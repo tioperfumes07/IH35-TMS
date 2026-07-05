@@ -1,6 +1,6 @@
 {
  "date": "2026-07-04",
- "generated_at_iso": "2026-07-04T19:25:55.233Z",
+ "generated_at_iso": "2026-07-05T04:58:14.647Z",
  "counts": {
   "PENDING": 4,
   "PENDING (GATED)": 39,
@@ -5744,6 +5744,186 @@
  ],
  "merged_prs": [
   {
+   "number": 2039,
+   "title": "fix(program): Program Board tabs empty in prod — read repo JSON via resolveMonorepoRoot (cwd-independent)",
+   "mergedAt": "2026-07-05T04:56:46Z",
+   "branch": "fix/program-board-repo-root-resolve"
+  },
+  {
+   "number": 2038,
+   "title": "fix(drivers): B2-2 pass limit:200 to 14 driver pickers relying on the 50-cap default",
+   "mergedAt": "2026-07-05T04:57:00Z",
+   "branch": "fix/b2-2-driver-picker-200-cap"
+  },
+  {
+   "number": 2037,
+   "title": "fix(security): C2-4 scope bypass driver PII reads by operating_company_id",
+   "mergedAt": "2026-07-05T04:56:55Z",
+   "branch": "fix/c2-4-driver-pk-opco-scope"
+  },
+  {
+   "number": 2036,
+   "title": "fix(compliance): Form 2290 deadline off-by-one at August boundary (B3-2)",
+   "mergedAt": "2026-07-05T04:56:51Z",
+   "branch": "fix/b3-2-form2290-deadline-off-by-one"
+  },
+  {
+   "number": 2035,
+   "title": "fix(security): G3-3 cap @fastify/multipart body size to stop memory-exhaustion DoS",
+   "mergedAt": "2026-07-05T02:11:35Z",
+   "branch": "fix/g3-3-multipart-size-limits"
+  },
+  {
+   "number": 2034,
+   "title": "chore(tracker): mark audit wave-1 findings DONE on Program Board",
+   "mergedAt": "2026-07-05T02:07:10Z",
+   "branch": "chore/audit-tracker-wave1-done"
+  },
+  {
+   "number": 2032,
+   "title": "ci(pwa): enforce G8-1 driver-date i18n guard in CI (verify:pwa-date-format)",
+   "mergedAt": "2026-07-05T01:38:41Z",
+   "branch": "fix/g8-1-driver-pwa-i18n-dates"
+  },
+  {
+   "number": 2031,
+   "title": "fix(compliance/docs): COMP-1 IFTA quarter + DOCS-1 load-documents tab + G8-4 a11y",
+   "mergedAt": "2026-07-04T22:58:40Z",
+   "branch": "fix/audit-ifta-docs-a11y"
+  },
+  {
+   "number": 2030,
+   "title": "fix(frontend): G8-1 PWA date-timezone + G8-5 error-states + G9-H6 CoA/fleet 50-cap",
+   "mergedAt": "2026-07-04T22:50:50Z",
+   "branch": "fix/audit-pwa-frontend-ux"
+  },
+  {
+   "number": 2029,
+   "title": "docs(repairs): Repair B–E design docs (owner-locked decisions applied)",
+   "mergedAt": "2026-07-04T22:48:10Z",
+   "branch": "docs/repairs-b-c-d-e-design"
+  },
+  {
+   "number": 2028,
+   "title": "fix(authz): LEGAL-1 role-gate + G9-H4 load-resurrection guard + G10-H3 API-contract check",
+   "mergedAt": "2026-07-04T23:08:05Z",
+   "branch": "fix/audit-authz-route-contracts"
+  },
+  {
+   "number": 2027,
+   "title": "fix(schema): phantom-column 500s — FLEET-1, DRIVER-2, HOME-1, DISP-1 (verify-first, query-only)",
+   "mergedAt": "2026-07-05T01:38:46Z",
+   "branch": "fix/audit-phantom-schema-500s"
+  },
+  {
+   "number": 2026,
+   "title": "docs(repairs): Repair A design — deduction ledger unify + applier (owner-locked)",
+   "mergedAt": "2026-07-04T22:11:35Z",
+   "branch": "docs/repair-a-deduction-ledger-design"
+  },
+  {
+   "number": 2025,
+   "title": "fix(master-data): D1-1 inline customer black-hole + D5-1 inventory create 401",
+   "mergedAt": "2026-07-04T22:11:38Z",
+   "branch": "fix/audit-master-data-black-holes"
+  },
+  {
+   "number": 2024,
+   "title": "fix(reliability): G10-C3 Sentry-in-crons/PWA + G10-C4 orphaned-queue reaper + G4-HEALTH cron freshness",
+   "mergedAt": "2026-07-04T23:00:29Z",
+   "branch": "fix/audit-reliability-observability"
+  },
+  {
+   "number": 2023,
+   "title": "fix(ci): A2-1/E2-1 dup-migration-number guard + A2-3/A2-4 widen timestamp-blind guards + G10-H2 wire no-hard-delete",
+   "mergedAt": "2026-07-04T22:05:38Z",
+   "branch": "fix/audit-migration-ci-guards"
+  },
+  {
+   "number": 2022,
+   "title": "docs(repairs): settlement-engine definitive trace (resolves M-RECONCILE-NOTE)",
+   "mergedAt": "2026-07-04T22:03:52Z",
+   "branch": "docs/settlement-engine-trace"
+  },
+  {
+   "number": 2021,
+   "title": "fix(security): H1-1 + H4-3 rate-limit auth/OTP + AI-cost endpoints",
+   "mergedAt": "2026-07-04T22:02:02Z",
+   "branch": "fix/audit-auth-ai-rate-limits"
+  },
+  {
+   "number": 2020,
+   "title": "fix(audit): G10-C1 wire the audit-chain verifier (daily cron + alarms)",
+   "mergedAt": "2026-07-05T01:38:55Z",
+   "branch": "fix/g10c1-audit-chain-verify-cron"
+  },
+  {
+   "number": 2019,
+   "title": "fix(dispatch): G9-C1 + D3-1 shared driver-qualification gate (incl. hazmat H-endorsement)",
+   "mergedAt": "2026-07-05T01:51:30Z",
+   "branch": "fix/g9c1-d31-driver-qualification-gate"
+  },
+  {
+   "number": 2018,
+   "title": "feat(program): Audit & Bug Sweep tab (all 160 findings on the Program Board)",
+   "mergedAt": "2026-07-04T21:48:25Z",
+   "branch": "feat/program-board-audit-tab"
+  },
+  {
+   "number": 2017,
+   "title": "fix(identity): G1-1 block Admin→Owner privilege escalation (LIVE-EXPLOITABLE #1)",
+   "mergedAt": "2026-07-04T21:42:39Z",
+   "branch": "fix/g1-1-user-role-escalation"
+  },
+  {
+   "number": 2016,
+   "title": "docs(lockdown): driver-pay/deduction/escrow engine LOCKED decisions (2026-07-04)",
+   "mergedAt": "2026-07-04T21:39:13Z",
+   "branch": "docs/driver-pay-engine-locked-decisions-2026-07-04"
+  },
+  {
+   "number": 2015,
+   "title": "chore(program): BUG-AUDIT-FIX-TRACKER (130-finding sweep, append-only)",
+   "mergedAt": "2026-07-04T21:39:16Z",
+   "branch": "chore/bug-audit-fix-tracker"
+  },
+  {
+   "number": 2014,
+   "title": "feat(money): app-wide QBO money format — first sweep (51 files) + guard",
+   "mergedAt": "2026-07-04T20:26:53Z",
+   "branch": "fix/money-format-sweep"
+  },
+  {
+   "number": 2013,
+   "title": "fix(ratecon): recover stop city/state/zip fused into the address",
+   "mergedAt": "2026-07-04T20:10:19Z",
+   "branch": "fix/ratecon-address-recovery"
+  },
+  {
+   "number": 2012,
+   "title": "fix(ratecon): sharpen extraction prompt (address split, equipment, per-line accessorials)",
+   "mergedAt": "2026-07-04T20:01:34Z",
+   "branch": "fix/ratecon-extract-prompt-quality"
+  },
+  {
+   "number": 2011,
+   "title": "feat(money): canonical QuickBooks-format formatter (foundation for app-wide sweep)",
+   "mergedAt": "2026-07-04T19:55:57Z",
+   "branch": "feat/canonical-money-format"
+  },
+  {
+   "number": 2010,
+   "title": "fix(book-load): save 400 (empty trailer_type) + per-line accessorials + equipment auto-detect",
+   "mergedAt": "2026-07-04T19:51:05Z",
+   "branch": "fix/bookload-save-400-and-accessorial-lines"
+  },
+  {
+   "number": 2009,
+   "title": "chore(program): Program Board live reconcile (2026-07-04) — 478 DONE / 4 PENDING / 39 gated",
+   "mergedAt": "2026-07-04T19:35:56Z",
+   "branch": "chore/program-board-live-reconcile-2026-07-04"
+  },
+  {
    "number": 2008,
    "title": "fix(ratecon/docs): upload under the ACTIVE company — the real rate-con 404 fix (recovered from #2007 squash loss)",
    "mergedAt": "2026-07-04T19:19:14Z",
@@ -9162,189 +9342,9 @@
    "title": "feat(dispatch): §B reefer \"Temperature type\" Frozen/Fresh segmented field (W-FIX-1)",
    "mergedAt": "2026-06-24T00:03:16Z",
    "branch": "feat/reefer-temperature-type-frozen-fresh-w-fix-1"
-  },
-  {
-   "number": 1396,
-   "title": "feat(banking): transfer amount → QBO MoneyInput dollars-mode (M-1)",
-   "mergedAt": "2026-06-23T23:40:49Z",
-   "branch": "feat/money-input-banking-transfer-m1"
-  },
-  {
-   "number": 1395,
-   "title": "feat(driver-finance): escrow override amount → QBO MoneyInput dollars-mode (M-1)",
-   "mergedAt": "2026-06-23T23:36:32Z",
-   "branch": "feat/money-input-settlement-escrow-m1"
-  },
-  {
-   "number": 1394,
-   "title": "feat(maint): Create WO §A Close date/time → closed_at (W-FIX-8, ship-on-green)",
-   "mergedAt": "2026-06-23T23:33:36Z",
-   "branch": "feat/wo-close-datetime-w-fix-8"
-  },
-  {
-   "number": 1393,
-   "title": "[HOLD-FOR-JORGE] chore(mdata): loads.temperature_type (Frozen/Fresh) — W-FIX-1 migration",
-   "mergedAt": "2026-06-23T23:32:11Z",
-   "branch": "chore/loads-temperature-type-w-fix-1"
-  },
-  {
-   "number": 1392,
-   "title": "feat(mdata): vendor quick-create render-v5 §D fields end-to-end (W-FIX-7b)",
-   "mergedAt": "2026-06-23T23:36:20Z",
-   "branch": "feat/vendor-renderv5-d-fields-wiring-w-fix-7b"
-  },
-  {
-   "number": 1391,
-   "title": "feat(dispatch): Book Load Trip Type full-width banner (A3)",
-   "mergedAt": "2026-06-23T23:25:29Z",
-   "branch": "feat/book-load-trip-type-banner-a3"
-  },
-  {
-   "number": 1390,
-   "title": "feat(dispatch): Book Load persists selected trailer → mdata.loads.trailer_id (W-FIX-3b)",
-   "mergedAt": "2026-06-23T23:08:03Z",
-   "branch": "feat/book-load-persist-trailer-id-w-fix-3b"
-  },
-  {
-   "number": 1389,
-   "title": "feat(dispatch): side-panel §B Equipment enrichment via read-only joins (W-FIX-3a)",
-   "mergedAt": "2026-06-23T22:52:21Z",
-   "branch": "feat/load-detail-equipment-enrichment-w-fix-3a"
-  },
-  {
-   "number": 1388,
-   "title": "feat(accounting): invoice line money entry → inline QBO MoneyInput (M-1, replaces window.prompt)",
-   "mergedAt": "2026-06-23T22:36:21Z",
-   "branch": "feat/money-input-invoice-lines-m1"
-  },
-  {
-   "number": 1387,
-   "title": "feat(forms): MoneyInput DOLLARS mode + Create WO/bills/expenses Cost fields → QBO format (M-1, display-only)",
-   "mergedAt": "2026-06-23T22:25:59Z",
-   "branch": "feat/money-input-dollars-mode-costbreakdown-m1"
-  },
-  {
-   "number": 1386,
-   "title": "[HOLD-FOR-JORGE] chore(mdata): qbo_vendors render-v5 §D columns (FIX-7b migration)",
-   "mergedAt": "2026-06-23T22:18:45Z",
-   "branch": "chore/qbo-vendors-renderv5-d-columns-fix7b"
-  },
-  {
-   "number": 1385,
-   "title": "feat(maint): vendor quick-create — split Display name + Company/Vendor name (FIX-7a)",
-   "mergedAt": "2026-06-23T21:51:50Z",
-   "branch": "feat/vendor-quickcreate-company-name-fix7a"
-  },
-  {
-   "number": 1384,
-   "title": "fix(dispatch): Book Load §A money fields → shared MoneyInput (M-1, fixes 350→$3.50 100x bug)",
-   "mergedAt": "2026-06-23T21:45:55Z",
-   "branch": "fix/money-input-book-load-m1"
-  },
-  {
-   "number": 1383,
-   "title": "fix(maint): WO footer = Cancel | Create work order | Save WO & Create Bill (FIX-6 option-a re-apply)",
-   "mergedAt": "2026-06-23T21:37:29Z",
-   "branch": "fix/create-wo-footer-option-a-fix6b"
-  },
-  {
-   "number": 1382,
-   "title": "feat(maint): Create WO §C Cost Breakdown columns → render-v5 labels (WO mode only) (FIX-4)",
-   "mergedAt": "2026-06-23T21:31:37Z",
-   "branch": "feat/wo-cost-columns-render-v5-fix4"
-  },
-  {
-   "number": 1381,
-   "title": "feat(maint): Create WO §A Priority field (routine/urgent/immediate) — render-v5 (FIX-5)",
-   "mergedAt": "2026-06-23T21:26:23Z",
-   "branch": "feat/wo-priority-field-fix5"
-  },
-  {
-   "number": 1380,
-   "title": "fix(maint): Create WO footer render-v5 labels — Save draft + Create work order (FIX-6, safe relabel)",
-   "mergedAt": "2026-06-23T21:00:03Z",
-   "branch": "fix/create-wo-footer-labels-fix6"
-  },
-  {
-   "number": 1379,
-   "title": "fix(dispatch): load side panel subtitle = real origin→destination from stops (FIX-2)",
-   "mergedAt": "2026-06-23T20:31:16Z",
-   "branch": "fix/side-panel-route-subtitle-fix2"
-  },
-  {
-   "number": 1378,
-   "title": "feat(dispatch): board — move Location column after HOS clocks, before Load # (C2)",
-   "mergedAt": "2026-06-23T21:07:28Z",
-   "branch": "feat/dispatch-board-location-column-c2"
-  },
-  {
-   "number": 1377,
-   "title": "feat(dispatch): Trip Pairing board — live unit location on the payload (C1b)",
-   "mergedAt": "2026-06-23T20:25:11Z",
-   "branch": "feat/trip-pairing-location-c1b"
-  },
-  {
-   "number": 1376,
-   "title": "feat(maint): R&M Status Board → 5-column status kanban + R&M default tab + subnav reorder (D1)",
-   "mergedAt": "2026-06-23T20:16:27Z",
-   "branch": "feat/maintenance-rm-kanban-d1"
-  },
-  {
-   "number": 1375,
-   "title": "feat(dispatch): Trip Pairing board rebuild — Triangulation column + bespoke toolbar + +Book NB pool + §7 (C1a)",
-   "mergedAt": "2026-06-23T20:03:55Z",
-   "branch": "feat/trip-pairing-board-c1a"
-  },
-  {
-   "number": 1374,
-   "title": "feat(dispatch): load side panel Overview = 3 wizard-parity sections + per-section Edit ▸ (B1a)",
-   "mergedAt": "2026-06-23T19:51:07Z",
-   "branch": "feat/load-side-panel-overview-wizard-parity-b1a"
-  },
-  {
-   "number": 1373,
-   "title": "feat(dispatch): Book Load §B RENDER-A-v2 reorder (A1a) — HOS last, combined equip+instructions expander",
-   "mergedAt": "2026-06-23T19:41:30Z",
-   "branch": "feat/bookload-sectionB-render-a-v2-reorder"
-  },
-  {
-   "number": 1372,
-   "title": "fix(dispatch): load side panel Overview hang (BUG 1) + friendly title (BUG 2)",
-   "mergedAt": "2026-06-23T18:29:29Z",
-   "branch": "feat/load-panel-overview-fix"
-  },
-  {
-   "number": 1371,
-   "title": "feat(dispatch): §B reefer panel → RENDER-A-v2 (temp=setpoint, drop mode/pre-cool) + Lowboy + §7",
-   "mergedAt": "2026-06-23T17:57:06Z",
-   "branch": "feat/sectionB-render-a-v2"
-  },
-  {
-   "number": 1370,
-   "title": "feat(dispatch): §B audit — Reefer setpoint top-level + reefer/flatbed amber panels (render-v6)",
-   "mergedAt": "2026-06-23T17:15:08Z",
-   "branch": "feat/sectionB-audit"
-  },
-  {
-   "number": 1369,
-   "title": "feat(dispatch): §A lumper responsibility (paid-by + required) — relocated from §C, per-stop",
-   "mergedAt": "2026-06-23T17:04:32Z",
-   "branch": "feat/lumper-responsibility-sectionA"
-  },
-  {
-   "number": 1368,
-   "title": "feat(dispatch): relocate GAP-31 per-stop extra-rate editor §C → §A (GUARD decision)",
-   "mergedAt": "2026-06-23T16:44:41Z",
-   "branch": "feat/extra-rates-to-sectionA"
-  },
-  {
-   "number": 1367,
-   "title": "feat(guard): verify:wizard-section-equality — EXACT field-set per section (fail-on-extra)",
-   "mergedAt": "2026-06-23T09:44:39Z",
-   "branch": "feat/parity-exact-equality"
   }
  ],
- "merged_pr_total": 1899,
+ "merged_pr_total": 1929,
  "hold_for_jorge": [
   {
    "number": 2000,
