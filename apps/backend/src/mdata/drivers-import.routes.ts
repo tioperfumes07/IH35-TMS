@@ -211,7 +211,7 @@ function authed(req: FastifyRequest, reply: FastifyReply) {
 const IMPORT_CAP = 1000;
 
 export async function registerDriversImportRoutes(app: FastifyInstance) {
-  app.post("/api/v1/mdata/drivers/import", async (req, reply) => {
+  app.post("/api/v1/mdata/drivers/import", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!["Owner", "Administrator"].includes(user.role)) return reply.code(403).send({ error: "forbidden" });

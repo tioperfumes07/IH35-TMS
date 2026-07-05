@@ -755,7 +755,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
     return { ok: true, variance_cents: varianceCents };
   });
 
-  app.post("/api/v1/banking/upload-statement", async (req, reply) => {
+  app.post("/api/v1/banking/upload-statement", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canReconcile(user.role)) return reply.code(403).send({ error: "forbidden" });
