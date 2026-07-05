@@ -1,77 +1,77 @@
-import { MapView } from "../pages/dispatch/MapView";
+const MapView = React.lazy(() => import("../pages/dispatch/MapView").then((m) => ({ default: m.MapView })));
 import React from "react";
 import { Navigate, Route, useLocation, useParams } from "react-router-dom";
 import type { ReactNode } from "react";
 import { useAuth } from "../auth/useAuth";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { Shell } from "../components/Shell";
-import { CustomersPage } from "../pages/Customers";
-import { CustomerDetailPage } from "../pages/CustomerDetail";
-import { ListsHubPage } from "../pages/lists/ListsHubPage";
-import { ProgramBoardPage } from "../pages/program/ProgramBoardPage";
-import { FinalAdditionsPage } from "../pages/program/FinalAdditionsPage";
-import { DomainCatalogHubPage } from "../pages/lists/DomainCatalogHubPage";
-import { DetailTypesListPage } from "../pages/lists/accounting/DetailTypesListPage";
-import { NamesMasterHub } from "../pages/lists/names/NamesMasterHub";
-import { BrokersListPage } from "../pages/lists/names/BrokersListPage";
-import { DriverDetailPage } from "../pages/DriverDetail";
-import { DriverProfilePage } from "../pages/drivers/DriverProfilePage";
-import { DriverLayoverHistoryPage } from "../pages/drivers/DriverLayoverHistoryPage";
-import { DriverHosDetailPage } from "../pages/drivers/DriverHosDetailPage";
-import { MessagesInboxPage } from "../pages/drivers/MessagesInboxPage";
-import { DocumentAlertsPage } from "../pages/alerts/DocumentAlertsPage";
-import { OnboardingWizardPage } from "../pages/drivers/OnboardingWizardPage";
-import { ApplicantsPipelinePage } from "../pages/drivers/ApplicantsPipelinePage";
-import { ApplicationPage } from "../pages/public/ApplicationPage";
-import { DriverLoadStatusesPage } from "../pages/DriverLoadStatusesPage";
-import { DriversPage } from "../pages/drivers/DriversPage";
-import { RetentionDashboard } from "../pages/drivers/RetentionDashboard";
+const CustomersPage = React.lazy(() => import("../pages/Customers").then((m) => ({ default: m.CustomersPage })));
+const CustomerDetailPage = React.lazy(() => import("../pages/CustomerDetail").then((m) => ({ default: m.CustomerDetailPage })));
+const ListsHubPage = React.lazy(() => import("../pages/lists/ListsHubPage").then((m) => ({ default: m.ListsHubPage })));
+const ProgramBoardPage = React.lazy(() => import("../pages/program/ProgramBoardPage").then((m) => ({ default: m.ProgramBoardPage })));
+const FinalAdditionsPage = React.lazy(() => import("../pages/program/FinalAdditionsPage").then((m) => ({ default: m.FinalAdditionsPage })));
+const DomainCatalogHubPage = React.lazy(() => import("../pages/lists/DomainCatalogHubPage").then((m) => ({ default: m.DomainCatalogHubPage })));
+const DetailTypesListPage = React.lazy(() => import("../pages/lists/accounting/DetailTypesListPage").then((m) => ({ default: m.DetailTypesListPage })));
+const NamesMasterHub = React.lazy(() => import("../pages/lists/names/NamesMasterHub").then((m) => ({ default: m.NamesMasterHub })));
+const BrokersListPage = React.lazy(() => import("../pages/lists/names/BrokersListPage").then((m) => ({ default: m.BrokersListPage })));
+const DriverDetailPage = React.lazy(() => import("../pages/DriverDetail").then((m) => ({ default: m.DriverDetailPage })));
+const DriverProfilePage = React.lazy(() => import("../pages/drivers/DriverProfilePage").then((m) => ({ default: m.DriverProfilePage })));
+const DriverLayoverHistoryPage = React.lazy(() => import("../pages/drivers/DriverLayoverHistoryPage").then((m) => ({ default: m.DriverLayoverHistoryPage })));
+const DriverHosDetailPage = React.lazy(() => import("../pages/drivers/DriverHosDetailPage").then((m) => ({ default: m.DriverHosDetailPage })));
+const MessagesInboxPage = React.lazy(() => import("../pages/drivers/MessagesInboxPage").then((m) => ({ default: m.MessagesInboxPage })));
+const DocumentAlertsPage = React.lazy(() => import("../pages/alerts/DocumentAlertsPage").then((m) => ({ default: m.DocumentAlertsPage })));
+const OnboardingWizardPage = React.lazy(() => import("../pages/drivers/OnboardingWizardPage").then((m) => ({ default: m.OnboardingWizardPage })));
+const ApplicantsPipelinePage = React.lazy(() => import("../pages/drivers/ApplicantsPipelinePage").then((m) => ({ default: m.ApplicantsPipelinePage })));
+const ApplicationPage = React.lazy(() => import("../pages/public/ApplicationPage").then((m) => ({ default: m.ApplicationPage })));
+const DriverLoadStatusesPage = React.lazy(() => import("../pages/DriverLoadStatusesPage").then((m) => ({ default: m.DriverLoadStatusesPage })));
+const DriversPage = React.lazy(() => import("../pages/drivers/DriversPage").then((m) => ({ default: m.DriversPage })));
+const RetentionDashboard = React.lazy(() => import("../pages/drivers/RetentionDashboard").then((m) => ({ default: m.RetentionDashboard })));
 import type { DriversSubnavId } from "../components/drivers/DRIVERS_TABS_CONFIG";
-import { DispatchPage } from "../pages/Dispatch";
-import { GeofencesPage } from "../pages/operations/GeofencesPage";
-import { DispatchAlertsPage } from "../pages/dispatch/DispatchAlertsPage";
-import { LateArrivalsPage } from "../pages/dispatch/LateArrivalsPage";
-import { AtRiskQueuePage } from "../pages/dispatch/AtRiskQueuePage";
-import { FactoringQueuePage } from "../pages/dispatch/FactoringQueuePage";
-import { InTransitIssuesPage } from "../pages/dispatch/InTransitIssuesPage";
-import { AssignmentHistoryPage } from "../pages/dispatch/AssignmentHistoryPage";
-import { PlannerCalendarPage } from "../pages/dispatch/PlannerCalendarPage";
+const DispatchPage = React.lazy(() => import("../pages/Dispatch").then((m) => ({ default: m.DispatchPage })));
+const GeofencesPage = React.lazy(() => import("../pages/operations/GeofencesPage").then((m) => ({ default: m.GeofencesPage })));
+const DispatchAlertsPage = React.lazy(() => import("../pages/dispatch/DispatchAlertsPage").then((m) => ({ default: m.DispatchAlertsPage })));
+const LateArrivalsPage = React.lazy(() => import("../pages/dispatch/LateArrivalsPage").then((m) => ({ default: m.LateArrivalsPage })));
+const AtRiskQueuePage = React.lazy(() => import("../pages/dispatch/AtRiskQueuePage").then((m) => ({ default: m.AtRiskQueuePage })));
+const FactoringQueuePage = React.lazy(() => import("../pages/dispatch/FactoringQueuePage").then((m) => ({ default: m.FactoringQueuePage })));
+const InTransitIssuesPage = React.lazy(() => import("../pages/dispatch/InTransitIssuesPage").then((m) => ({ default: m.InTransitIssuesPage })));
+const AssignmentHistoryPage = React.lazy(() => import("../pages/dispatch/AssignmentHistoryPage").then((m) => ({ default: m.AssignmentHistoryPage })));
+const PlannerCalendarPage = React.lazy(() => import("../pages/dispatch/PlannerCalendarPage").then((m) => ({ default: m.PlannerCalendarPage })));
 import { DispatchPlannersLayout } from "../pages/dispatch/planners/DispatchPlannersLayout";
-import { UnifiedTimelinePlanner } from "../pages/dispatch/planners/UnifiedTimelinePlanner";
-import { DriverPlanner } from "../pages/dispatch/planners/DriverPlanner";
-import { TruckPlanner } from "../pages/dispatch/planners/TruckPlanner";
-import { LoadsPlanner } from "../pages/dispatch/planners/LoadsPlanner";
-import { DetentionBoardPage } from "../pages/dispatch/DetentionBoardPage";
-import { EquipmentTransferRequestsPage } from "../pages/dispatch/EquipmentTransferRequests";
-import { OcrQueuePage } from "../pages/dispatch/OcrQueuePage";
-import { NotifyPreferencesPage } from "../pages/dispatch/NotifyPreferencesPage";
-import { PodReviewPage } from "../pages/dispatch/PodReviewPage";
-import { DispatchSettingsPage } from "../pages/dispatch/DispatchSettingsPage";
-import { BorderCrossingWizardPage } from "../pages/dispatch/BorderCrossingWizardPage";
-import { BorderCrossingHistoryPage } from "../pages/dispatch/BorderCrossingHistoryPage";
+const UnifiedTimelinePlanner = React.lazy(() => import("../pages/dispatch/planners/UnifiedTimelinePlanner").then((m) => ({ default: m.UnifiedTimelinePlanner })));
+const DriverPlanner = React.lazy(() => import("../pages/dispatch/planners/DriverPlanner").then((m) => ({ default: m.DriverPlanner })));
+const TruckPlanner = React.lazy(() => import("../pages/dispatch/planners/TruckPlanner").then((m) => ({ default: m.TruckPlanner })));
+const LoadsPlanner = React.lazy(() => import("../pages/dispatch/planners/LoadsPlanner").then((m) => ({ default: m.LoadsPlanner })));
+const DetentionBoardPage = React.lazy(() => import("../pages/dispatch/DetentionBoardPage").then((m) => ({ default: m.DetentionBoardPage })));
+const EquipmentTransferRequestsPage = React.lazy(() => import("../pages/dispatch/EquipmentTransferRequests").then((m) => ({ default: m.EquipmentTransferRequestsPage })));
+const OcrQueuePage = React.lazy(() => import("../pages/dispatch/OcrQueuePage").then((m) => ({ default: m.OcrQueuePage })));
+const NotifyPreferencesPage = React.lazy(() => import("../pages/dispatch/NotifyPreferencesPage").then((m) => ({ default: m.NotifyPreferencesPage })));
+const PodReviewPage = React.lazy(() => import("../pages/dispatch/PodReviewPage").then((m) => ({ default: m.PodReviewPage })));
+const DispatchSettingsPage = React.lazy(() => import("../pages/dispatch/DispatchSettingsPage").then((m) => ({ default: m.DispatchSettingsPage })));
+const BorderCrossingWizardPage = React.lazy(() => import("../pages/dispatch/BorderCrossingWizardPage").then((m) => ({ default: m.BorderCrossingWizardPage })));
+const BorderCrossingHistoryPage = React.lazy(() => import("../pages/dispatch/BorderCrossingHistoryPage").then((m) => ({ default: m.BorderCrossingHistoryPage })));
 import { BorderCrossingHistory as GpsBorderCrossingHistory } from "../pages/dispatch/borders/BorderCrossingHistory";
-import { SettlementsPage } from "../pages/driver-finance/SettlementsPage";
-import { CashAdvanceRequestsPage } from "../pages/driver-finance/CashAdvanceRequestsPage";
-import { OwnerApprovalPortalPage } from "../pages/driver-finance/OwnerApprovalPortalPage";
+const SettlementsPage = React.lazy(() => import("../pages/driver-finance/SettlementsPage").then((m) => ({ default: m.SettlementsPage })));
+const CashAdvanceRequestsPage = React.lazy(() => import("../pages/driver-finance/CashAdvanceRequestsPage").then((m) => ({ default: m.CashAdvanceRequestsPage })));
+const OwnerApprovalPortalPage = React.lazy(() => import("../pages/driver-finance/OwnerApprovalPortalPage").then((m) => ({ default: m.OwnerApprovalPortalPage })));
 import { PortalLayout } from "../portal/PortalLayout";
-import { PortalLoginPage } from "../portal/PortalLoginPage";
-import { PortalDashboardPage } from "../portal/PortalDashboardPage";
-import { PortalLoadDetailPage } from "../portal/PortalLoadDetailPage";
-import { PortalProfilePage } from "../portal/PortalProfilePage";
+const PortalLoginPage = React.lazy(() => import("../portal/PortalLoginPage").then((m) => ({ default: m.PortalLoginPage })));
+const PortalDashboardPage = React.lazy(() => import("../portal/PortalDashboardPage").then((m) => ({ default: m.PortalDashboardPage })));
+const PortalLoadDetailPage = React.lazy(() => import("../portal/PortalLoadDetailPage").then((m) => ({ default: m.PortalLoadDetailPage })));
+const PortalProfilePage = React.lazy(() => import("../portal/PortalProfilePage").then((m) => ({ default: m.PortalProfilePage })));
 import { PortalRouteGuard } from "../portal/PortalRouteGuard";
 import { FuelPlannerHomePage, type FuelTabId } from "../pages/fuel/FuelPlannerHome";
-import { FraudAlertsListPage } from "../pages/fuel/fraud-alerts/FraudAlertsList";
-import { BankingHomePage } from "../pages/banking/BankingHome";
-import { TransfersListPage } from "../pages/banking/TransfersListPage";
-import { BankingObligationReconcilePage } from "../pages/banking/BankingObligationReconcilePage";
-import { ReconciliationWorkspacePage } from "../pages/banking/ReconciliationWorkspace";
-import { BankReconciliationPage } from "../pages/banking/BankReconciliationPage";
-import { CategorizationRulesPage } from "../pages/banking/CategorizationRulesPage";
-import { QboSyncQueuePage } from "../pages/banking/QboSyncQueuePage";
-import { EmailQueuePage } from "../pages/banking/EmailQueuePage";
-import { BankAccountDetailPage } from "../pages/banking/BankAccountDetail";
+const FraudAlertsListPage = React.lazy(() => import("../pages/fuel/fraud-alerts/FraudAlertsList").then((m) => ({ default: m.FraudAlertsListPage })));
+const BankingHomePage = React.lazy(() => import("../pages/banking/BankingHome").then((m) => ({ default: m.BankingHomePage })));
+const TransfersListPage = React.lazy(() => import("../pages/banking/TransfersListPage").then((m) => ({ default: m.TransfersListPage })));
+const BankingObligationReconcilePage = React.lazy(() => import("../pages/banking/BankingObligationReconcilePage").then((m) => ({ default: m.BankingObligationReconcilePage })));
+const ReconciliationWorkspacePage = React.lazy(() => import("../pages/banking/ReconciliationWorkspace").then((m) => ({ default: m.ReconciliationWorkspacePage })));
+const BankReconciliationPage = React.lazy(() => import("../pages/banking/BankReconciliationPage").then((m) => ({ default: m.BankReconciliationPage })));
+const CategorizationRulesPage = React.lazy(() => import("../pages/banking/CategorizationRulesPage").then((m) => ({ default: m.CategorizationRulesPage })));
+const QboSyncQueuePage = React.lazy(() => import("../pages/banking/QboSyncQueuePage").then((m) => ({ default: m.QboSyncQueuePage })));
+const EmailQueuePage = React.lazy(() => import("../pages/banking/EmailQueuePage").then((m) => ({ default: m.EmailQueuePage })));
+const BankAccountDetailPage = React.lazy(() => import("../pages/banking/BankAccountDetail").then((m) => ({ default: m.BankAccountDetailPage })));
 import { SafetyLayout } from "../pages/safety/SafetyLayout";
-import { EldAuditTrailViewer } from "../pages/safety/eld/EldAuditTrailViewer";
+const EldAuditTrailViewer = React.lazy(() => import("../pages/safety/eld/EldAuditTrailViewer").then((m) => ({ default: m.EldAuditTrailViewer })));
 import {
   AccidentsIncidentsTab,
   CargoClaimsTab,
@@ -99,203 +99,203 @@ import {
   SettingsTab,
   TrailerInterchangesTab,
 } from "../pages/safety/tabs";
-import { LiabilitiesHomePage } from "../pages/liabilities/LiabilitiesHome";
+const LiabilitiesHomePage = React.lazy(() => import("../pages/liabilities/LiabilitiesHome").then((m) => ({ default: m.LiabilitiesHomePage })));
 import { MaintenanceHomePage, MaintenanceShell } from "../pages/maintenance/MaintenanceHome";
 import type { MaintenanceTabId } from "../pages/maintenance/MaintenanceHome";
-import { WorkOrdersConsoleDetailPage } from "../pages/work-orders/WorkOrdersConsoleDetailPage";
-import { WorkOrdersConsoleListPage } from "../pages/work-orders/WorkOrdersConsoleListPage";
-import { WorkOrderDetailPage } from "../pages/maintenance/WorkOrderDetailPage";
-import { WorkOrderNewPage } from "../pages/maintenance/WorkOrderNewPage";
-import { DefectsInboxPage } from "../pages/maintenance/DefectsInboxPage";
-import { DefectDetailPage } from "../pages/maintenance/DefectDetailPage";
-import { VehiclesMasterDataPage } from "../pages/maintenance/vehicles/VehiclesMasterDataPage";
-import { DriversMasterDataPage } from "../pages/maintenance/drivers/DriversMasterDataPage";
-import { PartsMasterDataPage } from "../pages/maintenance/parts/PartsMasterDataPage";
-import { PmSchedulePage } from "../pages/maintenance/pm-schedule/PmSchedulePage";
-import { PmAutoEnginePage } from "../pages/maintenance/PmAutoEnginePage";
-import { MaintKpiDashboardPage } from "../pages/maintenance/MaintKpiDashboardPage";
-import { InspectionsPage } from "../pages/maintenance/inspections/InspectionsPage";
-import { TireProgramPage } from "../pages/maintenance/TireProgramPage";
-import { WarrantyClaimsPage } from "../pages/maintenance/WarrantyClaimsPage";
+const WorkOrdersConsoleDetailPage = React.lazy(() => import("../pages/work-orders/WorkOrdersConsoleDetailPage").then((m) => ({ default: m.WorkOrdersConsoleDetailPage })));
+const WorkOrdersConsoleListPage = React.lazy(() => import("../pages/work-orders/WorkOrdersConsoleListPage").then((m) => ({ default: m.WorkOrdersConsoleListPage })));
+const WorkOrderDetailPage = React.lazy(() => import("../pages/maintenance/WorkOrderDetailPage").then((m) => ({ default: m.WorkOrderDetailPage })));
+const WorkOrderNewPage = React.lazy(() => import("../pages/maintenance/WorkOrderNewPage").then((m) => ({ default: m.WorkOrderNewPage })));
+const DefectsInboxPage = React.lazy(() => import("../pages/maintenance/DefectsInboxPage").then((m) => ({ default: m.DefectsInboxPage })));
+const DefectDetailPage = React.lazy(() => import("../pages/maintenance/DefectDetailPage").then((m) => ({ default: m.DefectDetailPage })));
+const VehiclesMasterDataPage = React.lazy(() => import("../pages/maintenance/vehicles/VehiclesMasterDataPage").then((m) => ({ default: m.VehiclesMasterDataPage })));
+const DriversMasterDataPage = React.lazy(() => import("../pages/maintenance/drivers/DriversMasterDataPage").then((m) => ({ default: m.DriversMasterDataPage })));
+const PartsMasterDataPage = React.lazy(() => import("../pages/maintenance/parts/PartsMasterDataPage").then((m) => ({ default: m.PartsMasterDataPage })));
+const PmSchedulePage = React.lazy(() => import("../pages/maintenance/pm-schedule/PmSchedulePage").then((m) => ({ default: m.PmSchedulePage })));
+const PmAutoEnginePage = React.lazy(() => import("../pages/maintenance/PmAutoEnginePage").then((m) => ({ default: m.PmAutoEnginePage })));
+const MaintKpiDashboardPage = React.lazy(() => import("../pages/maintenance/MaintKpiDashboardPage").then((m) => ({ default: m.MaintKpiDashboardPage })));
+const InspectionsPage = React.lazy(() => import("../pages/maintenance/inspections/InspectionsPage").then((m) => ({ default: m.InspectionsPage })));
+const TireProgramPage = React.lazy(() => import("../pages/maintenance/TireProgramPage").then((m) => ({ default: m.TireProgramPage })));
+const WarrantyClaimsPage = React.lazy(() => import("../pages/maintenance/WarrantyClaimsPage").then((m) => ({ default: m.WarrantyClaimsPage })));
 import { VendorsPage as MaintenanceVendorsPage } from "../pages/maintenance/vendors/VendorsPage";
 import { VendorDetailPage as MaintenanceVendorDetailPage } from "../pages/maintenance/VendorDetailPage";
-import { MaintenanceReportsPage } from "../pages/maintenance/reports/MaintenanceReportsPage";
-import { Compliance425CPage } from "../pages/maintenance/compliance/Compliance425CPage";
-import { CashAdvancesHomePage } from "../pages/cash-advances/CashAdvancesHome";
-import { FactoringHomePage } from "../pages/factoring/FactoringHome";
-import { BatchWizard } from "../pages/factoring/BatchWizard";
-import { BatchDetail } from "../pages/factoring/BatchDetail";
-import { FactorAdmin } from "../pages/factoring/FactorAdmin";
-import { ReserveDashboard } from "../pages/factoring/ReserveDashboard";
-import { FaroImportPage } from "../pages/factoring/FaroImportPage";
-import { VehicleProfilePage } from "../pages/fleet/VehicleProfilePage";
-import { FleetHomePage } from "../pages/fleet/FleetHomePage";
-import { TrailerProfilePage } from "../pages/fleet/TrailerProfilePage";
-import { TransfersInProgressPage } from "../pages/fleet/TransfersInProgressPage";
-import { ComplianceDashboardPage } from "../pages/compliance/ComplianceDashboardPage";
-import { NotificationCenterPage } from "../pages/notifications/NotificationCenterPage";
-import { EquipmentTypesPage } from "../pages/EquipmentTypesPage";
-import { HomePage } from "../pages/Home";
-import { OwnerHome } from "../pages/home/OwnerHome";
-import { QboStyleHomePage } from "../pages/home/QboStyleHomePage";
-import { LoginPage } from "../pages/Login";
-import { LoginResetRequestPage } from "../pages/LoginResetRequestPage";
-import { LoginResetConfirmPage } from "../pages/LoginResetConfirmPage";
-import { ComingSoonPage } from "../pages/ComingSoonPage";
-import { IntegrationTransactionsPage } from "../pages/accounting/IntegrationTransactionsPage";
-import { ReceiptsPage } from "../pages/accounting/ReceiptsPage";
-import { PrepaidExpensesPage } from "../pages/accounting/PrepaidExpensesPage";
-import { RevenueRecognitionPage } from "../pages/accounting/RevenueRecognitionPage";
-import { FixedAssetsPage } from "../pages/accounting/FixedAssetsPage";
-import { QboReconcileCapturesPage } from "../pages/accounting/QboReconcileCapturesPage";
-import { AccountTypeCatalogPage } from "../pages/accounting/AccountTypeCatalogPage";
-import { MyAccountantPage } from "../pages/accounting/MyAccountantPage";
-import { BulkDemoPage } from "../pages/dev/BulkDemoPage";
-import { SamsaraIntegrationPage } from "../pages/integrations/SamsaraIntegrationPage";
-import { DriverAppLandingPage } from "../pages/DriverAppLandingPage";
-import { DisputesPage } from "../pages/driver/DisputesPage";
+const MaintenanceReportsPage = React.lazy(() => import("../pages/maintenance/reports/MaintenanceReportsPage").then((m) => ({ default: m.MaintenanceReportsPage })));
+const Compliance425CPage = React.lazy(() => import("../pages/maintenance/compliance/Compliance425CPage").then((m) => ({ default: m.Compliance425CPage })));
+const CashAdvancesHomePage = React.lazy(() => import("../pages/cash-advances/CashAdvancesHome").then((m) => ({ default: m.CashAdvancesHomePage })));
+const FactoringHomePage = React.lazy(() => import("../pages/factoring/FactoringHome").then((m) => ({ default: m.FactoringHomePage })));
+const BatchWizard = React.lazy(() => import("../pages/factoring/BatchWizard").then((m) => ({ default: m.BatchWizard })));
+const BatchDetail = React.lazy(() => import("../pages/factoring/BatchDetail").then((m) => ({ default: m.BatchDetail })));
+const FactorAdmin = React.lazy(() => import("../pages/factoring/FactorAdmin").then((m) => ({ default: m.FactorAdmin })));
+const ReserveDashboard = React.lazy(() => import("../pages/factoring/ReserveDashboard").then((m) => ({ default: m.ReserveDashboard })));
+const FaroImportPage = React.lazy(() => import("../pages/factoring/FaroImportPage").then((m) => ({ default: m.FaroImportPage })));
+const VehicleProfilePage = React.lazy(() => import("../pages/fleet/VehicleProfilePage").then((m) => ({ default: m.VehicleProfilePage })));
+const FleetHomePage = React.lazy(() => import("../pages/fleet/FleetHomePage").then((m) => ({ default: m.FleetHomePage })));
+const TrailerProfilePage = React.lazy(() => import("../pages/fleet/TrailerProfilePage").then((m) => ({ default: m.TrailerProfilePage })));
+const TransfersInProgressPage = React.lazy(() => import("../pages/fleet/TransfersInProgressPage").then((m) => ({ default: m.TransfersInProgressPage })));
+const ComplianceDashboardPage = React.lazy(() => import("../pages/compliance/ComplianceDashboardPage").then((m) => ({ default: m.ComplianceDashboardPage })));
+const NotificationCenterPage = React.lazy(() => import("../pages/notifications/NotificationCenterPage").then((m) => ({ default: m.NotificationCenterPage })));
+const EquipmentTypesPage = React.lazy(() => import("../pages/EquipmentTypesPage").then((m) => ({ default: m.EquipmentTypesPage })));
+const HomePage = React.lazy(() => import("../pages/Home").then((m) => ({ default: m.HomePage })));
+const OwnerHome = React.lazy(() => import("../pages/home/OwnerHome").then((m) => ({ default: m.OwnerHome })));
+const QboStyleHomePage = React.lazy(() => import("../pages/home/QboStyleHomePage").then((m) => ({ default: m.QboStyleHomePage })));
+const LoginPage = React.lazy(() => import("../pages/Login").then((m) => ({ default: m.LoginPage })));
+const LoginResetRequestPage = React.lazy(() => import("../pages/LoginResetRequestPage").then((m) => ({ default: m.LoginResetRequestPage })));
+const LoginResetConfirmPage = React.lazy(() => import("../pages/LoginResetConfirmPage").then((m) => ({ default: m.LoginResetConfirmPage })));
+const ComingSoonPage = React.lazy(() => import("../pages/ComingSoonPage").then((m) => ({ default: m.ComingSoonPage })));
+const IntegrationTransactionsPage = React.lazy(() => import("../pages/accounting/IntegrationTransactionsPage").then((m) => ({ default: m.IntegrationTransactionsPage })));
+const ReceiptsPage = React.lazy(() => import("../pages/accounting/ReceiptsPage").then((m) => ({ default: m.ReceiptsPage })));
+const PrepaidExpensesPage = React.lazy(() => import("../pages/accounting/PrepaidExpensesPage").then((m) => ({ default: m.PrepaidExpensesPage })));
+const RevenueRecognitionPage = React.lazy(() => import("../pages/accounting/RevenueRecognitionPage").then((m) => ({ default: m.RevenueRecognitionPage })));
+const FixedAssetsPage = React.lazy(() => import("../pages/accounting/FixedAssetsPage").then((m) => ({ default: m.FixedAssetsPage })));
+const QboReconcileCapturesPage = React.lazy(() => import("../pages/accounting/QboReconcileCapturesPage").then((m) => ({ default: m.QboReconcileCapturesPage })));
+const AccountTypeCatalogPage = React.lazy(() => import("../pages/accounting/AccountTypeCatalogPage").then((m) => ({ default: m.AccountTypeCatalogPage })));
+const MyAccountantPage = React.lazy(() => import("../pages/accounting/MyAccountantPage").then((m) => ({ default: m.MyAccountantPage })));
+const BulkDemoPage = React.lazy(() => import("../pages/dev/BulkDemoPage").then((m) => ({ default: m.BulkDemoPage })));
+const SamsaraIntegrationPage = React.lazy(() => import("../pages/integrations/SamsaraIntegrationPage").then((m) => ({ default: m.SamsaraIntegrationPage })));
+const DriverAppLandingPage = React.lazy(() => import("../pages/DriverAppLandingPage").then((m) => ({ default: m.DriverAppLandingPage })));
+const DisputesPage = React.lazy(() => import("../pages/driver/DisputesPage").then((m) => ({ default: m.DisputesPage })));
 import { DriverShell } from "../pages/driver/DriverShell";
-import { DriverLoginPage } from "../pages/driver/DriverLoginPage";
-import { DriverLoadsPage } from "../pages/driver/DriverLoadsPage";
-import { DriverLoadDetailPage } from "../pages/driver/DriverLoadDetailPage";
-import { DriverHosPage } from "../pages/driver/DriverHosPage";
-import { DriverSettingsPage } from "../pages/driver/DriverSettingsPage";
-import { FuelReceiptPage } from "../pages/driver/FuelReceiptPage";
-import { NotificationPreferencesPage } from "../pages/settings/NotificationPreferencesPage";
-import { UserProfileSettingsPage } from "../pages/settings/UserProfileSettingsPage";
-import { DocumentsPage } from "../pages/Documents";
-import { DocsHomePage } from "../pages/docs/DocsHomePage";
-import { EldPage } from "../pages/eld/EldPage";
-import { CashFlowPage } from "../pages/cash-flow/CashFlowPage";
-import { DriverHubPage } from "../pages/home/DriverHubPage";
-import { DriverHubReportingPage } from "../pages/home/DriverHubReportingPage";
-import { UserDetailPage } from "../pages/UserDetail";
-import { UsersPage } from "../pages/Users";
-import { VendorsPage } from "../pages/Vendors";
-import { VendorDetailPage } from "../pages/VendorDetail";
-import { Form425CHome } from "../pages/form425c/Form425CHome";
-import { HelpCenterPage } from "../pages/help/HelpCenterPage";
-import { HelpArticlePage } from "../pages/help/HelpArticlePage";
-import { HelpPage } from "../pages/help/HelpPage";
-import { RunbooksIndex } from "../pages/help/RunbooksIndex";
-import { OnboardingWizard } from "../pages/onboarding/OnboardingWizard";
-import { ReportsHomePage } from "../pages/reports/ReportsHome";
+const DriverLoginPage = React.lazy(() => import("../pages/driver/DriverLoginPage").then((m) => ({ default: m.DriverLoginPage })));
+const DriverLoadsPage = React.lazy(() => import("../pages/driver/DriverLoadsPage").then((m) => ({ default: m.DriverLoadsPage })));
+const DriverLoadDetailPage = React.lazy(() => import("../pages/driver/DriverLoadDetailPage").then((m) => ({ default: m.DriverLoadDetailPage })));
+const DriverHosPage = React.lazy(() => import("../pages/driver/DriverHosPage").then((m) => ({ default: m.DriverHosPage })));
+const DriverSettingsPage = React.lazy(() => import("../pages/driver/DriverSettingsPage").then((m) => ({ default: m.DriverSettingsPage })));
+const FuelReceiptPage = React.lazy(() => import("../pages/driver/FuelReceiptPage").then((m) => ({ default: m.FuelReceiptPage })));
+const NotificationPreferencesPage = React.lazy(() => import("../pages/settings/NotificationPreferencesPage").then((m) => ({ default: m.NotificationPreferencesPage })));
+const UserProfileSettingsPage = React.lazy(() => import("../pages/settings/UserProfileSettingsPage").then((m) => ({ default: m.UserProfileSettingsPage })));
+const DocumentsPage = React.lazy(() => import("../pages/Documents").then((m) => ({ default: m.DocumentsPage })));
+const DocsHomePage = React.lazy(() => import("../pages/docs/DocsHomePage").then((m) => ({ default: m.DocsHomePage })));
+const EldPage = React.lazy(() => import("../pages/eld/EldPage").then((m) => ({ default: m.EldPage })));
+const CashFlowPage = React.lazy(() => import("../pages/cash-flow/CashFlowPage").then((m) => ({ default: m.CashFlowPage })));
+const DriverHubPage = React.lazy(() => import("../pages/home/DriverHubPage").then((m) => ({ default: m.DriverHubPage })));
+const DriverHubReportingPage = React.lazy(() => import("../pages/home/DriverHubReportingPage").then((m) => ({ default: m.DriverHubReportingPage })));
+const UserDetailPage = React.lazy(() => import("../pages/UserDetail").then((m) => ({ default: m.UserDetailPage })));
+const UsersPage = React.lazy(() => import("../pages/Users").then((m) => ({ default: m.UsersPage })));
+const VendorsPage = React.lazy(() => import("../pages/Vendors").then((m) => ({ default: m.VendorsPage })));
+const VendorDetailPage = React.lazy(() => import("../pages/VendorDetail").then((m) => ({ default: m.VendorDetailPage })));
+const Form425CHome = React.lazy(() => import("../pages/form425c/Form425CHome").then((m) => ({ default: m.Form425CHome })));
+const HelpCenterPage = React.lazy(() => import("../pages/help/HelpCenterPage").then((m) => ({ default: m.HelpCenterPage })));
+const HelpArticlePage = React.lazy(() => import("../pages/help/HelpArticlePage").then((m) => ({ default: m.HelpArticlePage })));
+const HelpPage = React.lazy(() => import("../pages/help/HelpPage").then((m) => ({ default: m.HelpPage })));
+const RunbooksIndex = React.lazy(() => import("../pages/help/RunbooksIndex").then((m) => ({ default: m.RunbooksIndex })));
+const OnboardingWizard = React.lazy(() => import("../pages/onboarding/OnboardingWizard").then((m) => ({ default: m.OnboardingWizard })));
+const ReportsHomePage = React.lazy(() => import("../pages/reports/ReportsHome").then((m) => ({ default: m.ReportsHomePage })));
 import IFTAPreparer from "../pages/reports/ifta/IFTAPreparer";
 import IftaPreparer from "../pages/reports/tax-regulatory/IftaPreparer";
-import { ReportsRunnerPage } from "../pages/reports/ReportsRunner";
-import { ARAgingPage } from "../pages/reports/ARAgingPage";
-import { APAgingPage } from "../pages/reports/APAgingPage";
-import { TrialBalancePage } from "../pages/reports/TrialBalancePage";
-import { ProfitLossPage } from "../pages/reports/ProfitLossPage";
-import { BalanceSheetPage } from "../pages/reports/BalanceSheetPage";
-import { CashFlowStatementPage } from "../pages/reports/CashFlowStatementPage";
-import { CashFlowOverviewPage } from "../pages/reports/CashFlowOverviewPage";
-import { CashFlowReport } from "../pages/reports/CashFlowReport";
-import { PerTruckCpmReport } from "../pages/reports/PerTruckCpmReport";
-import { SettlementSummaryPage } from "../pages/reports/SettlementSummaryPage";
-import { CustomerProfitabilityPage } from "../pages/reports/CustomerProfitabilityPage";
-import { ProfitPerTruckPage } from "../pages/reports/ProfitPerTruckPage";
-import { LaneProfitabilityPage } from "../pages/reports/LaneProfitabilityPage";
-import { CancellationsReportPage } from "../pages/reports/CancellationsReportPage";
-import { FuelReconciliationPage } from "../pages/reports/FuelReconciliationPage";
-import { MaintenanceCostPerUnitPage } from "../pages/reports/MaintenanceCostPerUnitPage";
-import { DispatchMarginPage } from "../pages/reports/DispatchMarginPage";
-import { SubscriptionManager } from "../pages/reports/SubscriptionManager";
-import { GeofenceDwellReport } from "../pages/reports/GeofenceDwellReport";
-import { GeofenceReconciliationReport } from "../pages/reports/GeofenceReconciliationReport";
+const ReportsRunnerPage = React.lazy(() => import("../pages/reports/ReportsRunner").then((m) => ({ default: m.ReportsRunnerPage })));
+const ARAgingPage = React.lazy(() => import("../pages/reports/ARAgingPage").then((m) => ({ default: m.ARAgingPage })));
+const APAgingPage = React.lazy(() => import("../pages/reports/APAgingPage").then((m) => ({ default: m.APAgingPage })));
+const TrialBalancePage = React.lazy(() => import("../pages/reports/TrialBalancePage").then((m) => ({ default: m.TrialBalancePage })));
+const ProfitLossPage = React.lazy(() => import("../pages/reports/ProfitLossPage").then((m) => ({ default: m.ProfitLossPage })));
+const BalanceSheetPage = React.lazy(() => import("../pages/reports/BalanceSheetPage").then((m) => ({ default: m.BalanceSheetPage })));
+const CashFlowStatementPage = React.lazy(() => import("../pages/reports/CashFlowStatementPage").then((m) => ({ default: m.CashFlowStatementPage })));
+const CashFlowOverviewPage = React.lazy(() => import("../pages/reports/CashFlowOverviewPage").then((m) => ({ default: m.CashFlowOverviewPage })));
+const CashFlowReport = React.lazy(() => import("../pages/reports/CashFlowReport").then((m) => ({ default: m.CashFlowReport })));
+const PerTruckCpmReport = React.lazy(() => import("../pages/reports/PerTruckCpmReport").then((m) => ({ default: m.PerTruckCpmReport })));
+const SettlementSummaryPage = React.lazy(() => import("../pages/reports/SettlementSummaryPage").then((m) => ({ default: m.SettlementSummaryPage })));
+const CustomerProfitabilityPage = React.lazy(() => import("../pages/reports/CustomerProfitabilityPage").then((m) => ({ default: m.CustomerProfitabilityPage })));
+const ProfitPerTruckPage = React.lazy(() => import("../pages/reports/ProfitPerTruckPage").then((m) => ({ default: m.ProfitPerTruckPage })));
+const LaneProfitabilityPage = React.lazy(() => import("../pages/reports/LaneProfitabilityPage").then((m) => ({ default: m.LaneProfitabilityPage })));
+const CancellationsReportPage = React.lazy(() => import("../pages/reports/CancellationsReportPage").then((m) => ({ default: m.CancellationsReportPage })));
+const FuelReconciliationPage = React.lazy(() => import("../pages/reports/FuelReconciliationPage").then((m) => ({ default: m.FuelReconciliationPage })));
+const MaintenanceCostPerUnitPage = React.lazy(() => import("../pages/reports/MaintenanceCostPerUnitPage").then((m) => ({ default: m.MaintenanceCostPerUnitPage })));
+const DispatchMarginPage = React.lazy(() => import("../pages/reports/DispatchMarginPage").then((m) => ({ default: m.DispatchMarginPage })));
+const SubscriptionManager = React.lazy(() => import("../pages/reports/SubscriptionManager").then((m) => ({ default: m.SubscriptionManager })));
+const GeofenceDwellReport = React.lazy(() => import("../pages/reports/GeofenceDwellReport").then((m) => ({ default: m.GeofenceDwellReport })));
+const GeofenceReconciliationReport = React.lazy(() => import("../pages/reports/GeofenceReconciliationReport").then((m) => ({ default: m.GeofenceReconciliationReport })));
 import BookingGapReport from "../pages/reports/BookingGapReport";
-import { FaultDraftsPage } from "../pages/maintenance/FaultDraftsPage";
-import { FaultRulesPage } from "../pages/maintenance/FaultRulesPage";
-import { DeadheadReportPage } from "../pages/reports/DeadheadReportPage";
-import { AuditActivityByUserPage } from "../pages/reports/audit/AuditActivityByUserPage";
-import { AuditActivityByModulePage } from "../pages/reports/audit/AuditActivityByModulePage";
-import { AuditFinancialChangeLogPage } from "../pages/reports/audit/AuditFinancialChangeLogPage";
-import { AuditMaintenanceDecisionLogPage } from "../pages/reports/audit/AuditMaintenanceDecisionLogPage";
-import { AuditDeductionTrailPage } from "../pages/reports/audit/AuditDeductionTrailPage";
-import { AuditVoidReversalPage } from "../pages/reports/audit/AuditVoidReversalPage";
-import { AuditPeriodCloseHistoryPage } from "../pages/reports/audit/AuditPeriodCloseHistoryPage";
-import { QboSyncDetailPage } from "../pages/qbo-sync-detail/QboSyncDetailPage";
-import { InvoicesListPage } from "../pages/accounting/InvoicesListPage";
-import { TransactionRegisterPage } from "../pages/accounting/TransactionRegisterPage";
-import { MultiEntityAccountingPage } from "../pages/accounting/MultiEntityAccountingPage";
-import { AccountingHubPage } from "../pages/accounting/AccountingHubPage";
-import { DisputeQueuePage } from "../pages/accounting/DisputeQueuePage";
-import { AbandonmentQueuePage } from "../pages/accounting/AbandonmentQueuePage";
-import { InvoiceDetailPage } from "../pages/accounting/InvoiceDetailPage";
-import { PaymentsListPage } from "../pages/accounting/PaymentsListPage";
-import { PaymentDetailPage } from "../pages/accounting/PaymentDetailPage";
-import { FactoringListPage } from "../pages/accounting/FactoringListPage";
-import { FactoringDetailPage } from "../pages/accounting/FactoringDetailPage";
-import { FactorReconciliationPage } from "../pages/accounting/FactorReconciliationPage";
+const FaultDraftsPage = React.lazy(() => import("../pages/maintenance/FaultDraftsPage").then((m) => ({ default: m.FaultDraftsPage })));
+const FaultRulesPage = React.lazy(() => import("../pages/maintenance/FaultRulesPage").then((m) => ({ default: m.FaultRulesPage })));
+const DeadheadReportPage = React.lazy(() => import("../pages/reports/DeadheadReportPage").then((m) => ({ default: m.DeadheadReportPage })));
+const AuditActivityByUserPage = React.lazy(() => import("../pages/reports/audit/AuditActivityByUserPage").then((m) => ({ default: m.AuditActivityByUserPage })));
+const AuditActivityByModulePage = React.lazy(() => import("../pages/reports/audit/AuditActivityByModulePage").then((m) => ({ default: m.AuditActivityByModulePage })));
+const AuditFinancialChangeLogPage = React.lazy(() => import("../pages/reports/audit/AuditFinancialChangeLogPage").then((m) => ({ default: m.AuditFinancialChangeLogPage })));
+const AuditMaintenanceDecisionLogPage = React.lazy(() => import("../pages/reports/audit/AuditMaintenanceDecisionLogPage").then((m) => ({ default: m.AuditMaintenanceDecisionLogPage })));
+const AuditDeductionTrailPage = React.lazy(() => import("../pages/reports/audit/AuditDeductionTrailPage").then((m) => ({ default: m.AuditDeductionTrailPage })));
+const AuditVoidReversalPage = React.lazy(() => import("../pages/reports/audit/AuditVoidReversalPage").then((m) => ({ default: m.AuditVoidReversalPage })));
+const AuditPeriodCloseHistoryPage = React.lazy(() => import("../pages/reports/audit/AuditPeriodCloseHistoryPage").then((m) => ({ default: m.AuditPeriodCloseHistoryPage })));
+const QboSyncDetailPage = React.lazy(() => import("../pages/qbo-sync-detail/QboSyncDetailPage").then((m) => ({ default: m.QboSyncDetailPage })));
+const InvoicesListPage = React.lazy(() => import("../pages/accounting/InvoicesListPage").then((m) => ({ default: m.InvoicesListPage })));
+const TransactionRegisterPage = React.lazy(() => import("../pages/accounting/TransactionRegisterPage").then((m) => ({ default: m.TransactionRegisterPage })));
+const MultiEntityAccountingPage = React.lazy(() => import("../pages/accounting/MultiEntityAccountingPage").then((m) => ({ default: m.MultiEntityAccountingPage })));
+const AccountingHubPage = React.lazy(() => import("../pages/accounting/AccountingHubPage").then((m) => ({ default: m.AccountingHubPage })));
+const DisputeQueuePage = React.lazy(() => import("../pages/accounting/DisputeQueuePage").then((m) => ({ default: m.DisputeQueuePage })));
+const AbandonmentQueuePage = React.lazy(() => import("../pages/accounting/AbandonmentQueuePage").then((m) => ({ default: m.AbandonmentQueuePage })));
+const InvoiceDetailPage = React.lazy(() => import("../pages/accounting/InvoiceDetailPage").then((m) => ({ default: m.InvoiceDetailPage })));
+const PaymentsListPage = React.lazy(() => import("../pages/accounting/PaymentsListPage").then((m) => ({ default: m.PaymentsListPage })));
+const PaymentDetailPage = React.lazy(() => import("../pages/accounting/PaymentDetailPage").then((m) => ({ default: m.PaymentDetailPage })));
+const FactoringListPage = React.lazy(() => import("../pages/accounting/FactoringListPage").then((m) => ({ default: m.FactoringListPage })));
+const FactoringDetailPage = React.lazy(() => import("../pages/accounting/FactoringDetailPage").then((m) => ({ default: m.FactoringDetailPage })));
+const FactorReconciliationPage = React.lazy(() => import("../pages/accounting/FactorReconciliationPage").then((m) => ({ default: m.FactorReconciliationPage })));
 import { ReconciliationWorkspacePage as AccountingReconciliationWorkspacePage } from "../pages/accounting/ReconciliationWorkspacePage";
-import { VendorBillCreatePage } from "../pages/accounting/VendorBillCreatePage";
-import { CreateMultipleBillsPage } from "../pages/accounting/CreateMultipleBillsPage";
-import { ExpenseCreatePage } from "../pages/accounting/ExpenseCreatePage";
-import { ExpensesListPage } from "../pages/accounting/ExpensesListPage";
-import { BillsPage } from "../pages/accounting/BillsPage";
-import { VendorBalancesPage } from "../pages/accounting/VendorBalancesPage";
-import { ManualJEListPage } from "../pages/accounting/ManualJEListPage";
-import { BillPaymentsListPage } from "../pages/accounting/BillPaymentsListPage";
-import { JournalEntryDetailPage } from "../pages/accounting/journal-entries/JournalEntryDetailPage";
-import { AccountRegisterPage } from "../pages/accounting/AccountRegisterPage";
-import { AccountingPreSettlementsPage } from "../pages/accounting/AccountingPreSettlementsPage";
-import { PayrollAggregatedPage } from "../pages/accounting/PayrollAggregatedPage";
-import { ExpenseCategoryMapPage } from "../pages/accounting/ExpenseCategoryMapPage";
-import { CoaRolesPage } from "../pages/accounting/CoaRolesPage";
-import { DailyReconPage } from "../pages/accounting/DailyReconPage";
-import { QboReconciliationPage } from "../pages/accounting/QboReconciliationPage";
-import { SalesTaxPage } from "../pages/accounting/SalesTaxPage";
-import { AccountingAuditTrailPage } from "../pages/accounting/AccountingAuditTrailPage";
-import { PostingLineagePage } from "../pages/accounting/PostingLineagePage";
-import { MonthClosePage } from "../pages/accounting/MonthClosePage";
-import { EscrowPage } from "../pages/accounting/EscrowPage";
-import { CashForecastPage } from "../pages/accounting/CashForecastPage";
-import { PeriodComparisonPage } from "../pages/accounting/PeriodComparisonPage";
-import { QBOSyncDriftDashboard } from "../pages/accounting/QBOSyncDriftDashboard";
+const VendorBillCreatePage = React.lazy(() => import("../pages/accounting/VendorBillCreatePage").then((m) => ({ default: m.VendorBillCreatePage })));
+const CreateMultipleBillsPage = React.lazy(() => import("../pages/accounting/CreateMultipleBillsPage").then((m) => ({ default: m.CreateMultipleBillsPage })));
+const ExpenseCreatePage = React.lazy(() => import("../pages/accounting/ExpenseCreatePage").then((m) => ({ default: m.ExpenseCreatePage })));
+const ExpensesListPage = React.lazy(() => import("../pages/accounting/ExpensesListPage").then((m) => ({ default: m.ExpensesListPage })));
+const BillsPage = React.lazy(() => import("../pages/accounting/BillsPage").then((m) => ({ default: m.BillsPage })));
+const VendorBalancesPage = React.lazy(() => import("../pages/accounting/VendorBalancesPage").then((m) => ({ default: m.VendorBalancesPage })));
+const ManualJEListPage = React.lazy(() => import("../pages/accounting/ManualJEListPage").then((m) => ({ default: m.ManualJEListPage })));
+const BillPaymentsListPage = React.lazy(() => import("../pages/accounting/BillPaymentsListPage").then((m) => ({ default: m.BillPaymentsListPage })));
+const JournalEntryDetailPage = React.lazy(() => import("../pages/accounting/journal-entries/JournalEntryDetailPage").then((m) => ({ default: m.JournalEntryDetailPage })));
+const AccountRegisterPage = React.lazy(() => import("../pages/accounting/AccountRegisterPage").then((m) => ({ default: m.AccountRegisterPage })));
+const AccountingPreSettlementsPage = React.lazy(() => import("../pages/accounting/AccountingPreSettlementsPage").then((m) => ({ default: m.AccountingPreSettlementsPage })));
+const PayrollAggregatedPage = React.lazy(() => import("../pages/accounting/PayrollAggregatedPage").then((m) => ({ default: m.PayrollAggregatedPage })));
+const ExpenseCategoryMapPage = React.lazy(() => import("../pages/accounting/ExpenseCategoryMapPage").then((m) => ({ default: m.ExpenseCategoryMapPage })));
+const CoaRolesPage = React.lazy(() => import("../pages/accounting/CoaRolesPage").then((m) => ({ default: m.CoaRolesPage })));
+const DailyReconPage = React.lazy(() => import("../pages/accounting/DailyReconPage").then((m) => ({ default: m.DailyReconPage })));
+const QboReconciliationPage = React.lazy(() => import("../pages/accounting/QboReconciliationPage").then((m) => ({ default: m.QboReconciliationPage })));
+const SalesTaxPage = React.lazy(() => import("../pages/accounting/SalesTaxPage").then((m) => ({ default: m.SalesTaxPage })));
+const AccountingAuditTrailPage = React.lazy(() => import("../pages/accounting/AccountingAuditTrailPage").then((m) => ({ default: m.AccountingAuditTrailPage })));
+const PostingLineagePage = React.lazy(() => import("../pages/accounting/PostingLineagePage").then((m) => ({ default: m.PostingLineagePage })));
+const MonthClosePage = React.lazy(() => import("../pages/accounting/MonthClosePage").then((m) => ({ default: m.MonthClosePage })));
+const EscrowPage = React.lazy(() => import("../pages/accounting/EscrowPage").then((m) => ({ default: m.EscrowPage })));
+const CashForecastPage = React.lazy(() => import("../pages/accounting/CashForecastPage").then((m) => ({ default: m.CashForecastPage })));
+const PeriodComparisonPage = React.lazy(() => import("../pages/accounting/PeriodComparisonPage").then((m) => ({ default: m.PeriodComparisonPage })));
+const QBOSyncDriftDashboard = React.lazy(() => import("../pages/accounting/QBOSyncDriftDashboard").then((m) => ({ default: m.QBOSyncDriftDashboard })));
 import { COLLECTIONS_ROUTE } from "./collections.routes";
 import { TRIP_PAIRING_BOARD_ROUTE } from "./trip-pairing-board.routes";
 import { AP_AGING_ROUTE } from "./ap-aging.routes";
 import { resolveUnderscoreRedirectPath } from "./url-canonicalize";
-import { ForensicReviewPage } from "../pages/forensic/ForensicReviewPage";
-import { ActivityLogPage } from "../pages/admin/ActivityLogPage";
+const ForensicReviewPage = React.lazy(() => import("../pages/forensic/ForensicReviewPage").then((m) => ({ default: m.ForensicReviewPage })));
+const ActivityLogPage = React.lazy(() => import("../pages/admin/ActivityLogPage").then((m) => ({ default: m.ActivityLogPage })));
 import AuditEventsList from "../pages/audit/AuditEventsList";
 import AuditLogViewer from "../pages/admin/audit-log/AuditLogViewer";
 import AuditTrailPage from "../pages/audit/AuditTrailPage";
-import { MigrationStatusPage } from "../pages/admin/MigrationStatus";
-import { ErrorMonitorPage } from "../pages/admin/ErrorMonitor";
-import { IntegrityAdminPage } from "../pages/admin/IntegrityAdminPage";
-import { DataImportPage } from "../pages/admin/DataImportPage";
-import { CarrierBootstrapPage } from "../pages/admin/CarrierBootstrap";
-import { LaunchTogglesPage } from "../pages/admin/LaunchToggles";
-import { FeatureFlagsManager } from "../pages/admin/feature-flags/FeatureFlagsManager";
-import { ObservabilityPage } from "../pages/admin/ObservabilityPage";
-import { MobileAuditReport } from "../pages/admin/mobile-audit/MobileAuditReport";
-import { AccountRoleBindingsListPage } from "../pages/lists/accounting/AccountRoleBindingsListPage";
-import { ChartOfAccountsListPage } from "../pages/lists/accounting/ChartOfAccountsListPage";
-import { ChartOfAccountsSeedsListPage } from "../pages/lists/accounting/ChartOfAccountsSeedsListPage";
-import { ClassesListPage } from "../pages/lists/accounting/ClassesListPage";
-import { CurrencyCodesListPage } from "../pages/lists/accounting/CurrencyCodesListPage";
-import { ExpenseCategoriesListPage } from "../pages/lists/accounting/ExpenseCategoriesListPage";
-import { ItemsListPage } from "../pages/lists/accounting/ItemsListPage";
-import { JournalEntryTypesListPage } from "../pages/lists/accounting/JournalEntryTypesListPage";
-import { PaymentTermsListPage } from "../pages/lists/accounting/PaymentTermsListPage";
-import { VoidCancelReasonsListPage } from "../pages/lists/accounting/VoidCancelReasonsListPage";
-import { PaymentMethodsListPage } from "../pages/lists/accounting/PaymentMethodsListPage";
-import { PostingTemplatesListPage } from "../pages/lists/accounting/PostingTemplatesListPage";
-import { QBOBulkLinkPage } from "../pages/lists/accounting/QBOBulkLinkPage";
-import { QboCategoriesListPage } from "../pages/lists/accounting/QboCategoriesListPage";
-import { TaxCodesListPage } from "../pages/lists/accounting/TaxCodesListPage";
-import { AbandonmentDefaultsPage } from "../pages/lists/accounting/AbandonmentDefaultsPage";
-import { AdditionalChargesListPage } from "../pages/lists/dispatch/AdditionalChargesListPage";
-import { DetentionReasonsListPage } from "../pages/lists/dispatch/DetentionReasonsListPage";
-import { LoadCancellationReasonsListPage } from "../pages/lists/dispatch/LoadCancellationReasonsListPage";
-import { LoadTypesListPage } from "../pages/lists/dispatch/LoadTypesListPage";
-import { PickupTimeTypesListPage } from "../pages/lists/dispatch/PickupTimeTypesListPage";
-import { DriverDeductionTypesListPage } from "../pages/lists/driver/DriverDeductionTypesListPage";
-import { DriverPayTypesListPage } from "../pages/lists/driver/DriverPayTypesListPage";
-import { DriverTeamsPage } from "../pages/lists/driver/DriverTeamsPage";
-import { EscrowTypesListPage } from "../pages/lists/driver/EscrowTypesListPage";
-import { PayRateTemplatesListPage } from "../pages/lists/driver/PayRateTemplatesListPage";
+const MigrationStatusPage = React.lazy(() => import("../pages/admin/MigrationStatus").then((m) => ({ default: m.MigrationStatusPage })));
+const ErrorMonitorPage = React.lazy(() => import("../pages/admin/ErrorMonitor").then((m) => ({ default: m.ErrorMonitorPage })));
+const IntegrityAdminPage = React.lazy(() => import("../pages/admin/IntegrityAdminPage").then((m) => ({ default: m.IntegrityAdminPage })));
+const DataImportPage = React.lazy(() => import("../pages/admin/DataImportPage").then((m) => ({ default: m.DataImportPage })));
+const CarrierBootstrapPage = React.lazy(() => import("../pages/admin/CarrierBootstrap").then((m) => ({ default: m.CarrierBootstrapPage })));
+const LaunchTogglesPage = React.lazy(() => import("../pages/admin/LaunchToggles").then((m) => ({ default: m.LaunchTogglesPage })));
+const FeatureFlagsManager = React.lazy(() => import("../pages/admin/feature-flags/FeatureFlagsManager").then((m) => ({ default: m.FeatureFlagsManager })));
+const ObservabilityPage = React.lazy(() => import("../pages/admin/ObservabilityPage").then((m) => ({ default: m.ObservabilityPage })));
+const MobileAuditReport = React.lazy(() => import("../pages/admin/mobile-audit/MobileAuditReport").then((m) => ({ default: m.MobileAuditReport })));
+const AccountRoleBindingsListPage = React.lazy(() => import("../pages/lists/accounting/AccountRoleBindingsListPage").then((m) => ({ default: m.AccountRoleBindingsListPage })));
+const ChartOfAccountsListPage = React.lazy(() => import("../pages/lists/accounting/ChartOfAccountsListPage").then((m) => ({ default: m.ChartOfAccountsListPage })));
+const ChartOfAccountsSeedsListPage = React.lazy(() => import("../pages/lists/accounting/ChartOfAccountsSeedsListPage").then((m) => ({ default: m.ChartOfAccountsSeedsListPage })));
+const ClassesListPage = React.lazy(() => import("../pages/lists/accounting/ClassesListPage").then((m) => ({ default: m.ClassesListPage })));
+const CurrencyCodesListPage = React.lazy(() => import("../pages/lists/accounting/CurrencyCodesListPage").then((m) => ({ default: m.CurrencyCodesListPage })));
+const ExpenseCategoriesListPage = React.lazy(() => import("../pages/lists/accounting/ExpenseCategoriesListPage").then((m) => ({ default: m.ExpenseCategoriesListPage })));
+const ItemsListPage = React.lazy(() => import("../pages/lists/accounting/ItemsListPage").then((m) => ({ default: m.ItemsListPage })));
+const JournalEntryTypesListPage = React.lazy(() => import("../pages/lists/accounting/JournalEntryTypesListPage").then((m) => ({ default: m.JournalEntryTypesListPage })));
+const PaymentTermsListPage = React.lazy(() => import("../pages/lists/accounting/PaymentTermsListPage").then((m) => ({ default: m.PaymentTermsListPage })));
+const VoidCancelReasonsListPage = React.lazy(() => import("../pages/lists/accounting/VoidCancelReasonsListPage").then((m) => ({ default: m.VoidCancelReasonsListPage })));
+const PaymentMethodsListPage = React.lazy(() => import("../pages/lists/accounting/PaymentMethodsListPage").then((m) => ({ default: m.PaymentMethodsListPage })));
+const PostingTemplatesListPage = React.lazy(() => import("../pages/lists/accounting/PostingTemplatesListPage").then((m) => ({ default: m.PostingTemplatesListPage })));
+const QBOBulkLinkPage = React.lazy(() => import("../pages/lists/accounting/QBOBulkLinkPage").then((m) => ({ default: m.QBOBulkLinkPage })));
+const QboCategoriesListPage = React.lazy(() => import("../pages/lists/accounting/QboCategoriesListPage").then((m) => ({ default: m.QboCategoriesListPage })));
+const TaxCodesListPage = React.lazy(() => import("../pages/lists/accounting/TaxCodesListPage").then((m) => ({ default: m.TaxCodesListPage })));
+const AbandonmentDefaultsPage = React.lazy(() => import("../pages/lists/accounting/AbandonmentDefaultsPage").then((m) => ({ default: m.AbandonmentDefaultsPage })));
+const AdditionalChargesListPage = React.lazy(() => import("../pages/lists/dispatch/AdditionalChargesListPage").then((m) => ({ default: m.AdditionalChargesListPage })));
+const DetentionReasonsListPage = React.lazy(() => import("../pages/lists/dispatch/DetentionReasonsListPage").then((m) => ({ default: m.DetentionReasonsListPage })));
+const LoadCancellationReasonsListPage = React.lazy(() => import("../pages/lists/dispatch/LoadCancellationReasonsListPage").then((m) => ({ default: m.LoadCancellationReasonsListPage })));
+const LoadTypesListPage = React.lazy(() => import("../pages/lists/dispatch/LoadTypesListPage").then((m) => ({ default: m.LoadTypesListPage })));
+const PickupTimeTypesListPage = React.lazy(() => import("../pages/lists/dispatch/PickupTimeTypesListPage").then((m) => ({ default: m.PickupTimeTypesListPage })));
+const DriverDeductionTypesListPage = React.lazy(() => import("../pages/lists/driver/DriverDeductionTypesListPage").then((m) => ({ default: m.DriverDeductionTypesListPage })));
+const DriverPayTypesListPage = React.lazy(() => import("../pages/lists/driver/DriverPayTypesListPage").then((m) => ({ default: m.DriverPayTypesListPage })));
+const DriverTeamsPage = React.lazy(() => import("../pages/lists/driver/DriverTeamsPage").then((m) => ({ default: m.DriverTeamsPage })));
+const EscrowTypesListPage = React.lazy(() => import("../pages/lists/driver/EscrowTypesListPage").then((m) => ({ default: m.EscrowTypesListPage })));
+const PayRateTemplatesListPage = React.lazy(() => import("../pages/lists/driver/PayRateTemplatesListPage").then((m) => ({ default: m.PayRateTemplatesListPage })));
 import {
   CdlEndorsementsListPage,
   CdlRestrictionsListPage,
@@ -308,96 +308,113 @@ import { Catalog as DriversEndorsementsCatalog } from "../pages/lists/drivers/en
 import { Catalog as DriversRestrictionsCatalog } from "../pages/lists/drivers/restrictions/Catalog";
 import { Catalog as DriversMedicalCardStatusCatalog } from "../pages/lists/drivers/medical-card-status/Catalog";
 import { Catalog as DriversEmploymentStatusCatalog } from "../pages/lists/drivers/employment-status/Catalog";
-import { TerminationReasonsListPage } from "../pages/lists/drivers/TerminationReasonsListPage";
-import { ConditionCodesListPage } from "../pages/lists/fleet/ConditionCodesListPage";
-import { AssetLocationsListPage } from "../pages/lists/fleet/AssetLocationsListPage";
-import { AssetStatusesListPage } from "../pages/lists/fleet/AssetStatusesListPage";
-import { EquipmentTypesListPage } from "../pages/lists/fleet/EquipmentTypesListPage";
-import { LeaseTermsListPage } from "../pages/lists/fleet/LeaseTermsListPage";
-import { OwnershipTypesListPage } from "../pages/lists/fleet/OwnershipTypesListPage";
-import { TirePositionsListPage } from "../pages/lists/fleet/TirePositionsListPage";
-import { TractorStatusesListPage } from "../pages/lists/fleet/TractorStatusesListPage";
-import { TrailerStatusesListPage } from "../pages/lists/fleet/TrailerStatusesListPage";
-import { TrailerTypesListPage } from "../pages/lists/fleet/TrailerTypesListPage";
-import { ExpensiveStatesListPage } from "../pages/lists/fuel/ExpensiveStatesListPage";
-import { FuelBrandsListPage } from "../pages/lists/fuel/FuelBrandsListPage";
-import { FuelCardTypesListPage } from "../pages/lists/fuel/FuelCardTypesListPage";
-import { FuelExceptionTypesListPage } from "../pages/lists/fuel/FuelExceptionTypesListPage";
-import { FuelGradesListPage } from "../pages/lists/fuel/FuelGradesListPage";
-import { FuelStationBrandsListPage } from "../pages/lists/fuel/FuelStationBrandsListPage";
-import { FuelStopReasonCodesListPage } from "../pages/lists/fuel/FuelStopReasonCodesListPage";
-import { FuelTaxJurisdictionsListPage } from "../pages/lists/fuel/FuelTaxJurisdictionsListPage";
-import { FuelDispatchRoutesListPage } from "../pages/lists/fuel/FuelDispatchRoutesListPage";
-import { FuelPumpTypesListPage } from "../pages/lists/fuel/FuelPumpTypesListPage";
-import { FuelStationStatesListPage } from "../pages/lists/fuel/FuelStationStatesListPage";
-import { MpgBandsListPage } from "../pages/lists/fuel/MpgBandsListPage";
-import { MaintenanceFailureCodesListPage } from "../pages/lists/maintenance/MaintenanceFailureCodesListPage";
-import { MaintenanceLaborCodesListPage } from "../pages/lists/maintenance/MaintenanceLaborCodesListPage";
-import { MaintenancePartsListPage } from "../pages/lists/maintenance/MaintenancePartsListPage";
-import { OemPartsCatalog } from "../pages/lists/maintenance/OemPartsCatalog";
-import { MaintenancePriorityLevelsListPage } from "../pages/lists/maintenance/MaintenancePriorityLevelsListPage";
-import { MaintenanceServiceTasksListPage } from "../pages/lists/maintenance/MaintenanceServiceTasksListPage";
-import { MaintenanceShopLocationsListPage } from "../pages/lists/maintenance/MaintenanceShopLocationsListPage";
-import { MaintenanceVendorsListPage } from "../pages/lists/maintenance/MaintenanceVendorsListPage";
-import { WorkOrderStatusesListPage } from "../pages/lists/maintenance/WorkOrderStatusesListPage";
-import { CivilFineTypesListPage } from "../pages/lists/safety/CivilFineTypesListPage";
-import { CompanyViolationTypesListPage } from "../pages/lists/safety/CompanyViolationTypesListPage";
-import { ComplaintTypesListPage } from "../pages/lists/safety/ComplaintTypesListPage";
-import { DotViolationTypesListPage } from "../pages/lists/safety/DotViolationTypesListPage";
-import { CargoClaimReasonsListPage } from "../pages/lists/safety/CargoClaimReasonsListPage";
-import { InternalFineReasonsListPage } from "../pages/lists/safety/InternalFineReasonsListPage";
-import { LegalTemplateDetailPage } from "../pages/legal/templates/LegalTemplateDetailPage";
-import { LegalTemplatesListPage } from "../pages/legal/templates/LegalTemplatesListPage";
-import { LegalSignPage } from "../pages/legal/sign/LegalSignPage";
-import { LegalAttorneyReviewPortalPage } from "../pages/legal/attorney-review/LegalAttorneyReviewPortalPage";
-import { LegalLandingPage } from "../pages/legal/LegalLandingPage";
-import { LegalContractInstancesPage } from "../pages/legal/contracts/LegalContractInstancesPage";
-import { LegalPoliciesPage } from "../pages/legal/LegalPoliciesPage";
-import { PrivacyPolicyPage } from "../pages/legal/PrivacyPolicyPage";
-import { TermsOfServicePage } from "../pages/legal/TermsOfServicePage";
-import { LegalAttorneyReviewPage } from "../pages/legal/LegalAttorneyReviewPage";
-import { LegalMattersListPage } from "../pages/legal/matters/LegalMattersListPage";
-import { LegalMatterNewPage } from "../pages/legal/matters/LegalMatterNewPage";
-import { LegalMatterDetailPage } from "../pages/legal/matters/LegalMatterDetailPage";
-import { LegalReportsLandingPage } from "../pages/legal/reports/LegalReportsLandingPage";
-import { DriverSchedulerGridPage } from "../pages/safety/driver-scheduler/DriverSchedulerGridPage";
-import { DriverSchedulerRequestInboxPage } from "../pages/safety/driver-scheduler/DriverSchedulerRequestInboxPage";
-import { DriverSchedulerRequestDetailPage } from "../pages/safety/driver-scheduler/DriverSchedulerRequestDetailPage";
-import { DriverLeaveBalancesPage } from "../pages/safety/driver-scheduler/DriverLeaveBalancesPage";
+const TerminationReasonsListPage = React.lazy(() => import("../pages/lists/drivers/TerminationReasonsListPage").then((m) => ({ default: m.TerminationReasonsListPage })));
+const ConditionCodesListPage = React.lazy(() => import("../pages/lists/fleet/ConditionCodesListPage").then((m) => ({ default: m.ConditionCodesListPage })));
+const AssetLocationsListPage = React.lazy(() => import("../pages/lists/fleet/AssetLocationsListPage").then((m) => ({ default: m.AssetLocationsListPage })));
+const AssetStatusesListPage = React.lazy(() => import("../pages/lists/fleet/AssetStatusesListPage").then((m) => ({ default: m.AssetStatusesListPage })));
+const EquipmentTypesListPage = React.lazy(() => import("../pages/lists/fleet/EquipmentTypesListPage").then((m) => ({ default: m.EquipmentTypesListPage })));
+const LeaseTermsListPage = React.lazy(() => import("../pages/lists/fleet/LeaseTermsListPage").then((m) => ({ default: m.LeaseTermsListPage })));
+const OwnershipTypesListPage = React.lazy(() => import("../pages/lists/fleet/OwnershipTypesListPage").then((m) => ({ default: m.OwnershipTypesListPage })));
+const TirePositionsListPage = React.lazy(() => import("../pages/lists/fleet/TirePositionsListPage").then((m) => ({ default: m.TirePositionsListPage })));
+const TractorStatusesListPage = React.lazy(() => import("../pages/lists/fleet/TractorStatusesListPage").then((m) => ({ default: m.TractorStatusesListPage })));
+const TrailerStatusesListPage = React.lazy(() => import("../pages/lists/fleet/TrailerStatusesListPage").then((m) => ({ default: m.TrailerStatusesListPage })));
+const TrailerTypesListPage = React.lazy(() => import("../pages/lists/fleet/TrailerTypesListPage").then((m) => ({ default: m.TrailerTypesListPage })));
+const ExpensiveStatesListPage = React.lazy(() => import("../pages/lists/fuel/ExpensiveStatesListPage").then((m) => ({ default: m.ExpensiveStatesListPage })));
+const FuelBrandsListPage = React.lazy(() => import("../pages/lists/fuel/FuelBrandsListPage").then((m) => ({ default: m.FuelBrandsListPage })));
+const FuelCardTypesListPage = React.lazy(() => import("../pages/lists/fuel/FuelCardTypesListPage").then((m) => ({ default: m.FuelCardTypesListPage })));
+const FuelExceptionTypesListPage = React.lazy(() => import("../pages/lists/fuel/FuelExceptionTypesListPage").then((m) => ({ default: m.FuelExceptionTypesListPage })));
+const FuelGradesListPage = React.lazy(() => import("../pages/lists/fuel/FuelGradesListPage").then((m) => ({ default: m.FuelGradesListPage })));
+const FuelStationBrandsListPage = React.lazy(() => import("../pages/lists/fuel/FuelStationBrandsListPage").then((m) => ({ default: m.FuelStationBrandsListPage })));
+const FuelStopReasonCodesListPage = React.lazy(() => import("../pages/lists/fuel/FuelStopReasonCodesListPage").then((m) => ({ default: m.FuelStopReasonCodesListPage })));
+const FuelTaxJurisdictionsListPage = React.lazy(() => import("../pages/lists/fuel/FuelTaxJurisdictionsListPage").then((m) => ({ default: m.FuelTaxJurisdictionsListPage })));
+const FuelDispatchRoutesListPage = React.lazy(() => import("../pages/lists/fuel/FuelDispatchRoutesListPage").then((m) => ({ default: m.FuelDispatchRoutesListPage })));
+const FuelPumpTypesListPage = React.lazy(() => import("../pages/lists/fuel/FuelPumpTypesListPage").then((m) => ({ default: m.FuelPumpTypesListPage })));
+const FuelStationStatesListPage = React.lazy(() => import("../pages/lists/fuel/FuelStationStatesListPage").then((m) => ({ default: m.FuelStationStatesListPage })));
+const MpgBandsListPage = React.lazy(() => import("../pages/lists/fuel/MpgBandsListPage").then((m) => ({ default: m.MpgBandsListPage })));
+const MaintenanceFailureCodesListPage = React.lazy(() => import("../pages/lists/maintenance/MaintenanceFailureCodesListPage").then((m) => ({ default: m.MaintenanceFailureCodesListPage })));
+const MaintenanceLaborCodesListPage = React.lazy(() => import("../pages/lists/maintenance/MaintenanceLaborCodesListPage").then((m) => ({ default: m.MaintenanceLaborCodesListPage })));
+const MaintenancePartsListPage = React.lazy(() => import("../pages/lists/maintenance/MaintenancePartsListPage").then((m) => ({ default: m.MaintenancePartsListPage })));
+const OemPartsCatalog = React.lazy(() => import("../pages/lists/maintenance/OemPartsCatalog").then((m) => ({ default: m.OemPartsCatalog })));
+const MaintenancePriorityLevelsListPage = React.lazy(() => import("../pages/lists/maintenance/MaintenancePriorityLevelsListPage").then((m) => ({ default: m.MaintenancePriorityLevelsListPage })));
+const MaintenanceServiceTasksListPage = React.lazy(() => import("../pages/lists/maintenance/MaintenanceServiceTasksListPage").then((m) => ({ default: m.MaintenanceServiceTasksListPage })));
+const MaintenanceShopLocationsListPage = React.lazy(() => import("../pages/lists/maintenance/MaintenanceShopLocationsListPage").then((m) => ({ default: m.MaintenanceShopLocationsListPage })));
+const MaintenanceVendorsListPage = React.lazy(() => import("../pages/lists/maintenance/MaintenanceVendorsListPage").then((m) => ({ default: m.MaintenanceVendorsListPage })));
+const WorkOrderStatusesListPage = React.lazy(() => import("../pages/lists/maintenance/WorkOrderStatusesListPage").then((m) => ({ default: m.WorkOrderStatusesListPage })));
+const CivilFineTypesListPage = React.lazy(() => import("../pages/lists/safety/CivilFineTypesListPage").then((m) => ({ default: m.CivilFineTypesListPage })));
+const CompanyViolationTypesListPage = React.lazy(() => import("../pages/lists/safety/CompanyViolationTypesListPage").then((m) => ({ default: m.CompanyViolationTypesListPage })));
+const ComplaintTypesListPage = React.lazy(() => import("../pages/lists/safety/ComplaintTypesListPage").then((m) => ({ default: m.ComplaintTypesListPage })));
+const DotViolationTypesListPage = React.lazy(() => import("../pages/lists/safety/DotViolationTypesListPage").then((m) => ({ default: m.DotViolationTypesListPage })));
+const CargoClaimReasonsListPage = React.lazy(() => import("../pages/lists/safety/CargoClaimReasonsListPage").then((m) => ({ default: m.CargoClaimReasonsListPage })));
+const InternalFineReasonsListPage = React.lazy(() => import("../pages/lists/safety/InternalFineReasonsListPage").then((m) => ({ default: m.InternalFineReasonsListPage })));
+const LegalTemplateDetailPage = React.lazy(() => import("../pages/legal/templates/LegalTemplateDetailPage").then((m) => ({ default: m.LegalTemplateDetailPage })));
+const LegalTemplatesListPage = React.lazy(() => import("../pages/legal/templates/LegalTemplatesListPage").then((m) => ({ default: m.LegalTemplatesListPage })));
+const LegalSignPage = React.lazy(() => import("../pages/legal/sign/LegalSignPage").then((m) => ({ default: m.LegalSignPage })));
+const LegalAttorneyReviewPortalPage = React.lazy(() => import("../pages/legal/attorney-review/LegalAttorneyReviewPortalPage").then((m) => ({ default: m.LegalAttorneyReviewPortalPage })));
+const LegalLandingPage = React.lazy(() => import("../pages/legal/LegalLandingPage").then((m) => ({ default: m.LegalLandingPage })));
+const LegalContractInstancesPage = React.lazy(() => import("../pages/legal/contracts/LegalContractInstancesPage").then((m) => ({ default: m.LegalContractInstancesPage })));
+const LegalPoliciesPage = React.lazy(() => import("../pages/legal/LegalPoliciesPage").then((m) => ({ default: m.LegalPoliciesPage })));
+const PrivacyPolicyPage = React.lazy(() => import("../pages/legal/PrivacyPolicyPage").then((m) => ({ default: m.PrivacyPolicyPage })));
+const TermsOfServicePage = React.lazy(() => import("../pages/legal/TermsOfServicePage").then((m) => ({ default: m.TermsOfServicePage })));
+const LegalAttorneyReviewPage = React.lazy(() => import("../pages/legal/LegalAttorneyReviewPage").then((m) => ({ default: m.LegalAttorneyReviewPage })));
+const LegalMattersListPage = React.lazy(() => import("../pages/legal/matters/LegalMattersListPage").then((m) => ({ default: m.LegalMattersListPage })));
+const LegalMatterNewPage = React.lazy(() => import("../pages/legal/matters/LegalMatterNewPage").then((m) => ({ default: m.LegalMatterNewPage })));
+const LegalMatterDetailPage = React.lazy(() => import("../pages/legal/matters/LegalMatterDetailPage").then((m) => ({ default: m.LegalMatterDetailPage })));
+const LegalReportsLandingPage = React.lazy(() => import("../pages/legal/reports/LegalReportsLandingPage").then((m) => ({ default: m.LegalReportsLandingPage })));
+const DriverSchedulerGridPage = React.lazy(() => import("../pages/safety/driver-scheduler/DriverSchedulerGridPage").then((m) => ({ default: m.DriverSchedulerGridPage })));
+const DriverSchedulerRequestInboxPage = React.lazy(() => import("../pages/safety/driver-scheduler/DriverSchedulerRequestInboxPage").then((m) => ({ default: m.DriverSchedulerRequestInboxPage })));
+const DriverSchedulerRequestDetailPage = React.lazy(() => import("../pages/safety/driver-scheduler/DriverSchedulerRequestDetailPage").then((m) => ({ default: m.DriverSchedulerRequestDetailPage })));
+const DriverLeaveBalancesPage = React.lazy(() => import("../pages/safety/driver-scheduler/DriverLeaveBalancesPage").then((m) => ({ default: m.DriverLeaveBalancesPage })));
 import Audit425cPage from "../pages/safety/audit-425c/Audit425cPage";
 import HosExceptionsPage from "../pages/safety/hos/HosExceptionsPage";
 import TrainingProgramsTab from "../pages/safety/tabs/TrainingProgramsTab";
-import { TrainingRecordsTab } from "../pages/safety/tabs/TrainingRecordsTab";
+const TrainingRecordsTab = React.lazy(() => import("../pages/safety/tabs/TrainingRecordsTab").then((m) => ({ default: m.TrainingRecordsTab })));
 import SafetyReportsPage from "../pages/safety/reports/SafetyReportsPage";
 import DriverSafetyProfilePage from "../pages/safety/driver-safety/DriverSafetyProfilePage";
-import { IntegrityAlertsPage } from "../pages/safety/IntegrityAlertsPage";
-import { DailyTasksPage } from "../pages/daily-tasks/DailyTasksPage";
-import { VendorMappingResolutionPage } from "../pages/samsara-vendor-mapping/VendorMappingResolutionPage";
+const IntegrityAlertsPage = React.lazy(() => import("../pages/safety/IntegrityAlertsPage").then((m) => ({ default: m.IntegrityAlertsPage })));
+const DailyTasksPage = React.lazy(() => import("../pages/daily-tasks/DailyTasksPage").then((m) => ({ default: m.DailyTasksPage })));
+const VendorMappingResolutionPage = React.lazy(() => import("../pages/samsara-vendor-mapping/VendorMappingResolutionPage").then((m) => ({ default: m.VendorMappingResolutionPage })));
 
 // Tasks module (SIDEBAR-V2-REORG-25)
-import { TaskBoardPage } from "../pages/tasks/TaskBoardPage";
-import { TasksCalendarPage } from "../pages/tasks/TasksCalendarPage";
-import { TasksMinePage } from "../pages/tasks/TasksMinePage";
-import { TasksChatPage } from "../pages/tasks/TasksChatPage";
-import { DispatchChatPage } from "../pages/chat/DispatchChatPage";
-import { TasksReportPage } from "../pages/tasks/TasksReportPage";
+const TaskBoardPage = React.lazy(() => import("../pages/tasks/TaskBoardPage").then((m) => ({ default: m.TaskBoardPage })));
+const TasksCalendarPage = React.lazy(() => import("../pages/tasks/TasksCalendarPage").then((m) => ({ default: m.TasksCalendarPage })));
+const TasksMinePage = React.lazy(() => import("../pages/tasks/TasksMinePage").then((m) => ({ default: m.TasksMinePage })));
+const TasksChatPage = React.lazy(() => import("../pages/tasks/TasksChatPage").then((m) => ({ default: m.TasksChatPage })));
+const DispatchChatPage = React.lazy(() => import("../pages/chat/DispatchChatPage").then((m) => ({ default: m.DispatchChatPage })));
+const TasksReportPage = React.lazy(() => import("../pages/tasks/TasksReportPage").then((m) => ({ default: m.TasksReportPage })));
 
 // Finance module (SIDEBAR-V2-REORG-25)
-import { FinanceOverviewPage } from "../pages/finance/FinanceOverviewPage";
-import { FinanceProjectionsPage } from "../pages/finance/FinanceProjectionsPage";
-import { LoanWizardPage } from "../pages/finance/LoanWizardPage";
-import { CalculatorPage } from "../pages/finance/CalculatorPage";
-import { AmortizationPage } from "../pages/finance/AmortizationPage";
-import { FinanceScenariosPage } from "../pages/finance/FinanceScenariosPage";
+const FinanceOverviewPage = React.lazy(() => import("../pages/finance/FinanceOverviewPage").then((m) => ({ default: m.FinanceOverviewPage })));
+const FinanceProjectionsPage = React.lazy(() => import("../pages/finance/FinanceProjectionsPage").then((m) => ({ default: m.FinanceProjectionsPage })));
+const LoanWizardPage = React.lazy(() => import("../pages/finance/LoanWizardPage").then((m) => ({ default: m.LoanWizardPage })));
+const CalculatorPage = React.lazy(() => import("../pages/finance/CalculatorPage").then((m) => ({ default: m.CalculatorPage })));
+const AmortizationPage = React.lazy(() => import("../pages/finance/AmortizationPage").then((m) => ({ default: m.AmortizationPage })));
+const FinanceScenariosPage = React.lazy(() => import("../pages/finance/FinanceScenariosPage").then((m) => ({ default: m.FinanceScenariosPage })));
 import { ArApAgingPage } from "../pages/finance/ArApAgingPage"; // FIN-20 (read-only, flag-gated)
-import { FinancialStatementsPage } from "../pages/finance/FinancialStatementsPage";
+const FinancialStatementsPage = React.lazy(() => import("../pages/finance/FinancialStatementsPage").then((m) => ({ default: m.FinancialStatementsPage })));
 import { FinanceHubPage } from "../pages/finance/FinanceHubPage"; // AF-6 (read-only, flag-gated)
 import { BreakEvenPage } from "../pages/finance/BreakEvenPage"; // F1 (read-only analytics, flag-gated)
 
 // Inventory module (SIDEBAR-V2-REORG-25)
-import { InventoryPartsStockPage } from "../pages/inventory/InventoryPartsStockPage";
-import { InventoryAssignmentsPage } from "../pages/inventory/InventoryAssignmentsPage";
-import { InventoryPurchasesPage } from "../pages/inventory/InventoryPurchasesPage";
+const InventoryPartsStockPage = React.lazy(() => import("../pages/inventory/InventoryPartsStockPage").then((m) => ({ default: m.InventoryPartsStockPage })));
+const InventoryAssignmentsPage = React.lazy(() => import("../pages/inventory/InventoryAssignmentsPage").then((m) => ({ default: m.InventoryAssignmentsPage })));
+const InventoryPurchasesPage = React.lazy(() => import("../pages/inventory/InventoryPurchasesPage").then((m) => ({ default: m.InventoryPurchasesPage })));
+
+// G5-3 — content-area fallback for React.lazy route chunks. Rendered INSIDE the
+// Shell so the top nav/sidebar stay mounted while a route's JS chunk loads; only
+// the content region shows this placeholder. Route-based code-splitting keeps the
+// initial bundle small so mobile LCP stays under the 4s ceiling.
+export function RouteFallback() {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+      className="flex min-h-[40vh] w-full items-center justify-center text-sm text-gray-500"
+    >
+      Loading…
+    </div>
+  );
+}
 
 function RootRedirect() {
   const auth = useAuth();
@@ -416,7 +433,11 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
   if (!auth.user || auth.isUnauthenticated) {
     return <Navigate to="/login" replace />;
   }
-  return <Shell auth={auth.user}>{children}</Shell>;
+  return (
+    <Shell auth={auth.user}>
+      <React.Suspense fallback={<RouteFallback />}>{children}</React.Suspense>
+    </Shell>
+  );
 }
 
 function OwnerAdminRoute({ children }: { children: ReactNode }) {
@@ -431,7 +452,11 @@ function OwnerAdminRoute({ children }: { children: ReactNode }) {
   if (role !== "Owner" && role !== "Administrator") {
     return <Navigate to="/home" replace />;
   }
-  return <Shell auth={auth.user}>{children}</Shell>;
+  return (
+    <Shell auth={auth.user}>
+      <React.Suspense fallback={<RouteFallback />}>{children}</React.Suspense>
+    </Shell>
+  );
 }
 
 function OwnerSuperAdminRoute({ children }: { children: ReactNode }) {
@@ -446,7 +471,11 @@ function OwnerSuperAdminRoute({ children }: { children: ReactNode }) {
   if (role !== "Owner" && role !== "SuperAdmin") {
     return <Navigate to="/home" replace />;
   }
-  return <Shell auth={auth.user}>{children}</Shell>;
+  return (
+    <Shell auth={auth.user}>
+      <React.Suspense fallback={<RouteFallback />}>{children}</React.Suspense>
+    </Shell>
+  );
 }
 
 function OwnerOnlyRoute({ children }: { children: ReactNode }) {
@@ -460,7 +489,11 @@ function OwnerOnlyRoute({ children }: { children: ReactNode }) {
   if (String(auth.user.role ?? "") !== "Owner") {
     return <Navigate to="/home" replace />;
   }
-  return <Shell auth={auth.user}>{children}</Shell>;
+  return (
+    <Shell auth={auth.user}>
+      <React.Suspense fallback={<RouteFallback />}>{children}</React.Suspense>
+    </Shell>
+  );
 }
 
 function HomeRoute() {
