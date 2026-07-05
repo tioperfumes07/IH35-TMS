@@ -646,12 +646,15 @@
       "name": "1 (Security/Identity) \u2014 [LIVE-EXPLOITABLE] Any Administrator can promote themselves to Owner",
       "wave": "CRIT",
       "type": "CRIT",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Owner-role assignment = Owner-only; block self-role-change; scope target to caller's companies; last-Owner guard."
+      "notes": "Owner-role assignment = Owner-only; block self-role-change; scope target to caller's companies; last-Owner guard.",
+      "done_ct": "2026-07-04 22:12 CT",
+      "pr": 2017,
+      "verified": "reconcile-2026-07-04"
     },
     {
       "id": "G9",
@@ -734,12 +737,15 @@
       "name": "C4 (Reliability/Queues) \u2014 QBO-sync in_flight + email 'sending' rows orphan on any crash (no reaper)",
       "wave": "CRIT",
       "type": "CRIT",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Port the outbox.events locked_at<now()-5min reclaim to both drainers; wrap email finalize in try/catch."
+      "notes": "Port the outbox.events locked_at<now()-5min reclaim to both drainers; wrap email finalize in try/catch.",
+      "done_ct": "2026-07-04 22:12 CT",
+      "pr": 2024,
+      "verified": "reconcile-2026-07-04"
     },
     {
       "id": "G11",
@@ -842,12 +848,15 @@
       "name": "DISP-1 (Dispatch) \u2014 quick-assign/quicksave write a trailer's ID into the co-driver column (FK violation / overwrite)",
       "wave": "CRIT",
       "type": "CRIT",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Persist trailers via load_assignment_history everywhere (copy book-load)."
+      "notes": "Persist trailers via load_assignment_history everywhere (copy book-load).",
+      "done_ct": "2026-07-04 22:12 CT",
+      "pr": 2027,
+      "verified": "reconcile-2026-07-04"
     },
     {
       "id": "M",
@@ -880,12 +889,15 @@
       "name": "1 (DB/Migrations) \u2014 18 reused migration numbers, no CI guard (already caused an outage)",
       "wave": "HIGH",
       "type": "HIGH",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Add a dup-number guard: fail on any new duplicate leading NNNN_ prefix; allowlist the 18 historical pairs."
+      "notes": "Add a dup-number guard: fail on any new duplicate leading NNNN_ prefix; allowlist the 18 historical pairs.",
+      "done_ct": "2026-07-04 22:12 CT",
+      "pr": 2023,
+      "verified": "reconcile-2026-07-04"
     },
     {
       "id": "A2",
@@ -952,12 +964,15 @@
       "name": "1 (Customers) \u2014 Inline 'New Customer' writes to a mirror table no picker reads",
       "wave": "HIGH",
       "type": "HIGH",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Point the inline creators at POST /api/v1/mdata/customers (the real table)."
+      "notes": "Point the inline creators at POST /api/v1/mdata/customers (the real table).",
+      "done_ct": "2026-07-04 22:12 CT",
+      "pr": 2025,
+      "verified": "reconcile-2026-07-04"
     },
     {
       "id": "D2",
@@ -990,12 +1005,15 @@
       "name": "1 (Inventory) \u2014 Inventory part create is broken in prod (missing credentials)",
       "wave": "HIGH",
       "type": "HIGH",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Route through apiRequest (adds credentials + idempotency), send all fields, fix the inverted checkbox."
+      "notes": "Route through apiRequest (adds credentials + idempotency), send all fields, fix the inverted checkbox.",
+      "done_ct": "2026-07-04 22:12 CT",
+      "pr": 2025,
+      "verified": "reconcile-2026-07-04"
     },
     {
       "id": "E1",
@@ -1038,12 +1056,15 @@
       "name": "1 (DB/Migrations) \u2014 Duplicate migration numbers unguarded (root cause of A2-1)",
       "wave": "HIGH",
       "type": "HIGH",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Add a dup-number CI guard, allowlist the 18 historical pairs. Non-financial, self-mergeable."
+      "notes": "Add a dup-number CI guard, allowlist the 18 historical pairs. Non-financial, self-mergeable.",
+      "done_ct": "2026-07-04 22:12 CT",
+      "pr": 2023,
+      "verified": "reconcile-2026-07-04"
     },
     {
       "id": "E2",
@@ -1196,12 +1217,15 @@
       "name": "H4 (Dispatch) \u2014 Load status machine advisory; driver-PWA can resurrect a cancelled load",
       "wave": "HIGH",
       "type": "HIGH",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Funnel all mdata.loads.status writes through the guarded helper; block arrival/departure on terminal statuses."
+      "notes": "Funnel all mdata.loads.status writes through the guarded helper; block arrival/departure on terminal statuses.",
+      "done_ct": "2026-07-04 22:12 CT",
+      "pr": 2028,
+      "verified": "reconcile-2026-07-04"
     },
     {
       "id": "G9",
@@ -1225,7 +1249,7 @@
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Add total/has_more, raise/remove the cap (locations/items/classes same at MED)."
+      "notes": "[PARTIAL \u2014 some landed #2030; verified 2026-07-04] Add total/has_more, raise/remove the cap (locations/items/classes same at MED)."
     },
     {
       "id": "G10",
@@ -1244,12 +1268,15 @@
       "name": "H2 (CI/Evidence) \u2014 The 'no hard-delete load_stops' CI guard is never wired into CI",
       "wave": "HIGH",
       "type": "HIGH",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Register it in package.json + locked-guards.yml; broaden the regex."
+      "notes": "Register it in package.json + locked-guards.yml; broaden the regex.",
+      "done_ct": "2026-07-04 22:12 CT",
+      "pr": 2023,
+      "verified": "reconcile-2026-07-04"
     },
     {
       "id": "G10",
@@ -1261,7 +1288,7 @@
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "CI contract check (extractor built); build the financial routes under the gate."
+      "notes": "[PARTIAL \u2014 some landed #2028; verified 2026-07-04] CI contract check (extractor built); build the financial routes under the gate."
     },
     {
       "id": "G10",
@@ -1345,7 +1372,7 @@
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Make each cron record a run + add non-null staleness rules; arm the mirror alarm whenever a realm is connected."
+      "notes": "[PARTIAL \u2014 some landed; verified 2026-07-04] Make each cron record a run + add non-null staleness rules; arm the mirror alarm whenever a realm is connected."
     },
     {
       "id": "H3",
@@ -1376,12 +1403,15 @@
       "name": "1 (Security/RateLimit) \u2014 Public credential + OTP endpoints have no rate limit",
       "wave": "HIGH",
       "type": "HIGH",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Add config.rateLimit (5-10/min/IP) to every login/reset/OTP route (the limiters already exist)."
+      "notes": "Add config.rateLimit (5-10/min/IP) to every login/reset/OTP route (the limiters already exist).",
+      "done_ct": "2026-07-04 22:12 CT",
+      "pr": 2021,
+      "verified": "reconcile-2026-07-04"
     },
     {
       "id": "H4",
@@ -1465,7 +1495,7 @@
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Extract one shared qualification gate called by every assignment path."
+      "notes": "[PARTIAL \u2014 some landed; verified 2026-07-04] Extract one shared qualification gate called by every assignment path."
     },
     {
       "id": "M",
@@ -1484,24 +1514,30 @@
       "name": "LEGAL-1 (Legal) \u2014 Legal Matters has NO backend role gate \u2014 any role can read/write litigation data",
       "wave": "HIGH",
       "type": "HIGH",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Add Owner/Admin role enforcement on every matters endpoint + the route guard."
+      "notes": "Add Owner/Admin role enforcement on every matters endpoint + the route guard.",
+      "done_ct": "2026-07-04 22:12 CT",
+      "pr": 2028,
+      "verified": "reconcile-2026-07-04"
     },
     {
       "id": "M",
       "name": "DOCS-1 (Docs) \u2014 Load Documents tab is dead-on-arrival (route blocks 'load' type)",
       "wave": "HIGH",
       "type": "HIGH",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Add 'load' to SUPPORTED_LINK_ENTITY_TYPES (schema already allows it)."
+      "notes": "Add 'load' to SUPPORTED_LINK_ENTITY_TYPES (schema already allows it).",
+      "done_ct": "2026-07-04 22:12 CT",
+      "pr": 2031,
+      "verified": "reconcile-2026-07-04"
     },
     {
       "id": "M",
@@ -1580,12 +1616,15 @@
       "name": "HOME-1 (Home) \u2014 Safety role-home silently 500s \u2192 every Safety user sees all-zero KPIs (false 'all clear')",
       "wave": "HIGH",
       "type": "HIGH",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Guard the columns / fix the queries; the table for pending DA draws doesn't have a status."
+      "notes": "Guard the columns / fix the queries; the table for pending DA draws doesn't have a status.",
+      "done_ct": "2026-07-04 22:12 CT",
+      "pr": 2027,
+      "verified": "reconcile-2026-07-04"
     },
     {
       "id": "M",
@@ -1618,12 +1657,15 @@
       "name": "COMP-1 (Compliance) \u2014 IFTA files the WRONG quarter at the point of action",
       "wave": "HIGH",
       "type": "HIGH",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Use getCurrentQuarterInfo at the point of action."
+      "notes": "Use getCurrentQuarterInfo at the point of action.",
+      "done_ct": "2026-07-04 22:12 CT",
+      "pr": 2031,
+      "verified": "reconcile-2026-07-04"
     },
     {
       "id": "M",
@@ -1702,12 +1744,15 @@
       "name": "3 (Security/Cost) \u2014 AI-cost endpoints have no throttle (direct $ per call)",
       "wave": "MED-HIGH",
       "type": "MED-HIGH",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Add config.rateLimit (30/min) + a per-user daily AI ceiling."
+      "notes": "Add config.rateLimit (30/min) + a per-user daily AI ceiling.",
+      "done_ct": "2026-07-04 22:12 CT",
+      "pr": 2021,
+      "verified": "reconcile-2026-07-04"
     },
     {
       "id": "M",
@@ -1738,12 +1783,14 @@
       "name": "3 (DB/CI) \u2014 Immutability guard blind to all 238 timestamp migrations",
       "wave": "MED",
       "type": "MED",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Widen the regex to \\d{4,} (the fix already applied in verify-migration-application-consistency.mjs:65)."
+      "notes": "Widen the regex to \\d{4,} (the fix already applied in verify-migration-application-consistency.mjs:65).",
+      "done_ct": "2026-07-04 22:12 CT",
+      "verified": "reconcile-2026-07-04"
     },
     {
       "id": "B2",
@@ -1786,12 +1833,15 @@
       "name": "3 (Customers/Vendors) \u2014 Inline drawers silently drop most captured fields",
       "wave": "MED",
       "type": "MED",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Forward all fields (match the QuickCreate modal) or remove the dead inputs."
+      "notes": "Forward all fields (match the QuickCreate modal) or remove the dead inputs.",
+      "done_ct": "2026-07-04 22:12 CT",
+      "pr": 2025,
+      "verified": "reconcile-2026-07-04"
     },
     {
       "id": "D1",
@@ -1822,12 +1872,14 @@
       "name": "1 (Samsara/Telematics) \u2014 Webhook driver-pairing keyed to equipment, not units",
       "wave": "MED",
       "type": "MED",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Mirror the units-primary -> equipment-fallback lookup."
+      "notes": "Mirror the units-primary -> equipment-fallback lookup.",
+      "done_ct": "2026-07-04 22:12 CT",
+      "verified": "reconcile-2026-07-04"
     },
     {
       "id": "E1",
@@ -1851,7 +1903,7 @@
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "View-alias + repoint into maintenance; archive-not-drop."
+      "notes": "[PARTIAL \u2014 some landed; verified 2026-07-04] View-alias + repoint into maintenance; archive-not-drop."
     },
     {
       "id": "E2",
@@ -1887,7 +1939,7 @@
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "z.string().uuid() on opco/:id + route through resolveOperatingCompanyId(with membership)."
+      "notes": "[PARTIAL \u2014 some landed; verified 2026-07-04] z.string().uuid() on opco/:id + route through resolveOperatingCompanyId(with membership)."
     },
     {
       "id": "G3",
@@ -1918,12 +1970,15 @@
       "name": "3 (Security/Reliability) \u2014 No multipart file-size limit \u2192 memory-exhaustion DoS",
       "wave": "MED",
       "type": "MED",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Set limits{fileSize,files,fieldSize} on the multipart registration."
+      "notes": "Set limits{fileSize,files,fieldSize} on the multipart registration.",
+      "done_ct": "2026-07-04 22:12 CT",
+      "pr": 2035,
+      "verified": "reconcile-2026-07-04"
     },
     {
       "id": "G5",
@@ -1966,12 +2021,14 @@
       "name": "6 (Accounting) \u2014 Default payments list returns voided rows",
       "wave": "MED",
       "type": "MED",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Default status to active or always append voided_at IS NULL unless explicitly requested."
+      "notes": "Default status to active or always append voided_at IS NULL unless explicitly requested.",
+      "done_ct": "2026-07-04 22:12 CT",
+      "verified": "reconcile-2026-07-04"
     },
     {
       "id": "G7",
@@ -1990,12 +2047,14 @@
       "name": "4 (Tests) \u2014 7 end-to-end specs are empty stubs (false-green)",
       "wave": "MED",
       "type": "MED",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Write the assertions or mark the specs skipped so green means covered."
+      "notes": "Write the assertions or mark the specs skipped so green means covered.",
+      "done_ct": "2026-07-04 22:12 CT",
+      "verified": "reconcile-2026-07-04"
     },
     {
       "id": "G8",
@@ -2028,12 +2087,15 @@
       "name": "5 (Frontend) \u2014 Data pages with no error state render blank/forever-spinner on the live 500s",
       "wave": "MED",
       "type": "MED",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "A shared QueryBoundary (loading/error/empty) wrapper."
+      "notes": "A shared QueryBoundary (loading/error/empty) wrapper.",
+      "done_ct": "2026-07-04 22:12 CT",
+      "pr": 2030,
+      "verified": "reconcile-2026-07-04"
     },
     {
       "id": "G9",
@@ -2045,7 +2107,7 @@
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Per-item (see report); most non-financial + guarded."
+      "notes": "[PARTIAL \u2014 some landed #2028; verified 2026-07-04] Per-item (see report); most non-financial + guarded."
     },
     {
       "id": "G10",
@@ -2057,7 +2119,7 @@
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Per-item (HMAC/anchor the chain; add row_changes trigger; standardize stop archive; scope the swallow; idempotency key; durable notifications; build/remove the PWA route)."
+      "notes": "[PARTIAL \u2014 some landed; verified 2026-07-04] Per-item (HMAC/anchor the chain; add row_changes trigger; standardize stop archive; scope the swallow; idempotency key; durable notifications; build/remove the PWA route)."
     },
     {
       "id": "G11",
@@ -2124,12 +2186,14 @@
       "name": "DEPLOY (Reliability/Deploy) \u2014 preDeploy smoke hinges on a live prod row + leaves a test Owner in prod",
       "wave": "MED",
       "type": "MED",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Use a seeded fixed IH35_SMOKE_UNIT_ID (env already supported); exclude the test email from prod user listings."
+      "notes": "Use a seeded fixed IH35_SMOKE_UNIT_ID (env already supported); exclude the test email from prod user listings.",
+      "done_ct": "2026-07-04 22:12 CT",
+      "verified": "reconcile-2026-07-04"
     },
     {
       "id": "H3",
@@ -2177,7 +2241,7 @@
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Per-route caps on /export/*, /audit/reports/*; set multipart limits{fileSize,files}. Export routes touch accounting \u2014 Jorge's OK on those."
+      "notes": "[PARTIAL \u2014 some landed #2035; verified 2026-07-04] Per-route caps on /export/*, /audit/reports/*; set multipart limits{fileSize,files}. Export routes touch accounting \u2014 Jorge's OK on those."
     },
     {
       "id": "H1",
@@ -2189,7 +2253,7 @@
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Default the real prod origins (drop localhost outside dev); fail-loud if CORS_ALLOWED_ORIGINS is unset in production."
+      "notes": "[PARTIAL \u2014 some landed; verified 2026-07-04] Default the real prod origins (drop localhost outside dev); fail-loud if CORS_ALLOWED_ORIGINS is unset in production."
     },
     {
       "id": "H1",
@@ -2261,7 +2325,7 @@
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Role-gate the read endpoints; require an existing Owner to approve promotions to Owner."
+      "notes": "[PARTIAL \u2014 some landed #2017; verified 2026-07-04] Role-gate the read endpoints; require an existing Owner to approve promotions to Owner."
     },
     {
       "id": "M",
@@ -2328,12 +2392,15 @@
       "name": "2 (Ops/Cron) \u2014 Recon crons can fail silently (no health endpoint)",
       "wave": "LOW-MED",
       "type": "LOW-MED",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Surface a 'last recon run' freshness row on the web /healthz."
+      "notes": "Surface a 'last recon run' freshness row on the web /healthz.",
+      "done_ct": "2026-07-04 22:12 CT",
+      "pr": 2024,
+      "verified": "reconcile-2026-07-04"
     },
     {
       "id": "B1",
@@ -2376,12 +2443,14 @@
       "name": "3 (Cross-entity/Samsara) \u2014 Position-poll worker reads all entities' units",
       "wave": "LOW-MED",
       "type": "LOW-MED",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Scope to COALESCE(currently_leased_to_company_id, owner_company_id)."
+      "notes": "Scope to COALESCE(currently_leased_to_company_id, owner_company_id).",
+      "done_ct": "2026-07-04 22:12 CT",
+      "verified": "reconcile-2026-07-04"
     },
     {
       "id": "E1",
@@ -2412,12 +2481,15 @@
       "name": "4 (DB/CI) \u2014 Two more migration guards skip timestamp migrations",
       "wave": "LOW",
       "type": "LOW",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Widen both regexes to \\d{4,}."
+      "notes": "Widen both regexes to \\d{4,}.",
+      "done_ct": "2026-07-04 22:12 CT",
+      "pr": 2023,
+      "verified": "reconcile-2026-07-04"
     },
     {
       "id": "A2",
@@ -2465,7 +2537,7 @@
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Delete the dead modals or wire attachment_draft_id reconcile."
+      "notes": "[PARTIAL \u2014 some landed; verified 2026-07-04] Delete the dead modals or wire attachment_draft_id reconcile."
     },
     {
       "id": "C2",
