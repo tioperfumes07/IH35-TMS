@@ -147,7 +147,7 @@ export function SaveDropdown({
       </Button>
       <button
         type="button"
-        className="inline-flex h-8 items-center bg-[#16A34A] px-2 text-white hover:bg-green-700 disabled:opacity-60"
+        className="inline-flex h-8 items-center bg-[#1f2a44] px-2 text-white hover:bg-[#0f1729] disabled:opacity-60"
         aria-expanded={menuOpen}
         aria-haspopup="menu"
         aria-controls={menuId}

@@ -10,7 +10,8 @@ import { buildInvoiceFromLoad } from "./from-load.js";
 import { createExpandedInvoice } from "./invoices.service.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope, recomputeInvoiceTotals } from "./shared.js";
 import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
-import { auditVoid, canVoid, isVoidEnforcementEnabled, postVoidReversal, type VoidReversalResult } from "./void.service.js";
+import { auditVoid, isVoidEnforcementEnabled, postVoidReversal, type VoidReversalResult } from "./void.service.js";
+import { requireVoidCancelExecutor } from "../lib/authz/void-cancel-authz.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 
 const idParamsSchema = z.object({ id: z.string().uuid() });
@@ -603,6 +604,11 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
   app.post("/api/v1/accounting/invoices/:id/void", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
+    // G9-C3: voiding an invoice is an EXECUTOR-only action (Owner|Administrator|Accountant). This gate is
+    // OUTSIDE the VOID-EVERYWHERE flag — previously the role check lived only inside the flag-ON path, so
+    // in the default (flag-OFF) state anyone could void. Route through the shared governance authz so
+    // non-executors must FILE a void/cancel request for approval.
+    if (!requireVoidCancelExecutor(reply, String(user.role ?? ""))) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -630,7 +636,8 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
         reversed_line_count: 0,
       };
       if (flagOn) {
-        if (!canVoid(user.role)) return { code: 403 as const, error: "forbidden_void_owner_or_accountant_only" };
+        // Executor role already enforced above (requireVoidCancelExecutor, OUTSIDE the flag). The flag-ON
+        // path only adds the reversing-JE + required-reason obligations.
         if (!body.data.reason || !body.data.reason.trim()) return { code: 400 as const, error: "void_reason_required" };
         const rawDate = current.issue_date as unknown;
         const originalDate =

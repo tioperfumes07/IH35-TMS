@@ -224,7 +224,7 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
                       <button
                         type="button"
                         disabled={approveMut.isPending}
-                        className="rounded-xs border border-[#16A34A] bg-[#16A34A] px-[14px] py-[5px] text-[11px] font-semibold text-white disabled:opacity-70"
+                        className="rounded-xs border border-[#1f2a44] bg-[#1f2a44] px-[14px] py-[5px] text-[11px] font-semibold text-white hover:bg-[#0f1729] disabled:opacity-70"
                         onClick={() => approveMut.mutate(id)}
                       >
                         Approve &amp; post
@@ -263,7 +263,7 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
               <button
                 type="button"
                 disabled={denyReason.trim().length < 1 || denyMut.isPending}
-                className="rounded-xs border border-[#16A34A] bg-[#16A34A] px-[14px] py-[5px] text-[11px] font-semibold text-white disabled:opacity-60"
+                className="rounded-xs border border-[#1f2a44] bg-[#1f2a44] px-[14px] py-[5px] text-[11px] font-semibold text-white hover:bg-[#0f1729] disabled:opacity-60"
                 onClick={() => void denyMut.mutate()}
               >
                 Confirm deny

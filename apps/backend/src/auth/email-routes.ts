@@ -4,7 +4,7 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { enforceAuthEmailStartLimits, enforceAuthEmailVerifyLimits } from "../middleware/rate-limit.js";
 import { withLuciaBypass } from "./db.js";
-import { lucia } from "./lucia.js";
+import { createSessionCookie } from "./session-provider.js";
 import { createSessionWithLastLogin } from "./session-create.js";
 import { setLuciaSessionCookie } from "./session-cookie-policy.js";
 import { sendEmailCode } from "./email-send.js";
@@ -227,7 +227,7 @@ export async function registerEmailAuthRoutes(app: FastifyInstance) {
     }
 
     const session = await createSessionWithLastLogin(verificationResult.user.id, {});
-    const sessionCookie = lucia.createSessionCookie(session.id);
+    const sessionCookie = createSessionCookie(session.id);
     setLuciaSessionCookie(reply, sessionCookie);
     return reply.code(200).send({
       ok: true,
