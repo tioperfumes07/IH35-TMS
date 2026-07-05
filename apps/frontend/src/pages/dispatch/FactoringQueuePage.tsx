@@ -180,13 +180,17 @@ export function FactoringQueuePage() {
           <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
             <div className="text-[11px] uppercase tracking-wide text-gray-500">Reserve Balance</div>
             <div className="mt-1 font-semibold text-gray-900">
-              {money.format((summaryQ.data.reserve_balance || 0) / 100)}
+              {/* views.factoring_summary emits reserve_balance in DOLLARS (migration 0124 sources
+                  accounting.factoring_companies.current_reserve_balance::numeric — no _cents suffix).
+                  Format directly as dollars; do NOT divide by 100. Must match FactoringHome.tsx. */}
+              {money.format(summaryQ.data.reserve_balance || 0)}
             </div>
           </div>
           <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
             <div className="text-[11px] uppercase tracking-wide text-gray-500">MTD Advances</div>
             <div className="mt-1 font-semibold text-gray-900">
-              {money.format((summaryQ.data.mtd_advanced_total || 0) / 100)}{" "}
+              {/* mtd_advanced_total is also DOLLARS (0124 sums factoring_advances.advance_amount — no _cents). */}
+              {money.format(summaryQ.data.mtd_advanced_total || 0)}{" "}
               <span className="text-xs text-gray-500">({summaryQ.data.mtd_advances_count} batch)</span>
             </div>
           </div>
