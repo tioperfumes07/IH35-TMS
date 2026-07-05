@@ -680,7 +680,7 @@
       "fin": true,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "amount_cents, group on is_credit, add own-transfer exclusion, remove the zero-swallow (fail loud). FINANCIAL \u2014 Jorge's OK."
+      "notes": "[DESIGN DOC #2063 \u2014 analysis + proof landed; awaiting owner build approval] amount_cents, group on is_credit, add own-transfer exclusion, remove the zero-swallow (fail loud). FINANCIAL \u2014 Jorge's OK."
     },
     {
       "id": "G9",
@@ -725,12 +725,15 @@
       "name": "C3 (Observability) \u2014 Sentry only half-live: crons + driver-PWA report to nobody; nothing pages on failure",
       "wave": "CRIT",
       "type": "CRIT",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Init Sentry in cron entrypoints; alert on zero-trusted-entity recon; wire PWA error handlers; a human-paging channel."
+      "notes": "Init Sentry in cron entrypoints; alert on zero-trusted-entity recon; wire PWA error handlers; a human-paging channel.",
+      "pr": 2033,
+      "done_ct": "2026-07-05 05:15 CT",
+      "verified": "session-2026-07-05"
     },
     {
       "id": "G10",
@@ -769,7 +772,7 @@
       "fin": true,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Add idempotency keys / dedup / balance caps to every money POST/PATCH; fix the stale matchers. FINANCIAL \u2014 Jorge's OK."
+      "notes": "[DESIGN DOC #2047 \u2014 analysis + proof landed; awaiting owner build approval] Add idempotency keys / dedup / balance caps to every money POST/PATCH; fix the stale matchers. FINANCIAL \u2014 Jorge's OK."
     },
     {
       "id": "G4",
@@ -781,7 +784,7 @@
       "fin": true,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Give the posters an optional client param so call sites enlist one atomic tx. FINANCIAL \u2014 Jorge's OK."
+      "notes": "[DESIGN DOC #2047 \u2014 analysis + proof landed; awaiting owner build approval] Give the posters an optional client param so call sites enlist one atomic tx. FINANCIAL \u2014 Jorge's OK."
     },
     {
       "id": "FLAG",
@@ -882,7 +885,7 @@
       "fin": true,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Gate this path behind the same flag as FIN-18, or collapse the engines. FINANCIAL \u2014 Jorge's OK."
+      "notes": "[DESIGN DOC #2066 \u2014 analysis + proof landed; awaiting owner build approval] Gate this path behind the same flag as FIN-18, or collapse the engines. FINANCIAL \u2014 Jorge's OK."
     },
     {
       "id": "A2",
@@ -979,12 +982,15 @@
       "name": "1 (Maintenance) \u2014 Two maintenance modals save nothing (non-persisting stubs)",
       "wave": "HIGH",
       "type": "HIGH",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Delete/archive or wire to a real POST."
+      "notes": "Delete/archive or wire to a real POST.",
+      "pr": 2064,
+      "done_ct": "2026-07-05 05:10 CT",
+      "verified": "session-2026-07-05"
     },
     {
       "id": "D3",
@@ -1095,36 +1101,45 @@
       "name": "2 (Security/Money) \u2014 Bills pay/void trust client company-id with no membership check",
       "wave": "HIGH",
       "type": "HIGH",
-      "status": "PENDING (GATED)",
+      "status": "DONE",
       "tier": "STOP",
       "fin": true,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Route every opco handler through withCompanyScope (asserts membership) or add assertCompanyMembership. FINANCIAL \u2014 Jorge's OK."
+      "notes": "Route every opco handler through withCompanyScope (asserts membership) or add assertCompanyMembership. FINANCIAL \u2014 Jorge's OK.",
+      "pr": 2042,
+      "done_ct": "2026-07-05 05:10 CT",
+      "verified": "session-2026-07-05"
     },
     {
       "id": "G1",
       "name": "3 (Security/Money) \u2014 Settlement + cash-advance approvals skip membership check",
       "wave": "HIGH",
       "type": "HIGH",
-      "status": "PENDING (GATED)",
+      "status": "DONE",
       "tier": "STOP",
       "fin": true,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Same fix as G1-2 (withCompanyScope / assertCompanyMembership). FINANCIAL \u2014 Jorge's OK."
+      "notes": "Same fix as G1-2 (withCompanyScope / assertCompanyMembership). FINANCIAL \u2014 Jorge's OK.",
+      "pr": 2042,
+      "done_ct": "2026-07-05 05:10 CT",
+      "verified": "session-2026-07-05"
     },
     {
       "id": "G2",
       "name": "1 (Security/Audit) \u2014 One real SQL-injection via unvalidated operating_company_id in an audit-log call",
       "wave": "HIGH",
       "type": "HIGH",
-      "status": "PENDING (GATED)",
+      "status": "DONE",
       "tier": "STOP",
       "fin": true,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Validate ocId as uuid + rewrite log_event to parameterized placeholders. Touches audit spine \u2014 Jorge's OK."
+      "notes": "Validate ocId as uuid + rewrite log_event to parameterized placeholders. Touches audit spine \u2014 Jorge's OK.",
+      "pr": 2043,
+      "done_ct": "2026-07-05 05:10 CT",
+      "verified": "session-2026-07-05"
     },
     {
       "id": "G5",
@@ -1143,12 +1158,15 @@
       "name": "1 (Accounting/Dates) \u2014 Financial 'today' computed in UTC, not Central Time (~40+ sites)",
       "wave": "HIGH",
       "type": "HIGH",
-      "status": "PENDING (GATED)",
+      "status": "DONE",
       "tier": "STOP",
       "fin": true,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Route all financial-date defaults through companyBusinessDate(). FINANCIAL \u2014 Jorge's OK."
+      "notes": "Route all financial-date defaults through companyBusinessDate(). FINANCIAL \u2014 Jorge's OK.",
+      "pr": 2048,
+      "done_ct": "2026-07-05 05:10 CT",
+      "verified": "session-2026-07-05"
     },
     {
       "id": "G7",
@@ -1232,24 +1250,30 @@
       "name": "H5 (Reports) \u2014 Profit/pay reports double-count and include cancelled/voided rows",
       "wave": "HIGH",
       "type": "HIGH",
-      "status": "PENDING (GATED)",
+      "status": "DONE",
       "tier": "STOP",
       "fin": true,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Separate CTEs (the 'extended' path is already correct); add status<>'cancelled' and void filters. FINANCIAL read-layer \u2014 Jorge's OK."
+      "notes": "Separate CTEs (the 'extended' path is already correct); add status<>'cancelled' and void filters. FINANCIAL read-layer \u2014 Jorge's OK.",
+      "pr": 2046,
+      "done_ct": "2026-07-05 05:10 CT",
+      "verified": "session-2026-07-05"
     },
     {
       "id": "G9",
       "name": "H6 (Catalogs/UI) \u2014 CoA management list + trailer list cap at 50 (oldest records unreachable)",
       "wave": "HIGH",
       "type": "HIGH",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "[PARTIAL \u2014 some landed #2030; verified 2026-07-04] Add total/has_more, raise/remove the cap (locations/items/classes same at MED)."
+      "notes": "[PARTIAL \u2014 some landed #2030; verified 2026-07-04] Add total/has_more, raise/remove the cap (locations/items/classes same at MED).",
+      "pr": 2030,
+      "done_ct": "2026-07-05 05:15 CT",
+      "verified": "session-2026-07-05"
     },
     {
       "id": "G10",
@@ -1295,24 +1319,30 @@
       "name": "H5 (Security) \u2014 Plaid access token stored in plaintext",
       "wave": "HIGH",
       "type": "HIGH",
-      "status": "PENDING (GATED)",
+      "status": "DONE",
       "tier": "STOP",
       "fin": true,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Encrypt with the existing ENCRYPTION_KEY AES-256-GCM helper. Touches banking \u2014 Jorge's OK."
+      "notes": "Encrypt with the existing ENCRYPTION_KEY AES-256-GCM helper. Touches banking \u2014 Jorge's OK.",
+      "pr": 2044,
+      "done_ct": "2026-07-05 05:10 CT",
+      "verified": "session-2026-07-05"
     },
     {
       "id": "G10",
       "name": "H4 (Integrations/QBO) \u2014 QBO push generic catch = infinite retry, no dead-letter cap",
       "wave": "HIGH",
       "type": "HIGH",
-      "status": "PENDING (GATED)",
+      "status": "DONE",
       "tier": "STOP",
       "fin": true,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Gate the generic catch on the same dead-letter threshold. Touches QBO push path \u2014 Jorge's OK."
+      "notes": "Gate the generic catch on the same dead-letter threshold. Touches QBO push path \u2014 Jorge's OK.",
+      "pr": 2052,
+      "done_ct": "2026-07-05 05:10 CT",
+      "verified": "session-2026-07-05"
     },
     {
       "id": "G11",
@@ -1324,7 +1354,7 @@
       "fin": true,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "One authoritative sub-ledger; recompute deductions_total from the source FIN-18 reads; include auto_deduction. FINANCIAL \u2014 Jorge's OK."
+      "notes": "[DESIGN DOC #2066 \u2014 analysis + proof landed; awaiting owner build approval] One authoritative sub-ledger; recompute deductions_total from the source FIN-18 reads; include auto_deduction. FINANCIAL \u2014 Jorge's OK."
     },
     {
       "id": "G11",
@@ -1336,7 +1366,7 @@
       "fin": true,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "One floor resolver + one config source; default 10%. FINANCIAL \u2014 Jorge's OK."
+      "notes": "[DESIGN DOC #2066 \u2014 analysis + proof landed; awaiting owner build approval] One floor resolver + one config source; default 10%. FINANCIAL \u2014 Jorge's OK."
     },
     {
       "id": "G11",
@@ -1355,12 +1385,15 @@
       "name": "1 (Reliability/Audit) \u2014 61 money/dispatch spine-event emits swallowed with zero breadcrumb",
       "wave": "HIGH",
       "type": "HIGH",
-      "status": "PENDING (GATED)",
+      "status": "DONE",
       "tier": "STOP",
       "fin": true,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Fix the events grant gap (gated migration) + log the emit failure instead of discarding. FINANCIAL \u2014 Jorge's OK."
+      "notes": "Fix the events grant gap (gated migration) + log the emit failure instead of discarding. FINANCIAL \u2014 Jorge's OK.",
+      "pr": 2057,
+      "done_ct": "2026-07-05 05:10 CT",
+      "verified": "session-2026-07-05"
     },
     {
       "id": "G4",
@@ -1466,12 +1499,15 @@
       "name": "2 (Cash-Advance) \u2014 Cash-advance number generator: MAX+1, no lock, no unique \u2192 silent duplicate IDs",
       "wave": "HIGH",
       "type": "HIGH",
-      "status": "PENDING (GATED)",
+      "status": "DONE",
       "tier": "STOP",
       "fin": true,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Wrap in pg_advisory_xact_lock + add UNIQUE(operating_company_id, display_id). Migration \u2014 Jorge's OK."
+      "notes": "Wrap in pg_advisory_xact_lock + add UNIQUE(operating_company_id, display_id). Migration \u2014 Jorge's OK.",
+      "pr": 2051,
+      "done_ct": "2026-07-05 05:10 CT",
+      "verified": "session-2026-07-05"
     },
     {
       "id": "M",
@@ -1556,24 +1592,30 @@
       "name": "REPORTS-1 (Reports) \u2014 AR/AP aging: two implementations, the UI uses the broken one (misclassifies not-yet-due)",
       "wave": "HIGH",
       "type": "HIGH",
-      "status": "PENDING (GATED)",
+      "status": "DONE",
       "tier": "STOP",
       "fin": true,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Point the UI at the canonical FIN-20 aging; retire the duplicate. FINANCIAL \u2014 Jorge's OK."
+      "notes": "Point the UI at the canonical FIN-20 aging; retire the duplicate. FINANCIAL \u2014 Jorge's OK.",
+      "pr": 2049,
+      "done_ct": "2026-07-05 05:10 CT",
+      "verified": "session-2026-07-05"
     },
     {
       "id": "M",
       "name": "CASH-1 (Cash-Flow) \u2014 Void exclusion is a no-op ('void' vs 'voided') \u2014 cancelled bills show as future expense",
       "wave": "HIGH",
       "type": "HIGH",
-      "status": "PENDING (GATED)",
+      "status": "DONE",
       "tier": "STOP",
       "fin": true,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Filter status='void' OR revoked_at IS NOT NULL. FINANCIAL \u2014 Jorge's OK."
+      "notes": "Filter status='void' OR revoked_at IS NOT NULL. FINANCIAL \u2014 Jorge's OK.",
+      "pr": 2045,
+      "done_ct": "2026-07-05 05:10 CT",
+      "verified": "session-2026-07-05"
     },
     {
       "id": "M",
@@ -1585,19 +1627,22 @@
       "fin": true,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "One floor resolver + one config = the CPA-locked value (confirm 5% vs 10%). FINANCIAL \u2014 Jorge/CPA."
+      "notes": "[DESIGN DOC #2066 \u2014 analysis + proof landed; awaiting owner build approval] One floor resolver + one config = the CPA-locked value (confirm 5% vs 10%). FINANCIAL \u2014 Jorge/CPA."
     },
     {
       "id": "M",
       "name": "FACTOR-1 (Factoring) \u2014 The reserve figure reads a column NOTHING writes to; FOUR un-reconciled reserve sources",
       "wave": "HIGH",
       "type": "HIGH",
-      "status": "PENDING (GATED)",
+      "status": "DONE",
       "tier": "STOP",
       "fin": true,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Pick one canonical reserve ledger + reconcile; fix the QBO push shape. FINANCIAL \u2014 Jorge's OK."
+      "notes": "Pick one canonical reserve ledger + reconcile; fix the QBO push shape. FINANCIAL \u2014 Jorge's OK.",
+      "pr": 2065,
+      "done_ct": "2026-07-05 05:10 CT",
+      "verified": "session-2026-07-05"
     },
     {
       "id": "M",
@@ -1631,12 +1676,15 @@
       "name": "DRIVER-1 (Drivers) \u2014 Second driver create/edit surface bypasses rehire-match / vendor-linkage / invite",
       "wave": "HIGH",
       "type": "HIGH",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Route all driver create/edit through the canonical path (or apply the same guards)."
+      "notes": "Route all driver create/edit through the canonical path (or apply the same guards).",
+      "pr": 2055,
+      "done_ct": "2026-07-05 05:10 CT",
+      "verified": "session-2026-07-05"
     },
     {
       "id": "M",
@@ -1677,7 +1725,7 @@
       "fin": true,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Fix columns (amount_cents/is_credit), remove the zero-swallow, add own-transfer exclusion + GL tie-out. FINANCIAL \u2014 Jorge/CPA."
+      "notes": "[DESIGN DOC #2063 \u2014 analysis + proof landed; awaiting owner build approval] Fix columns (amount_cents/is_credit), remove the zero-swallow, add own-transfer exclusion + GL tie-out. FINANCIAL \u2014 Jorge/CPA."
     },
     {
       "id": "D1",
@@ -1797,36 +1845,45 @@
       "name": "2 (Dispatch/Drivers) \u2014 Driver-picker 50-cap in ~14 non-dispatch pickers",
       "wave": "MED",
       "type": "MED",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Pass limit:200 (or server-side search) at each call."
+      "notes": "Pass limit:200 (or server-side search) at each call.",
+      "pr": 2038,
+      "done_ct": "2026-07-05 05:15 CT",
+      "verified": "session-2026-07-05"
     },
     {
       "id": "C1",
       "name": "3 (Frontend/Routing) \u2014 Three live buttons dead-end to Home",
       "wave": "MED",
       "type": "MED",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Fix the three target paths (route the two orphan pages; correct the typo)."
+      "notes": "Fix the three target paths (route the two orphan pages; correct the typo).",
+      "pr": 2054,
+      "done_ct": "2026-07-05 05:10 CT",
+      "verified": "session-2026-07-05"
     },
     {
       "id": "C1",
       "name": "4 (Code-quality) \u2014 Dead/duplicate components",
       "wave": "MED",
       "type": "MED",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Archive-not-delete the dead components."
+      "notes": "Archive-not-delete the dead components.",
+      "pr": 2060,
+      "done_ct": "2026-07-05 05:10 CT",
+      "verified": "session-2026-07-05"
     },
     {
       "id": "D1",
@@ -1853,7 +1910,7 @@
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Validate isSubCustomer && !parentCustomer blocks submit and forward the field."
+      "notes": "[PARTIAL \u2014 part landed #2061; remainder gated] Validate isSubCustomer && !parentCustomer blocks submit and forward the field."
     },
     {
       "id": "D2",
@@ -1922,12 +1979,15 @@
       "name": "6 (Security) \u2014 resolveOperatingCompanyId returns client value unvalidated",
       "wave": "MED",
       "type": "MED",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Validate requested opco against user_accessible_company_ids before returning it."
+      "notes": "Validate requested opco against user_accessible_company_ids before returning it.",
+      "pr": 2062,
+      "done_ct": "2026-07-05 05:10 CT",
+      "verified": "session-2026-07-05"
     },
     {
       "id": "G2",
@@ -2061,12 +2121,15 @@
       "name": "2 (i18n) \u2014 Two live translation directories \u2192 stale-Spanish drift",
       "wave": "MED",
       "type": "MED",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Collapse to one locale directory."
+      "notes": "Collapse to one locale directory.",
+      "pr": 2056,
+      "done_ct": "2026-07-05 05:10 CT",
+      "verified": "session-2026-07-05"
     },
     {
       "id": "G8",
@@ -2224,12 +2287,15 @@
       "name": "4 (Security) \u2014 Office-login account/role enumeration + timing oracle",
       "wave": "MED",
       "type": "MED",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Uniform 401 for not-found/deactivated/no-password/wrong-password/driver-role + a dummy argon2 verify on the not-found branch."
+      "notes": "Uniform 401 for not-found/deactivated/no-password/wrong-password/driver-role + a dummy argon2 verify on the not-found branch.",
+      "pr": 2053,
+      "done_ct": "2026-07-05 05:10 CT",
+      "verified": "session-2026-07-05"
     },
     {
       "id": "H4",
@@ -2308,12 +2374,15 @@
       "name": "DOCS-2 (Docs/Security) \u2014 Entity document uploader has no size/type limits; attachment DELETE is ungated",
       "wave": "MED",
       "type": "MED",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Add size/type validation to docs.files; role-gate the attachment delete."
+      "notes": "Add size/type validation to docs.files; role-gate the attachment delete.",
+      "pr": 2059,
+      "done_ct": "2026-07-05 05:10 CT",
+      "verified": "session-2026-07-05"
     },
     {
       "id": "M",
@@ -2356,12 +2425,15 @@
       "name": "HOME-2 (Home) \u2014 Cash Position + Factoring Balance home tiles always show $0 (response-shape mismatch)",
       "wave": "MED",
       "type": "MED",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Align the frontend field names to the response."
+      "notes": "Align the frontend field names to the response.",
+      "pr": 2058,
+      "done_ct": "2026-07-05 05:10 CT",
+      "verified": "session-2026-07-05"
     },
     {
       "id": "M",
@@ -2520,12 +2592,15 @@
       "name": "2 (Compliance/2290) \u2014 Form 2290 deadline off-by-one during August",
       "wave": "LOW",
       "type": "LOW",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Use month>7 (or nearest-future Aug 31)."
+      "notes": "Use month>7 (or nearest-future Aug 31).",
+      "pr": 2036,
+      "done_ct": "2026-07-05 05:15 CT",
+      "verified": "session-2026-07-05"
     },
     {
       "id": "C1",
@@ -2544,24 +2619,30 @@
       "name": "4 (Cross-entity/PII) \u2014 Two bypass reads of drivers by PK only",
       "wave": "LOW",
       "type": "LOW",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Add AND operating_company_id = $2."
+      "notes": "Add AND operating_company_id = $2.",
+      "pr": 2037,
+      "done_ct": "2026-07-05 05:15 CT",
+      "verified": "session-2026-07-05"
     },
     {
       "id": "D1",
       "name": "5 (Customers) \u2014 customer_type not enforced client-side",
       "wave": "LOW",
       "type": "LOW",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Mark the field required client-side + block empty before request."
+      "notes": "Mark the field required client-side + block empty before request.",
+      "pr": 2061,
+      "done_ct": "2026-07-05 05:10 CT",
+      "verified": "session-2026-07-05"
     },
     {
       "id": "D2",
