@@ -45,7 +45,7 @@ export function HomeFleetRestoreCard({ operatingCompanyId }: Props) {
           </p>
         </div>
         <Link
-          to="/maintenance/severe-repair-oos"
+          to="/maintenance/severe-repairs"
           className="shrink-0 rounded-sm bg-slate-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-600"
         >
           View OOS estimates

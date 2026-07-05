@@ -16,6 +16,7 @@ import { NamesMasterHub } from "../pages/lists/names/NamesMasterHub";
 import { BrokersListPage } from "../pages/lists/names/BrokersListPage";
 import { DriverDetailPage } from "../pages/DriverDetail";
 import { DriverProfilePage } from "../pages/drivers/DriverProfilePage";
+import { DriverLayoverHistoryPage } from "../pages/drivers/DriverLayoverHistoryPage";
 import { DriverHosDetailPage } from "../pages/drivers/DriverHosDetailPage";
 import { MessagesInboxPage } from "../pages/drivers/MessagesInboxPage";
 import { DocumentAlertsPage } from "../pages/alerts/DocumentAlertsPage";
@@ -59,6 +60,7 @@ import { PortalLoadDetailPage } from "../portal/PortalLoadDetailPage";
 import { PortalProfilePage } from "../portal/PortalProfilePage";
 import { PortalRouteGuard } from "../portal/PortalRouteGuard";
 import { FuelPlannerHomePage, type FuelTabId } from "../pages/fuel/FuelPlannerHome";
+import { FraudAlertsListPage } from "../pages/fuel/fraud-alerts/FraudAlertsList";
 import { BankingHomePage } from "../pages/banking/BankingHome";
 import { TransfersListPage } from "../pages/banking/TransfersListPage";
 import { BankingObligationReconcilePage } from "../pages/banking/BankingObligationReconcilePage";
@@ -1073,6 +1075,14 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route
+          path="/dispatch/layovers/driver/:driverId"
+          element={
+            <ProtectedRoute>
+              <DriverLayoverHistoryPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/dispatch/factoring-packets"
           element={
             <ProtectedRoute>
@@ -1149,6 +1159,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <FuelTabRoute tabId="compliance" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/fuel/fraud-alerts"
+          element={
+            <ProtectedRoute>
+              <FraudAlertsListPage />
             </ProtectedRoute>
           }
         />

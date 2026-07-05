@@ -92,6 +92,7 @@
     "verify:phantom-relations:list": "node scripts/verify-phantom-relations.mjs --list",
     "verify:phantom-relations:test": "node --test scripts/__tests__/verify-phantom-relations.test.mjs",
     "verify:no-orphan-routes": "node scripts/verify-no-orphan-routes.mjs",
+    "verify:c1-3-button-targets-routed": "node scripts/verify-c1-3-button-targets-routed.mjs",
     "verify:enum-literals": "node scripts/verify-enum-literals.mjs",
     "verify:test-insert-columns": "node scripts/verify-test-insert-columns.mjs",
     "verify:schema-usage-grants": "node scripts/verify-schema-usage-grants.mjs",
