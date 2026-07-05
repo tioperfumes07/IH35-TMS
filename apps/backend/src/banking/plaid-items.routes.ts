@@ -5,6 +5,7 @@ import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope 
 import { requireAuth } from "../auth/session-middleware.js";
 import { getPlaidClient } from "../integrations/plaid/plaid-client.js";
 import { handleItemError, syncTransactions } from "../integrations/plaid/plaid.service.js";
+import { decryptPlaidAccessToken } from "../integrations/plaid/plaid-token-crypto.js";
 import { plaidManualSyncErrorResponse } from "../integrations/plaid/plaid-sync-state.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
@@ -138,7 +139,8 @@ export async function registerPlaidBankingItemsRoutes(app: FastifyInstance) {
           [body.data.operating_company_id, params.data.itemId]
         );
 
-        const token = accessRes.rows[0]?.token ?? null;
+        // G10-H5: decrypt at rest (backward-compatible with legacy plaintext rows).
+        const token = decryptPlaidAccessToken(accessRes.rows[0]?.token ?? null);
         if (token) {
           await getPlaidClient().itemRemove({ access_token: token });
         }

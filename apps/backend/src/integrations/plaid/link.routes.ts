@@ -5,6 +5,7 @@ import { withCurrentUser, withLuciaBypass } from "../../auth/db.js";
 import { requireAuth } from "../../auth/session-middleware.js";
 import { createLinkToken, createUpdateModeLinkToken, exchangePublicToken } from "./plaid.service.js";
 import { getPlaidClient } from "./plaid-client.js";
+import { decryptPlaidAccessToken } from "./plaid-token-crypto.js";
 import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
 
 const ownerAdminRoles = new Set(["Owner", "Administrator"]);
@@ -326,7 +327,8 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
           `,
           [account.plaid_item_id, body.data.operating_company_id]
         );
-        const accessToken = tokenRes.rows[0]?.plaid_access_token ?? null;
+        // G10-H5: decrypt at rest (backward-compatible with legacy plaintext rows).
+        const accessToken = decryptPlaidAccessToken(tokenRes.rows[0]?.plaid_access_token ?? null);
         if (accessToken) {
           try {
             // CI-ALLOWLIST: registerPlaidLinkRoutes invokes Plaid item revoke in request path for explicit user disconnect intent — see DS-AUDIT-B-016.
@@ -411,7 +413,8 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
         `,
         [body.data.plaid_item_id, body.data.operating_company_id]
       );
-      const accessToken = tokenRes.rows[0]?.plaid_access_token ?? null;
+      // G10-H5: decrypt at rest (backward-compatible with legacy plaintext rows).
+      const accessToken = decryptPlaidAccessToken(tokenRes.rows[0]?.plaid_access_token ?? null);
       if (accessToken) {
         try {
           // CI-ALLOWLIST: registerPlaidLinkRoutes invokes Plaid item revoke in request path for explicit user disconnect intent — see DS-AUDIT-B-016.

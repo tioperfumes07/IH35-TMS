@@ -19,6 +19,7 @@ import {
 import { withCircuitBreaker } from "../../lib/circuit-breaker/index.js";
 import { getPlaidClient, getPlaidEnvForAudit } from "./plaid-client.js";
 import { markPlaidItemSyncSucceeded } from "./plaid-sync-state.js";
+import { decryptPlaidAccessToken, encryptPlaidAccessToken } from "./plaid-token-crypto.js";
 
 type SyncCounts = {
   added: number;
@@ -201,7 +202,8 @@ export async function createUpdateModeLinkToken(userId: string, operatingCompany
       `,
       [operatingCompanyId, plaidItemId]
     );
-    return res.rows[0]?.t ?? null;
+    // G10-H5: decrypt at rest (backward-compatible with legacy plaintext rows).
+    return decryptPlaidAccessToken(res.rows[0]?.t ?? null);
   });
 
   if (!accessToken) {
@@ -246,6 +248,9 @@ export async function exchangePublicToken(publicToken: string, operatingCompanyI
   const plaid = getPlaidClient();
   const exchange = await withPlaidCircuit(() => plaid.itemPublicTokenExchange({ public_token: publicToken }));
   const accessToken = exchange.data.access_token;
+  // G10-H5: never persist the raw token. Encrypt at rest (AES-256-GCM via lib/encryption.ts);
+  // the plaintext `accessToken` is used ONLY for the in-memory Plaid API calls below.
+  const accessTokenEncrypted = encryptPlaidAccessToken(accessToken);
   const itemId = exchange.data.item_id;
   const accountsResponse = await withPlaidCircuit(() => plaid.accountsGet({ access_token: accessToken }));
 
@@ -318,7 +323,7 @@ export async function exchangePublicToken(publicToken: string, operatingCompanyI
           [
             accountId,
             itemId,
-            accessToken,
+            accessTokenEncrypted,
             institutionName,
             accountName,
             accountType,
@@ -367,7 +372,7 @@ export async function exchangePublicToken(publicToken: string, operatingCompanyI
           [
             operatingCompanyId,
             itemId,
-            accessToken,
+            accessTokenEncrypted,
             account.account_id,
             institutionName,
             accountName,
@@ -489,7 +494,10 @@ export async function syncTransactions(itemId: string) {
       autoCategorizeUnmatched: 0,
     } satisfies SyncCounts;
   }
-  const accessToken = accountRows.find((row) => row.plaid_access_token)?.plaid_access_token;
+  // G10-H5: decrypt at rest (backward-compatible with legacy plaintext rows).
+  const accessToken = decryptPlaidAccessToken(
+    accountRows.find((row) => row.plaid_access_token)?.plaid_access_token ?? null
+  );
   if (!accessToken) throw new Error("plaid_access_token_missing_for_item");
 
   const accountByPlaidId = new Map<string, { id: string; operating_company_id: string }>();
@@ -737,8 +745,10 @@ export async function getAccountBalance(bankAccountId: string) {
   if (!account || !account.plaid_access_token || !account.plaid_account_id) {
     throw new Error("bank_account_not_linked");
   }
-  const plaidAccessToken = account.plaid_access_token;
+  // G10-H5: decrypt at rest (backward-compatible with legacy plaintext rows).
+  const plaidAccessToken = decryptPlaidAccessToken(account.plaid_access_token);
   const plaidAccountId = account.plaid_account_id;
+  if (!plaidAccessToken) throw new Error("bank_account_not_linked");
 
   const response = await withPlaidCircuit(() =>
     plaid.accountsBalanceGet({
