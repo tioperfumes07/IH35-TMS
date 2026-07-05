@@ -51,6 +51,16 @@ are pointed to Section C.
 
 ## C. GATED / HOLD BUILDS (specced or built behind OFF flags — awaiting JORGE-APPROVED / go)
 
+- **Owner-Operator settlement engine (future — IH35 has no owner-operators today).** The
+  `owner_operator_lease_agreement` FMCSA-Part-376 legal template is registered (design/template only,
+  no posting code). When owner-operators are onboarded, the settlement engine differs from the
+  existing hired-driver path: (1) owner-operator pay posts to **Purchased Transportation** expense,
+  NOT the "Cost of Labor–Mexico Drivers" Contract-Labor account used for hired drivers; (2) the truck
+  is the **owner-operator's own asset**, not TRK's (no TRK depreciation/lease-income entry); (3) the
+  Part-376 escrow/maintenance-reserve fund must be returned **no later than 45 days** after
+  termination, with quarterly interest at ≥ the 91-day T-bill yield and an itemized accounting —
+  same escrow-liability shape as driver escrow but a distinct FMCSA-mandated deadline. Build-and-hold
+  only when owner-operators are actually onboarded; never build posting logic solo.
 - **IMPORT-P0b** entity-push kill-switch — ✅ MERGED + DEPLOYED (#1802, prod 06b0975); flag
   `QBO_ENTITY_PUSH_ENABLED` seeded default OFF. factoring_advance folded into the JE gate (decision #1).
 - **DOC-REQ (required documents, decision #6):** DOC-REQ-1 (migration: `compliance.required_document_types`

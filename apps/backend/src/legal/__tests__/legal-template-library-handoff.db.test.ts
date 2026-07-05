@@ -7,7 +7,9 @@
  * lease-to-own-fleet.db.test.ts.
  *
  * Asserts the Phase-2/3/4/5 acceptance criteria:
- *  - seed inserts 7 active templates; re-run adds zero (idempotent), never mutates status.
+ *  - seed inserts 8 active templates (7 Carl Barto docx templates + the hand-authored
+ *    owner_operator_lease_agreement future-use draft); re-run adds zero (idempotent), never
+ *    mutates status.
  *  - draft preview creates NO contract instance.
  *  - signed driver_deduction_auth -> driver + deduction_schedule links + DQ doc;
  *    hasSignedDeductionAuthorization() returns true.
@@ -66,10 +68,10 @@ describeIntegration("legal template library + Option-B handoff (real Postgres)",
     if (db) await db.end();
   });
 
-  it("seeds 7 active templates idempotently and never mutates status on re-run", async () => {
+  it("seeds 8 active templates idempotently and never mutates status on re-run", async () => {
     await withBypass(async () => {
       const first = await ensureLegalTemplateLibrary(db, { operatingCompanyId: companyId, actorUserId: actorId });
-      expect(first.total).toBe(7);
+      expect(first.total).toBe(8);
       const active = await db.query(
         `SELECT count(*)::int AS n FROM legal.contract_templates
          WHERE operating_company_id=$1 AND status='active'
@@ -84,15 +86,16 @@ describeIntegration("legal template library + Option-B handoff (real Postgres)",
             "nda_ebt_confidentiality",
             "nda_chatgpt_full",
             "nda_polished_full",
+            "owner_operator_lease_agreement",
           ],
         ]
       );
-      expect(active.rows[0].n).toBe(7);
+      expect(active.rows[0].n).toBe(8);
 
       // Re-run: zero new rows.
       const second = await ensureLegalTemplateLibrary(db, { operatingCompanyId: companyId, actorUserId: actorId });
       expect(second.inserted).toBe(0);
-      expect(second.already_present).toBe(7);
+      expect(second.already_present).toBe(8);
     });
   });
 
