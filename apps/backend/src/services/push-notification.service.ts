@@ -107,9 +107,10 @@ export async function notifyLoadAssigned(input: {
         SELECT identity_user_id, phone, first_name, last_name
         FROM mdata.drivers
         WHERE id = $1
+          AND operating_company_id = $2
         LIMIT 1
       `,
-      [input.driverId]
+      [input.driverId, input.operatingCompanyId]
     );
     const row = res.rows[0];
     if (!row?.identity_user_id) return;
