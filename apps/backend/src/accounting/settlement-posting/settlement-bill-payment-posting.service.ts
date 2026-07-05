@@ -27,12 +27,12 @@
 // vendor -> deduction JE) + driver_settlement_gl_bills (settlement -> each driver_bill -> load ->
 // accounting.bills -> bill JE -> cash + non-cash bill_payments) — forward + reverse, no orphans.
 //
-// FOUNDATION-PR NOTE: this branch is cut from origin/main. Once the "per-driver account foundation" PR
-// lands (accounting.escrow_accounts.coa_account_id holder=driver + the cash-advance link table), the
-// driver sub-account resolver below prefers those stored ids; today it resolves the SAME per-driver
-// sub-accounts by their canonical provisioned NAME (driver-subaccount-provision) and FAILS LOUD when a
-// driver's own sub-account is not provisioned (never credits the shared recovery account for
-// advance/escrow, never guesses).
+// PER-DRIVER ACCOUNT RESOLUTION: the driver sub-account resolver below reads the driver-keyed
+// bridge-links — escrow via accounting.escrow_accounts (holder=driver, migration 0234), advance via
+// driver_finance.driver_advance_accounts (PK operating_company_id+driver_id). Both are deterministic,
+// driver-keyed lookups (NOT name resolution, which could shadow the wrong per-driver account and is a
+// GL-correctness defect). The resolver FAILS LOUD when a driver's own sub-account bridge is not
+// provisioned (never credits the shared recovery account for advance/escrow, never guesses).
 
 import { withCurrentUser } from "../../auth/db.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
@@ -42,11 +42,8 @@ import { createJournalEntry } from "../journal-entries.service.js";
 import { postSourceTransaction, reversePostedSourceTransaction } from "../posting-engine.service.js";
 import { resolveRoleAccountOptional } from "../coa-roles/resolver.service.js";
 import {
-  DRIVER_ADVANCE_PARENT_NAME,
-  driverAdvanceSubAccountName,
   driverEscrowSubAccountName,
   planDriverEscrowSubAccount,
-  planDriverSubAccount,
 } from "../driver-subaccount-provision.service.js";
 import {
   SETTLEMENT_GL_POSTING_FLAG_KEY,
@@ -162,10 +159,12 @@ async function resolveDipBankAccountId(client: DbClient, operatingCompanyId: str
 }
 
 /**
- * The driver's OWN per-driver sub-account (blueprint §4). Prefers the foundation-stored id
- * (accounting.escrow_accounts holder=driver for escrow) when present, else the canonical provisioned
- * NAME (driver-subaccount-provision). NEVER returns the shared recovery/default account — advance and
- * escrow credits must land on the driver's OWN asset/liability sub-account or FAIL LOUD.
+ * The driver's OWN per-driver sub-account (blueprint §4), resolved by the driver-keyed bridge-link:
+ * escrow via accounting.escrow_accounts (holder=driver), advance via driver_finance.driver_advance_accounts
+ * (PK operating_company_id+driver_id). NEVER returns the shared recovery/default account — advance and
+ * escrow credits must land on the driver's OWN asset/liability sub-account or FAIL LOUD (returns null so
+ * the caller throws). Escrow keeps a canonical-NAME fallback (two-level nesting) for its pre-bridge path;
+ * advance is bridge-only (name resolution could shadow the wrong per-driver account).
  */
 async function resolveDriverOwnAccount(
   client: DbClient,
@@ -204,15 +203,37 @@ async function resolveDriverOwnAccount(
     if (plan.action === "skip_exists") return plan.existingId;
     return null;
   }
-  // Canonical provisioned per-driver sub-account, resolved by its stable business name (flat, single-level).
-  const subAccountName = driverAdvanceSubAccountName(driverName);
-  const plan = await planDriverSubAccount(client, {
-    parentName: DRIVER_ADVANCE_PARENT_NAME,
-    parentType: "Asset",
-    subAccountName,
-    operatingCompanyId,
-  });
-  if (plan.action === "skip_exists") return plan.existingId;
+  // ADVANCE — SYMMETRIC with escrow: resolve the driver's OWN Cash-Advance ASSET sub-account by the
+  // driver-keyed bridge-link driver_finance.driver_advance_accounts (PK operating_company_id+driver_id),
+  // NOT by name. Resolving by name went through resolveCanonicalParentAccount's OLDEST-match ORDER BY
+  // created_at, so a residual/shadow "Driver Cash Advance" parent could shadow the driver's real advance
+  // account — crediting the WRONG account (a GL-correctness defect; flaky in CI). The bridge is a
+  // deterministic, driver-keyed lookup (mirrors accounting.escrow_accounts). Guarded with to_regclass so
+  // it is safe before the migration runs. FAIL LOUD (return null -> caller throws
+  // DRIVER_ADVANCE_ACCOUNT_MISSING) when the bridge row is absent — NEVER fall back to name resolution,
+  // NEVER silently pick an account.
+  const reg = await client.query<{ ok: boolean }>(
+    `SELECT to_regclass('driver_finance.driver_advance_accounts') IS NOT NULL AS ok`
+  );
+  if (reg.rows[0]?.ok) {
+    const found = await client.query<{ account_id: string }>(
+      `
+        SELECT daa.coa_account_id::text AS account_id
+        FROM driver_finance.driver_advance_accounts daa
+        JOIN catalogs.accounts a ON a.id = daa.coa_account_id
+        WHERE daa.operating_company_id = $1::uuid
+          AND daa.driver_id = $2::uuid
+          AND daa.is_active = true
+          AND a.parent_account_id IS NOT NULL      -- a per-driver SUB-account, never the shared parent
+          AND a.deactivated_at IS NULL
+          AND a.is_postable = true
+          AND a.operating_company_id = $1::uuid
+        LIMIT 1
+      `,
+      [operatingCompanyId, driverId]
+    );
+    if (found.rows[0]?.account_id) return found.rows[0].account_id;
+  }
   return null;
 }
 
