@@ -44,23 +44,29 @@ export async function buildExhibitD(
   client: ExhibitQueryClient,
   input: ExhibitPeriod
 ): Promise<ExhibitD> {
-  const res = await client.query<{ disbursements: string }>(
+  // REAL schema (db/migrations/0072,0073). Disbursements base for the U.S. Trustee quarterly fee
+  // (28 U.S.C. § 1930(a)(6)) = money OUT = is_credit=false, summed via abs(amount_cents). GROUP ON
+  // is_credit (NOT the Plaid-signed amount) and exclude own-transfers (mirrors
+  // bank-feed-gl-posting.service.ts:155). NO .catch(): the prior zero-swallow directly UNDERSTATED
+  // the statutory fee — it must FAIL LOUD instead of quietly filing $0.
+  const res = await client.query<{ disbursements_cents: string }>(
     `
-      SELECT COALESCE(SUM(abs(bt.amount)), 0)::numeric AS disbursements
+      SELECT COALESCE(SUM(CASE WHEN NOT bt.is_credit THEN abs(bt.amount_cents) END), 0)::bigint AS disbursements_cents
       FROM banking.bank_transactions bt
-      JOIN banking.bank_accounts a ON a.id = bt.account_id
+      JOIN banking.bank_accounts a ON a.id = bt.bank_account_id
       WHERE bt.operating_company_id = $1
-        AND a.is_dip = true
         AND COALESCE(a.account_type, '') NOT LIKE 'virtual_%'
-        AND COALESCE(a.tag, '') NOT IN ('Factoring', 'Escrow')
-        AND bt.amount < 0
-        AND bt.txn_date >= $2::date
-        AND bt.txn_date <= $3::date
+        AND bt.is_credit = false
+        AND bt.transaction_date >= $2::date
+        AND bt.transaction_date <= $3::date
+        AND bt.review_state IS DISTINCT FROM 'transfer'
+        AND bt.transfer_kind IS NULL
+        AND bt.destination_bank_account_id IS NULL
     `,
     [input.operating_company_id, input.period_start, input.period_end]
-  ).catch(() => ({ rows: [{ disbursements: "0" }] }));
+  );
 
-  const quarterly_disbursements_cents = Math.round(Number(res.rows[0]?.disbursements ?? 0) * 100);
+  const quarterly_disbursements_cents = Math.trunc(Number(res.rows[0]?.disbursements_cents ?? 0));
   const { fee_cents, tier_label } = calculateUsTrusteeQuarterlyFeeCents(quarterly_disbursements_cents);
 
   return {

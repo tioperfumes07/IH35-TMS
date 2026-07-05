@@ -28,30 +28,39 @@ export async function buildExhibitA(
   client: ExhibitQueryClient,
   input: ExhibitPeriod
 ): Promise<ExhibitA> {
+  // REAL schema (db/migrations/0072,0073): amount_cents (bigint, signed-Plaid), bank_account_id,
+  // transaction_date, merchant_name, is_credit. Receipts = money IN = is_credit=true. We GROUP ON
+  // is_credit (the canonical direction flag the GL poster trusts), NEVER the amount_cents sign —
+  // amount_cents is stored on the Plaid convention (negative = deposit) so a sign test would file
+  // receipts/disbursements SWAPPED on the court MOR. Magnitude via abs(amount_cents).
+  // Own-transfers between the debtor's own accounts are excluded (mirrors bank-feed-gl-posting
+  // service.ts:155 — review_state='transfer' / transfer_kind / destination_bank_account_id).
+  // NO .catch(): a broken query must FAIL LOUD, never silently render a blank court exhibit.
   const res = await client.query<{
     description: string;
     counterparty: string | null;
-    amount: string;
+    amount_cents: string;
   }>(
     `
-      SELECT bt.description, bt.counterparty_name AS counterparty, bt.amount::numeric AS amount
+      SELECT bt.description, bt.merchant_name AS counterparty, abs(bt.amount_cents)::bigint AS amount_cents
       FROM banking.bank_transactions bt
-      JOIN banking.bank_accounts a ON a.id = bt.account_id
+      JOIN banking.bank_accounts a ON a.id = bt.bank_account_id
       WHERE bt.operating_company_id = $1
-        AND a.is_dip = true
         AND COALESCE(a.account_type, '') NOT LIKE 'virtual_%'
-        AND COALESCE(a.tag, '') NOT IN ('Factoring', 'Escrow')
-        AND bt.amount > 0
-        AND bt.txn_date >= $2::date
-        AND bt.txn_date <= $3::date
+        AND bt.is_credit = true
+        AND bt.transaction_date >= $2::date
+        AND bt.transaction_date <= $3::date
+        AND bt.review_state IS DISTINCT FROM 'transfer'
+        AND bt.transfer_kind IS NULL
+        AND bt.destination_bank_account_id IS NULL
     `,
     [input.operating_company_id, input.period_start, input.period_end]
-  ).catch(() => ({ rows: [] }));
+  );
 
   const buckets = new Map<string, { amount_cents: number; txn_count: number }>();
   for (const row of res.rows) {
     const source = classifyReceiptSource(String(row.description ?? ""), row.counterparty ? String(row.counterparty) : null);
-    const cents = Math.round(Number(row.amount ?? 0) * 100);
+    const cents = Math.trunc(Number(row.amount_cents ?? 0));
     const prev = buckets.get(source) ?? { amount_cents: 0, txn_count: 0 };
     buckets.set(source, { amount_cents: prev.amount_cents + cents, txn_count: prev.txn_count + 1 });
   }

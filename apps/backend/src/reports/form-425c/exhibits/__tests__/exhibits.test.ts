@@ -15,22 +15,28 @@ vi.mock("../../../shared.js", async () => {
     withCompanyScope: vi.fn(async (_userId: string, _companyId: string, fn: (client: any) => Promise<any>) => {
       const client = {
         query: vi.fn(async (sql: string) => {
-          if (sql.includes("banking.bank_transactions") && sql.includes("bt.amount > 0")) {
+          // Real schema (0072/0073): amount_cents (bigint), is_credit direction flag. These mocks match
+          // the REAL identifiers the fix now emits — the phantom `bt.amount`/`bt.txn_date` are gone.
+          // Exhibit A — receipts (is_credit = true), amounts in CENTS.
+          if (sql.includes("banking.bank_transactions") && sql.includes("bt.is_credit = true")) {
             return {
               rows: [
-                { description: "Customer payment", counterparty: "ACME Freight", amount: "1500.25" },
-                { description: "Factor advance", counterparty: "Triumph", amount: "800" },
+                { description: "Customer payment", counterparty: "ACME Freight", amount_cents: "150025" },
+                { description: "Factor advance", counterparty: "Triumph", amount_cents: "80000" },
               ],
             };
           }
-          if (sql.includes("banking.bank_transactions") && sql.includes("bt.amount < 0") && sql.includes("disbursements")) {
-            return { rows: [{ disbursements: "250000" }] };
+          // Exhibit D — quarterly-fee disbursements base (is_credit = false), summed to *_cents.
+          if (sql.includes("banking.bank_transactions") && sql.includes("disbursements_cents")) {
+            return { rows: [{ disbursements_cents: "25000000" }] };
           }
-          if (sql.includes("banking.bank_transactions") && sql.includes("bt.amount < 0")) {
+          // Exhibit B — disbursements detail (is_credit = false), amounts in CENTS.
+          if (sql.includes("banking.bank_transactions") && sql.includes("bt.is_credit = false")) {
             return {
-              rows: [{ description: "Fuel purchase", counterparty: "Pilot", amount: "420.50" }],
+              rows: [{ description: "Fuel purchase", counterparty: "Pilot", amount_cents: "42050" }],
             };
           }
+          // Exhibit C — per-account reconciliation (inflows/outflows via CASE WHEN bt.is_credit).
           if (sql.includes("banking.bank_accounts")) {
             return {
               rows: [
@@ -38,9 +44,8 @@ vi.mock("../../../shared.js", async () => {
                   id: "11111111-1111-4111-8111-111111111111",
                   name: "DIP Operating",
                   mask: "3500",
-                  opening_balance: "10000",
-                  inflows: "5000",
-                  outflows: "2000",
+                  inflows: "500000",
+                  outflows: "200000",
                 },
               ],
             };
