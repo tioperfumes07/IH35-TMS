@@ -646,6 +646,7 @@
     "verify:no-bulk-default-classifications": "node scripts/verify-no-bulk-default-classifications.mjs",
     "verify:plaid-status-derived-from-state": "node scripts/verify-plaid-status-derived-from-state.mjs",
     "verify:plaid-cron-registered": "node scripts/verify-plaid-cron-registered.mjs",
+    "verify:plaid-token-encrypted-at-rest": "node scripts/verify-plaid-token-encrypted-at-rest.mjs",
     "verify:ifta-aggregator-determinism": "node scripts/verify-ifta-aggregator-determinism.mjs",
     "verify:ifta-tax-rates-current": "node scripts/verify-ifta-tax-rates-current.mjs",
     "verify:ifta-quarterly-preparer": "node scripts/verify-ifta-quarterly-preparer.mjs",

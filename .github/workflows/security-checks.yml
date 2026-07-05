@@ -56,6 +56,9 @@ jobs:
       - name: Build driver PWA bundles (secrets scan)
         run: npm run build:driver-pwa
 
+      - name: CI guard — Plaid access token encrypted at rest (G10-H5)
+        run: node scripts/verify-plaid-token-encrypted-at-rest.mjs
+
       - name: RLS policy audit
         run: node scripts/sec-audit-rls-policies.mjs
 
