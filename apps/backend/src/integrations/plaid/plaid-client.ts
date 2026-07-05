@@ -1,7 +1,9 @@
 import { Configuration, PlaidApi, PlaidEnvironments } from "plaid";
 import { withCircuitBreaker } from "../../lib/circuit-breaker/index.js";
 
-type PlaidEnv = "sandbox" | "development" | "production";
+// Plaid retired the `development` environment (SDK exports only sandbox/production).
+// Reject it (and any other unknown value) fail-loud rather than silently hitting a dead endpoint.
+type PlaidEnv = "sandbox" | "production";
 
 let cachedClient: PlaidApi | null = null;
 let initializedEnv: PlaidEnv | null = null;
@@ -9,17 +11,18 @@ let initializedEnv: PlaidEnv | null = null;
 function resolvePlaidEnv(): PlaidEnv {
   const envRaw = (process.env.PLAID_ENV ?? "").trim().toLowerCase();
   if (!envRaw) {
-    throw new Error("PLAID_ENV is required (sandbox|development|production)");
+    throw new Error("PLAID_ENV is required (sandbox|production)");
   }
-  if (envRaw !== "sandbox" && envRaw !== "development" && envRaw !== "production") {
-    throw new Error(`Unsupported PLAID_ENV value: ${envRaw}`);
+  if (envRaw !== "sandbox" && envRaw !== "production") {
+    throw new Error(
+      `Unsupported PLAID_ENV value: ${envRaw} (valid: sandbox|production; 'development' was retired by Plaid)`,
+    );
   }
   return envRaw;
 }
 
 function resolveBasePath(env: PlaidEnv) {
   if (env === "production") return PlaidEnvironments.production;
-  if (env === "development") return PlaidEnvironments.development;
   return PlaidEnvironments.sandbox;
 }
 

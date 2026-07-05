@@ -4,7 +4,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { issueDriverTokenPair } from "../driver/driver-jwt.js";
 import { enforceAuthPhoneStartLimits, enforceAuthPhoneVerifyLimits } from "../middleware/rate-limit.js";
 import { withLuciaBypass } from "./db.js";
-import { lucia } from "./lucia.js";
+import { createSessionCookie } from "./session-provider.js";
 import { createSessionWithLastLogin } from "./session-create.js";
 import { setLuciaSessionCookie } from "./session-cookie-policy.js";
 import { checkVerification, getTwilioClient, isTwilioVerifyConfigured, startVerification, type TwilioChannel } from "./twilio-verify.js";
@@ -232,7 +232,7 @@ export async function registerPhoneAuthRoutes(app: FastifyInstance) {
     });
 
     const session = await createSessionWithLastLogin(user.id, {});
-    const sessionCookie = lucia.createSessionCookie(session.id);
+    const sessionCookie = createSessionCookie(session.id);
     setLuciaSessionCookie(reply, sessionCookie);
     const driverAuth = user.role === "Driver" ? issueDriverTokenPair(String(user.id), "Driver") : null;
     return reply.code(200).send({

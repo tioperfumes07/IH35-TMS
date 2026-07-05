@@ -7,6 +7,7 @@ import * as Sentry from "@sentry/node";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { getObjectBytes } from "../storage/r2-client.js";
 import { extractRateConPdf, RateConTooLargeError } from "./ratecon-extract.service.js";
@@ -71,7 +72,8 @@ export async function registerRateConExtractRoutes(app: FastifyInstance) {
       const { operating_company_id: opco, file_id } = body.data;
 
       try {
-        return await withCurrentUser(user.uuid, async (client) => {
+        await assertCompanyMembership(user.uuid, opco);
+      return await withCurrentUser(user.uuid, async (client) => {
           await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [opco]);
 
           // Kill-switch: OFF → 409, no Anthropic call, no behavior.

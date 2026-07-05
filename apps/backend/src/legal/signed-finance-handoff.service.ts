@@ -22,11 +22,47 @@ type QueryableClient = {
   query: (query: string, values?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }>;
 };
 
-// Driver deduction authorization templates (consent for settlement deductions, FLSA).
+// Driver deduction authorization templates (legacy/standalone consent for settlement
+// deductions, FLSA). Per the owner-LOCKED decision (2026-07-04/2026-07-05 — memory
+// audit-fix-decisions-2026-07-04 §F + finance-build-directive-and-driver-model): there is
+// NO separate driver-facing deduction-authorization e-sign. These codes are retained only
+// so any pre-existing signed instance still satisfies the gate; the PRIMARY authorizing
+// document is the signed HIRE CONTRACT below (see isHireContractTemplateCode).
 const DEDUCTION_AUTH_TEMPLATE_CODES = [
   "driver_deduction_auth",
   "driver_deduction_authorization",
 ];
+
+// HIRE-CONTRACT template codes — the OWNER-LOCKED authorizing document for payroll/settlement
+// deductions. Lock (Jorge): "the signed hire contract authorizes payroll deductions → satisfy
+// the CONSENT_MISSING gate on that basis; do NOT build a separate driver e-sign flow. The
+// hire-contract template gets built in the Legal module later and carries the authorization
+// for new drivers." That future Legal build MUST register its driver hire/employment agreement
+// under one of these codes (or add its code HERE) or the deduction-consent gate stays
+// fail-closed. Matched like isLeaseTemplateCode: explicit canonical codes + a `driver_hire_`
+// convention prefix. NDAs (nda_*) are category='employment' but are NOT hire contracts and are
+// deliberately EXCLUDED — an NDA must never authorize a payroll deduction.
+// The v1 hiring agreement (`driver_hire_agreement`) and the v2 cross-border contractor
+// agreement (`driver_hire_agreement_v2`) both carry the standing written deduction
+// authorization — v2 is caught by the `driver_hire_` prefix convention below, so it does not
+// need its own explicit entry; v1 stays registered and recognized for already-signed instances.
+const HIRE_CONTRACT_TEMPLATE_CODES = [
+  "driver_hire_contract",
+  "driver_hire_agreement",
+  "driver_employment_agreement",
+  "driver_master_agreement",
+];
+
+function isHireContractTemplateCode(code: string): boolean {
+  return HIRE_CONTRACT_TEMPLATE_CODES.includes(code) || code.startsWith("driver_hire");
+}
+
+// A signed instance of ANY of these template codes authorizes settlement/payroll deductions
+// for the driver who signed it. Hire contract is the primary path; the legacy standalone
+// deduction-auth codes remain accepted for backward compatibility.
+function authorizesDeductions(code: string): boolean {
+  return isHireContractTemplateCode(code) || DEDUCTION_AUTH_TEMPLATE_CODES.includes(code);
+}
 
 function isLeaseTemplateCode(code: string): boolean {
   return code.startsWith("lease_") || code === "truck_lease" || code === "lease_to_own";
@@ -86,7 +122,12 @@ export async function applySignedFinanceHandoff(
   const actor = args.actorUserId ?? instance.created_by_user_id;
 
   // --- Deduction authorization consent handoff (FIN-18 consumes the gate) ---
-  if (DEDUCTION_AUTH_TEMPLATE_CODES.includes(instance.template_code) && instance.signer_type === "driver" && instance.signer_entity_id) {
+  // Fires for the signed HIRE CONTRACT (primary, owner-locked authorizing document) OR a legacy
+  // standalone deduction-auth instance. Writes the driver -> signed-contract -> deduction_schedule
+  // link (Law of the Land: wired both directions — forward via idx_..._instance, reverse via
+  // idx_..._target so "what signed contract authorizes this driver's deductions?" is answerable).
+  if (authorizesDeductions(instance.template_code) && instance.signer_type === "driver" && instance.signer_entity_id) {
+    const viaHireContract = isHireContractTemplateCode(instance.template_code);
     await writeContractInstanceLink(client, {
       operatingCompanyId: args.operatingCompanyId,
       contractInstanceId: instance.id,
@@ -95,13 +136,19 @@ export async function applySignedFinanceHandoff(
       targetTable: "drivers",
       targetId: instance.signer_entity_id,
       actorUserId: actor,
-      notes: "Signed FLSA deduction authorization — consent gate for FIN-18 settlement posting",
+      notes: viaHireContract
+        ? "Signed hire contract — payroll/settlement deduction authorization (consent gate for FIN-18)"
+        : "Signed FLSA deduction authorization — consent gate for FIN-18 settlement posting",
     });
     await appendContractAuditLog(client, {
       operatingCompanyId: args.operatingCompanyId,
       contractInstanceId: instance.id,
       eventType: "contract_deduction_consent_recorded",
-      eventPayload: { driver_id: instance.signer_entity_id, template_code: instance.template_code },
+      eventPayload: {
+        driver_id: instance.signer_entity_id,
+        template_code: instance.template_code,
+        via_hire_contract: viaHireContract,
+      },
       actorUserId: actor,
     });
     return { handoff: "deduction_schedule" };
@@ -165,25 +212,30 @@ export async function applySignedFinanceHandoff(
   return { handoff: null };
 }
 
-// Consent gate consumed by FIN-18: is there an active signed deduction authorization
-// on file for this driver? FIN-18 MUST call this and block any deduction post if false.
+// Consent gate consumed by FIN-18: does this driver have a signed authorizing document on
+// file for payroll/settlement deductions? Per owner lock, that authorizing document is the
+// driver's SIGNED HIRE CONTRACT (a legacy standalone deduction-auth instance also qualifies).
+// FIN-18 / recover-from-driver MUST call this and block any deduction post if false.
+//
+// FAIL-CLOSED by design: a driver with NO signed authorizing contract returns false and no
+// deduction posts (correct — an unsigned driver must not be charged). Matching is done in JS
+// (not a fixed SQL `= ANY`) so the `driver_hire_` convention prefix is honored the same way
+// the handoff recognizes it — one predicate, one source of truth.
 export async function hasSignedDeductionAuthorization(
   client: QueryableClient,
   args: { operatingCompanyId: string; driverId: string }
 ): Promise<boolean> {
   const res = await client.query(
     `
-      SELECT 1
+      SELECT ci.template_code
       FROM legal.contract_instances ci
       WHERE ci.operating_company_id = $1
         AND ci.signer_type = 'driver'
         AND ci.signer_entity_id = $2
         AND ci.status = 'signed_electronically'
         AND ci.voided_at IS NULL
-        AND ci.template_code = ANY($3)
-      LIMIT 1
     `,
-    [args.operatingCompanyId, args.driverId, DEDUCTION_AUTH_TEMPLATE_CODES]
+    [args.operatingCompanyId, args.driverId]
   );
-  return res.rows.length > 0;
+  return res.rows.some((r) => authorizesDeductions(String(r.template_code)));
 }

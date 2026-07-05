@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as complianceApi from "../../../api/compliance";
@@ -43,12 +44,38 @@ describe("ComplianceDashboardPage", () => {
     });
     vi.spyOn(complianceApi, "fetchComplianceRules").mockResolvedValue({ rules: [] });
     vi.spyOn(complianceApi, "fetchComplianceLog").mockResolvedValue({ entries: [] });
+    vi.spyOn(complianceApi, "fetchFilingsDashboard").mockResolvedValue({
+      items: [
+        {
+          id: "ifta:2026-Q2",
+          program: "IFTA Quarterly Fuel Tax Return",
+          category: "ifta",
+          entity_code: "TRANSP",
+          detail: "Q2 2026 return",
+          due_date: "2026-07-31",
+          status: "due",
+          drill_through: "/reports/ifta",
+          source: "real",
+        },
+      ],
+      counts: { upcoming: 0, due: 1, overdue: 0, not_yet_tracked: 1 },
+      generated_at: "2026-07-05T00:00:00.000Z",
+    });
   });
 
-  it("renders compliance dashboard sections", async () => {
+  it("lands on the Filings & Compliance Due tab by default (new module overview/home)", async () => {
     renderPage();
     expect(await screen.findByTestId("compliance-dashboard-page")).toBeTruthy();
-    expect(screen.getByTestId("compliance-section-summary")).toBeTruthy();
+    expect(await screen.findByTestId("compliance-section-filings")).toBeTruthy();
+    expect(await screen.findByTestId("compliance-filings-dashboard")).toBeTruthy();
+  });
+
+  it("keeps the prior Overview tab fully intact, one click away", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByTestId("compliance-dashboard-page");
+    await user.click(screen.getByRole("tab", { name: "Overview" }));
+    expect(await screen.findByTestId("compliance-section-summary")).toBeTruthy();
     expect(screen.getByTestId("compliance-section-table")).toBeTruthy();
     expect(screen.getByTestId("compliance-section-rules")).toBeTruthy();
     expect(screen.getByTestId("compliance-section-log")).toBeTruthy();

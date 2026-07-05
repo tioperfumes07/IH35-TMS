@@ -3,9 +3,10 @@ import fp from "fastify-plugin";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { listFactorReserveBalances, postFactoringFeeExpenseEvent } from "./factoring-fees-posting/poster.service.js";
-import { postFactoringAdvanceEvent, postFactoringReleaseEvent } from "./factoring-posting/poster.service.js";
+import { postFactoringAdvanceEvent, postFactoringCustomerPaymentEvent, postFactoringReleaseEvent } from "./factoring-posting/poster.service.js";
 import { nextFactoringDisplayId } from "./display-id.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
+import { requireVoidCancelExecutor } from "../lib/authz/void-cancel-authz.js";
 
 const idParamsSchema = z.object({
   id: z.string().uuid(),
@@ -486,6 +487,21 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
         `,
         [params.data.id, user.uuid]
       );
+      // WIRE the built-but-unwired customer-payment poster (Law of the Land: no built-but-unwired poster).
+      // The reserve_held transition IS the "customer paid the factor directly" event (notification
+      // factoring): the collected_at is stamped here. Under the secured-borrowing model this is the ONLY
+      // place A/R goes down — Dr Factoring-Advance-Liability / Cr A/R, for the full pledged invoice Net
+      // (invoice_total_cents = the amount the customer pays Faro). Flag-gated + idempotent inside the poster;
+      // a flag-OFF entity no-ops. Any default interest that compounded into the liability (late payment) is
+      // intentionally left outstanding — the customer only ever pays the invoice face; the residual accrued
+      // interest is the Seller's to settle with Faro (see PR body / open item).
+      await postFactoringCustomerPaymentEvent({
+        operating_company_id: query.data.operating_company_id,
+        factoring_advance_id: params.data.id,
+        actor_user_id: user.uuid,
+        amount_cents: Number(advance.invoice_total_cents ?? 0),
+        paid_at_iso: collectedAt,
+      });
       await appendCrudAudit(
         client,
         user.uuid,
@@ -687,6 +703,10 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
   app.post("/api/v1/accounting/factoring-advances/:id/void", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
+    // G9-C3: voiding a factoring advance is an EXECUTOR-only action (Owner|Administrator|Accountant).
+    // Route through the shared governance authz — OUTSIDE any feature flag — so anyone else must FILE a
+    // void/cancel request for approval. Non-executors get the canonical 403 here.
+    if (!requireVoidCancelExecutor(reply, String(user.role ?? ""))) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});

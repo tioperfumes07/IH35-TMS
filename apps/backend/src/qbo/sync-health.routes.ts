@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withLuciaBypass } from "../auth/db.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { createTtlCache } from "../lib/ttl-cache.js";
 import { getRunnerState } from "../admin/runner-status.store.js";
@@ -31,6 +32,7 @@ export async function registerQboSyncHealthRoutes(app: FastifyInstance) {
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
 
     const payload = await withLuciaBypass(async (client) => {
+      await assertCompanyMembership(user.uuid, parsed.data.operating_company_id);
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [parsed.data.operating_company_id]);
 
       const runsExist = await client.query(`SELECT to_regclass('qbo.sync_runs') IS NOT NULL AS ok`);
@@ -175,6 +177,7 @@ export async function registerQboSyncHealthRoutes(app: FastifyInstance) {
     let payload: Record<string, unknown>;
     try {
       payload = await withLuciaBypass(async (client) => {
+      await assertCompanyMembership(user.uuid, parsed.data.operating_company_id);
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [parsed.data.operating_company_id]);
 
       const alertsExist = await client.query(`SELECT to_regclass('qbo.sync_alerts') IS NOT NULL AS ok`);
@@ -254,13 +257,15 @@ export async function registerQboSyncHealthRoutes(app: FastifyInstance) {
       const connTbl = await client.query(`SELECT to_regclass('integrations.qbo_connections') IS NOT NULL AS ok`);
       let refreshTokenExpiresAt: string | null = null;
       let hasActiveConnection = false;
+      let connectionNeedsReauth = false;
 
       if (connTbl.rows[0]?.ok) {
-        const connRes = await client.query<{ exp: string | null; has_active: boolean | null }>(
+        const connRes = await client.query<{ exp: string | null; has_active: boolean | null; needs_reauth: boolean | null }>(
           `
             SELECT
               MIN(refresh_token_expires_at) FILTER (WHERE revoked_at IS NULL)::text AS exp,
-              bool_or(revoked_at IS NULL) AS has_active
+              bool_or(revoked_at IS NULL) AS has_active,
+              bool_or(needs_reauth_at IS NOT NULL) FILTER (WHERE revoked_at IS NULL) AS needs_reauth
             FROM integrations.qbo_connections
             WHERE operating_company_id = $1::uuid
           `,
@@ -268,6 +273,7 @@ export async function registerQboSyncHealthRoutes(app: FastifyInstance) {
         );
         refreshTokenExpiresAt = connRes.rows[0]?.exp ?? null;
         hasActiveConnection = Boolean(connRes.rows[0]?.has_active);
+        connectionNeedsReauth = Boolean(connRes.rows[0]?.needs_reauth);
       }
 
       // Master-data (CDC) freshness: the recurring vendor/customer/item/account sync writes to
@@ -323,9 +329,10 @@ export async function registerQboSyncHealthRoutes(app: FastifyInstance) {
           ? now >= Date.parse(String(refreshTokenExpiresAt))
           : false;
 
-      const needsReconnect = refreshExpired || tokenAlertCount > 0;
+      const needsReconnect = connectionNeedsReauth || refreshExpired || tokenAlertCount > 0;
       let reconnectReason: string | null = null;
-      if (refreshExpired) reconnectReason = "quickbooks_refresh_token_expired";
+      if (connectionNeedsReauth) reconnectReason = "quickbooks_refresh_token_dead";
+      else if (refreshExpired) reconnectReason = "quickbooks_refresh_token_expired";
       else if (tokenAlertCount > 0) reconnectReason = "quickbooks_token_alert";
 
       const STALE_AFTER_MS = 24 * 60 * 60 * 1000;

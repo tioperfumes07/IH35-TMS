@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { requireDriverSession } from "../driver/auth.js";
 import {
@@ -126,6 +127,7 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
     }
     const parsed = companyQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
+    await assertCompanyMembership(user.uuid, parsed.data.operating_company_id);
     const rows = await withCurrentUser(user.uuid, async (client) => {
       await client.query("SELECT set_config('app.operating_company_id', $1, true)", [parsed.data.operating_company_id]);
       return listPendingCashAdvanceRequests(client, parsed.data.operating_company_id);
@@ -141,6 +143,7 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
     }
     const parsed = listQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
+    await assertCompanyMembership(user.uuid, parsed.data.operating_company_id);
     const rows = await withCurrentUser(user.uuid, async (client) => {
       await client.query("SELECT set_config('app.operating_company_id', $1, true)", [parsed.data.operating_company_id]);
       return listCashAdvanceRequests(client, parsed.data.operating_company_id, {
@@ -158,6 +161,7 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
     }
     const parsed = companyQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
+    await assertCompanyMembership(user.uuid, parsed.data.operating_company_id);
     const rows = await withCurrentUser(user.uuid, async (client) => {
       await client.query("SELECT set_config('app.operating_company_id', $1, true)", [parsed.data.operating_company_id]);
       return listPendingOwnerApprovalCashAdvanceRequests(client, parsed.data.operating_company_id);
@@ -177,6 +181,7 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
     const esc = await withCurrentUser(user.uuid, async (client) => {
+      await assertCompanyMembership(user.uuid, parsedQuery.data.operating_company_id);
       await client.query("SELECT set_config('app.operating_company_id', $1, true)", [parsedQuery.data.operating_company_id]);
       return escalateCashAdvanceRequestToOwner(client, {
         operatingCompanyId: parsedQuery.data.operating_company_id,
@@ -219,6 +224,7 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
     const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
     const detail = await withCurrentUser(user.uuid, async (client) => {
+      await assertCompanyMembership(user.uuid, parsedQuery.data.operating_company_id);
       await client.query("SELECT set_config('app.operating_company_id', $1, true)", [parsedQuery.data.operating_company_id]);
       const d = await getCashAdvanceRequestDetail(client, parsedQuery.data.operating_company_id, parsedParams.data.id);
       // B4: record the FIRST office view of this request (accountability response-time signal).
@@ -254,6 +260,7 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
     const preview = await withCurrentUser(user.uuid, async (client) => {
+      await assertCompanyMembership(user.uuid, parsedQuery.data.operating_company_id);
       await client.query("SELECT set_config('app.operating_company_id', $1, true)", [parsedQuery.data.operating_company_id]);
       return previewCashAdvanceCascade(client, parsedQuery.data.operating_company_id, parsedParams.data.id);
     });
@@ -274,6 +281,7 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
     const timeline = await withCurrentUser(user.uuid, async (client) => {
+      await assertCompanyMembership(user.uuid, parsedQuery.data.operating_company_id);
       await client.query("SELECT set_config('app.operating_company_id', $1, true)", [parsedQuery.data.operating_company_id]);
       return getCashAdvanceRequestTimeline(client, parsedQuery.data.operating_company_id, parsedParams.data.id);
     });
@@ -294,6 +302,7 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
 
     const result = await withCurrentUser(user.uuid, async (client) => {
+      await assertCompanyMembership(user.uuid, parsedQuery.data.operating_company_id);
       await client.query("SELECT set_config('app.operating_company_id', $1, true)", [parsedQuery.data.operating_company_id]);
       return approveCashAdvanceRequest(client, {
         operatingCompanyId: parsedQuery.data.operating_company_id,
@@ -353,6 +362,7 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
 
     const result = await withCurrentUser(user.uuid, async (client) => {
+      await assertCompanyMembership(user.uuid, parsedQuery.data.operating_company_id);
       await client.query("SELECT set_config('app.operating_company_id', $1, true)", [parsedQuery.data.operating_company_id]);
       return denyCashAdvanceRequest(client, {
         operatingCompanyId: parsedQuery.data.operating_company_id,

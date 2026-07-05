@@ -12,6 +12,16 @@ import path from "node:path";
 
 const ROOT = process.cwd();
 const BACKEND = path.join(ROOT, "apps/backend/src");
+const MIGRATIONS = path.join(ROOT, "db/migrations");
+
+// db/migrations SQL functions filter mdata.units UNALIASED (`FROM mdata.units WHERE ... operating_company_id`),
+// which the TS/alias scan below cannot see — that gap let WOID-1 (maintenance.next_wo_display_id) ship a
+// phantom-column 42703. 0049 first shipped that bad body; migration 202607051000 CREATE-OR-REPLACEs it with the
+// correct COALESCE(currently_leased_to_company_id, owner_company_id). 0049's on-disk text is dead/superseded, so
+// it is allowlisted here; any NEW migration reintroducing the antipattern still fails.
+const MIGRATION_ALLOWLIST = new Set(["0049_p3_t11_6_1_wo_format_vendor_inventory_integrity.sql"]);
+// Unaliased `FROM mdata.units` followed by a bare `operating_company_id =` filter with no COALESCE in between.
+const UNALIASED_UNITS_OPCO = /FROM\s+mdata\.units\s+WHERE\b(?:(?!COALESCE\s*\()[\s\S]){0,160}?\boperating_company_id\s*=/i;
 
 /** Recursively collect .ts files (skip tests + node_modules). */
 function tsFiles(dir) {
@@ -50,6 +60,18 @@ for (const file of tsFiles(BACKEND)) {
         violations.push(`${path.relative(ROOT, file)}: alias '${alias}' (mdata.units) references ${alias}.operating_company_id — units has no such column (use owner_company_id / currently_leased_to_company_id)`);
       }
       re.lastIndex = 0;
+    }
+  }
+}
+
+// WOID-1: also scan db/migrations SQL for the unaliased `FROM mdata.units ... operating_company_id` form.
+if (fs.existsSync(MIGRATIONS)) {
+  for (const name of fs.readdirSync(MIGRATIONS)) {
+    if (!name.endsWith(".sql")) continue;
+    if (MIGRATION_ALLOWLIST.has(name)) continue;
+    const src = fs.readFileSync(path.join(MIGRATIONS, name), "utf8");
+    if (UNALIASED_UNITS_OPCO.test(src)) {
+      violations.push(`db/migrations/${name}: 'FROM mdata.units ... operating_company_id =' (unaliased) — units has no operating_company_id column; use COALESCE(currently_leased_to_company_id, owner_company_id)`);
     }
   }
 }

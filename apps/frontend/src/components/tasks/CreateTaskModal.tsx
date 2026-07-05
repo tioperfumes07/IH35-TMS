@@ -422,7 +422,7 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
           <button
             type="submit"
             disabled={!canSubmit}
-            className="rounded-sm bg-[#16A34A] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#15803d] disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-sm bg-[#1f2a44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {mutation.isPending ? "Creating…" : "Create task"}
           </button>

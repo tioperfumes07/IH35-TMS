@@ -32,8 +32,13 @@
 
 import { withLuciaBypass } from "../../auth/db.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
+import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { createJournalEntry } from "../journal-entries.service.js";
 import { resolveRoleAccount } from "../coa-roles/resolver.service.js";
+import {
+  FACTORING_DEFAULT_INTEREST_DAILY_RATE,
+  FACTORING_INTEREST_ACCRUAL_AFTER_DAY,
+} from "./contract-config.js";
 
 export const FACTORING_GL_POSTING_FLAG = "FACTORING_GL_POSTING_ENABLED";
 
@@ -43,10 +48,27 @@ type DbClient = {
 
 type PostResult = {
   posted: boolean;
-  reason?: "flag_off" | "already_posted" | "zero_amount" | "advance_not_found" | "no_invoices";
+  reason?:
+    | "flag_off"
+    | "already_posted"
+    | "zero_amount"
+    | "advance_not_found"
+    | "no_invoices"
+    | "not_outstanding"
+    | "before_grace";
   journal_entry_id?: string;
   memo?: string;
+  closing_balance_cents?: number;
 };
+
+// Whole-day gap between two ISO dates (accrual date − purchase date), computed on the calendar-date parts
+// only (no partial-day / TZ drift). Purchase Date = the advance's advanced_at (funding date).
+function dayIndexBetween(purchaseIso: string, accrualIso: string): number {
+  const purchase = Date.parse(`${purchaseIso.slice(0, 10)}T00:00:00.000Z`);
+  const accrual = Date.parse(`${accrualIso.slice(0, 10)}T00:00:00.000Z`);
+  if (Number.isNaN(purchase) || Number.isNaN(accrual)) return 0;
+  return Math.round((accrual - purchase) / 86_400_000);
+}
 
 const FLAG_OFF: PostResult = { posted: false, reason: "flag_off" };
 
@@ -102,6 +124,7 @@ async function journalEntryExistsByMemo(client: DbClient, operatingCompanyId: st
 type AdvanceRow = {
   id: string;
   display_id: string;
+  status: string;
   invoice_total_cents: number;
   advance_amount_cents: number;
   reserve_amount_cents: number;
@@ -119,6 +142,7 @@ async function loadAdvance(client: DbClient, operatingCompanyId: string, factori
       SELECT
         id::text,
         display_id,
+        status::text               AS status,
         invoice_total_cents::int   AS invoice_total_cents,
         advance_amount_cents::int  AS advance_amount_cents,
         reserve_amount_cents::int  AS reserve_amount_cents,
@@ -426,4 +450,218 @@ export async function postFactoringChargebackEvent(input: PostFactoringChargebac
     lastJeId = created.id;
   }
   return anyPosted ? { posted: true, journal_entry_id: lastJeId } : { posted: false, reason: "already_posted" };
+}
+
+// ---------------------------------------------------------------------------------------------------
+// DAILY DEFAULT-INTEREST ACCRUAL (contract: 0.067%/day, COMPOUNDED DAILY, on the unpaid balance, ONLY
+//   after day 35 = 30-day Repurchase Term + 5-day Grace). Posts ONE day's charge:
+//     Dr Default-Interest-Expense / Cr Factoring-Advance-Liability   (interest compounds INTO the liability
+//     per the contract "Repurchase Price = Net + fees + interest" — see contract-config OPEN #2).
+//
+//   Compounding is deterministic + idempotent via accounting.factoring_default_interest_accruals: exactly
+//   ONE row per (advance, accrual_date), carrying opening → interest → closing. The opening balance for a
+//   given day = the PRIOR accrual's closing balance (compounded), or the pledged Net (invoice_total_cents)
+//   for the first charged day. A re-run for a day already accrued no-ops (already_posted). The accrual cron
+//   drives one call per (outstanding advance, missing day) in ascending date order, so each day compounds
+//   off the committed prior row. Interest only accrues while the advance is still funded-and-unpaid
+//   (status 'advanced'); once the customer pays the factor (reserve_held) or it recourses, accrual stops.
+// ---------------------------------------------------------------------------------------------------
+export type PostFactoringDefaultInterestAccrualInput = {
+  operating_company_id: string;
+  factoring_advance_id: string;
+  actor_user_id: string;
+  accrual_date_iso: string; // the calendar day interest is charged for (America/Chicago)
+};
+
+async function lastAccrualClosingBalance(
+  client: DbClient,
+  operatingCompanyId: string,
+  factoringAdvanceId: string
+): Promise<number | null> {
+  const res = await client.query<{ closing_balance_cents: string }>(
+    `
+      SELECT closing_balance_cents::text AS closing_balance_cents
+      FROM accounting.factoring_default_interest_accruals
+      WHERE operating_company_id = $1::uuid
+        AND factoring_advance_id = $2::uuid
+        AND is_active = true
+      ORDER BY accrual_date DESC
+      LIMIT 1
+    `,
+    [operatingCompanyId, factoringAdvanceId]
+  );
+  const raw = res.rows[0]?.closing_balance_cents;
+  return raw == null ? null : Number(raw);
+}
+
+async function accrualExistsForDay(
+  client: DbClient,
+  operatingCompanyId: string,
+  factoringAdvanceId: string,
+  accrualDate: string
+): Promise<boolean> {
+  const res = await client.query<{ id: string }>(
+    `
+      SELECT id::text
+      FROM accounting.factoring_default_interest_accruals
+      WHERE operating_company_id = $1::uuid
+        AND factoring_advance_id = $2::uuid
+        AND accrual_date = $3::date
+      LIMIT 1
+    `,
+    [operatingCompanyId, factoringAdvanceId, accrualDate]
+  );
+  return Boolean(res.rows[0]?.id);
+}
+
+// Sum of all accrued interest to date for an advance (closing − Net, or the running total) — used by the
+// day-95 recourse trigger to know how much of the outstanding liability is compounded interest.
+export async function sumAccruedDefaultInterest(
+  operatingCompanyId: string,
+  factoringAdvanceId: string
+): Promise<{ total_interest_cents: number; last_closing_cents: number | null }> {
+  return withLuciaBypass(async (client: DbClient) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+    const res = await client.query<{ total_interest_cents: string; last_closing_cents: string | null }>(
+      `
+        SELECT
+          COALESCE(SUM(interest_cents), 0)::text AS total_interest_cents,
+          (
+            SELECT closing_balance_cents::text
+            FROM accounting.factoring_default_interest_accruals
+            WHERE operating_company_id = $1::uuid AND factoring_advance_id = $2::uuid AND is_active = true
+            ORDER BY accrual_date DESC LIMIT 1
+          ) AS last_closing_cents
+        FROM accounting.factoring_default_interest_accruals
+        WHERE operating_company_id = $1::uuid AND factoring_advance_id = $2::uuid AND is_active = true
+      `,
+      [operatingCompanyId, factoringAdvanceId]
+    );
+    const row = res.rows[0];
+    return {
+      total_interest_cents: Number(row?.total_interest_cents ?? 0),
+      last_closing_cents: row?.last_closing_cents == null ? null : Number(row.last_closing_cents),
+    };
+  });
+}
+
+export async function postFactoringDefaultInterestAccrualEvent(
+  input: PostFactoringDefaultInterestAccrualInput
+): Promise<PostResult> {
+  const prepared = await withLuciaBypass(async (client: DbClient) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
+    if (!(await factoringPostingEnabled(client, input.operating_company_id))) return { gate: "flag_off" as const };
+
+    const advance = await loadAdvance(client, input.operating_company_id, input.factoring_advance_id);
+    if (!advance) return { gate: "advance_not_found" as const };
+
+    // Interest accrues ONLY while the advance is funded AND the customer has not yet paid the factor. Once
+    // status leaves 'advanced' (reserve_held = customer paid, released, recourse_returned, voided) the
+    // liability is being settled — no further interest. Defense-in-depth beyond the cron's own selection.
+    if (advance.status !== "advanced" || !advance.advanced_at) return { gate: "not_outstanding" as const };
+
+    const accrualDate = input.accrual_date_iso.slice(0, 10);
+    const dayIndex = dayIndexBetween(advance.advanced_at, accrualDate);
+    // Contract: no interest through the 30-day term + 5-day grace (day 35). First charged day is day 36.
+    if (dayIndex <= FACTORING_INTEREST_ACCRUAL_AFTER_DAY) return { gate: "before_grace" as const };
+
+    if (await accrualExistsForDay(client, input.operating_company_id, input.factoring_advance_id, accrualDate)) {
+      return { gate: "already_posted" as const };
+    }
+
+    // Compounding: opening = prior accrual's closing, else the pledged Net (the outstanding liability).
+    const priorClosing = await lastAccrualClosingBalance(client, input.operating_company_id, input.factoring_advance_id);
+    const opening = priorClosing ?? Number(advance.invoice_total_cents ?? 0);
+    if (opening <= 0) return { gate: "zero_amount" as const };
+
+    const interest = Math.round(opening * FACTORING_DEFAULT_INTEREST_DAILY_RATE);
+    if (interest <= 0) return { gate: "zero_amount" as const };
+    const closing = opening + interest;
+
+    const memo = `Factoring default interest ${advance.display_id} day ${dayIndex} (${accrualDate})`;
+
+    const interestAccountId = await resolveRoleAccount(client, input.operating_company_id, "default_interest_expense");
+    const liabilityAccountId = await resolveRoleAccount(client, input.operating_company_id, "factoring_advance_liability");
+
+    return {
+      gate: "post" as const,
+      memo,
+      accrualDate,
+      dayIndex,
+      opening,
+      interest,
+      closing,
+      displayId: advance.display_id,
+      postings: [
+        { account_id: interestAccountId, debit_or_credit: "debit" as const, amount_cents: interest, description: `${memo} — default interest (0.067%/day compounded)` },
+        { account_id: liabilityAccountId, debit_or_credit: "credit" as const, amount_cents: interest, description: `${memo} — compound into factoring advance (liability)` },
+      ],
+    };
+  });
+
+  if (prepared.gate === "flag_off") return FLAG_OFF;
+  if (prepared.gate === "advance_not_found") return { posted: false, reason: "advance_not_found" };
+  if (prepared.gate === "not_outstanding") return { posted: false, reason: "not_outstanding" };
+  if (prepared.gate === "before_grace") return { posted: false, reason: "before_grace" };
+  if (prepared.gate === "already_posted") return { posted: false, reason: "already_posted" };
+  if (prepared.gate === "zero_amount") return { posted: false, reason: "zero_amount" };
+
+  const created = await createJournalEntry(
+    {
+      operating_company_id: input.operating_company_id,
+      entry_date: prepared.accrualDate,
+      memo: prepared.memo,
+      source: "auto",
+      postings: prepared.postings,
+    },
+    { userId: input.actor_user_id, role: "system" }
+  );
+
+  // Record the accrual (ledger + connectivity: accrual → JE → advance). ON CONFLICT no-ops so a retry after
+  // the JE posted but before this insert committed will not double-insert (and the memo-less JE stays keyed
+  // by its own memo idempotency for any future guard).
+  await withLuciaBypass(async (client: DbClient) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
+    await client.query(
+      `
+        INSERT INTO accounting.factoring_default_interest_accruals (
+          operating_company_id, factoring_advance_id, accrual_date, day_index, daily_rate,
+          opening_balance_cents, interest_cents, closing_balance_cents, journal_entry_id
+        )
+        VALUES ($1::uuid, $2::uuid, $3::date, $4, $5, $6, $7, $8, $9::uuid)
+        ON CONFLICT (operating_company_id, factoring_advance_id, accrual_date) DO NOTHING
+      `,
+      [
+        input.operating_company_id,
+        input.factoring_advance_id,
+        prepared.accrualDate,
+        prepared.dayIndex,
+        FACTORING_DEFAULT_INTEREST_DAILY_RATE,
+        prepared.opening,
+        prepared.interest,
+        prepared.closing,
+        created.id,
+      ]
+    );
+    await appendCrudAudit(
+      client,
+      input.actor_user_id,
+      "accounting.factoring_default_interest_accrued",
+      {
+        resource_type: "accounting.factoring_advances",
+        resource_id: input.factoring_advance_id,
+        operating_company_id: input.operating_company_id,
+        display_id: prepared.displayId,
+        accrual_date: prepared.accrualDate,
+        day_index: prepared.dayIndex,
+        interest_cents: prepared.interest,
+        closing_balance_cents: prepared.closing,
+        journal_entry_id: created.id,
+      },
+      "info",
+      "FACTORING-DEFAULT-INTEREST"
+    );
+  });
+
+  return { posted: true, journal_entry_id: created.id, memo: prepared.memo, closing_balance_cents: prepared.closing };
 }

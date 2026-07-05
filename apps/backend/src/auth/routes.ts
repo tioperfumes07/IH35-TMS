@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { generateState, generateCodeVerifier, OAuth2RequestError } from "arctic";
-import { getGoogleOAuthClient, lucia } from "./lucia.js";
+import { getGoogleOAuthClient } from "./lucia.js";
+import { createSessionCookie, invalidateSession } from "./session-provider.js";
 import { createSessionWithLastLogin } from "./session-create.js";
 import { withLuciaBypass } from "./db.js";
 import { oauthPkceCookieOptions, setLuciaSessionCookie, clearSessionCookieOptions } from "./session-cookie-policy.js";
@@ -117,7 +118,7 @@ export async function registerAuthRoutes(app: FastifyInstance) {
         }
         const userUuid = await findOrCreateUser(email, googleUserId);
         const session = await createSessionWithLastLogin(userUuid, {});
-        const sessionCookie = lucia.createSessionCookie(session.id);
+        const sessionCookie = createSessionCookie(session.id);
         setLuciaSessionCookie(reply, sessionCookie);
         reply.clearCookie(STATE_COOKIE, { path: "/" });
         reply.clearCookie(VERIFIER_COOKIE, { path: "/" });
@@ -156,7 +157,7 @@ export async function registerAuthRoutes(app: FastifyInstance) {
     const returnTo = validateReturnTo(query["returnTo"]);
     const sessionId = req.cookies["ih35_session"];
     if (sessionId) {
-      await lucia.invalidateSession(sessionId);
+      await invalidateSession(sessionId);
     }
     reply.clearCookie("ih35_session", clearSessionCookieOptions());
     const origin = String(req.headers.origin || "");

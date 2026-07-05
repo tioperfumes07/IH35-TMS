@@ -7,7 +7,9 @@
  * lease-to-own-fleet.db.test.ts.
  *
  * Asserts the Phase-2/3/4/5 acceptance criteria:
- *  - seed inserts 7 active templates; re-run adds zero (idempotent), never mutates status.
+ *  - seed inserts the whole library (LEGAL_TEMPLATE_LIBRARY.length active templates: 7 Carl
+ *    Barto docx templates + the hand-authored owner_operator_lease_agreement future-use draft
+ *    + driver_hire_agreement v1/v2); re-run adds zero (idempotent), never mutates status.
  *  - draft preview creates NO contract instance.
  *  - signed driver_deduction_auth -> driver + deduction_schedule links + DQ doc;
  *    hasSignedDeductionAuthorization() returns true.
@@ -21,6 +23,7 @@ import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
 import { ensureIntegrationPrerequisites } from "../../../test-helpers/db-fixture.js";
 import { TEST_OWNER_USER_ID } from "../../../test-helpers/constants.js";
 import { ensureLegalTemplateLibrary } from "../template-library.service.js";
+import { LEGAL_TEMPLATE_LIBRARY } from "../templates/legal-template-library.generated.js";
 import { renderDraftContractHtml } from "../draft-preview.service.js";
 import { applySignedOperationalLinks } from "../signed-links.service.js";
 import { applySignedFinanceHandoff, hasSignedDeductionAuthorization } from "../signed-finance-handoff.service.js";
@@ -66,10 +69,11 @@ describeIntegration("legal template library + Option-B handoff (real Postgres)",
     if (db) await db.end();
   });
 
-  it("seeds 7 active templates idempotently and never mutates status on re-run", async () => {
+  it("seeds the whole library idempotently and never mutates status on re-run", async () => {
     await withBypass(async () => {
+      const LIBRARY_TOTAL = LEGAL_TEMPLATE_LIBRARY.length;
       const first = await ensureLegalTemplateLibrary(db, { operatingCompanyId: companyId, actorUserId: actorId });
-      expect(first.total).toBe(7);
+      expect(first.total).toBe(LIBRARY_TOTAL);
       const active = await db.query(
         `SELECT count(*)::int AS n FROM legal.contract_templates
          WHERE operating_company_id=$1 AND status='active'
@@ -84,15 +88,16 @@ describeIntegration("legal template library + Option-B handoff (real Postgres)",
             "nda_ebt_confidentiality",
             "nda_chatgpt_full",
             "nda_polished_full",
+            "owner_operator_lease_agreement",
           ],
         ]
       );
-      expect(active.rows[0].n).toBe(7);
+      expect(active.rows[0].n).toBe(8);
 
       // Re-run: zero new rows.
       const second = await ensureLegalTemplateLibrary(db, { operatingCompanyId: companyId, actorUserId: actorId });
       expect(second.inserted).toBe(0);
-      expect(second.already_present).toBe(7);
+      expect(second.already_present).toBe(LIBRARY_TOTAL);
     });
   });
 
@@ -155,6 +160,58 @@ describeIntegration("legal template library + Option-B handoff (real Postgres)",
 
       const gate = await hasSignedDeductionAuthorization(db, { operatingCompanyId: companyId, driverId });
       expect(gate).toBe(true);
+    });
+  });
+
+  it("signed HIRE CONTRACT satisfies the consent gate + writes the deduction_schedule link", async () => {
+    await withBypass(async () => {
+      // A brand-new driver with NO signed contract yet — the gate MUST be fail-closed.
+      const hireDriverId = randomUUID();
+      const before = await hasSignedDeductionAuthorization(db, { operatingCompanyId: companyId, driverId: hireDriverId });
+      expect(before).toBe(false);
+
+      // Reuse any seeded template row for the FK; template_code carries the hire-contract code
+      // (the hire-contract template itself is a later Legal-module build — this proves the GATE).
+      const tplId = (
+        await db.query(`SELECT id FROM legal.contract_templates WHERE operating_company_id=$1 AND template_code='nda_ebt_confidentiality' LIMIT 1`, [
+          companyId,
+        ])
+      ).rows[0].id;
+      const instId = randomUUID();
+      await db.query(
+        `INSERT INTO legal.contract_instances (id, operating_company_id, template_id, template_code, template_version,
+           signer_type, signer_entity_id, signer_name, language, status, created_by_user_id, updated_by_user_id)
+         VALUES ($1,$2,$3,'driver_hire_contract',1,'driver',$4,'Hired Driver','en','signed_electronically',$5,$5)`,
+        [instId, companyId, tplId, hireDriverId, actorId]
+      );
+      const res = await applySignedFinanceHandoff(db, { operatingCompanyId: companyId, contractInstanceId: instId, actorUserId: actorId });
+      expect(res.handoff).toBe("deduction_schedule");
+
+      const link = await db.query(
+        `SELECT count(*)::int AS n FROM legal.contract_instance_links
+         WHERE contract_instance_id=$1 AND link_type='deduction_schedule' AND target_id=$2`,
+        [instId, hireDriverId]
+      );
+      expect(link.rows[0].n).toBe(1);
+
+      const gate = await hasSignedDeductionAuthorization(db, { operatingCompanyId: companyId, driverId: hireDriverId });
+      expect(gate).toBe(true);
+
+      // A signed NDA (category=employment) must NOT authorize deductions — security intent preserved.
+      const ndaDriverId = randomUUID();
+      const ndaTplId = (
+        await db.query(`SELECT id FROM legal.contract_templates WHERE operating_company_id=$1 AND template_code='nda_ebt_confidentiality' LIMIT 1`, [
+          companyId,
+        ])
+      ).rows[0].id;
+      await db.query(
+        `INSERT INTO legal.contract_instances (id, operating_company_id, template_id, template_code, template_version,
+           signer_type, signer_entity_id, signer_name, language, status, created_by_user_id, updated_by_user_id)
+         VALUES ($1,$2,$3,'nda_ebt_confidentiality',1,'driver',$4,'NDA Only','en','signed_electronically',$5,$5)`,
+        [randomUUID(), companyId, ndaTplId, ndaDriverId, actorId]
+      );
+      const ndaGate = await hasSignedDeductionAuthorization(db, { operatingCompanyId: companyId, driverId: ndaDriverId });
+      expect(ndaGate).toBe(false);
     });
   });
 

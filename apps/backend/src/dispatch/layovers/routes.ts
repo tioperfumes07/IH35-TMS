@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireAuth } from "../../auth/session-middleware.js";
 import { getLayoversForDriver, getLayoverSummary } from "./detection.service.js";
 import { withCurrentUser } from "../../auth/db.js";
+import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
 
 function authed(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
@@ -25,6 +26,7 @@ export async function registerLayoverRoutes(app: FastifyInstance) {
       to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
     }).safeParse(req.query ?? {});
     if (!q.success) return reply.code(400).send({ error: "validation_error", details: q.error.flatten() });
+    await assertCompanyMembership(user.uuid, q.data.operating_company_id);
     const rows = await getLayoversForDriver(user.uuid, q.data.operating_company_id, q.data.driver, q.data.from, q.data.to);
     return reply.send({ data: rows });
   });
@@ -39,6 +41,7 @@ export async function registerLayoverRoutes(app: FastifyInstance) {
       operating_company_id: z.string().uuid(),
     }).safeParse(req.body ?? {});
     if (!body.success) return reply.code(400).send({ error: "validation_error" });
+    await assertCompanyMembership(user.uuid, body.data.operating_company_id);
     await withCurrentUser(user.uuid, async (client) => {
       await client.query(
         `UPDATE dispatch.driver_layovers SET billable_to_customer = $1 WHERE uuid = $2 AND operating_company_id = $3`,
@@ -58,6 +61,7 @@ export async function registerLayoverRoutes(app: FastifyInstance) {
       operating_company_id: z.string().uuid(),
     }).safeParse(req.body ?? {});
     if (!body.success) return reply.code(400).send({ error: "validation_error" });
+    await assertCompanyMembership(user.uuid, body.data.operating_company_id);
     await withCurrentUser(user.uuid, async (client) => {
       await client.query(
         `UPDATE dispatch.driver_layovers SET per_diem_eligible = $1 WHERE uuid = $2 AND operating_company_id = $3`,

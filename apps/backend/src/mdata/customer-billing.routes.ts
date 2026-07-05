@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { requireAuth } from "../auth/session-middleware.js";
 
 const paramsSchema = z.object({
@@ -53,6 +54,7 @@ export async function registerCustomerBillingRoutes(app: FastifyInstance) {
       const operatingCompanyId = parsedQuery.data.operating_company_id;
       const customerId = parsedParams.data.customer_id;
 
+      await assertCompanyMembership(authUser.uuid, operatingCompanyId);
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
       const customerRes = await client.query(
         `

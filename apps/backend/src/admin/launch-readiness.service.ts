@@ -84,7 +84,22 @@ async function singleRow<T extends Record<string, unknown>>(
   return (res.rows[0] as T) ?? null;
 }
 
-export async function buildLaunchReadinessPayload(): Promise<LaunchReadinessPayload> {
+/**
+ * C2-2: master_counts and critical_workflows are ENTITY-scoped master/operational data.
+ * mdata.* / driver_finance.* / banking.* / qbo.* RLS is role-scoped (NOT entity-scoped) and this
+ * service reads under a Lucia bypass, so an unscoped COUNT(*) blends TRANSP ↔ TRK ↔ USMCA rows.
+ * The caller's resolved operating company is threaded in and bound to every entity-scoped count so
+ * the readiness dashboard reflects a single entity (a USMCA-launch correctness requirement).
+ *
+ * `operatingCompanyId` is resolved in the route via `resolveOperatingCompanyId` (default/first
+ * accessible company, or an explicitly-requested, membership-validated id). When it is null (no
+ * resolvable company) entity counts bind against a NULL predicate and return 0 — never a blended
+ * total. System-infra tiles (migrations ledger, workers, plaid/email connectivity, whatsapp) stay
+ * intentionally global: they describe process/deployment health, not per-entity master data.
+ */
+export async function buildLaunchReadinessPayload(
+  operatingCompanyId: string | null
+): Promise<LaunchReadinessPayload> {
   const errors: string[] = [];
   const repoRoot = repoRootFromHere();
   const diskMigrations = migrationDiskFiles(repoRoot);
@@ -273,23 +288,39 @@ export async function buildLaunchReadinessPayload(): Promise<LaunchReadinessPayl
       ? { status: "green", detail: "WHATSAPP_BUSINESS_VERIFIED=true" }
       : { status: "yellow", detail: "Meta WhatsApp verification pending (set WHATSAPP_BUSINESS_VERIFIED=true when live)" };
 
-    const safeCount = async (sql: string): Promise<number> => {
+    const safeCount = async (sql: string, params: unknown[] = []): Promise<number> => {
       try {
-        const row = await singleRow<{ c: string }>(client, sql);
+        const row = await singleRow<{ c: string }>(client, sql, params);
         return Number(row?.c ?? 0);
       } catch {
         return 0;
       }
     };
 
+    // $1 = the caller's resolved operating company for every entity-scoped count (C2-2).
+    const companyParam: unknown[] = [operatingCompanyId];
+
     const drivers_active = await safeCount(
-      `SELECT COUNT(*)::text AS c FROM mdata.drivers WHERE status = 'Active' AND deactivated_at IS NULL`
+      `SELECT COUNT(*)::text AS c FROM mdata.drivers
+       WHERE status = 'Active' AND deactivated_at IS NULL AND operating_company_id = $1`,
+      companyParam
     );
+    // units ownership is owner_company_id (TRK) with a lease override to currently_leased_to_company_id
+    // (TRANSP/USMCA) — §4 canonical operating-entity predicate is COALESCE(leased, owner).
     const units_active = await safeCount(
-      `SELECT COUNT(*)::text AS c FROM mdata.units WHERE status = 'InService' AND deactivated_at IS NULL`
+      `SELECT COUNT(*)::text AS c FROM mdata.units
+       WHERE status = 'InService' AND deactivated_at IS NULL
+         AND COALESCE(currently_leased_to_company_id, owner_company_id) = $1`,
+      companyParam
     );
-    const customers = await safeCount(`SELECT COUNT(*)::text AS c FROM mdata.customers`);
-    const vendors = await safeCount(`SELECT COUNT(*)::text AS c FROM mdata.vendors`);
+    const customers = await safeCount(
+      `SELECT COUNT(*)::text AS c FROM mdata.customers WHERE operating_company_id = $1`,
+      companyParam
+    );
+    const vendors = await safeCount(
+      `SELECT COUNT(*)::text AS c FROM mdata.vendors WHERE operating_company_id = $1`,
+      companyParam
+    );
 
     const bank_accounts_plaid_linked = await safeCount(
       `
@@ -297,7 +328,9 @@ export async function buildLaunchReadinessPayload(): Promise<LaunchReadinessPayl
         FROM banking.bank_accounts
         WHERE plaid_item_id IS NOT NULL AND TRIM(plaid_item_id) <> ''
           AND COALESCE(is_active, true) = true
-      `
+          AND operating_company_id = $1
+      `,
+      companyParam
     );
 
     const loads_last_30_days = await safeCount(
@@ -306,7 +339,9 @@ export async function buildLaunchReadinessPayload(): Promise<LaunchReadinessPayl
         FROM mdata.loads
         WHERE created_at >= now() - interval '30 days'
           AND soft_deleted_at IS NULL
-      `
+          AND operating_company_id = $1
+      `,
+      companyParam
     );
 
     const bank_transactions_last_30_days = await safeCount(
@@ -314,7 +349,9 @@ export async function buildLaunchReadinessPayload(): Promise<LaunchReadinessPayl
         SELECT COUNT(*)::text AS c
         FROM banking.bank_transactions
         WHERE created_at >= now() - interval '30 days'
-      `
+          AND operating_company_id = $1
+      `,
+      companyParam
     );
 
     let settlements_last_30_days = 0;
@@ -327,7 +364,9 @@ export async function buildLaunchReadinessPayload(): Promise<LaunchReadinessPayl
             SELECT COUNT(*)::text AS c
             FROM driver_finance.driver_settlements
             WHERE created_at >= now() - interval '30 days'
-          `
+              AND operating_company_id = $1
+          `,
+          companyParam
         );
         settlements_last_30_days = Number(row?.c ?? 0);
       }
@@ -345,7 +384,9 @@ export async function buildLaunchReadinessPayload(): Promise<LaunchReadinessPayl
             SELECT COUNT(*)::text AS c
             FROM driver_finance.settlement_disputes
             WHERE status IN ('submitted','under_review')
-          `
+              AND operating_company_id = $1
+          `,
+          companyParam
         );
         settlement_disputes_open = Number(row?.c ?? 0);
       }
@@ -364,7 +405,9 @@ export async function buildLaunchReadinessPayload(): Promise<LaunchReadinessPayl
             FROM driver_finance.cash_advance_requests
             WHERE COALESCE(owner_approval_required, false) = true
               AND status IN ('pending','under_review')
-          `
+              AND operating_company_id = $1
+          `,
+          companyParam
         );
         cash_advances_pending_owner_approval = Number(row?.c ?? 0);
       }
@@ -378,7 +421,9 @@ export async function buildLaunchReadinessPayload(): Promise<LaunchReadinessPayl
       if (reg.rows[0]?.ok) {
         const row = await singleRow<{ c: string }>(
           client,
-          `SELECT COUNT(*)::text AS c FROM qbo.sync_alerts WHERE resolved_at IS NULL`
+          `SELECT COUNT(*)::text AS c FROM qbo.sync_alerts
+           WHERE resolved_at IS NULL AND operating_company_id = $1`,
+          companyParam
         );
         qbo_sync_errors_unresolved = Number(row?.c ?? 0);
       }

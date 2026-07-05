@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  isEnabled,
   isPerEntityGatedFlag,
   isPerEntityOnlyFlag,
   isPostingFlag,
   isRolloutEnabled,
+  POSTING_FLAG_KEYS,
   resolveFlagEnabled,
   rolloutBucket,
   type FeatureFlagOverrideRow,
@@ -239,5 +241,92 @@ describe("resolveFlagEnabled — per-entity-only flags ignore global default/rol
   it("one entity's ON override does not leak to another entity", () => {
     const overrides = [rateconOverride({ operating_company_id: "company-1", enabled: true })];
     expect(resolveFlagEnabled(RATECON, overrides, { operating_company_id: "company-2" })).toBe(false);
+  });
+});
+
+// H3-1 — BANK_DRIVER_ADVANCE_ENABLED is a REAL money-posting flag (BLOCK-6 posts a balanced driver-advance
+// JE). Its key does NOT match the `*_GL_POSTING*` / `*_POSTING_ENABLED` pattern, so it must be enrolled in
+// POSTING_FLAG_KEYS explicitly or it silently falls through to the global rollout/default path — a global
+// flip would enable posting for EVERY entity, bypassing the per-entity money kill-switch.
+describe("BANK_DRIVER_ADVANCE_ENABLED is under the per-entity posting kill-switch (H3-1)", () => {
+  const FLAG_KEY = "BANK_DRIVER_ADVANCE_ENABLED";
+
+  it("is enrolled in POSTING_FLAG_KEYS and classified as a posting / per-entity-gated flag", () => {
+    expect(POSTING_FLAG_KEYS.has(FLAG_KEY)).toBe(true);
+    expect(isPostingFlag(FLAG_KEY)).toBe(true);
+    expect(isPerEntityGatedFlag(FLAG_KEY)).toBe(true);
+    // It is a posting flag, not a (non-posting) per-entity-only flag.
+    expect(isPerEntityOnlyFlag(FLAG_KEY)).toBe(false);
+  });
+
+  // A minimal mock of the real isEnabled() DB path: it issues EXACTLY TWO reads — (1) lib.feature_flags for
+  // the flag row, then (2) lib.feature_flag_overrides for matching per-entity/user overrides. Both are
+  // mocked so the resolver runs end-to-end through isEnabled(), not just resolveFlagEnabled() in isolation.
+  function makeClient(opts: {
+    flag: FeatureFlagRow | null;
+    overrides: FeatureFlagOverrideRow[];
+  }) {
+    const queries: string[] = [];
+    const client = {
+      query: async <R = Record<string, unknown>>(sql: string) => {
+        queries.push(sql);
+        if (/FROM\s+lib\.feature_flags\b/i.test(sql)) {
+          return { rows: (opts.flag ? [opts.flag] : []) as R[] };
+        }
+        if (/FROM\s+lib\.feature_flag_overrides\b/i.test(sql)) {
+          return { rows: opts.overrides as unknown as R[] };
+        }
+        throw new Error(`unexpected query: ${sql}`);
+      },
+    };
+    return { client, queries };
+  }
+
+  const postingFlag: FeatureFlagRow = {
+    flag_key: FLAG_KEY,
+    description: "BLOCK-6 driver advance posting",
+    default_enabled: false,
+    rollout_pct: 0,
+  };
+
+  it("stays OFF via isEnabled even when global default_enabled=true + rollout=100 (both reads issued)", async () => {
+    const { client, queries } = makeClient({
+      flag: { ...postingFlag, default_enabled: true, rollout_pct: 100 },
+      overrides: [],
+    });
+    const enabled = await isEnabled(client, FLAG_KEY, {
+      operating_company_id: "91e0bf0a-133f-4ce8-a734-2586cfa66d96",
+      user_uuid: "user-1",
+    });
+    expect(enabled).toBe(false);
+    // Both the flag read and the override read were issued.
+    expect(queries.some((q) => /FROM\s+lib\.feature_flags\b/i.test(q))).toBe(true);
+    expect(queries.some((q) => /FROM\s+lib\.feature_flag_overrides\b/i.test(q))).toBe(true);
+  });
+
+  it("turns ON via isEnabled ONLY through an explicit per-entity override", async () => {
+    const transp = "91e0bf0a-133f-4ce8-a734-2586cfa66d96";
+    const { client } = makeClient({
+      flag: postingFlag,
+      overrides: [
+        {
+          uuid: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          flag_key: FLAG_KEY,
+          operating_company_id: transp,
+          user_uuid: null,
+          enabled: true,
+          set_by_user_uuid: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+          set_at: "2026-01-01T00:00:00Z",
+          expires_at: null,
+        },
+      ],
+    });
+    expect(await isEnabled(client, FLAG_KEY, { operating_company_id: transp })).toBe(true);
+  });
+
+  it("one entity's ON override does not leak to another entity via isEnabled", async () => {
+    // The override read is scoped by operating_company_id, so a different entity gets no matching row.
+    const { client } = makeClient({ flag: postingFlag, overrides: [] });
+    expect(await isEnabled(client, FLAG_KEY, { operating_company_id: "company-2" })).toBe(false);
   });
 });

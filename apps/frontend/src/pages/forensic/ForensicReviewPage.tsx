@@ -220,13 +220,19 @@ export function ForensicReviewPage() {
           {forensicCompanies.map((company) => {
             const status = qboStatusQuery.data?.[company.id];
             const connected = Boolean(status?.connected);
+            const needsReauth = Boolean(status?.needs_reauth);
             const expiresAt = status?.refresh_token_expires_at ? new Date(status.refresh_token_expires_at) : null;
             const expiresInDays = expiresAt ? Math.max(0, Math.ceil((expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24))) : null;
             return (
               <div key={company.id} className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-100 p-2 text-xs">
                 <div>
                   <p className="font-semibold text-gray-900">{company.short_name ?? company.legal_name}</p>
-                  <p className={connected ? "text-green-700" : "text-red-700"}>{connected ? "Connected" : "Not Connected"}</p>
+                  <p className={connected ? "text-green-700" : needsReauth ? "text-amber-700" : "text-red-700"}>
+                    {connected ? "Connected" : needsReauth ? "Reconnect needed — refresh token dead" : "Not Connected"}
+                  </p>
+                  {needsReauth && status?.last_refresh_error ? (
+                    <p className="text-amber-700">Refresh error: {status.last_refresh_error}</p>
+                  ) : null}
                   <p className="text-gray-500">
                     Last refreshed: {status?.last_refreshed_at ? new Date(status.last_refreshed_at).toLocaleString() : "Never"}
                   </p>

@@ -121,7 +121,7 @@ export function DotInspectionsPage({ operatingCompanyId }: Props) {
                   </button>
                   <button
                     type="button"
-                    className="rounded-sm bg-emerald-700 px-2 py-1 text-[11px] font-semibold text-white"
+                    className="rounded-sm bg-[#1f2a44] px-2 py-1 text-[11px] font-semibold text-white hover:bg-[#0f1729]"
                     onClick={() => followUpMutation.mutate({ id: String(row.id), state: "clean" })}
                   >
                     Mark Clean

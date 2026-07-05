@@ -80,12 +80,15 @@ describe("customer billing summary routes (always-on smoke)", () => {
     expect(res.statusCode).toBe(401);
   });
 
-  it("GET /api/v1/mdata/customers/:customer_id/billing-summary returns 404 for unknown customers without DB fixtures", async () => {
+  it("GET /api/v1/mdata/customers/:customer_id/billing-summary returns 403 for a company the caller has no membership in (G2-2 opco-resolver)", async () => {
+    // A random operating_company_id has no org.user_company_access row for this test user — the G2-2
+    // membership guard (assertCompanyMembership) now rejects BEFORE the customer lookup runs, so this
+    // no longer reaches (and no longer needs) a real customer-not-found 404.
     const res = await app.inject({
       method: "GET",
       url: `/api/v1/mdata/customers/${randomUUID()}/billing-summary?operating_company_id=${randomUUID()}`,
       headers: testAuthHeaders(undefined, "Owner"),
     });
-    expect(res.statusCode).toBe(404);
+    expect(res.statusCode).toBe(403);
   });
 });

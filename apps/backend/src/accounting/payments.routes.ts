@@ -6,6 +6,7 @@ import { reassignDraftAttachments } from "../documents/attachments.service.js";
 import { nextPaymentDisplayId } from "./display-id.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
+import { requireVoidCancelExecutor } from "../lib/authz/void-cancel-authz.js";
 
 const paymentMethodSchema = z.enum([
   "ach",
@@ -376,6 +377,10 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
   app.post("/api/v1/accounting/payments/:id/void", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
+    // G9-C3: voiding a financial record is an EXECUTOR-only action (Owner|Administrator|Accountant).
+    // Route through the shared governance authz — OUTSIDE any feature flag — so anyone else must FILE a
+    // void/cancel request for approval. Non-executors get the canonical 403 here.
+    if (!requireVoidCancelExecutor(reply, String(user.role ?? ""))) return;
 
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);

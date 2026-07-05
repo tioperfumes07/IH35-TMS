@@ -15,6 +15,7 @@ import { NotificationLogPanel } from "../../components/compliance/NotificationLo
 import { NotificationRulesPanel } from "../../components/compliance/NotificationRulesPanel";
 import { SummaryCards } from "../../components/compliance/SummaryCards";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { FilingsComplianceDueSection } from "./FilingsComplianceDueSection";
 import { FleetHosBoardSection } from "./FleetHosBoardSection";
 import { HosTrackerSection } from "./HosTrackerSection";
 import { HosViewerSection } from "./HosViewerSection";
@@ -23,8 +24,13 @@ import { SectionErrorBoundary } from "../../components/SectionErrorBoundary";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
 
-type ComplianceTab = "overview" | "hos_tracker" | "hos_viewer" | "violations" | "hos_history" | "required_docs";
+// ADDITIVE: "filings" is the module's new overview/home landing tab (owner decision 2026-07-05,
+// memory `compliance-taxes-permits-module-org`) — a cross-module "view all pending" rollup. Every
+// prior tab (Overview, HOS Tracker/Viewer, Violations, HOS History, Required Documents) is unchanged
+// and fully reachable; only the default active tab moves to "filings".
+type ComplianceTab = "filings" | "overview" | "hos_tracker" | "hos_viewer" | "violations" | "hos_history" | "required_docs";
 const COMPLIANCE_TABS: { id: ComplianceTab; label: string }[] = [
+  { id: "filings", label: "Filings & Compliance Due" },
   { id: "overview", label: "Overview" },
   { id: "hos_tracker", label: "HOS Tracker" },
   { id: "hos_viewer", label: "HOS Viewer" },
@@ -66,7 +72,7 @@ export function ComplianceDashboardPage() {
   const [severityFilter, setSeverityFilter] = useState<ComplianceSeverity | null>(null);
   const [typeFilter, setTypeFilter] = useState("");
   const [ownerTypeFilter, setOwnerTypeFilter] = useState("");
-  const [tab, setTab] = useState<ComplianceTab>("overview");
+  const [tab, setTab] = useState<ComplianceTab>("filings");
 
   const summaryQ = useQuery({
     queryKey: ["compliance-summary", companyId],
@@ -140,6 +146,14 @@ export function ComplianceDashboardPage() {
           </button>
         ))}
       </div>
+
+      {tab === "filings" ? (
+        <SectionErrorBoundary name="Filings & Compliance Due">
+          <section data-testid="compliance-section-filings">
+            <FilingsComplianceDueSection operatingCompanyId={companyId} />
+          </section>
+        </SectionErrorBoundary>
+      ) : null}
 
       {tab === "hos_tracker" ? (
         <SectionErrorBoundary name="HOS Tracker">

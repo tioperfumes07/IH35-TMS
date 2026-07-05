@@ -7,6 +7,7 @@ import { emitAutoProposedEscrowEvents } from "../driver-finance/escrow-deduction
 import { computeProgressStatus } from "../telematics/load-progress.service.js";
 import { effectiveDeliverySelectSql } from "../dispatch/effective-delivery.js";
 import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { companyBusinessDateCompact } from "../lib/company-business-date.js";
 
 const loadStatusSchema = z.enum([
@@ -280,6 +281,8 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       return reply.code(400).send({ error: "solo_or_team_assignment_required_not_both" });
     }
 
+    await assertCompanyMembership(authUser.uuid, b.operating_company_id);
+
     try {
       const created = await withCurrentUser(authUser.uuid, async (client) => {
         const customerRes = await client.query<{ id: string }>(
@@ -301,6 +304,11 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         let inserted: Record<string, unknown> | null = null;
         for (let attempt = 0; attempt < 3; attempt += 1) {
           loadNumber = await nextLoadNumber(client, b.operating_company_id);
+          // SAVEPOINT so a concurrent-booking unique collision (23505 on load_number) can be rolled back
+          // in isolation. Without it the failed INSERT aborts the whole transaction and the retry's own
+          // nextLoadNumber SELECT throws "current transaction is aborted" — i.e. the retry never worked
+          // and the caller still got a 500. (Load-number collision 500 — G9-M.)
+          await client.query(`SAVEPOINT create_load`);
           try {
             const res = await client.query(
               `
@@ -331,9 +339,11 @@ export async function registerLoadRoutes(app: FastifyInstance) {
                 b.notes ?? null,
               ]
             );
+            await client.query(`RELEASE SAVEPOINT create_load`);
             inserted = res.rows[0] ?? null;
             break;
           } catch (err) {
+            await client.query(`ROLLBACK TO SAVEPOINT create_load`).catch(() => undefined);
             if ((err as { code?: string }).code !== "23505") throw err;
             if (attempt === 2) throw err;
           }

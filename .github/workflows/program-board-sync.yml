@@ -1,0 +1,63 @@
+name: program-board-sync
+
+# Scheduled LIVE SYNC of the Program Board (NON-FINANCIAL, reporting only).
+# Runs `npm run board:sync` which derives per-finding git/deploy lifecycle from
+# `gh` + the prod health endpoint and rewrites:
+#   docs/trackers/program-board-extra.json  (per-row live_state/lifecycle/timestamps)
+#   docs/trackers/program-board-meta.json   (tab totals + deltas)
+# then auto-commits if anything changed.
+#
+# ┌──────────────────────────────────────────────────────────────────────────┐
+# │ ⚠ JORGE: THIS IS A STANDING AUTO-COMMIT AUTOMATION — enable/merge to turn  │
+# │   it on. It commits generated JSON to `main` on a schedule (every 20 min). │
+# │   No Desktop xlsx is needed here (that is the separate LOCAL `board:import`).│
+# └──────────────────────────────────────────────────────────────────────────┘
+
+on:
+  schedule:
+    - cron: "*/20 * * * *" # every 20 minutes
+  workflow_dispatch: {}
+
+# Only one sync in flight at a time; let a newer run supersede a queued one.
+concurrency:
+  group: program-board-sync
+  cancel-in-progress: false
+
+permissions:
+  contents: write # needed to push the auto-commit
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+
+      - name: Run live sync
+        env:
+          # `gh` reads GH_TOKEN; provided automatically by Actions.
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run board:sync
+
+      - name: Commit updated board trackers (if changed)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/trackers/program-board-extra.json \
+                  docs/trackers/program-board-meta.json \
+                  docs/trackers/program-board-intake.json
+          if git diff --cached --quiet; then
+            echo "No board changes to commit."
+          else
+            git commit -m "chore(program-board): scheduled live sync [skip ci]"
+            git push origin HEAD:main
+          fi

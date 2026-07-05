@@ -3,6 +3,7 @@ import type { FastifyInstance } from "fastify";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { initializeCollectionsSyncCron } from "../cron/collections-sync.cron.js";
+import { initializeFactoringDefaultInterestCron } from "../cron/factoring-default-interest-accrual.cron.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -18,4 +19,5 @@ export async function registerAccountingRoutes(app: FastifyInstance) {
 
 export function initializeAccountingCrons(app: FastifyInstance) {
   initializeCollectionsSyncCron(app);
+  initializeFactoringDefaultInterestCron(app);
 }
