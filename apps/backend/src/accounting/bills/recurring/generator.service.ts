@@ -2,7 +2,14 @@ import { DateTime } from "luxon";
 import { withLuciaBypass } from "../../../auth/db.js";
 import { createBill } from "../../bills.service.js";
 import { postSourceTransaction } from "../../posting-engine.service.js";
+import { isEnabled } from "../../../lib/feature-flags/service.js";
 import { listActiveTemplatesDue, type RecurringBillTemplate } from "./template.service.js";
+
+// GL-posting kill switch for recurring-bill autopost. A recurring bill's autopost IS bill posting, so it
+// is gated by the SAME per-entity flag as every other bill post — resolved via lib.feature_flags
+// (isEnabled) per operating_company_id, NOT a raw process.env global (which would flip autopost on for
+// EVERY entity at once, violating the per-entity kill-switch rule). Default OFF.
+const BILL_GL_POSTING_FLAG_KEY = "BILL_GL_POSTING_ENABLED";
 
 export function computeNextGenerationDate(currentDate: string, frequency: string): string {
   const dt = DateTime.fromISO(currentDate, { zone: "utc" });
@@ -81,11 +88,17 @@ export async function generateFromTemplate(
   });
 
   // GL-posting gate: the bill (AP record) is always created above, but auto-posting it to the GL is
-  // held behind a default-OFF flag — consistent with FIN-18/21/22/VOID, which never post until Jorge
-  // flips them on with the accountant. Split across two lines so the FLAG_FLIP hold-merge-gate regex
-  // doesn't trip on a single line carrying both the *_ENABLED token and the on-value.
-  const autoPostFlagRaw = process.env.RECURRING_BILL_AUTOPOST_ENABLED ?? "false";
-  const autoPostEnabled = autoPostFlagRaw === "true";
+  // held behind a default-OFF, PER-ENTITY flag resolved via lib.feature_flags (isEnabled) — consistent
+  // with FIN-18/21/22/VOID, which never post until Jorge flips them on with the accountant. Resolved on
+  // a scoped client for THIS template's operating_company_id, so a flip is per-entity (never a raw
+  // process.env global that would enable autopost for every entity at once). Default OFF => no-op.
+  const autoPostEnabled = await withLuciaBypass(async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [template.operating_company_id]);
+    return isEnabled(client, BILL_GL_POSTING_FLAG_KEY, {
+      operating_company_id: template.operating_company_id,
+      user_uuid: actorUserId,
+    });
+  });
   if (template.auto_post && autoPostEnabled) {
     try {
       await postSourceTransaction(

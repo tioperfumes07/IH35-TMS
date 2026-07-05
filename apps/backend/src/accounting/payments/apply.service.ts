@@ -1,5 +1,13 @@
 import { nextCreditMemoDisplayId } from "../display-id.js";
 import { postSourceTransaction } from "../posting-engine.service.js";
+import { isEnabled } from "../../lib/feature-flags/service.js";
+
+// CHAIN-06 — per-entity GL-posting kill switch for the customer-payment (A/R receipt) JE. The payment and
+// its applications (AR reduced at the payment_applications level) are always written; posting the balanced
+// receipt JE to the GL is gated PER-ENTITY via lib.feature_flags (isEnabled). Default OFF => the payment
+// applies but no GL journal is posted (no-op), matching every other gated poster. Whether to turn this ON
+// (or leave A/R-receipt posting always-on) is an OWNER decision (CHAIN-06); OFF-by-default is the safe state.
+const CUSTOMER_PAYMENT_GL_POSTING_FLAG_KEY = "CUSTOMER_PAYMENT_GL_POSTING_ENABLED";
 
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
@@ -307,15 +315,23 @@ export async function applyPayment(client: Queryable, input: ApplyPaymentInput, 
     if (applicationId) applicationIds.push(applicationId);
   }
 
-  await postSourceTransaction(
-    {
-      operating_company_id: input.operating_company_id,
-      source_transaction_type: "customer_payment",
-      source_transaction_id: input.payment_id,
-      posting_purpose: "initial_post",
-    },
-    { userId: actor.user_id }
-  );
+  // Kill switch: resolve the per-entity flag on the same scoped client (operating_company_id already set
+  // above). Flag OFF (default) => skip the GL post entirely; the payment + applications above still stand.
+  const customerPaymentPostingEnabled = await isEnabled(client, CUSTOMER_PAYMENT_GL_POSTING_FLAG_KEY, {
+    operating_company_id: input.operating_company_id,
+    user_uuid: actor.user_id,
+  });
+  if (customerPaymentPostingEnabled) {
+    await postSourceTransaction(
+      {
+        operating_company_id: input.operating_company_id,
+        source_transaction_type: "customer_payment",
+        source_transaction_id: input.payment_id,
+        posting_purpose: "initial_post",
+      },
+      { userId: actor.user_id }
+    );
+  }
 
   const refreshedPaymentRes = await client.query<{ amount_unapplied_cents: number }>(
     `SELECT amount_unapplied_cents::bigint AS amount_unapplied_cents FROM accounting.payments WHERE id = $1::uuid LIMIT 1`,

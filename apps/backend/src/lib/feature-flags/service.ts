@@ -40,6 +40,13 @@ export const POSTING_FLAG_KEYS: ReadonlySet<string> = new Set([
   "BANK_FEED_GL_POSTING_ENABLED",
   "BILL_GL_POSTING_ENABLED",
   "BILL_PAYMENT_GL_POSTING_ENABLED",
+  // CHAIN-06 GAP — customer-payment (A/R receipt) posting kill switch. payments/apply.service.ts posts a
+  // balanced JE (DR real-bank / CR ar_control) via postSourceTransaction('customer_payment') on every
+  // payment apply — previously with NO per-entity flag at all. Enrolled per-entity, default OFF, so a
+  // global flip can never turn A/R-receipt posting on for EVERY entity (incl. USMCA / TRK). Whether to
+  // turn it ON (or leave AR-receipt posting always-on) is an OWNER decision (CHAIN-06); OFF-by-default
+  // is the safe state Jorge flips.
+  "CUSTOMER_PAYMENT_GL_POSTING_ENABLED",
   "EXPENSE_GL_POSTING_ENABLED",
   "FACTORING_GL_POSTING_ENABLED",
   "INVOICE_AR_GL_POSTING_ENABLED",
