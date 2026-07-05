@@ -1,5 +1,7 @@
-// Legal Template Library — idempotent seed of the 7 owner-activated templates
-// (4 lease versions + 3 NDA variants) from the verbatim source docx.
+// Legal Template Library — idempotent seed of the 8 owner-activated templates
+// (4 lease versions + 3 NDA variants from the verbatim source docx, plus the
+// hand-authored owner_operator_lease_agreement future-use draft — see the banner
+// comment in templates/legal-template-library.generated.ts).
 //
 // Owner directive (Jorge): KEEP all 19 existing templates untouched; ADD these 7
 // under DISTINCT codes; MAKE them active so the creator works now. Activation is
