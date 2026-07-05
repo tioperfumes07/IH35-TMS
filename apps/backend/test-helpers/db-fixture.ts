@@ -134,17 +134,25 @@ export async function ensureIntegrationPrerequisites(): Promise<string> {
       TEST_OWNER_USER_ID,
     ]);
 
+    // default_company_id MUST be seeded to TRANSP. For an Owner, org.user_accessible_company_ids()
+    // returns EVERY company, so resolveOperatingCompanyId(no explicit id) falls back to the LOWEST
+    // company UUID (USMCA/TRK < TRANSP) when default_company_id is NULL. By-id mutation routes (e.g.
+    // PATCH /mdata/customers/:id) intentionally scope to the caller's current/default company and do
+    // NOT accept an operating_company_id override, so an unset default made them resolve the wrong
+    // entity → the seeded TRANSP customer was "not found" → 404 instead of the real 400 validation.
+    // Production Owners always have default_company_id set (migration 0014); the fixture must mirror that.
     await client.query(
       `
-        INSERT INTO identity.users (id, email, google_user_id, role, preferred_language)
-        VALUES ($1::uuid, $2, $3, 'Owner', 'en')
+        INSERT INTO identity.users (id, email, google_user_id, role, preferred_language, default_company_id)
+        VALUES ($1::uuid, $2, $3, 'Owner', 'en', $4::uuid)
         ON CONFLICT (id) DO UPDATE
           SET email = EXCLUDED.email,
               role = EXCLUDED.role,
               google_user_id = EXCLUDED.google_user_id,
-              preferred_language = EXCLUDED.preferred_language
+              preferred_language = EXCLUDED.preferred_language,
+              default_company_id = EXCLUDED.default_company_id
       `,
-      [TEST_OWNER_USER_ID, TEST_OWNER_EMAIL, TEST_OWNER_GOOGLE_ID]
+      [TEST_OWNER_USER_ID, TEST_OWNER_EMAIL, TEST_OWNER_GOOGLE_ID, companyId]
     );
 
     await client.query(

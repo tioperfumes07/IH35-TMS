@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { listPaymentTermOptions, type Customer, type UpdateCustomerInput } from "../../api/mdata";
+import { listCustomers, listPaymentTermOptions, type Customer, type UpdateCustomerInput } from "../../api/mdata";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
 import {
@@ -46,6 +46,21 @@ export function CustomerEditModal({ open, customer, operatingCompanyId, saving =
   });
   const paymentTermOptions = useMemo(() => paymentTermsQuery.data ?? [], [paymentTermsQuery.data]);
 
+  // D1-4: eligible parents = active, TOP-LEVEL customers in this company, excluding this customer itself.
+  const parentCandidatesQuery = useQuery({
+    queryKey: ["customer-parent-options", companyId],
+    queryFn: () => listCustomers({ operating_company_id: companyId, limit: 5000 }).then((r) => r.customers),
+    enabled: open && Boolean(companyId),
+    staleTime: 60_000,
+  });
+  const parentCustomerOptions = useMemo(
+    () =>
+      (parentCandidatesQuery.data ?? [])
+        .filter((c) => !c.parent_customer_id && c.id !== customer?.id && c.status !== "inactive" && !c.deactivated_at)
+        .map((c) => ({ id: c.id, name: c.name, customer_code: c.customer_code })),
+    [parentCandidatesQuery.data, customer?.id]
+  );
+
   if (!open || !customer) return null;
 
   return (
@@ -76,6 +91,8 @@ export function CustomerEditModal({ open, customer, operatingCompanyId, saving =
           mode="edit"
           paymentTermOptions={paymentTermOptions}
           onPaymentTermCreated={() => void paymentTermsQuery.refetch()}
+          parentCustomerOptions={parentCustomerOptions}
+          customerId={customer.id}
         />
         <div className="flex justify-end gap-2 border-t border-gray-200 pt-3">
           <Button type="button" variant="secondary" onClick={onClose}>

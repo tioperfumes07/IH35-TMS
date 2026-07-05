@@ -159,6 +159,37 @@ for (const file of walkTsFiles(BACKEND_SRC, [])) {
   }
 }
 
+// (6) H3-1: BANK_DRIVER_ADVANCE_ENABLED is a REAL money-posting flag (BLOCK-6 posts a balanced
+//     driver-advance JE) whose key does NOT match the `*_GL_POSTING*` / `*_POSTING_ENABLED` pattern that
+//     isPostingFlag() auto-recognizes. So it MUST be enumerated in POSTING_FLAG_KEYS explicitly, or it
+//     silently falls through resolveFlagEnabled to the global rollout/default path and a single global flip
+//     could enable posting for EVERY entity — bypassing the per-entity money kill-switch. This asserts both
+//     that it stays enrolled and that its service reads it through the canonical isEnabled() resolver.
+if (service) {
+  if (!postingKeys.has("BANK_DRIVER_ADVANCE_ENABLED")) {
+    failures.push(
+      "service.ts: BANK_DRIVER_ADVANCE_ENABLED (BLOCK-6 driver-advance JE posting flag) must be enumerated in POSTING_FLAG_KEYS — its key does not match the posting-flag pattern, so without it a global default/rollout enable would bypass the per-entity kill-switch"
+    );
+  }
+}
+const BANK_DRIVER_ADVANCE_SERVICE = path.join(
+  ROOT,
+  "apps/backend/src/banking/bank-driver-advance.service.ts"
+);
+const advSvc = read(BANK_DRIVER_ADVANCE_SERVICE);
+if (advSvc) {
+  if (!/isEnabled\s*\(/.test(advSvc)) {
+    failures.push(
+      "bank-driver-advance.service.ts must gate BANK_DRIVER_ADVANCE_ENABLED via the canonical isEnabled(client, key, { operating_company_id, user_uuid }) resolver"
+    );
+  }
+  if (/process\.env\.[A-Za-z_]*BANK_DRIVER_ADVANCE/.test(advSvc)) {
+    failures.push(
+      "bank-driver-advance.service.ts must NOT read BANK_DRIVER_ADVANCE_ENABLED from process.env — a raw env read bypasses the per-entity kill-switch; use isEnabled()"
+    );
+  }
+}
+
 if (failures.length > 0) {
   console.error("verify:per-entity-only-flag-gates — FAILED");
   for (const f of failures) console.error(`  ✗ ${f}`);

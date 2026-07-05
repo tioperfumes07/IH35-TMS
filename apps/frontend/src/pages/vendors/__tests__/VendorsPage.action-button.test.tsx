@@ -65,6 +65,6 @@ describe("VendorsPage primary action button", () => {
 
     const button = await screen.findByRole("button", { name: "New transaction" });
     expect(button).toHaveTextContent("New transaction");
-    expect(button.className).toContain("bg-[#16A34A]");
+    expect(button.className).toContain("bg-[#1f2a44]");
   });
 });

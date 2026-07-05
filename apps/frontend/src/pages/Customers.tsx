@@ -276,6 +276,14 @@ export function CustomersPage() {
     queryFn: () => listCustomers({ operating_company_id: companyId, limit: 5000 }).then((result) => result.customers),
     enabled: Boolean(companyId),
   });
+  // D1-4: eligible parents for the create form = active, TOP-LEVEL customers (never a sub-customer).
+  const parentCustomerOptions = useMemo(
+    () =>
+      (customersQuery.data ?? [])
+        .filter((c) => !c.parent_customer_id && c.status !== "inactive" && !c.deactivated_at)
+        .map((c) => ({ id: c.id, name: c.name, customer_code: c.customer_code })),
+    [customersQuery.data]
+  );
   const allInvoicesQuery = useQuery({
     queryKey: ["accounting", "invoices", "all", companyId],
     queryFn: () => listInvoices(companyId),
@@ -515,7 +523,7 @@ export function CustomersPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <ActionButton onClick={() => navigate(`/customers/${selectedCustomer.id}`)}>Edit</ActionButton>
-                      <ActionButton className="rounded-sm border border-emerald-700 bg-emerald-700 px-3 py-1 text-white hover:bg-emerald-600" onClick={() => navigate(`/accounting/invoices?customer_id=${selectedCustomer.id}`)}>
+                      <ActionButton className="rounded-sm border border-[#1f2a44] bg-[#1f2a44] px-3 py-1 text-white hover:bg-[#0f1729]" onClick={() => navigate(`/accounting/invoices?customer_id=${selectedCustomer.id}`)}>
                         New transaction
                       </ActionButton>
                     </div>
@@ -713,6 +721,7 @@ export function CustomersPage() {
             mode="create"
             paymentTermOptions={paymentTermsQuery.data ?? []}
             onPaymentTermCreated={() => void paymentTermsQuery.refetch()}
+            parentCustomerOptions={parentCustomerOptions}
           />
           {createFieldErrors.mc_number ? (
             <span id="mc_number-error" className="block text-xs text-red-700">
