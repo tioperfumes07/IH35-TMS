@@ -33,8 +33,16 @@
 -- applies JORGE-APPROVED and flips the flag per entity.
 --
 -- CONCURRENCY NOTE: §2 rebuilds the two closed-list CHECKs as a SUPERSET of main's CURRENT values
--- (CODER-34 = the last widener). If a concurrently-held migration widens the same CHECK first, reconcile
--- the value list at apply time (Jorge applies held migrations in order on the Neon branch).
+-- (CODER-34 / 202607013000 = the last widener on main: 22 roles = 12 base + FIN-22's 4 + CODER-34's 6).
+-- §2's list = those 22 + property_tax_expense + property_tax_payable = 24 (a TRUE SUPERSET). If a
+-- concurrently-held migration widens the same CHECK first, reconcile the value list at apply time
+-- (Jorge applies held migrations in order on the Neon branch).
+--
+-- CROSS-PR RECONCILE (vs #2151 settlement-contract-terms 202607080000, held concurrently): #2151 does
+-- NOT touch either CoA role-CHECK and seeds ZERO chart_of_accounts_roles rows — it adds no role values.
+-- Therefore this migration's DROP+ADD superset composes with #2151 in EITHER apply order with no
+-- collision: applying #2151 first adds no roles this ADD CONSTRAINT would reject; applying this first
+-- leaves a 24-role CHECK that #2151 never narrows. (Verified 2026-07-05 vs origin/main 202607013000.)
 
 BEGIN;
 
