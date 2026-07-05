@@ -45,7 +45,6 @@ function isTrackedFrontendSource(filePath) {
   if (!filePath.startsWith("apps/frontend/src/")) return false;
   if (!/\.(tsx|jsx)$/.test(filePath)) return false;
   if (/(\.test\.|\.spec\.|\/__tests__\/)/.test(filePath)) return false;
-  if (filePath.includes("/i18n/translations/")) return false;
   return true;
 }
 

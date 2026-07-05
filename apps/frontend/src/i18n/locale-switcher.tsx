@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { getUserPreferences, patchUserPreferences } from "../api/safety";
-import i18n from "./i18n";
+import i18n from "./index";
 import { useTranslation } from "../hooks/useTranslation";
 
 const SUPPORTED_LOCALES = ["en", "es"] as const;
