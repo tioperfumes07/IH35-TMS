@@ -33,7 +33,10 @@ const DEDUCTION_AUTH_TEMPLATE_CODES = [
 // deduction consent — no separate deduction-auth e-sign is required. A signed instance
 // of any of these codes satisfies the same FIN-18 consent gate as a standalone
 // deduction authorization. (Mirrors the constant added by PR #2144.)
-export const HIRE_CONTRACT_TEMPLATE_CODES = ["driver_hire_agreement"];
+// Both the v1 hiring agreement and the v2 cross-border contractor agreement carry the
+// standing written deduction authorization, so either one satisfies the consent gate.
+// v2 is additive — v1 stays registered and recognized for already-signed instances.
+export const HIRE_CONTRACT_TEMPLATE_CODES = ["driver_hire_agreement", "driver_hire_agreement_v2"];
 
 // Any signed driver instance of these codes authorizes settlement/escrow deductions.
 const DEDUCTION_CONSENT_TEMPLATE_CODES = [
