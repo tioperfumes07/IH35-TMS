@@ -363,7 +363,7 @@ export type Customer = {
   credit_limit_updated_at: string | null;
   payment_terms_id: string | null;
   operating_company_id: string;
-  parent_customer_id: string | null; // D1-4: sub-customer -> parent hard link
+  parent_customer_id?: string | null; // D1-4: sub-customer -> parent hard link (optional: null/absent for top-level customers)
   customer_type: CustomerType | null;
   status: "active" | "inactive" | "credit_hold" | "blacklist";
   default_billing_miles_basis: MilesBasis;
