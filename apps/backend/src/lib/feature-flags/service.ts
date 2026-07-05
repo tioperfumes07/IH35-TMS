@@ -45,6 +45,13 @@ export const POSTING_FLAG_KEYS: ReadonlySet<string> = new Set([
   "INVOICE_AR_GL_POSTING_ENABLED",
   "LEASE_GL_POSTING_ENABLED",
   "SETTLEMENT_GL_POSTING_ENABLED",
+  // H3-1: BLOCK-6 driver loan/advance posting from bank categorize. It posts a BALANCED JE (DEBIT the
+  // driver-advance receivable, CREDIT the source bank) via the existing driver_advance source type, so it
+  // is a real money-posting flag — but its key does NOT match the `*_GL_POSTING*` / `*_POSTING_ENABLED`
+  // pattern, so without enrolling it here it would fall through to the global rollout/default path and a
+  // single global flip could turn posting on for EVERY entity (incl. USMCA / TRK), bypassing the
+  // per-entity kill-switch. Enrolled so enable is ONLY via an explicit per-entity/user override. Default OFF.
+  "BANK_DRIVER_ADVANCE_ENABLED",
   // IMPORT-P0: gates whether TMS pushes journal entries INTO QuickBooks. QBO is the system of record
   // through 12/31/2025 (double books + reconciliation, no sync-back), so this must be per-entity-only —
   // a global flip would start echoing every entity's JEs into QBO. Enable is an explicit per-entity
