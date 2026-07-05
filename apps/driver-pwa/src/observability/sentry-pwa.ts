@@ -43,3 +43,22 @@ export async function capturePwaError(error: unknown, context?: string): Promise
 export function sentryPwaReady(): boolean {
   return initialized && Boolean(readDsn());
 }
+
+let globalHandlersRegistered = false;
+
+/**
+ * G10-C3: route uncaught driver-PWA errors and unhandled promise rejections into Sentry so a bad-signal crash
+ * on a driver's phone actually reports somewhere instead of dying silently. Both paths funnel through
+ * capturePwaError, which dynamic-imports the Sentry SDK and no-ops when it is unavailable or VITE_SENTRY_DSN is
+ * unset — so this adds NO new runtime dependency and is inert in local/dev. Idempotent + SSR-safe.
+ */
+export function registerPwaGlobalErrorHandlers(): void {
+  if (globalHandlersRegistered || typeof window === "undefined") return;
+  globalHandlersRegistered = true;
+  window.addEventListener("error", (event) => {
+    void capturePwaError(event.error ?? event.message, "window.error");
+  });
+  window.addEventListener("unhandledrejection", (event) => {
+    void capturePwaError(event.reason, "unhandledrejection");
+  });
+}
