@@ -394,7 +394,7 @@ export function ProgramBoardPage() {
       ) : null}
 
       {/* TABLE tabs */}
-      {!isLoading && !isError && (tab === "focus" || tab === "all" || tab === "pending" || tab === "owner" || tab === "dispatch") ? (
+      {!isLoading && !isError && (tab === "focus" || tab === "all" || tab === "pending" || tab === "owner" || tab === "dispatch" || tab === "audit") ? (
         <div className="space-y-2">
           {tab === "pending" ? (
             <div className="space-y-2">
