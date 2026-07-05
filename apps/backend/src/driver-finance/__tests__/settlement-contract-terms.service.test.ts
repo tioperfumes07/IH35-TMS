@@ -264,7 +264,7 @@ describe("computeDriverFinePassthrough", () => {
   it("open driver fine => deduction + fine reverse-link", async () => {
     const { client, calls } = makeClient([
       {
-        match: "FROM safety.fines",
+        match: "FROM safety.civil_fines",
         rows: [{ id: "fine1", amount_cents: 15000, violation_description: "overweight", issued_by_authority: "TX DPS", related_load_id: "load9" }],
       },
       { match: "INSERT INTO driver_finance.settlement_contract_lines", rows: [{ id: "c1" }] },
@@ -273,12 +273,12 @@ describe("computeDriverFinePassthrough", () => {
     const res = await computeDriverFinePassthrough(client, base);
     expect(res.appliedCount).toBe(1);
     expect(res.appliedCents).toBe(15000);
-    // reverse link: safety.fines UPDATE ... driver_settlement_deduction_id
-    expect(calls.some((c) => c.sql.includes("UPDATE") && c.sql.includes("safety.fines") && c.sql.includes("driver_settlement_deduction_id"))).toBe(true);
+    // reverse link: safety.civil_fines UPDATE ... driver_settlement_deduction_id
+    expect(calls.some((c) => c.sql.includes("UPDATE") && c.sql.includes("safety.civil_fines") && c.sql.includes("driver_settlement_deduction_id"))).toBe(true);
   });
 
   it("no open fines => nothing", async () => {
-    const { client, calls } = makeClient([{ match: "FROM safety.fines", rows: [] }]);
+    const { client, calls } = makeClient([{ match: "FROM safety.civil_fines", rows: [] }]);
     const res = await computeDriverFinePassthrough(client, base);
     expect(res.appliedCount).toBe(0);
     expect(insertsInto(calls, "driver_finance.driver_settlement_deductions")).toHaveLength(0);

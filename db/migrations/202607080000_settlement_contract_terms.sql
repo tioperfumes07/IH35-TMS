@@ -26,7 +26,7 @@
 -- SCHEMA TOUCHES (all additive, all IF NOT EXISTS):
 --   * mdata.drivers                         — referral link + reward-paid provenance (columns).
 --   * mdata.loads                           — customer chargeback AMOUNT + driver-fault flag (columns).
---   * safety.fines                          — reverse link to the driver deduction it produced (column).
+--   * safety.civil_fines                          — reverse link to the driver deduction it produced (column).
 --   * driver_finance.driver_reimbursements  — NEW table (immediate-pay out-of-pocket claims).
 --   * driver_finance.settlement_contract_lines — NEW table (provenance/connectivity backbone: each computed
 --                                             line -> its source record + settlement + created line/deduction).
@@ -95,30 +95,30 @@ BEGIN
 END $$;
 
 -- ─────────────────────────────────────────────────────────────────────────────────────────────────────
--- 3) safety.fines — reverse link to the driver deduction it produced (forward = deduction.load_id/reason;
+-- 3) safety.civil_fines — reverse link to the driver deduction it produced (forward = deduction.load_id/reason;
 --    reverse = fine.driver_settlement_deduction_id). Also the idempotency guard: a fine that already has a
 --    deduction is never charged twice.
 -- ─────────────────────────────────────────────────────────────────────────────────────────────────────
 DO $$
 BEGIN
-  IF to_regclass('safety.fines') IS NOT NULL THEN
-    ALTER TABLE safety.fines
+  IF to_regclass('safety.civil_fines') IS NOT NULL THEN
+    ALTER TABLE safety.civil_fines
       ADD COLUMN IF NOT EXISTS driver_settlement_deduction_id uuid;
 
     IF to_regclass('driver_finance.driver_settlement_deductions') IS NOT NULL
        AND NOT EXISTS (
          SELECT 1 FROM pg_constraint
          WHERE conname = 'fines_driver_settlement_deduction_id_fkey'
-           AND conrelid = 'safety.fines'::regclass
+           AND conrelid = 'safety.civil_fines'::regclass
        ) THEN
-      ALTER TABLE safety.fines
+      ALTER TABLE safety.civil_fines
         ADD CONSTRAINT fines_driver_settlement_deduction_id_fkey
         FOREIGN KEY (driver_settlement_deduction_id)
         REFERENCES driver_finance.driver_settlement_deductions(id);
     END IF;
 
     CREATE INDEX IF NOT EXISTS idx_fines_driver_deduction
-      ON safety.fines (driver_settlement_deduction_id) WHERE driver_settlement_deduction_id IS NOT NULL;
+      ON safety.civil_fines (driver_settlement_deduction_id) WHERE driver_settlement_deduction_id IS NOT NULL;
   END IF;
 END $$;
 
@@ -280,8 +280,8 @@ BEGIN
     IF to_regclass('mdata.loads') IS NOT NULL THEN
       GRANT SELECT, INSERT, UPDATE ON mdata.loads TO ih35_app;
     END IF;
-    IF to_regclass('safety.fines') IS NOT NULL THEN
-      GRANT SELECT, INSERT, UPDATE ON safety.fines TO ih35_app;
+    IF to_regclass('safety.civil_fines') IS NOT NULL THEN
+      GRANT SELECT, INSERT, UPDATE ON safety.civil_fines TO ih35_app;
     END IF;
   END IF;
 END $$;

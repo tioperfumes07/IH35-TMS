@@ -480,7 +480,7 @@ export async function computeDriverFinePassthrough(
   }>(
     `
       SELECT id::text, amount_cents, violation_description, issued_by_authority, related_load_id::text
-      FROM safety.fines
+      FROM safety.civil_fines
       WHERE operating_company_id = $1::uuid
         AND subject_type = 'driver'
         AND subject_driver_id = $2::uuid
@@ -510,7 +510,7 @@ export async function computeDriverFinePassthrough(
       lineKind: "fine_passthrough",
       direction: "deduction",
       amountCents,
-      sourceTable: "safety.fines",
+      sourceTable: "safety.civil_fines",
       sourceId: fineId,
       computedBasis: { authority: fine.issued_by_authority, description: fine.violation_description },
       actorUserId: input.actorUserId,
@@ -531,7 +531,7 @@ export async function computeDriverFinePassthrough(
     // Reverse link + idempotency: a fine that already produced a deduction is never charged again.
     await client.query(
       `
-        UPDATE safety.fines
+        UPDATE safety.civil_fines
         SET driver_settlement_deduction_id = $2::uuid, updated_at = now()
         WHERE id = $1::uuid AND driver_settlement_deduction_id IS NULL
       `,
