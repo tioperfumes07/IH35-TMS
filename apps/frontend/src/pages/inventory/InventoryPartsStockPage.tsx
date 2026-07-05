@@ -12,6 +12,8 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 const columns = [
   { key: "name", label: "Part Name" },
   { key: "sku", label: "SKU" },
+  // INV-1: category is now a persisted column — surface it so the saved value is visible.
+  { key: "category", label: "Category" },
   { key: "on_hand_qty", label: "On Hand Qty", align: "right" as const },
   { key: "unit_cost", label: "Unit Cost", align: "right" as const, format: (v: number) => v ? `$${Number(v).toFixed(2)}` : "—" },
   { key: "location", label: "Location/Bin" },
@@ -25,6 +27,8 @@ export type MaintenancePartRow = {
   id: string;
   part_number: string | null;
   name: string | null;
+  category: string | null;
+  notes: string | null;
   unit_cost: number | null;
   qty_on_hand: number | null;
   location: string | null;
@@ -34,6 +38,8 @@ export type InventoryPartRow = {
   id: string;
   name: string | null;
   sku: string | null;
+  category: string | null;
+  notes: string | null;
   on_hand_qty: number;
   unit_cost: number | null;
   location: string | null;
@@ -46,6 +52,9 @@ export function mapMaintenancePartsToInventoryRows(rows: MaintenancePartRow[]): 
       id: r.id,
       name: r.name,
       sku: r.part_number,
+      // INV-1: category + notes now round-trip from the persisted columns.
+      category: r.category ?? null,
+      notes: r.notes ?? null,
       on_hand_qty: qty,
       unit_cost: r.unit_cost,
       location: r.location,
