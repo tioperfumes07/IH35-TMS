@@ -13,6 +13,11 @@ type BookStop = {
   state: string;
   country: string;
   address_line1: string;
+  // RATECON-4 — ZIP is now a first-class stop field (was silently dropped by this normalizer, forcing the
+  // rate-con mapper to bury it in stop_notes). Optional so existing template JSON without it still applies.
+  zip?: string;
+  pickup_number?: string;
+  po_number?: string;
   scheduled_arrival_at: string;
   time_window_type?: "appointment" | "open_window" | "select_hours" | "refused";
   appointment_start_at?: string;
@@ -142,6 +147,9 @@ function normalizeTemplateStops(raw: unknown): BookStop[] {
       state: String(o.state ?? ""),
       country: String(o.country ?? "USA"),
       address_line1: String(o.address_line1 ?? o.location_address ?? ""),
+      zip: String(o.zip ?? o.postal_code ?? ""),
+      pickup_number: String(o.pickup_number ?? ""),
+      po_number: String(o.po_number ?? ""),
       scheduled_arrival_at: String(o.scheduled_arrival_at ?? "").slice(0, 16),
       time_window_type: (o.time_window_type as BookStop["time_window_type"]) ?? "appointment",
       appointment_start_at: o.appointment_start_at ? String(o.appointment_start_at).slice(0, 16) : "",
