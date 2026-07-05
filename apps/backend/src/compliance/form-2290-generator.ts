@@ -89,8 +89,13 @@ export function computeForm2290Vehicles(
 
 export function upcomingForm2290Deadline(reference = new Date()): { deadline: string; daysRemaining: number } {
   const year = reference.getUTCFullYear();
+  // getUTCMonth() is 0-indexed: July=6, August=7, September=8.
+  // The Form 2290 annual deadline is Aug 31 (for vehicles first used in July, tax period begins Jul 1).
+  // During all of August the current year's Aug 31 is still today-or-future, so it remains the upcoming
+  // deadline; only from September onward (month > 7) has this year's Aug 31 passed and we roll to next year.
+  // Using `>= 7` here bumped the entire month of August a full year forward (off-by-one at the boundary).
   const month = reference.getUTCMonth();
-  const deadlineYear = month >= 7 ? year + 1 : year;
+  const deadlineYear = month > 7 ? year + 1 : year;
   const deadline = new Date(Date.UTC(deadlineYear, 7, 31));
   const daysRemaining = Math.ceil((deadline.getTime() - reference.getTime()) / 86_400_000);
   return { deadline: deadline.toISOString().slice(0, 10), daysRemaining };

@@ -7,6 +7,7 @@ import {
   computeForm2290Vehicles,
   grossWeightCategoryFromLbs,
   partialYearTaxFactor,
+  upcomingForm2290Deadline,
 } from "./form-2290-generator.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -45,6 +46,23 @@ describe("form-2290-generator", () => {
     expect(vehicles[1]?.taxDue).toBeLessThanOrEqual(annualTaxForCategory("F"));
     expect(partialYearTaxFactor("2026-04-01", "2025-07-01")).toBeLessThan(1);
     expect(partialYearTaxFactor("2026-01-01", "2025-07-01")).toBeLessThan(1);
+  });
+
+  it("targets the correct Aug 31 deadline across the tax-year rollover boundary", () => {
+    // July (before the deadline) → this year's Aug 31.
+    expect(upcomingForm2290Deadline(new Date("2026-07-15T00:00:00Z")).deadline).toBe("2026-08-31");
+    // Aug 1 — the deadline (Aug 31 this year) is imminent, NOT a full year away (the off-by-one bug).
+    const aug1 = upcomingForm2290Deadline(new Date("2026-08-01T00:00:00Z"));
+    expect(aug1.deadline).toBe("2026-08-31");
+    expect(aug1.daysRemaining).toBe(30);
+    // Aug 31 itself — deadline is today, 0 days remaining (not next year).
+    expect(upcomingForm2290Deadline(new Date("2026-08-31T00:00:00Z")).deadline).toBe("2026-08-31");
+    // September (this year's Aug 31 has passed) → next year's Aug 31.
+    expect(upcomingForm2290Deadline(new Date("2026-09-01T00:00:00Z")).deadline).toBe("2027-08-31");
+    // December (year rollover) → next year's Aug 31.
+    expect(upcomingForm2290Deadline(new Date("2026-12-15T00:00:00Z")).deadline).toBe("2027-08-31");
+    // January (before the deadline) → same year's Aug 31.
+    expect(upcomingForm2290Deadline(new Date("2027-01-10T00:00:00Z")).deadline).toBe("2027-08-31");
   });
 
   it("wires routes from form-425c bootstrap", () => {
