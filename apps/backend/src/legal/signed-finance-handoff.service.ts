@@ -42,6 +42,10 @@ const DEDUCTION_AUTH_TEMPLATE_CODES = [
 // fail-closed. Matched like isLeaseTemplateCode: explicit canonical codes + a `driver_hire_`
 // convention prefix. NDAs (nda_*) are category='employment' but are NOT hire contracts and are
 // deliberately EXCLUDED — an NDA must never authorize a payroll deduction.
+// The v1 hiring agreement (`driver_hire_agreement`) and the v2 cross-border contractor
+// agreement (`driver_hire_agreement_v2`) both carry the standing written deduction
+// authorization — v2 is caught by the `driver_hire_` prefix convention below, so it does not
+// need its own explicit entry; v1 stays registered and recognized for already-signed instances.
 const HIRE_CONTRACT_TEMPLATE_CODES = [
   "driver_hire_contract",
   "driver_hire_agreement",

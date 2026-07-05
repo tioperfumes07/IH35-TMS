@@ -7,9 +7,9 @@
  * lease-to-own-fleet.db.test.ts.
  *
  * Asserts the Phase-2/3/4/5 acceptance criteria:
- *  - seed inserts 8 active templates (7 Carl Barto docx templates + the hand-authored
- *    owner_operator_lease_agreement future-use draft); re-run adds zero (idempotent), never
- *    mutates status.
+ *  - seed inserts the whole library (LEGAL_TEMPLATE_LIBRARY.length active templates: 7 Carl
+ *    Barto docx templates + the hand-authored owner_operator_lease_agreement future-use draft
+ *    + driver_hire_agreement v1/v2); re-run adds zero (idempotent), never mutates status.
  *  - draft preview creates NO contract instance.
  *  - signed driver_deduction_auth -> driver + deduction_schedule links + DQ doc;
  *    hasSignedDeductionAuthorization() returns true.
@@ -23,6 +23,7 @@ import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
 import { ensureIntegrationPrerequisites } from "../../../test-helpers/db-fixture.js";
 import { TEST_OWNER_USER_ID } from "../../../test-helpers/constants.js";
 import { ensureLegalTemplateLibrary } from "../template-library.service.js";
+import { LEGAL_TEMPLATE_LIBRARY } from "../templates/legal-template-library.generated.js";
 import { renderDraftContractHtml } from "../draft-preview.service.js";
 import { applySignedOperationalLinks } from "../signed-links.service.js";
 import { applySignedFinanceHandoff, hasSignedDeductionAuthorization } from "../signed-finance-handoff.service.js";
@@ -68,10 +69,11 @@ describeIntegration("legal template library + Option-B handoff (real Postgres)",
     if (db) await db.end();
   });
 
-  it("seeds 8 active templates idempotently and never mutates status on re-run", async () => {
+  it("seeds the whole library idempotently and never mutates status on re-run", async () => {
     await withBypass(async () => {
+      const LIBRARY_TOTAL = LEGAL_TEMPLATE_LIBRARY.length;
       const first = await ensureLegalTemplateLibrary(db, { operatingCompanyId: companyId, actorUserId: actorId });
-      expect(first.total).toBe(8);
+      expect(first.total).toBe(LIBRARY_TOTAL);
       const active = await db.query(
         `SELECT count(*)::int AS n FROM legal.contract_templates
          WHERE operating_company_id=$1 AND status='active'
@@ -95,7 +97,7 @@ describeIntegration("legal template library + Option-B handoff (real Postgres)",
       // Re-run: zero new rows.
       const second = await ensureLegalTemplateLibrary(db, { operatingCompanyId: companyId, actorUserId: actorId });
       expect(second.inserted).toBe(0);
-      expect(second.already_present).toBe(8);
+      expect(second.already_present).toBe(LIBRARY_TOTAL);
     });
   });
 
