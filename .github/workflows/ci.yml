@@ -1177,6 +1177,9 @@ jobs:
       - name: verify:a4-audit-emit-accounting
         run: npm run verify:a4-audit-emit-accounting
 
+      - name: verify:g2-1-log-event-parameterized
+        run: npm run verify:g2-1-log-event-parameterized
+
       - name: verify:a5-audit-emit-banking
         run: npm run verify:a5-audit-emit-banking
 
