@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import type { UseFormRegister } from "react-hook-form";
-import { listUsers } from "../../../api/identity";
+import { listAssignableUsers } from "../../../api/identity";
 import type { CreateWOFormValues } from "./CreateWorkOrderModal";
 
 // render-v5 §header (maintenance-create-wo-render-v5.html) — the WO header fields that persist to LIVE
@@ -24,7 +24,7 @@ const INPUT = "h-7 w-full rounded-sm border border-gray-300 px-2";
 export function CreateWOSectionRenderV5Header({ register }: { register: UseFormRegister<CreateWOFormValues> }) {
   const usersQuery = useQuery({
     queryKey: ["identity", "users", "wo-authorized-by"],
-    queryFn: () => listUsers(false),
+    queryFn: () => listAssignableUsers(),
   });
   const users = usersQuery.data?.users ?? [];
   const userLabel = (u: { name?: string; first_name?: string | null; last_name?: string | null; email: string | null }) =>

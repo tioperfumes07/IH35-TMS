@@ -12,7 +12,7 @@ import {
   type TaskTargetType,
   type TaskType,
 } from "../../api/tasks";
-import { listUsers } from "../../api/identity";
+import { listAssignableUsers } from "../../api/identity";
 import { listVendors, listCustomers, listDrivers, listUnits } from "../../api/mdata";
 import type { IdentityUser } from "../../types/api";
 import { companyToday } from "../../lib/businessDate";
@@ -89,7 +89,7 @@ export function CreateTaskModal({ open, operatingCompanyId, defaultDate, presetL
 
   const usersQuery = useQuery({
     queryKey: ["identity", "users", "assignable"],
-    queryFn: () => listUsers(false),
+    queryFn: () => listAssignableUsers(),
     enabled: open,
   });
   const users = useMemo(

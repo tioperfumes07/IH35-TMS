@@ -85,4 +85,47 @@ describe("identity users routes", () => {
     const body = response.json() as { users: Array<{ last_login_at: string | null }> };
     expect(body.users[0]?.last_login_at).toBeNull();
   });
+
+  // USERS-2: the full directory (email, auth method, last-login) is a user-management surface — only
+  // Owner/Administrator may read it. A low-privilege role must NOT be able to enumerate every user.
+  it("GET /api/v1/identity/users returns 200 for Administrator", async () => {
+    const app = await buildApp("Administrator");
+    const response = await app.inject({ method: "GET", url: "/api/v1/identity/users" });
+    expect(response.statusCode).toBe(200);
+  });
+
+  it("GET /api/v1/identity/users returns 403 for a non-admin role (Dispatcher)", async () => {
+    const app = await buildApp("Dispatcher");
+    const response = await app.inject({ method: "GET", url: "/api/v1/identity/users" });
+    expect(response.statusCode).toBe(403);
+    expect(response.json()).toEqual({ error: "forbidden" });
+  });
+
+  it("GET /api/v1/identity/users returns 403 for a Driver (no directory enumeration)", async () => {
+    const app = await buildApp("Driver");
+    const response = await app.inject({ method: "GET", url: "/api/v1/identity/users" });
+    expect(response.statusCode).toBe(403);
+  });
+
+  // USERS-2: assignee pickers need a minimal name/role list — allowed for every office role, but NEVER
+  // exposes the auth-sensitive fields the full directory does, and is closed to Driver.
+  it("GET /api/v1/identity/users/assignable returns 200 for a non-admin office role (Dispatcher)", async () => {
+    const app = await buildApp("Dispatcher");
+    const response = await app.inject({ method: "GET", url: "/api/v1/identity/users/assignable" });
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toHaveProperty("users");
+  });
+
+  it("GET /api/v1/identity/users/assignable returns 200 for Owner", async () => {
+    const app = await buildApp("Owner");
+    const response = await app.inject({ method: "GET", url: "/api/v1/identity/users/assignable" });
+    expect(response.statusCode).toBe(200);
+  });
+
+  it("GET /api/v1/identity/users/assignable returns 403 for a Driver", async () => {
+    const app = await buildApp("Driver");
+    const response = await app.inject({ method: "GET", url: "/api/v1/identity/users/assignable" });
+    expect(response.statusCode).toBe(403);
+    expect(response.json()).toEqual({ error: "forbidden" });
+  });
 });

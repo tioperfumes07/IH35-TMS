@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { TasksModuleTabs } from "./TasksModuleTabs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { listUsers } from "../../api/identity";
+import { listAssignableUsers } from "../../api/identity";
 import {
   fetchPlannerTasks,
   fetchTaskComments,
@@ -83,7 +83,7 @@ export function TasksChatPage() {
     enabled: Boolean(companyId),
   });
 
-  const usersQuery = useQuery({ queryKey: ["identity", "users"], queryFn: () => listUsers(false) });
+  const usersQuery = useQuery({ queryKey: ["identity", "users", "assignable"], queryFn: () => listAssignableUsers() });
   const employees: Employee[] = useMemo(
     () =>
       (usersQuery.data?.users ?? [])
