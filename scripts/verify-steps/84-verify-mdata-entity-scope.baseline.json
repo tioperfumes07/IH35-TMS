@@ -511,6 +511,11 @@
       "preview": "` SELECT load_number FROM mdata.loads WHERE id = $1 LIMIT 1 `"
     },
     {
+      "key": "apps/backend/src/fuel/fuel-transaction-import.ts#b03bb410b179b930e521793d0fd2a668ba5fe592",
+      "file": "apps/backend/src/fuel/fuel-transaction-import.ts",
+      "preview": "`SELECT id::text FROM mdata.units WHERE COALESCE(currently_leased_to_company_id, owner_company_id) = $1 AND lower(unit_n"
+    },
+    {
       "key": "apps/backend/src/identity/users.routes.ts#6c7dbaf6580a7bf29a16d85736ff4bb6a72c6273",
       "file": "apps/backend/src/identity/users.routes.ts",
       "preview": "` SELECT EXISTS ( SELECT 1 FROM mdata.drivers d WHERE d.identity_user_id = $1 ) AS has_driver_record `"
