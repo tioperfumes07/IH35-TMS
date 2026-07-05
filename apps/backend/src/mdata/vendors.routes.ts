@@ -73,6 +73,30 @@ function isWriteRole(role: string): boolean {
   return role === "Owner" || role === "Administrator" || role === "Manager" || role === "Accountant";
 }
 
+// G6-2: vendor create previously had NO dedup guard (customers had one), so duplicate vendors could
+// be created freely. Mirror the customer pattern: (a) case-insensitive on name (lower(btrim(...))),
+// (b) entity-scoped by operating_company_id (mdata RLS is identity-based, NOT entity-scoped, so the
+// opco predicate MUST be explicit — the same vendor name in TRANSP vs USMCA is allowed), and (c)
+// ignore archived rows (deactivated_at IS NULL). Returns true when a live duplicate exists.
+async function vendorNameConflictExists(
+  authUserId: string,
+  operatingCompanyId: string,
+  name: string,
+  excludeId?: string
+): Promise<boolean> {
+  return withCurrentUser(authUserId, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    const values: unknown[] = [name, operatingCompanyId];
+    let where = `lower(btrim(vendor_name)) = lower(btrim($1)) AND operating_company_id = $2 AND deactivated_at IS NULL`;
+    if (excludeId) {
+      values.push(excludeId);
+      where += " AND id <> $3";
+    }
+    const res = await client.query(`SELECT id FROM mdata.vendors WHERE ${where} LIMIT 1`, values);
+    return res.rows.length > 0;
+  });
+}
+
 function scrubVendorProjectionSource(row: Record<string, unknown>) {
   const notesRaw = typeof row.notes === "string" ? row.notes : null;
   if (!notesRaw || !QBO_ARCHIVE_PROJECTION_SOURCE_RE.test(notesRaw)) return row;
@@ -178,12 +202,22 @@ export async function registerVendorRoutes(app: FastifyInstance) {
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
     const b = parsedBody.data;
 
+    // Resolve the operating company BEFORE the dedup check so the check is entity-scoped (G6-2).
+    const createOperatingCompanyId = await withCurrentUser(authUser.uuid, async (client) =>
+      resolveOperatingCompanyId(client, authUser.uuid, b.operating_company_id)
+    );
+    if (!createOperatingCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
+    if (await vendorNameConflictExists(authUser.uuid, createOperatingCompanyId, b.name)) {
+      return reply.code(409).send({
+        error: "mdata_vendor_name_conflict",
+        message: "Vendor with this name already exists",
+        fieldErrors: { name: "Already in use" },
+      });
+    }
+
     try {
       const created = await withCurrentUser(authUser.uuid, async (client) => {
-        const resolvedOperatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, b.operating_company_id);
-        if (!resolvedOperatingCompanyId) {
-          throw new Error("operating_company_id_required");
-        }
+        const resolvedOperatingCompanyId = createOperatingCompanyId;
         const res = await client.query(
           `
             INSERT INTO mdata.vendors (
@@ -311,6 +345,20 @@ export async function registerVendorRoutes(app: FastifyInstance) {
     const parsedBody = updateVendorBodySchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
     const b = parsedBody.data;
+
+    // G6-2: a rename must not collide with an existing live vendor in the same entity.
+    if ("name" in b && b.name) {
+      const patchScopedCompanyId = await withCurrentUser(authUser.uuid, async (client) =>
+        resolveOperatingCompanyId(client, authUser.uuid)
+      );
+      if (patchScopedCompanyId && (await vendorNameConflictExists(authUser.uuid, patchScopedCompanyId, b.name, parsedParams.data.id))) {
+        return reply.code(409).send({
+          error: "mdata_vendor_name_conflict",
+          message: "Vendor with this name already exists",
+          fieldErrors: { name: "Already in use" },
+        });
+      }
+    }
 
     const setParts: string[] = [];
     const values: unknown[] = [];

@@ -172,22 +172,32 @@ function canForceFmcsaVerify(role: string): boolean {
   return role === "Owner" || role === "Administrator";
 }
 
+// G6-3: customer dedup must be (a) case-insensitive on name (lower(btrim(...))), (b) entity-scoped
+// by operating_company_id (so the same customer name in TRANSP vs USMCA is allowed — mdata RLS is
+// identity-based, NOT entity-scoped, so the opco predicate MUST be explicit), and (c) ignore
+// archived rows (deactivated_at IS NULL) so a name freed by deactivation can be reused. mc/dot
+// numbers stay exact-match but are likewise opco-scoped + active-only.
 async function assertUniqueCustomerFields(
   authUserId: string,
+  operatingCompanyId: string,
   payload: { name?: string | null; mc_number?: string | null; dot_number?: string | null },
   excludeId?: string
 ): Promise<null | "name" | "mc_number" | "dot_number"> {
   const conflict = await withCurrentUser(authUserId, async (client) => {
-    const checks: Array<{ key: "name" | "mc_number" | "dot_number"; sql: string; value: string }> = [];
-    if (payload.name) checks.push({ key: "name", sql: "customer_name", value: payload.name });
-    if (payload.mc_number) checks.push({ key: "mc_number", sql: "mc_number", value: payload.mc_number });
-    if (payload.dot_number) checks.push({ key: "dot_number", sql: "dot_number", value: payload.dot_number });
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    const checks: Array<{ key: "name" | "mc_number" | "dot_number"; column: string; value: string; caseInsensitive: boolean }> = [];
+    if (payload.name) checks.push({ key: "name", column: "customer_name", value: payload.name, caseInsensitive: true });
+    if (payload.mc_number) checks.push({ key: "mc_number", column: "mc_number", value: payload.mc_number, caseInsensitive: false });
+    if (payload.dot_number) checks.push({ key: "dot_number", column: "dot_number", value: payload.dot_number, caseInsensitive: false });
     for (const check of checks) {
-      const values: unknown[] = [check.value];
-      let where = `${check.sql} = $1`;
+      const values: unknown[] = [check.value, operatingCompanyId];
+      const matchExpr = check.caseInsensitive
+        ? `lower(btrim(${check.column})) = lower(btrim($1))`
+        : `${check.column} = $1`;
+      let where = `${matchExpr} AND operating_company_id = $2 AND deactivated_at IS NULL`;
       if (excludeId) {
         values.push(excludeId);
-        where += " AND id <> $2";
+        where += " AND id <> $3";
       }
       const res = await client.query(`SELECT id FROM mdata.customers WHERE ${where} LIMIT 1`, values);
       if (res.rows.length > 0) return check.key;
@@ -457,7 +467,12 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     const normalizedName = b.legal_name ?? b.name ?? "";
     const normalizedCode = b.code ?? b.customer_code;
     const normalizedCustomerType = normalizeCustomerType(b.customer_type);
-    const conflict = await assertUniqueCustomerFields(authUser.uuid, {
+    // Resolve the operating company BEFORE the dedup check so the check is entity-scoped (G6-3).
+    const createOperatingCompanyId = await withCurrentUser(authUser.uuid, async (client) =>
+      resolveOperatingCompanyId(client, authUser.uuid, b.operating_company_id)
+    );
+    if (!createOperatingCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
+    const conflict = await assertUniqueCustomerFields(authUser.uuid, createOperatingCompanyId, {
       name: normalizedName,
       mc_number: b.mc_number ?? null,
       dot_number: b.dot_number ?? null,
@@ -473,8 +488,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
 
     try {
       const created = await withCurrentUser(authUser.uuid, async (client) => {
-        const resolvedOperatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, b.operating_company_id);
-        if (!resolvedOperatingCompanyId) throw new Error("operating_company_id_required");
+        const resolvedOperatingCompanyId = createOperatingCompanyId;
         const columns: string[] = ["customer_name", "customer_type", "status", "operating_company_id", "created_by_user_id", "updated_by_user_id"];
         const values: unknown[] = [normalizedName, normalizedCustomerType, b.status ?? "active", resolvedOperatingCompanyId, authUser.uuid, authUser.uuid];
         const placeholders: string[] = ["$1", "$2", "$3", "$4", "$5", "$6"];
@@ -702,7 +716,12 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
       return reply.code(403).send({ error: "credit_limit_forbidden" });
     }
     const patchName = b.legal_name ?? b.name ?? null;
-    const conflict = await assertUniqueCustomerFields(authUser.uuid, { name: patchName, mc_number: b.mc_number ?? null, dot_number: b.dot_number ?? null }, parsedParams.data.id);
+    // Resolve the caller's operating company up front so the dedup check is entity-scoped (G6-3).
+    const patchScopedCompanyId = await withCurrentUser(authUser.uuid, async (client) =>
+      resolveOperatingCompanyId(client, authUser.uuid)
+    );
+    if (!patchScopedCompanyId) return reply.code(404).send({ error: "mdata_customer_not_found" });
+    const conflict = await assertUniqueCustomerFields(authUser.uuid, patchScopedCompanyId, { name: patchName, mc_number: b.mc_number ?? null, dot_number: b.dot_number ?? null }, parsedParams.data.id);
     if (conflict) {
       const fieldKey = conflict === "name" ? "name" : conflict;
       return reply.code(409).send({
