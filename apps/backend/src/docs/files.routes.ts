@@ -3,6 +3,7 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { MAX_DOC_UPLOAD_BYTES, isAllowedDocMimeType } from "./upload-constraints.js";
 import {
   generatePresignedDownloadUrl,
   generatePresignedUploadUrl,
@@ -40,8 +41,9 @@ const fileLinkInputSchema = z.object({
 
 const uploadUrlBodySchema = z.object({
   original_filename: z.string().trim().min(1).max(255),
-  mime_type: z.string().trim().min(1).max(200),
-  size_bytes: z.number().int().min(1),
+  // DOCS-2: enforce a MIME allowlist (blocks html/svg/scripts/executables) + a hard size cap.
+  mime_type: z.string().trim().min(1).max(200).refine(isAllowedDocMimeType, { message: "unsupported_mime_type" }),
+  size_bytes: z.number().int().min(1).max(MAX_DOC_UPLOAD_BYTES),
   sha256_hash: z.string().trim().regex(/^[A-Fa-f0-9]{64}$/).optional(),
   category_id: z.string().uuid().optional(),
   entity_links: z.array(fileLinkInputSchema).max(25).optional(),
@@ -85,8 +87,9 @@ const deleteFileBodySchema = z.object({
 
 const createVersionBodySchema = z.object({
   original_filename: z.string().trim().min(1).max(255),
-  mime_type: z.string().trim().min(1).max(200),
-  size_bytes: z.number().int().min(1),
+  // DOCS-2: same allowlist + size cap on the new-version upload path.
+  mime_type: z.string().trim().min(1).max(200).refine(isAllowedDocMimeType, { message: "unsupported_mime_type" }),
+  size_bytes: z.number().int().min(1).max(MAX_DOC_UPLOAD_BYTES),
   sha256_hash: z.string().trim().regex(/^[A-Fa-f0-9]{64}$/).optional(),
 });
 
