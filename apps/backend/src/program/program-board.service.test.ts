@@ -90,7 +90,7 @@ describe("getProgramBoard — R2 live snapshot (R2-first, committed-JSON fallbac
 
     // meta came from R2 (distinctive sentinel), not the committed file.
     expect(board.meta?.deploy_version).toBe("R2SHA99");
-    // the targeted committed block row got its LIVE fields overlaid from R2.
+    // the targeted committed block row got its LIVE fields overlaid from the R2 snapshot.
     const overlaid = board.blocks.find((b) => b.id === b0.id && b.name === b0.name) as
       | (typeof b0 & { live_state?: string; lifecycle?: string })
       | undefined;
