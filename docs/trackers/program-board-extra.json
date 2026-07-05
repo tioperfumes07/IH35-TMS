@@ -665,12 +665,12 @@
       "written_ct": "2026-07-04 16:31 CT",
       "merged_ct": "2026-07-04 16:42 CT",
       "merged_at": "2026-07-04T21:42:39Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "ca87616",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2017",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G9",
@@ -695,12 +695,12 @@
       "written_ct": "2026-07-04 16:39 CT",
       "merged_ct": "2026-07-04 20:51 CT",
       "merged_at": "2026-07-05T01:51:30Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "c463144",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2019",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G9",
@@ -728,7 +728,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G9",
@@ -756,7 +756,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G10",
@@ -781,12 +781,12 @@
       "written_ct": "2026-07-04 16:39 CT",
       "merged_ct": "2026-07-04 20:38 CT",
       "merged_at": "2026-07-05T01:38:55Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "d50419f",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2020",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G10",
@@ -814,7 +814,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G10",
@@ -840,12 +840,12 @@
       "written_ct": "2026-07-04 19:52 CT",
       "merged_ct": "2026-07-05 00:40 CT",
       "merged_at": "2026-07-05T05:40:22Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "149d195",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2033",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G10",
@@ -871,12 +871,12 @@
       "written_ct": "2026-07-04 16:54 CT",
       "merged_ct": "2026-07-04 18:00 CT",
       "merged_at": "2026-07-04T23:00:29Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "052c55a",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2024",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G11",
@@ -904,7 +904,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G4",
@@ -932,7 +932,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G4",
@@ -960,7 +960,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "FLAG",
@@ -988,7 +988,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "H3",
@@ -1016,7 +1016,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "REPO",
@@ -1044,7 +1044,7 @@
       "pr_url": null,
       "live_state": "pending",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "M",
@@ -1057,6 +1057,7 @@
       "registered_on": "2026-07-04",
       "track": "audit",
       "notes": "Decide the source of Samsara log-edit data + build the real table/query, or remove the feature. Migration → Jorge.",
+      "pr": "#2106",
       "severity": "CRIT",
       "lane": "safe-to-fix",
       "where": "apps/backend/src/safety/eld-audit-trail/viewer.service.ts:92,139; pages/eld/EldPage.tsx",
@@ -1064,15 +1065,15 @@
       "root_cause": "eld-audit-trail/viewer.service.ts queries samsara.hos_log_edits (table never created) + mdata.drivers.display_name (column never created); endpoints registered with no flag → every request 500s. The /eld top-nav renders 5 tabs with zero API calls.",
       "impact": "No ELD screen in the app produces real data; has presumably never worked in prod.",
       "requested_ct": "2026-07-04 01:00 CT",
-      "written_ct": null,
-      "merged_ct": null,
-      "merged_at": null,
-      "deployed_ct": null,
-      "deploy_no": null,
-      "pr_url": null,
-      "live_state": "pending",
-      "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "written_ct": "2026-07-05 11:50 CT",
+      "merged_ct": "2026-07-05 12:15 CT",
+      "merged_at": "2026-07-05T17:15:23Z",
+      "deployed_ct": "2026-07-05 12:51 CT",
+      "deploy_no": "fb347c5",
+      "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2106",
+      "live_state": "deployed",
+      "lifecycle": "deployed",
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "M",
@@ -1100,7 +1101,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "M",
@@ -1126,12 +1127,12 @@
       "written_ct": "2026-07-04 17:19 CT",
       "merged_ct": "2026-07-04 20:38 CT",
       "merged_at": "2026-07-05T01:38:46Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "d2ee968",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2027",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "M",
@@ -1156,12 +1157,12 @@
       "written_ct": "2026-07-04 17:19 CT",
       "merged_ct": "2026-07-04 20:38 CT",
       "merged_at": "2026-07-05T01:38:46Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "d2ee968",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2027",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "M",
@@ -1189,7 +1190,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "A2",
@@ -1215,12 +1216,12 @@
       "written_ct": "2026-07-04 16:53 CT",
       "merged_ct": "2026-07-04 17:05 CT",
       "merged_at": "2026-07-04T22:05:38Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "e10ecdd",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2023",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "A2",
@@ -1248,7 +1249,7 @@
       "pr_url": null,
       "live_state": "pending",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "B1",
@@ -1276,7 +1277,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "C1",
@@ -1304,7 +1305,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "C1",
@@ -1332,7 +1333,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "C2",
@@ -1360,7 +1361,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "D1",
@@ -1386,12 +1387,12 @@
       "written_ct": "2026-07-04 17:00 CT",
       "merged_ct": "2026-07-04 17:11 CT",
       "merged_at": "2026-07-04T22:11:38Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "e218038",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2025",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "D2",
@@ -1417,12 +1418,12 @@
       "written_ct": "2026-07-05 01:15 CT",
       "merged_ct": "2026-07-05 01:27 CT",
       "merged_at": "2026-07-05T06:27:54Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "ca4e85f",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2064",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "D3",
@@ -1447,12 +1448,12 @@
       "written_ct": "2026-07-04 16:39 CT",
       "merged_ct": "2026-07-04 20:51 CT",
       "merged_at": "2026-07-05T01:51:30Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "c463144",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2019",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "D5",
@@ -1478,12 +1479,12 @@
       "written_ct": "2026-07-04 17:00 CT",
       "merged_ct": "2026-07-04 17:11 CT",
       "merged_at": "2026-07-04T22:11:38Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "e218038",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2025",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "E1",
@@ -1511,7 +1512,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "E1",
@@ -1539,7 +1540,7 @@
       "pr_url": null,
       "live_state": "pending",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "E1",
@@ -1567,7 +1568,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "E2",
@@ -1593,12 +1594,12 @@
       "written_ct": "2026-07-04 16:53 CT",
       "merged_ct": "2026-07-04 17:05 CT",
       "merged_at": "2026-07-04T22:05:38Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "e10ecdd",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2023",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "E2",
@@ -1626,7 +1627,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "E2",
@@ -1654,7 +1655,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G1",
@@ -1680,12 +1681,12 @@
       "written_ct": "2026-07-05 00:06 CT",
       "merged_ct": "2026-07-05 00:19 CT",
       "merged_at": "2026-07-05T05:19:09Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "bd1ca1a",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2042",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G1",
@@ -1711,12 +1712,12 @@
       "written_ct": "2026-07-05 00:06 CT",
       "merged_ct": "2026-07-05 00:19 CT",
       "merged_at": "2026-07-05T05:19:09Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "bd1ca1a",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2042",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G2",
@@ -1742,24 +1743,26 @@
       "written_ct": "2026-07-05 00:06 CT",
       "merged_ct": "2026-07-05 00:17 CT",
       "merged_at": "2026-07-05T05:17:57Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "60eddfd",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2043",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G5",
       "name": "2 (Reliability/QBO) — DB connection + open transaction held across a QuickBooks HTTP call",
       "wave": "HIGH",
       "type": "HIGH",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
       "notes": "Commit/release the DB txn, do the QBO fetch outside, then a short second txn to link (or use the outbox path).",
+      "verified": true,
+      "done_ct": "2026-07-05",
       "severity": "HIGH",
       "lane": "safe-to-fix",
       "where": "apps/backend/src/integrations/qbo/qbo-vendor-linkage.service.ts:577,659",
@@ -1775,7 +1778,7 @@
       "pr_url": null,
       "live_state": "pending",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G6",
@@ -1801,12 +1804,12 @@
       "written_ct": "2026-07-05 00:28 CT",
       "merged_ct": "2026-07-05 00:38 CT",
       "merged_at": "2026-07-05T05:38:30Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "cd5413b",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2048",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G7",
@@ -1834,7 +1837,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G7",
@@ -1862,7 +1865,7 @@
       "pr_url": null,
       "live_state": "pending",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G8",
@@ -1887,12 +1890,12 @@
       "written_ct": "2026-07-04 17:38 CT",
       "merged_ct": "2026-07-04 17:50 CT",
       "merged_at": "2026-07-04T22:50:50Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "a11c29a",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2030",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G9",
@@ -1920,7 +1923,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G9",
@@ -1948,7 +1951,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G9",
@@ -1974,12 +1977,12 @@
       "written_ct": "2026-07-04 17:36 CT",
       "merged_ct": "2026-07-04 18:08 CT",
       "merged_at": "2026-07-04T23:08:05Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "ca52d6f",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2028",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G9",
@@ -2005,12 +2008,12 @@
       "written_ct": "2026-07-05 00:14 CT",
       "merged_ct": "2026-07-05 00:40 CT",
       "merged_at": "2026-07-05T05:40:17Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "5e22aa7",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2046",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G9",
@@ -2036,12 +2039,12 @@
       "written_ct": "2026-07-04 17:38 CT",
       "merged_ct": "2026-07-04 17:50 CT",
       "merged_at": "2026-07-04T22:50:50Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "a11c29a",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2030",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G10",
@@ -2069,7 +2072,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G10",
@@ -2095,12 +2098,12 @@
       "written_ct": "2026-07-04 16:53 CT",
       "merged_ct": "2026-07-04 17:05 CT",
       "merged_at": "2026-07-04T22:05:38Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "e10ecdd",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2023",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G10",
@@ -2128,7 +2131,7 @@
       "pr_url": null,
       "live_state": "pending",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G10",
@@ -2154,12 +2157,12 @@
       "written_ct": "2026-07-05 00:08 CT",
       "merged_ct": "2026-07-05 00:20 CT",
       "merged_at": "2026-07-05T05:20:06Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "162689e",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2044",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G10",
@@ -2185,12 +2188,12 @@
       "written_ct": "2026-07-05 00:44 CT",
       "merged_ct": "2026-07-05 00:57 CT",
       "merged_at": "2026-07-05T05:57:38Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "e799889",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2052",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G11",
@@ -2218,7 +2221,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G11",
@@ -2246,7 +2249,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G11",
@@ -2274,7 +2277,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "SWL",
@@ -2300,24 +2303,26 @@
       "written_ct": "2026-07-05 00:54 CT",
       "merged_ct": "2026-07-05 05:08 CT",
       "merged_at": "2026-07-05T10:08:23Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "2a23ea8",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2057",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G4",
       "name": "HEALTH (Reliability/Health) — Recon + several money crons have no freshness surface (fail dark)",
       "wave": "HIGH",
       "type": "HIGH",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
       "notes": "[PARTIAL — some landed; verified 2026-07-04] Make each cron record a run + add non-null staleness rules; arm the mirror alarm whenever a realm is connected.",
+      "verified": true,
+      "done_ct": "2026-07-05",
       "severity": "HIGH",
       "lane": "safe-to-fix",
       "where": "accounting/recon/run-recon.ts; health.routes.ts:181-205,189",
@@ -2333,7 +2338,7 @@
       "pr_url": null,
       "live_state": "pending",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "H3",
@@ -2361,7 +2366,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "H2",
@@ -2389,7 +2394,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "H1",
@@ -2415,24 +2420,26 @@
       "written_ct": "2026-07-04 16:51 CT",
       "merged_ct": "2026-07-04 17:02 CT",
       "merged_at": "2026-07-04T22:02:02Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "70a82e7",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2021",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "H4",
       "name": "2 (Security/Samsara) — Samsara webhook: signature doesn't match vendor scheme + writes attacker payload before reject + no throttle",
       "wave": "HIGH",
       "type": "HIGH",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
       "notes": "Implement Samsara's documented v1 scheme + timestamp freshness; reject before persisting; add per-IP rate limit.",
+      "verified": true,
+      "done_ct": "2026-07-05",
       "severity": "HIGH",
       "lane": "safe-to-fix",
       "where": "apps/backend/src/integrations/samsara/samsara-webhook-verify.ts; samsara-webhook.routes.ts:55-77",
@@ -2448,7 +2455,7 @@
       "pr_url": null,
       "live_state": "pending",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "H5",
@@ -2476,7 +2483,7 @@
       "pr_url": null,
       "live_state": "pending",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "H5",
@@ -2504,7 +2511,7 @@
       "pr_url": null,
       "live_state": "pending",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "H6",
@@ -2532,7 +2539,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "H6",
@@ -2558,12 +2565,12 @@
       "written_ct": "2026-07-05 00:41 CT",
       "merged_ct": "2026-07-05 00:53 CT",
       "merged_at": "2026-07-05T05:53:26Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "3081641",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2051",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "M",
@@ -2576,6 +2583,7 @@
       "registered_on": "2026-07-04",
       "track": "audit",
       "notes": "Route fuel ingestion into fuel.fuel_transactions (or add the load-FK trigger to bank_transactions). Migration → Jorge.",
+      "pr": "#2086",
       "severity": "HIGH",
       "lane": "safe-to-fix",
       "where": "driver/fuel-receipt.routes.ts:101; reports/profit-per-truck.routes.ts:173 (+6)",
@@ -2583,27 +2591,29 @@
       "root_cause": "The G18-enforced fuel.fuel_transactions table (real load FK + trigger) has no writer; real fuel receipts go to banking.bank_transactions (no load enforcement, truck/odometer stuffed into merchant_name text). Every per-load/CPM/margin report + IFTA per-state gallons read the empty table.",
       "impact": "Fuel cost is structurally invisible to profitability + IFTA; margins overstated; the fuel GL poster is dead code.",
       "requested_ct": "2026-07-04 01:00 CT",
-      "written_ct": null,
+      "written_ct": "2026-07-05 06:49 CT",
       "merged_ct": null,
       "merged_at": null,
       "deployed_ct": null,
       "deploy_no": null,
-      "pr_url": null,
-      "live_state": "pending",
-      "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2086",
+      "live_state": "ci-failed",
+      "lifecycle": "written",
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "M",
       "name": "DISP-2 (Dispatch) — CDL/medical qualification gate exists only in Book Load — sibling assign paths skip it",
       "wave": "HIGH",
       "type": "HIGH",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
       "notes": "[PARTIAL — some landed; verified 2026-07-04] Extract one shared qualification gate called by every assignment path.",
+      "verified": true,
+      "done_ct": "2026-07-05",
       "severity": "HIGH",
       "lane": "safe-to-fix",
       "where": "dispatch/quick-assign.service.ts; quicksave.service.ts; planner.service.ts:232",
@@ -2619,7 +2629,7 @@
       "pr_url": null,
       "live_state": "pending",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "M",
@@ -2632,6 +2642,7 @@
       "registered_on": "2026-07-04",
       "track": "audit",
       "notes": "Add at_fault/preventable columns (migration) + wire the drawer fields.",
+      "pr": "#2087",
       "severity": "HIGH",
       "lane": "safe-to-fix",
       "where": "components/safety/AccidentReportDrawer.tsx:269; db/migrations/0345_safety_incidents.sql",
@@ -2639,15 +2650,15 @@
       "root_cause": "AccidentReportDrawer.tsx:269 renders an 'At Fault' combobox hardcoded to 'no' with onChange no-op, and Police Report #/Insurance Claim #/Bill-Expense #/3rd-party/Vendor-Invoice inputs are unbound — none persist. safety.incidents/accident_reports have no at_fault/preventable column at all.",
       "impact": "You cannot record who was at fault on an accident (DOT accident register + CSA fault gap); most of the accident form is decorative.",
       "requested_ct": "2026-07-04 01:00 CT",
-      "written_ct": null,
-      "merged_ct": null,
-      "merged_at": null,
-      "deployed_ct": null,
-      "deploy_no": null,
-      "pr_url": null,
-      "live_state": "pending",
-      "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "written_ct": "2026-07-05 06:50 CT",
+      "merged_ct": "2026-07-05 12:01 CT",
+      "merged_at": "2026-07-05T17:01:54Z",
+      "deployed_ct": "2026-07-05 12:51 CT",
+      "deploy_no": "8c3cf6a",
+      "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2087",
+      "live_state": "deployed",
+      "lifecycle": "deployed",
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "M",
@@ -2673,12 +2684,12 @@
       "written_ct": "2026-07-04 17:36 CT",
       "merged_ct": "2026-07-04 18:08 CT",
       "merged_at": "2026-07-04T23:08:05Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "ca52d6f",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2028",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "M",
@@ -2704,12 +2715,12 @@
       "written_ct": "2026-07-04 17:48 CT",
       "merged_ct": "2026-07-04 17:58 CT",
       "merged_at": "2026-07-04T22:58:40Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "61edac7",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2031",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "M",
@@ -2737,7 +2748,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "M",
@@ -2763,12 +2774,12 @@
       "written_ct": "2026-07-05 00:31 CT",
       "merged_ct": "2026-07-05 00:41 CT",
       "merged_at": "2026-07-05T05:41:58Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "928aa05",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2049",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "M",
@@ -2794,12 +2805,12 @@
       "written_ct": "2026-07-05 00:12 CT",
       "merged_ct": "2026-07-05 00:40 CT",
       "merged_at": "2026-07-05T05:40:19Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "814da6f",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2045",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "M",
@@ -2827,7 +2838,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "M",
@@ -2853,12 +2864,12 @@
       "written_ct": "2026-07-05 01:21 CT",
       "merged_ct": "2026-07-05 05:08 CT",
       "merged_at": "2026-07-05T10:08:17Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "00eeda5",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2065",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "M",
@@ -2871,6 +2882,7 @@
       "registered_on": "2026-07-04",
       "track": "audit",
       "notes": "Extend the table to real columns (or route to the better stack); pick one canonical inventory surface.",
+      "pr": "#2090",
       "severity": "HIGH",
       "lane": "safe-to-fix",
       "where": "pages/inventory/PartCreateDrawer.tsx:36; maintenance/parts.routes.ts:159",
@@ -2878,15 +2890,15 @@
       "root_cause": "PartCreateDrawer sends only 6 fields (category/notes/is_active dropped); the table maintenance.parts_inventory has no part_number/SKU/category/notes/reorder columns — parts.routes.ts returns id::text AS part_number, so the SKU shown back is the row UUID, not what the user typed. 'Voided' is faked via a '[VOID] ' description prefix. Two duplicate CRUD stacks (/inventory broken vs /maintenance/parts-inventory better).",
       "impact": "Users type a SKU/category/notes and none of it is stored; the SKU is a UUID.",
       "requested_ct": "2026-07-04 01:00 CT",
-      "written_ct": null,
+      "written_ct": "2026-07-05 07:01 CT",
       "merged_ct": null,
       "merged_at": null,
       "deployed_ct": null,
       "deploy_no": null,
-      "pr_url": null,
-      "live_state": "pending",
-      "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2090",
+      "live_state": "waiting-merge",
+      "lifecycle": "written",
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "M",
@@ -2912,12 +2924,12 @@
       "written_ct": "2026-07-04 17:19 CT",
       "merged_ct": "2026-07-04 20:38 CT",
       "merged_at": "2026-07-05T01:38:46Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "d2ee968",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2027",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "M",
@@ -2943,12 +2955,12 @@
       "written_ct": "2026-07-05 00:48 CT",
       "merged_ct": "2026-07-05 01:05 CT",
       "merged_at": "2026-07-05T06:05:10Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "ac66de0",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2055",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "M",
@@ -2973,12 +2985,12 @@
       "written_ct": "2026-07-04 17:19 CT",
       "merged_ct": "2026-07-04 20:38 CT",
       "merged_at": "2026-07-05T01:38:46Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "d2ee968",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2027",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "M",
@@ -3004,12 +3016,12 @@
       "written_ct": "2026-07-04 17:48 CT",
       "merged_ct": "2026-07-04 17:58 CT",
       "merged_at": "2026-07-04T22:58:40Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "61edac7",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2031",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "M",
@@ -3037,7 +3049,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "D1",
@@ -3065,7 +3077,7 @@
       "pr_url": null,
       "live_state": "pending",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "E2",
@@ -3093,19 +3105,22 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G6",
       "name": "2 (Vendors) — Vendor create has no dedup guard (customers have one)",
       "wave": "MED-HIGH",
       "type": "MED-HIGH",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
       "notes": "assertUniqueVendorFields (case-insensitive, entity-scoped) + a partial UNIQUE index (gated migration).",
+      "pr": "#2069",
+      "verified": true,
+      "done_ct": "2026-07-05",
       "severity": "MED-HIGH",
       "lane": "safe-to-fix",
       "where": "apps/backend/src/mdata/vendors.routes.ts (~205)",
@@ -3113,15 +3128,15 @@
       "root_cause": "mdata/vendors POST inserts directly; the only unique constraint is (opco,id) which the PK satisfies — no name-based dedup, unlike customers' assertUniqueCustomerFields.",
       "impact": "Duplicate A/P payees → split bill/payment history, ambiguous QBO mapping, double-pay risk.",
       "requested_ct": "2026-07-04 01:00 CT",
-      "written_ct": null,
-      "merged_ct": null,
-      "merged_at": null,
-      "deployed_ct": null,
-      "deploy_no": null,
-      "pr_url": null,
-      "live_state": "pending",
-      "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "written_ct": "2026-07-05 05:21 CT",
+      "merged_ct": "2026-07-05 05:37 CT",
+      "merged_at": "2026-07-05T10:37:56Z",
+      "deployed_ct": "2026-07-05 12:51 CT",
+      "deploy_no": "60d066a",
+      "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2069",
+      "live_state": "deployed",
+      "lifecycle": "deployed",
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "FLAG",
@@ -3149,7 +3164,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "H3",
@@ -3177,7 +3192,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "H4",
@@ -3203,12 +3218,12 @@
       "written_ct": "2026-07-04 16:51 CT",
       "merged_ct": "2026-07-04 17:02 CT",
       "merged_at": "2026-07-04T22:02:02Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "70a82e7",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2021",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "M",
@@ -3236,19 +3251,21 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "A1",
       "name": "1 (Connections/QBO) — QBO mirror-staleness alarm self-disables",
       "wave": "MED",
       "type": "MED",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
       "notes": "Arm the mirror-freshness check whenever a QBO realm is connected, independent of QBO_MASTERDATA_SYNC_ENABLED.",
+      "verified": true,
+      "done_ct": "2026-07-05",
       "severity": "MED",
       "lane": "safe-to-fix",
       "where": "apps/backend/src/health/health.routes.ts:190",
@@ -3264,7 +3281,7 @@
       "pr_url": null,
       "live_state": "pending",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "A2",
@@ -3294,7 +3311,7 @@
       "pr_url": null,
       "live_state": "pending",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "B2",
@@ -3320,12 +3337,12 @@
       "written_ct": "2026-07-04 23:28 CT",
       "merged_ct": "2026-07-04 23:57 CT",
       "merged_at": "2026-07-05T04:57:00Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "c8cc22c",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2038",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "C1",
@@ -3351,12 +3368,12 @@
       "written_ct": "2026-07-05 00:48 CT",
       "merged_ct": "2026-07-05 01:01 CT",
       "merged_at": "2026-07-05T06:01:51Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "a2ae622",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2054",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "C1",
@@ -3382,12 +3399,12 @@
       "written_ct": "2026-07-05 01:06 CT",
       "merged_ct": "2026-07-05 01:17 CT",
       "merged_at": "2026-07-05T06:17:23Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "d9c54a5",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2060",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "D1",
@@ -3413,12 +3430,12 @@
       "written_ct": "2026-07-04 17:00 CT",
       "merged_ct": "2026-07-04 17:11 CT",
       "merged_at": "2026-07-04T22:11:38Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "e218038",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2025",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "D1",
@@ -3431,6 +3448,7 @@
       "registered_on": "2026-07-04",
       "track": "audit",
       "notes": "[PARTIAL — part landed #2061; remainder gated] Validate isSubCustomer && !parentCustomer blocks submit and forward the field.",
+      "pr": "#2084",
       "severity": "MED",
       "lane": "safe-to-fix",
       "where": "NewCustomerDrawerForm.tsx:52-54,117",
@@ -3438,27 +3456,29 @@
       "root_cause": "The Parent field is marked required with a *, but submit only validates displayName; parent/isSubCustomer are never sent.",
       "impact": "Silent loss of customer hierarchy; a required-looking field that does nothing.",
       "requested_ct": "2026-07-04 01:00 CT",
-      "written_ct": null,
+      "written_ct": "2026-07-05 06:41 CT",
       "merged_ct": null,
       "merged_at": null,
       "deployed_ct": null,
       "deploy_no": null,
-      "pr_url": null,
-      "live_state": "pending",
-      "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2084",
+      "live_state": "in-ci",
+      "lifecycle": "written",
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "D2",
       "name": "2 (Maintenance/G18) — G18 load-FK not enforced on the vendor-Bill path",
       "wave": "MED",
       "type": "MED",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
       "notes": "Run hasLoadRequiredExpenseCategories for vendor_invoice too. FINANCIAL-adjacent — flag to Jorge.",
+      "verified": true,
+      "done_ct": "2026-07-05",
       "severity": "MED",
       "lane": "safe-to-fix",
       "where": "work-orders.routes.ts:449-459; two-section-service.ts:463,540",
@@ -3474,7 +3494,7 @@
       "pr_url": null,
       "live_state": "pending",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "D4",
@@ -3504,7 +3524,7 @@
       "pr_url": null,
       "live_state": "pending",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "E1",
@@ -3532,7 +3552,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "E1",
@@ -3560,7 +3580,7 @@
       "pr_url": null,
       "live_state": "pending",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "E2",
@@ -3588,7 +3608,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G1",
@@ -3614,12 +3634,12 @@
       "written_ct": "2026-07-05 01:13 CT",
       "merged_ct": "2026-07-05 05:08 CT",
       "merged_at": "2026-07-05T10:08:20Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "848c7d8",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2062",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G2",
@@ -3647,19 +3667,22 @@
       "pr_url": null,
       "live_state": "pending",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G3",
       "name": "1 (Security) — CSRF gap on file-upload routes (SameSite=None cookie, no CSRF token)",
       "wave": "MED",
       "type": "MED",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
       "notes": "Add an Origin/Referer allowlist hook on state-changing/multipart routes or a double-submit CSRF token.",
+      "pr": "#2062",
+      "verified": true,
+      "done_ct": "2026-07-05",
       "severity": "MED",
       "lane": "safe-to-fix",
       "where": "apps/backend/src/auth/session-cookie-policy.ts:24-30; index.ts (multipart)",
@@ -3667,27 +3690,29 @@
       "root_cause": "Prod session cookie is sameSite=none (required cross-subdomain); multipart/form-data skips CORS preflight, and there is no CSRF token/Origin check on state-changing routes, so a malicious site can drive an authenticated upload.",
       "impact": "Cross-site authenticated uploads (fuel receipts, CSV imports, load docs) — the action executes even though the response can't be read.",
       "requested_ct": "2026-07-04 01:00 CT",
-      "written_ct": null,
-      "merged_ct": null,
-      "merged_at": null,
-      "deployed_ct": null,
-      "deploy_no": null,
-      "pr_url": null,
-      "live_state": "pending",
-      "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "written_ct": "2026-07-05 01:13 CT",
+      "merged_ct": "2026-07-05 05:08 CT",
+      "merged_at": "2026-07-05T10:08:20Z",
+      "deployed_ct": "2026-07-05 12:51 CT",
+      "deploy_no": "848c7d8",
+      "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2062",
+      "live_state": "deployed",
+      "lifecycle": "deployed",
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G3",
       "name": "2 (Security) — Plaid webhook signature not bound to body/freshness (replay-able)",
       "wave": "MED",
       "type": "MED",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
       "notes": "Capture rawBody, compare its hash to the JWT claim, reject stale iat (QBO webhook already does this).",
+      "verified": true,
+      "done_ct": "2026-07-05",
       "severity": "MED",
       "lane": "safe-to-fix",
       "where": "apps/backend/src/integrations/plaid/webhook-core.ts:41-79",
@@ -3703,7 +3728,7 @@
       "pr_url": null,
       "live_state": "pending",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G3",
@@ -3729,12 +3754,12 @@
       "written_ct": "2026-07-04 21:02 CT",
       "merged_ct": "2026-07-04 21:11 CT",
       "merged_at": "2026-07-05T02:11:35Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "50b3924",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2035",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G5",
@@ -3747,6 +3772,7 @@
       "registered_on": "2026-07-04",
       "track": "audit",
       "notes": "Route-level React.lazy + a manualChunks vendor split.",
+      "pr": "#2105",
       "severity": "MED",
       "lane": "safe-to-fix",
       "where": "apps/frontend/vite.config.*",
@@ -3754,27 +3780,30 @@
       "root_cause": "vite has no manualChunks and there is no React.lazy anywhere; one 4.2MB bundle drives recorded mobile LCP over the 4000ms hard ceiling on reports/accounting/drivers/dispatch/customers/maintenance/home.",
       "impact": "Slow first paint on every route, worst on the accounting/reports screens.",
       "requested_ct": "2026-07-04 01:00 CT",
-      "written_ct": null,
-      "merged_ct": null,
-      "merged_at": null,
-      "deployed_ct": null,
-      "deploy_no": null,
-      "pr_url": null,
-      "live_state": "pending",
-      "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "written_ct": "2026-07-05 11:49 CT",
+      "merged_ct": "2026-07-05 12:11 CT",
+      "merged_at": "2026-07-05T17:11:37Z",
+      "deployed_ct": "2026-07-05 12:51 CT",
+      "deploy_no": "0e636bc",
+      "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2105",
+      "live_state": "deployed",
+      "lifecycle": "deployed",
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G6",
       "name": "3 (Customers) — Customer dedup is case-sensitive, not entity-scoped, race-prone",
       "wave": "MED",
       "type": "MED",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
       "notes": "lower(trim()) compare + opco filter + partial UNIQUE index (gated migration).",
+      "pr": "#2069",
+      "verified": true,
+      "done_ct": "2026-07-05",
       "severity": "MED",
       "lane": "safe-to-fix",
       "where": "apps/backend/src/mdata/customers.routes.ts:212",
@@ -3782,15 +3811,15 @@
       "root_cause": "customers POST checks WHERE customer_name=$1 — case/whitespace-sensitive, no operating_company_id filter, no backing unique constraint (TOCTOU).",
       "impact": "Near-duplicate customers slip through; at USMCA the unscoped check false-rejects a same-named customer in another entity.",
       "requested_ct": "2026-07-04 01:00 CT",
-      "written_ct": null,
-      "merged_ct": null,
-      "merged_at": null,
-      "deployed_ct": null,
-      "deploy_no": null,
-      "pr_url": null,
-      "live_state": "pending",
-      "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "written_ct": "2026-07-05 05:21 CT",
+      "merged_ct": "2026-07-05 05:37 CT",
+      "merged_at": "2026-07-05T10:37:56Z",
+      "deployed_ct": "2026-07-05 12:51 CT",
+      "deploy_no": "60d066a",
+      "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2069",
+      "live_state": "deployed",
+      "lifecycle": "deployed",
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G6",
@@ -3818,7 +3847,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G6",
@@ -3848,7 +3877,7 @@
       "pr_url": null,
       "live_state": "pending",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G7",
@@ -3861,6 +3890,7 @@
       "registered_on": "2026-07-04",
       "track": "audit",
       "notes": "Define typed row interfaces / a typed-query helper for money read-models.",
+      "pr": "#2101",
       "severity": "MED",
       "lane": "safe-to-fix",
       "where": "accounting/prepaid-expenses.routes.ts:184; revenue-recognition.routes.ts:154; fixed-assets.routes.ts:110",
@@ -3868,15 +3898,15 @@
       "root_cause": "rows as any / rows.map((r:any)) across accounting read routes leaves *_cents money fields and column names unchecked at compile time — a renamed/re-typed column passes typecheck and surfaces as a wrong number or 500.",
       "impact": "The exact recurring §4 'code drifted from the column' class, uncaught by the compiler.",
       "requested_ct": "2026-07-04 01:00 CT",
-      "written_ct": null,
-      "merged_ct": null,
-      "merged_at": null,
-      "deployed_ct": null,
-      "deploy_no": null,
-      "pr_url": null,
-      "live_state": "pending",
-      "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "written_ct": "2026-07-05 11:31 CT",
+      "merged_ct": "2026-07-05 11:47 CT",
+      "merged_at": "2026-07-05T16:47:52Z",
+      "deployed_ct": "2026-07-05 12:51 CT",
+      "deploy_no": "e326f69",
+      "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2101",
+      "live_state": "deployed",
+      "lifecycle": "deployed",
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G7",
@@ -3906,7 +3936,7 @@
       "pr_url": null,
       "live_state": "pending",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G8",
@@ -3932,12 +3962,12 @@
       "written_ct": "2026-07-05 00:49 CT",
       "merged_ct": "2026-07-05 01:03 CT",
       "merged_at": "2026-07-05T06:03:31Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "891266f",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2056",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G8",
@@ -3962,12 +3992,12 @@
       "written_ct": "2026-07-04 17:19 CT",
       "merged_ct": "2026-07-04 20:38 CT",
       "merged_at": "2026-07-05T01:38:46Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "d2ee968",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2027",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G8",
@@ -3993,12 +4023,12 @@
       "written_ct": "2026-07-04 17:38 CT",
       "merged_ct": "2026-07-04 17:50 CT",
       "merged_at": "2026-07-04T22:50:50Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "a11c29a",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2030",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G9",
@@ -4026,7 +4056,7 @@
       "pr_url": null,
       "live_state": "pending",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G10",
@@ -4054,7 +4084,7 @@
       "pr_url": null,
       "live_state": "pending",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G11",
@@ -4082,7 +4112,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G11",
@@ -4110,7 +4140,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G11",
@@ -4138,7 +4168,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G11",
@@ -4166,19 +4196,22 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "SWL",
       "name": "2 (Reliability) — Three silent masks: banking recon suggestions, Finance Hub $0, mirror-integrity 'no drift'",
       "wave": "MED",
       "type": "MED",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
       "notes": "Log + surface the error instead of returning a benign empty/zero.",
+      "pr": "#2096",
+      "verified": true,
+      "done_ct": "2026-07-05",
       "severity": "MED",
       "lane": "safe-to-fix",
       "where": "banking/recon.service.ts:28; accounting/finance-hub.service.ts:218; integrations/qbo/mirror-integrity.service.ts:26",
@@ -4186,15 +4219,15 @@
       "root_cause": "getSuggestionsForTxn().catch(()=>[]) drops factoring match suggestions; finance-hub catch sets cashAtEndCents=0 (owner sees $0 indistinguishable from empty); mirror-integrity catch sets local_count=0 → drift_detected=false (monitor masks its own DB failure).",
       "impact": "Operators see empty/zero/no-drift when the truth is an error.",
       "requested_ct": "2026-07-04 01:00 CT",
-      "written_ct": null,
-      "merged_ct": null,
-      "merged_at": null,
-      "deployed_ct": null,
-      "deploy_no": null,
-      "pr_url": null,
-      "live_state": "pending",
-      "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "written_ct": "2026-07-05 11:16 CT",
+      "merged_ct": "2026-07-05 11:33 CT",
+      "merged_at": "2026-07-05T16:33:55Z",
+      "deployed_ct": "2026-07-05 12:51 CT",
+      "deploy_no": "c405b97",
+      "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2096",
+      "live_state": "deployed",
+      "lifecycle": "deployed",
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G4",
@@ -4224,7 +4257,7 @@
       "pr_url": null,
       "live_state": "pending",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "H3",
@@ -4252,7 +4285,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "H2",
@@ -4280,7 +4313,7 @@
       "pr_url": null,
       "live_state": "pending",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "H4",
@@ -4306,24 +4339,27 @@
       "written_ct": "2026-07-05 00:48 CT",
       "merged_ct": "2026-07-05 00:59 CT",
       "merged_at": "2026-07-05T05:59:19Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "f036057",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2053",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "H4",
       "name": "5 (Security/Perf) — Heavy financial exports + file uploads have no throttle or size cap",
       "wave": "MED",
       "type": "MED",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
       "notes": "[PARTIAL — some landed #2035; verified 2026-07-04] Per-route caps on /export/*, /audit/reports/*; set multipart limits{fileSize,files}. Export routes touch accounting — Jorge's OK on those.",
+      "pr": "#2097",
+      "verified": true,
+      "done_ct": "2026-07-05",
       "severity": "MED",
       "lane": "safe-to-fix",
       "where": "accounting/statement-export.routes.ts; audit/audit-reports.routes.ts; index.ts:590 (multipart)",
@@ -4331,15 +4367,15 @@
       "root_cause": "14 GL export routes, audit-report scans, and comparison reports carry no config.rateLimit; @fastify/multipart has no fileSize limit and upload routes have no throttle (several buffer the whole file into RAM).",
       "impact": "Authenticated resource/CPU/R2 exhaustion via looped exports or large uploads.",
       "requested_ct": "2026-07-04 01:00 CT",
-      "written_ct": null,
-      "merged_ct": null,
-      "merged_at": null,
-      "deployed_ct": null,
-      "deploy_no": null,
-      "pr_url": null,
-      "live_state": "pending",
-      "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "written_ct": "2026-07-05 11:16 CT",
+      "merged_ct": "2026-07-05 11:35 CT",
+      "merged_at": "2026-07-05T16:35:57Z",
+      "deployed_ct": "2026-07-05 12:51 CT",
+      "deploy_no": "2c0de6d",
+      "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2097",
+      "live_state": "deployed",
+      "lifecycle": "deployed",
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "H1",
@@ -4367,7 +4403,7 @@
       "pr_url": null,
       "live_state": "pending",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "H1",
@@ -4395,7 +4431,7 @@
       "pr_url": null,
       "live_state": "pending",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "H5",
@@ -4423,7 +4459,7 @@
       "pr_url": null,
       "live_state": "pending",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "H6",
@@ -4436,6 +4472,7 @@
       "registered_on": "2026-07-04",
       "track": "audit",
       "notes": "Partial unique index / single-flight on the breach; add pg_try_advisory_lock leader-election per tick before scaling.",
+      "pr": "#2102",
       "severity": "MED",
       "lane": "safe-to-fix",
       "where": "cron/geofence-breach-detector.cron.ts:157-235; lib/background-jobs.ts:23",
@@ -4443,15 +4480,15 @@
       "root_cause": "The every-minute geofence breach detector does SELECT-dedup-then-INSERT with no unique/lock (overlapping ticks double-insert + double-alert); more broadly no in-app cron (except outbox/email) has an overlap/single-flight guard — safe on one instance, but every unguarded job double-runs the moment numInstances>1.",
       "impact": "Duplicate geofence alerts now; fleet-wide cron double-execution when you scale.",
       "requested_ct": "2026-07-04 01:00 CT",
-      "written_ct": null,
-      "merged_ct": null,
-      "merged_at": null,
-      "deployed_ct": null,
-      "deploy_no": null,
-      "pr_url": null,
-      "live_state": "pending",
-      "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "written_ct": "2026-07-05 11:46 CT",
+      "merged_ct": "2026-07-05 12:09 CT",
+      "merged_at": "2026-07-05T17:09:43Z",
+      "deployed_ct": "2026-07-05 12:51 CT",
+      "deploy_no": "dffe5bd",
+      "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2102",
+      "live_state": "deployed",
+      "lifecycle": "deployed",
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "H7",
@@ -4479,7 +4516,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "M",
@@ -4505,24 +4542,27 @@
       "written_ct": "2026-07-05 01:00 CT",
       "merged_ct": "2026-07-05 01:13 CT",
       "merged_at": "2026-07-05T06:13:18Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "0f2460f",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2059",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "M",
       "name": "USERS-2 (Security/Users) — Whole user directory readable by ANY authenticated role + 2 admins can mint an Owner",
       "wave": "MED",
       "type": "MED",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
       "notes": "[PARTIAL — some landed #2017; verified 2026-07-04] Role-gate the read endpoints; require an existing Owner to approve promotions to Owner.",
+      "pr": "#2071",
+      "verified": true,
+      "done_ct": "2026-07-05",
       "severity": "MED",
       "lane": "safe-to-fix",
       "where": "apps/backend/src/identity/users.routes.ts (GET); workflow-routes.ts:304",
@@ -4530,27 +4570,30 @@
       "root_cause": "GET /identity/users (+/:id) have no role check → any role (driver/mechanic) can list every user's email/role/last-login. The maker-checker approval also lets two colluding Administrators approve each other's role-change to Owner with no Owner involved.",
       "impact": "Directory exposure + a governance bypass on Owner creation.",
       "requested_ct": "2026-07-04 01:00 CT",
-      "written_ct": null,
-      "merged_ct": null,
-      "merged_at": null,
-      "deployed_ct": null,
-      "deploy_no": null,
-      "pr_url": null,
-      "live_state": "pending",
-      "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "written_ct": "2026-07-05 05:23 CT",
+      "merged_ct": "2026-07-05 05:32 CT",
+      "merged_at": "2026-07-05T10:32:49Z",
+      "deployed_ct": "2026-07-05 12:51 CT",
+      "deploy_no": "c786687",
+      "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2071",
+      "live_state": "deployed",
+      "lifecycle": "deployed",
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "M",
       "name": "SETTLE-3 (Settlements) — The Settlements module's own Dispute tab 404s (route never registered)",
       "wave": "MED",
       "type": "MED",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
       "notes": "Register the route (or repoint the tab to the working one).",
+      "pr": "#2089",
+      "verified": true,
+      "done_ct": "2026-07-05",
       "severity": "MED",
       "lane": "safe-to-fix",
       "where": "apps/backend/src/driver-finance/settlement-dispute.routes.ts:83; index.ts",
@@ -4558,15 +4601,15 @@
       "root_cause": "settlement-dispute.routes.ts (registerSettlementDisputeRoutes) is never registered in index.ts; SettlementDisputesTab + the Open-Dispute panel call dead paths. A separate dispute UI under Drivers works — disputes function elsewhere, not from Settlements.",
       "impact": "The dispute button inside Settlements is dead.",
       "requested_ct": "2026-07-04 01:00 CT",
-      "written_ct": null,
-      "merged_ct": null,
-      "merged_at": null,
-      "deployed_ct": null,
-      "deploy_no": null,
-      "pr_url": null,
-      "live_state": "pending",
-      "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "written_ct": "2026-07-05 06:58 CT",
+      "merged_ct": "2026-07-05 07:06 CT",
+      "merged_at": "2026-07-05T12:06:49Z",
+      "deployed_ct": "2026-07-05 12:51 CT",
+      "deploy_no": "254edeb",
+      "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2089",
+      "live_state": "deployed",
+      "lifecycle": "deployed",
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "M",
@@ -4579,6 +4622,7 @@
       "registered_on": "2026-07-04",
       "track": "audit",
       "notes": "Seed a DB flag row + pick ONE control plane. Financial-adjacent → Jorge's OK.",
+      "pr": "#2092",
       "severity": "MED",
       "lane": "safe-to-fix",
       "where": "accounting/finance-hub.routes.ts:24; pages/finance/FinanceHubPage.tsx:44",
@@ -4586,15 +4630,15 @@
       "root_cause": "Backend gate = process.env.FINANCE_HUB_UI_ENABLED; frontend gate = useFeatureFlag(DB lib.feature_flags) — and no migration seeds that DB row. Flipping the env var does nothing visible; a DB override without the env var → frontend calls a 404. Code comments contradict each other on the default.",
       "impact": "Finance Hub can't be reliably enabled; two control planes, no seeded row.",
       "requested_ct": "2026-07-04 01:00 CT",
-      "written_ct": null,
-      "merged_ct": null,
-      "merged_at": null,
-      "deployed_ct": null,
-      "deploy_no": null,
-      "pr_url": null,
-      "live_state": "pending",
-      "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "written_ct": "2026-07-05 11:08 CT",
+      "merged_ct": "2026-07-05 12:03 CT",
+      "merged_at": "2026-07-05T17:03:58Z",
+      "deployed_ct": "2026-07-05 12:51 CT",
+      "deploy_no": "11682a9",
+      "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2092",
+      "live_state": "deployed",
+      "lifecycle": "deployed",
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "M",
@@ -4620,24 +4664,27 @@
       "written_ct": "2026-07-05 00:58 CT",
       "merged_ct": "2026-07-05 01:10 CT",
       "merged_at": "2026-07-05T06:10:01Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "222cb76",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2058",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "M",
       "name": "DHUB-1 (Driver-Hub) — An entire second cash-advance approve/deny system was built but never registered (404, green tests)",
       "wave": "MED",
       "type": "MED",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
       "notes": "Delete or wire (aligning role gates). Touches driver_finance → Jorge's OK.",
+      "pr": "#2088",
+      "verified": true,
+      "done_ct": "2026-07-05",
       "severity": "MED",
       "lane": "safe-to-fix",
       "where": "apps/backend/src/cash-advances/driver-hub-requests.routes.ts; index.ts",
@@ -4645,15 +4692,15 @@
       "root_cause": "cash-advances/driver-hub-requests.routes.ts (registerDriverHubRequestRoutes) is never registered → its /cash-advances/hub/* paths 404; the rendered DriverInbox uses a DIFFERENT client. Its unit test mocks the DB and never proves the routes mount. Its role gate also diverges from the live path.",
       "impact": "Dead financial-adjacent code with false-green tests — a cleanup trap.",
       "requested_ct": "2026-07-04 01:00 CT",
-      "written_ct": null,
-      "merged_ct": null,
-      "merged_at": null,
-      "deployed_ct": null,
-      "deploy_no": null,
-      "pr_url": null,
-      "live_state": "pending",
-      "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "written_ct": "2026-07-05 06:57 CT",
+      "merged_ct": "2026-07-05 07:08 CT",
+      "merged_at": "2026-07-05T12:08:38Z",
+      "deployed_ct": "2026-07-05 12:51 CT",
+      "deploy_no": "57e9abb",
+      "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2088",
+      "live_state": "deployed",
+      "lifecycle": "deployed",
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "M",
@@ -4681,7 +4728,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "A1",
@@ -4707,12 +4754,12 @@
       "written_ct": "2026-07-04 16:54 CT",
       "merged_ct": "2026-07-04 18:00 CT",
       "merged_at": "2026-07-04T23:00:29Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "052c55a",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2024",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "B1",
@@ -4740,19 +4787,21 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "B3",
       "name": "1 (Maintenance/WO) — Orphan legacy WO-create endpoint mints malformed WO numbers",
       "wave": "LOW-MED",
       "type": "LOW-MED",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
       "notes": "Remove/410 the legacy route or delegate to the canonical generator + 7-type enum.",
+      "verified": true,
+      "done_ct": "2026-07-05",
       "severity": "LOW-MED",
       "lane": "safe-to-fix",
       "where": "apps/backend/src/work-orders/work-orders.routes.ts:695; wo-number.service.ts:14,33",
@@ -4768,7 +4817,7 @@
       "pr_url": null,
       "live_state": "pending",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "C2",
@@ -4781,6 +4830,7 @@
       "registered_on": "2026-07-04",
       "track": "audit",
       "notes": "Scope each count to operating_company_id (owner_company_id for units).",
+      "pr": "#2100",
       "severity": "LOW-MED",
       "lane": "safe-to-fix",
       "where": "apps/backend/src/admin/launch-readiness.service.ts:285-311",
@@ -4788,15 +4838,15 @@
       "root_cause": "buildLaunchReadinessPayload runs under bypass and counts drivers/units/customers/vendors/loads with no opco predicate — TRANSP+TRK+USMCA summed into one view.",
       "impact": "Misreports the operating carrier's readiness; breaks at USMCA launch (read-only, admin-only).",
       "requested_ct": "2026-07-04 01:00 CT",
-      "written_ct": null,
+      "written_ct": "2026-07-05 11:30 CT",
       "merged_ct": null,
       "merged_at": null,
       "deployed_ct": null,
       "deploy_no": null,
-      "pr_url": null,
-      "live_state": "pending",
-      "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2100",
+      "live_state": "in-ci",
+      "lifecycle": "written",
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "C2",
@@ -4826,7 +4876,7 @@
       "pr_url": null,
       "live_state": "pending",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "E1",
@@ -4854,19 +4904,22 @@
       "pr_url": null,
       "live_state": "pending",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G5",
       "name": "4 (Performance) — N+1 loops in report-refresh jobs + SELECT * on wide accounting tables",
       "wave": "LOW-MED",
       "type": "LOW-MED",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
       "notes": "Set-based GROUP BY + single multi-row INSERT; explicit column lists.",
+      "pr": "#2073",
+      "verified": true,
+      "done_ct": "2026-07-05",
       "severity": "LOW-MED",
       "lane": "safe-to-fix",
       "where": "reports/deadhead.service.ts:238; lane-profitability.service.ts:268; accounting/bills.service.ts",
@@ -4874,15 +4927,15 @@
       "root_cause": "refreshDeadheadCache does units×weeks per-query (~480 round-trips) + per-row inserts; lane-profitability and a qbo alert insert loop per row; several accounting reads use SELECT * on wide tables.",
       "impact": "Slow refresh jobs that grow with fleet size; over-fetch + silent break on schema growth.",
       "requested_ct": "2026-07-04 01:00 CT",
-      "written_ct": null,
-      "merged_ct": null,
-      "merged_at": null,
-      "deployed_ct": null,
-      "deploy_no": null,
-      "pr_url": null,
-      "live_state": "pending",
-      "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "written_ct": "2026-07-05 05:30 CT",
+      "merged_ct": "2026-07-05 05:40 CT",
+      "merged_at": "2026-07-05T10:40:30Z",
+      "deployed_ct": "2026-07-05 12:51 CT",
+      "deploy_no": "d2c69e8",
+      "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2073",
+      "live_state": "deployed",
+      "lifecycle": "deployed",
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "A2",
@@ -4908,12 +4961,12 @@
       "written_ct": "2026-07-04 16:53 CT",
       "merged_ct": "2026-07-04 17:05 CT",
       "merged_at": "2026-07-04T22:05:38Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:51 CT",
       "deploy_no": "e10ecdd",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2023",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "A2",
@@ -4941,7 +4994,7 @@
       "pr_url": null,
       "live_state": "pending",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "B1",
@@ -4969,7 +5022,7 @@
       "pr_url": null,
       "live_state": "gated",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "B3",
@@ -4995,24 +5048,26 @@
       "written_ct": "2026-07-04 23:25 CT",
       "merged_ct": "2026-07-04 23:56 CT",
       "merged_at": "2026-07-05T04:56:51Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:52 CT",
       "deploy_no": "10d94f6",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2036",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "C1",
       "name": "5 (Uploads) — Upload-orphan trap inside the dead maintenance modals",
       "wave": "LOW",
       "type": "LOW",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
       "notes": "[PARTIAL — some landed; verified 2026-07-04] Delete the dead modals or wire attachment_draft_id reconcile.",
+      "verified": true,
+      "done_ct": "2026-07-05",
       "severity": "LOW",
       "lane": "safe-to-fix",
       "where": "pages/maintenance/components/CreateExpenseModal.tsx (+CreateBillModal, SevereRepairEstimateModal:19)",
@@ -5028,7 +5083,7 @@
       "pr_url": null,
       "live_state": "pending",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "C2",
@@ -5054,12 +5109,12 @@
       "written_ct": "2026-07-04 23:26 CT",
       "merged_ct": "2026-07-04 23:56 CT",
       "merged_at": "2026-07-05T04:56:55Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:52 CT",
       "deploy_no": "9a4894d",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2037",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "D1",
@@ -5085,24 +5140,27 @@
       "written_ct": "2026-07-05 01:09 CT",
       "merged_ct": "2026-07-05 01:21 CT",
       "merged_at": "2026-07-05T06:21:27Z",
-      "deployed_ct": "2026-07-05 12:16 CT",
+      "deployed_ct": "2026-07-05 12:52 CT",
       "deploy_no": "8ed5416",
       "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2061",
       "live_state": "deployed",
       "lifecycle": "deployed",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "D2",
       "name": "3 (Maintenance) — No edit-WO UI; PATCH is dead; 'Edit' label misleads",
       "wave": "LOW",
       "type": "LOW",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
       "notes": "Wire an edit mode to the PATCH or drop 'Edit' from the title.",
+      "pr": "#2082",
+      "verified": true,
+      "done_ct": "2026-07-05",
       "severity": "LOW",
       "lane": "safe-to-fix",
       "where": "api/maintenance.ts:515; CreateWorkOrderModal.tsx:582",
@@ -5110,27 +5168,30 @@
       "root_cause": "updateWorkOrder PATCH has zero frontend callers; the modal titled 'Create / Edit' always POSTs a new WO; the detail modal is read-only.",
       "impact": "Can't correct a WO after create in-app despite backend support; misleading label.",
       "requested_ct": "2026-07-04 01:00 CT",
-      "written_ct": null,
-      "merged_ct": null,
-      "merged_at": null,
-      "deployed_ct": null,
-      "deploy_no": null,
-      "pr_url": null,
-      "live_state": "pending",
-      "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "written_ct": "2026-07-05 06:03 CT",
+      "merged_ct": "2026-07-05 06:53 CT",
+      "merged_at": "2026-07-05T11:53:44Z",
+      "deployed_ct": "2026-07-05 12:52 CT",
+      "deploy_no": "1cafaa6",
+      "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2082",
+      "live_state": "deployed",
+      "lifecycle": "deployed",
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "D3",
       "name": "3 (Dispatch/Customers) — Stale customer_id if you type over a picked customer",
       "wave": "LOW",
       "type": "LOW",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
       "notes": "Clear customer_id in onChange when the qbo id diverges from the picked row.",
+      "pr": "#2075",
+      "verified": true,
+      "done_ct": "2026-07-05",
       "severity": "LOW",
       "lane": "safe-to-fix",
       "where": "BookLoadModalV4.tsx:890-903",
@@ -5138,15 +5199,15 @@
       "root_cause": "onPick sets customer_id; onChange (free-typing/qbo-only) updates qbo id + name but never clears a previously-picked customer_id. Pick A then edit toward B without re-picking -> customer_id stays A while display shows B.",
       "impact": "Rare load<->customer mis-linkage; required-validation still passes.",
       "requested_ct": "2026-07-04 01:00 CT",
-      "written_ct": null,
-      "merged_ct": null,
-      "merged_at": null,
-      "deployed_ct": null,
-      "deploy_no": null,
-      "pr_url": null,
-      "live_state": "pending",
-      "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "written_ct": "2026-07-05 05:34 CT",
+      "merged_ct": "2026-07-05 05:44 CT",
+      "merged_at": "2026-07-05T10:44:41Z",
+      "deployed_ct": "2026-07-05 12:52 CT",
+      "deploy_no": "30841cb",
+      "pr_url": "https://github.com/tioperfumes07/IH35-TMS/pull/2075",
+      "live_state": "deployed",
+      "lifecycle": "deployed",
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "D5",
@@ -5174,7 +5235,7 @@
       "pr_url": null,
       "live_state": "pending",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "G3",
@@ -5202,7 +5263,7 @@
       "pr_url": null,
       "live_state": "pending",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "H2",
@@ -5230,7 +5291,7 @@
       "pr_url": null,
       "live_state": "pending",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "H7",
@@ -5258,7 +5319,7 @@
       "pr_url": null,
       "live_state": "pending",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     },
     {
       "id": "B3",
@@ -5286,12 +5347,12 @@
       "pr_url": null,
       "live_state": "pending",
       "lifecycle": "requested",
-      "synced_at": "2026-07-05T17:17:14.890Z"
+      "synced_at": "2026-07-05T17:51:33.175Z"
     }
   ],
   "audit_generated": "2026-07-04 — 160-finding sweep; APPEND-ONLY (mark DONE, never delete)",
   "audit_xlsx_import": {
-    "at": "2026-07-05T17:16:24.499Z",
+    "at": "2026-07-05T17:51:32.596Z",
     "source": "IH35-TMS-BUG-AUDIT-FIX-TRACKER.xlsx",
     "matched": 160,
     "total": 160,

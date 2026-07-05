@@ -1,30 +1,30 @@
 {
-  "last_synced_ct": "2026-07-05 12:17 CT",
-  "last_synced_at": "2026-07-05T17:17:14.890Z",
-  "deploy_version": "dffe5bd",
-  "deploy_checked_at": "2026-07-05T17:17:14.552Z",
+  "last_synced_ct": "2026-07-05 12:52 CT",
+  "last_synced_at": "2026-07-05T17:51:33.175Z",
+  "deploy_version": "853e9e8",
+  "deploy_checked_at": "2026-07-05T17:51:32.865Z",
   "gh_authenticated": true,
   "tabs": {
     "audit": {
       "total": 160,
-      "done": 54,
-      "open": 106,
+      "done": 71,
+      "open": 89,
       "gated": 47,
-      "waiting_merge": 0,
-      "in_ci": 0,
-      "ci_failed": 0,
-      "pending": 59,
-      "deployed": 54,
+      "waiting_merge": 1,
+      "in_ci": 2,
+      "ci_failed": 1,
+      "pending": 38,
+      "deployed": 71,
       "merged": 0
     },
     "pending": {
-      "total": 100,
+      "total": 80,
       "done": 0,
-      "open": 100
+      "open": 80
     },
     "merged": {
-      "total": 60,
-      "done": 60,
+      "total": 80,
+      "done": 80,
       "open": 0
     },
     "owner": {
@@ -39,13 +39,440 @@
     },
     "all": {
       "total": 204,
-      "done": 68
+      "done": 85
     }
   },
   "deltas": {
-    "since": "2026-07-05 12:16 CT",
+    "since": null,
     "added": [],
-    "completed": []
+    "completed": [
+      {
+        "id": "G1",
+        "name": "1 (Security/Identity) — [LIVE-EXPLOITABLE] Any Administrator can promote themselves to Owner",
+        "pr": "#2017",
+        "at": "2026-07-04 16:42 CT"
+      },
+      {
+        "id": "G9",
+        "name": "C1 (Dispatch/Compliance) — Unqualified drivers assignable via quick-assign / quicksave / planner",
+        "pr": "#2019",
+        "at": "2026-07-04 20:51 CT"
+      },
+      {
+        "id": "G10",
+        "name": "C1 (Compliance/Audit) — Tamper-evident audit chain verifier is never invoked",
+        "pr": "#2020",
+        "at": "2026-07-04 20:38 CT"
+      },
+      {
+        "id": "G10",
+        "name": "C3 (Observability) — Sentry only half-live: crons + driver-PWA report to nobody; nothing pages on failure",
+        "pr": "#2033",
+        "at": "2026-07-05 00:40 CT"
+      },
+      {
+        "id": "G10",
+        "name": "C4 (Reliability/Queues) — QBO-sync in_flight + email 'sending' rows orphan on any crash (no reaper)",
+        "pr": "#2024",
+        "at": "2026-07-04 18:00 CT"
+      },
+      {
+        "id": "M",
+        "name": "ELD-1 (ELD) — ELD is not built — audit trail queries a phantom TABLE (500 on every request); nav module is a stub",
+        "pr": "#2106",
+        "at": "2026-07-05 12:15 CT"
+      },
+      {
+        "id": "M",
+        "name": "DISP-1 (Dispatch) — quick-assign/quicksave write a trailer's ID into the co-driver column (FK violation / overwrite)",
+        "pr": "#2027",
+        "at": "2026-07-04 20:38 CT"
+      },
+      {
+        "id": "M",
+        "name": "FLEET-1 (Fleet) — Trailer quick-assign updates mdata.equipment WHERE operating_company_id (phantom) → 500",
+        "pr": "#2027",
+        "at": "2026-07-04 20:38 CT"
+      },
+      {
+        "id": "A2",
+        "name": "1 (DB/Migrations) — 18 reused migration numbers, no CI guard (already caused an outage)",
+        "pr": "#2023",
+        "at": "2026-07-04 17:05 CT"
+      },
+      {
+        "id": "D1",
+        "name": "1 (Customers) — Inline 'New Customer' writes to a mirror table no picker reads",
+        "pr": "#2025",
+        "at": "2026-07-04 17:11 CT"
+      },
+      {
+        "id": "D2",
+        "name": "1 (Maintenance) — Two maintenance modals save nothing (non-persisting stubs)",
+        "pr": "#2064",
+        "at": "2026-07-05 01:27 CT"
+      },
+      {
+        "id": "D3",
+        "name": "1 (Dispatch/Safety) — Hazmat load can be dispatched to an unendorsed driver",
+        "pr": "#2019",
+        "at": "2026-07-04 20:51 CT"
+      },
+      {
+        "id": "D5",
+        "name": "1 (Inventory) — Inventory part create is broken in prod (missing credentials)",
+        "pr": "#2025",
+        "at": "2026-07-04 17:11 CT"
+      },
+      {
+        "id": "E2",
+        "name": "1 (DB/Migrations) — Duplicate migration numbers unguarded (root cause of A2-1)",
+        "pr": "#2023",
+        "at": "2026-07-04 17:05 CT"
+      },
+      {
+        "id": "G1",
+        "name": "2 (Security/Money) — Bills pay/void trust client company-id with no membership check",
+        "pr": "#2042",
+        "at": "2026-07-05 00:19 CT"
+      },
+      {
+        "id": "G1",
+        "name": "3 (Security/Money) — Settlement + cash-advance approvals skip membership check",
+        "pr": "#2042",
+        "at": "2026-07-05 00:19 CT"
+      },
+      {
+        "id": "G2",
+        "name": "1 (Security/Audit) — One real SQL-injection via unvalidated operating_company_id in an audit-log call",
+        "pr": "#2043",
+        "at": "2026-07-05 00:17 CT"
+      },
+      {
+        "id": "G6",
+        "name": "1 (Accounting/Dates) — Financial 'today' computed in UTC, not Central Time (~40+ sites)",
+        "pr": "#2048",
+        "at": "2026-07-05 00:38 CT"
+      },
+      {
+        "id": "G8",
+        "name": "1 (Driver-PWA/i18n) — Driver-app dates render in device locale + timezone, not app language",
+        "pr": "#2030",
+        "at": "2026-07-04 17:50 CT"
+      },
+      {
+        "id": "G9",
+        "name": "H4 (Dispatch) — Load status machine advisory; driver-PWA can resurrect a cancelled load",
+        "pr": "#2028",
+        "at": "2026-07-04 18:08 CT"
+      },
+      {
+        "id": "G9",
+        "name": "H5 (Reports) — Profit/pay reports double-count and include cancelled/voided rows",
+        "pr": "#2046",
+        "at": "2026-07-05 00:40 CT"
+      },
+      {
+        "id": "G9",
+        "name": "H6 (Catalogs/UI) — CoA management list + trailer list cap at 50 (oldest records unreachable)",
+        "pr": "#2030",
+        "at": "2026-07-04 17:50 CT"
+      },
+      {
+        "id": "G10",
+        "name": "H2 (CI/Evidence) — The 'no hard-delete load_stops' CI guard is never wired into CI",
+        "pr": "#2023",
+        "at": "2026-07-04 17:05 CT"
+      },
+      {
+        "id": "G10",
+        "name": "H5 (Security) — Plaid access token stored in plaintext",
+        "pr": "#2044",
+        "at": "2026-07-05 00:20 CT"
+      },
+      {
+        "id": "G10",
+        "name": "H4 (Integrations/QBO) — QBO push generic catch = infinite retry, no dead-letter cap",
+        "pr": "#2052",
+        "at": "2026-07-05 00:57 CT"
+      },
+      {
+        "id": "SWL",
+        "name": "1 (Reliability/Audit) — 61 money/dispatch spine-event emits swallowed with zero breadcrumb",
+        "pr": "#2057",
+        "at": "2026-07-05 05:08 CT"
+      },
+      {
+        "id": "H1",
+        "name": "1 (Security/RateLimit) — Public credential + OTP endpoints have no rate limit",
+        "pr": "#2021",
+        "at": "2026-07-04 17:02 CT"
+      },
+      {
+        "id": "H6",
+        "name": "2 (Cash-Advance) — Cash-advance number generator: MAX+1, no lock, no unique → silent duplicate IDs",
+        "pr": "#2051",
+        "at": "2026-07-05 00:53 CT"
+      },
+      {
+        "id": "M",
+        "name": "SAFE-1 (Safety) — Accident 'At Fault' is a dead stub with no schema column (+ other unwired accident fields)",
+        "pr": "#2087",
+        "at": "2026-07-05 12:01 CT"
+      },
+      {
+        "id": "M",
+        "name": "LEGAL-1 (Legal) — Legal Matters has NO backend role gate — any role can read/write litigation data",
+        "pr": "#2028",
+        "at": "2026-07-04 18:08 CT"
+      },
+      {
+        "id": "M",
+        "name": "DOCS-1 (Docs) — Load Documents tab is dead-on-arrival (route blocks 'load' type)",
+        "pr": "#2031",
+        "at": "2026-07-04 17:58 CT"
+      },
+      {
+        "id": "M",
+        "name": "REPORTS-1 (Reports) — AR/AP aging: two implementations, the UI uses the broken one (misclassifies not-yet-due)",
+        "pr": "#2049",
+        "at": "2026-07-05 00:41 CT"
+      },
+      {
+        "id": "M",
+        "name": "CASH-1 (Cash-Flow) — Void exclusion is a no-op ('void' vs 'voided') — cancelled bills show as future expense",
+        "pr": "#2045",
+        "at": "2026-07-05 00:40 CT"
+      },
+      {
+        "id": "M",
+        "name": "FACTOR-1 (Factoring) — The reserve figure reads a column NOTHING writes to; FOUR un-reconciled reserve sources",
+        "pr": "#2065",
+        "at": "2026-07-05 05:08 CT"
+      },
+      {
+        "id": "M",
+        "name": "HOME-1 (Home) — Safety role-home silently 500s → every Safety user sees all-zero KPIs (false 'all clear')",
+        "pr": "#2027",
+        "at": "2026-07-04 20:38 CT"
+      },
+      {
+        "id": "M",
+        "name": "DRIVER-1 (Drivers) — Second driver create/edit surface bypasses rehire-match / vendor-linkage / invite",
+        "pr": "#2055",
+        "at": "2026-07-05 01:05 CT"
+      },
+      {
+        "id": "M",
+        "name": "DRIVER-2 (Drivers) — mdata.drivers.escrow_balance is a phantom column (read by the escrow visualizer)",
+        "pr": "#2027",
+        "at": "2026-07-04 20:38 CT"
+      },
+      {
+        "id": "M",
+        "name": "COMP-1 (Compliance) — IFTA files the WRONG quarter at the point of action",
+        "pr": "#2031",
+        "at": "2026-07-04 17:58 CT"
+      },
+      {
+        "id": "G6",
+        "name": "2 (Vendors) — Vendor create has no dedup guard (customers have one)",
+        "pr": "#2069",
+        "at": "2026-07-05 05:37 CT"
+      },
+      {
+        "id": "H4",
+        "name": "3 (Security/Cost) — AI-cost endpoints have no throttle (direct $ per call)",
+        "pr": "#2021",
+        "at": "2026-07-04 17:02 CT"
+      },
+      {
+        "id": "B2",
+        "name": "2 (Dispatch/Drivers) — Driver-picker 50-cap in ~14 non-dispatch pickers",
+        "pr": "#2038",
+        "at": "2026-07-04 23:57 CT"
+      },
+      {
+        "id": "C1",
+        "name": "3 (Frontend/Routing) — Three live buttons dead-end to Home",
+        "pr": "#2054",
+        "at": "2026-07-05 01:01 CT"
+      },
+      {
+        "id": "C1",
+        "name": "4 (Code-quality) — Dead/duplicate components",
+        "pr": "#2060",
+        "at": "2026-07-05 01:17 CT"
+      },
+      {
+        "id": "D1",
+        "name": "3 (Customers/Vendors) — Inline drawers silently drop most captured fields",
+        "pr": "#2025",
+        "at": "2026-07-04 17:11 CT"
+      },
+      {
+        "id": "G1",
+        "name": "6 (Security) — resolveOperatingCompanyId returns client value unvalidated",
+        "pr": "#2062",
+        "at": "2026-07-05 05:08 CT"
+      },
+      {
+        "id": "G3",
+        "name": "1 (Security) — CSRF gap on file-upload routes (SameSite=None cookie, no CSRF token)",
+        "pr": "#2062",
+        "at": "2026-07-05 05:08 CT"
+      },
+      {
+        "id": "G3",
+        "name": "3 (Security/Reliability) — No multipart file-size limit → memory-exhaustion DoS",
+        "pr": "#2035",
+        "at": "2026-07-04 21:11 CT"
+      },
+      {
+        "id": "G5",
+        "name": "3 (Performance) — No frontend code-splitting → mobile LCP over the 4s ceiling on 7/8 routes",
+        "pr": "#2105",
+        "at": "2026-07-05 12:11 CT"
+      },
+      {
+        "id": "G6",
+        "name": "3 (Customers) — Customer dedup is case-sensitive, not entity-scoped, race-prone",
+        "pr": "#2069",
+        "at": "2026-07-05 05:37 CT"
+      },
+      {
+        "id": "G7",
+        "name": "3 (Code-quality) — Accounting read-queries cast rows to any (§4 landmine class)",
+        "pr": "#2101",
+        "at": "2026-07-05 11:47 CT"
+      },
+      {
+        "id": "G8",
+        "name": "2 (i18n) — Two live translation directories → stale-Spanish drift",
+        "pr": "#2056",
+        "at": "2026-07-05 01:03 CT"
+      },
+      {
+        "id": "G8",
+        "name": "4 (Accessibility) — Search/filter inputs have no accessible name (~65 files) + no a11y lint",
+        "pr": "#2027",
+        "at": "2026-07-04 20:38 CT"
+      },
+      {
+        "id": "G8",
+        "name": "5 (Frontend) — Data pages with no error state render blank/forever-spinner on the live 500s",
+        "pr": "#2030",
+        "at": "2026-07-04 17:50 CT"
+      },
+      {
+        "id": "SWL",
+        "name": "2 (Reliability) — Three silent masks: banking recon suggestions, Finance Hub $0, mirror-integrity 'no drift'",
+        "pr": "#2096",
+        "at": "2026-07-05 11:33 CT"
+      },
+      {
+        "id": "H4",
+        "name": "4 (Security) — Office-login account/role enumeration + timing oracle",
+        "pr": "#2053",
+        "at": "2026-07-05 00:59 CT"
+      },
+      {
+        "id": "H4",
+        "name": "5 (Security/Perf) — Heavy financial exports + file uploads have no throttle or size cap",
+        "pr": "#2097",
+        "at": "2026-07-05 11:35 CT"
+      },
+      {
+        "id": "H6",
+        "name": "3 (Reliability/Cron) — Geofence alerts duplicate on overlap + no cron single-flight (horizontal-scale landmine)",
+        "pr": "#2102",
+        "at": "2026-07-05 12:09 CT"
+      },
+      {
+        "id": "M",
+        "name": "DOCS-2 (Docs/Security) — Entity document uploader has no size/type limits; attachment DELETE is ungated",
+        "pr": "#2059",
+        "at": "2026-07-05 01:13 CT"
+      },
+      {
+        "id": "M",
+        "name": "USERS-2 (Security/Users) — Whole user directory readable by ANY authenticated role + 2 admins can mint an Owner",
+        "pr": "#2071",
+        "at": "2026-07-05 05:32 CT"
+      },
+      {
+        "id": "M",
+        "name": "SETTLE-3 (Settlements) — The Settlements module's own Dispute tab 404s (route never registered)",
+        "pr": "#2089",
+        "at": "2026-07-05 07:06 CT"
+      },
+      {
+        "id": "M",
+        "name": "FINHUB-1 (Finance-Hub) — FINANCE_HUB_UI flag is split-brain (env-var backend / unseeded DB-flag frontend)",
+        "pr": "#2092",
+        "at": "2026-07-05 12:03 CT"
+      },
+      {
+        "id": "M",
+        "name": "HOME-2 (Home) — Cash Position + Factoring Balance home tiles always show $0 (response-shape mismatch)",
+        "pr": "#2058",
+        "at": "2026-07-05 01:10 CT"
+      },
+      {
+        "id": "M",
+        "name": "DHUB-1 (Driver-Hub) — An entire second cash-advance approve/deny system was built but never registered (404, green tests)",
+        "pr": "#2088",
+        "at": "2026-07-05 07:08 CT"
+      },
+      {
+        "id": "A1",
+        "name": "2 (Ops/Cron) — Recon crons can fail silently (no health endpoint)",
+        "pr": "#2024",
+        "at": "2026-07-04 18:00 CT"
+      },
+      {
+        "id": "G5",
+        "name": "4 (Performance) — N+1 loops in report-refresh jobs + SELECT * on wide accounting tables",
+        "pr": "#2073",
+        "at": "2026-07-05 05:40 CT"
+      },
+      {
+        "id": "A2",
+        "name": "4 (DB/CI) — Two more migration guards skip timestamp migrations",
+        "pr": "#2023",
+        "at": "2026-07-04 17:05 CT"
+      },
+      {
+        "id": "B3",
+        "name": "2 (Compliance/2290) — Form 2290 deadline off-by-one during August",
+        "pr": "#2036",
+        "at": "2026-07-04 23:56 CT"
+      },
+      {
+        "id": "C2",
+        "name": "4 (Cross-entity/PII) — Two bypass reads of drivers by PK only",
+        "pr": "#2037",
+        "at": "2026-07-04 23:56 CT"
+      },
+      {
+        "id": "D1",
+        "name": "5 (Customers) — customer_type not enforced client-side",
+        "pr": "#2061",
+        "at": "2026-07-05 01:21 CT"
+      },
+      {
+        "id": "D2",
+        "name": "3 (Maintenance) — No edit-WO UI; PATCH is dead; 'Edit' label misleads",
+        "pr": "#2082",
+        "at": "2026-07-05 06:53 CT"
+      },
+      {
+        "id": "D3",
+        "name": "3 (Dispatch/Customers) — Stale customer_id if you type over a picked customer",
+        "pr": "#2075",
+        "at": "2026-07-05 05:44 CT"
+      }
+    ]
   },
   "_row_index": {
     "G1::1 (Security/Identity) — [LIVE-EXPLOITABLE] Any Administrator can promote themselves to Owner": "deployed",
@@ -62,7 +489,7 @@
     "FLAG::LIVE (Accounting/Flags) — CONFIRMED: all 9 GL-posting flags (incl. SETTLEMENT) are ON in prod for all 3 entities": "gated",
     "H3::1 (Accounting/Flags) — A real GL-posting flag evades the per-entity money kill-switch": "gated",
     "REPO::PUBLIC (Security/Infra) — GitHub repo tioperfumes07/IH35-TMS is PUBLIC — entire codebase readable on the internet": "pending",
-    "M::ELD-1 (ELD) — ELD is not built — audit trail queries a phantom TABLE (500 on every request); nav module is a stub": "pending",
+    "M::ELD-1 (ELD) — ELD is not built — audit trail queries a phantom TABLE (500 on every request); nav module is a stub": "deployed",
     "M::WOID-1 (Maintenance) — WO-ID generator queries phantom mdata.units.operating_company_id (migrations never create it)": "gated",
     "M::DISP-1 (Dispatch) — quick-assign/quicksave write a trailer's ID into the co-driver column (FK violation / overwrite)": "deployed",
     "M::FLEET-1 (Fleet) — Trailer quick-assign updates mdata.equipment WHERE operating_company_id (phantom) → 500": "deployed",
@@ -114,9 +541,9 @@
     "H5::2 (Data/Retention) — Partition scaffolding is orphaned AND expires 2027-12 (latent time-bomb)": "pending",
     "H6::1 (Reliability/QBO) — QBO OAuth refresh-token rotation race can knock the connection offline": "gated",
     "H6::2 (Cash-Advance) — Cash-advance number generator: MAX+1, no lock, no unique → silent duplicate IDs": "deployed",
-    "M::FUEL-1 (Fuel) — fuel.fuel_transactions is never written — 7 profitability + IFTA reports read $0 fuel": "pending",
+    "M::FUEL-1 (Fuel) — fuel.fuel_transactions is never written — 7 profitability + IFTA reports read $0 fuel": "ci-failed",
     "M::DISP-2 (Dispatch) — CDL/medical qualification gate exists only in Book Load — sibling assign paths skip it": "pending",
-    "M::SAFE-1 (Safety) — Accident 'At Fault' is a dead stub with no schema column (+ other unwired accident fields)": "pending",
+    "M::SAFE-1 (Safety) — Accident 'At Fault' is a dead stub with no schema column (+ other unwired accident fields)": "deployed",
     "M::LEGAL-1 (Legal) — Legal Matters has NO backend role gate — any role can read/write litigation data": "deployed",
     "M::DOCS-1 (Docs) — Load Documents tab is dead-on-arrival (route blocks 'load' type)": "deployed",
     "M::LISTS-1 (Cross-entity) — Lists cross-entity WRITE + READ leaks (flag-colors, cancellation-reasons, stub-purge)": "gated",
@@ -124,7 +551,7 @@
     "M::CASH-1 (Cash-Flow) — Void exclusion is a no-op ('void' vs 'voided') — cancelled bills show as future expense": "deployed",
     "M::SETTLE-2 (Settlements) — Net-pay floor is 10%/50%/50% across three paths — none matches the CPA-locked 5%": "gated",
     "M::FACTOR-1 (Factoring) — The reserve figure reads a column NOTHING writes to; FOUR un-reconciled reserve sources": "deployed",
-    "M::INV-1 (Inventory) — Inventory part SKU is fake (returns the row UUID) + create drops category/notes": "pending",
+    "M::INV-1 (Inventory) — Inventory part SKU is fake (returns the row UUID) + create drops category/notes": "waiting-merge",
     "M::HOME-1 (Home) — Safety role-home silently 500s → every Safety user sees all-zero KPIs (false 'all clear')": "deployed",
     "M::DRIVER-1 (Drivers) — Second driver create/edit surface bypasses rehire-match / vendor-linkage / invite": "deployed",
     "M::DRIVER-2 (Drivers) — mdata.drivers.escrow_balance is a phantom column (read by the escrow visualizer)": "deployed",
@@ -132,7 +559,7 @@
     "M::MOR-2 (425C/MOR) — MOR/Exhibits use multiple phantom columns → $0; UST quarterly fee understated; exhibits orphaned": "gated",
     "D1::2 (Vendors) — Vendors split across two disjoint tables": "pending",
     "E2::4 (Safety/Integrity) — Drug-&-alcohol records can orphan from their driver": "gated",
-    "G6::2 (Vendors) — Vendor create has no dedup guard (customers have one)": "pending",
+    "G6::2 (Vendors) — Vendor create has no dedup guard (customers have one)": "deployed",
     "FLAG::LEASE (Accounting/Flags) — LEASE_GL_POSTING_ENABLED is ON despite the locked 'never flip until lease engine built' rule": "gated",
     "H3::3 (Accounting/Flags) — Void flags classified inconsistently between two guards": "gated",
     "H4::3 (Security/Cost) — AI-cost endpoints have no throttle (direct $ per call)": "deployed",
@@ -143,7 +570,7 @@
     "C1::3 (Frontend/Routing) — Three live buttons dead-end to Home": "deployed",
     "C1::4 (Code-quality) — Dead/duplicate components": "deployed",
     "D1::3 (Customers/Vendors) — Inline drawers silently drop most captured fields": "deployed",
-    "D1::4 (Customers) — Sub-customer 'Parent *' required but never enforced or sent": "pending",
+    "D1::4 (Customers) — Sub-customer 'Parent *' required but never enforced or sent": "in-ci",
     "D2::2 (Maintenance/G18) — G18 load-FK not enforced on the vendor-Bill path": "pending",
     "D4::1 (Samsara/Telematics) — Webhook driver-pairing keyed to equipment, not units": "pending",
     "E1::2 (Schema/Naming) — finance.* schema exists and is live (violates 'never finance.*')": "gated",
@@ -151,14 +578,14 @@
     "E2::5 (Maintenance/Integrity) — Samsara fault-code history can orphan from its unit": "gated",
     "G1::6 (Security) — resolveOperatingCompanyId returns client value unvalidated": "deployed",
     "G2::2 (Security) — operating_company_id trusted raw as tenant scope on money/dispatch routes": "pending",
-    "G3::1 (Security) — CSRF gap on file-upload routes (SameSite=None cookie, no CSRF token)": "pending",
+    "G3::1 (Security) — CSRF gap on file-upload routes (SameSite=None cookie, no CSRF token)": "deployed",
     "G3::2 (Security) — Plaid webhook signature not bound to body/freshness (replay-able)": "pending",
     "G3::3 (Security/Reliability) — No multipart file-size limit → memory-exhaustion DoS": "deployed",
-    "G5::3 (Performance) — No frontend code-splitting → mobile LCP over the 4s ceiling on 7/8 routes": "pending",
-    "G6::3 (Customers) — Customer dedup is case-sensitive, not entity-scoped, race-prone": "pending",
+    "G5::3 (Performance) — No frontend code-splitting → mobile LCP over the 4s ceiling on 7/8 routes": "deployed",
+    "G6::3 (Customers) — Customer dedup is case-sensitive, not entity-scoped, race-prone": "deployed",
     "G6::4 (Accounting) — bills.amount_cents nullable + dual money representation": "gated",
     "G6::6 (Accounting) — Default payments list returns voided rows": "pending",
-    "G7::3 (Code-quality) — Accounting read-queries cast rows to any (§4 landmine class)": "pending",
+    "G7::3 (Code-quality) — Accounting read-queries cast rows to any (§4 landmine class)": "deployed",
     "G7::4 (Tests) — 7 end-to-end specs are empty stubs (false-green)": "pending",
     "G8::2 (i18n) — Two live translation directories → stale-Spanish drift": "deployed",
     "G8::4 (Accessibility) — Search/filter inputs have no accessible name (~65 files) + no a11y lint": "deployed",
@@ -169,31 +596,31 @@
     "G11::10 (Finance/Period) — Month-close checklist is unsatisfiable in normal operation": "gated",
     "G11::6 (Finance/Recon) — No GL-control-account ↔ sub-ledger tie-out exists": "gated",
     "G11::7 (Finance/Factoring) — Factoring reserve tracked in two places that never reconcile; asymmetric idempotency": "gated",
-    "SWL::2 (Reliability) — Three silent masks: banking recon suggestions, Finance Hub $0, mirror-integrity 'no drift'": "pending",
+    "SWL::2 (Reliability) — Three silent masks: banking recon suggestions, Finance Hub $0, mirror-integrity 'no drift'": "deployed",
     "G4::DEPLOY (Reliability/Deploy) — preDeploy smoke hinges on a live prod row + leaves a test Owner in prod": "pending",
     "H3::4 (Accounting/Flags) — Settlement recovery cutover flag read raw, bypassing the resolver": "gated",
     "H2::3 (Deps/Auth) — Lucia auth library is deprecated / end-of-maintenance": "pending",
     "H4::4 (Security) — Office-login account/role enumeration + timing oracle": "deployed",
-    "H4::5 (Security/Perf) — Heavy financial exports + file uploads have no throttle or size cap": "pending",
+    "H4::5 (Security/Perf) — Heavy financial exports + file uploads have no throttle or size cap": "deployed",
     "H1::2 (Infra/Config) — CORS defaults to the wrong origins for prod (with credentials)": "pending",
     "H1::3 (Infra/Config) — CSP still report-only + no deploy health-gate + preDeploy auth-bypass touches prod": "pending",
     "H5::3 (Data/Evidence) — No R2-evidence presence check + DR drill is a stub + 7-day emailed evidence links": "pending",
-    "H6::3 (Reliability/Cron) — Geofence alerts duplicate on overlap + no cron single-flight (horizontal-scale landmine)": "pending",
+    "H6::3 (Reliability/Cron) — Geofence alerts duplicate on overlap + no cron single-flight (horizontal-scale landmine)": "deployed",
     "H7::1 (Factoring/Vendor) — Faro→RTS: RTS has no public API — factoring integration is Faro-CSV-shaped": "gated",
     "M::DOCS-2 (Docs/Security) — Entity document uploader has no size/type limits; attachment DELETE is ungated": "deployed",
-    "M::USERS-2 (Security/Users) — Whole user directory readable by ANY authenticated role + 2 admins can mint an Owner": "pending",
-    "M::SETTLE-3 (Settlements) — The Settlements module's own Dispute tab 404s (route never registered)": "pending",
-    "M::FINHUB-1 (Finance-Hub) — FINANCE_HUB_UI flag is split-brain (env-var backend / unseeded DB-flag frontend)": "pending",
+    "M::USERS-2 (Security/Users) — Whole user directory readable by ANY authenticated role + 2 admins can mint an Owner": "deployed",
+    "M::SETTLE-3 (Settlements) — The Settlements module's own Dispute tab 404s (route never registered)": "deployed",
+    "M::FINHUB-1 (Finance-Hub) — FINANCE_HUB_UI flag is split-brain (env-var backend / unseeded DB-flag frontend)": "deployed",
     "M::HOME-2 (Home) — Cash Position + Factoring Balance home tiles always show $0 (response-shape mismatch)": "deployed",
-    "M::DHUB-1 (Driver-Hub) — An entire second cash-advance approve/deny system was built but never registered (404, green tests)": "pending",
+    "M::DHUB-1 (Driver-Hub) — An entire second cash-advance approve/deny system was built but never registered (404, green tests)": "deployed",
     "M::RECONCILE-NOTE (Settlements/Meta) — OPEN: agents disagree on the settlement/deduction engine — needs a definitive re-verification": "gated",
     "A1::2 (Ops/Cron) — Recon crons can fail silently (no health endpoint)": "deployed",
     "B1::2 (Accounting/COA-roles) — Stale factoring-reserve role still typed Liability": "gated",
     "B3::1 (Maintenance/WO) — Orphan legacy WO-create endpoint mints malformed WO numbers": "pending",
-    "C2::2 (Cross-entity/Admin) — Launch-readiness counts sum across all entities": "pending",
+    "C2::2 (Cross-entity/Admin) — Launch-readiness counts sum across all entities": "in-ci",
     "C2::3 (Cross-entity/Samsara) — Position-poll worker reads all entities' units": "pending",
     "E1::6 (Schema/Naming) — bank.* / geo.* stranded next to banking.* / geofence.*": "pending",
-    "G5::4 (Performance) — N+1 loops in report-refresh jobs + SELECT * on wide accounting tables": "pending",
+    "G5::4 (Performance) — N+1 loops in report-refresh jobs + SELECT * on wide accounting tables": "deployed",
     "A2::4 (DB/CI) — Two more migration guards skip timestamp migrations": "deployed",
     "A2::5 (DB/Migrations) — A few foundation migrations aren't idempotent": "pending",
     "B1::3 (Accounting/Bills) — DELETE-then-INSERT on bill_unit_allocation (breaks void-not-delete)": "gated",
@@ -201,8 +628,8 @@
     "C1::5 (Uploads) — Upload-orphan trap inside the dead maintenance modals": "pending",
     "C2::4 (Cross-entity/PII) — Two bypass reads of drivers by PK only": "deployed",
     "D1::5 (Customers) — customer_type not enforced client-side": "deployed",
-    "D2::3 (Maintenance) — No edit-WO UI; PATCH is dead; 'Edit' label misleads": "pending",
-    "D3::3 (Dispatch/Customers) — Stale customer_id if you type over a picked customer": "pending",
+    "D2::3 (Maintenance) — No edit-WO UI; PATCH is dead; 'Edit' label misleads": "deployed",
+    "D3::3 (Dispatch/Customers) — Stale customer_id if you type over a picked customer": "deployed",
     "D5::4 (Design-lock) — Green-CTA / green-band palette deviations": "pending",
     "G3::5 (Security) — CSP still report-only; Samsara webhook placeholder sig; error-message echo": "pending",
     "H2::2 (Deps) — Stale apps/backend/package-lock.json carries 2 unshipped HIGH CVEs": "pending",
