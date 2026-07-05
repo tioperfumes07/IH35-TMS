@@ -579,7 +579,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
   }
 
   return (
-    <Modal open={open} onClose={handleModalClose} title="Create / Edit Work Order" sizePreset="lg" wide>
+    <Modal open={open} onClose={handleModalClose} title="Create Work Order" sizePreset="lg" wide>
       <div data-testid="create-wo-render-v5" className="space-y-2.5 text-[12.5px] text-sidebar-bg">
         {/* Subbar — WO # · status · opened timestamp (render: .subbar) */}
         <div className="flex flex-wrap items-center gap-2 rounded-sm bg-[#243352] px-3 py-1.5 text-[10.5px] text-[#cdd6e6]">

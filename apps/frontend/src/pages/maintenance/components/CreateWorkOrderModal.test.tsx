@@ -71,4 +71,15 @@ describe("CreateWorkOrderModal — render-v5 structural anchors render to the DO
       expect(screen.getByTestId(testid)).toBeInTheDocument();
     }
   });
+
+  // GUARD (D2-3, 2026-07-05): the modal title must not promise an "Edit" capability the modal does not
+  // have. This component only ever calls createWorkOrder (never the updateWorkOrder PATCH), so the header
+  // was renamed "Create / Edit Work Order" → "Create Work Order". If anyone re-adds a false "Edit" to the
+  // title without wiring a real edit path, this fails RED.
+  it("(d) modal title reads 'Create Work Order' and does not falsely claim Edit", () => {
+    renderModal();
+    const heading = screen.getByRole("heading", { name: /create work order/i });
+    expect(heading).toBeInTheDocument();
+    expect(heading.textContent ?? "").not.toMatch(/edit/i);
+  });
 });
