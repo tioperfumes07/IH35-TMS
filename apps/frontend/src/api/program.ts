@@ -73,10 +73,33 @@ export type LiveMetrics = {
 // Optional throughout — the board renders unchanged when meta is absent.
 export type BoardDeltaItem = { id: string; name?: string; at?: string; pr?: string };
 export type BoardDeltas = { since?: string; added?: BoardDeltaItem[]; completed?: BoardDeltaItem[] };
+
+// Per-tab (and global) live tally for the summary bar. All fields OPTIONAL — the sync engine populates
+// them in parallel; the UI reads defensively and renders only the parts that are present.
+export type TabTally = {
+  total?: number;
+  done?: number;
+  deployed?: number;
+  open?: number;
+  gated?: number;
+  waiting_merge?: number;
+  in_ci?: number;
+  pending?: number;
+  pct_deployed?: number; // 0–100
+  financial_pending?: number;
+  added_recent?: number; // since last sync
+  completed_recent?: number; // since last sync
+  by_module?: Record<string, number>; // pending count per module
+  // tolerate any extra numeric roll-ups the sync engine adds later without a type break
+  [k: string]: number | Record<string, number> | undefined;
+};
+export type BoardTotals = TabTally; // same shape, whole-board roll-up
+
 export type BoardMeta = {
   last_synced_ct?: string;
   deploy_version?: string;
-  tabs?: Record<string, Record<string, number>>;
+  tabs?: Record<string, TabTally>;
+  totals?: BoardTotals;
   deltas?: BoardDeltas;
 };
 
