@@ -55,6 +55,7 @@ const createCustomerBodySchema = z
   credit_limit_updated_at: z.string().datetime().nullable().optional(),
   payment_terms_id: z.string().uuid().nullable().optional(),
   operating_company_id: z.string().uuid().optional(),
+  parent_customer_id: z.string().uuid().nullable().optional(), // D1-4: sub-customer -> parent hard link
   customer_type: customerTypeInputSchema.optional(),
   status: customerStatusSchema.optional(),
   default_billing_miles_basis: milesBasisSchema.optional(),
@@ -112,6 +113,7 @@ const updateCustomerBodySchema = z
     credit_limit_updated_at: z.string().datetime().nullable().optional(),
     payment_terms_id: z.string().uuid().nullable().optional(),
     operating_company_id: z.string().uuid().optional(),
+    parent_customer_id: z.string().uuid().nullable().optional(), // D1-4: sub-customer -> parent hard link
     customer_type: customerTypeInputSchema.nullable().optional(),
     status: customerStatusSchema.optional(),
     status_change_reason: z.string().trim().max(1000).optional(),
@@ -207,6 +209,60 @@ async function assertUniqueCustomerFields(
   return conflict;
 }
 
+// D1-4: sub-customer -> parent link integrity. Enforces a clean, cycle-free 2-level hierarchy at the
+// application layer (the DB has a self-referential FK + a NOT-self CHECK; the deeper invariants live
+// here because they need same-company scoping and a descendant lookup):
+//   - a customer can never be its own parent            ("self")
+//   - the parent must exist, be active, and be in the SAME operating company ("not_found")
+//   - the parent must itself be a top-level customer — never a sub          ("parent_is_sub")
+//   - a customer that already has sub-customers cannot itself become a sub  ("has_children")
+// Together these three positive rules make a cycle impossible (max depth = 2, no back-edges).
+type ParentValidationError = "self" | "not_found" | "parent_is_sub" | "has_children";
+
+async function validateParentCustomer(
+  authUserId: string,
+  operatingCompanyId: string,
+  parentId: string | null,
+  selfId: string | null
+): Promise<ParentValidationError | null> {
+  if (parentId === null) return null; // clearing / no parent is always valid
+  if (selfId && parentId === selfId) return "self";
+  return withCurrentUser(authUserId, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    const parentRes = await client.query<{ id: string; parent_customer_id: string | null }>(
+      `SELECT id, parent_customer_id FROM mdata.customers WHERE id = $1 AND operating_company_id = $2 AND deactivated_at IS NULL LIMIT 1`,
+      [parentId, operatingCompanyId]
+    );
+    const parent = parentRes.rows[0];
+    if (!parent) return "not_found";
+    if (parent.parent_customer_id) return "parent_is_sub";
+    if (selfId) {
+      const childRes = await client.query(
+        `SELECT 1 FROM mdata.customers WHERE parent_customer_id = $1 AND operating_company_id = $2 LIMIT 1`,
+        [selfId, operatingCompanyId]
+      );
+      if (childRes.rows.length > 0) return "has_children";
+    }
+    return null;
+  });
+}
+
+const PARENT_VALIDATION_MESSAGES: Record<ParentValidationError, string> = {
+  self: "A customer cannot be its own parent.",
+  not_found: "Parent customer not found in this company.",
+  parent_is_sub: "Parent must be a top-level customer (it cannot itself be a sub-customer).",
+  has_children: "This customer already has sub-customers and cannot become a sub-customer.",
+};
+
+function sendParentValidationError(reply: FastifyReply, code: ParentValidationError) {
+  const message = PARENT_VALIDATION_MESSAGES[code];
+  return reply.code(400).send({
+    error: `parent_customer_${code}`,
+    message,
+    fieldErrors: { parent_customer_id: message },
+  });
+}
+
 const CUSTOMER_SELECT_COLUMNS = `
   id,
   customer_name AS name,
@@ -223,6 +279,7 @@ const CUSTOMER_SELECT_COLUMNS = `
   credit_limit_updated_at,
   payment_terms_id,
   operating_company_id,
+  parent_customer_id,
   customer_type,
   status,
   default_billing_miles_basis,
@@ -485,6 +542,11 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
         fieldErrors: { [fieldKey]: "Already in use" },
       });
     }
+    // D1-4: if this is a sub-customer, its parent must be a real, active, same-company, top-level customer.
+    if (b.parent_customer_id !== undefined && b.parent_customer_id !== null) {
+      const parentErr = await validateParentCustomer(authUser.uuid, createOperatingCompanyId, b.parent_customer_id, null);
+      if (parentErr) return sendParentValidationError(reply, parentErr);
+    }
 
     try {
       const created = await withCurrentUser(authUser.uuid, async (client) => {
@@ -513,6 +575,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
         addOptional("credit_limit_source", b.credit_limit_source ?? (b.credit_limit !== undefined ? "manual" : undefined));
         addOptional("credit_limit_updated_at", b.credit_limit_updated_at);
         addOptional("payment_terms_id", b.payment_terms_id);
+        addOptional("parent_customer_id", b.parent_customer_id); // D1-4: persist the sub-customer -> parent link
         addOptional("default_billing_miles_basis", b.default_billing_miles_basis ?? "practical_miles");
         addOptional("default_free_time_hours", b.default_free_time_hours ?? 4);
         addOptional("default_detention_rate", b.default_detention_rate ?? 50);
@@ -649,6 +712,31 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
                 AND v.operating_company_id = c.operating_company_id
               LIMIT 1
             ) AS factoring_company_name,
+            -- D1-4: forward drill-through — the parent's name (when this is a sub-customer).
+            (
+              SELECT p.customer_name
+              FROM mdata.customers p
+              WHERE p.id = c.parent_customer_id
+                AND p.operating_company_id = c.operating_company_id
+              LIMIT 1
+            ) AS parent_customer_name,
+            -- D1-4: reverse drill-through — every sub-customer that links back to this parent.
+            COALESCE((
+              SELECT json_agg(
+                json_build_object(
+                  'id', s.id,
+                  'name', s.customer_name,
+                  'customer_code', s.customer_code,
+                  'customer_type', s.customer_type,
+                  'status', s.status
+                )
+                ORDER BY s.customer_name
+              )
+              FROM mdata.customers s
+              WHERE s.parent_customer_id = c.id
+                AND s.operating_company_id = c.operating_company_id
+                AND s.deactivated_at IS NULL
+            ), '[]'::json) AS sub_customers,
             COALESCE((
               SELECT json_agg(
                 json_build_object(
@@ -744,6 +832,12 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     });
     if (!existingRow) return reply.code(404).send({ error: "mdata_customer_not_found" });
 
+    // D1-4: validate the parent link (self/cycle/cross-company/parent-is-sub guards) before writing.
+    if ("parent_customer_id" in b) {
+      const parentErr = await validateParentCustomer(authUser.uuid, patchScopedCompanyId, b.parent_customer_id ?? null, parsedParams.data.id);
+      if (parentErr) return sendParentValidationError(reply, parentErr);
+    }
+
     if (creditLimitRequested) {
       const nextSource = (b.credit_limit_source ?? (existingRow.credit_limit_source as string | null) ?? null) as string | null;
       if (nextSource === "factor" && authUser.role !== "Owner") {
@@ -777,6 +871,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
       add("credit_limit_updated_at", b.credit_limit_updated_at ?? null);
     }
     if ("payment_terms_id" in b) add("payment_terms_id", b.payment_terms_id ?? null);
+    if ("parent_customer_id" in b) add("parent_customer_id", b.parent_customer_id ?? null); // D1-4
     if ("operating_company_id" in b) add("operating_company_id", b.operating_company_id ?? null);
     if ("customer_type" in b) add("customer_type", normalizeCustomerType(b.customer_type ?? null));
     if ("status" in b) add("status", b.status);

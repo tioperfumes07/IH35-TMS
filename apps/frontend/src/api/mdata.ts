@@ -363,6 +363,7 @@ export type Customer = {
   credit_limit_updated_at: string | null;
   payment_terms_id: string | null;
   operating_company_id: string;
+  parent_customer_id?: string | null; // D1-4: sub-customer -> parent hard link (optional: null/absent for top-level customers)
   customer_type: CustomerType | null;
   status: "active" | "inactive" | "credit_hold" | "blacklist";
   default_billing_miles_basis: MilesBasis;
@@ -435,6 +436,7 @@ export type CreateCustomerInput = {
   credit_limit_updated_at?: string | null;
   payment_terms_id?: string | null;
   operating_company_id?: string;
+  parent_customer_id?: string | null; // D1-4: sub-customer -> parent hard link
   customer_type?: CustomerType | "direct";
   status?: "active" | "inactive" | "credit_hold" | "blacklist";
   default_billing_miles_basis?: MilesBasis;
@@ -510,6 +512,7 @@ export type UpdateCustomerInput = Partial<{
   credit_limit_updated_at: string | null;
   payment_terms_id: string | null;
   operating_company_id: string;
+  parent_customer_id: string | null; // D1-4: sub-customer -> parent hard link
   customer_type: CustomerType | null;
   status: "active" | "inactive" | "credit_hold" | "blacklist";
   status_change_reason: string;
@@ -548,7 +551,21 @@ export type UpdateCustomerInput = Partial<{
   deactivated_at: string | null;
 }>;
 
-export type CustomerDetailFull = Customer & { contacts: CustomerContact[] };
+// D1-4: sub-customer <-> parent drill-through. `parent_customer_name` is the parent's display name
+// (present only when this customer is a sub); `sub_customers` is every child that links back here.
+export type CustomerSubCustomer = {
+  id: string;
+  name: string;
+  customer_code: string | null;
+  customer_type: CustomerType | null;
+  status: "active" | "inactive" | "credit_hold" | "blacklist";
+};
+
+export type CustomerDetailFull = Customer & {
+  contacts: CustomerContact[];
+  parent_customer_name?: string | null;
+  sub_customers?: CustomerSubCustomer[];
+};
 
 export type CustomerContactDepartment = "sales" | "billing" | "dispatch" | "operations" | "owner" | "other";
 

@@ -276,6 +276,14 @@ export function CustomersPage() {
     queryFn: () => listCustomers({ operating_company_id: companyId, limit: 5000 }).then((result) => result.customers),
     enabled: Boolean(companyId),
   });
+  // D1-4: eligible parents for the create form = active, TOP-LEVEL customers (never a sub-customer).
+  const parentCustomerOptions = useMemo(
+    () =>
+      (customersQuery.data ?? [])
+        .filter((c) => !c.parent_customer_id && c.status !== "inactive" && !c.deactivated_at)
+        .map((c) => ({ id: c.id, name: c.name, customer_code: c.customer_code })),
+    [customersQuery.data]
+  );
   const allInvoicesQuery = useQuery({
     queryKey: ["accounting", "invoices", "all", companyId],
     queryFn: () => listInvoices(companyId),
@@ -713,6 +721,7 @@ export function CustomersPage() {
             mode="create"
             paymentTermOptions={paymentTermsQuery.data ?? []}
             onPaymentTermCreated={() => void paymentTermsQuery.refetch()}
+            parentCustomerOptions={parentCustomerOptions}
           />
           {createFieldErrors.mc_number ? (
             <span id="mc_number-error" className="block text-xs text-red-700">

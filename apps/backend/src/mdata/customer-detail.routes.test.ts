@@ -91,3 +91,98 @@ describe("mdata customer detail route (always-on smoke)", () => {
     expect([403, 404]).toContain(res.statusCode);
   });
 });
+
+// D1-4: sub-customer -> parent HARD link (parent_customer_id) forward-persist + reverse drill-through.
+describeIntegration("mdata customer parent_customer_id link", () => {
+  let app: FastifyInstance;
+  let companyId: string;
+
+  beforeAll(async () => {
+    await ensureIntegrationPrerequisites();
+    companyId = getOperatingCompanyId();
+    app = await createIntegrationApp(async (a) => {
+      await registerCustomerRoutes(a);
+    });
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  async function createCustomer(body: Record<string, unknown>) {
+    return app.inject({
+      method: "POST",
+      url: "/api/v1/mdata/customers",
+      headers: testAuthHeaders(undefined, "Owner"),
+      payload: { operating_company_id: companyId, customer_type: "broker", ...body },
+    });
+  }
+
+  it("persists a sub-customer's parent and exposes it via reverse drill-through", async () => {
+    const suffix = randomUUID().slice(0, 8);
+    const parentRes = await createCustomer({ name: `PARENT-${suffix}` });
+    expect(parentRes.statusCode).toBe(201);
+    const parentId = (parentRes.json() as { id: string }).id;
+
+    const childRes = await createCustomer({ name: `SUB-${suffix}`, parent_customer_id: parentId });
+    expect(childRes.statusCode).toBe(201);
+    const childId = (childRes.json() as { id: string; parent_customer_id: string | null }).id;
+    expect((childRes.json() as { parent_customer_id: string | null }).parent_customer_id).toBe(parentId);
+
+    // Reverse: the parent's detail lists the sub-customer.
+    const parentDetail = await app.inject({
+      method: "GET",
+      url: `/api/v1/mdata/customers/${parentId}/detail?operating_company_id=${companyId}`,
+      headers: testAuthHeaders(undefined, "Owner"),
+    });
+    expect(parentDetail.statusCode).toBe(200);
+    const subs = (parentDetail.json() as { customer: { sub_customers?: Array<{ id: string }> } }).customer.sub_customers ?? [];
+    expect(subs.some((s) => s.id === childId)).toBe(true);
+
+    // Forward: the child's detail carries the parent's name.
+    const childDetail = await app.inject({
+      method: "GET",
+      url: `/api/v1/mdata/customers/${childId}/detail?operating_company_id=${companyId}`,
+      headers: testAuthHeaders(undefined, "Owner"),
+    });
+    expect(childDetail.statusCode).toBe(200);
+    expect((childDetail.json() as { customer: { parent_customer_name?: string } }).customer.parent_customer_name).toBe(`PARENT-${suffix}`);
+  });
+
+  it("rejects a self-parent and a parent that is itself a sub-customer", async () => {
+    const suffix = randomUUID().slice(0, 8);
+    const parentId = (await createCustomer({ name: `P2-${suffix}` }).then((r) => r.json())).id as string;
+    const subId = (await createCustomer({ name: `S2-${suffix}`, parent_customer_id: parentId }).then((r) => r.json())).id as string;
+
+    // self-parent
+    const selfRes = await app.inject({
+      method: "PATCH",
+      url: `/api/v1/mdata/customers/${parentId}`,
+      headers: testAuthHeaders(undefined, "Owner"),
+      payload: { parent_customer_id: parentId },
+    });
+    expect(selfRes.statusCode).toBe(400);
+    expect((selfRes.json() as { error: string }).error).toBe("parent_customer_self");
+
+    // parent-is-sub: a third customer cannot use the existing sub as its parent
+    const grandRes = await createCustomer({ name: `G2-${suffix}`, parent_customer_id: subId });
+    expect(grandRes.statusCode).toBe(400);
+    expect((grandRes.json() as { error: string }).error).toBe("parent_customer_parent_is_sub");
+  });
+
+  it("rejects making a parent (with children) into a sub-customer", async () => {
+    const suffix = randomUUID().slice(0, 8);
+    const parentId = (await createCustomer({ name: `P3-${suffix}` }).then((r) => r.json())).id as string;
+    await createCustomer({ name: `S3-${suffix}`, parent_customer_id: parentId });
+    const topId = (await createCustomer({ name: `T3-${suffix}` }).then((r) => r.json())).id as string;
+
+    const res = await app.inject({
+      method: "PATCH",
+      url: `/api/v1/mdata/customers/${parentId}`,
+      headers: testAuthHeaders(undefined, "Owner"),
+      payload: { parent_customer_id: topId },
+    });
+    expect(res.statusCode).toBe(400);
+    expect((res.json() as { error: string }).error).toBe("parent_customer_has_children");
+  });
+});
