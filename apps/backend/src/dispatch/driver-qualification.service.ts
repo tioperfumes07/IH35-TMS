@@ -10,8 +10,11 @@ import type { PoolClient } from "pg";
 // the qualification rules can never drift between entry points again.
 //
 // D3-1: the same gate now also enforces the hazmat H-endorsement. When the load is hazmat, the
-// driver must hold a live `mdata.drivers.hazmat_endorsement = true` with a non-expired
-// `hazmat_endorsement_expires_at`, else it blocks with reason `hazmat_endorsement_missing`. There
+// driver must hold the H (HazMat) CDL endorsement — the real boolean is `mdata.drivers.endorsement_h`
+// (migration 0301; the 0343 trigger syncs it into `mdata.driver_cdl_endorsements`). NOTE: there is NO
+// `mdata.drivers.hazmat_endorsement` column — that boolean lives on `mdata.units` (0295); the driver
+// side is `endorsement_h` + expiry `hazmat_endorsement_expires_at`. Blocks with reason
+// `hazmat_endorsement_missing` when not held, no expiry on record, or expired. There
 // is NO `mdata.loads.hazmat` column — load-level hazmat lives in the `quicksave_pending_fields`
 // jsonb, so callers pass the resolved `isHazmat` boolean in.
 //
@@ -79,7 +82,7 @@ export async function assertDriverQualifiedForLoad(
           AND COALESCE(mc.expiry_date, d.dot_medical_expires_at) < CURRENT_DATE) AS med_expired,
         COALESCE(mc.expiry_date, d.dot_medical_expires_at)::text AS med_expiry_date,
         -- D3-1 hazmat H-endorsement: blocked when not held, no expiry on record, or expired.
-        (d.hazmat_endorsement IS NOT TRUE
+        (d.endorsement_h IS NOT TRUE
           OR d.hazmat_endorsement_expires_at IS NULL
           OR d.hazmat_endorsement_expires_at < CURRENT_DATE) AS hazmat_blocked,
         d.hazmat_endorsement_expires_at::text AS hazmat_endorsement_expires_at
