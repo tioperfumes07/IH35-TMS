@@ -1,3 +1,8 @@
+// @cron-tenant-agnostic: global reliability monitor — deliberately scans EVERY company's evidence
+// rows via withLuciaBypass (RLS-bypass, read-only) and never sets/scopes a single app.operating_company_id.
+// The operatingCompanyId carried on each row is used only to attribute the fail-loud alarm to the owning
+// company; there is no per-tenant scheduler context to assert (DD-7 / B-017 does not apply).
+//
 // FINDING H5-3 — R2-evidence PRESENCE reconcile + real DR-drill evidence check.
 //
 // WHY: CI guards (verify-backups-current.mjs) prove the DR *artifacts* exist and that Neon PITR
