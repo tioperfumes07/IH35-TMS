@@ -1,5 +1,5 @@
 import type { UseFormRegister } from "react-hook-form";
-import { SelectCombobox } from "../../../../components/shared/SelectCombobox";
+import { SelectCombobox } from "../../shared/SelectCombobox";
 
 type V3Fields = {
   booking_mode: "single_popup" | "legacy_form";

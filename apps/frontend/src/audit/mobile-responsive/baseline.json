@@ -759,9 +759,9 @@
       "owner_module": "office-tms"
     },
     {
-      "id": "input-under-44px:apps/frontend/src/pages/dispatch/components/book-load-v3/BookLoadV3OptionsSection.tsx",
+      "id": "input-under-44px:apps/frontend/src/components/_archived/book-load-v3/BookLoadV3OptionsSection.tsx",
       "rule": "input-under-44px",
-      "file": "apps/frontend/src/pages/dispatch/components/book-load-v3/BookLoadV3OptionsSection.tsx",
+      "file": "apps/frontend/src/components/_archived/book-load-v3/BookLoadV3OptionsSection.tsx",
       "message": "Text input height may be below 48px on mobile",
       "viewport": {
         "width": 375,

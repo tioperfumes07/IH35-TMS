@@ -114,3 +114,21 @@ jobs:
 
       - name: Verify every Program Board shared-table tab renders (no blank Audit/extra-track tab)
         run: node scripts/verify-program-board-tab-render-parity.mjs
+
+  no-archived-imports:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Guard self-test (negative + positive)
+        run: node scripts/verify-no-archived-imports.mjs --selftest
+
+      - name: Verify no live frontend file imports from _archived/ (C1-4 dead-component archive lock)
+        run: node scripts/verify-no-archived-imports.mjs
