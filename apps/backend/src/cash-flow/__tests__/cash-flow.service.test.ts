@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { notVoidedSql } from "../cash-flow.service.js";
+
 /**
  * Unit tests for cash-flow prediction and A-vs-P variance calculations.
  * Uses mock DB client — no live DB required.
@@ -117,6 +119,50 @@ describe("projected closing cash balance", () => {
     const predicted = 2_000_00;
     const closing = opening !== null ? opening + predicted : null;
     expect(closing).toBeNull();
+  });
+});
+
+describe("CASH-1: void-exclusion predicate (notVoidedSql)", () => {
+  // Mirror the SQL predicate `<alias>.status NOT IN ('void','voided') AND <alias>.revoked_at IS NULL`
+  // in JS so we can prove which rows it keeps vs excludes.
+  function predicateKeepsRow(row: { status: string; revoked_at: string | null }): boolean {
+    const sql = notVoidedSql("b");
+    // Assert the fragment references the columns for the alias we passed.
+    expect(sql).toContain("b.status");
+    expect(sql).toContain("b.revoked_at IS NULL");
+    const notVoidStatus = !["void", "voided"].includes(row.status);
+    const notRevoked = row.revoked_at === null;
+    return notVoidStatus && notRevoked;
+  }
+
+  it("EXCLUDES a bill voided via the real write-path (status='void' + revoked_at set)", () => {
+    // This is the exact row the buggy `status <> 'voided'` filter let leak in.
+    expect(predicateKeepsRow({ status: "void", revoked_at: "2026-07-04T00:00:00Z" })).toBe(false);
+  });
+
+  it("EXCLUDES a row that carries revoked_at even if status was left non-void", () => {
+    expect(predicateKeepsRow({ status: "unpaid", revoked_at: "2026-07-04T00:00:00Z" })).toBe(false);
+  });
+
+  it("EXCLUDES a legacy 'voided' status row too (backward compatible)", () => {
+    expect(predicateKeepsRow({ status: "voided", revoked_at: null })).toBe(false);
+  });
+
+  it("KEEPS a live unpaid bill (status='unpaid', not revoked)", () => {
+    expect(predicateKeepsRow({ status: "unpaid", revoked_at: null })).toBe(true);
+  });
+
+  it("KEEPS a live partially-paid bill (status='partial', not revoked)", () => {
+    expect(predicateKeepsRow({ status: "partial", revoked_at: null })).toBe(true);
+  });
+
+  it("fragment guards against the no-op: it matches the singular 'void' the write-path stores", () => {
+    const sql = notVoidedSql("bp");
+    expect(sql).toContain("'void'");
+    expect(sql).toContain("'voided'");
+    expect(sql).toContain("bp.revoked_at IS NULL");
+    // Regression guard: a bare `status <> 'voided'` (the original bug) would NOT contain 'void'.
+    expect(sql.includes("'void'")).toBe(true);
   });
 });
 

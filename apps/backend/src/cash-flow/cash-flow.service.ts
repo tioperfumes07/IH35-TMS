@@ -94,6 +94,24 @@ function variancePct(projected: number, actual: number): number | null {
 
 /** Statuses that mean "this load is real revenue" (excludes only 'cancelled'). */
 const ACTIVE_LOAD_FILTER = `l.status <> 'cancelled'`;
+
+/**
+ * CASH-1 fix (void-exclusion no-op): the canonical void write-path
+ * (`accounting/bills.service.ts` `voidBill` / `voidBillPayment`) stores
+ * `status = 'void'` (SINGULAR) and sets `revoked_at = now()` — it NEVER writes
+ * `'voided'`. Filtering on `status <> 'voided'` alone therefore matched nothing
+ * and let voided bills / bill-payments leak into the cash-flow figures.
+ *
+ * Match the authoritative reader (`bills.service.ts` `listBills`, which uses
+ * `b.status IN ('void','voided') OR b.revoked_at IS NOT NULL` to identify voids,
+ * and `b.revoked_at IS NULL` to hide them) and the posting engine (`status NOT IN
+ * ('void', 'voided')`): a row is excluded if it is void/voided by status OR carries
+ * a `revoked_at` timestamp. This is a pure exclusion-predicate fix — no amounts or
+ * posting logic change.
+ */
+export function notVoidedSql(alias: string): string {
+  return `${alias}.status NOT IN ('void', 'voided') AND ${alias}.revoked_at IS NULL`;
+}
 /** Delivered-or-beyond → income is Confirmed rather than Predicted. */
 const CONFIRMED_STATUSES = new Set(["delivered", "invoiced", "paid", "closed"]);
 
@@ -202,7 +220,8 @@ export async function getDailyPrediction(
     LEFT JOIN mdata.vendors v ON v.id::text = b.vendor_id
     WHERE b.operating_company_id = $1
       AND b.due_date::date = $2::date
-      AND b.status NOT IN ('paid', 'voided')
+      AND b.status <> 'paid'
+      AND ${notVoidedSql("b")}
     ORDER BY v.vendor_name ASC NULLS LAST
     `,
     [operatingCompanyId, date]
@@ -340,7 +359,8 @@ async function buildSevenDayStrip(
           FROM accounting.bills b
           WHERE b.operating_company_id = $1
             AND b.due_date::date = $2::date
-            AND b.status NOT IN ('paid','voided')
+            AND b.status <> 'paid'
+            AND ${notVoidedSql("b")}
         ), 0)::int AS expense_cents
       `,
       [operatingCompanyId, dateStr]
@@ -431,7 +451,7 @@ export async function getActualVsProjected(
     FROM accounting.bills b
     WHERE b.operating_company_id = $1
       AND b.due_date::date BETWEEN $2::date AND $3::date
-      AND b.status <> 'voided'
+      AND ${notVoidedSql("b")}
     GROUP BY b.due_date::date
     ORDER BY b.due_date::date
     `,
@@ -447,7 +467,7 @@ export async function getActualVsProjected(
     FROM accounting.bill_payments bp
     WHERE bp.operating_company_id = $1
       AND bp.payment_date::date BETWEEN $2::date AND $3::date
-      AND bp.status <> 'voided'
+      AND ${notVoidedSql("bp")}
     GROUP BY bp.payment_date::date
     ORDER BY bp.payment_date::date
     `,
