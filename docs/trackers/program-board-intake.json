@@ -1,0 +1,5 @@
+{
+  "_comment": "Intake timestamps (requested_ct): id-or-block -> ISO ts, stamped when Jorge pastes/uploads a work order. Falls back to a finding's registered_on when absent.",
+  "RATECON-4": "2026-07-05T17:20:00Z",
+  "RATECON-5": "2026-07-05T17:20:00Z"
+}
