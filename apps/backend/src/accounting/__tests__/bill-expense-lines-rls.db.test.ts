@@ -103,11 +103,11 @@ describeIntegration("bill_lines / expense_lines RLS tenant isolation (real Postg
     // Seed: one bill + one bill_line per tenant, plus an orphan expense_line.
     await withBypass(async () => {
       await db.query(
-        `INSERT INTO accounting.bills (id, operating_company_id, status) VALUES ($1::uuid, $2::uuid, 'unpaid')`,
+        `INSERT INTO accounting.bills (id, operating_company_id, status, amount_cents) VALUES ($1::uuid, $2::uuid, 'unpaid', 10000)`,
         [primaryBillId, primaryCompanyId]
       );
       await db.query(
-        `INSERT INTO accounting.bills (id, operating_company_id, status) VALUES ($1::uuid, $2::uuid, 'unpaid')`,
+        `INSERT INTO accounting.bills (id, operating_company_id, status, amount_cents) VALUES ($1::uuid, $2::uuid, 'unpaid', 20000)`,
         [secondaryBillId, secondaryCompanyId]
       );
       await db.query(
