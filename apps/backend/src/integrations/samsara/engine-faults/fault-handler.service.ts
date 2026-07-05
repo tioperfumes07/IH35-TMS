@@ -124,9 +124,12 @@ async function resolveLocalUnitId(
 
   const byUnit = await client.query<{ unit_id: string | null; unit_number: string | null }>(
     `
+      -- §4 landmine: mdata.units has NO operating_company_id column (owner_company_id +
+      -- currently_leased_to_company_id are the real entity columns). The prior predicate 42703'd →
+      -- fault->unit resolution 500'd. Scope by ownership/lease.
       SELECT id::text AS unit_id, unit_number
       FROM mdata.units
-      WHERE operating_company_id = $1::uuid
+      WHERE (owner_company_id = $1::uuid OR currently_leased_to_company_id = $1::uuid)
         AND id::text = $2
       LIMIT 1
     `,

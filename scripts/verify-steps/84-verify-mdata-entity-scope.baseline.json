@@ -216,6 +216,11 @@
       "preview": "` SELECT h.id, h.load_id, h.assignment_method, h.reason_code, h.notes, h.assigned_at, l.load_number, CONCAT_WS(' ', pd.f"
     },
     {
+      "key": "apps/backend/src/dispatch/assignments/quicksave.service.ts#ba80700d506989960471ffa79dba940f014aa7ca",
+      "file": "apps/backend/src/dispatch/assignments/quicksave.service.ts",
+      "preview": "` SELECT id::text FROM mdata.equipment WHERE id = $1::uuid AND COALESCE(currently_leased_to_company_id, owner_company_id"
+    },
+    {
       "key": "apps/backend/src/dispatch/book-load.service.ts#bc77e99806bc2ef5da2e58fa880c00c4c130c9d2",
       "file": "apps/backend/src/dispatch/book-load.service.ts",
       "preview": "`SELECT tour_id::text FROM mdata.loads WHERE assigned_unit_id = $1::uuid AND trip_type = 'NB' AND tour_id IS NOT NULL AN"
@@ -304,6 +309,11 @@
       "key": "apps/backend/src/dispatch/pod.routes.ts#3b7cc6ed2b966322b19986a1f6fbdb83d1d2ff4b",
       "file": "apps/backend/src/dispatch/pod.routes.ts",
       "preview": "` SELECT s.id, s.stop_type::text, l.operating_company_id::text FROM mdata.load_stops s JOIN mdata.loads l ON l.id = s.lo"
+    },
+    {
+      "key": "apps/backend/src/dispatch/quick-assign.service.ts#ba80700d506989960471ffa79dba940f014aa7ca",
+      "file": "apps/backend/src/dispatch/quick-assign.service.ts",
+      "preview": "` SELECT id::text FROM mdata.equipment WHERE id = $1::uuid AND COALESCE(currently_leased_to_company_id, owner_company_id"
     },
     {
       "key": "apps/backend/src/dispatch/trip-pairing-board.service.ts#217f2ceb23d3c51b9ac7959ee596d8a54949998a",

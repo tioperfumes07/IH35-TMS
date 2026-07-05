@@ -154,11 +154,15 @@ export async function registerAssignmentsQuicksaveRoutes(app: FastifyInstance) {
       if (!trailerOk) return { error: "equipment_not_found" as const };
 
       await client.query(
+        // §4 landmine: mdata.equipment has NO operating_company_id column (owner_company_id +
+        // currently_leased_to_company_id are the real entity columns — migration 0015). The prior
+        // `WHERE operating_company_id = $2` 42703'd → every trailer quick-assign 500'd. Scope by the
+        // real ownership/lease columns, matching assertTrailerScope above.
         `
           UPDATE mdata.equipment
           SET assigned_driver_id = $3::uuid, updated_at = now()
           WHERE id = $1::uuid
-            AND operating_company_id = $2::uuid
+            AND (owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid)
         `,
         [equipmentId, companyId, driverId]
       );

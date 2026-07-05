@@ -53,7 +53,9 @@ describe("getSafetyHomeData", () => {
       "safety.dvir_defects": [{ c: "3" }],
       "safety.hos_violations": [{ c: "2" }],
       "safety.accident_reports": [{ open_count: "1", pending_investigations: "1" }],
-      "safety.da_random_pool_draws": [{ c: "1" }],
+      // pending DA draws now read from safety.da_test_records.result='pending' (real source);
+      // safety.da_random_pool_draws has no `status` column (§4 landmine, migration 0327).
+      "safety.da_test_records": [{ c: "1" }],
       "safety.csa_scores": [{ c: "2" }],
       "safety.workers_comp_claims": [{ c: "1" }],
       "mdata.drivers": [

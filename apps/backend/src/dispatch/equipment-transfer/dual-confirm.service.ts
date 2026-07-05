@@ -97,10 +97,14 @@ export async function confirmInbound(
   );
 
   await client.query(
+    // §4 landmine: mdata.equipment has NO operating_company_id column (owner_company_id +
+    // currently_leased_to_company_id are the real entity columns — migration 0015). The prior
+    // `operating_company_id = $2` 42703'd → inbound transfer confirm 500'd. Scope by ownership/lease.
     `
       UPDATE mdata.equipment
       SET assigned_driver_id = $3::uuid, updated_at = now()
-      WHERE id = $1::uuid AND operating_company_id = $2::uuid
+      WHERE id = $1::uuid
+        AND (owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid)
     `,
     [req.equipment_uuid, operatingCompanyId, req.to_driver_uuid]
   );
