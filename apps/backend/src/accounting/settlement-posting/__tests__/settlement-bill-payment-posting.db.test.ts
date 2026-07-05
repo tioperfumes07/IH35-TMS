@@ -196,9 +196,18 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
       await upsertDriverEscrowAccountLink(db, { operatingCompanyId: companyId, driverId, coaAccountId: acct.escrowSub });
       await upsertDriverAdvanceAccountLink(db, { operatingCompanyId: companyId, driverId, coaAccountId: acct.advanceSub, actorUserId: userId });
 
+      // The shared fixture company (ensureIntegrationPrerequisites) may already carry an active
+      // 'ap_control' role — seeded by a BLOCK-00 migration or a sibling real-Postgres suite
+      // (e.g. bill-payment-gl-posting.db.test.ts) that does NOT clean it up. A bare INSERT collides
+      // with the partial-unique index uq_coa_roles_company_role_active. Upsert instead so the seed is
+      // idempotent AND pins ap_control to THIS suite's acct.ap (the assertions below resolve the A/P
+      // account via the service's ap_control lookup and check it equals acct.ap), matching the
+      // ON CONFLICT pattern the sibling suites already use.
       await db.query(
         `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
-         VALUES ($1::uuid,'ap_control',$2::uuid,true)`,
+         VALUES ($1::uuid,'ap_control',$2::uuid,true)
+         ON CONFLICT (operating_company_id, role) WHERE is_active = true
+           DO UPDATE SET account_id = EXCLUDED.account_id, updated_at = now()`,
         [companyId, acct.ap]
       );
       const bind = async (roleKey: string, accountId: string) =>
