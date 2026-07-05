@@ -1,10 +1,15 @@
 #!/usr/bin/env node
 // Guard: the REAL booking path (book-load.service.ts) must hard-gate driver
-// qualification — deactivated/archived, expired-or-missing CDL, and
-// expired-or-missing DOT medical card — for EVERY assigned driver, and BLOCK
-// (not warn). Also asserts the pre-dispatch validator fails CLOSED (a thrown
-// check becomes a synthetic blocker, and missing CDL / missing medical card are
-// hard blocks). These are DOT safety hard-stops; this guard stops silent regression.
+// qualification for EVERY assigned driver and BLOCK (not warn). G9-C1 centralised
+// the per-driver credential hard-stops into the SHARED gate
+// (driver-qualification.service.ts) so book-load, quick-assign, quicksave and the
+// planner can never drift; this guard asserts (a) book-load delegates to that shared
+// gate + emits the block audit event, and (b) the shared gate still enforces every
+// dimension — deactivated/archived, expired-or-missing CDL, expired-or-missing DOT
+// medical card, and (D3-1) the hazmat H-endorsement via the REAL mdata.drivers.endorsement_h
+// column (NOT the phantom `hazmat_endorsement`, which lives on mdata.units). Also asserts
+// the pre-dispatch validator fails CLOSED. These are DOT safety hard-stops; this guard
+// stops silent regression.
 import fs from "node:fs";
 import path from "node:path";
 
@@ -16,6 +21,7 @@ function readIfExists(filePath) {
 }
 
 const bookLoadPath = path.resolve(ROOT, "apps/backend/src/dispatch/book-load.service.ts");
+const dqPath = path.resolve(ROOT, "apps/backend/src/dispatch/driver-qualification.service.ts");
 const validatorPath = path.resolve(
   ROOT,
   "apps/backend/src/dispatch/validation/pre-dispatch-validator.service.ts"
@@ -25,20 +31,37 @@ const bookLoad = readIfExists(bookLoadPath);
 if (!bookLoad) {
   failures.push("missing_book_load_service");
 } else {
-  // The hard gate must exist, block with the canonical code, and inspect all
-  // required credential dimensions against mdata.drivers.
+  // The booking path must BLOCK with the canonical code, emit the block audit event, apply the
+  // gate to every assigned driver, delegate the credential hard-stops to the SHARED gate, and keep
+  // its optional reads failing CLOSED. (The per-dimension credential checks themselves are asserted
+  // against the shared gate below, since G9-C1 moved them out of book-load.)
   if (!bookLoad.includes("E_DRIVER_NOT_QUALIFIED")) failures.push("missing_driver_not_qualified_block_code");
   if (!bookLoad.includes("dispatch.book_load_blocked_by_driver_qualification"))
     failures.push("missing_driver_qualification_audit_event");
   if (!bookLoad.includes("collectAssignedDriverIdsForDrugGate"))
     failures.push("gate_not_applied_to_all_assigned_drivers");
-  if (!/deactivated_at\s+IS NOT NULL/.test(bookLoad)) failures.push("missing_deactivated_check");
-  if (!/archived_at\s+IS NOT NULL/.test(bookLoad)) failures.push("missing_archived_check");
-  if (!bookLoad.includes("cdl_expires_at")) failures.push("missing_cdl_check");
-  if (!bookLoad.includes("dot_medical_expires_at") || !bookLoad.includes("safety.medical_cards"))
-    failures.push("missing_medical_card_check");
+  if (!bookLoad.includes("assertDriverQualifiedForLoad"))
+    failures.push("gate_not_delegated_to_shared_qualification_service");
   // optionalQuery must fail CLOSED on real errors (only skip relation-absent codes).
   if (!bookLoad.includes("RELATION_ABSENT_CODES")) failures.push("optional_query_not_fail_closed");
+}
+
+// G9-C1/D3-1: the shared per-driver qualification gate is the single source of the DOT credential
+// hard-stops. Every dimension the booking path used to inline must live here and BLOCK.
+const dq = readIfExists(dqPath);
+if (!dq) {
+  failures.push("missing_driver_qualification_service");
+} else {
+  if (!/deactivated_at\s+IS NOT NULL/.test(dq)) failures.push("missing_deactivated_check");
+  if (!/archived_at\s+IS NOT NULL/.test(dq)) failures.push("missing_archived_check");
+  if (!dq.includes("cdl_expires_at")) failures.push("missing_cdl_check");
+  if (!dq.includes("dot_medical_expires_at") || !dq.includes("safety.medical_cards"))
+    failures.push("missing_medical_card_check");
+  // D3-1 hazmat H-endorsement must use the REAL mdata.drivers.endorsement_h boolean...
+  if (!dq.includes("endorsement_h")) failures.push("missing_hazmat_endorsement_check");
+  // ...and must NEVER reintroduce the phantom `d.hazmat_endorsement` column (that boolean lives on
+  // mdata.units, not mdata.drivers; `d.hazmat_endorsement_expires_at` is the real, distinct column).
+  if (/\bd\.hazmat_endorsement\b/.test(dq)) failures.push("phantom_driver_hazmat_endorsement_column");
 }
 
 const validator = readIfExists(validatorPath);

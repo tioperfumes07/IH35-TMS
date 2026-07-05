@@ -6,6 +6,7 @@ import { driverBillNumberFromLoadNumber } from "../driver-finance/driver-bill-nu
 import { effectiveTeamPercentsFromRow, splitTotalCents } from "../driver-finance/settlement-engine.js";
 import { detectAssetCoverageGap } from "../insurance/coverage-gap.service.js";
 import { bookLoadRateTotalCents } from "./book-load-accessorial.js";
+import { assertDriverQualifiedForLoad } from "./driver-qualification.service.js";
 import {
   claimReservation,
   consumeLoadNumberReservation,
@@ -815,90 +816,49 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
     // error here must fail CLOSED (abort the booking), never be swallowed into [].
     {
       const gatedDriverIds = await collectAssignedDriverIdsForDrugGate(client, input);
-      if (gatedDriverIds.length > 0) {
-        const credRows = await client.query<{
-          id: string;
-          driver_name: string | null;
-          is_deactivated: boolean;
-          is_archived: boolean;
-          cdl_missing: boolean;
-          cdl_expired: boolean;
-          cdl_expires_at: string | null;
-          med_missing: boolean;
-          med_expired: boolean;
-          med_expiry_date: string | null;
-        }>(
-          `
-            SELECT
-              d.id::text AS id,
-              CONCAT_WS(' ', d.first_name, d.last_name) AS driver_name,
-              (d.deactivated_at IS NOT NULL) AS is_deactivated,
-              (d.archived_at IS NOT NULL) AS is_archived,
-              (d.cdl_expires_at IS NULL) AS cdl_missing,
-              (d.cdl_expires_at IS NOT NULL AND d.cdl_expires_at < CURRENT_DATE) AS cdl_expired,
-              d.cdl_expires_at::text AS cdl_expires_at,
-              (COALESCE(mc.expiry_date, d.dot_medical_expires_at) IS NULL) AS med_missing,
-              (COALESCE(mc.expiry_date, d.dot_medical_expires_at) IS NOT NULL
-                AND COALESCE(mc.expiry_date, d.dot_medical_expires_at) < CURRENT_DATE) AS med_expired,
-              COALESCE(mc.expiry_date, d.dot_medical_expires_at)::text AS med_expiry_date
-            FROM mdata.drivers d
-            LEFT JOIN LATERAL (
-              SELECT expiry_date
-              FROM safety.medical_cards
-              WHERE driver_id = d.id
-                AND operating_company_id = $2::uuid
-                AND voided_at IS NULL
-              ORDER BY expiry_date DESC
-              LIMIT 1
-            ) mc ON true
-            WHERE d.id = ANY($1::uuid[])
-              AND d.operating_company_id = $2::uuid
-          `,
-          [gatedDriverIds, input.operating_company_id]
-        );
-
-        for (const dr of credRows.rows) {
-          const reasons: string[] = [];
-          if (dr.is_deactivated) reasons.push("driver_deactivated");
-          if (dr.is_archived) reasons.push("driver_archived");
-          if (dr.cdl_missing) reasons.push("cdl_missing");
-          else if (dr.cdl_expired) reasons.push("cdl_expired");
-          if (dr.med_missing) reasons.push("medical_card_missing");
-          else if (dr.med_expired) reasons.push("medical_card_expired");
-
-          if (reasons.length > 0) {
-            await appendCrudAudit(
-              client,
-              input.requestingUserUuid,
-              "dispatch.book_load_blocked_by_driver_qualification",
-              {
-                operating_company_id: input.operating_company_id,
-                driver_id: dr.id,
-                block_code: "E_DRIVER_NOT_QUALIFIED",
-                reasons,
-                cdl_expires_at: dr.cdl_expires_at,
-                medical_expiry_date: dr.med_expiry_date,
+      const isHazmatLoad = Boolean(input.hazmat);
+      for (const gatedDriverId of gatedDriverIds) {
+        // Shared gate (G9-C1 + D3-1): identical credential logic to the sibling assignment paths,
+        // plus the hazmat H-endorsement branch when this is a hazmat load.
+        const block = await assertDriverQualifiedForLoad(client, {
+          driverId: gatedDriverId,
+          operatingCompanyId: input.operating_company_id,
+          isHazmat: isHazmatLoad,
+        });
+        if (block) {
+          await appendCrudAudit(
+            client,
+            input.requestingUserUuid,
+            "dispatch.book_load_blocked_by_driver_qualification",
+            {
+              operating_company_id: input.operating_company_id,
+              driver_id: block.driverId,
+              block_code: "E_DRIVER_NOT_QUALIFIED",
+              reasons: block.reasons,
+              cdl_expires_at: block.cdlExpiresAt,
+              medical_expiry_date: block.medicalExpiryDate,
+              hazmat_endorsement_expires_at: block.hazmatEndorsementExpiresAt,
+            },
+            "warning",
+            "BT-3-DISPATCH-AUTH-GATES"
+          );
+          return {
+            kind: "error",
+            status: 422,
+            payload: {
+              error: "E_DRIVER_NOT_QUALIFIED",
+              message: `Driver ${block.driverName ?? block.driverId} cannot be dispatched: ${block.reasons.join(", ")}.`,
+              details: {
+                driver_id: block.driverId,
+                reasons: block.reasons,
+                cdl_expires_at: block.cdlExpiresAt,
+                medical_expiry_date: block.medicalExpiryDate,
+                hazmat_endorsement_expires_at: block.hazmatEndorsementExpiresAt,
               },
-              "warning",
-              "BT-3-DISPATCH-AUTH-GATES"
-            );
-            return {
-              kind: "error",
-              status: 422,
-              payload: {
-                error: "E_DRIVER_NOT_QUALIFIED",
-                message: `Driver ${dr.driver_name ?? dr.id} cannot be dispatched: ${reasons.join(", ")}.`,
-                details: {
-                  driver_id: dr.id,
-                  reasons,
-                  cdl_expires_at: dr.cdl_expires_at,
-                  medical_expiry_date: dr.med_expiry_date,
-                },
-                wf_044_maintenance_warnings: wf044Warnings,
-                insurance_coverage_gap_warnings: insuranceCoverageWarnings,
-              },
-            };
-          }
+              wf_044_maintenance_warnings: wf044Warnings,
+              insurance_coverage_gap_warnings: insuranceCoverageWarnings,
+            },
+          };
         }
       }
     }

@@ -9,6 +9,7 @@ import {
   listQuicksaveDrafts,
   quickAssignLoad,
 } from "./quick-assign.service.js";
+import { DriverNotQualifiedError } from "./driver-qualification.service.js";
 
 const loadIdParamsSchema = z.object({ id: z.string().uuid() });
 const quickAssignBodySchema = z.object({
@@ -33,6 +34,23 @@ function authed(req: FastifyRequest, reply: FastifyReply) {
 }
 
 function mapQuickAssignError(error: unknown) {
+  // G9-C1 + D3-1: the shared driver-qualification gate throws a typed error carrying the block.
+  if (error instanceof DriverNotQualifiedError) {
+    return {
+      status: 422,
+      payload: {
+        error: error.code,
+        message: error.message,
+        details: {
+          driver_id: error.block.driverId,
+          reasons: error.block.reasons,
+          cdl_expires_at: error.block.cdlExpiresAt,
+          medical_expiry_date: error.block.medicalExpiryDate,
+          hazmat_endorsement_expires_at: error.block.hazmatEndorsementExpiresAt,
+        },
+      },
+    };
+  }
   const code = String((error as Error)?.message ?? "");
   if (code === "E_LOAD_NOT_FOUND") return { status: 404, payload: { error: code } };
   if (code === "E_HARD_BLOCKS_PRESENT") return { status: 422, payload: { error: code, message: "hard blocks present for quick-assign" } };
