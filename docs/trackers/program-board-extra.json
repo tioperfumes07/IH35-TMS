@@ -658,12 +658,14 @@
       "name": "C1 (Dispatch/Compliance) \u2014 Unqualified drivers assignable via quick-assign / quicksave / planner",
       "wave": "CRIT",
       "type": "CRIT",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Extract the book-load qualification gate into one shared function called by every assignment path."
+      "notes": "Extract the book-load qualification gate into one shared function called by every assignment path.",
+      "pr": 2019,
+      "done_ct": "2026-07-04 20:57 CT"
     },
     {
       "id": "G9",
@@ -694,12 +696,14 @@
       "name": "C1 (Compliance/Audit) \u2014 Tamper-evident audit chain verifier is never invoked",
       "wave": "CRIT",
       "type": "CRIT",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Add a daily chain-verify cron per company; alert on chain_ok=false/stale."
+      "notes": "Add a daily chain-verify cron per company; alert on chain_ok=false/stale.",
+      "pr": 2020,
+      "done_ct": "2026-07-04 20:57 CT"
     },
     {
       "id": "G10",
@@ -850,12 +854,14 @@
       "name": "FLEET-1 (Fleet) \u2014 Trailer quick-assign updates mdata.equipment WHERE operating_company_id (phantom) \u2192 500",
       "wave": "CRIT",
       "type": "CRIT",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Use owner_company_id / currently_leased_to_company_id."
+      "notes": "Use owner_company_id / currently_leased_to_company_id.",
+      "pr": 2027,
+      "done_ct": "2026-07-04 20:57 CT"
     },
     {
       "id": "M",
@@ -970,12 +976,14 @@
       "name": "1 (Dispatch/Safety) \u2014 Hazmat load can be dispatched to an unendorsed driver",
       "wave": "HIGH",
       "type": "HIGH",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Add an H-endorsement branch (reason hazmat_endorsement_missing) reading mdata.drivers.hazmat_endorsement, mirroring the CDL gate."
+      "notes": "Add an H-endorsement branch (reason hazmat_endorsement_missing) reading mdata.drivers.hazmat_endorsement, mirroring the CDL gate.",
+      "pr": 2019,
+      "done_ct": "2026-07-04 20:57 CT"
     },
     {
       "id": "D5",
@@ -1150,12 +1158,14 @@
       "name": "1 (Driver-PWA/i18n) \u2014 Driver-app dates render in device locale + timezone, not app language",
       "wave": "HIGH",
       "type": "HIGH",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Shared formatDateTime(iso,locale,tz) helper + a lint banning bare .toLocale* in driver-pwa."
+      "notes": "Shared formatDateTime(iso,locale,tz) helper + a lint banning bare .toLocale* in driver-pwa.",
+      "pr": 2030,
+      "done_ct": "2026-07-04 20:57 CT"
     },
     {
       "id": "G9",
@@ -1594,12 +1604,14 @@
       "name": "DRIVER-2 (Drivers) \u2014 mdata.drivers.escrow_balance is a phantom column (read by the escrow visualizer)",
       "wave": "HIGH",
       "type": "HIGH",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "Compute escrow from the real escrow ledger, not a phantom column."
+      "notes": "Compute escrow from the real escrow ledger, not a phantom column.",
+      "pr": 2027,
+      "done_ct": "2026-07-04 20:57 CT"
     },
     {
       "id": "M",
@@ -2002,12 +2014,14 @@
       "name": "4 (Accessibility) \u2014 Search/filter inputs have no accessible name (~65 files) + no a11y lint",
       "wave": "MED",
       "type": "MED",
-      "status": "PENDING",
+      "status": "DONE",
       "tier": "safe",
       "fin": false,
       "registered_on": "2026-07-04",
       "track": "audit",
-      "notes": "aria-label on every search/filter input; wire eslint-plugin-jsx-a11y into CI."
+      "notes": "aria-label on every search/filter input; wire eslint-plugin-jsx-a11y into CI.",
+      "pr": 2027,
+      "done_ct": "2026-07-04 20:57 CT"
     },
     {
       "id": "G8",
