@@ -48,6 +48,10 @@
     {
       "file": "202607010700_account_role_bindings_per_entity.sql",
       "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] account_role_bindings per-entity \u2014 last deferred cross-entity leak (USMCA "
+    },
+    {
+      "file": "202607070100_bank_categorize_unit_trip_driver_deduction.sql",
+      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] BLOCK-6b \u2014 Unit + Trip(Load) dimensions + Item(Products&Services) linkage on bank categorize + driver auto-deduction (fine\u2192driver\u2192settlement, flag OFF)"
     }
   ]
 }

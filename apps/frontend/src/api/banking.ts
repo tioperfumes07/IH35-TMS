@@ -321,9 +321,19 @@ export function categorizeBankTransaction(
     gl_account_id?: string;
     vendor_id?: string;
     customer_id?: string;
+    // Catalog-linkage (QBO parity): an ITEM line links to the Products & Services catalog (catalogs.items),
+    // DISTINCT from the CATEGORY line (gl_account_id → Chart of Accounts).
+    item_id?: string;
     // BLOCK-6 (additive dimension): tag the transaction to a driver. Stored as a tag; a driver-advance
     // account posts a recoverable receivable behind the OFF-by-default BANK_DRIVER_ADVANCE_ENABLED flag.
     driver_id?: string;
+    // BLOCK-6b (additive dimensions): tag the Unit (truck) + Trip (load) the transaction belongs to, and
+    // — when the paid expense belongs to the driver (e.g. a fine) — recover_from_driver + the target
+    // deduction bucket type drive the OFF-by-default driver AUTO-DEDUCTION into the settlement engine.
+    unit_id?: string;
+    load_id?: string;
+    recover_from_driver?: boolean;
+    recover_deduction_type?: string;
     memo?: string;
   }
 ) {
@@ -331,6 +341,57 @@ export function categorizeBankTransaction(
     method: "POST",
     body,
   });
+}
+
+/** BLOCK-6b — forward drill-through: a categorized bank transaction's Driver/Unit/Trip + the deduction it created. */
+export type BankCategorizationLinks = {
+  bank_transaction_id: string;
+  transaction_date: string | null;
+  description: string | null;
+  amount_cents: number | null;
+  is_credit: boolean | null;
+  category_kind: string | null;
+  driver_id: string | null;
+  driver_name: string | null;
+  unit_id: string | null;
+  unit_number: string | null;
+  load_id: string | null;
+  load_number: string | null;
+  vendor_id: string | null;
+  vendor_name: string | null;
+  customer_id: string | null;
+  customer_name: string | null;
+  item_id: string | null;
+  item_name: string | null;
+  recover_from_driver: boolean | null;
+  recover_deduction_type: string | null;
+  deduction_id: string | null;
+  deduction_amount_cents: number | null;
+  deduction_status: string | null;
+  deduction_type: string | null;
+  deduction_bucket_id: string | null;
+  deduction_load_id: string | null;
+};
+
+export function getBankTransactionCategorizationLinks(transactionId: string, companyId: string) {
+  return apiRequest<BankCategorizationLinks | null>(
+    `/api/v1/banking/transactions/${transactionId}/categorization-links?${q(companyId)}`
+  );
+}
+
+/** BLOCK-6b — reverse drill-through: bank transactions tagged to a given driver / unit / load (+ their deduction). */
+export function getBankTransactionsByLinkage(
+  companyId: string,
+  linkage: { driver_id?: string; unit_id?: string; load_id?: string; limit?: number }
+) {
+  const params = new URLSearchParams({ operating_company_id: companyId });
+  if (linkage.driver_id) params.set("driver_id", linkage.driver_id);
+  if (linkage.unit_id) params.set("unit_id", linkage.unit_id);
+  if (linkage.load_id) params.set("load_id", linkage.load_id);
+  if (linkage.limit != null) params.set("limit", String(linkage.limit));
+  return apiRequest<{ rows: Array<Record<string, unknown>>; total_count: number }>(
+    `/api/v1/banking/transactions/by-linkage?${params.toString()}`
+  );
 }
 
 export function categorizeBankTransactionToAccount(
