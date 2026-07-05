@@ -45,7 +45,7 @@ export function CreateExpenseModal({ open, operatingCompanyId, onClose }: Props)
   });
   const driversQuery = useQuery({
     queryKey: ["create-expense-modal", "drivers", operatingCompanyId],
-    queryFn: () => listDrivers({ status: "Active", operating_company_id: operatingCompanyId }),
+    queryFn: () => listDrivers({ status: "Active", operating_company_id: operatingCompanyId, limit: 200 }), // full active set (endpoint default 50 truncates >50)
     enabled: Boolean(open && operatingCompanyId),
   });
   const unitsQuery = useQuery({

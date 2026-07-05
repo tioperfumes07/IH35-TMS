@@ -60,7 +60,7 @@ export function computeHosDashboardMetrics(rows: FleetHosDriverRow[]) {
 }
 
 async function loadFleetHosRows(operatingCompanyId: string): Promise<FleetHosDriverRow[]> {
-  const { drivers } = await listDrivers({ operating_company_id: operatingCompanyId, status: "Active" });
+  const { drivers } = await listDrivers({ operating_company_id: operatingCompanyId, status: "Active", limit: 200 }); // full active set (endpoint default 50 truncates >50)
   return Promise.all(
     drivers.map(async (driver) => {
       const base: FleetHosDriverRow = {

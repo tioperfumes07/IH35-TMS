@@ -30,7 +30,7 @@ export function TeamSplitConfig({ operatingCompanyId }: Props) {
   const { data, isLoading, create, endConfig } = useTeamSplits(operatingCompanyId);
   const driversQuery = useQuery({
     queryKey: ["drivers", "team-splits", operatingCompanyId],
-    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId }).then((res) => res.drivers),
+    queryFn: () => listDrivers({ operating_company_id: operatingCompanyId, limit: 200 }).then((res) => res.drivers), // full active set (endpoint default 50 truncates >50)
     enabled: Boolean(operatingCompanyId),
   });
   const driverOptions = useMemo(
