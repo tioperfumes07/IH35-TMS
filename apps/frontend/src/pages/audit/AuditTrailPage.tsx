@@ -150,7 +150,7 @@ export function AuditTrailPage() {
           </label>
         </div>
         <div className="mt-3 flex items-center gap-2">
-          <button type="button" onClick={applyFilters} className="rounded-sm bg-[#16A34A] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#15803d]">Apply</button>
+          <button type="button" onClick={applyFilters} className="rounded-sm bg-[#1f2a44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0f1729]">Apply</button>
           <button type="button" onClick={resetFilters} className="rounded-sm border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50">Reset</button>
           {rows.length > 0 && (
             <button type="button" onClick={() => downloadCSV(rows)} className="ml-2 rounded-sm border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50">Export CSV</button>

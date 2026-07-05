@@ -20,7 +20,7 @@ export function TaskBoardPage() {
               type="button"
               disabled={!companyId}
               onClick={() => setCreateOpen(true)}
-              className="rounded-sm bg-[#16A34A] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#15803d] disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-sm bg-[#1f2a44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:cursor-not-allowed disabled:opacity-50"
             >
               + Create Task
             </button>

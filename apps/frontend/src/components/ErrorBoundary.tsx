@@ -32,7 +32,7 @@ function ErrorFallback({ error, onReload }: { error: Error; onReload: () => void
         <div className="mt-4 flex flex-wrap gap-2">
           <button
             type="button"
-            className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500"
+            className="rounded-md bg-[#1f2a44] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0f1729]"
             onClick={onReload}
           >
             Reload

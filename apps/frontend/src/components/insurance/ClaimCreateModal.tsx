@@ -354,7 +354,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
           </button>
           <button
             type="submit"
-            className="rounded-sm border border-[#16A34A] bg-[#16A34A] px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-700 disabled:opacity-60"
+            className="rounded-sm border border-[#1f2a44] bg-[#1f2a44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:opacity-60"
             disabled={createMutation.isPending}
           >
             {createMutation.isPending ? "Creating..." : "+ Claim"}
