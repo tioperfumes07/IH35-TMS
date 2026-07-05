@@ -18,13 +18,19 @@ import { UploadZone } from "../../../components/UploadZone";
 type Props = {
   open: boolean;
   operatingCompanyId: string;
+  /** When present, the created expense's memo carries this WO reference (human-readable maintenance linkage). */
+  linkedWoDisplayId?: string;
+  /** When present, the created expense persists a HARD FK (accounting.expenses.work_order_id) to this WO. */
+  linkedWoId?: string;
+  /** When present (WO context), the created expense persists a HARD FK to this unit. Falls back to the picker. */
+  linkedUnitId?: string;
   onClose: () => void;
   onCreated?: (expenseId: string | null) => void;
 };
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export function CreateExpenseModal({ open, operatingCompanyId, onClose, onCreated }: Props) {
+export function CreateExpenseModal({ open, operatingCompanyId, linkedWoDisplayId, linkedWoId, linkedUnitId, onClose, onCreated }: Props) {
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
   const [lines, setLines] = useState<TwoSectionLine[]>([]);
@@ -115,6 +121,7 @@ export function CreateExpenseModal({ open, operatingCompanyId, onClose, onCreate
     const parts: string[] = [];
     const typeLabel = EXPENSE_TYPE_TABS.find((t) => t.id === expenseType)?.label;
     if (typeLabel) parts.push(typeLabel);
+    if (linkedWoDisplayId) parts.push(`WO: ${linkedWoDisplayId}`);
     if (categoryLabel) parts.push(`Category: ${categoryLabel}`);
     if (expenseNumber.trim()) parts.push(`Expense #: ${expenseNumber.trim()}`);
     if (invoiceNumber.trim()) parts.push(`Invoice: ${invoiceNumber.trim()}`);
@@ -147,6 +154,10 @@ export function CreateExpenseModal({ open, operatingCompanyId, onClose, onCreate
         payment_account_uuid: payFromAccountId,
         memo: buildMemo(),
         ...(payeeId && UUID_RE.test(payeeId) ? { vendor_uuid: payeeId } : {}),
+        // HARD cross-module link: persist the WO + unit as real FKs (forward half of the bidirectional
+        // link; reverse half = WO detail "Linked Bills / Expenses"). Unit picker overrides the WO's unit.
+        ...(linkedWoId ? { work_order_id: linkedWoId } : {}),
+        ...(unitId || linkedUnitId ? { unit_id: unitId || linkedUnitId } : {}),
         attachment_draft_id: draftAttachmentEntityId,
       });
     },

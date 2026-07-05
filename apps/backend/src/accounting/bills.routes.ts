@@ -9,6 +9,7 @@ import {
   listBillPayments,
   listBillPaymentsForBill,
   listBills,
+  listWorkOrderLinkedFinancials,
   listVendorBalances,
   payBill,
   voidBill,
@@ -53,6 +54,9 @@ const createBillBodySchema = z.object({
   amount_cents: z.coerce.number().int().positive(),
   memo: z.string().trim().max(4000).optional(),
   coa_account_id: z.string().uuid().optional(),
+  // HARD cross-module link (maintenance): persist the WO + unit id as a real FK, not just a memo string.
+  work_order_id: z.string().uuid().optional().nullable(),
+  unit_id: z.string().uuid().optional().nullable(),
   attachment_draft_id: z.string().uuid().optional().nullable(),
 });
 
@@ -120,6 +124,25 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     return { rows };
   });
 
+  // Reverse drill-through for the WO↔bill/expense HARD link: list the bills + expenses that FK-reference
+  // a given work order. Read-only (SELECT), company-scoped. Powers the WO detail "Linked Bills / Expenses"
+  // section — the reverse half of the bidirectional link (forward half = FK persisted on create).
+  app.get("/api/v1/accounting/work-orders/:id/linked-financials", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!canAccessAccounting(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+    const params = idParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    const result = await listWorkOrderLinkedFinancials(
+      String(user.uuid),
+      query.data.operating_company_id,
+      params.data.id
+    );
+    return result;
+  });
+
   app.get("/api/v1/accounting/bills/:id/payments", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
@@ -168,6 +191,8 @@ export async function registerBillsRoutes(app: FastifyInstance) {
           amountCents: body.data.amount_cents,
           memo: body.data.memo,
           coaAccountId: body.data.coa_account_id,
+          workOrderId: body.data.work_order_id,
+          unitId: body.data.unit_id,
           attachmentDraftId: body.data.attachment_draft_id,
         },
         String(user.uuid)
