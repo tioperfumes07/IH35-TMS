@@ -357,3 +357,6 @@ jobs:
 
       - name: verify:pwa-date-format
         run: npm run verify:pwa-date-format
+
+      - name: verify:multipart-size-limits
+        run: npm run verify:multipart-size-limits

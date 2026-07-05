@@ -76,6 +76,7 @@
     "verify:cash-flow-auto-opening-excludes-credit": "node scripts/verify-cash-flow-auto-opening-excludes-credit.mjs",
     "verify:booking-driver-names": "node scripts/verify-booking-driver-names.mjs",
     "verify:pwa-date-format": "node scripts/verify-no-bare-tolocale-in-pwa.mjs",
+    "verify:multipart-size-limits": "node scripts/verify-multipart-size-limits.mjs",
     "verify:book-load-driver-qualification-gate": "node scripts/verify-book-load-driver-qualification-gate.mjs",
     "verify:booking-unit-ownership-fallback": "node scripts/verify-booking-unit-ownership-fallback.mjs",
     "verify:fleet-include-inactive-scope": "node scripts/verify-fleet-include-inactive-scope.mjs",
