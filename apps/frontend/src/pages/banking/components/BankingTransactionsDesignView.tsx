@@ -19,6 +19,15 @@ import { Button } from "../../../components/Button";
 import { useBulkSelection } from "../../../hooks/useBulkSelection";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useToast } from "../../../components/Toast";
+import { DriverAutocomplete } from "../../../components/factoring/DriverAutocomplete";
+import { UnitAutocomplete } from "../../../components/banking/UnitAutocomplete";
+import { LoadAutocomplete } from "../../../components/banking/LoadAutocomplete";
+import { listVendors, listCustomers } from "../../../api/mdata";
+import { itemsCatalogClient, type AccountingCatalogRow } from "../../../api/catalogs-accounting";
+
+// BLOCK-6b — recoverable-expense bucket types a bank-categorized driver expense can charge (a fine/toll
+// the company paid on the driver's behalf → recovered from settlement). Mirrors the backend allow-list.
+const RECOVER_DEDUCTION_TYPES = ["fine", "toll", "citation", "damage", "equipment", "fuel", "other"] as const;
 
 type Props = {
   companyId: string;
@@ -36,13 +45,28 @@ type RowDetailDraft = {
   accountId: string;
   className: string;
   location: string;
+  // Catalog-linkage: the free-text label is kept for the table cell + export; the *_id is the real catalog
+  // FK the transaction links to (forward + reverse). Payee→vendor, Customer/project→customer, Product/
+  // Service (Item)→catalogs.items — DISTINCT from the Account (Category → Chart of Accounts).
   productService: string;
+  itemId: string;
   customerProject: string;
+  customerId: string;
   payee: string;
+  vendorId: string;
   checkNo: string;
   billable: boolean;
   tags: string;
   memo: string;
+  // BLOCK-6b dimensions + driver auto-deduction.
+  driverId: string;
+  driverName: string;
+  unitId: string;
+  unitName: string;
+  loadId: string;
+  loadName: string;
+  recoverFromDriver: boolean;
+  recoverDeductionType: string;
 };
 
 const USD = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
@@ -247,6 +271,30 @@ export function BankingTransactionsDesignView({
     staleTime: 120_000,
   });
 
+  // Catalog-linkage pickers (QBO parity). limit:200 dodges the endpoint 50-caps so the FULL roster is
+  // selectable. Payee→vendors, Customer/project→customers, Product/Service (Item)→Products & Services.
+  const vendorsQuery = useQuery({
+    queryKey: ["banking", "tx-vendors", companyId],
+    queryFn: () => listVendors({ operating_company_id: companyId, limit: 200 }).then((r) => r.vendors ?? []),
+    enabled: Boolean(companyId),
+    staleTime: 120_000,
+  });
+  const customersQuery = useQuery({
+    queryKey: ["banking", "tx-customers", companyId],
+    queryFn: () => listCustomers({ operating_company_id: companyId, limit: 200 }).then((r) => r.customers ?? []),
+    enabled: Boolean(companyId),
+    staleTime: 120_000,
+  });
+  const itemsQuery = useQuery({
+    queryKey: ["banking", "tx-items", companyId],
+    queryFn: () =>
+      itemsCatalogClient
+        .list({ operating_company_id: companyId, is_active: "true", limit: 200, offset: 0 })
+        .then((r) => r.rows ?? []),
+    enabled: Boolean(companyId),
+    staleTime: 120_000,
+  });
+
   const scopedRows = useMemo(() => {
     const rows = transactionsQuery.data?.transactions ?? [];
     if (!selectedAccount?.id) return rows;
@@ -423,12 +471,23 @@ export function BankingTransactionsDesignView({
       className: "",
       location: "",
       productService: "",
+      itemId: "",
       customerProject: "",
+      customerId: "",
       payee: tx.merchant_name || "",
+      vendorId: "",
       checkNo: "",
       billable: false,
       tags: "",
       memo: viewSettings.copyBankDetailToMemo ? description : tx.notes || "",
+      driverId: "",
+      driverName: "",
+      unitId: "",
+      unitName: "",
+      loadId: "",
+      loadName: "",
+      recoverFromDriver: false,
+      recoverDeductionType: "fine",
     };
   }
 
@@ -463,6 +522,17 @@ export function BankingTransactionsDesignView({
       await categorizeBankTransaction(tx.id, companyId, {
         category_kind: categoryKind,
         gl_account_id: draft.accountId,
+        // Catalog-linkage (each selection LINKS the expense to that entity, forward + reverse).
+        vendor_id: draft.vendorId || undefined,
+        customer_id: draft.customerId || undefined,
+        item_id: draft.itemId || undefined,
+        // BLOCK-6b dimensions + driver auto-deduction (recover flags only sent when a driver is tagged).
+        driver_id: draft.driverId || undefined,
+        unit_id: draft.unitId || undefined,
+        load_id: draft.loadId || undefined,
+        recover_from_driver: draft.driverId ? draft.recoverFromDriver : undefined,
+        recover_deduction_type:
+          draft.driverId && draft.recoverFromDriver ? draft.recoverDeductionType || undefined : undefined,
         memo: draft.memo || undefined,
       });
       pushToast("Transaction posted", "success");
@@ -1097,12 +1167,23 @@ export function BankingTransactionsDesignView({
                                 </SelectCombobox>
                               </label>
                               <label className="text-xs text-gray-600">
-                                Payee
-                                <input
-                                  className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
-                                  value={draft.payee}
-                                  onChange={(event) => setDraft(tx, { payee: event.target.value })}
-                                />
+                                Payee (vendor)
+                                <SelectCombobox
+                                  className="mt-0.5 w-full"
+                                  value={draft.vendorId}
+                                  onChange={(event) => {
+                                    const vid = event.target.value;
+                                    const v = (vendorsQuery.data ?? []).find((x) => x.id === vid);
+                                    setDraft(tx, { vendorId: vid, payee: v?.name ?? "" });
+                                  }}
+                                >
+                                  <option value="">Select payee (vendor)</option>
+                                  {(vendorsQuery.data ?? []).map((v) => (
+                                    <option key={v.id} value={v.id}>
+                                      {v.name}
+                                    </option>
+                                  ))}
+                                </SelectCombobox>
                               </label>
                               <label className="text-xs text-gray-600">
                                 Check No.
@@ -1121,13 +1202,13 @@ export function BankingTransactionsDesignView({
                                 />
                               </label>
                               <label className="text-xs text-gray-600">
-                                Account
+                                Category (Chart of Accounts)
                                 <SelectCombobox
                                   className="mt-0.5 w-full"
                                   value={draft.accountId}
                                   onChange={(event) => setDraft(tx, { accountId: event.target.value })}
                                 >
-                                  <option value="">Select account</option>
+                                  <option value="">Select category account</option>
                                   {(coaQuery.data?.accounts ?? []).map((account) => (
                                     <option key={account.id} value={account.id}>
                                       {account.account_number ? `${account.account_number} · ` : ""}
@@ -1153,20 +1234,54 @@ export function BankingTransactionsDesignView({
                                 />
                               </label>
                               <label className="text-xs text-gray-600">
-                                Product/Service
-                                <input
-                                  className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
-                                  value={draft.productService}
-                                  onChange={(event) => setDraft(tx, { productService: event.target.value })}
-                                />
+                                Item (Products &amp; Services)
+                                <SelectCombobox
+                                  className="mt-0.5 w-full"
+                                  value={draft.itemId}
+                                  onChange={(event) => {
+                                    const iid = event.target.value;
+                                    const item = (itemsQuery.data ?? []).find((x) => x.id === iid);
+                                    // An Item carries its own account mapping (PR #1716): default the Category
+                                    // account from the item's expense/income account when none is chosen yet, so
+                                    // an item line still posts to the right account without re-picking it.
+                                    const m = (item?.metadata ?? {}) as Record<string, unknown>;
+                                    const itemAccount =
+                                      (typeof m.default_expense_account_id === "string" && m.default_expense_account_id) ||
+                                      (typeof m.default_income_account_id === "string" && m.default_income_account_id) ||
+                                      "";
+                                    setDraft(tx, {
+                                      itemId: iid,
+                                      productService: item?.display_name ?? "",
+                                      accountId: draft.accountId || (itemAccount as string) || "",
+                                    });
+                                  }}
+                                >
+                                  <option value="">Select item</option>
+                                  {(itemsQuery.data ?? []).map((it: AccountingCatalogRow) => (
+                                    <option key={it.id} value={it.id}>
+                                      {it.display_name}
+                                    </option>
+                                  ))}
+                                </SelectCombobox>
                               </label>
                               <label className="text-xs text-gray-600">
                                 Customer/project
-                                <input
-                                  className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
-                                  value={draft.customerProject}
-                                  onChange={(event) => setDraft(tx, { customerProject: event.target.value })}
-                                />
+                                <SelectCombobox
+                                  className="mt-0.5 w-full"
+                                  value={draft.customerId}
+                                  onChange={(event) => {
+                                    const cid = event.target.value;
+                                    const c = (customersQuery.data ?? []).find((x) => x.id === cid);
+                                    setDraft(tx, { customerId: cid, customerProject: c?.name ?? "" });
+                                  }}
+                                >
+                                  <option value="">Select customer</option>
+                                  {(customersQuery.data ?? []).map((c) => (
+                                    <option key={c.id} value={c.id}>
+                                      {c.name}
+                                    </option>
+                                  ))}
+                                </SelectCombobox>
                               </label>
                               <label className="flex items-center gap-2 text-xs text-gray-700">
                                 <input
@@ -1177,6 +1292,103 @@ export function BankingTransactionsDesignView({
                                 Billable
                               </label>
                             </div>
+                            {/* BLOCK-6b dimensions: Driver + Unit (truck) + Trip (load) the transaction belongs
+                                to — tags for full cross-module linkage + drill-through (forward: this txn shows
+                                them; reverse: each shows this expense). */}
+                            <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-3">
+                              <div className="text-xs text-gray-600">
+                                Driver
+                                <div className="mt-0.5">
+                                  <DriverAutocomplete
+                                    companyId={companyId}
+                                    value={draft.driverId}
+                                    onChange={(driverId, driverName) =>
+                                      setDraft(tx, { driverId, driverName: driverName ?? "" })
+                                    }
+                                  />
+                                </div>
+                                {draft.driverId ? (
+                                  <button
+                                    type="button"
+                                    className="mt-0.5 text-[11px] text-slate-700 underline"
+                                    onClick={() => setDraft(tx, { driverId: "", driverName: "", recoverFromDriver: false })}
+                                  >
+                                    Clear driver{draft.driverName ? ` (${draft.driverName})` : ""}
+                                  </button>
+                                ) : null}
+                              </div>
+                              <div className="text-xs text-gray-600">
+                                Unit (truck)
+                                <div className="mt-0.5">
+                                  <UnitAutocomplete
+                                    companyId={companyId}
+                                    value={draft.unitId}
+                                    onChange={(unitId, unitName) => setDraft(tx, { unitId, unitName })}
+                                  />
+                                </div>
+                                {draft.unitId ? (
+                                  <button
+                                    type="button"
+                                    className="mt-0.5 text-[11px] text-slate-700 underline"
+                                    onClick={() => setDraft(tx, { unitId: "", unitName: "" })}
+                                  >
+                                    Clear unit{draft.unitName ? ` (${draft.unitName})` : ""}
+                                  </button>
+                                ) : null}
+                              </div>
+                              <div className="text-xs text-gray-600">
+                                Trip (load)
+                                <div className="mt-0.5">
+                                  <LoadAutocomplete
+                                    companyId={companyId}
+                                    value={draft.loadId}
+                                    onChange={(loadId, loadName) => setDraft(tx, { loadId, loadName })}
+                                  />
+                                </div>
+                                {draft.loadId ? (
+                                  <button
+                                    type="button"
+                                    className="mt-0.5 text-[11px] text-slate-700 underline"
+                                    onClick={() => setDraft(tx, { loadId: "", loadName: "" })}
+                                  >
+                                    Clear trip{draft.loadName ? ` (${draft.loadName})` : ""}
+                                  </button>
+                                ) : null}
+                              </div>
+                            </div>
+                            {/* BLOCK-6b driver AUTO-DEDUCTION: when the paid expense BELONGS to the tagged driver
+                                (e.g. a fine the company paid), recover it from the driver's settlement. Creates a
+                                recoverable driver_settlement_deductions row behind the OFF-by-default
+                                BANK_DRIVER_EXPENSE_DEDUCTION_ENABLED flag (consent-gated, load_id direct). Only
+                                offered once a driver is tagged. */}
+                            {draft.driverId ? (
+                              <div className="mt-2 rounded-sm border border-gray-200 bg-gray-50 px-2 py-1.5">
+                                <label className="flex items-center gap-2 text-xs font-medium text-gray-700">
+                                  <input
+                                    type="checkbox"
+                                    checked={draft.recoverFromDriver}
+                                    onChange={(event) => setDraft(tx, { recoverFromDriver: event.target.checked })}
+                                  />
+                                  Recover from driver (auto-deduction on settlement)
+                                </label>
+                                {draft.recoverFromDriver ? (
+                                  <label className="mt-1.5 block text-xs text-gray-600">
+                                    Recovery type
+                                    <SelectCombobox
+                                      className="mt-0.5 w-full"
+                                      value={draft.recoverDeductionType}
+                                      onChange={(event) => setDraft(tx, { recoverDeductionType: event.target.value })}
+                                    >
+                                      {RECOVER_DEDUCTION_TYPES.map((t) => (
+                                        <option key={t} value={t}>
+                                          {t}
+                                        </option>
+                                      ))}
+                                    </SelectCombobox>
+                                  </label>
+                                ) : null}
+                              </div>
+                            ) : null}
                             <label className="mt-2 block text-xs text-gray-600">
                               Memo
                               <textarea

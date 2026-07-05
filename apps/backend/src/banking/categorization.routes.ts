@@ -7,6 +7,7 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 import { emitBankingSpineEvent } from "./banking-spine-emit.js";
 import { pendingCategorizationPredicate } from "./pending-categorization.js";
 import { maybePostBankDriverAdvanceForCategorization } from "./bank-driver-advance.service.js";
+import { maybeCreateBankCategorizationDriverDeduction } from "./bank-driver-expense-deduction.service.js";
 import { maybePostBankCategorizationToGl } from "./bank-feed-gl-posting.service.js";
 import {
   BULK_TXN_MAX,
@@ -37,8 +38,20 @@ const categorizeBodySchema = z.object({
   // ACCOUNT chosen decides treatment (driver-advance account → recoverable receivable, behind the
   // OFF-by-default BANK_DRIVER_ADVANCE_ENABLED flag; any other account → analytics-only, stays expense).
   driver_id: z.string().uuid().optional(),
+  // BLOCK-6b (additive dimensions): the Unit (truck) and the Trip (load) the transaction belongs to —
+  // stored as TAGS for full cross-module linkage + drill-through. recover_from_driver + the target bucket
+  // type drive the OFF-by-default driver AUTO-DEDUCTION (a fine the company paid → recovered from the
+  // driver's settlement); see bank-driver-expense-deduction.service.ts.
+  unit_id: z.string().uuid().optional(),
+  load_id: z.string().uuid().optional(),
+  recover_from_driver: z.boolean().optional(),
+  recover_deduction_type: z.string().trim().min(1).max(40).optional(),
   gl_account_id: z.string().uuid().optional(),
   project_id: z.string().uuid().optional(),
+  // Catalog-linkage (QBO parity): a CATEGORY line carries gl_account_id (Chart of Accounts); an ITEM line
+  // carries item_id (Products & Services / catalogs.items) — TWO DISTINCT catalogs. Payee → vendor_id and
+  // Customer → customer_id (both already accepted above) round out the four catalog links.
+  item_id: z.string().uuid().optional(),
   memo: z.string().trim().max(4000).optional(),
   suggested_match_invoice_id: z.string().uuid().optional(),
   suggested_match_bill_id: z.string().uuid().optional(),
@@ -257,6 +270,11 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
             coa_account_id = COALESCE($10, coa_account_id),
             linked_entity_id = COALESCE($11, linked_entity_id),
             categorization_driver_id = COALESCE($13, categorization_driver_id),
+            categorization_unit_id = COALESCE($14, categorization_unit_id),
+            categorization_load_id = COALESCE($15, categorization_load_id),
+            categorization_recover_from_driver = COALESCE($16, categorization_recover_from_driver),
+            categorization_recover_deduction_type = COALESCE($17, categorization_recover_deduction_type),
+            categorization_item_id = COALESCE($18, categorization_item_id),
             skip_reason = NULL,
             investigate_note = NULL,
             categorized_at = now(),
@@ -278,6 +296,11 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
           linked,
           companyId,
           body.data.driver_id ?? null,
+          body.data.unit_id ?? null,
+          body.data.load_id ?? null,
+          body.data.recover_from_driver ?? null,
+          body.data.recover_deduction_type ?? null,
+          body.data.item_id ?? null,
         ]
       );
 
@@ -346,6 +369,33 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
       }
     }
 
+    // BLOCK-6b [HOLD] — driver AUTO-DEDUCTION: when the transaction is tagged to a Driver AND flagged
+    // recover_from_driver (a fine/toll/citation the company paid on the driver's behalf), auto-create a
+    // recoverable, bucket-charged, consent-gated pending deduction that flows into the FIN-18 settlement
+    // poster (carrying load_id DIRECTLY + the source bank txn for reverse drill-through). Runs AFTER the
+    // driver-advance path and cedes when the chosen account IS the driver-advance account (that path owns
+    // it) so the same money is never double-booked. Behind BANK_DRIVER_EXPENSE_DEDUCTION_ENABLED (OFF):
+    // with the flag off this returns { posted:false, reason:"flag_off" }. The tags are already committed.
+    let driverDeduction: Awaited<ReturnType<typeof maybeCreateBankCategorizationDriverDeduction>> | undefined;
+    if (body.data.driver_id && body.data.recover_from_driver) {
+      try {
+        driverDeduction = await maybeCreateBankCategorizationDriverDeduction({
+          companyId,
+          actorUserUuid: String(user.uuid),
+          bankTransactionId: params.data.id,
+          driverId: body.data.driver_id,
+          glAccountId: body.data.gl_account_id ?? null,
+          recoverFromDriver: body.data.recover_from_driver ?? false,
+          recoverDeductionType: body.data.recover_deduction_type ?? null,
+          loadId: body.data.load_id ?? null,
+          memo: body.data.memo ?? null,
+        });
+      } catch (e) {
+        // Surface, never silently swallow (the tags are committed; the deduction is best-effort).
+        driverDeduction = { posted: false, reason: "create_failed", message: String((e as Error)?.message ?? e) };
+      }
+    }
+
     // CHAIN-05 (BLOCK-03) [HOLD] — the GENERAL case: post a direction-aware balanced JE for ANY categorized
     // line. Runs AFTER the BLOCK-6 driver-advance call (§7 ordering); its cede predicate (driver tagged +
     // the driver-advance account) returns driver_advance_branch so it NEVER re-posts a row BLOCK-6 owns.
@@ -366,8 +416,130 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
     return {
       ...result.data,
       ...(driverAdvance ? { driver_advance: driverAdvance } : {}),
+      ...(driverDeduction ? { driver_deduction: driverDeduction } : {}),
       ...(bankFeedGl ? { bank_feed_gl: bankFeedGl } : {}),
     };
+  });
+
+  // BLOCK-6b — FORWARD drill-through: a categorized bank transaction → its Driver / Unit / Trip(Load) tags
+  // and the driver deduction it created (if any). Powers the txn detail "linked to" panel.
+  app.get("/api/v1/banking/transactions/:id/categorization-links", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+
+    const params = transactionIdParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    const companyId = query.data.operating_company_id;
+
+    const payload = await withCompanyScope(user.uuid, companyId, async (client) => {
+      const res = await client.query(
+        `
+          SELECT
+            bt.id::text AS bank_transaction_id,
+            bt.transaction_date::text AS transaction_date,
+            bt.description,
+            bt.amount_cents::bigint AS amount_cents,
+            bt.is_credit,
+            bt.category_kind,
+            bt.categorization_driver_id::text AS driver_id,
+            NULLIF(TRIM(CONCAT(d.first_name, ' ', d.last_name)), '') AS driver_name,
+            bt.categorization_unit_id::text AS unit_id,
+            u.unit_number AS unit_number,
+            bt.categorization_load_id::text AS load_id,
+            l.load_number AS load_number,
+            bt.categorization_vendor_id::text AS vendor_id,
+            ven.vendor_name AS vendor_name,
+            bt.categorization_customer_id::text AS customer_id,
+            cust.customer_name AS customer_name,
+            bt.categorization_item_id::text AS item_id,
+            itm.item_name AS item_name,
+            bt.categorization_recover_from_driver AS recover_from_driver,
+            bt.categorization_recover_deduction_type AS recover_deduction_type,
+            bt.categorization_deduction_id::text AS deduction_id,
+            ded.amount_cents::bigint AS deduction_amount_cents,
+            ded.status AS deduction_status,
+            ded.deduction_type AS deduction_type,
+            ded.bucket_id::text AS deduction_bucket_id,
+            ded.load_id::text AS deduction_load_id
+          FROM banking.bank_transactions bt
+          LEFT JOIN mdata.drivers d ON d.id = bt.categorization_driver_id
+          LEFT JOIN mdata.units u ON u.id = bt.categorization_unit_id
+          LEFT JOIN mdata.loads l ON l.id = bt.categorization_load_id
+          LEFT JOIN mdata.vendors ven ON ven.id = bt.categorization_vendor_id
+          LEFT JOIN mdata.customers cust ON cust.id = bt.categorization_customer_id
+          LEFT JOIN catalogs.items itm ON itm.id = bt.categorization_item_id
+          LEFT JOIN driver_finance.driver_settlement_deductions ded ON ded.id = bt.categorization_deduction_id
+          WHERE bt.id = $1::uuid AND bt.operating_company_id = $2::uuid
+          LIMIT 1
+        `,
+        [params.data.id, companyId]
+      );
+      return res.rows[0] ?? null;
+    });
+
+    if (!payload) return reply.code(404).send({ error: "transaction_not_found" });
+    return payload;
+  });
+
+  // BLOCK-6b — REVERSE drill-through: given a Driver / Unit / Trip(Load), list the bank transactions tagged
+  // to it (+ any deduction each created). Powers the driver / unit / load detail "linked bank expenses"
+  // panels. Exactly one of driver_id / unit_id / load_id is required.
+  app.get("/api/v1/banking/transactions/by-linkage", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+
+    const q = companyQuerySchema
+      .extend({
+        driver_id: z.string().uuid().optional(),
+        unit_id: z.string().uuid().optional(),
+        load_id: z.string().uuid().optional(),
+        limit: z.coerce.number().int().min(1).max(500).default(200),
+      })
+      .safeParse(req.query ?? {});
+    if (!q.success) return validationError(reply, q.error);
+    const provided = [q.data.driver_id, q.data.unit_id, q.data.load_id].filter(Boolean);
+    if (provided.length !== 1) {
+      return reply.code(400).send({ error: "exactly_one_linkage_required", detail: "provide exactly one of driver_id, unit_id, load_id" });
+    }
+    const companyId = q.data.operating_company_id;
+
+    const rows = await withCompanyScope(user.uuid, companyId, async (client) => {
+      const res = await client.query(
+        `
+          SELECT
+            bt.id::text AS bank_transaction_id,
+            bt.transaction_date::text AS transaction_date,
+            bt.description,
+            bt.amount_cents::bigint AS amount_cents,
+            bt.is_credit,
+            bt.category_kind,
+            bt.categorization_driver_id::text AS driver_id,
+            bt.categorization_unit_id::text AS unit_id,
+            bt.categorization_load_id::text AS load_id,
+            bt.categorization_recover_from_driver AS recover_from_driver,
+            bt.categorization_deduction_id::text AS deduction_id,
+            ded.amount_cents::bigint AS deduction_amount_cents,
+            ded.status AS deduction_status,
+            ded.deduction_type AS deduction_type
+          FROM banking.bank_transactions bt
+          LEFT JOIN driver_finance.driver_settlement_deductions ded ON ded.id = bt.categorization_deduction_id
+          WHERE bt.operating_company_id = $1::uuid
+            AND (
+              ($2::uuid IS NOT NULL AND bt.categorization_driver_id = $2::uuid)
+              OR ($3::uuid IS NOT NULL AND bt.categorization_unit_id = $3::uuid)
+              OR ($4::uuid IS NOT NULL AND bt.categorization_load_id = $4::uuid)
+            )
+          ORDER BY bt.transaction_date DESC, bt.created_at DESC
+          LIMIT $5
+        `,
+        [companyId, q.data.driver_id ?? null, q.data.unit_id ?? null, q.data.load_id ?? null, q.data.limit]
+      );
+      return res.rows;
+    });
+
+    return { rows, total_count: rows.length };
   });
 
   app.post("/api/v1/banking/transactions/categorize-bulk", async (req, reply) => {
