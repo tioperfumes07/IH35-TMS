@@ -917,6 +917,24 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                           if (typeof prefill.json.trailer_type === "string") {
                             form.setValue("trailer_type", prefill.json.trailer_type, { shouldDirty: true });
                           }
+                          // RATECON-4 — apply the newly-mapped fields to their existing wizard inputs
+                          // (previously these values only reached the notes blob). Each is optional/guarded.
+                          const pj = prefill.json as Record<string, unknown>;
+                          if (typeof pj.commodity === "string" && pj.commodity) {
+                            form.setValue("commodity", pj.commodity, { shouldDirty: true });
+                          }
+                          if (typeof pj.weight_lbs === "number" && Number.isFinite(pj.weight_lbs)) {
+                            form.setValue("weight_lbs", pj.weight_lbs, { shouldDirty: true });
+                          }
+                          if (typeof pj.pieces === "string" && pj.pieces) {
+                            form.setValue("pieces", pj.pieces, { shouldDirty: true });
+                          }
+                          if (typeof pj.pickup_number === "string" && pj.pickup_number) {
+                            form.setValue("pickup_number", pj.pickup_number, { shouldDirty: true });
+                          }
+                          if (typeof pj.customer_wo_number === "string" && pj.customer_wo_number) {
+                            form.setValue("customer_wo_number", pj.customer_wo_number, { shouldDirty: true });
+                          }
                           pushToast(
                             prefill.lowConfidenceFields.length
                               ? "Rate con read — review the prefill (low-confidence fields flagged)"
@@ -960,6 +978,13 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                               form.setValue("customer_name", name, { shouldDirty: true, shouldValidate: false });
                               return;
                             }
+                            // D3-3: user typed over the field, diverging from the picked row.
+                            // Clear the picked TMS FK (and its QBO mirror id) so a stale customer_id
+                            // can't silently ride along under a different name — otherwise the load
+                            // books under the WRONG customer. This forces a fresh pick; the `required`
+                            // rule on customer_id blocks submit until the user re-selects a real row.
+                            form.setValue("customer_id", "", { shouldDirty: true, shouldValidate: true });
+                            form.setValue("customer_qbo_id", "", { shouldDirty: true, shouldValidate: false });
                             form.setValue("customer_name", name, { shouldDirty: true, shouldValidate: false });
                           }}
                           onPick={(row) => {

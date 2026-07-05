@@ -93,6 +93,12 @@ export const PER_ENTITY_ONLY_FLAG_KEYS: ReadonlySet<string> = new Set([
   // (TRANSP first) — a global default/rollout enable would start applying deductions for EVERY entity
   // (incl. USMCA / TRK). Per-entity override only; default OFF. Owner-controlled (Jorge flips).
   "SETTLEMENT_DEDUCTION_APPLY_ENABLED",
+  // FINHUB-1: the read-only Finance Hub landing dashboard. It is a per-entity surface
+  // (operating_company_id required; no cross-entity totals) and its backend gate now resolves this
+  // same DB flag as the frontend (kills the prior process.env vs DB split-brain). Enabling it in prod
+  // is a per-entity owner (Jorge) sign-off, so it must be per-entity-only — a global default/rollout
+  // enable would light the hub up for EVERY entity (incl. USMCA / TRK) at once. Default OFF.
+  "FINANCE_HUB_UI_ENABLED",
   // FLAG-SPLIT-BRAIN sweep: read-only finance surfaces whose backend gate now resolves the SAME DB
   // flag the frontend reads (via isEnabled), killing the prior process.env vs DB split-brain. Each is
   // per-entity (operating_company_id required; no cross-entity totals) and enabling it in prod is a

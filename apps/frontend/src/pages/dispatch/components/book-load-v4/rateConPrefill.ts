@@ -5,7 +5,22 @@ import type { RateConExtraction } from "../../../../api/ratecon";
 
 export type RateConPrefill = {
   json: Record<string, unknown>; // fed to applyLoadTemplateToBookForm (MinimalBookForm-shaped)
-  brokerMatch: { name: string | null; mc_number: string | null }; // fuzzy-match target for mdata.customers
+  // RATECON-4/5 — full broker payload carried for fuzzy-match AND profile enrichment (RATECON-5 fills the
+  // empty mdata.customers profile + inserts the after-hours customer_contacts row from these).
+  brokerMatch: {
+    name: string | null;
+    mc_number: string | null;
+    contact_name: string | null;
+    phone: string | null;
+    email: string | null;
+    after_hours_phone: string | null;
+    after_hours_email: string | null;
+    invoice_to_email: string | null;
+    address: string | null;
+    detention_rate_per_hour_cents: number | null;
+    detention_free_hours: number | null;
+    layover_per_day_cents: number | null;
+  };
   lowConfidenceFields: string[]; // fields the model was unsure about — flag for review in the UI
 };
 
@@ -74,9 +89,14 @@ function toBookStop(s: RateConExtraction["stops"][number], index: number) {
     state: s.state ?? recovered?.state ?? "",
     country: "US",
     address_line1: recovered ? recovered.line1 : s.address ?? "",
+    // RATECON-4 — zip is now a first-class stop field (was buried in stop_notes), applied to the stop's
+    // ZIP input in the wizard. Keep the site name + time window in stop_notes (unmapped context only).
+    zip: zip ?? "",
+    pickup_number: s.pickup_number ?? "",
+    po_number: s.po_number ?? "",
     scheduled_arrival_at: s.date ?? "",
     time_window_type: s.appointment_required ? "appointment" : "open_window",
-    stop_notes: [s.name, zip, s.time_window].filter(Boolean).join(" · ") || undefined,
+    stop_notes: [s.name, s.time_window].filter(Boolean).join(" · ") || undefined,
   };
 }
 
@@ -85,14 +105,22 @@ export function rateConExtractionToPrefill(e: RateConExtraction): RateConPrefill
     .filter(([, c]) => c === "low")
     .map(([k]) => k);
 
+  // RATECON-4 — mapped fields (commodity/weight/pieces/refs) now land in their OWN wizard inputs, so the
+  // notes blob only carries what has no dedicated field left (equipment + payment_terms as context). The
+  // dispatcher still sees + edits everything; nothing is lost.
   const notes = [
     e.notes,
-    e.commodity ? `Commodity: ${e.commodity}` : null,
-    e.weight ? `Weight: ${e.weight}` : null,
     e.equipment ? `Equipment: ${e.equipment}` : null,
     e.payment_terms ? `Terms: ${e.payment_terms}` : null,
-    e.load_reference.length ? `Ref: ${e.load_reference.join(", ")}` : null,
   ].filter(Boolean).join("\n");
+
+  // RATECON-4 — split load_reference: a shipment/SS-load number → Pickup #; the other → Customer WO #.
+  // Prefer a per-stop pickup_number when the model captured one on the pickup stop.
+  const pickupStop = e.stops.find((s) => s.type === "pickup");
+  const ssRef = e.load_reference.find((r) => /^ss[-\s]/i.test(r)) ?? null;
+  const otherRef = e.load_reference.find((r) => r !== ssRef) ?? null;
+  const pickupNumber = (pickupStop?.pickup_number ?? "").trim() || ssRef || e.load_reference[1] || "";
+  const customerWo = otherRef ?? e.load_reference.find((r) => r !== pickupNumber) ?? e.load_reference[0] ?? "";
 
   const json: Record<string, unknown> = {
     // customer_id intentionally omitted — resolved by broker fuzzy-match against mdata.customers, or the
@@ -102,6 +130,12 @@ export function rateConExtractionToPrefill(e: RateConExtraction): RateConPrefill
     fuel_surcharge_cents: e.rate.fuel_surcharge_cents ?? 0,
     accessorial_cents: accessorialCents(e), // retained for the legacy single-line fallback
     accessorial_lines: accessorialLines(e), // one editable row per extracted accessorial
+    // RATECON-4 — dedicated fields (were previously dropped into the notes blob only):
+    commodity: e.commodity ?? "",
+    weight_lbs: e.total_weight_lbs ?? undefined, // number input; undefined leaves it blank rather than 0
+    pieces: e.pieces_count != null ? `${e.pieces_count}${e.pieces_unit ? ` ${e.pieces_unit}` : ""}` : "",
+    pickup_number: pickupNumber,
+    customer_wo_number: customerWo,
     notes,
     stops: e.stops.map(toBookStop),
   };
@@ -110,7 +144,20 @@ export function rateConExtractionToPrefill(e: RateConExtraction): RateConPrefill
 
   return {
     json,
-    brokerMatch: { name: e.broker.name, mc_number: e.broker.mc_number },
+    brokerMatch: {
+      name: e.broker.name,
+      mc_number: e.broker.mc_number,
+      contact_name: e.broker.contact_name,
+      phone: e.broker.phone,
+      email: e.broker.email,
+      after_hours_phone: e.broker.after_hours_phone,
+      after_hours_email: e.broker.after_hours_email,
+      invoice_to_email: e.invoice_to_email,
+      address: e.broker.address,
+      detention_rate_per_hour_cents: e.terms.detention_rate_per_hour_cents,
+      detention_free_hours: e.terms.detention_free_hours,
+      layover_per_day_cents: e.terms.layover_per_day_cents,
+    },
     lowConfidenceFields,
   };
 }

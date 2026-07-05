@@ -146,17 +146,28 @@ export async function pullCustomersFromQbo(operatingCompanyId: string): Promise<
 
   const pulledQboIds: string[] = [];
 
+  // G5-2: fetch ALL QBO pages over HTTP with NO pooled DB connection or open transaction held.
+  // qboCompanyContext (token fetch) and qboPaginateEntity (the outbound QuickBooks REST calls) manage
+  // their own short-lived reads; the prior structure ran this pagination *inside* withLuciaBypass, which
+  // checked out a connection and kept a write transaction (BEGIN…COMMIT) open for the full duration of
+  // every QuickBooks round-trip — exhausting the pool and risking long-held locks under load. Gather
+  // first (no tx), then persist in one short transaction opened only after all HTTP has completed.
+  const ctx = await qboCompanyContext(operatingCompanyId);
+  const pulledRows: Record<string, unknown>[] = [];
+  for await (const page of qboPaginateEntity<Record<string, unknown>>(ctx, "Customer", "", { pageSize: 1000 })) {
+    for (const row of page) {
+      rowsPulled += 1;
+      const qboId = String(row.Id ?? "");
+      if (qboId) pulledQboIds.push(qboId);
+      pulledRows.push(row);
+    }
+  }
+
   await withLuciaBypass(async (client) => {
-    const ctx = await qboCompanyContext(operatingCompanyId);
-    for await (const page of qboPaginateEntity<Record<string, unknown>>(ctx, "Customer", "", { pageSize: 1000 })) {
-      for (const row of page) {
-        rowsPulled += 1;
-        const qboId = String(row.Id ?? "");
-        if (qboId) pulledQboIds.push(qboId);
-        await upsertMirror(client, operatingCompanyId, row);
-        await upsertLocalCustomer(client, operatingCompanyId, row);
-        rowsUpserted += 1;
-      }
+    for (const row of pulledRows) {
+      await upsertMirror(client, operatingCompanyId, row);
+      await upsertLocalCustomer(client, operatingCompanyId, row);
+      rowsUpserted += 1;
     }
 
     // MD-1 void-gone-from-QBO: a cloned customer absent from the FULL QBO pull was deleted in QBO →

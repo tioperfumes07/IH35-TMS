@@ -5,18 +5,20 @@
  * CI guard for the "Audit & Bug Sweep renders blank" regression.
  *
  * Root cause it locks down: apps/frontend/src/pages/program/ProgramBoardPage.tsx builds
- * `activeRows` via an if / else-if chain — one branch per shared-table tab
+ * `baseRows` via an if / else-if chain — one branch per shared-table tab
  * (`all`, `focus`, `pending`, `owner`, `dispatch`, `audit`). Those rows are shaped
  * identically (extra-track tabs go through `extraToRow`) and are meant to render in the
  * SAME table block, which is gated by a single render-guard condition:
  *
  *   {!isLoading && !isError && (tab === "focus" || tab === "all" || ... ) ? ( <table> ) : ...}
  *
- * The `audit` tab was wired everywhere (TABS entry, `auditRows` memo, the `activeRows`
+ * The `audit` tab was wired everywhere (TABS entry, `auditRows` memo, the tab-selection
  * switch) EXCEPT this render guard — so audit rows computed but the table never rendered
  * and the tab was blank. A future added extra-track tab could regress the same silent way.
+ * (The tab-selection switch was later hoisted from `activeRows` into a `baseRows` memo so
+ * the unfiltered total count has its own denominator; this guard reads `baseRows`.)
  *
- * Rule enforced here: EVERY tab id that has an `activeRows` switch branch (i.e. is meant to
+ * Rule enforced here: EVERY tab id that has a `baseRows` switch branch (i.e. is meant to
  * render the shared table) MUST also appear in the table-render guard condition. If any tab
  * is in the switch but missing from the guard, this fails (exit 1) and names it.
  *
@@ -40,16 +42,16 @@ function tabIds(text) {
 
 /**
  * Given the full source, return { switchTabs, guardTabs }.
- *  - switchTabs: tab ids that have a branch in the `activeRows = useMemo(...)` if/else-if chain
+ *  - switchTabs: tab ids that have a branch in the `baseRows = useMemo(...)` if/else-if chain
  *    (the tabs meant to render the shared table).
  *  - guardTabs: tab ids present in the table-render guard condition (the guard line that carries
  *    the `tab === "all"` branch — the shared table block, distinct from the merged/hold/questions
  *    /ideas guards which each render their own bespoke block).
  */
 function extract(src) {
-  const memoMatch = src.match(/const\s+activeRows\s*=\s*useMemo<Row\[\]>\(\(\)\s*=>\s*\{([\s\S]*?)\},\s*\[/);
+  const memoMatch = src.match(/const\s+baseRows\s*=\s*useMemo<Row\[\]>\(\(\)\s*=>\s*\{([\s\S]*?)\},\s*\[/);
   if (!memoMatch) {
-    throw new Error("could not locate the `activeRows = useMemo<Row[]>(...)` block");
+    throw new Error("could not locate the `baseRows = useMemo<Row[]>(...)` block");
   }
   const switchTabs = tabIds(memoMatch[1]);
 
@@ -114,7 +116,7 @@ function main() {
     console.error("verify-program-board-tab-render-parity: FAIL — tab(s) render blank:\n");
     for (const t of missing) {
       console.error(
-        `  - tab "${t}" has an \`activeRows\` switch branch but is MISSING from the table-render guard ` +
+        `  - tab "${t}" has a \`baseRows\` switch branch but is MISSING from the table-render guard ` +
           `condition in ProgramBoardPage.tsx. Its rows compute but the table never renders (blank tab). ` +
           `Add \`|| tab === "${t}"\` to the guard.`
       );

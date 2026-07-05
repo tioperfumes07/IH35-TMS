@@ -30,6 +30,30 @@ const querySchema = companyQuerySchema.extend({
   offset: z.coerce.number().int().min(0).default(0),
 });
 
+/** Row shape returned by the integration-transactions LIST query (qbo_sync_queue + bank_transactions join). */
+interface IntegrationTransactionRow {
+  id: string;
+  entity_type: string;
+  entity_id: string;
+  sync_status: string;
+  qbo_id: string | null;
+  attempt_count: number;
+  last_attempt_at: string | null;
+  next_attempt_at: string | null;
+  synced_at: string | null;
+  error_message: string | null;
+  created_at: string;
+  txn_date: string | null;
+  description: string | null;
+  merchant_name: string | null;
+  amount_cents: string | null;
+  is_credit: boolean | null;
+  pending: boolean | null;
+  matched_load_id: string | null;
+  matched_bill_id: string | null;
+  qbo_synced_at: string | null;
+}
+
 async function registerIntegrationTransactionsRoutes(app: FastifyInstance) {
   app.get("/api/v1/accounting/integration-transactions", async (req, reply) => {
     const user = currentAuthUser(req, reply);
@@ -102,7 +126,7 @@ async function registerIntegrationTransactionsRoutes(app: FastifyInstance) {
         total,
         limit,
         offset,
-        items: listRes.rows.map((r: any) => ({
+        items: listRes.rows.map((r: IntegrationTransactionRow) => ({
           id: r.id as string,
           entity_type: r.entity_type as string,
           entity_id: r.entity_id as string,

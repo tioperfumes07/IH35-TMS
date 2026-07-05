@@ -52,6 +52,13 @@ function setup(opts: { flagOn: boolean; pending: { id: string; amount_cents: str
   m.createJournalEntryMock.mockResolvedValue({ id: "je-1" });
   m.queryMock.mockImplementation(async (sql: string, params?: unknown[]) => {
     if (sql.includes("set_config")) return { rows: [] };
+    // H3-4: settlementCappedRecoveryEnabled now routes through isEnabled(), which issues TWO reads —
+    // the flag row (lib.feature_flags) and the per-entity/user override (lib.feature_flag_overrides).
+    // SETTLEMENT_CAPPED_RECOVERY_ENABLED is not a posting/per-entity-only flag, so the resolver honors
+    // the global default_enabled → "on"/"off" stays modeled by opts.flagOn on the flag row; the override
+    // read returns no rows. (Order the overrides check first: "feature_flag_overrides" contains the
+    // "feature_flag" stem, so it must not fall through to the "feature_flags" branch or the raw throw.)
+    if (sql.includes("feature_flag_overrides")) return { rows: [] };
     if (sql.includes("feature_flags")) return { rows: [{ default_enabled: opts.flagOn }] };
     if (sql.includes("FROM payroll.driver_settlements") && sql.includes("FOR UPDATE")) return { rows: [SETTLEMENT] };
     if (sql.includes("FROM mdata.drivers")) return { rows: [{ qbo_vendor_id: "VND-1" }] };
