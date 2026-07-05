@@ -19,6 +19,8 @@ type QboConnectionRow = {
   refresh_token_expires_at: string;
   last_refreshed_at: string | null;
   last_used_at: string | null;
+  needs_reauth_at: string | null;
+  last_refresh_error: string | null;
   authorized_by_user_id: string | null;
   authorized_at: string;
   revoked_at: string | null;
@@ -361,6 +363,8 @@ export async function exchangeAuthCodeForTokens(
           refresh_token_expires_at = EXCLUDED.refresh_token_expires_at,
           last_refreshed_at = now(),
           last_used_at = now(),
+          needs_reauth_at = NULL,
+          last_refresh_error = NULL,
           authorized_by_user_id = EXCLUDED.authorized_by_user_id,
           authorized_at = now(),
           updated_at = now(),
@@ -432,17 +436,76 @@ export async function exchangeAuthCodeForTokens(
   return { connection: saved, realmLinks };
 }
 
+/**
+ * Stamp a token-refresh failure on the connection so the "connected" state stops lying.
+ * `needs_reauth_at` is set ONLY for auth failures (dead/expired refresh token — Intuit
+ * invalid_grant, HTTP 400/401), which a re-authorization fixes. Transient failures
+ * (network/5xx) record `last_refresh_error` for diagnostics but do NOT flip the reauth
+ * flag, so a temporary blip doesn't nag the owner to reconnect. Never throws — best-effort
+ * observability that must not mask the original refresh error the caller will re-raise.
+ */
+async function stampRefreshFailure(
+  connectionId: string,
+  operatingCompanyId: string,
+  error: unknown
+): Promise<void> {
+  const intuitStatus = (error as { intuitStatus?: number }).intuitStatus;
+  const isAuthFailure = intuitStatus === 400 || intuitStatus === 401;
+  const rawMessage = String((error as Error)?.message ?? "qbo_token_refresh_failed");
+  const errorSummary = (
+    intuitStatus ? `status=${intuitStatus} ${rawMessage}` : rawMessage
+  ).slice(0, 500);
+  try {
+    await withLuciaBypass(async (client) => {
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      await client.query(
+        `
+          UPDATE integrations.qbo_connections
+          SET
+            last_refresh_error = $3,
+            needs_reauth_at = CASE WHEN $4::boolean THEN COALESCE(needs_reauth_at, now()) ELSE needs_reauth_at END,
+            updated_at = now()
+          WHERE id = $1
+            AND operating_company_id = $2
+        `,
+        [connectionId, operatingCompanyId, errorSummary, isAuthFailure]
+      );
+    });
+    await appendSystemAudit(
+      "integrations.qbo.refresh_failed",
+      {
+        connection_id: connectionId,
+        operating_company_id: operatingCompanyId,
+        intuit_status: intuitStatus ?? null,
+        needs_reauth: isAuthFailure,
+        error: errorSummary,
+      },
+      "warning"
+    );
+  } catch (stampError) {
+    console.error("[QBO_OAUTH]", { step: "stamp_refresh_failure_failed", connectionId, err: String(stampError) });
+  }
+}
+
 export async function refreshAccessToken(connectionId: string, operatingCompanyId: string, actorUserId?: string | null) {
   const connection = await getConnectionById(connectionId, operatingCompanyId);
   if (!connection || connection.revoked_at) throw new Error("qbo_connection_not_found");
 
   const refreshToken = decryptToken(connection.refresh_token);
-  const payload = await tokenExchangeRequest(
-    new URLSearchParams({
-      grant_type: "refresh_token",
-      refresh_token: refreshToken,
-    })
-  );
+  let payload: TokenExchangeResponse;
+  try {
+    payload = await tokenExchangeRequest(
+      new URLSearchParams({
+        grant_type: "refresh_token",
+        refresh_token: refreshToken,
+      })
+    );
+  } catch (error) {
+    // Dead/expired refresh token or transient failure — record it so status stops
+    // silently reporting "connected", then re-raise for the caller.
+    await stampRefreshFailure(connectionId, operatingCompanyId, error);
+    throw error;
+  }
 
   const accessTokenEncrypted = encryptToken(payload.access_token);
   const refreshTokenEncrypted = encryptToken(payload.refresh_token);
@@ -461,6 +524,8 @@ export async function refreshAccessToken(connectionId: string, operatingCompanyI
           refresh_token_expires_at = $5,
           last_refreshed_at = now(),
           last_used_at = now(),
+          needs_reauth_at = NULL,
+          last_refresh_error = NULL,
           updated_at = now()
         WHERE id = $1
           AND operating_company_id = $6
@@ -572,6 +637,9 @@ export async function getQboConnectionStatus(operatingCompanyId: string) {
   if (!connection) {
     return {
       connected: false,
+      needs_reauth: false,
+      needs_reauth_at: null,
+      last_refresh_error: null,
       realm_id: null,
       refresh_token_expires_at: null,
       last_used_at: null,
@@ -579,8 +647,15 @@ export async function getQboConnectionStatus(operatingCompanyId: string) {
       connection_id: null,
     };
   }
+  // A row exists but its refresh token is dead (invalid_grant on refresh) — reconciliation
+  // has silently stopped. Report connected=false so the UI stops showing "connected" and
+  // prompts a re-authorization instead.
+  const needsReauth = Boolean(connection.needs_reauth_at);
   return {
-    connected: true,
+    connected: !needsReauth,
+    needs_reauth: needsReauth,
+    needs_reauth_at: connection.needs_reauth_at,
+    last_refresh_error: connection.last_refresh_error,
     realm_id: connection.realm_id,
     refresh_token_expires_at: connection.refresh_token_expires_at,
     last_used_at: connection.last_used_at,

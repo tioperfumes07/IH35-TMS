@@ -12,7 +12,7 @@ export type QboSyncPill = {
 };
 
 export type TopStatusBarProps = {
-  qboVis: { label: string; dot: "gray" | "green" };
+  qboVis: { label: string; dot: "gray" | "green" | "yellow" };
   samsaraVis: SamsaraVisualStatus;
   relayVis: SamsaraVisualStatus;
   qboSyncPill: QboSyncPill | null;
