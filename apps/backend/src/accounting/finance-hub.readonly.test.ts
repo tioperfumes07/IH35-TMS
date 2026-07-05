@@ -34,12 +34,29 @@ describe("AF-6 finance-hub — static read-only invariant", () => {
     expect(/app\.(post|put|patch|delete)\s*\(/i.test(src), "finance-hub route must be GET-only").toBe(false);
     expect(/app\.get\s*\(/.test(src)).toBe(true);
   });
+
+  // ── FINHUB-1 flag-parity guard: the backend must gate on the SAME DB feature flag the frontend
+  //    reads (via isEnabled), NOT process.env — so the two sides can never split-brain. ──
+  it("gates on the DB feature flag via isEnabled (no process.env read for the flag)", () => {
+    const src = fs.readFileSync(path.resolve(__dirname, "finance-hub.routes.ts"), "utf8");
+    // Must resolve the flag through the canonical DB resolver.
+    expect(src).toMatch(/isEnabled\s*\(/);
+    expect(src).toMatch(/FINANCE_HUB_UI_ENABLED/);
+    // Must NOT read the flag from the environment (the old split-brain source).
+    expect(
+      /process\.env\.FINANCE_HUB_UI_ENABLED/.test(src),
+      "finance-hub route must not read the flag from process.env — resolve it via isEnabled(DB flag)",
+    ).toBe(false);
+  });
 });
 
 // ── Behavioral: flag gates reachability; OFF → 404 (no service call); ON → 200 with KPIs. ──
-const { overviewMock, membershipMock } = vi.hoisted(() => ({
+// The gate now resolves the DB feature flag via isEnabled (same source the frontend reads), so we
+// drive it with a mocked isEnabled instead of process.env — proving backend+frontend read one flag.
+const { overviewMock, membershipMock, isEnabledMock } = vi.hoisted(() => ({
   overviewMock: vi.fn(),
   membershipMock: vi.fn(),
+  isEnabledMock: vi.fn(),
 }));
 
 vi.mock("./shared.js", async (orig) => {
@@ -58,11 +75,24 @@ vi.mock("./finance-hub.service.js", () => ({
   getFinanceHubOverview: (...args: unknown[]) => overviewMock(...args),
 }));
 
+// withCurrentUser just runs the callback with a stub client; isEnabled is mocked so the client is unused.
+// Partial mock so the rest of auth/db.js (luciaPool, etc.) stays real for other importers.
+vi.mock("../auth/db.js", async (orig) => {
+  const actual = (await orig()) as Record<string, unknown>;
+  return {
+    ...actual,
+    withCurrentUser: (_userUuid: string, fn: (client: unknown) => unknown) => fn({}),
+  };
+});
+
+vi.mock("../lib/feature-flags/service.js", () => ({
+  isEnabled: (...args: unknown[]) => isEnabledMock(...args),
+}));
+
 const apps: Array<{ close: () => Promise<void> }> = [];
 afterEach(async () => {
   for (const a of apps.splice(0)) await a.close();
   vi.clearAllMocks();
-  delete process.env.FINANCE_HUB_UI_ENABLED;
 });
 
 async function build() {
@@ -84,14 +114,21 @@ const URL = "/api/v1/finance/hub/overview?operating_company_id=11111111-1111-411
 
 describe("AF-6 finance-hub — flag gating", () => {
   it("flag OFF (default) → 404 unreachable, service never called", async () => {
+    isEnabledMock.mockResolvedValue(false);
     const app = await build();
     const res = await app.inject({ method: "GET", url: URL });
     expect(res.statusCode).toBe(404);
     expect(overviewMock).not.toHaveBeenCalled();
+    // Resolves the canonical DB flag for THIS operating company (not process.env).
+    expect(isEnabledMock).toHaveBeenCalledWith(
+      expect.anything(),
+      "FINANCE_HUB_UI_ENABLED",
+      expect.objectContaining({ operating_company_id: "11111111-1111-4111-8111-111111111111" }),
+    );
   });
 
   it("flag ON → 200 with read-only KPI payload", async () => {
-    process.env.FINANCE_HUB_UI_ENABLED = "true";
+    isEnabledMock.mockResolvedValue(true);
     const app = await build();
     const res = await app.inject({ method: "GET", url: URL });
     expect(res.statusCode).toBe(200);

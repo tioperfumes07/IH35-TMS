@@ -3623,7 +3623,7 @@ export const ROUTES = React.Children.toArray(
         <Route path="/finance/ar-ap-aging" element={<ProtectedRoute><ArApAgingPage /></ProtectedRoute>} />
         {/* FIN-19 — Financial statements (P&L / BS / TB). flag FINANCE_STATEMENTS_UI_ENABLED — default_enabled=true in lib.feature_flags (resolves ON unless a per-entity/user override disables it); read-only, no money posting. */}
         <Route path="/finance/statements" element={<ProtectedRoute><FinancialStatementsPage /></ProtectedRoute>} />
-        {/* AF-6 — Finance Hub landing dashboard. flag FINANCE_HUB_UI_ENABLED — default_enabled=true in lib.feature_flags (resolves ON unless a per-entity/user override disables it); read-only, no money posting. */}
+        {/* AF-6 — Finance Hub landing dashboard. flag FINANCE_HUB_UI_ENABLED in lib.feature_flags — default OFF, per-entity-only (owner enables per operating company via override); same DB flag gates the backend via isEnabled; read-only, no money posting. */}
         <Route path="/finance/hub" element={<ProtectedRoute><FinanceHubPage /></ProtectedRoute>} />
         {/* F1 — Break-Even Analysis. flag FINANCE_BREAK_EVEN_UI_ENABLED (OFF by default — owner sign-off gate); read-only analytics/estimate, no money posting. */}
         <Route path="/finance/break-even" element={<ProtectedRoute><BreakEvenPage /></ProtectedRoute>} />
