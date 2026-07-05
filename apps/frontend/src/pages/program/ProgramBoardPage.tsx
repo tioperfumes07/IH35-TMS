@@ -9,11 +9,13 @@ import {
   postProgramBoardNote,
   type BoardDeltas,
   type BoardNote,
+  type BoardTotals,
   type ExtraItem,
   type HoldItem,
   type MergedPr,
   type ProgramBoard,
   type ReconBlock,
+  type TabTally,
 } from "../../api/program";
 
 const AUTO_REFRESH_MS = 60_000; // board re-polls every 60s so refreshed_at_ct stays live
@@ -551,6 +553,11 @@ export function ProgramBoardPage() {
       {/* TABLE tabs */}
       {!isLoading && !isError && (tab === "focus" || tab === "all" || tab === "pending" || tab === "owner" || tab === "dispatch" || tab === "audit") ? (
         <div className="space-y-2">
+          {/* Real-time tally/summary (meta-driven) — All Tasks / Currently Pending / Bugs & Audits only.
+              Renders nothing when meta is absent (graceful degradation). */}
+          {showLifecycleCol ? (
+            <TallyBar tally={data?.meta?.tabs?.[tab]} totals={data?.meta?.totals} lastSyncedCt={data?.meta?.last_synced_ct} />
+          ) : null}
           {tab === "pending" ? (
             <div className="space-y-2">
               <div className="flex flex-wrap items-center gap-2 text-[11px]">
@@ -1021,6 +1028,106 @@ function DeltasBadge({ deltas, open, onToggle }: { deltas?: BoardDeltas; open: b
               </ul>
             </div>
           ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+// First defined numeric among the candidates (per-tab value wins over the global roll-up).
+function pickNum(...vals: unknown[]): number | undefined {
+  for (const v of vals) if (typeof v === "number" && Number.isFinite(v)) return v;
+  return undefined;
+}
+
+// ── Real-time tally/summary bar (meta-driven) — the owner's core ask: on each of the three named tabs,
+// see true progress + all pending financial + all blocks pending per module, live. Reads the sync-engine
+// meta (per-tab tally preferred, global totals as fallback). Renders NOTHING when no data is present so
+// the board degrades gracefully while the parallel sync PR is still populating these fields. §7 palette.
+function TallyBar({ tally, totals, lastSyncedCt }: { tally?: TabTally; totals?: BoardTotals; lastSyncedCt?: string }) {
+  const t = tally ?? {};
+  const g = totals ?? {};
+  const deployed = pickNum(t.deployed, g.deployed);
+  const total = pickNum(t.total, g.total);
+  const pct =
+    pickNum(t.pct_deployed, g.pct_deployed) ??
+    (typeof deployed === "number" && typeof total === "number" && total > 0 ? Math.round((deployed / total) * 100) : undefined);
+  const financialPending = pickNum(t.financial_pending, g.financial_pending);
+  const addedRecent = pickNum(t.added_recent, g.added_recent);
+  const completedRecent = pickNum(t.completed_recent, g.completed_recent);
+  const byModule = (t.by_module ?? g.by_module ?? {}) as Record<string, number>;
+
+  const moduleChips = Object.entries(byModule)
+    .filter(([, n]) => typeof n === "number" && n > 0)
+    .sort((a, b) => b[1] - a[1]);
+
+  const hasProgress = typeof pct === "number" || typeof deployed === "number" || typeof total === "number";
+  const hasFinancial = typeof financialPending === "number";
+  const hasModules = moduleChips.length > 0;
+  const hasDeltas = typeof addedRecent === "number" || typeof completedRecent === "number";
+  if (!hasProgress && !hasFinancial && !hasModules && !hasDeltas) return null;
+
+  const TOP = 10;
+  const shown = moduleChips.slice(0, TOP);
+  const moreCount = moduleChips.length - shown.length;
+
+  return (
+    <div className="space-y-1.5 rounded border border-gray-200 bg-white p-2">
+      {hasProgress ? (
+        <div className="space-y-1">
+          <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-600">
+            <span className="font-semibold tabular-nums">
+              {typeof deployed === "number" ? deployed : "—"} of {typeof total === "number" ? total : "—"} deployed
+              {typeof pct === "number" ? ` · ${pct}%` : ""}
+            </span>
+            {lastSyncedCt ? <span className="text-[10px] text-slate-400">synced {lastSyncedCt}</span> : null}
+          </div>
+          {typeof pct === "number" ? (
+            <div
+              className="h-1.5 w-full overflow-hidden rounded bg-slate-200"
+              role="progressbar"
+              aria-valuenow={pct}
+              aria-valuemin={0}
+              aria-valuemax={100}
+            >
+              <div className="h-full rounded" style={{ width: `${Math.max(0, Math.min(100, pct))}%`, background: "#1F2A44" }} />
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      {hasFinancial || hasDeltas ? (
+        <div className="flex flex-wrap items-center gap-2 text-[11px]">
+          {hasFinancial ? (
+            <span
+              className="rounded px-2 py-0.5 font-semibold tabular-nums"
+              style={(financialPending ?? 0) > 0 ? { background: "#FEE2E2", color: "#991B1B" } : { background: "#E2E8F0", color: "#334155" }}
+            >
+              Pending financial: {financialPending}
+            </span>
+          ) : null}
+          {hasDeltas ? (
+            <span className="rounded px-2 py-0.5 tabular-nums text-slate-600" style={{ background: "#E2E8F0" }}>
+              +{addedRecent ?? 0} added · {completedRecent ?? 0} completed (since last sync)
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+
+      {hasModules ? (
+        <div className="flex flex-wrap items-center gap-1 text-[10px]">
+          <span className="font-semibold uppercase tracking-wide text-slate-500">Pending by module:</span>
+          {shown.map(([mod, n]) => (
+            <span
+              key={mod}
+              className="rounded px-1.5 py-0.5 tabular-nums text-slate-600"
+              style={{ background: "#E2E8F0" }}
+              title={`${mod}: ${n} pending`}
+            >
+              <span className="inline-block max-w-[140px] truncate align-bottom">{mod}</span> {n}
+            </span>
+          ))}
+          {moreCount > 0 ? <span className="text-slate-400">+{moreCount} more</span> : null}
         </div>
       ) : null}
     </div>
