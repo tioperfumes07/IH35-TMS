@@ -14,7 +14,7 @@ function authed(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function registerUnitPdfExportRoutes(app: FastifyInstance) {
-  app.get("/api/v1/mdata/units/:id/export.pdf", async (req, reply) => {
+  app.get("/api/v1/mdata/units/:id/export.pdf", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = authed(req, reply);
     if (!authUser) return;
     const params = unitParamsSchema.safeParse(req.params ?? {});

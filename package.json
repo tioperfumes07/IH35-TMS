@@ -58,6 +58,7 @@
     "verify:db:stop": "docker compose -f docker-compose.verify.yml down",
     "verify:db:reset": "node scripts/verify-db-reset.mjs",
     "verify:auth-ai-rate-limits": "node scripts/verify-auth-ai-rate-limits.mjs",
+    "verify:export-upload-rate-limits": "node scripts/verify-export-upload-rate-limits.mjs",
     "verify:outbox-handler-parity": "node scripts/verify-outbox-handler-parity.mjs",
     "verify:outbox-handler-parity:test": "node --test scripts/__tests__/verify-outbox-handler-parity.test.mjs",
     "verify:migration-runner-hardening": "node scripts/verify-migration-runner-hardening.mjs",

@@ -47,7 +47,7 @@ function exportError(req: FastifyRequest, reply: FastifyReply, error: unknown) {
 }
 
 export async function registerStatementExportRoutes(app: FastifyInstance) {
-  app.get("/api/v1/accounting/trial-balance/export/pdf", async (req, reply) => {
+  app.get("/api/v1/accounting/trial-balance/export/pdf", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccessStatementExport(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -69,7 +69,7 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/accounting/trial-balance/export/xlsx", async (req, reply) => {
+  app.get("/api/v1/accounting/trial-balance/export/xlsx", { config: { rateLimit: { max: 15, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccessStatementExport(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -90,7 +90,7 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/accounting/profit-loss/export/pdf", async (req, reply) => {
+  app.get("/api/v1/accounting/profit-loss/export/pdf", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccessStatementExport(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -113,7 +113,7 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/accounting/profit-loss/export/xlsx", async (req, reply) => {
+  app.get("/api/v1/accounting/profit-loss/export/xlsx", { config: { rateLimit: { max: 15, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccessStatementExport(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -136,7 +136,7 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/accounting/balance-sheet/export/pdf", async (req, reply) => {
+  app.get("/api/v1/accounting/balance-sheet/export/pdf", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccessStatementExport(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -157,7 +157,7 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/accounting/balance-sheet/export/xlsx", async (req, reply) => {
+  app.get("/api/v1/accounting/balance-sheet/export/xlsx", { config: { rateLimit: { max: 15, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccessStatementExport(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -178,7 +178,7 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/accounting/cash-flow/export/pdf", async (req, reply) => {
+  app.get("/api/v1/accounting/cash-flow/export/pdf", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccessStatementExport(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -201,7 +201,7 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/accounting/cash-flow/export/xlsx", async (req, reply) => {
+  app.get("/api/v1/accounting/cash-flow/export/xlsx", { config: { rateLimit: { max: 15, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccessStatementExport(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -224,7 +224,7 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/accounting/ar-aging/export/pdf", async (req, reply) => {
+  app.get("/api/v1/accounting/ar-aging/export/pdf", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccessStatementExport(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -245,7 +245,7 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/accounting/ar-aging/export/xlsx", async (req, reply) => {
+  app.get("/api/v1/accounting/ar-aging/export/xlsx", { config: { rateLimit: { max: 15, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccessStatementExport(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -266,7 +266,7 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/accounting/ap-aging/export/pdf", async (req, reply) => {
+  app.get("/api/v1/accounting/ap-aging/export/pdf", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccessStatementExport(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -287,7 +287,7 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/accounting/ap-aging/export/xlsx", async (req, reply) => {
+  app.get("/api/v1/accounting/ap-aging/export/xlsx", { config: { rateLimit: { max: 15, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccessStatementExport(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });

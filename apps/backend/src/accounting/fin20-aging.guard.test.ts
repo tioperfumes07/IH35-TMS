@@ -55,14 +55,22 @@ describe("FIN-20 AR/AP aging is read-only", () => {
 });
 
 describe("FIN-20 AR/AP aging is flag-gated OFF by default", () => {
-  it("gates every handler on the env flag resolving to the on value", () => {
-    // Split across two source lines so the merge-gate scanner never sees both the flag token and the
-    // on-value on one line; the gate stays OFF unless the env var matches exactly.
-    expect(routes).toContain('process.env.AR_AP_AGING_UI_ENABLED ?? "false"');
-    expect(routes).toContain('agingFlagRaw === "true"');
-    // one 404 short-circuit per route (2 summaries + 2 drills)
-    const gates = routes.match(/if \(!agingUiEnabled\(\)\) return reply\.code\(404\)/g) ?? [];
+  // FLAG-SPLIT-BRAIN: the backend must gate on the SAME DB feature flag the frontend reads (via
+  // isEnabled), NOT process.env — so the two sides can never split-brain. Enable is a per-entity
+  // owner override; default OFF.
+  it("gates every handler on the DB feature flag via isEnabled (no process.env read for the flag)", () => {
+    expect(routes).toContain("AR_AP_AGING_UI_ENABLED");
+    expect(routes).toMatch(/isEnabled\s*\(/);
+    // Must NOT read the flag from the environment (the old split-brain source).
+    expect(
+      /process\.env\.AR_AP_AGING_UI_ENABLED/.test(routes),
+      "fin20-aging route must not read the flag from process.env — resolve it via isEnabled(DB flag)",
+    ).toBe(false);
+    // one flag gate + 404 short-circuit per route (2 summaries + 2 drills)
+    const gates = routes.match(/await agingUiEnabled\(user\.uuid, query\.data\.operating_company_id\)/g) ?? [];
     expect(gates.length).toBe(4);
+    const notFound = routes.match(/return reply\.code\(404\)/g) ?? [];
+    expect(notFound.length).toBe(4);
   });
 
   it("only ever registers GET routes (no mutating verbs)", () => {

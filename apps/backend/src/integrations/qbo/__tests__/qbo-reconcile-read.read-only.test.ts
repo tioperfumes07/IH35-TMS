@@ -46,8 +46,15 @@ describe("FIN-23 QBO reconcile captures — read-only", () => {
     expect(/push\.service/.test(imports)).toBe(false);
   });
 
-  it("is gated behind the OFF flag QBO_RECONCILE_UI_ENABLED", () => {
-    expect(routesSrc.includes('process.env.QBO_RECONCILE_UI_ENABLED === "true"')).toBe(true);
+  it("is gated behind the OFF flag QBO_RECONCILE_UI_ENABLED via the DB feature flag (no process.env)", () => {
+    // FLAG-SPLIT-BRAIN: backend resolves the SAME DB flag the frontend reads (via isEnabled), not
+    // process.env — so the two sides can never split-brain. Enable is a per-entity owner override.
+    expect(routesSrc.includes("QBO_RECONCILE_UI_ENABLED")).toBe(true);
+    expect(/isEnabled\s*\(/.test(routesSrc)).toBe(true);
+    expect(
+      /process\.env\.QBO_RECONCILE_UI_ENABLED/.test(routesSrc),
+      "qbo-reconcile route must not read the flag from process.env — resolve it via isEnabled(DB flag)",
+    ).toBe(false);
   });
 
   // FIN-23 hardening: the RLS SELECT policy on these two tables scopes by the user's company

@@ -7,6 +7,7 @@ import { createExpense } from "../../../../api/accounting";
 
 const VENDOR_ID = "11111111-1111-4111-8111-111111111111";
 const ACCT_ID = "22222222-2222-4222-8222-222222222222";
+const WO_ID = "33333333-3333-4333-8333-333333333333";
 
 vi.mock("../../../../api/accounting", () => ({
   createExpense: vi.fn(() =>
@@ -67,6 +68,8 @@ function renderModal(onClose = vi.fn()) {
         <CreateExpenseModal
           open={true}
           operatingCompanyId="91e0bf0a-133f-4ce8-a734-2586cfa66d96"
+          linkedWoDisplayId="WO-TEST"
+          linkedWoId={WO_ID}
           onClose={onClose}
         />
       </ToastProvider>
@@ -98,6 +101,7 @@ describe("CreateExpenseModal — persists via the canonical createExpense endpoi
     expect(body.payment_account_uuid).toBe(ACCT_ID);
     expect(body.amount_cents).toBe(10825); // 100 + 8.25% tax
     expect(body.vendor_uuid).toBe(VENDOR_ID); // payee FK linkage
+    expect(body.work_order_id).toBe(WO_ID); // HARD cross-module FK (forward-wired on create)
     expect(body.expense_date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(typeof body.attachment_draft_id).toBe("string");
 

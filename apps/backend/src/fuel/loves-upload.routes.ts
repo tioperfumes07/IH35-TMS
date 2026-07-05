@@ -69,7 +69,7 @@ function normalizeRowsFromWorkbook(data: Buffer): LovesRow[] {
 }
 
 export async function registerFuelLovesUploadRoutes(app: FastifyInstance) {
-  app.post("/api/v1/fuel/loves-prices/upload", async (req, reply) => {
+  app.post("/api/v1/fuel/loves-prices/upload", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});

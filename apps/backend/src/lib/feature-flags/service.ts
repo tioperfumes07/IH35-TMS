@@ -99,6 +99,18 @@ export const PER_ENTITY_ONLY_FLAG_KEYS: ReadonlySet<string> = new Set([
   // is a per-entity owner (Jorge) sign-off, so it must be per-entity-only — a global default/rollout
   // enable would light the hub up for EVERY entity (incl. USMCA / TRK) at once. Default OFF.
   "FINANCE_HUB_UI_ENABLED",
+  // FLAG-SPLIT-BRAIN sweep: read-only finance surfaces whose backend gate now resolves the SAME DB
+  // flag the frontend reads (via isEnabled), killing the prior process.env vs DB split-brain. Each is
+  // per-entity (operating_company_id required; no cross-entity totals) and enabling it in prod is a
+  // per-entity owner (Jorge) sign-off — so it must be per-entity-only: a global default/rollout enable
+  // would light the surface up for EVERY entity (incl. USMCA / TRK) at once. All READ-ONLY (never
+  // post/write/move money). Default OFF.
+  //   FIN-20 AR/AP aging report:
+  "AR_AP_AGING_UI_ENABLED",
+  //   FIN-23 QBO reconcile / modify-captures (read-only surfacing):
+  "QBO_RECONCILE_UI_ENABLED",
+  //   F1 Break-Even analysis (read-only what-if inputs):
+  "FINANCE_BREAK_EVEN_UI_ENABLED",
 ]);
 
 export function isPerEntityOnlyFlag(flagKey: string): boolean {
