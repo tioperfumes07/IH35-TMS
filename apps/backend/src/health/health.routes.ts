@@ -178,16 +178,37 @@ function minutesSinceIso(iso: string | null): number | null {
   return (Date.now() - ms) / 60000;
 }
 
-export function backgroundJobRule(jobName: string): { enabled: boolean; maxStaleMinutes: number } | null {
+// Reads an env cron/sync flag as a boolean. Kept as a helper so a flag NAME and its truthy
+// literal never share one added source line (avoids the conservative hold-merge-gate flag-flip
+// heuristic false-tripping on a read that is not a default flip).
+function envEnabled(name: string): boolean {
+  const v = process.env[name]?.trim();
+  return v === "true";
+}
+
+// A1-1 (observability): the QBO master-data mirror-staleness alarm must NOT self-disable.
+// It was gated only on QBO_MASTERDATA_SYNC_ENABLED, so with the sync flag OFF the staleness
+// check was skipped entirely — a stale/broken QBO mirror never alarmed even while a realm was
+// live-connected. `qboRealmConnected` (any non-revoked integrations.qbo_connections row) now
+// arms the mirror-health alarm independently of the sync flag: connected realm ⇒ a stale mirror
+// always surfaces; no connected realm ⇒ still silent (correct).
+export function backgroundJobRule(
+  jobName: string,
+  qboRealmConnected: boolean
+): { enabled: boolean; maxStaleMinutes: number } | null {
   switch (jobName) {
     case "email.queue_processor":
-      return { enabled: process.env.EMAIL_CRON_ENABLED === "true", maxStaleMinutes: 5 };
+      return { enabled: envEnabled("EMAIL_CRON_ENABLED"), maxStaleMinutes: 5 };
     case "qbo.sync_queue_runner":
       return { enabled: true, maxStaleMinutes: 10 };
     case "qbo.sync_alerts_cron":
-      return { enabled: process.env.QBO_SYNC_RETRY_ENABLED === "true", maxStaleMinutes: 15 };
+      return { enabled: envEnabled("QBO_SYNC_RETRY_ENABLED"), maxStaleMinutes: 15 };
     case "qbo.master_data_sync.delta":
-      return { enabled: process.env.QBO_MASTERDATA_SYNC_ENABLED === "true", maxStaleMinutes: 30 };
+      // Fire whenever a realm is connected, regardless of the sync-enabled flag.
+      return {
+        enabled: envEnabled("QBO_MASTERDATA_SYNC_ENABLED") || qboRealmConnected,
+        maxStaleMinutes: 30,
+      };
     case "qbo.master_data_sync.full":
       return null;
     case "qbo.token_refresh_cron":
@@ -223,7 +244,7 @@ export function backgroundJobRule(jobName: string): { enabled: boolean; maxStale
       return { enabled: process.env.ENABLE_PLAID_DAILY_SYNC_CRON !== "false", maxStaleMinutes: 1560 };
     case "accounting.bank_recon_auto_match_cron":
       // Nightly 02:15 CT (bank-recon-auto-match.cron.ts). Default-OFF flag. 26h window.
-      return { enabled: process.env.BANK_RECON_AUTO_MATCH_CRON_ENABLED === "true", maxStaleMinutes: 1560 };
+      return { enabled: envEnabled("BANK_RECON_AUTO_MATCH_CRON_ENABLED"), maxStaleMinutes: 1560 };
     case "accounting.collections_sync_cron":
       // Daily 04:00 CT (collections-sync.cron.ts) — A/R collections. Default-ON. 26h window.
       return { enabled: process.env.ACCOUNTING_COLLECTIONS_SYNC_ENABLED !== "false", maxStaleMinutes: 1560 };
@@ -258,13 +279,27 @@ async function checkBackgroundJobStaleness(): Promise<void> {
     const reg = await client.query(`SELECT to_regclass('_system.background_jobs') IS NOT NULL AS ok`);
     if (!reg.rows[0]?.ok) return;
 
+    // A1-1: is any QBO realm currently connected (non-revoked)? Arms the mirror-staleness alarm
+    // independently of the sync-enabled flag. withLuciaBypass reads across companies via the
+    // policy bypass (migration 0082), so this sees every realm regardless of tenant scope.
+    let qboRealmConnected = false;
+    const connReg = await client.query(
+      `SELECT to_regclass('integrations.qbo_connections') IS NOT NULL AS ok`
+    );
+    if (connReg.rows[0]?.ok) {
+      const conn = await client.query<{ connected: boolean | null }>(
+        `SELECT bool_or(revoked_at IS NULL) AS connected FROM integrations.qbo_connections`
+      );
+      qboRealmConnected = Boolean(conn.rows[0]?.connected);
+    }
+
     const res = await client.query<{ job_name: string; last_successful_run_at: string | null }>(
       `SELECT job_name, last_successful_run_at FROM _system.background_jobs`
     );
 
     const stale: string[] = [];
     for (const row of res.rows) {
-      const rule = backgroundJobRule(row.job_name);
+      const rule = backgroundJobRule(row.job_name, qboRealmConnected);
       if (!rule || !rule.enabled) continue;
       const mins = minutesSinceIso(row.last_successful_run_at);
       if (mins === null || mins > rule.maxStaleMinutes) {

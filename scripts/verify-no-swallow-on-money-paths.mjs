@@ -83,6 +83,35 @@ const walkSpine = (dir) => {
 };
 if (fs.existsSync(SRC)) walkSpine(SRC);
 
+// ── SWL-2 extension ────────────────────────────────────────────────────────────────────────────
+// A THIRD swallow shape: a discard-`.catch` that fakes an EMPTY/ZERO result — `.catch(() => [])`,
+// `.catch(() => 0)`, `.catch(() => ({}))`, `.catch(() => null)` — on a money-reconciliation read.
+// Unlike the spine-emit case this isn't fire-and-forget: the faked value flows straight into a
+// user-facing figure (a $0 cash KPI, "no suggestions", "in sync"), so a real query failure looks
+// identical to genuinely-empty data. Ban it on the banking-recon / finance-hub / qbo-mirror surface;
+// the correct fix is a try/catch that logs with context and surfaces an error/unavailable state.
+const SWL2_PATHS = /(banking\/recon\.service|accounting\/finance-hub\.service|integrations\/qbo\/mirror-integrity\.service)/;
+const FAKE_EMPTY_CATCH = /\.catch\(\s*(?:async\s*)?\(\s*\)\s*=>\s*(?:\[\s*\]|0|null|\(\s*\{\s*\}\s*\)|\{\s*\})\s*\)/g;
+
+const walkFakeEmpty = (dir) => {
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    const fp = path.join(dir, e.name);
+    if (e.isDirectory()) walkFakeEmpty(fp);
+    else if (/\.ts$/.test(e.name) && !/\.(test|spec)\.ts$/.test(e.name)) {
+      const rel = path.relative(ROOT, fp).replace(/\\/g, "/");
+      if (!SWL2_PATHS.test(rel)) continue;
+      const src = fs.readFileSync(fp, "utf8");
+      let m;
+      FAKE_EMPTY_CATCH.lastIndex = 0;
+      while ((m = FAKE_EMPTY_CATCH.exec(src))) {
+        const line = src.slice(0, m.index).split("\n").length;
+        offenders.push(`${rel}:${line} (SWL-2 fake-empty catch: ${m[0]})`);
+      }
+    }
+  }
+};
+if (fs.existsSync(SRC)) walkFakeEmpty(SRC);
+
 if (offenders.length) {
   console.error(`[${LABEL}] FAILED — ${offenders.length} silent swallow(s) on money/dispatch paths / spine emits:`);
   for (const o of offenders) console.error(`  ✗ ${o}`);

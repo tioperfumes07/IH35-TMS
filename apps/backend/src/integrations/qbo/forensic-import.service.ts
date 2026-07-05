@@ -718,29 +718,72 @@ export async function importAttachments(actorUserId: string, batchId: string, qb
             page_number: Math.ceil(pageStart / 100),
             records_processed: page.length,
           });
+          // G5-2 pool/lock safety: do ALL external HTTP (QBO download + R2 upload) FIRST,
+          // with NO DB transaction open, so a pooled connection is never held across a
+          // slow/failable network call. Collect the fetched-and-uploaded objects in memory,
+          // THEN open a short transaction to persist them. Persisted data is unchanged.
+          type FetchedAttachment = {
+            attachmentId: string;
+            fileName: string;
+            mimeType: string;
+            objectKey: string;
+            checksum: string;
+            sizeBytes: number;
+          };
+          const fetched: FetchedAttachment[] = [];
+          for (const attachment of page) {
+            const attachmentId = String(attachment.Id ?? "");
+            const fileName = String(attachment.FileName ?? `${attachmentId}.bin`);
+            const mimeType = String(attachment.ContentType ?? "application/octet-stream");
+            const downloadUri = String(attachment.TempDownloadUri ?? attachment.DownloadUri ?? "");
+            if (!attachmentId || !downloadUri) continue;
+
+            try {
+              const file = await qboDownloadAttachment(qboContext, downloadUri);
+              const checksum = crypto.createHash("sha256").update(file.data).digest("hex");
+              const objectKey = `qbo-archive/${qboContext.operatingCompanyId}/${batchId}/${tx.qbo_txn_id}/${fileName}`;
+              await r2.send(
+                new PutObjectCommand({
+                  Bucket: bucket,
+                  Key: objectKey,
+                  Body: file.data,
+                  ContentType: file.contentType ?? mimeType,
+                })
+              );
+              fetched.push({
+                attachmentId,
+                fileName,
+                mimeType,
+                objectKey,
+                checksum,
+                sizeBytes: file.data.byteLength,
+              });
+            } catch (error) {
+              errors += 1;
+              appendForensicProgressError(batchId, `Attachment ${attachmentId} failed: ${String((error as Error)?.message ?? error)}`);
+              console.error("[FORENSIC_IMPORT]", {
+                step: "attachment_import_failed",
+                batchId,
+                operatingCompanyId: qboContext.operatingCompanyId,
+                txnId: tx.qbo_txn_id,
+                attachmentId,
+                error: String((error as Error)?.message ?? error),
+              });
+              await auditForensicImportError(batchId, qboContext.operatingCompanyId, error, {
+                phase: "attachments",
+                step: "attachment_import_failed",
+                entity_type: "Attachable",
+                last_qbo_entity_id: attachmentId || tx.qbo_txn_id,
+              });
+            }
+          }
+
+          // Short transaction: persist the already-fetched attachments. No HTTP inside.
           await client.query("BEGIN");
           try {
             await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [qboContext.operatingCompanyId]);
-            for (const attachment of page) {
-              const attachmentId = String(attachment.Id ?? "");
-              const fileName = String(attachment.FileName ?? `${attachmentId}.bin`);
-              const mimeType = String(attachment.ContentType ?? "application/octet-stream");
-              const downloadUri = String(attachment.TempDownloadUri ?? attachment.DownloadUri ?? "");
-              if (!attachmentId || !downloadUri) continue;
-
+            for (const f of fetched) {
               try {
-                const file = await qboDownloadAttachment(qboContext, downloadUri);
-                const checksum = crypto.createHash("sha256").update(file.data).digest("hex");
-                const objectKey = `qbo-archive/${qboContext.operatingCompanyId}/${batchId}/${tx.qbo_txn_id}/${fileName}`;
-                await r2.send(
-                  new PutObjectCommand({
-                    Bucket: bucket,
-                    Key: objectKey,
-                    Body: file.data,
-                    ContentType: file.contentType ?? mimeType,
-                  })
-                );
-
                 const insertRes = await client.query(
                   `
                     INSERT INTO qbo_archive.attachments_snapshot (
@@ -763,12 +806,12 @@ export async function importAttachments(actorUserId: string, batchId: string, qb
                   [
                     qboContext.operatingCompanyId,
                     tx.id,
-                    attachmentId,
-                    fileName,
-                    mimeType,
-                    file.data.byteLength,
-                    objectKey,
-                    checksum,
+                    f.attachmentId,
+                    f.fileName,
+                    f.mimeType,
+                    f.sizeBytes,
+                    f.objectKey,
+                    f.checksum,
                     null,
                     batchId,
                   ]
@@ -778,7 +821,7 @@ export async function importAttachments(actorUserId: string, batchId: string, qb
                   operatingCompanyId: qboContext.operatingCompanyId,
                   batchId,
                   txnId: tx.qbo_txn_id,
-                  attachmentId,
+                  attachmentId: f.attachmentId,
                   rowCount: insertRes.rowCount ?? 0,
                 });
                 if ((insertRes.rowCount ?? 0) === 0) {
@@ -789,24 +832,24 @@ export async function importAttachments(actorUserId: string, batchId: string, qb
                 await auditBatchEvent(batchId, qboContext.operatingCompanyId, "attachment_downloaded", {
                   entity_type: "Attachable",
                   records_processed: 1,
-                  metadata: { txn_id: tx.qbo_txn_id, attachment_id: attachmentId },
+                  metadata: { txn_id: tx.qbo_txn_id, attachment_id: f.attachmentId },
                 });
               } catch (error) {
                 errors += 1;
-                appendForensicProgressError(batchId, `Attachment ${attachmentId} failed: ${String((error as Error)?.message ?? error)}`);
+                appendForensicProgressError(batchId, `Attachment ${f.attachmentId} failed: ${String((error as Error)?.message ?? error)}`);
                 console.error("[FORENSIC_IMPORT]", {
                   step: "attachment_import_failed",
                   batchId,
                   operatingCompanyId: qboContext.operatingCompanyId,
                   txnId: tx.qbo_txn_id,
-                  attachmentId,
+                  attachmentId: f.attachmentId,
                   error: String((error as Error)?.message ?? error),
                 });
                 await auditForensicImportError(batchId, qboContext.operatingCompanyId, error, {
                   phase: "attachments",
                   step: "attachment_import_failed",
                   entity_type: "Attachable",
-                  last_qbo_entity_id: attachmentId || tx.qbo_txn_id,
+                  last_qbo_entity_id: f.attachmentId || tx.qbo_txn_id,
                 });
               }
             }

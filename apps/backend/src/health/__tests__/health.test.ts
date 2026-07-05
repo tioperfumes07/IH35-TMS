@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterAll } from "vitest";
 import Fastify from "fastify";
 import { registerHealthRoutes, resolveBackendVersion, backgroundJobRule } from "../health.routes.js";
 import { setAppReady } from "../../lib/startup-ready.js";
@@ -83,7 +83,7 @@ describe("backgroundJobRule money-cron freshness coverage (G4-HEALTH guard)", ()
 
   it("every money cron has a freshness rule with a positive staleness window", () => {
     for (const jobName of MONEY_CRON_JOB_NAMES) {
-      const rule = backgroundJobRule(jobName);
+      const rule = backgroundJobRule(jobName, false);
       expect(rule, `missing freshness rule for money cron "${jobName}"`).not.toBeNull();
       expect(rule!.maxStaleMinutes, `non-positive window for "${jobName}"`).toBeGreaterThan(0);
       expect(typeof rule!.enabled, `enabled must be boolean for "${jobName}"`).toBe("boolean");
@@ -91,16 +91,16 @@ describe("backgroundJobRule money-cron freshness coverage (G4-HEALTH guard)", ()
   });
 
   it("unknown job names have no rule (default null)", () => {
-    expect(backgroundJobRule("does.not.exist")).toBeNull();
+    expect(backgroundJobRule("does.not.exist", false)).toBeNull();
   });
 
   it("settlement auto-pay rule respects its env gating", () => {
     const prior = process.env.ENABLE_DRIVER_SETTLEMENT_AUTO_PAY_CRON;
     try {
       delete process.env.ENABLE_DRIVER_SETTLEMENT_AUTO_PAY_CRON;
-      expect(backgroundJobRule("driver_finance.settlement_auto_pay_cron")?.enabled).toBe(true);
+      expect(backgroundJobRule("driver_finance.settlement_auto_pay_cron", false)?.enabled).toBe(true);
       process.env.ENABLE_DRIVER_SETTLEMENT_AUTO_PAY_CRON = "false";
-      expect(backgroundJobRule("driver_finance.settlement_auto_pay_cron")?.enabled).toBe(false);
+      expect(backgroundJobRule("driver_finance.settlement_auto_pay_cron", false)?.enabled).toBe(false);
     } finally {
       if (prior === undefined) delete process.env.ENABLE_DRIVER_SETTLEMENT_AUTO_PAY_CRON;
       else process.env.ENABLE_DRIVER_SETTLEMENT_AUTO_PAY_CRON = prior;
@@ -111,12 +111,51 @@ describe("backgroundJobRule money-cron freshness coverage (G4-HEALTH guard)", ()
     const prior = process.env.BANK_RECON_AUTO_MATCH_CRON_ENABLED;
     try {
       delete process.env.BANK_RECON_AUTO_MATCH_CRON_ENABLED;
-      expect(backgroundJobRule("accounting.bank_recon_auto_match_cron")?.enabled).toBe(false);
+      expect(backgroundJobRule("accounting.bank_recon_auto_match_cron", false)?.enabled).toBe(false);
       process.env.BANK_RECON_AUTO_MATCH_CRON_ENABLED = "true";
-      expect(backgroundJobRule("accounting.bank_recon_auto_match_cron")?.enabled).toBe(true);
+      expect(backgroundJobRule("accounting.bank_recon_auto_match_cron", false)?.enabled).toBe(true);
     } finally {
       if (prior === undefined) delete process.env.BANK_RECON_AUTO_MATCH_CRON_ENABLED;
       else process.env.BANK_RECON_AUTO_MATCH_CRON_ENABLED = prior;
     }
+  });
+});
+
+// A1-1 guard: the QBO master-data mirror-staleness alarm must not self-disable when the
+// sync-enabled flag is OFF — it must fire whenever a QBO realm is connected, and stay silent
+// only when no realm is connected. Regression guard for the self-disabling health gate.
+describe("A1-1 backgroundJobRule — QBO mirror-staleness arms on connected realm", () => {
+  const prior = process.env.QBO_MASTERDATA_SYNC_ENABLED;
+  beforeEach(() => {
+    delete process.env.QBO_MASTERDATA_SYNC_ENABLED;
+  });
+  afterAll(() => {
+    if (prior === undefined) delete process.env.QBO_MASTERDATA_SYNC_ENABLED;
+    else process.env.QBO_MASTERDATA_SYNC_ENABLED = prior;
+  });
+
+  it("sync flag OFF + realm CONNECTED → alarm armed (was silently skipped)", () => {
+    delete process.env.QBO_MASTERDATA_SYNC_ENABLED;
+    const rule = backgroundJobRule("qbo.master_data_sync.delta", true);
+    expect(rule).not.toBeNull();
+    expect(rule?.enabled).toBe(true);
+    expect(rule?.maxStaleMinutes).toBe(30);
+  });
+
+  it("sync flag OFF + NO realm connected → alarm stays silent (correct)", () => {
+    delete process.env.QBO_MASTERDATA_SYNC_ENABLED;
+    const rule = backgroundJobRule("qbo.master_data_sync.delta", false);
+    expect(rule?.enabled).toBe(false);
+  });
+
+  it("sync flag ON → alarm armed regardless of realm connection", () => {
+    process.env.QBO_MASTERDATA_SYNC_ENABLED = "true";
+    expect(backgroundJobRule("qbo.master_data_sync.delta", false)?.enabled).toBe(true);
+    expect(backgroundJobRule("qbo.master_data_sync.delta", true)?.enabled).toBe(true);
+  });
+
+  it("realm connection does not spuriously arm unrelated jobs", () => {
+    expect(backgroundJobRule("qbo.sync_alerts_cron", true)?.enabled).toBe(false);
+    expect(backgroundJobRule("email.queue_processor", true)?.enabled).toBe(false);
   });
 });

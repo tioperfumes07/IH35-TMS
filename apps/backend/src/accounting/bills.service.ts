@@ -24,6 +24,12 @@ type CreateBillInput = {
   amountCents: number;
   memo?: string;
   coaAccountId?: string;
+  // HARD cross-module link (maintenance): real FK from the bill to its work order + unit. Persists into
+  // the CANONICAL accounting.bills.linked_work_order_uuid column (the same one the WO-close posting path
+  // writes) + the new unit_id. Nullable — a bill created outside maintenance has neither. The FK
+  // constraints are added by migration 202607050810.
+  workOrderId?: string | null;
+  unitId?: string | null;
   // Draft id used by UploadZone for create-time bill attachments; reconciled onto the real bill id in
   // the same txn (Option B inc 2 — docs/specs/ATTACHMENT-DRAFT-LINKAGE-FIX.md).
   attachmentDraftId?: string | null;
@@ -416,6 +422,80 @@ export async function listBillPaymentsForBill(userId: string, operatingCompanyId
   });
 }
 
+/**
+ * Reverse drill-through for the WO↔bill/expense HARD link (migration 202607050810): given a work
+ * order id, return the bills + expenses that reference it via the canonical linked_work_order_uuid
+ * FK. This is the reverse half of the bidirectional link (forward half = FK persisted on create). It
+ * surfaces BOTH modal-created (#2081) and WO-close-posting-created bills/expenses. Read-only,
+ * company-scoped. Guarded on column existence so it degrades to empty lists (never 500s). No writes.
+ */
+export async function listWorkOrderLinkedFinancials(
+  userId: string,
+  operatingCompanyId: string,
+  workOrderId: string
+): Promise<{
+  bills: Array<{ id: string; bill_number: string | null; bill_date: string | null; amount_cents: number; status: string | null; memo: string | null }>;
+  expenses: Array<{ id: string; transaction_date: string | null; total_amount_cents: number; status: string | null; memo: string | null }>;
+}> {
+  return withCurrentUser(userId, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    const colExists = async (schema: string, table: string, column: string): Promise<boolean> => {
+      const r = await client.query(
+        `SELECT 1 FROM information_schema.columns WHERE table_schema=$1 AND table_name=$2 AND column_name=$3`,
+        [schema, table, column]
+      );
+      return (r.rowCount ?? 0) > 0;
+    };
+
+    let bills: Array<{ id: string; bill_number: string | null; bill_date: string | null; amount_cents: number; status: string | null; memo: string | null }> = [];
+    if (await colExists("accounting", "bills", "linked_work_order_uuid")) {
+      const res = await client.query(
+        `SELECT b.id::text AS id, b.bill_number, b.bill_date::text AS bill_date,
+                COALESCE(b.amount_cents, 0)::bigint AS amount_cents, b.status, b.memo
+           FROM accounting.bills b
+          WHERE b.operating_company_id = $1
+            AND b.linked_work_order_uuid = $2
+            AND b.revoked_at IS NULL
+          ORDER BY b.bill_date DESC NULLS LAST, b.created_at DESC`,
+        [operatingCompanyId, workOrderId]
+      );
+      bills = res.rows.map((r: Record<string, unknown>) => ({
+        id: String(r.id),
+        bill_number: (r.bill_number as string) ?? null,
+        bill_date: (r.bill_date as string) ?? null,
+        amount_cents: Number(r.amount_cents ?? 0),
+        status: (r.status as string) ?? null,
+        memo: (r.memo as string) ?? null,
+      }));
+    }
+
+    let expenses: Array<{ id: string; transaction_date: string | null; total_amount_cents: number; status: string | null; memo: string | null }> = [];
+    if (await colExists("accounting", "expenses", "linked_work_order_uuid")) {
+      const hasMemo = await colExists("accounting", "expenses", "memo");
+      const res = await client.query(
+        `SELECT e.id::text AS id, e.transaction_date::text AS transaction_date,
+                COALESCE(e.total_amount_cents, 0)::bigint AS total_amount_cents, e.status,
+                ${hasMemo ? "e.memo" : "NULL::text AS memo"}
+           FROM accounting.expenses e
+          WHERE e.operating_company_id = $1
+            AND e.linked_work_order_uuid = $2
+            AND e.status <> 'void'
+          ORDER BY e.transaction_date DESC NULLS LAST, e.created_at DESC`,
+        [operatingCompanyId, workOrderId]
+      );
+      expenses = res.rows.map((r: Record<string, unknown>) => ({
+        id: String(r.id),
+        transaction_date: (r.transaction_date as string) ?? null,
+        total_amount_cents: Number(r.total_amount_cents ?? 0),
+        status: (r.status as string) ?? null,
+        memo: (r.memo as string) ?? null,
+      }));
+    }
+
+    return { bills, expenses };
+  });
+}
+
 export async function listBills(
   userId: string,
   operatingCompanyId: string,
@@ -551,11 +631,13 @@ export async function createBill(input: CreateBillInput, userId: string) {
           status,
           memo,
           coa_account_id,
+          linked_work_order_uuid,
+          unit_id,
           created_by_user_id,
           created_at,
           updated_at
         )
-        VALUES ($1,$2,$2,$3,$4,$5,$6,$7,0,0,'unpaid',$8,$9,$10,now(),now())
+        VALUES ($1,$2,$2,$3,$4,$5,$6,$7,0,0,'unpaid',$8,$9,$11,$12,$10,now(),now())
         RETURNING *
       `,
       [
@@ -569,6 +651,8 @@ export async function createBill(input: CreateBillInput, userId: string) {
         input.memo ?? null,
         input.coaAccountId ?? null,
         userId,
+        input.workOrderId ?? null,
+        input.unitId ?? null,
       ]
     );
     if ((res.rowCount ?? 0) === 0 || !res.rows[0]) throw new Error("bill_insert_failed");

@@ -585,6 +585,9 @@ export function createVendorBill(
     amount_cents: number;
     memo?: string;
     coa_account_id?: string;
+    // HARD cross-module link (maintenance): real FK to the WO + unit, persisted server-side (not just memo).
+    work_order_id?: string;
+    unit_id?: string;
     attachment_draft_id?: string;
   }
 ) {
@@ -592,6 +595,18 @@ export function createVendorBill(
     method: "POST",
     body,
   });
+}
+
+export type WorkOrderLinkedFinancials = {
+  bills: Array<{ id: string; bill_number: string | null; bill_date: string | null; amount_cents: number; status: string | null; memo: string | null }>;
+  expenses: Array<{ id: string; transaction_date: string | null; total_amount_cents: number; status: string | null; memo: string | null }>;
+};
+
+// Reverse drill-through for the WO↔bill/expense HARD link: bills + expenses that FK-reference this WO.
+export function listWorkOrderLinkedFinancials(workOrderId: string, operatingCompanyId: string) {
+  return apiRequest<WorkOrderLinkedFinancials>(
+    withCompany(`/api/v1/accounting/work-orders/${workOrderId}/linked-financials`, operatingCompanyId)
+  );
 }
 
 // Driverless, categorized cash-out expense → accounting.expenses (NOT a bill). category_qbo_id is the
@@ -606,6 +621,9 @@ export function createExpense(
     payment_account_uuid: string;
     vendor_uuid?: string;
     memo?: string;
+    // HARD cross-module link (maintenance): real FK to the WO + unit, persisted server-side (not just memo).
+    work_order_id?: string;
+    unit_id?: string;
     attachment_draft_id?: string;
   }
 ) {

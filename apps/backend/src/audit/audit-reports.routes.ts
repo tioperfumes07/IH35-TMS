@@ -33,7 +33,7 @@ function buildDateFilter(from: string | undefined, to: string | undefined, value
 export async function registerAuditReportRoutes(app: FastifyInstance) {
 
   /** Activity by user — who did what, date range */
-  app.get("/api/v1/audit/reports/activity-by-user", async (req, reply) => {
+  app.get("/api/v1/audit/reports/activity-by-user", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!authGuard(req, reply)) return;
     const p = baseQuerySchema.extend({
       actor_user_id: z.string().uuid().optional(),
@@ -60,7 +60,7 @@ export async function registerAuditReportRoutes(app: FastifyInstance) {
   });
 
   /** Activity by module */
-  app.get("/api/v1/audit/reports/activity-by-module", async (req, reply) => {
+  app.get("/api/v1/audit/reports/activity-by-module", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!authGuard(req, reply)) return;
     const p = baseQuerySchema.extend({
       module: z.string().trim().min(1).max(100).optional(),
@@ -87,7 +87,7 @@ export async function registerAuditReportRoutes(app: FastifyInstance) {
   });
 
   /** Financial change log */
-  app.get("/api/v1/audit/reports/financial-change-log", async (req, reply) => {
+  app.get("/api/v1/audit/reports/financial-change-log", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!authGuard(req, reply)) return;
     const p = baseQuerySchema.safeParse(req.query ?? {});
     if (!p.success) return reply.code(400).send({ error: "validation_error", details: p.error.flatten() });
@@ -116,7 +116,7 @@ export async function registerAuditReportRoutes(app: FastifyInstance) {
   });
 
   /** Maintenance decision log */
-  app.get("/api/v1/audit/reports/maintenance-decision-log", async (req, reply) => {
+  app.get("/api/v1/audit/reports/maintenance-decision-log", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!authGuard(req, reply)) return;
     const p = baseQuerySchema.safeParse(req.query ?? {});
     if (!p.success) return reply.code(400).send({ error: "validation_error", details: p.error.flatten() });
@@ -145,7 +145,7 @@ export async function registerAuditReportRoutes(app: FastifyInstance) {
   });
 
   /** Deduction trail */
-  app.get("/api/v1/audit/reports/deduction-trail", async (req, reply) => {
+  app.get("/api/v1/audit/reports/deduction-trail", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!authGuard(req, reply)) return;
     const p = baseQuerySchema.extend({
       driver_id: z.string().uuid().optional(),
@@ -185,7 +185,7 @@ export async function registerAuditReportRoutes(app: FastifyInstance) {
    *       column: opco lives in payload (inconsistently present) and the timestamp is created_at — so scope
    *       it by payload opco WHEN PRESENT and include rows that carry NO opco (void/reversal events often
    *       omit it) so nothing is dropped. Read-only; output shape unchanged (adds provenance audit_source). */
-  app.get("/api/v1/audit/reports/void-reversal", async (req, reply) => {
+  app.get("/api/v1/audit/reports/void-reversal", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!authGuard(req, reply)) return;
     const p = baseQuerySchema.safeParse(req.query ?? {});
     if (!p.success) return reply.code(400).send({ error: "validation_error", details: p.error.flatten() });
@@ -243,7 +243,7 @@ export async function registerAuditReportRoutes(app: FastifyInstance) {
   });
 
   /** Period close history */
-  app.get("/api/v1/audit/reports/period-close-history", async (req, reply) => {
+  app.get("/api/v1/audit/reports/period-close-history", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!authGuard(req, reply)) return;
     const p = baseQuerySchema.safeParse(req.query ?? {});
     if (!p.success) return reply.code(400).send({ error: "validation_error", details: p.error.flatten() });

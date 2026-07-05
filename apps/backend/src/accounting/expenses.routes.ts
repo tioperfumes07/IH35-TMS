@@ -94,6 +94,9 @@ const createExpenseBodySchema = z.object({
   vendor_uuid: z.string().uuid().optional(),
   memo: z.string().trim().max(2000).optional(),
   payment_account_uuid: z.string().uuid().optional(),
+  // HARD cross-module link (maintenance): persist the WO + unit id as a real FK, not just a memo string.
+  work_order_id: z.string().uuid().optional().nullable(),
+  unit_id: z.string().uuid().optional().nullable(),
   location_lat: z.number().finite().optional(),
   location_lng: z.number().finite().optional(),
 });
@@ -295,6 +298,8 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         const hasExpenseNumber = await columnExists(client, "accounting", "expenses", "expense_number");
         const hasLoadId = await columnExists(client, "accounting", "expenses", "load_id");
         const hasPaymentAccount = await columnExists(client, "accounting", "expenses", "payment_account_uuid");
+        const hasWorkOrderId = await columnExists(client, "accounting", "expenses", "linked_work_order_uuid");
+        const hasUnitId = await columnExists(client, "accounting", "expenses", "unit_id");
 
         // Resolve the form's QBO category account → a catalogs.accounts (GL) id, ENTITY-SCOPED
         // (operating_company_id) per TRK/TRANSP/USMCA independence. Reject if the QBO account isn't yet
@@ -336,6 +341,16 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         if (hasPaymentAccount) {
           columns.push(`payment_account_uuid`);
           values.push(body.payment_account_uuid ?? null);
+        }
+
+        if (hasWorkOrderId) {
+          columns.push(`linked_work_order_uuid`);
+          values.push(body.work_order_id ?? null);
+        }
+
+        if (hasUnitId) {
+          columns.push(`unit_id`);
+          values.push(body.unit_id ?? null);
         }
 
         const placeholders = columns.map((_, i) => `$${i + 1}`).join(", ");

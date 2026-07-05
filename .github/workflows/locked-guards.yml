@@ -367,5 +367,8 @@ jobs:
       - name: verify:multipart-size-limits
         run: npm run verify:multipart-size-limits
 
+      - name: verify:export-upload-rate-limits
+        run: npm run verify:export-upload-rate-limits
+
       - name: verify:program-board-repo-root
         run: npm run verify:program-board-repo-root
