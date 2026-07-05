@@ -1,6 +1,6 @@
 {
- "date": "2026-07-04",
- "generated_at_iso": "2026-07-05T04:58:14.647Z",
+ "date": "2026-07-05",
+ "generated_at_iso": "2026-07-05T10:10:45.801Z",
  "counts": {
   "PENDING": 4,
   "PENDING (GATED)": 39,
@@ -5744,6 +5744,174 @@
  ],
  "merged_prs": [
   {
+   "number": 2067,
+   "title": "fix(factoring): FactoringQueuePage renders reserve/advanced 100x too small (views.factoring_summary is dollars) + unit guard",
+   "mergedAt": "2026-07-05T09:58:18Z",
+   "branch": "fix/factoring-queue-reserve-unit"
+  },
+  {
+   "number": 2066,
+   "title": "docs(repairs): settlement engine reconciliation — canonical engine + 5% floor + deduction sub-ledger (SETTLE-1/2, G11-2/3)",
+   "mergedAt": "2026-07-05T06:31:50Z",
+   "branch": "docs/repair-settlement-engine-reconcile"
+  },
+  {
+   "number": 2065,
+   "title": "[HOLD-FOR-JORGE] fix(factoring): FACTOR-1 read reserve from the real populated source (not the never-written column)",
+   "mergedAt": "2026-07-05T10:08:17Z",
+   "branch": "fix/factor-1-reserve-real-source"
+  },
+  {
+   "number": 2064,
+   "title": "fix(maintenance): D2-1 wire (or remove) the two non-persisting maintenance modals",
+   "mergedAt": "2026-07-05T06:27:54Z",
+   "branch": "fix/d2-1-maintenance-modals-persist"
+  },
+  {
+   "number": 2063,
+   "title": "docs(repairs): MOR cash lines $0 + phantom columns (G9-C2/MOR-2) — design + proof",
+   "mergedAt": "2026-07-05T06:26:17Z",
+   "branch": "docs/repair-mor-cash-lines"
+  },
+  {
+   "number": 2062,
+   "title": "[HOLD-FOR-JORGE] fix(security): G1-6 validate requested operating_company_id against membership in resolveOperatingCompanyId",
+   "mergedAt": "2026-07-05T10:08:20Z",
+   "branch": "fix/g1-6-resolve-opco-membership-validate"
+  },
+  {
+   "number": 2061,
+   "title": "fix(customers): D1-4/D1-5 enforce sub-customer parent + required customer_type client-side",
+   "mergedAt": "2026-07-05T06:21:27Z",
+   "branch": "fix/d1-4-5-customer-form-validation"
+  },
+  {
+   "number": 2060,
+   "title": "chore(frontend): C1-4 archive verifiably-dead components (zero importers, additive-only)",
+   "mergedAt": "2026-07-05T06:17:23Z",
+   "branch": "fix/c1-4-archive-dead-components"
+  },
+  {
+   "number": 2059,
+   "title": "fix(security): DOCS-2 doc uploader size/type limits + role-gate document delete",
+   "mergedAt": "2026-07-05T06:13:18Z",
+   "branch": "fix/docs-2-uploader-limits-delete-gate"
+  },
+  {
+   "number": 2058,
+   "title": "fix(home): HOME-2 cash-position + factoring tiles read the correct backend fields (not always $0)",
+   "mergedAt": "2026-07-05T06:10:01Z",
+   "branch": "fix/home-2-cash-tiles-field-mapping"
+  },
+  {
+   "number": 2057,
+   "title": "[HOLD-FOR-JORGE] fix(audit): SWL-1 stop swallowing money-path spine-event emit failures",
+   "mergedAt": "2026-07-05T10:08:23Z",
+   "branch": "fix/swl-1-unswallow-money-dispatch-spine-emits"
+  },
+  {
+   "number": 2056,
+   "title": "fix(i18n): G8-2 consolidate the two translation directories into one source of truth",
+   "mergedAt": "2026-07-05T06:03:31Z",
+   "branch": "fix/g8-2-consolidate-translation-dirs"
+  },
+  {
+   "number": 2055,
+   "title": "fix(drivers): DRIVER-1 route the maintenance driver-create through the canonical path",
+   "mergedAt": "2026-07-05T06:05:10Z",
+   "branch": "fix/driver-1-canonical-driver-create"
+  },
+  {
+   "number": 2054,
+   "title": "fix(routing): C1-3 wire three dead-end buttons to their real pages",
+   "mergedAt": "2026-07-05T06:01:51Z",
+   "branch": "fix/c1-3-dead-end-buttons-routing"
+  },
+  {
+   "number": 2053,
+   "title": "fix(security): H4-4 uniform 401 + constant-time office-login (kill account/role enumeration)",
+   "mergedAt": "2026-07-05T05:59:19Z",
+   "branch": "fix/h4-4-office-login-enumeration-timing"
+  },
+  {
+   "number": 2052,
+   "title": "[HOLD-FOR-JORGE] fix(qbo): G10-H4 dead-letter the generic push catch (stop infinite retry)",
+   "mergedAt": "2026-07-05T05:57:38Z",
+   "branch": "fix/g10-h4-qbo-push-retry-deadletter"
+  },
+  {
+   "number": 2051,
+   "title": "[HOLD-FOR-JORGE] fix(cash-advance): H6-2 advisory-lock the number generator (kill the dup-number race)",
+   "mergedAt": "2026-07-05T05:53:26Z",
+   "branch": "fix/h6-2-cash-advance-number-advisory-lock"
+  },
+  {
+   "number": 2050,
+   "title": "fix(program): render the Audit & Bug Sweep tab — add 'audit' to the table-render guard",
+   "mergedAt": "2026-07-05T05:47:34Z",
+   "branch": "fix/program-board-audit-tab-render-guard"
+  },
+  {
+   "number": 2049,
+   "title": "[HOLD-FOR-JORGE] fix(reports): REPORTS-1 wire AR/AP aging UI to the canonical implementation",
+   "mergedAt": "2026-07-05T05:41:58Z",
+   "branch": "fix/reports-1-arap-aging-canonical"
+  },
+  {
+   "number": 2048,
+   "title": "[HOLD-FOR-JORGE] fix(accounting): G6-1 compute financial 'today' in company timezone (America/Chicago)",
+   "mergedAt": "2026-07-05T05:38:30Z",
+   "branch": "fix/g6-1-financial-today-company-tz"
+  },
+  {
+   "number": 2047,
+   "title": "docs(repairs): G4-TX1/IDEM1 money atomicity + idempotency — design + proof",
+   "mergedAt": "2026-07-05T05:40:14Z",
+   "branch": "docs/repair-g4-money-atomicity"
+  },
+  {
+   "number": 2046,
+   "title": "[HOLD-FOR-JORGE] fix(reports): G9-H5 profit/pay double-count + include-cancelled",
+   "mergedAt": "2026-07-05T05:40:17Z",
+   "branch": "fix/g9-h5-profit-pay-report-double-count"
+  },
+  {
+   "number": 2045,
+   "title": "[HOLD-FOR-JORGE] fix(cash-flow): CASH-1 void exclusion no-op — correct the voided comparison value",
+   "mergedAt": "2026-07-05T05:40:19Z",
+   "branch": "fix/cash-1-void-exclusion-value"
+  },
+  {
+   "number": 2044,
+   "title": "[HOLD-FOR-JORGE] fix(security): G10-H5 encrypt Plaid access token at rest (AES-256-GCM, backward-compatible read)",
+   "mergedAt": "2026-07-05T05:20:06Z",
+   "branch": "fix/g10-h5-plaid-token-encrypt-at-rest"
+  },
+  {
+   "number": 2043,
+   "title": "[HOLD-FOR-JORGE] fix(security): G2-1 audit log_event SQL-injection — uuid-validate + parameterize ocId",
+   "mergedAt": "2026-07-05T05:17:57Z",
+   "branch": "fix/g2-1-audit-log-event-sqli"
+  },
+  {
+   "number": 2042,
+   "title": "[HOLD-FOR-JORGE] fix(security): G1-2/G1-3 assert company membership on bills pay/void + settlement/advance approvals",
+   "mergedAt": "2026-07-05T05:19:09Z",
+   "branch": "fix/g1-2-3-money-route-company-membership"
+  },
+  {
+   "number": 2041,
+   "title": "chore(board): reconcile block data so all Program Board tabs are current",
+   "mergedAt": "2026-07-05T05:08:25Z",
+   "branch": "chore/board-reconcile-refresh"
+  },
+  {
+   "number": 2040,
+   "title": "chore(tracker): reconcile Audit tab — 33/160 fully fixed (verified)",
+   "mergedAt": "2026-07-05T05:03:10Z",
+   "branch": "chore/audit-tracker-reconcile-verified"
+  },
+  {
    "number": 2039,
    "title": "fix(program): Program Board tabs empty in prod — read repo JSON via resolveMonorepoRoot (cwd-independent)",
    "mergedAt": "2026-07-05T04:56:46Z",
@@ -5778,6 +5946,12 @@
    "title": "chore(tracker): mark audit wave-1 findings DONE on Program Board",
    "mergedAt": "2026-07-05T02:07:10Z",
    "branch": "chore/audit-tracker-wave1-done"
+  },
+  {
+   "number": 2033,
+   "title": "fix(observability): G10-C3 recon zero-trusted-entity alert + driver-PWA global error handlers",
+   "mergedAt": "2026-07-05T05:40:22Z",
+   "branch": "fix/g10-c3-sentry-cron-observability"
   },
   {
    "number": 2032,
@@ -6018,6 +6192,12 @@
    "title": "[HOLD-FOR-JORGE — MIGRATION] fix(chat): break participants RLS infinite recursion (42P17) — DDL already live on prod",
    "mergedAt": "2026-07-04T16:15:40Z",
    "branch": "fix/chat-participants-rls-recursion"
+  },
+  {
+   "number": 1991,
+   "title": "[HOLD-FOR-JORGE] fix(xe-fin): quality-events-payrates — bind entity scope on financial read",
+   "mergedAt": "2026-07-05T05:29:26Z",
+   "branch": "fix/xe-fin-quality-payrates"
   },
   {
    "number": 1990,
@@ -9162,190 +9342,82 @@
    "title": "feat(maint): R&M Status Board — 2nd stat strip + 5 real KPI counts (part 1)",
    "mergedAt": "2026-06-24T07:18:51Z",
    "branch": "feat/maint-rm-status-board-parity"
-  },
-  {
-   "number": 1428,
-   "title": "feat(maint): tab parity batch 1 — Arriving Soon (Open Issue/Severity)…",
-   "mergedAt": "2026-06-24T07:07:27Z",
-   "branch": "feat/maint-tab-parity-batch1"
-  },
-  {
-   "number": 1427,
-   "title": "docs(tracker): verified Master Tracker 2026-06-24 (no-guessing reconciliation)",
-   "mergedAt": "2026-06-24T06:22:52Z",
-   "branch": "docs/master-tracker-2026-06-24-verified"
-  },
-  {
-   "number": 1426,
-   "title": "feat(maint): Create WO modal → render-v5 A–E card layout (match approved render)",
-   "mergedAt": "2026-06-24T06:19:36Z",
-   "branch": "feat/create-wo-render-v5-AE-rebuild"
-  },
-  {
-   "number": 1424,
-   "title": "docs(guard): EscrowForfeit allowlist note → accurate finding (forfeit route missing)",
-   "mergedAt": "2026-06-24T05:43:57Z",
-   "branch": "chore/escrowforfeit-finding-allowlist-note"
-  },
-  {
-   "number": 1422,
-   "title": "fix(reports,banking,maint): M-1 cluster-4 filters + WO cost → MoneyInput; WIRE guard into CI",
-   "mergedAt": "2026-06-24T04:44:41Z",
-   "branch": "fix/m1-cluster4-filters-and-guard-ci"
-  },
-  {
-   "number": 1421,
-   "title": "fix(dispatch,customers,safety): M-1 cluster-3 money inputs → MoneyInput + guard rate-exclusion",
-   "mergedAt": "2026-06-24T03:34:13Z",
-   "branch": "fix/m1-cluster3-cancel-customer-violations-extrarate"
-  },
-  {
-   "number": 1420,
-   "title": "fix(fleet,maint): M-1 cluster-2 sold-price + warranty-claim → MoneyInput (byte-for-byte)",
-   "mergedAt": "2026-06-24T03:33:52Z",
-   "branch": "fix/m1-cluster2-soldprice-warranty"
-  },
-  {
-   "number": 1419,
-   "title": "fix(safety): M-1 Internal Fines inline amount → MoneyInput + guard inline blind-spot fix",
-   "mergedAt": "2026-06-24T02:12:07Z",
-   "branch": "fix/m1-internal-fines-inline-and-guard-inline"
-  },
-  {
-   "number": 1418,
-   "title": "chore(dev): GUARD crawl test-record seed script (build-only; execution gated)",
-   "mergedAt": "2026-06-24T02:02:52Z",
-   "branch": "chore/guard-crawl-seed-fixtures"
-  },
-  {
-   "number": 1417,
-   "title": "fix(drivers,ap): M-1 auto-deduction + CC bill-payment money inputs → MoneyInput (byte-for-byte)",
-   "mergedAt": "2026-06-24T01:54:30Z",
-   "branch": "fix/m1-autodeduction-ccpayment-money-inputs"
-  },
-  {
-   "number": 1416,
-   "title": "[HOLD-FOR-JORGE] fix(driver-finance): M-1 dispute resolution amount → MoneyInput",
-   "mergedAt": "2026-06-24T03:33:38Z",
-   "branch": "fix/m1-settlement-dispute-resolution-HOLD"
-  },
-  {
-   "number": 1415,
-   "title": "fix(factoring,driver-finance,maint): M-1 cluster-1 money inputs → Mon…",
-   "mergedAt": "2026-06-24T01:48:53Z",
-   "branch": "fix/m1-cluster1-factoring-settlement-severe"
-  },
-  {
-   "number": 1414,
-   "title": "fix(factoring): M-1 FAIL#3 inline loan principal → cents-mode MoneyInput + recurrence guard (worklist)",
-   "mergedAt": "2026-06-24T01:37:26Z",
-   "branch": "fix/m1-factoring-principal-and-guard"
-  },
-  {
-   "number": 1413,
-   "title": "[HOLD-FOR-JORGE] fix(accounting,banking): M-1 Manual JE debit/credit → MoneyInput",
-   "mergedAt": "2026-06-24T02:51:40Z",
-   "branch": "fix/m1-manualje-money-inputs-HOLD"
-  },
-  {
-   "number": 1412,
-   "title": "fix(users,dispatch): M-1 cost + lumper money inputs → MoneyInput (byte-for-byte)",
-   "mergedAt": "2026-06-24T01:23:03Z",
-   "branch": "fix/m1-userdetail-lumper-money-inputs"
-  },
-  {
-   "number": 1411,
-   "title": "fix(border,vendors,bills): M-1 money inputs → MoneyInput (byte-for-byte)",
-   "mergedAt": "2026-06-24T01:18:40Z",
-   "branch": "fix/m1-wizard-vendor-recurring-money-inputs"
-  },
-  {
-   "number": 1410,
-   "title": "fix(advances,customers,banking): M-1 money inputs → MoneyInput (byte-for-byte)",
-   "mergedAt": "2026-06-24T01:17:57Z",
-   "branch": "fix/m1-advance-detention-split-money-inputs"
-  },
-  {
-   "number": 1409,
-   "title": "fix(lists,banking): M-1 item/account/recon money inputs → MoneyInput (byte-for-byte)",
-   "mergedAt": "2026-06-24T01:09:42Z",
-   "branch": "fix/m1-lists-banking-money-inputs"
-  },
-  {
-   "number": 1408,
-   "title": "fix(safety,drivers): M-1 fine/dispute amount inputs → MoneyInput (byte-for-byte)",
-   "mergedAt": "2026-06-24T01:05:31Z",
-   "branch": "fix/m1-fines-dispute-money-inputs"
-  },
-  {
-   "number": 1407,
-   "title": "fix(insurance): M-1 claim/lawsuit/policy money inputs → MoneyInput (byte-for-byte)",
-   "mergedAt": "2026-06-24T01:02:16Z",
-   "branch": "fix/m1-insurance-money-inputs"
-  },
-  {
-   "number": 1406,
-   "title": "fix(parts,items): M-1 cost inputs → MoneyInput (byte-for-byte; traced cents-vs-dollars)",
-   "mergedAt": "2026-06-24T00:56:55Z",
-   "branch": "fix/m1-parts-item-money-inputs"
-  },
-  {
-   "number": 1405,
-   "title": "fix(customers): M-1 customer payment + lane-rate money inputs → MoneyInput",
-   "mergedAt": "2026-06-24T00:38:12Z",
-   "branch": "fix/m1-customer-detail-money-inputs"
-  },
-  {
-   "number": 1404,
-   "title": "fix(fuel,legal): M-1 amount inputs → MoneyInput (byte-for-byte)",
-   "mergedAt": "2026-06-24T00:36:22Z",
-   "branch": "fix/m1-fuel-legal-money-inputs"
-  },
-  {
-   "number": 1403,
-   "title": "fix(expenses): M-1 Record Expense amount → MoneyInput (byte-for-byte)",
-   "mergedAt": "2026-06-24T00:36:13Z",
-   "branch": "fix/m1-expense-amount-money-input"
-  },
-  {
-   "number": 1402,
-   "title": "fix(ap): M-1 bill-payment + multi-bill amount inputs → MoneyInput (byte-for-byte)",
-   "mergedAt": "2026-06-24T00:32:10Z",
-   "branch": "fix/m1-ap-bills-money-inputs"
-  },
-  {
-   "number": 1401,
-   "title": "fix(accounting): M-1 cash-forecast weekly estimates → cents-mode MoneyInput",
-   "mergedAt": "2026-06-24T00:28:11Z",
-   "branch": "fix/m1-cash-forecast-money-inputs"
-  },
-  {
-   "number": 1400,
-   "title": "fix(accounting): M-1 payment-apply money inputs → MoneyInput (byte-for-byte)",
-   "mergedAt": "2026-06-24T00:24:15Z",
-   "branch": "fix/m1-accounting-payment-money-inputs"
-  },
-  {
-   "number": 1399,
-   "title": "fix(factoring): M-1 equipment-loan attribution/payment → modal + cents-mode MoneyInput",
-   "mergedAt": "2026-06-24T00:19:22Z",
-   "branch": "fix/m1-factoring-loan-money-modal"
-  },
-  {
-   "number": 1398,
-   "title": "fix(banking): M-1 money inputs → QBO MoneyInput dollars-mode (byte-for-byte)",
-   "mergedAt": "2026-06-24T00:16:48Z",
-   "branch": "feat/m1-banking-money-inputs-dollars-mode"
-  },
-  {
-   "number": 1397,
-   "title": "feat(dispatch): §B reefer \"Temperature type\" Frozen/Fresh segmented field (W-FIX-1)",
-   "mergedAt": "2026-06-24T00:03:16Z",
-   "branch": "feat/reefer-temperature-type-frozen-fresh-w-fix-1"
   }
  ],
- "merged_pr_total": 1929,
+ "merged_pr_total": 1959,
  "hold_for_jorge": [
+  {
+   "number": 2065,
+   "title": "[HOLD-FOR-JORGE] fix(factoring): FACTOR-1 read reserve from the real populated source (not the never-written column)",
+   "mergedAt": "2026-07-05T10:08:17Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 2062,
+   "title": "[HOLD-FOR-JORGE] fix(security): G1-6 validate requested operating_company_id against membership in resolveOperatingCompanyId",
+   "mergedAt": "2026-07-05T10:08:20Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 2057,
+   "title": "[HOLD-FOR-JORGE] fix(audit): SWL-1 stop swallowing money-path spine-event emit failures",
+   "mergedAt": "2026-07-05T10:08:23Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 2052,
+   "title": "[HOLD-FOR-JORGE] fix(qbo): G10-H4 dead-letter the generic push catch (stop infinite retry)",
+   "mergedAt": "2026-07-05T05:57:38Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 2051,
+   "title": "[HOLD-FOR-JORGE] fix(cash-advance): H6-2 advisory-lock the number generator (kill the dup-number race)",
+   "mergedAt": "2026-07-05T05:53:26Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 2049,
+   "title": "[HOLD-FOR-JORGE] fix(reports): REPORTS-1 wire AR/AP aging UI to the canonical implementation",
+   "mergedAt": "2026-07-05T05:41:58Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 2048,
+   "title": "[HOLD-FOR-JORGE] fix(accounting): G6-1 compute financial 'today' in company timezone (America/Chicago)",
+   "mergedAt": "2026-07-05T05:38:30Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 2046,
+   "title": "[HOLD-FOR-JORGE] fix(reports): G9-H5 profit/pay double-count + include-cancelled",
+   "mergedAt": "2026-07-05T05:40:17Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 2045,
+   "title": "[HOLD-FOR-JORGE] fix(cash-flow): CASH-1 void exclusion no-op — correct the voided comparison value",
+   "mergedAt": "2026-07-05T05:40:19Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 2044,
+   "title": "[HOLD-FOR-JORGE] fix(security): G10-H5 encrypt Plaid access token at rest (AES-256-GCM, backward-compatible read)",
+   "mergedAt": "2026-07-05T05:20:06Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 2043,
+   "title": "[HOLD-FOR-JORGE] fix(security): G2-1 audit log_event SQL-injection — uuid-validate + parameterize ocId",
+   "mergedAt": "2026-07-05T05:17:57Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 2042,
+   "title": "[HOLD-FOR-JORGE] fix(security): G1-2/G1-3 assert company membership on bills pay/void + settlement/advance approvals",
+   "mergedAt": "2026-07-05T05:19:09Z",
+   "category": "HOLD"
+  },
   {
    "number": 2000,
    "title": "[HOLD-FOR-JORGE] feat(recon): wire createQboReconSource — live QBO bank register pull",
@@ -9362,6 +9434,12 @@
    "number": 1992,
    "title": "[HOLD-FOR-JORGE — MIGRATION] fix(chat): break participants RLS infinite recursion (42P17) — DDL already live on prod",
    "mergedAt": "2026-07-04T16:15:40Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 1991,
+   "title": "[HOLD-FOR-JORGE] fix(xe-fin): quality-events-payrates — bind entity scope on financial read",
+   "mergedAt": "2026-07-05T05:29:26Z",
    "category": "HOLD"
   },
   {
