@@ -375,16 +375,23 @@ export async function fetchHomeWosOpenCount(companyId: string): Promise<HomeWosO
 
 export async function fetchHomeCashPosition(companyId: string): Promise<HomeCashPosition> {
   const raw = await apiRequest<Record<string, unknown>>(withCompany("/api/v1/home/cash-position", companyId));
+  // Backend (home-widgets.routes.ts /cash-position) returns { totalCents, byAccount }. It does NOT
+  // send `balance_cents`, so reading that key rendered a permanent $0 (HOME-2). Read `totalCents`,
+  // keeping `balance_cents` as a fallback for forward-compat.
   return {
-    balance_cents: num(raw.balance_cents),
+    balance_cents: num(raw.totalCents ?? raw.balance_cents),
     last_reconciled_at: typeof raw.last_reconciled_at === "string" ? raw.last_reconciled_at : null,
   };
 }
 
 export async function fetchHomeFactoringBalance(companyId: string): Promise<HomeFactoringBalance> {
   const raw = await apiRequest<Record<string, unknown>>(withCompany("/api/v1/home/factoring-balance", companyId));
+  // Backend (home-widgets.routes.ts /factoring-balance) returns { reserveCents, advancedCents,
+  // totalCents }. It does NOT send `outstanding_cents`, so reading that key rendered a permanent $0
+  // (HOME-2). The tile shows the factoring reserve balance held by the factor → read `reserveCents`,
+  // keeping `outstanding_cents` as a fallback for forward-compat.
   return {
-    outstanding_cents: num(raw.outstanding_cents),
+    outstanding_cents: num(raw.reserveCents ?? raw.outstanding_cents),
     invoices_factored: num(raw.invoices_factored),
   };
 }
