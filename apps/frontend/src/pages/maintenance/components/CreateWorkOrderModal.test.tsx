@@ -19,7 +19,10 @@ vi.mock("../../../api/maintenance", () => ({
   listMaintenanceDrivers: vi.fn(() => Promise.resolve({ rows: [] })),
   getWoCostContext: vi.fn(() => Promise.resolve({ data: {} })),
 }));
-vi.mock("../../../api/identity", () => ({ listUsers: () => Promise.resolve({ users: [] }) }));
+vi.mock("../../../api/identity", () => ({
+  listUsers: () => Promise.resolve({ users: [] }),
+  listAssignableUsers: () => Promise.resolve({ users: [] }),
+}));
 vi.mock("../../../api/catalogs-fleet", () => ({
   tirePositionsCatalogClient: { list: () => Promise.resolve({ rows: [] }) },
 }));

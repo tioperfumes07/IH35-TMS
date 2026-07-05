@@ -123,6 +123,36 @@ function mapIdentityUser(row: IdentityUserRow) {
   };
 }
 
+type AssignableUserRow = {
+  id: string;
+  email: string | null;
+  role: string;
+  first_name: string | null;
+  last_name: string | null;
+  default_company_id: string | null;
+  created_at: string;
+};
+
+// USERS-2: minimal projection for assignee pickers (tasks, work orders, chat mentions). Deliberately
+// omits the auth-sensitive fields the full directory exposes — google_user_id/password_hash (→ auth
+// method, an auth-enumeration signal) and last_login_at (activity tracking). Names + role only.
+function mapAssignableUser(row: AssignableUserRow) {
+  const firstName = String(row.first_name ?? "").trim();
+  const lastName = String(row.last_name ?? "").trim();
+  const fullName = `${firstName} ${lastName}`.trim();
+  return {
+    id: String(row.id),
+    name: fullName || (row.email ? row.email.split("@")[0] : "User"),
+    first_name: firstName || null,
+    last_name: lastName || null,
+    email: row.email,
+    role: String(row.role),
+    default_company_id: row.default_company_id ?? null,
+    created_at: row.created_at,
+    deactivated_at: null,
+  };
+}
+
 function splitName(fullNameRaw: string): { firstName: string; lastName: string | null } {
   const fullName = fullNameRaw.trim().replace(/\s+/g, " ");
   const [firstName = "", ...rest] = fullName.split(" ");
@@ -199,6 +229,15 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
     if (!authUser) {
       return;
     }
+    // USERS-2 (security, audit 2026-07-05): the full user directory (email, auth method, last-login
+    // activity) is a user-management surface. Previously gated only by requireAuth, so ANY authenticated
+    // role — including low-privilege Driver — could enumerate every user in the org. Restrict the full
+    // directory read to Owner/Administrator, matching the create/patch/deactivate mutations
+    // (isAdminRole). Assignee pickers used by non-admin roles read the minimal-fields /users/assignable
+    // endpoint below instead of the full directory.
+    if (!isAdminRole(authUser.role)) {
+      return reply.code(403).send({ error: "forbidden" });
+    }
     const parsedQuery = paginationSchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) {
       return sendValidationError(reply, parsedQuery.error);
@@ -250,6 +289,63 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
         values
       );
       return res.rows.map(mapIdentityUser);
+    });
+
+    return { users };
+  });
+
+  // USERS-2 minimal directory for assignee pickers. Every office role may read it (never Driver), but it
+  // returns names + role only — no email auth method, no last-login. Active users only, no pagination
+  // knob, capped, so it can never be turned into a full-directory dump by a low-privilege caller.
+  app.get("/api/v1/identity/users/assignable", async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) {
+      return;
+    }
+    if (authUser.role === "Driver") {
+      return reply.code(403).send({ error: "forbidden" });
+    }
+    const parsedQuery = tenantQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) {
+      return sendValidationError(reply, parsedQuery.error);
+    }
+
+    const users = await withCurrentUser(authUser.uuid, async (client) => {
+      const values: unknown[] = [];
+      const filters: string[] = [
+        EXCLUDE_ARCHIVED_IDENTITY_USERS_SQL,
+        "u.deactivated_at IS NULL",
+        `(u.default_company_id IN (SELECT org.user_accessible_company_ids()) OR EXISTS (
+            SELECT 1
+            FROM org.user_company_access uca
+            WHERE uca.user_id = u.id
+              AND uca.company_id IN (SELECT org.user_accessible_company_ids())
+          ))`,
+      ];
+      if (parsedQuery.data.operating_company_id) {
+        values.push(parsedQuery.data.operating_company_id);
+        filters.push(`(
+          u.default_company_id = $${values.length}::uuid
+          OR EXISTS (
+            SELECT 1
+            FROM org.user_company_access uca
+            WHERE uca.user_id = u.id
+              AND uca.company_id = $${values.length}::uuid
+          )
+        )`);
+      }
+      const whereClause = `WHERE ${filters.join(" AND ")}`;
+      const res = await client.query<AssignableUserRow>(
+        `
+          SELECT u.id, u.email, u.role, u.first_name, u.last_name, u.default_company_id, u.created_at
+          FROM identity.users u
+          ${whereClause}
+          ORDER BY u.first_name ASC, u.last_name ASC
+          LIMIT 500
+        `,
+        values
+      );
+      return res.rows.map(mapAssignableUser);
     });
 
     return { users };

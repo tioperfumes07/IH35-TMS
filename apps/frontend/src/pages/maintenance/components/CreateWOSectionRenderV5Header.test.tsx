@@ -6,7 +6,10 @@ import { CreateWOSectionRenderV5Header } from "./CreateWOSectionRenderV5Header";
 import type { CreateWOFormValues } from "./CreateWorkOrderModal";
 
 // Avoid a real network call for the Authorized-by user list; the labels must render regardless of data.
-vi.mock("../../../api/identity", () => ({ listUsers: () => Promise.resolve({ users: [] }) }));
+vi.mock("../../../api/identity", () => ({
+  listUsers: () => Promise.resolve({ users: [] }),
+  listAssignableUsers: () => Promise.resolve({ users: [] }),
+}));
 
 // GUARD render-guard (false-DONE lesson): prove the render-v5 header fields reach the DOM, not just the
 // source file. Mounts the section and asserts each design label is rendered.
