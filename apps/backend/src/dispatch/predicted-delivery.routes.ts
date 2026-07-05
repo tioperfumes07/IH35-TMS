@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -39,6 +40,8 @@ export async function registerPredictedDeliveryRoutes(app: FastifyInstance) {
     const body = bodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
     if (!ALLOWED_ROLES.includes(user.role)) return reply.code(403).send({ error: "forbidden" });
+
+    await assertCompanyMembership(user.uuid, body.data.operating_company_id);
 
     const result = await withCurrentUser(user.uuid, async (client) => {
       // Master flag — feature no-ops until explicitly enabled.

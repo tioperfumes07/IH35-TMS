@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../../auth/db.js";
+import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
 import { requireAuth } from "../../auth/session-middleware.js";
 import { checkGates, DISPATCH_MUTATION_ACTIONS, type GateContext } from "./gate-registry.service.js";
 import "./wf-044-advisory.gate.js";
@@ -39,6 +40,7 @@ export async function registerDispatchAuthGateRoutes(app: FastifyInstance) {
     const parsed = checkQuery.safeParse(req.query ?? {});
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
     const d = parsed.data;
+    await assertCompanyMembership(req.user!.uuid, d.operating_company_id);
     const result = await withCurrentUser(req.user!.uuid, async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [d.operating_company_id]);
       return checkGates({
@@ -64,6 +66,7 @@ export async function registerDispatchAuthGateRoutes(app: FastifyInstance) {
     // Edge guard: oci flows into the tenant-scoping GUC below. Parameterization closes injection;
     // a non-UUID can never match a real tenant, so treat it as "no gate context" (skip), not a 500.
     if (!z.string().uuid().safeParse(oci).success) return;
+    await assertCompanyMembership(req.user.uuid, oci);
     const gateResult = await withCurrentUser(req.user.uuid, async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [oci]);
       return checkGates(extractBodyContext(body, match.action, oci), client);

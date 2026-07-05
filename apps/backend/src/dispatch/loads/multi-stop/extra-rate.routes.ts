@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../../../auth/db.js";
+import { assertCompanyMembership } from "../../../_helpers/company-membership-guard.js";
 import { requireAuth } from "../../../auth/session-middleware.js";
 import { addStopExtra, listForLoad, softDelete, totalForLoad } from "./extra-rate.service.js";
 
@@ -55,6 +56,7 @@ export async function registerLoadStopExtraRateRoutes(app: FastifyInstance) {
     if (!body.success) return sendValidationError(reply, body.error);
 
     const created = await withCurrentUser(user.uuid, async (client) => {
+      await assertCompanyMembership(user.uuid, body.data.operating_company_id);
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [body.data.operating_company_id]);
       return addStopExtra(client, {
         operating_company_id: body.data.operating_company_id,
@@ -82,6 +84,7 @@ export async function registerLoadStopExtraRateRoutes(app: FastifyInstance) {
     if (!query.success) return sendValidationError(reply, query.error);
 
     const payload = await withCurrentUser(user.uuid, async (client) => {
+      await assertCompanyMembership(user.uuid, query.data.operating_company_id);
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
       const [items, total_cents] = await Promise.all([
         listForLoad(client, {
@@ -114,7 +117,8 @@ export async function registerLoadStopExtraRateRoutes(app: FastifyInstance) {
       if (!query.success) return sendValidationError(reply, query.error);
 
       const deleted = await withCurrentUser(user.uuid, async (client) => {
-        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
+        await assertCompanyMembership(user.uuid, query.data.operating_company_id);
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
         return softDelete(client, {
           operating_company_id: query.data.operating_company_id,
           load_uuid: params.data.load_uuid,

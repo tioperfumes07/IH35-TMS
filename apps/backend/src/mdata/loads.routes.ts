@@ -7,6 +7,7 @@ import { emitAutoProposedEscrowEvents } from "../driver-finance/escrow-deduction
 import { computeProgressStatus } from "../telematics/load-progress.service.js";
 import { effectiveDeliverySelectSql } from "../dispatch/effective-delivery.js";
 import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { companyBusinessDateCompact } from "../lib/company-business-date.js";
 
 const loadStatusSchema = z.enum([
@@ -279,6 +280,8 @@ export async function registerLoadRoutes(app: FastifyInstance) {
     if (b.assigned_primary_driver_id && b.team_id) {
       return reply.code(400).send({ error: "solo_or_team_assignment_required_not_both" });
     }
+
+    await assertCompanyMembership(authUser.uuid, b.operating_company_id);
 
     try {
       const created = await withCurrentUser(authUser.uuid, async (client) => {

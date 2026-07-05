@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { requireAuth } from "../auth/session-middleware.js";
 
 const querySchema = z.object({
@@ -159,6 +160,7 @@ export async function registerQboUnlinkedEntitiesRoutes(app: FastifyInstance) {
     if (!parsed.success) return validationError(reply, parsed.error);
 
     const oc = parsed.data.operating_company_id;
+    await assertCompanyMembership(user.uuid, oc);
 
     const payload = await withCurrentUser(user.uuid, async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [oc]);

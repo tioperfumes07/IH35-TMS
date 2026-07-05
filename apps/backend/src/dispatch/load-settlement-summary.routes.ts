@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 const paramsSchema = z.object({ loadId: z.string().uuid() });
 const querySchema = z.object({ operating_company_id: z.string().uuid() });
@@ -25,6 +26,7 @@ export async function registerLoadSettlementSummaryRoutes(app: FastifyInstance) 
     const { loadId } = params.data;
     const { operating_company_id } = query.data;
 
+    await assertCompanyMembership(user.uuid, operating_company_id);
     const result = await withCurrentUser(user.uuid, async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operating_company_id]);
 

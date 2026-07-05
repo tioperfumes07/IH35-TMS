@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { getTripPairingBoard } from "./trip-pairing-board.service.js";
 
@@ -21,6 +22,7 @@ export async function registerTripPairingBoardRoutes(app: FastifyInstance) {
 
     const asOf = new Date();
     const board = await withCurrentUser(user.uuid, async (client) => {
+      await assertCompanyMembership(user.uuid, query.data.operating_company_id);
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [query.data.operating_company_id]);
       return getTripPairingBoard(client, query.data.operating_company_id, asOf);
     });

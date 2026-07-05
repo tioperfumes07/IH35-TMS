@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { pool } from "../auth/db.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import {
   approvePendingDeduction,
@@ -44,6 +45,7 @@ export function registerEscrowDeductionPendingRoutes(app: FastifyInstance) {
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
 
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     const client = await pool.connect();
     try {
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
@@ -111,6 +113,7 @@ export function registerEscrowDeductionPendingRoutes(app: FastifyInstance) {
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
 
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     const client = await pool.connect();
     try {
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
