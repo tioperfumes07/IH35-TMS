@@ -18,6 +18,7 @@ import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { UploadZone } from "../../components/UploadZone";
 import { LaborTracker } from "../../components/maintenance/LaborTracker";
 import { TasksTab } from "../../components/tasks/TasksTab";
+import { CreateBillModal } from "./components/CreateBillModal";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useAuth } from "../../auth/useAuth";
 import { useToast } from "../../components/Toast";
@@ -180,6 +181,7 @@ export function WorkOrderDetailPage() {
   const canCancelVoid = ["Owner", "Administrator"].includes(String(auth.user?.role ?? ""));
   const [reasonModal, setReasonModal] = useState<{ kind: "cancel" | "void" } | null>(null);
   const [reasonText, setReasonText] = useState("");
+  const [createBillOpen, setCreateBillOpen] = useState(false);
   const invalidateWo = () => {
     void queryClient.invalidateQueries({ queryKey: ["maintenance", "work-order-detail", id, companyId] });
     void queryClient.invalidateQueries({ queryKey: ["maintenance", "work-order-posting-preview", id, companyId] });
@@ -340,6 +342,9 @@ export function WorkOrderDetailPage() {
       <div className="flex flex-wrap gap-2">
         <Button type="button" disabled={invoiceMismatch || !id}>
           Save header
+        </Button>
+        <Button type="button" variant="secondary" disabled={!id || !companyId} onClick={() => setCreateBillOpen(true)}>
+          + Create Bill
         </Button>
         <Button
           type="button"
@@ -579,6 +584,13 @@ export function WorkOrderDetailPage() {
       <section className="rounded-sm border border-gray-200 bg-white p-3">
         <TasksTab operatingCompanyId={companyId} targetType="work_order" targetId={id} targetLabel={`Work Order ${woNumber}`} />
       </section>
+
+      <CreateBillModal
+        open={createBillOpen}
+        operatingCompanyId={companyId}
+        linkedWoDisplayId={woNumber}
+        onClose={() => setCreateBillOpen(false)}
+      />
     </div>
   );
 }

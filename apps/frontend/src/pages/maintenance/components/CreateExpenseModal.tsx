@@ -1,37 +1,40 @@
 import type { JSX } from "react";
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { listDrivers, listUnits, listVendors } from "../../api/mdata";
-import { getAllAccounts } from "../../api/banking";
-import { Modal } from "../Modal";
-import { companyToday } from "../../lib/businessDate";
-import { TwoSectionLineEditor, type TwoSectionLine } from "../forms/TwoSectionLineEditor";
-import { TotalsStack } from "../forms/shared/TotalsStack";
-import { EXPENSE_TYPE_TABS, TypeTabBar } from "../forms/shared/TypeTabBar";
-import { SelectCombobox } from "../shared/SelectCombobox";
-import { UploadZone } from "../UploadZone";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { listDrivers, listUnits, listVendors } from "../../../api/mdata";
+import { getWoCostContext } from "../../../api/maintenance";
+import { listCatalogAccounts } from "../../../api/catalog-accounts";
+import { createExpense } from "../../../api/accounting";
+import { Modal } from "../../../components/Modal";
+import { Button } from "../../../components/Button";
+import { useToast } from "../../../components/Toast";
+import { companyToday } from "../../../lib/businessDate";
+import { TwoSectionLineEditor, type TwoSectionLine } from "../../../components/forms/TwoSectionLineEditor";
+import { TotalsStack } from "../../../components/forms/shared/TotalsStack";
+import { EXPENSE_TYPE_TABS, TypeTabBar } from "../../../components/forms/shared/TypeTabBar";
+import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { UploadZone } from "../../../components/UploadZone";
 
-// ARCHIVED (D2-1 "modals that save nothing"): this was a non-persisting stub — the form
-// rendered but had NO Save affordance and NO POST, so it could never write. It was never
-// mounted anywhere (only referenced from a unit test). The canonical, fully-wired
-// create-expense flow already exists in the accounting module (ExpenseCreatePage /
-// recordExpenseSubmit -> createExpense -> POST /api/v1/expenses). Shelved here rather than
-// wired because expense creation is financial-cluster work (accounting.*) that must go
-// through Jorge (CLAUDE.md §1.4). If a Work-Order-linked "Create Expense" entry point is
-// wanted, wire that flow to POST /api/v1/expenses under his sign-off instead of this stub.
 type Props = {
   open: boolean;
   operatingCompanyId: string;
   onClose: () => void;
+  onCreated?: (expenseId: string | null) => void;
 };
 
-export function CreateExpenseModalArchived({ open, operatingCompanyId, onClose }: Props) {
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function CreateExpenseModal({ open, operatingCompanyId, onClose, onCreated }: Props) {
+  const { pushToast } = useToast();
+  const queryClient = useQueryClient();
   const [lines, setLines] = useState<TwoSectionLine[]>([]);
   const [taxRate, setTaxRate] = useState(8.25);
   const [expenseType, setExpenseType] = useState("fuel");
   const [draftAttachmentEntityId] = useState(() => crypto.randomUUID());
   const [expenseDate, setExpenseDate] = useState(() => companyToday());
   const [expenseNumber, setExpenseNumber] = useState("");
+  const [categoryQboId, setCategoryQboId] = useState<string | null>(null);
+  const [categoryLabel, setCategoryLabel] = useState("");
   const [payFromAccountId, setPayFromAccountId] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("fuel_card");
   const [payeeId, setPayeeId] = useState("");
@@ -41,10 +44,20 @@ export function CreateExpenseModalArchived({ open, operatingCompanyId, onClose }
   const [className, setClassName] = useState("");
   const [invoiceNumber, setInvoiceNumber] = useState("");
 
-  const accountsQuery = useQuery({
-    queryKey: ["create-expense-modal", "accounts", operatingCompanyId],
-    queryFn: () => getAllAccounts(operatingCompanyId),
+  // Payment account = the cash/bank asset the expense was paid FROM. Sourced from the postable Asset
+  // chart of accounts (catalogs.accounts) so the id is a valid payment_account_uuid — same source the
+  // canonical Record-Expense form uses.
+  const paymentAccountsQuery = useQuery({
+    queryKey: ["create-expense-modal", "payment-accounts", operatingCompanyId],
+    queryFn: () => listCatalogAccounts({ status: "active" }),
     enabled: Boolean(open && operatingCompanyId),
+    staleTime: 60_000,
+  });
+  const costContextQuery = useQuery({
+    queryKey: ["create-expense-modal", "cost-context", operatingCompanyId],
+    queryFn: () => getWoCostContext(operatingCompanyId),
+    enabled: Boolean(open && operatingCompanyId),
+    staleTime: 60_000,
   });
   const vendorsQuery = useQuery({
     queryKey: ["create-expense-modal", "vendors", operatingCompanyId],
@@ -61,6 +74,26 @@ export function CreateExpenseModalArchived({ open, operatingCompanyId, onClose }
     queryFn: () => listUnits({ status: "Active", operating_company_id: operatingCompanyId }),
     enabled: Boolean(open && operatingCompanyId),
   });
+
+  const paymentAccountOptions = useMemo(
+    () =>
+      (paymentAccountsQuery.data?.accounts ?? [])
+        .filter((acct) => acct.is_postable && acct.account_type === "Asset" && !acct.deactivated_at)
+        .map((acct) => ({
+          id: acct.id,
+          label: acct.account_number ? `${acct.account_number} · ${acct.account_name}` : acct.account_name,
+        })),
+    [paymentAccountsQuery.data?.accounts]
+  );
+  const categoryOptions = useMemo(
+    () =>
+      (costContextQuery.data?.expense_categories ?? []).map((entry) => ({
+        id: String(entry.id ?? ""),
+        label: String(entry.name ?? ""),
+        qboId: entry.qbo_id ? String(entry.qbo_id) : null,
+      })),
+    [costContextQuery.data?.expense_categories]
+  );
   const payeeOptions = useMemo(
     () =>
       (vendorsQuery.data?.vendors ?? []).map((vendor) => ({
@@ -74,6 +107,60 @@ export function CreateExpenseModalArchived({ open, operatingCompanyId, onClose }
     const subRowsTotal = (line.sub_rows ?? []).reduce((rowSum, row) => rowSum + Number(row.amount || 0), 0);
     return sum + Math.max(Number(line.amount || 0), subRowsTotal);
   }, 0);
+  const totalCents = Math.round((subtotal + (subtotal * taxRate) / 100) * 100);
+
+  // Fold the maintenance context (unit / driver / load / class / payment / invoice) into the expense memo
+  // so the cash-out is CONNECTED even though the canonical expense create has no WO/unit FK column.
+  function buildMemo(): string | undefined {
+    const parts: string[] = [];
+    const typeLabel = EXPENSE_TYPE_TABS.find((t) => t.id === expenseType)?.label;
+    if (typeLabel) parts.push(typeLabel);
+    if (categoryLabel) parts.push(`Category: ${categoryLabel}`);
+    if (expenseNumber.trim()) parts.push(`Expense #: ${expenseNumber.trim()}`);
+    if (invoiceNumber.trim()) parts.push(`Invoice: ${invoiceNumber.trim()}`);
+    if (loadNumber.trim()) parts.push(`Load: ${loadNumber.trim()}`);
+    if (driverId) {
+      const d = (driversQuery.data?.drivers ?? []).find((row) => row.id === driverId);
+      const name = d ? [d.first_name, d.last_name].filter(Boolean).join(" ").trim() : "";
+      if (name) parts.push(`Driver: ${name}`);
+    }
+    if (unitId) {
+      const u = ((unitsQuery.data?.units ?? []) as Array<Record<string, unknown>>).find((row) => String(row.id ?? "") === unitId);
+      const label = u ? String(u.unit_number ?? u.id ?? "") : "";
+      if (label) parts.push(`Unit: ${label}`);
+    }
+    if (className.trim()) parts.push(`Class: ${className.trim()}`);
+    if (paymentMethod) parts.push(`Payment: ${paymentMethod.replace(/_/g, " ").toUpperCase()}`);
+    return parts.length ? parts.join(" · ") : undefined;
+  }
+
+  const createMutation = useMutation({
+    mutationFn: () => {
+      if (!operatingCompanyId) throw new Error("Select an operating company first");
+      if (!categoryQboId) throw new Error("Category is required");
+      if (!payFromAccountId) throw new Error("Pay-from account is required");
+      if (totalCents <= 0) throw new Error("Expense total must be greater than zero");
+      return createExpense(operatingCompanyId, {
+        category_qbo_id: categoryQboId,
+        expense_date: expenseDate,
+        amount_cents: totalCents,
+        payment_account_uuid: payFromAccountId,
+        memo: buildMemo(),
+        ...(payeeId && UUID_RE.test(payeeId) ? { vendor_uuid: payeeId } : {}),
+        attachment_draft_id: draftAttachmentEntityId,
+      });
+    },
+    onSuccess: (res) => {
+      pushToast("Expense recorded", "success");
+      void queryClient.invalidateQueries({ queryKey: ["accounting", "expenses"] });
+      void queryClient.invalidateQueries({ queryKey: ["maintenance"] });
+      onCreated?.(res?.expense_id ?? null);
+      onClose();
+    },
+    onError: (error) => {
+      pushToast(String((error as Error).message || "Failed to record expense"), "error");
+    },
+  });
 
   return (
     <Modal open={open} onClose={onClose} title="Create Expense">
@@ -94,14 +181,32 @@ export function CreateExpenseModalArchived({ open, operatingCompanyId, onClose }
           <Field label="Expense Number">
             <input className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" placeholder="Expense Number" value={expenseNumber} onChange={(event) => setExpenseNumber(event.target.value)} />
           </Field>
-          <div className="md:col-span-3" />
+          <Field label="Category *">
+            <SelectCombobox
+              className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
+              value={categoryOptions.find((row) => row.qboId === categoryQboId)?.id ?? ""}
+              onChange={(event) => {
+                const match = categoryOptions.find((row) => row.id === event.target.value);
+                setCategoryQboId(match?.qboId ?? null);
+                setCategoryLabel(match?.label ?? "");
+              }}
+            >
+              <option value="">Select category...</option>
+              {categoryOptions.map((row) => (
+                <option key={row.id} value={row.id}>
+                  {row.label}
+                </option>
+              ))}
+            </SelectCombobox>
+          </Field>
+          <div className="md:col-span-2" />
 
-          <Field label="Pay From Account">
+          <Field label="Pay From Account *">
             <SelectCombobox className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" value={payFromAccountId} onChange={(event) => setPayFromAccountId(event.target.value)}>
               <option value="">Select account...</option>
-              {(accountsQuery.data?.accounts ?? []).map((account) => (
-                <option key={String(account.id ?? "")} value={String(account.id ?? "")}>
-                  {String(account.display_name ?? "Account")}
+              {paymentAccountOptions.map((account) => (
+                <option key={account.id} value={account.id}>
+                  {account.label}
                 </option>
               ))}
             </SelectCombobox>
@@ -174,6 +279,22 @@ export function CreateExpenseModalArchived({ open, operatingCompanyId, onClose }
           defaultCategory="receipt"
           title="Expense Receipts"
         />
+
+        <div className="flex items-center justify-end gap-2 border-t border-gray-200 pt-3">
+          <Button variant="secondary" type="button" onClick={onClose} disabled={createMutation.isPending}>
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            type="button"
+            data-testid="create-expense-submit"
+            loading={createMutation.isPending}
+            disabled={createMutation.isPending || !categoryQboId || !payFromAccountId || totalCents <= 0}
+            onClick={() => createMutation.mutate()}
+          >
+            Create Expense
+          </Button>
+        </div>
       </div>
     </Modal>
   );
