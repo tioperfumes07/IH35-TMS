@@ -19,12 +19,13 @@ describe("FIN-18 settlement posting math", () => {
     expect(dollarsToCents("oops")).toBe(0);
   });
 
-  it("normalizeFloorPct clamps invalid values to the 10% default", () => {
+  it("normalizeFloorPct clamps invalid values to the 5% locked default", () => {
     expect(normalizeFloorPct(0.25)).toBe(0.25);
     expect(normalizeFloorPct("0.15")).toBe(0.15);
-    expect(normalizeFloorPct(null)).toBe(0.1);
-    expect(normalizeFloorPct(-1)).toBe(0.1);
-    expect(normalizeFloorPct(2)).toBe(0.1);
+    // Owner-LOCKED default corrected 10% -> 5% (2026-07-04).
+    expect(normalizeFloorPct(null)).toBe(0.05);
+    expect(normalizeFloorPct(-1)).toBe(0.05);
+    expect(normalizeFloorPct(2)).toBe(0.05);
   });
 
   it("netPayFloorCents = ceil(gross * pct) — 10% of $9,000 gross is $900", () => {

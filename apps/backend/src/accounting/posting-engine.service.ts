@@ -931,6 +931,7 @@ async function buildBillPaymentLines(client: DbClient, operatingCompanyId: strin
     from_bank_account_id: string | null;
     revoked_at: string | null;
     status: string;
+    settlement_deduction_noncash: boolean | null;
   }>(
     `
       SELECT
@@ -941,7 +942,8 @@ async function buildBillPaymentLines(client: DbClient, operatingCompanyId: strin
         amount::text,
         from_bank_account_id::text,
         revoked_at::text,
-        status::text
+        status::text,
+        COALESCE(settlement_deduction_noncash, false) AS settlement_deduction_noncash
       FROM accounting.bill_payments
       WHERE operating_company_id = $1::uuid
         AND id::text = $2
@@ -954,6 +956,16 @@ async function buildBillPaymentLines(client: DbClient, operatingCompanyId: strin
   if (!payment) throw new PostingEngineError("SOURCE_NOT_FOUND", "Bill payment not found");
   if (payment.revoked_at || payment.status === "void") {
     throw new PostingEngineError("PAYMENT_NOT_POSTING_ELIGIBLE", "Voided bill payment is not posting-eligible");
+  }
+  // SETTLEMENT-BILL-PAYMENT: a non-cash settlement DEDUCTION bill_payment (advance repaid / escrow
+  // withheld — from_bank_account_id NULL) exists ONLY to close its bill's A/P in the subledger. Its GL
+  // is OWNED by the settlement deduction JE (Dr A/P / Cr the driver's own sub-account). Posting it here
+  // (Dr A/P / Cr bank) would double-reduce A/P and credit cash it never touched — refuse (skip).
+  if (payment.settlement_deduction_noncash === true) {
+    throw new PostingEngineError(
+      "PAYMENT_NOT_POSTING_ELIGIBLE",
+      "Non-cash settlement-deduction bill payment — GL is owned by the settlement deduction JE; not independently posting-eligible"
+    );
   }
 
   // CHAIN-04 GAP #3 — accrual-sequencing guard (bill-posted-first). The payment JE always does
@@ -1678,6 +1690,9 @@ export async function runPostingEngineMvpBackfill(input: BackfillInput, actor: A
         WHERE operating_company_id = $1::uuid
           AND revoked_at IS NULL
           AND status <> 'void'
+          -- SETTLEMENT-BILL-PAYMENT: skip non-cash settlement-deduction payments (GL owned by the
+          -- settlement deduction JE; posting them here would double-reduce A/P + credit phantom cash).
+          AND COALESCE(settlement_deduction_noncash, false) = false
       `,
       [input.operating_company_id]
     );

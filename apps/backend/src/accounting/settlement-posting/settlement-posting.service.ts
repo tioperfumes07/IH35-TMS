@@ -1,5 +1,13 @@
 // FIN-18 — Settlement + deduction GL posting engine (TIER-1 FINANCIAL; BUILD-AND-HOLD, flag OFF).
 //
+// ⚠ DEPRECATED / SUPERSEDED: the canonical settlement posting is now the Bill + BillPayment engine
+// (settlement-bill-payment-posting.service.ts, blueprint §3 LOCKED) — driver = a VENDOR, one Bill per
+// LOAD, deductions credit the driver's OWN sub-accounts (pay-first-then-escrow), net BillPayment to DIP,
+// consent = the hire contract (NO separate signed-deduction gate). This single-JE poster (Dr gross /
+// Cr bucket recovery / Cr net-pay clearing, with the separate CONSENT_MISSING gate) is retained only as
+// the older build-and-hold path behind the same SETTLEMENT_GL_POSTING_ENABLED flag; it has no live
+// caller. New wiring uses the Bill + BillPayment engine.
+//
 // On a finalized/locked driver settlement (TRANSP only — never cross-post), post ONE balanced journal
 // entry through the established accounting spine (NO new GL math, NO ad-hoc poster):
 //   Dr  driver-pay expense        = gross_pay
