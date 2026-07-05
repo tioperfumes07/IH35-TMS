@@ -3,7 +3,20 @@ import { z } from "zod";
 import { buildPatchChanges } from "../audit/crud-audit.js";
 import { appendBulkCrudAudit, registerBulkRoute } from "../bulk/bulk-update.factory.js";
 import type { BulkPerEntityContext, BulkPerEntityResult } from "../bulk/bulk.types.js";
-import { dispatchStatusSchema, toMdataStatus, validateLoadStatusTransition } from "./load-state-machine.js";
+import {
+  type DispatchStatus,
+  dispatchStatusSchema,
+  fromMdataStatus,
+  toMdataStatus,
+  validateLoadStatusTransition,
+} from "./load-state-machine.js";
+import { emitDispatchSpineEvent } from "./dispatch-spine-emit.js";
+
+// Transitions that fire escrow-proposal + settlement side-effects on the per-load endpoint
+// (PATCH /dispatch/loads/:id/status). Bulk set_status does NOT run those financial hooks, so moving a
+// load into one of these states in bulk would silently skip the escrow proposal and the settlement ping.
+// Route them to the per-load action instead of losing the side-effects. (financial hooks are Jorge-gated)
+const PER_LOAD_ONLY_TRANSITIONS = new Set<DispatchStatus>(["abandoned", "driver_walkoff", "driver_no_show"]);
 
 const setStatusPayloadSchema = z.object({
   transition: dispatchStatusSchema,
@@ -50,6 +63,13 @@ async function handleLoadBulk(ctx: BulkPerEntityContext<LoadBulkPayload>): Promi
 
   if (action === "set_status") {
     const statusPayload = payload as z.infer<typeof setStatusPayloadSchema>;
+    if (PER_LOAD_ONLY_TRANSITIONS.has(statusPayload.transition)) {
+      return {
+        ok: false,
+        code: "E_REQUIRES_PER_LOAD",
+        message: `Transition to ${statusPayload.transition} runs escrow/settlement side-effects and must use the per-load status action`,
+      };
+    }
     const validation = validateLoadStatusTransition(String(oldRow.status), statusPayload.transition);
     if (!validation.ok) {
       return {
@@ -74,6 +94,19 @@ async function handleLoadBulk(ctx: BulkPerEntityContext<LoadBulkPayload>): Promi
     if (updateRes.rows.length === 0) {
       return { ok: false, code: "E_UPDATE_FAILED", message: "Load status update failed" };
     }
+    // Parity with the per-load endpoint: a bulk status change must land on the dispatch event spine so
+    // downstream workflow consumers (timeline, notifications) see it. (Non-financial event-bus write.)
+    await emitDispatchSpineEvent(client as unknown as Parameters<typeof emitDispatchSpineEvent>[0], {
+      operating_company_id: operatingCompanyId,
+      actor_user_id: actorUserId,
+      event_type: "load.status_changed",
+      load_id: id,
+      payload: {
+        from_status: fromMdataStatus(String(oldRow.status)),
+        to_status: statusPayload.transition,
+        source: "bulk",
+      },
+    });
     auditPayload.changes = buildPatchChanges(
       { status: mdataStatus, transition: statusPayload.transition },
       oldRow,
