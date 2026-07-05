@@ -16,6 +16,7 @@
 // Money is integer cents. Per-entity only — no cross-entity totals.
 
 import { withCurrentUser } from "../auth/db.js";
+import { logger } from "../observability/structured-logger.js";
 import { getCashFlowReport } from "./cash-flow.service.js";
 import { computeDepreciationSchedule, asOfToday } from "./fixed-assets.math.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
@@ -212,12 +213,22 @@ export async function getFinanceHubOverview(input: {
 
   // Cash position reuses the read-only cash-flow service (manages its own opco-scoped client).
   // YTD range so cash_at_end reflects the live cash balance.
+  // SWL-2: a cash-flow failure must NOT masquerade as a real $0 cash position — that reads to the
+  // user as "you have no cash" when in truth the figure could not be loaded. Surface an explicit
+  // "Unavailable" state (see the cash_position KPI below) and log with context, rather than a
+  // misleading $0. A genuine $0 cash balance still comes back through the success path.
   let cashAtEndCents = 0;
+  let cashUnavailable = false;
   try {
     const cashFlow = await getCashFlowReport({ userId, operating_company_id, from_date: startOfYearIso(), to_date: todayIsoDate() });
     cashAtEndCents = num(cashFlow.cash_at_end);
-  } catch {
-    cashAtEndCents = 0;
+  } catch (err) {
+    cashUnavailable = true;
+    logger.error("finance-hub: cash-position read failed — surfacing Unavailable instead of $0", err, {
+      user_id: userId,
+      company_id: operating_company_id,
+      surface: "accounting.getFinanceHubOverview.cash_position",
+    });
   }
 
   return withCurrentUser(userId, async (client) => {
@@ -232,15 +243,27 @@ export async function getFinanceHubOverview(input: {
     ]);
 
     const kpis: FinanceHubKpi[] = [
-      {
-        key: "cash_position",
-        label: "Cash position",
-        value_kind: "money_cents",
-        value: cashAtEndCents,
-        secondary: "Cash on hand, year to date",
-        drill_to: "/cash-flow",
-        drill_label: "View cash flow",
-      },
+      // SWL-2: distinguish a real $0 (success path, money_cents) from a load failure (text
+      // "Unavailable") so the UI never shows a misleading zero when the figure couldn't be read.
+      cashUnavailable
+        ? {
+            key: "cash_position",
+            label: "Cash position",
+            value_kind: "text" as const,
+            value: "Unavailable",
+            secondary: "Couldn't load cash position — try again",
+            drill_to: "/cash-flow",
+            drill_label: "View cash flow",
+          }
+        : {
+            key: "cash_position",
+            label: "Cash position",
+            value_kind: "money_cents" as const,
+            value: cashAtEndCents,
+            secondary: "Cash on hand, year to date",
+            drill_to: "/cash-flow",
+            drill_label: "View cash flow",
+          },
       {
         key: "accounts_receivable",
         label: "Accounts receivable (open)",

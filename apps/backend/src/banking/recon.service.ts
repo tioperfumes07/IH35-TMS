@@ -1,4 +1,5 @@
 import { getSuggestionsForTxn } from "../factoring/bank-match.service.js";
+import { logger } from "../observability/structured-logger.js";
 
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
@@ -23,9 +24,24 @@ export async function appendFactoringSuggestions(input: {
   bank_transaction_id: string;
   baseSuggestions: BankingReconSuggestion[];
 }) {
-  const factoring = await getSuggestionsForTxn(input.bank_transaction_id, input.operating_company_id, {
-    client: input.client,
-  }).catch(() => []);
+  // Best-effort append: factoring suggestions are layered ON TOP of the base obligation matches,
+  // so a factoring-lookup failure must NOT blow up the whole suggestions panel. But it must also
+  // never vanish silently — a swallowed error here previously looked identical to "no factoring
+  // match", hiding a real query failure on a money-reconciliation path. Log with context and fall
+  // back to the base suggestions (SWL-2). Convention: best-effort/side path → log, do not rethrow.
+  let factoring: Awaited<ReturnType<typeof getSuggestionsForTxn>> = [];
+  try {
+    factoring = await getSuggestionsForTxn(input.bank_transaction_id, input.operating_company_id, {
+      client: input.client,
+    });
+  } catch (err) {
+    logger.error("banking-recon: factoring suggestion lookup failed — returning base suggestions only", err, {
+      company_id: input.operating_company_id,
+      bank_transaction_id: input.bank_transaction_id,
+      surface: "banking.appendFactoringSuggestions",
+    });
+    factoring = [];
+  }
 
   const factoringSuggestions: BankingReconSuggestion[] = factoring.map((row) => ({
     obligation_type: "factoring_batch",
