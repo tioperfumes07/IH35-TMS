@@ -15,6 +15,7 @@ import {
 import { ApiError } from "../../../api/client";
 import { companyToday } from "../../../lib/businessDate";
 import { Button } from "../../../components/Button";
+import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../../../components/forms/TwoSectionLineEditor";
 import { TotalsStack } from "../../../components/forms/shared/TotalsStack";
 import { TypeTabBar } from "../../../components/forms/shared/TypeTabBar";
@@ -852,10 +853,10 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
                           <input type="number" step="1" min="0" value={line.quantity} onChange={(e) => patchEditLine(i, { quantity: Number(e.target.value) })} className={`${FLD} text-right`} />
                         </td>
                         <td className="px-1.5 py-1">
-                          <input type="number" step="0.01" min="0" value={line.unit_cost} onChange={(e) => patchEditLine(i, { unit_cost: Number(e.target.value) })} className={`${FLD} text-right`} />
+                          <MoneyInput valueDollars={line.unit_cost ?? null} onChangeDollars={(d) => patchEditLine(i, { unit_cost: d ?? 0 })} ariaLabel="Unit cost (USD)" className="w-full" />
                         </td>
                         <td className="px-1.5 py-1">
-                          <input type="number" step="0.01" min="0" value={line.amount} onChange={(e) => patchEditLine(i, { amount: Number(e.target.value) })} className={`${FLD} text-right`} />
+                          <MoneyInput valueDollars={line.amount ?? null} onChangeDollars={(d) => patchEditLine(i, { amount: d ?? 0 })} ariaLabel="Amount (USD)" className="w-full" />
                         </td>
                         <td className="px-1.5 py-1 text-right">
                           <button type="button" data-testid={`edit-wo-remove-line-${i}`} onClick={() => removeEditLine(i)} className="rounded-sm border border-[#d6dae1] px-2 py-0.5 text-[11px] text-[#b91c1c]">Remove</button>
