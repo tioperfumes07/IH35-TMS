@@ -756,6 +756,7 @@
     "verify:dispatch-list-hos-columns": "node scripts/verify-dispatch-list-hos-columns.mjs",
     "verify:mdp-fields": "node scripts/verify-mdp-fields.mjs",
     "verify:cash-forecast-routes-registered": "node scripts/verify-cash-forecast-routes-registered.mjs",
+    "verify:driver-hub-cash-advance-routes-registered": "node scripts/verify-driver-hub-cash-advance-routes-registered.mjs",
     "verify:deactivation-trap-fix": "node scripts/verify-deactivation-trap-fix.mjs",
     "verify:attachment-draft-reconcile": "node scripts/verify-attachment-draft-reconcile.mjs",
     "verify:dispatch-board-hos-columns": "node scripts/verify-dispatch-board-hos-columns.mjs",
