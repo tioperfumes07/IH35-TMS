@@ -130,7 +130,7 @@ describeIntegration("CHAIN-05 bank-feed categorization → GL posting (real Post
   async function seedBill(): Promise<string> {
     const id = randomUUID();
     await bypass(async () => {
-      await db.query(`INSERT INTO accounting.bills (id, operating_company_id) VALUES ($1::uuid,$2::uuid)`, [id, companyId]);
+      await db.query(`INSERT INTO accounting.bills (id, operating_company_id, amount_cents) VALUES ($1::uuid,$2::uuid, 20000)`, [id, companyId]);
     });
     bills.push(id);
     return id;

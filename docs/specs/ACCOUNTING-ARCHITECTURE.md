@@ -1,5 +1,12 @@
 # IH35-TMS — Accounting Architecture (CANONICAL, locked 2026-07-02)
 
+> **★ CURRENT CONSOLIDATED GUARDRAIL:** [`ARCHITECTURE-BLUEPRINT-2026-07-05.md`](ARCHITECTURE-BLUEPRINT-2026-07-05.md)
+> is the current consolidated architecture guardrail — the **Law of the Land** total-connectivity rule, the
+> driver **Bill + BillPayment** settlement model, the **Faro** exact factoring terms, the auto-provisioned
+> **driver accounts** (cash-advance asset + escrow liability), the **posting flags**, and the
+> **per-build-block linkage checklist**. **All builds conform to it.** This ACCOUNTING-ARCHITECTURE doc
+> remains the detailed accounting source of truth; the blueprint is its consolidated, cross-module superset.
+
 > **Single source of truth for how accounting works. If any older doc (esp. the master blueprint
 > §3.12 "QBO AUTO-SYNC + REPLAY") disagrees, THIS wins.** Aligned with
 > `docs/lockdown/00_LOCKED_DECISIONS.md` §8. Purpose: stop agents from rebuilding a two-way QBO sync.

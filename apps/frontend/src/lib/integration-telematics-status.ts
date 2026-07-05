@@ -51,7 +51,13 @@ export function resolveSamsaraVisualStatus(health: SamsaraPublicHealth | undefin
   return { label: "Samsara: not configured", dot: "gray" };
 }
 
-export function qboConnectionLabel(connected: boolean | undefined): { label: string; dot: "gray" | "green" } {
+export function qboConnectionLabel(
+  connected: boolean | undefined,
+  needsReauth?: boolean,
+): { label: string; dot: "gray" | "green" | "yellow" } {
+  // A dead refresh token must never read as "connected" — reconciliation has silently
+  // stopped and the owner needs to reconnect QBO.
+  if (needsReauth === true) return { label: "QuickBooks: reconnect needed", dot: "yellow" };
   if (connected === true) return { label: "QuickBooks: connected", dot: "green" };
   return { label: "QuickBooks: not connected", dot: "gray" };
 }

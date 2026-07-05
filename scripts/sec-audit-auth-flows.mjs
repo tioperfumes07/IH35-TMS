@@ -38,6 +38,11 @@ function main() {
   const authRoutes = readRequired("apps/backend/src/auth/routes.ts", "auth routes");
   const lucia = readRequired("apps/backend/src/auth/lucia.ts", "lucia");
   const resetRoutes = readRequired("apps/backend/src/identity/password-reset.routes.ts", "password-reset");
+  // H2-3: session create/validate/invalidate now flow through a single indirection
+  // seam (session-provider.ts) instead of calling the Lucia instance directly, so
+  // the eventual swap off Lucia is a localized change. Read it too so the logout
+  // check below can see THROUGH the seam instead of false-failing on it.
+  const sessionProvider = readRequired("apps/backend/src/auth/session-provider.ts", "session-provider seam");
 
   assertIncludes(sessionPolicy, "httpOnly: true", "OAuth PKCE cookies must be httpOnly");
   assertIncludes(sessionPolicy, "secure:", "session cookies must declare secure flag");
@@ -83,9 +88,25 @@ function main() {
     driver_phone_auth: "Twilio Verify OTP — no long-lived refresh tokens in client",
   };
 
-  assertIncludes(authRoutes, "lucia.invalidateSession", "logout must invalidate server-side session");
+  // Logout must invalidate the server-side session. Accept either a direct
+  // `lucia.invalidateSession` call, OR the H2-3 seam indirection — routes.ts
+  // imports `invalidateSession` from ./session-provider AND calls it, PROVIDED
+  // the seam itself still genuinely forwards to lucia.invalidateSession (so a
+  // future edit that guts the seam into a no-op still fails this guard).
+  const callsLuciaDirectly = authRoutes.includes("lucia.invalidateSession");
+  const importsInvalidateSessionFromSeam =
+    /import\s*\{[^}]*\binvalidateSession\b[^}]*\}\s*from\s*["']\.\/session-provider(?:\.js)?["']/.test(authRoutes) &&
+    /\binvalidateSession\s*\(/.test(authRoutes);
+  const seamForwardsToLucia = /invalidateSession\s*=\s*\([^]*?=>\s*lucia\.invalidateSession/.test(sessionProvider);
+  if (!callsLuciaDirectly && !(importsInvalidateSessionFromSeam && seamForwardsToLucia)) {
+    fail("logout must invalidate server-side session");
+  }
   assertIncludes(authRoutes, 'clearCookie("ih35_session"', "logout must clear session cookie");
-  report.logout = { server_invalidation: true, cookie_clear: true };
+  report.logout = {
+    server_invalidation: true,
+    cookie_clear: true,
+    via: callsLuciaDirectly ? "direct lucia.invalidateSession" : "session-provider seam -> lucia.invalidateSession",
+  };
 
   assertIncludes(authRoutes, "generateCodeVerifier", "Google OAuth must use PKCE");
   assertIncludes(authRoutes, "validateReturnTo", "OAuth returnTo must be allowlisted");

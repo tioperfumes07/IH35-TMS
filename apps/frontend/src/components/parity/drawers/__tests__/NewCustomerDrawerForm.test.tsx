@@ -2,17 +2,25 @@ import { describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ToastProvider } from "../../../Toast";
 import { NewCustomerDrawerForm } from "../NewCustomerDrawerForm";
 
 vi.mock("../../../../api/mdata", () => ({
   createCustomer: vi.fn(),
+  // D1-4: the drawer now loads eligible parent customers when "is a sub-customer" is checked.
+  listCustomers: vi.fn().mockResolvedValue({ customers: [] }),
 }));
 
 import { createCustomer } from "../../../../api/mdata";
 
 function wrap(ui: ReactElement) {
-  return <ToastProvider>{ui}</ToastProvider>;
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ToastProvider>{ui}</ToastProvider>
+    </QueryClientProvider>
+  );
 }
 
 function renderDrawer() {

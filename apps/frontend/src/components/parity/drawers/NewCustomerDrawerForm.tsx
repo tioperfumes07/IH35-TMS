@@ -2,8 +2,9 @@
  * BK7 — New Customer drawer form (type-aware contact + sub-customer + comms).
  * OPERATIONAL gate: customer create is non-financial.
  */
-import { useState } from "react";
-import { createCustomer } from "../../../api/mdata";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { createCustomer, listCustomers } from "../../../api/mdata";
 import { useToast } from "../../Toast";
 import type { InlineCreateResult } from "../InlineCreateDrawer";
 
@@ -24,7 +25,7 @@ type FormState = {
   mobile: string;
   website: string;
   isSubCustomer: boolean;
-  parentCustomer: string;
+  parentCustomerId: string; // D1-4: the selected parent's real customer id (not free text)
   emailConsent: boolean;
   billingLine1: string;
   billingCity: string;
@@ -39,7 +40,7 @@ export function NewCustomerDrawerForm({ operatingCompanyId, onCreated, onClose }
   const [form, setForm] = useState<FormState>({
     displayName: "", companyName: "", customerType: "", firstName: "", lastName: "",
     email: "", phone: "", mobile: "", website: "",
-    isSubCustomer: false, parentCustomer: "",
+    isSubCustomer: false, parentCustomerId: "",
     emailConsent: false,
     billingLine1: "", billingCity: "", billingState: "", billingZip: "",
     sameAsShipping: true,
@@ -48,6 +49,20 @@ export function NewCustomerDrawerForm({ operatingCompanyId, onCreated, onClose }
   function set<K extends keyof FormState>(key: K, value: string | boolean) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
+
+  // D1-4: candidate parents = active, TOP-LEVEL customers in this company (a parent can never itself
+  // be a sub-customer, so drop any row that already has a parent_customer_id). Loaded lazily only when
+  // the "is a sub-customer" box is checked.
+  const parentQuery = useQuery({
+    queryKey: ["customer-parent-options", operatingCompanyId],
+    queryFn: () => listCustomers({ operating_company_id: operatingCompanyId, limit: 5000 }).then((r) => r.customers),
+    enabled: Boolean(operatingCompanyId) && form.isSubCustomer,
+    staleTime: 60_000,
+  });
+  const parentOptions = useMemo(
+    () => (parentQuery.data ?? []).filter((c) => !c.parent_customer_id && c.status !== "inactive"),
+    [parentQuery.data]
+  );
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -59,7 +74,7 @@ export function NewCustomerDrawerForm({ operatingCompanyId, onCreated, onClose }
     if (!form.customerType) { pushToast("Customer type is required.", "error"); return; }
     // D1-4: a sub-customer with no parent selected is invalid — the "Parent customer *" marker was never
     // enforced before (submit went through and the parent was silently dropped). Block submit here.
-    if (form.isSubCustomer && !form.parentCustomer.trim()) {
+    if (form.isSubCustomer && !form.parentCustomerId) {
       pushToast("Parent customer is required for a sub-customer.", "error");
       return;
     }
@@ -73,9 +88,9 @@ export function NewCustomerDrawerForm({ operatingCompanyId, onCreated, onClose }
         name: displayName,
         operating_company_id: operatingCompanyId,
         customer_type: form.customerType,
-        // NOTE (D1-4): parent/sub-customer has no mdata.customers column yet (documented in
-        // CustomerProfileForm's "pending backend" note). We validate it above so an orphan sub-customer
-        // can't be created, but the parent link cannot be persisted until a migration adds the column.
+        // D1-4: persist the REAL parent hard link (parent_customer_id column added by migration
+        // 202607050820). Only sent when this is a sub-customer; the backend re-validates it.
+        parent_customer_id: form.isSubCustomer ? form.parentCustomerId : undefined,
         email: form.email.trim() || undefined,
         phone: form.phone.trim() || undefined,
         website: form.website.trim() || undefined,
@@ -155,7 +170,20 @@ export function NewCustomerDrawerForm({ operatingCompanyId, onCreated, onClose }
       {form.isSubCustomer && (
         <label className="block">
           <span className="text-xs font-medium text-gray-700">Parent customer *</span>
-          <input className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm" value={form.parentCustomer} onChange={(e) => set("parentCustomer", e.target.value)} placeholder="Parent customer name" />
+          <select
+            name="parent_customer_id"
+            className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm"
+            value={form.parentCustomerId}
+            aria-required
+            onChange={(e) => set("parentCustomerId", e.target.value)}
+          >
+            <option value="">{parentQuery.isLoading ? "Loading customers…" : "— Select parent —"}</option>
+            {parentOptions.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.customer_code ? `${c.name} (${c.customer_code})` : c.name}
+              </option>
+            ))}
+          </select>
         </label>
       )}
       <fieldset className="rounded-sm border border-gray-200 p-3">

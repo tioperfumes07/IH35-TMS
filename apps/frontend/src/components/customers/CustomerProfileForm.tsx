@@ -8,8 +8,8 @@
  * (heading + rule + field grid) — no box-within-box card nesting.
  *
  * Every field here round-trips to an EXISTING mdata.customers column via
- * Create/UpdateCustomerInput. QBO fields that have no column yet (sub-customer,
- * Cc/Bcc, name-to-print-on-checks, shipping address, payment method, delivery
+ * Create/UpdateCustomerInput. QBO fields that have no column yet (Cc/Bcc,
+ * name-to-print-on-checks, shipping address, payment method, delivery
  * method, language, tax-exemption details, attachments, communication
  * permissions) are surfaced in a labelled "Pending backend" note rather than as
  * silent inputs that would drop data — those are flagged follow-ups (need a
@@ -25,6 +25,7 @@ export type CustomerProfileFormValues = {
   // Name & contact
   name: string;
   customer_type: "" | CustomerType;
+  parent_customer_id: string; // D1-4: sub-customer -> parent hard link ("" = top-level customer)
   email: string;
   phone: string;
   mobile: string;
@@ -70,6 +71,7 @@ export function emptyCustomerProfileValues(): CustomerProfileFormValues {
   return {
     name: "",
     customer_type: "",
+    parent_customer_id: "",
     email: "",
     phone: "",
     mobile: "",
@@ -109,6 +111,7 @@ export function customerToProfileValues(c: Customer): CustomerProfileFormValues 
   return {
     name: str(c.name),
     customer_type: c.customer_type ?? "",
+    parent_customer_id: str(c.parent_customer_id),
     email: str(c.email),
     phone: str(c.phone),
     mobile: str(c.main_contact_mobile),
@@ -161,6 +164,7 @@ export function profileValuesToCreatePayload(v: CustomerProfileFormValues, opera
     legal_name: name,
     customer_code: trimOrUndef(v.customer_code),
     customer_type: v.customer_type || undefined,
+    parent_customer_id: v.parent_customer_id || undefined, // D1-4: persist parent hard link
     email: trimOrUndef(v.email),
     phone: trimOrUndef(v.phone),
     website: trimOrUndef(v.website),
@@ -200,6 +204,7 @@ export function profileValuesToUpdatePayload(v: CustomerProfileFormValues): Upda
     name,
     customer_code: trimOrNull(v.customer_code),
     customer_type: v.customer_type || null,
+    parent_customer_id: v.parent_customer_id || null, // D1-4: persist / clear parent hard link
     email: trimOrNull(v.email),
     phone: trimOrNull(v.phone),
     website: trimOrNull(v.website),
@@ -319,6 +324,11 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
+// D1-4: candidate parents for the sub-customer picker. Callers pass ACTIVE, TOP-LEVEL customers in the
+// same company (a parent can never itself be a sub). `customerId` is the row being edited, excluded so a
+// customer can't pick itself as parent. When no options are supplied the section renders read-only guidance.
+export type ParentCustomerOption = { id: string; name: string; customer_code: string | null };
+
 type Props = {
   values: CustomerProfileFormValues;
   onPatch: (patch: Partial<CustomerProfileFormValues>) => void;
@@ -326,9 +336,11 @@ type Props = {
   mode: "create" | "edit";
   paymentTermOptions: PaymentTermOption[];
   onPaymentTermCreated?: (term: PaymentTermOption) => void;
+  parentCustomerOptions?: ParentCustomerOption[];
+  customerId?: string;
 };
 
-export function CustomerProfileForm({ values, onPatch, mode, paymentTermOptions, onPaymentTermCreated }: Props) {
+export function CustomerProfileForm({ values, onPatch, mode, paymentTermOptions, onPaymentTermCreated, parentCustomerOptions, customerId }: Props) {
   const [localTerms, setLocalTerms] = useState<PaymentTermOption[]>([]);
   const [addTermOpen, setAddTermOpen] = useState(false);
   const [newTermName, setNewTermName] = useState("");
@@ -340,6 +352,15 @@ export function CustomerProfileForm({ values, onPatch, mode, paymentTermOptions,
     const merged = [...paymentTermOptions, ...localTerms];
     return merged.map((t) => ({ value: t.id, label: `${t.terms_name} (${t.days_until_due}d)` }));
   }, [paymentTermOptions, localTerms]);
+
+  // D1-4: parent-customer options, excluding the row being edited (a customer can't be its own parent).
+  const parentOptions = useMemo(
+    () =>
+      (parentCustomerOptions ?? [])
+        .filter((c) => c.id !== customerId)
+        .map((c) => ({ value: c.id, label: c.customer_code ? `${c.name} (${c.customer_code})` : c.name })),
+    [parentCustomerOptions, customerId]
+  );
 
   async function saveNewTerm() {
     const name = newTermName.trim();
@@ -394,6 +415,27 @@ export function CustomerProfileForm({ values, onPatch, mode, paymentTermOptions,
           <TextField label="Fax" value={values.fax_phone} onChange={(fax_phone) => onPatch({ fax_phone })} />
           <TextField label="Website" value={values.website} onChange={(website) => onPatch({ website })} />
           <TextField label="Customer code" value={values.customer_code} onChange={(customer_code) => onPatch({ customer_code })} />
+        </div>
+      </section>
+
+      {/* D1-4: Sub-customer / parent hard link */}
+      <section className="border-t border-gray-200 pt-3">
+        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Sub-customer</h3>
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+          <div className="block text-sm md:col-span-2">
+            <span className="mb-1 block text-xs font-semibold text-gray-600">Parent customer</span>
+            <Combobox
+              options={parentOptions}
+              value={values.parent_customer_id || null}
+              onChange={(next) => onPatch({ parent_customer_id: next ?? "" })}
+              placeholder={parentOptions.length === 0 ? "No eligible parent customers" : "Select a parent (leave blank for a top-level customer)"}
+              disabled={parentOptions.length === 0}
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Link this customer as a sub-customer of an existing top-level customer. Leave blank for a top-level
+              customer. A parent must itself be top-level (no nesting beyond two levels).
+            </p>
+          </div>
         </div>
       </section>
 
@@ -562,7 +604,7 @@ export function CustomerProfileForm({ values, onPatch, mode, paymentTermOptions,
         <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">QuickBooks fields — pending backend</h3>
         <p className="text-xs text-gray-500">
           These QBO parity fields have no <code className="text-gray-600">mdata.customers</code> column yet and are a
-          gated follow-up (needs a migration): sub-customer, Cc/Bcc email, name-to-print-on-checks, structured
+          gated follow-up (needs a migration): Cc/Bcc email, name-to-print-on-checks, structured
           shipping address, payment method, preferred delivery method, customer language, tax-exemption details,
           attachments, and communication permissions. They are intentionally not shown as inputs here so no data is
           silently dropped.
