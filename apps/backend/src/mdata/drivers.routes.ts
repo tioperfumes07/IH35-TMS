@@ -210,33 +210,689 @@ function driverIdentityMatches(
   return null;
 }
 
-export async function registerDriverRoutes(app: FastifyInstance) {
-  const driverInviteBaseUrl = (process.env.DRIVER_PWA_BASE_URL || "https://driver.ih35dispatch.com").replace(/\/$/, "");
-  const supportEmail = process.env.EMAIL_FROM_DISPATCH || "dispatch@ih35dispatch.com";
+// Module-level driver-invite env + sender. Moved out of registerDriverRoutes so the extracted
+// canonical create (createDriverCanonical) — used by BOTH the office POST /mdata/drivers route and the
+// maintenance POST /maintenance/drivers route (DRIVER-1 single-code-path fix) — can send invites without
+// re-implementing the email plumbing per call site.
+const driverInviteBaseUrl = (process.env.DRIVER_PWA_BASE_URL || "https://driver.ih35dispatch.com").replace(/\/$/, "");
+const supportEmail = process.env.EMAIL_FROM_DISPATCH || "dispatch@ih35dispatch.com";
 
-  const sendDriverInvite = async (params: {
-    to: string;
-    driverName: string;
-    loginUrl: string;
-    actorUserId: string | null;
-    recipientUserUuid?: string | null;
-    operatingCompanyId: string;
-  }) => {
-    const { queueId } = await enqueueEmail({
-      operatingCompanyId: params.operatingCompanyId,
-      toAddresses: [params.to],
-      subject: "Welcome to IH 35 Dispatch — your driver app login",
-      templateKey: "driver-invite",
-      templateVars: {
-        driverName: params.driverName,
-        loginUrl: params.loginUrl,
-        ownerName: "Jorge",
-        supportEmail,
-      },
-      queuedByUserId: params.actorUserId,
+async function sendDriverInvite(params: {
+  to: string;
+  driverName: string;
+  loginUrl: string;
+  actorUserId: string | null;
+  recipientUserUuid?: string | null;
+  operatingCompanyId: string;
+}) {
+  const { queueId } = await enqueueEmail({
+    operatingCompanyId: params.operatingCompanyId,
+    toAddresses: [params.to],
+    subject: "Welcome to IH 35 Dispatch — your driver app login",
+    templateKey: "driver-invite",
+    templateVars: {
+      driverName: params.driverName,
+      loginUrl: params.loginUrl,
+      ownerName: "Jorge",
+      supportEmail,
+    },
+    queuedByUserId: params.actorUserId,
+  });
+  return { id: queueId };
+}
+
+export type CreateDriverCanonicalResult =
+  | { status: 201; body: Record<string, unknown> }
+  | { status: number; body: { error: string; [key: string]: unknown } };
+
+export interface CreateDriverCanonicalOptions {
+  // Non-onboarding company assignment: set mdata.drivers.operating_company_id to this company WITHOUT
+  // triggering the onboarding/invite flow (used by the maintenance quick-add surface, which assigns a
+  // company but never invites). Validated against org.user_accessible_company_ids(). Ignored when the
+  // input carries operating_company_id (which means an explicit onboarding request).
+  assignCompanyId?: string | null;
+  // Whether to auto-provision the per-driver advance/escrow sub-accounts (catalogs.accounts writes).
+  // Defaults ON (the office hire flow). The maintenance surface passes false to preserve its historical
+  // non-financial behavior; provisioning-on-maintenance-create is a separate (financial-cluster) follow-up.
+  provisionSubAccounts?: boolean;
+}
+
+/**
+ * DRIVER-1 (single canonical driver-create code path).
+ *
+ * The ONE place a driver row is INSERTed from an office/maintenance request. It carries every hire-time
+ * guard: returning-driver detection, rehire-chain matching, identity-user link/create + invite, entity
+ * defaulting, CDL-conflict handling, and rich audit. Both POST /api/v1/mdata/drivers and
+ * POST /api/v1/maintenance/drivers delegate here so neither surface can drift or bypass a guard again.
+ *
+ * Returns a discriminated { status, body } instead of writing to a FastifyReply, so each route can shape
+ * its own response envelope. The caller has already validated the body with createDriverBodySchema (office)
+ * or mapped its own validated body into this shape (maintenance).
+ */
+export async function createDriverCanonical(
+  authUser: { uuid: string; role: string },
+  input: z.infer<typeof createDriverBodySchema>,
+  options: CreateDriverCanonicalOptions = {}
+): Promise<CreateDriverCanonicalResult> {
+  const b = input;
+  const normalizedEmail = b.email?.toLowerCase() ?? null;
+  const provisionSubAccounts = options.provisionSubAccounts !== false;
+
+  try {
+    const created = await withCurrentUser(authUser.uuid, async (client) => {
+      if (b.prior_driver_id && !b.override_returning_warning) {
+        return { error: "override_required_for_rehire" as const };
+      }
+
+      const returningDetection = await findReturningDriverMatches(client, {
+        curp: b.curp,
+        cdl_number: b.cdl_number,
+        cdl_state: b.cdl_state,
+      });
+      if (returningDetection.returning_driver) {
+        await appendCrudAudit(
+          client,
+          authUser.uuid,
+          "mdata.drivers.returning_driver_detected",
+          {
+            resource_type: "mdata.drivers",
+            match_count: returningDetection.matched_events.length,
+            severity_summary: returningDetection.severity_summary,
+            matched_events: returningDetection.matched_events,
+          },
+          returningDetection.severity_summary.severe_count > 0 ? "warning" : "info",
+          "BT-1-DRIVER-SAFETY-FILE"
+        );
+        if (!b.override_returning_warning) {
+          return {
+            error: "returning_driver_detected" as const,
+            detection: returningDetection,
+          };
+        }
+      }
+
+      const rehireState: {
+        prior_driver_id: string | null;
+        is_rehire: boolean;
+        rehire_count: number;
+        matched_via: "curp" | "cdl" | null;
+      } = {
+        prior_driver_id: null,
+        is_rehire: false,
+        rehire_count: 0,
+        matched_via: null,
+      };
+
+      if (b.override_returning_warning && b.prior_driver_id) {
+        const priorRes = await client.query<{
+          id: string;
+          status: string;
+          curp: string | null;
+          cdl_number: string | null;
+          cdl_state: string | null;
+          rehire_count: number | null;
+        }>(
+          `
+              SELECT id, status, curp, cdl_number, cdl_state, rehire_count
+              FROM mdata.drivers
+              WHERE id = $1
+              LIMIT 1
+            `,
+          [b.prior_driver_id]
+        );
+        const priorDriver = priorRes.rows[0] ?? null;
+        if (!priorDriver) {
+          return { error: "prior_driver_not_found" as const };
+        }
+        if (priorDriver.status !== "Terminated") {
+          return { error: "prior_driver_not_terminated" as const };
+        }
+
+        const matchedVia = driverIdentityMatches(priorDriver, {
+          curp: b.curp,
+          cdl_number: b.cdl_number,
+          cdl_state: b.cdl_state,
+        });
+        if (!matchedVia) {
+          return { error: "prior_driver_identity_mismatch" as const };
+        }
+
+        // Hardening: require prior_driver_id to be the MOST-RECENT terminated record in this
+        // identity's full rehire chain — not an older link. Walk the whole chain by identity
+        // (curp / cdl), not just the immediate prior. Linking to a non-tip record would fork the
+        // chain (two drivers pointing at the same prior) and miscount rehires.
+        const tipFilters: string[] = [];
+        const tipValues: unknown[] = [];
+        const ncurp = b.curp?.trim().toUpperCase();
+        const ncdlNumber = b.cdl_number?.trim().toUpperCase();
+        const ncdlState = b.cdl_state?.trim().toUpperCase();
+        if (ncurp) {
+          tipValues.push(ncurp);
+          tipFilters.push(`upper(trim(curp)) = $${tipValues.length}`);
+        }
+        if (ncdlNumber && ncdlState) {
+          tipValues.push(ncdlNumber);
+          tipValues.push(ncdlState);
+          tipFilters.push(
+            `(upper(trim(cdl_number)) = $${tipValues.length - 1} AND upper(trim(cdl_state)) = $${tipValues.length})`
+          );
+        }
+        let chainTip: { id: string; rehire_count: number | null } = priorDriver;
+        if (tipFilters.length > 0) {
+          const tipRes = await client.query<{ id: string; rehire_count: number | null }>(
+            `
+                SELECT id, rehire_count
+                FROM mdata.drivers
+                WHERE status = 'Terminated'
+                  AND (${tipFilters.join(" OR ")})
+                ORDER BY rehire_count DESC NULLS LAST, created_at DESC
+                LIMIT 1
+              `,
+            tipValues
+          );
+          chainTip = tipRes.rows[0] ?? priorDriver;
+        }
+        if (String(chainTip.id) !== String(priorDriver.id)) {
+          return { error: "prior_driver_not_most_recent_in_chain" as const };
+        }
+
+        rehireState.prior_driver_id = priorDriver.id;
+        rehireState.is_rehire = true;
+        rehireState.rehire_count = Number(chainTip.rehire_count ?? priorDriver.rehire_count ?? 0) + 1;
+        rehireState.matched_via = matchedVia;
+      }
+
+      let identityUserId = b.identity_user_id ?? null;
+      let linkedUserEventType: "existing_user" | "new_user_created" | null = null;
+      let operatingCompany: { id: string; legal_name: string } | null = null;
+      let resolvedOperatingCompanyId: string | null = null;
+      const onboardingEnabled = Boolean(b.operating_company_id);
+
+      if (onboardingEnabled) {
+        const companyRes = await client.query<{ id: string; legal_name: string }>(
+          `
+              SELECT id, legal_name
+              FROM org.companies
+              WHERE ($1::uuid IS NULL OR id = $1)
+                AND id IN (SELECT org.user_accessible_company_ids())
+                AND deactivated_at IS NULL
+                AND is_active = true
+              ORDER BY legal_name
+              LIMIT 1
+            `,
+          [b.operating_company_id]
+        );
+        operatingCompany = companyRes.rows[0] ?? null;
+        if (!operatingCompany) {
+          return { error: "operating_company_not_found" as const };
+        }
+        resolvedOperatingCompanyId = operatingCompany.id;
+
+        await client.query("SET LOCAL app.bypass_rls = 'lucia'");
+
+        if (!identityUserId) {
+          const existingUserRes = await client.query<{ id: string }>(
+            `
+                SELECT id
+                FROM identity.users
+                WHERE phone = $1
+                   OR ($2::text IS NOT NULL AND lower(email) = $2)
+                ORDER BY id
+                LIMIT 2
+              `,
+            [b.phone, normalizedEmail]
+          );
+          const existingUsers = existingUserRes.rows;
+          if (existingUsers.length > 1 && existingUsers[0].id !== existingUsers[1].id) {
+            return { error: "identity_user_conflict_credentials" as const };
+          }
+          const existingUser = existingUsers[0] ?? null;
+          if (existingUser) {
+            identityUserId = existingUser.id;
+            linkedUserEventType = "existing_user";
+          } else {
+            try {
+              const userRes = await client.query<{ id: string }>(
+                `
+                    INSERT INTO identity.users (email, role, phone, default_company_id, deactivated_at)
+                    VALUES ($1, 'Driver', $2, $3, NULL)
+                    RETURNING id
+                  `,
+                [normalizedEmail, b.phone, resolvedOperatingCompanyId]
+              );
+              identityUserId = userRes.rows[0]?.id ?? null;
+              linkedUserEventType = "new_user_created";
+            } catch (err) {
+              const code = (err as { code?: string }).code;
+              if (code !== "23505") throw err;
+              const conflictUserRes = await client.query<{ id: string }>(
+                `
+                    SELECT id
+                    FROM identity.users
+                    WHERE phone = $1
+                       OR ($2::text IS NOT NULL AND lower(email) = $2)
+                    ORDER BY id
+                    LIMIT 2
+                  `,
+                [b.phone, normalizedEmail]
+              );
+              const conflictUsers = conflictUserRes.rows;
+              if (conflictUsers.length > 1 && conflictUsers[0].id !== conflictUsers[1].id) {
+                return { error: "identity_user_conflict_credentials" as const };
+              }
+              identityUserId = conflictUsers[0]?.id ?? null;
+              linkedUserEventType = "existing_user";
+            }
+          }
+        }
+        if (!identityUserId) throw new Error("failed_to_resolve_identity_user");
+
+        await client.query(
+          `
+              UPDATE identity.users
+              SET default_company_id = $2,
+                  role = 'Driver',
+                  phone = $3,
+                  email = COALESCE($4, email),
+                  preferred_language = COALESCE($5, preferred_language, 'en'),
+                  deactivated_at = NULL
+              WHERE id = $1
+            `,
+          [identityUserId, resolvedOperatingCompanyId, b.phone, normalizedEmail, b.preferred_language ?? null]
+        );
+
+        await client.query(
+          `
+              INSERT INTO org.user_company_access (user_id, company_id, granted_by_user_id, deactivated_at, granted_at)
+              VALUES ($1, $2, $3, NULL, now())
+              ON CONFLICT (user_id, company_id)
+              DO UPDATE
+              SET deactivated_at = NULL,
+                  granted_by_user_id = EXCLUDED.granted_by_user_id,
+                  granted_at = now()
+            `,
+          [identityUserId, resolvedOperatingCompanyId, authUser.uuid]
+        );
+      } else if (b.create_login_user) {
+        const existingUserRes = await client.query<{ id: string }>(
+          `
+              SELECT id
+              FROM identity.users
+              WHERE phone = $1
+                 OR ($2::text IS NOT NULL AND lower(email) = $2)
+              ORDER BY id
+              LIMIT 2
+            `,
+          [b.phone, normalizedEmail]
+        );
+        const existingUsers = existingUserRes.rows;
+        if (existingUsers.length > 1 && existingUsers[0].id !== existingUsers[1].id) {
+          return { error: "identity_user_conflict_credentials" as const };
+        }
+        if (existingUsers[0]) {
+          identityUserId = existingUsers[0].id;
+          linkedUserEventType = "existing_user";
+        } else {
+          const userRes = await client.query<{ id: string }>(
+            `
+                INSERT INTO identity.users (email, role, phone)
+                VALUES ($1, 'Driver', $2)
+                RETURNING id
+              `,
+            [normalizedEmail, b.phone]
+          );
+          identityUserId = userRes.rows[0]?.id ?? null;
+          linkedUserEventType = "new_user_created";
+        }
+        if (!identityUserId) throw new Error("failed_to_create_identity_user");
+
+        await client.query(
+          `
+              UPDATE identity.users
+              SET role = 'Driver',
+                  phone = $2,
+                  email = COALESCE($3, email),
+                  preferred_language = COALESCE($4, preferred_language, 'en'),
+                  deactivated_at = NULL
+              WHERE id = $1
+            `,
+          [identityUserId, b.phone, normalizedEmail, b.preferred_language ?? null]
+        );
+      }
+
+      // DRIVER-1 non-onboarding company assignment (maintenance quick-add): when the caller supplied a
+      // company to assign but did NOT request onboarding, bind it here — validated the same way the
+      // onboarding branch validates b.operating_company_id (must be user-accessible + active). This
+      // replaces the maintenance route's old assertCompanyMembership + direct INSERT.
+      if (!resolvedOperatingCompanyId && options.assignCompanyId) {
+        const assignRes = await client.query<{ id: string }>(
+          `
+              SELECT id
+              FROM org.companies
+              WHERE id = $1
+                AND id IN (SELECT org.user_accessible_company_ids())
+                AND deactivated_at IS NULL
+                AND is_active = true
+              LIMIT 1
+            `,
+          [options.assignCompanyId]
+        );
+        if (!assignRes.rows[0]) {
+          return { error: "operating_company_not_found" as const };
+        }
+        resolvedOperatingCompanyId = assignRes.rows[0].id;
+      }
+
+      // DRIVER ENTITY DEFAULT (business rule): a driver must never be entity-less. TRANSP
+      // (IH 35 Transportation) is the only driver-bearing entity (TRK is asset-holder, USMCA
+      // inactive). When the caller did not supply an operating company, default to TRANSP by its
+      // stable code (never a hardcoded uuid). The mdata.drivers.operating_company_id NOT NULL
+      // constraint is the hard backstop if even this resolves null.
+      if (!resolvedOperatingCompanyId) {
+        const transpRes = await client.query<{ id: string }>(
+          `SELECT id FROM org.companies WHERE code = 'TRANSP' LIMIT 1`
+        );
+        resolvedOperatingCompanyId = transpRes.rows[0]?.id ?? null;
+      }
+
+      const res = await client.query(
+        `
+            INSERT INTO mdata.drivers (
+              identity_user_id, first_name, last_name, phone, email, cdl_number, cdl_state, cdl_class,
+              cdl_expires_at, hire_date, pay_basis, dot_medical_expires_at, hazmat_endorsement_expires_at,
+              visa_type, visa_number, visa_expires_at, passport_number, passport_expires_at, ine_number, curp,
+              mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
+              emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
+              emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
+              status, notes, prior_driver_id, rehire_count, is_rehire,
+            operating_company_id, created_by_user_id, updated_by_user_id
+            ) VALUES (
+            $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$38
+            )
+            RETURNING
+              id, identity_user_id, first_name, last_name, phone, email, cdl_number, cdl_state, cdl_class,
+              cdl_expires_at, hire_date, pay_basis, termination_date, dot_medical_expires_at, hazmat_endorsement_expires_at,
+              visa_type, visa_number, visa_expires_at, passport_number, passport_expires_at, ine_number, curp,
+              mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
+              emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
+              emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
+              COALESCE((SELECT iu.preferred_language FROM identity.users iu WHERE iu.id = mdata.drivers.identity_user_id), 'en') AS preferred_language,
+              status, notes, prior_driver_id, rehire_count, is_rehire,
+            operating_company_id, created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
+          `,
+        [
+          identityUserId,
+          b.first_name,
+          b.last_name,
+          b.phone,
+          normalizedEmail,
+          b.cdl_number ?? null,
+          b.cdl_state ?? null,
+          b.cdl_class ?? null,
+          b.cdl_expires_at ?? null,
+          b.hire_date ?? null,
+          b.pay_basis ?? "short_miles",
+          b.dot_medical_expires_at ?? null,
+          b.hazmat_endorsement_expires_at ?? null,
+          b.visa_type ?? null,
+          b.visa_number ?? null,
+          b.visa_expires_at ?? null,
+          b.passport_number ?? null,
+          b.passport_expires_at ?? null,
+          b.ine_number ?? null,
+          b.curp ?? null,
+          b.mx_address_line1 ?? null,
+          b.mx_address_line2 ?? null,
+          b.mx_city ?? null,
+          b.mx_state ?? null,
+          b.mx_postal_code ?? null,
+          b.emergency_contact_name ?? null,
+          b.emergency_contact_relationship ?? null,
+          b.emergency_contact_phone_primary ?? null,
+          b.emergency_contact_phone_alternate ?? null,
+          b.emergency_contact_address ?? null,
+          b.emergency_contact_notes ?? null,
+          b.status,
+          b.notes ?? null,
+          rehireState.prior_driver_id,
+          rehireState.rehire_count,
+          rehireState.is_rehire,
+          resolvedOperatingCompanyId,
+          authUser.uuid,
+        ]
+      );
+      const row = res.rows[0];
+
+      // DRIVER-SUBACCOUNT-AUTO-PROVISION: create BOTH per-driver sub-accounts together on hire —
+      //   ASSET     "Driver Cash Advance- <Name>"   under "Driver Cash Advance" (QBO-149)
+      //   LIABILITY "Damage Claim Escrow- <Name>"   under "Damage Claim Escrow" (QBO-1150040187)
+      // Best-effort + idempotent: a missing parent (e.g. TRK's chart) is a graceful no-op, and any
+      // error must NOT fail driver creation. Gated by options.provisionSubAccounts (maintenance opts out).
+      if (provisionSubAccounts) {
+        try {
+          if (resolvedOperatingCompanyId) {
+            // AF-1 entity scope: catalogs.accounts is per-entity. This handler runs under withCurrentUser
+            // (lucia-bypass, GUC unset) — set app.operating_company_id so the sub-account parent lookup +
+            // INSERTs resolve/land inside THIS driver's entity chart. Without it, AF-1 RLS returns 0 rows and
+            // the sub-accounts are silently never created (a live break even for TRANSP); under bypass they
+            // would nest under another entity's parent (cross-entity GL leak).
+            await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [resolvedOperatingCompanyId]);
+            const provisionArgs = {
+              operatingCompanyId: resolvedOperatingCompanyId,
+              driverId: String(row.id),
+              driverName: `${row.first_name ?? ""} ${row.last_name ?? ""}`.trim(),
+              actorUserId: authUser.uuid,
+            };
+            await provisionDriverAdvanceSubAccount(client, provisionArgs);
+            await provisionDriverEscrowSubAccount(client, provisionArgs);
+          }
+        } catch (err) {
+          await appendCrudAudit(
+            client,
+            authUser.uuid,
+            "catalogs.accounts.auto_provision_failed",
+            { resource_type: "mdata.drivers", resource_id: String(row.id), error: String((err as Error)?.message ?? err) },
+            "warning",
+            "DRIVER-SUBACCOUNT-AUTO-PROVISION"
+          ).catch(() => undefined);
+        }
+      }
+
+      let inviteUrl: string | null = null;
+      let inviteExpiresAt: string | null = null;
+
+      if (onboardingEnabled && resolvedOperatingCompanyId && operatingCompany && identityUserId) {
+        const inviteToken = randomBytes(32).toString("hex");
+        inviteUrl = `${driverInviteBaseUrl}/invite?token=${inviteToken}`;
+        await client.query("SET LOCAL app.bypass_rls = 'lucia'");
+        const inviteRes = await client.query<{ expires_at: string }>(
+          `
+              INSERT INTO identity.driver_invites (
+                operating_company_id,
+                driver_id,
+                identity_user_id,
+                token,
+                phone,
+                expires_at,
+                created_by_user_id
+              )
+              VALUES ($1, $2, $3, $4, $5, now() + interval '72 hours', $6)
+              RETURNING expires_at
+            `,
+          [resolvedOperatingCompanyId, row.id, identityUserId, inviteToken, b.phone, authUser.uuid]
+        );
+        inviteExpiresAt = inviteRes.rows[0]?.expires_at ?? null;
+
+        await client.query(
+          `
+              INSERT INTO outbox.events (event_type, payload, next_retry_at)
+              VALUES ($1, $2::jsonb, now())
+            `,
+          [
+            "twilio.whatsapp.send",
+            JSON.stringify({
+              to: b.phone,
+              template: "driver_invite",
+              variables: {
+                driver_first_name: row.first_name,
+                company_name: operatingCompany.legal_name,
+                invite_url: inviteUrl,
+                expires_hours: 72,
+              },
+            }),
+          ]
+        );
+
+        await appendCrudAudit(
+          client,
+          authUser.uuid,
+          "mdata.driver.linked_to_user",
+          {
+            resource_id: row.id,
+            resource_type: "mdata.drivers",
+            driver_id: row.id,
+            identity_user_id: identityUserId,
+            phone: b.phone,
+            event_type: linkedUserEventType,
+            operating_company_id: resolvedOperatingCompanyId,
+          },
+          "info",
+          "BT-3-DRIVER-ONBOARDING"
+        );
+
+        await appendCrudAudit(
+          client,
+          authUser.uuid,
+          "identity.driver_invite.created",
+          {
+            resource_id: row.id,
+            resource_type: "identity.driver_invites",
+            driver_id: row.id,
+            identity_user_id: identityUserId,
+            phone: b.phone,
+            invite_url: inviteUrl,
+            expires_at: inviteExpiresAt,
+            event_type: linkedUserEventType,
+          },
+          "info",
+          "BT-3-DRIVER-ONBOARDING"
+        );
+      } else if (b.create_login_user && identityUserId) {
+        await appendCrudAudit(
+          client,
+          authUser.uuid,
+          linkedUserEventType === "existing_user" ? "identity.users.linked" : "identity.users.created",
+          {
+            resource_id: identityUserId,
+            resource_type: "identity.users",
+            phone: b.phone,
+            email: normalizedEmail,
+            role: "Driver",
+            linked_driver_id: row.id,
+          },
+          "warning",
+          "BT-1-AUTH-DRIVER"
+        );
+      }
+
+      await appendCrudAudit(client, authUser.uuid, "mdata.drivers.created", {
+        resource_id: row.id,
+        resource_type: "mdata.drivers",
+        id: row.id,
+        first_name: row.first_name,
+        last_name: row.last_name,
+        email: row.email,
+        status: row.status,
+      });
+
+      if (returningDetection.returning_driver && b.override_returning_warning) {
+        if (rehireState.is_rehire && rehireState.prior_driver_id) {
+          await appendCrudAudit(
+            client,
+            authUser.uuid,
+            "mdata.drivers.rehired",
+            {
+              resource_id: row.id,
+              resource_type: "mdata.drivers",
+              new_driver_id: row.id,
+              prior_driver_id: rehireState.prior_driver_id,
+              rehire_count: rehireState.rehire_count,
+              matched_via: rehireState.matched_via,
+            },
+            "warning",
+            "BT-1-REHIRE-STATES-COMBOBOX"
+          );
+        } else {
+          await appendCrudAudit(
+            client,
+            authUser.uuid,
+            "mdata.drivers.returning_driver_override",
+            {
+              resource_id: row.id,
+              resource_type: "mdata.drivers",
+              match_count: returningDetection.matched_events.length,
+              severity_summary: returningDetection.severity_summary,
+              matched_events: returningDetection.matched_events,
+            },
+            "warning",
+            "BT-1-DRIVER-SAFETY-FILE"
+          );
+        }
+      }
+      return {
+        ...row,
+        invite_url: inviteUrl,
+        invite_expires_at: inviteExpiresAt,
+        linked_user_event_type: linkedUserEventType,
+        invite_operating_company_id: resolvedOperatingCompanyId,
+      };
     });
-    return { id: queueId };
-  };
+    if (created && typeof created === "object" && "error" in created && created.error === "returning_driver_detected") {
+      return { status: 409, body: { error: "returning_driver_detected", ...created.detection } };
+    }
+    if (created && typeof created === "object" && "error" in created) {
+      if (created.error === "identity_user_conflict_credentials") {
+        return { status: 409, body: { error: "identity_user_conflict_credentials" } };
+      }
+      if (created.error === "operating_company_not_found") return { status: 400, body: { error: "operating_company_not_found" } };
+      if (created.error === "prior_driver_not_found") return { status: 404, body: { error: "prior_driver_not_found" } };
+      if (created.error === "prior_driver_not_terminated") return { status: 400, body: { error: "prior_driver_not_terminated" } };
+      if (created.error === "prior_driver_identity_mismatch") return { status: 400, body: { error: "prior_driver_identity_mismatch" } };
+      if (created.error === "prior_driver_not_most_recent_in_chain")
+        return { status: 409, body: { error: "prior_driver_not_most_recent_in_chain" } };
+      if (created.error === "override_required_for_rehire") return { status: 400, body: { error: "override_required_for_rehire" } };
+      return { status: 400, body: { error: String((created as { error: string }).error) } };
+    }
+
+    if (created?.invite_url && created?.email && created.invite_operating_company_id) {
+      void sendDriverInvite({
+        to: created.email as string,
+        driverName: `${created.first_name ?? ""} ${created.last_name ?? ""}`.trim() || "Driver",
+        loginUrl: created.invite_url as string,
+        actorUserId: authUser.uuid,
+        recipientUserUuid: (created.identity_user_id as string | null) ?? null,
+        operatingCompanyId: created.invite_operating_company_id as string,
+      }).catch(() => undefined);
+    }
+
+    return { status: 201, body: created as Record<string, unknown> };
+  } catch (err) {
+    const code = (err as { code?: string }).code;
+    if (code === "23505")
+      return {
+        status: 409,
+        body: {
+          error: "mdata_driver_conflict",
+          message: "Driver with this CDL already exists",
+          fieldErrors: { cdl_number: "Already in use", cdl_state: "Already in use" },
+        },
+      };
+    if (code === "23503") return { status: 400, body: { error: "invalid_identity_user_id" } };
+    throw err;
+  }
+}
+
+export async function registerDriverRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/mdata/drivers", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
@@ -343,595 +999,10 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedBody = createDriverBodySchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
-    const b = parsedBody.data;
-    const normalizedEmail = b.email?.toLowerCase() ?? null;
-
-    try {
-      const created = await withCurrentUser(authUser.uuid, async (client) => {
-        if (b.prior_driver_id && !b.override_returning_warning) {
-          return { error: "override_required_for_rehire" as const };
-        }
-
-        const returningDetection = await findReturningDriverMatches(client, {
-          curp: b.curp,
-          cdl_number: b.cdl_number,
-          cdl_state: b.cdl_state,
-        });
-        if (returningDetection.returning_driver) {
-          await appendCrudAudit(
-            client,
-            authUser.uuid,
-            "mdata.drivers.returning_driver_detected",
-            {
-              resource_type: "mdata.drivers",
-              match_count: returningDetection.matched_events.length,
-              severity_summary: returningDetection.severity_summary,
-              matched_events: returningDetection.matched_events,
-            },
-            returningDetection.severity_summary.severe_count > 0 ? "warning" : "info",
-            "BT-1-DRIVER-SAFETY-FILE"
-          );
-          if (!b.override_returning_warning) {
-            return {
-              error: "returning_driver_detected" as const,
-              detection: returningDetection,
-            };
-          }
-        }
-
-        const rehireState: {
-          prior_driver_id: string | null;
-          is_rehire: boolean;
-          rehire_count: number;
-          matched_via: "curp" | "cdl" | null;
-        } = {
-          prior_driver_id: null,
-          is_rehire: false,
-          rehire_count: 0,
-          matched_via: null,
-        };
-
-        if (b.override_returning_warning && b.prior_driver_id) {
-          const priorRes = await client.query<{
-            id: string;
-            status: string;
-            curp: string | null;
-            cdl_number: string | null;
-            cdl_state: string | null;
-            rehire_count: number | null;
-          }>(
-            `
-              SELECT id, status, curp, cdl_number, cdl_state, rehire_count
-              FROM mdata.drivers
-              WHERE id = $1
-              LIMIT 1
-            `,
-            [b.prior_driver_id]
-          );
-          const priorDriver = priorRes.rows[0] ?? null;
-          if (!priorDriver) {
-            return { error: "prior_driver_not_found" as const };
-          }
-          if (priorDriver.status !== "Terminated") {
-            return { error: "prior_driver_not_terminated" as const };
-          }
-
-          const matchedVia = driverIdentityMatches(priorDriver, {
-            curp: b.curp,
-            cdl_number: b.cdl_number,
-            cdl_state: b.cdl_state,
-          });
-          if (!matchedVia) {
-            return { error: "prior_driver_identity_mismatch" as const };
-          }
-
-          // Hardening: require prior_driver_id to be the MOST-RECENT terminated record in this
-          // identity's full rehire chain — not an older link. Walk the whole chain by identity
-          // (curp / cdl), not just the immediate prior. Linking to a non-tip record would fork the
-          // chain (two drivers pointing at the same prior) and miscount rehires.
-          const tipFilters: string[] = [];
-          const tipValues: unknown[] = [];
-          const ncurp = b.curp?.trim().toUpperCase();
-          const ncdlNumber = b.cdl_number?.trim().toUpperCase();
-          const ncdlState = b.cdl_state?.trim().toUpperCase();
-          if (ncurp) {
-            tipValues.push(ncurp);
-            tipFilters.push(`upper(trim(curp)) = $${tipValues.length}`);
-          }
-          if (ncdlNumber && ncdlState) {
-            tipValues.push(ncdlNumber);
-            tipValues.push(ncdlState);
-            tipFilters.push(
-              `(upper(trim(cdl_number)) = $${tipValues.length - 1} AND upper(trim(cdl_state)) = $${tipValues.length})`
-            );
-          }
-          let chainTip: { id: string; rehire_count: number | null } = priorDriver;
-          if (tipFilters.length > 0) {
-            const tipRes = await client.query<{ id: string; rehire_count: number | null }>(
-              `
-                SELECT id, rehire_count
-                FROM mdata.drivers
-                WHERE status = 'Terminated'
-                  AND (${tipFilters.join(" OR ")})
-                ORDER BY rehire_count DESC NULLS LAST, created_at DESC
-                LIMIT 1
-              `,
-              tipValues
-            );
-            chainTip = tipRes.rows[0] ?? priorDriver;
-          }
-          if (String(chainTip.id) !== String(priorDriver.id)) {
-            return { error: "prior_driver_not_most_recent_in_chain" as const };
-          }
-
-          rehireState.prior_driver_id = priorDriver.id;
-          rehireState.is_rehire = true;
-          rehireState.rehire_count = Number(chainTip.rehire_count ?? priorDriver.rehire_count ?? 0) + 1;
-          rehireState.matched_via = matchedVia;
-        }
-
-        let identityUserId = b.identity_user_id ?? null;
-        let linkedUserEventType: "existing_user" | "new_user_created" | null = null;
-        let operatingCompany: { id: string; legal_name: string } | null = null;
-        let resolvedOperatingCompanyId: string | null = null;
-        const onboardingEnabled = Boolean(b.operating_company_id);
-
-        if (onboardingEnabled) {
-          const companyRes = await client.query<{ id: string; legal_name: string }>(
-            `
-              SELECT id, legal_name
-              FROM org.companies
-              WHERE ($1::uuid IS NULL OR id = $1)
-                AND id IN (SELECT org.user_accessible_company_ids())
-                AND deactivated_at IS NULL
-                AND is_active = true
-              ORDER BY legal_name
-              LIMIT 1
-            `,
-            [b.operating_company_id]
-          );
-          operatingCompany = companyRes.rows[0] ?? null;
-          if (!operatingCompany) {
-            return { error: "operating_company_not_found" as const };
-          }
-          resolvedOperatingCompanyId = operatingCompany.id;
-
-          await client.query("SET LOCAL app.bypass_rls = 'lucia'");
-
-          if (!identityUserId) {
-            const existingUserRes = await client.query<{ id: string }>(
-              `
-                SELECT id
-                FROM identity.users
-                WHERE phone = $1
-                   OR ($2::text IS NOT NULL AND lower(email) = $2)
-                ORDER BY id
-                LIMIT 2
-              `,
-              [b.phone, normalizedEmail]
-            );
-            const existingUsers = existingUserRes.rows;
-            if (existingUsers.length > 1 && existingUsers[0].id !== existingUsers[1].id) {
-              return { error: "identity_user_conflict_credentials" as const };
-            }
-            const existingUser = existingUsers[0] ?? null;
-            if (existingUser) {
-              identityUserId = existingUser.id;
-              linkedUserEventType = "existing_user";
-            } else {
-              try {
-                const userRes = await client.query<{ id: string }>(
-                  `
-                    INSERT INTO identity.users (email, role, phone, default_company_id, deactivated_at)
-                    VALUES ($1, 'Driver', $2, $3, NULL)
-                    RETURNING id
-                  `,
-                  [normalizedEmail, b.phone, resolvedOperatingCompanyId]
-                );
-                identityUserId = userRes.rows[0]?.id ?? null;
-                linkedUserEventType = "new_user_created";
-              } catch (err) {
-                const code = (err as { code?: string }).code;
-                if (code !== "23505") throw err;
-                const conflictUserRes = await client.query<{ id: string }>(
-                  `
-                    SELECT id
-                    FROM identity.users
-                    WHERE phone = $1
-                       OR ($2::text IS NOT NULL AND lower(email) = $2)
-                    ORDER BY id
-                    LIMIT 2
-                  `,
-                  [b.phone, normalizedEmail]
-                );
-                const conflictUsers = conflictUserRes.rows;
-                if (conflictUsers.length > 1 && conflictUsers[0].id !== conflictUsers[1].id) {
-                  return { error: "identity_user_conflict_credentials" as const };
-                }
-                identityUserId = conflictUsers[0]?.id ?? null;
-                linkedUserEventType = "existing_user";
-              }
-            }
-          }
-          if (!identityUserId) throw new Error("failed_to_resolve_identity_user");
-
-          await client.query(
-            `
-              UPDATE identity.users
-              SET default_company_id = $2,
-                  role = 'Driver',
-                  phone = $3,
-                  email = COALESCE($4, email),
-                  preferred_language = COALESCE($5, preferred_language, 'en'),
-                  deactivated_at = NULL
-              WHERE id = $1
-            `,
-            [identityUserId, resolvedOperatingCompanyId, b.phone, normalizedEmail, b.preferred_language ?? null]
-          );
-
-          await client.query(
-            `
-              INSERT INTO org.user_company_access (user_id, company_id, granted_by_user_id, deactivated_at, granted_at)
-              VALUES ($1, $2, $3, NULL, now())
-              ON CONFLICT (user_id, company_id)
-              DO UPDATE
-              SET deactivated_at = NULL,
-                  granted_by_user_id = EXCLUDED.granted_by_user_id,
-                  granted_at = now()
-            `,
-            [identityUserId, resolvedOperatingCompanyId, authUser.uuid]
-          );
-        } else if (b.create_login_user) {
-          const existingUserRes = await client.query<{ id: string }>(
-            `
-              SELECT id
-              FROM identity.users
-              WHERE phone = $1
-                 OR ($2::text IS NOT NULL AND lower(email) = $2)
-              ORDER BY id
-              LIMIT 2
-            `,
-            [b.phone, normalizedEmail]
-          );
-          const existingUsers = existingUserRes.rows;
-          if (existingUsers.length > 1 && existingUsers[0].id !== existingUsers[1].id) {
-            return { error: "identity_user_conflict_credentials" as const };
-          }
-          if (existingUsers[0]) {
-            identityUserId = existingUsers[0].id;
-            linkedUserEventType = "existing_user";
-          } else {
-            const userRes = await client.query<{ id: string }>(
-              `
-                INSERT INTO identity.users (email, role, phone)
-                VALUES ($1, 'Driver', $2)
-                RETURNING id
-              `,
-              [normalizedEmail, b.phone]
-            );
-            identityUserId = userRes.rows[0]?.id ?? null;
-            linkedUserEventType = "new_user_created";
-          }
-          if (!identityUserId) throw new Error("failed_to_create_identity_user");
-
-          await client.query(
-            `
-              UPDATE identity.users
-              SET role = 'Driver',
-                  phone = $2,
-                  email = COALESCE($3, email),
-                  preferred_language = COALESCE($4, preferred_language, 'en'),
-                  deactivated_at = NULL
-              WHERE id = $1
-            `,
-            [identityUserId, b.phone, normalizedEmail, b.preferred_language ?? null]
-          );
-        }
-
-        // DRIVER ENTITY DEFAULT (business rule): a driver must never be entity-less. TRANSP
-        // (IH 35 Transportation) is the only driver-bearing entity (TRK is asset-holder, USMCA
-        // inactive). When the caller did not supply an operating company, default to TRANSP by its
-        // stable code (never a hardcoded uuid). The mdata.drivers.operating_company_id NOT NULL
-        // constraint is the hard backstop if even this resolves null.
-        if (!resolvedOperatingCompanyId) {
-          const transpRes = await client.query<{ id: string }>(
-            `SELECT id FROM org.companies WHERE code = 'TRANSP' LIMIT 1`
-          );
-          resolvedOperatingCompanyId = transpRes.rows[0]?.id ?? null;
-        }
-
-        const res = await client.query(
-          `
-            INSERT INTO mdata.drivers (
-              identity_user_id, first_name, last_name, phone, email, cdl_number, cdl_state, cdl_class,
-              cdl_expires_at, hire_date, pay_basis, dot_medical_expires_at, hazmat_endorsement_expires_at,
-              visa_type, visa_number, visa_expires_at, passport_number, passport_expires_at, ine_number, curp,
-              mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
-              emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
-              emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
-              status, notes, prior_driver_id, rehire_count, is_rehire,
-            operating_company_id, created_by_user_id, updated_by_user_id
-            ) VALUES (
-            $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$38
-            )
-            RETURNING
-              id, identity_user_id, first_name, last_name, phone, email, cdl_number, cdl_state, cdl_class,
-              cdl_expires_at, hire_date, pay_basis, termination_date, dot_medical_expires_at, hazmat_endorsement_expires_at,
-              visa_type, visa_number, visa_expires_at, passport_number, passport_expires_at, ine_number, curp,
-              mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
-              emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
-              emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
-              COALESCE((SELECT iu.preferred_language FROM identity.users iu WHERE iu.id = mdata.drivers.identity_user_id), 'en') AS preferred_language,
-              status, notes, prior_driver_id, rehire_count, is_rehire,
-            operating_company_id, created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
-          `,
-          [
-            identityUserId,
-            b.first_name,
-            b.last_name,
-            b.phone,
-            normalizedEmail,
-            b.cdl_number ?? null,
-            b.cdl_state ?? null,
-            b.cdl_class ?? null,
-            b.cdl_expires_at ?? null,
-            b.hire_date ?? null,
-            b.pay_basis ?? "short_miles",
-            b.dot_medical_expires_at ?? null,
-            b.hazmat_endorsement_expires_at ?? null,
-            b.visa_type ?? null,
-            b.visa_number ?? null,
-            b.visa_expires_at ?? null,
-            b.passport_number ?? null,
-            b.passport_expires_at ?? null,
-            b.ine_number ?? null,
-            b.curp ?? null,
-            b.mx_address_line1 ?? null,
-            b.mx_address_line2 ?? null,
-            b.mx_city ?? null,
-            b.mx_state ?? null,
-            b.mx_postal_code ?? null,
-            b.emergency_contact_name ?? null,
-            b.emergency_contact_relationship ?? null,
-            b.emergency_contact_phone_primary ?? null,
-            b.emergency_contact_phone_alternate ?? null,
-            b.emergency_contact_address ?? null,
-            b.emergency_contact_notes ?? null,
-            b.status,
-            b.notes ?? null,
-            rehireState.prior_driver_id,
-            rehireState.rehire_count,
-            rehireState.is_rehire,
-            resolvedOperatingCompanyId,
-            authUser.uuid,
-          ]
-        );
-        const row = res.rows[0];
-
-        // DRIVER-SUBACCOUNT-AUTO-PROVISION: create BOTH per-driver sub-accounts together on hire —
-        //   ASSET     "Driver Cash Advance- <Name>"   under "Driver Cash Advance" (QBO-149)
-        //   LIABILITY "Damage Claim Escrow- <Name>"   under "Damage Claim Escrow" (QBO-1150040187)
-        // Best-effort + idempotent: a missing parent (e.g. TRK's chart) is a graceful no-op, and any
-        // error must NOT fail driver creation.
-        try {
-          if (resolvedOperatingCompanyId) {
-            // AF-1 entity scope: catalogs.accounts is per-entity. This handler runs under withCurrentUser
-            // (lucia-bypass, GUC unset) — set app.operating_company_id so the sub-account parent lookup +
-            // INSERTs resolve/land inside THIS driver's entity chart. Without it, AF-1 RLS returns 0 rows and
-            // the sub-accounts are silently never created (a live break even for TRANSP); under bypass they
-            // would nest under another entity's parent (cross-entity GL leak).
-            await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [resolvedOperatingCompanyId]);
-            const provisionArgs = {
-              operatingCompanyId: resolvedOperatingCompanyId,
-              driverId: String(row.id),
-              driverName: `${row.first_name ?? ""} ${row.last_name ?? ""}`.trim(),
-              actorUserId: authUser.uuid,
-            };
-            await provisionDriverAdvanceSubAccount(client, provisionArgs);
-            await provisionDriverEscrowSubAccount(client, provisionArgs);
-          }
-        } catch (err) {
-          await appendCrudAudit(
-            client,
-            authUser.uuid,
-            "catalogs.accounts.auto_provision_failed",
-            { resource_type: "mdata.drivers", resource_id: String(row.id), error: String((err as Error)?.message ?? err) },
-            "warning",
-            "DRIVER-SUBACCOUNT-AUTO-PROVISION"
-          ).catch(() => undefined);
-        }
-
-        let inviteUrl: string | null = null;
-        let inviteExpiresAt: string | null = null;
-
-        if (onboardingEnabled && resolvedOperatingCompanyId && operatingCompany && identityUserId) {
-          const inviteToken = randomBytes(32).toString("hex");
-          inviteUrl = `${driverInviteBaseUrl}/invite?token=${inviteToken}`;
-          await client.query("SET LOCAL app.bypass_rls = 'lucia'");
-          const inviteRes = await client.query<{ expires_at: string }>(
-            `
-              INSERT INTO identity.driver_invites (
-                operating_company_id,
-                driver_id,
-                identity_user_id,
-                token,
-                phone,
-                expires_at,
-                created_by_user_id
-              )
-              VALUES ($1, $2, $3, $4, $5, now() + interval '72 hours', $6)
-              RETURNING expires_at
-            `,
-            [resolvedOperatingCompanyId, row.id, identityUserId, inviteToken, b.phone, authUser.uuid]
-          );
-          inviteExpiresAt = inviteRes.rows[0]?.expires_at ?? null;
-
-          await client.query(
-            `
-              INSERT INTO outbox.events (event_type, payload, next_retry_at)
-              VALUES ($1, $2::jsonb, now())
-            `,
-            [
-              "twilio.whatsapp.send",
-              JSON.stringify({
-                to: b.phone,
-                template: "driver_invite",
-                variables: {
-                  driver_first_name: row.first_name,
-                  company_name: operatingCompany.legal_name,
-                  invite_url: inviteUrl,
-                  expires_hours: 72,
-                },
-              }),
-            ]
-          );
-
-          await appendCrudAudit(
-            client,
-            authUser.uuid,
-            "mdata.driver.linked_to_user",
-            {
-              resource_id: row.id,
-              resource_type: "mdata.drivers",
-              driver_id: row.id,
-              identity_user_id: identityUserId,
-              phone: b.phone,
-              event_type: linkedUserEventType,
-              operating_company_id: resolvedOperatingCompanyId,
-            },
-            "info",
-            "BT-3-DRIVER-ONBOARDING"
-          );
-
-          await appendCrudAudit(
-            client,
-            authUser.uuid,
-            "identity.driver_invite.created",
-            {
-              resource_id: row.id,
-              resource_type: "identity.driver_invites",
-              driver_id: row.id,
-              identity_user_id: identityUserId,
-              phone: b.phone,
-              invite_url: inviteUrl,
-              expires_at: inviteExpiresAt,
-              event_type: linkedUserEventType,
-            },
-            "info",
-            "BT-3-DRIVER-ONBOARDING"
-          );
-        } else if (b.create_login_user && identityUserId) {
-          await appendCrudAudit(
-            client,
-            authUser.uuid,
-            linkedUserEventType === "existing_user" ? "identity.users.linked" : "identity.users.created",
-            {
-              resource_id: identityUserId,
-              resource_type: "identity.users",
-              phone: b.phone,
-              email: normalizedEmail,
-              role: "Driver",
-              linked_driver_id: row.id,
-            },
-            "warning",
-            "BT-1-AUTH-DRIVER"
-          );
-        }
-
-        await appendCrudAudit(client, authUser.uuid, "mdata.drivers.created", {
-          resource_id: row.id,
-          resource_type: "mdata.drivers",
-          id: row.id,
-          first_name: row.first_name,
-          last_name: row.last_name,
-          email: row.email,
-          status: row.status,
-        });
-
-        if (returningDetection.returning_driver && b.override_returning_warning) {
-          if (rehireState.is_rehire && rehireState.prior_driver_id) {
-            await appendCrudAudit(
-              client,
-              authUser.uuid,
-              "mdata.drivers.rehired",
-              {
-                resource_id: row.id,
-                resource_type: "mdata.drivers",
-                new_driver_id: row.id,
-                prior_driver_id: rehireState.prior_driver_id,
-                rehire_count: rehireState.rehire_count,
-                matched_via: rehireState.matched_via,
-              },
-              "warning",
-              "BT-1-REHIRE-STATES-COMBOBOX"
-            );
-          } else {
-            await appendCrudAudit(
-              client,
-              authUser.uuid,
-              "mdata.drivers.returning_driver_override",
-              {
-                resource_id: row.id,
-                resource_type: "mdata.drivers",
-                match_count: returningDetection.matched_events.length,
-                severity_summary: returningDetection.severity_summary,
-                matched_events: returningDetection.matched_events,
-              },
-              "warning",
-              "BT-1-DRIVER-SAFETY-FILE"
-            );
-          }
-        }
-        return {
-          ...row,
-          invite_url: inviteUrl,
-          invite_expires_at: inviteExpiresAt,
-          linked_user_event_type: linkedUserEventType,
-          invite_operating_company_id: resolvedOperatingCompanyId,
-        };
-      });
-      if (created && typeof created === "object" && "error" in created && created.error === "returning_driver_detected") {
-        return reply.code(409).send({
-          error: "returning_driver_detected",
-          ...created.detection,
-        });
-      }
-      if (created && typeof created === "object" && "error" in created) {
-        if (created.error === "identity_user_conflict_credentials") {
-          return reply.code(409).send({ error: "identity_user_conflict_credentials" });
-        }
-        if (created.error === "operating_company_not_found") return reply.code(400).send({ error: "operating_company_not_found" });
-        if (created.error === "prior_driver_not_found") return reply.code(404).send({ error: "prior_driver_not_found" });
-        if (created.error === "prior_driver_not_terminated") return reply.code(400).send({ error: "prior_driver_not_terminated" });
-        if (created.error === "prior_driver_identity_mismatch") return reply.code(400).send({ error: "prior_driver_identity_mismatch" });
-        if (created.error === "prior_driver_not_most_recent_in_chain")
-          return reply.code(409).send({ error: "prior_driver_not_most_recent_in_chain" });
-        if (created.error === "override_required_for_rehire") return reply.code(400).send({ error: "override_required_for_rehire" });
-      }
-
-      if (created?.invite_url && created?.email && created.invite_operating_company_id) {
-        void sendDriverInvite({
-          to: created.email,
-          driverName: `${created.first_name ?? ""} ${created.last_name ?? ""}`.trim() || "Driver",
-          loginUrl: created.invite_url,
-          actorUserId: authUser.uuid,
-          recipientUserUuid: created.identity_user_id ?? null,
-          operatingCompanyId: created.invite_operating_company_id,
-        }).catch(() => undefined);
-      }
-
-      return reply.code(201).send(created);
-    } catch (err) {
-      const code = (err as { code?: string }).code;
-      if (code === "23505")
-        return reply.code(409).send({
-          error: "mdata_driver_conflict",
-          message: "Driver with this CDL already exists",
-          fieldErrors: { cdl_number: "Already in use", cdl_state: "Already in use" },
-        });
-      if (code === "23503") return reply.code(400).send({ error: "invalid_identity_user_id" });
-      throw err;
-    }
+    // DRIVER-1: the office create delegates to the single canonical create path (createDriverCanonical),
+    // which is the ONLY place a driver row is INSERTed from a request.
+    const result = await createDriverCanonical(authUser, parsedBody.data, { provisionSubAccounts: true });
+    return reply.code(result.status).send(result.body);
   });
 
   await registerDriverDefaultTruckRoutes(app);

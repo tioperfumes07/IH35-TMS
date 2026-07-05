@@ -4,6 +4,7 @@ import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { createDriverCanonical } from "../mdata/drivers.routes.js";
 
 const querySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -175,34 +176,52 @@ export async function registerMaintenanceDriversRoutes(app: FastifyInstance) {
     if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
     const companyId = (req.query as { operating_company_id?: string })?.operating_company_id;
     if (!companyId) return reply.code(400).send({ error: "operating_company_id_required" });
-    const created = await withCompany(user.uuid, companyId, async (client) => {
-      const result = await client.query(
-        `
-          INSERT INTO mdata.drivers (
-            operating_company_id, first_name, last_name, phone, email, cdl_number, cdl_state, status, notes, created_by_user_id, updated_by_user_id
-          )
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$10)
-          RETURNING id, first_name, last_name, phone, email, cdl_number, cdl_state, status, notes, deactivated_at AS voided_at, NULL::text AS voided_reason, samsara_driver_id
-        `,
-        [
-          companyId,
-          body.data.first_name,
-          body.data.last_name,
-          body.data.phone,
-          body.data.email?.toLowerCase() ?? null,
-          body.data.cdl_number ?? null,
-          body.data.cdl_state ?? null,
-          body.data.status,
-          body.data.notes ?? null,
-          user.uuid,
-        ]
-      );
-      await appendCrudAudit(client, user.uuid, "maintenance.drivers.created", {
-        resource_id: result.rows[0].id,
-      });
-      return result.rows[0];
+
+    // DRIVER-1: route the maintenance quick-add through the SINGLE canonical create path
+    // (createDriverCanonical in mdata/drivers.routes.ts) instead of INSERTing into mdata.drivers directly.
+    // This surface previously bypassed returning-driver detection, rehire-chain matching, identity-user
+    // conflict handling, CDL-conflict handling, and the richer create audit. It now inherits all of them.
+    // - assignCompanyId: bind the requested operating_company_id WITHOUT triggering the onboarding/invite
+    //   flow (this surface never invites); the canonical fn validates it against user_accessible_company_ids().
+    // - provisionSubAccounts:false: preserve this surface's historical non-financial behavior (no
+    //   catalogs.accounts writes). Provisioning-on-maintenance-create is a separate financial-cluster follow-up.
+    const input: Parameters<typeof createDriverCanonical>[1] = {
+      first_name: body.data.first_name,
+      last_name: body.data.last_name,
+      phone: body.data.phone,
+      email: body.data.email,
+      cdl_number: body.data.cdl_number,
+      cdl_state: body.data.cdl_state,
+      status: body.data.status,
+      notes: body.data.notes,
+      create_login_user: false,
+      override_returning_warning: false,
+      is_rehire: false,
+    };
+    const result = await createDriverCanonical(
+      { uuid: user.uuid, role: user.role },
+      input,
+      { assignCompanyId: companyId, provisionSubAccounts: false }
+    );
+    if (result.status !== 201) {
+      return reply.code(result.status).send(result.body);
+    }
+    // Re-shape the canonical row into this surface's historical response contract (voided_at / voided_reason).
+    const d = result.body as Record<string, unknown>;
+    return reply.code(201).send({
+      id: d.id,
+      first_name: d.first_name,
+      last_name: d.last_name,
+      phone: d.phone,
+      email: d.email,
+      cdl_number: d.cdl_number,
+      cdl_state: d.cdl_state,
+      status: d.status,
+      notes: d.notes,
+      voided_at: (d.deactivated_at as string | null) ?? null,
+      voided_reason: null,
+      samsara_driver_id: (d.samsara_driver_id as string | null) ?? null,
     });
-    return reply.code(201).send(created);
   });
 
   app.patch("/api/v1/maintenance/drivers/:id", async (req, reply) => {
