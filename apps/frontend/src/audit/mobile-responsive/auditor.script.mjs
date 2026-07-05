@@ -68,7 +68,9 @@ function walk(dir, files = []) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) {
-      if (entry.name === "node_modules" || entry.name === "__tests__") continue;
+      // Skip build-junk, test fixtures, and archived (non-shipped) components — archived
+      // code is not a live mobile surface, so it must not trip the regression detector.
+      if (entry.name === "node_modules" || entry.name === "__tests__" || entry.name === "_archived") continue;
       walk(full, files);
     } else if (/\.(tsx|css)$/.test(entry.name)) {
       files.push(full);

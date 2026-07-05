@@ -1,23 +1,31 @@
 import type { JSX } from "react";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { listDrivers, listUnits, listVendors } from "../../../api/mdata";
-import { getAllAccounts } from "../../../api/banking";
-import { Modal } from "../../../components/Modal";
-import { companyToday } from "../../../lib/businessDate";
-import { TwoSectionLineEditor, type TwoSectionLine } from "../../../components/forms/TwoSectionLineEditor";
-import { TotalsStack } from "../../../components/forms/shared/TotalsStack";
-import { EXPENSE_TYPE_TABS, TypeTabBar } from "../../../components/forms/shared/TypeTabBar";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
-import { UploadZone } from "../../../components/UploadZone";
+import { listDrivers, listUnits, listVendors } from "../../api/mdata";
+import { getAllAccounts } from "../../api/banking";
+import { Modal } from "../Modal";
+import { companyToday } from "../../lib/businessDate";
+import { TwoSectionLineEditor, type TwoSectionLine } from "../forms/TwoSectionLineEditor";
+import { TotalsStack } from "../forms/shared/TotalsStack";
+import { EXPENSE_TYPE_TABS, TypeTabBar } from "../forms/shared/TypeTabBar";
+import { SelectCombobox } from "../shared/SelectCombobox";
+import { UploadZone } from "../UploadZone";
 
+// ARCHIVED (D2-1 "modals that save nothing"): this was a non-persisting stub — the form
+// rendered but had NO Save affordance and NO POST, so it could never write. It was never
+// mounted anywhere (only referenced from a unit test). The canonical, fully-wired
+// create-expense flow already exists in the accounting module (ExpenseCreatePage /
+// recordExpenseSubmit -> createExpense -> POST /api/v1/expenses). Shelved here rather than
+// wired because expense creation is financial-cluster work (accounting.*) that must go
+// through Jorge (CLAUDE.md §1.4). If a Work-Order-linked "Create Expense" entry point is
+// wanted, wire that flow to POST /api/v1/expenses under his sign-off instead of this stub.
 type Props = {
   open: boolean;
   operatingCompanyId: string;
   onClose: () => void;
 };
 
-export function CreateExpenseModal({ open, operatingCompanyId, onClose }: Props) {
+export function CreateExpenseModalArchived({ open, operatingCompanyId, onClose }: Props) {
   const [lines, setLines] = useState<TwoSectionLine[]>([]);
   const [taxRate, setTaxRate] = useState(8.25);
   const [expenseType, setExpenseType] = useState("fuel");

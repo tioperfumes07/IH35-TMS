@@ -1,16 +1,24 @@
 import type { JSX } from "react";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { listDrivers, listUnits, listVendors } from "../../../api/mdata";
-import { Modal } from "../../../components/Modal";
-import { companyToday } from "../../../lib/businessDate";
-import { TwoSectionLineEditor, type TwoSectionLine } from "../../../components/forms/TwoSectionLineEditor";
-import { TotalsStack } from "../../../components/forms/shared/TotalsStack";
-import { BILL_TYPE_TABS, TypeTabBar } from "../../../components/forms/shared/TypeTabBar";
-import { QboCombobox } from "../../../components/forms/QboCombobox";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
-import { UploadZone } from "../../../components/UploadZone";
+import { listDrivers, listUnits, listVendors } from "../../api/mdata";
+import { Modal } from "../Modal";
+import { companyToday } from "../../lib/businessDate";
+import { TwoSectionLineEditor, type TwoSectionLine } from "../forms/TwoSectionLineEditor";
+import { TotalsStack } from "../forms/shared/TotalsStack";
+import { BILL_TYPE_TABS, TypeTabBar } from "../forms/shared/TypeTabBar";
+import { QboCombobox } from "../forms/QboCombobox";
+import { SelectCombobox } from "../shared/SelectCombobox";
+import { UploadZone } from "../UploadZone";
 
+// ARCHIVED (D2-1 "modals that save nothing"): this was a non-persisting stub — the form
+// rendered but had NO Save affordance and NO POST, so it could never write. It was never
+// mounted anywhere (only referenced from a unit test). The canonical, fully-wired
+// create-bill flow already exists in the accounting module (VendorBillCreatePage /
+// VendorBillForm -> POST /api/v1/bills). Shelved here rather than wired because bill
+// creation is financial-cluster work (accounting.*) that must go through Jorge (CLAUDE.md
+// §1.4). If a Work-Order-linked "Create Bill" entry point is wanted, wire that flow to
+// POST /api/v1/bills under his sign-off instead of resurrecting this stub.
 type Props = {
   open: boolean;
   operatingCompanyId: string;
@@ -18,7 +26,7 @@ type Props = {
   onClose: () => void;
 };
 
-export function CreateBillModal({ open, operatingCompanyId, linkedWoDisplayId, onClose }: Props) {
+export function CreateBillModalArchived({ open, operatingCompanyId, linkedWoDisplayId, onClose }: Props) {
   const [lines, setLines] = useState<TwoSectionLine[]>([]);
   const [taxRate, setTaxRate] = useState(8.25);
   const [billType, setBillType] = useState("repair");
