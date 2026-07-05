@@ -1,6 +1,18 @@
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { isEnabled } from "../lib/feature-flags/service.js";
 import { applyApprovedAbandonmentChargebacksToSettlement } from "./abandonment.service.js";
+import { applyPendingDeductionsToSettlementWithNetFloor } from "./settlement-deduction-cap.service.js";
 import { appendSettlementLineFromDriverBillIfMissing, fetchTeamDriversForLoad } from "./settlement-engine.js";
+
+/**
+ * OFF-by-default flag (per-entity-only; routed through the canonical `isEnabled` resolver, NOT a
+ * raw lib.feature_flags read). When OFF the close behaves exactly as before (earnings + abandonment
+ * only) — deductions are NOT applied. When ON (owner flips per entity, TRANSP first) the canonical
+ * deduction applier runs inside the close transaction, after earnings/abandonment lines exist and
+ * BEFORE aggregateSettlementTotals recomputes net_pay, closing the "drivers overpaid" gap. TIER-1
+ * FINANCIAL — flag flip is Jorge's.
+ */
+export const SETTLEMENT_DEDUCTION_APPLY_FLAG = "SETTLEMENT_DEDUCTION_APPLY_ENABLED";
 
 type DbClient = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
@@ -299,6 +311,47 @@ async function closeLoadBookendedSettlementForDriver(
     driverId: opts.driverId,
     operatingCompanyId: opts.operatingCompanyId,
   });
+
+  // ── Deduction applier (OFF-flag-gated) ─────────────────────────────────────────────────────────
+  // REPAIR-A root cause: the canonical close applied earnings + abandonment but NEVER general
+  // cash-advance / other deductions, because the applier had no non-test caller → drivers overpaid.
+  // Wire the EXISTING applier here (reuse — no new GL/posting math), gated behind an OFF flag routed
+  // through the canonical `isEnabled` resolver (per-entity, kill-switch aware — fixes the H3-4 raw-read
+  // pattern). Runs on the SAME client (inside the close transaction), AFTER earnings/abandonment lines
+  // exist and BEFORE aggregateSettlementTotals recomputes net_pay. OFF => skipped => net pay unchanged.
+  const deductionApplyEnabled = await isEnabled(client, SETTLEMENT_DEDUCTION_APPLY_FLAG, {
+    operating_company_id: opts.operatingCompanyId,
+  });
+  if (deductionApplyEnabled) {
+    const applied = await applyPendingDeductionsToSettlementWithNetFloor(client, {
+      settlementId,
+      driverId: opts.driverId,
+      operatingCompanyId: opts.operatingCompanyId,
+      actorUserId: opts.actorUserId,
+    });
+
+    // Spine audit event for the apply (append-only; ties net-pay reduction to the deduction ledger).
+    await appendCrudAudit(
+      client,
+      opts.actorUserId,
+      "driver_finance.settlement.deductions_applied",
+      {
+        settlement_id: settlementId,
+        driver_id: opts.driverId,
+        operating_company_id: opts.operatingCompanyId,
+        last_load_id: opts.load.id,
+        applied_count: applied.appliedCount,
+        applied_cents: applied.appliedCents,
+        deferred_count: applied.deferredCount,
+        deferred_cents: applied.deferredCents,
+        gross_cents: applied.grossCents,
+        floor_cents: applied.floorCents,
+        available_cents: applied.availableCents,
+      },
+      "info",
+      "REPAIR-A-DEDUCTION-APPLY"
+    );
+  }
 
   const totals = await aggregateSettlementTotals(client, settlementId);
 

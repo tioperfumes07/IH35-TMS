@@ -88,6 +88,11 @@ export const PER_ENTITY_ONLY_FLAG_KEYS: ReadonlySet<string> = new Set([
   // RECON-01: read-only twice-daily QBO↔TMS reconciliation passes — migration seeds it "per-entity
   // owner-gated". Enabling it per operating company (not globally) is the documented intent.
   "TMS_QBO_RECON_ENABLED",
+  // REPAIR-A: wires the canonical deduction applier into the driver_finance settlement close. It
+  // reduces real net pay owed to drivers (money-affecting), so it must be flipped ONE ENTITY AT A TIME
+  // (TRANSP first) — a global default/rollout enable would start applying deductions for EVERY entity
+  // (incl. USMCA / TRK). Per-entity override only; default OFF. Owner-controlled (Jorge flips).
+  "SETTLEMENT_DEDUCTION_APPLY_ENABLED",
 ]);
 
 export function isPerEntityOnlyFlag(flagKey: string): boolean {

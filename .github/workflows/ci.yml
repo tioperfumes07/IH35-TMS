@@ -148,6 +148,9 @@ jobs:
       - name: Verify FIN-18 settlement GL flag/consent/floor gate (Tier 1)
         run: npm run verify:settlement-gl-flag-gate
 
+      - name: Verify REPAIR-A deduction applier wired into close behind OFF flag (Tier 1)
+        run: npm run verify:deduction-applier-wired-into-close
+
       - name: Verify uncategorized-expense → QBO mapping (no NULL-QBO bucket)
         run: npm run verify:uncategorized-expense-mapping
 
