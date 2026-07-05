@@ -42,8 +42,10 @@ import { registerSamsaraEngineFaultRoutes } from "../routes.js";
 const OC = "00000000-0000-4000-8000-000000000001";
 const UNIT = "00000000-0000-4000-8000-000000000010";
 
-function sign(body: Buffer, secret: string) {
-  return crypto.createHmac("sha256", secret).update(body).digest("hex");
+/** Sign per Samsara's documented v1 scheme: HMAC-SHA256 over `v1:<timestamp>:<rawBody>`. */
+function signV1(body: Buffer, tsSeconds: number, secret: string) {
+  const message = Buffer.concat([Buffer.from(`v1:${tsSeconds}:`, "utf8"), body]);
+  return `v1=${crypto.createHmac("sha256", secret).update(message).digest("hex")}`;
 }
 
 function severePayload(eventId = "evt-severe-1") {
@@ -194,12 +196,14 @@ describe("registerSamsaraEngineFaultRoutes", () => {
       .mockResolvedValueOnce({ rows: [{ driver_id: null }] })
       .mockResolvedValueOnce({ rows: [] });
 
+    const ts = Math.floor(Date.now() / 1000);
     const res = await app.inject({
       method: "POST",
       url: `/api/integrations/samsara/engine-faults/webhook?operating_company_id=${OC}`,
       headers: {
         "content-type": "application/json",
-        "x-samsara-signature": sign(body, "route-test-secret"),
+        "x-samsara-signature": signV1(body, ts, "route-test-secret"),
+        "x-samsara-timestamp": String(ts),
       },
       payload: body,
     });
