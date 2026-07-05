@@ -10,7 +10,7 @@
  *   (2) OWN-TRANSFER EXCLUDED — legs flagged review_state='transfer' / transfer_kind / a
  *       destination_bank_account_id are excluded from BOTH receipts and disbursements.
  *   (3) GENUINE owner contribution (a plain credit, not a transfer) remains INCLUDED as a receipt.
- *   (4) VIRTUAL accounts (factoring/escrow, account_type LIKE 'virtual_%') are excluded from scope.
+ *   (4) VIRTUAL accounts (factoring/escrow, account_type LIKE 'virtual_%') are out of scope and excluded.
  *
  * This test executes the SAME query the court filing uses (computeBankingSummary) — the phantom
  * columns would throw here, which is exactly why the previous mock-only suite missed the defect.
