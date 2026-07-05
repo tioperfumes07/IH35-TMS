@@ -237,6 +237,9 @@ jobs:
       - name: Verify driver PWA i18n coverage
         run: npm run verify:driver-pwa-i18n-coverage
 
+      - name: Verify single i18n source of truth (G8-2)
+        run: npm run verify:single-i18n-source
+
       - name: Verify driver PWA incident full report
         run: npm run verify:driver-pwa-incident-full
 
