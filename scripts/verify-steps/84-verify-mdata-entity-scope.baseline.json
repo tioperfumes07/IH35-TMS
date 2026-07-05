@@ -391,11 +391,6 @@
       "preview": "` SELECT d.*, concat_ws(' ', dr.first_name, dr.last_name) AS driver_name, s.display_id AS settlement_display_id, s.perio"
     },
     {
-      "key": "apps/backend/src/driver-finance/settlement-disputes-p6.service.ts#1aea2bb4743253a6afe4f532a621f0d94f1b1dcf",
-      "file": "apps/backend/src/driver-finance/settlement-disputes-p6.service.ts",
-      "preview": "` SELECT d.email, d.first_name, d.last_name FROM mdata.drivers d WHERE d.id = $1 LIMIT 1 `"
-    },
-    {
       "key": "apps/backend/src/driver-finance/settlement-disputes-p6.service.ts#55f65ef3b5edb673452fe431fa5e017103a69a9b",
       "file": "apps/backend/src/driver-finance/settlement-disputes-p6.service.ts",
       "preview": "` SELECT sd.*, concat_ws(' ', dr.first_name, dr.last_name) AS driver_name, s.display_id AS settlement_display_id FROM dr"
@@ -694,6 +689,11 @@
       "key": "apps/backend/src/mdata/customer-quality-events.routes.ts#764d74ba62f61188773fe1797ed9ca5e658d6ef0",
       "file": "apps/backend/src/mdata/customer-quality-events.routes.ts",
       "preview": "`SELECT id FROM mdata.customers WHERE id = $1 LIMIT 1`"
+    },
+    {
+      "key": "apps/backend/src/mdata/customer-quality-events.routes.ts#87fe8feb6d3023207639c13cac897a9e354ab3a5",
+      "file": "apps/backend/src/mdata/customer-quality-events.routes.ts",
+      "preview": "` SELECT e.id, e.customer_id, e.event_type, e.event_date, e.severity, e.summary, e.details, e.reason_id, r.code AS reaso"
     },
     {
       "key": "apps/backend/src/mdata/customers.routes.ts#19dc2d8a5fe04741d19588aae5a63860737897d4",
@@ -1009,11 +1009,6 @@
       "key": "apps/backend/src/seed/csv-seed-import.ts#a473ba16a3b835d47793b45386dc46495362cb49",
       "file": "apps/backend/src/seed/csv-seed-import.ts",
       "preview": "`SELECT id FROM mdata.equipment WHERE equipment_number = $1 LIMIT 1`"
-    },
-    {
-      "key": "apps/backend/src/services/push-notification.service.ts#bcc436ff39f773bc65ecf8cbb8be908aff8ab874",
-      "file": "apps/backend/src/services/push-notification.service.ts",
-      "preview": "` SELECT identity_user_id, phone, first_name, last_name FROM mdata.drivers WHERE id = $1 LIMIT 1 `"
     },
     {
       "key": "apps/backend/src/settlements/disputes/disputes.routes.ts#232dc689a1c3fba424d23525682814391bf29487",
