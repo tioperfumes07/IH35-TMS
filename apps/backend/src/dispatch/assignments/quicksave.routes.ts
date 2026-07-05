@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../../auth/session-middleware.js";
 import { reassignDriver, reassignTrailer, reassignUnit } from "./quicksave.service.js";
+import { DriverNotQualifiedError } from "../driver-qualification.service.js";
 
 const loadParamsSchema = z.object({ uuid: z.string().uuid() });
 const companyBodySchema = z.object({ operating_company_id: z.string().uuid() });
@@ -15,6 +16,25 @@ function authed(req: FastifyRequest, reply: FastifyReply) {
 }
 
 function mapValidationError(error: unknown) {
+  // DISP-2: the shared driver-qualification gate (used by the assign-driver reassign path) throws a
+  // typed error carrying the full block → render the canonical E_DRIVER_NOT_QUALIFIED 422 payload,
+  // matching the quick-assign route's contract.
+  if (error instanceof DriverNotQualifiedError) {
+    return {
+      status: 422,
+      payload: {
+        error: error.code,
+        message: error.message,
+        details: {
+          driver_id: error.block.driverId,
+          reasons: error.block.reasons,
+          cdl_expires_at: error.block.cdlExpiresAt,
+          medical_expiry_date: error.block.medicalExpiryDate,
+          hazmat_endorsement_expires_at: error.block.hazmatEndorsementExpiresAt,
+        },
+      },
+    };
+  }
   const code = String((error as Error)?.message ?? "");
   if (code === "E_LOAD_NOT_FOUND") return { status: 404, payload: { error: code } };
   if (code.startsWith("E_VALIDATION_")) return { status: 422, payload: { error: code.split(":")[0], message: code.split(":")[1] ?? code } };
