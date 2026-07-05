@@ -2,6 +2,19 @@ type Queryable = {
   query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }>;
 };
 
+/**
+ * H6-2: serialize concurrent CA-number generation. Without this, two concurrent
+ * createDriverCashAdvanceCore transactions both run MAX(display_id)+1 against the same
+ * (operating_company_id, year) window and mint the SAME number → duplicate cash-advance
+ * numbers. Reuses the exact advisory-lock pattern already used by accounting/display-id.ts
+ * (nextInvoiceDisplayId et al.). pg_advisory_xact_lock is held for the rest of the
+ * transaction, so the read-and-INSERT that follows is serialized per (company, year).
+ * Must be called inside the same transaction that performs the INSERT.
+ */
+async function withDisplayLock(client: Queryable, scope: string) {
+  await client.query(`SELECT pg_advisory_xact_lock(hashtext($1))`, [scope]);
+}
+
 export async function nextCashAdvanceDisplayId(
   client: Queryable,
   operatingCompanyId: string,
@@ -9,6 +22,7 @@ export async function nextCashAdvanceDisplayId(
 ) {
   const year = referenceDate.getUTCFullYear();
   const prefix = `CA-${year}-`;
+  await withDisplayLock(client, `driver_finance.cash_advance.display_id:${operatingCompanyId}:${year}`);
   const rows = await client.query(
     `
       SELECT COALESCE(
