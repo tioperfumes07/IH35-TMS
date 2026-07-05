@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -21,6 +21,8 @@ const accidentFixture = {
   location: "I-35 MM 120",
   status: "open",
   notes: "Rear-end contact",
+  at_fault: "disputed",
+  preventable: true,
 };
 
 function wrap(ui: ReactElement) {
@@ -43,6 +45,11 @@ describe("AccidentsPage", () => {
     expect(await screen.findByTestId("accidents-page")).toBeTruthy();
     expect(await screen.findByTestId("accident-row-acc-1")).toBeTruthy();
     expect(screen.getByText("I-35 MM 120")).toBeTruthy();
+    // SAFE-1: fault + DOT preventability determinations render in the row (scope to the row so the
+    // "Preventable" column header does not collide with the cell value).
+    const row = within(await screen.findByTestId("accident-row-acc-1"));
+    expect(row.getByText("Disputed")).toBeTruthy();
+    expect(row.getByText("Preventable")).toBeTruthy();
     expect(safetyApi.getSafetyAccidents).toHaveBeenCalledWith(companyId);
   });
 
