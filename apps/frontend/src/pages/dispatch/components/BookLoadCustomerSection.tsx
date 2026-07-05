@@ -70,6 +70,12 @@ export function BookLoadCustomerSection({
                   setValue("customer_name", name, { shouldDirty: true, shouldValidate: false });
                   return;
                 }
+                // Free-text edit: the user typed over the field, diverging from the picked row.
+                // Clear the picked TMS FK (and its QBO mirror id) so a stale customer_id can't
+                // silently ride along with a different name. This forces a fresh pick; the
+                // `required` rule on customer_id (validated here) blocks submit until then.
+                setValue("customer_id", "", { shouldDirty: true, shouldValidate: true });
+                setValue("customer_qbo_id", "", { shouldDirty: true, shouldValidate: false });
                 setValue("customer_name", name, { shouldDirty: true, shouldValidate: false });
               }}
               onPick={(row) => {
