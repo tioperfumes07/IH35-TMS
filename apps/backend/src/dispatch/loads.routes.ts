@@ -18,6 +18,8 @@ import { pingSettlementOnLoadEvent } from "../driver-finance/settlements-load-bo
 import { notifyAbandonedLoadStakeholders } from "../notifications/dispatcher.js";
 import { isR2Configured, putObjectBytes } from "../storage/r2-client.js";
 import { getCurrentClocks } from "../telematics/hos-clocks.service.js";
+import { getLatestHosClocksByDriver } from "../integrations/samsara/samsara-hos-clocks-pull.service.js";
+import type { PgClient } from "../integrations/samsara/samsara.service.js";
 import { autoCreateGeofencesForLoad } from "../telematics/auto-geofence.service.js";
 import { detectAssetCoverageGap } from "../insurance/coverage-gap.service.js";
 import { countActiveDispatchLoads, countInTransitDispatchLoads } from "./active-loads-count.js";
@@ -828,6 +830,13 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       if (!driverRes.rows[0]) return null;
 
       const clocks = await getCurrentClocks(client, operatingCompanyId, params.data.driver_id);
+      // HOS-PRC-DATA / HOS-PRC2 (Jorge 2026-07-05) — attach the certified Samsara ELD clocks
+      // VERBATIM (no re-derivation) alongside the in-app recompute. The recompute stays for the
+      // projected Stop-By/Resume-At + violates-in-Nmin math; `eld_certified` is the single source
+      // of truth for the headline remaining-time numbers everywhere it's wired (board == roster ==
+      // certified ELD). Null when Samsara has never polled this driver — never fabricated.
+      const eldMap = await getLatestHosClocksByDriver(client as unknown as PgClient, operatingCompanyId);
+      const eld = eldMap.get(params.data.driver_id) ?? null;
       return {
         driver_id: params.data.driver_id,
         drive_remaining_min: clocks.drive_remaining_min,
@@ -836,6 +845,17 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
         cycle_remaining_min: clocks.cycle_remaining_min,
         status: clocks.status,
         last_reset_at: clocks.last_reset_at,
+        eld_certified: eld
+          ? {
+              drive_remaining_min: eld.drive_remaining_min,
+              shift_remaining_min: eld.shift_remaining_min,
+              cycle_remaining_min: eld.cycle_remaining_min,
+              break_remaining_min: eld.break_remaining_min,
+              violation: eld.violation,
+              polled_at: eld.polled_at,
+              source: "samsara_certified_eld" as const,
+            }
+          : null,
       };
     });
 
