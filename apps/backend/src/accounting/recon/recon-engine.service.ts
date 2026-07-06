@@ -14,7 +14,13 @@ export type ReconRunType =
   | "am_bank_count"
   | "pm_categorization_diff"
   | "on_demand_bank_count"
-  | "on_demand_categorization_diff";
+  | "on_demand_categorization_diff"
+  // AF-2 — DETECT-ONLY master-data anchor-drift passes (see ../../qbo-sync/master-data-anchor-drift.ts).
+  // These record ANCHOR_DRIFT exceptions read from mdata.vendors/mdata.customers/catalogs.accounts vs
+  // their QBO mirror; they never write to the source table (write-back stays OFF per the locked decision).
+  | "master_data_drift_vendors"
+  | "master_data_drift_customers"
+  | "master_data_drift_accounts";
 
 export type ExceptionClass =
   | "COUNT_MISMATCH"
@@ -103,7 +109,9 @@ export type QboReconSource = {
   bankEntries(opco: string, windowStart: string, windowEnd: string): Promise<ReconEntry[]>;
 };
 
-async function insertRun(client: PoolClient, opco: string, runType: ReconRunType, ws: string, we: string, preparer: string | null): Promise<string> {
+// Exported (not just used internally) so AF-2's master-data-anchor-drift.ts can reuse the SAME audited
+// recon_runs/recon_exceptions write path instead of standing up a parallel table.
+export async function insertRun(client: PoolClient, opco: string, runType: ReconRunType, ws: string, we: string, preparer: string | null): Promise<string> {
   const res = await client.query<{ id: string }>(
     `INSERT INTO accounting.recon_runs (operating_company_id, run_type, window_start, window_end, preparer, status)
      VALUES ($1::uuid,$2,$3::timestamptz,$4::timestamptz,$5,'running') RETURNING id`,
@@ -113,7 +121,7 @@ async function insertRun(client: PoolClient, opco: string, runType: ReconRunType
   return res.rows[0].id;
 }
 
-async function insertExceptions(client: PoolClient, opco: string, runId: string, ex: PendingException[]): Promise<void> {
+export async function insertExceptions(client: PoolClient, opco: string, runId: string, ex: PendingException[]): Promise<void> {
   for (const e of ex) {
     const res = await client.query<{ id: string }>(
       `INSERT INTO accounting.recon_exceptions
@@ -126,7 +134,7 @@ async function insertExceptions(client: PoolClient, opco: string, runId: string,
   }
 }
 
-async function finalizeRun(client: PoolClient, opco: string, runId: string, totals: Record<string, unknown>): Promise<void> {
+export async function finalizeRun(client: PoolClient, opco: string, runId: string, totals: Record<string, unknown>): Promise<void> {
   await client.query(
     `UPDATE accounting.recon_runs SET status='complete', finished_at=now(), totals=$2::jsonb, updated_at=now()
      WHERE id=$1::uuid`,
@@ -137,10 +145,15 @@ async function finalizeRun(client: PoolClient, opco: string, runId: string, tota
 
 // events.log_event whitelists subject_type — 'recon' is not allowed, so recon events ride under 'alert'
 // (a recon exception/run is an operational alert). actor 'system' for scheduled runs.
+// event_log.actor_id is UUID NOT NULL — when no human actor is present (system/cron runs) we use the
+// shared system-actor sentinel, which is the same sentinel used by journal-entry-qbo-push and
+// factoring-posting crons (SYSTEM_ACTOR_USER_ID env, defaulting to 00000000-0000-4000-8000-000000000001).
+const RECON_SYSTEM_ACTOR_ID = process.env.SYSTEM_ACTOR_USER_ID ?? "00000000-0000-4000-8000-000000000001";
 async function logReconEvent(client: PoolClient, opco: string, eventType: string, actorId: string | null, subjectId: string, payload: Record<string, unknown>): Promise<void> {
+  const effectiveActorId = actorId ?? RECON_SYSTEM_ACTOR_ID;
   await client.query(
     `SELECT events.log_event($1::uuid,$2,$3,$4::uuid,'alert',$5::uuid,$6::jsonb)`,
-    [opco, eventType, actorId ? "user" : "system", actorId, subjectId, JSON.stringify(payload)],
+    [opco, eventType, actorId ? "user" : "system", effectiveActorId, subjectId, JSON.stringify(payload)],
   );
 }
 

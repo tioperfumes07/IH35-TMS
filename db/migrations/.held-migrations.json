@@ -152,6 +152,22 @@
     {
       "file": "202607130100_block17_24_tax_document_engine.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1] BLOCK-17/24 — 1099-NEC/1042-S annual generation + general tax-document PDF engine (catalogs.payee_tax_profile, catalogs.tax_form_thresholds, accounting.tax_document(_batch), accounting.form_1099_nec, accounting.form_1042_s). No new GL math, no e-file/transmission logic. TAX_DOC_1099_ENABLED OFF."
+    },
+    {
+      "file": "202607110300_af2_master_data_drift_readonly.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] AF-2 — QBO master-data drift DETECT-ONLY extension: gates the vendors/customers/COA reconciler auto-heal behind QBO_MASTER_DATA_HEAL_ENABLED (default OFF) + widens accounting.recon_runs.run_type for 3 new read-only master-data drift passes. No write-back, no posting."
+    },
+    {
+      "file": "202607110310_af4_ap_import_scaffold.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] AF-4 — A/P bills migration SCAFFOLD: accounting.ap_import_batches/ap_import_preview_lines (audited reviewable bill list) + AP_IMPORT_ENABLED flag (default OFF). The accounting.bills write path is NOT built in this PR (design-only, never build posting logic solo) — schema/preview layer only."
+    },
+    {
+      "file": "202607110320_af7_money_control_flags.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] AF-7 — money-control flag infra: 3 per-entity-only flags (void/reversal, period-close, period-reopen — all default OFF) + accounting.periods RLS role-gate fix (INSERT/UPDATE now requires Owner/Administrator, closing a documented open gap). No posting turned on."
+    },
+    {
+      "file": "202607130000_factoring_reserve_movements.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] CONN-2 — accounting.factoring_reserve_movements per-advance reserve ledger + views.factoring_reserve_balances (Faro Reserve Tracker). Storage/reporting only, no new GL math; FACTORING_GL_POSTING_ENABLED stays OFF."
     }
   ]
 }
