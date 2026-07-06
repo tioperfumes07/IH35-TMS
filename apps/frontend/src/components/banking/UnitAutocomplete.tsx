@@ -13,6 +13,10 @@ type Props = {
 // server-side 50-cap (G9-H6) so the FULL fleet is selectable.
 export function UnitAutocomplete({ companyId, value, onChange, placeholder = "Search unit (optional)" }: Props) {
   const [search, setSearch] = useState("");
+  // Show-on-focus (not gated behind a typed query): the initial unfiltered fleet is visible as soon as
+  // the field is focused, so an empty result reads as "genuinely no units under this entity", not
+  // "broken picker". A short close-delay lets the click on a list button register before blur hides it.
+  const [focused, setFocused] = useState(false);
 
   const unitsQuery = useQuery({
     queryKey: ["banking", "unit-autocomplete", companyId, search],
@@ -29,17 +33,25 @@ export function UnitAutocomplete({ companyId, value, onChange, placeholder = "Se
     return match ? label(match) : "";
   }, [unitsQuery.data, value]);
 
+  const rows = unitsQuery.data ?? [];
+
   return (
     <div className="space-y-1" data-unit-autocomplete="true">
       <input
         className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
         value={search || selectedLabel}
         placeholder={placeholder}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setTimeout(() => setFocused(false), 150)}
         onChange={(event) => setSearch(event.target.value)}
       />
-      {search.trim() ? (
+      {focused ? (
         <div className="max-h-40 overflow-y-auto rounded-sm border border-gray-200 bg-white">
-          {(unitsQuery.data ?? []).slice(0, 20).map((u) => (
+          {unitsQuery.isLoading ? <p className="px-2 py-1 text-xs text-gray-500">Loading units...</p> : null}
+          {!unitsQuery.isLoading && rows.length === 0 ? (
+            <p className="px-2 py-1 text-xs text-gray-500">No units found for this company.</p>
+          ) : null}
+          {rows.slice(0, 20).map((u) => (
             <button
               key={u.id}
               type="button"
@@ -47,6 +59,7 @@ export function UnitAutocomplete({ companyId, value, onChange, placeholder = "Se
               onClick={() => {
                 onChange(u.id, label(u));
                 setSearch("");
+                setFocused(false);
               }}
             >
               {label(u)}
