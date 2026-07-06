@@ -15,6 +15,12 @@ vi.mock("./DomainRowCountBadge", () => ({
   DomainRowCountBadge: () => <span data-testid="row-count-badge" />,
 }));
 
+// ModuleHeader's optional countModule badge also pulls a live count via useModuleCount, which needs
+// a CompanyProvider these unit tests don't set up; stub it the same way as DomainRowCountBadge above.
+vi.mock("../../../components/layout/SubNavCounts", () => ({
+  SubNavCounts: () => <span data-testid="subnav-count-badge" />,
+}));
+
 describe("Lists reorg — ordering (data-driven, single source)", () => {
   const sorted = sortDomainsForDisplay(DOMAIN_CONFIG);
 
