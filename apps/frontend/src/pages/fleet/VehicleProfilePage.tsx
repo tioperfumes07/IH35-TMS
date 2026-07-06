@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams, Link } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { patchUnit, quicksaveEquipmentAssignment } from "../../api/mdata";
 import { QuickAssignModal } from "../../components/fleet/QuickAssignModal";
@@ -278,6 +278,11 @@ export function VehicleProfilePage() {
               onEdit={() => setEditModalOpen(true)}
               onArchive={handleArchive}
             />
+            <div className="mt-3">
+              <Link to={`/fleet/units/${id}/detail`} className="inline-block rounded-sm border px-3 py-1.5 text-sm">
+                View Permits, Toll Tags, Tasks, Brakes, Tires
+              </Link>
+            </div>
           </div>
         </>
       ) : null}
