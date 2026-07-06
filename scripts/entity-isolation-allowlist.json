@@ -709,6 +709,12 @@
     },
     {
       "schema": "compliance",
+      "table": "appraisal_districts",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "compliance",
       "table": "form_425c_exhibit_a_entries",
       "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
       "phase": "P1"
@@ -747,6 +753,12 @@
       "schema": "docs",
       "table": "file_links",
       "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "driver_finance",
+      "table": "signed_acknowledgments",
+      "reason": "needs opco-scoped RLS policy",
       "phase": "P1"
     },
     {
@@ -852,16 +864,16 @@
       "phase": "P4"
     },
     {
-      "schema": "maint",
-      "table": "part_position_assignment",
-      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
-      "phase": "P4"
+      "schema": "maintenance",
+      "table": "defects",
+      "reason": "needs opco-scoped RLS policy",
+      "phase": "P1"
     },
     {
-      "schema": "maint",
-      "table": "position_set",
-      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
-      "phase": "P4"
+      "schema": "maintenance",
+      "table": "dvir_submissions",
+      "reason": "needs opco-scoped RLS policy",
+      "phase": "P1"
     },
     {
       "schema": "maintenance",
@@ -896,6 +908,18 @@
     {
       "schema": "maintenance",
       "table": "work_orders",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "maint",
+      "table": "part_position_assignment",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "maint",
+      "table": "position_set",
       "reason": "needs FK from 'operating_company_id' to org.companies(id)",
       "phase": "P4"
     },
@@ -1092,12 +1116,6 @@
       "phase": "P4"
     },
     {
-      "schema": "safety",
-      "table": "integrity_findings",
-      "reason": "needs uuid cast (column 'operating_company_id' is currently 'text') | needs FK from 'operating_company_id' to org.companies(id)",
-      "phase": "P4"
-    },
-    {
       "schema": "safetydoc",
       "table": "assignment",
       "reason": "needs FK from 'operating_company_id' to org.companies(id)",
@@ -1107,6 +1125,12 @@
       "schema": "safetydoc",
       "table": "document",
       "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "safety",
+      "table": "integrity_findings",
+      "reason": "needs uuid cast (column 'operating_company_id' is currently 'text') | needs FK from 'operating_company_id' to org.companies(id)",
       "phase": "P4"
     },
     {
