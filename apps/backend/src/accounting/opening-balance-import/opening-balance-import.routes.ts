@@ -4,6 +4,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import fp from "fastify-plugin";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../shared.js";
+import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
 import { buildTransp20241231OpeningBalanceImportPreview } from "./opening-balance-import.service.js";
 
 const financeRoles = new Set(["Owner", "Administrator", "Accountant"]);
@@ -27,6 +28,9 @@ async function registerOpeningBalanceImportRoutes(app: FastifyInstance) {
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+
+    try { await assertCompanyMembership(user.uuid, query.data.operating_company_id); }
+    catch { return reply.code(403).send({ error: "forbidden_company_membership" }); }
 
     const payload = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) =>
       buildTransp20241231OpeningBalanceImportPreview(client, query.data.operating_company_id)
