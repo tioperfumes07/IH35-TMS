@@ -26,7 +26,7 @@ export async function getDriverPayrollHistory(
   const totalRes = await client.query<{ total: string }>(
     `
       SELECT COUNT(*)::text AS total
-      FROM payroll.driver_settlements
+      FROM driver_finance.driver_settlements
       WHERE driver_id = $1::uuid
         AND operating_company_id = $2::uuid
     `,
@@ -45,7 +45,7 @@ export async function getDriverPayrollHistory(
         net_pay::text,
         status,
         created_at::text
-      FROM payroll.driver_settlements
+      FROM driver_finance.driver_settlements
       WHERE driver_id = $1::uuid
         AND operating_company_id = $2::uuid
       ORDER BY period_end DESC NULLS LAST, created_at DESC

@@ -160,7 +160,7 @@ export function CashFlowStatementPage() {
             { key: "investing", title: "Investing activities", lines: investingLines, total: query.data.investing.total },
             { key: "financing", title: "Financing activities", lines: financingLines, total: query.data.financing.total },
           ].map((section) => (
-            <div key={section.key} className="overflow-auto rounded-sm border border-gray-200 bg-white">
+            <div key={section.key} className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
               <div className="border-b border-gray-200 bg-gray-50 px-3 py-2 text-sm font-semibold">{section.title}</div>
               <table className="min-w-full text-left text-xs">
                 <thead className="border-b border-gray-200 bg-gray-50 text-[11px] font-semibold uppercase tracking-wide text-gray-600">

@@ -7,7 +7,7 @@ export type PermitHistoryRow = {
   permit_type: string | null;
   issuing_state: string | null;
   permit_number: string | null;
-  expiration_date: string | null;
+  expiry_date: string | null;
   created_at: string;
 };
 
@@ -41,12 +41,12 @@ export async function getDriverPermitHistory(
         permit_type,
         issuing_state,
         permit_number,
-        expiration_date::text,
+        expiry_date::text,
         created_at::text
       FROM safety.permits
       WHERE driver_id = $1::uuid
         AND operating_company_id = $2::uuid
-      ORDER BY expiration_date DESC NULLS LAST, created_at DESC
+      ORDER BY expiry_date DESC NULLS LAST, created_at DESC
       LIMIT $3 OFFSET $4
     `,
     [driverUuid, operatingCompanyId, limit, offset]

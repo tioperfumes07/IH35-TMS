@@ -1195,6 +1195,9 @@ jobs:
       - name: verify:a5-audit-emit-banking
         run: npm run verify:a5-audit-emit-banking
 
+      - name: verify:spine-emit-placeholder-casts
+        run: npm run verify:spine-emit-placeholder-casts
+
       - name: verify:a6-audit-universal-view
         run: npm run verify:a6-audit-universal-view
 

@@ -274,7 +274,7 @@ export async function registerCustomerPaymentsRoutes(app: FastifyInstance) {
       emitAccountingSpineEvent(client, {
         operating_company_id: query.data.operating_company_id,
         actor_user_id: String(user.uuid),
-        event_type: "customer_payment.created",
+        event_type: "payment.customer_created",
         entity_id: (result as { data?: { id?: string } })?.data?.id ?? "",
         entity_type: "customer_payment",
         source_table: "accounting.payments",

@@ -1,0 +1,177 @@
+# Entity Isolation Guard
+
+**Script:** `scripts/verify-entity-isolation.mjs`
+**npm:** `npm run verify:entity-isolation` (also `:update`)
+**Allowlist:** `scripts/entity-isolation-allowlist.json`
+**Runs in:** the `verify:arch-design` chain (CI, against a fresh-migrated database — see
+`docs/ci-guards/ORPHAN-COMPONENTS-GUARD.md` for the general house pattern this follows).
+
+## The mandate (Jorge, 2026-07-05, verbatim)
+
+> "usmca will use insurance and factoring as well... each company should be completely independent,
+> create all around guards. that is why i wanted a database independent of each other so this would
+> not happen. each company should never touch anything of another."
+
+TRANSP (operating carrier), TRK (asset holder), and USMCA (future carrier, July 2026 launch) share
+**one** Neon Postgres database via RLS walls — separate physical databases were considered and
+rejected as too costly. This guard is the **permanent enforcement** of that wall. It does not fix
+today's non-compliant tables (that is separate P1/P4/RLS-force-tail remediation work tracked
+elsewhere) — it does two things:
+
+1. **PASSES today** by capturing every currently non-compliant business table in a documented,
+   reviewed backlog (`remediation_backlog`).
+2. **FAILS the instant** anyone — human or agent — introduces a **new** un-walled business table, or
+   weakens/removes compliance on a table that was already compliant.
+
+See also `docs/specs/MULTI-ENTITY-SEPARATION.md` (the locked separation doc this guard implements —
+do not contradict it) and the narrower existing guards it does not replace:
+`scripts/verify-rls-operating-company-scope.mjs` (RLS-enabled + has-a-policy check for any table with
+`operating_company_id`), `scripts/verify-catalogs-accounts-entity-scope.mjs` /
+`verify-catalogs-items-classes-entity-scope.mjs` / `verify-financial-entity-scope.mjs` (narrow,
+static, per-table regression pins). This guard is **broader**: it walks every ordinary table in the
+live schema and classifies each one.
+
+## The four compliance requirements
+
+A business table is **entity-scoped** (compliant) only if it has **all four**:
+
+- **(a) scoping column, type uuid.** Canonically `operating_company_id`. Two verified-live synonyms
+  are ALSO accepted, because they are systematically used for the exact same contract elsewhere in
+  this schema (not a guess — checked against every occurrence before being added here):
+  - `tenant_id` — every `insurance.*` and `factoring.*` table, plus several `accounting.*` /
+    `mdata.*` / `maint.*` tables, scope this way.
+  - `company_id` — e.g. `onboarding.onboarding_state`.
+  A column present but **not** uuid (e.g. `text`) fails this requirement — it needs a uuid-cast
+  migration, not just a new RLS policy.
+- **(b) foreign key** from that exact column to `org.companies(id)`.
+- **(c) an RLS policy that actually scopes by that column**, in one of two doc-sanctioned forms:
+  - **Form 1 — single-active-entity equality:** `<col> = current_setting('app.operating_company_id',
+    true)` (or the documented `app.current_operating_company_id` GUC variant — the `events.event_log`
+    exception, see Landmines below).
+  - **Form 2 — accessible-companies membership:** `<col> IN (SELECT
+    org.user_accessible_company_ids())` or `<col> IN (SELECT company_id FROM org.user_company_access
+    WHERE user_id = ...)`. **This is not a weaker fallback.** `docs/specs/MULTI-ENTITY-SEPARATION.md`
+    §8 (LAW) explicitly prescribes this shape for role-elevated visibility: *"role elevation widens
+    visibility WITHIN accessible companies only, never across entities."* A manager granted access to
+    more than one company is **intended** to see all of them in one query — that is not a leak. Every
+    `mdata.customers` / `drivers` / `vendors` / `loads`-class table uses this form, not Form 1.
+  A policy with **neither** form — a bare role check (`identity.current_user_role() = ANY(...)`) or
+  an unconditional `true` — does **not** count. That is the real "zero-isolation policy" failure mode
+  documented in the `rls-unforced-tail-resolution` audit.
+- **(d) `pg_class.relforcerowsecurity = true`** (FORCE ROW LEVEL SECURITY). RLS enabled-but-not-forced
+  lets the table **owner** bypass every policy above — belt-and-suspenders, not optional.
+
+## Two categories, and why the distinction matters
+
+- **`global`** — genuinely non-entity structural tables: `reference.*` lookup catalogs, the
+  `org`/`identity` control plane itself (a user can hold access to multiple companies; `org.companies`
+  is the FK target every scoping column points to), migration/dev ledgers, and one reviewed legacy-dead
+  table (`public.audit_log` + its 48 monthly partitions — see the file's own reason string for the
+  full verified trail). **Hand-curated and human-reviewed. Never touched by `--update`.**
+- **`remediation_backlog`** — the burn-down debt list: every currently non-compliant business table
+  that is NOT global. Regenerated by `--update` from live introspection.
+
+The difference is not cosmetic: `global` is a **permanent exemption** (this table will never need
+walling); `remediation_backlog` is **debt** (this table should shrink the list, never grow it, over
+time). Conflating them would either hide real gaps as "fine forever" or nag forever about a table that
+structurally can never comply.
+
+**Be conservative.** When genuinely unsure whether a table is structural or just currently broken, put
+it in `remediation_backlog`, never `global`. `global` entries require someone to argue, in the reason
+string, why the table can *never* need per-entity scoping — not just that it doesn't have it *today*.
+
+## Landmines this guard had to get right (verified against live schema, not guessed)
+
+- **`mdata.units` / `mdata.equipment`** deliberately have **no** `operating_company_id` — they carry
+  `owner_company_id` (TRK owns) + `currently_leased_to_company_id` (TRANSP/USMCA lease); a unit can be
+  TRK-owned but TRANSP-leased. These are `remediation_backlog` (phase `other`) with a note that this
+  needs an explicit architecture decision, not a raw add-column fix. The same dual-ownership shape
+  recurs in `accounting.fixed_assets` / `fixed_assets.assets` (owner/lessor columns) and
+  `accounting.lease_contract` (`lessor_operating_company_id` — a lease inherently spans two entities)
+  — all four are backlogged with the same cross-reference.
+- **`events.event_log`** uses a *different* GUC name, `app.current_operating_company_id`, in its two
+  policies (migration `202606111050`). Migration `202607090000` already reconciled this at the
+  function level (`events.log_event()` now derives the GUC from its own argument — every caller is
+  correct by construction). What remains is (b) no FK to `org.companies`, and (d) not forced — FORCE
+  is a deliberate, tracked, separate follow-up (`202607080100_event_log_force_rls_blocked_pending_guc_fix.sql`
+  is the no-op placeholder documenting why forcing today would reject spine-emit writers). The
+  backlog reason for this table says so explicitly — do not "fix" it by forcing RLS as a side effect
+  of closing this entry.
+- **`catalogs.accounts` / `catalogs.items` / `catalogs.classes`** (AF-1/AF-2/AF-3) come out
+  **compliant**, not backlogged — they use Form 1 (`(operating_company_id)::text = current_setting(...)`).
+  If a future run of `--update` puts these back in the backlog, that is a guard regression, not a
+  schema regression — investigate the guard first.
+- **`catalogs.account_role_bindings`** is `remediation_backlog` (phase `other`): migration
+  `202607010700` added a *nullable* `operating_company_id` + a resolver-side guard, but a **global**
+  `role_key` UNIQUE constraint still exists, blocking true per-entity rows. Current policies are
+  role-only (no company comparison at all) pending that constraint's removal.
+- **The 8 `reference.*` tables** (`cbp_wait_times_cache`, `cdl_endorsements`, `cdl_restrictions`,
+  `employment_statuses`, `license_classes`, `medical_card_statuses`, `oem_parts`, `ports_of_entry`) are
+  global. The live count is **8**, not 7 — always re-derive this from the schema, never hardcode a
+  count from memory.
+- **`insurance.*` and `factoring.*`** all scope by `tenant_id` (not `operating_company_id`) and come
+  out **compliant**. If a naive guard only checked for `operating_company_id`, it would wrongly
+  backlog every one of these — the exact false-positive this guard's synonym list (`tenant_id`,
+  `company_id`) exists to prevent.
+- **`catalogs.load_cancellation_reasons` / `catalogs.void_cancel_reasons`** and most of
+  `mdata.customers` / `drivers` / `vendors` / `loads` / `locations` come out **compliant** via Form 2
+  (membership), not Form 1 (equality) — see the requirement (c) explanation above. A guard that only
+  recognized Form 1 would have wrongly flagged dozens of correctly-walled core operational tables.
+
+## Commands
+
+```bash
+npm run verify:entity-isolation          # CI gate — exit 1 on a NEW leak or a stale backlog entry
+npm run verify:entity-isolation:update   # regenerate remediation_backlog (global untouched)
+```
+
+Requires `DATABASE_DIRECT_URL` or `DATABASE_URL` pointed at a **fresh-migrated** database (same
+fresh-DB-CI-only convention as every other DB-driven guard here — see
+`docs/ci-guards/ORPHAN-COMPONENTS-GUARD.md` and the migration-authoring skill for why). Never point
+this at prod. It only reads `pg_catalog` (`SET ROLE ih35_app` first, matching
+`scripts/verify-rls-operating-company-scope.mjs` / `scripts/db-verify-mdata-rls.mjs`) — it makes no
+schema or data change either way.
+
+On success it prints two exact tokens Jorge/CI grep for:
+
+```
+remediation_backlog_count=<N>
+new_violations=0
+```
+
+## `--update` is a reviewable diff, never a silent bump
+
+`--update` regenerates `remediation_backlog` from live introspection (recomputing every reason from
+scratch). It **never** touches `global` — that array is hand-curated and requires a human editing the
+JSON directly, with the same scrutiny as adding an entry to any other permanent exemption list in this
+repo.
+
+**A table must never be silently added to the backlog inside a normal feature PR.** If your change
+introduces a new business table, wall it properly (four requirements above) before merging. If CI
+fails naming your new table, that is the guard doing its job — fix the table, don't launder it into
+the backlog. Regenerating the backlog file via `--update` is itself a reviewable diff that must be
+inspected by a human (or Jorge) before merge — exactly the same house convention as
+`verify:schema-parity:update` and `verify:phantom-relations` baseline updates.
+
+## Fixing a NEW violation (what to do when CI fails)
+
+You have exactly two correct options — **do NOT edit the JSON by hand to paper over it**:
+
+1. **Wall it (preferred).** Add the uuid scoping column, the FK to `org.companies(id)`, an RLS policy
+   using Form 1 or Form 2 above, and FORCE ROW LEVEL SECURITY. This is a migration — financial-cluster
+   rules apply if the table is under `accounting.*`/`catalogs.*`, and even outside those schemas, a new
+   RLS/FORCE migration always needs the standard show-the-SQL-first protocol.
+2. **Document why it's structurally global (rare).** Only for a genuinely non-entity table (shared
+   code/reference/system table). Add it to `global` in `scripts/entity-isolation-allowlist.json` with
+   a concrete, specific reason — not "not sure, seems fine."
+
+If the table is real debt you can't close in this PR, run `npm run verify:entity-isolation:update`,
+inspect the regenerated diff, and get it reviewed like any other baseline change — never hand-edit the
+JSON.
+
+## Burn-down intent
+
+The backlog starts at **142** business tables (out of 656 scanned, 75 global-exempt) as of this
+guard's introduction — the real, live count of tables still needing entity-scoping work, spanning
+known P1 (no scoping column at all), P4 (column present but missing FK/policy/FORCE), and `other`
+(the 4 documented architecture-decision landmines above). That number should only ever go **down**.

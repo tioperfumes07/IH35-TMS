@@ -4,9 +4,10 @@ export type SettlementHistoryRow = {
   uuid: string;
   driver_id: string;
   operating_company_id: string;
-  settlement_number: string | null;
+  display_id: string | null;
+  period_start: string | null;
   period_end: string | null;
-  total_amount: string | null;
+  total_amount_cents: string | null;
   status: string | null;
   created_at: string;
 };
@@ -38,9 +39,10 @@ export async function getDriverSettlementHistory(
         id::text AS uuid,
         driver_id::text,
         operating_company_id::text,
-        settlement_number,
+        display_id,
+        period_start::text,
         period_end::text,
-        total_amount::text,
+        total_amount_cents::text,
         status,
         created_at::text
       FROM driver_finance.driver_settlements
