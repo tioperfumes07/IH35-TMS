@@ -75,9 +75,30 @@ export function DriverAssignmentSection({
             {currentDriver?.logged_in_at ? `Logged in ${String(currentDriver.logged_in_at)}` : ""}
             {currentDriver?.source ? ` via ${String(currentDriver.source)}` : ""}
           </div>
+          {/* HOS-FANOUT (Jorge 2026-07-05) — certified Samsara ELD, verbatim, wired into Fleet/
+              Maintenance so "is this truck's driver clear to be on the road right now?" is answerable
+              from the vehicle profile too, not just the dispatch board. */}
           <div className="mt-2 text-xs text-gray-600">
-            HOS: Drive {String(currentDriver?.hos_drive_remaining_min ?? "—")}m · On-duty{" "}
-            {String(currentDriver?.hos_on_duty_remaining_min ?? "—")}m · Cycle {String(currentDriver?.hos_cycle_remaining_min ?? "—")}m
+            {currentDriver?.hos_drive_remaining_min != null ||
+            currentDriver?.hos_on_duty_remaining_min != null ||
+            currentDriver?.hos_cycle_remaining_min != null ? (
+              <>
+                <span
+                  className={`mr-1 rounded-sm px-1 text-[9px] font-semibold uppercase tracking-[0.3px] ${
+                    currentDriver?.hos_violation
+                      ? "bg-red-100 text-red-700"
+                      : "bg-emerald-100 text-emerald-700"
+                  }`}
+                >
+                  {currentDriver?.hos_violation ? "HOS violation — certified ELD" : "Certified ELD"}
+                </span>
+                Drive {String(currentDriver?.hos_drive_remaining_min ?? "—")}m · On-duty{" "}
+                {String(currentDriver?.hos_on_duty_remaining_min ?? "—")}m · Cycle{" "}
+                {String(currentDriver?.hos_cycle_remaining_min ?? "—")}m
+              </>
+            ) : (
+              "No certified ELD data yet"
+            )}
           </div>
         </div>
       </div>
