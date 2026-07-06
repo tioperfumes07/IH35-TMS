@@ -1,0 +1,9 @@
+# Custom merge driver for DERIVED / APPEND-ONLY registry JSON files that every migration PR touches.
+# Without this, any migration PR that merges first conflicts EVERY other open migration PR on these
+# single shared files, and hand-resolving them then fails `verify:schema-parity` in CI. The json-union
+# driver (scripts/git-merge-driver.mjs, registered by scripts/setup-git-merge-drivers.mjs) deep-unions
+# both sides automatically so `git merge origin/main` never surfaces a conflict on them. The post-merge
+# hook then canonicalizes the schema-parity baseline via `--update` (pure static, no DB).
+docs/schema-parity-baseline.json        merge=json-union
+db/migrations/.held-migrations.json     merge=json-union
+scripts/entity-isolation-allowlist.json merge=json-union
