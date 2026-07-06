@@ -6,8 +6,8 @@ export type MaintenanceAssignmentRow = {
   operating_company_id: string;
   unit_id: string | null;
   unit_number: string | null;
-  assigned_at: string | null;
-  unassigned_at: string | null;
+  started_at: string | null;
+  ended_at: string | null;
   created_at: string;
 };
 
@@ -41,14 +41,14 @@ export async function getDriverMaintenanceAssignments(
         a.operating_company_id::text,
         a.unit_id::text,
         COALESCE(NULLIF(TRIM(u.unit_number), ''), a.unit_id::text) AS unit_number,
-        a.assigned_at::text,
-        a.unassigned_at::text,
+        a.started_at::text,
+        a.ended_at::text,
         a.created_at::text
       FROM telematics.vehicle_driver_assignments a
       LEFT JOIN mdata.units u ON u.id = a.unit_id
       WHERE a.driver_id = $1::uuid
         AND a.operating_company_id = $2::uuid
-      ORDER BY a.assigned_at DESC NULLS LAST, a.created_at DESC
+      ORDER BY a.started_at DESC NULLS LAST, a.created_at DESC
       LIMIT $3 OFFSET $4
     `,
     [driverUuid, operatingCompanyId, limit, offset]

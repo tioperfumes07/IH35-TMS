@@ -4,9 +4,8 @@ export type DocumentsVaultRow = {
   uuid: string;
   driver_id: string;
   operating_company_id: string;
-  document_id: string | null;
-  file_name: string | null;
-  doc_type: string | null;
+  file_id: string | null;
+  entity_type: string | null;
   created_at: string;
 };
 
@@ -38,9 +37,8 @@ export async function getDriverDocumentsVault(
         id::text AS uuid,
         entity_id::text AS driver_id,
         operating_company_id::text,
-        document_id::text,
-        file_name,
-        doc_type,
+        file_id::text,
+        entity_type,
         created_at::text
       FROM docs.file_links
       WHERE entity_type = 'driver'

@@ -4,9 +4,9 @@ export type DebtHistoryRow = {
   uuid: string;
   driver_id: string;
   operating_company_id: string;
-  advance_type: string | null;
-  principal_amount: string | null;
-  balance_remaining: string | null;
+  purpose: string | null;
+  amount: string | null;
+  outstanding_balance: string | null;
   status: string | null;
   created_at: string;
 };
@@ -38,9 +38,9 @@ export async function getDriverDebtHistory(
         id::text AS uuid,
         driver_id::text,
         operating_company_id::text,
-        advance_type,
-        principal_amount::text,
-        balance_remaining::text,
+        purpose,
+        amount::text,
+        outstanding_balance::text,
         status,
         created_at::text
       FROM driver_finance.driver_advances

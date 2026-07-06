@@ -4,10 +4,10 @@ export type FuelHistoryRow = {
   uuid: string;
   driver_id: string;
   operating_company_id: string;
-  transaction_date: string | null;
-  merchant: string | null;
+  transaction_at: string | null;
+  location_city: string | null;
   gallons: string | null;
-  total_amount: string | null;
+  total_cost: string | null;
   created_at: string;
 };
 
@@ -38,15 +38,15 @@ export async function getDriverFuelHistory(
         id::text AS uuid,
         driver_id::text,
         operating_company_id::text,
-        transaction_date::text,
-        merchant,
+        transaction_at::text,
+        location_city,
         gallons::text,
-        total_amount::text,
+        total_cost::text,
         created_at::text
       FROM fuel.fuel_transactions
       WHERE driver_id = $1::uuid
         AND operating_company_id = $2::uuid
-      ORDER BY transaction_date DESC NULLS LAST, created_at DESC
+      ORDER BY transaction_at DESC NULLS LAST, created_at DESC
       LIMIT $3 OFFSET $4
     `,
     [driverUuid, operatingCompanyId, limit, offset]

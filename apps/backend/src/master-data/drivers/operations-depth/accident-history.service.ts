@@ -4,9 +4,8 @@ export type AccidentHistoryRow = {
   uuid: string;
   driver_id: string;
   operating_company_id: string;
-  incident_id: string | null;
-  occurred_at: string | null;
-  severity: string | null;
+  unit_id: string | null;
+  accident_at: string | null;
   description: string | null;
   created_at: string;
 };
@@ -38,15 +37,14 @@ export async function getDriverAccidentHistory(
         id::text AS uuid,
         driver_id::text,
         operating_company_id::text,
-        incident_id::text,
-        occurred_at::text,
-        severity,
+        unit_id::text,
+        accident_at::text,
         description,
         created_at::text
       FROM safety.accident_reports
       WHERE driver_id = $1::uuid
         AND operating_company_id = $2::uuid
-      ORDER BY occurred_at DESC NULLS LAST, created_at DESC
+      ORDER BY accident_at DESC NULLS LAST, created_at DESC
       LIMIT $3 OFFSET $4
     `,
     [driverUuid, operatingCompanyId, limit, offset]

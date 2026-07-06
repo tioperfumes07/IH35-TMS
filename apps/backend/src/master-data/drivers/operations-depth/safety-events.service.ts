@@ -4,10 +4,9 @@ export type SafetyEventRow = {
   uuid: string;
   driver_id: string;
   operating_company_id: string;
-  event_type: string | null;
+  event_kind: string | null;
   severity: string | null;
-  occurred_at: string | null;
-  source: string | null;
+  event_at: string | null;
   created_at: string;
 };
 
@@ -38,15 +37,14 @@ export async function getDriverSafetyEvents(
         id::text AS uuid,
         driver_id::text,
         operating_company_id::text,
-        event_type,
+        event_kind,
         severity,
-        occurred_at::text,
-        source,
+        event_at::text,
         created_at::text
       FROM safety.harsh_events
       WHERE driver_id = $1::uuid
         AND operating_company_id = $2::uuid
-      ORDER BY occurred_at DESC NULLS LAST, created_at DESC
+      ORDER BY event_at DESC NULLS LAST, created_at DESC
       LIMIT $3 OFFSET $4
     `,
     [driverUuid, operatingCompanyId, limit, offset]

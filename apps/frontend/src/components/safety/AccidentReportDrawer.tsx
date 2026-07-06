@@ -5,7 +5,6 @@ import {
   addAccidentPhoto,
   createSafetyAccident,
   patchSafetyAccident,
-  setSafetyAccidentStatus,
   spawnSafetyLiability,
   spawnSafetyWo,
   type AccidentFault,
@@ -48,12 +47,6 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
   // never the display name — and on create/save PERSIST them to safety.accident_reports
   // (driver_id/unit_id/vendor_id/load_id) via the office creator endpoint, so the accident keys to
   // real driver + unit + vendor + load records.
-  const [driverId, setDriverId] = useState<string>("");
-  const [unitId, setUnitId] = useState<string>("");
-  const [vendorId, setVendorId] = useState<string>("");
-  const [loadId, setLoadId] = useState<string>("");
-  const [incidentDate, setIncidentDate] = useState<string>("");
-  const [memo, setMemo] = useState<string>("");
   // SAFE-1: real fault + DOT preventability state (was a dead hardcoded "no"). at_fault holds one of
   // yes/no/disputed (or "" = not yet assessed → persists as null). preventable is a tri-state select
   // string ("" = Undetermined→null, "true" = Preventable, "false" = Not Preventable) converted to a
@@ -64,22 +57,36 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
 
   const accidentId = accident ? String(accident.id ?? "") : "";
 
+  // Derive initial state from accident prop to avoid useEffect setState warning
+  const initialDriverId = accident ? String(accident.driver_id ?? "") : "";
+  const initialUnitId = accident ? String(accident.unit_id ?? "") : "";
+  const initialVendorId = accident ? String(accident.vendor_id ?? "") : "";
+  const initialLoadId = accident ? String(accident.load_id ?? "") : "";
+  const initialIncidentDate = accident ? String(accident.accident_at ?? "").slice(0, 10) : "";
+  const initialMemo = accident ? String(accident.notes ?? accident.description ?? "") : "";
+  const initialAtFault = accident ? String(accident.at_fault ?? "") : "";
+  const initialPreventable =
+    accident && accident.preventable !== null && accident.preventable !== undefined
+      ? String(Boolean(accident.preventable))
+      : "";
+
+  const [driverId, setDriverId] = useState(initialDriverId);
+  const [unitId, setUnitId] = useState(initialUnitId);
+  const [vendorId, setVendorId] = useState(initialVendorId);
+  const [loadId, setLoadId] = useState(initialLoadId);
+  const [incidentDate, setIncidentDate] = useState(initialIncidentDate);
+  const [memo, setMemo] = useState(initialMemo);
+
   useEffect(() => {
-    setDriverId(accident ? String(accident.driver_id ?? "") : "");
-    setUnitId(accident ? String(accident.unit_id ?? "") : "");
-    setVendorId(accident ? String(accident.vendor_id ?? "") : "");
-    setLoadId(accident ? String(accident.load_id ?? "") : "");
-    setIncidentDate(accident ? String(accident.accident_at ?? "").slice(0, 10) : "");
-    setMemo(accident ? String(accident.notes ?? accident.description ?? "") : "");
-    // SAFE-1: hydrate from the persisted row so editing an existing report shows its real fault +
-    // preventability (never a false default "no"). Unset stays "" = not assessed / undetermined.
-    setAtFault(accident ? String(accident.at_fault ?? "") : "");
-    setPreventable(
-      accident && accident.preventable !== null && accident.preventable !== undefined
-        ? String(Boolean(accident.preventable))
-        : ""
-    );
-  }, [accidentId]); // eslint-disable-line react-hooks/exhaustive-deps
+    setDriverId(initialDriverId);
+    setUnitId(initialUnitId);
+    setVendorId(initialVendorId);
+    setLoadId(initialLoadId);
+    setIncidentDate(initialIncidentDate);
+    setMemo(initialMemo);
+    setAtFault(initialAtFault);
+    setPreventable(initialPreventable);
+  }, [accidentId, initialDriverId, initialUnitId, initialVendorId, initialLoadId, initialIncidentDate, initialMemo, initialAtFault, initialPreventable]);
 
   const scopeReady = open && Boolean(operatingCompanyId);
 
@@ -145,19 +152,6 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
     const subRowsTotal = (line.sub_rows ?? []).reduce((rowSum, row) => rowSum + Number(row.amount || 0), 0);
     return sum + Math.max(Number(line.amount || 0), subRowsTotal);
   }, 0);
-
-  const setStatus = (status: string) => {
-    if (!canMutate) {
-      pushToast("Save the accident report from Driver PWA intake before updating status.", "info");
-      return;
-    }
-    void setSafetyAccidentStatus(id, operatingCompanyId, status)
-      .then(() => {
-        pushToast("Accident status updated", "success");
-        onUpdated();
-      })
-      .catch((error) => pushToast(String((error as Error).message || "Failed"), "error"));
-  };
 
   const linkPayload = {
     driver_id: driverId || null,
@@ -359,15 +353,6 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
           </Button>
         </div>
         <div className="mt-3 grid grid-cols-2 gap-2">
-          <Button size="sm" variant="secondary" disabled={!canMutate} onClick={() => setStatus("under-investigation")}>
-            Set Investigating
-          </Button>
-          <Button size="sm" variant="secondary" disabled={!canMutate} onClick={() => setStatus("closed-no-fault")}>
-            Close No Fault
-          </Button>
-          <Button size="sm" variant="secondary" disabled={!canMutate} onClick={() => setStatus("closed-driver-at-fault")}>
-            Close Driver Fault
-          </Button>
           <Button
             size="sm"
             variant="secondary"

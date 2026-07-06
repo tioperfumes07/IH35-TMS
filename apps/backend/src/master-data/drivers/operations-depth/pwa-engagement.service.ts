@@ -6,8 +6,8 @@ export type PwaEngagementRow = {
   operating_company_id: string;
   suggestion_id: string | null;
   response: string | null;
-  accepted: boolean | null;
-  responded_at: string | null;
+  response_at: string | null;
+  response_by_user_uuid: string | null;
   created_at: string;
 };
 
@@ -41,13 +41,13 @@ export async function getDriverPwaEngagement(
         operating_company_id::text,
         suggestion_id::text,
         response,
-        accepted,
-        responded_at::text,
+        response_at::text,
+        response_by_user_uuid::text,
         created_at::text
       FROM dispatch.auto_status_suggestion_responses
       WHERE driver_id = $1::uuid
         AND operating_company_id = $2::uuid
-      ORDER BY responded_at DESC NULLS LAST, created_at DESC
+      ORDER BY response_at DESC NULLS LAST, created_at DESC
       LIMIT $3 OFFSET $4
     `,
     [driverUuid, operatingCompanyId, limit, offset]
