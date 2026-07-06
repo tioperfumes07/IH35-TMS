@@ -1,5 +1,7 @@
 import type { PoolClient } from "pg";
 import { withLuciaBypass } from "../auth/db.js";
+import { isEnabled } from "../lib/feature-flags/service.js";
+import { detectAnchorDrift } from "./master-data-anchor-drift.js";
 
 export type CustomersReconcileResult = {
   driftDetected: number;
@@ -132,7 +134,16 @@ export async function reconcileCustomers(operatingCompanyId: string): Promise<Cu
   await withLuciaBypass(async (client) => {
     driftDetected = await markLocalOnlyDrift(client, operatingCompanyId);
     createdFromQbo = await createMissingFromMirror(client, operatingCompanyId);
-    healed = await healFieldDrift(client, operatingCompanyId);
+    // AF-2: healFieldDrift() is a write-back — locked decision is "detect only, write stays OFF". Gate
+    // it behind QBO_MASTER_DATA_HEAL_ENABLED (default OFF); when off, record the same drift as a
+    // read-only accounting.recon_exceptions row (ANCHOR_DRIFT) instead of mutating mdata.customers.
+    const healEnabled = await isEnabled(client, "QBO_MASTER_DATA_HEAL_ENABLED", { operating_company_id: operatingCompanyId });
+    if (healEnabled) {
+      healed = await healFieldDrift(client, operatingCompanyId);
+    } else {
+      await detectAnchorDrift(client, operatingCompanyId, "customers");
+      healed = 0;
+    }
     localOnly = await countLocalOnly(client, operatingCompanyId);
   });
 

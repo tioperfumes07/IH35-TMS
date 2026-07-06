@@ -29,6 +29,26 @@
 //    that funding never credits ar_control (leaves total A/R exactly as-is and satisfies the
 //    verify-factoring-treatment guard). ar_assigned_to_factor is created/bound for that optional
 //    presentation + the chargeback path.
+//
+// CONN-2 (this revision) — two additions, both storage/subledger-only, NO new GL math:
+//  1. AR-subledger fix (CHAIN-06-FACTORING-AR-TIEOUT-PROOF.md §5/§7-A, surfaced by PR #2188, not fixed
+//     there by design). postFactoringCustomerPaymentEvent / postFactoringChargebackEvent relieved
+//     `ar_control` at the GL but never touched `accounting.invoices.amount_paid_cents`/`status` — AR
+//     Aging (`views.ar_aging`, filtered on `status IN ('sent','partial')`) would diverge from the GL the
+//     moment the flag flips ON. Fixed here by applying a DETERMINISTIC SET (not an increment) to every
+//     invoice linked to the advance right after the JE posts — idempotent regardless of retry timing, and
+//     self-healing on an `already_posted` re-entry (covers a prior run that posted the JE but crashed
+//     before the subledger sync). Customer-payment => the invoice was actually collected (via Faro) =>
+//     amount_paid_cents set (proportionally across the advance's invoices, reusing allocateByProportion —
+//     zero new math) + status 'paid'/'partial'. Chargeback's A/R-relief leg => the receivable was NOT
+//     collected, it was reclassed off trade A/R into `factoring_recoursed_ar` => status only moves to the
+//     schema's own pre-existing 'factored' CHECK value (0060) so it leaves the `ar_aging`
+//     sent/partial pool without misrepresenting it as paid; amount_paid_cents is untouched.
+//  2. Faro Reserve Tracker (accounting.factoring_reserve_movements, migration 202607130000, HELD) — a
+//     per-advance ledger of reserve HELD (at funding)/RELEASED (at release) events, mirroring the
+//     already-shipped default-interest-accrual ledger pattern 1:1. Recorded as a side effect of the SAME
+//     funding/release JE this file already posts — no new GL entry, just a structural (non-memo-parsed)
+//     record for the reserve-balance view (`views.factoring_reserve_balances`) and the advance packet.
 
 import { withLuciaBypass } from "../../auth/db.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
@@ -163,6 +183,119 @@ async function loadAdvance(client: DbClient, operatingCompanyId: string, factori
 }
 
 // ---------------------------------------------------------------------------------------------------
+// CONN-2 helpers — AR subledger relief (CHAIN-06 §5/§7-A fix) + Faro Reserve Tracker (migration
+// 202607130000). Storage/subledger only — no new GL math, no new JE.
+// ---------------------------------------------------------------------------------------------------
+
+type AdvanceInvoiceRow = { id: string; total_cents: number; voided_at: string | null };
+
+async function loadAdvanceInvoices(
+  client: DbClient,
+  operatingCompanyId: string,
+  factoringAdvanceId: string
+): Promise<AdvanceInvoiceRow[]> {
+  const res = await client.query<{ id: string; total_cents: string; voided_at: string | null }>(
+    `
+      SELECT id::text, total_cents::text, voided_at::text
+      FROM accounting.invoices
+      WHERE factoring_advance_id = $1::uuid
+        AND operating_company_id = $2::uuid
+      ORDER BY issue_date ASC, created_at ASC
+    `,
+    [factoringAdvanceId, operatingCompanyId]
+  );
+  return res.rows.map((r) => ({ id: r.id, total_cents: Number(r.total_cents ?? 0), voided_at: r.voided_at }));
+}
+
+// Deterministic SET (never an increment) — re-running with the same amountCents produces the identical
+// final state, so this is safe to call both after a fresh JE post AND as a self-heal on an
+// `already_posted` re-entry. Allocates proportionally across the advance's (non-voided) invoices with the
+// SAME allocateByProportion used elsewhere in this file (no new math) so a multi-invoice advance splits
+// correctly instead of double/under-crediting any one invoice.
+async function applyCustomerPaymentSubledgerRelief(
+  client: DbClient,
+  operatingCompanyId: string,
+  factoringAdvanceId: string,
+  amountCents: number
+): Promise<void> {
+  if (amountCents <= 0) return;
+  const invoices = (await loadAdvanceInvoices(client, operatingCompanyId, factoringAdvanceId)).filter((inv) => !inv.voided_at);
+  if (invoices.length === 0) return;
+
+  const allocations = allocateByProportion(
+    amountCents,
+    invoices.map((inv) => ({ invoice_id: inv.id, total_cents: inv.total_cents }))
+  );
+
+  for (const inv of invoices) {
+    const allocated = Math.min(inv.total_cents, allocations.get(inv.id) ?? 0);
+    await client.query(
+      `
+        UPDATE accounting.invoices
+        SET amount_paid_cents = $2,
+            status = CASE
+              WHEN status = 'void' THEN 'void'
+              WHEN $2 >= total_cents AND total_cents > 0 THEN 'paid'
+              WHEN $2 > 0 THEN 'partial'
+              ELSE status
+            END,
+            updated_at = now()
+        WHERE id = $1::uuid AND operating_company_id = $3::uuid
+      `,
+      [inv.id, allocated, operatingCompanyId]
+    );
+  }
+}
+
+// The chargeback's A/R-relief leg (Dr factoring_recoursed_ar / Cr ar_control) removes the receivable from
+// trade A/R entirely — no cash changed hands, so amount_paid_cents is intentionally left untouched; only
+// `status` moves to the schema's own pre-existing 'factored' terminal value (accounting.invoices CHECK,
+// migration 0060) so the invoice leaves the ar_aging sent/partial pool without being misreported as
+// collected. Idempotent (re-setting the same status is a no-op); scoped to the whole advance, matching the
+// existing route-layer granularity (reserve-held/release/recourse-return already update factoring_status
+// for every invoice on the advance in one statement — no per-invoice split exists at that layer either).
+async function applyChargebackSubledgerRelief(
+  client: DbClient,
+  operatingCompanyId: string,
+  factoringAdvanceId: string
+): Promise<void> {
+  await client.query(
+    `
+      UPDATE accounting.invoices
+      SET status = CASE WHEN status = 'void' THEN 'void' ELSE 'factored' END,
+          updated_at = now()
+      WHERE factoring_advance_id = $1::uuid AND operating_company_id = $2::uuid
+    `,
+    [factoringAdvanceId, operatingCompanyId]
+  );
+}
+
+// Faro Reserve Tracker — records one ledger row per (advance, movement_type), linked to the JE that moved
+// it. ON CONFLICT DO NOTHING against the table's (operating_company_id, factoring_advance_id,
+// movement_type) unique constraint — idempotent, mirrors the JE memo-idempotency this file already uses.
+async function recordReserveMovement(
+  client: DbClient,
+  operatingCompanyId: string,
+  factoringAdvanceId: string,
+  movementType: "held" | "released",
+  amountCents: number,
+  movementDate: string,
+  journalEntryId: string
+): Promise<void> {
+  if (amountCents <= 0) return;
+  await client.query(
+    `
+      INSERT INTO accounting.factoring_reserve_movements (
+        operating_company_id, factoring_advance_id, movement_type, amount_cents, movement_date, journal_entry_id
+      )
+      VALUES ($1::uuid, $2::uuid, $3, $4, $5::date, $6::uuid)
+      ON CONFLICT (operating_company_id, factoring_advance_id, movement_type) DO NOTHING
+    `,
+    [operatingCompanyId, factoringAdvanceId, movementType, amountCents, movementDate, journalEntryId]
+  );
+}
+
+// ---------------------------------------------------------------------------------------------------
 // STEP 2 — FUNDING (posts at funding, using FARO's actual funded figures; A/R is UNTOUCHED).
 //   Dr Cash + Dr Factoring Reserves + Dr Factoring Fees (+ Dr Bank/ACH) / Cr Factoring Advance (liability).
 //   The liability is the FULL net invoice (invoice_total_cents). Cash is derived so the entry balances by
@@ -228,7 +361,7 @@ export async function postFactoringAdvanceEvent(input: PostFactoringAdvanceInput
     if (ach > 0) postings.push({ account_id: feeAccountId, debit_or_credit: "debit", amount_cents: ach, description: `${memo} — bank/ACH fee` });
     postings.push({ account_id: liabilityAccountId, debit_or_credit: "credit", amount_cents: liability, description: `${memo} — factoring advance (liability)` });
 
-    return { gate: "post" as const, memo, entryDate, postings };
+    return { gate: "post" as const, memo, entryDate, postings, reserve };
   });
 
   if (prepared.gate === "flag_off") return FLAG_OFF;
@@ -246,6 +379,15 @@ export async function postFactoringAdvanceEvent(input: PostFactoringAdvanceInput
     },
     { userId: input.actor_user_id, role: "system" }
   );
+
+  // Faro Reserve Tracker: record the reserve HELD at funding (storage-only, same JE, no new GL math).
+  if (prepared.reserve > 0) {
+    await withLuciaBypass(async (client: DbClient) => {
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
+      await recordReserveMovement(client, input.operating_company_id, input.factoring_advance_id, "held", prepared.reserve, prepared.entryDate, created.id);
+    });
+  }
+
   return { posted: true, journal_entry_id: created.id, memo: prepared.memo };
 }
 
@@ -292,7 +434,16 @@ export async function postFactoringCustomerPaymentEvent(input: PostFactoringCust
 
   if (prepared.gate === "flag_off") return FLAG_OFF;
   if (prepared.gate === "advance_not_found") return { posted: false, reason: "advance_not_found" };
-  if (prepared.gate === "already_posted") return { posted: false, reason: "already_posted" };
+  if (prepared.gate === "already_posted") {
+    // CHAIN-06 §5/§7-A self-heal: the JE already exists (this exact event was posted before) but a prior
+    // run may have crashed AFTER the JE committed and BEFORE the subledger sync below ran. The sync is a
+    // deterministic SET, so re-applying it here is always safe (no double-count) and closes that gap.
+    await withLuciaBypass(async (client: DbClient) => {
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
+      await applyCustomerPaymentSubledgerRelief(client, input.operating_company_id, input.factoring_advance_id, amount);
+    });
+    return { posted: false, reason: "already_posted" };
+  }
 
   const created = await createJournalEntry(
     {
@@ -304,6 +455,14 @@ export async function postFactoringCustomerPaymentEvent(input: PostFactoringCust
     },
     { userId: input.actor_user_id, role: "system" }
   );
+
+  // CHAIN-06 §5/§7-A fix: relieve the A/R SUBLEDGER (accounting.invoices) in lockstep with the GL — see
+  // the file-header note + applyCustomerPaymentSubledgerRelief's own comment for the reasoning.
+  await withLuciaBypass(async (client: DbClient) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
+    await applyCustomerPaymentSubledgerRelief(client, input.operating_company_id, input.factoring_advance_id, amount);
+  });
+
   return { posted: true, journal_entry_id: created.id, memo: prepared.memo };
 }
 
@@ -364,6 +523,13 @@ export async function postFactoringReleaseEvent(input: PostFactoringReleaseInput
     },
     { userId: input.actor_user_id, role: "system" }
   );
+
+  // Faro Reserve Tracker: record the reserve RELEASED (storage-only, same JE, no new GL math).
+  await withLuciaBypass(async (client: DbClient) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
+    await recordReserveMovement(client, input.operating_company_id, input.factoring_advance_id, "released", releaseAmount, prepared.entryDate, created.id);
+  });
+
   return { posted: true, journal_entry_id: created.id, memo: prepared.memo };
 }
 
@@ -449,6 +615,18 @@ export async function postFactoringChargebackEvent(input: PostFactoringChargebac
     anyPosted = true;
     lastJeId = created.id;
   }
+
+  // CHAIN-06 §5/§7-A fix: the (B) leg above removes the receivable from trade A/R (ar_control) — sync the
+  // subledger accordingly. Runs whenever this advance HAS a recoursed-AR leg (returnPostings non-empty),
+  // whether the JE was just created OR already existed (returnExists) — idempotent status flip, so this
+  // also self-heals a prior run that posted the JE but crashed before this sync.
+  if (prepared.returnPostings.length > 0) {
+    await withLuciaBypass(async (client: DbClient) => {
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
+      await applyChargebackSubledgerRelief(client, input.operating_company_id, input.factoring_advance_id);
+    });
+  }
+
   return anyPosted ? { posted: true, journal_entry_id: lastJeId } : { posted: false, reason: "already_posted" };
 }
 

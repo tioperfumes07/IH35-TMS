@@ -4,6 +4,11 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { listFactorReserveBalances, postFactoringFeeExpenseEvent } from "./factoring-fees-posting/poster.service.js";
 import { postFactoringAdvanceEvent, postFactoringCustomerPaymentEvent, postFactoringReleaseEvent } from "./factoring-posting/poster.service.js";
+import {
+  getFactoringAdvancePacket,
+  getFactoringReserveRollup,
+  listFactoringReserveBalances as listFactoringReserveBalancesByAdvance,
+} from "./factoring-posting/reserve-tracker.service.js";
 import { nextFactoringDisplayId } from "./display-id.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { requireVoidCancelExecutor } from "../lib/authz/void-cancel-authz.js";
@@ -127,6 +132,36 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
       operating_company_id: query.data.operating_company_id,
     });
     return payload;
+  });
+
+  // CONN-2 — Faro Reserve Tracker (per-advance, structural ledger — accounting.factoring_reserve_movements,
+  // migration 202607130000, HELD). Complements the customer-level estimate above (which splits
+  // reserve_amount_cents/release_amount_cents proportionally off the advance header, no JE linkage) with
+  // the true per-advance HELD/RELEASED events and their journal_entry_id. Read-only; not flag-gated.
+  app.get("/api/v1/accounting/factoring-advances/reserve-tracker", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    const [balances, rollup] = await Promise.all([
+      listFactoringReserveBalancesByAdvance(query.data.operating_company_id),
+      getFactoringReserveRollup(query.data.operating_company_id),
+    ]);
+    return { rollup, advances: balances };
+  });
+
+  // CONN-2 — Advance Packet: advance header + linked invoices/loads + reserve ledger + interest ledger in
+  // one read (Law of the Land §10a forward+reverse drill-through). Read-only; not flag-gated.
+  app.get("/api/v1/accounting/factoring-advances/:id/packet", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const params = idParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    const packet = await getFactoringAdvancePacket(query.data.operating_company_id, params.data.id);
+    if (!packet) return reply.code(404).send({ error: "factoring_advance_not_found" });
+    return packet;
   });
 
   app.get("/api/v1/accounting/factoring-advances", async (req, reply) => {
