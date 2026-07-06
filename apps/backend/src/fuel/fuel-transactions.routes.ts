@@ -42,7 +42,7 @@ async function withCompanyScope<T>(userId: string, operatingCompanyId: string, f
 export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
   // List fuel.fuel_transactions for the FuelTransactionsTable / transaction-register surfaces.
   // Entity-scoped via app.operating_company_id (RLS policy fuel_tx_company_isolation, migration 0300).
-  app.get("/api/v1/fuel/transactions", async (req, reply) => {
+  app.get("/api/v1/fuel/transactions", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const query = listFuelTransactionsQuerySchema.safeParse(req.query ?? {});
