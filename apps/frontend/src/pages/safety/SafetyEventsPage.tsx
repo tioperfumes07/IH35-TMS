@@ -10,6 +10,7 @@ import {
 } from "../../api/safety";
 import { Modal } from "../../components/Modal";
 import { useListState } from "../../components/list-state";
+import { SafetyEventsTable } from "./components/SafetyEventsTable";
 
 type Props = {
   operatingCompanyId: string;
@@ -103,6 +104,22 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
   const rows = useMemo(() => eventsQuery.data ?? [], [eventsQuery.data]);
   // LIST-EMPTY: each empty message renders only after its own query settles.
   const listState = useListState(eventsQuery, rows.length === 0);
+  // Bulk-select + CSV export table (SafetyEventsTable) — adapt the v2 events-log row shape onto the
+  // table's generic field names. Detail remains one click away via the existing side panel.
+  const bulkTableRows = useMemo(
+    () =>
+      rows.map((row) => ({
+        id: row.id,
+        event_at: row.occurred_at,
+        driver_full_name: row.subject_type === "driver" ? row.subject_driver_name || row.subject_driver_id || "" : "",
+        unit_display_id: row.subject_type === "unit" ? row.subject_unit_number || row.subject_unit_id || "" : undefined,
+        event_type: row.event_type,
+        severity: row.severity,
+        status: row.status,
+        title: row.title,
+      })),
+    [rows]
+  );
   const notesListState = useListState(notesQuery, (notesQuery.data ?? []).length === 0);
   const logModalDirty =
     draft.title.trim() !== INITIAL_DRAFT.title.trim() ||
@@ -169,45 +186,19 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
         </button>
       </div>
 
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-[980px] w-full text-left text-xs">
-          <thead className="bg-gray-50 text-[10px] uppercase text-gray-600">
-            <tr>
-              <th className="px-2 py-1">Occurred</th>
-              <th className="px-2 py-1">Type</th>
-              <th className="px-2 py-1">Severity</th>
-              <th className="px-2 py-1">Status</th>
-              <th className="px-2 py-1">Subject</th>
-              <th className="px-2 py-1">Title</th>
-              <th className="px-2 py-1">Details</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.id} className="border-t border-gray-100">
-                <td className="px-2 py-1">{String(row.occurred_at ?? "").slice(0, 16).replace("T", " ")}</td>
-                <td className="px-2 py-1">{row.event_type}</td>
-                <td className="px-2 py-1">{row.severity}</td>
-                <td className="px-2 py-1">{row.status}</td>
-                <td className="px-2 py-1">{renderSubject(row)}</td>
-                <td className="px-2 py-1">{row.title}</td>
-                <td className="px-2 py-1">
-                  <button type="button" className="text-slate-700 underline" onClick={() => setSelectedEventId(row.id)}>
-                    Open
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {listState.isEmpty ? (
+      {listState.isEmpty ? (
+        <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
+          <table className="min-w-[980px] w-full text-left text-xs">
+            <tbody>
               <tr>
-                <td colSpan={7} className="px-2 py-4 text-center text-gray-500">
-                  No safety events found.
-                </td>
+                <td className="px-2 py-4 text-center text-gray-500">No safety events found.</td>
               </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <SafetyEventsTable rows={bulkTableRows} onOpenAccident={(row) => setSelectedEventId(String(row.id))} />
+      )}
 
       {selectedEventId ? (
         <div className="fixed inset-y-0 right-0 z-40 w-full max-w-md border-l border-gray-200 bg-white p-4 shadow-xl">
@@ -220,6 +211,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
 
           <div className="mt-3 space-y-2 text-xs text-gray-700">
             <div><span className="font-semibold">Title:</span> {detailQuery.data?.title ?? "—"}</div>
+            <div><span className="font-semibold">Subject:</span> {detailQuery.data ? renderSubject(detailQuery.data) : "—"}</div>
             <div><span className="font-semibold">Type:</span> {detailQuery.data?.event_type ?? "—"}</div>
             <div><span className="font-semibold">Severity:</span> {detailQuery.data?.severity ?? "—"}</div>
             <div><span className="font-semibold">Status:</span> {detailQuery.data?.status ?? "—"}</div>

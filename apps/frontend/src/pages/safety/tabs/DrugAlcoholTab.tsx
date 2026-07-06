@@ -21,6 +21,7 @@ import { DrugAlcoholDashboard } from "../DrugAlcoholDashboard";
 import { RandomTestingPool } from "../RandomTestingPool";
 import { ReturnToDuty } from "../ReturnToDuty";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { DrugAlcoholProgramTab } from "../drug-alcohol/DrugAlcoholProgramTab";
 
 const TEST_TYPES = [
   "pre_employment",
@@ -489,6 +490,12 @@ export function DrugAlcoholTab() {
           </ul>
         </div>
       </div>
+
+      {/* GAP-81: consortium enrollment roster, positive-result SAP referral queue, test scheduling,
+          and quarterly random-pool draw tracking (49 CFR 382.305 10%/10% minimums) — additive section,
+          separate consortium-program engine (/api/safety/drug-alcohol/*) alongside the driver-level
+          workflow above. */}
+      <DrugAlcoholProgramTab />
 
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs">
