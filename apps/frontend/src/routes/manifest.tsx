@@ -230,6 +230,8 @@ const FactorReconciliationPage = React.lazy(() => import("../pages/accounting/Fa
 import { ReconciliationWorkspacePage as AccountingReconciliationWorkspacePage } from "../pages/accounting/ReconciliationWorkspacePage";
 const VendorBillCreatePage = React.lazy(() => import("../pages/accounting/VendorBillCreatePage").then((m) => ({ default: m.VendorBillCreatePage })));
 const CreateMultipleBillsPage = React.lazy(() => import("../pages/accounting/CreateMultipleBillsPage").then((m) => ({ default: m.CreateMultipleBillsPage })));
+const RecurringBillList = React.lazy(() => import("../pages/accounting/bills/RecurringBillList").then((m) => ({ default: m.RecurringBillList })));
+const RecurringBillCreate = React.lazy(() => import("../pages/accounting/bills/RecurringBillCreate").then((m) => ({ default: m.RecurringBillCreate })));
 const ExpenseCreatePage = React.lazy(() => import("../pages/accounting/ExpenseCreatePage").then((m) => ({ default: m.ExpenseCreatePage })));
 const ExpensesListPage = React.lazy(() => import("../pages/accounting/ExpensesListPage").then((m) => ({ default: m.ExpensesListPage })));
 const BillsPage = React.lazy(() => import("../pages/accounting/BillsPage").then((m) => ({ default: m.BillsPage })));
@@ -3330,6 +3332,22 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <CreateMultipleBillsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/bills/recurring"
+          element={
+            <ProtectedRoute>
+              <RecurringBillList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/bills/recurring/create"
+          element={
+            <ProtectedRoute>
+              <RecurringBillCreate />
             </ProtectedRoute>
           }
         />

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { createRecurringBillTemplate, type RecurringBillFrequency, type RecurringBillLineItem } from "../../../api/accounting";
 import { listVendors } from "../../../api/mdata";
@@ -69,7 +69,7 @@ export function RecurringBillCreate() {
     onSuccess: () => {
       pushToast("Recurring bill template created", "success");
       void queryClient.invalidateQueries({ queryKey: ["accounting", "recurring-bills"] });
-      navigate("/accounting/bills?tab=recurring");
+      navigate("/accounting/bills/recurring");
     },
     onError: (err) => pushToast(err instanceof Error ? err.message : "Create failed", "error"),
   });
@@ -91,10 +91,20 @@ export function RecurringBillCreate() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 py-6">
+      <div className="flex items-center gap-2 text-xs text-gray-500">
+        <Link to="/accounting" className="hover:underline">Accounting</Link>
+        <span>/</span>
+        <Link to="/accounting/bills" className="hover:underline">Bills</Link>
+        <span>/</span>
+        <Link to="/accounting/bills/recurring" className="hover:underline">Recurring Bills</Link>
+        <span>/</span>
+        <span className="text-gray-700">Create</span>
+      </div>
       <div className="flex items-center gap-3">
         <button
           onClick={() => navigate(-1)}
           className="rounded-sm p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+          aria-label="Back"
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
