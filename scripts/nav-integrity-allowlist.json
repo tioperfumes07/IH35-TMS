@@ -45,6 +45,14 @@
       "reason": "GAP-91 mobile responsive audit report (admin tooling)"
     },
     {
+      "path": "/admin/launch-readiness",
+      "reason": "Owner/Admin USMCA launch readiness dashboard (deep-link tooling, no subnav)"
+    },
+    {
+      "path": "/admin/qbo-vendor-linkage",
+      "reason": "Owner/Admin QBO driver/unit vendor-class linkage tool (deep-link tooling, no subnav)"
+    },
+    {
       "path": "/admin/activity",
       "reason": "Owner/SuperAdmin activity log"
     },
@@ -265,6 +273,14 @@
     {
       "path": "/integrations/samsara",
       "reason": "Owner integration page \u2014 not in subnav"
+    },
+    {
+      "path": "/integrations/edi",
+      "reason": "Owner EDI partner setup wizard \u2014 not in subnav"
+    },
+    {
+      "path": "/integrations/edi/transaction-log",
+      "reason": "Owner EDI transaction log \u2014 deep link only"
     },
     {
       "path": "/samsara/vendor-mapping-integrity",
