@@ -38,6 +38,7 @@ import { STATUS_LABEL, formatMoneyCents, toRouteSummary } from "../../components
 import { InTransitEtaChip } from "../../components/dispatch/InTransitEtaChip";
 import { InlineDriverPicker } from "../../components/dispatch/InlineDriverPicker";
 import { InlineUnitPicker } from "../../components/dispatch/InlineUnitPicker";
+import { InlineTrailerPicker } from "../../components/dispatch/InlineTrailerPicker";
 import { OnTimePredictionColumn } from "../../components/dispatch/LiveEtaColumns";
 import { CargoTempBadge, isReeferCommodity } from "../../components/dispatch/CargoTempBadge";
 import { DriverHosClockValue } from "../../components/dispatch/hos/DriverHosClocks";
@@ -68,6 +69,8 @@ type RowOverride = {
   unitLabel?: string;
   driverId?: string | null;
   driverLabel?: string;
+  trailerId?: string | null;
+  trailerLabel?: string;
 };
 
 const LOAD_TRANSITION_OPTIONS = [
@@ -561,6 +564,31 @@ export function DispatchBoard({
       load.assigned_primary_driver_name ?? "Unassigned"
     );
 
+  const renderTrailerCell = (load: BoardLoad) =>
+    inlineQuicksaveEnabled && companyId ? (
+      <InlineTrailerPicker
+        loadId={load.id}
+        operatingCompanyId={companyId}
+        trailerId={rowOverrides[load.id]?.trailerId ?? (load as { trailer_id?: string | null }).trailer_id ?? null}
+        displayLabel={rowOverrides[load.id]?.trailerLabel ?? load.trailer_number ?? "—"}
+        onAssigned={({ trailerId, label }) =>
+          setRowOverrides((prev) => ({
+            ...prev,
+            [load.id]: { ...prev[load.id], trailerId, trailerLabel: label },
+          }))
+        }
+        onRollback={() =>
+          setRowOverrides((prev) => {
+            const next = { ...prev };
+            delete next[load.id]?.trailerId;
+            return next;
+          })
+        }
+      />
+    ) : (
+      load.trailer_number ?? "—"
+    );
+
   const renderTriSignalCell = (load: DispatchLoadRow) => (
     <TriSignalPill signal={triSignalByLoadId.get(load.id)} loading={triSignalsQuery.isLoading && Boolean(companyId)} />
   );
@@ -662,7 +690,7 @@ export function DispatchBoard({
   // into Pickup (City, ST) + Delivery (City, ST).
   const boardColumns: Array<{ key: string; header: string; cell: (load: BoardLoad) => ReactNode }> = [
     { key: "unit", header: "Unit", cell: (load) => renderUnitCell(load) },
-    { key: "trailer", header: "Trailer", cell: (load) => load.trailer_number ?? "—" },
+    { key: "trailer", header: "Trailer", cell: (load) => renderTrailerCell(load) },
     // DB-6: Load # sits immediately after Trailer in the shared column model (app-wide list + table).
     { key: "load", header: "Load #", cell: (load) => <span className="code-cell font-medium text-gray-800">{load.load_number}</span> },
     { key: "driver", header: "Driver", cell: (load) => renderDriverCell(load) },
@@ -1009,7 +1037,7 @@ export function DispatchBoard({
                 ) : (
                   renderLoadRows(assignedLoads, [
                     { key: "unit", header: "Unit", cell: (load) => renderUnitCell(load) },
-                    { key: "trailer", header: "Trailer", cell: (load) => load.trailer_number ?? "—" },
+                    { key: "trailer", header: "Trailer", cell: (load) => renderTrailerCell(load) },
                     {
                       key: "cargo_temp",
                       header: "Cargo Temp",
