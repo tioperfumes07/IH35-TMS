@@ -76,6 +76,10 @@
     {
       "file": "202607090000_event_log_guc_reconcile.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1] P0 prerequisite — events.log_event() sets app.current_operating_company_id from its own argument so FORCE RLS (P0-a, separate PR) becomes safe"
+    },
+    {
+      "file": "202607100100_block01_depreciation_loan_link_and_autopost_log.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] BLOCK-01 Fixed-Asset Depreciation — additive-only: fixed_assets.financing_loan_id (CCG loan linkage) + append-only depreciation_autopost_runs log. No posting, no new GL math, no flag flips."
     }
   ]
 }
