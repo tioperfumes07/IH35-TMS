@@ -57,6 +57,7 @@ const KNOWN_PHANTOM_DEBT = [
   // ── bucket-③ HOLD / needs migration or data-model decision ──
   { rel: "accounting.qbo_payroll_links", why: "HOLD payroll — real integrations.qbo_payroll_links is per-run aggregate, not per-employee; needs data-model decision" },
   { rel: "accounting.journal_entry_lines", why: "deprecated dead route (manual-je.routes.deprecated.ts — not served); canonical=accounting.journal_entry_postings; archive, don't revive" },
+  { rel: "banking.bank_transaction_splits", why: "HOLD BANK-SPLIT-1 — migration 202607110100 (HELD, .held-migrations.json) creates this table; not yet run on prod" },
   // ── section C: degrade-safe but still names the phantom in a comment/fallback path (PR #1485) ──
 
   // ── forward-refs to unbuilt modules (bucket-4 — map to pending gap-specs, not bugs) ──
@@ -87,6 +88,7 @@ const KNOWN_PHANTOM_DEBT = [
   { rel: "driver_finance.driver_reimbursements", why: "[HOLD-FOR-JORGE] forward-ref — driver out-of-pocket toll/fuel reimbursement (pay-out) table for the settlement contract-terms engine; ships in gated migration 202607080000_settlement_contract_terms.sql (not yet applied to prod). Compute/poster paths are behind SETTLEMENT_CONTRACT_TERMS_ENABLED (default OFF). Remove from debt when that migration merges." },
   { rel: "driver_finance.settlement_contract_lines", why: "[HOLD-FOR-JORGE] forward-ref — provenance/connectivity backbone tying each computed contract line to its source+settlement+created line/deduction; ships in gated migration 202607080000_settlement_contract_terms.sql (not yet applied to prod). Behind SETTLEMENT_CONTRACT_TERMS_ENABLED (default OFF). Remove from debt when that migration merges." },
   { rel: "driver_finance.settlement_contract_terms_config", why: "[HOLD-FOR-JORGE] forward-ref — per-entity EDITABLE contract amounts (MPG bonus / referral reward) with locked defaults; ships in gated migration 202607080000_settlement_contract_terms.sql (not yet applied to prod). Behind SETTLEMENT_CONTRACT_TERMS_ENABLED (default OFF). Remove from debt when that migration merges." },
+  { rel: "driver_finance.driver_escrow_separations", why: "[HOLD-FOR-JORGE] forward-ref to HELD 202607111000 driver-escrow separation-return, flag DRIVER_ESCROW_SEPARATION_RETURN_ENABLED default OFF" },
 ];
 const KNOWN = new Map(KNOWN_PHANTOM_DEBT.map((d) => [d.rel, d.why]));
 
