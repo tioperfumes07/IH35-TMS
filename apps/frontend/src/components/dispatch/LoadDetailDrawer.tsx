@@ -21,7 +21,7 @@ import { LoadTemplateLibrary, SaveLoadTemplateModal, templateJsonFromLoadDetail 
 import { AbandonmentReportModal } from "../../pages/loads/AbandonmentReportModal";
 import { PreSettlementPanel } from "./PreSettlementPanel";
 import { CustomsTab } from "./drawer-tabs/CustomsTab";
-import { FactoringTab } from "./drawer-tabs/FactoringTab";
+import { FactoringTab } from "./tabs/FactoringTab";
 import { FinesDeductionsCard } from "./tabs/FinesDeductionsCard";
 import { SettlementProfitabilityCard } from "./tabs/SettlementProfitabilityCard";
 import { BookLoadModalV4 } from "../../pages/dispatch/components/BookLoadModalV4";
@@ -647,9 +647,15 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
             )
           ) : null}
 
-          {/* Block 7 — Factoring packet tab (stub; Lane B fills content) */}
+          {/* Block 7 — Factoring packet tab (wired to the real per-load packet/submit-to-FARO UI;
+              the drawer-tabs/FactoringTab.tsx stub is now orphaned — left in place per ADD-ONLY policy). */}
           {activeTab === "Factoring" && load ? (
-            <FactoringTab loadId={load.id} operatingCompanyId={load.operating_company_id} canEdit={canEdit} />
+            <FactoringTab
+              loadId={load.id}
+              operatingCompanyId={load.operating_company_id}
+              canEdit={canEdit}
+              onPacketUpdated={() => void loadQuery.refetch()}
+            />
           ) : null}
 
           {/* Block 8 — Customs/border compliance tab (stub; hidden for domestic loads) */}

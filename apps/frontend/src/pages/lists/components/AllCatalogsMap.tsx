@@ -72,6 +72,7 @@ export const DOMAIN_CONFIG: DomainConfig[] = [
       { name: "OEM Parts Reference", description: "Universal OEM part templates by brand (not company inventory)", live: true, catalogKey: "oem-parts-reference" },
       { name: "Maintenance Priority Levels", description: "Priority/severity ladder for work orders", live: true, catalogKey: "priority-levels" },
       { name: "Maintenance Service Tasks", description: "Standard PM and repair task templates", live: true, catalogKey: "service-tasks" },
+      { name: "Maintenance Services Catalog", description: "Searchable PM and repair services list with pricing", live: true, catalogKey: "services-catalog" },
       { name: "Maintenance Shop Locations", description: "Internal and vendor repair location set", live: true, catalogKey: "shop-locations" },
       { name: "Maintenance Vendors", description: "Maintenance-specific vendor list", live: true, catalogKey: "vendors" },
       { name: "Work Order Statuses", description: "Lifecycle statuses for maintenance work orders", live: true, catalogKey: "work-order-statuses" },

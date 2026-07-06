@@ -1,5 +1,5 @@
 -- [HOLD-FOR-JORGE — TIER 1] Business-Property Allocation — property-tax ACCRUAL + PAYMENT GL posting.
--- FINANCIAL / §1.4 cluster. Companion to the filing migration 202607080100_property_tax_rendition_filing.sql
+-- FINANCIAL / §1.4 cluster. Companion to the filing migration 202607080300_property_tax_rendition_filing.sql
 -- (which must apply FIRST — this table cross-references compliance.property_tax_renditions).
 --
 -- *** DO NOT MERGE. DO NOT RUN ON PROD. DO NOT flip PROPERTY_TAX_GL_POSTING_ENABLED. Posting flag DEFAULT

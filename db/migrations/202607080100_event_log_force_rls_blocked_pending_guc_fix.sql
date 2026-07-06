@@ -1,0 +1,78 @@
+-- *** HOLD-FOR-JORGE — DO NOT RUN ON PROD. STOP-GATE. Verify writer first. ***
+-- [HOLD-FOR-JORGE — TIER 1] P0 DB-audit — events.event_log FORCE ROW LEVEL SECURITY
+--
+-- THIS MIGRATION IS INTENTIONALLY A NO-OP. It does NOT force RLS. It exists only to be a tracked,
+-- reviewable artifact documenting WHY, and what must land first before a real FORCE migration is safe.
+-- See docs/db-audit/P0-audit-log-rls-DESIGN.md for the full writer-verification trail (file paths + code).
+--
+-- ============================================================================================
+-- FINDING (verified live against apps/backend/src + db/migrations, 2026-07-05 — design/p0-audit-log-rls):
+-- FORCE ROW LEVEL SECURITY on events.event_log is NOT SAFE YET. Doing so today would BREAK THE HASH
+-- CHAIN by silently rejecting the majority of audit-spine writes. Do NOT lift this block without first
+-- landing the GUC-reconciliation code fix described below and re-verifying on a Neon branch.
+--
+-- WHY (root cause):
+--   1. events.event_log is RLS ENABLED but NOT FORCED (migration 202606111050). Two policies exist:
+--        event_log_tenant_isolation / event_log_tenant_insert
+--        USING/WITH CHECK (operating_company_id = current_setting('app.current_operating_company_id', true)::uuid)
+--   2. ALL writes go through events.log_event(...), a `SECURITY DEFINER` function OWNED BY `neondb_owner`
+--      (the table owner) — see migrations 202606111050 and 202606251300 (the 13-arg overload, also
+--      `SECURITY DEFINER`, owner neondb_owner). Because the table is RLS-ENABLED-but-NOT-FORCED, the
+--      OWNER currently bypasses RLS entirely on every write, regardless of any GUC — this is WHY the
+--      write path works today despite the GUC gap described next.
+--   3. FOUR of the five spine-emit helpers that call `events.log_event(...)` do NOT set
+--      `app.current_operating_company_id` on the connection before calling it — they rely entirely on
+--      whatever GUC state the caller's request middleware already put on the session:
+--        apps/backend/src/accounting/accounting-spine-emit.ts   (line ~49, `SELECT events.log_event(...)`)
+--        apps/backend/src/dispatch/dispatch-spine-emit.ts       (line ~30)
+--        apps/backend/src/banking/banking-spine-emit.ts         (line ~33)
+--        apps/backend/src/maintenance/maintenance-spine-emit.ts (line ~27)
+--      The STANDARD request-scoped GUC set by the app (apps/backend/src/index.ts:1239 and the majority of
+--      accounting/banking services, e.g. apps/backend/src/accounting/posting-engine.service.ts) is
+--      `app.operating_company_id` — NOT `app.current_operating_company_id`. Grepped repo-wide: there is
+--      NO call site that sets `app.current_operating_company_id` ahead of an accounting/dispatch/banking/
+--      maintenance spine-emit. Only driver-finance + a few other paths are GUC-aware for event_log:
+--        apps/backend/src/driver-finance/driver-request-spine-emit.ts (sets it explicitly, line ~37 —
+--          the file's own comment says "events.event_log RLS (W1A) keys on app.current_operating_company_id")
+--        apps/backend/src/driveralert/driveralert.routes.ts (4 call sites)
+--        apps/backend/src/tasks/task-alarm.job.ts, apps/backend/src/tasks/task.routes.ts (set BOTH GUCs)
+--        apps/backend/src/cron/event-spine-heartbeat.cron.ts (read path)
+--   4. Consequence if FORCE were applied today: the owner (neondb_owner, via the SECURITY DEFINER
+--      function) would become subject to the INSERT policy like any other role. For the accounting/
+--      dispatch/banking/maintenance call sites (item 3), `current_setting('app.current_operating_company_id',
+--      true)` evaluates to NULL on their connections → `NULLIF(NULL,'')::uuid` = NULL →
+--      `operating_company_id = NULL` is NULL (not TRUE) in the WITH CHECK → INSERT REJECTED. This is the
+--      majority of production event volume: GL/settlement postings, load lifecycle, bank reconciliation,
+--      work orders. The hash-chain trigger (202606111051) runs BEFORE INSERT and would never fire because
+--      the row is rejected by RLS before the trigger's insert path completes — net effect: a live P0
+--      OUTAGE of the audit spine for these domains, not a partial degradation.
+--   5. This is NOT a new discovery — migration 202606290002 (`RLS FORCE-TAIL`, 2026-06-29) explicitly
+--      excluded `events.event_log` from its sweep for exactly this reason (its own comment: "it needs the
+--      app.current_operating_company_id GUC reconciled first ... handled in a SEPARATE Part-2 PR"). That
+--      Part-2 GUC-reconciliation work has NOT landed as of this migration (verified 2026-07-05 — grep
+--      shows the 4 spine-emit helpers above are unchanged since 202606290002 merged). This migration IS
+--      that promised Part-2 follow-up, and its finding is: still blocked.
+--
+-- WHAT MUST HAPPEN BEFORE FORCE IS SAFE (code change, not a migration — build in a separate PR):
+--   Option A (preferred — least invasive): each of the 4 spine-emit helpers above adds, immediately before
+--     the `events.log_event(...)` call, on the SAME client/transaction:
+--       await client.query(`SELECT set_config('app.current_operating_company_id', $1::text, true)`, [opts.operating_company_id]);
+--     (mirrors the pattern already proven in driver-request-spine-emit.ts and tasks/task.routes.ts, which
+--     sets BOTH GUCs on one call).
+--   Option B (schema-side, riskier): change the two event_log policies to key on `app.operating_company_id`
+--     instead (or `COALESCE` both GUC names) so no caller needs updating. Riskier because
+--     `app.operating_company_id` is used far more broadly (RLS on ~150+ tables) and a policy referencing it
+--     on event_log could be spoofed/reset by unrelated code paths that touch that GUC for other tables
+--     within the same transaction — Option A is the narrower, safer fix.
+--   Either way: after the code fix ships and is deployed, re-run the verification in
+--   docs/db-audit/P0-audit-log-rls-DESIGN.md on a Neon branch (insert one event per spine-emit call site,
+--   confirm all succeed AND the hash chain still validates via the existing audit-chain-verify cron), THEN
+--   author a real FORCE migration (numbered above whatever is main's max at that time) and retire this file.
+--
+-- This migration makes NO schema/RLS/grant change. It is a documentation + registry placeholder so the
+-- P0 finding is tracked and cannot be silently forgotten. Idempotent no-op — safe to "run" any number of
+-- times (including accidentally); it alters nothing.
+DO $$
+BEGIN
+  RAISE NOTICE '[P0-EVENT-LOG-RLS] BLOCKED — FORCE ROW LEVEL SECURITY on events.event_log is NOT applied by this migration. See db/migrations/202607080100_event_log_force_rls_blocked_pending_guc_fix.sql header + docs/db-audit/P0-audit-log-rls-DESIGN.md: forcing today would reject accounting/dispatch/banking/maintenance spine writes (GUC app.current_operating_company_id is never set on those call sites) and break the hash chain. Land the spine-emit GUC fix first, re-verify on a Neon branch, then author the real FORCE migration.';
+END $$;

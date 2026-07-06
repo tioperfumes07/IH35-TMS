@@ -1,6 +1,6 @@
 -- [HOLD-FOR-JORGE — TIER 1] Business-Property Allocation — TX business personal-property tax RENDITION
 -- filing model (Compliance module). Handoff §12 item 6 confirmed GAP. Companion accrual/payment poster
--- migration: 202607080110_property_tax_accrual_posting.sql (financial-cluster).
+-- migration: 202607080310_property_tax_accrual_posting.sql (financial-cluster).
 --
 -- *** DO NOT MERGE. DO NOT RUN ON PROD. Run ONLY on a Neon branch by Jorge's hand, then ledger-backfill so
 --     prod db:migrate skips it. This migration POSTS NOTHING and touches NO money table. ***

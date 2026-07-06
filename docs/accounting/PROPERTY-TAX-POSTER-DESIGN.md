@@ -15,9 +15,9 @@ sends an assessment; the tax is billed by the county (typically Oct, due Jan 31 
 
 Two sides, built together:
 - **Filing (Compliance module, money-free):** `compliance.property_tax_renditions` + `_rendition_lines` +
-  `appraisal_districts`. Source of record for the rendition workflow. Migration `202607080100`.
+  `appraisal_districts`. Source of record for the rendition workflow. Migration `202607080300`.
 - **Accounting (this poster, gated OFF):** accrue the assessed tax to a liability, then relieve it on payment.
-  Migration `202607080110` adds the COA roles + `accounting.property_tax_accruals` ledger + the flag.
+  Migration `202607080310` adds the COA roles + `accounting.property_tax_accruals` ledger + the flag.
 
 ## 2. Accounting treatment (CPA to confirm)
 
@@ -66,8 +66,8 @@ statutory April-15 reminder.
 
 ## 5. Enablement (owner only, after CPA sign-off)
 
-1. Apply `202607080100` then `202607080110` on a **Neon branch** (never prod db:migrate — both are HELD /
+1. Apply `202607080300` then `202607080310` on a **Neon branch** (never prod db:migrate — both are HELD /
    DO-NOT-RUN and registered in `.held-migrations.json`).
-2. Verify the 2 role rows per entity + the flag row (queries at the bottom of `202607080110`).
+2. Verify the 2 role rows per entity + the flag row (queries at the bottom of `202607080310`).
 3. Seed a per-entity override row (`lib.feature_flag_overrides`, `enabled=true`) for the entity going live —
    exactly like the factoring go-live migration `202607052300`. Until then every call is a no-op.

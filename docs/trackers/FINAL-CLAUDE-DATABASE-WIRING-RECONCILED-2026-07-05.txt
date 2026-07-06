@@ -1,0 +1,903 @@
+# FINAL — DATABASE TABLES: LIVE WIRING + RECONCILIATION (FOR CODER)
+**IH35-TMS · 2026-07-05 · Claude Coder 2 · MERGED: live prod introspection (Claude agent's DATABASE-WIRING-MAP, 664 tables + RLS flags) + Claude Coder 2 reconciliation/fix-actions.**
+
+**Scope (LIVE prod DB):** 664 tables · 1528 FK connections · 74 schemas. Each table carries live RLS / RLS-FORCED / Entity-Scoped / Void-Aware / Source-Tracked flags.
+**Note:** this supersedes the earlier 531-table baseline version — the baseline was missing ~130 live tables. This is the authoritative one.
+
+---
+## PART 1 — LIVE FINDINGS (from the introspection map)
+- **[HIGH]** public.audit_log + 48 monthly partitions have NO RLS at all — Audit data readable by any DB role that can reach the schema. Correct: RLS FORCED like audit.audit_events, or lock grants to a single writer role.
+- **[HIGH]** events.event_log (the immutable hash-chained audit log) has RLS but NOT FORCED — The table owner can bypass RLS — on the tamper-evidence log itself. Correct: FORCE ROW LEVEL SECURITY (one-line migration).
+- **[HIGH]** Entire insurance schema (8 tables) has NO operating_company_id — Policies/claims/COIs are not entity-separated — TRK's insurance and TRANSP's insurance blend. Violates entity independence. Correct: add opco + per-entity RLS (part of the known ~16-endpoint leak fix, pre-USMCA).
+- **[HIGH]** Entire factoring schema (batch, factor, reserve_movement, customer_factor_assignment) has NO operating_company_id — Factoring is TRANSP-only today so it works by accident — the moment a second entity factors, data blends. Correct: opco + per-entity policies before any second-entity factoring.
+- **[MED]** mdata.units, mdata.equipment, mdata.assets have NO operating_company_id — Trucks are TRK-owned, TRANSP-operated — ownership vs operation is not expressible. Known cross-entity leak class; must be resolved before USMCA.
+- **[MED]** Three outbox tables exist: outbox.events (30,782 rows, NO RLS), outbox.outbox_queue (0 rows, NO RLS), outbox.queue (RLS ok) — Two generations of the same mechanism plus one live one. Correct: confirm the single live path in code, archive the legacy two, add RLS or drop.
+- **[MED]** Four settlement families: settlement.*, settlements.*, driver_finance.driver_settlements, payroll.driver_settlements — driver_finance.escrow_ledger still FKs into settlement.settlement — the old family is still wired into live escrow. Correct: one canonical family, others voided/archived with FKs repointed.
+- **[MED]** Twin schemas from drift: maint vs maintenance, factor vs factoring, master_data vs mdata, docs vs documents, geo vs geofence, qbo vs qbo_sync — Each pair splits one domain across two homes; agents guess wrong. Correct: declare canonical per pair in MULTI-ENTITY/architecture doc + migrate stragglers.
+- **[MED]** safety.civil_fines has no voided_at (internal_fines has it) — A wrongly-entered civil fine can only be deleted or edited — breaks void-never-delete on a money-adjacent record. Correct: add voided_at (additive migration).
+- **[LOW]** maintenance.work_order_lines + wo_status_history have NO RLS — Work-order money lines unprotected. Correct: enable+force RLS like sibling tables.
+- **[LOW]** 41 tables are FK islands (0 out, 0 in) — mostly caches/logs/ledgers, but each was reviewed in ALL TABLES verdicts — Islands are fine for caches; not fine for business records. The verdict column marks which is which.
+- **[LOW]** identity.email_verifications, sms.queue, whatsapp.queue, shipper_portal sessions/tokens: NO RLS — Token/queue tables — low blast radius but inconsistent with the standard. Correct: enable RLS or document the exception.
+
+---
+## PART 2 — ★ RECONCILIATION: FIX / RENAME / CONSOLIDATE (so the software posts to the CORRECT table)
+
+### A. SPLIT-BRAIN / DUPLICATE TABLES → pick ONE canonical, repoint writers, archive the rest  [STOP-GATE: migration]
+| Concept | Tables (live) | Canonical / action |
+|---|---|---|
+| qbo_customers | `accounting.qbo_customers`, `mdata.qbo_customers` | **mdata.qbo_* canonical**; repoint accounting.qbo_* writers (this split caused the customer black-hole) |
+| qbo_vendors | `accounting.qbo_vendors`, `mdata.qbo_vendors` | **mdata.qbo_* canonical**; repoint accounting.qbo_* writers (this split caused the customer black-hole) |
+| qbo_accounts | `accounting.qbo_accounts`, `mdata.qbo_accounts` | **mdata.qbo_* canonical**; repoint accounting.qbo_* writers (this split caused the customer black-hole) |
+| `bank.*` schema (1 tbl) | `bank.reconciliation_matches` | consolidate → `banking.*` (or Jorge decision for reporting/geo) |
+| `maint.*` schema (5 tbl) | `maint.part`, `maint.part_position_assignment`, `maint.pm_schedule`, `maint.position_history`, `maint.position_set` | consolidate → `maintenance.*` (or Jorge decision for reporting/geo) |
+| `payroll.*` schema (2 tbl) | `payroll.driver_settlement_line_items`, `payroll.driver_settlements` | consolidate → `driver_finance.*` (or Jorge decision for reporting/geo) |
+| `settlement.*` schema (3 tbl) | `settlement.settlement`, `settlement.settlement_deduction`, `settlement.settlement_line` | consolidate → `driver_finance.*` (or Jorge decision for reporting/geo) |
+| `reporting.*` schema (2 tbl) | `reporting.scheduled_report_runs`, `reporting.scheduled_reports` | consolidate → `reports.*` (or Jorge decision for reporting/geo) |
+| `geo.*` schema (3 tbl) | `geo.geofence_events`, `geo.geofence_state_transitions`, `geo.geofences` | consolidate → `geofence.*` (or Jorge decision for reporting/geo) |
+| Vendors (multi) | `mdata.vendors` + `catalogs.maintenance_vendors` (+ qbo_vendors) | mdata.vendors canonical; write maintenance_vendors.metadata.mdata_vendor_id FK |
+| Cancellation reasons | `catalogs.cancellation_reasons` (read) vs `catalogs.load_cancellation_reasons` (edited) | point Lists page at the read table; retire decoy |
+
+### B. UNWIRED ISLANDS (no FK in or out, live) → add the missing FK  [STOP-GATE: migration]
+Total islands: 115 → **14 to VERIFY**, 101 by-design.
+| Table | What it is | Action |
+|---|---|---|
+| `accounting.line_category_load_required` | Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — line category load required | add FK or mark by-design |
+| `alerts.broker_queue` | alerts — broker queue | add FK or mark by-design |
+| `ih35_migrations.applied_migrations` | applied migrations | add FK or mark by-design |
+| `integrity.anomalies` | integrity — anomalies | FK→source entity |
+| `maintenance.work_order_lines` | Fleet maintenance — work orders, service, parts, PM schedules — work order lines | FK→work_orders(parent) |
+| `notifications.user_notification_preferences` | notifications — user notification preferences | add FK or mark by-design |
+| `ops.program_board_notes` | Operational ops tooling — program board notes | FK→block/board |
+| `qbo.reconciliation_alerts` | QuickBooks live sync state & mirror — reconciliation alerts | opco TEXT→uuid+FK |
+| `reference.oem_parts` | Static reference data (codes, enums-as-tables) — oem parts | add FK or mark by-design |
+| `safety.integrity_findings` | Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — integrity findings | FK→entity(driver/unit/load) + fix TEXT opco |
+| `sms.queue` | sms — queue | add FK or mark by-design |
+| `utilization.driver_period` | utilization — driver period | FK→mdata.drivers |
+| `utilization.unit_period` | utilization — unit period | FK→mdata.units |
+| `whatsapp.queue` | whatsapp — queue | add FK or mark by-design |
+
+_By-design islands (DO NOT fix): `_system._schema_migrations`, `_system.background_jobs`, `accounting.qbo_accounts`, `accounting.qbo_customers`, `accounting.qbo_vendors`, `analytics.customer_rollup`, `analytics.lane_rollup`, `analytics.load_fact`, `analytics.type_rollup`, `audit.audit_events`, `audit.row_changes`, `catalogs.asset_condition_codes`, `catalogs.asset_locations`, `catalogs.asset_statuses`, `catalogs.audit_event_types`, `catalogs.catalog_registry`, `catalogs.driver_load_statuses`, `catalogs.excel_upload_jobs`, `catalogs.lease_terms`, `catalogs.mexico_states`, `catalogs.tire_positions`, `catalogs.tractor_statuses`, `catalogs.trailer_statuses`, `catalogs.trailer_types`, `catalogs.unit_ownership_types`, `catalogs.us_states`, `catalogs.wo_cancellation_reasons`, `compliance.required_document_types`, `events.event_log`, `forecast.cash_entries`, `forecast.opening_balance`, `forecast.predicted_delivery_changes`, `fuel.fuel_planner_settings`, `identity.email_verifications`, `integrations.active_driver_set_cache`, `integrations.samsara_vehicle_positions`, `migration.block6_demo_purge_ledger`, `migration.test_seed_archive_ledger_0320`, `migration.test_seed_archive_ledger_0367`, `migration.test_seed_archive_ledger_0369`, `migration.test_seed_archive_ledger_0396`, `ops.audit_chain_verifications`, `outbox.events`, `outbox.outbox_queue`, `outbox.queue`, `owner.todays_attention_snapshot`, `public.audit_log`, `public.audit_log_2024_01`, `public.audit_log_2024_02`, `public.audit_log_2024_03`, `public.audit_log_2024_04`, `public.audit_log_2024_05`, `public.audit_log_2024_06`, `public.audit_log_2024_07`, `public.audit_log_2024_08`, `public.audit_log_2024_09`, `public.audit_log_2024_10`, `public.audit_log_2024_11`, `public.audit_log_2024_12`, `public.audit_log_2025_01`, `public.audit_log_2025_02`, `public.audit_log_2025_03`, `public.audit_log_2025_04`, `public.audit_log_2025_05`, `public.audit_log_2025_06`, `public.audit_log_2025_07`, `public.audit_log_2025_08`, `public.audit_log_2025_09`, `public.audit_log_2025_10`, `public.audit_log_2025_11`, `public.audit_log_2025_12`, `public.audit_log_2026_01`, `public.audit_log_2026_02`, `public.audit_log_2026_03`, `public.audit_log_2026_04`, `public.audit_log_2026_05`, `public.audit_log_2026_06`, `public.audit_log_2026_07`, `public.audit_log_2026_08`, `public.audit_log_2026_09`, `public.audit_log_2026_10`, `public.audit_log_2026_11`, `public.audit_log_2026_12`, `public.audit_log_2027_01`, `public.audit_log_2027_02`, `public.audit_log_2027_03`, `public.audit_log_2027_04`, `public.audit_log_2027_05`, `public.audit_log_2027_06`, `public.audit_log_2027_07`, `public.audit_log_2027_08`, `public.audit_log_2027_09`, `public.audit_log_2027_10`, `public.audit_log_2027_11`, `public.audit_log_2027_12`, `public.idempotency_keys`, `public.partition_maintenance_log`, `reference.cbp_wait_times_cache`, `safety.da_random_pool_draws`, `search.universal_index`, `tasks.task_type_seed`_
+
+### C. WRONG-TYPE TENANT KEY — operating_company_id as TEXT → migrate to uuid + FK org.companies  [STOP-GATE: migration]
+- `accounting.recurring_bill_templates` ⚠ FINANCIAL
+- `dispatch.border_crossing_events`
+- `dispatch.driver_layovers`
+- `dispatch.stop_extra_rates`
+- `qbo.reconciliation_alerts` ⚠ cross-tenant DEFAULT 'default'
+- `reports.scheduled_subscriptions`
+- `safety.anomaly_alert_rules`
+- `safety.anomaly_alerts`
+- `safety.integrity_findings`
+
+### D. ★ LIVE RLS / SECURITY-WIRING GAPS (from the live map — new; not visible in FK-only analysis)  [STOP-GATE: RLS/migration]
+- **RLS enabled but NOT FORCED (9 tables)** → table owner/grantee can bypass RLS (matches live finding on audit_log/event_log). Force RLS. e.g.: `events.event_log`, `lib.feature_flags`, `reference.cbp_wait_times_cache`, `reference.cdl_endorsements`, `reference.cdl_restrictions`, `reference.employment_statuses`, `reference.license_classes`, `reference.medical_card_statuses`, `reference.oem_parts`
+- **Domain tables NOT entity-scoped (73 tables)** → should be tenant-scoped but aren't (cross-entity leak risk, USMCA blocker). e.g.: `accounting.ar_collection_contacts`, `accounting.bill_lines`, `accounting.bill_unit_allocation`, `accounting.coa_account`, `accounting.expense_lines`, `accounting.line_category_load_required`, `accounting.ps_category`, `accounting.ps_item`, `accounting.pse_posting_policy`, `accounting.recurring_bill_generation_log`, `accounting.vendor_subtype_pse_map`, `catalogs.account_types`, `catalogs.asset_condition_codes`, `catalogs.asset_locations`, `catalogs.asset_statuses` …
+
+### E. HUB TABLES (the backbone — keep clean)
+- `org.companies` ← 464 tables — THE entity spine — every entity-scoped row hangs off it (TRK/TRANSP/USMCA)
+- `identity.users` ← 344 tables — every human action traces to a user (audit trail spine)
+- `mdata.drivers` ← 120 tables — driver master — safety, finance, dispatch, telematics all wire here
+- `mdata.units` ← 76 tables — truck master — maintenance, compliance, insurance, telematics wire here
+- `mdata.loads` ← 66 tables — load master — dispatch, billing, settlements, fuel wire here
+- `catalogs.accounts` ← 41 tables — chart of accounts — every GL posting resolves to it
+- `mdata.customers` ← 27 tables — customer master — AR, factoring, portal wire here
+- `maintenance.work_orders` ← 21 tables — maintenance spine — parts, labor, tires, DVIR wire here
+- `accounting.journal_entries` ← 21 tables — the GL — everything financial ends here
+- `mdata.vendors` ← 20 tables — vendor master — AP, factoring, maintenance wire here
+- `docs.files` ← 12 tables — 
+- `mdata.equipment` ← 11 tables — 
+
+---
+## PART 3 — FULL LIVE TABLE INVENTORY (664 tables) — table · purpose · RLS/Forced/Scoped/Void/Src · out→ in← · verdict
+
+### _system (5)
+- `_system._schema_migrations` —  schema migrations · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `_system.admin_jobs` — System — migration ledger, background jobs, admin jobs — admin jobs · RLS+F ent+ void- · out→2 in←0 · wired
+- `_system.background_jobs` — System — migration ledger, background jobs, admin jobs — background jobs · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `_system.reconciliation_findings` — System — migration ledger, background jobs, admin jobs — reconciliation findings · RLS+F ent+ void- · out→1 in←0 · wired
+- `_system.reconciliation_state` — System — migration ledger, background jobs, admin jobs — reconciliation state · RLS+F ent+ void- · out→1 in←0 · wired
+
+### accounting (64)
+- `accounting.ar_collection_contacts` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — ar collection contacts · RLS+F ent- void- · out→2 in←0 · wired
+- `accounting.ar_collection_tasks` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — ar collection tasks · RLS+F ent+ void- · out→4 in←1 · wired
+- `accounting.banking_rules` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — banking rules · RLS+F ent+ void- · out→6 in←0 · wired
+- `accounting.bill_lines` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — bill lines · RLS+F ent- void- · out→1 in←0 · wired
+- `accounting.bill_payments` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — bill payments · RLS+F ent+ void- · out→5 in←3 · wired
+- `accounting.bill_unit_allocation` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — bill unit allocation · RLS+F ent- void- · out→3 in←0 · wired
+- `accounting.bills` — bills · RLS+F ent+ void+ · out→4 in←8 · wired
+- `accounting.cash_flow_adjustments` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — cash flow adjustments · RLS+F ent+ void- · out→2 in←0 · wired
+- `accounting.cash_forecast_settings` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — cash forecast settings · RLS+F ent+ void- · out→1 in←0 · wired
+- `accounting.chart_of_accounts_roles` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — chart of accounts roles · RLS+F ent+ void- · out→3 in←0 · wired
+- `accounting.coa_account` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — coa account · RLS+F ent- void- · out→1 in←2 · wired
+- `accounting.credit_memos` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — credit memos · RLS+F ent+ void+ · out→4 in←0 · wired
+- `accounting.customer_classifications` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — customer classifications · RLS+F ent+ void- · out→2 in←0 · wired
+- `accounting.depreciation_schedule_rows` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — depreciation schedule rows · RLS+F ent+ void- · out→4 in←0 · wired
+- `accounting.escrow_accounts` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — escrow accounts · RLS+F ent+ void- · out→2 in←1 · wired
+- `accounting.escrow_postings` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — escrow postings · RLS+F ent+ void- · out→4 in←0 · wired
+- `accounting.expense_category_account_map` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — expense category account map · RLS+F ent+ void- · out→3 in←0 · wired
+- `accounting.expense_lines` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — expense lines · RLS+F ent- void- · out→4 in←0 · wired
+- `accounting.expenses` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — expenses · RLS+F ent+ void+ · out→7 in←4 · wired
+- `accounting.factoring_advances` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — factoring advances · RLS+F ent+ void- · out→3 in←2 · wired
+- `accounting.factoring_default_interest_accruals` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — factoring default interest accruals · RLS+F ent+ void- · out→1 in←0 · wired
+- `accounting.fixed_asset_classes` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — fixed asset classes · RLS+F ent+ void- · out→3 in←1 · wired
+- `accounting.fixed_asset_disposals` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — fixed asset disposals · RLS+F ent+ void- · out→6 in←0 · wired
+- `accounting.fixed_assets` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — fixed assets · RLS+F ent+ void+ · out→6 in←3 · wired
+- `accounting.invoice_lines` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — invoice lines · RLS+F ent+ void- · out→4 in←1 · wired
+- `accounting.invoices` — invoices · RLS+F ent+ void+ · out→7 in←8 · wired
+- `accounting.journal_entries` — the GL — everything financial ends here · RLS+F ent+ void+ · out→2 in←19 · wired
+- `accounting.journal_entry_postings` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — journal entry postings · RLS+F ent+ void- · out→5 in←1 · wired
+- `accounting.lease_asset_line` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — lease asset line · RLS+F ent+ void- · out→5 in←0 · wired
+- `accounting.lease_classification` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — lease classification · RLS+F ent+ void- · out→3 in←0 · wired
+- `accounting.lease_contract` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — lease contract · RLS+F ent+ void+ · out→5 in←4 · wired
+- `accounting.lease_schedule_period` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — lease schedule period · RLS+F ent+ void- · out→4 in←0 · wired
+- `accounting.line_category_load_required` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — line category load required · RLS+F ent- void- · out→0 in←0 · ★ISLAND-VERIFY
+- `accounting.outbox_events` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — outbox events · RLS+F ent+ void- · out→1 in←0 · wired
+- `accounting.payment_applications` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — payment applications · RLS+F ent+ void- · out→4 in←0 · wired
+- `accounting.payments` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — payments · RLS+F ent+ void+ · out→4 in←3 · wired
+- `accounting.period_cash_basis_snapshot` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — period cash basis snapshot · RLS+F ent+ void- · out→3 in←0 · wired
+- `accounting.periods` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — periods · RLS+F ent+ void- · out→3 in←1 · wired
+- `accounting.posting_batches` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — posting batches · RLS+F ent+ void- · out→2 in←1 · wired
+- `accounting.prepaid_amortization_rows` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — prepaid amortization rows · RLS+F ent+ void- · out→4 in←0 · wired
+- `accounting.prepaid_assets` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — prepaid assets · RLS+F ent+ void+ · out→4 in←1 · wired
+- `accounting.ps_category` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — ps category · RLS+F ent- void- · out→2 in←0 · wired
+- `accounting.ps_item` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — ps item · RLS+F ent- void- · out→2 in←0 · wired
+- `accounting.pse_posting_policy` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — pse posting policy · RLS+F ent- void- · out→1 in←0 · wired
+- `accounting.qbo_accounts` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — qbo accounts · RLS+F ent+ void- · out→0 in←0 · island(by-design)
+- `accounting.qbo_customers` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — qbo customers · RLS+F ent+ void- · out→0 in←0 · island(by-design)
+- `accounting.qbo_remote_count_collection_state` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — qbo remote count collection state · RLS+F ent+ void- · out→1 in←0 · wired
+- `accounting.qbo_remote_counts` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — qbo remote counts · RLS+F ent+ void- · out→1 in←0 · wired
+- `accounting.qbo_vendors` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — qbo vendors · RLS+F ent+ void- · out→0 in←0 · island(by-design)
+- `accounting.recon_exceptions` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — recon exceptions · RLS+F ent+ void+ · out→1 in←0 · wired
+- `accounting.recon_runs` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — recon runs · RLS+F ent+ void+ · out→0 in←1 · wired
+- `accounting.recurring_bill_generation_log` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — recurring bill generation log · RLS+F ent- void- · out→1 in←0 · wired
+- `accounting.recurring_bill_templates` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — recurring bill templates · RLS+F ent+ void- · out→0 in←1 · wired
+- `accounting.recurring_templates` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — recurring templates · RLS+F ent+ void- · out→2 in←0 · wired
+- `accounting.revenue_contracts` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — revenue contracts · RLS+F ent+ void+ · out→4 in←2 · wired
+- `accounting.revenue_obligations` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — revenue obligations · RLS+F ent+ void- · out→4 in←1 · wired
+- `accounting.revenue_recognition_rows` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — revenue recognition rows · RLS+F ent+ void- · out→5 in←0 · wired
+- `accounting.sales_tax_agencies` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — sales tax agencies · RLS+F ent+ void- · out→3 in←1 · wired
+- `accounting.sales_tax_returns` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — sales tax returns · RLS+F ent+ void- · out→4 in←0 · wired
+- `accounting.settlement_posting_config` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — settlement posting config · RLS+F ent+ void- · out→2 in←0 · wired
+- `accounting.transaction_source_links` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — transaction source links · RLS+F ent+ void- · out→2 in←0 · wired
+- `accounting.vendor_classifications` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — vendor classifications · RLS+F ent+ void- · out→2 in←0 · wired
+- `accounting.vendor_credits` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — vendor credits · RLS+F ent+ void- · out→3 in←0 · wired
+- `accounting.vendor_subtype_pse_map` — Double-entry GL / ledger — journal entries, bills, payments, posting, periods, CoA roles — vendor subtype pse map · RLS+F ent- void- · out→1 in←0 · wired
+
+### admin (1)
+- `admin.launch_toggles` — admin — launch toggles · RLS+F ent+ void- · out→2 in←0 · wired
+
+### alerts (3)
+- `alerts.broker_queue` — alerts — broker queue · RLS+F ent+ void- · out→0 in←0 · ★ISLAND-VERIFY
+- `alerts.profile` — alerts — profile · RLS+F ent+ void- · out→0 in←1 · wired
+- `alerts.rule` — alerts — rule · RLS+F ent+ void- · out→1 in←0 · wired
+
+### analytics (4)
+- `analytics.customer_rollup` — analytics — customer rollup · RLS+F ent+ void- · out→0 in←0 · island(by-design)
+- `analytics.lane_rollup` — analytics — lane rollup · RLS+F ent+ void- · out→0 in←0 · island(by-design)
+- `analytics.load_fact` — analytics — load fact · RLS+F ent+ void- · out→0 in←0 · island(by-design)
+- `analytics.type_rollup` — analytics — type rollup · RLS+F ent+ void- · out→0 in←0 · island(by-design)
+
+### audit (2)
+- `audit.audit_events` — Audit trail — row_changes, hash chain (tamper-evident) — audit events · RLS+F ent- void- · out→0 in←0 · island(by-design)
+- `audit.row_changes` — Audit trail — row_changes, hash chain (tamper-evident) — row changes · RLS+F ent- void- · out→0 in←0 · island(by-design)
+
+### bank (1)
+- `bank.reconciliation_matches` — bank — reconciliation matches · RLS+F ent+ void- · out→3 in←0 · wired
+
+### banking (8)
+- `banking.bank_accounts` — bank accounts · RLS+F ent+ void- · out→2 in←3 · wired
+- `banking.bank_transactions` — bank transactions · RLS+F ent+ void- · out→16 in←6 · wired
+- `banking.equipment_loan_attributions` — Bank feed — transactions, categorization, reconciliation, bank accounts — equipment loan attributions · RLS+F ent+ void- · out→4 in←0 · wired
+- `banking.equipment_loan_payments` — Bank feed — transactions, categorization, reconciliation, bank accounts — equipment loan payments · RLS+F ent+ void- · out→3 in←0 · wired
+- `banking.equipment_loans` — Bank feed — transactions, categorization, reconciliation, bank accounts — equipment loans · RLS+F ent+ void- · out→4 in←2 · wired
+- `banking.reconciliation_sessions` — Bank feed — transactions, categorization, reconciliation, bank accounts — reconciliation sessions · RLS+F ent+ void- · out→3 in←1 · wired
+- `banking.transaction_categories` — Bank feed — transactions, categorization, reconciliation, bank accounts — transaction categories · RLS+F ent+ void- · out→1 in←0 · wired
+- `banking.transfers` — Bank feed — transactions, categorization, reconciliation, bank accounts — transfers · RLS+F ent+ void- · out→2 in←1 · wired
+
+### brokerupdate (2)
+- `brokerupdate.profile` — brokerupdate — profile · RLS+F ent+ void- · out→0 in←1 · wired
+- `brokerupdate.send` — brokerupdate — send · RLS+F ent+ void- · out→1 in←0 · wired
+
+### catalogs (109)
+- `catalogs.accident_types` — accident types · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.account_role_bindings` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — account role bindings · RLS+F ent+ void- · out→3 in←0 · wired
+- `catalogs.account_types` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — account types · RLS- ent- void- · out→0 in←1 · wired
+- `catalogs.accounts` — chart of accounts — every GL posting resolves to it · RLS+F ent+ void- · out→2 in←25 · wired
+- `catalogs.additional_charges` — additional charges · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.air_bag_catalog` — air bag catalog · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.asset_condition_codes` — asset condition codes · RLS+F ent- void- · out→0 in←0 · island(by-design)
+- `catalogs.asset_locations` — asset locations · RLS+F ent- void- · out→0 in←0 · island(by-design)
+- `catalogs.asset_statuses` — asset statuses · RLS+F ent- void- · out→0 in←0 · island(by-design)
+- `catalogs.audit_event_types` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — audit event types · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `catalogs.battery_catalog` — battery catalog · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.cancellation_reasons` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — cancellation reasons · RLS- ent- void- · out→0 in←1 · wired
+- `catalogs.cargo_claim_reasons` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — cargo claim reasons · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.cash_advance_types` — cash advance types · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.catalog_registry` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — catalog registry · RLS+F ent- void- · out→0 in←0 · island(by-design)
+- `catalogs.cdl_endorsements` — cdl endorsements · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.cdl_restrictions` — cdl restrictions · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.chart_of_accounts_seeds` — chart of accounts seeds · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.civil_fine_types` — civil fine types · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.classes` — classes · RLS+F ent+ void- · out→2 in←4 · wired
+- `catalogs.company_violation_types` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — company violation types · RLS+F ent+ void- · out→1 in←1 · wired
+- `catalogs.complaint_types` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — complaint types · RLS+F ent+ void- · out→1 in←1 · wired
+- `catalogs.currency_codes` — currency codes · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.customer_quality_event_reasons` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — customer quality event reasons · RLS+F ent- void- · out→0 in←1 · wired
+- `catalogs.def_stations` — def stations · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.detail_types` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — detail types · RLS+F ent+ void- · out→2 in←0 · wired
+- `catalogs.detention_reasons` — detention reasons · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.dispatch_flag_colors` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — dispatch flag colors · RLS+F ent+ void- · out→2 in←0 · wired
+- `catalogs.dispatcher_error_reasons` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — dispatcher error reasons · RLS+F ent- void- · out→0 in←1 · wired
+- `catalogs.dot_violation_types` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — dot violation types · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.driver_deduction_types` — driver deduction types · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.driver_leave_balances` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — driver leave balances · RLS+F ent+ void- · out→2 in←0 · wired
+- `catalogs.driver_load_statuses` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — driver load statuses · RLS+F ent- void- · out→0 in←0 · island(by-design)
+- `catalogs.driver_pay_types` — driver pay types · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.driver_termination_reasons` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — driver termination reasons · RLS+F ent- void- · out→0 in←1 · wired
+- `catalogs.employment_statuses` — employment statuses · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.equipment_line_item_templates` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — equipment line item templates · RLS+F ent- void- · out→1 in←1 · wired
+- `catalogs.equipment_types` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — equipment types · RLS+F ent- void- · out→0 in←3 · wired
+- `catalogs.equipment_types_dedup_ledger_0318` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — equipment types dedup ledger 0318 · RLS- ent- void- · out→1 in←0 · wired
+- `catalogs.escrow_types` — escrow types · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.excel_upload_jobs` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — excel upload jobs · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `catalogs.expense_categories` — expense categories · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.expensive_states` — expensive states · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.file_categories` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — file categories · RLS+F ent- void- · out→0 in←1 · wired
+- `catalogs.fmcsa_lookups` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — fmcsa lookups · RLS+F ent+ void- · out→2 in←1 · wired
+- `catalogs.form_425c_company_profiles` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — form 425c company profiles · RLS+F ent+ void- · out→2 in←0 · wired
+- `catalogs.fuel_brands` — fuel brands · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.fuel_card_types` — fuel card types · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.fuel_dispatch_routes` — fuel dispatch routes · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.fuel_exception_types` — fuel exception types · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.fuel_grades` — fuel grades · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.fuel_pump_types` — fuel pump types · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.fuel_station_brands` — fuel station brands · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.fuel_station_states` — fuel station states · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.fuel_stations` — fuel stations · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.fuel_stop_reason_codes` — fuel stop reason codes · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.fuel_tax_jurisdictions` — fuel tax jurisdictions · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.ifta_states` — ifta states · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.internal_fine_reasons` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — internal fine reasons · RLS+F ent+ void- · out→1 in←1 · wired
+- `catalogs.items` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — items · RLS+F ent+ void- · out→6 in←1 · wired
+- `catalogs.labor_rates` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — labor rates · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.lease_terms` — lease terms · RLS+F ent- void- · out→0 in←0 · island(by-design)
+- `catalogs.leave_policies` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — leave policies · RLS+F ent+ void- · out→2 in←0 · wired
+- `catalogs.leave_types` — leave types · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.license_classes` — license classes · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.load_cancellation_reasons` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — load cancellation reasons · RLS+F ent+ void- · out→2 in←1 · wired
+- `catalogs.load_trailer_equipment` — load trailer equipment · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.load_types` — load types · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.lumper_providers` — lumper providers · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.maintenance_failure_codes` — maintenance failure codes · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.maintenance_labor_codes` — maintenance labor codes · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.maintenance_part_locations` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — maintenance part locations · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.maintenance_parts` — maintenance parts · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.maintenance_priority_levels` — maintenance priority levels · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.maintenance_service_tasks` — maintenance service tasks · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.maintenance_shop_locations` — maintenance shop locations · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.maintenance_vendors` — maintenance vendors · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.medical_card_statuses` — medical card statuses · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.mexico_states` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — mexico states · RLS+F ent- void- · out→0 in←0 · island(by-design)
+- `catalogs.mpg_bands` — mpg bands · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.mx_customs_brokers` — mx customs brokers · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.parts` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — parts · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.pay_rate_templates` — pay rate templates · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.payment_methods` — payment methods · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.payment_terms` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — payment terms · RLS+F ent- void- · out→1 in←2 · wired
+- `catalogs.pickup_time_types` — pickup time types · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.pm_intervals` — pm intervals · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.posting_templates` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — posting templates · RLS+F ent- void- · out→3 in←0 · wired
+- `catalogs.qbo_categories` — qbo categories · RLS+F ent+ void- · out→1 in←1 · wired
+- `catalogs.relay_accounts` — relay accounts · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.repair_locations` — repair locations · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.settlement_templates` — settlement templates · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.tax_codes` — tax codes · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.tire_catalog` — tire catalog · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.tire_positions` — tire positions · RLS+F ent- void- · out→0 in←0 · island(by-design)
+- `catalogs.toll_providers` — toll providers · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.tractor_statuses` — tractor statuses · RLS+F ent- void- · out→0 in←0 · island(by-design)
+- `catalogs.trailer_parts` — trailer parts · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.trailer_statuses` — trailer statuses · RLS+F ent- void- · out→0 in←0 · island(by-design)
+- `catalogs.trailer_types` — trailer types · RLS+F ent- void- · out→0 in←0 · island(by-design)
+- `catalogs.truck_parts` — truck parts · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.unit_ownership_types` — unit ownership types · RLS+F ent- void- · out→0 in←0 · island(by-design)
+- `catalogs.us_states` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — us states · RLS+F ent- void- · out→0 in←0 · island(by-design)
+- `catalogs.void_cancel_reasons` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — void cancel reasons · RLS+F ent+ void- · out→2 in←1 · wired
+- `catalogs.wo_cancellation_reasons` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — wo cancellation reasons · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `catalogs.work_order_statuses` — work order statuses · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.work_order_templates` — work order templates · RLS+F ent+ void- · out→1 in←0 · wired
+- `catalogs.workflow_requests` — Per-entity master catalogs — chart of accounts, items, classes, vendors/customers ref, role bindings — workflow requests · RLS+F ent- void- · out→1 in←0 · wired
+- `catalogs.workplace_incident_types` — workplace incident types · RLS+F ent+ void- · out→1 in←0 · wired
+
+### chat (5)
+- `chat.attachments` — chat — attachments · RLS+F ent+ void- · out→3 in←0 · wired
+- `chat.message_receipts` — chat — message receipts · RLS+F ent+ void- · out→3 in←0 · wired
+- `chat.messages` — chat — messages · RLS+F ent+ void- · out→5 in←2 · wired
+- `chat.participants` — chat — participants · RLS+F ent+ void- · out→4 in←1 · wired
+- `chat.threads` — chat — threads · RLS+F ent+ void- · out→3 in←2 · wired
+
+### compliance (17)
+- `compliance.csa_basic_scores` — Regulatory filings — IFTA, 2290, IRP, permits, property-tax rendition, credentials — csa basic scores · RLS+F ent+ void- · out→1 in←0 · wired
+- `compliance.csa_mitigation_actions` — Regulatory filings — IFTA, 2290, IRP, permits, property-tax rendition, credentials — csa mitigation actions · RLS+F ent+ void- · out→2 in←0 · wired
+- `compliance.dot_inspection_event_followups` — Regulatory filings — IFTA, 2290, IRP, permits, property-tax rendition, credentials — dot inspection event followups · RLS+F ent+ void- · out→3 in←0 · wired
+- `compliance.dot_inspection_events` — Regulatory filings — IFTA, 2290, IRP, permits, property-tax rendition, credentials — dot inspection events · RLS+F ent+ void- · out→5 in←1 · wired
+- `compliance.drug_alcohol_pool_members` — Regulatory filings — IFTA, 2290, IRP, permits, property-tax rendition, credentials — drug alcohol pool members · RLS+F ent+ void- · out→2 in←0 · wired
+- `compliance.drug_alcohol_random_draws` — Regulatory filings — IFTA, 2290, IRP, permits, property-tax rendition, credentials — drug alcohol random draws · RLS+F ent+ void- · out→1 in←1 · wired
+- `compliance.drug_alcohol_random_selections` — Regulatory filings — IFTA, 2290, IRP, permits, property-tax rendition, credentials — drug alcohol random selections · RLS+F ent+ void- · out→3 in←1 · wired
+- `compliance.drug_alcohol_test_results` — Regulatory filings — IFTA, 2290, IRP, permits, property-tax rendition, credentials — drug alcohol test results · RLS+F ent+ void- · out→4 in←1 · wired
+- `compliance.form_2290_filing_vehicles` — Regulatory filings — IFTA, 2290, IRP, permits, property-tax rendition, credentials — form 2290 filing vehicles · RLS+F ent+ void- · out→3 in←0 · wired
+- `compliance.form_2290_filings` — Regulatory filings — IFTA, 2290, IRP, permits, property-tax rendition, credentials — form 2290 filings · RLS+F ent+ void- · out→2 in←1 · wired
+- `compliance.form_425c_exhibit_a_entries` — Regulatory filings — IFTA, 2290, IRP, permits, property-tax rendition, credentials — form 425c exhibit a entries · RLS- ent- void- · out→1 in←0 · wired
+- `compliance.form_425c_exhibit_b_entries` — Regulatory filings — IFTA, 2290, IRP, permits, property-tax rendition, credentials — form 425c exhibit b entries · RLS- ent- void- · out→1 in←0 · wired
+- `compliance.form_425c_reports` — Regulatory filings — IFTA, 2290, IRP, permits, property-tax rendition, credentials — form 425c reports · RLS+F ent+ void- · out→3 in←2 · wired
+- `compliance.notification_log` — Regulatory filings — IFTA, 2290, IRP, permits, property-tax rendition, credentials — notification log · RLS+F ent+ void- · out→2 in←0 · wired
+- `compliance.notification_rules` — Regulatory filings — IFTA, 2290, IRP, permits, property-tax rendition, credentials — notification rules · RLS+F ent+ void- · out→1 in←1 · wired
+- `compliance.required_document_types` — Regulatory filings — IFTA, 2290, IRP, permits, property-tax rendition, credentials — required document types · RLS+F ent+ void- · out→0 in←0 · island(by-design)
+- `compliance.return_to_duty_processes` — Regulatory filings — IFTA, 2290, IRP, permits, property-tax rendition, credentials — return to duty processes · RLS+F ent+ void- · out→3 in←0 · wired
+
+### customer (1)
+- `customer.contract` — customer — contract · RLS+F ent+ void- · out→4 in←0 · wired
+
+### dispatch (24)
+- `dispatch.auto_status_suggestion_responses` — Dispatch operations — assignments, load assignment history, board state — auto status suggestion responses · RLS+F ent+ void- · out→3 in←0 · wired
+- `dispatch.auto_status_suggestions` — Dispatch operations — assignments, load assignment history, board state — auto status suggestions · RLS+F ent+ void- · out→5 in←1 · wired
+- `dispatch.bol_documents` — Dispatch operations — assignments, load assignment history, board state — bol documents · RLS+F ent+ void- · out→3 in←0 · wired
+- `dispatch.border_crossing_events` — Dispatch operations — assignments, load assignment history, board state — border crossing events · RLS+F ent+ void- · out→3 in←0 · wired
+- `dispatch.cargo_sensor_readings` — Dispatch operations — assignments, load assignment history, board state — cargo sensor readings · RLS+F ent+ void- · out→3 in←0 · wired
+- `dispatch.customer_notify_preferences` — Dispatch operations — assignments, load assignment history, board state — customer notify preferences · RLS+F ent+ void- · out→2 in←0 · wired
+- `dispatch.detention_events` — Dispatch operations — assignments, load assignment history, board state — detention events · RLS+F ent+ void- · out→6 in←2 · wired
+- `dispatch.detention_evidence` — Dispatch operations — assignments, load assignment history, board state — detention evidence · RLS+F ent+ void- · out→6 in←0 · wired
+- `dispatch.detention_requests` — Dispatch operations — assignments, load assignment history, board state — detention requests · RLS+F ent+ void- · out→5 in←1 · wired
+- `dispatch.driver_layovers` — Dispatch operations — assignments, load assignment history, board state — driver layovers · RLS+F ent+ void- · out→3 in←0 · wired
+- `dispatch.equipment_transfer_requests` — Dispatch operations — assignments, load assignment history, board state — equipment transfer requests · RLS+F ent+ void- · out→3 in←0 · wired
+- `dispatch.intransit_issues` — Dispatch operations — assignments, load assignment history, board state — intransit issues · RLS+F ent+ void- · out→5 in←0 · wired
+- `dispatch.load_abandonments` — Dispatch operations — assignments, load assignment history, board state — load abandonments · RLS+F ent+ void- · out→5 in←0 · wired
+- `dispatch.load_assignment_history` — Dispatch operations — assignments, load assignment history, board state — load assignment history · RLS+F ent+ void- · out→6 in←0 · wired
+- `dispatch.load_cancellations` — Dispatch operations — assignments, load assignment history, board state — load cancellations · RLS+F ent+ void- · out→5 in←0 · wired
+- `dispatch.load_eta_predictions` — Dispatch operations — assignments, load assignment history, board state — load eta predictions · RLS+F ent- void- · out→2 in←0 · wired
+- `dispatch.load_id_reservations` — Dispatch operations — assignments, load assignment history, board state — load id reservations · RLS+F ent+ void- · out→3 in←0 · wired
+- `dispatch.load_templates` — Dispatch operations — assignments, load assignment history, board state — load templates · RLS+F ent+ void- · out→2 in←0 · wired
+- `dispatch.notify_log` — Dispatch operations — assignments, load assignment history, board state — notify log · RLS+F ent+ void- · out→4 in←0 · wired
+- `dispatch.ocr_intake_queue` — Dispatch operations — assignments, load assignment history, board state — ocr intake queue · RLS+F ent+ void- · out→2 in←0 · wired
+- `dispatch.pod_documents` — Dispatch operations — assignments, load assignment history, board state — pod documents · RLS+F ent+ void- · out→5 in←0 · wired
+- `dispatch.ratecon_extractions` — Dispatch operations — assignments, load assignment history, board state — ratecon extractions · RLS+F ent+ void- · out→1 in←0 · wired
+- `dispatch.stop_arrivals` — Dispatch operations — assignments, load assignment history, board state — stop arrivals · RLS+F ent+ void- · out→5 in←1 · wired
+- `dispatch.stop_extra_rates` — Dispatch operations — assignments, load assignment history, board state — stop extra rates · RLS+F ent+ void- · out→4 in←0 · wired
+
+### docs (2)
+- `docs.file_links` — docs — file links · RLS+F ent- void- · out→2 in←0 · wired
+- `docs.files` — files · RLS+F ent+ void- · out→4 in←10 · wired
+
+### documents (2)
+- `documents.attachments` — documents — attachments · RLS+F ent+ void- · out→2 in←3 · wired
+- `documents.damage_photo_evidence` — documents — damage photo evidence · RLS+F ent+ void- · out→2 in←0 · wired
+
+### driver_finance (29)
+- `driver_finance.abandonment_chargebacks` — Driver pay — settlements, settlement lines, deductions, advances, escrow, bills — abandonment chargebacks · RLS+F ent+ void- · out→5 in←0 · wired
+- `driver_finance.abandonment_defaults` — Driver pay — settlements, settlement lines, deductions, advances, escrow, bills — abandonment defaults · RLS+F ent+ void- · out→1 in←0 · wired
+- `driver_finance.auto_deduction_policies` — Driver pay — settlements, settlement lines, deductions, advances, escrow, bills — auto deduction policies · RLS+F ent+ void- · out→3 in←2 · wired
+- `driver_finance.cash_advance_owner_approval_audit` — Driver pay — settlements, settlement lines, deductions, advances, escrow, bills — cash advance owner approval audit · RLS+F ent+ void- · out→2 in←0 · wired
+- `driver_finance.cash_advance_request_audit` — Driver pay — settlements, settlement lines, deductions, advances, escrow, bills — cash advance request audit · RLS+F ent+ void- · out→3 in←0 · wired
+- `driver_finance.cash_advance_requests` — Driver pay — settlements, settlement lines, deductions, advances, escrow, bills — cash advance requests · RLS+F ent+ void- · out→5 in←3 · wired
+- `driver_finance.deduction_schedule` — Driver pay — settlements, settlement lines, deductions, advances, escrow, bills — deduction schedule · RLS+F ent+ void- · out→4 in←0 · wired
+- `driver_finance.driver_advance_accounts` — Driver pay — settlements, settlement lines, deductions, advances, escrow, bills — driver advance accounts · RLS+F ent+ void- · out→4 in←0 · wired
+- `driver_finance.driver_advances` — Driver pay — settlements, settlement lines, deductions, advances, escrow, bills — driver advances · RLS+F ent+ void- · out→7 in←1 · wired
+- `driver_finance.driver_bills` — Driver pay — settlements, settlement lines, deductions, advances, escrow, bills — driver bills · RLS+F ent+ void- · out→4 in←3 · wired
+- `driver_finance.driver_deduction_bucket_events` — Driver pay — settlements, settlement lines, deductions, advances, escrow, bills — driver deduction bucket events · RLS+F ent+ void- · out→6 in←0 · wired
+- `driver_finance.driver_deduction_buckets` — Driver pay — settlements, settlement lines, deductions, advances, escrow, bills — driver deduction buckets · RLS+F ent+ void- · out→3 in←2 · wired
+- `driver_finance.driver_liabilities` — Driver pay — settlements, settlement lines, deductions, advances, escrow, bills — driver liabilities · RLS+F ent+ void- · out→2 in←2 · wired
+- `driver_finance.driver_pay_settings` — Driver pay — settlements, settlement lines, deductions, advances, escrow, bills — driver pay settings · RLS+F ent+ void- · out→3 in←0 · wired
+- `driver_finance.driver_settlement_deductions` — Driver pay — settlements, settlement lines, deductions, advances, escrow, bills — driver settlement deductions · RLS+F ent+ void- · out→9 in←2 · wired
+- `driver_finance.driver_settlement_disputes` — Driver pay — settlements, settlement lines, deductions, advances, escrow, bills — driver settlement disputes · RLS+F ent+ void- · out→4 in←0 · wired
+- `driver_finance.driver_settlement_gl_bills` — driver settlement gl bills · RLS+F ent+ void- · out→8 in←0 · wired
+- `driver_finance.driver_settlement_gl_runs` — driver settlement gl runs · RLS+F ent+ void- · out→5 in←1 · wired
+- `driver_finance.driver_settlements` — driver settlements · RLS+F ent+ void- · out→4 in←10 · wired
+- `driver_finance.escrow_balances` — Driver pay — settlements, settlement lines, deductions, advances, escrow, bills — escrow balances · RLS+F ent+ void- · out→3 in←1 · wired
+- `driver_finance.escrow_deductions_pending` — Driver pay — settlements, settlement lines, deductions, advances, escrow, bills — escrow deductions pending · RLS+F ent+ void- · out→4 in←1 · wired
+- `driver_finance.escrow_ledger` — Driver pay — settlements, settlement lines, deductions, advances, escrow, bills — escrow ledger · RLS+F ent+ void- · out→5 in←0 · wired
+- `driver_finance.settlement_disputes` — Driver pay — settlements, settlement lines, deductions, advances, escrow, bills — settlement disputes · RLS+F ent+ void- · out→4 in←0 · wired
+- `driver_finance.settlement_lines` — Driver pay — settlements, settlement lines, deductions, advances, escrow, bills — settlement lines · RLS+F ent+ void- · out→5 in←0 · wired
+- `driver_finance.settlement_payment_events` — Driver pay — settlements, settlement lines, deductions, advances, escrow, bills — settlement payment events · RLS+F ent+ void- · out→2 in←0 · wired
+- `driver_finance.settlement_preview_costs` — Driver pay — settlements, settlement lines, deductions, advances, escrow, bills — settlement preview costs · RLS+F ent+ void- · out→2 in←0 · wired
+- `driver_finance.signed_acknowledgments` — Driver pay — settlements, settlement lines, deductions, advances, escrow, bills — signed acknowledgments · RLS+F ent+ void- · out→3 in←0 · wired
+- `driver_finance.team_settlement_splits` — Driver pay — settlements, settlement lines, deductions, advances, escrow, bills — team settlement splits · RLS+F ent+ void- · out→5 in←0 · wired
+- `driver_finance.trip_link_queue` — Driver pay — settlements, settlement lines, deductions, advances, escrow, bills — trip link queue · RLS+F ent+ void- · out→5 in←0 · wired
+
+### driver_pwa (1)
+- `driver_pwa.push_subscriptions` — driver_pwa — push subscriptions · RLS+F ent+ void- · out→2 in←0 · wired
+
+### driveralert (2)
+- `driveralert.alarm_event` — driveralert — alarm event · RLS+F ent+ void- · out→1 in←0 · wired
+- `driveralert.dispatch` — driveralert — dispatch · RLS+F ent+ void- · out→0 in←1 · wired
+
+### drivers (1)
+- `drivers.retention_scores` — drivers — retention scores · RLS+F ent+ void- · out→2 in←0 · wired
+
+### email (2)
+- `email.email_alerts` — email — email alerts · RLS+F ent+ void- · out→3 in←0 · wired
+- `email.email_queue` — email — email queue · RLS+F ent+ void- · out→2 in←2 · wired
+
+### events (1)
+- `events.event_log` — Event log / outbox — event log · RLS+ ent+ void- · out→0 in←0 · island(by-design)
+
+### expense_attribution (2)
+- `expense_attribution.expense_load_links` — expense_attribution — expense load links · RLS+F ent+ void- · out→2 in←0 · wired
+- `expense_attribution.expense_seq_per_load` — expense_attribution — expense seq per load · RLS+F ent- void- · out→1 in←0 · wired
+
+### factor (4)
+- `factor.faro_daily_imports` — Factoring (Faro) — advances, reserve, funding — faro daily imports · RLS+F ent+ void- · out→2 in←2 · wired
+- `factor.faro_invoice_lines` — Factoring (Faro) — advances, reserve, funding — faro invoice lines · RLS+F ent+ void- · out→3 in←0 · wired
+- `factor.reconciliation_items` — Factoring (Faro) — advances, reserve, funding — reconciliation items · RLS+F ent+ void- · out→3 in←0 · wired
+- `factor.reconciliation_runs` — Factoring (Faro) — advances, reserve, funding — reconciliation runs · RLS+F ent+ void- · out→4 in←1 · wired
+
+### factoring (5)
+- `factoring.bank_match_suggestion` — Factoring posting/workflow — bank match suggestion · RLS+F ent- void- · out→3 in←0 · wired
+- `factoring.batch` — Factoring posting/workflow — batch · RLS+F ent- void- · out→2 in←2 · wired
+- `factoring.customer_factor_assignment` — Factoring posting/workflow — customer factor assignment · RLS+F ent- void- · out→3 in←0 · wired
+- `factoring.factor` — Factoring posting/workflow — factor · RLS+F ent- void- · out→1 in←3 · wired
+- `factoring.reserve_movement` — Factoring posting/workflow — reserve movement · RLS+F ent- void- · out→2 in←0 · wired
+
+### finance (2)
+- `finance.loan_amortization_rows` — finance — loan amortization rows · RLS+F ent+ void- · out→4 in←0 · wired
+- `finance.loans` — finance — loans · RLS+F ent+ void- · out→3 in←1 · wired
+
+### fixed_assets (4)
+- `fixed_assets.asset_classes` — Fixed asset register & depreciation — asset classes · RLS+F ent+ void- · out→3 in←1 · wired
+- `fixed_assets.assets` — Fixed asset register & depreciation — assets · RLS+F ent+ void- · out→5 in←2 · wired
+- `fixed_assets.depreciation_schedules` — Fixed asset register & depreciation — depreciation schedules · RLS+F ent+ void- · out→4 in←0 · wired
+- `fixed_assets.disposals` — Fixed asset register & depreciation — disposals · RLS+F ent+ void- · out→4 in←0 · wired
+
+### forecast (3)
+- `forecast.cash_entries` — forecast — cash entries · RLS+F ent+ void- · out→0 in←0 · island(by-design)
+- `forecast.opening_balance` — forecast — opening balance · RLS+F ent+ void- · out→0 in←0 · island(by-design)
+- `forecast.predicted_delivery_changes` — forecast — predicted delivery changes · RLS+F ent+ void- · out→0 in←0 · island(by-design)
+
+### fuel (3)
+- `fuel.fraud_alerts` — fuel — fraud alerts · RLS+F ent+ void- · out→3 in←0 · wired
+- `fuel.fuel_planner_settings` — fuel — fuel planner settings · RLS+F ent+ void- · out→0 in←0 · island(by-design)
+- `fuel.fuel_transactions` — fuel — fuel transactions · RLS+F ent+ void- · out→4 in←1 · wired
+
+### geo (3)
+- `geo.geofence_events` — geo — geofence events · RLS+F ent+ void- · out→4 in←0 · wired
+- `geo.geofence_state_transitions` — geo — geofence state transitions · RLS+F ent+ void- · out→4 in←0 · wired
+- `geo.geofences` — geo — geofences · RLS+F ent+ void- · out→2 in←4 · wired
+
+### geofence (2)
+- `geofence.event` — geofence — event · RLS+F ent+ void- · out→1 in←0 · wired
+- `geofence.fence` — geofence — fence · RLS+F ent+ void- · out→0 in←1 · wired
+
+### governance (1)
+- `governance.void_cancel_requests` — governance — void cancel requests · RLS+F ent+ void- · out→3 in←0 · wired
+
+### hos (1)
+- `hos.duty_status_events` — Hours-of-service — duty status events (append-only) — duty status events · RLS+F ent+ void- · out→3 in←0 · wired
+
+### identity (10)
+- `identity.applicant_documents` — Auth & users — sessions, roles, permissions, preferences — applicant documents · RLS+F ent+ void- · out→2 in←0 · wired
+- `identity.driver_applicants` — Auth & users — sessions, roles, permissions, preferences — driver applicants · RLS+F ent+ void- · out→4 in←1 · wired
+- `identity.driver_invites` — Auth & users — sessions, roles, permissions, preferences — driver invites · RLS+F ent+ void- · out→3 in←0 · wired
+- `identity.email_verifications` — Auth & users — sessions, roles, permissions, preferences — email verifications · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `identity.password_reset_tokens` — Auth & users — sessions, roles, permissions, preferences — password reset tokens · RLS+F ent- void- · out→1 in←0 · wired
+- `identity.sessions` — Auth & users — sessions, roles, permissions, preferences — sessions · RLS+F ent- void- · out→1 in←0 · wired
+- `identity.user_notification_preferences` — Auth & users — sessions, roles, permissions, preferences — user notification preferences · RLS+F ent- void- · out→1 in←0 · wired
+- `identity.user_preferences` — Auth & users — sessions, roles, permissions, preferences — user preferences · RLS+F ent- void- · out→1 in←0 · wired
+- `identity.users` — every human action traces to a user (audit trail spine) · RLS+F ent- void- · out→1 in←220 · wired
+- `identity.workflow_requests` — Auth & users — sessions, roles, permissions, preferences — workflow requests · RLS+F ent- void- · out→1 in←0 · wired
+
+### ifta (4)
+- `ifta.quarterly_preparations` — IFTA fuel-tax quarterly prep — quarterly preparations · RLS+F ent+ void- · out→1 in←3 · wired
+- `ifta.state_gallons_by_quarter` — IFTA fuel-tax quarterly prep — state gallons by quarter · RLS+F ent- void- · out→1 in←0 · wired
+- `ifta.state_miles_by_quarter` — IFTA fuel-tax quarterly prep — state miles by quarter · RLS+F ent- void- · out→1 in←0 · wired
+- `ifta.state_tax_by_quarter` — IFTA fuel-tax quarterly prep — state tax by quarter · RLS+F ent- void- · out→1 in←0 · wired
+
+### ih35_migrations (1)
+- `ih35_migrations.applied_migrations` — applied migrations · RLS- ent- void- · out→0 in←0 · ★ISLAND-VERIFY
+
+### insurance (8)
+- `insurance.claim` — Insurance — policies, coverage, claims linkage — claim · RLS+F ent- void- · out→3 in←1 · wired
+- `insurance.coi_request` — Insurance — policies, coverage, claims linkage — coi request · RLS+F ent- void- · out→3 in←0 · wired
+- `insurance.lawsuit` — Insurance — policies, coverage, claims linkage — lawsuit · RLS+F ent- void- · out→2 in←0 · wired
+- `insurance.payment_schedule` — Insurance — policies, coverage, claims linkage — payment schedule · RLS+F ent- void- · out→3 in←0 · wired
+- `insurance.policy` — policy · RLS+F ent- void- · out→2 in←5 · wired
+- `insurance.policy_unit` — Insurance — policies, coverage, claims linkage — policy unit · RLS+F ent- void- · out→3 in←0 · wired
+- `insurance.refund_obligation` — Insurance — policies, coverage, claims linkage — refund obligation · RLS+F ent- void- · out→2 in←0 · wired
+- `insurance.type_catalog` — Insurance — policies, coverage, claims linkage — type catalog · RLS+F ent- void- · out→1 in←1 · wired
+
+### integrations (21)
+- `integrations.active_driver_set_cache` — External integrations — Samsara/telematics, provider sync state — active driver set cache · RLS+F ent+ void- · out→0 in←0 · island(by-design)
+- `integrations.auto_status_position_snapshots` — External integrations — Samsara/telematics, provider sync state — auto status position snapshots · RLS+F ent+ void- · out→2 in←0 · wired
+- `integrations.auto_status_switch_events` — External integrations — Samsara/telematics, provider sync state — auto status switch events · RLS+F ent+ void- · out→4 in←0 · wired
+- `integrations.edi_messages` — External integrations — Samsara/telematics, provider sync state — edi messages · RLS+F ent+ void- · out→2 in←0 · wired
+- `integrations.edi_partners` — External integrations — Samsara/telematics, provider sync state — edi partners · RLS+F ent+ void- · out→1 in←1 · wired
+- `integrations.engine_fault_events` — External integrations — Samsara/telematics, provider sync state — engine fault events · RLS+F ent+ void- · out→2 in←0 · wired
+- `integrations.integration_sync_log` — External integrations — Samsara/telematics, provider sync state — integration sync log · RLS+F ent+ void- · out→1 in←0 · wired
+- `integrations.qbo_connections` — External integrations — Samsara/telematics, provider sync state — qbo connections · RLS+F ent+ void- · out→2 in←0 · wired
+- `integrations.qbo_inbound_events` — External integrations — Samsara/telematics, provider sync state — qbo inbound events · RLS+F ent+ void- · out→1 in←0 · wired
+- `integrations.qbo_payroll_links` — External integrations — Samsara/telematics, provider sync state — qbo payroll links · RLS+F ent+ void- · out→1 in←0 · wired
+- `integrations.qbo_sync_conflicts` — External integrations — Samsara/telematics, provider sync state — qbo sync conflicts · RLS+F ent+ void- · out→2 in←0 · wired
+- `integrations.qbo_sync_queue` — External integrations — Samsara/telematics, provider sync state — qbo sync queue · RLS+F ent+ void- · out→1 in←0 · wired
+- `integrations.qbo_vendor_linkage_events` — External integrations — Samsara/telematics, provider sync state — qbo vendor linkage events · RLS+F ent+ void- · out→2 in←0 · wired
+- `integrations.samsara_config` — External integrations — Samsara/telematics, provider sync state — samsara config · RLS+F ent+ void- · out→1 in←0 · wired
+- `integrations.samsara_drivers` — External integrations — Samsara/telematics, provider sync state — samsara drivers · RLS+F ent+ void- · out→2 in←0 · wired
+- `integrations.samsara_remote_count_collection_state` — External integrations — Samsara/telematics, provider sync state — samsara remote count collection state · RLS+F ent+ void- · out→1 in←0 · wired
+- `integrations.samsara_remote_counts` — External integrations — Samsara/telematics, provider sync state — samsara remote counts · RLS+F ent+ void- · out→1 in←0 · wired
+- `integrations.samsara_vehicle_positions` — External integrations — Samsara/telematics, provider sync state — samsara vehicle positions · RLS+F ent+ void- · out→0 in←0 · island(by-design)
+- `integrations.samsara_vehicles` — External integrations — Samsara/telematics, provider sync state — samsara vehicles · RLS+F ent+ void- · out→2 in←0 · wired
+- `integrations.samsara_webhook_events` — External integrations — Samsara/telematics, provider sync state — samsara webhook events · RLS+F ent+ void- · out→1 in←2 · wired
+- `integrations.samsara_webhook_projection_state` — External integrations — Samsara/telematics, provider sync state — samsara webhook projection state · RLS+F ent+ void- · out→2 in←0 · wired
+
+### integrity (4)
+- `integrity.anomalies` — integrity — anomalies · RLS+F ent- void- · out→0 in←0 · ★ISLAND-VERIFY
+- `integrity.anomaly` — anomaly · RLS+F ent- void- · out→4 in←0 · wired
+- `integrity.driver_metric` — driver metric · RLS+F ent- void- · out→4 in←0 · wired
+- `integrity.metric` — metric · RLS+F ent- void- · out→2 in←2 · wired
+
+### legal (11)
+- `legal.contract_attorney_review_tokens` — Legal — contracts, templates, consent, e-sign, document links — contract attorney review tokens · RLS+F ent+ void- · out→3 in←0 · wired
+- `legal.contract_audit_log` — Legal — contracts, templates, consent, e-sign, document links — contract audit log · RLS+F ent+ void- · out→4 in←0 · wired
+- `legal.contract_instance_links` — Legal — contracts, templates, consent, e-sign, document links — contract instance links · RLS+F ent+ void- · out→3 in←0 · wired
+- `legal.contract_instances` — contract instances · RLS+F ent+ void+ · out→5 in←5 · wired
+- `legal.contract_signing_tokens` — Legal — contracts, templates, consent, e-sign, document links — contract signing tokens · RLS+F ent+ void- · out→3 in←0 · wired
+- `legal.contract_templates` — Legal — contracts, templates, consent, e-sign, document links — contract templates · RLS+F ent+ void- · out→2 in←3 · wired
+- `legal.matter_deadlines` — Legal — contracts, templates, consent, e-sign, document links — matter deadlines · RLS+F ent+ void- · out→3 in←0 · wired
+- `legal.matter_documents` — Legal — contracts, templates, consent, e-sign, document links — matter documents · RLS+F ent+ void- · out→4 in←0 · wired
+- `legal.matter_events` — Legal — contracts, templates, consent, e-sign, document links — matter events · RLS+F ent+ void- · out→3 in←0 · wired
+- `legal.matters` — Legal — contracts, templates, consent, e-sign, document links — matters · RLS+F ent+ void- · out→3 in←4 · wired
+- `legal.signatures` — Legal — contracts, templates, consent, e-sign, document links — signatures · RLS+F ent+ void- · out→2 in←0 · wired
+
+### lib (2)
+- `lib.feature_flag_overrides` — Library — feature flags, feature_flag_overrides — feature flag overrides · RLS+F ent+ void- · out→3 in←0 · wired
+- `lib.feature_flags` — Library — feature flags, feature_flag_overrides — feature flags · RLS+ ent- void- · out→0 in←1 · wired
+
+### maint (5)
+- `maint.part` — Maintenance (legacy/aux) — part · RLS+F ent- void- · out→1 in←1 · wired
+- `maint.part_position_assignment` — Maintenance (legacy/aux) — part position assignment · RLS+F ent+ void- · out→1 in←0 · wired
+- `maint.pm_schedule` — Maintenance (legacy/aux) — pm schedule · RLS+F ent- void- · out→2 in←0 · wired
+- `maint.position_history` — Maintenance (legacy/aux) — position history · RLS+F ent+ void- · out→5 in←0 · wired
+- `maint.position_set` — Maintenance (legacy/aux) — position set · RLS+F ent+ void- · out→0 in←2 · wired
+
+### maintenance (34)
+- `maintenance.brake_projections` — Fleet maintenance — work orders, service, parts, PM schedules — brake projections · RLS+F ent+ void- · out→2 in←0 · wired
+- `maintenance.brake_wear_measurements` — Fleet maintenance — work orders, service, parts, PM schedules — brake wear measurements · RLS+F ent+ void- · out→3 in←0 · wired
+- `maintenance.defects` — Fleet maintenance — work orders, service, parts, PM schedules — defects · RLS+F ent+ void- · out→3 in←0 · wired
+- `maintenance.driver_reports` — Fleet maintenance — work orders, service, parts, PM schedules — driver reports · RLS+F ent+ void- · out→4 in←0 · wired
+- `maintenance.dvir_submissions` — Fleet maintenance — work orders, service, parts, PM schedules — dvir submissions · RLS+F ent+ void- · out→4 in←1 · wired
+- `maintenance.fault_code_severity_rules` — Fleet maintenance — work orders, service, parts, PM schedules — fault code severity rules · RLS+F ent+ void- · out→1 in←0 · wired
+- `maintenance.inspection_photos` — Fleet maintenance — work orders, service, parts, PM schedules — inspection photos · RLS+F ent+ void- · out→3 in←0 · wired
+- `maintenance.inspections` — Fleet maintenance — work orders, service, parts, PM schedules — inspections · RLS+F ent+ void- · out→4 in←1 · wired
+- `maintenance.internal_labor_log` — Fleet maintenance — work orders, service, parts, PM schedules — internal labor log · RLS+F ent+ void- · out→4 in←0 · wired
+- `maintenance.parts_inventory` — Fleet maintenance — work orders, service, parts, PM schedules — parts inventory · RLS+F ent+ void- · out→1 in←2 · wired
+- `maintenance.parts_invoice_links` — Fleet maintenance — work orders, service, parts, PM schedules — parts invoice links · RLS+F ent+ void- · out→3 in←0 · wired
+- `maintenance.parts_warranty` — Fleet maintenance — work orders, service, parts, PM schedules — parts warranty · RLS+F ent+ void- · out→4 in←1 · wired
+- `maintenance.pm_alerts` — Fleet maintenance — work orders, service, parts, PM schedules — pm alerts · RLS+F ent+ void- · out→5 in←0 · wired
+- `maintenance.pm_auto_engine_settings` — Fleet maintenance — work orders, service, parts, PM schedules — pm auto engine settings · RLS+F ent+ void- · out→2 in←0 · wired
+- `maintenance.pm_auto_wo_log` — Fleet maintenance — work orders, service, parts, PM schedules — pm auto wo log · RLS+F ent+ void- · out→5 in←0 · wired
+- `maintenance.pm_schedule_runs` — Fleet maintenance — work orders, service, parts, PM schedules — pm schedule runs · RLS+F ent+ void- · out→1 in←1 · wired
+- `maintenance.pm_schedules` — Fleet maintenance — work orders, service, parts, PM schedules — pm schedules · RLS+F ent+ void- · out→3 in←2 · wired
+- `maintenance.reefer_hours_log` — Fleet maintenance — work orders, service, parts, PM schedules — reefer hours log · RLS+F ent+ void- · out→3 in←0 · wired
+- `maintenance.reefer_specs` — Fleet maintenance — work orders, service, parts, PM schedules — reefer specs · RLS+F ent+ void- · out→2 in←0 · wired
+- `maintenance.road_service_tickets` — Fleet maintenance — work orders, service, parts, PM schedules — road service tickets · RLS+F ent+ void- · out→6 in←0 · wired
+- `maintenance.samsara_fault_code_history` — Fleet maintenance — work orders, service, parts, PM schedules — samsara fault code history · RLS+F ent+ void- · out→2 in←0 · wired
+- `maintenance.severe_repair_estimates` — Fleet maintenance — work orders, service, parts, PM schedules — severe repair estimates · RLS+F ent+ void- · out→3 in←0 · wired
+- `maintenance.tire_brands` — Fleet maintenance — work orders, service, parts, PM schedules — tire brands · RLS+F ent+ void- · out→1 in←2 · wired
+- `maintenance.tire_events` — Fleet maintenance — work orders, service, parts, PM schedules — tire events · RLS+F ent+ void- · out→5 in←0 · wired
+- `maintenance.tire_projections` — Fleet maintenance — work orders, service, parts, PM schedules — tire projections · RLS+F ent+ void- · out→2 in←0 · wired
+- `maintenance.tire_records` — Fleet maintenance — work orders, service, parts, PM schedules — tire records · RLS+F ent+ void- · out→6 in←1 · wired
+- `maintenance.tire_tread_measurements` — Fleet maintenance — work orders, service, parts, PM schedules — tire tread measurements · RLS+F ent+ void- · out→3 in←0 · wired
+- `maintenance.warranty_claims` — Fleet maintenance — work orders, service, parts, PM schedules — warranty claims · RLS+F ent+ void- · out→5 in←0 · wired
+- `maintenance.wo_serialized_parts` — Fleet maintenance — work orders, service, parts, PM schedules — wo serialized parts · RLS+F ent+ void+ · out→2 in←0 · wired
+- `maintenance.wo_status_history` — Fleet maintenance — work orders, service, parts, PM schedules — wo status history · RLS- ent- void- · out→2 in←0 · wired
+- `maintenance.wo_time_entries` — Fleet maintenance — work orders, service, parts, PM schedules — wo time entries · RLS+F ent+ void- · out→3 in←0 · wired
+- `maintenance.work_order_lines` — Fleet maintenance — work orders, service, parts, PM schedules — work order lines · RLS- ent- void- · out→0 in←0 · ★ISLAND-VERIFY
+- `maintenance.work_order_seq_per_month` — Fleet maintenance — work orders, service, parts, PM schedules — work order seq per month · RLS+F ent+ void- · out→1 in←0 · wired
+- `maintenance.work_orders` — maintenance spine — parts, labor, tires, DVIR wire here · RLS+F ent+ void+ · out→7 in←21 · wired
+
+### master_data (4)
+- `master_data.customer_relationship_scores` — Master data (legacy/aux) — customer relationship scores · RLS+F ent+ void- · out→2 in←0 · wired
+- `master_data.customer_terms_history` — Master data (legacy/aux) — customer terms history · RLS+F ent+ void- · out→3 in←0 · wired
+- `master_data.unit_permits` — Master data (legacy/aux) — unit permits · RLS+F ent+ void- · out→2 in←0 · wired
+- `master_data.unit_toll_tags` — Master data (legacy/aux) — unit toll tags · RLS+F ent+ void- · out→2 in←0 · wired
+
+### mdata (45)
+- `mdata.asset_status_history` — Operational master data — loads, stops, drivers, units, equipment, customers, vendors — asset status history · RLS+F ent- void- · out→3 in←0 · wired
+- `mdata.assets` — assets · RLS+F ent- void- · out→1 in←6 · wired
+- `mdata.customer_contacts` — Operational master data — loads, stops, drivers, units, equipment, customers, vendors — customer contacts · RLS+F ent- void- · out→2 in←0 · wired
+- `mdata.customer_lanes` — Operational master data — loads, stops, drivers, units, equipment, customers, vendors — customer lanes · RLS+F ent+ void- · out→2 in←0 · wired
+- `mdata.customer_quality_events` — Operational master data — loads, stops, drivers, units, equipment, customers, vendors — customer quality events · RLS+F ent- void+ · out→3 in←0 · wired
+- `mdata.customers` — customer master — AR, factoring, portal wire here · RLS+F ent+ void- · out→5 in←25 · wired
+- `mdata.dispatcher_safety_events` — Operational master data — loads, stops, drivers, units, equipment, customers, vendors — dispatcher safety events · RLS+F ent- void+ · out→5 in←0 · wired
+- `mdata.driver_cdl_endorsements` — Operational master data — loads, stops, drivers, units, equipment, customers, vendors — driver cdl endorsements · RLS+F ent- void- · out→2 in←0 · wired
+- `mdata.driver_cdl_restrictions` — Operational master data — loads, stops, drivers, units, equipment, customers, vendors — driver cdl restrictions · RLS+F ent- void- · out→2 in←0 · wired
+- `mdata.driver_company_authorizations` — Operational master data — loads, stops, drivers, units, equipment, customers, vendors — driver company authorizations · RLS+F ent- void- · out→2 in←0 · wired
+- `mdata.driver_equipment_qualifications` — Operational master data — loads, stops, drivers, units, equipment, customers, vendors — driver equipment qualifications · RLS+F ent- void- · out→2 in←1 · wired
+- `mdata.driver_pay_rates` — Operational master data — loads, stops, drivers, units, equipment, customers, vendors — driver pay rates · RLS+F ent- void- · out→2 in←0 · wired
+- `mdata.driver_profile_messages` — Operational master data — loads, stops, drivers, units, equipment, customers, vendors — driver profile messages · RLS+F ent+ void- · out→3 in←0 · wired
+- `mdata.driver_safety_events` — Operational master data — loads, stops, drivers, units, equipment, customers, vendors — driver safety events · RLS+F ent- void+ · out→3 in←0 · wired
+- `mdata.driver_teams` — Operational master data — loads, stops, drivers, units, equipment, customers, vendors — driver teams · RLS+F ent+ void- · out→3 in←2 · wired
+- `mdata.driver_vendor_merges` — Operational master data — loads, stops, drivers, units, equipment, customers, vendors — driver vendor merges · RLS+F ent+ void- · out→3 in←0 · wired
+- `mdata.drivers` — driver master — safety, finance, dispatch, telematics all wire here · RLS+F ent+ void- · out→5 in←106 · wired
+- `mdata.entity_reclassification_log` — Operational master data — loads, stops, drivers, units, equipment, customers, vendors — entity reclassification log · RLS+F ent+ void- · out→1 in←0 · wired
+- `mdata.equipment` — equipment · RLS+F ent- void- · out→5 in←10 · wired
+- `mdata.equipment_log` — Operational master data — loads, stops, drivers, units, equipment, customers, vendors — equipment log · RLS+F ent- void- · out→4 in←0 · wired
+- `mdata.equipment_plates` — Operational master data — loads, stops, drivers, units, equipment, customers, vendors — equipment plates · RLS+F ent+ void- · out→2 in←0 · wired
+- `mdata.equipment_transfers` — Operational master data — loads, stops, drivers, units, equipment, customers, vendors — equipment transfers · RLS+F ent+ void- · out→4 in←0 · wired
+- `mdata.load_stops` — load stops · RLS+F ent- void- · out→2 in←9 · wired
+- `mdata.loads` — load master — dispatch, billing, settlements, fuel wire here · RLS+F ent+ void- · out→6 in←61 · wired
+- `mdata.location_contacts` — Operational master data — loads, stops, drivers, units, equipment, customers, vendors — location contacts · RLS+F ent+ void- · out→3 in←0 · wired
+- `mdata.locations` — locations · RLS+F ent+ void- · out→4 in←4 · wired
+- `mdata.maintenance_parts` — Operational master data — loads, stops, drivers, units, equipment, customers, vendors — maintenance parts · RLS+F ent+ void- · out→1 in←0 · wired
+- `mdata.maintenance_services` — Operational master data — loads, stops, drivers, units, equipment, customers, vendors — maintenance services · RLS+F ent+ void- · out→1 in←0 · wired
+- `mdata.mx_permits` — Operational master data — loads, stops, drivers, units, equipment, customers, vendors — mx permits · RLS+F ent+ void- · out→3 in←0 · wired
+- `mdata.mx_tolls_ledger` — Operational master data — loads, stops, drivers, units, equipment, customers, vendors — mx tolls ledger · RLS+F ent+ void- · out→4 in←0 · wired
+- `mdata.qbo_accounts` — Operational master data — loads, stops, drivers, units, equipment, customers, vendors — qbo accounts · RLS+F ent+ void- · out→1 in←0 · wired
+- `mdata.qbo_ap_bills` — Operational master data — loads, stops, drivers, units, equipment, customers, vendors — qbo ap bills · RLS+F ent+ void- · out→1 in←0 · wired
+- `mdata.qbo_bills` — Operational master data — loads, stops, drivers, units, equipment, customers, vendors — qbo bills · RLS+F ent+ void- · out→2 in←0 · wired
+- `mdata.qbo_classes` — Operational master data — loads, stops, drivers, units, equipment, customers, vendors — qbo classes · RLS+F ent+ void- · out→1 in←0 · wired
+- `mdata.qbo_customers` — Operational master data — loads, stops, drivers, units, equipment, customers, vendors — qbo customers · RLS+F ent+ void- · out→1 in←0 · wired
+- `mdata.qbo_invoices` — Operational master data — loads, stops, drivers, units, equipment, customers, vendors — qbo invoices · RLS+F ent+ void- · out→2 in←0 · wired
+- `mdata.qbo_items` — Operational master data — loads, stops, drivers, units, equipment, customers, vendors — qbo items · RLS+F ent+ void- · out→1 in←0 · wired
+- `mdata.qbo_sync_runs` — Operational master data — loads, stops, drivers, units, equipment, customers, vendors — qbo sync runs · RLS+F ent+ void- · out→1 in←0 · wired
+- `mdata.qbo_vendors` — Operational master data — loads, stops, drivers, units, equipment, customers, vendors — qbo vendors · RLS+F ent+ void- · out→1 in←2 · wired
+- `mdata.unit_border_crossings` — Operational master data — loads, stops, drivers, units, equipment, customers, vendors — unit border crossings · RLS+F ent+ void- · out→4 in←0 · wired
+- `mdata.unit_photos` — Operational master data — loads, stops, drivers, units, equipment, customers, vendors — unit photos · RLS+F ent+ void- · out→2 in←0 · wired
+- `mdata.unit_plates` — Operational master data — loads, stops, drivers, units, equipment, customers, vendors — unit plates · RLS+F ent+ void- · out→2 in←0 · wired
+- `mdata.units` — truck master — maintenance, compliance, insurance, telematics wire here · RLS+F ent- void- · out→3 in←71 · wired
+- `mdata.vendors` — vendor master — AP, factoring, maintenance wire here · RLS+F ent+ void- · out→2 in←18 · wired
+- `mdata.workflow_requests` — Operational master data — loads, stops, drivers, units, equipment, customers, vendors — workflow requests · RLS+F ent- void- · out→1 in←0 · wired
+
+### migration (5)
+- `migration.block6_demo_purge_ledger` — migration — block6 demo purge ledger · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `migration.test_seed_archive_ledger_0320` — migration — test seed archive ledger 0320 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `migration.test_seed_archive_ledger_0367` — migration — test seed archive ledger 0367 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `migration.test_seed_archive_ledger_0369` — migration — test seed archive ledger 0369 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `migration.test_seed_archive_ledger_0396` — migration — test seed archive ledger 0396 · RLS- ent- void- · out→0 in←0 · island(by-design)
+
+### notifications (2)
+- `notifications.user_notification_preferences` — notifications — user notification preferences · RLS+F ent- void- · out→0 in←0 · ★ISLAND-VERIFY
+- `notifications.user_notifications` — notifications — user notifications · RLS+F ent+ void- · out→1 in←0 · wired
+
+### onboarding (1)
+- `onboarding.onboarding_state` — onboarding — onboarding state · RLS+F ent- void- · out→1 in←0 · wired
+
+### ops (6)
+- `ops.audit_chain_verifications` — Operational ops tooling — audit chain verifications · RLS+F ent+ void- · out→0 in←0 · island(by-design)
+- `ops.daily_task_alerts` — Operational ops tooling — daily task alerts · RLS+F ent+ void- · out→3 in←0 · wired
+- `ops.daily_task_events` — Operational ops tooling — daily task events · RLS+F ent+ void- · out→3 in←0 · wired
+- `ops.daily_tasks` — Operational ops tooling — daily tasks · RLS+F ent+ void- · out→2 in←2 · wired
+- `ops.load_test_runs` — Operational ops tooling — load test runs · RLS+F ent+ void- · out→1 in←0 · wired
+- `ops.program_board_notes` — Operational ops tooling — program board notes · RLS+F ent- void+ · out→0 in←0 · ★ISLAND-VERIFY
+
+### org (2)
+- `org.companies` — THE entity spine — every entity-scoped row hangs off it (TRK/TRANSP/USMCA) · RLS+F ent- void- · out→0 in←455 · wired
+- `org.user_company_access` — Organization / companies (multi-entity) — user company access · RLS+F ent- void- · out→2 in←0 · wired
+
+### outbox (3)
+- `outbox.events` — outbox — events · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `outbox.outbox_queue` — outbox — outbox queue · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `outbox.queue` — outbox — queue · RLS+F ent+ void- · out→0 in←0 · island(by-design)
+
+### owner (1)
+- `owner.todays_attention_snapshot` — owner — todays attention snapshot · RLS+F ent+ void- · out→0 in←0 · island(by-design)
+
+### payroll (2)
+- `payroll.driver_settlement_line_items` — Payroll (RETIRED — do not build on) — driver settlement line items · RLS+F ent+ void- · out→6 in←0 · wired
+- `payroll.driver_settlements` — Payroll (RETIRED — do not build on) — driver settlements · RLS+F ent+ void- · out→5 in←1 · wired
+
+### payroll_integration (1)
+- `payroll_integration.aggregate_cache` — payroll_integration — aggregate cache · RLS+F ent+ void- · out→1 in←0 · wired
+
+### public (51)
+- `public.audit_log` — Default/public schema (misc) — audit log · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2024_01` — audit log 2024 01 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2024_02` — audit log 2024 02 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2024_03` — audit log 2024 03 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2024_04` — audit log 2024 04 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2024_05` — audit log 2024 05 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2024_06` — audit log 2024 06 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2024_07` — audit log 2024 07 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2024_08` — audit log 2024 08 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2024_09` — audit log 2024 09 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2024_10` — audit log 2024 10 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2024_11` — audit log 2024 11 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2024_12` — audit log 2024 12 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2025_01` — audit log 2025 01 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2025_02` — audit log 2025 02 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2025_03` — audit log 2025 03 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2025_04` — audit log 2025 04 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2025_05` — audit log 2025 05 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2025_06` — audit log 2025 06 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2025_07` — audit log 2025 07 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2025_08` — audit log 2025 08 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2025_09` — audit log 2025 09 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2025_10` — audit log 2025 10 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2025_11` — audit log 2025 11 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2025_12` — audit log 2025 12 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2026_01` — audit log 2026 01 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2026_02` — audit log 2026 02 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2026_03` — audit log 2026 03 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2026_04` — audit log 2026 04 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2026_05` — audit log 2026 05 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2026_06` — audit log 2026 06 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2026_07` — audit log 2026 07 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2026_08` — audit log 2026 08 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2026_09` — audit log 2026 09 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2026_10` — audit log 2026 10 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2026_11` — audit log 2026 11 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2026_12` — audit log 2026 12 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2027_01` — audit log 2027 01 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2027_02` — audit log 2027 02 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2027_03` — audit log 2027 03 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2027_04` — audit log 2027 04 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2027_05` — audit log 2027 05 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2027_06` — audit log 2027 06 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2027_07` — audit log 2027 07 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2027_08` — audit log 2027 08 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2027_09` — audit log 2027 09 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2027_10` — audit log 2027 10 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2027_11` — audit log 2027 11 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.audit_log_2027_12` — audit log 2027 12 · RLS- ent- void- · out→0 in←0 · island(by-design)
+- `public.idempotency_keys` — Default/public schema (misc) — idempotency keys · RLS+F ent+ void- · out→0 in←0 · island(by-design)
+- `public.partition_maintenance_log` — Default/public schema (misc) — partition maintenance log · RLS- ent- void- · out→0 in←0 · island(by-design)
+
+### qbo (5)
+- `qbo.bill_payment_mappings` — QuickBooks live sync state & mirror — bill payment mappings · RLS+F ent+ void- · out→1 in←0 · wired
+- `qbo.reconciliation_alerts` — QuickBooks live sync state & mirror — reconciliation alerts · RLS+F ent+ void- · out→0 in←0 · ★ISLAND-VERIFY
+- `qbo.sync_alerts` — QuickBooks live sync state & mirror — sync alerts · RLS+F ent+ void- · out→3 in←0 · wired
+- `qbo.sync_dead_letter_email_throttle` — QuickBooks live sync state & mirror — sync dead letter email throttle · RLS+F ent+ void- · out→1 in←0 · wired
+- `qbo.sync_runs` — QuickBooks live sync state & mirror — sync runs · RLS+F ent+ void- · out→1 in←1 · wired
+
+### qbo_archive (6)
+- `qbo_archive.attachments_snapshot` — QuickBooks archived/cloned data (system-of-record clone) — attachments snapshot · RLS+F ent+ void- · out→3 in←0 · wired
+- `qbo_archive.entities_snapshot` — QuickBooks archived/cloned data (system-of-record clone) — entities snapshot · RLS+F ent+ void- · out→2 in←0 · wired
+- `qbo_archive.forensic_anomalies` — QuickBooks archived/cloned data (system-of-record clone) — forensic anomalies · RLS+F ent+ void- · out→4 in←0 · wired
+- `qbo_archive.import_batch_audit_log` — QuickBooks archived/cloned data (system-of-record clone) — import batch audit log · RLS+F ent+ void- · out→2 in←0 · wired
+- `qbo_archive.import_batches` — import batches · RLS+F ent+ void- · out→2 in←5 · wired
+- `qbo_archive.transactions_snapshot` — QuickBooks archived/cloned data (system-of-record clone) — transactions snapshot · RLS+F ent+ void- · out→2 in←2 · wired
+
+### qbo_sync (2)
+- `qbo_sync.drift_alert_throttle` — qbo_sync — drift alert throttle · RLS+F ent+ void- · out→1 in←0 · wired
+- `qbo_sync.drift_log` — qbo_sync — drift log · RLS+F ent+ void- · out→1 in←0 · wired
+
+### reference (8)
+- `reference.cbp_wait_times_cache` — Static reference data (codes, enums-as-tables) — cbp wait times cache · RLS+ ent- void- · out→0 in←0 · island(by-design)
+- `reference.cdl_endorsements` — cdl endorsements · RLS+ ent- void- · out→0 in←1 · wired
+- `reference.cdl_restrictions` — cdl restrictions · RLS+ ent- void- · out→0 in←1 · wired
+- `reference.employment_statuses` — employment statuses · RLS+ ent- void- · out→0 in←1 · wired
+- `reference.license_classes` — license classes · RLS+ ent- void- · out→0 in←1 · wired
+- `reference.medical_card_statuses` — medical card statuses · RLS+ ent- void- · out→0 in←1 · wired
+- `reference.oem_parts` — Static reference data (codes, enums-as-tables) — oem parts · RLS+ ent- void- · out→0 in←0 · ★ISLAND-VERIFY
+- `reference.ports_of_entry` — Static reference data (codes, enums-as-tables) — ports of entry · RLS- ent- void- · out→0 in←1 · wired
+
+### reporting (2)
+- `reporting.scheduled_report_runs` — reporting — scheduled report runs · RLS+F ent+ void- · out→3 in←0 · wired
+- `reporting.scheduled_reports` — reporting — scheduled reports · RLS+F ent+ void- · out→2 in←1 · wired
+
+### reports (8)
+- `reports.custom_report_definitions` — Reporting engine — saved reports, refresh state — custom report definitions · RLS+F ent+ void- · out→2 in←0 · wired
+- `reports.deadhead_cache` — Reporting engine — saved reports, refresh state — deadhead cache · RLS+F ent+ void- · out→1 in←0 · wired
+- `reports.ifta_filings` — Reporting engine — saved reports, refresh state — ifta filings · RLS+F ent+ void- · out→2 in←0 · wired
+- `reports.lane_profitability_cache` — Reporting engine — saved reports, refresh state — lane profitability cache · RLS+F ent+ void- · out→1 in←0 · wired
+- `reports.run_log` — Reporting engine — saved reports, refresh state — run log · RLS+F ent+ void- · out→2 in←0 · wired
+- `reports.scheduled_delivery_log` — Reporting engine — saved reports, refresh state — scheduled delivery log · RLS+F ent- void- · out→1 in←0 · wired
+- `reports.scheduled_reports` — Reporting engine — saved reports, refresh state — scheduled reports · RLS+F ent+ void- · out→1 in←0 · wired
+- `reports.scheduled_subscriptions` — Reporting engine — saved reports, refresh state — scheduled subscriptions · RLS+F ent+ void- · out→0 in←1 · wired
+
+### safety (61)
+- `safety.accident_reports` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — accident reports · RLS+F ent+ void- · out→3 in←0 · wired
+- `safety.accidents` — accidents · RLS+F ent+ void+ · out→3 in←0 · wired
+- `safety.anomaly_alert_rules` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — anomaly alert rules · RLS+F ent+ void- · out→0 in←1 · wired
+- `safety.anomaly_alerts` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — anomaly alerts · RLS+F ent+ void- · out→1 in←0 · wired
+- `safety.background_checks` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — background checks · RLS+F ent+ void+ · out→1 in←0 · wired
+- `safety.citations` — citations · RLS+F ent+ void+ · out→3 in←0 · wired
+- `safety.civil_fines` — civil fines · RLS+F ent+ void- · out→6 in←0 · wired
+- `safety.clearinghouse_query` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — clearinghouse query · RLS+F ent+ void+ · out→2 in←0 · wired
+- `safety.company_violations` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — company violations · RLS+F ent+ void- · out→5 in←0 · wired
+- `safety.complaints` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — complaints · RLS+F ent+ void+ · out→5 in←0 · wired
+- `safety.compliance_reminders` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — compliance reminders · RLS+F ent+ void- · out→1 in←0 · wired
+- `safety.csa_scores` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — csa scores · RLS+F ent+ void- · out→1 in←0 · wired
+- `safety.da_program_enrollments` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — da program enrollments · RLS+F ent+ void- · out→1 in←0 · wired
+- `safety.da_random_pool_draws` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — da random pool draws · RLS+F ent+ void- · out→0 in←0 · island(by-design)
+- `safety.da_test_records` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — da test records · RLS+F ent+ void- · out→1 in←0 · wired
+- `safety.damage_continuity_chains` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — damage continuity chains · RLS+F ent+ void- · out→2 in←0 · wired
+- `safety.document_alert_events` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — document alert events · RLS+F ent+ void- · out→3 in←0 · wired
+- `safety.document_alert_rules` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — document alert rules · RLS+F ent+ void- · out→1 in←1 · wired
+- `safety.dot_inspections` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — dot inspections · RLS+F ent+ void+ · out→5 in←0 · wired
+- `safety.driver_documents` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — driver documents · RLS+F ent+ void+ · out→1 in←0 · wired
+- `safety.driver_leave_audit_log` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — driver leave audit log · RLS+F ent+ void- · out→3 in←0 · wired
+- `safety.driver_leave_days` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — driver leave days · RLS+F ent+ void+ · out→4 in←0 · wired
+- `safety.driver_leave_requests` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — driver leave requests · RLS+F ent+ void+ · out→4 in←3 · wired
+- `safety.driver_qualification_files` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — driver qualification files · RLS+F ent+ void+ · out→1 in←0 · wired
+- `safety.driver_safety_profiles` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — driver safety profiles · RLS+F ent+ void+ · out→1 in←0 · wired
+- `safety.driver_safety_scores` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — driver safety scores · RLS+F ent+ void- · out→2 in←0 · wired
+- `safety.driver_w8ben` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — driver w8ben · RLS+F ent+ void+ · out→1 in←0 · wired
+- `safety.drug_pool_selections` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — drug pool selections · RLS+F ent+ void+ · out→1 in←0 · wired
+- `safety.drug_test` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — drug test · RLS+F ent+ void+ · out→2 in←2 · wired
+- `safety.dvir_defect_severity_tags` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — dvir defect severity tags · RLS+F ent+ void- · out→4 in←0 · wired
+- `safety.dvir_defects` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — dvir defects · RLS+F ent+ void- · out→4 in←1 · wired
+- `safety.dvir_submissions` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — dvir submissions · RLS+F ent+ void- · out→5 in←2 · wired
+- `safety.event_documents` — event documents · RLS+F ent+ void+ · out→1 in←0 · wired
+- `safety.fmcsa_events` — fmcsa events · RLS+F ent+ void+ · out→1 in←0 · wired
+- `safety.fuel_gps_matches` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — fuel gps matches · RLS+F ent+ void- · out→3 in←0 · wired
+- `safety.geofence_breach_events` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — geofence breach events · RLS+F ent+ void- · out→5 in←0 · wired
+- `safety.harsh_events` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — harsh events · RLS+F ent+ void- · out→3 in←1 · wired
+- `safety.hos_exceptions` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — hos exceptions · RLS+F ent+ void+ · out→1 in←0 · wired
+- `safety.hos_violations` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — hos violations · RLS+F ent+ void+ · out→4 in←0 · wired
+- `safety.incidents` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — incidents · RLS+F ent+ void- · out→6 in←3 · wired
+- `safety.integrity_alert_events` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — integrity alert events · RLS+F ent+ void- · out→4 in←1 · wired
+- `safety.integrity_alert_rules` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — integrity alert rules · RLS+F ent+ void- · out→2 in←2 · wired
+- `safety.integrity_alerts` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — integrity alerts · RLS+F ent+ void- · out→7 in←1 · wired
+- `safety.integrity_findings` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — integrity findings · RLS+F ent+ void- · out→0 in←0 · ★ISLAND-VERIFY
+- `safety.integrity_observations` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — integrity observations · RLS+F ent+ void- · out→2 in←0 · wired
+- `safety.internal_fines` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — internal fines · RLS+F ent+ void+ · out→5 in←1 · wired
+- `safety.medical_cards` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — medical cards · RLS+F ent+ void+ · out→1 in←0 · wired
+- `safety.onboarding_sessions` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — onboarding sessions · RLS+F ent+ void- · out→3 in←1 · wired
+- `safety.permit_renewal_reminders` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — permit renewal reminders · RLS+F ent+ void- · out→1 in←0 · wired
+- `safety.permits` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — permits · RLS+F ent+ void- · out→3 in←0 · wired
+- `safety.photo_comparison_sessions` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — photo comparison sessions · RLS+F ent+ void- · out→2 in←0 · wired
+- `safety.random_pool` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — random pool · RLS+F ent+ void+ · out→3 in←0 · wired
+- `safety.roadside_inspections` — roadside inspections · RLS+F ent+ void+ · out→3 in←0 · wired
+- `safety.rtd_case` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — rtd case · RLS+F ent+ void+ · out→3 in←0 · wired
+- `safety.safety_event_notes` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — safety event notes · RLS+F ent+ void- · out→3 in←0 · wired
+- `safety.safety_events` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — safety events · RLS+F ent+ void- · out→5 in←1 · wired
+- `safety.safety_settings` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — safety settings · RLS+F ent+ void- · out→2 in←0 · wired
+- `safety.temp_unit_assignments` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — temp unit assignments · RLS+F ent+ void+ · out→5 in←0 · wired
+- `safety.training_programs` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — training programs · RLS+F ent+ void+ · out→1 in←0 · wired
+- `safety.training_records` — Safety & compliance events — incidents, accidents, fines (civil+internal), violations, drug/alcohol — training records · RLS+F ent+ void+ · out→1 in←0 · wired
+- `safety.violations` — violations · RLS+F ent+ void+ · out→1 in←0 · wired
+
+### safetydoc (2)
+- `safetydoc.assignment` — safetydoc — assignment · RLS+F ent+ void- · out→1 in←0 · wired
+- `safetydoc.document` — safetydoc — document · RLS+F ent+ void- · out→0 in←1 · wired
+
+### samsara (2)
+- `samsara.hos_snapshots` — samsara — hos snapshots · RLS+F ent+ void- · out→3 in←0 · wired
+- `samsara.vehicle_state_miles` — samsara — vehicle state miles · RLS+F ent+ void- · out→2 in←0 · wired
+
+### search (1)
+- `search.universal_index` — search — universal index · RLS+F ent+ void- · out→0 in←0 · island(by-design)
+
+### settlement (3)
+- `settlement.settlement` — Settlement (RETIRED — canonical is driver_finance) — settlement · RLS+F ent+ void- · out→3 in←4 · wired
+- `settlement.settlement_deduction` — Settlement (RETIRED — canonical is driver_finance) — settlement deduction · RLS+F ent+ void- · out→3 in←0 · wired
+- `settlement.settlement_line` — Settlement (RETIRED — canonical is driver_finance) — settlement line · RLS+F ent+ void- · out→5 in←2 · wired
+
+### settlements (3)
+- `settlements.settlement_disputes` — settlements — settlement disputes · RLS+F ent- void- · out→3 in←0 · wired
+- `settlements.team_split_configs` — settlements — team split configs · RLS+F ent+ void- · out→3 in←0 · wired
+- `settlements.team_split_load_overrides` — settlements — team split load overrides · RLS+F ent+ void- · out→4 in←0 · wired
+
+### shipper_portal (4)
+- `shipper_portal.load_milestones` — Customer/shipper portal — load milestones · RLS+F ent+ void- · out→1 in←0 · wired
+- `shipper_portal.portal_password_reset_tokens` — Customer/shipper portal — portal password reset tokens · RLS- ent- void- · out→1 in←0 · wired
+- `shipper_portal.portal_sessions` — Customer/shipper portal — portal sessions · RLS- ent- void- · out→1 in←0 · wired
+- `shipper_portal.portal_users` — Customer/shipper portal — portal users · RLS+F ent+ void- · out→2 in←2 · wired
+
+### sms (1)
+- `sms.queue` — sms — queue · RLS- ent- void- · out→0 in←0 · ★ISLAND-VERIFY
+
+### tasks (8)
+- `tasks.note` — Task planner — tasks, links, alarms — note · RLS+F ent- void- · out→1 in←0 · wired
+- `tasks.status_history` — Task planner — tasks, links, alarms — status history · RLS+F ent- void- · out→1 in←0 · wired
+- `tasks.task` — task · RLS+F ent+ void- · out→1 in←5 · wired
+- `tasks.task_activity` — Task planner — tasks, links, alarms — task activity · RLS+F ent+ void- · out→1 in←0 · wired
+- `tasks.task_comments` — Task planner — tasks, links, alarms — task comments · RLS+F ent+ void- · out→1 in←0 · wired
+- `tasks.task_link` — Task planner — tasks, links, alarms — task link · RLS+F ent+ void+ · out→1 in←0 · wired
+- `tasks.task_type` — Task planner — tasks, links, alarms — task type · RLS+F ent+ void- · out→0 in←1 · wired
+- `tasks.task_type_seed` — Task planner — tasks, links, alarms — task type seed · RLS- ent- void- · out→0 in←0 · island(by-design)
+
+### telematics (4)
+- `telematics.dashcam_clips` — Telematics ingest — GPS, engine states, HOS feed — dashcam clips · RLS+F ent+ void- · out→3 in←0 · wired
+- `telematics.vehicle_driver_assignments` — Telematics ingest — GPS, engine states, HOS feed — vehicle driver assignments · RLS+F ent+ void- · out→5 in←1 · wired
+- `telematics.vehicle_driver_pairing_overlap_flags` — Telematics ingest — GPS, engine states, HOS feed — vehicle driver pairing overlap flags · RLS+F ent+ void- · out→4 in←0 · wired
+- `telematics.vehicle_locations` — Telematics ingest — GPS, engine states, HOS feed — vehicle locations · RLS+F ent+ void- · out→2 in←0 · wired
+
+### usmca_ops (2)
+- `usmca_ops.activation_audit` — usmca_ops — activation audit · RLS+F ent- void- · out→1 in←0 · wired
+- `usmca_ops.activation_state` — usmca_ops — activation state · RLS+F ent- void- · out→1 in←0 · wired
+
+### utilization (2)
+- `utilization.driver_period` — utilization — driver period · RLS+F ent+ void- · out→0 in←0 · ★ISLAND-VERIFY
+- `utilization.unit_period` — utilization — unit period · RLS+F ent+ void- · out→0 in←0 · ★ISLAND-VERIFY
+
+### whatsapp (1)
+- `whatsapp.queue` — whatsapp — queue · RLS- ent- void- · out→0 in←0 · ★ISLAND-VERIFY

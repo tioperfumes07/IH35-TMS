@@ -58,11 +58,19 @@
       "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] Settlement contract-terms computation engine (driver hire-contract bonuses/deductions)"
     },
     {
-      "file": "202607080100_property_tax_rendition_filing.sql",
+      "file": "202607080100_event_log_force_rls_blocked_pending_guc_fix.sql",
+      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] P0 DB-audit \u2014 events.event_log FORCE RLS is a documented NO-OP/BLOCKED: forcing today would break the hash chain (spine-emit GUC gap must be fixed in code first)"
+    },
+    {
+      "file": "202607080200_audit_log_legacy_grant_lockdown.sql",
+      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] P0 DB-audit \u2014 public.audit_log (+48 monthly partitions) legacy table: REVOKE INSERT/UPDATE/DELETE from ih35_app + REVOKE ALL from PUBLIC, SELECT-only lockdown"
+    },
+    {
+      "file": "202607080300_property_tax_rendition_filing.sql",
       "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] Business-Property Allocation \u2014 TX property-tax rendition filing tables (compliance schema; posts nothing, but a schema change \u2014 never self-merge)"
     },
     {
-      "file": "202607080110_property_tax_accrual_posting.sql",
+      "file": "202607080310_property_tax_accrual_posting.sql",
       "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] Business-Property Allocation \u2014 property-tax accrual/payment GL scaffolding (accounting.*/catalogs.* + COA roles + PROPERTY_TAX_GL_POSTING_ENABLED flag OFF; financial cluster)"
     }
   ]

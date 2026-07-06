@@ -252,7 +252,7 @@ async function loadMvrItems(client: DbClient, operatingCompanyId: string, entity
 }
 
 // Business-Property Allocation — TX business personal-property tax rendition (NOW BUILT, migration
-// 202607080100). Surfaces every not-yet-filed rendition for the entity plus, if the current tax year has
+// 202607080300). Surfaces every not-yet-filed rendition for the entity plus, if the current tax year has
 // no rendition row yet, a statutory-deadline reminder anchored to April 15 (Tax Code §22.23 — a REAL
 // regulatory calendar, not an invented date). Drill-through → the rendition screen (/compliance/property-tax).
 export async function loadPropertyTaxItems(client: DbClient, operatingCompanyId: string, entityCode: string): Promise<FilingItem[]> {

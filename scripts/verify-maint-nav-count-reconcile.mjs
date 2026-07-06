@@ -51,7 +51,7 @@ function main() {
     masterData: 9,
     dashboardTabs: 10,
     operationLinks: 11,
-    listsCatalogs: 9,
+    listsCatalogs: 10,
   };
 
   if (navConfig.match(/MAINTENANCE_MODULE_NAV_LINKS[\s\S]*?\];/g)?.[0]?.match(/path:/g)?.length !== expected.moduleNav) {
@@ -99,7 +99,7 @@ function main() {
   }
 
   const catalogCount = countCatalogEntries(allCatalogsMap);
-  const expectedListsCatalogs = 9;
+  const expectedListsCatalogs = 10;
   if (catalogCount !== expectedListsCatalogs) {
     failures.push(`AllCatalogsMap maintenance domain must have ${expectedListsCatalogs} catalogs (found ${catalogCount})`);
   }

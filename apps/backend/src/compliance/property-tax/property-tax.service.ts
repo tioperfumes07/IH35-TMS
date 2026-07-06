@@ -1,6 +1,6 @@
 // Business-Property Allocation — TX business personal-property tax RENDITION service (filing side).
 // Source of record for the rendition workflow (draft → filed → appealed → settled). Reads/writes the
-// compliance.property_tax_* tables (migration 202607080100). Money-free: the accrual/payment GL posting
+// compliance.property_tax_* tables (migration 202607080300). Money-free: the accrual/payment GL posting
 // lives in accounting/property-tax-posting/poster.service.ts behind PROPERTY_TAX_GL_POSTING_ENABLED.
 //
 // CONNECTIVITY: a rendition links entity → appraisal district (county) → taxable assets (mdata.units
