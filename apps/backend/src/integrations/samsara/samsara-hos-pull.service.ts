@@ -64,18 +64,28 @@ export async function syncSamsaraHosLogs(
 ): Promise<HosPullResult> {
   // SCOPE: the active board drivers = drivers with an OPEN vehicle assignment (the same set the board shows HOS
   // for), resolved to their Samsara id via the board-proven key. This is the 8, not the account's 1358.
+  // HOS-WRITE-PARITY (2026-07 audit): also carry the driver's currently-assigned unit_id (DISTINCT ON the
+  // newest open assignment per driver) so this poll path can resolve unit_id the same way the real-time
+  // webhook projector does (webhook-projectors/hos-projector.ts::resolveLocalUnitId). Previously this path
+  // always inserted unit_id=NULL; since both paths write the same natural key with ON CONFLICT ... DO NOTHING,
+  // whichever path landed first won PERMANENTLY — if this (slower) poll cron ever won the race, unit_id stayed
+  // NULL forever for that event. Root-caused, not patched: resolve it here too instead of hardcoding NULL.
   const active = await client.query(
-    `SELECT DISTINCT d.id::text AS local_driver_id, d.samsara_driver_id::text AS samsara_driver_id
+    `SELECT DISTINCT ON (d.id) d.id::text AS local_driver_id, d.samsara_driver_id::text AS samsara_driver_id,
+            a.unit_id::text AS unit_id
        FROM mdata.drivers d
        JOIN telematics.vehicle_driver_assignments a ON a.driver_id = d.id AND a.ended_at IS NULL
       WHERE d.operating_company_id = $1::uuid
         AND d.samsara_driver_id IS NOT NULL
-        AND d.deactivated_at IS NULL`,
+        AND d.deactivated_at IS NULL
+      ORDER BY d.id, a.started_at DESC`,
     [operatingCompanyId]
   );
   const localBySamsara = new Map<string, string>();
-  for (const r of active.rows as Array<{ local_driver_id: string; samsara_driver_id: string }>) {
+  const unitByLocalDriver = new Map<string, string>();
+  for (const r of active.rows as Array<{ local_driver_id: string; samsara_driver_id: string; unit_id: string | null }>) {
     localBySamsara.set(r.samsara_driver_id, r.local_driver_id);
+    if (r.unit_id) unitByLocalDriver.set(r.local_driver_id, r.unit_id);
   }
   const activeDrivers = localBySamsara.size;
   if (activeDrivers === 0) {
@@ -120,12 +130,19 @@ export async function syncSamsaraHosLogs(
     await client.query(`SAVEPOINT ${sp}`);
     try {
       for (const log of dl.logs) {
+        const canonicalStatus = toCanonicalDutyStatus(log.hosStatusType);
+        // Same convention as hos-projector.ts: unit_id is only meaningful while the driver could be operating
+        // the vehicle — null it for off_duty/sleeper/personal_conveyance even when we know the assigned unit.
+        const unitId =
+          canonicalStatus === "off_duty" || canonicalStatus === "sleeper" || canonicalStatus === "personal_conveyance"
+            ? null
+            : unitByLocalDriver.get(localDriverId) ?? null;
         const res = await client.query(
           `INSERT INTO hos.duty_status_events
              (operating_company_id, driver_id, unit_id, duty_status, started_at, ended_at, source, odometer_mi, location)
-           VALUES ($1::uuid, $2::uuid, NULL, $3, $4::timestamptz, $5::timestamptz, 'samsara_eld', NULL, NULL)
+           VALUES ($1::uuid, $2::uuid, $3::uuid, $4, $5::timestamptz, $6::timestamptz, 'samsara_eld', NULL, NULL)
            ON CONFLICT (operating_company_id, driver_id, duty_status, started_at, source) DO NOTHING`,
-          [operatingCompanyId, localDriverId, toCanonicalDutyStatus(log.hosStatusType), log.startedAt, log.endedAt]
+          [operatingCompanyId, localDriverId, unitId, canonicalStatus, log.startedAt, log.endedAt]
         );
         inserted += res.rowCount ?? 0;
       }

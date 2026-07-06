@@ -1,5 +1,6 @@
 import type { DispatchLoadRow } from "../../api/loads";
 import { FreshnessIndicator } from "./FreshnessIndicator";
+import { formatClockTimeCT } from "../../lib/businessDate";
 
 const LIFECYCLE_LABEL: Record<string, string> = {
   pretrip: "Pretrip",
@@ -39,9 +40,9 @@ function pwaPingClass(lastPingAt: string | null): string {
 
 function formatEtaTime(etaAt: string | null): string {
   if (!etaAt) return "—";
-  const parsed = new Date(etaAt);
-  if (Number.isNaN(parsed.getTime())) return "—";
-  return parsed.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  // Central Time (CLAUDE.md §8 "Central Time always") — never the dispatcher's browser zone.
+  const formatted = formatClockTimeCT(etaAt);
+  return formatted || "—";
 }
 
 function onTimeClass(prediction: DispatchLoadRow["on_time_prediction"]): string {
