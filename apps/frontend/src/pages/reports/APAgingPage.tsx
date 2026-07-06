@@ -277,10 +277,10 @@ export function APAgingPage() {
                 <td className="px-3 py-2 text-gray-700">{r.last_payment_date ?? "—"}</td>
                 <td className="no-print px-3 py-2">
                   <div className="flex flex-wrap gap-1" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
-                    <Button size="sm" variant="secondary" onClick={() => pushToast("Open Banking → Pay credit card / check flow", "info")}>
+                    <Button size="sm" variant="secondary" disabled onClick={() => pushToast("Pay bills from Banking → Credit Card / Check flow", "info")}>
                       Pay now
                     </Button>
-                    <Button size="sm" variant="secondary" onClick={() => pushToast("Scheduled payments ship Phase 6+", "info")}>
+                    <Button size="sm" variant="secondary" disabled onClick={() => pushToast("Scheduled payments ship Phase 6+", "info")}>
                       Schedule payment
                     </Button>
                   </div>
