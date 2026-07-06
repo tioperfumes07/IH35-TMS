@@ -11,6 +11,7 @@ import { registerComplianceNotificationRulesRoutes } from "./compliance-notifica
 import { registerRequiredDocumentTypesRoutes } from "./required-documents.routes.js";
 import { registerMissingRequiredRoutes } from "./missing-required.routes.js";
 import { registerFilingsAggregateRoutes } from "./filings-aggregate.routes.js";
+import { registerPropertyTaxRoutes } from "./property-tax/property-tax.routes.js";
 import { registerComplianceSchedulerJobs } from "../scheduler/jobs.index.js";
 import { registerNotificationRoutes } from "../notifications/notifications.routes.js";
 
@@ -37,6 +38,7 @@ export async function registerComplianceRoutes(app: FastifyInstance) {
   await registerRequiredDocumentTypesRoutes(app);
   await registerMissingRequiredRoutes(app);
   await registerFilingsAggregateRoutes(app);
+  await registerPropertyTaxRoutes(app);
   await registerNotificationRoutes(app);
 
   if (!cronRegistered) {

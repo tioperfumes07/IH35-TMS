@@ -133,6 +133,7 @@ const FleetHomePage = React.lazy(() => import("../pages/fleet/FleetHomePage").th
 const TrailerProfilePage = React.lazy(() => import("../pages/fleet/TrailerProfilePage").then((m) => ({ default: m.TrailerProfilePage })));
 const TransfersInProgressPage = React.lazy(() => import("../pages/fleet/TransfersInProgressPage").then((m) => ({ default: m.TransfersInProgressPage })));
 const ComplianceDashboardPage = React.lazy(() => import("../pages/compliance/ComplianceDashboardPage").then((m) => ({ default: m.ComplianceDashboardPage })));
+const PropertyTaxRenditionPage = React.lazy(() => import("../pages/compliance/PropertyTaxRenditionPage").then((m) => ({ default: m.PropertyTaxRenditionPage })));
 const NotificationCenterPage = React.lazy(() => import("../pages/notifications/NotificationCenterPage").then((m) => ({ default: m.NotificationCenterPage })));
 const EquipmentTypesPage = React.lazy(() => import("../pages/EquipmentTypesPage").then((m) => ({ default: m.EquipmentTypesPage })));
 const HomePage = React.lazy(() => import("../pages/Home").then((m) => ({ default: m.HomePage })));
@@ -1307,6 +1308,22 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <ComplianceDashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/compliance/property-tax"
+          element={
+            <ProtectedRoute>
+              <PropertyTaxRenditionPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/compliance/property-tax/:id"
+          element={
+            <ProtectedRoute>
+              <PropertyTaxRenditionPage />
             </ProtectedRoute>
           }
         />

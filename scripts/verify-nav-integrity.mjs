@@ -168,6 +168,7 @@ function modulePrefixReachable(routePath, navReachable) {
     ["/reports", "/reports"],
     ["/legal", "/legal"],
     ["/maintenance", "/maintenance"],
+    ["/compliance", "/compliance"],
     ["/accounting", "/accounting"],
     ["/banking", "/banking"],
     ["/drivers", "/drivers"],
