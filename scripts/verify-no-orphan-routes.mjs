@@ -41,22 +41,16 @@ const ALLOWLIST = new Map([
   ["registerDispatchViewRoutes", "dead code — driver-PWA view; also references a non-existent evidence table (separate finding)"],
   // --- Held: money-moving / financial surface, awaiting explicit owner approval before mounting ---
   ["registerSettlementPaymentRoutes", "HELD financial — moves settlement payments; needs owner OK"],
-  ["registerDriverHubRequestRoutes", "HELD financial — approves/denies cash advances; needs owner OK"],
-  ["registerFactoringQueueRoutes", "HELD financial — factoring queue; needs owner OK"],
   ["registerCategorizationRulesRoutes", "HELD — banking categorization rules; owner review"],
   // --- Collision/unsafe: mounting duplicates an existing route -> boot crash. Do NOT mount. ---
   ["registerSettlementsMvpRoutes", "UNSAFE — collides with mounted settlement routes (FST_ERR_DUPLICATED_ROUTE)"],
   ["registerSettlementApprovalRoutes", "UNSAFE — collides with SettlementsMvp on /settlements/:id/approve"],
-  ["registerSettlementDisputeRoutes", "UNSAFE — namespace collision with mounted settlement-disputes"],
   // --- In-flight mount PRs (remove once merged) ---
   // --- Newly surfaced by this guard (2026-06) — backlog, not yet triaged for frontend usage.
   //     Each is genuinely unmounted (0 call sites). TODO: triage real-404-bug vs dead-code, then
   //     either mount + remove from this list, or recategorize as dead code. ---
-  ["registerDispatchCatalogRoutes", "backlog — catalog aggregator, unmounted; triage pending"],
   ["registerMaintenanceCatalogRoutes", "backlog — catalog aggregator, unmounted; triage pending"],
-  ["registerFuelFraudAlertRoutes", "backlog — unmounted; triage pending"],
   ["registerActiveDriverSetRoutes", "backlog — samsara, unmounted; triage pending"],
-  ["registerPreFlightDvirRoutes", "backlog — unmounted; triage pending"],
   ["registerForm425cExhibitsRoutes", "backlog — unmounted; triage pending"],
 ]);
 
