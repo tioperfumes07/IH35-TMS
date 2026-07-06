@@ -445,19 +445,19 @@ export async function registerBankingRoutes(app: FastifyInstance) {
     const body = splitBodySchema.safeParse(req.body ?? {});
     if (!body.success) return sendValidationError(reply, body.error);
 
-    // HONEST INTERIM (QA-sweep): a real bank-transaction split needs a persisted multi-line
-    // split-lines model that does not exist yet — banking.bank_transactions has a single `category`
-    // column and there is no split-lines table. The previous implementation silently wrote
-    // category='split_transaction' / status='categorized' with NO line allocation, mis-categorizing
-    // the transaction (and the client even toasted "Split posted as single-line placeholder").
-    // Until a true balanced N-line split is built (financial — requires a new table + migration),
-    // this endpoint performs NO write and returns 501 so nothing is mis-categorized.
+    // SUPERSEDED (BANK-SPLIT-1, HOLD): the honest 501 stub above is retained for this legacy shallow
+    // contract ({category, amount} only — no vendor/driver/unit/trailer/load linkage, no mode toggle). The
+    // real, persisted, balanced N-line split now lives at PUT/POST /transactions/:id/splits (plural) —
+    // see bank-transaction-splits.service.ts + categorization.routes.ts. This route stays a documented
+    // 501 (never silently mis-categorizes) so any caller still on the old contract fails loud instead of
+    // getting a wrong answer.
     return reply.code(501).send({
       error: "split_not_implemented",
       message:
-        "Multi-line transaction split is not implemented yet (no split-lines model). The transaction was left unchanged.",
+        "This legacy split contract is retired. Use PUT /api/v1/banking/transactions/:id/splits (real, persisted, linked split lines).",
       transaction_id: params.data.id,
       requested_line_count: body.data.lines.length,
+      see: "/api/v1/banking/transactions/:id/splits",
     });
   });
 

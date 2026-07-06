@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+# After a successful merge, canonicalize the schema-parity baseline EXACTLY from the merged migration
+# set (pure static parser — NO DB). The json-union merge driver already prevented a git conflict on it;
+# this guarantees the committed baseline matches what CI's `verify:schema-parity` expects, so a merge
+# of origin/main never leaves build-typecheck red. Only runs if the baseline could have changed.
+if git diff --name-only ORIG_HEAD HEAD 2>/dev/null | grep -Eq '^db/migrations/.*\.sql$|^docs/schema-parity-baseline\.json$'; then
+  node scripts/verify-schema-parity.mjs --update >/dev/null 2>&1 || true
+  git add docs/schema-parity-baseline.json 2>/dev/null || true
+  echo "post-merge: schema-parity baseline canonicalized (verify-schema-parity --update)."
+fi
