@@ -1,7 +1,21 @@
-import { useParams, useNavigate, Link } from "react-router-dom";
-import { PageHeader } from "../../components/layout/PageHeader";
+import { useParams, useNavigate } from "react-router-dom";
+import type { ListsModule } from "../../api/listsHub";
+import { ModuleHeader } from "../../components/layout/ModuleHeader";
 import { ComingSoonPage } from "../ComingSoonPage";
 import { DomainCatalogSection, buildCatalogPath, sortDomainsForDisplay } from "./components/AllCatalogsMap";
+
+// domain.key -> ListsModule, same mapping DomainRowCountBadge uses so this hub's header count and the
+// ribbon/map badges can never disagree.
+const DOMAIN_MODULE: Record<string, ListsModule> = {
+  safety: "SAFETY",
+  maintenance: "MAINTENANCE",
+  dispatch: "DISPATCH",
+  fuel: "FUEL",
+  drivers: "DRIVERS",
+  fleet: "FLEET",
+  accounting: "ACCOUNTING",
+  names_master: "NAMES_MASTER",
+};
 
 // Per-domain Lists hub: renders ONLY the requested domain's catalogs, from the SAME DOMAIN_CONFIG
 // source as the main hub (via sortDomainsForDisplay). Unknown domain keys fall back to ComingSoon,
@@ -23,15 +37,13 @@ export function DomainCatalogHubPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2 text-xs text-slate-500">
-        <Link to="/lists" className="inline-flex items-center gap-1 rounded-sm px-1 py-0.5 font-semibold text-slate-600 hover:underline focus:outline-hidden focus:ring-2 focus:ring-slate-400">
-          <span aria-hidden="true">←</span> Lists &amp; Catalogs
-        </Link>
-        <span aria-hidden="true">/</span>
-        <span className="font-semibold text-slate-700">{domain.label}</span>
-      </div>
-
-      <PageHeader title={`${domain.label} catalogs`} subtitle="Catalogs in this domain" />
+      <ModuleHeader
+        backHref="/lists"
+        breadcrumb={["Lists & Catalogs", domain.label]}
+        title={`${domain.label} catalogs`}
+        subtitle="Catalogs in this domain"
+        countModule={DOMAIN_MODULE[domain.key]}
+      />
 
       <div className="rounded-sm border border-slate-200 bg-white p-3">
         <div className="space-y-2">
