@@ -142,6 +142,12 @@ export type LoadDetail = DispatchLoadRow & {
   assigned_secondary_driver_name?: string | null; // team driver (assigned_secondary_driver_id → drivers)
   trailer_equipment_type?: string | null;          // mdata.loads.trailer_id → mdata.equipment.equipment_type
   trailer_number?: string | null;                  // mdata.equipment.equipment_number
+  // A9 — rate-con PDF resolved from docs.file_links + docs.files (category 'rate_confirmation'),
+  // no persisted column on the load. Fetch the PDF via GET /api/v1/docs/files/{ratecon_file_id}/download-url
+  // (same pattern as driver_instructions_file_id above).
+  ratecon_file_id?: string | null;
+  ratecon_file_name?: string | null;
+  ratecon_uploaded_at?: string | null;
 };
 
 export type LoadAuditEvent = {
