@@ -26,7 +26,6 @@
   "apps/frontend/src/components/form-425c/ExhibitCard.tsx",
   "apps/frontend/src/components/forms/TimePicker.tsx",
   "apps/frontend/src/components/fuel/FuelFraudBadge.tsx",
-  "apps/frontend/src/components/home/AttentionItemCard.tsx",
   "apps/frontend/src/components/home/AttentionListRow.tsx",
   "apps/frontend/src/components/home/SeverityPill.tsx",
   "apps/frontend/src/components/layout/ModuleHeader.tsx",

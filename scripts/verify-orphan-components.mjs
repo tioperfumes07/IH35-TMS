@@ -147,7 +147,15 @@ function resolveSpecifier(fromFile, spec) {
   }
   if (base === null) return null; // bare package or unknown alias → not a graph node
 
-  const resolved = tryResolve(base);
+  let resolved = tryResolve(base);
+  if (!resolved) {
+    // TS "bundler"-style specifiers reference the emitted .js/.jsx extension
+    // even though the real source is .ts/.tsx (e.g. `import x from './Foo.js'`
+    // resolving to `Foo.tsx`). Strip a trailing .js/.jsx and retry so those
+    // don't fall through as unresolved (false-positive "orphan" downstream).
+    const stripped = base.replace(/\.jsx?$/, "");
+    if (stripped !== base) resolved = tryResolve(stripped);
+  }
   if (!resolved) return null;
   // only code files are graph nodes; assets (css/json/svg) resolve to null above
   if (!CODE_EXTS.includes(path.extname(resolved))) return null;
