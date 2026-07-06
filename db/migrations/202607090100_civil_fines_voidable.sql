@@ -7,7 +7,7 @@
 -- VERIFIED (read-only, db/migrations/ only — no prod DB access):
 --   * safety.civil_fines is the canonical rename (migration 0050_two_section_v5_and_safety_restructure.sql
 --     + repair 202606151200_repair_safety_0050_ordering_collision.sql) of the original
---     `safety.fines` table created by 0050_safety_gaps_fill.sql. Its CREATE TABLE (0050_safety_gaps_fill.sql)
+--     the legacy fines table (pre-rename) table created by 0050_safety_gaps_fill.sql. Its CREATE TABLE (0050_safety_gaps_fill.sql)
 --     has NO `voided_at` / `voided_reason` columns and a `status` CHECK that does NOT include 'voided'
 --     (`CHECK (status IN ('open','paid','contested','dismissed','reduced'))`) — only a soft-archive
 --     `deactivated_at`. A wrongly-entered civil (external/regulatory) fine can today ONLY be
@@ -31,7 +31,7 @@
 --   1. ADD COLUMN IF NOT EXISTS voided_at / voided_reason on safety.civil_fines.
 --   2. Widen the status CHECK constraint to allow 'voided' (constraint is discovered dynamically via
 --      pg_constraint — its auto-generated name is `fines_status_check` from when the table was still
---      named `safety.fines`; ALTER TABLE ... RENAME never renames constraints, so hard-coding a name
+--      named the legacy fines table (pre-rename); ALTER TABLE ... RENAME never renames constraints, so hard-coding a name
 --      would be a guess. We instead find-and-drop-and-recreate by inspecting pg_get_constraintdef()).
 --   3. REVOKE DELETE ON safety.civil_fines FROM ih35_app (void-not-delete, matches 0065's own default
 --      schema-wide grant being the thing that created the gap in the first place).
