@@ -1,77 +1,81 @@
 {
-  "note": "HELD MIGRATIONS \u2014 each carries a 'DO NOT RUN ON PROD' marker and must run ONLY on a Neon branch by Jorge's hand, then be ledger-backfilled so prod db:migrate skips it. verify:hold-migrations-registered enforces bidirectional parity: every migration whose header says DO-NOT-RUN must be listed here, and every entry here must still carry the marker \u2014 so a held migration can never silently lose its marker (which would let db:migrate fire it on prod).",
+  "note": "HELD MIGRATIONS — each carries a 'DO NOT RUN ON PROD' marker and must run ONLY on a Neon branch by Jorge's hand, then be ledger-backfilled so prod db:migrate skips it. verify:hold-migrations-registered enforces bidirectional parity: every migration whose header says DO-NOT-RUN must be listed here, and every entry here must still carry the marker — so a held migration can never silently lose its marker (which would let db:migrate fire it on prod).",
   "held": [
     {
       "file": "202606272100_af1_catalogs_accounts_per_entity.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] AF-1 \u2014 catalogs.accounts per-entity (entity-COA) migration"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] AF-1 — catalogs.accounts per-entity (entity-COA) migration"
     },
     {
       "file": "202606272300_deduction_line_load_id_direct.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] Load\u2194Advance: carry load_id DIRECTLY on the settlement deduction line"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] Load↔Advance: carry load_id DIRECTLY on the settlement deduction line"
     },
     {
       "file": "202606300050_drivers_hire_date_source.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 PROTECTED] mdata.drivers.hire_date_source \u2014 provenance for hire dates"
+      "reason": "[HOLD-FOR-JORGE — PROTECTED] mdata.drivers.hire_date_source — provenance for hire dates"
     },
     {
       "file": "202606300060_usmca_coa_seed.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] B1 \u2014 seed USMCA's chart of accounts (Path B Stage 5)"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] B1 — seed USMCA's chart of accounts (Path B Stage 5)"
     },
     {
       "file": "202606300070_bank_coa_bridge_backfill.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] B2 (backfill) \u2014 link connected bank accounts to a Bank-type COA account"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] B2 (backfill) — link connected bank accounts to a Bank-type COA account"
     },
     {
       "file": "202606300080_af2_catalogs_items_per_entity.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] AF-2 \u2014 catalogs.items per-entity (entity item master)"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] AF-2 — catalogs.items per-entity (entity item master)"
     },
     {
       "file": "202606300090_af3_catalogs_classes_per_entity.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] AF-3 \u2014 catalogs.classes per-entity. POSTS NOTHING."
+      "reason": "[HOLD-FOR-JORGE — TIER 1] AF-3 — catalogs.classes per-entity. POSTS NOTHING."
     },
     {
       "file": "202606300100_af2c_items_category_id.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] AF-2c \u2014 catalogs.items.category_id (item \u2192 per-entity Category link)."
+      "reason": "[HOLD-FOR-JORGE — TIER 1] AF-2c — catalogs.items.category_id (item → per-entity Category link)."
     },
     {
       "file": "202606300110_af2c2_items_purchasing.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] AF-2c.2 \u2014 full QBO two-sided item: Purchasing info + Preferred vendor."
+      "reason": "[HOLD-FOR-JORGE — TIER 1] AF-2c.2 — full QBO two-sided item: Purchasing info + Preferred vendor."
     },
     {
       "file": "202606300160_af2b_item_account_mapping_backfill.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] AF-2b \u2014 item -> income/expense account mapping backfill (TEMPLATE)"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] AF-2b — item -> income/expense account mapping backfill (TEMPLATE)"
     },
     {
       "file": "202607010010_bank_transactions_categorization_driver_id.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] BLOCK-6 \u2014 Driver dimension on bank categorize + loan-to-driver posting."
+      "reason": "[HOLD-FOR-JORGE — TIER 1] BLOCK-6 — Driver dimension on bank categorize + loan-to-driver posting."
     },
     {
       "file": "202607010700_account_role_bindings_per_entity.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] account_role_bindings per-entity \u2014 last deferred cross-entity leak (USMCA "
+      "reason": "[HOLD-FOR-JORGE — TIER 1] account_role_bindings per-entity — last deferred cross-entity leak (USMCA "
     },
     {
       "file": "202607070100_bank_categorize_unit_trip_driver_deduction.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] BLOCK-6b \u2014 Unit + Trip(Load) dimensions + Item(Products&Services) linkage on bank categorize + driver auto-deduction (fine\u2192driver\u2192settlement, flag OFF)"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] BLOCK-6b — Unit + Trip(Load) dimensions + Item(Products&Services) linkage on bank categorize + driver auto-deduction (fine→driver→settlement, flag OFF)"
     },
     {
       "file": "202607080000_settlement_contract_terms.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] Settlement contract-terms computation engine (driver hire-contract bonuses/deductions)"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] Settlement contract-terms computation engine (driver hire-contract bonuses/deductions)"
     },
     {
       "file": "202607080100_event_log_force_rls_blocked_pending_guc_fix.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] P0 DB-audit \u2014 events.event_log FORCE RLS is a documented NO-OP/BLOCKED: forcing today would break the hash chain (spine-emit GUC gap must be fixed in code first)"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] P0 DB-audit — events.event_log FORCE RLS is a documented NO-OP/BLOCKED: forcing today would break the hash chain (spine-emit GUC gap must be fixed in code first)"
     },
     {
       "file": "202607080200_audit_log_legacy_grant_lockdown.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] P0 DB-audit \u2014 public.audit_log (+48 monthly partitions) legacy table: REVOKE INSERT/UPDATE/DELETE from ih35_app + REVOKE ALL from PUBLIC, SELECT-only lockdown"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] P0 DB-audit — public.audit_log (+48 monthly partitions) legacy table: REVOKE INSERT/UPDATE/DELETE from ih35_app + REVOKE ALL from PUBLIC, SELECT-only lockdown"
     },
     {
       "file": "202607080300_property_tax_rendition_filing.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] Business-Property Allocation \u2014 TX property-tax rendition filing tables (compliance schema; posts nothing, but a schema change \u2014 never self-merge)"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] Business-Property Allocation — TX property-tax rendition filing tables (compliance schema; posts nothing, but a schema change — never self-merge)"
     },
     {
       "file": "202607080310_property_tax_accrual_posting.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] Business-Property Allocation \u2014 property-tax accrual/payment GL scaffolding (accounting.*/catalogs.* + COA roles + PROPERTY_TAX_GL_POSTING_ENABLED flag OFF; financial cluster)"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] Business-Property Allocation — property-tax accrual/payment GL scaffolding (accounting.*/catalogs.* + COA roles + PROPERTY_TAX_GL_POSTING_ENABLED flag OFF; financial cluster)"
+    },
+    {
+      "file": "202607090000_event_log_guc_reconcile.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] P0 prerequisite — events.log_event() sets app.current_operating_company_id from its own argument so FORCE RLS (P0-a, separate PR) becomes safe"
     }
   ]
 }
