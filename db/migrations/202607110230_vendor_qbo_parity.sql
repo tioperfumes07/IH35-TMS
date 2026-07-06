@@ -1,6 +1,6 @@
 -- [HOLD-FOR-JORGE — TIER 1] VENDOR-QBO-PARITY — additive mdata.vendors columns closing the vendor-side
 -- QuickBooks field-parity gap: no payment terms, no default expense account, no website/print-on-check
--- name (companion migration 202607092010 covers mdata.customers; split into two files — one ALTER TABLE
+-- name (companion migration 202607110240 covers mdata.customers; split into two files — one ALTER TABLE
 -- per file — so the static schema-parity parser's fixed scan window can't bleed columns between tables).
 --
 -- *** DO NOT RUN ON PROD. Run ONLY on a Neon branch by Jorge's hand, then ledger-backfill so prod

@@ -35,7 +35,7 @@ const factoringRecourseTypeSchema = z.enum(["recourse", "non_recourse"]);
 const qualityOverallFlagSchema = z.enum(["preferred", "standard", "caution", "avoid"]);
 const creditLimitSourceSchema = z.enum(["factor", "manual", "rmis_future"]);
 const layoverCurrencySchema = z.enum(["USD", "MXN", "CAD"]);
-// VENDOR-CUSTOMER-QBO-PARITY: QBO field-parity enums (migration 202607092000, HELD).
+// VENDOR-CUSTOMER-QBO-PARITY: QBO field-parity enums (migration 202607110230, HELD).
 const preferredPaymentMethodSchema = z.enum(["check", "ach", "credit_card", "cash", "other"]);
 const preferredDeliveryMethodSchema = z.enum(["email", "print", "none"]);
 const preferredLanguageSchema = z.enum(["en", "es"]);
@@ -94,7 +94,7 @@ const createCustomerBodySchema = z
   factoring_notes: z.string().trim().max(5000).nullable().optional(),
   quality_overall_flag: qualityOverallFlagSchema.optional(),
   quality_notes: z.string().trim().max(5000).optional(),
-  // VENDOR-CUSTOMER-QBO-PARITY (migration 202607092000, HELD): print/Cc/Bcc + shipping address +
+  // VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD): print/Cc/Bcc + shipping address +
   // delivery/payment/language preferences + tax-exemption + Option-B default income account.
   print_on_invoice_name: z.string().trim().max(200).optional(),
   cc_email: z.string().trim().email().optional(),
@@ -172,7 +172,7 @@ const updateCustomerBodySchema = z
     factoring_notes: z.string().trim().max(5000).nullable().optional(),
     quality_overall_flag: qualityOverallFlagSchema.optional(),
     quality_notes: z.string().trim().max(5000).nullable().optional(),
-    // VENDOR-CUSTOMER-QBO-PARITY (migration 202607092000, HELD): same field set as create, all nullable.
+    // VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD): same field set as create, all nullable.
     print_on_invoice_name: z.string().trim().max(200).nullable().optional(),
     cc_email: z.string().trim().email().nullable().optional(),
     bcc_email: z.string().trim().email().nullable().optional(),
@@ -663,7 +663,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
         addOptional("factoring_notes", b.factoring_notes);
         addOptional("quality_overall_flag", b.quality_overall_flag);
         addOptional("quality_notes", b.quality_notes);
-        // VENDOR-CUSTOMER-QBO-PARITY (migration 202607092000, HELD)
+        // VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD)
         addOptional("print_on_invoice_name", b.print_on_invoice_name);
         addOptional("cc_email", b.cc_email);
         addOptional("bcc_email", b.bcc_email);
@@ -982,7 +982,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     if ("factoring_notes" in b) add("factoring_notes", b.factoring_notes ?? null);
     if ("quality_overall_flag" in b) add("quality_overall_flag", b.quality_overall_flag);
     if ("quality_notes" in b) add("quality_notes", b.quality_notes ?? null);
-    // VENDOR-CUSTOMER-QBO-PARITY (migration 202607092000, HELD)
+    // VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD)
     if ("print_on_invoice_name" in b) add("print_on_invoice_name", b.print_on_invoice_name ?? null);
     if ("cc_email" in b) add("cc_email", b.cc_email ?? null);
     if ("bcc_email" in b) add("bcc_email", b.bcc_email ?? null);

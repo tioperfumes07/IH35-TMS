@@ -9,7 +9,7 @@
  *
  * Every field here round-trips to an EXISTING mdata.customers column via
  * Create/UpdateCustomerInput. VENDOR-CUSTOMER-QBO-PARITY (migration
- * 202607092000, HELD) closed the Cc/Bcc, print-on-invoice name, structured
+ * 202607110230, HELD) closed the Cc/Bcc, print-on-invoice name, structured
  * shipping address, preferred payment/delivery method, customer language, and
  * tax-exemption gaps that used to be listed here as "pending backend" — they
  * are now real sections below. Only fine-grained communication-consent
@@ -69,7 +69,7 @@ export type CustomerProfileFormValues = {
   notes: string;
   // Status (edit only)
   status: Customer["status"];
-  // VENDOR-CUSTOMER-QBO-PARITY (migration 202607092000, HELD)
+  // VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD)
   print_on_invoice_name: string;
   cc_email: string;
   bcc_email: string;
@@ -810,7 +810,7 @@ export function CustomerProfileForm({ values, onPatch, mode, paymentTermOptions,
       <section className="border-t border-gray-200 pt-3">
         <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">QuickBooks fields — pending backend</h3>
         <p className="text-xs text-gray-500">
-          VENDOR-CUSTOMER-QBO-PARITY (migration 202607092000, HELD) closed Cc/Bcc email, print-on-invoice
+          VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD) closed Cc/Bcc email, print-on-invoice
           name, structured shipping address, preferred payment/delivery method, customer language, and
           tax-exemption — those are now real sections above. Document attachments already live on the
           <code className="text-gray-600"> Documents</code> tab. The one remaining gap: fine-grained

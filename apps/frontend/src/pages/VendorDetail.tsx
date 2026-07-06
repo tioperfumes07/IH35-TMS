@@ -54,7 +54,7 @@ type VendorProfileForm = VendorProfileMeta & {
   taxId: string;
   vendorCode: string;
   notes: string;
-  // VENDOR-CUSTOMER-QBO-PARITY (migration 202607092000, HELD) — real columns, not the notes meta blob.
+  // VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD) — real columns, not the notes meta blob.
   website: string;
   printOnCheckName: string;
   eligible1099: boolean;
@@ -120,7 +120,7 @@ export function VendorDetailPage() {
     enabled: Boolean(companyId && id),
   });
 
-  // VENDOR-CUSTOMER-QBO-PARITY (migration 202607092000, HELD)
+  // VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD)
   const paymentTermsQuery = useQuery({ queryKey: ["payment-term-options"], queryFn: listPaymentTermOptions, staleTime: 5 * 60 * 1000 });
   const paymentTermOptions = useMemo(
     () => (paymentTermsQuery.data?.payment_terms ?? []).map((t) => ({ value: t.id, label: `${t.terms_name} (${t.days_until_due}d)` })),
@@ -296,7 +296,7 @@ export function VendorDetailPage() {
         vendor_code: profileForm.vendorCode.trim() || null,
         operating_company_id: companyId || undefined,
         notes: serializeVendorNotes(meta, profileForm.notes),
-        // VENDOR-CUSTOMER-QBO-PARITY (migration 202607092000, HELD) — real columns.
+        // VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD) — real columns.
         website: profileForm.website.trim() || null,
         print_on_check_name: profileForm.printOnCheckName.trim() || null,
         eligible_1099: profileForm.eligible1099,
@@ -355,7 +355,7 @@ export function VendorDetailPage() {
       telephone: parsed.meta.telephone || v.phone || "",
       address: parsed.meta.address || v.address || "",
       generalEmail: parsed.meta.generalEmail || v.email || "",
-      // VENDOR-CUSTOMER-QBO-PARITY (migration 202607092000, HELD) — real columns.
+      // VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD) — real columns.
       website: v.website ?? "",
       printOnCheckName: v.print_on_check_name ?? "",
       eligible1099: Boolean(v.eligible_1099),
@@ -546,7 +546,7 @@ export function VendorDetailPage() {
               className="w-full max-w-md rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
             />
           </DataPanelRow>
-          {/* VENDOR-CUSTOMER-QBO-PARITY (migration 202607092000, HELD) */}
+          {/* VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD) */}
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Website</span>
             <input

@@ -1,7 +1,7 @@
 -- [HOLD-FOR-JORGE — TIER 1] CUSTOMER-QBO-PARITY — additive mdata.customers columns closing the gaps
 -- flagged in-code (CustomerProfileForm.tsx's former "QuickBooks fields — pending backend" note):
 -- Cc/Bcc email, print-on-invoice name, structured shipping address, preferred payment/delivery method,
--- customer language, tax-exemption. Companion migration 202607092000 covers mdata.vendors; split into
+-- customer language, tax-exemption. Companion migration 202607110230 covers mdata.vendors; split into
 -- two files — one ALTER TABLE per file — so the static schema-parity parser's fixed scan window can't
 -- bleed columns between tables.
 --

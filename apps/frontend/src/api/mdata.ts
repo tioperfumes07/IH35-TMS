@@ -411,7 +411,7 @@ export type Customer = {
   fmcsa_authority_status_at_verification: string | null;
   fmcsa_last_checked_at: string | null;
   fmcsa_check_response: unknown | null;
-  // VENDOR-CUSTOMER-QBO-PARITY (migration 202607092000, HELD) — optional so pre-existing partial
+  // VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD) — optional so pre-existing partial
   // Customer fixtures (tests, older mocks) keep typechecking; the API always returns them.
   print_on_invoice_name?: string | null;
   cc_email?: string | null;
@@ -489,7 +489,7 @@ export type CreateCustomerInput = {
   factoring_notes?: string | null;
   quality_overall_flag?: "preferred" | "standard" | "caution" | "avoid";
   quality_notes?: string;
-  // VENDOR-CUSTOMER-QBO-PARITY (migration 202607092000, HELD)
+  // VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD)
   print_on_invoice_name?: string;
   cc_email?: string;
   bcc_email?: string;
@@ -583,7 +583,7 @@ export type UpdateCustomerInput = Partial<{
   factoring_notes: string | null;
   quality_overall_flag: "preferred" | "standard" | "caution" | "avoid";
   quality_notes: string | null;
-  // VENDOR-CUSTOMER-QBO-PARITY (migration 202607092000, HELD)
+  // VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD)
   print_on_invoice_name: string | null;
   cc_email: string | null;
   bcc_email: string | null;
@@ -761,7 +761,7 @@ export type VendorOption = {
   created_by_user_id?: string;
   updated_by_user_id?: string;
   deactivated_at: string | null;
-  // VENDOR-CUSTOMER-QBO-PARITY (migration 202607092000, HELD)
+  // VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD)
   address_line2?: string | null;
   city?: string | null;
   state?: string | null;
@@ -1279,7 +1279,7 @@ export type CreateVendorInput = {
   address?: string;
   tax_id?: string;
   notes?: string;
-  // VENDOR-CUSTOMER-QBO-PARITY (migration 202607092000, HELD)
+  // VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD)
   address_line2?: string;
   city?: string;
   state?: string;
@@ -1309,7 +1309,7 @@ export type UpdateVendorInput = Partial<{
   tax_id: string | null;
   notes: string | null;
   deactivated_at: string | null;
-  // VENDOR-CUSTOMER-QBO-PARITY (migration 202607092000, HELD)
+  // VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD)
   address_line2: string | null;
   city: string | null;
   state: string | null;

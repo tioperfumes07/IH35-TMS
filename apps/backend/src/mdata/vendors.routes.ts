@@ -10,7 +10,7 @@ import { listActiveVendorClassifications } from "./classification-queries.js";
 const vendorTypeSchema = z.enum(["Fuel", "Repair", "Tires", "Towing", "Insurance", "Permit", "Toll", "Other"]);
 const QBO_ARCHIVE_PROJECTION_SOURCE_RE = /Projected from qbo_archive\.entities_snapshot[^\n]*/gi;
 
-// VENDOR-CUSTOMER-QBO-PARITY (migration 202607092000, HELD): the vendor row shape returned by every
+// VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD): the vendor row shape returned by every
 // read/write endpoint. Kept as one constant (mirrors CUSTOMER_SELECT_COLUMNS in customers.routes.ts)
 // so list/get/create/update can never drift from each other.
 const VENDOR_SELECT_COLUMNS = `
@@ -71,7 +71,7 @@ const createVendorBodySchema = z.object({
     .optional(),
   operating_company_id: z.string().uuid().optional(),
   address: z.string().trim().max(500).optional(),
-  // VENDOR-CUSTOMER-QBO-PARITY (migration 202607092000, HELD): structured address already existed as
+  // VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD): structured address already existed as
   // real mdata.vendors columns (0008) but was never exposed here — `address` above still maps to
   // address_line1 for existing callers; these are additive, optional structured fields alongside it.
   address_line2: z.string().trim().max(200).optional(),
@@ -294,7 +294,7 @@ export async function registerVendorRoutes(app: FastifyInstance) {
         ];
         const placeholders: string[] = values.map((_, i) => `$${i + 1}`);
 
-        // VENDOR-CUSTOMER-QBO-PARITY (migration 202607092000, HELD): additive optional columns.
+        // VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD): additive optional columns.
         const addOptional = (column: string, value: unknown) => {
           if (value === undefined) return;
           columns.push(column);
@@ -420,7 +420,7 @@ export async function registerVendorRoutes(app: FastifyInstance) {
     if ("email" in b) add("email", b.email ?? null);
     if ("operating_company_id" in b) add("operating_company_id", b.operating_company_id ?? null);
     if ("address" in b) add("address_line1", b.address ?? null);
-    // VENDOR-CUSTOMER-QBO-PARITY (migration 202607092000, HELD)
+    // VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD)
     if ("address_line2" in b) add("address_line2", b.address_line2 ?? null);
     if ("city" in b) add("city", b.city ?? null);
     if ("state" in b) add("state", b.state ?? null);

@@ -104,7 +104,7 @@ export function VendorCreateModal({ open, onClose, operatingCompanyId }: Props) 
   // Classification
   const [taxId, setTaxId] = useState("");
   const [vendorCode, setVendorCode] = useState("");
-  // VENDOR-CUSTOMER-QBO-PARITY (migration 202607092000, HELD)
+  // VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD)
   const [website, setWebsite] = useState("");
   const [printOnCheckName, setPrintOnCheckName] = useState("");
   const [eligible1099, setEligible1099] = useState(false);
@@ -197,7 +197,7 @@ export function VendorCreateModal({ open, onClose, operatingCompanyId }: Props) 
         vendor_code: vendorCode.trim() || undefined,
         operating_company_id: operatingCompanyId,
         notes: serializeVendorNotes(meta, notes.trim()),
-        // VENDOR-CUSTOMER-QBO-PARITY (migration 202607092000, HELD)
+        // VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD)
         website: website.trim() || undefined,
         print_on_check_name: printOnCheckName.trim() || undefined,
         eligible_1099: eligible1099,
@@ -314,7 +314,7 @@ export function VendorCreateModal({ open, onClose, operatingCompanyId }: Props) 
           </div>
         </Section>
 
-        {/* VENDOR-CUSTOMER-QBO-PARITY (migration 202607092000, HELD) */}
+        {/* VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD) */}
         <Section title="Terms & Option-B recommendation">
           <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
             <label className="block text-sm">
