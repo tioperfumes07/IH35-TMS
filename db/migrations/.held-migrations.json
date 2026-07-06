@@ -160,6 +160,10 @@
     {
       "file": "202607111000_block02_driver_escrow_separation_return.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1] BLOCK-02 driver escrow — driver_finance.driver_escrow_separations (>=90-day post-separation return path tracking) + DRIVER_ESCROW_SEPARATION_RETURN_ENABLED flag OFF; reuses existing Block-23 escrow release JE, no new GL math"
+    },
+    {
+      "file": "202607130000_factoring_reserve_movements.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] CONN-2 — accounting.factoring_reserve_movements per-advance reserve ledger + views.factoring_reserve_balances (Faro Reserve Tracker). Storage/reporting only, no new GL math; FACTORING_GL_POSTING_ENABLED stays OFF."
     }
   ]
 }
