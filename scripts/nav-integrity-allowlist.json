@@ -351,6 +351,10 @@
       "reason": "Fleet unit profile dynamic route from in-app links"
     },
     {
+      "path": "/fleet/units/:id/detail",
+      "reason": "Unit detail deep-link (UnitDetail) reachable from fleet unit profile / in-app links"
+    },
+    {
       "path": "/fleet/trailers/:id",
       "reason": "Trailer profile dynamic route from in-app links (Block 15)"
     },
