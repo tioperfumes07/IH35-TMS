@@ -2,6 +2,7 @@ import type { AuthMeResponse } from "../types/api";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { colors, spacing, typography } from "../design/tokens";
+import { UltraWideContainer } from "./layout/UltraWideContainer";
 import { FooterFaqLink } from "./PageHelpLink";
 import { PostReloadToastHost } from "./PostReloadToastHost";
 import { Sidebar } from "./Sidebar";
@@ -29,7 +30,9 @@ export function Shell({ auth, children }: Props) {
             style={{ backgroundColor: colors.bodyBg, paddingTop: spacing.pageContentPadding, paddingBottom: spacing.pageContentPadding }}
           >
             <OnboardingTourHost role={auth.role} />
-            {children}
+            {/* Edge-breakpoint hardening (EDGE-BREAKPOINTS-AUDIT): centers + caps page content on
+                ultra-wide monitors (>=1920px); a no-op below that width. */}
+            <UltraWideContainer>{children}</UltraWideContainer>
             <footer className="mt-10 flex justify-end border-t border-gray-200/80 py-3">
               <FooterFaqLink />
             </footer>

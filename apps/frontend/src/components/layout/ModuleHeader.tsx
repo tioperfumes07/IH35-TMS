@@ -6,16 +6,18 @@ import { SubNavCounts } from "./SubNavCounts";
 
 type Props = {
   backHref?: string;
+  breadcrumb?: string[];
   title: string;
   subtitle?: string;
   actions?: ReactNode;
   countModule?: ListsModule;
 };
 
-export function ModuleHeader({ backHref, title, subtitle, actions, countModule }: Props) {
+export function ModuleHeader({ backHref, breadcrumb, title, subtitle, actions, countModule }: Props) {
   return (
     <PageHeader
       backHref={backHref}
+      breadcrumb={breadcrumb}
       title={title}
       subtitle={subtitle}
       actions={
