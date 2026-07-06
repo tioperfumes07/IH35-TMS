@@ -2853,6 +2853,14 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route
+          path="/reports/trip-profitability"
+          element={
+            <ProtectedRoute>
+              <TripProfitabilityPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/qbo/sync-dashboard"
           element={
             <ProtectedRoute>
