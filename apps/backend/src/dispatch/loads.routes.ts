@@ -573,7 +573,8 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             l.*,
             c.customer_name,
             u.unit_number,
-            tr.unit_number AS trailer_number,
+            tr.equipment_number AS trailer_number,
+            tr.equipment_type AS trailer_equipment_type,
             CASE WHEN d.id IS NULL THEN NULL ELSE CONCAT(LEFT(d.first_name, 1), '. ', d.last_name) END AS driver_short_name,
             COALESCE(uds.has_open_pm_due_wo, false) AS has_open_pm_due_wo,
             COALESCE(uds.is_dispatch_blocked, false) AS is_dispatch_blocked,
@@ -589,7 +590,18 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           FROM views.dispatch_load_with_driver_status l
           JOIN mdata.customers c ON c.id = l.customer_id
           LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
-          LEFT JOIN mdata.units tr ON tr.id = l.assigned_secondary_driver_id
+          -- A9: trailer has NO column on mdata.loads (and was never assigned_secondary_driver_id, which is
+          -- the team driver) — the only real trailer↔load link is dispatch.load_assignment_history.new_trailer_id
+          -- (mdata.equipment). Resolve the most recent assignment-history row that actually set a trailer.
+          LEFT JOIN LATERAL (
+            SELECT eq.equipment_number, eq.equipment_type
+            FROM dispatch.load_assignment_history lah
+            JOIN mdata.equipment eq ON eq.id = lah.new_trailer_id
+              AND (eq.owner_company_id = l.operating_company_id OR eq.currently_leased_to_company_id = l.operating_company_id)
+            WHERE lah.load_id = l.id AND lah.new_trailer_id IS NOT NULL
+            ORDER BY lah.assigned_at DESC
+            LIMIT 1
+          ) tr ON true
           LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
           LEFT JOIN views.units_with_dispatch_status uds ON uds.id = l.assigned_unit_id
           LEFT JOIN views.drivers_with_hos_status dhs ON dhs.id = l.assigned_primary_driver_id
