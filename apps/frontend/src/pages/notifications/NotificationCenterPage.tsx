@@ -26,6 +26,8 @@ export function NotificationCenterPage() {
   const [readFilter, setReadFilter] = useState<"all" | "unread" | "read">("all");
   const [prefs, setPrefs] = useState<NotificationPreferences | null>(null);
   const [prefsSaving, setPrefsSaving] = useState(false);
+  const [page, setPage] = useState(1);
+  const pageSize = 25;
 
   useEffect(() => {
     void fetchNotificationPreferences().then((res) => setPrefs(res.preferences));
@@ -40,6 +42,17 @@ export function NotificationCenterPage() {
       return true;
     });
   }, [notifications, typeFilter, severityFilter, readFilter]);
+
+  const paginated = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filtered.slice(start, start + pageSize);
+  }, [filtered, page, pageSize]);
+
+  const pageCount = Math.ceil(filtered.length / pageSize);
+
+  useEffect(() => {
+    setPage(1);
+  }, [typeFilter, severityFilter, readFilter]);
 
   const savePrefs = async () => {
     if (!prefs) return;
@@ -112,7 +125,7 @@ export function NotificationCenterPage() {
           {loading ? <p className="text-sm text-gray-500">Loading notifications…</p> : null}
           {!loading && filtered.length === 0 ? <p className="text-sm text-gray-500">No notifications match filters.</p> : null}
           <ul className="divide-y">
-            {filtered.map((item) => (
+            {paginated.map((item) => (
               <li key={item.id} className="py-3" data-testid="notification-center-item">
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -136,6 +149,35 @@ export function NotificationCenterPage() {
               </li>
             ))}
           </ul>
+
+          {pageCount > 1 && (
+            <div className="mt-4 flex items-center justify-between border-t border-gray-200 pt-3">
+              <div className="text-xs text-gray-500">
+                Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, filtered.length)} of {filtered.length}
+              </div>
+              <div className="flex gap-1">
+                <button
+                  type="button"
+                  className="rounded-sm border px-2 py-1 text-xs disabled:opacity-50"
+                  disabled={page === 1}
+                  onClick={() => setPage((p) => p - 1)}
+                >
+                  Previous
+                </button>
+                <span className="px-2 py-1 text-xs text-gray-600">
+                  Page {page} of {pageCount}
+                </span>
+                <button
+                  type="button"
+                  className="rounded-sm border px-2 py-1 text-xs disabled:opacity-50"
+                  disabled={page === pageCount}
+                  onClick={() => setPage((p) => p + 1)}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </section>
 
         <aside className="rounded-sm border border-gray-200 bg-white p-4" data-testid="notification-preferences-panel">

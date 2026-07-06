@@ -7,6 +7,7 @@ import { createDotInspection, listDotInspections, uploadDotInspectionPdf, voidDo
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { companyToday } from "../../../lib/businessDate";
 import { useListState } from "../../../components/list-state";
+import { InspectionScoreBadge } from "../../../components/safety/InspectionScoreBadge";
 
 export function DOTInspectionsTab() {
   const { selectedCompanyId } = useCompanyContext();
@@ -73,6 +74,10 @@ export function DOTInspectionsTab() {
 
   return (
     <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-slate-900">DOT Inspections</h2>
+        <InspectionScoreBadge companyId={companyId} />
+      </div>
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-9">
         <DatePicker className="rounded-sm border border-gray-300 px-2 py-1 text-xs" value={form.inspection_date} onChange={(next) => setForm((v) => ({ ...v, inspection_date: next }))} />
         <input className="rounded-sm border border-gray-300 px-2 py-1 text-xs" placeholder="driver_id" value={form.driver_id} onChange={(e) => setForm((v) => ({ ...v, driver_id: e.target.value }))} />

@@ -1,5 +1,7 @@
 import { withSavepoint } from "../auth/db.js";
 import { getComparableMetrics, getUnitFinancialYTD } from "./unit-financial.service.js";
+import { getLatestHosClocksByDriver } from "../integrations/samsara/samsara-hos-clocks-pull.service.js";
+import type { PgClient } from "../integrations/samsara/samsara.service.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -173,12 +175,26 @@ export async function buildUnitAggregate(
   );
 
   const default_driver = await mapDriverRow(defaultDriverRes.rows[0]);
+
+  // HOS-FANOUT (Jorge 2026-07-05) — Fleet/Maintenance vehicle profile: the currently-driving
+  // (Samsara-linked) driver's HOS is relevant here too (can this truck be released for a road trip /
+  // maintenance run right now?). Read the SAME certified Samsara ELD snapshot the dispatch board and
+  // driver profile read — verbatim, no re-derivation — so this never drifts from board == roster ==
+  // certified ELD. Null (never fabricated) when Samsara hasn't polled this driver.
+  const currentDriverId = currentDriverRes.rows[0]?.id ? String(currentDriverRes.rows[0].id) : null;
+  const currentDriverEld = currentDriverId
+    ? (await getLatestHosClocksByDriver(client as unknown as PgClient, operatingCompanyId)).get(currentDriverId) ?? null
+    : null;
+
   const current_driver = await mapDriverRow(currentDriverRes.rows[0], {
     source: currentDriverRes.rows[0]?.source ?? null,
     logged_in_at: currentDriverRes.rows[0]?.logged_in_at ?? null,
-    hos_drive_remaining_min: null,
-    hos_on_duty_remaining_min: null,
-    hos_cycle_remaining_min: null,
+    hos_drive_remaining_min: currentDriverEld?.drive_remaining_min ?? null,
+    hos_on_duty_remaining_min: currentDriverEld?.shift_remaining_min ?? null,
+    hos_cycle_remaining_min: currentDriverEld?.cycle_remaining_min ?? null,
+    hos_source: currentDriverEld ? "samsara_certified_eld" : null,
+    hos_polled_at: currentDriverEld?.polled_at ?? null,
+    hos_violation: currentDriverEld?.violation ?? null,
   });
 
   const loadRes = await client.query(

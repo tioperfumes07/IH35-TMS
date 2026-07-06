@@ -229,7 +229,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
           <section className="rounded-sm border border-gray-200 bg-white p-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-gray-900">Fuel Transactions</h3>
-              <ActionButton onClick={() => pushToast("Fuel import UI coming soon (requires backend endpoint)", "info")}>
+              <ActionButton disabled onClick={() => pushToast("Fuel import UI coming soon (requires backend endpoint)", "info")}>
                 Import Fuel Transactions
               </ActionButton>
             </div>

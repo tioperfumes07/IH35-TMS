@@ -33,6 +33,9 @@ jobs:
       - name: verify:settlements-sidebar
         run: npm run verify:settlements-sidebar
 
+      - name: verify:settlement-payment-guc-order
+        run: npm run verify:settlement-payment-guc-order
+
       - name: verify:tasks-planner-v3
         run: npm run verify:tasks-planner-v3
 

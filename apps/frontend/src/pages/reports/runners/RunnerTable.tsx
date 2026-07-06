@@ -66,7 +66,7 @@ export function RunnerTable({ columns, rows, onSort, tableId = "reports-runner" 
   }
 
   return (
-    <div className="overflow-hidden rounded-sm border border-slate-200 bg-white" data-resizable-table={tableId}>
+    <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white" data-resizable-table={tableId}>
       <table className="min-w-full text-left text-xs">
         <thead className="bg-slate-50">
           <tr className="border-b border-slate-200 text-slate-600">
