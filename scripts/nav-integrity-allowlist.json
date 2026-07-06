@@ -352,7 +352,7 @@
     },
     {
       "path": "/fleet/units/:id/detail",
-      "reason": "Unit detail deep-link (UnitDetail) reachable from fleet unit profile / in-app links"
+      "reason": "Unit detail dynamic route linked from VehicleProfilePage in-app link, not sidebar subnav"
     },
     {
       "path": "/fleet/trailers/:id",
