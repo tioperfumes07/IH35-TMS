@@ -5,6 +5,13 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { countPendingBills } from "../kpi/canonical-kpis.js";
+import {
+  bankAccountHiddenFilterSql,
+  hideBankAccountForEntity,
+  isBankAccountHideAdminRole,
+  isBankAccountHideEnabled,
+  unhideBankAccountForEntity,
+} from "./bank-account-visibility.js";
 import { countDriverEscrowKpis } from "./driver-escrow-counts.js";
 import { countUncategorizedTransactions } from "./pending-categorization.js";
 
@@ -14,6 +21,10 @@ const companyQuerySchema = z.object({
 
 const accountsAllQuerySchema = companyQuerySchema.extend({
   include_inactive: z.coerce.boolean().optional().default(false),
+  // BANK-ACCOUNT-HIDE: the visibility manager (Owner/Administrator) passes true to see + toggle hidden
+  // rows; every other consumer of this endpoint defaults to false so a hidden account stays fully
+  // excluded everywhere (dashboards, pickers, categorization, reconciliation).
+  include_hidden: z.coerce.boolean().optional().default(false),
 });
 
 const accountIdParamsSchema = z.object({
@@ -101,6 +112,9 @@ export async function registerBankingRoutes(app: FastifyInstance) {
     const companyId = query.data.operating_company_id;
 
     const payload = await withCompanyScope(user.uuid, companyId, async (client) => {
+      // BANK-ACCOUNT-HIDE: per-entity hidden accounts (flag OFF by default) must be excluded from every
+      // cash/KPI surface — see docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md.
+      const hideOn = await isBankAccountHideEnabled(client, companyId);
       const kpiRes = await client.query(
         `
           WITH tiles AS (
@@ -112,6 +126,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
                 OR EXISTS (
                   SELECT 1 FROM banking.bank_accounts b
                   WHERE b.id = t.id AND b.is_active = true
+                  ${bankAccountHiddenFilterSql(hideOn, "b")}
                 )
               )
           )
@@ -146,6 +161,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
           WHERE operating_company_id = $1
             AND account_class = 'depository'
             AND is_active = true
+          ${bankAccountHiddenFilterSql(hideOn, "banking.bank_accounts")}
           `,
           [companyId]
         )
@@ -187,6 +203,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
     const companyId = query.data.operating_company_id;
 
     const tiles = await withCompanyScope(user.uuid, companyId, async (client) => {
+      const hideOn = await isBankAccountHideEnabled(client, companyId);
       const res = await client.query(
         `
           SELECT t.*
@@ -197,6 +214,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
               OR EXISTS (
                 SELECT 1 FROM banking.bank_accounts b
                 WHERE b.id = t.id AND b.is_active = true
+                ${bankAccountHiddenFilterSql(hideOn, "b")}
               )
             )
           ORDER BY t.display_order, t.account_type, t.display_name
@@ -215,16 +233,20 @@ export async function registerBankingRoutes(app: FastifyInstance) {
     if (!query.success) return sendValidationError(reply, query.error);
     const companyId = query.data.operating_company_id;
     const includeInactive = query.data.include_inactive;
+    const includeHidden = query.data.include_hidden;
 
     const accounts = await withCompanyScope(user.uuid, companyId, async (client) => {
       if (!(await hasRelation(client, "banking.bank_accounts"))) return [];
       const activeClause = includeInactive ? "" : " AND is_active = true";
+      const hideOn = await isBankAccountHideEnabled(client, companyId);
+      const hiddenClause = includeHidden ? "" : bankAccountHiddenFilterSql(hideOn, "banking.bank_accounts");
       const res = await client.query(
         `
           SELECT *
           FROM banking.bank_accounts
           WHERE operating_company_id = $1
           ${activeClause}
+          ${hiddenClause}
           ORDER BY display_order, display_name
         `,
         [companyId]
@@ -506,6 +528,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
     if (!query.success) return sendValidationError(reply, query.error);
     const companyId = query.data.operating_company_id;
     const payload = await withCompanyScope(user.uuid, companyId, async (client) => {
+      const hideOn = await isBankAccountHideEnabled(client, companyId);
       const banks = await client.query<{ id: string; account_name: string; ledger_account_id: string | null; ledger_account_name: string | null; ledger_account_number: string | null }>(
         `SELECT ba.id::text, ba.account_name,
                 ba.ledger_account_id::text,
@@ -513,6 +536,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
            FROM banking.bank_accounts ba
            LEFT JOIN catalogs.accounts a ON a.id = ba.ledger_account_id
           WHERE ba.operating_company_id = $1 AND ba.deactivated_at IS NULL
+          ${bankAccountHiddenFilterSql(hideOn, "ba")}
           ORDER BY ba.account_name ASC`,
         [companyId]
       );
@@ -545,8 +569,9 @@ export async function registerBankingRoutes(app: FastifyInstance) {
     const companyId = query.data.operating_company_id;
 
     const result = await withCompanyScope(user.uuid, companyId, async (client) => {
+      const hideOn = await isBankAccountHideEnabled(client, companyId);
       const bank = await client.query<{ id: string }>(
-        `SELECT id FROM banking.bank_accounts WHERE id = $1 AND operating_company_id = $2 AND deactivated_at IS NULL LIMIT 1`,
+        `SELECT id FROM banking.bank_accounts WHERE id = $1 AND operating_company_id = $2 AND deactivated_at IS NULL ${bankAccountHiddenFilterSql(hideOn, "banking.bank_accounts")} LIMIT 1`,
         [params.data.id, companyId]
       );
       if (!bank.rows[0]) return { error: "bank_account_not_found" as const };
@@ -577,5 +602,65 @@ export async function registerBankingRoutes(app: FastifyInstance) {
       return reply.code(code).send({ error: result.error });
     }
     return result;
+  });
+
+  // ── BANK-ACCOUNT-HIDE (Tier-1 HOLD, behind BANK_ACCOUNT_HIDE_ENABLED, default OFF) ──────────────────
+  // Owner/Administrator only. Hide/unhide is a per-entity, reversible, audited visibility toggle — it
+  // NEVER deletes the row (void-not-delete). See docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md.
+  const hideBodySchema = z.object({
+    operating_company_id: z.string().uuid(),
+    reason: z.string().trim().min(1).max(500),
+  });
+  const unhideBodySchema = z.object({
+    operating_company_id: z.string().uuid(),
+  });
+
+  app.post("/api/v1/banking/accounts/:id/hide", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!isBankAccountHideAdminRole(String((user as { role?: string }).role ?? ""))) {
+      return reply.code(403).send({ error: "forbidden", detail: "bank-account hide is Owner/Administrator only" });
+    }
+    const params = accountIdParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return sendValidationError(reply, params.error);
+    const body = hideBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return sendValidationError(reply, body.error);
+    const companyId = body.data.operating_company_id;
+
+    const result = await withCompanyScope(user.uuid, companyId, async (client) => {
+      const row = await hideBankAccountForEntity(client, {
+        bankAccountId: params.data.id,
+        operatingCompanyId: companyId,
+        actorUserId: user.uuid,
+        reason: body.data.reason,
+      });
+      return row;
+    });
+    if (!result) return reply.code(404).send({ error: "bank_account_not_found_or_already_hidden" });
+    return { account: result };
+  });
+
+  app.post("/api/v1/banking/accounts/:id/unhide", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!isBankAccountHideAdminRole(String((user as { role?: string }).role ?? ""))) {
+      return reply.code(403).send({ error: "forbidden", detail: "bank-account unhide is Owner/Administrator only" });
+    }
+    const params = accountIdParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return sendValidationError(reply, params.error);
+    const body = unhideBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return sendValidationError(reply, body.error);
+    const companyId = body.data.operating_company_id;
+
+    const result = await withCompanyScope(user.uuid, companyId, async (client) => {
+      const row = await unhideBankAccountForEntity(client, {
+        bankAccountId: params.data.id,
+        operatingCompanyId: companyId,
+        actorUserId: user.uuid,
+      });
+      return row;
+    });
+    if (!result) return reply.code(404).send({ error: "bank_account_not_found_or_not_hidden" });
+    return { account: result };
   });
 }

@@ -6,6 +6,7 @@ import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope 
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { emitBankingSpineEvent } from "./banking-spine-emit.js";
 import { pendingCategorizationPredicate } from "./pending-categorization.js";
+import { bankTransactionHiddenFilterSql, isBankAccountHideEnabled } from "./bank-account-visibility.js";
 import { maybePostBankDriverAdvanceForCategorization } from "./bank-driver-advance.service.js";
 import { maybeCreateBankCategorizationDriverDeduction } from "./bank-driver-expense-deduction.service.js";
 import { maybePostBankCategorizationToGl } from "./bank-feed-gl-posting.service.js";
@@ -122,7 +123,11 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
     const q = parsed.data;
 
     const payload = await withCompanyScope(user.uuid, q.operating_company_id, async (client) => {
+      // BANK-ACCOUNT-HIDE: excluded everywhere for THIS entity (flag OFF by default — see
+      // docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
+      const hideOn = await isBankAccountHideEnabled(client, q.operating_company_id);
       const where: string[] = [`bt.operating_company_id = $1`, pendingStatusesSql()];
+      if (bankTransactionHiddenFilterSql(hideOn, "bt")) where.push(bankTransactionHiddenFilterSql(hideOn, "bt").replace(/^AND\s+/, ""));
       const values: unknown[] = [q.operating_company_id];
 
       if (q.bank_account_id) {

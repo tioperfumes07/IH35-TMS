@@ -166,6 +166,10 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
         { label: "Reconcile", to: "/banking/reconcile" },
         { label: "Transfers", to: "/banking/transfers" },
         { label: "Fuel Planner", to: "/fuel" },
+        // BANK-ACCOUNT-HIDE (Tier-1 HOLD): per-entity hide/exclude manager. Route + nav entry are
+        // additive; the page itself is gated behind BANK_ACCOUNT_HIDE_ENABLED (default OFF) and shows
+        // a plain-language notice until Jorge flips the per-entity flag.
+        { label: "Account Visibility", to: "/banking/account-visibility" },
       ];
     case "safety":
       return [

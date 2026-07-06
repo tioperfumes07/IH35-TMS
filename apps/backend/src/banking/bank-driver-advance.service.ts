@@ -25,6 +25,7 @@
 
 import { withCompanyScope } from "../accounting/shared.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
+import { isBankAccountHideEnabled } from "./bank-account-visibility.js";
 import {
   resolveAccountForCategory,
   ExpenseCategoryMapResolutionError,
@@ -44,7 +45,8 @@ export type BankDriverAdvanceSkipReason =
   | "not_a_debit"
   | "zero_amount"
   | "authorization_required"
-  | "disburse_failed";
+  | "disburse_failed"
+  | "bank_account_hidden";
 
 export type BankDriverAdvanceResult =
   | { posted: false; reason: BankDriverAdvanceSkipReason; message?: string }
@@ -124,7 +126,8 @@ async function decide(input: MaybePostBankDriverAdvanceInput): Promise<Decision>
           bt.amount_cents::bigint AS amount_cents,
           bt.transaction_date::text AS transaction_date,
           bt.is_credit AS is_credit,
-          ba.ledger_account_id::text AS bank_ledger_account_id
+          ba.ledger_account_id::text AS bank_ledger_account_id,
+          ba.hidden_at AS bank_account_hidden_at
         FROM banking.bank_transactions bt
         LEFT JOIN banking.bank_accounts ba
           ON ba.id = bt.bank_account_id
@@ -136,9 +139,21 @@ async function decide(input: MaybePostBankDriverAdvanceInput): Promise<Decision>
       [input.bankTransactionId, input.companyId]
     );
     const txn = txnRes.rows[0] as
-      | { amount_cents: string | number; transaction_date: string; is_credit: boolean; bank_ledger_account_id: string | null }
+      | {
+          amount_cents: string | number;
+          transaction_date: string;
+          is_credit: boolean;
+          bank_ledger_account_id: string | null;
+          bank_account_hidden_at: string | null;
+        }
       | undefined;
     if (!txn) return { ok: false, reason: "bank_txn_not_found" };
+
+    // BANK-ACCOUNT-HIDE: an account hidden for THIS entity can never receive a NEW driver-advance
+    // disbursement (flag OFF by default — see docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
+    if (txn.bank_account_hidden_at && (await isBankAccountHideEnabled(client, input.companyId))) {
+      return { ok: false, reason: "bank_account_hidden" };
+    }
 
     // An advance is money OUT (a debit on the bank). A credit (money in) is not a loan disbursement.
     if (txn.is_credit === true) return { ok: false, reason: "not_a_debit" };

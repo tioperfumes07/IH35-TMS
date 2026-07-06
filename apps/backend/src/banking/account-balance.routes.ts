@@ -4,6 +4,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "./bank-account-visibility.js";
 
 const paramsSchema = z.object({
   accountId: z.string().uuid(),
@@ -52,6 +53,9 @@ export async function registerAccountBalanceRoutes(app: FastifyInstance) {
     if (!query.success) return validationError(reply, query.error);
 
     const payload = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      // BANK-ACCOUNT-HIDE: a hidden account must be fully excluded — its balance/drill-through disappears
+      // for this entity (flag OFF by default, see docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
+      const hideOn = await isBankAccountHideEnabled(client, query.data.operating_company_id);
       const accountRes = await client.query<{
         id: string;
         account_name: string;
@@ -65,6 +69,7 @@ export async function registerAccountBalanceRoutes(app: FastifyInstance) {
           WHERE id = $1
             AND operating_company_id = $2
             AND deactivated_at IS NULL
+          ${bankAccountHiddenFilterSql(hideOn, "banking.bank_accounts")}
           LIMIT 1
         `,
         [params.data.accountId, query.data.operating_company_id]
