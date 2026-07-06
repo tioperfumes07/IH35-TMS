@@ -7,12 +7,14 @@ export function ActionBar({
   equipmentNumber,
   onEdit,
   onChangeStatus,
+  onArchive,
 }: {
   equipmentId: string;
   companyId: string;
   equipmentNumber: string;
   onEdit?: () => void;
   onChangeStatus?: () => void;
+  onArchive?: () => void;
 }) {
   const pdfUrl = `/api/v1/mdata/equipment/${equipmentId}/export.pdf?operating_company_id=${encodeURIComponent(companyId)}`;
   return (
@@ -29,7 +31,7 @@ export function ActionBar({
       <a className={linkClass} href={pdfUrl} download data-testid="tp-export-pdf">
         Export PDF
       </a>
-      <button type="button" className={linkClass}>
+      <button type="button" className={linkClass} onClick={onArchive}>
         Archive
       </button>
       <span className="sr-only">{equipmentNumber}</span>

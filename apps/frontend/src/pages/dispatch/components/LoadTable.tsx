@@ -102,7 +102,7 @@ export function LoadTable({
         onCapExceeded={(message) => pushToast(message, "error")}
       >
         {(selectCtx) => (
-          <div className="overflow-hidden rounded-sm border border-gray-200 bg-white">
+          <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
             <table className="w-full table-fixed text-left text-[11px]">
               <thead className="bg-gray-50 text-[10px] uppercase tracking-wide text-gray-600">
                 <tr>

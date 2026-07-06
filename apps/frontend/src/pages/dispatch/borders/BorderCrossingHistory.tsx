@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
+import { formatDateTimeUS } from "../../../lib/formatDate";
 
 interface CrossingEvent {
   uuid: string;
@@ -88,9 +89,9 @@ export function BorderCrossingHistory() {
                 <td className="px-3 py-2">{ev.vehicle_id}</td>
                 <td className="px-3 py-2">{CROSSING_LABELS[ev.crossing_point] ?? ev.crossing_point}</td>
                 <td className="px-3 py-2 capitalize">{ev.direction}</td>
-                <td className="px-3 py-2">{new Date(ev.entered_geofence_at).toLocaleString()}</td>
+                <td className="px-3 py-2">{formatDateTimeUS(ev.entered_geofence_at)} CT</td>
                 <td className="px-3 py-2">
-                  {ev.exited_geofence_at ? new Date(ev.exited_geofence_at).toLocaleString() : "—"}
+                  {ev.exited_geofence_at ? `${formatDateTimeUS(ev.exited_geofence_at)} CT` : "—"}
                 </td>
                 <td className="px-3 py-2">{ev.customs_clearance_minutes ?? "—"}</td>
               </tr>

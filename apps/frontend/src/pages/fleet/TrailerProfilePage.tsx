@@ -4,6 +4,7 @@ import { useParams } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { useToast } from "../../components/Toast";
 import { EditTrailerModal } from "../../components/fleet/EditTrailerModal";
 import { ActionBar } from "../../components/trailer-profile/ActionBar";
 import { ComplianceSection } from "../../components/trailer-profile/ComplianceSection";
@@ -40,6 +41,7 @@ export function TrailerProfilePage() {
   const { id = "" } = useParams();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const { pushToast } = useToast();
   const queryClient = useQueryClient();
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -52,6 +54,12 @@ export function TrailerProfilePage() {
 
   const invalidateProfile = () => {
     void queryClient.invalidateQueries({ queryKey: ["trailer-profile", id, companyId] });
+  };
+
+  const handleArchive = () => {
+    // Archive functionality - requires backend endpoint
+    // TODO: Implement when archive endpoint is available
+    pushToast("Archive functionality not yet implemented", "info");
   };
 
   if (!companyId) {
@@ -113,6 +121,7 @@ export function TrailerProfilePage() {
           equipmentNumber={String(equipment.equipment_number ?? id)}
           onEdit={() => setEditModalOpen(true)}
           onChangeStatus={() => setStatusModalOpen(true)}
+          onArchive={handleArchive}
         />
       </div>
       <StatusChangeModal

@@ -43,9 +43,11 @@ export interface AuditReportPageProps {
   extraParams?: Partial<AuditReportParams>;
   showModuleFilter?: boolean;
   showDriverFilter?: boolean;
+  backHref?: string;
+  breadcrumb?: string[];
 }
 
-export function AuditReportPage({ title, subtitle, endpoint, extraParams, showModuleFilter, showDriverFilter }: AuditReportPageProps) {
+export function AuditReportPage({ title, subtitle, endpoint, extraParams, showModuleFilter, showDriverFilter, backHref, breadcrumb }: AuditReportPageProps) {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [from, setFrom] = useState("");
@@ -84,7 +86,7 @@ export function AuditReportPage({ title, subtitle, endpoint, extraParams, showMo
   return (
     <div className="space-y-4">
       <div className="flex items-start justify-between">
-        <PageHeader title={title} subtitle={subtitle} />
+        <PageHeader title={title} subtitle={subtitle} backHref={backHref} breadcrumb={breadcrumb} />
         <Button size="sm" variant="secondary" onClick={handleCsvExport} disabled={rows.length === 0}>
           Export CSV
         </Button>

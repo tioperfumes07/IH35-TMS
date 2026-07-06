@@ -129,7 +129,7 @@ export function BulkDemoPage() {
         onCapExceeded={setCapMessage}
       >
         {(selectCtx) => (
-          <div className="overflow-hidden rounded-sm border border-gray-200 bg-white">
+          <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
             <table className="w-full text-left text-sm">
               <thead className="bg-gray-50 text-xs uppercase text-gray-600">
                 <tr>

@@ -127,6 +127,8 @@ export function ARAgingPage() {
       <PageHeader
         title="A/R aging"
         subtitle={`As of ${asOf} · open invoices by customer · Accrual basis`}
+        backHref="/reports"
+        breadcrumb={["Reports", "A/R Aging"]}
         actions={
           <div className="no-print flex flex-wrap gap-2">
             <Button size="sm" variant="secondary" onClick={() => window.print()}>

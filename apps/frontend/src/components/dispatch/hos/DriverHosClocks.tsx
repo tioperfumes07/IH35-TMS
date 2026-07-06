@@ -5,7 +5,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { getDriverHosStatus } from "../../../api/dispatch";
 import {
+  computeCertifiedHosClocks,
   computeHosClocks,
+  eldStatusDot,
   HOS_COLUMNS,
   HOS_PROJECTED_TOOLTIP,
   hosStatusDot,
@@ -24,10 +26,13 @@ function useDriverHos(driverId: string | null | undefined, operatingCompanyId: s
   });
 }
 
-// Small duty/HOS-health dot for next to a driver name (ITEM 5 + ITEM 3).
+// Small duty/HOS-health dot for next to a driver name (ITEM 5 + ITEM 3). HOS-PRC2: prefer the
+// certified Samsara ELD violation flag; fall back to the in-app recompute only when Samsara has
+// never polled this driver.
 export function DriverHosStatusDot({ driverId, operatingCompanyId }: { driverId: string | null | undefined; operatingCompanyId: string | undefined }) {
   const q = useDriverHos(driverId, operatingCompanyId);
-  const dot = hosStatusDot(q.data?.status ?? null);
+  const eld = q.data?.eld_certified ?? null;
+  const dot = eld ? eldStatusDot(eld) : hosStatusDot(q.data?.status ?? null);
   return <span className={`inline-block h-2 w-2 shrink-0 rounded-full ${dot.cls}`} title={dot.label} aria-label={dot.label} />;
 }
 
@@ -45,14 +50,23 @@ export function DriverHosClocksBlock({
   // render-v6 §B: the HOS block is ALWAYS mounted (never returns null) so the 6-clock set is visible in the
   // wizard the moment Section B is shown — even before a driver is picked or while Samsara HOS is unseeded.
   // Returning null here was the #1355 false-DONE: the JSX existed (guard passed) but rendered nothing live.
-  const clocks = computeHosClocks(q.data as HosStatusRow | undefined);
-  const dot = hosStatusDot(q.data?.status ?? null);
+  // HOS-PRC2: prefer the certified Samsara ELD snapshot (verbatim); fall back to the in-app recompute
+  // only when Samsara has never polled this driver yet.
+  const eld = q.data?.eld_certified ?? null;
+  const certified = computeCertifiedHosClocks(eld);
+  const clocks = certified ?? computeHosClocks(q.data as HosStatusRow | undefined);
+  const dot = eld ? eldStatusDot(eld) : hosStatusDot(q.data?.status ?? null);
 
   return (
     <div className="rounded-sm border border-gray-200 bg-gray-50 px-2 py-1.5" data-hos-block="book-load">
       <div className="mb-1 flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-600">
         <span className={`inline-block h-2 w-2 rounded-full ${dot.cls}`} title={dot.label} />
         {heading}
+        {certified ? (
+          <span className="ml-1 rounded-sm bg-emerald-100 px-1 text-[8px] font-semibold uppercase tracking-[0.3px] text-emerald-700">
+            Certified ELD
+          </span>
+        ) : null}
       </div>
       {q.isLoading ? (
         <div className="text-[11px] text-gray-400">Loading HOS…</div>
@@ -71,9 +85,11 @@ export function DriverHosClocksBlock({
           ))}
         </div>
       )}
-      {/* render-v6 §B hosNote — exact design text. */}
+      {/* render-v6 §B hosNote — exact design text, + certified-source disclosure. */}
       <div className="hosnote mt-0.5 text-[9px] text-gray-400">
-        Select a driver to load HOS. Clocks populate from the Samsara feed. Stop by / Resume at are projected.
+        {certified
+          ? "Drive/Shift/Break/Cycle are Samsara's certified ELD values, verbatim. Stop by / Resume at are projected."
+          : "Select a driver to load HOS. Clocks populate from the Samsara feed. Stop by / Resume at are projected."}
       </div>
     </div>
   );
@@ -92,7 +108,9 @@ export function DriverHosClockValue({
   colKey: HosColumnKey;
 }) {
   const q = useDriverHos(driverId, operatingCompanyId);
-  const clocks = computeHosClocks(q.data as HosStatusRow | undefined);
+  // HOS-PRC2 — board reads the certified Samsara ELD snapshot verbatim; falls back to the in-app
+  // recompute only when Samsara has never polled this driver.
+  const clocks = computeCertifiedHosClocks(q.data?.eld_certified ?? null) ?? computeHosClocks(q.data as HosStatusRow | undefined);
   const col = HOS_COLUMNS.find((c) => c.key === colKey);
   if (!driverId) return <span className="text-gray-300">—</span>;
   return (
@@ -110,7 +128,8 @@ export function DriverHosClockValue({
 // existing <tr> exactly where the single HOS column was, keeping the grid aligned.
 export function DriverHosClockCells({ driverId, operatingCompanyId }: { driverId: string | null | undefined; operatingCompanyId: string | undefined }) {
   const q = useDriverHos(driverId, operatingCompanyId);
-  const clocks = computeHosClocks(q.data as HosStatusRow | undefined);
+  // HOS-PRC2 — roster reads the same certified Samsara ELD snapshot verbatim as the board.
+  const clocks = computeCertifiedHosClocks(q.data?.eld_certified ?? null) ?? computeHosClocks(q.data as HosStatusRow | undefined);
   return (
     <>
       {HOS_COLUMNS.map((col) => (

@@ -109,6 +109,8 @@ export function TrialBalancePage() {
       <PageHeader
         title="Trial balance"
         subtitle={`Ledger debits and credits by account · ${basis === "cash" ? "Cash" : "Accrual"} basis`}
+        backHref="/reports"
+        breadcrumb={["Reports", "Trial Balance"]}
         actions={
           <div className="no-print flex flex-wrap gap-2">
             <Button size="sm" variant="secondary" onClick={() => window.print()}>
