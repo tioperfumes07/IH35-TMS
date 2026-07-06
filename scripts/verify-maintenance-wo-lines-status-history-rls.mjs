@@ -16,7 +16,7 @@ import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
 
-const MIGRATION = "db/migrations/202607090200_maintenance_wo_lines_status_history_rls.sql";
+const MIGRATION = "db/migrations/202607110210_maintenance_wo_lines_status_history_rls.sql";
 
 let failed = 0;
 function fail(msg) {

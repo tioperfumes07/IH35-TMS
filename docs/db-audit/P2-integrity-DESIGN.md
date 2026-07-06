@@ -60,7 +60,7 @@ Branch: `design/p2-integrity-fixes` (isolated worktree, off `origin/main`).
   motive (no void path) and the means (DELETE grant) to destroy evidence of a civil fine — the worst
   combination for a legal/compliance evidence table.
 
-### Fix (migration `db/migrations/202607090100_civil_fines_voidable.sql`, HELD)
+### Fix (migration `db/migrations/202607110200_civil_fines_voidable.sql`, HELD)
 
 Additive, idempotent, no data touched:
 
@@ -135,7 +135,7 @@ services, so there's no conflicting signal about which is canonical — the memo
 → Both tables are EMPTY. The untangle is **schema-only, no data to move, low risk**. A straight DROP-then-ADD
 FK is safe (nothing to orphan, nothing to fail a check against).
 
-### Fix (migration `db/migrations/202607090300_escrow_ledger_repoint_fk_to_canonical.sql`, HELD)
+### Fix (migration `db/migrations/202607110220_escrow_ledger_repoint_fk_to_canonical.sql`, HELD)
 
 Idempotent, no data touched (both tables empty):
 1. Discover the existing FK constraint(s) on `driver_finance.escrow_ledger` that reference
@@ -206,7 +206,7 @@ Jorge (§7 archive-don't-delete), flagged not decided.
   `maintenance.work_orders` (the parent) has `operating_company_id` confirmed present
   (`0049_p3_t11_6_1_wo_format_vendor_inventory_integrity.sql:10-24`).
 
-### Fix (migration `db/migrations/202607090200_maintenance_wo_lines_status_history_rls.sql`, HELD)
+### Fix (migration `db/migrations/202607110210_maintenance_wo_lines_status_history_rls.sql`, HELD)
 
 `ENABLE` + `FORCE` `ROW LEVEL SECURITY` on both tables, with one isolate-through-parent policy each,
 identical shape to the `bill_lines` precedent (lucia-bypass included): `work_order_lines` joins on
@@ -228,7 +228,7 @@ SECURITY`. **The coordinator's live prod check (2026-07-05) confirms this was a 
 `maintenance.work_orders` ALREADY has FORCE RLS on `operating_company_id`** (the RLS was applied by a path
 the source-grep pattern missed — e.g. a dynamic/loop-based enablement). No action is needed on
 `work_orders` itself. Only the two child tables (`work_order_lines`, `wo_status_history`) genuinely lacked
-RLS, and those are fixed by migration `202607090200`. This also independently confirms the child-table
+RLS, and those are fixed by migration `202607110210`. This also independently confirms the child-table
 policies' parent join is sound (the parent is RLS-protected and scoped on the same column).
 
 ---
@@ -237,9 +237,9 @@ policies' parent join is sound (the parent is RLS-protected and scoped on the sa
 
 | # | Item | Verdict | Migration | CI Guard |
 |---|---|---|---|---|
-| 1 | `safety.civil_fines` missing `voided_at` | CONFIRMED | `202607090100_civil_fines_voidable.sql` (HELD) | `verify-civil-fines-voidable.mjs` |
-| 2 | `escrow_ledger` FK → `settlement.settlement` | CONFIRMED FK; prod data-audit: both tables 0 rows → schema-only repoint | `202607090300_escrow_ledger_repoint_fk_to_canonical.sql` (HELD) | `verify-escrow-ledger-fk-canonical.mjs` |
-| 3 | `work_order_lines` + `wo_status_history` no RLS | CONFIRMED (parent `work_orders` already RLS'd — false-positive retracted) | `202607090200_maintenance_wo_lines_status_history_rls.sql` (HELD) | `verify-maintenance-wo-lines-status-history-rls.mjs` |
+| 1 | `safety.civil_fines` missing `voided_at` | CONFIRMED | `202607110200_civil_fines_voidable.sql` (HELD) | `verify-civil-fines-voidable.mjs` |
+| 2 | `escrow_ledger` FK → `settlement.settlement` | CONFIRMED FK; prod data-audit: both tables 0 rows → schema-only repoint | `202607110220_escrow_ledger_repoint_fk_to_canonical.sql` (HELD) | `verify-escrow-ledger-fk-canonical.mjs` |
+| 3 | `work_order_lines` + `wo_status_history` no RLS | CONFIRMED (parent `work_orders` already RLS'd — false-positive retracted) | `202607110210_maintenance_wo_lines_status_history_rls.sql` (HELD) | `verify-maintenance-wo-lines-status-history-rls.mjs` |
 
 All three migrations are registered in `db/migrations/.held-migrations.json` and carry `DO NOT
 MERGE-AND-RUN / DO NOT RUN ON PROD` headers — none has been run anywhere, including a Neon branch. Two

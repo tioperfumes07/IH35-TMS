@@ -16,7 +16,7 @@ import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
 
-const MIGRATION = "db/migrations/202607090300_escrow_ledger_repoint_fk_to_canonical.sql";
+const MIGRATION = "db/migrations/202607110220_escrow_ledger_repoint_fk_to_canonical.sql";
 
 let failed = 0;
 function fail(msg) {

@@ -16,7 +16,7 @@ import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
 
-const MIGRATION = "db/migrations/202607090100_civil_fines_voidable.sql";
+const MIGRATION = "db/migrations/202607110200_civil_fines_voidable.sql";
 
 let failed = 0;
 function fail(msg) {
