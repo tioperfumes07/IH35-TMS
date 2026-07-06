@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getPlaidBankAccounts, recordCcPayment } from "../../api/banking";
+import { categorizeBankTransaction, getPlaidBankAccounts, recordCcPayment } from "../../api/banking";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { QboCombobox } from "../../components/forms/QboCombobox";
@@ -13,6 +13,15 @@ type Props = {
   operatingCompanyId: string;
   onClose: () => void;
   onSaved: () => void;
+  // banking Categorize inline wiring (HELD): opening this modal FROM a bank-feed row (Transaction type
+  // = "CC Payment") pre-seeds amount/date/from-bank-account from that row, and — once the payment
+  // posts — best-effort marks the originating row categorized. Optional; the existing BankingHome
+  // mount (no prefill props) keeps its blank-form behavior byte-for-byte.
+  prefillAmountCents?: number;
+  prefillDate?: string;
+  prefillMemo?: string;
+  prefillFromBankId?: string;
+  linkBankTransactionId?: string | null;
 };
 
 function todayIsoDate() {
@@ -25,7 +34,19 @@ function centsFromAmount(value: number | null) {
   return Math.round(value * 100);
 }
 
-export function RecordCCPaymentModal({ open, operatingCompanyId, onClose, onSaved }: Props) {
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function RecordCCPaymentModal({
+  open,
+  operatingCompanyId,
+  onClose,
+  onSaved,
+  prefillAmountCents,
+  prefillDate,
+  prefillMemo,
+  prefillFromBankId,
+  linkBankTransactionId,
+}: Props) {
   const { pushToast } = useToast();
   const [ccVendorId, setCcVendorId] = useState<string | null>(null);
   const [ccVendorLabel, setCcVendorLabel] = useState("");
@@ -44,12 +65,12 @@ export function RecordCCPaymentModal({ open, operatingCompanyId, onClose, onSave
     setCcVendorLabel("");
     setLiabilityAccountId(null);
     setLiabilityLabel("");
-    setFromBankId("");
-    setPaymentDate(todayIsoDate());
-    setAmount(null);
-    setMemo("");
+    setFromBankId(prefillFromBankId || "");
+    setPaymentDate(prefillDate || todayIsoDate());
+    setAmount(prefillAmountCents != null && prefillAmountCents > 0 ? prefillAmountCents / 100 : null);
+    setMemo(prefillMemo ?? "");
     setStatementPeriod("");
-  }, [open]);
+  }, [open, prefillAmountCents, prefillDate, prefillFromBankId, prefillMemo]);
 
   const bankAccountsQuery = useQuery({
     queryKey: ["banking", "plaid-accounts", operatingCompanyId, "cc-payment-modal"],
@@ -85,6 +106,22 @@ export function RecordCCPaymentModal({ open, operatingCompanyId, onClose, onSave
         statement_period: statementPeriod.trim() || undefined,
       });
       pushToast("Credit card payment recorded", "success");
+      // Best-effort: mark the originating bank-feed row categorized so it clears "for review". Reuses
+      // the EXISTING /categorize poster (no new GL math — the JE already posted via recordCcPayment
+      // above). vendor_id only sent when QboCombobox resolved a real vendors.id (uuid); a free-typed
+      // label still lands in the memo via categorization_memo, never silently dropped.
+      if (linkBankTransactionId) {
+        try {
+          await categorizeBankTransaction(linkBankTransactionId, operatingCompanyId, {
+            category_kind: "CC Payment",
+            gl_account_id: liabilityAccountId ?? undefined,
+            vendor_id: vendorKey && UUID_RE.test(vendorKey) ? vendorKey : undefined,
+            memo: memo.trim() || undefined,
+          });
+        } catch {
+          // Best-effort only — the payment itself already posted; leave the row for manual review.
+        }
+      }
       onSaved();
       onClose();
     } catch (error) {

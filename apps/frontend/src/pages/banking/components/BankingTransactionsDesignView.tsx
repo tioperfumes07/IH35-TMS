@@ -26,6 +26,9 @@ import { LoadAutocomplete } from "../../../components/banking/LoadAutocomplete";
 import { listVendors, listCustomers } from "../../../api/mdata";
 import { itemsCatalogClient, type AccountingCatalogRow } from "../../../api/catalogs-accounting";
 import { BankTransactionSplitModal } from "./BankTransactionSplitModal";
+import { MatchDrawer } from "./MatchDrawer";
+import { RecordTransferModal } from "../RecordTransferModal";
+import { RecordCCPaymentModal } from "../RecordCCPaymentModal";
 
 // BLOCK-6b — recoverable-expense bucket types a bank-categorized driver expense can charge (a fine/toll
 // the company paid on the driver's behalf → recovered from settlement). Mirrors the backend allow-list.
@@ -218,6 +221,12 @@ export function BankingTransactionsDesignView({
   const [currentPage, setCurrentPage] = useState(1);
   // BANK-SPLIT-1 — the transaction currently open in the Split-transaction popup (real, persisted; HELD).
   const [splitTx, setSplitTx] = useState<PlaidBankTransaction | null>(null);
+  // HELD financial-actions wiring (banking Categorize panel): the transaction whose reconcile Match
+  // drawer / Transfer modal / CC Payment modal is currently open. Reuses the EXISTING, already-gated
+  // posters (acceptBankReconMatch, createTransfer, recordCcPayment) — no new GL math.
+  const [matchDrawerTxId, setMatchDrawerTxId] = useState<string | null>(null);
+  const [transferModalTx, setTransferModalTx] = useState<PlaidBankTransaction | null>(null);
+  const [ccPaymentModalTx, setCcPaymentModalTx] = useState<PlaidBankTransaction | null>(null);
 
   const [viewSettings, setViewSettings] = useState<ViewSettings>({
     showCheckNo: false,
@@ -1090,6 +1099,20 @@ export function BankingTransactionsDesignView({
                         </button>
                         {menuOpen ? (
                           <div className="absolute right-0 top-7 z-20 min-w-[220px] rounded-sm border border-gray-200 bg-white shadow-md">
+                            {/* HELD financial-actions wiring: reuses the orphaned MatchDrawer (already-built
+                            getMatchCandidates + acceptBankReconMatch, reconcile-commit — link-and-clear for
+                            an exact-amount match, or a balanced variance JE via acceptMatchWithResolveDifference;
+                            both gated, no new GL math here). */}
+                            <button
+                              type="button"
+                              className="block w-full border-b border-gray-100 px-3 py-2 text-left text-xs hover:bg-gray-50"
+                              onClick={() => {
+                                setActionMenuTxId(null);
+                                setMatchDrawerTxId(tx.id);
+                              }}
+                            >
+                              Accept match (reconcile)
+                            </button>
                             {/* BANK-SPLIT-1: the real, persisted, balanced N-line split (banking.bank_transaction_splits,
                             migration 202607110100, HELD). Opens the QBO-style Split transaction popup. */}
                             <button
@@ -1168,10 +1191,24 @@ export function BankingTransactionsDesignView({
                             <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                               <label className="text-xs text-gray-600">
                                 Transaction type
-                                <SelectCombobox className="mt-0.5 w-full" value={draft.transactionType} onChange={(event) => setDraft(tx, { transactionType: event.target.value })}>
+                                <SelectCombobox
+                                  className="mt-0.5 w-full"
+                                  value={draft.transactionType}
+                                  onChange={(event) => {
+                                    const value = event.target.value;
+                                    setDraft(tx, { transactionType: value });
+                                    // HELD financial-actions wiring: Transfer/CC Payment open the existing,
+                                    // fully-built RecordTransferModal / RecordCCPaymentModal (gated posters —
+                                    // createTransfer / recordCcPayment) pre-seeded from this row, instead of
+                                    // duplicating a third transfer/CC-payment picker inline.
+                                    if (value === "Transfer") setTransferModalTx(tx);
+                                    if (value === "CC Payment") setCcPaymentModalTx(tx);
+                                  }}
+                                >
                                   <option value="Money in">Money in</option>
                                   <option value="Money out">Money out</option>
                                   <option value="Transfer">Transfer</option>
+                                  <option value="CC Payment">CC Payment</option>
                                   <option value="Expense">Expense</option>
                                 </SelectCombobox>
                               </label>
@@ -1204,11 +1241,29 @@ export function BankingTransactionsDesignView({
                               </label>
                               <label className="text-xs text-gray-600">
                                 From/To
-                                <input
-                                  className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
-                                  value={draft.fromTo}
-                                  onChange={(event) => setDraft(tx, { fromTo: event.target.value })}
-                                />
+                                {draft.transactionType === "Transfer" ? (
+                                  <button
+                                    type="button"
+                                    className="mt-0.5 block w-full rounded-sm border border-gray-300 px-2 py-1 text-left text-sm hover:bg-gray-50"
+                                    onClick={() => setTransferModalTx(tx)}
+                                  >
+                                    {draft.fromTo || "Select From/To accounts…"}
+                                  </button>
+                                ) : draft.transactionType === "CC Payment" ? (
+                                  <button
+                                    type="button"
+                                    className="mt-0.5 block w-full rounded-sm border border-gray-300 px-2 py-1 text-left text-sm hover:bg-gray-50"
+                                    onClick={() => setCcPaymentModalTx(tx)}
+                                  >
+                                    {draft.fromTo || "Select CC payment details…"}
+                                  </button>
+                                ) : (
+                                  <input
+                                    className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+                                    value={draft.fromTo}
+                                    onChange={(event) => setDraft(tx, { fromTo: event.target.value })}
+                                  />
+                                )}
                               </label>
                               <label className="text-xs text-gray-600">
                                 Category (Chart of Accounts)
@@ -1512,6 +1567,49 @@ export function BankingTransactionsDesignView({
         transaction={splitTx ? { id: splitTx.id, amount_cents: splitTx.amount_cents, is_credit: splitTx.is_credit, description: transactionLabel(splitTx) } : null}
         onClose={() => setSplitTx(null)}
         onSaved={() => onDataChanged()}
+      />
+      {/* HELD financial-actions wiring — reuses the orphaned MatchDrawer (getMatchCandidates +
+      acceptBankReconMatch, already gated) instead of inventing a second match/accept flow. */}
+      <MatchDrawer
+        open={Boolean(matchDrawerTxId)}
+        bankTransactionId={matchDrawerTxId}
+        operatingCompanyId={companyId}
+        onClose={() => setMatchDrawerTxId(null)}
+        onAccepted={() => onDataChanged()}
+      />
+      {/* HELD financial-actions wiring — the fully-built RecordTransferModal (createTransfer, gated),
+      pre-seeded from the row's amount/date + this account as one leg. */}
+      <RecordTransferModal
+        open={Boolean(transferModalTx)}
+        operatingCompanyId={companyId}
+        defaultTransferType="bank_to_bank"
+        prefillAmountCents={transferModalTx ? Math.abs(Number(transferModalTx.amount_cents ?? 0)) : undefined}
+        prefillDate={transferModalTx?.transaction_date?.slice(0, 10)}
+        prefillMemo={transferModalTx ? transactionLabel(transferModalTx) : undefined}
+        seedAccountId={selectedAccount?.id}
+        seedAccountSide={transferModalTx?.is_credit ? "to" : "from"}
+        linkBankTransactionId={transferModalTx?.id ?? null}
+        onClose={() => setTransferModalTx(null)}
+        onSaved={() => {
+          setTransferModalTx(null);
+          onDataChanged();
+        }}
+      />
+      {/* HELD financial-actions wiring — the RecordCCPaymentModal already mounted at BankingHome.tsx
+      (recordCcPayment, gated), reused here pre-seeded from the row. */}
+      <RecordCCPaymentModal
+        open={Boolean(ccPaymentModalTx)}
+        operatingCompanyId={companyId}
+        prefillAmountCents={ccPaymentModalTx ? Math.abs(Number(ccPaymentModalTx.amount_cents ?? 0)) : undefined}
+        prefillDate={ccPaymentModalTx?.transaction_date?.slice(0, 10)}
+        prefillMemo={ccPaymentModalTx ? transactionLabel(ccPaymentModalTx) : undefined}
+        prefillFromBankId={selectedAccount?.id}
+        linkBankTransactionId={ccPaymentModalTx?.id ?? null}
+        onClose={() => setCcPaymentModalTx(null)}
+        onSaved={() => {
+          setCcPaymentModalTx(null);
+          onDataChanged();
+        }}
       />
     </div>
   );
