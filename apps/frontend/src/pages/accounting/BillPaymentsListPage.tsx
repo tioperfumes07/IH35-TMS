@@ -10,7 +10,9 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useToast } from "../../components/Toast";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { BillDetailPanel } from "./BillDetailPanel";
 import { PayBillModal } from "./PayBillModal";
+import { CCPaymentModal } from "./bill-payments/CCPaymentModal";
 import { useListState } from "../../components/list-state";
 
 function money(cents: number) {
@@ -54,6 +56,7 @@ export function BillPaymentsListPage() {
   const [search, setSearch] = useState("");
   const [selectedBillId, setSelectedBillId] = useState("");
   const [payModalOpen, setPayModalOpen] = useState(false);
+  const [ccModalOpen, setCcModalOpen] = useState(false);
 
   const paymentsQuery = useQuery({
     queryKey: ["accounting", "bill-payments-list", companyId, vendorId, dateFrom, dateTo],
@@ -120,16 +123,28 @@ export function BillPaymentsListPage() {
       title="Bill Payments"
       subtitle="Vendor bill payment ledger"
       actions={
-        <Button
-          variant="secondary"
-          disabled={!selectedBill}
-          onClick={() => {
-            if (!selectedBill) { pushToast("Select an unpaid bill first", "info"); return; }
-            setPayModalOpen(true);
-          }}
-        >
-          + Record Bill Payment
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="secondary"
+            disabled={!selectedBill}
+            onClick={() => {
+              if (!selectedBill) { pushToast("Select an unpaid bill first", "info"); return; }
+              setPayModalOpen(true);
+            }}
+          >
+            + Record Bill Payment
+          </Button>
+          <Button
+            variant="secondary"
+            disabled={!selectedBill}
+            onClick={() => {
+              if (!selectedBill) { pushToast("Select an unpaid bill first", "info"); return; }
+              setCcModalOpen(true);
+            }}
+          >
+            Pay with CC
+          </Button>
+        </div>
       }
     >
 
@@ -190,6 +205,8 @@ export function BillPaymentsListPage() {
         </label>
         <div className="flex items-end text-xs text-gray-600">Total rows amount: <span className="ml-1 font-semibold text-gray-900">{money(totals)}</span></div>
       </div>
+
+      {selectedBill ? <BillDetailPanel bill={selectedBill} /> : null}
 
       <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-left text-xs">
@@ -267,6 +284,22 @@ export function BillPaymentsListPage() {
           onSaved={() => {
             setPayModalOpen(false);
             pushToast("Bill payment recorded", "success");
+            void queryClient.invalidateQueries({ queryKey: ["accounting", "bill-payments-list", companyId] });
+            void queryClient.invalidateQueries({ queryKey: ["accounting", "vendor-balances", companyId] });
+            void queryClient.invalidateQueries({ queryKey: ["accounting", "bills-unpaid", companyId] });
+          }}
+        />
+      ) : null}
+
+      {companyId ? (
+        <CCPaymentModal
+          open={ccModalOpen}
+          operatingCompanyId={companyId}
+          bill={selectedBill}
+          onClose={() => setCcModalOpen(false)}
+          onSaved={() => {
+            setCcModalOpen(false);
+            pushToast("CC bill payment recorded", "success");
             void queryClient.invalidateQueries({ queryKey: ["accounting", "bill-payments-list", companyId] });
             void queryClient.invalidateQueries({ queryKey: ["accounting", "vendor-balances", companyId] });
             void queryClient.invalidateQueries({ queryKey: ["accounting", "bills-unpaid", companyId] });

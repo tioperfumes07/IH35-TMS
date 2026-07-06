@@ -8,6 +8,14 @@ import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useCCPayment } from "../../../hooks/useCCPayment";
 
+// FINANCIAL GATE (orphan-triage F1): /api/v1/bill-payments/cc posts directly to
+// accounting.bill_payments + accounting.bills (money-moving) and had zero prior UI consumer
+// anywhere in the app (verified: useCCPayment/submitCcBillPayment were unused before this PR).
+// Per constitution §1.4 there is no EXISTING gated/wired poster for this exact action to reuse,
+// so the form renders fully but submit stays disabled until Jorge gives an explicit per-block OK
+// (same pattern as NewAccountDrawerForm's ACCOUNT_CREATE_GATED). Flip to false only on that OK.
+const CC_BILL_PAYMENT_GATED = true;
+
 type Props = { open: boolean; operatingCompanyId: string; bill: VendorBill | null; onClose: () => void; onSaved: () => void };
 
 export function CCPaymentModal({ open, operatingCompanyId, bill, onClose, onSaved }: Props) {
@@ -27,6 +35,7 @@ export function CCPaymentModal({ open, operatingCompanyId, bill, onClose, onSave
     <Modal open={open} onClose={onClose} title="Pay with CC">
       <form className="space-y-2" onSubmit={async (e) => {
         e.preventDefault();
+        if (CC_BILL_PAYMENT_GATED) return;
         await ccPayment.mutateAsync({ bill_id: bill.id, cc_account_id: ccAccountId, payment_amount_cents: Math.round(Number(amountDollars) * 100), payment_date: paymentDate });
         onSaved(); onClose();
       }}>
@@ -37,7 +46,14 @@ export function CCPaymentModal({ open, operatingCompanyId, bill, onClose, onSave
         {/* M-1: dollars-mode; Math.round(amountDollars*100)=payment_amount_cents byte-for-byte. */}
         <MoneyInput valueDollars={amountDollars ? Number(amountDollars) : null} onChangeDollars={(d) => setAmountDollars(d == null ? "" : String(d))} ariaLabel="Payment amount (USD)" className="w-full" />
         <input type="date" className="h-9 w-full rounded-sm border px-2 text-[13px]" value={paymentDate} onChange={(e) => setPaymentDate(e.target.value)} />
-        <Button type="submit">Pay with CC</Button>
+        {CC_BILL_PAYMENT_GATED ? (
+          <div className="rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            <span className="font-semibold">CC bill payment gated.</span> Submit is disabled pending financial-cluster approval. Contact Jorge to enable.
+          </div>
+        ) : null}
+        <Button type="submit" disabled={CC_BILL_PAYMENT_GATED} title={CC_BILL_PAYMENT_GATED ? "Pay with CC awaiting financial approval" : undefined}>
+          {CC_BILL_PAYMENT_GATED ? "Awaiting approval" : "Pay with CC"}
+        </Button>
       </form>
     </Modal>
   );

@@ -18,20 +18,19 @@ function fail(msg) { console.error(`[verify-ob1] FAIL: ${msg}`); failed = true; 
 function pass(msg) { console.log(`[verify-ob1] PASS: ${msg}`); }
 
 const manifest = read("apps/frontend/src/pages/accounting/subnav-manifest.ts");
-const subNav = read("apps/frontend/src/pages/accounting/AccountingSubNav.tsx");
 const wrapper = read("apps/frontend/src/pages/accounting/AccountingSubNavWrapper.tsx");
 
 // ACCOUNTING_CLEAN_TABS exported from manifest (OB1 deliverable)
 if (!manifest.includes("export const ACCOUNTING_CLEAN_TABS")) fail("subnav-manifest missing ACCOUNTING_CLEAN_TABS export");
 else pass("ACCOUNTING_CLEAN_TABS exported from subnav-manifest");
 
-// AccountingSubNav MUST keep HoverDropdownNav (required by CLOSURE-15-DEEP-AUDIT-B locked guard)
-if (!subNav.includes("HoverDropdownNav")) fail("AccountingSubNav must keep HoverDropdownNav (CLOSURE-15 locked guard)");
-else pass("AccountingSubNav correctly keeps HoverDropdownNav (17-tab invoice-context nav)");
-
-// AccountingSubNav must keep accountingSubNavActiveHref (required by CLOSURE-15)
-if (!subNav.includes('pathname.startsWith("/accounting/invoices/")')) fail("accountingSubNavActiveHref missing invoices/ prefix match (CLOSURE-15)");
-else pass("accountingSubNavActiveHref intact with invoices/ prefix match");
+// orphan-triage F1: AccountingSubNav.tsx (the pre-unification HoverDropdownNav-based "17-tab
+// invoice-context nav") was a verified-dead, zero-render-consumer duplicate of the now-live
+// AccountingSubNavWrapper — verify-accounting-nav.mjs Check 4 CI-forbids any OTHER page from
+// importing it back, and InvoicesListPage.tsx never actually rendered it (only the Wrapper). It
+// has been deleted; check the Wrapper's equivalent nested-route tab-active behavior instead.
+if (!wrapper.includes("startsWith(`${to}/`)")) fail("AccountingSubNavWrapper must keep nested-route tab-active matching (was HoverDropdownNav's job pre-unification)");
+else pass("AccountingSubNavWrapper correctly keeps nested-route tab-active matching (post-unification)");
 
 // AccountingSubNavWrapper uses ACCOUNTING_CLEAN_TABS from manifest (not a local duplicate)
 if (wrapper.includes("const ACCOUNTING_TABS")) fail("AccountingSubNavWrapper still defines local ACCOUNTING_TABS (should import from manifest)");
