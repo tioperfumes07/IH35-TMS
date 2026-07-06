@@ -41,6 +41,7 @@ export const SUBNAV_ITEMS: readonly AccountingSubNavItem[] = [
   { label: "Driver bill", path: "/accounting/bills/driver", section: "bills" },
   { label: "Vendor bill", path: "/accounting/bills/vendor", section: "bills" },
   { label: "Multiple bills", path: "/accounting/bills/multiple", section: "bills" },
+  { label: "Recurring bills", path: "/accounting/bills/recurring", section: "bills" },
   { label: "Expenses", path: "/accounting/expenses", section: "direct" },
   { label: "Expenses List", path: "/accounting/expenses/list", section: "direct" },
   { label: "Bill payment", path: "/accounting/bill-payments", section: "direct" },

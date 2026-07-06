@@ -69,8 +69,6 @@
   "apps/frontend/src/pages/accounting/ItemsCatalog.tsx",
   "apps/frontend/src/pages/accounting/bill-payments/BillPaymentPage.tsx",
   "apps/frontend/src/pages/accounting/bill-payments/CCPaymentModal.tsx",
-  "apps/frontend/src/pages/accounting/bills/RecurringBillCreate.tsx",
-  "apps/frontend/src/pages/accounting/bills/RecurringBillList.tsx",
   "apps/frontend/src/pages/admin/AdminPage.tsx",
   "apps/frontend/src/pages/admin/LaunchReadinessPage.tsx",
   "apps/frontend/src/pages/admin/QboVendorLinkagePage.tsx",
