@@ -101,6 +101,7 @@
     "verify:schema-parity": "node scripts/verify-schema-parity.mjs",
     "verify:schema-parity:update": "node scripts/verify-schema-parity.mjs --update",
     "verify:settlement-bill-payment": "node scripts/verify-settlement-bill-payment.mjs",
+    "verify:settlement-payment-guc-order": "node scripts/verify-settlement-payment-guc-order.mjs",
     "verify:phantom-relations": "node scripts/verify-phantom-relations.mjs",
     "verify:phantom-relations:list": "node scripts/verify-phantom-relations.mjs --list",
     "verify:phantom-relations:test": "node --test scripts/__tests__/verify-phantom-relations.test.mjs",
