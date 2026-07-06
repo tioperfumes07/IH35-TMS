@@ -154,6 +154,46 @@ export async function listEscrowAccounts(operatingCompanyId: string, actorUserId
   });
 }
 
+/**
+ * BLOCK-02 — per-holder escrow balance lookup (e.g. the driver's own escrow balance). Read-only;
+ * reuses the same accounting.escrow_accounts row Block-23 already maintains
+ * (UNIQUE (operating_company_id, holder_id, purpose) — one row per driver per purpose), so this is a
+ * convenience filter, not a new balance source. Returns null when the holder has no escrow account yet
+ * (e.g. never had a driver_bond deduction withheld).
+ */
+export async function getEscrowAccountForHolder(
+  input: { operating_company_id: string; holder_id: string; holder_type: EscrowHolderType; purpose: EscrowPurpose },
+  actorUserId: string
+): Promise<EscrowAccount | null> {
+  return withCurrentUser(actorUserId, async (client) => {
+    await setCompanyScope(client, input.operating_company_id);
+    const res = await client.query<EscrowAccount>(
+      `
+        SELECT
+          id::text,
+          operating_company_id::text,
+          holder_id::text,
+          holder_type::text,
+          purpose::text,
+          coa_account_id::text,
+          balance_cents::bigint,
+          status::text,
+          created_at::text,
+          updated_at::text
+        FROM accounting.escrow_accounts
+        WHERE operating_company_id = $1::uuid
+          AND holder_id = $2::uuid
+          AND holder_type = $3
+          AND purpose = $4
+        LIMIT 1
+      `,
+      [input.operating_company_id, input.holder_id, input.holder_type, input.purpose]
+    );
+    const row = res.rows[0];
+    return row ? { ...row, balance_cents: cents(row.balance_cents) } : null;
+  });
+}
+
 export async function listEscrowPostings(input: { operating_company_id: string; escrow_account_id: string; limit: number }, actorUserId: string) {
   return withCurrentUser(actorUserId, async (client) => {
     await setCompanyScope(client, input.operating_company_id);

@@ -156,6 +156,7 @@
     "catalogs.ifta_states",
     "catalogs.internal_fine_reasons",
     "catalogs.items",
+    "catalogs.journal_entry_types",
     "catalogs.labor_rates",
     "catalogs.lease_terms",
     "catalogs.leave_policies",

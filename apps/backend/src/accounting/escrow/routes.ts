@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError } from "../shared.js";
-import { depositEscrow, listEscrowAccounts, listEscrowPostings, openEscrow, releaseEscrow } from "./service.js";
+import { depositEscrow, getEscrowAccountForHolder, listEscrowAccounts, listEscrowPostings, openEscrow, releaseEscrow } from "./service.js";
 
 const openBodySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -25,6 +25,12 @@ const postBodySchema = z.object({
 
 const postingQuerySchema = companyQuerySchema.extend({
   limit: z.coerce.number().int().min(1).max(500).default(200),
+});
+
+const holderParamsSchema = z.object({
+  holder_type: z.enum(["driver", "vendor", "factor", "other"]),
+  holder_id: z.string().uuid(),
+  purpose: z.enum(["driver_bond", "repair_reserve", "factor_reserve", "other"]),
 });
 
 function canAccessEscrow(role: string) {
@@ -54,6 +60,28 @@ export async function registerEscrowRoutes(app: FastifyInstance) {
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
     return { rows: await listEscrowAccounts(query.data.operating_company_id, user.uuid) };
+  });
+
+  // BLOCK-02 — per-holder (e.g. per-driver) escrow balance lookup. Read-only convenience over the
+  // existing accounting.escrow_accounts row (Block-23); no new balance source.
+  app.get("/api/v1/accounting/escrow/holder/:holder_type/:holder_id/:purpose", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!canAccessEscrow(user.role)) return reply.code(403).send({ error: "forbidden" });
+    const params = holderParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    const account = await getEscrowAccountForHolder(
+      {
+        operating_company_id: query.data.operating_company_id,
+        holder_id: params.data.holder_id,
+        holder_type: params.data.holder_type,
+        purpose: params.data.purpose,
+      },
+      user.uuid
+    );
+    return { escrow_account: account };
   });
 
   app.get("/api/v1/accounting/escrow/accounts/:escrow_account_id/postings", async (req, reply) => {
