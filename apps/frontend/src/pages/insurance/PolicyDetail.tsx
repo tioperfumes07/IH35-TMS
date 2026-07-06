@@ -9,7 +9,6 @@ import {
   listInsuranceClaims,
   listInsuranceCoiRequests,
   listInsuranceLawsuits,
-  listInsurancePaymentSchedule,
   updateInsurancePolicy,
   type InsurancePolicyStatus,
 } from "../../api/insurance";
@@ -17,6 +16,7 @@ import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatUsdCents } from "../../lib/money";
+import { PaymentScheduleTab } from "./PaymentScheduleTab";
 
 function formatMoney(cents: number) {
   return formatUsdCents(cents);
@@ -45,13 +45,6 @@ export function PolicyDetail() {
     queryKey: ["insurance", "policy", "claims", companyId, policyId],
     enabled: Boolean(companyId && policyId),
     queryFn: () => listInsuranceClaims({ operating_company_id: companyId, policy_id: policyId }).then((result) => result.claims),
-  });
-
-  const paymentScheduleQuery = useQuery({
-    queryKey: ["insurance", "policy", "payment-schedule", companyId, policyId],
-    enabled: Boolean(companyId && policyId),
-    queryFn: () =>
-      listInsurancePaymentSchedule({ operating_company_id: companyId, policy_id: policyId }).then((result) => result.payment_schedules),
   });
 
   const coiQuery = useQuery({
@@ -233,36 +226,8 @@ export function PolicyDetail() {
         </div>
       </section>
 
-      <section className="rounded-sm border border-gray-200 bg-white p-4">
-        <h3 className="text-sm font-semibold text-slate-900">Payment Schedule (INS-05)</h3>
-        <div className="mt-2 overflow-x-auto">
-          <table className="min-w-full text-left text-xs">
-            <thead className="bg-gray-50 text-slate-600">
-              <tr>
-                <th className="px-2 py-1.5 font-semibold">Due Date</th>
-                <th className="px-2 py-1.5 font-semibold">Amount</th>
-                <th className="px-2 py-1.5 font-semibold">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(paymentScheduleQuery.data ?? []).map((row) => (
-                <tr key={row.id} className="border-t border-gray-100">
-                  <td className="px-2 py-1.5 text-slate-700">{row.due_date}</td>
-                  <td className="px-2 py-1.5 text-slate-700">{formatMoney(row.amount_cents)}</td>
-                  <td className="px-2 py-1.5 text-slate-700">{row.status}</td>
-                </tr>
-              ))}
-              {!paymentScheduleQuery.isLoading && (paymentScheduleQuery.data ?? []).length === 0 ? (
-                <tr>
-                  <td colSpan={3} className="px-2 py-3 text-center text-slate-500">
-                    No payment schedule records.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      {/* Payment Schedule (INS-05) — shared PaymentScheduleTab panel (status filter + Mark paid action). */}
+      <PaymentScheduleTab operatingCompanyId={companyId} policyId={policyId} />
 
       <section className="rounded-sm border border-gray-200 bg-white p-4">
         <h3 className="text-sm font-semibold text-slate-900">COI History (INS-04)</h3>

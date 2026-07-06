@@ -30,6 +30,7 @@ import { PhotoGallery } from "../../components/vehicle-profile/PhotoGallery";
 import { ActionBar } from "../../components/vehicle-profile/ActionBar";
 import { BackhaulSuggestionsWidget } from "../../components/reports/BackhaulSuggestionsWidget";
 import { EditVehicleModal } from "../../components/fleet/EditVehicleModal";
+import { EntityAuditHistoryTab } from "../../components/audit/EntityAuditHistoryTab";
 
 export type UnitProfileAggregate = {
   unit: Record<string, unknown>;
@@ -283,6 +284,10 @@ export function VehicleProfilePage() {
                 View Permits, Toll Tags, Tasks, Brakes, Tires
               </Link>
             </div>
+          </div>
+          <div data-testid="vp-section-12-audit-history" className="rounded-sm border border-gray-200 bg-white p-4">
+            <h3 className="mb-2 text-sm font-semibold text-slate-900">Audit History</h3>
+            <EntityAuditHistoryTab operatingCompanyId={companyId} entityType="unit" entityId={id} />
           </div>
         </>
       ) : null}

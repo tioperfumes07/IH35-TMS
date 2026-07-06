@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "../Button";
+import { TimePicker } from "../forms/TimePicker";
 
 export type SubscriptionFormValues = {
   report_slug: string;
@@ -145,11 +146,11 @@ export function SubscriptionEditor({ open, onClose, onSave, initial, reportOptio
 
           <label className="block">
             <span className="font-medium text-slate-700">Time (local)</span>
-            <input
-              type="time"
-              className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1.5"
+            <TimePicker
+              className="mt-1 w-full"
               value={timeOfDay}
-              onChange={(e) => setTimeOfDay(e.target.value)}
+              onChange={setTimeOfDay}
+              ariaLabel="Time (local)"
             />
           </label>
 

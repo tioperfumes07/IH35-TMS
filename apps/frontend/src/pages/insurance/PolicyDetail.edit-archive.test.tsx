@@ -95,7 +95,9 @@ describe("PolicyDetail edit and archive", () => {
 
     await screen.findByText(/Policy PN-100/i);
     await user.click(screen.getByRole("button", { name: /Edit \/ Update/i }));
-    await user.selectOptions(screen.getByLabelText(/Status/i), "expired");
+    // Anchored: the policy edit panel's "Status" label must not match the Payment Schedule
+    // panel's "Payment status filter" label (added when PaymentScheduleTab was wired in).
+    await user.selectOptions(screen.getByLabelText(/^Status$/i), "expired");
     await user.clear(screen.getByLabelText(/Effective date/i));
     await user.type(screen.getByLabelText(/Effective date/i), "2026-02-15");
     await user.clear(screen.getByLabelText(/Expiry date/i));

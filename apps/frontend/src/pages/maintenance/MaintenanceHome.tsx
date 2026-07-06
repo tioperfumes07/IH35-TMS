@@ -9,6 +9,7 @@ import {
   getMaintenanceKpis,
   getMaintenanceRecentActivity,
   getMaintenanceRmStatus,
+  getMaintenanceSevereAlerts,
   getWorkOrder,
   listMaintenanceParts,
   listMaintPmDue,
@@ -34,6 +35,8 @@ import { CreateExpenseModal } from "./components/CreateExpenseModal";
 import { MaintenanceDamageRegisterTab } from "./components/MaintenanceDamageRegisterTab";
 import { DtcAutoWorkOrdersCard } from "./components/DtcAutoWorkOrdersCard";
 import { InTransitIssuesTable } from "./components/InTransitIssuesTable";
+import { InTransitTriageBand } from "./components/InTransitTriageBand";
+import { SevereAlertsBand } from "./components/SevereAlertsBand";
 import { IntegrationsStrip } from "./components/IntegrationsStrip";
 import { MaintKpiRows } from "./components/MaintKpiRows";
 import { MaintenancePmCountdownCards } from "./components/MaintenancePmCountdownCards";
@@ -125,6 +128,11 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
   const triageQuery = useQuery({
     queryKey: ["maintenance", "dashboard", "triage", companyId],
     queryFn: () => getMaintenanceInTransitQueue(companyId),
+    enabled: Boolean(companyId),
+  });
+  const severeAlertsQuery = useQuery({
+    queryKey: ["maintenance", "dashboard", "severe-alerts", companyId],
+    queryFn: () => getMaintenanceSevereAlerts(companyId),
     enabled: Boolean(companyId),
   });
   const recentQuery = useQuery({
@@ -312,6 +320,11 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
               roadside={rmStatusQuery.data?.roadside ?? []}
               onOpen={(id) => setSelectedWorkOrderId(id)}
             />
+            <InTransitTriageBand
+              issues={triageQuery.data?.issues ?? []}
+              onTriage={(issue) => setTriageIssue(issue)}
+            />
+            <SevereAlertsBand alerts={severeAlertsQuery.data?.alerts ?? []} />
           </aside>
         </div>
       ) : null}

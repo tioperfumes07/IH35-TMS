@@ -2,6 +2,7 @@ import type { JSX } from "react";
 import { useFieldArray, Controller, type Control, type UseFormRegister, type UseFormSetValue } from "react-hook-form";
 import { StateSelect } from "../../../components/forms/StateSelect";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
+import { TimePicker } from "../../../components/forms/TimePicker";
 import { AddressGeocodeInput } from "../../../components/dispatch/AddressGeocodeInput";
 import { stopGeocodePatches } from "./book-load-stop-geocode";
 
@@ -139,7 +140,7 @@ export function BookLoadStopsSection({ control, register, setValue }: Props) {
                       return (
                         <>
                           <Field label="Date" input={<input type="date" data-testid={`stop-date-${index}`} value={d} onChange={(e) => combine(e.target.value, t)} className={CELL} />} />
-                          <Field label="Time" input={<input type="time" data-testid={`stop-time-${index}`} value={t} onChange={(e) => combine(d, e.target.value)} className={CELL} />} />
+                          <Field label="Time" input={<TimePicker id={`stop-time-${index}`} value={t} onChange={(v) => combine(d, v)} className={CELL} ariaLabel="Stop time" />} />
                         </>
                       );
                     }}

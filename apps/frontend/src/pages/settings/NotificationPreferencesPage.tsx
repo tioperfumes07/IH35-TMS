@@ -9,6 +9,7 @@ import {
 } from "../../api/notification-preferences";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
+import { TimePicker } from "../../components/forms/TimePicker";
 
 const CHANNELS: NotificationChannelKey[] = ["email", "sms", "whatsapp", "in_app"];
 
@@ -192,21 +193,11 @@ export function NotificationPreferencesPage() {
           <div className="mt-3 flex flex-wrap items-end gap-3">
             <label className="text-xs text-slate-700">
               <div className="mb-1 font-medium">Start</div>
-              <input
-                type="time"
-                className="rounded-sm border border-slate-300 px-2 py-1 text-sm"
-                value={quietStart}
-                onChange={(e) => setQuietStart(e.target.value)}
-              />
+              <TimePicker value={quietStart} onChange={setQuietStart} ariaLabel="Quiet hours start" />
             </label>
             <label className="text-xs text-slate-700">
               <div className="mb-1 font-medium">End</div>
-              <input
-                type="time"
-                className="rounded-sm border border-slate-300 px-2 py-1 text-sm"
-                value={quietEnd}
-                onChange={(e) => setQuietEnd(e.target.value)}
-              />
+              <TimePicker value={quietEnd} onChange={setQuietEnd} ariaLabel="Quiet hours end" />
             </label>
             <label className="min-w-48 text-xs text-slate-700">
               <div className="mb-1 font-medium">Timezone (IANA)</div>
