@@ -3,7 +3,7 @@
 // Extends the existing single-line categorize workflow (categorization.routes.ts, BLOCK-6/6b) with a real
 // multi-line split model. The prior split endpoint (banking.routes.ts POST /transactions/:id/split)
 // honestly returned 501 — there was no persisted split-lines table. This service is the real thing,
-// backed by banking.bank_transaction_splits (migration 202607091600, HELD).
+// backed by banking.bank_transaction_splits (migration 202607110100, HELD).
 //
 // FULL DOWNSTREAM LINEAGE ON COMMIT (behind BANK_TX_SPLIT_GL_POSTING_ENABLED, OFF by default) — every
 // branch REUSES an existing, already-shipped writer parameterized on the split line's own amount, never new
@@ -29,7 +29,7 @@
 //     that line's own amount. Requires vendor_id (bills always have a payee, same rule as the whole-txn
 //     bulk-post-as-bill path). No new GL math: accounting.bills carries no journal_entry_id — creating one
 //     books a payable, it does not post to the ledger. result_bill_id (forward) + accounting.bills.
-//     source_bank_transaction_id (reverse, migration 202607091600) close the loop.
+//     source_bank_transaction_id (reverse, migration 202607110100) close the loop.
 //   Neither branch eligible (no vendor, no driver-advance) -> posting_status='skipped_pending_gl_wiring'.
 //
 // FLAGS (both OFF by default — lib.feature_flags):

@@ -1091,7 +1091,7 @@ export function BankingTransactionsDesignView({
                         {menuOpen ? (
                           <div className="absolute right-0 top-7 z-20 min-w-[220px] rounded-sm border border-gray-200 bg-white shadow-md">
                             {/* BANK-SPLIT-1: the real, persisted, balanced N-line split (banking.bank_transaction_splits,
-                            migration 202607091600, HELD). Opens the QBO-style Split transaction popup. */}
+                            migration 202607110100, HELD). Opens the QBO-style Split transaction popup. */}
                             <button
                               type="button"
                               className="block w-full border-b border-gray-100 px-3 py-2 text-left text-xs hover:bg-gray-50"
