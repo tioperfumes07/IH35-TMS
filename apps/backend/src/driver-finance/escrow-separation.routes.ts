@@ -36,7 +36,7 @@ function canAccessEscrowSeparation(role: string) {
 
 export async function registerDriverEscrowSeparationRoutes(app: FastifyInstance) {
   // Forward link: driver -> separation record (+ status/eligibility/balance).
-  app.get("/api/v1/driver-finance/escrow-separations/driver/:driver_id", async (req, reply) => {
+  app.get("/api/v1/driver-finance/escrow-separations/driver/:driver_id", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!canAccessEscrowSeparation(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -51,7 +51,7 @@ export async function registerDriverEscrowSeparationRoutes(app: FastifyInstance)
   });
 
   // Owner/Accountant queue: separations whose 90-day hold has elapsed.
-  app.get("/api/v1/driver-finance/escrow-separations", async (req, reply) => {
+  app.get("/api/v1/driver-finance/escrow-separations", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!canAccessEscrowSeparation(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -64,7 +64,7 @@ export async function registerDriverEscrowSeparationRoutes(app: FastifyInstance)
   });
 
   // Record a driver's separation (starts the 90-day clock). Owner/Administrator only.
-  app.post("/api/v1/driver-finance/escrow-separations", async (req, reply) => {
+  app.post("/api/v1/driver-finance/escrow-separations", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!["Owner", "Administrator"].includes(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -81,7 +81,7 @@ export async function registerDriverEscrowSeparationRoutes(app: FastifyInstance)
   });
 
   // Release the driver's escrow balance (net of outstanding damage claims). Owner-only — moves cash.
-  app.post("/api/v1/driver-finance/escrow-separations/:id/release", async (req, reply) => {
+  app.post("/api/v1/driver-finance/escrow-separations/:id/release", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = separationParamsSchema.safeParse(req.params ?? {});
