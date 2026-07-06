@@ -391,6 +391,10 @@
       "reason": "425C form route alias \u2014 sidebar uses /425c"
     },
     {
+      "path": "/425c/exhibits",
+      "reason": "Form 425C Exhibits A-F viewer \u2014 reachable via header link on Form425CHome (/425c), not a module subnav"
+    },
+    {
       "path": "/login/reset",
       "reason": "Auth password reset \u2014 no module subnav"
     },
