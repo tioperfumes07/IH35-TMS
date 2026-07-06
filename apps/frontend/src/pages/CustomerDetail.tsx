@@ -3,6 +3,7 @@ import { formatDateUS } from "../lib/formatDate";
 import { DatePicker } from "../components/forms/DatePicker";
 import { MoneyInput } from "../components/forms/MoneyInput";
 import { customerQualityKind, customerQualityClass } from "../lib/quality-badge";
+import { CustomerLateArrivalCard } from "../components/customers/CustomerLateArrivalCard";
 import { formatUsdCents } from "../lib/money";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -1462,6 +1463,7 @@ export function CustomerDetailPage() {
               />
             </div>
           </DataPanel>
+          <CustomerLateArrivalCard customerId={id} operatingCompanyId={selectedCompanyId ?? ""} />
 
           <DataPanel title="Event Summary">
             <FlatFieldGrid
