@@ -12,6 +12,7 @@ import { ListView } from "../../../components/lists/ListView";
 import type { ActiveFilter, ListViewColumn, ListViewFilter, SortConfig } from "../../../components/lists/ListView/types";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { ChartOfAccountsSyncPanel } from "../../accounting/ChartOfAccountsSyncPanel";
 import { AccountDrawer } from "./AccountDrawer";
 import { CoaBatchActions } from "./CoaBatchActions";
 import {
@@ -366,6 +367,8 @@ export function ChartOfAccountsListPage() {
           </Button>
         }
       />
+
+      {companyId ? <ChartOfAccountsSyncPanel operatingCompanyId={companyId} /> : null}
 
       {isError ? <ListErrorBanner onRetry={() => refetchAll()} /> : null}
 
