@@ -11,6 +11,14 @@ const ListsHubPage = React.lazy(() => import("../pages/lists/ListsHubPage").then
 const ProgramBoardPage = React.lazy(() => import("../pages/program/ProgramBoardPage").then((m) => ({ default: m.ProgramBoardPage })));
 const FinalAdditionsPage = React.lazy(() => import("../pages/program/FinalAdditionsPage").then((m) => ({ default: m.FinalAdditionsPage })));
 const DomainCatalogHubPage = React.lazy(() => import("../pages/lists/DomainCatalogHubPage").then((m) => ({ default: m.DomainCatalogHubPage })));
+// CATALOG-2 — factory-backed generic catalog CRUD (registry-driven, additive to the hand-rolled
+// per-catalog list pages). Distinct route namespace (/lists/catalogs/...) so it never collides with
+// an existing hand-rolled catalog route (e.g. /lists/fleet/equipment-types stays on its own page).
+const CatalogIndex = React.lazy(() => import("../pages/lists/CatalogIndex").then((m) => ({ default: m.CatalogIndex })));
+const GenericCatalogPage = React.lazy(() => import("../pages/lists/GenericCatalogPage").then((m) => ({ default: m.GenericCatalogPage })));
+// CLOSURE-10 — enhanced maintenance parts search (by manufacturer/category), additive to the
+// existing Maintenance Parts master CRUD list at /lists/maintenance/parts.
+const MaintenancePartsCatalog = React.lazy(() => import("../pages/lists/MaintenancePartsCatalog").then((m) => ({ default: m.MaintenancePartsCatalog })));
 const DetailTypesListPage = React.lazy(() => import("../pages/lists/accounting/DetailTypesListPage").then((m) => ({ default: m.DetailTypesListPage })));
 const NamesMasterHub = React.lazy(() => import("../pages/lists/names/NamesMasterHub").then((m) => ({ default: m.NamesMasterHub })));
 const BrokersListPage = React.lazy(() => import("../pages/lists/names/BrokersListPage").then((m) => ({ default: m.BrokersListPage })));
@@ -2175,6 +2183,14 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route
+          path="/lists/maintenance/parts-catalog"
+          element={
+            <ProtectedRoute>
+              <MaintenancePartsCatalog />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/lists/maintenance/priority-levels"
           element={
             <ProtectedRoute>
@@ -2618,6 +2634,24 @@ export const ROUTES = React.Children.toArray(
             path is kept, never deleted) to the canonical Chart of Accounts page shipped in #1793. This
             explicit route is declared BEFORE /lists/:domain so it wins the match. */}
         <Route path="/lists/chart-of-accounts" element={<Navigate replace to="/lists/accounting/chart-of-accounts" />} />
+        {/* CATALOG-2 factory index + dynamic catalog page — registered BEFORE /lists/:domain(/:catalogKey)
+            so the literal "catalogs" segment always wins over the dynamic domain catch-all. */}
+        <Route
+          path="/lists/catalogs"
+          element={
+            <ProtectedRoute>
+              <CatalogIndex />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/catalogs/:domain/:catalogKey"
+          element={
+            <ProtectedRoute>
+              <GenericCatalogPage />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/lists/:domain"
           element={

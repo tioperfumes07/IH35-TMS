@@ -2,8 +2,15 @@ import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { GENERIC_CATALOG_REGISTRY, catalogNameToRoutePath } from "../../hooks/useCatalogQuery";
+import { GENERIC_CATALOG_REGISTRY } from "../../hooks/useCatalogQuery";
 import { ListsSubNav } from "./ListsSubNav";
+
+// Own route-builder (distinct from useCatalogQuery's catalogNameToRoutePath, which points at the
+// legacy hand-rolled per-catalog pages, e.g. /lists/fleet/equipment-types) so this factory index
+// always links into the CATALOG-2 dynamic page namespace and never collides with an existing route.
+function factoryRoutePath(domain: string, catalogKey: string): string {
+  return `/lists/catalogs/${domain}/${catalogKey}`;
+}
 
 type DomainGroup = {
   domain: string;
@@ -42,7 +49,7 @@ export function CatalogIndex() {
       existing.catalogs.push({
         catalogName: definition.catalogName,
         displayName: definition.displayName,
-        routePath: catalogNameToRoutePath(definition.catalogName),
+        routePath: factoryRoutePath(definition.domain, definition.catalogKey),
         description: `Generic CRUD for ${definition.catalogName}`,
       });
       byDomain.set(definition.domain, existing);
