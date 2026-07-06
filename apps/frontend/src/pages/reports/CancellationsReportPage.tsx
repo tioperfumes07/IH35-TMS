@@ -68,7 +68,12 @@ export function CancellationsReportPage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader title="Cancellations" subtitle="Reports" />
+      <PageHeader
+        title="Cancellations"
+        subtitle="Reports"
+        backHref="/reports"
+        breadcrumb={["Reports", "Cancellations"]}
+      />
       <ReportsSubNav />
 
       <div className="flex flex-wrap items-end gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">

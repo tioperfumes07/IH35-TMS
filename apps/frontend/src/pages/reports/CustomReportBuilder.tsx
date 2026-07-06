@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
@@ -98,11 +97,8 @@ export function CustomReportBuilder() {
       <PageHeader
         title="Custom report builder"
         subtitle="Drag fields, choose filters, save to your Saved list"
-        actions={
-          <Link to="/reports" className="text-xs font-semibold text-slate-700 hover:underline">
-            ← Reports
-          </Link>
-        }
+        backHref="/reports"
+        breadcrumb={["Reports", "Custom Report Builder"]}
       />
 
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
