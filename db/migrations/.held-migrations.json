@@ -176,6 +176,10 @@
     {
       "file": "202607140000_opening_balance_import_flag.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1] STMT-2 — OPENING_BALANCE_IMPORT_ENABLED flag seed only (no schema change). Gates the read-only TRANSP 12/31/2024 opening-balance importer preview endpoint; the importer never posts (owner-entered only)."
+    },
+    {
+      "file": "202607130100_block17_24_tax_document_engine.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] BLOCK-17/24 — 1099-NEC/1042-S annual generation + general tax-document PDF engine (catalogs.payee_tax_profile, catalogs.tax_form_thresholds, accounting.tax_document(_batch), accounting.form_1099_nec, accounting.form_1042_s). No new GL math, no e-file/transmission logic. TAX_DOC_1099_ENABLED OFF."
     }
   ]
 }
