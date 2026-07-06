@@ -56,13 +56,15 @@ const SCREEN_COMPONENTS = {
     `${FE}/maintenance/components/CreateWorkOrderModal.tsx`,
     `${FE}/maintenance/components/CreateWOSectionIdentification.tsx`,
     `${FE}/maintenance/components/CreateWOSectionRenderV5Header.tsx`,
-    `${FE}/maintenance/components/CreateWOSectionCostBreakdown.tsx`,
     `${FE}/maintenance/components/CreateWOSectionPaymentTiming.tsx`,
     `${FE}/maintenance/components/CreateWOSectionReconcile.tsx`,
     `${FE}/maintenance/components/CreateWOSectionValidation.tsx`,
-    // Parts/labor line fields (Part # / Task, Qty/Hr, Unit/Rate, Total) render via the shared line editor;
-    // the inline "+ Add vendor" mini-create (Street/Zip/Account no./Tax ID/Track 1099?/Default expense
-    // account) renders via QuickCreateEntityModal — both reached from this modal.
+    // Parts/labor line fields (Part # / Task, Qty/Hr, Unit/Rate, Total) render via the shared line editor
+    // (orphan-triage batch 08 removed the dead CreateWOSectionCostBreakdown.tsx: it bound to the
+    // CreateWOFormValues.line_items field, which the live create-submit path never reads — the real
+    // Section C is TwoSectionLineEditor mode="wo", whose CostBreakdownBox already carries these exact
+    // labels, listed below); the inline "+ Add vendor" mini-create (Street/Zip/Account no./Tax ID/
+    // Track 1099?/Default expense account) renders via QuickCreateEntityModal — both reached from this modal.
     `apps/frontend/src/components/forms/TwoSectionLineEditor.tsx`,
     `apps/frontend/src/components/forms/shared/CostBreakdownBox.tsx`,
     `apps/frontend/src/components/forms/shared/QuickCreateEntityModal.tsx`,
