@@ -270,6 +270,17 @@ const IntegrityAdminPage = React.lazy(() => import("../pages/admin/IntegrityAdmi
 const DataImportPage = React.lazy(() => import("../pages/admin/DataImportPage").then((m) => ({ default: m.DataImportPage })));
 const CarrierBootstrapPage = React.lazy(() => import("../pages/admin/CarrierBootstrap").then((m) => ({ default: m.CarrierBootstrapPage })));
 const LaunchTogglesPage = React.lazy(() => import("../pages/admin/LaunchToggles").then((m) => ({ default: m.LaunchTogglesPage })));
+const LaunchReadinessPage = React.lazy(() => import("../pages/admin/LaunchReadinessPage").then((m) => ({ default: m.LaunchReadinessPage })));
+const QboVendorLinkagePage = React.lazy(() => import("../pages/admin/QboVendorLinkagePage").then((m) => ({ default: m.QboVendorLinkagePage })));
+const TripProfitabilityPage = React.lazy(() => import("../pages/dispatch/TripProfitability").then((m) => ({ default: m.TripProfitability })));
+const EdiSetupWizard = React.lazy(() => import("../pages/integrations/edi/EdiSetupWizard").then((m) => ({ default: m.EdiSetupWizard })));
+const EdiTransactionLog = React.lazy(() => import("../pages/integrations/edi/EdiTransactionLog").then((m) => ({ default: m.EdiTransactionLog })));
+const BrakeWearDashboard = React.lazy(() => import("../pages/maintenance/brakes/BrakeWearDashboard").then((m) => ({ default: m.BrakeWearDashboard })));
+const PreFlightDvirQueue = React.lazy(() => import("../pages/maintenance/pre-flight/PreFlightDvirQueue").then((m) => ({ default: m.PreFlightDvirQueue })));
+const TireWearDashboard = React.lazy(() => import("../pages/maintenance/tires/TireWearDashboard").then((m) => ({ default: m.TireWearDashboard })));
+const LateArrivalReport = React.lazy(() => import("../pages/reports/LateArrivalReport").then((m) => ({ default: m.LateArrivalReport })));
+const CSAMitigationQueuePage = React.lazy(() => import("../pages/safety/CSAMitigationQueue").then((m) => ({ default: m.CSAMitigationQueuePage })));
+const AnomalyAlertsPage = React.lazy(() => import("../pages/safety/anomaly/AnomalyAlertsPage").then((m) => ({ default: m.AnomalyAlertsPage })));
 const FeatureFlagsManager = React.lazy(() => import("../pages/admin/feature-flags/FeatureFlagsManager").then((m) => ({ default: m.FeatureFlagsManager })));
 const ObservabilityPage = React.lazy(() => import("../pages/admin/ObservabilityPage").then((m) => ({ default: m.ObservabilityPage })));
 const MobileAuditReport = React.lazy(() => import("../pages/admin/mobile-audit/MobileAuditReport").then((m) => ({ default: m.MobileAuditReport })));
@@ -1381,6 +1392,8 @@ export const ROUTES = React.Children.toArray(
           <Route path="/safety/integrity-reports" element={<IntegrityReportsTab />} />
           <Route path="/safety/position-history" element={<PositionHistoryPage />} />
           <Route path="/safety/integrity-alerts" element={<IntegrityAlertsTab />} />
+          <Route path="/safety/csa-mitigation" element={<CSAMitigationQueuePage />} />
+          <Route path="/safety/anomaly-alerts" element={<AnomalyAlertsPage />} />
           <Route path="/safety/audit-425c" element={<Audit425cPage />} />
           <Route path="/safety/reports" element={<SafetyReportsPage />} />
           <Route path="/safety/driver-profiles/:driverId" element={<DriverSafetyProfileTab />} />
@@ -1728,6 +1741,36 @@ export const ROUTES = React.Children.toArray(
             <ProtectedRoute>
               <MaintenanceShell>
                 <FaultRulesPage />
+              </MaintenanceShell>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/maintenance/brake-wear"
+          element={
+            <ProtectedRoute>
+              <MaintenanceShell>
+                <BrakeWearDashboard />
+              </MaintenanceShell>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/maintenance/pre-flight-dvir"
+          element={
+            <ProtectedRoute>
+              <MaintenanceShell>
+                <PreFlightDvirQueue />
+              </MaintenanceShell>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/maintenance/tire-wear"
+          element={
+            <ProtectedRoute>
+              <MaintenanceShell>
+                <TireWearDashboard />
               </MaintenanceShell>
             </ProtectedRoute>
           }
@@ -2594,6 +2637,22 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route
+          path="/integrations/edi"
+          element={
+            <OwnerOnlyRoute>
+              <EdiSetupWizard />
+            </OwnerOnlyRoute>
+          }
+        />
+        <Route
+          path="/integrations/edi/transaction-log"
+          element={
+            <OwnerOnlyRoute>
+              <EdiTransactionLog />
+            </OwnerOnlyRoute>
+          }
+        />
+        <Route
           path="/samsara/vendor-mapping-integrity"
           element={
             <ProtectedRoute>
@@ -2774,6 +2833,22 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <CancellationsReportPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/late-arrival"
+          element={
+            <ProtectedRoute>
+              <LateArrivalReport />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dispatch/trip-profitability"
+          element={
+            <ProtectedRoute>
+              <TripProfitabilityPage />
             </ProtectedRoute>
           }
         />
@@ -3038,6 +3113,22 @@ export const ROUTES = React.Children.toArray(
             <OwnerOnlyRoute>
               <IntegrityAdminPage />
             </OwnerOnlyRoute>
+          }
+        />
+        <Route
+          path="/admin/launch-readiness"
+          element={
+            <OwnerAdminRoute>
+              <LaunchReadinessPage />
+            </OwnerAdminRoute>
+          }
+        />
+        <Route
+          path="/admin/qbo-vendor-linkage"
+          element={
+            <OwnerAdminRoute>
+              <QboVendorLinkagePage />
+            </OwnerAdminRoute>
           }
         />
         <Route
