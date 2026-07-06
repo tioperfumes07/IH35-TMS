@@ -216,6 +216,7 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
       return [
         { label: "Lists & Catalogs", to: "/lists" },
         { label: "Names Master", to: "/lists/names" },
+        { label: "Maintenance Services", to: "/lists/maintenance/services-catalog" },
       ];
     case "legal":
       return [
@@ -240,7 +241,9 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
           { label: "Migration Status", to: "/admin/migration-status" },
           // "Integrity checks" (/admin/integrity) hidden — endpoint unshipped; module-specific
           // integrity dashboards already exist. Route kept; restore link when backend lands. (#29)
-          { label: "Error monitor", to: "/admin/error-monitor" }
+          { label: "Error monitor", to: "/admin/error-monitor" },
+          { label: "Launch Readiness", to: "/admin/launch-readiness" },
+          { label: "QBO Vendor Linkage", to: "/admin/qbo-vendor-linkage" }
         );
       }
       if (role === "Owner" || role === "SuperAdmin") {
@@ -282,6 +285,12 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
       return [
         { label: "Driver Hub Home", to: "/driver-hub" },
         { label: "Driver App", to: "/driver-app" },
+      ];
+    case "reports":
+      return [
+        { label: "Reports Home", to: "/reports" },
+        { label: "Trip Profitability", to: "/reports/trip-profitability" },
+        { label: "Late Arrival Report", to: "/reports/late-arrival" },
       ];
     default:
       return [];
