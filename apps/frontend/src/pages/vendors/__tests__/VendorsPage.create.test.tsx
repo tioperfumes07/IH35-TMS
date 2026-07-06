@@ -10,6 +10,11 @@ import { VendorsPage } from "../../Vendors";
 vi.mock("../../../api/mdata", () => ({
   listVendors: vi.fn().mockResolvedValue({ vendors: [] }),
   createVendor: vi.fn(),
+  listPaymentTermOptions: vi.fn().mockResolvedValue({ payment_terms: [] }),
+}));
+
+vi.mock("../../../api/catalog-accounts", () => ({
+  listCatalogAccounts: vi.fn().mockResolvedValue({ accounts: [] }),
 }));
 
 vi.mock("../../../api/accounting", () => ({

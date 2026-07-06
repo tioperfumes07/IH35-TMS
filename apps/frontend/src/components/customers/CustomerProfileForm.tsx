@@ -8,17 +8,20 @@
  * (heading + rule + field grid) — no box-within-box card nesting.
  *
  * Every field here round-trips to an EXISTING mdata.customers column via
- * Create/UpdateCustomerInput. QBO fields that have no column yet (Cc/Bcc,
- * name-to-print-on-checks, shipping address, payment method, delivery
- * method, language, tax-exemption details, attachments, communication
- * permissions) are surfaced in a labelled "Pending backend" note rather than as
- * silent inputs that would drop data — those are flagged follow-ups (need a
- * migration; out of scope for this non-financial UI block).
+ * Create/UpdateCustomerInput. VENDOR-CUSTOMER-QBO-PARITY (migration
+ * 202607110230, HELD) closed the Cc/Bcc, print-on-invoice name, structured
+ * shipping address, preferred payment/delivery method, customer language, and
+ * tax-exemption gaps that used to be listed here as "pending backend" — they
+ * are now real sections below. Only fine-grained communication-consent
+ * tracking (beyond the delivery-method choice) remains a flagged follow-up;
+ * see the trailing note.
  */
 import { useMemo, useState, type ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Combobox } from "../Combobox";
 import { Button } from "../Button";
 import { createPaymentTermOption, type CreateCustomerInput, type Customer, type PaymentTermOption, type UpdateCustomerInput } from "../../api/mdata";
+import { listCatalogAccounts } from "../../api/catalog-accounts";
 import type { CustomerType, MilesBasis } from "../../types/api";
 
 export type CustomerProfileFormValues = {
@@ -43,6 +46,7 @@ export type CustomerProfileFormValues = {
   payment_terms_id: string;
   credit_limit: string;
   credit_limit_source: "" | "factor" | "manual" | "rmis_future";
+  default_income_account_id: string; // Option-B: recommendation only, pre-fills invoice lines
   // AR / AP contacts
   main_contact_name: string;
   main_contact_title: string;
@@ -65,6 +69,22 @@ export type CustomerProfileFormValues = {
   notes: string;
   // Status (edit only)
   status: Customer["status"];
+  // VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD)
+  print_on_invoice_name: string;
+  cc_email: string;
+  bcc_email: string;
+  shipping_same_as_billing: boolean;
+  shipping_address_line1: string;
+  shipping_address_line2: string;
+  shipping_city: string;
+  shipping_state: string;
+  shipping_postal_code: string;
+  shipping_country: string;
+  preferred_payment_method: "" | "check" | "ach" | "credit_card" | "cash" | "other";
+  preferred_delivery_method: "email" | "print" | "none";
+  preferred_language: "en" | "es";
+  tax_exempt: boolean;
+  tax_exempt_reason: string;
 };
 
 export function emptyCustomerProfileValues(): CustomerProfileFormValues {
@@ -86,6 +106,7 @@ export function emptyCustomerProfileValues(): CustomerProfileFormValues {
     payment_terms_id: "",
     credit_limit: "",
     credit_limit_source: "",
+    default_income_account_id: "",
     main_contact_name: "",
     main_contact_title: "",
     ar_email: "",
@@ -103,6 +124,21 @@ export function emptyCustomerProfileValues(): CustomerProfileFormValues {
     factoring_notes: "",
     notes: "",
     status: "active",
+    print_on_invoice_name: "",
+    cc_email: "",
+    bcc_email: "",
+    shipping_same_as_billing: true,
+    shipping_address_line1: "",
+    shipping_address_line2: "",
+    shipping_city: "",
+    shipping_state: "",
+    shipping_postal_code: "",
+    shipping_country: "US",
+    preferred_payment_method: "",
+    preferred_delivery_method: "email",
+    preferred_language: "en",
+    tax_exempt: false,
+    tax_exempt_reason: "",
   };
 }
 
@@ -126,6 +162,7 @@ export function customerToProfileValues(c: Customer): CustomerProfileFormValues 
     payment_terms_id: str(c.payment_terms_id),
     credit_limit: str(c.credit_limit),
     credit_limit_source: c.credit_limit_source ?? "",
+    default_income_account_id: str(c.default_income_account_id),
     main_contact_name: str(c.main_contact_name),
     main_contact_title: str(c.main_contact_title),
     ar_email: str(c.ar_email),
@@ -143,6 +180,21 @@ export function customerToProfileValues(c: Customer): CustomerProfileFormValues 
     factoring_notes: str(c.factoring_notes),
     notes: str(c.notes),
     status: c.status,
+    print_on_invoice_name: str(c.print_on_invoice_name),
+    cc_email: str(c.cc_email),
+    bcc_email: str(c.bcc_email),
+    shipping_same_as_billing: c.shipping_same_as_billing ?? true,
+    shipping_address_line1: str(c.shipping_address_line1),
+    shipping_address_line2: str(c.shipping_address_line2),
+    shipping_city: str(c.shipping_city),
+    shipping_state: str(c.shipping_state),
+    shipping_postal_code: str(c.shipping_postal_code),
+    shipping_country: c.shipping_country ?? "US",
+    preferred_payment_method: c.preferred_payment_method ?? "",
+    preferred_delivery_method: c.preferred_delivery_method ?? "email",
+    preferred_language: c.preferred_language ?? "en",
+    tax_exempt: Boolean(c.tax_exempt),
+    tax_exempt_reason: str(c.tax_exempt_reason),
   };
 }
 
@@ -177,6 +229,7 @@ export function profileValuesToCreatePayload(v: CustomerProfileFormValues, opera
     payment_terms_id: v.payment_terms_id || null,
     credit_limit: numOrUndef(v.credit_limit),
     credit_limit_source: v.credit_limit_source || null,
+    default_income_account_id: v.default_income_account_id || null,
     main_contact_name: trimOrUndef(v.main_contact_name),
     main_contact_title: trimOrUndef(v.main_contact_title),
     main_contact_mobile: trimOrUndef(v.mobile),
@@ -195,6 +248,21 @@ export function profileValuesToCreatePayload(v: CustomerProfileFormValues, opera
     factoring_notes: trimOrUndef(v.factoring_notes),
     notes: trimOrUndef(v.notes),
     operating_company_id: operatingCompanyId,
+    print_on_invoice_name: trimOrUndef(v.print_on_invoice_name),
+    cc_email: trimOrUndef(v.cc_email),
+    bcc_email: trimOrUndef(v.bcc_email),
+    shipping_same_as_billing: v.shipping_same_as_billing,
+    shipping_address_line1: v.shipping_same_as_billing ? undefined : trimOrUndef(v.shipping_address_line1),
+    shipping_address_line2: v.shipping_same_as_billing ? undefined : trimOrUndef(v.shipping_address_line2),
+    shipping_city: v.shipping_same_as_billing ? undefined : trimOrUndef(v.shipping_city),
+    shipping_state: v.shipping_same_as_billing ? undefined : trimOrUndef(v.shipping_state),
+    shipping_postal_code: v.shipping_same_as_billing ? undefined : trimOrUndef(v.shipping_postal_code),
+    shipping_country: v.shipping_same_as_billing ? undefined : trimOrUndef(v.shipping_country),
+    preferred_payment_method: v.preferred_payment_method || null,
+    preferred_delivery_method: v.preferred_delivery_method || undefined,
+    preferred_language: v.preferred_language || undefined,
+    tax_exempt: v.tax_exempt,
+    tax_exempt_reason: v.tax_exempt ? trimOrNull(v.tax_exempt_reason) : null,
   };
 }
 
@@ -217,6 +285,7 @@ export function profileValuesToUpdatePayload(v: CustomerProfileFormValues): Upda
     payment_terms_id: v.payment_terms_id || null,
     credit_limit: numOrNull(v.credit_limit),
     credit_limit_source: v.credit_limit_source || null,
+    default_income_account_id: v.default_income_account_id || null,
     main_contact_name: trimOrNull(v.main_contact_name),
     main_contact_title: trimOrNull(v.main_contact_title),
     main_contact_mobile: trimOrNull(v.mobile),
@@ -235,6 +304,21 @@ export function profileValuesToUpdatePayload(v: CustomerProfileFormValues): Upda
     factoring_notes: trimOrNull(v.factoring_notes),
     notes: trimOrNull(v.notes),
     status: v.status,
+    print_on_invoice_name: trimOrNull(v.print_on_invoice_name),
+    cc_email: trimOrNull(v.cc_email),
+    bcc_email: trimOrNull(v.bcc_email),
+    shipping_same_as_billing: v.shipping_same_as_billing,
+    shipping_address_line1: v.shipping_same_as_billing ? null : trimOrNull(v.shipping_address_line1),
+    shipping_address_line2: v.shipping_same_as_billing ? null : trimOrNull(v.shipping_address_line2),
+    shipping_city: v.shipping_same_as_billing ? null : trimOrNull(v.shipping_city),
+    shipping_state: v.shipping_same_as_billing ? null : trimOrNull(v.shipping_state),
+    shipping_postal_code: v.shipping_same_as_billing ? null : trimOrNull(v.shipping_postal_code),
+    shipping_country: v.shipping_same_as_billing ? null : trimOrNull(v.shipping_country),
+    preferred_payment_method: v.preferred_payment_method || null,
+    preferred_delivery_method: v.preferred_delivery_method || undefined,
+    preferred_language: v.preferred_language || undefined,
+    tax_exempt: v.tax_exempt,
+    tax_exempt_reason: v.tax_exempt ? trimOrNull(v.tax_exempt_reason) : null,
   };
 }
 
@@ -361,6 +445,20 @@ export function CustomerProfileForm({ values, onPatch, mode, paymentTermOptions,
         .map((c) => ({ value: c.id, label: c.customer_code ? `${c.name} (${c.customer_code})` : c.name })),
     [parentCustomerOptions, customerId]
   );
+
+  // Option-B (vendor-customer-categorization-option-b): default income account is a RECOMMENDATION
+  // that pre-fills invoice lines — the user can always override it. Scoped to Income-type accounts.
+  const incomeAccountsQuery = useQuery({
+    queryKey: ["catalog-accounts", "income-for-customer-default"],
+    queryFn: () => listCatalogAccounts({ status: "active" }),
+    staleTime: 5 * 60 * 1000,
+  });
+  const incomeAccountOptions = useMemo(() => {
+    const accounts = incomeAccountsQuery.data?.accounts ?? [];
+    return accounts
+      .filter((a) => a.account_type === "Income")
+      .map((a) => ({ value: a.id, label: a.account_number ? `${a.account_number} — ${a.account_name}` : a.account_name }));
+  }, [incomeAccountsQuery.data]);
 
   async function saveNewTerm() {
     const name = newTermName.trim();
@@ -504,6 +602,19 @@ export function CustomerProfileForm({ values, onPatch, mode, paymentTermOptions,
               { value: "rmis_future", label: "RMIS (future)" },
             ]}
           />
+          <div className="block text-sm md:col-span-2">
+            <span className="mb-1 block text-xs font-semibold text-gray-600">Default income account</span>
+            <Combobox
+              options={incomeAccountOptions}
+              value={values.default_income_account_id || null}
+              onChange={(next) => onPatch({ default_income_account_id: next ?? "" })}
+              placeholder="— None —"
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Option-B recommendation only: pre-fills the income account when creating an invoice line for
+              this customer. Always shown as an editable suggestion — never posted silently.
+            </p>
+          </div>
         </div>
       </section>
 
@@ -515,7 +626,103 @@ export function CustomerProfileForm({ values, onPatch, mode, paymentTermOptions,
         <TextField label="A/R phone" value={values.ar_phone} onChange={(ar_phone) => onPatch({ ar_phone })} />
         <TextField label="A/P email" type="email" value={values.ap_email} onChange={(ap_email) => onPatch({ ap_email })} />
         <TextField label="A/P phone" value={values.ap_phone} onChange={(ap_phone) => onPatch({ ap_phone })} />
+        <TextField label="Cc email (invoice copy)" type="email" value={values.cc_email} onChange={(cc_email) => onPatch({ cc_email })} />
+        <TextField label="Bcc email (invoice copy)" type="email" value={values.bcc_email} onChange={(bcc_email) => onPatch({ bcc_email })} />
+        <TextField
+          label="Print on invoice as"
+          value={values.print_on_invoice_name}
+          onChange={(print_on_invoice_name) => onPatch({ print_on_invoice_name })}
+          placeholder="Leave blank to use the customer display name"
+        />
       </Section>
+
+      {/* Shipping address */}
+      <section className="border-t border-gray-200 pt-3">
+        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Shipping address</h3>
+        <label className="mb-2 flex items-center gap-2 text-sm text-gray-700">
+          <input
+            name="shipping_same_as_billing"
+            type="checkbox"
+            checked={values.shipping_same_as_billing}
+            onChange={(e) => onPatch({ shipping_same_as_billing: e.target.checked })}
+          />
+          Ship to is the same as the billing address
+        </label>
+        {!values.shipping_same_as_billing ? (
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+            <label className="block text-sm md:col-span-2">
+              <span className="mb-1 block text-xs font-semibold text-gray-600">Shipping street</span>
+              <input
+                value={values.shipping_address_line1}
+                onChange={(e) => onPatch({ shipping_address_line1: e.target.value })}
+                className="h-9 w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
+              />
+            </label>
+            <TextField label="Shipping address line 2" value={values.shipping_address_line2} onChange={(shipping_address_line2) => onPatch({ shipping_address_line2 })} />
+            <TextField label="Shipping city" value={values.shipping_city} onChange={(shipping_city) => onPatch({ shipping_city })} />
+            <TextField label="Shipping state" value={values.shipping_state} onChange={(shipping_state) => onPatch({ shipping_state })} placeholder="TX" />
+            <TextField label="Shipping ZIP / postal code" value={values.shipping_postal_code} onChange={(shipping_postal_code) => onPatch({ shipping_postal_code })} />
+            <TextField label="Shipping country" value={values.shipping_country} onChange={(shipping_country) => onPatch({ shipping_country })} placeholder="US" />
+          </div>
+        ) : null}
+      </section>
+
+      {/* Preferences */}
+      <Section title="Preferences">
+        <SelectField
+          label="Preferred delivery method"
+          value={values.preferred_delivery_method}
+          onChange={(v) => onPatch({ preferred_delivery_method: v as CustomerProfileFormValues["preferred_delivery_method"] })}
+          options={[
+            { value: "email", label: "Email" },
+            { value: "print", label: "Print" },
+            { value: "none", label: "None" },
+          ]}
+        />
+        <SelectField
+          label="Preferred payment method"
+          value={values.preferred_payment_method}
+          onChange={(v) => onPatch({ preferred_payment_method: v as CustomerProfileFormValues["preferred_payment_method"] })}
+          options={[
+            { value: "", label: "— Select —" },
+            { value: "check", label: "Check" },
+            { value: "ach", label: "ACH" },
+            { value: "credit_card", label: "Credit card" },
+            { value: "cash", label: "Cash" },
+            { value: "other", label: "Other" },
+          ]}
+        />
+        <SelectField
+          label="Customer language"
+          value={values.preferred_language}
+          onChange={(v) => onPatch({ preferred_language: v as CustomerProfileFormValues["preferred_language"] })}
+          options={[
+            { value: "en", label: "English" },
+            { value: "es", label: "Español" },
+          ]}
+        />
+      </Section>
+
+      {/* Tax */}
+      <section className="border-t border-gray-200 pt-3">
+        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Tax</h3>
+        <label className="mb-2 flex items-center gap-2 text-sm text-gray-700">
+          <input
+            name="tax_exempt"
+            type="checkbox"
+            checked={values.tax_exempt}
+            onChange={(e) => onPatch({ tax_exempt: e.target.checked })}
+          />
+          Tax exempt
+        </label>
+        {values.tax_exempt ? (
+          <TextField
+            label="Exemption reason / certificate on file"
+            value={values.tax_exempt_reason}
+            onChange={(tax_exempt_reason) => onPatch({ tax_exempt_reason })}
+          />
+        ) : null}
+      </section>
 
       {/* Detention & free time */}
       <Section title="Detention & free-time defaults">
@@ -603,11 +810,12 @@ export function CustomerProfileForm({ values, onPatch, mode, paymentTermOptions,
       <section className="border-t border-gray-200 pt-3">
         <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">QuickBooks fields — pending backend</h3>
         <p className="text-xs text-gray-500">
-          These QBO parity fields have no <code className="text-gray-600">mdata.customers</code> column yet and are a
-          gated follow-up (needs a migration): Cc/Bcc email, name-to-print-on-checks, structured
-          shipping address, payment method, preferred delivery method, customer language, tax-exemption details,
-          attachments, and communication permissions. They are intentionally not shown as inputs here so no data is
-          silently dropped.
+          VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD) closed Cc/Bcc email, print-on-invoice
+          name, structured shipping address, preferred payment/delivery method, customer language, and
+          tax-exemption — those are now real sections above. Document attachments already live on the
+          <code className="text-gray-600"> Documents</code> tab. The one remaining gap: fine-grained
+          communication-consent tracking (beyond the delivery-method choice) has no column yet — a gated
+          follow-up, intentionally not shown as an input here so no data is silently dropped.
         </p>
       </section>
     </div>

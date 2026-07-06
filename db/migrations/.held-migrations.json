@@ -120,6 +120,14 @@
     {
       "file": "202607110000_relay_fuel_ingest.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1] Relay Payments fuel ingest storage — integrations.relay_fuel_transactions/_lines + mdata.drivers.integration_id (additive). Storage only, no GL posting; RELAY_FUEL_INGEST_ENABLED OFF."
+    },
+    {
+      "file": "202607110230_vendor_qbo_parity.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] VENDOR-QBO-PARITY — additive mdata.vendors columns (website, print-on-check name, payment terms, default expense account Option-B recommendation); pure ADD COLUMN, no data touched"
+    },
+    {
+      "file": "202607110240_customer_qbo_parity.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] CUSTOMER-QBO-PARITY — additive mdata.customers columns (Cc/Bcc email, print-on-invoice name, shipping address, delivery/payment/language preferences, tax-exempt, default income account Option-B recommendation); pure ADD COLUMN, no data touched"
     }
   ]
 }
