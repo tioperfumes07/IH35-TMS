@@ -34,6 +34,30 @@ function yesterdayIsoDate(): string {
   return d.toISOString().slice(0, 10);
 }
 
+function todayIsoDate(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+/** First day of the month `n` months before today (UTC), ISO date. */
+function isoDateMonthsAgo(n: number): string {
+  const d = new Date();
+  d.setUTCMonth(d.getUTCMonth() - n, 1);
+  return d.toISOString().slice(0, 10);
+}
+
+/**
+ * Inclusive monthly [startDate,endDate] windows from `months` ago through today (UTC).
+ * Chunked monthly so a deep historical pull stays within Relay API response limits; any
+ * boundary overlap is harmless because the upsert is idempotent by transaction_id.
+ */
+function monthlyWindows(months: number): Array<{ startDate: string; endDate: string }> {
+  const windows: Array<{ startDate: string; endDate: string }> = [];
+  for (let i = months; i >= 0; i -= 1) {
+    windows.push({ startDate: isoDateMonthsAgo(i), endDate: i === 0 ? todayIsoDate() : isoDateMonthsAgo(i - 1) });
+  }
+  return windows;
+}
+
 async function listActiveCompanyIds(client: DbClient): Promise<string[]> {
   const res = await client.query<{ id: string }>(
     `SELECT id::text AS id FROM org.companies WHERE is_active = true AND deactivated_at IS NULL ORDER BY id`
@@ -151,4 +175,56 @@ export function initializeRelayFuelIngestCron(app: FastifyInstance) {
   );
 
   app.log.info("Relay fuel ingest cron scheduled (daily 07:00 America/Chicago)");
+}
+
+/**
+ * One-shot HISTORICAL BACKFILL — pulls the maximum available past Relay fuel transactions
+ * for each active, flag-ON operating company. Default 24 months (RELAY_FUEL_INGEST_BACKFILL_MONTHS),
+ * chunked monthly. Idempotent (upsert by transaction_id), so safe to re-run; Relay returns only
+ * what exists, so "24 months or more" naturally yields whatever history is available.
+ * Jorge 2026-07-05: "set to maximum past time, 24 months or more if available."
+ */
+export async function runRelayFuelBackfill(app: FastifyInstance, opts?: { months?: number }): Promise<void> {
+  const months =
+    opts?.months ?? (Number.parseInt(process.env.RELAY_FUEL_INGEST_BACKFILL_MONTHS ?? "24", 10) || 24);
+  const windows = monthlyWindows(months);
+  const failures: { operating_company_id: string; error: unknown }[] = [];
+
+  await withLuciaBypass(async (client) => {
+    const companyIds = await listActiveCompanyIds(client);
+    for (const operatingCompanyId of companyIds) {
+      const flagOn = await isEnabled(client, "RELAY_FUEL_INGEST_ENABLED", { operating_company_id: operatingCompanyId });
+      if (!flagOn) continue;
+
+      let pulled = 0;
+      let upserted = 0;
+      let skipped = 0;
+      try {
+        for (const w of windows) {
+          const stats = await ingestForCompany(client, app, operatingCompanyId, w.startDate, w.endDate);
+          pulled += stats.pulled;
+          upserted += stats.upserted;
+          skipped += stats.skipped;
+        }
+        app.log.info(
+          { operating_company_id: operatingCompanyId, months, windows: windows.length, pulled, upserted, skipped },
+          "[RELAY_FUEL_INGEST_BACKFILL] company backfill complete"
+        );
+      } catch (error) {
+        // Isolate per-company failure, never swallow — collected and re-thrown after the loop.
+        app.log.error(
+          { err: error, operating_company_id: operatingCompanyId },
+          "[RELAY_FUEL_INGEST_BACKFILL] company backfill failed"
+        );
+        failures.push({ operating_company_id: operatingCompanyId, error });
+      }
+    }
+  });
+
+  if (failures.length > 0) {
+    throw new Error(
+      `relay_fuel_ingest_backfill: ${failures.length} compan${failures.length === 1 ? "y" : "ies"} failed: ` +
+        failures.map((f) => `${f.operating_company_id}(${String((f.error as Error)?.message ?? f.error)})`).join("; ")
+    );
+  }
 }
