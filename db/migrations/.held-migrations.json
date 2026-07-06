@@ -136,6 +136,18 @@
     {
       "file": "202607100100_block01_depreciation_loan_link_and_autopost_log.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1] BLOCK-01 Fixed-Asset Depreciation — additive-only: fixed_assets.financing_loan_id (CCG loan linkage) + append-only depreciation_autopost_runs log. No posting, no new GL math, no flag flips."
+    },
+    {
+      "file": "202607110300_af2_master_data_drift_readonly.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] AF-2 — QBO master-data drift DETECT-ONLY extension: gates the vendors/customers/COA reconciler auto-heal behind QBO_MASTER_DATA_HEAL_ENABLED (default OFF) + widens accounting.recon_runs.run_type for 3 new read-only master-data drift passes. No write-back, no posting."
+    },
+    {
+      "file": "202607110310_af4_ap_import_scaffold.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] AF-4 — A/P bills migration SCAFFOLD: accounting.ap_import_batches/ap_import_preview_lines (audited reviewable bill list) + AP_IMPORT_ENABLED flag (default OFF). The accounting.bills write path is NOT built in this PR (design-only, never build posting logic solo) — schema/preview layer only."
+    },
+    {
+      "file": "202607110320_af7_money_control_flags.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] AF-7 — money-control flag infra: 3 per-entity-only flags (void/reversal, period-close, period-reopen — all default OFF) + accounting.periods RLS role-gate fix (INSERT/UPDATE now requires Owner/Administrator, closing a documented open gap). No posting turned on."
     }
   ]
 }

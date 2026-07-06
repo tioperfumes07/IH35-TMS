@@ -14,7 +14,13 @@ export type ReconRunType =
   | "am_bank_count"
   | "pm_categorization_diff"
   | "on_demand_bank_count"
-  | "on_demand_categorization_diff";
+  | "on_demand_categorization_diff"
+  // AF-2 — DETECT-ONLY master-data anchor-drift passes (see ../../qbo-sync/master-data-anchor-drift.ts).
+  // These record ANCHOR_DRIFT exceptions read from mdata.vendors/mdata.customers/catalogs.accounts vs
+  // their QBO mirror; they never write to the source table (write-back stays OFF per the locked decision).
+  | "master_data_drift_vendors"
+  | "master_data_drift_customers"
+  | "master_data_drift_accounts";
 
 export type ExceptionClass =
   | "COUNT_MISMATCH"
@@ -103,7 +109,9 @@ export type QboReconSource = {
   bankEntries(opco: string, windowStart: string, windowEnd: string): Promise<ReconEntry[]>;
 };
 
-async function insertRun(client: PoolClient, opco: string, runType: ReconRunType, ws: string, we: string, preparer: string | null): Promise<string> {
+// Exported (not just used internally) so AF-2's master-data-anchor-drift.ts can reuse the SAME audited
+// recon_runs/recon_exceptions write path instead of standing up a parallel table.
+export async function insertRun(client: PoolClient, opco: string, runType: ReconRunType, ws: string, we: string, preparer: string | null): Promise<string> {
   const res = await client.query<{ id: string }>(
     `INSERT INTO accounting.recon_runs (operating_company_id, run_type, window_start, window_end, preparer, status)
      VALUES ($1::uuid,$2,$3::timestamptz,$4::timestamptz,$5,'running') RETURNING id`,
@@ -113,7 +121,7 @@ async function insertRun(client: PoolClient, opco: string, runType: ReconRunType
   return res.rows[0].id;
 }
 
-async function insertExceptions(client: PoolClient, opco: string, runId: string, ex: PendingException[]): Promise<void> {
+export async function insertExceptions(client: PoolClient, opco: string, runId: string, ex: PendingException[]): Promise<void> {
   for (const e of ex) {
     const res = await client.query<{ id: string }>(
       `INSERT INTO accounting.recon_exceptions
@@ -126,7 +134,7 @@ async function insertExceptions(client: PoolClient, opco: string, runId: string,
   }
 }
 
-async function finalizeRun(client: PoolClient, opco: string, runId: string, totals: Record<string, unknown>): Promise<void> {
+export async function finalizeRun(client: PoolClient, opco: string, runId: string, totals: Record<string, unknown>): Promise<void> {
   await client.query(
     `UPDATE accounting.recon_runs SET status='complete', finished_at=now(), totals=$2::jsonb, updated_at=now()
      WHERE id=$1::uuid`,
