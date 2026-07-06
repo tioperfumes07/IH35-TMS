@@ -28,6 +28,7 @@ import { colors } from "../../design/tokens";
 import { driverDisplayName, summarizeDriverDqf } from "../../lib/driverDqf";
 import { DriverDqfComplianceChip } from "./components/DriverDqfComplianceChip";
 import { DriverDqfPanel } from "./components/DriverDqfPanel";
+import { DriverLateArrivalCard } from "../../components/drivers/DriverLateArrivalCard";
 
 interface LayoverSummary {
   total_layovers: number;
@@ -286,6 +287,9 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
 
       <div data-testid="dp-section-7-performance">
         <PerformanceScorecardSection scorecard={aggregate.performance_scorecard ?? null} />
+      </div>
+      <div data-testid="dp-section-late-arrival">
+        <DriverLateArrivalCard driverId={id} operatingCompanyId={companyId} />
       </div>
       <div data-testid="dp-section-8-settlements">
         <SettlementsSection
