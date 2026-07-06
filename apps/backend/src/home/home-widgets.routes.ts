@@ -6,6 +6,7 @@ import {
   countDriversOnActiveLoads,
 } from "../kpi/canonical-kpis.js";
 import { getOpenLoadsBreakdown } from "../dispatch/active-loads-count.js";
+import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../banking/bank-account-visibility.js";
 
 function officeRole(role: string) {
   return role !== "Driver";
@@ -273,6 +274,9 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
         const rel = await client.query(`SELECT to_regclass('banking.bank_accounts') IS NOT NULL AS ok`);
         if (!rel.rows[0]?.ok) return { totalCents: 0, byAccount: [] as Array<{ accountName: string; cents: number }> };
 
+        // BANK-ACCOUNT-HIDE: exclude accounts hidden for THIS entity (flag OFF by default — see
+        // docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
+        const hideOn = await isBankAccountHideEnabled(client, parsed.data.operating_company_id);
         const res = await client.query(
           `
             SELECT COALESCE(NULLIF(trim(account_name), ''), 'Account') AS name,
@@ -282,6 +286,7 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
               AND deactivated_at IS NULL
               AND is_active = true
               AND account_class = 'depository'
+              ${bankAccountHiddenFilterSql(hideOn, "banking.bank_accounts")}
           `,
           [parsed.data.operating_company_id]
         );

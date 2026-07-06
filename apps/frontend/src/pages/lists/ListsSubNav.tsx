@@ -21,6 +21,7 @@ const DOMAIN_LABELS: Record<(typeof DOMAIN_ORDER)[number], string> = {
 export const LISTS_SUB_NAV_ITEMS: NavItem[] = [
   { label: "Lists & Catalogs", href: "/lists" },
   { label: "Names Master", href: "/lists/names" },
+  { label: "Catalog Index", href: "/lists/catalogs" },
   {
     label: "Catalog domains",
     children: DOMAIN_ORDER.map((domain) => ({
@@ -36,12 +37,20 @@ export const LISTS_SUB_NAV_ITEMS: NavItem[] = [
       { label: "Company Violation Types", href: "/lists/safety/company-violation-types" },
     ],
   },
+  {
+    label: "Maintenance catalogs",
+    children: [
+      { label: "Parts Catalog", href: "/lists/maintenance/parts-catalog" },
+    ],
+  },
 ];
 
 export function listsSubNavActiveHref(pathname: string): string {
   const norm = pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
   if (norm === "/lists") return "/lists";
   if (norm.startsWith("/lists/names")) return "/lists/names";
+  if (norm.startsWith("/lists/catalogs")) return "/lists/catalogs";
+  if (norm.startsWith("/lists/maintenance/parts-catalog")) return "/lists/maintenance/parts-catalog";
   if (norm.startsWith("/lists/safety/internal-fine-reasons")) return "/lists/safety/internal-fine-reasons";
   if (norm.startsWith("/lists/safety/civil-fine-types")) return "/lists/safety/civil-fine-types";
   if (norm.startsWith("/lists/safety/company-violation-types")) return "/lists/safety/company-violation-types";

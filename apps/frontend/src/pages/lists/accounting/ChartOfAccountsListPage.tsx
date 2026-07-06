@@ -225,6 +225,11 @@ export function ChartOfAccountsListPage() {
   const [drawerMode, setDrawerMode] = useState<"create" | "edit">("create");
   const [drawerAccount, setDrawerAccount] = useState<CatalogAccount | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  // QBO-SYNC-1 (orphan-triage F1): drift-only filter, driven by ChartOfAccountsSyncPanel's own
+  // "Drift" toggle (previously wired to nothing — see the retired standalone ChartOfAccounts.tsx
+  // wrapper). Rows whose catalog metadata carries the reconciler's `drift_detected` sync status
+  // (set by qbo-sync/chart-of-accounts-reconciler.ts) are shown; all other rows are hidden.
+  const [driftOnly, setDriftOnly] = useState(false);
 
   const asOfDate = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
@@ -262,6 +267,14 @@ export function ChartOfAccountsListPage() {
     );
   }, [balancesQuery.data, catalogQuery.data, plaidQuery.data, typeCatalogQuery.data]);
 
+  const driftAccountIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const row of catalogQuery.data ?? []) {
+      if (row.metadata.qbo_sync_status === "drift_detected") ids.add(row.id);
+    }
+    return ids;
+  }, [catalogQuery.data]);
+
   const filteredRows = useMemo(() => {
     let rows = orderCoaHierarchy(baseRows);
     rows = applyCollapsedVisibility(rows, collapsedParentIds);
@@ -273,6 +286,8 @@ export function ChartOfAccountsListPage() {
 
     if (statusFilter === "active") rows = rows.filter((row) => row.is_active);
     if (statusFilter === "inactive") rows = rows.filter((row) => !row.is_active);
+
+    if (driftOnly) rows = rows.filter((row) => driftAccountIds.has(row.id));
 
     if (sortKey) {
       const currencyColumns = new Set(["qb_balance", "bank_balance"]);
@@ -288,7 +303,7 @@ export function ChartOfAccountsListPage() {
     }
 
     return rows;
-  }, [activeFilters, baseRows, collapsedParentIds, sortDir, sortKey, statusFilter]);
+  }, [activeFilters, baseRows, collapsedParentIds, driftAccountIds, driftOnly, sortDir, sortKey, statusFilter]);
 
   const pageRows = useMemo(() => {
     const start = (page - 1) * pageSize;
@@ -368,7 +383,15 @@ export function ChartOfAccountsListPage() {
         }
       />
 
-      {companyId ? <ChartOfAccountsSyncPanel operatingCompanyId={companyId} /> : null}
+      {companyId ? (
+        <ChartOfAccountsSyncPanel operatingCompanyId={companyId} onDriftFilterToggle={setDriftOnly} />
+      ) : null}
+
+      {driftOnly ? (
+        <p className="text-sm text-slate-700">
+          Showing drift filter active — reconcile or sync to heal unmatched CoA rows.
+        </p>
+      ) : null}
 
       {isError ? <ListErrorBanner onRetry={() => refetchAll()} /> : null}
 

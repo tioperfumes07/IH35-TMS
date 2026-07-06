@@ -20,6 +20,7 @@
  *   adjustments  → accounting.cash_flow_adjustments (already correct)
  */
 import type pg from "pg";
+import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../banking/bank-account-visibility.js";
 import { projectedCashDateSql } from "./projected-cash-date.js";
 
 type Queryable = pg.PoolClient;
@@ -276,6 +277,9 @@ export async function getDailyPrediction(
   //     imported transaction history is incomplete — so the stored balance is the only source of truth.
   // Credit / investment / virtual (factoring/escrow/advance) accounts are excluded: they are not
   // spendable depository cash. Defensive: null on any error so a missing banking table never crashes.
+  // BANK-ACCOUNT-HIDE: opening cash must exclude any account hidden for THIS entity (flag OFF by
+  // default — see docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
+  const hideOn = await isBankAccountHideEnabled(client, operatingCompanyId).catch(() => false);
   const openingRow = await client
     .query<{ balance_cents: number | null }>(
       `
@@ -284,6 +288,7 @@ export async function getDailyPrediction(
       WHERE operating_company_id = $1
         AND account_class = 'depository'
         AND is_active = true
+      ${bankAccountHiddenFilterSql(hideOn, "banking.bank_accounts")}
       `,
       [operatingCompanyId]
     )

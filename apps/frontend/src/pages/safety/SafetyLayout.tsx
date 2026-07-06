@@ -3,7 +3,8 @@ import { useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { getUserPreferences, patchUserPreferences } from "../../api/safety";
+import { getLatestCsa, getSafetyKpis, getUserPreferences, patchUserPreferences } from "../../api/safety";
+import { AnomalyAlertBadge } from "../../components/safety/AnomalyAlertBadge";
 import { SAFETY_ALIAS_TABS, SAFETY_GROUPS, findSafetyTab } from "../../components/safety/SAFETY_TABS_CONFIG";
 import {
   SafetyDashboardFilter,
@@ -11,6 +12,9 @@ import {
   type SafetyDriverFilter,
 } from "../../components/safety/SafetyDashboardFilter";
 import { SafetyGroupNav } from "../../components/safety/SafetyGroupNav";
+import { useCompanyContext } from "../../contexts/CompanyContext";
+import { CSAScoreCard } from "./components/CSAScoreCard";
+import { SafetyKpiRow } from "./components/SafetyKpiRow";
 
 type SafetyUiContextValue = {
   filter: SafetyDriverFilter;
@@ -39,6 +43,8 @@ export function useSafetyUiContext() {
 export function SafetyLayout() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { selectedCompanyId } = useCompanyContext();
+  const companyId = selectedCompanyId ?? "";
   const [filter, setFilter] = useState<SafetyDriverFilter>("active");
   const [activityWindow, setActivityWindow] = useState<SafetyActivityWindow>("7d");
   const [shownDrivers, setShownDrivers] = useState(0);
@@ -50,6 +56,18 @@ export function SafetyLayout() {
   });
   const prefsMutation = useMutation({
     mutationFn: (preferences: Record<string, unknown>) => patchUserPreferences(preferences),
+  });
+  // Cross-module KPI strip + cached CSA badge — shown on every Safety tab (Law of Total
+  // Connectivity: a persistent view of company-wide safety health regardless of which tab is active).
+  const kpisQuery = useQuery({
+    queryKey: ["safety", "kpis", companyId],
+    queryFn: () => getSafetyKpis(companyId),
+    enabled: Boolean(companyId),
+  });
+  const csaQuery = useQuery({
+    queryKey: ["safety", "csa", "latest", companyId],
+    queryFn: () => getLatestCsa(companyId),
+    enabled: Boolean(companyId),
   });
 
   useEffect(() => {
@@ -135,7 +153,10 @@ export function SafetyLayout() {
             </div>
             <h2 className="text-xl font-semibold text-slate-900">Safety</h2>
           </div>
-          <div className="text-xs text-slate-500">Compliance · inspections · discipline · liability · alerts</div>
+          <div className="flex items-center gap-2">
+            <div className="text-xs text-slate-500">Compliance · inspections · discipline · liability · alerts</div>
+            <AnomalyAlertBadge operatingCompanyId={companyId} />
+          </div>
         </div>
 
         <SafetyDashboardFilter
@@ -147,6 +168,11 @@ export function SafetyLayout() {
           total={totalDrivers}
           countsReported={contextValue.countsReported}
         />
+        <div className="grid gap-2 px-[22px] py-2 lg:grid-cols-[1fr_260px]">
+          <SafetyKpiRow kpis={kpisQuery.data} />
+          <CSAScoreCard latest={csaQuery.data?.latest} />
+        </div>
+
         <SafetyGroupNav
           groups={SAFETY_GROUPS}
           activeTabId={activeTabId}

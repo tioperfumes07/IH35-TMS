@@ -67,14 +67,20 @@ function read(rel) {
 
 const subnavManifest = read("apps/frontend/src/pages/accounting/subnav-manifest.ts");
 const routeManifest = read("apps/frontend/src/routes/manifest.tsx");
-const accountingSubNav = read("apps/frontend/src/pages/accounting/AccountingSubNav.tsx");
+// orphan-triage F1: AccountingSubNav.tsx (the old HoverDropdownNav-based "17-tab hover subnav")
+// was a verified-dead, zero-render-consumer duplicate — verify-accounting-nav.mjs Check 4
+// CI-forbids any OTHER page from importing it back, and it was never actually reached from
+// InvoicesListPage.tsx (confirmed: that page only ever imported AccountingSubNavWrapper — the
+// `.includes("AccountingSubNav")` checks below already pass via that substring, not the old file).
+// It has been deleted; the live, unified nav is AccountingSubNavWrapper.tsx, checked here instead.
+const accountingSubNavWrapper = read("apps/frontend/src/pages/accounting/AccountingSubNavWrapper.tsx");
 const invoicesPage = read("apps/frontend/src/pages/accounting/InvoicesListPage.tsx");
 
 if (!invoicesPage.includes("AccountingSubNav")) {
-  fail("InvoicesListPage must render AccountingSubNav (17-tab hover subnav)");
+  fail("InvoicesListPage must render AccountingSubNavWrapper (unified accounting subnav)");
 }
-if (!accountingSubNav.includes("HoverDropdownNav")) {
-  fail("AccountingSubNav must use HoverDropdownNav for Bills/Settlements dropdowns");
+if (!accountingSubNavWrapper.includes("startsWith(`${to}/`)") && !accountingSubNavWrapper.includes("startsWith(\"/accounting/invoices/\")")) {
+  fail("AccountingSubNavWrapper must keep nested-route tab-active matching (was HoverDropdownNav's job pre-unification)");
 }
 
 for (const tab of AUDIT_17_TABS) {
@@ -109,8 +115,8 @@ for (const page of PAGE_FILES_WITH_SUBNAV) {
   }
 }
 
-if (!accountingSubNav.includes('pathname.startsWith("/accounting/invoices/")')) {
-  fail("accountingSubNavActiveHref must keep Invoices tab active on invoice detail paths");
-}
+// AccountingSubNavWrapper's generic tabActive() keeps ANY tab (incl. Invoices) active on nested
+// detail paths via `pathname.startsWith(`${to}/`)` — equivalent to the retired file's hand-coded
+// accountingSubNavActiveHref, verified above.
 
 console.log(`[${LABEL}] PASS — ${AUDIT_17_TABS.length} subnav tabs + Bills/Settlements children + route mounts guarded`);

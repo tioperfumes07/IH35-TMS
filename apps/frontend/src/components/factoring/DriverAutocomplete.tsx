@@ -14,6 +14,10 @@ type Props = {
 
 export function DriverAutocomplete({ companyId, value, onChange, placeholder = "Search driver by name", limit }: Props) {
   const [search, setSearch] = useState("");
+  // Show-on-focus (not gated behind a typed query): the initial unfiltered roster is visible as soon as
+  // the field is focused, so an empty result reads as "genuinely no drivers under this entity", not
+  // "broken picker". A short close-delay lets the click on a list button register before blur hides it.
+  const [focused, setFocused] = useState(false);
 
   const driversQuery = useQuery({
     queryKey: ["factoring", "driver-autocomplete", companyId, search, limit ?? null],
@@ -27,17 +31,25 @@ export function DriverAutocomplete({ companyId, value, onChange, placeholder = "
     return match ? `${match.first_name} ${match.last_name}`.trim() : "";
   }, [driversQuery.data, value]);
 
+  const rows = driversQuery.data ?? [];
+
   return (
     <div className="space-y-1" data-driver-autocomplete="true">
       <input
         className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
         value={search || selectedName}
         placeholder={placeholder}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setTimeout(() => setFocused(false), 150)}
         onChange={(event) => setSearch(event.target.value)}
       />
-      {search.trim() ? (
+      {focused ? (
         <div className="max-h-40 overflow-y-auto rounded-sm border border-gray-200 bg-white">
-          {(driversQuery.data ?? []).slice(0, 20).map((driver) => (
+          {driversQuery.isLoading ? <p className="px-2 py-1 text-xs text-gray-500">Loading drivers...</p> : null}
+          {!driversQuery.isLoading && rows.length === 0 ? (
+            <p className="px-2 py-1 text-xs text-gray-500">No drivers found for this company.</p>
+          ) : null}
+          {rows.slice(0, 20).map((driver) => (
             <button
               key={driver.id}
               type="button"
@@ -45,6 +57,7 @@ export function DriverAutocomplete({ companyId, value, onChange, placeholder = "
               onClick={() => {
                 onChange(driver.id, `${driver.first_name} ${driver.last_name}`.trim());
                 setSearch("");
+                setFocused(false);
               }}
             >
               {`${driver.first_name} ${driver.last_name}`.trim() || driver.id}

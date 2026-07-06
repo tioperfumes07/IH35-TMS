@@ -1,10 +1,12 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { listAuditEvents } from "../../api/audit";
+import { listAuditEvents, type AuditEventListItem } from "../../api/audit";
 import { useAuth } from "../../auth/useAuth";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useListState } from "../../components/list-state";
+import { DataTable } from "../../components/DataTable";
+import { dataTableErrorState } from "../../lib/tableError";
 
 function bulkCallPreview(id: string | null | undefined): string {
   if (!id) return "—";
@@ -41,8 +43,10 @@ export function AuditEventsList() {
       }),
     enabled: Boolean(allowed && operatingCompanyId),
   });
+
+  const rows = eventsQuery.data?.events ?? [];
   // Empty message renders only once the events query settles, never mid-fetch.
-  const listState = useListState(eventsQuery, (eventsQuery.data?.events ?? []).length === 0);
+  const listState = useListState(eventsQuery, rows.length === 0);
 
   if (!allowed) {
     return (
@@ -52,8 +56,6 @@ export function AuditEventsList() {
       </div>
     );
   }
-
-  const rows = eventsQuery.data?.events ?? [];
 
   return (
     <div className="space-y-4">
@@ -92,49 +94,54 @@ export function AuditEventsList() {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="w-full text-left text-xs">
-          <thead className="bg-gray-50 text-[10px] uppercase text-gray-600">
-            <tr>
-              <th className="px-2 py-2">When</th>
-              <th className="px-2 py-2">Event</th>
-              <th className="px-2 py-2">Actor</th>
-              <th className="px-2 py-2">Bulk Call</th>
-              <th className="px-2 py-2">Source</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.id} className="border-t border-gray-100">
-                <td className="px-2 py-2 text-gray-700">{new Date(row.created_at).toLocaleString()}</td>
-                <td className="px-2 py-2 font-medium text-gray-900">{row.event_type}</td>
-                <td className="px-2 py-2 text-gray-700">{row.actor_email ?? row.actor_user_id ?? "—"}</td>
-                <td className="px-2 py-2">
-                  {row.bulk_call_id ? (
-                    <button
-                      type="button"
-                      className="font-mono text-slate-700 underline"
-                      title={row.bulk_call_id}
-                      onClick={() => {
-                        setBulkCallId(row.bulk_call_id ?? "");
-                        setAppliedBulkCallId(row.bulk_call_id ?? "");
-                      }}
-                    >
-                      {bulkCallPreview(row.bulk_call_id)}
-                    </button>
-                  ) : (
-                    "—"
-                  )}
-                </td>
-                <td className="px-2 py-2 text-gray-600">{row.source ?? "—"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {listState.isEmpty ? (
-          <div className="p-3 text-sm text-gray-500">No audit events found.</div>
-        ) : null}
-      </div>
+      <DataTable
+        rows={rows}
+        tableKey="audit-events-list"
+        rowKey={(row) => row.id}
+        loading={listState.isLoading}
+        errorState={dataTableErrorState(eventsQuery.error, () => void eventsQuery.refetch())}
+        // Settled-only empty text (LIST-EMPTY-1): only supplied once listState resolves to "empty",
+        // never during loading/error, so DataTable's own gate never flashes a false empty.
+        emptyText={listState.isEmpty ? "No audit events found." : undefined}
+        columns={[
+          {
+            key: "created_at",
+            label: "When",
+            sortable: true,
+            numeric: true,
+            render: (row) => new Date(row.created_at).toLocaleString(),
+          },
+          { key: "event_type", label: "Event", sortable: true, cellClass: "font-medium text-gray-900" },
+          {
+            key: "actor_email",
+            label: "Actor",
+            sortable: true,
+            render: (row) => row.actor_email ?? row.actor_user_id ?? "—",
+          },
+          {
+            key: "bulk_call_id",
+            label: "Bulk Call",
+            sortable: true,
+            render: (row: AuditEventListItem) =>
+              row.bulk_call_id ? (
+                <button
+                  type="button"
+                  className="font-mono text-slate-700 underline"
+                  title={row.bulk_call_id}
+                  onClick={() => {
+                    setBulkCallId(row.bulk_call_id ?? "");
+                    setAppliedBulkCallId(row.bulk_call_id ?? "");
+                  }}
+                >
+                  {bulkCallPreview(row.bulk_call_id)}
+                </button>
+              ) : (
+                "—"
+              ),
+          },
+          { key: "source", label: "Source", sortable: true, render: (row) => row.source ?? "—" },
+        ]}
+      />
     </div>
   );
 }

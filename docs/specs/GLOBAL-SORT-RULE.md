@@ -123,6 +123,7 @@ The following columns are permanently exempt from this rule:
 | File | Key / ID | Reason |
 |---|---|---|
 | `apps/frontend/src/pages/dispatch/components/LoadTable.tsx` | `end_date_stub` | The "End" column is a pre-existing stub that renders the identical `created_at` value already shown (and already sortable) in the "Start" column — no distinct end-date field exists yet on `DispatchLoad`. A second sort control over the same data would be a no-op, so it is exempted here rather than marked misleadingly `sortable: true`. |
+| `apps/frontend/src/pages/dispatch/components/UnitsWithoutLoadTable.tsx` | `idle_time` | Duplicate-format display of the already-sortable `hours_since_last_delivery` ("Hours Since") column — the same underlying numeric value, just rendered with a warning glyph/suffix. A second sort control on identical data would be a no-op, not a pure-action column, so it is exempted here rather than marked misleadingly `sortable: true`. |
 
 To add an exemption, update this table and add the key to `EXEMPT_COLUMN_KEYS` in `scripts/verify-global-sort-rule.mjs`. Exemptions require a comment explaining why the column is a pure action column.
 

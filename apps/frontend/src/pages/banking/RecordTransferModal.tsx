@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
+  categorizeBankTransaction,
   createTransfer,
   getCoaAccounts,
   getPlaidBankAccounts,
@@ -19,9 +20,26 @@ type Props = {
   defaultTransferType?: TransferType;
   onClose: () => void;
   onSaved: () => void;
+  // banking Categorize inline wiring (HELD): opening this modal FROM a bank-feed row (Transaction
+  // type = "Transfer") pre-seeds the amount/date/memo + one side of the transfer from that row, and —
+  // once the transfer posts — best-effort marks the originating row categorized so it clears the "for
+  // review" queue. All optional; a caller that omits them (none exist today) keeps prior blank-form
+  // behavior byte-for-byte.
+  prefillAmountCents?: number;
+  prefillDate?: string;
+  prefillMemo?: string;
+  seedAccountId?: string;
+  seedAccountSide?: "from" | "to";
+  linkBankTransactionId?: string | null;
 };
 
 type AccountOption = { id: string; name: string; kind: TransferAccountKind };
+
+// OWNER SPEC (2026-07-06): the bank-to-bank From/To picker lists BANK + ASSET + LIABILITY accounts only —
+// EXCLUDE Expense/Income/Equity/CostOfGoodsSold. Expenses stay in the separate "Category (Chart of
+// Accounts)" categorize field, never here. catalogs.accounts.account_type values are the fixed CHECK-
+// constraint set from db/migrations/0010_catalogs_init.sql.
+const TRANSFER_ELIGIBLE_COA_TYPES = new Set(["Asset", "Liability"]);
 
 const transferTypeOptions: Array<{ value: TransferType; label: string }> = [
   { value: "bank_to_bank", label: "Bank-to-Bank" },
@@ -41,7 +59,19 @@ function centsFromAmount(value: number | null) {
   return Math.round(value * 100);
 }
 
-export function RecordTransferModal({ open, operatingCompanyId, defaultTransferType = "bank_to_bank", onClose, onSaved }: Props) {
+export function RecordTransferModal({
+  open,
+  operatingCompanyId,
+  defaultTransferType = "bank_to_bank",
+  onClose,
+  onSaved,
+  prefillAmountCents,
+  prefillDate,
+  prefillMemo,
+  seedAccountId,
+  seedAccountSide,
+  linkBankTransactionId,
+}: Props) {
   const { pushToast } = useToast();
   const [transferType, setTransferType] = useState<TransferType>(defaultTransferType);
   const [fromAccountId, setFromAccountId] = useState("");
@@ -55,13 +85,13 @@ export function RecordTransferModal({ open, operatingCompanyId, defaultTransferT
   useEffect(() => {
     if (!open) return;
     setTransferType(defaultTransferType);
-    setFromAccountId("");
-    setToAccountId("");
-    setAmount(null);
-    setTransferDate(todayIsoDate());
-    setMemo("");
+    setFromAccountId(seedAccountSide === "from" && seedAccountId ? seedAccountId : "");
+    setToAccountId(seedAccountSide === "to" && seedAccountId ? seedAccountId : "");
+    setAmount(prefillAmountCents != null && prefillAmountCents > 0 ? prefillAmountCents / 100 : null);
+    setTransferDate(prefillDate || todayIsoDate());
+    setMemo(prefillMemo ?? "");
     setReferenceNumber("");
-  }, [defaultTransferType, open]);
+  }, [defaultTransferType, open, prefillAmountCents, prefillDate, prefillMemo, seedAccountId, seedAccountSide]);
 
   const bankAccountsQuery = useQuery({
     queryKey: ["banking", "plaid-accounts", operatingCompanyId],
@@ -89,12 +119,21 @@ export function RecordTransferModal({ open, operatingCompanyId, defaultTransferT
         id: account.id,
         name: `${account.account_number || "COA"} - ${account.account_name}`,
         kind: "coa" as const,
+        account_type: account.account_type ?? "",
       })),
     [coaAccountsQuery.data?.accounts]
   );
 
+  // OWNER SPEC (2026-07-06): Bank-to-Bank From/To = real bank accounts PLUS CoA Asset/Liability
+  // accounts (e.g. a loan payable, a money-market asset) — never Expense/Income/Equity.
+  const assetLiabilityCoaAccounts = useMemo(
+    () => coaAccounts.filter((account) => TRANSFER_ELIGIBLE_COA_TYPES.has(account.account_type)),
+    [coaAccounts]
+  );
+
   const fromOptions = useMemo<AccountOption[]>(() => {
-    if (transferType === "bank_to_bank" || transferType === "cc_payment" || transferType === "owner_distribution") return bankAccounts;
+    if (transferType === "bank_to_bank") return [...bankAccounts, ...assetLiabilityCoaAccounts];
+    if (transferType === "cc_payment" || transferType === "owner_distribution") return bankAccounts;
     if (transferType === "cash_deposit") {
       return coaAccounts.filter((account) => /cash|petty/i.test(account.name));
     }
@@ -102,10 +141,12 @@ export function RecordTransferModal({ open, operatingCompanyId, defaultTransferT
       return coaAccounts.filter((account) => /owner|equity|capital/i.test(account.name));
     }
     return [];
-  }, [bankAccounts, coaAccounts, transferType]);
+  }, [assetLiabilityCoaAccounts, bankAccounts, coaAccounts, transferType]);
 
   const toOptions = useMemo<AccountOption[]>(() => {
-    if (transferType === "bank_to_bank") return bankAccounts.filter((account) => account.id !== fromAccountId);
+    if (transferType === "bank_to_bank") {
+      return [...bankAccounts, ...assetLiabilityCoaAccounts].filter((account) => account.id !== fromAccountId);
+    }
     if (transferType === "cc_payment") {
       const creditAccounts = coaAccounts.filter((account) => /credit|card|visa|mastercard|amex|liability/i.test(account.name));
       return creditAccounts.length > 0 ? creditAccounts : coaAccounts;
@@ -115,7 +156,7 @@ export function RecordTransferModal({ open, operatingCompanyId, defaultTransferT
       return coaAccounts.filter((account) => /owner|equity|capital/i.test(account.name));
     }
     return [];
-  }, [bankAccounts, coaAccounts, transferType, fromAccountId]);
+  }, [assetLiabilityCoaAccounts, bankAccounts, coaAccounts, transferType, fromAccountId]);
 
   const fromAccountKind: TransferAccountKind = transferType === "cc_payment" ? "bank" : (fromOptions.find((option) => option.id === fromAccountId)?.kind ?? "bank");
   const toAccountKind: TransferAccountKind = transferType === "cc_payment" ? "cc" : (toOptions.find((option) => option.id === toAccountId)?.kind ?? "bank");
@@ -139,6 +180,28 @@ export function RecordTransferModal({ open, operatingCompanyId, defaultTransferT
         reference_number: referenceNumber.trim() || undefined,
       });
       pushToast(`Transfer recorded (${response.transfer.id})`, "success");
+      // Best-effort: mark the originating bank-feed row categorized so it clears "for review". Reuses
+      // the EXISTING /categorize poster (no new GL math — categorize is a status/tag update, the JE
+      // already posted via createTransfer above). Only wired for a Bank<->CoA leg: the CoA side IS a
+      // catalogs.accounts id, exactly what gl_account_id expects. A bank<->bank leg (destination is
+      // another Plaid account, not a catalogs.accounts row) is intentionally left for manual
+      // categorization — the only endpoint built for that (mark-transfer) has a known-broken/mismatched
+      // contract (see api/banking.ts markBankTransactionTransfer comment); wiring around a broken
+      // contract here would be a guess, not a verified fix.
+      if (linkBankTransactionId) {
+        const coaSideId = fromAccountKind === "coa" ? fromAccountId : toAccountKind === "coa" ? toAccountId : null;
+        if (coaSideId) {
+          try {
+            await categorizeBankTransaction(linkBankTransactionId, operatingCompanyId, {
+              category_kind: "Transfer",
+              gl_account_id: coaSideId,
+              memo: memo.trim() || undefined,
+            });
+          } catch {
+            // Best-effort only — the transfer itself already posted; leave the row for manual review.
+          }
+        }
+      }
       onSaved();
       onClose();
     } catch (error) {

@@ -562,11 +562,43 @@ export function splitTransaction(
   });
 }
 
-export function getAllAccounts(companyId: string, options?: { include_inactive?: boolean }) {
+export function getAllAccounts(companyId: string, options?: { include_inactive?: boolean; include_hidden?: boolean }) {
   const params = new URLSearchParams();
   params.set("operating_company_id", companyId);
   if (options?.include_inactive) params.set("include_inactive", "true");
+  if (options?.include_hidden) params.set("include_hidden", "true");
   return apiRequest<{ accounts: Array<Record<string, unknown>> }>(`/api/v1/banking/accounts/all?${params.toString()}`);
+}
+
+// ── BANK-ACCOUNT-HIDE (Tier-1 HOLD, behind BANK_ACCOUNT_HIDE_ENABLED, default OFF) ──────────────────────
+// Per-entity hide/exclude: an account real for its OWNING entity can be fully hidden for the OTHER entity
+// it was duplicated into (shared Plaid login). Reversible, audited, Owner/Administrator only.
+export type BankAccountVisibilityRow = {
+  id: string;
+  account_name?: string | null;
+  display_name?: string | null;
+  institution_name?: string | null;
+  account_mask?: string | null;
+  account_type?: string | null;
+  current_balance_cents?: number | string | null;
+  is_active?: boolean;
+  hidden_at?: string | null;
+  hidden_by_user_id?: string | null;
+  hidden_reason?: string | null;
+};
+
+export function hideBankAccount(companyId: string, bankAccountId: string, reason: string) {
+  return apiRequest<{ account: BankAccountVisibilityRow }>(`/api/v1/banking/accounts/${bankAccountId}/hide`, {
+    method: "POST",
+    body: { operating_company_id: companyId, reason },
+  });
+}
+
+export function unhideBankAccount(companyId: string, bankAccountId: string) {
+  return apiRequest<{ account: BankAccountVisibilityRow }>(`/api/v1/banking/accounts/${bankAccountId}/unhide`, {
+    method: "POST",
+    body: { operating_company_id: companyId },
+  });
 }
 
 export function saveAccountVisibility(

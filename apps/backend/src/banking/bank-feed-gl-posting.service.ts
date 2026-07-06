@@ -32,6 +32,7 @@ import {
   ExpenseCategoryMapResolutionError,
 } from "../accounting/expense-category-map/resolver.service.js";
 import { postSourceTransaction } from "../accounting/posting-engine.service.js";
+import { isBankAccountHideEnabled } from "./bank-account-visibility.js";
 
 export const BANK_FEED_GL_POSTING_FLAG_KEY = "BANK_FEED_GL_POSTING_ENABLED";
 
@@ -47,6 +48,7 @@ export type BankFeedGlSkipReason =
   | "account_cross_entity"
   | "account_not_postable"
   | "bank_account_ledger_unlinked"
+  | "bank_account_hidden"
   | "zero_amount"
   | "post_failed";
 
@@ -105,6 +107,7 @@ async function decide(input: MaybePostBankCategorizationInput): Promise<Decision
           bt.transfer_kind::text                       AS transfer_kind,
           bt.destination_bank_account_id::text         AS destination_bank_account_id,
           ba.ledger_account_id::text                   AS bank_ledger_account_id,
+          ba.hidden_at                                  AS bank_account_hidden_at,
           ca.id::text                                  AS cat_account_id,
           ca.operating_company_id::text                AS cat_account_opco,
           ca.deactivated_at                            AS cat_account_deactivated_at,
@@ -134,6 +137,7 @@ async function decide(input: MaybePostBankCategorizationInput): Promise<Decision
           transfer_kind: string | null;
           destination_bank_account_id: string | null;
           bank_ledger_account_id: string | null;
+          bank_account_hidden_at: string | null;
           cat_account_id: string | null;
           cat_account_opco: string | null;
           cat_account_deactivated_at: string | null;
@@ -186,6 +190,12 @@ async function decide(input: MaybePostBankCategorizationInput): Promise<Decision
 
     // Fail-closed bank cash-GL bridge (the direction-appropriate bank leg).
     if (!txn.bank_ledger_account_id) return { ok: false, reason: "bank_account_ledger_unlinked" };
+
+    // BANK-ACCOUNT-HIDE: an account hidden for THIS entity can never receive a NEW GL posting (flag OFF
+    // by default — see docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
+    if (txn.bank_account_hidden_at && (await isBankAccountHideEnabled(client, input.companyId))) {
+      return { ok: false, reason: "bank_account_hidden" };
+    }
 
     // Sign landmine: money-out is stored NEGATIVE. Magnitude only; direction from the is_credit flag.
     const amountCents = Math.abs(Number(txn.amount_cents ?? 0));
