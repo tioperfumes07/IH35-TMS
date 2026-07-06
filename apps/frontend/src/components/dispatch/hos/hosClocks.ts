@@ -50,8 +50,9 @@ export function fmtHMM(min: number | null | undefined): string {
 
 export function fmtLocalClock(date: Date | null): string {
   if (!date) return "—";
-  // "h:mm a" in the dispatcher's local timezone.
-  return date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  // "h:mm a" in America/Chicago (Central Time — CLAUDE.md §8 "Central Time always"; the carrier
+  // operates out of Laredo TX, NOT the dispatcher's browser timezone, which could be anywhere).
+  return date.toLocaleTimeString("en-US", { timeZone: "America/Chicago", hour: "numeric", minute: "2-digit" });
 }
 
 export type HosClocks = {
@@ -90,6 +91,57 @@ export function computeHosClocks(row: HosStatusRow | null | undefined, now: Date
     driveConstrainedMin,
     stopByMin,
   };
+}
+
+// HOS-PRC-DATA / HOS-PRC2 (Jorge 2026-07-05) — Samsara's own certified ELD clocks, VERBATIM. Only
+// Stop By / Resume At stay derived (Samsara doesn't return projected clock-times); the four
+// headline numbers (Drive/Shift/Break/Cycle) are Samsara's raw remaining-minutes, NOT the
+// most-constraining-limit recompute above. This is the single source of truth wherever HOS is
+// wired (board == roster == certified ELD) — a driver with no certified snapshot yet renders "—"
+// (honest unavailable), never a silent fallback to the recompute.
+export type EldCertifiedLike = {
+  drive_remaining_min: number | null;
+  shift_remaining_min: number | null;
+  cycle_remaining_min: number | null;
+  break_remaining_min: number | null;
+  violation: boolean;
+  polled_at: string;
+} | null | undefined;
+
+export function computeCertifiedHosClocks(eld: EldCertifiedLike, now: Date = new Date()): HosClocks | null {
+  if (!eld) return null;
+  const drive = eld.drive_remaining_min;
+  const shift = eld.shift_remaining_min;
+  const brk = eld.break_remaining_min;
+  const cycle = eld.cycle_remaining_min;
+  if (drive == null && shift == null && cycle == null) return null;
+  const constrained = [drive, shift, cycle].filter((v): v is number => v != null);
+  const stopByMin = constrained.length ? Math.max(0, Math.min(...constrained)) : 0;
+  const stopBy = new Date(now.getTime() + stopByMin * 60_000);
+  const resumeAt = new Date(stopBy.getTime() + RESET_MIN * 60_000);
+  return {
+    drive: fmtHMM(drive), // verbatim Samsara remaining-drive-time — no min-of-three clamp
+    shift: fmtHMM(shift), // verbatim
+    break: fmtHMM(brk), // verbatim
+    cycle: fmtHMM(cycle), // verbatim
+    stopBy: fmtLocalClock(stopBy), // derived (projected — not an ELD field)
+    resumeAt: fmtLocalClock(resumeAt), // derived
+    driveConstrainedMin: stopByMin,
+    stopByMin,
+  };
+}
+
+// Health dot driven ONLY by Samsara's own certified violation flag — never the app recompute.
+export function eldStatusDot(eld: EldCertifiedLike): { cls: string; label: string } {
+  if (!eld) return { cls: "bg-gray-300", label: "No certified ELD data" };
+  if (eld.violation) return { cls: "bg-red-500", label: "HOS violation (certified ELD)" };
+  const remaining = [eld.drive_remaining_min, eld.shift_remaining_min, eld.cycle_remaining_min].filter(
+    (v): v is number => v != null
+  );
+  if (remaining.length && Math.min(...remaining) < 60) {
+    return { cls: "bg-amber-500", label: "HOS warning (certified ELD)" };
+  }
+  return { cls: "bg-emerald-500", label: "HOS ok (certified ELD)" };
 }
 
 // Tooltip text reused by the projected clocks so they are never presented as guaranteed.

@@ -13,15 +13,16 @@ export type RecordCustomerPaymentPayload = {
 
 export type CustomerPaymentListRow = {
   id: string;
-  payment_date: string;
+  date: string;
   amount_cents: number;
-  payment_method?: string;
-  method?: string;
-  amount_applied_cents?: number;
-  applied_total_cents?: number;
-  reference?: string | null;
-  journal_entry_id?: string | null;
-  qbo_journal_entry_id?: string | null;
+  source_kind?: string;
+  source_bank_transaction_id?: string | null;
+  qbo_payment_id?: string | null;
+  applied_to_invoices?: Array<{
+    invoice_id: string;
+    amount_cents: number;
+    invoice_display_id: string;
+  }>;
 };
 
 export function recordCustomerPayment(
@@ -52,7 +53,7 @@ export function listCustomerPayments(customerId: string, params: { limit?: numbe
   const qs = new URLSearchParams();
   if (params.limit != null) qs.set("limit", String(params.limit));
   const suffix = qs.toString() ? `?${qs.toString()}` : "";
-  return apiRequest<{ payments: CustomerPaymentListRow[] }>(`/api/v1/customers/${customerId}/payments${suffix}`);
+  return apiRequest<{ rows: CustomerPaymentListRow[]; total: number }>(`/api/v1/customers/${customerId}/payments${suffix}`);
 }
 
 export function unapplyCustomerPayment(customerId: string, paymentId: string) {

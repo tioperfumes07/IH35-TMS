@@ -746,8 +746,8 @@
     {
       "schema": "driver_finance",
       "table": "signed_acknowledgments",
-      "reason": "needs opco-scoped RLS policy (currently: 1 policy, none scope 'operating_company_id' against current_setting('app.operating_company_id'|'app.current_operating_company_id') OR org.user_accessible_company_ids()/org.user_company_access membership)",
-      "phase": "P4"
+      "reason": "needs opco-scoped RLS policy",
+      "phase": "P1"
     },
     {
       "schema": "driveralert",
@@ -852,28 +852,16 @@
       "phase": "P4"
     },
     {
-      "schema": "maint",
-      "table": "part_position_assignment",
-      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
-      "phase": "P4"
-    },
-    {
-      "schema": "maint",
-      "table": "position_set",
-      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
-      "phase": "P4"
-    },
-    {
       "schema": "maintenance",
       "table": "defects",
-      "reason": "needs opco-scoped RLS policy (currently: 1 policy, none scope 'operating_company_id' against current_setting('app.operating_company_id'|'app.current_operating_company_id') OR org.user_accessible_company_ids()/org.user_company_access membership)",
-      "phase": "P4"
+      "reason": "needs opco-scoped RLS policy",
+      "phase": "P1"
     },
     {
       "schema": "maintenance",
       "table": "dvir_submissions",
-      "reason": "needs opco-scoped RLS policy (currently: 1 policy, none scope 'operating_company_id' against current_setting('app.operating_company_id'|'app.current_operating_company_id') OR org.user_accessible_company_ids()/org.user_company_access membership)",
-      "phase": "P4"
+      "reason": "needs opco-scoped RLS policy",
+      "phase": "P1"
     },
     {
       "schema": "maintenance",
@@ -908,6 +896,18 @@
     {
       "schema": "maintenance",
       "table": "work_orders",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "maint",
+      "table": "part_position_assignment",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "maint",
+      "table": "position_set",
       "reason": "needs FK from 'operating_company_id' to org.companies(id)",
       "phase": "P4"
     },
@@ -1064,19 +1064,19 @@
     {
       "schema": "safety",
       "table": "da_program_enrollments",
-      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "reason": "needs uuid cast (column 'operating_company_id' is currently 'text') | needs FK from 'operating_company_id' to org.companies(id)",
       "phase": "P4"
     },
     {
       "schema": "safety",
       "table": "da_random_pool_draws",
-      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "reason": "needs uuid cast (column 'operating_company_id' is currently 'text') | needs FK from 'operating_company_id' to org.companies(id)",
       "phase": "P4"
     },
     {
       "schema": "safety",
       "table": "da_test_records",
-      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "reason": "needs uuid cast (column 'operating_company_id' is currently 'text') | needs FK from 'operating_company_id' to org.companies(id)",
       "phase": "P4"
     },
     {

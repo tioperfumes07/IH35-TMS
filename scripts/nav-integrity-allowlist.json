@@ -9,6 +9,14 @@
       "reason": "Owner data migration tool; not in module subnav"
     },
     {
+      "path": "/admin/launch-readiness",
+      "reason": "Owner USMCA launch-readiness dashboard (OwnerAdminRoute); flyout deep link, not a module subnav"
+    },
+    {
+      "path": "/admin/qbo-vendor-linkage",
+      "reason": "Owner QBO driver/unit vendor-class linkage tool (OwnerAdminRoute); flyout deep link, not a module subnav"
+    },
+    {
       "path": "/admin/carrier-bootstrap",
       "reason": "Owner USMCA hidden-carrier bootstrap (Wave 19 USMCA-2)"
     },
@@ -43,6 +51,22 @@
     {
       "path": "/admin/mobile-audit",
       "reason": "GAP-91 mobile responsive audit report (admin tooling)"
+    },
+    {
+      "path": "/admin/launch-readiness",
+      "reason": "Owner launch-readiness dashboard; admin tooling, not in module subnav"
+    },
+    {
+      "path": "/admin/qbo-vendor-linkage",
+      "reason": "Owner QBO vendor linkage tool; admin tooling, not in module subnav"
+    },
+    {
+      "path": "/integrations/edi",
+      "reason": "Owner EDI setup wizard; not in subnav (mirrors /integrations/samsara)"
+    },
+    {
+      "path": "/integrations/edi/transaction-log",
+      "reason": "Owner EDI transaction log; deep link from EDI setup wizard, not in subnav"
     },
     {
       "path": "/admin/activity",
@@ -267,6 +291,14 @@
       "reason": "Owner integration page \u2014 not in subnav"
     },
     {
+      "path": "/integrations/edi",
+      "reason": "Owner EDI partner setup wizard (OwnerOnlyRoute) \u2014 not in subnav, same pattern as /integrations/samsara"
+    },
+    {
+      "path": "/integrations/edi/transaction-log",
+      "reason": "Owner EDI transaction log (OwnerOnlyRoute) \u2014 not in subnav, same pattern as /integrations/samsara"
+    },
+    {
       "path": "/samsara/vendor-mapping-integrity",
       "reason": "Samsara integrity tool \u2014 deep link only"
     },
@@ -317,6 +349,10 @@
     {
       "path": "/fleet/units/:id",
       "reason": "Fleet unit profile dynamic route from in-app links"
+    },
+    {
+      "path": "/fleet/units/:id/detail",
+      "reason": "Unit detail dynamic route linked from VehicleProfilePage in-app link, not sidebar subnav"
     },
     {
       "path": "/fleet/trailers/:id",

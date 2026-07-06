@@ -37,7 +37,12 @@ export function CashFlowReport() {
 
   return (
     <div className="space-y-4 p-4">
-      <PageHeader title="Cash flow" subtitle="Tenant-scoped liquidity snapshot (GAP-45)" />
+      <PageHeader
+        title="Cash flow"
+        subtitle="Tenant-scoped liquidity snapshot (GAP-45)"
+        backHref="/reports"
+        breadcrumb={["Reports", "Cash Flow"]}
+      />
       <ReportsSubNav />
       <div className="flex flex-wrap items-end gap-3 rounded-sm border bg-white p-4">
         <label className="text-sm">

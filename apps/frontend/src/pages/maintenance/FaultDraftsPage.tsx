@@ -6,6 +6,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 type FaultDraft = {
   id: string;
@@ -103,7 +104,7 @@ export function FaultDraftsPage() {
                   <td className="px-3 py-2">{row.unit_number ?? row.unit_id.slice(0, 8)}</td>
                   <td className="px-3 py-2">{row.fault_code ?? "—"}</td>
                   <td className="px-3 py-2 capitalize">{row.fault_severity ?? "—"}</td>
-                  <td className="px-3 py-2">{row.fault_occurred_at ? new Date(row.fault_occurred_at).toLocaleString() : "—"}</td>
+                  <td className="px-3 py-2">{row.fault_occurred_at ? `${formatDateTimeUS(row.fault_occurred_at)} CT` : "—"}</td>
                   <td className="px-3 py-2">{row.status}</td>
                   <td className="px-3 py-2">
                     <Button size="sm" variant="secondary" onClick={() => setSelectedId(row.id)}>

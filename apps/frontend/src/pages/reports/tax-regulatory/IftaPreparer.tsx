@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import {
   getIftaFilingDraft,
   listIftaFilings,
@@ -80,11 +79,8 @@ export function IftaPreparer() {
       <PageHeader
         title="IFTA Quarterly Preparer"
         subtitle={`${quarter} · 4-step wizard (mileage, fuel, tax, owner approval)`}
-        actions={
-          <Link to="/reports" className="text-xs font-semibold text-slate-700 hover:underline">
-            ← Reports
-          </Link>
-        }
+        backHref="/reports"
+        breadcrumb={["Reports", "IFTA Quarterly Preparer"]}
       />
 
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
