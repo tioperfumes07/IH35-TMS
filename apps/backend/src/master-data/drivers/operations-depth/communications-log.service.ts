@@ -4,9 +4,9 @@ export type CommunicationsLogRow = {
   uuid: string;
   driver_id: string;
   operating_company_id: string;
-  direction: string | null;
   channel: string | null;
-  body: string | null;
+  message: string | null;
+  urgency: string | null;
   created_at: string;
 };
 
@@ -37,9 +37,9 @@ export async function getDriverCommunicationsLog(
         id::text AS uuid,
         driver_id::text,
         operating_company_id::text,
-        direction,
         channel,
-        body,
+        message,
+        urgency,
         created_at::text
       FROM mdata.driver_profile_messages
       WHERE driver_id = $1::uuid

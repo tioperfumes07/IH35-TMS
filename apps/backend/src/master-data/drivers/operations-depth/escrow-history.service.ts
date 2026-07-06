@@ -4,9 +4,9 @@ export type EscrowHistoryRow = {
   uuid: string;
   driver_id: string;
   operating_company_id: string;
-  entry_type: string | null;
-  amount: string | null;
-  running_balance: string | null;
+  transaction_type: string | null;
+  amount_cents: string | null;
+  running_balance_cents: string | null;
   created_at: string;
 };
 
@@ -37,9 +37,9 @@ export async function getDriverEscrowHistory(
         id::text AS uuid,
         driver_id::text,
         operating_company_id::text,
-        entry_type,
-        amount::text,
-        running_balance::text,
+        transaction_type,
+        amount_cents::text,
+        running_balance_cents::text,
         created_at::text
       FROM driver_finance.escrow_ledger
       WHERE driver_id = $1::uuid
