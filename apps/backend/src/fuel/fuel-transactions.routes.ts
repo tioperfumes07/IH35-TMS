@@ -50,10 +50,10 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
     const q = query.data;
 
     const result = await withCompanyScope(authUser.uuid, q.operating_company_id, async (client) => {
-      const tableExists = await client.query<{ ok: boolean }>(
+      const tableExists = await client.query(
         `SELECT to_regclass('fuel.fuel_transactions') IS NOT NULL AS ok`
       );
-      if (!tableExists.rows[0]?.ok) return { unavailable: true as const };
+      if (!(tableExists.rows[0] as { ok?: boolean } | undefined)?.ok) return { unavailable: true as const };
 
       const values: unknown[] = [q.operating_company_id];
       const filters: string[] = ["ft.operating_company_id = $1", "ft.archived_at IS NULL"];
@@ -79,7 +79,7 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
       }
       const whereClause = `WHERE ${filters.join(" AND ")}`;
 
-      const countRes = await client.query<{ total: number }>(
+      const countRes = await client.query(
         `SELECT count(*)::int AS total FROM fuel.fuel_transactions ft ${whereClause}`,
         values
       );
@@ -153,7 +153,7 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
           purchased_at: row.purchased_at,
           created_at: row.created_at,
         })),
-        total: Number(countRes.rows[0]?.total ?? 0),
+        total: Number((countRes.rows[0] as { total?: number } | undefined)?.total ?? 0),
       };
     });
 
