@@ -1,6 +1,5 @@
 [
   "apps/frontend/src/components/CompanySwitcher.tsx",
-  "apps/frontend/src/components/SidebarFlyoutMenu.tsx",
   "apps/frontend/src/components/_archived/JumpToTab.tsx",
   "apps/frontend/src/components/audit/AuditHistoryTab.tsx",
   "apps/frontend/src/components/audit/EntityAuditHistoryTab.tsx",
@@ -30,7 +29,6 @@
   "apps/frontend/src/components/home/SeverityPill.tsx",
   "apps/frontend/src/components/layout/ModuleHeader.tsx",
   "apps/frontend/src/components/layout/SubAreaGrid.tsx",
-  "apps/frontend/src/components/layout/SubAreaTile.tsx",
   "apps/frontend/src/components/layout/SubNavCounts.tsx",
   "apps/frontend/src/components/layout/UltraWideContainer.tsx",
   "apps/frontend/src/components/lists/ListView/demo/ListViewDemo.tsx",
