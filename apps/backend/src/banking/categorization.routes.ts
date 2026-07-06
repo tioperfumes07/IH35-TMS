@@ -922,7 +922,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
   });
 
   // ── BANK-SPLIT-1 — Split-transaction popup (real, persisted; replaces the honest 501 stub) ─────────────
-  app.get("/api/v1/banking/transactions/:id/splits", async (req, reply) => {
+  app.get("/api/v1/banking/transactions/:id/splits", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = transactionIdParamsSchema.safeParse(req.params ?? {});
@@ -940,7 +940,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
     }
   });
 
-  app.put("/api/v1/banking/transactions/:id/splits", async (req, reply) => {
+  app.put("/api/v1/banking/transactions/:id/splits", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = transactionIdParamsSchema.safeParse(req.params ?? {});
@@ -966,7 +966,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/banking/transactions/:id/splits/commit", async (req, reply) => {
+  app.post("/api/v1/banking/transactions/:id/splits/commit", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = transactionIdParamsSchema.safeParse(req.params ?? {});
@@ -992,7 +992,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
   // REVERSE drill-through: given a Driver/Unit/Trailer/Trip(Load)/Vendor, list the split lines tagged to it
   // (+ their parent bank txn + whatever each line produced — advance/deduction/bill). Exactly one linkage
   // param required, mirroring the single-line by-linkage endpoint above (BLOCK-6b), generalized to splits.
-  app.get("/api/v1/banking/transaction-splits/by-linkage", async (req, reply) => {
+  app.get("/api/v1/banking/transaction-splits/by-linkage", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const q = companyQuerySchema
@@ -1028,7 +1028,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
     return { rows, total_count: rows.length };
   });
 
-  app.post("/api/v1/banking/transactions/:id/splits/void", async (req, reply) => {
+  app.post("/api/v1/banking/transactions/:id/splits/void", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = transactionIdParamsSchema.safeParse(req.params ?? {});
