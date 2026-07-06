@@ -1,11 +1,14 @@
-import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { ApiError } from "../../api/client";
 import { createVendor, type CreateVendorInput } from "../../api/mdata";
+import { listPaymentTermOptions } from "../../api/mdata";
+import { listCatalogAccounts } from "../../api/catalog-accounts";
 import { Modal } from "../Modal";
 import { ActionButton } from "../shared/ActionButton";
 import { SelectCombobox } from "../shared/SelectCombobox";
+import { Combobox } from "../Combobox";
 import { useToast } from "../Toast";
 import { emptyVendorProfileMeta, serializeVendorNotes, type VendorProfileMeta } from "../../lib/vendorProfileMeta";
 
@@ -101,11 +104,36 @@ export function VendorCreateModal({ open, onClose, operatingCompanyId }: Props) 
   // Classification
   const [taxId, setTaxId] = useState("");
   const [vendorCode, setVendorCode] = useState("");
+  // VENDOR-CUSTOMER-QBO-PARITY (migration 202607092000, HELD)
+  const [website, setWebsite] = useState("");
+  const [printOnCheckName, setPrintOnCheckName] = useState("");
+  const [eligible1099, setEligible1099] = useState(false);
+  const [paymentTermsId, setPaymentTermsId] = useState<string | null>(null);
+  const [defaultExpenseAccountId, setDefaultExpenseAccountId] = useState<string | null>(null);
   // Notes
   const [notes, setNotes] = useState("");
 
   const [formError, setFormError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<{ name?: string; vendor_code?: string }>({});
+
+  const paymentTermsQuery = useQuery({ queryKey: ["payment-term-options"], queryFn: listPaymentTermOptions, staleTime: 5 * 60 * 1000 });
+  const paymentTermOptions = useMemo(
+    () => (paymentTermsQuery.data?.payment_terms ?? []).map((t) => ({ value: t.id, label: `${t.terms_name} (${t.days_until_due}d)` })),
+    [paymentTermsQuery.data]
+  );
+  // Option-B (vendor-customer-categorization-option-b): recommendation only, pre-fills bill lines.
+  const expenseAccountsQuery = useQuery({
+    queryKey: ["catalog-accounts", "expense-for-vendor-default"],
+    queryFn: () => listCatalogAccounts({ status: "active" }),
+    staleTime: 5 * 60 * 1000,
+  });
+  const expenseAccountOptions = useMemo(
+    () =>
+      (expenseAccountsQuery.data?.accounts ?? [])
+        .filter((a) => a.account_type === "Expense")
+        .map((a) => ({ value: a.id, label: a.account_number ? `${a.account_number} — ${a.account_name}` : a.account_name })),
+    [expenseAccountsQuery.data]
+  );
 
   function reset() {
     setName("");
@@ -122,6 +150,11 @@ export function VendorCreateModal({ open, onClose, operatingCompanyId }: Props) 
     setZip("");
     setTaxId("");
     setVendorCode("");
+    setWebsite("");
+    setPrintOnCheckName("");
+    setEligible1099(false);
+    setPaymentTermsId(null);
+    setDefaultExpenseAccountId(null);
     setNotes("");
     setFormError("");
     setFieldErrors({});
@@ -157,10 +190,19 @@ export function VendorCreateModal({ open, onClose, operatingCompanyId }: Props) 
         email: email.trim() || undefined,
         phone: phone.trim() || undefined,
         address: address || undefined,
+        city: city.trim() || undefined,
+        state: state.trim() || undefined,
+        postal_code: zip.trim() || undefined,
         tax_id: taxId.trim() || undefined,
         vendor_code: vendorCode.trim() || undefined,
         operating_company_id: operatingCompanyId,
         notes: serializeVendorNotes(meta, notes.trim()),
+        // VENDOR-CUSTOMER-QBO-PARITY (migration 202607092000, HELD)
+        website: website.trim() || undefined,
+        print_on_check_name: printOnCheckName.trim() || undefined,
+        eligible_1099: eligible1099,
+        payment_terms_id: paymentTermsId,
+        default_expense_account_id: defaultExpenseAccountId,
       });
     },
     onSuccess: async (vendor) => {
@@ -263,6 +305,30 @@ export function VendorCreateModal({ open, onClose, operatingCompanyId }: Props) 
               errorId="vendor_code-error"
               error={fieldErrors.vendor_code}
             />
+            <Field label="Website" value={website} onChange={setWebsite} />
+            <Field label="Print on check as" value={printOnCheckName} onChange={setPrintOnCheckName} placeholder="Leave blank to use vendor display name" />
+            <label className="flex items-center gap-2 text-sm text-gray-700 md:col-span-2">
+              <input type="checkbox" checked={eligible1099} onChange={(event) => setEligible1099(event.target.checked)} />
+              Track payments for 1099 (Form 1099-NEC)
+            </label>
+          </div>
+        </Section>
+
+        {/* VENDOR-CUSTOMER-QBO-PARITY (migration 202607092000, HELD) */}
+        <Section title="Terms & Option-B recommendation">
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+            <label className="block text-sm">
+              <span className="mb-1 block text-xs font-semibold text-gray-600">Payment terms</span>
+              <Combobox options={paymentTermOptions} value={paymentTermsId} onChange={setPaymentTermsId} placeholder="Select terms" />
+            </label>
+            <label className="block text-sm">
+              <span className="mb-1 block text-xs font-semibold text-gray-600">Default expense account</span>
+              <Combobox options={expenseAccountOptions} value={defaultExpenseAccountId} onChange={setDefaultExpenseAccountId} placeholder="— None —" />
+              <p className="mt-1 text-xs text-gray-500">
+                Recommendation only: pre-fills the expense account on new bills for this vendor. Always
+                editable — never posted silently.
+              </p>
+            </label>
           </div>
         </Section>
 

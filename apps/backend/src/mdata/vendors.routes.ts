@@ -10,6 +10,41 @@ import { listActiveVendorClassifications } from "./classification-queries.js";
 const vendorTypeSchema = z.enum(["Fuel", "Repair", "Tires", "Towing", "Insurance", "Permit", "Toll", "Other"]);
 const QBO_ARCHIVE_PROJECTION_SOURCE_RE = /Projected from qbo_archive\.entities_snapshot[^\n]*/gi;
 
+// VENDOR-CUSTOMER-QBO-PARITY (migration 202607092000, HELD): the vendor row shape returned by every
+// read/write endpoint. Kept as one constant (mirrors CUSTOMER_SELECT_COLUMNS in customers.routes.ts)
+// so list/get/create/update can never drift from each other.
+const VENDOR_SELECT_COLUMNS = `
+  id,
+  vendor_name AS name,
+  vendor_code,
+  vendor_type,
+  vendor_category,
+  vendor_category_locked_at,
+  phone,
+  email,
+  operating_company_id,
+  address_line1 AS address,
+  address_line2,
+  city,
+  state,
+  postal_code,
+  country,
+  mc_number,
+  dot_number,
+  eligible_1099,
+  website,
+  print_on_check_name,
+  payment_terms_id,
+  default_expense_account_id,
+  tax_id,
+  notes,
+  created_at,
+  updated_at,
+  deactivated_at,
+  created_by_user_id,
+  updated_by_user_id
+`;
+
 const listQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(5000).default(50), // VEND-1: allow loading the full roster (was capped at 200, hiding ~440 of 490)
   offset: z.coerce.number().int().min(0).default(0),
@@ -36,6 +71,24 @@ const createVendorBodySchema = z.object({
     .optional(),
   operating_company_id: z.string().uuid().optional(),
   address: z.string().trim().max(500).optional(),
+  // VENDOR-CUSTOMER-QBO-PARITY (migration 202607092000, HELD): structured address already existed as
+  // real mdata.vendors columns (0008) but was never exposed here — `address` above still maps to
+  // address_line1 for existing callers; these are additive, optional structured fields alongside it.
+  address_line2: z.string().trim().max(200).optional(),
+  city: z.string().trim().max(100).optional(),
+  state: z.string().trim().max(50).optional(),
+  postal_code: z.string().trim().max(20).optional(),
+  country: z.string().trim().max(56).optional(),
+  // mc_number/dot_number already existed (0382, for carrier/subhaul vendors) but were unexposed.
+  mc_number: z.string().trim().max(50).optional(),
+  dot_number: z.string().trim().max(50).optional(),
+  // eligible_1099 already existed (0178) but was unexposed — QBO "Track payments for 1099" parity.
+  eligible_1099: z.boolean().optional(),
+  website: z.string().trim().max(200).optional(),
+  print_on_check_name: z.string().trim().max(200).optional(),
+  payment_terms_id: z.string().uuid().nullable().optional(),
+  // Option-B: recommendation-only default expense account — pre-fills bill lines, never a silent post.
+  default_expense_account_id: z.string().uuid().nullable().optional(),
   tax_id: z.string().trim().max(100).optional(),
   notes: z.string().trim().max(2000).optional(),
 });
@@ -54,6 +107,18 @@ const updateVendorBodySchema = z
       .optional(),
     operating_company_id: z.string().uuid().optional(),
     address: z.string().trim().max(500).nullable().optional(),
+    address_line2: z.string().trim().max(200).nullable().optional(),
+    city: z.string().trim().max(100).nullable().optional(),
+    state: z.string().trim().max(50).nullable().optional(),
+    postal_code: z.string().trim().max(20).nullable().optional(),
+    country: z.string().trim().max(56).nullable().optional(),
+    mc_number: z.string().trim().max(50).nullable().optional(),
+    dot_number: z.string().trim().max(50).nullable().optional(),
+    eligible_1099: z.boolean().optional(),
+    website: z.string().trim().max(200).nullable().optional(),
+    print_on_check_name: z.string().trim().max(200).nullable().optional(),
+    payment_terms_id: z.string().uuid().nullable().optional(),
+    default_expense_account_id: z.string().uuid().nullable().optional(),
     tax_id: z.string().trim().max(100).nullable().optional(),
     notes: z.string().trim().max(2000).nullable().optional(),
     deactivated_at: z.string().datetime().nullable().optional(),
@@ -163,24 +228,7 @@ export async function registerVendorRoutes(app: FastifyInstance) {
       values.push(offset);
       const res = await client.query(
         `
-          SELECT
-            id,
-            vendor_name AS name,
-            vendor_code,
-            vendor_type,
-            vendor_category,
-            vendor_category_locked_at,
-            phone,
-            email,
-            operating_company_id,
-            address_line1 AS address,
-            tax_id,
-            notes,
-            created_at,
-            updated_at,
-            deactivated_at,
-            created_by_user_id,
-            updated_by_user_id
+          SELECT ${VENDOR_SELECT_COLUMNS}
           FROM mdata.vendors
           ${whereClause}
           ORDER BY created_at DESC
@@ -218,45 +266,61 @@ export async function registerVendorRoutes(app: FastifyInstance) {
     try {
       const created = await withCurrentUser(authUser.uuid, async (client) => {
         const resolvedOperatingCompanyId = createOperatingCompanyId;
+        const columns: string[] = [
+          "vendor_name",
+          "vendor_code",
+          "vendor_type",
+          "phone",
+          "email",
+          "operating_company_id",
+          "address_line1",
+          "tax_id",
+          "notes",
+          "created_by_user_id",
+          "updated_by_user_id",
+        ];
+        const values: unknown[] = [
+          b.name,
+          b.vendor_code ?? null,
+          b.vendor_type,
+          b.phone ?? null,
+          b.email ?? null,
+          resolvedOperatingCompanyId,
+          b.address ?? null,
+          b.tax_id ?? null,
+          b.notes ?? null,
+          authUser.uuid,
+          authUser.uuid,
+        ];
+        const placeholders: string[] = values.map((_, i) => `$${i + 1}`);
+
+        // VENDOR-CUSTOMER-QBO-PARITY (migration 202607092000, HELD): additive optional columns.
+        const addOptional = (column: string, value: unknown) => {
+          if (value === undefined) return;
+          columns.push(column);
+          values.push(value);
+          placeholders.push(`$${values.length}`);
+        };
+        addOptional("address_line2", b.address_line2);
+        addOptional("city", b.city);
+        addOptional("state", b.state);
+        addOptional("postal_code", b.postal_code);
+        addOptional("country", b.country);
+        addOptional("mc_number", b.mc_number);
+        addOptional("dot_number", b.dot_number);
+        addOptional("eligible_1099", b.eligible_1099);
+        addOptional("website", b.website);
+        addOptional("print_on_check_name", b.print_on_check_name);
+        addOptional("payment_terms_id", b.payment_terms_id);
+        addOptional("default_expense_account_id", b.default_expense_account_id);
+
         const res = await client.query(
           `
-            INSERT INTO mdata.vendors (
-              vendor_name, vendor_code, vendor_type, phone, email, operating_company_id, address_line1, tax_id, notes,
-              created_by_user_id, updated_by_user_id
-            ) VALUES (
-              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$10
-            )
-            RETURNING
-              id,
-              vendor_name AS name,
-              vendor_code,
-              vendor_type,
-              vendor_category,
-              vendor_category_locked_at,
-              phone,
-              email,
-              operating_company_id,
-              address_line1 AS address,
-              tax_id,
-              notes,
-              created_at,
-              updated_at,
-              deactivated_at,
-              created_by_user_id,
-              updated_by_user_id
+            INSERT INTO mdata.vendors (${columns.join(", ")})
+            VALUES (${placeholders.join(", ")})
+            RETURNING ${VENDOR_SELECT_COLUMNS}
           `,
-          [
-            b.name,
-            b.vendor_code ?? null,
-            b.vendor_type,
-            b.phone ?? null,
-            b.email ?? null,
-            resolvedOperatingCompanyId,
-            b.address ?? null,
-            b.tax_id ?? null,
-            b.notes ?? null,
-            authUser.uuid,
-          ]
+          values
         );
         const row = res.rows[0];
         await appendCrudAudit(client, authUser.uuid, "mdata.vendors.created", {
@@ -304,24 +368,7 @@ export async function registerVendorRoutes(app: FastifyInstance) {
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [resolvedOperatingCompanyId]);
       const res = await client.query(
         `
-          SELECT
-            id,
-            vendor_name AS name,
-            vendor_code,
-            vendor_type,
-            vendor_category,
-            vendor_category_locked_at,
-            phone,
-            email,
-            operating_company_id,
-            address_line1 AS address,
-            tax_id,
-            notes,
-            created_at,
-            updated_at,
-            deactivated_at,
-            created_by_user_id,
-            updated_by_user_id
+          SELECT ${VENDOR_SELECT_COLUMNS}
           FROM mdata.vendors
           WHERE id = $1
             AND operating_company_id = $2
@@ -373,6 +420,19 @@ export async function registerVendorRoutes(app: FastifyInstance) {
     if ("email" in b) add("email", b.email ?? null);
     if ("operating_company_id" in b) add("operating_company_id", b.operating_company_id ?? null);
     if ("address" in b) add("address_line1", b.address ?? null);
+    // VENDOR-CUSTOMER-QBO-PARITY (migration 202607092000, HELD)
+    if ("address_line2" in b) add("address_line2", b.address_line2 ?? null);
+    if ("city" in b) add("city", b.city ?? null);
+    if ("state" in b) add("state", b.state ?? null);
+    if ("postal_code" in b) add("postal_code", b.postal_code ?? null);
+    if ("country" in b) add("country", b.country ?? null);
+    if ("mc_number" in b) add("mc_number", b.mc_number ?? null);
+    if ("dot_number" in b) add("dot_number", b.dot_number ?? null);
+    if ("eligible_1099" in b) add("eligible_1099", b.eligible_1099);
+    if ("website" in b) add("website", b.website ?? null);
+    if ("print_on_check_name" in b) add("print_on_check_name", b.print_on_check_name ?? null);
+    if ("payment_terms_id" in b) add("payment_terms_id", b.payment_terms_id ?? null);
+    if ("default_expense_account_id" in b) add("default_expense_account_id", b.default_expense_account_id ?? null);
     if ("tax_id" in b) add("tax_id", b.tax_id ?? null);
     if ("notes" in b) add("notes", b.notes ?? null);
     if ("deactivated_at" in b) add("deactivated_at", b.deactivated_at ?? null);
@@ -384,24 +444,7 @@ export async function registerVendorRoutes(app: FastifyInstance) {
       const updated = await withCurrentUser(authUser.uuid, async (client) => {
         const oldRes = await client.query(
           `
-            SELECT
-              id,
-              vendor_name AS name,
-              vendor_code,
-              vendor_type,
-              vendor_category,
-              vendor_category_locked_at,
-              phone,
-              email,
-              operating_company_id,
-              address_line1 AS address,
-              tax_id,
-              notes,
-              created_at,
-              updated_at,
-              deactivated_at,
-              created_by_user_id,
-              updated_by_user_id
+            SELECT ${VENDOR_SELECT_COLUMNS}
             FROM mdata.vendors
             WHERE id = $1
             LIMIT 1
@@ -416,24 +459,7 @@ export async function registerVendorRoutes(app: FastifyInstance) {
             UPDATE mdata.vendors
             SET ${setParts.join(", ")}
             WHERE id = $${idIdx}
-            RETURNING
-              id,
-              vendor_name AS name,
-              vendor_code,
-              vendor_type,
-              vendor_category,
-              vendor_category_locked_at,
-              phone,
-              email,
-              operating_company_id,
-              address_line1 AS address,
-              tax_id,
-              notes,
-              created_at,
-              updated_at,
-              deactivated_at,
-              created_by_user_id,
-              updated_by_user_id
+            RETURNING ${VENDOR_SELECT_COLUMNS}
           `,
           values
         );

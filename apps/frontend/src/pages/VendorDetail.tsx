@@ -6,7 +6,8 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { listVendorBills } from "../api/accounting";
 import { ApiError, apiRequest } from "../api/client";
 import { listVendorBillPayments, recordVendorBillPayment, type VendorBillPaymentListRow } from "../api/vendors";
-import { getVendor, updateVendor } from "../api/mdata";
+import { getVendor, updateVendor, listPaymentTermOptions } from "../api/mdata";
+import { listCatalogAccounts } from "../api/catalog-accounts";
 import { getVendorIntegrityHistory } from "../api/maintenance";
 import { patchVendorAccountingCategory } from "../api/vendorCategory";
 import { useAuth } from "../auth/useAuth";
@@ -53,6 +54,12 @@ type VendorProfileForm = VendorProfileMeta & {
   taxId: string;
   vendorCode: string;
   notes: string;
+  // VENDOR-CUSTOMER-QBO-PARITY (migration 202607092000, HELD) — real columns, not the notes meta blob.
+  website: string;
+  printOnCheckName: string;
+  eligible1099: boolean;
+  paymentTermsId: string | null;
+  defaultExpenseAccountId: string | null;
 };
 
 export function VendorDetailPage() {
@@ -84,6 +91,11 @@ export function VendorDetailPage() {
     taxId: "",
     vendorCode: "",
     notes: "",
+    website: "",
+    printOnCheckName: "",
+    eligible1099: false,
+    paymentTermsId: null,
+    defaultExpenseAccountId: null,
     ...emptyVendorProfileMeta(),
   });
 
@@ -107,6 +119,26 @@ export function VendorDetailPage() {
     queryFn: () => getVendorIntegrityHistory(id, companyId),
     enabled: Boolean(companyId && id),
   });
+
+  // VENDOR-CUSTOMER-QBO-PARITY (migration 202607092000, HELD)
+  const paymentTermsQuery = useQuery({ queryKey: ["payment-term-options"], queryFn: listPaymentTermOptions, staleTime: 5 * 60 * 1000 });
+  const paymentTermOptions = useMemo(
+    () => (paymentTermsQuery.data?.payment_terms ?? []).map((t) => ({ value: t.id, label: `${t.terms_name} (${t.days_until_due}d)` })),
+    [paymentTermsQuery.data]
+  );
+  // Option-B (vendor-customer-categorization-option-b): recommendation only, pre-fills bill lines.
+  const expenseAccountsQuery = useQuery({
+    queryKey: ["catalog-accounts", "expense-for-vendor-default"],
+    queryFn: () => listCatalogAccounts({ status: "active" }),
+    staleTime: 5 * 60 * 1000,
+  });
+  const expenseAccountOptions = useMemo(
+    () =>
+      (expenseAccountsQuery.data?.accounts ?? [])
+        .filter((a) => a.account_type === "Expense")
+        .map((a) => ({ value: a.id, label: a.account_number ? `${a.account_number} — ${a.account_name}` : a.account_name })),
+    [expenseAccountsQuery.data]
+  );
 
   const vendorPaymentsQuery = useQuery({
     queryKey: ["vendor-bill-payments", id, companyId],
@@ -264,6 +296,12 @@ export function VendorDetailPage() {
         vendor_code: profileForm.vendorCode.trim() || null,
         operating_company_id: companyId || undefined,
         notes: serializeVendorNotes(meta, profileForm.notes),
+        // VENDOR-CUSTOMER-QBO-PARITY (migration 202607092000, HELD) — real columns.
+        website: profileForm.website.trim() || null,
+        print_on_check_name: profileForm.printOnCheckName.trim() || null,
+        eligible_1099: profileForm.eligible1099,
+        payment_terms_id: profileForm.paymentTermsId,
+        default_expense_account_id: profileForm.defaultExpenseAccountId,
       });
     },
     onSuccess: async () => {
@@ -317,6 +355,12 @@ export function VendorDetailPage() {
       telephone: parsed.meta.telephone || v.phone || "",
       address: parsed.meta.address || v.address || "",
       generalEmail: parsed.meta.generalEmail || v.email || "",
+      // VENDOR-CUSTOMER-QBO-PARITY (migration 202607092000, HELD) — real columns.
+      website: v.website ?? "",
+      printOnCheckName: v.print_on_check_name ?? "",
+      eligible1099: Boolean(v.eligible_1099),
+      paymentTermsId: v.payment_terms_id ?? null,
+      defaultExpenseAccountId: v.default_expense_account_id ?? null,
     });
   }, [vendorQuery.data]);
 
@@ -501,6 +545,74 @@ export function VendorDetailPage() {
               disabled={!profileEditMode}
               className="w-full max-w-md rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
             />
+          </DataPanelRow>
+          {/* VENDOR-CUSTOMER-QBO-PARITY (migration 202607092000, HELD) */}
+          <DataPanelRow>
+            <span className="text-xs font-semibold text-gray-600">Website</span>
+            <input
+              value={profileForm.website}
+              onChange={(event) => setProfileForm((current) => ({ ...current, website: event.target.value }))}
+              disabled={!profileEditMode}
+              className="w-full max-w-md rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+            />
+          </DataPanelRow>
+          <DataPanelRow>
+            <span className="text-xs font-semibold text-gray-600">Print on check as</span>
+            <input
+              value={profileForm.printOnCheckName}
+              onChange={(event) => setProfileForm((current) => ({ ...current, printOnCheckName: event.target.value }))}
+              disabled={!profileEditMode}
+              placeholder="Leave blank to use vendor display name"
+              className="w-full max-w-md rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:border-transparent disabled:bg-transparent"
+            />
+          </DataPanelRow>
+          <DataPanelRow>
+            <span className="text-xs font-semibold text-gray-600">1099 tracking</span>
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                checked={profileForm.eligible1099}
+                onChange={(event) => setProfileForm((current) => ({ ...current, eligible1099: event.target.checked }))}
+                disabled={!profileEditMode}
+              />
+              Track payments for 1099 (Form 1099-NEC)
+            </label>
+          </DataPanelRow>
+          <DataPanelRow>
+            <span className="text-xs font-semibold text-gray-600">Payment terms</span>
+            <SelectCombobox
+              value={profileForm.paymentTermsId ?? ""}
+              onChange={(event) => setProfileForm((current) => ({ ...current, paymentTermsId: event.target.value || null }))}
+              disabled={!profileEditMode}
+              className="h-8 w-full max-w-md text-xs"
+            >
+              <option value="">— None —</option>
+              {paymentTermOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </SelectCombobox>
+          </DataPanelRow>
+          <DataPanelRow>
+            <span className="text-xs font-semibold text-gray-600">Default expense account</span>
+            <SelectCombobox
+              value={profileForm.defaultExpenseAccountId ?? ""}
+              onChange={(event) => setProfileForm((current) => ({ ...current, defaultExpenseAccountId: event.target.value || null }))}
+              disabled={!profileEditMode}
+              className="h-8 w-full max-w-md text-xs"
+            >
+              <option value="">— None —</option>
+              {expenseAccountOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </SelectCombobox>
+            <p className="mt-1 text-xs text-gray-500">
+              Option-B recommendation only: pre-fills the expense account on new bills for this vendor.
+              Always editable — never posted silently.
+            </p>
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Quality rating</span>

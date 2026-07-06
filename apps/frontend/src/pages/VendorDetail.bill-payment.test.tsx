@@ -22,6 +22,12 @@ vi.mock("../contexts/CompanyContext", () => ({
 
 vi.mock("../api/mdata", () => ({
   getVendor: vi.fn(),
+  updateVendor: vi.fn(),
+  listPaymentTermOptions: vi.fn().mockResolvedValue({ payment_terms: [] }),
+}));
+
+vi.mock("../api/catalog-accounts", () => ({
+  listCatalogAccounts: vi.fn().mockResolvedValue({ accounts: [] }),
 }));
 
 vi.mock("../api/accounting", () => ({
