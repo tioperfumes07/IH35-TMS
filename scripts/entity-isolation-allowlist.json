@@ -457,12 +457,6 @@
     },
     {
       "schema": "accounting",
-      "table": "recurring_bill_templates",
-      "reason": "needs uuid cast (column 'operating_company_id' is currently 'text') | needs FK from 'operating_company_id' to org.companies(id)",
-      "phase": "P4"
-    },
-    {
-      "schema": "accounting",
       "table": "vendor_classifications",
       "reason": "needs FK from 'operating_company_id' to org.companies(id)",
       "phase": "P4"
@@ -741,12 +735,6 @@
       "schema": "dispatch",
       "table": "ratecon_extractions",
       "reason": "needs FK from 'operating_company_id' to org.companies(id)",
-      "phase": "P4"
-    },
-    {
-      "schema": "dispatch",
-      "table": "stop_extra_rates",
-      "reason": "needs uuid cast (column 'operating_company_id' is currently 'text') | needs FK from 'operating_company_id' to org.companies(id)",
       "phase": "P4"
     },
     {
@@ -1062,39 +1050,15 @@
       "phase": "P4"
     },
     {
-      "schema": "qbo",
-      "table": "reconciliation_alerts",
-      "reason": "needs uuid cast (column 'operating_company_id' is currently 'text') | needs FK from 'operating_company_id' to org.companies(id)",
-      "phase": "P4"
-    },
-    {
       "schema": "reports",
       "table": "scheduled_delivery_log",
       "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
       "phase": "P1"
     },
     {
-      "schema": "reports",
-      "table": "scheduled_subscriptions",
-      "reason": "needs uuid cast (column 'operating_company_id' is currently 'text') | needs FK from 'operating_company_id' to org.companies(id)",
-      "phase": "P4"
-    },
-    {
       "schema": "safety",
       "table": "accident_reports",
       "reason": "needs FK from 'operating_company_id' to org.companies(id)",
-      "phase": "P4"
-    },
-    {
-      "schema": "safety",
-      "table": "anomaly_alert_rules",
-      "reason": "needs uuid cast (column 'operating_company_id' is currently 'text') | needs FK from 'operating_company_id' to org.companies(id)",
-      "phase": "P4"
-    },
-    {
-      "schema": "safety",
-      "table": "anomaly_alerts",
-      "reason": "needs uuid cast (column 'operating_company_id' is currently 'text') | needs FK from 'operating_company_id' to org.companies(id)",
       "phase": "P4"
     },
     {
@@ -1113,12 +1077,6 @@
       "schema": "safety",
       "table": "da_test_records",
       "reason": "needs FK from 'operating_company_id' to org.companies(id)",
-      "phase": "P4"
-    },
-    {
-      "schema": "safety",
-      "table": "integrity_findings",
-      "reason": "needs uuid cast (column 'operating_company_id' is currently 'text') | needs FK from 'operating_company_id' to org.companies(id)",
       "phase": "P4"
     },
     {
