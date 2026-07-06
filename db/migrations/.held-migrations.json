@@ -76,6 +76,14 @@
     {
       "file": "202607090000_event_log_guc_reconcile.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1] P0 prerequisite — events.log_event() sets app.current_operating_company_id from its own argument so FORCE RLS (P0-a, separate PR) becomes safe"
+    },
+    {
+      "file": "202607090100_civil_fines_voidable.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] P2 DB-audit — safety.civil_fines void-not-delete gap: adds voided_at/voided_reason + widens status CHECK + REVOKEs DELETE from ih35_app"
+    },
+    {
+      "file": "202607090200_maintenance_wo_lines_status_history_rls.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] P2 DB-audit — maintenance.work_order_lines + maintenance.wo_status_history had NO RLS at all; ENABLE+FORCE with isolate-through-parent (work_orders) policy"
     }
   ]
 }
