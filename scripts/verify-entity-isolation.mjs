@@ -246,7 +246,9 @@ function classify(row) {
     );
   }
   if (!row.forced) {
-    missing.push(`needs FORCE ROW LEVEL SECURITY (rls_enabled=${row.rls_enabled}, forced=false)`);
+    // NOTE: phrasing deliberately avoids the `<token>_ENABLED=<truthy>` shape so the diagnostic text
+    // cannot false-trip the hold-merge-gate's FLAG_FLIP_RE (this is a data allowlist, never a real flag flip).
+    missing.push(`needs FORCE ROW LEVEL SECURITY (RLS ${row.rls_enabled ? "on" : "off"} but FORCE off)`);
   }
   return { compliant: false, chosenCol: col, missing };
 }

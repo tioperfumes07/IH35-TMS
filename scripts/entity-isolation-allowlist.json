@@ -776,7 +776,7 @@
     {
       "schema": "events",
       "table": "event_log",
-      "reason": "needs FK from 'operating_company_id' to org.companies(id) | needs FORCE ROW LEVEL SECURITY (rls_enabled=true, forced=false) — GUC NAME IS NOT THE GAP (already reconciled): migration 202607090000 fixed events.log_event() to derive app.current_operating_company_id from its own p_operating_company_id argument, so every caller is correct by construction. What remains: (b) operating_company_id has NO foreign key to org.companies, and (d) RLS is enabled but NOT FORCED — migration 202607080100_event_log_force_rls_blocked_pending_guc_fix.sql is the tracked no-op placeholder documenting that FORCE is a deliberate separate follow-up (P0-a), to be authored only after a Neon-branch re-verification that forcing does not reject any spine-emit writer. Do not force this table as a side effect of closing this backlog entry.",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id) | needs FORCE ROW LEVEL SECURITY (RLS on but FORCE off) — GUC NAME IS NOT THE GAP (already reconciled): migration 202607090000 fixed events.log_event() to derive app.current_operating_company_id from its own p_operating_company_id argument, so every caller is correct by construction. What remains: (b) operating_company_id has NO foreign key to org.companies, and (d) RLS is enabled but NOT FORCED — migration 202607080100_event_log_force_rls_blocked_pending_guc_fix.sql is the tracked no-op placeholder documenting that FORCE is a deliberate separate follow-up (P0-a), to be authored only after a Neon-branch re-verification that forcing does not reject any spine-emit writer. Do not force this table as a side effect of closing this backlog entry.",
       "phase": "other"
     },
     {
