@@ -78,6 +78,34 @@
       "reason": "[HOLD-FOR-JORGE — TIER 1] P0 prerequisite — events.log_event() sets app.current_operating_company_id from its own argument so FORCE RLS (P0-a, separate PR) becomes safe"
     },
     {
+      "file": "202607091500_p4_1_stop_extra_rates_opco_uuid.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] P4-1 DB-audit — dispatch.stop_extra_rates operating_company_id TEXT -> uuid + FK; run only after prod data-audit confirms no non-uuid rows"
+    },
+    {
+      "file": "202607091510_p4_2_qbo_reconciliation_alerts_opco_uuid.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] P4-2 DB-audit (most urgent) — qbo.reconciliation_alerts operating_company_id TEXT DEFAULT 'default' -> uuid + FK; prod data-audit 2026-07-05 confirmed 0 rows (clean, no remap)"
+    },
+    {
+      "file": "202607091520_p4_3_recurring_bill_templates_opco_uuid.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] P4-3 DB-audit — accounting.recurring_bill_templates operating_company_id TEXT -> uuid + FK (financial cluster); prod data-audit 2026-07-05 confirmed 0 rows"
+    },
+    {
+      "file": "202607091530_p4_4_scheduled_subscriptions_opco_uuid.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] P4-4 DB-audit — reports.scheduled_subscriptions operating_company_id TEXT -> uuid + FK; prod data-audit 2026-07-05 confirmed 0 rows (seed rows valid-uuid in CI)"
+    },
+    {
+      "file": "202607091540_p4_5_anomaly_alert_rules_opco_uuid.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] P4-5 DB-audit — safety.anomaly_alert_rules operating_company_id TEXT -> uuid + FK; prod data-audit 2026-07-05 confirmed 0 rows"
+    },
+    {
+      "file": "202607091550_p4_6_anomaly_alerts_opco_uuid.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] P4-6 DB-audit — safety.anomaly_alerts operating_company_id TEXT -> uuid + FK; prod data-audit 2026-07-05 confirmed 0 rows"
+    },
+    {
+      "file": "202607091560_p4_7_integrity_findings_opco_uuid.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] P4-7 DB-audit — safety.integrity_findings operating_company_id TEXT -> uuid + FK; prod data-audit 2026-07-05 confirmed 0 rows"
+    },
+    {
       "file": "202607100100_block01_depreciation_loan_link_and_autopost_log.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1] BLOCK-01 Fixed-Asset Depreciation — additive-only: fixed_assets.financing_loan_id (CCG loan linkage) + append-only depreciation_autopost_runs log. No posting, no new GL math, no flag flips."
     }
