@@ -295,6 +295,7 @@ export async function registerVoidCancelRequestRoutes(app: FastifyInstance) {
         not_completable: { code: 409, error: "target_not_voidable", message: "This target cannot be voided/cancelled in its current state (e.g. a completed work order or a paid invoice)." },
         financial_blocked: { code: 409, error: "target_has_posted_financial_entries", message: "Target has posted financial entries; financial void is disabled for this entity (posting flag off)." },
         bill_has_payments: { code: 409, error: "target_linked_bill_has_payments", message: "Target has live payments; void the payment first." },
+        void_not_enabled: { code: 409, error: "void_not_enabled", message: "Void enforcement is not enabled for this entity/company (VOID_ENFORCEMENT_ENABLED is OFF)." },
       };
       const key = String(result.exec_error);
       const m = map[key] ?? { code: 409, error: key, message: "Void/cancel execution failed." };
