@@ -8,17 +8,21 @@ export function ActionBar({
   companyId,
   unitNumber,
   onChangeStatus,
+  onEdit,
+  onArchive,
 }: {
   unitId: string;
   companyId: string;
   unitNumber: string;
   onChangeStatus?: () => void;
+  onEdit?: () => void;
+  onArchive?: () => void;
 }) {
   const pdfUrl = `/api/v1/mdata/units/${unitId}/export.pdf?operating_company_id=${encodeURIComponent(companyId)}`;
 
   return (
     <div className="sticky bottom-0 z-10 flex flex-wrap gap-2 border-t border-gray-200 bg-white/95 p-3 backdrop-blur-sm">
-      <Button size="sm" variant="secondary">
+      <Button size="sm" variant="secondary" onClick={onEdit}>
         Edit
       </Button>
       <Button size="sm" variant="secondary" onClick={onChangeStatus}>
@@ -31,13 +35,13 @@ export function ActionBar({
       >
         + Create Work Order
       </a>
-      <a className={linkClass} href={`/fleet/map?unit=${unitId}`}>
+      <a className={linkClass} href={`/dispatch/map?unit=${unitId}`}>
         View on Map
       </a>
       <a className={linkClass} href={pdfUrl} download data-testid="vp-export-pdf">
         Export PDF
       </a>
-      <Button size="sm" variant="secondary">
+      <Button size="sm" variant="secondary" onClick={onArchive}>
         Archive
       </Button>
       <span className="sr-only">{unitNumber}</span>

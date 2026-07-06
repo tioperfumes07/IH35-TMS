@@ -4,6 +4,7 @@ import { getDriverHosDetail } from "../../api/hos";
 import { getDriver } from "../../api/mdata";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 function minutesToLabel(minutes: number) {
   const safe = Math.max(0, Math.floor(minutes));
@@ -89,7 +90,7 @@ export function DriverHosDetailPage() {
               {hosQuery.data.timeline_24h.map((event) => (
                 <div key={event.id} className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-100 bg-gray-50 px-2 py-1 text-xs">
                   <span className="font-semibold">{event.duty_status}</span>
-                  <span>{new Date(event.started_at).toLocaleString()} → {event.ended_at ? new Date(event.ended_at).toLocaleString() : "open"}</span>
+                  <span>{formatDateTimeUS(event.started_at)} CT → {event.ended_at ? `${formatDateTimeUS(event.ended_at)} CT` : "open"}</span>
                   <span className="text-gray-500">{event.location ?? "location n/a"}</span>
                 </div>
               ))}
@@ -121,7 +122,7 @@ export function DriverHosDetailPage() {
               <div className="mt-2 space-y-1">
                 {hosQuery.data.manual_edits.events.map((event) => (
                   <div key={event.id} className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-xs text-slate-800">
-                    {new Date(event.started_at).toLocaleString()} · {event.duty_status}
+                    {formatDateTimeUS(event.started_at)} CT · {event.duty_status}
                   </div>
                 ))}
               </div>

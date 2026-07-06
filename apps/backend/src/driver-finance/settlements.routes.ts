@@ -465,7 +465,7 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
       });
     }).catch(() => undefined);
 
-    const queueResult = await queuePaymentOnFinalize(params.data.id, user.uuid).catch((error) => ({
+    const queueResult = await queuePaymentOnFinalize(params.data.id, companyId, user.uuid).catch((error) => ({
       queued: false as const,
       reason: String((error as Error)?.message ?? "queue_payment_failed"),
     }));

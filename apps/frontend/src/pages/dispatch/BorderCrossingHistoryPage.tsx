@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { CustomsTimePill } from "../../components/dispatch/CustomsTimePill";
 
 type CrossingRow = {
   id: string;
@@ -49,7 +50,23 @@ export function BorderCrossingHistoryPage() {
   const columns: Array<ParityColumn<CrossingRow>> = [
     { key: "crossing_date", label: "Date", sortable: true, render: (row) => row.planned_crossing_date ?? row.crossing_date },
     { key: "direction", label: "Direction", sortable: true, className: "capitalize", cellClass: "capitalize" },
-    { key: "port_of_entry", label: "Port", sortable: true },
+    {
+      key: "port_of_entry",
+      label: "Port",
+      sortable: true,
+      render: (row) => (
+        <div className="flex items-center gap-2">
+          <span>{row.port_of_entry}</span>
+          {selectedCompanyId && row.port_of_entry && row.direction ? (
+            <CustomsTimePill
+              operatingCompanyId={selectedCompanyId}
+              crossingPoint={row.port_of_entry}
+              direction={row.direction as "northbound" | "southbound"}
+            />
+          ) : null}
+        </div>
+      ),
+    },
     { key: "unit_number", label: "Unit", sortable: true, render: (row) => row.unit_number ?? "—" },
     { key: "emanifest_reference", label: "eManifest", render: (row) => row.emanifest_reference ?? "—" },
   ];

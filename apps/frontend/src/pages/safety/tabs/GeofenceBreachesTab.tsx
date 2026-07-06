@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { acknowledgeBreach, listGeofenceBreaches, type GeofenceBreachFilter } from "../../../api/safetyGeofence";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { formatDateTimeUS } from "../../../lib/formatDate";
 
 const FILTERS: GeofenceBreachFilter[] = ["active", "acknowledged", "all"];
 
@@ -61,7 +62,7 @@ export function GeofenceBreachesTab() {
                 </span>
                 <span className="text-sm font-medium text-slate-900">Unit {event.unit_number ?? event.vehicle_id.slice(0, 8)}</span>
               </div>
-              <span className="text-xs text-slate-500">{new Date(event.event_at).toLocaleString()}</span>
+              <span className="text-xs text-slate-500">{formatDateTimeUS(event.event_at)} CT</span>
             </div>
             <div className="mt-1 text-xs text-slate-600">
               Geofence: {event.geofence_label ?? event.geofence_id} · Customer: {event.customer_name ?? "N/A"} · Position:{" "}

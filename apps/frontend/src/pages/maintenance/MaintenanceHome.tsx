@@ -47,6 +47,9 @@ import { RecentActivityRow } from "./components/RecentActivityRow";
 import { RoadServiceList } from "./RoadServiceList";
 import { SevereRepairOosTab } from "./components/SevereRepairOosTab";
 import { TriageModal } from "./components/TriageModal";
+import { BrakeWearDashboard } from "./brakes/BrakeWearDashboard";
+import { PreFlightDvirQueue } from "./pre-flight/PreFlightDvirQueue";
+import { TireWearDashboard } from "./tires/TireWearDashboard";
 import { WorkOrderDetailModal } from "../../components/maintenance/WorkOrderDetailModal";
 import { WorkOrdersTable } from "./components/WorkOrdersTable";
 import { partNeedsReorder } from "./parts-low-stock";
@@ -73,6 +76,9 @@ const SUBNAV = [
   { id: "severe_repairs", label: "Severe Repairs" },
   { id: "road_service", label: "Road Service" },
   { id: "parts_inventory", label: "Parts Inventory" },
+  { id: "brake_wear", label: "Brake Wear" },
+  { id: "tire_wear", label: "Tire Wear" },
+  { id: "pre_flight_dvir", label: "Pre-Flight DVIR" },
   { id: "settings", label: "Settings" },
 ] as const;
 
@@ -347,6 +353,12 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
       {tab === "severe_repairs" ? <SevereRepairOosTab operatingCompanyId={companyId} /> : null}
 
       {tab === "road_service" ? <RoadServiceList operatingCompanyId={companyId} /> : null}
+
+      {tab === "brake_wear" ? <BrakeWearDashboard /> : null}
+
+      {tab === "tire_wear" ? <TireWearDashboard /> : null}
+
+      {tab === "pre_flight_dvir" ? <PreFlightDvirQueue /> : null}
 
       {tab === "parts_inventory" ? (
         <div className="space-y-2">

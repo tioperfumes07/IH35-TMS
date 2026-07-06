@@ -84,7 +84,7 @@ export function createAttachmentUploadUrl(body: {
 
 export function finalizeAttachment(
   attachmentId: string,
-  body: { operating_company_id: string; sha256_hash: string; category: AttachmentCategory }
+  body: { operating_company_id: string; entity_type: AttachmentEntityType; entity_id: string; sha256_hash: string; category: AttachmentCategory }
 ) {
   return apiRequest<{ id: string; deduped: boolean }>(`/api/v1/attachments/${attachmentId}/finalize`, {
     method: "POST",

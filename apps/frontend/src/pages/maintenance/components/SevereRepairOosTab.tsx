@@ -228,6 +228,7 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
       <Button
         size="sm"
         variant="secondary"
+        disabled
         onClick={() => pushToast("Convert to WO action is available from work-order detail in this foundation block", "info")}
       >
         Convert to WO
@@ -242,7 +243,7 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
       >
         Mark OOS
       </Button>
-      <Button size="sm" variant="secondary" onClick={() => pushToast("Dispatch Tow workflow lands in Block 04", "info")}>
+      <Button size="sm" variant="secondary" disabled onClick={() => pushToast("Dispatch Tow workflow lands in Block 04", "info")}>
         Dispatch Tow
       </Button>
       <Button size="sm" variant="secondary" disabled onClick={() => pushToast("Approve estimate follows Owner workflow route in next iteration", "info")}>
