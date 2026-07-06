@@ -148,6 +148,10 @@
     {
       "file": "202607111000_block02_driver_escrow_separation_return.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1] BLOCK-02 driver escrow — driver_finance.driver_escrow_separations (>=90-day post-separation return path tracking) + DRIVER_ESCROW_SEPARATION_RETURN_ENABLED flag OFF; reuses existing Block-23 escrow release JE, no new GL math"
+    },
+    {
+      "file": "202607140000_opening_balance_import_flag.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] STMT-2 — OPENING_BALANCE_IMPORT_ENABLED flag seed only (no schema change). Gates the read-only TRANSP 12/31/2024 opening-balance importer preview endpoint; the importer never posts (owner-entered only)."
     }
   ]
 }
