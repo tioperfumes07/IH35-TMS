@@ -128,11 +128,18 @@ describeIntegration("GAP-EXPENSES expenses list read-only (real Postgres)", () =
     await seedExpenseMatch(companyId, expenseA, "auto_matched");
     await seedExpenseMatch(companyId, expenseB, "rejected");
 
-    // Snapshot the expenses row count for the own entity — the SELECT must not change it (0 writes).
+    // Snapshot the row count for ONLY the expenses THIS test inserted (expenseA, expenseB) — scoped
+    // by id, not just operating_company_id. The shared TRANSP fixture company is written to
+    // concurrently by sibling db-test suites (expense-balance-invariant, wo-linked-financials,
+    // expense-gl-posting, bill-expense-lines-rls all insert accounting.expenses rows for this same
+    // company under parallel vitest), so a company-wide COUNT(*) races those inserts and can flip
+    // between snapshots (documented shared-company-db-test-contamination class). Filtering to this
+    // test's own ids makes the "the SELECT writes nothing" assertion immune to concurrent siblings.
+    const ownExpenseIds = [expenseA, expenseB];
     const countBefore = await bypass(companyId, async () => {
       const r = await db.query<{ n: string }>(
-        `SELECT count(*)::text AS n FROM accounting.expenses WHERE operating_company_id = $1::uuid`,
-        [companyId]
+        `SELECT count(*)::text AS n FROM accounting.expenses WHERE operating_company_id = $1::uuid AND id = ANY($2::uuid[])`,
+        [companyId, ownExpenseIds]
       );
       return Number(r.rows[0]!.n);
     });
@@ -161,8 +168,8 @@ describeIntegration("GAP-EXPENSES expenses list read-only (real Postgres)", () =
 
     const countAfter = await bypass(companyId, async () => {
       const r = await db.query<{ n: string }>(
-        `SELECT count(*)::text AS n FROM accounting.expenses WHERE operating_company_id = $1::uuid`,
-        [companyId]
+        `SELECT count(*)::text AS n FROM accounting.expenses WHERE operating_company_id = $1::uuid AND id = ANY($2::uuid[])`,
+        [companyId, ownExpenseIds]
       );
       return Number(r.rows[0]!.n);
     });
