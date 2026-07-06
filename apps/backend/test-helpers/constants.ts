@@ -13,3 +13,18 @@ export const TEST_OWNER_GOOGLE_ID = "integration-google-user-id";
  * ensureIntegrationPrerequisites (…477000). Isolation only — no financial/GL behavior is affected.
  */
 export const CASH_ADVANCE_MAP_TEST_LOCK_KEY = "922337203685477001";
+
+/**
+ * Shared ENCRYPTION_KEY default for every `.db.test.ts` that seeds a fake integrations.qbo_connections
+ * row so createJournalEntry's unconditional enqueueSyncJob->getValidAccessToken can resolve a connection
+ * (the JE push flag itself stays OFF — push is gated separately, at drain/immediate-push time). MUST be
+ * the SAME literal across every file that adopts this pattern: vitest's `pool: "forks"` can reuse one
+ * child process across multiple test files (files aren't always process-isolated), so a per-file
+ * `process.env.ENCRYPTION_KEY ??= "<file-specific literal>"` default is a landmine — whichever file's
+ * module loads first in a shared fork "wins" the value for the whole process, and
+ * getActiveConnectionByCompany (qbo-oauth.service.ts) has no realm_id filter (picks the single latest
+ * `authorized_at` row for the company), so a SECOND file's connection row can get decrypted with a
+ * DIFFERENT process-wide key than it was encrypted with -> AES-GCM auth-tag failure ("Unsupported state
+ * or unable to authenticate data"). Import this constant (never a local literal) in every such file.
+ */
+export const TEST_ENCRYPTION_KEY = "test-only-encryption-key-shared-db-test-qbo-connection";

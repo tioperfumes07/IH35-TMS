@@ -94,6 +94,9 @@ jobs:
       - name: Verify CHAIN-05 bank-feed GL posting (categorize→post behind BANK_FEED_GL_POSTING_ENABLED, flag OFF)
         run: npm run verify:bank-feed-gl-posting
 
+      - name: Verify CHAIN-05 live bank-feed tie-out (categorize/match/post chain shape, read-only)
+        run: npm run verify:bank-feed-live-tieout
+
       - name: Verify bank-recon variance poster reads ledger_account_id (not phantom coa_account_id)
         run: npm run verify:bank-recon-poster-ledger-account-id
 
