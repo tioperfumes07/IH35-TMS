@@ -15,6 +15,7 @@ import {
 import { ApiError } from "../../../api/client";
 import { companyToday } from "../../../lib/businessDate";
 import { Button } from "../../../components/Button";
+import { QboCombobox } from "../../../components/forms/QboCombobox";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../../../components/forms/TwoSectionLineEditor";
 import { TotalsStack } from "../../../components/forms/shared/TotalsStack";
@@ -965,8 +966,21 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
           {outsideVendor ? (
             <div data-testid="wo-outside-vendor-block" className="mt-2 rounded-md border border-[#fed7aa] bg-[#fffdf8] p-2">
               <div className="mb-1.5 text-[10px] font-bold uppercase tracking-wide text-[#b45309]">Outside vendor</div>
+              <input type="hidden" {...form.register("vendor_id")} />
               <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-                <FieldV5 label="Vendor (QuickBooks list)"><input list="wo-vendors" {...form.register("vendor_display_name")} placeholder="Search vendor…" className={FLD} /></FieldV5>
+                <FieldV5 label="Vendor (QuickBooks list)">
+                  <QboCombobox
+                    entityType="vendor"
+                    operatingCompanyId={operatingCompanyId}
+                    value={form.watch("vendor_id") || null}
+                    displayValue={form.watch("vendor_display_name") || ""}
+                    onChange={(qboId, displayName) => {
+                      form.setValue("vendor_id", qboId || "", { shouldDirty: true });
+                      form.setValue("vendor_display_name", displayName, { shouldDirty: true });
+                    }}
+                    placeholder="Search vendor…"
+                  />
+                </FieldV5>
                 <FieldV5 label="Vendor invoice #"><input {...form.register("vendor_invoice_number")} className={FLD} /></FieldV5>
                 <FieldV5 label="Authorization #"><input {...form.register("authorization_number")} className={FLD} /></FieldV5>
               </div>
@@ -1117,7 +1131,6 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       <datalist id="wo-statuses"><option value="open">Open</option><option value="in_progress">In progress</option><option value="waiting_parts">Awaiting parts</option><option value="complete">Completed</option></datalist>
       <datalist id="wo-systems">{["Brakes", "Tires & wheels", "Engine", "Aftertreatment / DEF", "Electrical / Battery", "Lighting / Lamps", "Mirrors / Glass", "HVAC / Reefer", "Suspension", "Body / Trailer"].map((s) => <option key={s} value={s} />)}</datalist>
       <datalist id="wo-terms">{["Due on receipt", "Net 15", "Net 30", "Net 45"].map((t) => <option key={t} value={t} />)}</datalist>
-      <datalist id="wo-vendors">{["TA Petro Laredo", "Rush Truck Centers", "Love's Road Service"].map((v) => <option key={v} value={v} />)}</datalist>
     </Modal>
   );
 }

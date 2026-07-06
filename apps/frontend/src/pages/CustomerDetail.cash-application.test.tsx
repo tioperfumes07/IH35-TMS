@@ -99,7 +99,7 @@ describe("CustomerDetail cash application", () => {
         } as never,
       ],
     });
-    vi.mocked(customersApi.listCustomerPayments).mockResolvedValue({ payments: [] });
+    vi.mocked(customersApi.listCustomerPayments).mockResolvedValue({ rows: [], total: 0 });
     vi.mocked(customersApi.recordCustomerPayment).mockResolvedValue({ ok: true });
   });
 

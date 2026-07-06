@@ -94,7 +94,7 @@ export function AdvanceDetailDrawer({ open, operatingCompanyId, advance, onClose
         </div>
 
         <div className="mt-3 grid grid-cols-2 gap-2">
-          <Button size="sm" variant="secondary" onClick={() => pushToast("Edit flow pending", "info")}>
+          <Button size="sm" variant="secondary" disabled onClick={() => pushToast("Edit cash advances is not available yet — reverse and create a new advance instead", "info")}>
             Edit
           </Button>
           <Button

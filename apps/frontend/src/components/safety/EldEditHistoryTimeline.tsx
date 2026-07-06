@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatDateUS, formatDateTimeUS } from "../../lib/formatDate";
 
 export type EldEditHistoryEntry = {
   id: string;
@@ -22,9 +22,9 @@ type EldRecentHistoryResponse = {
 };
 
 function formatTimestamp(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleString();
+  // Central Time (CLAUDE.md §8 "Central Time always") — never the reviewing user's browser zone.
+  const formatted = formatDateTimeUS(value);
+  return formatted ? `${formatted} CT` : value;
 }
 
 type EldEditHistoryTimelineProps = {

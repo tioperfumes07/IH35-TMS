@@ -104,6 +104,8 @@ export function FuelReconciliationPage() {
       <PageHeader
         title="Fuel reconciliation"
         subtitle="Card spend vs work order fuel attribution"
+        backHref="/reports"
+        breadcrumb={["Reports", "Fuel Reconciliation"]}
         actions={
           <div className="no-print flex flex-wrap gap-2">
             <Button size="sm" variant="secondary" onClick={() => window.print()}>

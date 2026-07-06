@@ -76,6 +76,8 @@ export function LateArrivalReport() {
       <PageHeader
         title="Late arrival analytics"
         subtitle="Completed stop late rates by driver, customer, and lane (30-minute grace)."
+        backHref="/reports"
+        breadcrumb={["Reports", "Late Arrival Analytics"]}
       />
 
       <div className="flex flex-wrap items-end gap-3 rounded-sm border border-slate-200 bg-white p-3">

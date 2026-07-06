@@ -106,6 +106,22 @@
       "reason": "[HOLD-FOR-JORGE — TIER 1] P4-7 DB-audit — safety.integrity_findings operating_company_id TEXT -> uuid + FK; prod data-audit 2026-07-05 confirmed 0 rows"
     },
     {
+      "file": "202607110200_civil_fines_voidable.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] P2 civil_fines void-not-delete"
+    },
+    {
+      "file": "202607110210_maintenance_wo_lines_status_history_rls.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] P2 maintenance wo_lines+status_history RLS"
+    },
+    {
+      "file": "202607110220_escrow_ledger_repoint_fk_to_canonical.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] P2 escrow_ledger FK repoint"
+    },
+    {
+      "file": "202607110000_relay_fuel_ingest.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] Relay Payments fuel ingest storage — integrations.relay_fuel_transactions/_lines + mdata.drivers.integration_id (additive). Storage only, no GL posting; RELAY_FUEL_INGEST_ENABLED OFF."
+    },
+    {
       "file": "202607110230_vendor_qbo_parity.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1] VENDOR-QBO-PARITY — additive mdata.vendors columns (website, print-on-check name, payment terms, default expense account Option-B recommendation); pure ADD COLUMN, no data touched"
     },

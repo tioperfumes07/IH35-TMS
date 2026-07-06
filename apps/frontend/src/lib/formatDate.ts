@@ -50,7 +50,8 @@ export function formatDateUS(value: unknown): string {
 }
 
 /**
- * Format an ISO timestamp as "MM/DD/YYYY, h:mm AM/PM" in the browser's local zone.
+ * Format an ISO timestamp as "MM/DD/YYYY, h:mm AM/PM" in America/Chicago (Central Time — CLAUDE.md
+ * §8 "Central Time always"; Laredo TX is the company's wall-clock zone, not the viewer's browser zone).
  * Returns "" for empty/unparseable input.
  */
 export function formatDateTimeUS(value: string | number | Date | null | undefined): string {
@@ -58,6 +59,7 @@ export function formatDateTimeUS(value: string | number | Date | null | undefine
   const dt = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(dt.getTime())) return "";
   return dt.toLocaleString("en-US", {
+    timeZone: "America/Chicago",
     month: "2-digit",
     day: "2-digit",
     year: "numeric",

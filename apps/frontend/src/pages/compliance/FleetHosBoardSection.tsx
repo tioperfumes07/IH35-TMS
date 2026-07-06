@@ -14,6 +14,7 @@ import {
   useTableController,
   type TableColumn,
 } from "../../components/table";
+import { formatClockTimeCT } from "../../lib/businessDate";
 
 function hmm(min: number | null): string {
   if (min == null || Number.isNaN(min)) return "—";
@@ -164,7 +165,7 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
         onPageSizeChange={table.setPageSize}
       >
         <span className="text-xs text-slate-500">
-          {query.data?.generated_at ? `as of ${new Date(query.data.generated_at).toLocaleTimeString()}` : ""}
+          {query.data?.generated_at ? `as of ${formatClockTimeCT(query.data.generated_at)} CT` : ""}
         </span>
         <div className="ml-auto flex gap-2">
           <Button type="button" variant="secondary" onClick={() => void query.refetch()}>

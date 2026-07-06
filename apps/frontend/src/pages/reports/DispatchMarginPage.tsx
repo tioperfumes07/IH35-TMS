@@ -1,10 +1,9 @@
 import { useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
+import { Button } from "../../components/Button";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
 import { getDispatchMargin, type DispatchMarginRow } from "../../api/reports";
 import { PageHeader } from "../../components/layout/PageHeader";
-import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportsSubNav } from "./ReportsSubNav";
 
@@ -24,7 +23,6 @@ function currentQuarterRange() {
 type SortKey = keyof DispatchMarginRow;
 
 export function DispatchMarginPage() {
-  const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [period, setPeriod] = useState(currentQuarterRange);
@@ -72,11 +70,8 @@ export function DispatchMarginPage() {
       <ReportsSubNav />
       <PageHeader
         title="Dispatch margin"
-        actions={
-          <Button variant="secondary" onClick={() => navigate("/reports")}>
-            Back
-          </Button>
-        }
+        backHref="/reports"
+        breadcrumb={["Reports", "Dispatch Margin"]}
       />
 
       <section className="flex flex-wrap items-end gap-3 rounded-sm border border-slate-200 bg-white p-3">

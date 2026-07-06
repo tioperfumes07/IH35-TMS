@@ -56,7 +56,12 @@ export function PerTruckCpmReport() {
 
   return (
     <div className="space-y-4 p-4">
-      <PageHeader title="Per-truck CPM" subtitle="Cost per mile by unit (GAP-45)" />
+      <PageHeader
+        title="Per-truck CPM"
+        subtitle="Cost per mile by unit (GAP-45)"
+        backHref="/reports"
+        breadcrumb={["Reports", "Per-Truck CPM"]}
+      />
       <ReportsSubNav />
       <div className="flex flex-wrap items-end gap-3 rounded-sm border bg-white p-4">
         <label className="text-sm">

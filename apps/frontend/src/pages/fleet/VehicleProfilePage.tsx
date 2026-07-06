@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams, Link } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { patchUnit, quicksaveEquipmentAssignment } from "../../api/mdata";
 import { QuickAssignModal } from "../../components/fleet/QuickAssignModal";
@@ -29,6 +29,7 @@ import { DocumentsSection } from "../../components/vehicle-profile/DocumentsSect
 import { PhotoGallery } from "../../components/vehicle-profile/PhotoGallery";
 import { ActionBar } from "../../components/vehicle-profile/ActionBar";
 import { BackhaulSuggestionsWidget } from "../../components/reports/BackhaulSuggestionsWidget";
+import { EditVehicleModal } from "../../components/fleet/EditVehicleModal";
 
 export type UnitProfileAggregate = {
   unit: Record<string, unknown>;
@@ -78,6 +79,7 @@ export function VehicleProfilePage() {
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
   const [quickAssignOpen, setQuickAssignOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
   const [qboVendorId, setQboVendorId] = useState<string | null>(null);
   const [qboVendorLabel, setQboVendorLabel] = useState("");
   const [qboClassTmsId, setQboClassTmsId] = useState("");
@@ -147,6 +149,16 @@ export function VehicleProfilePage() {
     mutationFn: (value: "available" | "booked" | "holding" | null) => postQuickAvailability(id, companyId, value),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["unit-profile", id, companyId] }),
   });
+
+  const invalidateProfile = () => {
+    void queryClient.invalidateQueries({ queryKey: ["unit-profile", id, companyId] });
+  };
+
+  const handleArchive = () => {
+    // Archive functionality - requires backend endpoint
+    // TODO: Implement when archive endpoint is available
+    pushToast("Archive functionality not yet implemented", "info");
+  };
 
   const telemetry = telemetryQuery.data ?? profile;
   const financial = profile?.financial_ytd as Record<string, unknown> | undefined;
@@ -263,7 +275,14 @@ export function VehicleProfilePage() {
               companyId={companyId}
               unitNumber={unitNumber}
               onChangeStatus={() => document.getElementById("vp-section-1-identity")?.scrollIntoView({ behavior: "smooth" })}
+              onEdit={() => setEditModalOpen(true)}
+              onArchive={handleArchive}
             />
+            <div className="mt-3">
+              <Link to={`/fleet/units/${id}/detail`} className="inline-block rounded-sm border px-3 py-1.5 text-sm">
+                View Permits, Toll Tags, Tasks, Brakes, Tires
+              </Link>
+            </div>
           </div>
         </>
       ) : null}
@@ -316,6 +335,13 @@ export function VehicleProfilePage() {
           void queryClient.invalidateQueries({ queryKey: ["unit-profile", id, companyId] });
           pushToast("Driver assigned", "success");
         }}
+      />
+      <EditVehicleModal
+        open={editModalOpen}
+        unitId={id}
+        operatingCompanyId={companyId}
+        onClose={() => setEditModalOpen(false)}
+        onSaved={invalidateProfile}
       />
     </div>
   );

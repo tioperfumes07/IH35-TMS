@@ -137,6 +137,8 @@ export function SubscriptionManager() {
       <PageHeader
         title="Scheduled report subscriptions"
         subtitle="Q8 auto-emailed reports — Owner manages cadence and recipients"
+        backHref="/reports"
+        breadcrumb={["Reports", "Scheduled Subscriptions"]}
         actions={
           isOwner ? (
             <Button

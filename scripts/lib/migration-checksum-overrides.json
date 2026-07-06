@@ -198,5 +198,11 @@
     "reason": "0937 edited post-apply to add EXISTS guard (catalogs.accounts) for CI-safety; prod already seeded, no behavior change",
     "added_at": "2026-06-09",
     "added_in_pr": "fix/0937-checksum-override"
+  },
+  {
+    "filename": "202607080000_settlement_contract_terms.sql",
+    "ledger_checksum": "2cca4179981cf46bee3bdfb79c83cd7d32cd783a3d0d14aab97c07d840a9e76a",
+    "disk_checksum": "93385bd9b537c3a18eed05d9481aecd14b64fd2aeeb51cfe4660b52b8e5ecbb2",
+    "reason": "#2152 edited already-applied #2151 migration (inert CoA role-CHECK reconcile); accept drift instead of mutating an applied migration. Unblocks prod deploy."
   }
 ]
