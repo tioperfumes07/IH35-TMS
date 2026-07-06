@@ -281,6 +281,8 @@ import { TRIP_PAIRING_BOARD_ROUTE } from "./trip-pairing-board.routes";
 import { AP_AGING_ROUTE } from "./ap-aging.routes";
 import { resolveUnderscoreRedirectPath } from "./url-canonicalize";
 const ForensicReviewPage = React.lazy(() => import("../pages/forensic/ForensicReviewPage").then((m) => ({ default: m.ForensicReviewPage })));
+const AdminPage = React.lazy(() => import("../pages/admin/AdminPage").then((m) => ({ default: m.AdminPage })));
+const USMCAActivationPanel = React.lazy(() => import("../pages/admin/USMCAActivationPanel").then((m) => ({ default: m.USMCAActivationPanel })));
 const ActivityLogPage = React.lazy(() => import("../pages/admin/ActivityLogPage").then((m) => ({ default: m.ActivityLogPage })));
 import AuditEventsList from "../pages/audit/AuditEventsList";
 import AuditLogViewer from "../pages/admin/audit-log/AuditLogViewer";
@@ -3175,6 +3177,22 @@ export const ROUTES = React.Children.toArray(
             <OwnerAdminRoute>
               <LegalAttorneyReviewPage />
             </OwnerAdminRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <OwnerAdminRoute>
+              <AdminPage />
+            </OwnerAdminRoute>
+          }
+        />
+        <Route
+          path="/admin/usmca-activation"
+          element={
+            <OwnerOnlyRoute>
+              <USMCAActivationPanel />
+            </OwnerOnlyRoute>
           }
         />
         <Route

@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { useState } from "react";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { PlannerRangeProvider } from "./PlannerRangeContext";
+import { PlannerRangeToolbar } from "./PlannerRangeToolbar";
 import { UniversalFilterBar, type FilterState } from "../../../components/planner/UniversalFilterBar";
 
 const TABS = [
@@ -39,6 +40,7 @@ export function DispatchPlannersLayout({ children }: { children?: ReactNode }) {
           ))}
         </nav>
         <UniversalFilterBar value={filters} onChange={setFilters} />
+        <PlannerRangeToolbar />
         {children}
       </div>
     </PlannerRangeProvider>

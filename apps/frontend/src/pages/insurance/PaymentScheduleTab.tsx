@@ -91,7 +91,7 @@ export function PaymentScheduleTab({ operatingCompanyId, policyId }: Props) {
     <DataPanel title="Payment Schedule">
       <div className="mb-3 flex items-center gap-2">
         <label className="text-xs font-semibold text-gray-600">
-          Status filter
+          Payment status filter
           <select
             className="ml-2 rounded-sm border border-gray-300 px-2 py-1 text-xs"
             value={statusFilter}

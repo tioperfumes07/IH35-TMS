@@ -2,8 +2,10 @@ import type { JSX } from "react";
 import { useFieldArray, Controller, type Control, type UseFormRegister, type UseFormSetValue } from "react-hook-form";
 import { StateSelect } from "../../../components/forms/StateSelect";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
+import { TimePicker } from "../../../components/forms/TimePicker";
 import { AddressGeocodeInput } from "../../../components/dispatch/AddressGeocodeInput";
 import { stopGeocodePatches } from "./book-load-stop-geocode";
+import { TimeWindowDropdown } from "./book-load-v4/TimeWindowDropdown";
 
 type Props = {
   control: Control<any>;
@@ -139,7 +141,7 @@ export function BookLoadStopsSection({ control, register, setValue }: Props) {
                       return (
                         <>
                           <Field label="Date" input={<input type="date" data-testid={`stop-date-${index}`} value={d} onChange={(e) => combine(e.target.value, t)} className={CELL} />} />
-                          <Field label="Time" input={<input type="time" data-testid={`stop-time-${index}`} value={t} onChange={(e) => combine(d, e.target.value)} className={CELL} />} />
+                          <Field label="Time" input={<TimePicker id={`stop-time-${index}`} value={t} onChange={(v) => combine(d, v)} className={CELL} ariaLabel="Stop time" />} />
                         </>
                       );
                     }}
@@ -173,8 +175,21 @@ export function BookLoadStopsSection({ control, register, setValue }: Props) {
                   />
                 </div>
 
+                {/* Row 3 — Time window. ADDITIVE (orphan-triage wiring, not in the original render-v6 §C
+                    spec): time_window_type was a real field (submitted on every stop, OCR rate-con extraction
+                    already infers it — appointment_required → "appointment"/"open_window") with NO UI control
+                    anywhere, silently hardcoded to "appointment" for every stop. Surfacing it lets the office
+                    correct a wrong OCR read or mark a customer-refused appointment before booking. */}
+                <div data-testid={`stop-timewindow-${index}`} className="grid grid-cols-1 gap-2 md:grid-cols-3">
+                  <Field
+                    label="Time window"
+                    input={<TimeWindowDropdown register={register} name={`stops.${index}.time_window_type`} />}
+                  />
+                </div>
+
                 {/* render-v6 §C empty-diff (GUARD): the stop card renders EXACTLY the 11 locrow/siterow fields
-                    above — nothing else. These columns are RELOCATED per Jorge, not deleted, so they round-trip
+                    above, PLUS the Time window field (Row 3, additive — see comment above) — nothing else.
+                    These columns are RELOCATED per Jorge, not deleted, so they round-trip
                     as hidden registered inputs (the full-stops-array UPDATE would null them otherwise):
                     appointment start/end → represented by Date+Time; Lumper paid by / required → §A by the
                     Lumper charge; tarp stop/count → §B Flatbed panel; instructions → optional, not a flat field. */}

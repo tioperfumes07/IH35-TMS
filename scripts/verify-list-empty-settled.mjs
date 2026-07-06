@@ -80,7 +80,12 @@ const MIGRATED = [
   { file: "apps/frontend/src/pages/banking/components/MatchDrawer.tsx", empties: ["No matchable records found in the ±7-day window for this transaction."] },
   { file: "apps/frontend/src/pages/dispatch/FactoringQueuePage.tsx", empties: ["No delivered loads in factoring queue.", "No loads match the current filter."] },
   { file: "apps/frontend/src/pages/dispatch/PodReviewPage.tsx", empties: ["No POD documents match the current filters."] },
-  { file: "apps/frontend/src/pages/dispatch/DispatchBoard.tsx", empties: ["All units currently have active loads."] },
+  // DispatchBoard's "All units currently have active loads." empty migrated (orphan-triage batch 05)
+  // into the shared UnitsWithoutLoadTable (components/DataTable): it renders emptyText ONLY when the
+  // `loading` prop (fed unitsWithoutLoadQuery.isLoading) is false — i.e. settled-only, the same
+  // false-empty invariant this guard enforces, now via DataTable's loading gate rather than the
+  // list-state primitive. DispatchBoard no longer renders that literal directly, so it is not a
+  // list-state surface anymore. Covered below by the DataTable false-empty scan.
   { file: "apps/frontend/src/pages/factoring/FactorAdmin.tsx", empties: ["No factors configured yet.", "No assignments found for this factor/customer.", "No batch history for this customer."] },
   { file: "apps/frontend/src/pages/factoring/ReserveDashboard.tsx", empties: ["No reserve balances found.", "No reserve movements found for the selected factor.", "No recent movements for this factor.", "No projected reserve releases in the selected window."] },
   { file: "apps/frontend/src/pages/driver-finance/components/SettlementDisputesTab.tsx", empties: ["No disputes found for current filter."] },
