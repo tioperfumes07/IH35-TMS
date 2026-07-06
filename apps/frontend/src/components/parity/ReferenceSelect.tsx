@@ -2,15 +2,23 @@
  * ReferenceSelect (A2) — the software-wide inline "+ Add new" keystone.
  *
  * Composes the existing office-standard Combobox (which supports `allowAddNew`
- * + `sublabel` = the "Type" in "Name + Type") with QuickCreateEntityModal (the
- * inline create form). Behavior mirrors QBO: "+ Add new" opens a NESTED create
- * panel on top of the current one; on Save the record is created and RETURNED
- * with the new value selected — no navigation away, no losing entered data.
+ * + `sublabel` = the "Type" in "Name + Type") with an inline create form.
+ * Behavior mirrors QBO: "+ Add new" opens a NESTED create panel on top of the
+ * current one; on Save the record is created and RETURNED with the new value
+ * selected — no navigation away, no losing entered data.
  *
  * Every reference dropdown across the TMS should use this instead of wiring
- * Combobox + QuickCreate ad-hoc. Account/category selects keep their existing
+ * Combobox + create-modal ad-hoc. Account/category selects keep their existing
  * lock-account control alongside via the `lockControl` slot. UI/read only —
  * the create call is the entity's existing non-financial create endpoint.
+ *
+ * Two inline-create backends, by kind:
+ *   - vendor / customer / item / category / part → QuickCreateEntityModal
+ *     (existing, locked-in behavior — do not change; covered by
+ *     ReferenceSelect.test.tsx).
+ *   - service → InlineCreateDrawer's richer BK7 two-sided (sell+buy) form
+ *     (NewServiceDrawerForm), additive — fixes the QBO-parity-spec-flagged
+ *     Line-Haul income/expense account mixup by defaulting to Service income.
  */
 import { useState, type ReactNode } from "react";
 import { Combobox, type ComboboxOption } from "../Combobox";
@@ -18,6 +26,7 @@ import {
   QuickCreateEntityModal,
   type QuickCreateKind,
 } from "../forms/shared/QuickCreateEntityModal";
+import { InlineCreateDrawer } from "./InlineCreateDrawer";
 
 export type ReferenceOption = {
   value: string;
@@ -26,12 +35,14 @@ export type ReferenceOption = {
   type?: string;
 };
 
+export type ReferenceCreateKind = QuickCreateKind | "service";
+
 export type ReferenceSelectProps = {
   value: string | null;
   onChange: (value: string | null) => void;
   options: ReferenceOption[];
-  /** Entity kind for the inline "+ Add new" create modal. */
-  createKind: QuickCreateKind;
+  /** Entity kind for the inline "+ Add new" create panel. */
+  createKind: ReferenceCreateKind;
   operatingCompanyId: string;
   placeholder?: string;
   disabled?: boolean;
@@ -66,6 +77,14 @@ export function ReferenceSelect({
 
   const addLabel = addNewLabel ?? `+ Add new ${createKind}`;
 
+  function handleCreated(rec: { id: string; label: string }) {
+    const opt: ReferenceOption = { value: rec.id, label: rec.label };
+    setCreated((prev) => [...prev, opt]);
+    onOptionCreated?.(opt);
+    onChange(rec.id); // return to parent with the new value selected
+    setCreateOpen(false);
+  }
+
   return (
     <div className="flex items-center gap-2">
       <div className="min-w-0 flex-1">
@@ -89,19 +108,23 @@ export function ReferenceSelect({
         {addLabel}
       </button>
       {lockControl}
-      <QuickCreateEntityModal
-        open={createOpen}
-        operatingCompanyId={operatingCompanyId}
-        kind={createKind}
-        onClose={() => setCreateOpen(false)}
-        onCreated={(rec) => {
-          const opt: ReferenceOption = { value: rec.id, label: rec.label };
-          setCreated((prev) => [...prev, opt]);
-          onOptionCreated?.(opt);
-          onChange(rec.id); // return to parent with the new value selected
-          setCreateOpen(false);
-        }}
-      />
+      {createKind === "service" ? (
+        <InlineCreateDrawer
+          open={createOpen}
+          kind="service"
+          operatingCompanyId={operatingCompanyId}
+          onClose={() => setCreateOpen(false)}
+          onCreated={handleCreated}
+        />
+      ) : (
+        <QuickCreateEntityModal
+          open={createOpen}
+          operatingCompanyId={operatingCompanyId}
+          kind={createKind}
+          onClose={() => setCreateOpen(false)}
+          onCreated={handleCreated}
+        />
+      )}
     </div>
   );
 }
