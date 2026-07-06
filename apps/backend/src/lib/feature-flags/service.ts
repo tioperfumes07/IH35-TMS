@@ -51,6 +51,12 @@ export const POSTING_FLAG_KEYS: ReadonlySet<string> = new Set([
   "FACTORING_GL_POSTING_ENABLED",
   "INVOICE_AR_GL_POSTING_ENABLED",
   "LEASE_GL_POSTING_ENABLED",
+  // Business-Property Allocation: property-tax accrual (Dr expense / Cr payable) + payment (Dr payable /
+  // Cr cash) posting, per-entity override (TRANSP/TRK), default OFF. Its key matches the `*_GL_POSTING_ENABLED`
+  // pattern isPostingFlag() auto-recognizes, but it is enumerated explicitly (belt-and-suspenders) so the
+  // migration-coverage guard and the per-entity money kill-switch both cover it — a global flip can never
+  // turn property-tax GL posting on for EVERY entity (incl. USMCA).
+  "PROPERTY_TAX_GL_POSTING_ENABLED",
   "SETTLEMENT_GL_POSTING_ENABLED",
   // H3-1: BLOCK-6 driver loan/advance posting from bank categorize. It posts a BALANCED JE (DEBIT the
   // driver-advance receivable, CREDIT the source bank) via the existing driver_advance source type, so it

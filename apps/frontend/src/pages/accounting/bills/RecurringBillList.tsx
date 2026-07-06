@@ -1,8 +1,8 @@
 import { formatDateUS } from "../../../lib/formatDate";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
-import { Plus, RefreshCw, ToggleLeft, Zap } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
+import { ArrowLeft, RefreshCw, ToggleLeft, Zap } from "lucide-react";
 import {
   listRecurringBillTemplates,
   deactivateRecurringBillTemplate,
@@ -66,6 +66,21 @@ export function RecurringBillList() {
 
   return (
     <div className="space-y-4">
+      <div className="flex items-center gap-2 text-xs text-gray-500">
+        <button
+          onClick={() => navigate("/accounting/bills")}
+          className="rounded-sm p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+          aria-label="Back to Bills"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </button>
+        <Link to="/accounting" className="hover:underline">Accounting</Link>
+        <span>/</span>
+        <Link to="/accounting/bills" className="hover:underline">Bills</Link>
+        <span>/</span>
+        <span className="text-gray-700">Recurring Bills</span>
+      </div>
+
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <h2 className="text-base font-semibold text-gray-900">Recurring Bill Templates</h2>
@@ -81,10 +96,9 @@ export function RecurringBillList() {
         </div>
         <button
           onClick={() => navigate("/accounting/bills/recurring/create")}
-          className="flex items-center gap-1.5 rounded-sm bg-[#1F2A44] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#1F2A44]"
+          className="rounded-sm border border-[#1f2a44] bg-[#1f2a44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0f1729]"
         >
-          <Plus className="h-3.5 w-3.5" />
-          Create Recurring Bill
+          + Create
         </button>
       </div>
 

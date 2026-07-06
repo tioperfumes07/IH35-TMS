@@ -16,6 +16,7 @@ export function accountingSubNavActiveHref(pathname: string, search: string): st
     if (category && BILL_CATEGORY_PATHS[category]) return BILL_CATEGORY_PATHS[category];
   }
   if (pathname.startsWith("/accounting/invoices/")) return "/accounting/invoices";
+  if (pathname.startsWith("/accounting/bills/recurring")) return "/accounting/bills/recurring";
   if (pathname.startsWith("/accounting/multi-entity")) return "/accounting/multi-entity";
   if (pathname.startsWith("/accounting/payments/")) return "/accounting/payments";
   if (pathname.startsWith("/accounting/factoring/")) return "/accounting/factoring";

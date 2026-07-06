@@ -133,6 +133,7 @@ const FleetHomePage = React.lazy(() => import("../pages/fleet/FleetHomePage").th
 const TrailerProfilePage = React.lazy(() => import("../pages/fleet/TrailerProfilePage").then((m) => ({ default: m.TrailerProfilePage })));
 const TransfersInProgressPage = React.lazy(() => import("../pages/fleet/TransfersInProgressPage").then((m) => ({ default: m.TransfersInProgressPage })));
 const ComplianceDashboardPage = React.lazy(() => import("../pages/compliance/ComplianceDashboardPage").then((m) => ({ default: m.ComplianceDashboardPage })));
+const PropertyTaxRenditionPage = React.lazy(() => import("../pages/compliance/PropertyTaxRenditionPage").then((m) => ({ default: m.PropertyTaxRenditionPage })));
 const NotificationCenterPage = React.lazy(() => import("../pages/notifications/NotificationCenterPage").then((m) => ({ default: m.NotificationCenterPage })));
 const EquipmentTypesPage = React.lazy(() => import("../pages/EquipmentTypesPage").then((m) => ({ default: m.EquipmentTypesPage })));
 const HomePage = React.lazy(() => import("../pages/Home").then((m) => ({ default: m.HomePage })));
@@ -230,6 +231,8 @@ const FactorReconciliationPage = React.lazy(() => import("../pages/accounting/Fa
 import { ReconciliationWorkspacePage as AccountingReconciliationWorkspacePage } from "../pages/accounting/ReconciliationWorkspacePage";
 const VendorBillCreatePage = React.lazy(() => import("../pages/accounting/VendorBillCreatePage").then((m) => ({ default: m.VendorBillCreatePage })));
 const CreateMultipleBillsPage = React.lazy(() => import("../pages/accounting/CreateMultipleBillsPage").then((m) => ({ default: m.CreateMultipleBillsPage })));
+const RecurringBillList = React.lazy(() => import("../pages/accounting/bills/RecurringBillList").then((m) => ({ default: m.RecurringBillList })));
+const RecurringBillCreate = React.lazy(() => import("../pages/accounting/bills/RecurringBillCreate").then((m) => ({ default: m.RecurringBillCreate })));
 const ExpenseCreatePage = React.lazy(() => import("../pages/accounting/ExpenseCreatePage").then((m) => ({ default: m.ExpenseCreatePage })));
 const ExpensesListPage = React.lazy(() => import("../pages/accounting/ExpensesListPage").then((m) => ({ default: m.ExpensesListPage })));
 const BillsPage = React.lazy(() => import("../pages/accounting/BillsPage").then((m) => ({ default: m.BillsPage })));
@@ -1305,6 +1308,22 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <ComplianceDashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/compliance/property-tax"
+          element={
+            <ProtectedRoute>
+              <PropertyTaxRenditionPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/compliance/property-tax/:id"
+          element={
+            <ProtectedRoute>
+              <PropertyTaxRenditionPage />
             </ProtectedRoute>
           }
         />
@@ -3330,6 +3349,22 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <CreateMultipleBillsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/bills/recurring"
+          element={
+            <ProtectedRoute>
+              <RecurringBillList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/bills/recurring/create"
+          element={
+            <ProtectedRoute>
+              <RecurringBillCreate />
             </ProtectedRoute>
           }
         />

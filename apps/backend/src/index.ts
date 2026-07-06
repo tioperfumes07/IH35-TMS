@@ -327,6 +327,7 @@ import { initializeQboSyncQueueRunner } from "./cron/qbo-sync-queue-runner.js";
 import { initializeQboInboundSyncCron, stopQboInboundSyncCron } from "./cron/qbo-inbound-sync.cron.js";
 import { initializeQboCdcPollCron } from "./cron/qbo-cdc-poll.cron.js";
 import { initializeRecurringTemplatesCron } from "./cron/recurring-templates.cron.js";
+import { initializeRecurringBillGeneratorWorker, stopRecurringBillGeneratorWorker } from "./jobs/recurring-bill-generator-worker.js";
 import { initializeQboTokenRefreshCron } from "./cron/qbo-token-refresh-cron.js";
 import { initializeCashAdvanceRequestExpiryCron } from "./cron/cash-advance-request-expiry-cron.js";
 import { initializeChatConfirmationEscalationCron } from "./cron/chat-confirmation-escalation.cron.js";
@@ -528,6 +529,7 @@ async function shutdown(signal: string) {
     stopBookingGapAggregatorWorker();
     stopCustomerRelationshipScorerWorker();
     stopDriverRetentionScorerWorker();
+    stopRecurringBillGeneratorWorker();
   } catch (error) {
     app.log.error({ err: error }, "Failed to stop QBO sync processors cleanly");
   }
@@ -1053,6 +1055,26 @@ async function main() {
     app.log.info("[STARTUP] recurring-templates cron initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] recurring-templates cron failed");
+  }
+
+  // GAP-20 / HOLD-FOR-JORGE: the recurring-bill-templates generator (accounting.recurring_bill_templates
+  // -> creates a real accounting.bills AP row on every due template, daily at 06:00 CT) was fully built
+  // (table + generator.service.ts + this worker) but never started -- the FE pages that create templates
+  // were also unrouted until this change. Bill CREATION here is unconditional (not gated by the
+  // BILL_GL_POSTING_ENABLED flag, which only gates the SEPARATE auto-post-to-GL sub-step inside
+  // generateFromTemplate). Starting this daily job therefore makes the server autonomously write
+  // accounting.bills rows for any active template -- a financial-cluster write with no per-action human
+  // confirmation. Per CLAUDE.md SS1.4 (never enable money-moving/posting automation without explicit
+  // owner OK) this ships OFF by default behind an explicit opt-in env var; Jorge decides when to flip it.
+  if (process.env.RECURRING_BILL_GENERATOR_CRON_ENABLED === "true") {
+    try {
+      initializeRecurringBillGeneratorWorker(app);
+      app.log.info("[STARTUP] recurring-bill-generator-worker initialized (RECURRING_BILL_GENERATOR_CRON_ENABLED=true)");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] recurring-bill-generator-worker failed");
+    }
+  } else {
+    app.log.info("[STARTUP] recurring-bill-generator-worker NOT started (RECURRING_BILL_GENERATOR_CRON_ENABLED != 'true' -- default OFF, HOLD-FOR-JORGE)");
   }
 
   try {

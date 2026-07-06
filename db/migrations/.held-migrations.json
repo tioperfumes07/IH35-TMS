@@ -66,6 +66,14 @@
       "reason": "[HOLD-FOR-JORGE — TIER 1] P0 DB-audit — public.audit_log (+48 monthly partitions) legacy table: REVOKE INSERT/UPDATE/DELETE from ih35_app + REVOKE ALL from PUBLIC, SELECT-only lockdown"
     },
     {
+      "file": "202607080300_property_tax_rendition_filing.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] Business-Property Allocation — TX property-tax rendition filing tables (compliance schema; posts nothing, but a schema change — never self-merge)"
+    },
+    {
+      "file": "202607080310_property_tax_accrual_posting.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] Business-Property Allocation — property-tax accrual/payment GL scaffolding (accounting.*/catalogs.* + COA roles + PROPERTY_TAX_GL_POSTING_ENABLED flag OFF; financial cluster)"
+    },
+    {
       "file": "202607090000_event_log_guc_reconcile.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1] P0 prerequisite — events.log_event() sets app.current_operating_company_id from its own argument so FORCE RLS (P0-a, separate PR) becomes safe"
     }
