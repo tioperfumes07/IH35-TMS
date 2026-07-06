@@ -93,6 +93,28 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
     );
     return rows.map((r) => r.accounting_bill_id);
   }
+  // Every accounting.journal_entry this run posted (3x per-load bill JE + 3x cash bill-payment JE + the
+  // 1 deduction JE). NOTE: this shared TRANSP company's ap_control / cash_dip roles are SINGLE mutable
+  // slots (accounting.chart_of_accounts_roles / catalogs.account_role_bindings) that sibling
+  // real-Postgres suites (e.g. bill-gl-posting.db.test.ts, bill-payment-gl-posting.db.test.ts) also
+  // point at their OWN account under vitest's parallel db-test execution. Whichever suite's upsert
+  // "wins" the race at any instant, ALL concurrently-running posts resolve the role fresh and can land
+  // their legs on THIS account — summing every journal_entry_postings row for (company, account) picks
+  // up that cross-test noise. Scoping to just the journal_entry_uuid values THIS test created makes the
+  // assertion immune to that race — it is now read as "does the leg of the JEs I posted net correctly",
+  // never "does the whole company's account net correctly right now" (see auto-memory
+  // shared-company-db-test-contamination).
+  async function resolveOwnJournalEntryIds(): Promise<string[]> {
+    const rows = await read<{ je_id: string | null }>(
+      `SELECT bill_journal_entry_id::text AS je_id FROM driver_finance.driver_settlement_gl_bills WHERE settlement_id=$1::uuid
+       UNION
+       SELECT cash_journal_entry_id::text AS je_id FROM driver_finance.driver_settlement_gl_bills WHERE settlement_id=$1::uuid
+       UNION
+       SELECT deduction_journal_entry_id::text AS je_id FROM driver_finance.driver_settlement_gl_runs WHERE settlement_id=$1::uuid`,
+      [settlementId]
+    );
+    return rows.map((r) => r.je_id).filter((id): id is string => Boolean(id));
+  }
   async function setFlag(enabled: boolean) {
     await bypass(async () => {
       await db.query(
@@ -345,10 +367,15 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
       [glBillIds, dipBankId]
     );
     expect(Number(cashBps[0]!.total)).toBe(124000);
+    // Scoped to THIS test's own journal entries (not just company+account) — see resolveOwnJournalEntryIds:
+    // the shared cash_dip role binding is a global singleton other concurrent real-Postgres suites can
+    // repoint mid-race, so an unscoped company+account sum would pick up their postings too.
+    const ownJeIds = await resolveOwnJournalEntryIds();
     const dipCredit = await read<{ total: string }>(
       `SELECT COALESCE(SUM(amount_cents),0)::text AS total FROM accounting.journal_entry_postings
-        WHERE operating_company_id=$1::uuid AND account_id=$2::uuid AND debit_or_credit='credit' AND source_transaction_type='bill_payment'`,
-      [companyId, acct.dipCash]
+        WHERE operating_company_id=$1::uuid AND account_id=$2::uuid AND debit_or_credit='credit'
+          AND source_transaction_type='bill_payment' AND journal_entry_uuid = ANY($3::uuid[])`,
+      [companyId, acct.dipCash, ownJeIds]
     );
     expect(Number(dipCredit[0]!.total)).toBe(124000);
 
@@ -368,11 +395,15 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
     expect(Number(noncashPosted[0]!.c)).toBe(0);
 
     // GL A/P nets to ZERO: Cr from bills (1515) == Dr from deduction JE (275) + cash payments (1240).
+    // Scoped to THIS test's own journal entries (ownJeIds, resolved above) — see resolveOwnJournalEntryIds:
+    // the shared ap_control role is a single mutable slot other concurrent real-Postgres suites can point
+    // at THIS account mid-race, so an unscoped company+account sum picks up their postings too.
     const apNet = await read<{ dr: string; cr: string }>(
       `SELECT COALESCE(SUM(amount_cents) FILTER (WHERE debit_or_credit='debit'),0)::text AS dr,
               COALESCE(SUM(amount_cents) FILTER (WHERE debit_or_credit='credit'),0)::text AS cr
-         FROM accounting.journal_entry_postings WHERE operating_company_id=$1::uuid AND account_id=$2::uuid`,
-      [companyId, acct.ap]
+         FROM accounting.journal_entry_postings
+        WHERE operating_company_id=$1::uuid AND account_id=$2::uuid AND journal_entry_uuid = ANY($3::uuid[])`,
+      [companyId, acct.ap, ownJeIds]
     );
     expect(Number(apNet[0]!.cr)).toBe(151500);
     expect(Number(apNet[0]!.dr)).toBe(151500); // nets to 0
@@ -388,6 +419,15 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
   });
 
   it("(c) idempotent -> second post is already_posted, no duplicate bills", async () => {
+    // Re-assert OUR OWN flag override rather than trusting it survived since test (b): the flag row is
+    // keyed (flag_key, operating_company_id) on this SAME shared TRANSP company, and a concurrent sibling
+    // real-Postgres suite on the same flag_key (settlement-gl-posting.db.test.ts also drives
+    // SETTLEMENT_GL_POSTING_ENABLED for this company) can DELETE+re-INSERT that row between tests under
+    // vitest's parallel db-test execution — flipping us back to flag-off and masking the real
+    // already_posted check (postSettlementBillPayment gates on the flag BEFORE checking run status).
+    // idempotent no-op when nobody raced us; see resolveOwnJournalEntryIds above for the sibling
+    // contamination pattern (shared-company-db-test-contamination).
+    await setFlag(true);
     const result = (await postSettlementBillPayment({ operatingCompanyId: companyId, settlementId }, { userId })) as SettlementBillPaymentResult;
     expect(result.result).toBe("already_posted");
     const glBillIds = await resolveGlBillIds();

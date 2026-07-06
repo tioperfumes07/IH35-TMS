@@ -6,7 +6,7 @@ import { resolveBillLineDebitAccount, BillLineAccountError } from "./bill-accoun
 // CHAIN-05 (BLOCK-03) adds "bank_categorization" (a categorized bank-feed line → direction-aware balanced
 // JE; built by buildBankCategorizationLines). NOTE: kept on ONE line — verify-posting-engine-mvp-contract
 // prefix-matches the leading four MVP types on a single line.
-export type PostingSourceType = "invoice" | "bill" | "customer_payment" | "bill_payment" | "cash_advance" | "driver_advance" | "expense" | "bank_categorization";
+export type PostingSourceType = "invoice" | "bill" | "customer_payment" | "bill_payment" | "cash_advance" | "driver_advance" | "expense" | "bank_categorization" | "driver_reimbursement";
 export type PostingPurpose = "initial_post" | "reversal";
 type BatchStatus = "queued" | "in_progress" | "posted" | "reversed" | "failed";
 
@@ -135,7 +135,7 @@ const PERIOD_LOCKED_TOKEN = "IH35_CLOSED_PERIOD";
 
 function assertKnownSourceType(value: string): asserts value is PostingSourceType {
   if (
-    !["invoice", "bill", "customer_payment", "bill_payment", "cash_advance", "driver_advance", "expense", "bank_categorization"].includes(
+    !["invoice", "bill", "customer_payment", "bill_payment", "cash_advance", "driver_advance", "expense", "bank_categorization", "driver_reimbursement"].includes(
       value
     )
   ) {
@@ -1194,6 +1194,101 @@ async function buildDriverAdvanceLines(
   };
 }
 
+// Driver REIMBURSEMENT immediate pay-out — the OPPOSITE of a driver advance. A reimbursement is money the
+// COMPANY owes the DRIVER for out-of-pocket tolls/fuel, paid IMMEDIATELY (no settlement needed). Balanced JE:
+//   DEBIT  reimbursement_expense  (role-mapped; same role the settlement poster uses for the aggregate leg)
+//   CREDIT the operator-chosen source/bank account (creditAccountId) or the company-default cash-like account.
+// Reads driver_finance.driver_reimbursements directly; posts only when status='paid' (the service flips it
+// first, then posts — mirrors the two-phase driver_advance disburse). NO new GL math — the standard
+// two-leg cash↔expense structure through the same spine as every other source type.
+async function buildDriverReimbursementLines(
+  client: DbClient,
+  operatingCompanyId: string,
+  sourceId: string,
+  creditAccountId: string | null
+): Promise<PostingDraft> {
+  const reimbRes = await client.query<{
+    id: string;
+    amount_cents: string;
+    status: string;
+    reimbursement_type: string;
+    posting_date: string | null;
+    paid_at: string | null;
+    created_at: string;
+  }>(
+    `
+      SELECT id::text, amount_cents::text, status::text, reimbursement_type::text,
+             posting_date::text, paid_at::text, created_at::text
+      FROM driver_finance.driver_reimbursements
+      WHERE operating_company_id = $1::uuid AND id::text = $2
+      LIMIT 1
+      FOR UPDATE
+    `,
+    [operatingCompanyId, sourceId]
+  );
+  const reimb = reimbRes.rows[0];
+  if (!reimb) throw new PostingEngineError("SOURCE_NOT_FOUND", "Driver reimbursement not found");
+  if (reimb.status !== "paid") {
+    throw new PostingEngineError(
+      "ADVANCE_NOT_POSTING_ELIGIBLE",
+      `Driver reimbursement is not posting-eligible (status=${reimb.status}; must be 'paid')`
+    );
+  }
+
+  // reimbursement_expense lives in catalogs.account_role_bindings (the same binding the settlement poster
+  // resolves for its aggregate reimbursement leg) — resolve entity-pinned, identical shape, so an
+  // immediate pay-out and a settlement-close pay-out hit the SAME expense account.
+  const debitRes = await client.query<{ account_id: string }>(
+    `
+      SELECT arb.account_id::text AS account_id
+      FROM catalogs.account_role_bindings arb
+      JOIN catalogs.accounts a ON a.id = arb.account_id
+      WHERE arb.role_key = 'reimbursement_expense'
+        AND arb.deactivated_at IS NULL
+        AND a.deactivated_at IS NULL
+        AND a.is_postable = true
+        AND (arb.operating_company_id = $1::uuid OR arb.operating_company_id IS NULL)
+        AND a.operating_company_id = $1::uuid
+      ORDER BY (arb.operating_company_id IS NOT NULL) DESC
+      LIMIT 1
+    `,
+    [operatingCompanyId]
+  );
+  const debitAccountId = debitRes.rows[0]?.account_id ?? null;
+  if (!debitAccountId) {
+    throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "No 'reimbursement_expense' role binding for driver reimbursement");
+  }
+  const creditAccount = creditAccountId ?? (await resolveCashLikeAccountForCompany(client, operatingCompanyId));
+  if (!creditAccount) {
+    throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Cash account mapping for driver reimbursement is missing");
+  }
+
+  const postingDate =
+    reimb.posting_date ?? (reimb.paid_at ? reimb.paid_at.slice(0, 10) : reimb.created_at.slice(0, 10));
+  const amountCents = Math.round(Number(reimb.amount_cents));
+  const label = `Driver reimbursement ${sourceId}`;
+  return {
+    postingDate,
+    memo: `${label} posting`,
+    lines: [
+      {
+        account_id: debitAccountId,
+        debit_or_credit: "debit",
+        amount_cents: amountCents,
+        description: `${label} (${reimb.reimbursement_type})`,
+        source_transaction_line_id: null,
+      },
+      {
+        account_id: creditAccount,
+        debit_or_credit: "credit",
+        amount_cents: amountCents,
+        description: `${label} cash`,
+        source_transaction_line_id: null,
+      },
+    ],
+  };
+}
+
 // CHAIN-05 (BLOCK-03) — a categorized bank-feed line → a direction-aware balanced JE. This is the
 // GENERALIZATION of BLOCK-6 (bank-driver-advance): the same two-leg cash↔category structure, for ANY
 // categorized bank transaction (not just the driver-advance branch). NO new GL math — it reads the row
@@ -1304,6 +1399,7 @@ async function buildPostingDraft(
   if (sourceType === "cash_advance") return buildCashAdvanceLines(client, operatingCompanyId, sourceId, creditAccountId);
   if (sourceType === "driver_advance") return buildDriverAdvanceLines(client, operatingCompanyId, sourceId, creditAccountId);
   if (sourceType === "bank_categorization") return buildBankCategorizationLines(client, operatingCompanyId, sourceId);
+  if (sourceType === "driver_reimbursement") return buildDriverReimbursementLines(client, operatingCompanyId, sourceId, creditAccountId);
   throw new PostingEngineError("UNKNOWN_SOURCE_TYPE", `Unknown source type: ${sourceType}`);
 }
 

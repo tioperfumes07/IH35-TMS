@@ -1,0 +1,4 @@
+{
+  "_comment": "Intentional standalone .tsx entrypoints that are legitimately NOT reachable from the main import graph (e.g. a component mounted only by an external harness). Only add a path here when the file is deliberately standalone — the default fix for an orphan is to WIRE it into a route/parent, not allowlist it. Paths are repo-relative POSIX.",
+  "allow": []
+}

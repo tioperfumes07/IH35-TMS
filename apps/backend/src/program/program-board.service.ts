@@ -14,8 +14,77 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import type pg from "pg";
 import { resolveMonorepoRoot } from "../lib/monorepo-root.js";
+import { getObjectTextIfExists } from "../storage/r2-client.js";
 
 const CT_ZONE = "America/Chicago";
+
+// ── LIVE snapshot (Cloudflare R2) ─────────────────────────────────────────────────────────────────────
+// The sync engine (`scripts/sync-program-board.mjs --to-r2`) writes the LIVE parts of the board — the
+// per-tab meta (tallies/deltas/deploy_version/last_synced_ct) + a per-row lifecycle map — to this R2 key
+// on a schedule, WITHOUT committing to `main` (so the board refreshes live with NO prod redeploy). We read
+// it here FIRST (cached ~60s) and OVERLAY it onto the committed repo JSON. When R2 is empty/unreadable we
+// fall back to the committed JSON verbatim (the finding LIST + descriptive fields always come from there),
+// so the page still renders and never 500s.
+const R2_LIVE_SNAPSHOT_KEY = "program-board/live-snapshot.json";
+const SNAPSHOT_TTL_MS = 60_000;
+
+// LIVE lifecycle fields the sync engine derives per row; these (and only these) are overlaid from R2 onto
+// the committed rows. The canonical id/name/descriptive fields are NEVER overlaid.
+const LIVE_OVERLAY_FIELDS = [
+  "requested_ct",
+  "written_ct",
+  "merged_ct",
+  "merged_at",
+  "deployed_ct",
+  "deploy_no",
+  "pr_url",
+  "live_state",
+  "lifecycle",
+  "synced_at",
+] as const;
+
+type LiveRowFields = Partial<Record<(typeof LIVE_OVERLAY_FIELDS)[number], unknown>>;
+type LiveSnapshot = {
+  generated_at_iso?: string;
+  meta?: BoardMeta | null;
+  live?: Record<string, LiveRowFields>;
+};
+
+let snapshotCache: { at: number; value: LiveSnapshot | null } | null = null;
+
+// Read + parse the R2 live snapshot with a small TTL cache so the 60s auto-refresh payload doesn't hit R2
+// on every request. Returns null (committed-JSON fallback) whenever R2 is absent/unconfigured/unparseable.
+async function readLiveSnapshot(warnings: string[]): Promise<LiveSnapshot | null> {
+  const now = Date.now();
+  if (snapshotCache && now - snapshotCache.at < SNAPSHOT_TTL_MS) return snapshotCache.value;
+  let value: LiveSnapshot | null = null;
+  try {
+    const text = await getObjectTextIfExists(R2_LIVE_SNAPSHOT_KEY);
+    if (text) value = JSON.parse(text) as LiveSnapshot;
+  } catch {
+    // Present-but-corrupt snapshot → warn once and fall back to committed JSON (never a 500).
+    warnings.push("program board live snapshot (R2) unparseable — falling back to committed JSON");
+    value = null;
+  }
+  snapshotCache = { at: now, value };
+  return value;
+}
+
+// Overlay ONLY the live lifecycle fields from a snapshot row onto a committed row (immutably). The
+// snapshot is keyed `${track}::${id}::${name}` — the same key the sync engine writes.
+function overlayLive<T extends { id?: unknown; name?: unknown }>(
+  row: T,
+  live: LiveSnapshot["live"] | undefined,
+  key: string
+): T {
+  const src = live?.[key];
+  if (!src) return row;
+  const out: Record<string, unknown> = { ...(row as Record<string, unknown>) };
+  for (const f of LIVE_OVERLAY_FIELDS) {
+    if (src[f] !== undefined) out[f] = src[f];
+  }
+  return out as T;
+}
 
 // Repo root resolved from THIS compiled module's location (cwd-independent). Falls back to null if the
 // anchor walk fails, in which case readRepoJson still tries cwd-relative candidates.
@@ -282,10 +351,16 @@ export async function getProgramBoard(client: pg.PoolClient): Promise<BoardRespo
     locked_decisions?: LockedDecision[];
   }>(EXTRA_REL, warnings, "program board extra");
 
-  // Live board meta (per-tab totals + deltas + deploy version) — sync-engine maintained. Read via the
-  // same cwd-independent resolveMonorepoRoot path as recon/extra. Absent/unparseable → null + warning
-  // (readRepoJson pushes it); NEVER a 500. The sync engine populates this file for real.
-  const meta = readRepoJson<BoardMeta>(META_REL, warnings, "program board meta");
+  // Live board meta (per-tab totals + deltas + deploy version) — sync-engine maintained. Committed copy
+  // read via the same cwd-independent resolveMonorepoRoot path as recon/extra; it is the FALLBACK.
+  const committedMeta = readRepoJson<BoardMeta>(META_REL, warnings, "program board meta");
+
+  // LIVE snapshot from R2 (refreshed by the scheduled sync WITHOUT a prod redeploy). Meta + per-row
+  // lifecycle come from here FIRST; committed JSON is the graceful fallback. Absent/unreadable → null.
+  const snapshot = await readLiveSnapshot(warnings);
+  const liveMap = snapshot?.live;
+  // R2-first for meta; committed file when the snapshot has none. NEVER a 500.
+  const meta: BoardMeta | null = snapshot?.meta ?? committedMeta;
 
   const dbNotes = await readNotes(client, warnings);
 
@@ -303,10 +378,15 @@ export async function getProgramBoard(client: pg.PoolClient): Promise<BoardRespo
   }));
 
   const extraItems: ExtraItem[] = [
+    // Owner-Batch + Dispatch-Kit tracks have no live-sync overlay (the sync engine enriches audit + block
+    // rows only) — they render straight from the committed JSON.
     ...(extra?.owner_batch ?? []).map((it) => ({ ...it, track: "owner-batch" as const })),
     ...(extra?.dispatch_kit ?? []).map((it) => ({ ...it, track: "dispatch-kit" as const })),
     // Audit & Bug Sweep track — the 160-finding 2026-07-04 sweep, append-only (mark DONE, never delete).
-    ...(extra?.audit_bug_sweep ?? []).map((it) => ({ ...it, track: "audit" as const })),
+    // Live lifecycle fields overlaid from the R2 snapshot (keyed `audit::id::name`) when present.
+    ...(extra?.audit_bug_sweep ?? []).map((it) =>
+      overlayLive({ ...it, track: "audit" as const }, liveMap, `audit::${it.id}::${it.name}`)
+    ),
   ];
 
   // ── HONEST TIMESTAMPS ───────────────────────────────────────────────────────────────────────────
@@ -320,7 +400,9 @@ export async function getProgramBoard(client: pg.PoolClient): Promise<BoardRespo
   const data_as_of_ct = snapshotStamp ? formatCt(snapshotStamp) : null;
 
   // ── LIVE METRICS — recomputed at request time from what the backend can actually read ─────────────
-  const blocks = recon?.blocks ?? [];
+  // Overlay the R2 live lifecycle fields (keyed `block::id::name`) onto the committed blocks before the
+  // live counts/tallies are re-derived, so the rendered rows and the counts both reflect the R2 snapshot.
+  const blocks = (recon?.blocks ?? []).map((b) => overlayLive(b, liveMap, `block::${b.id}::${b.name}`));
   const liveCounts: Record<string, number> = {};
   for (const b of blocks) liveCounts[b.status] = (liveCounts[b.status] ?? 0) + 1;
   const financial_count = blocks.filter((b) => b.fin).length;
