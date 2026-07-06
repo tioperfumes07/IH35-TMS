@@ -216,6 +216,7 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
       return [
         { label: "Lists & Catalogs", to: "/lists" },
         { label: "Names Master", to: "/lists/names" },
+        { label: "Maintenance Services", to: "/lists/maintenance/services-catalog" },
       ];
     case "legal":
       return [
@@ -289,6 +290,7 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
       return [
         { label: "Reports Home", to: "/reports" },
         { label: "Trip Profitability", to: "/reports/trip-profitability" },
+        { label: "Late Arrival Report", to: "/reports/late-arrival" },
       ];
     default:
       return [];
