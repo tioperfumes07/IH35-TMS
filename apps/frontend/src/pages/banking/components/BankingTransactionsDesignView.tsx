@@ -1480,8 +1480,7 @@ export function BankingTransactionsDesignView({
                             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Match candidates</p>
                             <p className="mt-0.5 text-[11px] text-gray-500">
                               Ranked matchable ledger records (amount, date, memo) from the reconciliation match
-                              engine. Confirming a match to link and clear the transaction is part of the
-                              reconciliation workflow — coming soon here.
+                              engine, best match first.
                             </p>
                             {matchCandidatesQuery.isLoading ? <p className="mt-2 text-sm text-gray-500">Loading match candidates...</p> : null}
                             {matchCandidatesQuery.isError ? (
