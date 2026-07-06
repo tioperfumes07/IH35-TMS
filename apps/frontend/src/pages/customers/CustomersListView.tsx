@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { listAtRiskCustomerRelationshipScores, type Customer } from "../../api/mdata";
+import { getCustomerBillingSummary, listAtRiskCustomerRelationshipScores, type Customer } from "../../api/mdata";
 import { customerQualityKind, customerQualityClass } from "../../lib/quality-badge";
 import { bulkUpdate } from "../../api/bulk";
 import { BulkActionBar } from "../../components/bulk/BulkActionBar";
@@ -11,6 +11,7 @@ import { useToast } from "../../components/Toast";
 import { useBulkSelection } from "../../hooks/useBulkSelection";
 import { useListState, type ListQueryStatus } from "../../components/list-state";
 import { formatUsdCents } from "../../lib/money";
+import { CustomerDrillModal } from "../../components/customers/CustomerDrillModal";
 
 function fmtMoney(cents: number) {
   return formatUsdCents(cents);
@@ -64,6 +65,13 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
   const { pushToast } = useToast();
   const selection = useBulkSelection();
   const [filter, setFilter] = useState<FilterChip>("all");
+  const [drillCustomer, setDrillCustomer] = useState<Customer | null>(null);
+
+  const drillSummaryQuery = useQuery({
+    queryKey: ["customers", "billing-summary", companyId, drillCustomer?.id ?? ""],
+    queryFn: () => getCustomerBillingSummary(drillCustomer!.id, companyId),
+    enabled: Boolean(companyId && drillCustomer?.id),
+  });
 
   const atRiskQuery = useQuery({
     queryKey: ["customers-relationship-at-risk", companyId],
@@ -198,9 +206,23 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
     switch (key) {
       case "name":
         return (
-          <Link to={`/customers/${customer.id}`} className="text-slate-700 hover:underline" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
-            {customer.name}
-          </Link>
+          <span className="inline-flex items-center gap-1.5">
+            <Link to={`/customers/${customer.id}`} className="text-slate-700 hover:underline" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
+              {customer.name}
+            </Link>
+            <button
+              type="button"
+              className="text-[10px] font-medium text-slate-500 underline hover:text-slate-700"
+              data-testid={`customer-quick-view-${customer.id}`}
+              title="Quick view"
+              onClick={(e: { stopPropagation(): void }) => {
+                e.stopPropagation();
+                setDrillCustomer(customer);
+              }}
+            >
+              View
+            </button>
+          </span>
         );
       case "email": return customer.email ?? "—";
       case "phone": return customer.phone ?? "—";
@@ -373,6 +395,14 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
       </TableSelection>
 
       <Paginator page={table.page} pageCount={table.pageCount} onPageChange={table.setPage} />
+
+      <CustomerDrillModal
+        open={Boolean(drillCustomer)}
+        customer={drillCustomer}
+        openBalanceCents={openByCustomerId.get(drillCustomer?.id ?? "") ?? 0}
+        overdueCents={drillSummaryQuery.data?.aging_buckets?.bucket_91_plus ?? 0}
+        onClose={() => setDrillCustomer(null)}
+      />
     </div>
   );
 }
