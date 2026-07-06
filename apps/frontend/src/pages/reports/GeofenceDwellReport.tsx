@@ -6,6 +6,7 @@ import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getGeofenceDwellReport, listGeofences, type GeofenceLocationKind } from "../../api/geofencing";
 import { ReportsSubNav } from "./ReportsSubNav";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 function minutesToClock(value: number | null) {
   if (value == null) return "In yard";
@@ -206,8 +207,8 @@ export function GeofenceDwellReport() {
                   <td className="px-2 py-2">{row.location_kind}</td>
                   <td className="px-2 py-2">{row.unit_number}</td>
                   <td className="px-2 py-2">{driverName(row.first_name, row.last_name)}</td>
-                  <td className="px-2 py-2">{new Date(row.entered_at).toLocaleString()}</td>
-                  <td className="px-2 py-2">{row.exited_at ? new Date(row.exited_at).toLocaleString() : "In yard"}</td>
+                  <td className="px-2 py-2">{formatDateTimeUS(row.entered_at)} CT</td>
+                  <td className="px-2 py-2">{row.exited_at ? `${formatDateTimeUS(row.exited_at)} CT` : "In yard"}</td>
                   <td className="px-2 py-2">{minutesToClock(row.dwell_minutes)}</td>
                 </tr>
               ))}

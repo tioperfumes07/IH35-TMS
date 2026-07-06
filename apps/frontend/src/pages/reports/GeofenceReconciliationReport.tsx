@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ReportsSubNav } from "./ReportsSubNav";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 interface Finding {
   uuid: string;
@@ -115,7 +116,7 @@ export function GeofenceReconciliationReport() {
                 <tr key={f.uuid} className={`border-b ${f.resolved ? "opacity-50" : ""}`}>
                   <td className="px-3 py-2">{f.unit_id ?? "—"}</td>
                   <td className="px-3 py-2">{f.geofence_id ?? "—"}</td>
-                  <td className="px-3 py-2">{f.occurred_at ? new Date(f.occurred_at).toLocaleString() : "—"}</td>
+                  <td className="px-3 py-2">{f.occurred_at ? `${formatDateTimeUS(f.occurred_at)} CT` : "—"}</td>
                   <td className="px-3 py-2">
                     {f.resolved
                       ? <span className="text-green-600">Resolved</span>

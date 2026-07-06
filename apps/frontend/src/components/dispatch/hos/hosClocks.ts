@@ -50,8 +50,9 @@ export function fmtHMM(min: number | null | undefined): string {
 
 export function fmtLocalClock(date: Date | null): string {
   if (!date) return "—";
-  // "h:mm a" in the dispatcher's local timezone.
-  return date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  // "h:mm a" in America/Chicago (Central Time — CLAUDE.md §8 "Central Time always"; the carrier
+  // operates out of Laredo TX, NOT the dispatcher's browser timezone, which could be anywhere).
+  return date.toLocaleTimeString("en-US", { timeZone: "America/Chicago", hour: "numeric", minute: "2-digit" });
 }
 
 export type HosClocks = {
