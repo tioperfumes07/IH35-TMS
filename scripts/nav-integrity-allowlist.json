@@ -351,6 +351,10 @@
       "reason": "Fleet unit profile dynamic route from in-app links"
     },
     {
+      "path": "/fleet/units/:id/detail",
+      "reason": "Unit detail dynamic route linked from VehicleProfilePage in-app link, not sidebar subnav"
+    },
+    {
       "path": "/fleet/trailers/:id",
       "reason": "Trailer profile dynamic route from in-app links (Block 15)"
     },
