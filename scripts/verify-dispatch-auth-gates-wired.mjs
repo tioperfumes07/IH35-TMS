@@ -11,7 +11,10 @@ m("apps/backend/src/dispatch/auth-gates/routes.ts",/registerDispatchAuthGateRout
 m("apps/backend/src/dispatch/auth-gates/routes.ts",/checkGates/,"mutation gate hook");
 m("apps/backend/src/index.ts",/registerDispatchAuthGateRoutes/,"index");
 m("apps/frontend/src/components/dispatch/AuthGatePanel.tsx",/AuthGatePanel/,"panel");
-m("apps/frontend/src/pages/dispatch/book-load/BookLoad.tsx",/AuthGatePanel/,"book load");
-m("apps/frontend/src/pages/dispatch/assignments/AssignmentEdit.tsx",/AuthGatePanel/,"assignment edit");
+// book-load/BookLoad.tsx and assignments/AssignmentEdit.tsx were deleted (orphan-triage batch 05) —
+// thin AuthGatePanel + duplicate-button wrapper "steps" that never fit the single-submit-button
+// modals they targeted. AuthGatePanel is wired DIRECTLY into the live modals instead.
+m("apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx",/AuthGatePanel/,"book load");
+m("apps/frontend/src/pages/dispatch/LoadReassignModal.tsx",/AuthGatePanel/,"assignment edit");
 r(".block-ready/GAP-47.json");
 if(f.length){console.error(f);process.exit(1);} console.log("verify:dispatch-auth-gates — OK");

@@ -34,11 +34,15 @@ if (!/const tableColumns = boardColumns/.test(src)) fail("tableColumns must alia
 // columns — only the position changed.
 // POSITION UPDATE 2026-06-28 (DB-6, GUARD construction block): "load" (Load #) moved to sit
 // immediately after "trailer" (app-wide shared column model). Same 16 columns — position only.
-// This 16-column order is the contract going forward.
+// LOCKED COUNT CHANGE 2026-07-06 (orphan-triage batch 05, additive): 16 → 17 columns —
+// "driver_status" appended at the end. Wires the previously-orphaned DriverStatusCell
+// (dispatch lifecycle sub-stage — pretrip/at_shipper/loading/detention/hos_break/accident/...,
+// distinct from both the load-level "status" chip and the Risk column's ETA prediction).
+// This 17-column order is the contract going forward.
 const expectedOrder = [
   "unit", "trailer", "load", "driver", "location", "customer",
   "commodity", "pickup", "delivery", "wo", "cargo_temp", "linehaul", "status_signal",
-  "live_gps", "risk", "status",
+  "live_gps", "risk", "status", "driver_status",
 ];
 const modelStart = src.indexOf("const boardColumns");
 const modelEnd = src.indexOf("];", modelStart);
