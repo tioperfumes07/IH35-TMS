@@ -118,6 +118,8 @@ export function SettlementSummaryPage() {
       <PageHeader
         title="Settlement summary"
         subtitle="Driver pay, deductions, and chargebacks by period"
+        backHref="/reports"
+        breadcrumb={["Reports", "Settlement Summary"]}
         actions={
           <div className="no-print flex flex-wrap gap-2">
             <Button size="sm" variant="secondary" onClick={() => window.print()}>

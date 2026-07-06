@@ -58,6 +58,8 @@ export function CashFlowStatementPage() {
       <PageHeader
         title="Cash flow statement"
         subtitle="Operating, investing, and financing movements · Accrual basis"
+        backHref="/reports"
+        breadcrumb={["Reports", "Cash Flow Statement"]}
         actions={
           <div className="no-print flex flex-wrap gap-2">
             <Button size="sm" variant="secondary" onClick={() => window.print()}>

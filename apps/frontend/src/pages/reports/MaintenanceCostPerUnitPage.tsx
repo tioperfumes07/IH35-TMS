@@ -110,6 +110,8 @@ export function MaintenanceCostPerUnitPage() {
       <PageHeader
         title="Maintenance cost per unit"
         subtitle="WO parts, labor, and outsourced spend by truck"
+        backHref="/reports"
+        breadcrumb={["Reports", "Maintenance Cost Per Unit"]}
         actions={
           <div className="no-print flex flex-wrap gap-2">
             <Button size="sm" variant="secondary" onClick={() => window.print()}>

@@ -87,7 +87,12 @@ export function DeadheadReportPage() {
 
   return (
     <div className="space-y-4 p-4">
-      <PageHeader title="Deadhead optimization" subtitle="Empty vs loaded miles by truck · backhaul planning" />
+      <PageHeader
+        title="Deadhead optimization"
+        subtitle="Empty vs loaded miles by truck · backhaul planning"
+        backHref="/reports"
+        breadcrumb={["Reports", "Deadhead Optimization"]}
+      />
       <ReportsSubNav />
 
       {!companyId ? <p className="text-sm text-red-600">Select operating company.</p> : null}

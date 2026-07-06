@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getDispatchLoadEta } from "../../api/dispatch";
+import { formatClockTimeCT } from "../../lib/businessDate";
 
 type Props = {
   loadId: string;
@@ -29,8 +30,8 @@ export function InTransitEtaChip({ loadId, operatingCompanyId }: Props) {
   }
   const data = q.data;
   if (!data) return null;
-  const t = new Date(data.eta_at);
-  const timeStr = Number.isNaN(t.getTime()) ? data.eta_at : t.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  // Central Time (CLAUDE.md §8 "Central Time always") — never the dispatcher's browser zone.
+  const timeStr = formatClockTimeCT(data.eta_at) || data.eta_at;
   return (
     <span
       className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-800"

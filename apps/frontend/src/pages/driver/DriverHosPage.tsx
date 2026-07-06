@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { getDriverHos, type HosSnapshot } from "../../api/driver";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 export function DriverHosPage() {
   const { t } = useTranslation();
@@ -12,7 +13,7 @@ export function DriverHosPage() {
     <div className="space-y-2">
       <h2 className="text-base font-semibold">{t("driver.hos_title")}</h2>
       <p className="text-xs text-slate-600">
-        {t("driver.hos_synced")}: {new Date(snap.last_synced_at).toLocaleString()}
+        {t("driver.hos_synced")}: {formatDateTimeUS(snap.last_synced_at)} CT
       </p>
       <p className="text-xs">
         {t("driver.duty_status")}: <span className="font-semibold">{snap.duty_status}</span>
