@@ -5,6 +5,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { bulkPostTransactionsAsBills } from "../banking/bulk-transactions.js";
+import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../banking/bank-account-visibility.js";
 import {
   buildInsuranceGenerateBillsResponse,
   computeInsuranceDispersal,
@@ -120,12 +121,16 @@ export async function persistInsuranceDispersalBills(input: {
     const vendorId = vendorRes.rows[0]?.id;
     if (!vendorId) throw new Error("insurance_vendor_not_found");
 
+    // BANK-ACCOUNT-HIDE: an account hidden for THIS entity must never be auto-picked to seed insurance
+    // premium bill transactions (flag OFF by default — see docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
+    const hideOnInsurance = await isBankAccountHideEnabled(client, input.operatingCompanyId);
     const bankAccountRes = await client.query<{ id: string }>(
       `
         SELECT id::text
         FROM banking.bank_accounts
         WHERE operating_company_id = $1
           AND is_active = true
+          ${bankAccountHiddenFilterSql(hideOnInsurance, "banking.bank_accounts")}
         ORDER BY created_at ASC
         LIMIT 1
       `,

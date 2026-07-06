@@ -70,6 +70,7 @@ const CategorizationRulesPage = React.lazy(() => import("../pages/banking/Catego
 const QboSyncQueuePage = React.lazy(() => import("../pages/banking/QboSyncQueuePage").then((m) => ({ default: m.QboSyncQueuePage })));
 const EmailQueuePage = React.lazy(() => import("../pages/banking/EmailQueuePage").then((m) => ({ default: m.EmailQueuePage })));
 const BankAccountDetailPage = React.lazy(() => import("../pages/banking/BankAccountDetail").then((m) => ({ default: m.BankAccountDetailPage })));
+const BankAccountVisibilityPage = React.lazy(() => import("../pages/banking/BankAccountVisibilityPage").then((m) => ({ default: m.BankAccountVisibilityPage })));
 import { SafetyLayout } from "../pages/safety/SafetyLayout";
 const EldAuditTrailViewer = React.lazy(() => import("../pages/safety/eld/EldAuditTrailViewer").then((m) => ({ default: m.EldAuditTrailViewer })));
 import {
@@ -1314,6 +1315,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <BankAccountDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/banking/account-visibility"
+          element={
+            <ProtectedRoute>
+              <BankAccountVisibilityPage />
             </ProtectedRoute>
           }
         />

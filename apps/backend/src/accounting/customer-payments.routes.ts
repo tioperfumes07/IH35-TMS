@@ -6,6 +6,7 @@ import { nextPaymentDisplayId } from "./display-id.js";
 import { enqueueAccountingOutbox } from "./outbox-events.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
+import { assertBankAccountUsable } from "../banking/bank-account-visibility.js";
 
 const paymentMethodSchema = z.enum([
   "ach",
@@ -148,6 +149,11 @@ export async function registerCustomerPaymentsRoutes(app: FastifyInstance) {
           [body.data.bank_account_id, query.data.operating_company_id]
         );
         if (!acctRes.rows[0]) return { code: 400 as const, error: "bank_account_not_found" };
+        // BANK-ACCOUNT-HIDE: an account hidden for THIS entity can never receive a NEW payment
+        // deposit (flag OFF by default — see docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
+        if (!(await assertBankAccountUsable(client, body.data.bank_account_id, query.data.operating_company_id))) {
+          return { code: 400 as const, error: "bank_account_not_found" };
+        }
       }
 
       const displayId = await nextPaymentDisplayId(client, query.data.operating_company_id, new Date(`${body.data.received_at}T00:00:00.000Z`));

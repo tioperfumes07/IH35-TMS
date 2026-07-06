@@ -1,4 +1,5 @@
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { bankTransactionHiddenFilterSql, isBankAccountHideEnabled } from "../banking/bank-account-visibility.js";
 import { withCompanyScope } from "./shared.js";
 import { insertRetainedEarningsClosingJournalIfNeeded } from "./period-close-retained-earnings.service.js";
 import { writePeriodCashBasisSnapshotAtClose } from "./cash-basis/period-close-snapshot.service.js";
@@ -81,6 +82,9 @@ async function loadChecklist(client: Client, input: { operatingCompanyId: string
   );
   const period = periodRes.rows[0] ?? null;
 
+  // BANK-ACCOUNT-HIDE: an account hidden for THIS entity is excluded from the month-close bank-recon
+  // coverage requirement entirely (flag OFF by default — see docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
+  const hideOnForClose = await isBankAccountHideEnabled(client, input.operatingCompanyId);
   const bankReconRes = await client.query<{
     bank_account_id: string;
     bank_account_name: string;
@@ -104,6 +108,7 @@ async function loadChecklist(client: Client, input: { operatingCompanyId: string
         FROM banking.bank_transactions bt
         WHERE bt.operating_company_id = $1::uuid
           AND bt.transaction_date BETWEEN $2::date AND $3::date
+          ${bankTransactionHiddenFilterSql(hideOnForClose, "bt")}
         GROUP BY bt.bank_account_id
       )
       SELECT

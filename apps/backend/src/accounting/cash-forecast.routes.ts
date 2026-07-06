@@ -4,6 +4,7 @@ import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { buildForecastWeeks, type ForecastSettings } from "./cash-forecast.math.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
+import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../banking/bank-account-visibility.js";
 
 const forecastQuerySchema = companyQuerySchema.extend({
   weeks: z.coerce.number().int().min(1).max(26).optional().default(13),
@@ -155,6 +156,9 @@ export async function registerCashForecastRoutes(app: FastifyInstance) {
       const settings =
         settingsRes.rows[0] ?? ({ fuel_estimate_weekly_cents: 0, insurance_weekly_cents: 0, lease_weekly_cents: 0, payroll_weekly_cents: 0 } satisfies ForecastSettings);
 
+      // BANK-ACCOUNT-HIDE: opening cash excludes accounts hidden for THIS entity (flag OFF by default —
+      // see docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
+      const hideOnForecast = await isBankAccountHideEnabled(client, query.data.operating_company_id);
       const cashRes = await client.query(
         `
           SELECT COALESCE(SUM(current_balance_cents), 0)::int AS total_cents
@@ -165,6 +169,7 @@ export async function registerCashForecastRoutes(app: FastifyInstance) {
             -- carry debt (negative balances) and are liabilities, not cash on hand —
             -- including them wrongly dragged opening cash to -$5.5M (CASH-ANOMALY).
             AND COALESCE(account_type, '') NOT ILIKE '%credit%'
+            ${bankAccountHiddenFilterSql(hideOnForecast, "banking.bank_accounts")}
         `,
         [query.data.operating_company_id]
       );

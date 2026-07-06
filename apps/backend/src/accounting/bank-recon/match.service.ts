@@ -1,5 +1,10 @@
 import { withLuciaBypass } from "../../auth/db.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
+import {
+  bankAccountHiddenFilterSql,
+  bankTransactionHiddenFilterSql,
+  isBankAccountHideEnabled,
+} from "../../banking/bank-account-visibility.js";
 import { writeTransactionSourceLink } from "../accounting-spine-emit.js";
 import { applyCashBasisSuppression, type CashBasisEntry } from "../cash-basis/engine.js";
 
@@ -136,22 +141,26 @@ function computeMatchScore(input: { amountGapCents: number; toleranceCents: numb
 }
 
 async function loadTransaction(client: DbClient, operatingCompanyId: string, bankTransactionId: string): Promise<BankTxn | null> {
+  // BANK-ACCOUNT-HIDE: a transaction on an account hidden for THIS entity must be unreachable by the
+  // categorization/matching flow (flag OFF by default — see docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
+  const hideOn = await isBankAccountHideEnabled(client, operatingCompanyId);
   const txn = await client.query<BankTxn>(
     `
       SELECT
-        id::text,
-        bank_account_id::text,
-        operating_company_id::text,
-        transaction_date::text,
-        amount_cents::int,
-        is_credit,
-        description,
-        merchant_name,
-        notes,
-        review_state
-      FROM banking.bank_transactions
-      WHERE id = $1::uuid
-        AND operating_company_id = $2::uuid
+        bt.id::text,
+        bt.bank_account_id::text,
+        bt.operating_company_id::text,
+        bt.transaction_date::text,
+        bt.amount_cents::int,
+        bt.is_credit,
+        bt.description,
+        bt.merchant_name,
+        bt.notes,
+        bt.review_state
+      FROM banking.bank_transactions bt
+      WHERE bt.id = $1::uuid
+        AND bt.operating_company_id = $2::uuid
+        ${bankTransactionHiddenFilterSql(hideOn, "bt")}
       LIMIT 1
     `,
     [bankTransactionId, operatingCompanyId]
@@ -511,12 +520,16 @@ async function postDifferenceJournalEntry(
 
   // Bank→GL bridge is banking.bank_accounts.ledger_account_id (FK → catalogs.accounts), NOT coa_account_id
   // (that column does not exist — reading it threw 42703 on every variance post). Same bridge CHAIN-04/05 use.
+  // BANK-ACCOUNT-HIDE: fail-closed — an account hidden for this entity can never be the target of a NEW
+  // variance posting (flag OFF by default).
+  const hideOnForPost = await isBankAccountHideEnabled(client, input.operating_company_id);
   const accountRes = await client.query<{ ledger_account_id: string | null }>(
     `
       SELECT ledger_account_id::text
       FROM banking.bank_accounts
       WHERE id = $1::uuid
         AND operating_company_id = $2::uuid
+        ${bankAccountHiddenFilterSql(hideOnForPost, "banking.bank_accounts")}
       LIMIT 1
     `,
     [input.bank_account_id, input.operating_company_id]

@@ -5,6 +5,7 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { enqueueAccountingOutbox } from "./outbox-events.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
+import { assertBankAccountUsable } from "../banking/bank-account-visibility.js";
 
 const vendorIdParamsSchema = z.object({
   id: z.string().trim().min(1),
@@ -183,6 +184,11 @@ export async function registerVendorBillPaymentsRoutes(app: FastifyInstance) {
             [body.data.bank_account_id, query.data.operating_company_id]
           );
           if (!acctProbe.rows[0]) return { code: 400 as const, error: "bank_account_not_found_for_payment" as const };
+          // BANK-ACCOUNT-HIDE: an account hidden for THIS entity can never fund a NEW vendor bill
+          // payment (flag OFF by default — see docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
+          if (!(await assertBankAccountUsable(client, body.data.bank_account_id, query.data.operating_company_id))) {
+            return { code: 400 as const, error: "bank_account_not_found_for_payment" as const };
+          }
         }
 
         const batchId = randomUUID();

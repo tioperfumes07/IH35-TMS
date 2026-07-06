@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../shared.js";
+import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../../banking/bank-account-visibility.js";
 
 const querySchema = companyQuerySchema.extend({
   as_of_date: z.string().date().optional(),
@@ -35,6 +36,9 @@ export async function registerCashFlowReportRouteFix(app: FastifyInstance) {
         return { kind: "company_not_found" as const };
       }
 
+      // BANK-ACCOUNT-HIDE: exclude accounts hidden for THIS entity (flag OFF by default — see
+      // docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
+      const hideOn = await isBankAccountHideEnabled(client, companyId).catch(() => false);
       const bankRes = await client
         .query(
           `
@@ -42,6 +46,7 @@ export async function registerCashFlowReportRouteFix(app: FastifyInstance) {
             FROM banking.bank_accounts
             WHERE operating_company_id = $1::uuid
               AND is_active = true
+            ${bankAccountHiddenFilterSql(hideOn, "banking.bank_accounts")}
           `,
           [companyId]
         )

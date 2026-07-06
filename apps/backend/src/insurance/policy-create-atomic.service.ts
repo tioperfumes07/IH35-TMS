@@ -8,6 +8,7 @@ import type { PoolClient } from "pg";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { enqueueAccountingOutbox } from "../accounting/outbox-events.js";
+import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../banking/bank-account-visibility.js";
 import {
   computeInsuranceDispersal,
   coverageTypeToPsItem,
@@ -75,9 +76,13 @@ async function persistBillsOnClient(
   const vendorId = vendorRes.rows[0]?.id;
   if (!vendorId) throw new Error("insurance_vendor_not_found");
 
+  // BANK-ACCOUNT-HIDE: an account hidden for THIS entity must never be auto-picked to seed insurance
+  // premium bill transactions (flag OFF by default — see docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
+  const hideOnPolicy = await isBankAccountHideEnabled(client, input.operatingCompanyId);
   const bankAccountRes = await client.query<{ id: string }>(
     `SELECT id::text FROM banking.bank_accounts
      WHERE operating_company_id = $1 AND is_active = true
+     ${bankAccountHiddenFilterSql(hideOnPolicy, "banking.bank_accounts")}
      ORDER BY created_at ASC LIMIT 1`,
     [input.operatingCompanyId]
   );

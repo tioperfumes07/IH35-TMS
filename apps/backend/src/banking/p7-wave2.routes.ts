@@ -5,6 +5,7 @@ import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope 
 import { BankingRuleRow, mergeSuggestionPreferHigher, suggestionFromPlaidCategory, suggestionFromRules } from "./suggestion-engine.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { findCandidates } from "../accounting/bank-recon/match.service.js";
+import { bankTransactionHiddenFilterSql, isBankAccountHideEnabled } from "./bank-account-visibility.js";
 
 const financeRoles = new Set(["Owner", "Administrator", "Manager", "Accountant"]);
 
@@ -49,8 +50,12 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
       );
       const rules = rulesRes.rows as BankingRuleRow[];
 
+      // BANK-ACCOUNT-HIDE: the review/categorization worklist must never surface a transaction on an
+      // account hidden for THIS entity (flag OFF by default — see
+      // docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
+      const hideOn = await isBankAccountHideEnabled(client, q.operating_company_id);
       const params: unknown[] = [q.operating_company_id];
-      let where = `bt.operating_company_id = $1`;
+      let where = `bt.operating_company_id = $1 ${bankTransactionHiddenFilterSql(hideOn, "bt")}`;
       if (q.state) {
         params.push(q.state);
         where += ` AND bt.review_state = $${params.length}`;

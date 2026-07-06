@@ -2,6 +2,11 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { createTtlCache } from "../lib/ttl-cache.js";
+import {
+  bankAccountHiddenFilterSql,
+  bankTransactionHiddenFilterSql,
+  isBankAccountHideEnabled,
+} from "../banking/bank-account-visibility.js";
 
 const querySchema = companyQuerySchema.extend({
   as_of_date: z.string().date().optional(),
@@ -53,6 +58,9 @@ export async function registerCashFlowOverviewRoutes(app: FastifyInstance) {
     if (hit) return hit;
 
     const payload = await withCompanyScope(user.uuid, companyId, async (client) => {
+      // BANK-ACCOUNT-HIDE: every cash aggregate below must exclude accounts hidden for THIS entity
+      // (flag OFF by default — see docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
+      const hideOn = await isBankAccountHideEnabled(client, companyId).catch(() => false);
       const bankRes = await client
         .query(
           `
@@ -75,6 +83,7 @@ export async function registerCashFlowOverviewRoutes(app: FastifyInstance) {
             FROM banking.bank_accounts
             WHERE operating_company_id = $1
               AND is_active = true
+            ${bankAccountHiddenFilterSql(hideOn, "banking.bank_accounts")}
           `,
           [companyId]
         )
@@ -117,6 +126,7 @@ export async function registerCashFlowOverviewRoutes(app: FastifyInstance) {
               AND t.matched_bill_id IS NULL
               AND t.matched_settlement_id IS NULL
               AND t.transaction_date <= $2::date
+              ${bankTransactionHiddenFilterSql(hideOn, "t")}
           `,
           [companyId, asOf]
         )
@@ -191,6 +201,7 @@ export async function registerCashFlowOverviewRoutes(app: FastifyInstance) {
               AND t.pending = false
               AND t.transaction_date > ($2::date - INTERVAL '7 days')
               AND t.transaction_date <= $2::date
+              ${bankTransactionHiddenFilterSql(hideOn, "t")}
           `,
           [companyId, asOf]
         )
@@ -213,6 +224,7 @@ export async function registerCashFlowOverviewRoutes(app: FastifyInstance) {
               AND t.pending = false
               AND t.transaction_date > ($2::date - INTERVAL '30 days')
               AND t.transaction_date <= $2::date
+              ${bankTransactionHiddenFilterSql(hideOn, "t")}
           `,
           [companyId, asOf]
         )

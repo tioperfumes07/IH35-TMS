@@ -5,6 +5,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { putObjectBytes, isR2Configured } from "../storage/r2-client.js";
 import { computeBankTransactionDedupHash, normalizeBankTransactionDescription } from "../banking/bank-tx-dedup.js";
+import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../banking/bank-account-visibility.js";
 import { requireDriverSession } from "./auth.js";
 
 const fieldSchema = z.object({
@@ -67,11 +68,15 @@ export async function registerDriverFuelReceiptRoutes(app: FastifyInstance) {
 
         await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
 
+        // BANK-ACCOUNT-HIDE: an account hidden for THIS entity must never be auto-picked as the fuel
+        // -receipt deposit target (flag OFF by default — see docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
+        const hideOnFuel = await isBankAccountHideEnabled(client, operatingCompanyId);
         const acct = await client.query<{ id: string }>(
           `
             SELECT id
             FROM banking.bank_accounts
             WHERE operating_company_id = $1::uuid
+            ${bankAccountHiddenFilterSql(hideOnFuel, "banking.bank_accounts")}
             ORDER BY (plaid_item_id IS NULL), created_at ASC
             LIMIT 1
           `,
