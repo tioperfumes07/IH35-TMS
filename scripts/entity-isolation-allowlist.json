@@ -126,6 +126,11 @@
       "reason": "one-off migration dedup ledger created by db/migrations/0318_equipment_types_canonical_dedup.sql (same class as the migration.test_seed_archive_ledger_* tables); not business data"
     },
     {
+      "schema": "catalogs",
+      "table": "tax_form_thresholds",
+      "reason": "global IRS reference data — year-keyed 1099-NEC/1042-S thresholds, withholding rates, and filing deadlines. Identical across every carrier entity (same federal law applies to all). Not operating_company_id-scoped by design; comment in 202607130100_block17_24_tax_document_engine.sql line 84 documents this decision."
+    },
+    {
       "schema": "public",
       "table": "partition_maintenance_log",
       "reason": "infra table tracking partition-maintenance job runs; not entity business data"
