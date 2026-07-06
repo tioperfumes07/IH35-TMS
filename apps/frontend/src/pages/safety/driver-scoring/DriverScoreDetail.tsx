@@ -1,6 +1,7 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { listDriverSafetyTrend, type DriverSafetyScoreRow } from "../../../api/safety";
+import { listDriverSafetyTrend, listDriverScoreEvents, type DriverSafetyScoreRow } from "../../../api/safety";
+import { HarshEventDetail } from "../HarshEventDetail";
 
 type Props = {
   companyId: string;
@@ -8,6 +9,8 @@ type Props = {
   driverName: string;
   onClose: () => void;
 };
+
+const EVENT_PERIODS = [7, 30, 90] as const;
 
 function TrendChart({ periods }: { periods: DriverSafetyScoreRow[] }) {
   const points = periods
@@ -51,6 +54,17 @@ export function DriverScoreDetail({ companyId, driverUuid, driverName, onClose }
 
   const periods = trendQuery.data?.periods ?? [];
   const latest = useMemo(() => (periods.length > 0 ? periods[periods.length - 1] : null), [periods]);
+
+  // Harsh-event timeline (raw telematics events behind the composite score) + per-event dashcam
+  // clip drill-through — ports the standalone event view so a reviewer can go from "score dropped"
+  // straight to "here's the clip" without leaving the driver's detail panel.
+  const [eventPeriodDays, setEventPeriodDays] = useState<(typeof EVENT_PERIODS)[number]>(30);
+  const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
+  const eventsQuery = useQuery({
+    queryKey: ["safety", "driver-scoring-events", companyId, driverUuid, eventPeriodDays],
+    queryFn: () => listDriverScoreEvents(companyId, driverUuid, eventPeriodDays),
+    enabled: Boolean(companyId && driverUuid),
+  });
 
   return (
     <div className="space-y-3 rounded-sm border border-gray-200 bg-white p-3">
@@ -125,6 +139,52 @@ export function DriverScoreDetail({ companyId, driverUuid, driverName, onClose }
             ) : null}
           </tbody>
         </table>
+      </div>
+
+      <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3">
+        <div className="flex items-center justify-between">
+          <h5 className="text-sm font-semibold text-slate-900">Harsh Event Timeline</h5>
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-slate-500">Period</span>
+            {EVENT_PERIODS.map((days) => (
+              <button
+                key={days}
+                type="button"
+                onClick={() => setEventPeriodDays(days)}
+                className={`rounded-sm px-2 py-1 ${eventPeriodDays === days ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-700"}`}
+              >
+                {days}d
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="space-y-1 text-xs">
+          {(eventsQuery.data?.events ?? []).slice(0, 50).map((event) => (
+            <div key={event.id} className="rounded-sm border border-slate-100 px-2 py-1">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span>
+                  {String(event.event_at).slice(0, 19).replace("T", " ")} · {event.event_kind} · {event.severity} · Unit{" "}
+                  {event.unit_number ?? "N/A"} · lat/lng {event.latitude ?? "—"}/{event.longitude ?? "—"}
+                </span>
+                <button
+                  type="button"
+                  className="text-slate-700 underline"
+                  onClick={() => setExpandedEventId(expandedEventId === event.id ? null : event.id)}
+                >
+                  {expandedEventId === event.id ? "Hide dashcam" : "View dashcam"}
+                </button>
+              </div>
+              {expandedEventId === event.id ? (
+                <div className="mt-2">
+                  <HarshEventDetail harshEventId={event.id} />
+                </div>
+              ) : null}
+            </div>
+          ))}
+          {(eventsQuery.data?.events ?? []).length === 0 ? (
+            <div className="text-slate-500">No harsh events for this driver in period.</div>
+          ) : null}
+        </div>
       </div>
     </div>
   );
