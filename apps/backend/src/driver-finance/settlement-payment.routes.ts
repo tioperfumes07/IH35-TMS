@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import {
   listPaymentEvents,
   markBounced,
@@ -37,8 +38,9 @@ function isOwnerOrAdmin(role: string) {
 }
 
 function mapServiceError(error: unknown, reply: FastifyReply) {
-  const err = error as { message?: string; code?: string; constraint?: string };
+  const err = error as { message?: string; code?: string; constraint?: string; statusCode?: number };
   const message = String(err?.message ?? "unknown_error");
+  if (message === "forbidden_company_membership") return reply.code(403).send({ error: message });
   if (message === "settlement_not_found") return reply.code(404).send({ error: message });
   if (message === "driver_bank_configuration_required") return reply.code(409).send({ error: message });
   if (message === "settlement_must_be_final") return reply.code(409).send({ error: message });
@@ -53,6 +55,16 @@ function mapServiceError(error: unknown, reply: FastifyReply) {
   });
 }
 
+async function parseCompanyQuery(req: FastifyRequest, reply: FastifyReply, userId: string) {
+  const query = companyQuerySchema.safeParse(req.query ?? {});
+  if (!query.success) {
+    sendValidationError(reply, query.error);
+    return null;
+  }
+  await assertCompanyMembership(userId, query.data.operating_company_id);
+  return query.data.operating_company_id;
+}
+
 export async function registerSettlementPaymentRoutes(app: FastifyInstance) {
   app.post("/api/v1/driver-pay/settlements/:id/queue-payment", async (req, reply) => {
     const user = currentAuthUser(req, reply);
@@ -61,7 +73,9 @@ export async function registerSettlementPaymentRoutes(app: FastifyInstance) {
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
     try {
-      const settlement = await queuePayment(params.data.id, user.uuid);
+      const operatingCompanyId = await parseCompanyQuery(req, reply, user.uuid);
+      if (operatingCompanyId === null) return;
+      const settlement = await queuePayment(params.data.id, operatingCompanyId, user.uuid);
       return { settlement };
     } catch (error) {
       return mapServiceError(error, reply);
@@ -77,7 +91,9 @@ export async function registerSettlementPaymentRoutes(app: FastifyInstance) {
     const body = markSentBodySchema.safeParse(req.body ?? {});
     if (!body.success) return sendValidationError(reply, body.error);
     try {
-      const settlement = await markSentToBank(params.data.id, body.data.bank_reference, user.uuid);
+      const operatingCompanyId = await parseCompanyQuery(req, reply, user.uuid);
+      if (operatingCompanyId === null) return;
+      const settlement = await markSentToBank(params.data.id, operatingCompanyId, body.data.bank_reference, user.uuid);
       return { settlement };
     } catch (error) {
       return mapServiceError(error, reply);
@@ -91,7 +107,9 @@ export async function registerSettlementPaymentRoutes(app: FastifyInstance) {
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
     try {
-      const settlement = await markCleared(params.data.id, user.uuid);
+      const operatingCompanyId = await parseCompanyQuery(req, reply, user.uuid);
+      if (operatingCompanyId === null) return;
+      const settlement = await markCleared(params.data.id, operatingCompanyId, user.uuid);
       return { settlement };
     } catch (error) {
       return mapServiceError(error, reply);
@@ -107,7 +125,9 @@ export async function registerSettlementPaymentRoutes(app: FastifyInstance) {
     const body = bouncedBodySchema.safeParse(req.body ?? {});
     if (!body.success) return sendValidationError(reply, body.error);
     try {
-      const settlement = await markBounced(params.data.id, body.data.reason, user.uuid);
+      const operatingCompanyId = await parseCompanyQuery(req, reply, user.uuid);
+      if (operatingCompanyId === null) return;
+      const settlement = await markBounced(params.data.id, operatingCompanyId, body.data.reason, user.uuid);
       return { settlement };
     } catch (error) {
       return mapServiceError(error, reply);
@@ -123,7 +143,15 @@ export async function registerSettlementPaymentRoutes(app: FastifyInstance) {
     const body = markManualBodySchema.safeParse(req.body ?? {});
     if (!body.success) return sendValidationError(reply, body.error);
     try {
-      const settlement = await markPaidManually(params.data.id, body.data.payment_method, body.data.reference ?? null, user.uuid);
+      const operatingCompanyId = await parseCompanyQuery(req, reply, user.uuid);
+      if (operatingCompanyId === null) return;
+      const settlement = await markPaidManually(
+        params.data.id,
+        operatingCompanyId,
+        body.data.payment_method,
+        body.data.reference ?? null,
+        user.uuid
+      );
       return { settlement };
     } catch (error) {
       return mapServiceError(error, reply);

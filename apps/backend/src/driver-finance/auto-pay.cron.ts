@@ -77,7 +77,7 @@ export function initializeDriverSettlementAutoPayCron(app: FastifyInstance) {
           candidates += rows.length;
           for (const row of rows) {
             try {
-              await queuePayment(row.settlement_id, SYSTEM_USER_ID);
+              await queuePayment(row.settlement_id, row.operating_company_id, SYSTEM_USER_ID);
               await withLuciaBypass(async (client) => {
                 await appendCrudAudit(
                   client,
