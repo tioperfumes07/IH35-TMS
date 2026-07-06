@@ -3422,6 +3422,29 @@
       "total_obligation_cents",
       "updated_at"
     ],
+    "driver_finance.driver_escrow_separations": [
+      "created_at",
+      "created_by_user_id",
+      "driver_id",
+      "eligible_release_date",
+      "escrow_account_id",
+      "escrow_balance_at_separation_cents",
+      "id",
+      "is_active",
+      "notes",
+      "operating_company_id",
+      "outstanding_damage_claims_cents",
+      "released_amount_cents",
+      "released_at",
+      "released_posting_id",
+      "retained_for_damages_cents",
+      "separation_date",
+      "status",
+      "updated_at",
+      "void_reason",
+      "voided_at",
+      "voided_by_user_id"
+    ],
     "driver_finance.driver_liabilities": [
       "created_at",
       "current_balance",
@@ -3583,14 +3606,14 @@
       "period_end",
       "period_start",
       "reimbursements_total",
-      "reversal_reason",
-      "reversed_at",
-      "reversed_by_user_id",
       "settlement_model",
       "status",
       "trip_closed_at",
       "trip_started_at",
-      "updated_at"
+      "updated_at",
+      "reversal_reason",
+      "reversed_at",
+      "reversed_by_user_id"
     ],
     "driver_finance.escrow_balances": [
       "created_at",

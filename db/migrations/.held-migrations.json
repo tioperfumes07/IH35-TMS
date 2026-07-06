@@ -140,6 +140,10 @@
     {
       "file": "202607100100_block01_depreciation_loan_link_and_autopost_log.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1] BLOCK-01 Fixed-Asset Depreciation — additive-only: fixed_assets.financing_loan_id (CCG loan linkage) + append-only depreciation_autopost_runs log. No posting, no new GL math, no flag flips."
+    },
+    {
+      "file": "202607111000_block02_driver_escrow_separation_return.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] BLOCK-02 driver escrow — driver_finance.driver_escrow_separations (>=90-day post-separation return path tracking) + DRIVER_ESCROW_SEPARATION_RETURN_ENABLED flag OFF; reuses existing Block-23 escrow release JE, no new GL math"
     }
   ]
 }
