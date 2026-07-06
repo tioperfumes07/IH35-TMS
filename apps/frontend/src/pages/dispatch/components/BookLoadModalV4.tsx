@@ -16,6 +16,7 @@ import { useToast } from "../../../components/Toast";
 import type { BookLoadFormValues } from "./BookLoadCustomerSection";
 import { BookLoadEquipmentSection } from "./BookLoadEquipmentSection";
 import { PreDispatchValidationPanel } from "../../../components/dispatch/PreDispatchValidationPanel";
+import { AuthGatePanel } from "../../../components/dispatch/AuthGatePanel";
 import { BookLoadStopsSection } from "./BookLoadStopsSection";
 import { MultiStopExtraRateEditor } from "../../../components/dispatch/MultiStopExtraRateEditor";
 import { BookLoadValidationSection } from "./BookLoadValidationSection";
@@ -1258,6 +1259,14 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                   trailerUuid={assignedTrailerUnitId || null}
                   customerId={watchedCustomerId || null}
                   onValidationChange={(canDispatch, hasBlockers) => setPreDispatch({ canDispatch, hasBlockers })}
+                />
+                <AuthGatePanel
+                  operatingCompanyId={operatingCompanyId}
+                  action={isEditMode ? "assign_driver" : "book_load"}
+                  loadUuid={editLoadId || undefined}
+                  unitUuid={assignedUnitId || undefined}
+                  driverUuid={assignedPrimaryDriverId || undefined}
+                  trailerUuid={assignedTrailerUnitId || undefined}
                 />
                 <BookLoadValidationSection issues={validationIssues} />
               </div>

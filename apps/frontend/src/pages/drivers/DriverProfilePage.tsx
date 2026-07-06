@@ -18,6 +18,7 @@ import { SettlementsSection } from "../../components/driver-profile/SettlementsS
 import { TrainingRecordsSection } from "../../components/driver-profile/TrainingRecordsSection";
 import { W8BenSection } from "../../components/driver-profile/W8BenSection";
 import { AddTrainingModal } from "../../components/drivers/AddTrainingModal";
+import { DriverCommunicationsTab } from "../../components/drivers/DriverCommunicationsTab";
 import { W8BenModal } from "../../components/drivers/W8BenModal";
 import { KpiCard } from "../../components/layout/KpiCard";
 import { KpiStrip } from "../../components/layout/KpiStrip";
@@ -344,6 +345,10 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
             same component DriverDetail uses. Replaces the read-only stub that only linked out to /docs, so
             CDLs / medical cards / insurance can be uploaded here directly. Per-entity scoped (driver). */}
         <DocumentsTab entityType="driver" entityId={id} entityName={displayName} />
+      </div>
+
+      <div data-testid="dp-section-communications" className="rounded-sm border border-gray-200 bg-white p-3">
+        <DriverCommunicationsTab driverId={id} operatingCompanyId={companyId} />
       </div>
 
       <KpiStrip>
