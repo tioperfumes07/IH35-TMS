@@ -61,14 +61,19 @@ const AUDIT_REPORT_CHILDREN: NavChild[] = [
 
 export const REPORTS_SUB_NAV_ITEMS: NavItem[] = [
   { label: "Reports", href: "/reports" },
+  { label: "Category hub", href: "/reports/hub" },
   { label: "Run report", children: flattenReportRunLinks() },
   { label: "Cancellations", href: "/reports/cancellations" },
+  { label: "Scheduled (custom)", href: "/reports/scheduled-custom" },
   { label: "Audit", children: AUDIT_REPORT_CHILDREN },
 ];
 
 export function reportsSubNavActiveHref(pathname: string): string {
   if (pathname.startsWith("/reports/audit/")) return pathname;
   if (pathname.startsWith("/reports/run/")) return pathname;
+  if (pathname.startsWith("/reports/categories/")) return "/reports/hub";
+  if (pathname === "/reports/hub") return pathname;
+  if (pathname === "/reports/scheduled-custom") return pathname;
   if (
     pathname === "/reports/ar-aging" ||
     pathname === "/reports/ap-aging" ||

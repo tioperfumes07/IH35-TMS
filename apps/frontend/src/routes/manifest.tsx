@@ -215,6 +215,18 @@ const AuditFinancialChangeLogPage = React.lazy(() => import("../pages/reports/au
 const AuditMaintenanceDecisionLogPage = React.lazy(() => import("../pages/reports/audit/AuditMaintenanceDecisionLogPage").then((m) => ({ default: m.AuditMaintenanceDecisionLogPage })));
 const AuditDeductionTrailPage = React.lazy(() => import("../pages/reports/audit/AuditDeductionTrailPage").then((m) => ({ default: m.AuditDeductionTrailPage })));
 const AuditVoidReversalPage = React.lazy(() => import("../pages/reports/audit/AuditVoidReversalPage").then((m) => ({ default: m.AuditVoidReversalPage })));
+const ReportsHubPage = React.lazy(() => import("../pages/reports/ReportsHub").then((m) => ({ default: m.ReportsHubPage })));
+const OpsDispatchCategoryPage = React.lazy(() => import("../pages/reports/categories/ops-dispatch").then((m) => ({ default: m.OpsDispatchCategoryPage })));
+const DriverPerfCategoryPage = React.lazy(() => import("../pages/reports/categories/driver-perf").then((m) => ({ default: m.UdriverUperfCategoryPage })));
+const EquipmentCategoryPage = React.lazy(() => import("../pages/reports/categories/equipment").then((m) => ({ default: m.UequipmentCategoryPage })));
+const SafetyCategoryPage = React.lazy(() => import("../pages/reports/categories/safety").then((m) => ({ default: m.UsafetyCategoryPage })));
+const CustomersCategoryPage = React.lazy(() => import("../pages/reports/categories/customers").then((m) => ({ default: m.UcustomersCategoryPage })));
+const VendorsCategoryPage = React.lazy(() => import("../pages/reports/categories/vendors").then((m) => ({ default: m.UvendorsCategoryPage })));
+const AccountingCategoryPage = React.lazy(() => import("../pages/reports/categories/accounting").then((m) => ({ default: m.UaccountingCategoryPage })));
+const TaxRegCategoryPage = React.lazy(() => import("../pages/reports/categories/tax-reg").then((m) => ({ default: m.UtaxUregCategoryPage })));
+const MultiCompanyCategoryPage = React.lazy(() => import("../pages/reports/categories/multi-company").then((m) => ({ default: m.UmultiUcompanyCategoryPage })));
+const ScheduledReportsPage = React.lazy(() => import("../pages/reports/ScheduledReportsPage").then((m) => ({ default: m.ScheduledReportsPage })));
+const Form425CExhibitsViewer = React.lazy(() => import("../pages/reports/form-425c/ExhibitsViewer").then((m) => ({ default: m.ExhibitsViewer })));
 const AuditPeriodCloseHistoryPage = React.lazy(() => import("../pages/reports/audit/AuditPeriodCloseHistoryPage").then((m) => ({ default: m.AuditPeriodCloseHistoryPage })));
 const QboSyncDetailPage = React.lazy(() => import("../pages/qbo-sync-detail/QboSyncDetailPage").then((m) => ({ default: m.QboSyncDetailPage })));
 const InvoicesListPage = React.lazy(() => import("../pages/accounting/InvoicesListPage").then((m) => ({ default: m.InvoicesListPage })));
@@ -1927,6 +1939,14 @@ export const ROUTES = React.Children.toArray(
         />
         <Route path="/form-425c" element={<Navigate to="/425c" replace />} />
         <Route
+          path="/425c/exhibits"
+          element={
+            <ProtectedRoute>
+              <Form425CExhibitsViewer />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/work-orders"
           element={
             <ProtectedRoute>
@@ -2943,6 +2963,94 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <SubscriptionManager />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/scheduled-custom"
+          element={
+            <ProtectedRoute>
+              <ScheduledReportsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/hub"
+          element={
+            <ProtectedRoute>
+              <ReportsHubPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/categories/ops-dispatch"
+          element={
+            <ProtectedRoute>
+              <OpsDispatchCategoryPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/categories/driver-perf"
+          element={
+            <ProtectedRoute>
+              <DriverPerfCategoryPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/categories/equipment"
+          element={
+            <ProtectedRoute>
+              <EquipmentCategoryPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/categories/safety"
+          element={
+            <ProtectedRoute>
+              <SafetyCategoryPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/categories/customers"
+          element={
+            <ProtectedRoute>
+              <CustomersCategoryPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/categories/vendors"
+          element={
+            <ProtectedRoute>
+              <VendorsCategoryPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/categories/accounting"
+          element={
+            <ProtectedRoute>
+              <AccountingCategoryPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/categories/tax-reg"
+          element={
+            <ProtectedRoute>
+              <TaxRegCategoryPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/categories/multi-company"
+          element={
+            <ProtectedRoute>
+              <MultiCompanyCategoryPage />
             </ProtectedRoute>
           }
         />
