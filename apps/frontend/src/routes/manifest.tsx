@@ -283,6 +283,7 @@ const CSAMitigationQueuePage = React.lazy(() => import("../pages/safety/CSAMitig
 const AnomalyAlertsPage = React.lazy(() => import("../pages/safety/anomaly/AnomalyAlertsPage").then((m) => ({ default: m.AnomalyAlertsPage })));
 const FeatureFlagsManager = React.lazy(() => import("../pages/admin/feature-flags/FeatureFlagsManager").then((m) => ({ default: m.FeatureFlagsManager })));
 const ObservabilityPage = React.lazy(() => import("../pages/admin/ObservabilityPage").then((m) => ({ default: m.ObservabilityPage })));
+const UnitDetail = React.lazy(() => import("../pages/units/UnitDetail").then((m) => ({ default: m.UnitDetail })));
 const MobileAuditReport = React.lazy(() => import("../pages/admin/mobile-audit/MobileAuditReport").then((m) => ({ default: m.MobileAuditReport })));
 const AccountRoleBindingsListPage = React.lazy(() => import("../pages/lists/accounting/AccountRoleBindingsListPage").then((m) => ({ default: m.AccountRoleBindingsListPage })));
 const ChartOfAccountsListPage = React.lazy(() => import("../pages/lists/accounting/ChartOfAccountsListPage").then((m) => ({ default: m.ChartOfAccountsListPage })));
@@ -3747,6 +3748,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <VehicleProfilePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/fleet/units/:id/detail"
+          element={
+            <ProtectedRoute>
+              <UnitDetail />
             </ProtectedRoute>
           }
         />
