@@ -608,7 +608,7 @@ export function CustomersPage() {
                       </div>
                     ) : null}
                   </div>
-                  <div className="overflow-hidden">
+                  <div className="overflow-x-auto">
                     <table className="w-full table-fixed text-left text-sm">
                       <thead className="bg-gray-50 text-xs uppercase text-gray-600">
                         <tr>{COLUMN_OPTIONS.filter((column) => columns[column.key]).map((column) => <th key={column.key} className="px-2 py-1">{column.label}</th>)}</tr>
