@@ -21,11 +21,11 @@ try {
   const appSource = `${read("apps/frontend/src/App.tsx")}\n${
     fs.existsSync("apps/frontend/src/routes/manifest.tsx") ? read("apps/frontend/src/routes/manifest.tsx") : ""
   }`;
-  const accountingSubNav = `${read("apps/frontend/src/pages/accounting/AccountingSubNav.tsx")}\n${
-    fs.existsSync("apps/frontend/src/pages/accounting/subnav-manifest.ts")
-      ? read("apps/frontend/src/pages/accounting/subnav-manifest.ts")
-      : ""
-  }`;
+  // orphan-triage F1: AccountingSubNav.tsx (a verified-dead, zero-consumer duplicate of the live
+  // AccountingSubNavWrapper.tsx — see verify-accounting-nav.mjs Check 4) was deleted. It only ever
+  // re-exported subnav-manifest.ts's SUBNAV_ITEMS (which is what the `path:` regex below matches
+  // against), so read the manifest directly — same source of truth, no coverage lost.
+  const accountingSubNav = read("apps/frontend/src/pages/accounting/subnav-manifest.ts");
 
   const parityMap = [
     { from: "/accounting/vendors", to: "/vendors", targetPage: "VendorsPage" },

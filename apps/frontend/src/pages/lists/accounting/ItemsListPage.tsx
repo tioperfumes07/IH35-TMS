@@ -15,6 +15,7 @@ import { Button } from "../../../components/Button";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { ItemEditorModal } from "./ItemEditorModal";
+import { ItemsCatalog } from "../../accounting/ItemsCatalog";
 
 const UNCATEGORIZED = "Uncategorized";
 
@@ -160,6 +161,12 @@ export function ItemsListPage() {
           </Button>
         }
       />
+
+      {companyId ? (
+        <ItemsCatalog
+          onSynced={() => void qc.invalidateQueries({ queryKey: ["catalogs", "accounting", "items"] })}
+        />
+      ) : null}
 
       {!companyId ? (
         <div className="rounded-sm border border-gray-200 bg-white px-3 py-6 text-sm text-slate-600">Select a company to view products &amp; services.</div>

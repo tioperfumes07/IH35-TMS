@@ -676,7 +676,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
           ) : null}
 
           {/* Block 7 — Factoring packet tab (wired to the real per-load packet/submit-to-FARO UI;
-              the drawer-tabs/FactoringTab.tsx stub is now orphaned — left in place per ADD-ONLY policy). */}
+              the dead duplicate drawer-tabs/FactoringTab.tsx stub was deleted, orphan-triage F1). */}
           {activeTab === "Factoring" && load ? (
             <FactoringTab
               loadId={load.id}
@@ -697,14 +697,15 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
           ) : null}
 
           {/* Block 9 — Settlement profitability card (DISP-PROFIT: wired to the real per-load
-              profitability breakdown; the drawer-tabs stub was orphaned). */}
+              profitability breakdown; the dead duplicate drawer-tabs stub was deleted, orphan-triage F1). */}
           {activeTab === "Settlement" && load ? (
             <div className="mt-3">
               <SettlementProfitabilityCard loadId={load.id} operatingCompanyId={load.operating_company_id} currencyCode={load.currency_code} />
             </div>
           ) : null}
 
-          {/* Block 13 — Fines & deductions confirm/defer card (stub; Lane A Block 13 fills content) */}
+          {/* Block 13 — Fines & deductions confirm/defer card (wired to the real Lane A Block 13 card;
+              the dead duplicate drawer-tabs stub was deleted, orphan-triage F1). */}
           {activeTab === "Settlement" && load ? (
             <div className="mt-3">
               <FinesDeductionsCard loadId={load.id} operatingCompanyId={load.operating_company_id} canEdit={canEdit} />

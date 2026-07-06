@@ -11,7 +11,13 @@ async function postItemsAction(path: string, operatingCompanyId: string) {
   return res.json();
 }
 
-export function ItemsCatalog() {
+type Props = {
+  /** Called after a pull-now/reconcile-now action succeeds, so a mounting list page can
+   *  invalidate/refetch its own items query. Optional — no-op standalone behavior unchanged. */
+  onSynced?: () => void;
+};
+
+export function ItemsCatalog({ onSynced }: Props = {}) {
   const { selectedCompanyId } = useCompanyContext();
   const [status, setStatus] = useState<string>("");
   const operatingCompanyId = selectedCompanyId ?? "";
@@ -31,6 +37,7 @@ export function ItemsCatalog() {
           onClick={async () => {
             const result = await postItemsAction("/api/v1/qbo-sync/items/pull-now", operatingCompanyId);
             setStatus(`Pulled ${result.rowsUpserted ?? 0} items`);
+            onSynced?.();
           }}
         >
           Sync now
@@ -41,6 +48,7 @@ export function ItemsCatalog() {
           onClick={async () => {
             const result = await postItemsAction("/api/v1/qbo-sync/items/reconcile-now", operatingCompanyId);
             setStatus(`Reconciled · healed ${result.healed ?? 0} · drift ${result.driftDetected ?? 0}`);
+            onSynced?.();
           }}
         >
           Reconcile
