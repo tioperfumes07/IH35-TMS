@@ -25,15 +25,29 @@ function hashPayload(input: unknown) {
   return crypto.createHash("sha256").update(JSON.stringify(input)).digest("hex");
 }
 
-async function loadSettlement(client: { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> }, settlementId: string) {
+// CHAIN-07 root cause: driver_finance.driver_settlements carries FORCE ROW LEVEL SECURITY
+// (policy requires operating_company_id = current_setting('app.operating_company_id')). Every
+// caller below used to look the settlement up by id ALONE, BEFORE the GUC was set (the GUC was
+// only learned by reading the very row RLS was blocking) -- a chicken-and-egg that made every
+// settlement-payment action (queue/mark-sent/mark-cleared/mark-bounced/mark-paid-manually, and
+// the auto-queue-on-finalize call) throw settlement_not_found for every settlement, every time,
+// regardless of validity. Fix: callers now receive operating_company_id explicitly (from the
+// route, same as every other driver_finance route) and set the GUC BEFORE this lookup, and this
+// lookup scopes by BOTH id and operating_company_id (defense in depth beyond RLS alone).
+async function loadSettlement(
+  client: { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> },
+  settlementId: string,
+  operatingCompanyId: string
+) {
   const res = await client.query<SettlementRow>(
     `
       SELECT id, operating_company_id, driver_id, status, payment_state, payment_method, payment_bank_reference
       FROM driver_finance.driver_settlements
       WHERE id = $1
+        AND operating_company_id = $2
       LIMIT 1
     `,
-    [settlementId]
+    [settlementId, operatingCompanyId]
   );
   return res.rows[0] ?? null;
 }
@@ -114,11 +128,12 @@ function validateTransition(current: PaymentState, next: PaymentState) {
   return allowed[current].includes(next);
 }
 
-export async function queuePayment(settlementId: string, userId: string) {
+export async function queuePayment(settlementId: string, operatingCompanyId: string, userId: string) {
   return withCurrentUser(userId, async (client) => {
-    const settlement = await loadSettlement(client, settlementId);
+    // GUC must be set BEFORE the lookup -- driver_settlements is FORCE RLS (see loadSettlement).
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    const settlement = await loadSettlement(client, settlementId, operatingCompanyId);
     if (!settlement) throw new Error("settlement_not_found");
-    await client.query(`SELECT set_config('app.operating_company_id', $1, false)`, [settlement.operating_company_id]);
 
     if (!(settlement.status === "locked" || settlement.status === "final")) {
       throw new Error("settlement_must_be_final");
@@ -165,11 +180,11 @@ export async function queuePayment(settlementId: string, userId: string) {
   });
 }
 
-export async function markSentToBank(settlementId: string, bankReference: string, userId: string) {
+export async function markSentToBank(settlementId: string, operatingCompanyId: string, bankReference: string, userId: string) {
   return withCurrentUser(userId, async (client) => {
-    const settlement = await loadSettlement(client, settlementId);
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    const settlement = await loadSettlement(client, settlementId, operatingCompanyId);
     if (!settlement) throw new Error("settlement_not_found");
-    await client.query(`SELECT set_config('app.operating_company_id', $1, false)`, [settlement.operating_company_id]);
     const currentState = settlementPaymentState(settlement);
     if (!validateTransition(currentState, "sent_to_bank")) {
       throw new Error("invalid_payment_state_transition");
@@ -208,11 +223,11 @@ export async function markSentToBank(settlementId: string, bankReference: string
   });
 }
 
-export async function markCleared(settlementId: string, userId: string) {
+export async function markCleared(settlementId: string, operatingCompanyId: string, userId: string) {
   return withCurrentUser(userId, async (client) => {
-    const settlement = await loadSettlement(client, settlementId);
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    const settlement = await loadSettlement(client, settlementId, operatingCompanyId);
     if (!settlement) throw new Error("settlement_not_found");
-    await client.query(`SELECT set_config('app.operating_company_id', $1, false)`, [settlement.operating_company_id]);
     const currentState = settlementPaymentState(settlement);
     if (!validateTransition(currentState, "cleared")) {
       throw new Error("invalid_payment_state_transition");
@@ -257,11 +272,11 @@ export async function markCleared(settlementId: string, userId: string) {
   });
 }
 
-export async function markBounced(settlementId: string, reason: string, userId: string) {
+export async function markBounced(settlementId: string, operatingCompanyId: string, reason: string, userId: string) {
   return withCurrentUser(userId, async (client) => {
-    const settlement = await loadSettlement(client, settlementId);
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    const settlement = await loadSettlement(client, settlementId, operatingCompanyId);
     if (!settlement) throw new Error("settlement_not_found");
-    await client.query(`SELECT set_config('app.operating_company_id', $1, false)`, [settlement.operating_company_id]);
     const currentState = settlementPaymentState(settlement);
     if (!validateTransition(currentState, "bounced")) {
       throw new Error("invalid_payment_state_transition");
@@ -316,14 +331,15 @@ export async function markBounced(settlementId: string, reason: string, userId: 
 
 export async function markPaidManually(
   settlementId: string,
+  operatingCompanyId: string,
   paymentMethod: string,
   reference: string | null,
   userId: string
 ) {
   return withCurrentUser(userId, async (client) => {
-    const settlement = await loadSettlement(client, settlementId);
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    const settlement = await loadSettlement(client, settlementId, operatingCompanyId);
     if (!settlement) throw new Error("settlement_not_found");
-    await client.query(`SELECT set_config('app.operating_company_id', $1, false)`, [settlement.operating_company_id]);
     const currentState = settlementPaymentState(settlement);
     if (!validateTransition(currentState, "manual_paid")) {
       throw new Error("invalid_payment_state_transition");
@@ -364,21 +380,26 @@ export async function markPaidManually(
   });
 }
 
-export async function queuePaymentOnFinalize(settlementId: string, userId: string) {
-  return withCurrentUser(userId, async (client) => {
-    const settlement = await loadSettlement(client, settlementId);
+export async function queuePaymentOnFinalize(settlementId: string, operatingCompanyId: string, userId: string) {
+  // NOTE: this used to `return withCurrentUser(...)` as its first statement, which made the
+  // `try { await queuePayment(...) }` block below permanently unreachable dead code -- the
+  // auto-queue-on-finalize feature never actually queued a payment even when a company had
+  // auto_queue_settlement_payments=true. Fixed: await the enabled-check, THEN conditionally call
+  // queuePayment in its own transaction (queuePayment opens its own withCurrentUser scope).
+  const enabled = await withCurrentUser(userId, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    const settlement = await loadSettlement(client, settlementId, operatingCompanyId);
     if (!settlement) throw new Error("settlement_not_found");
-    await client.query(`SELECT set_config('app.operating_company_id', $1, false)`, [settlement.operating_company_id]);
     const companyRes = await client.query<{ auto_queue_settlement_payments: boolean }>(
       `SELECT auto_queue_settlement_payments FROM org.companies WHERE id = $1 LIMIT 1`,
-      [settlement.operating_company_id]
+      [operatingCompanyId]
     );
-    const enabled = Boolean(companyRes.rows[0]?.auto_queue_settlement_payments);
-    if (!enabled) return { queued: false, reason: "auto_queue_disabled" as const };
+    return Boolean(companyRes.rows[0]?.auto_queue_settlement_payments);
   });
+  if (!enabled) return { queued: false, reason: "auto_queue_disabled" as const };
 
   try {
-    await queuePayment(settlementId, userId);
+    await queuePayment(settlementId, operatingCompanyId, userId);
     return { queued: true as const };
   } catch (error) {
     return { queued: false as const, reason: String((error as Error)?.message ?? "queue_payment_failed") };
@@ -387,7 +408,7 @@ export async function queuePaymentOnFinalize(settlementId: string, userId: strin
 
 export async function listPaymentEvents(settlementId: string, operatingCompanyId: string, userId: string) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, false)`, [operatingCompanyId]);
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
     const res = await client.query(
       `
         SELECT id, settlement_id, operating_company_id, event_type, payload, user_id, created_at
