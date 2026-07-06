@@ -16,6 +16,7 @@ import {
 } from "../../../components/home/DispatcherActiveLoadsPanel";
 import { DispatcherKpiBar } from "../../../components/home/DispatcherKpiBar";
 import { DispatcherPendingActionsPanel } from "../../../components/home/DispatcherPendingActionsPanel";
+import { DispatcherPerformanceCard } from "../../../components/dispatchers/DispatcherPerformanceCard";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 
 type DispatcherHomeData = {
@@ -132,6 +133,7 @@ export function DispatcherHome({ auth }: Props) {
           </section>
         </div>
       )}
+      <DispatcherPerformanceCard dispatcherId={auth.uuid} operatingCompanyId={selectedCompanyId ?? ""} />
     </div>
   );
 }
