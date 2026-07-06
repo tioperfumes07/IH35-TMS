@@ -128,6 +128,10 @@
     {
       "file": "202607110240_customer_qbo_parity.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1] CUSTOMER-QBO-PARITY — additive mdata.customers columns (Cc/Bcc email, print-on-invoice name, shipping address, delivery/payment/language preferences, tax-exempt, default income account Option-B recommendation); pure ADD COLUMN, no data touched"
+    },
+    {
+      "file": "202607120000_af5_journal_entry_types_catalog.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] AF-5 — catalogs.journal_entry_types real table (closes the last true stub catalog: Journal Entry Types); global reference taxonomy, no FK from any posting/GL table, posts nothing"
     }
   ]
 }
