@@ -1397,8 +1397,6 @@ export const ROUTES = React.Children.toArray(
           <Route path="/safety/integrity-alerts" element={<IntegrityAlertsTab />} />
           <Route path="/safety/csa-mitigation" element={<CSAMitigationQueuePage />} />
           <Route path="/safety/anomaly-alerts" element={<AnomalyAlertsPage />} />
-          <Route path="/safety/photo-comparison" element={<PhotoComparisonPage />} />
-          <Route path="/safety/photo-comparison/:sessionUuid" element={<SessionDetailPage />} />
           <Route path="/safety/audit-425c" element={<Audit425cPage />} />
           <Route path="/safety/reports" element={<SafetyReportsPage />} />
           <Route path="/safety/driver-profiles/:driverId" element={<DriverSafetyProfileTab />} />
