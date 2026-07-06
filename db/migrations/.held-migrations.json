@@ -138,7 +138,7 @@
       "reason": "[HOLD-FOR-JORGE — TIER 1] BLOCK-01 Fixed-Asset Depreciation — additive-only: fixed_assets.financing_loan_id (CCG loan linkage) + append-only depreciation_autopost_runs log. No posting, no new GL math, no flag flips."
     },
     {
-      "file": "202607110300_bank_account_entity_hide.sql",
+      "file": "202607121000_bank_account_entity_hide.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1] Per-entity bank-account hide/exclude — banking.bank_accounts.hidden_at/hidden_by_user_id/hidden_reason (void-not-delete) + BANK_ACCOUNT_HIDE_ENABLED flag (per-entity-only, default OFF). No new GL math."
     },
     {

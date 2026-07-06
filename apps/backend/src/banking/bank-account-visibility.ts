@@ -5,7 +5,7 @@
 // 1 TRK) into BOTH entities' banking.bank_accounts — each as its OWN row scoped by operating_company_id
 // (0072 RLS design: one row = exactly one entity). An entity must be able to fully hide the OTHER
 // entity's duplicate rows so they never touch that entity's ledger/CoA/BS/cash-flow/categorization/
-// reconciliation. Migration 202607110300_bank_account_entity_hide.sql adds nullable
+// reconciliation. Migration 202607121000_bank_account_entity_hide.sql adds nullable
 // hidden_at/hidden_by_user_id/hidden_reason to banking.bank_accounts (void-not-delete — hide/unhide only
 // ever sets/clears these columns, never deletes the row). No new GL math, no new table.
 //
