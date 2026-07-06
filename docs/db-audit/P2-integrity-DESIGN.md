@@ -1,12 +1,18 @@
 # P2 DB-Audit — Three Integrity/Governance Fixes — DESIGN (BUILD-AND-HOLD)
 
-**Status: DESIGN + VERIFICATION ONLY. Migrations #1 and #3 below are written, HELD, and registered in
+**Status: DESIGN + VERIFICATION ONLY. All THREE migrations below are written, HELD, and registered in
 `.held-migrations.json` with `DO NOT RUN ON PROD` headers — nothing has been run anywhere, including a
-Neon branch. Item #2 is DESIGN + an explicit DATA QUESTION only — no migration was written for it (see
-§2). This requires Jorge's explicit "OK to merge" per constitution §1.3/§1.4 (schema change / RLS /
-grants) before even a branch-test. Per §1.5, no prod DB access happened to produce this doc — every claim
-below is grounded in `db/migrations/` + `apps/backend/src` (read-only), with prod-only questions called
-out explicitly as questions, not assertions.**
+Neon branch. This requires Jorge's explicit "OK to merge" per constitution §1.3/§1.4 (schema change / RLS
+/ grants) before even a branch-test. Per §1.5, this agent performed no prod DB access — the read-only
+prod data-audit that unblocked Item 2 (row counts on `settlement.settlement` / `driver_finance.escrow_ledger`)
+was run by the coordinator under Jorge's supervision and reported back; it is cited as a reported result,
+not something this agent executed. All other claims are grounded in `db/migrations/` + `apps/backend/src`
+(read-only).**
+
+**UPDATE (2026-07-05, after the coordinator's prod data-audit):** Item 2's data question came back
+conclusive — both tables are EMPTY (0 rows), so migration #3 was written (schema-only FK repoint, no data
+to move). Item 3's "work_orders parent has no RLS" flag was a FALSE POSITIVE — `maintenance.work_orders`
+already has FORCE RLS; that concern is retracted below.
 
 Branch: `design/p2-integrity-fixes` (isolated worktree, off `origin/main`).
 
@@ -88,7 +94,7 @@ voiding *possible* at the schema layer.
 
 ---
 
-## 2. `driver_finance.escrow_ledger` FK into `settlement.settlement` — DESIGN + DATA QUESTION ONLY (no migration written)
+## 2. `driver_finance.escrow_ledger` FK into `settlement.settlement` — CONFIRMED, DATA-AUDIT ANSWERED, migration written (HELD)
 
 ### Verification — the FK is real
 
@@ -107,79 +113,54 @@ Confirmed: both FKs point into the `settlement.*` family, not the canonical `dri
 (`0124_p6_active_drift_reconciliation.sql:68-98`) + `driver_finance.settlement_lines`
 (`0191_driver_finance_settlement_lines.sql:6-24`) tables.
 
-### Why this is genuinely unresolved from migrations + code alone — the live-code picture contradicts the stale memory
+### Canonical target confirmed
 
-Auto-memory `schema-canonicalization-verdicts` (6 days old, flagged stale by the memory system itself)
-asserts: *"settlement headers = `driver_finance` canonical... Deprecate-not-drop `settlement.*` (0 rows,
-dead)."* That claim was GUARD-verified against `pg_stat_user_tables` on 2026-06-28. Re-verifying against
-the **current** live codebase (not the 6-day-old snapshot) surfaces a real contradiction:
+Canonical settlement tables (per `schema-canonicalization-verdicts` memory: *"settlement headers =
+`driver_finance` canonical"*):
+- `driver_finance.driver_settlements` — `0124_p6_active_drift_reconciliation.sql:68-69` — PK `id uuid`.
+- `driver_finance.settlement_lines` — `0191_driver_finance_settlement_lines.sql:6-7` — PK `id uuid`
+  (already itself FKs `settlement_id → driver_finance.driver_settlements(id)`).
 
-| File | Registered/mounted in `apps/backend/src/index.ts`? | What it does with `settlement.settlement*` |
-|---|---|---|
-| `apps/backend/src/settlements/pre-settlements.routes.ts` | **YES** — `index.ts:124,820` (`registerC1PreSettlementsRoutes`) | **READ-ONLY.** 3 `SELECT`s against `settlement.settlement` / `settlement.settlement_line` / `settlement.settlement_deduction` (`GET /api/v1/settlements`, `GET /api/v1/settlements/:id`, `GET /api/v1/settlements/pending-deductions`). No `INSERT`. |
-| `apps/backend/src/settlements/approval.routes.ts` + `approval.service.ts` | **NO** — not imported anywhere in `index.ts` (confirmed: only `settlements/pre-settlements.routes.ts` and `settlements/disputes/disputes.routes.ts` are registered from that directory) | This is the **only** code in the entire backend that `INSERT`s into `driver_finance.escrow_ledger` (line 369, with `settlement_id`/`settlement_line_id` sourced from `settlement.settlement_line` reads at lines 62-134/207/244-314) — but it is dead/unreachable HTTP-wise (the "merged-not-live" landmine pattern). |
-| Full-repo grep | — | **No `INSERT INTO settlement.settlement`, `settlement.settlement_line`, or `settlement.settlement_deduction` exists anywhere in `apps/backend/src`.** |
+Both PKs are `uuid PRIMARY KEY` — type-compatible with `escrow_ledger`'s `uuid` `settlement_id` /
+`settlement_line_id` columns. No backend code references either canonical table from the escrow/settlement
+services, so there's no conflicting signal about which is canonical — the memory + migration evidence agree.
 
-So: there is a **live, mounted READ path** into `settlement.settlement*` (pre-settlements list/detail
-screens), but **no live WRITE path** anywhere in the current codebase — the only inserter
-(`approval.service.ts`) is unreachable. This means:
+### Live prod data-audit (read-only; run by the coordinator under Jorge's supervision, §1.5 — reported, not run by this agent)
 
-- Going forward, no *new* rows can be created via the app today.
-- It does **not** tell us whether rows already exist from an earlier period when `approval.routes.ts` may
-  have been mounted, from manual/seed SQL, or from any other historical write path no longer in the repo.
-- The mounted read-only UI (`pre-settlements.routes.ts`) would silently show **stale/frozen data forever**
-  if any rows exist, since nothing can update them — itself a separate, smaller correctness concern worth
-  a follow-up, but not this block's scope.
+**2026-07-05 result:**
+- `settlement.settlement` = **0 rows**.
+- `driver_finance.escrow_ledger` = **0 rows**.
+- **0** escrow rows carry a `settlement_id`.
 
-### THE DATA QUESTION (needs a live prod read — gated, §1.5, ask Jorge / run under his supervision)
+→ Both tables are EMPTY. The untangle is **schema-only, no data to move, low risk**. A straight DROP-then-ADD
+FK is safe (nothing to orphan, nothing to fail a check against).
 
-```sql
--- 1. Does settlement.settlement actually have 0 rows today (re-verify the 6-day-old claim)?
-SELECT count(*) FROM settlement.settlement;
-SELECT count(*) FROM settlement.settlement_line;
-SELECT count(*) FROM settlement.settlement_deduction;
+### Fix (migration `db/migrations/202607090300_escrow_ledger_repoint_fk_to_canonical.sql`, HELD)
 
--- 2. Does driver_finance.escrow_ledger have any rows with settlement_id/settlement_line_id populated,
---    and if so, do they still resolve to real rows in settlement.settlement(_line)? (orphan check)
-SELECT count(*) FILTER (WHERE settlement_id IS NOT NULL) AS with_settlement_id,
-       count(*) FILTER (WHERE settlement_line_id IS NOT NULL) AS with_settlement_line_id
-FROM driver_finance.escrow_ledger;
+Idempotent, no data touched (both tables empty):
+1. Discover the existing FK constraint(s) on `driver_finance.escrow_ledger` that reference
+   `settlement.settlement` / `settlement.settlement_line` via `pg_constraint` (NOT by a guessed name — the
+   inline `REFERENCES` FKs were auto-named at `CREATE` time). Drop each if present.
+2. Add named FKs to the canonical targets: `fk_escrow_ledger_settlement` (`settlement_id →
+   driver_finance.driver_settlements(id)`) and `fk_escrow_ledger_settlement_line` (`settlement_line_id →
+   driver_finance.settlement_lines(id)`). Each ADD is skipped if a FK to the canonical target already
+   exists — fully re-runnable.
 
-SELECT el.id, el.settlement_id, el.settlement_line_id
-FROM driver_finance.escrow_ledger el
-LEFT JOIN settlement.settlement s ON s.id = el.settlement_id
-WHERE el.settlement_id IS NOT NULL AND s.id IS NULL;  -- orphans, should be empty if FK held
-```
+CI guard `scripts/verify-escrow-ledger-fk-canonical.mjs` (wired into `verify:arch-design`) statically
+asserts the migration repoints to both canonical targets and dynamically drops the retired
+`settlement.settlement` FKs first.
 
-### Design of the untangle (do NOT execute until Q1/Q2 above are answered)
+### Flagged, NOT fixed here (same follow-up block as the retired-`settlement.*` disposition)
 
-- **If `settlement.settlement*` truly has 0 rows AND `escrow_ledger` has 0 rows with `settlement_id`/
-  `settlement_line_id` populated:** the fix is a clean, low-risk FK repoint — drop the two FKs on
-  `driver_finance.escrow_ledger`, add new ones to `driver_finance.driver_settlements(id)` and
-  `driver_finance.settlement_lines(id)`. Column types are compatible (`uuid` → `uuid`). This is the
-  expected/likely case given no live write path exists, but must be **confirmed, not assumed** — that is
-  exactly the "never guess" hardline rule.
-- **If `escrow_ledger` has existing rows pointing at real `settlement.settlement(_line)` rows:** the data
-  must be migrated/mapped to the equivalent `driver_finance.driver_settlements`/`settlement_lines` rows
-  **before** the FK can be repointed — a straight FK swap would either orphan those rows (if nullable) or
-  hard-fail the migration (if not). This needs its own migration + a mapping strategy (by
-  driver_id + pay_period, most likely) design pass, which is out of scope until Q1/Q2 confirm this branch
-  applies.
-- **Regardless of the data answer, a second and equally real problem must be fixed alongside the FK
-  repoint:** `settlements/pre-settlements.routes.ts` (the live, mounted read UI) also needs to be
-  repointed from `settlement.settlement*` to `driver_finance.driver_settlements` / `settlement_lines` —
-  otherwise the FK repoint on `escrow_ledger` alone leaves the mounted UI reading a table nothing can ever
-  write to. This is a real code change (query rewrite in a live route file), not just a migration, so it
-  belongs in the SAME follow-up block as the FK repoint, not silently split off.
-- **`settlements/approval.routes.ts` + `approval.service.ts` disposition:** since it's dead/unmounted and
-  already targets the wrong (legacy) schema, it should either be (a) deleted (if genuinely superseded —
-  needs Jorge's call per the additive-only/archive-don't-delete product lock, §7) or (b) rewired to the
-  canonical `driver_finance.*` tables and re-mounted, if the approval workflow it implements
-  (line-item approve/reject before settlement finalization) is still wanted. This is a product decision,
-  not a schema one — flagging it, not deciding it.
-
-**No migration was written for item 2**, per the task's explicit instruction: deliver the data-question
-when unsure, not a blind FK-swap. This is exactly that case.
+The mounted read path `apps/backend/src/settlements/pre-settlements.routes.ts` (registered
+`index.ts:124,820`) still `SELECT`s from `settlement.settlement` / `settlement.settlement_line` /
+`settlement.settlement_deduction`. It reads **0 rows today** (the tables are empty), so it is not
+user-visible-broken — but it should be repointed to `driver_finance.driver_settlements` /
+`settlement_lines` in the SAME follow-up that dispositions the retired `settlement.*` family. That is a
+route/code change (query rewrite in a live file), out of scope for this schema migration. Separately, the
+only code that ever inserted into `escrow_ledger` (`settlements/approval.service.ts`) is unmounted/dead
+and targets the legacy schema — its disposition (delete-vs-rewire-and-remount) is a product decision for
+Jorge (§7 archive-don't-delete), flagged not decided.
 
 ---
 
@@ -239,16 +220,16 @@ asserts: both tables get `ENABLE` **and** `FORCE` RLS, both get a named isolate-
 `identity.is_lucia_bypass()` escape hatch is present, and both policies actually reference
 `maintenance.work_orders` — so this can't silently regress.
 
-### Adjacent finding — flagged, NOT fixed (out of scope for this block)
+### Adjacent finding — RETRACTED (was a false positive)
 
-Searching the full migration chain for `ALTER TABLE maintenance.work_orders ... ROW LEVEL SECURITY` also
-returns **nothing** — the `work_orders` **parent** table itself appears to have no RLS/FORCE RLS ever
-applied in the migration history either. This migration's child-table policies do not depend on the
-parent having RLS (the subquery filters explicitly on `operating_company_id` regardless of whether RLS is
-enabled on the parent table), so the fix above is correct and complete for the two named tables. But
-`maintenance.work_orders` itself lacking RLS is a larger, separate finding of the same class (and
-arguably higher-severity, since it's the header table) — it needs its own follow-up block, and is
-surfaced here rather than silently folded into this one or silently left undiscovered.
+An earlier draft of this doc flagged that `maintenance.work_orders` (the parent) itself appeared to have
+no RLS, based on a migration-source grep finding no `ALTER TABLE maintenance.work_orders ... ROW LEVEL
+SECURITY`. **The coordinator's live prod check (2026-07-05) confirms this was a FALSE POSITIVE:
+`maintenance.work_orders` ALREADY has FORCE RLS on `operating_company_id`** (the RLS was applied by a path
+the source-grep pattern missed — e.g. a dynamic/loop-based enablement). No action is needed on
+`work_orders` itself. Only the two child tables (`work_order_lines`, `wo_status_history`) genuinely lacked
+RLS, and those are fixed by migration `202607090200`. This also independently confirms the child-table
+policies' parent join is sound (the parent is RLS-protected and scoped on the same column).
 
 ---
 
@@ -257,9 +238,11 @@ surfaced here rather than silently folded into this one or silently left undisco
 | # | Item | Verdict | Migration | CI Guard |
 |---|---|---|---|---|
 | 1 | `safety.civil_fines` missing `voided_at` | CONFIRMED | `202607090100_civil_fines_voidable.sql` (HELD) | `verify-civil-fines-voidable.mjs` |
-| 2 | `escrow_ledger` FK → `settlement.settlement` | CONFIRMED FK exists; data state UNKNOWN (needs live prod read) | **none written — design + data-question only** | n/a |
-| 3 | `work_order_lines` + `wo_status_history` no RLS | CONFIRMED | `202607090200_maintenance_wo_lines_status_history_rls.sql` (HELD) | `verify-maintenance-wo-lines-status-history-rls.mjs` |
+| 2 | `escrow_ledger` FK → `settlement.settlement` | CONFIRMED FK; prod data-audit: both tables 0 rows → schema-only repoint | `202607090300_escrow_ledger_repoint_fk_to_canonical.sql` (HELD) | `verify-escrow-ledger-fk-canonical.mjs` |
+| 3 | `work_order_lines` + `wo_status_history` no RLS | CONFIRMED (parent `work_orders` already RLS'd — false-positive retracted) | `202607090200_maintenance_wo_lines_status_history_rls.sql` (HELD) | `verify-maintenance-wo-lines-status-history-rls.mjs` |
 
-Both migrations are registered in `db/migrations/.held-migrations.json` and carry `DO NOT MERGE-AND-RUN /
-DO NOT RUN ON PROD` headers. Item 2's data question is the blocking prerequisite for any future migration
-there — surfaced explicitly for Jorge, not guessed.
+All three migrations are registered in `db/migrations/.held-migrations.json` and carry `DO NOT
+MERGE-AND-RUN / DO NOT RUN ON PROD` headers — none has been run anywhere, including a Neon branch. Two
+follow-ups flagged (not done here): repoint `settlements/pre-settlements.routes.ts` reads to the canonical
+`driver_finance` tables + disposition the retired `settlement.*` family and the dead
+`settlements/approval.*` code.

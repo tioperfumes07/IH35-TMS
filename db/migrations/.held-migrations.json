@@ -84,6 +84,10 @@
     {
       "file": "202607090200_maintenance_wo_lines_status_history_rls.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1] P2 DB-audit — maintenance.work_order_lines + maintenance.wo_status_history had NO RLS at all; ENABLE+FORCE with isolate-through-parent (work_orders) policy"
+    },
+    {
+      "file": "202607090300_escrow_ledger_repoint_fk_to_canonical.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] P2 DB-audit — driver_finance.escrow_ledger FKs repointed from retired settlement.settlement(_line) to canonical driver_finance.driver_settlements/settlement_lines (both tables verified 0 rows on prod — schema-only, no data move)"
     }
   ]
 }
