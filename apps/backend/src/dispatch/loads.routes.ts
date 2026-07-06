@@ -666,10 +666,29 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           SELECT l.*, c.customer_name,
                  NULLIF(TRIM(CONCAT(COALESCE(sd.first_name, ''), ' ', COALESCE(sd.last_name, ''))), '') AS assigned_secondary_driver_name,
                  NULL::text AS trailer_equipment_type,
-                 NULL::text AS trailer_number
+                 NULL::text AS trailer_number,
+                 rc.file_id AS ratecon_file_id,
+                 rc.original_filename AS ratecon_file_name,
+                 rc.uploaded_at AS ratecon_uploaded_at
           FROM views.dispatch_load_with_driver_status l
           JOIN mdata.customers c ON c.id = l.customer_id
           LEFT JOIN mdata.drivers sd ON sd.id = l.assigned_secondary_driver_id
+          -- A9 — surface the load's rate-con PDF (docs.file_links + docs.files, category
+          -- 'rate_confirmation'). No column on mdata.loads carries this (unlike
+          -- driver_instructions_file_id below, which IS persisted) — the link is polymorphic via
+          -- docs.file_links(entity_type='load', entity_id=l.id). Entity-scoped by construction (we
+          -- key off THIS load's id, already verified above to belong to operatingCompanyId), so the
+          -- lowest-UUID-company upload trap (see [[docs-upload-lowest-uuid-company-trap]]) cannot
+          -- leak a foreign company's file in here. Most recent non-deleted upload wins.
+          LEFT JOIN LATERAL (
+            SELECT df.id AS file_id, df.original_filename, df.created_at AS uploaded_at
+            FROM docs.file_links dfl
+            JOIN docs.files df ON df.id = dfl.file_id AND df.deleted_at IS NULL
+            JOIN catalogs.file_categories fc ON fc.id = df.category_id AND fc.code = 'rate_confirmation'
+            WHERE dfl.entity_type = 'load' AND dfl.entity_id = l.id AND dfl.deleted_at IS NULL
+            ORDER BY df.created_at DESC
+            LIMIT 1
+          ) rc ON true
           WHERE l.id = $1
             AND l.operating_company_id = $2
           LIMIT 1
