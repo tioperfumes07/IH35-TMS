@@ -136,6 +136,10 @@
     {
       "file": "202607100100_block01_depreciation_loan_link_and_autopost_log.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1] BLOCK-01 Fixed-Asset Depreciation — additive-only: fixed_assets.financing_loan_id (CCG loan linkage) + append-only depreciation_autopost_runs log. No posting, no new GL math, no flag flips."
+    },
+    {
+      "file": "202607130100_block17_24_tax_document_engine.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] BLOCK-17/24 — 1099-NEC/1042-S annual generation + general tax-document PDF engine (catalogs.payee_tax_profile, catalogs.tax_form_thresholds, accounting.tax_document(_batch), accounting.form_1099_nec, accounting.form_1042_s). No new GL math, no e-file/transmission logic. TAX_DOC_1099_ENABLED OFF."
     }
   ]
 }
