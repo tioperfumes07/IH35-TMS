@@ -1,0 +1,1233 @@
+{
+  "global": [
+    {
+      "schema": "reference",
+      "table": "cbp_wait_times_cache",
+      "reason": "universal CBP border-wait-time cache; no per-entity variation, keyed by port/date only"
+    },
+    {
+      "schema": "reference",
+      "table": "cdl_endorsements",
+      "reason": "universal FMCSA CDL endorsement code catalog (H, N, X, ...); identical across every carrier entity"
+    },
+    {
+      "schema": "reference",
+      "table": "cdl_restrictions",
+      "reason": "universal FMCSA CDL restriction code catalog; identical across every carrier entity"
+    },
+    {
+      "schema": "reference",
+      "table": "employment_statuses",
+      "reason": "universal employment-status enum catalog; identical across every entity"
+    },
+    {
+      "schema": "reference",
+      "table": "license_classes",
+      "reason": "universal CDL license-class catalog (A/B/C); identical across every entity"
+    },
+    {
+      "schema": "reference",
+      "table": "medical_card_statuses",
+      "reason": "universal DOT medical-card status enum catalog; identical across every entity"
+    },
+    {
+      "schema": "reference",
+      "table": "oem_parts",
+      "reason": "universal OEM parts reference catalog; shared parts taxonomy, not entity-owned inventory"
+    },
+    {
+      "schema": "reference",
+      "table": "ports_of_entry",
+      "reason": "universal US/Mexico port-of-entry reference catalog; identical across every entity"
+    },
+    {
+      "schema": "lib",
+      "table": "feature_flags",
+      "reason": "global feature-flag definitions (the flag registry itself); per-entity overrides live separately in lib.feature_flag_overrides, which IS operating_company_id-scoped and is NOT in this exemption"
+    },
+    {
+      "schema": "org",
+      "table": "companies",
+      "reason": "the entity registry itself — the FK target every operating_company_id/tenant_id/company_id column points to; cannot meaningfully self-scope"
+    },
+    {
+      "schema": "org",
+      "table": "user_company_access",
+      "reason": "the multi-entity access-control mapping (which user may access which company); a single row set spans multiple companies by design — this table IS the control plane, not business data it protects"
+    },
+    {
+      "schema": "identity",
+      "table": "users",
+      "reason": "global auth identity; one user account can hold access to multiple companies via org.user_company_access (see identity-entity-facts: managers/owners routinely span TRANSP+TRK)"
+    },
+    {
+      "schema": "identity",
+      "table": "sessions",
+      "reason": "auth session tied to a user, not a company"
+    },
+    {
+      "schema": "identity",
+      "table": "email_verifications",
+      "reason": "account-level auth artifact tied to a user email, not a company"
+    },
+    {
+      "schema": "identity",
+      "table": "password_reset_tokens",
+      "reason": "account-level auth artifact tied to a user, not a company"
+    },
+    {
+      "schema": "identity",
+      "table": "user_preferences",
+      "reason": "per-user UI/locale preference, not company business data"
+    },
+    {
+      "schema": "identity",
+      "table": "user_notification_preferences",
+      "reason": "per-user notification preference, not company business data"
+    },
+    {
+      "schema": "_system",
+      "table": "_schema_migrations",
+      "reason": "the migration ledger itself — infra, applies once to the whole database, not per entity"
+    },
+    {
+      "schema": "_system",
+      "table": "background_jobs",
+      "reason": "generic cross-cutting job-queue/scheduler infrastructure table, not entity business data"
+    },
+    {
+      "schema": "migration",
+      "table": "block6_demo_purge_ledger",
+      "reason": "one-off dev/demo purge ledger created by a specific historical migration; not business data"
+    },
+    {
+      "schema": "migration",
+      "table": "test_seed_archive_ledger_0320",
+      "reason": "one-off migration test-seed archive ledger; not business data"
+    },
+    {
+      "schema": "migration",
+      "table": "test_seed_archive_ledger_0367",
+      "reason": "one-off migration test-seed archive ledger; not business data"
+    },
+    {
+      "schema": "migration",
+      "table": "test_seed_archive_ledger_0369",
+      "reason": "one-off migration test-seed archive ledger; not business data"
+    },
+    {
+      "schema": "migration",
+      "table": "test_seed_archive_ledger_0396",
+      "reason": "one-off migration test-seed archive ledger; not business data"
+    },
+    {
+      "schema": "catalogs",
+      "table": "equipment_types_dedup_ledger_0318",
+      "reason": "one-off migration dedup ledger created by db/migrations/0318_equipment_types_canonical_dedup.sql (same class as the migration.test_seed_archive_ledger_* tables); not business data"
+    },
+    {
+      "schema": "public",
+      "table": "partition_maintenance_log",
+      "reason": "infra table tracking partition-maintenance job runs; not entity business data"
+    },
+    {
+      "schema": "public",
+      "table": "audit_log",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2024_01",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2024_02",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2024_03",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2024_04",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2024_05",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2024_06",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2024_07",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2024_08",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2024_09",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2024_10",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2024_11",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2024_12",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2025_01",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2025_02",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2025_03",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2025_04",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2025_05",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2025_06",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2025_07",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2025_08",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2025_09",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2025_10",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2025_11",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2025_12",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2026_01",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2026_02",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2026_03",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2026_04",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2026_05",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2026_06",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2026_07",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2026_08",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2026_09",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2026_10",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2026_11",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2026_12",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2027_01",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2027_02",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2027_03",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2027_04",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2027_05",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2027_06",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2027_07",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2027_08",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2027_09",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2027_10",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2027_11",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "public",
+      "table": "audit_log_2027_12",
+      "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    }
+  ],
+  "remediation_backlog": [
+    {
+      "schema": "accounting",
+      "table": "ar_collection_contacts",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "accounting",
+      "table": "bill_lines",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "accounting",
+      "table": "cash_forecast_settings",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "accounting",
+      "table": "customer_classifications",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "accounting",
+      "table": "expense_lines",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "accounting",
+      "table": "factoring_default_interest_accruals",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "accounting",
+      "table": "line_category_load_required",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "accounting",
+      "table": "qbo_accounts",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "accounting",
+      "table": "qbo_customers",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "accounting",
+      "table": "qbo_vendors",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "accounting",
+      "table": "recon_exceptions",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "accounting",
+      "table": "recon_runs",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "accounting",
+      "table": "recurring_bill_generation_log",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "accounting",
+      "table": "recurring_bill_templates",
+      "reason": "needs uuid cast (column 'operating_company_id' is currently 'text') | needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "accounting",
+      "table": "vendor_classifications",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "admin",
+      "table": "launch_toggles",
+      "reason": "needs opco-scoped RLS policy (currently: 1 policy, none scope 'operating_company_id' against current_setting('app.operating_company_id'|'app.current_operating_company_id') OR org.user_accessible_company_ids()/org.user_company_access membership)",
+      "phase": "P4"
+    },
+    {
+      "schema": "alerts",
+      "table": "broker_queue",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "alerts",
+      "table": "profile",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "alerts",
+      "table": "rule",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "analytics",
+      "table": "customer_rollup",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "analytics",
+      "table": "lane_rollup",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "analytics",
+      "table": "load_fact",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "analytics",
+      "table": "type_rollup",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "audit",
+      "table": "audit_events",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "audit",
+      "table": "row_changes",
+      "reason": "needs FK from 'tenant_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "brokerupdate",
+      "table": "profile",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "brokerupdate",
+      "table": "send",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "catalogs",
+      "table": "account_role_bindings",
+      "reason": "needs opco-scoped RLS policy (currently: 3 policies, none scope 'operating_company_id' against current_setting('app.operating_company_id'|'app.current_operating_company_id') OR org.user_accessible_company_ids()/org.user_company_access membership) — PARTIALLY MIGRATED, not un-migrated: migration 202607010700_account_role_bindings_per_entity.sql added a NULLABLE operating_company_id + a resolver-side entity guard, but a GLOBAL role_key UNIQUE constraint still exists, which blocks true per-entity rows (two entities can't both have a 'default_ar_control' binding). Current policies are role-only (no operating_company_id comparison) — pending the unique-constraint drop before real per-entity RLS can be written.",
+      "phase": "other"
+    },
+    {
+      "schema": "catalogs",
+      "table": "account_types",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "catalogs",
+      "table": "asset_condition_codes",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "catalogs",
+      "table": "asset_locations",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "catalogs",
+      "table": "asset_statuses",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "catalogs",
+      "table": "audit_event_types",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "catalogs",
+      "table": "cancellation_reasons",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "catalogs",
+      "table": "catalog_registry",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "catalogs",
+      "table": "customer_quality_event_reasons",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "catalogs",
+      "table": "dispatcher_error_reasons",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "catalogs",
+      "table": "driver_load_statuses",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "catalogs",
+      "table": "driver_termination_reasons",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "catalogs",
+      "table": "equipment_line_item_templates",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "catalogs",
+      "table": "equipment_types",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "catalogs",
+      "table": "excel_upload_jobs",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "catalogs",
+      "table": "file_categories",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "catalogs",
+      "table": "lease_terms",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "catalogs",
+      "table": "mexico_states",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "catalogs",
+      "table": "payment_terms",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "catalogs",
+      "table": "posting_templates",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "catalogs",
+      "table": "tire_positions",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "catalogs",
+      "table": "tractor_statuses",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "catalogs",
+      "table": "trailer_statuses",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "catalogs",
+      "table": "trailer_types",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "catalogs",
+      "table": "unit_ownership_types",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "catalogs",
+      "table": "us_states",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "catalogs",
+      "table": "wo_cancellation_reasons",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "catalogs",
+      "table": "workflow_requests",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "compliance",
+      "table": "appraisal_districts",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "compliance",
+      "table": "form_425c_exhibit_a_entries",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "compliance",
+      "table": "form_425c_exhibit_b_entries",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "compliance",
+      "table": "required_document_types",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "dispatch",
+      "table": "load_eta_predictions",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "dispatch",
+      "table": "ratecon_extractions",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "dispatch",
+      "table": "stop_extra_rates",
+      "reason": "needs uuid cast (column 'operating_company_id' is currently 'text') | needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "docs",
+      "table": "file_links",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "driver_finance",
+      "table": "signed_acknowledgments",
+      "reason": "needs opco-scoped RLS policy (currently: 1 policy, none scope 'operating_company_id' against current_setting('app.operating_company_id'|'app.current_operating_company_id') OR org.user_accessible_company_ids()/org.user_company_access membership)",
+      "phase": "P4"
+    },
+    {
+      "schema": "driveralert",
+      "table": "alarm_event",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "driveralert",
+      "table": "dispatch",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "events",
+      "table": "event_log",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id) | needs FORCE ROW LEVEL SECURITY (rls_enabled=true, forced=false) — GUC NAME IS NOT THE GAP (already reconciled): migration 202607090000 fixed events.log_event() to derive app.current_operating_company_id from its own p_operating_company_id argument, so every caller is correct by construction. What remains: (b) operating_company_id has NO foreign key to org.companies, and (d) RLS is enabled but NOT FORCED — migration 202607080100_event_log_force_rls_blocked_pending_guc_fix.sql is the tracked no-op placeholder documenting that FORCE is a deliberate separate follow-up (P0-a), to be authored only after a Neon-branch re-verification that forcing does not reject any spine-emit writer. Do not force this table as a side effect of closing this backlog entry.",
+      "phase": "other"
+    },
+    {
+      "schema": "expense_attribution",
+      "table": "expense_seq_per_load",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "forecast",
+      "table": "cash_entries",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "forecast",
+      "table": "opening_balance",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "forecast",
+      "table": "predicted_delivery_changes",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "fuel",
+      "table": "fuel_planner_settings",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "geofence",
+      "table": "event",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "geofence",
+      "table": "fence",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "identity",
+      "table": "workflow_requests",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "ifta",
+      "table": "state_gallons_by_quarter",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "ifta",
+      "table": "state_miles_by_quarter",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "ifta",
+      "table": "state_tax_by_quarter",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "integrations",
+      "table": "active_driver_set_cache",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "integrations",
+      "table": "samsara_vehicle_positions",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "integrity",
+      "table": "anomalies",
+      "reason": "needs FK from 'tenant_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "maint",
+      "table": "part_position_assignment",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "maint",
+      "table": "position_set",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "maintenance",
+      "table": "defects",
+      "reason": "needs opco-scoped RLS policy (currently: 1 policy, none scope 'operating_company_id' against current_setting('app.operating_company_id'|'app.current_operating_company_id') OR org.user_accessible_company_ids()/org.user_company_access membership)",
+      "phase": "P4"
+    },
+    {
+      "schema": "maintenance",
+      "table": "dvir_submissions",
+      "reason": "needs opco-scoped RLS policy (currently: 1 policy, none scope 'operating_company_id' against current_setting('app.operating_company_id'|'app.current_operating_company_id') OR org.user_accessible_company_ids()/org.user_company_access membership)",
+      "phase": "P4"
+    },
+    {
+      "schema": "maintenance",
+      "table": "parts_inventory",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "maintenance",
+      "table": "parts_invoice_links",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "maintenance",
+      "table": "samsara_fault_code_history",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "maintenance",
+      "table": "wo_status_history",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "maintenance",
+      "table": "work_order_lines",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "maintenance",
+      "table": "work_orders",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "mdata",
+      "table": "customer_contacts",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "mdata",
+      "table": "customer_quality_events",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "mdata",
+      "table": "dispatcher_safety_events",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "mdata",
+      "table": "driver_cdl_endorsements",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "mdata",
+      "table": "driver_cdl_restrictions",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "mdata",
+      "table": "driver_equipment_qualifications",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "mdata",
+      "table": "driver_pay_rates",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "mdata",
+      "table": "driver_safety_events",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "mdata",
+      "table": "entity_reclassification_log",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "mdata",
+      "table": "equipment",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id) — Same dual-column ownership model as mdata.units (owner_company_id + currently_leased_to_company_id, no single operating_company_id). ARCHITECTURE DECISION NEEDED before standard single-column walling applies.",
+      "phase": "other"
+    },
+    {
+      "schema": "mdata",
+      "table": "equipment_log",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "mdata",
+      "table": "load_stops",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "mdata",
+      "table": "units",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id) — ARCHITECTURE DECISION NEEDED (not a raw add-column fix): mdata.units deliberately has NO operating_company_id — it carries owner_company_id (TRK owns) + currently_leased_to_company_id (TRANSP/USMCA lease); a unit can be TRK-owned but TRANSP-leased. Walling it the standard single-column way would be WRONG. Needs an explicit owner/lease dual-scope RLS design before it can be marked compliant.",
+      "phase": "other"
+    },
+    {
+      "schema": "mdata",
+      "table": "workflow_requests",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "notifications",
+      "table": "user_notification_preferences",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "notifications",
+      "table": "user_notifications",
+      "reason": "needs opco-scoped RLS policy (currently: 1 policy, none scope 'operating_company_id' against current_setting('app.operating_company_id'|'app.current_operating_company_id') OR org.user_accessible_company_ids()/org.user_company_access membership)",
+      "phase": "P4"
+    },
+    {
+      "schema": "ops",
+      "table": "audit_chain_verifications",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "ops",
+      "table": "program_board_notes",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "outbox",
+      "table": "events",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "outbox",
+      "table": "outbox_queue",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "outbox",
+      "table": "queue",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "owner",
+      "table": "todays_attention_snapshot",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "public",
+      "table": "idempotency_keys",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "qbo",
+      "table": "reconciliation_alerts",
+      "reason": "needs uuid cast (column 'operating_company_id' is currently 'text') | needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "reports",
+      "table": "scheduled_delivery_log",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "reports",
+      "table": "scheduled_subscriptions",
+      "reason": "needs uuid cast (column 'operating_company_id' is currently 'text') | needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "safety",
+      "table": "accident_reports",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "safety",
+      "table": "anomaly_alert_rules",
+      "reason": "needs uuid cast (column 'operating_company_id' is currently 'text') | needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "safety",
+      "table": "anomaly_alerts",
+      "reason": "needs uuid cast (column 'operating_company_id' is currently 'text') | needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "safety",
+      "table": "da_program_enrollments",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "safety",
+      "table": "da_random_pool_draws",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "safety",
+      "table": "da_test_records",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "safety",
+      "table": "integrity_findings",
+      "reason": "needs uuid cast (column 'operating_company_id' is currently 'text') | needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "safetydoc",
+      "table": "assignment",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "safetydoc",
+      "table": "document",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "search",
+      "table": "universal_index",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "settlements",
+      "table": "settlement_disputes",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "shipper_portal",
+      "table": "portal_password_reset_tokens",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "shipper_portal",
+      "table": "portal_sessions",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "tasks",
+      "table": "note",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "tasks",
+      "table": "status_history",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "tasks",
+      "table": "task",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "tasks",
+      "table": "task_activity",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "tasks",
+      "table": "task_comments",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "tasks",
+      "table": "task_link",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "tasks",
+      "table": "task_type",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "tasks",
+      "table": "task_type_seed",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "usmca_ops",
+      "table": "activation_audit",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "usmca_ops",
+      "table": "activation_state",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "utilization",
+      "table": "driver_period",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "utilization",
+      "table": "unit_period",
+      "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    }
+  ]
+}
