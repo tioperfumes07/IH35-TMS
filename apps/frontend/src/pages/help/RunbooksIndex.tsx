@@ -3,7 +3,8 @@ import { RUNBOOKS } from "./runbooks-data";
 
 export { RUNBOOKS } from "./runbooks-data";
 
-// Bundle runbook markdown files via Vite's import.meta.glob with eager loading
+// Bundle runbook markdown files via Vite's import.meta.glob with eager loading.
+// Includes docs/runbooks/operational-tuning-catalog.md (see ./runbooks-data), rendered below.
 const runbookModules = import.meta.glob("../../../docs/runbooks/*.md", { as: "url", eager: true });
 
 export function RunbooksIndex() {
