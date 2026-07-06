@@ -172,6 +172,10 @@
     {
       "file": "202607130200_block03_ifta_trip_methodology_extend.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1] BLOCK-03 — IFTA preparer extension: reference.ifta_tax_rates + reference.non_ifta_jurisdictions catalogs, TRIP=practical-miles-less-personal-conveyance columns, PDF archive linkage. Additive-only on top of live IFTA v1 (0372/0373). IFTA_TRIP_METHODOLOGY_ENABLED OFF."
+    },
+    {
+      "file": "202607140000_opening_balance_import_flag.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] STMT-2 — OPENING_BALANCE_IMPORT_ENABLED flag seed only (no schema change). Gates the read-only TRANSP 12/31/2024 opening-balance importer preview endpoint; the importer never posts (owner-entered only)."
     }
   ]
 }
