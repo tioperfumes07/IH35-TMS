@@ -14,19 +14,27 @@
  *       that touches ar_control directly, and a terminal advance with no relief event) — the guard is
  *       not a no-op.
  *
- * Uses the live TRANSP-prerequisite company's already-seeded chart_of_accounts_roles (ar_control from
- * 202606290072, factoring_advance_liability/factor_reserve_held/factor_fee_expense/factoring_recoursed_ar/
- * default_interest_expense from 202607013000/CODER-34, cash_clearing from earlier blocks) — no schema
- * change, no new roles/accounts seeded by this test.
+ * Uses the live TRANSP-prerequisite company's already-seeded chart_of_accounts_roles where present
+ * (factoring_advance_liability/factor_reserve_held/factor_fee_expense/factoring_recoursed_ar/
+ * default_interest_expense from 202607013000/CODER-34) — no migration/schema change. ar_control/
+ * cash_clearing are FRESH-DB self-healed below (202607011000 seeds ar_control only by joining prod's
+ * real QBO-synced account UUID, which doesn't exist on a fresh CI DB; cash_clearing has never had a
+ * seeding migration at all) — a no-op on a prod-copy branch where the real mappings already exist.
+ *
+ * Also seeds a long-lived fake integrations.qbo_connections row (same pattern as
+ * settlement-bill-payment-posting.db.test.ts): createJournalEntry unconditionally calls
+ * enqueueSyncJob -> getValidAccessToken, which throws "QBO not authorized" if no connection row exists
+ * for the company, even though the JE_QBO_PUSH_ENABLED flag itself stays OFF (push is gated separately,
+ * at drain/immediate-push time, not at enqueue time).
  *
  * Runs only in CI (GITHUB_ACTIONS=true) where a migrated Postgres is available.
  */
-import { randomUUID } from "node:crypto";
+import crypto, { randomUUID } from "node:crypto";
 import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../../lib/pg-connection-options.js";
 import { ensureIntegrationPrerequisites } from "../../../../test-helpers/db-fixture.js";
-import { TEST_OWNER_USER_ID } from "../../../../test-helpers/constants.js";
+import { TEST_OWNER_USER_ID, TEST_ENCRYPTION_KEY } from "../../../../test-helpers/constants.js";
 import {
   postFactoringAdvanceEvent,
   postFactoringChargebackEvent,
@@ -35,6 +43,20 @@ import {
 import { createJournalEntry } from "../../journal-entries.service.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
+
+// See test-helpers/constants.ts (TEST_ENCRYPTION_KEY) and settlement-bill-payment-posting.db.test.ts for
+// the full rationale (AES-256-GCM round-trip via the real decryptToken call). MUST be the shared
+// constant, never a file-local literal — vitest's `pool: "forks"` can reuse one child process across
+// multiple `.db.test.ts` files, and getActiveConnectionByCompany has no realm_id filter.
+process.env.ENCRYPTION_KEY ??= TEST_ENCRYPTION_KEY;
+function encryptTestToken(plain: string): string {
+  const iv = crypto.randomBytes(12);
+  const key = crypto.createHash("sha256").update(process.env.ENCRYPTION_KEY!, "utf8").digest();
+  const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
+  const encrypted = Buffer.concat([cipher.update(plain, "utf8"), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  return `${iv.toString("base64")}.${tag.toString("base64")}.${encrypted.toString("base64")}`;
+}
 
 // Kept in lockstep with scripts/verify-chain-06-factoring-ar-tieout.mjs's ASSERTIONS object, scoped here
 // to just the advance ids this test creates (memory shared-company-db-test-contamination: the TRANSP
@@ -72,7 +94,7 @@ const ASSERTIONS = {
            AND je.memo LIKE 'Factoring chargeback repay ' || fa.display_id || ' (%' AND jep.debit_or_credit = 'debit'
       ) chargeback ON true
      WHERE fa.display_id = ANY($1::text[])
-    HAVING COALESCE(funding.credited, 0) <> (COALESCE(customer.debited, 0) + COALESCE(chargeback.debited, 0))`,
+       AND COALESCE(funding.credited, 0) <> (COALESCE(customer.debited, 0) + COALESCE(chargeback.debited, 0))`,
 };
 
 describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Postgres)", () => {
@@ -137,6 +159,40 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
     });
   }
 
+  // Self-heal cash_clearing/ar_control role mappings for the TRANSP prerequisite company on a FRESH CI
+  // Postgres (migration-must-refresh-schema-parity / branch-copy-vs-fresh-DB landmine): 202607011000
+  // seeds ap_control/ar_control ONLY by joining prod's real QBO-synced account UUIDs — those rows don't
+  // exist on a fresh migrated-from-0001 DB, so the join yields 0 rows and the role stays unmapped there.
+  // cash_clearing has never been seeded by any migration at all (0223 only defines the CHECK value). The
+  // real poster (poster.service.ts) fails closed via resolveRoleAccount when a role is unmapped — exactly
+  // what CHAIN-06 exists to exercise, so the test must guarantee both roles resolve. Idempotent + additive:
+  // a no-op on a prod-copy branch where the real mappings already exist (ON CONFLICT ... DO NOTHING), and
+  // provisions a minimal Asset account otherwise. No migration touched.
+  async function ensureRoleMapped(role: "cash_clearing" | "ar_control"): Promise<void> {
+    await bypass(async () => {
+      const existing = await db.query(
+        `SELECT 1 FROM accounting.chart_of_accounts_roles WHERE operating_company_id=$1::uuid AND role=$2 AND is_active=true LIMIT 1`,
+        [companyId, role]
+      );
+      if ((existing.rowCount ?? 0) > 0) return;
+      const acctId = randomUUID();
+      const acctNumber = `T06-${role.toUpperCase()}-${suffix}`;
+      const acctName = role === "cash_clearing" ? `Chain-06 Test Cash Clearing ${suffix}` : `Chain-06 Test A/R Control ${suffix}`;
+      const acctSubtype = role === "cash_clearing" ? "CashAndCashEquivalents" : "AccountsReceivable";
+      await db.query(
+        `INSERT INTO catalogs.accounts (id, operating_company_id, account_number, account_name, account_type, account_subtype, is_postable)
+         VALUES ($1::uuid,$2::uuid,$3,$4,'Asset',$5,true)`,
+        [acctId, companyId, acctNumber, acctName, acctSubtype]
+      );
+      await db.query(
+        `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active, created_at, updated_at)
+         VALUES ($1::uuid,$2,$3::uuid,true,now(),now())
+         ON CONFLICT (operating_company_id, role) WHERE is_active DO NOTHING`,
+        [companyId, role, acctId]
+      );
+    });
+  }
+
   beforeAll(async () => {
     companyId = await ensureIntegrationPrerequisites();
     const cs = process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL;
@@ -144,6 +200,8 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
     db = new pg.Client(buildPgClientConfig(cs));
     await db.connect();
     await db.query("SET ROLE ih35_app");
+    await ensureRoleMapped("cash_clearing");
+    await ensureRoleMapped("ar_control");
     await bypass(async () => {
       await db.query(
         `INSERT INTO mdata.vendors (id, operating_company_id, vendor_name, vendor_type) VALUES ($1::uuid,$2::uuid,$3,'Other')`,
@@ -158,6 +216,15 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
          DO UPDATE SET enabled = true`,
         [companyId, TEST_OWNER_USER_ID]
       );
+      // createJournalEntry (called by every real poster event below) unconditionally enqueues a QBO sync
+      // job, which requires an authorized connection row to exist even though the JE push flag stays OFF.
+      await db.query(
+        `INSERT INTO integrations.qbo_connections
+           (operating_company_id, realm_id, access_token, refresh_token, access_token_expires_at, refresh_token_expires_at, authorized_by_user_id)
+         VALUES ($1::uuid, $2, $3, $4, now() + interval '1 year', now() + interval '1 year', $5::uuid)
+         ON CONFLICT (operating_company_id, realm_id) WHERE revoked_at IS NULL DO NOTHING`,
+        [companyId, `TEST-REALM-T06-${suffix}`, encryptTestToken("test-access-token"), encryptTestToken("test-refresh-token"), TEST_OWNER_USER_ID]
+      );
     });
   });
 
@@ -170,6 +237,8 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
         await db.query(`DELETE FROM accounting.journal_entries WHERE memo LIKE $1`, [`%${suffix}%`]);
         await db.query(`DELETE FROM accounting.factoring_advances WHERE id = ANY($1::uuid[])`, [advanceIds]);
         await db.query(`DELETE FROM mdata.vendors WHERE id = $1::uuid`, [vendorId]);
+        await db.query(`DELETE FROM integrations.qbo_sync_queue WHERE operating_company_id=$1::uuid AND entity_type='journal_entry' AND entity_id = ANY($2::uuid[])`, [companyId, journalEntryIds]);
+        await db.query(`DELETE FROM integrations.qbo_connections WHERE operating_company_id=$1::uuid AND realm_id=$2`, [companyId, `TEST-REALM-T06-${suffix}`]);
       });
     } catch {
       /* best-effort cleanup */

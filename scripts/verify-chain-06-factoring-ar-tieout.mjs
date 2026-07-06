@@ -78,7 +78,7 @@ export const ASSERTIONS = {
            AND jep.debit_or_credit = 'debit'
       ) chargeback ON true
      WHERE fa.status IN ('collected', 'released', 'recourse_returned', 'voided')
-    HAVING COALESCE(funding.credited, 0) <> (COALESCE(customer.debited, 0) + COALESCE(chargeback.debited, 0))`,
+       AND COALESCE(funding.credited, 0) <> (COALESCE(customer.debited, 0) + COALESCE(chargeback.debited, 0))`,
 };
 
 /** Informational only — never fails the guard. See docs/specs/qbo-parity/CHAIN-06-FACTORING-AR-TIEOUT-PROOF.md §5. */
