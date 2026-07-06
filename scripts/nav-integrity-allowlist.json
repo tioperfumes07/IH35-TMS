@@ -45,6 +45,22 @@
       "reason": "GAP-91 mobile responsive audit report (admin tooling)"
     },
     {
+      "path": "/admin/launch-readiness",
+      "reason": "Owner launch-readiness dashboard; admin tooling, not in module subnav"
+    },
+    {
+      "path": "/admin/qbo-vendor-linkage",
+      "reason": "Owner QBO vendor linkage tool; admin tooling, not in module subnav"
+    },
+    {
+      "path": "/integrations/edi",
+      "reason": "Owner EDI setup wizard; not in subnav (mirrors /integrations/samsara)"
+    },
+    {
+      "path": "/integrations/edi/transaction-log",
+      "reason": "Owner EDI transaction log; deep link from EDI setup wizard, not in subnav"
+    },
+    {
       "path": "/admin/activity",
       "reason": "Owner/SuperAdmin activity log"
     },
