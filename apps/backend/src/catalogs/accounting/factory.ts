@@ -509,75 +509,21 @@ export function registerQboCategoriesCatalogRoutes(app: FastifyInstance) {
   });
 }
 
+// AF-5 (2026-07 stub-catalog closeout): Journal Entry Types used to be a hardcoded 3-row in-file array
+// (the last true SILENT-STUB found by the 2026-06-24 recon — docs/recon/stub-inventory-2026-06-24.md).
+// It is now a REAL catalogs.journal_entry_types table (migration
+// 202607120000_af5_journal_entry_types_catalog.sql, HELD — never self-merge), registered below via the
+// same generic `registerLegacyAccountingCatalogRoutes({ readOnly: true, ... })` factory already used
+// for Posting Templates / Account Role Bindings (real table, GET-only by design). The exported function
+// name is intentionally retained so no import at the call site needs to change.
 export function registerJournalEntryTypesReadOnlyRoutes(app: FastifyInstance) {
-  const basePath = "/api/v1/catalogs/accounting/journal-entry-types";
-  const rows = [
-    {
-      id: "11111111-1111-4111-8111-111111111111",
-      code: "GENERAL",
-      display_name: "General Journal",
-      description: "Manual and adjustment entries",
-      metadata: { source: "code-defined" },
-      is_active: true,
-      sort_order: 10,
-      created_at: new Date(0).toISOString(),
-      updated_at: new Date(0).toISOString(),
-    },
-    {
-      id: "22222222-2222-4222-8222-222222222222",
-      code: "SALES_INVOICE",
-      display_name: "Sales Invoice",
-      description: "AR invoice posting entries",
-      metadata: { source: "code-defined" },
-      is_active: true,
-      sort_order: 20,
-      created_at: new Date(0).toISOString(),
-      updated_at: new Date(0).toISOString(),
-    },
-    {
-      id: "33333333-3333-4333-8333-333333333333",
-      code: "PAYMENT_RECEIPT",
-      display_name: "Payment Receipt",
-      description: "Customer payment application entries",
-      metadata: { source: "code-defined" },
-      is_active: true,
-      sort_order: 30,
-      created_at: new Date(0).toISOString(),
-      updated_at: new Date(0).toISOString(),
-    },
-  ];
-
-  app.get(basePath, async (req, reply) => {
-    const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
-    return { rows, total: rows.length };
-  });
-
-  app.get(`${basePath}/:id`, async (req, reply) => {
-    const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
-    const parsedParams = idParamSchema.safeParse(req.params ?? {});
-    if (!parsedParams.success) return validationError(reply, parsedParams.error);
-    const row = rows.find((item) => item.id === parsedParams.data.id);
-    if (!row) return reply.code(404).send({ error: "catalog_journal_entry_types_not_found" });
-    return row;
-  });
-
-  app.post(basePath, async (req, reply) => {
-    const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
-    return reply.code(405).send({ error: "catalog_read_only" });
-  });
-
-  app.patch(`${basePath}/:id`, async (req, reply) => {
-    const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
-    return reply.code(405).send({ error: "catalog_read_only" });
-  });
-
-  app.delete(`${basePath}/:id`, async (req, reply) => {
-    const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
-    return reply.code(405).send({ error: "catalog_read_only" });
+  registerLegacyAccountingCatalogRoutes(app, {
+    tableName: "journal_entry_types",
+    urlSegment: "journal-entry-types",
+    codeColumn: "code",
+    nameColumn: "display_name",
+    descriptionColumn: "description",
+    activeMode: "is_active",
+    readOnly: true,
   });
 }

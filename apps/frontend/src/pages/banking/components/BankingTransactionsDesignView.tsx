@@ -21,9 +21,11 @@ import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useToast } from "../../../components/Toast";
 import { DriverAutocomplete } from "../../../components/factoring/DriverAutocomplete";
 import { UnitAutocomplete } from "../../../components/banking/UnitAutocomplete";
+import { TrailerAutocomplete } from "../../../components/banking/TrailerAutocomplete";
 import { LoadAutocomplete } from "../../../components/banking/LoadAutocomplete";
 import { listVendors, listCustomers } from "../../../api/mdata";
 import { itemsCatalogClient, type AccountingCatalogRow } from "../../../api/catalogs-accounting";
+import { BankTransactionSplitModal } from "./BankTransactionSplitModal";
 
 // BLOCK-6b — recoverable-expense bucket types a bank-categorized driver expense can charge (a fine/toll
 // the company paid on the driver's behalf → recovered from settlement). Mirrors the backend allow-list.
@@ -63,6 +65,10 @@ type RowDetailDraft = {
   driverName: string;
   unitId: string;
   unitName: string;
+  // BANK-SPLIT-1 (Part 1 linkage): Trailer is the 4th dimension alongside Driver/Unit/Trip — trailers are
+  // mdata.equipment, NEVER mdata.loads.trailer_id (no such column exists).
+  trailerId: string;
+  trailerName: string;
   loadId: string;
   loadName: string;
   recoverFromDriver: boolean;
@@ -210,6 +216,8 @@ export function BankingTransactionsDesignView({
   const [excludingTxId, setExcludingTxId] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<string, RowDetailDraft>>({});
   const [currentPage, setCurrentPage] = useState(1);
+  // BANK-SPLIT-1 — the transaction currently open in the Split-transaction popup (real, persisted; HELD).
+  const [splitTx, setSplitTx] = useState<PlaidBankTransaction | null>(null);
 
   const [viewSettings, setViewSettings] = useState<ViewSettings>({
     showCheckNo: false,
@@ -484,6 +492,8 @@ export function BankingTransactionsDesignView({
       driverName: "",
       unitId: "",
       unitName: "",
+      trailerId: "",
+      trailerName: "",
       loadId: "",
       loadName: "",
       recoverFromDriver: false,
@@ -529,6 +539,7 @@ export function BankingTransactionsDesignView({
         // BLOCK-6b dimensions + driver auto-deduction (recover flags only sent when a driver is tagged).
         driver_id: draft.driverId || undefined,
         unit_id: draft.unitId || undefined,
+        trailer_id: draft.trailerId || undefined,
         load_id: draft.loadId || undefined,
         recover_from_driver: draft.driverId ? draft.recoverFromDriver : undefined,
         recover_deduction_type:
@@ -1079,19 +1090,17 @@ export function BankingTransactionsDesignView({
                         </button>
                         {menuOpen ? (
                           <div className="absolute right-0 top-7 z-20 min-w-[220px] rounded-sm border border-gray-200 bg-white shadow-md">
-                            {/* Split is intentionally disabled (QA-sweep): a real multi-line split needs a
-                            persisted split-lines model that does not exist yet. The old handler silently
-                            mis-categorized the txn as a single full-amount 'split_transaction' line and
-                            showed a "posted as single-line placeholder" success toast — wrong financial
-                            categorization. Disabled until a true balanced N-line split is built
-                            (financial, HOLD-FOR-JORGE). */}
+                            {/* BANK-SPLIT-1: the real, persisted, balanced N-line split (banking.bank_transaction_splits,
+                            migration 202607110100, HELD). Opens the QBO-style Split transaction popup. */}
                             <button
                               type="button"
-                              disabled
-                              title="Split into multiple categories is not available in this build"
-                              className="block w-full cursor-not-allowed border-b border-gray-100 px-3 py-2 text-left text-xs text-gray-400"
+                              className="block w-full border-b border-gray-100 px-3 py-2 text-left text-xs hover:bg-gray-50"
+                              onClick={() => {
+                                setActionMenuTxId(null);
+                                setSplitTx(tx);
+                              }}
                             >
-                              Split <span className="text-[10px] font-semibold text-gray-400">(unavailable)</span>
+                              Split
                             </button>
                             <button
                               type="button"
@@ -1295,7 +1304,7 @@ export function BankingTransactionsDesignView({
                             {/* BLOCK-6b dimensions: Driver + Unit (truck) + Trip (load) the transaction belongs
                                 to — tags for full cross-module linkage + drill-through (forward: this txn shows
                                 them; reverse: each shows this expense). */}
-                            <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-3">
+                            <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-4">
                               <div className="text-xs text-gray-600">
                                 Driver
                                 <div className="mt-0.5">
@@ -1333,6 +1342,25 @@ export function BankingTransactionsDesignView({
                                     onClick={() => setDraft(tx, { unitId: "", unitName: "" })}
                                   >
                                     Clear unit{draft.unitName ? ` (${draft.unitName})` : ""}
+                                  </button>
+                                ) : null}
+                              </div>
+                              <div className="text-xs text-gray-600">
+                                Trailer
+                                <div className="mt-0.5">
+                                  <TrailerAutocomplete
+                                    companyId={companyId}
+                                    value={draft.trailerId}
+                                    onChange={(trailerId, trailerName) => setDraft(tx, { trailerId, trailerName })}
+                                  />
+                                </div>
+                                {draft.trailerId ? (
+                                  <button
+                                    type="button"
+                                    className="mt-0.5 text-[11px] text-slate-700 underline"
+                                    onClick={() => setDraft(tx, { trailerId: "", trailerName: "" })}
+                                  >
+                                    Clear trailer{draft.trailerName ? ` (${draft.trailerName})` : ""}
                                   </button>
                                 ) : null}
                               </div>
@@ -1478,6 +1506,13 @@ export function BankingTransactionsDesignView({
           </tbody>
         </table>
       </div>
+      <BankTransactionSplitModal
+        open={Boolean(splitTx)}
+        companyId={companyId}
+        transaction={splitTx ? { id: splitTx.id, amount_cents: splitTx.amount_cents, is_credit: splitTx.is_credit, description: transactionLabel(splitTx) } : null}
+        onClose={() => setSplitTx(null)}
+        onSaved={() => onDataChanged()}
+      />
     </div>
   );
 }
