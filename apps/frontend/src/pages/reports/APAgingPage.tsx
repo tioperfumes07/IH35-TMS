@@ -124,6 +124,8 @@ export function APAgingPage() {
       <PageHeader
         title="A/P aging"
         subtitle={`As of ${asOf} · open bills by vendor · Accrual basis`}
+        backHref="/reports"
+        breadcrumb={["Reports", "A/P Aging"]}
         actions={
           <div className="no-print flex flex-wrap gap-2">
             <Button size="sm" variant="secondary" onClick={() => window.print()}>

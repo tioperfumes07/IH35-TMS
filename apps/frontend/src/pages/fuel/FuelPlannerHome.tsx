@@ -32,6 +32,7 @@ import { StopReasoningTable } from "./components/StopReasoningTable";
 import { TripPlanSummaryBanner } from "./components/TripPlanSummaryBanner";
 import { UploadLovesPricesModal } from "./components/UploadLovesPricesModal";
 import { FuelHomePage } from "./FuelHome";
+import { FuelTransactionsTable } from "./FuelTransactionsTable";
 
 const SUBNAV = [
   { id: "home", label: "Home" },
@@ -225,6 +226,20 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
             topDriverName={String((savingsQuery.data?.top_driver?.driver_name as string | undefined) ?? "n/a")}
             topDriverAmount={Number((savingsQuery.data?.top_driver?.savings_ytd as number | undefined) ?? 0)}
           />
+          <section className="rounded-sm border border-gray-200 bg-white p-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-gray-900">Fuel Transactions</h3>
+              <ActionButton onClick={() => pushToast("Fuel import UI coming soon (requires backend endpoint)", "info")}>
+                Import Fuel Transactions
+              </ActionButton>
+            </div>
+            <p className="mt-2 text-xs text-gray-600">
+              Fuel transaction history (requires backend API endpoint for real data).
+            </p>
+            <div className="mt-3">
+              <FuelTransactionsTable rows={[]} />
+            </div>
+          </section>
         </div>
       ) : null}
 
