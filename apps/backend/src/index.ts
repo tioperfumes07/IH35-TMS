@@ -446,6 +446,7 @@ import { registerPayrollDriverSettlementRoutes } from "./payroll/driver-settleme
 import { registerSettlementShadowRoutes } from "./payroll/settlement-shadow.routes.js";
 import { registerDriverSubAccountBackfillRoutes } from "./accounting/driver-subaccount-backfill.routes.js";
 import { registerPayrollAggregatedRoutes } from "./payroll/aggregated.routes.js";
+import { registerUsmcaActivationRoutes } from "./usmca/activation/activation.routes.js";
 import { applyEnvStartupChecks, isFeatureDisabled, setDisabledFeatures } from "./config/required-env.js";
 import { registerBookingGapRoutes } from "./dispatch/analytics/booking-gap.routes.js";
 import { initializeBookingGapAggregatorWorker, stopBookingGapAggregatorWorker } from "./jobs/booking-gap-aggregator-worker.js";
@@ -1009,6 +1010,7 @@ async function main() {
   await registerSettlementShadowRoutes(app);
   await registerDriverSubAccountBackfillRoutes(app);
   await registerPayrollAggregatedRoutes(app);
+  await registerUsmcaActivationRoutes(app);
 
   try {
     initializeAccountingCrons(app);
