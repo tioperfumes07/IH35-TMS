@@ -87,6 +87,7 @@ const KNOWN_PHANTOM_DEBT = [
   { rel: "driver_finance.driver_reimbursements", why: "[HOLD-FOR-JORGE] forward-ref — driver out-of-pocket toll/fuel reimbursement (pay-out) table for the settlement contract-terms engine; ships in gated migration 202607080000_settlement_contract_terms.sql (not yet applied to prod). Compute/poster paths are behind SETTLEMENT_CONTRACT_TERMS_ENABLED (default OFF). Remove from debt when that migration merges." },
   { rel: "driver_finance.settlement_contract_lines", why: "[HOLD-FOR-JORGE] forward-ref — provenance/connectivity backbone tying each computed contract line to its source+settlement+created line/deduction; ships in gated migration 202607080000_settlement_contract_terms.sql (not yet applied to prod). Behind SETTLEMENT_CONTRACT_TERMS_ENABLED (default OFF). Remove from debt when that migration merges." },
   { rel: "driver_finance.settlement_contract_terms_config", why: "[HOLD-FOR-JORGE] forward-ref — per-entity EDITABLE contract amounts (MPG bonus / referral reward) with locked defaults; ships in gated migration 202607080000_settlement_contract_terms.sql (not yet applied to prod). Behind SETTLEMENT_CONTRACT_TERMS_ENABLED (default OFF). Remove from debt when that migration merges." },
+  { rel: "driver_finance.driver_escrow_separations", why: "[HOLD-FOR-JORGE] forward-ref to HELD 202607111000 driver-escrow separation-return, flag DRIVER_ESCROW_SEPARATION_RETURN_ENABLED default OFF" },
 ];
 const KNOWN = new Map(KNOWN_PHANTOM_DEBT.map((d) => [d.rel, d.why]));
 
