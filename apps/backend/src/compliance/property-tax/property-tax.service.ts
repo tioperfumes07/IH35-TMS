@@ -6,6 +6,8 @@
 // CONNECTIVITY: a rendition links entity → appraisal district (county) → taxable assets (mdata.units
 // tractors + mdata.equipment trailers) via the basis lines; the assessed tax feeds the accrual poster.
 
+import { appendCrudAudit } from "../../audit/crud-audit.js";
+
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
 };
@@ -91,6 +93,7 @@ export async function listAppraisalDistricts(client: DbClient): Promise<Appraisa
 
 export async function createAppraisalDistrict(
   client: DbClient,
+  actorUserId: string,
   input: { state?: string; county: string; cad_name: string }
 ): Promise<AppraisalDistrict> {
   const res = await client.query<AppraisalDistrict>(
@@ -100,7 +103,14 @@ export async function createAppraisalDistrict(
      RETURNING id::text, state, county, cad_name, is_active`,
     [input.state ?? "TX", input.county, input.cad_name]
   );
-  return res.rows[0];
+  const district = res.rows[0];
+  await appendCrudAudit(client as Parameters<typeof appendCrudAudit>[0], actorUserId, "compliance.property_tax_appraisal_district.created", {
+    entityId: district.id,
+    state: district.state,
+    county: district.county,
+    cad_name: district.cad_name,
+  });
+  return district;
 }
 
 const RENDITION_SELECT = `
@@ -186,6 +196,12 @@ export async function createRendition(
   );
   const got = await getRendition(client, operatingCompanyId, res.rows[0].id);
   if (!got) throw new Error("rendition_create_failed");
+  await appendCrudAudit(client as Parameters<typeof appendCrudAudit>[0], actorUserId, "compliance.property_tax_rendition.created", {
+    entityId: got.rendition.id,
+    operatingCompanyId,
+    tax_year: got.rendition.tax_year,
+    appraisal_district_id: got.rendition.appraisal_district_id,
+  });
   return got.rendition;
 }
 
@@ -239,6 +255,14 @@ export async function updateRendition(
     vals
   );
   const got = await getRendition(client, operatingCompanyId, renditionId);
+  if (got) {
+    await appendCrudAudit(client as Parameters<typeof appendCrudAudit>[0], actorUserId, "compliance.property_tax_rendition.updated", {
+      entityId: renditionId,
+      operatingCompanyId,
+      changed: Object.keys(patch).filter((k) => (patch as Record<string, unknown>)[k] !== undefined),
+      status: got.rendition.status,
+    });
+  }
   return got?.rendition ?? null;
 }
 
@@ -284,6 +308,13 @@ export async function addRenditionLine(
   const got = await getRendition(client, operatingCompanyId, renditionId);
   const created = got?.lines.find((l) => l.id === res.rows[0].id);
   if (!created) throw new Error("rendition_line_create_failed");
+  await appendCrudAudit(client as Parameters<typeof appendCrudAudit>[0], actorUserId, "compliance.property_tax_rendition_line.added", {
+    entityId: created.id,
+    renditionId,
+    operatingCompanyId,
+    asset_description: created.asset_description,
+    rendered_value_cents: created.rendered_value_cents,
+  });
   return created;
 }
 

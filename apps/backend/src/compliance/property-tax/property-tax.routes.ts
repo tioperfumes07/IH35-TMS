@@ -87,7 +87,7 @@ export async function registerPropertyTaxRoutes(app: FastifyInstance) {
     await assertCompanyMembership(user.uuid, body.data.operating_company_id);
     const district = await withCurrentUser(user.uuid, async (client) => {
       await client.query("SELECT set_config('app.operating_company_id', $1, true)", [body.data.operating_company_id]);
-      return createAppraisalDistrict(client, { state: body.data.state, county: body.data.county, cad_name: body.data.cad_name });
+      return createAppraisalDistrict(client, user.uuid, { state: body.data.state, county: body.data.county, cad_name: body.data.cad_name });
     });
     return reply.code(201).send({ district });
   });

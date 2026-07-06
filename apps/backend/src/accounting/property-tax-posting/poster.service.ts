@@ -21,6 +21,7 @@ import { withLuciaBypass } from "../../auth/db.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
 import { createJournalEntry } from "../journal-entries.service.js";
 import { resolveRoleAccount } from "../coa-roles/resolver.service.js";
+import { appendCrudAudit } from "../../audit/crud-audit.js";
 
 export const PROPERTY_TAX_GL_POSTING_FLAG = "PROPERTY_TAX_GL_POSTING_ENABLED";
 
@@ -195,6 +196,13 @@ export async function postPropertyTaxAccrual(input: PostPropertyTaxAccrualInput)
         input.actor_user_id,
       ]
     );
+    await appendCrudAudit(client as Parameters<typeof appendCrudAudit>[0], input.actor_user_id, "accounting.property_tax_accrual.posted", {
+      renditionId: input.rendition_id,
+      operatingCompanyId: input.operating_company_id,
+      journalEntryId: created.id,
+      tax_amount_cents: prepared.amount,
+      tax_year: prepared.taxYear,
+    });
   });
 
   return { posted: true, journal_entry_id: created.id, memo: prepared.memo };
@@ -278,6 +286,12 @@ export async function postPropertyTaxPayment(input: PostPropertyTaxPaymentInput)
         `,
         [input.operating_company_id, input.rendition_id, created.id, prepared.entryDate]
       );
+      await appendCrudAudit(client as Parameters<typeof appendCrudAudit>[0], input.actor_user_id, "accounting.property_tax_payment.posted", {
+        renditionId: input.rendition_id,
+        operatingCompanyId: input.operating_company_id,
+        journalEntryId: created.id,
+        payment_date: prepared.entryDate,
+      });
     });
   }
 
