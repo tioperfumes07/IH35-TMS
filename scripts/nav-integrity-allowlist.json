@@ -81,6 +81,14 @@
       "reason": "Owner/SuperAdmin universal audit log viewer (GAP-87)"
     },
     {
+      "path": "/admin",
+      "reason": "Owner/Administrator admin hub (tiles to Data Import, Launch Toggles, Carrier Bootstrap, etc.); not in module subnav, no nav link (mirrors its sibling /admin/* pages)"
+    },
+    {
+      "path": "/admin/usmca-activation",
+      "reason": "Owner-only USMCA activation checklist + state transitions; deep link from the /admin hub tile, not in module subnav"
+    },
+    {
       "path": "/program/final-additions",
       "reason": "Final Additions launch punch-list; standalone sub-page of /program Topbar tracker (non-sidebar by design, sidebar locked at 28)"
     }
