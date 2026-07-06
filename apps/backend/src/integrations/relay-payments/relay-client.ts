@@ -272,5 +272,8 @@ export async function listRelayFuelTransactions(params: {
       ? ((json as Record<string, unknown>).data as unknown[])
       : [];
 
-  return rows.filter((r): r is Record<string, unknown> => Boolean(r && typeof r === "object"));
+  return rows
+    .filter((r): r is Record<string, unknown> => Boolean(r && typeof r === "object"))
+    .map((r) => parseRelayFuelTransactionRow(r))
+    .filter((t): t is RelayFuelTransaction => t !== null);
 }
