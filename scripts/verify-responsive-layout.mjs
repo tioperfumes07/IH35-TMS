@@ -23,7 +23,10 @@ try {
 
   const dispatchLoadTable = read("apps/frontend/src/pages/dispatch/components/LoadTable.tsx");
   assertNotIncludes(dispatchLoadTable, "min-w-[1400px]", "Dispatch load table still forces horizontal overflow");
-  assertIncludes(dispatchLoadTable, "table-fixed", "Dispatch load table must use fixed responsive layout");
+  // TBL-STANDARD batch 2: LoadTable migrated to the shared ParityTable, which owns the fixed-layout
+  // <table> (table-fixed) — responsiveness is inherited from ParityTable, not a hand-rolled table in
+  // LoadTable. Accept the delegation here; ParityTable's own table-fixed is asserted below.
+  assertIncludes(dispatchLoadTable, "ParityTable", "Dispatch load table must use the shared responsive ParityTable");
 
   const customers = read("apps/frontend/src/pages/Customers.tsx");
   assertNotIncludes(customers, "min-w-[1200px]", "Customers table still forces horizontal overflow");
@@ -45,6 +48,9 @@ try {
 
   const dataTable = read("apps/frontend/src/components/DataTable.tsx");
   assertIncludes(dataTable, "table-fixed", "Shared DataTable must use fixed responsive layout");
+
+  const parityTable = read("apps/frontend/src/components/parity/ParityTable.tsx");
+  assertIncludes(parityTable, "table-fixed", "Shared ParityTable must use fixed responsive layout");
 
   console.log("✅ Responsive layout guard passed");
 } catch (error) {

@@ -9,7 +9,7 @@ import { useBulkPermission } from "../../hooks/useBulkPermission";
 import { useToast } from "../../components/Toast";
 import { useListState, type ListQueryStatus } from "../../components/list-state";
 import { formatUsdCents } from "../../lib/money";
-import { TableSearch } from "../../components/table/TableSearch";
+import { TableSearch } from "../../components/table";
 import { CustomerDrillModal } from "../../components/customers/CustomerDrillModal";
 
 function fmtMoney(cents: number) {
