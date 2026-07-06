@@ -72,6 +72,14 @@
     {
       "file": "202607080310_property_tax_accrual_posting.sql",
       "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] Business-Property Allocation \u2014 property-tax accrual/payment GL scaffolding (accounting.*/catalogs.* + COA roles + PROPERTY_TAX_GL_POSTING_ENABLED flag OFF; financial cluster)"
+    },
+    {
+      "file": "202607081500_p1_insurance_entity_scope.sql",
+      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] P1 DB-Audit \u2014 insurance.* entity scope (7 tables); adaptive migration, unresolved migration-file-vs-prod-read contradiction documented in docs/db-audit/P1-insurance-factoring-entity-scope-DESIGN.md"
+    },
+    {
+      "file": "202607081600_p1_factoring_entity_scope.sql",
+      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] P1 DB-Audit \u2014 factoring.* entity scope (5 tables); adaptive migration, same unresolved contradiction as the insurance sibling"
     }
   ]
 }
