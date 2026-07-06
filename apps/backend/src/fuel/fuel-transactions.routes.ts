@@ -114,9 +114,12 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
             ft.load_exemption_reason,
             ft.created_at
           FROM fuel.fuel_transactions ft
-          LEFT JOIN mdata.loads l ON l.id = ft.load_id
-          LEFT JOIN mdata.drivers d ON d.id = ft.driver_id
+          -- Entity-scope the joins to the SAME company as the transaction (defense in depth: a
+          -- load_id/driver_id/unit_id should never point cross-company, but never trust that silently).
+          LEFT JOIN mdata.loads l ON l.id = ft.load_id AND l.operating_company_id = ft.operating_company_id
+          LEFT JOIN mdata.drivers d ON d.id = ft.driver_id AND d.operating_company_id = ft.operating_company_id
           LEFT JOIN mdata.units u ON u.id = ft.unit_id
+            AND (u.owner_company_id = ft.operating_company_id OR u.currently_leased_to_company_id = ft.operating_company_id)
           LEFT JOIN mdata.vendors v ON v.id = ft.vendor_id
           ${whereClause}
           ORDER BY ft.transaction_at DESC
