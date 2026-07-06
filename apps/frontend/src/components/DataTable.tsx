@@ -53,6 +53,8 @@ type DataTableProps<T> = {
   tableKey?: string;
   onRowClick?: (row: T) => void;
   errorState?: DataTableErrorState;
+  /** Override the default "No records found." message shown for a settled, zero-row table. Additive. */
+  emptyText?: string;
 };
 
 export function DataTable<T>({
@@ -64,6 +66,7 @@ export function DataTable<T>({
   tableKey,
   onRowClick,
   errorState,
+  emptyText = "No records found.",
 }: DataTableProps<T>) {
   const [sortKey, setSortKey] = useState<string>("");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
@@ -163,7 +166,7 @@ export function DataTable<T>({
           ) : pageRows.length === 0 ? (
             <tr>
                   <td colSpan={columns.length} className="px-2 py-3 text-center text-[11px] text-gray-500">
-                No records found.
+                {emptyText}
               </td>
             </tr>
           ) : (
