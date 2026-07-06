@@ -143,6 +143,21 @@ export const PER_ENTITY_ONLY_FLAG_KEYS: ReadonlySet<string> = new Set([
   // ENTITY AT A TIME — a global default/rollout enable would hide/reveal accounts for EVERY entity
   // (incl. USMCA / TRK) at once. Per-entity override only; default OFF. Jorge flips.
   "BANK_ACCOUNT_HIDE_ENABLED",
+  // AF-2: gates the qbo-sync/*-reconciler.ts healFieldDrift() auto-fix (silently overwrites local
+  // vendor/customer/CoA fields from the QBO mirror). Locked decision is "detect only, write stays OFF"
+  // — a global default/rollout enable would auto-heal for EVERY entity at once. Default OFF; when OFF
+  // the reconcilers record a read-only recon_exceptions (ANCHOR_DRIFT) row instead of mutating the row.
+  "QBO_MASTER_DATA_HEAL_ENABLED",
+  // AF-4: gates the (not-yet-built) QBO A/P importer WRITE step into accounting.bills/mdata.vendors.
+  // Money-affecting master-data + A/P creation — must be flipped ONE ENTITY AT A TIME (TRANSP first).
+  // Default OFF; the schema/preview layer (ap_import_batches/ap_import_preview_lines) ships regardless.
+  "AP_IMPORT_ENABLED",
+  // AF-7: money-control flags — void/reversing-JE UX, period-close action, period-reopen action. Each is
+  // a per-entity owner sign-off (CPA tie-out gates all three); a global enable would turn a money control
+  // on for EVERY entity at once. All default OFF.
+  "MONEY_CONTROL_VOID_REVERSAL_ENABLED",
+  "MONEY_CONTROL_PERIOD_CLOSE_ENABLED",
+  "MONEY_CONTROL_PERIOD_REOPEN_ENABLED",
 ]);
 
 export function isPerEntityOnlyFlag(flagKey: string): boolean {

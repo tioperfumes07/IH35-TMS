@@ -256,7 +256,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
     return { accounts };
   });
 
-  app.post("/api/v1/banking/accounts/visibility", async (req, reply) => {
+  app.post("/api/v1/banking/accounts/visibility", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const body = visibilityBodySchema.safeParse(req.body ?? {});
@@ -615,7 +615,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
     operating_company_id: z.string().uuid(),
   });
 
-  app.post("/api/v1/banking/accounts/:id/hide", async (req, reply) => {
+  app.post("/api/v1/banking/accounts/:id/hide", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isBankAccountHideAdminRole(String((user as { role?: string }).role ?? ""))) {
@@ -640,7 +640,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
     return { account: result };
   });
 
-  app.post("/api/v1/banking/accounts/:id/unhide", async (req, reply) => {
+  app.post("/api/v1/banking/accounts/:id/unhide", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isBankAccountHideAdminRole(String((user as { role?: string }).role ?? ""))) {
