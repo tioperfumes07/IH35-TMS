@@ -80,11 +80,24 @@ async function resolveMatchedDriverId(
   return res.rows[0]?.id ?? null;
 }
 
-async function resolveMatchedUnitId(client: DbClient, truckNumber: string | null): Promise<string | null> {
+async function resolveMatchedUnitId(
+  client: DbClient,
+  operatingCompanyId: string,
+  truckNumber: string | null
+): Promise<string | null> {
   if (!truckNumber) return null;
+  // mdata.units has no operating_company_id (CLAUDE.md §4 landmine) — scope to this operating
+  // company's fleet the same way dispatch/assignment does (owner OR currently-leased-to), so a
+  // fuel transaction can never match a unit belonging to a different entity.
   const res = await client.query<{ id: string }>(
-    `SELECT id::text AS id FROM mdata.units WHERE unit_number = $1 LIMIT 1`,
-    [truckNumber]
+    `
+      SELECT id::text AS id
+      FROM mdata.units
+      WHERE unit_number = $1
+        AND (owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid)
+      LIMIT 1
+    `,
+    [truckNumber, operatingCompanyId]
   );
   return res.rows[0]?.id ?? null;
 }
@@ -104,7 +117,7 @@ export async function upsertRelayFuelTransaction(
   const relayDriverIntegrationId = tx.driver?.integration_id ?? null;
 
   const matchedDriverId = await resolveMatchedDriverId(client, operatingCompanyId, relayDriverIntegrationId);
-  const matchedUnitId = await resolveMatchedUnitId(client, truckNumber);
+  const matchedUnitId = await resolveMatchedUnitId(client, operatingCompanyId, truckNumber);
 
   const totalAmountPaidCents = dollarsToCents(tx.total_amount_paid, "total_amount_paid");
   const totalRetailPriceCents = dollarsToCents(tx.total_retail_price, "total_retail_price");
