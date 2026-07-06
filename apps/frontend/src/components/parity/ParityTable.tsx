@@ -48,6 +48,10 @@ export type ParityTableProps<T> = {
   rowKey: (row: T) => string;
   loading?: boolean;
   onRowClick?: (row: T) => void;
+  /** Optional row-level context-menu handler (e.g. right-click quick actions). Additive — omitting it renders no listener. */
+  onRowContextMenu?: (row: T, event: ReactMouseEvent<HTMLTableRowElement>) => void;
+  /** Optional extra className per row (e.g. highlight the currently-open record). Additive — merged with the base row class. */
+  rowClassName?: (row: T) => string;
   emptyText?: string;
 
   density?: ParityDensity;
@@ -64,6 +68,10 @@ export type ParityTableProps<T> = {
   batchActions?: (selected: T[]) => ReactNode;
   /** Per-row 3-dots action menu content. */
   rowActions?: (row: T) => ReactNode;
+  /** Max selectable rows at once (mirrors useBulkSelection's cap). Unset = unlimited. Additive. */
+  maxSelectable?: number;
+  /** Fired when a selection toggle/select-all-on-page would exceed maxSelectable; the toggle is a no-op in that case. */
+  onSelectionCapExceeded?: (attempted: number) => void;
 
   /** Filter toolbar slot (search + dropdowns), rendered above the table per the universal-list standard. */
   filterBar?: ReactNode;
@@ -130,6 +138,8 @@ export function ParityTable<T>({
   rowKey,
   loading = false,
   onRowClick,
+  onRowContextMenu,
+  rowClassName,
   emptyText = "No records found.",
   density: densityProp = "regular",
   pageSizeOptions = [15, 50, 100, 300],
@@ -139,6 +149,8 @@ export function ParityTable<T>({
   selectable = false,
   batchActions,
   rowActions,
+  maxSelectable,
+  onSelectionCapExceeded,
   filterBar,
   exportFilename,
   stickyHeader = true,
@@ -329,8 +341,15 @@ export function ParityTable<T>({
   function toggleRow(id: string) {
     setSelected((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(id)) {
+        next.delete(id);
+        return next;
+      }
+      next.add(id);
+      if (maxSelectable != null && next.size > maxSelectable) {
+        onSelectionCapExceeded?.(next.size);
+        return prev;
+      }
       return next;
     });
   }
@@ -347,8 +366,15 @@ export function ParityTable<T>({
   function togglePageAll() {
     setSelected((prev) => {
       const next = new Set(prev);
-      if (pageAllSelected) pageRows.forEach((r) => next.delete(rowKey(r)));
-      else pageRows.forEach((r) => next.add(rowKey(r)));
+      if (pageAllSelected) {
+        pageRows.forEach((r) => next.delete(rowKey(r)));
+        return next;
+      }
+      pageRows.forEach((r) => next.add(rowKey(r)));
+      if (maxSelectable != null && next.size > maxSelectable) {
+        onSelectionCapExceeded?.(next.size);
+        return prev;
+      }
       return next;
     });
   }
@@ -549,9 +575,10 @@ export function ParityTable<T>({
                   data-testid={rowTestId ? rowTestId(row) : undefined}
                   className={`border-t border-gray-100 ${
                     onRowClick ? "cursor-pointer hover:bg-gray-50" : ""
-                  }`}
+                  } ${rowClassName ? rowClassName(row) : ""}`}
                   style={{ height: d.rowH, ...(selected.has(id) ? { backgroundColor: colors.accentTint } : {}) }}
                   onClick={onRowClick ? () => onRowClick(row) : undefined}
+                  onContextMenu={onRowContextMenu ? (event) => onRowContextMenu(row, event) : undefined}
                 >
                   {renderExpanded ? (
                     <td className="px-2 align-top" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>

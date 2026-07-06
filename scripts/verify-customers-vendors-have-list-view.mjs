@@ -7,14 +7,15 @@ const repoRoot = process.cwd();
 
 const REQUIRED = [
   {
-    // ResizableTh OR the shared TableHeaderCell — both give a resizable tabular grid
-    // (GLOBAL-TABLE-CONTROLS rollout replaced ResizableTh with TableHeaderCell).
+    // ResizableTh OR the shared TableHeaderCell OR ParityTable — all give a resizable tabular grid.
+    // (GLOBAL-TABLE-CONTROLS rollout replaced ResizableTh with TableHeaderCell; TBL-STANDARD batch 2
+    // migrates customers to the shared ParityTable, which owns the resizable/table-fixed column grid.)
     file: "apps/frontend/src/pages/customers/CustomersListView.tsx",
-    markers: ["data-customers-list-view", "ResizableTh|TableHeaderCell", "BulkActionBar"],
+    markers: ["data-customers-list-view", "ResizableTh|TableHeaderCell|ParityTable", "BulkActionBar"],
   },
   {
     file: "apps/frontend/src/pages/vendors/VendorsListView.tsx",
-    markers: ["data-vendors-list-view", "ResizableTh|TableHeaderCell", "BulkActionBar"],
+    markers: ["data-vendors-list-view", "ResizableTh|TableHeaderCell|ParityTable", "BulkActionBar"],
   },
   {
     file: "apps/frontend/src/pages/Customers.tsx",

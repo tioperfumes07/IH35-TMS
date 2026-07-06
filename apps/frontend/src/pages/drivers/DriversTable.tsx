@@ -1,7 +1,8 @@
-import { useRef } from "react";
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { StatusBadge } from "../../components/StatusBadge";
-import { BulkSelectableTable } from "../../components/shared/BulkSelectableTable";
+import { ParityTable } from "../../components/parity/ParityTable";
+import { useBulkPermission } from "../../hooks/useBulkPermission";
 import { useToast } from "../../components/Toast";
 import { DriverDqfComplianceChip } from "./components/DriverDqfComplianceChip";
 import type { summarizeDriverDqf } from "../../lib/driverDqf";
@@ -13,6 +14,13 @@ export type DriverTableRow = {
   summary: ReturnType<typeof summarizeDriverDqf>;
 };
 
+// Enriched with flat sort keys for the DQF chip + checklist-stats columns (ParityTable sorts by
+// String(row[key]); the real values live nested under `summary`).
+type EnrichedDriverRow = DriverTableRow & {
+  dqf_level: string;
+  dqf_present_count: number;
+};
+
 type Props = {
   rows: DriverTableRow[];
   onOpenProfile?: (driverId: string) => void;
@@ -20,12 +28,19 @@ type Props = {
 
 export function DriversTable({ rows, onOpenProfile }: Props) {
   const { pushToast } = useToast();
-  // Mirror the current bulk selection so the "Export Selected" action (whose onClick is fixed at
-  // config time and can't see the render-prop ctx) exports exactly the checked rows.
-  const selectedRowsRef = useRef<DriverTableRow[]>([]);
+  // Same role gate the old BulkSelectableTable wrapper enforced (BULK_WRITE_ROLES via
+  // useBulkPermission, applied inside its BulkActionBar) — preserved here so bulk selection/actions
+  // stay hidden for roles that couldn't use them before. Matches the FuelTransactionsTable /
+  // TBL-STANDARD batch-1 idiom.
+  const bulkPermission = useBulkPermission();
 
-  function handleExportSelected() {
-    const scope = selectedRowsRef.current.length > 0 ? selectedRowsRef.current : rows;
+  const enrichedRows = useMemo<EnrichedDriverRow[]>(
+    () => rows.map((row) => ({ ...row, dqf_level: row.summary.level, dqf_present_count: row.summary.presentCount })),
+    [rows]
+  );
+
+  function handleExportSelected(selected: DriverTableRow[]) {
+    const scope = selected.length > 0 ? selected : rows;
     if (scope.length === 0) {
       pushToast("No drivers to export.", "info");
       return;
@@ -51,107 +66,104 @@ export function DriversTable({ rows, onOpenProfile }: Props) {
   }
 
   return (
-    <BulkSelectableTable
-      entityType="drivers"
-      rows={rows}
-      getRowId={(row) => row.driverId}
-      bulkActions={[
-        {
-          id: "export",
-          label: "Export Selected (CSV)",
-          onClick: handleExportSelected,
-        },
-        {
-          // No bulk tag endpoint exists yet — honestly disabled instead of a fake success toast.
-          id: "tag",
-          label: "Tag (coming soon)",
-          disabled: true,
-          onClick: () => pushToast("Bulk tagging is not available yet.", "info"),
-        },
-        {
-          // No bulk deactivate endpoint exists yet — honestly disabled (deactivate one driver from the profile).
-          id: "deactivate",
-          label: "Deactivate (coming soon)",
-          destructive: true,
-          action: "deactivate",
-          disabled: true,
-          onClick: () => pushToast("Bulk deactivate is not available yet — deactivate a driver from their profile.", "info"),
-        },
-      ]}
-    >
-      {(ctx) => {
-        selectedRowsRef.current = rows.filter((row) => ctx.isSelected(row.driverId));
+    <ParityTable<EnrichedDriverRow>
+      rows={enrichedRows}
+      rowKey={(row) => row.driverId}
+      storageKey="drivers-table"
+      emptyText="No drivers found."
+      selectable={bulkPermission.canUseBulkOps}
+      batchActions={(selected) => {
         return (
-        <table className="min-w-full text-left text-xs">
-          <thead className="bg-gray-50 text-[10px] uppercase tracking-wide text-gray-500">
-            <tr>
-              <th className="w-8 px-3 py-2">{ctx.renderHeaderCheckbox()}</th>
-              <th className="px-3 py-2">Driver</th>
-              <th className="px-3 py-2">Status</th>
-              <th className="px-3 py-2">DQF status chips</th>
-              <th className="px-3 py-2">Checklist stats</th>
-              <th className="px-3 py-2 text-right">Profile</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.driverId} className="border-t border-gray-100">
-                <td className="px-3 py-2">{ctx.renderRowCheckbox(row.driverId)}</td>
-                <td className="px-3 py-2 font-medium text-slate-900">
-                  {/* D1: the driver name itself opens the profile (entity-name click → its profile),
-                      not only the trailing "Open profile" action. Same target as that action. */}
-                  {onOpenProfile ? (
-                    <button
-                      type="button"
-                      onClick={() => onOpenProfile(row.driverId)}
-                      className="text-left font-medium text-slate-900 hover:text-slate-700 hover:underline"
-                    >
-                      {row.name}
-                    </button>
-                  ) : (
-                    <Link to={`/drivers/${row.driverId}/profile`} className="font-medium text-slate-900 hover:text-slate-700 hover:underline">
-                      {row.name}
-                    </Link>
-                  )}
-                </td>
-                <td className="px-3 py-2">
-                  <StatusBadge status={row.status} />
-                </td>
-                <td className="px-3 py-2">
-                  <DriverDqfComplianceChip summary={row.summary} compact />
-                </td>
-                <td className="px-3 py-2 text-slate-600">
-                  {row.summary.presentCount} present · {row.summary.missingCount} missing · {row.summary.expiredCount}{" "}
-                  expired
-                </td>
-                <td className="px-3 py-2 text-right">
-                  {onOpenProfile ? (
-                    <button
-                      type="button"
-                      onClick={() => onOpenProfile(row.driverId)}
-                      className="text-xs font-semibold text-slate-700 hover:underline"
-                    >
-                      Open profile
-                    </button>
-                  ) : (
-                    <Link to={`/drivers/${row.driverId}/profile`} className="text-xs font-semibold text-slate-700 hover:underline">
-                      Open profile
-                    </Link>
-                  )}
-                </td>
-              </tr>
-            ))}
-            {rows.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="px-3 py-6 text-center text-slate-500">
-                  No drivers found.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700"
+              onClick={() => handleExportSelected(selected)}
+            >
+              Export Selected (CSV)
+            </button>
+            <button
+              type="button"
+              disabled
+              title="Bulk tagging is not available yet."
+              className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 disabled:opacity-50"
+              onClick={() => pushToast("Bulk tagging is not available yet.", "info")}
+            >
+              Tag
+            </button>
+            <button
+              type="button"
+              disabled
+              title="Bulk deactivate is not available yet — deactivate a driver from their profile."
+              className="rounded-sm border border-red-300 bg-white px-2 py-1 text-xs font-semibold text-red-800 disabled:opacity-50"
+              onClick={() => pushToast("Bulk deactivate is not available yet — deactivate a driver from their profile.", "info")}
+            >
+              Deactivate
+            </button>
+          </div>
         );
       }}
-    </BulkSelectableTable>
+      columns={[
+        {
+          key: "name",
+          label: "Driver",
+          sortable: true,
+          cellClass: "font-medium text-slate-900",
+          // D1: the driver name itself opens the profile (entity-name click → its profile),
+          // not only the trailing "Open profile" action. Same target as that action.
+          render: (row) =>
+            onOpenProfile ? (
+              <button
+                type="button"
+                onClick={() => onOpenProfile(row.driverId)}
+                className="text-left font-medium text-slate-900 hover:text-slate-700 hover:underline"
+              >
+                {row.name}
+              </button>
+            ) : (
+              <Link to={`/drivers/${row.driverId}/profile`} className="font-medium text-slate-900 hover:text-slate-700 hover:underline">
+                {row.name}
+              </Link>
+            ),
+        },
+        {
+          key: "status",
+          label: "Status",
+          sortable: true,
+          render: (row) => <StatusBadge status={row.status} />,
+        },
+        {
+          key: "dqf_level",
+          label: "DQF status chips",
+          sortable: true,
+          render: (row) => <DriverDqfComplianceChip summary={row.summary} compact />,
+        },
+        {
+          key: "dqf_present_count",
+          label: "Checklist stats",
+          cellClass: "text-slate-600",
+          sortable: true,
+          render: (row) => `${row.summary.presentCount} present · ${row.summary.missingCount} missing · ${row.summary.expiredCount} expired`,
+        },
+        {
+          // EXEMPT (pure action column — reuses the standing "actions" key already registered in
+          // EXEMPT_COLUMN_KEYS / GLOBAL-SORT-RULE.md; no per-driver data to sort on).
+          key: "actions",
+          label: "Profile",
+          className: "text-right",
+          cellClass: "text-right",
+          render: (row) =>
+            onOpenProfile ? (
+              <button type="button" onClick={() => onOpenProfile(row.driverId)} className="text-xs font-semibold text-slate-700 hover:underline">
+                Open profile
+              </button>
+            ) : (
+              <Link to={`/drivers/${row.driverId}/profile`} className="text-xs font-semibold text-slate-700 hover:underline">
+                Open profile
+              </Link>
+            ),
+        },
+      ]}
+    />
   );
 }

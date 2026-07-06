@@ -46,6 +46,7 @@ const EXEMPT_COLUMN_KEYS = new Set([
   "_actions",
   "row_actions",
   // Duplicate-format display of an already-sortable column (see GLOBAL-SORT-RULE.md registry).
+  "end_date_stub",
   "idle_time",
 ]);
 
