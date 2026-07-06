@@ -23,24 +23,28 @@ describe("Task #24 — void/cancel executor wiring", () => {
     });
   });
 
-  describe("dispatch map — WO + bill + invoice wired; the rest flagged", () => {
-    it("work_order, bill, invoice are supported", () => {
+  describe("dispatch map — VOID-EVERYWHERE PR-3: WO/bill/invoice/expense/JE/payment/bill_payment/driver_settlement wired; load flagged", () => {
+    it("work_order, bill, invoice are supported (Phase 1 / Task #24)", () => {
       expect(isVoidCancelEntitySupported("work_order")).toBe(true);
       expect(isVoidCancelEntitySupported("bill")).toBe(true);
       expect(isVoidCancelEntitySupported("invoice")).toBe(true);
     });
-    it("journal_entry, payment, bill_payment, driver_settlement remain unwired (Phase-2 gap)", () => {
-      expect(isVoidCancelEntitySupported("journal_entry")).toBe(false);
-      expect(isVoidCancelEntitySupported("payment")).toBe(false);
-      expect(isVoidCancelEntitySupported("bill_payment")).toBe(false);
-      expect(isVoidCancelEntitySupported("driver_settlement")).toBe(false);
+    it("expense, journal_entry, payment, bill_payment, driver_settlement are now wired (PR-3)", () => {
+      expect(isVoidCancelEntitySupported("expense")).toBe(true);
+      expect(isVoidCancelEntitySupported("journal_entry")).toBe(true);
+      expect(isVoidCancelEntitySupported("payment")).toBe(true);
+      expect(isVoidCancelEntitySupported("bill_payment")).toBe(true);
+      expect(isVoidCancelEntitySupported("driver_settlement")).toBe(true);
+    });
+    it("load remains unwired — dispatch load-cancel keeps its OWN dedicated maker/checker (flagged, not silently dropped)", () => {
+      expect(isVoidCancelEntitySupported("load")).toBe(false);
     });
     it("unknown entity types are not supported", () => {
       expect(isVoidCancelEntitySupported("nope")).toBe(false);
     });
     it("all wired + flagged entities are registered (no silent no-op)", () => {
       const known = knownVoidCancelEntities();
-      for (const e of ["work_order", "bill", "invoice", "journal_entry", "payment", "bill_payment", "driver_settlement"]) {
+      for (const e of ["work_order", "bill", "invoice", "expense", "journal_entry", "payment", "bill_payment", "driver_settlement", "load"]) {
         expect(known).toContain(e);
       }
     });

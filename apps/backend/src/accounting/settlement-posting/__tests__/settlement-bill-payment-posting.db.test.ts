@@ -18,7 +18,7 @@ import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../../lib/pg-connection-options.js";
 import { ensureIntegrationPrerequisites } from "../../../../test-helpers/db-fixture.js";
-import { TEST_OWNER_USER_ID } from "../../../../test-helpers/constants.js";
+import { TEST_OWNER_USER_ID, TEST_ENCRYPTION_KEY } from "../../../../test-helpers/constants.js";
 import { postSettlementBillPayment, type SettlementBillPaymentResult } from "../settlement-bill-payment-posting.service.js";
 import { upsertDriverEscrowAccountLink, upsertDriverAdvanceAccountLink } from "../../driver-subaccount-provision.service.js";
 
@@ -27,10 +27,13 @@ const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true
 // createBill/payBill enqueue a QBO sync job which reads an authorized integrations.qbo_connections row
 // and decrypts its access_token (qbo-oauth.service.ts encryptToken/decryptToken: AES-256-GCM, key =
 // sha256(ENCRYPTION_KEY), value = "<iv>.<tag>.<cipher>" base64). No test in this suite exercises that
-// path yet, so ENCRYPTION_KEY is not otherwise required in CI — set a deterministic test-only default
-// (pool:"forks" isolates this per test file) and mirror the exact encryption so the fixture connection's
-// token round-trips through the real decrypt call.
-process.env.ENCRYPTION_KEY ??= "test-only-encryption-key-settlement-bill-payment-posting";
+// path yet, so ENCRYPTION_KEY is not otherwise required in CI — set a deterministic test-only default.
+// MUST be the shared TEST_ENCRYPTION_KEY constant, not a file-local literal: vitest's `pool: "forks"`
+// can reuse one child process across multiple `.db.test.ts` files, and getActiveConnectionByCompany has
+// no realm_id filter (picks the single latest `authorized_at` row per company) — a second file's
+// connection row can otherwise get decrypted with a different process-wide key than it was encrypted
+// with (see test-helpers/constants.ts).
+process.env.ENCRYPTION_KEY ??= TEST_ENCRYPTION_KEY;
 function encryptTestToken(plain: string): string {
   const iv = crypto.randomBytes(12);
   const key = crypto.createHash("sha256").update(process.env.ENCRYPTION_KEY!, "utf8").digest();

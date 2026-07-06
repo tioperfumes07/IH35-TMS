@@ -22,7 +22,13 @@ export const VOID_FLAG_KEY = "VOID_ENFORCEMENT_ENABLED";
 // to journal_entry_postings with source_transaction_type='expense' inside a posting batch, so
 // readOriginalGlPostings flips those lines with NO new GL math. Lets WO void/cancel reverse a linked
 // posted expense on the caller's transaction (atomic) instead of orphaning it.
-export type VoidableEntityType = "invoice" | "journal_entry" | "bill" | "expense";
+//
+// VOID-EVERYWHERE PR-3 — 'bill_payment' and 'customer_payment' reuse the identical generic
+// source-linked path (readOriginalGlPostings' non-journal_entry branch matches ANY
+// source_transaction_type recorded by the posting engine — no new query needed). Both types are
+// already real source_transaction_type values written by settlement-bill-payment-posting.service.ts
+// (bill_payment) and accounting/payments/apply.service.ts (customer_payment). Additive; NO new GL math.
+export type VoidableEntityType = "invoice" | "journal_entry" | "bill" | "expense" | "bill_payment" | "customer_payment";
 
 type QueryableClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -293,6 +299,8 @@ export async function auditVoid(
     journal_entry: "accounting.journal_entries",
     bill: "accounting.bills",
     expense: "accounting.expenses",
+    bill_payment: "accounting.bill_payments",
+    customer_payment: "accounting.payments",
   };
   const resourceType = resourceTypeByEntity[entityType];
   await appendCrudAudit(
