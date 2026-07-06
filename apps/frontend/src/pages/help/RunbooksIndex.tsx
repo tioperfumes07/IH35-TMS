@@ -1,6 +1,8 @@
 import { PageHeader } from "../../components/layout/PageHeader";
 import { RUNBOOKS } from "./runbooks-data";
 
+export { RUNBOOKS } from "./runbooks-data";
+
 // Bundle runbook markdown files via Vite's import.meta.glob with eager loading
 const runbookModules = import.meta.glob("../../../docs/runbooks/*.md", { as: "url", eager: true });
 
