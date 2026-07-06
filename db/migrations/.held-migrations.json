@@ -104,6 +104,10 @@
     {
       "file": "202607091560_p4_7_integrity_findings_opco_uuid.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1] P4-7 DB-audit — safety.integrity_findings operating_company_id TEXT -> uuid + FK; prod data-audit 2026-07-05 confirmed 0 rows"
+    },
+    {
+      "file": "202607091600_driver_settlements_reversal_columns.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] VOID-EVERYWHERE — driver_finance.driver_settlements reversed_at/reversed_by_user_id/reversal_reason (additive) so the governed 'driver_settlement' void/cancel executor can record a row-level reversal audit trail"
     }
   ]
 }
