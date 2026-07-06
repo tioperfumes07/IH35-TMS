@@ -107,6 +107,12 @@ export const PER_ENTITY_ONLY_FLAG_KEYS: ReadonlySet<string> = new Set([
   // (TRANSP first) — a global default/rollout enable would start applying deductions for EVERY entity
   // (incl. USMCA / TRK). Per-entity override only; default OFF. Owner-controlled (Jorge flips).
   "SETTLEMENT_DEDUCTION_APPLY_ENABLED",
+  // SETTLEMENT-CONTRACT-TERMS: computes the driver hire-contract bonuses/deductions (MPG +$35, referral
+  // $200, late-delivery pass-through, driver fines, reimbursements) at settlement close. It writes real
+  // settlement pay lines + real pending deductions (money-affecting once the GL/deduction flags are also
+  // on), so it must be flipped ONE ENTITY AT A TIME (TRANSP first) — a global default/rollout enable would
+  // start computing for EVERY entity (incl. USMCA / TRK). Per-entity override only; default OFF. Jorge flips.
+  "SETTLEMENT_CONTRACT_TERMS_ENABLED",
   // FINHUB-1: the read-only Finance Hub landing dashboard. It is a per-entity surface
   // (operating_company_id required; no cross-entity totals) and its backend gate now resolves this
   // same DB flag as the frontend (kills the prior process.env vs DB split-brain). Enabling it in prod

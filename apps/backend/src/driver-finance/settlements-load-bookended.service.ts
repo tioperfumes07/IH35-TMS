@@ -2,6 +2,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { applyApprovedAbandonmentChargebacksToSettlement } from "./abandonment.service.js";
 import { applyPendingDeductionsToSettlementWithNetFloor } from "./settlement-deduction-cap.service.js";
+import { computeSettlementContractTerms, SETTLEMENT_CONTRACT_TERMS_FLAG } from "./settlement-contract-terms.service.js";
 import { appendSettlementLineFromDriverBillIfMissing, fetchTeamDriversForLoad } from "./settlement-engine.js";
 
 /**
@@ -311,6 +312,25 @@ async function closeLoadBookendedSettlementForDriver(
     driverId: opts.driverId,
     operatingCompanyId: opts.operatingCompanyId,
   });
+
+  // ── Hire-contract terms computation (OFF-flag-gated) ───────────────────────────────────────────
+  // Compute the five signed-hire-contract money terms (MPG +$35, referral $200, late-delivery
+  // pass-through, driver fines, reimbursements). Runs AFTER earnings/abandonment lines exist and BEFORE
+  // the net-floor deduction applier + aggregateSettlementTotals — so the MPG/referral bonuses raise gross
+  // first, and the pass-through/fine deductions this creates are picked up by the SAME existing applier
+  // (net-floor capped, pay-first). NO new GL math: bonuses ride the poster's driver-pay/reimbursement
+  // legs; deductions ride the bucketed deduction poster. Per-entity OFF flag; Jorge flips (TRANSP first).
+  const contractTermsEnabled = await isEnabled(client, SETTLEMENT_CONTRACT_TERMS_FLAG, {
+    operating_company_id: opts.operatingCompanyId,
+  });
+  if (contractTermsEnabled) {
+    await computeSettlementContractTerms(client, {
+      settlementId,
+      driverId: opts.driverId,
+      operatingCompanyId: opts.operatingCompanyId,
+      actorUserId: opts.actorUserId,
+    });
+  }
 
   // ── Deduction applier (OFF-flag-gated) ─────────────────────────────────────────────────────────
   // REPAIR-A root cause: the canonical close applied earnings + abandonment but NEVER general
