@@ -128,7 +128,6 @@
   "apps/frontend/src/pages/lists/GenericCatalogPage.tsx",
   "apps/frontend/src/pages/lists/ListsPage.tsx",
   "apps/frontend/src/pages/lists/MaintenancePartsCatalog.tsx",
-  "apps/frontend/src/pages/lists/MaintenanceServicesCatalog.tsx",
   "apps/frontend/src/pages/lists/dispatch/DispatchCatalogModal.tsx",
   "apps/frontend/src/pages/maintenance/ActiveWOsTable.tsx",
   "apps/frontend/src/pages/maintenance/WorkOrderCreateModal.tsx",
