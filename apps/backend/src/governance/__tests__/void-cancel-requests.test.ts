@@ -32,18 +32,25 @@ const APPROVER = "33333333-3333-3333-3333-333333333333";
 const REQUESTER = "44444444-4444-4444-4444-444444444444";
 
 describe("governance void/cancel — dispatch map", () => {
-  it("wires work_order and registers other entities as unsupported (no silent no-op)", () => {
+  it("wires work_order + VOID-EVERYWHERE PR-3 surfaces; 'load' registers as unsupported (no silent no-op)", () => {
     expect(isVoidCancelEntitySupported("work_order")).toBe(true);
     expect(isVoidCancelEntitySupported("invoice")).toBe(true);
     expect(isVoidCancelEntitySupported("bill")).toBe(true);
-    expect(isVoidCancelEntitySupported("expense")).toBe(false);
+    expect(isVoidCancelEntitySupported("expense")).toBe(true);
+    expect(isVoidCancelEntitySupported("journal_entry")).toBe(true);
+    expect(isVoidCancelEntitySupported("payment")).toBe(true);
+    expect(isVoidCancelEntitySupported("bill_payment")).toBe(true);
+    expect(isVoidCancelEntitySupported("driver_settlement")).toBe(true);
+    // 'load' deliberately stays unsupported here — dispatch load-cancel keeps its OWN dedicated
+    // maker/checker (dispatch/cancellation.service.ts), flagged rather than silently rearchitected.
+    expect(isVoidCancelEntitySupported("load")).toBe(false);
     expect(isVoidCancelEntitySupported("not_a_real_entity")).toBe(false);
     expect(knownVoidCancelEntities()).toContain("work_order");
   });
 
   it("returns unsupported_entity for an unwired entity instead of executing", async () => {
     const { client } = mockClient([]);
-    const res = await executeVoidCancel("journal_entry", {
+    const res = await executeVoidCancel("load", {
       client: client as never,
       operatingCompanyId: OCI,
       entityId: "x",

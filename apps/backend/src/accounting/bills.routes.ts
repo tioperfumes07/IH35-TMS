@@ -17,6 +17,7 @@ import {
 } from "./bills.service.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
+import { requireVoidCancelExecutor } from "../lib/authz/void-cancel-authz.js";
 
 const idParamsSchema = z.object({
   id: z.string().uuid(),
@@ -334,7 +335,10 @@ export async function registerBillsRoutes(app: FastifyInstance) {
   app.post("/api/v1/accounting/bill-payments/:id/void", async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
-    if (String(user.role ?? "") !== "Owner") return reply.code(403).send({ error: "forbidden_owner_only" });
+    // VOID-EVERYWHERE PR-3: replaced the hand-rolled Owner-only gate with the shared executor check
+    // (Owner|Administrator|Accountant, Jorge-locked 2026-06-29) — non-executors now file a governed
+    // void/cancel request instead of getting a bare 403 with no path forward.
+    if (!requireVoidCancelExecutor(reply, String(user.role ?? ""))) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});

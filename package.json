@@ -827,7 +827,9 @@
     "verify:anthropic-model-ids": "node scripts/verify-anthropic-model-ids.mjs",
     "verify:qbo-sync-panels-credentialed": "node scripts/verify-qbo-sync-panels-credentialed.mjs",
     "verify:qbo-sync-routes-auth": "node scripts/verify-qbo-sync-routes-auth.mjs",
-    "verify:money-format": "node scripts/verify-money-format.mjs"
+    "verify:money-format": "node scripts/verify-money-format.mjs",
+    "verify:chain-04-bill-payment-bank-tieout": "node scripts/verify-chain-04-bill-payment-bank-tieout.mjs",
+    "verify:chain-06-factoring-ar-tieout": "node scripts/verify-chain-06-factoring-ar-tieout.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",

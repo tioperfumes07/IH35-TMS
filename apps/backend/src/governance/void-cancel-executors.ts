@@ -2,18 +2,24 @@
 //
 // When an executor APPROVES a governance.void_cancel_requests row, the underlying void/cancel must
 // actually run — keyed on entity_type. This dispatch map is the single registry of WHICH entities can
-// be executed from an approved request. Phase 1 wires entity_type='work_order' to the real WO
+// be executed from an approved request. Phase 1 wired entity_type='work_order' to the real WO
 // void/cancel path (reusing settleWorkOrderFinancialLinkage — the SHARED, money-safe reversal that
-// reverses the WO's linked bill/expense GL via void.service, NO new GL math). Every other entity is
-// registered EXPLICITLY as { supported: false } so an approve can never silently no-op an unwired
-// surface — it returns a clear "entity not yet wired" instead.
+// reverses the WO's linked bill/expense GL via void.service, NO new GL math), plus 'bill'/'invoice'
+// (postVoidReversal). VOID-EVERYWHERE PR-3 (this block) wires the remaining Phase-2 financial surfaces:
+// 'expense', 'journal_entry', 'payment' (customer payment), 'bill_payment', 'driver_settlement'. Every
+// unwired entity is registered EXPLICITLY as { supported: false } so an approve can never silently
+// no-op — it returns a clear "entity not yet wired" instead.
 //
-// All work runs on the caller's transaction client (the approve route's withCompanyScope txn) so the
-// reversal + the WO status flip + the request decision are atomic (all-or-nothing).
+// Most work runs on the caller's transaction client (the approve route's withCompanyScope txn) so the
+// reversal + the status flip + the request decision are atomic (all-or-nothing) — true for work_order,
+// bill, invoice, expense, journal_entry, bill_payment (GL leg), payment. 'driver_settlement' and the
+// bill_payment status-flip call an existing multi-transaction financial function verbatim (see their
+// executor comments below) rather than duplicate money math inline.
 
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { settleWorkOrderFinancialLinkage } from "../work-orders/work-orders.routes.js";
 import { auditVoid, isVoidEnforcementEnabled, postVoidReversal } from "../accounting/void.service.js";
+import { reverseSettlementBillPayment } from "../accounting/settlement-posting/settlement-bill-payment-posting.service.js";
 
 export type VoidCancelAction = "void" | "cancel";
 
@@ -31,9 +37,10 @@ export type ExecutorResult =
   | { kind: "unsupported_entity" } // entity_type registered { supported:false } OR its schema is absent
   | { kind: "not_found" }
   | { kind: "already_done" }
-  | { kind: "not_completable" } // cancel attempted on a completed WO / paid invoice
+  | { kind: "not_completable" } // cancel attempted on a completed WO / paid invoice / paid settlement
   | { kind: "financial_blocked" } // posted financials + the surface's OFF posting flag -> never orphan
-  | { kind: "bill_has_payments" };
+  | { kind: "bill_has_payments" }
+  | { kind: "void_not_enabled" }; // surface requires VOID_ENFORCEMENT_ENABLED ON unconditionally (expense)
 
 type EntityExecutor = (ctx: ExecutorContext) => Promise<ExecutorResult>;
 
@@ -153,11 +160,11 @@ export function resolveSurfaceVoidGate(flagOn: boolean, hasPostedFinancials: boo
 
 type ExecClient = ExecutorContext["client"];
 
-/** Count posted GL lines carrying this entity's source linkage (bill/invoice) inside a posting batch. */
+/** Count posted GL lines carrying this entity's source linkage inside a posting batch. */
 async function countPostedGl(
   client: ExecClient,
   operatingCompanyId: string,
-  sourceType: "bill" | "invoice",
+  sourceType: "bill" | "invoice" | "expense" | "journal_entry" | "bill_payment" | "customer_payment",
   entityId: string
 ): Promise<number> {
   const res = await client.query<{ n: number }>(
@@ -309,25 +316,353 @@ const executeInvoice: EntityExecutor = async (ctx) => {
   return { kind: "ok", reversing_entry_ref: reversingEntryRef, closed_period_reversal: closedPeriod };
 };
 
-// Dispatch map keyed on entity_type. Phase 1 wires 'work_order'; the rest are registered EXPLICITLY as
-// unsupported so an approve fails loud ("entity not yet wired") rather than silently no-op. See the
-// Phase-2 wiring backlog in the PR/report for the remaining ~39 surfaces.
+// VOID-EVERYWHERE PR-3 — journal_entry executor. Mirrors journal-entries.service.ts voidJournalEntry's
+// money-safe rule (postVoidReversal, gated VOID_ENFORCEMENT_ENABLED) but runs on ctx.client so it is
+// atomic with the governance decision. NO new GL math.
+const executeJournalEntry: EntityExecutor = async (ctx) => {
+  const { client, operatingCompanyId, entityId, userId, reason } = ctx;
+
+  const ready = await client.query<{ ok: boolean }>(`SELECT to_regclass('accounting.journal_entries') IS NOT NULL AS ok`);
+  if (!ready.rows[0]?.ok) return { kind: "unsupported_entity" };
+
+  const pre = await client.query<{ status: string; entry_date: string | null }>(
+    `SELECT status::text AS status, entry_date::text AS entry_date
+       FROM accounting.journal_entries WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1 FOR UPDATE`,
+    [entityId, operatingCompanyId]
+  );
+  if (!pre.rows[0]) return { kind: "not_found" };
+  if (String(pre.rows[0].status) === "voided") return { kind: "already_done" };
+
+  const flagOn = await isVoidEnforcementEnabled(client, operatingCompanyId, userId);
+  const postedCount = await countPostedGl(client, operatingCompanyId, "journal_entry", entityId);
+  const gate = resolveSurfaceVoidGate(flagOn, postedCount > 0);
+  if (gate === "blocked") return { kind: "financial_blocked" };
+
+  let reversingEntryRef: string | null = null;
+  let closedPeriod = false;
+  if (gate === "reverse") {
+    const ed = pre.rows[0].entry_date;
+    const originalDate = ed && ed.length >= 10 ? ed.slice(0, 10) : new Date().toISOString().slice(0, 10);
+    const reversal = await postVoidReversal(
+      client,
+      { operatingCompanyId, entityType: "journal_entry", entityId, originalDate, memo: `Void reversal of journal entry ${entityId}: ${reason}` },
+      { userId }
+    );
+    reversingEntryRef = reversal.reversal_journal_entry_id;
+    closedPeriod = reversal.closed_period_reversal;
+    await auditVoid(client, userId, "journal_entry", { operatingCompanyId, entityId, reason, reversal });
+  }
+
+  const flipped = await client.query<{ id: string }>(
+    `UPDATE accounting.journal_entries
+        SET status = 'voided', voided_at = now(), voided_by_user_id = $3::uuid, void_reason = $4,
+            qbo_sync_pending = true, updated_at = now()
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid AND status <> 'voided'
+      RETURNING id::text`,
+    [entityId, operatingCompanyId, userId, reason]
+  );
+  if (!flipped.rows[0]) return { kind: "already_done" };
+  await appendCrudAudit(
+    client,
+    userId,
+    "accounting.journal_entries.voided",
+    {
+      resource_type: "accounting.journal_entries",
+      resource_id: entityId,
+      operating_company_id: operatingCompanyId,
+      reason,
+      reversing_entry_ref: reversingEntryRef,
+      financial_void: reversingEntryRef != null,
+      via: "governance.void_cancel_requests",
+    },
+    "warning",
+    "VOID-CANCEL-GOV"
+  );
+  return { kind: "ok", reversing_entry_ref: reversingEntryRef, closed_period_reversal: closedPeriod };
+};
+
+// VOID-EVERYWHERE PR-3 — expense executor. expenses.routes.ts' direct /void route requires
+// VOID_ENFORCEMENT_ENABLED unconditionally (no Owner-only flip-only fallback like bill/invoice/JE) —
+// mirrored here as `void_not_enabled` rather than silently allowing a plain status flip. When the flag
+// is on, reuses postVoidReversal (entityType 'expense' — same generic source-linked path already used
+// by the WO executor to reverse a linked posted expense) instead of the direct route's separate-
+// transaction reversePostedSourceTransaction call, so the reversal + status flip land atomically here.
+const executeExpense: EntityExecutor = async (ctx) => {
+  const { client, operatingCompanyId, entityId, userId, reason } = ctx;
+
+  const ready = await client.query<{ ok: boolean }>(`SELECT to_regclass('accounting.expenses') IS NOT NULL AS ok`);
+  if (!ready.rows[0]?.ok) return { kind: "unsupported_entity" };
+
+  const pre = await client.query<{ status: string; posting_status: string; transaction_date: string | null }>(
+    `SELECT status::text AS status, posting_status::text AS posting_status, transaction_date::text AS transaction_date
+       FROM accounting.expenses WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1 FOR UPDATE`,
+    [entityId, operatingCompanyId]
+  );
+  if (!pre.rows[0]) return { kind: "not_found" };
+  if (String(pre.rows[0].status) === "void" || String(pre.rows[0].posting_status) === "reversed") return { kind: "already_done" };
+
+  const flagOn = await isVoidEnforcementEnabled(client, operatingCompanyId, userId);
+  if (!flagOn) return { kind: "void_not_enabled" };
+
+  let reversingEntryRef: string | null = null;
+  if (String(pre.rows[0].posting_status) === "posted") {
+    const td = pre.rows[0].transaction_date;
+    const originalDate = td && td.length >= 10 ? td.slice(0, 10) : new Date().toISOString().slice(0, 10);
+    const reversal = await postVoidReversal(
+      client,
+      { operatingCompanyId, entityType: "expense", entityId, originalDate, memo: `Void reversal of expense ${entityId}: ${reason}` },
+      { userId }
+    );
+    reversingEntryRef = reversal.reversal_journal_entry_id;
+    await auditVoid(client, userId, "expense", { operatingCompanyId, entityId, reason, reversal });
+  }
+
+  const flipped = await client.query<{ id: string }>(
+    `UPDATE accounting.expenses
+        SET status = 'void',
+            posting_status = CASE WHEN posting_status = 'posted' THEN 'reversed' ELSE posting_status END,
+            reversed_by_je_id = COALESCE($3::uuid, reversed_by_je_id),
+            voided_at = now(), voided_by_user_id = $4::uuid, void_reason = $5, updated_at = now()
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid AND status <> 'void'
+      RETURNING id::text`,
+    [entityId, operatingCompanyId, reversingEntryRef, userId, reason]
+  );
+  if (!flipped.rows[0]) return { kind: "already_done" };
+  await appendCrudAudit(
+    client,
+    userId,
+    "expense.voided",
+    {
+      expense_id: entityId,
+      operating_company_id: operatingCompanyId,
+      reason,
+      reversing_journal_entry_id: reversingEntryRef,
+      via: "governance.void_cancel_requests",
+    },
+    "warning",
+    "VOID-CANCEL-GOV"
+  );
+  return { kind: "ok", reversing_entry_ref: reversingEntryRef };
+};
+
+// VOID-EVERYWHERE PR-3 — bill_payment executor. Mirrors bills.service.ts voidBillPayment's guards
+// (not-found / already-voided), reverses any posted GL for this bill_payment via postVoidReversal
+// (entityType 'bill_payment' — additive VoidableEntityType, same generic source-linked path), THEN
+// reuses the EXISTING voidBillPayment() for the status flip + bill paid_cents recompute + bank-balance
+// restore (bank-balance math must never be duplicated — reuse the live function verbatim). That call
+// opens its own transaction (same non-atomic-with-caller pattern already accepted for
+// expense/driver_settlement below) — the GL reversal above is what must never be orphaned, and it runs
+// atomically on ctx.client.
+const executeBillPayment: EntityExecutor = async (ctx) => {
+  const { client, operatingCompanyId, entityId, userId, reason } = ctx;
+
+  const ready = await client.query<{ ok: boolean }>(`SELECT to_regclass('accounting.bill_payments') IS NOT NULL AS ok`);
+  if (!ready.rows[0]?.ok) return { kind: "unsupported_entity" };
+
+  const pre = await client.query<{ status: string; revoked_at: string | null; payment_date: string | null }>(
+    `SELECT status::text AS status, revoked_at::text AS revoked_at, payment_date::text AS payment_date
+       FROM accounting.bill_payments WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1 FOR UPDATE`,
+    [entityId, operatingCompanyId]
+  );
+  if (!pre.rows[0]) return { kind: "not_found" };
+  if (pre.rows[0].revoked_at || String(pre.rows[0].status) === "void") return { kind: "already_done" };
+
+  const flagOn = await isVoidEnforcementEnabled(client, operatingCompanyId, userId);
+  const postedCount = await countPostedGl(client, operatingCompanyId, "bill_payment", entityId);
+  const gate = resolveSurfaceVoidGate(flagOn, postedCount > 0);
+  if (gate === "blocked") return { kind: "financial_blocked" };
+
+  let reversingEntryRef: string | null = null;
+  let closedPeriod = false;
+  if (gate === "reverse") {
+    const pd = pre.rows[0].payment_date;
+    const originalDate = pd && pd.length >= 10 ? pd.slice(0, 10) : new Date().toISOString().slice(0, 10);
+    const reversal = await postVoidReversal(
+      client,
+      { operatingCompanyId, entityType: "bill_payment", entityId, originalDate, memo: `Void reversal of bill payment ${entityId}: ${reason}` },
+      { userId }
+    );
+    reversingEntryRef = reversal.reversal_journal_entry_id;
+    closedPeriod = reversal.closed_period_reversal;
+    await auditVoid(client, userId, "bill_payment", { operatingCompanyId, entityId, reason, reversal });
+  }
+
+  // Reuse the LIVE status-flip / paid_cents-recompute / bank-balance-restore function verbatim — never
+  // re-derive money math. Opens its own transaction (see header comment).
+  const { voidBillPayment } = await import("../accounting/bills.service.js");
+  await voidBillPayment(operatingCompanyId, entityId, reason, userId);
+
+  await appendCrudAudit(
+    client,
+    userId,
+    "accounting.bill_payment.voided",
+    {
+      resource_type: "accounting.bill_payments",
+      resource_id: entityId,
+      operating_company_id: operatingCompanyId,
+      reason,
+      reversing_entry_ref: reversingEntryRef,
+      financial_void: reversingEntryRef != null,
+      via: "governance.void_cancel_requests",
+    },
+    "warning",
+    "VOID-CANCEL-GOV"
+  );
+  return { kind: "ok", reversing_entry_ref: reversingEntryRef, closed_period_reversal: closedPeriod };
+};
+
+// VOID-EVERYWHERE PR-3 — customer payment executor (governance entity_type 'payment'). Mirrors
+// accounting/payments.routes.ts' direct /void route (voided_at guard, payment_applications unapply —
+// void-never-delete). Reverses posted GL (source_transaction_type='customer_payment', written by
+// accounting/payments/apply.service.ts) via postVoidReversal before the status flip, atomic on ctx.client.
+const executeCustomerPayment: EntityExecutor = async (ctx) => {
+  const { client, operatingCompanyId, entityId, userId, reason } = ctx;
+
+  const ready = await client.query<{ ok: boolean }>(`SELECT to_regclass('accounting.payments') IS NOT NULL AS ok`);
+  if (!ready.rows[0]?.ok) return { kind: "unsupported_entity" };
+
+  const pre = await client.query<{ voided_at: string | null; payment_date: string | null }>(
+    `SELECT voided_at::text AS voided_at, payment_date::text AS payment_date
+       FROM accounting.payments WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1 FOR UPDATE`,
+    [entityId, operatingCompanyId]
+  );
+  if (!pre.rows[0]) return { kind: "not_found" };
+  if (pre.rows[0].voided_at) return { kind: "already_done" };
+
+  const flagOn = await isVoidEnforcementEnabled(client, operatingCompanyId, userId);
+  const postedCount = await countPostedGl(client, operatingCompanyId, "customer_payment", entityId);
+  const gate = resolveSurfaceVoidGate(flagOn, postedCount > 0);
+  if (gate === "blocked") return { kind: "financial_blocked" };
+
+  let reversingEntryRef: string | null = null;
+  let closedPeriod = false;
+  if (gate === "reverse") {
+    const pd = pre.rows[0].payment_date;
+    const originalDate = pd && pd.length >= 10 ? pd.slice(0, 10) : new Date().toISOString().slice(0, 10);
+    const reversal = await postVoidReversal(
+      client,
+      { operatingCompanyId, entityType: "customer_payment", entityId, originalDate, memo: `Void reversal of payment ${entityId}: ${reason}` },
+      { userId }
+    );
+    reversingEntryRef = reversal.reversal_journal_entry_id;
+    closedPeriod = reversal.closed_period_reversal;
+    await auditVoid(client, userId, "customer_payment", { operatingCompanyId, entityId, reason, reversal });
+  }
+
+  await client.query(
+    `UPDATE accounting.payments SET voided_at = now(), voided_by_user_id = $2::uuid, void_reason = $3 WHERE id = $1::uuid`,
+    [entityId, userId, reason]
+  );
+  // INV-2: void-never-delete — archive all applications when voiding; never hard-delete.
+  await client.query(
+    `UPDATE accounting.payment_applications SET unapplied_at = now(), unapplied_by_user_id = $2 WHERE payment_id = $1 AND unapplied_at IS NULL`,
+    [entityId, userId]
+  );
+
+  await appendCrudAudit(
+    client,
+    userId,
+    "accounting.payment_voided",
+    {
+      resource_type: "accounting.payments",
+      resource_id: entityId,
+      operating_company_id: operatingCompanyId,
+      void_reason: reason,
+      reversing_entry_ref: reversingEntryRef,
+      financial_void: reversingEntryRef != null,
+      via: "governance.void_cancel_requests",
+    },
+    "warning",
+    "VOID-CANCEL-GOV"
+  );
+  return { kind: "ok", reversing_entry_ref: reversingEntryRef, closed_period_reversal: closedPeriod };
+};
+
+// VOID-EVERYWHERE PR-3 — driver_settlement executor. Reuses the EXISTING, already-live
+// settlement-bill-payment-posting.service.ts::reverseSettlementBillPayment (per-load bill + cash
+// bill_payment reversal via the shared posting engine, plus a mirrored deduction JE) — that function
+// was previously built but had ZERO route wiring anywhere (a true orphan). This executor is its first
+// live caller. It is inherently multi-transaction already (each leg its own posting-engine reversal),
+// so — like expense's reversePostedSourceTransaction — it cannot run atomically on ctx.client without a
+// deeper posting-engine refactor; left as-is (matches its own existing non-atomic design). The row-level
+// audit trail (reversed_at/reversed_by_user_id/reversal_reason) is written by the HELD migration
+// 202607091600_driver_settlements_reversal_columns.sql (BUILD-AND-HOLD; not yet run on prod).
+const executeDriverSettlement: EntityExecutor = async (ctx) => {
+  const { client, operatingCompanyId, entityId, userId, reason } = ctx;
+
+  const ready = await client.query<{ ok: boolean }>(`SELECT to_regclass('driver_finance.driver_settlements') IS NOT NULL AS ok`);
+  if (!ready.rows[0]?.ok) return { kind: "unsupported_entity" };
+
+  const pre = await client.query<{ status: string }>(
+    `SELECT status::text AS status FROM driver_finance.driver_settlements
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1 FOR UPDATE`,
+    [entityId, operatingCompanyId]
+  );
+  if (!pre.rows[0]) return { kind: "not_found" };
+  const status = String(pre.rows[0].status);
+  if (status === "cancelled") return { kind: "already_done" };
+  if (status === "paid") return { kind: "not_completable" }; // already paid out to the driver — cannot reverse via this path
+
+  const reversal = await reverseSettlementBillPayment(
+    { operatingCompanyId, settlementId: entityId, reason },
+    { userId }
+  );
+
+  const flipped = await client.query<{ id: string }>(
+    `UPDATE driver_finance.driver_settlements
+        SET status = 'cancelled',
+            reversed_at = now(),
+            reversed_by_user_id = $3::uuid,
+            reversal_reason = $4,
+            updated_at = now()
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid AND status <> 'cancelled'
+      RETURNING id::text`,
+    [entityId, operatingCompanyId, userId, reason]
+  );
+  if (!flipped.rows[0]) return { kind: "already_done" };
+
+  await appendCrudAudit(
+    client,
+    userId,
+    "driver_finance.driver_settlement.voided",
+    {
+      resource_type: "driver_finance.driver_settlements",
+      resource_id: entityId,
+      operating_company_id: operatingCompanyId,
+      reason,
+      gl_reversal_result: reversal.result,
+      gl_run_id: reversal.run_id,
+      via: "governance.void_cancel_requests",
+    },
+    "warning",
+    "VOID-CANCEL-GOV"
+  );
+  return { kind: "ok", reversing_entry_ref: reversal.run_id };
+};
+
+// Dispatch map keyed on entity_type. Phase 1 wired 'work_order'; VOID-EVERYWHERE PR-3 wires the
+// remaining Phase-2 financial surfaces flagged in the prior report: expense, journal_entry, payment,
+// bill_payment, driver_settlement. 'load' is deliberately LEFT unsupported here — dispatch load
+// cancellation already has its OWN dedicated maker/checker workflow
+// (dispatch/cancellation.service.ts::cancelLoad / approveCancellation, with its own per-entity
+// catalogs.load_cancellation_reasons) per the explicit design decision in migration
+// 202606300030_void_cancel_reasons_catalog.sql ("load cancellations stay on the per-entity
+// catalogs.load_cancellation_reasons — separate operational domain, NOT the financial void catalog").
+// Routing 'load' through THIS governance layer too would create two parallel approval systems for the
+// same action — flagged as a drift/decision point for Jorge rather than silently rearchitected here.
 const EXECUTORS: Record<string, EntityExecutor | { supported: false }> = {
   work_order: executeWorkOrder,
-  // Task #24: bill + invoice now wired through the SHARED void engine (postVoidReversal), gated per-entity
+  // Task #24: bill + invoice wired through the SHARED void engine (postVoidReversal), gated per-entity
   // by VOID_ENFORCEMENT_ENABLED (default OFF). No new GL math — same reversal path as the direct routes.
   bill: executeBill,
   invoice: executeInvoice,
-  // Phase-2 gaps (flagged in the block report): each surface's void fn opens its OWN withCurrentUser
-  // transaction (journal-entries.service.voidJournalEntry, bills.service.voidBillPayment,
-  // settlement-posting.reverseSettlementGlPosting) so it can't run atomically on the executor's caller
-  // transaction without refactoring those live financial call sites to accept a client. Left explicitly
-  // unsupported so an approve fails loud ("entity not yet wired") rather than silently no-op'ing.
-  expense: { supported: false },
-  journal_entry: { supported: false },
-  payment: { supported: false },
-  bill_payment: { supported: false },
-  driver_settlement: { supported: false },
+  // VOID-EVERYWHERE PR-3 (this block): all wired through the SAME shared engine.
+  expense: executeExpense,
+  journal_entry: executeJournalEntry,
+  payment: executeCustomerPayment,
+  bill_payment: executeBillPayment,
+  driver_settlement: executeDriverSettlement,
+  // Deliberately unsupported — see comment above.
   load: { supported: false },
 };
 
