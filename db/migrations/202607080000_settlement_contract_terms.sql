@@ -36,9 +36,9 @@
 --   * driver_finance.settlement_contract_terms_config — NEW table (per-entity EDITABLE amounts; locked defaults).
 --   * lib.feature_flags                     — seed SETTLEMENT_CONTRACT_TERMS_ENABLED (default OFF).
 --
--- CROSS-PR RECONCILE (vs #2152 property-tax 202607080310): this migration does NOT touch the CoA
+-- CROSS-PR RECONCILE (vs #2152 property-tax 202607080110): this migration does NOT touch the CoA
 -- role-CHECK constraints (accounting.chart_of_accounts_roles_role_check / catalogs.account_role_bindings_role_key_check).
--- It adds ZERO role values and seeds ZERO chart_of_accounts_roles rows. #2152's 202607080310 rebuilds
+-- It adds ZERO role values and seeds ZERO chart_of_accounts_roles rows. #2152's 202607080110 rebuilds
 -- those two CHECKs as a TRUE SUPERSET (main's 22 roles + 2 property-tax). Because this migration widens
 -- neither CHECK nor seeds any role, the two held migrations compose cleanly in EITHER apply order — no
 -- collision. (Verified 2026-07-05 vs origin/main 202607013000, the last widener.)
