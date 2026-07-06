@@ -264,26 +264,6 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
               >
                 Export CSV
               </button>
-              {/* No bulk statement-batch endpoint exists yet — honestly disabled instead of a fake success toast. */}
-              <button
-                type="button"
-                disabled
-                title="Coming soon — needs a customer statement-batch endpoint"
-                className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 disabled:opacity-50"
-                onClick={() => pushToast("Statement batches are not available yet.", "info")}
-              >
-                Send Statement
-              </button>
-              {/* No bulk FMCSA endpoint — FMCSA is verified per-customer on the detail page. Honestly disabled. */}
-              <button
-                type="button"
-                disabled
-                title="Coming soon — verify FMCSA per customer on the detail page"
-                className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 disabled:opacity-50"
-                onClick={() => pushToast("Bulk FMCSA verification is not available yet — open a customer to verify.", "info")}
-              >
-                Verify FMCSA
-              </button>
             </div>
           );
         }}

@@ -89,7 +89,7 @@ export function DriversTable({ rows, onOpenProfile }: Props) {
               className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 disabled:opacity-50"
               onClick={() => pushToast("Bulk tagging is not available yet.", "info")}
             >
-              Tag (coming soon)
+              Tag
             </button>
             <button
               type="button"
@@ -98,7 +98,7 @@ export function DriversTable({ rows, onOpenProfile }: Props) {
               className="rounded-sm border border-red-300 bg-white px-2 py-1 text-xs font-semibold text-red-800 disabled:opacity-50"
               onClick={() => pushToast("Bulk deactivate is not available yet — deactivate a driver from their profile.", "info")}
             >
-              Deactivate (coming soon)
+              Deactivate
             </button>
           </div>
         );
