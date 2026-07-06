@@ -1,16 +1,10 @@
 import type { DispatchLoad } from "../../../api/dispatch";
 import type { MouseEvent } from "react";
 import { useMemo, useState } from "react";
-import {
-  BulkActionBar,
-  BulkActionModal,
-  BulkProgressDialog,
-  TableSelection,
-  TableSelectionHeader,
-  useBulkSelection,
-} from "../../../components/bulk";
+import { BulkActionModal, BulkProgressDialog } from "../../../components/bulk";
 import { useEntityBulkAction } from "../../../components/bulk/useEntityBulkAction";
 import { useToast } from "../../../components/Toast";
+import { ParityTable } from "../../../components/parity/ParityTable";
 import { DriverStatusCell } from "./DriverStatusCell";
 
 type Props = {
@@ -21,6 +15,18 @@ type Props = {
   onDriverStatusClick: (row: DispatchLoad) => void;
   onRowContextMenu?: (row: DispatchLoad, event: MouseEvent<HTMLTableRowElement>) => void;
   onBulkComplete?: () => void;
+};
+
+// GLOBAL-SORT-RULE exemption (see docs/specs/GLOBAL-SORT-RULE.md registry + EXEMPT_COLUMN_KEYS in
+// scripts/verify-global-sort-rule.mjs): "End" is a pre-existing stub that renders the identical
+// `created_at` value as the "Start" column (no distinct end-date field exists on DispatchLoad yet).
+// Start already carries the real sort on that value, so a second sort control on "End" would be a
+// no-op over the same data — exempted rather than marked misleadingly sortable: true.
+type EnrichedLoadRow = DispatchLoad & {
+  wo_stub: string;
+  temp_stub: string;
+  end_date_stub: string;
+  route_display: string;
 };
 
 function statusPill(status: string) {
@@ -43,13 +49,28 @@ export function LoadTable({
 }: Props) {
   const { pushToast } = useToast();
   const [statusModalOpen, setStatusModalOpen] = useState(false);
+  // Captured at "Mark dispatched" click time — ParityTable owns selection internally (no external
+  // selectedIds Set), so the batch-action button snapshots the currently-selected rows for the
+  // confirm modal to act on later.
+  const [pendingRows, setPendingRows] = useState<EnrichedLoadRow[]>([]);
+  // Remount key: bumping this after a successful bulk action resets ParityTable's internal
+  // selection state (mirrors the old selection.clear() call — ParityTable has no controlled/
+  // external selection API to clear imperatively).
+  const [tableResetKey, setTableResetKey] = useState(0);
   const bulk = useEntityBulkAction();
-  const selection = useBulkSelection({
-    cap: 200,
-    onCapExceeded: (error) => pushToast(error.message, "error"),
-  });
-  const pageRowIds = useMemo(() => rows.map((row) => row.id), [rows]);
   const companyId = operatingCompanyId ?? rows[0]?.operating_company_id ?? "";
+
+  const enrichedRows = useMemo<EnrichedLoadRow[]>(
+    () =>
+      rows.map((row) => ({
+        ...row,
+        wo_stub: "—",
+        temp_stub: "dry",
+        end_date_stub: row.created_at ? new Date(row.created_at).toLocaleDateString() : "-",
+        route_display: `${row.pickup_city ?? "-"} ${row.pickup_state ?? ""} -> ${row.delivery_city ?? "-"} ${row.delivery_state ?? ""}`,
+      })),
+    [rows]
+  );
 
   const runDispatchedBulk = async (reason?: string) => {
     if (!companyId) {
@@ -62,7 +83,7 @@ export function LoadTable({
         {
           domain: "dispatch",
           resource: "loads",
-          ids: Array.from(selection.selectedIds),
+          ids: pendingRows.map((row) => row.id),
           action: "set_status",
           payload: { transition: "dispatched" },
           reason,
@@ -70,7 +91,8 @@ export function LoadTable({
           invalidateKeys: [["dispatch", "loads"]],
         },
         () => {
-          selection.clear();
+          setPendingRows([]);
+          setTableResetKey((k) => k + 1);
           onBulkComplete?.();
         }
       );
@@ -81,139 +103,125 @@ export function LoadTable({
 
   return (
     <div className="space-y-2">
-      <BulkActionBar
-        selectedCount={selection.count}
-        actions={[
+      <ParityTable<EnrichedLoadRow>
+        key={tableResetKey}
+        rows={enrichedRows}
+        rowKey={(row) => row.id}
+        storageKey="dispatch-load-table"
+        emptyText="No loads found for current filters."
+        onRowClick={onRowClick}
+        onRowContextMenu={onRowContextMenu}
+        rowClassName={(row) => (selectedLoadId === row.id ? "bg-[#E6F1FB]" : "")}
+        selectable
+        maxSelectable={200}
+        onSelectionCapExceeded={() =>
+          pushToast("You can select up to 200 items at a time. Clear some selections and try again.", "error")
+        }
+        batchActions={(selected) => (
+          <button
+            type="button"
+            className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700"
+            onClick={() => {
+              setPendingRows(selected);
+              setStatusModalOpen(true);
+            }}
+          >
+            Mark dispatched
+          </button>
+        )}
+        columns={[
           {
-            id: "mark-dispatched",
-            label: "Mark dispatched",
-            onClick: () => setStatusModalOpen(true),
+            key: "load_number",
+            label: "Load #",
+            sortable: true,
+            render: (row) => (
+              <span className={`font-semibold text-slate-700 ${row.dispatch_status === "cancelled" ? "line-through opacity-70" : ""}`}>
+                {row.load_number}
+              </span>
+            ),
+          },
+          {
+            key: "unit_number",
+            label: "Unit",
+            sortable: true,
+            render: (row) => (
+              <span className="inline-flex items-center gap-1">
+                {row.unit_number ?? "-"}
+                {row.has_open_pm_due_wo ? <span title="PM-due advisory">⚡</span> : null}
+                {row.is_dispatch_blocked ? <span title={row.dispatch_block_reason ?? "Dispatch blocked"}>🔒</span> : null}
+              </span>
+            ),
+          },
+          { key: "trailer_number", label: "Trailer", sortable: true, render: (row) => row.trailer_number ?? "-" },
+          // Placeholder columns (no backing field on DispatchLoad yet — constant across all rows).
+          { key: "wo_stub", label: "WO", sortable: true },
+          { key: "temp_stub", label: "Temp", sortable: true },
+          {
+            key: "driver_short_name",
+            label: "Driver",
+            sortable: true,
+            render: (row) => (
+              <span className="inline-flex items-center gap-1">
+                {row.driver_short_name ?? "Unassigned"}
+                {row.driver_short_name ? (
+                  <span
+                    className={`inline-block h-2 w-2 rounded-full ${
+                      row.hos_badge_color === "red" ? "bg-red-500" : row.hos_badge_color === "yellow" ? "bg-slate-600" : "bg-slate-600"
+                    }`}
+                    title={
+                      row.hos_is_in_violation
+                        ? "HOS violation"
+                        : `HOS: ${Math.max(Number(row.hos_minutes_until_violation ?? 0), 0)}m until violation`
+                    }
+                  />
+                ) : null}
+              </span>
+            ),
+          },
+          {
+            key: "created_at",
+            label: "Start",
+            sortable: true,
+            cellClass: "text-right tabular-nums",
+            render: (row) => (row.created_at ? new Date(row.created_at).toLocaleDateString() : "-"),
+          },
+          // EXEMPT (GLOBAL-SORT-RULE.md registry): duplicate-format display of "Start" (created_at) —
+          // no distinct end-date field exists yet. See file-header comment.
+          { key: "end_date_stub", label: "End", cellClass: "text-right tabular-nums" },
+          { key: "customer_name", label: "Customer", sortable: true, render: (row) => row.customer_name ?? "-" },
+          { key: "route_display", label: "Origin -> Destination", sortable: true },
+          {
+            key: "dispatch_status",
+            label: "Status",
+            sortable: true,
+            render: (row) => <span className={statusPill(row.dispatch_status)}>{row.dispatch_status}</span>,
+          },
+          {
+            key: "driver_lifecycle_stage",
+            label: "Driver Status",
+            sortable: true,
+            render: (row) => (
+              <span onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}>
+                <DriverStatusCell
+                  lifecycle={row.driver_lifecycle_stage}
+                  etaConfidence={(row.latest_eta_prediction?.confidence_class as "on_time" | "tight" | "late_risk" | "late" | undefined) ?? null}
+                  etaText={
+                    row.latest_eta_prediction?.predicted_arrival_at
+                      ? `ETA ${new Date(row.latest_eta_prediction.predicted_arrival_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+                      : "manual"
+                  }
+                  onClick={() => onDriverStatusClick(row)}
+                />
+              </span>
+            ),
           },
         ]}
-        onClear={selection.clear}
       />
-
-      <TableSelection
-        rows={rows}
-        getId={(row) => row.id}
-        selectedIds={selection.selectedIds}
-        onSelectionChange={selection.setSelectedIds}
-        pageRowIds={pageRowIds}
-        onCapExceeded={(message) => pushToast(message, "error")}
-      >
-        {(selectCtx) => (
-          <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-            <table className="w-full table-fixed text-left text-[11px]">
-              <thead className="bg-gray-50 text-[10px] uppercase tracking-wide text-gray-600">
-                <tr>
-                  <th className="w-8 px-2 py-1">
-                    <TableSelectionHeader
-                      selectedIds={selection.selectedIds}
-                      pageRowIds={pageRowIds}
-                      onSelectionChange={selection.setSelectedIds}
-                      onCapExceeded={(message) => pushToast(message, "error")}
-                    />
-                  </th>
-                  {["Load #", "Unit", "Trailer", "WO", "Temp", "Driver", "Start", "End", "Customer", "Origin -> Destination", "Status", "Driver Status"].map(
-                    (header) => (
-                      <th key={header} className="px-2 py-1">
-                        {header}
-                      </th>
-                    )
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => (
-                  <tr
-                    key={row.id}
-                    onClick={() => onRowClick(row)}
-                    onContextMenu={(event) => onRowContextMenu?.(row, event)}
-                    draggable
-                    className={`cursor-pointer border-t border-gray-100 hover:bg-gray-50 ${selectedLoadId === row.id ? "bg-[#E6F1FB]" : ""}`}
-                  >
-                    <td className="px-2 py-1" onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}>
-                      <input
-                        type="checkbox"
-                        aria-label={`Select load ${row.load_number}`}
-                        checked={selectCtx.isSelected(row.id)}
-                        onChange={() => selectCtx.toggle(row.id)}
-                      />
-                    </td>
-                    <td className={`truncate px-2 py-1 font-semibold text-slate-700 ${row.dispatch_status === "cancelled" ? "line-through opacity-70" : ""}`}>
-                      {row.load_number}
-                    </td>
-                    <td className="truncate px-2 py-1">
-                      <span className="inline-flex items-center gap-1">
-                        {row.unit_number ?? "-"}
-                        {row.has_open_pm_due_wo ? <span title="PM-due advisory">⚡</span> : null}
-                        {row.is_dispatch_blocked ? <span title={row.dispatch_block_reason ?? "Dispatch blocked"}>🔒</span> : null}
-                      </span>
-                    </td>
-                    <td className="truncate px-2 py-1">{row.trailer_number ?? "-"}</td>
-                    <td className="px-2 py-1 text-slate-700">—</td>
-                    <td className="px-2 py-1">dry</td>
-                    <td className="truncate px-2 py-1">
-                      <span className="inline-flex items-center gap-1">
-                        {row.driver_short_name ?? "Unassigned"}
-                        {row.driver_short_name ? (
-                          <span
-                            className={`inline-block h-2 w-2 rounded-full ${
-                              row.hos_badge_color === "red"
-                                ? "bg-red-500"
-                                : row.hos_badge_color === "yellow"
-                                  ? "bg-slate-600"
-                                  : "bg-slate-600"
-                            }`}
-                            title={
-                              row.hos_is_in_violation
-                                ? "HOS violation"
-                                : `HOS: ${Math.max(Number(row.hos_minutes_until_violation ?? 0), 0)}m until violation`
-                            }
-                          />
-                        ) : null}
-                      </span>
-                    </td>
-                    <td className="px-2 py-1">{row.created_at ? new Date(row.created_at).toLocaleDateString() : "-"}</td>
-                    <td className="px-2 py-1">{row.created_at ? new Date(row.created_at).toLocaleDateString() : "-"}</td>
-                    <td className="truncate px-2 py-1">{row.customer_name ?? "-"}</td>
-                    <td className="truncate px-2 py-1">
-                      {row.pickup_city ?? "-"} {row.pickup_state ?? ""} {"->"} {row.delivery_city ?? "-"} {row.delivery_state ?? ""}
-                    </td>
-                    <td className="px-2 py-1">
-                      <span className={statusPill(row.dispatch_status)}>{row.dispatch_status}</span>
-                    </td>
-                    <td className="px-2 py-1" onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}>
-                      <DriverStatusCell
-                        lifecycle={row.driver_lifecycle_stage}
-                        etaConfidence={(row.latest_eta_prediction?.confidence_class as "on_time" | "tight" | "late_risk" | "late" | undefined) ?? null}
-                        etaText={
-                          row.latest_eta_prediction?.predicted_arrival_at
-                            ? `ETA ${new Date(row.latest_eta_prediction.predicted_arrival_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
-                            : "manual"
-                        }
-                        onClick={() => onDriverStatusClick(row)}
-                      />
-                    </td>
-                  </tr>
-                ))}
-                {rows.length === 0 ? (
-                  <tr>
-                    <td colSpan={13} className="px-2 py-3 text-center text-gray-500">
-                      No loads found for current filters.
-                    </td>
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </TableSelection>
 
       <BulkActionModal
         open={statusModalOpen}
         actionLabel="Mark dispatched"
-        affectedCount={selection.count}
+        affectedCount={pendingRows.length}
         requiresReason
         description="Transition selected loads to dispatched where the state machine allows."
         onCancel={() => setStatusModalOpen(false)}
