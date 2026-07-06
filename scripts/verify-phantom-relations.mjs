@@ -57,6 +57,7 @@ const KNOWN_PHANTOM_DEBT = [
   // ── bucket-③ HOLD / needs migration or data-model decision ──
   { rel: "accounting.qbo_payroll_links", why: "HOLD payroll — real integrations.qbo_payroll_links is per-run aggregate, not per-employee; needs data-model decision" },
   { rel: "accounting.journal_entry_lines", why: "deprecated dead route (manual-je.routes.deprecated.ts — not served); canonical=accounting.journal_entry_postings; archive, don't revive" },
+  { rel: "banking.bank_transaction_splits", why: "HOLD BANK-SPLIT-1 — migration 202607091600 (HELD, .held-migrations.json) creates this table; not yet run on prod" },
   // ── section C: degrade-safe but still names the phantom in a comment/fallback path (PR #1485) ──
 
   // ── forward-refs to unbuilt modules (bucket-4 — map to pending gap-specs, not bugs) ──

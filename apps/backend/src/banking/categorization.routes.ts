@@ -14,6 +14,15 @@ import {
   bulkCategorizeTransactions,
   bulkPostTransactionsAsBills,
 } from "./bulk-transactions.js";
+import {
+  SplitValidationError,
+  commitSplit,
+  getSplitLines,
+  getSplitLinesByLinkage,
+  saveSplitDraft,
+  voidSplit,
+  type SplitLineInput,
+} from "./bank-transaction-splits.service.js";
 
 const transactionIdParamsSchema = z.object({
   id: z.string().uuid(),
@@ -43,6 +52,9 @@ const categorizeBodySchema = z.object({
   // type drive the OFF-by-default driver AUTO-DEDUCTION (a fine the company paid → recovered from the
   // driver's settlement); see bank-driver-expense-deduction.service.ts.
   unit_id: z.string().uuid().optional(),
+  // BANK-SPLIT-1 (Part 1 linkage): the Trailer the transaction belongs to — trailers are mdata.equipment,
+  // NEVER mdata.loads.trailer_id (no such column exists). Stored as a TAG only, same as unit_id/load_id.
+  trailer_id: z.string().uuid().optional(),
   load_id: z.string().uuid().optional(),
   recover_from_driver: z.boolean().optional(),
   recover_deduction_type: z.string().trim().min(1).max(40).optional(),
@@ -91,6 +103,38 @@ const bulkPostAsBillsBodySchema = z.object({
   ps_category: z.string().trim().min(1).max(120),
   ps_item: z.string().trim().min(1).max(200),
 });
+
+// BANK-SPLIT-1 — QBO-style split-transaction popup: one bank txn -> N lines. DEFAULT mode is one vendor +
+// multiple categories; a MULTIPLE VENDORS toggle allows a distinct vendor per line. Each line may also
+// carry Driver/Unit/Trailer/Load links (Part 1 linkage dimensions).
+const splitLineSchema = z.object({
+  amount_cents: z.number().int().positive(),
+  category_kind: z.string().trim().max(120).optional(),
+  gl_account_id: z.string().uuid().optional(),
+  vendor_id: z.string().uuid().optional(),
+  customer_id: z.string().uuid().optional(),
+  driver_id: z.string().uuid().optional(),
+  unit_id: z.string().uuid().optional(),
+  trailer_id: z.string().uuid().optional(),
+  load_id: z.string().uuid().optional(),
+  item_id: z.string().uuid().optional(),
+  memo: z.string().trim().max(2000).optional(),
+  recover_from_driver: z.boolean().optional(),
+  recover_deduction_type: z.string().trim().max(40).optional(),
+});
+
+const saveSplitBodySchema = z.object({
+  mode: z.enum(["single_vendor_multi_category", "multi_vendor"]),
+  lines: z.array(splitLineSchema).min(2).max(50),
+});
+
+function mapSplitError(reply: FastifyReply, error: unknown) {
+  if (error instanceof SplitValidationError) {
+    const code = error.code === "bank_txn_not_found" ? 404 : error.code === "feature_disabled" ? 409 : 400;
+    return reply.code(code).send({ error: error.code, message: error.message });
+  }
+  return null;
+}
 
 function mapBulkError(reply: FastifyReply, message: string) {
   if (message === "bulk_txn_limit_exceeded") return reply.code(400).send({ error: message, max: BULK_TXN_MAX });
@@ -275,6 +319,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
             categorization_recover_from_driver = COALESCE($16, categorization_recover_from_driver),
             categorization_recover_deduction_type = COALESCE($17, categorization_recover_deduction_type),
             categorization_item_id = COALESCE($18, categorization_item_id),
+            categorization_trailer_id = COALESCE($19, categorization_trailer_id),
             skip_reason = NULL,
             investigate_note = NULL,
             categorized_at = now(),
@@ -301,6 +346,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
           body.data.recover_from_driver ?? null,
           body.data.recover_deduction_type ?? null,
           body.data.item_id ?? null,
+          body.data.trailer_id ?? null,
         ]
       );
 
@@ -447,6 +493,8 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
             NULLIF(TRIM(CONCAT(d.first_name, ' ', d.last_name)), '') AS driver_name,
             bt.categorization_unit_id::text AS unit_id,
             u.unit_number AS unit_number,
+            bt.categorization_trailer_id::text AS trailer_id,
+            eq.equipment_number AS trailer_number,
             bt.categorization_load_id::text AS load_id,
             l.load_number AS load_number,
             bt.categorization_vendor_id::text AS vendor_id,
@@ -462,10 +510,12 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
             ded.status AS deduction_status,
             ded.deduction_type AS deduction_type,
             ded.bucket_id::text AS deduction_bucket_id,
-            ded.load_id::text AS deduction_load_id
+            ded.load_id::text AS deduction_load_id,
+            bt.split_mode
           FROM banking.bank_transactions bt
           LEFT JOIN mdata.drivers d ON d.id = bt.categorization_driver_id
           LEFT JOIN mdata.units u ON u.id = bt.categorization_unit_id
+          LEFT JOIN mdata.equipment eq ON eq.id = bt.categorization_trailer_id
           LEFT JOIN mdata.loads l ON l.id = bt.categorization_load_id
           LEFT JOIN mdata.vendors ven ON ven.id = bt.categorization_vendor_id
           LEFT JOIN mdata.customers cust ON cust.id = bt.categorization_customer_id
@@ -494,14 +544,17 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
       .extend({
         driver_id: z.string().uuid().optional(),
         unit_id: z.string().uuid().optional(),
+        trailer_id: z.string().uuid().optional(),
         load_id: z.string().uuid().optional(),
         limit: z.coerce.number().int().min(1).max(500).default(200),
       })
       .safeParse(req.query ?? {});
     if (!q.success) return validationError(reply, q.error);
-    const provided = [q.data.driver_id, q.data.unit_id, q.data.load_id].filter(Boolean);
+    const provided = [q.data.driver_id, q.data.unit_id, q.data.trailer_id, q.data.load_id].filter(Boolean);
     if (provided.length !== 1) {
-      return reply.code(400).send({ error: "exactly_one_linkage_required", detail: "provide exactly one of driver_id, unit_id, load_id" });
+      return reply
+        .code(400)
+        .send({ error: "exactly_one_linkage_required", detail: "provide exactly one of driver_id, unit_id, trailer_id, load_id" });
     }
     const companyId = q.data.operating_company_id;
 
@@ -517,6 +570,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
             bt.category_kind,
             bt.categorization_driver_id::text AS driver_id,
             bt.categorization_unit_id::text AS unit_id,
+            bt.categorization_trailer_id::text AS trailer_id,
             bt.categorization_load_id::text AS load_id,
             bt.categorization_recover_from_driver AS recover_from_driver,
             bt.categorization_deduction_id::text AS deduction_id,
@@ -530,11 +584,12 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
               ($2::uuid IS NOT NULL AND bt.categorization_driver_id = $2::uuid)
               OR ($3::uuid IS NOT NULL AND bt.categorization_unit_id = $3::uuid)
               OR ($4::uuid IS NOT NULL AND bt.categorization_load_id = $4::uuid)
+              OR ($6::uuid IS NOT NULL AND bt.categorization_trailer_id = $6::uuid)
             )
           ORDER BY bt.transaction_date DESC, bt.created_at DESC
           LIMIT $5
         `,
-        [companyId, q.data.driver_id ?? null, q.data.unit_id ?? null, q.data.load_id ?? null, q.data.limit]
+        [companyId, q.data.driver_id ?? null, q.data.unit_id ?? null, q.data.load_id ?? null, q.data.limit, q.data.trailer_id ?? null]
       );
       return res.rows;
     });
@@ -861,6 +916,131 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
     } catch (error) {
       const message = String((error as Error)?.message ?? "bulk_post_failed");
       const mapped = mapBulkError(reply, message);
+      if (mapped) return mapped;
+      throw error;
+    }
+  });
+
+  // ── BANK-SPLIT-1 — Split-transaction popup (real, persisted; replaces the honest 501 stub) ─────────────
+  app.get("/api/v1/banking/transactions/:id/splits", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const params = transactionIdParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+
+    try {
+      const payload = await getSplitLines(query.data.operating_company_id, user.uuid, params.data.id);
+      return payload;
+    } catch (error) {
+      const mapped = mapSplitError(reply, error);
+      if (mapped) return mapped;
+      throw error;
+    }
+  });
+
+  app.put("/api/v1/banking/transactions/:id/splits", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const params = transactionIdParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    const body = saveSplitBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return validationError(reply, body.error);
+
+    try {
+      const result = await saveSplitDraft(
+        query.data.operating_company_id,
+        user.uuid,
+        params.data.id,
+        body.data.mode,
+        body.data.lines as SplitLineInput[]
+      );
+      return result;
+    } catch (error) {
+      const mapped = mapSplitError(reply, error);
+      if (mapped) return mapped;
+      throw error;
+    }
+  });
+
+  app.post("/api/v1/banking/transactions/:id/splits/commit", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const params = transactionIdParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+
+    try {
+      const result = await commitSplit(
+        query.data.operating_company_id,
+        user.uuid,
+        String((user as { role?: string }).role ?? ""),
+        params.data.id
+      );
+      return result;
+    } catch (error) {
+      const mapped = mapSplitError(reply, error);
+      if (mapped) return mapped;
+      throw error;
+    }
+  });
+
+  // REVERSE drill-through: given a Driver/Unit/Trailer/Trip(Load)/Vendor, list the split lines tagged to it
+  // (+ their parent bank txn + whatever each line produced — advance/deduction/bill). Exactly one linkage
+  // param required, mirroring the single-line by-linkage endpoint above (BLOCK-6b), generalized to splits.
+  app.get("/api/v1/banking/transaction-splits/by-linkage", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const q = companyQuerySchema
+      .extend({
+        driver_id: z.string().uuid().optional(),
+        unit_id: z.string().uuid().optional(),
+        trailer_id: z.string().uuid().optional(),
+        load_id: z.string().uuid().optional(),
+        vendor_id: z.string().uuid().optional(),
+        limit: z.coerce.number().int().min(1).max(500).default(200),
+      })
+      .safeParse(req.query ?? {});
+    if (!q.success) return validationError(reply, q.error);
+    const provided = [q.data.driver_id, q.data.unit_id, q.data.trailer_id, q.data.load_id, q.data.vendor_id].filter(Boolean);
+    if (provided.length !== 1) {
+      return reply.code(400).send({
+        error: "exactly_one_linkage_required",
+        detail: "provide exactly one of driver_id, unit_id, trailer_id, load_id, vendor_id",
+      });
+    }
+    const rows = await getSplitLinesByLinkage(
+      q.data.operating_company_id,
+      user.uuid,
+      {
+        driver_id: q.data.driver_id,
+        unit_id: q.data.unit_id,
+        trailer_id: q.data.trailer_id,
+        load_id: q.data.load_id,
+        vendor_id: q.data.vendor_id,
+      },
+      q.data.limit
+    );
+    return { rows, total_count: rows.length };
+  });
+
+  app.post("/api/v1/banking/transactions/:id/splits/void", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const params = transactionIdParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+
+    try {
+      const result = await voidSplit(query.data.operating_company_id, user.uuid, params.data.id);
+      return result;
+    } catch (error) {
+      const mapped = mapSplitError(reply, error);
       if (mapped) return mapped;
       throw error;
     }

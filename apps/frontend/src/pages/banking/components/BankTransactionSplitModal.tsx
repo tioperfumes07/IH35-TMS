@@ -1,0 +1,397 @@
+// [HOLD-FOR-JORGE — TIER 1] BANK-SPLIT-1 — QBO-style Split transaction popup.
+//
+// Opens on ONE bank transaction and splits it into multiple lines. DEFAULT mode is one vendor + multiple
+// categories; a button switches to MULTIPLE VENDORS (each line its own vendor). Lines must sum EXACTLY to
+// the transaction total (validated client-side + re-validated server-side). Each line can also carry
+// Driver/Unit/Trailer/Load links (Part 1 linkage) and, when tagged to a Driver + the driver-advance
+// account, becomes a cash-advance line (reuses the existing BLOCK-6 posting path per-line — see
+// bank-transaction-splits.service.ts). Behind BANK_TX_SPLIT_ENABLED (OFF) — Save/Commit calls 409 with
+// `feature_disabled` until the owner flips the flag per entity.
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Modal } from "../../../components/Modal";
+import { Button } from "../../../components/Button";
+import { MoneyInput } from "../../../components/forms/MoneyInput";
+import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
+import { useToast } from "../../../components/Toast";
+import { DriverAutocomplete } from "../../../components/factoring/DriverAutocomplete";
+import { UnitAutocomplete } from "../../../components/banking/UnitAutocomplete";
+import { TrailerAutocomplete } from "../../../components/banking/TrailerAutocomplete";
+import { LoadAutocomplete } from "../../../components/banking/LoadAutocomplete";
+import { listVendors } from "../../../api/mdata";
+import { getCoaAccounts } from "../../../api/banking";
+import {
+  commitBankTransactionSplit,
+  getBankTransactionSplits,
+  saveBankTransactionSplitDraft,
+  voidBankTransactionSplit,
+  type BankTransactionSplitLine,
+  type BankTransactionSplitMode,
+} from "../../../api/banking";
+import { formatUsdCents } from "../../../lib/money";
+import { ApiError } from "../../../api/client";
+
+type LineDraft = BankTransactionSplitLine & { _key: string; _driverName?: string; _unitName?: string; _trailerName?: string; _loadName?: string };
+
+let keySeq = 0;
+function nextKey() {
+  keySeq += 1;
+  return `line-${keySeq}`;
+}
+
+function blankLine(): LineDraft {
+  return { _key: nextKey(), amount_cents: 0 };
+}
+
+type Props = {
+  open: boolean;
+  companyId: string;
+  transaction: { id: string; amount_cents: number; is_credit: boolean; description?: string } | null;
+  onClose: () => void;
+  onSaved: () => void;
+};
+
+export function BankTransactionSplitModal({ open, companyId, transaction, onClose, onSaved }: Props) {
+  const { pushToast } = useToast();
+  const [mode, setMode] = useState<BankTransactionSplitMode>("single_vendor_multi_category");
+  const [singleVendorId, setSingleVendorId] = useState("");
+  const [lines, setLines] = useState<LineDraft[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [committing, setCommitting] = useState(false);
+  const [commitResults, setCommitResults] = useState<
+    Array<{ line_no: number; posted: boolean; reason: string; driver_advance_id?: string; deduction_id?: string; bill_id?: string }> | null
+  >(null);
+
+  const txnId = transaction?.id ?? "";
+  const totalCents = Math.abs(transaction?.amount_cents ?? 0);
+
+  const existingQuery = useQuery({
+    queryKey: ["banking", "splits", companyId, txnId],
+    queryFn: () => getBankTransactionSplits(txnId, companyId),
+    enabled: Boolean(open && companyId && txnId),
+  });
+
+  const coaQuery = useQuery({
+    queryKey: ["banking", "coa-accounts", "split", companyId],
+    queryFn: () => getCoaAccounts(companyId),
+    enabled: Boolean(open && companyId),
+  });
+
+  const vendorsQuery = useQuery({
+    queryKey: ["banking", "split-vendors", companyId],
+    queryFn: () => listVendors({ operating_company_id: companyId }).then((res) => (res.vendors ?? []) as Array<{ id: string; name: string }>),
+    enabled: Boolean(open && companyId),
+  });
+
+  useEffect(() => {
+    if (!open) return;
+    const existing = existingQuery.data;
+    if (existing && existing.lines.length > 0) {
+      setMode(existing.mode ?? "single_vendor_multi_category");
+      setLines(existing.lines.map((l) => ({ ...l, _key: nextKey() })));
+      const firstVendor = existing.lines.find((l) => l.vendor_id)?.vendor_id;
+      setSingleVendorId(firstVendor ?? "");
+      setCommitResults(null);
+    } else if (existing) {
+      // No saved split yet — seed two blank lines so the operator starts from the worked-example shape.
+      setLines([blankLine(), blankLine()]);
+      setMode("single_vendor_multi_category");
+      setSingleVendorId("");
+      setCommitResults(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, existingQuery.data]);
+
+  const sumCents = useMemo(() => lines.reduce((acc, l) => acc + (Number(l.amount_cents) || 0), 0), [lines]);
+  const remainingCents = totalCents - sumCents;
+
+  function patchLine(key: string, patch: Partial<LineDraft>) {
+    setLines((prev) => prev.map((l) => (l._key === key ? { ...l, ...patch } : l)));
+  }
+
+  function addLine() {
+    setLines((prev) => [...prev, blankLine()]);
+  }
+
+  function removeLine(key: string) {
+    setLines((prev) => (prev.length <= 2 ? prev : prev.filter((l) => l._key !== key)));
+  }
+
+  function effectiveVendorId(line: LineDraft): string | undefined {
+    return mode === "single_vendor_multi_category" ? singleVendorId || undefined : line.vendor_id ?? undefined;
+  }
+
+  async function handleSave() {
+    if (!transaction) return;
+    setSaving(true);
+    setCommitResults(null);
+    try {
+      const payloadLines: BankTransactionSplitLine[] = lines.map((l) => ({
+        amount_cents: Math.round(Number(l.amount_cents) || 0),
+        category_kind: l.category_kind || undefined,
+        gl_account_id: l.gl_account_id || undefined,
+        vendor_id: effectiveVendorId(l),
+        customer_id: l.customer_id || undefined,
+        driver_id: l.driver_id || undefined,
+        unit_id: l.unit_id || undefined,
+        trailer_id: l.trailer_id || undefined,
+        load_id: l.load_id || undefined,
+        item_id: l.item_id || undefined,
+        memo: l.memo || undefined,
+        recover_from_driver: l.driver_id ? Boolean(l.recover_from_driver) : undefined,
+        recover_deduction_type: l.driver_id && l.recover_from_driver ? l.recover_deduction_type || undefined : undefined,
+      }));
+      await saveBankTransactionSplitDraft(transaction.id, companyId, { mode, lines: payloadLines });
+      pushToast("Split saved", "success");
+      onSaved();
+      void existingQuery.refetch();
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 409) {
+        pushToast("Split transactions are not enabled for this company yet (BANK_TX_SPLIT_ENABLED is OFF).", "error");
+      } else {
+        pushToast(String((error as Error).message ?? "Could not save split"), "error");
+      }
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleCommit() {
+    if (!transaction) return;
+    setCommitting(true);
+    try {
+      const result = await commitBankTransactionSplit(transaction.id, companyId);
+      setCommitResults(result.results);
+      const posted = result.results.filter((r) => r.posted).length;
+      pushToast(
+        posted > 0
+          ? `Split committed — ${posted} of ${result.results.length} line(s) posted to GL.`
+          : "Split committed — lines saved and tagged (GL posting pending owner flag flip for non-advance lines).",
+        "success"
+      );
+      onSaved();
+    } catch (error) {
+      pushToast(String((error as Error).message ?? "Could not commit split"), "error");
+    } finally {
+      setCommitting(false);
+    }
+  }
+
+  async function handleVoid() {
+    if (!transaction) return;
+    try {
+      await voidBankTransactionSplit(transaction.id, companyId);
+      pushToast("Split voided — transaction returned to pending categorization.", "success");
+      onSaved();
+      onClose();
+    } catch (error) {
+      pushToast(String((error as Error).message ?? "Could not void split"), "error");
+    }
+  }
+
+  return (
+    <Modal open={open} onClose={onClose} title="Split transaction" wide>
+      {!transaction ? null : (
+        <div className="space-y-3 text-xs text-gray-800">
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-gray-50 p-2">
+            <div>
+              <div className="font-semibold text-gray-900">{transaction.description || "Bank transaction"}</div>
+              <div className="text-gray-600">{transaction.is_credit ? "Money in" : "Money out"} · Total {formatUsdCents(totalCents)}</div>
+            </div>
+            <div className={`rounded-sm px-2 py-1 text-xs font-semibold ${remainingCents === 0 ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>
+              Remaining: {formatUsdCents(remainingCents)}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Mode</span>
+            <button
+              type="button"
+              className={`rounded-sm border px-2 py-1 text-xs ${mode === "single_vendor_multi_category" ? "border-slate-400 bg-slate-100 text-slate-800" : "border-gray-300 text-gray-600"}`}
+              onClick={() => setMode("single_vendor_multi_category")}
+            >
+              One vendor, multiple categories
+            </button>
+            <button
+              type="button"
+              className={`rounded-sm border px-2 py-1 text-xs ${mode === "multi_vendor" ? "border-slate-400 bg-slate-100 text-slate-800" : "border-gray-300 text-gray-600"}`}
+              onClick={() => setMode("multi_vendor")}
+            >
+              Multiple vendors
+            </button>
+          </div>
+
+          {mode === "single_vendor_multi_category" ? (
+            <div className="text-xs text-gray-600">
+              Vendor (applies to every line)
+              <div className="mt-0.5 max-w-sm">
+                <ReferenceSelect
+                  value={singleVendorId || null}
+                  onChange={(v) => setSingleVendorId(v ?? "")}
+                  options={(vendorsQuery.data ?? []).map((v) => ({ value: v.id, label: v.name }))}
+                  createKind="vendor"
+                  operatingCompanyId={companyId}
+                  placeholder="Select vendor (optional)"
+                  onOptionCreated={() => void vendorsQuery.refetch()}
+                />
+              </div>
+            </div>
+          ) : null}
+
+          <div className="overflow-x-auto rounded-sm border border-gray-200">
+            <table className="min-w-full text-left text-xs">
+              <thead className="border-b border-gray-200 bg-gray-50 text-[10px] font-semibold uppercase text-gray-600">
+                <tr>
+                  <th className="px-2 py-2">#</th>
+                  <th className="px-2 py-2">Category (account)</th>
+                  {mode === "multi_vendor" ? <th className="px-2 py-2">Vendor</th> : null}
+                  <th className="px-2 py-2">Driver</th>
+                  <th className="px-2 py-2">Unit</th>
+                  <th className="px-2 py-2">Trailer</th>
+                  <th className="px-2 py-2">Trip (load)</th>
+                  <th className="px-2 py-2 text-right">Amount</th>
+                  <th className="px-2 py-2"> </th>
+                </tr>
+              </thead>
+              <tbody>
+                {lines.map((line, idx) => {
+                  const result = commitResults?.find((r) => r.line_no === idx + 1);
+                  return (
+                    <tr key={line._key} className="border-b border-gray-100 align-top">
+                      <td className="px-2 py-2 text-gray-500">{idx + 1}</td>
+                      <td className="min-w-[180px] px-2 py-2">
+                        <ReferenceSelect
+                          value={line.gl_account_id ?? null}
+                          onChange={(v) => {
+                            const acct = (coaQuery.data?.accounts ?? []).find((a) => a.id === v);
+                            patchLine(line._key, {
+                              gl_account_id: v ?? undefined,
+                              category_kind: acct?.account_name ?? line.category_kind,
+                            });
+                          }}
+                          options={(coaQuery.data?.accounts ?? []).map((a) => ({
+                            value: a.id,
+                            label: a.account_name,
+                            type: a.account_number ?? undefined,
+                          }))}
+                          createKind="category"
+                          operatingCompanyId={companyId}
+                          placeholder="Select category"
+                          onOptionCreated={() => void coaQuery.refetch()}
+                        />
+                      </td>
+                      {mode === "multi_vendor" ? (
+                        <td className="min-w-[160px] px-2 py-2">
+                          <ReferenceSelect
+                            value={line.vendor_id ?? null}
+                            onChange={(v) => patchLine(line._key, { vendor_id: v ?? undefined })}
+                            options={(vendorsQuery.data ?? []).map((v) => ({ value: v.id, label: v.name }))}
+                            createKind="vendor"
+                            operatingCompanyId={companyId}
+                            placeholder="Vendor"
+                            onOptionCreated={() => void vendorsQuery.refetch()}
+                          />
+                        </td>
+                      ) : null}
+                      <td className="px-2 py-2">
+                        <DriverAutocomplete
+                          companyId={companyId}
+                          value={line.driver_id ?? ""}
+                          onChange={(driverId, driverName) => patchLine(line._key, { driver_id: driverId || undefined, _driverName: driverName ?? "" })}
+                        />
+                        {line.driver_id ? (
+                          <label className="mt-1 flex items-center gap-1 text-[10px] text-gray-600">
+                            <input
+                              type="checkbox"
+                              checked={Boolean(line.recover_from_driver)}
+                              onChange={(e) => patchLine(line._key, { recover_from_driver: e.target.checked, recover_deduction_type: line.recover_deduction_type ?? "fine" })}
+                            />
+                            Recover from driver
+                          </label>
+                        ) : null}
+                      </td>
+                      <td className="px-2 py-2">
+                        <UnitAutocomplete
+                          companyId={companyId}
+                          value={line.unit_id ?? ""}
+                          onChange={(unitId, unitName) => patchLine(line._key, { unit_id: unitId || undefined, _unitName: unitName })}
+                        />
+                      </td>
+                      <td className="px-2 py-2">
+                        <TrailerAutocomplete
+                          companyId={companyId}
+                          value={line.trailer_id ?? ""}
+                          onChange={(trailerId, trailerName) => patchLine(line._key, { trailer_id: trailerId || undefined, _trailerName: trailerName })}
+                        />
+                      </td>
+                      <td className="px-2 py-2">
+                        <LoadAutocomplete
+                          companyId={companyId}
+                          value={line.load_id ?? ""}
+                          onChange={(loadId, loadName) => patchLine(line._key, { load_id: loadId || undefined, _loadName: loadName })}
+                        />
+                      </td>
+                      <td className="px-2 py-2 text-right">
+                        <MoneyInput
+                          valueCents={line.amount_cents || null}
+                          onChangeCents={(cents) => patchLine(line._key, { amount_cents: cents ?? 0 })}
+                          ariaLabel={`Split line ${idx + 1} amount`}
+                          className="w-28 text-right"
+                        />
+                        {result ? (
+                          <div className={`mt-1 text-[10px] ${result.posted ? "text-emerald-700" : "text-gray-500"}`}>
+                            {result.posted ? (
+                              <>
+                                Posted
+                                {result.bill_id ? " · bill created" : null}
+                                {result.driver_advance_id ? " · advance posted" : null}
+                                {result.deduction_id ? " · recovery scheduled" : null}
+                              </>
+                            ) : (
+                              result.reason
+                            )}
+                          </div>
+                        ) : null}
+                      </td>
+                      <td className="px-2 py-2">
+                        <button
+                          type="button"
+                          className="text-slate-600 underline disabled:text-gray-300"
+                          disabled={lines.length <= 2}
+                          onClick={() => removeLine(line._key)}
+                        >
+                          Remove
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <Button size="sm" variant="secondary" onClick={addLine}>
+            + Add line
+          </Button>
+
+          <div className="flex items-center justify-between border-t border-gray-200 pt-2">
+            <button type="button" className="text-red-700 underline" onClick={() => void handleVoid()}>
+              Void split (return to pending)
+            </button>
+            <div className="flex gap-2">
+              <Button variant="secondary" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button variant="secondary" loading={saving} disabled={remainingCents !== 0} onClick={() => void handleSave()}>
+                Save split
+              </Button>
+              <Button loading={committing} disabled={remainingCents !== 0} onClick={() => void handleCommit()}>
+                Save and close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </Modal>
+  );
+}
