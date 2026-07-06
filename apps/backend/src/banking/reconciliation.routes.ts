@@ -285,7 +285,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
       emitBankingSpineEvent(client, {
         operating_company_id: accountContext.operating_company_id,
         actor_user_id: String(user.uuid),
-        event_type: "banking.reconciliation.started",
+        event_type: "reconciliation.started",
         entity_id: created,
         entity_type: "reconciliation_session",
         source_table: "banking.reconciliation_sessions",
@@ -740,7 +740,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
       emitBankingSpineEvent(client, {
         operating_company_id: query.data.operating_company_id,
         actor_user_id: String(user.uuid),
-        event_type: "banking.reconciliation.completed",
+        event_type: "reconciliation.completed",
         entity_id: session.id,
         entity_type: "reconciliation_session",
         source_table: "banking.reconciliation_sessions",

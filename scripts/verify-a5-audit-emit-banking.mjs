@@ -2,6 +2,14 @@
 /**
  * verify-a5-audit-emit-banking.mjs
  * Assert banking mutations emit spine events via emitBankingSpineEvent calling events.log_event().
+ *
+ * 2026-07 (audit-spine-emit-silent-failures): every BankingSpineEvent value previously carried a
+ * redundant "banking." prefix (two dots), unconditionally violating events.event_log's
+ * `valid_event_type` CHECK (`^[a-z]+\.[a-z_]+$` — exactly one dot, letters-only noun before it) on
+ * every emit. Fixed to single-dot noun.action form. This guard now (a) checks for the CORRECTED
+ * strings so the fix can't be silently reverted, and (b) regex-validates every union member against
+ * the exact CHECK pattern so a future addition can't reintroduce a two-dot or underscore-before-dot
+ * event_type.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -31,15 +39,15 @@ else pass("banking-spine-emit.ts does not bypass log_event()");
 const checks = [
   {
     file: "apps/backend/src/banking/transfers.routes.ts",
-    events: ["banking.transfer.created", "banking.cc_payment.created", "banking.transfer.revoked"],
+    events: ["transfer.created", "ccpayment.created", "transfer.revoked"],
   },
   {
     file: "apps/backend/src/banking/categorization.routes.ts",
-    events: ["banking.transaction.categorized", "banking.transaction.skipped", "banking.transaction.investigate_flagged"],
+    events: ["transaction.categorized", "transaction.skipped", "transaction.investigate_flagged"],
   },
   {
     file: "apps/backend/src/banking/reconciliation.routes.ts",
-    events: ["banking.reconciliation.started", "banking.reconciliation.completed"],
+    events: ["reconciliation.started", "reconciliation.completed"],
   },
   // banking/manual-je.routes.ts — ARCHIVED 2026-06-24 (Tier-1 H-1). The route is RETIRED (unmounted; the
   // original is preserved in manual-je.routes.deprecated.ts) and no longer mutates anything, so it is no longer
@@ -63,19 +71,36 @@ for (const { file, events } of checks) {
 
 // 3. Union must cover all expected types
 const allEvents = [
-  "banking.transfer.created",
-  "banking.cc_payment.created",
-  "banking.transfer.revoked",
-  "banking.transaction.categorized",
-  "banking.transaction.skipped",
-  "banking.transaction.investigate_flagged",
-  "banking.reconciliation.started",
-  "banking.reconciliation.completed",
-  "banking.manual_je.created",
+  "transfer.created",
+  "ccpayment.created",
+  "transfer.revoked",
+  "transaction.categorized",
+  "transaction.skipped",
+  "transaction.investigate_flagged",
+  "reconciliation.started",
+  "reconciliation.completed",
+  "manualje.created",
 ];
 for (const ev of allEvents) {
   if (!helperSrc.includes(`"${ev}"`)) fail(`BankingSpineEvent union missing "${ev}"`);
   else pass(`BankingSpineEvent union includes "${ev}"`);
+}
+
+// 4. Regression guard: every declared BankingSpineEvent literal must satisfy events.event_log's
+// `valid_event_type` CHECK constraint exactly (db/migrations/202606111050_w1a_event_log_spine.sql).
+// A two-dot string (redundant domain prefix) or an underscore before the dot would violate this and
+// silently fail every emit again — catch it here, statically, before it ships.
+const VALID_EVENT_TYPE = /^[a-z]+\.[a-z_]+$/;
+const unionBlockMatch = helperSrc.match(/export type BankingSpineEvent =([\s\S]*?);/);
+if (!unionBlockMatch) {
+  fail("could not locate BankingSpineEvent union block to regex-validate");
+} else {
+  const literals = [...unionBlockMatch[1].matchAll(/\|\s*"([^"]+)"/g)].map((m) => m[1]);
+  if (literals.length === 0) fail("BankingSpineEvent union block had no string literals");
+  for (const lit of literals) {
+    if (!VALID_EVENT_TYPE.test(lit)) fail(`BankingSpineEvent "${lit}" violates events.event_log valid_event_type CHECK (^[a-z]+\\.[a-z_]+$)`);
+    else pass(`BankingSpineEvent "${lit}" satisfies valid_event_type CHECK`);
+  }
 }
 
 if (failed) { console.error("\n[verify-a5] FAILED"); process.exit(1); }

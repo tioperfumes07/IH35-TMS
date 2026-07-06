@@ -132,7 +132,7 @@ export async function registerBankingManualJeRoutes(app: FastifyInstance) {
       emitBankingSpineEvent(client, {
         operating_company_id: b.operating_company_id,
         actor_user_id: String(user.uuid),
-        event_type: "banking.manual_je.created",
+        event_type: "manualje.created",
         entity_id: (created as { id?: string })?.id ?? "",
         entity_type: "journal_entry",
         source_table: "accounting.journal_entries",

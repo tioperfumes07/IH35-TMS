@@ -334,7 +334,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
       emitBankingSpineEvent(client, {
         operating_company_id: companyId,
         actor_user_id: String(user.uuid),
-        event_type: "banking.transaction.categorized",
+        event_type: "transaction.categorized",
         entity_id: params.data.id,
         entity_type: "bank_transaction",
         source_table: "banking.bank_transactions",
@@ -735,7 +735,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
       emitBankingSpineEvent(client, {
         operating_company_id: companyId,
         actor_user_id: String(user.uuid),
-        event_type: "banking.transaction.skipped",
+        event_type: "transaction.skipped",
         entity_id: params.data.id,
         entity_type: "bank_transaction",
         source_table: "banking.bank_transactions",
@@ -792,7 +792,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
       emitBankingSpineEvent(client, {
         operating_company_id: companyId,
         actor_user_id: String(user.uuid),
-        event_type: "banking.transaction.investigate_flagged",
+        event_type: "transaction.investigate_flagged",
         entity_id: params.data.id,
         entity_type: "bank_transaction",
         source_table: "banking.bank_transactions",
