@@ -597,6 +597,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             SELECT eq.equipment_number, eq.equipment_type
             FROM dispatch.load_assignment_history lah
             JOIN mdata.equipment eq ON eq.id = lah.new_trailer_id
+              AND (eq.owner_company_id = l.operating_company_id OR eq.currently_leased_to_company_id = l.operating_company_id)
             WHERE lah.load_id = l.id AND lah.new_trailer_id IS NOT NULL
             ORDER BY lah.assigned_at DESC
             LIMIT 1
