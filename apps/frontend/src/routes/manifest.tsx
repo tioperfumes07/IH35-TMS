@@ -281,6 +281,7 @@ const PreFlightDvirQueue = React.lazy(() => import("../pages/maintenance/pre-fli
 const TireWearDashboard = React.lazy(() => import("../pages/maintenance/tires/TireWearDashboard").then((m) => ({ default: m.TireWearDashboard })));
 const LateArrivalReport = React.lazy(() => import("../pages/reports/LateArrivalReport").then((m) => ({ default: m.LateArrivalReport })));
 const CSAMitigationQueuePage = React.lazy(() => import("../pages/safety/CSAMitigationQueue").then((m) => ({ default: m.CSAMitigationQueuePage })));
+const CSAFmcsaTrendPage = React.lazy(() => import("../pages/safety/CSAScore").then((m) => ({ default: m.CSAScorePage })));
 const AnomalyAlertsPage = React.lazy(() => import("../pages/safety/anomaly/AnomalyAlertsPage").then((m) => ({ default: m.AnomalyAlertsPage })));
 const PhotoComparisonPage = React.lazy(() => import("../pages/safety/photo-comparison/PhotoComparisonPage").then((m) => ({ default: m.PhotoComparisonPage })));
 const SessionDetailPage = React.lazy(() => import("../pages/safety/photo-comparison/SessionDetailPage").then((m) => ({ default: m.SessionDetailPage })));
@@ -1405,6 +1406,7 @@ export const ROUTES = React.Children.toArray(
           <Route path="/safety/position-history" element={<PositionHistoryPage />} />
           <Route path="/safety/integrity-alerts" element={<IntegrityAlertsTab />} />
           <Route path="/safety/csa-mitigation" element={<CSAMitigationQueuePage />} />
+          <Route path="/safety/csa-fmcsa-trend" element={<CSAFmcsaTrendPage />} />
           <Route path="/safety/anomaly-alerts" element={<AnomalyAlertsPage />} />
           <Route path="/safety/audit-425c" element={<Audit425cPage />} />
           <Route path="/safety/photo-comparison" element={<PhotoComparisonPage />} />

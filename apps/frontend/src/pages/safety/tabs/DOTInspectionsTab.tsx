@@ -4,6 +4,7 @@ import { DatePicker } from "../../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { createDotInspection, listDotInspections, uploadDotInspectionPdf, voidDotInspection } from "../../../api/safetyV64";
+import { followUpDotInspectionEvent, listDotInspectionEvents } from "../../../api/safety";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { companyToday } from "../../../lib/businessDate";
 import { useListState } from "../../../components/list-state";
@@ -71,6 +72,21 @@ export function DOTInspectionsTab() {
 
   // LIST-EMPTY: the empty message renders only after the inspections query settles.
   const listState = useListState(query, (query.data?.dot_inspections ?? []).length === 0);
+
+  // Open DOT station dwell-follow-up queue (samsara geofence dwell-detector → dot_inspection_events).
+  const openEventsQuery = useQuery({
+    queryKey: ["safety", "dot-inspection-events", companyId],
+    queryFn: () => listDotInspectionEvents(companyId, "open"),
+    enabled: Boolean(companyId),
+  });
+
+  const followUpMutation = useMutation({
+    mutationFn: (payload: { id: string; state: "reviewed" | "citation" | "clean" }) =>
+      followUpDotInspectionEvent(payload.id, companyId, payload.state),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["safety", "dot-inspection-events", companyId] });
+    },
+  });
 
   return (
     <div className="space-y-3">
@@ -149,6 +165,52 @@ export function DOTInspectionsTab() {
             ) : null}
           </tbody>
         </table>
+      </div>
+
+      <div className="rounded-sm border border-gray-200 bg-white p-3">
+        <h3 className="mb-2 text-xs font-semibold text-slate-800">Open DOT Station Dwell Events (last captured)</h3>
+        {(openEventsQuery.data?.events ?? []).length === 0 ? (
+          <p className="text-xs text-slate-500">No open DOT dwell follow-ups.</p>
+        ) : (
+          <div className="space-y-2">
+            {(openEventsQuery.data?.events ?? []).slice(0, 20).map((row) => (
+              <div key={String(row.id)} className="rounded-sm border border-gray-200 p-2 text-xs">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-semibold text-slate-800">
+                    {String(row.station_label ?? "DOT station")} · Unit {String(row.unit_number ?? "—")}
+                  </span>
+                  <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-slate-700">{String(row.dwell_minutes ?? 0)} min</span>
+                </div>
+                <p className="mt-1 text-slate-600">
+                  Driver: {String(row.driver_name ?? "Unknown")} · Departed: {String(row.departed_at ?? "n/a")}
+                </p>
+                <div className="mt-2 flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="rounded-sm bg-[#1f2a44] px-2 py-1 text-[11px] font-semibold text-white"
+                    onClick={() => followUpMutation.mutate({ id: String(row.id), state: "reviewed" })}
+                  >
+                    Mark Reviewed
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-sm bg-red-700 px-2 py-1 text-[11px] font-semibold text-white"
+                    onClick={() => followUpMutation.mutate({ id: String(row.id), state: "citation" })}
+                  >
+                    Mark Citation
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-sm bg-[#1f2a44] px-2 py-1 text-[11px] font-semibold text-white hover:bg-[#0f1729]"
+                    onClick={() => followUpMutation.mutate({ id: String(row.id), state: "clean" })}
+                  >
+                    Mark Clean
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

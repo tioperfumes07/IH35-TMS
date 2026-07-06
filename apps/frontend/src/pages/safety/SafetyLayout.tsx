@@ -4,6 +4,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { getUserPreferences, patchUserPreferences } from "../../api/safety";
+import { AnomalyAlertBadge } from "../../components/safety/AnomalyAlertBadge";
 import { SAFETY_ALIAS_TABS, SAFETY_GROUPS, findSafetyTab } from "../../components/safety/SAFETY_TABS_CONFIG";
 import {
   SafetyDashboardFilter,
@@ -11,6 +12,7 @@ import {
   type SafetyDriverFilter,
 } from "../../components/safety/SafetyDashboardFilter";
 import { SafetyGroupNav } from "../../components/safety/SafetyGroupNav";
+import { useCompanyContext } from "../../contexts/CompanyContext";
 
 type SafetyUiContextValue = {
   filter: SafetyDriverFilter;
@@ -39,6 +41,7 @@ export function useSafetyUiContext() {
 export function SafetyLayout() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { selectedCompanyId } = useCompanyContext();
   const [filter, setFilter] = useState<SafetyDriverFilter>("active");
   const [activityWindow, setActivityWindow] = useState<SafetyActivityWindow>("7d");
   const [shownDrivers, setShownDrivers] = useState(0);
@@ -135,7 +138,10 @@ export function SafetyLayout() {
             </div>
             <h2 className="text-xl font-semibold text-slate-900">Safety</h2>
           </div>
-          <div className="text-xs text-slate-500">Compliance · inspections · discipline · liability · alerts</div>
+          <div className="flex items-center gap-2">
+            <div className="text-xs text-slate-500">Compliance · inspections · discipline · liability · alerts</div>
+            <AnomalyAlertBadge operatingCompanyId={selectedCompanyId ?? ""} />
+          </div>
         </div>
 
         <SafetyDashboardFilter
