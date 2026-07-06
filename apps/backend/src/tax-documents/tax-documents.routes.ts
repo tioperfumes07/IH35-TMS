@@ -58,7 +58,7 @@ async function flagGate(client: Queryable, companyId: string, userId: string, re
 export async function registerTaxDocumentRoutes(app: FastifyInstance) {
   // Read-only preview of the annual Box-1 aggregation — no writes, safe to check even while
   // the flag is being evaluated by the owner/CPA (still 409s if OFF, per the flag's own contract).
-  app.get("/api/v1/tax-documents/1099-nec/box1-preview", async (req, reply) => {
+  app.get("/api/v1/tax-documents/1099-nec/box1-preview", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const query = taxYearQuery.safeParse(req.query ?? {});
@@ -78,7 +78,7 @@ export async function registerTaxDocumentRoutes(app: FastifyInstance) {
   // one accounting.tax_document + accounting.form_1099_nec DRAFT row per US-person driver whose
   // Box-1 comp meets/exceeds the year-keyed threshold. Never issues — issuance is a separate,
   // explicit action (kept apart from generation so a draft can be reviewed first).
-  app.post("/api/v1/tax-documents/1099-nec/generate-batch", async (req, reply) => {
+  app.post("/api/v1/tax-documents/1099-nec/generate-batch", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const body = taxYearQuery.safeParse({ ...(req.query as object), ...(req.body as object) });
@@ -144,8 +144,8 @@ export async function registerTaxDocumentRoutes(app: FastifyInstance) {
         }
 
         const driverRes = await client.query<{ first_name: string; last_name: string }>(
-          `SELECT first_name, last_name FROM mdata.drivers WHERE id = $1 LIMIT 1`,
-          [row.driver_id]
+          `SELECT first_name, last_name FROM mdata.drivers WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+          [row.driver_id, body.data.operating_company_id]
         );
         const driver = driverRes.rows[0];
 
@@ -223,7 +223,7 @@ export async function registerTaxDocumentRoutes(app: FastifyInstance) {
 
   // Renders the PDF for one draft form_1099_nec, archives it to R2/docs.files (never overwrites
   // an already-issued document — immutability is also DB-trigger-enforced, this is belt+suspenders).
-  app.post("/api/v1/tax-documents/1099-nec/:id/render-pdf", async (req, reply) => {
+  app.post("/api/v1/tax-documents/1099-nec/:id/render-pdf", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const params = idParams.safeParse(req.params ?? {});

@@ -379,6 +379,16 @@
       "schema": "public",
       "table": "audit_log_2027_12",
       "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "reference",
+      "table": "ifta_tax_rates",
+      "reason": "global IFTA quarterly per-jurisdiction diesel tax-rate catalog (source: iftach.org); identical across every carrier entity — no per-entity variation in the published tax rates"
+    },
+    {
+      "schema": "reference",
+      "table": "non_ifta_jurisdictions",
+      "reason": "global static list of non-IFTA jurisdictions (Mexican states) this carrier's lanes cross; a universal reference catalog, not per-entity business data"
     }
   ],
   "remediation_backlog": [
@@ -1197,6 +1207,12 @@
       "table": "unit_period",
       "reason": "needs FK from 'operating_company_id' to org.companies(id)",
       "phase": "P4"
+    },
+    {
+      "schema": "ifta",
+      "table": "personal_conveyance_miles_by_quarter",
+      "reason": "entity-scoped transitively via preparation_id → ifta.quarterly_preparations.operating_company_id (same pattern as state_miles_by_quarter / state_gallons_by_quarter / state_tax_by_quarter); no direct scoping column — BLOCK-03 additive table, P1 backlog parity with sibling ifta.* tables",
+      "phase": "P1"
     }
   ]
 }
