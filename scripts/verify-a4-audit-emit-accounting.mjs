@@ -2,6 +2,11 @@
 /**
  * verify-a4-audit-emit-accounting.mjs
  * Assert that accounting mutations emit spine events via emitAccountingSpineEvent calling events.log_event().
+ *
+ * 2026-07 (audit-spine-emit-silent-failures): "bill_payment.voided" / "customer_payment.created" had
+ * an underscore BEFORE the dot, violating the letters-only-noun half of events.event_log's
+ * `valid_event_type` CHECK (`^[a-z]+\.[a-z_]+$`) on every emit — same root cause as the banking fix
+ * in this PR, found alongside it. Renamed to "payment.bill_voided" / "payment.customer_created".
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -30,10 +35,10 @@ else pass("accounting-spine-emit.ts does not bypass log_event()");
 // 2. Per-file event coverage
 const checks = [
   { file: "apps/backend/src/accounting/invoices.routes.ts", events: ["invoice.created", "invoice.updated", "invoice.sent", "invoice.voided"] },
-  { file: "apps/backend/src/accounting/bills.routes.ts", events: ["bill.created", "bill.paid", "bill.voided", "bill_payment.voided"] },
+  { file: "apps/backend/src/accounting/bills.routes.ts", events: ["bill.created", "bill.paid", "bill.voided", "payment.bill_voided"] },
   { file: "apps/backend/src/accounting/expenses.routes.ts", events: ["expense.created", "expense.reattributed"] },
   { file: "apps/backend/src/accounting/payments.routes.ts", events: ["payment.created", "payment.voided"] },
-  { file: "apps/backend/src/accounting/customer-payments.routes.ts", events: ["customer_payment.created"] },
+  { file: "apps/backend/src/accounting/customer-payments.routes.ts", events: ["payment.customer_created"] },
 ];
 
 for (const { file, events } of checks) {
@@ -53,14 +58,30 @@ for (const { file, events } of checks) {
 // 3. Union must cover all expected types
 const allEvents = [
   "invoice.created", "invoice.updated", "invoice.sent", "invoice.voided",
-  "bill.created", "bill.paid", "bill.voided", "bill_payment.voided", "bill.allocated",
+  "bill.created", "bill.paid", "bill.voided", "payment.bill_voided", "bill.allocated",
   "expense.created", "expense.reattributed",
   "payment.created", "payment.voided",
-  "customer_payment.created",
+  "payment.customer_created",
 ];
 for (const ev of allEvents) {
   if (!helperSrc.includes(`"${ev}"`)) fail(`AccountingSpineEvent union missing "${ev}"`);
   else pass(`AccountingSpineEvent union includes "${ev}"`);
+}
+
+// 4. Regression guard: every declared AccountingSpineEvent literal must satisfy events.event_log's
+// `valid_event_type` CHECK exactly (db/migrations/202606111050_w1a_event_log_spine.sql) so an
+// underscore-before-the-dot (or any other CHECK violation) can't be silently reintroduced.
+const VALID_EVENT_TYPE = /^[a-z]+\.[a-z_]+$/;
+const unionBlockMatch = helperSrc.match(/export type AccountingSpineEvent =([\s\S]*?);/);
+if (!unionBlockMatch) {
+  fail("could not locate AccountingSpineEvent union block to regex-validate");
+} else {
+  const literals = [...unionBlockMatch[1].matchAll(/\|\s*"([^"]+)"/g)].map((m) => m[1]);
+  if (literals.length === 0) fail("AccountingSpineEvent union block had no string literals");
+  for (const lit of literals) {
+    if (!VALID_EVENT_TYPE.test(lit)) fail(`AccountingSpineEvent "${lit}" violates events.event_log valid_event_type CHECK (^[a-z]+\\.[a-z_]+$)`);
+    else pass(`AccountingSpineEvent "${lit}" satisfies valid_event_type CHECK`);
+  }
 }
 
 if (failed) { console.error("\n[verify-a4] FAILED"); process.exit(1); }

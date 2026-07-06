@@ -76,7 +76,7 @@ export async function registerBankingTransfersRoutes(app: FastifyInstance) {
         emitBankingSpineEvent(client, {
           operating_company_id: body.data.operating_company_id,
           actor_user_id: String(user.uuid),
-          event_type: "banking.transfer.created",
+          event_type: "transfer.created",
           entity_id: (transfer as { id?: string })?.id ?? "",
           entity_type: "transfer",
           source_table: "banking.transfers",
@@ -131,7 +131,7 @@ export async function registerBankingTransfersRoutes(app: FastifyInstance) {
         emitBankingSpineEvent(client, {
           operating_company_id: body.data.operating_company_id,
           actor_user_id: String(user.uuid),
-          event_type: "banking.cc_payment.created",
+          event_type: "ccpayment.created",
           entity_id: (transfer as { id?: string })?.id ?? "",
           entity_type: "transfer",
           source_table: "banking.transfers",
@@ -211,7 +211,7 @@ export async function registerBankingTransfersRoutes(app: FastifyInstance) {
         emitBankingSpineEvent(client, {
           operating_company_id: query.data.operating_company_id,
           actor_user_id: String(user.uuid),
-          event_type: "banking.transfer.revoked",
+          event_type: "transfer.revoked",
           entity_id: params.data.id,
           entity_type: "transfer",
           source_table: "banking.transfers",

@@ -1,8 +1,14 @@
 import { randomUUID } from "crypto";
+import { logger } from "../observability/structured-logger.js";
 
 type DbClient = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
 };
+
+// events.event_log's `valid_subject_type` CHECK allowlist (db/migrations/202606111050_w1a_event_log_spine.sql).
+const VALID_SUBJECT_TYPES = new Set([
+  "load", "driver", "unit", "geofence", "document", "assignment", "status", "broker", "task", "alert",
+]);
 
 export type AccountingSpineEvent =
   | "invoice.created"
@@ -12,13 +18,19 @@ export type AccountingSpineEvent =
   | "bill.created"
   | "bill.paid"
   | "bill.voided"
-  | "bill_payment.voided"
+  // BUG FIX (audit-spine-emit-silent-failures, found alongside the 3 tracked defects): the noun half
+  // of events.event_log's valid_event_type CHECK (letters-only, no underscore, exactly one dot before
+  // the action) was previously violated here: the old bill-payment-voided / customer-payment-created
+  // event types both had an underscore BEFORE the dot, so every emit unconditionally violated the
+  // CHECK — same root cause as the banking fix in this PR. Renamed to keep the underscore only in the
+  // action half (after the dot).
+  | "payment.bill_voided"
   | "bill.allocated"
   | "expense.created"
   | "expense.reattributed"
   | "payment.created"
   | "payment.voided"
-  | "customer_payment.created"
+  | "payment.customer_created"
   // FIN-18 (appended additively): driver settlement + bucketed-deduction GL posting events.
   // subject_type='driver' is within the events.event_log allowlist (verified live).
   | "settlement.posted"
@@ -43,26 +55,52 @@ export async function emitAccountingSpineEvent(
   }
 ): Promise<void> {
   const correlationId = opts.correlation_id ?? randomUUID();
-  // DISTINCT placeholders for entity_id used as text (subject_id $5) vs ::uuid (source_reference_id $10):
-  // reusing one $n as BOTH text and ::uuid makes Postgres fail "inconsistent types deduced for parameter".
-  await client.query(
-    `SELECT events.log_event(
-      $1, $2, 'user', $3, $4, $5, $6, now(), 'accounting',
-      $7, $10::uuid, $8::uuid, $9::uuid
-    )`,
-    [
-      opts.operating_company_id,
-      opts.event_type,
-      opts.actor_user_id,
-      opts.entity_type,
-      opts.entity_id,
-      JSON.stringify(opts.payload ?? {}),
-      opts.source_table,
-      opts.actor_user_id,
-      correlationId,
-      opts.entity_id,
-    ]
-  );
+  // BUG FIX (invalid subject_type, found while root-causing the 3 tracked audit-spine-emit-silent-failures
+  // defects and PROVING each fix against a real local DB): `entity_type` was bound directly to
+  // p_subject_type, but call sites pass free-form values ("invoice", "bill", "bill_payment", "expense",
+  // "payment", "customer_payment") that are NOT members of events.event_log's valid_subject_type
+  // allowlist — those emits would still have failed even after the event_type rename above. ("driver" /
+  // "unit", used by the FIN-18/FIN-21/FIN-22 blocks, ARE allowlisted, per the comments already on those
+  // union members — left untouched.) Fix: use entity_type as subject_type only when it's a valid member,
+  // otherwise fall back to 'task' (the same allowed bucket maintenance-spine-emit.ts /
+  // driver-request-spine-emit.ts already use for process/action-lifecycle events with no bespoke
+  // subject_type). entity_type itself is never dropped — it's carried in payload.entity_type either way.
+  const subjectType = VALID_SUBJECT_TYPES.has(opts.entity_type) ? opts.entity_type : "task";
+  try {
+    // DISTINCT placeholders for entity_id used as text (subject_id $5) vs ::uuid (source_reference_id $8):
+    // reusing one $n as BOTH text and ::uuid makes Postgres fail "inconsistent types deduced for parameter".
+    await client.query(
+      `SELECT events.log_event(
+        $1, $2, 'user', $3, $4, $5, $6, now(), 'accounting',
+        $7, $8::uuid, $9::uuid, $10::uuid
+      )`,
+      [
+        opts.operating_company_id,
+        opts.event_type,
+        opts.actor_user_id,
+        subjectType,
+        opts.entity_id,
+        JSON.stringify({ entity_type: opts.entity_type, ...(opts.payload ?? {}) }),
+        opts.source_table,
+        opts.entity_id,
+        opts.actor_user_id,
+        correlationId,
+      ]
+    );
+  } catch (err) {
+    // Non-silent by construction — see banking-spine-emit.ts for the same rationale: log at the true
+    // source of failure regardless of caller-side error handling; log-then-rethrow keeps this
+    // non-blocking for fire-and-forget callers while preserving fail-loud semantics for any awaited caller
+    // (e.g. the in-transaction settlement/amortization/lease posting services).
+    logger.error("spine_emit_accounting_failed", err, {
+      event_type: opts.event_type,
+      entity_type: opts.entity_type,
+      entity_id: opts.entity_id,
+      company_id: opts.operating_company_id,
+      correlation_id: correlationId,
+    });
+    throw err;
+  }
 }
 
 /**

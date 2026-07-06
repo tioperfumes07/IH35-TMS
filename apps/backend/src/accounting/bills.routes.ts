@@ -349,7 +349,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
         emitAccountingSpineEvent(client, {
           operating_company_id: query.data.operating_company_id,
           actor_user_id: String(user.uuid),
-          event_type: "bill_payment.voided",
+          event_type: "payment.bill_voided",
           entity_id: params.data.id,
           entity_type: "bill_payment",
           source_table: "accounting.bill_payments",
