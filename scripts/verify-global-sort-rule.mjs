@@ -45,6 +45,8 @@ const EXEMPT_COLUMN_KEYS = new Set([
   "controls",
   "_actions",
   "row_actions",
+  // Duplicate-format display of an already-sortable column (see GLOBAL-SORT-RULE.md registry).
+  "idle_time",
 ]);
 
 /** File globs to skip entirely. */
