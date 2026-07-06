@@ -145,10 +145,15 @@ export async function finalizeRun(client: PoolClient, opco: string, runId: strin
 
 // events.log_event whitelists subject_type — 'recon' is not allowed, so recon events ride under 'alert'
 // (a recon exception/run is an operational alert). actor 'system' for scheduled runs.
+// event_log.actor_id is UUID NOT NULL — when no human actor is present (system/cron runs) we use the
+// shared system-actor sentinel, which is the same sentinel used by journal-entry-qbo-push and
+// factoring-posting crons (SYSTEM_ACTOR_USER_ID env, defaulting to 00000000-0000-4000-8000-000000000001).
+const RECON_SYSTEM_ACTOR_ID = process.env.SYSTEM_ACTOR_USER_ID ?? "00000000-0000-4000-8000-000000000001";
 async function logReconEvent(client: PoolClient, opco: string, eventType: string, actorId: string | null, subjectId: string, payload: Record<string, unknown>): Promise<void> {
+  const effectiveActorId = actorId ?? RECON_SYSTEM_ACTOR_ID;
   await client.query(
     `SELECT events.log_event($1::uuid,$2,$3,$4::uuid,'alert',$5::uuid,$6::jsonb)`,
-    [opco, eventType, actorId ? "user" : "system", actorId, subjectId, JSON.stringify(payload)],
+    [opco, eventType, actorId ? "user" : "system", effectiveActorId, subjectId, JSON.stringify(payload)],
   );
 }
 
