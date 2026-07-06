@@ -17,10 +17,14 @@ const GOV_ROUTES = "apps/backend/src/governance/void-cancel-requests.routes.ts";
 
 // G9-C3: every financial VOID endpoint must route through the shared executor guard OUTSIDE any feature
 // flag (anyone could void these before). Each entry is a route file + the void route path it must guard.
+// VOID-EVERYWHERE PR-3 added the bill-payment void route — it previously hand-rolled a bare
+// `role !== "Owner"` check (narrower AND off-policy: the locked executor set is Owner|Administrator|
+// Accountant); this guard now pins it to requireVoidCancelExecutor so that regression can't return.
 const FINANCIAL_VOID_ROUTES = [
   { rel: "apps/backend/src/accounting/payments.routes.ts", route: "/api/v1/accounting/payments/:id/void" },
   { rel: "apps/backend/src/accounting/invoices.routes.ts", route: "/api/v1/accounting/invoices/:id/void" },
   { rel: "apps/backend/src/accounting/factoring-advances.routes.ts", route: "/api/v1/accounting/factoring-advances/:id/void" },
+  { rel: "apps/backend/src/accounting/bills.routes.ts", route: "/api/v1/accounting/bill-payments/:id/void" },
 ];
 
 function read(rel) {
@@ -108,8 +112,8 @@ export default {
 
     console.log(
       "verify-void-cancel-authz OK — void/cancel is centralized on canVoidCancel (Owner|Administrator|Accountant), " +
-        "the 3 financial void endpoints (payments/invoices/factoring-advances) gate through requireVoidCancelExecutor " +
-        "outside any feature flag, and the governance approve route blocks self-approval."
+        "the 4 financial void endpoints (payments/invoices/factoring-advances/bill-payments) gate through " +
+        "requireVoidCancelExecutor outside any feature flag, and the governance approve route blocks self-approval."
     );
   },
 };
