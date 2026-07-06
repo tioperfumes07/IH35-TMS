@@ -9,6 +9,14 @@
       "reason": "Owner data migration tool; not in module subnav"
     },
     {
+      "path": "/admin/launch-readiness",
+      "reason": "Owner USMCA launch-readiness dashboard (OwnerAdminRoute); flyout deep link, not a module subnav"
+    },
+    {
+      "path": "/admin/qbo-vendor-linkage",
+      "reason": "Owner QBO driver/unit vendor-class linkage tool (OwnerAdminRoute); flyout deep link, not a module subnav"
+    },
+    {
       "path": "/admin/carrier-bootstrap",
       "reason": "Owner USMCA hidden-carrier bootstrap (Wave 19 USMCA-2)"
     },
@@ -265,6 +273,14 @@
     {
       "path": "/integrations/samsara",
       "reason": "Owner integration page \u2014 not in subnav"
+    },
+    {
+      "path": "/integrations/edi",
+      "reason": "Owner EDI partner setup wizard (OwnerOnlyRoute) \u2014 not in subnav, same pattern as /integrations/samsara"
+    },
+    {
+      "path": "/integrations/edi/transaction-log",
+      "reason": "Owner EDI transaction log (OwnerOnlyRoute) \u2014 not in subnav, same pattern as /integrations/samsara"
     },
     {
       "path": "/samsara/vendor-mapping-integrity",
