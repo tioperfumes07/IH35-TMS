@@ -11,6 +11,14 @@ const ListsHubPage = React.lazy(() => import("../pages/lists/ListsHubPage").then
 const ProgramBoardPage = React.lazy(() => import("../pages/program/ProgramBoardPage").then((m) => ({ default: m.ProgramBoardPage })));
 const FinalAdditionsPage = React.lazy(() => import("../pages/program/FinalAdditionsPage").then((m) => ({ default: m.FinalAdditionsPage })));
 const DomainCatalogHubPage = React.lazy(() => import("../pages/lists/DomainCatalogHubPage").then((m) => ({ default: m.DomainCatalogHubPage })));
+// CATALOG-2 — factory-backed generic catalog CRUD (registry-driven, additive to the hand-rolled
+// per-catalog list pages). Distinct route namespace (/lists/catalogs/...) so it never collides with
+// an existing hand-rolled catalog route (e.g. /lists/fleet/equipment-types stays on its own page).
+const CatalogIndex = React.lazy(() => import("../pages/lists/CatalogIndex").then((m) => ({ default: m.CatalogIndex })));
+const GenericCatalogPage = React.lazy(() => import("../pages/lists/GenericCatalogPage").then((m) => ({ default: m.GenericCatalogPage })));
+// CLOSURE-10 — enhanced maintenance parts search (by manufacturer/category), additive to the
+// existing Maintenance Parts master CRUD list at /lists/maintenance/parts.
+const MaintenancePartsCatalog = React.lazy(() => import("../pages/lists/MaintenancePartsCatalog").then((m) => ({ default: m.MaintenancePartsCatalog })));
 const DetailTypesListPage = React.lazy(() => import("../pages/lists/accounting/DetailTypesListPage").then((m) => ({ default: m.DetailTypesListPage })));
 const NamesMasterHub = React.lazy(() => import("../pages/lists/names/NamesMasterHub").then((m) => ({ default: m.NamesMasterHub })));
 const BrokersListPage = React.lazy(() => import("../pages/lists/names/BrokersListPage").then((m) => ({ default: m.BrokersListPage })));
@@ -215,6 +223,18 @@ const AuditFinancialChangeLogPage = React.lazy(() => import("../pages/reports/au
 const AuditMaintenanceDecisionLogPage = React.lazy(() => import("../pages/reports/audit/AuditMaintenanceDecisionLogPage").then((m) => ({ default: m.AuditMaintenanceDecisionLogPage })));
 const AuditDeductionTrailPage = React.lazy(() => import("../pages/reports/audit/AuditDeductionTrailPage").then((m) => ({ default: m.AuditDeductionTrailPage })));
 const AuditVoidReversalPage = React.lazy(() => import("../pages/reports/audit/AuditVoidReversalPage").then((m) => ({ default: m.AuditVoidReversalPage })));
+const ReportsHubPage = React.lazy(() => import("../pages/reports/ReportsHub").then((m) => ({ default: m.ReportsHubPage })));
+const OpsDispatchCategoryPage = React.lazy(() => import("../pages/reports/categories/ops-dispatch").then((m) => ({ default: m.OpsDispatchCategoryPage })));
+const DriverPerfCategoryPage = React.lazy(() => import("../pages/reports/categories/driver-perf").then((m) => ({ default: m.UdriverUperfCategoryPage })));
+const EquipmentCategoryPage = React.lazy(() => import("../pages/reports/categories/equipment").then((m) => ({ default: m.UequipmentCategoryPage })));
+const SafetyCategoryPage = React.lazy(() => import("../pages/reports/categories/safety").then((m) => ({ default: m.UsafetyCategoryPage })));
+const CustomersCategoryPage = React.lazy(() => import("../pages/reports/categories/customers").then((m) => ({ default: m.UcustomersCategoryPage })));
+const VendorsCategoryPage = React.lazy(() => import("../pages/reports/categories/vendors").then((m) => ({ default: m.UvendorsCategoryPage })));
+const AccountingCategoryPage = React.lazy(() => import("../pages/reports/categories/accounting").then((m) => ({ default: m.UaccountingCategoryPage })));
+const TaxRegCategoryPage = React.lazy(() => import("../pages/reports/categories/tax-reg").then((m) => ({ default: m.UtaxUregCategoryPage })));
+const MultiCompanyCategoryPage = React.lazy(() => import("../pages/reports/categories/multi-company").then((m) => ({ default: m.UmultiUcompanyCategoryPage })));
+const ScheduledReportsPage = React.lazy(() => import("../pages/reports/ScheduledReportsPage").then((m) => ({ default: m.ScheduledReportsPage })));
+const Form425CExhibitsViewer = React.lazy(() => import("../pages/reports/form-425c/ExhibitsViewer").then((m) => ({ default: m.ExhibitsViewer })));
 const AuditPeriodCloseHistoryPage = React.lazy(() => import("../pages/reports/audit/AuditPeriodCloseHistoryPage").then((m) => ({ default: m.AuditPeriodCloseHistoryPage })));
 const QboSyncDetailPage = React.lazy(() => import("../pages/qbo-sync-detail/QboSyncDetailPage").then((m) => ({ default: m.QboSyncDetailPage })));
 const InvoicesListPage = React.lazy(() => import("../pages/accounting/InvoicesListPage").then((m) => ({ default: m.InvoicesListPage })));
@@ -281,6 +301,7 @@ const PreFlightDvirQueue = React.lazy(() => import("../pages/maintenance/pre-fli
 const TireWearDashboard = React.lazy(() => import("../pages/maintenance/tires/TireWearDashboard").then((m) => ({ default: m.TireWearDashboard })));
 const LateArrivalReport = React.lazy(() => import("../pages/reports/LateArrivalReport").then((m) => ({ default: m.LateArrivalReport })));
 const CSAMitigationQueuePage = React.lazy(() => import("../pages/safety/CSAMitigationQueue").then((m) => ({ default: m.CSAMitigationQueuePage })));
+const CSAFmcsaTrendPage = React.lazy(() => import("../pages/safety/CSAScore").then((m) => ({ default: m.CSAScorePage })));
 const AnomalyAlertsPage = React.lazy(() => import("../pages/safety/anomaly/AnomalyAlertsPage").then((m) => ({ default: m.AnomalyAlertsPage })));
 const PhotoComparisonPage = React.lazy(() => import("../pages/safety/photo-comparison/PhotoComparisonPage").then((m) => ({ default: m.PhotoComparisonPage })));
 const SessionDetailPage = React.lazy(() => import("../pages/safety/photo-comparison/SessionDetailPage").then((m) => ({ default: m.SessionDetailPage })));
@@ -1405,6 +1426,7 @@ export const ROUTES = React.Children.toArray(
           <Route path="/safety/position-history" element={<PositionHistoryPage />} />
           <Route path="/safety/integrity-alerts" element={<IntegrityAlertsTab />} />
           <Route path="/safety/csa-mitigation" element={<CSAMitigationQueuePage />} />
+          <Route path="/safety/csa-fmcsa-trend" element={<CSAFmcsaTrendPage />} />
           <Route path="/safety/anomaly-alerts" element={<AnomalyAlertsPage />} />
           <Route path="/safety/audit-425c" element={<Audit425cPage />} />
           <Route path="/safety/photo-comparison" element={<PhotoComparisonPage />} />
@@ -1927,6 +1949,14 @@ export const ROUTES = React.Children.toArray(
         />
         <Route path="/form-425c" element={<Navigate to="/425c" replace />} />
         <Route
+          path="/425c/exhibits"
+          element={
+            <ProtectedRoute>
+              <Form425CExhibitsViewer />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/work-orders"
           element={
             <ProtectedRoute>
@@ -2171,6 +2201,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <OemPartsCatalog />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/maintenance/parts-catalog"
+          element={
+            <ProtectedRoute>
+              <MaintenancePartsCatalog />
             </ProtectedRoute>
           }
         />
@@ -2618,6 +2656,24 @@ export const ROUTES = React.Children.toArray(
             path is kept, never deleted) to the canonical Chart of Accounts page shipped in #1793. This
             explicit route is declared BEFORE /lists/:domain so it wins the match. */}
         <Route path="/lists/chart-of-accounts" element={<Navigate replace to="/lists/accounting/chart-of-accounts" />} />
+        {/* CATALOG-2 factory index + dynamic catalog page — registered BEFORE /lists/:domain(/:catalogKey)
+            so the literal "catalogs" segment always wins over the dynamic domain catch-all. */}
+        <Route
+          path="/lists/catalogs"
+          element={
+            <ProtectedRoute>
+              <CatalogIndex />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/catalogs/:domain/:catalogKey"
+          element={
+            <ProtectedRoute>
+              <GenericCatalogPage />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/lists/:domain"
           element={
@@ -2943,6 +2999,94 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <SubscriptionManager />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/scheduled-custom"
+          element={
+            <ProtectedRoute>
+              <ScheduledReportsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/hub"
+          element={
+            <ProtectedRoute>
+              <ReportsHubPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/categories/ops-dispatch"
+          element={
+            <ProtectedRoute>
+              <OpsDispatchCategoryPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/categories/driver-perf"
+          element={
+            <ProtectedRoute>
+              <DriverPerfCategoryPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/categories/equipment"
+          element={
+            <ProtectedRoute>
+              <EquipmentCategoryPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/categories/safety"
+          element={
+            <ProtectedRoute>
+              <SafetyCategoryPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/categories/customers"
+          element={
+            <ProtectedRoute>
+              <CustomersCategoryPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/categories/vendors"
+          element={
+            <ProtectedRoute>
+              <VendorsCategoryPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/categories/accounting"
+          element={
+            <ProtectedRoute>
+              <AccountingCategoryPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/categories/tax-reg"
+          element={
+            <ProtectedRoute>
+              <TaxRegCategoryPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/categories/multi-company"
+          element={
+            <ProtectedRoute>
+              <MultiCompanyCategoryPage />
             </ProtectedRoute>
           }
         />

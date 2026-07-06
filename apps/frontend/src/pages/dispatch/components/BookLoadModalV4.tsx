@@ -1273,8 +1273,8 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                     advisory registry checks), distinct from the physical-readiness checks above. */}
                 <AuthGatePanel
                   operatingCompanyId={operatingCompanyId}
-                  action="book_load"
-                  loadUuid={isEditMode ? editLoadId ?? undefined : undefined}
+                  action={isEditMode ? "assign_driver" : "book_load"}
+                  loadUuid={editLoadId || undefined}
                   unitUuid={assignedUnitId || undefined}
                   driverUuid={assignedPrimaryDriverId || undefined}
                   trailerUuid={assignedTrailerUnitId || undefined}

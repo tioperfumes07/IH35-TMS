@@ -11,8 +11,9 @@ import {
 } from "../../../api/safetyV64";
 import { IntegrityAlertsPage } from "../IntegrityAlertsPage";
 import { DriverVendorMappingTab } from "../integrity-reports/DriverVendorMappingTab";
+import { AnomaliesTab } from "./AnomaliesTab";
 
-type SubTab = "wo-cost" | "fuel-mpg" | "driver-dwell" | "hos-pattern" | "driver-vendor" | "active-alerts";
+type SubTab = "wo-cost" | "fuel-mpg" | "driver-dwell" | "hos-pattern" | "driver-vendor" | "active-alerts" | "anomalies";
 
 export function IntegrityReportsTab() {
   const { selectedCompanyId } = useCompanyContext();
@@ -83,6 +84,7 @@ export function IntegrityReportsTab() {
             { id: "hos-pattern", label: "HOS Pattern Breaks" },
             { id: "driver-vendor", label: "Driver-Vendor Mapping" },
             { id: "active-alerts", label: "Active Alerts" },
+            { id: "anomalies", label: "Anomalies" },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -96,6 +98,37 @@ export function IntegrityReportsTab() {
           ))}
         </div>
         <IntegrityAlertsPage operatingCompanyId={companyId} />
+      </div>
+    );
+  }
+
+  if (subTab === "anomalies") {
+    return (
+      <div className="space-y-3" data-testid="integrity-reports-anomalies">
+        <div className="flex flex-wrap gap-2">
+          {[
+            { id: "wo-cost", label: "WO Cost Outliers" },
+            { id: "fuel-mpg", label: "Fuel MPG Anomalies" },
+            { id: "driver-dwell", label: "Driver Dwell Outliers" },
+            { id: "hos-pattern", label: "HOS Pattern Breaks" },
+            { id: "driver-vendor", label: "Driver-Vendor Mapping" },
+            { id: "active-alerts", label: "Active Alerts" },
+            { id: "anomalies", label: "Anomalies" },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              className="rounded-sm border px-3 py-1 text-xs font-semibold"
+              style={subTab === tab.id ? { background: "#1f2a44", borderColor: "#1f2a44", color: "white" } : { background: "white", borderColor: "#cbd5e1", color: "#334155" }}
+              onClick={() => setSubTab(tab.id as SubTab)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        {/* Detector/rule-engine based anomaly review inbox (ack/resolve/dismiss + audit trail) —
+            a separate, more advanced engine (safety.anomalies) than the Active Alerts rule table above. */}
+        <AnomaliesTab />
       </div>
     );
   }
@@ -114,6 +147,7 @@ export function IntegrityReportsTab() {
           { id: "hos-pattern", label: "HOS Pattern Breaks" },
           { id: "driver-vendor", label: "Driver-Vendor Mapping" },
             { id: "active-alerts", label: "Active Alerts" },
+            { id: "anomalies", label: "Anomalies" },
         ].map((tab) => (
           <button
             key={tab.id}

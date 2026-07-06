@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createForm425CReport,
@@ -297,9 +298,14 @@ export function Form425CHome() {
 
   return (
     <div className="min-h-screen bg-slate-100" data-form425c-page="true">
-      <div className="bg-linear-to-r from-slate-900 to-slate-400 px-5 py-3 text-white">
-        <div className="text-lg font-extrabold">IH 35 GROUP</div>
-        <div className="text-xs opacity-75">Official Form 425C — Monthly Operating Report System</div>
+      <div className="flex items-center justify-between gap-2 bg-linear-to-r from-slate-900 to-slate-400 px-5 py-3 text-white">
+        <div>
+          <div className="text-lg font-extrabold">IH 35 GROUP</div>
+          <div className="text-xs opacity-75">Official Form 425C — Monthly Operating Report System</div>
+        </div>
+        <Link to="/425c/exhibits" className="shrink-0 text-xs font-semibold text-white hover:underline">
+          Exhibits A–F →
+        </Link>
       </div>
 
       <SecondaryNavTabs
