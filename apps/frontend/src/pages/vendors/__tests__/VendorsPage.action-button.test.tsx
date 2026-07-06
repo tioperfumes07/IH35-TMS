@@ -13,6 +13,11 @@ const listBillsMock = vi.fn();
 
 vi.mock("../../../api/mdata", () => ({
   listVendors: (...args: unknown[]) => listVendorsMock(...args),
+  listPaymentTermOptions: vi.fn().mockResolvedValue({ payment_terms: [] }),
+}));
+
+vi.mock("../../../api/catalog-accounts", () => ({
+  listCatalogAccounts: vi.fn().mockResolvedValue({ accounts: [] }),
 }));
 
 vi.mock("../../../api/accounting", () => ({

@@ -35,6 +35,10 @@ const factoringRecourseTypeSchema = z.enum(["recourse", "non_recourse"]);
 const qualityOverallFlagSchema = z.enum(["preferred", "standard", "caution", "avoid"]);
 const creditLimitSourceSchema = z.enum(["factor", "manual", "rmis_future"]);
 const layoverCurrencySchema = z.enum(["USD", "MXN", "CAD"]);
+// VENDOR-CUSTOMER-QBO-PARITY: QBO field-parity enums (migration 202607110230, HELD).
+const preferredPaymentMethodSchema = z.enum(["check", "ach", "credit_card", "cash", "other"]);
+const preferredDeliveryMethodSchema = z.enum(["email", "print", "none"]);
+const preferredLanguageSchema = z.enum(["en", "es"]);
 
 const createCustomerBodySchema = z
   .object({
@@ -90,6 +94,25 @@ const createCustomerBodySchema = z
   factoring_notes: z.string().trim().max(5000).nullable().optional(),
   quality_overall_flag: qualityOverallFlagSchema.optional(),
   quality_notes: z.string().trim().max(5000).optional(),
+  // VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD): print/Cc/Bcc + shipping address +
+  // delivery/payment/language preferences + tax-exemption + Option-B default income account.
+  print_on_invoice_name: z.string().trim().max(200).optional(),
+  cc_email: z.string().trim().email().optional(),
+  bcc_email: z.string().trim().email().optional(),
+  shipping_address_line1: z.string().trim().max(200).optional(),
+  shipping_address_line2: z.string().trim().max(200).optional(),
+  shipping_city: z.string().trim().max(100).optional(),
+  shipping_state: z.string().trim().max(50).optional(),
+  shipping_postal_code: z.string().trim().max(20).optional(),
+  shipping_country: z.string().trim().max(56).optional(),
+  shipping_same_as_billing: z.boolean().optional(),
+  preferred_payment_method: preferredPaymentMethodSchema.nullable().optional(),
+  preferred_delivery_method: preferredDeliveryMethodSchema.optional(),
+  preferred_language: preferredLanguageSchema.optional(),
+  tax_exempt: z.boolean().optional(),
+  tax_exempt_reason: z.string().trim().max(500).nullable().optional(),
+  // Option-B: recommendation-only default income account — pre-fills invoice lines, never a silent post.
+  default_income_account_id: z.string().uuid().nullable().optional(),
   })
   .refine((value) => Boolean(value.legal_name ?? value.name), { message: "legal_name is required" })
   .refine((value) => Boolean(value.customer_type), { message: "customer_type is required" });
@@ -149,6 +172,23 @@ const updateCustomerBodySchema = z
     factoring_notes: z.string().trim().max(5000).nullable().optional(),
     quality_overall_flag: qualityOverallFlagSchema.optional(),
     quality_notes: z.string().trim().max(5000).nullable().optional(),
+    // VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD): same field set as create, all nullable.
+    print_on_invoice_name: z.string().trim().max(200).nullable().optional(),
+    cc_email: z.string().trim().email().nullable().optional(),
+    bcc_email: z.string().trim().email().nullable().optional(),
+    shipping_address_line1: z.string().trim().max(200).nullable().optional(),
+    shipping_address_line2: z.string().trim().max(200).nullable().optional(),
+    shipping_city: z.string().trim().max(100).nullable().optional(),
+    shipping_state: z.string().trim().max(50).nullable().optional(),
+    shipping_postal_code: z.string().trim().max(20).nullable().optional(),
+    shipping_country: z.string().trim().max(56).nullable().optional(),
+    shipping_same_as_billing: z.boolean().optional(),
+    preferred_payment_method: preferredPaymentMethodSchema.nullable().optional(),
+    preferred_delivery_method: preferredDeliveryMethodSchema.optional(),
+    preferred_language: preferredLanguageSchema.optional(),
+    tax_exempt: z.boolean().optional(),
+    tax_exempt_reason: z.string().trim().max(500).nullable().optional(),
+    default_income_account_id: z.string().uuid().nullable().optional(),
     deactivated_at: z.string().datetime().nullable().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, { message: "at least one field is required" });
@@ -323,6 +363,22 @@ const CUSTOMER_SELECT_COLUMNS = `
   fmcsa_authority_status_at_verification,
   fmcsa_last_checked_at,
   fmcsa_check_response,
+  print_on_invoice_name,
+  cc_email,
+  bcc_email,
+  shipping_address_line1,
+  shipping_address_line2,
+  shipping_city,
+  shipping_state,
+  shipping_postal_code,
+  shipping_country,
+  shipping_same_as_billing,
+  preferred_payment_method,
+  preferred_delivery_method,
+  preferred_language,
+  tax_exempt,
+  tax_exempt_reason,
+  default_income_account_id,
   created_at,
   updated_at,
   deactivated_at,
@@ -607,6 +663,23 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
         addOptional("factoring_notes", b.factoring_notes);
         addOptional("quality_overall_flag", b.quality_overall_flag);
         addOptional("quality_notes", b.quality_notes);
+        // VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD)
+        addOptional("print_on_invoice_name", b.print_on_invoice_name);
+        addOptional("cc_email", b.cc_email);
+        addOptional("bcc_email", b.bcc_email);
+        addOptional("shipping_address_line1", b.shipping_address_line1);
+        addOptional("shipping_address_line2", b.shipping_address_line2);
+        addOptional("shipping_city", b.shipping_city);
+        addOptional("shipping_state", b.shipping_state);
+        addOptional("shipping_postal_code", b.shipping_postal_code);
+        addOptional("shipping_country", b.shipping_country);
+        addOptional("shipping_same_as_billing", b.shipping_same_as_billing ?? true);
+        addOptional("preferred_payment_method", b.preferred_payment_method);
+        addOptional("preferred_delivery_method", b.preferred_delivery_method ?? "email");
+        addOptional("preferred_language", b.preferred_language ?? "en");
+        addOptional("tax_exempt", b.tax_exempt ?? false);
+        addOptional("tax_exempt_reason", b.tax_exempt_reason);
+        addOptional("default_income_account_id", b.default_income_account_id);
         if (b.notes !== undefined || b.dba !== undefined) {
           const notesParts = [b.notes, b.dba ? `DBA: ${b.dba}` : null].filter(Boolean);
           addOptional("notes", notesParts.length > 0 ? notesParts.join("\n") : null);
@@ -909,6 +982,23 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     if ("factoring_notes" in b) add("factoring_notes", b.factoring_notes ?? null);
     if ("quality_overall_flag" in b) add("quality_overall_flag", b.quality_overall_flag);
     if ("quality_notes" in b) add("quality_notes", b.quality_notes ?? null);
+    // VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD)
+    if ("print_on_invoice_name" in b) add("print_on_invoice_name", b.print_on_invoice_name ?? null);
+    if ("cc_email" in b) add("cc_email", b.cc_email ?? null);
+    if ("bcc_email" in b) add("bcc_email", b.bcc_email ?? null);
+    if ("shipping_address_line1" in b) add("shipping_address_line1", b.shipping_address_line1 ?? null);
+    if ("shipping_address_line2" in b) add("shipping_address_line2", b.shipping_address_line2 ?? null);
+    if ("shipping_city" in b) add("shipping_city", b.shipping_city ?? null);
+    if ("shipping_state" in b) add("shipping_state", b.shipping_state ?? null);
+    if ("shipping_postal_code" in b) add("shipping_postal_code", b.shipping_postal_code ?? null);
+    if ("shipping_country" in b) add("shipping_country", b.shipping_country ?? null);
+    if ("shipping_same_as_billing" in b) add("shipping_same_as_billing", b.shipping_same_as_billing);
+    if ("preferred_payment_method" in b) add("preferred_payment_method", b.preferred_payment_method ?? null);
+    if ("preferred_delivery_method" in b) add("preferred_delivery_method", b.preferred_delivery_method);
+    if ("preferred_language" in b) add("preferred_language", b.preferred_language);
+    if ("tax_exempt" in b) add("tax_exempt", b.tax_exempt);
+    if ("tax_exempt_reason" in b) add("tax_exempt_reason", b.tax_exempt_reason ?? null);
+    if ("default_income_account_id" in b) add("default_income_account_id", b.default_income_account_id ?? null);
     if ("deactivated_at" in b) add("deactivated_at", b.deactivated_at ?? null);
     if (setParts.length === 0) return reply.code(400).send({ error: "no_fields_to_update" });
     add("updated_by_user_id", authUser.uuid);

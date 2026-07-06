@@ -16,6 +16,7 @@ import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { companyToday } from "../../../lib/businessDate";
 import { useListState } from "../../../components/list-state";
 import { formatUsdCents } from "../../../lib/money";
+import { DamageReportDetail } from "../damage-reports/DamageReportDetail";
 
 // Declarative per-incident-type field keys. The COMMON set renders for every type;
 // `typedFields` on each config adds the type-specific inputs (root-fix: one surface,
@@ -534,6 +535,12 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                   disabled={uploading}
                   onChange={(e) => void onPhotoSelected(e.target.files?.[0] ?? null)}
                 />
+              </div>
+            ) : null}
+
+            {!createMode && config.incidentType === "damage_report" && detail?.id ? (
+              <div className="mt-3">
+                <DamageReportDetail damageUuid={String(detail.id)} operatingCompanyId={operatingCompanyId} />
               </div>
             ) : null}
 

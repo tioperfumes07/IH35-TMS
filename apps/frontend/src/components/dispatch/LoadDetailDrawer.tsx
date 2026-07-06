@@ -25,6 +25,7 @@ import { FactoringTab } from "./tabs/FactoringTab";
 import { FinesDeductionsCard } from "./tabs/FinesDeductionsCard";
 import { SettlementProfitabilityCard } from "./tabs/SettlementProfitabilityCard";
 import { BookLoadModalV4 } from "../../pages/dispatch/components/BookLoadModalV4";
+import { CargoSensorTimeline } from "../../pages/dispatch/cargo-sensors/CargoSensorTimeline";
 
 type Props = {
   loadId: string | null;
@@ -41,6 +42,7 @@ const tabs = [
   "Documents",
   "Factoring",
   "Customs",
+  "Cargo Sensors",
   "Settlement",
   "Geofence Timeline",
   "Assignment History",
@@ -661,6 +663,11 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
           {/* Block 8 — Customs/border compliance tab (stub; hidden for domestic loads) */}
           {activeTab === "Customs" && load && showCustomsTab ? (
             <CustomsTab loadId={load.id} operatingCompanyId={load.operating_company_id} canEdit={canEdit} />
+          ) : null}
+
+          {/* Block 8.5 — Cargo sensor timeline tab */}
+          {activeTab === "Cargo Sensors" && load ? (
+            <CargoSensorTimeline loadId={load.id} operatingCompanyId={load.operating_company_id} />
           ) : null}
 
           {/* Block 9 — Settlement profitability card (DISP-PROFIT: wired to the real per-load

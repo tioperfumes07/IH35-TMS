@@ -174,6 +174,7 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
         { label: "DOT Inspections", to: "/safety/dot-inspections" },
         { label: "CSA Mitigation", to: "/safety/csa-mitigation" },
         { label: "Anomaly Alerts", to: "/safety/anomaly-alerts" },
+        { label: "Photo Comparison", to: "/safety/photo-comparison" },
       ];
     case "drivers":
       return [
