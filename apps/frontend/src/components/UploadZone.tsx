@@ -134,6 +134,8 @@ export function UploadZone({
         const hash = await sha256Hex(file);
         await finalizeAttachment(uploadUrl.attachment_id, {
           operating_company_id: operatingCompanyId,
+          entity_type: entityType,
+          entity_id: entityId,
           sha256_hash: hash,
           category,
         });

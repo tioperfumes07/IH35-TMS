@@ -143,6 +143,8 @@ export function CashFlowOverviewPage() {
       <PageHeader
         title="Cash flow overview"
         subtitle="Operating liquidity, 30-day projection, and treasury posture"
+        backHref="/reports"
+        breadcrumb={["Reports", "Cash Flow Overview"]}
         actions={
           <div className="no-print flex flex-wrap gap-2">
             <Button size="sm" variant="secondary" onClick={() => window.print()}>

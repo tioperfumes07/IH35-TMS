@@ -1,19 +1,31 @@
+import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { InventoryModuleTabs } from "./InventoryModuleTabs";
+import { PartsInventoryTable } from "../maintenance/components/PartsInventoryTable";
+import { listPartsInventory } from "../../api/maintenance";
+import { useCompanyContext } from "../../contexts/CompanyContext";
 
 export function InventoryAssignmentsPage() {
+  const { selectedCompanyId } = useCompanyContext();
+  const companyId = selectedCompanyId ?? "";
+
+  const inventoryQuery = useQuery({
+    queryKey: ["maintenance", "parts-inventory", companyId],
+    queryFn: () => listPartsInventory(companyId),
+    enabled: Boolean(companyId),
+  });
+
   return (
     <div className="space-y-4">
       <PageHeader title="Assignments" backHref="/inventory" breadcrumb={["Inventory", "Assignments"]} />
       <InventoryModuleTabs />
-      <div className="rounded-sm border border-gray-200 bg-white p-8">
-        <div className="text-center">
-          <h3 className="text-lg font-semibold text-gray-900">Part Assignments</h3>
-          <p className="mt-2 text-sm text-gray-500">
-            Assign parts to trucks or drivers. Operational tracking (no GL posting).
-          </p>
+      {inventoryQuery.isLoading ? (
+        <div className="rounded-sm border border-gray-200 bg-white p-8 text-center text-sm text-gray-500">
+          Loading inventory...
         </div>
-      </div>
+      ) : (
+        <PartsInventoryTable companyId={companyId} rows={inventoryQuery.data ?? []} />
+      )}
     </div>
   );
 }

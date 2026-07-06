@@ -98,6 +98,8 @@ export function GeofenceDwellReport() {
       <PageHeader
         title="Geofence dwell report"
         subtitle="Entry/exit dwell durations by customer site, yard, and vendor geofence."
+        backHref="/reports"
+        breadcrumb={["Reports", "Geofence Dwell Report"]}
         actions={
           <Button size="sm" variant="secondary" onClick={exportCsv} disabled={!reportQuery.data}>
             Export CSV

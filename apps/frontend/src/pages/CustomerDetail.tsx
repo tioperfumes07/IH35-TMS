@@ -907,7 +907,7 @@ export function CustomerDetailPage() {
   // Each list empty message renders only once its query settles, never mid-fetch.
   const contactsListState = useListState(contactsQuery, contacts.length === 0);
   const openInvoicesListState = useListState(paymentInvoicesQuery, openInvoicesForPayment.length === 0);
-  const customerPaymentsListState = useListState(customerPaymentsQuery, (customerPaymentsQuery.data?.payments ?? []).length === 0);
+  const customerPaymentsListState = useListState(customerPaymentsQuery, (customerPaymentsQuery.data?.rows ?? []).length === 0);
   const recentInvoicesListState = useListState(recentInvoicesQuery, recentInvoices.length === 0);
   const customerLanesListState = useListState(lanesQuery, customerLanes.length === 0);
   const fmcsaHistoryListState = useListState(fmcsaHistoryQuery, (fmcsaHistoryQuery.data ?? []).length === 0);
@@ -964,7 +964,8 @@ export function CustomerDetailPage() {
                   Reactivate
                 </Button>
               )}
-              <Button onClick={() => setEditModalOpen(true)}>Edit</Button>
+              <Button onClick={() => setEditMode(true)}>Edit</Button>
+              <Button variant="secondary" onClick={() => setEditModalOpen(true)}>Full Edit</Button>
             </div>
           ) : (
             <Button onClick={() => void saveCustomer()} loading={updateCustomerMutation.isPending}>
@@ -1858,22 +1859,16 @@ export function CustomerDetailPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {(customerPaymentsQuery.data?.payments ?? []).map((p: CustomerPaymentListRow) => {
-                      const jeId = p.journal_entry_id ?? p.qbo_journal_entry_id;
-                      const applied = p.amount_applied_cents ?? p.applied_total_cents;
+                    {(customerPaymentsQuery.data?.rows ?? []).map((p: CustomerPaymentListRow) => {
+                      const appliedTotal = p.applied_to_invoices?.reduce((sum, inv) => sum + inv.amount_cents, 0) ?? 0;
                       return (
                         <tr key={p.id} className="border-b border-gray-100">
-                          <td className="px-2 py-1.5">{p.payment_date}</td>
+                          <td className="px-2 py-1.5">{p.date}</td>
                           <td className="px-2 py-1.5">{formatCurrencyCents(p.amount_cents)}</td>
-                          <td className="px-2 py-1.5">{p.payment_method ?? p.method ?? "—"}</td>
-                          <td className="px-2 py-1.5">{applied != null ? formatCurrencyCents(applied) : "—"}</td>
-                          <td className="px-2 py-1.5">{p.reference ?? "—"}</td>
+                          <td className="px-2 py-1.5">{p.source_kind ?? "—"}</td>
+                          <td className="px-2 py-1.5">{appliedTotal > 0 ? formatCurrencyCents(appliedTotal) : "—"}</td>
+                          <td className="px-2 py-1.5">{p.qbo_payment_id ?? "—"}</td>
                           <td className="px-2 py-1.5">
-                            {jeId ? (
-                              <button type="button" className="mr-2 text-slate-700 underline" onClick={() => navigate(`/accounting/journal-entries/${jeId}`)}>
-                                View JE
-                              </button>
-                            ) : null}
                             {canUnapplyCustomerPayment ? (
                               <button
                                 type="button"
@@ -2461,6 +2456,7 @@ export function CustomerDetailPage() {
             mc_number: fmcsaResult.mc_number ?? current.mc_number,
             office_phone: fmcsaResult.phone ?? current.office_phone,
           }));
+          setEditMode(true); // Enable edit mode so FMCSA changes can be saved
           pushToast("FMCSA values applied. Save customer to persist profile changes.", "success");
         }}
         onSavedAsVerified={() => {

@@ -182,6 +182,8 @@ export function ProfitPerTruckPage() {
       <PageHeader
         title="Per-truck CPM dashboard"
         subtitle="Real cost-per-mile, revenue-per-mile, and margin by fleet unit"
+        backHref="/reports"
+        breadcrumb={["Reports", "Per-Truck CPM Dashboard"]}
         actions={
           <div className="no-print flex flex-wrap gap-2">
             <Button size="sm" variant="secondary" onClick={() => window.print()}>

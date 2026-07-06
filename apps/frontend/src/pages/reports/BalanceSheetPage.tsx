@@ -70,6 +70,8 @@ export function BalanceSheetPage() {
       <PageHeader
         title="Balance sheet"
         subtitle={`As of ${appliedAsOf} · ${basis === "cash" ? "Cash" : "Accrual"} basis`}
+        backHref="/reports"
+        breadcrumb={["Reports", "Balance Sheet"]}
         actions={
           <div className="no-print flex flex-wrap gap-2">
             <Button size="sm" variant="secondary" onClick={() => window.print()}>
