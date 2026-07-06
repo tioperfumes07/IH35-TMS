@@ -146,6 +146,14 @@
       "reason": "[HOLD-FOR-JORGE — TIER 1] BLOCK-01 Fixed-Asset Depreciation — additive-only: fixed_assets.financing_loan_id (CCG loan linkage) + append-only depreciation_autopost_runs log. No posting, no new GL math, no flag flips."
     },
     {
+      "file": "202607130200_block03_ifta_trip_methodology_extend.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] BLOCK-03 — IFTA preparer extension: reference.ifta_tax_rates + reference.non_ifta_jurisdictions catalogs, TRIP=practical-miles-less-personal-conveyance columns, PDF archive linkage. Additive-only on top of live IFTA v1 (0372/0373). IFTA_TRIP_METHODOLOGY_ENABLED OFF."
+    },
+    {
+      "file": "202607111000_block02_driver_escrow_separation_return.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] BLOCK-02 driver escrow — driver_finance.driver_escrow_separations (>=90-day post-separation return path tracking) + DRIVER_ESCROW_SEPARATION_RETURN_ENABLED flag OFF; reuses existing Block-23 escrow release JE, no new GL math"
+    },
+    {
       "file": "202607110300_af2_master_data_drift_readonly.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1] AF-2 — QBO master-data drift DETECT-ONLY extension: gates the vendors/customers/COA reconciler auto-heal behind QBO_MASTER_DATA_HEAL_ENABLED (default OFF) + widens accounting.recon_runs.run_type for 3 new read-only master-data drift passes. No write-back, no posting."
     },
@@ -156,10 +164,6 @@
     {
       "file": "202607110320_af7_money_control_flags.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1] AF-7 — money-control flag infra: 3 per-entity-only flags (void/reversal, period-close, period-reopen — all default OFF) + accounting.periods RLS role-gate fix (INSERT/UPDATE now requires Owner/Administrator, closing a documented open gap). No posting turned on."
-    },
-    {
-      "file": "202607111000_block02_driver_escrow_separation_return.sql",
-      "reason": "[HOLD-FOR-JORGE — TIER 1] BLOCK-02 driver escrow — driver_finance.driver_escrow_separations (>=90-day post-separation return path tracking) + DRIVER_ESCROW_SEPARATION_RETURN_ENABLED flag OFF; reuses existing Block-23 escrow release JE, no new GL math"
     },
     {
       "file": "202607130000_factoring_reserve_movements.sql",
