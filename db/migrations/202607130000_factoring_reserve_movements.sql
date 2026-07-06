@@ -27,7 +27,7 @@ CREATE SCHEMA IF NOT EXISTS accounting;
 --    ADJUSTED (a rare manual correction, Owner/Admin only at the route layer) event ────────────────────
 CREATE TABLE IF NOT EXISTS accounting.factoring_reserve_movements (
   id                    uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  operating_company_id  uuid NOT NULL,
+  operating_company_id  uuid NOT NULL REFERENCES org.companies(id),
   factoring_advance_id  uuid NOT NULL REFERENCES accounting.factoring_advances(id),
   movement_type         text NOT NULL CHECK (movement_type IN ('held', 'released', 'adjusted')),
   amount_cents          bigint NOT NULL CHECK (amount_cents >= 0),
