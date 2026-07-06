@@ -92,7 +92,7 @@ export function AuditEventsList() {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-sm border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="w-full text-left text-xs">
           <thead className="bg-gray-50 text-[10px] uppercase text-gray-600">
             <tr>

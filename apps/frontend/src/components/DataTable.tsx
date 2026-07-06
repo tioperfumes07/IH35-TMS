@@ -100,7 +100,7 @@ export function DataTable<T>({
   const footerRowsLength = inError ? 0 : sortedRows.length;
 
   return (
-    <div className="overflow-hidden rounded-md border border-gray-200 bg-white">
+    <div className="overflow-x-auto rounded-md border border-gray-200 bg-white">
       <table className="w-full table-fixed text-left" style={{ fontSize: typography.tableRow }}>
         <thead className="bg-gray-50">
           <tr style={{ height: spacing.tableHeaderHeight }}>

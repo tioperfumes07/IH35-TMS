@@ -1034,7 +1034,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                     </label>
                   </div>
 
-                  <div className="overflow-hidden rounded-sm border border-gray-200">
+                  <div className="overflow-x-auto rounded-sm border border-gray-200">
                     <table className="w-full border-collapse text-xs">
                       <tbody>
                         <tr className="border-b border-gray-100">
