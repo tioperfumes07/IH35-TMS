@@ -69,7 +69,6 @@
   "apps/frontend/src/pages/accounting/AccountingSubNav.tsx",
   "apps/frontend/src/pages/accounting/BillDetailPanel.tsx",
   "apps/frontend/src/pages/accounting/ChartOfAccounts.tsx",
-  "apps/frontend/src/pages/accounting/ChartOfAccountsSyncPanel.tsx",
   "apps/frontend/src/pages/accounting/ItemsCatalog.tsx",
   "apps/frontend/src/pages/accounting/bill-payments/BillPaymentPage.tsx",
   "apps/frontend/src/pages/accounting/bill-payments/CCPaymentModal.tsx",
