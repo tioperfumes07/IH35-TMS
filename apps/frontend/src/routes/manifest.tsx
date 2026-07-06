@@ -337,6 +337,7 @@ const MaintenancePartsListPage = React.lazy(() => import("../pages/lists/mainten
 const OemPartsCatalog = React.lazy(() => import("../pages/lists/maintenance/OemPartsCatalog").then((m) => ({ default: m.OemPartsCatalog })));
 const MaintenancePriorityLevelsListPage = React.lazy(() => import("../pages/lists/maintenance/MaintenancePriorityLevelsListPage").then((m) => ({ default: m.MaintenancePriorityLevelsListPage })));
 const MaintenanceServiceTasksListPage = React.lazy(() => import("../pages/lists/maintenance/MaintenanceServiceTasksListPage").then((m) => ({ default: m.MaintenanceServiceTasksListPage })));
+const MaintenanceServicesCatalog = React.lazy(() => import("../pages/lists/MaintenanceServicesCatalog").then((m) => ({ default: m.MaintenanceServicesCatalog })));
 const MaintenanceShopLocationsListPage = React.lazy(() => import("../pages/lists/maintenance/MaintenanceShopLocationsListPage").then((m) => ({ default: m.MaintenanceShopLocationsListPage })));
 const MaintenanceVendorsListPage = React.lazy(() => import("../pages/lists/maintenance/MaintenanceVendorsListPage").then((m) => ({ default: m.MaintenanceVendorsListPage })));
 const WorkOrderStatusesListPage = React.lazy(() => import("../pages/lists/maintenance/WorkOrderStatusesListPage").then((m) => ({ default: m.WorkOrderStatusesListPage })));
@@ -2110,6 +2111,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <MaintenanceServiceTasksListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lists/maintenance/services-catalog"
+          element={
+            <ProtectedRoute>
+              <MaintenanceServicesCatalog />
             </ProtectedRoute>
           }
         />
