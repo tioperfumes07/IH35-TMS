@@ -122,7 +122,7 @@ The following columns are permanently exempt from this rule:
 
 | File | Key / ID | Reason |
 |---|---|---|
-| *(none at lock time)* | | |
+| `apps/frontend/src/pages/dispatch/components/UnitsWithoutLoadTable.tsx` | `idle_time` | Duplicate-format display of the already-sortable `hours_since_last_delivery` ("Hours Since") column — the same underlying numeric value, just rendered with a warning glyph/suffix. A second sort control on identical data would be a no-op, not a pure-action column, so it is exempted here rather than marked misleadingly `sortable: true`. |
 
 To add an exemption, update this table and add the key to `EXEMPT_COLUMN_KEYS` in `scripts/verify-global-sort-rule.mjs`. Exemptions require a comment explaining why the column is a pure action column.
 
