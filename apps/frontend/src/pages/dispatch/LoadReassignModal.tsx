@@ -7,6 +7,7 @@ import { useToast } from "../../components/Toast";
 import { AssignDriverDropdown, REASSIGN_REASON_CODES, type AssignDriverDropdownProps } from "./AssignDriverDropdown";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { OptimalDriversPanel } from "../../components/dispatch/OptimalDriversPanel";
+import { AuthGatePanel } from "../../components/dispatch/AuthGatePanel";
 
 type Props = {
   open: boolean;
@@ -23,6 +24,9 @@ export function LoadReassignModal({ open, onClose, loadId, operatingCompanyId, l
   const [driverId, setDriverId] = useState("");
   const [reasonCode, setReasonCode] = useState<string>(REASSIGN_REASON_CODES[0].value);
   const [notes, setNotes] = useState("");
+  // GAP-47 — dispatch authorization gates preview; the server enforces the same check on the
+  // PATCH .../assignment mutation (422 dispatch_auth_gate_blocked), this is an early, read-only warning.
+  const [gateBlocked, setGateBlocked] = useState(false);
 
   const mut = useMutation({
     mutationFn: () =>
@@ -82,12 +86,21 @@ export function LoadReassignModal({ open, onClose, loadId, operatingCompanyId, l
           <label className="text-xs font-semibold text-gray-600">Notes (optional)</label>
           <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]" />
         </div>
+        {driverId ? (
+          <AuthGatePanel
+            operatingCompanyId={operatingCompanyId}
+            action="assign_driver"
+            loadUuid={loadId}
+            driverUuid={driverId}
+            onBlockersChange={setGateBlocked}
+          />
+        ) : null}
         {mut.isError ? <div className="text-xs text-red-600">Could not reassign. Check permissions and try again.</div> : null}
         <div className="flex justify-end gap-2 pt-1">
           <Button type="button" variant="secondary" size="sm" onClick={onClose}>
             Close
           </Button>
-          <Button type="submit" size="sm" loading={mut.isPending} disabled={!driverId}>
+          <Button type="submit" size="sm" loading={mut.isPending} disabled={!driverId || gateBlocked}>
             Reassign
           </Button>
         </div>

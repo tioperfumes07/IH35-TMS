@@ -430,6 +430,10 @@ export function DispatchPage({
               setSearchParams(next);
             }}
             onExportCsv={exportCsv}
+            onBookForUnit={(unitId) => {
+              setBookUnitId(unitId);
+              setNewLoadOpen(true);
+            }}
           />
         ) : (
           <DispatchKanban
