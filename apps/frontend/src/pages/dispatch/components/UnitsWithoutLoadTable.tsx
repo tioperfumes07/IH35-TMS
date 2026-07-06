@@ -4,6 +4,7 @@ import { DataTable } from "../../../components/DataTable";
 type Props = {
   rows: UnitsWithoutLoad[];
   onRowClick: (row: UnitsWithoutLoad) => void;
+  loading?: boolean;
 };
 
 function idleClass(hours: number | null) {
@@ -28,13 +29,14 @@ function LocationCell({ loc }: { loc: UnitLiveLocation | null }) {
   );
 }
 
-export function UnitsWithoutLoadTable({ rows, onRowClick }: Props) {
+export function UnitsWithoutLoadTable({ rows, onRowClick, loading }: Props) {
   return (
     <DataTable
       rows={rows}
       tableKey="dispatch-units-without-load"
       rowKey={(row) => row.id}
       onRowClick={onRowClick}
+      loading={loading}
       emptyText="All units currently have active loads."
       columns={[
         { key: "unit_number", label: "Unit", sortable: true, cellClass: "font-semibold" },

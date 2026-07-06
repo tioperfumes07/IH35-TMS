@@ -18,7 +18,16 @@ function renderCustomerCell(load: DispatchLoadRow): ReactNode {
     </Link>
   );
 }
-import { listUnitsWithoutLoad, listActiveLoadTriSignals, getDispatchLoadPositions, type TriSignalRow, type UnitsWithoutLoad } from "../../api/dispatch";
+import {
+  listUnitsWithoutLoad,
+  listActiveLoadTriSignals,
+  getDispatchLoadPositions,
+  quickAssignDispatchLoad,
+  type TriSignalRow,
+  type UnitsWithoutLoad,
+  type DispatchLifecycleStage,
+  type DispatchConfidenceClass,
+} from "../../api/dispatch";
 import { getFleetLocationHos } from "../../api/reports";
 import type { DispatchListProps } from "../../components/dispatch/DispatchList";
 import {
@@ -46,11 +55,16 @@ import { formatInCompanyTimeZone } from "../../lib/businessDate";
 import { HOS_COLUMNS } from "../../components/dispatch/hos/hosClocks";
 import { LoadLivePositionCell } from "../../components/dispatch/LoadLivePositionCell";
 import { TriSignalPill } from "../../components/dispatch/TriSignalPill";
-import { useListState } from "../../components/list-state";
+import { DriverStatusCell } from "./components/DriverStatusCell";
+import { UnitsWithoutLoadTable } from "./components/UnitsWithoutLoadTable";
+import { QuickAssignModal } from "./components/QuickAssignModal";
 
 export type DispatchBoardProps = Omit<DispatchListProps, "showEtaColumn"> & {
   operatingCompanyId?: string;
   onBulkComplete?: () => void;
+  /** DB-6-style hook so a Kanban-equivalent "Book load for this unit" action is also reachable from
+      List/Table/Assignment views (Unassigned Units band) — matches DispatchKanban's onBookForUnit. */
+  onBookForUnit?: (unitId: string) => void;
 };
 
 type BoardMode = "list" | "table" | "assignment";
@@ -293,6 +307,7 @@ export function DispatchBoard({
   activeGeofenceBreachVehicleIds,
   onRowClick,
   onPageChange,
+  onBookForUnit,
 }: DispatchBoardProps) {
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
@@ -300,6 +315,7 @@ export function DispatchBoard({
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [pendingTransition, setPendingTransition] = useState<string>(LOAD_TRANSITION_OPTIONS[0].value);
   const [rowOverrides, setRowOverrides] = useState<Record<string, RowOverride>>({});
+  const [quickAssignLoad, setQuickAssignLoad] = useState<BoardLoad | null>(null);
   const bulk = useEntityBulkAction();
   const selection = useBulkSelection({
     cap: 200,
@@ -327,8 +343,6 @@ export function DispatchBoard({
     staleTime: 30_000,
   });
   const unassignedUnits = unitsWithoutLoadQuery.data?.units ?? [];
-  // Awaiting-units empty renders only once the roster query settles (never mid-fetch).
-  const unitsListState = useListState(unitsWithoutLoadQuery, unassignedUnits.length === 0);
 
   const triSignalsQuery = useQuery({
     queryKey: ["dispatch-board", "tri-signals", companyId],
@@ -604,6 +618,28 @@ export function DispatchBoard({
     </div>
   );
 
+  // Driver lifecycle sub-stage (pretrip/at_shipper/loading/detention/hos_break/accident/... — finer-
+  // grained than the load-level `status` chip above, and NOT covered by the Risk column's on-time
+  // prediction). driver_lifecycle_stage is a loose string server-side; guard against unlisted values
+  // so an unrecognized stage renders "—" instead of crashing the lookup.
+  const KNOWN_LIFECYCLE_STAGES = new Set<string>([
+    "pretrip", "enroute_pu", "at_shipper", "loading", "loaded", "enroute_del", "at_receiver",
+    "unloading", "unloaded", "detention", "hos_break", "off_duty", "accident", "breakdown", "no_gps",
+  ]);
+  const onTimeToConfidence: Record<string, DispatchConfidenceClass> = { green: "on_time", amber: "tight", red: "late" };
+  const renderDriverStatusCell = (load: BoardLoad) => {
+    const stage = load.driver_lifecycle_stage;
+    if (!stage || !KNOWN_LIFECYCLE_STAGES.has(stage)) return <span className="text-[10px] text-slate-400">—</span>;
+    const confidence = load.on_time_prediction ? onTimeToConfidence[load.on_time_prediction] : null;
+    return (
+      <DriverStatusCell
+        lifecycle={stage as DispatchLifecycleStage}
+        etaConfidence={confidence}
+        onClick={() => onRowClick(load.id)}
+      />
+    );
+  };
+
   const renderPreSettlementPrompt = (load: DispatchLoadRow, colSpan: number) => {
     const effectiveDriverId = rowOverrides[load.id]?.driverId ?? load.assigned_primary_driver_id;
     const openPreSettlement = effectiveDriverId ? openPreSettlementsMap.get(effectiveDriverId) : undefined;
@@ -741,6 +777,7 @@ export function DispatchBoard({
     { key: "live_gps", header: "Live GPS", cell: (load) => <LoadLivePositionCell position={positionByLoad[load.id] ?? null} loadId={load.id} /> },
     { key: "risk", header: "Risk", cell: (load) => <RiskCell load={load} /> },
     { key: "status", header: "Status", cell: (load) => renderStatusCell(load) },
+    { key: "driver_status", header: "Driver Status", cell: (load) => renderDriverStatusCell(load) },
   ];
 
   // List and Table share the same column model (the grid look is identical).
@@ -912,51 +949,11 @@ export function DispatchBoard({
     return (
       <div className="space-y-4" data-testid="dispatch-board-assignment-view">
         <AssignmentBand title="Unassigned Units" count={unassignedUnits.length}>
-          <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-            <table className="min-w-full text-left text-[11px]">
-              <thead className="bg-gray-50 text-[10px] uppercase tracking-wide text-gray-600">
-                <tr>
-                  {["Unit", "Trailer", "Driver", "Last Drop", "Idle"].map((header) => (
-                    <th key={header} className="px-2 py-1">
-                      {header}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {unitsWithoutLoadQuery.isLoading ? (
-                  <tr>
-                    <td colSpan={5} className="px-2 py-3 text-gray-400">
-                      Loading unassigned units...
-                    </td>
-                  </tr>
-                ) : (
-                  unassignedUnits.map((unit: UnitsWithoutLoad) => (
-                    <tr key={unit.id} className="border-t border-gray-100 hover:bg-gray-50">
-                      <td className="px-2 py-1 font-semibold">{unit.unit_number}</td>
-                      <td className="px-2 py-1">{unit.trailer_number ?? "—"}</td>
-                      <td className="px-2 py-1">{unit.driver_name ?? "—"}</td>
-                      <td className="px-2 py-1">
-                        {unit.last_drop_at
-                          ? `${formatInCompanyTimeZone(unit.last_drop_at, { month: "2-digit", day: "2-digit", year: "numeric", hour: "numeric", minute: "2-digit" })} CT`
-                          : "No prior drop"}
-                      </td>
-                      <td className="px-2 py-1">
-                        {unit.hours_since_last_delivery != null ? `${unit.hours_since_last_delivery}h idle` : "—"}
-                      </td>
-                    </tr>
-                  ))
-                )}
-                {unitsListState.isEmpty ? (
-                  <tr>
-                    <td colSpan={5} className="px-2 py-3 text-center text-gray-500">
-                      All units currently have active loads.
-                    </td>
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
-          </div>
+          <UnitsWithoutLoadTable
+            rows={unassignedUnits}
+            loading={unitsWithoutLoadQuery.isLoading}
+            onRowClick={(unit) => onBookForUnit?.(unit.id)}
+          />
         </AssignmentBand>
 
         <AssignmentBand title="Booked Loads" count={bookedLoads.length}>
@@ -964,7 +961,7 @@ export function DispatchBoard({
             <table className="min-w-full text-left text-[11px]">
               <thead className="bg-gray-50 text-[10px] uppercase tracking-wide text-gray-600">
                 <tr>
-                  {["Load", "Customer", "Lane", "Delivery", "Doc-Compliance", "Cargo Temp", "Status"].map((header) => (
+                  {["Load", "Customer", "Lane", "Delivery", "Doc-Compliance", "Cargo Temp", "Status", "Assign"].map((header) => (
                     <th key={header} className="px-2 py-1">
                       {header}
                     </th>
@@ -974,7 +971,7 @@ export function DispatchBoard({
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={7} className="px-2 py-3 text-gray-400">
+                    <td colSpan={8} className="px-2 py-3 text-gray-400">
                       Loading booked loads...
                     </td>
                   </tr>
@@ -1001,11 +998,27 @@ export function DispatchBoard({
                       ),
                     },
                     { key: "status", header: "Status", cell: (load) => renderStatusCell(load) },
+                    {
+                      key: "assign",
+                      header: "Assign",
+                      cell: (load) => (
+                        <button
+                          type="button"
+                          className="rounded-sm border border-slate-300 px-2 py-0.5 text-[10px] font-semibold text-slate-700 hover:bg-slate-50"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setQuickAssignLoad(load);
+                          }}
+                        >
+                          + Quick Assign
+                        </button>
+                      ),
+                    },
                   ], { showBulk: false })
                 )}
                 {!loading && bookedLoads.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-2 py-3 text-center text-gray-500">
+                    <td colSpan={8} className="px-2 py-3 text-center text-gray-500">
                       No reserved loads waiting for assignment.
                     </td>
                   </tr>
@@ -1148,6 +1161,29 @@ export function DispatchBoard({
         onClose={() => bulk.setProgressOpen(false)}
         resolveRowHref={(id) => `/dispatch?load_id=${encodeURIComponent(id)}`}
       />
+
+      {quickAssignLoad ? (
+        <QuickAssignModal
+          open={Boolean(quickAssignLoad)}
+          operatingCompanyId={quickAssignLoad.operating_company_id}
+          loadNumber={quickAssignLoad.load_number}
+          hardWarnings={[]}
+          onClose={() => setQuickAssignLoad(null)}
+          onSubmit={async (payload) => {
+            try {
+              await quickAssignDispatchLoad(quickAssignLoad.id, {
+                operating_company_id: quickAssignLoad.operating_company_id,
+                ...payload,
+              });
+              pushToast("Load quick-assigned", "success");
+              await queryClient.invalidateQueries({ queryKey: ["dispatch", "loads"] });
+              onBulkComplete?.();
+            } catch (error) {
+              pushToast(error instanceof Error ? error.message : "Quick assign failed", "error");
+            }
+          }}
+        />
+      ) : null}
     </div>
   );
 }
