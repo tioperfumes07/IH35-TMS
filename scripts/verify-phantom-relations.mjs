@@ -89,6 +89,8 @@ const KNOWN_PHANTOM_DEBT = [
   { rel: "driver_finance.settlement_contract_terms_config", why: "[HOLD-FOR-JORGE] forward-ref — per-entity EDITABLE contract amounts (MPG bonus / referral reward) with locked defaults; ships in gated migration 202607080000_settlement_contract_terms.sql (not yet applied to prod). Behind SETTLEMENT_CONTRACT_TERMS_ENABLED (default OFF). Remove from debt when that migration merges." },
   { rel: "accounting.factoring_reserve_movements", why: "[HOLD-FOR-JORGE] forward-ref — CONN-2 Faro Reserve Tracker per-advance reserve movement ledger; ships in gated migration 202607130000_factoring_reserve_movements.sql (not yet applied to prod). Written only as a side effect of postFactoringAdvanceEvent/postFactoringReleaseEvent, both behind FACTORING_GL_POSTING_ENABLED (default OFF). Remove from debt when that migration merges." },
   { rel: "views.factoring_reserve_balances", why: "[HOLD-FOR-JORGE] forward-ref — CONN-2 Faro Reserve Tracker per-advance balance view (held-released), reads accounting.factoring_reserve_movements; ships in gated migration 202607130000_factoring_reserve_movements.sql (not yet applied to prod). Read-only reporting. Remove from debt when that migration merges." },
+  { rel: "banking.bank_transaction_splits", why: "HOLD BANK-SPLIT-1 — migration 202607110100 (HELD, .held-migrations.json) creates this table; not yet run on prod" },
+  { rel: "driver_finance.driver_escrow_separations", why: "[HOLD-FOR-JORGE] forward-ref to HELD 202607111000 driver-escrow separation-return, flag DRIVER_ESCROW_SEPARATION_RETURN_ENABLED default OFF" },
 ];
 const KNOWN = new Map(KNOWN_PHANTOM_DEBT.map((d) => [d.rel, d.why]));
 
