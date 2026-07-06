@@ -49,7 +49,7 @@ export const MAINTENANCE_OPERATION_LINKS: MaintenanceNavLink[] = [
 ];
 
 /** Lists → Maintenance catalogs (AllCatalogsMap maintenance domain). */
-export const MAINTENANCE_LISTS_CATALOG_COUNT = 9;
+export const MAINTENANCE_LISTS_CATALOG_COUNT = 10;
 
 export const MAINTENANCE_MODULE_NAV_COUNT = MAINTENANCE_MODULE_NAV_LINKS.length;
 export const MAINTENANCE_MASTER_DATA_NAV_COUNT = MAINTENANCE_MASTER_DATA_LINKS.length;

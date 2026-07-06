@@ -21,7 +21,7 @@ describe("maintenance nav count reconcile (B24)", () => {
     expect(MAINTENANCE_DASHBOARD_TAB_COUNT).toBe(10);
   });
 
-  it("tracks nine live lists maintenance catalogs", () => {
-    expect(MAINTENANCE_LISTS_CATALOG_COUNT).toBe(9);
+  it("tracks ten live lists maintenance catalogs", () => {
+    expect(MAINTENANCE_LISTS_CATALOG_COUNT).toBe(10);
   });
 });
