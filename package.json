@@ -883,7 +883,7 @@
     "husky": "^9.1.7",
     "supertest": "^7.2.2",
     "tsx": "^4.0.0",
-    "typescript": "^5.0.0",
+    "typescript": "^6.0.3",
     "vitest": "^4.1.5"
   },
   "overrides": {
