@@ -1331,7 +1331,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
     limit: z.coerce.number().int().min(1).max(200).default(50),
     offset: z.coerce.number().int().min(0).default(0),
   });
-  app.get("/api/v1/drivers/:id/loads", async (req, reply) => {
+  app.get("/api/v1/drivers/:id/loads", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const params = driverLoadsParamSchema.safeParse(req.params ?? {});
