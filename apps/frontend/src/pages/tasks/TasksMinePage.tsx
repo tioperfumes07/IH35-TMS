@@ -1,9 +1,11 @@
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { TasksModuleTabs } from "./TasksModuleTabs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getMe } from "../../api/identity";
-import { fetchPlannerTasks } from "../../api/tasks";
+import { fetchPlannerTasks, type Task } from "../../api/tasks";
 import { addDaysIso, companyToday } from "../../lib/businessDate";
 import { TASK_STATUS_BADGE, isOpenTaskStatus, priorityLabel, taskStatusLabel } from "./taskDisplay";
 import { formatDateUS } from "../../lib/formatDate";
@@ -30,6 +32,36 @@ export function TasksMinePage() {
   const openTasks = tasks.filter((t) => isOpenTaskStatus(t.status));
   const overdue = openTasks.filter((t) => t.scheduled_date < today);
 
+  // ParityTable columns (A1 grammar): built-in sort/density/column-toggle/pager replace the former
+  // hand-rolled table. Preserves the overdue red-highlight on the Scheduled column.
+  const columns = useMemo<ParityColumn<Task>[]>(
+    () => [
+      { key: "title", label: "Task", sortable: true, cellClass: "font-medium text-slate-800" },
+      { key: "category", label: "Category", sortable: true, cellClass: "capitalize text-slate-600" },
+      {
+        key: "scheduled_date",
+        label: "Scheduled",
+        sortable: true,
+        render: (row) => (
+          <span className={isOpenTaskStatus(row.status) && row.scheduled_date < today ? "font-semibold text-red-700" : "text-slate-600"}>
+            {formatDateUS(row.scheduled_date)}
+          </span>
+        ),
+      },
+      { key: "priority", label: "Priority", sortable: true, render: (row) => priorityLabel(row.priority), cellClass: "text-slate-600" },
+      {
+        key: "status",
+        label: "Status",
+        sortable: true,
+        render: (row) => (
+          <span className={`rounded-sm border px-1.5 py-0.5 text-[10px] ${TASK_STATUS_BADGE[row.status]}`}>{taskStatusLabel(row.status)}</span>
+        ),
+      },
+      { key: "progress_pct", label: "Progress", sortable: true, render: (row) => `${row.progress_pct}%`, cellClass: "text-slate-600" },
+    ],
+    [today],
+  );
+
   return (
     <div className="space-y-4">
       <PageHeader title="My Tasks" subtitle="Tasks assigned to you" />
@@ -48,50 +80,20 @@ export function TasksMinePage() {
         ))}
       </div>
 
-      <div className="rounded-sm border border-slate-200 bg-white">
-        {query.isLoading ? (
-          <div className="p-4 text-xs text-slate-500">Loading your tasks…</div>
-        ) : query.isError ? (
-          <div className="p-4 text-xs text-red-700">Couldn't load your tasks.</div>
-        ) : tasks.length === 0 ? (
-          <div className="p-6 text-center text-xs text-slate-500">No tasks assigned to you in this window.</div>
-        ) : (
-          <div className="overflow-x-auto">
-          <table className="min-w-full text-left text-xs">
-            <thead className="border-b border-slate-200 text-slate-500">
-              <tr>
-                <th className="px-3 py-2 font-semibold">Task</th>
-                <th className="px-3 py-2 font-semibold">Category</th>
-                <th className="px-3 py-2 font-semibold">Scheduled</th>
-                <th className="px-3 py-2 font-semibold">Priority</th>
-                <th className="px-3 py-2 font-semibold">Status</th>
-                <th className="px-3 py-2 font-semibold">Progress</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tasks.map((t) => (
-                <tr key={t.task_id} className="border-t border-slate-100">
-                  <td className="px-3 py-2 font-medium text-slate-800">{t.title}</td>
-                  <td className="px-3 py-2 capitalize text-slate-600">{t.category}</td>
-                  <td
-                    className={`px-3 py-2 ${isOpenTaskStatus(t.status) && t.scheduled_date < today ? "font-semibold text-red-700" : "text-slate-600"}`}
-                  >
-                    {formatDateUS(t.scheduled_date)}
-                  </td>
-                  <td className="px-3 py-2 text-slate-600">{priorityLabel(t.priority)}</td>
-                  <td className="px-3 py-2">
-                    <span className={`rounded-sm border px-1.5 py-0.5 text-[10px] ${TASK_STATUS_BADGE[t.status]}`}>
-                      {taskStatusLabel(t.status)}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2 text-slate-600">{t.progress_pct}%</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          </div>
-        )}
-      </div>
+      {query.isError ? (
+        <div className="rounded-sm border border-slate-200 bg-white p-4 text-xs text-red-700">Couldn't load your tasks.</div>
+      ) : (
+        <ParityTable
+          rows={tasks}
+          columns={columns}
+          rowKey={(row) => row.task_id}
+          // Settled-only empty (LIST-EMPTY-1 invariant): show loading while pending OR while a
+          // refetch is in flight with zero current rows, so emptyText never flashes mid-fetch.
+          loading={query.isPending || (query.isFetching && tasks.length === 0)}
+          storageKey="tasks-mine"
+          emptyText="No tasks assigned to you in this window."
+        />
+      )}
     </div>
   );
 }

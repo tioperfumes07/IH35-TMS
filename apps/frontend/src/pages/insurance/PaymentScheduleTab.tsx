@@ -1,5 +1,5 @@
+import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
 import {
   listInsurancePaymentSchedule,
   markInsurancePaymentSchedulePaid,
@@ -13,6 +13,7 @@ import { StatusBadge } from "../../components/layout/StatusBadge";
 import { formatDateUS } from "../../lib/formatDate";
 import { useListState } from "../../components/list-state";
 import { formatUsdCents } from "../../lib/money";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 type Props = {
   operatingCompanyId?: string;
@@ -87,6 +88,16 @@ export function PaymentScheduleTab({ operatingCompanyId, policyId }: Props) {
 
   const rows = query.data ?? [];
 
+  const columns = useMemo<ParityColumn<InsurancePaymentSchedule>[]>(
+    () => [
+      { key: "due_date", label: "Due Date", sortable: true, render: (row) => <span className="text-gray-800">{formatDateUS(row.due_date)}</span> },
+      { key: "amount_cents", label: "Amount", sortable: true, render: (row) => formatMoney(row.amount_cents) },
+      { key: "late_fee_cents", label: "Late Fee", sortable: true, render: (row) => formatMoney(row.late_fee_cents) },
+      { key: "status", label: "Status", sortable: true, render: (row) => <StatusBadge variant={statusBadgeVariant(row.status)}>{statusLabel(row.status)}</StatusBadge> },
+    ],
+    [],
+  );
+
   return (
     <DataPanel title="Payment Schedule">
       <div className="mb-3 flex items-center gap-2">
@@ -106,49 +117,28 @@ export function PaymentScheduleTab({ operatingCompanyId, policyId }: Props) {
         </label>
       </div>
 
-      {query.isLoading ? <div className="text-sm text-gray-500">Loading payment schedule...</div> : null}
       {query.isError ? (
         <div className="rounded-sm border border-red-200 bg-red-50 p-2 text-sm text-red-700">Failed to load payment schedule.</div>
       ) : null}
-      {listState.isEmpty ? <div className="text-sm text-gray-600">No payment schedule records found.</div> : null}
 
-      {rows.length > 0 ? (
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-left text-xs">
-            <thead>
-              <tr className="border-b border-gray-200 text-gray-600">
-                <th className="px-2 py-1.5 font-semibold">Due Date</th>
-                <th className="px-2 py-1.5 font-semibold">Amount</th>
-                <th className="px-2 py-1.5 font-semibold">Late Fee</th>
-                <th className="px-2 py-1.5 font-semibold">Status</th>
-                <th className="px-2 py-1.5 font-semibold">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.id} className="border-b border-gray-100">
-                  <td className="px-2 py-1.5 text-gray-800">{formatDateUS(row.due_date)}</td>
-                  <td className="px-2 py-1.5 text-gray-700">{formatMoney(row.amount_cents)}</td>
-                  <td className="px-2 py-1.5 text-gray-700">{formatMoney(row.late_fee_cents)}</td>
-                  <td className="px-2 py-1.5">
-                    <StatusBadge variant={statusBadgeVariant(row.status)}>{statusLabel(row.status)}</StatusBadge>
-                  </td>
-                  <td className="px-2 py-1.5">
-                    <Button
-                      size="sm"
-                      onClick={() => markPaidMutation.mutate(row.id)}
-                      disabled={!canMarkPaid(row)}
-                      loading={markPaidMutation.isPending && markPaidMutation.variables === row.id}
-                    >
-                      Mark paid
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : null}
+      <ParityTable
+        rows={rows}
+        columns={columns}
+        rowKey={(row) => row.id}
+        loading={listState.isLoading}
+        storageKey="insurance-payment-schedule"
+        emptyText="No payment schedule records found."
+        rowActions={(row) => (
+          <Button
+            size="sm"
+            onClick={() => markPaidMutation.mutate(row.id)}
+            disabled={!canMarkPaid(row)}
+            loading={markPaidMutation.isPending && markPaidMutation.variables === row.id}
+          >
+            Mark paid
+          </Button>
+        )}
+      />
     </DataPanel>
   );
 }

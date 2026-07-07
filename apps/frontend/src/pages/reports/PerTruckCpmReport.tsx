@@ -7,6 +7,7 @@ import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 type PerTruckCpmRow = {
   unit_uuid: string;
@@ -55,6 +56,17 @@ export function PerTruckCpmReport() {
 
   const rows = useMemo(() => query.data?.rows ?? [], [query.data]);
 
+  const columns = useMemo<ParityColumn<PerTruckCpmRow>[]>(
+    () => [
+      { key: "rank", label: "Rank", sortable: true },
+      { key: "display_id", label: "Unit", sortable: true, render: (row) => <EntityLink kind="unit" id={row.unit_uuid} label={row.display_id} /> },
+      { key: "miles", label: "Miles", sortable: true, render: (row) => row.miles.toLocaleString() },
+      { key: "total_cost_cents", label: "Total cost", sortable: true, render: (row) => money(row.total_cost_cents) },
+      { key: "cpm_cents", label: "CPM", sortable: true, render: (row) => `${money(row.cpm_cents)}/mi` },
+    ],
+    [],
+  );
+
   return (
     <div className="space-y-4 p-4">
       <PageHeader
@@ -75,30 +87,15 @@ export function PerTruckCpmReport() {
         </label>
         <Button onClick={() => setApplied(period)}>Apply</Button>
       </div>
-      <div className="overflow-x-auto rounded-sm border bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="bg-slate-50 text-left">
-            <tr>
-              <th className="px-3 py-2">Rank</th>
-              <th className="px-3 py-2">Unit</th>
-              <th className="px-3 py-2">Miles</th>
-              <th className="px-3 py-2">Total cost</th>
-              <th className="px-3 py-2">CPM</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.unit_uuid} className={row.outlier ? "bg-rose-50 text-rose-900" : ""}>
-                <td className="px-3 py-2">{row.rank}</td>
-                <td className="px-3 py-2"><EntityLink kind="unit" id={row.unit_uuid} label={row.display_id} /></td>
-                <td className="px-3 py-2">{row.miles.toLocaleString()}</td>
-                <td className="px-3 py-2">{money(row.total_cost_cents)}</td>
-                <td className="px-3 py-2">{money(row.cpm_cents)}/mi</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <ParityTable
+        rows={rows}
+        columns={columns}
+        rowKey={(row) => row.unit_uuid}
+        loading={query.isPending || (query.isFetching && rows.length === 0)}
+        storageKey="per-truck-cpm"
+        emptyText="No units with CPM data for this period."
+        rowClassName={(row) => (row.outlier ? "bg-rose-50 text-rose-900" : "")}
+      />
     </div>
   );
 }

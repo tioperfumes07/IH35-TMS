@@ -10,6 +10,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportBlockTPendingBanner } from "./ReportBlockTPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { useListState } from "../../components/list-state";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -35,7 +36,6 @@ const FLAG_UI: Record<ProfitPerTruckFlag, { className: string; label: string }> 
   underutilized: { className: "border-slate-200 bg-slate-50 text-slate-800", label: "underutilized" },
 };
 
-type SortKey = keyof ProfitPerTruckRow;
 type FlagFilter = "all" | ProfitPerTruckFlag;
 
 export function ProfitPerTruckPage() {
@@ -44,8 +44,6 @@ export function ProfitPerTruckPage() {
   const companyId = selectedCompanyId ?? "";
   const [period, setPeriod] = useState(currentQuarterRange);
   const [applied, setApplied] = useState(currentQuarterRange);
-  const [sortKey, setSortKey] = useState<SortKey>("net_profit_cents");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [search, setSearch] = useState("");
   const [flagFilter, setFlagFilter] = useState<FlagFilter>("all");
 
@@ -75,33 +73,45 @@ export function ProfitPerTruckPage() {
     });
   }, [flagFilter, query.data?.by_truck, search]);
 
-  const sorted = useMemo(() => {
-    const rows = filteredRows;
-    const mul = sortDir === "asc" ? 1 : -1;
-    const copy = [...rows];
-    copy.sort((a, b) => {
-      if (sortKey === "unit_number" || sortKey === "truck_type") {
-        const av = String(a[sortKey] ?? "");
-        const bv = String(b[sortKey] ?? "");
-        return av.localeCompare(bv) * mul;
-      }
-      if (sortKey === "primary_driver_name") {
-        const av = a.primary_driver_name ?? "";
-        const bv = b.primary_driver_name ?? "";
-        return av.localeCompare(bv) * mul;
-      }
-      const av = a[sortKey] as number | string | null;
-      const bv = b[sortKey] as number | string | null;
-      if (typeof av === "number" && typeof bv === "number") return (av - bv) * mul;
-      if (av == null && bv == null) return 0;
-      if (av == null) return 1 * mul;
-      if (bv == null) return -1 * mul;
-      return 0;
-    });
-    return copy;
-  }, [filteredRows, sortKey, sortDir]);
+  const sorted = filteredRows;
 
   const listState = useListState(query, sorted.length === 0);
+
+  const columns = useMemo<ParityColumn<ProfitPerTruckRow>[]>(
+    () => [
+      { key: "unit_number", label: "Unit #", sortable: true, render: (r) => <span className="font-medium text-gray-900">{r.unit_number}</span> },
+      { key: "truck_type", label: "Type", sortable: true },
+      { key: "primary_driver_name", label: "Driver", sortable: true, render: (r) => r.primary_driver_name ?? "—" },
+      { key: "load_count", label: "Loads", sortable: true, className: "text-right", cellClass: "text-right" },
+      { key: "miles_driven", label: "Miles", sortable: true, className: "text-right", cellClass: "text-right" },
+      { key: "revenue_cents", label: "Revenue", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.revenue_cents) },
+      { key: "driver_pay_cents", label: "Driver pay", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.driver_pay_cents) },
+      { key: "fuel_cents", label: "Fuel", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.fuel_cents) },
+      { key: "maintenance_cents", label: "Maint", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.maintenance_cents) },
+      { key: "net_profit_cents", label: "Net profit", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.net_profit_cents) },
+      { key: "margin_pct", label: "Margin", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => pct(r.margin_pct) },
+      { key: "revenue_per_mile_cents", label: "Rev/mi", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.revenue_per_mile_cents) },
+      { key: "cost_per_mile_cents", label: "Cost/mi", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.cost_per_mile_cents) },
+      { key: "profit_per_mile_cents", label: "Profit/mi", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.profit_per_mile_cents) },
+      {
+        key: "flags",
+        label: "Flags",
+        render: (r) => (
+          <div className="flex flex-wrap gap-1">
+            {(r.flags ?? []).map((f) => {
+              const meta = FLAG_UI[f];
+              return (
+                <span key={f} className={`rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold ${meta.className}`} title={meta.label}>
+                  {meta.label}
+                </span>
+              );
+            })}
+          </div>
+        ),
+      },
+    ],
+    [],
+  );
 
   const perMileChart = useMemo(() => {
     const rows = [...filteredRows];
@@ -113,14 +123,6 @@ export function ProfitPerTruckPage() {
       profitPerMile: r.profit_per_mile_cents,
     }));
   }, [filteredRows]);
-
-  function toggleSort(k: SortKey) {
-    if (sortKey === k) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    else {
-      setSortKey(k);
-      setSortDir("desc");
-    }
-  }
 
   function exportCsv(data: ProfitPerTruckResponse) {
     const header = [
@@ -280,96 +282,16 @@ export function ProfitPerTruckPage() {
 
       {query.data ? (
         <>
-          <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
-            <table className="min-w-full text-left text-xs">
-              <thead className="bg-gray-50 text-[11px] font-semibold uppercase text-gray-600">
-                <tr>
-                  <th className="cursor-pointer px-2 py-2" onClick={() => toggleSort("unit_number")}>
-                    Unit #
-                  </th>
-                  <th className="cursor-pointer px-2 py-2" onClick={() => toggleSort("truck_type")}>
-                    Type
-                  </th>
-                  <th className="cursor-pointer px-2 py-2" onClick={() => toggleSort("primary_driver_name")}>
-                    Driver
-                  </th>
-                  <th className="cursor-pointer px-2 py-2 text-right" onClick={() => toggleSort("load_count")}>
-                    Loads
-                  </th>
-                  <th className="cursor-pointer px-2 py-2 text-right" onClick={() => toggleSort("miles_driven")}>
-                    Miles
-                  </th>
-                  <th className="cursor-pointer px-2 py-2 text-right" onClick={() => toggleSort("revenue_cents")}>
-                    Revenue
-                  </th>
-                  <th className="cursor-pointer px-2 py-2 text-right" onClick={() => toggleSort("driver_pay_cents")}>
-                    Driver pay
-                  </th>
-                  <th className="cursor-pointer px-2 py-2 text-right" onClick={() => toggleSort("fuel_cents")}>
-                    Fuel
-                  </th>
-                  <th className="cursor-pointer px-2 py-2 text-right" onClick={() => toggleSort("maintenance_cents")}>
-                    Maint
-                  </th>
-                  <th className="cursor-pointer px-2 py-2 text-right" onClick={() => toggleSort("net_profit_cents")}>
-                    Net profit
-                  </th>
-                  <th className="cursor-pointer px-2 py-2 text-right" onClick={() => toggleSort("margin_pct")}>
-                    Margin
-                  </th>
-                  <th className="cursor-pointer px-2 py-2 text-right" onClick={() => toggleSort("revenue_per_mile_cents")}>
-                    Rev/mi
-                  </th>
-                  <th className="cursor-pointer px-2 py-2 text-right" onClick={() => toggleSort("cost_per_mile_cents")}>
-                    Cost/mi
-                  </th>
-                  <th className="cursor-pointer px-2 py-2 text-right" onClick={() => toggleSort("profit_per_mile_cents")}>
-                    Profit/mi
-                  </th>
-                  <th className="px-2 py-2">Flags</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sorted.map((r) => (
-                  <tr
-                    key={r.unit_id}
-                    className="cursor-pointer border-b border-gray-100 hover:bg-gray-50"
-                    onClick={() => navigate(`/fleet/units/${r.unit_id}?tab=financial`)}
-                  >
-                    <td className="px-2 py-2 font-medium text-gray-900">{r.unit_number}</td>
-                    <td className="px-2 py-2">{r.truck_type}</td>
-                    <td className="px-2 py-2">{r.primary_driver_name ?? "—"}</td>
-                    <td className="px-2 py-2 text-right">{r.load_count}</td>
-                    <td className="px-2 py-2 text-right">{r.miles_driven}</td>
-                    <td className="px-2 py-2 text-right">{money(r.revenue_cents)}</td>
-                    <td className="px-2 py-2 text-right">{money(r.driver_pay_cents)}</td>
-                    <td className="px-2 py-2 text-right">{money(r.fuel_cents)}</td>
-                    <td className="px-2 py-2 text-right">{money(r.maintenance_cents)}</td>
-                    <td className="px-2 py-2 text-right">{money(r.net_profit_cents)}</td>
-                    <td className="px-2 py-2 text-right">{pct(r.margin_pct)}</td>
-                    <td className="px-2 py-2 text-right">{money(r.revenue_per_mile_cents)}</td>
-                    <td className="px-2 py-2 text-right">{money(r.cost_per_mile_cents)}</td>
-                    <td className="px-2 py-2 text-right">{money(r.profit_per_mile_cents)}</td>
-                    <td className="px-2 py-2">
-                      <div className="flex flex-wrap gap-1">
-                        {(r.flags ?? []).map((f) => {
-                          const meta = FLAG_UI[f];
-                          return (
-                            <span key={f} className={`rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold ${meta.className}`} title={meta.label}>
-                              {meta.label}
-                            </span>
-                          );
-                        })}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {listState.isEmpty ? (
-              <div className="px-3 py-4 text-sm text-gray-500">No trucks match the current filters for this period.</div>
-            ) : null}
-          </div>
+          <ParityTable
+            rows={sorted}
+            columns={columns}
+            rowKey={(r) => r.unit_id}
+            loading={listState.isLoading}
+            storageKey="profit-per-truck"
+            emptyText="No trucks match the current filters for this period."
+            exportFilename={`profit-per-truck-${applied.start}-${applied.end}`}
+            onRowClick={(r) => navigate(`/fleet/units/${r.unit_id}?tab=financial`)}
+          />
 
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-sm font-semibold">Top 10 trucks by per-mile metrics</div>

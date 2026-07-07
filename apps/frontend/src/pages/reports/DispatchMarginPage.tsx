@@ -7,6 +7,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -21,16 +22,12 @@ function currentQuarterRange() {
   return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) };
 }
 
-type SortKey = keyof DispatchMarginRow;
-
 export function DispatchMarginPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [period, setPeriod] = useState(currentQuarterRange);
   const [applied, setApplied] = useState(currentQuarterRange);
   const [basis, setBasis] = useState<"accrual" | "cash">("accrual");
-  const [sortKey, setSortKey] = useState<SortKey>("margin_cents");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   const query = useQuery({
     queryKey: ["reports", "dispatch-margin", companyId, applied.start, applied.end, basis],
@@ -45,26 +42,19 @@ export function DispatchMarginPage() {
     retry: false,
   });
 
-  const sorted = useMemo(() => {
-    const rows = query.data?.rows ?? [];
-    const mul = sortDir === "asc" ? 1 : -1;
-    const copy = [...rows];
-    copy.sort((a, b) => {
-      const av = a[sortKey];
-      const bv = b[sortKey];
-      if (typeof av === "string" && typeof bv === "string") return av.localeCompare(bv) * mul;
-      return ((Number(av) || 0) - (Number(bv) || 0)) * mul;
-    });
-    return copy;
-  }, [query.data?.rows, sortDir, sortKey]);
+  const sorted = query.data?.rows ?? [];
 
-  function toggleSort(key: SortKey) {
-    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    else {
-      setSortKey(key);
-      setSortDir("desc");
-    }
-  }
+  const columns = useMemo<ParityColumn<DispatchMarginRow>[]>(
+    () => [
+      { key: "load_number", label: "Load", sortable: true, render: (row) => <EntityLink kind="load" id={row.load_id} label={row.load_number ?? undefined} /> },
+      { key: "customer_name", label: "Customer", sortable: true, render: (row) => row.customer_name ?? "—" },
+      { key: "revenue_cents", label: "Revenue", sortable: true, className: "text-right", cellClass: "text-right", render: (row) => money(row.revenue_cents) },
+      { key: "direct_cost_cents", label: "Direct cost", sortable: true, className: "text-right", cellClass: "text-right", render: (row) => money(row.direct_cost_cents) },
+      { key: "margin_cents", label: "Margin", sortable: true, className: "text-right", cellClass: "text-right", render: (row) => money(row.margin_cents) },
+      { key: "margin_pct", label: "Margin %", sortable: true, className: "text-right", cellClass: "text-right", render: (row) => `${row.margin_pct.toFixed(1)}%` },
+    ],
+    [],
+  );
 
   return (
     <div className="space-y-3">
@@ -122,42 +112,14 @@ export function DispatchMarginPage() {
             </div>
           </div>
 
-          {sorted.length === 0 ? (
-            <div className="rounded-sm border bg-white p-4 text-sm text-slate-500">No loads in this period.</div>
-          ) : (
-            <div className="overflow-x-auto rounded-sm border bg-white">
-              <table className="min-w-full text-sm">
-                <thead className="bg-slate-50 text-left">
-                  <tr>
-                    {[
-                      ["load_number", "Load"],
-                      ["customer_name", "Customer"],
-                      ["revenue_cents", "Revenue"],
-                      ["direct_cost_cents", "Direct cost"],
-                      ["margin_cents", "Margin"],
-                      ["margin_pct", "Margin %"],
-                    ].map(([key, label]) => (
-                      <th key={key} className="cursor-pointer px-3 py-2" onClick={() => toggleSort(key as SortKey)}>
-                        {label}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {sorted.map((row) => (
-                    <tr key={row.load_id} className="border-t">
-                      <td className="px-3 py-2"><EntityLink kind="load" id={row.load_id} label={row.load_number ?? undefined} /></td>
-                      <td className="px-3 py-2">{row.customer_name ?? "—"}</td>
-                      <td className="px-3 py-2 text-right">{money(row.revenue_cents)}</td>
-                      <td className="px-3 py-2 text-right">{money(row.direct_cost_cents)}</td>
-                      <td className="px-3 py-2 text-right">{money(row.margin_cents)}</td>
-                      <td className="px-3 py-2 text-right">{row.margin_pct.toFixed(1)}%</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          <ParityTable
+            rows={sorted}
+            columns={columns}
+            rowKey={(row) => row.load_id}
+            loading={query.isPending || (query.isFetching && sorted.length === 0)}
+            storageKey="dispatch-margin"
+            emptyText="No loads in this period."
+          />
         </>
       ) : null}
     </div>

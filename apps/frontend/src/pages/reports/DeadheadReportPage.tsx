@@ -6,6 +6,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportsSubNav } from "./ReportsSubNav";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 type DeadheadPeriod = "last_4_weeks" | "last_12_weeks" | "YTD";
 
@@ -85,6 +86,19 @@ export function DeadheadReportPage() {
   const worst = sortedUnits[0];
   const trend = drilldownQuery.data?.weekly_trend ?? [];
 
+  const columns = useMemo<ParityColumn<DeadheadUnitRow>[]>(
+    () => [
+      { key: "unit_number", label: "Truck", sortable: true, render: (row) => <span className="font-medium">{row.unit_number}</span> },
+      { key: "deadhead_pct", label: "Deadhead %", sortable: true, render: (row) => pct(row.deadhead_pct) },
+      { key: "deadhead_miles", label: "Deadhead mi", sortable: true, render: (row) => row.deadhead_miles.toLocaleString() },
+      { key: "loaded_miles", label: "Loaded mi", sortable: true, render: (row) => row.loaded_miles.toLocaleString() },
+      { key: "total_miles", label: "Total mi", sortable: true, render: (row) => row.total_miles.toLocaleString() },
+      { key: "load_count", label: "Loads", sortable: true },
+      { key: "rank_in_fleet", label: "Fleet rank", sortable: true, render: (row) => row.rank_in_fleet ?? "—" },
+    ],
+    [],
+  );
+
   return (
     <div className="space-y-4 p-4">
       <PageHeader
@@ -151,38 +165,16 @@ export function DeadheadReportPage() {
             </div>
           ) : null}
 
-          <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-            <table className="min-w-full text-sm">
-              <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500">
-                <tr>
-                  <th className="px-3 py-2">Truck</th>
-                  <th className="px-3 py-2">Deadhead %</th>
-                  <th className="px-3 py-2">Deadhead mi</th>
-                  <th className="px-3 py-2">Loaded mi</th>
-                  <th className="px-3 py-2">Total mi</th>
-                  <th className="px-3 py-2">Loads</th>
-                  <th className="px-3 py-2">Fleet rank</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedUnits.map((row) => (
-                  <tr
-                    key={row.unit_id}
-                    className={`cursor-pointer border-t hover:bg-gray-50 ${selectedUnitId === row.unit_id ? "bg-slate-100" : ""}`}
-                    onClick={() => setSelectedUnitId(row.unit_id)}
-                  >
-                    <td className="px-3 py-2 font-medium">{row.unit_number}</td>
-                    <td className="px-3 py-2">{pct(row.deadhead_pct)}</td>
-                    <td className="px-3 py-2">{row.deadhead_miles.toLocaleString()}</td>
-                    <td className="px-3 py-2">{row.loaded_miles.toLocaleString()}</td>
-                    <td className="px-3 py-2">{row.total_miles.toLocaleString()}</td>
-                    <td className="px-3 py-2">{row.load_count}</td>
-                    <td className="px-3 py-2">{row.rank_in_fleet ?? "—"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ParityTable
+            rows={sortedUnits}
+            columns={columns}
+            rowKey={(row) => row.unit_id}
+            loading={reportQuery.isPending || (reportQuery.isFetching && sortedUnits.length === 0)}
+            storageKey="deadhead-report"
+            emptyText="No trucks with deadhead data for this period."
+            rowClassName={(row) => (selectedUnitId === row.unit_id ? "bg-slate-100" : "")}
+            onRowClick={(row) => setSelectedUnitId(row.unit_id)}
+          />
 
           {selectedUnitId && trend.length > 0 ? (
             <div className="rounded-sm border border-gray-200 bg-white p-4">

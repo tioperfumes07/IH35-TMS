@@ -25,6 +25,7 @@ import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportBlockTPendingBanner } from "./ReportBlockTPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 const DEFAULT_MIN_REVENUE_CENTS = 100_000; // $1,000
 
@@ -52,8 +53,6 @@ const FLAG_UI: Record<CustomerProfitFlag, { className: string; label: string }> 
   declining_revenue: { className: "border-slate-200 bg-slate-50 text-slate-800", label: "declining_revenue" },
 };
 
-type SortKey = keyof CustomerProfitabilityRow;
-
 export function CustomerProfitabilityPage() {
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
@@ -62,8 +61,6 @@ export function CustomerProfitabilityPage() {
   const [applied, setApplied] = useState(currentQuarterRange);
   const [minRevDollars, setMinRevDollars] = useState("1000");
   const [appliedMinCents, setAppliedMinCents] = useState(DEFAULT_MIN_REVENUE_CENTS);
-  const [sortKey, setSortKey] = useState<SortKey>("revenue_cents");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   const query = useQuery({
     queryKey: ["reports", "customer-profitability", companyId, applied.start, applied.end, appliedMinCents],
@@ -78,22 +75,61 @@ export function CustomerProfitabilityPage() {
     retry: false,
   });
 
-  const sorted = useMemo(() => {
-    const rows = query.data?.by_customer ?? [];
-    const mul = sortDir === "asc" ? 1 : -1;
-    const copy = [...rows];
-    copy.sort((a, b) => {
-      if (sortKey === "customer_name") return a.customer_name.localeCompare(b.customer_name) * mul;
-      const av = a[sortKey] as number | string | null;
-      const bv = b[sortKey] as number | string | null;
-      if (typeof av === "number" && typeof bv === "number") return (av - bv) * mul;
-      if (av == null && bv == null) return 0;
-      if (av == null) return 1 * mul;
-      if (bv == null) return -1 * mul;
-      return 0;
-    });
-    return copy;
-  }, [query.data?.by_customer, sortKey, sortDir]);
+  const rows = query.data?.by_customer ?? [];
+
+  const profitabilityColumns = useMemo<ParityColumn<CustomerProfitabilityRow>[]>(
+    () => [
+      { key: "customer_name", label: "Customer", sortable: true, render: (r) => <span className="font-medium text-gray-900">{r.customer_name}</span> },
+      { key: "load_count", label: "Loads", sortable: true, className: "text-right", cellClass: "text-right" },
+      { key: "revenue_cents", label: "Revenue", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.revenue_cents) },
+      { key: "direct_cost_cents", label: "Direct cost", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.direct_cost_cents) },
+      { key: "gross_margin_cents", label: "Margin", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.gross_margin_cents) },
+      { key: "gross_margin_pct", label: "Margin %", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => pct(r.gross_margin_pct) },
+      {
+        key: "ar_aging_balance_cents",
+        label: "A/R aging",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (r) => (
+          <span
+            className="cursor-pointer text-slate-700 underline"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/reports/ar-aging?customer_id=${encodeURIComponent(r.customer_id)}`);
+            }}
+          >
+            {money(r.ar_aging_balance_cents)}
+          </span>
+        ),
+      },
+      {
+        key: "days_since_last_load",
+        label: "Last load",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (r) => (r.days_since_last_load == null ? "—" : `${r.days_since_last_load}d`),
+      },
+      {
+        key: "flags",
+        label: "Flags",
+        render: (r) => (
+          <div className="flex flex-wrap gap-1">
+            {(r.flags ?? []).map((f) => {
+              const meta = FLAG_UI[f];
+              return (
+                <span key={f} className={`rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold ${meta.className}`} title={meta.label}>
+                  {meta.label}
+                </span>
+              );
+            })}
+          </div>
+        ),
+      },
+    ],
+    [navigate],
+  );
 
   const top5Chart = useMemo(() => {
     const rows = [...(query.data?.by_customer ?? [])];
@@ -104,14 +140,6 @@ export function CustomerProfitabilityPage() {
       marginPct: r.gross_margin_pct,
     }));
   }, [query.data?.by_customer]);
-
-  function toggleSort(k: SortKey) {
-    if (sortKey === k) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    else {
-      setSortKey(k);
-      setSortDir("desc");
-    }
-  }
 
   function applyFilters() {
     setApplied({ ...period });
@@ -217,79 +245,16 @@ export function CustomerProfitabilityPage() {
             </div>
           </div>
 
-          <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
-            <table className="min-w-full text-left text-xs">
-              <thead className="bg-gray-50 text-[11px] font-semibold uppercase text-gray-600">
-                <tr>
-                  <th className="cursor-pointer px-2 py-2" onClick={() => toggleSort("customer_name")}>
-                    Customer
-                  </th>
-                  <th className="cursor-pointer px-2 py-2 text-right" onClick={() => toggleSort("load_count")}>
-                    Loads
-                  </th>
-                  <th className="cursor-pointer px-2 py-2 text-right" onClick={() => toggleSort("revenue_cents")}>
-                    Revenue
-                  </th>
-                  <th className="cursor-pointer px-2 py-2 text-right" onClick={() => toggleSort("direct_cost_cents")}>
-                    Direct cost
-                  </th>
-                  <th className="cursor-pointer px-2 py-2 text-right" onClick={() => toggleSort("gross_margin_cents")}>
-                    Margin
-                  </th>
-                  <th className="cursor-pointer px-2 py-2 text-right" onClick={() => toggleSort("gross_margin_pct")}>
-                    Margin %
-                  </th>
-                  <th className="cursor-pointer px-2 py-2 text-right" onClick={() => toggleSort("ar_aging_balance_cents")}>
-                    A/R aging
-                  </th>
-                  <th className="cursor-pointer px-2 py-2 text-right" onClick={() => toggleSort("days_since_last_load")}>
-                    Last load
-                  </th>
-                  <th className="px-2 py-2">Flags</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sorted.map((r) => (
-                  <tr
-                    key={r.customer_id}
-                    className="cursor-pointer border-b border-gray-100 hover:bg-gray-50"
-                    onClick={() => navigate(`/customers/${r.customer_id}?tab=billing`)}
-                  >
-                    <td className="px-2 py-2 font-medium text-gray-900">{r.customer_name}</td>
-                    <td className="px-2 py-2 text-right">{r.load_count}</td>
-                    <td className="px-2 py-2 text-right">{money(r.revenue_cents)}</td>
-                    <td className="px-2 py-2 text-right">{money(r.direct_cost_cents)}</td>
-                    <td className="px-2 py-2 text-right">{money(r.gross_margin_cents)}</td>
-                    <td className="px-2 py-2 text-right">{pct(r.gross_margin_pct)}</td>
-                    <td
-                      className="px-2 py-2 text-right text-slate-700 underline"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/reports/ar-aging?customer_id=${encodeURIComponent(r.customer_id)}`);
-                      }}
-                    >
-                      {money(r.ar_aging_balance_cents)}
-                    </td>
-                    <td className="px-2 py-2 text-right">
-                      {r.days_since_last_load == null ? "—" : `${r.days_since_last_load}d`}
-                    </td>
-                    <td className="px-2 py-2">
-                      <div className="flex flex-wrap gap-1">
-                        {(r.flags ?? []).map((f) => {
-                          const meta = FLAG_UI[f];
-                          return (
-                            <span key={f} className={`rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold ${meta.className}`} title={meta.label}>
-                              {meta.label}
-                            </span>
-                          );
-                        })}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ParityTable
+            rows={rows}
+            columns={profitabilityColumns}
+            rowKey={(r) => r.customer_id}
+            loading={query.isPending || (query.isFetching && rows.length === 0)}
+            storageKey="customer-profitability"
+            emptyText="No customers match the current filters."
+            exportFilename={`customer-profitability-${applied.start}-${applied.end}`}
+            onRowClick={(r) => navigate(`/customers/${r.customer_id}?tab=billing`)}
+          />
 
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-sm font-semibold">Top 5 customers by revenue (margin % overlay)</div>

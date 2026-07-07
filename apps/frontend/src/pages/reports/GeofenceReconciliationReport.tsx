@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 interface Finding {
   uuid: string;
@@ -67,6 +68,20 @@ export function GeofenceReconciliationReport() {
     return acc;
   }, {} as Record<string, Finding[]>);
 
+  const findingColumns = useMemo<ParityColumn<Finding>[]>(
+    () => [
+      { key: "unit_id", label: "Unit", render: (f) => <EntityLink kind="unit" id={f.unit_id ?? undefined} label={f.unit_id?.slice(0, 8) ?? "—"} /> },
+      { key: "geofence_id", label: "Geofence", render: (f) => f.geofence_id ?? "—" },
+      { key: "occurred_at", label: "Time", sortable: true, render: (f) => (f.occurred_at ? `${formatDateTimeUS(f.occurred_at)} CT` : "—") },
+      {
+        key: "resolved",
+        label: "Status",
+        render: (f) => (f.resolved ? <span className="text-green-600">Resolved</span> : <span className="text-yellow-600">Open</span>),
+      },
+    ],
+    [],
+  );
+
   return (
     <div className="space-y-4">
       <ReportsSubNav />
@@ -101,43 +116,25 @@ export function GeofenceReconciliationReport() {
             </span>
             <span className="text-sm text-gray-500">{items.length} finding{items.length !== 1 ? "s" : ""}</span>
           </div>
-          <div className="overflow-x-auto">
-          <table className="w-full text-sm border-collapse">
-            <thead>
-              <tr className="bg-gray-50">
-                <th className="text-left px-3 py-2 border-b">Unit</th>
-                <th className="text-left px-3 py-2 border-b">Geofence</th>
-                <th className="text-left px-3 py-2 border-b">Time</th>
-                <th className="text-left px-3 py-2 border-b">Status</th>
-                <th className="text-left px-3 py-2 border-b">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((f) => (
-                <tr key={f.uuid} className={`border-b ${f.resolved ? "opacity-50" : ""}`}>
-                  <td className="px-3 py-2"><EntityLink kind="unit" id={f.unit_id ?? undefined} label={f.unit_id?.slice(0, 8) ?? "—"} /></td>
-                  <td className="px-3 py-2">{f.geofence_id ?? "—"}</td>
-                  <td className="px-3 py-2">{f.occurred_at ? `${formatDateTimeUS(f.occurred_at)} CT` : "—"}</td>
-                  <td className="px-3 py-2">
-                    {f.resolved
-                      ? <span className="text-green-600">Resolved</span>
-                      : <span className="text-yellow-600">Open</span>}
-                  </td>
-                  <td className="px-3 py-2">
-                    {!f.resolved && (
-                      <button
-                        onClick={() => resolveMutation.mutate({ uuid: f.uuid, note: "Resolved via UI" })}
-                        className="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded-sm"
-                      >
-                        Mark Resolved
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          </div>
+          <ParityTable
+            rows={items}
+            columns={findingColumns}
+            rowKey={(f) => f.uuid}
+            loading={false}
+            storageKey={`geofence-recon-${cls}`}
+            emptyText="No findings."
+            rowClassName={(f) => (f.resolved ? "opacity-50" : "")}
+            rowActions={(f) =>
+              !f.resolved ? (
+                <button
+                  onClick={() => resolveMutation.mutate({ uuid: f.uuid, note: "Resolved via UI" })}
+                  className="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded-sm"
+                >
+                  Mark Resolved
+                </button>
+              ) : null
+            }
+          />
         </div>
       ))}
     </div>

@@ -22,6 +22,7 @@ import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { LaneDetailModal } from "../../components/reports/LaneDetailModal";
 import { ReportsSubNav } from "./ReportsSubNav";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -39,11 +40,6 @@ function marginClass(margin: number | null) {
   return "text-rose-700 font-semibold";
 }
 
-type SortKey = keyof Pick<
-  LaneProfitabilityLane,
-  "load_count" | "total_revenue_cents" | "gross_profit_cents" | "profit_per_mile_cents" | "margin_pct"
->;
-
 export function LaneProfitabilityPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -53,8 +49,6 @@ export function LaneProfitabilityPage() {
   const [applied, setApplied] = useState<{ period: LaneProfitabilityPeriod; start?: string; end?: string }>({
     period: "YTD",
   });
-  const [sortKey, setSortKey] = useState<SortKey>("gross_profit_cents");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [selectedLane, setSelectedLane] = useState<LaneProfitabilityLane | null>(null);
 
   const query = useQuery({
@@ -96,16 +90,45 @@ export function LaneProfitabilityPage() {
     retry: false,
   });
 
-  const sorted = useMemo(() => {
-    const rows = [...(query.data?.lanes ?? [])];
-    const mul = sortDir === "asc" ? 1 : -1;
-    rows.sort((a, b) => {
-      const av = a[sortKey] ?? 0;
-      const bv = b[sortKey] ?? 0;
-      return ((Number(av) || 0) - (Number(bv) || 0)) * mul;
-    });
-    return rows;
-  }, [query.data?.lanes, sortDir, sortKey]);
+  const rows = query.data?.lanes ?? [];
+
+  const laneColumns = useMemo<ParityColumn<LaneProfitabilityLane>[]>(
+    () => [
+      {
+        key: "lane",
+        label: "Lane",
+        alwaysVisible: true,
+        render: (lane) => `${lane.origin_city}, ${lane.origin_state} → ${lane.destination_city}, ${lane.destination_state}`,
+      },
+      { key: "load_count", label: "Loads", sortable: true, className: "text-right", cellClass: "text-right" },
+      { key: "total_revenue_cents", label: "Revenue", sortable: true, className: "text-right", cellClass: "text-right", render: (lane) => money(lane.total_revenue_cents) },
+      {
+        key: "costs",
+        label: "Costs",
+        className: "text-right",
+        cellClass: "text-right",
+        render: (lane) => money(lane.total_driver_pay_cents + lane.total_fuel_cost_cents + lane.total_maintenance_cost_cents),
+      },
+      { key: "gross_profit_cents", label: "Profit", sortable: true, className: "text-right", cellClass: "text-right", render: (lane) => money(lane.gross_profit_cents) },
+      {
+        key: "profit_per_mile_cents",
+        label: "Profit/mi",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (lane) => (lane.profit_per_mile_cents != null ? money(lane.profit_per_mile_cents) : "—"),
+      },
+      {
+        key: "margin_pct",
+        label: "Margin",
+        sortable: true,
+        className: "text-right",
+        cellClass: `text-right`,
+        render: (lane) => <span className={marginClass(lane.margin_pct)}>{pct(lane.margin_pct)}</span>,
+      },
+    ],
+    [],
+  );
 
   const chartData = useMemo(() => {
     return [...(query.data?.lanes ?? [])]
@@ -127,7 +150,6 @@ export function LaneProfitabilityPage() {
   }
 
   function exportCsv() {
-    const rows = sorted;
     const header = [
       "Origin City",
       "Origin State",
@@ -159,15 +181,6 @@ export function LaneProfitabilityPage() {
     a.download = `lane-profitability-${query.data?.period.start ?? "export"}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-  }
-
-  function toggleSort(key: SortKey) {
-    if (sortKey === key) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-      return;
-    }
-    setSortKey(key);
-    setSortDir("desc");
   }
 
   return (
@@ -214,7 +227,7 @@ export function LaneProfitabilityPage() {
         <Button type="button" onClick={applyPeriod}>
           Apply
         </Button>
-        <Button type="button" variant="secondary" onClick={exportCsv} disabled={sorted.length === 0}>
+        <Button type="button" variant="secondary" onClick={exportCsv} disabled={rows.length === 0}>
           Export CSV
         </Button>
       </div>
@@ -274,55 +287,15 @@ export function LaneProfitabilityPage() {
             </div>
           </div>
 
-          <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-            <table className="min-w-full text-sm">
-              <thead className="bg-gray-50 text-left text-xs uppercase text-gray-600">
-                <tr>
-                  <th className="px-3 py-2">Lane</th>
-                  <th className="cursor-pointer px-3 py-2" onClick={() => toggleSort("load_count")}>
-                    Loads
-                  </th>
-                  <th className="cursor-pointer px-3 py-2" onClick={() => toggleSort("total_revenue_cents")}>
-                    Revenue
-                  </th>
-                  <th className="px-3 py-2">Costs</th>
-                  <th className="cursor-pointer px-3 py-2" onClick={() => toggleSort("gross_profit_cents")}>
-                    Profit
-                  </th>
-                  <th className="cursor-pointer px-3 py-2" onClick={() => toggleSort("profit_per_mile_cents")}>
-                    Profit/mi
-                  </th>
-                  <th className="cursor-pointer px-3 py-2" onClick={() => toggleSort("margin_pct")}>
-                    Margin
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {sorted.map((lane) => {
-                  const totalCosts =
-                    lane.total_driver_pay_cents + lane.total_fuel_cost_cents + lane.total_maintenance_cost_cents;
-                  const label = `${lane.origin_city}, ${lane.origin_state} → ${lane.destination_city}, ${lane.destination_state}`;
-                  return (
-                    <tr
-                      key={label}
-                      className="cursor-pointer border-t border-gray-100 hover:bg-gray-50"
-                      onClick={() => setSelectedLane(lane)}
-                    >
-                      <td className="px-3 py-2 font-medium">{label}</td>
-                      <td className="px-3 py-2">{lane.load_count}</td>
-                      <td className="px-3 py-2">{money(lane.total_revenue_cents)}</td>
-                      <td className="px-3 py-2">{money(totalCosts)}</td>
-                      <td className="px-3 py-2">{money(lane.gross_profit_cents)}</td>
-                      <td className="px-3 py-2">
-                        {lane.profit_per_mile_cents != null ? money(lane.profit_per_mile_cents) : "—"}
-                      </td>
-                      <td className={`px-3 py-2 ${marginClass(lane.margin_pct)}`}>{pct(lane.margin_pct)}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <ParityTable
+            rows={rows}
+            columns={laneColumns}
+            rowKey={(lane) => `${lane.origin_city}, ${lane.origin_state} → ${lane.destination_city}, ${lane.destination_state}`}
+            loading={query.isPending || (query.isFetching && rows.length === 0)}
+            storageKey="lane-profitability"
+            emptyText="No lanes match the current filters."
+            onRowClick={(lane) => setSelectedLane(lane)}
+          />
         </>
       ) : null}
 

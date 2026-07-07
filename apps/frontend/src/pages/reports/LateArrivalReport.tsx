@@ -6,6 +6,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportsSubNav } from "./ReportsSubNav";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 type GroupBy = "driver" | "customer" | "lane";
 
@@ -70,6 +71,18 @@ export function LateArrivalReport() {
     return { total: rows.length, chronic: chronic.length };
   }, [reportQuery.data?.rows]);
 
+  const rows = reportQuery.data?.rows ?? [];
+
+  const columns = useMemo<ParityColumn<LateArrivalRow>[]>(
+    () => [
+      { key: "entity_label", label: TAB_LABELS[applied.groupBy], sortable: true, render: (row) => <span className="font-medium text-slate-900">{row.entity_label}</span> },
+      { key: "late_count", label: "Late", sortable: true },
+      { key: "total_count", label: "Total", sortable: true },
+      { key: "late_rate", label: "Rate", sortable: true, render: (row) => pct(row.late_rate) },
+    ],
+    [applied.groupBy],
+  );
+
   return (
     <div data-testid="late-arrival-report-page" className="space-y-4">
       <ReportsSubNav />
@@ -125,38 +138,15 @@ export function LateArrivalReport() {
         ))}
       </div>
 
-      <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
-            <tr>
-              <th className="px-3 py-2">{TAB_LABELS[applied.groupBy]}</th>
-              <th className="px-3 py-2">Late</th>
-              <th className="px-3 py-2">Total</th>
-              <th className="px-3 py-2">Rate</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(reportQuery.data?.rows ?? []).map((row) => (
-              <tr
-                key={row.entity_id}
-                className={row.chronic_offender ? "bg-slate-50" : "border-t border-slate-100"}
-              >
-                <td className="px-3 py-2 font-medium text-slate-900">{row.entity_label}</td>
-                <td className="px-3 py-2">{row.late_count}</td>
-                <td className="px-3 py-2">{row.total_count}</td>
-                <td className="px-3 py-2">{pct(row.late_rate)}</td>
-              </tr>
-            ))}
-            {!reportQuery.isLoading && (reportQuery.data?.rows ?? []).length === 0 ? (
-              <tr>
-                <td colSpan={4} className="px-3 py-6 text-center text-slate-500">
-                  No completed stops with scheduled times in this period.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
+      <ParityTable
+        rows={rows}
+        columns={columns}
+        rowKey={(row) => row.entity_id}
+        loading={reportQuery.isPending || (reportQuery.isFetching && rows.length === 0)}
+        storageKey="late-arrival-report"
+        emptyText="No completed stops with scheduled times in this period."
+        rowClassName={(row) => (row.chronic_offender ? "bg-slate-50" : "")}
+      />
     </div>
   );
 }
