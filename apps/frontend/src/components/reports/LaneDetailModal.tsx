@@ -1,6 +1,7 @@
 import type { LaneProfitabilityLane, LaneProfitabilityLoadDetail } from "../../api/reports";
 import { formatDateUS } from "../../lib/formatDate";
 import { Modal } from "../Modal";
+import { EntityLink } from "../shared/EntityLink";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -47,7 +48,7 @@ export function LaneDetailModal({ open, lane, loads, loading, onClose }: Props) 
           <tbody>
             {loads.map((load) => (
               <tr key={load.load_id} className="border-t border-gray-100">
-                <td className="px-3 py-2 font-medium">{load.load_number ?? load.load_id.slice(0, 8)}</td>
+                <td className="px-3 py-2 font-medium"><EntityLink kind="load" id={load.load_id} label={load.load_number ?? load.load_id.slice(0, 8)} /></td>
                 <td className="px-3 py-2">{formatDateUS(load.created_at)}</td>
                 <td className="px-3 py-2">{money(load.revenue_cents)}</td>
                 <td className="px-3 py-2">{money(load.driver_pay_cents)}</td>
