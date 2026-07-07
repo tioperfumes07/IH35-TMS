@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../auth/useAuth";
 import { getArrivingSoon, logArrivingSoonView, type ArrivingSoonCard as ArrivingSoonCardType } from "../../api/maintenance";
@@ -130,9 +131,7 @@ export function ArrivingSoonPage({ operatingCompanyId }: Props) {
       sortable: true,
       render: (card) =>
         card.driver_id ? (
-          <Link to={`/drivers/${card.driver_id}`} className={LINK}>
-            {card.driver_name ?? card.driver_id.slice(0, 8)}
-          </Link>
+          <EntityLink kind="driver" id={card.driver_id} label={card.driver_name ?? undefined} />
         ) : (
           <span className="text-gray-400">Unassigned</span>
         ),

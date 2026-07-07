@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { listUnits } from "../../../api/mdata";
@@ -177,9 +178,7 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
       label: "Unit",
       sortable: true,
       render: (row) => (
-        <Link to={`/fleet/${row.unit_id}`} className={LINK}>
-          {row.unit_number ?? row.unit_id.slice(0, 8)}
-        </Link>
+        <EntityLink kind="unit" id={row.unit_id} label={row.unit_number ?? undefined} />
       ),
     },
     {
@@ -189,13 +188,7 @@ export function SevereRepairOosTab({ operatingCompanyId }: Props) {
       label: "Driver",
       sortable: true,
       render: (row) =>
-        row.driver_id ? (
-          <Link to={`/drivers/${row.driver_id}`} className={LINK}>
-            {row.driver_name ?? row.driver_id.slice(0, 8)}
-          </Link>
-        ) : (
-          <span className="text-gray-400">Unassigned</span>
-        ),
+        <EntityLink kind="driver" id={row.driver_id ?? undefined} label={row.driver_name ?? undefined} />,
     },
     {
       key: "damage_severity",
