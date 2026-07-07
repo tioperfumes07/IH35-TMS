@@ -197,6 +197,7 @@ const ReportsRunnerPage = React.lazy(() => import("../pages/reports/ReportsRunne
 const ARAgingPage = React.lazy(() => import("../pages/reports/ARAgingPage").then((m) => ({ default: m.ARAgingPage })));
 const APAgingPage = React.lazy(() => import("../pages/reports/APAgingPage").then((m) => ({ default: m.APAgingPage })));
 const TrialBalancePage = React.lazy(() => import("../pages/reports/TrialBalancePage").then((m) => ({ default: m.TrialBalancePage })));
+const ManagementReportPackagePage = React.lazy(() => import("../pages/reports/ManagementReportPackagePage").then((m) => ({ default: m.ManagementReportPackagePage })));
 const ProfitLossPage = React.lazy(() => import("../pages/reports/ProfitLossPage").then((m) => ({ default: m.ProfitLossPage })));
 const BalanceSheetPage = React.lazy(() => import("../pages/reports/BalanceSheetPage").then((m) => ({ default: m.BalanceSheetPage })));
 const CashFlowStatementPage = React.lazy(() => import("../pages/reports/CashFlowStatementPage").then((m) => ({ default: m.CashFlowStatementPage })));
@@ -2787,6 +2788,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <ReportsHomePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/management"
+          element={
+            <ProtectedRoute>
+              <ManagementReportPackagePage />
             </ProtectedRoute>
           }
         />

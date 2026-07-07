@@ -193,6 +193,31 @@ export function ReportsHomePage() {
               ))}
             </div>
           </section>
+          <section className="rounded-sm border border-slate-200 bg-white">
+            <div className="border-b border-slate-200 px-3 py-2">
+              <h3 className="text-sm font-semibold text-slate-900">Management reports</h3>
+              <p className="text-xs text-slate-500">QBO-standard branded compilations — lender, insurance, and stakeholder ready</p>
+            </div>
+            <div className="grid gap-2 p-3 sm:grid-cols-3">
+              {(
+                [
+                  ["company-overview", "Company Overview", "P&L + Balance Sheet"],
+                  ["sales-performance", "Sales Performance", "P&L + A/R Aging + Customer Summary"],
+                  ["expenses-performance", "Expenses Performance", "P&L + A/P Aging + Vendor Summary"],
+                ] as const
+              ).map(([type, label, sub]) => (
+                <button
+                  key={type}
+                  type="button"
+                  className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-left hover:border-[#1f2a44] hover:bg-white"
+                  onClick={() => navigate(`/reports/management?type=${type}`)}
+                >
+                  <div className="text-xs font-semibold text-slate-800">{label}</div>
+                  <div className="mt-0.5 text-[10px] text-slate-500">{sub}</div>
+                </button>
+              ))}
+            </div>
+          </section>
           <FrequentlyRunTable rows={frequentRows} onRun={handleRunReport} />
         </div>
         <ScheduledReportsPanel rows={scheduledQuery.data ?? []} />

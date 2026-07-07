@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
@@ -15,6 +16,13 @@ import { ReportsSubNav } from "./ReportsSubNav";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
+}
+
+const SYNTHETIC_ACCOUNT_IDS = new Set(["cash-basis-ar-row", "cash-basis-ap-row"]);
+
+function registerHref(accountId: string, fromDate: string, toDate: string, basis: string) {
+  const params = new URLSearchParams({ from_date: fromDate, to_date: toDate, basis });
+  return `/accounting/chart-of-accounts/register/${accountId}?${params}`;
 }
 
 function currentQuarterRange() {
@@ -232,16 +240,30 @@ export function TrialBalancePage() {
                 </td>
               </tr>
             ) : null}
-            {rows.map((row) => (
-              <tr key={row.account_id} className="border-b border-gray-100">
-                <td className="px-3 py-2 font-medium text-gray-900">{row.account_code || "—"}</td>
-                <td className="px-3 py-2">{row.account_name || "—"}</td>
-                <td className="px-3 py-2">{row.account_type || "—"}</td>
-                <td className="px-3 py-2 text-right">{money(row.total_debits)}</td>
-                <td className="px-3 py-2 text-right">{money(row.total_credits)}</td>
-                <td className={`px-3 py-2 text-right ${row.net_balance < 0 ? "text-rose-700" : "text-slate-900"}`}>{money(row.net_balance)}</td>
-              </tr>
-            ))}
+            {rows.map((row) => {
+              const canDrill = row.account_id && !SYNTHETIC_ACCOUNT_IDS.has(row.account_id);
+              return (
+                <tr key={row.account_id} className="border-b border-gray-100">
+                  <td className="px-3 py-2 font-medium text-gray-900">{row.account_code || "—"}</td>
+                  <td className="px-3 py-2">
+                    {canDrill ? (
+                      <Link
+                        to={registerHref(row.account_id!, applied.start, applied.end, basis)}
+                        className="text-slate-700 underline-offset-2 hover:underline"
+                      >
+                        {row.account_name || "—"}
+                      </Link>
+                    ) : (
+                      row.account_name || "—"
+                    )}
+                  </td>
+                  <td className="px-3 py-2">{row.account_type || "—"}</td>
+                  <td className="px-3 py-2 text-right">{money(row.total_debits)}</td>
+                  <td className="px-3 py-2 text-right">{money(row.total_credits)}</td>
+                  <td className={`px-3 py-2 text-right ${row.net_balance < 0 ? "text-rose-700" : "text-slate-900"}`}>{money(row.net_balance)}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

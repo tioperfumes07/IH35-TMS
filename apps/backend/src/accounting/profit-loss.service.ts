@@ -1,6 +1,7 @@
 import { withCurrentUser } from "../auth/db.js";
 
 type ProfitLossAggregateRowDb = {
+  account_id: string | null;
   account_code: string;
   account_name: string;
   account_type: string;
@@ -9,6 +10,7 @@ type ProfitLossAggregateRowDb = {
 };
 
 export type ProfitLossLine = {
+  account_id?: string;
   account_code: string;
   account_name: string;
   account_type: string;
@@ -58,6 +60,7 @@ export async function getProfitLossReport(input: {
     const res = await client.query<ProfitLossAggregateRowDb>(
       `
         SELECT
+          a.id::text AS account_id,
           COALESCE(a.account_number, '') AS account_code,
           COALESCE(a.account_name, '') AS account_name,
           COALESCE(a.account_type, '') AS account_type,
@@ -75,7 +78,7 @@ export async function getProfitLossReport(input: {
         WHERE p.operating_company_id = $1::uuid
           AND je.status <> 'voided'
           AND (p.posting_batch_id IS NULL OR pb.batch_status IN ('posted', 'reversed'))${dateSql}
-        GROUP BY a.account_number, a.account_name, a.account_type
+        GROUP BY a.id, a.account_number, a.account_name, a.account_type
         ORDER BY a.account_number ASC NULLS LAST, a.account_name ASC
       `,
       values
@@ -92,6 +95,7 @@ export async function getProfitLossReport(input: {
 
       if (REVENUE_TYPES.has(accountType)) {
         revenueLines.push({
+          ...(row.account_id ? { account_id: row.account_id } : {}),
           account_code: row.account_code,
           account_name: row.account_name,
           account_type: accountType,
@@ -102,6 +106,7 @@ export async function getProfitLossReport(input: {
 
       if (COGS_TYPES.has(accountType)) {
         cogsLines.push({
+          ...(row.account_id ? { account_id: row.account_id } : {}),
           account_code: row.account_code,
           account_name: row.account_name,
           account_type: accountType,
@@ -112,6 +117,7 @@ export async function getProfitLossReport(input: {
 
       if (OPERATING_EXPENSE_TYPES.has(accountType)) {
         operatingExpenseLines.push({
+          ...(row.account_id ? { account_id: row.account_id } : {}),
           account_code: row.account_code,
           account_name: row.account_name,
           account_type: accountType,

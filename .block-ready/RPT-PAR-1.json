@@ -1,0 +1,42 @@
+{
+  "block": "RPT-PAR-1",
+  "phase": "PARITY",
+  "status": "BUILD",
+  "tier": 3,
+  "merge_gate": "auto_on_green",
+  "description": "Management Report Packages + Report Drilldowns",
+  "allowed_files": [
+    "apps/frontend/src/pages/reports/ManagementReportPackagePage.tsx",
+    "apps/frontend/src/pages/reports/ReportsHome.tsx",
+    "apps/frontend/src/pages/reports/TrialBalancePage.tsx",
+    "apps/frontend/src/pages/reports/ProfitLossPage.tsx",
+    "apps/frontend/src/pages/reports/BalanceSheetPage.tsx",
+    "apps/frontend/src/pages/accounting/AccountRegisterPage.tsx",
+    "apps/frontend/src/routes/manifest.tsx",
+    "apps/frontend/src/api/reports.ts",
+    "apps/backend/src/accounting/profit-loss.service.ts"
+  ],
+  "forbidden": [
+    "db/migrations",
+    "accounting.*",
+    "catalogs.*",
+    "GL math changes",
+    "shared registries"
+  ],
+  "deliverables": {
+    "G1_management_packages": {
+      "status": "DONE",
+      "note": "3 QBO-standard compilations (Company Overview, Sales Performance, Expenses Performance) at /reports/management?type=*; cover page, TOC, per-report sections, print-to-PDF"
+    },
+    "G2_drilldowns": {
+      "status": "DONE",
+      "note": "TB account rows link to /accounting/chart-of-accounts/register/:id?from_date&to_date&basis; P&L rows same (account_id added to backend); BS rows same. AccountRegisterPage reads from_date/to_date from URL search params. Rows without account_id render unlinked."
+    },
+    "G3_custom_report_verify": {
+      "status": "DONE",
+      "note": "Custom report builder is functional — table exists (migration 0374), save/load/run UI wired. Available fields are run-log analytics (10 fields over reports.run_log). Not a from-scratch arbitrary-data builder — correctly scoped as run-log customization. No fake UI built."
+    }
+  },
+  "parity_basis": "QBO Management reports (branded compilations: Company Overview=P&L+BS; Sales Performance=P&L+AR Aging Detail+Sales by Customer; Expenses Performance=P&L+AP Aging Detail+Expenses by Vendor; cover page, TOC); QBO modern-view drilldowns (report numbers to transaction detail, per-account Run report from COA)",
+  "post_import_verification": "packages + drilldowns to be re-verified against real TRANSP data vs QBO reports for same period after historical import lands"
+}

@@ -1,7 +1,7 @@
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 
@@ -90,16 +90,20 @@ export function AccountRegisterPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   // Deep-link: the Chart of Accounts "View register" link routes to
   // /accounting/chart-of-accounts/register/:accountId — preselect that account here.
+  // Report drilldowns pass ?from_date=&to_date=&basis= as query params.
   const { accountId: routeAccountId } = useParams<{ accountId?: string }>();
 
   const initial = monthBounds(new Date());
+  const paramFrom = searchParams.get("from_date");
+  const paramTo = searchParams.get("to_date");
   const [density, setDensity] = useState<"regular" | "compact" | "ultra">("regular");
   const [accountId, setAccountId] = useState(routeAccountId ?? "");
-  const [fromDate, setFromDate] = useState(initial.from);
-  const [toDate, setToDate] = useState(initial.to);
-  const [preset, setPreset] = useState("this_month");
+  const [fromDate, setFromDate] = useState(paramFrom ?? initial.from);
+  const [toDate, setToDate] = useState(paramTo ?? initial.to);
+  const [preset, setPreset] = useState(paramFrom ? "custom" : "this_month");
   const [view, setView] = useState<"register" | "audit">("register");
 
   useEffect(() => {

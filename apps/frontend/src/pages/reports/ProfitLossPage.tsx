@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
@@ -26,6 +27,11 @@ function currentMonthRange() {
 
 function sortLines(lines: AccountingProfitLossLine[]) {
   return [...lines].sort((a, b) => String(a.account_code || "").localeCompare(String(b.account_code || "")));
+}
+
+function registerHref(accountId: string, fromDate: string, toDate: string, basis: string) {
+  const params = new URLSearchParams({ from_date: fromDate, to_date: toDate, basis });
+  return `/accounting/chart-of-accounts/register/${accountId}?${params}`;
 }
 
 export function ProfitLossPage() {
@@ -178,7 +184,18 @@ export function ProfitLossPage() {
                     section.lines.map((line) => (
                       <tr key={`${section.key}-${line.account_code}-${line.account_name}`} className="border-b border-gray-100">
                         <td className="px-3 py-2 font-medium text-gray-900">{line.account_code || "—"}</td>
-                        <td className="px-3 py-2">{line.account_name || "—"}</td>
+                        <td className="px-3 py-2">
+                          {line.account_id ? (
+                            <Link
+                              to={registerHref(line.account_id, applied.start, applied.end, basis)}
+                              className="text-slate-700 underline-offset-2 hover:underline"
+                            >
+                              {line.account_name || "—"}
+                            </Link>
+                          ) : (
+                            line.account_name || "—"
+                          )}
+                        </td>
                         <td className="px-3 py-2">{line.account_type || "—"}</td>
                         <td className="px-3 py-2 text-right">{money(line.amount)}</td>
                       </tr>
