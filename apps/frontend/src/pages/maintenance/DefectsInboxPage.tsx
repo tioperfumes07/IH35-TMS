@@ -8,6 +8,7 @@ import {
   type DvirDefectTriageStatus,
 } from "../../api/maintenance";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
@@ -86,7 +87,7 @@ export function DefectsInboxPage() {
                 <td className="truncate px-2 py-2">
                   {row.submitted_at ? new Date(row.submitted_at).toLocaleString() : "—"}
                 </td>
-                <td className="truncate px-2 py-2">{row.unit_number ?? row.unit_id}</td>
+                <td className="truncate px-2 py-2"><EntityLink kind="unit" id={row.unit_id} label={row.unit_number ?? undefined} /></td>
                 <td className="truncate px-2 py-2">{row.driver_name ?? "—"}</td>
                 <td className="truncate px-2 py-2">{row.item_key}</td>
                 <td className="px-2 py-2">

@@ -8,6 +8,7 @@ import { followUpDotInspectionEvent, listDotInspectionEvents } from "../../../ap
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { companyToday } from "../../../lib/businessDate";
 import { useListState } from "../../../components/list-state";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { InspectionScoreBadge } from "../../../components/safety/InspectionScoreBadge";
 
 export function DOTInspectionsTab() {
@@ -130,12 +131,12 @@ export function DOTInspectionsTab() {
             {(query.data?.dot_inspections ?? []).map((row) => (
               <tr key={String(row.id)} className="border-t border-gray-100">
                 <td className="px-2 py-1">{formatDateUS(row.inspection_date)}</td>
-                <td className="px-2 py-1">{String(row.driver_id ?? "—")}</td>
-                <td className="px-2 py-1">{String(row.unit_id ?? "—")}</td>
+                <td className="px-2 py-1"><EntityLink kind="driver" id={row.driver_id as string | undefined} /></td>
+                <td className="px-2 py-1"><EntityLink kind="unit" id={row.unit_id as string | undefined} /></td>
                 <td className="px-2 py-1">{String(row.fmcsa_level ?? "—")}</td>
                 <td className="px-2 py-1">{String(row.outcome ?? "—")}</td>
                 <td className="px-2 py-1">{String(row.csa_points ?? "0")}</td>
-                <td className="px-2 py-1">{String(row.auto_spawned_wo_id ?? "—")}</td>
+                <td className="px-2 py-1"><EntityLink kind="work_order" id={row.auto_spawned_wo_id as string | undefined} /></td>
                 <td className="px-2 py-1">
                   <label className="mr-2 inline-flex cursor-pointer items-center text-slate-700 underline">
                     PDF

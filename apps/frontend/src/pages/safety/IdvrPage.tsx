@@ -3,6 +3,7 @@ import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { getSafetyDvirSubmissions } from "../../api/safety";
 import { useListState } from "../../components/list-state";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 type Props = {
   operatingCompanyId: string;
@@ -101,20 +102,12 @@ export function IdvrPage({ operatingCompanyId }: Props) {
             {rows.map((row) => (
               <tr key={String(row.id)} className="border-t border-gray-100" data-testid={`idvr-row-${String(row.id)}`}>
                 <td className="px-2 py-1">{String(row.submitted_at ?? "").slice(0, 16).replace("T", " ")}</td>
-                <td className="px-2 py-1">{String(row.driver_name ?? row.driver_id ?? "—")}</td>
-                <td className="px-2 py-1">{String(row.unit_number ?? row.unit_id ?? "—")}</td>
+                <td className="px-2 py-1"><EntityLink kind="driver" id={row.driver_id as string | undefined} label={row.driver_name as string | undefined} /></td>
+                <td className="px-2 py-1"><EntityLink kind="unit" id={row.unit_id as string | undefined} label={row.unit_number as string | undefined} /></td>
                 <td className="px-2 py-1">{String(row.type ?? "—").replace("_", " ")}</td>
                 <td className="px-2 py-1">{String(row.defect_count ?? 0)}</td>
                 <td className="px-2 py-1">{String(row.defect_severity ?? "none")}</td>
-                <td className="px-2 py-1">
-                  {row.follow_up_wo_id ? (
-                    <a className="text-slate-700 underline" href={`/maintenance/work-orders/${String(row.follow_up_wo_id)}`}>
-                      Open WO
-                    </a>
-                  ) : (
-                    "—"
-                  )}
-                </td>
+                <td className="px-2 py-1"><EntityLink kind="work_order" id={row.follow_up_wo_id as string | undefined} label={(row.follow_up_wo_id as string | undefined) ? "Open WO" : undefined} /></td>
               </tr>
             ))}
             {listState.isEmpty ? (

@@ -106,7 +106,15 @@ export function EscrowPage() {
                         postingsQuery.mutate(row.id);
                       }}
                     >
-                      <td className="px-2 py-2 font-mono">{row.holder_id}</td>
+                      <td className="px-2 py-2 font-mono">
+                        {row.holder_type === "driver" ? (
+                          <EntityLink kind="driver" id={row.holder_id} />
+                        ) : row.holder_type === "vendor" ? (
+                          <EntityLink kind="vendor" id={row.holder_id} />
+                        ) : (
+                          row.holder_id
+                        )}
+                      </td>
                       <td className="px-2 py-2">{row.holder_type}</td>
                       <td className="px-2 py-2">{row.purpose}</td>
                       <td className="px-2 py-2">{row.status}</td>

@@ -6,6 +6,7 @@ import { getDispatchMargin, type DispatchMarginRow } from "../../api/reports";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportsSubNav } from "./ReportsSubNav";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -145,7 +146,7 @@ export function DispatchMarginPage() {
                 <tbody>
                   {sorted.map((row) => (
                     <tr key={row.load_id} className="border-t">
-                      <td className="px-3 py-2">{row.load_number ?? row.load_id.slice(0, 8)}</td>
+                      <td className="px-3 py-2"><EntityLink kind="load" id={row.load_id} label={row.load_number ?? undefined} /></td>
                       <td className="px-3 py-2">{row.customer_name ?? "—"}</td>
                       <td className="px-3 py-2 text-right">{money(row.revenue_cents)}</td>
                       <td className="px-3 py-2 text-right">{money(row.direct_cost_cents)}</td>
