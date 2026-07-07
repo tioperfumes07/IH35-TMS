@@ -197,7 +197,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
           </table>
         </div>
       ) : (
-        <SafetyEventsTable rows={bulkTableRows} onOpenAccident={(row) => setSelectedEventId(String(row.id))} />
+        <SafetyEventsTable rows={bulkTableRows} loading={eventsQuery.isPending || eventsQuery.isFetching} onOpenAccident={(row) => setSelectedEventId(String(row.id))} />
       )}
 
       {selectedEventId ? (

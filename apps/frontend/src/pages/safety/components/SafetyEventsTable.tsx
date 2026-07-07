@@ -7,6 +7,7 @@ import { useBulkSelection } from "../../../hooks/useBulkSelection";
 type Props = {
   rows: Array<Record<string, unknown>>;
   onOpenAccident: (row: Record<string, unknown>) => void;
+  loading?: boolean;
 };
 
 function typePill(type: string) {
@@ -23,7 +24,7 @@ function severityPill(severity: string) {
   return "bg-gray-100 text-gray-700";
 }
 
-export function SafetyEventsTable({ rows, onOpenAccident }: Props) {
+export function SafetyEventsTable({ rows, onOpenAccident, loading }: Props) {
   const { pushToast } = useToast();
   const selection = useBulkSelection({ cap: 200, onCapExceeded: (e) => pushToast(e.message, "error") });
   const pageRowIds = rows.map((row) => String(row.id));
@@ -79,7 +80,7 @@ export function SafetyEventsTable({ rows, onOpenAccident }: Props) {
         cap={selection.cap}
       >
         {({ isSelected, toggle }) => (
-      <table className="min-w-[1050px] w-full text-left text-xs">
+      <table className="w-full text-left text-xs">
         <thead className="bg-gray-50 text-[10px] uppercase text-gray-600">
           <tr>
             <th className="w-8 px-2 py-1">
@@ -128,8 +129,11 @@ export function SafetyEventsTable({ rows, onOpenAccident }: Props) {
               </tr>
             );
           })}
-          {rows.length === 0 ? (
+          {!loading && rows.length === 0 ? (
             <tr><td colSpan={9} className="px-2 py-3 text-center text-gray-500">No safety events found.</td></tr>
+          ) : null}
+          {loading ? (
+            <tr><td colSpan={9} className="px-2 py-3 text-center text-gray-400">Loading…</td></tr>
           ) : null}
         </tbody>
       </table>
