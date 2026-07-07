@@ -17,7 +17,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { ReportBlockVPendingBanner } from "../reports/ReportBlockVPendingBanner";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
-import { ConflictsTab } from "../qbo-sync-detail/ConflictsTab";
+// ConflictsTab removed (qbo-sync-detail/ConflictsTab.tsx deleted in orphan-triage batch 11)
 
 function withinHours(iso: string, hours: number) {
   const t = new Date(iso).getTime();
@@ -175,7 +175,7 @@ export function QBOSyncStatusDashboardPage() {
         </button>
       </div>
 
-      {activeTab === "conflicts" ? <ConflictsTab operatingCompanyId={companyId} /> : null}
+      {activeTab === "conflicts" ? <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-500">Conflicts view has been migrated to the QBO Sync Detail page.</div> : null}
       {activeTab !== "runs" ? null : (
         <>
 
