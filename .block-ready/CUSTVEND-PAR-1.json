@@ -1,0 +1,30 @@
+{
+  "block_id": "CUSTVEND-PAR-1",
+  "status": "BUILD",
+  "classification": "FINANCIAL",
+  "phase": "CUSTOMER-VENDOR-PARITY",
+  "task": "G1: Credit-limit enforcement on invoice + dispatch paths with Manager+ override. G2: Vendor-credit ledger (vendor_credit_applications junction table + apply/void routes). G3: Statement verification checklist (read-only). No GL posting — QBO-parity data layer only. All money-posting flags remain OFF.",
+  "branch": "feat/custvend-parity-1",
+  "lane": "CUSTVEND",
+  "allowed_files": [
+    ".block-ready/CUSTVEND-PAR-1.json",
+    "db/migrations/202607170000_custvend_par1_vendor_credit_applications.sql",
+    "apps/backend/src/accounting/vendor-credits.routes.ts",
+    "apps/backend/src/accounting/invoices.routes.ts",
+    "apps/backend/src/dispatch/loads.routes.ts",
+    "apps/backend/src/index.ts",
+    "apps/frontend/src/api/vendor-credits.ts",
+    "apps/frontend/src/api/accounting.ts",
+    "apps/frontend/src/api/dispatch.ts",
+    "apps/frontend/src/pages/accounting/modals/InvoiceTypeModalBase.tsx",
+    "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx",
+    "scripts/verify-custvend-par1.mjs",
+    "docs/specs/qbo-parity/CUSTVEND-PAR-1-G3-statement-verification.md",
+    ".github/workflows/ci.yml",
+    "package.json"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true,
+  "extra_gates": ["hold-merge-gate"]
+}

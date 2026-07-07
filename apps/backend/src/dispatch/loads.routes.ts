@@ -213,6 +213,8 @@ const createDispatchLoadBodySchema = z.object({
   save_mode: z.enum(["draft", "book_dispatch"]).default("book_dispatch"),
   override_token: z.string().uuid().optional(),
   override_reason: z.string().trim().min(10).max(1000).optional(),
+  // CUSTVEND-PAR-1: Manager+ override when customer is at/over credit limit.
+  override_credit_limit: z.boolean().optional(),
 });
 
 // Block 06 (Inc 2) — full load edit. All fields optional (PATCH semantics); only present keys update.
@@ -965,6 +967,72 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     const body = createDispatchLoadBodySchema.safeParse(req.body ?? {});
     if (!body.success) return sendValidationError(reply, body.error);
     try {
+      // CUSTVEND-PAR-1: Credit-limit enforcement at load booking.
+      if (body.data.save_mode !== "draft") {
+        const canOverride = ["Owner", "Administrator", "Manager"].includes(authUser.role);
+        if (!body.data.override_credit_limit || !canOverride) {
+          const creditBlock = await withCurrentUser(authUser.uuid, async (client) => {
+            await client.query(
+              `SELECT set_config('app.operating_company_id', $1::text, true)`,
+              [body.data.operating_company_id]
+            );
+            const res = await client.query(
+              `SELECT c.credit_limit_cents, c.credit_limit_source,
+                 COALESCE((
+                   SELECT SUM(i.total_cents)
+                   FROM accounting.invoices i
+                   WHERE i.customer_id = $1
+                     AND i.operating_company_id = $2
+                     AND i.status NOT IN ('void', 'paid')
+                 ), 0)::bigint AS open_invoice_cents,
+                 COALESCE((
+                   SELECT SUM(l.rate_total_cents)
+                   FROM mdata.loads l
+                   WHERE l.customer_id = $1
+                     AND l.operating_company_id = $2
+                     AND l.status NOT IN ('draft', 'invoiced', 'paid', 'closed', 'cancelled')
+                 ), 0)::bigint AS unbilled_load_cents
+               FROM mdata.customers c
+               WHERE c.id = $1 AND c.operating_company_id = $2 LIMIT 1`,
+              [body.data.customer_id, body.data.operating_company_id]
+            );
+            return res.rows[0] ?? null;
+          });
+          if (creditBlock?.credit_limit_cents != null) {
+            const newLoadCents = (body.data.charges ?? []).reduce((s: number, c: { amount_cents: number }) => s + c.amount_cents, 0);
+            const openCents = Number(creditBlock.open_invoice_cents ?? 0);
+            const loadCents = Number(creditBlock.unbilled_load_cents ?? 0);
+            const totalExposure = openCents + loadCents + newLoadCents;
+            const limitCents = Number(creditBlock.credit_limit_cents);
+            if (totalExposure > limitCents) {
+              return reply.code(422).send({
+                error: "credit_limit_exceeded",
+                exposure_cents: openCents + loadCents,
+                new_load_cents: newLoadCents,
+                limit_cents: limitCents,
+                credit_limit_source: creditBlock.credit_limit_source ?? null,
+                can_override: canOverride,
+              });
+            }
+          }
+        }
+        if (body.data.override_credit_limit && canOverride) {
+          void withCurrentUser(authUser.uuid, async (client) => {
+            await appendCrudAudit(
+              client,
+              authUser.uuid,
+              "dispatch.loads.credit_limit_override",
+              {
+                customer_id: body.data.customer_id,
+                operating_company_id: body.data.operating_company_id,
+              },
+              "warn",
+              "CUSTVEND-PAR-1"
+            );
+          }).catch(() => {});
+        }
+      }
+
       const result = await bookLoad({
         ...body.data,
         requestingUserUuid: authUser.uuid,

@@ -212,6 +212,8 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
   const [overrideToken, setOverrideToken] = useState<string | null>(null);
   const [pendingCloseAfterAdvisory, setPendingCloseAfterAdvisory] = useState(false);
   const [submitErrorMessage, setSubmitErrorMessage] = useState<string | null>(null);
+  const [creditLimitBlock, setCreditLimitBlock] = useState<{ exposure_cents: number; limit_cents: number; credit_limit_source: string | null; can_override: boolean } | null>(null);
+  const [overrideCreditLimit, setOverrideCreditLimit] = useState(false);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const [headerTime] = useState(() => new Date().toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }));
   const [showSpecialNotes, setShowSpecialNotes] = useState(false);
@@ -482,6 +484,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
 
   const canOverrideHardBlock = auth.user?.role === "Owner";
   const canOverrideHos = ["Owner", "Administrator", "Manager"].includes(String(auth.user?.role ?? ""));
+  const canOverrideCreditLimit = ["Owner", "Administrator", "Manager"].includes(String(auth.user?.role ?? ""));
 
   useEffect(() => {
     if (!open) {
@@ -646,6 +649,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
         save_mode: saveMode,
         override_token: token,
         override_reason: opts?.override ? overrideReason : undefined,
+        override_credit_limit: overrideCreditLimit || undefined,
       });
       const warnings = Array.isArray((payload as Record<string, unknown>)?.wf_044_maintenance_warnings)
         ? ((payload as Record<string, unknown>).wf_044_maintenance_warnings as Array<Record<string, unknown>>)
@@ -701,6 +705,15 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
             type: "hos_block",
             message,
             warnings: (data.wf_044_maintenance_warnings as Array<Record<string, unknown>> | undefined) ?? [],
+          });
+          return;
+        }
+        if (error.status === 422 && code === "credit_limit_exceeded") {
+          setCreditLimitBlock({
+            exposure_cents: Number(data.exposure_cents ?? 0),
+            limit_cents: Number(data.limit_cents ?? 0),
+            credit_limit_source: (data.credit_limit_source as string | null) ?? null,
+            can_override: Boolean(data.can_override),
           });
           return;
         }
@@ -766,6 +779,25 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
         >
           {submitErrorMessage ? (
             <div className="mx-3 mt-2 rounded-sm border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-900">{submitErrorMessage}</div>
+          ) : null}
+
+          {creditLimitBlock ? (
+            <div className="mx-3 mt-2 rounded-sm border-2 border-slate-300 bg-slate-50 px-3 py-2 text-xs">
+              <p className="font-semibold text-slate-700">Credit limit reached</p>
+              <p className="mt-0.5 text-slate-600">
+                Open exposure: ${(creditLimitBlock.exposure_cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })} &mdash;{" "}
+                Limit: ${(creditLimitBlock.limit_cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                {creditLimitBlock.credit_limit_source === "factor" ? " (Factor-set — FARO)" : ""}
+              </p>
+              {canOverrideCreditLimit ? (
+                <label className="mt-1.5 inline-flex cursor-pointer items-center gap-2">
+                  <input type="checkbox" checked={overrideCreditLimit} onChange={(e) => setOverrideCreditLimit(e.target.checked)} />
+                  <span className="text-slate-700">Override — I acknowledge this customer is over their credit limit</span>
+                </label>
+              ) : (
+                <p className="mt-1 text-slate-500">Contact an Owner or Manager to override.</p>
+              )}
+            </div>
           ) : null}
 
           {isEditMode ? (
@@ -1350,7 +1382,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                   Save draft
                 </Button>
               )}
-              <Button type="submit" disabled={repairBlockSubmitBlocked}>
+              <Button type="submit" disabled={repairBlockSubmitBlocked || (creditLimitBlock != null && (!canOverrideCreditLimit || !overrideCreditLimit))}>
                 {isEditMode ? "Save changes" : "Book + dispatch"}
               </Button>
             </div>

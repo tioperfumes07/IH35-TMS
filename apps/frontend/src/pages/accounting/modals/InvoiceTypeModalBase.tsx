@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
+import { AlertTriangle } from "lucide-react";
 import { Modal } from "../../../components/Modal";
 import { Button } from "../../../components/Button";
 import { UploadZone } from "../../../components/UploadZone";
@@ -8,6 +9,15 @@ import { FieldError, fieldErrorClassname } from "../../../components/forms/Field
 import { FormErrorBanner } from "../../../components/forms/FormErrorBanner";
 import { useFormValidation } from "../../../components/forms/useFormValidation";
 import { QboCombobox } from "../../../components/forms/QboCombobox";
+import { ApiError } from "../../../api/client";
+import { useAuth } from "../../../auth/useAuth";
+
+type CreditLimitBlock = {
+  exposure_cents: number;
+  limit_cents: number;
+  credit_limit_source: string | null;
+  can_override: boolean;
+};
 
 const invoiceModalSchema = z.object({
   customer_id: z.string().min(1, "Customer is required").uuid("Customer is required"),
@@ -32,11 +42,13 @@ type Props = {
     internal_notes?: string;
     customer_notes?: string;
     attachment_draft_id?: string;
+    override_credit_limit?: boolean;
   }) => Promise<{ id: string }>;
 };
 
 export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEntityType, onClose, onCreated, createInvoice }: Props) {
   const { pushToast } = useToast();
+  const auth = useAuth();
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [customerQboId, setCustomerQboId] = useState<string | null>(null);
   const [customerName, setCustomerName] = useState("");
@@ -44,6 +56,9 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
   const [issueDate, setIssueDate] = useState(new Date().toISOString().slice(0, 10));
   const [dueDate, setDueDate] = useState("");
   const [draftAttachmentEntityId, setDraftAttachmentEntityId] = useState(() => crypto.randomUUID());
+  const [creditLimitBlock, setCreditLimitBlock] = useState<CreditLimitBlock | null>(null);
+  const [overrideCreditLimit, setOverrideCreditLimit] = useState(false);
+  const canOverrideCreditLimit = ["Owner", "Administrator", "Manager"].includes(auth.user?.role ?? "");
 
   const formSnapshot = useMemo(
     () => ({
@@ -64,20 +79,37 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
   } = useFormValidation({
     schema: invoiceModalSchema,
     onSubmit: async (parsed) => {
-      const created = await createInvoice({
-        customer_id: parsed.customer_id,
-        bill_to_entity_type: billToEntityType,
-        bill_to_entity_id: parsed.customer_id,
-        issue_date: parsed.issue_date || undefined,
-        due_date: parsed.due_date || undefined,
-        internal_notes: parsed.notes || undefined,
-        customer_notes: parsed.notes || undefined,
-        // Option B: send the UploadZone draft id so the invoice route re-keys the rate-con/BOL onto the
-        // new invoice (otherwise it orphans).
-        attachment_draft_id: draftAttachmentEntityId,
-      });
-      onCreated(created.id);
-      pushToast("Invoice created", "success");
+      try {
+        const created = await createInvoice({
+          customer_id: parsed.customer_id,
+          bill_to_entity_type: billToEntityType,
+          bill_to_entity_id: parsed.customer_id,
+          issue_date: parsed.issue_date || undefined,
+          due_date: parsed.due_date || undefined,
+          internal_notes: parsed.notes || undefined,
+          customer_notes: parsed.notes || undefined,
+          // Option B: send the UploadZone draft id so the invoice route re-keys the rate-con/BOL onto the
+          // new invoice (otherwise it orphans).
+          attachment_draft_id: draftAttachmentEntityId,
+          override_credit_limit: overrideCreditLimit || undefined,
+        });
+        onCreated(created.id);
+        pushToast("Invoice created", "success");
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 422) {
+          const data = err.data as { error?: string; exposure_cents?: number; limit_cents?: number; credit_limit_source?: string | null; can_override?: boolean };
+          if (data?.error === "credit_limit_exceeded") {
+            setCreditLimitBlock({
+              exposure_cents: data.exposure_cents ?? 0,
+              limit_cents: data.limit_cents ?? 0,
+              credit_limit_source: data.credit_limit_source ?? null,
+              can_override: data.can_override ?? false,
+            });
+            return;
+          }
+        }
+        throw err;
+      }
     },
   });
 
@@ -89,6 +121,8 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
     setNotes("");
     setIssueDate(new Date().toISOString().slice(0, 10));
     setDueDate("");
+    setCreditLimitBlock(null);
+    setOverrideCreditLimit(false);
     resetInvoiceErrors();
     setDraftAttachmentEntityId(crypto.randomUUID());
   }, [open, resetInvoiceErrors]);
@@ -206,11 +240,36 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
           defaultCategory="vendor_invoice"
           title="Supporting Documents"
         />
+        {creditLimitBlock ? (
+          <div className="rounded-sm border-2 border-slate-300 bg-slate-50 p-3 text-xs">
+            <p className="flex items-center gap-1.5 font-semibold text-slate-700">
+              <AlertTriangle className="h-4 w-4 shrink-0 text-slate-500" />
+              Credit limit reached
+            </p>
+            <p className="mt-1 text-slate-600">
+              Open exposure: ${((creditLimitBlock.exposure_cents) / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })} &mdash;{" "}
+              Limit: ${((creditLimitBlock.limit_cents) / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+              {creditLimitBlock.credit_limit_source === "factor" ? " (Factor-set — FARO)" : ""}
+            </p>
+            {canOverrideCreditLimit ? (
+              <label className="mt-2 inline-flex cursor-pointer items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={overrideCreditLimit}
+                  onChange={(e) => setOverrideCreditLimit(e.target.checked)}
+                />
+                <span className="text-slate-700">Override — I acknowledge this customer is over their credit limit</span>
+              </label>
+            ) : (
+              <p className="mt-1 text-slate-500">Contact an Owner or Manager to override.</p>
+            )}
+          </div>
+        ) : null}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit">Create</Button>
+          <Button type="submit" disabled={creditLimitBlock != null && (!canOverrideCreditLimit || !overrideCreditLimit)}>Create</Button>
         </div>
       </form>
     </Modal>

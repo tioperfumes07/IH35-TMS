@@ -304,6 +304,7 @@ export function createInvoice(
     internal_notes?: string;
     customer_notes?: string;
     currency_code?: "USD" | "MXN";
+    override_credit_limit?: boolean;
   }
 ) {
   return apiRequest<Invoice>(withCompany("/api/v1/accounting/invoices", operatingCompanyId), { method: "POST", body: payload });
