@@ -137,7 +137,7 @@ describeIntegration("settlements.routes integration", () => {
       headers: testAuthHeaders(),
     });
     expect(res.statusCode).toBe(200);
-    const body = res.json() as { rows?: unknown };
-    expect(Array.isArray(body.rows)).toBe(true);
+    const body = res.json() as { settlements?: unknown };
+    expect(Array.isArray(body.settlements)).toBe(true);
   });
 });
