@@ -12,6 +12,7 @@
 import { useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { getTripProfitability, type TripProfitabilityRow } from "../../lib/loadProfit";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -196,7 +197,7 @@ export function TripProfitability() {
               {sorted.map((row) => (
                 <tr key={row.settlement_id} className="hover:bg-slate-50">
                   <td className="whitespace-nowrap px-3 py-2 font-mono text-xs">
-                    {row.settlement_display_id ?? row.settlement_id.slice(0, 8)}
+                    <EntityLink kind="settlement" id={row.settlement_id} label={row.settlement_display_id ?? row.settlement_id.slice(0, 8)} />
                   </td>
                   <td className="px-3 py-2">{row.driver_name ?? "—"}</td>
                   <td className="px-3 py-2 font-mono text-xs">{row.nb_load_number ?? "—"}</td>

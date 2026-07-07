@@ -1,5 +1,6 @@
 import { formatDateUS } from "../../lib/formatDate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { addInvoiceLine, deleteInvoiceLine, getInvoice, patchInvoiceLine, sendInvoice, voidInvoice } from "../../api/accounting";
@@ -200,7 +201,9 @@ export function InvoiceDetailPage() {
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs text-gray-600">Source Load</span>
-            <span className="text-sm text-gray-900">{invoice.source_load_id ?? "-"}</span>
+            <span className="text-sm text-gray-900">
+              <EntityLink kind="load" id={invoice.source_load_id ?? undefined} label={invoice.source_load_id ? invoice.source_load_id.slice(0, 8) : "-"} />
+            </span>
           </DataPanelRow>
         </DataPanel>
 

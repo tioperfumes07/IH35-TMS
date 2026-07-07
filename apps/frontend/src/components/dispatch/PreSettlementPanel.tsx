@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getPreSettlementForDriver, settleAndPay } from "../../api/driverFinance";
 import { useToast } from "../Toast";
 import { Button } from "../Button";
+import { EntityLink } from "../shared/EntityLink";
 
 type Props = {
   driverId: string;
@@ -69,7 +70,7 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
         <div>
           <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Pre-Settlement</div>
           <div className="font-semibold text-gray-900">
-            {settlement.display_id ?? settlement.id.slice(0, 8)}
+            <EntityLink kind="settlement" id={settlement.id} label={settlement.display_id ?? settlement.id.slice(0, 8)} />
           </div>
           <div className="mt-0.5 text-[11px] text-gray-500">
             {settlement.period_start ? new Date(settlement.period_start).toLocaleDateString() : "—"}
