@@ -56,24 +56,23 @@ const DEFAULT_LINK_CLASSNAME =
 /**
  * Resolves an entity kind + id to its real per-id detail route.
  *
- * Verified against apps/frontend/src/routes/manifest.tsx (2026-07-06 sweep). Kinds that do
+ * Verified against apps/frontend/src/routes/manifest.tsx (2026-07-07 sweep). Kinds that do
  * NOT have a per-id detail route return null on purpose — EntityLink renders plain text for
  * those rather than fabricating a dead link:
- *   - "bill": no /accounting/bills/:id route exists; only the list (/accounting/bills) and
- *     an inline selection-state BillDetailPanel. AccountRegisterPage.sourceRoute() and
- *     IntegrationTransactionsPage/AuditTrailPage's sourceLink() incorrectly link to a
- *     fabricated /accounting/bills/:id today — do not copy that.
  *   - "expense": /accounting/expenses is ExpenseCreatePage (a create form) and
- *     /accounting/expenses/list is the list; no :id detail route exists.
+ *     /accounting/expenses/list is the list; no :id detail route exists yet.
  * "settlement" has no path-param route either, but SettlementsPage does support a real
  * query-param drill-through (?settlement_id=), so it resolves to that instead of null.
  * "payment" → /accounting/payments/:id (PaymentDetailPage, confirmed in manifest.tsx).
  * "work_order" → /maintenance/work-orders/:id (WorkOrderDetailPage, confirmed in manifest.tsx).
+ * "bill" → /accounting/bills/:id (BillDetailPage, added 2026-07-07).
  */
 export function resolveEntityRoute(kind: EntityKind, id: string): string | null {
   switch (kind) {
     case "load":
       return `/dispatch/loads/${id}`;
+    case "bill":
+      return `/accounting/bills/${id}`;
     case "invoice":
       return `/accounting/invoices/${id}`;
     case "journal_entry":
@@ -98,7 +97,6 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/maintenance/work-orders/${id}`;
     case "settlement":
       return `/driver-finance/settlements?settlement_id=${id}`;
-    case "bill":
     case "expense":
       return null;
     default:

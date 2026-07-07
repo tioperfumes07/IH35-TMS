@@ -247,6 +247,7 @@ const AbandonmentQueuePage = React.lazy(() => import("../pages/accounting/Abando
 const InvoiceDetailPage = React.lazy(() => import("../pages/accounting/InvoiceDetailPage").then((m) => ({ default: m.InvoiceDetailPage })));
 const PaymentsListPage = React.lazy(() => import("../pages/accounting/PaymentsListPage").then((m) => ({ default: m.PaymentsListPage })));
 const PaymentDetailPage = React.lazy(() => import("../pages/accounting/PaymentDetailPage").then((m) => ({ default: m.PaymentDetailPage })));
+const BillDetailPage = React.lazy(() => import("../pages/accounting/BillDetailPage").then((m) => ({ default: m.BillDetailPage })));
 const FactoringListPage = React.lazy(() => import("../pages/accounting/FactoringListPage").then((m) => ({ default: m.FactoringListPage })));
 const FactoringDetailPage = React.lazy(() => import("../pages/accounting/FactoringDetailPage").then((m) => ({ default: m.FactoringDetailPage })));
 const FactorReconciliationPage = React.lazy(() => import("../pages/accounting/FactorReconciliationPage").then((m) => ({ default: m.FactorReconciliationPage })));
@@ -3649,6 +3650,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <RecurringBillCreate />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/bills/:id"
+          element={
+            <ProtectedRoute>
+              <BillDetailPage />
             </ProtectedRoute>
           }
         />
