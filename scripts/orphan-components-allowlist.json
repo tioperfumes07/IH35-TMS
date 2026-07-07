@@ -46,6 +46,10 @@
     "_comment_22: required by verify-payroll-aggregate-matches-qbo.mjs",
     "apps/frontend/src/pages/payroll-integration/PayrollAggregateTable.tsx",
     "_comment_23: required by verify-payroll-aggregate-matches-qbo.mjs",
-    "apps/frontend/src/pages/payroll-integration/ClassAllocationView.tsx"
+    "apps/frontend/src/pages/payroll-integration/ClassAllocationView.tsx",
+    "_comment_24: required by verify-all-list-pages-have-bulk-select.mjs (RegisterTable is the canonical banking register surface)",
+    "apps/frontend/src/pages/banking/components/RegisterTable.tsx",
+    "_comment_25: imported by RegisterTable.tsx — must coexist to avoid TypeScript build error",
+    "apps/frontend/src/pages/banking/components/RegisterRow.tsx"
   ]
 }
