@@ -58,6 +58,11 @@ export const POSTING_FLAG_KEYS: ReadonlySet<string> = new Set([
   // turn property-tax GL posting on for EVERY entity (incl. USMCA).
   "PROPERTY_TAX_GL_POSTING_ENABLED",
   "SETTLEMENT_GL_POSTING_ENABLED",
+  // BANKING-GL-COMPLETION: banking.transfers (bank_to_bank / cc_payment / cash_deposit /
+  // owner_contribution / owner_distribution) -> GL posting via postSourceTransaction('transfer').
+  // Enumerated explicitly (belt-and-suspenders — its key already matches the `*_GL_POSTING_ENABLED`
+  // pattern below) so a global flip can never post transfers for EVERY entity at once. Default OFF.
+  "TRANSFER_GL_POSTING_ENABLED",
   // H3-1: BLOCK-6 driver loan/advance posting from bank categorize. It posts a BALANCED JE (DEBIT the
   // driver-advance receivable, CREDIT the source bank) via the existing driver_advance source type, so it
   // is a real money-posting flag — but its key does NOT match the `*_GL_POSTING*` / `*_POSTING_ENABLED`

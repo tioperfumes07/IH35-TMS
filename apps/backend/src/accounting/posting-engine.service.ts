@@ -7,7 +7,7 @@ import { resolveBillLineDebitAccount, BillLineAccountError } from "./bill-accoun
 // CHAIN-05 (BLOCK-03) adds "bank_categorization" (a categorized bank-feed line → direction-aware balanced
 // JE; built by buildBankCategorizationLines). NOTE: kept on ONE line — verify-posting-engine-mvp-contract
 // prefix-matches the leading four MVP types on a single line.
-export type PostingSourceType = "invoice" | "bill" | "customer_payment" | "bill_payment" | "cash_advance" | "driver_advance" | "expense" | "bank_categorization" | "driver_reimbursement";
+export type PostingSourceType = "invoice" | "bill" | "customer_payment" | "bill_payment" | "cash_advance" | "driver_advance" | "expense" | "bank_categorization" | "driver_reimbursement" | "transfer";
 export type PostingPurpose = "initial_post" | "reversal";
 type BatchStatus = "queued" | "in_progress" | "posted" | "reversed" | "failed";
 
@@ -75,7 +75,8 @@ export type PostingErrorCode =
   | "BILL_LINE_ACCOUNT_UNRESOLVED"
   | "INVOICE_LINE_REVENUE_UNRESOLVED"
   | "EXPENSE_NOT_POSTING_ELIGIBLE"
-  | "BANK_CATEGORIZATION_NOT_POSTING_ELIGIBLE";
+  | "BANK_CATEGORIZATION_NOT_POSTING_ELIGIBLE"
+  | "TRANSFER_NOT_POSTING_ELIGIBLE";
 
 export class PostingEngineError extends Error {
   code: PostingErrorCode;
@@ -136,9 +137,18 @@ const PERIOD_LOCKED_TOKEN = "IH35_CLOSED_PERIOD";
 
 function assertKnownSourceType(value: string): asserts value is PostingSourceType {
   if (
-    !["invoice", "bill", "customer_payment", "bill_payment", "cash_advance", "driver_advance", "expense", "bank_categorization", "driver_reimbursement"].includes(
-      value
-    )
+    ![
+      "invoice",
+      "bill",
+      "customer_payment",
+      "bill_payment",
+      "cash_advance",
+      "driver_advance",
+      "expense",
+      "bank_categorization",
+      "driver_reimbursement",
+      "transfer",
+    ].includes(value)
   ) {
     throw new PostingEngineError("UNKNOWN_SOURCE_TYPE", `Unknown source_transaction_type: ${value}`);
   }
@@ -934,6 +944,7 @@ async function buildBillPaymentLines(client: DbClient, operatingCompanyId: strin
     amount_cents: number | null;
     amount: string | null;
     from_bank_account_id: string | null;
+    cc_account_id: string | null;
     revoked_at: string | null;
     status: string;
     settlement_deduction_noncash: boolean | null;
@@ -946,6 +957,7 @@ async function buildBillPaymentLines(client: DbClient, operatingCompanyId: strin
         amount_cents::bigint,
         amount::text,
         from_bank_account_id::text,
+        cc_account_id::text,
         revoked_at::text,
         status::text,
         COALESCE(settlement_deduction_noncash, false) AS settlement_deduction_noncash
@@ -997,10 +1009,16 @@ async function buildBillPaymentLines(client: DbClient, operatingCompanyId: strin
   // credit the REAL bank the money left, via the bank->GL bridge banking.bank_accounts.ledger_account_id
   // (migrations 202606280100 FK + 202606300070 backfill). NB: a "coa-account" column does NOT exist on
   // banking.bank_accounts (reading it was the documented bug) — never read it. Fail-closed if the chosen
-  // bank has no ledger_account_id. When the payment carries no from_bank_account_id (e.g. a cash
-  // payment recorded without a bank), keep the company-default cash-like fallback (mirrors
-  // buildCustomerPaymentLines' deposited_to_account_id-then-cash-like resolution).
+  // bank has no ledger_account_id.
+  // CC-PAYMENT GAP FIX — a bill paid BY CREDIT CARD (bill-payments/cc-payment.routes.ts) carries
+  // cc_account_id instead of from_bank_account_id: cc_account_id is already a catalogs.accounts id (the
+  // route validates it is an active credit-card-type account before the insert), so credit it directly —
+  // no bridge lookup needed. Dr ap_control / Cr the CC-liability account.
+  // When the payment carries NEITHER (e.g. a cash payment recorded without a bank), keep the
+  // company-default cash-like fallback (mirrors buildCustomerPaymentLines' deposited_to_account_id-then-
+  // cash-like resolution).
   let cashAccountId: string | null;
+  let creditRole: "bank" | "cc" | "cash_like";
   if (payment.from_bank_account_id) {
     cashAccountId = await resolveBankLedgerAccountId(client, operatingCompanyId, payment.from_bank_account_id);
     if (!cashAccountId) {
@@ -1009,9 +1027,14 @@ async function buildBillPaymentLines(client: DbClient, operatingCompanyId: strin
         `Bank ledger account mapping is missing (banking.bank_accounts.ledger_account_id) for from_bank_account_id ${payment.from_bank_account_id}`
       );
     }
+    creditRole = "bank";
+  } else if (payment.cc_account_id) {
+    cashAccountId = payment.cc_account_id;
+    creditRole = "cc";
   } else {
     cashAccountId = await resolveCashLikeAccountForCompany(client, operatingCompanyId);
     if (!cashAccountId) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Cash account mapping is missing");
+    creditRole = "cash_like";
   }
 
   const amount = Number(payment.amount_cents ?? Math.round(Number(payment.amount ?? "0") * 100));
@@ -1031,7 +1054,7 @@ async function buildBillPaymentLines(client: DbClient, operatingCompanyId: strin
         account_id: cashAccountId,
         debit_or_credit: "credit",
         amount_cents: amount,
-        description: `${label} cash`,
+        description: `${label} ${creditRole === "cc" ? "CC liability" : "cash"}`,
         source_transaction_line_id: null,
       },
     ],
@@ -1389,6 +1412,125 @@ async function buildBankCategorizationLines(client: DbClient, operatingCompanyId
   };
 }
 
+// BANKING-GL-COMPLETION — resolve one transfer LEG (from_account_id/to_account_id + its kind) to the GL
+// account that leg actually posts against. "bank" legs go through the SAME bank->GL bridge
+// (banking.bank_accounts.ledger_account_id) every other bank-facing poster uses (resolveBankLedgerAccountId
+// — CHAIN-04's bridge, no new lookup). "cc"/"coa" legs are ALREADY a catalogs.accounts id at transfer-create
+// time (transfers.service.ts's validateAccountOwnership only ever validates non-"bank" kinds against
+// catalogs.accounts — never banking.bank_accounts), so re-validate it is still active and use it directly.
+async function resolveTransferLegAccountId(
+  client: DbClient,
+  operatingCompanyId: string,
+  accountId: string,
+  accountKind: "bank" | "cc" | "coa"
+): Promise<string | null> {
+  if (accountKind === "bank") {
+    return resolveBankLedgerAccountId(client, operatingCompanyId, accountId);
+  }
+  const res = await client.query<{ id: string }>(
+    `
+      SELECT id::text
+      FROM catalogs.accounts
+      WHERE id = $1::uuid
+        AND operating_company_id = $2::uuid
+        AND deactivated_at IS NULL
+      LIMIT 1
+    `,
+    [accountId, operatingCompanyId]
+  );
+  return res.rows[0]?.id ?? null;
+}
+
+// BANKING-GL-COMPLETION — banking.transfers -> balanced JE. Every TransferType (bank_to_bank, cc_payment,
+// cash_deposit, owner_contribution, owner_distribution) shares the SAME two-leg shape: DEBIT the
+// destination account's GL register, CREDIT the source account's GL register — e.g. transfer_type
+// 'cc_payment' (paying down a card balance from a bank account, POST /banking/cc-payments ->
+// createTransfer) posts Dr CC-liability (to_account) / Cr bank (from_account). NO new GL math: both legs
+// resolve through the SAME account-bridge helper every other banking poster already uses
+// (resolveTransferLegAccountId above). Reversal (a revoked transfer) is handled by the generic
+// reversePostedSourceTransaction — no transfer-specific reversal logic needed.
+async function buildTransferLines(client: DbClient, operatingCompanyId: string, sourceId: string): Promise<PostingDraft> {
+  const transferRes = await client.query<{
+    id: string;
+    transfer_type: string;
+    from_account_id: string;
+    from_account_kind: "bank" | "cc" | "coa";
+    to_account_id: string;
+    to_account_kind: "bank" | "cc" | "coa";
+    amount_cents: number;
+    transfer_date: string;
+    memo: string | null;
+    revoked_at: string | null;
+  }>(
+    `
+      SELECT
+        id::text,
+        transfer_type::text,
+        from_account_id::text,
+        from_account_kind::text AS from_account_kind,
+        to_account_id::text,
+        to_account_kind::text AS to_account_kind,
+        amount_cents::bigint,
+        transfer_date::text,
+        memo,
+        revoked_at::text
+      FROM banking.transfers
+      WHERE operating_company_id = $1::uuid
+        AND id::text = $2
+      LIMIT 1
+      FOR UPDATE
+    `,
+    [operatingCompanyId, sourceId]
+  );
+  const transfer = transferRes.rows[0];
+  if (!transfer) throw new PostingEngineError("SOURCE_NOT_FOUND", "Transfer not found");
+  if (transfer.revoked_at) {
+    throw new PostingEngineError("TRANSFER_NOT_POSTING_ELIGIBLE", "Revoked transfer is not posting-eligible");
+  }
+
+  const amountCents = Math.abs(Number(transfer.amount_cents ?? 0));
+  if (!Number.isFinite(amountCents) || amountCents <= 0) {
+    throw new PostingEngineError("TRANSFER_NOT_POSTING_ELIGIBLE", "Transfer has a zero/non-finite amount");
+  }
+
+  const debitAccountId = await resolveTransferLegAccountId(client, operatingCompanyId, transfer.to_account_id, transfer.to_account_kind);
+  if (!debitAccountId) {
+    throw new PostingEngineError(
+      "ACCOUNT_MAPPING_MISSING",
+      `Transfer destination account has no resolvable GL account (${transfer.to_account_kind} account ${transfer.to_account_id})`
+    );
+  }
+  const creditAccountId = await resolveTransferLegAccountId(client, operatingCompanyId, transfer.from_account_id, transfer.from_account_kind);
+  if (!creditAccountId) {
+    throw new PostingEngineError(
+      "ACCOUNT_MAPPING_MISSING",
+      `Transfer source account has no resolvable GL account (${transfer.from_account_kind} account ${transfer.from_account_id})`
+    );
+  }
+
+  const label = `Transfer (${transfer.transfer_type}) ${sourceId}`;
+  return {
+    postingDate: transfer.transfer_date,
+    memo: transfer.memo ? `${label} — ${transfer.memo}` : `${label} posting`,
+    lines: [
+      {
+        account_id: debitAccountId,
+        debit_or_credit: "debit",
+        amount_cents: amountCents,
+        description: `${label} destination`,
+        source_transaction_line_id: null,
+      },
+      {
+        account_id: creditAccountId,
+        debit_or_credit: "credit",
+        amount_cents: amountCents,
+        description: `${label} source`,
+        source_transaction_line_id: null,
+      },
+    ],
+  };
+}
+
 async function buildPostingDraft(
   client: DbClient,
   sourceType: PostingSourceType,
@@ -1405,6 +1547,7 @@ async function buildPostingDraft(
   if (sourceType === "driver_advance") return buildDriverAdvanceLines(client, operatingCompanyId, sourceId, creditAccountId);
   if (sourceType === "bank_categorization") return buildBankCategorizationLines(client, operatingCompanyId, sourceId);
   if (sourceType === "driver_reimbursement") return buildDriverReimbursementLines(client, operatingCompanyId, sourceId, creditAccountId);
+  if (sourceType === "transfer") return buildTransferLines(client, operatingCompanyId, sourceId);
   throw new PostingEngineError("UNKNOWN_SOURCE_TYPE", `Unknown source type: ${sourceType}`);
 }
 
@@ -1559,7 +1702,8 @@ export async function postSourceTransaction(input: PostSourceInput, actor: Actor
         error.code !== "BILL_NOT_POSTING_ELIGIBLE" &&
         error.code !== "PAYMENT_NOT_POSTING_ELIGIBLE" &&
         error.code !== "ADVANCE_NOT_POSTING_ELIGIBLE" &&
-        error.code !== "BANK_CATEGORIZATION_NOT_POSTING_ELIGIBLE"
+        error.code !== "BANK_CATEGORIZATION_NOT_POSTING_ELIGIBLE" &&
+        error.code !== "TRANSFER_NOT_POSTING_ELIGIBLE"
       ) {
         await markBatchFailed(actor, input.operating_company_id, sourceType, sourceId, idempotencyKey);
       }

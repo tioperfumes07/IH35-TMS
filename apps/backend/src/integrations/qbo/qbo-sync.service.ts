@@ -280,8 +280,16 @@ export async function enqueueSyncJob(
   payloadHash: string,
   actorUserId?: string,
   extras?: { triggered_by?: string | null; payload_jsonb?: unknown | null }
-) {
-  const token = await getValidAccessToken(operatingCompanyId);
+): Promise<{ id: string } | null> {
+  // QBO not configured (no ENCRYPTION_KEY or no active token) — skip queue entry.
+  // The parallel-books architecture gates all entity push OFF by default; if there is no
+  // QBO connection, there is nothing to enqueue.
+  let token: Awaited<ReturnType<typeof getValidAccessToken>>;
+  try {
+    token = await getValidAccessToken(operatingCompanyId);
+  } catch {
+    return null;
+  }
   const upsertQueue = async (client: { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> }) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
     const res = await client.query<{ id: string }>(

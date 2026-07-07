@@ -32,6 +32,7 @@ import {
 } from "../accounting/expense-category-map/resolver.service.js";
 import { createEmployeeLoanCore } from "../cash-advances/cash-advance-create.js";
 import { disburseDriverAdvanceCore } from "../cash-advances/cash-advance-disburse.js";
+import { createSettlementDeduction } from "../driver-finance/deductions.service.js";
 
 export const BANK_DRIVER_ADVANCE_FLAG_KEY = "BANK_DRIVER_ADVANCE_ENABLED";
 
@@ -57,6 +58,9 @@ export type BankDriverAdvanceResult =
       journal_entry_id: string;
       driver_advance_account_id: string;
       amount_cents: number;
+      // BANKING-GL-COMPLETION — the recovery deduction created against the driver's next settlement (null
+      // if that step failed; the advance/disbursement above is real and posted either way — see below).
+      deduction_id: string | null;
     };
 
 export type MaybePostBankDriverAdvanceInput = {
@@ -67,6 +71,10 @@ export type MaybePostBankDriverAdvanceInput = {
   driverId: string | null | undefined;
   glAccountId: string | null | undefined;
   memo?: string | null;
+  // BANKING-GL-COMPLETION — the load this bank-categorized advance belongs to (load_id-direct rule,
+  // C1-1/C1-2 — carried straight onto the recovery deduction when tagged; null for a non-load-linked
+  // advance). Mirrors bank-transaction-splits.service.ts's driver cash-advance branch.
+  loadId?: string | null;
   /**
    * Recovery cadence for the driver_finance.deduction_schedule the advance is enrolled in. Defaults to
    * a single period (recover at the next settlement); the net-pay floor + written-consent gates are
@@ -242,6 +250,35 @@ export async function maybePostBankDriverAdvanceForCategorization(
     );
   });
 
+  // Phase 4 — BANKING-GL-COMPLETION: recover this advance from the driver's next settlement. Every other
+  // advance-issuance path (bank-transaction-splits.service.ts's driver cash-advance branch, the B5
+  // cash-advance-request approval flow) creates this SAME recovery deduction right after disbursement —
+  // this bank-categorize path was the one gap where an advance posted with no recovery leg. REUSE
+  // createSettlementDeduction verbatim (sourceType 'cash_advance_repayment', the value that already exists
+  // for exactly this case) — no new deduction math. A failure here does NOT roll back the already-posted
+  // advance (the receivable is real either way) — surfaced via deduction_id: null, never swallowed.
+  let deductionId: string | null = null;
+  try {
+    const deduction = await withCompanyScope(input.actorUserUuid, input.companyId, (client) =>
+      createSettlementDeduction(client as never, {
+        driverId: input.driverId as string,
+        operatingCompanyId: input.companyId,
+        amountCents: decision.amountCents,
+        reason: `Bank-categorized driver cash-advance recovery (bank_txn ${input.bankTransactionId})`,
+        sourceType: "cash_advance_repayment",
+        loadId: input.loadId ?? null,
+        sourceBankTransactionId: input.bankTransactionId,
+        createdByUserId: input.actorUserUuid,
+      })
+    );
+    deductionId = deduction.id;
+  } catch (err) {
+    console.error(
+      `[bank-driver-advance] recovery deduction create failed for advance ${created.advanceId} (advance already posted)`,
+      err
+    );
+  }
+
   return {
     posted: true,
     advance_id: created.advanceId,
@@ -249,5 +286,6 @@ export async function maybePostBankDriverAdvanceForCategorization(
     journal_entry_id: disb.posting?.journal_entry_id ?? "",
     driver_advance_account_id: decision.driverAdvanceAccountId,
     amount_cents: decision.amountCents,
+    deduction_id: deductionId,
   };
 }

@@ -46,6 +46,7 @@ import { createEmployeeLoanCore } from "../cash-advances/cash-advance-create.js"
 import { disburseDriverAdvanceCore } from "../cash-advances/cash-advance-disburse.js";
 import { createSettlementDeduction } from "../driver-finance/deductions.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { postCreatedBillsGl } from "./bulk-transactions.js";
 
 export const BANK_TX_SPLIT_FLAG_KEY = "BANK_TX_SPLIT_ENABLED";
 export const BANK_TX_SPLIT_GL_POSTING_FLAG_KEY = "BANK_TX_SPLIT_GL_POSTING_ENABLED";
@@ -341,7 +342,7 @@ export async function commitSplit(
 ): Promise<{ ok: true; results: LineCommitResult[] }> {
   const results: LineCommitResult[] = [];
 
-  const { lines, txnIsCredit, txnPostingDate, bankLedgerAccountId } = await withCompanyScope(
+  const { lines, txnIsCredit, txnPostingDate, bankLedgerAccountId, bankAccountId } = await withCompanyScope(
     actorUserUuid,
     companyId,
     async (client: Client) => {
@@ -355,10 +356,12 @@ export async function commitSplit(
         is_credit: boolean;
         transaction_date: string;
         bank_ledger_account_id: string | null;
+        bank_account_id: string | null;
       }>(
         `
           SELECT bt.is_credit, bt.transaction_date::text,
-                 ba.ledger_account_id::text AS bank_ledger_account_id
+                 ba.ledger_account_id::text AS bank_ledger_account_id,
+                 bt.bank_account_id::text AS bank_account_id
           FROM banking.bank_transactions bt
           LEFT JOIN banking.bank_accounts ba ON ba.id = bt.bank_account_id AND ba.operating_company_id = bt.operating_company_id
           WHERE bt.id = $1 AND bt.operating_company_id = $2
@@ -369,6 +372,9 @@ export async function commitSplit(
       const txn = txnRes.rows[0];
       if (!txn) throw new SplitValidationError("bank_txn_not_found", "Bank transaction not found.");
 
+      // RE-POST GUARD (BANKING-GL-COMPLETION) — read posting_status so the per-line loop below can skip
+      // any line already 'posted' or 'void' (a re-commit of an already-committed split must never re-run
+      // createEmployeeLoanCore/disburseDriverAdvanceCore or re-insert a bill — that would double-book).
       const linesRes = await client.query<{
         line_no: number;
         amount_cents: string;
@@ -377,10 +383,11 @@ export async function commitSplit(
         gl_account_id: string | null;
         load_id: string | null;
         category_kind: string | null;
+        posting_status: "draft" | "posted" | "skipped_pending_gl_wiring" | "void";
       }>(
         `
           SELECT line_no, amount_cents::text, driver_id::text, vendor_id::text, gl_account_id::text,
-                 load_id::text, category_kind
+                 load_id::text, category_kind, posting_status
           FROM banking.bank_transaction_splits
           WHERE bank_transaction_id = $1 AND operating_company_id = $2 AND voided_at IS NULL
           ORDER BY line_no ASC
@@ -391,11 +398,14 @@ export async function commitSplit(
         throw new SplitValidationError("min_two_lines", "Save at least 2 split lines before committing.");
       }
 
+      // RE-POST GUARD — only flip the parent to 'split' the FIRST time (idempotent re-commit no-op on the
+      // parent row; a re-commit that only recovers a partially-failed line should not reset
+      // categorized_at / re-fire the parent's own downstream effects every time).
       await client.query(
         `UPDATE banking.bank_transactions
          SET status = 'split', category = 'split_transaction', category_kind = 'split_transaction',
              categorized_at = now(), updated_at = now()
-         WHERE id = $1 AND operating_company_id = $2`,
+         WHERE id = $1 AND operating_company_id = $2 AND status <> 'split'`,
         [bankTransactionId, companyId]
       );
 
@@ -404,6 +414,7 @@ export async function commitSplit(
         txnIsCredit: txn.is_credit,
         txnPostingDate: txn.transaction_date,
         bankLedgerAccountId: txn.bank_ledger_account_id,
+        bankAccountId: txn.bank_account_id,
       };
     }
   );
@@ -426,6 +437,15 @@ export async function commitSplit(
   );
 
   for (const line of lines) {
+    // RE-POST GUARD (BANKING-GL-COMPLETION) — a line already 'posted' already ran createEmployeeLoanCore /
+    // disburseDriverAdvanceCore / the bill insert exactly once; a re-commit (e.g. retrying after a
+    // different line failed) must never repeat that side effect. A 'void' line was retired and must never
+    // be resurrected by a commit. Both are reported as-is, not re-attempted.
+    if (line.posting_status === "posted" || line.posting_status === "void") {
+      results.push({ line_no: line.line_no, posted: line.posting_status === "posted", reason: `already_${line.posting_status}` });
+      continue;
+    }
+
     const amountCents = Math.abs(Number(line.amount_cents ?? 0));
     const isCashAdvanceLine =
       Boolean(line.driver_id) && Boolean(driverAdvanceAccountId) && line.gl_account_id === driverAdvanceAccountId;
@@ -546,10 +566,12 @@ export async function commitSplit(
         results.push({ line_no: line.line_no, posted: false, reason: "zero_amount" });
         continue;
       }
-      // REUSE: the exact accounting.bills INSERT shape from bulkPostTransactionsAsBills ("Post as bill"),
-      // invoked per line instead of per whole transaction. Booking a payable — no journal_entry_id on
-      // accounting.bills, so this is not GL posting.
-      const billId = await withCompanyScope(actorUserUuid, companyId, async (client: Client) => {
+      // PAID-IN-FULL MODEL (BANKING-GL-COMPLETION, owner-approved QBO parity) — this line IS the bank
+      // clearing the vendor's charge right now, not a Bill→pay-later A/P scenario, so it books BOTH the
+      // Bill AND its matching full-amount accounting.bill_payments crediting the real source bank account
+      // (same shape as bulkPostTransactionsAsBills's "Post as bill", reused via postCreatedBillsGl below —
+      // no new GL math).
+      const created = await withCompanyScope(actorUserUuid, companyId, async (client: Client) => {
         const billRes = await client.query<{ id: string }>(
           `
             INSERT INTO accounting.bills (
@@ -557,7 +579,7 @@ export async function commitSplit(
               paid_cents, paid_amount, status, memo, coa_account_id, source_bank_transaction_id,
               created_by_user_id, created_at, updated_at
             )
-            VALUES ($1,$2,$2,$3,$3,$4,$5,0,0,'unpaid',$6,$7,$8,$9,now(),now())
+            VALUES ($1,$2,$2,$3,$3,$4,$5,$4,$5,'paid',$6,$7,$8,$9,now(),now())
             RETURNING id::text
           `,
           [
@@ -577,18 +599,82 @@ export async function commitSplit(
             actorUserUuid,
           ]
         );
-        return billRes.rows[0]?.id ?? null;
+        const billId = billRes.rows[0]?.id ?? null;
+        if (!billId) return null;
+
+        // The GL poster reads accounting.bill_lines, not the header. The operator already chose the GL
+        // account when tagging this split line (line.gl_account_id) — carry it as an EXPLICIT per-line
+        // override (Tier 1 of the canonical resolver), the most correct resolution available, not a
+        // generic "uncategorized" fallback.
+        await client.query(
+          `INSERT INTO accounting.bill_lines (bill_id, line_sequence, amount, description, account_id)
+           VALUES ($1::uuid, 1, $2, $3, $4::uuid)
+           ON CONFLICT (bill_id, line_sequence) DO NOTHING`,
+          [billId, amountCents / 100, `Bank-split vendor bill (bank_txn ${bankTransactionId}, line ${line.line_no})`, line.gl_account_id]
+        );
+
+        const paymentRes = await client.query<{ id: string }>(
+          `
+            INSERT INTO accounting.bill_payments (
+              operating_company_id, bill_id, vendor_id, payment_date, amount_cents, amount,
+              payment_method, from_bank_account_id, memo, status, payment_source_kind,
+              source_bank_transaction_id, created_by_user_id, created_at, updated_at
+            )
+            VALUES ($1,$2,$3,$4,$5,$6,'ach',$7,$8,'posted','bank_tx_split',$9,$10,now(),now())
+            RETURNING id::text
+          `,
+          [
+            companyId,
+            billId,
+            line.vendor_id,
+            txnPostingDate,
+            amountCents,
+            amountCents / 100,
+            bankAccountId,
+            JSON.stringify({ source: "bank_tx_split", bank_transaction_id: bankTransactionId, split_line_no: line.line_no }),
+            bankTransactionId,
+            actorUserUuid,
+          ]
+        );
+        const billPaymentId = paymentRes.rows[0]?.id ?? null;
+        return billPaymentId ? { billId, billPaymentId } : null;
       });
-      if (!billId) {
+      if (!created) {
         results.push({ line_no: line.line_no, posted: false, reason: "bill_insert_failed" });
         continue;
       }
+
+      // Bill + bill_payment are already committed (each withCompanyScope call above is its own
+      // transaction) — safe to post now, on separate connections, without self-deadlocking on the rows'
+      // own locks. Gated by the EXISTING BILL_GL_POSTING_ENABLED / BILL_PAYMENT_GL_POSTING_ENABLED flags
+      // (both default OFF) — no new flags.
+      let journalEntryId: string | null = null;
+      try {
+        const [glResult] = await postCreatedBillsGl(companyId, [{ billId: created.billId, billPaymentId: created.billPaymentId }], actorUserUuid);
+        if (glResult?.bill_payment_posted) {
+          journalEntryId =
+            (await withCompanyScope(actorUserUuid, companyId, async (client: Client) => {
+              const jeRes = await client.query<{ journal_entry_uuid: string }>(
+                `SELECT journal_entry_uuid::text FROM accounting.journal_entry_postings
+                 WHERE operating_company_id = $1 AND source_transaction_type = 'bill_payment' AND source_transaction_id = $2
+                 ORDER BY created_at DESC LIMIT 1`,
+                [companyId, created.billPaymentId]
+              );
+              return jeRes.rows[0]?.journal_entry_uuid ?? null;
+            })) ?? null;
+        }
+      } catch (err) {
+        // Best-effort — the bill/bill_payment rows are real either way; surface, never swallow silently.
+        console.error("[bank-transaction-splits] vendor-bill GL post failed (rows already committed)", err);
+      }
+
       await markLineOutcome(companyId, actorUserUuid, bankTransactionId, line.line_no, {
         posting_status: "posted",
         posting_reason: null,
-        result_bill_id: billId,
+        result_bill_id: created.billId,
+        result_journal_entry_id: journalEntryId,
       });
-      results.push({ line_no: line.line_no, posted: true, reason: "posted", bill_id: billId });
+      results.push({ line_no: line.line_no, posted: true, reason: "posted", bill_id: created.billId, journal_entry_id: journalEntryId ?? undefined });
       continue;
     }
 

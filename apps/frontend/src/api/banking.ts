@@ -503,16 +503,17 @@ export function bulkCategorizeBankTransactions(
   });
 }
 
-/** FLAGGED (QA-sweep): path `/mark-transfer` 404s — BE serves `/transfer`, but the BE body
- *  contract differs (`{ destination_bank_account_id, transfer_kind, paired_transaction_id? }`)
- *  and that route enqueues a QBO accounting outbox event. Realigning needs a financial-aware
- *  rework of both this helper and its TransferModal caller — deferred, not a blind path swap. */
+/** Marks a bank transaction as an inter-account transfer (excludes it from cash-flow / bank-feed GL
+ *  posting — see bank-feed-gl-posting.service.ts's own-transfer skip). Repointed to the REAL backend
+ *  route `POST /api/v1/banking/transactions/:id/transfer` (categorization.routes.ts) whose body
+ *  contract is `{ destination_bank_account_id, transfer_kind, paired_transaction_id? }` — the prior
+ *  `/mark-transfer` path 404'd and the old `{ from_account_id, to_account_id }` body never matched. */
 export function markBankTransactionTransfer(
   transactionId: string,
   companyId: string,
-  body: { from_account_id: string; to_account_id: string }
+  body: { destination_bank_account_id: string; transfer_kind: "in" | "out"; paired_transaction_id?: string }
 ) {
-  return apiRequest<{ ok: boolean }>(`/api/v1/banking/transactions/${transactionId}/mark-transfer?${q(companyId)}`, {
+  return apiRequest<{ ok: boolean }>(`/api/v1/banking/transactions/${transactionId}/transfer?${q(companyId)}`, {
     method: "POST",
     body,
   });

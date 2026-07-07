@@ -741,7 +741,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
           {
             resource_type: "banking.bank_transactions",
             resource_id: txn.id,
-            queue_id: queued.id,
+            queue_id: queued?.id ?? null,
             session_id: session.id,
           },
           "info",

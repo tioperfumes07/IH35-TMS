@@ -89,6 +89,7 @@ export async function registerQboSyncAdminRoutes(app: FastifyInstance) {
       body.data.payload_hash,
       user.uuid
     );
+    if (!row) return reply.code(503).send({ error: "qbo_not_configured" });
     return reply.code(201).send({ id: row.id });
   });
 

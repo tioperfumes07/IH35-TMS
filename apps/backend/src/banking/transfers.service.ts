@@ -3,6 +3,59 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
 import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "./bank-account-visibility.js";
+import { isEnabled } from "../lib/feature-flags/service.js";
+import { postSourceTransaction, reversePostedSourceTransaction, PostingEngineError } from "../accounting/posting-engine.service.js";
+
+// BANKING-GL-COMPLETION — per-entity kill switch (default OFF; migration 202607150000). Resolved
+// PER-ENTITY via isEnabled inside the request flow — never a global process.env read — so flipping it
+// for one entity can never post transfers for every entity (constitution §1.4 money-posting discipline).
+const TRANSFER_GL_POSTING_FLAG_KEY = "TRANSFER_GL_POSTING_ENABLED";
+
+/**
+ * Best-effort GL post for a just-committed transfer row. The transfer + cached-balance bump are ALREADY
+ * committed by the caller (its own withCurrentUser transaction) before this runs, so a posting failure
+ * here NEVER rolls back the transfer — it is logged and surfaced via the return value; the posting-engine
+ * backfill (or a retry once the flag flips) can pick it up later. Reuses the shared posting engine
+ * end-to-end (idempotency key + transaction_source_links spine) — no new GL math.
+ */
+async function maybePostTransferGl(
+  operatingCompanyId: string,
+  transferId: string,
+  userId: string,
+  purpose: "initial_post" | "reversal"
+): Promise<void> {
+  try {
+    const postingEnabled = await withCurrentUser(userId, async (client) => {
+      // RLS on lib.feature_flag_overrides requires app.operating_company_id to match the row's
+      // operating_company_id. withCurrentUser alone does not set it — set it explicitly so that
+      // company-level flag overrides are visible on this connection.
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+      return isEnabled(client, TRANSFER_GL_POSTING_FLAG_KEY, { operating_company_id: operatingCompanyId, user_uuid: userId });
+    });
+    if (!postingEnabled) return;
+
+    if (purpose === "initial_post") {
+      await postSourceTransaction(
+        { operating_company_id: operatingCompanyId, source_transaction_type: "transfer", source_transaction_id: transferId },
+        { userId }
+      );
+    } else {
+      await reversePostedSourceTransaction(
+        { operating_company_id: operatingCompanyId, source_transaction_type: "transfer", source_transaction_id: transferId },
+        { userId }
+      );
+    }
+  } catch (err) {
+    if (err instanceof PostingEngineError && err.code === "SOURCE_NOT_FOUND" && purpose === "reversal") {
+      // Nothing was ever posted for this transfer (flag was off when it was created) — nothing to reverse.
+      return;
+    }
+    console.error(
+      `[transfers] TRANSFER_GL_POSTING ${purpose} failed for transfer ${transferId} (row already committed)`,
+      err
+    );
+  }
+}
 
 type AccountKind = "bank" | "cc" | "coa";
 type TransferType = "bank_to_bank" | "cc_payment" | "cash_deposit" | "owner_contribution" | "owner_distribution";
@@ -167,6 +220,12 @@ export async function createTransfer(input: TransferInput, userId: string) {
     return created;
   });
 
+  // BANKING-GL-COMPLETION — post the balanced JE (Dr destination / Cr source) AFTER the transfer row is
+  // committed above (postSourceTransaction opens its OWN transaction on its own connection; calling it
+  // from inside the still-open insert transaction would self-deadlock on the row's own lock). No-ops when
+  // TRANSFER_GL_POSTING_ENABLED resolves false for this entity (the default).
+  await maybePostTransferGl(transfer.operating_company_id, transfer.id, userId, "initial_post");
+
   await enqueueSyncJob(
     transfer.operating_company_id,
     "transfer",
@@ -238,6 +297,10 @@ export async function revokeTransfer(transferId: string, operatingCompanyId: str
     );
     return revoked;
   });
+
+  // BANKING-GL-COMPLETION — reverse any posted transfer JE (idempotent no-op if the flag was off when the
+  // transfer was created / nothing was ever posted).
+  await maybePostTransferGl(transfer.operating_company_id, transfer.id, userId, "reversal");
 
   await enqueueSyncJob(
     transfer.operating_company_id,
