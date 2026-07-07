@@ -15,7 +15,8 @@ export type AdminJobOperation =
   | "qbo.inbound.replay_since"
   | "admin.health.deep.refresh"
   | "qbo.forensic.start_import"
-  | "samsara.config.health_check";
+  | "samsara.config.health_check"
+  | "users.deactivate_probe_accounts";
 
 export type AdminJobRecord = {
   id: string;
@@ -53,7 +54,8 @@ export function buildIdempotencyKey(input:
   | { operation: "qbo.inbound.replay_since"; operatingCompanyId: string; realmId: string; sinceIso: string }
   | { operation: "admin.health.deep.refresh"; operatingCompanyId: string; integration: string; nowMs: number }
   | { operation: "qbo.forensic.start_import"; operatingCompanyId: string; importBatchId: string }
-  | { operation: "samsara.config.health_check"; operatingCompanyId: string; samsaraConfigId: string; configVersion: string }) {
+  | { operation: "samsara.config.health_check"; operatingCompanyId: string; samsaraConfigId: string; configVersion: string }
+  | { operation: "users.deactivate_probe_accounts"; requestedByUserId: string; utcDayBucket: string }) {
   if (input.operation === "qbo.inbound.replay_since") {
     // F-005 key: same (company, realm, since) replay requests coalesce.
     return hashKey({
@@ -80,6 +82,10 @@ export function buildIdempotencyKey(input:
       operating_company_id: input.operatingCompanyId,
       import_batch_id: input.importBatchId,
     });
+  }
+  if (input.operation === "users.deactivate_probe_accounts") {
+    // USERS-1 PR B: one deactivation run per UTC day per requesting admin.
+    return hashKey({ op: input.operation, requested_by: input.requestedByUserId, day: input.utcDayBucket });
   }
   // S-002 key: config-version specific dedupe; same config version probes once.
   return hashKey({
@@ -343,7 +349,29 @@ async function markJobFailed(job: AdminJobRecord, errorMessage: string) {
   );
 }
 
+// USERS-1 PR B: RFC-2606 reserved test domain + CI probe naming patterns. Mirrors the
+// frontend FIXTURE_USER_EMAIL_RE in users.routes.ts — kept in sync manually.
+const PROBE_EMAIL_RE = /@example\.(com|org|net)$|(^|[.+_-])(m2-probe|m2-stop|verifyfix)\b/i;
+
 async function runOperation(job: AdminJobRecord): Promise<Record<string, unknown>> {
+  // users.deactivate_probe_accounts operates on identity.users globally — no company RLS needed.
+  if (job.operation === "users.deactivate_probe_accounts") {
+    const deactivated = await withLuciaBypass(async (client) => {
+      const res = await client.query<{ id: string; email: string; role: string }>(
+        `SELECT id, email, role FROM identity.users WHERE deactivated_at IS NULL`
+      );
+      const probeRows = res.rows.filter((r) => PROBE_EMAIL_RE.test(r.email));
+      if (probeRows.length === 0) return [];
+      const ids = probeRows.map((r) => r.id);
+      await client.query(
+        `UPDATE identity.users SET deactivated_at = now() WHERE id = ANY($1::uuid[]) AND deactivated_at IS NULL`,
+        [ids]
+      );
+      return probeRows.map((r) => ({ email: r.email, role: r.role }));
+    });
+    return { ok: true, deactivated_count: deactivated.length, deactivated };
+  }
+
   if (!job.operating_company_id) throw new Error("missing_operating_company_id");
 
   if (job.operation === "qbo.inbound.replay_since") {
