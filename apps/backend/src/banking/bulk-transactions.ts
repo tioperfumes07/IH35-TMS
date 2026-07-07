@@ -191,11 +191,11 @@ export async function bulkPostTransactionsAsBills(
           suggested_vendor_id,
           categorization_vendor_id,
           bank_account_id
-        FROM banking.bank_transactions
-        WHERE operating_company_id = $1
-          AND id = ANY($2::uuid[])
+        FROM banking.bank_transactions bt
+        WHERE bt.operating_company_id = $1
+          AND bt.id = ANY($2::uuid[])
           AND ${pendingStatusesSql()}
-        ORDER BY transaction_date ASC, id ASC
+        ORDER BY bt.transaction_date ASC, bt.id ASC
       `,
       [input.operatingCompanyId, input.txnIds]
     );

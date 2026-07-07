@@ -172,7 +172,7 @@ describeIntegration("CHAIN-04 bill-payment → GL gap-closure end-to-end (real P
       // BANKING-GL-COMPLETION — credit-card liability account (the cc_account_id credit leg).
       await db.query(
         `INSERT INTO catalogs.accounts (id, operating_company_id, account_number, account_name, account_type, is_postable)
-         VALUES ($1::uuid,$3::uuid,$2,'CC Liability Test','Credit Card',true)`,
+         VALUES ($1::uuid,$3::uuid,$2,'CC Liability Test','Liability',true)`,
         [ccLiabilityAccountId, `CC${suffix}`, companyId]
       );
     });
@@ -183,16 +183,16 @@ describeIntegration("CHAIN-04 bill-payment → GL gap-closure end-to-end (real P
     try {
       await bypass(async () => {
         await db.query(`DELETE FROM lib.feature_flag_overrides WHERE flag_key='BILL_PAYMENT_GL_POSTING_ENABLED' AND operating_company_id=$1::uuid`, [companyId]);
-        await db.query(`DELETE FROM accounting.journal_entry_postings WHERE source_transaction_id = ANY($1) AND source_transaction_type IN ('bill','bill_payment')`, [[...createdBillIds, ...createdPaymentIds]]);
         await db.query(`DELETE FROM accounting.transaction_source_links WHERE linked_object_id = ANY($1) AND linked_object_type IN ('bill','bill_payment')`, [[...createdBillIds, ...createdPaymentIds]]);
+        await db.query(`DELETE FROM accounting.journal_entry_postings WHERE source_transaction_id = ANY($1) AND source_transaction_type IN ('bill','bill_payment')`, [[...createdBillIds, ...createdPaymentIds]]);
         await db.query(`DELETE FROM accounting.posting_batches WHERE source_transaction_id = ANY($1) AND source_transaction_type IN ('bill','bill_payment')`, [[...createdBillIds, ...createdPaymentIds]]);
         await db.query(`DELETE FROM accounting.bill_payments WHERE id = ANY($1::uuid[])`, [createdPaymentIds]);
         await db.query(`DELETE FROM accounting.bill_lines WHERE bill_id = ANY($1::uuid[])`, [createdBillIds]);
         await db.query(`DELETE FROM accounting.bills WHERE id = ANY($1::uuid[])`, [createdBillIds]);
         await db.query(`DELETE FROM banking.bank_accounts WHERE id = ANY($1::uuid[])`, [[bankAccountId, bankNoLedgerId]]);
-        await db.query(`DELETE FROM catalogs.accounts WHERE id = $1::uuid`, [ccLiabilityAccountId]);
         await db.query(`DELETE FROM accounting.expense_category_account_map WHERE operating_company_id=$1::uuid AND account_id=$2::uuid`, [companyId, fuelAccountId]);
         await db.query(`DELETE FROM accounting.chart_of_accounts_roles WHERE operating_company_id=$1::uuid AND account_id=$2::uuid`, [companyId, apAccountId]);
+        await db.query(`DELETE FROM catalogs.accounts WHERE id = ANY($1::uuid[])`, [[fuelAccountId, apAccountId, bankGlAccountId, ccLiabilityAccountId]]);
         await db.query(`DELETE FROM org.user_company_access WHERE user_id=$1::uuid AND company_id=$2::uuid`, [userId, companyId]);
       });
     } catch { /* best-effort cleanup */ }

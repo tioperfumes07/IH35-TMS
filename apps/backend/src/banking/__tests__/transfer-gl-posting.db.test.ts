@@ -112,7 +112,7 @@ describeIntegration("BANKING-GL-COMPLETION transfer -> GL posting end-to-end (re
         );
       await mkAccount(fromBankGlId, "FRB", "From Bank GL Test", "Asset");
       await mkAccount(toBankGlId, "TOB", "To Bank GL Test", "Asset");
-      await mkAccount(ccLiabilityId, "CCL", "CC Liability Test", "Credit Card");
+      await mkAccount(ccLiabilityId, "CCL", "CC Liability Test", "Liability");
 
       await db.query(
         `INSERT INTO banking.bank_accounts (id, operating_company_id, account_name, ledger_account_id, is_active, current_balance_cents)
@@ -132,11 +132,11 @@ describeIntegration("BANKING-GL-COMPLETION transfer -> GL posting end-to-end (re
     try {
       await bypass(async () => {
         await db.query(
-          `DELETE FROM accounting.journal_entry_postings WHERE source_transaction_id = ANY($1) AND source_transaction_type='transfer'`,
+          `DELETE FROM accounting.transaction_source_links WHERE linked_object_id = ANY($1) AND linked_object_type='transfer'`,
           [createdTransferIds]
         );
         await db.query(
-          `DELETE FROM accounting.transaction_source_links WHERE linked_object_id = ANY($1) AND linked_object_type='transfer'`,
+          `DELETE FROM accounting.journal_entry_postings WHERE source_transaction_id = ANY($1) AND source_transaction_type='transfer'`,
           [createdTransferIds]
         );
         await db.query(

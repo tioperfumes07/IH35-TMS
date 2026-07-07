@@ -107,6 +107,12 @@ describeIntegration("BANKING-GL-COMPLETION bank-transaction-splits vendor-bill l
       await mkAccount(otherGlAccountId, "SPV2", "Split Vendor Line 2 Test", "Expense");
       await mkAccount(bankGlAccountId, "SPBK", "Split Bank GL Test", "Asset");
       await db.query(
+        `INSERT INTO mdata.vendors (id, operating_company_id, vendor_name, vendor_type)
+         VALUES ($1::uuid, $2::uuid, 'Split Test Vendor', 'Other')
+         ON CONFLICT (id) DO NOTHING`,
+        [vendorId, companyId]
+      );
+      await db.query(
         `INSERT INTO banking.bank_accounts (id, operating_company_id, account_name, ledger_account_id, is_active, current_balance_cents)
          VALUES ($1::uuid,$2::uuid,'Split Test Bank',$3::uuid,true,0)`,
         [bankAccountId, companyId, bankGlAccountId]
@@ -126,11 +132,11 @@ describeIntegration("BANKING-GL-COMPLETION bank-transaction-splits vendor-bill l
     try {
       await bypass(async () => {
         await db.query(
-          `DELETE FROM accounting.journal_entry_postings WHERE source_transaction_id = ANY($1) AND source_transaction_type IN ('bill','bill_payment')`,
+          `DELETE FROM accounting.transaction_source_links WHERE linked_object_id = ANY($1) AND linked_object_type IN ('bill','bill_payment')`,
           [[...createdBillIds, ...createdPaymentIds]]
         );
         await db.query(
-          `DELETE FROM accounting.transaction_source_links WHERE linked_object_id = ANY($1) AND linked_object_type IN ('bill','bill_payment')`,
+          `DELETE FROM accounting.journal_entry_postings WHERE source_transaction_id = ANY($1) AND source_transaction_type IN ('bill','bill_payment')`,
           [[...createdBillIds, ...createdPaymentIds]]
         );
         await db.query(
@@ -140,6 +146,7 @@ describeIntegration("BANKING-GL-COMPLETION bank-transaction-splits vendor-bill l
         await db.query(`DELETE FROM accounting.bill_payments WHERE id = ANY($1::uuid[])`, [createdPaymentIds]);
         await db.query(`DELETE FROM accounting.bill_lines WHERE bill_id = ANY($1::uuid[])`, [createdBillIds]);
         await db.query(`DELETE FROM accounting.bills WHERE id = ANY($1::uuid[])`, [createdBillIds]);
+        await db.query(`DELETE FROM mdata.vendors WHERE id = $1::uuid`, [vendorId]);
         await db.query(`DELETE FROM banking.bank_transaction_splits WHERE bank_transaction_id = $1::uuid`, [txnId]);
         await db.query(`DELETE FROM banking.bank_transactions WHERE id = $1::uuid`, [txnId]);
         await db.query(`DELETE FROM banking.bank_accounts WHERE id = $1::uuid`, [bankAccountId]);

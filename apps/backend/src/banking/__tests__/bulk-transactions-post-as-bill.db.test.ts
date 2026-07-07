@@ -117,6 +117,12 @@ describeIntegration("BANKING-GL-COMPLETION post-as-bill paid-in-full end-to-end 
          VALUES ($1::uuid,$2::uuid,'Bulk Post Test Bank',$3::uuid,true,0)`,
         [bankAccountId, companyId, bankGlAccountId]
       );
+      await db.query(
+        `INSERT INTO mdata.vendors (id, operating_company_id, vendor_name, vendor_type)
+         VALUES ($1::uuid, $2::uuid, 'Bulk Post Test Vendor', 'Other')
+         ON CONFLICT (id) DO NOTHING`,
+        [vendorId, companyId]
+      );
     });
   });
 
@@ -125,11 +131,11 @@ describeIntegration("BANKING-GL-COMPLETION post-as-bill paid-in-full end-to-end 
     try {
       await bypass(async () => {
         await db.query(
-          `DELETE FROM accounting.journal_entry_postings WHERE source_transaction_id = ANY($1) AND source_transaction_type IN ('bill','bill_payment')`,
+          `DELETE FROM accounting.transaction_source_links WHERE linked_object_id = ANY($1) AND linked_object_type IN ('bill','bill_payment')`,
           [[...createdBillIds, ...createdPaymentIds]]
         );
         await db.query(
-          `DELETE FROM accounting.transaction_source_links WHERE linked_object_id = ANY($1) AND linked_object_type IN ('bill','bill_payment')`,
+          `DELETE FROM accounting.journal_entry_postings WHERE source_transaction_id = ANY($1) AND source_transaction_type IN ('bill','bill_payment')`,
           [[...createdBillIds, ...createdPaymentIds]]
         );
         await db.query(
@@ -139,6 +145,7 @@ describeIntegration("BANKING-GL-COMPLETION post-as-bill paid-in-full end-to-end 
         await db.query(`DELETE FROM accounting.bill_payments WHERE id = ANY($1::uuid[])`, [createdPaymentIds]);
         await db.query(`DELETE FROM accounting.bill_lines WHERE bill_id = ANY($1::uuid[])`, [createdBillIds]);
         await db.query(`DELETE FROM accounting.bills WHERE id = ANY($1::uuid[])`, [createdBillIds]);
+        await db.query(`DELETE FROM mdata.vendors WHERE id = $1::uuid`, [vendorId]);
         await db.query(`DELETE FROM banking.bank_transactions WHERE id = ANY($1::uuid[])`, [createdTxnIds]);
         await db.query(`DELETE FROM banking.bank_accounts WHERE id = $1::uuid`, [bankAccountId]);
         await db.query(`DELETE FROM catalogs.accounts WHERE id = $1::uuid`, [bankGlAccountId]);
