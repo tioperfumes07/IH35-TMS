@@ -214,6 +214,9 @@ export function DriverDetailPage() {
   const [qboVendorPickId, setQboVendorPickId] = useState<string | null>(null);
   const [qboVendorPickLabel, setQboVendorPickLabel] = useState("");
   const [qboClassTmsId, setQboClassTmsId] = useState("");
+  // Hazmat "H" CDL endorsement (mdata.drivers.endorsement_h, migration 0301) — separate boolean state
+  // since `form`/`hydratedForm` are string-keyed text-field state; reset whenever a different driver loads.
+  const [endorsementH, setEndorsementH] = useState<boolean | null>(null);
 
   // Scope the driver lookup to the SELECTED company (+ its authorizations),
   // mirroring the DQF list and DriverProfilePage (#1882). Without this, opening
@@ -276,6 +279,11 @@ export function DriverDetailPage() {
     setQboVendorPickLabel("");
     setQboClassTmsId(driver.qbo_class_id ?? "");
   }, [driver?.id, driver?.qbo_vendor_id, driver?.qbo_class_id]);
+
+  useEffect(() => {
+    if (!driver) return;
+    setEndorsementH(driver.endorsement_h ?? false);
+  }, [driver?.id, driver?.endorsement_h]);
 
   const saveDriverQboMutation = useMutation({
     mutationFn: () =>
@@ -386,6 +394,7 @@ export function DriverDetailPage() {
         pay_basis: hydratedForm.pay_basis as "short_miles" | "practical_miles",
         dot_medical_expires_at: hydratedForm.dot_medical_expires_at || null,
         hazmat_endorsement_expires_at: hydratedForm.hazmat_endorsement_expires_at || null,
+        endorsement_h: endorsementH ?? driver?.endorsement_h ?? false,
         visa_type: hydratedForm.visa_type || null,
         visa_number: hydratedForm.visa_number || null,
         visa_expires_at: hydratedForm.visa_expires_at || null,
@@ -767,15 +776,36 @@ export function DriverDetailPage() {
           {fields.map(([key, label, type]) => (
             <div key={key} className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-gray-600">{label}</label>
-              <input
-                type={type}
-                value={hydratedForm[key] ?? ""}
-                disabled={!editMode}
-                onChange={(event) => setForm((current) => ({ ...current, [key]: event.target.value }))}
-                className={`${FORM_INPUT_CLASS} disabled:bg-gray-100`}
-              />
+              {type === "date" ? (
+                <DatePicker
+                  value={hydratedForm[key] ?? ""}
+                  disabled={!editMode}
+                  onChange={(value) => setForm((current) => ({ ...current, [key]: value }))}
+                />
+              ) : (
+                <input
+                  type={type}
+                  value={hydratedForm[key] ?? ""}
+                  disabled={!editMode}
+                  onChange={(event) => setForm((current) => ({ ...current, [key]: event.target.value }))}
+                  className={`${FORM_INPUT_CLASS} disabled:bg-gray-100`}
+                />
+              )}
             </div>
           ))}
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-gray-600">Hazmat Endorsement (H)</label>
+            <label className="flex h-9 items-center gap-2 rounded-sm border border-gray-300 px-2 text-sm disabled:bg-gray-100">
+              <input
+                type="checkbox"
+                checked={endorsementH ?? driver.endorsement_h ?? false}
+                disabled={!editMode}
+                onChange={(event) => setEndorsementH(event.target.checked)}
+                data-testid="driver-endorsement-h-checkbox"
+              />
+              <span className="text-gray-700">Driver holds a hazmat (H) CDL endorsement</span>
+            </label>
+          </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">CDL State</label>
             <Combobox
@@ -911,13 +941,21 @@ export function DriverDetailPage() {
               ].map(([key, label, type]) => (
                 <div key={key} className="flex flex-col gap-1">
                   <label className="text-xs font-semibold text-gray-600">{label}</label>
-                  <input
-                    type={type}
-                    value={hydratedForm[key] ?? ""}
-                    disabled={!editMode}
-                    onChange={(event) => setForm((current) => ({ ...current, [key]: event.target.value }))}
-                    className={`${FORM_INPUT_CLASS} disabled:bg-gray-100`}
-                  />
+                  {type === "date" ? (
+                    <DatePicker
+                      value={hydratedForm[key] ?? ""}
+                      disabled={!editMode}
+                      onChange={(value) => setForm((current) => ({ ...current, [key]: value }))}
+                    />
+                  ) : (
+                    <input
+                      type={type}
+                      value={hydratedForm[key] ?? ""}
+                      disabled={!editMode}
+                      onChange={(event) => setForm((current) => ({ ...current, [key]: event.target.value }))}
+                      className={`${FORM_INPUT_CLASS} disabled:bg-gray-100`}
+                    />
+                  )}
                 </div>
               ))}
               <div className="flex flex-col gap-1">

@@ -87,6 +87,13 @@ function formatMoney(value: number) {
   return formatUsd(value);
 }
 
+// Some aggregate rows (e.g. debtAlertRows) fall back to a driver NAME string as the "id" when the
+// source record has no driver_id — guard EntityLink so it never fabricates a route to a non-uuid.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function isUuid(value: string | null | undefined): value is string {
+  return Boolean(value) && UUID_RE.test(value as string);
+}
+
 function isWithinNextDays(dateIso: string | null | undefined, days: number) {
   if (!dateIso) return false;
   const target = new Date(dateIso);
@@ -488,7 +495,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                   const v = String(row.primary_driver_name ?? row.primary_driver_id ?? "—");
                   return (
                     <span title={v !== "—" ? v : undefined} className="single-line-name">
-                      {v}
+                      <EntityLink kind="driver" id={String(row.primary_driver_id ?? "")} label={v} />
                     </span>
                   );
                 },
@@ -501,7 +508,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                   const v = String(row.co_driver_name ?? row.secondary_driver_id ?? "—");
                   return (
                     <span title={v !== "—" ? v : undefined} className="single-line-name">
-                      {v}
+                      <EntityLink kind="driver" id={String(row.secondary_driver_id ?? "")} label={v} />
                     </span>
                   );
                 },
@@ -597,7 +604,10 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
             <DataPanel title="Debt Alert · before any payment" accentColor={colors.crit.strong}>
               {debtAlertRows.map((row) => (
                 <DataPanelRow key={row.driver_id}>
-                  <span>{row.driver_name} · {row.reasons.slice(0, 2).join(" + ")}</span>
+                  <span>
+                    <EntityLink kind="driver" id={isUuid(row.driver_id) ? row.driver_id : null} label={row.driver_name} /> ·{" "}
+                    {row.reasons.slice(0, 2).join(" + ")}
+                  </span>
                   <span className="text-red-600">-{formatMoney(row.total)}</span>
                 </DataPanelRow>
               ))}
@@ -614,7 +624,9 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
             <DataPanel title="Permit / Document Expirations" accentColor={colors.warn.strong}>
               {permitExpirationRows.map((row) => (
                 <DataPanelRow key={row.id}>
-                  <span><EntityLink kind="driver" id={row.driver_id} label={row.driver_name} /> · {row.label}</span>
+                  <span>
+                    <EntityLink kind="driver" id={row.driver_id} label={row.driver_name} /> · {row.label}
+                  </span>
                   <span>{row.days}d</span>
                 </DataPanelRow>
               ))}
@@ -808,16 +820,16 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                 Primary:{" "}
                 <EntityLink
                   kind="driver"
-                  id={teamDetailQuery.data.primary_driver_id}
-                  label={teamDetailQuery.data.primary_driver_name ?? teamDetailQuery.data.primary_driver_id}
+                  id={String(teamDetailQuery.data.primary_driver_id ?? "")}
+                  label={String(teamDetailQuery.data.primary_driver_name ?? teamDetailQuery.data.primary_driver_id)}
                 />
               </p>
               <p>
                 Co:{" "}
                 <EntityLink
                   kind="driver"
-                  id={teamDetailQuery.data.secondary_driver_id}
-                  label={teamDetailQuery.data.co_driver_name ?? teamDetailQuery.data.secondary_driver_id}
+                  id={String(teamDetailQuery.data.secondary_driver_id ?? "")}
+                  label={String(teamDetailQuery.data.co_driver_name ?? teamDetailQuery.data.secondary_driver_id)}
                 />
               </p>
               <p>Split: {String(teamDetailQuery.data.split_method)} ({Number(teamDetailQuery.data.primary_share_pct)} / {Number(teamDetailQuery.data.co_share_pct)})</p>

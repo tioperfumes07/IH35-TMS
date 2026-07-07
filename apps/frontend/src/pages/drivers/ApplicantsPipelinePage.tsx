@@ -12,6 +12,7 @@ import {
 } from "../../api/applicants";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Button } from "../../components/Button";
+import { PageHeader } from "../../components/layout/PageHeader";
 
 function applicantName(row: DriverApplicant) {
   return `${row.first_name ?? ""} ${row.last_name ?? ""}`.trim() || "Applicant";
@@ -119,17 +120,19 @@ export function ApplicantsPipelinePage() {
 
   return (
     <div className="space-y-4 p-4" data-testid="applicants-pipeline-page">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-900">Applicant pipeline</h1>
-          <p className="text-sm text-gray-600">Pre-hire applications → review → convert to driver onboarding.</p>
-        </div>
-        {applyPath ? (
-          <div className="rounded-sm border bg-gray-50 px-3 py-2 text-xs text-gray-700" data-testid="applicant-public-link">
-            Public apply link: <span className="font-mono">{applyPath}</span>
-          </div>
-        ) : null}
-      </header>
+      <PageHeader
+        title="Applicant pipeline"
+        subtitle="Pre-hire applications → review → convert to driver onboarding."
+        breadcrumb={["Drivers", "Applicant pipeline"]}
+        backHref="/drivers"
+        actions={
+          applyPath ? (
+            <div className="rounded-sm border bg-gray-50 px-3 py-2 text-xs text-gray-700" data-testid="applicant-public-link">
+              Public apply link: <span className="font-mono">{applyPath}</span>
+            </div>
+          ) : null
+        }
+      />
 
       {applicantsQ.isLoading ? <p className="text-sm text-gray-500">Loading applicants…</p> : null}
 

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AtRiskDriverCard } from "../../components/drivers/AtRiskDriverCard";
+import { PageHeader } from "../../components/layout/PageHeader";
 
 type RetentionRow = {
   driver_uuid: string;
@@ -28,10 +29,12 @@ export function RetentionDashboard() {
 
   return (
     <div className="space-y-4 p-4" data-testid="driver-retention-dashboard">
-      <div>
-        <h1 className="text-lg font-semibold text-gray-900">Driver Retention Risk</h1>
-        <p className="text-xs text-gray-600">GAP-71 predictive model · at-risk and critical drivers</p>
-      </div>
+      <PageHeader
+        title="Driver Retention Risk"
+        subtitle="GAP-71 predictive model · at-risk and critical drivers"
+        breadcrumb={["Drivers", "Retention Risk"]}
+        backHref="/drivers"
+      />
       {!companyId ? <p className="text-sm text-gray-500">Select operating company.</p> : null}
       {scoresQ.isLoading ? <p className="text-sm text-gray-500">Loading retention scores…</p> : null}
       <div className="grid gap-3 md:grid-cols-2">

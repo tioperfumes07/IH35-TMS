@@ -12,9 +12,11 @@ export function AccidentHistoryView({ driverId, operatingCompanyId }: Props) {
       description="Accident reports cross-linked to safety incidents."
       columns={[
         { key: "occurred_at", label: "Occurred" },
-        { key: "severity", label: "Severity" },
         { key: "description", label: "Description" },
-        { key: "incident_id", label: "Incident" },
+        { key: "at_fault", label: "At Fault" },
+        { key: "preventable", label: "Preventable" },
+        { key: "unit_id", label: "Unit", entityKind: "unit" },
+        { key: "load_id", label: "Load", entityKind: "load" },
       ]}
     />
   );

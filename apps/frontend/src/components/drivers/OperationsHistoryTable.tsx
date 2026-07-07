@@ -7,10 +7,10 @@ export type OperationsColumn = {
   key: string;
   label: string;
   /**
-   * When set, the cell is rendered as an <EntityLink> of this kind instead of plain text —
-   * total-connectivity drill-through for the shared driver-operations history views. `idKey`
-   * names the field on the row (which may be a field not otherwise shown as its own column,
-   * e.g. the row's raw `uuid`) that holds the real id; defaults to `${key}_id` when omitted.
+   * When set, renders this cell as an <EntityLink> drill-through of this kind (LAW OF THE LAND
+   * total-connectivity) instead of plain text. The id value is read from `idKey` when given,
+   * otherwise from `key` itself — letting a column display one field (e.g. a unit number) while
+   * linking through a different raw id field on the same row (e.g. unit_id).
    */
   entityKind?: EntityKind;
   idKey?: string;
@@ -38,6 +38,17 @@ function formatCell(value: unknown): string {
   if (value === null || value === undefined || value === "") return "—";
   if (typeof value === "boolean") return value ? "Yes" : "No";
   return String(value);
+}
+
+function renderCell(row: Record<string, unknown>, column: OperationsColumn) {
+  if (column.entityKind) {
+    const idValue = row[column.idKey ?? column.key];
+    const id = idValue == null ? null : String(idValue);
+    const labelValue = row[column.key];
+    const label = labelValue === null || labelValue === undefined || labelValue === "" ? undefined : formatCell(labelValue);
+    return <EntityLink kind={column.entityKind} id={id} label={label} />;
+  }
+  return formatCell(row[column.key]);
 }
 
 /**
@@ -94,15 +105,7 @@ export function OperationsHistoryTable({ driverId, operatingCompanyId, subView, 
                 <tr key={String(row.uuid ?? index)} className="border-b border-gray-100">
                   {columns.map((column) => (
                     <td key={column.key} className="px-2 py-1.5 text-gray-800">
-                      {column.entityKind ? (
-                        <EntityLink
-                          kind={column.entityKind}
-                          id={row[column.idKey ?? `${column.key}_id`] as string | null | undefined}
-                          label={formatCell(row[column.key])}
-                        />
-                      ) : (
-                        formatCell(row[column.key])
-                      )}
+                      {renderCell(row, column)}
                     </td>
                   ))}
                 </tr>

@@ -131,7 +131,15 @@ export function EntityLink({ kind, id, label, className, onClick, "data-testid":
   }
 
   return (
-    <Link to={route} className={className ?? DEFAULT_LINK_CLASSNAME} onClick={onClick} data-testid={testId}>
+    <Link
+      to={route}
+      className={className ?? DEFAULT_LINK_CLASSNAME}
+      data-testid={testId}
+      onClick={(event) => {
+        event.stopPropagation();
+        onClick?.(event);
+      }}
+    >
       {display}
     </Link>
   );

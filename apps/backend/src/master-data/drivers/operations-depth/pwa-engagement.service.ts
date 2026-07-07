@@ -6,7 +6,8 @@ export type PwaEngagementRow = {
   operating_company_id: string;
   suggestion_id: string | null;
   response: string | null;
-  response_at: string | null;
+  responded_at: string | null;
+  accepted: boolean;
   response_by_user_uuid: string | null;
   created_at: string;
 };
@@ -15,6 +16,11 @@ export type PwaEngagementRow = {
  * Driver PWA engagement — acceptance / response activity for status suggestions,
  * a proxy for login frequency and acceptance rate in the driver PWA.
  * Scoped to one driver inside one operating company; paged for large drivers.
+ *
+ * §4 fix (2026-07-06): real column is `response_at` (migration 0230) but the frontend's
+ * PwaEngagementView column key is `responded_at` — aliased. `accepted` is not a stored column;
+ * `response` is a real CHECK-constrained enum ('confirmed' | 'overridden' | 'dismissed' | 'expired'),
+ * so `accepted` is derived honestly as `response = 'confirmed'` rather than fabricated.
  */
 export async function getDriverPwaEngagement(
   client: Queryable,
@@ -41,7 +47,8 @@ export async function getDriverPwaEngagement(
         operating_company_id::text,
         suggestion_id::text,
         response,
-        response_at::text,
+        response_at::text AS responded_at,
+        (response = 'confirmed') AS accepted,
         response_by_user_uuid::text,
         created_at::text
       FROM dispatch.auto_status_suggestion_responses

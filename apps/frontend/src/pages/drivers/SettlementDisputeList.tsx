@@ -1,10 +1,10 @@
 import { useMemo, useState } from "react";
 import { Button } from "../../components/Button";
 import { DataTable } from "../../components/DataTable";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useSettlementDisputes, type SettlementDisputeStatus } from "../../hooks/useSettlementDisputes";
 import { SettlementDisputeModal } from "./SettlementDisputeModal";
-import { EntityLink } from "../../components/shared/EntityLink";
 
 const STATUS_FILTERS: Array<{ id: SettlementDisputeStatus | "all"; label: string }> = [
   { id: "all", label: "All" },

@@ -4,16 +4,24 @@ export type FuelHistoryRow = {
   uuid: string;
   driver_id: string;
   operating_company_id: string;
-  transaction_at: string | null;
-  location_city: string | null;
+  transaction_date: string | null;
+  merchant: string | null;
   gallons: string | null;
-  total_cost: string | null;
+  total_amount: string | null;
   created_at: string;
 };
 
 /**
  * Driver fuel history — per-driver fuel transactions.
  * Scoped to one driver inside one operating company; paged for large drivers.
+ *
+ * §4 fix (2026-07-06): real columns are `transaction_at` / `location_city` / `total_cost` (migration
+ * 0300) but the frontend's FuelHistoryView column keys were `transaction_date` / `merchant` /
+ * `total_amount` — a name mismatch that silently rendered every cell "—". Aliased to the frontend's
+ * real keys; `merchant` prefers the linked vendor's real name (fuel.fuel_transactions.vendor_id has
+ * no FK constraint but is populated from mdata.vendors on import) and falls back to the fuel-stop
+ * city when no vendor is linked (still real data, never fabricated), archived rows excluded
+ * (void-not-delete: `archived_at IS NULL`).
  */
 export async function getDriverFuelHistory(
   client: Queryable,
@@ -28,6 +36,7 @@ export async function getDriverFuelHistory(
       FROM fuel.fuel_transactions
       WHERE driver_id = $1::uuid
         AND operating_company_id = $2::uuid
+        AND archived_at IS NULL
     `,
     [driverUuid, operatingCompanyId]
   );
@@ -35,18 +44,20 @@ export async function getDriverFuelHistory(
   const res = await client.query<FuelHistoryRow>(
     `
       SELECT
-        id::text AS uuid,
-        driver_id::text,
-        operating_company_id::text,
-        transaction_at::text,
-        location_city,
-        gallons::text,
-        total_cost::text,
-        created_at::text
-      FROM fuel.fuel_transactions
-      WHERE driver_id = $1::uuid
-        AND operating_company_id = $2::uuid
-      ORDER BY transaction_at DESC NULLS LAST, created_at DESC
+        ft.id::text AS uuid,
+        ft.driver_id::text,
+        ft.operating_company_id::text,
+        ft.transaction_at::text AS transaction_date,
+        COALESCE(v.vendor_name, ft.location_city) AS merchant,
+        ft.gallons::text,
+        ft.total_cost::text AS total_amount,
+        ft.created_at::text
+      FROM fuel.fuel_transactions ft
+      LEFT JOIN mdata.vendors v ON v.id = ft.vendor_id
+      WHERE ft.driver_id = $1::uuid
+        AND ft.operating_company_id = $2::uuid
+        AND ft.archived_at IS NULL
+      ORDER BY ft.transaction_at DESC NULLS LAST, ft.created_at DESC
       LIMIT $3 OFFSET $4
     `,
     [driverUuid, operatingCompanyId, limit, offset]

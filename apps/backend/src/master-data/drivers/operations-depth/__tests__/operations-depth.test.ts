@@ -81,8 +81,11 @@ describe("driver operations-depth routes (GAP-48)", () => {
   function wireInScopeDriver() {
     mockQuery.mockImplementation(async (sql: string) => {
       if (sql.includes("set_config")) return { rows: [] };
-      if (sql.includes("FROM mdata.drivers")) return { rows: [{ id: DRIVER }] };
+      // permit-history's UNION ALL CTE also references `FROM mdata.drivers` (CDL + hazmat rows), so
+      // the driver-scope check must be more specific than a bare substring match: assertDriverScope's
+      // real query is a standalone single-row lookup with no UNION and no COUNT(*)/paging.
       if (sql.includes("COUNT(*)")) return { rows: [{ total: "2" }] };
+      if (sql.includes("FROM mdata.drivers") && !sql.includes("UNION ALL")) return { rows: [{ id: DRIVER }] };
       return { rows: [{ uuid: "row-1" }, { uuid: "row-2" }] };
     });
   }

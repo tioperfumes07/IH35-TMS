@@ -6,8 +6,8 @@ export type MaintenanceAssignmentRow = {
   operating_company_id: string;
   unit_id: string | null;
   unit_number: string | null;
-  started_at: string | null;
-  ended_at: string | null;
+  assigned_at: string | null;
+  unassigned_at: string | null;
   created_at: string;
 };
 
@@ -15,6 +15,10 @@ export type MaintenanceAssignmentRow = {
  * Driver maintenance / equipment assignment history — which trucks the driver
  * operated, sourced from telematics vehicle-driver assignments.
  * Scoped to one driver inside one operating company; paged for large drivers.
+ *
+ * §4 fix (2026-07-06): real columns are `started_at` / `ended_at` (migration 0221) but the
+ * frontend's MaintenanceAssignmentsView column keys were `assigned_at` / `unassigned_at` — a name
+ * mismatch that silently rendered those two cells "—" (unit_number was already correctly aliased).
  */
 export async function getDriverMaintenanceAssignments(
   client: Queryable,
@@ -41,8 +45,8 @@ export async function getDriverMaintenanceAssignments(
         a.operating_company_id::text,
         a.unit_id::text,
         COALESCE(NULLIF(TRIM(u.unit_number), ''), a.unit_id::text) AS unit_number,
-        a.started_at::text,
-        a.ended_at::text,
+        a.started_at::text AS assigned_at,
+        a.ended_at::text AS unassigned_at,
         a.created_at::text
       FROM telematics.vehicle_driver_assignments a
       LEFT JOIN mdata.units u ON u.id = a.unit_id
