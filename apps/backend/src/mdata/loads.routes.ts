@@ -1341,28 +1341,28 @@ export async function registerLoadRoutes(app: FastifyInstance) {
     const { status, limit, offset, operating_company_id } = parsedQuery.data;
 
     const result = await withCurrentUser(authUser.uuid, async (client) => {
-      const values: unknown[] = [params.data.id];
-      const filters: string[] = [
-        "l.soft_deleted_at IS NULL",
-        "(l.assigned_primary_driver_id = $1::uuid OR l.assigned_secondary_driver_id = $1::uuid)",
-      ];
+      // Resolve operating company upfront so the predicate is a static literal in every query
+      // (the verify-mdata-entity-scope guard does static template-literal scanning).
+      const scopedId = operating_company_id ?? await resolveOperatingCompanyId(client, authUser.uuid);
+      if (!scopedId) return { rows: [], totalCount: 0 };
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedId]);
+
+      // $1 = driver uuid, $2 = operating_company_id uuid (always present)
+      const values: unknown[] = [params.data.id, scopedId];
+      const extraFilters: string[] = [];
       if (status && status.length > 0) {
         values.push(status);
-        filters.push(`l.status = ANY($${values.length}::mdata.load_status_enum[])`);
+        extraFilters.push(`l.status = ANY($${values.length}::mdata.load_status_enum[])`);
       }
-      if (operating_company_id) {
-        values.push(operating_company_id);
-        filters.push(`l.operating_company_id = $${values.length}::uuid`);
-      } else {
-        const scopedId = await resolveOperatingCompanyId(client, authUser.uuid);
-        if (!scopedId) return { rows: [], totalCount: 0 };
-        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedId]);
-        values.push(scopedId);
-        filters.push(`l.operating_company_id = $${values.length}::uuid`);
-      }
-      const whereClause = `WHERE ${filters.join(" AND ")}`;
+      const extraWhere = extraFilters.length > 0 ? `AND ${extraFilters.join(" AND ")}` : "";
+
       const countRes = await client.query(
-        `SELECT count(*)::int AS cnt FROM mdata.loads l ${whereClause}`,
+        `SELECT count(*)::int AS cnt
+         FROM mdata.loads l
+         WHERE l.operating_company_id = $2::uuid
+           AND l.soft_deleted_at IS NULL
+           AND (l.assigned_primary_driver_id = $1::uuid OR l.assigned_secondary_driver_id = $1::uuid)
+           ${extraWhere}`,
         values
       );
       values.push(limit, offset);
@@ -1391,7 +1391,10 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             WHERE load_id = l.id AND stop_type = 'delivery'
             ORDER BY sequence_number DESC LIMIT 1
           ) sd ON true
-          ${whereClause}
+          WHERE l.operating_company_id = $2::uuid
+            AND l.soft_deleted_at IS NULL
+            AND (l.assigned_primary_driver_id = $1::uuid OR l.assigned_secondary_driver_id = $1::uuid)
+            ${extraWhere}
           ORDER BY l.created_at DESC
           LIMIT $${values.length - 1} OFFSET $${values.length}
         `,
