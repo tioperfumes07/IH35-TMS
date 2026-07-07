@@ -12,7 +12,6 @@ import {
 } from "../../api/reports";
 import { ReportBlockTPendingBanner } from "./ReportBlockTPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
-import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -27,12 +26,16 @@ function currentQuarterRange() {
   return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) };
 }
 
+type SortKey = keyof AccountingTrialBalanceRow;
+
 export function TrialBalancePage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [period, setPeriod] = useState(currentQuarterRange);
   const [applied, setApplied] = useState(currentQuarterRange);
   const [basis, setBasis] = useState<AccountingBasis>("accrual");
+  const [sortKey, setSortKey] = useState<SortKey>("account_code");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
   const query = useQuery({
     queryKey: ["reports", "trial-balance", companyId, applied.start, applied.end, basis],
@@ -75,29 +78,25 @@ export function TrialBalancePage() {
         });
       }
     }
+    const mul = sortDir === "asc" ? 1 : -1;
     const output = [...input];
-    output.sort((a, b) => String(a.account_code).localeCompare(String(b.account_code)));
+    output.sort((a, b) => {
+      if (sortKey === "account_code" || sortKey === "account_name" || sortKey === "account_type") {
+        return String(a[sortKey]).localeCompare(String(b[sortKey])) * mul;
+      }
+      return ((a[sortKey] as number) - (b[sortKey] as number)) * mul;
+    });
     return output;
-  }, [query.data?.rows, basis]);
+  }, [query.data?.rows, sortDir, sortKey]);
 
-  const columns = useMemo<ParityColumn<AccountingTrialBalanceRow>[]>(
-    () => [
-      { key: "account_code", label: "Account #", sortable: true, render: (row) => <span className="font-medium text-gray-900">{row.account_code || "—"}</span> },
-      { key: "account_name", label: "Account", sortable: true, render: (row) => row.account_name || "—" },
-      { key: "account_type", label: "Type", sortable: true, render: (row) => row.account_type || "—" },
-      { key: "total_debits", label: "Debits", sortable: true, className: "text-right", cellClass: "text-right", render: (row) => money(row.total_debits) },
-      { key: "total_credits", label: "Credits", sortable: true, className: "text-right", cellClass: "text-right", render: (row) => money(row.total_credits) },
-      {
-        key: "net_balance",
-        label: "Net",
-        sortable: true,
-        className: "text-right",
-        cellClass: "text-right",
-        render: (row) => <span className={row.net_balance < 0 ? "text-rose-700" : "text-slate-900"}>{money(row.net_balance)}</span>,
-      },
-    ],
-    [],
-  );
+  function toggleSort(next: SortKey) {
+    if (sortKey === next) {
+      setSortDir((value) => (value === "asc" ? "desc" : "asc"));
+      return;
+    }
+    setSortKey(next);
+    setSortDir(next === "account_code" || next === "account_name" || next === "account_type" ? "asc" : "desc");
+  }
 
   const summary = query.data?.summary;
 
@@ -194,14 +193,58 @@ export function TrialBalancePage() {
         </div>
       ) : null}
 
-      <ParityTable
-        rows={rows}
-        columns={columns}
-        rowKey={(row) => row.account_id}
-        loading={query.isPending || (query.isFetching && rows.length === 0)}
-        storageKey="trial-balance"
-        emptyText="No rows"
-      />
+      <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
+        <table className="min-w-full text-left text-xs">
+          <thead className="border-b border-gray-200 bg-gray-50 text-[11px] font-semibold uppercase tracking-wide text-gray-600">
+            <tr>
+              <th className="cursor-pointer px-3 py-2" onClick={() => toggleSort("account_code")}>
+                Account #
+              </th>
+              <th className="cursor-pointer px-3 py-2" onClick={() => toggleSort("account_name")}>
+                Account
+              </th>
+              <th className="cursor-pointer px-3 py-2" onClick={() => toggleSort("account_type")}>
+                Type
+              </th>
+              <th className="cursor-pointer px-3 py-2 text-right" onClick={() => toggleSort("total_debits")}>
+                Debits
+              </th>
+              <th className="cursor-pointer px-3 py-2 text-right" onClick={() => toggleSort("total_credits")}>
+                Credits
+              </th>
+              <th className="cursor-pointer px-3 py-2 text-right" onClick={() => toggleSort("net_balance")}>
+                Net
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {query.isLoading ? (
+              <tr>
+                <td colSpan={6} className="px-3 py-4 text-gray-500">
+                  Loading…
+                </td>
+              </tr>
+            ) : null}
+            {!query.isLoading && rows.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-3 py-4 text-gray-500">
+                  No rows
+                </td>
+              </tr>
+            ) : null}
+            {rows.map((row) => (
+              <tr key={row.account_id} className="border-b border-gray-100">
+                <td className="px-3 py-2 font-medium text-gray-900">{row.account_code || "—"}</td>
+                <td className="px-3 py-2">{row.account_name || "—"}</td>
+                <td className="px-3 py-2">{row.account_type || "—"}</td>
+                <td className="px-3 py-2 text-right">{money(row.total_debits)}</td>
+                <td className="px-3 py-2 text-right">{money(row.total_credits)}</td>
+                <td className={`px-3 py-2 text-right ${row.net_balance < 0 ? "text-rose-700" : "text-slate-900"}`}>{money(row.net_balance)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

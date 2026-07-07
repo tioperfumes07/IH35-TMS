@@ -15,8 +15,7 @@ import {
 } from "../api/identity";
 import { Button } from "../components/Button";
 import { Combobox } from "../components/Combobox";
-import { ParityTable, type ParityColumn } from "../components/parity/ParityTable";
-import { ListErrorState } from "../components/ListErrorState";
+import { DataTable } from "../components/DataTable";
 import { KpiCard } from "../components/layout/KpiCard";
 import { KpiStrip } from "../components/layout/KpiStrip";
 import { PageHeader } from "../components/layout/PageHeader";
@@ -26,11 +25,14 @@ import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
 import { StatusBadge } from "../components/StatusBadge";
 import { useToast } from "../components/Toast";
 import { SaveDropdown } from "../components/forms/SaveDropdown";
+import { BulkActionBar } from "../components/bulk/BulkActionBar";
+import { TableSelection, TableSelectionHeader } from "../components/bulk/TableSelection";
+import { useBulkSelection } from "../hooks/useBulkSelection";
 import { useUnsavedChanges } from "../hooks/useUnsavedChanges";
 import { evaluatePasswordStrength, OFFICE_PASSWORD_HINT } from "../auth/office-password-ui";
 import { parseApiErrorPayload } from "../components/forms/useFormValidation";
 import { formatLastLoginAt } from "../lib/formatLastLoginAt";
-import { formatQueryErrorDetail } from "../lib/tableError";
+import { dataTableErrorState } from "../lib/tableError";
 import { colors } from "../design/tokens";
 import type { IdentityUser, UserRole } from "../types/api";
 
@@ -148,6 +150,7 @@ export function UsersPage() {
   const [roleBaseline, setRoleBaseline] = useState({ roleChangeRole: "Manager" as UserRole, roleReason: "" });
   const returningWarningRef = useRef<HTMLDivElement | null>(null);
   const { pushToast } = useToast();
+  const userBulk = useBulkSelection({ cap: 200, onCapExceeded: (error) => pushToast(error.message, "error") });
   const queryClient = useQueryClient();
   const isOwnerOrAdmin = auth.user?.role === "Owner" || auth.user?.role === "Administrator";
   const listTab = useMemo(() => parseUserListTab(searchParams), [searchParams]);
@@ -388,7 +391,8 @@ export function UsersPage() {
   // Export the currently-selected users to a real client-side CSV (name/email/role/status/auth/last-login),
   // mirroring the Blob-download pattern used in DriversListPage. Reads the rows already loaded in the table —
   // no backend call, correct per-entity RLS because the list itself was fetched through the session.
-  const handleExportSelected = (selectedRows: IdentityUser[]) => {
+  const handleExportSelected = () => {
+    const selectedRows = filteredUsers.filter((row) => userBulk.selectedIds.has(row.id));
     if (selectedRows.length === 0) {
       pushToast("No users selected to export", "info");
       return;
@@ -420,92 +424,6 @@ export function UsersPage() {
     URL.revokeObjectURL(href);
   };
 
-  // ParityTable columns (A1 grammar): built-in gear column-toggle, density, resizable columns, and
-  // advanced pager replace the former hand-rolled DataTable + manual TableSelection wrapper. Bulk
-  // select/export moves onto ParityTable's own selectable + batchActions (matches DriversTable /
-  // WorkOrdersTable idiom) instead of the standalone BulkActionBar + useBulkSelection hook.
-  const userColumns = useMemo<ParityColumn<IdentityUser>[]>(
-    () => [
-      { key: "name", label: "Name", sortable: true },
-      { key: "email", label: "Email", sortable: true },
-      {
-        key: "role",
-        label: "Role",
-        sortable: true,
-        render: (row) => ROLE_LABEL[row.role as UserRole] ?? row.role,
-      },
-      {
-        key: "status",
-        label: "Status",
-        render: (row) => <StatusBadge status={userStatus(row)} />,
-      },
-      {
-        key: "auth_method",
-        label: "Auth method",
-        render: (row) => row.auth_method ?? "Invite pending",
-      },
-      {
-        key: "last_login",
-        label: "Last Login",
-        render: (row) => formatLastLoginAt(row.last_login_at),
-      },
-      {
-        key: "actions",
-        label: "Actions",
-        className: "w-44",
-        alwaysVisible: true,
-        render: (row) => {
-          const isDeactivated = Boolean(row.deactivated_at);
-          const permReason = isOwnerOrAdmin ? undefined : "Requires Owner or Administrator role";
-          return (
-            <div className="flex flex-wrap items-center gap-1.5" onClick={(event) => event.stopPropagation()}>
-              <button
-                type="button"
-                disabled={!isOwnerOrAdmin}
-                title={permReason ?? "Change this user's role"}
-                aria-label={`Change role for ${row.name}`}
-                className="whitespace-nowrap rounded-sm border border-gray-300 px-2 py-1 text-xs text-slate-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  setRoleModalUser(row);
-                  setRoleChangeRole(row.role);
-                }}
-              >
-                Change Role
-              </button>
-              <button
-                type="button"
-                disabled={!isOwnerOrAdmin || isDeactivated || deactivateMutation.isPending}
-                title={permReason ?? (isDeactivated ? "User is already deactivated" : "Deactivate this user")}
-                aria-label={`Deactivate ${row.name}`}
-                className="whitespace-nowrap rounded-sm border border-gray-300 px-2 py-1 text-xs text-slate-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  const ok = window.confirm(`Deactivate ${row.name || "this user"}?`);
-                  if (!ok) return;
-                  deactivateMutation.mutate(row.id);
-                }}
-              >
-                {isDeactivated ? "Deactivated" : "Deactivate"}
-              </button>
-            </div>
-          );
-        },
-      },
-    ],
-    [isOwnerOrAdmin, deactivateMutation.isPending]
-  );
-
-  // AUTO-13-style honest error state instead of a blank/broken table when the users fetch 500s.
-  if (usersQuery.isError) {
-    const { status, message } = formatQueryErrorDetail(usersQuery.error);
-    return (
-      <div className="p-3">
-        <ListErrorState title="Couldn't load users" status={status} message={message} onRetry={() => void usersQuery.refetch()} />
-      </div>
-    );
-  }
-
   return (
     <div className="mx-auto w-full max-w-[min(1280px,calc(100vw-2rem))] space-y-3">
       <PageHeader title="Users" subtitle={`${filteredUsers.length} records`} actions={<ActionButton onClick={openInvite}>+ Create User</ActionButton>} />
@@ -531,44 +449,137 @@ export function UsersPage() {
         ]}
       />
 
-      <ParityTable
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <input
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="Search users"
+          aria-label="Search users"
+          className="h-8 w-full min-w-0 max-w-sm rounded-md border border-gray-300 px-2 text-[13px]"
+        />
+      </div>
+
+      <BulkActionBar
+        {...userBulk.bulkActionBarProps([
+          // No bulk-deactivate backend endpoint exists (only per-user deactivateUser). Honestly disabled with a
+          // "Coming soon" tooltip instead of firing a fake success toast. Deactivate users one at a time via the
+          // per-row Deactivate button in the Actions column, which is wired to the real endpoint.
+          { id: "deactivate", label: "Deactivate", destructive: true, action: "deactivate", disabled: true, title: "Coming soon — deactivate users individually from the row menu", onClick: () => pushToast("Bulk deactivate is not available yet — use the row menu to deactivate a user.", "info") },
+          { id: "export", label: "Export Selected", title: "Download selected users as CSV", onClick: handleExportSelected },
+        ])}
+      >
+        <TableSelectionHeader
+          selectedIds={userBulk.selectedIds}
+          pageRowIds={filteredUsers.map((row) => row.id)}
+          onSelectionChange={userBulk.setSelectedIds}
+          cap={userBulk.cap}
+          ariaLabel="Select all users on this page"
+        />
+      </BulkActionBar>
+
+      <TableSelection
         rows={filteredUsers}
-        columns={userColumns}
+        getId={(row) => row.id}
+        selectedIds={userBulk.selectedIds}
+        onSelectionChange={userBulk.setSelectedIds}
+        pageRowIds={filteredUsers.map((row) => row.id)}
+        cap={userBulk.cap}
+      >
+        {({ isSelected, toggle }) => (
+      <DataTable
+        rows={filteredUsers}
+        loading={usersQuery.isLoading}
+        errorState={dataTableErrorState(usersQuery.error, () => void usersQuery.refetch())}
         rowKey={(row) => row.id}
-        // Settled-only empty (LIST-EMPTY-1 invariant): show loading while pending OR while a refetch
-        // is in flight with zero current rows, so ParityTable's emptyText never flashes mid-fetch.
-        loading={usersQuery.isPending || (usersQuery.isFetching && filteredUsers.length === 0)}
-        storageKey="users-list"
-        emptyText="No users found."
-        exportFilename="IH35-users"
         onRowClick={(row) => navigate(`/users/${row.id}`)}
-        selectable
-        maxSelectable={200}
-        onSelectionCapExceeded={() => pushToast("You can select up to 200 items at a time. Clear some selections and try again.", "error")}
-        batchActions={(selected) => (
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700"
-              onClick={() => handleExportSelected(selected)}
-            >
-              Export Selected
-            </button>
-            {/* Bulk deactivate is intentionally NOT offered here: there is no bulk endpoint, and
-                deactivating users is an access-control action (§1.6). Deactivate a user via the
-                real per-row Deactivate button in the Actions column. */}
-          </div>
-        )}
-        filterBar={
-          <input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search users"
-            aria-label="Search users"
-            className="h-8 w-full min-w-0 max-w-sm rounded-md border border-gray-300 px-2 text-[13px]"
-          />
-        }
+        columns={[
+          {
+            key: "_bulk",
+            label: "Select",
+            className: "w-8",
+            render: (row) => (
+              <input
+                type="checkbox"
+                checked={isSelected(row.id)}
+                onChange={(event) => {
+                  event.stopPropagation();
+                  toggle(row.id);
+                }}
+                aria-label={`Select user ${row.name}`}
+              />
+            ),
+          },
+          { key: "name", label: "Name", sortable: true },
+          { key: "email", label: "Email", sortable: true },
+          {
+            key: "role",
+            label: "Role",
+            sortable: true,
+            render: (row) => ROLE_LABEL[row.role as UserRole] ?? row.role,
+          },
+          {
+            key: "status",
+            label: "Status",
+            render: (row) => <StatusBadge status={userStatus(row)} />,
+          },
+          {
+            key: "auth_method",
+            label: "Auth method",
+            render: (row) => row.auth_method ?? "Invite pending",
+          },
+          {
+            key: "last_login",
+            label: "Last Login",
+            render: (row) => formatLastLoginAt(row.last_login_at),
+          },
+          {
+            key: "actions",
+            label: "Actions",
+            className: "w-44",
+            render: (row) => {
+              const isDeactivated = Boolean(row.deactivated_at);
+              const permReason = isOwnerOrAdmin ? undefined : "Requires Owner or Administrator role";
+              return (
+                <div className="flex flex-wrap items-center gap-1.5" onClick={(event) => event.stopPropagation()}>
+                  <button
+                    type="button"
+                    disabled={!isOwnerOrAdmin}
+                    title={permReason ?? "Change this user's role"}
+                    aria-label={`Change role for ${row.name}`}
+                    className="whitespace-nowrap rounded-sm border border-gray-300 px-2 py-1 text-xs text-slate-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setRoleModalUser(row);
+                      setRoleChangeRole(row.role);
+                    }}
+                  >
+                    Change Role
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!isOwnerOrAdmin || isDeactivated || deactivateMutation.isPending}
+                    title={
+                      permReason ?? (isDeactivated ? "User is already deactivated" : "Deactivate this user")
+                    }
+                    aria-label={`Deactivate ${row.name}`}
+                    className="whitespace-nowrap rounded-sm border border-gray-300 px-2 py-1 text-xs text-slate-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      const ok = window.confirm(`Deactivate ${row.name || "this user"}?`);
+                      if (!ok) return;
+                      deactivateMutation.mutate(row.id);
+                    }}
+                  >
+                    {isDeactivated ? "Deactivated" : "Deactivate"}
+                  </button>
+                </div>
+              );
+            },
+          },
+        ]}
       />
+        )}
+      </TableSelection>
 
       <Modal
         open={inviteOpen}
