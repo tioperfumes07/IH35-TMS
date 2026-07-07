@@ -18,6 +18,12 @@
     "_comment_8: imported by deprecated SafetyHome shell (sunset 2026-09-01)",
     "apps/frontend/src/pages/safety/ComplaintsPage.tsx",
     "_comment_9: imported by deprecated SafetyHome shell (sunset 2026-09-01)",
-    "apps/frontend/src/pages/safety/DotInspectionsPage.tsx"
+    "apps/frontend/src/pages/safety/DotInspectionsPage.tsx",
+    "_comment_10: required by verify-tables-use-resizable-th.mjs (CI guard checks file existence)",
+    "apps/frontend/src/components/shared/ResizableTable.tsx",
+    "_comment_11: required by verify-tables-use-resizable-th.mjs (CI guard checks file existence)",
+    "apps/frontend/src/components/shared/ResizableTh.tsx",
+    "_comment_12: calls live QBO createQboAccount API (financial-adjacent); wire only on Jorge's instruction",
+    "apps/frontend/src/components/parity/drawers/NewClassDrawerForm.tsx"
   ]
 }

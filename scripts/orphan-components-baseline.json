@@ -1,7 +1,4 @@
 [
-  "apps/frontend/src/components/parity/drawers/NewClassDrawerForm.tsx",
-  "apps/frontend/src/components/shared/ResizableTable.tsx",
-  "apps/frontend/src/components/shared/ResizableTh.tsx",
   "apps/frontend/src/pages/banking/BankTxCategorizationPage.tsx",
   "apps/frontend/src/pages/banking/BankingTransactionsTable.tsx",
   "apps/frontend/src/pages/banking/CashGlSetupPage.tsx",
@@ -21,17 +18,5 @@
   "apps/frontend/src/pages/banking/components/forms/FactoringAdvanceForm.tsx",
   "apps/frontend/src/pages/banking/components/forms/ManualJEForm.tsx",
   "apps/frontend/src/pages/banking/components/forms/SplitTransactionModal.tsx",
-  "apps/frontend/src/pages/banking/components/forms/TransferForm.tsx",
-  "apps/frontend/src/pages/payroll-integration/ClassAllocationView.tsx",
-  "apps/frontend/src/pages/payroll-integration/PayrollAggregateTable.tsx",
-  "apps/frontend/src/pages/payroll-integration/PayrollIntegrationPage.tsx",
-  "apps/frontend/src/pages/profitability/ByCustomerView.tsx",
-  "apps/frontend/src/pages/profitability/ByLaneView.tsx",
-  "apps/frontend/src/pages/profitability/ByLoadView.tsx",
-  "apps/frontend/src/pages/profitability/ByTypeView.tsx",
-  "apps/frontend/src/pages/profitability/FilterBar.tsx",
-  "apps/frontend/src/pages/profitability/KpiStrip.tsx",
-  "apps/frontend/src/pages/profitability/ProfitabilityPage.tsx",
-  "apps/frontend/src/pages/qbo-sync-detail/ConflictsTab.tsx",
-  "apps/frontend/src/pages/qbo/QBOSyncStatusDashboardPage.tsx"
+  "apps/frontend/src/pages/banking/components/forms/TransferForm.tsx"
 ]
