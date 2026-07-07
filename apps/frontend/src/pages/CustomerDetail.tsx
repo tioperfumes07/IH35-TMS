@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDateUS } from "../lib/formatDate";
 import { DatePicker } from "../components/forms/DatePicker";
 import { MoneyInput } from "../components/forms/MoneyInput";
+import { ParityTable } from "../components/parity/ParityTable";
 import { customerQualityKind, customerQualityClass } from "../lib/quality-badge";
 import { CustomerLateArrivalCard } from "../components/customers/CustomerLateArrivalCard";
 import { formatUsdCents } from "../lib/money";
@@ -1584,16 +1585,15 @@ export function CustomerDetailPage() {
 
       {activeTab === "Contacts" ? (
         <DataPanel title={`Contacts (${contacts.length})`}>
-          <div className="mb-2 flex items-center justify-between">
-            <div className="text-xs text-gray-600">Operational contacts and communication owners</div>
-            <div className="flex items-center gap-2">
-              {canViewInactiveContacts ? (
-                <label className="flex items-center gap-1 rounded-sm border border-gray-300 px-2 py-1 text-[11px] text-gray-600">
-                  <input type="checkbox" checked={includeInactiveContacts} onChange={(event) => setIncludeInactiveContacts(event.target.checked)} />
-                  Show inactive
-                </label>
-              ) : null}
-              {canManageContacts ? (
+          <ParityTable<CustomerContact>
+            rows={contacts}
+            rowKey={(contact) => contact.id}
+            loading={contactsListState.isLoading}
+            storageKey="customer-detail-contacts"
+            emptyText="No contacts on file. Add via Edit Customer."
+            exportFilename="customer-contacts"
+            toolbar={
+              canManageContacts ? (
                 <Button
                   size="sm"
                   onClick={() => {
@@ -1604,72 +1604,60 @@ export function CustomerDetailPage() {
                 >
                   + Create Contact
                 </Button>
-              ) : null}
-            </div>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-gray-200 text-gray-600">
-                  <th className="px-2 py-1.5 font-semibold">Name</th>
-                  <th className="px-2 py-1.5 font-semibold">Role</th>
-                  <th className="px-2 py-1.5 font-semibold">Phone</th>
-                  <th className="px-2 py-1.5 font-semibold">Email</th>
-                  <th className="px-2 py-1.5 font-semibold">Primary</th>
-                  <th className="px-2 py-1.5 font-semibold">Status</th>
-                  <th className="px-2 py-1.5 font-semibold">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {contacts.map((contact) => (
-                  <tr key={contact.id} className="border-b border-gray-100">
-                    <td className="px-2 py-1.5 text-gray-900">{contact.name}</td>
-                    <td className="px-2 py-1.5 text-gray-700">{contact.title || contact.department}</td>
-                    <td className="px-2 py-1.5 text-gray-700">{contact.phone || contact.mobile || "-"}</td>
-                    <td className="px-2 py-1.5 text-gray-700">{contact.email || "-"}</td>
-                    <td className="px-2 py-1.5 text-gray-700">{contact.is_primary ? "Yes" : "No"}</td>
-                    <td className="px-2 py-1.5 text-gray-700">{contact.deactivated_at ? "Inactive" : "Active"}</td>
-                    <td className="px-2 py-1.5 text-gray-700">
-                      {canManageContacts ? (
-                        !contact.deactivated_at ? (
-                          <div className="flex gap-1">
-                            <Button
-                              size="sm"
-                              variant="secondary"
-                              onClick={() => {
-                                setEditingContact(contact);
-                                setContactForm({
-                                  name: contact.name,
-                                  title: contact.title ?? "",
-                                  email: contact.email ?? "",
-                                  phone: contact.phone ?? "",
-                                  mobile: contact.mobile ?? "",
-                                  department: contact.department,
-                                  is_primary: contact.is_primary,
-                                  notes: contact.notes ?? "",
-                                });
-                                setContactModalOpen(true);
-                              }}
-                            >
-                              Edit
-                            </Button>
-                            <Button size="sm" variant="danger" onClick={() => deactivateContactMutation.mutate(contact.id)}>
-                              Deactivate
-                            </Button>
-                          </div>
-                        ) : (
-                          <Button size="sm" variant="secondary" onClick={() => reactivateContactMutation.mutate(contact.id)}>
-                            Reactivate
-                          </Button>
-                        )
-                      ) : null}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {contactsListState.isEmpty ? <div className="mt-3 text-sm text-gray-600">No contacts on file. Add via Edit Customer.</div> : null}
+              ) : undefined
+            }
+            filterBar={
+              canViewInactiveContacts ? (
+                <label className="flex items-center gap-1 rounded-sm border border-gray-300 px-2 py-1 text-[11px] text-gray-600">
+                  <input type="checkbox" checked={includeInactiveContacts} onChange={(event) => setIncludeInactiveContacts(event.target.checked)} />
+                  Show inactive
+                </label>
+              ) : undefined
+            }
+            rowActions={(contact) =>
+              canManageContacts ? (
+                !contact.deactivated_at ? (
+                  <div className="flex gap-1">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => {
+                        setEditingContact(contact);
+                        setContactForm({
+                          name: contact.name,
+                          title: contact.title ?? "",
+                          email: contact.email ?? "",
+                          phone: contact.phone ?? "",
+                          mobile: contact.mobile ?? "",
+                          department: contact.department,
+                          is_primary: contact.is_primary,
+                          notes: contact.notes ?? "",
+                        });
+                        setContactModalOpen(true);
+                      }}
+                    >
+                      Edit
+                    </Button>
+                    <Button size="sm" variant="danger" onClick={() => deactivateContactMutation.mutate(contact.id)}>
+                      Deactivate
+                    </Button>
+                  </div>
+                ) : (
+                  <Button size="sm" variant="secondary" onClick={() => reactivateContactMutation.mutate(contact.id)}>
+                    Reactivate
+                  </Button>
+                )
+              ) : null
+            }
+            columns={[
+              { key: "name", label: "Name", sortable: true, render: (contact) => contact.name },
+              { key: "role", label: "Role", render: (contact) => contact.title || contact.department },
+              { key: "phone", label: "Phone", render: (contact) => contact.phone || contact.mobile || "-" },
+              { key: "email", label: "Email", sortable: true, render: (contact) => contact.email || "-" },
+              { key: "is_primary", label: "Primary", render: (contact) => (contact.is_primary ? "Yes" : "No") },
+              { key: "status", label: "Status", render: (contact) => (contact.deactivated_at ? "Inactive" : "Active") },
+            ]}
+          />
         </DataPanel>
       ) : null}
 
@@ -1846,55 +1834,41 @@ export function CustomerDetailPage() {
               <p className="text-sm text-slate-700">
                 Backend pending — payment history unavailable until backend ships (P6-T11204).
               </p>
-            ) : customerPaymentsQuery.isLoading ? (
-              <p className="text-sm text-gray-500">Loading payments…</p>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-left text-xs">
-                  <thead>
-                    <tr className="border-b border-gray-200 text-gray-600">
-                      <th className="px-2 py-1.5 font-semibold">Date</th>
-                      <th className="px-2 py-1.5 font-semibold">Amount</th>
-                      <th className="px-2 py-1.5 font-semibold">Method</th>
-                      <th className="px-2 py-1.5 font-semibold">Applied</th>
-                      <th className="px-2 py-1.5 font-semibold">Reference</th>
-                      <th className="px-2 py-1.5 font-semibold">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(customerPaymentsQuery.data?.rows ?? []).map((p: CustomerPaymentListRow) => {
+              <ParityTable<CustomerPaymentListRow>
+                rows={customerPaymentsQuery.data?.rows ?? []}
+                rowKey={(p) => p.id}
+                loading={customerPaymentsListState.isLoading}
+                storageKey="customer-detail-payments"
+                emptyText="No payments recorded."
+                exportFilename="customer-payments"
+                rowActions={(p) =>
+                  canUnapplyCustomerPayment ? (
+                    <button
+                      type="button"
+                      className="text-red-700 underline"
+                      onClick={() => void unapplyCustomerPaymentMutation.mutateAsync(p.id)}
+                    >
+                      Unapply
+                    </button>
+                  ) : null
+                }
+                columns={[
+                  { key: "date", label: "Date", sortable: true, render: (p) => p.date },
+                  { key: "amount_cents", label: "Amount", sortable: true, cellClass: "text-right tabular-nums", render: (p) => formatCurrencyCents(p.amount_cents) },
+                  { key: "source_kind", label: "Method", render: (p) => p.source_kind ?? "—" },
+                  {
+                    key: "applied",
+                    label: "Applied",
+                    cellClass: "text-right tabular-nums",
+                    render: (p) => {
                       const appliedTotal = p.applied_to_invoices?.reduce((sum, inv) => sum + inv.amount_cents, 0) ?? 0;
-                      return (
-                        <tr key={p.id} className="border-b border-gray-100">
-                          <td className="px-2 py-1.5">{p.date}</td>
-                          <td className="px-2 py-1.5">{formatCurrencyCents(p.amount_cents)}</td>
-                          <td className="px-2 py-1.5">{p.source_kind ?? "—"}</td>
-                          <td className="px-2 py-1.5">{appliedTotal > 0 ? formatCurrencyCents(appliedTotal) : "—"}</td>
-                          <td className="px-2 py-1.5">{p.qbo_payment_id ?? "—"}</td>
-                          <td className="px-2 py-1.5">
-                            {canUnapplyCustomerPayment ? (
-                              <button
-                                type="button"
-                                className="text-red-700 underline"
-                                onClick={() => void unapplyCustomerPaymentMutation.mutateAsync(p.id)}
-                              >
-                                Unapply
-                              </button>
-                            ) : null}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                    {customerPaymentsListState.isEmpty ? (
-                      <tr>
-                        <td colSpan={6} className="px-2 py-3 text-gray-500">
-                          No payments recorded.
-                        </td>
-                      </tr>
-                    ) : null}
-                  </tbody>
-                </table>
-              </div>
+                      return appliedTotal > 0 ? formatCurrencyCents(appliedTotal) : "—";
+                    },
+                  },
+                  { key: "qbo_payment_id", label: "Reference", render: (p) => p.qbo_payment_id ?? "—" },
+                ]}
+              />
             )}
           </div>
           <div className="md:col-span-3 rounded-sm border border-gray-200 bg-white p-3">
@@ -1988,14 +1962,16 @@ export function CustomerDetailPage() {
 
       {activeTab === "Lanes & Pricing" ? (
         <div className="rounded-sm border border-gray-200 bg-white p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <div className="text-sm text-gray-600">Customer lane pricing definitions</div>
-            <div className="flex items-center gap-2">
-              <label className="flex items-center gap-1 rounded-sm border border-gray-300 px-2 py-1 text-[11px] text-gray-600">
-                <input type="checkbox" checked={includeInactiveLanes} onChange={(event) => setIncludeInactiveLanes(event.target.checked)} />
-                Show inactive
-              </label>
-              {canManageLanes ? (
+          <div className="mb-3 text-sm text-gray-600">Customer lane pricing definitions</div>
+          <ParityTable<CustomerLane>
+            rows={customerLanes}
+            rowKey={(lane) => lane.id}
+            loading={customerLanesListState.isLoading}
+            storageKey="customer-detail-lanes"
+            emptyText="Add your first lane to track customer pricing."
+            exportFilename="customer-lanes"
+            toolbar={
+              canManageLanes ? (
                 <Button
                   size="sm"
                   onClick={() => {
@@ -2006,69 +1982,58 @@ export function CustomerDetailPage() {
                 >
                   + Create Lane
                 </Button>
-              ) : null}
-            </div>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-gray-200 text-gray-600">
-                  <th className="px-2 py-1.5 font-semibold">Lane</th>
-                  <th className="px-2 py-1.5 font-semibold">Origin</th>
-                  <th className="px-2 py-1.5 font-semibold">Destination</th>
-                  <th className="px-2 py-1.5 font-semibold">Miles</th>
-                  <th className="px-2 py-1.5 font-semibold">Base Rate</th>
-                  <th className="px-2 py-1.5 font-semibold">FSC/mi</th>
-                  <th className="px-2 py-1.5 font-semibold">Status</th>
-                  <th className="px-2 py-1.5 font-semibold">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {customerLanes.map((lane) => (
-                  <tr key={lane.id} className="border-b border-gray-100">
-                    <td className="px-2 py-1.5 text-gray-900">{lane.lane_label}</td>
-                    <td className="px-2 py-1.5 text-gray-700">{lane.origin_city}, {lane.origin_state}</td>
-                    <td className="px-2 py-1.5 text-gray-700">{lane.destination_city}, {lane.destination_state}</td>
-                    <td className="px-2 py-1.5 text-gray-700">{lane.typical_miles ?? "-"}</td>
-                    <td className="px-2 py-1.5 text-gray-700">{formatUsdCents(Number(lane.base_rate_cents ?? 0))}</td>
-                    <td className="px-2 py-1.5 text-gray-700">{lane.fsc_per_mile_cents == null ? "-" : `$${(lane.fsc_per_mile_cents / 100).toFixed(2)}`}</td>
-                    <td className="px-2 py-1.5 text-gray-700">{lane.deactivated_at ? "Inactive" : "Active"}</td>
-                    <td className="px-2 py-1.5 text-gray-700">
-                      {canManageLanes && !lane.deactivated_at ? (
-                        <div className="flex gap-1">
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={() => {
-                              setEditingLane(lane);
-                              setLaneForm({
-                                lane_label: lane.lane_label,
-                                origin_city: lane.origin_city,
-                                origin_state: lane.origin_state,
-                                destination_city: lane.destination_city,
-                                destination_state: lane.destination_state,
-                                typical_miles: lane.typical_miles?.toString() ?? "",
-                                base_rate_cents: lane.base_rate_cents?.toString() ?? "",
-                                fsc_per_mile_cents: lane.fsc_per_mile_cents?.toString() ?? "",
-                                notes: lane.notes ?? "",
-                              });
-                              setLaneModalOpen(true);
-                            }}
-                          >
-                            Edit
-                          </Button>
-                          <Button size="sm" variant="danger" onClick={() => deactivateLaneMutation.mutate(lane.id)}>
-                            Deactivate
-                          </Button>
-                        </div>
-                      ) : null}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {customerLanesListState.isEmpty ? <div className="mt-3 text-sm text-gray-600">Add your first lane to track customer pricing.</div> : null}
+              ) : undefined
+            }
+            filterBar={
+              <label className="flex items-center gap-1 rounded-sm border border-gray-300 px-2 py-1 text-[11px] text-gray-600">
+                <input type="checkbox" checked={includeInactiveLanes} onChange={(event) => setIncludeInactiveLanes(event.target.checked)} />
+                Show inactive
+              </label>
+            }
+            rowActions={(lane) =>
+              canManageLanes && !lane.deactivated_at ? (
+                <div className="flex gap-1">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => {
+                      setEditingLane(lane);
+                      setLaneForm({
+                        lane_label: lane.lane_label,
+                        origin_city: lane.origin_city,
+                        origin_state: lane.origin_state,
+                        destination_city: lane.destination_city,
+                        destination_state: lane.destination_state,
+                        typical_miles: lane.typical_miles?.toString() ?? "",
+                        base_rate_cents: lane.base_rate_cents?.toString() ?? "",
+                        fsc_per_mile_cents: lane.fsc_per_mile_cents?.toString() ?? "",
+                        notes: lane.notes ?? "",
+                      });
+                      setLaneModalOpen(true);
+                    }}
+                  >
+                    Edit
+                  </Button>
+                  <Button size="sm" variant="danger" onClick={() => deactivateLaneMutation.mutate(lane.id)}>
+                    Deactivate
+                  </Button>
+                </div>
+              ) : null
+            }
+            columns={[
+              { key: "lane_label", label: "Lane", sortable: true, render: (lane) => lane.lane_label },
+              { key: "origin", label: "Origin", render: (lane) => `${lane.origin_city}, ${lane.origin_state}` },
+              { key: "destination", label: "Destination", render: (lane) => `${lane.destination_city}, ${lane.destination_state}` },
+              { key: "typical_miles", label: "Miles", sortable: true, render: (lane) => lane.typical_miles ?? "-" },
+              { key: "base_rate_cents", label: "Base Rate", sortable: true, render: (lane) => formatUsdCents(Number(lane.base_rate_cents ?? 0)) },
+              {
+                key: "fsc_per_mile_cents",
+                label: "FSC/mi",
+                render: (lane) => (lane.fsc_per_mile_cents == null ? "-" : `$${(lane.fsc_per_mile_cents / 100).toFixed(2)}`),
+              },
+              { key: "status", label: "Status", render: (lane) => (lane.deactivated_at ? "Inactive" : "Active") },
+            ]}
+          />
         </div>
       ) : null}
 

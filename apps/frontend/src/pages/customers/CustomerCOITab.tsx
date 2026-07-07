@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DatePicker } from "../../components/forms/DatePicker";
+import { ParityTable } from "../../components/parity/ParityTable";
 import { useMemo, useState } from "react";
 import {
   createInsuranceCoiRequest,
@@ -121,21 +122,6 @@ export function CustomerCOITab({ customerId, customerName, operatingCompanyId }:
   return (
     <DataPanel title={`COI Requests · ${customerName}`}>
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <label className="text-xs font-semibold text-gray-600">
-          Status filter
-          <select
-            className="ml-2 rounded-sm border border-gray-300 px-2 py-1 text-xs"
-            value={statusFilter}
-            onChange={(event) => setStatusFilter((event.target.value || "") as "" | CoiRequestStatus)}
-          >
-            <option value="">All</option>
-            {STATUS_OPTIONS.map((status) => (
-              <option key={status} value={status}>
-                {statusLabel(status)}
-              </option>
-            ))}
-          </select>
-        </label>
         <Button size="sm" variant="secondary" onClick={() => setRequestOpen((open) => !open)}>
           {requestOpen ? "Close Request Form" : "Request COI"}
         </Button>
@@ -178,53 +164,61 @@ export function CustomerCOITab({ customerId, customerName, operatingCompanyId }:
         </div>
       ) : null}
 
-      {query.isLoading ? <div className="text-sm text-gray-500">Loading COI requests...</div> : null}
       {query.isError ? <div className="rounded-sm border border-red-200 bg-red-50 p-2 text-sm text-red-700">Failed to load COI requests.</div> : null}
 
-      {!query.isLoading && requests.length === 0 ? <div className="text-sm text-gray-600">No COI requests yet for this customer.</div> : null}
-
-      {requests.length > 0 ? (
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-left text-xs">
-            <thead>
-              <tr className="border-b border-gray-200 text-gray-600">
-                <th className="px-2 py-1.5 font-semibold">Requested</th>
-                <th className="px-2 py-1.5 font-semibold">Status</th>
-                <th className="px-2 py-1.5 font-semibold">Expires</th>
-                <th className="px-2 py-1.5 font-semibold">Document</th>
-                <th className="px-2 py-1.5 font-semibold">Notes</th>
-                <th className="px-2 py-1.5 font-semibold">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {requests.map((request) => (
-                <tr key={request.id} className="border-b border-gray-100 align-top">
-                  <td className="px-2 py-1.5 text-gray-800">{new Date(request.requested_at).toLocaleString()}</td>
-                  <td className="px-2 py-1.5">
-                    <StatusBadge variant={statusVariant(request.status)}>{statusLabel(request.status)}</StatusBadge>
-                  </td>
-                  <td className="px-2 py-1.5 text-gray-700">{request.expires_at ?? "-"}</td>
-                  <td className="px-2 py-1.5 text-gray-700">
-                    {request.document_url ? (
-                      <a className="text-slate-700 underline" href={request.document_url} target="_blank" rel="noreferrer">
-                        Open
-                      </a>
-                    ) : (
-                      "-"
-                    )}
-                  </td>
-                  <td className="max-w-[24rem] px-2 py-1.5 text-gray-700">{request.notes || "-"}</td>
-                  <td className="px-2 py-1.5">
-                    <Button size="sm" variant="secondary" onClick={() => beginEdit(request)}>
-                      Update
-                    </Button>
-                  </td>
-                </tr>
+      <ParityTable<InsuranceCoiRequest>
+        rows={requests}
+        rowKey={(request) => request.id}
+        loading={query.isLoading}
+        storageKey="customer-coi-requests"
+        emptyText="No COI requests yet for this customer."
+        exportFilename="customer-coi-requests"
+        filterBar={
+          <label className="text-xs font-semibold text-gray-600">
+            Status filter
+            <select
+              className="ml-2 rounded-sm border border-gray-300 px-2 py-1 text-xs"
+              value={statusFilter}
+              onChange={(event) => setStatusFilter((event.target.value || "") as "" | CoiRequestStatus)}
+            >
+              <option value="">All</option>
+              {STATUS_OPTIONS.map((status) => (
+                <option key={status} value={status}>
+                  {statusLabel(status)}
+                </option>
               ))}
-            </tbody>
-          </table>
-        </div>
-      ) : null}
+            </select>
+          </label>
+        }
+        rowActions={(request) => (
+          <Button size="sm" variant="secondary" onClick={() => beginEdit(request)}>
+            Update
+          </Button>
+        )}
+        columns={[
+          { key: "requested_at", label: "Requested", sortable: true, render: (request) => new Date(request.requested_at).toLocaleString() },
+          {
+            key: "status",
+            label: "Status",
+            sortable: true,
+            render: (request) => <StatusBadge variant={statusVariant(request.status)}>{statusLabel(request.status)}</StatusBadge>,
+          },
+          { key: "expires_at", label: "Expires", sortable: true, render: (request) => request.expires_at ?? "-" },
+          {
+            key: "document_url",
+            label: "Document",
+            render: (request) =>
+              request.document_url ? (
+                <a className="text-slate-700 underline" href={request.document_url} target="_blank" rel="noreferrer">
+                  Open
+                </a>
+              ) : (
+                "-"
+              ),
+          },
+          { key: "notes", label: "Notes", cellClass: "max-w-[24rem]", render: (request) => request.notes || "-" },
+        ]}
+      />
 
       {selected ? (
         <div className="mt-3 grid gap-2 rounded-sm border border-gray-200 bg-gray-50 p-3 md:grid-cols-2">
