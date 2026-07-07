@@ -1,9 +1,23 @@
 // GUARD (GLOBAL RULE): a maintenance ParityTable tab is NOT done until its record cells NAVIGATE.
-// Assert each converted tab renders the expected record-cell anchors (<Link to=`/…/{id}`>) per
-// 00-MASTER-LINK-MAP, so a recolor/refactor can never silently turn them back into plain text.
+// Assert each converted tab renders the expected record-cell anchors using either:
+//   <Link to={`/…/{id}`}>  (react-router Link), or
+//   <EntityLink kind="…">  (shared drill-through primitive — resolves routes internally)
+// This ensures a refactor/recolor can never silently turn them back into plain text.
 import { readFileSync } from "node:fs";
 
 const fail = (m) => { console.error(`FAIL verify-maintenance-record-cells-link: ${m}`); process.exit(1); };
+
+// Maps a route-prefix string to the EntityLink kind that resolves to an equivalent route.
+// Used as an alternative acceptance criterion when code uses EntityLink instead of <Link to=`.
+const PREFIX_TO_ENTITY_KIND = {
+  "/maintenance/work-orders/": "work_order",
+  "/fleet/": "unit",          // legacy wrong prefix — EntityLink kind="unit" → /fleet/units/:id (correct)
+  "/fleet/units/": "unit",
+  "/drivers/": "driver",
+  "/dispatch/loads/": "load",
+  "/customers/": "customer",
+  "/vendors/": "vendor",
+};
 
 // file → required record-cell link route prefixes (only routes the data can actually resolve).
 const REQUIRED = {
@@ -68,11 +82,23 @@ const failures = [];
 for (const [file, prefixes] of Object.entries(REQUIRED)) {
   let src;
   try { src = readFileSync(file, "utf8"); } catch { failures.push(`${file} (missing)`); continue; }
-  if (!/<Link\s+to=/.test(src)) failures.push(`${file}: no <Link to=…> record cells at all`);
+
+  // Check file has at least one navigating element — either a react-router Link or an EntityLink.
+  if (!/<Link\s+to=/.test(src) && !/<EntityLink\s+kind=/.test(src)) {
+    failures.push(`${file}: no <Link to=…> or <EntityLink kind=…> record cells at all`);
+  }
+
   for (const p of prefixes) {
-    // match `to={`/prefix...` }` (template-literal link to a record detail/filtered route)
-    const re = new RegExp("to=\\{`" + p.replace(/\//g, "\\/"));
-    if (!re.test(src)) failures.push(`${file}: missing record-cell link to ${p}{id}`);
+    // Accept <Link to={`/prefix...`}> (original pattern).
+    const linkRe = new RegExp("to=\\{`" + p.replace(/\//g, "\\/"));
+    // Accept <EntityLink kind="kind"> as an alternative (resolves to the same route internally).
+    const entityKind = PREFIX_TO_ENTITY_KIND[p];
+    const entityRe = entityKind ? new RegExp(`<EntityLink[^>]+kind="${entityKind}"`) : null;
+
+    if (!linkRe.test(src) && !(entityRe && entityRe.test(src))) {
+      const altHint = entityKind ? ` or <EntityLink kind="${entityKind}">` : "";
+      failures.push(`${file}: missing record-cell link to ${p}{id} (need <Link to=\`${p}…\`>${altHint})`);
+    }
   }
 }
 

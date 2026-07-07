@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import type { InTransitIssue } from "../../../api/maintenance";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 type Props = {
@@ -47,28 +48,14 @@ export function InTransitIssuesTable({ issues, onTriage }: Props) {
       key: "driver_full_name",
       label: "Driver",
       sortable: true,
-      render: (issue) =>
-        issue.driver_id ? (
-          <Link to={`/drivers/${issue.driver_id}`} className={LINK}>
-            {issue.driver_full_name ?? issue.driver_id.slice(0, 8)}
-          </Link>
-        ) : (
-          <span className="text-gray-400">Unassigned</span>
-        ),
+      render: (issue) => <EntityLink kind="driver" id={issue.driver_id || undefined} label={issue.driver_full_name || undefined} />,
     },
     {
       // Design parity (in-transit-issues.html): Load # after Driver. Backed by dispatch.intransit_issues.load_id.
       key: "load_display_id",
       label: "Load #",
       sortable: true,
-      render: (issue) =>
-        issue.load_id ? (
-          <Link to={`/dispatch/loads/${issue.load_id}`} className={LINK}>
-            {issue.load_display_id ?? issue.load_id.slice(0, 8)}
-          </Link>
-        ) : (
-          <span className="text-gray-400">—</span>
-        ),
+      render: (issue) => <EntityLink kind="load" id={issue.load_id ?? undefined} label={issue.load_display_id ?? undefined} />,
     },
     // Preview's "Fault" column = the issue category. Description kept as a useful extra (additive).
     { key: "issue_category", label: "Fault", sortable: true },

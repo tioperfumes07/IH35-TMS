@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import type { WorkOrder } from "../../../api/maintenance";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { Button } from "../../../components/Button";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
@@ -14,7 +14,6 @@ type Props = {
   onExternalVendorChange: (value: string) => void;
 };
 
-const LINK = "text-slate-700 hover:underline";
 
 function formatDuration(seconds: number) {
   const days = Math.floor(seconds / 86400);
@@ -99,34 +98,19 @@ export function WorkOrdersTable({
       key: "display_id",
       label: "WO #",
       sortable: true,
-      render: (row) => (
-        <Link to={`/maintenance/work-orders/${row.id}`} className={`${LINK} font-medium`}>
-          {row.display_id ?? row.id.slice(0, 8)}
-        </Link>
-      ),
+      render: (row) => <EntityLink kind="work_order" id={row.id} label={row.display_id ?? undefined} />,
     },
     { key: "source_type", label: "Source", sortable: true, render: (row) => row.source_type ?? "—" },
     {
       key: "unit_number",
       label: "Unit",
       sortable: true,
-      render: (row) => (
-        <Link to={`/fleet/${row.unit_id}`} className={LINK}>
-          {row.unit_number ?? row.unit_id.slice(0, 8)}
-        </Link>
-      ),
+      render: (row) => <EntityLink kind="unit" id={row.unit_id} label={row.unit_number ?? undefined} />,
     },
     {
       key: "driver_id",
       label: "Driver",
-      render: (row) =>
-        row.driver_id ? (
-          <Link to={`/drivers/${row.driver_id}`} className={LINK}>
-            {row.driver_id.slice(0, 8)}
-          </Link>
-        ) : (
-          "—"
-        ),
+      render: (row) => <EntityLink kind="driver" id={row.driver_id ?? undefined} label={row.driver_id ? row.driver_id.slice(0, 8) : undefined} />,
     },
     { key: "external_vendor_id", label: "Vendor", render: (row) => row.external_vendor_id ?? "—" },
     { key: "status", label: "Status", sortable: true },
