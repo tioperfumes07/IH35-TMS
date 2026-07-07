@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getDriverHosDetail } from "../../api/hos";
 import { listDrivers } from "../../api/mdata";
 import { listHosViolations } from "../../api/safetyV64";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 const ON_DUTY_STATUSES = new Set(["driving", "on_duty_not_driving", "yard_moves"]);
 const NEAR_CAP_MINUTES = 30;
@@ -108,6 +109,31 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
   const metrics = useMemo(() => computeHosDashboardMetrics(rows), [rows]);
   const violations = (violationsQuery.data?.hos_violations ?? []).filter((row) => !row.voided_at);
 
+  const fleetColumns = useMemo<Array<ParityColumn<FleetHosDriverRow>>>(
+    () => [
+      { key: "driverName", label: "Driver", sortable: true, cellClass: "font-medium", render: (row) => row.driverName },
+      {
+        key: "currentDutyStatus",
+        label: "Duty",
+        sortable: true,
+        cellClass: "capitalize",
+        render: (row) => formatDutyStatus(row.currentDutyStatus),
+      },
+      { key: "driveRemainingMin", label: "Drive left", sortable: true, render: (row) => formatDriveRemaining(row.driveRemainingMin) },
+      { key: "clockStatus", label: "Clock", sortable: true, render: (row) => row.clockStatus ?? "—" },
+      {
+        key: "action",
+        label: "Action",
+        render: (row) => (
+          <Link to={`/drivers/${row.driverId}/hos`} className="font-semibold text-slate-700 hover:underline">
+            Drill-down
+          </Link>
+        ),
+      },
+    ],
+    [],
+  );
+
   return (
     <div className="space-y-3" data-testid="safety-hos-dashboard-page">
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2">
@@ -173,41 +199,19 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
       ) : null}
 
       <div className="grid gap-3 lg:grid-cols-2">
-        <section className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-          <div className="border-b border-gray-100 px-3 py-2 text-xs font-semibold text-slate-800">Fleet duty status</div>
-          <table className="min-w-full text-xs" data-testid="safety-hos-fleet-table">
-            <thead className="bg-gray-50 text-[10px] uppercase text-slate-600">
-              <tr>
-                <th className="px-2 py-1 text-left">Driver</th>
-                <th className="px-2 py-1 text-left">Duty</th>
-                <th className="px-2 py-1 text-left">Drive left</th>
-                <th className="px-2 py-1 text-left">Clock</th>
-                <th className="px-2 py-1 text-left">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.driverId} className="border-t border-gray-100" data-testid={`safety-hos-row-${row.driverId}`}>
-                  <td className="px-2 py-1 font-medium">{row.driverName}</td>
-                  <td className="px-2 py-1 capitalize">{formatDutyStatus(row.currentDutyStatus)}</td>
-                  <td className="px-2 py-1">{formatDriveRemaining(row.driveRemainingMin)}</td>
-                  <td className="px-2 py-1">{row.clockStatus ?? "—"}</td>
-                  <td className="px-2 py-1">
-                    <Link to={`/drivers/${row.driverId}/hos`} className="font-semibold text-slate-700 hover:underline">
-                      Drill-down
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-              {!fleetQuery.isLoading && rows.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-2 py-3 text-center text-slate-500">
-                    No active drivers for this company.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
+        <section>
+          <div className="mb-1 text-xs font-semibold text-slate-800">Fleet duty status</div>
+          <ParityTable<FleetHosDriverRow>
+            columns={fleetColumns}
+            rows={rows}
+            rowKey={(row) => row.driverId}
+            loading={fleetQuery.isLoading}
+            emptyText="No active drivers for this company."
+            storageKey="safety-hos-fleet"
+            exportFilename="hos-fleet-status"
+            tableTestId="safety-hos-fleet-table"
+            rowTestId={(row) => `safety-hos-row-${row.driverId}`}
+          />
         </section>
 
         <section className="rounded-sm border border-gray-200 bg-white" data-testid="safety-hos-violations-panel">

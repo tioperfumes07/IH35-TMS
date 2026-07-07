@@ -12,6 +12,9 @@ import {
 import { IntegrityAlertsPage } from "../IntegrityAlertsPage";
 import { DriverVendorMappingTab } from "../integrity-reports/DriverVendorMappingTab";
 import { AnomaliesTab } from "./AnomaliesTab";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+
+type IntegrityRow = Record<string, unknown> & { _rowKey: string };
 
 type SubTab = "wo-cost" | "fuel-mpg" | "driver-dwell" | "hos-pattern" | "driver-vendor" | "active-alerts" | "anomalies";
 
@@ -61,6 +64,13 @@ export function IntegrityReportsTab() {
     return hosQuery.data?.pattern_breaks ?? [];
   }, [subTab, woQuery.data?.outliers, fuelQuery.data?.anomalies, dwellQuery.data?.outliers, hosQuery.data?.pattern_breaks]);
 
+  // ParityTable requires a stable per-row key; some outlier rows lack an `id`, so fall back to a
+  // subTab+index composite (presentation-only — does not touch the underlying row data).
+  const keyedRows = useMemo<IntegrityRow[]>(
+    () => rows.map((row, idx) => ({ ...row, _rowKey: row.id ? String(row.id) : `${subTab}-${idx}` })),
+    [rows, subTab],
+  );
+
   const observationsById = useMemo(() => {
     const map = new Map<string, Record<string, unknown>>();
     for (const observation of observationsQuery.data?.observations ?? []) {
@@ -68,6 +78,63 @@ export function IntegrityReportsTab() {
     }
     return map;
   }, [observationsQuery.data?.observations]);
+
+  const isLoading =
+    subTab === "wo-cost"
+      ? woQuery.isLoading
+      : subTab === "fuel-mpg"
+        ? fuelQuery.isLoading
+        : subTab === "driver-dwell"
+          ? dwellQuery.isLoading
+          : hosQuery.isLoading;
+
+  const columns = useMemo<ParityColumn<IntegrityRow>[]>(
+    () => [
+      {
+        key: "observation",
+        label: "Observation",
+        render: (row) => String(row.alert_category ?? row.violation_pattern ?? row.root_cause ?? subTab),
+      },
+      {
+        key: "entity",
+        label: "Entity",
+        render: (row) => String(row.unit_id ?? row.driver_id ?? row.vendor_id ?? row.subject_id ?? "—"),
+      },
+      {
+        key: "metric",
+        label: "Metric",
+        render: (row) =>
+          String(row.z_score ?? row.cost_delta_pct ?? row.mpg_delta_pct ?? row.minutes_over_avg ?? row.violations_30d ?? "—"),
+      },
+      {
+        key: "status",
+        label: "Status",
+        render: (row) => {
+          const rowId = row.id ? String(row.id) : "";
+          const observation = observationsById.get(rowId);
+          return String(observation?.status ?? row.status ?? "new");
+        },
+      },
+      {
+        key: "action",
+        label: "Actions",
+        render: (row) => {
+          const rowId = row.id ? String(row.id) : "";
+          return (
+            <button
+              type="button"
+              className="text-[#1f2a44] underline disabled:opacity-40"
+              disabled={!rowId || reviewMutation.isPending}
+              onClick={() => reviewMutation.mutate(rowId)}
+            >
+              Review
+            </button>
+          );
+        },
+      },
+    ],
+    [subTab, observationsById, reviewMutation],
+  );
 
   if (subTab === "driver-vendor") {
     return <DriverVendorMappingTab />;
@@ -161,50 +228,15 @@ export function IntegrityReportsTab() {
         ))}
       </div>
 
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-xs">
-          <thead className="bg-gray-50 text-[10px] uppercase text-slate-600">
-            <tr>
-              <th className="px-2 py-1 text-left">Observation</th>
-              <th className="px-2 py-1 text-left">Entity</th>
-              <th className="px-2 py-1 text-left">Metric</th>
-              <th className="px-2 py-1 text-left">Status</th>
-              <th className="px-2 py-1 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row, idx) => {
-              const rowId = String(row.id ?? "");
-              const observation = observationsById.get(rowId);
-              return (
-                <tr key={rowId || `${subTab}-${idx}`} className="border-t border-gray-100">
-                  <td className="px-2 py-1">{String(row.alert_category ?? row.violation_pattern ?? row.root_cause ?? subTab)}</td>
-                  <td className="px-2 py-1">{String(row.unit_id ?? row.driver_id ?? row.vendor_id ?? row.subject_id ?? "—")}</td>
-                  <td className="px-2 py-1">{String(row.z_score ?? row.cost_delta_pct ?? row.mpg_delta_pct ?? row.minutes_over_avg ?? row.violations_30d ?? "—")}</td>
-                  <td className="px-2 py-1">{String(observation?.status ?? row.status ?? "new")}</td>
-                  <td className="px-2 py-1">
-                    <button
-                      type="button"
-                      className="text-[#1f2a44] underline disabled:opacity-40"
-                      disabled={!rowId || reviewMutation.isPending}
-                      onClick={() => reviewMutation.mutate(rowId)}
-                    >
-                      Review
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-            {rows.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="px-2 py-3 text-center text-slate-500">
-                  No observations available for this integrity report.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
+      <ParityTable<IntegrityRow>
+        columns={columns}
+        rows={keyedRows}
+        rowKey={(row) => row._rowKey}
+        loading={isLoading}
+        emptyText="No observations available for this integrity report."
+        storageKey="safety-integrity-reports"
+        exportFilename="integrity-reports"
+      />
     </div>
   );
 }

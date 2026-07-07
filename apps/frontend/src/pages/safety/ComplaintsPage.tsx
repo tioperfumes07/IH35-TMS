@@ -5,11 +5,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createComplaint, getComplaints } from "../../api/safety";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { companyToday } from "../../lib/businessDate";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 type Props = {
   operatingCompanyId: string;
   role?: string;
 };
+
+type ComplaintRow = Record<string, unknown>;
 
 export function ComplaintsPage({ operatingCompanyId, role }: Props) {
   const canView = useMemo(() => ["Owner", "Administrator", "Safety"].includes(String(role ?? "")), [role]);
@@ -37,6 +40,22 @@ export function ComplaintsPage({ operatingCompanyId, role }: Props) {
       await queryClient.invalidateQueries({ queryKey: ["safety", "complaints", operatingCompanyId] });
     },
   });
+
+  const columns = useMemo<Array<ParityColumn<ComplaintRow>>>(
+    () => [
+      { key: "complaint_date", label: "Date", sortable: true, render: (row) => formatDateUS(row.complaint_date as string) },
+      { key: "complainant_type", label: "Complainant", sortable: true, render: (row) => String(row.complainant_type ?? "—") },
+      {
+        key: "respondent_type",
+        label: "Respondent",
+        render: (row) => `${String(row.respondent_type ?? "—")} · ${String(row.respondent_id ?? "—")}`,
+      },
+      { key: "type_code", label: "Type", sortable: true, render: (row) => String(row.type_code ?? "—") },
+      { key: "summary", label: "Summary", render: (row) => String(row.summary ?? "—") },
+      { key: "status", label: "Status", sortable: true, render: (row) => String(row.status ?? "open") },
+    ],
+    [],
+  );
 
   if (!canView) {
     return <div className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">Complaints tab is restricted to Owner/Admin/Safety.</div>;
@@ -66,32 +85,15 @@ export function ComplaintsPage({ operatingCompanyId, role }: Props) {
           + Create Complaint
         </button>
       </div>
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-xs">
-          <thead className="bg-gray-50 text-[10px] uppercase text-gray-600">
-            <tr>
-              <th className="px-2 py-1 text-left">Date</th>
-              <th className="px-2 py-1 text-left">Complainant</th>
-              <th className="px-2 py-1 text-left">Respondent</th>
-              <th className="px-2 py-1 text-left">Type</th>
-              <th className="px-2 py-1 text-left">Summary</th>
-              <th className="px-2 py-1 text-left">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(query.data?.complaints ?? []).map((row) => (
-              <tr key={String(row.id)} className="border-t border-gray-100">
-                <td className="px-2 py-1">{formatDateUS(row.complaint_date)}</td>
-                <td className="px-2 py-1">{String(row.complainant_type ?? "—")}</td>
-                <td className="px-2 py-1">{String(row.respondent_type ?? "—")} · {String(row.respondent_id ?? "—")}</td>
-                <td className="px-2 py-1">{String(row.type_code ?? "—")}</td>
-                <td className="px-2 py-1">{String(row.summary ?? "—")}</td>
-                <td className="px-2 py-1">{String(row.status ?? "open")}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <ParityTable<ComplaintRow>
+        columns={columns}
+        rows={query.data?.complaints ?? []}
+        rowKey={(row) => String(row.id)}
+        loading={query.isLoading}
+        emptyText="No complaints found."
+        storageKey="safety-complaints"
+        exportFilename="complaints"
+      />
     </div>
   );
 }

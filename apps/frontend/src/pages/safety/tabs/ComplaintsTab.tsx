@@ -12,6 +12,7 @@ import { useAuth } from "../../../auth/useAuth";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useListState } from "../../../components/list-state";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 function isPrivacyGateError(error: unknown) {
   if (!(error instanceof ApiError)) return false;
@@ -151,6 +152,42 @@ export function ComplaintsTab() {
     return complaintTypeByCode.get(code) ?? code;
   }
 
+  const columns: Array<ParityColumn<Record<string, unknown>>> = [
+    { key: "filed_at", label: "Filed", sortable: true, render: (row) => formatDateUS(row.filed_at) },
+    { key: "complainant_external_name", label: "Complainant", sortable: true, render: (row) => String(row.complainant_external_name ?? row.complainant_type ?? "—") },
+    { key: "respondent", label: "Respondent", render: (row) => resolveRespondent(row) },
+    { key: "complaint_type", label: "Type", sortable: true, render: (row) => resolveType(row) },
+    { key: "severity", label: "Severity", sortable: true, render: (row) => String(row.severity ?? "—") },
+    { key: "status", label: "Status", sortable: true, render: (row) => String(row.status ?? "open") },
+    {
+      key: "action",
+      label: "Actions",
+      render: (row) =>
+        isOwner ? (
+          <>
+            <button
+              type="button"
+              className="mr-2 text-slate-700 underline disabled:opacity-60"
+              disabled={patchMutation.isPending}
+              onClick={() => patchMutation.mutate({ id: String(row.id), status: "resolved" })}
+            >
+              Resolve
+            </button>
+            <button
+              type="button"
+              className="text-red-700 underline disabled:opacity-60"
+              disabled={voidMutation.isPending || Boolean(row.voided_at)}
+              onClick={() => voidMutation.mutate(String(row.id))}
+            >
+              {row.voided_at ? "Voided" : "Void"}
+            </button>
+          </>
+        ) : (
+          <span className="text-slate-400">Owner-only</span>
+        ),
+    },
+  ];
+
   if (isPrivacyGateError(complaintsQuery.error)) {
     return (
       <div className="rounded-sm border border-slate-200 bg-slate-50 p-6 text-center">
@@ -219,54 +256,15 @@ export function ComplaintsTab() {
         </div>
       ) : null}
 
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-xs">
-          <thead className="bg-gray-50 text-[10px] uppercase text-slate-600">
-            <tr>
-              <th className="px-2 py-1 text-left">Filed</th>
-              <th className="px-2 py-1 text-left">Complainant</th>
-              <th className="px-2 py-1 text-left">Respondent</th>
-              <th className="px-2 py-1 text-left">Type</th>
-              <th className="px-2 py-1 text-left">Severity</th>
-              <th className="px-2 py-1 text-left">Status</th>
-              <th className="px-2 py-1 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(complaintsQuery.data?.complaints ?? []).map((row) => (
-              <tr key={String(row.id)} className="border-t border-gray-100">
-                <td className="px-2 py-1">{formatDateUS(row.filed_at)}</td>
-                <td className="px-2 py-1">{String(row.complainant_external_name ?? row.complainant_type ?? "—")}</td>
-                <td className="px-2 py-1">{resolveRespondent(row)}</td>
-                <td className="px-2 py-1">{resolveType(row)}</td>
-                <td className="px-2 py-1">{String(row.severity ?? "—")}</td>
-                <td className="px-2 py-1">{String(row.status ?? "open")}</td>
-                <td className="px-2 py-1">
-                  {isOwner ? (
-                    <>
-                      <button type="button" className="mr-2 text-slate-700 underline disabled:opacity-60" disabled={patchMutation.isPending} onClick={() => patchMutation.mutate({ id: String(row.id), status: "resolved" })}>
-                        Resolve
-                      </button>
-                      <button type="button" className="text-red-700 underline disabled:opacity-60" disabled={voidMutation.isPending || Boolean(row.voided_at)} onClick={() => voidMutation.mutate(String(row.id))}>
-                        {row.voided_at ? "Voided" : "Void"}
-                      </button>
-                    </>
-                  ) : (
-                    <span className="text-slate-400">Owner-only</span>
-                  )}
-                </td>
-              </tr>
-            ))}
-            {listState.isEmpty ? (
-              <tr>
-                <td colSpan={7} className="px-2 py-3 text-center text-slate-500">
-                  No complaints found.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
+      <ParityTable<Record<string, unknown>>
+        columns={columns}
+        rows={complaintsQuery.data?.complaints ?? []}
+        rowKey={(row) => String(row.id)}
+        loading={listState.isLoading}
+        emptyText="No complaints found."
+        storageKey="safety-complaints"
+        exportFilename="complaints"
+      />
     </div>
   );
 }

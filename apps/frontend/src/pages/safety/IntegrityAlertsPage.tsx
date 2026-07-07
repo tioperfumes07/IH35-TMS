@@ -10,10 +10,14 @@ import {
 } from "../../api/safety";
 import { IntegrityAlertDetailDrawer } from "./components/IntegrityAlertDetailDrawer";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 type Props = {
   operatingCompanyId: string;
 };
+
+type IntegrityAlertRow = Record<string, unknown>;
+type IntegrityAlertRuleRow = Record<string, unknown>;
 
 type PageTab = "inbox" | "rules";
 
@@ -84,6 +88,59 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
   const rows = alertsQuery.data?.integrity_alerts ?? [];
   const rules = rulesQuery.data?.integrity_alert_rules ?? [];
 
+  // Migrated to the shared QBO-parity grid — columns, order, and the per-row "Open" action are
+  // preserved verbatim (§7 additive-only).
+  const alertColumns: Array<ParityColumn<IntegrityAlertRow>> = [
+    { key: "created_at", label: "Created", sortable: true, render: (row) => formatDateUS(row.created_at) },
+    { key: "alert_category", label: "Category", sortable: true, render: (row) => String(row.alert_category ?? "—") },
+    { key: "severity", label: "Severity", sortable: true, render: (row) => String(row.severity ?? "—") },
+    { key: "subject_type", label: "Subject", render: (row) => String(row.subject_type ?? "—") },
+    { key: "resolution_status", label: "Status", sortable: true, render: (row) => String(row.resolution_status ?? "unresolved") },
+    {
+      key: "action",
+      label: "Action",
+      render: (row) => (
+        <button type="button" className="text-slate-700 underline" onClick={() => setSelected(row)}>
+          Open
+        </button>
+      ),
+    },
+  ];
+
+  // Migrated to the shared QBO-parity grid — columns, order, and the per-row "Edit" action are
+  // preserved verbatim (§7 additive-only).
+  const ruleColumns: Array<ParityColumn<IntegrityAlertRuleRow>> = [
+    { key: "rule_name", label: "Rule", sortable: true, render: (row) => String(row.rule_name ?? row.rule_code) },
+    { key: "source_view", label: "Source view", render: (row) => String(row.source_view ?? "—") },
+    { key: "severity", label: "Severity", sortable: true, render: (row) => String(row.severity ?? "—") },
+    { key: "enabled", label: "Enabled", sortable: true, render: (row) => (row.enabled ? "Yes" : "No") },
+    {
+      key: "action",
+      label: "Action",
+      render: (row) => (
+        <button
+          type="button"
+          className="text-slate-700 underline"
+          onClick={() => {
+            setEditingRule(row);
+            setDraftRule({
+              rule_code: String(row.rule_code ?? ""),
+              rule_name: String(row.rule_name ?? ""),
+              source_view: String(row.source_view ?? ""),
+              alert_category: String(row.alert_category ?? ""),
+              subject_type: String(row.subject_type ?? "driver"),
+              severity: String(row.severity ?? "warning"),
+              enabled: Boolean(row.enabled ?? true),
+            });
+            setCreateRuleOpen(true);
+          }}
+        >
+          Edit
+        </button>
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-3" data-testid="integrity-alerts-page">
       <div className="flex flex-wrap items-center gap-2">
@@ -128,113 +185,50 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
       </div>
 
       {pageTab === "inbox" ? (
-        <>
-          <div className="flex flex-wrap items-center gap-2">
-            <input
-              value={category}
-              onChange={(event) => setCategory(event.target.value)}
-              className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
-              placeholder="Category"
-            />
-            <SelectCombobox value={severity} onChange={(event) => setSeverity(event.target.value)} className="rounded-sm border border-gray-300 px-2 py-1 text-xs">
-              <option value="">All severities</option>
-              <option value="info">Info</option>
-              <option value="warning">Warning</option>
-              <option value="critical">Critical</option>
-            </SelectCombobox>
-            <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value)} className="rounded-sm border border-gray-300 px-2 py-1 text-xs">
-              <option value="">All statuses</option>
-              <option value="unresolved">Unresolved</option>
-              <option value="investigating">Investigating</option>
-              <option value="false_positive">False positive</option>
-              <option value="confirmed_action_taken">Confirmed action taken</option>
-              <option value="dismissed">Dismissed</option>
-            </SelectCombobox>
-          </div>
-
-          <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-            <table className="min-w-[980px] w-full text-left text-xs">
-              <thead className="bg-gray-50 text-[10px] uppercase text-gray-600">
-                <tr>
-                  <th className="px-2 py-1">Created</th>
-                  <th className="px-2 py-1">Category</th>
-                  <th className="px-2 py-1">Severity</th>
-                  <th className="px-2 py-1">Subject</th>
-                  <th className="px-2 py-1">Status</th>
-                  <th className="px-2 py-1">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => (
-                  <tr key={String(row.id)} className="border-t border-gray-100">
-                    <td className="px-2 py-1">{formatDateUS(row.created_at)}</td>
-                    <td className="px-2 py-1">{String(row.alert_category ?? "—")}</td>
-                    <td className="px-2 py-1">{String(row.severity ?? "—")}</td>
-                    <td className="px-2 py-1">{String(row.subject_type ?? "—")}</td>
-                    <td className="px-2 py-1">{String(row.resolution_status ?? "unresolved")}</td>
-                    <td className="px-2 py-1">
-                      <button type="button" className="text-slate-700 underline" onClick={() => setSelected(row)}>
-                        Open
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-                {rows.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-2 py-3 text-center text-gray-500">
-                      No active integrity alerts. Run the evaluator or wait for the scheduled job.
-                    </td>
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
-          </div>
-        </>
+        <ParityTable<IntegrityAlertRow>
+          columns={alertColumns}
+          rows={rows}
+          rowKey={(row) => String(row.id)}
+          loading={alertsQuery.isLoading}
+          emptyText="No active integrity alerts. Run the evaluator or wait for the scheduled job."
+          storageKey="safety-integrity-alerts"
+          exportFilename="integrity-alerts"
+          filterBar={
+            <div className="relative flex flex-wrap items-center gap-2">
+              <input
+                value={category}
+                onChange={(event) => setCategory(event.target.value)}
+                className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+                placeholder="Category"
+              />
+              <SelectCombobox value={severity} onChange={(event) => setSeverity(event.target.value)} className="rounded-sm border border-gray-300 px-2 py-1 text-xs">
+                <option value="">All severities</option>
+                <option value="info">Info</option>
+                <option value="warning">Warning</option>
+                <option value="critical">Critical</option>
+              </SelectCombobox>
+              <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value)} className="rounded-sm border border-gray-300 px-2 py-1 text-xs">
+                <option value="">All statuses</option>
+                <option value="unresolved">Unresolved</option>
+                <option value="investigating">Investigating</option>
+                <option value="false_positive">False positive</option>
+                <option value="confirmed_action_taken">Confirmed action taken</option>
+                <option value="dismissed">Dismissed</option>
+              </SelectCombobox>
+            </div>
+          }
+        />
       ) : (
-        <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white" data-testid="integrity-rules-panel">
-          <table className="min-w-full text-left text-xs">
-            <thead className="bg-gray-50 text-[10px] uppercase text-gray-600">
-              <tr>
-                <th className="px-2 py-1">Rule</th>
-                <th className="px-2 py-1">Source view</th>
-                <th className="px-2 py-1">Severity</th>
-                <th className="px-2 py-1">Enabled</th>
-                <th className="px-2 py-1">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rules.map((rule) => (
-                <tr key={String(rule.id)} className="border-t border-gray-100">
-                  <td className="px-2 py-1">{String(rule.rule_name ?? rule.rule_code)}</td>
-                  <td className="px-2 py-1">{String(rule.source_view ?? "—")}</td>
-                  <td className="px-2 py-1">{String(rule.severity ?? "—")}</td>
-                  <td className="px-2 py-1">{rule.enabled ? "Yes" : "No"}</td>
-                  <td className="px-2 py-1">
-                    <button
-                      type="button"
-                      className="text-slate-700 underline"
-                      onClick={() => {
-                        setEditingRule(rule);
-                        setDraftRule({
-                          rule_code: String(rule.rule_code ?? ""),
-                          rule_name: String(rule.rule_name ?? ""),
-                          source_view: String(rule.source_view ?? ""),
-                          alert_category: String(rule.alert_category ?? ""),
-                          subject_type: String(rule.subject_type ?? "driver"),
-                          severity: String(rule.severity ?? "warning"),
-                          enabled: Boolean(rule.enabled ?? true),
-                        });
-                        setCreateRuleOpen(true);
-                      }}
-                    >
-                      Edit
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ParityTable<IntegrityAlertRuleRow>
+          columns={ruleColumns}
+          rows={rules}
+          rowKey={(row) => String(row.id)}
+          loading={rulesQuery.isLoading}
+          emptyText="No integrity alert rules."
+          storageKey="safety-integrity-alert-rules"
+          exportFilename="integrity-alert-rules"
+          tableTestId="integrity-rules-panel"
+        />
       )}
 
       {createRuleOpen ? (

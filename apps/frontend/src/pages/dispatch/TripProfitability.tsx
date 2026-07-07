@@ -9,12 +9,13 @@
  * Aggregates NB + SB per driver_settlement (load_bookended model).
  * Read-only. No new financial code.
  */
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { getTripProfitability, type TripProfitabilityRow } from "../../lib/loadProfit";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ReportsSubNav } from "../reports/ReportsSubNav";
 import { EntityLink } from "../../components/shared/EntityLink";
 
@@ -33,8 +34,6 @@ function currentQuarterRange() {
   return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) };
 }
 
-type SortKey = keyof TripProfitabilityRow;
-
 function marginClass(pct: number) {
   if (pct < 0) return "text-red-600 font-semibold";
   if (pct < 10) return "text-slate-700";
@@ -47,8 +46,6 @@ export function TripProfitability() {
 
   const [period, setPeriod] = useState(currentQuarterRange);
   const [applied, setApplied] = useState(currentQuarterRange);
-  const [sortKey, setSortKey] = useState<SortKey>("trip_closed_at");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   const query = useQuery({
     queryKey: ["reports", "trip-profitability", companyId, applied.start, applied.end],
@@ -58,73 +55,125 @@ export function TripProfitability() {
     retry: false,
   });
 
-  const sorted = useMemo(() => {
-    const rows = query.data?.rows ?? [];
-    const mul = sortDir === "asc" ? 1 : -1;
-    const copy = [...rows];
-    copy.sort((a, b) => {
-      const av = a[sortKey];
-      const bv = b[sortKey];
-      if (av == null && bv == null) return 0;
-      if (av == null) return 1 * mul;
-      if (bv == null) return -1 * mul;
-      if (typeof av === "string" && typeof bv === "string") return av.localeCompare(bv) * mul;
-      return ((Number(av) || 0) - (Number(bv) || 0)) * mul;
-    });
-    return copy;
-  }, [query.data?.rows, sortKey, sortDir]);
-
-  function toggleSort(key: SortKey) {
-    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    else {
-      setSortKey(key);
-      setSortDir("desc");
-    }
-  }
-
-  function sortIcon(key: SortKey) {
-    if (sortKey !== key) return null;
-    return <span className="ml-1 text-[10px]">{sortDir === "asc" ? "▲" : "▼"}</span>;
-  }
-
+  const rows = query.data?.rows ?? [];
   const t = query.data?.totals;
+
+  // Migrated to the shared QBO-parity grid — columns, order, and margin coloring preserved
+  // verbatim (§7 additive-only).
+  const columns: Array<ParityColumn<TripProfitabilityRow>> = [
+    {
+      key: "settlement_display_id",
+      label: "Trip #",
+      sortable: true,
+      render: (row) => (
+        <span className="font-mono text-xs">
+          <EntityLink kind="settlement" id={row.settlement_id} label={row.settlement_display_id ?? row.settlement_id.slice(0, 8)} />
+        </span>
+      ),
+    },
+    { key: "driver_name", label: "Driver", sortable: true, render: (row) => row.driver_name ?? "—" },
+    {
+      key: "nb_load_number",
+      label: "NB Load",
+      sortable: true,
+      render: (row) => (
+        <span className="font-mono text-xs">
+          <EntityLink kind="load" id={row.nb_load_id} label={row.nb_load_number ?? "—"} />
+        </span>
+      ),
+    },
+    {
+      key: "sb_load_number",
+      label: "SB Load",
+      sortable: true,
+      render: (row) => (
+        <span className="font-mono text-xs">
+          <EntityLink kind="load" id={row.sb_load_id} label={row.sb_load_number ?? "—"} />
+        </span>
+      ),
+    },
+    {
+      key: "revenue_cents",
+      label: "Revenue",
+      sortable: true,
+      className: "text-right",
+      cellClass: "text-right",
+      render: (row) => money(row.revenue_cents),
+    },
+    {
+      key: "driver_pay_cents",
+      label: "Driver Pay",
+      sortable: true,
+      className: "text-right",
+      cellClass: "text-right",
+      render: (row) => money(row.driver_pay_cents),
+    },
+    {
+      key: "fuel_cents",
+      label: "Fuel",
+      sortable: true,
+      className: "text-right",
+      cellClass: "text-right",
+      render: (row) => money(row.fuel_cents),
+    },
+    {
+      key: "net_profit_cents",
+      label: "Net Profit",
+      sortable: true,
+      className: "text-right",
+      cellClass: "text-right",
+      render: (row) => <span className={marginClass(row.margin_pct)}>{money(row.net_profit_cents)}</span>,
+    },
+    {
+      key: "margin_pct",
+      label: "Margin %",
+      sortable: true,
+      className: "text-right",
+      cellClass: "text-right",
+      render: (row) => <span className={marginClass(row.margin_pct)}>{row.margin_pct.toFixed(1)}%</span>,
+    },
+    {
+      key: "trip_closed_at",
+      label: "Closed",
+      sortable: true,
+      render: (row) => (row.trip_closed_at ? new Date(row.trip_closed_at).toLocaleDateString() : "Open"),
+    },
+  ];
+
+  const filterBar = (
+    <div className="flex flex-wrap items-end gap-3">
+      <label className="text-sm">
+        From
+        <DatePicker
+          className="ml-2 rounded-sm border px-2 py-1"
+          value={period.start}
+          onChange={(next) => setPeriod((p) => ({ ...p, start: next }))}
+        />
+      </label>
+      <label className="text-sm">
+        To
+        <DatePicker
+          className="ml-2 rounded-sm border px-2 py-1"
+          value={period.end}
+          onChange={(next) => setPeriod((p) => ({ ...p, end: next }))}
+        />
+      </label>
+      <button
+        type="button"
+        className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#1F2A44]"
+        onClick={() => setApplied(period)}
+      >
+        Apply
+      </button>
+    </div>
+  );
 
   return (
     <div className="space-y-3">
       <ReportsSubNav />
       <PageHeader title="Trip Profitability" subtitle="Company Settlement Report — NB + SB roll-up per trip" />
 
-      {/* Filters */}
-      <section className="flex flex-wrap items-end gap-3 rounded-sm border border-slate-200 bg-white p-3">
-        <label className="text-sm">
-          From
-          <DatePicker
-            className="ml-2 rounded-sm border px-2 py-1"
-            value={period.start}
-            onChange={(next) => setPeriod((p) => ({ ...p, start: next }))}
-          />
-        </label>
-        <label className="text-sm">
-          To
-          <DatePicker
-            className="ml-2 rounded-sm border px-2 py-1"
-            value={period.end}
-            onChange={(next) => setPeriod((p) => ({ ...p, end: next }))}
-          />
-        </label>
-        <button
-          type="button"
-          className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#1F2A44]"
-          onClick={() => setApplied(period)}
-        >
-          Apply
-        </button>
-      </section>
-
       {/* State messages */}
-      {query.isLoading && (
-        <div className="rounded-sm border bg-white p-4 text-sm text-slate-500">Loading…</div>
-      )}
       {query.isError && (
         <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-sm text-red-700">
           Failed to load trip profitability.{" "}
@@ -156,78 +205,16 @@ export function TripProfitability() {
         </div>
       )}
 
-      {/* Table */}
-      {query.data && sorted.length === 0 && (
-        <div className="rounded-sm border bg-white p-4 text-sm text-slate-500">
-          No trips closed in this period.
-        </div>
-      )}
-
-      {sorted.length > 0 && (
-        <div className="overflow-x-auto rounded-sm border bg-white">
-          <table className="min-w-full text-sm">
-            <thead className="bg-slate-50 text-left text-xs font-semibold text-slate-600">
-              <tr>
-                {(
-                  [
-                    ["settlement_display_id", "Trip #"],
-                    ["driver_name", "Driver"],
-                    ["nb_load_number", "NB Load"],
-                    ["sb_load_number", "SB Load"],
-                    ["revenue_cents", "Revenue"],
-                    ["driver_pay_cents", "Driver Pay"],
-                    ["fuel_cents", "Fuel"],
-                    ["net_profit_cents", "Net Profit"],
-                    ["margin_pct", "Margin %"],
-                    ["trip_closed_at", "Closed"],
-                  ] as [SortKey, string][]
-                ).map(([key, label]) => (
-                  <th
-                    key={key}
-                    className="cursor-pointer select-none whitespace-nowrap px-3 py-2 hover:bg-slate-100"
-                    onClick={() => toggleSort(key)}
-                  >
-                    {label}
-                    {sortIcon(key)}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {sorted.map((row) => (
-                <tr key={row.settlement_id} className="hover:bg-slate-50">
-                  <td className="whitespace-nowrap px-3 py-2 font-mono text-xs">
-                    <EntityLink
-                      kind="settlement"
-                      id={row.settlement_id}
-                      label={row.settlement_display_id ?? row.settlement_id.slice(0, 8)}
-                    />
-                  </td>
-                  <td className="px-3 py-2">{row.driver_name ?? "—"}</td>
-                  <td className="px-3 py-2 font-mono text-xs">
-                    <EntityLink kind="load" id={row.nb_load_id} label={row.nb_load_number ?? "—"} />
-                  </td>
-                  <td className="px-3 py-2 font-mono text-xs">
-                    <EntityLink kind="load" id={row.sb_load_id} label={row.sb_load_number ?? "—"} />
-                  </td>
-                  <td className="px-3 py-2 text-right">{money(row.revenue_cents)}</td>
-                  <td className="px-3 py-2 text-right">{money(row.driver_pay_cents)}</td>
-                  <td className="px-3 py-2 text-right">{money(row.fuel_cents)}</td>
-                  <td className={`px-3 py-2 text-right ${marginClass(row.margin_pct)}`}>
-                    {money(row.net_profit_cents)}
-                  </td>
-                  <td className={`px-3 py-2 text-right ${marginClass(row.margin_pct)}`}>
-                    {row.margin_pct.toFixed(1)}%
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-2 text-slate-500">
-                    {row.trip_closed_at ? new Date(row.trip_closed_at).toLocaleDateString() : "Open"}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <ParityTable<TripProfitabilityRow>
+        columns={columns}
+        rows={rows}
+        rowKey={(row) => row.settlement_id}
+        loading={query.isLoading}
+        emptyText="No trips closed in this period."
+        storageKey="dispatch-trip-profitability"
+        exportFilename="trip-profitability"
+        filterBar={filterBar}
+      />
     </div>
   );
 }

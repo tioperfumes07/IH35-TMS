@@ -1,9 +1,10 @@
 import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { acknowledgeSafetyReminder, listSafetyReminders } from "../../../api/safety";
+import { acknowledgeSafetyReminder, listSafetyReminders, type SafetyReminderRow } from "../../../api/safety";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { ExpiryDashboard } from "../expiry-tracking/ExpiryDashboard";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 type DotReferenceCard = {
   cfr: string;
@@ -105,6 +106,37 @@ export function DOTComplianceTab() {
     return counters;
   }, [orderedReminders]);
 
+  const reminderColumns = useMemo<ParityColumn<SafetyReminderRow>[]>(
+    () => [
+      { key: "driver_name", label: "Driver", sortable: true, render: (row) => <EntityLink kind="driver" id={row.driver_id} label={row.driver_name ?? undefined} /> },
+      { key: "item_name", label: "Item", sortable: true },
+      { key: "due_date", label: "Due", sortable: true },
+      { key: "days_to_expiry", label: "Days", sortable: true },
+      {
+        key: "severity",
+        label: "Severity",
+        sortable: true,
+        render: (row) => <span className={`rounded-sm px-2 py-0.5 ${tierClass(row.severity)}`}>{row.severity}</span>,
+      },
+      { key: "source_type", label: "Source", sortable: true, render: (row) => sourceLabel(row.source_type) },
+      {
+        key: "action",
+        label: "Action",
+        render: (row) => (
+          <button
+            type="button"
+            className="rounded-sm border border-slate-300 px-2 py-0.5 text-[11px] disabled:opacity-50"
+            disabled={acknowledgeMutation.isPending || remindersQ.isLoading}
+            onClick={() => acknowledgeMutation.mutate(row.id)}
+          >
+            Dismiss
+          </button>
+        ),
+      },
+    ],
+    [acknowledgeMutation, remindersQ.isLoading],
+  );
+
   return (
     <div className="space-y-4">
       <ExpiryDashboard />
@@ -117,57 +149,19 @@ export function DOTComplianceTab() {
           </div>
           <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">Open {orderedReminders.length}</span>
         </div>
-        {remindersQ.isLoading ? (
-          <p className="mt-3 text-xs text-slate-500">Loading reminders...</p>
-        ) : null}
         {remindersQ.error ? (
           <p className="mt-3 rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">Could not load reminders. Try again.</p>
         ) : null}
-        <div className="mt-3 overflow-x-auto">
-          <table className="min-w-[860px] w-full text-left text-xs">
-            <thead className="bg-gray-50 text-[10px] uppercase text-gray-600">
-              <tr>
-                <th className="px-2 py-1">Driver</th>
-                <th className="px-2 py-1">Item</th>
-                <th className="px-2 py-1">Due</th>
-                <th className="px-2 py-1">Days</th>
-                <th className="px-2 py-1">Severity</th>
-                <th className="px-2 py-1">Source</th>
-                <th className="px-2 py-1">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orderedReminders.map((row) => (
-                <tr key={row.id} className="border-t border-gray-100">
-                  <td className="px-2 py-1"><EntityLink kind="driver" id={row.driver_id} label={row.driver_name} /></td>
-                  <td className="px-2 py-1">{row.item_name}</td>
-                  <td className="px-2 py-1">{row.due_date}</td>
-                  <td className="px-2 py-1">{row.days_to_expiry}</td>
-                  <td className="px-2 py-1">
-                    <span className={`rounded-sm px-2 py-0.5 ${tierClass(row.severity)}`}>{row.severity}</span>
-                  </td>
-                  <td className="px-2 py-1">{sourceLabel(row.source_type)}</td>
-                  <td className="px-2 py-1">
-                    <button
-                      type="button"
-                      className="rounded-sm border border-slate-300 px-2 py-0.5 text-[11px] disabled:opacity-50"
-                      disabled={acknowledgeMutation.isPending || remindersQ.isLoading}
-                      onClick={() => acknowledgeMutation.mutate(row.id)}
-                    >
-                      Dismiss
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {!remindersQ.isLoading && orderedReminders.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-2 py-3 text-center text-slate-500">
-                    No open reminders.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
+        <div className="mt-3">
+          <ParityTable<SafetyReminderRow>
+            columns={reminderColumns}
+            rows={orderedReminders}
+            rowKey={(row) => row.id}
+            loading={remindersQ.isLoading}
+            emptyText="No open reminders."
+            storageKey="safety-dot-compliance-reminders"
+            exportFilename="dot-compliance-reminders"
+          />
         </div>
       </div>
 

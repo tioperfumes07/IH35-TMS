@@ -12,6 +12,9 @@ import { listDispatchLoads, type DispatchStatus } from "../../api/dispatch";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { companyToday } from "../../lib/businessDate";
 import { useAuth } from "../../auth/useAuth";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+
+type InternalFineRow = Record<string, unknown>;
 
 type Props = {
   operatingCompanyId: string;
@@ -116,6 +119,16 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
   const canCreate = missing.length === 0 && !createMutation.isPending;
   const approverName = user?.email ?? user?.uuid ?? null;
 
+  // Migrated to the shared QBO-parity grid — columns and order are preserved verbatim (§7 additive-only).
+  const columns: Array<ParityColumn<InternalFineRow>> = [
+    { key: "imposed_date", label: "Date", sortable: true, render: (row) => formatDateUS(row.imposed_date) },
+    { key: "driver_id", label: "Driver", render: (row) => <EntityLink kind="driver" id={row.driver_id as string | undefined} /> },
+    { key: "reason_code", label: "Reason", render: (row) => String(row.reason_code ?? row.reason_name ?? "—") },
+    { key: "amount", label: "Amount", render: (row) => `$${Number(row.amount ?? 0).toFixed(2)}` },
+    { key: "status", label: "Status", sortable: true, render: (row) => toStatusLabel(String(row.status ?? "pending")) },
+    { key: "driver_liability_id", label: "Liability", render: (row) => String(row.driver_liability_id ?? "—") },
+  ];
+
   return (
     <div className="space-y-3">
       <div className="rounded-sm border border-gray-200 bg-white p-3">
@@ -195,32 +208,15 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
           </Link>
         </div>
       </div>
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-xs">
-          <thead className="bg-gray-50 text-[10px] uppercase text-gray-600">
-            <tr>
-              <th className="px-2 py-1 text-left">Date</th>
-              <th className="px-2 py-1 text-left">Driver</th>
-              <th className="px-2 py-1 text-left">Reason</th>
-              <th className="px-2 py-1 text-left">Amount</th>
-              <th className="px-2 py-1 text-left">Status</th>
-              <th className="px-2 py-1 text-left">Liability</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(query.data?.fines ?? []).map((row) => (
-              <tr key={String(row.id)} className="border-t border-gray-100">
-                <td className="px-2 py-1">{formatDateUS(row.imposed_date)}</td>
-                <td className="px-2 py-1"><EntityLink kind="driver" id={row.driver_id as string | undefined} /></td>
-                <td className="px-2 py-1">{String(row.reason_code ?? row.reason_name ?? "—")}</td>
-                <td className="px-2 py-1">${Number(row.amount ?? 0).toFixed(2)}</td>
-                <td className="px-2 py-1">{toStatusLabel(String(row.status ?? "pending"))}</td>
-                <td className="px-2 py-1">{String(row.driver_liability_id ?? "—")}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <ParityTable<InternalFineRow>
+        columns={columns}
+        rows={query.data?.fines ?? []}
+        rowKey={(row) => String(row.id)}
+        loading={query.isLoading}
+        emptyText="No internal fines found."
+        storageKey="safety-internal-fines"
+        exportFilename="internal-fines"
+      />
     </div>
   );
 }

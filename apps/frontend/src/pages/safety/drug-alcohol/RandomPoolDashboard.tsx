@@ -4,8 +4,10 @@
  * Consumes /api/safety/drug-alcohol/random-pool/* endpoints.
  * FMCSA Part 382 §382.305 — 10% drug / 10% alcohol quarterly minimums.
  */
+import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { resolveApiUrl } from "../../../api/client";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 type PoolDraw = {
   uuid: string;
@@ -87,6 +89,44 @@ export function RandomPoolDashboard({ companyId }: Props) {
 
   const mostRecent = drawsQ.data?.[0] ?? null;
 
+  const drawColumns = useMemo<ParityColumn<PoolDraw>[]>(
+    () => [
+      { key: "draw_date", label: "Draw Date", sortable: true },
+      { key: "pool_size", label: "Pool", sortable: true },
+      {
+        key: "drug_drawn_count",
+        label: "Drug",
+        sortable: true,
+        render: (draw) => (
+          <>
+            {draw.drug_drawn_count} <span className="text-slate-400">({drugPct(draw)})</span>
+          </>
+        ),
+      },
+      {
+        key: "alcohol_drawn_count",
+        label: "Alcohol",
+        sortable: true,
+        render: (draw) => (
+          <>
+            {draw.alcohol_drawn_count} <span className="text-slate-400">({alcoholPct(draw)})</span>
+          </>
+        ),
+      },
+      {
+        key: "fmcsa",
+        label: "FMCSA",
+        render: (draw) =>
+          meetsMinimums(draw) ? (
+            <span className="text-slate-700">✓</span>
+          ) : (
+            <span className="text-red-700">✗</span>
+          ),
+      },
+    ],
+    [],
+  );
+
   return (
     <section className="rounded-lg border border-gray-200 bg-white p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -153,47 +193,18 @@ export function RandomPoolDashboard({ companyId }: Props) {
       {/* ── Draw history table ────────────────────────────────────────────── */}
       <div className="mt-4">
         <h3 className="mb-2 text-xs font-medium text-slate-700">Draw History</h3>
-        {drawsQ.isLoading ? (
-          <p className="text-xs text-slate-500">Loading…</p>
-        ) : drawsQ.isError ? (
+        {drawsQ.isError ? (
           <p className="text-xs text-red-600">Failed to load draw history.</p>
-        ) : (drawsQ.data ?? []).length === 0 ? (
-          <p className="text-xs text-slate-500">No draws recorded yet. Run a manual draw or wait for the quarterly worker.</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="text-[11px] uppercase tracking-wide text-slate-500">
-                  <th className="pb-1 pr-3 font-medium">Draw Date</th>
-                  <th className="pb-1 pr-3 font-medium">Pool</th>
-                  <th className="pb-1 pr-3 font-medium">Drug</th>
-                  <th className="pb-1 pr-3 font-medium">Alcohol</th>
-                  <th className="pb-1 font-medium">FMCSA</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(drawsQ.data ?? []).map((draw) => (
-                  <tr key={draw.uuid} className="border-b border-gray-100">
-                    <td className="py-1.5 pr-3">{draw.draw_date}</td>
-                    <td className="py-1.5 pr-3">{draw.pool_size}</td>
-                    <td className="py-1.5 pr-3">
-                      {draw.drug_drawn_count} <span className="text-slate-400">({drugPct(draw)})</span>
-                    </td>
-                    <td className="py-1.5 pr-3">
-                      {draw.alcohol_drawn_count} <span className="text-slate-400">({alcoholPct(draw)})</span>
-                    </td>
-                    <td className="py-1.5">
-                      {meetsMinimums(draw) ? (
-                        <span className="text-slate-700">✓</span>
-                      ) : (
-                        <span className="text-red-700">✗</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ParityTable<PoolDraw>
+            columns={drawColumns}
+            rows={drawsQ.data ?? []}
+            rowKey={(draw) => draw.uuid}
+            loading={drawsQ.isLoading}
+            emptyText="No draws recorded yet. Run a manual draw or wait for the quarterly worker."
+            storageKey="safety-random-pool-draws"
+            exportFilename="random-pool-draws"
+          />
         )}
       </div>
     </section>

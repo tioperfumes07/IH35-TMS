@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { listDriverSafetyPeriodScores, type DriverSafetyScoreRow } from "../../../api/safety";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { DriverScoreDetail } from "./DriverScoreDetail";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 type PeriodPreset = "week" | "month" | "quarter";
 
@@ -37,6 +38,47 @@ export function DriverScoringTab() {
 
   const rows = leaderboardQuery.data?.rows ?? [];
 
+  const columns = useMemo<ParityColumn<DriverSafetyScoreRow>[]>(
+    () => [
+      { key: "rank_in_fleet", label: "Rank", sortable: true, render: (row) => row.rank_in_fleet ?? "—" },
+      { key: "driver_name", label: "Driver", sortable: true },
+      {
+        key: "composite_score",
+        label: "Score",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (row) => (
+          <span className={`font-semibold ${scoreClass(row.composite_score)}`}>
+            {row.composite_score == null ? "N/A" : row.composite_score.toFixed(1)}
+          </span>
+        ),
+      },
+      { key: "harsh_brake_count", label: "Brakes", sortable: true, className: "text-right", cellClass: "text-right" },
+      { key: "hard_accel_count", label: "Accel", sortable: true, className: "text-right", cellClass: "text-right" },
+      { key: "speeding_seconds", label: "Speeding (s)", sortable: true, className: "text-right", cellClass: "text-right" },
+      { key: "lane_departure_count", label: "Lane", sortable: true, className: "text-right", cellClass: "text-right" },
+      {
+        key: "miles_driven",
+        label: "Miles",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (row) => row.miles_driven.toFixed(0),
+      },
+      {
+        key: "trend",
+        label: "Trend",
+        render: (row) => (
+          <button type="button" className="text-slate-700 underline" onClick={() => setSelectedDriver(row)}>
+            View
+          </button>
+        ),
+      },
+    ],
+    [],
+  );
+
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white p-3">
@@ -46,70 +88,32 @@ export function DriverScoringTab() {
             Composite score from harsh events and telematics miles (min 500 mi to rank).
           </p>
         </div>
-        <div className="flex items-center gap-2 text-xs">
-          <span className="text-slate-500">Period</span>
-          {(["week", "month", "quarter"] as PeriodPreset[]).map((value) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() => setPreset(value)}
-              className={`rounded-sm px-2 py-1 capitalize ${preset === value ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-700"}`}
-            >
-              {value}
-            </button>
-          ))}
-        </div>
       </div>
 
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-xs">
-          <thead className="bg-gray-50 text-[10px] uppercase text-slate-600">
-            <tr>
-              <th className="px-2 py-1 text-left">Rank</th>
-              <th className="px-2 py-1 text-left">Driver</th>
-              <th className="px-2 py-1 text-right">Score</th>
-              <th className="px-2 py-1 text-right">Brakes</th>
-              <th className="px-2 py-1 text-right">Accel</th>
-              <th className="px-2 py-1 text-right">Speeding (s)</th>
-              <th className="px-2 py-1 text-right">Lane</th>
-              <th className="px-2 py-1 text-right">Miles</th>
-              <th className="px-2 py-1 text-left">Trend</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.driver_uuid} className="border-t border-gray-100">
-                <td className="px-2 py-1">{row.rank_in_fleet ?? "—"}</td>
-                <td className="px-2 py-1">{row.driver_name}</td>
-                <td className={`px-2 py-1 text-right font-semibold ${scoreClass(row.composite_score)}`}>
-                  {row.composite_score == null ? "N/A" : row.composite_score.toFixed(1)}
-                </td>
-                <td className="px-2 py-1 text-right">{row.harsh_brake_count}</td>
-                <td className="px-2 py-1 text-right">{row.hard_accel_count}</td>
-                <td className="px-2 py-1 text-right">{row.speeding_seconds}</td>
-                <td className="px-2 py-1 text-right">{row.lane_departure_count}</td>
-                <td className="px-2 py-1 text-right">{row.miles_driven.toFixed(0)}</td>
-                <td className="px-2 py-1">
-                  <button
-                    type="button"
-                    className="text-slate-700 underline"
-                    onClick={() => setSelectedDriver(row)}
-                  >
-                    View
-                  </button>
-                </td>
-              </tr>
+      <ParityTable<DriverSafetyScoreRow>
+        columns={columns}
+        rows={rows}
+        rowKey={(row) => row.driver_uuid}
+        loading={leaderboardQuery.isLoading}
+        emptyText="No composite scores for this period yet. Weekly aggregation runs Monday 3am CT."
+        storageKey="safety-driver-scoring"
+        exportFilename="driver-safety-scoring"
+        filterBar={
+          <div className="relative flex flex-wrap items-center gap-2">
+            <span className="text-slate-500">Period</span>
+            {(["week", "month", "quarter"] as PeriodPreset[]).map((value) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setPreset(value)}
+                className={`rounded-sm px-2 py-1 capitalize ${preset === value ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-700"}`}
+              >
+                {value}
+              </button>
             ))}
-            {rows.length === 0 ? (
-              <tr>
-                <td colSpan={9} className="px-2 py-3 text-center text-slate-500">
-                  No composite scores for this period yet. Weekly aggregation runs Monday 3am CT.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
+          </div>
+        }
+      />
 
       {selectedDriver ? (
         <DriverScoreDetail
