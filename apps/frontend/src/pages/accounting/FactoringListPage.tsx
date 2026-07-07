@@ -11,6 +11,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SubmitFactoringModal } from "./SubmitFactoringModal";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 const STATUS_OPTIONS: Array<{ value: "all" | FactoringAdvance["status"]; label: string }> = [
   { value: "all", label: "All" },
@@ -159,7 +160,7 @@ export function FactoringListPage() {
             ) : null}
             {pagedRows.map((row) => (
               <tr key={row.id} className="cursor-pointer border-t border-gray-100 hover:bg-gray-50" onClick={() => navigate(`/accounting/factoring/${row.id}`)}>
-                <td className="px-3 py-2 font-semibold text-gray-900">{row.display_id}</td>
+                <td className="px-3 py-2 font-semibold text-gray-900" onClick={(e) => e.stopPropagation()}><EntityLink kind="factoring_advance" id={row.id} label={row.display_id} /></td>
                 <td className="px-3 py-2 text-gray-700">{formatDateUS(row.submitted_at)}</td>
                 <td className="px-3 py-2 text-gray-700">{row.factoring_company_name}</td>
                 <td className="px-3 py-2 text-gray-700">{row.invoice_count}</td>

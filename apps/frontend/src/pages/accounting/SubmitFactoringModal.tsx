@@ -7,6 +7,7 @@ import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { parseVendorNotes } from "../../lib/vendorProfileMeta";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -166,7 +167,7 @@ export function SubmitFactoringModal({ open, operatingCompanyId, onClose, onCrea
                     <td className="px-2 py-1.5">
                       <input type="checkbox" checked={selectedInvoiceIds.includes(row.id)} onChange={() => toggleInvoice(row.id)} />
                     </td>
-                    <td className="px-2 py-1.5 text-gray-900">{row.display_id}</td>
+                    <td className="px-2 py-1.5 text-gray-900"><EntityLink kind="invoice" id={row.id} label={row.display_id} /></td>
                     <td className="px-2 py-1.5 text-gray-700">{row.customer_name}</td>
                     <td className="px-2 py-1.5 text-gray-700">{money(row.total_cents)}</td>
                     <td className="px-2 py-1.5 text-gray-700">{row.customer_recourse_type}</td>
