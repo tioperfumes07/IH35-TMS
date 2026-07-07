@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { acknowledgeSafetyReminder, listSafetyReminders } from "../../../api/safety";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { ExpiryDashboard } from "../expiry-tracking/ExpiryDashboard";
+import { EntityLink } from "../../../components/shared/EntityLink";
 
 type DotReferenceCard = {
   cfr: string;
@@ -138,7 +139,7 @@ export function DOTComplianceTab() {
             <tbody>
               {orderedReminders.map((row) => (
                 <tr key={row.id} className="border-t border-gray-100">
-                  <td className="px-2 py-1">{row.driver_name ?? row.driver_id.slice(0, 8)}</td>
+                  <td className="px-2 py-1"><EntityLink kind="driver" id={row.driver_id} label={row.driver_name} /></td>
                   <td className="px-2 py-1">{row.item_name}</td>
                   <td className="px-2 py-1">{row.due_date}</td>
                   <td className="px-2 py-1">{row.days_to_expiry}</td>

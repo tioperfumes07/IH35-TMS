@@ -6,6 +6,7 @@ import { Button } from "../../components/Button";
 import { AccidentReportDrawer } from "../../components/safety/AccidentReportDrawer";
 import { companyNow } from "../../lib/businessDate";
 import { useListState } from "../../components/list-state";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 type Props = {
   operatingCompanyId: string;
@@ -100,8 +101,8 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
             {rows.map((row) => (
               <tr key={String(row.id)} className="border-t border-gray-100" data-testid={`accident-row-${String(row.id)}`}>
                 <td className="px-2 py-1">{formatDateUS(row.accident_at)}</td>
-                <td className="px-2 py-1">{String(row.driver_id ?? "—")}</td>
-                <td className="px-2 py-1">{String(row.unit_id ?? "—")}</td>
+                <td className="px-2 py-1"><EntityLink kind="driver" id={row.driver_id as string | undefined} /></td>
+                <td className="px-2 py-1"><EntityLink kind="unit" id={row.unit_id as string | undefined} /></td>
                 <td className="px-2 py-1">{String(row.location ?? row.description ?? "—")}</td>
                 <td className="px-2 py-1 capitalize">{formatAtFault(row.at_fault)}</td>
                 <td className="px-2 py-1">{formatPreventable(row.preventable)}</td>

@@ -12,6 +12,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useListState } from "../../components/list-state";
 import { formatUsdCents } from "../../lib/money";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 const PAGE_SIZE = 50;
 
@@ -159,8 +160,8 @@ export function TransfersListPage() {
               <tr key={row.id}>
                 <td className="border-b border-gray-100 px-2 py-2">{row.transfer_date}</td>
                 <td className="border-b border-gray-100 px-2 py-2 capitalize">{typeLabel(row.transfer_type)}</td>
-                <td className="border-b border-gray-100 px-2 py-2">{row.from_bank_name || row.from_coa_name || accountNameMap.get(row.from_account_id) || row.from_account_id}</td>
-                <td className="border-b border-gray-100 px-2 py-2">{row.to_bank_name || row.to_coa_name || accountNameMap.get(row.to_account_id) || row.to_account_id}</td>
+                <td className="border-b border-gray-100 px-2 py-2"><EntityLink kind="bank_account" id={row.from_account_id} label={row.from_bank_name || row.from_coa_name || accountNameMap.get(row.from_account_id) || undefined} /></td>
+                <td className="border-b border-gray-100 px-2 py-2"><EntityLink kind="bank_account" id={row.to_account_id} label={row.to_bank_name || row.to_coa_name || accountNameMap.get(row.to_account_id) || undefined} /></td>
                 <td className="border-b border-gray-100 px-2 py-2">{formatMoney(Number(row.amount_cents))}</td>
                 <td className="border-b border-gray-100 px-2 py-2">{row.memo || "-"}</td>
                 <td className="border-b border-gray-100 px-2 py-2">{row.reference_number || "-"}</td>

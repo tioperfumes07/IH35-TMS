@@ -14,13 +14,13 @@ import { getAccountRegister, type AccountRegisterReport } from "../../api/accoun
 const fmtCents = (cents: number) => formatUsdCents(cents);
 
 // Drill-through: map a register row's source transaction to its REAL detail/source route (all verified to
-// exist in routes/manifest.tsx). invoice + customer_payment have true per-id detail; the rest resolve to
-// their source module. Falls back to the journal-entries surface for plain JEs / unmapped types.
+// exist in routes/manifest.tsx). invoice + customer_payment + bill have true per-id detail; the rest
+// resolve to their source module. Falls back to the journal-entries surface for plain JEs / unmapped types.
 function sourceRoute(type: string | null, reference: string | null): string {
   const t = (type ?? "").toLowerCase();
   if (t === "invoice" && reference) return `/accounting/invoices/${reference}`;
   if (t === "customer_payment" && reference) return `/accounting/payments/${reference}`;
-  if (t === "bill") return "/accounting/bills";
+  if (t === "bill" && reference) return `/accounting/bills/${reference}`;
   if (t === "bill_payment") return "/accounting/bill-payments";
   if (t === "expense") return "/accounting/expenses";
   if (t === "settlement") return "/driver-finance/settlements";
