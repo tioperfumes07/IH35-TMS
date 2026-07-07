@@ -532,7 +532,11 @@ export function FleetTable({
                         </Link>
                       </td>
                     ) : (
-                      <td className="px-2 py-1">{String(row.unit_number ?? row.id ?? "—")}</td>
+                      <td className="px-2 py-1" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
+                        <Link to={fleetProfilePath(row)} className="font-semibold text-slate-700 hover:underline">
+                          {String(row.unit_number ?? row.id ?? "—")}
+                        </Link>
+                      </td>
                     )}
                     {isVisible("vin") ? <td className="truncate px-2 py-1">{String(row.vin ?? "—")}</td> : null}
                     {isVisible("type") ? <td className="truncate px-2 py-1">{displayType(row)}</td> : null}
