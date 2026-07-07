@@ -11,6 +11,7 @@ import { listCatalogAccounts } from "../api/catalog-accounts";
 import { getVendorIntegrityHistory } from "../api/maintenance";
 import { patchVendorAccountingCategory } from "../api/vendorCategory";
 import { useAuth } from "../auth/useAuth";
+import { EntityLink } from "../components/shared/EntityLink";
 import { DocumentsTab } from "../components/documents/DocumentsTab";
 import { TasksTab } from "../components/tasks/TasksTab";
 import { Button } from "../components/Button";
@@ -1076,7 +1077,7 @@ export function VendorDetailPage() {
                   ) : null}
                   {billsQuery.data.rows.map((b) => (
                     <tr key={b.id} className="border-b border-gray-50">
-                      <td className="px-3 py-2 font-medium">{b.bill_number ?? b.id.slice(0, 8)}</td>
+                      <td className="px-3 py-2 font-medium"><EntityLink kind="bill" id={b.id} label={b.bill_number ?? b.id.slice(0, 8)} /></td>
                       <td className="px-3 py-2">{b.bill_date}</td>
                       <td className="px-3 py-2">{b.due_date ?? "—"}</td>
                       <td className="px-3 py-2 text-right">{money.format(b.amount_cents / 100)}</td>
