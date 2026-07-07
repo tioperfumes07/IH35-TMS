@@ -243,22 +243,22 @@ export function BankingHomePage({ initialTab }: Props = {}) {
       />
       {activeTab === "accounts" ? (
         <>
-          <div className="grid grid-cols-2 gap-2 md:grid-cols-6">
+          <div className="grid auto-rows-fr grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-6">
             <button
               type="button"
               onClick={() => navigate("/lists/accounting/chart-of-accounts")}
-              className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-left text-[11px] transition hover:bg-gray-50"
+              className="flex h-16 min-w-0 flex-col justify-center gap-0.5 rounded-sm border border-gray-200 bg-white px-2 py-1 text-left text-[11px] transition hover:bg-gray-50"
             >
-              <div className="text-[10px] uppercase text-gray-500">Cash posting</div>
-              <div className="font-semibold">{money.format(cashPosting)}</div>
+              <div className="truncate text-[10px] uppercase text-gray-500">Cash posting</div>
+              <div className="truncate font-semibold" title={money.format(cashPosting)}>{money.format(cashPosting)}</div>
             </button>
             <button
               type="button"
               onClick={() => (dipAccountId ? navigate(`/banking/accounts/${dipAccountId}`) : setActiveTab("accounts"))}
-              className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-left text-[11px] transition hover:bg-gray-50"
+              className="flex h-16 min-w-0 flex-col justify-center gap-0.5 rounded-sm border border-gray-200 bg-white px-2 py-1 text-left text-[11px] transition hover:bg-gray-50"
             >
-              <div className="text-[10px] uppercase text-gray-500">DIP balance</div>
-              <div className="font-semibold">{money.format(dipBalance)}</div>
+              <div className="truncate text-[10px] uppercase text-gray-500">DIP balance</div>
+              <div className="truncate font-semibold" title={money.format(dipBalance)}>{money.format(dipBalance)}</div>
             </button>
             <button
               type="button"
@@ -266,34 +266,34 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                 setTransactionsInitialFilter("uncategorized");
                 navigate(BANKING_TAB_PATH.transactions);
               }}
-              className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-left text-[11px] transition hover:bg-slate-100"
+              className="flex h-16 min-w-0 flex-col justify-center gap-0.5 rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-left text-[11px] transition hover:bg-slate-100"
             >
-              <div className="text-[10px] uppercase text-slate-700">Uncategorized</div>
-              <div className="font-semibold text-slate-700">{uncategorizedCount}</div>
+              <div className="truncate text-[10px] uppercase text-slate-700">Uncategorized</div>
+              <div className="truncate font-semibold text-slate-700" title={String(uncategorizedCount)}>{uncategorizedCount}</div>
             </button>
             <button
               type="button"
               onClick={() => navigate(BANKING_TAB_PATH.reconciliation)}
-              className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-left text-[11px] transition hover:bg-gray-50"
+              className="flex h-16 min-w-0 flex-col justify-center gap-0.5 rounded-sm border border-gray-200 bg-white px-2 py-1 text-left text-[11px] transition hover:bg-gray-50"
             >
-              <div className="text-[10px] uppercase text-gray-500">Recon accts</div>
-              <div className="font-semibold">{reconAccounts}</div>
+              <div className="truncate text-[10px] uppercase text-gray-500">Recon accts</div>
+              <div className="truncate font-semibold" title={String(reconAccounts)}>{reconAccounts}</div>
             </button>
             <button
               type="button"
               onClick={() => navigate("/factoring/reserve-tracker")}
-              className="rounded-sm border border-slate-300 bg-slate-100 px-2 py-1 text-left text-[11px] transition hover:bg-slate-200"
+              className="flex h-16 min-w-0 flex-col justify-center gap-0.5 rounded-sm border border-slate-300 bg-slate-100 px-2 py-1 text-left text-[11px] transition hover:bg-slate-200"
             >
-              <div className="text-[10px] uppercase text-slate-700">Factoring res</div>
-              <div className="font-semibold text-slate-700">{money.format(factoringReserve)}</div>
+              <div className="truncate text-[10px] uppercase text-slate-700">Factoring res</div>
+              <div className="truncate font-semibold text-slate-700" title={money.format(factoringReserve)}>{money.format(factoringReserve)}</div>
             </button>
             <button
               type="button"
               onClick={() => navigate(BANKING_TAB_PATH.driver_escrow)}
-              className="rounded-sm border border-slate-300 bg-slate-100 px-2 py-1 text-left text-[11px] transition hover:bg-slate-200"
+              className="flex h-16 min-w-0 flex-col justify-center gap-0.5 rounded-sm border border-slate-300 bg-slate-100 px-2 py-1 text-left text-[11px] transition hover:bg-slate-200"
             >
-              <div className="text-[10px] uppercase text-slate-700">Escrow feed</div>
-              <div className="font-semibold text-slate-700">{money.format(escrowFeed)}</div>
+              <div className="truncate text-[10px] uppercase text-slate-700">Escrow feed</div>
+              <div className="truncate font-semibold text-slate-700" title={money.format(escrowFeed)}>{money.format(escrowFeed)}</div>
             </button>
           </div>
 

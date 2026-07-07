@@ -34,6 +34,9 @@ import { BankTransactionSplitModal } from "./BankTransactionSplitModal";
 import { MatchDrawer } from "./MatchDrawer";
 import { RecordTransferModal } from "../RecordTransferModal";
 import { RecordCCPaymentModal } from "../RecordCCPaymentModal";
+import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
+import { DatePicker } from "../../../components/forms/DatePicker";
+import { TableHeaderCell, useTablePref } from "../../../components/table";
 
 // BLOCK-6b — recoverable-expense bucket types a bank-categorized driver expense can charge (a fine/toll
 // the company paid on the driver's behalf → recovered from settlement). Mirrors the backend allow-list.
@@ -385,7 +388,30 @@ export function BankingTransactionsDesignView({
   const [sortBy, setSortBy] = useState<{ key: "date" | "description" | "spent" | "received"; dir: "asc" | "desc" }>({ key: "date", dir: "desc" });
   const toggleSort = (key: "date" | "description" | "spent" | "received") =>
     setSortBy((prev) => (prev.key === key ? { key, dir: prev.dir === "asc" ? "desc" : "asc" } : { key, dir: key === "date" ? "desc" : "asc" }));
-  const sortCaret = (key: "date" | "description" | "spent" | "received") => (sortBy.key === key ? (sortBy.dir === "asc" ? " ▲" : " ▼") : "");
+  // Resizable columns (QBO parity) — reuses the shared TableHeaderCell/useTablePref pair (the current
+  // repo-wide resizable-header standard: RunnerTable.tsx, VendorsListView.tsx, AccountsPayableAgingPage.tsx,
+  // FleetTable.tsx) rather than the older, effectively-unused ResizableTable/ResizableTh. Widths persist
+  // per-user via localStorage under the "banking-transactions" table key.
+  const { widths: txColWidths, setColumnWidth: setTxColWidth } = useTablePref("banking-transactions", { pageSize: 50 });
+  const TX_COLUMN_DEFAULTS: Record<string, number> = {
+    date: 90,
+    description: 220,
+    amount: 130,
+    spent: 90,
+    received: 90,
+    balance: 100,
+    fromTo: 150,
+    customer: 130,
+    productService: 130,
+    checkNo: 100,
+    payee: 130,
+    className: 100,
+    location: 110,
+    matchCategorize: 110,
+    action: 150,
+  };
+  const txColWidth = (key: string) => txColWidths[key] ?? TX_COLUMN_DEFAULTS[key] ?? 120;
+  const onToggleSortCol = (key: string) => toggleSort(key as "date" | "description" | "spent" | "received");
 
   const tableRows = useMemo(() => {
     const source = reviewTabBuckets[activeReviewTab];
@@ -808,14 +834,18 @@ export function BankingTransactionsDesignView({
             </button>
             {showDateFilterMenu ? (
               <div className="absolute left-0 z-20 mt-1 w-64 rounded-sm border border-gray-200 bg-white p-2 shadow-sm">
-                <label className="text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">
-                  From
-                  <input type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} className="mt-0.5 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" />
-                </label>
-                <label className="mt-1 block text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">
-                  To
-                  <input type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} className="mt-0.5 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" />
-                </label>
+                <div>
+                  <label htmlFor="tx-date-from" className="text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                    From
+                  </label>
+                  <DatePicker id="tx-date-from" value={dateFrom} onChange={setDateFrom} className="mt-0.5 w-full" />
+                </div>
+                <div className="mt-1">
+                  <label htmlFor="tx-date-to" className="block text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                    To
+                  </label>
+                  <DatePicker id="tx-date-to" value={dateTo} onChange={setDateTo} className="mt-0.5 w-full" />
+                </div>
                 <button
                   type="button"
                   className="mt-2 rounded-sm border border-gray-300 px-2 py-1 text-xs"
@@ -993,7 +1023,7 @@ export function BankingTransactionsDesignView({
         <table className="min-w-[1150px] w-full table-fixed text-left text-[12px]">
           <thead className="bg-gray-50 text-[10px] font-semibold uppercase tracking-wide text-gray-600">
             <tr>
-              <th className="w-[3%] px-1 py-2">
+              <th className="px-1 py-2" style={{ width: 36 }}>
                 <TableSelectionHeader
                   selectedIds={bulkSelection.selectedIds}
                   pageRowIds={pageRowIds}
@@ -1001,22 +1031,183 @@ export function BankingTransactionsDesignView({
                   cap={bulkSelection.cap}
                 />
               </th>
-              <th className="w-[7%] cursor-pointer select-none px-1 py-2 hover:bg-gray-100" onClick={() => toggleSort("date")}>Date{sortCaret("date")}</th>
-              <th className="w-[17%] cursor-pointer select-none px-1 py-2 hover:bg-gray-100" onClick={() => toggleSort("description")}>Full bank description{sortCaret("description")}</th>
-              {viewSettings.showAmountsInOneColumn ? <th className="px-2 py-2">Amount</th> : <>
-                <th className="w-[6%] cursor-pointer select-none px-1 py-2 hover:bg-gray-100" onClick={() => toggleSort("spent")}>Spent{sortCaret("spent")}</th>
-                <th className="w-[6%] cursor-pointer select-none px-1 py-2 hover:bg-gray-100" onClick={() => toggleSort("received")}>Received{sortCaret("received")}</th>
-              </>}
-              <th className={`w-[8%] px-1 py-2 text-right ${sortBy.key !== "date" ? "text-gray-300" : ""}`} title={sortBy.key !== "date" ? "Running balance is only meaningful when sorted by date" : undefined}>Balance</th>
-              <th className="w-[12%] px-1 py-2">From/To</th>
-              <th className="w-[10%] px-1 py-2">Customer</th>
-              <th className="w-[10%] px-1 py-2">Product/Service</th>
-              {viewSettings.showCheckNo ? <th className="px-2 py-2">Check No.</th> : null}
-              {viewSettings.showPayee ? <th className="px-2 py-2">Payee</th> : null}
-              {viewSettings.showClass ? <th className="px-2 py-2">Class</th> : null}
-              {viewSettings.showLocation ? <th className="px-2 py-2">Location</th> : null}
-              <th className="w-[9%] px-1 py-2">Match/Categorize</th>
-              <th className="w-[13%] px-1 py-2">Action</th>
+              {/* Resizable columns (QBO parity) — shared TableHeaderCell + useTablePref (drag the right
+              edge; widths persist per-user). */}
+              <TableHeaderCell
+                columnKey="date"
+                label="Date"
+                sortKey={sortBy.key}
+                sortDir={sortBy.dir}
+                onToggleSort={onToggleSortCol}
+                width={txColWidth("date")}
+                onResize={setTxColWidth}
+                className="font-semibold normal-case text-[10px] uppercase tracking-wide"
+              />
+              <TableHeaderCell
+                columnKey="description"
+                label="Full bank description"
+                sortKey={sortBy.key}
+                sortDir={sortBy.dir}
+                onToggleSort={onToggleSortCol}
+                width={txColWidth("description")}
+                onResize={setTxColWidth}
+                className="font-semibold normal-case text-[10px] uppercase tracking-wide"
+              />
+              {viewSettings.showAmountsInOneColumn ? (
+                <TableHeaderCell
+                  columnKey="amount"
+                  label="Amount"
+                  sortable={false}
+                  sortKey={sortBy.key}
+                  sortDir={sortBy.dir}
+                  onToggleSort={onToggleSortCol}
+                  width={txColWidth("amount")}
+                  onResize={setTxColWidth}
+                  className="font-semibold normal-case text-[10px] uppercase tracking-wide"
+                />
+              ) : (
+                <>
+                  <TableHeaderCell
+                    columnKey="spent"
+                    label="Spent"
+                    sortKey={sortBy.key}
+                    sortDir={sortBy.dir}
+                    onToggleSort={onToggleSortCol}
+                    width={txColWidth("spent")}
+                    onResize={setTxColWidth}
+                    className="font-semibold normal-case text-[10px] uppercase tracking-wide"
+                  />
+                  <TableHeaderCell
+                    columnKey="received"
+                    label="Received"
+                    sortKey={sortBy.key}
+                    sortDir={sortBy.dir}
+                    onToggleSort={onToggleSortCol}
+                    width={txColWidth("received")}
+                    onResize={setTxColWidth}
+                    className="font-semibold normal-case text-[10px] uppercase tracking-wide"
+                  />
+                </>
+              )}
+              <TableHeaderCell
+                columnKey="balance"
+                label="Balance"
+                sortable={false}
+                sortKey={sortBy.key}
+                sortDir={sortBy.dir}
+                onToggleSort={onToggleSortCol}
+                width={txColWidth("balance")}
+                onResize={setTxColWidth}
+                align="right"
+                className={`font-semibold normal-case text-[10px] uppercase tracking-wide ${sortBy.key !== "date" ? "text-gray-300" : ""}`}
+              />
+              <TableHeaderCell
+                columnKey="fromTo"
+                label="From/To"
+                sortable={false}
+                sortKey={sortBy.key}
+                sortDir={sortBy.dir}
+                onToggleSort={onToggleSortCol}
+                width={txColWidth("fromTo")}
+                onResize={setTxColWidth}
+                className="font-semibold normal-case text-[10px] uppercase tracking-wide"
+              />
+              <TableHeaderCell
+                columnKey="customer"
+                label="Customer"
+                sortable={false}
+                sortKey={sortBy.key}
+                sortDir={sortBy.dir}
+                onToggleSort={onToggleSortCol}
+                width={txColWidth("customer")}
+                onResize={setTxColWidth}
+                className="font-semibold normal-case text-[10px] uppercase tracking-wide"
+              />
+              <TableHeaderCell
+                columnKey="productService"
+                label="Product/Service"
+                sortable={false}
+                sortKey={sortBy.key}
+                sortDir={sortBy.dir}
+                onToggleSort={onToggleSortCol}
+                width={txColWidth("productService")}
+                onResize={setTxColWidth}
+                className="font-semibold normal-case text-[10px] uppercase tracking-wide"
+              />
+              {viewSettings.showCheckNo ? (
+                <TableHeaderCell
+                  columnKey="checkNo"
+                  label="Check No."
+                  sortable={false}
+                  sortKey={sortBy.key}
+                  sortDir={sortBy.dir}
+                  onToggleSort={onToggleSortCol}
+                  width={txColWidth("checkNo")}
+                  onResize={setTxColWidth}
+                  className="font-semibold normal-case text-[10px] uppercase tracking-wide"
+                />
+              ) : null}
+              {viewSettings.showPayee ? (
+                <TableHeaderCell
+                  columnKey="payee"
+                  label="Payee"
+                  sortable={false}
+                  sortKey={sortBy.key}
+                  sortDir={sortBy.dir}
+                  onToggleSort={onToggleSortCol}
+                  width={txColWidth("payee")}
+                  onResize={setTxColWidth}
+                  className="font-semibold normal-case text-[10px] uppercase tracking-wide"
+                />
+              ) : null}
+              {viewSettings.showClass ? (
+                <TableHeaderCell
+                  columnKey="className"
+                  label="Class"
+                  sortable={false}
+                  sortKey={sortBy.key}
+                  sortDir={sortBy.dir}
+                  onToggleSort={onToggleSortCol}
+                  width={txColWidth("className")}
+                  onResize={setTxColWidth}
+                  className="font-semibold normal-case text-[10px] uppercase tracking-wide"
+                />
+              ) : null}
+              {viewSettings.showLocation ? (
+                <TableHeaderCell
+                  columnKey="location"
+                  label="Location"
+                  sortable={false}
+                  sortKey={sortBy.key}
+                  sortDir={sortBy.dir}
+                  onToggleSort={onToggleSortCol}
+                  width={txColWidth("location")}
+                  onResize={setTxColWidth}
+                  className="font-semibold normal-case text-[10px] uppercase tracking-wide"
+                />
+              ) : null}
+              <TableHeaderCell
+                columnKey="matchCategorize"
+                label="Match/Categorize"
+                sortable={false}
+                sortKey={sortBy.key}
+                sortDir={sortBy.dir}
+                onToggleSort={onToggleSortCol}
+                width={txColWidth("matchCategorize")}
+                onResize={setTxColWidth}
+                className="font-semibold normal-case text-[10px] uppercase tracking-wide"
+              />
+              <TableHeaderCell
+                columnKey="action"
+                label="Action"
+                sortable={false}
+                sortKey={sortBy.key}
+                sortDir={sortBy.dir}
+                onToggleSort={onToggleSortCol}
+                width={txColWidth("action")}
+                onResize={setTxColWidth}
+                className="font-semibold normal-case text-[10px] uppercase tracking-wide"
+              />
             </tr>
           </thead>
           <tbody>
@@ -1075,13 +1266,12 @@ export function BankingTransactionsDesignView({
                     </td>
                     <td className="px-1 py-2 align-top text-gray-700">
                       {viewSettings.editableDateField && expanded ? (
-                        <input
-                          type="date"
-                          className="h-7 rounded-sm border border-gray-300 px-2 text-xs"
-                          value={tx.transaction_date.slice(0, 10)}
-                          onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}
-                          readOnly
-                        />
+                        // QB-style calendar (§7); still display-only — there is no PATCH transaction-date
+                        // endpoint yet, so this mirrors the prior readOnly input's non-functional state
+                        // rather than silently pretending a bank transaction's date can be edited here.
+                        <div onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}>
+                          <DatePicker value={tx.transaction_date.slice(0, 10)} onChange={() => {}} disabled className="w-32" />
+                        </div>
                       ) : (
                         formatBankTransactionDate(tx.transaction_date)
                       )}
@@ -1268,22 +1458,29 @@ export function BankingTransactionsDesignView({
                               </label>
                               <label className="text-xs text-gray-600">
                                 Payee (vendor)
-                                <SelectCombobox
-                                  className="mt-0.5 w-full"
-                                  value={draft.vendorId}
-                                  onChange={(event) => {
-                                    const vid = event.target.value;
-                                    const v = (vendorsQuery.data ?? []).find((x) => x.id === vid);
-                                    setDraft(tx, { vendorId: vid, payee: v?.name ?? "" });
-                                  }}
-                                >
-                                  <option value="">Select payee (vendor)</option>
-                                  {(vendorsQuery.data ?? []).map((v) => (
-                                    <option key={v.id} value={v.id}>
-                                      {v.name}
-                                    </option>
-                                  ))}
-                                </SelectCombobox>
+                                <div className="mt-0.5">
+                                  {/* QBO parity — inline "+ Add new vendor" (ReferenceSelect, A2 keystone).
+                                  Note: the create call lands in the mdata.qbo_vendors mirror while this list
+                                  reads mdata.vendors (a pre-existing split-brain in ReferenceSelect/
+                                  QuickCreateEntityModal, not introduced here) — the new vendor stays selectable
+                                  for this session via ReferenceSelect's own "created" state, but won't
+                                  reappear in the list after a refetch/reload until that backend gap is fixed. */}
+                                  <ReferenceSelect
+                                    value={draft.vendorId || null}
+                                    onChange={(vid) => {
+                                      const v = (vendorsQuery.data ?? []).find((x) => x.id === vid);
+                                      setDraft(tx, { vendorId: vid ?? "", ...(v ? { payee: v.name } : {}) });
+                                    }}
+                                    options={(vendorsQuery.data ?? []).map((v) => ({ value: v.id, label: v.name }))}
+                                    createKind="vendor"
+                                    operatingCompanyId={companyId}
+                                    placeholder="Select payee (vendor)"
+                                    onOptionCreated={(opt) => {
+                                      void vendorsQuery.refetch();
+                                      setDraft(tx, { payee: opt.label });
+                                    }}
+                                  />
+                                </div>
                               </label>
                               <label className="text-xs text-gray-600">
                                 Check No.
@@ -1321,19 +1518,23 @@ export function BankingTransactionsDesignView({
                               </label>
                               <label className="text-xs text-gray-600">
                                 Category (Chart of Accounts)
-                                <SelectCombobox
-                                  className="mt-0.5 w-full"
-                                  value={draft.accountId}
-                                  onChange={(event) => setDraft(tx, { accountId: event.target.value })}
-                                >
-                                  <option value="">Select category account</option>
-                                  {(coaQuery.data?.accounts ?? []).map((account) => (
-                                    <option key={account.id} value={account.id}>
-                                      {account.account_number ? `${account.account_number} · ` : ""}
-                                      {account.account_name}
-                                    </option>
-                                  ))}
-                                </SelectCombobox>
+                                <div className="mt-0.5">
+                                  {/* QBO parity — inline "+ Add new category" (creates a GL account via the
+                                  existing ReferenceSelect/QuickCreateEntityModal "category" flow). */}
+                                  <ReferenceSelect
+                                    value={draft.accountId || null}
+                                    onChange={(v) => setDraft(tx, { accountId: v ?? "" })}
+                                    options={(coaQuery.data?.accounts ?? []).map((account) => ({
+                                      value: account.id,
+                                      label: account.account_name,
+                                      type: account.account_number ? String(account.account_number) : undefined,
+                                    }))}
+                                    createKind="category"
+                                    operatingCompanyId={companyId}
+                                    placeholder="Select category account"
+                                    onOptionCreated={() => void coaQuery.refetch()}
+                                  />
+                                </div>
                               </label>
                               <label className="text-xs text-gray-600">
                                 Class
@@ -1353,34 +1554,43 @@ export function BankingTransactionsDesignView({
                               </label>
                               <label className="text-xs text-gray-600">
                                 Item (Products &amp; Services)
-                                <SelectCombobox
-                                  className="mt-0.5 w-full"
-                                  value={draft.itemId}
-                                  onChange={(event) => {
-                                    const iid = event.target.value;
-                                    const item = (itemsQuery.data ?? []).find((x) => x.id === iid);
-                                    // An Item carries its own account mapping (PR #1716): default the Category
-                                    // account from the item's expense/income account when none is chosen yet, so
-                                    // an item line still posts to the right account without re-picking it.
-                                    const m = (item?.metadata ?? {}) as Record<string, unknown>;
-                                    const itemAccount =
-                                      (typeof m.default_expense_account_id === "string" && m.default_expense_account_id) ||
-                                      (typeof m.default_income_account_id === "string" && m.default_income_account_id) ||
-                                      "";
-                                    setDraft(tx, {
-                                      itemId: iid,
-                                      productService: item?.display_name ?? "",
-                                      accountId: draft.accountId || (itemAccount as string) || "",
-                                    });
-                                  }}
-                                >
-                                  <option value="">Select item</option>
-                                  {(itemsQuery.data ?? []).map((it: AccountingCatalogRow) => (
-                                    <option key={it.id} value={it.id}>
-                                      {it.display_name}
-                                    </option>
-                                  ))}
-                                </SelectCombobox>
+                                <div className="mt-0.5">
+                                  {/* QBO parity — inline "+ Add new product/service" reuses ReferenceSelect's
+                                  "service" create kind (InlineCreateDrawer → NewServiceDrawerForm), the kind
+                                  purpose-built for this exact field (BK7). Note: like Payee/Category above,
+                                  the create call lands in the mdata.qbo_items mirror while this list reads
+                                  catalogs.items (pre-existing split-brain, not introduced here) — the new item
+                                  stays selectable for this session but won't persist into the catalog list
+                                  until that backend gap is fixed. */}
+                                  <ReferenceSelect
+                                    value={draft.itemId || null}
+                                    onChange={(iid) => {
+                                      const item = (itemsQuery.data ?? []).find((x) => x.id === iid);
+                                      // An Item carries its own account mapping (PR #1716): default the Category
+                                      // account from the item's expense/income account when none is chosen yet, so
+                                      // an item line still posts to the right account without re-picking it.
+                                      const m = (item?.metadata ?? {}) as Record<string, unknown>;
+                                      const itemAccount =
+                                        (typeof m.default_expense_account_id === "string" && m.default_expense_account_id) ||
+                                        (typeof m.default_income_account_id === "string" && m.default_income_account_id) ||
+                                        "";
+                                      setDraft(tx, {
+                                        itemId: iid ?? "",
+                                        ...(item ? { productService: item.display_name ?? "" } : {}),
+                                        accountId: draft.accountId || (itemAccount as string) || "",
+                                      });
+                                    }}
+                                    options={(itemsQuery.data ?? []).map((it: AccountingCatalogRow) => ({ value: it.id, label: it.display_name }))}
+                                    createKind="service"
+                                    addNewLabel="+ Add new product/service"
+                                    operatingCompanyId={companyId}
+                                    placeholder="Select item"
+                                    onOptionCreated={(opt) => {
+                                      void itemsQuery.refetch();
+                                      setDraft(tx, { productService: opt.label });
+                                    }}
+                                  />
+                                </div>
                               </label>
                               <label className="text-xs text-gray-600">
                                 Customer/project
