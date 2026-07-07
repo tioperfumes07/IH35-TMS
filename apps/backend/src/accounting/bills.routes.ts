@@ -529,6 +529,37 @@ export async function registerBillsRoutes(app: FastifyInstance) {
 
     return payload;
   });
+
+  // Reverse drill-through: list bills for a specific vendor. Read-only SELECT, company-scoped.
+  // Powers the Vendor detail "Bills" tab. Delegates to the same listBills service used by the
+  // global /accounting/bills list — the vendor id comes from the path param, not a query param.
+  const vendorIdParamSchema = z.object({ vendorId: z.string().uuid() });
+  const vendorBillsQuerySchema = companyQuerySchema.extend({
+    status: z.enum(["open", "partial", "paid", "voided"]).optional(),
+    date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    limit: z.coerce.number().int().min(1).max(200).default(50),
+    offset: z.coerce.number().int().min(0).default(0),
+  });
+  app.get("/api/v1/vendors/:vendorId/bills", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!canAccessAccounting(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+    const params = vendorIdParamSchema.safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const query = vendorBillsQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
+    const rows = await listBills(String(user.uuid), query.data.operating_company_id, {
+      vendorId: params.data.vendorId,
+      status: query.data.status,
+      fromDate: query.data.date_from,
+      toDate: query.data.date_to,
+      limit: query.data.limit,
+      offset: query.data.offset,
+    });
+    return { rows };
+  });
 }
 
 

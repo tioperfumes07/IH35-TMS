@@ -32,6 +32,7 @@ const listQuerySchema = z.object({
   offset: z.coerce.number().int().min(0).default(0),
   status: settlementStatusSchema.optional(),
   payment_state: paymentStateSchema.optional(),
+  driver_id: z.string().uuid().optional(),
 });
 const idParamsSchema = z.object({ id: z.string().uuid() });
 const createBodySchema = z.object({
@@ -117,6 +118,10 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
         values.push(q.payment_state);
         where.push(`COALESCE(s.payment_state, 'unpaid') = $${values.length}`);
       }
+      if (q.driver_id) {
+        values.push(q.driver_id);
+        where.push(`s.driver_id = $${values.length}::uuid`);
+      }
       const countRes = await client.query(
         `SELECT count(*)::int AS cnt FROM driver_finance.driver_settlements s WHERE ${where.join(" AND ")}`,
         values
@@ -143,6 +148,76 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
       );
 
       // List can show cached/quick debt summary approximation.
+      const rows = await Promise.all(
+        rowsRes.rows.map(async (row: any) => {
+          const debt = await recomputeDebtSync(client, String(row.driver_id));
+          return {
+            ...row,
+            live_debt_flag: debt?.total_active_debt == null ? null : Number(debt.total_active_debt),
+            debt_computed_at: debt?.computed_at ?? null,
+          };
+        })
+      );
+      return { rows, total: Number((countRes.rows[0] as { cnt?: number } | undefined)?.cnt ?? 0) };
+    });
+    return { settlements: payload.rows, total_count: payload.total };
+  });
+
+  // Reverse drill-through: list all historical settlements for a specific driver.
+  // Path-based alias for GET /driver-finance/settlements?driver_id=X.
+  // Powers the Driver detail "Settlements" tab — returns full history (all statuses).
+  const driverIdParamSchema = z.object({ id: z.string().uuid() });
+  const driverSettlementsQuerySchema = z.object({
+    operating_company_id: z.string().uuid(),
+    status: settlementStatusSchema.optional(),
+    payment_state: paymentStateSchema.optional(),
+    limit: z.coerce.number().int().min(1).max(200).default(50),
+    offset: z.coerce.number().int().min(0).default(0),
+  });
+  app.get("/api/v1/drivers/:id/settlements", async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    const params = driverIdParamSchema.safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const query = driverSettlementsQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+
+    const payload = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
+      if (!(await hasSettlementSchema(client))) return { rows: [], total: 0 };
+      const values: unknown[] = [query.data.operating_company_id, params.data.id];
+      const where = ["s.operating_company_id = $1", "s.driver_id = $2::uuid"];
+      if (query.data.status) {
+        values.push(query.data.status);
+        where.push(`s.status = $${values.length}`);
+      }
+      if (query.data.payment_state) {
+        values.push(query.data.payment_state);
+        where.push(`COALESCE(s.payment_state, 'unpaid') = $${values.length}`);
+      }
+      const countRes = await client.query(
+        `SELECT count(*)::int AS cnt FROM driver_finance.driver_settlements s WHERE ${where.join(" AND ")}`,
+        values
+      );
+      values.push(query.data.limit, query.data.offset);
+      const rowsRes = await client.query(
+        `
+          SELECT
+            v.*,
+            COALESCE(s.payment_state, 'unpaid') AS payment_state,
+            s.payment_queued_at,
+            s.payment_sent_at,
+            s.payment_cleared_at,
+            s.payment_bank_reference,
+            s.payment_bounced_reason,
+            s.payment_method
+          FROM views.driver_settlement_with_debt v
+          JOIN driver_finance.driver_settlements s ON s.id = v.id
+          WHERE ${where.join(" AND ")}
+          ORDER BY v.period_start DESC
+          LIMIT $${values.length - 1} OFFSET $${values.length}
+        `,
+        values
+      );
       const rows = await Promise.all(
         rowsRes.rows.map(async (row: any) => {
           const debt = await recomputeDebtSync(client, String(row.driver_id));

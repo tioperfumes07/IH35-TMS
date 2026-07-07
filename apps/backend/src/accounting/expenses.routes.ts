@@ -113,6 +113,7 @@ const listExpensesQuerySchema = companyQuerySchema.extend({
   status: z.enum(["draft", "posted", "void"]).optional(),
   date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  load_id: z.string().uuid().optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -121,6 +122,7 @@ export type ExpenseListFilters = {
   status?: "draft" | "posted" | "void";
   dateFrom?: string;
   dateTo?: string;
+  loadId?: string;
   limit: number;
   offset: number;
 };
@@ -171,6 +173,10 @@ export async function queryExpensesList(
   if (filters.dateTo) {
     values.push(filters.dateTo);
     where.push(`e.transaction_date <= $${values.length}::date`);
+  }
+  if (filters.loadId) {
+    values.push(filters.loadId);
+    where.push(`e.load_id = $${values.length}::uuid`);
   }
   values.push(filters.limit);
   const limitIdx = values.length;
@@ -251,6 +257,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         status: q.status,
         dateFrom: q.date_from,
         dateTo: q.date_to,
+        loadId: q.load_id,
         limit: q.limit,
         offset: q.offset,
       });
@@ -839,6 +846,39 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         { expense_id: expenseId, reversing_journal_entry_id: reversingJeId, reason: body.data.reason }, "warning");
     });
     return reply.code(200).send({ expense_id: expenseId, status: "void", reversing_journal_entry_id: reversingJeId });
+  });
+
+  // Reverse drill-through: list expenses attributed to a specific load. Read-only SELECT, company-scoped.
+  // Powers the Load detail "Expenses" tab. Delegates to queryExpensesList with loadId from path.
+  const loadIdParamSchema = z.object({ id: z.string().uuid() });
+  const loadExpensesQuerySchema = companyQuerySchema.extend({
+    status: z.enum(["draft", "posted", "void"]).optional(),
+    limit: z.coerce.number().int().min(1).max(200).default(50),
+    offset: z.coerce.number().int().min(0).default(0),
+  });
+  app.get("/api/v1/loads/:id/expenses", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!accountingRoles(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+    const params = loadIdParamSchema.safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const parsed = loadExpensesQuerySchema.safeParse(req.query ?? {});
+    if (!parsed.success) return validationError(reply, parsed.error);
+    const q = parsed.data;
+
+    const result = await withCompanyScope(String(user.uuid), q.operating_company_id, async (client) => {
+      if (!(await relationExists(client, "accounting.expenses"))) return { unavailable: true as const };
+      const rows = await queryExpensesList(client, q.operating_company_id, {
+        loadId: params.data.id,
+        status: q.status,
+        limit: q.limit,
+        offset: q.offset,
+      });
+      return { rows };
+    });
+
+    if ("unavailable" in result) return reply.code(200).send({ rows: [] });
+    return reply.code(200).send(result);
   });
 }
 
