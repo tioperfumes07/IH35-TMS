@@ -1,5 +1,6 @@
 import { formatDateUS } from "../../lib/formatDate";
 import { useMemo, useState } from "react";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listBillPayments, listBills, type BillPayment, type VendorBill, voidVendorBillPayment } from "../../api/accounting";
@@ -243,8 +244,8 @@ export function BillPaymentsListPage() {
                 <td className="px-3 py-2 text-gray-700">{formatDateUS(row.payment_date)}</td>
                 <td className="px-3 py-2 text-gray-900">{money(row.amount_cents)}</td>
                 <td className="px-3 py-2 text-gray-700">{row.payment_method}</td>
-                <td className="px-3 py-2 font-mono text-[11px] text-gray-700">{row.bill_id}</td>
-                <td className="px-3 py-2 font-mono text-[11px] text-gray-700">{row.vendor_id ?? "-"}</td>
+                <td className="px-3 py-2 text-gray-700"><EntityLink kind="bill" id={row.bill_id} label={row.bill_id.slice(0, 8)} /></td>
+                <td className="px-3 py-2 text-gray-700"><EntityLink kind="vendor" id={row.vendor_id} /></td>
                 <td className="px-3 py-2 text-gray-700">{row.reference_number ?? row.check_number ?? "-"}</td>
                 <td className="px-3 py-2 text-gray-700">{row.memo ?? "-"}</td>
                 <td className="px-3 py-2">

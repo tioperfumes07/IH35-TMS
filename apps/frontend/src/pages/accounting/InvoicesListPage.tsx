@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { ArrowRightCircle } from "lucide-react";
 import { listInvoices, type InvoiceStatus } from "../../api/accounting";
 import { Button } from "../../components/Button";
@@ -263,14 +264,9 @@ export function InvoicesListPage() {
                   </span>
                 </td>
                 <td className="min-w-0 max-w-[240px] px-3 py-2 text-gray-700">
-                  {(() => {
-                    const v = invoice.customer_name ?? "-";
-                    return (
-                      <span title={v !== "-" ? v : undefined} className="single-line-name">
-                        {v}
-                      </span>
-                    );
-                  })()}
+                  <span title={invoice.customer_name ?? undefined} className="single-line-name">
+                    <EntityLink kind="customer" id={invoice.customer_id} label={invoice.customer_name ?? invoice.customer_id} />
+                  </span>
                 </td>
                 <td className="px-3 py-2 text-gray-700">{formatDateUS(invoice.issue_date)}</td>
                 <td className="px-3 py-2 text-gray-700">{formatDateUS(invoice.due_date)}</td>
