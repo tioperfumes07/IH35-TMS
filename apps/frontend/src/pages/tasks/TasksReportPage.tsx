@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { TasksModuleTabs } from "./TasksModuleTabs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { fetchPlannerTasks, type Task, type TaskStatus } from "../../api/tasks";
@@ -75,6 +76,25 @@ export function TasksReportPage() {
       .sort((a, b) => b.total - a.total);
   }, [tasks, today]);
 
+  // ParityTable columns (A1 grammar): built-in sort/density/column-toggle/pager replace the former
+  // hand-rolled <table>. Preserves the overdue red-highlight on the Overdue column.
+  const employeeColumns = useMemo<ParityColumn<EmployeeRow>[]>(
+    () => [
+      { key: "name", label: "Assignee", sortable: true, cellClass: "font-medium text-slate-800" },
+      { key: "total", label: "Total", sortable: true, cellClass: "text-slate-600" },
+      { key: "completed", label: "Completed", sortable: true, cellClass: "text-slate-600" },
+      { key: "open", label: "Open", sortable: true, cellClass: "text-slate-600" },
+      {
+        key: "overdue",
+        label: "Overdue",
+        sortable: true,
+        render: (row) => <span className={row.overdue > 0 ? "font-semibold text-red-700" : "text-slate-600"}>{row.overdue}</span>,
+      },
+      { key: "avgActualMinutes", label: "Avg time (min)", sortable: true, render: (row) => row.avgActualMinutes ?? "—", cellClass: "text-slate-600" },
+    ],
+    [],
+  );
+
   return (
     <div className="space-y-4">
       <PageHeader title="Admin Report" subtitle="Task throughput and team productivity" />
@@ -111,38 +131,18 @@ export function TasksReportPage() {
         ))}
       </div>
 
-      <div className="rounded-sm border border-slate-200 bg-white">
-        <div className="border-b border-slate-200 px-3 py-2 text-sm font-semibold text-slate-900">By assignee</div>
-        {byEmployee.length === 0 ? (
-          <div className="p-6 text-center text-xs text-slate-500">No tasks in this window.</div>
-        ) : (
-          <div className="overflow-x-auto">
-          <table className="min-w-full text-left text-xs">
-            <thead className="border-b border-slate-200 text-slate-500">
-              <tr>
-                <th className="px-3 py-2 font-semibold">Assignee</th>
-                <th className="px-3 py-2 font-semibold">Total</th>
-                <th className="px-3 py-2 font-semibold">Completed</th>
-                <th className="px-3 py-2 font-semibold">Open</th>
-                <th className="px-3 py-2 font-semibold">Overdue</th>
-                <th className="px-3 py-2 font-semibold">Avg time (min)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {byEmployee.map((r) => (
-                <tr key={r.name} className="border-t border-slate-100">
-                  <td className="px-3 py-2 font-medium text-slate-800">{r.name}</td>
-                  <td className="px-3 py-2 text-slate-600">{r.total}</td>
-                  <td className="px-3 py-2 text-slate-600">{r.completed}</td>
-                  <td className="px-3 py-2 text-slate-600">{r.open}</td>
-                  <td className={`px-3 py-2 ${r.overdue > 0 ? "font-semibold text-red-700" : "text-slate-600"}`}>{r.overdue}</td>
-                  <td className="px-3 py-2 text-slate-600">{r.avgActualMinutes ?? "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          </div>
-        )}
+      <div className="space-y-2">
+        <div className="text-sm font-semibold text-slate-900">By assignee</div>
+        <ParityTable
+          rows={byEmployee}
+          columns={employeeColumns}
+          rowKey={(row) => row.name}
+          // Settled-only empty (LIST-EMPTY-1 invariant): show loading while pending OR while a
+          // refetch is in flight with zero current rows, so emptyText never flashes mid-fetch.
+          loading={query.isPending || (query.isFetching && byEmployee.length === 0)}
+          storageKey="tasks-report-by-assignee"
+          emptyText="No tasks in this window."
+        />
       </div>
     </div>
   );
