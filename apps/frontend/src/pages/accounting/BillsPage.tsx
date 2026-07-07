@@ -3,6 +3,7 @@ import { Fragment, useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { listBills, listPaymentsForBill, type BillStatus, type VendorBill } from "../../api/accounting";
 import { BillAllocationPanel } from "../../components/allocation";
@@ -336,7 +337,7 @@ export function BillsPage() {
                         {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                       </button>
                     </td>
-                    <td className="px-3 py-2 font-medium text-gray-900">{bill.vendor_name || bill.vendor_id || "—"}</td>
+                    <td className="px-3 py-2 font-medium text-gray-900"><EntityLink kind="vendor" id={bill.vendor_id} label={bill.vendor_name || bill.vendor_id} /></td>
                     <td className="px-3 py-2">{bill.bill_number || bill.id.slice(0, 8)}</td>
                     <td className="px-3 py-2">{formatDateUS(bill.bill_date)}</td>
                     <td className="px-3 py-2 text-right">{money(bill.amount_cents)}</td>
