@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { deactivateFactoring, getFactoringChargebacksFees, getFactoringRecoursePipeline, getFactoringStatementsSettings, getFactoringSummary } from "../../api/factoring";
 import { listVendors, updateVendor } from "../../api/mdata";
@@ -783,7 +784,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
                 <tbody className="divide-y divide-gray-100">
                   {(vendorMergesQuery.data?.rows ?? []).map((row) => (
                     <tr key={row.id}>
-                      <td className="px-2 py-2">{row.driver_id}</td>
+                      <td className="px-2 py-2"><EntityLink kind="driver" id={row.driver_id} label={row.driver_id?.slice(0, 8)} /></td>
                       <td className="px-2 py-2">{row.from_qbo_vendor_id}</td>
                       <td className="px-2 py-2">{row.to_qbo_vendor_id}</td>
                       <td className="px-2 py-2">{row.merge_reason}</td>

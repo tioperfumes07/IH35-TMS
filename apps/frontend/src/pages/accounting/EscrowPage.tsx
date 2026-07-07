@@ -1,5 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { listEscrowAccounts, listEscrowPostings, type EscrowAccount, type EscrowPosting } from "../../api/accounting";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -150,7 +151,7 @@ export function EscrowPage() {
                         {row.source_type}
                         {row.source_id ? ` / ${row.source_id}` : ""}
                       </td>
-                      <td className="px-2 py-2 font-mono">{row.linked_journal_entry_id ?? "—"}</td>
+                      <td className="px-2 py-2 font-mono"><EntityLink kind="journal_entry" id={row.linked_journal_entry_id ?? undefined} label={row.linked_journal_entry_id ? row.linked_journal_entry_id.slice(0, 8) : "—"} /></td>
                     </tr>
                   ))}
                 </tbody>

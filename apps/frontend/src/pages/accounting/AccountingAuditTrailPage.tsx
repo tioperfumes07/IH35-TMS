@@ -1,5 +1,6 @@
 import { Fragment, useMemo, useState } from "react";
 import { useInfiniteQuery, useMutation } from "@tanstack/react-query";
+import { EntityLink } from "../../components/shared/EntityLink";
 import {
   getAccountingSourceLineage,
   listAccountingAuditTrail,
@@ -257,7 +258,7 @@ export function AccountingAuditTrailPage() {
                 {lineageRows.map((row) => (
                   <tr key={`${row.posting_id}:${row.linked_object_id ?? "none"}`} className="border-b border-slate-100">
                     <td className="px-2 py-2">{fmtDate(row.occurred_at)}</td>
-                    <td className="px-2 py-2">{row.journal_entry_id}</td>
+                    <td className="px-2 py-2"><EntityLink kind="journal_entry" id={row.journal_entry_id} label={row.journal_entry_id?.slice(0, 8)} /></td>
                     <td className="px-2 py-2">
                       {row.account_number ?? "—"} {row.account_name ? `- ${row.account_name}` : ""}
                     </td>
