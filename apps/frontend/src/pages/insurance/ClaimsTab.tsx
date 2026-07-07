@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { listInsuranceClaims, type InsuranceClaim, type InsuranceClaimStatus } from "../../api/insurance";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { Button } from "../../components/Button";
 import { ClaimCreateModal } from "../../components/insurance/ClaimCreateModal";
 import { DataPanel } from "../../components/layout/DataPanel";
@@ -132,13 +133,7 @@ function ClaimRow({ claim }: { claim: InsuranceClaim }) {
         </Link>
       </td>
       <td className="px-2 py-1.5 text-gray-700">
-        {claim.asset_id ? (
-          <Link className="text-slate-700 underline" to={`/fleet/units/${claim.asset_id}`}>
-            {claim.asset_id.slice(0, 8)}
-          </Link>
-        ) : (
-          "-"
-        )}
+        <EntityLink kind="unit" id={claim.asset_id ?? undefined} label={claim.asset_id ? claim.asset_id.slice(0, 8) : undefined} />
       </td>
       <td className="px-2 py-1.5 text-gray-700">{formatDateUS(claim.accident_date)}</td>
       <td className="px-2 py-1.5 text-gray-700">{formatMoney(claim.amount_claimed_cents)}</td>

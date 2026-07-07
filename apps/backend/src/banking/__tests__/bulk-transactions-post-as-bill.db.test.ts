@@ -63,13 +63,17 @@ describeIntegration("BANKING-GL-COMPLETION post-as-bill paid-in-full end-to-end 
   }
 
   async function setFlagOverride(flagKey: string, enabled: boolean) {
+    // Use a USER-LEVEL override (user_uuid = userId, operating_company_id = NULL) so this test is immune
+    // to concurrent company-level flag writes from other parallel test files (e.g. bank-transaction-splits-
+    // vendor-bill which sets BILL_GL_POSTING_ENABLED = true for TRANSP at the company level). User-level
+    // overrides take priority over company-level in resolveFlagEnabled(), isolating this test's flag state.
     await bypass(async () => {
       await db.query(
-        `INSERT INTO lib.feature_flag_overrides (flag_key, operating_company_id, enabled, set_by_user_uuid)
-         VALUES ($1,$2::uuid,$3,$4::uuid)
-         ON CONFLICT (flag_key, operating_company_id) WHERE user_uuid IS NULL AND operating_company_id IS NOT NULL
+        `INSERT INTO lib.feature_flag_overrides (flag_key, user_uuid, enabled, set_by_user_uuid)
+         VALUES ($1,$2::uuid,$3,$2::uuid)
+         ON CONFLICT (flag_key, user_uuid) WHERE user_uuid IS NOT NULL
          DO UPDATE SET enabled = EXCLUDED.enabled`,
-        [flagKey, companyId, enabled, userId]
+        [flagKey, userId, enabled]
       );
     });
   }
@@ -106,7 +110,7 @@ describeIntegration("BANKING-GL-COMPLETION post-as-bill paid-in-full end-to-end 
         `INSERT INTO org.user_company_access (user_id, company_id) VALUES ($1::uuid,$2::uuid) ON CONFLICT (user_id, company_id) DO NOTHING`,
         [userId, companyId]
       );
-      await db.query(`DELETE FROM lib.feature_flag_overrides WHERE flag_key IN ('BILL_GL_POSTING_ENABLED','BILL_PAYMENT_GL_POSTING_ENABLED') AND operating_company_id=$1::uuid`, [companyId]);
+      await db.query(`DELETE FROM lib.feature_flag_overrides WHERE flag_key IN ('BILL_GL_POSTING_ENABLED','BILL_PAYMENT_GL_POSTING_ENABLED') AND (operating_company_id=$1::uuid OR user_uuid=$2::uuid)`, [companyId, userId]);
       await db.query(
         `INSERT INTO catalogs.accounts (id, operating_company_id, account_number, account_name, account_type, is_postable)
          VALUES ($1::uuid,$3::uuid,$2,'Bulk Post Bank GL Test','Asset',true)`,
@@ -149,7 +153,7 @@ describeIntegration("BANKING-GL-COMPLETION post-as-bill paid-in-full end-to-end 
         await db.query(`DELETE FROM banking.bank_transactions WHERE id = ANY($1::uuid[])`, [createdTxnIds]);
         await db.query(`DELETE FROM banking.bank_accounts WHERE id = $1::uuid`, [bankAccountId]);
         await db.query(`DELETE FROM catalogs.accounts WHERE id = $1::uuid`, [bankGlAccountId]);
-        await db.query(`DELETE FROM lib.feature_flag_overrides WHERE flag_key IN ('BILL_GL_POSTING_ENABLED','BILL_PAYMENT_GL_POSTING_ENABLED') AND operating_company_id=$1::uuid`, [companyId]);
+        await db.query(`DELETE FROM lib.feature_flag_overrides WHERE flag_key IN ('BILL_GL_POSTING_ENABLED','BILL_PAYMENT_GL_POSTING_ENABLED') AND (operating_company_id=$1::uuid OR user_uuid=$2::uuid)`, [companyId, userId]);
         await db.query(`DELETE FROM org.user_company_access WHERE user_id=$1::uuid AND company_id=$2::uuid`, [userId, companyId]);
       });
     } catch {
