@@ -31,20 +31,20 @@ export function searchQboMasterData(
   operatingCompanyId: string,
   params: { q: string; active_only?: boolean }
 ) {
-  if (entityType === "customer") {
+  // Customer + vendor pickers read the CANONICAL master tables (mdata.customers / mdata.vendors) via
+  // their autocomplete mode, so records created through the canonical writer are immediately selectable
+  // (fixes the "create → disappears" split where writers wrote the real table but the picker read the
+  // mdata.qbo_* mirror). Items/accounts still read the mirror pending their canonical autocomplete modes.
+  if (entityType === "customer" || entityType === "vendor") {
     const search = new URLSearchParams();
     search.set("autocomplete", "true");
     search.set("q", params.q);
     if (params.active_only === false) search.set("active_only", "false");
-    return apiRequest<QboAutocompleteResponse>(withCompany(`/api/v1/mdata/customers?${search.toString()}`, operatingCompanyId));
+    const path = entityType === "customer" ? "/api/v1/mdata/customers" : "/api/v1/mdata/vendors";
+    return apiRequest<QboAutocompleteResponse>(withCompany(`${path}?${search.toString()}`, operatingCompanyId));
   }
 
-  const plural =
-    entityType === "vendor"
-      ? "vendors"
-      : entityType === "item"
-          ? "items"
-          : "accounts";
+  const plural = entityType === "item" ? "items" : "accounts";
   const search = new URLSearchParams();
   search.set("q", params.q);
   if (params.active_only === false) search.set("active_only", "false");
