@@ -14,7 +14,7 @@ const WINDOWS: Array<[string, number]> = [
   ["90d", 90],
 ];
 
-type EmployeeRow = {
+type AssigneeRow = {
   name: string;
   total: number;
   completed: number;
@@ -49,7 +49,7 @@ export function TasksReportPage() {
 
   const completionRate = tasks.length > 0 ? Math.round(((statusCounts.get("completed") ?? 0) / tasks.length) * 100) : 0;
 
-  const byEmployee = useMemo<EmployeeRow[]>(() => {
+  const byAssignee = useMemo<AssigneeRow[]>(() => {
     const groups = new Map<string, Task[]>();
     for (const t of tasks) {
       const name = t.assigned_to_name ?? t.assigned_to_email ?? t.assigned_to_user_id;
@@ -78,7 +78,7 @@ export function TasksReportPage() {
 
   // ParityTable columns (A1 grammar): built-in sort/density/column-toggle/pager replace the former
   // hand-rolled table. Preserves the overdue red-highlight on the Overdue column.
-  const employeeColumns = useMemo<ParityColumn<EmployeeRow>[]>(
+  const assigneeColumns = useMemo<ParityColumn<AssigneeRow>[]>(
     () => [
       { key: "name", label: "Assignee", sortable: true, cellClass: "font-medium text-slate-800" },
       { key: "total", label: "Total", sortable: true, cellClass: "text-slate-600" },
@@ -134,12 +134,12 @@ export function TasksReportPage() {
       <div className="space-y-2">
         <div className="text-sm font-semibold text-slate-900">By assignee</div>
         <ParityTable
-          rows={byEmployee}
-          columns={employeeColumns}
+          rows={byAssignee}
+          columns={assigneeColumns}
           rowKey={(row) => row.name}
           // Settled-only empty (LIST-EMPTY-1 invariant): show loading while pending OR while a
           // refetch is in flight with zero current rows, so emptyText never flashes mid-fetch.
-          loading={query.isPending || (query.isFetching && byEmployee.length === 0)}
+          loading={query.isPending || (query.isFetching && byAssignee.length === 0)}
           storageKey="tasks-report-by-assignee"
           emptyText="No tasks in this window."
         />
