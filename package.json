@@ -695,6 +695,7 @@
     "verify:closure-24-onboarding-artifacts": "node scripts/verify-closure-24-onboarding-artifacts.mjs",
     "verify:closure-21-monitoring-artifacts": "node scripts/verify-closure-21-monitoring-artifacts.mjs",
     "verify:profitability-engine": "node scripts/verify-profitability-engine.mjs",
+    "verify:entity-link-no-bare-ids": "node scripts/verify-entity-link-no-bare-ids.mjs",
     "verify:tasks-module": "node scripts/verify-tasks-module.mjs",
     "verify:alert-rules-profiles": "node scripts/verify-alert-rules-profiles.mjs",
     "verify:planner-universal-grid": "node scripts/verify-planner-universal-grid.mjs",
