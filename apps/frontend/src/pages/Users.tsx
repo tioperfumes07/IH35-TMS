@@ -554,18 +554,9 @@ export function UsersPage() {
             >
               Export Selected
             </button>
-            {/* No bulk-deactivate backend endpoint exists (only per-user deactivateUser). Honestly
-                disabled with a "Coming soon" tooltip instead of firing a fake success toast. Deactivate
-                users one at a time via the per-row Deactivate button in the Actions column. */}
-            <button
-              type="button"
-              disabled
-              title="Coming soon — deactivate users individually from the row menu"
-              className="rounded-sm border border-red-300 bg-white px-2 py-1 text-xs font-semibold text-red-800 disabled:opacity-50"
-              onClick={() => pushToast("Bulk deactivate is not available yet — use the row menu to deactivate a user.", "info")}
-            >
-              Deactivate
-            </button>
+            {/* Bulk deactivate is intentionally NOT offered here: there is no bulk endpoint, and
+                deactivating users is an access-control action (§1.6). Deactivate a user via the
+                real per-row Deactivate button in the Actions column. */}
           </div>
         )}
         filterBar={
