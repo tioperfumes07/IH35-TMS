@@ -7,6 +7,7 @@ import {
   type InsurancePolicy,
 } from "../../api/insurance";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 function toDate(value: string) {
   return new Date(`${value}T00:00:00.000Z`);
@@ -109,7 +110,7 @@ export function CoverageGapDashboard() {
             <tbody>
               {summary.unitsWithoutActiveCoverage.map((row) => (
                 <tr key={row.unit_id} className="border-t border-gray-100">
-                  <td className="px-2 py-1.5 text-slate-700">{unitLabel(row)}</td>
+                  <td className="px-2 py-1.5 text-slate-700"><EntityLink kind="unit" id={row.unit_id} label={unitLabel(row)} /></td>
                   <td className="px-2 py-1.5 text-slate-700">{row.missing_types.join(", ") || "all"}</td>
                 </tr>
               ))}
