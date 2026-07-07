@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import {
   getBankingRegister,
   getEscrowDriverBalances,
@@ -96,7 +97,15 @@ export function DriverEscrowTabContent({ operatingCompanyId, driverEscrowBalance
           </div>
           <div className="rounded-sm border border-gray-200 bg-slate-50 px-3 py-2">
             <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Ledger scope</p>
-            <p className="mt-1 text-sm font-semibold text-gray-900">{selectedDriver ? `Driver: ${selectedDriver.driver_name ?? "Unknown"}` : "Account-level ledger"}</p>
+            <p className="mt-1 text-sm font-semibold text-gray-900">
+              {selectedDriver ? (
+                <>
+                  Driver: <Link to={`/drivers/${selectedDriver.driver_id}`} className="text-slate-700 hover:underline">{selectedDriver.driver_name ?? "Unknown"}</Link>
+                </>
+              ) : (
+                "Account-level ledger"
+              )}
+            </p>
           </div>
         </div>
       </div>

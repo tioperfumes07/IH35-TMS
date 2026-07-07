@@ -67,6 +67,9 @@ export function BankingHomePage({ initialTab }: Props = {}) {
   const [startingRecon, setStartingRecon] = useState(false);
   const [showDisconnectedBankAccounts, setShowDisconnectedBankAccounts] = useState(false);
   const [activeTab, setActiveTab] = useState<BankingTabId>(initialTab ?? bankingTabFromPath(location.pathname) as BankingTabId);
+  // Uncategorized KPI tile → Transactions tab pre-filtered. Reset to "all" whenever the Transactions tab
+  // is reached any other way (top tab bar) so the filter only sticks when it came from the tile.
+  const [transactionsInitialFilter, setTransactionsInitialFilter] = useState<string>("all");
 
   useEffect(() => {
     setActiveTab(bankingTabFromPath(location.pathname) as BankingTabId);
@@ -144,6 +147,10 @@ export function BankingHomePage({ initialTab }: Props = {}) {
     () => tiles.find((t) => String(t.tile_kind) === "virtual" || t.display_name.toLowerCase().includes("factoring")) ?? null,
     [tiles]
   );
+  const dipAccountId = useMemo(() => {
+    const dip = (allAccountsQuery.data?.accounts ?? []).find((a) => Boolean((a as Record<string, unknown>).is_dip));
+    return dip ? String((dip as Record<string, unknown>).id ?? "") || null : null;
+  }, [allAccountsQuery.data?.accounts]);
   const openStartReconciliation = () => {
     setReconAccountId(String(plaidAccountsQuery.data?.accounts?.[0]?.id ?? ""));
     setStartReconOpen(true);
@@ -212,6 +219,9 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               <NavLink
                 key={tab.id}
                 to={target}
+                onClick={() => {
+                  if (tab.id === "transactions") setTransactionsInitialFilter("all");
+                }}
                 className={`pb-0.5 text-xs font-semibold ${
                   active ? "border-b-2 border-[#1f2a44] text-[#1f2a44]" : "border-b-2 border-transparent text-slate-500 hover:text-slate-700"
                 }`}
@@ -234,19 +244,57 @@ export function BankingHomePage({ initialTab }: Props = {}) {
       {activeTab === "accounts" ? (
         <>
           <div className="grid grid-cols-2 gap-2 md:grid-cols-6">
-            <div className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-[11px]"><div className="text-[10px] uppercase text-gray-500">Cash posting</div><div className="font-semibold">{money.format(cashPosting)}</div></div>
-            <div className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-[11px]"><div className="text-[10px] uppercase text-gray-500">DIP balance</div><div className="font-semibold">{money.format(dipBalance)}</div></div>
             <button
               type="button"
-              onClick={() => setActiveTab("transactions")}
+              onClick={() => navigate("/lists/accounting/chart-of-accounts")}
+              className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-left text-[11px] transition hover:bg-gray-50"
+            >
+              <div className="text-[10px] uppercase text-gray-500">Cash posting</div>
+              <div className="font-semibold">{money.format(cashPosting)}</div>
+            </button>
+            <button
+              type="button"
+              onClick={() => (dipAccountId ? navigate(`/banking/accounts/${dipAccountId}`) : setActiveTab("accounts"))}
+              className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-left text-[11px] transition hover:bg-gray-50"
+            >
+              <div className="text-[10px] uppercase text-gray-500">DIP balance</div>
+              <div className="font-semibold">{money.format(dipBalance)}</div>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setTransactionsInitialFilter("uncategorized");
+                navigate(BANKING_TAB_PATH.transactions);
+              }}
               className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-left text-[11px] transition hover:bg-slate-100"
             >
               <div className="text-[10px] uppercase text-slate-700">Uncategorized</div>
               <div className="font-semibold text-slate-700">{uncategorizedCount}</div>
             </button>
-            <div className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-[11px]"><div className="text-[10px] uppercase text-gray-500">Recon accts</div><div className="font-semibold">{reconAccounts}</div></div>
-            <div className="rounded-sm border border-slate-300 bg-slate-100 px-2 py-1 text-[11px]"><div className="text-[10px] uppercase text-slate-700">Factoring res</div><div className="font-semibold text-slate-700">{money.format(factoringReserve)}</div></div>
-            <div className="rounded-sm border border-slate-300 bg-slate-100 px-2 py-1 text-[11px]"><div className="text-[10px] uppercase text-slate-700">Escrow feed</div><div className="font-semibold text-slate-700">{money.format(escrowFeed)}</div></div>
+            <button
+              type="button"
+              onClick={() => navigate(BANKING_TAB_PATH.reconciliation)}
+              className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-left text-[11px] transition hover:bg-gray-50"
+            >
+              <div className="text-[10px] uppercase text-gray-500">Recon accts</div>
+              <div className="font-semibold">{reconAccounts}</div>
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate("/factoring/reserve-tracker")}
+              className="rounded-sm border border-slate-300 bg-slate-100 px-2 py-1 text-left text-[11px] transition hover:bg-slate-200"
+            >
+              <div className="text-[10px] uppercase text-slate-700">Factoring res</div>
+              <div className="font-semibold text-slate-700">{money.format(factoringReserve)}</div>
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate(BANKING_TAB_PATH.driver_escrow)}
+              className="rounded-sm border border-slate-300 bg-slate-100 px-2 py-1 text-left text-[11px] transition hover:bg-slate-200"
+            >
+              <div className="text-[10px] uppercase text-slate-700">Escrow feed</div>
+              <div className="font-semibold text-slate-700">{money.format(escrowFeed)}</div>
+            </button>
           </div>
 
           <div className="grid grid-cols-1 gap-2 lg:grid-cols-[1.3fr_1fr_1fr]">
@@ -260,7 +308,10 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                   <button
                     key={row.id}
                     type="button"
-                    onClick={() => setSelectedAccountId(row.id)}
+                    onClick={() => {
+                      setSelectedAccountId(row.id);
+                      navigate(`/banking/accounts/${row.id}`);
+                    }}
                     className={`grid w-full grid-cols-[1fr_auto] border-b border-gray-100 px-3 py-1.5 text-left text-sm ${selectedId === row.id ? "bg-slate-100" : "hover:bg-gray-50"}`}
                   >
                     <span className="truncate">{row.displayName}</span>
@@ -277,13 +328,17 @@ export function BankingHomePage({ initialTab }: Props = {}) {
 
             <div className="rounded-sm border border-slate-300 bg-slate-100">
               <div className="flex items-center justify-between border-b border-slate-300 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">
-                <span>Factoring · virtual bank</span>
+                <Link to="/factoring" className="hover:underline">Factoring · virtual bank</Link>
                 <span className="text-[10px]">Open</span>
               </div>
               <div className="space-y-1 px-3 py-2 text-sm">
-                <div className="flex justify-between"><span>Reserves held</span><span>{money.format(factoringReserve)}</span></div>
+                <Link to="/factoring/reserve-tracker" className="flex justify-between hover:underline">
+                  <span>Reserves held</span><span>{money.format(factoringReserve)}</span>
+                </Link>
                 <div className="flex justify-between"><span>Advances funded MTD</span><span>{money.format(Math.max(cashPosting - factoringReserve, 0))}</span></div>
-                <div className="flex justify-between"><span>Chargebacks open</span><span className="text-red-700">{money.format(0)}</span></div>
+                <Link to="/factoring/chargebacks-fees" className="flex justify-between hover:underline">
+                  <span>Chargebacks open</span><span className="text-red-700">{money.format(0)}</span>
+                </Link>
                 <div className="flex justify-between"><span>+30 aging fees</span><span className="text-slate-700">{money.format(0)}</span></div>
                 <div className="pt-1 text-xs text-gray-500">Last upload: {selectedTile?.last_txn_date ? String(selectedTile.last_txn_date) : "—"}</div>
                 {factoringTile ? <div className="text-xs text-slate-700">{factoringTile.display_name}</div> : null}
@@ -323,6 +378,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
           selectedAccountId={selectedAccountId}
           onSelectAccount={setSelectedAccountId}
           onManageConnections={() => setActiveTab("accounts")}
+          initialTransactionType={transactionsInitialFilter}
           onDataChanged={() => {
             void queryClient.invalidateQueries({ queryKey: ["banking"] });
           }}
