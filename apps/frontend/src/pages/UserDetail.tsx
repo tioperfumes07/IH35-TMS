@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { EntityLink } from "../components/shared/EntityLink";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../api/client";
 import {
@@ -382,7 +383,7 @@ export function UserDetailPage() {
                       Related:{" "}
                       {event.related_customer_id ? <Link to={`/customers/${event.related_customer_id}`} className="text-slate-700">Customer</Link> : "Customer —"} |{" "}
                       {event.related_driver_id ? <Link to={`/drivers/${event.related_driver_id}`} className="text-slate-700">Driver</Link> : "Driver —"} | Load:{" "}
-                      {event.related_load_id ?? "Load link pending"}
+                      {event.related_load_id ? <EntityLink kind="load" id={event.related_load_id} label={event.related_load_id.slice(0, 8)} /> : "Load link pending"}
                     </div>
                     {event.voided_at ? (
                       <div className="font-semibold">
