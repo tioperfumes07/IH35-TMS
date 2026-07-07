@@ -3,8 +3,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   assignCustomerFactor,
   createFactor,
+  createLetterOfRelease,
+  deactivateFactor,
   getCustomerFactor,
   listFactors,
+  listLetterOfReleases,
+  updateFactor,
   type Factor,
 } from "../../api/factoring";
 import { listCustomers } from "../../api/mdata";
@@ -38,12 +42,25 @@ export function FactorAdmin() {
 
   const [showAddFactorModal, setShowAddFactorModal] = useState(false);
   const [showAssignCustomerModal, setShowAssignCustomerModal] = useState(false);
+  const [showNoaModal, setShowNoaModal] = useState(false);
+  const [showLorModal, setShowLorModal] = useState(false);
   const [selectedFactor, setSelectedFactor] = useState<Factor | null>(null);
   const [detailCustomerId, setDetailCustomerId] = useState("");
   const [customerSearch, setCustomerSearch] = useState("");
   const [assignCustomerId, setAssignCustomerId] = useState("");
   const [assignFactorId, setAssignFactorId] = useState("");
   const [assignEffectiveFrom, setAssignEffectiveFrom] = useState(todayDate());
+  const [noaForm, setNoaForm] = useState({
+    noa_stamp_text: "",
+    noa_remit_to_name: "",
+    noa_remit_to_addr: "",
+    noa_remit_to_wire_ref: "",
+  });
+  const [lorForm, setLorForm] = useState({
+    issued_date: todayDate(),
+    effective_release_date: todayDate(),
+    notes: "",
+  });
   const [addForm, setAddForm] = useState<AddFactorForm>({
     name: "",
     advance_rate: "0.95",
@@ -73,6 +90,69 @@ export function FactorAdmin() {
     queryKey: ["factoring", "customer-factor-detail", companyId, detailCustomerId],
     queryFn: () => getCustomerFactor(detailCustomerId, companyId),
     enabled: Boolean(companyId && detailCustomerId),
+  });
+
+  const lorQuery = useQuery({
+    queryKey: ["factoring", "lor", companyId, selectedFactor?.id],
+    queryFn: () => listLetterOfReleases(selectedFactor!.id, companyId).then((res) => res.letters_of_release),
+    enabled: Boolean(companyId && selectedFactor?.id),
+  });
+
+  const updateNoaMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedFactor) return;
+      return updateFactor(selectedFactor.id, companyId, {
+        noa_stamp_text: noaForm.noa_stamp_text || null,
+        noa_remit_to_name: noaForm.noa_remit_to_name || null,
+        noa_remit_to_addr: noaForm.noa_remit_to_addr || null,
+        noa_remit_to_wire_ref: noaForm.noa_remit_to_wire_ref || null,
+      });
+    },
+    onSuccess: async (updated) => {
+      setShowNoaModal(false);
+      if (updated) setSelectedFactor(updated);
+      pushToast("NOA config saved", "success");
+      await queryClient.invalidateQueries({ queryKey: ["factoring", "factors", companyId] });
+    },
+    onError: (error) => pushToast(String((error as Error).message || "Failed to save NOA config"), "error"),
+  });
+
+  const createLorMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedFactor) return;
+      return createLetterOfRelease(selectedFactor.id, companyId, {
+        issued_date: lorForm.issued_date,
+        effective_release_date: lorForm.effective_release_date,
+        notes: lorForm.notes || null,
+      });
+    },
+    onSuccess: async () => {
+      setShowLorModal(false);
+      setLorForm({ issued_date: todayDate(), effective_release_date: todayDate(), notes: "" });
+      pushToast("Letter of Release recorded", "success");
+      await queryClient.invalidateQueries({ queryKey: ["factoring", "lor", companyId, selectedFactor?.id] });
+    },
+    onError: (error) => pushToast(String((error as Error).message || "Failed to record LOR"), "error"),
+  });
+
+  const deactivateFactorMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedFactor) return;
+      return deactivateFactor(selectedFactor.id, companyId);
+    },
+    onSuccess: async (updated) => {
+      if (updated) setSelectedFactor(updated);
+      pushToast("Factor deactivated", "success");
+      await queryClient.invalidateQueries({ queryKey: ["factoring", "factors", companyId] });
+    },
+    onError: (error) => {
+      const msg = String((error as Error).message || "");
+      if (msg.includes("active_assignments_exist") || msg.includes("409")) {
+        pushToast("Factor has active customer assignments. Record a Letter of Release first.", "error");
+      } else {
+        pushToast(msg || "Failed to deactivate factor", "error");
+      }
+    },
   });
 
   const addFactorMutation = useMutation({
@@ -191,7 +271,73 @@ export function FactorAdmin() {
 
       {selectedFactor ? (
         <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3">
-          <div className="text-sm font-semibold text-gray-900">{selectedFactor.name} details</div>
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-sm font-semibold text-gray-900">{selectedFactor.name} details</div>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => {
+                  setNoaForm({
+                    noa_stamp_text: selectedFactor.noa_stamp_text ?? "",
+                    noa_remit_to_name: selectedFactor.noa_remit_to_name ?? "",
+                    noa_remit_to_addr: selectedFactor.noa_remit_to_addr ?? "",
+                    noa_remit_to_wire_ref: selectedFactor.noa_remit_to_wire_ref ?? "",
+                  });
+                  setShowNoaModal(true);
+                }}
+              >
+                Edit NOA Config
+              </Button>
+              <Button size="sm" variant="secondary" onClick={() => setShowLorModal(true)}>
+                + Letter of Release
+              </Button>
+              {selectedFactor.active ? (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  loading={deactivateFactorMutation.isPending}
+                  onClick={() => {
+                    if (!window.confirm(`Deactivate "${selectedFactor.name}"? A Letter of Release is required if the factor has active customer assignments.`)) return;
+                    void deactivateFactorMutation.mutateAsync();
+                  }}
+                >
+                  Deactivate
+                </Button>
+              ) : null}
+            </div>
+          </div>
+
+          {/* NOA config status */}
+          <div className="rounded-sm border border-gray-100 bg-gray-50 p-2 text-xs">
+            <div className="mb-1 font-medium text-gray-700">NOA / Remit-To Config</div>
+            {selectedFactor.noa_stamp_text || selectedFactor.noa_remit_to_name ? (
+              <div className="space-y-0.5 text-gray-700">
+                {selectedFactor.noa_remit_to_name ? <div><span className="text-gray-500">Remit to: </span>{selectedFactor.noa_remit_to_name}</div> : null}
+                {selectedFactor.noa_remit_to_addr ? <div><span className="text-gray-500">Address: </span>{selectedFactor.noa_remit_to_addr}</div> : null}
+                {selectedFactor.noa_remit_to_wire_ref ? <div><span className="text-gray-500">Wire ref: </span>{selectedFactor.noa_remit_to_wire_ref}</div> : null}
+                {selectedFactor.noa_stamp_text ? <div className="mt-1 rounded bg-white p-1 text-gray-600 italic">{selectedFactor.noa_stamp_text.slice(0, 120)}{selectedFactor.noa_stamp_text.length > 120 ? "…" : ""}</div> : null}
+              </div>
+            ) : (
+              <div className="text-red-600">Not configured — invoices for assigned customers will be blocked until NOA fields are set.</div>
+            )}
+          </div>
+
+          {/* LOR history */}
+          {(lorQuery.data ?? []).length > 0 ? (
+            <div className="rounded-sm border border-gray-100 p-2 text-xs">
+              <div className="mb-1 font-medium text-gray-700">Letters of Release</div>
+              <div className="space-y-1">
+                {(lorQuery.data ?? []).slice(0, 5).map((lor) => (
+                  <div key={lor.id} className="flex items-center gap-3 text-gray-700">
+                    <span>Issued: {lor.issued_date}</span>
+                    <span>Effective: {lor.effective_release_date}</span>
+                    {lor.notes ? <span className="text-gray-500">{lor.notes}</span> : null}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <input
               value={customerSearch}
@@ -427,6 +573,121 @@ export function FactorAdmin() {
                 }}
               >
                 Assign
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showNoaModal && selectedFactor ? (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-3">
+          <div className="w-full max-w-lg rounded-sm border border-gray-200 bg-white p-4 shadow-xl">
+            <div className="mb-3 text-sm font-semibold text-gray-900">NOA Config — {selectedFactor.name}</div>
+            <div className="space-y-2 text-xs">
+              <label className="block">
+                <div className="mb-1 font-medium">NOA Stamp Text (printed on invoice)</div>
+                <textarea
+                  rows={4}
+                  value={noaForm.noa_stamp_text}
+                  onChange={(event) => setNoaForm((current) => ({ ...current, noa_stamp_text: event.target.value }))}
+                  className="w-full rounded-sm border border-gray-300 px-2 py-1 font-mono text-xs"
+                  placeholder="NOTICE OF ASSIGNMENT: Pursuant to UCC 9-406, payment must be remitted to..."
+                />
+              </label>
+              <label className="block">
+                <div className="mb-1 font-medium">Remit-To Name (factor lockbox/ACH name)</div>
+                <input
+                  value={noaForm.noa_remit_to_name}
+                  onChange={(event) => setNoaForm((current) => ({ ...current, noa_remit_to_name: event.target.value }))}
+                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                  placeholder="Faro Capital LLC Lockbox"
+                />
+              </label>
+              <label className="block">
+                <div className="mb-1 font-medium">Remit-To Address</div>
+                <input
+                  value={noaForm.noa_remit_to_addr}
+                  onChange={(event) => setNoaForm((current) => ({ ...current, noa_remit_to_addr: event.target.value }))}
+                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                  placeholder="PO Box 12345, Dallas TX 75201"
+                />
+              </label>
+              <label className="block">
+                <div className="mb-1 font-medium">Wire / ACH Reference</div>
+                <input
+                  value={noaForm.noa_remit_to_wire_ref}
+                  onChange={(event) => setNoaForm((current) => ({ ...current, noa_remit_to_wire_ref: event.target.value }))}
+                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                  placeholder="ABA 021000021 · Acct 4567890123 · Ref: [Invoice #]"
+                />
+              </label>
+            </div>
+            <div className="mt-4 flex justify-end gap-2">
+              <Button size="sm" variant="secondary" onClick={() => setShowNoaModal(false)}>
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                loading={updateNoaMutation.isPending}
+                onClick={() => { void updateNoaMutation.mutateAsync(); }}
+              >
+                Save NOA Config
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showLorModal && selectedFactor ? (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-3">
+          <div className="w-full max-w-md rounded-sm border border-gray-200 bg-white p-4 shadow-xl">
+            <div className="mb-1 text-sm font-semibold text-gray-900">Letter of Release — {selectedFactor.name}</div>
+            <div className="mb-3 text-xs text-gray-600">Records that this factor has released its security interest. Required before deactivating a factor with active customer assignments.</div>
+            <div className="space-y-2 text-xs">
+              <label className="block">
+                <div className="mb-1 font-medium">Issued Date</div>
+                <input
+                  type="date"
+                  value={lorForm.issued_date}
+                  onChange={(event) => setLorForm((current) => ({ ...current, issued_date: event.target.value }))}
+                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                />
+              </label>
+              <label className="block">
+                <div className="mb-1 font-medium">Effective Release Date</div>
+                <input
+                  type="date"
+                  value={lorForm.effective_release_date}
+                  onChange={(event) => setLorForm((current) => ({ ...current, effective_release_date: event.target.value }))}
+                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                />
+              </label>
+              <label className="block">
+                <div className="mb-1 font-medium">Notes (optional)</div>
+                <input
+                  value={lorForm.notes}
+                  onChange={(event) => setLorForm((current) => ({ ...current, notes: event.target.value }))}
+                  className="w-full rounded-sm border border-gray-300 px-2 py-1"
+                  placeholder="Reference LOR document # or comments"
+                />
+              </label>
+            </div>
+            <div className="mt-4 flex justify-end gap-2">
+              <Button size="sm" variant="secondary" onClick={() => setShowLorModal(false)}>
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                loading={createLorMutation.isPending}
+                onClick={() => {
+                  if (!lorForm.issued_date || !lorForm.effective_release_date) {
+                    pushToast("Issued date and effective release date are required", "error");
+                    return;
+                  }
+                  void createLorMutation.mutateAsync();
+                }}
+              >
+                Record LOR
               </Button>
             </div>
           </div>

@@ -15,10 +15,31 @@ export type FactorRow = {
   reserve_schedule: unknown[] | null;
   fee_application_mode: string;
   remittance_details: unknown | null;
+  noa_stamp_text: string | null;
+  noa_remit_to_name: string | null;
+  noa_remit_to_addr: string | null;
+  noa_remit_to_wire_ref: string | null;
   notes: string | null;
   created_at: string;
   updated_at: string;
 };
+
+export type LetterOfReleaseRow = {
+  id: string;
+  tenant_id: string;
+  factor_id: string;
+  issued_date: string;
+  effective_release_date: string;
+  released_by_user_id: string | null;
+  notes: string | null;
+  created_at: string;
+};
+
+export class FactorLorError extends Error {
+  constructor(readonly code: "active_assignments_exist" | "lor_not_found", readonly statusCode: number) {
+    super(code);
+  }
+}
 
 export type CustomerFactorAssignmentRow = {
   id: string;
@@ -48,6 +69,19 @@ export class FactorServiceError extends Error {
   }
 }
 
+function mapLorRow(row: Record<string, unknown>): LetterOfReleaseRow {
+  return {
+    id: String(row.id),
+    tenant_id: String(row.tenant_id),
+    factor_id: String(row.factor_id),
+    issued_date: String(row.issued_date),
+    effective_release_date: String(row.effective_release_date),
+    released_by_user_id: row.released_by_user_id != null ? String(row.released_by_user_id) : null,
+    notes: row.notes != null ? String(row.notes) : null,
+    created_at: String(row.created_at),
+  };
+}
+
 function toNumber(value: unknown): number {
   if (typeof value === "number") return value;
   if (typeof value === "string") return Number(value);
@@ -68,6 +102,10 @@ function mapFactorRow(row: Record<string, unknown>): FactorRow {
     reserve_schedule: Array.isArray(row.reserve_schedule) ? row.reserve_schedule : null,
     fee_application_mode: String(row.fee_application_mode ?? "replace"),
     remittance_details: row.remittance_details ?? null,
+    noa_stamp_text: row.noa_stamp_text != null ? String(row.noa_stamp_text) : null,
+    noa_remit_to_name: row.noa_remit_to_name != null ? String(row.noa_remit_to_name) : null,
+    noa_remit_to_addr: row.noa_remit_to_addr != null ? String(row.noa_remit_to_addr) : null,
+    noa_remit_to_wire_ref: row.noa_remit_to_wire_ref != null ? String(row.noa_remit_to_wire_ref) : null,
     notes: row.notes != null ? String(row.notes) : null,
     created_at: String(row.created_at),
     updated_at: String(row.updated_at),
@@ -124,6 +162,10 @@ export async function listFactors(
         reserve_schedule,
         fee_application_mode,
         remittance_details,
+        noa_stamp_text,
+        noa_remit_to_name,
+        noa_remit_to_addr,
+        noa_remit_to_wire_ref,
         notes,
         created_at::text,
         updated_at::text
@@ -158,6 +200,10 @@ export async function getFactorForCustomer(
         f.reserve_schedule,
         f.fee_application_mode,
         f.remittance_details,
+        f.noa_stamp_text,
+        f.noa_remit_to_name,
+        f.noa_remit_to_addr,
+        f.noa_remit_to_wire_ref,
         f.notes,
         f.created_at::text,
         f.updated_at::text,
@@ -200,6 +246,10 @@ export async function createFactor(
     reserve_schedule?: unknown[] | null;
     fee_application_mode?: string;
     remittance_details?: unknown | null;
+    noa_stamp_text?: string | null;
+    noa_remit_to_name?: string | null;
+    noa_remit_to_addr?: string | null;
+    noa_remit_to_wire_ref?: string | null;
     notes?: string | null;
   },
   deps: { client: Queryable }
@@ -219,6 +269,10 @@ export async function createFactor(
           reserve_schedule,
           fee_application_mode,
           remittance_details,
+          noa_stamp_text,
+          noa_remit_to_name,
+          noa_remit_to_addr,
+          noa_remit_to_wire_ref,
           notes,
           created_at,
           updated_at
@@ -236,6 +290,10 @@ export async function createFactor(
           COALESCE($10, 'replace'),
           $11::jsonb,
           $12,
+          $13,
+          $14,
+          $15,
+          $16,
           now(),
           now()
         )
@@ -252,6 +310,10 @@ export async function createFactor(
           reserve_schedule,
           fee_application_mode,
           remittance_details,
+          noa_stamp_text,
+          noa_remit_to_name,
+          noa_remit_to_addr,
+          noa_remit_to_wire_ref,
           notes,
           created_at::text,
           updated_at::text
@@ -268,6 +330,10 @@ export async function createFactor(
         input.reserve_schedule != null ? JSON.stringify(input.reserve_schedule) : null,
         input.fee_application_mode ?? null,
         input.remittance_details != null ? JSON.stringify(input.remittance_details) : null,
+        input.noa_stamp_text ?? null,
+        input.noa_remit_to_name ?? null,
+        input.noa_remit_to_addr ?? null,
+        input.noa_remit_to_wire_ref ?? null,
         input.notes ?? null,
       ]
     );
@@ -294,6 +360,10 @@ export async function updateFactor(
     reserve_schedule: unknown[] | null;
     fee_application_mode: string;
     remittance_details: unknown | null;
+    noa_stamp_text: string | null;
+    noa_remit_to_name: string | null;
+    noa_remit_to_addr: string | null;
+    noa_remit_to_wire_ref: string | null;
     notes: string | null;
   }>,
   deps: { client: Queryable }
@@ -345,6 +415,22 @@ export async function updateFactor(
     values.push(patch.notes ?? null);
     updates.push(`notes = $${values.length}`);
   }
+  if (Object.prototype.hasOwnProperty.call(patch, "noa_stamp_text")) {
+    values.push(patch.noa_stamp_text ?? null);
+    updates.push(`noa_stamp_text = $${values.length}`);
+  }
+  if (Object.prototype.hasOwnProperty.call(patch, "noa_remit_to_name")) {
+    values.push(patch.noa_remit_to_name ?? null);
+    updates.push(`noa_remit_to_name = $${values.length}`);
+  }
+  if (Object.prototype.hasOwnProperty.call(patch, "noa_remit_to_addr")) {
+    values.push(patch.noa_remit_to_addr ?? null);
+    updates.push(`noa_remit_to_addr = $${values.length}`);
+  }
+  if (Object.prototype.hasOwnProperty.call(patch, "noa_remit_to_wire_ref")) {
+    values.push(patch.noa_remit_to_wire_ref ?? null);
+    updates.push(`noa_remit_to_wire_ref = $${values.length}`);
+  }
 
   if (updates.length === 0) {
     const current = await deps.client.query<Record<string, unknown>>(
@@ -362,6 +448,10 @@ export async function updateFactor(
           reserve_schedule,
           fee_application_mode,
           remittance_details,
+          noa_stamp_text,
+          noa_remit_to_name,
+          noa_remit_to_addr,
+          noa_remit_to_wire_ref,
           notes,
           created_at::text,
           updated_at::text
@@ -398,6 +488,10 @@ export async function updateFactor(
           reserve_schedule,
           fee_application_mode,
           remittance_details,
+          noa_stamp_text,
+          noa_remit_to_name,
+          noa_remit_to_addr,
+          noa_remit_to_wire_ref,
           notes,
           created_at::text,
           updated_at::text
@@ -416,6 +510,35 @@ export async function updateFactor(
 }
 
 export async function deactivateFactor(tenantId: string, factorId: string, deps: { client: Queryable }): Promise<FactorRow> {
+  // LOR required when active customer assignments still open (UCC 9-406 compliance)
+  const assignmentCheck = await deps.client.query<{ cnt: string }>(
+    `
+      SELECT COUNT(*)::text AS cnt
+      FROM factoring.customer_factor_assignment
+      WHERE tenant_id = $1::uuid
+        AND factor_id = $2::uuid
+        AND effective_to IS NULL
+    `,
+    [tenantId, factorId]
+  );
+  const openAssignments = Number(assignmentCheck.rows[0]?.cnt ?? 0);
+  if (openAssignments > 0) {
+    // Check that at least one LOR exists for this factor
+    const lorCheck = await deps.client.query<{ cnt: string }>(
+      `
+        SELECT COUNT(*)::text AS cnt
+        FROM factoring.letter_of_release
+        WHERE tenant_id = $1::uuid
+          AND factor_id = $2::uuid
+      `,
+      [tenantId, factorId]
+    );
+    const lorCount = Number(lorCheck.rows[0]?.cnt ?? 0);
+    if (lorCount === 0) {
+      throw new FactorLorError("active_assignments_exist", 409);
+    }
+  }
+
   const res = await deps.client.query<Record<string, unknown>>(
     `
       UPDATE factoring.factor
@@ -436,6 +559,10 @@ export async function deactivateFactor(tenantId: string, factorId: string, deps:
         reserve_schedule,
         fee_application_mode,
         remittance_details,
+        noa_stamp_text,
+        noa_remit_to_name,
+        noa_remit_to_addr,
+        noa_remit_to_wire_ref,
         notes,
         created_at::text,
         updated_at::text
@@ -445,6 +572,85 @@ export async function deactivateFactor(tenantId: string, factorId: string, deps:
 
   if (!res.rows[0]) throw new FactorServiceError("factor_not_found", 404);
   return mapFactorRow(res.rows[0]);
+}
+
+export async function createLetterOfRelease(
+  tenantId: string,
+  input: {
+    factor_id: string;
+    issued_date: string;
+    effective_release_date: string;
+    released_by_user_id?: string | null;
+    notes?: string | null;
+  },
+  deps: { client: Queryable }
+): Promise<LetterOfReleaseRow> {
+  const res = await deps.client.query<Record<string, unknown>>(
+    `
+      INSERT INTO factoring.letter_of_release (
+        tenant_id,
+        factor_id,
+        issued_date,
+        effective_release_date,
+        released_by_user_id,
+        notes,
+        created_at
+      )
+      VALUES (
+        $1::uuid,
+        $2::uuid,
+        $3::date,
+        $4::date,
+        $5::uuid,
+        $6,
+        now()
+      )
+      RETURNING
+        id::text,
+        tenant_id::text,
+        factor_id::text,
+        issued_date::text,
+        effective_release_date::text,
+        released_by_user_id::text,
+        notes,
+        created_at::text
+    `,
+    [
+      tenantId,
+      input.factor_id,
+      input.issued_date,
+      input.effective_release_date,
+      input.released_by_user_id ?? null,
+      input.notes ?? null,
+    ]
+  );
+  return mapLorRow(res.rows[0] ?? {});
+}
+
+export async function listLetterOfReleases(
+  tenantId: string,
+  factorId: string,
+  deps: { client: Queryable }
+): Promise<LetterOfReleaseRow[]> {
+  const res = await deps.client.query<Record<string, unknown>>(
+    `
+      SELECT
+        id::text,
+        tenant_id::text,
+        factor_id::text,
+        issued_date::text,
+        effective_release_date::text,
+        released_by_user_id::text,
+        notes,
+        created_at::text
+      FROM factoring.letter_of_release
+      WHERE tenant_id = $1::uuid
+        AND factor_id = $2::uuid
+      ORDER BY created_at DESC
+    `,
+    [tenantId, factorId]
+  );
+  return res.rows.map(mapLorRow);
 }
 
 export async function assignCustomerToFactor(

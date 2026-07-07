@@ -102,6 +102,43 @@ export async function registerAccountingInvoiceHtmlRoutes(app: FastifyInstance) 
         }
       }
 
+      // FACT-PAR-2: Look up active factor assignment via factoring.customer_factor_assignment
+      // If the customer is assigned to a factor, the factor MUST have NOA config before render is allowed.
+      const invoiceDate = String(invoice.issue_date);
+      const noaAssignmentRes = await client.query(
+        `
+          SELECT
+            f.id::text AS factor_id,
+            f.name AS factor_name,
+            f.noa_stamp_text,
+            f.noa_remit_to_name,
+            f.noa_remit_to_addr,
+            f.noa_remit_to_wire_ref,
+            a.id::text AS assignment_id
+          FROM factoring.customer_factor_assignment a
+          JOIN factoring.factor f ON f.id = a.factor_id
+          WHERE a.tenant_id = $1::uuid
+            AND a.customer_id = $2::uuid
+            AND a.effective_from <= $3::date
+            AND (a.effective_to IS NULL OR a.effective_to > $3::date)
+          ORDER BY a.effective_from DESC
+          LIMIT 1
+        `,
+        [query.data.operating_company_id, invoice.customer_id, invoiceDate]
+      );
+      const noaRow = noaAssignmentRes.rows[0] ?? null;
+      if (noaRow) {
+        const hasNoa =
+          noaRow.noa_stamp_text || noaRow.noa_remit_to_name || noaRow.noa_remit_to_addr;
+        if (!hasNoa) {
+          return {
+            kind: "noa_config_missing" as const,
+            factor_id: String(noaRow.factor_id),
+            factor_name: String(noaRow.factor_name),
+          };
+        }
+      }
+
       const linesRaw = (invoice.lines as Array<Record<string, unknown>> | undefined) ?? [];
       const filteredLines = linesRaw.filter((line) => String(line.line_type ?? "") !== "tax");
 
@@ -173,7 +210,14 @@ export async function registerAccountingInvoiceHtmlRoutes(app: FastifyInstance) 
         company.email ? String(company.email) : "",
       ].filter(Boolean));
 
-      if (invoice.factoring_advance_id && factorName) {
+      if (noaRow?.noa_remit_to_name) {
+        // FACT-PAR-2: Customer has active factor assignment + factor has NOA config → print NOA remit-to
+        remitLabel = "Remit to (factor — NOA in effect)";
+        const addrLines: string[] = [];
+        if (noaRow.noa_remit_to_addr) addrLines.push(String(noaRow.noa_remit_to_addr));
+        if (noaRow.noa_remit_to_wire_ref) addrLines.push(String(noaRow.noa_remit_to_wire_ref));
+        remitInnerHtml = stackedBlock(String(noaRow.noa_remit_to_name), addrLines);
+      } else if (invoice.factoring_advance_id && factorName) {
         remitLabel = "Remit to (factor — auto-routed)";
         const pctLine =
           advancePct != null && reservePct != null
@@ -224,9 +268,11 @@ export async function registerAccountingInvoiceHtmlRoutes(app: FastifyInstance) 
 
       const referenceTrip = [invoiceDocNum, loadDocNum, String(load?.customer_wo_number ?? load?.live_load_number ?? "WO")].join(" / ");
 
-      const paymentInstructionsHtml = invoice.factoring_advance_id
-        ? `<strong>Wire / ACH to ${escapeHtml(factorName ?? "factor lockbox")}.</strong> Reference: <span class="mono">${escapeHtml(referenceTrip)}</span>.<br/>
-           <strong>Mailed check:</strong> payable to ${escapeHtml(factorName ?? "factor lockbox")}. Do NOT remit direct to ${escapeHtml(brandName)} when factored.`
+      const effectiveFactorName = noaRow?.noa_remit_to_name ? String(noaRow.noa_remit_to_name) : (factorName ?? null);
+      const isFactored = !!(noaRow?.noa_remit_to_name || (invoice.factoring_advance_id && factorName));
+      const paymentInstructionsHtml = isFactored
+        ? `<strong>Wire / ACH to ${escapeHtml(effectiveFactorName ?? "factor lockbox")}.</strong> Reference: <span class="mono">${escapeHtml(referenceTrip)}</span>.<br/>
+           <strong>Mailed check:</strong> payable to ${escapeHtml(effectiveFactorName ?? "factor lockbox")}. Do NOT remit direct to ${escapeHtml(brandName)} when factored.`
         : `<strong>ACH / wire to ${escapeHtml(brandName)}.</strong> Reference: <span class="mono">${escapeHtml(invoiceDocNum)}</span>.`;
 
       const model: InvoiceHtmlModel = {
@@ -257,7 +303,7 @@ export async function registerAccountingInvoiceHtmlRoutes(app: FastifyInstance) 
         taxCents,
         adjustmentsIntro,
         adjustments,
-        totalDuePrimary: invoice.factoring_advance_id ? `Pay to ${factorName ?? "factor"} lockbox` : `Pay to ${brandName}`,
+        totalDuePrimary: isFactored ? `Pay to ${effectiveFactorName ?? "factor"} lockbox` : `Pay to ${brandName}`,
         totalDueSecondary: `${paymentTermsLabel} · invoice ${invoiceDocNum}`,
         paymentInstructionsHtml,
         disputesFooter: `Email ${String(company.email ?? "billing@carrier.local")} within 15 days with WO # and disputed line item.`,
@@ -289,6 +335,13 @@ export async function registerAccountingInvoiceHtmlRoutes(app: FastifyInstance) 
     });
 
     if (!payload || payload.kind === "not_found") return reply.code(404).send({ error: "invoice_not_found" });
+    if (payload.kind === "noa_config_missing") {
+      return reply.code(422).send({
+        error: "noa_config_missing",
+        message: `Factor "${payload.factor_name}" has an active assignment for this customer but is missing NOA stamp text or remit-to address. Configure NOA fields on the factor profile before rendering this invoice.`,
+        factor_id: payload.factor_id,
+      });
+    }
 
     reply.header("Content-Type", "text/html; charset=utf-8");
     reply.header("Cache-Control", "private, no-store");

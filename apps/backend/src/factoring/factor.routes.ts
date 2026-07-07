@@ -12,12 +12,15 @@ import {
 import {
   assignCustomerToFactor,
   createFactor,
+  createLetterOfRelease,
   deactivateFactor,
+  FactorLorError,
   FactorServiceError,
   getFactorForCustomer,
   listFactorAssignmentsForCustomer,
   listFactorBatchHistoryForCustomer,
   listFactors,
+  listLetterOfReleases,
   updateFactor,
 } from "./factor.service.js";
 
@@ -61,6 +64,11 @@ const createFactorBodySchema = companyQuerySchema.extend({
   reserve_schedule: z.array(reserveTierSchema).optional().nullable(),
   fee_application_mode: z.enum(FEE_APP_MODES).optional(),
   remittance_details: z.record(z.string(), z.unknown()).optional().nullable(),
+  // NOA / remit-to enforcement fields
+  noa_stamp_text: z.string().optional().nullable(),
+  noa_remit_to_name: z.string().optional().nullable(),
+  noa_remit_to_addr: z.string().optional().nullable(),
+  noa_remit_to_wire_ref: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
 });
 
@@ -75,6 +83,17 @@ const patchFactorBodySchema = companyQuerySchema.extend({
   reserve_schedule: z.array(reserveTierSchema).optional().nullable(),
   fee_application_mode: z.enum(FEE_APP_MODES).optional(),
   remittance_details: z.record(z.string(), z.unknown()).optional().nullable(),
+  // NOA / remit-to enforcement fields
+  noa_stamp_text: z.string().optional().nullable(),
+  noa_remit_to_name: z.string().optional().nullable(),
+  noa_remit_to_addr: z.string().optional().nullable(),
+  noa_remit_to_wire_ref: z.string().optional().nullable(),
+  notes: z.string().optional().nullable(),
+});
+
+const lorBodySchema = companyQuerySchema.extend({
+  issued_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  effective_release_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   notes: z.string().optional().nullable(),
 });
 
@@ -103,6 +122,10 @@ type ReplyLike = { code: (status: number) => { send: (payload: unknown) => void 
 function sendFactorError(reply: ReplyLike, error: unknown): boolean {
   if (error instanceof TierValidationError) {
     reply.code(422).send({ error: "tier_validation_error", field: error.field, message: error.message });
+    return true;
+  }
+  if (error instanceof FactorLorError) {
+    reply.code(error.statusCode).send({ error: error.code });
     return true;
   }
   if (error instanceof FactorServiceError) {
@@ -178,6 +201,10 @@ export async function registerFactorRoutes(app: FastifyInstance) {
             reserve_schedule: body.data.reserve_schedule ?? null,
             fee_application_mode: body.data.fee_application_mode,
             remittance_details: body.data.remittance_details ?? null,
+            noa_stamp_text: body.data.noa_stamp_text ?? null,
+            noa_remit_to_name: body.data.noa_remit_to_name ?? null,
+            noa_remit_to_addr: body.data.noa_remit_to_addr ?? null,
+            noa_remit_to_wire_ref: body.data.noa_remit_to_wire_ref ?? null,
             notes: body.data.notes ?? null,
           },
           { client }
@@ -226,7 +253,7 @@ export async function registerFactorRoutes(app: FastifyInstance) {
           active: body.data.active,
           fee_application_mode: body.data.fee_application_mode,
         };
-        // Only set schedule fields if they were explicitly sent in the request body
+        // Only set fields if they were explicitly sent in the request body
         if (Object.prototype.hasOwnProperty.call(body.data, "fee_schedule")) {
           patch.fee_schedule = body.data.fee_schedule ?? null;
         }
@@ -235,6 +262,18 @@ export async function registerFactorRoutes(app: FastifyInstance) {
         }
         if (Object.prototype.hasOwnProperty.call(body.data, "remittance_details")) {
           patch.remittance_details = body.data.remittance_details ?? null;
+        }
+        if (Object.prototype.hasOwnProperty.call(body.data, "noa_stamp_text")) {
+          patch.noa_stamp_text = body.data.noa_stamp_text ?? null;
+        }
+        if (Object.prototype.hasOwnProperty.call(body.data, "noa_remit_to_name")) {
+          patch.noa_remit_to_name = body.data.noa_remit_to_name ?? null;
+        }
+        if (Object.prototype.hasOwnProperty.call(body.data, "noa_remit_to_addr")) {
+          patch.noa_remit_to_addr = body.data.noa_remit_to_addr ?? null;
+        }
+        if (Object.prototype.hasOwnProperty.call(body.data, "noa_remit_to_wire_ref")) {
+          patch.noa_remit_to_wire_ref = body.data.noa_remit_to_wire_ref ?? null;
         }
         if (Object.prototype.hasOwnProperty.call(body.data, "notes")) {
           patch.notes = body.data.notes ?? null;
@@ -307,6 +346,61 @@ export async function registerFactorRoutes(app: FastifyInstance) {
     });
 
     return payload;
+  });
+
+  // GET /api/v1/factoring/factors/:id/letter-of-release — list LORs for a factor
+  app.get("/api/v1/factoring/factors/:id/letter-of-release", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+
+    const params = factorParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+
+    const lors = await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
+      listLetterOfReleases(query.data.operating_company_id, params.data.id, { client })
+    );
+
+    return { letters_of_release: lors };
+  });
+
+  // POST /api/v1/factoring/factors/:id/letter-of-release — record an LOR for a factor
+  app.post("/api/v1/factoring/factors/:id/letter-of-release", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" }); // MUST KEEP: role-gate
+
+    const params = factorParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const body = lorBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return validationError(reply, body.error);
+
+    const lor = await withCompanyScope(user.uuid, body.data.operating_company_id, async (client) => {
+      const created = await createLetterOfRelease(
+        body.data.operating_company_id,
+        {
+          factor_id: params.data.id,
+          issued_date: body.data.issued_date,
+          effective_release_date: body.data.effective_release_date,
+          released_by_user_id: user.uuid,
+          notes: body.data.notes ?? null,
+        },
+        { client }
+      );
+      // MUST KEEP: spine audit on LOR creation
+      await appendCrudAudit(client, user.uuid, "factoring.letter_of_release.created", {
+        resource_type: "factoring.letter_of_release",
+        resource_id: created.id,
+        operating_company_id: body.data.operating_company_id,
+        factor_id: params.data.id,
+        issued_date: body.data.issued_date,
+        effective_release_date: body.data.effective_release_date,
+      }, "warning", "FACT-PAR-2");
+      return created;
+    });
+
+    return reply.code(201).send(lor);
   });
 
   // POST /api/v1/customers/:customerId/factor — assign customer to factor
