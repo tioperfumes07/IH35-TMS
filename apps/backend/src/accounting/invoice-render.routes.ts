@@ -104,7 +104,7 @@ export async function registerAccountingInvoiceHtmlRoutes(app: FastifyInstance) 
 
       // FACT-PAR-2: Look up active factor assignment via factoring.customer_factor_assignment
       // If the customer is assigned to a factor, the factor MUST have NOA config before render is allowed.
-      const invoiceDate = String(invoice.issue_date ?? new Date().toISOString().slice(0, 10));
+      const invoiceDate = String(invoice.issue_date);
       const noaAssignmentRes = await client.query(
         `
           SELECT

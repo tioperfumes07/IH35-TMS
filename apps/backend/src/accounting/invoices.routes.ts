@@ -514,7 +514,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       if (String(current.status) !== "draft") return { code: 409 as const, error: "invoice_not_draft" };
 
       // FACT-PAR-2: 422 guard — customer with active factor assignment requires NOA config on the factor
-      const invoiceDate = String(current.issue_date ?? new Date().toISOString().slice(0, 10));
+      const invoiceDate = String(current.issue_date);
       const noaCheck = await client.query(
         `
           SELECT
