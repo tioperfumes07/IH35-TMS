@@ -12,6 +12,7 @@ import { formatDateUS } from "../../lib/formatDate";
  */
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { useQuery } from "@tanstack/react-query";
 import { listExpenses, type ExpenseListRow, type ExpenseListStatus } from "../../api/accounting";
 import { DatePicker } from "../../components/forms/DatePicker";
@@ -110,7 +111,7 @@ export function ExpensesListPage() {
       key: "load_number",
       label: "Load",
       sortable: true,
-      render: (r) => <span className="text-gray-600">{r.load_number || (r.load_id ? r.load_id.slice(0, 8) : "—")}</span>,
+      render: (r) => <EntityLink kind="load" id={r.load_id} label={r.load_number ?? (r.load_id ? r.load_id.slice(0, 8) : undefined)} />,
     },
     {
       key: "total_amount_cents",
