@@ -2,10 +2,11 @@
  * BK7 — New Service (Product/Service item) drawer form — two-sided GL mapping.
  * SELL side: income account (defaults to Service income, not Product income — carrier fix).
  * BUY side: expense account + preferred vendor.
- * OPERATIONAL gate: item create is non-financial.
+ * QB-STD-5: writes to catalogs.items (canonical) so the created item survives reload.
+ * Previously used createQboItem → mdata.qbo_items (mirror), invisible after refresh.
  */
 import { useState } from "react";
-import { createQboItem } from "../../../api/qbo-mdata";
+import { itemsCatalogClient } from "../../../api/catalogs-accounting";
 import { MoneyInput } from "../../forms/MoneyInput";
 import { useToast } from "../../Toast";
 import type { InlineCreateResult } from "../InlineCreateDrawer";
@@ -71,17 +72,17 @@ export function NewServiceDrawerForm({ operatingCompanyId, onCreated, onClose }:
     setSaving(true);
     try {
       // M-1: sellPrice stays a DOLLAR number → unit_price_cents = round(price*100) unchanged (byte-for-byte).
-      // NOTE: the buy side (buyCost/buyDescription/preferredVendor/expenseAccount) is collected here but the
-      // createQboItem API + mdata.qbo_items only persist the SELL side — buyCost is NOT a 100× bug (never sent).
-      // Persisting the buy side requires new qbo_items columns → tracked as a separate [HOLD-FOR-JORGE] migration.
+      // QB-STD-5: canonical catalogs.items — survives reload. incomeAccount is form UI only (no catalog column).
+      // Buy side (buyCost/buyDescription/preferredVendor/expenseAccount) collected here but not yet persisted;
+      // adding those catalog columns is a separate HELD migration.
       const priceCents = form.sellPrice != null ? Math.round(form.sellPrice * 100) : 0;
-      const res = await createQboItem(operatingCompanyId, {
-        name: form.name.trim(),
-        sku: form.sku.trim() || undefined,
-        unit_price_cents: priceCents,
-        income_account_qbo_id: form.incomeAccount.trim() || "Sales of Service Income",
+      const nameSlug = (form.sku.trim() || form.name.trim().replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 20) || "ITEM").slice(0, 120);
+      const res = await itemsCatalogClient.create(operatingCompanyId, {
+        code: nameSlug || "ITEM",
+        display_name: form.name.trim(),
+        metadata: { item_type: form.itemType, unit_price_cents: priceCents },
       });
-      onCreated({ id: String(res.item.id), label: form.name.trim() });
+      onCreated({ id: String(res.id), label: form.name.trim() });
       pushToast("Item created", "success");
       onClose();
     } catch (err) {

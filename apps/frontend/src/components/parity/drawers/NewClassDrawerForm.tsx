@@ -1,9 +1,12 @@
 /**
  * BK7 — New Class drawer form (minimal — Class name only).
- * OPERATIONAL gate: class create is non-financial.
+ * QB-STD-5: writes to catalogs.classes (canonical) via classesCatalogClient. Previously used
+ * createQboAccount with account_type:"Class" which wrote to mdata.qbo_accounts (wrong table AND
+ * would have triggered a live QBO push). InlineCreateDrawer still holds the "class" kind wiring
+ * until ReferenceSelect adds kind:"class" support.
  */
 import { useState } from "react";
-import { createQboAccount } from "../../../api/qbo-mdata";
+import { classesCatalogClient } from "../../../api/catalogs-accounting";
 import { useToast } from "../../Toast";
 import type { InlineCreateResult } from "../InlineCreateDrawer";
 
@@ -23,12 +26,12 @@ export function NewClassDrawerForm({ operatingCompanyId, onCreated, onClose }: P
     if (!name.trim()) { pushToast("Class name is required.", "error"); return; }
     setSaving(true);
     try {
-      const res = await createQboAccount(operatingCompanyId, {
-        name: name.trim(),
-        account_type: "Class",
-        full_qualified_name: name.trim(),
+      const nameSlug = name.trim().replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 20) || "CLASS";
+      const res = await classesCatalogClient.create(operatingCompanyId, {
+        code: nameSlug,
+        display_name: name.trim(),
       });
-      onCreated({ id: String(res.account.id), label: name.trim() });
+      onCreated({ id: String(res.id), label: name.trim() });
       pushToast("Class created", "success");
       onClose();
     } catch (err) {

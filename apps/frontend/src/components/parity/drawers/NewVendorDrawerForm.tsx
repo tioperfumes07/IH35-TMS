@@ -1,9 +1,10 @@
 /**
  * BK7 — New Vendor drawer form (full contact form, type-aware).
- * OPERATIONAL gate: vendor create is non-financial.
+ * QB-STD-5: writes to mdata.vendors (canonical — same table listVendors reads from) so the
+ * created vendor survives reload. Previously used createQboVendor → mdata.qbo_vendors (mirror).
  */
 import { useState } from "react";
-import { createQboVendor } from "../../../api/qbo-mdata";
+import { createVendor } from "../../../api/mdata";
 import { useToast } from "../../Toast";
 import type { InlineCreateResult } from "../InlineCreateDrawer";
 
@@ -13,11 +14,15 @@ type Props = {
   onClose: () => void;
 };
 
+const VENDOR_TYPES = ["Fuel", "Repair", "Tires", "Towing", "Insurance", "Permit", "Toll", "Other"] as const;
+type VendorType = (typeof VENDOR_TYPES)[number];
+
 type FormState = {
   displayName: string;
   companyName: string;
   firstName: string;
   lastName: string;
+  vendorType: VendorType;
   email: string;
   phone: string;
   mobile: string;
@@ -34,6 +39,7 @@ export function NewVendorDrawerForm({ operatingCompanyId, onCreated, onClose }: 
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<FormState>({
     displayName: "", companyName: "", firstName: "", lastName: "",
+    vendorType: "Other",
     email: "", phone: "", mobile: "", website: "", printOnChecks: "",
     addressLine1: "", city: "", state: "", zip: "",
   });
@@ -48,13 +54,17 @@ export function NewVendorDrawerForm({ operatingCompanyId, onCreated, onClose }: 
     if (!displayName) { pushToast("Vendor display name is required.", "error"); return; }
     setSaving(true);
     try {
-      const res = await createQboVendor(operatingCompanyId, {
-        display_name: displayName,
-        company_name: form.companyName.trim() || undefined,
-        primary_email: form.email.trim() || undefined,
-        primary_phone: form.phone.trim() || undefined,
+      // QB-STD-5: canonical mdata.vendors — survives reload. Mirror fields (mobile, website,
+      // printOnChecks, city, state, zip) are held back until migration 202607110230 lands.
+      const res = await createVendor({
+        name: displayName,
+        vendor_type: form.vendorType,
+        email: form.email.trim() || undefined,
+        phone: form.phone.trim() || undefined,
+        address: form.addressLine1.trim() || undefined,
+        operating_company_id: operatingCompanyId,
       });
-      onCreated({ id: String(res.vendor.id), label: displayName });
+      onCreated({ id: String(res.id), label: displayName });
       pushToast("Vendor created", "success");
       onClose();
     } catch (err) {
@@ -83,6 +93,12 @@ export function NewVendorDrawerForm({ operatingCompanyId, onCreated, onClose }: 
       <label className="block">
         <span className="text-xs font-medium text-gray-700">Vendor display name *</span>
         <input className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm" value={form.displayName} onChange={(e) => set("displayName", e.target.value)} placeholder="How this vendor appears on transactions" />
+      </label>
+      <label className="block">
+        <span className="text-xs font-medium text-gray-700">Vendor type</span>
+        <select className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm" value={form.vendorType} onChange={(e) => set("vendorType", e.target.value as VendorType)} aria-label="Vendor type">
+          {VENDOR_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+        </select>
       </label>
       <label className="block">
         <span className="text-xs font-medium text-gray-700">Email</span>
