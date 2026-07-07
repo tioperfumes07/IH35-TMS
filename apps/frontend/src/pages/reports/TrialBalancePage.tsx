@@ -249,7 +249,7 @@ export function TrialBalancePage() {
                     {canDrill ? (
                       <Link
                         to={registerHref(row.account_id!, applied.start, applied.end, basis)}
-                        className="text-blue-700 underline-offset-2 hover:underline"
+                        className="text-slate-700 underline-offset-2 hover:underline"
                       >
                         {row.account_name || "—"}
                       </Link>

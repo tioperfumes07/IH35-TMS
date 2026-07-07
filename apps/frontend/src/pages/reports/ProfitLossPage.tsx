@@ -188,7 +188,7 @@ export function ProfitLossPage() {
                           {line.account_id ? (
                             <Link
                               to={registerHref(line.account_id, applied.start, applied.end, basis)}
-                              className="text-blue-700 underline-offset-2 hover:underline"
+                              className="text-slate-700 underline-offset-2 hover:underline"
                             >
                               {line.account_name || "—"}
                             </Link>

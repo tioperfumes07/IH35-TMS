@@ -175,7 +175,7 @@ export function BalanceSheetPage() {
                       <td className="px-3 py-2 font-medium text-gray-900">{line.account_code || "—"}</td>
                       <td className="px-3 py-2">
                         {line.account_id ? (
-                          <Link to={registerHref(line.account_id, appliedAsOf, basis)} className="text-blue-700 underline-offset-2 hover:underline">
+                          <Link to={registerHref(line.account_id, appliedAsOf, basis)} className="text-slate-700 underline-offset-2 hover:underline">
                             {line.account_name || "—"}
                           </Link>
                         ) : (
@@ -220,7 +220,7 @@ export function BalanceSheetPage() {
                         <td className="px-3 py-2 font-medium text-gray-900">{line.account_code || "—"}</td>
                         <td className="px-3 py-2">
                           {line.account_id ? (
-                            <Link to={registerHref(line.account_id, appliedAsOf, basis)} className="text-blue-700 underline-offset-2 hover:underline">
+                            <Link to={registerHref(line.account_id, appliedAsOf, basis)} className="text-slate-700 underline-offset-2 hover:underline">
                               {line.account_name || "—"}
                             </Link>
                           ) : (
@@ -264,7 +264,7 @@ export function BalanceSheetPage() {
                         <td className="px-3 py-2 font-medium text-gray-900">{line.account_code || "—"}</td>
                         <td className="px-3 py-2">
                           {line.account_id ? (
-                            <Link to={registerHref(line.account_id, appliedAsOf, basis)} className="text-blue-700 underline-offset-2 hover:underline">
+                            <Link to={registerHref(line.account_id, appliedAsOf, basis)} className="text-slate-700 underline-offset-2 hover:underline">
                               {line.account_name || "—"}
                             </Link>
                           ) : (
