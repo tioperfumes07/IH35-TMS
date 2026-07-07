@@ -7,6 +7,7 @@ import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 const LINK = "text-slate-700 hover:underline";
 
@@ -76,7 +77,7 @@ export function DriverReportsQueuePage() {
           "—"
         ),
     },
-    { key: "load_number", label: "Load", render: (row) => row.load_number ?? row.load_id ?? "—" },
+    { key: "load_number", label: "Load", render: (row) => <EntityLink kind="load" id={row.load_id ?? undefined} label={row.load_number ?? undefined} /> },
     {
       key: "description",
       label: "Description",

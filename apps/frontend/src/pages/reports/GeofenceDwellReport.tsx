@@ -7,6 +7,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getGeofenceDwellReport, listGeofences, type GeofenceLocationKind } from "../../api/geofencing";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { formatDateTimeUS } from "../../lib/formatDate";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 function minutesToClock(value: number | null) {
   if (value == null) return "In yard";
@@ -207,8 +208,8 @@ export function GeofenceDwellReport() {
                 <tr key={`${row.geofence_id}-${row.unit_id}-${row.entered_at}`} className="border-b border-slate-100">
                   <td className="px-2 py-2 font-medium text-slate-900">{row.geofence_label}</td>
                   <td className="px-2 py-2">{row.location_kind}</td>
-                  <td className="px-2 py-2">{row.unit_number}</td>
-                  <td className="px-2 py-2">{driverName(row.first_name, row.last_name)}</td>
+                  <td className="px-2 py-2"><EntityLink kind="unit" id={row.unit_id} label={row.unit_number} /></td>
+                  <td className="px-2 py-2"><EntityLink kind="driver" id={row.driver_id ?? undefined} label={driverName(row.first_name, row.last_name)} /></td>
                   <td className="px-2 py-2">{formatDateTimeUS(row.entered_at)} CT</td>
                   <td className="px-2 py-2">{row.exited_at ? `${formatDateTimeUS(row.exited_at)} CT` : "In yard"}</td>
                   <td className="px-2 py-2">{minutesToClock(row.dwell_minutes)}</td>
