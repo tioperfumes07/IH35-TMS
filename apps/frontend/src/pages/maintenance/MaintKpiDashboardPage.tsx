@@ -11,8 +11,10 @@ import {
 } from "../../api/maintenance";
 import { apiRequest } from "../../api/client";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 type KpiTileId = MaintKpiDrilldownKind | "pm_compliance";
+type DrillRow = Record<string, unknown>;
 
 function defaultPeriod() {
   const end = new Date();
@@ -161,7 +163,23 @@ export function MaintKpiDashboardPage() {
     [summary]
   );
 
-  const drillRows = drilldownQ.data?.rows ?? [];
+  const drillRows = useMemo<DrillRow[]>(
+    () => (drilldownQ.data?.rows ?? []).map((row, index) => ({ ...row, __row_key: index })),
+    [drilldownQ.data?.rows],
+  );
+
+  const drillColumns = useMemo<ParityColumn<DrillRow>[]>(() => {
+    const first = drillRows[0];
+    if (!first) return [];
+    return Object.keys(first)
+      .filter((key) => key !== "__row_key")
+      .map((key) => ({
+        key,
+        label: key.replace(/_/g, " "),
+        sortable: true,
+        render: (row: DrillRow) => String(row[key] ?? "—"),
+      }));
+  }, [drillRows]);
 
   return (
     <div className="space-y-4" data-testid="maint-kpi-dashboard">
@@ -255,39 +273,15 @@ export function MaintKpiDashboardPage() {
         <div className="border-b border-gray-100 px-3 py-2 text-xs font-semibold text-slate-800">
           Drill-down — {activeKpi.replace(/_/g, " ")}
         </div>
-        <table className="min-w-full text-xs">
-          <thead className="bg-gray-50 text-[10px] uppercase text-slate-600">
-            <tr>
-              {drillRows[0]
-                ? Object.keys(drillRows[0]).map((key) => (
-                    <th key={key} className="px-2 py-1 text-left">
-                      {key.replace(/_/g, " ")}
-                    </th>
-                  ))
-                : (
-                    <th className="px-2 py-1 text-left">No rows</th>
-                  )}
-            </tr>
-          </thead>
-          <tbody>
-            {drillRows.map((row, idx) => (
-              <tr key={idx} className="border-t border-gray-100">
-                {Object.values(row).map((val, colIdx) => (
-                  <td key={colIdx} className="px-2 py-1">
-                    {String(val ?? "—")}
-                  </td>
-                ))}
-              </tr>
-            ))}
-            {drillRows.length === 0 ? (
-              <tr>
-                <td className="px-2 py-3 text-slate-500" colSpan={6}>
-                  No drill-down rows for this filter window.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
+        <ParityTable
+          rows={drillRows}
+          columns={drillColumns}
+          rowKey={(row) => String(row.__row_key)}
+          loading={drilldownQ.isLoading}
+          storageKey={`maintenance-kpi-drilldown-${activeKpi}`}
+          emptyText="No drill-down rows for this filter window."
+          exportFilename={`maint-kpi-drilldown-${activeKpi}`}
+        />
       </section>
     </div>
   );

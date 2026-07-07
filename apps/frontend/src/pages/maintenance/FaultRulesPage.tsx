@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { apiRequest } from "../../api/client";
@@ -7,6 +7,7 @@ import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { FaultRuleModal, type FaultRuleFormValues } from "../../components/maintenance/FaultRuleModal";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 type FaultRule = FaultRuleFormValues & { id: string; active?: boolean };
 
@@ -66,6 +67,40 @@ export function FaultRulesPage() {
 
   const rules = rulesQuery.data?.rules ?? [];
 
+  const columns = useMemo<ParityColumn<FaultRule>[]>(
+    () => [
+      { key: "fault_code", label: "Code", sortable: true, render: (row) => <span className="font-mono text-xs">{row.fault_code}</span> },
+      { key: "source", label: "Source", sortable: true, render: (row) => row.source },
+      { key: "severity", label: "Severity", sortable: true, render: (row) => <span className="capitalize">{row.severity}</span> },
+      { key: "auto_create_wo", label: "Auto WO", render: (row) => (row.auto_create_wo ? "Yes" : "No") },
+      { key: "suggested_priority", label: "Priority", render: (row) => row.suggested_priority ?? "—" },
+      { key: "estimated_repair_hours", label: "Est. hours", render: (row) => row.estimated_repair_hours ?? "—" },
+      {
+        key: "actions",
+        label: "Actions",
+        alwaysVisible: true,
+        render: (row) => (
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                setEditRule(row);
+                setModalOpen(true);
+              }}
+            >
+              Edit
+            </Button>
+            <Button size="sm" variant="tertiary" onClick={() => archiveMutation.mutate(row.id)}>
+              Archive
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [archiveMutation],
+  );
+
   return (
     <div className="space-y-4 p-4">
       <PageHeader
@@ -94,58 +129,15 @@ export function FaultRulesPage() {
         </Button>
       </div>
 
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500">
-            <tr>
-              <th className="px-3 py-2">Code</th>
-              <th className="px-3 py-2">Source</th>
-              <th className="px-3 py-2">Severity</th>
-              <th className="px-3 py-2">Auto WO</th>
-              <th className="px-3 py-2">Priority</th>
-              <th className="px-3 py-2">Est. hours</th>
-              <th className="px-3 py-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rules.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="px-3 py-6 text-center text-gray-500">
-                  No fault rules configured yet.
-                </td>
-              </tr>
-            ) : (
-              rules.map((rule) => (
-                <tr key={rule.id} className="border-t border-gray-100">
-                  <td className="px-3 py-2 font-mono text-xs">{rule.fault_code}</td>
-                  <td className="px-3 py-2">{rule.source}</td>
-                  <td className="px-3 py-2 capitalize">{rule.severity}</td>
-                  <td className="px-3 py-2">{rule.auto_create_wo ? "Yes" : "No"}</td>
-                  <td className="px-3 py-2">{rule.suggested_priority ?? "—"}</td>
-                  <td className="px-3 py-2">{rule.estimated_repair_hours ?? "—"}</td>
-                  <td className="px-3 py-2">
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => {
-                          setEditRule(rule);
-                          setModalOpen(true);
-                        }}
-                      >
-                        Edit
-                      </Button>
-                      <Button size="sm" variant="tertiary" onClick={() => archiveMutation.mutate(rule.id)}>
-                        Archive
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+      <ParityTable
+        rows={rules}
+        columns={columns}
+        rowKey={(row) => row.id}
+        loading={rulesQuery.isLoading}
+        storageKey="maintenance-fault-rules"
+        emptyText="No fault rules configured yet."
+        exportFilename="fault-rules"
+      />
 
       {modalOpen ? (
         <FaultRuleModal

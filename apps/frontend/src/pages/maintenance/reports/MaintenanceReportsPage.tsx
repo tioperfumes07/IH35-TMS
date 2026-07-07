@@ -2,6 +2,9 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getMaintenanceReportRows, getMaintenanceReportXlsxUrl } from "../../../api/maintenance";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+
+type ReportRow = Record<string, unknown>;
 
 const REPORTS = [
   { id: "cost_per_unit", label: "Cost per unit (TCO)" },
@@ -24,11 +27,21 @@ export function MaintenanceReportsPage() {
     enabled: Boolean(companyId),
   });
 
-  const columns = useMemo(() => {
-    const first = reportQ.data?.rows?.[0] ?? null;
+  const rows = useMemo<ReportRow[]>(
+    () => (reportQ.data?.rows ?? []).map((row, index) => ({ ...row, __row_key: index })),
+    [reportQ.data?.rows],
+  );
+
+  const columnKeys = useMemo(() => {
+    const first = rows[0] ?? null;
     if (!first) return [] as string[];
-    return Object.keys(first);
-  }, [reportQ.data?.rows]);
+    return Object.keys(first).filter((key) => key !== "__row_key");
+  }, [rows]);
+
+  const columns = useMemo<ParityColumn<ReportRow>[]>(
+    () => columnKeys.map((key) => ({ key, label: key, sortable: true, render: (row: ReportRow) => String(row[key] ?? "") })),
+    [columnKeys],
+  );
 
   return (
     <div className="space-y-3">
@@ -58,26 +71,15 @@ export function MaintenanceReportsPage() {
             ))}
           </select>
         </label>
-        <div className="overflow-auto">
-          <table className="min-w-full text-left text-xs">
-            <thead className="text-[11px] uppercase text-gray-600">
-              <tr>
-                {columns.map((key) => (
-                  <th key={key} className="py-1 pr-3">{key}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {(reportQ.data?.rows ?? []).map((row, index) => (
-                <tr key={index} className="border-t border-gray-100">
-                  {columns.map((key) => (
-                    <td key={key} className="py-1 pr-3">{String(row[key] ?? "")}</td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ParityTable
+          rows={rows}
+          columns={columns}
+          rowKey={(row) => String(row.__row_key)}
+          loading={reportQ.isLoading}
+          storageKey={`maintenance-reports-${report}`}
+          emptyText="No rows for this report."
+          exportFilename={report}
+        />
       </div>
     </div>
   );

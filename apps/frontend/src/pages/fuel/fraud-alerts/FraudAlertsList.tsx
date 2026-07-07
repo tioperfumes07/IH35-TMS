@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { apiRequest } from "../../../api/client";
@@ -6,8 +6,8 @@ import { PageHeader } from "../../../components/layout/PageHeader";
 import { ActionButton } from "../../../components/shared/ActionButton";
 import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
-import { DataTable } from "../../../components/DataTable";
-import { dataTableErrorState } from "../../../lib/tableError";
+import { ListErrorState } from "../../../components/ListErrorState";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 type FraudAlertRow = {
   uuid: string;
@@ -91,6 +91,54 @@ export function FraudAlertsListPage() {
 
   const rows = alertsQuery.data?.alerts ?? [];
 
+  const columns = useMemo<ParityColumn<FraudAlertRow>[]>(
+    () => [
+      { key: "detected_at", label: "Detected", sortable: true, render: (row) => new Date(row.detected_at).toLocaleString() },
+      {
+        key: "severity",
+        label: "Severity",
+        sortable: true,
+        render: (row) => (
+          <span className={`rounded-sm px-1.5 py-0.5 text-[10px] font-semibold ${severityClass(row.severity)}`}>{row.severity}</span>
+        ),
+      },
+      { key: "rule_id", label: "Rule", sortable: true, cellClass: "font-mono text-[10px]", render: (row) => row.rule_id },
+      {
+        key: "location_city",
+        label: "Location",
+        sortable: true,
+        render: (row) => [row.location_city, row.location_state].filter(Boolean).join(", ") || "—",
+      },
+      { key: "gallons", label: "Gallons", sortable: true, render: (row) => (row.gallons != null ? row.gallons.toFixed(1) : "—") },
+      { key: "status", label: "Status", sortable: true, render: (row) => row.status },
+      {
+        key: "actions",
+        label: "Actions",
+        alwaysVisible: true,
+        render: (row) => (
+          <div className="flex flex-wrap gap-1">
+            <ActionButton disabled={investigateMut.isPending} onClick={() => investigateMut.mutate(row.uuid)}>
+              Investigate
+            </ActionButton>
+            <ActionButton disabled={confirmMut.isPending} onClick={() => confirmMut.mutate(row.uuid)}>
+              Confirm fraud
+            </ActionButton>
+            <ActionButton
+              disabled={dismissMut.isPending}
+              onClick={() => {
+                const reason = window.prompt("Dismiss reason");
+                if (reason?.trim()) dismissMut.mutate({ uuid: row.uuid, reason: reason.trim() });
+              }}
+            >
+              Dismiss
+            </ActionButton>
+          </div>
+        ),
+      },
+    ],
+    [investigateMut, confirmMut, dismissMut],
+  );
+
   return (
     <div className="space-y-3">
       <PageHeader
@@ -116,76 +164,19 @@ export function FraudAlertsListPage() {
         ))}
       </div>
 
-      <DataTable
-        rows={rows}
-        tableKey="fuel-fraud-alerts"
-        rowKey={(row) => row.uuid}
-        loading={alertsQuery.isLoading}
-        errorState={dataTableErrorState(alertsQuery.error, () => void alertsQuery.refetch())}
-        emptyText="No fraud alerts for this filter."
-        columns={[
-          {
-            key: "detected_at",
-            label: "Detected",
-            sortable: true,
-            numeric: true,
-            render: (row) => new Date(row.detected_at).toLocaleString(),
-          },
-          {
-            key: "severity",
-            label: "Severity",
-            sortable: true,
-            render: (row) => (
-              <span className={`rounded-sm px-1.5 py-0.5 text-[10px] font-semibold ${severityClass(row.severity)}`}>
-                {row.severity}
-              </span>
-            ),
-          },
-          {
-            key: "rule_id",
-            label: "Rule",
-            sortable: true,
-            cellClass: "font-mono text-[10px]",
-          },
-          {
-            key: "location_city",
-            label: "Location",
-            sortable: true,
-            render: (row) => [row.location_city, row.location_state].filter(Boolean).join(", ") || "—",
-          },
-          {
-            key: "gallons",
-            label: "Gallons",
-            sortable: true,
-            numeric: true,
-            render: (row) => (row.gallons != null ? row.gallons.toFixed(1) : "—"),
-          },
-          { key: "status", label: "Status", sortable: true },
-          {
-            key: "actions",
-            label: "Actions",
-            render: (row) => (
-              <div className="flex flex-wrap gap-1">
-                <ActionButton disabled={investigateMut.isPending} onClick={() => investigateMut.mutate(row.uuid)}>
-                  Investigate
-                </ActionButton>
-                <ActionButton disabled={confirmMut.isPending} onClick={() => confirmMut.mutate(row.uuid)}>
-                  Confirm fraud
-                </ActionButton>
-                <ActionButton
-                  disabled={dismissMut.isPending}
-                  onClick={() => {
-                    const reason = window.prompt("Dismiss reason");
-                    if (reason?.trim()) dismissMut.mutate({ uuid: row.uuid, reason: reason.trim() });
-                  }}
-                >
-                  Dismiss
-                </ActionButton>
-              </div>
-            ),
-          },
-        ]}
-      />
+      {alertsQuery.isError ? (
+        <ListErrorState title="Couldn't load fraud alerts" status={0} message={(alertsQuery.error as Error)?.message} onRetry={() => void alertsQuery.refetch()} />
+      ) : (
+        <ParityTable
+          rows={rows}
+          columns={columns}
+          rowKey={(row) => row.uuid}
+          loading={alertsQuery.isLoading}
+          storageKey="fuel-fraud-alerts"
+          emptyText="No fraud alerts for this filter."
+          exportFilename="fuel-fraud-alerts"
+        />
+      )}
     </div>
   );
 }

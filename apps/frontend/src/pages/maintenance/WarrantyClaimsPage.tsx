@@ -13,7 +13,7 @@ import { Modal } from "../../components/Modal";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { useListState } from "../../components/list-state";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 type ClaimDraft = {
   part_description: string;
@@ -114,8 +114,29 @@ export function WarrantyClaimsPage() {
 
   const claims = claimsQ.data?.rows ?? [];
 
-  // Empty row renders only once the claims query settles (no first-fetch flash).
-  const listState = useListState(claimsQ, claims.length === 0);
+  const columns = useMemo<ParityColumn<MaintenanceWarrantyClaimRow>[]>(
+    () => [
+      { key: "part_description", label: "Part", sortable: true, render: (row) => row.part_description },
+      { key: "vendor_name", label: "Vendor", sortable: true, render: (row) => row.vendor_name ?? "—" },
+      { key: "claim_number", label: "Claim #", sortable: true, render: (row) => row.claim_number || "—" },
+      { key: "status", label: "Status", sortable: true, render: (row) => row.status_label ?? row.status },
+      { key: "claim_amount_cents", label: "Amount", render: (row) => `$${((row.claim_amount_cents ?? 0) / 100).toFixed(2)}` },
+      {
+        key: "actions",
+        label: "Actions",
+        alwaysVisible: true,
+        render: (row) =>
+          row.status === "draft" ? (
+            <Button type="button" variant="secondary" onClick={() => setFileTarget(row)}>
+              File claim
+            </Button>
+          ) : (
+            "—"
+          ),
+      },
+    ],
+    [],
+  );
 
   return (
     <div className="space-y-4" data-testid="maint-warranty-claims-page">
@@ -156,45 +177,15 @@ export function WarrantyClaimsPage() {
       </div>
 
       <section data-testid="warranty-claims-table">
-        <table className="w-full text-left text-xs">
-          <thead className="text-[11px] uppercase text-gray-500">
-            <tr>
-              <th className="py-1">Part</th>
-              <th className="py-1">Vendor</th>
-              <th className="py-1">Claim #</th>
-              <th className="py-1">Status</th>
-              <th className="py-1">Amount</th>
-              <th className="py-1">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {claims.map((claim) => (
-              <tr key={claim.id} className="border-t border-gray-100">
-                <td className="py-1">{claim.part_description}</td>
-                <td className="py-1">{claim.vendor_name ?? "—"}</td>
-                <td className="py-1">{claim.claim_number || "—"}</td>
-                <td className="py-1">{claim.status_label ?? claim.status}</td>
-                <td className="py-1">${((claim.claim_amount_cents ?? 0) / 100).toFixed(2)}</td>
-                <td className="py-1">
-                  {claim.status === "draft" ? (
-                    <Button type="button" variant="secondary" onClick={() => setFileTarget(claim)}>
-                      File claim
-                    </Button>
-                  ) : (
-                    "—"
-                  )}
-                </td>
-              </tr>
-            ))}
-            {listState.isEmpty ? (
-              <tr>
-                <td colSpan={6} className="py-3 text-gray-500">
-                  No warranty claims yet.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
+        <ParityTable
+          rows={claims}
+          columns={columns}
+          rowKey={(row) => row.id}
+          loading={claimsQ.isPending}
+          storageKey="maintenance-warranty-claims"
+          emptyText="No warranty claims yet."
+          exportFilename="warranty-claims"
+        />
       </section>
 
       <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="+ Create Claim">

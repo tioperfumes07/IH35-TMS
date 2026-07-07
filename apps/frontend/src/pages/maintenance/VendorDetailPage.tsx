@@ -1,9 +1,13 @@
 import { Link, useParams } from "react-router-dom";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getMaintenanceVendorDetail } from "../../api/maintenance";
 import { BackArrowHeader } from "../../components/layout/BackArrowHeader";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+
+type VendorHistoryRow = Record<string, unknown>;
 
 export function VendorDetailPage() {
   const { vendorId = "" } = useParams();
@@ -19,6 +23,32 @@ export function VendorDetailPage() {
   const vendor = detailQ.data?.vendor;
   const woHistory = detailQ.data?.wo_history ?? [];
   const invoiceHistory = detailQ.data?.invoice_history ?? [];
+
+  const woColumns = useMemo<ParityColumn<VendorHistoryRow>[]>(
+    () => [
+      { key: "display_id", label: "WO", sortable: true, render: (row) => String(row.display_id ?? row.id ?? "—") },
+      { key: "wo_type", label: "Type", sortable: true, render: (row) => String(row.wo_type ?? "—") },
+      { key: "status", label: "Status", sortable: true, render: (row) => String(row.status ?? "—") },
+      { key: "repair_location", label: "Location", render: (row) => String(row.repair_location ?? "—") },
+      { key: "opened_at", label: "Opened", sortable: true, render: (row) => String(row.opened_at ?? "—") },
+    ],
+    [],
+  );
+
+  const invoiceColumns = useMemo<ParityColumn<VendorHistoryRow>[]>(
+    () => [
+      { key: "invoice_number", label: "Invoice #", sortable: true, render: (row) => String(row.invoice_number ?? "—") },
+      { key: "display_id", label: "WO", render: (row) => String(row.display_id ?? row.work_order_id ?? "—") },
+      {
+        key: "invoice_amount",
+        label: "Amount",
+        render: (row) => (row.invoice_amount != null ? `$${Number(row.invoice_amount).toFixed(2)}` : "—"),
+      },
+      { key: "invoice_date", label: "Date", sortable: true, render: (row) => String(row.invoice_date ?? "—") },
+      { key: "status", label: "Status", sortable: true, render: (row) => String(row.status ?? "—") },
+    ],
+    [],
+  );
 
   return (
     <div className="space-y-3" data-testid="maint-vendor-detail-page">
@@ -60,68 +90,26 @@ export function VendorDetailPage() {
 
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <h3 className="mb-2 text-sm font-semibold text-gray-900">Work Order History</h3>
-        <table className="w-full text-left text-xs">
-          <thead className="text-[11px] uppercase text-gray-600">
-            <tr>
-              <th className="py-1">WO</th>
-              <th className="py-1">Type</th>
-              <th className="py-1">Status</th>
-              <th className="py-1">Location</th>
-              <th className="py-1">Opened</th>
-            </tr>
-          </thead>
-          <tbody>
-            {woHistory.map((row) => (
-              <tr key={String(row.id)} className="border-t border-gray-100">
-                <td className="py-1">{String(row.display_id ?? row.id ?? "—")}</td>
-                <td className="py-1">{String(row.wo_type ?? "—")}</td>
-                <td className="py-1">{String(row.status ?? "—")}</td>
-                <td className="py-1">{String(row.repair_location ?? "—")}</td>
-                <td className="py-1">{String(row.opened_at ?? "—")}</td>
-              </tr>
-            ))}
-            {woHistory.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="py-3 text-center text-gray-500">
-                  No linked work orders yet.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
+        <ParityTable
+          rows={woHistory}
+          columns={woColumns}
+          rowKey={(row) => String(row.id)}
+          loading={detailQ.isLoading}
+          storageKey="maintenance-vendor-wo-history"
+          emptyText="No linked work orders yet."
+        />
       </div>
 
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <h3 className="mb-2 text-sm font-semibold text-gray-900">Invoice History</h3>
-        <table className="w-full text-left text-xs">
-          <thead className="text-[11px] uppercase text-gray-600">
-            <tr>
-              <th className="py-1">Invoice #</th>
-              <th className="py-1">WO</th>
-              <th className="py-1">Amount</th>
-              <th className="py-1">Date</th>
-              <th className="py-1">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {invoiceHistory.map((row) => (
-              <tr key={`${String(row.work_order_id)}-${String(row.invoice_number)}`} className="border-t border-gray-100">
-                <td className="py-1">{String(row.invoice_number ?? "—")}</td>
-                <td className="py-1">{String(row.display_id ?? row.work_order_id ?? "—")}</td>
-                <td className="py-1">{row.invoice_amount != null ? `$${Number(row.invoice_amount).toFixed(2)}` : "—"}</td>
-                <td className="py-1">{String(row.invoice_date ?? "—")}</td>
-                <td className="py-1">{String(row.status ?? "—")}</td>
-              </tr>
-            ))}
-            {invoiceHistory.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="py-3 text-center text-gray-500">
-                  No vendor invoices recorded.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
+        <ParityTable
+          rows={invoiceHistory}
+          columns={invoiceColumns}
+          rowKey={(row) => `${String(row.work_order_id)}-${String(row.invoice_number)}`}
+          loading={detailQ.isLoading}
+          storageKey="maintenance-vendor-invoice-history"
+          emptyText="No vendor invoices recorded."
+        />
       </div>
     </div>
   );
