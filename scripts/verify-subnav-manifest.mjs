@@ -9,8 +9,14 @@ function fail(message) {
   process.exit(1);
 }
 
+// orphan-triage F1: AccountingSubNav.tsx was the legacy left-rail-era component this guard
+// existed to keep in sync with subnav-manifest.ts (no competing inline item literal). It was a
+// verified-dead, zero-consumer duplicate of the live AccountingSubNavWrapper.tsx and has been
+// deleted (verify-accounting-nav.mjs Check 4 CI-enforces that no OTHER page may import it back).
+// With the file gone there is no inline literal left to drift out of sync — pass.
 if (!fs.existsSync(subnavPath)) {
-  fail("AccountingSubNav.tsx not found");
+  console.log("verify:subnav-manifest OK (AccountingSubNav.tsx retired — nothing to check)");
+  process.exit(0);
 }
 
 const source = fs.readFileSync(subnavPath, "utf8");

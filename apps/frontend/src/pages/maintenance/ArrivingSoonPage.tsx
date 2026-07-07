@@ -5,6 +5,7 @@ import { useAuth } from "../../auth/useAuth";
 import { getArrivingSoon, logArrivingSoonView, type ArrivingSoonCard as ArrivingSoonCardType } from "../../api/maintenance";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ArrivingSoonFilterBar } from "./components/ArrivingSoonFilterBar";
+import { ArrivingSoonCard } from "./components/ArrivingSoonCard";
 import { ConvertIssueToWOModal } from "./components/ConvertIssueToWOModal";
 
 type Props = {
@@ -209,17 +210,36 @@ export function ArrivingSoonPage({ operatingCompanyId }: Props) {
         onIncludeNonYardChange={setIncludeNonYard}
       />
 
-      <ParityTable<ArrivingSoonCardType>
-        columns={columns}
-        rows={cards}
-        rowKey={(card) => `${card.load_id}:${card.unit_id}`}
-        loading={query.isLoading}
-        emptyText="No units arriving with open issues. The shop has nothing to prep right now."
-        storageKey="maint-arriving-soon"
-        exportFilename="arriving-soon"
-        rowActions={rowActions}
-        renderExpanded={renderExpanded}
-      />
+      {/* Desktop/tablet: full parity table. Mobile: stacked cards (same data, no horizontal scroll). */}
+      <div className="hidden sm:block">
+        <ParityTable<ArrivingSoonCardType>
+          columns={columns}
+          rows={cards}
+          rowKey={(card) => `${card.load_id}:${card.unit_id}`}
+          loading={query.isLoading}
+          emptyText="No units arriving with open issues. The shop has nothing to prep right now."
+          storageKey="maint-arriving-soon"
+          exportFilename="arriving-soon"
+          rowActions={rowActions}
+          renderExpanded={renderExpanded}
+        />
+      </div>
+      <div className="space-y-2 sm:hidden">
+        {query.isLoading ? <div className="text-xs text-gray-500">Loading...</div> : null}
+        {!query.isLoading && cards.length === 0 ? (
+          <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-gray-500">
+            No units arriving with open issues. The shop has nothing to prep right now.
+          </div>
+        ) : null}
+        {cards.map((card) => (
+          <ArrivingSoonCard
+            key={`${card.load_id}:${card.unit_id}`}
+            card={card}
+            canConvert={canConvert}
+            onConvert={(c) => setSelectedCard(c)}
+          />
+        ))}
+      </div>
 
       <ConvertIssueToWOModal
         open={Boolean(selectedCard)}

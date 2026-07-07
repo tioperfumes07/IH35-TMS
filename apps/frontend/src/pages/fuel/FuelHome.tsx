@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { FuelFraudBadge } from "../../components/fuel/FuelFraudBadge";
 
 type FraudSummary = {
   open_critical: number;
@@ -31,7 +32,10 @@ export function FuelFraudAlertsKpiCard() {
       to="/fuel/fraud-alerts"
       className={`block rounded-sm border px-3 py-2 text-[11px] transition hover:shadow-xs ${tone}`}
     >
-      <div className="text-[10px] uppercase text-gray-500">Open Fraud Alerts</div>
+      <div className="flex items-center gap-1.5 text-[10px] uppercase text-gray-500">
+        Open Fraud Alerts
+        <FuelFraudBadge hasOpenCritical={openCritical > 0} />
+      </div>
       <div className={`text-lg font-semibold ${openCritical > 0 ? "text-red-700" : "text-gray-900"}`}>
         {openCritical}
       </div>

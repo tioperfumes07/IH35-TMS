@@ -20,7 +20,9 @@ const REQUIRED_BULK_FILES = [
   "apps/frontend/src/pages/safety/components/SafetyEventsTable.tsx",
   "apps/frontend/src/pages/Users.tsx",
   "apps/frontend/src/components/catalogs/CatalogTable.tsx",
-  "apps/frontend/src/pages/dispatch/components/LoadTable.tsx",
+  // dispatch/components/LoadTable.tsx was deleted (orphan-triage batch 05) as a verified-dead
+  // duplicate of DispatchBoard, the live dispatch loads table (already useBulkSelection-wired).
+  "apps/frontend/src/pages/dispatch/DispatchBoard.tsx",
   "apps/frontend/src/hooks/useBulkSelection.ts",
   "apps/frontend/src/components/shared/BulkSelectableTable.tsx",
 ];

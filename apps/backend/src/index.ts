@@ -129,6 +129,7 @@ import { registerDriverFinanceDriverBillsRoutes } from "./driver-finance/driver-
 import { registerDriverFinanceDebtRoutes } from "./driver-finance/debt.routes.js";
 import { registerDriverFinanceDeductionRoutes } from "./driver-finance/deductions.routes.js";
 import { registerEscrowDeductionPendingRoutes } from "./driver-finance/escrow-deduction-pending.routes.js";
+import { registerDriverEscrowSeparationRoutes } from "./driver-finance/escrow-separation.routes.js";
 import { registerCashAdvanceRequestRoutes } from "./driver-finance/cash-advance-requests.routes.js";
 import { registerDriverInboxReportingRoutes } from "./driver-finance/inbox-reporting.routes.js";
 import { registerOwnerApprovalPortalRoutes } from "./driver-finance/owner-approval.routes.js";
@@ -282,6 +283,7 @@ import { registerDriverMetricsRoutes } from "./integrity/driver-metrics.routes.j
 import { registerAnomalyStatusRoutes } from "./integrity/anomaly-status.routes.js";
 import { runAnomalyDetectionForTenant } from "./integrity/anomaly-detector.service.js";
 import { registerForm425CRoutes } from "./compliance/form-425c.routes.js";
+import { registerTaxDocumentRoutes } from "./tax-documents/tax-documents.routes.js";
 import { registerListsHubRoutes } from "./lists/lists-hub.routes.js";
 import { registerListsCountsRoutes } from "./lists/lists-counts.routes.js";
 import { registerDriverCatalogDeprecatedRoutes } from "./lists/driver-catalogs.routes.js";
@@ -831,6 +833,7 @@ async function main() {
   await registerDriverFinanceDebtRoutes(app);
   await registerDriverFinanceDeductionRoutes(app);
   await registerEscrowDeductionPendingRoutes(app);
+  await registerDriverEscrowSeparationRoutes(app);
   await registerOwnerApprovalPortalRoutes(app);
   await registerCashAdvanceRequestRoutes(app);
   registerDriverInboxReportingRoutes(app);
@@ -991,6 +994,7 @@ async function main() {
   await registerMaintPmRoutes(app);
   await registerMaintWoApRoutes(app);
   await registerForm425CRoutes(app);
+  await registerTaxDocumentRoutes(app);
   await registerListsHubRoutes(app);
   await registerListsCountsRoutes(app);
   await registerDriversReferenceRoutes(app);

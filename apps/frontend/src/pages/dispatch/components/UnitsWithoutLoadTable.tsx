@@ -1,8 +1,10 @@
 import type { UnitsWithoutLoad, UnitLiveLocation } from "../../../api/dispatch";
+import { DataTable } from "../../../components/DataTable";
 
 type Props = {
   rows: UnitsWithoutLoad[];
   onRowClick: (row: UnitsWithoutLoad) => void;
+  loading?: boolean;
 };
 
 function idleClass(hours: number | null) {
@@ -27,44 +29,61 @@ function LocationCell({ loc }: { loc: UnitLiveLocation | null }) {
   );
 }
 
-export function UnitsWithoutLoadTable({ rows, onRowClick }: Props) {
+export function UnitsWithoutLoadTable({ rows, onRowClick, loading }: Props) {
   return (
-    <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-      <table className="min-w-full text-left text-[11px]">
-        <thead className="bg-gray-50 text-[10px] uppercase tracking-wide text-gray-600">
-          <tr>
-            {["Unit", "Trailer", "Driver", "Current Location", "Last Drop · Status", "Hours Since", "Idle Time"].map((header) => (
-              <th key={header} className="px-2 py-1">{header}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.id} onClick={() => onRowClick(row)} className="cursor-pointer border-t border-gray-100 hover:bg-gray-50">
-              <td className="px-2 py-1 font-semibold">{row.unit_number}</td>
-              <td className="px-2 py-1">{row.trailer_number ?? "-"}</td>
-              <td className="px-2 py-1">{row.driver_name ?? "-"}</td>
-              <td className="px-2 py-1"><LocationCell loc={row.location} /></td>
-              <td className="px-2 py-1">
-                {row.last_drop_at ? new Date(row.last_drop_at).toLocaleString() : "No prior drop"} ·
-                <span className="ml-1 text-slate-700">Need Load</span>
-              </td>
-              <td className={`px-2 py-1 ${idleClass(row.hours_since_last_delivery)}`}>
-                {row.hours_since_last_delivery ?? "-"}
-              </td>
-              <td className={`px-2 py-1 ${idleClass(row.hours_since_last_delivery)}`}>
-                {row.hours_since_last_delivery !== null && row.hours_since_last_delivery >= 72 ? "⚠ " : ""}
-                {row.hours_since_last_delivery !== null ? `${row.hours_since_last_delivery}h idle` : "-"}
-              </td>
-            </tr>
-          ))}
-          {rows.length === 0 ? (
-            <tr>
-              <td colSpan={7} className="px-2 py-3 text-center text-gray-500">All units currently have active loads.</td>
-            </tr>
-          ) : null}
-        </tbody>
-      </table>
-    </div>
+    <DataTable
+      rows={rows}
+      tableKey="dispatch-units-without-load"
+      rowKey={(row) => row.id}
+      onRowClick={onRowClick}
+      loading={loading}
+      emptyText="All units currently have active loads."
+      columns={[
+        { key: "unit_number", label: "Unit", sortable: true, cellClass: "font-semibold" },
+        { key: "trailer_number", label: "Trailer", sortable: true, render: (row) => row.trailer_number ?? "-" },
+        { key: "driver_name", label: "Driver", sortable: true, render: (row) => row.driver_name ?? "-" },
+        {
+          key: "location",
+          label: "Current Location",
+          sortable: true,
+          render: (row) => <LocationCell loc={row.location} />,
+        },
+        {
+          key: "last_drop_at",
+          label: "Last Drop · Status",
+          sortable: true,
+          render: (row) => (
+            <>
+              {row.last_drop_at ? new Date(row.last_drop_at).toLocaleString() : "No prior drop"} ·
+              <span className="ml-1 text-slate-700">Need Load</span>
+            </>
+          ),
+        },
+        {
+          key: "hours_since_last_delivery",
+          label: "Hours Since",
+          sortable: true,
+          numeric: true,
+          render: (row) => (
+            <span className={idleClass(row.hours_since_last_delivery)}>{row.hours_since_last_delivery ?? "-"}</span>
+          ),
+        },
+        {
+          // GLOBAL-SORT-RULE exemption "idle_time" (see docs/specs/GLOBAL-SORT-RULE.md registry):
+          // this column is the same underlying value as "Hours Since" (hours_since_last_delivery),
+          // just formatted differently — sorting is already available via the Hours Since column,
+          // so a second, no-op sort control here would be misleading rather than useful.
+          key: "idle_time",
+          label: "Idle Time",
+          numeric: true,
+          render: (row) => (
+            <span className={idleClass(row.hours_since_last_delivery)}>
+              {row.hours_since_last_delivery !== null && row.hours_since_last_delivery >= 72 ? "⚠ " : ""}
+              {row.hours_since_last_delivery !== null ? `${row.hours_since_last_delivery}h idle` : "-"}
+            </span>
+          ),
+        },
+      ]}
+    />
   );
 }

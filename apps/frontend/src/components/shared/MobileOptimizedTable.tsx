@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { SwipeActionRow, type SwipeAction } from "./SwipeActionRow";
 
 type Column<T> = {
   key: string;
@@ -12,9 +13,11 @@ type Props<T> = {
   columns: Column<T>[];
   rowKey: (row: T) => string;
   emptyMessage?: string;
+  /** Optional per-row actions revealed by a swipe gesture on the mobile card view (<640px). */
+  rowActions?: (row: T) => SwipeAction[];
 };
 
-export function MobileOptimizedTable<T>({ rows, columns, rowKey, emptyMessage = "No rows" }: Props<T>) {
+export function MobileOptimizedTable<T>({ rows, columns, rowKey, emptyMessage = "No rows", rowActions }: Props<T>) {
   if (rows.length === 0) {
     return <p className="text-sm text-gray-500">{emptyMessage}</p>;
   }
@@ -46,18 +49,26 @@ export function MobileOptimizedTable<T>({ rows, columns, rowKey, emptyMessage = 
         </table>
       </div>
       <div className="space-y-3 sm:hidden">
-        {rows.map((row) => (
-          <article key={rowKey(row)} className="rounded-sm border border-gray-200 bg-white p-3 shadow-xs">
-            {columns.map((col) => (
-              <div key={col.key} className="mb-2 last:mb-0">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-                  {col.cardLabel ?? col.header}
-                </p>
-                <div className="text-sm text-gray-900">{col.render(row)}</div>
-              </div>
-            ))}
-          </article>
-        ))}
+        {rows.map((row) => {
+          const card = (
+            <article className="rounded-sm border border-gray-200 bg-white p-3 shadow-xs">
+              {columns.map((col) => (
+                <div key={col.key} className="mb-2 last:mb-0">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                    {col.cardLabel ?? col.header}
+                  </p>
+                  <div className="text-sm text-gray-900">{col.render(row)}</div>
+                </div>
+              ))}
+            </article>
+          );
+          const actions = rowActions?.(row) ?? [];
+          return (
+            <div key={rowKey(row)}>
+              {actions.length > 0 ? <SwipeActionRow actions={actions}>{card}</SwipeActionRow> : card}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

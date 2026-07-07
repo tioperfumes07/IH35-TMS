@@ -9,6 +9,7 @@ import { insertCsvStatementBankTransaction } from "./transaction-ingestion.js";
 import { applyBankingRulesForTransaction } from "./banking-rules.engine.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { emitBankingSpineEvent } from "./banking-spine-emit.js";
+import { assertBankAccountUsable, bankTransactionHiddenFilterSql, isBankAccountHideEnabled } from "./bank-account-visibility.js";
 
 const startBodySchema = z.object({
   bank_account_id: z.string().uuid(),
@@ -184,12 +185,19 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
     const companyId = query.data.operating_company_id;
 
     const payload = await withCompanyScope(user.uuid, companyId, async (client) => {
+      // BANK-ACCOUNT-HIDE: reconciliation sessions for an account hidden FOR THIS ENTITY must not
+      // surface (flag OFF by default — see docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
+      const hideOn = await isBankAccountHideEnabled(client, companyId);
+      const hiddenSessionFilter = hideOn
+        ? `AND NOT EXISTS (SELECT 1 FROM banking.bank_accounts __bah WHERE __bah.id = bank_account_id AND __bah.hidden_at IS NOT NULL)`
+        : "";
       const openRes = await client.query(
         `
           SELECT id, bank_account_id, period_start, period_end, statement_balance_cents, variance_cents, status, created_at
           FROM banking.reconciliation_sessions
           WHERE operating_company_id = $1
             AND status = 'open'
+            ${hiddenSessionFilter}
           ORDER BY created_at DESC
         `,
         [companyId]
@@ -200,6 +208,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
           FROM banking.reconciliation_sessions
           WHERE operating_company_id = $1
             AND status = 'reconciled'
+            ${hiddenSessionFilter}
           ORDER BY reconciled_at DESC NULLS LAST, created_at DESC
           LIMIT 5
         `,
@@ -232,6 +241,11 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
       return res.rows[0] ?? null;
     });
     if (!accountContext) return reply.code(404).send({ error: "bank_account_not_found" });
+
+    const usable = await withCompanyScope(user.uuid, accountContext.operating_company_id, (client) =>
+      assertBankAccountUsable(client, accountContext.id, accountContext.operating_company_id)
+    );
+    if (!usable) return reply.code(404).send({ error: "bank_account_not_found" });
 
     const created = await withCompanyScope(user.uuid, accountContext.operating_company_id, async (client) => {
       const insertRes = await client.query<{ id: string }>(
@@ -781,6 +795,10 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
       return res.rows[0] ?? null;
     });
     if (!accountContext) return reply.code(404).send({ error: "bank_account_not_found" });
+    const csvUploadUsable = await withCompanyScope(user.uuid, accountContext.operating_company_id, (client) =>
+      assertBankAccountUsable(client, accountContext.id, accountContext.operating_company_id)
+    );
+    if (!csvUploadUsable) return reply.code(404).send({ error: "bank_account_not_found" });
 
     const content = (await file.toBuffer()).toString("utf-8");
     const lines = content.split(/\r?\n/).filter((line) => line.trim().length > 0);

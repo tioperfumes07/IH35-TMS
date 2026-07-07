@@ -9,6 +9,14 @@
       "reason": "Owner data migration tool; not in module subnav"
     },
     {
+      "path": "/admin/launch-readiness",
+      "reason": "Owner USMCA launch-readiness dashboard (OwnerAdminRoute); flyout deep link, not a module subnav"
+    },
+    {
+      "path": "/admin/qbo-vendor-linkage",
+      "reason": "Owner QBO driver/unit vendor-class linkage tool (OwnerAdminRoute); flyout deep link, not a module subnav"
+    },
+    {
       "path": "/admin/carrier-bootstrap",
       "reason": "Owner USMCA hidden-carrier bootstrap (Wave 19 USMCA-2)"
     },
@@ -46,11 +54,19 @@
     },
     {
       "path": "/admin/launch-readiness",
-      "reason": "Owner/Admin USMCA launch readiness dashboard (deep-link tooling, no subnav)"
+      "reason": "Owner launch-readiness dashboard; admin tooling, not in module subnav"
     },
     {
       "path": "/admin/qbo-vendor-linkage",
-      "reason": "Owner/Admin QBO driver/unit vendor-class linkage tool (deep-link tooling, no subnav)"
+      "reason": "Owner QBO vendor linkage tool; admin tooling, not in module subnav"
+    },
+    {
+      "path": "/integrations/edi",
+      "reason": "Owner EDI setup wizard; not in subnav (mirrors /integrations/samsara)"
+    },
+    {
+      "path": "/integrations/edi/transaction-log",
+      "reason": "Owner EDI transaction log; deep link from EDI setup wizard, not in subnav"
     },
     {
       "path": "/admin/activity",
@@ -63,6 +79,14 @@
     {
       "path": "/admin/audit-log",
       "reason": "Owner/SuperAdmin universal audit log viewer (GAP-87)"
+    },
+    {
+      "path": "/admin",
+      "reason": "Owner/Administrator admin hub (tiles to Data Import, Launch Toggles, Carrier Bootstrap, etc.); not in module subnav, no nav link (mirrors its sibling /admin/* pages)"
+    },
+    {
+      "path": "/admin/usmca-activation",
+      "reason": "Owner-only USMCA activation checklist + state transitions; deep link from the /admin hub tile, not in module subnav"
     },
     {
       "path": "/program/final-additions",
@@ -276,11 +300,11 @@
     },
     {
       "path": "/integrations/edi",
-      "reason": "Owner EDI partner setup wizard \u2014 not in subnav"
+      "reason": "Owner EDI partner setup wizard (OwnerOnlyRoute) \u2014 not in subnav, same pattern as /integrations/samsara"
     },
     {
       "path": "/integrations/edi/transaction-log",
-      "reason": "Owner EDI transaction log \u2014 deep link only"
+      "reason": "Owner EDI transaction log (OwnerOnlyRoute) \u2014 not in subnav, same pattern as /integrations/samsara"
     },
     {
       "path": "/samsara/vendor-mapping-integrity",
@@ -335,6 +359,10 @@
       "reason": "Fleet unit profile dynamic route from in-app links"
     },
     {
+      "path": "/fleet/units/:id/detail",
+      "reason": "Unit detail dynamic route linked from VehicleProfilePage in-app link, not sidebar subnav"
+    },
+    {
       "path": "/fleet/trailers/:id",
       "reason": "Trailer profile dynamic route from in-app links (Block 15)"
     },
@@ -369,6 +397,10 @@
     {
       "path": "/form-425c",
       "reason": "425C form route alias \u2014 sidebar uses /425c"
+    },
+    {
+      "path": "/425c/exhibits",
+      "reason": "Form 425C Exhibits A-F viewer \u2014 reachable via header link on Form425CHome (/425c), not a module subnav"
     },
     {
       "path": "/login/reset",

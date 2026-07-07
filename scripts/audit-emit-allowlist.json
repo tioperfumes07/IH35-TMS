@@ -660,6 +660,14 @@
     {
       "file": "apps/backend/src/compliance/property-tax/property-tax.routes.ts",
       "reason": "Business-Property Allocation rendition routes — HTTP layer performs NO DB mutation of its own (SELECT set_config + delegate to property-tax.service.ts, which emits appendCrudAudit for every create/update/add). The guard's UPDATE\\s+\\w regex is a false positive on the prose comment '// Update a rendition (status transition, extension, assessed tax, notes)'. Same disposition as audit-chain-verify.cron.service.ts (regex false-match on an explanatory comment)."
+    },
+    {
+      "file": "apps/backend/src/integrations/relay-payments/relay-fuel-ingest.service.ts",
+      "reason": "Relay fuel-transaction ingest — external data storage/mirror sync (no GL/expense posting per the file's own doc comment), not a user-facing audit event; same category as the Samsara webhook / QBO CDC / PSE mirror ingest services above."
+    },
+    {
+      "file": "apps/backend/src/accounting/ap-import/qbo-ap-import-preview.service.ts",
+      "reason": "AF-4 A/P import PREVIEW scaffold (flag OFF, read-only QBO pull — no money-moving write, no GL/expense posting). Its INSERTs into accounting.ap_import_batches / ap_import_preview_lines ARE the append-only audit trail of each review cycle (who ran it, when, QBO as-of, totals, approve/reject disposition), void-not-delete with REVOKE UPDATE/DELETE on the preview lines — the tables themselves are the audit record, not a separate spine-auditable business commit. Same disposition as the FIN-18 bucket-ledger and ratecon-extraction append-only-artifact entries above; the spine-auditable event is the downstream approved A/P bill creation that consumes an approved batch."
     }
   ]
 }

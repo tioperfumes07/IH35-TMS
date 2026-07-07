@@ -287,6 +287,21 @@ export function getUnitDispatchStatus(unitId: string, operatingCompanyId: string
   );
 }
 
+// HOS-PRC-DATA / HOS-PRC2 (Jorge 2026-07-05) — `eld_certified` carries the certified Samsara ELD
+// clocks VERBATIM (no re-derivation). Null when Samsara has never polled this driver (honest
+// "unavailable" — never fabricated). This is the single source of truth for HOS everywhere it's
+// wired (board == roster == certified ELD); the other fields are the in-app recompute, kept only
+// for the projected Stop-By/Resume-At clocks.
+export type EldCertifiedClocks = {
+  drive_remaining_min: number | null;
+  shift_remaining_min: number | null;
+  cycle_remaining_min: number | null;
+  break_remaining_min: number | null;
+  violation: boolean;
+  polled_at: string;
+  source: "samsara_certified_eld";
+} | null;
+
 export function getDriverHosStatus(driverId: string, operatingCompanyId: string) {
   return apiRequest<{
     driver_id: string;
@@ -296,6 +311,7 @@ export function getDriverHosStatus(driverId: string, operatingCompanyId: string)
     cycle_remaining_min: number;
     last_reset_at: string | null;
     status: "ok" | "warning_1hr" | "warning_15min" | "violation";
+    eld_certified: EldCertifiedClocks;
   }>(
     `/api/v1/dispatch/drivers/${driverId}/hos-status?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
   );
@@ -428,6 +444,29 @@ export function listQuicksaveDrafts(operatingCompanyId: string) {
 export function getDispatchAssignmentHistory(loadId: string, operatingCompanyId: string) {
   return apiRequest<{ rows: Array<Record<string, unknown>> }>(
     `/api/v1/dispatch/loads/${loadId}/assignment-history?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
+}
+
+// GAP-56 / CAP-4 — recent GPS-driven auto status switch events (pickup-departure / delivery-arrival
+// drift corrections). Used to badge a load's Status field when its current status was applied
+// automatically rather than by a dispatcher. Route has no /v1 prefix (registered as-is in index.ts).
+export type AutoStatusSwitchEvent = {
+  uuid: string;
+  load_uuid: string;
+  case_id: "A" | "B" | "C" | null;
+  from_status: string;
+  to_status: string;
+  reason: string | null;
+  auto_switched: boolean;
+  applied_at: string | null;
+  driver_notified: boolean;
+  created_at: string;
+  load_number: string;
+};
+
+export function getRecentAutoStatusSwitches(operatingCompanyId: string, limit = 50) {
+  return apiRequest<{ events: AutoStatusSwitchEvent[] }>(
+    `/api/integrations/samsara/auto-status-switch/recent?operating_company_id=${encodeURIComponent(operatingCompanyId)}&limit=${limit}`
   );
 }
 

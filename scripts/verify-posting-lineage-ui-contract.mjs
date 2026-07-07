@@ -5,7 +5,12 @@ import path from "node:path";
 const appPath = path.join(process.cwd(), "apps/frontend/src/App.tsx");
 const routesManifestPath = path.join(process.cwd(), "apps/frontend/src/routes/manifest.tsx");
 const pagePath = path.join(process.cwd(), "apps/frontend/src/pages/accounting/PostingLineagePage.tsx");
-const navPath = path.join(process.cwd(), "apps/frontend/src/pages/accounting/AccountingSubNav.tsx");
+// orphan-triage F1: the legacy AccountingSubNav.tsx (a dead, zero-consumer left-rail-era nav
+// component — see subnav-manifest.ts's header comment + verify-accounting-nav.mjs Check 4, which
+// forbids any OTHER page from importing it) was deleted. The live, unified accounting sub-nav is
+// AccountingSubNavWrapper.tsx, sourced from subnav-manifest.ts's ACCOUNTING_MORE_TABS/CLEAN_TABS —
+// check that file instead of resurrecting the retired one.
+const navPath = path.join(process.cwd(), "apps/frontend/src/pages/accounting/subnav-manifest.ts");
 const apiPath = path.join(process.cwd(), "apps/frontend/src/api/accounting.ts");
 
 function fail(message) {
@@ -26,7 +31,7 @@ if (!appText.includes('path="/accounting/posting-lineage"')) {
   fail("App routing must expose /accounting/posting-lineage");
 }
 if (!navText.includes('/accounting/posting-lineage')) {
-  fail("Accounting sub-nav must include Posting lineage destination");
+  fail("Accounting sub-nav manifest must include Posting lineage destination");
 }
 if (!pageText.includes("getAccountingSourceLineage")) {
   fail("Posting lineage page must call getAccountingSourceLineage");

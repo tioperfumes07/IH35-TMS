@@ -36,6 +36,7 @@
 
 import { withCurrentUser } from "../../auth/db.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
+import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../../banking/bank-account-visibility.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { createBill, payBill } from "../bills.service.js";
 import { createJournalEntry } from "../journal-entries.service.js";
@@ -139,6 +140,9 @@ async function resolveRoleBindingAccount(client: DbClient, operatingCompanyId: s
  * Wells Fargo — DIP cash account (never a hardcoded id). NULL when unmapped (caller fails loud).
  */
 async function resolveDipBankAccountId(client: DbClient, operatingCompanyId: string): Promise<string | null> {
+  // BANK-ACCOUNT-HIDE: an account hidden for THIS entity is never eligible as the resolved DIP bank
+  // (flag OFF by default — see docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
+  const hideOn = await isBankAccountHideEnabled(client, operatingCompanyId);
   const res = await client.query<{ bank_account_id: string }>(
     `
       SELECT ba.id::text AS bank_account_id
@@ -150,6 +154,7 @@ async function resolveDipBankAccountId(client: DbClient, operatingCompanyId: str
        AND (arb.operating_company_id = $1::uuid OR arb.operating_company_id IS NULL)
       WHERE ba.operating_company_id = $1::uuid
         AND ba.ledger_account_id IS NOT NULL
+        ${bankAccountHiddenFilterSql(hideOn, "ba")}
       ORDER BY (arb.operating_company_id IS NOT NULL) DESC
       LIMIT 1
     `,

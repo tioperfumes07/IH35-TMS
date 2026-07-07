@@ -331,6 +331,9 @@ export function categorizeBankTransaction(
     // — when the paid expense belongs to the driver (e.g. a fine) — recover_from_driver + the target
     // deduction bucket type drive the OFF-by-default driver AUTO-DEDUCTION into the settlement engine.
     unit_id?: string;
+    // BANK-SPLIT-1 (Part 1 linkage): the Trailer the transaction belongs to (mdata.equipment — trailers are
+    // NEVER mdata.loads.trailer_id, no such column exists).
+    trailer_id?: string;
     load_id?: string;
     recover_from_driver?: boolean;
     recover_deduction_type?: string;
@@ -355,6 +358,8 @@ export type BankCategorizationLinks = {
   driver_name: string | null;
   unit_id: string | null;
   unit_number: string | null;
+  trailer_id: string | null;
+  trailer_number: string | null;
   load_id: string | null;
   load_number: string | null;
   vendor_id: string | null;
@@ -371,6 +376,7 @@ export type BankCategorizationLinks = {
   deduction_type: string | null;
   deduction_bucket_id: string | null;
   deduction_load_id: string | null;
+  split_mode: string | null;
 };
 
 export function getBankTransactionCategorizationLinks(transactionId: string, companyId: string) {
@@ -382,15 +388,97 @@ export function getBankTransactionCategorizationLinks(transactionId: string, com
 /** BLOCK-6b — reverse drill-through: bank transactions tagged to a given driver / unit / load (+ their deduction). */
 export function getBankTransactionsByLinkage(
   companyId: string,
-  linkage: { driver_id?: string; unit_id?: string; load_id?: string; limit?: number }
+  linkage: { driver_id?: string; unit_id?: string; trailer_id?: string; load_id?: string; limit?: number }
 ) {
   const params = new URLSearchParams({ operating_company_id: companyId });
   if (linkage.driver_id) params.set("driver_id", linkage.driver_id);
   if (linkage.unit_id) params.set("unit_id", linkage.unit_id);
+  if (linkage.trailer_id) params.set("trailer_id", linkage.trailer_id);
   if (linkage.load_id) params.set("load_id", linkage.load_id);
   if (linkage.limit != null) params.set("limit", String(linkage.limit));
   return apiRequest<{ rows: Array<Record<string, unknown>>; total_count: number }>(
     `/api/v1/banking/transactions/by-linkage?${params.toString()}`
+  );
+}
+
+// ── BANK-SPLIT-1 — QBO-style split-transaction popup (real, persisted; behind BANK_TX_SPLIT_ENABLED) ─────
+export type BankTransactionSplitMode = "single_vendor_multi_category" | "multi_vendor";
+
+export type BankTransactionSplitLine = {
+  id?: string;
+  line_no?: number;
+  amount_cents: number;
+  category_kind?: string | null;
+  gl_account_id?: string | null;
+  vendor_id?: string | null;
+  customer_id?: string | null;
+  driver_id?: string | null;
+  unit_id?: string | null;
+  trailer_id?: string | null;
+  load_id?: string | null;
+  item_id?: string | null;
+  memo?: string | null;
+  recover_from_driver?: boolean | null;
+  recover_deduction_type?: string | null;
+  posting_status?: "draft" | "posted" | "skipped_pending_gl_wiring" | "void";
+  posting_reason?: string | null;
+  result_driver_advance_id?: string | null;
+  result_deduction_id?: string | null;
+  result_journal_entry_id?: string | null;
+};
+
+export function getBankTransactionSplits(transactionId: string, companyId: string) {
+  return apiRequest<{ mode: BankTransactionSplitMode | null; lines: BankTransactionSplitLine[]; remaining_cents: number; total_cents: number }>(
+    `/api/v1/banking/transactions/${transactionId}/splits?${q(companyId)}`
+  );
+}
+
+export function saveBankTransactionSplitDraft(
+  transactionId: string,
+  companyId: string,
+  body: { mode: BankTransactionSplitMode; lines: BankTransactionSplitLine[] }
+) {
+  return apiRequest<{ ok: boolean; remaining_cents: number }>(
+    `/api/v1/banking/transactions/${transactionId}/splits?${q(companyId)}`,
+    { method: "PUT", body }
+  );
+}
+
+export function commitBankTransactionSplit(transactionId: string, companyId: string) {
+  return apiRequest<{
+    ok: boolean;
+    results: Array<{
+      line_no: number;
+      posted: boolean;
+      reason: string;
+      driver_advance_id?: string;
+      deduction_id?: string;
+      bill_id?: string;
+      journal_entry_id?: string;
+    }>;
+  }>(`/api/v1/banking/transactions/${transactionId}/splits/commit?${q(companyId)}`, { method: "POST" });
+}
+
+export function voidBankTransactionSplit(transactionId: string, companyId: string) {
+  return apiRequest<{ ok: boolean }>(`/api/v1/banking/transactions/${transactionId}/splits/void?${q(companyId)}`, {
+    method: "POST",
+  });
+}
+
+/** BANK-SPLIT-1 — reverse drill-through: split lines tagged to a given driver/unit/trailer/load/vendor. */
+export function getBankTransactionSplitsByLinkage(
+  companyId: string,
+  linkage: { driver_id?: string; unit_id?: string; trailer_id?: string; load_id?: string; vendor_id?: string; limit?: number }
+) {
+  const params = new URLSearchParams({ operating_company_id: companyId });
+  if (linkage.driver_id) params.set("driver_id", linkage.driver_id);
+  if (linkage.unit_id) params.set("unit_id", linkage.unit_id);
+  if (linkage.trailer_id) params.set("trailer_id", linkage.trailer_id);
+  if (linkage.load_id) params.set("load_id", linkage.load_id);
+  if (linkage.vendor_id) params.set("vendor_id", linkage.vendor_id);
+  if (linkage.limit != null) params.set("limit", String(linkage.limit));
+  return apiRequest<{ rows: Array<Record<string, unknown>>; total_count: number }>(
+    `/api/v1/banking/transaction-splits/by-linkage?${params.toString()}`
   );
 }
 
@@ -474,11 +562,43 @@ export function splitTransaction(
   });
 }
 
-export function getAllAccounts(companyId: string, options?: { include_inactive?: boolean }) {
+export function getAllAccounts(companyId: string, options?: { include_inactive?: boolean; include_hidden?: boolean }) {
   const params = new URLSearchParams();
   params.set("operating_company_id", companyId);
   if (options?.include_inactive) params.set("include_inactive", "true");
+  if (options?.include_hidden) params.set("include_hidden", "true");
   return apiRequest<{ accounts: Array<Record<string, unknown>> }>(`/api/v1/banking/accounts/all?${params.toString()}`);
+}
+
+// ── BANK-ACCOUNT-HIDE (Tier-1 HOLD, behind BANK_ACCOUNT_HIDE_ENABLED, default OFF) ──────────────────────
+// Per-entity hide/exclude: an account real for its OWNING entity can be fully hidden for the OTHER entity
+// it was duplicated into (shared Plaid login). Reversible, audited, Owner/Administrator only.
+export type BankAccountVisibilityRow = {
+  id: string;
+  account_name?: string | null;
+  display_name?: string | null;
+  institution_name?: string | null;
+  account_mask?: string | null;
+  account_type?: string | null;
+  current_balance_cents?: number | string | null;
+  is_active?: boolean;
+  hidden_at?: string | null;
+  hidden_by_user_id?: string | null;
+  hidden_reason?: string | null;
+};
+
+export function hideBankAccount(companyId: string, bankAccountId: string, reason: string) {
+  return apiRequest<{ account: BankAccountVisibilityRow }>(`/api/v1/banking/accounts/${bankAccountId}/hide`, {
+    method: "POST",
+    body: { operating_company_id: companyId, reason },
+  });
+}
+
+export function unhideBankAccount(companyId: string, bankAccountId: string) {
+  return apiRequest<{ account: BankAccountVisibilityRow }>(`/api/v1/banking/accounts/${bankAccountId}/unhide`, {
+    method: "POST",
+    body: { operating_company_id: companyId },
+  });
 }
 
 export function saveAccountVisibility(

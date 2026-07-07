@@ -411,6 +411,24 @@ export type Customer = {
   fmcsa_authority_status_at_verification: string | null;
   fmcsa_last_checked_at: string | null;
   fmcsa_check_response: unknown | null;
+  // VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD) — optional so pre-existing partial
+  // Customer fixtures (tests, older mocks) keep typechecking; the API always returns them.
+  print_on_invoice_name?: string | null;
+  cc_email?: string | null;
+  bcc_email?: string | null;
+  shipping_address_line1?: string | null;
+  shipping_address_line2?: string | null;
+  shipping_city?: string | null;
+  shipping_state?: string | null;
+  shipping_postal_code?: string | null;
+  shipping_country?: string | null;
+  shipping_same_as_billing?: boolean;
+  preferred_payment_method?: "check" | "ach" | "credit_card" | "cash" | "other" | null;
+  preferred_delivery_method?: "email" | "print" | "none";
+  preferred_language?: "en" | "es";
+  tax_exempt?: boolean;
+  tax_exempt_reason?: string | null;
+  default_income_account_id?: string | null;
   created_at: string;
   updated_at: string;
   deactivated_at: string | null;
@@ -471,6 +489,23 @@ export type CreateCustomerInput = {
   factoring_notes?: string | null;
   quality_overall_flag?: "preferred" | "standard" | "caution" | "avoid";
   quality_notes?: string;
+  // VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD)
+  print_on_invoice_name?: string;
+  cc_email?: string;
+  bcc_email?: string;
+  shipping_address_line1?: string;
+  shipping_address_line2?: string;
+  shipping_city?: string;
+  shipping_state?: string;
+  shipping_postal_code?: string;
+  shipping_country?: string;
+  shipping_same_as_billing?: boolean;
+  preferred_payment_method?: "check" | "ach" | "credit_card" | "cash" | "other" | null;
+  preferred_delivery_method?: "email" | "print" | "none";
+  preferred_language?: "en" | "es";
+  tax_exempt?: boolean;
+  tax_exempt_reason?: string | null;
+  default_income_account_id?: string | null;
 };
 
 export type RelationshipHealthTier = "thriving" | "healthy" | "watch" | "at_risk";
@@ -548,6 +583,23 @@ export type UpdateCustomerInput = Partial<{
   factoring_notes: string | null;
   quality_overall_flag: "preferred" | "standard" | "caution" | "avoid";
   quality_notes: string | null;
+  // VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD)
+  print_on_invoice_name: string | null;
+  cc_email: string | null;
+  bcc_email: string | null;
+  shipping_address_line1: string | null;
+  shipping_address_line2: string | null;
+  shipping_city: string | null;
+  shipping_state: string | null;
+  shipping_postal_code: string | null;
+  shipping_country: string | null;
+  shipping_same_as_billing: boolean;
+  preferred_payment_method: "check" | "ach" | "credit_card" | "cash" | "other" | null;
+  preferred_delivery_method: "email" | "print" | "none";
+  preferred_language: "en" | "es";
+  tax_exempt: boolean;
+  tax_exempt_reason: string | null;
+  default_income_account_id: string | null;
   deactivated_at: string | null;
 }>;
 
@@ -709,6 +761,19 @@ export type VendorOption = {
   created_by_user_id?: string;
   updated_by_user_id?: string;
   deactivated_at: string | null;
+  // VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD)
+  address_line2?: string | null;
+  city?: string | null;
+  state?: string | null;
+  postal_code?: string | null;
+  country?: string | null;
+  mc_number?: string | null;
+  dot_number?: string | null;
+  eligible_1099?: boolean | null;
+  website?: string | null;
+  print_on_check_name?: string | null;
+  payment_terms_id?: string | null;
+  default_expense_account_id?: string | null;
 };
 
 export function listDriverQualifications(driverId: string, includeInactive?: boolean) {
@@ -1214,6 +1279,19 @@ export type CreateVendorInput = {
   address?: string;
   tax_id?: string;
   notes?: string;
+  // VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD)
+  address_line2?: string;
+  city?: string;
+  state?: string;
+  postal_code?: string;
+  country?: string;
+  mc_number?: string;
+  dot_number?: string;
+  eligible_1099?: boolean;
+  website?: string;
+  print_on_check_name?: string;
+  payment_terms_id?: string | null;
+  default_expense_account_id?: string | null;
 };
 
 export function createVendor(body: CreateVendorInput) {
@@ -1231,6 +1309,19 @@ export type UpdateVendorInput = Partial<{
   tax_id: string | null;
   notes: string | null;
   deactivated_at: string | null;
+  // VENDOR-CUSTOMER-QBO-PARITY (migration 202607110230, HELD)
+  address_line2: string | null;
+  city: string | null;
+  state: string | null;
+  postal_code: string | null;
+  country: string | null;
+  mc_number: string | null;
+  dot_number: string | null;
+  eligible_1099: boolean;
+  website: string | null;
+  print_on_check_name: string | null;
+  payment_terms_id: string | null;
+  default_expense_account_id: string | null;
 }>;
 
 export function updateVendor(id: string, body: UpdateVendorInput) {

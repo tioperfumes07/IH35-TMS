@@ -1,5 +1,6 @@
-import { BulkSelectableTable } from "../../components/shared/BulkSelectableTable";
 import { useToast } from "../../components/Toast";
+import { useBulkPermission } from "../../hooks/useBulkPermission";
+import { ParityTable } from "../../components/parity/ParityTable";
 
 export type FuelTransactionRow = {
   id: string;
@@ -55,66 +56,51 @@ function exportFuelTransactionsCsv(rows: FuelTransactionRow[]): void {
 
 export function FuelTransactionsTable({ rows }: Props) {
   const { pushToast } = useToast();
+  // Same role gate the old BulkSelectableTable wrapper enforced (BULK_WRITE_ROLES via
+  // useBulkPermission) — preserved here so bulk selection/actions stay hidden for roles that
+  // couldn't see them before.
+  const bulkPermission = useBulkPermission();
 
   return (
-    <BulkSelectableTable
-      entityType="fuel-transactions"
+    <ParityTable
       rows={rows}
-      getRowId={(row) => row.id}
-      bulkActions={[
-        {
-          id: "export",
-          label: "Export CSV",
-          onClick: () => {
-            if (rows.length === 0) {
-              pushToast("No fuel transactions to export.", "info");
-              return;
-            }
-            exportFuelTransactionsCsv(rows);
-          },
-        },
-        {
-          // No bulk-categorize endpoint exists yet — honestly disabled instead of a fake success toast (QA-sweep).
-          id: "categorize",
-          label: "Categorize",
-          disabled: true,
-          onClick: () => pushToast("Bulk categorize is not available yet.", "info"),
-        },
-      ]}
-    >
-      {(ctx) => (
-        <table className="min-w-full text-left text-xs">
-          <thead className="bg-gray-50 text-[10px] uppercase text-gray-600">
-            <tr>
-              <th className="w-8 px-2 py-1">{ctx.renderHeaderCheckbox()}</th>
-              <th className="px-2 py-1">Date</th>
-              <th className="px-2 py-1">Driver</th>
-              <th className="px-2 py-1">Station</th>
-              <th className="px-2 py-1">Gallons</th>
-              <th className="px-2 py-1">Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.id} className="border-t border-gray-100">
-                <td className="px-2 py-1">{ctx.renderRowCheckbox(row.id)}</td>
-                <td className="px-2 py-1">{row.transaction_date}</td>
-                <td className="px-2 py-1">{row.driver_name}</td>
-                <td className="px-2 py-1">{row.station}</td>
-                <td className="px-2 py-1">{row.gallons.toFixed(2)}</td>
-                <td className="px-2 py-1">{money(row.amount_cents)}</td>
-              </tr>
-            ))}
-            {rows.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="px-2 py-3 text-center text-gray-500">
-                  No fuel transactions.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
+      rowKey={(row) => row.id}
+      storageKey="fuel-transactions"
+      emptyText="No fuel transactions."
+      selectable={bulkPermission.canUseBulkOps}
+      batchActions={() => (
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 disabled:opacity-50"
+            onClick={() => {
+              if (rows.length === 0) {
+                pushToast("No fuel transactions to export.", "info");
+                return;
+              }
+              exportFuelTransactionsCsv(rows);
+            }}
+          >
+            Export CSV
+          </button>
+          <button
+            type="button"
+            disabled
+            title="Bulk categorize is not available yet."
+            className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 disabled:opacity-50"
+            onClick={() => pushToast("Bulk categorize is not available yet.", "info")}
+          >
+            Categorize
+          </button>
+        </div>
       )}
-    </BulkSelectableTable>
+      columns={[
+        { key: "transaction_date", label: "Date", sortable: true },
+        { key: "driver_name", label: "Driver", sortable: true },
+        { key: "station", label: "Station", sortable: true },
+        { key: "gallons", label: "Gallons", sortable: true, render: (row) => row.gallons.toFixed(2) },
+        { key: "amount_cents", label: "Amount", sortable: true, render: (row) => money(row.amount_cents) },
+      ]}
+    />
   );
 }

@@ -16,6 +16,8 @@ import { useToast } from "../../../components/Toast";
 import type { BookLoadFormValues } from "./BookLoadCustomerSection";
 import { BookLoadEquipmentSection } from "./BookLoadEquipmentSection";
 import { PreDispatchValidationPanel } from "../../../components/dispatch/PreDispatchValidationPanel";
+import { AuthGatePanel } from "../../../components/dispatch/AuthGatePanel";
+import { LoadCreateModal } from "../LoadCreateModal";
 import { BookLoadStopsSection } from "./BookLoadStopsSection";
 import { MultiStopExtraRateEditor } from "../../../components/dispatch/MultiStopExtraRateEditor";
 import { BookLoadValidationSection } from "./BookLoadValidationSection";
@@ -299,6 +301,14 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
     canDispatch: true,
     hasBlockers: false,
   });
+  // GAP-47 — dispatch authorization gates (distinct from GAP-14's physical-readiness checks above):
+  // server-side already enforces these on POST .../book (auth-gates preHandler, 422 dispatch_auth_gate_blocked
+  // if it fails), so this is a pre-submit PREVIEW, same "read-only preview, submit-time gate is the real
+  // enforcement" pattern as PreDispatchValidationPanel.
+  const [authGateBlocked, setAuthGateBlocked] = useState(false);
+  // GAP-47 — active-repair-work-order block on the selected driver, with a dispatcher override checkbox.
+  const [overrideRepairBlock, setOverrideRepairBlock] = useState(false);
+  const [repairBlockSubmitBlocked, setRepairBlockSubmitBlocked] = useState(false);
   const watchedStops = form.watch("stops");
   const deadheadAfterAt = useMemo(() => {
     const stops = (watchedStops ?? []) as Array<{
@@ -1238,7 +1248,7 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                 <span className="blw-sec-chip">D</span>
                 <span className="blw-sec-name">Pre-dispatch validation</span>
                 <span className="blw-sec-meta">
-                  {preDispatch.hasBlockers ? (
+                  {preDispatch.hasBlockers || authGateBlocked || repairBlockSubmitBlocked ? (
                     <b className="text-red-700">Active blocker(s) — override required</b>
                   ) : assignedPrimaryDriverId || assignedUnitId || watchedCustomerId ? (
                     <b>{preDispatch.canDispatch ? "All checks pass · ready to book" : "Review warnings"}</b>
@@ -1258,6 +1268,24 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                   trailerUuid={assignedTrailerUnitId || null}
                   customerId={watchedCustomerId || null}
                   onValidationChange={(canDispatch, hasBlockers) => setPreDispatch({ canDispatch, hasBlockers })}
+                />
+                {/* GAP-47 — dispatch authorization gates (workflow-level, e.g. active-driver / DVIR-major /
+                    advisory registry checks), distinct from the physical-readiness checks above. */}
+                <AuthGatePanel
+                  operatingCompanyId={operatingCompanyId}
+                  action={isEditMode ? "assign_driver" : "book_load"}
+                  loadUuid={editLoadId || undefined}
+                  unitUuid={assignedUnitId || undefined}
+                  driverUuid={assignedPrimaryDriverId || undefined}
+                  trailerUuid={assignedTrailerUnitId || undefined}
+                  onBlockersChange={setAuthGateBlocked}
+                />
+                <LoadCreateModal
+                  operatingCompanyId={operatingCompanyId}
+                  selectedDriverId={assignedPrimaryDriverId || ""}
+                  overrideRepairBlock={overrideRepairBlock}
+                  onOverrideRepairBlockChange={setOverrideRepairBlock}
+                  onSubmitBlockedChange={setRepairBlockSubmitBlocked}
                 />
                 <BookLoadValidationSection issues={validationIssues} />
               </div>
@@ -1322,7 +1350,9 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
                   Save draft
                 </Button>
               )}
-              <Button type="submit">{isEditMode ? "Save changes" : "Book + dispatch"}</Button>
+              <Button type="submit" disabled={repairBlockSubmitBlocked}>
+                {isEditMode ? "Save changes" : "Book + dispatch"}
+              </Button>
             </div>
           </div>
           <div className="border-t border-gray-100 px-3 py-1 text-right text-[9px] text-gray-500">

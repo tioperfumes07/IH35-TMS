@@ -10,6 +10,8 @@
 // counts ONLY status='uncategorized' → it read 0 while the For-review queue (both statuses) held
 // thousands. Both surfaces now derive from this one predicate.
 
+import { bankTransactionHiddenFilterSql, isBankAccountHideEnabled } from "./bank-account-visibility.js";
+
 export const PENDING_CATEGORIZATION_STATUSES = ["pending_categorization", "uncategorized"] as const;
 
 type Queryable = {
@@ -27,12 +29,17 @@ export async function countUncategorizedTransactions(
   client: Queryable,
   operatingCompanyId: string
 ): Promise<number> {
+  // BANK-ACCOUNT-HIDE: an account hidden for THIS entity contributes nothing to the count (flag OFF by
+  // default — see docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md). Shared by both the Banking Home
+  // KPI and the For-review queue, so they can never diverge on hidden-account handling either.
+  const hideOn = await isBankAccountHideEnabled(client, operatingCompanyId);
   const res = await client.query<{ count: number }>(
     `
       SELECT count(*)::int AS count
       FROM banking.bank_transactions bt
       WHERE bt.operating_company_id = $1::uuid
         AND ${pendingCategorizationPredicate("bt")}
+        ${bankTransactionHiddenFilterSql(hideOn, "bt")}
     `,
     [operatingCompanyId]
   );

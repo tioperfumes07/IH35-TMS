@@ -6,9 +6,12 @@ import {
   categorizeBankTransaction,
   getBankingSuggestions,
   getCoaAccounts,
+  getMatchCandidates,
   getPlaidCompanyTransactions,
   skipBankTransactionInvestigation,
   uploadBankStatementCsv,
+  type BankMatchCandidate,
+  type BankMatchCandidateKind,
   type PlaidBankAccount,
   type PlaidBankTransaction,
 } from "../../../api/banking";
@@ -19,11 +22,17 @@ import { Button } from "../../../components/Button";
 import { useBulkSelection } from "../../../hooks/useBulkSelection";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useToast } from "../../../components/Toast";
+import { formatUsdCents } from "../../../lib/money";
 import { DriverAutocomplete } from "../../../components/factoring/DriverAutocomplete";
 import { UnitAutocomplete } from "../../../components/banking/UnitAutocomplete";
+import { TrailerAutocomplete } from "../../../components/banking/TrailerAutocomplete";
 import { LoadAutocomplete } from "../../../components/banking/LoadAutocomplete";
 import { listVendors, listCustomers } from "../../../api/mdata";
 import { itemsCatalogClient, type AccountingCatalogRow } from "../../../api/catalogs-accounting";
+import { BankTransactionSplitModal } from "./BankTransactionSplitModal";
+import { MatchDrawer } from "./MatchDrawer";
+import { RecordTransferModal } from "../RecordTransferModal";
+import { RecordCCPaymentModal } from "../RecordCCPaymentModal";
 
 // BLOCK-6b — recoverable-expense bucket types a bank-categorized driver expense can charge (a fine/toll
 // the company paid on the driver's behalf → recovered from settlement). Mirrors the backend allow-list.
@@ -63,6 +72,10 @@ type RowDetailDraft = {
   driverName: string;
   unitId: string;
   unitName: string;
+  // BANK-SPLIT-1 (Part 1 linkage): Trailer is the 4th dimension alongside Driver/Unit/Trip — trailers are
+  // mdata.equipment, NEVER mdata.loads.trailer_id (no such column exists).
+  trailerId: string;
+  trailerName: string;
   loadId: string;
   loadName: string;
   recoverFromDriver: boolean;
@@ -71,6 +84,18 @@ type RowDetailDraft = {
 
 const USD = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 const COMPANY_TRANSACTIONS_PAGE_SIZE = 500;
+
+// Match candidates panel — real ranked-match engine (GET .../match-candidates), same rendering idiom as
+// the orphaned MatchDrawer.tsx (kind badge, amount, date gap, score). DISPLAY ONLY here: the accept/
+// confirm-match action is financial (reconcile-commit) and ships in a separate HELD PR.
+const MATCH_CANDIDATE_KIND_LABELS: Record<BankMatchCandidateKind, string> = {
+  payment: "Payment",
+  bill_payment: "Bill Payment",
+  transfer: "Transfer",
+  je: "Journal Entry",
+  bill: "Bill",
+  expense: "Expense",
+};
 
 type ReviewTabId = "for_review" | "categorized" | "excluded";
 type AmountFilter = "all" | "spent" | "received";
@@ -210,6 +235,14 @@ export function BankingTransactionsDesignView({
   const [excludingTxId, setExcludingTxId] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<string, RowDetailDraft>>({});
   const [currentPage, setCurrentPage] = useState(1);
+  // BANK-SPLIT-1 — the transaction currently open in the Split-transaction popup (real, persisted; HELD).
+  const [splitTx, setSplitTx] = useState<PlaidBankTransaction | null>(null);
+  // HELD financial-actions wiring (banking Categorize panel): the transaction whose reconcile Match
+  // drawer / Transfer modal / CC Payment modal is currently open. Reuses the EXISTING, already-gated
+  // posters (acceptBankReconMatch, createTransfer, recordCcPayment) — no new GL math.
+  const [matchDrawerTxId, setMatchDrawerTxId] = useState<string | null>(null);
+  const [transferModalTx, setTransferModalTx] = useState<PlaidBankTransaction | null>(null);
+  const [ccPaymentModalTx, setCcPaymentModalTx] = useState<PlaidBankTransaction | null>(null);
 
   const [viewSettings, setViewSettings] = useState<ViewSettings>({
     showCheckNo: false,
@@ -258,6 +291,16 @@ export function BankingTransactionsDesignView({
     enabled: Boolean(companyId),
   });
 
+  // PRIMARY match panel — the real ranked-match engine (match.service.ts findCandidates), NOT the
+  // "similar past categorizations" suggestions endpoint below (that one was wrongly bound here before —
+  // it answers a different question and always came back empty for a first-time transaction).
+  const matchCandidatesQuery = useQuery({
+    queryKey: ["banking", "tx-match-candidates", companyId, expandedTxId ?? ""],
+    queryFn: () => getMatchCandidates(String(expandedTxId), companyId),
+    enabled: Boolean(companyId && expandedTxId),
+  });
+
+  // Secondary panel — "similar past categorizations" (kept, additive-only; not the primary match source).
   const suggestionsQuery = useQuery({
     queryKey: ["banking", "tx-suggestions", companyId, expandedTxId ?? ""],
     queryFn: () => getBankingSuggestions(String(expandedTxId), companyId),
@@ -484,6 +527,8 @@ export function BankingTransactionsDesignView({
       driverName: "",
       unitId: "",
       unitName: "",
+      trailerId: "",
+      trailerName: "",
       loadId: "",
       loadName: "",
       recoverFromDriver: false,
@@ -529,6 +574,7 @@ export function BankingTransactionsDesignView({
         // BLOCK-6b dimensions + driver auto-deduction (recover flags only sent when a driver is tagged).
         driver_id: draft.driverId || undefined,
         unit_id: draft.unitId || undefined,
+        trailer_id: draft.trailerId || undefined,
         load_id: draft.loadId || undefined,
         recover_from_driver: draft.driverId ? draft.recoverFromDriver : undefined,
         recover_deduction_type:
@@ -1079,19 +1125,31 @@ export function BankingTransactionsDesignView({
                         </button>
                         {menuOpen ? (
                           <div className="absolute right-0 top-7 z-20 min-w-[220px] rounded-sm border border-gray-200 bg-white shadow-md">
-                            {/* Split is intentionally disabled (QA-sweep): a real multi-line split needs a
-                            persisted split-lines model that does not exist yet. The old handler silently
-                            mis-categorized the txn as a single full-amount 'split_transaction' line and
-                            showed a "posted as single-line placeholder" success toast — wrong financial
-                            categorization. Disabled until a true balanced N-line split is built
-                            (financial, HOLD-FOR-JORGE). */}
+                            {/* HELD financial-actions wiring: reuses the orphaned MatchDrawer (already-built
+                            getMatchCandidates + acceptBankReconMatch, reconcile-commit — link-and-clear for
+                            an exact-amount match, or a balanced variance JE via acceptMatchWithResolveDifference;
+                            both gated, no new GL math here). */}
                             <button
                               type="button"
-                              disabled
-                              title="Split into multiple categories is not available in this build"
-                              className="block w-full cursor-not-allowed border-b border-gray-100 px-3 py-2 text-left text-xs text-gray-400"
+                              className="block w-full border-b border-gray-100 px-3 py-2 text-left text-xs hover:bg-gray-50"
+                              onClick={() => {
+                                setActionMenuTxId(null);
+                                setMatchDrawerTxId(tx.id);
+                              }}
                             >
-                              Split <span className="text-[10px] font-semibold text-gray-400">(unavailable)</span>
+                              Accept match (reconcile)
+                            </button>
+                            {/* BANK-SPLIT-1: the real, persisted, balanced N-line split (banking.bank_transaction_splits,
+                            migration 202607110100, HELD). Opens the QBO-style Split transaction popup. */}
+                            <button
+                              type="button"
+                              className="block w-full border-b border-gray-100 px-3 py-2 text-left text-xs hover:bg-gray-50"
+                              onClick={() => {
+                                setActionMenuTxId(null);
+                                setSplitTx(tx);
+                              }}
+                            >
+                              Split
                             </button>
                             <button
                               type="button"
@@ -1159,10 +1217,24 @@ export function BankingTransactionsDesignView({
                             <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                               <label className="text-xs text-gray-600">
                                 Transaction type
-                                <SelectCombobox className="mt-0.5 w-full" value={draft.transactionType} onChange={(event) => setDraft(tx, { transactionType: event.target.value })}>
+                                <SelectCombobox
+                                  className="mt-0.5 w-full"
+                                  value={draft.transactionType}
+                                  onChange={(event) => {
+                                    const value = event.target.value;
+                                    setDraft(tx, { transactionType: value });
+                                    // HELD financial-actions wiring: Transfer/CC Payment open the existing,
+                                    // fully-built RecordTransferModal / RecordCCPaymentModal (gated posters —
+                                    // createTransfer / recordCcPayment) pre-seeded from this row, instead of
+                                    // duplicating a third transfer/CC-payment picker inline.
+                                    if (value === "Transfer") setTransferModalTx(tx);
+                                    if (value === "CC Payment") setCcPaymentModalTx(tx);
+                                  }}
+                                >
                                   <option value="Money in">Money in</option>
                                   <option value="Money out">Money out</option>
                                   <option value="Transfer">Transfer</option>
+                                  <option value="CC Payment">CC Payment</option>
                                   <option value="Expense">Expense</option>
                                 </SelectCombobox>
                               </label>
@@ -1195,11 +1267,29 @@ export function BankingTransactionsDesignView({
                               </label>
                               <label className="text-xs text-gray-600">
                                 From/To
-                                <input
-                                  className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
-                                  value={draft.fromTo}
-                                  onChange={(event) => setDraft(tx, { fromTo: event.target.value })}
-                                />
+                                {draft.transactionType === "Transfer" ? (
+                                  <button
+                                    type="button"
+                                    className="mt-0.5 block w-full rounded-sm border border-gray-300 px-2 py-1 text-left text-sm hover:bg-gray-50"
+                                    onClick={() => setTransferModalTx(tx)}
+                                  >
+                                    {draft.fromTo || "Select From/To accounts…"}
+                                  </button>
+                                ) : draft.transactionType === "CC Payment" ? (
+                                  <button
+                                    type="button"
+                                    className="mt-0.5 block w-full rounded-sm border border-gray-300 px-2 py-1 text-left text-sm hover:bg-gray-50"
+                                    onClick={() => setCcPaymentModalTx(tx)}
+                                  >
+                                    {draft.fromTo || "Select CC payment details…"}
+                                  </button>
+                                ) : (
+                                  <input
+                                    className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+                                    value={draft.fromTo}
+                                    onChange={(event) => setDraft(tx, { fromTo: event.target.value })}
+                                  />
+                                )}
                               </label>
                               <label className="text-xs text-gray-600">
                                 Category (Chart of Accounts)
@@ -1295,13 +1385,14 @@ export function BankingTransactionsDesignView({
                             {/* BLOCK-6b dimensions: Driver + Unit (truck) + Trip (load) the transaction belongs
                                 to — tags for full cross-module linkage + drill-through (forward: this txn shows
                                 them; reverse: each shows this expense). */}
-                            <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-3">
+                            <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-4">
                               <div className="text-xs text-gray-600">
                                 Driver
                                 <div className="mt-0.5">
                                   <DriverAutocomplete
                                     companyId={companyId}
                                     value={draft.driverId}
+                                    limit={200}
                                     onChange={(driverId, driverName) =>
                                       setDraft(tx, { driverId, driverName: driverName ?? "" })
                                     }
@@ -1333,6 +1424,25 @@ export function BankingTransactionsDesignView({
                                     onClick={() => setDraft(tx, { unitId: "", unitName: "" })}
                                   >
                                     Clear unit{draft.unitName ? ` (${draft.unitName})` : ""}
+                                  </button>
+                                ) : null}
+                              </div>
+                              <div className="text-xs text-gray-600">
+                                Trailer
+                                <div className="mt-0.5">
+                                  <TrailerAutocomplete
+                                    companyId={companyId}
+                                    value={draft.trailerId}
+                                    onChange={(trailerId, trailerName) => setDraft(tx, { trailerId, trailerName })}
+                                  />
+                                </div>
+                                {draft.trailerId ? (
+                                  <button
+                                    type="button"
+                                    className="mt-0.5 text-[11px] text-slate-700 underline"
+                                    onClick={() => setDraft(tx, { trailerId: "", trailerName: "" })}
+                                  >
+                                    Clear trailer{draft.trailerName ? ` (${draft.trailerName})` : ""}
                                   </button>
                                 ) : null}
                               </div>
@@ -1423,46 +1533,104 @@ export function BankingTransactionsDesignView({
 
                           <div className="rounded-sm border border-gray-200 bg-white p-2">
                             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Match candidates</p>
-                            {!viewSettings.enableSuggestedCategorization ? (
-                              <p className="mt-2 text-sm text-gray-500">Suggested categorization disabled in view settings.</p>
+                            <p className="mt-0.5 text-[11px] text-gray-500">
+                              Ranked matchable ledger records (amount, date, memo) from the reconciliation match
+                              engine, best match first.
+                            </p>
+                            {matchCandidatesQuery.isLoading ? <p className="mt-2 text-sm text-gray-500">Loading match candidates...</p> : null}
+                            {matchCandidatesQuery.isError ? (
+                              <p className="mt-2 text-sm text-red-700">Could not load match candidates.</p>
                             ) : null}
-                            {viewSettings.enableSuggestedCategorization && suggestionsQuery.isLoading ? <p className="mt-2 text-sm text-gray-500">Loading suggestions...</p> : null}
-                            {viewSettings.enableSuggestedCategorization && !suggestionsQuery.isLoading && (suggestionsQuery.data?.suggestions ?? []).length === 0 ? (
-                              <p className="mt-2 text-sm text-gray-500">No match candidates returned.</p>
+                            {!matchCandidatesQuery.isLoading &&
+                            !matchCandidatesQuery.isError &&
+                            (matchCandidatesQuery.data?.candidates ?? []).length === 0 ? (
+                              <p className="mt-2 text-sm text-gray-500">No match candidates found for this transaction.</p>
                             ) : null}
-                            <div className="mt-2 space-y-1">
-                              {(suggestionsQuery.data?.suggestions ?? []).slice(0, 6).map((suggestion, index) => (
-                                <button
-                                  key={`${tx.id}-s-${index}`}
-                                  type="button"
-                                  className="block w-full rounded-sm border border-gray-100 px-2 py-1 text-left text-xs hover:bg-gray-50"
-                                  onClick={() => {
-                                    // Contract fix (C1): apply the suggested category through the
-                                    // real /categorize contract (category_kind + gl_account_id) —
-                                    // the old {action_type:"match"} body 400'd. The suggestion
-                                    // carries its prior category + account; reuse them.
-                                    const suggestedKind = String(suggestion.category ?? suggestion.kind ?? "").trim();
-                                    const suggestedAccountId = String(
-                                      suggestion.gl_account_id ?? suggestion.coa_account_id ?? suggestion.account_id ?? ""
-                                    );
-                                    if (!suggestedKind && !suggestedAccountId) {
-                                      pushToast("This suggestion has no category to apply.", "error");
-                                      return;
-                                    }
-                                    void categorizeBankTransaction(tx.id, companyId, {
-                                      category_kind: suggestedKind || "Matched",
-                                      gl_account_id: suggestedAccountId || undefined,
-                                    })
-                                      .then(() => {
-                                        pushToast("Transaction matched", "success");
-                                        onDataChanged();
+                            <div className="mt-2 space-y-1.5">
+                              {[...(matchCandidatesQuery.data?.candidates ?? [])]
+                                .sort((a, b) => b.match_score - a.match_score)
+                                .map((candidate: BankMatchCandidate) => (
+                                  <div
+                                    key={`${tx.id}-mc-${candidate.ledger_entry_kind}-${candidate.ledger_entry_id}`}
+                                    className="rounded-sm border border-gray-100 px-2 py-1.5 text-xs"
+                                  >
+                                    <div className="flex items-center justify-between gap-2">
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="inline-flex items-center rounded-sm border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700">
+                                          {MATCH_CANDIDATE_KIND_LABELS[candidate.ledger_entry_kind]}
+                                        </span>
+                                        {candidate.auto_match ? (
+                                          <span className="inline-flex items-center rounded-sm bg-slate-800 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">
+                                            Best match
+                                          </span>
+                                        ) : null}
+                                      </div>
+                                      <span className="shrink-0 font-semibold text-gray-900">
+                                        {formatUsdCents(Math.abs(Number(candidate.amount_cents ?? 0)))}
+                                      </span>
+                                    </div>
+                                    <div className="mt-1 truncate text-gray-700" title={candidate.memo}>
+                                      {candidate.memo?.trim() ? candidate.memo : "—"}
+                                    </div>
+                                    <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-gray-500">
+                                      <span>Date: {String(candidate.event_date ?? "").slice(0, 10) || "—"}</span>
+                                      <span>Amount gap: {formatUsdCents(Math.abs(Number(candidate.amount_gap_cents ?? 0)))}</span>
+                                      <span>Date gap: {candidate.date_gap_days}d</span>
+                                      <span>Score: {candidate.match_score.toFixed(3)}</span>
+                                    </div>
+                                  </div>
+                                ))}
+                            </div>
+
+                            <div className="mt-3 border-t border-gray-100 pt-2">
+                              <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+                                Similar past categorizations
+                              </p>
+                              {!viewSettings.enableSuggestedCategorization ? (
+                                <p className="mt-1 text-xs text-gray-500">Suggested categorization disabled in view settings.</p>
+                              ) : null}
+                              {viewSettings.enableSuggestedCategorization && suggestionsQuery.isLoading ? (
+                                <p className="mt-1 text-xs text-gray-500">Loading suggestions...</p>
+                              ) : null}
+                              {viewSettings.enableSuggestedCategorization &&
+                              !suggestionsQuery.isLoading &&
+                              (suggestionsQuery.data?.suggestions ?? []).length === 0 ? (
+                                <p className="mt-1 text-xs text-gray-500">No similar past categorizations found.</p>
+                              ) : null}
+                              <div className="mt-1 space-y-1">
+                                {(suggestionsQuery.data?.suggestions ?? []).slice(0, 6).map((suggestion, index) => (
+                                  <button
+                                    key={`${tx.id}-s-${index}`}
+                                    type="button"
+                                    className="block w-full rounded-sm border border-gray-100 px-2 py-1 text-left text-xs hover:bg-gray-50"
+                                    onClick={() => {
+                                      // Contract fix (C1): apply the suggested category through the
+                                      // real /categorize contract (category_kind + gl_account_id) —
+                                      // the old {action_type:"match"} body 400'd. The suggestion
+                                      // carries its prior category + account; reuse them.
+                                      const suggestedKind = String(suggestion.category ?? suggestion.kind ?? "").trim();
+                                      const suggestedAccountId = String(
+                                        suggestion.gl_account_id ?? suggestion.coa_account_id ?? suggestion.account_id ?? ""
+                                      );
+                                      if (!suggestedKind && !suggestedAccountId) {
+                                        pushToast("This suggestion has no category to apply.", "error");
+                                        return;
+                                      }
+                                      void categorizeBankTransaction(tx.id, companyId, {
+                                        category_kind: suggestedKind || "Matched",
+                                        gl_account_id: suggestedAccountId || undefined,
                                       })
-                                      .catch((error) => pushToast(String((error as Error).message || "Match failed"), "error"));
-                                  }}
-                                >
-                                  {String(suggestion.category ?? suggestion.kind ?? "candidate")} · {String(suggestion.id ?? "")}
-                                </button>
-                              ))}
+                                        .then(() => {
+                                          pushToast("Transaction matched", "success");
+                                          onDataChanged();
+                                        })
+                                        .catch((error) => pushToast(String((error as Error).message || "Match failed"), "error"));
+                                    }}
+                                  >
+                                    {String(suggestion.category ?? suggestion.kind ?? "candidate")} · {String(suggestion.id ?? "")}
+                                  </button>
+                                ))}
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -1478,6 +1646,56 @@ export function BankingTransactionsDesignView({
           </tbody>
         </table>
       </div>
+      <BankTransactionSplitModal
+        open={Boolean(splitTx)}
+        companyId={companyId}
+        transaction={splitTx ? { id: splitTx.id, amount_cents: splitTx.amount_cents, is_credit: splitTx.is_credit, description: transactionLabel(splitTx) } : null}
+        onClose={() => setSplitTx(null)}
+        onSaved={() => onDataChanged()}
+      />
+      {/* HELD financial-actions wiring — reuses the orphaned MatchDrawer (getMatchCandidates +
+      acceptBankReconMatch, already gated) instead of inventing a second match/accept flow. */}
+      <MatchDrawer
+        open={Boolean(matchDrawerTxId)}
+        bankTransactionId={matchDrawerTxId}
+        operatingCompanyId={companyId}
+        onClose={() => setMatchDrawerTxId(null)}
+        onAccepted={() => onDataChanged()}
+      />
+      {/* HELD financial-actions wiring — the fully-built RecordTransferModal (createTransfer, gated),
+      pre-seeded from the row's amount/date + this account as one leg. */}
+      <RecordTransferModal
+        open={Boolean(transferModalTx)}
+        operatingCompanyId={companyId}
+        defaultTransferType="bank_to_bank"
+        prefillAmountCents={transferModalTx ? Math.abs(Number(transferModalTx.amount_cents ?? 0)) : undefined}
+        prefillDate={transferModalTx?.transaction_date?.slice(0, 10)}
+        prefillMemo={transferModalTx ? transactionLabel(transferModalTx) : undefined}
+        seedAccountId={selectedAccount?.id}
+        seedAccountSide={transferModalTx?.is_credit ? "to" : "from"}
+        linkBankTransactionId={transferModalTx?.id ?? null}
+        onClose={() => setTransferModalTx(null)}
+        onSaved={() => {
+          setTransferModalTx(null);
+          onDataChanged();
+        }}
+      />
+      {/* HELD financial-actions wiring — the RecordCCPaymentModal already mounted at BankingHome.tsx
+      (recordCcPayment, gated), reused here pre-seeded from the row. */}
+      <RecordCCPaymentModal
+        open={Boolean(ccPaymentModalTx)}
+        operatingCompanyId={companyId}
+        prefillAmountCents={ccPaymentModalTx ? Math.abs(Number(ccPaymentModalTx.amount_cents ?? 0)) : undefined}
+        prefillDate={ccPaymentModalTx?.transaction_date?.slice(0, 10)}
+        prefillMemo={ccPaymentModalTx ? transactionLabel(ccPaymentModalTx) : undefined}
+        prefillFromBankId={selectedAccount?.id}
+        linkBankTransactionId={ccPaymentModalTx?.id ?? null}
+        onClose={() => setCcPaymentModalTx(null)}
+        onSaved={() => {
+          setCcPaymentModalTx(null);
+          onDataChanged();
+        }}
+      />
     </div>
   );
 }

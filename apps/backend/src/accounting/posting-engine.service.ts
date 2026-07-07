@@ -1,4 +1,5 @@
 import { withCurrentUser } from "../auth/db.js";
+import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../banking/bank-account-visibility.js";
 import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
 import { resolveAccountForCategory } from "./expense-category-map/resolver.service.js";
 import { resolveBillLineDebitAccount, BillLineAccountError } from "./bill-account-resolver.js";
@@ -208,12 +209,16 @@ async function resolveBankLedgerAccountId(
   operatingCompanyId: string,
   bankAccountId: string
 ): Promise<string | null> {
+  // BANK-ACCOUNT-HIDE: an account hidden for THIS entity resolves to no bridge, so the caller fails
+  // closed rather than post to it (flag OFF by default — see docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
+  const hideOn = await isBankAccountHideEnabled(client, operatingCompanyId);
   const res = await client.query<{ ledger_account_id: string | null }>(
     `
       SELECT ledger_account_id::text AS ledger_account_id
       FROM banking.bank_accounts
       WHERE id = $1::uuid
         AND operating_company_id = $2::uuid
+        ${bankAccountHiddenFilterSql(hideOn, "banking.bank_accounts")}
       LIMIT 1
     `,
     [bankAccountId, operatingCompanyId]

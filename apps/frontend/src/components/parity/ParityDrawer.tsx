@@ -6,7 +6,7 @@
  * B1–B3 for item/customer/vendor/account create-edit panels. Transaction
  * editors are full-page and do NOT use this drawer.
  */
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { PARITY_DRAWER_WIDTH, PARITY_DRAWER_WIDTH_WIDE } from "./sizing";
 
 export type ParityDrawerProps = {
@@ -30,6 +30,15 @@ export function ParityDrawer({
   children,
   size = "regular",
 }: ParityDrawerProps) {
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
   if (!open) return null;
   const widthClass = size === "wide" ? PARITY_DRAWER_WIDTH_WIDE : PARITY_DRAWER_WIDTH;
   return (

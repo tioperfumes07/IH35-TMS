@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
+import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "./bank-account-visibility.js";
 
 type AccountKind = "bank" | "cc" | "coa";
 type TransferType = "bank_to_bank" | "cc_payment" | "cash_deposit" | "owner_contribution" | "owner_distribution";
@@ -41,6 +42,9 @@ async function validateAccountOwnership(
   accountKind: AccountKind
 ) {
   if (accountKind === "bank") {
+    // BANK-ACCOUNT-HIDE: an account hidden for THIS entity can never be chosen as a NEW transfer
+    // leg (flag OFF by default — see docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
+    const hideOn = await isBankAccountHideEnabled(client, operatingCompanyId);
     const res = await client.query<{ id: string }>(
       `
         SELECT id
@@ -48,6 +52,7 @@ async function validateAccountOwnership(
         WHERE id = $1
           AND operating_company_id = $2
           AND is_active = true
+          ${bankAccountHiddenFilterSql(hideOn, "banking.bank_accounts")}
         LIMIT 1
       `,
       [accountId, operatingCompanyId]

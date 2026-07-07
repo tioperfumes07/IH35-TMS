@@ -23,7 +23,13 @@ const EXCLUDED_TABLE_SUFFIXES = [
 // void_cancel_reasons was grandfathered here until Task #24 Block 09; Block 09 ships its DEDICATED
 // CRUD route + Lists profile (specialized per-entity RLS + requires-note/same-entity DB trigger the
 // generic factory can't model), so it is now registered and removed from this stub list.
-const KNOWN_STUB_TABLES = [];
+// BLOCK-17/24 tax-document engine ships two specialized catalogs.* tables that are NOT generic
+// Excel-upload CRUD catalogs — they are managed by the dedicated tax-documents module: payee_tax_profile
+// (per-payee W-9/W-8BEN tax status driving 1099-NEC vs 1042-S selection, effective-year-keyed, voidable)
+// and tax_form_thresholds (year-keyed IRS reporting thresholds read by box1-aggregation). Neither fits the
+// generic factory model (no free-form Excel upload; specialized effective-dated/tax-year semantics), so
+// they are grandfathered here rather than force-fit onto the generic catalog factory.
+const KNOWN_STUB_TABLES = ["payee_tax_profile", "tax_form_thresholds"];
 
 function fail(message) {
   console.error(`verify:catalog-factory-coverage FAIL: ${message}`);

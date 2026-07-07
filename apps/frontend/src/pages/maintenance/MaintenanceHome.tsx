@@ -9,6 +9,7 @@ import {
   getMaintenanceKpis,
   getMaintenanceRecentActivity,
   getMaintenanceRmStatus,
+  getMaintenanceSevereAlerts,
   getWorkOrder,
   listMaintenanceParts,
   listMaintPmDue,
@@ -34,6 +35,8 @@ import { CreateExpenseModal } from "./components/CreateExpenseModal";
 import { MaintenanceDamageRegisterTab } from "./components/MaintenanceDamageRegisterTab";
 import { DtcAutoWorkOrdersCard } from "./components/DtcAutoWorkOrdersCard";
 import { InTransitIssuesTable } from "./components/InTransitIssuesTable";
+import { InTransitTriageBand } from "./components/InTransitTriageBand";
+import { SevereAlertsBand } from "./components/SevereAlertsBand";
 import { IntegrationsStrip } from "./components/IntegrationsStrip";
 import { MaintKpiRows } from "./components/MaintKpiRows";
 import { MaintenancePmCountdownCards } from "./components/MaintenancePmCountdownCards";
@@ -47,6 +50,9 @@ import { RecentActivityRow } from "./components/RecentActivityRow";
 import { RoadServiceList } from "./RoadServiceList";
 import { SevereRepairOosTab } from "./components/SevereRepairOosTab";
 import { TriageModal } from "./components/TriageModal";
+import { BrakeWearDashboard } from "./brakes/BrakeWearDashboard";
+import { PreFlightDvirQueue } from "./pre-flight/PreFlightDvirQueue";
+import { TireWearDashboard } from "./tires/TireWearDashboard";
 import { WorkOrderDetailModal } from "../../components/maintenance/WorkOrderDetailModal";
 import { WorkOrdersTable } from "./components/WorkOrdersTable";
 import { partNeedsReorder } from "./parts-low-stock";
@@ -73,6 +79,9 @@ const SUBNAV = [
   { id: "severe_repairs", label: "Severe Repairs" },
   { id: "road_service", label: "Road Service" },
   { id: "parts_inventory", label: "Parts Inventory" },
+  { id: "brake_wear", label: "Brake Wear" },
+  { id: "tire_wear", label: "Tire Wear" },
+  { id: "pre_flight_dvir", label: "Pre-Flight DVIR" },
   { id: "settings", label: "Settings" },
 ] as const;
 
@@ -119,6 +128,11 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
   const triageQuery = useQuery({
     queryKey: ["maintenance", "dashboard", "triage", companyId],
     queryFn: () => getMaintenanceInTransitQueue(companyId),
+    enabled: Boolean(companyId),
+  });
+  const severeAlertsQuery = useQuery({
+    queryKey: ["maintenance", "dashboard", "severe-alerts", companyId],
+    queryFn: () => getMaintenanceSevereAlerts(companyId),
     enabled: Boolean(companyId),
   });
   const recentQuery = useQuery({
@@ -306,6 +320,11 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
               roadside={rmStatusQuery.data?.roadside ?? []}
               onOpen={(id) => setSelectedWorkOrderId(id)}
             />
+            <InTransitTriageBand
+              issues={triageQuery.data?.issues ?? []}
+              onTriage={(issue) => setTriageIssue(issue)}
+            />
+            <SevereAlertsBand alerts={severeAlertsQuery.data?.alerts ?? []} />
           </aside>
         </div>
       ) : null}
@@ -347,6 +366,12 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
       {tab === "severe_repairs" ? <SevereRepairOosTab operatingCompanyId={companyId} /> : null}
 
       {tab === "road_service" ? <RoadServiceList operatingCompanyId={companyId} /> : null}
+
+      {tab === "brake_wear" ? <BrakeWearDashboard /> : null}
+
+      {tab === "tire_wear" ? <TireWearDashboard /> : null}
+
+      {tab === "pre_flight_dvir" ? <PreFlightDvirQueue /> : null}
 
       {tab === "parts_inventory" ? (
         <div className="space-y-2">

@@ -1,6 +1,6 @@
 import { useRef, useState, type ReactNode } from "react";
 
-type Action = {
+export type SwipeAction = {
   id: string;
   label: string;
   onClick: () => void;
@@ -9,7 +9,7 @@ type Action = {
 
 type Props = {
   children: ReactNode;
-  actions: Action[];
+  actions: SwipeAction[];
 };
 
 export function SwipeActionRow({ children, actions }: Props) {

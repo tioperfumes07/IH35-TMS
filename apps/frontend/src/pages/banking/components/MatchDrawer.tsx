@@ -22,6 +22,10 @@ type Props = {
   bankTransactionId: string | null;
   operatingCompanyId: string;
   onClose: () => void;
+  // HELD banking-categorize wiring: lets a host page (e.g. BankingTransactionsDesignView's row Action
+  // menu) refresh its own transaction list once a match is confirmed. Optional — existing callers that
+  // don't pass it keep prior behavior (drawer-local refetch only).
+  onAccepted?: () => void;
 };
 
 const KIND_LABELS: Record<BankMatchCandidateKind, string> = {
@@ -49,7 +53,7 @@ function kindBadge(kind: BankMatchCandidateKind) {
   );
 }
 
-export function MatchDrawer({ open, bankTransactionId, operatingCompanyId, onClose }: Props) {
+export function MatchDrawer({ open, bankTransactionId, operatingCompanyId, onClose, onAccepted }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const { pushToast } = useToast();
@@ -72,6 +76,7 @@ export function MatchDrawer({ open, bankTransactionId, operatingCompanyId, onClo
     onSuccess: async () => {
       pushToast("Match confirmed — transaction cleared.", "success");
       await candidatesQuery.refetch();
+      onAccepted?.();
     },
     onError: (error) => {
       pushToast(String((error as Error).message ?? "Confirm match failed"), "error");

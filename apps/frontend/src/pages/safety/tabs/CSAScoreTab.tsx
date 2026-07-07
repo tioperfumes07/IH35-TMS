@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { formatDateUS } from "../../../lib/formatDate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../../auth/useAuth";
@@ -79,6 +80,9 @@ export function CSAScoreTab() {
           Pull from FMCSA SAFER
         </button>
         {saferMutation.isError ? <span className="text-xs text-slate-700">FMCSA SAFER lookup is not available yet (service returned an error).</span> : null}
+        <Link to="/safety/csa-fmcsa-trend" className="ml-auto text-xs font-semibold text-slate-700 underline">
+          View FMCSA live trend &amp; projections &rarr;
+        </Link>
       </div>
 
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-2">

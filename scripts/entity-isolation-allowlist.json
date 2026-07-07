@@ -126,6 +126,11 @@
       "reason": "one-off migration dedup ledger created by db/migrations/0318_equipment_types_canonical_dedup.sql (same class as the migration.test_seed_archive_ledger_* tables); not business data"
     },
     {
+      "schema": "catalogs",
+      "table": "tax_form_thresholds",
+      "reason": "global IRS reference data — year-keyed 1099-NEC/1042-S thresholds, withholding rates, and filing deadlines. Identical across every carrier entity (same federal law applies to all). Not operating_company_id-scoped by design; comment in 202607130100_block17_24_tax_document_engine.sql line 84 documents this decision."
+    },
+    {
       "schema": "public",
       "table": "partition_maintenance_log",
       "reason": "infra table tracking partition-maintenance job runs; not entity business data"
@@ -374,6 +379,16 @@
       "schema": "public",
       "table": "audit_log_2027_12",
       "reason": "LEGACY DEAD TABLE (verified 2026-07-05, migration 202607080200_audit_log_legacy_grant_lockdown.sql): public.audit_log + its 48 monthly range partitions predate the entity model, were built as an explicitly cross-tenant/no-RLS-by-design audit log (original migration comment: \"No operating_company_id: this is a cross-tenant audit log; RLS not needed\"), and have ZERO live writers in apps/backend/src — every current audit path uses audit.audit_events / audit.row_changes instead. INSERT/UPDATE/DELETE were revoked from ih35_app by 202607080200 (SELECT-only forensic/IRS 7-year-retention access remains). A previously-reviewed decision, not an open gap."
+    },
+    {
+      "schema": "reference",
+      "table": "ifta_tax_rates",
+      "reason": "global IFTA quarterly per-jurisdiction diesel tax-rate catalog (source: iftach.org); identical across every carrier entity — no per-entity variation in the published tax rates"
+    },
+    {
+      "schema": "reference",
+      "table": "non_ifta_jurisdictions",
+      "reason": "global static list of non-IFTA jurisdictions (Mexican states) this carrier's lanes cross; a universal reference catalog, not per-entity business data"
     }
   ],
   "remediation_backlog": [
@@ -626,6 +641,12 @@
     {
       "schema": "catalogs",
       "table": "file_categories",
+      "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
+      "phase": "P1"
+    },
+    {
+      "schema": "catalogs",
+      "table": "journal_entry_types",
       "reason": "no scoping column present (checked: operating_company_id, tenant_id, company_id)",
       "phase": "P1"
     },
@@ -1186,6 +1207,12 @@
       "table": "unit_period",
       "reason": "needs FK from 'operating_company_id' to org.companies(id)",
       "phase": "P4"
+    },
+    {
+      "schema": "ifta",
+      "table": "personal_conveyance_miles_by_quarter",
+      "reason": "entity-scoped transitively via preparation_id → ifta.quarterly_preparations.operating_company_id (same pattern as state_miles_by_quarter / state_gallons_by_quarter / state_tax_by_quarter); no direct scoping column — BLOCK-03 additive table, P1 backlog parity with sibling ifta.* tables",
+      "phase": "P1"
     }
   ]
 }

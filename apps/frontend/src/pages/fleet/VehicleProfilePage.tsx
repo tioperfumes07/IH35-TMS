@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams, Link } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { patchUnit, quicksaveEquipmentAssignment } from "../../api/mdata";
 import { QuickAssignModal } from "../../components/fleet/QuickAssignModal";
@@ -30,6 +30,7 @@ import { PhotoGallery } from "../../components/vehicle-profile/PhotoGallery";
 import { ActionBar } from "../../components/vehicle-profile/ActionBar";
 import { BackhaulSuggestionsWidget } from "../../components/reports/BackhaulSuggestionsWidget";
 import { EditVehicleModal } from "../../components/fleet/EditVehicleModal";
+import { EntityAuditHistoryTab } from "../../components/audit/EntityAuditHistoryTab";
 
 export type UnitProfileAggregate = {
   unit: Record<string, unknown>;
@@ -278,6 +279,15 @@ export function VehicleProfilePage() {
               onEdit={() => setEditModalOpen(true)}
               onArchive={handleArchive}
             />
+            <div className="mt-3">
+              <Link to={`/fleet/units/${id}/detail`} className="inline-block rounded-sm border px-3 py-1.5 text-sm">
+                View Permits, Toll Tags, Tasks, Brakes, Tires
+              </Link>
+            </div>
+          </div>
+          <div data-testid="vp-section-12-audit-history" className="rounded-sm border border-gray-200 bg-white p-4">
+            <h3 className="mb-2 text-sm font-semibold text-slate-900">Audit History</h3>
+            <EntityAuditHistoryTab operatingCompanyId={companyId} entityType="unit" entityId={id} />
           </div>
         </>
       ) : null}

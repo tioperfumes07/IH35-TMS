@@ -1,6 +1,8 @@
 import { withSavepoint } from "../auth/db.js";
 import { computeDriverScoreFromCounts } from "../safety/driver-scoring.service.js";
 import { getCurrentClocks, type HosDutyStatus } from "../telematics/hos-clocks.service.js";
+import { getLatestHosClocksByDriver } from "../integrations/samsara/samsara-hos-clocks-pull.service.js";
+import type { PgClient } from "../integrations/samsara/samsara.service.js";
 import { loadDriverReferenceFkEnrichment } from "./driver-reference-fk.service.js";
 
 type DbClient = {
@@ -171,6 +173,21 @@ export async function buildDriverAggregate(
       [driverId, operatingCompanyId]
     );
     const latest = latestRes.rows[0];
+    // HOS-PRC-DATA / HOS-PRC2 (Jorge 2026-07-05) — certified Samsara ELD clocks, VERBATIM (no
+    // re-derivation). This is the same lookup the dispatch board reads, so the driver profile and
+    // the board always agree (board == roster == certified ELD).
+    const eldMap = await getLatestHosClocksByDriver(client as unknown as PgClient, operatingCompanyId);
+    const eld = eldMap.get(driverId) ?? null;
+    const eld_certified = eld
+      ? {
+          drive_remaining_min: eld.drive_remaining_min,
+          shift_remaining_min: eld.shift_remaining_min,
+          cycle_remaining_min: eld.cycle_remaining_min,
+          break_remaining_min: eld.break_remaining_min,
+          violation: eld.violation,
+          polled_at: eld.polled_at,
+        }
+      : null;
     if (latest) {
       hos = {
         cycle_remaining_min: clocks.cycle_remaining_min,
@@ -179,6 +196,19 @@ export async function buildDriverAggregate(
         current_status: latest.duty_status as HosDutyStatus,
         last_log_update_at: latest.started_at,
         eld_device_status: clocks.status === "violation" ? "offline" : "connected",
+        eld_certified,
+      };
+    } else if (eld_certified) {
+      // No app-side duty-status event yet, but Samsara's certified snapshot exists. HOS-PRC2:
+      // certified ELD is authoritative even when the in-app recompute has nothing to show.
+      hos = {
+        cycle_remaining_min: null,
+        drive_remaining_min: null,
+        on_duty_remaining_min: null,
+        current_status: null,
+        last_log_update_at: null,
+        eld_device_status: "connected",
+        eld_certified,
       };
     }
   } catch {

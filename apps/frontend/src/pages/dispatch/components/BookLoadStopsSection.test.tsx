@@ -57,6 +57,11 @@ describe("BookLoadStopsSection — render-v6 §C two-row stop card", () => {
       expect(within(siterow).getByText(label)).toBeInTheDocument();
     }
 
+    // Row 3 (additive, orphan-triage wiring): Time window — the only field beyond the original
+    // render-v6 §C 11-field spec (see component comment).
+    const timeWindowRow = screen.getByTestId("stop-timewindow-0");
+    expect(within(timeWindowRow).getByText("Time window")).toBeInTheDocument();
+
     // Empty-diff (GUARD): NOTHING extra renders in the stop card — the relocated fields must be absent.
     for (const extra of ["Customer instructions", "Appointment start", "Appointment end", "Lumper paid by", "Lumper required", "Tarp stop", "Tarp count", "Instructions / directions"]) {
       expect(screen.queryByText(extra)).not.toBeInTheDocument();
