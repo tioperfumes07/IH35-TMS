@@ -10,6 +10,7 @@ import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { listCoaAccountsForJe, listAccountingAuditTrail } from "../../api/accounting";
 import { getAccountRegister, type AccountRegisterReport } from "../../api/account-register";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 const fmtCents = (cents: number) => formatUsdCents(cents);
 
@@ -427,7 +428,7 @@ export function AccountRegisterPage() {
                 <tr key={e.id} className="border-b border-gray-100">
                   <td className="px-3 py-2 whitespace-nowrap">{new Date(e.occurred_at).toLocaleString()}</td>
                   <td className="px-3 py-2">{e.event_class.replace("accounting.", "")}</td>
-                  <td className="px-3 py-2">{e.journal_entry_id.slice(0, 8)}</td>
+                  <td className="px-3 py-2"><EntityLink kind="journal_entry" id={e.journal_entry_id} label={e.journal_entry_id.slice(0, 8)} /></td>
                   <td className="px-3 py-2">{e.debit_or_credit}</td>
                   <td className="px-3 py-2 text-right">{fmtCents(e.amount_cents)}</td>
                 </tr>
