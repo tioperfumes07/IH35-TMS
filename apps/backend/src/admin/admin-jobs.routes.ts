@@ -2,12 +2,16 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
 import {
+  buildIdempotencyKey,
+  enqueueAdminJob,
   getAdminJobById,
   getLatestCompletedAdminJob,
   resolveDefaultOperatingCompanyIdForUser,
   type AdminJobOperation,
 } from "./admin-jobs.service.js";
 
+// USERS-1 PR B: only Owner may trigger probe-account deactivation.
+const ownerOnly = new Set(["Owner"]);
 const adminRoles = new Set(["Owner", "Administrator"]);
 const LATEST_QUERY_ALLOWED_OPS: AdminJobOperation[] = ["admin.health.deep.refresh"];
 
@@ -85,5 +89,38 @@ export async function registerAdminJobsRoutes(app: FastifyInstance) {
       maxAttempts: row.max_attempts,
       operating_company_id: row.operating_company_id,
     };
+  });
+
+  // USERS-1 PR B: Owner-only endpoint to deactivate CI/probe fixture accounts still live in prod.
+  // One run per UTC day per requesting admin (idempotency key prevents accidental double-fire).
+  app.post("/api/v1/admin/jobs/deactivate-probe-accounts", async (req, reply) => {
+    if (!requireAuth(req, reply)) return;
+    const user = req.user as { uuid: string; role: string };
+    if (!ownerOnly.has(String(user.role ?? ""))) {
+      return reply.code(403).send({ error: "owner_only" });
+    }
+
+    const operatingCompanyId = await resolveDefaultOperatingCompanyIdForUser(user.uuid);
+    if (!operatingCompanyId) {
+      return reply.code(400).send({ error: "operating_company_id_required" });
+    }
+
+    const utcDayBucket = new Date().toISOString().slice(0, 10);
+    const idempotencyKey = buildIdempotencyKey({
+      operation: "users.deactivate_probe_accounts",
+      requestedByUserId: user.uuid,
+      utcDayBucket,
+    });
+
+    const jobId = await enqueueAdminJob({
+      operation: "users.deactivate_probe_accounts",
+      operatingCompanyId,
+      requestedByUserId: user.uuid,
+      idempotencyKey,
+      payload: {},
+      maxAttempts: 1,
+    });
+
+    return { ok: true, jobId };
   });
 }

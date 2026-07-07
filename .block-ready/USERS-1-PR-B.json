@@ -1,0 +1,29 @@
+{
+  "block_id": "USERS-1-PR-B",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL — Tier 3, self-merge on green CI",
+  "phase": "MODULE-SWEEP",
+  "task": "USERS-1 PR B: deactivate_probe_accounts admin-job operation + verify-no-fixture-users-prod-guard CI guard",
+  "branch": "fix/users-1-probe-deactivate-ci-guard",
+  "lane": "coder",
+  "details": [
+    "PR A (forward guard) landed earlier in users.routes.ts: FIXTURE_USER_EMAIL_RE blocks new @example.com / m2-probe / m2-stop / verifyfix accounts from being created in prod.",
+    "PR B (this block): admin-jobs operation 'users.deactivate_probe_accounts' deactivates any existing probe-pattern identity.users rows that are already active in prod. Triggered via POST /api/v1/admin/jobs/deactivate-probe-accounts (Owner-only). Idempotent: one run per UTC day per requesting admin.",
+    "CI guard: scripts/verify-no-fixture-users-prod-guard.mjs (was a stub file missing its content) — scans backend TS source for hardcoded @example.com / probe-pattern strings outside the designated allowlist. Already wired into verify:arch-design chain in package.json.",
+    "No migration. No schema change. No GL touch. Non-financial admin operation only."
+  ],
+  "allowed_files": [
+    ".block-ready/USERS-1-PR-B.json",
+    "apps/backend/src/admin/admin-jobs.service.ts",
+    "apps/backend/src/admin/admin-jobs.routes.ts",
+    "scripts/verify-no-fixture-users-prod-guard.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "guard_script": "scripts/verify-no-fixture-users-prod-guard.mjs",
+  "flag": null,
+  "flag_default": null,
+  "depends_on": [],
+  "registered_on": "2026-07-07"
+}
