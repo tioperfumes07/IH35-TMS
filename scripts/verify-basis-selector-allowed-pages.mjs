@@ -14,6 +14,9 @@ const allowedImportPages = new Set([
   // allowlist was written and was only ever flagged because this guard never
   // ran (arch-design runner poison-pill, now fixed).
   "apps/frontend/src/pages/finance/FinancialStatementsPage.tsx",
+  // RPT-PAR-1: management report package page — basis selector drives P&L/BS/TB
+  // sub-report rendering within the package view.
+  "apps/frontend/src/pages/reports/ManagementReportPackagePage.tsx",
 ]);
 
 const deniedPages = [
