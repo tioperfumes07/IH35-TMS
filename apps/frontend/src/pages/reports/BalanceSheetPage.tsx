@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
@@ -19,6 +20,11 @@ function money(cents: number) {
 
 function sortLines(lines: AccountingBalanceSheetLine[]) {
   return [...lines].sort((a, b) => String(a.account_code || "").localeCompare(String(b.account_code || "")));
+}
+
+function registerHref(accountId: string, asOfDate: string, basis: string) {
+  const params = new URLSearchParams({ from_date: `${asOfDate.slice(0, 7)}-01`, to_date: asOfDate, basis });
+  return `/accounting/chart-of-accounts/register/${accountId}?${params}`;
 }
 
 export function BalanceSheetPage() {
@@ -167,7 +173,15 @@ export function BalanceSheetPage() {
                   assets.map((line) => (
                     <tr key={`asset-${line.account_code}-${line.account_name}`} className="border-b border-gray-100">
                       <td className="px-3 py-2 font-medium text-gray-900">{line.account_code || "—"}</td>
-                      <td className="px-3 py-2">{line.account_name || "—"}</td>
+                      <td className="px-3 py-2">
+                        {line.account_id ? (
+                          <Link to={registerHref(line.account_id, appliedAsOf, basis)} className="text-blue-700 underline-offset-2 hover:underline">
+                            {line.account_name || "—"}
+                          </Link>
+                        ) : (
+                          line.account_name || "—"
+                        )}
+                      </td>
                       <td className="px-3 py-2 text-right">{money(line.amount)}</td>
                     </tr>
                   ))
@@ -204,7 +218,15 @@ export function BalanceSheetPage() {
                     liabilities.map((line) => (
                       <tr key={`liability-${line.account_code}-${line.account_name}`} className="border-b border-gray-100">
                         <td className="px-3 py-2 font-medium text-gray-900">{line.account_code || "—"}</td>
-                        <td className="px-3 py-2">{line.account_name || "—"}</td>
+                        <td className="px-3 py-2">
+                          {line.account_id ? (
+                            <Link to={registerHref(line.account_id, appliedAsOf, basis)} className="text-blue-700 underline-offset-2 hover:underline">
+                              {line.account_name || "—"}
+                            </Link>
+                          ) : (
+                            line.account_name || "—"
+                          )}
+                        </td>
                         <td className="px-3 py-2 text-right">{money(line.amount)}</td>
                       </tr>
                     ))
@@ -240,7 +262,15 @@ export function BalanceSheetPage() {
                     equityLinesWithoutAdjustment.map((line) => (
                       <tr key={`equity-${line.account_code}-${line.account_name}`} className="border-b border-gray-100">
                         <td className="px-3 py-2 font-medium text-gray-900">{line.account_code || "—"}</td>
-                        <td className="px-3 py-2">{line.account_name || "—"}</td>
+                        <td className="px-3 py-2">
+                          {line.account_id ? (
+                            <Link to={registerHref(line.account_id, appliedAsOf, basis)} className="text-blue-700 underline-offset-2 hover:underline">
+                              {line.account_name || "—"}
+                            </Link>
+                          ) : (
+                            line.account_name || "—"
+                          )}
+                        </td>
                         <td className="px-3 py-2 text-right">{money(line.amount)}</td>
                       </tr>
                     ))

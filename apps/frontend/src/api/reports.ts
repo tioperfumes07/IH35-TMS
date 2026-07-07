@@ -156,6 +156,7 @@ export type AccountingTrialBalanceResponse = {
 };
 
 export type AccountingProfitLossLine = {
+  account_id?: string;
   account_code: string;
   account_name: string;
   account_type: string;
@@ -177,6 +178,7 @@ export type AccountingProfitLossResponse = {
 };
 
 export type AccountingBalanceSheetLine = {
+  account_id?: string;
   account_code: string;
   account_name: string;
   account_type: string;
