@@ -103,12 +103,6 @@ describeIntegration("BANKING-GL-COMPLETION transfer -> GL posting end-to-end (re
         [userId, companyId]
       );
       await db.query(`DELETE FROM lib.feature_flag_overrides WHERE flag_key='TRANSFER_GL_POSTING_ENABLED' AND operating_company_id=$1::uuid`, [companyId]);
-      // Seed the flag definition so isEnabled() doesn't short-circuit when the seeding migration is held from CI
-      await db.query(
-        `INSERT INTO lib.feature_flags (flag_key, description, default_enabled, rollout_pct)
-         VALUES ('TRANSFER_GL_POSTING_ENABLED', 'Banking transfer GL posting (per-entity, held)', false, 0)
-         ON CONFLICT (flag_key) DO NOTHING`
-      );
 
       const mkAccount = (id: string, code: string, name: string, type: string) =>
         db.query(
@@ -153,7 +147,6 @@ describeIntegration("BANKING-GL-COMPLETION transfer -> GL posting end-to-end (re
         await db.query(`DELETE FROM banking.bank_accounts WHERE id = ANY($1::uuid[])`, [[fromBankAccountId, toBankAccountId]]);
         await db.query(`DELETE FROM catalogs.accounts WHERE id = ANY($1::uuid[])`, [[fromBankGlId, toBankGlId, ccLiabilityId]]);
         await db.query(`DELETE FROM lib.feature_flag_overrides WHERE flag_key='TRANSFER_GL_POSTING_ENABLED' AND operating_company_id=$1::uuid`, [companyId]);
-        await db.query(`DELETE FROM lib.feature_flags WHERE flag_key='TRANSFER_GL_POSTING_ENABLED'`);
         await db.query(`DELETE FROM org.user_company_access WHERE user_id=$1::uuid AND company_id=$2::uuid`, [userId, companyId]);
       });
     } catch {

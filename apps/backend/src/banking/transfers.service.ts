@@ -25,9 +25,13 @@ async function maybePostTransferGl(
   purpose: "initial_post" | "reversal"
 ): Promise<void> {
   try {
-    const postingEnabled = await withCurrentUser(userId, (client) =>
-      isEnabled(client, TRANSFER_GL_POSTING_FLAG_KEY, { operating_company_id: operatingCompanyId, user_uuid: userId })
-    );
+    const postingEnabled = await withCurrentUser(userId, async (client) => {
+      // RLS on lib.feature_flag_overrides requires app.operating_company_id to match the row's
+      // operating_company_id. withCurrentUser alone does not set it — set it explicitly so that
+      // company-level flag overrides are visible on this connection.
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+      return isEnabled(client, TRANSFER_GL_POSTING_FLAG_KEY, { operating_company_id: operatingCompanyId, user_uuid: userId });
+    });
     if (!postingEnabled) return;
 
     if (purpose === "initial_post") {
