@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { DatePicker } from "../components/forms/DatePicker";
+import { ParityTable, type ParityColumn } from "../components/parity/ParityTable";
 import { ListErrorState } from "../components/ListErrorState";
 import { customerQualityKind, customerQualityClass } from "../lib/quality-badge";
 import { formatUsdCents } from "../lib/money";
@@ -27,7 +28,6 @@ import { CustomerListSidebar } from "./customers/CustomerListSidebar";
 import { CustomersListView } from "./customers/CustomersListView";
 import { CustomersSyncPanel } from "./customers/CustomersSyncPanel";
 import { useViewModePref } from "../hooks/useViewModePref";
-import { useListState } from "../components/list-state";
 
 type CustomerTabId =
   | "transaction_list"
@@ -56,35 +56,6 @@ const CUSTOMER_TABS: Array<{ id: CustomerTabId; label: string }> = [
   { id: "opportunities", label: "Opportunities" },
   { id: "conversations", label: "Conversations" },
   { id: "coi_requests", label: "COI Requests" },
-];
-
-type ColumnKey =
-  | "date"
-  | "type"
-  | "doc_no"
-  | "status"
-  | "amount"
-  | "balance"
-  | "load_no"
-  | "settlement_no"
-  | "truck_no"
-  | "pickup_date"
-  | "delivery_date"
-  | "loaded_miles";
-
-const COLUMN_OPTIONS: Array<{ key: ColumnKey; label: string; defaultOn: boolean }> = [
-  { key: "date", label: "Date", defaultOn: true },
-  { key: "type", label: "Type", defaultOn: true },
-  { key: "doc_no", label: "Doc #", defaultOn: true },
-  { key: "status", label: "Status", defaultOn: true },
-  { key: "amount", label: "Amount", defaultOn: true },
-  { key: "balance", label: "Balance", defaultOn: true },
-  { key: "load_no", label: "Load #", defaultOn: true },
-  { key: "settlement_no", label: "Settlement #", defaultOn: false },
-  { key: "truck_no", label: "Truck #", defaultOn: false },
-  { key: "pickup_date", label: "Pick-up date", defaultOn: false },
-  { key: "delivery_date", label: "Delivery date", defaultOn: false },
-  { key: "loaded_miles", label: "Loaded miles", defaultOn: false },
 ];
 
 function fmtMoney(cents: number | null | undefined) {
@@ -205,14 +176,8 @@ export function CustomersPage() {
   const [rosterType, setRosterType] = useState<"" | "broker" | "direct_shipper">("");
   const [rosterCreditStatus, setRosterCreditStatus] = useState<"" | "active" | "inactive" | "credit_hold" | "blacklist">("");
   const [showFilterBox, setShowFilterBox] = useState(false);
-  const [showColumnChooser, setShowColumnChooser] = useState(false);
-  const [pageSize, setPageSize] = useState(50);
-  const [currentPage, setCurrentPage] = useState(1);
   const [sidebarPage, setSidebarPage] = useState(1);
   const [sidebarPageSize, setSidebarPageSize] = useState(50);
-  const [columns, setColumns] = useState<Record<ColumnKey, boolean>>(
-    () => Object.fromEntries(COLUMN_OPTIONS.map((column) => [column.key, column.defaultOn])) as Record<ColumnKey, boolean>
-  );
   const [createOpen, setCreateOpen] = useState(false);
   const [createValues, setCreateValues] = useState<CustomerProfileFormValues>(emptyCustomerProfileValues);
   const [createFormError, setCreateFormError] = useState("");
@@ -373,23 +338,28 @@ export function CustomersPage() {
   }, [invoicesQuery.data?.invoices, typeFilter, categoryFilter]);
 
   const overdue = Number(summaryQuery.data?.aging_buckets?.bucket_91_plus ?? 0);
-  const totalRows = txRows.length;
-  const totalPages = Math.max(1, Math.ceil(totalRows / pageSize));
-  const safeCurrentPage = Math.min(currentPage, totalPages);
-  const pageStartIndex = (safeCurrentPage - 1) * pageSize;
-  const pageRangeStart = totalRows === 0 ? 0 : pageStartIndex + 1;
-  const pageRangeEnd = totalRows === 0 ? 0 : Math.min(pageStartIndex + pageSize, totalRows);
-  const pagedRows = useMemo(
-    () => txRows.slice(pageStartIndex, pageStartIndex + pageSize),
-    [pageSize, pageStartIndex, txRows]
-  );
-  // Route the transactions empty state through the shared primitive so it renders
-  // only once the invoices query settles, never during the in-flight fetch.
-  const invoicesListState = useListState(invoicesQuery, pagedRows.length === 0);
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [activeTab, selectedCustomer?.id, typeFilter, statusFilter, dateFrom, dateTo, categoryFilter, pageSize]);
+  // Transaction-list columns for the shared ParityTable (A1 grammar): built-in gear column-toggle,
+  // density, resizable columns, and advanced pager replace the former hand-rolled table + chooser +
+  // pager. KEEP the trucking custom columns (Settlement/Truck/Pickup/Delivery/Loaded miles) per §7,
+  // defaulting them hidden (toggle on via the gear) exactly as the old column chooser did.
+  const txColumns = useMemo<ParityColumn<(typeof txRows)[number]>[]>(
+    () => [
+      { key: "date", label: "Date", sortable: true, render: (r) => r.issue_date },
+      { key: "type", label: "Type", sortable: true, render: (r) => String(r.invoice_type ?? "manual") },
+      { key: "doc_no", label: "Doc #", render: (r) => r.display_id },
+      { key: "status", label: "Status", sortable: true, render: (r) => r.status },
+      { key: "amount", label: "Amount", render: (r) => fmtMoney(r.total_cents) },
+      { key: "balance", label: "Balance", render: (r) => fmtMoney(r.amount_open_cents) },
+      { key: "load_no", label: "Load #", render: (r) => r.source_load_id ?? "—" },
+      { key: "settlement_no", label: "Settlement #", defaultHidden: true, render: () => "—" },
+      { key: "truck_no", label: "Truck #", defaultHidden: true, render: () => "—" },
+      { key: "pickup_date", label: "Pick-up date", defaultHidden: true, render: () => "—" },
+      { key: "delivery_date", label: "Delivery date", defaultHidden: true, render: () => "—" },
+      { key: "loaded_miles", label: "Loaded miles", defaultHidden: true, render: () => "—" },
+    ],
+    [],
+  );
 
   useEffect(() => {
     setSidebarPage(1);
@@ -549,121 +519,53 @@ export function CustomersPage() {
               <SecondaryNavTabs tabs={CUSTOMER_TABS} activeId={activeTab} onChange={(id) => setActiveTab(id as CustomerTabId)} />
 
               {activeTab === "transaction_list" ? (
-                <div className="rounded-sm border border-gray-200 bg-white p-3">
-                  <div className="relative mb-2 flex flex-wrap items-center gap-2">
-                    <SelectCombobox value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)} className="rounded-sm border border-gray-300 px-2 py-1 text-sm">
-                      <option value="">Type: All</option>
-                      <option value="from_load">from_load</option>
-                      <option value="driver_damage">driver_damage</option>
-                      <option value="driver_misc">driver_misc</option>
-                      <option value="vendor_chargeback">vendor_chargeback</option>
-                      <option value="customer_adjustment">customer_adjustment</option>
-                      <option value="manual">manual</option>
-                    </SelectCombobox>
-                    <ActionButton onClick={() => setShowFilterBox((open) => !open)}>Filter</ActionButton>
-                    <span className="rounded-sm border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-gray-600">
-                      {dateFrom || dateTo ? `Date: ${dateFrom || "…"} - ${dateTo || "…"}` : "Date: Any"}
-                    </span>
-                    <SelectCombobox value={String(pageSize)} onChange={(event) => setPageSize(Number(event.target.value) || 50)} className="h-8 min-w-[84px] text-xs">
-                      <option value="50">50</option>
-                      <option value="75">75</option>
-                      <option value="100">100</option>
-                      <option value="200">200</option>
-                      <option value="300">300</option>
-                    </SelectCombobox>
-                    <button type="button" aria-label="Columns" className="ml-auto rounded-sm border border-gray-300 px-2 py-1 text-sm hover:bg-gray-50" onClick={() => setShowColumnChooser((open) => !open)}>Columns</button>
-                    {showFilterBox ? (
-                      <div className="absolute left-0 top-9 z-10 w-[320px] rounded-sm border border-gray-200 bg-white p-2 shadow-sm">
-                        <label className="mb-1 block text-xs font-semibold text-gray-600">Status</label>
-                        <SelectCombobox value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="mb-2 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm">
-                          <option value="">All</option>
-                          <option value="draft">draft</option>
-                          <option value="sent">sent</option>
-                          <option value="partial">partial</option>
-                          <option value="paid">paid</option>
-                          <option value="void">void</option>
-                          <option value="factored">factored</option>
-                        </SelectCombobox>
-                        <label className="mb-1 block text-xs font-semibold text-gray-600">Date range</label>
-                        <div className="mb-2 grid grid-cols-2 gap-2">
-                          <DatePicker value={dateFrom} onChange={setDateFrom} className="rounded-sm border border-gray-300 px-2 py-1 text-sm" />
-                          <DatePicker value={dateTo} onChange={setDateTo} className="rounded-sm border border-gray-300 px-2 py-1 text-sm" />
+                <ParityTable
+                  rows={txRows}
+                  columns={txColumns}
+                  rowKey={(invoice) => invoice.id}
+                  loading={invoicesQuery.isPending}
+                  storageKey="customer-transactions"
+                  emptyText="No transactions for current filters."
+                  exportFilename="customer-transactions"
+                  filterBar={
+                    <div className="relative flex flex-wrap items-center gap-2">
+                      <SelectCombobox value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)} className="rounded-sm border border-gray-300 px-2 py-1 text-sm">
+                        <option value="">Type: All</option>
+                        <option value="from_load">from_load</option>
+                        <option value="driver_damage">driver_damage</option>
+                        <option value="driver_misc">driver_misc</option>
+                        <option value="vendor_chargeback">vendor_chargeback</option>
+                        <option value="customer_adjustment">customer_adjustment</option>
+                        <option value="manual">manual</option>
+                      </SelectCombobox>
+                      <ActionButton onClick={() => setShowFilterBox((open) => !open)}>Filter</ActionButton>
+                      <span className="rounded-sm border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-gray-600">
+                        {dateFrom || dateTo ? `Date: ${dateFrom || "…"} - ${dateTo || "…"}` : "Date: Any"}
+                      </span>
+                      {showFilterBox ? (
+                        <div className="absolute left-0 top-9 z-20 w-[320px] rounded-sm border border-gray-200 bg-white p-2 shadow-sm">
+                          <label className="mb-1 block text-xs font-semibold text-gray-600">Status</label>
+                          <SelectCombobox value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="mb-2 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm">
+                            <option value="">All</option>
+                            <option value="draft">draft</option>
+                            <option value="sent">sent</option>
+                            <option value="partial">partial</option>
+                            <option value="paid">paid</option>
+                            <option value="void">void</option>
+                            <option value="factored">factored</option>
+                          </SelectCombobox>
+                          <label className="mb-1 block text-xs font-semibold text-gray-600">Date range</label>
+                          <div className="mb-2 grid grid-cols-2 gap-2">
+                            <DatePicker value={dateFrom} onChange={setDateFrom} className="rounded-sm border border-gray-300 px-2 py-1 text-sm" />
+                            <DatePicker value={dateTo} onChange={setDateTo} className="rounded-sm border border-gray-300 px-2 py-1 text-sm" />
+                          </div>
+                          <label className="mb-1 block text-xs font-semibold text-gray-600">Category</label>
+                          <input value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} className="w-full rounded-sm border border-gray-300 px-2 py-1 text-sm" placeholder="Category text" />
                         </div>
-                        <label className="mb-1 block text-xs font-semibold text-gray-600">Category</label>
-                        <input value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} className="w-full rounded-sm border border-gray-300 px-2 py-1 text-sm" placeholder="Category text" />
-                      </div>
-                    ) : null}
-                    {showColumnChooser ? (
-                      <div className="absolute right-0 top-9 z-10 w-[220px] rounded-sm border border-gray-200 bg-white p-2 shadow-sm">
-                        {COLUMN_OPTIONS.map((column) => (
-                          <label key={column.key} className="flex items-center gap-2 py-0.5 text-xs">
-                            <input
-                              type="checkbox"
-                              checked={columns[column.key]}
-                              onChange={(event) => setColumns((prev) => ({ ...prev, [column.key]: event.target.checked }))}
-                            />
-                            {column.label}
-                          </label>
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full table-fixed text-left text-sm">
-                      <thead className="bg-gray-50 text-xs uppercase text-gray-600">
-                        <tr>{COLUMN_OPTIONS.filter((column) => columns[column.key]).map((column) => <th key={column.key} className="px-2 py-1">{column.label}</th>)}</tr>
-                      </thead>
-                      <tbody>
-                        {pagedRows.map((invoice) => {
-                          const values: Record<ColumnKey, string> = {
-                            date: invoice.issue_date,
-                            type: String(invoice.invoice_type ?? "manual"),
-                            doc_no: invoice.display_id,
-                            status: invoice.status,
-                            amount: fmtMoney(invoice.total_cents),
-                            balance: fmtMoney(invoice.amount_open_cents),
-                            load_no: invoice.source_load_id ?? "—",
-                            settlement_no: "—",
-                            truck_no: "—",
-                            pickup_date: "—",
-                            delivery_date: "—",
-                            loaded_miles: "—",
-                          };
-                          return (
-                            <tr key={invoice.id} className="border-t border-gray-100">
-                              {COLUMN_OPTIONS.filter((column) => columns[column.key]).map((column) => <td key={column.key} className="truncate px-2 py-1">{values[column.key]}</td>)}
-                            </tr>
-                          );
-                        })}
-                        {invoicesListState.isEmpty ? (
-                          <tr><td colSpan={COLUMN_OPTIONS.filter((column) => columns[column.key]).length} className="px-2 py-3 text-center text-sm text-gray-500">No transactions for current filters.</td></tr>
-                        ) : null}
-                      </tbody>
-                    </table>
-                  </div>
-                  <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-600">
-                    <span>{pageRangeStart}-{pageRangeEnd} of {totalRows}</span>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        className="rounded-sm border border-gray-300 px-2 py-1 disabled:opacity-50"
-                        disabled={safeCurrentPage <= 1}
-                        onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                      >
-                        Previous
-                      </button>
-                      <span>Page {safeCurrentPage} of {totalPages}</span>
-                      <button
-                        type="button"
-                        className="rounded-sm border border-gray-300 px-2 py-1 disabled:opacity-50"
-                        disabled={safeCurrentPage >= totalPages}
-                        onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-                      >
-                        Next
-                      </button>
+                      ) : null}
                     </div>
-                  </div>
-                </div>
+                  }
+                />
               ) : activeTab === "coi_requests" ? (
                 <CustomerCOITab
                   customerId={selectedCustomer.id}
