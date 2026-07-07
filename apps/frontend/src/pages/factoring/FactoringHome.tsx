@@ -123,6 +123,15 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
   const [mergeApplyToDriver, setMergeApplyToDriver] = useState(true);
   const [creatingMerge, setCreatingMerge] = useState(false);
   const [savingFactorProfile, setSavingFactorProfile] = useState(false);
+  const [profileEditOpen, setProfileEditOpen] = useState(false);
+  const [profileEditForm, setProfileEditForm] = useState<{
+    telephone: string; address: string; generalEmail: string;
+    primaryContactName: string; primaryContactEmail: string;
+    factoringReservesPct: string; escrowReservesPct: string;
+    lateFeesPct: string; chargebacksPct: string;
+    advanceRate31To60Pct: string; advanceFee31To60Pct: string;
+    advanceRate61To90Pct: string; advanceFee61To90Pct: string;
+  } | null>(null);
 
   const summaryQuery = useQuery({
     queryKey: ["factoring", "summary", companyId],
@@ -185,11 +194,8 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
   const summary = summaryQuery.data;
   const activeFactorVendor = useMemo(() => {
     const vendors = vendorsQuery.data ?? [];
-    if (summary?.active_factor_id) {
-      const byId = vendors.find((vendor) => vendor.id === summary.active_factor_id);
-      if (byId) return byId;
-    }
-    return vendors.find((vendor) => String(vendor.name ?? "").toLowerCase().includes("factoring")) ?? vendors[0] ?? null;
+    if (!summary?.active_factor_id) return null;
+    return vendors.find((vendor) => vendor.id === summary.active_factor_id) ?? null;
   }, [summary?.active_factor_id, vendorsQuery.data]);
   const factorParsed = useMemo(() => parseVendorNotes(activeFactorVendor?.notes), [activeFactorVendor?.notes]);
   const canDeactivate = user?.role === "Owner";
@@ -197,7 +203,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
   return (
     <div className="space-y-3">
       <PageHeader
-        title={`Factoring (${summary?.active_factor_name || activeFactorVendor?.name || "No active factor"})`}
+        title={`Factoring (${summary?.active_factor_name || "No active factor"})`}
         subtitle="Deep-dive workspace for recourse pipeline, chargebacks, fees, and settings"
         actions={
           <div className="flex items-center gap-2">
@@ -211,7 +217,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
       <div className="grid gap-2 md:grid-cols-4">
         <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
           <div className="text-xs uppercase tracking-wide text-gray-500">Active Factor</div>
-          <div className="mt-1 font-semibold text-gray-900">{summary?.active_factor_name ?? activeFactorVendor?.name ?? "Not configured"}</div>
+          <div className="mt-1 font-semibold text-gray-900">{summary?.active_factor_name ?? "Not configured"}</div>
         </div>
         <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
           <div className="text-xs uppercase tracking-wide text-gray-500">Reserve Balance</div>
@@ -227,61 +233,143 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
         </div>
       </div>
       {activeFactorVendor ? (
-        <FactoringProfilePanel
-          meta={factorParsed.meta}
-          saving={savingFactorProfile}
-          onSave={async () => {
-            const nextTelephone = window.prompt("Telephone", factorParsed.meta.telephone) ?? factorParsed.meta.telephone;
-            const nextAddress = window.prompt("Address", factorParsed.meta.address) ?? factorParsed.meta.address;
-            const nextGeneralEmail = window.prompt("General email", factorParsed.meta.generalEmail) ?? factorParsed.meta.generalEmail;
-            const nextPrimaryContact = window.prompt("Primary contact", factorParsed.meta.primaryContactName) ?? factorParsed.meta.primaryContactName;
-            const nextPrimaryEmail = window.prompt("Primary contact email", factorParsed.meta.primaryContactEmail) ?? factorParsed.meta.primaryContactEmail;
-            const nextFactoringReserves = window.prompt("Factoring reserves %", factorParsed.meta.factoring.factoringReservesPct) ?? factorParsed.meta.factoring.factoringReservesPct;
-            const nextEscrowReserves = window.prompt("Escrow reserves %", factorParsed.meta.factoring.escrowReservesPct) ?? factorParsed.meta.factoring.escrowReservesPct;
-            const nextLateFees = window.prompt("Late fees %", factorParsed.meta.factoring.lateFeesPct) ?? factorParsed.meta.factoring.lateFeesPct;
-            const nextChargebacks = window.prompt("Chargebacks %", factorParsed.meta.factoring.chargebacksPct) ?? factorParsed.meta.factoring.chargebacksPct;
-            const nextRate31 = window.prompt("31-60 advance rate %", factorParsed.meta.factoring.advanceRate31To60Pct) ?? factorParsed.meta.factoring.advanceRate31To60Pct;
-            const nextFee31 = window.prompt("31-60 fee %", factorParsed.meta.factoring.advanceFee31To60Pct) ?? factorParsed.meta.factoring.advanceFee31To60Pct;
-            const nextRate61 = window.prompt("61-90 advance rate %", factorParsed.meta.factoring.advanceRate61To90Pct) ?? factorParsed.meta.factoring.advanceRate61To90Pct;
-            const nextFee61 = window.prompt("61-90 fee %", factorParsed.meta.factoring.advanceFee61To90Pct) ?? factorParsed.meta.factoring.advanceFee61To90Pct;
-            const mergedMeta = {
-              ...factorParsed.meta,
-              telephone: nextTelephone,
-              address: nextAddress,
-              generalEmail: nextGeneralEmail,
-              primaryContactName: nextPrimaryContact,
-              primaryContactEmail: nextPrimaryEmail,
-              factoring: {
-                ...factorParsed.meta.factoring,
-                factoringReservesPct: nextFactoringReserves,
-                escrowReservesPct: nextEscrowReserves,
-                lateFeesPct: nextLateFees,
-                chargebacksPct: nextChargebacks,
-                advanceRate31To60Pct: nextRate31,
-                advanceFee31To60Pct: nextFee31,
-                advanceRate61To90Pct: nextRate61,
-                advanceFee61To90Pct: nextFee61,
-              },
-            };
-            try {
-              setSavingFactorProfile(true);
-              await updateVendor(activeFactorVendor.id, {
-                phone: mergedMeta.telephone || null,
-                address: mergedMeta.address || null,
-                email: mergedMeta.generalEmail || null,
-                notes: serializeVendorNotes(mergedMeta, factorParsed.publicNotes),
+        <>
+          <FactoringProfilePanel
+            meta={factorParsed.meta}
+            saving={savingFactorProfile}
+            onSave={() => {
+              setProfileEditForm({
+                telephone: factorParsed.meta.telephone ?? "",
+                address: factorParsed.meta.address ?? "",
+                generalEmail: factorParsed.meta.generalEmail ?? "",
+                primaryContactName: factorParsed.meta.primaryContactName ?? "",
+                primaryContactEmail: factorParsed.meta.primaryContactEmail ?? "",
+                factoringReservesPct: String(factorParsed.meta.factoring?.factoringReservesPct ?? ""),
+                escrowReservesPct: String(factorParsed.meta.factoring?.escrowReservesPct ?? ""),
+                lateFeesPct: String(factorParsed.meta.factoring?.lateFeesPct ?? ""),
+                chargebacksPct: String(factorParsed.meta.factoring?.chargebacksPct ?? ""),
+                advanceRate31To60Pct: String(factorParsed.meta.factoring?.advanceRate31To60Pct ?? ""),
+                advanceFee31To60Pct: String(factorParsed.meta.factoring?.advanceFee31To60Pct ?? ""),
+                advanceRate61To90Pct: String(factorParsed.meta.factoring?.advanceRate61To90Pct ?? ""),
+                advanceFee61To90Pct: String(factorParsed.meta.factoring?.advanceFee61To90Pct ?? ""),
               });
-              pushToast("Factoring profile saved", "success");
-              await queryClient.invalidateQueries({ queryKey: ["factoring"] });
-              await queryClient.invalidateQueries({ queryKey: ["factoring", "vendors", companyId] });
-            } catch (error) {
-              pushToast(String((error as Error).message || "Failed to save profile"), "error");
-            } finally {
-              setSavingFactorProfile(false);
-            }
-          }}
-        />
-      ) : null}
+              setProfileEditOpen(true);
+            }}
+          />
+          {profileEditForm && (
+            <Modal open={profileEditOpen} onClose={() => { setProfileEditOpen(false); setProfileEditForm(null); }} title="Edit Factoring Profile">
+              <div className="flex flex-col gap-3 text-sm">
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="block">
+                    <span className="text-xs font-medium text-gray-700">Telephone</span>
+                    <input className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm" value={profileEditForm.telephone} onChange={(e) => setProfileEditForm((f) => f ? { ...f, telephone: e.target.value } : f)} />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs font-medium text-gray-700">General email</span>
+                    <input type="email" className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm" value={profileEditForm.generalEmail} onChange={(e) => setProfileEditForm((f) => f ? { ...f, generalEmail: e.target.value } : f)} />
+                  </label>
+                </div>
+                <label className="block">
+                  <span className="text-xs font-medium text-gray-700">Address</span>
+                  <input className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm" value={profileEditForm.address} onChange={(e) => setProfileEditForm((f) => f ? { ...f, address: e.target.value } : f)} />
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="block">
+                    <span className="text-xs font-medium text-gray-700">Primary contact</span>
+                    <input className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm" value={profileEditForm.primaryContactName} onChange={(e) => setProfileEditForm((f) => f ? { ...f, primaryContactName: e.target.value } : f)} />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs font-medium text-gray-700">Primary contact email</span>
+                    <input type="email" className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm" value={profileEditForm.primaryContactEmail} onChange={(e) => setProfileEditForm((f) => f ? { ...f, primaryContactEmail: e.target.value } : f)} />
+                  </label>
+                </div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mt-1">Rate schedule (%)</p>
+                <div className="grid grid-cols-2 gap-3">
+                  {(
+                    [
+                      ["factoringReservesPct", "Factoring reserves %"],
+                      ["escrowReservesPct", "Escrow reserves %"],
+                      ["lateFeesPct", "Late fees %"],
+                      ["chargebacksPct", "Chargebacks %"],
+                      ["advanceRate31To60Pct", "31–60d advance rate %"],
+                      ["advanceFee31To60Pct", "31–60d fee %"],
+                      ["advanceRate61To90Pct", "61–90d advance rate %"],
+                      ["advanceFee61To90Pct", "61–90d fee %"],
+                    ] as const
+                  ).map(([key, label]) => (
+                    <label key={key} className="block">
+                      <span className="text-xs font-medium text-gray-700">{label}</span>
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm"
+                        value={profileEditForm[key]}
+                        onChange={(e) => setProfileEditForm((f) => f ? { ...f, [key]: e.target.value } : f)}
+                      />
+                    </label>
+                  ))}
+                </div>
+                <div className="flex justify-end gap-2 border-t border-gray-100 pt-4">
+                  <button type="button" onClick={() => { setProfileEditOpen(false); setProfileEditForm(null); }} className="rounded-sm border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+                  <button
+                    type="button"
+                    disabled={savingFactorProfile}
+                    className="rounded-sm bg-[#1f2a44] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50 hover:bg-[#0f1729]"
+                    onClick={async () => {
+                      if (!profileEditForm) return;
+                      const mergedMeta = {
+                        ...factorParsed.meta,
+                        telephone: profileEditForm.telephone,
+                        address: profileEditForm.address,
+                        generalEmail: profileEditForm.generalEmail,
+                        primaryContactName: profileEditForm.primaryContactName,
+                        primaryContactEmail: profileEditForm.primaryContactEmail,
+                        factoring: {
+                          ...factorParsed.meta.factoring,
+                          factoringReservesPct: profileEditForm.factoringReservesPct,
+                          escrowReservesPct: profileEditForm.escrowReservesPct,
+                          lateFeesPct: profileEditForm.lateFeesPct,
+                          chargebacksPct: profileEditForm.chargebacksPct,
+                          advanceRate31To60Pct: profileEditForm.advanceRate31To60Pct,
+                          advanceFee31To60Pct: profileEditForm.advanceFee31To60Pct,
+                          advanceRate61To90Pct: profileEditForm.advanceRate61To90Pct,
+                          advanceFee61To90Pct: profileEditForm.advanceFee61To90Pct,
+                        },
+                      };
+                      try {
+                        setSavingFactorProfile(true);
+                        await updateVendor(activeFactorVendor.id, {
+                          phone: mergedMeta.telephone || null,
+                          address: mergedMeta.address || null,
+                          email: mergedMeta.generalEmail || null,
+                          notes: serializeVendorNotes(mergedMeta, factorParsed.publicNotes),
+                        });
+                        pushToast("Factoring profile saved", "success");
+                        setProfileEditOpen(false);
+                        setProfileEditForm(null);
+                        await queryClient.invalidateQueries({ queryKey: ["factoring"] });
+                        await queryClient.invalidateQueries({ queryKey: ["factoring", "vendors", companyId] });
+                      } catch (error) {
+                        pushToast(String((error as Error).message || "Failed to save profile"), "error");
+                      } finally {
+                        setSavingFactorProfile(false);
+                      }
+                    }}
+                  >
+                    {savingFactorProfile ? "Saving…" : "Save profile"}
+                  </button>
+                </div>
+              </div>
+            </Modal>
+          )}
+        </>
+      ) : (
+        <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm text-gray-500">
+          No factor configured. Activate a factor to manage its profile.
+        </div>
+      )}
 
       <div className="overflow-x-auto rounded-sm bg-[#1f2a44] px-2 py-1 text-[11px] text-white">
         <div className="flex min-w-max gap-4">

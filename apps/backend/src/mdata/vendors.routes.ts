@@ -275,6 +275,13 @@ export async function registerVendorRoutes(app: FastifyInstance) {
       resolveOperatingCompanyId(client, authUser.uuid, b.operating_company_id)
     );
     if (!createOperatingCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
+    if (process.env.NODE_ENV === "production" && /^TEST[-_ ]/i.test(b.name)) {
+      return reply.code(422).send({
+        error: "mdata_vendor_test_fixture_rejected",
+        message: "Vendor names matching TEST-* patterns are not allowed in production",
+        fieldErrors: { name: "Test fixture names are not allowed in production" },
+      });
+    }
     if (await vendorNameConflictExists(authUser.uuid, createOperatingCompanyId, b.name)) {
       return reply.code(409).send({
         error: "mdata_vendor_name_conflict",

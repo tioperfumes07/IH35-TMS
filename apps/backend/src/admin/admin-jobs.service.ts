@@ -16,7 +16,8 @@ export type AdminJobOperation =
   | "admin.health.deep.refresh"
   | "qbo.forensic.start_import"
   | "samsara.config.health_check"
-  | "users.deactivate_probe_accounts";
+  | "users.deactivate_probe_accounts"
+  | "vendors.archive_test_rows";
 
 export type AdminJobRecord = {
   id: string;
@@ -457,6 +458,37 @@ async function runOperation(job: AdminJobRecord): Promise<Record<string, unknown
       await runSamsaraHealthCheckForRow(client, job.operating_company_id);
     });
     return { ok: true };
+  }
+
+  if (job.operation === "vendors.archive_test_rows") {
+    // FACT-FIX-1: owner-gated cleanup — deactivates TEST-VENDOR-{1..4} rows for the given entity.
+    // Void-never-delete: sets deactivated_at, appends audit row, returns affected ids.
+    // DO NOT auto-run; owner triggers via admin panel after reviewing affected ids.
+    const affected = await withLuciaBypass(async (client) => {
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [job.operating_company_id]);
+      const res = await client.query<{ id: string; vendor_name: string }>(
+        `
+          UPDATE mdata.vendors
+          SET deactivated_at = NOW(), updated_at = NOW()
+          WHERE operating_company_id = $1
+            AND vendor_name ~* '^TEST[-_ ]'
+            AND deactivated_at IS NULL
+          RETURNING id, vendor_name
+        `,
+        [job.operating_company_id]
+      );
+      for (const row of res.rows) {
+        await client.query(
+          `
+            INSERT INTO audit.row_changes (schema_name, table_name, row_pk, changed_by_user_id, op, new_data)
+            VALUES ('mdata', 'vendors', $1, $2, 'UPDATE', $3::jsonb)
+          `,
+          [row.id, job.requested_by_user_id ?? "system", JSON.stringify({ vendor_name: row.vendor_name, reason: "test_fixture_cleanup" })]
+        );
+      }
+      return res.rows.map((r) => r.id);
+    });
+    return { ok: true, affected_count: affected.length, affected_ids: affected };
   }
 
   throw new Error(`unsupported_admin_operation:${job.operation}`);
