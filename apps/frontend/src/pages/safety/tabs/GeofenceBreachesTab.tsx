@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { acknowledgeBreach, listGeofenceBreaches, type GeofenceBreachFilter } from "../../../api/safetyGeofence";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { formatDateTimeUS } from "../../../lib/formatDate";
+import { EntityLink } from "../../../components/shared/EntityLink";
 
 const FILTERS: GeofenceBreachFilter[] = ["active", "acknowledged", "all"];
 
@@ -60,7 +61,7 @@ export function GeofenceBreachesTab() {
                 <span className={`rounded-sm px-2 py-0.5 text-xs font-semibold ${event.event_type === "entry" ? "bg-slate-100 text-slate-700" : "bg-slate-100 text-slate-700"}`}>
                   {event.event_type}
                 </span>
-                <span className="text-sm font-medium text-slate-900">Unit {event.unit_number ?? event.vehicle_id.slice(0, 8)}</span>
+                <span className="text-sm font-medium text-slate-900">Unit <EntityLink kind="unit" id={event.vehicle_id} label={event.unit_number ?? event.vehicle_id.slice(0, 8)} /></span>
               </div>
               <span className="text-xs text-slate-500">{formatDateTimeUS(event.event_at)} CT</span>
             </div>

@@ -60,7 +60,7 @@ export function ReturnToDuty() {
         <ul className="mt-2 space-y-2">
           {processes.map((proc) => (
             <li key={String(proc.id)} className="rounded-sm border border-gray-100 p-2">
-              <div className="font-medium">Driver {String(proc.driver_id).slice(0, 8)}…</div>
+              <div className="font-medium">Driver <EntityLink kind="driver" id={proc.driver_id ? String(proc.driver_id) : undefined} label={proc.driver_id ? String(proc.driver_id).slice(0, 8) + "…" : undefined} /></div>
               <div className="text-slate-600">Status: {String(proc.status)} · Started {formatDateUS(proc.started_at)}</div>
             </li>
           ))}
