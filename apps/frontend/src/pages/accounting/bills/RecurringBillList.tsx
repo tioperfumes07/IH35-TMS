@@ -2,6 +2,7 @@ import { formatDateUS } from "../../../lib/formatDate";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, Link } from "react-router-dom";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { ArrowLeft, RefreshCw, ToggleLeft, Zap } from "lucide-react";
 import {
   listRecurringBillTemplates,
@@ -146,7 +147,7 @@ export function RecurringBillList() {
               {templates.map((tmpl) => (
                 <tr key={tmpl.uuid} className="hover:bg-gray-50">
                   <td className="px-4 py-2 font-medium text-gray-900">{tmpl.template_name}</td>
-                  <td className="px-4 py-2 font-mono text-xs text-gray-500">{tmpl.vendor_uuid.slice(0, 8)}…</td>
+                  <td className="px-4 py-2 font-mono text-xs"><EntityLink kind="vendor" id={tmpl.vendor_uuid} label={tmpl.vendor_name ?? (tmpl.vendor_uuid.slice(0, 8) + "…")} /></td>
                   <td className="px-4 py-2 text-gray-700">{frequencyLabel(tmpl.frequency)}</td>
                   <td className="px-4 py-2 text-gray-700">{formatDateUS(tmpl.next_generation_date)}</td>
                   <td className="px-4 py-2 text-right font-medium text-gray-900">{money(tmpl.amount)}</td>

@@ -338,7 +338,7 @@ export function BillsPage() {
                       </button>
                     </td>
                     <td className="px-3 py-2 font-medium text-gray-900"><EntityLink kind="vendor" id={bill.vendor_id} label={bill.vendor_name || bill.vendor_id} /></td>
-                    <td className="px-3 py-2">{bill.bill_number || bill.id.slice(0, 8)}</td>
+                    <td className="px-3 py-2"><EntityLink kind="bill" id={bill.id} label={bill.bill_number || bill.id.slice(0, 8)} /></td>
                     <td className="px-3 py-2">{formatDateUS(bill.bill_date)}</td>
                     <td className="px-3 py-2 text-right">{money(bill.amount_cents)}</td>
                     <td className="px-3 py-2 text-right">{money(bill.paid_cents)}</td>
