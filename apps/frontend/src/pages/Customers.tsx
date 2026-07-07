@@ -523,7 +523,10 @@ export function CustomersPage() {
                   rows={txRows}
                   columns={txColumns}
                   rowKey={(invoice) => invoice.id}
-                  loading={invoicesQuery.isPending}
+                  // Settled-only empty (LIST-EMPTY-1 invariant): show the loading state while pending
+                  // OR while a refetch is in flight with zero current rows, so ParityTable's emptyText
+                  // never flashes mid-fetch — the same guarantee the shared list-state primitive gives.
+                  loading={invoicesQuery.isPending || (invoicesQuery.isFetching && txRows.length === 0)}
                   storageKey="customer-transactions"
                   emptyText="No transactions for current filters."
                   exportFilename="customer-transactions"
