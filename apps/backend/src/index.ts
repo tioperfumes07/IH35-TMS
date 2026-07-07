@@ -222,6 +222,7 @@ import { registerFactoringBatchRoutes } from "./factoring/batch.routes.js";
 import { registerFactorRoutes } from "./factoring/factor.routes.js";
 import { registerReserveRoutes } from "./factoring/reserve.routes.js";
 import { registerFaroCsvImportRoutes } from "./factoring/faro-csv-import.routes.js";
+import { registerSubmissionQueueRoutes } from "./factoring/submission-queue.routes.js";
 import { registerScanDuplicateVendorRoutes } from "./factoring/scan-duplicate-vendors.routes.js";
 import { registerCashAdvancesRoutes } from "./cash-advances/cash-advances.routes.js";
 import { registerDriverHubRequestRoutes } from "./cash-advances/driver-hub-requests.routes.js";
@@ -937,6 +938,7 @@ async function main() {
   await registerFactorRoutes(app);
   await registerReserveRoutes(app);
   await registerFaroCsvImportRoutes(app);
+  await registerSubmissionQueueRoutes(app);
   await registerScanDuplicateVendorRoutes(app);
   await registerDataInfrastructureRoutes(app);
   await registerOcrRoutes(app);
