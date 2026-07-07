@@ -1,10 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { apiRequest } from "../../api/client";
+import { EntityLink, type EntityKind } from "../shared/EntityLink";
 
 export type OperationsColumn = {
   key: string;
   label: string;
+  /**
+   * When set, the cell is rendered as an <EntityLink> of this kind instead of plain text —
+   * total-connectivity drill-through for the shared driver-operations history views. `idKey`
+   * names the field on the row (which may be a field not otherwise shown as its own column,
+   * e.g. the row's raw `uuid`) that holds the real id; defaults to `${key}_id` when omitted.
+   */
+  entityKind?: EntityKind;
+  idKey?: string;
 };
 
 type PagedResponse = {
@@ -85,7 +94,15 @@ export function OperationsHistoryTable({ driverId, operatingCompanyId, subView, 
                 <tr key={String(row.uuid ?? index)} className="border-b border-gray-100">
                   {columns.map((column) => (
                     <td key={column.key} className="px-2 py-1.5 text-gray-800">
-                      {formatCell(row[column.key])}
+                      {column.entityKind ? (
+                        <EntityLink
+                          kind={column.entityKind}
+                          id={row[column.idKey ?? `${column.key}_id`] as string | null | undefined}
+                          label={formatCell(row[column.key])}
+                        />
+                      ) : (
+                        formatCell(row[column.key])
+                      )}
                     </td>
                   ))}
                 </tr>

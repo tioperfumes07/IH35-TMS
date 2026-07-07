@@ -2,6 +2,10 @@ import { useState } from "react";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { formatDateTimeUS } from "../../../lib/formatDate";
+// NOTE (EntityLink adoption sweep): `vehicle_id` here is the raw Samsara external vehicle id
+// (dispatch.border_crossing_events.vehicle_id, sourced from integrations.samsara_positions —
+// verified against apps/backend/src/integrations/samsara/border-crossings), NOT mdata.units.id.
+// Do not wrap it in <EntityLink kind="unit"> — that would fabricate a dead /fleet/units/:id link.
 
 interface CrossingEvent {
   uuid: string;
