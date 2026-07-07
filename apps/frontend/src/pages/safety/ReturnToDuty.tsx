@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDateUS } from "../../lib/formatDate";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 async function apiGet(path: string) {
   const res = await fetch(path, { credentials: "include" });
@@ -73,7 +74,7 @@ export function ReturnToDuty() {
           {positivePending.map((row) => (
             <li key={String(row.id)} className="flex items-center justify-between rounded-sm border border-slate-100 bg-white p-2">
               <span>
-                Driver {String(row.driver_id).slice(0, 8)}… · {String(row.test_date)}
+                Driver <EntityLink kind="driver" id={row.driver_id ? String(row.driver_id) : undefined} label={row.driver_id ? String(row.driver_id).slice(0, 8) + "…" : undefined} /> · {String(row.test_date)}
               </span>
               <button
                 type="button"

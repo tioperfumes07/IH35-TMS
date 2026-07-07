@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { DatePicker } from "../../../components/forms/DatePicker";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listDrivers } from "../../../api/mdata";
 import { companyToday } from "../../../lib/businessDate";
@@ -470,7 +471,7 @@ export function DrugAlcoholTab() {
           <ul className="mt-2 space-y-1">
             {(poolQ.data ?? []).slice(0, 8).map((entry) => (
               <li key={String(entry.id)} className="flex justify-between border-b border-gray-100 py-1">
-                <span>{String(entry.driver_id).slice(0, 8)}…</span>
+                <EntityLink kind="driver" id={entry.driver_id ? String(entry.driver_id) : undefined} label={entry.driver_id ? String(entry.driver_id).slice(0, 8) + "…" : undefined} />
                 <span>{String(entry.status ?? "selected")}</span>
               </li>
             ))}
@@ -482,7 +483,7 @@ export function DrugAlcoholTab() {
           <ul className="mt-2 space-y-1">
             {(clearinghouseQ.data ?? []).slice(0, 8).map((entry) => (
               <li key={String(entry.id)} className="flex justify-between border-b border-gray-100 py-1">
-                <span>{String(entry.driver_id).slice(0, 8)}…</span>
+                <EntityLink kind="driver" id={entry.driver_id ? String(entry.driver_id) : undefined} label={entry.driver_id ? String(entry.driver_id).slice(0, 8) + "…" : undefined} />
                 <span>{String(entry.query_status ?? "pending")}</span>
               </li>
             ))}

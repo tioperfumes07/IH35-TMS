@@ -1,5 +1,6 @@
 import { Lock } from "lucide-react";
 import { Link } from "react-router-dom";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { formatDateUS } from "../../../lib/formatDate";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -138,11 +139,7 @@ export function ComplaintsTab() {
     if (driverId) {
       const name = driverById.get(driverId);
       if (name) return <span>{name}</span>;
-      return (
-        <span className="text-slate-500" title={driverId}>
-          {driverId.slice(0, 8)}…
-        </span>
-      );
+      return <EntityLink kind="driver" id={driverId} label={driverId.slice(0, 8) + "…"} />;
     }
     if (row.respondent_user_id) return <span>{String(row.respondent_user_id)}</span>;
     return <span>—</span>;
