@@ -296,6 +296,18 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
             >
               {t("common.profile", "Profile")}
             </button>
+            {auth.role === "Owner" || auth.role === "Administrator" || auth.role === "SuperAdmin" ? (
+              <button
+                type="button"
+                className="block w-full rounded-sm px-2 py-1 text-left text-xs hover:bg-gray-100"
+                onClick={() => {
+                  setOpen(false);
+                  navigate("/admin");
+                }}
+              >
+                {t("common.admin", "Admin")}
+              </button>
+            ) : null}
             <button
               type="button"
               className="block w-full rounded-sm px-2 py-1 text-left text-xs hover:bg-gray-100"

@@ -10,6 +10,7 @@ import {
   setFeatureFlagOverride,
   updateFeatureFlag,
 } from "../../../lib/feature-flags-client";
+import { listMyCompanies } from "../../../api/org";
 
 export function FeatureFlagsManager() {
   const auth = useAuth();
@@ -23,6 +24,14 @@ export function FeatureFlagsManager() {
   const query = useQuery({
     queryKey: ["feature-flags-admin"],
     queryFn: fetchAllFeatureFlags,
+    enabled: allowed,
+  });
+
+  // Entities the owner can target a per-entity override at — so they pick "IH35 TRANSP" from a
+  // dropdown instead of pasting a company UUID.
+  const companiesQuery = useQuery({
+    queryKey: ["my-companies"],
+    queryFn: listMyCompanies,
     enabled: allowed,
   });
 
@@ -111,12 +120,19 @@ export function FeatureFlagsManager() {
             value={newDescription}
             onChange={(e) => setNewDescription(e.target.value)}
           />
-          <input
+          <select
             className="min-w-[280px] rounded-sm border border-gray-300 px-2 py-1 text-sm"
-            placeholder="tenant override company UUID"
             value={tenantOverrideCompanyId}
             onChange={(e) => setTenantOverrideCompanyId(e.target.value)}
-          />
+            aria-label="Entity for per-entity (tenant) override"
+          >
+            <option value="">Select entity for override…</option>
+            {(companiesQuery.data?.companies ?? []).map((c) => (
+              <option key={c.id} value={c.id}>
+                {(c.short_name || c.legal_name)} ({c.code})
+              </option>
+            ))}
+          </select>
           <Button
             type="button"
             disabled={!newFlagKey.trim() || createMutation.isPending}
