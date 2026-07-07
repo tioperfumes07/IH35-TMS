@@ -69,7 +69,7 @@ function PLSection({ companyId, fromDate, toDate, basis }: { companyId: string; 
       {lines.length === 0 ? (
         <p className="text-xs text-slate-400 pl-2">— no entries —</p>
       ) : (
-        <table className="min-w-full text-xs">
+        <div className="overflow-x-auto"><table className="min-w-full text-xs">
           <tbody>
             {lines.map((line) => (
               <tr key={`${line.account_code}-${line.account_name}`} className="border-b border-gray-50">
@@ -83,7 +83,7 @@ function PLSection({ companyId, fromDate, toDate, basis }: { companyId: string; 
               <td className="py-0.5 text-right">{money(total)}</td>
             </tr>
           </tbody>
-        </table>
+        </table></div>
       )}
     </div>
   );
@@ -163,7 +163,7 @@ function ARAgingSection({ companyId, asOfDate }: { companyId: string; asOfDate: 
 
   return (
     <div className="mt-3 overflow-auto">
-      <table className="min-w-full text-xs">
+      <div className="overflow-x-auto"><table className="min-w-full text-xs">
         <thead className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200">
           <tr>
             <th className="py-1 text-left">Customer</th>
@@ -188,7 +188,7 @@ function ARAgingSection({ companyId, asOfDate }: { companyId: string; asOfDate: 
             </tr>
           ))}
         </tbody>
-      </table>
+      </table></div>
     </div>
   );
 }
@@ -208,7 +208,7 @@ function APAgingSection({ companyId, asOfDate }: { companyId: string; asOfDate: 
 
   return (
     <div className="mt-3 overflow-auto">
-      <table className="min-w-full text-xs">
+      <div className="overflow-x-auto"><table className="min-w-full text-xs">
         <thead className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200">
           <tr>
             <th className="py-1 text-left">Vendor</th>
@@ -233,7 +233,7 @@ function APAgingSection({ companyId, asOfDate }: { companyId: string; asOfDate: 
             </tr>
           ))}
         </tbody>
-      </table>
+      </table></div>
     </div>
   );
 }
@@ -254,7 +254,7 @@ function CustomerSummarySection({ companyId, fromDate, toDate }: { companyId: st
   const sorted = [...rows].sort((a, b) => b.revenue_cents - a.revenue_cents);
   return (
     <div className="mt-3 overflow-auto">
-      <table className="min-w-full text-xs">
+      <div className="overflow-x-auto"><table className="min-w-full text-xs">
         <thead className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200">
           <tr>
             <th className="py-1 text-left">Customer</th>
@@ -271,7 +271,7 @@ function CustomerSummarySection({ companyId, fromDate, toDate }: { companyId: st
             </tr>
           ))}
         </tbody>
-      </table>
+      </table></div>
     </div>
   );
 }
@@ -292,7 +292,7 @@ function VendorExpenseSummarySection({ companyId, fromDate, toDate }: { companyI
   const sorted = [...rows].sort((a, b) => b.total_open_cents - a.total_open_cents);
   return (
     <div className="mt-3 overflow-auto">
-      <table className="min-w-full text-xs">
+      <div className="overflow-x-auto"><table className="min-w-full text-xs">
         <thead className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200">
           <tr>
             <th className="py-1 text-left">Vendor</th>
@@ -309,7 +309,7 @@ function VendorExpenseSummarySection({ companyId, fromDate, toDate }: { companyI
             </tr>
           ))}
         </tbody>
-      </table>
+      </table></div>
     </div>
   );
 }
