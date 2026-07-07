@@ -11,7 +11,7 @@ export function SettlementHistoryView({ driverId, operatingCompanyId }: Props) {
       title="Settlement History"
       description="Per-settlement summary for drill-down."
       columns={[
-        { key: "settlement_number", label: "Settlement #" },
+        { key: "settlement_number", label: "Settlement #", entityKind: "settlement", idKey: "uuid" },
         { key: "period_end", label: "Period End" },
         { key: "total_amount", label: "Total" },
         { key: "status", label: "Status" },

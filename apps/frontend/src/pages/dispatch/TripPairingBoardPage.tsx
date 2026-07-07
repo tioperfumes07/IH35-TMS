@@ -5,6 +5,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getTripPairingBoard, type TripLeg, type TripPairingUnitRow } from "../../api/dispatch";
 import { BookLoadModalV4 } from "./components/BookLoadModalV4";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 // §7 navy ruling (Jorge 2026-06-23): NB/TR/SB render in the navy family — no blue/purple/green pills.
 // Three distinguishable navy-family shades replace the old SB green (#16a34a) and any blue/purple.
@@ -197,7 +198,7 @@ export function TripPairingBoardPage() {
               <div className="flex flex-wrap gap-2 rounded-sm border border-slate-200 bg-slate-50 p-2">
                 {unbooked.map((u) => (
                   <div key={u.unit_id} className="flex min-w-[180px] flex-col gap-1 rounded-sm border border-slate-200 bg-white px-2.5 py-2 text-xs">
-                    <span className="font-semibold text-slate-800">{u.unit_number ?? "—"}</span>
+                    <EntityLink kind="unit" id={u.unit_id} label={u.unit_number ?? "—"} className="font-semibold text-slate-800" />
                     <span className="text-slate-500">{u.driver_name ?? "no driver"}</span>
                     {/* C1b: live location ("now: <city>") arrives with the backend payload — not fabricated. */}
                     <span className="text-[10px] text-slate-400">now: —</span>
@@ -241,8 +242,12 @@ export function TripPairingBoardPage() {
                     const sb = t.legs.find((l) => l.trip_type === "SB") ?? null;
                     return (
                       <tr key={t.unit_id} className="border-t border-slate-100 align-top hover:bg-slate-50">
-                        <td className="px-2 py-1.5 font-medium">{t.unit_number ?? "—"}</td>
-                        <td className="px-2 py-1.5">{t.driver_name ?? "—"}</td>
+                        <td className="px-2 py-1.5 font-medium">
+                          <EntityLink kind="unit" id={t.unit_id} label={t.unit_number ?? "—"} />
+                        </td>
+                        <td className="px-2 py-1.5">
+                          <EntityLink kind="driver" id={t.driver_id} label={t.driver_name ?? "—"} />
+                        </td>
                         <td className="px-2 py-1.5">
                           <div className="flex flex-col gap-1">
                             {nbLegs.map((l) => legChip(l))}

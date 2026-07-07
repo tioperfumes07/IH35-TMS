@@ -12,11 +12,11 @@
 import { useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
-import { EntityLink } from "../../components/shared/EntityLink";
 import { getTripProfitability, type TripProfitabilityRow } from "../../lib/loadProfit";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ReportsSubNav } from "../reports/ReportsSubNav";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(
@@ -197,11 +197,19 @@ export function TripProfitability() {
               {sorted.map((row) => (
                 <tr key={row.settlement_id} className="hover:bg-slate-50">
                   <td className="whitespace-nowrap px-3 py-2 font-mono text-xs">
-                    <EntityLink kind="settlement" id={row.settlement_id} label={row.settlement_display_id ?? row.settlement_id.slice(0, 8)} />
+                    <EntityLink
+                      kind="settlement"
+                      id={row.settlement_id}
+                      label={row.settlement_display_id ?? row.settlement_id.slice(0, 8)}
+                    />
                   </td>
                   <td className="px-3 py-2">{row.driver_name ?? "—"}</td>
-                  <td className="px-3 py-2 font-mono text-xs">{row.nb_load_number ?? "—"}</td>
-                  <td className="px-3 py-2 font-mono text-xs">{row.sb_load_number ?? "—"}</td>
+                  <td className="px-3 py-2 font-mono text-xs">
+                    <EntityLink kind="load" id={row.nb_load_id} label={row.nb_load_number ?? "—"} />
+                  </td>
+                  <td className="px-3 py-2 font-mono text-xs">
+                    <EntityLink kind="load" id={row.sb_load_id} label={row.sb_load_number ?? "—"} />
+                  </td>
                   <td className="px-3 py-2 text-right">{money(row.revenue_cents)}</td>
                   <td className="px-3 py-2 text-right">{money(row.driver_pay_cents)}</td>
                   <td className="px-3 py-2 text-right">{money(row.fuel_cents)}</td>

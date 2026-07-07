@@ -11,6 +11,7 @@ import {
 import { listCustomers } from "../../api/mdata";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 function PrefToggle({
   label,
@@ -52,8 +53,12 @@ function LogTable({ entries }: { entries: CustomerNotifyLogEntry[] }) {
         <tbody>
           {entries.map((entry) => (
             <tr key={entry.id} className="border-t" data-testid={`notify-log-${entry.id}`}>
-              <td className="px-3 py-2">{entry.load_number ?? entry.load_id}</td>
-              <td className="px-3 py-2">{entry.customer_name ?? "—"}</td>
+              <td className="px-3 py-2">
+                <EntityLink kind="load" id={entry.load_id} label={entry.load_number ?? entry.load_id} />
+              </td>
+              <td className="px-3 py-2">
+                <EntityLink kind="customer" id={entry.customer_id} label={entry.customer_name ?? "—"} />
+              </td>
               <td className="px-3 py-2 capitalize">{entry.milestone_type.replace(/_/g, " ")}</td>
               <td className="px-3 py-2 uppercase">{entry.channel}</td>
               <td className="px-3 py-2">{entry.status}</td>

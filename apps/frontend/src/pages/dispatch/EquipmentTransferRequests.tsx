@@ -4,6 +4,7 @@ import { apiRequest } from "../../api/client";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EquipmentTransferModal } from "../../components/dispatch/EquipmentTransferModal";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 type TransferRow = {
   uuid: string;
@@ -64,7 +65,8 @@ export function EquipmentTransferRequests() {
                 <td className="px-3 py-2">{row.equipment_kind}</td>
                 <td className="px-3 py-2">{row.transfer_location}</td>
                 <td className="px-3 py-2">
-                  {row.from_driver_uuid?.slice(0, 8)} → {row.to_driver_uuid?.slice(0, 8)}
+                  <EntityLink kind="driver" id={row.from_driver_uuid} label={row.from_driver_uuid?.slice(0, 8)} /> →{" "}
+                  <EntityLink kind="driver" id={row.to_driver_uuid} label={row.to_driver_uuid?.slice(0, 8)} />
                 </td>
                 <td className="px-3 py-2">{row.created_at}</td>
               </tr>

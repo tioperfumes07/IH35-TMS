@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { MouseEvent, ReactNode } from "react";
 import { Link } from "react-router-dom";
 
 /**
@@ -39,6 +39,15 @@ export interface EntityLinkProps {
   /** Display text/content. Defaults to the raw id when omitted. */
   label?: ReactNode;
   className?: string;
+  /**
+   * Optional click handler — passed through to the underlying <Link>. Used by parent rows that
+   * also have their own onClick (e.g. a table row that opens a drawer): call
+   * `event.stopPropagation()` here so the cell's drill-through link doesn't also fire the row
+   * handler. No-op when the kind has no resolvable route (plain-text fallback).
+   */
+  onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
+  /** Optional test hook, forwarded to the rendered <Link>/<span> as `data-testid`. */
+  "data-testid"?: string;
 }
 
 const DEFAULT_LINK_CLASSNAME =
@@ -101,20 +110,28 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
  * Renders `id` as a clickable drill-through link when a real detail route exists for `kind`;
  * otherwise renders plain text (no dead link, no fabricated route).
  */
-export function EntityLink({ kind, id, label, className }: EntityLinkProps) {
+export function EntityLink({ kind, id, label, className, onClick, "data-testid": testId }: EntityLinkProps) {
   const display = label ?? id ?? "—";
 
   if (!id) {
-    return <span className={className}>{display}</span>;
+    return (
+      <span className={className} data-testid={testId}>
+        {display}
+      </span>
+    );
   }
 
   const route = resolveEntityRoute(kind, id);
   if (!route) {
-    return <span className={className}>{display}</span>;
+    return (
+      <span className={className} data-testid={testId}>
+        {display}
+      </span>
+    );
   }
 
   return (
-    <Link to={route} className={className ?? DEFAULT_LINK_CLASSNAME}>
+    <Link to={route} className={className ?? DEFAULT_LINK_CLASSNAME} onClick={onClick} data-testid={testId}>
       {display}
     </Link>
   );
