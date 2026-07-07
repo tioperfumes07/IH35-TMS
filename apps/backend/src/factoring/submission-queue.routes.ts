@@ -59,7 +59,10 @@ export async function registerSubmissionQueueRoutes(app: FastifyInstance) {
 
     const { operating_company_id, invoice_ids } = body.data;
 
-    const result = await withCompanyScope(user.uuid, operating_company_id, async (client) => {
+    type DocError = { ok: false; code: string; items: Array<{ invoice_id: string; display_id: string | null; missing_docs: string[] }> };
+    type BatchOk = { ok: true; batch: unknown };
+
+    const result = await withCompanyScope(user.uuid, operating_company_id, async (client): Promise<DocError | BatchOk> => {
       // Re-validate doc gate for every selected invoice
       const queueItems = await listSubmissionQueueInvoices(operating_company_id, { client });
       const queueById = new Map(queueItems.map((item) => [item.invoice_id, item]));
@@ -77,7 +80,7 @@ export async function registerSubmissionQueueRoutes(app: FastifyInstance) {
       }
 
       if (docErrors.length > 0) {
-        return { _docError: { code: "docs_missing", items: docErrors } };
+        return { ok: false, code: "docs_missing", items: docErrors };
       }
 
       // Create draft batch using the existing batch service
@@ -103,11 +106,11 @@ export async function registerSubmissionQueueRoutes(app: FastifyInstance) {
         "FACT-PAR-1"
       );
 
-      return { batch: submitted };
+      return { ok: true, batch: submitted };
     });
 
-    if ("_docError" in result) {
-      return reply.code(422).send({ error: result._docError.code, items: result._docError.items });
+    if (!result.ok) {
+      return reply.code(422).send({ error: result.code, items: result.items });
     }
     return reply.code(201).send(result.batch);
   });

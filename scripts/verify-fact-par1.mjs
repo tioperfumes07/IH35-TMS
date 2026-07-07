@@ -101,7 +101,7 @@ if (!routesSrc.includes("Owner") || !routesSrc.includes("Accountant")) fail("rou
 pass("routes: submit-batch role-gate present (Owner/Accountant)");
 
 // Re-validate doc gate before batch creation
-if (!routesSrc.includes("is_submittable") || !routesSrc.includes("docs_missing")) fail("routes missing server-side re-validation of is_submittable / docs_missing error");
+if (!routesSrc.includes("is_submittable") || !routesSrc.includes('"docs_missing"')) fail("routes missing server-side re-validation of is_submittable / docs_missing error");
 pass("routes: server-side doc-gate re-validation before batch creation");
 
 // Batch creation: import from batch.service
