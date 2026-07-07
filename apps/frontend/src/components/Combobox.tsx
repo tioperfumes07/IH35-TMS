@@ -93,13 +93,26 @@ export function Combobox({
       .slice(0, MAX_VISIBLE_OPTIONS);
   }, [filterMode, options, query]);
 
+  // QB-STD-1/2: "+ Add new" is always the FIRST row when allowAddNew is configured — visible
+  // the moment the dropdown opens, before any keystroke. No typed-query gate.
+  const showAddNew = Boolean(allowAddNew);
+
+  // Add row label: generic when no query; includes typed name when the user is creating a new one.
   const hasExactMatch = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
     if (!normalizedQuery) return false;
     return options.some((option) => option.label.trim().toLowerCase() === normalizedQuery);
   }, [options, query]);
 
-  const canAddNew = Boolean(allowAddNew && query.trim() && !hasExactMatch);
+  const addRowLabel = allowAddNew
+    ? query.trim() && !hasExactMatch
+      ? `${allowAddNew.label} "${query.trim()}"`
+      : allowAddNew.label
+    : "";
+
+  // Layout: add row is index 0 (when showAddNew), filtered options are 1..n.
+  // totalRows drives ArrowUp/ArrowDown wrap-around.
+  const totalRowCount = filteredOptions.length + (showAddNew ? 1 : 0);
 
   useEffect(() => {
     function onDocumentClick(event: MouseEvent) {
@@ -138,12 +151,10 @@ export function Combobox({
       setActiveIndex(-1);
       return;
     }
-    if (filteredOptions.length === 0) {
-      setActiveIndex(canAddNew ? 0 : -1);
-      return;
-    }
-    setActiveIndex(0);
-  }, [canAddNew, filteredOptions.length, open]);
+    // Start on the add row (index 0) when present (QB-STD-7: reachable as row 0); otherwise on the
+    // first option, or -1 when neither is present.
+    setActiveIndex(showAddNew ? 0 : filteredOptions.length > 0 ? 0 : -1);
+  }, [showAddNew, filteredOptions.length, open]);
 
   function commitSelection(nextValue: string | null) {
     onChange(nextValue);
@@ -154,15 +165,14 @@ export function Combobox({
 
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
     if (disabled) return;
-    const totalRows = filteredOptions.length + (canAddNew ? 1 : 0);
     if (event.key === "ArrowDown") {
       event.preventDefault();
       if (!open) {
         setOpen(true);
         return;
       }
-      if (totalRows === 0) return;
-      setActiveIndex((current) => (current + 1) % totalRows);
+      if (totalRowCount === 0) return;
+      setActiveIndex((current) => (current + 1) % totalRowCount);
       return;
     }
     if (event.key === "ArrowUp") {
@@ -171,21 +181,24 @@ export function Combobox({
         setOpen(true);
         return;
       }
-      if (totalRows === 0) return;
-      setActiveIndex((current) => (current <= 0 ? totalRows - 1 : current - 1));
+      if (totalRowCount === 0) return;
+      setActiveIndex((current) => (current <= 0 ? totalRowCount - 1 : current - 1));
       return;
     }
     if (event.key === "Enter") {
       if (!open) return;
       event.preventDefault();
       if (activeIndex < 0) return;
-      if (activeIndex < filteredOptions.length) {
-        commitSelection(filteredOptions[activeIndex]?.value ?? null);
+      // Add row is index 0 when showAddNew; options are at 1..n.
+      if (showAddNew && activeIndex === 0) {
+        allowAddNew!.onAdd(query.trim());
+        setOpen(false);
+        setQuery("");
         return;
       }
-      if (allowAddNew && canAddNew) {
-        allowAddNew.onAdd(query.trim());
-        setOpen(false);
+      const optionIndex = showAddNew ? activeIndex - 1 : activeIndex;
+      if (optionIndex >= 0 && optionIndex < filteredOptions.length) {
+        commitSelection(filteredOptions[optionIndex]?.value ?? null);
       }
       return;
     }
@@ -253,50 +266,55 @@ export function Combobox({
               Loading...
             </div>
           ) : null}
-          {!loading && filteredOptions.length === 0 && !canAddNew ? (
-            <div className="px-2 py-2 text-[13px] text-gray-500">No matches</div>
-          ) : null}
-          {!loading &&
-            filteredOptions.map((option, index) => (
-              <button
-                key={option.value}
-                type="button"
-                role="option"
-                aria-selected={value === option.value}
-                // Commit on CLICK (not mouseDown) so touch taps, automation, and assistive
-                // interactions all select — mouseDown-only left the field empty on touch/click-only
-                // input (the load-cancel reason couldn't be picked). mouseDown still preventDefaults to
-                // keep the input focused so the dropdown doesn't blur-close before the click lands.
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={() => commitSelection(option.value)}
-                onMouseEnter={() => setActiveIndex(index)}
-                className={`w-full px-2 py-1.5 text-left text-[13px] ${
-                  activeIndex === index ? "bg-slate-100 text-slate-700" : "text-gray-800 hover:bg-gray-50"
-                }`}
-              >
-                <div>{option.label}</div>
-                {option.sublabel ? <div className="text-[11px] text-gray-500">{option.sublabel}</div> : null}
-              </button>
-            ))}
-          {!loading && canAddNew && allowAddNew ? (
+          {/* QB-STD-1: add row is FIRST — always visible before any typing. */}
+          {!loading && showAddNew && allowAddNew ? (
             <button
               type="button"
               role="option"
-              aria-selected={activeIndex === filteredOptions.length}
+              aria-selected={activeIndex === 0}
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => {
                 allowAddNew.onAdd(query.trim());
                 setOpen(false);
                 setQuery("");
               }}
-              onMouseEnter={() => setActiveIndex(filteredOptions.length)}
-              className={`w-full border-t border-gray-100 px-2 py-1.5 text-left text-[13px] ${
-                activeIndex === filteredOptions.length ? "bg-slate-100 text-slate-700" : "text-gray-700 hover:bg-gray-50"
+              onMouseEnter={() => setActiveIndex(0)}
+              className={`w-full border-b border-gray-100 px-2 py-1.5 text-left text-[13px] font-medium ${
+                activeIndex === 0 ? "bg-slate-100 text-slate-700" : "text-slate-600 hover:bg-gray-50"
               }`}
             >
-              + {allowAddNew.label} "{query.trim()}"
+              {addRowLabel}
             </button>
           ) : null}
+          {!loading && filteredOptions.length === 0 && !showAddNew ? (
+            <div className="px-2 py-2 text-[13px] text-gray-500">No matches</div>
+          ) : null}
+          {!loading &&
+            filteredOptions.map((option, index) => {
+              // Options are at listbox indices 1..n when the add row occupies index 0.
+              const listIndex = showAddNew ? index + 1 : index;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="option"
+                  aria-selected={value === option.value}
+                  // Commit on CLICK (not mouseDown) so touch taps, automation, and assistive
+                  // interactions all select — mouseDown-only left the field empty on touch/click-only
+                  // input (the load-cancel reason couldn't be picked). mouseDown still preventDefaults to
+                  // keep the input focused so the dropdown doesn't blur-close before the click lands.
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => commitSelection(option.value)}
+                  onMouseEnter={() => setActiveIndex(listIndex)}
+                  className={`w-full px-2 py-1.5 text-left text-[13px] ${
+                    activeIndex === listIndex ? "bg-slate-100 text-slate-700" : "text-gray-800 hover:bg-gray-50"
+                  }`}
+                >
+                  <div>{option.label}</div>
+                  {option.sublabel ? <div className="text-[11px] text-gray-500">{option.sublabel}</div> : null}
+                </button>
+              );
+            })}
         </div>
       ) : null}
     </div>

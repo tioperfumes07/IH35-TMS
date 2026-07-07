@@ -1,24 +1,19 @@
 /**
  * ReferenceSelect (A2) — the software-wide inline "+ Add new" keystone.
  *
- * Composes the existing office-standard Combobox (which supports `allowAddNew`
- * + `sublabel` = the "Type" in "Name + Type") with an inline create form.
- * Behavior mirrors QBO: "+ Add new" opens a NESTED create panel on top of the
- * current one; on Save the record is created and RETURNED with the new value
- * selected — no navigation away, no losing entered data.
+ * Composes the Combobox (QB-STD-1/2: "+ Add new" is the permanent FIRST row of the open
+ * dropdown, visible before any keystroke — no external button, no typed-query gate) with an
+ * inline create panel. On Save the record is created and returned already selected — no
+ * navigation away, no losing entered data (QB-STD-3/4). Created records write to the SAME
+ * canonical table the list reads from, so they survive reload (QB-STD-5).
  *
- * Every reference dropdown across the TMS should use this instead of wiring
- * Combobox + create-modal ad-hoc. Account/category selects keep their existing
- * lock-account control alongside via the `lockControl` slot. UI/read only —
- * the create call is the entity's existing non-financial create endpoint.
+ * Every reference dropdown across the TMS should use this instead of wiring Combobox +
+ * create-modal ad-hoc. Account/category selects keep their existing lock-account control
+ * alongside via the `lockControl` slot.
  *
  * Two inline-create backends, by kind:
- *   - vendor / customer / item / category / part → QuickCreateEntityModal
- *     (existing, locked-in behavior — do not change; covered by
- *     ReferenceSelect.test.tsx).
- *   - service → InlineCreateDrawer's richer BK7 two-sided (sell+buy) form
- *     (NewServiceDrawerForm), additive — fixes the QBO-parity-spec-flagged
- *     Line-Haul income/expense account mixup by defaulting to Service income.
+ *   - vendor / customer / item / category / part → QuickCreateEntityModal (canonical tables)
+ *   - service → InlineCreateDrawer's richer BK7 two-sided (sell+buy) form (NewServiceDrawerForm)
  */
 import { useState, type ReactNode } from "react";
 import { Combobox, type ComboboxOption } from "../Combobox";
@@ -46,7 +41,7 @@ export type ReferenceSelectProps = {
   operatingCompanyId: string;
   placeholder?: string;
   disabled?: boolean;
-  /** Override the "+ Add new ___" label. */
+  /** Override the "+ Add new ___" label shown as the first dropdown row. */
   addNewLabel?: string;
   /** Notified when a record is created inline (so a parent can refetch). */
   onOptionCreated?: (opt: ReferenceOption) => void;
@@ -88,6 +83,8 @@ export function ReferenceSelect({
   return (
     <div className="flex items-center gap-2">
       <div className="min-w-0 flex-1">
+        {/* QB-STD-1/2: the "+" row lives inside the Combobox dropdown as its permanent first row.
+        No external button — the Combobox allowAddNew now always-shows the row on open. */}
         <Combobox
           options={comboOptions}
           value={value}
@@ -97,16 +94,6 @@ export function ReferenceSelect({
           allowAddNew={{ label: addLabel, onAdd: () => setCreateOpen(true) }}
         />
       </div>
-      {/* Always-visible "+ Add new" — the keystone is reachable without typing. */}
-      <button
-        type="button"
-        disabled={disabled}
-        aria-label={addLabel}
-        onClick={() => setCreateOpen(true)}
-        className="min-h-11 shrink-0 rounded-sm border border-gray-300 px-2 text-[12px] font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-40 sm:min-h-0 sm:py-1"
-      >
-        {addLabel}
-      </button>
       {lockControl}
       {createKind === "service" ? (
         <InlineCreateDrawer

@@ -2,8 +2,8 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { createPartsInventoryPurchase } from "../../../api/maintenance";
-import { createQboAccount, createQboItem, createQboVendor } from "../../../api/qbo-mdata";
-import { createCustomer } from "../../../api/mdata";
+import { createVendor, createCustomer } from "../../../api/mdata";
+import { chartOfAccountsCatalogClient, itemsCatalogClient } from "../../../api/catalogs-accounting";
 import { Modal } from "../../../components/Modal";
 import { useToast } from "../../../components/Toast";
 
@@ -13,10 +13,14 @@ type Props = {
   open: boolean;
   operatingCompanyId: string;
   kind: QuickCreateKind;
+  // Kept for backwards-compat (TwoSectionLineEditor passes it); no longer used since item create
+  // now writes to catalogs.items (canonical) which does not require a QBO income account ID.
   defaultIncomeAccountQboId?: string;
   onClose: () => void;
   onCreated: (created: { id: string; label: string }) => void;
 };
+
+const VENDOR_TYPES = ["Fuel", "Repair", "Tires", "Towing", "Insurance", "Permit", "Toll", "Other"] as const;
 
 const schema = z.object({
   name: z.string().trim().min(1, "Name is required"),
@@ -24,11 +28,13 @@ const schema = z.object({
   company: z.string().trim().optional(),
   email: z.string().trim().email("Valid email required").optional().or(z.literal("")),
   phone: z.string().trim().optional(),
+  vendorType: z.enum(VENDOR_TYPES).optional(),
   sku: z.string().trim().optional(),
   unitPrice: z.coerce.number().int().min(0).optional(),
   qtyReceived: z.coerce.number().int().min(1).optional(),
   location: z.string().trim().optional(),
-  // W-FIX-7b: render-v5 §D vendor fields (mig 202606231500).
+  // W-FIX-7b: render-v5 §D vendor fields. City/state/zip/terms/track1099 are collected in the UI
+  // but held back from the canonical create until migration 202607110230 lands on prod.
   street: z.string().trim().optional(),
   city: z.string().trim().optional(),
   state: z.string().trim().optional(),
@@ -54,14 +60,13 @@ export function QuickCreateEntityModal({
   open,
   operatingCompanyId,
   kind,
-  defaultIncomeAccountQboId,
   onClose,
   onCreated,
 }: Props) {
   const { pushToast } = useToast();
   const [saving, setSaving] = useState(false);
   const form = useForm<FormValues>({
-    defaultValues: { name: "", company: "", email: "", phone: "", sku: "", unitPrice: 0, qtyReceived: 1, location: "", street: "", city: "", state: "", zip: "", accountNumber: "", terms: "", taxId: "", track1099: false, defaultExpenseAccount: "" },
+    defaultValues: { name: "", company: "", email: "", phone: "", vendorType: "Other", sku: "", unitPrice: 0, qtyReceived: 1, location: "", street: "", city: "", state: "", zip: "", accountNumber: "", terms: "", taxId: "", track1099: false, defaultExpenseAccount: "" },
   });
 
   const submit = form.handleSubmit(async (raw) => {
@@ -74,36 +79,27 @@ export function QuickCreateEntityModal({
       pushToast("Select an operating company first.", "error");
       return;
     }
-    if (kind === "item" && !defaultIncomeAccountQboId) {
-      pushToast("Create an expense category first, then create an item.", "error");
-      return;
-    }
 
     setSaving(true);
     try {
       if (kind === "vendor") {
-        const res = await createQboVendor(operatingCompanyId, {
-          display_name: parsed.data.name,
-          company_name: parsed.data.company?.trim() || parsed.data.name,
-          primary_email: parsed.data.email || undefined,
-          primary_phone: parsed.data.phone || undefined,
-          // W-FIX-7b: render-v5 §D fields.
-          billing_address_line1: parsed.data.street?.trim() || undefined,
-          billing_city: parsed.data.city?.trim() || undefined,
-          billing_state: parsed.data.state?.trim() || undefined,
-          billing_postal_code: parsed.data.zip?.trim() || undefined,
-          account_number: parsed.data.accountNumber?.trim() || undefined,
-          terms: parsed.data.terms?.trim() || undefined,
+        // QB-STD-5: write to canonical mdata.vendors (same table listVendors reads from) so the
+        // created vendor survives reload. Previously wrote to mdata.qbo_vendors (mirror), which
+        // no vendor picker reads — the created row was invisible after refresh.
+        // Fields dropped (mirror-only, not in mdata.vendors pre-HELD migration 202607110230):
+        //   company_name, account_number, terms, track_1099, city, state, postal_code.
+        const res = await createVendor({
+          name: parsed.data.name,
+          vendor_type: parsed.data.vendorType ?? "Other",
+          email: parsed.data.email || undefined,
+          phone: parsed.data.phone || undefined,
+          address: parsed.data.street?.trim() || undefined,
           tax_id: parsed.data.taxId?.trim() || undefined,
-          track_1099: parsed.data.track1099 || undefined,
-          default_expense_account_qbo_id: parsed.data.defaultExpenseAccount?.trim() || undefined,
+          operating_company_id: operatingCompanyId,
         });
-        onCreated({ id: String(res.vendor.id), label: parsed.data.name });
+        onCreated({ id: String(res.id), label: parsed.data.name });
       } else if (kind === "customer") {
-        // D1-1: write the inline quick-create customer to the REAL mdata.customers table
-        // (POST /api/v1/mdata/customers — the same endpoint the full Customers page uses) so the
-        // returned id is a bookable/invoiceable FK. Previously this wrote to the QBO mirror
-        // (mdata.qbo_customers) that no customer picker/search/list reads, leaving a dangling id.
+        // D1-1: writes to mdata.customers (canonical) — already fixed in the prior customer path.
         const res = await createCustomer({
           name: parsed.data.name,
           operating_company_id: operatingCompanyId,
@@ -113,21 +109,35 @@ export function QuickCreateEntityModal({
         });
         onCreated({ id: String(res.id), label: parsed.data.name });
       } else if (kind === "item") {
-        const res = await createQboItem(operatingCompanyId, {
-          name: parsed.data.name,
-          sku: parsed.data.sku || undefined,
-          unit_price_cents: parsed.data.unitPrice,
-          income_account_qbo_id: defaultIncomeAccountQboId!,
+        // QB-STD-5: write to catalogs.items (canonical) — same table itemsCatalogClient.list()
+        // reads. Previously wrote to mdata.qbo_items (mirror), invisible after refresh.
+        // item_type defaults to "Service" (factory requiredMetadata["item_type"]).
+        const nameSlug = (parsed.data.sku?.trim() || parsed.data.name.replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 20) || "ITEM").slice(0, 120);
+        const itemCode = nameSlug || "ITEM";
+        const res = await itemsCatalogClient.create(operatingCompanyId, {
+          code: itemCode,
+          display_name: parsed.data.name,
+          metadata: {
+            item_type: "Service",
+            unit_price_cents: parsed.data.unitPrice ?? 0,
+          },
         });
-        onCreated({ id: String(res.item.id), label: parsed.data.name });
+        onCreated({ id: String(res.id), label: parsed.data.name });
       } else if (kind === "category") {
-        const res = await createQboAccount(operatingCompanyId, {
-          name: parsed.data.name,
-          account_type: "Expense",
-          account_sub_type: "OtherExpense",
-          full_qualified_name: parsed.data.name,
+        // QB-STD-5: write to catalogs.accounts (canonical) — same table getCoaAccounts reads via
+        // /api/v1/catalogs/accounts. Previously wrote to mdata.qbo_accounts (mirror), invisible
+        // after refresh. chartOfAccountsCatalogClient maps to tableName:"accounts" in the factory.
+        // Default account_type/subtype = Expense/OtherExpense (appropriate for a cost category).
+        const rawSlug = parsed.data.name.replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 12) || "ACCT";
+        const safeSlug = /^[A-Z]/.test(rawSlug) ? rawSlug : `E${rawSlug}`;
+        // Timestamp suffix avoids account_number unique-constraint violations on same-name creates.
+        const accountCode = `${safeSlug}${String(Date.now()).slice(-6)}`;
+        const res = await chartOfAccountsCatalogClient.create(operatingCompanyId, {
+          code: accountCode,
+          display_name: parsed.data.name,
+          metadata: { account_type: "Expense", account_subtype: "OtherExpense" },
         });
-        onCreated({ id: String(res.account.id), label: parsed.data.name });
+        onCreated({ id: String(res.id), label: parsed.data.name });
       } else {
         const res = await createPartsInventoryPurchase(operatingCompanyId, {
           part_description: parsed.data.name,
@@ -154,6 +164,17 @@ export function QuickCreateEntityModal({
           <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" {...form.register("name")} aria-label="Quick create name" />
         </label>
 
+        {kind === "vendor" ? (
+          <label className="block">
+            <span className="text-xs font-medium text-gray-600">Vendor type</span>
+            <select className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm" {...form.register("vendorType")} aria-label="Quick create vendor type">
+              {VENDOR_TYPES.map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+
         {kind === "vendor" || kind === "customer" ? (
           <label className="block">
             <span className="text-xs font-medium text-gray-600">Company / {kind === "vendor" ? "Vendor" : "Customer"} name</span>
@@ -174,7 +195,9 @@ export function QuickCreateEntityModal({
           </div>
         ) : null}
 
-        {/* W-FIX-7b: render-v5 §D vendor fields (persist to mdata.qbo_vendors columns, mig 202606231500). */}
+        {/* W-FIX-7b: render-v5 §D vendor fields. Street → mdata.vendors.address (live). City/state/
+        zip/account_number/terms/track1099 are collected here but NOT sent to the canonical endpoint
+        until migration 202607110230 lands (those columns are HELD on mdata.vendors). */}
         {kind === "vendor" ? (
           <div className="space-y-2 rounded-sm border border-gray-100 bg-gray-50 p-2">
             <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Vendor details (optional)</div>
@@ -204,7 +227,7 @@ export function QuickCreateEntityModal({
         {kind === "item" ? (
           <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
             <label>
-              <span className="text-xs font-medium text-gray-600">SKU</span>
+              <span className="text-xs font-medium text-gray-600">SKU (used as item code)</span>
               <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" {...form.register("sku")} aria-label="Quick create SKU" />
             </label>
             <label>
