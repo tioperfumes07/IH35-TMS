@@ -11,6 +11,7 @@ import {
 import { useAuth } from "../../auth/useAuth";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ActionButton } from "../../components/shared/ActionButton";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -216,7 +217,15 @@ export function BankAccountDetailPage() {
                     {Array.isArray(row.plaid_category) && row.plaid_category.length > 0 ? row.plaid_category.join(" / ") : "Uncategorized"}
                   </td>
                   <td className="border-b border-gray-100 px-2 py-2 text-gray-700">
-                    {row.matched_load_id || row.matched_bill_id || row.matched_settlement_id ? "Yes" : "No"}
+                    {row.matched_load_id ? (
+                      <EntityLink kind="load" id={row.matched_load_id} label="Load" />
+                    ) : row.matched_bill_id ? (
+                      <EntityLink kind="bill" id={row.matched_bill_id} label="Bill" />
+                    ) : row.matched_settlement_id ? (
+                      <EntityLink kind="settlement" id={row.matched_settlement_id} label="Settlement" />
+                    ) : (
+                      "No"
+                    )}
                   </td>
                 </tr>
               ))}

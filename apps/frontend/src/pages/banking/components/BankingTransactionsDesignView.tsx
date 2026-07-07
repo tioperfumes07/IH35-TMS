@@ -18,6 +18,7 @@ import {
 import { BulkActionBar } from "../../../components/bulk/BulkActionBar";
 import { TableSelectionHeader } from "../../../components/bulk/TableSelection";
 import { ActionButton } from "../../../components/shared/ActionButton";
+import { EntityLink, type EntityKind } from "../../../components/shared/EntityLink";
 import { Button } from "../../../components/Button";
 import { useBulkSelection } from "../../../hooks/useBulkSelection";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
@@ -99,6 +100,14 @@ const MATCH_CANDIDATE_KIND_LABELS: Record<BankMatchCandidateKind, string> = {
   je: "Journal Entry",
   bill: "Bill",
   expense: "Expense",
+};
+
+// Only kinds with a real EntityLink route map here — "payment"/"bill_payment"/"transfer" have no
+// EntityLink kind (and no per-id detail route) yet, so those candidates keep the plain badge.
+const MATCH_CANDIDATE_ENTITY_KIND: Partial<Record<BankMatchCandidateKind, EntityKind>> = {
+  je: "journal_entry",
+  bill: "bill",
+  expense: "expense",
 };
 
 type ReviewTabId = "for_review" | "categorized" | "excluded";
@@ -1105,10 +1114,24 @@ export function BankingTransactionsDesignView({
                       );
                     })()}
                     <td className="truncate px-1 py-2 align-top text-gray-700">{draft.fromTo || "—"}</td>
-                    <td className="truncate px-1 py-2 align-top text-gray-700">{draft.customerProject || "—"}</td>
+                    <td className="truncate px-1 py-2 align-top text-gray-700">
+                      {draft.customerId ? (
+                        <EntityLink kind="customer" id={draft.customerId} label={draft.customerProject || "—"} />
+                      ) : (
+                        draft.customerProject || "—"
+                      )}
+                    </td>
                     <td className="truncate px-1 py-2 align-top text-gray-700">{draft.productService || "—"}</td>
                     {viewSettings.showCheckNo ? <td className="truncate px-1 py-2 align-top text-gray-700">{draft.checkNo || "—"}</td> : null}
-                    {viewSettings.showPayee ? <td className="truncate px-1 py-2 align-top text-gray-700">{draft.payee || "—"}</td> : null}
+                    {viewSettings.showPayee ? (
+                      <td className="truncate px-1 py-2 align-top text-gray-700">
+                        {draft.vendorId ? (
+                          <EntityLink kind="vendor" id={draft.vendorId} label={draft.payee || "—"} />
+                        ) : (
+                          draft.payee || "—"
+                        )}
+                      </td>
+                    ) : null}
                     {viewSettings.showClass ? <td className="truncate px-1 py-2 align-top text-gray-700">{draft.className || "—"}</td> : null}
                     {viewSettings.showLocation ? <td className="truncate px-1 py-2 align-top text-gray-700">{draft.location || "—"}</td> : null}
                     <td className="px-1 py-2 align-top">
@@ -1404,13 +1427,16 @@ export function BankingTransactionsDesignView({
                                   />
                                 </div>
                                 {draft.driverId ? (
-                                  <button
-                                    type="button"
-                                    className="mt-0.5 text-[11px] text-slate-700 underline"
-                                    onClick={() => setDraft(tx, { driverId: "", driverName: "", recoverFromDriver: false })}
-                                  >
-                                    Clear driver{draft.driverName ? ` (${draft.driverName})` : ""}
-                                  </button>
+                                  <div className="mt-0.5 flex items-center gap-2 text-[11px]">
+                                    <EntityLink kind="driver" id={draft.driverId} label={draft.driverName || "Driver"} />
+                                    <button
+                                      type="button"
+                                      className="text-slate-700 underline"
+                                      onClick={() => setDraft(tx, { driverId: "", driverName: "", recoverFromDriver: false })}
+                                    >
+                                      Clear
+                                    </button>
+                                  </div>
                                 ) : null}
                               </div>
                               <div className="text-xs text-gray-600">
@@ -1423,13 +1449,16 @@ export function BankingTransactionsDesignView({
                                   />
                                 </div>
                                 {draft.unitId ? (
-                                  <button
-                                    type="button"
-                                    className="mt-0.5 text-[11px] text-slate-700 underline"
-                                    onClick={() => setDraft(tx, { unitId: "", unitName: "" })}
-                                  >
-                                    Clear unit{draft.unitName ? ` (${draft.unitName})` : ""}
-                                  </button>
+                                  <div className="mt-0.5 flex items-center gap-2 text-[11px]">
+                                    <EntityLink kind="unit" id={draft.unitId} label={draft.unitName || "Unit"} />
+                                    <button
+                                      type="button"
+                                      className="text-slate-700 underline"
+                                      onClick={() => setDraft(tx, { unitId: "", unitName: "" })}
+                                    >
+                                      Clear
+                                    </button>
+                                  </div>
                                 ) : null}
                               </div>
                               <div className="text-xs text-gray-600">
@@ -1442,13 +1471,16 @@ export function BankingTransactionsDesignView({
                                   />
                                 </div>
                                 {draft.trailerId ? (
-                                  <button
-                                    type="button"
-                                    className="mt-0.5 text-[11px] text-slate-700 underline"
-                                    onClick={() => setDraft(tx, { trailerId: "", trailerName: "" })}
-                                  >
-                                    Clear trailer{draft.trailerName ? ` (${draft.trailerName})` : ""}
-                                  </button>
+                                  <div className="mt-0.5 flex items-center gap-2 text-[11px]">
+                                    <EntityLink kind="trailer" id={draft.trailerId} label={draft.trailerName || "Trailer"} />
+                                    <button
+                                      type="button"
+                                      className="text-slate-700 underline"
+                                      onClick={() => setDraft(tx, { trailerId: "", trailerName: "" })}
+                                    >
+                                      Clear
+                                    </button>
+                                  </div>
                                 ) : null}
                               </div>
                               <div className="text-xs text-gray-600">
@@ -1461,13 +1493,16 @@ export function BankingTransactionsDesignView({
                                   />
                                 </div>
                                 {draft.loadId ? (
-                                  <button
-                                    type="button"
-                                    className="mt-0.5 text-[11px] text-slate-700 underline"
-                                    onClick={() => setDraft(tx, { loadId: "", loadName: "" })}
-                                  >
-                                    Clear trip{draft.loadName ? ` (${draft.loadName})` : ""}
-                                  </button>
+                                  <div className="mt-0.5 flex items-center gap-2 text-[11px]">
+                                    <EntityLink kind="load" id={draft.loadId} label={draft.loadName || "Trip"} />
+                                    <button
+                                      type="button"
+                                      className="text-slate-700 underline"
+                                      onClick={() => setDraft(tx, { loadId: "", loadName: "" })}
+                                    >
+                                      Clear
+                                    </button>
+                                  </div>
                                 ) : null}
                               </div>
                             </div>
@@ -1561,9 +1596,18 @@ export function BankingTransactionsDesignView({
                                   >
                                     <div className="flex items-center justify-between gap-2">
                                       <div className="flex items-center gap-1.5">
-                                        <span className="inline-flex items-center rounded-sm border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700">
-                                          {MATCH_CANDIDATE_KIND_LABELS[candidate.ledger_entry_kind]}
-                                        </span>
+                                        {MATCH_CANDIDATE_ENTITY_KIND[candidate.ledger_entry_kind] ? (
+                                          <EntityLink
+                                            kind={MATCH_CANDIDATE_ENTITY_KIND[candidate.ledger_entry_kind]!}
+                                            id={candidate.ledger_entry_id}
+                                            label={MATCH_CANDIDATE_KIND_LABELS[candidate.ledger_entry_kind]}
+                                            className="inline-flex items-center rounded-sm border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700 hover:underline"
+                                          />
+                                        ) : (
+                                          <span className="inline-flex items-center rounded-sm border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700">
+                                            {MATCH_CANDIDATE_KIND_LABELS[candidate.ledger_entry_kind]}
+                                          </span>
+                                        )}
                                         {candidate.auto_match ? (
                                           <span className="inline-flex items-center rounded-sm bg-slate-800 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">
                                             Best match
