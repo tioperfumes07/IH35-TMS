@@ -6,6 +6,7 @@ import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { enqueueTmsVendorPushRequested } from "../qbo/tms-vendor-push-chain.service.js";
 import { listActiveVendorClassifications } from "./classification-queries.js";
+import { searchVendorsForAutocomplete } from "./vendor-autocomplete.shared.js";
 
 const vendorTypeSchema = z.enum(["Fuel", "Repair", "Tires", "Towing", "Insurance", "Permit", "Toll", "Other"]);
 const QBO_ARCHIVE_PROJECTION_SOURCE_RE = /Projected from qbo_archive\.entities_snapshot[^\n]*/gi;
@@ -52,6 +53,11 @@ const listQuerySchema = z.object({
   search: z.string().trim().min(1).max(100).optional(),
   vendor_type: vendorTypeSchema.optional(),
   operating_company_id: z.string().uuid().optional(),
+  // QboCombobox picker repoint: autocomplete mode reads the CANONICAL mdata.vendors (with qbo_vendor_id)
+  // instead of the mdata.qbo_vendors mirror, so vendors created via the canonical writer are visible.
+  autocomplete: z.coerce.boolean().optional().default(false),
+  q: z.string().trim().max(100).optional(),
+  active_only: z.coerce.boolean().optional(),
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });
@@ -194,12 +200,26 @@ export async function registerVendorRoutes(app: FastifyInstance) {
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
-    const { limit, offset, status, search, vendor_type, operating_company_id } = parsedQuery.data;
+    const { limit, offset, status, search, vendor_type, operating_company_id, autocomplete, q, active_only } = parsedQuery.data;
     const resolvedOperatingCompanyId = await withCurrentUser(authUser.uuid, async (client) =>
       resolveOperatingCompanyId(client, authUser.uuid, operating_company_id)
     );
     if (!resolvedOperatingCompanyId) {
       return reply.code(400).send({ error: "operating_company_id_required" });
+    }
+
+    // QboCombobox picker repoint: canonical-table autocomplete (mirrors the customers endpoint) so a
+    // vendor created via the canonical writer is immediately selectable in bill/expense editors.
+    if (autocomplete) {
+      const results = await withCurrentUser(authUser.uuid, async (client) => {
+        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [resolvedOperatingCompanyId]);
+        return searchVendorsForAutocomplete(client, {
+          operating_company_id: resolvedOperatingCompanyId,
+          term: q ?? search ?? "",
+          active_only,
+        });
+      });
+      return { results };
     }
 
     const result = await withCurrentUser(authUser.uuid, async (client) => {
