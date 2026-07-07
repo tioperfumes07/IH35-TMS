@@ -28,6 +28,7 @@ CREATE INDEX IF NOT EXISTS idx_vca_bill
   WHERE voided_at IS NULL;
 
 ALTER TABLE accounting.vendor_credit_applications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE accounting.vendor_credit_applications FORCE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS vca_company_scope ON accounting.vendor_credit_applications;
 CREATE POLICY vca_company_scope ON accounting.vendor_credit_applications
