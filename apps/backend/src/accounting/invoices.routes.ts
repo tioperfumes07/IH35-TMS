@@ -267,7 +267,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
             client, user.uuid,
             "accounting.invoices.credit_limit_override",
             { customer_id: body.data.customer_id, operating_company_id: query.data.operating_company_id },
-            "warn",
+            "warning",
             "CUSTVEND-PAR-1"
           );
         }
@@ -452,7 +452,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
               if (body.data.override_credit_limit && canOverride) {
                 await appendCrudAudit(client, user.uuid, "accounting.invoices.credit_limit_override",
                   { customer_id: body.data.customer_id, operating_company_id: query.data.operating_company_id },
-                  "warn", "CUSTVEND-PAR-1");
+                  "warning", "CUSTVEND-PAR-1");
               }
             }
           }

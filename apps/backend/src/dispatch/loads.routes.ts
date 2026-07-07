@@ -971,11 +971,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       if (body.data.save_mode !== "draft") {
         const canOverride = ["Owner", "Administrator", "Manager"].includes(authUser.role);
         if (!body.data.override_credit_limit || !canOverride) {
-          const creditBlock = await withCurrentUser(authUser.uuid, async (client) => {
-            await client.query(
-              `SELECT set_config('app.operating_company_id', $1::text, true)`,
-              [body.data.operating_company_id]
-            );
+          const creditBlock = await withCompanyScope(authUser.uuid, body.data.operating_company_id, async (client) => {
             const res = await client.query(
               `SELECT c.credit_limit_cents, c.credit_limit_source,
                  COALESCE((
@@ -1017,7 +1013,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           }
         }
         if (body.data.override_credit_limit && canOverride) {
-          void withCurrentUser(authUser.uuid, async (client) => {
+          void withCompanyScope(authUser.uuid, body.data.operating_company_id, async (client) => {
             await appendCrudAudit(
               client,
               authUser.uuid,
@@ -1026,7 +1022,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
                 customer_id: body.data.customer_id,
                 operating_company_id: body.data.operating_company_id,
               },
-              "warn",
+              "warning",
               "CUSTVEND-PAR-1"
             );
           }).catch(() => {});

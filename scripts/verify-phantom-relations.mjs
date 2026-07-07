@@ -99,6 +99,7 @@ const KNOWN_PHANTOM_DEBT = [
   { rel: "accounting.tax_document", why: "[HOLD-FOR-JORGE] forward-ref — BLOCK-17/24 immutable generated tax-document record (1099-NEC/1042-S), void-not-delete; ships in gated migration 202607130100_block17_24_tax_document_engine.sql (not yet applied to prod). Remove from debt when that migration merges." },
   { rel: "accounting.form_1099_nec", why: "[HOLD-FOR-JORGE] forward-ref — BLOCK-17/24 per-payee 1099-NEC box-1 detail extending accounting.tax_document; ships in gated migration 202607130100_block17_24_tax_document_engine.sql (not yet applied to prod). Remove from debt when that migration merges." },
   { rel: "factoring.letter_of_release", why: "[HOLD-FOR-JORGE] forward-ref — FACT-PAR-2 Letter of Release lifecycle table; ships in gated migration 202607160000_fact_par2_noa_remit_to.sql (not yet applied to prod). Created in same PR as this forward-ref. Remove from debt when that migration merges." },
+  { rel: "accounting.vendor_credit_applications", why: "[HOLD-FOR-JORGE] forward-ref — CUSTVEND-PAR-1 vendor-credit application junction table; ships in gated migration 202607170000_custvend_par1_vendor_credit_applications.sql (not yet applied to prod). Read/insert by vendor-credits.routes.ts apply/void paths; no GL posting. Remove from debt when that migration merges." },
 ];
 const KNOWN = new Map(KNOWN_PHANTOM_DEBT.map((d) => [d.rel, d.why]));
 

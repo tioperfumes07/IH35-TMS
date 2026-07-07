@@ -282,7 +282,7 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
         user.uuid,
         "accounting.vendor_credits.voided",
         { resource_type: "accounting.vendor_credits", resource_id: params.data.id, reason: body.data.reason },
-        "warn",
+        "warning",
         "CUSTVEND-PAR-1"
       );
 
