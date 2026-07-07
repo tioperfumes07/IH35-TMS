@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
+import { EntityLink } from "../shared/EntityLink";
 
 type Props = {
   open: boolean;
@@ -59,7 +60,7 @@ export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onR
     <Modal open={open} onClose={onClose} title={modalTitle} modalKind="work_order_detail" sizePreset="md" resizable>
       <div className="space-y-3 text-xs">
         <ModalSection>
-          <div>Display ID: {displayId}</div>
+          <div>Display ID: <EntityLink kind="work_order" id={String(workOrder.id ?? "")} label={displayId} /></div>
           <div>
             Source Type: <span className="rounded-sm bg-gray-200 px-1 py-0.5">{sourceType}</span>
           </div>

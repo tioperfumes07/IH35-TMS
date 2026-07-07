@@ -12,6 +12,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 
@@ -131,7 +132,7 @@ export function BatchWizard() {
                         onChange={() => toggleInvoice(invoice.id)}
                       />
                     </td>
-                    <td className="px-2 py-2 font-medium text-gray-900">{invoice.display_id ?? invoice.id}</td>
+                    <td className="px-2 py-2 font-medium text-gray-900"><EntityLink kind="invoice" id={invoice.id} label={invoice.display_id ?? invoice.id} /></td>
                     <td className="px-2 py-2">{invoice.customer_name ?? "—"}</td>
                     <td className="px-2 py-2">{formatDateUS(invoice.issue_date) || "—"}</td>
                     <td className="px-2 py-2">{formatDateUS(invoice.due_date) || "—"}</td>

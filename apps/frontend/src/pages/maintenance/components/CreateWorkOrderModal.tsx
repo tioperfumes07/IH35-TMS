@@ -29,6 +29,7 @@ import { CreateWOSectionRenderV5Header } from "./CreateWOSectionRenderV5Header";
 import { CreateWOSectionPaymentTiming } from "./CreateWOSectionPaymentTiming";
 import { CreateWOSectionValidation } from "./CreateWOSectionValidation";
 import { CreateWOSectionReconcile } from "./CreateWOSectionReconcile";
+import { EntityLink } from "../../../components/shared/EntityLink";
 
 // ---- render-v5 presentational helpers (match docs/approved-screens/maintenance-create-wo-render-v5.html) ----
 const FLD = "h-[30px] w-full rounded-[5px] border border-[#d6dae1] bg-white px-2 text-[12.5px] text-sidebar-bg outline-hidden focus:border-[#1f2a44]";
@@ -898,7 +899,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
       <Modal open={open} onClose={handleModalClose} title="Work order created" sizePreset="md">
         <div className="space-y-3 text-[12.5px] text-sidebar-bg">
           <p className="text-sm text-gray-700">
-            Work order <span className="font-semibold">{createdWO.display_id ?? createdWO.uuid.slice(0, 8)}</span> created.
+            Work order <EntityLink kind="work_order" id={createdWO.uuid} label={createdWO.display_id ?? createdWO.uuid.slice(0, 8)} className="font-semibold text-slate-700 hover:underline" /> created.
           </p>
           <div className="flex items-center justify-between gap-3 border-t border-gray-200 pt-3">
             <span className="text-xs text-gray-600">Close an open task this work order fulfils:</span>

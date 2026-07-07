@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { formatMoneyCents } from "./constants";
+import { EntityLink } from "../shared/EntityLink";
 
 type SettlementLeg = {
   load_id: string;
@@ -109,7 +110,7 @@ export function LoadDetailSettlementTab({ loadId, operatingCompanyId, currencyCo
       <div className="flex items-start justify-between gap-2">
         <div>
           <div className="text-xs text-gray-500">Settlement</div>
-          <div className="font-semibold text-gray-900">{settlement.display_id ?? settlement.id.slice(0, 8)}</div>
+          <div className="font-semibold text-gray-900"><EntityLink kind="settlement" id={settlement.id} label={settlement.display_id ?? settlement.id.slice(0, 8)} /></div>
           {settlement.driver_name ? (
             <div className="text-xs text-gray-600">{settlement.driver_name}</div>
           ) : null}

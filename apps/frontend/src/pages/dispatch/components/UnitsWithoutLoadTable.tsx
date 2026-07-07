@@ -1,5 +1,6 @@
 import type { UnitsWithoutLoad, UnitLiveLocation } from "../../../api/dispatch";
 import { DataTable } from "../../../components/DataTable";
+import { EntityLink } from "../../../components/shared/EntityLink";
 
 type Props = {
   rows: UnitsWithoutLoad[];
@@ -39,9 +40,26 @@ export function UnitsWithoutLoadTable({ rows, onRowClick, loading }: Props) {
       loading={loading}
       emptyText="All units currently have active loads."
       columns={[
-        { key: "unit_number", label: "Unit", sortable: true, cellClass: "font-semibold" },
+        {
+          key: "unit_number",
+          label: "Unit",
+          sortable: true,
+          cellClass: "font-semibold",
+          // stopPropagation: the row also has its own onRowClick (opens "book load for this unit");
+          // the unit # link drills through to the unit's fleet profile instead.
+          render: (row) => (
+            <EntityLink kind="unit" id={row.id} label={row.unit_number} onClick={(e) => e.stopPropagation()} />
+          ),
+        },
         { key: "trailer_number", label: "Trailer", sortable: true, render: (row) => row.trailer_number ?? "-" },
-        { key: "driver_name", label: "Driver", sortable: true, render: (row) => row.driver_name ?? "-" },
+        {
+          key: "driver_name",
+          label: "Driver",
+          sortable: true,
+          render: (row) => (
+            <EntityLink kind="driver" id={row.driver_id} label={row.driver_name ?? "-"} onClick={(e) => e.stopPropagation()} />
+          ),
+        },
         {
           key: "location",
           label: "Current Location",

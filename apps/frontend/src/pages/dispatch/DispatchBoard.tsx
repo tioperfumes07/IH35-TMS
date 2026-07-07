@@ -1,21 +1,36 @@
 import { Fragment, useMemo, useState, type ReactNode } from "react";
-import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { DispatchLoadRow } from "../../api/loads";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 // Record-cell link: the Customer cell links to the customer's detail page. stopPropagation so it does NOT
 // also trigger the row's onRowClick (which opens the load drawer). Falls back to plain text when no id.
 function renderCustomerCell(load: DispatchLoadRow): ReactNode {
   if (!load.customer_id || !load.customer_name) return load.customer_name ?? "—";
   return (
-    <Link
-      to={`/customers/${load.customer_id}`}
-      onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}
+    <EntityLink
+      kind="customer"
+      id={load.customer_id}
+      label={load.customer_name}
+      onClick={(e) => e.stopPropagation()}
       className="text-slate-700 hover:underline"
       data-testid="loads-customer-link"
-    >
-      {load.customer_name}
-    </Link>
+    />
+  );
+}
+
+// Record-cell link: the Load # cell (shared column model across List/Table/Assignment views) links to
+// the load's detail page. stopPropagation so it does NOT also trigger the row's onRowClick (which opens
+// the load drawer) — same pattern as renderCustomerCell above.
+function renderLoadNumberCell(load: DispatchLoadRow, className = "code-cell font-medium"): ReactNode {
+  return (
+    <EntityLink
+      kind="load"
+      id={load.id}
+      label={load.load_number}
+      onClick={(e) => e.stopPropagation()}
+      className={className}
+    />
   );
 }
 import {
@@ -550,7 +565,7 @@ export function DispatchBoard({
         }
       />
     ) : (
-      load.assigned_unit_number ?? "—"
+      <EntityLink kind="unit" id={load.assigned_unit_id} label={load.assigned_unit_number ?? "—"} />
     );
 
   const renderDriverCell = (load: DispatchLoadRow) =>
@@ -575,7 +590,7 @@ export function DispatchBoard({
         }
       />
     ) : (
-      load.assigned_primary_driver_name ?? "Unassigned"
+      <EntityLink kind="driver" id={load.assigned_primary_driver_id} label={load.assigned_primary_driver_name ?? "Unassigned"} />
     );
 
   const renderTrailerCell = (load: BoardLoad) =>
@@ -600,7 +615,11 @@ export function DispatchBoard({
         }
       />
     ) : (
-      load.trailer_number ?? "—"
+      <EntityLink
+        kind="trailer"
+        id={(load as { trailer_id?: string | null }).trailer_id ?? null}
+        label={load.trailer_number ?? "—"}
+      />
     );
 
   const renderTriSignalCell = (load: DispatchLoadRow) => (
@@ -728,7 +747,7 @@ export function DispatchBoard({
     { key: "unit", header: "Unit", cell: (load) => renderUnitCell(load) },
     { key: "trailer", header: "Trailer", cell: (load) => renderTrailerCell(load) },
     // DB-6: Load # sits immediately after Trailer in the shared column model (app-wide list + table).
-    { key: "load", header: "Load #", cell: (load) => <Link to={`/dispatch/loads/${load.id}`} onClick={(e: { stopPropagation(): void }) => e.stopPropagation()} className="code-cell font-medium text-gray-800 hover:underline">{load.load_number}</Link> },
+    { key: "load", header: "Load #", cell: (load) => renderLoadNumberCell(load, "code-cell font-medium text-gray-800") },
     { key: "driver", header: "Driver", cell: (load) => renderDriverCell(load) },
     // DISPATCH-UI-REFINE-2 ITEM 5 — the locked Samsara 6-clock set on the live board. The old summary
     // pair was REMOVED per Jorge (it overlapped Drive/Shift/Cycle and cluttered the grid); only these 6
@@ -980,7 +999,7 @@ export function DispatchBoard({
                     {
                       key: "load",
                       header: "Load",
-                      cell: (load) => <Link to={`/dispatch/loads/${load.id}`} onClick={(e: { stopPropagation(): void }) => e.stopPropagation()} className="code-cell font-medium hover:underline">{load.load_number}</Link>,
+                      cell: (load) => renderLoadNumberCell(load),
                     },
                     { key: "customer", header: "Customer", cell: renderCustomerCell },
                     { key: "lane", header: "Lane", cell: (load) => laneSummary(load) },
@@ -1065,7 +1084,7 @@ export function DispatchBoard({
                     {
                       key: "load",
                       header: "Load",
-                      cell: (load) => <Link to={`/dispatch/loads/${load.id}`} onClick={(e: { stopPropagation(): void }) => e.stopPropagation()} className="code-cell font-medium hover:underline">{load.load_number}</Link>,
+                      cell: (load) => renderLoadNumberCell(load),
                     },
                     { key: "customer", header: "Customer", cell: renderCustomerCell },
                     { key: "driver", header: "Driver", cell: (load) => renderDriverCell(load) },

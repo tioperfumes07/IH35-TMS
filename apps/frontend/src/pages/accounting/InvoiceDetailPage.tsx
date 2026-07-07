@@ -1,5 +1,6 @@
 import { formatDateUS } from "../../lib/formatDate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { addInvoiceLine, deleteInvoiceLine, getInvoice, patchInvoiceLine, sendInvoice, voidInvoice } from "../../api/accounting";
@@ -200,7 +201,9 @@ export function InvoiceDetailPage() {
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs text-gray-600">Source Load</span>
-            <span className="text-sm text-gray-900">{invoice.source_load_id ?? "-"}</span>
+            <span className="text-sm text-gray-900">
+              <EntityLink kind="load" id={invoice.source_load_id ?? undefined} label={invoice.source_load_id ? invoice.source_load_id.slice(0, 8) : "-"} />
+            </span>
           </DataPanelRow>
         </DataPanel>
 
@@ -244,7 +247,7 @@ export function InvoiceDetailPage() {
         <DataPanel title="Factoring">
           <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
             <div className="text-gray-700">
-              This invoice is part of {invoice.factoring_display_id ?? "a factoring batch"}.
+              This invoice is part of <EntityLink kind="factoring_advance" id={invoice.factoring_advance_id ?? undefined} label={invoice.factoring_display_id ?? "a factoring batch"} />.
               {invoice.factoring_status ? (
                 <span className={`ml-2 ${factoringPillClass(invoice.factoring_status)}`}>{invoice.factoring_status.replaceAll("_", " ")}</span>
               ) : null}
@@ -372,7 +375,7 @@ export function InvoiceDetailPage() {
           <div className="space-y-2">
             {(invoice.payment_applications ?? []).map((application) => (
               <DataPanelRow key={application.id}>
-                <span className="text-xs text-gray-600">{application.payment_display_id ?? application.payment_id}</span>
+                <span className="text-xs text-gray-600"><EntityLink kind="payment" id={application.payment_id ?? undefined} label={application.payment_display_id ?? application.payment_id?.slice(0, 8)} /></span>
                 <span className="text-sm text-gray-900">
                   {money(application.amount_cents)} · {new Date(application.applied_at).toLocaleString()}
                 </span>

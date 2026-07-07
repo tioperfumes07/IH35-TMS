@@ -1,5 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { getAccountingSourceLineage, type AccountingSourceLineageRow } from "../../api/accounting";
 import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -132,7 +133,7 @@ export function PostingLineagePage() {
               {(lineageQuery.data.rows as AccountingSourceLineageRow[]).map((row) => (
                 <tr key={`${row.posting_id}:${row.linked_object_id ?? "none"}`} className="border-b border-slate-100">
                   <td className="whitespace-nowrap px-2 py-2">{formatWhen(row.occurred_at)}</td>
-                  <td className="px-2 py-2 font-mono">{row.journal_entry_id}</td>
+                  <td className="px-2 py-2 font-mono"><EntityLink kind="journal_entry" id={row.journal_entry_id} label={row.journal_entry_id?.slice(0, 8)} /></td>
                   <td className="px-2 py-2 font-mono">{row.posting_batch_id ?? "—"}</td>
                   <td className="px-2 py-2">
                     {row.account_number ?? "—"} {row.account_name ? `- ${row.account_name}` : ""}

@@ -6,6 +6,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportsSubNav } from "./ReportsSubNav";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 type PerTruckCpmRow = {
   unit_uuid: string;
@@ -89,7 +90,7 @@ export function PerTruckCpmReport() {
             {rows.map((row) => (
               <tr key={row.unit_uuid} className={row.outlier ? "bg-rose-50 text-rose-900" : ""}>
                 <td className="px-3 py-2">{row.rank}</td>
-                <td className="px-3 py-2">{row.display_id}</td>
+                <td className="px-3 py-2"><EntityLink kind="unit" id={row.unit_uuid} label={row.display_id} /></td>
                 <td className="px-3 py-2">{row.miles.toLocaleString()}</td>
                 <td className="px-3 py-2">{money(row.total_cost_cents)}</td>
                 <td className="px-3 py-2">{money(row.cpm_cents)}/mi</td>

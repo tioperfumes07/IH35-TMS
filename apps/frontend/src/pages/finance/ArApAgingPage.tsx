@@ -1,4 +1,5 @@
 import { Fragment, useMemo, useState } from "react";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 import { useQuery } from "@tanstack/react-query";
@@ -88,7 +89,7 @@ function ArInvoicesDrill({ operatingCompanyId, customer, asOfDate }: { operating
               <tbody className="divide-y divide-gray-100">
                 {invoices.map((inv) => (
                   <tr key={inv.invoice_id}>
-                    <td className="px-3 py-1.5 whitespace-nowrap">{inv.display_id}</td>
+                    <td className="px-3 py-1.5 whitespace-nowrap"><EntityLink kind="invoice" id={inv.invoice_id} label={inv.display_id} /></td>
                     <td className="px-3 py-1.5 capitalize">{inv.status}</td>
                     <td className="px-3 py-1.5 whitespace-nowrap">{fmtDate(inv.issue_date)}</td>
                     <td className="px-3 py-1.5 whitespace-nowrap">{fmtDate(inv.due_date)}</td>

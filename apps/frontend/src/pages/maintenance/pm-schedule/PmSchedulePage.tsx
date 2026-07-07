@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createMaintenancePmSchedule, generateMaintenancePmWorkOrder, listMaintenancePmSchedules } from "../../../api/maintenance";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { Button } from "../../../components/Button";
 
@@ -55,7 +56,7 @@ export function PmSchedulePage() {
           <tbody>
             {(listQ.data?.rows ?? []).map((row) => (
               <tr key={row.id} className="border-t border-gray-100">
-                <td className="py-1">{row.unit_display_id}</td>
+                <td className="py-1"><EntityLink kind="unit" id={row.unit_id} label={row.unit_display_id} /></td>
                 <td className="py-1">{row.pm_type}</td>
                 <td className="py-1">{row.interval_value} {row.interval_kind}</td>
                 <td className="py-1">{row.status}</td>

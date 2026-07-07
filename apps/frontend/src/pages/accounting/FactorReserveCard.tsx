@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { listFactoringReserveBalances } from "../../api/accounting";
 import { DataPanel } from "../../components/layout/DataPanel";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -64,7 +65,7 @@ export function FactorReserveCard({ operatingCompanyId }: { operatingCompanyId: 
             <div key={`${event.factoring_advance_id}-${event.occurred_at}`} className="rounded-sm border border-gray-200 p-2 text-xs">
               <div className="flex items-center justify-between gap-2">
                 <span className="font-semibold text-gray-900">
-                  {event.display_id} - {event.customer_name}
+                  <EntityLink kind="factoring_advance" id={event.factoring_advance_id} label={event.display_id} /> - {event.customer_name}
                 </span>
                 <span className="text-gray-500">{new Date(event.occurred_at).toLocaleString()}</span>
               </div>

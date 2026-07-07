@@ -29,7 +29,9 @@ export type EntityKind =
   | "trailer"
   | "expense"
   | "bank_account"
-  | "factoring_advance";
+  | "factoring_advance"
+  | "payment"
+  | "work_order";
 
 export interface EntityLinkProps {
   kind: EntityKind;
@@ -37,9 +39,14 @@ export interface EntityLinkProps {
   /** Display text/content. Defaults to the raw id when omitted. */
   label?: ReactNode;
   className?: string;
-  /** Extra click handler — combined with stopPropagation() when the link sits inside a row/card
-   * that has its own onClick (so clicking the link opens the entity instead of the row/card target). */
+  /**
+   * Optional click handler — passed through to the underlying <Link>. Used by parent rows that
+   * also have their own onClick (e.g. a table row that opens a drawer): call
+   * `event.stopPropagation()` here so the cell's drill-through link doesn't also fire the row
+   * handler. No-op when the kind has no resolvable route (plain-text fallback).
+   */
   onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
+  /** Optional test hook, forwarded to the rendered <Link>/<span> as `data-testid`. */
   "data-testid"?: string;
 }
 
@@ -60,6 +67,8 @@ const DEFAULT_LINK_CLASSNAME =
  *     /accounting/expenses/list is the list; no :id detail route exists.
  * "settlement" has no path-param route either, but SettlementsPage does support a real
  * query-param drill-through (?settlement_id=), so it resolves to that instead of null.
+ * "payment" → /accounting/payments/:id (PaymentDetailPage, confirmed in manifest.tsx).
+ * "work_order" → /maintenance/work-orders/:id (WorkOrderDetailPage, confirmed in manifest.tsx).
  */
 export function resolveEntityRoute(kind: EntityKind, id: string): string | null {
   switch (kind) {
@@ -83,6 +92,10 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/banking/accounts/${id}`;
     case "factoring_advance":
       return `/accounting/factoring/${id}`;
+    case "payment":
+      return `/accounting/payments/${id}`;
+    case "work_order":
+      return `/maintenance/work-orders/${id}`;
     case "settlement":
       return `/driver-finance/settlements?settlement_id=${id}`;
     case "bill":
@@ -97,12 +110,12 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
  * Renders `id` as a clickable drill-through link when a real detail route exists for `kind`;
  * otherwise renders plain text (no dead link, no fabricated route).
  */
-export function EntityLink({ kind, id, label, className, onClick, "data-testid": dataTestId }: EntityLinkProps) {
+export function EntityLink({ kind, id, label, className, onClick, "data-testid": testId }: EntityLinkProps) {
   const display = label ?? id ?? "—";
 
   if (!id) {
     return (
-      <span className={className} data-testid={dataTestId}>
+      <span className={className} data-testid={testId}>
         {display}
       </span>
     );
@@ -111,7 +124,7 @@ export function EntityLink({ kind, id, label, className, onClick, "data-testid":
   const route = resolveEntityRoute(kind, id);
   if (!route) {
     return (
-      <span className={className} data-testid={dataTestId}>
+      <span className={className} data-testid={testId}>
         {display}
       </span>
     );
@@ -121,7 +134,7 @@ export function EntityLink({ kind, id, label, className, onClick, "data-testid":
     <Link
       to={route}
       className={className ?? DEFAULT_LINK_CLASSNAME}
-      data-testid={dataTestId}
+      data-testid={testId}
       onClick={(event) => {
         event.stopPropagation();
         onClick?.(event);

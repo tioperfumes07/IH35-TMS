@@ -680,7 +680,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
               <DataPanel title="Permit / Document Expirations" accentColor={colors.warn.strong}>
                 {permitExpirationRows.map((row) => (
                   <DataPanelRow key={row.id}>
-                    <span>{row.driver_name} · {row.label}</span>
+                    <span><EntityLink kind="driver" id={row.driver_id} label={row.driver_name} /> · {row.label}</span>
                     <span>{row.days}d</span>
                   </DataPanelRow>
                 ))}
@@ -839,16 +839,23 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
               {(teamDetailQuery.data.settlement_history ?? []).length === 0 ? (
                 <p className="text-gray-500">No split history yet.</p>
               ) : (
-                (teamDetailQuery.data.settlement_history ?? []).slice(0, 20).map((row, index) => {
-                  const r = row as Record<string, unknown>;
-                  return (
-                    <div key={`${index}-${String(r.id ?? "")}`} className="border-t border-gray-100 py-1">
-                      Load <EntityLink kind="load" id={r.load_id ? String(r.load_id) : null} /> · Driver{" "}
-                      <EntityLink kind="driver" id={r.driver_id ? String(r.driver_id) : null} /> ·{" "}
-                      Pay {formatUsdCents(Number(r.driver_pay_cents ?? 0) || 0)}
-                    </div>
-                  );
-                })
+                (teamDetailQuery.data.settlement_history ?? []).slice(0, 20).map((row, index) => (
+                  <div key={`${index}-${String((row as Record<string, unknown>).id ?? "")}`} className="border-t border-gray-100 py-1">
+                    Load{" "}
+                    <EntityLink
+                      kind="load"
+                      id={(row as Record<string, unknown>).load_id as string | null}
+                      label={String((row as Record<string, unknown>).load_id ?? "—")}
+                    />{" "}
+                    · Driver{" "}
+                    <EntityLink
+                      kind="driver"
+                      id={(row as Record<string, unknown>).driver_id as string | null}
+                      label={String((row as Record<string, unknown>).driver_id ?? "—")}
+                    />{" "}
+                    · Pay {formatUsdCents(Number((row as Record<string, unknown>).driver_pay_cents ?? 0) || 0)}
+                  </div>
+                ))
               )}
             </div>
             <div className="rounded-sm border border-slate-200 bg-slate-100 p-2 text-xs">

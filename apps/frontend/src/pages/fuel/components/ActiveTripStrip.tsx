@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { FuelActiveRoute } from "../../../api/fuelPlanner";
+import { EntityLink } from "../../../components/shared/EntityLink";
 
 type Props = {
   route: FuelActiveRoute | null;
@@ -8,7 +9,7 @@ type Props = {
 export function ActiveTripStrip({ route }: Props) {
   return (
     <div className="grid grid-cols-2 gap-2 rounded-sm border border-gray-200 bg-white p-2 text-xs md:grid-cols-3 xl:grid-cols-6">
-      <Cell label="Load #">{route?.load_display_id ?? "—"}</Cell>
+      <Cell label="Load #"><EntityLink kind="load" id={route?.load_id ?? undefined} label={route?.load_display_id ?? "—"} /></Cell>
       <Cell label="Unit / Driver">{route?.unit_display_id ?? "—"}</Cell>
       <Cell label="Route">{route ? `${Number(route.total_distance_miles ?? 0).toFixed(0)} practical mi` : "—"}</Cell>
       <Cell label="Tank now">{route?.current_fuel_gallons != null ? `${Number(route.current_fuel_gallons).toFixed(1)} gal` : "—"}</Cell>

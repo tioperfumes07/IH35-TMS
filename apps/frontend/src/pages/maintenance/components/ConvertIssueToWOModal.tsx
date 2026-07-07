@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { convertIssueToWo, type ArrivingSoonCard } from "../../../api/maintenance";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { Button } from "../../../components/Button";
 import { ModalCloseButton } from "../../../components/ModalCloseButton";
 import { useEscapeKey } from "../../../hooks/useEscapeKey";
@@ -52,7 +53,7 @@ export function ConvertIssueToWOModal({ open, operatingCompanyId, card, onClose,
 
         <div className="space-y-2">
           <div className="rounded-sm border border-gray-200 bg-gray-50 p-2">
-            {card.unit_number} · {card.driver_name ?? "Unassigned"} · {card.load_display_id}
+            {card.unit_number} · {card.driver_name ?? "Unassigned"} · <EntityLink kind="load" id={card.load_id} label={card.load_display_id} />
           </div>
           <label className="space-y-1">
             <span>WO Source Type</span>
