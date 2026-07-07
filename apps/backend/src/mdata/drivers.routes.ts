@@ -1313,6 +1313,12 @@ export async function registerDriverRoutes(app: FastifyInstance) {
               created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
             FROM mdata.drivers
             WHERE id = $1
+              -- Entity scope (USMCA cross-entity leak fix): mirrors the GET-by-id route and the
+              -- drivers_select RLS policy (db/migrations/0404_drivers_rls_oci_scope.sql) — a PATCH
+              -- must not read/write a driver belonging to a company the caller cannot access.
+              -- drivers_update RLS (0008_mdata_init.sql) is role-scoped only, so this app-level
+              -- predicate is the real entity boundary for this write.
+              AND operating_company_id IN (SELECT org.user_accessible_company_ids())
             LIMIT 1
           `,
           [parsedParams.data.id]
@@ -1325,6 +1331,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             UPDATE mdata.drivers
             SET ${setParts.join(", ")}
             WHERE id = $${idIdx}
+              AND operating_company_id IN (SELECT org.user_accessible_company_ids())
             RETURNING
               id, identity_user_id, first_name, last_name, phone, email, cdl_number, cdl_state, cdl_class,
               cdl_expires_at, hire_date, pay_basis, termination_date, dot_medical_expires_at, hazmat_endorsement_expires_at, endorsement_h,
@@ -1385,6 +1392,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
                 created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
               FROM mdata.drivers
               WHERE id = $1
+                AND operating_company_id IN (SELECT org.user_accessible_company_ids())
               LIMIT 1
             `,
             [updatedRow.id]
