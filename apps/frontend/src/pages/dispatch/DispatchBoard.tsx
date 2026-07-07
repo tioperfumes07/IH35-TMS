@@ -728,7 +728,7 @@ export function DispatchBoard({
     { key: "unit", header: "Unit", cell: (load) => renderUnitCell(load) },
     { key: "trailer", header: "Trailer", cell: (load) => renderTrailerCell(load) },
     // DB-6: Load # sits immediately after Trailer in the shared column model (app-wide list + table).
-    { key: "load", header: "Load #", cell: (load) => <span className="code-cell font-medium text-gray-800">{load.load_number}</span> },
+    { key: "load", header: "Load #", cell: (load) => <Link to={`/dispatch/loads/${load.id}`} onClick={(e: { stopPropagation(): void }) => e.stopPropagation()} className="code-cell font-medium text-gray-800 hover:underline">{load.load_number}</Link> },
     { key: "driver", header: "Driver", cell: (load) => renderDriverCell(load) },
     // DISPATCH-UI-REFINE-2 ITEM 5 — the locked Samsara 6-clock set on the live board. The old summary
     // pair was REMOVED per Jorge (it overlapped Drive/Shift/Cycle and cluttered the grid); only these 6
@@ -980,7 +980,7 @@ export function DispatchBoard({
                     {
                       key: "load",
                       header: "Load",
-                      cell: (load) => <span className="code-cell font-medium">{load.load_number}</span>,
+                      cell: (load) => <Link to={`/dispatch/loads/${load.id}`} onClick={(e: { stopPropagation(): void }) => e.stopPropagation()} className="code-cell font-medium hover:underline">{load.load_number}</Link>,
                     },
                     { key: "customer", header: "Customer", cell: renderCustomerCell },
                     { key: "lane", header: "Lane", cell: (load) => laneSummary(load) },
@@ -1065,7 +1065,7 @@ export function DispatchBoard({
                     {
                       key: "load",
                       header: "Load",
-                      cell: (load) => <span className="code-cell font-medium">{load.load_number}</span>,
+                      cell: (load) => <Link to={`/dispatch/loads/${load.id}`} onClick={(e: { stopPropagation(): void }) => e.stopPropagation()} className="code-cell font-medium hover:underline">{load.load_number}</Link>,
                     },
                     { key: "customer", header: "Customer", cell: renderCustomerCell },
                     { key: "driver", header: "Driver", cell: (load) => renderDriverCell(load) },
