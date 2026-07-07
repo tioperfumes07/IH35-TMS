@@ -9,12 +9,13 @@ import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { ReportsSubNav } from "./ReportsSubNav";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
 }
 
-type SortKey = keyof ARAgingRow | "bucket_0_30";
+type ARAgingRowWithBucket = ARAgingRow & { bucket_0_30_cents: number };
 
 export function ARAgingPage() {
   const navigate = useNavigate();
@@ -25,8 +26,6 @@ export function ARAgingPage() {
   const [search, setSearch] = useState("");
   const [minBal, setMinBal] = useState("");
   const [bucketFilter, setBucketFilter] = useState<"all" | "61+">("all");
-  const [sortKey, setSortKey] = useState<SortKey>("total_open_cents");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   const query = useQuery({
     queryKey: ["reports", "ar-aging", companyId, asOf],
@@ -54,52 +53,40 @@ export function ARAgingPage() {
 
   const minCents = minBal.trim() === "" ? 0 : Math.round(Number(minBal) * 100) || 0;
 
-  const filtered = useMemo(() => {
-    return rows.filter((r) => {
-      if (search.trim() && !r.customer_name.toLowerCase().includes(search.trim().toLowerCase())) return false;
-      if (r.total_open_cents < minCents) return false;
-      if (bucketFilter === "61+") {
-        const late = r.bucket_61_90_cents + r.bucket_91_plus_cents;
-        if (late <= 0) return false;
-      }
-      return true;
-    });
+  const filtered = useMemo<ARAgingRowWithBucket[]>(() => {
+    return rows
+      .filter((r) => {
+        if (search.trim() && !r.customer_name.toLowerCase().includes(search.trim().toLowerCase())) return false;
+        if (r.total_open_cents < minCents) return false;
+        if (bucketFilter === "61+") {
+          const late = r.bucket_61_90_cents + r.bucket_91_plus_cents;
+          if (late <= 0) return false;
+        }
+        return true;
+      })
+      .map((r) => ({ ...r, bucket_0_30_cents: r.current_cents + r.bucket_1_30_cents }));
   }, [rows, search, minCents, bucketFilter]);
 
-  const sorted = useMemo(() => {
-    const mul = sortDir === "asc" ? 1 : -1;
-    const copy = [...filtered];
-    copy.sort((a, b) => {
-      let av: number | string = 0;
-      let bv: number | string = 0;
-      if (sortKey === "bucket_0_30") {
-        av = a.current_cents + a.bucket_1_30_cents;
-        bv = b.current_cents + b.bucket_1_30_cents;
-      } else {
-        av = a[sortKey as keyof ARAgingRow] as number | string;
-        bv = b[sortKey as keyof ARAgingRow] as number | string;
-      }
-      if (typeof av === "number" && typeof bv === "number") return (av - bv) * mul;
-      return String(av).localeCompare(String(bv)) * mul;
-    });
-    return copy;
-  }, [filtered, sortKey, sortDir]);
-
-  function toggleSort(key: SortKey) {
-    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    else {
-      setSortKey(key);
-      setSortDir("desc");
-    }
-  }
+  const columns = useMemo<ParityColumn<ARAgingRowWithBucket>[]>(
+    () => [
+      { key: "customer_name", label: "Customer", sortable: true, render: (r) => <span className="font-medium text-gray-900">{r.customer_name}</span> },
+      { key: "total_open_cents", label: "Total", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.total_open_cents) },
+      { key: "bucket_0_30_cents", label: "0–30", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.bucket_0_30_cents) },
+      { key: "bucket_31_60_cents", label: "31–60", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.bucket_31_60_cents) },
+      { key: "bucket_61_90_cents", label: "61–90", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.bucket_61_90_cents) },
+      { key: "bucket_91_plus_cents", label: "91+", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.bucket_91_plus_cents) },
+      { key: "last_payment_date", label: "Last Pmt", sortable: true, render: (r) => r.last_payment_date ?? "—" },
+    ],
+    [],
+  );
 
   function exportCsv() {
     const header = ["Customer", "Total", "0-30", "31-60", "61-90", "91+", "Last Pmt"];
-    const lines = sorted.map((r) =>
+    const lines = filtered.map((r) =>
       [
         JSON.stringify(r.customer_name),
         r.total_open_cents,
-        r.current_cents + r.bucket_1_30_cents,
+        r.bucket_0_30_cents,
         r.bucket_31_60_cents,
         r.bucket_61_90_cents,
         r.bucket_91_plus_cents,
@@ -218,64 +205,15 @@ export function ARAgingPage() {
         </div>
       </div>
 
-      <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-left text-xs">
-          <thead className="border-b border-gray-200 bg-gray-50 text-[11px] font-semibold uppercase tracking-wide text-gray-600">
-            <tr>
-              <th className="cursor-pointer px-3 py-2" onClick={() => toggleSort("customer_name")}>
-                Customer
-              </th>
-              <th className="cursor-pointer px-3 py-2 text-right" onClick={() => toggleSort("total_open_cents")}>
-                Total
-              </th>
-              <th className="cursor-pointer px-3 py-2 text-right" onClick={() => toggleSort("bucket_0_30")}>
-                0–30
-              </th>
-              <th className="cursor-pointer px-3 py-2 text-right" onClick={() => toggleSort("bucket_31_60_cents")}>
-                31–60
-              </th>
-              <th className="cursor-pointer px-3 py-2 text-right" onClick={() => toggleSort("bucket_61_90_cents")}>
-                61–90
-              </th>
-              <th className="cursor-pointer px-3 py-2 text-right" onClick={() => toggleSort("bucket_91_plus_cents")}>
-                91+
-              </th>
-              <th className="px-3 py-2">Last Pmt</th>
-            </tr>
-          </thead>
-          <tbody>
-            {query.isLoading ? (
-              <tr>
-                <td colSpan={7} className="px-3 py-4 text-gray-500">
-                  Loading…
-                </td>
-              </tr>
-            ) : null}
-            {!query.isLoading && sorted.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="px-3 py-4 text-gray-500">
-                  No rows
-                </td>
-              </tr>
-            ) : null}
-            {sorted.map((r) => (
-              <tr
-                key={r.customer_id}
-                className="cursor-pointer border-b border-gray-100 hover:bg-gray-50"
-                onClick={() => navigate(`/customers/${r.customer_id}?tab=billing`)}
-              >
-                <td className="px-3 py-2 font-medium text-gray-900">{r.customer_name}</td>
-                <td className="px-3 py-2 text-right">{money(r.total_open_cents)}</td>
-                <td className="px-3 py-2 text-right">{money(r.current_cents + r.bucket_1_30_cents)}</td>
-                <td className="px-3 py-2 text-right">{money(r.bucket_31_60_cents)}</td>
-                <td className="px-3 py-2 text-right">{money(r.bucket_61_90_cents)}</td>
-                <td className="px-3 py-2 text-right">{money(r.bucket_91_plus_cents)}</td>
-                <td className="px-3 py-2 text-gray-700">{r.last_payment_date ?? "—"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <ParityTable
+        rows={filtered}
+        columns={columns}
+        rowKey={(r) => r.customer_id}
+        loading={query.isPending || (query.isFetching && filtered.length === 0)}
+        storageKey="ar-aging"
+        emptyText="No rows"
+        onRowClick={(r) => navigate(`/customers/${r.customer_id}?tab=billing`)}
+      />
     </div>
   );
 }

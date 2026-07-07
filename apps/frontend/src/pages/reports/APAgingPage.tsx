@@ -10,6 +10,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { ReportsSubNav } from "./ReportsSubNav";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -19,7 +20,7 @@ function isVendorUuid(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
-type SortKey = keyof APAgingRow | "bucket_0_30";
+type APAgingRowWithBucket = APAgingRow & { bucket_0_30_cents: number };
 
 export function APAgingPage() {
   const navigate = useNavigate();
@@ -30,8 +31,6 @@ export function APAgingPage() {
   const [search, setSearch] = useState("");
   const [minBal, setMinBal] = useState("");
   const [bucketFilter, setBucketFilter] = useState<"all" | "61+">("all");
-  const [sortKey, setSortKey] = useState<SortKey>("total_open_cents");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   const query = useQuery({
     queryKey: ["reports", "ap-aging", companyId, asOf],
@@ -51,52 +50,27 @@ export function APAgingPage() {
 
   const minCents = minBal.trim() === "" ? 0 : Math.round(Number(minBal) * 100) || 0;
 
-  const filtered = useMemo(() => {
-    return rows.filter((r) => {
-      if (search.trim() && !r.vendor_name.toLowerCase().includes(search.trim().toLowerCase())) return false;
-      if (r.total_open_cents < minCents) return false;
-      if (bucketFilter === "61+") {
-        const late = r.bucket_61_90_cents + r.bucket_91_plus_cents;
-        if (late <= 0) return false;
-      }
-      return true;
-    });
+  const filtered = useMemo<APAgingRowWithBucket[]>(() => {
+    return rows
+      .filter((r) => {
+        if (search.trim() && !r.vendor_name.toLowerCase().includes(search.trim().toLowerCase())) return false;
+        if (r.total_open_cents < minCents) return false;
+        if (bucketFilter === "61+") {
+          const late = r.bucket_61_90_cents + r.bucket_91_plus_cents;
+          if (late <= 0) return false;
+        }
+        return true;
+      })
+      .map((r) => ({ ...r, bucket_0_30_cents: r.current_cents + r.bucket_1_30_cents }));
   }, [rows, search, minCents, bucketFilter]);
-
-  const sorted = useMemo(() => {
-    const mul = sortDir === "asc" ? 1 : -1;
-    const copy = [...filtered];
-    copy.sort((a, b) => {
-      let av: number | string = 0;
-      let bv: number | string = 0;
-      if (sortKey === "bucket_0_30") {
-        av = a.current_cents + a.bucket_1_30_cents;
-        bv = b.current_cents + b.bucket_1_30_cents;
-      } else {
-        av = a[sortKey as keyof APAgingRow] as number | string;
-        bv = b[sortKey as keyof APAgingRow] as number | string;
-      }
-      if (typeof av === "number" && typeof bv === "number") return (av - bv) * mul;
-      return String(av).localeCompare(String(bv)) * mul;
-    });
-    return copy;
-  }, [filtered, sortKey, sortDir]);
-
-  function toggleSort(key: SortKey) {
-    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    else {
-      setSortKey(key);
-      setSortDir("desc");
-    }
-  }
 
   function exportCsv() {
     const header = ["Vendor", "Total", "0-30", "31-60", "61-90", "91+", "Last Pmt"];
-    const lines = sorted.map((r) =>
+    const lines = filtered.map((r) =>
       [
         JSON.stringify(r.vendor_name),
         r.total_open_cents,
-        r.current_cents + r.bucket_1_30_cents,
+        r.bucket_0_30_cents,
         r.bucket_31_60_cents,
         r.bucket_61_90_cents,
         r.bucket_91_plus_cents,
@@ -111,6 +85,19 @@ export function APAgingPage() {
     a.click();
     URL.revokeObjectURL(ur);
   }
+
+  const columns = useMemo<ParityColumn<APAgingRowWithBucket>[]>(
+    () => [
+      { key: "vendor_name", label: "Vendor", sortable: true, render: (r) => <span className="font-medium text-gray-900">{r.vendor_name}</span> },
+      { key: "total_open_cents", label: "Total", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.total_open_cents) },
+      { key: "bucket_0_30_cents", label: "0–30", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.bucket_0_30_cents) },
+      { key: "bucket_31_60_cents", label: "31–60", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.bucket_31_60_cents) },
+      { key: "bucket_61_90_cents", label: "61–90", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.bucket_61_90_cents) },
+      { key: "bucket_91_plus_cents", label: "91+", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.bucket_91_plus_cents) },
+      { key: "last_payment_date", label: "Last Pmt", sortable: true, render: (r) => r.last_payment_date ?? "—" },
+    ],
+    [],
+  );
 
   return (
     <div className="space-y-4 print:space-y-2">
@@ -215,81 +202,31 @@ export function APAgingPage() {
         </div>
       </div>
 
-      <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-left text-xs">
-          <thead className="border-b border-gray-200 bg-gray-50 text-[11px] font-semibold uppercase tracking-wide text-gray-600">
-            <tr>
-              <th className="cursor-pointer px-3 py-2" onClick={() => toggleSort("vendor_name")}>
-                Vendor
-              </th>
-              <th className="cursor-pointer px-3 py-2 text-right" onClick={() => toggleSort("total_open_cents")}>
-                Total
-              </th>
-              <th className="cursor-pointer px-3 py-2 text-right" onClick={() => toggleSort("bucket_0_30")}>
-                0–30
-              </th>
-              <th className="cursor-pointer px-3 py-2 text-right" onClick={() => toggleSort("bucket_31_60_cents")}>
-                31–60
-              </th>
-              <th className="cursor-pointer px-3 py-2 text-right" onClick={() => toggleSort("bucket_61_90_cents")}>
-                61–90
-              </th>
-              <th className="cursor-pointer px-3 py-2 text-right" onClick={() => toggleSort("bucket_91_plus_cents")}>
-                91+
-              </th>
-              <th className="px-3 py-2">Last Pmt</th>
-              <th className="no-print px-3 py-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {query.isLoading ? (
-              <tr>
-                <td colSpan={8} className="px-3 py-4 text-gray-500">
-                  Loading…
-                </td>
-              </tr>
-            ) : null}
-            {!query.isLoading && sorted.length === 0 ? (
-              <tr>
-                <td colSpan={8} className="px-3 py-4 text-gray-500">
-                  No rows
-                </td>
-              </tr>
-            ) : null}
-            {sorted.map((r) => (
-              <tr
-                key={r.vendor_id}
-                className="cursor-pointer border-b border-gray-100 hover:bg-gray-50"
-                onClick={() => {
-                  if (!isVendorUuid(r.vendor_id)) {
-                    pushToast("This row is not linked to a vendor master record. Resolve vendor UUID on bills first.", "info");
-                    return;
-                  }
-                  navigate(`/vendors/${r.vendor_id}?tab=ap`);
-                }}
-              >
-                <td className="px-3 py-2 font-medium text-gray-900">{r.vendor_name}</td>
-                <td className="px-3 py-2 text-right">{money(r.total_open_cents)}</td>
-                <td className="px-3 py-2 text-right">{money(r.current_cents + r.bucket_1_30_cents)}</td>
-                <td className="px-3 py-2 text-right">{money(r.bucket_31_60_cents)}</td>
-                <td className="px-3 py-2 text-right">{money(r.bucket_61_90_cents)}</td>
-                <td className="px-3 py-2 text-right">{money(r.bucket_91_plus_cents)}</td>
-                <td className="px-3 py-2 text-gray-700">{r.last_payment_date ?? "—"}</td>
-                <td className="no-print px-3 py-2">
-                  <div className="flex flex-wrap gap-1" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
-                    <Button size="sm" variant="secondary" disabled onClick={() => pushToast("Pay bills from Banking → Credit Card / Check flow", "info")}>
-                      Pay now
-                    </Button>
-                    <Button size="sm" variant="secondary" disabled onClick={() => pushToast("Scheduled payments ship Phase 6+", "info")}>
-                      Schedule payment
-                    </Button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <ParityTable
+        rows={filtered}
+        columns={columns}
+        rowKey={(r) => r.vendor_id}
+        loading={query.isPending || (query.isFetching && filtered.length === 0)}
+        storageKey="ap-aging"
+        emptyText="No rows"
+        onRowClick={(r) => {
+          if (!isVendorUuid(r.vendor_id)) {
+            pushToast("This row is not linked to a vendor master record. Resolve vendor UUID on bills first.", "info");
+            return;
+          }
+          navigate(`/vendors/${r.vendor_id}?tab=ap`);
+        }}
+        rowActions={() => (
+          <div className="flex flex-wrap justify-end gap-1">
+            <Button size="sm" variant="secondary" disabled onClick={() => pushToast("Pay bills from Banking → Credit Card / Check flow", "info")}>
+              Pay now
+            </Button>
+            <Button size="sm" variant="secondary" disabled onClick={() => pushToast("Scheduled payments ship Phase 6+", "info")}>
+              Schedule payment
+            </Button>
+          </div>
+        )}
+      />
     </div>
   );
 }

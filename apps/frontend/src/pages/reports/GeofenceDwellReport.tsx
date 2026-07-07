@@ -4,10 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { getGeofenceDwellReport, listGeofences, type GeofenceLocationKind } from "../../api/geofencing";
+import { getGeofenceDwellReport, listGeofences, type GeofenceDwellRow, type GeofenceLocationKind } from "../../api/geofencing";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 function minutesToClock(value: number | null) {
   if (value == null) return "In yard";
@@ -92,6 +93,21 @@ export function GeofenceDwellReport() {
       avgDwell: completed.length > 0 ? Math.round(total / completed.length) : 0,
     };
   }, [reportQuery.data?.rows]);
+
+  const dwellRows = reportQuery.data?.rows ?? [];
+
+  const columns = useMemo<ParityColumn<GeofenceDwellRow>[]>(
+    () => [
+      { key: "geofence_label", label: "Geofence", sortable: true, render: (row) => <span className="font-medium text-slate-900">{row.geofence_label}</span> },
+      { key: "location_kind", label: "Kind", sortable: true },
+      { key: "unit_number", label: "Unit", render: (row) => <EntityLink kind="unit" id={row.unit_id} label={row.unit_number} /> },
+      { key: "driver", label: "Driver", render: (row) => <EntityLink kind="driver" id={row.driver_id ?? undefined} label={driverName(row.first_name, row.last_name)} /> },
+      { key: "entered_at", label: "Entered", sortable: true, render: (row) => `${formatDateTimeUS(row.entered_at)} CT` },
+      { key: "exited_at", label: "Exited", render: (row) => (row.exited_at ? `${formatDateTimeUS(row.exited_at)} CT` : "In yard") },
+      { key: "dwell_minutes", label: "Dwell", sortable: true, render: (row) => minutesToClock(row.dwell_minutes) },
+    ],
+    [],
+  );
 
   return (
     <div className="space-y-4">
@@ -188,37 +204,15 @@ export function GeofenceDwellReport() {
         </div>
       </section>
 
-      <section className="rounded-sm border border-slate-200 bg-white p-3">
-        {reportQuery.isLoading ? <p className="text-sm text-slate-500">Loading report...</p> : null}
-        <div className="overflow-auto">
-          <table className="min-w-full text-left text-xs">
-            <thead className="bg-slate-50 text-[11px] uppercase text-slate-600">
-              <tr>
-                <th className="px-2 py-2">Geofence</th>
-                <th className="px-2 py-2">Kind</th>
-                <th className="px-2 py-2">Unit</th>
-                <th className="px-2 py-2">Driver</th>
-                <th className="px-2 py-2">Entered</th>
-                <th className="px-2 py-2">Exited</th>
-                <th className="px-2 py-2">Dwell</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(reportQuery.data?.rows ?? []).map((row) => (
-                <tr key={`${row.geofence_id}-${row.unit_id}-${row.entered_at}`} className="border-b border-slate-100">
-                  <td className="px-2 py-2 font-medium text-slate-900">{row.geofence_label}</td>
-                  <td className="px-2 py-2">{row.location_kind}</td>
-                  <td className="px-2 py-2"><EntityLink kind="unit" id={row.unit_id} label={row.unit_number} /></td>
-                  <td className="px-2 py-2"><EntityLink kind="driver" id={row.driver_id ?? undefined} label={driverName(row.first_name, row.last_name)} /></td>
-                  <td className="px-2 py-2">{formatDateTimeUS(row.entered_at)} CT</td>
-                  <td className="px-2 py-2">{row.exited_at ? `${formatDateTimeUS(row.exited_at)} CT` : "In yard"}</td>
-                  <td className="px-2 py-2">{minutesToClock(row.dwell_minutes)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <ParityTable
+        rows={dwellRows}
+        columns={columns}
+        rowKey={(row) => `${row.geofence_id}-${row.unit_id}-${row.entered_at}`}
+        loading={reportQuery.isPending || (reportQuery.isFetching && dwellRows.length === 0)}
+        storageKey="geofence-dwell"
+        emptyText="No dwell events for the current filters."
+        exportFilename={`geofence-dwell-${applied.periodStart}-${applied.periodEnd}`}
+      />
     </div>
   );
 }

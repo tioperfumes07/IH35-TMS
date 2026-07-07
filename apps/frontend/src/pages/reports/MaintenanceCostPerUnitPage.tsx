@@ -15,6 +15,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportBlockVPendingBanner } from "./ReportBlockVPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { formatChartLegendLabel } from "../../lib/chartLegend";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -38,16 +39,12 @@ const FLAG_META: Record<MaintenanceCostFlag, { label: string }> = {
 
 const PIE_COLORS = ["#0d9488", "#155e75", "#f59e0b", "#dc2626", "#64748b", "#1e293b"];
 
-type SortKey = keyof MaintenanceCostUnitRow;
-
 export function MaintenanceCostPerUnitPage() {
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [period, setPeriod] = useState(currentQuarterRange);
   const [applied, setApplied] = useState(currentQuarterRange);
-  const [sortKey, setSortKey] = useState<SortKey>("total_cents");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   const query = useQuery({
     queryKey: ["reports", "maintenance-cost-per-unit", companyId, applied.start, applied.end],
@@ -66,26 +63,34 @@ export function MaintenanceCostPerUnitPage() {
     return raw.map((c) => ({ name: c.category, value: c.amount_cents })).filter((r) => r.value > 0);
   }, [query.data?.by_category]);
 
-  const sorted = useMemo(() => {
-    const rows = query.data?.by_truck ?? [];
-    const mul = sortDir === "asc" ? 1 : -1;
-    const copy = [...rows];
-    copy.sort((a, b) => {
-      if (sortKey === "unit_number") return a.unit_number.localeCompare(b.unit_number) * mul;
-      const av = a[sortKey] as number;
-      const bv = b[sortKey] as number;
-      return (av - bv) * mul;
-    });
-    return copy;
-  }, [query.data?.by_truck, sortKey, sortDir]);
+  const rows = query.data?.by_truck ?? [];
 
-  function toggleSort(k: SortKey) {
-    if (sortKey === k) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    else {
-      setSortKey(k);
-      setSortDir("desc");
-    }
-  }
+  const columns = useMemo<ParityColumn<MaintenanceCostUnitRow>[]>(
+    () => [
+      { key: "unit_number", label: "Unit #", sortable: true, render: (r) => <span className="font-medium">{r.unit_number}</span> },
+      { key: "wo_count", label: "WO count", sortable: true, className: "text-right", cellClass: "text-right" },
+      { key: "parts_cents", label: "Parts", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.parts_cents) },
+      { key: "labor_cents", label: "Labor", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.labor_cents) },
+      { key: "outsourced_cents", label: "Outsourced", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.outsourced_cents) },
+      { key: "total_cents", label: "Total", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.total_cents) },
+      { key: "miles", label: "Miles", sortable: true, className: "text-right", cellClass: "text-right" },
+      { key: "cost_per_mile_cents", label: "$/Mile", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.cost_per_mile_cents) },
+      {
+        key: "flags",
+        label: "Flags",
+        render: (r) => (
+          <div className="flex flex-wrap gap-1">
+            {(r.flags ?? []).map((f) => (
+              <span key={f} className="rounded-sm border border-slate-300 bg-slate-100 px-1 py-0.5 text-[10px] font-semibold text-slate-700" title={FLAG_META[f].label}>
+                {FLAG_META[f].label}
+              </span>
+            ))}
+          </div>
+        ),
+      },
+    ],
+    [],
+  );
 
   function exportCsv(data: MaintenanceCostPerUnitResponse) {
     const h = ["Unit", "WOs", "Parts", "Labor", "Outsourced", "Total", "Miles", "PerMile", "Flags"];
@@ -164,66 +169,16 @@ export function MaintenanceCostPerUnitPage() {
 
       {query.data ? (
         <div className="grid gap-3 lg:grid-cols-[1.4fr_1fr]">
-          <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
-            <table className="min-w-full text-left text-xs">
-              <thead className="bg-gray-50 text-[11px] font-semibold uppercase text-gray-600">
-                <tr>
-                  <th className="cursor-pointer px-2 py-2" onClick={() => toggleSort("unit_number")}>
-                    Unit #
-                  </th>
-                  <th className="cursor-pointer px-2 py-2 text-right" onClick={() => toggleSort("wo_count")}>
-                    WO count
-                  </th>
-                  <th className="cursor-pointer px-2 py-2 text-right" onClick={() => toggleSort("parts_cents")}>
-                    Parts
-                  </th>
-                  <th className="cursor-pointer px-2 py-2 text-right" onClick={() => toggleSort("labor_cents")}>
-                    Labor
-                  </th>
-                  <th className="cursor-pointer px-2 py-2 text-right" onClick={() => toggleSort("outsourced_cents")}>
-                    Outsourced
-                  </th>
-                  <th className="cursor-pointer px-2 py-2 text-right" onClick={() => toggleSort("total_cents")}>
-                    Total
-                  </th>
-                  <th className="cursor-pointer px-2 py-2 text-right" onClick={() => toggleSort("miles")}>
-                    Miles
-                  </th>
-                  <th className="cursor-pointer px-2 py-2 text-right" onClick={() => toggleSort("cost_per_mile_cents")}>
-                    $/Mile
-                  </th>
-                  <th className="px-2 py-2">Flags</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sorted.map((r: MaintenanceCostUnitRow) => (
-                  <tr
-                    key={r.unit_id}
-                    className="cursor-pointer border-b border-gray-100 hover:bg-gray-50"
-                    onClick={() => navigate(`/fleet/units/${r.unit_id}?tab=maintenance`)}
-                  >
-                    <td className="px-2 py-2 font-medium">{r.unit_number}</td>
-                    <td className="px-2 py-2 text-right">{r.wo_count}</td>
-                    <td className="px-2 py-2 text-right">{money(r.parts_cents)}</td>
-                    <td className="px-2 py-2 text-right">{money(r.labor_cents)}</td>
-                    <td className="px-2 py-2 text-right">{money(r.outsourced_cents)}</td>
-                    <td className="px-2 py-2 text-right">{money(r.total_cents)}</td>
-                    <td className="px-2 py-2 text-right">{r.miles}</td>
-                    <td className="px-2 py-2 text-right">{money(r.cost_per_mile_cents)}</td>
-                    <td className="px-2 py-2">
-                      <div className="flex flex-wrap gap-1">
-                        {(r.flags ?? []).map((f) => (
-                          <span key={f} className="rounded-sm border border-slate-300 bg-slate-100 px-1 py-0.5 text-[10px] font-semibold text-slate-700" title={FLAG_META[f].label}>
-                            {FLAG_META[f].label}
-                          </span>
-                        ))}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ParityTable
+            rows={rows}
+            columns={columns}
+            rowKey={(r) => r.unit_id}
+            loading={query.isPending || (query.isFetching && rows.length === 0)}
+            storageKey="maintenance-cost-per-unit"
+            emptyText="No trucks match the current filters for this period."
+            exportFilename={`maintenance-cost-per-unit-${applied.start}-${applied.end}`}
+            onRowClick={(r) => navigate(`/fleet/units/${r.unit_id}?tab=maintenance`)}
+          />
 
           {pieData.length > 0 ? (
             <div className="h-72 rounded-sm border border-gray-200 bg-white p-2">

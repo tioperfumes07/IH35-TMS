@@ -10,13 +10,18 @@ import {
   listInsuranceCoiRequests,
   listInsuranceLawsuits,
   updateInsurancePolicy,
+  type InsuranceClaim,
+  type InsuranceCoiRequest,
+  type InsuranceLawsuit,
   type InsurancePolicyStatus,
+  type InsurancePolicyUnit,
 } from "../../api/insurance";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatUsdCents } from "../../lib/money";
 import { PaymentScheduleTab } from "./PaymentScheduleTab";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 function formatMoney(cents: number) {
   return formatUsdCents(cents);
@@ -87,6 +92,50 @@ export function PolicyDetail() {
   const lawsuitRows = useMemo(
     () => (lawsuitsQuery.data ?? []).filter((lawsuit) => lawsuit.claim_id && claimIds.has(lawsuit.claim_id)),
     [claimIds, lawsuitsQuery.data]
+  );
+
+  const unitColumns = useMemo<ParityColumn<InsurancePolicyUnit>[]>(
+    () => [
+      {
+        key: "asset_id",
+        label: "Unit",
+        render: (unit) => (
+          <Link className="text-slate-700 underline" to={`/fleet/units/${unit.asset_id}`}>
+            {unit.asset_id.slice(0, 8)}
+          </Link>
+        ),
+      },
+      { key: "insured_value_cents", label: "Insured Value", sortable: true, render: (unit) => formatMoney(unit.insured_value_cents) },
+      { key: "created_at", label: "Assigned", sortable: true, render: (unit) => formatDateUS(unit.created_at) },
+    ],
+    [],
+  );
+
+  const coiColumns = useMemo<ParityColumn<InsuranceCoiRequest>[]>(
+    () => [
+      { key: "requested_at", label: "Requested", sortable: true, render: (row) => formatDateUS(row.requested_at) },
+      { key: "status", label: "Status", sortable: true },
+      { key: "document_url", label: "Document", render: (row) => (row.document_url ? <a href={row.document_url} className="text-slate-700 underline">View</a> : "-") },
+    ],
+    [],
+  );
+
+  const claimColumns = useMemo<ParityColumn<InsuranceClaim>[]>(
+    () => [
+      { key: "claim_number", label: "Claim #", sortable: true },
+      { key: "status", label: "Status", sortable: true },
+      { key: "amount_claimed_cents", label: "Claimed", sortable: true, render: (claim) => formatMoney(claim.amount_claimed_cents) },
+    ],
+    [],
+  );
+
+  const lawsuitColumns = useMemo<ParityColumn<InsuranceLawsuit>[]>(
+    () => [
+      { key: "case_number", label: "Case #", sortable: true },
+      { key: "status", label: "Status", sortable: true },
+      { key: "demand_cents", label: "Demand", sortable: true, render: (row) => formatMoney(row.demand_cents) },
+    ],
+    [],
   );
 
   if (!companyId) {
@@ -193,36 +242,15 @@ export function PolicyDetail() {
 
       <section className="rounded-sm border border-gray-200 bg-white p-4">
         <h3 className="text-sm font-semibold text-slate-900">Units Assigned</h3>
-        <div className="mt-2 overflow-x-auto">
-          <table className="min-w-full text-left text-xs">
-            <thead className="bg-gray-50 text-slate-600">
-              <tr>
-                <th className="px-2 py-1.5 font-semibold">Unit</th>
-                <th className="px-2 py-1.5 font-semibold">Insured Value</th>
-                <th className="px-2 py-1.5 font-semibold">Assigned</th>
-              </tr>
-            </thead>
-            <tbody>
-              {policy.units.map((unit) => (
-                <tr key={unit.id} className="border-t border-gray-100">
-                  <td className="px-2 py-1.5 text-slate-700">
-                    <Link className="text-slate-700 underline" to={`/fleet/units/${unit.asset_id}`}>
-                      {unit.asset_id.slice(0, 8)}
-                    </Link>
-                  </td>
-                  <td className="px-2 py-1.5 text-slate-700">{formatMoney(unit.insured_value_cents)}</td>
-                  <td className="px-2 py-1.5 text-slate-700">{formatDateUS(unit.created_at)}</td>
-                </tr>
-              ))}
-              {policy.units.length === 0 ? (
-                <tr>
-                  <td colSpan={3} className="px-2 py-3 text-center text-slate-500">
-                    No units assigned.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
+        <div className="mt-2">
+          <ParityTable
+            rows={policy.units}
+            columns={unitColumns}
+            rowKey={(unit) => unit.id}
+            loading={false}
+            storageKey="insurance-policy-units"
+            emptyText="No units assigned."
+          />
         </div>
       </section>
 
@@ -231,95 +259,44 @@ export function PolicyDetail() {
 
       <section className="rounded-sm border border-gray-200 bg-white p-4">
         <h3 className="text-sm font-semibold text-slate-900">COI History (INS-04)</h3>
-        <div className="mt-2 overflow-x-auto">
-          <table className="min-w-full text-left text-xs">
-            <thead className="bg-gray-50 text-slate-600">
-              <tr>
-                <th className="px-2 py-1.5 font-semibold">Requested</th>
-                <th className="px-2 py-1.5 font-semibold">Status</th>
-                <th className="px-2 py-1.5 font-semibold">Document</th>
-              </tr>
-            </thead>
-            <tbody>
-              {coiRows.map((row) => (
-                <tr key={row.id} className="border-t border-gray-100">
-                  <td className="px-2 py-1.5 text-slate-700">{formatDateUS(row.requested_at)}</td>
-                  <td className="px-2 py-1.5 text-slate-700">{row.status}</td>
-                  <td className="px-2 py-1.5 text-slate-700">{row.document_url ? <a href={row.document_url} className="text-slate-700 underline">View</a> : "-"}</td>
-                </tr>
-              ))}
-              {!coiQuery.isLoading && coiRows.length === 0 ? (
-                <tr>
-                  <td colSpan={3} className="px-2 py-3 text-center text-slate-500">
-                    No COI requests linked to this policy.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
+        <div className="mt-2">
+          <ParityTable
+            rows={coiRows}
+            columns={coiColumns}
+            rowKey={(row) => row.id}
+            loading={coiQuery.isPending || (coiQuery.isFetching && coiRows.length === 0)}
+            storageKey="insurance-policy-coi"
+            emptyText="No COI requests linked to this policy."
+          />
         </div>
       </section>
 
       <section className="grid gap-4 xl:grid-cols-2">
         <div className="rounded-sm border border-gray-200 bg-white p-4">
           <h3 className="text-sm font-semibold text-slate-900">Claims (INS-06)</h3>
-          <div className="mt-2 overflow-x-auto">
-            <table className="min-w-full text-left text-xs">
-              <thead className="bg-gray-50 text-slate-600">
-                <tr>
-                  <th className="px-2 py-1.5 font-semibold">Claim #</th>
-                  <th className="px-2 py-1.5 font-semibold">Status</th>
-                  <th className="px-2 py-1.5 font-semibold">Claimed</th>
-                </tr>
-              </thead>
-              <tbody>
-                {claims.map((claim) => (
-                  <tr key={claim.id} className="border-t border-gray-100">
-                    <td className="px-2 py-1.5 text-slate-700">{claim.claim_number}</td>
-                    <td className="px-2 py-1.5 text-slate-700">{claim.status}</td>
-                    <td className="px-2 py-1.5 text-slate-700">{formatMoney(claim.amount_claimed_cents)}</td>
-                  </tr>
-                ))}
-                {!claimsQuery.isLoading && claims.length === 0 ? (
-                  <tr>
-                    <td colSpan={3} className="px-2 py-3 text-center text-slate-500">
-                      No claims attached to this policy.
-                    </td>
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
+          <div className="mt-2">
+            <ParityTable
+              rows={claims}
+              columns={claimColumns}
+              rowKey={(claim) => claim.id}
+              loading={claimsQuery.isPending || (claimsQuery.isFetching && claims.length === 0)}
+              storageKey="insurance-policy-claims"
+              emptyText="No claims attached to this policy."
+            />
           </div>
         </div>
 
         <div className="rounded-sm border border-gray-200 bg-white p-4">
           <h3 className="text-sm font-semibold text-slate-900">Lawsuits (INS-06)</h3>
-          <div className="mt-2 overflow-x-auto">
-            <table className="min-w-full text-left text-xs">
-              <thead className="bg-gray-50 text-slate-600">
-                <tr>
-                  <th className="px-2 py-1.5 font-semibold">Case #</th>
-                  <th className="px-2 py-1.5 font-semibold">Status</th>
-                  <th className="px-2 py-1.5 font-semibold">Demand</th>
-                </tr>
-              </thead>
-              <tbody>
-                {lawsuitRows.map((row) => (
-                  <tr key={row.id} className="border-t border-gray-100">
-                    <td className="px-2 py-1.5 text-slate-700">{row.case_number}</td>
-                    <td className="px-2 py-1.5 text-slate-700">{row.status}</td>
-                    <td className="px-2 py-1.5 text-slate-700">{formatMoney(row.demand_cents)}</td>
-                  </tr>
-                ))}
-                {!lawsuitsQuery.isLoading && lawsuitRows.length === 0 ? (
-                  <tr>
-                    <td colSpan={3} className="px-2 py-3 text-center text-slate-500">
-                      No lawsuits linked to this policy's claims.
-                    </td>
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
+          <div className="mt-2">
+            <ParityTable
+              rows={lawsuitRows}
+              columns={lawsuitColumns}
+              rowKey={(row) => row.id}
+              loading={lawsuitsQuery.isPending || (lawsuitsQuery.isFetching && lawsuitRows.length === 0)}
+              storageKey="insurance-policy-lawsuits"
+              emptyText="No lawsuits linked to this policy's claims."
+            />
           </div>
         </div>
       </section>

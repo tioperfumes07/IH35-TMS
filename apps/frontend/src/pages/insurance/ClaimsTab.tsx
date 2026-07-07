@@ -1,5 +1,5 @@
+import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
 import { Link } from "react-router-dom";
 import { listInsuranceClaims, type InsuranceClaim, type InsuranceClaimStatus } from "../../api/insurance";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -11,6 +11,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
 import { useListState } from "../../components/list-state";
 import { formatUsdCents } from "../../lib/money";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 type Props = {
   operatingCompanyId?: string;
@@ -69,6 +70,27 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
 
   const rows = query.data ?? [];
 
+  const columns = useMemo<ParityColumn<InsuranceClaim>[]>(
+    () => [
+      { key: "claim_number", label: "Claim #", sortable: true, render: (claim) => <span className="font-medium text-gray-800">{claim.claim_number}</span> },
+      { key: "status", label: "Status", sortable: true, render: (claim) => <StatusBadge variant={claimStatusVariant(claim.status)}>{claim.status}</StatusBadge> },
+      {
+        key: "policy_id",
+        label: "Policy",
+        render: (claim) => (
+          <Link className="text-slate-700 underline" to={`/safety/insurance?policy_id=${claim.policy_id}`}>
+            {claim.policy_id.slice(0, 8)}
+          </Link>
+        ),
+      },
+      { key: "asset_id", label: "Asset", render: (claim) => <EntityLink kind="unit" id={claim.asset_id ?? undefined} label={claim.asset_id ? claim.asset_id.slice(0, 8) : undefined} /> },
+      { key: "accident_date", label: "Accident", sortable: true, render: (claim) => formatDateUS(claim.accident_date) },
+      { key: "amount_claimed_cents", label: "Claimed", sortable: true, render: (claim) => formatMoney(claim.amount_claimed_cents) },
+      { key: "amount_paid_cents", label: "Paid", sortable: true, render: (claim) => formatMoney(claim.amount_paid_cents) },
+    ],
+    [],
+  );
+
   return (
     <DataPanel title="Claims">
       <div className="mb-3 flex items-center justify-between gap-2">
@@ -80,32 +102,16 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
         </Button>
       </div>
 
-      {query.isLoading ? <div className="text-sm text-gray-500">Loading claims...</div> : null}
       {query.isError ? <div className="rounded-sm border border-red-200 bg-red-50 p-2 text-sm text-red-700">Failed to load claims.</div> : null}
-      {listState.isEmpty ? <div className="text-sm text-gray-600">No claims found.</div> : null}
 
-      {rows.length > 0 ? (
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-left text-xs">
-            <thead>
-              <tr className="border-b border-gray-200 text-gray-600">
-                <th className="px-2 py-1.5 font-semibold">Claim #</th>
-                <th className="px-2 py-1.5 font-semibold">Status</th>
-                <th className="px-2 py-1.5 font-semibold">Policy</th>
-                <th className="px-2 py-1.5 font-semibold">Asset</th>
-                <th className="px-2 py-1.5 font-semibold">Accident</th>
-                <th className="px-2 py-1.5 font-semibold">Claimed</th>
-                <th className="px-2 py-1.5 font-semibold">Paid</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((claim) => (
-                <ClaimRow key={claim.id} claim={claim} />
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : null}
+      <ParityTable
+        rows={rows}
+        columns={columns}
+        rowKey={(claim) => claim.id}
+        loading={listState.isLoading}
+        storageKey="insurance-claims"
+        emptyText="No claims found."
+      />
       <ClaimCreateModal
         open={createOpen}
         operatingCompanyId={companyId}
@@ -117,27 +123,5 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
         }}
       />
     </DataPanel>
-  );
-}
-
-function ClaimRow({ claim }: { claim: InsuranceClaim }) {
-  return (
-    <tr className="border-b border-gray-100">
-      <td className="px-2 py-1.5 font-medium text-gray-800">{claim.claim_number}</td>
-      <td className="px-2 py-1.5">
-        <StatusBadge variant={claimStatusVariant(claim.status)}>{claim.status}</StatusBadge>
-      </td>
-      <td className="px-2 py-1.5 text-gray-700">
-        <Link className="text-slate-700 underline" to={`/safety/insurance?policy_id=${claim.policy_id}`}>
-          {claim.policy_id.slice(0, 8)}
-        </Link>
-      </td>
-      <td className="px-2 py-1.5 text-gray-700">
-        <EntityLink kind="unit" id={claim.asset_id ?? undefined} label={claim.asset_id ? claim.asset_id.slice(0, 8) : undefined} />
-      </td>
-      <td className="px-2 py-1.5 text-gray-700">{formatDateUS(claim.accident_date)}</td>
-      <td className="px-2 py-1.5 text-gray-700">{formatMoney(claim.amount_claimed_cents)}</td>
-      <td className="px-2 py-1.5 text-gray-700">{formatMoney(claim.amount_paid_cents)}</td>
-    </tr>
   );
 }

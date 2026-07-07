@@ -8,6 +8,7 @@ import {
 } from "../../api/insurance";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 function toDate(value: string) {
   return new Date(`${value}T00:00:00.000Z`);
@@ -63,6 +64,22 @@ export function CoverageGapDashboard() {
     };
   }, [coverageGapsQuery.data, policiesQuery.data]);
 
+  const uncoveredColumns = useMemo<ParityColumn<InsuranceCoverageGapUnit>[]>(
+    () => [
+      { key: "unit_number", label: "Unit", render: (row) => <EntityLink kind="unit" id={row.unit_id} label={unitLabel(row)} /> },
+      { key: "missing_types", label: "Missing Required Types", render: (row) => row.missing_types.join(", ") || "all" },
+    ],
+    [],
+  );
+
+  const mismatchedColumns = useMemo<ParityColumn<InsuranceCoverageGapUnit>[]>(
+    () => [
+      { key: "unit_number", label: "Unit", render: (row) => unitLabel(row) },
+      { key: "missing_types", label: "Missing Required Types", render: (row) => row.missing_types.join(", ") },
+    ],
+    [],
+  );
+
   if (!companyId) {
     return <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">Select an operating company to view coverage gap dashboard.</div>;
   }
@@ -99,59 +116,29 @@ export function CoverageGapDashboard() {
 
       <section className="rounded-sm border border-gray-200 bg-white p-4">
         <h3 className="text-sm font-semibold text-slate-900">Units Without Active Coverage</h3>
-        <div className="mt-2 overflow-x-auto">
-          <table className="min-w-full text-left text-xs">
-            <thead className="bg-gray-50 text-slate-600">
-              <tr>
-                <th className="px-2 py-1.5 font-semibold">Unit</th>
-                <th className="px-2 py-1.5 font-semibold">Missing Required Types</th>
-              </tr>
-            </thead>
-            <tbody>
-              {summary.unitsWithoutActiveCoverage.map((row) => (
-                <tr key={row.unit_id} className="border-t border-gray-100">
-                  <td className="px-2 py-1.5 text-slate-700"><EntityLink kind="unit" id={row.unit_id} label={unitLabel(row)} /></td>
-                  <td className="px-2 py-1.5 text-slate-700">{row.missing_types.join(", ") || "all"}</td>
-                </tr>
-              ))}
-              {summary.unitsWithoutActiveCoverage.length === 0 && !coverageGapsQuery.isLoading ? (
-                <tr>
-                  <td colSpan={2} className="px-2 py-3 text-center text-slate-500">
-                    No uncovered units.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
+        <div className="mt-2">
+          <ParityTable
+            rows={summary.unitsWithoutActiveCoverage}
+            columns={uncoveredColumns}
+            rowKey={(row) => row.unit_id}
+            loading={coverageGapsQuery.isPending || (coverageGapsQuery.isFetching && summary.unitsWithoutActiveCoverage.length === 0)}
+            storageKey="insurance-coverage-gap-uncovered"
+            emptyText="No uncovered units."
+          />
         </div>
       </section>
 
       <section className="rounded-sm border border-gray-200 bg-white p-4">
         <h3 className="text-sm font-semibold text-slate-900">Units With Mismatched Coverage Requirements</h3>
-        <div className="mt-2 overflow-x-auto">
-          <table className="min-w-full text-left text-xs">
-            <thead className="bg-gray-50 text-slate-600">
-              <tr>
-                <th className="px-2 py-1.5 font-semibold">Unit</th>
-                <th className="px-2 py-1.5 font-semibold">Missing Required Types</th>
-              </tr>
-            </thead>
-            <tbody>
-              {summary.unitsWithMismatchedCoverageRequirements.map((row) => (
-                <tr key={`${row.unit_id}-mismatch`} className="border-t border-gray-100">
-                  <td className="px-2 py-1.5 text-slate-700">{unitLabel(row)}</td>
-                  <td className="px-2 py-1.5 text-slate-700">{row.missing_types.join(", ")}</td>
-                </tr>
-              ))}
-              {summary.unitsWithMismatchedCoverageRequirements.length === 0 && !coverageGapsQuery.isLoading ? (
-                <tr>
-                  <td colSpan={2} className="px-2 py-3 text-center text-slate-500">
-                    No mismatched coverage requirements.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
+        <div className="mt-2">
+          <ParityTable
+            rows={summary.unitsWithMismatchedCoverageRequirements}
+            columns={mismatchedColumns}
+            rowKey={(row) => `${row.unit_id}-mismatch`}
+            loading={coverageGapsQuery.isPending || (coverageGapsQuery.isFetching && summary.unitsWithMismatchedCoverageRequirements.length === 0)}
+            storageKey="insurance-coverage-gap-mismatched"
+            emptyText="No mismatched coverage requirements."
+          />
         </div>
       </section>
     </div>

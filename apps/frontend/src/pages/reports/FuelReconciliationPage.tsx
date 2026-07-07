@@ -8,6 +8,8 @@ import {
   type FuelReconciliationFlag,
   type FuelReconciliationResponse,
   type FuelReconciliationTruckRow,
+  type FuelReconciliationUnmatchedCard,
+  type FuelReconciliationUnmatchedWo,
 } from "../../api/reports";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
@@ -16,6 +18,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { ReportBlockVPendingBanner } from "./ReportBlockVPendingBanner";
 import { ReportsSubNav } from "./ReportsSubNav";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -34,8 +37,6 @@ const FLAG_META: Record<FuelReconciliationFlag, { label: string }> = {
   unmatched: { label: "unmatched" },
 };
 
-type SortKey = keyof FuelReconciliationTruckRow;
-
 export function FuelReconciliationPage() {
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
@@ -44,8 +45,6 @@ export function FuelReconciliationPage() {
   const companyId = selectedCompanyId ?? "";
   const [period, setPeriod] = useState(defaultRange);
   const [applied, setApplied] = useState(defaultRange);
-  const [sortKey, setSortKey] = useState<SortKey>("unit_number");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [tab, setTab] = useState<"card" | "wo">("card");
   const [matchOpen, setMatchOpen] = useState(false);
   const [matchNote, setMatchNote] = useState("");
@@ -62,26 +61,73 @@ export function FuelReconciliationPage() {
     retry: false,
   });
 
-  const sorted = useMemo(() => {
-    const rows = query.data?.by_truck ?? [];
-    const mul = sortDir === "asc" ? 1 : -1;
-    const copy = [...rows];
-    copy.sort((a, b) => {
-      if (sortKey === "unit_number") return a.unit_number.localeCompare(b.unit_number) * mul;
-      const av = a[sortKey] as number;
-      const bv = b[sortKey] as number;
-      return (av - bv) * mul;
-    });
-    return copy;
-  }, [query.data?.by_truck, sortKey, sortDir]);
+  const sorted = query.data?.by_truck ?? [];
 
-  function toggleSort(k: SortKey) {
-    if (sortKey === k) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    else {
-      setSortKey(k);
-      setSortDir("desc");
-    }
+  function isSuspicious(r: FuelReconciliationTruckRow) {
+    return r.card_amount_cents > 0 && Math.abs(r.delta_cents) / r.card_amount_cents > 0.1;
   }
+
+  const truckColumns = useMemo<ParityColumn<FuelReconciliationTruckRow>[]>(
+    () => [
+      { key: "unit_number", label: "Unit #", sortable: true, render: (r) => <span className="font-medium">{r.unit_number}</span> },
+      { key: "card_amount_cents", label: "Card $", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.card_amount_cents) },
+      { key: "wo_amount_cents", label: "WO $", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.wo_amount_cents) },
+      { key: "delta_cents", label: "Delta", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.delta_cents) },
+      { key: "matched_pct", label: "Matched %", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => `${r.matched_pct.toFixed(0)}%` },
+      {
+        key: "flags",
+        label: "Flags",
+        render: (r) => (
+          <div className="flex flex-wrap gap-1">
+            {(r.flags ?? []).map((f) => (
+              <span key={f} className="rounded-sm border border-slate-300 bg-slate-100 px-1 py-0.5 text-[10px] font-semibold text-slate-700" title={FLAG_META[f].label}>
+                {FLAG_META[f].label}
+              </span>
+            ))}
+          </div>
+        ),
+      },
+    ],
+    [],
+  );
+
+  const cardColumns = useMemo<ParityColumn<FuelReconciliationUnmatchedCard>[]>(
+    () => [
+      { key: "transaction_date", label: "Date", sortable: true },
+      { key: "amount_cents", label: "Amount", sortable: true, render: (row) => money(row.amount_cents) },
+      {
+        key: "merchant_name",
+        label: "Merchant",
+        render: (row) => (
+          <div>
+            <div>{row.merchant_name ?? row.description ?? "—"}</div>
+            <div className="mt-0.5 text-[10px]">
+              {row.gps_match_confidence === "high" ? (
+                <span className="rounded-sm bg-emerald-100 px-1 text-emerald-700">GPS match: high</span>
+              ) : row.gps_match_confidence === "medium" ? (
+                <span className="rounded-sm bg-amber-100 px-1 text-amber-700">GPS match: medium</span>
+              ) : row.gps_match_confidence === "no_match" ? (
+                <span className="rounded-sm bg-red-100 px-1 text-red-700">GPS match: no match</span>
+              ) : (
+                <span className="rounded-sm bg-gray-100 px-1 text-gray-600">GPS match: pending</span>
+              )}
+            </div>
+          </div>
+        ),
+      },
+    ],
+    [],
+  );
+
+  const woColumns = useMemo<ParityColumn<FuelReconciliationUnmatchedWo>[]>(
+    () => [
+      { key: "wo_number", label: "WO#", sortable: true },
+      { key: "wo_date", label: "Date", sortable: true },
+      { key: "amount_cents", label: "Amount", sortable: true, render: (row) => money(row.amount_cents) },
+      { key: "unit_number", label: "Unit", sortable: true },
+    ],
+    [],
+  );
 
   function exportCsv(data: FuelReconciliationResponse) {
     const h = ["Unit", "Card", "WO", "Delta", "MatchedPct", "Flags"];
@@ -155,57 +201,17 @@ export function FuelReconciliationPage() {
             ))}
           </div>
 
-          <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
-            <table className="min-w-full text-left text-xs">
-              <thead className="bg-gray-50 text-[11px] font-semibold uppercase text-gray-600">
-                <tr>
-                  <th className="cursor-pointer px-2 py-2" onClick={() => toggleSort("unit_number")}>
-                    Unit #
-                  </th>
-                  <th className="cursor-pointer px-2 py-2 text-right" onClick={() => toggleSort("card_amount_cents")}>
-                    Card $
-                  </th>
-                  <th className="cursor-pointer px-2 py-2 text-right" onClick={() => toggleSort("wo_amount_cents")}>
-                    WO $
-                  </th>
-                  <th className="cursor-pointer px-2 py-2 text-right" onClick={() => toggleSort("delta_cents")}>
-                    Delta
-                  </th>
-                  <th className="cursor-pointer px-2 py-2 text-right" onClick={() => toggleSort("matched_pct")}>
-                    Matched %
-                  </th>
-                  <th className="px-2 py-2">Flags</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sorted.map((r) => {
-                  const suspicious = r.card_amount_cents > 0 && Math.abs(r.delta_cents) / r.card_amount_cents > 0.1;
-                  return (
-                    <tr
-                      key={r.unit_id}
-                      className={`cursor-pointer border-b border-gray-100 hover:bg-gray-50 ${suspicious ? "bg-red-50" : ""}`}
-                      onClick={() => navigate(`/fleet/units/${r.unit_id}?tab=financial`)}
-                    >
-                      <td className="px-2 py-2 font-medium">{r.unit_number}</td>
-                      <td className="px-2 py-2 text-right">{money(r.card_amount_cents)}</td>
-                      <td className="px-2 py-2 text-right">{money(r.wo_amount_cents)}</td>
-                      <td className="px-2 py-2 text-right">{money(r.delta_cents)}</td>
-                      <td className="px-2 py-2 text-right">{r.matched_pct.toFixed(0)}%</td>
-                      <td className="px-2 py-2">
-                        <div className="flex flex-wrap gap-1">
-                          {(r.flags ?? []).map((f) => (
-                            <span key={f} className="rounded-sm border border-slate-300 bg-slate-100 px-1 py-0.5 text-[10px] font-semibold text-slate-700" title={FLAG_META[f].label}>
-                              {FLAG_META[f].label}
-                            </span>
-                          ))}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <ParityTable
+            rows={sorted}
+            columns={truckColumns}
+            rowKey={(r) => r.unit_id}
+            loading={query.isPending || (query.isFetching && sorted.length === 0)}
+            storageKey="fuel-reconciliation"
+            emptyText="No trucks with fuel data for this period."
+            exportFilename={`fuel-reconciliation-${applied.start}-${applied.end}`}
+            rowClassName={(r) => (isSuspicious(r) ? "bg-red-50" : "")}
+            onRowClick={(r) => navigate(`/fleet/units/${r.unit_id}?tab=financial`)}
+          />
 
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="no-print mb-2 flex gap-2 border-b border-gray-100 pb-2">
@@ -217,85 +223,48 @@ export function FuelReconciliationPage() {
               </button>
             </div>
             {tab === "card" ? (
-              <table className="min-w-full text-left text-xs">
-                <thead>
-                  <tr className="text-[11px] text-gray-500">
-                    <th className="py-1">Date</th>
-                    <th className="py-1">Amount</th>
-                    <th className="py-1">Merchant</th>
-                    <th className="py-1">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(query.data.unmatched_card_transactions ?? []).map((row) => (
-                    <tr key={row.transaction_id} className="border-t border-gray-100">
-                      <td className="py-1">{row.transaction_date}</td>
-                      <td className="py-1">{money(row.amount_cents)}</td>
-                      <td className="py-1">
-                        <div>{row.merchant_name ?? row.description ?? "—"}</div>
-                        <div className="mt-0.5 text-[10px]">
-                          {row.gps_match_confidence === "high" ? (
-                            <span className="rounded-sm bg-emerald-100 px-1 text-emerald-700">GPS match: high</span>
-                          ) : row.gps_match_confidence === "medium" ? (
-                            <span className="rounded-sm bg-amber-100 px-1 text-amber-700">GPS match: medium</span>
-                          ) : row.gps_match_confidence === "no_match" ? (
-                            <span className="rounded-sm bg-red-100 px-1 text-red-700">GPS match: no match</span>
-                          ) : (
-                            <span className="rounded-sm bg-gray-100 px-1 text-gray-600">GPS match: pending</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="py-1">
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          onClick={() => {
-                            if (!companyId) return;
-                            void rematchFuelTxnToGps({
-                              operating_company_id: companyId,
-                              transaction_id: row.transaction_id,
-                            })
-                              .then(() => {
-                                pushToast("GPS re-match queued", "success");
-                                void queryClient.invalidateQueries({ queryKey: ["reports", "fuel-reconciliation", companyId] });
-                              })
-                              .catch((error: Error) => pushToast(error.message || "Failed to re-match GPS", "error"));
-                          }}
-                        >
-                          Re-match GPS
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <ParityTable
+                rows={query.data.unmatched_card_transactions ?? []}
+                columns={cardColumns}
+                rowKey={(row) => row.transaction_id}
+                loading={false}
+                storageKey="fuel-reconciliation-unmatched-card"
+                emptyText="No unmatched card transactions."
+                rowActions={(row) => (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => {
+                      if (!companyId) return;
+                      void rematchFuelTxnToGps({
+                        operating_company_id: companyId,
+                        transaction_id: row.transaction_id,
+                      })
+                        .then(() => {
+                          pushToast("GPS re-match queued", "success");
+                          void queryClient.invalidateQueries({ queryKey: ["reports", "fuel-reconciliation", companyId] });
+                        })
+                        .catch((error: Error) => pushToast(error.message || "Failed to re-match GPS", "error"));
+                    }}
+                  >
+                    Re-match GPS
+                  </Button>
+                )}
+              />
             ) : (
-              <table className="min-w-full text-left text-xs">
-                <thead>
-                  <tr className="text-[11px] text-gray-500">
-                    <th className="py-1">WO#</th>
-                    <th className="py-1">Date</th>
-                    <th className="py-1">Amount</th>
-                    <th className="py-1">Unit</th>
-                    <th className="py-1">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(query.data.unmatched_wo_entries ?? []).map((row) => (
-                    <tr key={row.wo_id} className="border-t border-gray-100">
-                      <td className="py-1">{row.wo_number}</td>
-                      <td className="py-1">{row.wo_date}</td>
-                      <td className="py-1">{money(row.amount_cents)}</td>
-                      <td className="py-1">{row.unit_number}</td>
-                      <td className="py-1">
-                        <Button size="sm" variant="secondary" onClick={() => setMatchOpen(true)}>
-                          Manual Match
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <ParityTable
+                rows={query.data.unmatched_wo_entries ?? []}
+                columns={woColumns}
+                rowKey={(row) => row.wo_id}
+                loading={false}
+                storageKey="fuel-reconciliation-unmatched-wo"
+                emptyText="No unmatched WO entries."
+                rowActions={() => (
+                  <Button size="sm" variant="secondary" onClick={() => setMatchOpen(true)}>
+                    Manual Match
+                  </Button>
+                )}
+              />
             )}
           </div>
         </>

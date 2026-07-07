@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   deleteScheduledReport,
@@ -6,6 +6,7 @@ import {
   pauseScheduledReport,
   resumeScheduledReport,
   sendScheduledReportNow,
+  type ScheduledReportListRow,
 } from "../../api/scheduled-reports";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
@@ -15,6 +16,7 @@ import { useAuth } from "../../auth/useAuth";
 import { ScheduledReportsBackendPendingBanner } from "./ScheduledReportsBackendPendingBanner";
 import { ScheduleReportModal } from "./ScheduleReportModal";
 import { ReportsSubNav } from "./ReportsSubNav";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 function statusPill(status: string) {
   if (status === "active") return "bg-emerald-100 text-emerald-900 border-emerald-200";
@@ -72,6 +74,23 @@ export function ScheduledReportsPage() {
 
   const rows = listQuery.data?.rows ?? [];
 
+  const columns = useMemo<ParityColumn<ScheduledReportListRow>[]>(
+    () => [
+      { key: "name", label: "Report", sortable: true, render: (r) => <span className="font-medium">{r.name}</span> },
+      { key: "cadence_label", label: "Frequency", sortable: true },
+      { key: "recipients", label: "Recipients" },
+      { key: "last_run_at", label: "Last run", render: (r) => r.last_run_at?.slice(0, 19) ?? "—" },
+      { key: "next_run_at", label: "Next run", render: (r) => r.next_run_at?.slice(0, 19) ?? "—" },
+      {
+        key: "status",
+        label: "Status",
+        sortable: true,
+        render: (r) => <span className={`rounded-sm border px-2 py-0.5 text-[10px] font-semibold ${statusPill(r.status)}`}>{r.status}</span>,
+      },
+    ],
+    [],
+  );
+
   return (
     <div className="space-y-4 p-2 md:p-4">
       <ReportsSubNav />
@@ -86,64 +105,37 @@ export function ScheduledReportsPage() {
       />
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
       {listQuery.isError ? <ScheduledReportsBackendPendingBanner error={listQuery.error} onRetry={() => void listQuery.refetch()} /> : null}
-      {listQuery.isLoading ? <p className="text-sm text-gray-500">Loading schedules…</p> : null}
 
-      <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-left text-xs">
-          <thead className="bg-gray-50 text-[11px] font-semibold uppercase text-gray-600">
-            <tr>
-              <th className="px-2 py-2">Report</th>
-              <th className="px-2 py-2">Frequency</th>
-              <th className="px-2 py-2">Recipients</th>
-              <th className="px-2 py-2">Last run</th>
-              <th className="px-2 py-2">Next run</th>
-              <th className="px-2 py-2">Status</th>
-              <th className="px-2 py-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.id} className="border-b border-gray-100">
-                <td className="px-2 py-2 font-medium">{r.name}</td>
-                <td className="px-2 py-2">{r.cadence_label}</td>
-                <td className="px-2 py-2">{r.recipients}</td>
-                <td className="px-2 py-2">{r.last_run_at?.slice(0, 19) ?? "—"}</td>
-                <td className="px-2 py-2">{r.next_run_at?.slice(0, 19) ?? "—"}</td>
-                <td className="px-2 py-2">
-                  <span className={`rounded-sm border px-2 py-0.5 text-[10px] font-semibold ${statusPill(r.status)}`}>{r.status}</span>
-                </td>
-                <td className="space-x-1 px-2 py-2">
-                  <Button size="sm" variant="secondary" onClick={() => setModalOpen(true)}>
-                    Edit
-                  </Button>
-                  {r.status === "active" ? (
-                    <Button size="sm" variant="secondary" loading={pauseMut.isPending} onClick={() => pauseMut.mutate(r.id)}>
-                      Pause
-                    </Button>
-                  ) : (
-                    <Button size="sm" variant="secondary" loading={resumeMut.isPending} onClick={() => resumeMut.mutate(r.id)}>
-                      Resume
-                    </Button>
-                  )}
-                  <Button size="sm" variant="secondary" loading={sendMut.isPending} onClick={() => sendMut.mutate(r.id)}>
-                    Send now
-                  </Button>
-                  <Button size="sm" variant="secondary" loading={delMut.isPending} onClick={() => delMut.mutate(r.id)}>
-                    Delete
-                  </Button>
-                </td>
-              </tr>
-            ))}
-            {rows.length === 0 && listQuery.isSuccess ? (
-              <tr>
-                <td colSpan={7} className="px-2 py-6 text-center text-gray-500">
-                  No schedules yet. Create one when the backend endpoint is live (P6-T11201).
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
+      <ParityTable
+        rows={rows}
+        columns={columns}
+        rowKey={(r) => r.id}
+        loading={listQuery.isPending || (listQuery.isFetching && rows.length === 0)}
+        storageKey="scheduled-reports"
+        emptyText="No schedules yet. Create one when the backend endpoint is live (P6-T11201)."
+        rowActions={(r) => (
+          <div className="flex flex-wrap justify-end gap-1">
+            <Button size="sm" variant="secondary" onClick={() => setModalOpen(true)}>
+              Edit
+            </Button>
+            {r.status === "active" ? (
+              <Button size="sm" variant="secondary" loading={pauseMut.isPending} onClick={() => pauseMut.mutate(r.id)}>
+                Pause
+              </Button>
+            ) : (
+              <Button size="sm" variant="secondary" loading={resumeMut.isPending} onClick={() => resumeMut.mutate(r.id)}>
+                Resume
+              </Button>
+            )}
+            <Button size="sm" variant="secondary" loading={sendMut.isPending} onClick={() => sendMut.mutate(r.id)}>
+              Send now
+            </Button>
+            <Button size="sm" variant="secondary" loading={delMut.isPending} onClick={() => delMut.mutate(r.id)}>
+              Delete
+            </Button>
+          </div>
+        )}
+      />
 
       <ScheduleReportModal
         open={modalOpen}
