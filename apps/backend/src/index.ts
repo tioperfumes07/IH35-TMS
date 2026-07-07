@@ -83,6 +83,7 @@ import { registerLoadCancellationsAnalyticsRoutes } from "./dispatch/load-cancel
 import { registerLoadGeofenceTimelineRoutes } from "./dispatch/load-geofence-timeline.routes.js";
 import { registerTripPairingBoardRoutes } from "./dispatch/trip-pairing-board.routes.js";
 import { registerDriverCommunicationsRoutes } from "./drivers/communications.routes.js";
+import { registerDriverAdvancesRoutes } from "./drivers/advances.routes.js";
 import { registerMaintenancePartsMasterRoutes } from "./catalogs/maintenance/parts.routes.js";
 import { registerMaintenanceServicesCatalogRoutes } from "./catalogs/maintenance/services.routes.js";
 import { registerDamagePhotoEvidenceRoutes } from "./safety/damage-reports/photo-evidence.routes.js";
@@ -778,6 +779,7 @@ async function main() {
   await registerLoadGeofenceTimelineRoutes(app);
   await registerTripPairingBoardRoutes(app);
   await registerDriverCommunicationsRoutes(app);
+  await registerDriverAdvancesRoutes(app);
   await registerMaintenancePartsMasterRoutes(app);
   await registerMaintenanceServicesCatalogRoutes(app);
   await registerDamagePhotoEvidenceRoutes(app);
