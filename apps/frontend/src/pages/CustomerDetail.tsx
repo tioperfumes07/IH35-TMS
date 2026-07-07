@@ -75,6 +75,7 @@ import { SelectCombobox } from "../components/shared/SelectCombobox";
 import { scrubQboArchiveProjectionNotes } from "../lib/qboArchiveNotes";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { useListState } from "../components/list-state";
+import { EntityLink } from "../components/shared/EntityLink";
 
 const tabs = ["Profile", "Contacts", "Billing & Receivables", "Quality & History", "Lanes & Pricing", "Documents", "COI", "Contracts", "Portal Users", "Tasks"] as const;
 type CustomerTab = (typeof tabs)[number];
@@ -1688,7 +1689,7 @@ export function CustomerDetailPage() {
             <div className="space-y-1 text-sm text-gray-700">
               <div>Eligible: {billingSummary?.factoring_eligible ? "Yes" : "No"}</div>
               <div>Recourse: {billingSummary?.factoring_recourse_type ?? "Default"}</div>
-              <div>Company Vendor: {billingSummary?.factoring_company_vendor_id ?? "Not set"}</div>
+              <div>Company Vendor: <EntityLink kind="vendor" id={billingSummary?.factoring_company_vendor_id ?? undefined} label={billingSummary?.factoring_company_vendor_id?.slice(0, 8) ?? "Not set"} /></div>
             </div>
           </DataPanel>
           <DataPanel title="Credit Terms">
@@ -1801,7 +1802,7 @@ export function CustomerDetailPage() {
                             onChange={(e) => setPayInvoiceInclude((p) => ({ ...p, [inv.id]: e.target.checked }))}
                           />
                         ) : null}
-                        <span className="font-medium text-gray-800">{inv.display_id}</span>
+                        <EntityLink kind="invoice" id={inv.id} label={inv.display_id} className="font-medium text-gray-800 hover:underline" />
                         <span className="text-gray-600">Open {formatCurrencyCents(inv.amount_open_cents)}</span>
                         {!payAutoApply ? (
                           // M-1: dollars-mode; Math.round(payInvoiceAmount*100)=cents byte-for-byte (per-invoice apply).
@@ -1963,7 +1964,7 @@ export function CustomerDetailPage() {
                 <tbody>
                   {recentInvoices.map((invoice) => (
                     <tr key={invoice.id} className="cursor-pointer border-b border-gray-100 hover:bg-gray-50" onClick={() => navigate(`/accounting/invoices/${invoice.id}`)}>
-                      <td className="px-2 py-1.5 text-gray-900">{invoice.display_id}</td>
+                      <td className="px-2 py-1.5 text-gray-900" onClick={(e) => e.stopPropagation()}><EntityLink kind="invoice" id={invoice.id} label={invoice.display_id} /></td>
                       <td className="px-2 py-1.5 text-gray-700">{invoice.issue_date}</td>
                       <td className="px-2 py-1.5 text-gray-700">{invoice.status}</td>
                       <td className="px-2 py-1.5 text-gray-700">{(Number(invoice.total_cents ?? 0) / 100).toFixed(2)}</td>

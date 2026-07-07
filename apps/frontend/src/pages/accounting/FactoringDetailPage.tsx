@@ -21,6 +21,7 @@ import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { FactorReserveCard } from "./FactorReserveCard";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -221,7 +222,7 @@ export function FactoringDetailPage() {
             <tbody>
               {detail.invoices.map((invoice) => (
                 <tr key={invoice.id} className="cursor-pointer border-b border-gray-100 hover:bg-gray-50" onClick={() => navigate(`/accounting/invoices/${invoice.id}`)}>
-                  <td className="px-2 py-1.5 text-gray-900">{invoice.display_id}</td>
+                  <td className="px-2 py-1.5 text-gray-900" onClick={(e) => e.stopPropagation()}><EntityLink kind="invoice" id={invoice.id} label={invoice.display_id} /></td>
                   <td className="px-2 py-1.5 text-gray-700">{invoice.customer_name}</td>
                   <td className="px-2 py-1.5 text-gray-700">{formatDateUS(invoice.issue_date)}</td>
                   <td className="px-2 py-1.5 text-gray-700">{money(invoice.total_cents)}</td>

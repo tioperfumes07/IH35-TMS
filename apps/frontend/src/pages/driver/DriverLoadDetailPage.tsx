@@ -1,4 +1,5 @@
 import { useParams, Link } from "react-router-dom";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { getDriverLoad, type DriverLoad } from "../../api/driver";
@@ -31,7 +32,7 @@ export function DriverLoadDetailPage() {
         </button>
       </div>
       <h2 className="text-base font-semibold">
-        {load.display_id} — {t("driver.load_detail")}
+        <EntityLink kind="load" id={load.id} label={load.display_id} /> — {t("driver.load_detail")}
       </h2>
       <p className="text-xs text-slate-600">
         {t("driver.customer")}: {load.customer_name}

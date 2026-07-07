@@ -12,6 +12,7 @@ import { StatusBadge } from "../../components/layout/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { PaymentApplyModal } from "./PaymentApplyModal";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -153,7 +154,7 @@ export function PaymentDetailPage() {
         </DataPanelRow>
         <DataPanelRow>
           <span className="text-xs font-semibold text-gray-600">Deposited to</span>
-          <span className="text-sm text-gray-900">{payment.deposited_to_account_id || "-"}</span>
+          <span className="text-sm text-gray-900"><EntityLink kind="bank_account" id={payment.deposited_to_account_id || undefined} label={payment.deposited_to_account_id ? payment.deposited_to_account_id.slice(0, 8) : "-"} /></span>
         </DataPanelRow>
       </DataPanel>
 
@@ -182,7 +183,7 @@ export function PaymentDetailPage() {
                 const openAfter = Math.max(0, Number(app.invoice_amount_open_cents ?? 0));
                 return (
                   <tr key={app.id} className="border-b border-gray-100">
-                    <td className="px-2 py-1.5 text-gray-900">{app.invoice_display_id}</td>
+                    <td className="px-2 py-1.5 text-gray-900"><EntityLink kind="invoice" id={app.invoice_id ?? undefined} label={app.invoice_display_id ?? app.invoice_id?.slice(0, 8)} /></td>
                     <td className="px-2 py-1.5 text-gray-700">{money(app.amount_cents)}</td>
                     <td className="px-2 py-1.5 text-gray-700">{money(openAfter)}</td>
                     <td className="px-2 py-1.5 text-gray-700">{new Date(app.applied_at).toLocaleString()}</td>

@@ -259,7 +259,7 @@ export function InvoicesListPage() {
                 </td>
                 <td className="code-cell px-3 py-2 text-gray-900">
                   <span className="inline-flex items-center gap-1">
-                    {invoice.display_id}
+                    <EntityLink kind="invoice" id={invoice.id} label={invoice.display_id} />
                     {invoice.factoring_advance_id ? <ArrowRightCircle className="h-3.5 w-3.5 text-slate-600" /> : null}
                   </span>
                 </td>

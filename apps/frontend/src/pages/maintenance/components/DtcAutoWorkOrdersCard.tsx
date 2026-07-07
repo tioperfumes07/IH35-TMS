@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getMaintenanceDtcAutoWorkOrders } from "../../../api/maintenance";
+import { EntityLink } from "../../../components/shared/EntityLink";
 
 type Props = {
   operatingCompanyId: string;
@@ -73,7 +74,7 @@ export function DtcAutoWorkOrdersCard({ operatingCompanyId, compact = false, onO
             <div key={row.id} className="rounded-sm border border-gray-200 p-2 text-xs">
               <div className="flex items-center justify-between">
                 <span className="font-semibold text-gray-900">
-                  {row.display_id ?? row.id.slice(0, 8)} · Unit {row.unit_number ?? "N/A"}
+                  <EntityLink kind="work_order" id={row.id} label={row.display_id ?? row.id.slice(0, 8)} /> · Unit {row.unit_number ?? "N/A"}
                 </span>
                 <span className="rounded-sm bg-amber-100 px-2 py-0.5 text-amber-800">{row.status}</span>
               </div>
