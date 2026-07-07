@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { legalTemplatesApi, type LegalTemplateDraft } from "../../../api/legal-templates";
+import { legalTemplatesApi, type LegalTemplateDraft, type LegalTemplateSummary } from "../../../api/legal-templates";
 import { Button } from "../../../components/Button";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
@@ -55,11 +56,17 @@ export function LegalTemplatesListPage() {
   const rows = query.data ?? [];
   const total = rows.length;
 
-  const emptyText = useMemo(() => {
-    if (query.isLoading) return "Loading legal templates...";
-    if (rows.length > 0) return "";
-    return "No legal templates found for current filters.";
-  }, [query.isLoading, rows.length]);
+  const columns = useMemo<ParityColumn<LegalTemplateSummary>[]>(
+    () => [
+      { key: "template_code", label: "Code", sortable: true, render: (row) => <span className="font-mono text-xs">{row.template_code}</span> },
+      { key: "version", label: "Version", sortable: true, render: (row) => String(row.version) },
+      { key: "display_name_en", label: "Display Name (EN)", sortable: true, render: (row) => row.display_name_en },
+      { key: "category", label: "Category", sortable: true, render: (row) => row.category },
+      { key: "status", label: "Status", sortable: true, render: (row) => <span className={statusPillClass(row.status)}>{row.status}</span> },
+      { key: "updated_at", label: "Updated", sortable: true, render: (row) => new Date(row.updated_at).toLocaleString() },
+    ],
+    [],
+  );
 
   return (
     <div className="space-y-3">
@@ -78,66 +85,44 @@ export function LegalTemplatesListPage() {
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
       <LegalModuleTabs activeTabId="templates" />
 
-      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-4">
-        <input
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="Search code or display name"
-          className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-2"
-        />
-        <input
-          value={category}
-          onChange={(event) => setCategory(event.target.value)}
-          placeholder="Category"
-          className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
-        />
-        <SelectCombobox
-          value={status}
-          onChange={(event) => setStatus(event.target.value as (typeof STATUS_OPTIONS)[number] | "all")}
-          className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
-        >
-          <option value="all">All statuses</option>
-          {STATUS_OPTIONS.map((item) => (
-            <option key={item} value={item}>
-              {item}
-            </option>
-          ))}
-        </SelectCombobox>
-      </div>
-
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
-            <tr>
-              <th className="px-3 py-2 text-left">Code</th>
-              <th className="px-3 py-2 text-left">Version</th>
-              <th className="px-3 py-2 text-left">Display Name (EN)</th>
-              <th className="px-3 py-2 text-left">Category</th>
-              <th className="px-3 py-2 text-left">Status</th>
-              <th className="px-3 py-2 text-left">Updated</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr
-                key={row.id}
-                className="cursor-pointer border-t border-gray-100 hover:bg-gray-50"
-                onClick={() => navigate(`/legal/templates/${row.id}`)}
-              >
-                <td className="px-3 py-2 font-mono text-xs">{row.template_code}</td>
-                <td className="px-3 py-2">{row.version}</td>
-                <td className="px-3 py-2">{row.display_name_en}</td>
-                <td className="px-3 py-2">{row.category}</td>
-                <td className="px-3 py-2">
-                  <span className={statusPillClass(row.status)}>{row.status}</span>
-                </td>
-                <td className="px-3 py-2">{new Date(row.updated_at).toLocaleString()}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {emptyText ? <div className="px-3 py-6 text-sm text-gray-500">{emptyText}</div> : null}
-      </div>
+      <ParityTable
+        rows={rows}
+        columns={columns}
+        rowKey={(row) => row.id}
+        onRowClick={(row) => navigate(`/legal/templates/${row.id}`)}
+        // Settled-only empty (LIST-EMPTY-1 invariant): see LegalPoliciesPage for the same pattern.
+        loading={query.isPending || (query.isFetching && rows.length === 0)}
+        storageKey="legal-templates"
+        emptyText="No legal templates found for current filters."
+        filterBar={
+          <div className="grid gap-2 md:grid-cols-4">
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search code or display name"
+              className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-2"
+            />
+            <input
+              value={category}
+              onChange={(event) => setCategory(event.target.value)}
+              placeholder="Category"
+              className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
+            />
+            <SelectCombobox
+              value={status}
+              onChange={(event) => setStatus(event.target.value as (typeof STATUS_OPTIONS)[number] | "all")}
+              className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
+            >
+              <option value="all">All statuses</option>
+              {STATUS_OPTIONS.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </SelectCombobox>
+          </div>
+        }
+      />
 
       <LegalTemplateNewModal
         open={newOpen}

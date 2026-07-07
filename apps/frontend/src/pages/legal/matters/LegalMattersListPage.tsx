@@ -1,14 +1,14 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { legalMattersApi, type LegalMatterListRow } from "../../../api/legal-matters";
 import { Button } from "../../../components/Button";
 import { PageHeader } from "../../../components/layout/PageHeader";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { formatDateUS } from "../../../lib/formatDate";
-import { useListState } from "../../../components/list-state";
 
 function daysUntil(dateStr: unknown) {
   if (!dateStr || typeof dateStr !== "string") return null;
@@ -38,8 +38,41 @@ export function LegalMattersListPage() {
 
   const rows = listQuery.data?.matters ?? [];
 
-  // Empty message renders only once the matters query settles (no first-fetch flash).
-  const listState = useListState(listQuery, rows.length === 0);
+  const columns = useMemo<ParityColumn<LegalMatterListRow>[]>(
+    () => [
+      { key: "matter_number", label: "Number", sortable: true, render: (row) => <span className="font-mono text-xs">{String(row.matter_number ?? "")}</span> },
+      { key: "type", label: "Type", sortable: true, render: (row) => String(row.type ?? "") },
+      { key: "status", label: "Status", sortable: true, render: (row) => String(row.status ?? "") },
+      { key: "severity", label: "Severity", sortable: true, render: (row) => String(row.severity ?? "") },
+      {
+        key: "statute_of_limitations_at",
+        label: "SOL / hearing",
+        sortable: true,
+        render: (row) => {
+          const sol = daysUntil(row.statute_of_limitations_at);
+          const urgent = sol !== null && sol >= 0 && sol < 14;
+          return urgent ? (
+            <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs text-slate-700">SOL {sol}d</span>
+          ) : (
+            <span className="text-xs text-gray-600">
+              {row.statute_of_limitations_at ? formatDateUS(row.statute_of_limitations_at) : "—"}
+            </span>
+          );
+        },
+      },
+      {
+        key: "actions",
+        label: "",
+        alwaysVisible: true,
+        render: (row) => (
+          <Link to={`/legal/matters/${String(row.id ?? "")}`} className="text-xs text-slate-700">
+            Open
+          </Link>
+        ),
+      },
+    ],
+    [],
+  );
 
   return (
     <div className="space-y-3">
@@ -55,96 +88,54 @@ export function LegalMattersListPage() {
       <LegalModuleTabs activeTabId="matters" />
       {!companyId ? (
         <p className="text-sm text-gray-600">Select an operating company.</p>
+      ) : listQuery.isError ? (
+        <p className="text-sm text-red-600">Could not load matters.</p>
       ) : (
-        <>
-          <div className="flex flex-wrap gap-2">
-            <SelectCombobox
-              className="rounded-sm border border-gray-200 px-2 py-1 text-sm"
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-            >
-              <option value="">All statuses</option>
-              {["open", "investigating", "litigation", "settled", "dismissed", "judgment", "closed"].map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </SelectCombobox>
-            <SelectCombobox
-              className="rounded-sm border border-gray-200 px-2 py-1 text-sm"
-              value={severity}
-              onChange={(e) => setSeverity(e.target.value)}
-            >
-              <option value="">All severity</option>
-              {["critical", "high", "medium", "low"].map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </SelectCombobox>
-            <SelectCombobox className="rounded-sm border border-gray-200 px-2 py-1 text-sm" value={type} onChange={(e) => setType(e.target.value)}>
-              <option value="">All types</option>
-              {["lawsuit", "claim", "demand_letter", "settlement", "regulatory", "other"].map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </SelectCombobox>
-          </div>
-          {listQuery.isLoading ? (
-            <p className="text-sm text-gray-600">Loading…</p>
-          ) : listQuery.isError ? (
-            <p className="text-sm text-red-600">Could not load matters.</p>
-          ) : listState.isEmpty ? (
-            <p className="text-sm text-gray-600">No matters match filters.</p>
-          ) : (
-            <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-              <table className="min-w-full text-left text-sm">
-                <thead className="bg-gray-50 text-xs uppercase text-gray-600">
-                  <tr>
-                    <th className="px-3 py-2">Number</th>
-                    <th className="px-3 py-2">Type</th>
-                    <th className="px-3 py-2">Status</th>
-                    <th className="px-3 py-2">Severity</th>
-                    <th className="px-3 py-2">SOL / hearing</th>
-                    <th className="px-3 py-2"> </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((row: LegalMatterListRow) => {
-                    const id = String(row.id ?? "");
-                    const sol = daysUntil(row.statute_of_limitations_at);
-                    const urgent = sol !== null && sol >= 0 && sol < 14;
-                    return (
-                      <tr key={id} className="border-t border-gray-100">
-                        <td className="px-3 py-2 font-mono text-xs">{String(row.matter_number ?? "")}</td>
-                        <td className="px-3 py-2">{String(row.type ?? "")}</td>
-                        <td className="px-3 py-2">{String(row.status ?? "")}</td>
-                        <td className="px-3 py-2">{String(row.severity ?? "")}</td>
-                        <td className="px-3 py-2">
-                          {urgent ? (
-                            <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs text-slate-700">
-                              SOL {sol}d
-                            </span>
-                          ) : (
-                            <span className="text-xs text-gray-600">
-                              {row.statute_of_limitations_at ? formatDateUS(row.statute_of_limitations_at) : "—"}
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-3 py-2">
-                          <Link to={`/legal/matters/${id}`} className="text-xs text-slate-700">
-                            Open
-                          </Link>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+        <ParityTable
+          rows={rows}
+          columns={columns}
+          rowKey={(row) => String(row.id ?? "")}
+          // Settled-only empty (LIST-EMPTY-1 invariant): see LegalPoliciesPage for the same pattern.
+          loading={listQuery.isPending || (listQuery.isFetching && rows.length === 0)}
+          storageKey="legal-matters"
+          emptyText="No matters match filters."
+          filterBar={
+            <div className="flex flex-wrap gap-2">
+              <SelectCombobox
+                className="rounded-sm border border-gray-200 px-2 py-1 text-sm"
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+              >
+                <option value="">All statuses</option>
+                {["open", "investigating", "litigation", "settled", "dismissed", "judgment", "closed"].map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </SelectCombobox>
+              <SelectCombobox
+                className="rounded-sm border border-gray-200 px-2 py-1 text-sm"
+                value={severity}
+                onChange={(e) => setSeverity(e.target.value)}
+              >
+                <option value="">All severity</option>
+                {["critical", "high", "medium", "low"].map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </SelectCombobox>
+              <SelectCombobox className="rounded-sm border border-gray-200 px-2 py-1 text-sm" value={type} onChange={(e) => setType(e.target.value)}>
+                <option value="">All types</option>
+                {["lawsuit", "claim", "demand_letter", "settlement", "regulatory", "other"].map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </SelectCombobox>
             </div>
-          )}
-        </>
+          }
+        />
       )}
     </div>
   );
