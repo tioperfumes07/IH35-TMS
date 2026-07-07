@@ -4,20 +4,36 @@ import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
-import { ParityTable } from "../../components/parity/ParityTable";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { InventoryModuleTabs } from "./InventoryModuleTabs";
 import { PartCreateDrawer } from "./PartCreateDrawer";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
-const columns = [
-  { key: "name", label: "Part Name" },
-  { key: "sku", label: "SKU" },
+// ParityColumn only honors key/label/render/className/sortable — the earlier align/format/badge keys
+// were silently ignored (columns is a variable, so no excess-property check), so unit-cost formatting
+// and the status badge never rendered. Use render (formatting/badge) + className (right-align) instead.
+const columns: ParityColumn<InventoryPartRow>[] = [
+  { key: "name", label: "Part Name", sortable: true },
+  { key: "sku", label: "SKU", sortable: true },
   // INV-1: category is now a persisted column — surface it so the saved value is visible.
-  { key: "category", label: "Category" },
-  { key: "on_hand_qty", label: "On Hand Qty", align: "right" as const },
-  { key: "unit_cost", label: "Unit Cost", align: "right" as const, format: (v: number) => v ? `$${Number(v).toFixed(2)}` : "—" },
+  { key: "category", label: "Category", sortable: true },
+  { key: "on_hand_qty", label: "On Hand Qty", className: "text-right", sortable: true },
+  {
+    key: "unit_cost",
+    label: "Unit Cost",
+    className: "text-right",
+    render: (row) => (row.unit_cost ? `$${Number(row.unit_cost).toFixed(2)}` : "—"),
+  },
   { key: "location", label: "Location/Bin" },
-  { key: "status", label: "Status", badge: true },
+  {
+    key: "status",
+    label: "Status",
+    render: (row) => (
+      <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-700">
+        {row.status}
+      </span>
+    ),
+  },
 ];
 
 // B1: the inventory "Parts & Stock" page reads the real maintenance.parts_inventory table via
