@@ -134,4 +134,23 @@ describeIntegration("expenses.routes integration", () => {
     });
     expect(res.statusCode).toBe(401);
   });
+
+  it("GET /api/v1/loads/:id/expenses rejects unauthenticated callers", async () => {
+    const res = await app.inject({
+      method: "GET",
+      url: `/api/v1/loads/${randomUUID()}/expenses`,
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it("GET /api/v1/loads/:id/expenses returns rows for authenticated callers", async () => {
+    const res = await app.inject({
+      method: "GET",
+      url: `/api/v1/loads/${randomUUID()}/expenses?operating_company_id=${companyId}`,
+      headers: testAuthHeaders(),
+    });
+    expect(res.statusCode).toBe(200);
+    const body = res.json() as { rows?: unknown };
+    expect(Array.isArray(body.rows)).toBe(true);
+  });
 });

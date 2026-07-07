@@ -1318,4 +1318,90 @@ export async function registerLoadRoutes(app: FastifyInstance) {
     if (!removed) return reply.code(404).send({ error: "mdata_load_stop_not_found" });
     return { ok: true };
   });
+
+  // Reverse drill-through: list loads assigned to a specific driver (primary OR secondary).
+  // Read-only SELECT, company-scoped. Powers the Driver detail "Loads" tab.
+  const driverLoadsParamSchema = z.object({ id: z.string().uuid() });
+  const driverLoadsQuerySchema = z.object({
+    operating_company_id: z.string().uuid().optional(),
+    status: z.preprocess(
+      (v) => (typeof v === "string" ? v.split(",").map((s) => s.trim()).filter(Boolean) : v),
+      z.array(loadStatusSchema).optional()
+    ),
+    limit: z.coerce.number().int().min(1).max(200).default(50),
+    offset: z.coerce.number().int().min(0).default(0),
+  });
+  app.get("/api/v1/drivers/:id/loads", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    const params = driverLoadsParamSchema.safeParse(req.params ?? {});
+    if (!params.success) return sendValidationError(reply, params.error);
+    const parsedQuery = driverLoadsQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
+    const { status, limit, offset, operating_company_id } = parsedQuery.data;
+
+    const result = await withCurrentUser(authUser.uuid, async (client) => {
+      // Resolve operating company upfront so the predicate is a static literal in every query
+      // (the verify-mdata-entity-scope guard does static template-literal scanning).
+      const scopedId = operating_company_id ?? await resolveOperatingCompanyId(client, authUser.uuid);
+      if (!scopedId) return { rows: [], totalCount: 0 };
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedId]);
+
+      // $1 = driver uuid, $2 = operating_company_id uuid (always present)
+      const values: unknown[] = [params.data.id, scopedId];
+      const extraFilters: string[] = [];
+      if (status && status.length > 0) {
+        values.push(status);
+        extraFilters.push(`l.status = ANY($${values.length}::mdata.load_status_enum[])`);
+      }
+      const extraWhere = extraFilters.length > 0 ? `AND ${extraFilters.join(" AND ")}` : "";
+
+      const countRes = await client.query(
+        `SELECT count(*)::int AS cnt
+         FROM mdata.loads l
+         WHERE l.operating_company_id = $2::uuid
+           AND l.soft_deleted_at IS NULL
+           AND (l.assigned_primary_driver_id = $1::uuid OR l.assigned_secondary_driver_id = $1::uuid)
+           ${extraWhere}`,
+        values
+      );
+      values.push(limit, offset);
+      const rowsRes = await client.query(
+        `
+          SELECT
+            l.id, l.operating_company_id, l.load_number, l.customer_id, l.status, l.rate_total_cents, l.currency_code,
+            l.assigned_unit_id, l.assigned_primary_driver_id, l.assigned_secondary_driver_id,
+            l.notes, l.created_at, l.updated_at,
+            c.customer_name AS customer_name,
+            u.unit_number AS assigned_unit_number,
+            sp.city AS first_pickup_city,
+            sp.scheduled_arrival_at AS pickup_scheduled_at,
+            sd.city AS first_delivery_city,
+            sd.scheduled_arrival_at AS delivery_scheduled_at
+          FROM mdata.loads l
+          JOIN mdata.customers c ON c.id = l.customer_id
+          LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
+          LEFT JOIN LATERAL (
+            SELECT city, scheduled_arrival_at FROM mdata.load_stops
+            WHERE load_id = l.id AND stop_type = 'pickup'
+            ORDER BY sequence_number ASC LIMIT 1
+          ) sp ON true
+          LEFT JOIN LATERAL (
+            SELECT city, scheduled_arrival_at FROM mdata.load_stops
+            WHERE load_id = l.id AND stop_type = 'delivery'
+            ORDER BY sequence_number DESC LIMIT 1
+          ) sd ON true
+          WHERE l.operating_company_id = $2::uuid
+            AND l.soft_deleted_at IS NULL
+            AND (l.assigned_primary_driver_id = $1::uuid OR l.assigned_secondary_driver_id = $1::uuid)
+            ${extraWhere}
+          ORDER BY l.created_at DESC
+          LIMIT $${values.length - 1} OFFSET $${values.length}
+        `,
+        values
+      );
+      return { rows: rowsRes.rows, totalCount: Number((countRes.rows[0] as { cnt?: number } | undefined)?.cnt ?? 0) };
+    });
+    return { loads: result.rows, total_count: result.totalCount };
+  });
 }

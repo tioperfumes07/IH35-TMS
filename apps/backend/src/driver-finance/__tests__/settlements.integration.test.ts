@@ -121,4 +121,23 @@ describeIntegration("settlements.routes integration", () => {
     });
     expect(res.statusCode).toBe(404);
   });
+
+  it("GET /api/v1/drivers/:id/settlements rejects unauthenticated callers", async () => {
+    const res = await app.inject({
+      method: "GET",
+      url: `/api/v1/drivers/${randomUUID()}/settlements`,
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it("GET /api/v1/drivers/:id/settlements returns rows for authenticated callers", async () => {
+    const res = await app.inject({
+      method: "GET",
+      url: `/api/v1/drivers/${randomUUID()}/settlements?operating_company_id=${companyId}`,
+      headers: testAuthHeaders(),
+    });
+    expect(res.statusCode).toBe(200);
+    const body = res.json() as { settlements?: unknown };
+    expect(Array.isArray(body.settlements)).toBe(true);
+  });
 });

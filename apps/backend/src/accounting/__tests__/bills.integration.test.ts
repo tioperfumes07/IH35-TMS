@@ -104,4 +104,32 @@ describeIntegration("bills.routes integration", () => {
     const body = res.json() as { rows?: unknown };
     expect(Array.isArray(body.rows)).toBe(true);
   });
+
+  it("GET /api/v1/vendors/:vendorId/bills rejects unauthenticated callers", async () => {
+    const res = await app.inject({
+      method: "GET",
+      url: `/api/v1/vendors/${randomUUID()}/bills?operating_company_id=${companyId}`,
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it("GET /api/v1/vendors/:vendorId/bills rejects non-accounting callers", async () => {
+    const res = await app.inject({
+      method: "GET",
+      url: `/api/v1/vendors/${randomUUID()}/bills?operating_company_id=${companyId}`,
+      headers: testAuthHeaders(undefined, "Dispatcher"),
+    });
+    expect(res.statusCode).toBe(403);
+  });
+
+  it("GET /api/v1/vendors/:vendorId/bills returns rows for accounting callers", async () => {
+    const res = await app.inject({
+      method: "GET",
+      url: `/api/v1/vendors/${randomUUID()}/bills?operating_company_id=${companyId}&limit=5`,
+      headers: testAuthHeaders(undefined, "Accountant"),
+    });
+    expect(res.statusCode).toBe(200);
+    const body = res.json() as { rows?: unknown };
+    expect(Array.isArray(body.rows)).toBe(true);
+  });
 });
