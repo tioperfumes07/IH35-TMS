@@ -77,7 +77,7 @@ export function TasksReportPage() {
   }, [tasks, today]);
 
   // ParityTable columns (A1 grammar): built-in sort/density/column-toggle/pager replace the former
-  // hand-rolled <table>. Preserves the overdue red-highlight on the Overdue column.
+  // hand-rolled table. Preserves the overdue red-highlight on the Overdue column.
   const employeeColumns = useMemo<ParityColumn<EmployeeRow>[]>(
     () => [
       { key: "name", label: "Assignee", sortable: true, cellClass: "font-medium text-slate-800" },

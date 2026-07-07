@@ -33,7 +33,7 @@ export function TasksMinePage() {
   const overdue = openTasks.filter((t) => t.scheduled_date < today);
 
   // ParityTable columns (A1 grammar): built-in sort/density/column-toggle/pager replace the former
-  // hand-rolled <table>. Preserves the overdue red-highlight on the Scheduled column.
+  // hand-rolled table. Preserves the overdue red-highlight on the Scheduled column.
   const columns = useMemo<ParityColumn<Task>[]>(
     () => [
       { key: "title", label: "Task", sortable: true, cellClass: "font-medium text-slate-800" },
