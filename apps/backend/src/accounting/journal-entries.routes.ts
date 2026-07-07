@@ -130,7 +130,7 @@ export async function registerJournalEntryRoutes(app: FastifyInstance) {
 
   // Reverse drill-through: "what posted this JE" — read-only, company-scoped. Powers the JE detail
   // page's source lineage (bill/expense/settlement/etc. that generated each posting line).
-  app.get("/api/v1/accounting/journal-entries/:id/source-links", async (req, reply) => {
+  app.get("/api/v1/accounting/journal-entries/:id/source-links", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccessAccounting(user.role)) return reply.code(403).send({ error: "forbidden" });

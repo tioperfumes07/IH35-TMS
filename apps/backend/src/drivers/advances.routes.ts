@@ -32,7 +32,7 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
 }
 
 export async function registerDriverAdvancesRoutes(app: FastifyInstance) {
-  app.get("/api/v1/drivers/:id/advances", async (req, reply) => {
+  app.get("/api/v1/drivers/:id/advances", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = officeAuth(req, reply);
     if (!authUser) return;
 
