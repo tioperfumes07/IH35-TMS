@@ -1,4 +1,5 @@
 import type { SettlementListRow } from "../../../api/driverFinance";
+import { EntityLink } from "../../../components/shared/EntityLink";
 
 type Props = {
   rows: SettlementListRow[];
@@ -29,7 +30,7 @@ export function SettlementsTable({ rows, onOpen }: Props) {
             <tr key={row.id} className="border-t border-gray-100 hover:bg-gray-50">
               <td className="px-2 py-1">
                 <div className="font-semibold">{row.driver_full_name}</div>
-                <div className="text-[10px] text-gray-500">{row.driver_display_id}</div>
+                <div className="text-[10px] text-gray-500"><EntityLink kind="driver" id={row.driver_id} label={row.driver_display_id} /></div>
               </td>
               <td className="px-2 py-1">{row.period_start} → {row.period_end}</td>
               <td className="px-2 py-1">—</td>
