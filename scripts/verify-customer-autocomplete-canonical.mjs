@@ -16,20 +16,25 @@ if (!fs.existsSync(targetFile)) {
 
 const source = fs.readFileSync(targetFile, "utf8");
 
-const customerBranch = source.match(/if\s*\(\s*entityType\s*===\s*["']customer["']\s*\)\s*\{[\s\S]*?\n\s*\}/);
-if (!customerBranch) {
-  fail("customer branch in searchQboMasterData not found");
+// The customer + vendor pickers must read the CANONICAL master tables (mdata.customers / mdata.vendors)
+// via autocomplete mode, never the mdata.qbo_* mirror — otherwise records created through the canonical
+// writer are invisible in the picker ("create → disappears"). These are combined into one branch.
+const canonicalBranch = source.match(
+  /if\s*\(\s*entityType\s*===\s*["']customer["']\s*\|\|\s*entityType\s*===\s*["']vendor["']\s*\)\s*\{[\s\S]*?\n\s*\}/
+);
+if (!canonicalBranch) {
+  fail("combined customer||vendor canonical branch in searchQboMasterData not found");
 }
 
-const branchText = customerBranch[0];
-if (!branchText.includes("/api/v1/mdata/customers?")) {
-  fail('customer autocomplete is not using "/api/v1/mdata/customers"');
+const branchText = canonicalBranch[0];
+for (const path of ["/api/v1/mdata/customers", "/api/v1/mdata/vendors"]) {
+  if (!branchText.includes(path)) fail(`canonical autocomplete is not using "${path}"`);
 }
-if (branchText.includes("/api/v1/mdata/qbo/customers")) {
-  fail('customer autocomplete still references "/api/v1/mdata/qbo/customers"');
+for (const mirror of ["/api/v1/mdata/qbo/customers", "/api/v1/mdata/qbo/vendors"]) {
+  if (branchText.includes(mirror)) fail(`canonical autocomplete still references the mirror "${mirror}"`);
 }
 if (!branchText.includes("autocomplete")) {
-  fail('customer autocomplete request must include "autocomplete=true"');
+  fail('canonical autocomplete request must include "autocomplete=true"');
 }
 
-console.log("verify:customer-autocomplete-canonical — OK");
+console.log("verify:customer-autocomplete-canonical — OK (customer + vendor canonical)");
