@@ -1,4 +1,5 @@
 import type { InTransitIssue } from "../../../api/maintenance";
+import { EntityLink } from "../../../components/shared/EntityLink";
 
 type Props = {
   issues: InTransitIssue[];
@@ -17,7 +18,7 @@ export function InTransitTriageBand({ issues, onTriage }: Props) {
             onClick={() => onTriage(issue)}
             className="flex w-full items-center justify-between border-b border-amber-100 px-2 py-1 text-left text-xs hover:bg-amber-100"
           >
-            <span className="font-semibold">{issue.unit_display_id}</span>
+            <EntityLink kind="unit" id={issue.unit_id} label={issue.unit_display_id} className="font-semibold text-slate-700 hover:underline" />
             <span>{issue.issue_category}</span>
             <span>{Math.floor(issue.hours_since_report)}h</span>
             <span className="text-slate-700">Triage →</span>
