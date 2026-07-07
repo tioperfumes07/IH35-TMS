@@ -251,8 +251,23 @@ export type Factor = {
   reserve_rate: number;
   recourse_days: number;
   active: boolean;
+  noa_stamp_text: string | null;
+  noa_remit_to_name: string | null;
+  noa_remit_to_addr: string | null;
+  noa_remit_to_wire_ref: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type LetterOfRelease = {
+  id: string;
+  tenant_id: string;
+  factor_id: string;
+  issued_date: string;
+  effective_release_date: string;
+  released_by_user_id: string | null;
+  notes: string | null;
+  created_at: string;
 };
 
 export type CustomerFactorAssignment = {
@@ -313,6 +328,10 @@ export function updateFactor(
     reserve_rate: number;
     recourse_days: number;
     active: boolean;
+    noa_stamp_text: string | null;
+    noa_remit_to_name: string | null;
+    noa_remit_to_addr: string | null;
+    noa_remit_to_wire_ref: string | null;
   }>
 ) {
   return apiRequest<Factor>(`/api/v1/factoring/factors/${encodeURIComponent(factorId)}`, {
@@ -358,4 +377,31 @@ export function assignCustomerFactor(
       ...body,
     },
   });
+}
+
+export function listLetterOfReleases(factorId: string, companyId: string) {
+  return apiRequest<{ letters_of_release: LetterOfRelease[] }>(
+    `/api/v1/factoring/factors/${encodeURIComponent(factorId)}/letter-of-release?${q(companyId)}`
+  );
+}
+
+export function createLetterOfRelease(
+  factorId: string,
+  companyId: string,
+  body: {
+    issued_date: string;
+    effective_release_date: string;
+    notes?: string | null;
+  }
+) {
+  return apiRequest<LetterOfRelease>(
+    `/api/v1/factoring/factors/${encodeURIComponent(factorId)}/letter-of-release`,
+    {
+      method: "POST",
+      body: {
+        operating_company_id: companyId,
+        ...body,
+      },
+    }
+  );
 }

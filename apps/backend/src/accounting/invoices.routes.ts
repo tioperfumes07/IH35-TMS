@@ -512,6 +512,37 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       const current = currentRes.rows[0] ?? null;
       if (!current) return { code: 404 as const, error: "invoice_not_found" };
       if (String(current.status) !== "draft") return { code: 409 as const, error: "invoice_not_draft" };
+
+      // FACT-PAR-2: 422 guard — customer with active factor assignment requires NOA config on the factor
+      const invoiceDate = String(current.issue_date ?? new Date().toISOString().slice(0, 10));
+      const noaCheck = await client.query(
+        `
+          SELECT
+            f.id::text AS factor_id,
+            f.name AS factor_name,
+            f.noa_stamp_text,
+            f.noa_remit_to_name
+          FROM factoring.customer_factor_assignment a
+          JOIN factoring.factor f ON f.id = a.factor_id
+          WHERE a.tenant_id = $1::uuid
+            AND a.customer_id = $2::uuid
+            AND a.effective_from <= $3::date
+            AND (a.effective_to IS NULL OR a.effective_to > $3::date)
+          ORDER BY a.effective_from DESC
+          LIMIT 1
+        `,
+        [query.data.operating_company_id, current.customer_id, invoiceDate]
+      );
+      const noaRow = noaCheck.rows[0] ?? null;
+      if (noaRow && !noaRow.noa_stamp_text && !noaRow.noa_remit_to_name) {
+        return {
+          code: 422 as const,
+          error: "noa_config_missing",
+          factor_id: String(noaRow.factor_id),
+          factor_name: String(noaRow.factor_name),
+        };
+      }
+
       await recomputeInvoiceTotals(client, params.data.id);
       await client.query(
         `
@@ -582,7 +613,16 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       }
       return { code: 200 as const, data: detail };
     });
-    if ("error" in result) return reply.code(result.code).send({ error: result.error });
+    if ("error" in result) {
+      if (result.error === "noa_config_missing" && "factor_id" in result) {
+        return reply.code(result.code).send({
+          error: result.error,
+          message: `Factor "${result.factor_name}" has an active assignment for this customer but is missing NOA stamp text or remit-to address. Configure NOA fields on the factor profile before sending this invoice.`,
+          factor_id: result.factor_id,
+        });
+      }
+      return reply.code(result.code).send({ error: result.error });
+    }
     void withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
       emitAccountingSpineEvent(client, {
         operating_company_id: query.data.operating_company_id,
