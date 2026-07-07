@@ -87,7 +87,7 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
     return summary.row ?? {
         operating_company_id: companyId,
         active_factor_id: summary.activeFactor?.id ?? null,
-        active_factor_name: String(summary.activeFactor?.vendor_name ?? "Factoring Company"),
+        active_factor_name: summary.activeFactor?.vendor_name ?? null,
         recourse_days: 90,
         reserve_balance: 0,
         chargeback_balance: 0,
@@ -198,7 +198,7 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
       const current = rows[0] ?? {
         operating_company_id: companyId,
         active_factor_id: activeFactor?.id ?? null,
-        active_factor_name: String(activeFactor?.vendor_name ?? "Factoring Company"),
+        active_factor_name: activeFactor?.vendor_name ?? null,
         recourse_days: 90,
         active_factor_count: 0,
         single_factor_invariant_ok: true,

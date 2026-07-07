@@ -1,0 +1,28 @@
+{
+  "block_id": "FACT-FIX-1",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "MODULE-SWEEP",
+  "task": "Factoring profile truth + TEST-vendor guard + prompt-chain replacement",
+  "branch": "fix/factoring-profile-truth",
+  "lane": "A",
+  "details": [
+    "apps/frontend/src/pages/factoring/FactoringHome.tsx: activeFactorVendor resolves ONLY by summary.active_factor_id (removed name-includes + vendors[0] fallback). Page title uses summary.active_factor_name only. Empty-state card when no active factor.",
+    "apps/frontend/src/pages/factoring/FactoringHome.tsx: 13-prompt window.prompt chain replaced with profileEditOpen modal form (Modal + inline form; % fields numeric 0-100, email fields typed email).",
+    "apps/backend/src/factoring/factoring.routes.ts: both 'Factoring Company' fallback literals -> null (active_factor_name: string | null).",
+    "apps/backend/src/mdata/vendors.routes.ts: vendor create route rejects /^TEST[-_ ]/i names with 422 when NODE_ENV=production.",
+    "apps/backend/src/admin/admin-jobs.service.ts: additive operation 'vendors.archive_test_rows' deactivates TEST-* vendors, appends audit rows, returns affected ids. Owner-gated; DO NOT auto-run.",
+    "scripts/verify-no-test-fixture-names.mjs: CI guard scanning 4510 files for TEST-VENDOR literals in non-test production source. PASS."
+  ],
+  "allowed_files": [
+    ".block-ready/FACT-FIX-1.json",
+    "apps/frontend/src/pages/factoring/FactoringHome.tsx",
+    "apps/backend/src/factoring/factoring.routes.ts",
+    "apps/backend/src/mdata/vendors.routes.ts",
+    "apps/backend/src/admin/admin-jobs.service.ts",
+    "scripts/verify-no-test-fixture-names.mjs"
+  ],
+  "open_decisions": [
+    "FACT-3: duplicate Faro vendor rows — recommend canonical QBO-linked row 3585f27e; carry terms meta from 6dd1f7f5. Owner to merge manually."
+  ]
+}
