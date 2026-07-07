@@ -252,7 +252,7 @@ function CustomerFinancialOverviewSection(props: {
         <div className="max-h-56 space-y-1 overflow-auto text-xs">
           {props.summary.recent_loads.map((l) => (
             <div key={l.id} className="flex justify-between gap-2 border-b border-gray-100 py-1">
-              <span className="truncate">{l.load_number ?? l.id.slice(0, 8)}</span>
+              <EntityLink kind="load" id={l.id} label={l.load_number ?? undefined} className="truncate text-slate-700 hover:underline" />
               <StatusBadge variant="neutral">{l.status ?? "—"}</StatusBadge>
               <span>{formatUsdCents(Number(l.rate_total_cents ?? 0))}</span>
             </div>

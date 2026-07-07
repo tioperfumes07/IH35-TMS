@@ -10,6 +10,7 @@ import {
   type PrepaidAssetListItem, type PrepaidAssetDetail,
 } from "../../api/prepaid-expenses";
 import { useListState } from "../../components/list-state";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 const fmtCents = (c: number) => formatUsdCents(c);
 const fmtDate = (s: string | null) => formatDateUS(s) || "—";
@@ -79,7 +80,7 @@ function SchedulePanel({ detail, onClose }: { detail: PrepaidAssetDetail; onClos
                       : <span className="inline-block rounded-sm bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500">Pending</span>}
                   </td>
                   <td className="px-3 py-1.5 font-mono text-gray-400">
-                    {row.posted_journal_entry_id ? row.posted_journal_entry_id.slice(0, 8) + "…" : "—"}
+                    <EntityLink kind="journal_entry" id={row.posted_journal_entry_id} label={row.posted_journal_entry_id ? row.posted_journal_entry_id.slice(0, 8) + "…" : undefined} />
                   </td>
                 </tr>
               ))}

@@ -388,7 +388,7 @@ export function BillsPage() {
                                   <tr key={p.id}>
                                     <td className="py-1 pr-2">{formatDateUS(p.payment_date)}</td>
                                     <td className="py-1 pr-2 text-right">{money(p.amount_cents)}</td>
-                                    <td className="py-1 pr-2 font-mono text-[10px]">{p.from_bank_account_id ? p.from_bank_account_id.slice(0, 8) : "—"}</td>
+                                    <td className="py-1 pr-2 font-mono text-[10px]"><EntityLink kind="bank_account" id={p.from_bank_account_id ?? undefined} label={p.from_bank_account_id ? p.from_bank_account_id.slice(0, 8) : undefined} /></td>
                                     <td className="py-1 pr-2 text-gray-700">{p.memo || p.reference_number || "—"}</td>
                                   </tr>
                                 ))}
