@@ -1,3 +1,4 @@
+// @archived — Workflow-B form: superseded by BankingTransactionsDesignView categorization. Enforced by verify-banking-workflow-b-archived.mjs.
 type Props = {
   value: Record<string, unknown>;
   onChange: (next: Record<string, unknown>) => void;

@@ -1,3 +1,4 @@
+// @archived — Workflow-B: superseded by MatchDrawer inside BankingTransactionsDesignView. Enforced by verify-banking-workflow-b-archived.mjs.
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { categorizeTransaction, getBankingSuggestions, splitTransaction } from "../../../api/banking";

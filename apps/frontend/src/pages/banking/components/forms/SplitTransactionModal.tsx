@@ -1,3 +1,4 @@
+// @archived — Workflow-B form: superseded by BankTransactionSplitModal (live). Enforced by verify-banking-workflow-b-archived.mjs.
 import { useMemo, useState } from "react";
 import { Button } from "../../../../components/Button";
 import { Modal } from "../../../../components/Modal";
