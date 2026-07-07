@@ -13,7 +13,7 @@
  */
 import { useState } from "react";
 import { Lock } from "lucide-react";
-import { createQboAccount } from "../../../api/qbo-mdata";
+import { chartOfAccountsCatalogClient } from "../../../api/catalogs-accounting";
 import { useToast } from "../../Toast";
 import type { InlineCreateResult } from "../InlineCreateDrawer";
 
@@ -161,13 +161,17 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
     }
     setSaving(true);
     try {
-      const res = await createQboAccount(operatingCompanyId, {
-        name: form.name.trim(),
-        account_type: form.accountType,
-        account_sub_type: form.detailType || undefined,
-        full_qualified_name: form.name.trim(),
+      // QB-STD-5: canonical catalogs.accounts (same table getCoaAccounts reads). Previously used
+      // createQboAccount → mdata.qbo_accounts (mirror), invisible after refresh.
+      const rawSlug = form.name.trim().replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 12) || "ACCT";
+      const safeSlug = /^[A-Z]/.test(rawSlug) ? rawSlug : `E${rawSlug}`;
+      const accountCode = form.accountNumber.trim() || `${safeSlug}${String(Date.now()).slice(-6)}`;
+      const res = await chartOfAccountsCatalogClient.create(operatingCompanyId, {
+        code: accountCode,
+        display_name: form.name.trim(),
+        metadata: { account_type: form.accountType, account_subtype: form.detailType || undefined },
       });
-      onCreated({ id: String(res.account.id), label: form.name.trim() });
+      onCreated({ id: String(res.id), label: form.name.trim() });
       pushToast("Account created", "success");
       onClose();
     } catch (err) {
