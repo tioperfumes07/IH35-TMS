@@ -97,7 +97,7 @@ export function ExpensesListPage() {
       key: "expense_number",
       label: "Expense #",
       sortable: true,
-      render: (r) => <span className="code-cell text-gray-900">{r.expense_number || r.id.slice(0, 8)}</span>,
+      render: (r) => <EntityLink kind="expense" id={r.id} label={r.expense_number || r.id.slice(0, 8)} />,
     },
     { key: "transaction_date", label: "Date", sortable: true, render: (r) => <span className="text-gray-700">{formatDateUS(r.transaction_date)}</span> },
     { key: "payee", label: "Payee", sortable: true, render: (r) => <span className="font-medium text-gray-900">{payeeOf(r)}</span> },
