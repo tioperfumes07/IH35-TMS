@@ -7,6 +7,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 export function AbandonmentQueuePage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -67,8 +68,12 @@ export function AbandonmentQueuePage() {
               const st = String(row.status ?? "");
               return (
                 <tr key={id} className="border-b border-gray-100">
-                  <td className="px-2 py-2 font-mono text-[11px]">{loadId.slice(0, 8)}…</td>
-                  <td className="px-2 py-2 font-mono text-[11px]">{driverId.slice(0, 8)}…</td>
+                  <td className="px-2 py-2 font-mono text-[11px]">
+                    <EntityLink kind="load" id={row.load_id as string | undefined} label={loadId ? `${loadId.slice(0, 8)}…` : undefined} />
+                  </td>
+                  <td className="px-2 py-2 font-mono text-[11px]">
+                    <EntityLink kind="driver" id={row.driver_id as string | undefined} label={driverId ? `${driverId.slice(0, 8)}…` : undefined} />
+                  </td>
                   <td className="px-2 py-2">{total}</td>
                   <td className="px-2 py-2 capitalize">{st}</td>
                   <td className="px-2 py-2 text-right">
