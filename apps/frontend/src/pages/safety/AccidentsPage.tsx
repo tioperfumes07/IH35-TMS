@@ -5,8 +5,10 @@ import { getSafetyAccidents } from "../../api/safety";
 import { Button } from "../../components/Button";
 import { AccidentReportDrawer } from "../../components/safety/AccidentReportDrawer";
 import { companyNow } from "../../lib/businessDate";
-import { useListState } from "../../components/list-state";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+
+type AccidentRow = Record<string, unknown>;
 
 type Props = {
   operatingCompanyId: string;
@@ -50,8 +52,6 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
   });
 
   const rows = accidentsQuery.data?.accidents ?? [];
-  // LIST-EMPTY: the empty message renders only after the accidents query settles.
-  const listState = useListState(accidentsQuery, rows.length === 0);
   const createMode = String(selectedAccident?.id ?? "") === "__create__";
 
   const openAccident = (row: Record<string, unknown>) => {
@@ -63,6 +63,27 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
     setDrawerOpen(false);
     setSelectedAccident(null);
   };
+
+  // Migrated to the shared QBO-parity grid — columns, order, and the per-row "Open accident"
+  // action are preserved verbatim (§7 additive-only).
+  const columns: Array<ParityColumn<AccidentRow>> = [
+    { key: "accident_at", label: "Date", sortable: true, render: (row) => formatDateUS(row.accident_at) },
+    { key: "driver_id", label: "Driver", render: (row) => <EntityLink kind="driver" id={row.driver_id as string | undefined} /> },
+    { key: "unit_id", label: "Unit", render: (row) => <EntityLink kind="unit" id={row.unit_id as string | undefined} /> },
+    { key: "location", label: "Location", render: (row) => String(row.location ?? row.description ?? "—") },
+    { key: "at_fault", label: "At Fault", cellClass: "capitalize", render: (row) => formatAtFault(row.at_fault) },
+    { key: "preventable", label: "Preventable", render: (row) => formatPreventable(row.preventable) },
+    { key: "status", label: "Status", sortable: true, render: (row) => String(row.status ?? "open") },
+    {
+      key: "action",
+      label: "Action",
+      render: (row) => (
+        <button type="button" className="text-slate-700 underline" onClick={() => openAccident(row)}>
+          Open accident
+        </button>
+      ),
+    },
+  ];
 
   return (
     <div className="space-y-3" data-testid="accidents-page">
@@ -83,47 +104,17 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
         </Button>
       </div>
 
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-xs" data-testid="accidents-table">
-          <thead className="bg-gray-50 text-[10px] uppercase text-slate-600">
-            <tr>
-              <th className="px-2 py-1 text-left">Date</th>
-              <th className="px-2 py-1 text-left">Driver</th>
-              <th className="px-2 py-1 text-left">Unit</th>
-              <th className="px-2 py-1 text-left">Location</th>
-              <th className="px-2 py-1 text-left">At Fault</th>
-              <th className="px-2 py-1 text-left">Preventable</th>
-              <th className="px-2 py-1 text-left">Status</th>
-              <th className="px-2 py-1 text-left">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={String(row.id)} className="border-t border-gray-100" data-testid={`accident-row-${String(row.id)}`}>
-                <td className="px-2 py-1">{formatDateUS(row.accident_at)}</td>
-                <td className="px-2 py-1"><EntityLink kind="driver" id={row.driver_id as string | undefined} /></td>
-                <td className="px-2 py-1"><EntityLink kind="unit" id={row.unit_id as string | undefined} /></td>
-                <td className="px-2 py-1">{String(row.location ?? row.description ?? "—")}</td>
-                <td className="px-2 py-1 capitalize">{formatAtFault(row.at_fault)}</td>
-                <td className="px-2 py-1">{formatPreventable(row.preventable)}</td>
-                <td className="px-2 py-1">{String(row.status ?? "open")}</td>
-                <td className="px-2 py-1">
-                  <button type="button" className="text-slate-700 underline" onClick={() => openAccident(row)}>
-                    Open accident
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {listState.isEmpty ? (
-              <tr>
-                <td colSpan={8} className="px-2 py-3 text-center text-slate-500">
-                  No accident reports found.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
+      <ParityTable<AccidentRow>
+        columns={columns}
+        rows={rows}
+        rowKey={(row) => String(row.id)}
+        loading={accidentsQuery.isLoading}
+        emptyText="No accident reports found."
+        storageKey="safety-accidents"
+        exportFilename="accidents"
+        tableTestId="accidents-table"
+        rowTestId={(row) => `accident-row-${String(row.id)}`}
+      />
 
       <AccidentReportDrawer
         open={drawerOpen}

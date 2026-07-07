@@ -5,10 +5,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createDotInspection, followUpDotInspectionEvent, getDotInspections, listDotInspectionEvents } from "../../api/safety";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { companyToday } from "../../lib/businessDate";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 type Props = {
   operatingCompanyId: string;
 };
+
+type DotInspectionRow = Record<string, unknown>;
 
 export function DotInspectionsPage({ operatingCompanyId }: Props) {
   const queryClient = useQueryClient();
@@ -48,6 +51,15 @@ export function DotInspectionsPage({ operatingCompanyId }: Props) {
     },
   });
 
+  // Migrated to the shared QBO-parity grid — columns and order are preserved verbatim (§7 additive-only).
+  const columns: Array<ParityColumn<DotInspectionRow>> = [
+    { key: "inspection_date", label: "Date", sortable: true, render: (row) => formatDateUS(row.inspection_date) },
+    { key: "inspector_name", label: "Inspector", render: (row) => String(row.inspector_name ?? "—") },
+    { key: "inspection_level", label: "Level", sortable: true, render: (row) => String(row.inspection_level ?? "—") },
+    { key: "outcome", label: "Outcome", sortable: true, render: (row) => String(row.outcome ?? "—") },
+    { key: "spawned_wo_id", label: "Spawned WO", render: (row) => String(row.spawned_wo_id ?? "—") },
+  ];
+
   return (
     <div className="space-y-3">
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-5">
@@ -63,30 +75,15 @@ export function DotInspectionsPage({ operatingCompanyId }: Props) {
           + Create DOT Inspection
         </button>
       </div>
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-xs">
-          <thead className="bg-gray-50 text-[10px] uppercase text-gray-600">
-            <tr>
-              <th className="px-2 py-1 text-left">Date</th>
-              <th className="px-2 py-1 text-left">Inspector</th>
-              <th className="px-2 py-1 text-left">Level</th>
-              <th className="px-2 py-1 text-left">Outcome</th>
-              <th className="px-2 py-1 text-left">Spawned WO</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(query.data?.inspections ?? []).map((row) => (
-              <tr key={String(row.id)} className="border-t border-gray-100">
-                <td className="px-2 py-1">{formatDateUS(row.inspection_date)}</td>
-                <td className="px-2 py-1">{String(row.inspector_name ?? "—")}</td>
-                <td className="px-2 py-1">{String(row.inspection_level ?? "—")}</td>
-                <td className="px-2 py-1">{String(row.outcome ?? "—")}</td>
-                <td className="px-2 py-1">{String(row.spawned_wo_id ?? "—")}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <ParityTable<DotInspectionRow>
+        columns={columns}
+        rows={query.data?.inspections ?? []}
+        rowKey={(row) => String(row.id)}
+        loading={query.isLoading}
+        emptyText="No DOT inspections recorded."
+        storageKey="safety-dot-inspections"
+        exportFilename="dot-inspections"
+      />
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <h3 className="mb-2 text-xs font-semibold text-gray-800">Open DOT Station Dwell Events (last captured)</h3>
         {(openEventsQuery.data?.events ?? []).length === 0 ? (

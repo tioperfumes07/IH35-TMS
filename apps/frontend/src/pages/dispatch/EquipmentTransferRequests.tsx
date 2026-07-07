@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { apiRequest } from "../../api/client";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EquipmentTransferModal } from "../../components/dispatch/EquipmentTransferModal";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -30,6 +31,27 @@ export function EquipmentTransferRequests() {
       ),
   });
 
+  // Migrated to the shared QBO-parity grid — columns and order preserved verbatim (§7 additive-only).
+  const columns = useMemo<ParityColumn<TransferRow>[]>(
+    () => [
+      { key: "status", label: "Status", sortable: true },
+      { key: "equipment_kind", label: "Kind", sortable: true },
+      { key: "transfer_location", label: "Location", sortable: true },
+      {
+        key: "from_driver_uuid",
+        label: "From → To",
+        render: (row) => (
+          <>
+            <EntityLink kind="driver" id={row.from_driver_uuid} label={row.from_driver_uuid?.slice(0, 8)} /> →{" "}
+            <EntityLink kind="driver" id={row.to_driver_uuid} label={row.to_driver_uuid?.slice(0, 8)} />
+          </>
+        ),
+      },
+      { key: "created_at", label: "Created", sortable: true },
+    ],
+    [],
+  );
+
   return (
     <div className="space-y-4 p-4">
       <PageHeader title="Equipment transfer requests" subtitle="Dual-confirm handoff queue" />
@@ -47,33 +69,15 @@ export function EquipmentTransferRequests() {
           }}
         />
       ) : null}
-      <div className="overflow-x-auto rounded-sm border bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="bg-slate-50 text-left">
-            <tr>
-              <th className="px-3 py-2">Status</th>
-              <th className="px-3 py-2">Kind</th>
-              <th className="px-3 py-2">Location</th>
-              <th className="px-3 py-2">From → To</th>
-              <th className="px-3 py-2">Created</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(query.data?.requests ?? []).map((row) => (
-              <tr key={row.uuid}>
-                <td className="px-3 py-2">{row.status}</td>
-                <td className="px-3 py-2">{row.equipment_kind}</td>
-                <td className="px-3 py-2">{row.transfer_location}</td>
-                <td className="px-3 py-2">
-                  <EntityLink kind="driver" id={row.from_driver_uuid} label={row.from_driver_uuid?.slice(0, 8)} /> →{" "}
-                  <EntityLink kind="driver" id={row.to_driver_uuid} label={row.to_driver_uuid?.slice(0, 8)} />
-                </td>
-                <td className="px-3 py-2">{row.created_at}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <ParityTable<TransferRow>
+        columns={columns}
+        rows={query.data?.requests ?? []}
+        rowKey={(row) => row.uuid}
+        loading={query.isLoading}
+        emptyText="No pending equipment transfer requests."
+        storageKey="dispatch-equipment-transfer-requests"
+        exportFilename="equipment-transfer-requests"
+      />
     </div>
   );
 }

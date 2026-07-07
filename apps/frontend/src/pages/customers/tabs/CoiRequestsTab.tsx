@@ -1,11 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { listInsurancePolicies } from "../../../api/insurance";
+import { listInsurancePolicies, type InsuranceCoiRequest } from "../../../api/insurance";
 import { createCoiRequest, listCoiRequests } from "../../../api/customers";
 import { Button } from "../../../components/Button";
 import { DataPanel } from "../../../components/layout/DataPanel";
 import { StatusBadge } from "../../../components/layout/StatusBadge";
 import { Modal } from "../../../components/Modal";
+import { ParityTable } from "../../../components/parity/ParityTable";
 import { useToast } from "../../../components/Toast";
 
 type Props = {
@@ -81,46 +82,50 @@ export function CoiRequestsTab({ customerId, customerName, operatingCompanyId }:
         </Button>
       </div>
 
-      {requestsQuery.isLoading ? <div className="text-sm text-gray-500">Loading COI requests...</div> : null}
       {requestsQuery.isError ? <div className="rounded-sm border border-red-200 bg-red-50 p-2 text-sm text-red-700">Failed to load COI requests.</div> : null}
 
-      {!requestsQuery.isLoading && requests.length === 0 ? <div className="text-sm text-gray-600">No COI requests yet.</div> : null}
-
-      {requests.length > 0 ? (
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-left text-xs">
-            <thead>
-              <tr className="border-b border-gray-200 text-gray-600">
-                <th className="px-2 py-1.5 font-semibold">Date</th>
-                <th className="px-2 py-1.5 font-semibold">Requester User</th>
-                <th className="px-2 py-1.5 font-semibold">Policy Reference</th>
-                <th className="px-2 py-1.5 font-semibold">Insurer Email</th>
-                <th className="px-2 py-1.5 font-semibold">Status</th>
-                <th className="px-2 py-1.5 font-semibold">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {requests.map((request) => {
-                const status = statusLabel(request.status);
-                const insurerEmailLine = (request.notes ?? "").split("\n").find((line) => line.toLowerCase().startsWith("insurer email:"));
-                const insurerEmailValue = insurerEmailLine ? insurerEmailLine.split(":").slice(1).join(":").trim() : "-";
-                return (
-                  <tr key={request.id} className="border-b border-gray-100 align-top">
-                    <td className="px-2 py-1.5 text-gray-800">{new Date(request.requested_at).toLocaleString()}</td>
-                    <td className="px-2 py-1.5 text-gray-700">{request.requested_by || "-"}</td>
-                    <td className="px-2 py-1.5 text-gray-700">{request.policy_id || "-"}</td>
-                    <td className="px-2 py-1.5 text-gray-700">{insurerEmailValue}</td>
-                    <td className="px-2 py-1.5">
-                      <StatusBadge variant={statusVariant(status)}>{status}</StatusBadge>
-                    </td>
-                    <td className="px-2 py-1.5 text-gray-700">{request.document_url ? <a href={request.document_url} className="text-slate-700 underline" target="_blank" rel="noreferrer">Open</a> : "-"}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      ) : null}
+      <ParityTable<InsuranceCoiRequest>
+        rows={requests}
+        rowKey={(request) => request.id}
+        loading={requestsQuery.isLoading}
+        storageKey="customer-coi-requests-tab"
+        emptyText="No COI requests yet."
+        exportFilename="customer-coi-requests"
+        columns={[
+          { key: "requested_at", label: "Date", sortable: true, render: (request) => new Date(request.requested_at).toLocaleString() },
+          { key: "requested_by", label: "Requester User", render: (request) => request.requested_by || "-" },
+          { key: "policy_id", label: "Policy Reference", render: (request) => request.policy_id || "-" },
+          {
+            key: "insurer_email",
+            label: "Insurer Email",
+            render: (request) => {
+              const insurerEmailLine = (request.notes ?? "").split("\n").find((line) => line.toLowerCase().startsWith("insurer email:"));
+              return insurerEmailLine ? insurerEmailLine.split(":").slice(1).join(":").trim() : "-";
+            },
+          },
+          {
+            key: "status",
+            label: "Status",
+            sortable: true,
+            render: (request) => {
+              const status = statusLabel(request.status);
+              return <StatusBadge variant={statusVariant(status)}>{status}</StatusBadge>;
+            },
+          },
+          {
+            key: "document_url",
+            label: "Action",
+            render: (request) =>
+              request.document_url ? (
+                <a href={request.document_url} className="text-slate-700 underline" target="_blank" rel="noreferrer">
+                  Open
+                </a>
+              ) : (
+                "-"
+              ),
+          },
+        ]}
+      />
 
       <Modal
         title="Request New COI"

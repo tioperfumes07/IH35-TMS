@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { NavLink, useLocation, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { InTransitIssue, WorkOrderType } from "../../api/maintenance";
+import type { InTransitIssue, MaintenancePartRow, WorkOrderType } from "../../api/maintenance";
 import {
   convertInTransitIssueToDamage,
   getMaintenanceInTransitQueue,
@@ -56,12 +56,12 @@ import { TireWearDashboard } from "./tires/TireWearDashboard";
 import { WorkOrderDetailModal } from "../../components/maintenance/WorkOrderDetailModal";
 import { WorkOrdersTable } from "./components/WorkOrdersTable";
 import { partNeedsReorder } from "./parts-low-stock";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import {
   MAINTENANCE_MASTER_DATA_LINKS,
   MAINTENANCE_OPERATION_LINKS,
 } from "../../components/maintenance/MAINTENANCE_NAV_CONFIG";
 import { MAINTENANCE_TAB_PATH, maintenanceTabFromPath } from "../../router/route-manifest";
-import { useListState } from "../../components/list-state";
 
 export { MAINTENANCE_MASTER_DATA_LINKS, MAINTENANCE_OPERATION_LINKS } from "../../components/maintenance/MAINTENANCE_NAV_CONFIG";
 
@@ -178,8 +178,6 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
     enabled: Boolean(companyId),
     retry: false,
   });
-  // Reorder-list empty row renders only once its query settles (no first-fetch flash).
-  const partsReorderListState = useListState(partsReorderQuery, (partsReorderQuery.data?.rows ?? []).length === 0);
   const statusMutation = useMutation({
     mutationFn: (args: { id: string; status: "in_progress" | "waiting_parts" | "complete" }) =>
       transitionWorkOrder(args.id, companyId, { new_status: args.status }),
@@ -221,6 +219,28 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
         parts_low_stock: 0,
       },
     [kpisQuery.data]
+  );
+
+  const partsReorderRows = partsReorderQuery.data?.rows ?? [];
+
+  const partsReorderColumns = useMemo<ParityColumn<MaintenancePartRow>[]>(
+    () => [
+      { key: "part_number", label: "Part #", sortable: true, render: (row) => row.part_number },
+      { key: "name", label: "Part", sortable: true, render: (row) => row.name },
+      { key: "qty_on_hand", label: "On Hand", sortable: true, render: (row) => row.qty_on_hand },
+      { key: "reorder_threshold", label: "Reorder Threshold", render: (row) => row.reorder_threshold },
+      {
+        key: "flag",
+        label: "Flag",
+        render: (row) =>
+          partNeedsReorder(row.qty_on_hand, row.reorder_threshold) ? (
+            <span className="rounded-sm bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-700">REORDER</span>
+          ) : (
+            <span className="rounded-sm bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">OK</span>
+          ),
+      },
+    ],
+    [],
   );
 
   return (
@@ -397,54 +417,20 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
               <h3 className="text-sm font-semibold">Parts Inventory Reorder Flags</h3>
               <div className="text-xs text-gray-500">Canonical: maintenance.parts_inventory</div>
             </div>
-            {partsReorderQuery.isLoading ? <div className="text-xs text-gray-500">Loading reorder list...</div> : null}
             {partsReorderQuery.isError ? (
               <div className="rounded-sm border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-900">
                 Reorder list endpoint unavailable in this environment.
               </div>
-            ) : null}
-            {!partsReorderQuery.isLoading && !partsReorderQuery.isError ? (
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-xs">
-                  <thead>
-                    <tr className="text-left text-gray-500">
-                      <th className="px-2 py-1">Part #</th>
-                      <th className="px-2 py-1">Part</th>
-                      <th className="px-2 py-1">On Hand</th>
-                      <th className="px-2 py-1">Reorder Threshold</th>
-                      <th className="px-2 py-1">Flag</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(partsReorderQuery.data?.rows ?? []).map((part) => {
-                      const needsReorder = partNeedsReorder(part.qty_on_hand, part.reorder_threshold);
-                      return (
-                      <tr key={part.id} className="border-t border-gray-100">
-                        <td className="px-2 py-1">{part.part_number}</td>
-                        <td className="px-2 py-1">{part.name}</td>
-                        <td className="px-2 py-1">{part.qty_on_hand}</td>
-                        <td className="px-2 py-1">{part.reorder_threshold}</td>
-                        <td className="px-2 py-1">
-                          {needsReorder ? (
-                            <span className="rounded-sm bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-700">REORDER</span>
-                          ) : (
-                            <span className="rounded-sm bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">OK</span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                    })}
-                    {partsReorderListState.isEmpty ? (
-                      <tr>
-                        <td className="px-2 py-2 text-gray-500" colSpan={5}>
-                          No parts inventory rows found.
-                        </td>
-                      </tr>
-                    ) : null}
-                  </tbody>
-                </table>
-              </div>
-            ) : null}
+            ) : (
+              <ParityTable
+                rows={partsReorderRows}
+                columns={partsReorderColumns}
+                rowKey={(row) => row.id}
+                loading={partsReorderQuery.isLoading}
+                storageKey="maintenance-parts-reorder-flags"
+                emptyText="No parts inventory rows found."
+              />
+            )}
           </div>
         </div>
       ) : null}

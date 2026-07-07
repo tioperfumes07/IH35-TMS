@@ -1,10 +1,13 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { createHosViolation, listHosViolations, voidHosViolation } from "../../../api/safetyV64";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { companyNow } from "../../../lib/businessDate";
 import { useListState } from "../../../components/list-state";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+
+type HosViolationRow = Record<string, unknown>;
 
 export function HOSViolationsTab() {
   const { selectedCompanyId } = useCompanyContext();
@@ -55,6 +58,46 @@ export function HOSViolationsTab() {
   // LIST-EMPTY: the empty message renders only after the violations query settles.
   const listState = useListState(query, (query.data?.hos_violations ?? []).length === 0);
 
+  const columns = useMemo<Array<ParityColumn<HosViolationRow>>>(
+    () => [
+      { key: "driver_id", label: "Driver", sortable: true, render: (row) => String(row.driver_id ?? "—") },
+      {
+        key: "violation_code",
+        label: "Violation Type",
+        sortable: true,
+        render: (row) => String(row.violation_code ?? row.violation_type ?? "—"),
+      },
+      {
+        key: "occurred_at",
+        label: "Occurred",
+        sortable: true,
+        render: (row) => String(row.occurred_at ?? "").slice(0, 16).replace("T", " "),
+      },
+      { key: "source", label: "Source", sortable: true, render: (row) => String(row.source ?? "—") },
+      {
+        key: "duty_status",
+        label: "Duration",
+        render: (row) => String(row.duty_status ?? row.duration_minutes ?? "—"),
+      },
+      { key: "csa_points", label: "CSA Pts", sortable: true, render: (row) => String(row.csa_points ?? "0") },
+      {
+        key: "actions",
+        label: "Actions",
+        render: (row) => (
+          <button
+            type="button"
+            className="text-red-700 underline disabled:opacity-50"
+            disabled={Boolean(row.voided_at) || voidMutation.isPending}
+            onClick={() => voidMutation.mutate(String(row.id))}
+          >
+            {row.voided_at ? "Voided" : "Void"}
+          </button>
+        ),
+      },
+    ],
+    [voidMutation.isPending, voidMutation.mutate],
+  );
+
   return (
     <div className="space-y-3">
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-8">
@@ -84,50 +127,15 @@ export function HOSViolationsTab() {
         </button>
       </div>
 
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-xs">
-          <thead className="bg-gray-50 text-[10px] uppercase text-slate-600">
-            <tr>
-              <th className="px-2 py-1 text-left">Driver</th>
-              <th className="px-2 py-1 text-left">Violation Type</th>
-              <th className="px-2 py-1 text-left">Occurred</th>
-              <th className="px-2 py-1 text-left">Source</th>
-              <th className="px-2 py-1 text-left">Duration</th>
-              <th className="px-2 py-1 text-left">CSA Pts</th>
-              <th className="px-2 py-1 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(query.data?.hos_violations ?? []).map((row) => (
-              <tr key={String(row.id)} className="border-t border-gray-100">
-                <td className="px-2 py-1">{String(row.driver_id ?? "—")}</td>
-                <td className="px-2 py-1">{String(row.violation_code ?? row.violation_type ?? "—")}</td>
-                <td className="px-2 py-1">{String(row.occurred_at ?? "").slice(0, 16).replace("T", " ")}</td>
-                <td className="px-2 py-1">{String(row.source ?? "—")}</td>
-                <td className="px-2 py-1">{String(row.duty_status ?? row.duration_minutes ?? "—")}</td>
-                <td className="px-2 py-1">{String(row.csa_points ?? "0")}</td>
-                <td className="px-2 py-1">
-                  <button
-                    type="button"
-                    className="text-red-700 underline disabled:opacity-50"
-                    disabled={Boolean(row.voided_at) || voidMutation.isPending}
-                    onClick={() => voidMutation.mutate(String(row.id))}
-                  >
-                    {row.voided_at ? "Voided" : "Void"}
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {listState.isEmpty ? (
-              <tr>
-                <td colSpan={7} className="px-2 py-3 text-center text-slate-500">
-                  No HOS violations found.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
+      <ParityTable<HosViolationRow>
+        columns={columns}
+        rows={query.data?.hos_violations ?? []}
+        rowKey={(row) => String(row.id)}
+        loading={listState.isLoading}
+        emptyText="No HOS violations found."
+        storageKey="safety-hos-violations"
+        exportFilename="hos-violations"
+      />
     </div>
   );
 }

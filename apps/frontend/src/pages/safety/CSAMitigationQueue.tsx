@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { useAuth } from "../../auth/useAuth";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 type BasicCategory =
   | "unsafe_driving"
@@ -112,6 +113,56 @@ export function CSAMitigationQueuePage() {
 
   const queue = useMemo(() => queueQuery.data?.queue ?? [], [queueQuery.data?.queue]);
 
+  // Migrated to the shared QBO-parity grid — columns, order, and the per-row "Mark complete"
+  // action are preserved verbatim (§7 additive-only).
+  const columns: Array<ParityColumn<QueueItem>> = [
+    { key: "basic_category", label: "Category", sortable: true, render: (row) => BASIC_LABELS[row.basic_category] },
+    {
+      key: "title",
+      label: "Action",
+      render: (row) => (
+        <>
+          <div className="font-semibold text-slate-800">{row.title}</div>
+          {row.description ? <div className="text-[11px] text-slate-500">{row.description}</div> : null}
+        </>
+      ),
+    },
+    {
+      key: "category_risk_band",
+      label: "Risk",
+      sortable: true,
+      cellClass: "font-semibold",
+      render: (row) => <span className={riskClass(row.category_risk_band)}>{row.category_risk_band}</span>,
+    },
+    {
+      key: "due_date",
+      label: "Due",
+      sortable: true,
+      render: (row) => (
+        <>
+          {row.due_date}
+          <div className="text-[10px] text-slate-500">{row.days_until_due} days</div>
+        </>
+      ),
+    },
+    { key: "urgency_score", label: "Urgency", sortable: true, cellClass: "font-semibold text-slate-700", render: (row) => row.urgency_score },
+    { key: "status", label: "Status", sortable: true, render: (row) => row.status },
+    {
+      key: "ops",
+      label: "Ops",
+      render: (row) => (
+        <button
+          type="button"
+          className="rounded-sm border border-gray-300 px-2 py-0.5 disabled:opacity-50"
+          disabled={!canMutate || completeMutation.isPending}
+          onClick={() => completeMutation.mutate(row.id)}
+        >
+          Mark complete
+        </button>
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-3">
       <div className="rounded-sm border border-gray-200 bg-white p-3">
@@ -158,56 +209,15 @@ export function CSAMitigationQueuePage() {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-xs">
-          <thead className="bg-gray-50 text-[10px] uppercase text-slate-600">
-            <tr>
-              <th className="px-2 py-1 text-left">Category</th>
-              <th className="px-2 py-1 text-left">Action</th>
-              <th className="px-2 py-1 text-left">Risk</th>
-              <th className="px-2 py-1 text-left">Due</th>
-              <th className="px-2 py-1 text-left">Urgency</th>
-              <th className="px-2 py-1 text-left">Status</th>
-              <th className="px-2 py-1 text-left">Ops</th>
-            </tr>
-          </thead>
-          <tbody>
-            {queue.map((row) => (
-              <tr key={row.id} className="border-t border-gray-100">
-                <td className="px-2 py-1">{BASIC_LABELS[row.basic_category]}</td>
-                <td className="px-2 py-1">
-                  <div className="font-semibold text-slate-800">{row.title}</div>
-                  {row.description ? <div className="text-[11px] text-slate-500">{row.description}</div> : null}
-                </td>
-                <td className={`px-2 py-1 font-semibold ${riskClass(row.category_risk_band)}`}>{row.category_risk_band}</td>
-                <td className="px-2 py-1">
-                  {row.due_date}
-                  <div className="text-[10px] text-slate-500">{row.days_until_due} days</div>
-                </td>
-                <td className="px-2 py-1 font-semibold text-slate-700">{row.urgency_score}</td>
-                <td className="px-2 py-1">{row.status}</td>
-                <td className="px-2 py-1">
-                  <button
-                    type="button"
-                    className="rounded-sm border border-gray-300 px-2 py-0.5 disabled:opacity-50"
-                    disabled={!canMutate || completeMutation.isPending}
-                    onClick={() => completeMutation.mutate(row.id)}
-                  >
-                    Mark complete
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {queue.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="px-2 py-3 text-center text-slate-500">
-                  No open mitigation actions.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
+      <ParityTable<QueueItem>
+        columns={columns}
+        rows={queue}
+        rowKey={(row) => row.id}
+        loading={queueQuery.isLoading}
+        emptyText="No open mitigation actions."
+        storageKey="safety-csa-mitigation-queue"
+        exportFilename="csa-mitigation-queue"
+      />
     </div>
   );
 }

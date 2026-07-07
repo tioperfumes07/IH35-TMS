@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { apiRequest } from "../../api/client";
@@ -8,6 +8,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 type FaultDraft = {
   id: string;
@@ -61,6 +62,32 @@ export function FaultDraftsPage() {
   const drafts = draftsQuery.data?.drafts ?? [];
   const selected = drafts.find((d) => d.id === selectedId) ?? null;
 
+  const columns = useMemo<ParityColumn<FaultDraft>[]>(
+    () => [
+      { key: "unit_id", label: "Unit", render: (row) => <EntityLink kind="unit" id={row.unit_id} label={row.unit_number ?? undefined} /> },
+      { key: "fault_code", label: "Fault code", sortable: true, render: (row) => row.fault_code ?? "—" },
+      { key: "fault_severity", label: "Severity", sortable: true, render: (row) => <span className="capitalize">{row.fault_severity ?? "—"}</span> },
+      {
+        key: "fault_occurred_at",
+        label: "Occurred",
+        sortable: true,
+        render: (row) => (row.fault_occurred_at ? `${formatDateTimeUS(row.fault_occurred_at)} CT` : "—"),
+      },
+      { key: "status", label: "WO status", sortable: true, render: (row) => row.status },
+      {
+        key: "action",
+        label: "Action",
+        alwaysVisible: true,
+        render: (row) => (
+          <Button size="sm" variant="secondary" onClick={() => setSelectedId(row.id)}>
+            Review
+          </Button>
+        ),
+      },
+    ],
+    [],
+  );
+
   return (
     <div className="space-y-4 p-4">
       <PageHeader
@@ -77,47 +104,17 @@ export function FaultDraftsPage() {
         </Link>
       </div>
 
-      {draftsQuery.isLoading ? <p className="text-sm text-gray-600">Loading drafts…</p> : null}
       {draftsQuery.isError ? <p className="text-sm text-red-600">Failed to load fault-driven drafts.</p> : null}
 
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500">
-            <tr>
-              <th className="px-3 py-2">Unit</th>
-              <th className="px-3 py-2">Fault code</th>
-              <th className="px-3 py-2">Severity</th>
-              <th className="px-3 py-2">Occurred</th>
-              <th className="px-3 py-2">WO status</th>
-              <th className="px-3 py-2">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {drafts.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="px-3 py-6 text-center text-gray-500">
-                  No fault-driven draft work orders pending review.
-                </td>
-              </tr>
-            ) : (
-              drafts.map((row) => (
-                <tr key={row.id} className="border-t border-gray-100">
-                  <td className="px-3 py-2"><EntityLink kind="unit" id={row.unit_id} label={row.unit_number ?? undefined} /></td>
-                  <td className="px-3 py-2">{row.fault_code ?? "—"}</td>
-                  <td className="px-3 py-2 capitalize">{row.fault_severity ?? "—"}</td>
-                  <td className="px-3 py-2">{row.fault_occurred_at ? `${formatDateTimeUS(row.fault_occurred_at)} CT` : "—"}</td>
-                  <td className="px-3 py-2">{row.status}</td>
-                  <td className="px-3 py-2">
-                    <Button size="sm" variant="secondary" onClick={() => setSelectedId(row.id)}>
-                      Review
-                    </Button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+      <ParityTable
+        rows={drafts}
+        columns={columns}
+        rowKey={(row) => row.id}
+        loading={draftsQuery.isLoading}
+        storageKey="maintenance-fault-drafts"
+        emptyText="No fault-driven draft work orders pending review."
+        exportFilename="fault-drafts"
+      />
 
       {selected ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">

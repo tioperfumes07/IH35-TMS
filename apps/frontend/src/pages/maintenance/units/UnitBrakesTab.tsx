@@ -2,9 +2,11 @@
  * Unit Brakes Tab — GAP-63 / CAP-13
  * Per-unit brake lining history, gauges, and replacement projections.
  */
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../../api/client";
 import { BrakeWearGauge } from "../../../components/maintenance/BrakeWearGauge";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 type MeasurementRow = {
   uuid: string;
@@ -80,6 +82,19 @@ export function UnitBrakesTab({ unitId, companyId }: UnitBrakesTabProps) {
     ])
   ).sort();
 
+  const historyRows = historyQ.data?.rows ?? [];
+
+  const historyColumns = useMemo<ParityColumn<MeasurementRow>[]>(
+    () => [
+      { key: "brake_position", label: "Position", sortable: true, render: (row) => row.brake_position },
+      { key: "lining_thickness_mm", label: "Thickness", render: (row) => `${row.lining_thickness_mm.toFixed(1)} mm` },
+      { key: "measured_at", label: "Measured", sortable: true, render: (row) => new Date(row.measured_at).toLocaleDateString() },
+      { key: "source", label: "Source", sortable: true, render: (row) => <span className="capitalize">{row.source.replace(/_/g, " ")}</span> },
+      { key: "odometer_miles", label: "Odometer", render: (row) => row.odometer_miles?.toLocaleString() ?? "—" },
+    ],
+    [],
+  );
+
   return (
     <section className="space-y-4" data-testid="unit-brakes-tab">
       <div>
@@ -118,37 +133,14 @@ export function UnitBrakesTab({ unitId, companyId }: UnitBrakesTabProps) {
         <div className="border-b border-gray-100 px-3 py-2">
           <h4 className="text-xs font-semibold text-gray-900">Measurement history</h4>
         </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-left text-xs">
-            <thead className="bg-gray-50 text-[11px] uppercase text-gray-600">
-              <tr>
-                <th className="px-3 py-2">Position</th>
-                <th className="px-3 py-2">Thickness</th>
-                <th className="px-3 py-2">Measured</th>
-                <th className="px-3 py-2">Source</th>
-                <th className="px-3 py-2">Odometer</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(historyQ.data?.rows ?? []).map((row) => (
-                <tr key={row.uuid} className="border-t border-gray-100">
-                  <td className="px-3 py-2">{row.brake_position}</td>
-                  <td className="px-3 py-2">{row.lining_thickness_mm.toFixed(1)} mm</td>
-                  <td className="px-3 py-2">{new Date(row.measured_at).toLocaleDateString()}</td>
-                  <td className="px-3 py-2 capitalize">{row.source.replace(/_/g, " ")}</td>
-                  <td className="px-3 py-2">{row.odometer_miles?.toLocaleString() ?? "—"}</td>
-                </tr>
-              ))}
-              {!historyQ.isLoading && (historyQ.data?.rows ?? []).length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-3 py-4 text-center text-gray-500">
-                    No history yet.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
+        <ParityTable
+          rows={historyRows}
+          columns={historyColumns}
+          rowKey={(row) => row.uuid}
+          loading={historyQ.isLoading}
+          storageKey="maintenance-unit-brakes-history"
+          emptyText="No history yet."
+        />
       </div>
     </section>
   );

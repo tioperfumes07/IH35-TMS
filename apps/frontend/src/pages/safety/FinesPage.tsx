@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { formatDateUS } from "../../lib/formatDate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { convertFineToLiability, getSafetyFines } from "../../api/safety";
@@ -6,7 +6,9 @@ import { CompanyViolationsPage } from "./CompanyViolationsPage";
 import { FineCreateModal } from "./components/FineCreateModal";
 import { FineDetailDrawer } from "./components/FineDetailDrawer";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
-import { useListState } from "../../components/list-state";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+
+type FineRow = Record<string, unknown>;
 
 type Props = {
   operatingCompanyId: string;
@@ -51,9 +53,27 @@ export function FinesPage({ operatingCompanyId }: Props) {
     },
   });
 
-  const rows = useMemo(() => finesQuery.data?.fines ?? [], [finesQuery.data?.fines]);
-  // LIST-EMPTY: the empty message renders only after the fines query settles.
-  const listState = useListState(finesQuery, rows.length === 0);
+  const rows = finesQuery.data?.fines ?? [];
+
+  // Migrated to the shared QBO-parity grid — columns, order, and the per-row "Open" action are
+  // preserved verbatim (§7 additive-only).
+  const columns: Array<ParityColumn<FineRow>> = [
+    { key: "issued_date", label: "Issued", sortable: true, render: (row) => formatDateUS(row.issued_date) },
+    { key: "subject_type", label: "Subject", sortable: true, render: (row) => String(row.subject_type ?? "—") },
+    { key: "issued_by_authority", label: "Authority", render: (row) => String(row.issued_by_authority ?? "—") },
+    { key: "violation_description", label: "Violation", render: (row) => String(row.violation_description ?? "—") },
+    { key: "amount_cents", label: "Amount", render: (row) => `$${(Number(row.amount_cents ?? 0) / 100).toFixed(2)}` },
+    { key: "status", label: "Status", sortable: true, render: (row) => String(row.status ?? "open") },
+    {
+      key: "action",
+      label: "Action",
+      render: (row) => (
+        <button type="button" className="text-slate-700 underline" onClick={() => setSelectedFine(row)}>
+          Open
+        </button>
+      ),
+    },
+  ];
 
   if (recordTypeFilter === "company-violation") {
     return (
@@ -77,40 +97,7 @@ export function FinesPage({ operatingCompanyId }: Props) {
 
   return (
     <div className="space-y-3" data-testid="external-fines-page">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <div data-testid="fines-record-type-filter">
-            <SelectCombobox
-              value={recordTypeFilter}
-              onChange={(event) => setRecordTypeFilter(event.target.value as RecordTypeFilter)}
-              className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
-            >
-              <option value="driver-fine">Driver Fine</option>
-              <option value="company-violation">Company Violation</option>
-            </SelectCombobox>
-          </div>
-          <SelectCombobox
-            value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value)}
-            className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
-          >
-            <option value="">All statuses</option>
-            <option value="open">Open</option>
-            <option value="paid">Paid</option>
-            <option value="contested">Contested</option>
-            <option value="dismissed">Dismissed</option>
-            <option value="reduced">Reduced</option>
-          </SelectCombobox>
-          <SelectCombobox
-            value={subjectTypeFilter}
-            onChange={(event) => setSubjectTypeFilter(event.target.value)}
-            className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
-          >
-            <option value="">All subjects</option>
-            <option value="driver">Driver</option>
-            <option value="company">Company</option>
-          </SelectCombobox>
-        </div>
+      <div className="flex justify-end">
         <button
           type="button"
           onClick={() => setCreateOpen(true)}
@@ -120,49 +107,50 @@ export function FinesPage({ operatingCompanyId }: Props) {
         </button>
       </div>
 
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-[980px] w-full text-left text-xs">
-          <thead className="bg-gray-50 text-[10px] uppercase text-gray-600">
-            <tr>
-              <th className="px-2 py-1">Issued</th>
-              <th className="px-2 py-1">Subject</th>
-              <th className="px-2 py-1">Authority</th>
-              <th className="px-2 py-1">Violation</th>
-              <th className="px-2 py-1">Amount</th>
-              <th className="px-2 py-1">Status</th>
-              <th className="px-2 py-1">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={String(row.id)} className="border-t border-gray-100">
-                <td className="px-2 py-1">{formatDateUS(row.issued_date)}</td>
-                <td className="px-2 py-1">{String(row.subject_type ?? "—")}</td>
-                <td className="px-2 py-1">{String(row.issued_by_authority ?? "—")}</td>
-                <td className="px-2 py-1">{String(row.violation_description ?? "—")}</td>
-                <td className="px-2 py-1">${(Number(row.amount_cents ?? 0) / 100).toFixed(2)}</td>
-                <td className="px-2 py-1">{String(row.status ?? "open")}</td>
-                <td className="px-2 py-1">
-                  <button
-                    type="button"
-                    className="text-slate-700 underline"
-                    onClick={() => setSelectedFine(row)}
-                  >
-                    Open
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {listState.isEmpty ? (
-              <tr>
-                <td colSpan={7} className="px-2 py-3 text-center text-gray-500">
-                  No fines found.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
+      <ParityTable<FineRow>
+        columns={columns}
+        rows={rows}
+        rowKey={(row) => String(row.id)}
+        loading={finesQuery.isLoading}
+        emptyText="No fines found."
+        storageKey="safety-external-fines"
+        exportFilename="external-fines"
+        filterBar={
+          <div className="relative flex flex-wrap items-center gap-2">
+            <div data-testid="fines-record-type-filter">
+              <SelectCombobox
+                value={recordTypeFilter}
+                onChange={(event) => setRecordTypeFilter(event.target.value as RecordTypeFilter)}
+                className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+              >
+                <option value="driver-fine">Driver Fine</option>
+                <option value="company-violation">Company Violation</option>
+              </SelectCombobox>
+            </div>
+            <SelectCombobox
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+              className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+            >
+              <option value="">All statuses</option>
+              <option value="open">Open</option>
+              <option value="paid">Paid</option>
+              <option value="contested">Contested</option>
+              <option value="dismissed">Dismissed</option>
+              <option value="reduced">Reduced</option>
+            </SelectCombobox>
+            <SelectCombobox
+              value={subjectTypeFilter}
+              onChange={(event) => setSubjectTypeFilter(event.target.value)}
+              className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+            >
+              <option value="">All subjects</option>
+              <option value="driver">Driver</option>
+              <option value="company">Company</option>
+            </SelectCombobox>
+          </div>
+        }
+      />
 
       <FineCreateModal
         open={createOpen}

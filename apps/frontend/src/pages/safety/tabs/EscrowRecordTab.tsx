@@ -5,6 +5,7 @@ import { useAuth } from "../../../auth/useAuth";
 import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { EscrowForfeitModal } from "../components/EscrowForfeitModal";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 export function EscrowRecordTab() {
   const auth = useAuth();
@@ -46,67 +47,56 @@ export function EscrowRecordTab() {
   const attempts = escrowQuery.data?.forfeit_attempts ?? [];
   const totalForfeits = useMemo(() => attempts.filter((a) => a.status === "success").length, [attempts]);
 
+  const columns = useMemo<ParityColumn<EscrowRecordRow>[]>(
+    () => [
+      { key: "driver_name", label: "Driver", sortable: true },
+      { key: "current_balance", label: "Current Balance", sortable: true, render: (row) => `$${row.current_balance.toFixed(2)}` },
+      { key: "pre_clause_total", label: "Pre-clause", sortable: true, render: (row) => `$${row.pre_clause_total.toFixed(2)}` },
+      { key: "post_clause_total", label: "Post-clause", sortable: true, render: (row) => `$${row.post_clause_total.toFixed(2)}` },
+      { key: "accumulation_rate_pct", label: "Accumulation Rate", sortable: true, render: (row) => `${row.accumulation_rate_pct.toFixed(2)}%` },
+      { key: "forfeiture_history_count", label: "Forfeiture History", sortable: true },
+      {
+        key: "action",
+        label: "Actions",
+        render: (row) =>
+          isOwner ? (
+            <button
+              type="button"
+              className="text-[#1f2a44] underline"
+              data-testid={`escrow-forfeit-btn-${row.id}`}
+              onClick={() => setSelected(row)}
+            >
+              Forfeit
+            </button>
+          ) : (
+            <span className="text-slate-400">Owner-only</span>
+          ),
+      },
+    ],
+    [isOwner],
+  );
+
   return (
     <div className="space-y-3" data-testid="escrow-record-tab">
       <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-slate-600">
         Escrow balances and events surface security-invoker data. Forfeiture attempts are auditable.
       </div>
 
-      {escrowQuery.isLoading ? (
-        <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-slate-500">Loading escrow records…</div>
-      ) : null}
       {escrowQuery.isError ? (
         <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-xs text-red-700">Unable to load escrow records.</div>
       ) : null}
 
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-xs" data-testid="escrow-record-table">
-          <thead className="bg-gray-50 text-[10px] uppercase text-slate-600">
-            <tr>
-              <th className="px-2 py-1 text-left">Driver</th>
-              <th className="px-2 py-1 text-left">Current Balance</th>
-              <th className="px-2 py-1 text-left">Pre-clause</th>
-              <th className="px-2 py-1 text-left">Post-clause</th>
-              <th className="px-2 py-1 text-left">Accumulation Rate</th>
-              <th className="px-2 py-1 text-left">Forfeiture History</th>
-              <th className="px-2 py-1 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.id} className="border-t border-gray-100" data-testid={`escrow-record-row-${row.id}`}>
-                <td className="px-2 py-1">{row.driver_name}</td>
-                <td className="px-2 py-1">${row.current_balance.toFixed(2)}</td>
-                <td className="px-2 py-1">${row.pre_clause_total.toFixed(2)}</td>
-                <td className="px-2 py-1">${row.post_clause_total.toFixed(2)}</td>
-                <td className="px-2 py-1">{row.accumulation_rate_pct.toFixed(2)}%</td>
-                <td className="px-2 py-1">{row.forfeiture_history_count}</td>
-                <td className="px-2 py-1">
-                  {isOwner ? (
-                    <button
-                      type="button"
-                      className="text-[#1f2a44] underline"
-                      data-testid={`escrow-forfeit-btn-${row.id}`}
-                      onClick={() => setSelected(row)}
-                    >
-                      Forfeit
-                    </button>
-                  ) : (
-                    <span className="text-slate-400">Owner-only</span>
-                  )}
-                </td>
-              </tr>
-            ))}
-            {!escrowQuery.isLoading && rows.length === 0 ? (
-              <tr className="border-t border-gray-100">
-                <td className="px-2 py-3 text-center text-slate-500" colSpan={7}>
-                  No escrow records available for the selected company.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
+      <ParityTable<EscrowRecordRow>
+        columns={columns}
+        rows={rows}
+        rowKey={(row) => row.id}
+        loading={escrowQuery.isLoading}
+        emptyText="No escrow records available for the selected company."
+        storageKey="safety-escrow-records"
+        exportFilename="escrow-records"
+        tableTestId="escrow-record-table"
+        rowTestId={(row) => `escrow-record-row-${row.id}`}
+      />
 
       <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="escrow-forfeit-audit">
         <h4 className="text-xs font-semibold text-slate-700">Forfeiture Audit</h4>

@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { convertOcrIntakeToBookLoad, getOcrIntakeQueue, type OcrIntakeQueueItem } from "../../api/dispatch";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { BookLoadModal } from "./components/BookLoadModal";
@@ -36,7 +37,9 @@ function ExtractedSummary({ item }: { item: OcrIntakeQueueItem }) {
   );
 }
 
-function QueueRow({
+// Per-row action button — kept as its own component (not a plain column render) so the convert
+// mutation's hooks are scoped to a stable per-row instance, same as the original QueueRow.
+function ConvertAction({
   item,
   companyId,
   onConvert,
@@ -50,38 +53,18 @@ function QueueRow({
     onSuccess: (res) => onConvert(res.book_load_prefill),
   });
 
-  const canConvert = item.status === "ready_review";
+  if (item.status !== "ready_review") return null;
 
   return (
-    <tr className="border-b last:border-b-0" data-testid={`ocr-queue-row-${item.id}`}>
-      <td className="px-3 py-2">
-        <div className="font-medium">{item.email_subject || item.attachment_filename || "Rate con PDF"}</div>
-        <div className="text-xs text-slate-500">{item.email_from ?? item.source}</div>
-      </td>
-      <td className="px-3 py-2">
-        <StatusBadge status={item.status} />
-        {item.error_message ? <div className="mt-1 text-xs text-red-700">{item.error_message}</div> : null}
-      </td>
-      <td className="px-3 py-2">
-        {item.status === "ready_review" ? <ExtractedSummary item={item} /> : null}
-        {item.status === "pending_ocr" || item.status === "processing" ? (
-          <span className="text-xs text-slate-700">OCR processing…</span>
-        ) : null}
-      </td>
-      <td className="px-3 py-2">
-        {canConvert ? (
-          <button
-            type="button"
-            className="rounded-sm border border-slate-300 px-2 py-1 text-xs text-slate-700"
-            disabled={convertM.isPending}
-            onClick={() => convertM.mutate()}
-            data-testid={`ocr-convert-${item.id}`}
-          >
-            Convert to load
-          </button>
-        ) : null}
-      </td>
-    </tr>
+    <button
+      type="button"
+      className="rounded-sm border border-slate-300 px-2 py-1 text-xs text-slate-700"
+      disabled={convertM.isPending}
+      onClick={() => convertM.mutate()}
+      data-testid={`ocr-convert-${item.id}`}
+    >
+      Convert to load
+    </button>
   );
 }
 
@@ -104,6 +87,58 @@ export function OcrQueuePage() {
   }
 
   const items = queueQ.data?.items ?? [];
+  type OcrRow = (typeof items)[number];
+
+  const handleConvert = (prefill: Record<string, unknown>) => {
+    setBookPrefill(prefill);
+    setBookOpen(true);
+    void queryClient.invalidateQueries({ queryKey: ["dispatch", "ocr-intake-queue", companyId] });
+  };
+
+  // Migrated to the shared QBO-parity grid — columns, order, and per-row convert action preserved
+  // verbatim (§7 additive-only).
+  const columns: Array<ParityColumn<OcrRow>> = [
+    {
+      key: "email_subject",
+      label: "Intake",
+      sortable: true,
+      render: (item) => (
+        <>
+          <div className="font-medium">{item.email_subject || item.attachment_filename || "Rate con PDF"}</div>
+          <div className="text-xs text-slate-500">{item.email_from ?? item.source}</div>
+        </>
+      ),
+    },
+    {
+      key: "status",
+      label: "Status",
+      sortable: true,
+      render: (item) => (
+        <>
+          <StatusBadge status={item.status} />
+          {item.error_message ? <div className="mt-1 text-xs text-red-700">{item.error_message}</div> : null}
+        </>
+      ),
+    },
+    {
+      key: "confidence_score",
+      label: "Extracted",
+      render: (item) => (
+        <>
+          {item.status === "ready_review" ? <ExtractedSummary item={item} /> : null}
+          {item.status === "pending_ocr" || item.status === "processing" ? (
+            <span className="text-xs text-slate-700">OCR processing…</span>
+          ) : null}
+        </>
+      ),
+    },
+    {
+      key: "actions",
+      label: "Actions",
+      alwaysVisible: true,
+      render: (item) => <ConvertAction item={item} companyId={companyId} onConvert={handleConvert} />,
+    },
+  ];
 
   return (
     <div data-testid="dispatch-ocr-queue-page" className="mx-auto max-w-7xl space-y-4">
@@ -123,46 +158,15 @@ export function OcrQueuePage() {
         remains for ad-hoc uploads — this page is the dedicated inbox (B21-D7).
       </p>
 
-      <section className="overflow-x-auto rounded-sm border bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="border-b bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
-            <tr>
-              <th className="px-3 py-2">Intake</th>
-              <th className="px-3 py-2">Status</th>
-              <th className="px-3 py-2">Extracted</th>
-              <th className="px-3 py-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {queueQ.isLoading ? (
-              <tr>
-                <td colSpan={4} className="px-3 py-6 text-center text-slate-500">
-                  Loading OCR queue…
-                </td>
-              </tr>
-            ) : items.length === 0 ? (
-              <tr>
-                <td colSpan={4} className="px-3 py-6 text-center text-slate-500">
-                  No pending OCR items. Forward a rate confirmation PDF to the intake webhook to enqueue.
-                </td>
-              </tr>
-            ) : (
-              items.map((item) => (
-                <QueueRow
-                  key={item.id}
-                  item={item}
-                  companyId={companyId}
-                  onConvert={(prefill) => {
-                    setBookPrefill(prefill);
-                    setBookOpen(true);
-                    void queryClient.invalidateQueries({ queryKey: ["dispatch", "ocr-intake-queue", companyId] });
-                  }}
-                />
-              ))
-            )}
-          </tbody>
-        </table>
-      </section>
+      <ParityTable<OcrRow>
+        columns={columns}
+        rows={items}
+        rowKey={(item) => item.id}
+        loading={queueQ.isLoading}
+        emptyText="No pending OCR items. Forward a rate confirmation PDF to the intake webhook to enqueue."
+        storageKey="dispatch-ocr-queue"
+        rowTestId={(item) => `ocr-queue-row-${item.id}`}
+      />
 
       <BookLoadModal
         open={bookOpen}

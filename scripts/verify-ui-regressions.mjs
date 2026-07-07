@@ -38,9 +38,18 @@ try {
     ["Vendors", vendors],
     ["Factoring", factoring],
   ]) {
-    assertIncludes(source, "Page {safeCurrentPage} of {totalPages}", `${name} pager label missing`);
-    assertIncludes(source, "Previous", `${name} previous button missing`);
-    assertIncludes(source, "Next", `${name} next button missing`);
+    // Pagination regression guard: each list page must provide a real pager. Accept EITHER the shared
+    // ParityTable (QBO-parity A1 — renders its own numbered advanced pager + per-page selector) OR the
+    // legacy hand-rolled pager. This still fails hard if a page loses pagination entirely, but does not
+    // trip on the ParityTable migration that replaces the hand-rolled table/chooser/pager wholesale.
+    const hasParityTable = source.includes("<ParityTable");
+    const hasLegacyPager =
+      source.includes("Page {safeCurrentPage} of {totalPages}") &&
+      source.includes("Previous") &&
+      source.includes("Next");
+    if (!hasParityTable && !hasLegacyPager) {
+      throw new Error(`${name} pager missing (neither ParityTable nor legacy pager present)`);
+    }
   }
 
   const bankingHome = read("apps/frontend/src/pages/banking/BankingHome.tsx");

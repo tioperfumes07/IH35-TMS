@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { formatDateTimeUS } from "../../../lib/formatDate";
 // NOTE (EntityLink adoption sweep): `vehicle_id` here is the raw Samsara external vehicle id
 // (dispatch.border_crossing_events.vehicle_id, sourced from integrations.samsara_positions —
@@ -49,61 +50,73 @@ export function BorderCrossingHistory() {
 
   const events = data?.data ?? [];
 
+  // Migrated to the shared QBO-parity grid — columns and order preserved verbatim (§7 additive-only).
+  const columns = useMemo<ParityColumn<CrossingEvent>[]>(
+    () => [
+      { key: "vehicle_id", label: "Vehicle", sortable: true },
+      {
+        key: "crossing_point",
+        label: "Bridge",
+        sortable: true,
+        render: (ev) => CROSSING_LABELS[ev.crossing_point] ?? ev.crossing_point,
+      },
+      { key: "direction", label: "Direction", sortable: true, className: "capitalize", cellClass: "capitalize" },
+      {
+        key: "entered_geofence_at",
+        label: "Entered",
+        sortable: true,
+        render: (ev) => `${formatDateTimeUS(ev.entered_geofence_at)} CT`,
+      },
+      {
+        key: "exited_geofence_at",
+        label: "Exited",
+        sortable: true,
+        render: (ev) => (ev.exited_geofence_at ? `${formatDateTimeUS(ev.exited_geofence_at)} CT` : "—"),
+      },
+      {
+        key: "customs_clearance_minutes",
+        label: "Customs (min)",
+        sortable: true,
+        render: (ev) => ev.customs_clearance_minutes ?? "—",
+      },
+    ],
+    [],
+  );
+
+  const filterBar = (
+    <div className="relative flex flex-wrap items-center gap-4">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">From</label>
+        <DatePicker
+          value={from}
+          onChange={(next) => setFrom(next)}
+          className="border rounded-sm px-3 py-1.5 text-sm"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">To</label>
+        <DatePicker
+          value={to}
+          onChange={(next) => setTo(next)}
+          className="border rounded-sm px-3 py-1.5 text-sm"
+        />
+      </div>
+    </div>
+  );
+
   return (
     <div className="p-6">
       <h1 className="text-xl font-semibold mb-4">GPS Border Crossing Events</h1>
-      <div className="flex gap-4 mb-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">From</label>
-          <DatePicker
-            value={from}
-            onChange={(next) => setFrom(next)}
-            className="border rounded-sm px-3 py-1.5 text-sm"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">To</label>
-          <DatePicker
-            value={to}
-            onChange={(next) => setTo(next)}
-            className="border rounded-sm px-3 py-1.5 text-sm"
-          />
-        </div>
-      </div>
-      {isLoading && <p className="text-gray-500">Loading...</p>}
-      {!isLoading && events.length === 0 && (
-        <p className="text-gray-500">No border crossing events found for this period.</p>
-      )}
-      {events.length > 0 && (
-        <div className="overflow-x-auto">
-        <table className="w-full text-sm border-collapse">
-          <thead>
-            <tr className="bg-gray-50">
-              <th className="text-left px-3 py-2 border-b">Vehicle</th>
-              <th className="text-left px-3 py-2 border-b">Bridge</th>
-              <th className="text-left px-3 py-2 border-b">Direction</th>
-              <th className="text-left px-3 py-2 border-b">Entered</th>
-              <th className="text-left px-3 py-2 border-b">Exited</th>
-              <th className="text-left px-3 py-2 border-b">Customs (min)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {events.map((ev) => (
-              <tr key={ev.uuid} className="border-b hover:bg-gray-50">
-                <td className="px-3 py-2">{ev.vehicle_id}</td>
-                <td className="px-3 py-2">{CROSSING_LABELS[ev.crossing_point] ?? ev.crossing_point}</td>
-                <td className="px-3 py-2 capitalize">{ev.direction}</td>
-                <td className="px-3 py-2">{formatDateTimeUS(ev.entered_geofence_at)} CT</td>
-                <td className="px-3 py-2">
-                  {ev.exited_geofence_at ? `${formatDateTimeUS(ev.exited_geofence_at)} CT` : "—"}
-                </td>
-                <td className="px-3 py-2">{ev.customs_clearance_minutes ?? "—"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        </div>
-      )}
+      <ParityTable<CrossingEvent>
+        columns={columns}
+        rows={events}
+        rowKey={(ev) => ev.uuid}
+        loading={isLoading}
+        emptyText="No border crossing events found for this period."
+        storageKey="dispatch-border-crossing-gps-history"
+        exportFilename="border-crossing-gps-history"
+        filterBar={filterBar}
+      />
     </div>
   );
 }

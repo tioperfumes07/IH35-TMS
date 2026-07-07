@@ -16,6 +16,7 @@ import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 type InspectionDraft = {
   unit_id: string;
@@ -198,6 +199,35 @@ export function InspectionsPage() {
   };
 
   const formOpen = createOpen || Boolean(editing);
+  const rows = listQ.data?.rows ?? [];
+
+  const columns = useMemo<ParityColumn<MaintenanceInspectionRow>[]>(
+    () => [
+      { key: "inspection_date", label: "Date", sortable: true, render: (row) => String(row.inspection_date ?? row.scheduled_date ?? "—") },
+      { key: "inspection_type", label: "Type", sortable: true, render: (row) => row.inspection_type_label ?? row.inspection_type },
+      { key: "unit_number", label: "Unit", sortable: true, render: (row) => String(row.unit_number ?? row.unit_id ?? "—") },
+      { key: "inspector_name", label: "Inspector", sortable: true, render: (row) => String(row.inspector_name ?? "—") },
+      { key: "outcome", label: "Outcome", sortable: true, render: (row) => String(row.outcome ?? row.status ?? "—") },
+      { key: "dvir_submission_id", label: "DVIR", render: (row) => (row.dvir_submission_id ? "Linked" : "—") },
+      { key: "photo_count", label: "Photos", render: (row) => String(row.photo_count ?? 0) },
+      {
+        key: "actions",
+        label: "Actions",
+        alwaysVisible: true,
+        render: (row) => (
+          <div className="space-x-2">
+            <button type="button" className="text-slate-700 underline" onClick={() => openEdit(row)}>
+              Edit
+            </button>
+            <button type="button" className="text-red-700 underline" onClick={() => archiveMutation.mutate(row)}>
+              Archive
+            </button>
+          </div>
+        ),
+      },
+    ],
+    [archiveMutation],
+  );
 
   return (
     <div className="space-y-3" data-testid="maint-inspections-page">
@@ -209,48 +239,15 @@ export function InspectionsPage() {
       </div>
 
       <div className="rounded-sm border border-gray-200 bg-white p-3">
-        <table className="w-full text-left text-xs">
-          <thead className="text-[11px] uppercase text-gray-600">
-            <tr>
-              <th className="py-1">Date</th>
-              <th className="py-1">Type</th>
-              <th className="py-1">Unit</th>
-              <th className="py-1">Inspector</th>
-              <th className="py-1">Outcome</th>
-              <th className="py-1">DVIR</th>
-              <th className="py-1">Photos</th>
-              <th className="py-1">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(listQ.data?.rows ?? []).map((row) => (
-              <tr key={String(row.id)} className="border-t border-gray-100">
-                <td className="py-1">{String(row.inspection_date ?? row.scheduled_date ?? "—")}</td>
-                <td className="py-1">{row.inspection_type_label ?? row.inspection_type}</td>
-                <td className="py-1">{String(row.unit_number ?? row.unit_id ?? "—")}</td>
-                <td className="py-1">{String(row.inspector_name ?? "—")}</td>
-                <td className="py-1">{String(row.outcome ?? row.status ?? "—")}</td>
-                <td className="py-1">{row.dvir_submission_id ? "Linked" : "—"}</td>
-                <td className="py-1">{String(row.photo_count ?? 0)}</td>
-                <td className="py-1 space-x-2">
-                  <button type="button" className="text-slate-700 underline" onClick={() => openEdit(row)}>
-                    Edit
-                  </button>
-                  <button type="button" className="text-red-700 underline" onClick={() => archiveMutation.mutate(row)}>
-                    Archive
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {(listQ.data?.rows ?? []).length === 0 ? (
-              <tr>
-                <td colSpan={8} className="py-3 text-gray-500">
-                  No inspections logged yet.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
+        <ParityTable
+          rows={rows}
+          columns={columns}
+          rowKey={(row) => String(row.id)}
+          loading={listQ.isPending}
+          storageKey="maintenance-inspections"
+          emptyText="No inspections logged yet."
+          exportFilename="inspections"
+        />
       </div>
 
       <Modal

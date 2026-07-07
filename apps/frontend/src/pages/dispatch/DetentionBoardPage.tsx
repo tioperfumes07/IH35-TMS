@@ -10,6 +10,7 @@ import {
   type DetentionBoardEvent,
 } from "../../api/dispatch";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatUsdCents } from "../../lib/money";
@@ -27,15 +28,16 @@ function formatElapsed(startedAt: string, nowMs: number): string {
   return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }
 
-function EventRow({
+// Per-row action buttons — kept as its own component (not a plain column render) so the
+// close/bridge/notify mutations' hooks are scoped to a stable per-row instance, same as the
+// original EventRow.
+function EventActions({
   event,
   companyId,
-  nowMs,
   onAction,
 }: {
   event: DetentionBoardEvent;
   companyId: string;
-  nowMs: number;
   onAction: () => void;
 }) {
   const closeM = useMutation({
@@ -51,63 +53,39 @@ function EventRow({
     onSuccess: onAction,
   });
 
-  const liveCents = Number(event.live_accrued_amount_cents ?? event.accrued_amount_cents ?? 0);
-  const billable = Number(event.billable_minutes ?? 0);
-
   return (
-    <tr className="border-b last:border-b-0">
-      <td className="px-3 py-2 font-medium">
-        <Link to={`/dispatch?load_id=${encodeURIComponent(event.load_id)}`} className="text-slate-700 hover:underline">
-          {event.load_number}
-        </Link>
-      </td>
-      <td className="px-3 py-2">{event.customer_name ?? "—"}</td>
-      <td className="px-3 py-2">
-        {[event.stop_city, event.stop_state].filter(Boolean).join(", ") || "—"}
-        {event.stop_type ? <span className="ml-1 text-xs text-slate-500">({event.stop_type})</span> : null}
-      </td>
-      <td className="px-3 py-2">{event.driver_name ?? "—"}</td>
-      <td className="px-3 py-2 tabular-nums" data-testid={`detention-elapsed-${event.id}`}>
-        {formatElapsed(String(event.started_at), nowMs)}
-      </td>
-      <td className="px-3 py-2 tabular-nums">{billable} min</td>
-      <td className="px-3 py-2 tabular-nums font-medium">{formatMoney(liveCents)}</td>
-      <td className="px-3 py-2">
-        <StatusBadge status={String(event.status)} />
-      </td>
-      <td className="px-3 py-2 space-x-2">
-        {event.status === "accruing" ? (
-          <button
-            type="button"
-            className="rounded-sm border px-2 py-1 text-xs"
-            disabled={closeM.isPending}
-            onClick={() => closeM.mutate()}
-          >
-            Stop accrual
-          </button>
-        ) : null}
-        {event.status === "closed" ? (
-          <button
-            type="button"
-            className="rounded-sm border border-slate-300 px-2 py-1 text-xs text-slate-700"
-            disabled={bridgeM.isPending}
-            onClick={() => bridgeM.mutate()}
-          >
-            Bridge to billing
-          </button>
-        ) : null}
-        {event.notify_due && !event.customer_notified_at ? (
-          <button
-            type="button"
-            className="rounded-sm border px-2 py-1 text-xs"
-            disabled={notifyM.isPending}
-            onClick={() => notifyM.mutate()}
-          >
-            Notify customer
-          </button>
-        ) : null}
-      </td>
-    </tr>
+    <div className="space-x-2">
+      {event.status === "accruing" ? (
+        <button
+          type="button"
+          className="rounded-sm border px-2 py-1 text-xs"
+          disabled={closeM.isPending}
+          onClick={() => closeM.mutate()}
+        >
+          Stop accrual
+        </button>
+      ) : null}
+      {event.status === "closed" ? (
+        <button
+          type="button"
+          className="rounded-sm border border-slate-300 px-2 py-1 text-xs text-slate-700"
+          disabled={bridgeM.isPending}
+          onClick={() => bridgeM.mutate()}
+        >
+          Bridge to billing
+        </button>
+      ) : null}
+      {event.notify_due && !event.customer_notified_at ? (
+        <button
+          type="button"
+          className="rounded-sm border px-2 py-1 text-xs"
+          disabled={notifyM.isPending}
+          onClick={() => notifyM.mutate()}
+        >
+          Notify customer
+        </button>
+      ) : null}
+    </div>
   );
 }
 
@@ -142,6 +120,65 @@ export function DetentionBoardPage() {
   }
 
   const events = boardQ.data?.events ?? [];
+  type DetentionRow = (typeof events)[number];
+
+  // Migrated to the shared QBO-parity grid — columns, order, and per-row action buttons preserved
+  // verbatim (§7 additive-only). Elapsed re-renders live off nowMs (30s ticker) via column render.
+  const columns: Array<ParityColumn<DetentionRow>> = [
+    {
+      key: "load_number",
+      label: "Load",
+      sortable: true,
+      className: "font-medium",
+      render: (event) => (
+        <Link to={`/dispatch?load_id=${encodeURIComponent(event.load_id)}`} className="text-slate-700 hover:underline">
+          {event.load_number}
+        </Link>
+      ),
+    },
+    { key: "customer_name", label: "Customer", sortable: true, render: (event) => event.customer_name ?? "—" },
+    {
+      key: "stop_city",
+      label: "Stop",
+      render: (event) => (
+        <>
+          {[event.stop_city, event.stop_state].filter(Boolean).join(", ") || "—"}
+          {event.stop_type ? <span className="ml-1 text-xs text-slate-500">({event.stop_type})</span> : null}
+        </>
+      ),
+    },
+    { key: "driver_name", label: "Driver", sortable: true, render: (event) => event.driver_name ?? "—" },
+    {
+      key: "started_at",
+      label: "Elapsed",
+      sortable: true,
+      cellClass: "tabular-nums",
+      render: (event) => (
+        <span data-testid={`detention-elapsed-${event.id}`}>{formatElapsed(String(event.started_at), nowMs)}</span>
+      ),
+    },
+    {
+      key: "billable_minutes",
+      label: "Billable",
+      sortable: true,
+      cellClass: "tabular-nums",
+      render: (event) => `${Number(event.billable_minutes ?? 0)} min`,
+    },
+    {
+      key: "live_accrued_amount_cents",
+      label: "Accrual",
+      sortable: true,
+      cellClass: "tabular-nums font-medium",
+      render: (event) => formatMoney(Number(event.live_accrued_amount_cents ?? event.accrued_amount_cents ?? 0)),
+    },
+    { key: "status", label: "Status", sortable: true, render: (event) => <StatusBadge status={String(event.status)} /> },
+    {
+      key: "actions",
+      label: "Actions",
+      alwaysVisible: true,
+      render: (event) => <EventActions event={event} companyId={companyId} onAction={invalidate} />,
+    },
+  ];
 
   return (
     <div data-testid="dispatch-detention-board-page" className="mx-auto max-w-7xl space-y-4">
@@ -170,48 +207,15 @@ export function DetentionBoardPage() {
         {boardQ.data?.notify_threshold_minutes ?? 60} billable minutes.
       </p>
 
-      <section className="overflow-x-auto rounded-sm border bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="border-b bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
-            <tr>
-              <th className="px-3 py-2">Load</th>
-              <th className="px-3 py-2">Customer</th>
-              <th className="px-3 py-2">Stop</th>
-              <th className="px-3 py-2">Driver</th>
-              <th className="px-3 py-2">Elapsed</th>
-              <th className="px-3 py-2">Billable</th>
-              <th className="px-3 py-2">Accrual</th>
-              <th className="px-3 py-2">Status</th>
-              <th className="px-3 py-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {boardQ.isLoading ? (
-              <tr>
-                <td colSpan={9} className="px-3 py-6 text-center text-slate-500">
-                  Loading detention events…
-                </td>
-              </tr>
-            ) : events.length === 0 ? (
-              <tr>
-                <td colSpan={9} className="px-3 py-6 text-center text-slate-500">
-                  No active detention accrual. Confirmed stop arrivals will appear after sync.
-                </td>
-              </tr>
-            ) : (
-              events.map((event) => (
-                <EventRow
-                  key={String(event.id)}
-                  event={event}
-                  companyId={companyId}
-                  nowMs={nowMs}
-                  onAction={invalidate}
-                />
-              ))
-            )}
-          </tbody>
-        </table>
-      </section>
+      <ParityTable<DetentionRow>
+        columns={columns}
+        rows={events}
+        rowKey={(event) => String(event.id)}
+        loading={boardQ.isLoading}
+        emptyText="No active detention accrual. Confirmed stop arrivals will appear after sync."
+        storageKey="dispatch-detention-board"
+        exportFilename="detention-board"
+      />
     </div>
   );
 }

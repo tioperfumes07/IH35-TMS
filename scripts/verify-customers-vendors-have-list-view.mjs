@@ -11,11 +11,14 @@ const REQUIRED = [
     // (GLOBAL-TABLE-CONTROLS rollout replaced ResizableTh with TableHeaderCell; TBL-STANDARD batch 2
     // migrates customers to the shared ParityTable, which owns the resizable/table-fixed column grid.)
     file: "apps/frontend/src/pages/customers/CustomersListView.tsx",
-    markers: ["data-customers-list-view", "ResizableTh|TableHeaderCell|ParityTable", "BulkActionBar"],
+    // Bulk actions must exist: the legacy <BulkActionBar> OR ParityTable's own `batchActions` toolbar
+    // (selectable rows → batch bar) — the same feature via the shared component. Accept either so the
+    // ParityTable migration keeps the AUDIT-FIX-3 bulk-select guarantee without a literal-name proxy.
+    markers: ["data-customers-list-view", "ResizableTh|TableHeaderCell|ParityTable", "BulkActionBar|batchActions"],
   },
   {
     file: "apps/frontend/src/pages/vendors/VendorsListView.tsx",
-    markers: ["data-vendors-list-view", "ResizableTh|TableHeaderCell|ParityTable", "BulkActionBar"],
+    markers: ["data-vendors-list-view", "ResizableTh|TableHeaderCell|ParityTable", "BulkActionBar|batchActions"],
   },
   {
     file: "apps/frontend/src/pages/Customers.tsx",

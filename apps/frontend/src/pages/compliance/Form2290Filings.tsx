@@ -1,6 +1,8 @@
+import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 type Filing = Record<string, unknown>;
 
@@ -65,6 +67,25 @@ export function Form2290Filings() {
     },
   });
 
+  const columns = useMemo<ParityColumn<Filing>[]>(
+    () => [
+      {
+        key: "tax_period_start",
+        label: "Tax period",
+        sortable: true,
+        render: (filing) => `${formatDateUS(filing.tax_period_start)} → ${formatDateUS(filing.tax_period_end)}`,
+      },
+      { key: "filing_status", label: "Status", sortable: true, render: (filing) => String(filing.filing_status) },
+      {
+        key: "total_tax_due",
+        label: "Total tax",
+        sortable: true,
+        render: (filing) => `$${Number(filing.total_tax_due ?? 0).toFixed(2)}`,
+      },
+    ],
+    []
+  );
+
   if (!companyId) {
     return <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-slate-600">Select an operating company.</div>;
   }
@@ -91,33 +112,15 @@ export function Form2290Filings() {
         </button>
       </div>
 
-      <table className="w-full text-xs">
-        <thead>
-          <tr className="border-b border-gray-200 text-left text-slate-600">
-            <th className="py-2">Tax period</th>
-            <th>Status</th>
-            <th>Total tax</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filings.map((filing) => (
-            <tr key={String(filing.id)} className="border-b border-gray-100">
-              <td className="py-2">
-                {formatDateUS(filing.tax_period_start)} → {formatDateUS(filing.tax_period_end)}
-              </td>
-              <td>{String(filing.filing_status)}</td>
-              <td>${Number(filing.total_tax_due ?? 0).toFixed(2)}</td>
-            </tr>
-          ))}
-          {filings.length === 0 ? (
-            <tr>
-              <td colSpan={3} className="py-3 text-slate-500">
-                No filings yet.
-              </td>
-            </tr>
-          ) : null}
-        </tbody>
-      </table>
+      <ParityTable<Filing>
+        columns={columns}
+        rows={filings}
+        rowKey={(filing) => String(filing.id)}
+        loading={filingsQ.isLoading}
+        emptyText="No filings yet."
+        storageKey="compliance-form-2290-filings"
+        exportFilename="form-2290-filings"
+      />
     </div>
   );
 }

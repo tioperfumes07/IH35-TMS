@@ -1,9 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DatePicker } from "../components/forms/DatePicker";
 import { MoneyInput } from "../components/forms/MoneyInput";
+import { ParityTable } from "../components/parity/ParityTable";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { listVendorBills } from "../api/accounting";
+import { listVendorBills, type VendorBill } from "../api/accounting";
 import { ApiError, apiRequest } from "../api/client";
 import { listVendorBillPayments, recordVendorBillPayment, type VendorBillPaymentListRow } from "../api/vendors";
 import { getVendor, updateVendor, listPaymentTermOptions } from "../api/mdata";
@@ -1014,80 +1015,53 @@ export function VendorDetailPage() {
               <p className="text-sm text-slate-700">
                 Backend pending — history unavailable until backend ships (P6-T11204).
               </p>
-            ) : vendorPaymentsQuery.isLoading ? (
-              <p className="text-sm text-gray-500">Loading…</p>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-left text-xs">
-                  <thead>
-                    <tr className="border-b border-gray-200 text-gray-600">
-                      <th className="px-2 py-1.5 font-semibold">Date</th>
-                      <th className="px-2 py-1.5 font-semibold">Amount</th>
-                      <th className="px-2 py-1.5 font-semibold">Method</th>
-                      <th className="px-2 py-1.5 font-semibold">Applied</th>
-                      <th className="px-2 py-1.5 font-semibold">Reference</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(vendorPaymentsQuery.data?.payments ?? []).map((p: VendorBillPaymentListRow) => (
-                      <tr key={p.id} className="border-b border-gray-100">
-                        <td className="px-2 py-1.5">{p.payment_date}</td>
-                        <td className="px-2 py-1.5">{money.format(p.amount_cents / 100)}</td>
-                        <td className="px-2 py-1.5">{p.payment_method ?? p.method ?? "—"}</td>
-                        <td className="px-2 py-1.5">
-                          {p.amount_applied_cents != null ? money.format(p.amount_applied_cents / 100) : "—"}
-                        </td>
-                        <td className="px-2 py-1.5">{p.reference ?? "—"}</td>
-                      </tr>
-                    ))}
-                    {(vendorPaymentsQuery.data?.payments ?? []).length === 0 ? (
-                      <tr>
-                        <td colSpan={5} className="px-2 py-3 text-gray-500">
-                          No payments recorded.
-                        </td>
-                      </tr>
-                    ) : null}
-                  </tbody>
-                </table>
-              </div>
+              <ParityTable<VendorBillPaymentListRow>
+                rows={vendorPaymentsQuery.data?.payments ?? []}
+                rowKey={(p) => p.id}
+                loading={vendorPaymentsQuery.isLoading}
+                storageKey="vendor-detail-bill-payments"
+                emptyText="No payments recorded."
+                exportFilename="vendor-bill-payments"
+                columns={[
+                  { key: "payment_date", label: "Date", sortable: true, render: (p) => p.payment_date },
+                  { key: "amount_cents", label: "Amount", sortable: true, cellClass: "text-right tabular-nums", render: (p) => money.format(p.amount_cents / 100) },
+                  { key: "payment_method", label: "Method", sortable: true, render: (p) => p.payment_method ?? p.method ?? "—" },
+                  {
+                    key: "amount_applied_cents",
+                    label: "Applied",
+                    cellClass: "text-right tabular-nums",
+                    render: (p) => (p.amount_applied_cents != null ? money.format(p.amount_applied_cents / 100) : "—"),
+                  },
+                  { key: "reference", label: "Reference", render: (p) => p.reference ?? "—" },
+                ]}
+              />
             )}
           </div>
-          {billsQuery.isLoading ? <p className="text-sm text-gray-500">Loading bills…</p> : null}
           {billsQuery.isError ? <p className="text-sm text-red-600">Could not load bills.</p> : null}
-          {billsQuery.isSuccess ? (
-            <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
-              <table className="min-w-full text-left text-xs">
-                <thead className="border-b border-gray-100 bg-gray-50 text-[11px] font-semibold uppercase text-gray-600">
-                  <tr>
-                    <th className="px-3 py-2">Bill #</th>
-                    <th className="px-3 py-2">Date</th>
-                    <th className="px-3 py-2">Due</th>
-                    <th className="px-3 py-2 text-right">Amount</th>
-                    <th className="px-3 py-2 text-right">Balance</th>
-                    <th className="px-3 py-2">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {billsQuery.data.rows.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="px-3 py-4 text-gray-500">
-                        No bills for this vendor.
-                      </td>
-                    </tr>
-                  ) : null}
-                  {billsQuery.data.rows.map((b) => (
-                    <tr key={b.id} className="border-b border-gray-50">
-                      <td className="px-3 py-2 font-medium"><EntityLink kind="bill" id={b.id} label={b.bill_number ?? b.id.slice(0, 8)} /></td>
-                      <td className="px-3 py-2">{b.bill_date}</td>
-                      <td className="px-3 py-2">{b.due_date ?? "—"}</td>
-                      <td className="px-3 py-2 text-right">{money.format(b.amount_cents / 100)}</td>
-                      <td className="px-3 py-2 text-right">{money.format((b.balance_cents ?? b.amount_cents - b.paid_cents) / 100)}</td>
-                      <td className="px-3 py-2">{b.status}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          {!billsQuery.isError ? (
+            <ParityTable<VendorBill>
+              rows={billsQuery.data?.rows ?? []}
+              rowKey={(b) => b.id}
+              loading={billsQuery.isLoading}
+              storageKey="vendor-detail-bills"
+              emptyText="No bills for this vendor."
+              exportFilename="vendor-bills"
+              columns={[
+                { key: "bill_number", label: "Bill #", render: (b) => <EntityLink kind="bill" id={b.id} label={b.bill_number ?? b.id.slice(0, 8)} /> },
+                { key: "bill_date", label: "Date", sortable: true, render: (b) => b.bill_date },
+                { key: "due_date", label: "Due", sortable: true, render: (b) => b.due_date ?? "—" },
+                { key: "amount_cents", label: "Amount", sortable: true, cellClass: "text-right tabular-nums", render: (b) => money.format(b.amount_cents / 100) },
+                {
+                  key: "balance_cents",
+                  label: "Balance",
+                  sortable: true,
+                  cellClass: "text-right tabular-nums",
+                  render: (b) => money.format((b.balance_cents ?? b.amount_cents - b.paid_cents) / 100),
+                },
+                { key: "status", label: "Status", sortable: true, render: (b) => b.status },
+              ]}
+            />
           ) : null}
         </div>
       ) : null}

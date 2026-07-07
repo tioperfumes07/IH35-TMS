@@ -4,10 +4,13 @@ import { useQuery } from "@tanstack/react-query";
 import { getSafetyDvirSubmissions } from "../../api/safety";
 import { useListState } from "../../components/list-state";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 type Props = {
   operatingCompanyId: string;
 };
+
+type DvirRow = Record<string, unknown>;
 
 export function IdvrPage({ operatingCompanyId }: Props) {
   const [driverFilter, setDriverFilter] = useState("");
@@ -35,6 +38,46 @@ export function IdvrPage({ operatingCompanyId }: Props) {
   // LIST-EMPTY: the empty message renders only after the DVIR query settles.
   const listState = useListState(listQuery, rows.length === 0);
 
+  const columns = useMemo<Array<ParityColumn<DvirRow>>>(
+    () => [
+      {
+        key: "submitted_at",
+        label: "Submitted",
+        sortable: true,
+        render: (row) => String(row.submitted_at ?? "").slice(0, 16).replace("T", " "),
+      },
+      {
+        key: "driver_id",
+        label: "Driver",
+        render: (row) => (
+          <EntityLink kind="driver" id={row.driver_id as string | undefined} label={row.driver_name as string | undefined} />
+        ),
+      },
+      {
+        key: "unit_id",
+        label: "Unit",
+        render: (row) => (
+          <EntityLink kind="unit" id={row.unit_id as string | undefined} label={row.unit_number as string | undefined} />
+        ),
+      },
+      { key: "type", label: "Type", sortable: true, render: (row) => String(row.type ?? "—").replace("_", " ") },
+      { key: "defect_count", label: "Defects", sortable: true, render: (row) => String(row.defect_count ?? 0) },
+      { key: "defect_severity", label: "Severity", sortable: true, render: (row) => String(row.defect_severity ?? "none") },
+      {
+        key: "follow_up_wo_id",
+        label: "WO",
+        render: (row) => (
+          <EntityLink
+            kind="work_order"
+            id={row.follow_up_wo_id as string | undefined}
+            label={(row.follow_up_wo_id as string | undefined) ? "Open WO" : undefined}
+          />
+        ),
+      },
+    ],
+    [],
+  );
+
   return (
     <div className="space-y-3" data-testid="idvr-page">
       <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
@@ -44,82 +87,59 @@ export function IdvrPage({ operatingCompanyId }: Props) {
         </div>
       </div>
 
-      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2 md:grid-cols-4">
-        <label className="text-[11px] text-slate-600">
-          From
-          <DatePicker
-            value={fromDate}
-            onChange={(next) => setFromDate(next)}
-            className="mt-1 block h-8 w-full rounded-sm border border-gray-200 px-2 text-xs"
-            data-testid="idvr-filter-from"
-          />
-        </label>
-        <label className="text-[11px] text-slate-600">
-          To
-          <DatePicker
-            value={toDate}
-            onChange={(next) => setToDate(next)}
-            className="mt-1 block h-8 w-full rounded-sm border border-gray-200 px-2 text-xs"
-            data-testid="idvr-filter-to"
-          />
-        </label>
-        <label className="text-[11px] text-slate-600">
-          Driver ID
-          <input
-            value={driverFilter}
-            onChange={(event) => setDriverFilter(event.target.value)}
-            className="mt-1 block h-8 w-full rounded-sm border border-gray-200 px-2 text-xs"
-            placeholder="UUID"
-            data-testid="idvr-filter-driver"
-          />
-        </label>
-        <label className="text-[11px] text-slate-600">
-          Unit ID
-          <input
-            value={unitFilter}
-            onChange={(event) => setUnitFilter(event.target.value)}
-            className="mt-1 block h-8 w-full rounded-sm border border-gray-200 px-2 text-xs"
-            placeholder="UUID"
-            data-testid="idvr-filter-unit"
-          />
-        </label>
-      </div>
-
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-xs" data-testid="idvr-table">
-          <thead className="bg-gray-50 text-[10px] uppercase text-slate-600">
-            <tr>
-              <th className="px-2 py-1 text-left">Submitted</th>
-              <th className="px-2 py-1 text-left">Driver</th>
-              <th className="px-2 py-1 text-left">Unit</th>
-              <th className="px-2 py-1 text-left">Type</th>
-              <th className="px-2 py-1 text-left">Defects</th>
-              <th className="px-2 py-1 text-left">Severity</th>
-              <th className="px-2 py-1 text-left">WO</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={String(row.id)} className="border-t border-gray-100" data-testid={`idvr-row-${String(row.id)}`}>
-                <td className="px-2 py-1">{String(row.submitted_at ?? "").slice(0, 16).replace("T", " ")}</td>
-                <td className="px-2 py-1"><EntityLink kind="driver" id={row.driver_id as string | undefined} label={row.driver_name as string | undefined} /></td>
-                <td className="px-2 py-1"><EntityLink kind="unit" id={row.unit_id as string | undefined} label={row.unit_number as string | undefined} /></td>
-                <td className="px-2 py-1">{String(row.type ?? "—").replace("_", " ")}</td>
-                <td className="px-2 py-1">{String(row.defect_count ?? 0)}</td>
-                <td className="px-2 py-1">{String(row.defect_severity ?? "none")}</td>
-                <td className="px-2 py-1"><EntityLink kind="work_order" id={row.follow_up_wo_id as string | undefined} label={(row.follow_up_wo_id as string | undefined) ? "Open WO" : undefined} /></td>
-              </tr>
-            ))}
-            {listState.isEmpty ? (
-              <tr>
-                <td colSpan={7} className="px-2 py-3 text-center text-slate-500">
-                  No DVIR submissions found for the selected filters.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
+      <ParityTable<DvirRow>
+        columns={columns}
+        rows={rows}
+        rowKey={(row) => String(row.id)}
+        loading={listState.isLoading}
+        emptyText="No DVIR submissions found for the selected filters."
+        storageKey="safety-idvr"
+        exportFilename="dvir-submissions"
+        tableTestId="idvr-table"
+        rowTestId={(row) => `idvr-row-${String(row.id)}`}
+        filterBar={
+          <div className="flex flex-wrap items-end gap-3">
+            <label className="text-[11px] text-slate-600">
+              From
+              <DatePicker
+                value={fromDate}
+                onChange={(next) => setFromDate(next)}
+                className="mt-1 block h-8 w-full rounded-sm border border-gray-200 px-2 text-xs"
+                data-testid="idvr-filter-from"
+              />
+            </label>
+            <label className="text-[11px] text-slate-600">
+              To
+              <DatePicker
+                value={toDate}
+                onChange={(next) => setToDate(next)}
+                className="mt-1 block h-8 w-full rounded-sm border border-gray-200 px-2 text-xs"
+                data-testid="idvr-filter-to"
+              />
+            </label>
+            <label className="text-[11px] text-slate-600">
+              Driver ID
+              <input
+                value={driverFilter}
+                onChange={(event) => setDriverFilter(event.target.value)}
+                className="mt-1 block h-8 w-full rounded-sm border border-gray-200 px-2 text-xs"
+                placeholder="UUID"
+                data-testid="idvr-filter-driver"
+              />
+            </label>
+            <label className="text-[11px] text-slate-600">
+              Unit ID
+              <input
+                value={unitFilter}
+                onChange={(event) => setUnitFilter(event.target.value)}
+                className="mt-1 block h-8 w-full rounded-sm border border-gray-200 px-2 text-xs"
+                placeholder="UUID"
+                data-testid="idvr-filter-unit"
+              />
+            </label>
+          </div>
+        }
+      />
     </div>
   );
 }

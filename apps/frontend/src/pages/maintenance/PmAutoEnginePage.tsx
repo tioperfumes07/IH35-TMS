@@ -1,12 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMemo } from "react";
 import {
   getMaintenancePmAutoEngineDashboard,
   runMaintenancePmAutoEngineNow,
   updateMaintenancePmAutoEngineSettings,
+  type PmAutoEngineRunRow,
 } from "../../api/maintenance";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 export function PmAutoEnginePage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -41,6 +44,18 @@ export function PmAutoEnginePage() {
   });
 
   const isPaused = Boolean(dashboardQ.data?.settings?.is_paused);
+  const runs = dashboardQ.data?.runs ?? [];
+
+  const runColumns = useMemo<ParityColumn<PmAutoEngineRunRow>[]>(
+    () => [
+      { key: "started_at", label: "Started", sortable: true, render: (row) => row.started_at ?? "—" },
+      { key: "status", label: "Status", sortable: true, render: (row) => row.status },
+      { key: "schedules_evaluated", label: "Schedules", render: (row) => row.schedules_evaluated },
+      { key: "work_orders_created", label: "WOs", render: (row) => row.work_orders_created },
+      { key: "alerts_created", label: "Alerts", render: (row) => row.alerts_created },
+    ],
+    [],
+  );
 
   return (
     <div className="space-y-4" data-testid="maint-pm-auto-engine">
@@ -71,35 +86,14 @@ export function PmAutoEnginePage() {
           Status: {isPaused ? "Paused" : "Active"} · Lookahead {dashboardQ.data?.lookahead_miles ?? "—"} mi
         </div>
         <h3 className="mb-2 text-xs font-semibold uppercase text-gray-600">Recent runs</h3>
-        <table className="w-full text-left text-xs">
-          <thead className="text-[11px] uppercase text-gray-500">
-            <tr>
-              <th className="py-1">Started</th>
-              <th className="py-1">Status</th>
-              <th className="py-1">Schedules</th>
-              <th className="py-1">WOs</th>
-              <th className="py-1">Alerts</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(dashboardQ.data?.runs ?? []).map((run) => (
-              <tr key={run.id} className="border-t border-gray-100">
-                <td className="py-1">{run.started_at ?? "—"}</td>
-                <td className="py-1">{run.status}</td>
-                <td className="py-1">{run.schedules_evaluated}</td>
-                <td className="py-1">{run.work_orders_created}</td>
-                <td className="py-1">{run.alerts_created}</td>
-              </tr>
-            ))}
-            {(dashboardQ.data?.runs ?? []).length === 0 ? (
-              <tr>
-                <td colSpan={5} className="py-3 text-gray-500">
-                  No engine runs recorded yet.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
+        <ParityTable
+          rows={runs}
+          columns={runColumns}
+          rowKey={(row) => row.id}
+          loading={dashboardQ.isLoading}
+          storageKey="maintenance-pm-auto-engine-runs"
+          emptyText="No engine runs recorded yet."
+        />
       </div>
 
       <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">

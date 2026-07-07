@@ -1,6 +1,10 @@
+import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { resolveApiUrl } from "../../../api/client";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+
+type FindingRow = { driver_uuid: string; severity: string; drift_reason: string; _rowId: string };
 
 async function fetchSnapshot() {
   const res = await fetch(resolveApiUrl("/api/integrations/integrity/driver-vendor-mapping"), { credentials: "include" });
@@ -35,7 +39,31 @@ export function DriverVendorMappingTab() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["integrity", "driver-vendor-mapping"] }),
   });
 
-  const findings = query.data?.snapshot?.findings ?? [];
+  const findings: Array<{ driver_uuid: string; severity: string; drift_reason: string }> =
+    query.data?.snapshot?.findings ?? [];
+
+  const rows = useMemo<FindingRow[]>(
+    () => findings.map((f, i) => ({ ...f, _rowId: `${f.driver_uuid}-${i}` })),
+    [findings],
+  );
+
+  const columns = useMemo<ParityColumn<FindingRow>[]>(
+    () => [
+      { key: "driver_uuid", label: "Driver", sortable: true },
+      { key: "severity", label: "Severity", sortable: true },
+      { key: "drift_reason", label: "Drift reason" },
+      {
+        key: "action",
+        label: "Action",
+        render: () => (
+          <button type="button" className="underline text-[#1f2a44]">
+            Ack
+          </button>
+        ),
+      },
+    ],
+    [],
+  );
 
   return (
     <div className="space-y-3" data-testid="driver-vendor-mapping-tab">
@@ -50,33 +78,16 @@ export function DriverVendorMappingTab() {
       >
         Run scan
       </button>
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-      <table className="min-w-full text-xs">
-        <thead>
-          <tr className="bg-gray-50 text-[10px] uppercase">
-            <th className="px-2 py-1 text-left">Driver</th>
-            <th className="px-2 py-1 text-left">Severity</th>
-            <th className="px-2 py-1 text-left">Drift reason</th>
-            <th className="px-2 py-1 text-left">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {findings.map((f: { driver_uuid: string; severity: string; drift_reason: string }, i: number) => (
-            <tr key={`${f.driver_uuid}-${i}`} className="border-t">
-              <td className="px-2 py-1">{f.driver_uuid}</td>
-              <td className="px-2 py-1">{f.severity}</td>
-              <td className="px-2 py-1">{f.drift_reason}</td>
-              <td className="px-2 py-1">
-                <button type="button" className="underline text-[#1f2a44]">Ack</button>
-              </td>
-            </tr>
-          ))}
-          {findings.length === 0 ? (
-            <tr><td colSpan={4} className="px-2 py-3 text-center text-slate-500">No drift findings.</td></tr>
-          ) : null}
-        </tbody>
-      </table>
-      </div>
+      <ParityTable<FindingRow>
+        columns={columns}
+        rows={rows}
+        rowKey={(row) => row._rowId}
+        loading={query.isLoading}
+        emptyText="No drift findings."
+        storageKey="safety-driver-vendor-mapping"
+        exportFilename="driver-vendor-mapping-findings"
+        tableTestId="driver-vendor-mapping-tab-table"
+      />
     </div>
   );
 }

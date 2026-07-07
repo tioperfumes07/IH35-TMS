@@ -115,24 +115,32 @@ const MIGRATED = [
 for (const { file, empties } of MIGRATED) {
   if (!fs.existsSync(path.join(repoRoot, file))) fail(`migrated list surface missing: ${file}`);
   const src = read(file);
-  if (!src.includes("components/list-state")) {
-    fail(`${file} no longer imports the shared list-state primitive`);
-  }
-  if (!/useListState|resolveListState/.test(src)) {
-    fail(`${file} no longer references the list-state hook/resolver`);
+  // A list surface enforces the settled-only (no false-empty) invariant in ONE of two equivalent ways:
+  //  (a) the shared list-state primitive (isEmpty resolves only on a settled, zero-row query), or
+  //  (b) the shared ParityTable, whose emptyText renders ONLY when its `loading` prop is false — the
+  //      SAME settled-only gate (cf. the DispatchBoard-via-DataTable loading-gate precedent above).
+  //      A ParityTable surface must pass a `loading=` prop (never omit it) and carry the empty as
+  //      emptyText. This lets the QBO-parity ParityTable migration proceed without weakening the guard:
+  //      bare `.length === 0 ?` empties are still rejected below, per-literal.
+  const usesPrimitive = src.includes("components/list-state") && /useListState|resolveListState/.test(src);
+  const usesParity = src.includes("<ParityTable") && /\bloading=/.test(src);
+  if (!usesPrimitive && !usesParity) {
+    fail(`${file} routes its list empty through neither the shared list-state primitive nor a loading-gated ParityTable`);
   }
   for (const literal of empties) {
     let idx = src.indexOf(literal);
     if (idx === -1) fail(`${file} expected empty literal not found: "${literal}"`);
     while (idx !== -1) {
-      // The empty literal must sit inside a settled-state branch: an isEmpty /
-      // === "empty" guard within the preceding window. Anything gated on a bare
-      // `.length === 0` alone (the defect) is rejected.
+      // The empty literal must sit inside a settled-state branch within the preceding window: an
+      // isEmpty / === "empty" guard (list-state primitive) OR a ParityTable `emptyText=` prop (whose
+      // render is gated on the settled `loading` prop). A bare `.length === 0` alone (the defect) is rejected.
       const window = src.slice(Math.max(0, idx - 400), idx);
-      const gated = /listState\.isEmpty|state === "empty"|\.isEmpty\b/.test(window);
+      const listStateGated = /listState\.isEmpty|state === "empty"|\.isEmpty\b/.test(window);
+      const parityEmptyText = /emptyText=/.test(window);
+      const gated = listStateGated || parityEmptyText;
       const bareLength = /\.length === 0 \?/.test(window) && !gated;
       if (!gated || bareLength) {
-        fail(`${file}: empty literal "${literal}" is not gated on the settled list-state (found a raw data-length empty render)`);
+        fail(`${file}: empty literal "${literal}" is not gated on the settled list-state or a ParityTable emptyText (found a raw data-length empty render)`);
       }
       idx = src.indexOf(literal, idx + literal.length);
     }

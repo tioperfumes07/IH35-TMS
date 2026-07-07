@@ -14,6 +14,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { useToast } from "../../../components/Toast";
 import { PageHeader } from "../../../components/forms/shared/PageHeader";
 import { DvirSeverityBadge } from "../../../components/maintenance/DvirSeverityBadge";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 const TABS: Array<{ key: DvirSeverityLevel; label: string }> = [
   { key: "major", label: "Major" },
@@ -68,6 +69,54 @@ export function PreFlightDvirQueue() {
     onError: () => pushToast("Severity change blocked — Manager+ role required for major changes", "error"),
   });
 
+  const columns = useMemo<ParityColumn<PreFlightDvirQueueRow>[]>(
+    () => [
+      {
+        key: "submitted_at",
+        label: "Submitted",
+        sortable: true,
+        render: (row) => (row.submitted_at ? new Date(row.submitted_at).toLocaleString() : "—"),
+      },
+      { key: "unit_id", label: "Unit", render: (row) => <EntityLink kind="unit" id={row.unit_id} label={row.unit_number ?? undefined} /> },
+      { key: "driver_name", label: "Driver", sortable: true, render: (row) => row.driver_name ?? "—" },
+      { key: "item_key", label: "Item", sortable: true, render: (row) => <span title={row.notes ?? undefined}>{row.item_key}</span> },
+      { key: "severity", label: "Severity", sortable: true, render: (row) => <DvirSeverityBadge severity={row.severity} /> },
+      { key: "major_defect_code", label: "CFR Code", render: (row) => row.major_defect_code ?? "—" },
+      {
+        key: "auto_wo_id",
+        label: "Work Order",
+        render: (row) =>
+          row.auto_wo_id ? (
+            <Link to={`/maintenance/work-orders/${row.auto_wo_id}`} className="text-slate-700 underline" data-testid={`dvir-wo-link-${row.id}`}>
+              View WO
+            </Link>
+          ) : (
+            "—"
+          ),
+      },
+      {
+        key: "actions",
+        label: "Actions",
+        alwaysVisible: true,
+        render: (row) => (
+          <div className="flex flex-wrap gap-1">
+            {!row.routed ? (
+              <Button size="sm" onClick={() => routeMut.mutate(row.id)} disabled={routeMut.isPending}>
+                {row.severity === "major" ? "Create WO" : "Route"}
+              </Button>
+            ) : null}
+            {row.severity === "major" ? (
+              <Button size="sm" variant="secondary" onClick={() => downgradeMut.mutate(row.id)} disabled={downgradeMut.isPending}>
+                Downgrade to minor
+              </Button>
+            ) : null}
+          </div>
+        ),
+      },
+    ],
+    [routeMut, downgradeMut],
+  );
+
   return (
     <div className="space-y-4" data-testid="pre-flight-dvir-queue">
       <PageHeader
@@ -93,79 +142,17 @@ export function PreFlightDvirQueue() {
         ))}
       </div>
 
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="w-full table-fixed text-left text-xs">
-          <thead className="bg-gray-50 text-[10px] uppercase text-gray-600">
-            <tr>
-              <th className="px-2 py-2">Submitted</th>
-              <th className="px-2 py-2">Unit</th>
-              <th className="px-2 py-2">Driver</th>
-              <th className="px-2 py-2">Item</th>
-              <th className="px-2 py-2">Severity</th>
-              <th className="px-2 py-2">CFR Code</th>
-              <th className="px-2 py-2">Work Order</th>
-              <th className="px-2 py-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row: PreFlightDvirQueueRow) => (
-              <tr key={row.id} className="border-t border-gray-100 align-top" data-testid={`dvir-queue-row-${row.id}`}>
-                <td className="truncate px-2 py-2">
-                  {row.submitted_at ? new Date(row.submitted_at).toLocaleString() : "—"}
-                </td>
-                <td className="truncate px-2 py-2"><EntityLink kind="unit" id={row.unit_id} label={row.unit_number ?? undefined} /></td>
-                <td className="truncate px-2 py-2">{row.driver_name ?? "—"}</td>
-                <td className="truncate px-2 py-2" title={row.notes ?? undefined}>
-                  {row.item_key}
-                </td>
-                <td className="px-2 py-2">
-                  <DvirSeverityBadge severity={row.severity} />
-                </td>
-                <td className="truncate px-2 py-2">{row.major_defect_code ?? "—"}</td>
-                <td className="px-2 py-2">
-                  {row.auto_wo_id ? (
-                    <Link
-                      to={`/maintenance/work-orders/${row.auto_wo_id}`}
-                      className="text-slate-700 underline"
-                      data-testid={`dvir-wo-link-${row.id}`}
-                    >
-                      View WO
-                    </Link>
-                  ) : (
-                    "—"
-                  )}
-                </td>
-                <td className="px-2 py-2">
-                  <div className="flex flex-wrap gap-1">
-                    {!row.routed ? (
-                      <Button size="sm" onClick={() => routeMut.mutate(row.id)} disabled={routeMut.isPending}>
-                        {row.severity === "major" ? "Create WO" : "Route"}
-                      </Button>
-                    ) : null}
-                    {row.severity === "major" ? (
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => downgradeMut.mutate(row.id)}
-                        disabled={downgradeMut.isPending}
-                      >
-                        Downgrade to minor
-                      </Button>
-                    ) : null}
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {rows.length === 0 ? (
-              <tr>
-                <td colSpan={8} className="px-2 py-6 text-center text-sm text-gray-500">
-                  No {tab} DVIR defects in this queue.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
+      <ParityTable
+        rows={rows}
+        columns={columns}
+        rowKey={(row) => row.id}
+        loading={q.isPending}
+        storageKey="maintenance-pre-flight-dvir"
+        emptyText={`No ${tab} DVIR defects in this queue.`}
+        exportFilename="pre-flight-dvir-queue"
+        tableTestId="pre-flight-dvir-table"
+        rowTestId={(row) => `dvir-queue-row-${row.id}`}
+      />
     </div>
   );
 }

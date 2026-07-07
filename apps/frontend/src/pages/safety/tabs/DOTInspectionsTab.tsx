@@ -10,6 +10,7 @@ import { companyToday } from "../../../lib/businessDate";
 import { useListState } from "../../../components/list-state";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { InspectionScoreBadge } from "../../../components/safety/InspectionScoreBadge";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 export function DOTInspectionsTab() {
   const { selectedCompanyId } = useCompanyContext();
@@ -74,6 +75,45 @@ export function DOTInspectionsTab() {
   // LIST-EMPTY: the empty message renders only after the inspections query settles.
   const listState = useListState(query, (query.data?.dot_inspections ?? []).length === 0);
 
+  const columns: Array<ParityColumn<Record<string, unknown>>> = [
+    { key: "inspection_date", label: "Date", sortable: true, render: (row) => formatDateUS(row.inspection_date) },
+    { key: "driver_id", label: "Driver", render: (row) => <EntityLink kind="driver" id={row.driver_id as string | undefined} /> },
+    { key: "unit_id", label: "Unit", render: (row) => <EntityLink kind="unit" id={row.unit_id as string | undefined} /> },
+    { key: "fmcsa_level", label: "Level", sortable: true, render: (row) => String(row.fmcsa_level ?? "—") },
+    { key: "outcome", label: "Outcome", sortable: true, render: (row) => String(row.outcome ?? "—") },
+    { key: "csa_points", label: "CSA Pts", sortable: true, render: (row) => String(row.csa_points ?? "0") },
+    { key: "auto_spawned_wo_id", label: "WO Spawned", render: (row) => <EntityLink kind="work_order" id={row.auto_spawned_wo_id as string | undefined} /> },
+    {
+      key: "action",
+      label: "Actions",
+      render: (row) => (
+        <>
+          <label className="mr-2 inline-flex cursor-pointer items-center text-slate-700 underline">
+            PDF
+            <input
+              type="file"
+              accept="application/pdf"
+              className="hidden"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (!file) return;
+                uploadMutation.mutate({ id: String(row.id), file });
+              }}
+            />
+          </label>
+          <button
+            type="button"
+            className="text-red-700 underline disabled:opacity-50"
+            disabled={Boolean(row.voided_at) || voidMutation.isPending}
+            onClick={() => voidMutation.mutate(String(row.id))}
+          >
+            {row.voided_at ? "Voided" : "Void"}
+          </button>
+        </>
+      ),
+    },
+  ];
+
   // Open DOT station dwell-follow-up queue (samsara geofence dwell-detector → dot_inspection_events).
   const openEventsQuery = useQuery({
     queryKey: ["safety", "dot-inspection-events", companyId],
@@ -113,60 +153,15 @@ export function DOTInspectionsTab() {
         </button>
       </div>
 
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-xs">
-          <thead className="bg-gray-50 text-[10px] uppercase text-slate-600">
-            <tr>
-              <th className="px-2 py-1 text-left">Date</th>
-              <th className="px-2 py-1 text-left">Driver</th>
-              <th className="px-2 py-1 text-left">Unit</th>
-              <th className="px-2 py-1 text-left">Level</th>
-              <th className="px-2 py-1 text-left">Outcome</th>
-              <th className="px-2 py-1 text-left">CSA Pts</th>
-              <th className="px-2 py-1 text-left">WO Spawned</th>
-              <th className="px-2 py-1 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(query.data?.dot_inspections ?? []).map((row) => (
-              <tr key={String(row.id)} className="border-t border-gray-100">
-                <td className="px-2 py-1">{formatDateUS(row.inspection_date)}</td>
-                <td className="px-2 py-1"><EntityLink kind="driver" id={row.driver_id as string | undefined} /></td>
-                <td className="px-2 py-1"><EntityLink kind="unit" id={row.unit_id as string | undefined} /></td>
-                <td className="px-2 py-1">{String(row.fmcsa_level ?? "—")}</td>
-                <td className="px-2 py-1">{String(row.outcome ?? "—")}</td>
-                <td className="px-2 py-1">{String(row.csa_points ?? "0")}</td>
-                <td className="px-2 py-1"><EntityLink kind="work_order" id={row.auto_spawned_wo_id as string | undefined} /></td>
-                <td className="px-2 py-1">
-                  <label className="mr-2 inline-flex cursor-pointer items-center text-slate-700 underline">
-                    PDF
-                    <input
-                      type="file"
-                      accept="application/pdf"
-                      className="hidden"
-                      onChange={(event) => {
-                        const file = event.target.files?.[0];
-                        if (!file) return;
-                        uploadMutation.mutate({ id: String(row.id), file });
-                      }}
-                    />
-                  </label>
-                  <button type="button" className="text-red-700 underline disabled:opacity-50" disabled={Boolean(row.voided_at) || voidMutation.isPending} onClick={() => voidMutation.mutate(String(row.id))}>
-                    {row.voided_at ? "Voided" : "Void"}
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {listState.isEmpty ? (
-              <tr>
-                <td colSpan={8} className="px-2 py-3 text-center text-slate-500">
-                  No DOT inspections found.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
+      <ParityTable<Record<string, unknown>>
+        columns={columns}
+        rows={query.data?.dot_inspections ?? []}
+        rowKey={(row) => String(row.id)}
+        loading={listState.isLoading}
+        emptyText="No DOT inspections found."
+        storageKey="safety-dot-inspections"
+        exportFilename="dot-inspections"
+      />
 
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <h3 className="mb-2 text-xs font-semibold text-slate-800">Open DOT Station Dwell Events (last captured)</h3>

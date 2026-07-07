@@ -6,8 +6,8 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { apiRequest } from "../../../api/client";
-import { MobileOptimizedTable } from "../../../components/shared/MobileOptimizedTable";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 type AxleGroup = "all" | "steer" | "drive" | "trailer";
 
@@ -52,6 +52,36 @@ export function TireWearDashboard() {
 
   const rows = useMemo(() => atRiskQ.data?.rows ?? [], [atRiskQ.data?.rows]);
 
+  const columns = useMemo<ParityColumn<AtRiskRow>[]>(
+    () => [
+      {
+        key: "unit_number",
+        label: "Unit",
+        sortable: true,
+        render: (row) => (
+          <Link to={`/fleet/units/${row.unit_uuid}?tab=tires`} className="text-slate-700 hover:underline">
+            {row.unit_number ?? row.unit_uuid.slice(0, 8)}
+          </Link>
+        ),
+      },
+      { key: "tire_position", label: "Position", sortable: true, render: (row) => row.tire_position },
+      { key: "current_depth_32nds", label: "Depth", render: (row) => `${row.current_depth_32nds ?? "—"}/32"` },
+      { key: "threshold_32nds", label: "Threshold", render: (row) => `${row.threshold_32nds}/32"` },
+      { key: "projected_replacement_date", label: "Projected", sortable: true, render: (row) => row.projected_replacement_date ?? "—" },
+      {
+        key: "days_until_replacement",
+        label: "Days",
+        sortable: true,
+        render: (row) => (
+          <span className={(row.days_until_replacement ?? 99) <= 14 ? "font-semibold text-red-700" : "text-amber-700"}>
+            {row.days_until_replacement ?? "—"}
+          </span>
+        ),
+      },
+    ],
+    [],
+  );
+
   return (
     <div className="space-y-4 p-4" data-testid="tire-wear-dashboard">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -86,55 +116,14 @@ export function TireWearDashboard() {
         </div>
         {atRiskQ.isLoading ? <p className="p-3 text-xs text-gray-500">Loading projections...</p> : null}
         <div className="p-3">
-          <MobileOptimizedTable
+          <ParityTable
             rows={rows}
+            columns={columns}
             rowKey={(row) => `${row.unit_uuid}-${row.tire_position}`}
-            emptyMessage={`No tires projected for replacement within ${withinDays} days.`}
-            columns={[
-              {
-                key: "unit",
-                header: "Unit",
-                render: (row) => (
-                  <Link
-                    to={`/fleet/units/${row.unit_uuid}?tab=tires`}
-                    className="text-slate-700 hover:underline"
-                  >
-                    {row.unit_number ?? row.unit_uuid.slice(0, 8)}
-                  </Link>
-                ),
-              },
-              { key: "position", header: "Position", render: (row) => row.tire_position },
-              {
-                key: "depth",
-                header: "Depth",
-                render: (row) => `${row.current_depth_32nds ?? "—"}/32"`,
-              },
-              {
-                key: "threshold",
-                header: "Threshold",
-                render: (row) => `${row.threshold_32nds}/32"`,
-              },
-              {
-                key: "projected",
-                header: "Projected",
-                render: (row) => row.projected_replacement_date ?? "—",
-              },
-              {
-                key: "days",
-                header: "Days",
-                render: (row) => (
-                  <span
-                    className={
-                      (row.days_until_replacement ?? 99) <= 14
-                        ? "font-semibold text-red-700"
-                        : "text-amber-700"
-                    }
-                  >
-                    {row.days_until_replacement ?? "—"}
-                  </span>
-                ),
-              },
-            ]}
+            loading={atRiskQ.isLoading}
+            storageKey="maintenance-tire-wear-at-risk"
+            emptyText={`No tires projected for replacement within ${withinDays} days.`}
+            exportFilename="tire-wear-at-risk"
           />
         </div>
       </section>

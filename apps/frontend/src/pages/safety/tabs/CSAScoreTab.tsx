@@ -6,12 +6,15 @@ import { useAuth } from "../../../auth/useAuth";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { getCurrentCsaScore, listCsaScores, pullCsaFromSafer, recomputeCsa } from "../../../api/safetyV64";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 type BasicRow = {
   label: string;
   value: number | null;
   threshold: number;
 };
+
+type CsaScoreRow = Record<string, unknown>;
 
 function severityColor(value: number | null) {
   if (value == null) return "text-slate-400";
@@ -66,6 +69,17 @@ export function CSAScoreTab() {
     [current]
   );
 
+  const historyColumns = useMemo<Array<ParityColumn<CsaScoreRow>>>(
+    () => [
+      { key: "period_start", label: "Period Start", sortable: true, render: (row) => formatDateUS(row.period_start) },
+      { key: "period_end", label: "Period End", sortable: true, render: (row) => formatDateUS(row.period_end) },
+      { key: "total_violations", label: "Total Violations", sortable: true, render: (row) => String(row.total_violations ?? "0") },
+      { key: "total_oos", label: "Total OOS", sortable: true, render: (row) => String(row.total_oos ?? "0") },
+      { key: "computed_by", label: "Computed By", sortable: true, render: (row) => String(row.computed_by ?? "-") },
+    ],
+    [],
+  );
+
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2 rounded-sm border border-gray-200 bg-white p-3">
@@ -104,30 +118,15 @@ export function CSAScoreTab() {
         ))}
       </div>
 
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-xs">
-          <thead className="bg-gray-50 text-[10px] uppercase text-slate-600">
-            <tr>
-              <th className="px-2 py-1 text-left">Period Start</th>
-              <th className="px-2 py-1 text-left">Period End</th>
-              <th className="px-2 py-1 text-left">Total Violations</th>
-              <th className="px-2 py-1 text-left">Total OOS</th>
-              <th className="px-2 py-1 text-left">Computed By</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(historyQuery.data?.csa_scores ?? []).map((row) => (
-              <tr key={String(row.id)} className="border-t border-gray-100">
-                <td className="px-2 py-1">{formatDateUS(row.period_start)}</td>
-                <td className="px-2 py-1">{formatDateUS(row.period_end)}</td>
-                <td className="px-2 py-1">{String(row.total_violations ?? "0")}</td>
-                <td className="px-2 py-1">{String(row.total_oos ?? "0")}</td>
-                <td className="px-2 py-1">{String(row.computed_by ?? "-")}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <ParityTable<CsaScoreRow>
+        columns={historyColumns}
+        rows={historyQuery.data?.csa_scores ?? []}
+        rowKey={(row) => String(row.id)}
+        loading={historyQuery.isLoading}
+        emptyText="No CSA score history found."
+        storageKey="safety-csa-history"
+        exportFilename="csa-score-history"
+      />
     </div>
   );
 }

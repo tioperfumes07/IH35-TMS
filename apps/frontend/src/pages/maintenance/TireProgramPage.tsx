@@ -10,6 +10,7 @@ import {
   listMaintenanceTireEvents,
   replaceMaintenanceTire,
   rotateMaintenanceTire,
+  type MaintenanceTireEventRow,
   type MaintenanceTireRecordRow,
 } from "../../api/maintenance";
 import { listUnits } from "../../api/mdata";
@@ -17,6 +18,7 @@ import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 type MountDraft = {
   position_code: string;
@@ -249,6 +251,30 @@ export function TireProgramPage() {
     </section>
   );
 
+  const eventRows = eventsQ.data?.rows ?? [];
+
+  const eventColumns = useMemo<ParityColumn<MaintenanceTireEventRow>[]>(
+    () => [
+      { key: "created_at", label: "When", sortable: true, render: (row) => row.created_at ?? "—" },
+      { key: "event_type", label: "Event", sortable: true, render: (row) => row.event_type_label ?? row.event_type },
+      {
+        key: "to_position_code",
+        label: "Position",
+        render: (row) =>
+          row.from_position_code && row.to_position_code
+            ? `${row.from_position_code} → ${row.to_position_code}`
+            : row.to_position_code ?? "—",
+      },
+      {
+        key: "tread_depth_32nds",
+        label: "Tread",
+        render: (row) => `${row.tread_depth_32nds != null ? `${row.tread_depth_32nds}/32` : "—"}${row.is_low_tread_alert ? " · alert" : ""}`,
+      },
+      { key: "notes", label: "Notes", render: (row) => row.notes || "—" },
+    ],
+    [],
+  );
+
   return (
     <div className="space-y-4" data-testid="maint-tire-program-page">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -305,42 +331,14 @@ export function TireProgramPage() {
 
           <section data-testid="tire-program-history">
             <h3 className="mb-2 text-xs font-semibold uppercase text-gray-600">Rotation / replacement history</h3>
-            <table className="w-full text-left text-xs">
-              <thead className="text-[11px] uppercase text-gray-500">
-                <tr>
-                  <th className="py-1">When</th>
-                  <th className="py-1">Event</th>
-                  <th className="py-1">Position</th>
-                  <th className="py-1">Tread</th>
-                  <th className="py-1">Notes</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(eventsQ.data?.rows ?? []).map((event) => (
-                  <tr key={event.id} className="border-t border-gray-100">
-                    <td className="py-1">{event.created_at ?? "—"}</td>
-                    <td className="py-1">{event.event_type_label ?? event.event_type}</td>
-                    <td className="py-1">
-                      {event.from_position_code && event.to_position_code
-                        ? `${event.from_position_code} → ${event.to_position_code}`
-                        : event.to_position_code ?? "—"}
-                    </td>
-                    <td className="py-1">
-                      {event.tread_depth_32nds != null ? `${event.tread_depth_32nds}/32` : "—"}
-                      {event.is_low_tread_alert ? " · alert" : ""}
-                    </td>
-                    <td className="py-1">{event.notes || "—"}</td>
-                  </tr>
-                ))}
-                {(eventsQ.data?.rows ?? []).length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="py-3 text-gray-500">
-                      No tire events yet for this unit.
-                    </td>
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
+            <ParityTable
+              rows={eventRows}
+              columns={eventColumns}
+              rowKey={(row) => row.id}
+              loading={eventsQ.isPending}
+              storageKey="maintenance-tire-events"
+              emptyText="No tire events yet for this unit."
+            />
           </section>
         </div>
       ) : (

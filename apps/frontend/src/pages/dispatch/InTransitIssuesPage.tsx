@@ -1,14 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   createDispatchIntransitIssue,
   listDispatchIntransitIssues,
   resolveDispatchIntransitIssue,
+  type DispatchIntransitIssueRow,
 } from "../../api/dispatch";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
@@ -52,11 +54,61 @@ export function InTransitIssuesPage() {
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["dispatch", "intransit-issues", companyId] }),
   });
 
+  const issues = issuesQ.data?.issues ?? [];
+
+  // Migrated to the shared QBO-parity grid — columns, load deep-link, and the Resolve row action are
+  // preserved verbatim (§7 additive-only). Declared BEFORE the `!companyId` early return below so the
+  // hook call is unconditional (Rules of Hooks — companyId can change between renders).
+  const columns = useMemo<ParityColumn<DispatchIntransitIssueRow>[]>(
+    () => [
+      {
+        key: "reported_at",
+        label: "Reported",
+        sortable: true,
+        render: (issue) => new Date(issue.reported_at).toLocaleString(),
+      },
+      {
+        key: "load_number",
+        label: "Load",
+        sortable: true,
+        render: (issue) =>
+          issue.load_id ? (
+            <Link to={`/dispatch?load_id=${encodeURIComponent(issue.load_id)}`} className="text-slate-700 hover:underline">
+              {issue.load_number ?? issue.load_id}
+            </Link>
+          ) : (
+            issue.load_number ?? "—"
+          ),
+      },
+      { key: "driver_name", label: "Driver", sortable: true, render: (issue) => issue.driver_name ?? "—" },
+      { key: "issue_category", label: "Category", sortable: true },
+      { key: "severity", label: "Severity", render: (issue) => <StatusBadge status={issue.severity} /> },
+      { key: "status", label: "Status", sortable: true },
+      {
+        key: "actions",
+        label: "Actions",
+        alwaysVisible: true,
+        render: (issue) =>
+          issue.status === "open" || issue.status === "acknowledged" ? (
+            <Button
+              size="sm"
+              variant="secondary"
+              loading={resolveMutation.isPending}
+              onClick={() => resolveMutation.mutate(issue.id)}
+            >
+              Resolve
+            </Button>
+          ) : (
+            "—"
+          ),
+      },
+    ],
+    [resolveMutation],
+  );
+
   if (!companyId) {
     return <div className="rounded-sm border bg-white p-4 text-sm text-slate-600">Select an operating company.</div>;
   }
-
-  const issues = issuesQ.data?.issues ?? [];
 
   return (
     <div data-testid="dispatch-intransit-issues-page" className="mx-auto max-w-6xl space-y-4">
@@ -75,71 +127,15 @@ export function InTransitIssuesPage() {
         }
       />
 
-      <section className="overflow-x-auto rounded-sm border bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="border-b bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
-            <tr>
-              <th className="px-3 py-2">Reported</th>
-              <th className="px-3 py-2">Load</th>
-              <th className="px-3 py-2">Driver</th>
-              <th className="px-3 py-2">Category</th>
-              <th className="px-3 py-2">Severity</th>
-              <th className="px-3 py-2">Status</th>
-              <th className="px-3 py-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {issuesQ.isLoading ? (
-              <tr>
-                <td colSpan={7} className="px-3 py-6 text-center text-slate-500">
-                  Loading issues…
-                </td>
-              </tr>
-            ) : issues.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="px-3 py-6 text-center text-slate-500">
-                  No in-transit issues.
-                </td>
-              </tr>
-            ) : (
-              issues.map((issue) => (
-                <tr key={issue.id} className="border-b last:border-b-0">
-                  <td className="px-3 py-2">{new Date(issue.reported_at).toLocaleString()}</td>
-                  <td className="px-3 py-2">
-                    {issue.load_id ? (
-                      <Link to={`/dispatch?load_id=${encodeURIComponent(issue.load_id)}`} className="text-slate-700 hover:underline">
-                        {issue.load_number ?? issue.load_id}
-                      </Link>
-                    ) : (
-                      issue.load_number ?? "—"
-                    )}
-                  </td>
-                  <td className="px-3 py-2">{issue.driver_name ?? "—"}</td>
-                  <td className="px-3 py-2">{issue.issue_category}</td>
-                  <td className="px-3 py-2">
-                    <StatusBadge status={issue.severity} />
-                  </td>
-                  <td className="px-3 py-2">{issue.status}</td>
-                  <td className="px-3 py-2">
-                    {issue.status === "open" || issue.status === "acknowledged" ? (
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        loading={resolveMutation.isPending}
-                        onClick={() => resolveMutation.mutate(issue.id)}
-                      >
-                        Resolve
-                      </Button>
-                    ) : (
-                      "—"
-                    )}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </section>
+      <ParityTable<DispatchIntransitIssueRow>
+        columns={columns}
+        rows={issues}
+        rowKey={(issue) => issue.id}
+        loading={issuesQ.isLoading}
+        emptyText="No in-transit issues."
+        storageKey="dispatch-intransit-issues"
+        exportFilename="intransit-issues"
+      />
 
       <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Create In-Transit Issue">
         <form

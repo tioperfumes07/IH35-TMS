@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { listAtRiskDispatchLoads } from "../../api/dispatch";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
@@ -23,11 +25,50 @@ export function AtRiskQueuePage() {
     enabled: Boolean(companyId),
   });
 
+  const loads = loadsQ.data?.loads ?? [];
+  type AtRiskRow = (typeof loads)[number];
+
+  // Migrated to the shared QBO-parity grid — columns, order, load deep-link, and the ETA signal badge
+  // are preserved verbatim (§7 additive-only). Declared BEFORE the `!companyId` early return below so
+  // the hook call is unconditional (Rules of Hooks — companyId can change between renders).
+  const columns = useMemo<ParityColumn<AtRiskRow>[]>(
+    () => [
+      {
+        key: "load_number",
+        label: "Load",
+        sortable: true,
+        className: "font-medium",
+        render: (load) => (
+          <Link to={`/dispatch?load_id=${encodeURIComponent(load.id)}`} className="text-slate-700 hover:underline">
+            {load.load_number}
+          </Link>
+        ),
+      },
+      { key: "customer_name", label: "Customer", sortable: true, render: (load) => load.customer_name ?? "—" },
+      { key: "driver_name", label: "Driver", sortable: true, render: (load) => load.driver_name ?? "—" },
+      { key: "unit_number", label: "Unit", sortable: true, render: (load) => load.unit_number ?? "—" },
+      {
+        key: "delivery_city",
+        label: "Delivery",
+        render: (load) => [load.delivery_city, load.delivery_state].filter(Boolean).join(", ") || "—",
+      },
+      {
+        key: "eta_signal",
+        label: "ETA signal",
+        render: (load) => (
+          <>
+            <StatusBadge status={String(load.latest_eta_prediction?.confidence_class ?? "warning")} />
+            <span className="ml-2 text-xs text-slate-600">{etaLabel(load.latest_eta_prediction)}</span>
+          </>
+        ),
+      },
+    ],
+    [],
+  );
+
   if (!companyId) {
     return <div className="rounded-sm border bg-white p-4 text-sm text-slate-600">Select an operating company.</div>;
   }
-
-  const loads = loadsQ.data?.loads ?? [];
 
   return (
     <div data-testid="dispatch-at-risk-page" className="mx-auto max-w-6xl space-y-4">
@@ -41,55 +82,15 @@ export function AtRiskQueuePage() {
         }
       />
 
-      <section className="overflow-x-auto rounded-sm border bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="border-b bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
-            <tr>
-              <th className="px-3 py-2">Load</th>
-              <th className="px-3 py-2">Customer</th>
-              <th className="px-3 py-2">Driver</th>
-              <th className="px-3 py-2">Unit</th>
-              <th className="px-3 py-2">Delivery</th>
-              <th className="px-3 py-2">ETA signal</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loadsQ.isLoading ? (
-              <tr>
-                <td colSpan={6} className="px-3 py-6 text-center text-slate-500">
-                  Loading at-risk loads…
-                </td>
-              </tr>
-            ) : loads.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="px-3 py-6 text-center text-slate-500">
-                  No at-risk loads right now.
-                </td>
-              </tr>
-            ) : (
-              loads.map((load) => (
-                <tr key={load.id} className="border-b last:border-b-0">
-                  <td className="px-3 py-2 font-medium">
-                    <Link to={`/dispatch?load_id=${encodeURIComponent(load.id)}`} className="text-slate-700 hover:underline">
-                      {load.load_number}
-                    </Link>
-                  </td>
-                  <td className="px-3 py-2">{load.customer_name ?? "—"}</td>
-                  <td className="px-3 py-2">{load.driver_name ?? "—"}</td>
-                  <td className="px-3 py-2">{load.unit_number ?? "—"}</td>
-                  <td className="px-3 py-2">
-                    {[load.delivery_city, load.delivery_state].filter(Boolean).join(", ") || "—"}
-                  </td>
-                  <td className="px-3 py-2">
-                    <StatusBadge status={String(load.latest_eta_prediction?.confidence_class ?? "warning")} />
-                    <span className="ml-2 text-xs text-slate-600">{etaLabel(load.latest_eta_prediction)}</span>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </section>
+      <ParityTable<AtRiskRow>
+        columns={columns}
+        rows={loads}
+        rowKey={(load) => load.id}
+        loading={loadsQ.isLoading}
+        emptyText="No at-risk loads right now."
+        storageKey="dispatch-at-risk-queue"
+        exportFilename="at-risk-queue"
+      />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { apiRequest } from "../../../api/client";
 import { Button } from "../../../components/Button";
 import { DataPanel } from "../../../components/layout/DataPanel";
 import { Modal } from "../../../components/Modal";
+import { ParityTable } from "../../../components/parity/ParityTable";
 import { useToast } from "../../../components/Toast";
 
 type PortalUserRow = {
@@ -86,37 +87,27 @@ export function PortalUsersTab({ customerId, operatingCompanyId }: Props) {
       </div>
 
       <DataPanel title="Active portal accounts">
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead>
-              <tr className="text-left text-gray-600">
-                <th className="px-3 py-2">Email</th>
-                <th className="px-3 py-2">Name</th>
-                <th className="px-3 py-2">Last login</th>
-                <th className="px-3 py-2">Status</th>
-                <th className="px-3 py-2" />
-              </tr>
-            </thead>
-            <tbody>
-              {(usersQuery.data ?? []).map((row) => (
-                <tr key={row.id} className="border-t border-gray-100">
-                  <td className="px-3 py-2">{row.email}</td>
-                  <td className="px-3 py-2">{row.full_name ?? "—"}</td>
-                  <td className="px-3 py-2">{row.last_login_at ? new Date(row.last_login_at).toLocaleString() : "—"}</td>
-                  <td className="px-3 py-2">{row.archived_at ? "Archived" : row.active ? "Active" : "Inactive"}</td>
-                  <td className="px-3 py-2 text-right">
-                    {!row.archived_at ? (
-                      <Button variant="secondary" onClick={() => archiveMutation.mutate(row.id)} disabled={archiveMutation.isPending}>
-                        Archive
-                      </Button>
-                    ) : null}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {(usersQuery.data ?? []).length === 0 ? <p className="px-3 py-4 text-sm text-gray-600">No portal users yet.</p> : null}
-        </div>
+        <ParityTable<PortalUserRow>
+          rows={usersQuery.data ?? []}
+          rowKey={(row) => row.id}
+          loading={usersQuery.isPending}
+          storageKey="customer-portal-users"
+          emptyText="No portal users yet."
+          exportFilename="customer-portal-users"
+          rowActions={(row) =>
+            !row.archived_at ? (
+              <Button variant="secondary" onClick={() => archiveMutation.mutate(row.id)} disabled={archiveMutation.isPending}>
+                Archive
+              </Button>
+            ) : null
+          }
+          columns={[
+            { key: "email", label: "Email", sortable: true, render: (row) => row.email },
+            { key: "full_name", label: "Name", sortable: true, render: (row) => row.full_name ?? "—" },
+            { key: "last_login_at", label: "Last login", sortable: true, render: (row) => (row.last_login_at ? new Date(row.last_login_at).toLocaleString() : "—") },
+            { key: "status", label: "Status", render: (row) => (row.archived_at ? "Archived" : row.active ? "Active" : "Inactive") },
+          ]}
+        />
       </DataPanel>
 
       <Modal open={open} onClose={() => setOpen(false)} title="Create portal login">

@@ -10,6 +10,7 @@ import {
 } from "../../api/dispatch";
 import { listCustomers } from "../../api/mdata";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLink } from "../../components/shared/EntityLink";
 
@@ -32,43 +33,54 @@ function PrefToggle({
   );
 }
 
-function LogTable({ entries }: { entries: CustomerNotifyLogEntry[] }) {
-  if (entries.length === 0) {
-    return <p className="text-sm text-slate-600">No delivery confirmations logged yet.</p>;
-  }
+// Migrated to the shared QBO-parity grid — columns, order, and the row testid preserved verbatim
+// (§7 additive-only).
+const LOG_COLUMNS: Array<ParityColumn<CustomerNotifyLogEntry>> = [
+  {
+    key: "load_number",
+    label: "Load",
+    sortable: true,
+    render: (entry) => <EntityLink kind="load" id={entry.load_id} label={entry.load_number ?? entry.load_id} />,
+  },
+  {
+    key: "customer_name",
+    label: "Customer",
+    sortable: true,
+    render: (entry) => <EntityLink kind="customer" id={entry.customer_id} label={entry.customer_name ?? "—"} />,
+  },
+  {
+    key: "milestone_type",
+    label: "Milestone",
+    sortable: true,
+    render: (entry) => <span className="capitalize">{entry.milestone_type.replace(/_/g, " ")}</span>,
+  },
+  { key: "channel", label: "Channel", sortable: true, render: (entry) => <span className="uppercase">{entry.channel}</span> },
+  { key: "status", label: "Status", sortable: true },
+  {
+    key: "provider_id",
+    label: "Provider ID",
+    render: (entry) => <span className="font-mono text-xs">{entry.provider_id ?? "—"}</span>,
+  },
+  {
+    key: "sent_at",
+    label: "Sent",
+    sortable: true,
+    render: (entry) => (entry.sent_at ? new Date(entry.sent_at).toLocaleString() : "—"),
+  },
+];
+
+function LogTable({ entries, loading }: { entries: CustomerNotifyLogEntry[]; loading?: boolean }) {
   return (
-    <div className="overflow-x-auto rounded-sm border">
-      <table className="min-w-full text-sm">
-        <thead className="bg-slate-50 text-left">
-          <tr>
-            <th className="px-3 py-2">Load</th>
-            <th className="px-3 py-2">Customer</th>
-            <th className="px-3 py-2">Milestone</th>
-            <th className="px-3 py-2">Channel</th>
-            <th className="px-3 py-2">Status</th>
-            <th className="px-3 py-2">Provider ID</th>
-            <th className="px-3 py-2">Sent</th>
-          </tr>
-        </thead>
-        <tbody>
-          {entries.map((entry) => (
-            <tr key={entry.id} className="border-t" data-testid={`notify-log-${entry.id}`}>
-              <td className="px-3 py-2">
-                <EntityLink kind="load" id={entry.load_id} label={entry.load_number ?? entry.load_id} />
-              </td>
-              <td className="px-3 py-2">
-                <EntityLink kind="customer" id={entry.customer_id} label={entry.customer_name ?? "—"} />
-              </td>
-              <td className="px-3 py-2 capitalize">{entry.milestone_type.replace(/_/g, " ")}</td>
-              <td className="px-3 py-2 uppercase">{entry.channel}</td>
-              <td className="px-3 py-2">{entry.status}</td>
-              <td className="px-3 py-2 font-mono text-xs">{entry.provider_id ?? "—"}</td>
-              <td className="px-3 py-2">{entry.sent_at ? new Date(entry.sent_at).toLocaleString() : "—"}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <ParityTable<CustomerNotifyLogEntry>
+      columns={LOG_COLUMNS}
+      rows={entries}
+      rowKey={(entry) => entry.id}
+      loading={loading}
+      emptyText="No delivery confirmations logged yet."
+      storageKey="dispatch-notify-log"
+      exportFilename="customer-notify-log"
+      rowTestId={(entry) => `notify-log-${entry.id}`}
+    />
   );
 }
 
@@ -172,7 +184,7 @@ export function NotifyPreferencesPage() {
 
       <div className="mt-8">
         <h2 className="mb-3 font-semibold">Delivery log</h2>
-        <LogTable entries={logQuery.data?.entries ?? []} />
+        <LogTable entries={logQuery.data?.entries ?? []} loading={logQuery.isLoading} />
       </div>
     </div>
   );

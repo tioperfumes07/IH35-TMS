@@ -9,6 +9,7 @@ import {
   type RequiredDocEnforcement,
   type RequiredDocumentType,
 } from "../../api/requiredDocuments";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 // DOC-REQ-2 — per-carrier "Required Documents" config (decision #6). Additive section in the Compliance
 // dashboard; no sidebar change. Read for everyone in the company; warn⇄hard-block / add / deactivate are
@@ -52,6 +53,40 @@ export function RequiredDocumentsSection({ operatingCompanyId }: { operatingComp
   });
 
   const rows = useMemo(() => listQ.data ?? [], [listQ.data]);
+
+  const columns = useMemo<ParityColumn<RequiredDocumentType>[]>(
+    () => [
+      {
+        key: "label",
+        label: "Document",
+        sortable: true,
+        render: (row) => (
+          <>
+            <div className="font-medium text-slate-900">{row.label}</div>
+            <div className="text-[10px] text-slate-400">{row.code}</div>
+          </>
+        ),
+      },
+      { key: "authority", label: "Authority", sortable: true, render: (row) => row.authority ?? "—" },
+      { key: "has_expiry", label: "Expiry", render: (row) => (row.has_expiry ? "Tracked" : "—") },
+      {
+        key: "enforcement",
+        label: "Enforcement",
+        sortable: true,
+        render: (row) => (
+          <span
+            className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+              row.enforcement === "hard_block" ? "bg-slate-200 text-slate-800" : "bg-slate-100 text-slate-600"
+            }`}
+          >
+            {row.enforcement === "hard_block" ? "Hard block" : "Warn"}
+          </span>
+        ),
+      },
+      { key: "is_seed", label: "Source", render: (row) => (row.is_seed ? "Regulatory default" : "Carrier") },
+    ],
+    []
+  );
 
   return (
     <section data-testid="compliance-section-required-documents" className="mt-4">
@@ -100,108 +135,54 @@ export function RequiredDocumentsSection({ operatingCompanyId }: { operatingComp
         />
       ) : null}
 
-      {listQ.isLoading ? (
-        <p className="text-[12px] text-slate-500">Loading…</p>
-      ) : listQ.isError ? (
+      {listQ.isError ? (
         <p className="text-[12px] text-red-600">Could not load required document types.</p>
-      ) : rows.length === 0 ? (
-        <p className="text-[12px] text-slate-500">No required document types for this record type.</p>
       ) : (
-        <div className="overflow-x-auto rounded-sm border border-slate-200">
-          <table className="min-w-full text-[12px]">
-            <thead className="bg-slate-50 text-left text-slate-600">
-              <tr>
-                <th className="px-3 py-1.5 font-semibold uppercase tracking-wide">Document</th>
-                <th className="px-3 py-1.5 font-semibold uppercase tracking-wide">Authority</th>
-                <th className="px-3 py-1.5 font-semibold uppercase tracking-wide">Expiry</th>
-                <th className="px-3 py-1.5 font-semibold uppercase tracking-wide">Enforcement</th>
-                <th className="px-3 py-1.5 font-semibold uppercase tracking-wide">Source</th>
-                {canManage ? <th className="px-3 py-1.5 font-semibold uppercase tracking-wide">Actions</th> : null}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => (
-                <RowView
-                  key={r.id}
-                  row={r}
-                  canManage={canManage}
-                  pending={patch.isPending}
-                  onToggleEnforcement={() =>
-                    patch.mutate({
-                      id: r.id,
-                      input: {
-                        operating_company_id: operatingCompanyId,
-                        enforcement: r.enforcement === "warn" ? "hard_block" : "warn",
-                      },
-                    })
-                  }
-                  onDeactivate={() =>
-                    patch.mutate({ id: r.id, input: { operating_company_id: operatingCompanyId, is_active: false } })
-                  }
-                />
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ParityTable<RequiredDocumentType>
+          columns={columns}
+          rows={rows}
+          rowKey={(row) => row.id}
+          loading={listQ.isLoading}
+          emptyText="No required document types for this record type."
+          storageKey="compliance-required-documents"
+          exportFilename="required-documents"
+          rowActions={
+            canManage
+              ? (row) => (
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      disabled={patch.isPending}
+                      onClick={() =>
+                        patch.mutate({
+                          id: row.id,
+                          input: {
+                            operating_company_id: operatingCompanyId,
+                            enforcement: row.enforcement === "warn" ? "hard_block" : "warn",
+                          },
+                        })
+                      }
+                      className="rounded-sm border border-slate-300 px-2 py-0.5 text-[11px] hover:bg-slate-50 disabled:opacity-50"
+                    >
+                      {row.enforcement === "warn" ? "Make hard block" : "Make warn"}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={patch.isPending}
+                      onClick={() =>
+                        patch.mutate({ id: row.id, input: { operating_company_id: operatingCompanyId, is_active: false } })
+                      }
+                      className="rounded-sm border border-slate-300 px-2 py-0.5 text-[11px] text-red-600 hover:bg-slate-50 disabled:opacity-50"
+                    >
+                      Deactivate
+                    </button>
+                  </div>
+                )
+              : undefined
+          }
+        />
       )}
     </section>
-  );
-}
-
-function RowView({
-  row,
-  canManage,
-  pending,
-  onToggleEnforcement,
-  onDeactivate,
-}: {
-  row: RequiredDocumentType;
-  canManage: boolean;
-  pending: boolean;
-  onToggleEnforcement: () => void;
-  onDeactivate: () => void;
-}) {
-  return (
-    <tr className="border-t border-slate-100">
-      <td className="px-3 py-1.5">
-        <div className="font-medium text-slate-900">{row.label}</div>
-        <div className="text-[10px] text-slate-400">{row.code}</div>
-      </td>
-      <td className="px-3 py-1.5 text-slate-600">{row.authority ?? "—"}</td>
-      <td className="px-3 py-1.5 text-slate-600">{row.has_expiry ? "Tracked" : "—"}</td>
-      <td className="px-3 py-1.5">
-        <span
-          className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-            row.enforcement === "hard_block" ? "bg-slate-200 text-slate-800" : "bg-slate-100 text-slate-600"
-          }`}
-        >
-          {row.enforcement === "hard_block" ? "Hard block" : "Warn"}
-        </span>
-      </td>
-      <td className="px-3 py-1.5 text-slate-500">{row.is_seed ? "Regulatory default" : "Carrier"}</td>
-      {canManage ? (
-        <td className="px-3 py-1.5">
-          <div className="flex gap-2">
-            <button
-              type="button"
-              disabled={pending}
-              onClick={onToggleEnforcement}
-              className="rounded-sm border border-slate-300 px-2 py-0.5 text-[11px] hover:bg-slate-50 disabled:opacity-50"
-            >
-              {row.enforcement === "warn" ? "Make hard block" : "Make warn"}
-            </button>
-            <button
-              type="button"
-              disabled={pending}
-              onClick={onDeactivate}
-              className="rounded-sm border border-slate-300 px-2 py-0.5 text-[11px] text-red-600 hover:bg-slate-50 disabled:opacity-50"
-            >
-              Deactivate
-            </button>
-          </div>
-        </td>
-      ) : null}
-    </tr>
   );
 }
 

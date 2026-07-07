@@ -4,6 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import {
   addRenditionLine,
   createAppraisalDistrict,
@@ -14,6 +15,7 @@ import {
   fetchRenditions,
   updateRendition,
   type CandidateAsset,
+  type Rendition,
   type RenditionStatus,
 } from "../../api/property-tax";
 
@@ -73,6 +75,34 @@ function RenditionListView({ companyId }: { companyId: string }) {
 
   const renditions = renditionsQ.data?.renditions ?? [];
   const districts = districtsQ.data?.districts ?? [];
+
+  const renditionColumns = useMemo<ParityColumn<Rendition>[]>(
+    () => [
+      { key: "tax_year", label: "Tax Year", sortable: true },
+      {
+        key: "county",
+        label: "County / CAD",
+        sortable: true,
+        render: (r) => `${r.county} — ${r.cad_name}`,
+      },
+      { key: "status", label: "Status", sortable: true, render: (r) => STATUS_LABEL[r.status] },
+      { key: "value_basis", label: "Value Basis", sortable: true, render: (r) => r.value_basis.replace(/_/g, " ") },
+      { key: "effective_due_date", label: "Due Date", sortable: true, render: (r) => formatDateUS(r.effective_due_date) },
+      { key: "total_rendered_value_cents", label: "Rendered Value", sortable: true, render: (r) => centsToUSD(r.total_rendered_value_cents) },
+      { key: "assessed_tax_cents", label: "Assessed Tax", sortable: true, render: (r) => centsToUSD(r.assessed_tax_cents) },
+      {
+        key: "open",
+        label: "Open",
+        alwaysVisible: true,
+        render: (r) => (
+          <Link className="text-slate-700 underline" to={`/compliance/property-tax/${r.id}`}>
+            Open
+          </Link>
+        ),
+      },
+    ],
+    []
+  );
 
   return (
     <div className="space-y-4" data-testid="property-tax-list">
@@ -156,56 +186,15 @@ function RenditionListView({ companyId }: { companyId: string }) {
       </section>
 
       {/* Renditions table */}
-      <div className="overflow-x-auto rounded-sm border border-slate-200 bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="bg-slate-100 text-left text-slate-600">
-            <tr>
-              <th className="px-2 py-1.5 font-semibold">Tax Year</th>
-              <th className="px-2 py-1.5 font-semibold">County / CAD</th>
-              <th className="px-2 py-1.5 font-semibold">Status</th>
-              <th className="px-2 py-1.5 font-semibold">Value Basis</th>
-              <th className="px-2 py-1.5 font-semibold">Due Date</th>
-              <th className="px-2 py-1.5 font-semibold">Rendered Value</th>
-              <th className="px-2 py-1.5 font-semibold">Assessed Tax</th>
-              <th className="px-2 py-1.5 font-semibold">Open</th>
-            </tr>
-          </thead>
-          <tbody>
-            {renditionsQ.isLoading ? (
-              <tr>
-                <td className="p-3 text-slate-500" colSpan={8}>
-                  Loading…
-                </td>
-              </tr>
-            ) : renditions.length === 0 ? (
-              <tr>
-                <td className="p-3 text-slate-500" colSpan={8}>
-                  No renditions yet. Create one above for the current tax year.
-                </td>
-              </tr>
-            ) : (
-              renditions.map((r) => (
-                <tr key={r.id} className="border-t border-slate-100">
-                  <td className="px-2 py-1.5">{r.tax_year}</td>
-                  <td className="px-2 py-1.5">
-                    {r.county} — {r.cad_name}
-                  </td>
-                  <td className="px-2 py-1.5">{STATUS_LABEL[r.status]}</td>
-                  <td className="px-2 py-1.5">{r.value_basis.replace(/_/g, " ")}</td>
-                  <td className="px-2 py-1.5">{formatDateUS(r.effective_due_date)}</td>
-                  <td className="px-2 py-1.5">{centsToUSD(r.total_rendered_value_cents)}</td>
-                  <td className="px-2 py-1.5">{centsToUSD(r.assessed_tax_cents)}</td>
-                  <td className="px-2 py-1.5">
-                    <Link className="text-slate-700 underline" to={`/compliance/property-tax/${r.id}`}>
-                      Open
-                    </Link>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+      <ParityTable<Rendition>
+        columns={renditionColumns}
+        rows={renditions}
+        rowKey={(r) => r.id}
+        loading={renditionsQ.isLoading}
+        emptyText="No renditions yet. Create one above for the current tax year."
+        storageKey="compliance-property-tax-renditions"
+        exportFilename="property-tax-renditions"
+      />
     </div>
   );
 }

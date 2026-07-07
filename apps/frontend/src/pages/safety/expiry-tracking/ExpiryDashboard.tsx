@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../../api/client";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 type CertSeverity = "critical" | "warn" | "info";
 type CertType = "cdl" | "medical_card" | "hazmat_endorsement" | "twic" | "passport" | "drug_test";
@@ -80,6 +81,24 @@ export function ExpiryDashboard() {
     [rows, certType, severity]
   );
 
+  const columns = useMemo<Array<ParityColumn<CertExpiryAlert>>>(
+    () => [
+      { key: "driver_name", label: "Driver", sortable: true, render: (row) => row.driver_name },
+      { key: "cert_label", label: "Certificate", sortable: true, render: (row) => row.cert_label },
+      { key: "expiry_date", label: "Expiry", sortable: true, render: (row) => row.expiry_date },
+      { key: "days_until_expiry", label: "Days", sortable: true, render: (row) => row.days_until_expiry },
+      {
+        key: "severity",
+        label: "Severity",
+        sortable: true,
+        render: (row) => (
+          <span className={`rounded-sm px-2 py-0.5 text-[11px] font-semibold ${severityClassName(row.severity)}`}>{row.severity}</span>
+        ),
+      },
+    ],
+    [],
+  );
+
   if (!companyId) {
     return <div className="rounded-sm border border-slate-200 bg-white p-4 text-xs text-slate-600">Select an operating company.</div>;
   }
@@ -94,69 +113,45 @@ export function ExpiryDashboard() {
         <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">Open {filteredRows.length}</span>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 text-xs">
-        <label className="flex items-center gap-1">
-          <span className="text-slate-500">Cert:</span>
-          <select className="rounded-sm border border-slate-300 px-2 py-1" value={certType} onChange={(e) => setCertType(e.target.value as "all" | CertType)}>
-            {CERT_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex items-center gap-1">
-          <span className="text-slate-500">Severity:</span>
-          <select
-            className="rounded-sm border border-slate-300 px-2 py-1"
-            value={severity}
-            onChange={(e) => setSeverity(e.target.value as "all" | CertSeverity)}
-          >
-            {SEVERITY_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-
-      {alertsQuery.isLoading ? <p className="text-xs text-slate-500">Loading cert expiries...</p> : null}
       {alertsQuery.error ? <p className="text-xs text-red-600">Failed to load cert expiries.</p> : null}
 
-      <div className="overflow-x-auto">
-        <table className="min-w-[720px] w-full text-left text-xs">
-          <thead className="bg-slate-50 text-[10px] uppercase text-slate-500">
-            <tr>
-              <th className="px-2 py-1">Driver</th>
-              <th className="px-2 py-1">Certificate</th>
-              <th className="px-2 py-1">Expiry</th>
-              <th className="px-2 py-1">Days</th>
-              <th className="px-2 py-1">Severity</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredRows.map((row) => (
-              <tr key={`${row.driver_uuid}:${row.cert_type}:${row.expiry_date}`} className="border-t border-slate-100">
-                <td className="px-2 py-1">{row.driver_name}</td>
-                <td className="px-2 py-1">{row.cert_label}</td>
-                <td className="px-2 py-1">{row.expiry_date}</td>
-                <td className="px-2 py-1">{row.days_until_expiry}</td>
-                <td className="px-2 py-1">
-                  <span className={`rounded-sm px-2 py-0.5 text-[11px] font-semibold ${severityClassName(row.severity)}`}>{row.severity}</span>
-                </td>
-              </tr>
-            ))}
-            {!alertsQuery.isLoading && filteredRows.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="px-2 py-3 text-center text-slate-500">
-                  No expiring certificates in the selected filters.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
+      <ParityTable<CertExpiryAlert>
+        columns={columns}
+        rows={filteredRows}
+        rowKey={(row) => `${row.driver_uuid}:${row.cert_type}:${row.expiry_date}`}
+        loading={alertsQuery.isLoading}
+        emptyText="No expiring certificates in the selected filters."
+        storageKey="safety-cert-expiry"
+        exportFilename="cert-expiry"
+        filterBar={
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <label className="flex items-center gap-1">
+              <span className="text-slate-500">Cert:</span>
+              <select className="rounded-sm border border-slate-300 px-2 py-1" value={certType} onChange={(e) => setCertType(e.target.value as "all" | CertType)}>
+                {CERT_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex items-center gap-1">
+              <span className="text-slate-500">Severity:</span>
+              <select
+                className="rounded-sm border border-slate-300 px-2 py-1"
+                value={severity}
+                onChange={(e) => setSeverity(e.target.value as "all" | CertSeverity)}
+              >
+                {SEVERITY_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        }
+      />
     </section>
   );
 }
