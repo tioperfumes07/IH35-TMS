@@ -403,6 +403,53 @@ export async function listJournalEntries(input: {
   });
 }
 
+/**
+ * Reverse drill-through: "what posted this journal entry" — the source object(s) tied to each
+ * posting line. Reads BOTH source-tracking mechanisms that exist on the real schema (verified against
+ * db/migrations/0195_accounting_posting_backbone_schema.sql — accounting.journal_entries itself has
+ * NO source_type/source_id columns; there is no migration gap here):
+ *   1. accounting.journal_entry_postings.source_transaction_type / source_transaction_id — set directly
+ *      by some posting flows (e.g. the posting engine's batch inserts).
+ *   2. accounting.transaction_source_links — one row per posting line, written via
+ *      writeTransactionSourceLink() (journal-entries.service.ts manual-JE path, void.service.ts reversals,
+ *      amortization/lease/settlement posting, etc.).
+ * LEFT JOINed so a posting line with only mechanism (1) still returns a row.
+ */
+export async function getJournalEntrySourceLinks(userId: string, operatingCompanyId: string, journalEntryId: string) {
+  return withCurrentUser(userId, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    const headerRes = await client.query(
+      `SELECT id FROM accounting.journal_entries WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+      [journalEntryId, operatingCompanyId]
+    );
+    if (!headerRes.rows[0]) throw new Error("journal_entry_not_found");
+
+    const res = await client.query(
+      `
+        SELECT
+          jep.id AS journal_entry_posting_id,
+          jep.line_sequence,
+          jep.source_transaction_type,
+          jep.source_transaction_id,
+          jep.source_transaction_line_id,
+          jep.posting_batch_id::text,
+          tsl.id AS source_link_id,
+          tsl.linked_object_type,
+          tsl.linked_object_id,
+          tsl.relationship_role,
+          tsl.created_at::text AS source_link_created_at
+        FROM accounting.journal_entry_postings jep
+        LEFT JOIN accounting.transaction_source_links tsl ON tsl.journal_entry_posting_id = jep.id
+        WHERE jep.journal_entry_uuid = $1
+          AND jep.operating_company_id = $2
+        ORDER BY jep.line_sequence ASC, tsl.created_at ASC NULLS LAST
+      `,
+      [journalEntryId, operatingCompanyId]
+    );
+    return res.rows;
+  });
+}
+
 export async function getJournalEntryDetail(userId: string, operatingCompanyId: string, journalEntryId: string) {
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);

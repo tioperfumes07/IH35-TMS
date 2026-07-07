@@ -6,6 +6,7 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 import {
   createJournalEntry,
   getJournalEntryDetail,
+  getJournalEntrySourceLinks,
   listJournalEntries,
   voidJournalEntry,
 } from "./journal-entries.service.js";
@@ -120,6 +121,27 @@ export async function registerJournalEntryRoutes(app: FastifyInstance) {
     try {
       const item = await getJournalEntryDetail(user.uuid, query.data.operating_company_id, params.data.id);
       return item;
+    } catch (error) {
+      const message = String((error as Error)?.message ?? "journal_entry_not_found");
+      if (message === "journal_entry_not_found") return reply.code(404).send({ error: message });
+      throw error;
+    }
+  });
+
+  // Reverse drill-through: "what posted this JE" — read-only, company-scoped. Powers the JE detail
+  // page's source lineage (bill/expense/settlement/etc. that generated each posting line).
+  app.get("/api/v1/accounting/journal-entries/:id/source-links", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!canAccessAccounting(user.role)) return reply.code(403).send({ error: "forbidden" });
+    const params = idParamSchema.safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
+    try {
+      const rows = await getJournalEntrySourceLinks(user.uuid, query.data.operating_company_id, params.data.id);
+      return { journal_entry_id: params.data.id, source_links: rows };
     } catch (error) {
       const message = String((error as Error)?.message ?? "journal_entry_not_found");
       if (message === "journal_entry_not_found") return reply.code(404).send({ error: message });
