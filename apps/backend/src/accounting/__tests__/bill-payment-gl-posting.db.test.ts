@@ -30,6 +30,7 @@ describeIntegration("CHAIN-04 bill-payment → GL gap-closure end-to-end (real P
   const bankGlAccountId = randomUUID(); // catalogs.accounts cash/bank GL account (the ledger_account_id target)
   const bankAccountId = randomUUID(); // banking.bank_accounts row WITH ledger_account_id
   const bankNoLedgerId = randomUUID(); // banking.bank_accounts row WITHOUT ledger_account_id (fail-closed)
+  const ccLiabilityAccountId = randomUUID(); // catalogs.accounts credit-card liability (BANKING-GL-COMPLETION)
   const userId = "00000000-0000-4000-8000-0000000000c4";
   const fuelCode = `FUEL-${suffix}`;
   const createdBillIds: string[] = [];
@@ -104,6 +105,23 @@ describeIntegration("CHAIN-04 bill-payment → GL gap-closure end-to-end (real P
     return id;
   }
 
+  // BANKING-GL-COMPLETION — a bill paid BY CREDIT CARD (bill-payments/cc-payment.routes.ts) carries
+  // cc_account_id, never from_bank_account_id.
+  async function seedCcPayment(opts: { billId: string; amountCents: number; ccAccountId: string }): Promise<string> {
+    const id = randomUUID();
+    await bypass(async () => {
+      await db.query(
+        `INSERT INTO accounting.bill_payments
+           (id, operating_company_id, bill_id, payment_date, amount_cents, amount, payment_method,
+            cc_account_id, status, payment_source_kind, created_by_user_id)
+         VALUES ($1::uuid,$2::uuid,$3::uuid,CURRENT_DATE,$4,$5,'cc',$6::uuid,'posted','cc_bill_payment',$7::uuid)`,
+        [id, companyId, opts.billId, opts.amountCents, opts.amountCents / 100, opts.ccAccountId, userId]
+      );
+    });
+    createdPaymentIds.push(id);
+    return id;
+  }
+
   beforeAll(async () => {
     companyId = await ensureIntegrationPrerequisites();
     const cs = process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL;
@@ -151,6 +169,12 @@ describeIntegration("CHAIN-04 bill-payment → GL gap-closure end-to-end (real P
          VALUES ($1::uuid,$2::uuid,'Unmapped Bank',NULL,true)`,
         [bankNoLedgerId, companyId]
       );
+      // BANKING-GL-COMPLETION — credit-card liability account (the cc_account_id credit leg).
+      await db.query(
+        `INSERT INTO catalogs.accounts (id, operating_company_id, account_number, account_name, account_type, is_postable)
+         VALUES ($1::uuid,$3::uuid,$2,'CC Liability Test','Credit Card',true)`,
+        [ccLiabilityAccountId, `CC${suffix}`, companyId]
+      );
     });
   });
 
@@ -166,6 +190,7 @@ describeIntegration("CHAIN-04 bill-payment → GL gap-closure end-to-end (real P
         await db.query(`DELETE FROM accounting.bill_lines WHERE bill_id = ANY($1::uuid[])`, [createdBillIds]);
         await db.query(`DELETE FROM accounting.bills WHERE id = ANY($1::uuid[])`, [createdBillIds]);
         await db.query(`DELETE FROM banking.bank_accounts WHERE id = ANY($1::uuid[])`, [[bankAccountId, bankNoLedgerId]]);
+        await db.query(`DELETE FROM catalogs.accounts WHERE id = $1::uuid`, [ccLiabilityAccountId]);
         await db.query(`DELETE FROM accounting.expense_category_account_map WHERE operating_company_id=$1::uuid AND account_id=$2::uuid`, [companyId, fuelAccountId]);
         await db.query(`DELETE FROM accounting.chart_of_accounts_roles WHERE operating_company_id=$1::uuid AND account_id=$2::uuid`, [companyId, apAccountId]);
         await db.query(`DELETE FROM org.user_company_access WHERE user_id=$1::uuid AND company_id=$2::uuid`, [userId, companyId]);
@@ -276,6 +301,38 @@ describeIntegration("CHAIN-04 bill-payment → GL gap-closure end-to-end (real P
     expect(caught).toBeInstanceOf(PostingEngineError);
     expect((caught as PostingEngineError).code).toBe("ACCOUNT_MAPPING_MISSING");
     expect(await jeLineCount(paymentId)).toBe(0);
+  });
+
+  it("BANKING-GL-COMPLETION — a bill paid BY CREDIT CARD (cc_account_id) → DR ap_control / CR CC-liability", async () => {
+    const billId = await seedBill([{ amount_cents: 40_000, category_kind: "fuel", category_code: fuelCode }]);
+    await postSourceTransaction({ operating_company_id: companyId, source_transaction_type: "bill", source_transaction_id: billId }, { userId });
+    const paymentId = await seedCcPayment({ billId, amountCents: 40_000, ccAccountId: ccLiabilityAccountId });
+
+    await setFlagOverride(true);
+    const outcome = await postBillPaymentGlIfEnabled(companyId, paymentId, { userId });
+    expect(outcome.posted).toBe(true);
+
+    const rows = await scopedRead<{ account_id: string; debit_or_credit: string; amount_cents: string }>(
+      `SELECT account_id::text, debit_or_credit, amount_cents::text
+         FROM accounting.journal_entry_postings
+        WHERE source_transaction_id=$1 AND source_transaction_type='bill_payment'
+        ORDER BY line_sequence ASC`,
+      [paymentId]
+    );
+    const liveAp = await liveRole("ap_control");
+    const debits = rows.filter((r) => r.debit_or_credit === "debit");
+    const credits = rows.filter((r) => r.debit_or_credit === "credit");
+    expect(debits).toHaveLength(1);
+    expect(credits).toHaveLength(1);
+    expect(debits[0].account_id).toBe(liveAp);
+    expect(credits[0].account_id).toBe(ccLiabilityAccountId); // CR the CC-liability account, not a bank/cash-like account
+    expect(Number(debits[0].amount_cents)).toBe(40_000);
+    expect(Number(credits[0].amount_cents)).toBe(40_000);
+
+    // Idempotent re-post — no duplicate JE.
+    const again = await postSourceTransaction({ operating_company_id: companyId, source_transaction_type: "bill_payment", source_transaction_id: paymentId }, { userId });
+    expect(again.result).toBe("already_posted");
+    expect(await jeLineCount(paymentId)).toBe(2);
   });
 
   it("fail-closed — ineligible (voided) payment → PAYMENT_NOT_POSTING_ELIGIBLE, zero rows", async () => {

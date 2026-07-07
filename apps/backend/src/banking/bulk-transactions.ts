@@ -1,5 +1,11 @@
 import type { PoolClient } from "pg";
 import { enqueueAccountingOutbox } from "../accounting/outbox-events.js";
+import { isEnabled } from "../lib/feature-flags/service.js";
+import { postSourceTransaction, PostingEngineError } from "../accounting/posting-engine.service.js";
+import { postBillPaymentGlIfEnabled } from "../accounting/bill-payment-gl.service.js";
+import { withCurrentUser } from "../auth/db.js";
+
+const BILL_GL_POSTING_FLAG_KEY = "BILL_GL_POSTING_ENABLED";
 
 export const BULK_TXN_MAX = 500;
 
@@ -139,16 +145,31 @@ export async function bulkCategorizeTransactions(
   }
 }
 
+export type BulkPostAsBillsResult = {
+  bill_ids: string[];
+  bill_payment_ids: string[];
+  // BANKING-GL-COMPLETION — per-bill best-effort GL posting outcome (populated AFTER the subledger
+  // transaction below commits; a posting failure never rolls back the bill/bill_payment rows).
+  gl_posting: Array<{
+    bill_id: string;
+    bill_payment_id: string;
+    bill_posted: boolean;
+    bill_payment_posted: boolean;
+    error?: string;
+  }>;
+};
+
 export async function bulkPostTransactionsAsBills(
   client: PoolClient,
   input: BulkPostAsBillsInput,
   userId: string
-): Promise<{ bill_ids: string[] }> {
+): Promise<BulkPostAsBillsResult> {
   if (input.txnIds.length > BULK_TXN_MAX) {
     throw new Error("bulk_txn_limit_exceeded");
   }
 
   await client.query("BEGIN");
+  let created: Array<{ billId: string; billPaymentId: string }> = [];
   try {
     await assertTxnIdsTenantScoped(client, input.operatingCompanyId, input.txnIds);
 
@@ -159,6 +180,7 @@ export async function bulkPostTransactionsAsBills(
       description: string | null;
       suggested_vendor_id: string | null;
       categorization_vendor_id: string | null;
+      bank_account_id: string | null;
     }>(
       `
         SELECT
@@ -167,7 +189,8 @@ export async function bulkPostTransactionsAsBills(
           transaction_date::text AS transaction_date,
           description,
           suggested_vendor_id,
-          categorization_vendor_id
+          categorization_vendor_id,
+          bank_account_id
         FROM banking.bank_transactions
         WHERE operating_company_id = $1
           AND id = ANY($2::uuid[])
@@ -182,6 +205,7 @@ export async function bulkPostTransactionsAsBills(
     }
 
     const billIds: string[] = [];
+    const billPaymentIds: string[] = [];
     for (const txn of txRes.rows) {
       const vendorId =
         input.vendorId ??
@@ -196,6 +220,11 @@ export async function bulkPostTransactionsAsBills(
         throw new Error("bulk_post_amount_invalid");
       }
 
+      // PAID-IN-FULL MODEL (owner-approved QBO parity: cash already left the bank at the moment the bank
+      // feed shows the cleared transaction — this is NOT a Bill→pay-later A/P scenario). The bill is
+      // created ALREADY paid + a matching accounting.bill_payments row credits the real source bank
+      // account (from_bank_account_id, resolved via the SAME bank->GL bridge every other bill_payment
+      // poster uses) so the GL leg the posting engine builds actually reduces cash, not a phantom A/P.
       const billRes = await client.query<{ id: string }>(
         `
           INSERT INTO accounting.bills (
@@ -214,7 +243,7 @@ export async function bulkPostTransactionsAsBills(
             created_at,
             updated_at
           )
-          VALUES ($1,$2,$2,$3,$3,$4,$5,0,0,'unpaid',$6,$7,now(),now())
+          VALUES ($1,$2,$2,$3,$3,$4,$5,$4,$5,'paid',$6,$7,now(),now())
           RETURNING id
         `,
         [
@@ -236,6 +265,59 @@ export async function bulkPostTransactionsAsBills(
       const billId = billRes.rows[0]?.id;
       if (!billId) throw new Error("bulk_post_bill_insert_failed");
       billIds.push(billId);
+
+      // The GL poster reads accounting.bill_lines, not the header (same rule CHAIN-03 enforces
+      // everywhere else — see settlement-bill-payment-posting.service.ts). ps_category/ps_item here are
+      // free-text QBO Product/Service labels, not a resolvable expense_category_account_map key, so this
+      // single line carries NO category — it resolves via THE canonical resolver's Tier-3
+      // "uncategorized_expense" role (QBO-25 behavior: an unmapped category books to Uncategorized
+      // Expense rather than silently guessing or failing the whole batch).
+      await client.query(
+        `INSERT INTO accounting.bill_lines (bill_id, line_sequence, amount, description)
+         VALUES ($1::uuid, 1, $2, $3)
+         ON CONFLICT (bill_id, line_sequence) DO NOTHING`,
+        [billId, amountCents / 100, `${input.psCategory} — ${input.psItem}`.slice(0, 500)]
+      );
+
+      const paymentRes = await client.query<{ id: string }>(
+        `
+          INSERT INTO accounting.bill_payments (
+            operating_company_id,
+            bill_id,
+            vendor_id,
+            payment_date,
+            amount_cents,
+            amount,
+            payment_method,
+            from_bank_account_id,
+            memo,
+            status,
+            payment_source_kind,
+            source_bank_transaction_id,
+            created_by_user_id,
+            created_at,
+            updated_at
+          )
+          VALUES ($1,$2,$3,$4,$5,$6,'ach',$7,$8,'posted','bank_tx_bulk_post',$9,$10,now(),now())
+          RETURNING id
+        `,
+        [
+          input.operatingCompanyId,
+          billId,
+          vendorId,
+          txn.transaction_date,
+          amountCents,
+          amountCents / 100,
+          txn.bank_account_id,
+          JSON.stringify({ source: "bank_tx_bulk_post", bank_transaction_id: txn.id }),
+          txn.id,
+          userId,
+        ]
+      );
+      const billPaymentId = paymentRes.rows[0]?.id;
+      if (!billPaymentId) throw new Error("bulk_post_bill_payment_insert_failed");
+      billPaymentIds.push(billPaymentId);
+      created.push({ billId, billPaymentId });
 
       await client.query(
         `
@@ -264,9 +346,77 @@ export async function bulkPostTransactionsAsBills(
     }
 
     await client.query("COMMIT");
-    return { bill_ids: billIds };
+
+    // BANKING-GL-COMPLETION — post the A/P leg then the cash leg AFTER the subledger transaction above
+    // committed (postSourceTransaction opens its OWN transaction on its own connection; calling it from
+    // inside the still-open insert transaction would self-deadlock on the very row it needs to lock).
+    // Best-effort + per-bill: gated by the EXISTING BILL_GL_POSTING_ENABLED / BILL_PAYMENT_GL_POSTING_ENABLED
+    // flags (both default OFF, no new flags) — with either flag off this is a strict no-op, matching every
+    // other poster's dark-by-default contract.
+    const glPosting = await postCreatedBillsGl(input.operatingCompanyId, created, userId);
+
+    return { bill_ids: billIds, bill_payment_ids: billPaymentIds, gl_posting: glPosting };
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;
   }
+}
+
+/**
+ * BANKING-GL-COMPLETION — shared post-commit GL step for a "post as bill, paid-in-full" batch. Reused
+ * verbatim by bank-transaction-splits.service.ts's per-line vendor-bill branch (same shape: a freshly
+ * committed bill + its full-amount bill_payment). MUST be called only AFTER the bill/bill_payment rows are
+ * committed (each postSourceTransaction call opens its own transaction on its own connection — calling it
+ * from inside the still-open insert transaction would self-deadlock on the row's own lock).
+ *
+ * Gated by the EXISTING BILL_GL_POSTING_ENABLED (bill A/P leg) and BILL_PAYMENT_GL_POSTING_ENABLED (cash
+ * leg) flags — both default OFF, no new flags introduced. Best-effort per pair: one bill's posting failure
+ * never blocks the rest of the batch or unwinds the already-committed subledger rows.
+ */
+export async function postCreatedBillsGl(
+  operatingCompanyId: string,
+  pairs: Array<{ billId: string; billPaymentId: string }>,
+  userId: string
+): Promise<BulkPostAsBillsResult["gl_posting"]> {
+  if (pairs.length === 0) return [];
+
+  const billGlEnabled = await withCurrentUserFlagCheck(operatingCompanyId, userId, BILL_GL_POSTING_FLAG_KEY);
+
+  const results: BulkPostAsBillsResult["gl_posting"] = [];
+  for (const pair of pairs) {
+    let billPosted = false;
+    let billPaymentPosted = false;
+    let errorMessage: string | undefined;
+    try {
+      if (billGlEnabled) {
+        await postSourceTransaction(
+          { operating_company_id: operatingCompanyId, source_transaction_type: "bill", source_transaction_id: pair.billId },
+          { userId }
+        );
+        billPosted = true;
+      }
+      if (billPosted) {
+        const outcome = await postBillPaymentGlIfEnabled(operatingCompanyId, pair.billPaymentId, { userId });
+        billPaymentPosted = outcome.posted;
+      }
+    } catch (err) {
+      errorMessage =
+        err instanceof PostingEngineError ? `${err.code}: ${err.message}` : String((err as Error)?.message ?? err);
+    }
+    results.push({
+      bill_id: pair.billId,
+      bill_payment_id: pair.billPaymentId,
+      bill_posted: billPosted,
+      bill_payment_posted: billPaymentPosted,
+      ...(errorMessage ? { error: errorMessage } : {}),
+    });
+  }
+  return results;
+}
+
+async function withCurrentUserFlagCheck(operatingCompanyId: string, userId: string, flagKey: string): Promise<boolean> {
+  return withCurrentUser(userId, async (dbClient) => {
+    await dbClient.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+    return isEnabled(dbClient, flagKey, { operating_company_id: operatingCompanyId, user_uuid: userId });
+  });
 }

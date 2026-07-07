@@ -185,6 +185,7 @@ describeIntegration("BLOCK-6 bank-categorize driver advance posting (real Postgr
           `DELETE FROM accounting.journal_entry_postings WHERE source_transaction_id = ANY($1) AND source_transaction_type='driver_advance'`,
           [advanceIds]
         );
+        await db.query(`DELETE FROM driver_finance.driver_settlement_deductions WHERE driver_id = ANY($1::uuid[])`, [drivers]);
         await db.query(`DELETE FROM driver_finance.deduction_schedule WHERE driver_id = ANY($1::uuid[])`, [drivers]);
         await db.query(`DELETE FROM driver_finance.driver_advances WHERE driver_id = ANY($1::uuid[])`, [drivers]);
         await db.query(`DELETE FROM driver_finance.driver_liabilities WHERE driver_id = ANY($1::uuid[])`, [drivers]);
@@ -307,5 +308,18 @@ describeIntegration("BLOCK-6 bank-categorize driver advance posting (real Postgr
       [res.liability_id]
     );
     expect(liability.length).toBe(1);
+
+    // BANKING-GL-COMPLETION — a recovery deduction now exists against the driver's next settlement
+    // (sourceType 'cash_advance_repayment', the SAME shape every other advance-issuance path creates).
+    expect(res.deduction_id).toBeTruthy();
+    const deductions = await scopedRead<{ id: string; amount_cents: string; deduction_type: string; source_bank_transaction_id: string | null }>(
+      `SELECT id::text, amount_cents::text, deduction_type, source_bank_transaction_id::text
+       FROM driver_finance.driver_settlement_deductions WHERE id = $1::uuid`,
+      [res.deduction_id]
+    );
+    expect(deductions).toHaveLength(1);
+    expect(deductions[0]?.deduction_type).toBe("cash_advance_repayment");
+    expect(Number(deductions[0]?.amount_cents)).toBe(amountCents);
+    expect(deductions[0]?.source_bank_transaction_id).toBe(txn);
   });
 });

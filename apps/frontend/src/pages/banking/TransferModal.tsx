@@ -101,12 +101,14 @@ export function TransferModal({ open, operatingCompanyId, onClose, onSaved, pref
       });
       if (linkBankTransactionId) {
         try {
+          // linkBankTransactionId is the bank-feed row for the OUTGOING leg (money leaving fromAccountId);
+          // tag it as an inter-account transfer to toAccountId so bank-feed GL posting skips it.
           await markBankTransactionTransfer(linkBankTransactionId, operatingCompanyId, {
-            from_account_id: fromAccountId,
-            to_account_id: toAccountId,
+            destination_bank_account_id: toAccountId,
+            transfer_kind: "out",
           });
         } catch {
-          /* optional until P6-T11204 */
+          /* optional — the createTransfer ledger entry above is the source of truth either way */
         }
       }
       pushToast("Transfer recorded", "success");

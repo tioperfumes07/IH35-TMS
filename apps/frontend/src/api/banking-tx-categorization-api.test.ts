@@ -41,12 +41,12 @@ describe("banking tx categorization API client", () => {
     });
   });
 
-  it("markBankTransactionTransfer POSTs accounts", async () => {
+  it("markBankTransactionTransfer POSTs the real /transfer contract", async () => {
     const spy = vi.spyOn(client, "apiRequest").mockResolvedValue({ ok: true } as never);
-    await markBankTransactionTransfer("tx-9", "co-1", { from_account_id: "b1", to_account_id: "b2" });
-    expect(spy).toHaveBeenCalledWith("/api/v1/banking/transactions/tx-9/mark-transfer?operating_company_id=co-1", {
+    await markBankTransactionTransfer("tx-9", "co-1", { destination_bank_account_id: "b2", transfer_kind: "out" });
+    expect(spy).toHaveBeenCalledWith("/api/v1/banking/transactions/tx-9/transfer?operating_company_id=co-1", {
       method: "POST",
-      body: { from_account_id: "b1", to_account_id: "b2" },
+      body: { destination_bank_account_id: "b2", transfer_kind: "out" },
     });
   });
 });

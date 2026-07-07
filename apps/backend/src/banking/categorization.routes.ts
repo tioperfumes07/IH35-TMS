@@ -413,6 +413,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
           driverId: body.data.driver_id,
           glAccountId: body.data.gl_account_id ?? null,
           memo: body.data.memo ?? null,
+          loadId: body.data.load_id ?? null,
         });
       } catch (e) {
         // Surface, never silently swallow (the tag is committed; the financial post is best-effort).
@@ -917,7 +918,13 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
           user.uuid
         )
       );
-      return { ok: true, bill_ids: result.bill_ids, created_count: result.bill_ids.length };
+      return {
+        ok: true,
+        bill_ids: result.bill_ids,
+        bill_payment_ids: result.bill_payment_ids,
+        gl_posting: result.gl_posting,
+        created_count: result.bill_ids.length,
+      };
     } catch (error) {
       const message = String((error as Error)?.message ?? "bulk_post_failed");
       const mapped = mapBulkError(reply, message);
