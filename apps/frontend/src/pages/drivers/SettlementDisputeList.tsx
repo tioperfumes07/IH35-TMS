@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Button } from "../../components/Button";
 import { DataTable } from "../../components/DataTable";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useSettlementDisputes, type SettlementDisputeStatus } from "../../hooks/useSettlementDisputes";
 import { SettlementDisputeModal } from "./SettlementDisputeModal";
@@ -55,8 +56,18 @@ export function SettlementDisputeList() {
         loading={isLoading}
         rowKey={(row) => row.id}
         columns={[
-          { key: "driver_name", label: "Driver", render: (row) => row.driver_name ?? row.driver_id },
-          { key: "settlement_display_id", label: "Settlement", render: (row) => row.settlement_display_id ?? row.settlement_id },
+          {
+            key: "driver_name",
+            label: "Driver",
+            render: (row) => <EntityLink kind="driver" id={row.driver_id} label={row.driver_name ?? row.driver_id} />,
+          },
+          {
+            key: "settlement_display_id",
+            label: "Settlement",
+            render: (row) => (
+              <EntityLink kind="settlement" id={row.settlement_id} label={row.settlement_display_id ?? row.settlement_id} />
+            ),
+          },
           { key: "dispute_type", label: "Type" },
           { key: "claimed_amount_cents", label: "Claimed", render: (row) => money(row.claimed_amount_cents) },
           { key: "status", label: "Status", render: (row) => <StatusBadge status={row.status} /> },

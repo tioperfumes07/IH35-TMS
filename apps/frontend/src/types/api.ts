@@ -75,6 +75,11 @@ export type Driver = {
   termination_date: string | null;
   dot_medical_expires_at: string | null;
   hazmat_endorsement_expires_at: string | null;
+  /** DOT hazmat "H" CDL endorsement (migration 0301). Canonical link:
+   * mdata.driver_cdl_endorsements → reference.cdl_endorsements code 'H'; the shared driver-qualification
+   * gate (dispatch/driver-qualification.service.ts) reads this to block an unendorsed driver from a
+   * hazmat load. */
+  endorsement_h: boolean;
   visa_type: string | null;
   visa_number: string | null;
   visa_expires_at: string | null;
@@ -127,6 +132,7 @@ export type CreateDriverInput = {
   pay_basis?: MilesBasis;
   dot_medical_expires_at?: string;
   hazmat_endorsement_expires_at?: string;
+  endorsement_h?: boolean;
   visa_type?: string;
   visa_number?: string;
   visa_expires_at?: string;
@@ -175,6 +181,7 @@ export type UpdateDriverInput = Partial<
     | "pay_basis"
     | "dot_medical_expires_at"
     | "hazmat_endorsement_expires_at"
+    | "endorsement_h"
     | "visa_type"
     | "visa_number"
     | "visa_expires_at"

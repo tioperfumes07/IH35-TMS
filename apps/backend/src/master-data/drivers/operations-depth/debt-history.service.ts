@@ -4,9 +4,9 @@ export type DebtHistoryRow = {
   uuid: string;
   driver_id: string;
   operating_company_id: string;
-  purpose: string | null;
-  amount: string | null;
-  outstanding_balance: string | null;
+  advance_type: string | null;
+  principal_amount: string | null;
+  balance_remaining: string | null;
   status: string | null;
   created_at: string;
 };
@@ -14,6 +14,11 @@ export type DebtHistoryRow = {
 /**
  * Driver debt history — all advances / liabilities plus remaining balances.
  * Scoped to one driver inside one operating company; paged for large drivers.
+ *
+ * §4 fix (2026-07-06): real columns are `purpose` / `amount` / `outstanding_balance` (migration
+ * 0138) but the frontend's DebtHistoryView column keys were `advance_type` / `principal_amount` /
+ * `balance_remaining` — a name mismatch (not a 500, but every cell silently rendered "—" since
+ * OperationsHistoryTable looks up `row[column.key]`). Aliased in SQL to the frontend's real keys.
  */
 export async function getDriverDebtHistory(
   client: Queryable,
@@ -38,9 +43,9 @@ export async function getDriverDebtHistory(
         id::text AS uuid,
         driver_id::text,
         operating_company_id::text,
-        purpose,
-        amount::text,
-        outstanding_balance::text,
+        purpose AS advance_type,
+        amount::text AS principal_amount,
+        outstanding_balance::text AS balance_remaining,
         status,
         created_at::text
       FROM driver_finance.driver_advances

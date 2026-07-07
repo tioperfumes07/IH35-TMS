@@ -5,14 +5,22 @@ export type CommunicationsLogRow = {
   driver_id: string;
   operating_company_id: string;
   channel: string | null;
-  message: string | null;
+  body: string | null;
   urgency: string | null;
+  direction: string;
   created_at: string;
 };
 
 /**
  * Driver communications log — driver profile messages from the comm center (GAP-18).
  * Scoped to one driver inside one operating company; paged for large drivers.
+ *
+ * §4 fix (2026-07-06): the real message-text column is `message` (migration 0302) but the
+ * frontend's CommunicationsLogView column key is `body` — aliased. `direction` is not a stored
+ * column: this table (mdata.driver_profile_messages) is exclusively the office→driver comm-center
+ * channel (created_by references identity.users staff, delivery_status/read_at added by 0349 track
+ * office-to-driver delivery/read receipts; there is no driver-reply column), so `direction` is a
+ * literal 'outbound' rather than a fabricated per-row value.
  */
 export async function getDriverCommunicationsLog(
   client: Queryable,
@@ -38,8 +46,9 @@ export async function getDriverCommunicationsLog(
         driver_id::text,
         operating_company_id::text,
         channel,
-        message,
+        message AS body,
         urgency,
+        'outbound'::text AS direction,
         created_at::text
       FROM mdata.driver_profile_messages
       WHERE driver_id = $1::uuid

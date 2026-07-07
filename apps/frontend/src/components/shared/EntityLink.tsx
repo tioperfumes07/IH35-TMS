@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { MouseEvent, ReactNode } from "react";
 import { Link } from "react-router-dom";
 
 /**
@@ -37,6 +37,10 @@ export interface EntityLinkProps {
   /** Display text/content. Defaults to the raw id when omitted. */
   label?: ReactNode;
   className?: string;
+  /** Extra click handler — combined with stopPropagation() when the link sits inside a row/card
+   * that has its own onClick (so clicking the link opens the entity instead of the row/card target). */
+  onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
+  "data-testid"?: string;
 }
 
 const DEFAULT_LINK_CLASSNAME =
@@ -93,20 +97,36 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
  * Renders `id` as a clickable drill-through link when a real detail route exists for `kind`;
  * otherwise renders plain text (no dead link, no fabricated route).
  */
-export function EntityLink({ kind, id, label, className }: EntityLinkProps) {
+export function EntityLink({ kind, id, label, className, onClick, "data-testid": dataTestId }: EntityLinkProps) {
   const display = label ?? id ?? "—";
 
   if (!id) {
-    return <span className={className}>{display}</span>;
+    return (
+      <span className={className} data-testid={dataTestId}>
+        {display}
+      </span>
+    );
   }
 
   const route = resolveEntityRoute(kind, id);
   if (!route) {
-    return <span className={className}>{display}</span>;
+    return (
+      <span className={className} data-testid={dataTestId}>
+        {display}
+      </span>
+    );
   }
 
   return (
-    <Link to={route} className={className ?? DEFAULT_LINK_CLASSNAME}>
+    <Link
+      to={route}
+      className={className ?? DEFAULT_LINK_CLASSNAME}
+      data-testid={dataTestId}
+      onClick={(event) => {
+        event.stopPropagation();
+        onClick?.(event);
+      }}
+    >
       {display}
     </Link>
   );

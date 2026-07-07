@@ -137,6 +137,7 @@ const updateDriverBodySchema = z
     pay_basis: milesBasisSchema.optional(),
     dot_medical_expires_at: isoDateSchema.nullable().optional(),
     hazmat_endorsement_expires_at: isoDateSchema.nullable().optional(),
+    endorsement_h: z.boolean().optional(),
     visa_type: z.string().trim().max(100).nullable().optional(),
     visa_number: z.string().trim().max(100).nullable().optional(),
     visa_expires_at: isoDateSchema.nullable().optional(),
@@ -1069,7 +1070,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
         `
           SELECT
             id, identity_user_id, first_name, last_name, phone, email, cdl_number, cdl_state, cdl_class,
-            cdl_expires_at, hire_date, pay_basis, termination_date, dot_medical_expires_at, hazmat_endorsement_expires_at,
+            cdl_expires_at, hire_date, pay_basis, termination_date, dot_medical_expires_at, hazmat_endorsement_expires_at, endorsement_h,
             visa_type, visa_number, visa_expires_at, passport_number, passport_expires_at, ine_number, curp,
             mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
             emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
@@ -1248,6 +1249,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     if ("pay_basis" in b) add("pay_basis", b.pay_basis);
     if ("dot_medical_expires_at" in b) add("dot_medical_expires_at", b.dot_medical_expires_at ?? null);
     if ("hazmat_endorsement_expires_at" in b) add("hazmat_endorsement_expires_at", b.hazmat_endorsement_expires_at ?? null);
+    if ("endorsement_h" in b) add("endorsement_h", b.endorsement_h);
     if ("visa_type" in b) add("visa_type", b.visa_type ?? null);
     if ("visa_number" in b) add("visa_number", b.visa_number ?? null);
     if ("visa_expires_at" in b) add("visa_expires_at", b.visa_expires_at ?? null);
@@ -1299,7 +1301,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
           `
             SELECT
               id, identity_user_id, first_name, last_name, phone, email, cdl_number, cdl_state, cdl_class,
-              cdl_expires_at, hire_date, pay_basis, termination_date, dot_medical_expires_at, hazmat_endorsement_expires_at,
+              cdl_expires_at, hire_date, pay_basis, termination_date, dot_medical_expires_at, hazmat_endorsement_expires_at, endorsement_h,
               visa_type, visa_number, visa_expires_at, passport_number, passport_expires_at, ine_number, curp,
               mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
               emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
@@ -1325,7 +1327,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             WHERE id = $${idIdx}
             RETURNING
               id, identity_user_id, first_name, last_name, phone, email, cdl_number, cdl_state, cdl_class,
-              cdl_expires_at, hire_date, pay_basis, termination_date, dot_medical_expires_at, hazmat_endorsement_expires_at,
+              cdl_expires_at, hire_date, pay_basis, termination_date, dot_medical_expires_at, hazmat_endorsement_expires_at, endorsement_h,
               visa_type, visa_number, visa_expires_at, passport_number, passport_expires_at, ine_number, curp,
               mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
               emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
@@ -1371,7 +1373,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             `
               SELECT
                 id, identity_user_id, first_name, last_name, phone, email, cdl_number, cdl_state, cdl_class,
-                cdl_expires_at, hire_date, pay_basis, termination_date, dot_medical_expires_at, hazmat_endorsement_expires_at,
+                cdl_expires_at, hire_date, pay_basis, termination_date, dot_medical_expires_at, hazmat_endorsement_expires_at, endorsement_h,
                 visa_type, visa_number, visa_expires_at, passport_number, passport_expires_at, ine_number, curp,
                 mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
                 emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,

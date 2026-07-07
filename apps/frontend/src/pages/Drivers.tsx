@@ -29,6 +29,7 @@ import { PreSettlementsPanel } from "../components/driver-finance/PreSettlements
 import { dataTableErrorState } from "../lib/tableError";
 import { Modal } from "../components/Modal";
 import { ActionButton } from "../components/shared/ActionButton";
+import { EntityLink } from "../components/shared/EntityLink";
 import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
 import { StatusBadge } from "../components/StatusBadge";
 import { useToast } from "../components/Toast";
@@ -84,6 +85,13 @@ function formatDate(value: string | null) {
 
 function formatMoney(value: number) {
   return formatUsd(value);
+}
+
+// Some aggregate rows (e.g. debtAlertRows) fall back to a driver NAME string as the "id" when the
+// source record has no driver_id — guard EntityLink so it never fabricates a route to a non-uuid.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function isUuid(value: string | null | undefined): value is string {
+  return Boolean(value) && UUID_RE.test(value as string);
 }
 
 function isWithinNextDays(dateIso: string | null | undefined, days: number) {
@@ -353,14 +361,14 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
     return Array.from(byDriver.values()).slice(0, 8);
   }, [dispatchLoadsQuery.data?.loads]);
   const permitExpirationRows = useMemo(() => {
-    const rows: Array<{ id: string; driver_name: string; label: string; days: number }> = [];
+    const rows: Array<{ id: string; driver_id: string; driver_name: string; label: string; days: number }> = [];
     for (const driver of allDrivers) {
       const fullName = `${driver.first_name} ${driver.last_name}`;
       const pushIfSoon = (date: string | null, label: string) => {
         if (!isWithinNextDays(date, 60)) return;
         const d = daysUntil(date);
         if (d == null) return;
-        rows.push({ id: `${driver.id}-${label}`, driver_name: fullName, label, days: d });
+        rows.push({ id: `${driver.id}-${label}`, driver_id: driver.id, driver_name: fullName, label, days: d });
       };
       pushIfSoon(driver.cdl_expires_at, "CDL renewal");
       pushIfSoon(driver.dot_medical_expires_at, "Medical card");
@@ -487,7 +495,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                   const v = String(row.primary_driver_name ?? row.primary_driver_id ?? "—");
                   return (
                     <span title={v !== "—" ? v : undefined} className="single-line-name">
-                      {v}
+                      <EntityLink kind="driver" id={String(row.primary_driver_id ?? "")} label={v} />
                     </span>
                   );
                 },
@@ -500,7 +508,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                   const v = String(row.co_driver_name ?? row.secondary_driver_id ?? "—");
                   return (
                     <span title={v !== "—" ? v : undefined} className="single-line-name">
-                      {v}
+                      <EntityLink kind="driver" id={String(row.secondary_driver_id ?? "")} label={v} />
                     </span>
                   );
                 },
@@ -596,7 +604,10 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
             <DataPanel title="Debt Alert · before any payment" accentColor={colors.crit.strong}>
               {debtAlertRows.map((row) => (
                 <DataPanelRow key={row.driver_id}>
-                  <span>{row.driver_name} · {row.reasons.slice(0, 2).join(" + ")}</span>
+                  <span>
+                    <EntityLink kind="driver" id={isUuid(row.driver_id) ? row.driver_id : null} label={row.driver_name} /> ·{" "}
+                    {row.reasons.slice(0, 2).join(" + ")}
+                  </span>
                   <span className="text-red-600">-{formatMoney(row.total)}</span>
                 </DataPanelRow>
               ))}
@@ -613,7 +624,9 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
             <DataPanel title="Permit / Document Expirations" accentColor={colors.warn.strong}>
               {permitExpirationRows.map((row) => (
                 <DataPanelRow key={row.id}>
-                  <span>{row.driver_name} · {row.label}</span>
+                  <span>
+                    <EntityLink kind="driver" id={row.driver_id} label={row.driver_name} /> · {row.label}
+                  </span>
                   <span>{row.days}d</span>
                 </DataPanelRow>
               ))}
@@ -803,8 +816,22 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
           <div className="space-y-3">
             <div className="rounded-sm border border-gray-200 bg-gray-50 p-2 text-xs">
               <p className="font-semibold">{String(teamDetailQuery.data.team_name)}</p>
-              <p>Primary: {String(teamDetailQuery.data.primary_driver_name ?? teamDetailQuery.data.primary_driver_id)}</p>
-              <p>Co: {String(teamDetailQuery.data.co_driver_name ?? teamDetailQuery.data.secondary_driver_id)}</p>
+              <p>
+                Primary:{" "}
+                <EntityLink
+                  kind="driver"
+                  id={String(teamDetailQuery.data.primary_driver_id ?? "")}
+                  label={String(teamDetailQuery.data.primary_driver_name ?? teamDetailQuery.data.primary_driver_id)}
+                />
+              </p>
+              <p>
+                Co:{" "}
+                <EntityLink
+                  kind="driver"
+                  id={String(teamDetailQuery.data.secondary_driver_id ?? "")}
+                  label={String(teamDetailQuery.data.co_driver_name ?? teamDetailQuery.data.secondary_driver_id)}
+                />
+              </p>
               <p>Split: {String(teamDetailQuery.data.split_method)} ({Number(teamDetailQuery.data.primary_share_pct)} / {Number(teamDetailQuery.data.co_share_pct)})</p>
             </div>
             <div className="rounded-sm border border-gray-200 bg-white p-2 text-xs">
@@ -812,12 +839,16 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
               {(teamDetailQuery.data.settlement_history ?? []).length === 0 ? (
                 <p className="text-gray-500">No split history yet.</p>
               ) : (
-                (teamDetailQuery.data.settlement_history ?? []).slice(0, 20).map((row, index) => (
-                  <div key={`${index}-${String((row as Record<string, unknown>).id ?? "")}`} className="border-t border-gray-100 py-1">
-                    Load {String((row as Record<string, unknown>).load_id ?? "—")} · Driver {String((row as Record<string, unknown>).driver_id ?? "—")} ·
-                    Pay {formatUsdCents(Number((row as Record<string, unknown>).driver_pay_cents ?? 0) || 0)}
-                  </div>
-                ))
+                (teamDetailQuery.data.settlement_history ?? []).slice(0, 20).map((row, index) => {
+                  const r = row as Record<string, unknown>;
+                  return (
+                    <div key={`${index}-${String(r.id ?? "")}`} className="border-t border-gray-100 py-1">
+                      Load <EntityLink kind="load" id={r.load_id ? String(r.load_id) : null} /> · Driver{" "}
+                      <EntityLink kind="driver" id={r.driver_id ? String(r.driver_id) : null} /> ·{" "}
+                      Pay {formatUsdCents(Number(r.driver_pay_cents ?? 0) || 0)}
+                    </div>
+                  );
+                })
               )}
             </div>
             <div className="rounded-sm border border-slate-200 bg-slate-100 p-2 text-xs">

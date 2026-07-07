@@ -10,6 +10,7 @@ import {
 } from "../../api/driver-messages";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Button } from "../../components/Button";
+import { PageHeader } from "../../components/layout/PageHeader";
 import { SendMessageModal } from "../../components/drivers/SendMessageModal";
 
 function formatWhen(iso: string) {
@@ -160,15 +161,12 @@ export function MessagesInboxPage() {
 
   return (
     <div className="flex h-[calc(100vh-8rem)] flex-col gap-3 p-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Driver Messages</h1>
-          <p className="text-sm text-gray-600">Office inbox — threaded conversations per driver</p>
-        </div>
-        <Link to="/drivers" className="text-sm text-slate-700 hover:underline">
-          Back to Drivers
-        </Link>
-      </div>
+      <PageHeader
+        title="Driver Messages"
+        subtitle="Office inbox — threaded conversations per driver"
+        breadcrumb={["Drivers", "Messages"]}
+        backHref="/drivers"
+      />
       <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden rounded-lg border border-gray-200 bg-white md:grid-cols-[320px_1fr]">
         <div className="overflow-y-auto border-r border-gray-200">
           <div className="border-b border-gray-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500">

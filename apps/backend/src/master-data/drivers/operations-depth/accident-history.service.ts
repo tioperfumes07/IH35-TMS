@@ -5,14 +5,24 @@ export type AccidentHistoryRow = {
   driver_id: string;
   operating_company_id: string;
   unit_id: string | null;
-  accident_at: string | null;
+  load_id: string | null;
+  vendor_id: string | null;
+  occurred_at: string | null;
   description: string | null;
-  created_at: string;
+  at_fault: string | null;
+  preventable: boolean | null;
 };
 
 /**
  * Driver accident history — cross-linked to safety incident / accident reports.
  * Scoped to one driver inside one operating company; paged for large drivers.
+ *
+ * §4 landmine (fixed 2026-07-06): `safety.accident_reports` (base 0049 + SC1 202607031500 +
+ * SAFE-1 202607050830) has NO `created_at` and NO `incident_id`/`severity` columns — its real
+ * columns are id/operating_company_id/driver_id/unit_id/vendor_id/load_id/accident_at/description/
+ * at_fault/preventable. The prior SELECT of `created_at` 42703'd (column does not exist) → this
+ * sub-view 500'd on every request. Fixed to select only real columns, aliasing accident_at to the
+ * generic `occurred_at` timeline field the frontend expects and ordering by it directly.
  */
 export async function getDriverAccidentHistory(
   client: Queryable,
@@ -38,13 +48,16 @@ export async function getDriverAccidentHistory(
         driver_id::text,
         operating_company_id::text,
         unit_id::text,
-        accident_at::text,
+        load_id::text,
+        vendor_id::text,
+        accident_at::text AS occurred_at,
         description,
-        created_at::text
+        at_fault,
+        preventable
       FROM safety.accident_reports
       WHERE driver_id = $1::uuid
         AND operating_company_id = $2::uuid
-      ORDER BY accident_at DESC NULLS LAST, created_at DESC
+      ORDER BY accident_at DESC NULLS LAST
       LIMIT $3 OFFSET $4
     `,
     [driverUuid, operatingCompanyId, limit, offset]

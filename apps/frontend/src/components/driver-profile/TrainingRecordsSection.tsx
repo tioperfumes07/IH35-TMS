@@ -1,3 +1,4 @@
+import { DataTable } from "../DataTable";
 import { formatDateUS } from "../../lib/formatDate";
 
 function statusClass(status: string | undefined) {
@@ -28,34 +29,23 @@ export function TrainingRecordsSection({
           + Add training
         </button>
       </div>
-      <table className="mt-3 w-full text-left text-xs">
-        <thead>
-          <tr className="text-gray-500">
-            <th>Type</th>
-            <th>Completed</th>
-            <th>Expiration</th>
-            <th>Certificate</th>
-          </tr>
-        </thead>
-        <tbody>
-          {records.length === 0 ? (
-            <tr>
-              <td colSpan={4} className="py-2 text-gray-500">
-                No training records.
-              </td>
-            </tr>
-          ) : (
-            records.map((row, idx) => (
-              <tr key={`${row.type}-${idx}`} className="border-t border-gray-100">
-                <td className="py-1">{String(row.type ?? "—")}</td>
-                <td>{formatDateUS(row.completion_date) || "—"}</td>
-                <td className={statusClass(String(row.status))}>{String(row.expiration_date ?? "—")}</td>
-                <td>{row.certificate_url ? "On file" : "—"}</td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+      <div className="mt-3">
+        <DataTable<Record<string, unknown>>
+          rows={records.map((row, index) => ({ ...row, __rowKey: `${String(row.type ?? "training")}-${index}` }))}
+          rowKey={(row) => String(row.__rowKey)}
+          emptyText="No training records."
+          columns={[
+            { key: "type", label: "Type", render: (row) => String(row.type ?? "—") },
+            { key: "completion_date", label: "Completed", render: (row) => formatDateUS(row.completion_date as string) || "—" },
+            {
+              key: "expiration_date",
+              label: "Expiration",
+              render: (row) => <span className={statusClass(String(row.status))}>{String(row.expiration_date ?? "—")}</span>,
+            },
+            { key: "certificate_url", label: "Certificate", render: (row) => (row.certificate_url ? "On file" : "—") },
+          ]}
+        />
+      </div>
     </section>
   );
 }

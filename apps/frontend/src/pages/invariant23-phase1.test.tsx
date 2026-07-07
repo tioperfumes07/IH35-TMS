@@ -103,6 +103,7 @@ const fakeDriver: Driver = {
   termination_date: null,
   dot_medical_expires_at: null,
   hazmat_endorsement_expires_at: null,
+  endorsement_h: false,
   visa_type: null,
   visa_number: null,
   visa_expires_at: null,
