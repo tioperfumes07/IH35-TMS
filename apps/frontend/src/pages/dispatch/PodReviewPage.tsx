@@ -13,6 +13,7 @@ import {
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useListState } from "../../components/list-state";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 function PodRow({
   doc,
@@ -31,8 +32,12 @@ function PodRow({
 
   return (
     <tr className="border-t" data-testid={`pod-row-${doc.id}`}>
-      <td className="px-3 py-2">{doc.load_number ?? doc.load_id}</td>
-      <td className="px-3 py-2">{doc.driver_name ?? "—"}</td>
+      <td className="px-3 py-2">
+        <EntityLink kind="load" id={doc.load_id} label={doc.load_number ?? doc.load_id} />
+      </td>
+      <td className="px-3 py-2">
+        <EntityLink kind="driver" id={doc.driver_id} label={doc.driver_name ?? "—"} />
+      </td>
       <td className="px-3 py-2">{doc.recipient_name ?? "—"}</td>
       <td className="px-3 py-2 capitalize">{doc.status.replace(/_/g, " ")}</td>
       <td className="px-3 py-2">{new Date(doc.created_at).toLocaleString()}</td>

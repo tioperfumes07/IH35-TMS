@@ -11,7 +11,7 @@ export function MaintenanceAssignmentsView({ driverId, operatingCompanyId }: Pro
       title="Maintenance Assignments"
       description="Which trucks this driver operated, over time."
       columns={[
-        { key: "unit_number", label: "Unit" },
+        { key: "unit_number", label: "Unit", entityKind: "unit", idKey: "unit_id" },
         { key: "assigned_at", label: "Assigned" },
         { key: "unassigned_at", label: "Unassigned" },
       ]}
