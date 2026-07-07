@@ -849,7 +849,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
   });
 
   // Reverse drill-through: list expenses attributed to a specific load. Read-only SELECT, company-scoped.
-  // Powers the Load detail "Expenses" tab. Delegates to queryExpensesList with loadId from path.
+  // Powers the Load detail "Expenses" tab. Delegates to queryExpensesList with loadId from the path param.
   const loadIdParamSchema = z.object({ id: z.string().uuid() });
   const loadExpensesQuerySchema = companyQuerySchema.extend({
     status: z.enum(["draft", "posted", "void"]).optional(),
