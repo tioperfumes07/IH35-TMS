@@ -6,6 +6,7 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { TestSchedulingPanel } from "./TestSchedulingPanel";
 import { RandomPoolDashboard } from "./RandomPoolDashboard";
 
@@ -58,7 +59,7 @@ function EnrollmentRow({ enrollment }: { enrollment: Enrollment }) {
   return (
     <tr className="border-b border-gray-100 text-xs">
       <td className="py-1.5 pr-3 font-mono text-[11px] text-slate-500">
-        {enrollment.driver_uuid.slice(0, 8)}…
+        <EntityLink kind="driver" id={enrollment.driver_uuid} label={enrollment.driver_uuid.slice(0, 8) + "…"} />
       </td>
       <td className="py-1.5 pr-3">{enrollment.consortium_name}</td>
       <td className="py-1.5 text-slate-600">{enrollment.enrolled_at}</td>
@@ -70,7 +71,7 @@ function PositiveRow({ test }: { test: TestRecord }) {
   return (
     <tr className="border-b border-gray-100 text-xs">
       <td className="py-1.5 pr-3 font-mono text-[11px] text-slate-500">
-        {test.driver_uuid.slice(0, 8)}…
+        <EntityLink kind="driver" id={test.driver_uuid} label={test.driver_uuid.slice(0, 8) + "…"} />
       </td>
       <td className="py-1.5 pr-3 capitalize">{test.test_type.replace(/_/g, " ")}</td>
       <td className="py-1.5 pr-3 capitalize">{test.test_kind}</td>
