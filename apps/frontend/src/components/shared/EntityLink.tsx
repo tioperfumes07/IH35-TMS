@@ -29,7 +29,8 @@ export type EntityKind =
   | "trailer"
   | "expense"
   | "bank_account"
-  | "factoring_advance";
+  | "factoring_advance"
+  | "payment";
 
 export interface EntityLinkProps {
   kind: EntityKind;
@@ -56,6 +57,7 @@ const DEFAULT_LINK_CLASSNAME =
  *     /accounting/expenses/list is the list; no :id detail route exists.
  * "settlement" has no path-param route either, but SettlementsPage does support a real
  * query-param drill-through (?settlement_id=), so it resolves to that instead of null.
+ * "payment" → /accounting/payments/:id (PaymentDetailPage, confirmed in manifest.tsx).
  */
 export function resolveEntityRoute(kind: EntityKind, id: string): string | null {
   switch (kind) {
@@ -79,6 +81,8 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/banking/accounts/${id}`;
     case "factoring_advance":
       return `/accounting/factoring/${id}`;
+    case "payment":
+      return `/accounting/payments/${id}`;
     case "settlement":
       return `/driver-finance/settlements?settlement_id=${id}`;
     case "bill":
