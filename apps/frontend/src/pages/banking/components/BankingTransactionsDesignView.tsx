@@ -45,6 +45,10 @@ type Props = {
   onSelectAccount: (accountId: string) => void;
   onManageConnections: () => void;
   onDataChanged: () => void;
+  // Optional initial value for the Transaction type filter (e.g. "uncategorized") so a caller — the
+  // Banking Home "Uncategorized" KPI tile — can land on this tab pre-filtered instead of losing the
+  // filter on tab switch. Defaults to "all" (unfiltered), matching prior behavior.
+  initialTransactionType?: string;
 };
 
 type RowDetailDraft = {
@@ -213,13 +217,14 @@ export function BankingTransactionsDesignView({
   onSelectAccount,
   onManageConnections,
   onDataChanged,
+  initialTransactionType,
 }: Props) {
   const { pushToast } = useToast();
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
   const [activeReviewTab, setActiveReviewTab] = useState<ReviewTabId>("for_review");
   const [descriptionFilter, setDescriptionFilter] = useState("");
   const [amountFilter, setAmountFilter] = useState<AmountFilter>("all");
-  const [selectedTransactionType, setSelectedTransactionType] = useState("all");
+  const [selectedTransactionType, setSelectedTransactionType] = useState(initialTransactionType ?? "all");
   const [categorizeBy, setCategorizeBy] = useState<CategorizeBy>("category");
   const [showDateFilterMenu, setShowDateFilterMenu] = useState(false);
   const [dateFrom, setDateFrom] = useState("");

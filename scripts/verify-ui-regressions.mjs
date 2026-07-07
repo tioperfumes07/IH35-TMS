@@ -45,7 +45,10 @@ try {
 
   const bankingHome = read("apps/frontend/src/pages/banking/BankingHome.tsx");
   assertNotIncludes(bankingHome, "Categorize ·", "Banking Home categorize band still present");
-  assertIncludes(bankingHome, 'onClick={() => setActiveTab("transactions")}', "Banking Home uncategorized KPI link missing");
+  // Uncategorized KPI must link to the Transactions tab. As of #2249 it navigates there pre-filtered to
+  // uncategorized (setTransactionsInitialFilter("uncategorized") + navigate). Assert the pre-filter wiring —
+  // a stronger check than the old bare setActiveTab, and it still proves the KPI is a live link, not dead.
+  assertIncludes(bankingHome, 'setTransactionsInitialFilter("uncategorized")', "Banking Home uncategorized KPI link missing");
 
   const layoutPageHeader = read("apps/frontend/src/components/layout/PageHeader.tsx");
   const formPageHeader = read("apps/frontend/src/components/forms/shared/PageHeader.tsx");
