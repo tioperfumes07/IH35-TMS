@@ -1153,6 +1153,9 @@ jobs:
       - name: verify:profitability-engine
         run: npm run verify:profitability-engine
 
+      - name: verify:banking-workflow-b-archived
+        run: npm run verify:banking-workflow-b-archived
+
       - name: verify:tasks-module
         run: npm run verify:tasks-module
 

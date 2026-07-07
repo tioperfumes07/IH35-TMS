@@ -1,3 +1,4 @@
+// @archived — Workflow-B form: superseded by RecordTransferModal (live). Enforced by verify-banking-workflow-b-archived.mjs.
 type Props = {
   value: Record<string, unknown>;
   onChange: (next: Record<string, unknown>) => void;

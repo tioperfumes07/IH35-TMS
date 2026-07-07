@@ -1,3 +1,4 @@
+// @archived — Workflow-B: superseded by BankingTransactionsDesignView. Do not wire as a route. Enforced by verify-banking-workflow-b-archived.mjs.
 import { useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { MoneyInput } from "../../components/forms/MoneyInput";

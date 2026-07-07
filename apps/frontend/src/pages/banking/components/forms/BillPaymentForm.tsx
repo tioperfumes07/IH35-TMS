@@ -1,3 +1,4 @@
+// @archived — Workflow-B form: superseded by BankingTransactionsDesignView categorization. Enforced by verify-banking-workflow-b-archived.mjs.
 import type { JSX } from "react";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
