@@ -144,11 +144,14 @@ describeIntegration("CHAIN-04 bill-payment → GL gap-closure end-to-end (real P
       await db.query(`INSERT INTO catalogs.accounts (id, operating_company_id, account_number, account_name, account_type, is_postable) VALUES ($1::uuid,$3::uuid,$2,'Fuel Test','Expense',true)`, [fuelAccountId, `F${suffix}`, companyId]);
       await db.query(`INSERT INTO catalogs.accounts (id, operating_company_id, account_number, account_name, account_type, is_postable) VALUES ($1::uuid,$3::uuid,$2,'AP Test','Liability',true)`, [apAccountId, `P${suffix}`, companyId]);
       await db.query(`INSERT INTO catalogs.accounts (id, operating_company_id, account_number, account_name, account_type, is_postable) VALUES ($1::uuid,$3::uuid,$2,'Bank GL Test','Asset',true)`, [bankGlAccountId, `B${suffix}`, companyId]);
-      // ap_control role (rely on live if already seeded by BLOCK-00 migration).
+      // ap_control role — claim it for this test's apAccountId. DO UPDATE (not DO NOTHING) because
+      // other DB tests (e.g. bank-transaction-splits-vendor-bill) share the same companyId and use
+      // DO UPDATE to seed their own ap_control account; DO NOTHING would silently leave the wrong
+      // account and cause an assertion mismatch when this test calls liveRole("ap_control").
       await db.query(
         `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
          VALUES ($1::uuid,'ap_control',$2::uuid,true)
-         ON CONFLICT (operating_company_id, role) WHERE is_active = true DO NOTHING`,
+         ON CONFLICT (operating_company_id, role) WHERE is_active = true DO UPDATE SET account_id = EXCLUDED.account_id`,
         [companyId, apAccountId]
       );
       // expense_category_account_map: (fuel, <unique code>) → fuel account (so the bill posts to A/P).
