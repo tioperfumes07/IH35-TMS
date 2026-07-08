@@ -4,7 +4,7 @@
   "classification": "ADDITIVE (docs-only design lock)",
   "phase": "TMS-QBO-Reconciliation",
   "task": "RECON-00 Design lock: commit the TMS↔QBO Reconciliation Module architecture spec (double-books/no-sync, twice-daily passes, exception classes, data model, hard read-only/no-autofix control, UI, rollout+tiering, future hooks). Docs-only — no app code, no schema, no flag. Establishes design law for RECON-01/02.",
-  "branch": "docs/recon-module-design",
+  "branch": "docs/recon-00-architecture",
   "lane": "coder",
   "details": [
     "Docs-only design lock. Status auto-derived by reconciler from branch → merged-PR (docs blocks never promote via signature-file presence — all doc files are dropped by dropBoiler).",
