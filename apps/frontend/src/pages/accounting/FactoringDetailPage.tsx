@@ -22,6 +22,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { FactorReserveCard } from "./FactorReserveCard";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -121,6 +122,27 @@ export function FactoringDetailPage() {
     );
   if (!detail) return <div className="text-sm text-red-600">Factoring batch not found.</div>;
 
+  type FactoringInvoiceRow = FactoringAdvanceDetail["invoices"][number];
+
+  // QBO-parity grid — columns, order, and the row drill-through to the invoice preserved verbatim
+  // from the former hand-rolled table.
+  const invoiceColumns: Array<ParityColumn<FactoringInvoiceRow>> = [
+    {
+      key: "display_id",
+      label: "Invoice #",
+      sortable: true,
+      render: (invoice) => (
+        <span onClick={(e) => e.stopPropagation()}>
+          <EntityLink kind="invoice" id={invoice.id} label={invoice.display_id} />
+        </span>
+      ),
+    },
+    { key: "customer_name", label: "Customer", sortable: true },
+    { key: "issue_date", label: "Issue Date", sortable: true, render: (invoice) => formatDateUS(invoice.issue_date) },
+    { key: "total_cents", label: "Total", sortable: true, render: (invoice) => money(invoice.total_cents) },
+    { key: "factoring_status", label: "Factoring Status", sortable: true },
+  ];
+
   return (
     <AccountingSubNavWrapper>
       <PageHeader
@@ -208,30 +230,16 @@ export function FactoringDetailPage() {
       </div>
 
       <DataPanel title="Linked invoices">
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-left text-xs">
-            <thead>
-              <tr className="border-b border-gray-200 text-gray-600">
-                <th className="px-2 py-1.5 font-semibold">Invoice #</th>
-                <th className="px-2 py-1.5 font-semibold">Customer</th>
-                <th className="px-2 py-1.5 font-semibold">Issue Date</th>
-                <th className="px-2 py-1.5 font-semibold">Total</th>
-                <th className="px-2 py-1.5 font-semibold">Factoring Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {detail.invoices.map((invoice) => (
-                <tr key={invoice.id} className="cursor-pointer border-b border-gray-100 hover:bg-gray-50" onClick={() => navigate(`/accounting/invoices/${invoice.id}`)}>
-                  <td className="px-2 py-1.5 text-gray-900" onClick={(e) => e.stopPropagation()}><EntityLink kind="invoice" id={invoice.id} label={invoice.display_id} /></td>
-                  <td className="px-2 py-1.5 text-gray-700">{invoice.customer_name}</td>
-                  <td className="px-2 py-1.5 text-gray-700">{formatDateUS(invoice.issue_date)}</td>
-                  <td className="px-2 py-1.5 text-gray-700">{money(invoice.total_cents)}</td>
-                  <td className="px-2 py-1.5 text-gray-700">{invoice.factoring_status}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ParityTable<FactoringInvoiceRow>
+          columns={invoiceColumns}
+          rows={detail.invoices}
+          rowKey={(invoice) => invoice.id}
+          onRowClick={(invoice) => navigate(`/accounting/invoices/${invoice.id}`)}
+          loading={query.isFetching && !query.data}
+          emptyText="No invoices linked to this factoring batch."
+          density="compact"
+          storageKey="factoring-detail-invoices"
+        />
       </DataPanel>
       {selectedCompanyId ? <FactorReserveCard operatingCompanyId={selectedCompanyId} /> : null}
 
