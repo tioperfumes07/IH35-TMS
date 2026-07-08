@@ -1,7 +1,7 @@
 import { formatDateUS } from "../../lib/formatDate";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
-import { getVendorBill } from "../../api/accounting";
+import { getVendorBill, type BillPayment } from "../../api/accounting";
 import { ListErrorState } from "../../components/ListErrorState";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
@@ -10,6 +10,7 @@ import { StatusBadge } from "../../components/layout/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -50,6 +51,21 @@ export function BillDetailPage() {
 
   const displayId = bill.bill_number ?? bill.id.slice(0, 8);
   const balance = Number(bill.amount_cents ?? 0) - Number(bill.paid_cents ?? 0);
+
+  // QBO-parity grid — columns, order, and content preserved verbatim from the former hand-rolled table.
+  const paymentColumns: Array<ParityColumn<BillPayment>> = [
+    { key: "payment_date", label: "Date", sortable: true, render: (pmt) => formatDateUS(pmt.payment_date) },
+    { key: "amount_cents", label: "Amount", sortable: true, render: (pmt) => money(pmt.amount_cents) },
+    { key: "payment_method", label: "Method", sortable: true },
+    { key: "reference_number", label: "Reference", render: (pmt) => pmt.reference_number ?? "—" },
+    { key: "check_number", label: "Check #", render: (pmt) => pmt.check_number ?? "—" },
+    {
+      key: "is_reconciled",
+      label: "Reconciled",
+      render: (pmt) =>
+        pmt.is_reconciled ? <span className="text-slate-600">✓ Matched</span> : <span className="text-slate-400">—</span>,
+    },
+  ];
 
   return (
     <AccountingSubNavWrapper>
@@ -122,42 +138,15 @@ export function BillDetailPage() {
       </DataPanel>
 
       <DataPanel title="Payments">
-        {payments.length === 0 ? (
-          <div className="py-2 text-sm text-slate-500">No payments recorded.</div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-gray-200 text-gray-600">
-                  <th className="px-2 py-1.5 font-semibold">Date</th>
-                  <th className="px-2 py-1.5 font-semibold">Amount</th>
-                  <th className="px-2 py-1.5 font-semibold">Method</th>
-                  <th className="px-2 py-1.5 font-semibold">Reference</th>
-                  <th className="px-2 py-1.5 font-semibold">Check #</th>
-                  <th className="px-2 py-1.5 font-semibold">Reconciled</th>
-                </tr>
-              </thead>
-              <tbody>
-                {payments.map((pmt) => (
-                  <tr key={pmt.id} className="border-b border-gray-100">
-                    <td className="px-2 py-1.5 text-gray-900">{formatDateUS(pmt.payment_date)}</td>
-                    <td className="px-2 py-1.5 text-gray-900">{money(pmt.amount_cents)}</td>
-                    <td className="px-2 py-1.5 text-gray-700">{pmt.payment_method}</td>
-                    <td className="px-2 py-1.5 text-gray-700">{pmt.reference_number ?? "—"}</td>
-                    <td className="px-2 py-1.5 text-gray-700">{pmt.check_number ?? "—"}</td>
-                    <td className="px-2 py-1.5">
-                      {pmt.is_reconciled ? (
-                        <span className="text-slate-600">✓ Matched</span>
-                      ) : (
-                        <span className="text-slate-400">—</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <ParityTable<BillPayment>
+          columns={paymentColumns}
+          rows={payments}
+          rowKey={(pmt) => pmt.id}
+          loading={detailQuery.isFetching && !detailQuery.data}
+          emptyText="No payments recorded."
+          density="compact"
+          storageKey="bill-detail-payments"
+        />
       </DataPanel>
     </AccountingSubNavWrapper>
   );

@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { addInvoiceLine, deleteInvoiceLine, getInvoice, patchInvoiceLine, sendInvoice, voidInvoice } from "../../api/accounting";
+import { addInvoiceLine, deleteInvoiceLine, getInvoice, patchInvoiceLine, sendInvoice, voidInvoice, type InvoiceLine } from "../../api/accounting";
 import { resolveApiUrl } from "../../api/client";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -14,6 +14,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { RecordPaymentModal } from "./RecordPaymentModal";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { MoneyInput } from "../../components/forms/MoneyInput";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -119,6 +120,60 @@ export function InvoiceDetailPage() {
       />
     );
   if (!invoice) return <div className="text-sm text-red-600">Invoice not found.</div>;
+
+  // QBO-parity grid — columns, order, and the inline draft edit/delete actions preserved verbatim
+  // from the former hand-rolled table.
+  const lineColumns: Array<ParityColumn<InvoiceLine>> = [
+    { key: "line_type", label: "Type", sortable: true },
+    { key: "description", label: "Description", sortable: true },
+    { key: "quantity", label: "Qty" },
+    { key: "unit_amount_cents", label: "Unit", render: (line) => money(line.unit_amount_cents) },
+    { key: "line_total_cents", label: "Total", render: (line) => money(line.line_total_cents) },
+    {
+      key: "actions",
+      label: "Actions",
+      render: (line) => {
+        if (!isDraft) return "-";
+        if (editingLineId === line.id) {
+          // M-1: inline QBO MoneyInput edit (cents-mode) — replaces window.prompt("…cents").
+          return (
+            <div className="flex items-center gap-1">
+              <MoneyInput valueCents={editingCents} onChangeCents={setEditingCents} className="w-24" ariaLabel="Edit unit amount" />
+              <Button
+                size="sm"
+                onClick={() => {
+                  patchLineMutation.mutate({ lineId: line.id, unit_amount_cents: Math.trunc(editingCents ?? 0) });
+                  setEditingLineId(null);
+                }}
+              >
+                Save
+              </Button>
+              <Button size="sm" variant="secondary" onClick={() => setEditingLineId(null)}>
+                Cancel
+              </Button>
+            </div>
+          );
+        }
+        return (
+          <div className="flex gap-1">
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                setEditingLineId(line.id);
+                setEditingCents(line.unit_amount_cents);
+              }}
+            >
+              Edit
+            </Button>
+            <Button size="sm" variant="danger" onClick={() => deleteLineMutation.mutate(line.id)}>
+              Delete
+            </Button>
+          </div>
+        );
+      },
+    },
+  ];
 
   return (
     <AccountingSubNavWrapper>
@@ -294,78 +349,15 @@ export function InvoiceDetailPage() {
             </div>
           ) : null}
         </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-left text-xs">
-            <thead>
-              <tr className="border-b border-gray-200 text-gray-600">
-                <th className="px-2 py-1.5 font-semibold">Type</th>
-                <th className="px-2 py-1.5 font-semibold">Description</th>
-                <th className="px-2 py-1.5 font-semibold">Qty</th>
-                <th className="px-2 py-1.5 font-semibold">Unit</th>
-                <th className="px-2 py-1.5 font-semibold">Total</th>
-                <th className="px-2 py-1.5 font-semibold">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(invoice.lines ?? []).map((line) => (
-                <tr key={line.id} className="border-b border-gray-100">
-                  <td className="px-2 py-1.5 text-gray-700">{line.line_type}</td>
-                  <td className="px-2 py-1.5 text-gray-900">{line.description}</td>
-                  <td className="px-2 py-1.5 text-gray-700">{line.quantity}</td>
-                  <td className="px-2 py-1.5 text-gray-700">{money(line.unit_amount_cents)}</td>
-                  <td className="px-2 py-1.5 text-gray-700">{money(line.line_total_cents)}</td>
-                  <td className="px-2 py-1.5 text-gray-700">
-                    {isDraft ? (
-                      editingLineId === line.id ? (
-                        // M-1: inline QBO MoneyInput edit (cents-mode) — replaces window.prompt("…cents").
-                        <div className="flex items-center gap-1">
-                          <MoneyInput valueCents={editingCents} onChangeCents={setEditingCents} className="w-24" ariaLabel="Edit unit amount" />
-                          <Button
-                            size="sm"
-                            onClick={() => {
-                              patchLineMutation.mutate({ lineId: line.id, unit_amount_cents: Math.trunc(editingCents ?? 0) });
-                              setEditingLineId(null);
-                            }}
-                          >
-                            Save
-                          </Button>
-                          <Button size="sm" variant="secondary" onClick={() => setEditingLineId(null)}>
-                            Cancel
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="flex gap-1">
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={() => {
-                              setEditingLineId(line.id);
-                              setEditingCents(line.unit_amount_cents);
-                            }}
-                          >
-                            Edit
-                          </Button>
-                          <Button size="sm" variant="danger" onClick={() => deleteLineMutation.mutate(line.id)}>
-                            Delete
-                          </Button>
-                        </div>
-                      )
-                    ) : (
-                      "-"
-                    )}
-                  </td>
-                </tr>
-              ))}
-              {(invoice.lines ?? []).length === 0 ? (
-                <tr>
-                  <td className="px-2 py-2 text-gray-500" colSpan={6}>
-                    No lines yet.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
+        <ParityTable<InvoiceLine>
+          columns={lineColumns}
+          rows={invoice.lines ?? []}
+          rowKey={(line) => line.id}
+          loading={detailQuery.isFetching && !detailQuery.data}
+          emptyText="No lines yet."
+          density="compact"
+          storageKey="invoice-detail-lines"
+        />
       </DataPanel>
 
       <DataPanel title="Payment Applications">
