@@ -96,6 +96,7 @@ export function SubmissionQueue() {
         )}
       </div>
 
+      <div className="overflow-x-auto">
       <table className="w-full border-collapse text-xs">
         <thead>
           <tr className="border-b border-slate-200 text-left text-[10px] font-semibold uppercase text-slate-400">
@@ -144,6 +145,7 @@ export function SubmissionQueue() {
           })}
         </tbody>
       </table>
+      </div>
 
       {submitMutation.isError && (
         <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">
