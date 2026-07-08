@@ -270,6 +270,7 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
       // Resolve BEFORE the cleanup transaction (resolveGlBillIds/read run their own BEGIN/COMMIT — must
       // not nest inside the bypass() transaction below).
       const glBillIds = settlementId ? await resolveGlBillIds() : [];
+      await db.query("SELECT pg_advisory_lock(4200000001)");
       await bypass(async () => {
         await db.query(`DELETE FROM driver_finance.driver_settlement_gl_bills WHERE settlement_id = $1::uuid`, [settlementId]);
         await db.query(`DELETE FROM driver_finance.driver_settlement_gl_runs WHERE settlement_id = $1::uuid`, [settlementId]);
@@ -312,7 +313,7 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
         await db.query(`DELETE FROM integrations.qbo_sync_queue WHERE operating_company_id=$1::uuid AND entity_id = ANY($2::uuid[])`, [companyId, glBillIds]);
         await db.query(`DELETE FROM integrations.qbo_connections WHERE operating_company_id=$1::uuid AND realm_id=$2`, [companyId, `TEST-REALM-${suffix}`]);
       });
-    } catch { /* best-effort */ }
+    } catch { /* best-effort */ } finally { await db.query("SELECT pg_advisory_unlock(4200000001)").catch(() => {}); }
     await db.end();
   });
 
@@ -327,7 +328,22 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
 
   it("(b) blueprint worked example: 3 per-load bills, driver-own sub-accounts, net to DIP, A/P nets to 0", async () => {
     await setFlag(true);
-    const result = (await postSettlementBillPayment({ operatingCompanyId: companyId, settlementId }, { userId })) as Extract<SettlementBillPaymentResult, { result: "posted" }>;
+    const result = await (async () => {
+      await db.query("SELECT pg_advisory_lock(4200000001)");
+      try {
+        await bypass(async () => {
+          await db.query(
+            `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
+             VALUES ($1::uuid, 'ap_control', $2::uuid, true)
+             ON CONFLICT (operating_company_id, role) WHERE is_active DO UPDATE SET account_id = EXCLUDED.account_id`,
+            [companyId, acct.ap]
+          );
+        });
+        return await postSettlementBillPayment({ operatingCompanyId: companyId, settlementId }, { userId });
+      } finally {
+        await db.query("SELECT pg_advisory_unlock(4200000001)");
+      }
+    })() as Extract<SettlementBillPaymentResult, { result: "posted" }>;
     expect(result.result).toBe("posted");
     expect(result.bill_count).toBe(3);
     expect(result.gross_cents).toBe(151500);

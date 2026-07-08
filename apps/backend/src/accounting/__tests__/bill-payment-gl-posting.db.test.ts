@@ -184,6 +184,7 @@ describeIntegration("CHAIN-04 bill-payment → GL gap-closure end-to-end (real P
   afterAll(async () => {
     if (!db) return;
     try {
+      await db.query("SELECT pg_advisory_lock(4200000001)");
       await bypass(async () => {
         await db.query(`DELETE FROM lib.feature_flag_overrides WHERE flag_key='BILL_PAYMENT_GL_POSTING_ENABLED' AND operating_company_id=$1::uuid`, [companyId]);
         await db.query(`DELETE FROM accounting.transaction_source_links WHERE linked_object_id = ANY($1) AND linked_object_type IN ('bill','bill_payment')`, [[...createdBillIds, ...createdPaymentIds]]);
@@ -198,7 +199,7 @@ describeIntegration("CHAIN-04 bill-payment → GL gap-closure end-to-end (real P
         await db.query(`DELETE FROM catalogs.accounts WHERE id = ANY($1::uuid[])`, [[fuelAccountId, apAccountId, bankGlAccountId, ccLiabilityAccountId]]);
         await db.query(`DELETE FROM org.user_company_access WHERE user_id=$1::uuid AND company_id=$2::uuid`, [userId, companyId]);
       });
-    } catch { /* best-effort cleanup */ }
+    } catch { /* best-effort cleanup */ } finally { await db.query("SELECT pg_advisory_unlock(4200000001)").catch(() => {}); }
     await db.end();
   });
 
@@ -240,7 +241,29 @@ describeIntegration("CHAIN-04 bill-payment → GL gap-closure end-to-end (real P
     const paymentId = await seedPayment({ billId, amountCents: 120_000, fromBankAccountId: bankAccountId });
 
     await setFlagOverride(true);
-    const outcome = await postBillPaymentGlIfEnabled(companyId, paymentId, { userId });
+    // pg_advisory_lock(4200000001): serializes the re-seed + posting window across concurrent vitest forks.
+    // Both this file and bank-transaction-splits-vendor-bill.db.test.ts share the TRANSP company's
+    // ap_control row. Without this lock one fork's re-seed can clobber the other's between the re-seed
+    // and the posting call, causing the posting to use the wrong ap_control UUID.
+    const outcome = await (async () => {
+      await db.query("SELECT pg_advisory_lock(4200000001)");
+      try {
+        await bypass(async () => {
+          await db.query(
+            `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
+             VALUES ($1::uuid, 'ap_control', $2::uuid, true)
+             ON CONFLICT (operating_company_id, role) WHERE is_active = true DO UPDATE SET account_id = EXCLUDED.account_id`,
+            [companyId, apAccountId]
+          );
+        });
+        // Re-assert inside the lock — guards against concurrent afterAll blocks deleting this shared
+        // override between the setFlagOverride call above and this lock window.
+        await setFlagOverride(true);
+        return await postBillPaymentGlIfEnabled(companyId, paymentId, { userId });
+      } finally {
+        await db.query("SELECT pg_advisory_unlock(4200000001)");
+      }
+    })();
     expect(outcome.posted).toBe(true);
 
     const rows = await scopedRead<{ account_id: string; account_number: string; account_name: string; debit_or_credit: string; amount_cents: string }>(
@@ -254,12 +277,11 @@ describeIntegration("CHAIN-04 bill-payment → GL gap-closure end-to-end (real P
     // eslint-disable-next-line no-console
     console.log("CHAIN-04 posted bill-payment JE:\n" + rows.map((r) => `  ${r.debit_or_credit.toUpperCase().padEnd(6)} ${r.account_number} ${r.account_name}  $${(Number(r.amount_cents) / 100).toFixed(2)}`).join("\n"));
 
-    const liveAp = await liveRole("ap_control");
     const debits = rows.filter((r) => r.debit_or_credit === "debit");
     const credits = rows.filter((r) => r.debit_or_credit === "credit");
     expect(debits).toHaveLength(1);
     expect(credits).toHaveLength(1);
-    expect(debits[0].account_id).toBe(liveAp); // DR the live ap_control
+    expect(debits[0].account_id).toBe(apAccountId);
     expect(Number(debits[0].amount_cents)).toBe(120_000);
     expect(credits[0].account_id).toBe(bankGlAccountId); // CR the REAL bank ledger_account_id — NOT undeposited_funds
     expect(Number(credits[0].amount_cents)).toBe(120_000);
@@ -312,7 +334,24 @@ describeIntegration("CHAIN-04 bill-payment → GL gap-closure end-to-end (real P
     const paymentId = await seedCcPayment({ billId, amountCents: 40_000, ccAccountId: ccLiabilityAccountId });
 
     await setFlagOverride(true);
-    const outcome = await postBillPaymentGlIfEnabled(companyId, paymentId, { userId });
+    // Same pg_advisory_lock(4200000001) as the cash test — serializes re-seed + posting across forks.
+    const outcome = await (async () => {
+      await db.query("SELECT pg_advisory_lock(4200000001)");
+      try {
+        await bypass(async () => {
+          await db.query(
+            `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
+             VALUES ($1::uuid, 'ap_control', $2::uuid, true)
+             ON CONFLICT (operating_company_id, role) WHERE is_active = true DO UPDATE SET account_id = EXCLUDED.account_id`,
+            [companyId, apAccountId]
+          );
+        });
+        await setFlagOverride(true);
+        return await postBillPaymentGlIfEnabled(companyId, paymentId, { userId });
+      } finally {
+        await db.query("SELECT pg_advisory_unlock(4200000001)");
+      }
+    })();
     expect(outcome.posted).toBe(true);
 
     const rows = await scopedRead<{ account_id: string; debit_or_credit: string; amount_cents: string }>(
@@ -322,12 +361,11 @@ describeIntegration("CHAIN-04 bill-payment → GL gap-closure end-to-end (real P
         ORDER BY line_sequence ASC`,
       [paymentId]
     );
-    const liveAp = await liveRole("ap_control");
     const debits = rows.filter((r) => r.debit_or_credit === "debit");
     const credits = rows.filter((r) => r.debit_or_credit === "credit");
     expect(debits).toHaveLength(1);
     expect(credits).toHaveLength(1);
-    expect(debits[0].account_id).toBe(liveAp);
+    expect(debits[0].account_id).toBe(apAccountId);
     expect(credits[0].account_id).toBe(ccLiabilityAccountId); // CR the CC-liability account, not a bank/cash-like account
     expect(Number(debits[0].amount_cents)).toBe(40_000);
     expect(Number(credits[0].amount_cents)).toBe(40_000);
