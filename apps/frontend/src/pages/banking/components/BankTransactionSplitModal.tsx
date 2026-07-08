@@ -7,6 +7,13 @@
 // account, becomes a cash-advance line (reuses the existing BLOCK-6 posting path per-line — see
 // bank-transaction-splits.service.ts). Behind BANK_TX_SPLIT_ENABLED (OFF) — Save/Commit calls 409 with
 // `feature_disabled` until the owner flips the flag per entity.
+//
+// Layout rebuilt to the approved QBO-categorize design (docs/specs/qbo-parity/
+// BANKING-COA-CATEGORIZE-PHASE-B-DESIGN-2026-06-30.md + docs/approved-screens/qbo-categorize-modal.png):
+// each line is a card with the PRIMARY fields (Category-or-Item, Description, Amount) prominent, and the
+// trucking-link fields (Driver/Unit/Trailer/Trip) tucked behind a per-line "Add detail/links" disclosure.
+// NON-FINANCIAL: this only changes what renders. commitSplit/save/toPayload logic and payload field names
+// are untouched — every field still writes through the existing `patchLine`.
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Modal } from "../../../components/Modal";
@@ -20,6 +27,7 @@ import { TrailerAutocomplete } from "../../../components/banking/TrailerAutocomp
 import { LoadAutocomplete } from "../../../components/banking/LoadAutocomplete";
 import { listVendors } from "../../../api/mdata";
 import { getCoaAccounts } from "../../../api/banking";
+import { itemsCatalogClient } from "../../../api/catalogs-accounting";
 import {
   commitBankTransactionSplit,
   getBankTransactionSplits,
@@ -61,6 +69,10 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
   const [commitResults, setCommitResults] = useState<
     Array<{ line_no: number; posted: boolean; reason: string; driver_advance_id?: string; deduction_id?: string; bill_id?: string }> | null
   >(null);
+  // Per-line disclosure state for the secondary Driver/Unit/Trailer/Trip link fields — collapsed by
+  // default so the primary Category/Description/Amount row reads clean (owner feedback: "boxes are
+  // out of proportion" / table crammed 7 columns).
+  const [expandedLinks, setExpandedLinks] = useState<Record<string, boolean>>({});
 
   const txnId = transaction?.id ?? "";
   const totalCents = Math.abs(transaction?.amount_cents ?? 0);
@@ -83,6 +95,17 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
     enabled: Boolean(open && companyId),
   });
 
+  // Products/Services (catalogs.items) — QBO categorize offers Category (GL account) OR Product/Service;
+  // same client + list shape BankingTransactionsDesignView already uses for its inline categorize row.
+  const itemsQuery = useQuery({
+    queryKey: ["banking", "split-items", companyId],
+    queryFn: () =>
+      itemsCatalogClient
+        .list({ operating_company_id: companyId, is_active: "true", limit: 200, offset: 0 })
+        .then((r) => r.rows ?? []),
+    enabled: Boolean(open && companyId),
+  });
+
   useEffect(() => {
     if (!open) return;
     const existing = existingQuery.data;
@@ -92,12 +115,14 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
       const firstVendor = existing.lines.find((l) => l.vendor_id)?.vendor_id;
       setSingleVendorId(firstVendor ?? "");
       setCommitResults(null);
+      setExpandedLinks({});
     } else if (existing) {
       // No saved split yet — seed two blank lines so the operator starts from the worked-example shape.
       setLines([blankLine(), blankLine()]);
       setMode("single_vendor_multi_category");
       setSingleVendorId("");
       setCommitResults(null);
+      setExpandedLinks({});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, existingQuery.data]);
@@ -106,7 +131,19 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
   const remainingCents = totalCents - sumCents;
 
   function patchLine(key: string, patch: Partial<LineDraft>) {
-    setLines((prev) => prev.map((l) => (l._key === key ? { ...l, ...patch } : l)));
+    setLines((prev) => {
+      const next = prev.map((l) => (l._key === key ? { ...l, ...patch } : l));
+      // QBO-style auto-balance: whenever an amount changes on any line EXCEPT the last one, auto-fill
+      // the LAST line with whatever remains so the split always sums to the transaction total.
+      if (Object.prototype.hasOwnProperty.call(patch, "amount_cents") && next.length > 0) {
+        const lastIdx = next.length - 1;
+        if (next[lastIdx]._key !== key) {
+          const sumExceptLast = next.slice(0, lastIdx).reduce((acc, l) => acc + (Number(l.amount_cents) || 0), 0);
+          next[lastIdx] = { ...next[lastIdx], amount_cents: totalCents - sumExceptLast };
+        }
+      }
+      return next;
+    });
   }
 
   function addLine() {
@@ -114,7 +151,20 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
   }
 
   function removeLine(key: string) {
-    setLines((prev) => (prev.length <= 2 ? prev : prev.filter((l) => l._key !== key)));
+    setLines((prev) => {
+      if (prev.length <= 2) return prev;
+      const next = prev.filter((l) => l._key !== key);
+      const lastIdx = next.length - 1;
+      if (lastIdx >= 0) {
+        const sumExceptLast = next.slice(0, lastIdx).reduce((acc, l) => acc + (Number(l.amount_cents) || 0), 0);
+        next[lastIdx] = { ...next[lastIdx], amount_cents: totalCents - sumExceptLast };
+      }
+      return next;
+    });
+  }
+
+  function toggleLinks(key: string) {
+    setExpandedLinks((prev) => ({ ...prev, [key]: !prev[key] }));
   }
 
   function effectiveVendorId(line: LineDraft): string | undefined {
@@ -223,7 +273,7 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
 
           {mode === "single_vendor_multi_category" ? (
             <div className="text-xs text-gray-600">
-              Vendor (applies to every line)
+              <span className="text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Vendor (applies to every line)</span>
               <div className="mt-0.5 max-w-sm">
                 <ReferenceSelect
                   value={singleVendorId || null}
@@ -238,62 +288,145 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
             </div>
           ) : null}
 
-          <div className="overflow-x-auto rounded-sm border border-gray-200">
-            <table className="min-w-full text-left text-xs">
-              <thead className="border-b border-gray-200 bg-gray-50 text-[10px] font-semibold uppercase text-gray-600">
-                <tr>
-                  <th className="px-2 py-2">#</th>
-                  <th className="px-2 py-2">Category (account)</th>
-                  {mode === "multi_vendor" ? <th className="px-2 py-2">Vendor</th> : null}
-                  <th className="px-2 py-2">Driver</th>
-                  <th className="px-2 py-2">Unit</th>
-                  <th className="px-2 py-2">Trailer</th>
-                  <th className="px-2 py-2">Trip (load)</th>
-                  <th className="px-2 py-2 text-right">Amount</th>
-                  <th className="px-2 py-2"> </th>
-                </tr>
-              </thead>
-              <tbody>
-                {lines.map((line, idx) => {
-                  const result = commitResults?.find((r) => r.line_no === idx + 1);
-                  return (
-                    <tr key={line._key} className="border-b border-gray-100 align-top">
-                      <td className="px-2 py-2 text-gray-500">{idx + 1}</td>
-                      <td className="min-w-[180px] px-2 py-2">
+          <div className="space-y-2">
+            {lines.map((line, idx) => {
+              const result = commitResults?.find((r) => r.line_no === idx + 1);
+              const expanded = Boolean(expandedLinks[line._key]);
+              const linkCount = [line.driver_id, line.unit_id, line.trailer_id, line.load_id].filter(Boolean).length;
+
+              return (
+                <div key={line._key} className="rounded-sm border border-gray-200 p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Line {idx + 1}</span>
+                    <button
+                      type="button"
+                      className="text-slate-600 underline disabled:text-gray-300"
+                      disabled={lines.length <= 2}
+                      onClick={() => removeLine(line._key)}
+                    >
+                      Remove
+                    </button>
+                  </div>
+
+                  {/* Primary row: Category (GL account) OR Product/Service — QBO offers both, joined
+                  by "or" per the approved screenshot — plus Vendor when in multi-vendor mode. */}
+                  <div className={`mt-2 grid grid-cols-1 gap-2 md:items-end ${mode === "multi_vendor" ? "md:grid-cols-12" : "md:grid-cols-9"}`}>
+                    {mode === "multi_vendor" ? (
+                      <div className="md:col-span-3">
+                        <span className="text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Vendor</span>
                         <ReferenceSelect
-                          value={line.gl_account_id ?? null}
-                          onChange={(v) => {
-                            const acct = (coaQuery.data?.accounts ?? []).find((a) => a.id === v);
-                            patchLine(line._key, {
-                              gl_account_id: v ?? undefined,
-                              category_kind: acct?.account_name ?? line.category_kind,
-                            });
-                          }}
-                          options={(coaQuery.data?.accounts ?? []).map((a) => ({
-                            value: a.id,
-                            label: a.account_name,
-                            type: a.account_number ?? undefined,
-                          }))}
-                          createKind="category"
+                          value={line.vendor_id ?? null}
+                          onChange={(v) => patchLine(line._key, { vendor_id: v ?? undefined })}
+                          options={(vendorsQuery.data ?? []).map((v) => ({ value: v.id, label: v.name }))}
+                          createKind="vendor"
                           operatingCompanyId={companyId}
-                          placeholder="Select category"
-                          onOptionCreated={() => void coaQuery.refetch()}
+                          placeholder="Vendor"
+                          onOptionCreated={() => void vendorsQuery.refetch()}
                         />
-                      </td>
-                      {mode === "multi_vendor" ? (
-                        <td className="min-w-[160px] px-2 py-2">
-                          <ReferenceSelect
-                            value={line.vendor_id ?? null}
-                            onChange={(v) => patchLine(line._key, { vendor_id: v ?? undefined })}
-                            options={(vendorsQuery.data ?? []).map((v) => ({ value: v.id, label: v.name }))}
-                            createKind="vendor"
-                            operatingCompanyId={companyId}
-                            placeholder="Vendor"
-                            onOptionCreated={() => void vendorsQuery.refetch()}
-                          />
-                        </td>
-                      ) : null}
-                      <td className="px-2 py-2">
+                      </div>
+                    ) : null}
+                    <div className="md:col-span-4">
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Category</span>
+                      <ReferenceSelect
+                        value={line.gl_account_id ?? null}
+                        onChange={(v) => {
+                          const acct = (coaQuery.data?.accounts ?? []).find((a) => a.id === v);
+                          patchLine(line._key, {
+                            gl_account_id: v ?? undefined,
+                            category_kind: acct?.account_name ?? line.category_kind,
+                          });
+                        }}
+                        options={(coaQuery.data?.accounts ?? []).map((a) => ({
+                          value: a.id,
+                          label: a.account_name,
+                          type: a.account_number ?? undefined,
+                        }))}
+                        createKind="category"
+                        operatingCompanyId={companyId}
+                        placeholder="Select category"
+                        onOptionCreated={() => void coaQuery.refetch()}
+                      />
+                    </div>
+                    <div className="hidden text-center text-[10px] text-gray-400 md:col-span-1 md:block md:pb-2">or</div>
+                    <div className="md:col-span-4">
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Product/Service</span>
+                      <ReferenceSelect
+                        value={line.item_id ?? null}
+                        onChange={(v) => {
+                          const item = (itemsQuery.data ?? []).find((it) => it.id === v);
+                          const m = (item?.metadata ?? {}) as Record<string, unknown>;
+                          const itemAccount =
+                            (typeof m.default_expense_account_id === "string" && m.default_expense_account_id) ||
+                            (typeof m.default_income_account_id === "string" && m.default_income_account_id) ||
+                            "";
+                          patchLine(line._key, {
+                            item_id: v ?? undefined,
+                            gl_account_id: line.gl_account_id || (itemAccount as string) || undefined,
+                          });
+                        }}
+                        options={(itemsQuery.data ?? []).map((it) => ({ value: it.id, label: it.display_name }))}
+                        createKind="service"
+                        addNewLabel="+ Add new product/service"
+                        operatingCompanyId={companyId}
+                        placeholder="Select product/service"
+                        onOptionCreated={() => void itemsQuery.refetch()}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Primary row: Description (memo) + Amount — the two fields the owner said were
+                  missing/cramped. Description writes to the EXISTING memo payload field. */}
+                  <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-12">
+                    <div className="md:col-span-8">
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Description</span>
+                      <input
+                        className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+                        value={line.memo ?? ""}
+                        onChange={(e) => patchLine(line._key, { memo: e.target.value })}
+                        placeholder="Description"
+                        aria-label={`Split line ${idx + 1} description`}
+                      />
+                    </div>
+                    <div className="md:col-span-4">
+                      <span className="block text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500 md:text-right">Amount</span>
+                      <MoneyInput
+                        valueCents={line.amount_cents || null}
+                        onChangeCents={(cents) => patchLine(line._key, { amount_cents: cents ?? 0 })}
+                        ariaLabel={`Split line ${idx + 1} amount`}
+                        className="mt-0.5 w-full text-right"
+                      />
+                    </div>
+                  </div>
+
+                  {result ? (
+                    <div className={`mt-1 text-[10px] ${result.posted ? "text-emerald-700" : "text-gray-500"}`}>
+                      {result.posted ? (
+                        <>
+                          Posted
+                          {result.bill_id ? " · bill created" : null}
+                          {result.driver_advance_id ? " · advance posted" : null}
+                          {result.deduction_id ? " · recovery scheduled" : null}
+                        </>
+                      ) : (
+                        result.reason
+                      )}
+                    </div>
+                  ) : null}
+
+                  {/* Secondary: trucking-link fields (Driver/Unit/Trailer/Trip) — behind a disclosure so
+                  the primary row breathes, per owner feedback. */}
+                  <button
+                    type="button"
+                    className="mt-2 text-[11px] font-medium text-slate-600 underline"
+                    onClick={() => toggleLinks(line._key)}
+                  >
+                    {expanded ? "− Hide detail/links" : `+ Add detail/links${linkCount > 0 ? ` (${linkCount})` : ""}`}
+                  </button>
+
+                  {expanded ? (
+                    <div className="mt-2 grid grid-cols-1 gap-2 rounded-sm border border-gray-100 bg-gray-50 p-2 md:grid-cols-4">
+                      <div>
+                        <span className="text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Driver</span>
                         <DriverAutocomplete
                           companyId={companyId}
                           value={line.driver_id ?? ""}
@@ -309,65 +442,36 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
                             Recover from driver
                           </label>
                         ) : null}
-                      </td>
-                      <td className="px-2 py-2">
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Unit</span>
                         <UnitAutocomplete
                           companyId={companyId}
                           value={line.unit_id ?? ""}
                           onChange={(unitId, unitName) => patchLine(line._key, { unit_id: unitId || undefined, _unitName: unitName })}
                         />
-                      </td>
-                      <td className="px-2 py-2">
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Trailer</span>
                         <TrailerAutocomplete
                           companyId={companyId}
                           value={line.trailer_id ?? ""}
                           onChange={(trailerId, trailerName) => patchLine(line._key, { trailer_id: trailerId || undefined, _trailerName: trailerName })}
                         />
-                      </td>
-                      <td className="px-2 py-2">
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Trip (load)</span>
                         <LoadAutocomplete
                           companyId={companyId}
                           value={line.load_id ?? ""}
                           onChange={(loadId, loadName) => patchLine(line._key, { load_id: loadId || undefined, _loadName: loadName })}
                         />
-                      </td>
-                      <td className="px-2 py-2 text-right">
-                        <MoneyInput
-                          valueCents={line.amount_cents || null}
-                          onChangeCents={(cents) => patchLine(line._key, { amount_cents: cents ?? 0 })}
-                          ariaLabel={`Split line ${idx + 1} amount`}
-                          className="w-28 text-right"
-                        />
-                        {result ? (
-                          <div className={`mt-1 text-[10px] ${result.posted ? "text-emerald-700" : "text-gray-500"}`}>
-                            {result.posted ? (
-                              <>
-                                Posted
-                                {result.bill_id ? " · bill created" : null}
-                                {result.driver_advance_id ? " · advance posted" : null}
-                                {result.deduction_id ? " · recovery scheduled" : null}
-                              </>
-                            ) : (
-                              result.reason
-                            )}
-                          </div>
-                        ) : null}
-                      </td>
-                      <td className="px-2 py-2">
-                        <button
-                          type="button"
-                          className="text-slate-600 underline disabled:text-gray-300"
-                          disabled={lines.length <= 2}
-                          onClick={() => removeLine(line._key)}
-                        >
-                          Remove
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
           </div>
 
           <Button size="sm" variant="secondary" onClick={addLine}>
