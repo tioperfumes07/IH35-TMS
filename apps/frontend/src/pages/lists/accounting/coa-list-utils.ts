@@ -2,6 +2,7 @@ import type { AccountingCatalogRow } from "../../../api/catalogs-accounting";
 import type { AccountBalanceRow, AccountTypeCatalogEntry } from "../../../api/coa-list";
 import type { PlaidBankAccount } from "../../../api/banking";
 import { formatUsdCents } from "../../../lib/money";
+import { findQboTypeForDetail } from "./coa-account-type-map";
 
 const PL_ACCOUNT_TYPES = new Set(["Income", "Expense", "CostOfGoodsSold", "OtherIncome", "OtherExpense"]);
 
@@ -87,9 +88,21 @@ export function buildCoaListRows(
   }
 
   return catalogRows.map((row) => {
-    const accountType = String(row.metadata.account_type ?? "—");
-    const detailType = String(row.metadata.account_subtype ?? row.metadata.detail_type ?? "—");
-    const statement = statementFromAccountType(accountType);
+    // catalogs.accounts.account_type is the 8-value coarse enum (drives BS/P&L classification below —
+    // never changed). The ACCOUNT TYPE column instead shows the finer QBO type (e.g. "Bank" not
+    // "Asset") that the approved screen (preview-coa-qbo.html) uses, derived from the coarse enum +
+    // account_subtype via the same static map the create/edit drawer cascades from. Presentation only.
+    const rawAccountType = String(row.metadata.account_type ?? "—");
+    const rawDetailType =
+      row.metadata.account_subtype != null
+        ? String(row.metadata.account_subtype)
+        : row.metadata.detail_type != null
+          ? String(row.metadata.detail_type)
+          : null;
+    const qboType = rawAccountType !== "—" ? findQboTypeForDetail(rawAccountType, rawDetailType) : null;
+    const accountType = qboType ?? rawAccountType;
+    const detailType = rawDetailType ?? "—";
+    const statement = statementFromAccountType(rawAccountType);
     const defaultAction = statement === "BS" ? "view_register" : "run_report";
     const balance = balanceByCode.get(row.code);
     const childIds = childrenByParent.get(row.id) ?? [];

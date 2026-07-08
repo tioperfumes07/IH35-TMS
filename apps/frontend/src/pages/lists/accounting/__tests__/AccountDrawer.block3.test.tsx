@@ -2,7 +2,14 @@ import { describe, expect, it } from "vitest";
 // BLOCK-3 static guard for the New Account slide-over (AccountDrawer):
 //   (3) Balance As Of is a single clean bordered control (no box-in-box).
 //   (4) "Make this a subaccount" reveals a SAME-TYPE, per-entity parent picker persisting parent_account_id.
-//   (5) A live Preview pane sourced from catalogs.account_types (NOT hardcoded).
+//   (5) A live Preview pane, cascading Account type -> Detail type.
+//
+// CoA-QBO-parity rebuild (2026-07): the Account type -> Detail type cascade + preview now source from
+// the static, presentation-only coa-account-type-map.ts (approved-screen QBO groups: ASSET/LIABILITY/
+// EQUITY/INCOME/EXPENSE), not a backend account_types catalog endpoint. This keeps the classification
+// grounded and consistent (never hardcoded per-render) while requiring no new endpoint. The write
+// target is unchanged: account_type still resolves to one of the 8 CHECK-constrained
+// catalogs.accounts.account_type values; account_subtype stays free text.
 import SRC from "../AccountDrawer.tsx?raw";
 
 describe("AccountDrawer — Block 3 (subaccount + preview + clean date)", () => {
@@ -32,18 +39,31 @@ describe("AccountDrawer — Block 3 (subaccount + preview + clean date)", () => 
     expect(SRC).toMatch(/form\.is_subaccount && !form\.parent_account_id/);
   });
 
-  it("(5) renders a Preview pane sourced from the account_types catalog, not hardcoded", () => {
+  it("(5) renders a Preview pane driven by the static QBO type/detail classification map", () => {
     expect(SRC).toContain('data-testid="account-preview-pane"');
-    // Preview is derived from the fetched AccountTypeCatalogEntry (statement / normalBalance / defaultAction).
-    expect(SRC).toContain("previewEntry");
-    expect(SRC).toContain("previewEntry.statement");
-    expect(SRC).toContain("previewEntry.normalBalance");
-    expect(SRC).toContain("previewEntry.defaultAction");
-    // classification path + humanized catalog codes.
+    // Preview is derived from the static QBO_TYPE_META lookup (statement / normalBalance / defaultAction),
+    // not a per-render hardcoded string — it's keyed off the selected Account type.
+    expect(SRC).toContain("previewMeta");
+    expect(SRC).toContain("previewMeta.statement");
+    expect(SRC).toContain("previewMeta.normalBalance");
+    expect(SRC).toContain("previewMeta.defaultAction");
+    // classification path + humanized group labels.
     expect(SRC).toContain('data-testid="preview-classification"');
     expect(SRC).toContain("STATEMENT_LABELS");
     expect(SRC).toContain("ACTION_LABELS");
-    expect(SRC).toContain("GROUP_LABELS");
+    expect(SRC).toContain("GROUP_DISPLAY_LABELS");
+  });
+
+  it("(6) Account type CASCADES the Detail type list via the static coa-account-type-map (no new endpoint)", () => {
+    expect(SRC).toContain('from "./coa-account-type-map"');
+    expect(SRC).toContain("QBO_TYPE_GROUPS");
+    expect(SRC).toContain("DETAIL_TYPES");
+    expect(SRC).toContain("detailOptionsForType");
+    // selecting an Account type resets Detail type + parent selection (real cascade, not decorative).
+    expect(SRC).toMatch(/qbo_type:\s*nextType/);
+    expect(SRC).toMatch(/account_subtype:\s*""/);
+    // account_type submitted to the API is still the derived 8-value enum, not the fine QBO label.
+    expect(SRC).toMatch(/account_type:\s*meta\s*\?\s*meta\.enumValue\s*:\s*""/);
   });
 
   it("uses the + Create vocab (not + New) — no forbidden add-labels introduced", () => {

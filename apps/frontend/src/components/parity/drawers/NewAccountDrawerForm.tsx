@@ -14,92 +14,22 @@
 import { useState } from "react";
 import { Lock } from "lucide-react";
 import { chartOfAccountsCatalogClient } from "../../../api/catalogs-accounting";
+import {
+  DETAIL_TYPES,
+  GROUP_DISPLAY_LABELS,
+  QBO_TYPE_GROUPS,
+  QBO_TYPE_META,
+} from "../../../pages/lists/accounting/coa-account-type-map";
 import { useToast } from "../../Toast";
 import type { InlineCreateResult } from "../InlineCreateDrawer";
 
 const ACCOUNT_CREATE_GATED = true; // FINANCIAL GATE — flip to false only on Jorge's explicit OK
 
-type AccountTypeGroup = {
-  group: string;
-  types: { value: string; label: string }[];
-};
-
-const ACCOUNT_TYPE_GROUPS: AccountTypeGroup[] = [
-  {
-    group: "ASSET",
-    types: [
-      { value: "Bank", label: "Bank" },
-      { value: "Accounts Receivable", label: "Accounts Receivable (A/R)" },
-      { value: "Other Current Assets", label: "Other Current Assets" },
-      { value: "Fixed Assets", label: "Fixed Assets" },
-      { value: "Other Assets", label: "Other Assets" },
-    ],
-  },
-  {
-    group: "LIABILITY",
-    types: [
-      { value: "Credit Card", label: "Credit Card" },
-      { value: "Accounts Payable", label: "Accounts Payable (A/P)" },
-      { value: "Other Current Liabilities", label: "Other Current Liabilities" },
-      { value: "Long Term Liabilities", label: "Long Term Liabilities" },
-    ],
-  },
-  {
-    group: "EQUITY",
-    types: [{ value: "Equity", label: "Equity" }],
-  },
-  {
-    group: "INCOME",
-    types: [
-      { value: "Income", label: "Income" },
-      { value: "Other Income", label: "Other Income" },
-    ],
-  },
-  {
-    group: "EXPENSE",
-    types: [
-      { value: "Cost of Goods Sold", label: "Cost of Goods Sold" },
-      { value: "Expenses", label: "Expenses" },
-      { value: "Other Expense", label: "Other Expense" },
-    ],
-  },
-];
-
-const DETAIL_TYPES: Record<string, string[]> = {
-  Bank: ["Checking", "Savings", "Money Market", "Other Bank Account"],
-  "Accounts Receivable": ["Accounts Receivable"],
-  "Other Current Assets": ["Allowance for Bad Debts", "Deferred Tax Assets", "Inventory", "Loans to Officers", "Other Current Assets", "Prepaid Expenses", "Retainage", "Undeposited Funds"],
-  "Fixed Assets": ["Accumulated Depletion", "Accumulated Depreciation", "Buildings", "Furniture & Fixtures", "Intangible Assets", "Land", "Leasehold Improvements", "Machinery & Equipment", "Other Fixed Assets", "Vehicles"],
-  "Other Assets": ["Goodwill", "Licenses", "Long-term Investments", "Long-term Notes Receivable", "Other Long-term Assets", "Security Deposits"],
-  "Credit Card": ["Credit Card"],
-  "Accounts Payable": ["Accounts Payable"],
-  "Other Current Liabilities": ["Direct Deposit Payable", "Federal Income Tax Payable", "Health Insurance Payable", "Insurance Payable", "Line of Credit", "Loan Payable", "Other Taxes Payable", "Sales Tax Payable", "Unearned Revenue"],
-  "Long Term Liabilities": ["Notes Payable", "Other Long Term Liabilities", "Shareholder Notes Payable"],
-  Equity: ["Common Stock", "Dividends Paid", "Estimated Taxes", "Members Equity", "Opening Balance Equity", "Owner's Equity", "Paid-in Capital", "Partner Contributions", "Partner Distributions", "Preferred Stock", "Retained Earnings", "Treasury Stock"],
-  Income: ["Discounts/Refunds Given", "Non-Profit Income", "Other Primary Income", "Sales of Product Income", "Service/Fee Income", "Unapplied Cash Payment Income"],
-  "Other Income": ["Dividend Income", "Interest Earned", "Other Investment Income", "Other Miscellaneous Income", "Tax-Exempt Interest"],
-  "Cost of Goods Sold": ["Equipment Rental in COGS", "Other Costs of Service-COS", "Shipping, Freight & Delivery-COS", "Supplies & Materials-COGS"],
-  Expenses: ["Advertising/Promotional", "Auto", "Bad Debts", "Bank Charges", "Charitable Contributions", "Commissions & Fees", "Dues & Subscriptions", "Entertainment", "Equipment Rental", "Finance Costs", "Income Tax Expense", "Insurance", "Interest Paid", "Legal & Professional Fees", "Meals & Entertainment", "Office/General Administrative Expenses", "Other Business Expenses", "Other Miscellaneous Service Cost", "Payroll Expenses", "Printing", "Promotional Meals", "Rent or Lease", "Repair & Maintenance", "Shipping, Freight & Delivery", "Stationery & Printing", "Supplies", "Taxes Paid", "Travel", "Unapplied Cash Bill Payment Expense", "Utilities", "Vehicle"],
-  "Other Expense": ["Depreciation", "Exchange Gain or Loss", "Other Miscellaneous Expense", "Penalties & Settlements"],
-};
-
-const BS_PL_SECTIONS: Record<string, string> = {
-  Bank: "Balance Sheet → Assets → Current Assets",
-  "Accounts Receivable": "Balance Sheet → Assets → Current Assets",
-  "Other Current Assets": "Balance Sheet → Assets → Current Assets",
-  "Fixed Assets": "Balance Sheet → Assets → Fixed Assets",
-  "Other Assets": "Balance Sheet → Assets → Other Assets",
-  "Credit Card": "Balance Sheet → Liabilities → Current Liabilities",
-  "Accounts Payable": "Balance Sheet → Liabilities → Current Liabilities",
-  "Other Current Liabilities": "Balance Sheet → Liabilities → Current Liabilities",
-  "Long Term Liabilities": "Balance Sheet → Liabilities → Long-Term Liabilities",
-  Equity: "Balance Sheet → Equity",
-  Income: "Profit & Loss → Income",
-  "Other Income": "Profit & Loss → Other Income",
-  "Cost of Goods Sold": "Profit & Loss → Cost of Goods Sold",
-  Expenses: "Profit & Loss → Expenses",
-  "Other Expense": "Profit & Loss → Other Expenses",
-};
+// Account type / Detail type option lists + cascade come from the shared static
+// coa-account-type-map.ts (same source the main CoA create/edit drawer — AccountDrawer.tsx — uses),
+// so the "+Add new account" inline flow and the CoA page never drift apart. `form.accountType` here
+// is the fine QBO type (e.g. "Bank"); QBO_TYPE_META resolves it to the coarse 8-value
+// catalogs.accounts.account_type enum before submit — see handleSubmit below.
 
 type FormState = {
   name: string;
@@ -135,7 +65,10 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
   });
 
   const detailOptions = form.accountType ? DETAIL_TYPES[form.accountType] ?? [] : [];
-  const bsPlSection = form.accountType ? BS_PL_SECTIONS[form.accountType] : null;
+  const previewMeta = form.accountType ? QBO_TYPE_META[form.accountType] ?? null : null;
+  const bsPlSection = previewMeta
+    ? `${previewMeta.statement === "BS" ? "Balance Sheet" : "Profit & Loss"} → ${GROUP_DISPLAY_LABELS[previewMeta.group]}`
+    : null;
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({
@@ -159,6 +92,15 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
       pushToast("Account type is required.", "error");
       return;
     }
+    // form.accountType is the fine QBO type shown in the UI (e.g. "Bank"); catalogs.accounts.account_type
+    // is a CHECK-constrained 8-value enum, so resolve down to that before submit (coa-account-type-map.ts).
+    // FIX: this previously sent the fine label straight through, which would have violated the CHECK
+    // constraint the moment ACCOUNT_CREATE_GATED flips off — presentation-only fix, no schema/API change.
+    const enumAccountType = QBO_TYPE_META[form.accountType]?.enumValue;
+    if (!enumAccountType) {
+      pushToast("Select a valid account type.", "error");
+      return;
+    }
     setSaving(true);
     try {
       // QB-STD-5: canonical catalogs.accounts (same table getCoaAccounts reads). Previously used
@@ -169,7 +111,7 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
       const res = await chartOfAccountsCatalogClient.create(operatingCompanyId, {
         code: accountCode,
         display_name: form.name.trim(),
-        metadata: { account_type: form.accountType, account_subtype: form.detailType || undefined },
+        metadata: { account_type: enumAccountType, account_subtype: form.detailType || undefined },
       });
       onCreated({ id: String(res.id), label: form.name.trim() });
       pushToast("Account created", "success");
@@ -215,10 +157,10 @@ export function NewAccountDrawerForm({ operatingCompanyId, onCreated, onClose }:
               onChange={(e) => set("accountType", e.target.value)}
             >
               <option value="">Select a type…</option>
-              {ACCOUNT_TYPE_GROUPS.map((group) => (
+              {QBO_TYPE_GROUPS.map((group) => (
                 <optgroup key={group.group} label={group.group}>
                   {group.types.map((t) => (
-                    <option key={t.value} value={t.value}>{t.label}</option>
+                    <option key={t} value={t}>{t}</option>
                   ))}
                 </optgroup>
               ))}
