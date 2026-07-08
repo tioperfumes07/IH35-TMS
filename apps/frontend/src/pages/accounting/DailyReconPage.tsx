@@ -6,6 +6,7 @@ import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { fetchDailyRecon, type DailyReconMatchStatus, type DailyReconRow } from "../../api/daily-recon";
 import { useListState } from "../../components/list-state";
 import { formatUsdCents } from "../../lib/money";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 const ENTITY_TYPE_OPTIONS = [
   { value: "", label: "All types" },
@@ -42,40 +43,49 @@ function entityLabel(type: string): string {
   return ENTITY_TYPE_OPTIONS.find((o) => o.value === type)?.label ?? type;
 }
 
-function ReconRow({ row }: { row: DailyReconRow }) {
-  const badge = STATUS_BADGES[row.match_status];
-  const amountMatch =
-    row.tms_amount_cents != null &&
-    row.qbo_amount_cents != null &&
-    row.tms_amount_cents !== row.qbo_amount_cents;
-
-  return (
-    <tr className="border-b border-gray-100 text-xs hover:bg-gray-50">
-      <td className="px-3 py-2 text-gray-500 whitespace-nowrap">{entityLabel(row.entity_type)}</td>
-      <td className="px-3 py-2 font-mono text-gray-500 text-[10px]">
-        {row.tms_detail_path ? (
-          <Link to={row.tms_detail_path} className="text-slate-600 hover:underline">
-            {row.entity_id.slice(0, 8)}…
-          </Link>
-        ) : (
-          <span>{row.entity_id.slice(0, 8)}…</span>
-        )}
-      </td>
-      <td className="px-3 py-2 text-gray-700">{formatCents(row.tms_amount_cents)}</td>
-      <td className="px-3 py-2 text-gray-500 truncate max-w-[180px]">{row.tms_memo ?? "—"}</td>
-      <td className="px-3 py-2">
-        <span className={`inline-flex items-center rounded-sm px-1.5 py-0.5 text-[10px] font-semibold ${badge.cls}`}>
+// Per-day reconciliation table columns for the shared ParityTable (replaces the hand-rolled
+// per-day `<table>` — B21/TBL-STANDARD). Every day-group renders its own ParityTable instance so
+// the existing day-header rollup ("All reconciled" / "N item(s) need attention") is preserved.
+const RECON_COLUMNS: Array<ParityColumn<DailyReconRow>> = [
+  { key: "entity_type", label: "Type", render: (row) => <span className="whitespace-nowrap text-gray-500">{entityLabel(row.entity_type)}</span> },
+  {
+    key: "entity_id",
+    label: "ID",
+    render: (row) =>
+      row.tms_detail_path ? (
+        <Link to={row.tms_detail_path} className="font-mono text-[10px] text-slate-600 hover:underline">
+          {row.entity_id.slice(0, 8)}…
+        </Link>
+      ) : (
+        <span className="font-mono text-[10px] text-gray-500">{row.entity_id.slice(0, 8)}…</span>
+      ),
+  },
+  { key: "tms_amount_cents", label: "TMS Amount", render: (row) => <span className="text-gray-700">{formatCents(row.tms_amount_cents)}</span> },
+  { key: "tms_memo", label: "Memo", cellClass: "truncate max-w-[180px]", render: (row) => <span className="text-gray-500">{row.tms_memo ?? "—"}</span> },
+  {
+    key: "match_status",
+    label: "Status",
+    render: (row) => {
+      const badge = STATUS_BADGES[row.match_status];
+      return (
+        <span className={`inline-flex items-center whitespace-nowrap rounded-sm px-1.5 py-0.5 text-[10px] font-semibold ${badge.cls}`}>
           {badge.label}
         </span>
-      </td>
-      <td className="px-3 py-2 font-mono text-[10px] text-gray-500">{row.qbo_id ?? "—"}</td>
-      <td className={`px-3 py-2 ${amountMatch ? "text-red-700 font-semibold" : "text-gray-700"}`}>
-        {formatCents(row.qbo_amount_cents)}
-      </td>
-      <td className="px-3 py-2 text-red-600 text-[10px] truncate max-w-[160px]">{row.qbo_error ?? ""}</td>
-    </tr>
-  );
-}
+      );
+    },
+  },
+  { key: "qbo_id", label: "QBO ID", render: (row) => <span className="font-mono text-[10px] text-gray-500">{row.qbo_id ?? "—"}</span> },
+  {
+    key: "qbo_amount_cents",
+    label: "QBO Amount",
+    render: (row) => {
+      const amountMismatch =
+        row.tms_amount_cents != null && row.qbo_amount_cents != null && row.tms_amount_cents !== row.qbo_amount_cents;
+      return <span className={amountMismatch ? "font-semibold text-red-700" : "text-gray-700"}>{formatCents(row.qbo_amount_cents)}</span>;
+    },
+  },
+  { key: "qbo_error", label: "Error", cellClass: "truncate max-w-[160px]", render: (row) => <span className="text-[10px] text-red-600">{row.qbo_error ?? ""}</span> },
+];
 
 export function DailyReconPage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -226,27 +236,15 @@ export function DailyReconPage() {
                   </div>
 
                   {/* Rows table */}
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-xs">
-                      <thead>
-                        <tr className="border-b border-gray-100 bg-gray-50 text-[10px] uppercase tracking-wide text-gray-500">
-                          <th className="px-3 py-2 text-left">Type</th>
-                          <th className="px-3 py-2 text-left">ID</th>
-                          <th className="px-3 py-2 text-left">TMS Amount</th>
-                          <th className="px-3 py-2 text-left">Memo</th>
-                          <th className="px-3 py-2 text-left">Status</th>
-                          <th className="px-3 py-2 text-left">QBO ID</th>
-                          <th className="px-3 py-2 text-left">QBO Amount</th>
-                          <th className="px-3 py-2 text-left">Error</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {day.rows.map((row) => (
-                          <ReconRow key={`${row.entity_type}-${row.entity_id}`} row={row} />
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                  <ParityTable
+                    columns={RECON_COLUMNS}
+                    rows={day.rows}
+                    rowKey={(row) => `${row.entity_type}-${row.entity_id}`}
+                    loading={false}
+                    density="compact"
+                    storageKey="daily-recon-rows"
+                    stickyHeader={false}
+                  />
                 </div>
               ))}
             </div>
