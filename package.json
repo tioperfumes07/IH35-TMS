@@ -73,6 +73,7 @@
     "verify:export-upload-rate-limits": "node scripts/verify-export-upload-rate-limits.mjs",
     "verify:outbox-handler-parity": "node scripts/verify-outbox-handler-parity.mjs",
     "verify:outbox-handler-parity:test": "node --test scripts/__tests__/verify-outbox-handler-parity.test.mjs",
+    "verify:fact-par1": "node scripts/verify-fact-par1.mjs",
     "verify:migration-runner-hardening": "node scripts/verify-migration-runner-hardening.mjs",
     "verify:m2-integrity-position-history": "node scripts/verify-m2-integrity-position-history.mjs",
     "verify:migration-application-consistency": "node scripts/verify-migration-application-consistency.mjs",

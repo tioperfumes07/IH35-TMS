@@ -1219,6 +1219,9 @@ jobs:
       - name: verify:factoring-profile
         run: npm run verify:factoring-profile
 
+      - name: verify:fact-par1
+        run: npm run verify:fact-par1
+
       - name: verify:cust-vend-reclassify
         run: npm run verify:cust-vend-reclassify
 

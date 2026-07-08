@@ -379,6 +379,60 @@ export function assignCustomerFactor(
   });
 }
 
+// ── FACT-PAR-1: Submission Queue + Workqueue ──────────────────────────────
+
+export type SubmissionQueueItem = {
+  invoice_id: string;
+  display_id: string | null;
+  customer_id: string | null;
+  customer_name: string | null;
+  issue_date: string | null;
+  due_date: string | null;
+  total_cents: number;
+  factor_id: string | null;
+  factor_name: string | null;
+  load_id: string | null;
+  has_approved_pod: boolean;
+  has_rate_confirmation: boolean;
+  is_submittable: boolean;
+  missing_docs: string[];
+};
+
+export type WorkqueueItem = {
+  invoice_id: string;
+  display_id: string | null;
+  customer_name: string | null;
+  batch_number: string | null;
+  factoring_status: string | null;
+  submitted_at: string | null;
+  factor_name: string | null;
+  total_cents: number;
+  advance_cents: number;
+  reserve_cents: number;
+  fee_cents: number;
+  chargeback_cents: number;
+  recourse_expiry_date: string | null;
+  days_until_recourse_expiry: number | null;
+};
+
+export function listSubmissionQueue(companyId: string) {
+  return apiRequest<{ items: SubmissionQueueItem[] }>(`/api/v1/factoring/submission-queue?${q(companyId)}`);
+}
+
+export function listWorkqueue(companyId: string) {
+  return apiRequest<{ items: WorkqueueItem[] }>(`/api/v1/factoring/workqueue?${q(companyId)}`);
+}
+
+export function submitFactoringQueueBatch(
+  companyId: string,
+  invoiceIds: string[]
+): Promise<FactoringBatch> {
+  return apiRequest<FactoringBatch>("/api/v1/factoring/submission-queue/submit-batch", {
+    method: "POST",
+    body: { operating_company_id: companyId, invoice_ids: invoiceIds },
+  });
+}
+
 export function listLetterOfReleases(factorId: string, companyId: string) {
   return apiRequest<{ letters_of_release: LetterOfRelease[] }>(
     `/api/v1/factoring/factors/${encodeURIComponent(factorId)}/letter-of-release?${q(companyId)}`
