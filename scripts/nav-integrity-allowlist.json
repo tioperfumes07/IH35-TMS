@@ -311,6 +311,10 @@
       "reason": "Samsara integrity tool \u2014 deep link only"
     },
     {
+      "path": "/samsara/hos-driver-map",
+      "reason": "HOS-MAP driver\u2192Samsara ID preview (OwnerOnlyRoute) \u2014 read-only, write step is Jorge-gated; deep link only, no subnav"
+    },
+    {
       "path": "/catalogs/equipment-types",
       "reason": "Legacy catalog route \u2014 Block 43 lists migration"
     },
