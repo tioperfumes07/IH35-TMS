@@ -29,6 +29,7 @@ describeIntegration("BANKING-GL-COMPLETION bank-transaction-splits vendor-bill l
   const glAccountId = randomUUID(); // the operator's chosen category account for line 1 (NAPA)
   const otherGlAccountId = randomUUID(); // a distinct category account for line 2 (AutoZone) — no vendor
   const bankGlAccountId = randomUUID();
+  const apGlAccountId = randomUUID(); // AP control account — required by resolveApAccountForCompany or bill GL post silently no-ops
   const bankAccountId = randomUUID();
   const createdBillIds: string[] = [];
   const createdPaymentIds: string[] = [];
@@ -106,6 +107,16 @@ describeIntegration("BANKING-GL-COMPLETION bank-transaction-splits vendor-bill l
       await mkAccount(glAccountId, "SPV1", "Split Vendor Line 1 Test", "Expense");
       await mkAccount(otherGlAccountId, "SPV2", "Split Vendor Line 2 Test", "Expense");
       await mkAccount(bankGlAccountId, "SPBK", "Split Bank GL Test", "Asset");
+      await mkAccount(apGlAccountId, "SPAP", "Split AP Control Test", "Liability");
+      // Wire the AP control role so resolveApAccountForCompany finds it in a fresh CI DB
+      // (migration 202607011000_transp_coa_role_map_seed.sql is a no-op on fresh DB because the QBO-synced
+      // account doesn't exist there, so we seed it explicitly for this test's company scope).
+      await db.query(
+        `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
+         VALUES ($1::uuid, 'ap_control', $2::uuid, true)
+         ON CONFLICT (operating_company_id, role) WHERE is_active DO UPDATE SET account_id = EXCLUDED.account_id`,
+        [companyId, apGlAccountId]
+      );
       await db.query(
         `INSERT INTO mdata.vendors (id, operating_company_id, vendor_name, vendor_type)
          VALUES ($1::uuid, $2::uuid, 'Split Test Vendor', 'Other')
@@ -150,7 +161,11 @@ describeIntegration("BANKING-GL-COMPLETION bank-transaction-splits vendor-bill l
         await db.query(`DELETE FROM banking.bank_transaction_splits WHERE bank_transaction_id = $1::uuid`, [txnId]);
         await db.query(`DELETE FROM banking.bank_transactions WHERE id = $1::uuid`, [txnId]);
         await db.query(`DELETE FROM banking.bank_accounts WHERE id = $1::uuid`, [bankAccountId]);
-        await db.query(`DELETE FROM catalogs.accounts WHERE id = ANY($1::uuid[])`, [[glAccountId, otherGlAccountId, bankGlAccountId]]);
+        await db.query(
+          `DELETE FROM accounting.chart_of_accounts_roles WHERE operating_company_id = $1::uuid AND role = 'ap_control' AND account_id = $2::uuid`,
+          [companyId, apGlAccountId]
+        );
+        await db.query(`DELETE FROM catalogs.accounts WHERE id = ANY($1::uuid[])`, [[glAccountId, otherGlAccountId, bankGlAccountId, apGlAccountId]]);
         for (const key of [
           "BANK_TX_SPLIT_ENABLED",
           "BANK_TX_SPLIT_GL_POSTING_ENABLED",
