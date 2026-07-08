@@ -188,24 +188,29 @@ describeIntegration("BANKING-GL-COMPLETION bank-transaction-splits vendor-bill l
     await setFlagOverride("BILL_GL_POSTING_ENABLED", true);
     await setFlagOverride("BILL_PAYMENT_GL_POSTING_ENABLED", true);
 
-    // Re-seed ap_control immediately before commitSplit — guards against bill-payment-gl-posting
-    // afterAll deleting the row (it deletes by its own account_id, which may be the current row
-    // if it ran its beforeAll last and overwrote ours via DO UPDATE on the shared companyId).
-    await bypass(async () => {
-      await db.query(
-        `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
-         VALUES ($1::uuid, 'ap_control', $2::uuid, true)
-         ON CONFLICT (operating_company_id, role) WHERE is_active DO UPDATE SET account_id = EXCLUDED.account_id`,
-        [companyId, apGlAccountId]
-      );
-    });
-
     await saveSplitDraft(companyId, userId, txnId, "multi_vendor", [
       { amount_cents: 30_000, vendor_id: vendorId, gl_account_id: glAccountId, category_kind: "supplies" },
       { amount_cents: 20_000, gl_account_id: otherGlAccountId, category_kind: "supplies" }, // no vendor -> neither branch eligible
     ]);
 
-    const first = await commitSplit(companyId, userId, "Owner", txnId);
+    // pg_advisory_lock(4200000001): same key as bill-payment-gl-posting.db.test.ts — serializes the
+    // ap_control re-seed + commitSplit window so one fork's re-seed can't clobber the other's.
+    const first = await (async () => {
+      await db.query("SELECT pg_advisory_lock(4200000001)");
+      try {
+        await bypass(async () => {
+          await db.query(
+            `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
+             VALUES ($1::uuid, 'ap_control', $2::uuid, true)
+             ON CONFLICT (operating_company_id, role) WHERE is_active DO UPDATE SET account_id = EXCLUDED.account_id`,
+            [companyId, apGlAccountId]
+          );
+        });
+        return await commitSplit(companyId, userId, "Owner", txnId);
+      } finally {
+        await db.query("SELECT pg_advisory_unlock(4200000001)");
+      }
+    })();
     const line1 = first.results.find((r) => r.line_no === 1)!;
     expect(line1.posted).toBe(true);
     expect(line1.bill_id).toBeTruthy();
