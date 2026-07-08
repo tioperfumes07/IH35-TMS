@@ -1432,6 +1432,21 @@ export function BankingTransactionsDesignView({
                                 Categorize
                               </button>
                             </div>
+                            {/* QBO parity — "Transaction date" field (approved design: docs/approved-screens/
+                            qbo-categorize-modal.png). Shares the same disabled DatePicker pattern as the
+                            collapsed-row date cell above: there is no PATCH transaction-date endpoint yet, so
+                            this stays display-only until that backend gap is fixed (presentation-only change,
+                            not adding new write capability). */}
+                            <label className="mb-2 block text-xs text-gray-600">
+                              Transaction date
+                              <DatePicker
+                                id={`tx-date-panel-${tx.id}`}
+                                value={tx.transaction_date.slice(0, 10)}
+                                onChange={() => {}}
+                                disabled
+                                className="mt-0.5 w-full md:w-48"
+                              />
+                            </label>
                             <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                               <label className="text-xs text-gray-600">
                                 Transaction type
@@ -1456,8 +1471,12 @@ export function BankingTransactionsDesignView({
                                   <option value="Expense">Expense</option>
                                 </SelectCombobox>
                               </label>
+                              {/* QBO parity — field order/labels below follow the approved design
+                              (docs/approved-screens/qbo-categorize-modal.png) top row exactly: Vendor/
+                              Customer/project, Account*, Product/Service, Customer/project + Billable,
+                              Location, Class. */}
                               <label className="text-xs text-gray-600">
-                                Payee (vendor)
+                                Vendor/Customer/project
                                 <div className="mt-0.5">
                                   {/* QBO parity — inline "+ Add new vendor" (ReferenceSelect, A2 keystone).
                                   Note: the create call lands in the mdata.qbo_vendors mirror while this list
@@ -1483,41 +1502,7 @@ export function BankingTransactionsDesignView({
                                 </div>
                               </label>
                               <label className="text-xs text-gray-600">
-                                Check No.
-                                <input
-                                  className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
-                                  value={draft.checkNo}
-                                  onChange={(event) => setDraft(tx, { checkNo: event.target.value })}
-                                />
-                              </label>
-                              <label className="text-xs text-gray-600">
-                                From/To
-                                {draft.transactionType === "Transfer" ? (
-                                  <button
-                                    type="button"
-                                    className="mt-0.5 block w-full rounded-sm border border-gray-300 px-2 py-1 text-left text-sm hover:bg-gray-50"
-                                    onClick={() => setTransferModalTx(tx)}
-                                  >
-                                    {draft.fromTo || "Select From/To accounts…"}
-                                  </button>
-                                ) : draft.transactionType === "CC Payment" ? (
-                                  <button
-                                    type="button"
-                                    className="mt-0.5 block w-full rounded-sm border border-gray-300 px-2 py-1 text-left text-sm hover:bg-gray-50"
-                                    onClick={() => setCcPaymentModalTx(tx)}
-                                  >
-                                    {draft.fromTo || "Select CC payment details…"}
-                                  </button>
-                                ) : (
-                                  <input
-                                    className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
-                                    value={draft.fromTo}
-                                    onChange={(event) => setDraft(tx, { fromTo: event.target.value })}
-                                  />
-                                )}
-                              </label>
-                              <label className="text-xs text-gray-600">
-                                Category (Chart of Accounts)
+                                Account *
                                 <div className="mt-0.5">
                                   {/* QBO parity — inline "+ Add new category" (creates a GL account via the
                                   existing ReferenceSelect/QuickCreateEntityModal "category" flow). */}
@@ -1537,23 +1522,7 @@ export function BankingTransactionsDesignView({
                                 </div>
                               </label>
                               <label className="text-xs text-gray-600">
-                                Class
-                                <input
-                                  className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
-                                  value={draft.className}
-                                  onChange={(event) => setDraft(tx, { className: event.target.value })}
-                                />
-                              </label>
-                              <label className="text-xs text-gray-600">
-                                Location
-                                <input
-                                  className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
-                                  value={draft.location}
-                                  onChange={(event) => setDraft(tx, { location: event.target.value })}
-                                />
-                              </label>
-                              <label className="text-xs text-gray-600">
-                                Item (Products &amp; Services)
+                                Product/Service
                                 <div className="mt-0.5">
                                   {/* QBO parity — inline "+ Add new product/service" reuses ReferenceSelect's
                                   "service" create kind (InlineCreateDrawer → NewServiceDrawerForm), the kind
@@ -1594,22 +1563,25 @@ export function BankingTransactionsDesignView({
                               </label>
                               <label className="text-xs text-gray-600">
                                 Customer/project
-                                <SelectCombobox
-                                  className="mt-0.5 w-full"
-                                  value={draft.customerId}
-                                  onChange={(event) => {
-                                    const cid = event.target.value;
-                                    const c = (customersQuery.data ?? []).find((x) => x.id === cid);
-                                    setDraft(tx, { customerId: cid, customerProject: c?.name ?? "" });
-                                  }}
-                                >
-                                  <option value="">Select customer</option>
-                                  {(customersQuery.data ?? []).map((c) => (
-                                    <option key={c.id} value={c.id}>
-                                      {c.name}
-                                    </option>
-                                  ))}
-                                </SelectCombobox>
+                                <div className="mt-0.5">
+                                  {/* QBO parity — inline "+ Add new customer" (ReferenceSelect, A2 keystone),
+                                  same pattern as Vendor/Payee above. */}
+                                  <ReferenceSelect
+                                    value={draft.customerId || null}
+                                    onChange={(cid) => {
+                                      const c = (customersQuery.data ?? []).find((x) => x.id === cid);
+                                      setDraft(tx, { customerId: cid ?? "", customerProject: c?.name ?? "" });
+                                    }}
+                                    options={(customersQuery.data ?? []).map((c) => ({ value: c.id, label: c.name }))}
+                                    createKind="customer"
+                                    operatingCompanyId={companyId}
+                                    placeholder="Select customer"
+                                    onOptionCreated={(opt) => {
+                                      void customersQuery.refetch();
+                                      setDraft(tx, { customerProject: opt.label });
+                                    }}
+                                  />
+                                </div>
                               </label>
                               <label className="flex items-center gap-2 text-xs text-gray-700">
                                 <input
@@ -1618,6 +1590,56 @@ export function BankingTransactionsDesignView({
                                   onChange={(event) => setDraft(tx, { billable: event.target.checked })}
                                 />
                                 Billable
+                              </label>
+                              <label className="text-xs text-gray-600">
+                                Location
+                                <input
+                                  className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+                                  value={draft.location}
+                                  onChange={(event) => setDraft(tx, { location: event.target.value })}
+                                />
+                              </label>
+                              <label className="text-xs text-gray-600">
+                                Class
+                                <input
+                                  className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+                                  value={draft.className}
+                                  onChange={(event) => setDraft(tx, { className: event.target.value })}
+                                />
+                              </label>
+                              <label className="text-xs text-gray-600">
+                                Check No.
+                                <input
+                                  className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+                                  value={draft.checkNo}
+                                  onChange={(event) => setDraft(tx, { checkNo: event.target.value })}
+                                />
+                              </label>
+                              <label className="text-xs text-gray-600">
+                                From/To
+                                {draft.transactionType === "Transfer" ? (
+                                  <button
+                                    type="button"
+                                    className="mt-0.5 block w-full rounded-sm border border-gray-300 px-2 py-1 text-left text-sm hover:bg-gray-50"
+                                    onClick={() => setTransferModalTx(tx)}
+                                  >
+                                    {draft.fromTo || "Select From/To accounts…"}
+                                  </button>
+                                ) : draft.transactionType === "CC Payment" ? (
+                                  <button
+                                    type="button"
+                                    className="mt-0.5 block w-full rounded-sm border border-gray-300 px-2 py-1 text-left text-sm hover:bg-gray-50"
+                                    onClick={() => setCcPaymentModalTx(tx)}
+                                  >
+                                    {draft.fromTo || "Select CC payment details…"}
+                                  </button>
+                                ) : (
+                                  <input
+                                    className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+                                    value={draft.fromTo}
+                                    onChange={(event) => setDraft(tx, { fromTo: event.target.value })}
+                                  />
+                                )}
                               </label>
                             </div>
                             {/* BLOCK-6b dimensions: Driver + Unit (truck) + Trip (load) the transaction belongs
