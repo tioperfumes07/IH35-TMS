@@ -188,6 +188,18 @@ describeIntegration("BANKING-GL-COMPLETION bank-transaction-splits vendor-bill l
     await setFlagOverride("BILL_GL_POSTING_ENABLED", true);
     await setFlagOverride("BILL_PAYMENT_GL_POSTING_ENABLED", true);
 
+    // Re-seed ap_control immediately before commitSplit — guards against bill-payment-gl-posting
+    // afterAll deleting the row (it deletes by its own account_id, which may be the current row
+    // if it ran its beforeAll last and overwrote ours via DO UPDATE on the shared companyId).
+    await bypass(async () => {
+      await db.query(
+        `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
+         VALUES ($1::uuid, 'ap_control', $2::uuid, true)
+         ON CONFLICT (operating_company_id, role) WHERE is_active DO UPDATE SET account_id = EXCLUDED.account_id`,
+        [companyId, apGlAccountId]
+      );
+    });
+
     await saveSplitDraft(companyId, userId, txnId, "multi_vendor", [
       { amount_cents: 30_000, vendor_id: vendorId, gl_account_id: glAccountId, category_kind: "supplies" },
       { amount_cents: 20_000, gl_account_id: otherGlAccountId, category_kind: "supplies" }, // no vendor -> neither branch eligible
