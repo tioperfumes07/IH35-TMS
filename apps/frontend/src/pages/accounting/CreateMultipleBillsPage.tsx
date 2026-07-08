@@ -8,7 +8,9 @@ import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useToast } from "../../components/Toast";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { MoneyInput } from "../../components/forms/MoneyInput";
+import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
 type SeedDraft = {
@@ -89,6 +91,11 @@ export function CreateMultipleBillsPage() {
     queryFn: () => getCoaAccounts(companyId),
     enabled: Boolean(companyId),
   });
+
+  const vendorOptions = useMemo(
+    () => (vendorsQuery.data?.vendors ?? []).map((vendor) => ({ value: vendor.id, label: vendor.name })),
+    [vendorsQuery.data?.vendors]
+  );
 
   const createMutation = useMutation({
     mutationFn: async () => {
@@ -181,20 +188,24 @@ export function CreateMultipleBillsPage() {
                   {row.bank_transaction_id ? row.bank_transaction_id.slice(0, 8) : "manual"}
                 </td>
                 <td className="px-2 py-1.5">
-                  <SelectCombobox className="h-8 min-w-[180px] rounded-sm border border-gray-300 px-2" value={row.vendor_id} onChange={(event) => updateRow(row.id, { vendor_id: event.target.value })}>
-                    <option value="">Select vendor…</option>
-                    {(vendorsQuery.data?.vendors ?? []).map((vendor) => (
-                      <option key={vendor.id} value={vendor.id}>
-                        {vendor.name}
-                      </option>
-                    ))}
-                  </SelectCombobox>
+                  {/* A3: shared ReferenceSelect gives the vendor picker the inline "+ Add new vendor" row. */}
+                  <div className="min-w-[180px]">
+                    <ReferenceSelect
+                      value={row.vendor_id || null}
+                      onChange={(next) => updateRow(row.id, { vendor_id: next ?? "" })}
+                      options={vendorOptions}
+                      createKind="vendor"
+                      operatingCompanyId={companyId}
+                      placeholder="Select vendor…"
+                      disabled={!companyId}
+                    />
+                  </div>
                 </td>
                 <td className="px-2 py-1.5">
-                  <input type="date" className="h-8 rounded-sm border border-gray-300 px-2" value={row.bill_date} onChange={(event) => updateRow(row.id, { bill_date: event.target.value })} />
+                  <DatePicker className="w-28" value={row.bill_date} onChange={(next) => updateRow(row.id, { bill_date: next })} />
                 </td>
                 <td className="px-2 py-1.5">
-                  <input type="date" className="h-8 rounded-sm border border-gray-300 px-2" value={row.due_date} onChange={(event) => updateRow(row.id, { due_date: event.target.value })} />
+                  <DatePicker className="w-28" value={row.due_date} onChange={(next) => updateRow(row.id, { due_date: next })} />
                 </td>
                 <td className="px-2 py-1.5">
                   <input className="h-8 rounded-sm border border-gray-300 px-2" value={row.bill_number} onChange={(event) => updateRow(row.id, { bill_number: event.target.value })} />

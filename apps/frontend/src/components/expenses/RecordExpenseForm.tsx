@@ -5,6 +5,7 @@ import { getWoCostContext } from "../../api/maintenance";
 import { listUnits } from "../../api/mdata";
 import { listCatalogAccounts } from "../../api/catalog-accounts";
 import { Button } from "../Button";
+import { DatePicker } from "../forms/DatePicker";
 import { MoneyInput } from "../forms/MoneyInput";
 import { QboCombobox } from "../forms/QboCombobox";
 import { SelectCombobox } from "../shared/SelectCombobox";
@@ -151,13 +152,13 @@ export function RecordExpenseForm({
 
       <div className="grid gap-3 md:grid-cols-2">
         <label className="text-xs font-semibold text-gray-700" htmlFor={fieldId("date")}>
-          Date
-          <input
+          {/* QBO-parity: "Payment Date" (B8 §1 live capture) — same billDate state, no payload change. */}
+          Payment Date
+          <DatePicker
             id={fieldId("date")}
-            className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
-            type="date"
+            className="mt-1 w-full"
             value={values.billDate}
-            onChange={(event) => setValues((prev) => ({ ...prev, billDate: event.target.value }))}
+            onChange={(next) => setValues((prev) => ({ ...prev, billDate: next }))}
           />
         </label>
         <label className="text-xs font-semibold text-gray-700" htmlFor={fieldId("amount")}>
