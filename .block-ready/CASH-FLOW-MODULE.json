@@ -24,5 +24,12 @@
     "frontend tsc -b",
     "backend vitest (cash-flow paths)",
     "verify-cashflow-module.mjs"
+  ],
+  "allowed_files": [
+    "db/migrations/202606080200_cash_flow_adjustments.sql",
+    "apps/frontend/src/pages/cash-flow/CashFlowPage.tsx",
+    "apps/frontend/src/pages/cash-flow/tabs/DailyPredictionTab.tsx",
+    "apps/frontend/src/pages/cash-flow/tabs/ActualVsProjectedTab.tsx",
+    "scripts/verify-cashflow-module.mjs"
   ]
 }
