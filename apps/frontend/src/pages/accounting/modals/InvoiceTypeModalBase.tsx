@@ -5,6 +5,7 @@ import { Modal } from "../../../components/Modal";
 import { Button } from "../../../components/Button";
 import { UploadZone } from "../../../components/UploadZone";
 import { useToast } from "../../../components/Toast";
+import { DatePicker } from "../../../components/forms/DatePicker";
 import { FieldError, fieldErrorClassname } from "../../../components/forms/FieldError";
 import { FormErrorBanner } from "../../../components/forms/FormErrorBanner";
 import { useFormValidation } from "../../../components/forms/useFormValidation";
@@ -189,31 +190,29 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
             />
           </div>
           <label className="text-xs font-semibold text-slate-600">
-            Issue date
-            <input
-              data-field="issue_date"
-              className={fieldErrorClassname(Boolean(invoiceFieldErrors.issue_date), "mt-1 h-9 w-full rounded-sm border px-2 text-sm")}
-              type="date"
+            {/* QBO-parity: "Invoice date" per B8 §3 header set; shared DatePicker replaces the raw
+                native date input — same "YYYY-MM-DD" value, no payload change. */}
+            Invoice date
+            <DatePicker
+              data-testid="issue_date"
+              className={fieldErrorClassname(Boolean(invoiceFieldErrors.issue_date), "mt-1 w-full")}
               value={issueDate}
-              aria-describedby={invoiceFieldErrors.issue_date ? "issue_date-error" : undefined}
-              onChange={(event) => {
+              onChange={(next) => {
                 clearInvoiceFieldError("issue_date");
-                setIssueDate(event.target.value);
+                setIssueDate(next);
               }}
             />
             <FieldError id="issue_date" message={invoiceFieldErrors.issue_date} />
           </label>
           <label className="text-xs font-semibold text-slate-600">
             Due date
-            <input
-              data-field="due_date"
-              className={fieldErrorClassname(Boolean(invoiceFieldErrors.due_date), "mt-1 h-9 w-full rounded-sm border px-2 text-sm")}
-              type="date"
+            <DatePicker
+              data-testid="due_date"
+              className={fieldErrorClassname(Boolean(invoiceFieldErrors.due_date), "mt-1 w-full")}
               value={dueDate}
-              aria-describedby={invoiceFieldErrors.due_date ? "due_date-error" : undefined}
-              onChange={(event) => {
+              onChange={(next) => {
                 clearInvoiceFieldError("due_date");
-                setDueDate(event.target.value);
+                setDueDate(next);
               }}
             />
             <FieldError id="due_date" message={invoiceFieldErrors.due_date} />

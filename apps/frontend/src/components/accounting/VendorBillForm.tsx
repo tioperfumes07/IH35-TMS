@@ -3,10 +3,12 @@ import type { FormEvent } from "react";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listDrivers, listUnits, listVendors } from "../../api/mdata";
+import { DatePicker } from "../forms/DatePicker";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../forms/TwoSectionLineEditor";
 import { TotalsStack } from "../forms/shared/TotalsStack";
 import { BILL_TYPE_TABS, TypeTabBar } from "../forms/shared/TypeTabBar";
 import { QboCombobox } from "../forms/QboCombobox";
+import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { SelectCombobox } from "../shared/SelectCombobox";
 import { UploadZone } from "../UploadZone";
 
@@ -143,12 +145,7 @@ export function VendorBillForm({ operatingCompanyId, submitting = false, onSubmi
           />
         </Field>
         <Field label="Bill Date *">
-          <input
-            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
-            type="date"
-            value={billDate}
-            onChange={(event) => setBillDate(event.target.value)}
-          />
+          <DatePicker className="w-full" value={billDate} onChange={setBillDate} />
         </Field>
         <Field label="Terms">
           <SelectCombobox
@@ -162,12 +159,7 @@ export function VendorBillForm({ operatingCompanyId, submitting = false, onSubmi
           </SelectCombobox>
         </Field>
         <Field label="Due Date *">
-          <input
-            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
-            type="date"
-            value={dueDate}
-            onChange={(event) => setDueDate(event.target.value)}
-          />
+          <DatePicker className="w-full" value={dueDate} onChange={setDueDate} />
         </Field>
         <Field label="Bill Number *">
           <input
@@ -193,18 +185,18 @@ export function VendorBillForm({ operatingCompanyId, submitting = false, onSubmi
         <div className="md:col-span-6 h-2" />
         <Field label="Vendor *">
           <>
-          <SelectCombobox
-            className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
-            value={vendorId}
-            onChange={(event) => setVendorId(event.target.value)}
-          >
-            <option value="">Select vendor...</option>
-            {vendorOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </SelectCombobox>
+          {/* A3: shared ReferenceSelect gives the vendor picker the inline "+ Add new vendor" row
+              (writes to canonical mdata.vendors — same table vendorOptions reads from, so a newly
+              created vendor is immediately selectable, QB-STD-5). */}
+          <ReferenceSelect
+            value={vendorId || null}
+            onChange={(next) => setVendorId(next ?? "")}
+            options={vendorOptions}
+            createKind="vendor"
+            operatingCompanyId={operatingCompanyId}
+            placeholder="Select vendor..."
+            disabled={!operatingCompanyId}
+          />
           {/* CHAIN-01: never leave the vendor picker silently blank — say WHY it's empty so an empty
               dropdown reads as an honest data/scoping signal, not a broken control. */}
           {!operatingCompanyId ? (
