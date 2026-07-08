@@ -37,7 +37,7 @@ export function MaintenanceCatalogListPage({ client, displayName, breadcrumbPath
 
   const query = useQuery({
     queryKey: ["catalogs", "maintenance", displayName, companyId, search, status],
-    queryFn: () => client.list({ operating_company_id: companyId, search: search || undefined, is_active: status, limit: 200, offset: 0 }),
+    queryFn: () => client.list({ operating_company_id: companyId, search: search || undefined, is_active: status, limit: 500, offset: 0 }),
     enabled: Boolean(companyId),
   });
 
@@ -94,6 +94,7 @@ export function MaintenanceCatalogListPage({ client, displayName, breadcrumbPath
         }}
         loading={query.isLoading}
         tableKey="catalogs-maintenance"
+        pageSize={50}
         errorState={
           query.isError
             ? { status: 0, message: `Failed to load ${displayName.toLowerCase()}.`, onRetry: () => { void query.refetch(); } }

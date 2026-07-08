@@ -433,7 +433,7 @@ export function ChartOfAccountsListPage() {
                       setPage(1);
                     }}
                     className={`rounded px-2 py-1 capitalize ${
-                      statusFilter === value ? "bg-slate-1000 text-white" : "text-gray-700 hover:bg-gray-50"
+                      statusFilter === value ? "bg-[#1f2a44] text-white" : "text-gray-700 hover:bg-gray-50"
                     }`}
                   >
                     {value}

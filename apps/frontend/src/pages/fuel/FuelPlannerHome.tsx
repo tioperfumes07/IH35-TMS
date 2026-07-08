@@ -125,7 +125,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
   return (
     <div className="space-y-3">
       <PageHeader
-        title="Fuel · 0 new in last 3 days"
+        title="Fuel"
         subtitle={activeLabel}
         actions={
           <div className="flex items-center gap-2">
