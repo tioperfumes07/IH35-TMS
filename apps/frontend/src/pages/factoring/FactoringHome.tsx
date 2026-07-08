@@ -3,7 +3,9 @@ import { NavLink, useLocation } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { deactivateFactoring, getFactoringChargebacksFees, getFactoringRecoursePipeline, getFactoringStatementsSettings, getFactoringSummary } from "../../api/factoring";
-import { listVendors, updateVendor } from "../../api/mdata";
+import { listUnits, listVendors, updateVendor } from "../../api/mdata";
+import { listLoads } from "../../api/loads";
+import { Combobox } from "../../components/shared/Combobox";
 import {
   createDriverVendorMerge,
   createEquipmentLoan,
@@ -177,6 +179,16 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
     queryKey: ["data-infra", "equipment-loan-ledger", selectedLoanId, companyId],
     queryFn: () => getEquipmentLoanLedger(selectedLoanId, companyId),
     enabled: Boolean(companyId && selectedLoanId),
+  });
+  const unitsQuery = useQuery({
+    queryKey: ["mdata", "units", companyId],
+    queryFn: () => listUnits({ operating_company_id: companyId }).then((r) => r.units as { id: string; unit_number: string | null }[]),
+    enabled: Boolean(companyId) && tab === "equipment_loans",
+  });
+  const attributionLoadsQuery = useQuery({
+    queryKey: ["mdata", "loads", "attribution", companyId],
+    queryFn: () => listLoads({ operating_company_id: [companyId], limit: 200 }).then((r) => r.loads),
+    enabled: Boolean(companyId) && loanAction?.kind === "attribution",
   });
 
   const invoices = recourseQuery.data?.invoices ?? [];
@@ -669,17 +681,17 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-sm font-medium text-gray-900">Create equipment loan</div>
             <div className="grid gap-2 md:grid-cols-5">
-              <input
-                className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
-                value={loanEquipmentId}
-                onChange={(event) => setLoanEquipmentId(event.target.value)}
-                placeholder="equipment uuid"
+              <Combobox
+                options={(unitsQuery.data ?? []).map((u) => ({ value: u.id, label: u.unit_number ?? u.id }))}
+                value={loanEquipmentId || null}
+                onChange={(v) => setLoanEquipmentId(v ?? "")}
+                placeholder="Select equipment"
               />
-              <input
-                className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
-                value={loanLenderVendorId}
-                onChange={(event) => setLoanLenderVendorId(event.target.value)}
-                placeholder="lender vendor uuid"
+              <Combobox
+                options={(vendorsQuery.data ?? []).map((v) => ({ value: v.id, label: v.name }))}
+                value={loanLenderVendorId || null}
+                onChange={(v) => setLoanLenderVendorId(v ?? "")}
+                placeholder="Select lender vendor"
               />
               {/* M-1 (GUARD FAIL #3): was a raw "principal cents" text input (350 = $3.50). cents-mode MoneyInput:
                   operator types dollars; principal_cents = Number(loanPrincipalCents) stored unchanged. */}
@@ -902,12 +914,16 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
         <div className="space-y-3 text-sm">
           {loanAction?.kind === "attribution" ? (
             <label className="block">
-              Load UUID
-              <input
-                className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2"
-                value={loanActionLoadId}
-                onChange={(e) => setLoanActionLoadId(e.target.value)}
-                placeholder="Load UUID for attribution"
+              Load
+              <Combobox
+                options={(attributionLoadsQuery.data ?? []).map((l) => ({
+                  value: l.id,
+                  label: `${l.load_number}${l.customer_name ? ` — ${l.customer_name}` : ""}`,
+                }))}
+                value={loanActionLoadId || null}
+                onChange={(v) => setLoanActionLoadId(v ?? "")}
+                placeholder="Select load"
+                className="mt-1"
               />
             </label>
           ) : null}
