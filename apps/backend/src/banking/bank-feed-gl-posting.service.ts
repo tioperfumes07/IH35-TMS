@@ -20,8 +20,13 @@
 //      driver_advance_branch and post NOTHING — BANK_DRIVER_ADVANCE_ENABLED owns that row.
 //   2. SKIP rows already matched to a bill (matched_bill_id) — CHAIN-03/04 sourced them (Match, not
 //      Categorize) → reason already_matched_to_bill.
-//   3. SKIP own-bank transfers (transfer_kind / destination_bank_account_id / review_state='transfer') —
-//      bank-to-bank has no P&L → reason is_transfer.
+//   3. SKIP own-bank transfers (transfer_kind / destination_bank_account_id / review_state='transfer' /
+//      matched_transfer_id) — bank-to-bank has no P&L → reason is_transfer. matched_transfer_id is the
+//      SAME dedupe key transfers.service.ts's own createTransfer/acceptMatchWithResolveDifference (bank-
+//      recon match.service.ts) stamps when a Plaid-synced feed line is matched to an internal
+//      banking.transfers row — a line already linked to a transfer must never ALSO post through
+//      categorization (that would double-count the cash movement: once via the transfer's own JE, once
+//      via this poster).
 // FAIL-CLOSED on any unresolved / cross-entity / non-postable account, missing bank ledger bridge, or a
 // zero amount. Idempotent: a row already stamped matched_journal_entry_id returns already_posted.
 
@@ -106,6 +111,7 @@ async function decide(input: MaybePostBankCategorizationInput): Promise<Decision
           bt.matched_journal_entry_id::text            AS matched_journal_entry_id,
           bt.transfer_kind::text                       AS transfer_kind,
           bt.destination_bank_account_id::text         AS destination_bank_account_id,
+          bt.matched_transfer_id::text                 AS matched_transfer_id,
           ba.ledger_account_id::text                   AS bank_ledger_account_id,
           ba.hidden_at                                  AS bank_account_hidden_at,
           ca.id::text                                  AS cat_account_id,
@@ -136,6 +142,7 @@ async function decide(input: MaybePostBankCategorizationInput): Promise<Decision
           matched_journal_entry_id: string | null;
           transfer_kind: string | null;
           destination_bank_account_id: string | null;
+          matched_transfer_id: string | null;
           bank_ledger_account_id: string | null;
           bank_account_hidden_at: string | null;
           cat_account_id: string | null;
@@ -155,8 +162,11 @@ async function decide(input: MaybePostBankCategorizationInput): Promise<Decision
     // Interlock 2 — matched to a bill (CHAIN-03/04 sourced it; Match, not Categorize).
     if (txn.matched_bill_id) return { ok: false, reason: "already_matched_to_bill" };
 
-    // Interlock 3 — own-bank transfer (no P&L).
-    if (txn.transfer_kind || txn.destination_bank_account_id || txn.review_state === "transfer") {
+    // Interlock 3 — own-bank transfer (no P&L). matched_transfer_id is the TRANSFER DEDUPE KEY shared
+    // with transfers.service.ts / bank-recon match.service.ts (BANKING-GL-COMPLETION): a feed line
+    // already linked to an internal banking.transfers row already has its cash movement covered by that
+    // transfer's own JE and must never ALSO post here.
+    if (txn.transfer_kind || txn.destination_bank_account_id || txn.review_state === "transfer" || txn.matched_transfer_id) {
       return { ok: false, reason: "is_transfer" };
     }
 
