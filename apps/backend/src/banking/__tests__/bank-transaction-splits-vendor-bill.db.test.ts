@@ -141,6 +141,7 @@ describeIntegration("BANKING-GL-COMPLETION bank-transaction-splits vendor-bill l
   afterAll(async () => {
     if (!db) return;
     try {
+      await db.query("SELECT pg_advisory_lock(4200000001)");
       await bypass(async () => {
         await db.query(
           `DELETE FROM accounting.transaction_source_links WHERE linked_object_id = ANY($1) AND linked_object_type IN ('bill','bill_payment')`,
@@ -178,6 +179,8 @@ describeIntegration("BANKING-GL-COMPLETION bank-transaction-splits vendor-bill l
       });
     } catch {
       /* best-effort cleanup */
+    } finally {
+      await db.query("SELECT pg_advisory_unlock(4200000001)").catch(() => {});
     }
     await db.end();
   });
