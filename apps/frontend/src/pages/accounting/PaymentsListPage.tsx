@@ -11,7 +11,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { RecordPaymentModal } from "./RecordPaymentModal";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
-import { useListState } from "../../components/list-state";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -80,7 +80,6 @@ export function PaymentsListPage() {
   });
 
   const rows = query.data?.rows ?? [];
-  const listState = useListState(query, rows.length === 0);
   const totals = useMemo(() => {
     return rows.reduce(
       (acc, row) => {
@@ -92,6 +91,72 @@ export function PaymentsListPage() {
       { amount: 0, applied: 0, unapplied: 0 }
     );
   }, [rows]);
+
+  const columns = useMemo<ParityColumn<Payment>[]>(
+    () => [
+      {
+        key: "display_id",
+        label: "Payment #",
+        sortable: true,
+        render: (row) => <span className={row.voided_at ? "text-gray-500 line-through" : "text-gray-900"}>{row.display_id}</span>,
+      },
+      { key: "customer_name", label: "Customer", sortable: true },
+      { key: "payment_date", label: "Date", sortable: true, render: (row) => formatDateUS(row.payment_date) },
+      { key: "payment_method", label: "Method", sortable: true },
+      { key: "reference", label: "Reference", render: (row) => row.reference ?? "-" },
+      { key: "amount_cents", label: "Amount", sortable: true, className: "text-right", cellClass: "text-right tabular-nums", render: (row) => money(row.amount_cents) },
+      { key: "amount_applied_cents", label: "Applied", sortable: true, className: "text-right", cellClass: "text-right tabular-nums", render: (row) => money(row.amount_applied_cents) },
+      { key: "amount_unapplied_cents", label: "Unapplied", sortable: true, className: "text-right", cellClass: "text-right tabular-nums", render: (row) => money(row.amount_unapplied_cents) },
+      { key: "status", label: "Status", render: (row) => statusPill(row) },
+    ],
+    [],
+  );
+
+  const filterBar = (
+    <div className="grid gap-2 md:grid-cols-5 w-full">
+      <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+        Status
+        <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as "all" | "active" | "voided")} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
+          <option value="all">All</option>
+          <option value="active">Active</option>
+          <option value="voided">Voided</option>
+        </SelectCombobox>
+      </label>
+
+      <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+        Method
+        <SelectCombobox value={method} onChange={(event) => setMethod(event.target.value as "" | PaymentMethod | "factoring")} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
+          {METHOD_OPTIONS.map((option) => (
+            <option key={option.label} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </SelectCombobox>
+      </label>
+
+      <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600 md:col-span-2">
+        Search by payment # or customer
+        <input value={search} onChange={(event) => setSearch(event.target.value)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
+      </label>
+
+      <div className="grid grid-cols-2 gap-2">
+        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          From
+          <DatePicker value={dateFrom} onChange={(next) => setDateFrom(next)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
+        </label>
+        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          To
+          <DatePicker value={dateTo} onChange={(next) => setDateTo(next)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
+        </label>
+      </div>
+
+      <div className="flex items-center gap-3 text-xs text-gray-600 md:col-span-5">
+        <span>Amount: {money(totals.amount)}</span>
+        <span>Applied: {money(totals.applied)}</span>
+        <span>Unapplied: {money(totals.unapplied)}</span>
+      </div>
+    </div>
+  );
 
   return (
     <AccountingSubNavWrapper
@@ -106,96 +171,18 @@ export function PaymentsListPage() {
     >
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
 
-      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-5">
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-          Status
-          <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as "all" | "active" | "voided")} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
-            <option value="all">All</option>
-            <option value="active">Active</option>
-            <option value="voided">Voided</option>
-          </SelectCombobox>
-        </label>
-
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-          Method
-          <SelectCombobox value={method} onChange={(event) => setMethod(event.target.value as "" | PaymentMethod | "factoring")} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
-            {METHOD_OPTIONS.map((option) => (
-              <option key={option.label} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </SelectCombobox>
-        </label>
-
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600 md:col-span-2">
-          Search by payment # or customer
-          <input value={search} onChange={(event) => setSearch(event.target.value)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
-        </label>
-
-        <div className="grid grid-cols-2 gap-2">
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-            From
-            <DatePicker value={dateFrom} onChange={(next) => setDateFrom(next)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
-          </label>
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-            To
-            <DatePicker value={dateTo} onChange={(next) => setDateTo(next)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
-          </label>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-3 text-xs text-gray-600">
-        <span>Amount: {money(totals.amount)}</span>
-        <span>Applied: {money(totals.applied)}</span>
-        <span>Unapplied: {money(totals.unapplied)}</span>
-      </div>
-
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-left text-xs">
-          <thead className="bg-gray-50">
-            <tr className="text-gray-600">
-              <th className="px-3 py-2 font-semibold">Payment #</th>
-              <th className="px-3 py-2 font-semibold">Customer</th>
-              <th className="px-3 py-2 font-semibold">Date</th>
-              <th className="px-3 py-2 font-semibold">Method</th>
-              <th className="px-3 py-2 font-semibold">Reference</th>
-              <th className="px-3 py-2 font-semibold">Amount</th>
-              <th className="px-3 py-2 font-semibold">Applied</th>
-              <th className="px-3 py-2 font-semibold">Unapplied</th>
-              <th className="px-3 py-2 font-semibold">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {query.isLoading ? (
-              <tr>
-                <td className="px-3 py-3 text-gray-500" colSpan={9}>
-                  Loading payments...
-                </td>
-              </tr>
-            ) : null}
-            {listState.isEmpty ? (
-              <tr>
-                <td className="px-3 py-3 text-gray-500" colSpan={9}>
-                  No payments found.
-                </td>
-              </tr>
-            ) : null}
-            {rows.map((row) => (
-              <tr key={row.id} className="cursor-pointer border-t border-gray-100 hover:bg-gray-50" onClick={() => navigate(`/accounting/payments/${row.id}`)}>
-                <td className={`px-3 py-2 ${row.voided_at ? "text-gray-500 line-through" : "text-gray-900"}`}>{row.display_id}</td>
-                <td className="px-3 py-2 text-gray-700">{row.customer_name}</td>
-                <td className="px-3 py-2 text-gray-700">{formatDateUS(row.payment_date)}</td>
-                <td className="px-3 py-2 text-gray-700">{row.payment_method}</td>
-                <td className="px-3 py-2 text-gray-700">{row.reference ?? "-"}</td>
-                <td className="px-3 py-2 text-gray-700">{money(row.amount_cents)}</td>
-                <td className="px-3 py-2 text-gray-700">{money(row.amount_applied_cents)}</td>
-                <td className="px-3 py-2 text-gray-700">{money(row.amount_unapplied_cents)}</td>
-                <td className="px-3 py-2">{statusPill(row)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <ParityTable
+        columns={columns}
+        rows={rows}
+        rowKey={(row) => row.id}
+        loading={query.isPending || (query.isFetching && rows.length === 0)}
+        onRowClick={(row) => navigate(`/accounting/payments/${row.id}`)}
+        filterBar={filterBar}
+        exportFilename="payments"
+        storageKey="payments-list"
+        initialPageSize={50}
+        emptyText="No payments found."
+      />
 
       {selectedCompanyId ? (
         <RecordPaymentModal

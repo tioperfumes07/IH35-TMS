@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 import { useQuery } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
-import { useListState } from "../../components/list-state";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import {
   getFixedAssets, getFixedAssetDetail,
   type FixedAssetListItem, type FixedAssetDetail,
@@ -115,7 +115,7 @@ export function FixedAssetsPage() {
     queryFn: () => getFixedAssets({ operating_company_id: operatingCompanyId, status: statusFilter || undefined, limit, offset }),
     enabled: Boolean(selectedCompanyId) && enabled,
   });
-  const { data, isLoading, isError } = assetsQuery;
+  const { data, isPending, isFetching, isError } = assetsQuery;
 
   const { data: detail, isLoading: detailLoading } = useQuery({
     queryKey: ["fixed-asset-detail", detailId, operatingCompanyId],
@@ -125,7 +125,70 @@ export function FixedAssetsPage() {
 
   const total = data?.total ?? 0;
   const items = data?.items ?? [];
-  const listState = useListState(assetsQuery, items.length === 0);
+
+  const columns = useMemo<ParityColumn<FixedAssetListItem>[]>(
+    () => [
+      { key: "asset_number", label: "#", sortable: true, render: (row) => row.asset_number ?? "—" },
+      {
+        key: "name",
+        label: "Name",
+        sortable: true,
+        render: (row) => (
+          <button onClick={() => setDetailId(row.id)} className="text-slate-700 hover:underline text-left font-medium">{row.name}</button>
+        ),
+      },
+      { key: "class_name", label: "Class", sortable: true, render: (row) => row.class_name ?? "—" },
+      { key: "in_service_date", label: "In Service", sortable: true, render: (row) => fmtDate(row.in_service_date) },
+      { key: "method", label: "Method", sortable: true, render: (row) => <span className="capitalize">{titleize(row.method)}</span> },
+      { key: "purchase_price_cents", label: "Cost", sortable: true, className: "text-right", cellClass: "text-right tabular-nums", render: (row) => fmtCents(row.purchase_price_cents) },
+      {
+        key: "depreciation_to_date_cents",
+        label: "Depr. to date",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right tabular-nums text-emerald-700",
+        render: (row) => fmtCents(row.depreciation_to_date_cents),
+      },
+      {
+        key: "net_book_value_cents",
+        label: "Net Book Value",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right tabular-nums font-semibold",
+        render: (row) => fmtCents(row.net_book_value_cents),
+      },
+      {
+        key: "owner_company_name",
+        label: "Owner",
+        render: (row) => (row.is_owner_operated ? "Self" : (row.owner_company_name ?? "Leased-in")),
+      },
+      {
+        key: "status",
+        label: "Status",
+        sortable: true,
+        render: (row) => (
+          <span className={`inline-block rounded-sm px-2 py-0.5 text-xs font-semibold ${STATUS_COLOR[row.status] ?? "bg-gray-100 text-gray-600"}`}>
+            {titleize(row.status)}
+          </span>
+        ),
+      },
+    ],
+    [],
+  );
+
+  const filterBar = (
+    <div className="flex flex-wrap gap-2 items-center">
+      <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setOffset(0); }}
+        className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-emerald-500">
+        <option value="">All statuses</option>
+        <option value="active">Active</option>
+        <option value="fully_depreciated">Fully Depreciated</option>
+        <option value="disposed">Disposed</option>
+        <option value="voided">Voided</option>
+      </select>
+      <span className="text-xs text-gray-500">{total.toLocaleString()} asset{total !== 1 ? "s" : ""}</span>
+    </div>
+  );
 
   if (!flagLoading && !enabled) {
     return (
@@ -144,64 +207,18 @@ export function FixedAssetsPage() {
         <DetailPanel detail={detail} onClose={() => setDetailId(null)} />
       )}
 
-      <div className="flex flex-wrap gap-2 mb-4 items-center">
-        <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setOffset(0); }}
-          className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-emerald-500">
-          <option value="">All statuses</option>
-          <option value="active">Active</option>
-          <option value="fully_depreciated">Fully Depreciated</option>
-          <option value="disposed">Disposed</option>
-          <option value="voided">Voided</option>
-        </select>
-        <span className="text-xs text-gray-500">{total.toLocaleString()} asset{total !== 1 ? "s" : ""}</span>
-      </div>
+      {isError ? <p className="text-sm text-red-600 py-2 text-center">Failed to load fixed assets.</p> : null}
 
-      {isLoading || flagLoading ? (
-        <p className="text-sm text-gray-500 py-8 text-center">Loading…</p>
-      ) : isError ? (
-        <p className="text-sm text-red-600 py-8 text-center">Failed to load fixed assets.</p>
-      ) : listState.isEmpty ? (
-        <div className="py-12 text-center">
-          <p className="text-sm text-gray-500">No fixed assets found.</p>
-          <p className="text-xs text-gray-400 mt-1">Assets will appear here once they are added to the register.</p>
-        </div>
-      ) : (
-        <div className="overflow-x-auto rounded-sm border border-gray-200">
-          <table className="min-w-full divide-y divide-gray-200 text-sm">
-            <thead className="bg-gray-50">
-              <tr>
-                {["#", "Name", "Class", "In Service", "Method", "Cost", "Depr. to date", "Net Book Value", "Owner", "Status"].map((h) => (
-                  <th key={h} className="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide whitespace-nowrap">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 bg-white">
-              {items.map((row: FixedAssetListItem) => (
-                <tr key={row.id} className="hover:bg-gray-50">
-                  <td className="px-3 py-2 whitespace-nowrap text-gray-500 text-xs">{row.asset_number ?? "—"}</td>
-                  <td className="px-3 py-2 max-w-[220px] truncate font-medium">
-                    <button onClick={() => setDetailId(row.id)} className="text-slate-700 hover:underline text-left">{row.name}</button>
-                  </td>
-                  <td className="px-3 py-2 whitespace-nowrap text-gray-600">{row.class_name ?? "—"}</td>
-                  <td className="px-3 py-2 whitespace-nowrap text-gray-600">{fmtDate(row.in_service_date)}</td>
-                  <td className="px-3 py-2 whitespace-nowrap text-gray-600 capitalize">{titleize(row.method)}</td>
-                  <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums">{fmtCents(row.purchase_price_cents)}</td>
-                  <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-emerald-700">{fmtCents(row.depreciation_to_date_cents)}</td>
-                  <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums font-semibold">{fmtCents(row.net_book_value_cents)}</td>
-                  <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-600">
-                    {row.is_owner_operated ? "Self" : (row.owner_company_name ?? "Leased-in")}
-                  </td>
-                  <td className="px-3 py-2 whitespace-nowrap">
-                    <span className={`inline-block rounded-sm px-2 py-0.5 text-xs font-semibold ${STATUS_COLOR[row.status] ?? "bg-gray-100 text-gray-600"}`}>
-                      {titleize(row.status)}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <ParityTable
+        columns={columns}
+        rows={items}
+        rowKey={(row) => row.id}
+        loading={flagLoading || isPending || (isFetching && items.length === 0)}
+        filterBar={filterBar}
+        storageKey="fixed-assets-list"
+        initialPageSize={limit}
+        emptyText="No fixed assets found."
+      />
 
       {total > limit && (
         <div className="flex items-center justify-between mt-3 text-sm text-gray-600">

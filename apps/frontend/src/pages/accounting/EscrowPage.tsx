@@ -5,7 +5,7 @@ import { listEscrowAccounts, listEscrowPostings, type EscrowAccount, type Escrow
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { useListState } from "../../components/list-state";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EscrowDeductionsPendingTab } from "../driver-finance/EscrowDeductionsPendingTab";
 
 type EscrowViewTab = "accounts" | "pending";
@@ -38,12 +38,60 @@ export function EscrowPage() {
     mutationFn: (escrowAccountId: string) => listEscrowPostings(companyId, escrowAccountId, 300),
   });
 
+  const accountRows = (accountsQuery.data?.rows ?? []) as EscrowAccount[];
+
   const selectedAccount = useMemo(
-    () => ((accountsQuery.data?.rows ?? []) as EscrowAccount[]).find((row) => row.id === selectedAccountId) ?? null,
-    [accountsQuery.data?.rows, selectedAccountId]
+    () => accountRows.find((row) => row.id === selectedAccountId) ?? null,
+    [accountRows, selectedAccountId]
   );
 
-  const listState = useListState(accountsQuery, (accountsQuery.data?.rows ?? []).length === 0);
+  const accountColumns = useMemo<ParityColumn<EscrowAccount>[]>(
+    () => [
+      {
+        key: "holder_id",
+        label: "Holder",
+        render: (row) =>
+          row.holder_type === "driver" ? (
+            <EntityLink kind="driver" id={row.holder_id} />
+          ) : row.holder_type === "vendor" ? (
+            <EntityLink kind="vendor" id={row.holder_id} />
+          ) : (
+            row.holder_id
+          ),
+      },
+      { key: "holder_type", label: "Type", sortable: true },
+      { key: "purpose", label: "Purpose", sortable: true },
+      { key: "status", label: "Status", sortable: true },
+      { key: "balance_cents", label: "Balance", sortable: true, className: "text-right", cellClass: "text-right tabular-nums", render: (row) => money(row.balance_cents) },
+      { key: "updated_at", label: "Updated", sortable: true, render: (row) => dt(row.updated_at) },
+    ],
+    [],
+  );
+
+  const postingRows = (postingsQuery.data?.rows ?? []) as EscrowPosting[];
+  const postingColumns = useMemo<ParityColumn<EscrowPosting>[]>(
+    () => [
+      { key: "posted_at", label: "Posted", sortable: true, render: (row) => dt(row.posted_at) },
+      { key: "posting_type", label: "Type", sortable: true },
+      { key: "amount_cents", label: "Amount", sortable: true, className: "text-right", cellClass: "text-right tabular-nums", render: (row) => money(row.amount_cents) },
+      {
+        key: "source_type",
+        label: "Source",
+        render: (row) => (
+          <>
+            {row.source_type}
+            {row.source_id ? ` / ${row.source_id}` : ""}
+          </>
+        ),
+      },
+      {
+        key: "linked_journal_entry_id",
+        label: "Journal entry",
+        render: (row) => <EntityLink kind="journal_entry" id={row.linked_journal_entry_id ?? undefined} label={row.linked_journal_entry_id ? row.linked_journal_entry_id.slice(0, 8) : "—"} />,
+      },
+    ],
+    [],
+  );
 
   return (
     <div className="space-y-4 p-4">
@@ -70,9 +118,7 @@ export function EscrowPage() {
         <>
           {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
 
-          {accountsQuery.isLoading ? <div className="rounded-sm border border-slate-200 bg-white p-3 text-sm text-slate-500">Loading escrow accounts...</div> : null}
-
-          {listState.isError ? (
+          {accountsQuery.isError ? (
             <div className="rounded-sm border border-slate-200 bg-white">
               <ListErrorState
                 title="Couldn't load escrow accounts"
@@ -81,55 +127,21 @@ export function EscrowPage() {
                 onRetry={() => void accountsQuery.refetch()}
               />
             </div>
-          ) : null}
-
-          {accountsQuery.data?.rows && accountsQuery.data.rows.length > 0 ? (
-            <div className="overflow-auto rounded-sm border border-slate-200 bg-white">
-              <table className="min-w-full text-left text-xs">
-                <thead className="bg-slate-50 text-[11px] font-semibold uppercase text-slate-600">
-                  <tr>
-                    <th className="px-2 py-2">Holder</th>
-                    <th className="px-2 py-2">Type</th>
-                    <th className="px-2 py-2">Purpose</th>
-                    <th className="px-2 py-2">Status</th>
-                    <th className="px-2 py-2">Balance</th>
-                    <th className="px-2 py-2">Updated</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(accountsQuery.data.rows as EscrowAccount[]).map((row) => (
-                    <tr
-                      key={row.id}
-                      className={`cursor-pointer border-b border-slate-100 ${selectedAccountId === row.id ? "bg-slate-100" : ""}`}
-                      onClick={() => {
-                        setSelectedAccountId(row.id);
-                        postingsQuery.mutate(row.id);
-                      }}
-                    >
-                      <td className="px-2 py-2 font-mono">
-                        {row.holder_type === "driver" ? (
-                          <EntityLink kind="driver" id={row.holder_id} />
-                        ) : row.holder_type === "vendor" ? (
-                          <EntityLink kind="vendor" id={row.holder_id} />
-                        ) : (
-                          row.holder_id
-                        )}
-                      </td>
-                      <td className="px-2 py-2">{row.holder_type}</td>
-                      <td className="px-2 py-2">{row.purpose}</td>
-                      <td className="px-2 py-2">{row.status}</td>
-                      <td className="px-2 py-2">{money(row.balance_cents)}</td>
-                      <td className="px-2 py-2">{dt(row.updated_at)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : null}
-
-          {listState.isEmpty ? (
-            <div className="rounded-sm border border-slate-200 bg-white p-3 text-sm text-slate-500">No escrow accounts found.</div>
-          ) : null}
+          ) : (
+            <ParityTable
+              columns={accountColumns}
+              rows={accountRows}
+              rowKey={(row) => row.id}
+              loading={accountsQuery.isPending || (accountsQuery.isFetching && accountRows.length === 0)}
+              onRowClick={(row) => {
+                setSelectedAccountId(row.id);
+                postingsQuery.mutate(row.id);
+              }}
+              rowClassName={(row) => (selectedAccountId === row.id ? "bg-slate-100" : "")}
+              storageKey="escrow-accounts"
+              emptyText="No escrow accounts found."
+            />
+          )}
 
           {selectedAccount ? (
             <div className="rounded-sm border border-slate-200 bg-white p-3 text-sm text-slate-700">
@@ -137,34 +149,15 @@ export function EscrowPage() {
             </div>
           ) : null}
 
-          {postingsQuery.data?.rows && postingsQuery.data.rows.length > 0 ? (
-            <div className="overflow-auto rounded-sm border border-slate-200 bg-white">
-              <table className="min-w-full text-left text-xs">
-                <thead className="bg-slate-50 text-[11px] font-semibold uppercase text-slate-600">
-                  <tr>
-                    <th className="px-2 py-2">Posted</th>
-                    <th className="px-2 py-2">Type</th>
-                    <th className="px-2 py-2">Amount</th>
-                    <th className="px-2 py-2">Source</th>
-                    <th className="px-2 py-2">Journal entry</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(postingsQuery.data.rows as EscrowPosting[]).map((row) => (
-                    <tr key={row.id} className="border-b border-slate-100">
-                      <td className="px-2 py-2">{dt(row.posted_at)}</td>
-                      <td className="px-2 py-2">{row.posting_type}</td>
-                      <td className="px-2 py-2">{money(row.amount_cents)}</td>
-                      <td className="px-2 py-2">
-                        {row.source_type}
-                        {row.source_id ? ` / ${row.source_id}` : ""}
-                      </td>
-                      <td className="px-2 py-2 font-mono"><EntityLink kind="journal_entry" id={row.linked_journal_entry_id ?? undefined} label={row.linked_journal_entry_id ? row.linked_journal_entry_id.slice(0, 8) : "—"} /></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          {selectedAccountId ? (
+            <ParityTable
+              columns={postingColumns}
+              rows={postingRows}
+              rowKey={(row) => row.id}
+              loading={postingsQuery.isPending}
+              storageKey="escrow-postings"
+              emptyText="No escrow postings found for this account."
+            />
           ) : null}
         </>
       ) : null}
