@@ -4,6 +4,7 @@ import { createSafetyFine } from "../../../api/safety";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
+import { DatePicker } from "../../../components/forms/DatePicker";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { companyToday } from "../../../lib/businessDate";
 
@@ -102,12 +103,10 @@ export function FineCreateModal({ open, operatingCompanyId, onClose, onCreated }
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Issued date</label>
-            <input
-              type="date"
+            <DatePicker
               value={issuedDate}
-              onChange={(event) => setIssuedDate(event.target.value)}
+              onChange={setIssuedDate}
               className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
-              required
             />
           </div>
           <div className="flex flex-col gap-1">

@@ -18,6 +18,7 @@ import { formatDateUS } from "../lib/formatDate";
 import { Button } from "../components/Button";
 import { Combobox, type ComboboxOption } from "../components/Combobox";
 import { MoneyInput } from "../components/forms/MoneyInput";
+import { DatePicker } from "../components/forms/DatePicker";
 import { DataPanel } from "../components/layout/DataPanel";
 import { PageHeader } from "../components/layout/PageHeader";
 import { Modal } from "../components/Modal";
@@ -464,11 +465,10 @@ export function UserDetailPage() {
           </div>
           <div>
             <label className="mb-1 block text-xs font-semibold text-gray-600">Event date</label>
-            <input
-              type="date"
+            <DatePicker
               value={eventDate}
               max={new Date().toISOString().slice(0, 10)}
-              onChange={(event) => setEventDate(event.target.value)}
+              onChange={setEventDate}
               className="w-full rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
             />
           </div>

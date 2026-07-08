@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getInboxReporting, type InboxReportingData } from "../../api/driverInboxReporting";
 import { formatUsdCents } from "../../lib/money";
@@ -103,11 +104,11 @@ export function DriverHubReportingPage() {
       <div className="flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3">
         <div className="space-y-1">
           <label className="block text-[9px] font-semibold uppercase tracking-wide text-[#8A92AB]">From</label>
-          <input type="date" className={inputCls} value={from} max={to} onChange={(e) => setFrom(e.target.value)} />
+          <DatePicker className={inputCls} value={from} max={to} onChange={setFrom} />
         </div>
         <div className="space-y-1">
           <label className="block text-[9px] font-semibold uppercase tracking-wide text-[#8A92AB]">To</label>
-          <input type="date" className={inputCls} value={to} min={from} max={todayIso()} onChange={(e) => setTo(e.target.value)} />
+          <DatePicker className={inputCls} value={to} min={from} max={todayIso()} onChange={setTo} />
         </div>
         <Link to="/driver-hub" className="ml-auto text-xs font-semibold text-slate-700 underline">
           ← Back to Driver Inbox

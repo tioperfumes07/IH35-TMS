@@ -7,6 +7,7 @@ import { legalContractsApi, type LeaseToOwnFleetUnit } from "../../../api/legal-
 import { legalTemplatesApi } from "../../../api/legal-templates";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
+import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { useToast } from "../../../components/Toast";
 
@@ -210,7 +211,7 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
               <input className="rounded-sm border px-2 py-1" value={terms.venue_county} onChange={(e) => setTerms({ ...terms, venue_county: e.target.value })} />
             </label>
             <label className="flex flex-col gap-1 text-sm">Execution date
-              <input type="date" className="rounded-sm border px-2 py-1" value={terms.execution_date} onChange={(e) => setTerms({ ...terms, execution_date: e.target.value })} />
+              <DatePicker className="rounded-sm border px-2 py-1" value={terms.execution_date} onChange={(v) => setTerms({ ...terms, execution_date: v })} />
             </label>
             <label className="flex flex-col gap-1 text-sm">Reference # (optional)
               <input className="rounded-sm border px-2 py-1" value={terms.reference_no} onChange={(e) => setTerms({ ...terms, reference_no: e.target.value })} />

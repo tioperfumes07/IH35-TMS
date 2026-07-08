@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { holdDeduction } from "../../../api/driverFinance";
 import { Button } from "../../../components/Button";
+import { DatePicker } from "../../../components/forms/DatePicker";
 import { Modal } from "../../../components/Modal";
 import { useToast } from "../../../components/Toast";
 import type { DeductionRow } from "./DeductionsSection";
@@ -61,10 +62,9 @@ export function HoldDeductionModal({ open, deduction, operatingCompanyId, onClos
           </div>
           <div>
             <label className="mb-1 block font-semibold">Hold until period</label>
-            <input
-              type="date"
+            <DatePicker
               value={holdUntil}
-              onChange={(event) => setHoldUntil(event.target.value)}
+              onChange={setHoldUntil}
               className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm"
             />
           </div>

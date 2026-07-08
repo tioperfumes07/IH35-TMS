@@ -1575,11 +1575,10 @@ export function DriverDetailPage() {
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-gray-600">Event date</label>
-              <input
-                type="date"
+              <DatePicker
                 max={new Date().toISOString().slice(0, 10)}
                 value={safetyForm.event_date}
-                onChange={(event) => setSafetyForm((current) => ({ ...current, event_date: event.target.value }))}
+                onChange={(v) => setSafetyForm((current) => ({ ...current, event_date: v }))}
                 className={FORM_INPUT_CLASS}
               />
             </div>

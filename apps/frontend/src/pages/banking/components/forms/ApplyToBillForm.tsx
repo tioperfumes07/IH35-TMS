@@ -12,6 +12,7 @@ import {
   type ItemLine,
 } from "../../../../components/forms/shared/CostBreakdownBox";
 import { SelectCombobox } from "../../../../components/shared/SelectCombobox";
+import { DatePicker } from "../../../../components/forms/DatePicker";
 
 type Props = {
   value: Record<string, unknown>;
@@ -101,11 +102,10 @@ export function ApplyToBillForm({ value, onChange, operatingCompanyId }: Props) 
       </div>
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-2 md:grid-cols-6">
         <Field label="Bill Date">
-          <input
-            type="date"
+          <DatePicker
             className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
             value={String(value.bill_date ?? "")}
-            onChange={(event) => onChange({ ...value, bill_date: event.target.value })}
+            onChange={(v) => onChange({ ...value, bill_date: v })}
           />
         </Field>
         <Field label="Terms">
@@ -117,11 +117,10 @@ export function ApplyToBillForm({ value, onChange, operatingCompanyId }: Props) 
           </SelectCombobox>
         </Field>
         <Field label="Due Date">
-          <input
-            type="date"
+          <DatePicker
             className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
             value={String(value.due_date ?? "")}
-            onChange={(event) => onChange({ ...value, due_date: event.target.value })}
+            onChange={(v) => onChange({ ...value, due_date: v })}
           />
         </Field>
         <Field label="Bill Number">

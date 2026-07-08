@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listDrivers, listUnits, listVendors } from "../../api/mdata";
+import { DatePicker } from "../forms/DatePicker";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../forms/TwoSectionLineEditor";
 import { TotalsStack } from "../forms/shared/TotalsStack";
 import { BILL_TYPE_TABS, TypeTabBar } from "../forms/shared/TypeTabBar";
@@ -143,11 +144,10 @@ export function VendorBillForm({ operatingCompanyId, submitting = false, onSubmi
           />
         </Field>
         <Field label="Bill Date *">
-          <input
+          <DatePicker
             className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
-            type="date"
             value={billDate}
-            onChange={(event) => setBillDate(event.target.value)}
+            onChange={setBillDate}
           />
         </Field>
         <Field label="Terms">
@@ -162,11 +162,10 @@ export function VendorBillForm({ operatingCompanyId, submitting = false, onSubmi
           </SelectCombobox>
         </Field>
         <Field label="Due Date *">
-          <input
+          <DatePicker
             className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
-            type="date"
             value={dueDate}
-            onChange={(event) => setDueDate(event.target.value)}
+            onChange={setDueDate}
           />
         </Field>
         <Field label="Bill Number *">

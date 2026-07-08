@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { fetchDailyRecon, type DailyReconMatchStatus, type DailyReconRow } from "../../api/daily-recon";
 import { useListState } from "../../components/list-state";
 import { formatUsdCents } from "../../lib/money";
@@ -158,19 +159,17 @@ export function DailyReconPage() {
           <div className="flex flex-wrap gap-2 items-end">
             <div className="flex flex-col gap-0.5">
               <label className="text-[10px] font-semibold uppercase text-gray-500">From</label>
-              <input
-                type="date"
+              <DatePicker
                 value={fromDate}
-                onChange={(e) => setFromDate(e.target.value)}
+                onChange={setFromDate}
                 className="h-10 rounded-sm border border-gray-300 px-2 text-sm"
               />
             </div>
             <div className="flex flex-col gap-0.5">
               <label className="text-[10px] font-semibold uppercase text-gray-500">To</label>
-              <input
-                type="date"
+              <DatePicker
                 value={toDate}
-                onChange={(e) => setToDate(e.target.value)}
+                onChange={setToDate}
                 className="h-10 rounded-sm border border-gray-300 px-2 text-sm"
               />
             </div>

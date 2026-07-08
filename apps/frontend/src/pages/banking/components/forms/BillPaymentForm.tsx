@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { listBills } from "../../../../api/accounting";
 import { getAllAccounts } from "../../../../api/banking";
 import { SelectCombobox } from "../../../../components/shared/SelectCombobox";
+import { DatePicker } from "../../../../components/forms/DatePicker";
 
 type Props = {
   value: Record<string, unknown>;
@@ -42,11 +43,10 @@ export function BillPaymentForm({ value, onChange, operatingCompanyId }: Props) 
       </div>
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-2 md:grid-cols-6">
         <Field label="Payment Date">
-          <input
-            type="date"
+          <DatePicker
             className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
             value={String(value.payment_date ?? "")}
-            onChange={(event) => onChange({ ...value, payment_date: event.target.value })}
+            onChange={(v) => onChange({ ...value, payment_date: v })}
           />
         </Field>
         <Field label="Payment Method">

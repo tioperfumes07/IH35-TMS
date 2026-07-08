@@ -7,6 +7,7 @@ import { Modal } from "../Modal";
 import { SelectCombobox } from "../shared/SelectCombobox";
 import { TaskLinkPicker } from "../tasks/TaskLinkPicker";
 import { useToast } from "../Toast";
+import { DatePicker } from "../forms/DatePicker";
 import { MoneyInput } from "../forms/MoneyInput";
 
 export type BillPaymentRow = {
@@ -195,7 +196,7 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Payment date
-            <input type="date" value={paymentDate} onChange={(e) => setPaymentDate(e.target.value)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
+            <DatePicker value={paymentDate} onChange={setPaymentDate} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Method

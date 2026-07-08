@@ -8,6 +8,7 @@ import { Modal } from "../../components/Modal";
 import { UploadZone } from "../../components/UploadZone";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { MoneyInput } from "../../components/forms/MoneyInput";
+import { DatePicker } from "../../components/forms/DatePicker";
 
 type Props = {
   open: boolean;
@@ -201,7 +202,7 @@ export function RecordPaymentModal({
 
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Payment date
-            <input type="date" value={paymentDate} onChange={(event) => setPaymentDate(event.target.value)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
+            <DatePicker value={paymentDate} onChange={setPaymentDate} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
           </label>
 
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">

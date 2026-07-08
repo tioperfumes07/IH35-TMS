@@ -6,6 +6,7 @@ import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { DatePicker } from "../../../components/forms/DatePicker";
 import { useCCPayment } from "../../../hooks/useCCPayment";
 
 // FINANCIAL GATE (orphan-triage F1): /api/v1/bill-payments/cc posts directly to
@@ -45,7 +46,7 @@ export function CCPaymentModal({ open, operatingCompanyId, bill, onClose, onSave
         </SelectCombobox>
         {/* M-1: dollars-mode; Math.round(amountDollars*100)=payment_amount_cents byte-for-byte. */}
         <MoneyInput valueDollars={amountDollars ? Number(amountDollars) : null} onChangeDollars={(d) => setAmountDollars(d == null ? "" : String(d))} ariaLabel="Payment amount (USD)" className="w-full" />
-        <input type="date" className="h-9 w-full rounded-sm border px-2 text-[13px]" value={paymentDate} onChange={(e) => setPaymentDate(e.target.value)} />
+        <DatePicker value={paymentDate} onChange={setPaymentDate} className="h-9 w-full rounded-sm border px-2 text-[13px]" />
         {CC_BILL_PAYMENT_GATED ? (
           <div className="rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800">
             <span className="font-semibold">CC bill payment gated.</span> Submit is disabled pending financial-cluster approval. Contact Jorge to enable.

@@ -7,6 +7,7 @@ import { listVendors } from "../../../api/mdata";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { useToast } from "../../../components/Toast";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
+import { DatePicker } from "../../../components/forms/DatePicker";
 
 const FREQUENCIES: { value: RecurringBillFrequency; label: string }[] = [
   { value: "weekly", label: "Weekly" },
@@ -184,12 +185,11 @@ export function RecurringBillCreate() {
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">First Generation Date *</label>
-              <input
-                type="date"
+              <DatePicker
                 className="w-full rounded-sm border border-gray-300 px-3 py-2 text-sm focus:border-slate-300 focus:outline-hidden"
                 value={nextGenerationDate}
                 min={today()}
-                onChange={(e) => setNextGenerationDate(e.target.value)}
+                onChange={setNextGenerationDate}
               />
             </div>
           </div>
@@ -197,12 +197,11 @@ export function RecurringBillCreate() {
           {/* End date */}
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">End Date (optional)</label>
-            <input
-              type="date"
+            <DatePicker
               className="w-full rounded-sm border border-gray-300 px-3 py-2 text-sm focus:border-slate-300 focus:outline-hidden"
               value={endDate}
               min={nextGenerationDate}
-              onChange={(e) => setEndDate(e.target.value)}
+              onChange={setEndDate}
             />
           </div>
 

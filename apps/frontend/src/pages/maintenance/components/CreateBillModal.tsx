@@ -7,6 +7,7 @@ import { Modal } from "../../../components/Modal";
 import { Button } from "../../../components/Button";
 import { useToast } from "../../../components/Toast";
 import { companyToday } from "../../../lib/businessDate";
+import { DatePicker } from "../../../components/forms/DatePicker";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../../../components/forms/TwoSectionLineEditor";
 import { TotalsStack } from "../../../components/forms/shared/TotalsStack";
 import { BILL_TYPE_TABS, TypeTabBar } from "../../../components/forms/shared/TypeTabBar";
@@ -151,7 +152,7 @@ export function CreateBillModal({ open, operatingCompanyId, linkedWoDisplayId, l
             <input className="h-8 w-full rounded-sm border border-gray-300 bg-gray-100 px-2 text-xs" value={BILL_TYPE_TABS.find((t) => t.id === billType)?.label ?? "Repair Bill"} readOnly />
           </Field>
           <Field label="Bill Date *">
-            <input className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" type="date" value={billDate} onChange={(event) => setBillDate(event.target.value)} />
+            <DatePicker className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" value={billDate} onChange={setBillDate} />
           </Field>
           <Field label="Terms">
             <SelectCombobox className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" value={terms} onChange={(event) => setTerms(event.target.value)}>
@@ -161,7 +162,7 @@ export function CreateBillModal({ open, operatingCompanyId, linkedWoDisplayId, l
             </SelectCombobox>
           </Field>
           <Field label="Due Date">
-            <input className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" type="date" value={dueDate} onChange={(event) => setDueDate(event.target.value)} />
+            <DatePicker className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" value={dueDate} onChange={setDueDate} />
           </Field>
           <Field label="Bill Number">
             <input className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" value={billNumber} onChange={(event) => setBillNumber(event.target.value)} placeholder="Bill Number" />

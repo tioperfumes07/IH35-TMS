@@ -4,6 +4,7 @@ import { formatUsdCents } from "../../lib/money";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { MoneyInput } from "../../components/forms/MoneyInput";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import {
   getPrepaidExpenses, getPrepaidExpenseDetail, createPrepaidExpense,
@@ -141,13 +142,13 @@ function CreateModal({ companyId, onClose, onCreated }: { companyId: string; onC
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-0.5">Purchase Date *</label>
-              <input type="date" className="w-full rounded-sm border border-gray-300 px-3 py-1.5 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                value={form.purchase_date} onChange={(e) => setForm({ ...form, purchase_date: e.target.value })} />
+              <DatePicker className="w-full rounded-sm border border-gray-300 px-3 py-1.5 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                value={form.purchase_date} onChange={(v) => setForm({ ...form, purchase_date: v })} />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-0.5">Amortization Start *</label>
-              <input type="date" className="w-full rounded-sm border border-gray-300 px-3 py-1.5 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} />
+              <DatePicker className="w-full rounded-sm border border-gray-300 px-3 py-1.5 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                value={form.start_date} onChange={(v) => setForm({ ...form, start_date: v })} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">

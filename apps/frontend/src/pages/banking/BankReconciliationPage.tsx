@@ -16,6 +16,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { ActionButton } from "../../components/shared/ActionButton";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useToast } from "../../components/Toast";
+import { DatePicker } from "../../components/forms/DatePicker";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -117,8 +118,8 @@ export function BankReconciliationPage() {
             </option>
           ))}
         </SelectCombobox>
-        <input type="date" value={periodStart} onChange={(event) => setPeriodStart(event.target.value)} className="rounded-sm border border-gray-300 px-2 py-1 text-sm" />
-        <input type="date" value={periodEnd} onChange={(event) => setPeriodEnd(event.target.value)} className="rounded-sm border border-gray-300 px-2 py-1 text-sm" />
+        <DatePicker value={periodStart} onChange={setPeriodStart} className="rounded-sm border border-gray-300 px-2 py-1 text-sm" />
+        <DatePicker value={periodEnd} onChange={setPeriodEnd} className="rounded-sm border border-gray-300 px-2 py-1 text-sm" />
         <div className="flex items-center rounded-sm border border-gray-200 px-2 text-xs text-gray-700">
           Progress: {worklistQuery.data?.progress.percent ?? 0}% ({worklistQuery.data?.progress.matched_or_skipped_transactions ?? 0}/
           {worklistQuery.data?.progress.total_transactions ?? 0})

@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { getTrainingCompletions } from "../../api/safety";
 import { Button } from "../Button";
+import { DatePicker } from "../forms/DatePicker";
 import { Modal } from "../Modal";
 
 type Props = {
@@ -138,13 +139,11 @@ export function AddTrainingModal({ open, driverId, companyId, driverName, onClos
         ) : null}
         <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold text-gray-600">Completion date</label>
-          <input
-            type="date"
+          <DatePicker
             value={completedAt}
-            onChange={(event) => setCompletedAt(event.target.value)}
+            onChange={setCompletedAt}
             className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
             data-testid="add-training-completed"
-            required
           />
         </div>
         <div className="flex flex-col gap-1">

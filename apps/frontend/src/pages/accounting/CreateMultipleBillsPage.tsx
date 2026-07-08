@@ -9,6 +9,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useToast } from "../../components/Toast";
 import { MoneyInput } from "../../components/forms/MoneyInput";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
 type SeedDraft = {
@@ -191,10 +192,10 @@ export function CreateMultipleBillsPage() {
                   </SelectCombobox>
                 </td>
                 <td className="px-2 py-1.5">
-                  <input type="date" className="h-8 rounded-sm border border-gray-300 px-2" value={row.bill_date} onChange={(event) => updateRow(row.id, { bill_date: event.target.value })} />
+                  <DatePicker className="h-8 rounded-sm border border-gray-300 px-2" value={row.bill_date} onChange={(v) => updateRow(row.id, { bill_date: v })} />
                 </td>
                 <td className="px-2 py-1.5">
-                  <input type="date" className="h-8 rounded-sm border border-gray-300 px-2" value={row.due_date} onChange={(event) => updateRow(row.id, { due_date: event.target.value })} />
+                  <DatePicker className="h-8 rounded-sm border border-gray-300 px-2" value={row.due_date} onChange={(v) => updateRow(row.id, { due_date: v })} />
                 </td>
                 <td className="px-2 py-1.5">
                   <input className="h-8 rounded-sm border border-gray-300 px-2" value={row.bill_number} onChange={(event) => updateRow(row.id, { bill_number: event.target.value })} />

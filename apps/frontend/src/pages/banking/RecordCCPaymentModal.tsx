@@ -7,6 +7,7 @@ import { QboCombobox } from "../../components/forms/QboCombobox";
 import { useToast } from "../../components/Toast";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { MoneyInput } from "../../components/forms/MoneyInput";
+import { DatePicker } from "../../components/forms/DatePicker";
 
 type Props = {
   open: boolean;
@@ -183,7 +184,7 @@ export function RecordCCPaymentModal({
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label className="block">
             Payment date
-            <input type="date" className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2" value={paymentDate} onChange={(e) => setPaymentDate(e.target.value)} />
+            <DatePicker className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2" value={paymentDate} onChange={setPaymentDate} />
           </label>
           <label className="block">
             Amount (USD)

@@ -13,6 +13,7 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useToast } from "../../components/Toast";
+import { DatePicker } from "../../components/forms/DatePicker";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
@@ -127,11 +128,11 @@ export function ReconciliationWorkspacePage() {
         </label>
         <label>
           From
-          <input type="date" value={periodStart} onChange={(e) => setPeriodStart(e.target.value)} />
+          <DatePicker value={periodStart} onChange={setPeriodStart} />
         </label>
         <label>
           To
-          <input type="date" value={periodEnd} onChange={(e) => setPeriodEnd(e.target.value)} />
+          <DatePicker value={periodEnd} onChange={setPeriodEnd} />
         </label>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, minHeight: 360 }}>

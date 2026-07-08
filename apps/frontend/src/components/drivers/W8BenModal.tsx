@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { apiRequest } from "../../api/client";
 import { Button } from "../Button";
+import { DatePicker } from "../forms/DatePicker";
 import { Modal } from "../Modal";
 
 type Props = {
@@ -171,7 +172,7 @@ export function W8BenModal({ open, driverId, companyId, driverName, onClose, onC
           </div>
           <div className="flex flex-col gap-1">
             <label className={labelCls}>Date of birth</label>
-            <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} className={inputCls} data-testid="w8ben-dob" />
+            <DatePicker value={dob} onChange={setDob} className={inputCls} data-testid="w8ben-dob" />
           </div>
         </div>
 
@@ -195,7 +196,7 @@ export function W8BenModal({ open, driverId, companyId, driverName, onClose, onC
           </div>
           <div className="flex flex-col gap-1">
             <label className={labelCls}>Signed date</label>
-            <input type="date" value={signedDate} onChange={(e) => setSignedDate(e.target.value)} className={inputCls} data-testid="w8ben-signed" required />
+            <DatePicker value={signedDate} onChange={setSignedDate} className={inputCls} data-testid="w8ben-signed" />
           </div>
         </div>
 

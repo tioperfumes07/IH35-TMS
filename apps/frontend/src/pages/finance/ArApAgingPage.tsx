@@ -1,5 +1,6 @@
 import { Fragment, useMemo, useState } from "react";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 import { useQuery } from "@tanstack/react-query";
@@ -249,12 +250,10 @@ export function ArApAgingPage() {
           <div className="flex flex-wrap items-end gap-2 print:hidden">
             <div className="flex flex-col">
               <span className="text-[11px] font-medium text-gray-500">As of</span>
-              <input
-                type="date"
+              <DatePicker
                 value={asOfDate}
                 max={today}
-                onChange={(e) => {
-                  const v = e.target.value;
+                onChange={(v) => {
                   // Clamp to today; ignore empties so the report always has a valid as-of.
                   setAsOfDate(v && v <= today ? v : today);
                   setExpanded(null);

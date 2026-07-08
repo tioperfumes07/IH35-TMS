@@ -3,6 +3,7 @@ import { useFieldArray, Controller, type Control, type UseFormRegister, type Use
 import { StateSelect } from "../../../components/forms/StateSelect";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { TimePicker } from "../../../components/forms/TimePicker";
+import { DatePicker } from "../../../components/forms/DatePicker";
 import { AddressGeocodeInput } from "../../../components/dispatch/AddressGeocodeInput";
 import { stopGeocodePatches } from "./book-load-stop-geocode";
 import { TimeWindowDropdown } from "./book-load-v4/TimeWindowDropdown";
@@ -140,7 +141,7 @@ export function BookLoadStopsSection({ control, register, setValue }: Props) {
                       const combine = (nd: string, nt: string) => f.onChange(nd ? `${nd}T${nt || "00:00"}` : "");
                       return (
                         <>
-                          <Field label="Date" input={<input type="date" data-testid={`stop-date-${index}`} value={d} onChange={(e) => combine(e.target.value, t)} className={CELL} />} />
+                          <Field label="Date" input={<DatePicker data-testid={`stop-date-${index}`} value={d} onChange={(v) => combine(v, t)} className={CELL} />} />
                           <Field label="Time" input={<TimePicker id={`stop-time-${index}`} value={t} onChange={(v) => combine(d, v)} className={CELL} ariaLabel="Stop time" />} />
                         </>
                       );
