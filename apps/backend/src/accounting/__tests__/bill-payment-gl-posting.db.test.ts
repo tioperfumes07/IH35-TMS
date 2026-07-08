@@ -256,6 +256,9 @@ describeIntegration("CHAIN-04 bill-payment → GL gap-closure end-to-end (real P
             [companyId, apAccountId]
           );
         });
+        // Re-assert inside the lock — guards against concurrent afterAll blocks deleting this shared
+        // override between the setFlagOverride call above and this lock window.
+        await setFlagOverride(true);
         return await postBillPaymentGlIfEnabled(companyId, paymentId, { userId });
       } finally {
         await db.query("SELECT pg_advisory_unlock(4200000001)");
@@ -343,6 +346,7 @@ describeIntegration("CHAIN-04 bill-payment → GL gap-closure end-to-end (real P
             [companyId, apAccountId]
           );
         });
+        await setFlagOverride(true);
         return await postBillPaymentGlIfEnabled(companyId, paymentId, { userId });
       } finally {
         await db.query("SELECT pg_advisory_unlock(4200000001)");

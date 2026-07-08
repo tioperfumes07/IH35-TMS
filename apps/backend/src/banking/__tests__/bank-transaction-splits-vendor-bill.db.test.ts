@@ -209,6 +209,10 @@ describeIntegration("BANKING-GL-COMPLETION bank-transaction-splits vendor-bill l
             [companyId, apGlAccountId]
           );
         });
+        // Re-assert inside the lock — guards against concurrent afterAll blocks deleting these shared
+        // overrides between our setFlagOverride calls above and this lock window.
+        await setFlagOverride("BILL_GL_POSTING_ENABLED", true);
+        await setFlagOverride("BILL_PAYMENT_GL_POSTING_ENABLED", true);
         return await commitSplit(companyId, userId, "Owner", txnId);
       } finally {
         await db.query("SELECT pg_advisory_unlock(4200000001)");
