@@ -53,7 +53,8 @@ export type BankDriverExpenseDeductionSkipReason =
   | "not_a_debit"
   | "zero_amount"
   | "consent_missing"
-  | "create_failed";
+  | "create_failed"
+  | "already_charged";
 
 export type BankDriverExpenseDeductionResult =
   | { posted: false; reason: BankDriverExpenseDeductionSkipReason; message?: string }
@@ -93,6 +94,9 @@ function normalizeBucketType(raw: string | null | undefined): SettlementDeductio
  * BANK_DRIVER_EXPENSE_DEDUCTION_ENABLED flag. Creates a bucket-charged, consent-gated, recoverable pending
  * deduction that flows into the FIN-18 settlement poster. Every non-posting outcome returns a structured
  * reason and leaves the committed tags untouched.
+ *
+ * IDEMPOTENT: short-circuits (reason: already_charged) when this bank_transaction_id already carries
+ * categorization_deduction_id — a re-run/retry/replay never double-charges the driver's bucket.
  */
 export async function maybeCreateBankCategorizationDriverDeduction(
   input: MaybeCreateBankExpenseDeductionInput
@@ -122,12 +126,15 @@ export async function maybeCreateBankCategorizationDriverDeduction(
       }
     }
 
-    // Read the bank transaction: amount, direction, and the persisted load tag (fallback for the trip).
+    // Read the bank transaction: amount, direction, the persisted load tag (fallback for the trip), and
+    // the reverse dedup link (categorization_deduction_id — stamped at step 3 the first time this bank
+    // txn successfully charges a bucket).
     const txnRes = await client.query(
       `
         SELECT bt.amount_cents::bigint AS amount_cents,
                bt.is_credit AS is_credit,
-               bt.categorization_load_id::text AS categorization_load_id
+               bt.categorization_load_id::text AS categorization_load_id,
+               bt.categorization_deduction_id::text AS categorization_deduction_id
         FROM banking.bank_transactions bt
         WHERE bt.id = $1::uuid AND bt.operating_company_id = $2::uuid
         LIMIT 1
@@ -135,9 +142,20 @@ export async function maybeCreateBankCategorizationDriverDeduction(
       [input.bankTransactionId, input.companyId]
     );
     const txn = txnRes.rows[0] as
-      | { amount_cents: string | number; is_credit: boolean; categorization_load_id: string | null }
+      | {
+          amount_cents: string | number;
+          is_credit: boolean;
+          categorization_load_id: string | null;
+          categorization_deduction_id: string | null;
+        }
       | undefined;
     if (!txn) return { posted: false, reason: "bank_txn_not_found" };
+
+    // IDEMPOTENCY (root-cause fix, not a workaround): the dedup key ALREADY EXISTS — a bank txn carrying
+    // categorization_deduction_id was already charged to a bucket + already has its pending deduction
+    // (step 3 below stamps it). A re-run/retry/replay for the SAME bank txn must never double-charge the
+    // driver's bucket — return a no-op instead of re-creating the bucket charge + deduction.
+    if (txn.categorization_deduction_id) return { posted: false, reason: "already_charged" };
 
     // A fine the company PAID is money OUT (a debit). A credit (money in) is not a recoverable payment.
     if (txn.is_credit === true) return { posted: false, reason: "not_a_debit" };

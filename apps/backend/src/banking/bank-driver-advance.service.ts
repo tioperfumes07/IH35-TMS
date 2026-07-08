@@ -47,7 +47,8 @@ export type BankDriverAdvanceSkipReason =
   | "zero_amount"
   | "authorization_required"
   | "disburse_failed"
-  | "bank_account_hidden";
+  | "bank_account_hidden"
+  | "already_posted";
 
 export type BankDriverAdvanceResult =
   | { posted: false; reason: BankDriverAdvanceSkipReason; message?: string }
@@ -108,6 +109,22 @@ async function decide(input: MaybePostBankDriverAdvanceInput): Promise<Decision>
     if (!flagOn) return { ok: false, reason: "flag_off" };
     if (!input.driverId) return { ok: false, reason: "no_driver" };
     if (!input.glAccountId) return { ok: false, reason: "no_account" };
+
+    // IDEMPOTENCY (root-cause fix, not a workaround): a re-run of this entry point for the SAME bank
+    // transaction (retry after a transient error, double-click, categorize-route replay) must never
+    // double-book the driver receivable + double-deduct pay. Phase 3 below stamps
+    // driver_finance.driver_advances.linked_bank_txn_id on the advance it creates the FIRST time this
+    // bank txn is posted — reuse that EXISTING column as the dedupe key (no new table/column needed).
+    const existingRes = await client.query(
+      `
+        SELECT id FROM driver_finance.driver_advances
+        WHERE linked_bank_txn_id = $1::uuid
+          AND operating_company_id = $2::uuid
+        LIMIT 1
+      `,
+      [input.bankTransactionId, input.companyId]
+    );
+    if (existingRes.rows[0]) return { ok: false, reason: "already_posted" };
 
     // FAIL-CLOSED: authoritative driver-advance receivable account = the one the driver_advance posting
     // path debits (B1 category map). If it isn't designated we refuse to post.
@@ -190,6 +207,10 @@ async function decide(input: MaybePostBankDriverAdvanceInput): Promise<Decision>
  * Maker≠checker: the financial commit (disburse) reuses the existing Owner/Administrator back-dating gate
  * (disburseDriverAdvanceCore) — a caller without that role posting a back-dated advance is refused
  * (reason: authorization_required), leaving the tag in place.
+ *
+ * IDEMPOTENT: decide() short-circuits (reason: already_posted) when this bank_transaction_id already has
+ * an advance linked via linked_bank_txn_id — a re-run/retry/replay never double-books the driver loan or
+ * double-deducts pay.
  */
 export async function maybePostBankDriverAdvanceForCategorization(
   input: MaybePostBankDriverAdvanceInput
