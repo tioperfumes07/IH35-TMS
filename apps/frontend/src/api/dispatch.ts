@@ -198,6 +198,8 @@ export type DispatchBookLoadPayload = {
   miles_deadhead?: number;
   pickup_number?: string;
   border_routing?: string;
+  // CUSTVEND-PAR-1: Manager+ override when customer is at/over credit limit.
+  override_credit_limit?: boolean;
 };
 
 export function reserveDispatchLoadId(operatingCompanyId: string) {

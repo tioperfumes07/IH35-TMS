@@ -1421,6 +1421,18 @@
       "tag_label",
       "vendor_id"
     ],
+    "accounting.vendor_credit_applications": [
+      "applied_at",
+      "applied_by_user_id",
+      "applied_cents",
+      "bill_id",
+      "credit_id",
+      "id",
+      "operating_company_id",
+      "voided_at",
+      "voided_by_user_id",
+      "voided_reason"
+    ],
     "accounting.vendor_credits": [
       "amount_applied_cents",
       "amount_cents",

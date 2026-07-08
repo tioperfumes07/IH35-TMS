@@ -36,6 +36,8 @@ const createBodySchema = z.object({
   // Draft id for create-time invoice attachments (rate cons / BOL); reconciled onto the real invoice id
   // in the same txn (Option B inc 2 — docs/specs/ATTACHMENT-DRAFT-LINKAGE-FIX.md).
   attachment_draft_id: z.string().uuid().optional().nullable(),
+  // CUSTVEND-PAR-1: Manager+ override when customer is at/over credit limit.
+  override_credit_limit: z.boolean().optional(),
 });
 
 const fromLoadBodySchema = z.object({
@@ -55,6 +57,8 @@ const expandedInvoiceBodySchema = z.object({
   // in the same txn. These manual/driver-misc/driver-damage routes are what the invoice modals actually
   // hit (the plain /accounting/invoices route is a separate path).
   attachment_draft_id: z.string().uuid().optional().nullable(),
+  // CUSTVEND-PAR-1: Manager+ override when customer is at/over credit limit.
+  override_credit_limit: z.boolean().optional(),
 });
 
 const patchBodySchema = z
@@ -207,7 +211,8 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
     const created = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const customerRes = await client.query(
         `
-          SELECT c.id, c.payment_terms_id, c.ar_email, c.ar_phone, pt.terms_name, pt.days_until_due
+          SELECT c.id, c.payment_terms_id, c.ar_email, c.ar_phone, c.credit_limit_cents, c.credit_limit_source,
+                 pt.terms_name, pt.days_until_due
           FROM mdata.customers c
           LEFT JOIN catalogs.payment_terms pt ON pt.id = c.payment_terms_id
           WHERE c.id = $1
@@ -218,6 +223,55 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       );
       const customer = customerRes.rows[0] ?? null;
       if (!customer) return { code: 404 as const, error: "customer_not_found" };
+
+      // CUSTVEND-PAR-1: Credit-limit enforcement. Check open exposure vs stored limit.
+      // Includes open invoices + unbilled active loads. Factor-sourced limits show the source.
+      if (customer.credit_limit_cents != null) {
+        const canOverride = ["Owner", "Administrator", "Manager"].includes(user.role);
+        if (!body.data.override_credit_limit || !canOverride) {
+          const exposureRes = await client.query(
+            `SELECT
+               COALESCE((
+                 SELECT SUM(i.total_cents)
+                 FROM accounting.invoices i
+                 WHERE i.customer_id = $1
+                   AND i.operating_company_id = $2
+                   AND i.status NOT IN ('void', 'paid')
+               ), 0)::bigint AS open_invoice_cents,
+               COALESCE((
+                 SELECT SUM(l.rate_total_cents)
+                 FROM mdata.loads l
+                 WHERE l.customer_id = $1
+                   AND l.operating_company_id = $2
+                   AND l.status NOT IN ('draft', 'invoiced', 'paid', 'closed', 'cancelled')
+               ), 0)::bigint AS unbilled_load_cents`,
+            [body.data.customer_id, query.data.operating_company_id]
+          );
+          const openCents = Number(exposureRes.rows[0]?.open_invoice_cents ?? 0);
+          const loadCents = Number(exposureRes.rows[0]?.unbilled_load_cents ?? 0);
+          const totalExposure = openCents + loadCents;
+          const limitCents = Number(customer.credit_limit_cents);
+          if (totalExposure >= limitCents) {
+            return {
+              code: 422 as const,
+              error: "credit_limit_exceeded" as const,
+              exposure_cents: totalExposure,
+              limit_cents: limitCents,
+              credit_limit_source: customer.credit_limit_source ?? null,
+              can_override: canOverride,
+            };
+          }
+        }
+        if (body.data.override_credit_limit && canOverride) {
+          await appendCrudAudit(
+            client, user.uuid,
+            "accounting.invoices.credit_limit_override",
+            { customer_id: body.data.customer_id, operating_company_id: query.data.operating_company_id },
+            "warning",
+            "CUSTVEND-PAR-1"
+          );
+        }
+      }
 
       const issueDate = body.data.issue_date ?? companyBusinessDate();
       const termsDays = Number(customer.days_until_due ?? 30);
@@ -359,7 +413,50 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       if (!body.success) return validationError(reply, body.error);
 
       try {
+        type CreditBlock = { _creditBlock: { code: number; error: string; exposure_cents: number; limit_cents: number; credit_limit_source: string | null; can_override: boolean } };
         const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+          // CUSTVEND-PAR-1: Credit-limit enforcement for customer-facing invoice types.
+          if (body.data.bill_to_entity_type === "customer") {
+            const custRes = await client.query(
+              `SELECT credit_limit_cents, credit_limit_source FROM mdata.customers WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+              [body.data.customer_id, query.data.operating_company_id]
+            );
+            const cust = custRes.rows[0];
+            if (cust?.credit_limit_cents != null) {
+              const canOverride = ["Owner", "Administrator", "Manager"].includes(user.role);
+              if (!body.data.override_credit_limit || !canOverride) {
+                const expRes = await client.query(
+                  `SELECT
+                     COALESCE((SELECT SUM(i.total_cents) FROM accounting.invoices i
+                       WHERE i.customer_id = $1 AND i.operating_company_id = $2
+                         AND i.status NOT IN ('void','paid')), 0)::bigint AS open_invoice_cents,
+                     COALESCE((SELECT SUM(l.rate_total_cents) FROM mdata.loads l
+                       WHERE l.customer_id = $1 AND l.operating_company_id = $2
+                         AND l.status NOT IN ('draft','invoiced','paid','closed','cancelled')), 0)::bigint AS unbilled_load_cents`,
+                  [body.data.customer_id, query.data.operating_company_id]
+                );
+                const exposure = Number(expRes.rows[0]?.open_invoice_cents ?? 0) + Number(expRes.rows[0]?.unbilled_load_cents ?? 0);
+                if (exposure >= Number(cust.credit_limit_cents)) {
+                  return {
+                    _creditBlock: {
+                      code: 422,
+                      error: "credit_limit_exceeded",
+                      exposure_cents: exposure,
+                      limit_cents: Number(cust.credit_limit_cents),
+                      credit_limit_source: cust.credit_limit_source ?? null,
+                      can_override: canOverride,
+                    },
+                  };
+                }
+              }
+              if (body.data.override_credit_limit && canOverride) {
+                await appendCrudAudit(client, user.uuid, "accounting.invoices.credit_limit_override",
+                  { customer_id: body.data.customer_id, operating_company_id: query.data.operating_company_id },
+                  "warning", "CUSTVEND-PAR-1");
+              }
+            }
+          }
+
           const created = await createExpandedInvoice(client, {
             operatingCompanyId: query.data.operating_company_id,
             userId: user.uuid,
@@ -387,6 +484,10 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
           });
           return enrichInvoice(client, created.id);
         });
+        if ((result as CreditBlock)._creditBlock) {
+          const cb = (result as CreditBlock)._creditBlock;
+          return reply.code(cb.code).send({ error: cb.error, exposure_cents: cb.exposure_cents, limit_cents: cb.limit_cents, credit_limit_source: cb.credit_limit_source, can_override: cb.can_override });
+        }
         return reply.code(201).send(result);
       } catch (error) {
         if (String((error as Error).message ?? "") === "customer_not_found")
