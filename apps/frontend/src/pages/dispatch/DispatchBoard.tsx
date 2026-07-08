@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState, type ReactNode } from "react";
+import { Fragment, useCallback, useMemo, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { DispatchLoadRow } from "../../api/loads";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -73,6 +73,7 @@ import { TriSignalPill } from "../../components/dispatch/TriSignalPill";
 import { DriverStatusCell } from "./components/DriverStatusCell";
 import { UnitsWithoutLoadTable } from "./components/UnitsWithoutLoadTable";
 import { QuickAssignModal } from "./components/QuickAssignModal";
+import { TableHeaderCell, useTablePref, type SortDir } from "../../components/table";
 
 export type DispatchBoardProps = Omit<DispatchListProps, "showEtaColumn"> & {
   operatingCompanyId?: string;
@@ -225,6 +226,31 @@ function sortUnassignedFirst(loads: DispatchLoadRow[]) {
     if (aRank !== bRank) return aRank - bRank;
     return 0;
   });
+}
+
+// Columns the dispatcher can click-sort; badge/HOS/GPS columns are not sortable.
+const DISPATCH_SORTABLE_COLS = new Set(["load", "unit", "driver", "customer", "pickup", "delivery", "linehaul", "status"]);
+
+function compareDispatch(a: string | number | null | undefined, b: string | number | null | undefined): number {
+  if (a == null && b == null) return 0;
+  if (a == null) return 1;
+  if (b == null) return -1;
+  if (typeof a === "number" && typeof b === "number") return a - b;
+  return String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: "base" });
+}
+
+function dispatchSortValue(load: DispatchLoadRow, key: string): string | number | null {
+  switch (key) {
+    case "load": return load.load_number ?? null;
+    case "unit": return load.assigned_unit_number ?? null;
+    case "driver": return load.assigned_primary_driver_name ?? null;
+    case "customer": return load.customer_name ?? null;
+    case "pickup": return load.first_pickup_city ?? null;
+    case "delivery": return load.first_delivery_city ?? null;
+    case "linehaul": return load.rate_total_cents ?? null;
+    case "status": return load.status ?? null;
+    default: return null;
+  }
 }
 
 function statusVariant(status: DispatchLoadRow["status"]) {
@@ -400,8 +426,30 @@ export function DispatchBoard({
     [loads, rowOverrides]
   );
 
-  const sortedLoads = useMemo(() => sortUnassignedFirst(effectiveLoads), [effectiveLoads]);
+  const { widths: dispatchColWidths, setColumnWidth: setDispatchColWidth } = useTablePref("dispatch-board", { pageSize: 200 });
+  const [dispatchSortKey, setDispatchSortKey] = useState<string | null>(null);
+  const [dispatchSortDir, setDispatchSortDir] = useState<SortDir>("asc");
+  const toggleDispatchSort = useCallback((key: string) => {
+    setDispatchSortKey((prev) => {
+      if (prev === key) {
+        setDispatchSortDir((d) => (d === "asc" ? "desc" : "asc"));
+        return key;
+      }
+      setDispatchSortDir("asc");
+      return key;
+    });
+  }, []);
 
+  const sortedLoads = useMemo(() => {
+    const base = sortUnassignedFirst(effectiveLoads);
+    if (!dispatchSortKey) return base;
+    return [...base].sort((a, b) => {
+      const va = dispatchSortValue(a, dispatchSortKey);
+      const vb = dispatchSortValue(b, dispatchSortKey);
+      const cmp = compareDispatch(va, vb);
+      return dispatchSortDir === "asc" ? cmp : -cmp;
+    });
+  }, [effectiveLoads, dispatchSortKey, dispatchSortDir]);
 
   // Live GPS — last-known position per visible load (in-app Samsara store), one batched call.
   // Replaces the hardcoded null stub so the Live GPS column shows real coordinates when present.
@@ -854,7 +902,7 @@ export function DispatchBoard({
             onCapExceeded={(message) => pushToast(message, "error")}
           >
             {(selectCtx) => (
-              <table className="w-full text-left text-sm">
+              <table className="w-full text-sm">
                 <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
                   <tr>
                     <th className="w-10 px-2 py-2">
@@ -866,9 +914,17 @@ export function DispatchBoard({
                       />
                     </th>
                     {columns.map((column) => (
-                      <th key={column.key} className="px-3 py-1.5">
-                        {column.header}
-                      </th>
+                      <TableHeaderCell
+                        key={column.key}
+                        columnKey={column.key}
+                        label={column.header}
+                        sortable={DISPATCH_SORTABLE_COLS.has(column.key)}
+                        sortKey={dispatchSortKey}
+                        sortDir={dispatchSortDir}
+                        onToggleSort={toggleDispatchSort}
+                        width={dispatchColWidths[column.key]}
+                        onResize={setDispatchColWidth}
+                      />
                     ))}
                   </tr>
                 </thead>
