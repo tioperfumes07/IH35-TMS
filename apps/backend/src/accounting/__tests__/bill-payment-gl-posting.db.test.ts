@@ -235,6 +235,17 @@ describeIntegration("CHAIN-04 bill-payment → GL gap-closure end-to-end (real P
   });
 
   it("GAP #1 ON + GAP #2 — flag ON + bill A/P posted → balanced DR ap_control / CR REAL bank (ledger_account_id)", async () => {
+    // Re-seed ap_control immediately before posting — guards against concurrent test files
+    // (bank-transaction-splits-vendor-bill) mutating the shared TRANSP ap_control row via DO UPDATE
+    // in their own beforeAll/afterAll while this test's it-block is running.
+    await bypass(async () => {
+      await db.query(
+        `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
+         VALUES ($1::uuid, 'ap_control', $2::uuid, true)
+         ON CONFLICT (operating_company_id, role) WHERE is_active = true DO UPDATE SET account_id = EXCLUDED.account_id`,
+        [companyId, apAccountId]
+      );
+    });
     const billId = await seedBill([{ amount_cents: 120_000, category_kind: "fuel", category_code: fuelCode }]);
     await postSourceTransaction({ operating_company_id: companyId, source_transaction_type: "bill", source_transaction_id: billId }, { userId });
     const paymentId = await seedPayment({ billId, amountCents: 120_000, fromBankAccountId: bankAccountId });
@@ -254,12 +265,11 @@ describeIntegration("CHAIN-04 bill-payment → GL gap-closure end-to-end (real P
     // eslint-disable-next-line no-console
     console.log("CHAIN-04 posted bill-payment JE:\n" + rows.map((r) => `  ${r.debit_or_credit.toUpperCase().padEnd(6)} ${r.account_number} ${r.account_name}  $${(Number(r.amount_cents) / 100).toFixed(2)}`).join("\n"));
 
-    const liveAp = await liveRole("ap_control");
     const debits = rows.filter((r) => r.debit_or_credit === "debit");
     const credits = rows.filter((r) => r.debit_or_credit === "credit");
     expect(debits).toHaveLength(1);
     expect(credits).toHaveLength(1);
-    expect(debits[0].account_id).toBe(liveAp); // DR the live ap_control
+    expect(debits[0].account_id).toBe(apAccountId); // DR this test's seeded ap_control — use known UUID, not liveRole(), to avoid concurrent-fork read drift
     expect(Number(debits[0].amount_cents)).toBe(120_000);
     expect(credits[0].account_id).toBe(bankGlAccountId); // CR the REAL bank ledger_account_id — NOT undeposited_funds
     expect(Number(credits[0].amount_cents)).toBe(120_000);
@@ -307,6 +317,15 @@ describeIntegration("CHAIN-04 bill-payment → GL gap-closure end-to-end (real P
   });
 
   it("BANKING-GL-COMPLETION — a bill paid BY CREDIT CARD (cc_account_id) → DR ap_control / CR CC-liability", async () => {
+    // Re-seed ap_control at the start of this it-block for the same isolation reason as the cash-bank it.
+    await bypass(async () => {
+      await db.query(
+        `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
+         VALUES ($1::uuid, 'ap_control', $2::uuid, true)
+         ON CONFLICT (operating_company_id, role) WHERE is_active = true DO UPDATE SET account_id = EXCLUDED.account_id`,
+        [companyId, apAccountId]
+      );
+    });
     const billId = await seedBill([{ amount_cents: 40_000, category_kind: "fuel", category_code: fuelCode }]);
     await postSourceTransaction({ operating_company_id: companyId, source_transaction_type: "bill", source_transaction_id: billId }, { userId });
     const paymentId = await seedCcPayment({ billId, amountCents: 40_000, ccAccountId: ccLiabilityAccountId });
@@ -322,12 +341,11 @@ describeIntegration("CHAIN-04 bill-payment → GL gap-closure end-to-end (real P
         ORDER BY line_sequence ASC`,
       [paymentId]
     );
-    const liveAp = await liveRole("ap_control");
     const debits = rows.filter((r) => r.debit_or_credit === "debit");
     const credits = rows.filter((r) => r.debit_or_credit === "credit");
     expect(debits).toHaveLength(1);
     expect(credits).toHaveLength(1);
-    expect(debits[0].account_id).toBe(liveAp);
+    expect(debits[0].account_id).toBe(apAccountId); // DR this test's seeded ap_control — use known UUID, not liveRole(), to avoid concurrent-fork read drift
     expect(credits[0].account_id).toBe(ccLiabilityAccountId); // CR the CC-liability account, not a bank/cash-like account
     expect(Number(debits[0].amount_cents)).toBe(40_000);
     expect(Number(credits[0].amount_cents)).toBe(40_000);
