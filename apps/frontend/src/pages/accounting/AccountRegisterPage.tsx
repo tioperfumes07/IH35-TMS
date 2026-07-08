@@ -9,8 +9,9 @@ import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { listCoaAccountsForJe, listAccountingAuditTrail } from "../../api/accounting";
-import { getAccountRegister, type AccountRegisterReport } from "../../api/account-register";
+import { getAccountRegister, type AccountRegisterReport, type AccountRegisterRow } from "../../api/account-register";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 const fmtCents = (cents: number) => formatUsdCents(cents);
 
@@ -27,9 +28,6 @@ function sourceRoute(type: string | null, reference: string | null): string {
   if (t === "settlement") return "/driver-finance/settlements";
   return "/accounting/journal-entries";
 }
-
-// Density toggle per the qbo-parity table grammar (Regular / Compact / Ultra-compact).
-const DENSITY: Record<string, string> = { regular: "px-3 py-2", compact: "px-2 py-1", ultra: "px-2 py-0.5" };
 
 const TRANSACTION_TYPES = ["Invoice", "Invoice Payment", "Bill", "Bill Payment", "Expense", "Journal Entry", "Settlement", "Transfer"];
 // Map the display label back to the stored source_transaction_type the backend filters on.
@@ -99,7 +97,6 @@ export function AccountRegisterPage() {
   const initial = monthBounds(new Date());
   const paramFrom = searchParams.get("from_date");
   const paramTo = searchParams.get("to_date");
-  const [density, setDensity] = useState<"regular" | "compact" | "ultra">("regular");
   const [accountId, setAccountId] = useState(routeAccountId ?? "");
   const [fromDate, setFromDate] = useState(paramFrom ?? initial.from);
   const [toDate, setToDate] = useState(paramTo ?? initial.to);
@@ -202,7 +199,61 @@ export function AccountRegisterPage() {
   const accounts = accountsQuery.data?.accounts ?? [];
   const normalLabel = report ? (report.account.normal_balance === "debit" ? "Dr" : "Cr") : "";
   const normal: "debit" | "credit" = report?.account.normal_balance ?? "debit";
-  const cell = DENSITY[density];
+
+  // QBO register column grammar (approved design: docs/approved-screens/preview-register-qbo.html).
+  // Payment/Deposit are derived per-account from normal_balance, so they aren't sortable by a raw
+  // field on the row (sorting on the real debit/credit fields would silently swap meaning per account).
+  const columns: Array<ParityColumn<AccountRegisterRow>> = [
+    {
+      key: "entry_date",
+      label: "Date",
+      sortable: true,
+      cellClass: "whitespace-nowrap",
+      render: (r) => formatDateUS(r.entry_date),
+    },
+    { key: "reference", label: "Ref No.", sortable: true, render: (r) => r.reference ?? "—" },
+    { key: "payee", label: "Payee", sortable: true, render: (r) => r.payee ?? "—" },
+    { key: "memo", label: "Memo", sortable: true, render: (r) => r.memo ?? r.description ?? "—" },
+    { key: "class_name", label: "Class", sortable: true, render: (r) => r.class_name ?? "—" },
+    {
+      key: "payment",
+      label: "Payment",
+      sortable: false,
+      className: "text-right",
+      cellClass: "text-right tabular-nums",
+      render: (r) => {
+        const increase = normal === "debit" ? r.debit_cents : r.credit_cents;
+        return increase ? fmtCents(increase) : "";
+      },
+    },
+    {
+      key: "deposit",
+      label: "Deposit",
+      sortable: false,
+      className: "text-right",
+      cellClass: "text-right tabular-nums",
+      render: (r) => {
+        const decrease = normal === "debit" ? r.credit_cents : r.debit_cents;
+        return decrease ? fmtCents(decrease) : "";
+      },
+    },
+    {
+      key: "running_balance_cents",
+      label: "Balance",
+      sortable: true,
+      className: "text-right",
+      cellClass: "text-right font-medium tabular-nums",
+      render: (r) => fmtCents(r.running_balance_cents),
+    },
+    { key: "type", label: "Type", sortable: true, render: (r) => r.type },
+    { key: "split_account", label: "Account", sortable: true, render: (r) => r.split_account ?? "—" },
+    // Location + C/R are bank-register concepts; the GL posting model carries neither (verified) →
+    // honest "—", never fabricated. Kept as columns (hideable via the gear) to match the QBO grammar.
+    { key: "location", label: "Location", sortable: false, render: () => "—" },
+    { key: "cr", label: "C/R", sortable: false, render: () => "—" },
+  ];
+
+  const printList = () => window.print();
 
   const kpiStrip = report ? (
     <div className="grid gap-2 md:grid-cols-4">
@@ -283,22 +334,6 @@ export function AccountRegisterPage() {
             </div>
           ) : null}
         </div>
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-          Density
-          <SelectCombobox value={density} onChange={(e) => setDensity(e.target.value as "regular" | "compact" | "ultra")} className={inputCls}>
-            <option value="regular">Regular</option>
-            <option value="compact">Compact</option>
-            <option value="ultra">Ultra-compact</option>
-          </SelectCombobox>
-        </label>
-        <button
-          type="button"
-          onClick={exportCsv}
-          disabled={!report || report.rows.length === 0}
-          className="h-9 rounded-sm border border-gray-300 bg-white px-3 text-[13px] font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-40"
-        >
-          Export CSV
-        </button>
       </div>
 
       {activeChips.length ? (
@@ -351,69 +386,46 @@ export function AccountRegisterPage() {
         <div className="mb-2 rounded-sm border border-slate-200 bg-slate-50 px-3 py-1.5 text-[12px] text-slate-700">
           Reconciliation not yet available — the C/R column reflects GL postings, which carry no cleared/reconciled state yet.
         </div>
-        <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-          <table className="min-w-full text-left text-xs">
-            <thead className="border-b border-gray-200 bg-gray-50 text-[11px] font-semibold uppercase tracking-wide text-gray-600">
-              <tr>
-                <th className={cell}>Date</th>
-                <th className={cell}>Type</th>
-                <th className={cell}>Ref</th>
-                <th className={cell}>Payee</th>
-                <th className={cell}>Memo</th>
-                <th className={cell}>Account</th>
-                <th className={cell}>Class</th>
-                <th className={cell}>Location</th>
-                <th className={cell}>C/R</th>
-                <th className={`${cell} text-right`}>Increase</th>
-                <th className={`${cell} text-right`}>Decrease</th>
-                <th className={`${cell} text-right`}>Running balance</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="border-b border-gray-100 bg-gray-50/40 text-gray-600">
-                <td className={cell} colSpan={11}>
-                  Opening balance ({normal === "debit" ? "Dr" : "Cr"})
-                </td>
-                <td className={`${cell} text-right font-medium`}>{report ? fmtCents(report.opening_balance_cents) : "—"}</td>
-              </tr>
-              {report?.rows.map((r) => {
-                // QBO labels amounts by the account's normal balance: increase = the natural side.
-                const increase = normal === "debit" ? r.debit_cents : r.credit_cents;
-                const decrease = normal === "debit" ? r.credit_cents : r.debit_cents;
-                return (
-                  <tr
-                    key={r.posting_id}
-                    onClick={() => navigate(sourceRoute(r.source_transaction_type, r.reference))}
-                    title="Open source transaction"
-                    className="cursor-pointer border-b border-gray-100 hover:bg-gray-50"
-                  >
-                    <td className={`${cell} whitespace-nowrap`}>{formatDateUS(r.entry_date)}</td>
-                    <td className={cell}>{r.type}</td>
-                    <td className={cell}>{r.reference ?? "—"}</td>
-                    <td className={cell}>{r.payee ?? "—"}</td>
-                    <td className={cell}>{r.memo ?? r.description ?? "—"}</td>
-                    <td className={cell}>{r.split_account ?? "—"}</td>
-                    <td className={cell}>{r.class_name ?? "—"}</td>
-                    {/* Location + C/R are bank-register concepts; the GL posting model carries neither
-                        (verified) → honest "—", never fabricated. */}
-                    <td className={cell}>—</td>
-                    <td className={cell}>—</td>
-                    <td className={`${cell} text-right tabular-nums`}>{increase ? fmtCents(increase) : ""}</td>
-                    <td className={`${cell} text-right tabular-nums`}>{decrease ? fmtCents(decrease) : ""}</td>
-                    <td className={`${cell} text-right font-medium tabular-nums`}>{fmtCents(r.running_balance_cents)}</td>
-                  </tr>
-                );
-              })}
-              {report && report.rows.length === 0 ? (
-                <tr>
-                  <td className="px-3 py-6 text-center text-gray-500" colSpan={12}>
-                    {registerQuery.isLoading ? "Loading…" : "No transactions in this range."}
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
+        {/* Opening balance is a running summary, not a paginated row — kept pinned above the table
+            (QBO shows it as the first register line; ParityTable's rows are page-sliced, so a summary
+            row belongs outside it to stay visible on every page). */}
+        <div className="mb-0 flex items-center justify-between rounded-t-md border border-b-0 border-gray-200 bg-gray-50/60 px-2 py-1.5 text-[12px] text-gray-600">
+          <span>Opening balance ({normal === "debit" ? "Dr" : "Cr"})</span>
+          <span className="font-medium tabular-nums">{report ? fmtCents(report.opening_balance_cents) : "—"}</span>
         </div>
+        <ParityTable
+          columns={columns}
+          rows={report?.rows ?? []}
+          rowKey={(r) => r.posting_id}
+          loading={registerQuery.isLoading}
+          onRowClick={(r) => navigate(sourceRoute(r.source_transaction_type, r.reference))}
+          emptyText="No transactions in this range."
+          storageKey="account-register"
+          pageSizeOptions={[50, 75, 100, 200, 300]}
+          initialPageSize={50}
+          toolbar={
+            <>
+              <button
+                type="button"
+                onClick={exportCsv}
+                disabled={!report || report.rows.length === 0}
+                title="Export to Excel"
+                className="min-h-11 rounded-sm border border-gray-300 px-2 py-1 text-[12px] text-gray-700 hover:bg-gray-50 disabled:opacity-40 sm:min-h-0"
+              >
+                Export to Excel
+              </button>
+              <button
+                type="button"
+                onClick={printList}
+                disabled={!report || report.rows.length === 0}
+                title="Print list"
+                className="min-h-11 rounded-sm border border-gray-300 px-2 py-1 text-[12px] text-gray-700 hover:bg-gray-50 disabled:opacity-40 sm:min-h-0"
+              >
+                Print list
+              </button>
+            </>
+          }
+        />
         </>
       ) : (
         <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
