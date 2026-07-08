@@ -418,6 +418,7 @@ import DriverSafetyProfilePage from "../pages/safety/driver-safety/DriverSafetyP
 const IntegrityAlertsPage = React.lazy(() => import("../pages/safety/IntegrityAlertsPage").then((m) => ({ default: m.IntegrityAlertsPage })));
 const DailyTasksPage = React.lazy(() => import("../pages/daily-tasks/DailyTasksPage").then((m) => ({ default: m.DailyTasksPage })));
 const VendorMappingResolutionPage = React.lazy(() => import("../pages/samsara-vendor-mapping/VendorMappingResolutionPage").then((m) => ({ default: m.VendorMappingResolutionPage })));
+const HosDriverMapPreviewPage = React.lazy(() => import("../pages/samsara-vendor-mapping/HosDriverMapPreviewPage").then((m) => ({ default: m.HosDriverMapPreviewPage })));
 
 // Tasks module (SIDEBAR-V2-REORG-25)
 const TaskBoardPage = React.lazy(() => import("../pages/tasks/TaskBoardPage").then((m) => ({ default: m.TaskBoardPage })));
@@ -2741,6 +2742,14 @@ export const ROUTES = React.Children.toArray(
             <ProtectedRoute>
               <VendorMappingResolutionPage />
             </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/samsara/hos-driver-map"
+          element={
+            <OwnerOnlyRoute>
+              <HosDriverMapPreviewPage />
+            </OwnerOnlyRoute>
           }
         />
         <Route
