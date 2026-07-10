@@ -273,7 +273,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
             className="rounded-sm border border-gray-300 px-2 py-1 text-xs text-gray-700 hover:bg-gray-50 disabled:opacity-40"
             data-testid="safety-events-export"
           >
-            ⤓ Export CSV
+            Export CSV
           </button>
           <button
             type="button"
