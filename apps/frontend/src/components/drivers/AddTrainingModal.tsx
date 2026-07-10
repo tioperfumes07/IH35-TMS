@@ -4,6 +4,8 @@ import { apiRequest } from "../../api/client";
 import { getTrainingCompletions } from "../../api/safety";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
+import { DatePicker } from "../forms/DatePicker";
+import { companyToday } from "../../lib/businessDate";
 
 type Props = {
   open: boolean;
@@ -42,7 +44,7 @@ export function createDriverTrainingRecord(
 export function AddTrainingModal({ open, driverId, companyId, driverName, onClose, onCreated }: Props) {
   const [trainingName, setTrainingName] = useState("");
   const [customName, setCustomName] = useState("");
-  const [completedAt, setCompletedAt] = useState(new Date().toISOString().slice(0, 10));
+  const [completedAt, setCompletedAt] = useState(companyToday());
   const [notes, setNotes] = useState("");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
@@ -64,7 +66,7 @@ export function AddTrainingModal({ open, driverId, companyId, driverName, onClos
   const resetForm = () => {
     setTrainingName("");
     setCustomName("");
-    setCompletedAt(new Date().toISOString().slice(0, 10));
+    setCompletedAt(companyToday());
     setNotes("");
     setError("");
   };
@@ -138,13 +140,11 @@ export function AddTrainingModal({ open, driverId, companyId, driverName, onClos
         ) : null}
         <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold text-gray-600">Completion date</label>
-          <input
-            type="date"
+          <DatePicker
             value={completedAt}
-            onChange={(event) => setCompletedAt(event.target.value)}
+            onChange={setCompletedAt}
             className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
             data-testid="add-training-completed"
-            required
           />
         </div>
         <div className="flex flex-col gap-1">

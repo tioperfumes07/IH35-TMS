@@ -20,6 +20,7 @@ describe("ReconciliationWorkspacePage", () => {
 
   it("filters by account and date range", () => {
     expect(source).toContain("period_start");
-    expect(source).toContain("type=\"date\"");
+    // SYS-DATE: raw type="date" inputs were replaced with the shared DatePicker component.
+    expect(source).toContain("DatePicker");
   });
 });

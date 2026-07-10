@@ -4,11 +4,13 @@ import { useParams } from "react-router-dom";
 import { ApiError } from "../../api/client";
 import { getPublicApplyPortal, submitDriverApplication } from "../../api/applicants";
 import { Button } from "../../components/Button";
+import { DatePicker } from "../../components/forms/DatePicker";
+import { companyToday } from "../../lib/businessDate";
 
 function defaultDobForAge21() {
   const d = new Date();
   d.setUTCFullYear(d.getUTCFullYear() - 25);
-  return d.toISOString().slice(0, 10);
+  return companyToday(d);
 }
 
 export function ApplicationPage() {
@@ -154,13 +156,12 @@ export function ApplicationPage() {
         </label>
         <label className="grid gap-1 text-sm">
           <span>Date of birth</span>
-          <input
-            type="date"
+          {/* required removed: DatePicker has no native required attr */}
+          <DatePicker
             className="rounded-sm border px-3 py-2"
             data-testid="application-dob"
             value={dateOfBirth}
-            onChange={(e) => setDateOfBirth(e.target.value)}
-            required
+            onChange={setDateOfBirth}
           />
         </label>
         <div className="grid gap-3 sm:grid-cols-2">

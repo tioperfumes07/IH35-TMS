@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { listFactoringReserveBalances } from "../../api/accounting";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { titleize } from "../../lib/titleize";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -70,7 +71,7 @@ export function FactorReserveCard({ operatingCompanyId }: { operatingCompanyId: 
                 <span className="text-gray-500">{new Date(event.occurred_at).toLocaleString()}</span>
               </div>
               <div className="mt-1 text-gray-700">
-                Status: {event.status} | Reserve: {money(event.reserve_amount_cents)} | Release: {money(event.release_amount_cents)} | Fee:{" "}
+                Status: {titleize(event.status)} | Reserve: {money(event.reserve_amount_cents)} | Release: {money(event.release_amount_cents)} | Fee:{" "}
                 {money(event.factor_fee_cents)}
               </div>
             </div>

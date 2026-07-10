@@ -11,6 +11,7 @@ import {
   type CostContextOption,
   type ItemLine,
 } from "../../../../components/forms/shared/CostBreakdownBox";
+import { DatePicker } from "../../../../components/forms/DatePicker";
 import { SelectCombobox } from "../../../../components/shared/SelectCombobox";
 
 type Props = {
@@ -91,11 +92,10 @@ export function CreateExpenseForm({ value, onChange, operatingCompanyId }: Props
       </div>
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-2 md:grid-cols-6">
         <Field label="Expense Date">
-          <input
-            type="date"
+          <DatePicker
             className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
             value={String(value.expense_date ?? "")}
-            onChange={(event) => onChange({ ...value, expense_date: event.target.value })}
+            onChange={(next) => onChange({ ...value, expense_date: next })}
           />
         </Field>
         <Field label="Expense Number">

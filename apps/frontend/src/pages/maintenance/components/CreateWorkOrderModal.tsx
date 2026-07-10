@@ -962,7 +962,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
             <FieldV5 label="Repaired by"><select {...form.register("repaired_by")} className={FLD}><option value="in_house">In-house</option><option value="outside_vendor">Outside vendor</option></select></FieldV5>
             <FieldV5 label="Authorization #"><input {...form.register("authorization_number")} className={FLD} /></FieldV5>
           </div>
-          <CreateWOSectionRenderV5Header register={form.register} />
+          <CreateWOSectionRenderV5Header register={form.register} watch={form.watch} setValue={form.setValue} />
           {/* Conditional Outside-vendor block (render: #vendorBlock, revealed when Repaired by = Outside vendor) */}
           {outsideVendor ? (
             <div data-testid="wo-outside-vendor-block" className="mt-2 rounded-md border border-[#fed7aa] bg-[#fffdf8] p-2">
@@ -1071,7 +1071,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
               </div>
               {paymentTiming === "paid_same_day" ? (
                 <>
-                  <CreateWOSectionPaymentTiming register={form.register} watch={form.watch} />
+                  <CreateWOSectionPaymentTiming register={form.register} watch={form.watch} setValue={form.setValue} />
                   <div className="mt-1.5 rounded-md border border-[#cbd5e1] bg-[#f1f5f9] px-2 py-1.5 text-[10.5px] text-[#1f2a44]">Registers as an <b>Expense</b> in QuickBooks (money out now) against the payment account.</div>
                 </>
               ) : null}

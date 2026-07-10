@@ -6,6 +6,7 @@ import { ParityTable } from "../components/parity/ParityTable";
 import { customerQualityKind, customerQualityClass } from "../lib/quality-badge";
 import { CustomerLateArrivalCard } from "../components/customers/CustomerLateArrivalCard";
 import { formatUsdCents } from "../lib/money";
+import { companyToday } from "../lib/businessDate";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
@@ -357,7 +358,7 @@ export function CustomerDetailPage() {
   const [fmcsaHistoryOpen, setFmcsaHistoryOpen] = useState(false);
   const [qualityForm, setQualityForm] = useState({
     event_type: "late_payment" as CustomerQualityEvent["event_type"],
-    event_date: new Date().toISOString().slice(0, 10),
+    event_date: companyToday(),
     reason_id: "",
     severity: "info" as CustomerQualityEvent["severity"],
     summary: "",
@@ -367,7 +368,7 @@ export function CustomerDetailPage() {
   });
   const [voidReason, setVoidReason] = useState("");
   const [recordPaymentOpen, setRecordPaymentOpen] = useState(false);
-  const [payDate, setPayDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [payDate, setPayDate] = useState(() => companyToday());
   const [payAmount, setPayAmount] = useState<number | null>(null);
   const [payMethod, setPayMethod] = useState("ach");
   const [payRef, setPayRef] = useState("");
@@ -737,7 +738,7 @@ export function CustomerDetailPage() {
       setQualityModalOpen(false);
       setQualityForm({
         event_type: "late_payment",
-        event_date: new Date().toISOString().slice(0, 10),
+        event_date: companyToday(),
         reason_id: "",
         severity: "info",
         summary: "",
@@ -871,7 +872,7 @@ export function CustomerDetailPage() {
       setPayAmount(null);
       setPayRef("");
       setPayMemo("");
-      setPayDate(new Date().toISOString().slice(0, 10));
+      setPayDate(companyToday());
     },
     onError: (e) => pushToast(String((e as Error).message ?? "Failed"), "error"),
   });
@@ -2452,13 +2453,22 @@ function Field({
   return (
     <div className="mb-2 flex flex-col gap-1">
       <label className="text-xs font-semibold text-gray-600">{label}</label>
-      <input
-        type={type}
-        value={value ?? ""}
-        onChange={(event) => onChange(event.target.value)}
-        disabled={disabled}
-        className="h-9 rounded-sm border border-gray-300 px-2 py-1.5 text-[13px] disabled:bg-gray-100"
-      />
+      {type === "date" ? (
+        <DatePicker
+          value={value ?? ""}
+          onChange={onChange}
+          disabled={disabled}
+          className="h-9 rounded-sm border border-gray-300 px-2 py-1.5 text-[13px] disabled:bg-gray-100"
+        />
+      ) : (
+        <input
+          type={type}
+          value={value ?? ""}
+          onChange={(event) => onChange(event.target.value)}
+          disabled={disabled}
+          className="h-9 rounded-sm border border-gray-300 px-2 py-1.5 text-[13px] disabled:bg-gray-100"
+        />
+      )}
     </div>
   );
 }

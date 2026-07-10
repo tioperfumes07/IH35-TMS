@@ -93,11 +93,9 @@ export function EditMetadataModal({ file, entityType, onClose, onSaveSuccess }: 
             <label className="text-xs font-semibold text-gray-600">
               Expiration Date {selectedCategory?.requires_expiration_date ? <span className="text-crit">(required)</span> : null}
             </label>
-            <input
-              type="date"
+            <DatePicker
               value={expirationDate}
-              required={selectedCategory?.requires_expiration_date}
-              onChange={(event) => setExpirationDate(event.target.value)}
+              onChange={setExpirationDate}
               className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
             />
           </div>

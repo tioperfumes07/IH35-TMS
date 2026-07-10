@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { apiRequest } from "../../api/client";
+import { companyToday } from "../../lib/businessDate";
 import { Button } from "../Button";
+import { DatePicker } from "../forms/DatePicker";
 import { Modal } from "../Modal";
 
 type Props = {
@@ -58,7 +60,7 @@ export function W8BenModal({ open, driverId, companyId, driverName, onClose, onC
   const [treatyCountry, setTreatyCountry] = useState("");
   const [treatyArticle, setTreatyArticle] = useState("");
   const [certName, setCertName] = useState("");
-  const [signedDate, setSignedDate] = useState(new Date().toISOString().slice(0, 10));
+  const [signedDate, setSignedDate] = useState(companyToday());
   const [notes, setNotes] = useState("");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
@@ -171,7 +173,7 @@ export function W8BenModal({ open, driverId, companyId, driverName, onClose, onC
           </div>
           <div className="flex flex-col gap-1">
             <label className={labelCls}>Date of birth</label>
-            <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} className={inputCls} data-testid="w8ben-dob" />
+            <DatePicker value={dob} onChange={setDob} className={inputCls} data-testid="w8ben-dob" />
           </div>
         </div>
 
@@ -195,7 +197,7 @@ export function W8BenModal({ open, driverId, companyId, driverName, onClose, onC
           </div>
           <div className="flex flex-col gap-1">
             <label className={labelCls}>Signed date</label>
-            <input type="date" value={signedDate} onChange={(e) => setSignedDate(e.target.value)} className={inputCls} data-testid="w8ben-signed" required />
+            <DatePicker value={signedDate} onChange={setSignedDate} className={inputCls} data-testid="w8ben-signed" />
           </div>
         </div>
 

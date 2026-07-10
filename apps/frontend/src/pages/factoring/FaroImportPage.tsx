@@ -2,9 +2,11 @@ import { useMemo, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { apiRequest } from "../../api/client";
+import { companyToday } from "../../lib/businessDate";
 
 type PreviewLine = {
   invoice_number: string;
@@ -41,7 +43,7 @@ export function FaroImportPage() {
   const { pushToast } = useToast();
   const [fileName, setFileName] = useState("");
   const [csvText, setCsvText] = useState("");
-  const [statementDate, setStatementDate] = useState(new Date().toISOString().slice(0, 10));
+  const [statementDate, setStatementDate] = useState(companyToday());
   const [preview, setPreview] = useState<PreviewResponse | null>(null);
 
   const mutation = useMutation({
@@ -84,11 +86,10 @@ export function FaroImportPage() {
       <div className="rounded-sm border border-[#2A3150] bg-[#12182B] p-4 space-y-3">
         <label className="block text-xs text-slate-300">
           Statement date
-          <input
-            type="date"
+          <DatePicker
             className="mt-1 block w-full max-w-xs rounded-sm border border-[#2A3150] bg-[#0B1020] px-2 py-1 text-sm text-white"
             value={statementDate}
-            onChange={(e) => setStatementDate(e.target.value)}
+            onChange={setStatementDate}
           />
         </label>
 

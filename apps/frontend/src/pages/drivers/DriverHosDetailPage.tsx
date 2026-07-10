@@ -5,6 +5,7 @@ import { getDriver } from "../../api/mdata";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateTimeUS } from "../../lib/formatDate";
+import { titleize } from "../../lib/titleize";
 
 function minutesToLabel(minutes: number) {
   const safe = Math.max(0, Math.floor(minutes));
@@ -79,7 +80,7 @@ export function DriverHosDetailPage() {
             <div className="rounded-sm border border-gray-200 bg-white p-3">
               <div className="text-xs uppercase text-gray-500">Status</div>
               <div className={`mt-1 inline-flex rounded-full px-2 py-1 text-xs font-semibold ${statusClass(hosQuery.data.clocks.status)}`}>
-                {hosQuery.data.clocks.status}
+                {titleize(hosQuery.data.clocks.status)}
               </div>
             </div>
           </div>

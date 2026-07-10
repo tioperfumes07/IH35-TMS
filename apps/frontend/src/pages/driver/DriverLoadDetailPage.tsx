@@ -3,6 +3,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { getDriverLoad, type DriverLoad } from "../../api/driver";
+import { titleize } from "../../lib/titleize";
 import { useState } from "react";
 import { ReportIssueModal } from "./ReportIssueModal";
 
@@ -42,7 +43,7 @@ export function DriverLoadDetailPage() {
         <ul className="mt-1 space-y-1 text-xs">
           {load.stops.map((s: DriverLoad["stops"][number]) => (
             <li key={s.id}>
-              {s.type} · {s.city}, {s.state} · {s.status}
+              {titleize(s.type)} · {s.city}, {s.state} · {titleize(s.status)}
             </li>
           ))}
         </ul>

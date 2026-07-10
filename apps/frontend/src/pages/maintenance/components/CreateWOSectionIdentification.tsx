@@ -6,6 +6,7 @@ import { listMaintenanceDrivers, listMaintenanceVehicles } from "../../../api/ma
 import { useToast } from "../../../components/Toast";
 import type { CreateWOFormValues } from "./CreateWorkOrderModal";
 import { QboCombobox } from "../../../components/forms/QboCombobox";
+import { DatePicker } from "../../../components/forms/DatePicker";
 import { Combobox } from "../../../components/shared/Combobox";
 import { QuickCreateEntityModal, type QuickCreateKind } from "../../../components/forms/shared/QuickCreateEntityModal";
 
@@ -91,7 +92,15 @@ export function CreateWOSectionIdentification({
           <input value="Auto on save" readOnly className="h-8 w-full rounded-sm border border-gray-300 bg-gray-100 px-2 text-sm" />
         </Field>
         <Field label="Date Opened *">
-          <input type="date" {...register("service_date")} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
+          {setValue ? (
+            <DatePicker
+              value={watch("service_date") || ""}
+              onChange={(v) => setValue("service_date", v, { shouldDirty: true })}
+              className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm"
+            />
+          ) : (
+            <input {...register("service_date")} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
+          )}
         </Field>
         <Field label="Unit *">
           {operatingCompanyId && setValue ? (

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as clientApi from "../../../api/client";
@@ -59,7 +59,11 @@ describe("AddTrainingModal (A24-7)", () => {
       expect(screen.getByRole("option", { name: "Defensive Driving" })).toBeInTheDocument();
     });
     await user.selectOptions(screen.getByTestId("add-training-program"), "Defensive Driving");
-    fireEvent.change(screen.getByTestId("add-training-completed"), { target: { value: "2026-06-01" } });
+    // Completion date is the shared DatePicker (SYS-DATE) — open it and pick a day in the
+    // currently-displayed month rather than fireEvent.change (it's a button, not a native input).
+    // The POST body assertion below doesn't depend on the exact date picked.
+    await user.click(within(screen.getByTestId("add-training-completed")).getByRole("button"));
+    await user.click(await screen.findByRole("button", { name: "1" }));
     await user.type(screen.getByTestId("add-training-notes"), "Completed onsite");
     await user.click(screen.getByTestId("add-training-submit"));
 

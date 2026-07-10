@@ -8,6 +8,8 @@ import { SelectCombobox } from "../shared/SelectCombobox";
 import { TaskLinkPicker } from "../tasks/TaskLinkPicker";
 import { useToast } from "../Toast";
 import { MoneyInput } from "../forms/MoneyInput";
+import { DatePicker } from "../forms/DatePicker";
+import { companyToday } from "../../lib/businessDate";
 
 export type BillPaymentRow = {
   bill_id: string;
@@ -50,7 +52,7 @@ function centsFromInput(value: number | null) {
 
 export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorName, onClose, onSaved }: Props) {
   const { pushToast } = useToast();
-  const [paymentDate, setPaymentDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [paymentDate, setPaymentDate] = useState(() => companyToday());
   const [paymentMethod, setPaymentMethod] = useState<(typeof METHOD_OPTIONS)[number]["value"]>("ach");
   const [totalAmount, setTotalAmount] = useState<number | null>(null);
   const [checkNumber, setCheckNumber] = useState("");
@@ -119,7 +121,7 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
 
   useEffect(() => {
     if (!open) return;
-    setPaymentDate(new Date().toISOString().slice(0, 10));
+    setPaymentDate(companyToday());
     setPaymentMethod("ach");
     setTotalAmount(null);
     setCheckNumber("");
@@ -195,7 +197,7 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Payment date
-            <input type="date" value={paymentDate} onChange={(e) => setPaymentDate(e.target.value)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
+            <DatePicker value={paymentDate} onChange={setPaymentDate} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
           </label>
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Method

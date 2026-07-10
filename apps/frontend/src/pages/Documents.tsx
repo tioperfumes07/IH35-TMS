@@ -12,6 +12,7 @@ import { PageHeader } from "../components/layout/PageHeader";
 import { useToast } from "../components/Toast";
 import { dataTableErrorState } from "../lib/tableError";
 import { formatDateUS } from "../lib/formatDate";
+import { DatePicker } from "../components/forms/DatePicker";
 
 const ENTITY_TYPE_OPTIONS = [
   { value: "all", label: "All" },
@@ -177,19 +178,17 @@ export function DocumentsPage() {
         </div>
         <div className="space-y-1">
           <label className="text-xs font-semibold text-gray-600">Date From</label>
-          <input
-            type="date"
+          <DatePicker
             value={dateFrom}
-            onChange={(event) => setDateFrom(event.target.value)}
+            onChange={setDateFrom}
             className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
           />
         </div>
         <div className="space-y-1">
           <label className="text-xs font-semibold text-gray-600">Date To</label>
-          <input
-            type="date"
+          <DatePicker
             value={dateTo}
-            onChange={(event) => setDateTo(event.target.value)}
+            onChange={setDateTo}
             className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
           />
         </div>

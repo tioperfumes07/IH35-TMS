@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { titleize } from "../../../lib/titleize";
 import {
   getSettlementDispute,
   listSettlementDisputes,
@@ -217,8 +218,8 @@ export function SettlementDisputesTab({ companyId }: { companyId: string }) {
           <div className="grid gap-2 text-xs md:grid-cols-2">
             <div className="rounded-sm border border-gray-100 p-2">
               <p className="font-semibold text-gray-700">Dispute</p>
-              <p>Category: {detail.dispute_category}</p>
-              <p>Status: {detail.status}</p>
+              <p>Category: {titleize(detail.dispute_category)}</p>
+              <p>Status: {titleize(detail.status)}</p>
               <p>Opened: {openedDaysAgo ?? "-"} days ago</p>
               <p>Description: {detail.dispute_description}</p>
             </div>

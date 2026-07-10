@@ -238,11 +238,9 @@ export function UploadModal({
             <label className="text-xs font-semibold text-gray-600">
               Expiration Date {expirationRequired ? <span className="text-crit">(required)</span> : null}
             </label>
-            <input
-              type="date"
+            <DatePicker
               value={expirationDate}
-              onChange={(event) => setExpirationDate(event.target.value)}
-              required={expirationRequired}
+              onChange={setExpirationDate}
               className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
             />
           </div>

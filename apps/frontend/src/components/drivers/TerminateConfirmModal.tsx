@@ -4,6 +4,8 @@ import { createSafetyEvent, listTerminationReasons } from "../../api/mdata";
 import { Button } from "../Button";
 import { Combobox } from "../Combobox";
 import { Modal } from "../Modal";
+import { DatePicker } from "../forms/DatePicker";
+import { companyToday } from "../../lib/businessDate";
 
 function todayIso() {
   return new Date().toISOString().slice(0, 10);
@@ -20,7 +22,7 @@ type Props = {
 export function TerminateConfirmModal({ open, driverId, driverName, onClose, onTerminated }: Props) {
   const [terminationReasonId, setTerminationReasonId] = useState("");
   const [summary, setSummary] = useState("");
-  const [eventDate, setEventDate] = useState(todayIso());
+  const [eventDate, setEventDate] = useState(companyToday());
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
 
@@ -82,11 +84,10 @@ export function TerminateConfirmModal({ open, driverId, driverName, onClose, onT
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold text-gray-600">Event date</label>
-          <input
-            type="date"
+          <DatePicker
             max={todayIso()}
             value={eventDate}
-            onChange={(event) => setEventDate(event.target.value)}
+            onChange={setEventDate}
             className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
           />
         </div>

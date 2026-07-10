@@ -6,6 +6,8 @@ import { Modal } from "../../components/Modal";
 import { useToast } from "../../components/Toast";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { MoneyInput } from "../../components/forms/MoneyInput";
+import { DatePicker } from "../../components/forms/DatePicker";
+import { companyToday } from "../../lib/businessDate";
 
 type Props = {
   open: boolean;
@@ -23,7 +25,7 @@ type Props = {
 };
 
 function todayIsoDate() {
-  return new Date().toISOString().slice(0, 10);
+  return companyToday();
 }
 
 function minDateIso90DaysAgo() {
@@ -167,13 +169,12 @@ export function TransferModal({ open, operatingCompanyId, onClose, onSaved, pref
           </label>
           <label className="block">
             Date
-            <input
-              type="date"
+            <DatePicker
               min={minD}
               max={todayIsoDate()}
               className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2"
               value={transferDate}
-              onChange={(e) => setTransferDate(e.target.value)}
+              onChange={setTransferDate}
             />
           </label>
         </div>

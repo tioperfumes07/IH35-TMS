@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { FinanceModuleTabs } from "./FinanceModuleTabs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -140,22 +141,20 @@ export function BreakEvenPage() {
       <div className="mb-4 flex flex-wrap items-end gap-3 rounded-sm border border-slate-200 bg-white p-3">
         <label className="flex flex-col text-xs font-medium text-slate-600">
           From
-          <input
-            type="date"
+          <DatePicker
             value={fromDate}
             max={toDate}
-            onChange={(e) => setFromDate(e.target.value)}
+            onChange={setFromDate}
             className="mt-1 rounded-sm border border-slate-300 px-2 py-1 text-sm text-slate-900"
           />
         </label>
         <label className="flex flex-col text-xs font-medium text-slate-600">
           To
-          <input
-            type="date"
+          <DatePicker
             value={toDate}
             min={fromDate}
             max={todayIso()}
-            onChange={(e) => setToDate(e.target.value)}
+            onChange={setToDate}
             className="mt-1 rounded-sm border border-slate-300 px-2 py-1 text-sm text-slate-900"
           />
         </label>
