@@ -154,6 +154,9 @@ export function WorkOrdersTable({
         )}
         filterBar={
           <div className="flex flex-wrap items-center gap-2">
+            {/* M-09: visual filter indicator — the source/vendor/search boxes below had no label or icon
+                marking them as filters (looked like plain data-entry fields). */}
+            <span className="text-xs font-semibold text-gray-600">Filter:</span>
             <label className="flex items-center gap-1 text-xs text-gray-600">
               <span>Source type</span>
               <SelectCombobox

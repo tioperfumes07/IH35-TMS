@@ -37,7 +37,6 @@ import { DtcAutoWorkOrdersCard } from "./components/DtcAutoWorkOrdersCard";
 import { InTransitIssuesTable } from "./components/InTransitIssuesTable";
 import { InTransitTriageBand } from "./components/InTransitTriageBand";
 import { SevereAlertsBand } from "./components/SevereAlertsBand";
-import { IntegrationsStrip } from "./components/IntegrationsStrip";
 import { MaintKpiRows } from "./components/MaintKpiRows";
 import { MaintenancePmCountdownCards } from "./components/MaintenancePmCountdownCards";
 import { MaintenanceAlertsCard } from "./components/MaintenanceAlertsCard";
@@ -294,7 +293,8 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
       {companyId && tab !== "rm_status_board" ? (
         <MaintenancePmCountdownCards rows={pmDueQuery.data?.rows ?? []} loading={pmDueQuery.isLoading} />
       ) : null}
-      <IntegrationsStrip pendingQboCount={kpis.pending_qbo} />
+      {/* M-08: removed — this in-module QBO/Samsara/Relay status bar duplicated the global Topbar
+          (apps/frontend/src/components/Topbar.tsx renders the same integrations on every page). */}
       {companyId && tab !== "rm_status_board" ? <MaintenanceAlertsCard operatingCompanyId={companyId} /> : null}
       {companyId && tab !== "rm_status_board" ? <DtcAutoWorkOrdersCard operatingCompanyId={companyId} /> : null}
 
