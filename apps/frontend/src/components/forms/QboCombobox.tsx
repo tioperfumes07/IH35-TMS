@@ -27,6 +27,25 @@ function useDebouncedValue<T>(value: T, delayMs: number): T {
   return debounced;
 }
 
+// A-04: the picker searches our own local TMS tables (canonical mdata.vendors/mdata.customers/
+// catalogs.items for vendor/customer/item; the periodically-synced mdata.qbo_accounts mirror for
+// account) — it never calls the live QuickBooks API per keystroke. Default placeholder/loading text
+// must not imply a live QBO round-trip. See src/api/qbo-mdata.ts searchQboMasterData for the routing.
+function defaultPlaceholder(entityType: QboEntityType): string {
+  switch (entityType) {
+    case "vendor":
+      return "Type to search vendors…";
+    case "customer":
+      return "Type to search customers…";
+    case "item":
+      return "Type to search products/services…";
+    case "account":
+      return "Type to search chart of accounts…";
+    default:
+      return "Type to search…";
+  }
+}
+
 function renderLabel(row: QboAutocompleteRow, entityType: QboEntityType) {
   const base = row.display_name;
   const suffix = row.active ? "" : " [INACTIVE]";
@@ -91,7 +110,7 @@ export function QboCombobox({
     <div ref={rootRef} className="relative w-full">
       <input
         className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
-        placeholder={placeholder ?? "Type to search QuickBooks…"}
+        placeholder={placeholder ?? defaultPlaceholder(entityType)}
         value={draft}
         onFocus={() => setOpen(true)}
         onChange={(event) => {
@@ -131,7 +150,7 @@ export function QboCombobox({
 
       {open ? (
         <div className="absolute z-50 mt-1 max-h-56 w-full overflow-auto rounded-sm border border-gray-200 bg-white shadow-md">
-          {resultsQuery.isLoading ? <div className="px-2 py-2 text-xs text-gray-600">Searching QuickBooks mirror…</div> : null}
+          {resultsQuery.isLoading ? <div className="px-2 py-2 text-xs text-gray-600">Searching…</div> : null}
           {resultsQuery.isError ? (
             <div className="px-2 py-2 text-xs text-red-600">Could not load suggestions.</div>
           ) : null}

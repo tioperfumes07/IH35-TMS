@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { formatDateUS } from "../../lib/formatDate";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -155,6 +156,24 @@ export function BankingHomePage({ initialTab }: Props = {}) {
     setReconAccountId(String(plaidAccountsQuery.data?.accounts?.[0]?.id ?? ""));
     setStartReconOpen(true);
   };
+
+  // BNK-03: last-reconciled date + beginning balance for the account picked in the "Start
+  // reconciliation" dialog — READ-ONLY, sourced from the existing reconciliation-sessions endpoint
+  // (the most recently completed session's ending statement balance becomes the next period's
+  // beginning balance, same as QBO). Honest "not yet reconciled" when no completed session exists —
+  // never fabricated.
+  const lastCompletedReconSession = useMemo(() => {
+    if (!reconAccountId) return null;
+    const completed = (reconciliationSessionsQuery.data?.completed_sessions ?? []).filter(
+      (session) => session.bank_account_id === reconAccountId
+    );
+    if (completed.length === 0) return null;
+    return [...completed].sort((a, b) => {
+      const aDate = a.reconciled_at ?? a.period_end;
+      const bDate = b.reconciled_at ?? b.period_end;
+      return aDate < bDate ? 1 : aDate > bDate ? -1 : 0;
+    })[0];
+  }, [reconciliationSessionsQuery.data?.completed_sessions, reconAccountId]);
 
   const headerActions =
     activeTab === "accounts" ? (
@@ -506,6 +525,24 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                   </option>
                 ))}
               </SelectCombobox>
+              {reconAccountId ? (
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-sm border border-gray-200 bg-gray-50 px-2 py-1.5 text-xs text-gray-700">
+                  <span>
+                    Last reconciled:{" "}
+                    <span className="font-medium text-gray-900">
+                      {lastCompletedReconSession
+                        ? formatDateUS(lastCompletedReconSession.reconciled_at ?? lastCompletedReconSession.period_end)
+                        : "Not yet reconciled"}
+                    </span>
+                  </span>
+                  <span>
+                    Beginning balance:{" "}
+                    <span className="font-medium text-gray-900">
+                      {lastCompletedReconSession ? money.format(lastCompletedReconSession.statement_balance_cents / 100) : "Unavailable"}
+                    </span>
+                  </span>
+                </div>
+              ) : null}
               <DatePicker
                 value={reconPeriodStart}
                 onChange={(next) => setReconPeriodStart(next)}

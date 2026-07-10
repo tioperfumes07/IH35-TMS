@@ -51,7 +51,7 @@ const BUSINESS_FEED_CARDS: BusinessFeedCard[] = [
 
 const CREATE_ACTIONS = [
   { label: "Create invoice", to: "/accounting/invoices" },
-  { label: "Record expense", to: "/accounting/expenses" },
+  { label: "Record expense", to: "/accounting/expenses/new" },
   { label: "Receive payment", to: "/accounting/payments" },
   { label: "Create bill", to: "/accounting/bills/vendor" },
   { label: "Add bank deposit", to: "/accounting/bill-payments" },

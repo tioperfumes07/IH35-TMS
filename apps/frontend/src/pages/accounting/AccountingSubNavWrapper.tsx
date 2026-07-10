@@ -4,7 +4,7 @@ import { ACCOUNTING_CLEAN_TABS, ACCOUNTING_MORE_TABS } from "./subnav-manifest";
 
 const CREATE_MENU = [
   { label: "New Bill", to: "/accounting/bills/vendor" },
-  { label: "Expense", to: "/accounting/expenses" },
+  { label: "Expense", to: "/accounting/expenses/new" },
   { label: "Invoice", to: "/accounting/invoices" },
   { label: "Receive payment", to: "/accounting/payments" },
   { label: "Journal entry", to: "/accounting/journal-entries" },

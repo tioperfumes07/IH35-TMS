@@ -273,7 +273,9 @@ export function RecordExpenseForm({
       {error ? <div className="text-sm text-red-600">{error}</div> : null}
 
       {showSubmitButton ? (
-        <div className="flex justify-end">
+        // A-06: sticky so the primary action stays visible without scrolling past the whole
+        // form (works inside Modal's own scroll region and inside the full-page create screen).
+        <div className="sticky bottom-0 -mx-4 flex justify-end border-t border-gray-200 bg-white px-4 py-2">
           <Button type="submit" disabled={submitting || !operatingCompanyId}>
             {submitting ? "Saving…" : submitLabel}
           </Button>

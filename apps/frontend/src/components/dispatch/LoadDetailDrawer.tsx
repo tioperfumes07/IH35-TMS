@@ -279,12 +279,23 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
               Close
             </Button>
           </div>
-          <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+          {/* D-03: flex-shrink-0 + trailing spacer stop the last tab (e.g. "Assignment History") from
+              being clipped at the scroll container's right edge — the tab bar scrolls, it never truncates. */}
+          <div className="mt-3 flex gap-2 overflow-x-auto pb-1 pr-4">
             {visibleTabs.map((tab) => (
-              <Button key={tab} type="button" size="sm" variant={activeTab === tab ? "primary" : "secondary"} onClick={() => setActiveTab(tab)} style={{ whiteSpace: "nowrap" }}>
+              <Button
+                key={tab}
+                type="button"
+                size="sm"
+                variant={activeTab === tab ? "primary" : "secondary"}
+                onClick={() => setActiveTab(tab)}
+                className="flex-shrink-0"
+                style={{ whiteSpace: "nowrap" }}
+              >
                 {tab}
               </Button>
             ))}
+            <span className="flex-shrink-0 basis-2" aria-hidden="true" />
           </div>
         </header>
 
@@ -714,9 +725,16 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
         </div>
 
         <footer className="sticky bottom-0 flex items-center justify-between border-t border-gray-200 bg-white p-4">
-          <Button type="button" variant="danger" size="sm" onClick={() => setCancelOpen(true)} disabled={!load || load.status === "cancelled"}>
-            Cancel Load
-          </Button>
+          {/* D-02: a load that failed to load / doesn't exist yet has nothing to cancel — the danger
+              "Cancel Load" action only appears once a real load record is loaded. The always-present
+              "Close" button on the right already covers the unsaved/not-found case. */}
+          {load ? (
+            <Button type="button" variant="danger" size="sm" onClick={() => setCancelOpen(true)} disabled={load.status === "cancelled"}>
+              Cancel Load
+            </Button>
+          ) : (
+            <span />
+          )}
           <div className="flex gap-2">
             <Button
               type="button"

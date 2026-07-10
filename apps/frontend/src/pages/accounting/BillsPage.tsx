@@ -2,7 +2,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { listBills, listPaymentsForBill, type BillStatus, type VendorBill } from "../../api/accounting";
 import { BillAllocationPanel } from "../../components/allocation";
@@ -307,6 +307,14 @@ export function BillsPage() {
     <AccountingSubNavWrapper
       title="Bills"
       subtitle="Vendor bills with paid balance and partial payment history"
+      actions={
+        <Link
+          to="/accounting/bills/vendor"
+          className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-sm font-medium text-gray-800 hover:bg-gray-50"
+        >
+          + Create Bill
+        </Link>
+      }
       kpiStrip={
         <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
           {billKpiCard("Open Bills", money(billKpis.openAmount), `${billKpis.openCount} open`, billKpis.openCount ? "danger" : "neutral")}

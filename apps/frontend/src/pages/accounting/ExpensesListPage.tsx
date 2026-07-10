@@ -169,7 +169,7 @@ export function ExpensesListPage() {
       subtitle="Recorded expenses (read-only)"
       actions={
         <Link
-          to="/accounting/expenses"
+          to="/accounting/expenses/new"
           className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-sm font-medium text-gray-800 hover:bg-gray-50"
         >
           + Record expense

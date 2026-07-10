@@ -3683,15 +3683,25 @@ export const ROUTES = React.Children.toArray(
           path="/accounting/expenses"
           element={
             <ProtectedRoute>
-              <ExpenseCreatePage />
+              <ExpensesListPage />
             </ProtectedRoute>
           }
         />
         <Route
+          path="/accounting/expenses/new"
+          element={
+            <ProtectedRoute>
+              <ExpenseCreatePage />
+            </ProtectedRoute>
+          }
+        />
+        {/* A-03 (2026-07-10): list moved to /accounting/expenses (mirrors Bills = list at /accounting/bills);
+            /accounting/expenses/list kept as a working alias/redirect — additive, breaks no existing link. */}
+        <Route
           path="/accounting/expenses/list"
           element={
             <ProtectedRoute>
-              <ExpensesListPage />
+              <Navigate to="/accounting/expenses" replace />
             </ProtectedRoute>
           }
         />
