@@ -14,7 +14,9 @@ import {
 } from "../../../api/maintenance";
 import { ApiError } from "../../../api/client";
 import { companyToday } from "../../../lib/businessDate";
+import { BILL_TERMS_OPTIONS } from "../../../lib/billTermsLabel";
 import { Button } from "../../../components/Button";
+import { Combobox } from "../../../components/shared/Combobox";
 import { QboCombobox } from "../../../components/forms/QboCombobox";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../../../components/forms/TwoSectionLineEditor";
@@ -956,12 +958,10 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
             }
             backendLoadError={backendLoadError}
           />
-          <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-4">
-            <FieldV5 label="Priority"><input list="wo-prios" {...form.register("wo_priority")} placeholder="Routine / Urgent / OOS" className={FLD} /></FieldV5>
-            <FieldV5 label="Status"><input list="wo-statuses" {...form.register("status")} placeholder="Open…" className={FLD} /></FieldV5>
-            <FieldV5 label="Repaired by"><select {...form.register("repaired_by")} className={FLD}><option value="in_house">In-house</option><option value="outside_vendor">Outside vendor</option></select></FieldV5>
-            <FieldV5 label="Authorization #"><input {...form.register("authorization_number")} className={FLD} /></FieldV5>
-          </div>
+          {/* M-01: the compact Priority/Status/Repaired-by/Authorization # row that used to render here was
+              a DUPLICATE of the same 4 fields already rendered by CreateWOSectionRenderV5Header's "Work
+              order header" section immediately below — removed the duplicate render, kept the one full
+              section (visual-sweep 2026-07-02). */}
           <CreateWOSectionRenderV5Header register={form.register} watch={form.watch} setValue={form.setValue} />
           {/* Conditional Outside-vendor block (render: #vendorBlock, revealed when Repaired by = Outside vendor) */}
           {outsideVendor ? (
@@ -1078,7 +1078,15 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
               {paymentTiming === "vendor_invoice" ? (
                 <>
                   <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                    <FieldV5 label="Terms"><input list="wo-terms" {...form.register("bill_terms")} placeholder="Net 30 / Net 15 / Due on receipt" className={FLD} /></FieldV5>
+                    <FieldV5 label="Terms">
+                      {/* M-05: show the human label ("Net 30"), never the raw stored code ("net_30"). */}
+                      <Combobox
+                        options={BILL_TERMS_OPTIONS}
+                        value={form.watch("bill_terms") || null}
+                        onChange={(value) => form.setValue("bill_terms", value ?? "", { shouldDirty: true })}
+                        placeholder="Select terms…"
+                      />
+                    </FieldV5>
                     <FieldV5 label="Due date (from terms)"><input {...form.register("due_date")} placeholder="auto from terms" className={FLD} /></FieldV5>
                   </div>
                   <div className="mt-1.5 rounded-md border border-[#fed7aa] bg-[#fff7ed] px-2 py-1.5 text-[10.5px] text-[#92400e]">Registers as a <b>Bill</b> (A/P) — payable later, 1099-tracked.</div>
@@ -1122,16 +1130,10 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
             {paymentTiming === "vendor_invoice" ? "Create work order & Bill" : paymentTiming === "paid_same_day" ? "Create work order & Expense" : "Create work order"}
           </button>
         </div>
-        <div className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] text-slate-900">
-          Posts to QBO with class {classHint} on every line
-        </div>
       </div>
 
       {/* render-v5 datalists (searchable filter lists) */}
-      <datalist id="wo-prios"><option value="routine">Routine</option><option value="urgent">Urgent</option><option value="immediate">OOS / Immediate</option></datalist>
-      <datalist id="wo-statuses"><option value="open">Open</option><option value="in_progress">In progress</option><option value="waiting_parts">Awaiting parts</option><option value="complete">Completed</option></datalist>
       <datalist id="wo-systems">{["Brakes", "Tires & wheels", "Engine", "Aftertreatment / DEF", "Electrical / Battery", "Lighting / Lamps", "Mirrors / Glass", "HVAC / Reefer", "Suspension", "Body / Trailer"].map((s) => <option key={s} value={s} />)}</datalist>
-      <datalist id="wo-terms">{["Due on receipt", "Net 15", "Net 30", "Net 45"].map((t) => <option key={t} value={t} />)}</datalist>
     </Modal>
   );
 }
