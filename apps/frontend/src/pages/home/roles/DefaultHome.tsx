@@ -220,8 +220,8 @@ export function DefaultHome({ auth }: Props) {
                   : `${ownerCashPending.length} cash advance request${ownerCashPending.length === 1 ? "" : "s"} awaiting Owner action`}
               </div>
               <p className="mt-1 max-w-2xl text-xs text-slate-700/90">
-                Above-policy driver requests escalated from the office queue. Open the cash advance requests page to copy portal links or use the
-                email you received.
+                These driver cash advance requests are above standard policy and need your approval before they can be paid. Open the
+                queue to review and approve or decline each request.
               </p>
             </div>
             <Link
@@ -386,7 +386,8 @@ export function DefaultHome({ auth }: Props) {
               >
                 {item.number}
               </div>
-              <div className="text-[11px] text-slate-500">{item.meta}</div>
+              {/* H-04: darkened from slate-500 to slate-700 (locked --slate token) for WCAG AA on white */}
+              <div className="text-[11px] text-slate-700">{item.meta}</div>
             </div>
           ))}
         </div>
@@ -457,10 +458,6 @@ export function DefaultHome({ auth }: Props) {
       <div className="order-7">
         <ComplianceFilingsDueWidget operatingCompanyId={selectedCompanyId ?? null} />
       </div>
-
-      <footer className="order-8 text-xs text-gray-500">
-        Backend version: {import.meta.env.VITE_BUILD_COMMIT ? String(import.meta.env.VITE_BUILD_COMMIT) : "not available"}
-      </footer>
     </div>
   );
 }

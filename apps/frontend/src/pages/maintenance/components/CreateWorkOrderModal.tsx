@@ -1122,9 +1122,6 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
             {paymentTiming === "vendor_invoice" ? "Create work order & Bill" : paymentTiming === "paid_same_day" ? "Create work order & Expense" : "Create work order"}
           </button>
         </div>
-        <div className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] text-slate-900">
-          Posts to QBO with class {classHint} on every line
-        </div>
       </div>
 
       {/* render-v5 datalists (searchable filter lists) */}

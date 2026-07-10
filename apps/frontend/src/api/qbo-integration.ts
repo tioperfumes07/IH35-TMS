@@ -17,6 +17,15 @@ export function getQboSyncHealth(operatingCompanyId: string) {
   );
 }
 
+/** H-02: manual "Sync now" action for the topbar QBO Stale pill. Owner-only on the backend
+ *  (kicks off the existing master-data full sync); returns 202 immediately, health is polled after. */
+export function triggerQboMasterDataSyncFull(operatingCompanyId: string) {
+  return apiRequest<{ accepted: boolean }>("/api/v1/qbo/master-data-sync/trigger-full", {
+    method: "POST",
+    body: { operating_company_id: operatingCompanyId },
+  });
+}
+
 export type UnlinkedEntityRow = {
   entity_kind: "driver" | "unit" | "equipment";
   id: string;

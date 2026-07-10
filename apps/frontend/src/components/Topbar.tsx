@@ -1,9 +1,10 @@
 import { ChevronDown, Menu, Plus, ClipboardList, LayoutGrid } from "lucide-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getQboConnectionStatus, getQboAuthorizeStartUrl } from "../api/forensic";
-import { getQboSyncHealth } from "../api/qbo-integration";
+import { getQboSyncHealth, triggerQboMasterDataSyncFull } from "../api/qbo-integration";
+import { ApiError } from "../api/client";
 import { getSamsaraHealth } from "../api/samsara";
 import { getIdentityCurrentCompany, signOut } from "../api/identity";
 import { colors, spacing, typography } from "../design/tokens";
@@ -33,6 +34,14 @@ function formatNow(now: Date): string {
     hour: "numeric",
     minute: "2-digit",
   });
+}
+
+// H-02: read-only last-sync timestamp shown next to the QBO sync pill (e.g. "Last: Jul 9, 3:45 PM").
+function formatLastSync(iso: string | null | undefined): string {
+  if (!iso) return "never";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "never";
+  return d.toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 }
 
 export function Topbar({ auth, onOpenMobileNav }: Props) {
@@ -121,13 +130,29 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
       label = `QBO sync · Running${companySuffix}${row.pending_count ? ` · ${row.pending_count} pending` : ""}`;
     } else if (status === "stale") {
       dot = "yellow";
-      label = `QBO sync · Stale${row.pending_count ? ` · ${row.pending_count} pending` : ""}`;
+      // H-02: a "Stale" pill with no timestamp gives the user nothing to act on — show when it last
+      // actually succeeded so they can judge how stale is stale.
+      label = `QBO sync · Stale · Last: ${formatLastSync(row.last_successful_sync_at)}${row.pending_count ? ` · ${row.pending_count} pending` : ""}`;
     } else if (status === "error") {
       dot = "red";
       label = `QBO sync · Error${companySuffix}${row.error_count ? ` (${row.error_count})` : ""}`;
     }
     return { dot, label, status, needsReconnect: Boolean(row.needs_reconnect), reconnectReason: row.reconnect_reason ?? null };
   }, [qboSyncHealthQuery.data, qboSyncHealthQuery.isError, companyLabel]);
+
+  // H-02: "Stale" previously had no action — only "Reconnect" existed, and only for the error/needs-
+  // reconnect state. Wire the existing Owner-only manual full-sync trigger so Stale has a real action.
+  const canTriggerQboSync = auth.role === "Owner";
+  const syncNowMutation = useMutation({
+    mutationFn: () => triggerQboMasterDataSyncFull(companyId),
+    onSuccess: () => {
+      pushToast(t("topbar.qbo_sync_now_started", "QBO sync started"), "success");
+      void queryClient.invalidateQueries({ queryKey: ["qbo", "sync-health", companyId] });
+    },
+    onError: (err) => {
+      pushToast(err instanceof ApiError ? err.message : "Could not start QBO sync", "error");
+    },
+  });
 
   const qboErrorBannerMessage = useMemo(() => {
     if (!qboSyncPill || qboSyncPill.status !== "error") return null;
@@ -147,14 +172,19 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
 
   const dateLabel = useMemo(() => formatNow(now), [now]);
 
+  // H-01/SYS-09: the badge must reflect the entity the user is CURRENTLY working in — that is
+  // `selectedCompany` from CompanyContext (the same value driving companyId for every query on this
+  // page and the CarrierSwitcher dropdown right next to it). The server-truth `identityCompanyQuery`
+  // is only a fallback for the brief window before CompanyContext has resolved a selection, otherwise
+  // the two can disagree (e.g. stale identity cache) and show two different entity names at once.
   const legalNameChip =
-    identityCompanyQuery.data?.company_legal_name?.trim() ||
     selectedCompany?.legal_name?.trim() ||
     companyLabel ||
+    identityCompanyQuery.data?.company_legal_name?.trim() ||
     "";
 
   const chipClass = companyOperatingChipClasses(
-    identityCompanyQuery.data?.company_legal_name ?? selectedCompany?.legal_name ?? null,
+    selectedCompany?.legal_name ?? identityCompanyQuery.data?.company_legal_name ?? null,
     selectedCompany?.code ?? null
   );
 
@@ -204,6 +234,8 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
           onReconnectQbo={() => {
             if (companyId) window.location.href = getQboAuthorizeStartUrl(companyId);
           }}
+          onSyncNow={canTriggerQboSync && companyId ? () => syncNowMutation.mutate() : undefined}
+          syncNowPending={syncNowMutation.isPending}
         />
         <CarrierSwitcher />
       </div>

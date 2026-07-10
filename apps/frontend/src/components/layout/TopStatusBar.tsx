@@ -18,6 +18,10 @@ export type TopStatusBarProps = {
   qboSyncPill: QboSyncPill | null;
   onOpenQboSyncDashboard: () => void;
   onReconnectQbo: () => void;
+  /** H-02: manual "Sync now" action for the Stale state. Undefined when the user can't trigger a sync
+   *  (backend gates this Owner-only) — omit the button rather than show one that will 403. */
+  onSyncNow?: () => void;
+  syncNowPending?: boolean;
   /** Icon-only mode at/below this viewport width. AF-15: 1366 (tablet + laptop). */
   compactMaxWidth?: number;
 };
@@ -53,6 +57,8 @@ export function TopStatusBar({
   qboSyncPill,
   onOpenQboSyncDashboard,
   onReconnectQbo,
+  onSyncNow,
+  syncNowPending = false,
   compactMaxWidth = 1366,
 }: TopStatusBarProps) {
   const compact = useMaxWidth(compactMaxWidth);
@@ -68,6 +74,8 @@ export function TopStatusBar({
         qboSyncPill={qboSyncPill}
         onOpenQboSyncDashboard={onOpenQboSyncDashboard}
         onReconnectQbo={onReconnectQbo}
+        onSyncNow={onSyncNow}
+        syncNowPending={syncNowPending}
       />
     );
   }
@@ -112,6 +120,15 @@ export function TopStatusBar({
               onClick={onReconnectQbo}
             >
               Reconnect QuickBooks
+            </button>
+          ) : qboSyncPill.status === "stale" && onSyncNow ? (
+            <button
+              type="button"
+              className="ml-1 rounded-full border border-amber-400/60 px-2 py-0.5 text-[11px] font-semibold text-amber-100 hover:bg-amber-400/10 disabled:cursor-not-allowed disabled:opacity-60"
+              onClick={onSyncNow}
+              disabled={syncNowPending}
+            >
+              {syncNowPending ? "Syncing…" : "Sync now"}
             </button>
           ) : null}
         </>

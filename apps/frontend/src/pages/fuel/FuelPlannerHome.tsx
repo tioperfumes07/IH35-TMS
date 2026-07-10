@@ -15,7 +15,6 @@ import {
 } from "../../api/fuelPlanner";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ActionButton } from "../../components/shared/ActionButton";
-import { HoverDropdown } from "../../components/shared/HoverDropdown";
 import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -129,24 +128,8 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
         subtitle={activeLabel}
         actions={
           <div className="flex items-center gap-2">
-            <HoverDropdown
-              trigger={<button className="rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700">Jump to tab</button>}
-              align="right"
-              minWidth={240}
-            >
-              <div className="space-y-1">
-                {SUBNAV.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    className="block w-full rounded-sm px-2 py-1 text-left text-xs hover:bg-slate-100"
-                    onClick={() => goToTab(item.id)}
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-            </HoverDropdown>
+            {/* F-02: the "Jump to tab" dropdown duplicated the standard SecondaryNavTabs strip
+                rendered below — removed the non-standard control, tabs remain navigable there. */}
             {tab === "planner" ? (
               <>
                 {/* Trip planning is read from active dispatch routes (no manual create endpoint yet).

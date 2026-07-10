@@ -107,10 +107,8 @@ export function AccountingHome({ auth }: Props) {
 
       <ComplianceFilingsDueWidget operatingCompanyId={selectedCompanyId ?? null} />
 
-      <footer className="text-xs text-gray-500">
-        Read-only view · data as of {homeQuery.data?.as_of_date ?? "—"} · Backend:{" "}
-        {import.meta.env.VITE_BUILD_COMMIT ? String(import.meta.env.VITE_BUILD_COMMIT) : "not available"}
-      </footer>
+      {/* SYS-06: dropped the raw build-commit readout — developer-facing, not owner-facing */}
+      <footer className="text-xs text-gray-500">Read-only view · data as of {homeQuery.data?.as_of_date ?? "—"}</footer>
     </div>
   );
 }

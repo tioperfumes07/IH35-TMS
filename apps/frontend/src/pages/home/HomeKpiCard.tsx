@@ -56,7 +56,9 @@ export function HomeKpiCard({ label, number, accent, isLoading, isError, error, 
     <div className="flex min-h-[118px] flex-col gap-1">
       <KpiCard label={label} number={number} accent={accent} to={to} />
       {delta ? <div className="px-3 text-[11px]">{delta}</div> : null}
-      {subtext ? <div className="px-3 text-[11px] leading-snug text-slate-500">{subtext}</div> : null}
+      {/* H-04: text-slate-500 (#64748b) is borderline against white for 11px text; text-slate-700
+          (#334155 — the locked --slate token) keeps this on-palette while meeting WCAG AA. */}
+      {subtext ? <div className="px-3 text-[11px] leading-snug text-slate-700">{subtext}</div> : null}
     </div>
   );
 }

@@ -11,6 +11,8 @@ type Props = {
   qboSyncPill: QboSyncPill | null;
   onOpenQboSyncDashboard: () => void;
   onReconnectQbo: () => void;
+  onSyncNow?: () => void;
+  syncNowPending?: boolean;
 };
 
 function dotClass(dot: "gray" | "green" | "yellow" | "red"): string {
@@ -29,6 +31,8 @@ export function StatusBarMobile({
   qboSyncPill,
   onOpenQboSyncDashboard,
   onReconnectQbo,
+  onSyncNow,
+  syncNowPending = false,
 }: Props) {
   const [openKey, setOpenKey] = useState<IntegrationKey | null>(null);
   const anchorRefs = {
@@ -63,7 +67,9 @@ export function StatusBarMobile({
       detail: qboSyncPill.label,
       action: qboSyncPill.needsReconnect
         ? { label: "Reconnect QuickBooks", onClick: onReconnectQbo }
-        : { label: "View sync log →", onClick: onOpenQboSyncDashboard },
+        : qboSyncPill.status === "stale" && onSyncNow
+          ? { label: syncNowPending ? "Syncing…" : "Sync now", onClick: onSyncNow }
+          : { label: "View sync log →", onClick: onOpenQboSyncDashboard },
     });
   }
 
