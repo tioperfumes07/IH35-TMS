@@ -806,8 +806,40 @@ async function runCategoryForCompany(
 }
 
 export async function runReconciliationCategoryTick(integration: Integration, mirrorCategory: MirrorCategory): Promise<void> {
+  // RECON-NOCONN: a QBO tick with 0 active connections must fail LOUD, not report green. withLuciaBypass
+  // wraps this callback in a transaction that ROLLS BACK on throw — so we append the critical audit event
+  // INSIDE the callback (it commits when the callback returns normally) and throw AFTER it returns, so the
+  // background job records a real failure while the critical event still persists.
+  let noActiveQboConnection = false;
   await withLuciaBypass(async (client) => {
     const companies = await listCompaniesForCategory(client, integration, mirrorCategory);
+
+    if (integration === "qbo" && companies.length === 0) {
+      await appendAuditEvent(client, "reconciliation.qbo.no_active_connection", "critical", {
+        mirror_category: mirrorCategory,
+        active_connections: 0,
+      });
+      noActiveQboConnection = true;
+      return; // commit the audit event; the throw happens after withLuciaBypass returns (below)
+    }
+
+    // RECON-NOCONN stale-feed guard: with a connection present, a remote-count feed older than 25h means
+    // the reconciler is comparing against dead data. Surface it as critical — but do NOT throw; the tick
+    // can still run against whatever counts exist.
+    if (integration === "qbo") {
+      const stale = await client.query<{ is_stale: boolean | null; newest: string | null }>(
+        `SELECT (max(collected_at) IS NULL OR max(collected_at) < now() - interval '25 hours') AS is_stale,
+                max(collected_at)::text AS newest
+           FROM accounting.qbo_remote_counts`
+      );
+      if (stale.rows[0]?.is_stale) {
+        await appendAuditEvent(client, "reconciliation.qbo.remote_counts_stale", "critical", {
+          mirror_category: mirrorCategory,
+          newest_collected_at: stale.rows[0]?.newest ?? null,
+        });
+      }
+    }
+
     for (const operatingCompanyId of companies) {
       if (!operatingCompanyId || !operatingCompanyId.trim()) {
         throw new Error(`missing operating_company_id for reconciliation category ${integration}.${mirrorCategory}`);
@@ -854,4 +886,12 @@ export async function runReconciliationCategoryTick(integration: Integration, mi
       }
     }
   });
+
+  // Thrown AFTER withLuciaBypass committed the critical audit event above, so the background-job tick
+  // records a real FAILURE (last_failed_run_at + last_error_message) instead of a silent green no-op.
+  if (noActiveQboConnection) {
+    throw new Error(
+      "QBO reconciliation cannot run: 0 active qbo_connections — re-authorize at /admin/forensic-review"
+    );
+  }
 }
