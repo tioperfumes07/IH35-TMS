@@ -67,6 +67,11 @@ export async function registerPayrollDriverSettlementRoutes(app: FastifyInstance
         },
         user.uuid
       );
+      // SETTLE-GATE: SETTLEMENT_GL_POSTING_ENABLED was OFF for this entity — nothing posted, settlement
+      // stayed draft. Surface as a 409 policy response, not a 200 success.
+      if ("result" in payload && payload.result === "blocked_flag_off") {
+        return reply.code(409).send(payload);
+      }
       return reply.code(200).send(payload);
     } catch (error) {
       const message = String((error as Error)?.message ?? "driver_settlement_post_failed");
