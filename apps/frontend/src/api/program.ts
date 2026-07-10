@@ -54,6 +54,45 @@ export type SequenceStep = { step: number; label: string };
 // Owner-locked decision surfaced so it isn't buried in a thread. Owner-populated in program-board-extra.json.
 export type LockedDecision = { id: string; date_ct: string; decision: string };
 
+// TRUE-state audit snapshot (2026-07-10 MASTER-MANIFEST audit vs prod branch br-fancy-credit-akjnd07a).
+// Committed-JSON only (docs/trackers/program-board-audit.json), never overlaid live. Absent → null.
+export type ProgramBoardAuditModule = {
+  module: string;
+  built: number;
+  partial: number;
+  not_built: number;
+  needs_design: number;
+};
+export type ProgramBoardAuditFact = { fact: string; detail: string; verdict: string };
+export type ProgramBoardAuditOpenItem = {
+  id: string;
+  module: string;
+  verdict: string;
+  tier: string;
+  title: string;
+  missing: string;
+  evidence: string;
+  spec: string;
+  dup_count: number;
+};
+export type ProgramBoardAudit = {
+  generated_ct: string;
+  source: string;
+  headline: string;
+  why_done_overstates: string[];
+  true_totals: {
+    built: number;
+    partial: number;
+    not_built: number;
+    needs_design: number;
+    note: string;
+  };
+  by_module: ProgramBoardAuditModule[];
+  prod_verified_facts: ProgramBoardAuditFact[];
+  schema_drift_flags: string[];
+  top_open_items: ProgramBoardAuditOpenItem[];
+};
+
 export type MergedPr = { number: number; title: string; mergedAt: string | null; branch: string | null };
 export type HoldItem = { number: number; title: string; mergedAt: string | null; category: string };
 
@@ -132,6 +171,7 @@ export type ProgramBoard = {
   locked_decisions: LockedDecision[];
   warnings: string[];
   meta?: BoardMeta | null; // NEW: live-sync meta (deltas, tab totals, deploy version); tolerated absent
+  audit?: ProgramBoardAudit | null; // NEW: TRUE-state audit snapshot (committed JSON only); tolerated absent
 };
 
 export async function getProgramBoard(): Promise<ProgramBoard> {

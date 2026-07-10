@@ -1,0 +1,4561 @@
+# MASTER MANIFEST — Phase 1 block-by-block audit — 2026-07-10
+
+> Machine source: `MASTER-MANIFEST-2026-07-10.json` (this .md is generated, do not hand-edit).
+> Scope: 06-28-2026 bug sweep -> today + DEFERRED-ITEMS.md open items; 76 prior-verified blocks folded in. READ-ONLY audit. Nothing built.
+
+## Totals
+- Unique items after concept-dedup: **1533**
+- Open (excl. superseded / n-a-doc): **1386**
+- Verdicts: **built** 484, **not-built** 406, **partial** 262, **needs-design** 229, **needs-recheck** 5
+- Open non-built by tier: tier-3 423, tier-1 273, tier-2 206
+- Tier-1 (financial/migration/RLS) open build items: **273**
+- Block↔prod contradiction flags: **359**
+
+## Money-posting flags — OWNER-INTENDED ON (do NOT revert)
+
+Money-posting GL flags ON for TRANSP+TRK is DELIBERATE: TMS posts in PARALLEL with QuickBooks so the twice-daily TMS<->QBO reconciliation can compare the two during TESTING (QBO remains system of record). USMCA has ALL posting flags ON because USMCA has NO QuickBooks account — it is greenfield, TMS is its sole system of record, starting from 0.
+
+> A future agent must NOT turn these overrides OFF. The reconciliation-testing posture depends on them being ON. This supersedes any 'flags stay OFF' memory and any earlier banking-posting-flags GO/NO-GO note for these entities.
+
+> Residual: Migration 202607052300_per_entity_posting_flag_golive.sql header text says 'NEVER touches TRANSP' and 'FACTORING for nobody' — that documentation now CONTRADICTS the intended live state (TRANSP + FACTORING ON). The header is stale, not the flags. Correct the migration comment / add a note so no agent 'restores' the OFF posture. Also: root CLAUDE.md 'all money flags OFF' and memory banking-posting-flags-go-nogo need updating to 'ON for testing, owner-intended'.
+
+> Real open item: recon_runs=0 despite TMS_QBO_RECON_ENABLED ON for TRANSP+TRK: the twice-daily reconciliation has NEVER actually executed. Plus CASCADE-14: the QboReconciliationPage UI is routed but its backend route registerQboReconRoutes is never imported in apps/backend/src/index.ts -> 404. So the testing tool you built is not yet running. THIS is the real open item, not the flags.
+
+## By module (open items)
+
+| module | built | partial | not-built | needs-design | needs-recheck |
+|---|--:|--:|--:|--:|--:|
+| accounting | 178 | 78 | 102 | 45 | 2 |
+| banking | 25 | 19 | 24 | 5 | 0 |
+| compliance | 9 | 11 | 15 | 19 | 2 |
+| customers-vendors | 8 | 4 | 8 | 19 | 0 |
+| dispatch | 54 | 19 | 45 | 17 | 0 |
+| drivers | 13 | 9 | 12 | 5 | 0 |
+| factoring | 6 | 4 | 11 | 7 | 0 |
+| finance-hub | 6 | 1 | 1 | 1 | 0 |
+| fleet | 19 | 9 | 18 | 4 | 0 |
+| legal | 2 | 0 | 5 | 1 | 0 |
+| maintenance | 4 | 4 | 12 | 2 | 0 |
+| notifications | 5 | 0 | 0 | 1 | 0 |
+| platform | 30 | 15 | 12 | 14 | 0 |
+| qbo-import | 2 | 1 | 3 | 1 | 0 |
+| qbo-recon | 30 | 7 | 12 | 2 | 1 |
+| reports | 10 | 11 | 37 | 7 | 0 |
+| safety | 30 | 16 | 25 | 13 | 0 |
+| settlements | 18 | 17 | 33 | 6 | 0 |
+| uncategorized | 27 | 33 | 23 | 56 | 0 |
+| users-docs-help | 8 | 4 | 8 | 4 | 0 |
+
+## Tier-1 open build items (owner reviews before any build)
+
+- **[accounting] block5-coa-new-account-type-detail-organized** — CoA New-Account creator: grouped Account Type picker + filtered Detail Type picker sourced from catalog, persi — _partial_; missing: catalogs.accounts.detail_type_id FK column does not exist; doc explicitly required STOP-and-open-[HOLD-FOR-JORGE-TIER-1] if the column is mi
+- **[accounting] fd2-external-fines** — External (civil) fines: wire real creator with driver picker + chargeback control (approver+written-consent+re — _partial_; missing: listDrivers combobox on FineCreateModal (currently raw UUID text input); approver identity capture + written-consent checkbox + recovery_mod
+- **[accounting] load-cancellations-fk-per-entity-repoint** — Migrate dispatch.load_cancellations off the legacy GLOBAL catalogs.cancellation_reasons onto the per-entity ca — _partial_; missing: repoint the live cancel-load read/write paths off catalogs.cancellation_reasons onto the new reason_code_id FK, then archive (not drop) the 
+- **[accounting] usmca-posting-enable-hold** — Turn GL posting ON for USMCA only (per-entity override), gated on Blocks 01-07 (per-entity flag fix, engine pr — _not-built_; missing: USMCA unhide (Block 07) + COA seed + banking ingest + engine proof all confirmed complete, then a per-entity feature_flag_overrides seed tur
+- **[accounting] 0519-fl1-2649-bank-tx-uncategorized** — 2,649 raw Plaid bank transactions never categorized or posted to GL; UI filters them out of the review queue s — _partial_; missing: live confirmation of current uncategorized bank_transactions count + whether the UI review-queue filter gap is fixed
+- **[accounting] 0519-lg1-5-nullable-financial-columns** — 5 financial columns that should be required are nullable: accounting.bill_lines.account_id, accounting.bill_pa — _not-built_; missing: ALTER TABLE ... ALTER COLUMN ... SET NOT NULL for the 5 listed columns (Tier-1 migration, needs a backfill-safety check first for existing N
+- **[accounting] bf5-load-settlement-driver-pay-gl** — BF5 flow: Load -> Settlement -> Driver pay -> GL (doc claims BROKEN: deduction-applier test-only causing drive — _partial_; missing: could not confirm from repo alone whether the settlement clearing account is relieved on every path (net-pay clearing) — needs a live postin
+- **[accounting] bf6-bill-line-items-load-id** — BF6 flow: Expense/Bill -> GL -> A/P -> Payment -> Bank (doc claims Create Bill is header-only, no line items/l — _partial_; missing: createBillBodySchema needs a lines[] array (each line: account/category, amount, memo, optional load_id) so a bill can be split and G18-link
+- **[accounting] bf9b-wo-cost-unit-load-allocation-gl** — BF9-B flow: Work Order cost -> Unit/Load allocation -> GL (doc claims PARTIAL: creation WORKS (a prior phantom — _partial_; missing: confirmation of whether a TRK-owned unit's WO cost can be misattributed to TRANSP's books (or vice versa) — needs a targeted trace of apps/b
+- **[accounting] repair-program-settlement-consent-gate-live-status** — CRITICAL (as-of 2026-07-04): SETTLEMENT_GL_POSTING_ENABLED reported ON in prod for all 3 entities while the po — _partial_; missing: live confirmation that current TRANSP settlement closes actually post successfully (no CONSENT_MISSING/ACCOUNT_ROLE_BINDING_MISSING failures
+- **[accounting] 0243-h3-2-three-posting-flags-unprotected-no-entity-context** — [STOP-GATE] REVENUE_RECOGNITION_POST_ENABLED / PREPAID_EXPENSES_POST_ENABLED / FIXED_ASSET_AUTOPOST_ENABLED na — _not-built_; missing: rename to *_GL_POSTING_ENABLED or add these 3 to POSTING_FLAG_KEYS + pass opco context, before any real poster ships behind them
+- **[accounting] 0243-g11-7-factoring-reserve-two-places-asymmetric-idempotency** — [STOP-GATE] GL poster moves factor_reserve_held while factoring.reserve_movement/v_factor_reserve_balance keep — _partial_; missing: land the HELD migration 202607130000 (needs Jorge's OK per financial-cluster rule) and reconcile the two reserve balances; key idempotency u
+- **[accounting] repair-e-escrow-return-and-tieouts-design** — DESIGN DOC (Tier-1, never build solo): escrow return-on-separation trigger, unify 3 parallel escrow ledgers on — _partial_; missing: control-account<->sub-ledger tie-out report; confirmation escrow_load_abandonment_recovery role-key was added to the CHECK list; confirmatio
+- **[accounting] 0473-2-7-bank-transactions-uncategorized-plaid-down** — 2,650 bank transactions (CSV import 2026-05-24) all pending_categorization, none posted; both Plaid feeds (AmE — _needs-design_; missing: owner decision: repair the two Plaid ERROR items vs continue CSV-only; then categorize the 2,650 pending_categorization transactions
+- **[accounting] 0490-structural-fix-asset-identity-fragmentation** — Highest-leverage structural fix #1: one truck is represented across 5 tables (mdata.units/mdata.assets/account — _needs-design_; missing: one canonical asset identity (or a live sync trigger on mdata.units INSERT propagating to the other 4 tables)
+- **[accounting] catalog-create-split-brain-qbo-mirror** — mdata/qbo-master-write.routes.ts inserts new catalog entries into mirror tables (mdata.qbo_vendors/qbo_items/q — _not-built_; missing: Either write directly to the canonical tables (mdata.vendors/catalogs.items/catalogs.accounts) or write to both mirror+canonical atomically.
+- **[accounting] remediation-t1.5-force-rls-financial-tables** — T1.5 - FORCE RLS on ~70 financial-schema tables that are RLS-ENABLED but not FORCED (starting with the driver- — _partial_; missing: A live query confirming relforcerowsecurity=true for every one of the originally-flagged tables, esp. driver_finance.escrow_ledger/escrow_ba
+- **[accounting] 0243-flag-lease-on-despite-engine-not-built** — [STOP-GATE] LEASE_GL_POSTING_ENABLED confirmed ON in prod despite the locked 'never flip until lease engine bu — _not-built_; missing: confirm whether the FIN-22 lease engine is actually built; if not, flip LEASE_GL_POSTING_ENABLED back OFF (owner decision)
+- **[accounting] 0490-critical-m-settle-1-unflagged-settlement-posting** — CRITICAL: payroll/driver-settlement.service.ts postSettlement() posts a real Bill+BillPayment with NO feature- — _not-built_; missing: a role gate (Owner/Finance only) AND a feature-flag check (or full retirement of the payroll.* engine in favor of the canonical driver_finan
+- **[accounting] settlement-posting-design-doc-missing** — Write docs/specs/SETTLEMENT-POSTING-DESIGN.md (settlement->GL JE shape, FLSA recovery modes, escrow contributi — _not-built_; missing: the consolidated docs/specs/SETTLEMENT-POSTING-DESIGN.md itself, including the 5 explicit owner open-questions (net-pay floor, damage-deduct
+- **[accounting] 0243-d2-2-g18-load-fk-not-enforced-vendor-bill-path** — G18 load-FK gate only runs for paid_same_day (Expense); vendor_invoice (Bill) branch creates with no diesel/fu — _partial_; missing: confirm hasLoadRequiredExpenseCategories runs on the vendor_invoice branch too; see 0008-h for the underlying missing bill_lines/load_id sch
+- **[accounting] 0243-g11-5-period-close-no-reopen-path** — [STOP-GATE] closed_period_cutoff = MAX(period_end) blocks postings into an open middle period with non-contigu — _not-built_; missing: make the cutoff per-period; add an audited owner-gated reopen route
+- **[accounting] 0243-flag-live-all-9-gl-flags-on-prod** — [CRIT/STOP-GATE] Read-only prod SELECT (2026-07-04) confirmed ALL 9 GL-posting flags incl. SETTLEMENT are ON f — _not-built_; missing: owner must verify current prod flag state and confirm whether it still matches this 07-04 snapshot
+- **[accounting] 0243-g11-9-escrow-deduction-not-wired-to-liability** — [STOP-GATE] Escrow-abandonment deduction resolves escrow_load_abandonment_recovery and credits it, but code se — _not-built_; missing: bind escrow_load_abandonment_recovery to the Driver Escrow liability account through the capped recovery engine
+- **[accounting] 0243-h7-1-faro-to-rts-no-public-api** — RTS Financial has no public API (FTP/portal file-drop); entire factoring integration is Faro-CSV-shaped -- the — _not-built_; missing: design-doc for RTS as a second file-format adapter behind the existing reconciliation; confirm RTS export columns with their rep
+- **[accounting] 0473-1-1-default-revenue-account-unmapped-line** — CPA ruling needed: unmapped invoice line should hard-fail (refuse to post) vs post to a catch-all 'Uncategoriz — _needs-design_; missing: CPA written sign-off on hard-fail default + naming the standard freight/line-haul revenue account
+- **[accounting] 0473-1-3-insider-receivables-misclassified-as-ar** — Two 'Unauthorized Expenses [person]' accounts classified as A/R are actually employee/related-party advances - — _partial_; missing: confirm with CPA/counsel whether keeping these as accounts_receivable (for active bankruptcy-court pursuit) supersedes the original 'reclass
+- **[accounting] 0490-structural-fix-liability-deduction-fk-spine** — Highest-leverage structural fix #2: no shared liability/deduction FK spine (expense_id/liability_id/incident_i — _needs-design_; missing: expense_id / liability_id / incident_id FK columns on driver_finance.settlement deduction lines
+- **[accounting] 0007-pattern-6-silent-noop-posting** — Systemic Pattern 6: silent flag-gated no-op posting — money actions behind OFF flags toast 'success' while wri — _not-built_; missing: surfaced posted:false in API responses + suppressed success toast on no-op writes for createTransfer/CC-payment/Post-as-bill paths
+- **[accounting] 0473-1-10-year-end-close-retained-earnings-asc852** — Confirm period-close rolls net income to Retained Earnings at FY-end and locks the period; advise on ASC 852 f — _needs-design_; missing: CPA ruling on ASC 852 applicability; and the underlying period-close mechanics (see 0243-g11-5, 0243-g11-10, both not-built) must land first
+- **[accounting] 0243-e1-1-qbo-mirror-split-brain** — Two physical QBO mirror copies (accounting.qbo_* cloned LIKE mdata.qbo_*) written by different live code, neit — _not-built_; missing: pick one canonical home + repoint writers (see 0008-g3-qbo-mirror-canonical-mdata)
+- **[accounting] 0243-g4-tx1-source-gl-two-transactions** — [CRIT] GL posters open their own transaction, forcing 'write source row + post GL' across two commits -> orpha — _partial_; missing: confirm the same client-param pattern was applied to factoring release, cash-advance disburse, expenses, bills, and the lumper-split manual 
+- **[accounting] 0473-1-4-factoring-asc860-sale-vs-secured-borrowing** — CPA ruling needed: does FARO factoring transfer control (sale) or not (secured borrowing) under ASC 860's 3-pa — _needs-design_; missing: written CPA ruling on ASC 860 sale-vs-borrowing for the actual FARO contract terms
+- **[accounting] 0473-1-6-wo-void-reversal-grain** — Confirm WO void reverses at the whole-bill grain (one net-zero mirror JE, both entries kept) rather than line- — _needs-design_; missing: CPA written confirmation of the whole-bill-mirror-reversal design
+- **[accounting] 0473-1-9-driver-settlement-net-pay-model** — Confirm clearing-account net-pay flow, 10% net-pay floor (note: superseded by the later 5% lock), all-1099 tre — _partial_; missing: CPA/counsel written confirmation that drivers genuinely qualify as 1099 contractors (misclassification risk); confirm wage-deduction limits 
+- **[accounting] 0091-b1-3** — Replace DELETE-then-INSERT on accounting.bill_unit_allocation with is_active=false+reinsert (or an explicit vo — _not-built_; missing: switch to is_active=false+reinsert, or add bill_unit_allocation to an explicit void-not-delete mapping-table exemption list
+- **[accounting] 0010-f9-nullable-assumed-key-columns** — F9: 5 nullable assumed-key columns (bill_lines.account_id, bill_payments.amount_cents, bills.amount_cents, inv — _partial_; missing: same NOT VALID CHECK (or real NOT NULL after backfill) for bill_lines.account_id, bill_payments.amount_cents, invoice_lines.account_id, vend
+- **[accounting] 0394-qbo-bill-invoice-transaction-pull-missing** — QBO->TMS transaction pull (bills=A/P, invoices=A/R, bill-payments, credits) was never built — only master data — _not-built_; missing: a QBO->TMS bill/invoice pull job writing into mdata.qbo_bills / mdata.qbo_invoices, on a recurring (CDC) schedule, not the current one-shot 
+- **[accounting] 0285-banking-transfer-gl-gap-not-caught** — Doc's Banking section marks 'Create Transfer' as '✅ Implemented' and states 'Critical Gaps: None identified' — — _not-built_; missing: a 'transfer' GL posting type wired into createTransfer
+- **[accounting] driverprofile-1-companion-tier1-rls-hardening** — Companion Tier-1: GET /api/v1/mdata/drivers should fail-closed to the session's current company (RLS-derived), — _needs-recheck_; missing: read apps/backend/src/master-data/drivers (or equivalent) route to confirm session-derived fallback vs fail-closed-to-empty
+- **[accounting] sweep-flag-lease-golive-review** — FLAG-LEASE: LEASE_GL_POSTING_ENABLED confirmed ON in prod feature flags per the sweep, despite locked decision — _partial_; missing: confirm (outside repo, needs CPA/Jorge) that the lease ASC 842 engine was in fact CPA-reviewed before this go-live migration, per the locked
+- **[accounting] 0008-d-abandonment-pay-first-then-escrow** — Walkoff/abandonment: pay first, escrow only for shortfall, single charge per event, escrow keeps growing 30-45 — _partial_; missing: explicit single-path pay-first/escrow-shortfall logic confirmation; verify migration 0094 trigger was reworked per this decision
+- **[accounting] 0243-g6-4-bills-amount-cents-nullable-dual-money** — accounting.bills.amount_cents nullable (a null-amount bill drops out of SUM), plus dual money representation ( — _not-built_; missing: SET NOT NULL (or CHECK IS NOT NULL) on amount_cents; pick cents canonical, derive/drop the numeric columns
+- **[accounting] 0473-1-8-tk-transp-lease-asc842** — Confirm TRK-owns/5yr-SL-depreciates, TRANSP-leases-and-expenses operating-lease structure under ASC 842 common — _needs-design_; missing: CPA + counsel written confirmation of the common-control expedient application and 5-yr useful life vs IRS class life
+- **[accounting] 0473-2-5-trial-balance-002-cosmetic** — Trial balance shows $0.02 Dr/$0.02 Cr gross of the one posted+reversed test invoice (nets to $0, not an error) — _not-built_; missing: decide whether to void/purge the $0.01 test invoice's gross footprint before go-live, or leave it as documented test evidence
+- **[accounting] 0242-no-auto-customer-charge-on-cancellation** — Load cancellation should automatically create the customer charge/invoice when billable_to_customer is true, i — _needs-design_; missing: an auto-create-customer-charge step (new AR line / invoice adjustment) fired from cancelLoad() when billable_to_customer=true, gated by an e
+- **[accounting] 0490-critical-idempotency-posting-engine-vendor-bill-payment** — CRITICAL: raw GL posting-engine endpoints and /vendors/:id/bill-payments carry no idempotency — a double-click — _needs-design_; missing: an idempotency-key request-header contract + DB-level enforcement on POST /vendors/:id/bill-payments and any raw posting-engine HTTP endpoin
+- **[accounting] 0285-acct-gap3-manual-payment-application** — Accounting: customer payment application to invoices is fully manual — no auto-apply logic, risk of unapplied  — _needs-design_; missing: an auto-apply rule (e.g. oldest-invoice-first) — needs CPA sign-off given it affects AR
+- **[accounting] ruling-4-embezzlement-reclass-off-ar-qbo-source** — Reclassify the two 'Unauthorized Expenses' (embezzlement, ~$407k) accounts off A/R at the QuickBooks source; C — _partial_; missing: QBO-side subtype reclassification (owner/CPA action inside QuickBooks, not a TMS code change) + a CPA ruling: write off as theft loss vs boo
+- **[accounting] factoring-asc860-cpa-control-test-open** — CPA must apply the ASC 860 three-part control-surrender test to the actual FARO agreement before the factoring — _needs-design_; missing: CPA written ruling on FARO agreement's control-surrender test result, to be encoded as per-factor config in the posting engine
+- **[accounting] 0473-2-4-ap-aging-undercounts-partials** — Bills stored 'partially_paid' but aging report reads 'partial' -- a value mismatch under-counts partially-paid — _not-built_; missing: align the status value read in ap-aging.routes.ts with the actual stored 'partially_paid' value; add a DB constraint preventing future drift
+- **[accounting] 0091-m-settle-1** — Gate payroll/driver-settlement.service.ts postSettlement() behind SETTLEMENT_GL_POSTING_ENABLED before it call — _not-built_; missing: an isEnabled(SETTLEMENT_GL_POSTING_ENABLED, {operating_company_id}) gate before the createBill/payBill calls in postSettlement()
+- **[accounting] 0091-b1-2** — Remove stale factor_reserve_default COA-role (still typed Liability) or repoint fallback to Asset (locked mode — _not-built_; missing: remove factor_reserve_default or repoint its fallback to Asset
+- **[accounting] 0490-g6-4-bills-nullable-amount-cents-residual** — G6-4: accounting.bills.amount_cents nullable dual-money-representation bug — referenced as PR #2125, NOT-FIXED — _partial_; missing: true NOT NULL after backfill (owner-gated data step per the migration's own doc reference)
+- **[accounting] 0091-flag-lease** — Confirm LEASE_GL_POSTING_ENABLED prod state matches whether the FIN-22 lease engine is actually built (locked  — _partial_; missing: confirm prod override state for LEASE_GL_POSTING_ENABLED per entity
+- **[accounting] 0091-g6-4** — Make accounting.bills.amount_cents NOT NULL (currently nullable, drops out of SUM aggregates) and pick one can — _not-built_; missing: SET NOT NULL (or CHECK IS NOT NULL) on amount_cents; pick cents canonical and derive/drop the numeric total_amount/paid_amount columns
+- **[accounting] 0282-p0-catalogs-accounts-scope** — P0: migrate catalogs.accounts (and by extension other 'global' catalogs tables) to company-scoped, framed as a — _not-built_; missing: This is NOT simply unbuilt — it is a live ARCHITECTURAL DISAGREEMENT with the locked design (see contradicts field). Any 'fix' must go throu
+- **[accounting] 0280-05-factoring-balance-invoice-linkage** — Factoring Balance widget: factoring.company_balances aggregate has no verification it ties to specific account — _needs-design_; missing: join factoring.company_balances to accounting.invoices at the invoice grain
+- **[accounting] 0251-gap5-chargecode-gl-mapping** — Create a charge-code-to-GL-account mapping table so accessorial/linehaul/fuel-surcharge charge codes map to GL — _not-built_; missing: a dedicated charge-code-to-GL-account catalog table
+- **[accounting] biz-flow-2-no-customer-chargeback-mechanism** — Auto-create a customer invoice adjustment when a driver-caused expense should be billed back to the customer — _not-built_; missing: no code path that turns a recover_from_driver expense into a customer invoice line
+- **[accounting] ruling-3-driver-escrow-current-vs-long-term-reclass** — Reclassify driver Damage Claim Escrow from OtherLongTermLiabilities to a current-liability subtype (60-90 day  — _not-built_; missing: Reclass Damage Claim Escrow (QBO-1150040187) and year-dated variants from OtherLongTermLiabilities to a current-liability subtype, pending C
+- **[accounting] year-end-close-retained-earnings-asc852-freshstart** — Design year-end close + ASC 852 (Reorganizations) fresh-start equity treatment at Ch.11 plan confirmation — _needs-design_; missing: Design doc for year-end close + ASC 852 fresh-start equity treatment, CPA-approved.
+- **[accounting] intercompany-trk-transp-consolidation-decision** — Decide independent-books vs common-control consolidation (with intercompany eliminations) for TRK/TRANSP/USMCA — _needs-design_; missing: Owner decision: independent books vs common-control consolidation with intercompany eliminations, then build if elected.
+- **[accounting] 0441-mod7-invoices-plaintext-audit-log-dead** — Invoices customer/source-load plain text + 'View audit log' -> /reports?invoice_id= dead — _partial_; missing: 'View audit log' button should navigate to the real AccountingAuditTrailPage (filtered by invoice_id), not the generic /reports home.
+- **[accounting] 0243-d1-2-vendors-split-two-tables** — Vendors split across mdata.vendors (rich create/edit) and mdata.qbo_vendors (WO/expense/CC pickers) — a vendor — _not-built_; missing: single vendor namespace + resolver (see 0008-g4-vendor-namespace-canonical)
+- **[accounting] 0091-g4-tx1** — Give GL posters an optional caller-supplied client param so source-row write + GL post share one transaction — _partial_; missing: cash-advance-disburse.ts (and factoring-advances release / bills.service.ts / lumper-split — not individually re-verified) still need the cl
+- **[accounting] 0091-c1-1** — Collapse or bridge the two driver-settlement engines (live driver_finance.* vs orphaned payroll.*) before enab — _not-built_; missing: a single canonical settlement engine, or an explicit bridge layer between payroll.* and driver_finance.*
+- **[accounting] 0091-e1-1** — Pick one canonical home for the QBO mirror (accounting.qbo_* vs mdata.qbo_*) and repoint writers to stop the s — _not-built_; missing: an owner decision on canonical schema + a migration/repoint of the losing writer
+- **[accounting] 0091-m-lists-2** — Fix 'Merge accounts' (CoaBatchActions) to actually repoint GL references instead of only deactivating the sour — _needs-design_; missing: re-verify handleMerge reassigns GL lines/child accounts before deactivate
+- **[accounting] 0010-f11-jep-duplicate-idempotency-groups** — F11: 2 pre-existing duplicate idempotency_key groups exist in accounting.journal_entry_postings (from before t — _partial_; missing: investigate + repair the 2 existing duplicate idempotency_key groups (owner-gated financial data fix)
+- **[accounting] 0519-at2-no-db-enforced-sod** — No DB-level segregation-of-duties constraint — same user can create and approve GL entries; enforced only at a — _needs-design_; missing: an owner decision on whether SOD needs DB-level enforcement (posted_by/approved_by columns + CHECK) vs remaining app-layer-only
+- **[accounting] biz-flow-6-payment-application-manual** — Auto-apply customer payments to the oldest open invoice(s) instead of requiring a manual application — _not-built_; missing: no automatic FIFO/oldest-invoice application logic
+- **[accounting] acct-bills-routes-audit-trail-missing** — Areas for Review #1: bills.routes.ts has no direct appendCrudAudit call — verify if audited in service layer — _not-built_; missing: an appendCrudAudit call (or equivalent) somewhere in the bill create/pay/void/allocate path
+- **[accounting] 0091-g6-1** — Financial 'today' computed in UTC instead of Central Time (companyBusinessDate exists but accounting layer doe — _needs-design_; missing: re-verify remaining toISOString().slice(0,10) call sites in accounting/**
+- **[accounting] 0010-f1-orphan-fk-columns** — F1: 689 columns named *_id/*_uuid across accounting/banking/safety/maintenance/mdata carry no FK constraint — _partial_; missing: a CI guard enumerating *_id/*_uuid columns without FK constraints (excluding qbo_/plaid_/samsara_/stripe_) and a remediation migration for t
+- **[accounting] 0280-14-ap-aging-bill-vendor-linkage** — Accounting Home: AP aging bucket data has no verification it links to bills/vendors — _needs-design_; missing: 
+- **[accounting] biz-flow-6-no-automatic-gl-posting-tms** — TMS should post invoices/bills/payments directly to the GL instead of relying solely on QBO sync — _partial_; missing: INVOICE_AR_GL_POSTING_ENABLED (and likely the bill/payment counterparts) still default OFF in most/all companies
+- **[accounting] bill-status-vocab-partial-vs-partially_paid** — Standardize + DB-constrain the A/P bill status vocabulary ('partial' vs 'partially_paid' drift causes aging mi — _not-built_; missing: A single canonical status vocabulary + DB CHECK constraint for bill partial-payment status, replacing the two-spelling drift.
+- **[accounting] sweep-g11-1-deduction-consent-template-missing** — G11-1: driver-deduction-authorization consent template does not exist, so every settlement with a deduction fa — _partial_; missing: confirm the driver-deduction-authorization template specifically exists in legal-template-library.generated.ts and that #1639 (or its succes
+- **[accounting] 0243-b1-3-bill-unit-allocation-delete-not-void** — DELETE-then-INSERT on accounting.bill_unit_allocation breaks void-not-delete invariant — _not-built_; missing: switch to is_active=false + reinsert, or an explicit exempt-mapping-table allowlist entry in the void-not-delete guard
+- **[accounting] 0243-g9-h6-coa-trailer-lists-cap-50** — catalogs/accounts (371 accounts, page max 200, no total) and trailer list silently cap -> oldest foundational  — _not-built_; missing: add total/has_more to the accounts list response; raise/remove the cap; same for mdata/equipment (trailers), locations/items/classes
+- **[accounting] 0091-flag-live** — Confirm prod GL-posting flag state before relying on any live posting path (all 9 flags reported ON 2026-07-04 — _not-built_; missing: prod flag-state re-verification (owner-controlled, not a code fix)
+- **[accounting] 0251-gap19-driverbill-escrow** — Verify driver bill includes escrow deduction at book-load time — _not-built_; missing: escrow deduction logic in createDriverBillArtifacts
+- **[accounting] 0251-gap22-lumper-expense-linkage** — Verify lumper charges create an expense record so lumper costs are captured in accounting — _not-built_; missing: an expense record created (or linked) per carrier-paid lumper charge
+- **[accounting] flow2-customer-chargeback-driver-expense** — Automatic customer chargeback mechanism when a driver-caused expense should be billed back to the customer — _needs-design_; missing: Design doc defining trigger conditions, GL treatment, and customer-invoice creation rule.
+- **[accounting] biz-flow-2-no-auto-deduction-from-customer-expense** — Auto-create a driver settlement deduction when a customer/company expense is attributed to a driver — _partial_; missing: flag BANK_DRIVER_EXPENSE_DEDUCTION_ENABLED is OFF; the generic accounting.expenses POST route (not bank-tx-categorization) still has no auto
+- **[accounting] biz-flow-3-no-auto-customer-charge-on-cancellation** — Auto-create a customer invoice/charge from dispatch.load_cancellations.cancellation_charge_cents — _not-built_; missing: no call from cancelLoad()/approveCancellation() into an invoice-creation function
+- **[accounting] biz-flow-3-no-cancellation-billing-linkage** — dispatch.load_cancellations needs a foreign key to the invoice/charge it produced — _not-built_; missing: no invoice_id / charge_id column on dispatch.load_cancellations
+- **[accounting] biz-flow-3-approval-workflow-no-downstream-actions** — Owner cancellation-approval workflow exists but triggers no downstream billing/deduction actions — _partial_; missing: downstream invoice/escrow triggers off the approval event
+- **[accounting] p0-catalogs-accounts-company-scoped** — Migrate catalogs.accounts (chart of accounts) to company-scoped (add operating_company_id) — flagged P0 'entit — _not-built_; missing: operating_company_id uuid NOT NULL REFERENCES org.companies(id) column + FORCE RLS policy on catalogs.accounts; currently one shared global 
+- **[accounting] 0008-h-create-bill-line-items-load-id** — Create Bill: add line items + load_id so G18 (fuel/diesel/toll must FK a load) is enforceable on the bill path — _not-built_; missing: bill_lines table/columns + load_id FK on the vendor-Bill creation path; wire hasLoadRequiredExpenseCategories to the bill branch (overlaps D
+- **[accounting] 0251-gap20-driverbill-settlement-link** — Verify driver bill links to settlement so all bills are included — _partial_; missing: confirmation of a settlement_id FK (or join path) from driver_finance.driver_bills to the settlement that paid it
+- **[accounting] dispatch-sweep-gap-1** — Load to GL Account Linkage — verify load creation triggers GL posting to revenue accounts — _partial_; missing: No automatic hook from load creation (mdata.loads INSERT) to GL/invoice; revenue posting only happens if/when a human calls POST /api/v1/acc
+- **[accounting] dispatch-sweep-gap-32** — Assignment to GL Linkage (Load Assignment Flow) — verify assignments post to GL for cost tracking — _not-built_; missing: No per-assignment GL cost entry; cost only reaches GL later via the settlement posting engine (flag-gated, OFF by default).
+- **[accounting] audit10-payroll-automation-tax-withholding** — Payroll Audit: automated payroll processing, tax withholding calc, benefit calc, payroll tax reporting — _partial_; missing: n/a for driver settlements (by design, 1099 model); confirm the two streams (TMS driver settlements vs QBO W-2 payroll) reconcile without do
+- **[accounting] inbound-qbo-bill-sync-ap-gap** — Build inbound QBO bill sync so TMS A/P ties to QuickBooks' open A/P ($1,220,674.25 across 151 vendors as of th — _not-built_; missing: Inbound QBO bill sync (CDC/polling) so TMS A/P ties to QuickBooks' A/P balance.
+- **[accounting] 0441-mod7-je-rows-no-onclick** — Journal Entries list rows have no onClick — JE detail reachable from exactly one place app-wide — _partial_; missing: ManualJEListPage.tsx rows need an EntityLink/onClick to JournalEntryDetailPage (the one place that SHOULD link but doesn't is the JE list it
+- **[accounting] 0441-mod7-maintenance-repair-fuel-bill-filters** — Maintenance/Repair/Fuel bill subnav items are ?category= filters, not creators — _not-built_; missing: These subnav items should open a category-prefilled bill CREATE flow (like VendorBillCreatePage), not just filter the existing list.
+- **[accounting] linkage-cancellation-to-invoice-charge** — Missing linkage: load cancellation does not automatically create a customer invoice/charge — _partial_; missing: An explicit trigger/service call from cancellation.service.ts (when billable_to_customer=true) into invoice creation.
+- **[accounting] 0008-a-gl-flags-settlement-lease-off** — Flip SETTLEMENT_GL_POSTING_ENABLED and LEASE_GL_POSTING_ENABLED OFF in prod (2 broken/locked posting flags) — _not-built_; missing: Prod flag flip SETTLEMENT_GL_POSTING_ENABLED=false and LEASE_GL_POSTING_ENABLED=false for all entities (owner-controlled action, not a code 
+- **[accounting] 0251-gap15-load-completion-invoice-trigger** — Verify load completion triggers invoice generation automatically — _partial_; missing: confirmation of an automatic trigger (e.g. status-change hook) calling invoices/from-load, vs. requiring a manual office action
+- **[accounting] known-catalogs-accounts-global-not-per-entity** — catalogs.accounts should be per-entity (operating_company_id-scoped) instead of global — _partial_; missing: Confirm FORCE RLS policy exists on catalogs.accounts using the now-added operating_company_id column (AF-1 per 0264 known-issue).
+- **[accounting] dispatch-sweep-gap-2** — Load to Customer Invoice Linkage — verify load completion triggers invoice generation — _partial_; missing: Automatic invoke of buildInvoiceFromLoad on load delivery/completion status transition; today it requires an explicit office action.
+- **[accounting] dispatch-sweep-gap-6** — Status Transition to GL Linkage — verify status transitions trigger appropriate GL postings — _not-built_; missing: A hook from the load status-transition handler into buildInvoiceFromLoad / postSourceTransaction on delivery or invoice-eligible transitions
+- **[accounting] dispatch-sweep-gap-29** — Load to GL Revenue Linkage (Load Creation Flow) — verify load posts to revenue GL account — _partial_; missing: Same as gap-1.
+- **[accounting] 0441-mod11-ar-ap-aging-export-different-engine** — AR/AP Aging export uses different engine than screen — _not-built_; missing: export engine should call the same views.ar_aging/accounting.ar_aging_as_of source the screen uses, or the divergence must be reconciled and
+- **[accounting] 0441-mod13-coa-merge-accounts-deactivate-only-no-gl-repoint** — Lists CoA "Merge accounts" deactivates only - NO GL repoint — _not-built_; missing: A real merge operation (backend) that UPDATEs all GL-referencing rows (journal lines, bill lines, expense lines, budget lines, etc.) from so
+- **[accounting] 0008-g3-qbo-mirror-canonical-mdata** — Canonicalize mdata.qbo_* as the QBO mirror; repoint writers off accounting.qbo_* — _not-built_; missing: pick one canonical home (mdata.qbo_*), repoint accounting.qbo_* writers, forbid new accounting.qbo_* clone tables
+- **[accounting] 0091-h3-3** — Make isPostingFlag() recognize *_VOID_ENABLED (VOID_ENFORCEMENT_ENABLED, WO_VOID_ENABLED) as posting-class fla — _needs-design_; missing: confirm isPostingFlag() has a _VOID_ENABLED$ branch
+- **[accounting] 0280-47-driver-to-escrow-flow** — Data flow: Driver to Escrow linkage — verify driver queries include escrow account linkage — _needs-design_; missing: 
+- **[accounting] 0251-gap3-vendor-invoice-linkage** — Verify invoice generation includes factoring vendor — _needs-design_; missing: depends on 0251-gap1 landing first
+- **[accounting] 0251-gap8-accessorials-gl** — Verify each accessorial code posts to the correct GL account — _not-built_; missing: charge-code-to-GL mapping table (0251-gap5) is a prerequisite
+- **[accounting] dispatch-sweep-gap-23** — Reassign to GL Linkage — verify reassignments trigger GL journal entries — _not-built_; missing: No GL journal entry is created on reassignment; any GL effect only happens indirectly, later, if/when a settlement referencing the new drive
+- **[accounting] dispatch-sweep-gap-28** — Load to Invoice Linkage (Load Creation Flow) — verify load creation triggers invoice — _partial_; missing: Same as gap-2: no automatic trigger from load creation into invoice generation.
+- **[accounting] dispatch-sweep-gap-34** — Load Complete to GL Revenue Linkage — verify completion posts revenue to GL — _partial_; missing: Same as gap-1.
+- **[accounting] dispatch-sweep-gap-36** — Detention to Expense Linkage — verify approved detention creates expense record — _not-built_; missing: No accounting.expenses record for detention as an internal cost; only the customer-billing (revenue) side is wired (see gap-38).
+- **[accounting] fk-cancellation-billing-0289** — Critical FK gap #4: Cancellation -> Billing, expected column dispatch.cancellations.charge_id — _partial_; missing: a charge_id/invoice_id FK linking dispatch.load_cancellations to the actual accounting.invoices row that bills the customer for the cancella
+- **[accounting] 0441-mod2-g18-no-load-field** — G18 violations on manual capture (no load field on Bill/Expense) — _partial_; missing: A load_id column + field on accounting.bills (mirroring accounting.expenses), and make it required (not just optional) for diesel/roadside c
+- **[accounting] 0441-mod3-fuel-gl-poster-zero-callers** — CRITICAL: Fuel GL poster postFuelExpenseFromEvent has ZERO callers — _not-built_; missing: A production caller (route handler, event consumer, or cron) that invokes postFuelExpenseFromEvent when a fuel transaction/event is created/
+- **[accounting] 0441-mod9-merge-vendors-no-gl-repoint** — "Merge Vendors" merges QBO ids on driver (no GL repoint, no deactivation) — _not-built_; missing: GL repoint (UPDATE all bill/expense/payment/PO rows carrying the old qbo_vendor_id to the new one, or block merge if historical GL rows exis
+- **[accounting] 0010-f5-bank-txn-uncategorized** — F5: all 2,649 banking.bank_transactions rows uncategorized, none posted to GL — _partial_; missing: live confirmation of categorized-txn count trending toward 0
+- **[accounting] 0251-gap7-fuel-surcharge-gl** — Verify fuel surcharge posts to fuel revenue GL account — _not-built_; missing: charge-code-to-GL mapping table (0251-gap5) is a prerequisite
+- **[accounting] 0251-gap18-driverbill-gl** — Verify driver bill posts Bill + BillPayment to GL — _not-built_; missing: explicit GL posting call (Bill + BillPayment) from createDriverBillArtifacts, or confirmation it is intentionally deferred to a separate fla
+- **[accounting] fk-expenses-deductions-0289** — Critical FK gap #3: Expenses -> Deductions, expected column accounting.expenses.deduction_id — _not-built_; missing: accounting.expenses.deduction_id column + FK to driver_finance.driver_settlement_deductions
+- **[accounting] 0251-gap2-vendor-gl-linkage** — Verify vendor table has GL account FKs for factoring — _needs-design_; missing: a completed column-by-column audit of mdata.vendors against catalogs.accounts FKs
+- **[accounting] 0251-gap6-linehaul-revenue-gl** — Verify linehaul posts to revenue GL account — _partial_; missing: direct TMS-side linehaul-to-revenue-GL posting (currently relies on QBO sync per 0285)
+- **[accounting] dispatch-sweep-gap-37** — Detention to GL Linkage — verify detention expenses post to GL — _partial_; missing: Confirmation that the resulting invoice is actually posted (postSourceTransaction) rather than sitting as an unposted accounting.invoices ro
+- **[accounting] 0441-mod13-inventory-part-to-accounting-none** — Inventory part->accounting NONE — _not-built_; missing: A catalogs.accounts (expense/inventory-asset) linkage on parts and/or on the purchase-recording flow, per LAW OF THE LAND total-connectivity
+- **[accounting] 0251-gap14-customer-ar-gl-fk** — Verify customer table has an AR GL account FK — _partial_; missing: confirmation that every customer resolves to an ar_account_id via revenue_contracts (vs. mdata.customers carrying its own default)
+- **[accounting] dip-mor-pre-post-petition-ap-split** — Split the $1.22M A/P into pre- vs post-petition for the DIP/MOR presentation (ASC 852) — _needs-design_; missing: A pre-petition vs post-petition classification field on bills/A/P + MOR presentation logic, CPA/counsel-approved.
+- **[banking] bf9c-fuel-load-g18-writer** — BF9-C flow: Fuel -> Load (G18) (doc claims BROKEN: the G18-enforced fuel.fuel_transactions table has NO writer — _partial_; missing: confirmation that live fuel-card/receipt ingestion actually calls the FUEL-1 import writer into fuel.fuel_transactions rather than only bank
+- **[banking] 0518-r04-10-orphaned-migration-files-4-tables-absent** — apps/backend/src/migrations/ has 10 files never applied by the runner (which reads only db/migrations/) — 4 ta — _partial_; missing: remove/reconcile the orphaned apps/backend/src/migrations/ directory (or formally deprecate it) so it can't cause future drift
+- **[banking] 0243-g4-idem1-money-routes-off-allowlist** — [CRIT] Idempotency middleware guards a hardcoded allow-list missing several money routes (cash-advance create, — _not-built_; missing: add idempotency keys/dedup/balance caps to every money POST/PATCH on the allow-list gap; fix stale matchers
+- **[banking] 0010-f7-unapplied-migration-files-0392-0394-0395** — F7: apps/backend/src/migrations/0392-auto-deductions.sql, 0394-team-splits.sql, 0395-road-service-tickets.sql  — _not-built_; missing: port 0392-auto-deductions.sql, 0394-team-splits.sql, 0395-road-service-tickets.sql into db/migrations/ with fresh numbers above main's max a
+- **[banking] 0519-sec1-86-tables-rls-not-forced** — 86 tables RLS enabled but NOT FORCED, including driver_finance.escrow_balances/escrow_ledger/settlement_lines, — _partial_; missing: ALTER TABLE ... FORCE ROW LEVEL SECURITY for the listed 86 tables, prioritizing driver-money tables first
+- **[banking] 0091-g7-1** — Add a transition-matrix test pinning the driver-settlement payment state machine (unpaid->queued->sent_to_bank — _not-built_; missing: a transition-matrix test file + a compare-and-swap WHERE clause
+- **[banking] 0091-g4-idem1** — Add money POST/PATCH routes (cash-advance create, bank transfers/cc-payments, cash-advance disburse, customer- — _partial_; missing: REQUIRED_MATCHERS entries for /api/v1/cash-advances, /api/v1/banking/transfers, /api/v1/banking/cc-payments, /api/v1/customers/:id/payments,
+- **[banking] 0518-r06-70of145-tables-rls-not-forced** — 70/145 financial-schema tables (incl. driver_finance.escrow_balances, escrow_ledger, settlement_lines) RLS ENA — _partial_; missing: ALTER TABLE driver_finance.escrow_balances/escrow_ledger/settlement_lines FORCE ROW LEVEL SECURITY (Tier-1 ceremony)
+- **[banking] ledger-proof-period-end-posters** — Build a write-proof harness for period-end posters (depreciation, prepaid amortization, revenue recognition, A — _not-built_; missing: docs/proofs/CORE-LEDGER-WRITE-PROOF-period-end.md and the apps/backend/src/accounting/__proofs__/ harness files
+- **[banking] biz-flow-5-dual-deduction-systems** — Two live settlement-deduction paths (legacy sum-of-requests vs capped ledger) may cause confusion / overpaymen — _not-built_; missing: REPAIR-A's canonical-ledger unification + wired applier has not shipped (owner sign-off gate, no code/SQL applied per the design doc header)
+- **[banking] 0441-mod6-insurance-units-assets-id-mismatch** — Insurance Create-Policy wizard + Create-Claim 500/404 on every real unit (units vs assets id-space bug) — _not-built_; missing: Either point insurance.policy_unit/insurance.claim FKs at mdata.units(id) directly (matches original spec) and retire/alias mdata.assets, or
+- **[banking] 0441-mod8-mark-transfer-404-silent** — Record Transfer works but mark-transfer sub-call 404s silently — source tx never linked — _partial_; missing: RecordTransferModal.tsx should be updated to call the now-fixed markBankTransactionTransfer for the bank<->bank case instead of skipping it.
+- **[banking] 0008-g4-vendor-namespace-canonical** — Canonicalize mdata.vendors + a resolver; pickers read it (retire mdata.qbo_vendors split) — _not-built_; missing: a vendor resolver + repoint WO/expense/CC pickers onto mdata.vendors
+- **[banking] retire-parallel-payroll-settlement-engine** — Retire the parallel payroll.*/settlement.* settlement engine (split-brain vs canonical driver_finance.driver_s — _partial_; missing: decommission (archive-not-delete) the payroll.*/settlements.* routes+services once driver_finance.* is confirmed the sole write path, or exp
+- **[banking] custvend-par1-g3-customer-statement-engine** — CUSTVEND-PAR-1 G3 — customer Statement engine (Balance Forward / Open Item / Transaction types matching QBO) — _not-built_; missing: a customer AR statement generator endpoint + the 3 QBO statement types (Balance Forward/Open Item/Transaction) + send/email + auto-refresh o
+- **[banking] 0519-s1-maint-schema-fragmentation** — S1: maint + maintenance schema split — two schemas writing maintenance data, consolidation needed — _partial_; missing: a canonicalization verdict for maint vs maintenance
+- **[banking] 0441-mod10-holddeduction-id-mismatch** — HoldDeduction ID-mismatch (passes settlement_lines.id to deduction_schedule endpoint -> 404) — _not-built_; missing: either the settlement detail API must surface each deduction line's originating deduction_schedule.id (not settlement_lines.id) for the Hold
+- **[compliance] 0243-g6-2-vendor-create-no-dedup-guard** — mdata/vendors POST has no name-based dedup (customers have assertUniqueCustomerFields, vendors don't) — _not-built_; missing: assertUniqueVendorFields (case-insensitive, entity-scoped) + a partial UNIQUE index migration
+- **[compliance] 0519-rp1-ifta-q2-deadline** — IFTA Q2 due 2026-07-31 (34 days at audit time) — steps 1-3 still pending backend — _partial_; missing: live confirmation IFTA Q2 filing steps 1-3 are complete
+- **[compliance] 0518-r23-ifta-q2-deadline** — IFTA Q2 filing due 2026-07-31 (34 days out at audit time; now ~21 days out as of today 2026-07-10) — _partial_; missing: live confirmation that IFTA Q2 state miles/gallons/tax are accumulating and the filing is on track
+- **[customers-vendors] 0243-g6-3-customer-dedup-case-sensitive-unscoped** — Customer dedup checks WHERE customer_name=$1 — case/whitespace-sensitive, no operating_company_id filter, TOCT — _not-built_; missing: lower(trim()) compare + opco filter + partial UNIQUE index migration
+- **[customers-vendors] 0518-r10-qbo-sync-workers-off-mirror-stale** — QBO sync workers OFF → qbo_customers/qbo_vendors mirror stale since 2026-05-23 (~36d at audit time) — _partial_; missing: 
+- **[dispatch] chain-08-demo-data-purge** — CHAIN-08 transp-demo-data-purge: DISPATCH-4 oos-board, DRIVERHUB-2 dup drivers, MAINT-1 demo WOs, COMPLIANCE-1 — _partial_; missing: the actual demo-data purge migration/execution on prod, following the audit's row-state findings
+- **[dispatch] 0490-critical-users3-owner-mint-approval-path** — USERS-3 (STOP): identity/workflow-routes.ts maker-checker APPROVAL path has no callerIsOwner/last-Owner check  — _not-built_; missing: a callerIsOwner (or minimum-privilege) check + last-active-Owner-count guard on the WF-064-IDENT-002 role-change approval branch before it c
+- **[dispatch] 0243-h6-1-qbo-refresh-token-race** — [STOP-GATE] QBO refreshAccessToken has no lock; hourly cron, 15-min watchdog, per-minute sync runner, and requ — _not-built_; missing: pg_advisory_xact_lock(hashtext('qbo_refresh:'||connection_id)) (or in-process single-flight) around read+refresh+write
+- **[dispatch] 0243-g10-h1-load-stops-delete-grant-live** — 0034 still grants DELETE on mdata.load_stops (loads itself has none); 8 CASCADE children include pod_documents — _not-built_; missing: REVOKE DELETE ON mdata.load_stops (gated migration, Jorge's OK); convert CASCADE children to RESTRICT
+- **[dispatch] 0091-m-lists-1** — Add opco predicate + FORCE-RLS/grants to dispatch_flag_colors/load_cancellation_reasons UPDATE + stub-catalog- — _needs-design_; missing: re-verify catalogs.load_cancellation_reasons/dispatch_flag_colors UPDATE RLS policy predicates
+- **[dispatch] 0091-info-b3-3** — Arm the G18 fuel-transaction trigger against a future load hard-delete path (currently ON DELETE SET NULL, tri — _needs-design_; missing: if a load hard-delete path is ever added, switch fuel_transactions.load_id to ON DELETE RESTRICT
+- **[dispatch] 0490-section-c-2-reporting-vs-reports-drift** — Section C drift #2: lockdown doc names 'reporting' schema canonical, but the live CI guard blocks 'reporting'  — _needs-design_; missing: Jorge's decision on reporting vs reports as canonical, then align the lockdown doc + guard
+- **[dispatch] 0243-b3-3-fuel-g18-trigger-hard-delete-gap** — G18 fuel/load-FK trigger not armed against a load hard-delete (fuel_transactions.load_id is ON DELETE SET NULL — _not-built_; missing: if a load hard-delete path is ever added, switch to ON DELETE RESTRICT or re-validate
+- **[dispatch] coder-work-order-t1-7-escrow-ui-zero-callers** — T1-7: Escrow open/deposit/release backend routes have zero frontend callers — escrow UI is 100% read-only — _not-built_; missing: frontend UI wiring for escrow open/deposit/release actions (POST calls to the existing backend routes)
+- **[dispatch] 0091-g10-h1** — Revoke DELETE grant on mdata.load_stops (8 CASCADE evidence children incl POD/detention) and convert CASCADE c — _not-built_; missing: a REVOKE DELETE ON mdata.load_stops migration + RESTRICT on CASCADE evidence children
+- **[dispatch] 0091-e2-3** — Add FKs + retype operating_company_id from TEXT to uuid FK on dispatch.border_crossing_events (same class as E — _needs-design_; missing: confirm whether a border_crossing_events integrity migration exists alongside the confirmed driver_layovers one
+- **[dispatch] biz-flow-1-no-auto-termination-driver-walkoff** — Auto-terminate driver when a load status transitions to driver_walkoff — _not-built_; missing: no trigger call from the load-status-write path to a driver-termination writer
+- **[dispatch] d-01-new-load-overview-http-400** — New Load panel Overview tab returns HTTP 400 immediately on open (F1 missing grants) — _partial_; missing: Live confirmation the migration ran on prod and the panel no longer 400s.
+- **[dispatch] biz-flow-1-termination-not-linked-to-load** — Driver termination record must carry the load_id that caused it — _partial_; missing: WF-064-MDATA-002 payload still has no load_id field; the two termination mechanisms (workflow vs safety-event) are not unified
+- **[drivers] fk-escrow-termination-0289** — Critical FK gap #2: Escrow -> Termination, expected column driver_finance.escrow.termination_id — _partial_; missing: 202607111000 needs Jorge/CPA sign-off + a Neon-branch run before it addresses this gap live; currently HELD per its own header
+- **[drivers] 0243-h6-2-cash-advance-display-id-no-lock-no-unique** — cash-advances/display-id.ts computes MAX+1 with no advisory lock and no UNIQUE constraint on driver_advances.d — _not-built_; missing: wrap in pg_advisory_xact_lock + add UNIQUE(operating_company_id, display_id) migration
+- **[drivers] 0441-mod7-escrow-read-only** — Escrow 100% read-only — real open/deposit/release backend has zero frontend callers — _not-built_; missing: No UI affordance anywhere to open a new escrow account, deposit into one, or release funds — EscrowPage.tsx is view-only.
+- **[drivers] biz-flow-1-abandonment-separate-from-termination-workflow** — Abandonment chargeback flow does not trigger automatic driver termination — _partial_; missing: abandonment.service.ts has no call into a termination proposal/workflow
+- **[factoring] 0243-g10-h3-six-ui-features-404-routes** — Customer payment unapply, factoring bank-match apply, driver escrow forfeit, bank mark-transfer, driver dispat — _not-built_; missing: build the financial routes: customer-payment unapply, factoring bank-match apply, escrow forfeit, bank mark-transfer, driver dispatch-eligib
+- **[factoring] 0518-r18-schema-fragmentation-8-dup-pairs** — ~8 near-duplicate-concept schema pairs (factor/factoring, bank/banking, settle(s), driver_finance/payroll spli — _partial_; missing: canonicalization verdicts for maint/maintenance, docs/documents, reports/reporting, mdata/master_data pairs
+- **[factoring] remediation-t4.1-duplicate-schema-consolidation** — T4.1 - Consolidate duplicate/fragmented schema pairs (factor/factoring, bank/banking, settlement/settlements,  — _needs-design_; missing: Final consolidation of the remaining pairs (esp. maint(144 rows)/maintenance(17,310 rows) - both have data, doc calls for a data-lineage rev
+- **[factoring] 0091-g10-h3** — Build the 6 backend routes the live UI calls but don't exist (404): customer payment unapply, factoring bank-m — _not-built_; missing: backend routes for unapply/bank-match-apply/escrow-forfeit/mark-transfer/dispatch-eligibility/Pre-Flight DVIR under the appropriate money-pa
+- **[factoring] 0243-g11-10-month-close-checklist-unsatisfiable** — [STOP-GATE] can_lock requires arOverdueCount==0 AND apOverdueCount==0; a factoring carrier with slow-pay custo — _not-built_; missing: change the gate from 'zero overdue' to 'reviewed/acknowledged' sign-off
+- **[factoring] core-ledger-write-proof-trucking-evidence** — Neon-branch write-proof harness for the trucking-specific posters (driver settlement, factoring, fuel-card) wi — _not-built_; missing: The requested evidence doc + proof-harness test files for driver-settlement/factoring/fuel-card posters have not been produced.
+- **[factoring] 0091-g11-5** — Change month-close gate from 'zero A/R+A/P overdue' (unsatisfiable for a factoring carrier) to a reviewed/ackn — _not-built_; missing: a sign-off/override path for can_lock + an audited owner-gated reopen route
+- **[factoring] 0243-b1-2-factor-reserve-default-liability-fallback** — Stale factor_reserve_default role still typed Liability fallback despite factor_reserve_held (Asset) being can — _not-built_; missing: remove factor_reserve_default from COA_ROLE_VALUES/ROLE_FALLBACKS or repoint its fallback to Asset
+- **[factoring] guard-gap-factoring-treatment-unwired** — scripts/verify-factoring-treatment.mjs exists (CODER-34, PR #1770 factoring secured-borrowing treatment guard) — _partial_; missing: A wire-in line in scripts/verify-pre-commit.mjs (or a workflow) calling this guard.
+- **[factoring] factoring-asc860-determination-memo** — Formal CPA-ratification-ready ASC 860 sale-vs-secured-borrowing determination memo for the FARO factoring agre — _not-built_; missing: A dedicated ASC 860 determination memo (conditions a/b/c analysis, conclusion=secured borrowing, ratification-pending status) is not present
+- **[factoring] 0251-gap1-factoring-vendor-fk-not-stored** — Book Load: factoring vendor is selected in BookLoadModalV4.tsx but no FK is stored on the load — add factoring — _not-built_; missing: accounting.factoring_vendor_id (or similar) FK column on mdata.loads, populated at book-load time
+- **[factoring] factoring-coder-directive-item-c-unconfirmed** — 05_CODER-DIRECTIVE (factoring) Item C: draft-vs-posted immutability + reason-coded true-up — unconfirmed — _partial_; missing: Direct verification of draft-vs-posted immutability enforcement + reason-coded true-up in the factoring batch/advance posting path.
+- **[factoring] 0441-mod8-factoring-virtual-hardcodes-zero** — Factoring virtual panel hardcodes $0 — _partial_; missing: Either wire BankingHome's Factoring tile to the real /banking/factoring-virtual + accounting.factoring_companies data, or ensure views.banki
+- **[fleet] home6-fleet-rls-opco-context-unverified** — Home fleet/unit endpoints (fleet-utilization, fleet-snapshot, kpi-summary) return 0 because the RLS operating- — _partial_; missing: Live confirmation that /home/fleet-utilization and /home/fleet-snapshot (the two endpoints named in the defect) actually route through withC
+- **[fleet] 0091-m-woid-1** — Fix maintenance.next_wo_display_id querying phantom mdata.units.operating_company_id (real columns are owner_c — _not-built_; missing: maintenance.next_wo_display_id must use COALESCE(currently_leased_to_company_id, owner_company_id) instead of operating_company_id when quer
+- **[fleet] 0519-dc2-maint-schema-144-rows-active-alongside-maintenance** — maint schema (144 rows) actively receiving data alongside maintenance (17,286 rows) — queries against maintena — _partial_; missing: a canonicalization verdict for maint vs maintenance (which is canonical, consolidation plan)
+- **[maintenance] 0091-h5-1** — Add monthly range partition + maintenance cron (or R2 archive) for unbounded append-only spine tables (outbox. — _not-built_; missing: a monthly range-partition migration + maintenance cron, or a scheduled archive-to-R2-then-detach job
+- **[maintenance] wo-cancellation-reasons-fold-into-void-cancel-catalog** — Fold catalogs.wo_cancellation_reasons (WO-specific, 6 rows) into the unified per-entity catalogs.void_cancel_r — _partial_; missing: the migration that maps the 6 wo_cancellation_reasons rows into void_cancel_reasons per-entity, re-points the Cancel WO modal at void_cancel
+- **[platform] public-audit-log-partitions-no-rls** — public.audit_log + its 48 monthly partitions (audit_log_partitioned) have NO RLS at all — _partial_; missing: an RLS-enable(+force) migration for public.audit_log / audit_log_partitioned, scoped per-entity if the table carries operating_company_id, e
+- **[platform] 0010-f2-unscoped-financial-tables** — F2: 58 financial/operational tables have no operating_company_id/tenant scoping column — _partial_; missing: per-table disposition (global-by-design vs needs-scoping) for the remaining ~57 tables, plus migrations for any that need it
+- **[platform] coder-32-migration-drift-prod-triage-pending** — Run scripts/audit-migration-drift.mjs against PROD (read-only) and triage every real drift item beyond the 18- — _partial_; missing: The actual read-only prod run of scripts/audit-migration-drift.mjs and the per-item (a)/(b) triage + repair stubs docs/audits/MIGRATION-DRIF
+- **[platform] events-event-log-force-rls-still-blocked** — events.event_log (hash-chained audit log) has RLS ENABLED but NOT FORCED — owner role can bypass RLS on the ta — _partial_; missing: the real FORCE ROW LEVEL SECURITY migration on events.event_log, gated behind landing the spine-emit GUC fix first
+- **[platform] 0243-a2-5-foundation-migrations-not-idempotent** — 202606111050/55/56/57 create tables/indexes/policies without IF NOT EXISTS / DO guards — _not-built_; missing: IF NOT EXISTS on the CREATE TABLE/INDEX/POLICY statements in 202606111050/55/56/57
+- **[platform] 0010-f3-rls-missing-force** — F3: 86 tables have RLS ENABLED but not FORCED (superuser/owner-role queries can bypass row-level policies) — _partial_; missing: confirmation that all 86 originally-listed tables now carry FORCE (not just the financial subset covered by 202606281050)
+- **[platform] 0519-at1-245-tables-missing-created-by-user-id** — 245 financial/operational tables have no created_by_user_id maker column — attribution history exists only in  — _needs-design_; missing: a design doc prioritizing which financial tables get created_by_user_id first (journal_entry_postings, bill_lines, invoice_lines, expense_li
+- **[platform] ci1-build-typecheck-ap-control-race** — BLOCK_CI-1: root-cause flaky build-typecheck via verify-db-test-isolation.mjs + advisory-lock 4 ap_control DB  — _not-built_; missing: scripts/verify-db-test-isolation.mjs + a Postgres advisory lock keyed to ap_control serializing the 4 test files.
+- **[platform] guard-gap-qbo-sync-entity-scope-missing** — scripts/verify-qbo-sync-entity-scope.mjs never created — _not-built_; missing: The guard script.
+- **[platform] 0010-f12-missing-created-by-user-id** — F12: 245 financial tables missing created_by_user_id maker-column for audit trail — _not-built_; missing: a CI guard + migration plan adding created_by_user_id (or an equivalent maker column) to the 245 listed financial tables
+- **[qbo-import] import-5-qbo-import-ui** — QBO Import screen — Accounting sub-nav page surfacing import runs/tieouts/variance/cash-basis balances, owner- — _needs-design_; missing: no docs/approved-screens/*.html or docs/specs/*.md governs this specific screen's layout/columns — per the ROW-SCHEMA hard rule this makes i
+- **[qbo-import] import-block-1-trk-coa-sync** — BLOCK-IMPORT-1-trk-full-coa-sync: realm<->opco assertion + TRK realm 1432746210 full COA sync admin op — _not-built_; missing: Entire qbo/import/ directory and IMPORT-1 admin op.
+- **[qbo-import] import-1v2-trk-full-coa-equity** — TRK full COA sync (v2, corrected root cause) — pull ALL 917 TRK QBO accounts including 7-account Equity sectio — _partial_; missing: realm↔opco hard-assert refusal; Active-inclusive QBO query fix (root cause of TRK 32-row cap unverified/unfixed); two-pass parent_account_id
+- **[qbo-import] import-4v2-gl-detail-hardened** — IMPORT-4v2 — hardened GL detail import: leaf-level signed-union-void-aware tieout, re-run-forward orchestratio — _not-built_; missing: apps/backend/src/integrations/qbo/import/gl-detail.service.ts does not exist; admin-jobs 'qbo.import.gl_detail' and 'qbo.import.gl_reverify_
+- **[qbo-import] import-block-4v2-gl-detail-hardened** — BLOCK-IMPORT-4v2-gl-detail-hardened: leaf/signed/union tieout, forward-invalidation — _not-built_; missing: Hardened tieout logic with forward-invalidation.
+- **[qbo-recon] bf4-load-invoice-ar-factoring-payment** — BF4 flow: Load -> Invoice -> A/R -> Factoring -> Payment (doc claims BROKEN: customer payment posts NO GL so A — _partial_; missing: confirmation (or disproof) that a customer payment write auto-relieves A/R in the GL; reconciliation of the '3 reserve ledgers' claim
+- **[qbo-recon] bf10b-qbo-recon-six-types** — BF10-B flow: QBO clone -> Reconcile -> Divergence (doc claims PARTIAL: recon pulls only 2 of 6 bank-hitting QB — _not-built_; missing: grep for 'BillPayment'/'Payment'/'Transfer'/'JournalEntry' QBO txn types inside apps/backend/src/accounting/reconciliation.routes.ts and app
+- **[qbo-recon] gated-blocks-conn-plaid-relay-edi** — CONN-1 Plaid reconcile-commit, CONN-3 Relay internal bank, CONN-4 EDI — forward specs, 0 artifacts — _needs-design_; missing: all implementation; design docs exist (RELAY-INTERNAL-BANK-DESIGN.md) but zero code artifacts
+- **[qbo-recon] dbwiring-qbo-customers-vendors-accounts-split-brain** — QBO customers/vendors/accounts split-brain: duplicate tables in mdata.qbo_* (recommended canonical) AND accoun — _partial_; missing: A migration/refactor repointing the remaining accounting.qbo_* writers (qbo-customers-push.ts, qbo-vendors-push.ts, qbo-accounts-push.ts, *-
+- **[qbo-recon] 0243-g11-2-two-deduction-subledgers-dont-reconcile** — [STOP-GATE] settlement_lines (dollars) and driver_settlement_deductions (cents) independent; order-dependent o — _partial_; missing: collapse to one authoritative sub-ledger (see 0008-b) so the assertion never fires instead of merely detecting the mismatch
+- **[qbo-recon] 0091-m-factor-1** — Pick one canonical factoring reserve ledger — accounting.factoring_companies.current_reserve_balance has no wr — _not-built_; missing: either wire a write path to current_reserve_balance or repoint the dashboard read at the reconciled ledger (factoring.reserve_movement / v_f
+- **[qbo-recon] 0091-g11-2** — Reconcile settlement_lines vs driver_settlement_deductions sub-ledgers (order-dependent overpay or FIN-18 hard — _needs-design_; missing: re-verify aggregateSettlementTotals / auto_deduction handling
+- **[qbo-recon] daily-tms-qbo-reconciliation-cadence** — Establish a daily (twice-daily) TMS<->QuickBooks reconciliation with an owner + tolerance, including a reconci — _partial_; missing: Confirm whether a dedicated reconciliation SCREEN (distinct from the cron job) exists; if not, that remains the gap.
+- **[qbo-recon] 0441-mod8-reconciliation-workspace-no-refetch** — No refetch drift on reconciliation-workspace after match/unmatch — _not-built_; missing: Call workspaceQuery.refetch() (or invalidate its query key) after a successful match/unmatch, so the variance summary stays in sync with the
+- **[reports] 0441-mod6-spawn-liability-fake-stub** — Spawn Liability returns null under a success toast; writes to no real table — _not-built_; missing: A real target table (e.g. driver_finance.driver_liabilities or a new safety/insurance liability record) + an INSERT that creates it, with th
+- **[reports] 0441-mod13-form425c-exhibit-c-opening-balance-hardcoded-zero** — Form 425C Exhibit C opening-balance hardcoded 0 but inert — _not-built_; missing: A banking.* per-account historical balance snapshot table (migration, Jorge-gated per CLAUDE.md §1.4) to anchor opening_balance_cents.
+- **[reports] 0091-g9-h5** — Fix profit-per-truck reports double-counting via cartesian fan-out + including cancelled/voided rows — _needs-design_; missing: re-verify CTE structure + status filters on profit-per-truck reports
+- **[reports] 0441-mod11-owner-mint-maker-checker** — Owner-mint via maker-checker (approval path has no callerIsOwner check) — _not-built_; missing: add the same callerIsOwner-style check to the /approve handler for WF-064-IDENT-002 when toRole==='Owner' (or when target's current role==='
+- **[reports] 0441-mod7-dispute-queue-stub** — DisputeQueue is a 19-line stub with no real UI — _not-built_; missing: A real queue table (list disputes, filter by status/driver), a start-review action, and a decide (approve/deny + resolution text + optional 
+- **[reports] 0441-mod10-finalize-5s-staleness-race** — Finalize 5-second staleness race (practically unusable) — _not-built_; missing: either a materially longer/adaptive staleness window, or a client-side flow that recomputes debt and immediately submits finalize in one ato
+- **[safety] wave3-dot-49cfr-fields-missing** — 05_DISPATCH-BLOCK-WAVE3 Fix A: add 8 DOT/49-CFR-390.15 fields to accident/incident record (time_of_occurrence, — _not-built_; missing: 8 CFR-390.15 columns on safety.safety_incidents; From/To date filter on the UI list.
+- **[safety] audit-spine-a1-a9-emit-coverage-task** — Inventory A1-A9 audit-spine points from docs/specs (SAFETY-TRUST-RECOMMENDATIONS.md + AUDIT spec + QBO-parity  — _partial_; missing: Direct A1-A9 coverage inventory against the design doc's scope; confirmation of the enum-validity CI guard.
+- **[safety] 0243-swl-1-spine-emits-swallowed** — 61 money/dispatch spine-event emits swallowed with .catch(()=>undefined), zero breadcrumb, likely 500ing silen — _partial_; missing: confirm spine-emit catch blocks now log the failure instead of silently discarding; confirm the events schema USAGE grant gap itself is clos
+- **[safety] coder-work-order-t2-6-accident-liability-stub** — T2-6: 'Spawn Liability' accident action is a stub returning spawned_liability_id:null under a success toast; s — _not-built_; missing: the real accident→liability→escrow posting path; a safety.accident_liabilities table; and a status column fix on the action buttons
+- **[safety] 0091-e2-4** — Add FK driver_uuid -> mdata.drivers on safety.da_test_records / da_program_enrollments (drug-and-alcohol recor — _needs-design_; missing: confirm FK presence in db/migrations for safety.da_test_records/da_program_enrollments
+- **[safety] 0441-mod6-accident-edit-500-status-silent-fail** — Accident edit 500s (updated_at column doesn't exist) + status buttons silent-fail — _not-built_; missing: Migration adding safety.accident_reports.status + updated_at columns, then remove the .catch() swallow on the status endpoint.
+- **[safety] 0441-mod6-insurance-no-driver-accident-link** — Insurance has no driver link, no accident_id FK — _partial_; missing: insurance.claim.driver_id (FK mdata.drivers) and insurance.claim.accident_id (FK safety.accident_reports) forward columns.
+- **[settlements] bf9a-accident-claim-liability-deduction** — BF9-A flow: Accident/Damage/Claim -> Liability -> Deduction (doc claims BROKEN: no fault determination; 'Drive — _not-built_; missing: a claim->deduction producer service; a fault-determination field; linkage from safety.safety_events (or an insurance claim table) to driver_
+- **[settlements] bf1-driver-fault-liability-deduction** — BF1 flow: Driver fault determination -> liability -> deduction (doc claims BROKEN: fault not modeled, customer — _partial_; missing: explicit fault-determination field/workflow (who is at fault: driver/customer/company) feeding a single deduction pipeline; consolidation of
+- **[settlements] bf7-cash-advance-recovery-engine** — BF7 flow: Cash advance -> Liability -> Recovery (doc claims BROKEN: cash disburses + liability recorded, but r — _partial_; missing: confirmation of which settlement engine (shadow vs live) is wired to the production advance-recovery flag
+- **[settlements] 0490-new1-queuepaymentonfinalize-dead-code** — NEW-1: an early return in queuePaymentOnFinalize makes the real queuePayment call unreachable, so auto_queue_s — _partial_; missing: confirm (or fix) whether queuePaymentOnFinalize's internal early-return still shadows the real queuePayment call
+- **[settlements] 0243-g1-3-settlement-cash-advance-approvals-no-membership** — settlements/approval, settlement-dispute review/resolve, cash-advance approve handlers take client operating_c — _not-built_; missing: route settlements/approval.routes.ts, driver-finance/settlement-dispute.routes.ts, driver-finance/cash-advance-requests.routes.ts through wi
+- **[settlements] ground-truth-g4-grants-not-reproduced** — G4: ih35_app 'missing INSERT grants' on outbox_events/abandonment_defaults/settlement_preview_costs is NOT REP — _not-built_; missing: N/A per the doc's own verdict — no fix is warranted unless a live 42501 is reproduced
+- **[settlements] 0490-critical-g11-1-deduction-consent-template-not-seeded** — CRITICAL: hasSignedDeductionAuthorization() is structurally incapable of returning true because no driver-dedu — _partial_; missing: seed a legal.contract_templates row (or equivalent) with a template_code in HIRE_CONTRACT_TEMPLATE_CODES/DEDUCTION_AUTH_TEMPLATE_CODES
+- **[settlements] 0243-g2-2-operating-company-id-trusted-raw-tenant-scope** — operating_company_id trusted raw as tenant scope across settlements/dispatch/alerts routes — authorization gap — _partial_; missing: apply z.string().uuid() + resolveOperatingCompanyId(with membership) across settlements/*, driver-finance/*, dispatch/loads.routes.ts, alert
+- **[settlements] 0243-g9-h1-settlement-double-pay-race** — queuePayment/markPaidManually/markCleared read-then-UPDATE with no payment_state=<current> in the WHERE and no — _not-built_; missing: add AND payment_state=$current (compare-and-swap) or SELECT...FOR UPDATE to every state transition
+- **[settlements] 0243-e1-4-driver-settlements-four-schemas** — Canonical driver_finance.* coexists with a parallel payroll.* engine and an early settlement.* prototype over  — _partial_; missing: collapse to driver_finance.* per the owner-locked decision, or formally retire the payroll.* engine once shadow-run evidence is reviewed
+- **[settlements] 0285-df-gap1-no-escrow-for-cash-advances** — Driver Finance: cash advances use settlement deductions only — no escrow as a backup recovery source; if a dri — _not-built_; missing: an escrow-fallback recovery path when settlement earnings are insufficient to cover a cash-advance deduction
+- **[settlements] flow5-escrow-limited-to-driver-bonds** — Escrow deduction mechanism only covers driver bonds, not other deduction types (safety events, cash advances,  — _needs-design_; missing: Owner decision on which deduction classes are allowed to hit escrow vs settlement-only, then a design doc.
+- **[settlements] repair-b-driver-deduction-auth-template-not-seeded** — Seed the 'Driver Deduction Authorization' legal template (code driver_deduction_auth) so the settlement consen — _not-built_; missing: A real seed migration inserting the counsel-approved 'driver_deduction_auth' template into legal.contract_templates (idempotent, versioned),
+- **[settlements] 0008-f-consent-hire-contract-satisfies-gate** — No separate driver e-sign/consent template — signed hire contract authorizes payroll deductions, satisfies/rem — _partial_; missing: clarify whether driver_deduction_auth is auto-satisfied by the hire-contract signature event or is a genuinely separate signable document
+- **[settlements] linkage-safety-event-no-auto-escrow** — Missing linkage: damage-causing safety events do not automatically create an escrow deduction — _not-built_; missing: A safety.* event (damage/accident) -> driver_finance escrow-deduction-pending creation path, per the FLSA/consent-gated deduction rules alre
+- **[settlements] 0008-b-canonical-deduction-store** — Canonicalize driver_finance.driver_settlement_deductions as the one deduction store; retire settlement_lines a — _partial_; missing: settlement_lines auto_deduction path and payroll.* copy not yet retired; payroll engine kept as read-only shadow-comparison (A3-3) rather th
+- **[settlements] 0243-c1-1-orphaned-payroll-settlement-engine** — Load-linkage/deduction-stamping work landed in an orphaned parallel payroll.* settlement engine nothing calls — _not-built_; missing: collapse to one engine or formally bridge payroll.*->driver_finance.* before SETTLEMENT_GL_POSTING_ENABLED relies on load-linkage data
+- **[settlements] 0270-no-auto-escrow-deduction-safety-events** — Damage-causing driver safety events should automatically create an escrow deduction, instead of requiring a ma — _needs-design_; missing: a hook from safety-event creation (for damage-causing event types) into driver_finance.escrow_deductions_pending, mirroring the existing loa
+- **[settlements] 0091-g1-3** — Require membership assertion on settlement approval / dispute / cash-advance approve handlers (currently bare  — _not-built_; missing: route every opco handler in settlements/approval.routes.ts (and settlement-dispute.routes.ts, cash-advance-requests.routes.ts) through withC
+- **[settlements] 0242-no-auto-escrow-deduction-driver-fault-cancellation** — Driver-fault load cancellation should automatically create an escrow deduction, instead of requiring a manual  — _needs-design_; missing: a driver-fault-reason branch in cancelLoad() (or a hook off catalogs.cancellation_reasons) that creates a driver_finance.escrow_deductions_p
+- **[settlements] 0285-df-gap2-dual-deduction-systems** — Driver Finance: dual deduction systems (legacy vs capped) coexist — may cause confusion, need to standardize o — _partial_; missing: final canonicalization decision + migration of legacy deduction rows/writers to the capped system
+- **[settlements] biz-flow-4-no-escrow-deduction-cash-advance** — Cash advance recovery should be able to fall back to escrow, not only future-settlement deductions — _not-built_; missing: no escrow-balance fallback recovery path if settlement earnings are insufficient
+- **[settlements] biz-flow-5-escrow-only-driver-bonds** — Escrow handling at settlement-post time is limited to driver_bond_deduction lines only — _partial_; missing: the generic pay-first-then-escrow engine is not live (flag OFF)
+- **[settlements] biz-flow-9-no-automatic-escrow-deduction-safety-event** — Auto-create an escrow deduction when a safety event indicates driver-caused damage — _not-built_; missing: no linkage between mdata.driver_safety_events and driver_finance.escrow_deductions_pending
+- **[settlements] 0091-g9-h1** — Add compare-and-swap (AND payment_state=$current) or SELECT..FOR UPDATE to prevent settlement double-pay race — _not-built_; missing: compare-and-swap predicate on payment_state in every UPDATE driver_finance.driver_settlements SET payment_state=...
+- **[settlements] 0441-mod11-deduction-trail-period-close-zero-rows** — Deduction Trail + Period-Close History return zero rows always (wrong sink) — _not-built_; missing: UNION audit.audit_events (filtered by event_class patterns and payload opco) into both the deduction-trail and period-close-history queries,
+- **[settlements] 0441-mod11-financial-change-log-starved** — Financial Change Log starved (wrong sink, same root cause as Deduction Trail) — _not-built_; missing: same fix as deduction-trail: UNION in audit.audit_events filtered by the relevant event_class patterns.
+- **[settlements] biz-flow-3-no-auto-escrow-deduction-driver-fault-cancellation** — Auto-create an escrow deduction when a cancellation reason indicates driver fault — _not-built_; missing: no call from cancelLoad()/approveCancellation() into escrow-deduction-pending.service.ts
+- **[settlements] 0091-e1-4** — Collapse driver settlements from 4 schemas (driver_finance.*, payroll.*, settlement.*) to one canonical engine — _not-built_; missing: an owner decision + migration collapsing to driver_finance.* and archiving payroll.*/settlement.*
+- **[settlements] biz-flow-3-no-cancellation-deduction-linkage** — dispatch.load_cancellations needs a foreign key to the driver deduction it produced — _not-built_; missing: no deduction_id column on dispatch.load_cancellations
+- **[settlements] 0441-mod10-deductions-never-reduce-settlement** — Deductions never reduce a settlement (weekly-close hardcodes deductions_total=0) — _not-built_; missing: weekly-close must query driver_finance.deduction_schedule (active, non-held rows for the driver/period) and insert corresponding line_type='
+- **[settlements] 0441-mod10-cashflow-driverpay-hardcoded-empty** — Cash Flow driver-pay line hardcoded [] — _not-built_; missing: resolve settlement_lines -> driver_settlements -> load mapping (or add a direct load_id) and populate expenseItems with real driver-pay accr
+- **[settlements] 0519-sf1-82-drivers-0-settlements** — 82 active drivers but 0 settlements created — driver payroll pathway unclear — _partial_; missing: live confirmation of current settlement count and whether the driver payroll pathway has since been activated
+- **[settlements] dispatch-sweep-gap-19** — Pre-settlement to Driver Escrow Linkage — verify pre-settlements calculate escrow correctly — _not-built_; missing: A call from pre-settlement/settlement calculation into escrow-separation.service.ts so escrow amounts are computed as part of the settlement
+- **[settlements] 0441-mod10-settlement-line-ui-nonexistent-columns** — Settlement-line UI reads non-existent columns (silent placeholders) — _not-built_; missing: either add real columns (miles, rate, balance_left, is_held, held_by_user_id, pending_ack, receipt_number) to settlement_lines via migration
+- **[settlements] biz-flow-1-escrow-not-linked-to-termination** — Escrow deduction record must be linked to the driver-termination record that triggered it — _not-built_; missing: no termination_id / driver_safety_event_id FK on driver_finance.escrow_deductions_pending or driver_settlement_deductions
+- **[settlements] dispatch-sweep-gap-22** — Reassign to Settlement Linkage — verify reassignments trigger settlement recalculation — _partial_; missing: An explicit recalculation/adjustment of an already-open driver settlement when one of its bookended loads is reassigned mid-settlement.
+- **[settlements] dispatch-sweep-gap-41** — Geofence to Driver Settlement Linkage — verify geofence breaches affect driver settlement — _not-built_; missing: No driver_id on the breach table and no code path from a breach into driver_finance deductions/settlement.
+- **[settlements] fk-cancellation-deductions-0289** — Critical FK gap #5: Cancellation -> Deductions, expected column dispatch.cancellations.deduction_id — _not-built_; missing: dispatch.load_cancellations.deduction_id FK to driver_finance.driver_settlement_deductions when a cancellation is driver-caused
+- **[settlements] 0441-mod10-three-settlement-dispute-backends** — 3 settlement-dispute backends with incompatible enums — _not-built_; missing: consolidate into one dispute engine/table with one status enum; migrate or deprecate the other two.
+- **[settlements] 0441-mod10-payment-status-panel-404** — Payment Status panel 404 (registerSettlementPaymentRoutes unmounted) — _not-built_; missing: import { registerSettlementPaymentRoutes } from './driver-finance/settlement-payment.routes.js' and a corresponding await registerSettlement
+- **[settlements] 0441-mod10-autodeductionpolicies-fully-dead** — AutoDeductionPolicies fully dead — _partial_; missing: import and register registerAutoDeductionPolicyRoutes in apps/backend/src/index.ts.
+- **[uncategorized] 0091-g6-6** — Default the payments list to exclude voided rows even with no status param (currently defaults to showing ever — _not-built_; missing: default status to 'active' (or always append voided_at IS NULL unless explicitly requesting voided)
+- **[uncategorized] phase8-audit162-database-audit** — Audit 162 — database performance monitoring, database security audit, database dashboard/analytics (schema its — _needs-design_; missing: a database performance-monitoring/security-audit dashboard; exact live schema/table/index/RLS/FK/trigger/constraint counts need prod verific
+- **[uncategorized] product-service-categories-rename-and-creator** — Rename 'QBO Categories' -> 'Product & Service Categories', add QBO-style creator/profile with parent-category  — _partial_; missing: parent-category nesting was not built: apps/frontend/src/pages/lists/accounting/QboCategoriesListPage.tsx:4-8 comment states 'Parent/sub-cat
+- **[uncategorized] gated-blocks-usmca-launch-gate** — USMCA-LAUNCH — gated on entity-independence completion, July 2026 target — _not-built_; missing: full entity-independence verification across accounting/mdata/catalogs before USMCA can go live
+- **[uncategorized] 0394-qbo-sync-one-shot-not-recurring** — QBO master-data sync is a one-shot run (2026-05-17), not on a recurring/CDC schedule — mirrors are stale — _not-built_; missing: a recurring/incremental (CDC cursor-based) schedule for the QBO master-data sync, wired into the cron registry
+- **[uncategorized] p1-trigger-optimization** — P1 recommendation: Optimize Triggers (16 hours) — _not-built_; missing: doc names no specific slow trigger; requires live EXPLAIN/pg_stat on prod triggers to identify a target
+
+## Block↔prod contradictions (the dangerous ones)
+
+- **block5-coa-new-account-type-detail-organized** [accounting]: Doc requires detail_type_id FK persistence and forbids free-text storage ('do NOT store detail type as free text'); the shipped code persists account_subtype as free text instead, violating the doc's own integrity rule -
+- **fd2-external-fines** [accounting]: A prior sweep may have marked FD1-class defects fixed by pattern-matching FD1's fix, but FD2's creator still ships the exact bare-UUID-text-input defect class the doc was written to eliminate -- this is a real regression
+- **block4-detail-type-catalog-creator** [accounting]: Doc names the target table 'catalogs.account_detail_types' as a NEW table with account_type_id FK; the actual implementation extended the EXISTING catalogs.detail_types table in place instead of creating a new one -- fun
+- **coder-directive-drv-per-driver-escrow-advance** [accounting]: Doc explicitly says 'DESIGN ONLY NOW' / 'NOT functioning today' for DRV, but repo evidence shows real service code (driver-subaccount-provision.service.ts) and a migration already exist — either a later approved block bu
+- **import-1-trk-coa-sync-v1** [qbo-import]: none beyond the supersession itself
+- **import-2-import-schema-v1** [qbo-import]: none beyond the supersession itself
+- **import-3-opening-balance-engine-v1** [qbo-import]: none beyond the supersession itself (deliberate owner-accepted design correction, not accidental drift)
+- **import-4-gl-detail-import-v1** [qbo-import]: none beyond the supersession itself
+- **bf4-load-invoice-ar-factoring-payment** [qbo-recon]: Matches an already-known open item in auto-memory 'factoring-ar-subledger-gl-divergence.md' — this is not a new finding, it is a re-discovery of a tracked gap; do not treat as new work.
+- **bf3-bf5-bf7-deduction-applier-and-consent-fixed** [settlements]: 0075's checklist (2026-07-04) rated these CRIT/HIGH-severity live breaks ('drivers overpaid', 'silent, live since flags ON'); current repo evidence shows the applier wired into the live engine — appears fixed since the d
+- **bf8-escrow-return-on-separation** [drivers]: 0075 (2026-07-04) rated this CRIT 'NOT BUILT — legal/trust gap'; current repo shows a full service+math+release test set — appears fixed since.
+- **cascade-20-ar-ap-aging-reports** [accounting]: possible duplicate/diverging aging engines across finance/, reports/, accounting/ page dirs — flagged, not confirmed which is canonical
+- **fin22-lease-asc842-ui-cascade-lane** [dispatch]: duplicate dispatch of the same feature (FIN-18/22-style Model-A parallel-lane pattern) — not a second distinct gap
+- **0519-dc1-bank-master-data-empty-shells** [banking]: The doc's own recommendation ('safe to drop') conflicts with this repo's hard ADDITIVE-ONLY / never-delete-only-archive policy (CLAUDE.md §7, memory never-delete-never-defer-always-fix) — deprecate-not-drop is correct, n
+- **bf1-driver-fault-liability-deduction** [settlements]: doc's blanket claim 'deduction lands in a table nothing reads' is stale for driver_settlement_deductions specifically — settlement-deduction-cap.service.ts and settlement-posting.service.ts actively read/stamp applied_to
+- **bf5-load-settlement-driver-pay-gl** [accounting]: doc's 'deduction-applier is test-only' claim is stale — settlement-deduction-cap.service.ts is wired into the live settlement-posting service, not a test double. Consent-template and floor-conflict claims are also likely
+- **bf7-cash-advance-recovery-engine** [settlements]: Matches auto-memory bug-sweep-2026-07-04 'two settlement engines' STOP-gate finding — this is a known tracked issue, not new.
+- **bf9b-wo-cost-unit-load-allocation-gl** [accounting]: doc's 'unit link is a soft (no-FK) uuid' is stale for accounting.bills — the field is a real uuid column named unit_id with a comment confirming it's an intentional hard FK-style link (not verified as an actual DB FK con
+- **bf9c-fuel-load-g18-writer** [banking]: Doc's 'NO writer' claim is directly contradicted by an in-repo code comment confirming a writer (FUEL-1 import) already existed at the time this A10 read-only block was added — the doc may have been looking at the read-s
+- **bf10a-bank-bulk-categorize-gl-posting** [qbo-recon]: This finding is STALE — bulk-transactions.ts (per the 'BANKING-GL-COMPLETION' comment) reads as a later fix that specifically closed this gap after the 07-05 audit.
+- **p1-health-check-endpoint** [uncategorized]: P1 item was already long-satisfied at the time of the 07-05 audit — this is a core, load-bearing endpoint the team's own deploy workflow depends on.
+- **fk-escrow-termination-0289** [drivers]: Same underlying gap as row bf8-escrow-lifecycle-parallel-systems — duplicate finding surfaced from two source docs.
+- **0441-mod2-csv-import-mileage-phantom** [reports]: None - confirmed still fully broken as described
+- **0441-mod4-dispatch-factoring-drawer-stub-swap** [factoring]: Doc's claim is now WRONG — repo comment explicitly documents the stub deletion and real-tab wiring (Block 7 / orphan-triage F1)
+- **0441-mod8-bank-recon-404s-unmounted** [qbo-recon]: Strong code-level evidence contradicts the audit's 'unmounted' claim; recommend a live-endpoint check before fully closing this CRITICAL item.
+- **0441-mod11-fuel-recon-zero-and-noop-save-link** [qbo-recon]: the no-op Save link is fully confirmed; the '$0' half of the claim is plausible from the join design but not confirmed without live data
+- **0441-mod11-ifta-drift-two-preparers** [compliance]: none — doc claim confirmed accurate; note this is partly a recurring DATA-maintenance task (each new quarter needs a seed) rather than purely a code defect
+- **dispatch-board-db2-db7-fixes** [dispatch]: DB-5 ('columns must NOT be user-resizable, remove resize handles') directly contradicts the standing PARKED decision (db5-resize-removal-parked memory) and the opposite direction taken by BLOCK 6 of 0044__DISPATCH_accoun
+- **db5-resize-removal-directive-vs-current-lock** [dispatch]: auto-memory 'db5-resize-removal-parked' (PARKED — don't remove resizable columns without Jorge de-lock; breaks 4 resize guards) directly contradicts this old batch-6 dispatch's claim that Jorge already authorized app-wid
+- **0490-section-c-2-reporting-vs-reports-drift** [dispatch]: docs/lockdown/00_LOCKED_DECISIONS.md and the live schema-growth guard disagree on which of reporting/reports is canonical — flagging per instructions, not resolving
+- **vend2-sync-banner-no-retry-stuck-error** [dispatch]: MODULE-20-VENDORS-FINDINGS.txt (07-02) reports this as an open defect; the fix (retry:3 + backoff, explicitly labeled VEND-2 in a code comment) is already in the repo — the source doc is stale.
+- **0441-mod12-documentstab-entity-query-params-unread** [dispatch]: Doc's specific mechanism (URL query params ?entity_type=&entity_id=) does not exist in current code; DocumentsTab uses component props and UploadModal correctly builds entity_links from them.
+- **0441-mod4-dispatch-cancel-bypasses-approval-gate** [dispatch]: None — doc's claim fully confirmed still accurate, verbatim in current code
+- **0441-mod10-cashflow-income-loadid-plaintext** [dispatch]: none — doc claim confirmed accurate
+- **ratecon-3-retired-model** [dispatch]: Doc asked to migrate to claude-sonnet-4-6; repo has since superseded that to claude-sonnet-5 (RETIRED_MODEL_IDS lists claude-sonnet-4-6 as also retired) -- the underlying architecture (central registry + guard) this bloc
+- **d5-driver-detail-company-scope** [dispatch]: Doc explicitly asked for the getDriver signature parameter to be made REQUIRED (not optional) specifically to let TypeScript itself catch any missed bare-call site; the shipped signature is still `operatingCompanyId?: st
+- **flow4-cash-advance-loadid-linkage** [dispatch]: 0264 (07-04) claims 'driver-initiated advances have no load_id' — stale; matches auto-memory load-advance-loadid-direct-build.md (FIXED C1-1/C1-2).
+- **0441-mod4-dispatch-planner-range-picker-inert** [dispatch]: Doc's claim is now WRONG — the real PlannerRangeToolbar is mounted and interactive across all 4 planner views
+- **0441-mod11-profit-per-truck-cron-double-count** [dispatch]: none — doc claim confirmed accurate and confirmed LIVE (reachable via the actually-mounted scheduled-reports-emailer path), which is worse than the doc implies since it also feeds into finding #11 below
+- **0441-mod4-dispatch-ratecon-evidence-orphan** [dispatch]: Doc's claim (bare key, no file_links row) is now WRONG — fix is live in repo with explicit A9 comment documenting the exact prior bug and its resolution
+- **0441-mod4-dispatch-trailer-column-read-only** [dispatch]: Doc's claim is now WRONG — InlineTrailerPicker is live and interactive in DispatchBoard's Trailer column
+- **0441-mod5-onboarding-step-data-only** [dispatch]: none — doc's claim confirmed accurate; explicitly re-verified and left unfixed by name in a later commit's own message
+- **0441-mod12-docs-lowest-uuid-company-bug-live** [dispatch]: Memory item 'Docs Upload Lowest-UUID Trap' says this was fixed in PR #2008 - confirmed that fix only covers the rate-con extraction path; the shared UploadModal (all other upload entry points) still has the bug live.
+- **biz-flow-1-no-auto-termination-driver-walkoff** [dispatch]: REPAIR-D-CONDUCT-CATALOG-DESIGN.md (same 2026-07-04 date as this audit) LOCKS the opposite of the audit's implied fix: 'Termination stays HUMAN-gated (never auto)'. The audit frames auto-termination as a gap to close; th
+- **0441-mod4-dispatch-cancellation-reasons-decoy-page** [dispatch]: None — doc's claim fully confirmed still accurate; two genuinely distinct tables/migrations verified
+- **0441-mod4-dispatch-detention-in-shop-hardcoded-empty** [dispatch]: The underlying defect (hardcoded empty 'In shop' section) is confirmed real and unchanged, but it lives on DispatchBoard.tsx, not a distinct 'Detention board' page (DetentionBoardPage.tsx has no In-shop/in_shop reference
+- **dispatch-sweep-gap-15** [dispatch]: Doc frames this as an unverified linkage; the deeper finding is the underlying tables likely have zero rows (no writer found anywhere in the repo) — a dead/unpopulated Finance report, not just an unverified one.
+- **0441-mod11-dispatch-margin-cash-500** [dispatch]: none — doc claim confirmed accurate
+- **fin-19-financial-statements-parity-dup** [dispatch]: duplicate task-dispatch of the same FIN-19 build item captured from 0096__FIN-19_Financial-Statements-Parity.md
+- **biz-flow-1-termination-not-linked-to-load** [dispatch]: doc's blanket claim 'termination is NOT linked to the specific load that caused it' is only true for the WF-064 workflow path it traced; it missed the driver_safety_events path (built 2026-05-04, commit c71ba145c, predat
+- **0441-mod2-is-oos-not-read-by-dispatch** [dispatch]: None - confirmed still present exactly as described
+- **0441-mod4-dispatch-chat-no-attachment-upload** [dispatch]: None — doc's claim fully confirmed still accurate
+- **0441-mod4-dispatch-24-dead-orphaned-files** [dispatch]: Doc's claim ('24 dead/orphaned dispatch files') is now WRONG per the repo's own canonical orphan guard (0 current orphans, burned down from whatever baseline existed at audit time)
+- **0441-mod4-dispatch-mapview-no-real-map** [dispatch]: None — doc's claim fully confirmed still accurate
+- **0441-mod4-dispatch-2-pages-unreachable** [dispatch]: Doc's claim is now WRONG — both pages have live nav links (Trip Profitability under Reports sidebar; Cancellations under Reports subnav)
+- **0441-mod5-operations-depth-nav-500** [dispatch]: Doc's CRITICAL claim ('WILL 500 in every loader') is now false in repo code — all 12 loaders were root-caused and fixed in commits dated the same week as (and after) the audit
+- **0441-mod4-dispatch-load-templates-nav-dead** [dispatch]: None — doc's claim fully confirmed still accurate
+- **0441-mod4-dispatch-notify-prefs-no-onerror** [dispatch]: None — doc's claim fully confirmed still accurate
+- **0441-mod4-dispatch-ocr-queue-no-reprocess-ui** [dispatch]: None — doc's claim fully confirmed still accurate
+- **0394-tms-to-qbo-push-schema-bugs** [notifications]: the source doc explicitly marked this sub-claim as unverified 'Coder-reported'; repo evidence shows qbo_sync_token is a real, correctly-used column in the master-data sync path, so the claim as originally stated does not
+- **qbo-twoway-push-contradicts-no-writeback** [notifications]: This doc's core ask (build a live TMS->QBO push + CDC sync) directly contradicts the LATER canonical, locked architecture doc gather-0628/loose/0071__ACCOUNTING-ARCHITECTURE.md ('locked 2026-07-02'), which explicitly RET
+- **repair-program-settlement-consent-gate-live-status** [accounting]: this doc's 2026-07-04 snapshot claimed the flag was ON for ALL 3 entities with a broken path; the later 202607052300 migration shows a deliberate per-entity go-live (TRANSP-only ON) — the current live state may already r
+- **0518-r13-idempotency-key-do-not-dedupe-warning** [accounting]: Directly contradicts doc 0519's ID1/ID2 CRITICAL findings and REC-01 (which prescribe deduping + adding a bare UNIQUE(idempotency_key) — an action this doc explicitly proves would corrupt/break the ledger). See 0519-id1/
+- **fact-par-1-submission-workflow** [accounting]: the doc names the closure status 'financed' but the built code uses factoring_status='advanced' — same concept, different literal; flag for naming reconciliation, not a functional gap
+- **0243-flag-lease-on-despite-engine-not-built** [accounting]: Contradicts finance-engine-decisions-locked memory ('lease=operating... flags OFF') and 0008-a owner decision.
+- **0243-flag-live-all-9-gl-flags-on-prod** [accounting]: Directly contradicts 0008-a (owner decision to flip SETTLEMENT_GL_POSTING_ENABLED and LEASE_GL_POSTING_ENABLED OFF).
+- **0473-1-3-insider-receivables-misclassified-as-ar** [accounting]: The opening-balance-import source still categorizes these as accounts_receivable, which is what the CPA doc flagged as WRONG (recommended OtherCurrentAssets) — worth flagging to Jorge/CPA to confirm this is an intentiona
+- **0490-section-c-1-blueprint-wrong-coa-role-table** [accounting]: confirms the blueprint/CLAUDE.md doc drift is real; already corrected in the auto-memory index
+- **coder12-audit-spine** [accounting]: The doc's literal ask was that EVERY financial posting batch calls events.log_event (the canonical 13-arg function). The actual repo does NOT do this uniformly: apps/backend/src/accounting/bank-recon/__tests__/coder-12-s
+- **factoring-fact-par-1-outbound-submission** [accounting]: Doc (07-02) said 'batches exist internally but submission to the factor is manual/outside the TMS' — repo now shows a full built submit-batch route + workqueue + packet assembly, dated after the audit.
+- **0473-1-9-driver-settlement-net-pay-model** [accounting]: This doc's stated 10% floor is stale — superseded by the 07-04 owner lock of 5% (see 0008-c), which is what the repo now implements.
+- **0285-acct-gap1-no-auto-gl-posting** [accounting]: 0285 frames this as a 'Critical Gap' to fix, but per the CPA-locked architecture (skill ih35-cpa-accounting-decisions, memory accounting-architecture-parallel-clone-reconcile) this is an intentional, owner-approved desig
+- **0285-banking-transfer-gl-gap-not-caught** [accounting]: 0285's Banking 'Critical Gaps: None identified' / 'Create Transfer — Status: Implemented' directly contradicts memory 'banking-posting-flags-go-nogo-2026-07-06', which found this exact path live and unflagged-corrupting 
+- **db249-missing-fks-duplicate-of-0279-flows** [accounting]: Duplicate finding of 0279's Flow 1/2/3/8/9 missing-FK items; item #3 (expense->deduction FK) is stale/already fixed.
+- **factoring-sale-vs-secured-borrowing-treatment** [accounting]: The 2026-07-01 finding doc's premise (poster models factoring as customer_payment removing A/R, no liability booked) is now stale — the live code has since been rearchitected to the liability model.
+- **0091-m-settle-1** [accounting]: This is a live route (registered + called), directly contradicting any assumption that apps/backend/src/payroll/driver-settlement.service.ts is dead/orphaned code — see also the M-RECONCILE-NOTE item.
+- **catalogs-accounts-company-scope-fix** [accounting]: doc says the fix is to use withCompanyScope; repo shows a hand-rolled equivalent instead — flag for a reviewer to confirm the hand-rolled version actually enforces membership (not just resolves a default company) the sam
+- **coa-new-account-type-detail-organized** [accounting]: doc asks to persist detail_type_id as an FK column on catalogs.accounts, opening a Tier-1 migration if absent. Repo does NOT add detail_type_id — it persists the chosen detail type as catalogs.accounts.account_subtype (t
+- **expenses-list-route-still-shows-create-wizard** [accounting]: The 2026-07-06 work order describes this as a live routing bug still true on 2026-07-10 — not resolved despite other Bills/Expenses work landing since.
+- **0282-p0-catalogs-accounts-scope** [accounting]: CONTRADICTS the project's own locked architecture: durable memory 'GL Ledger Map' states 'catalogs.accounts = THE posting ledger' (a single shared chart of accounts spanning entities is the deliberate design, mirrored pe
+
+## Full block-by-block (differences: what spec asks vs what's built vs what's missing)
+
+
+### accounting  (405 open)
+
+- `0007-pattern-7-section7-gaps` **built** (tier-3) — Systemic Pattern 7: §7 gaps — missing breadcrumbs, wrong vocab ('New Bill' vs '+ Create'), debit/credit colori
+- `0010-f10-jep-idempotency-no-unique` **built** (tier-1) — F10: accounting.journal_entry_postings.idempotency_key has no UNIQUE index despite being used for dedup
+- `0010-f13-stub-routes-coming-soon` **built** (tier-3) — F13: /accounting/revenue-recognition, /accounting/fixed-assets, /accounting/my-accountant render ComingSoonPag
+- `0010-f4-ih35-app-insert-grants` **built** (tier-1) — F4: ih35_app role lacks INSERT grant on accounting.outbox_events, driver_finance.abandonment_defaults, driver_
+- `0033-factor-vs-factoring-canonical` **built** (tier-1) — Resolve factor vs factoring canonical schema BEFORE the secured-borrowing GL build
+- `0033-ledger-account-id-fk` **built** (tier-1) — Add FK constraint on banking.bank_accounts.ledger_account_id (bank→GL cash mapping column had no referential i
+- `0057-helper` **built** (tier-1) — Add writeTransactionSourceLink helper (co-located in accounting-spine-emit.ts) mirroring posting-engine's inli
+- `0057-migration` **built** (tier-1) — Add uq_tsl_posting_object_role unique index to accounting.transaction_source_links for idempotent link writes
+- `0091-c2-1` **built** (tier-1) — Add operating_company_id predicate to COA drift-detector (detectCoaDrift/detectItemsDrift) reads of catalogs.a
+- `0091-d2-1` **built** (tier-3) — Wire CreateBillModal/CreateExpenseModal (maintenance) to a real Save mutation instead of a dead form
+- `0091-g1-2` **built** (tier-1) — Require assertCompanyMembership on Bills pay/void/read handlers instead of trusting client-supplied operating_
+- `0091-g10-h5` **built** (tier-1) — Encrypt banking.bank_accounts.plaid_access_token at rest (was stored plaintext; QBO tokens already AES-256-GCM
+- `0091-g7-3` **built** (tier-3) — Replace `as any` row casts in accounting read routes with typed row interfaces (compiler-uncaught column-renam
+- `0091-g9-c3` **built** (tier-1) — Add role guard OUTSIDE any flag to invoice void, payment void, and factoring-advance void endpoints
+- `0091-h3-1` **built** (tier-1) — Add BANK_DRIVER_ADVANCE_ENABLED to POSTING_FLAG_KEYS so the per-entity money kill-switch actually covers it
+- `0091-h3-2` **built** (tier-1) — Rename or register REVENUE_RECOGNITION_POST_ENABLED / PREPAID_EXPENSES_POST_ENABLED / FIXED_ASSET_AUTOPOST_ENA
+- `0091-h6-3` **built** (tier-2) — Add unique/lock protection to geofence breach detector (duplicate alerts on overlapping ticks) + single-flight
+- `0091-m-cash-1` **built** (tier-1) — Fix cash-flow void-exclusion no-op ('void' vs 'voided' status mismatch) that let cancelled bills appear as fut
+- `0091-m-reports-1` **built** (tier-1) — Point AR/AP aging UI at the canonical FIN-20 aging (views.ar_aging/ap_aging), retire the duplicate 4-bucket ro
+- `0181-role-home-payment-terms-id-500` **built** (tier-1) — home /role-home 500 on bills.payment_terms_id (payment_terms_id lives on invoices, not bills)
+- `0243-b2-2-driver-picker-50-cap` **built** (tier-3) — Driver-picker 50-cap in ~14 non-dispatch pickers (CreateAdvanceModal, RunnerFilters, Training/Safety/HOS, Crea
+- `0243-c1-2-settlement-gl-deduction-linkage-severed` **built** (tier-1) — applied_to_settlement_id stamping only lived in the orphaned engine; live route recorded deductions as settlem
+- `0243-c1-5-upload-orphan-trap-dead-modals` **built** (tier-3) — UploadZone in dead CreateExpense/CreateBill/SevereRepairEstimate modals finalizes against a random draft id, o
+- `0243-c2-1-coa-drift-detector-no-entity-filter` **built** (tier-1) — detectCoaDrift/detectItemsDrift read catalogs.accounts/items under RLS-bypass with NO operating_company_id pre
+- `0243-d2-1-maintenance-modals-non-persisting-stubs` **built** (tier-1) — CreateBillModal and CreateExpenseModal render full forms + UploadZone but have no Save button/mutation/API cal
+- `0243-d5-4-green-cta-palette-deviation` **built** (tier-3) — ClaimCreateModal submit button and CreateBillModal 'Linked-WO' badge use green, reserved for the Class pill on
+- `0243-g1-2-bills-void-pay-no-membership-check` **built** (tier-1) — Bills pay/void/read handlers trust client-supplied operating_company_id with no assertCompanyMembership — cros
+- `0243-g10-h4-qbo-generic-catch-infinite-retry` **built** (tier-1) — [STOP-GATE] sync-outbound-accounting dead-letters HTTP-status branches at 5 attempts, but the generic catch (a
+- `0243-g10-h5-plaid-token-plaintext` **built** (tier-1) — [STOP-GATE] banking.bank_accounts.plaid_access_token written/read raw (plaintext) while QBO tokens are AES-256
+- `0243-g11-1-deduction-auth-template-missing` **built** (tier-1) — [CRIT/STOP-GATE] Consent gate requires template_code driver_deduction_auth but it doesn't exist -> hasSignedDe
+- `0243-g5-3-no-frontend-code-splitting` **built** (tier-3) — No manualChunks/React.lazy anywhere -> 4.2MB single bundle drives mobile LCP over 4s ceiling on 7/8 routes
+- `0243-g6-1-financial-today-utc-not-central` **built** (tier-1) — new Date().toISOString().slice(0,10) yields the UTC day (~40+ sites) -> a Laredo evening invoice/JE/expense da
+- `0243-g7-3-accounting-rows-cast-as-any` **built** (tier-2) — rows as any / rows.map((r:any)) across accounting read routes leaves *_cents money fields unchecked at compile
+- `0243-g9-c3-void-endpoints-no-role-guard` **built** (tier-1) — [CRIT] Invoice void, payment void, factoring-advance void have no executor check outside the (default-OFF) VOI
+- `0243-g9-h5-profit-reports-double-count-cancelled-voided` **built** (tier-1) — profit-per-truck legacy+weekly reports do a cartesian units*loads*work_orders fan-out and count cancelled load
+- `0243-h3-3-void-flags-inconsistent-classification` **built** (tier-1) — verify-no-global-posting-flags treats *_VOID_ENABLED as posting-class but isPostingFlag() has no void pattern 
+- `0243-h3-4-settlement-recovery-flag-raw-read` **built** (tier-1) — [STOP-GATE] payroll/driver-settlement.service.ts reads SELECT default_enabled FROM lib.feature_flags directly,
+- `0243-h4-4-office-login-enumeration-timing-oracle` **built** (tier-3) — Office-login returns a distinct 403 for Driver emails before password verify + argon2 only runs on existing ac
+- `0243-h4-5-financial-exports-uploads-no-throttle` **built** (tier-1) — 14 GL export routes, audit-report scans, comparison reports had no rate limit; multipart had no fileSize limit
+- `0243-h6-3-geofence-alert-duplicate-no-single-flight` **built** (tier-2) — Every-minute geofence breach detector does SELECT-dedup-then-INSERT with no unique/lock -- overlapping ticks d
+- `0394-accounting1-canonical-ar-control-account` **built** (tier-1) — ACCOUNTING-1: live invoice posting had no canonical A/R control account designated, risking postings to the wr
+- `0451-fin1-hub-fabricates-period-status` **built** (tier-1) — Finance Hub KPI fabricates an 'open' accounting period status that does not exist in the DB (accounting.period
+- `0473-1-2-ar-control-account-designation` **built** (tier-1) — Designate QBO-45 as the single A/R control account; deactivate duplicate native account 1100
+- `0473-1-5-escrow-vs-factoring-reserve-asset-liability` **built** (tier-1) — Driver escrow should be a LIABILITY (owed back to drivers); factoring reserve should be an ASSET ('Due from Fa
+- `0473-1-7-bill-vs-expense-cash-basis-split` **built** (tier-1) — Confirm Bill (accrual A/P, pay later) vs Expense (cash, paid now) split is correct for the cash-basis MOR
+- `0473-2-1-invoice-wrong-ar-account-found-fixed` **built** (tier-1) — Test invoice INV-2026-00001 posted A/R to the wrong fallback account (Unauthorized Expenses) because no A/R co
+- `0473-2-2-tms-ap-zero-vs-qbo-1-22m-sync-not-built` **built** (tier-1) — TMS A/P showed $0 vs QBO's real $1,220,674.25/151 vendors because the QBO bill/invoice transaction pull was ne
+- `0473-2-3-qbo-sync-stale-transp-fix-built` **built** (tier-1) — TRANSP's QBO master-data sync was ~6 weeks stale (last ran 2026-05-17) while the health header showed 'QBO syn
+- `0518-r01-role-home-payment-terms-id-500` **built** (tier-1) — Fix home /role-home 500: accounting-home.service.ts joins catalogs.payment_terms on bills.payment_terms_id, a 
+- `0518-r12-phantom-write-targets` **built** (tier-1) — Phantom WRITE targets: match.service.ts inserts journal_entry_id/side/memo into journal_entry_postings (real c
+- `0518-r13-idempotency-key-do-not-dedupe-warning` **built** (tier-1) — STANDING WARNING: the 2 'duplicate' idempotency_key rows in journal_entry_postings are the debit+credit legs o
+- `0518-r20-invoices-loads-sort-400` **built** (tier-3) — /accounting/invoices → GET /api/v1/mdata/loads?sort=-pickup_date 400 validation_error (sort must be one of cre
+- `0518-r21-6-accounting-comingsoon-stub-routes` **built** (tier-3) — 6 accounting ComingSoon stub routes: /accounting/integration-transactions, /receipts, /revenue-recognition, /f
+- `0519-ac1-accounting-zero-real-transactions` **built** (tier-3) — OBSERVATION: Accounting module fully built and functional but not yet activated for real business transactions
+- `1036-bug1-home-500-payment-terms-id` **built** (tier-3) — Fix role-home 500: query joined bills.payment_terms_id which doesn't exist on accounting.bills
+- `1036-bug3-invoices-sort-400` **built** (tier-3) — Fix invoices list sort=-pickup_date returning 400 (frontend/backend sort-key mismatch)
+- `a-01-expenses-amount-space` **built** (tier-3) — Amount field on Expenses form shows '$ 0.00' (space)
+- `a-02-expenses-date-defaults-tomorrow` **built** (tier-3) — Date field on Expenses form defaults to tomorrow
+- `a-08-all-transactions-route-broken` **built** (tier-3) — /accounting/all-transactions redirects to Home - unified transaction register inaccessible
+- `a-09-receive-payment-route-broken` **built** (tier-3) — /accounting/receive-payment redirects to Home - AR cash application inaccessible
+- `a-10-bill-payment-route-broken` **built** (tier-3) — /accounting/bill-payment redirects to Home - AP disbursement inaccessible
+- `a-11-settlements-factoring-dates-yyyy-mm-dd` **built** (tier-3) — Date fields in Accounting Settlements and Factoring lists show YYYY-MM-DD
+- `accounting-1-ar-control-account-designation` **built** (tier-1) — ACCOUNTING-1 (HIGH): designate a canonical A/R control account (system_purpose) so invoices never post AR to a
+- `accounting-1-ar-control-account-resolver` **built** (tier-1) — Invoice→GL account resolver must post A/R to a designated control account, never guess by subtype
+- `accounting-1-ar-control-resolver-hardfail` **built** (tier-1) — Designate canonical A/R control account (QBO-45), reclassify 2 mis-typed 'Unauthorized Expenses' accounts, res
+- `accounting-periods-init-seed` **built** (tier-1) — Seed accounting.periods with contiguous monthly OPEN periods per entity (TRANSP/TRK from 2024-01-01, USMCA fro
+- `acct-cash-basis-snapshot-management` **built** (tier-1) — Areas for Review #4: Cash Basis Reporting requires closed period snapshots — ensure a snapshot management proc
+- `af2-catalogs-items-per-entity-migration` **built** (tier-1) — AF-2: add operating_company_id to catalogs.items (per-entity item master), composite FKs to catalogs.accounts,
+- `af2b-item-account-mapping-backfill` **built** (tier-1) — Backfill catalogs.items.default_income_account_id/default_expense_account_id from QBO item account refs (156 i
+- `af2c-items-category-id-qbo-parity` **built** (tier-1) — Items editor: add real catalogs.items.category_id FK column + income/expense/category Combobox pickers (QBO pa
+- `bank-account-hide-2230-flag-off` **built** (tier-2) — #2230 bank-account HIDE — per-entity hide of other company's Wells Fargo accounts
+- `banking-b0-a1-guc-scoping-coa-accounts` **built** (tier-2) — Fix unset app.operating_company_id GUC bug in getCoaAccounts() callers (B0/A1)
+- `banking-b3-register-book-balance` **built** (tier-1) — B3 — bank account register shows BOOK balance (GL postings) not raw Plaid feed
+- `banking-b5-transfer-dedup-posting` **built** (tier-1) — B5 — GL posting with Transfer DEDUP (one bank movement as two feed rows posts ONE transfer, not two)
+- `banking-catalogs-accounts-insert-missing-opco` **built** (tier-1) — Fix catalogs.accounts CREATE INSERT omitting operating_company_id (inline +Add new account broken write)
+- `banking-categorization-auto-deduction-restore` **built** (tier-1) — Banking categorization: assign driver/unit/trip to an expense + auto-deduction (paid driver fine -> driver_set
+- `banking-match-coa-account-id-bugfix` **built** (tier-1) — Mandatory correction: match.service.ts postDifferenceJournalEntry reads non-existent bank_accounts.coa_account
+- `banking-match-drawer-part1-candidates` **built** (tier-3) — Part 1: extend findCandidates to bill/expense sources, wire the read endpoint + Match drawer, list matched/unm
+- `banking-match-drawer-program` **built** (tier-1) — Bank-txn Match drawer with bill/expense candidates (Part 1, Tier-3) + fix poster reading nonexistent bank_acco
+- `banking-match-drawer-v2-part1` **built** (tier-3) — Direction-aware Match candidate engine (bills+expenses added to findCandidates) + read endpoint + MatchDrawer 
+- `banking-match-drawer-v2-part2a` **built** (tier-1) — Accept match: expense-link + payment/bill_payment/transfer/je acceptance path (Part 2a, Tier-1 HOLD-FOR-JORGE)
+- `banking-match-spec-correction-accounting-lists` **built** (tier-3) — Spec correction: surface matched/unmatched status on existing Accounting Bills/Expenses/Bill-Payments lists (n
+- `banking-posting-flags-2261-fix` **built** (tier-1) — #2261 — fix 2 live banking posting paths that corrupt books (createTransfer/CC never posts GL; Post-as-bill=un
+- `bankrec-confirm-match-exact-only` **built** (tier-2) — Enable MatchDrawer Confirm button for exact matches only (gap===0, non-bill kinds); keep bill and variance (ga
+- `biz-flow-2-expense-gl-posting-optional` **built** (tier-2) — Expense GL posting stays optional/flag-gated and can remain unposted indefinitely
+- `biz-flow-2-no-expense-deduction-fk` **built** (tier-1) — driver_settlement_deductions needs a foreign key back to the originating accounting.expenses row
+- `biz-flow-2-partial-load-attribution-expense` **built** (tier-3) — Expenses can be auto-attributed to a load via driver_id/timestamp/location match, with manual reattribution av
+- `biz-flow-4-cascade-branch-detection-complex` **built** (tier-2) — Cash advance cascade-branch detection (load_bill / open_bill / loan) is complex and may not always find an app
+- `biz-flow-7-settlement-lines-per-driver-no-team-level` **built** (tier-3) — Settlements are calculated per-driver, not as a single team-level settlement, which may complicate team report
+- `block00-control-account-designation` **built** (tier-1) — Explicit ap_control/ar_control designation in accounting.chart_of_accounts_roles for TRANSP (QBO-47 A/P, QBO-4
+- `block01-per-entity-flag-fix-bill-wo-void` **built** (tier-1) — Convert BILL_GL_POSTING_ENABLED and WO_VOID_ENABLED from a global process.env read to per-entity isEnabled(cli
+- `block04-chain06-invoice-ar-posting` **built** (tier-1) — Invoice -> A/R GL posting engine: draft-gl/post-gl routes, INVOICE_AR_GL_POSTING_ENABLED flag default OFF, bal
+- `block2-account-detail-type-catalogs` **built** (tier-2) — Seed catalogs.account_types (15/5-group) + catalogs.detail_types and wire dependent Account Type -> Detail Typ
+- `block4-detail-type-catalog-creator` **built** (tier-1) — Per-entity custom Detail Type catalog + creator; register Account Type (read-only) + Detail Type (creator) in 
+- `block6-global-column-resize-sort` **built** (tier-3) — Harden ParityTable primitive (per-column resize, tri-state sort, a11y) + guard forcing app-wide adoption; phas
+- `bug1-bills-payment-terms-id-500` **built** (tier-3) — Fix /role-home 500 caused by a query joining bills.payment_terms_id (column lives on invoices, not bills)
+- `cas-03-c3-fh-amortization-allocation-lease-specs` **built** (tier-1) — Three Finance-Hub design docs: Amortization, Unit-Allocation, Lease ASC 842 (accounting policy + table DDL + g
+- `cascade-02-c2-revrec-spec` **built** (tier-1) — Revenue Recognition data-model design doc (ASC 606 five-step, gated posting)
+- `cascade-13-revenue-rec-ui` **built** (tier-2) — Revenue Recognition contracts/obligations/schedule read-only UI behind REVENUE_RECOGNITION_ENABLED (posting ga
+- `cascade-20-ar-ap-aging-reports` **built** (tier-3) — A/R Aging + A/P Aging read-only reports (QBO-parity buckets, per-entity, drill-to-document)
+- `cascade10-account-type-detail-type-catalog` **built** (tier-3) — Read-only Account Type / Detail-Type catalog view (QBO-parity taxonomy) wired into finance-hub
+- `cc-04-three-live-500s-fixed` **built** (tier-3) — Fix home /role-home 500 (bills.payment_terms_id), compliance dashboard 500 (mdata.equipment.operating_company_
+- `cc-06-force-rls-8-financial-tables` **built** (tier-1) — FORCE RLS on 8 financial tables (escrow_ledger, escrow_balances, settlement_lines, ar_collection_contacts, cas
+- `cf-01-cash-flow-amount-input-space` **built** (tier-3) — Amount input field shows '$ 0.00' (space) on Cash Flow add-expense
+- `chain04-bill-payment-gl-gap-closure` **built** (tier-1) — Bill-payment GL poster: add per-entity flag, fix bank leg to use real ledger_account_id, enforce bill-A/P-post
+- `chain05-bank-feed-gl-posting` **built** (tier-1) — Categorized bank-feed transaction -> balanced GL JE posting engine (flag-gated, idempotent, period-guarded)
+- `chain06-invoice-ar-gl-posting-killswitch-and-engine` **built** (tier-1) — CHAIN-06 Gap #1 (priority): add missing INVOICE_AR_GL_POSTING_ENABLED kill-switch to the previously-unguarded 
+- `coa-detail-type-catalog-creator` **built** (tier-1) — Detail Type catalog (catalogs.account_detail_types) + creator UI + Lists registration; Account Type stays read
+- `coa-list-page-dual-dataset-source` **built** (tier-1) — §7.2: CoA list page must render the QBO-mirror (~199 rows via /api/v1/mdata/accounts), not a ~50-row local see
+- `coa-nav-accounting-banking-kept` **built** (tier-3) — Chart of Accounts reachable from Accounting sub-nav AND Banking Home (route to canonical /lists/accounting/cha
+- `coa-new-account-type-detail-organized` **built** (tier-3) — CoA Account creator: Account Type grouped by statement, Detail Type filtered by chosen Type, sourced from cata
+- `coder-28-jep-idempotency-unique-index-branchB` **built** (tier-1) — Branch B: accounting.journal_entry_postings.idempotency_key had no unique constraint — a retry could double-po
+- `coder-34-factoring-secured-borrowing-poster` **built** (tier-1) — Factoring poster rebuild: sale-model -> secured-borrowing (ASC 860); factoring_advance_liability role, 5-step 
+- `coder-directive-a1-accounts-entity-scope` **built** (tier-2) — A1: GET /api/v1/catalogs/accounts moved to withScopedCompany (sets opco GUC + assertCompanyMembership), cross-
+- `coder-directive-a2-balance-as-of-boxinbox` **built** (tier-3) — A2: New-Account dialog 'Balance As Of' box-in-box CSS fix (native date input double-border)
+- `coder-directive-drv-per-driver-escrow-advance` **built** (tier-1) — DRV (Tier-1, design-only-at-time-of-writing): per-driver Escrow (liability) + Advance (asset) auto-sub-account
+- `coder12-audit-spine` **built** (tier-1) — Wire every financial posting batch to write events.log_event + accounting.transaction_source_links atomically,
+- `cust-2-late-pay-badge-null-fallback` **built** (tier-3) — CUST-2 — every customer wears red 'Late-pay' chip with zero invoice history (null score defaults to worst rati
+- `custvend-par-1-credit-limit-vendor-credits` **built** (tier-2) — G1 credit-limit enforcement at invoice creation + load booking (blocking warning, role-gated override, audit r
+- `custvend-par1-g1-credit-limit-enforcement` **built** (tier-1) — CUSTVEND-PAR-1 G1 — credit-limit ENFORCEMENT at invoice-creation and load-booking (not just stored)
+- `custvend-par1-g2-vendor-credits-surface` **built** (tier-1) — CUSTVEND-PAR-1 G2 — vendor-credit record/apply UI (record credit -> apply to open bills -> remainder on file)
+- `dispatch-sweep-gap-10` **built** (tier-1) — Book Load to Accounting Item Linkage — verify line items map to accounting items
+- `dispatch-sweep-gap-17` **built** (tier-1) — Settlement to GL Linkage Verification — verify settlements post Bill + BillPayment to GL
+- `dispatch-sweep-gap-30` **built** (tier-1) — Load to Driver Bill Linkage (Load Creation Flow) — verify load creates driver bill for settlement
+- `dispatch-sweep-gap-38` **built** (tier-1) — Detention to Customer Linkage — verify detention bills customer for reimbursement
+- `dispatch-sweep-gap-4` **built** (tier-1) — Load to Expense Linkage — verify load expenses (fuel, tolls, lumper) link to load
+- `dispatch-sweep-gap-45` **built** (tier-1) — Accounting to Load Linkage — verify accounting events (invoices, bills) link to loads
+- `fa-mig-fixed-assets-migration` **built** (tier-1) — Fixed Assets backing tables migration (accounting.fixed_assets + depreciation schedule, ASC 360, posting OFF)
+- `fact-par-2-noa-remit-to-lor` **built** (tier-2) — Per-factor NOA stamp + remit-to config, invoice-render hard-refuses (422) printing carrier remit-to for an ass
+- `factoring-ar-subledger-gl-divergence-fix` **built** (tier-1) — Factoring AR subledger <-> GL divergence: postFactoringCustomerPaymentEvent/postFactoringChargebackEvent relie
+- `factoring-batch-eligibility-paid-filter-bug` **built** (tier-1) — Fix factoring batch candidate-invoice eligibility predicate (was scoping on status='paid' instead of delivered
+- `factoring-fact-par-1-outbound-submission` **built** (tier-1) — FACT-PAR-1 — outbound submission workflow: select invoices -> Submit Batch to Faro with documents attached, pe
+- `factoring-fact-par-2-noa-remit-to-enforcement` **built** (tier-1) — FACT-PAR-2 — NOA + remit-to enforcement, block sending invoice with wrong remit-to while factor assignment act
+- `factoring-packet-ampm-design` **built** (tier-1) — DESIGN-ONLY: docs/specs/FACTORING-PACKET-DESIGN.md — packet assembly, AM/PM two-purchase workflow, GL flag OFF
+- `factoring-poster-asc860-secured-borrowing-model` **built** (tier-1) — Re-architect FARO factoring poster from sale/derecognition (customer_payment against A/R, no liability) to ASC
+- `factoring-sale-vs-secured-borrowing-treatment` **built** (tier-1) — Re-architect factoring advance/release GL posting from sale-style (customer_payment against A/R) to secured-bo
+- `fin-20-ar-ap-aging` **built** (tier-2) — Build read-only AR/AP aging reports in Finance-Hub behind AR_AP_AGING_UI_ENABLED, reading views.ar_aging/views
+- `fin18-settlement-deduction-gl-posting-engine` **built** (tier-1) — Settlement + deduction GL posting engine through the accounting spine, flag SETTLEMENT_GL_POSTING_ENABLED defa
+- `fin18-settlement-deduction-posting-engine` **built** (tier-1) — Bucketed driver settlement deduction posting engine (advance/damage/lease/insurance buckets, 10% floor, consen
+- `fin18-settlement-gl-posting-build-typecheck-fix-pr1644` **built** (tier-1) — Fix build-typecheck compile error on PR #1644 (FIN-18 settlement + deduction GL posting engine) without touchi
+- `fin20-ar-ap-aging-buckets-drill-through` **built** (tier-3) — A/R + A/P aging buckets (Current/1-30/31-60/61-90/90+) with drill-to-document, gated reminder/payment actions,
+- `fin21-amortization-unit-allocation-engine` **built** (tier-1) — Build prepaid amortization + fixed-asset depreciation + unit/asset cost-allocation posting engine through the 
+- `fin22-lease-asc842-engine-built` **built** (tier-1) — Lease ASC 842 lessor-side subledger + posting engine (operating-lease default, sales-type retained per-deal), 
+- `fin22-lease-asc842-ui-coder-lane` **built** (tier-1) — Lease ASC-842 register + amortization schedule read UI, honest-empty if tables unmigrated, posting gated OFF
+- `fixed-assets-ui-register-schedule-disposal` **built** (tier-2) — Fixed Assets UI-1: asset register + detail, depreciation schedule view, disposal view, class catalog — read/co
+- `flag-harden-per-entity-only` **built** (tier-2) — Per-entity-only flag class: PER_ENTITY_ONLY_FLAG_KEYS registry, resolver ignores default/rollout, PATCH reject
+- `force-rls-8-financial-tables` **built** (tier-1) — FORCE ROW LEVEL SECURITY on 8 financial tables (driver_finance.escrow_ledger/escrow_balances/settlement_lines;
+- `fuel-2-expense-mapping-gl-coverage` **built** (tier-2) — Fuel > Expense mapping was a thin stub with no real mapping UI or verified link target
+- `fuel-2-fuel-gl-mapping-verify` **built** (tier-3) — FUEL-2: verify fuel→GL account mapping coverage
+- `gl-idempotency-nullkey-closeout` **built** (tier-1) — Give recurring.worker.ts, period-close-retained-earnings.service.ts, journal-entries.service.ts (manual JE), v
+- `ground-truth-g1-three-live-500s` **built** (tier-3) — G1: three live 500s — Home /role-home (bills.payment_terms_id phantom column), Compliance dashboard (mdata.equ
+- `harden-qbo-sync-entity-isolation` **built** (tier-1) — outbox.queue + views.qbo_sync_health were global (no operating_company_id/RLS) — would blend TRANSP/USMCA sync
+- `legal-full-build-library-creator-connections` **built** (tier-1) — Legal contract template library full build: 7 new templates active, lifecycle admin, unified bilingual creator
+- `lists-reorg-domain-hubs-scroll` **built** (tier-3) — AllCatalogsMap reorder (Accounting first, then alphabetical), per-domain hub page (DomainCatalogHubPage), and 
+- `lists-reorg-domain-hubs-scroll-restore` **built** (tier-3) — Lists hub: pin Accounting first + alphabetize domains/catalogs, add per-domain hub pages, and scroll-restore o
+- `m-04-vendor-invoice-input-no-dollar-prefix` **built** (tier-3) — Vendor invoice total inputs show bare 0.00 without $ prefix
+- `my-accountant-readonly-workspace-ui` **built** (tier-3) — Read-only 'My Accountant' workspace: books-at-a-glance period status, reports links, export-for-CPA bundle, in
+- `new-account-dialog-subaccount-preview-datefix-v2` **built** (tier-2) — New Account dialog: single-box Balance-As-Of, Make-subaccount + same-type per-entity parent picker, classifica
+- `per-entity-flag-fix-bill-gl-wo-void` **built** (tier-1) — Convert BILL_GL_POSTING_ENABLED and WO_VOID_ENABLED from global process.env reads to per-entity isEnabled(clie
+- `pr2303-fixedassets-prepaid-overflow-fix-shipped` **built** (tier-3) — PR #2303: FixedAssetsPage.tsx + PrepaidExpensesPage.tsx ParityTable conversion had stripped page-level overflo
+- `qbo-b8-transaction-editors-doc` **built** (tier-3) — Capture QBO-parity design doc for the ~11 transaction editors (Invoice/Bill/Expense/Estimate/etc.) — docs only
+- `qbo-parity-cascading-account-detail-type` **built** (tier-2) — Cascading Account Type -> Detail Type selection in account create panel
+- `rls-force-tail-part1` **built** (tier-1) — FORCE ROW LEVEL SECURITY on the 142 confirmed-scoped tenant tables, excluding 8 global reference tables + even
+- `rpt-par-1-management-report-packages-drilldowns` **built** (tier-3) — Management report packages (Company Overview / Sales Performance / Expenses Performance) with cover page + TOC
+- `rr-mig-revenue-recognition-tables` **built** (tier-1) — Create Revenue Recognition (ASC 606) backing tables (revenue_contracts/revenue_obligations/revenue_recognition
+- `ruling-10-driver-net-pay-clearing-floor-1099` **built** (tier-1) — Confirm driver net-pay clearing-account model, bucketed deductions, net-pay floor, all-1099 treatment
+- `ruling-5-ar-control-qbo45` **built** (tier-1) — Designate QBO-45 as TRANSP's A/R control account (native 1100 deactivated)
+- `ruling-7-revenue-per-line-hardfail` **built** (tier-1) — Per-line invoice revenue posting hard-fails on an unmapped income account (no default/catch-all)
+- `ruling-9-lease-asc842-trk-transp` **built** (tier-1) — Build ASC 842 operating-lease accounting for TRK-owns/TRANSP-leases equipment, 5-yr straight-line depreciation
+- `settlements-catalog-tab-mislink` **built** (tier-3) — Settlements module 'Driver Pay Catalog' + 'Deduction Catalog' tabs both mis-linked to /accounting/settings/exp
+- `step1-blockA-periods-init-2024start-v2` **built** (tier-1) — Seed accounting.periods (all OPEN, no locks) for TRANSP+TRK 2024-2027, USMCA 2026-2027, per-entity isolation, 
+- `sweep-pr-b-deactivate-test-accounts-fixture-guard` **built** (tier-2) — SWEEP PR B: owner-gated deactivation of 4 prod test accounts + a fixture-name CI guard
+- `sweepfix1727-10` **built** (tier-2) — USERS-1: deactivate the 4 named prod test/probe accounts via an owner-gated admin-jobs operation, and block th
+- `sys-04-restore-11-broken-routes` **built** (tier-3) — Restore 11 routes that silently redirected to Home: 4 accounting, 5 safety sub-routes, /settlements, /finance-
+- `sys-money-input-format-fix` **built** (tier-3) — Root money input format fix: `$ 0.00` -> `$0.00` (no space) system-wide, WO vendor invoice inputs get $ prefix
+- `users-par-1-permission-matrix-design` **built** (tier-3) — docs/specs/USER-PERMISSION-MATRIX.md design doc (permission matrix, maker/checker approve rights, entity-scopi
+- `void-everywhere-design-docs` **built** (tier-3) — Write 3 void-vs-delete design docs (invoices/JEs, bills, expenses/settlements) under docs/specs/qbo-parity/, p
+- `wo-void-whole-bill-reversal-grain` **built** (tier-1) — Confirm work-order void reverses at the whole-bill grain (one net-zero reversing JE, original + reversal both 
+- `0091-d1-2` **needs-design** (tier-2) — Vendors split across mdata.vendors (rich create) vs mdata.qbo_vendors (WO/expense/CC pickers) — decide a singl
+    - diff: an owner decision on canonical vendor table + a resolver
+    - evidence: Not independently re-verified this pass; overlaps E1-1 (QBO mirror split-brain) architecturally.
+    - spec: NONE
+- `0091-g6-1` **needs-design** (tier-1) — Financial 'today' computed in UTC instead of Central Time (companyBusinessDate exists but accounting layer doe
+    - diff: re-verify remaining toISOString().slice(0,10) call sites in accounting/**
+    - evidence: Not independently re-verified this pass (40+ call sites named in the original finding); would require a dedicated grep sweep across accounting/invoices.service.ts, recurring.worker
+    - spec: NONE
+- `0091-g9-h6` **needs-design** (tier-3) — Add total/has_more to CoA management list + trailer list (both cap at 50/200 with no total, oldest records unr
+    - diff: re-verify list-contract total/has_more on catalogs/accounts and mdata/equipment
+    - evidence: Not independently re-verified this pass (catalogs/accounts.routes.ts:137, mdata/equipment.routes.ts:146 not re-checked).
+    - spec: NONE
+- `0091-h3-3` **needs-design** (tier-1) — Make isPostingFlag() recognize *_VOID_ENABLED (VOID_ENFORCEMENT_ENABLED, WO_VOID_ENABLED) as posting-class fla
+    - diff: confirm isPostingFlag() has a _VOID_ENABLED$ branch
+    - evidence: Not independently re-verified this pass.
+    - spec: NONE
+- `0091-m-lists-2` **needs-design** (tier-1) — Fix 'Merge accounts' (CoaBatchActions) to actually repoint GL references instead of only deactivating the sour
+    - diff: re-verify handleMerge reassigns GL lines/child accounts before deactivate
+    - evidence: Not independently re-verified this pass (CoaBatchActions.tsx:55 not re-checked).
+    - spec: NONE
+- `0242-no-auto-customer-charge-on-cancellation` **needs-design** (tier-1) — Load cancellation should automatically create the customer charge/invoice when billable_to_customer is true, i
+    - diff: an auto-create-customer-charge step (new AR line / invoice adjustment) fired from cancelLoad() when billable_to_customer=true, gated by an explicit design (who approves, which GL account, does it need
+    - evidence: apps/backend/src/dispatch/cancellation.service.ts cancelLoad() stores billable_to_customer and cancellation_charge_cents on dispatch.load_cancellations (INSERT ... ON CONFLICT, lin
+    - spec: NONE
+- `0251-gap2-vendor-gl-linkage` **needs-design** (tier-1) — Verify vendor table has GL account FKs for factoring
+    - diff: a completed column-by-column audit of mdata.vendors against catalogs.accounts FKs
+    - evidence: This is phrased as a verification ask, not a concrete bug. mdata.vendors was not found to carry a dedicated GL-account FK in the grep pass done for related items; a full audit of m
+    - spec: NONE
+- `0251-gap3-vendor-invoice-linkage` **needs-design** (tier-1) — Verify invoice generation includes factoring vendor
+    - diff: depends on 0251-gap1 landing first
+    - evidence: Not independently verified in this pass; depends on gap1 (factoring_vendor_id) being stored on the load first, which was confirmed not-built.
+    - spec: NONE
+- `0262-audit-54` **needs-design** (tier-3) — Audit 54: Privileged Access Audit — Admin access, privileged account management, access monitoring
+    - diff: a privileged account management/admin access logging/privileged session monitoring/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new privileged account management/admin access logging/privileged session monitoring/dashboard systems/dashboards/analytics for this domain; no such sy
+    - spec: NONE
+- `0280-05-factoring-balance-invoice-linkage` **needs-design** (tier-1) — Factoring Balance widget: factoring.company_balances aggregate has no verification it ties to specific account
+    - diff: join factoring.company_balances to accounting.invoices at the invoice grain
+    - evidence: Not independently re-verified in this pass; matches the broader known factoring-reserve dual-tracking gap already logged in auto-memory (factoring-ar-subledger-gl-divergence).
+    - spec: NONE
+- `0280-13-ar-aging-invoice-customer-linkage` **needs-design** (tier-3) — Accounting Home: AR aging bucket data has no verification it links to invoices/customers
+    - diff: 
+    - evidence: Not independently checked; AR aging is a well-established report elsewhere in the app (accounting-ar-aging route confirmed live in the 06-28 Playwright audit), so full linkage like
+    - spec: NONE
+- `0280-14-ap-aging-bill-vendor-linkage` **needs-design** (tier-1) — Accounting Home: AP aging bucket data has no verification it links to bills/vendors
+    - diff: 
+    - evidence: Not independently checked in this pass; also entangled with the still-open QBO A/P-mirror-empty finding (0394 docs above) which means AP aging on Home is likely showing $0 same as 
+    - spec: NONE
+- `0280-15-pending-approvals-gl-linkage` **needs-design** (tier-3) — Accounting Home: pending approvals panel has no verification of which GL accounts are affected
+    - diff: 
+    - evidence: Not independently checked in this pass.
+    - spec: NONE
+- `0280-37-cash-to-gl-flow` **needs-design** (tier-3) — Data flow: Cash to GL linkage — verify cash query includes GL account linkage
+    - diff: 
+    - evidence: Not independently checked in this pass.
+    - spec: NONE
+- `0280-42-wo-to-expense-flow` **needs-design** (tier-3) — Data flow: WO to Expense linkage — verify WO status query includes expense/bill linkage
+    - diff: 
+    - evidence: Not independently checked in this pass.
+    - spec: NONE
+- `0280-47-driver-to-escrow-flow` **needs-design** (tier-1) — Data flow: Driver to Escrow linkage — verify driver queries include escrow account linkage
+    - diff: 
+    - evidence: Not independently checked in this pass; note driver escrow is a LIABILITY per locked decision (driver-escrow-is-liability memory) so any linkage fix must preserve that classificati
+    - spec: NONE
+- `0285-acct-gap3-manual-payment-application` **needs-design** (tier-1) — Accounting: customer payment application to invoices is fully manual — no auto-apply logic, risk of unapplied 
+    - diff: an auto-apply rule (e.g. oldest-invoice-first) — needs CPA sign-off given it affects AR
+    - evidence: 0285's own inventory confirms payment-applications.routes.ts exposes explicit Apply/Unapply endpoints requiring payment_id+invoice_id+amount_cents — no auto-apply-by-oldest-invoice
+    - spec: docs/lockdown/00_LOCKED_DECISIONS.md (AR rules governed here)
+- `0473-1-1-default-revenue-account-unmapped-line` **needs-design** (tier-1) — CPA ruling needed: unmapped invoice line should hard-fail (refuse to post) vs post to a catch-all 'Uncategoriz
+    - diff: CPA written sign-off on hard-fail default + naming the standard freight/line-haul revenue account
+    - evidence: Doc's own Section 3.2 shows this is already locked as a recommendation ('Unmapped revenue line = hard-fail... don't bury errors in real revenue (ASC 606)') pending final CPA sign-o
+    - spec: NONE
+- `0473-1-10-year-end-close-retained-earnings-asc852` **needs-design** (tier-1) — Confirm period-close rolls net income to Retained Earnings at FY-end and locks the period; advise on ASC 852 f
+    - diff: CPA ruling on ASC 852 applicability; and the underlying period-close mechanics (see 0243-g11-5, 0243-g11-10, both not-built) must land first
+    - evidence: Standard closing-entries mechanics were not independently checked; the ASC 852 fresh-start overlay is explicitly CPA/counsel-driven per the doc itself, and 0243-g11-5/g11-10 confir
+    - spec: NONE
+- `0473-1-4-factoring-asc860-sale-vs-secured-borrowing` **needs-design** (tier-1) — CPA ruling needed: does FARO factoring transfer control (sale) or not (secured borrowing) under ASC 860's 3-pa
+    - diff: written CPA ruling on ASC 860 sale-vs-borrowing for the actual FARO contract terms
+    - evidence: Doc's Section 3.8 locks the engine design as 'Reuse posting engine, no new GL math; every entry balances; append-only audit' and skill ih35-cpa-accounting-decisions / memory locked
+    - spec: NONE
+- `0473-1-6-wo-void-reversal-grain` **needs-design** (tier-1) — Confirm WO void reverses at the whole-bill grain (one net-zero mirror JE, both entries kept) rather than line-
+    - diff: CPA written confirmation of the whole-bill-mirror-reversal design
+    - evidence: This is a CPA confirmation request on an already-built design choice, per the doc's own framing ('Recommendation: confirm... Reasoning/logic: a WO's GL footprint comes entirely thr
+    - spec: NONE
+- `0473-1-8-tk-transp-lease-asc842` **needs-design** (tier-1) — Confirm TRK-owns/5yr-SL-depreciates, TRANSP-leases-and-expenses operating-lease structure under ASC 842 common
+    - diff: CPA + counsel written confirmation of the common-control expedient application and 5-yr useful life vs IRS class life
+    - evidence: Matches the locked decision in Section 3.5 ('Lease = Option A operating (TRK owns, 5-yr SL) — ASC 842 common control') and memory note finance-engine-decisions-locked ('lease=opera
+    - spec: NONE
+- `0473-2-7-bank-transactions-uncategorized-plaid-down` **needs-design** (tier-1) — 2,650 bank transactions (CSV import 2026-05-24) all pending_categorization, none posted; both Plaid feeds (AmE
+    - diff: owner decision: repair the two Plaid ERROR items vs continue CSV-only; then categorize the 2,650 pending_categorization transactions
+    - evidence: This is an explicit owner/CPA operational decision point per the doc's own framing, not a code bug. Live Plaid connection status (ERROR vs healthy) is a prod-state fact not checkab
+    - spec: NONE
+- `0490-critical-idempotency-posting-engine-vendor-bill-payment` **needs-design** (tier-1) — CRITICAL: raw GL posting-engine endpoints and /vendors/:id/bill-payments carry no idempotency — a double-click
+    - diff: an idempotency-key request-header contract + DB-level enforcement on POST /vendors/:id/bill-payments and any raw posting-engine HTTP endpoint
+    - evidence: apps/backend/src/accounting/posting-engine.service.ts does have an idempotency_key column/check (line 128,258-295) at the posting-batch grain, but the doc's specific claim is that 
+    - spec: NONE
+- `0490-structural-fix-asset-identity-fragmentation` **needs-design** (tier-1) — Highest-leverage structural fix #1: one truck is represented across 5 tables (mdata.units/mdata.assets/account
+    - diff: one canonical asset identity (or a live sync trigger on mdata.units INSERT propagating to the other 4 tables)
+    - evidence: UNVERIFIED as fixed — this is flagged by the doc as the #1 highest-leverage structural fix still outstanding as of 07-05; no canonical-asset-identity migration or sync trigger was 
+    - spec: NONE
+- `0490-structural-fix-liability-deduction-fk-spine` **needs-design** (tier-1) — Highest-leverage structural fix #2: no shared liability/deduction FK spine (expense_id/liability_id/incident_i
+    - diff: expense_id / liability_id / incident_id FK columns on driver_finance.settlement deduction lines
+    - evidence: UNVERIFIED — not checked for a driver_settlement_deductions.expense_id/liability_id/incident_id column in this pass given time constraints; the doc frames this as the #2 highest-le
+    - spec: NONE
+- `0519-at2-no-db-enforced-sod` **needs-design** (tier-1) — No DB-level segregation-of-duties constraint — same user can create and approve GL entries; enforced only at a
+    - diff: an owner decision on whether SOD needs DB-level enforcement (posted_by/approved_by columns + CHECK) vs remaining app-layer-only
+    - evidence: No posted_by vs approved_by columns or DB-level maker-checker constraint found on any posting table per this and doc 0518's Part 12.2/12.3 findings (consistent across both audits).
+    - spec: NONE
+- `audit16-budget-tracking-system` **needs-design** (tier-2) — Budget Audit: budget tracking, budget-vs-actual, variance analysis, forecasting, approval workflow
+    - diff: An entirely new budget-tracking subsystem — no spec exists.
+    - evidence: No budget module found anywhere in apps/backend/src (find -iname '*budget*' returns nothing).
+    - spec: NONE
+- `audit17-procurement-purchase-order-system` **needs-design** (tier-2) — Procurement Audit: purchase order system, procurement workflow, vendor evaluation, contract management
+    - diff: A purchase-order module — no spec exists.
+    - evidence: Vendor management (mdata.vendors) and bill tracking (accounting.bills) are built; no purchase-order system found (find -iname '*purchase-order*' / '*procurement*' returns nothing).
+    - spec: NONE
+- `audit18-treasury-management` **needs-design** (tier-3) — Treasury Audit: treasury management system, investment tracking, banking relationship management, liquidity pl
+    - diff: A treasury module — low priority pre-launch, no spec exists.
+    - evidence: Bank account/transaction tracking built (banking.bank_accounts/bank_transactions); no dedicated treasury-management, investment-tracking, or liquidity-planning module found.
+    - spec: NONE
+- `audit19-ma-due-diligence-framework` **needs-design** (tier-3) — Merger & Acquisition Audit: due diligence framework, valuation methodology, integration planning
+    - diff: Entirely speculative subsystem, no spec, no current business need.
+    - evidence: No M&A tooling found; not currently relevant to IH35's operations (private Ch.11 carrier, no active M&A).
+    - spec: NONE
+- `audit20-dividend-tracking-system` **needs-design** (tier-3) — Dividend Audit: dividend tracking, declaration workflow, distribution tracking, compliance
+    - diff: Not currently relevant; no spec.
+    - evidence: No dividend tooling found; not applicable during active Ch.11 (no distributions to equity holders pre-confirmation).
+    - spec: NONE
+- `audit21-capex-tracking-approval` **needs-design** (tier-2) — Capital Expenditure Audit: CapEx tracking, approval workflow, project justification, ROI tracking
+    - diff: A CapEx tracking/approval module — no spec exists.
+    - evidence: No CapEx module found (find -iname '*capex*' returns nothing); fixed-assets.math.ts tracks assets once acquired but not pre-acquisition CapEx approval/ROI.
+    - spec: NONE
+- `audit23-royalty-tracking-system` **needs-design** (tier-3) — Royalty Audit: royalty tracking, calculation, reporting, compliance
+    - diff: Not currently relevant; no spec.
+    - evidence: No royalty tooling found; not applicable — IH35 has no royalty arrangements.
+    - spec: NONE
+- `audit24-franchise-tracking-system` **needs-design** (tier-3) — Franchise Audit: franchisee compliance, royalty verification, brand standards
+    - diff: Not currently relevant; no spec.
+    - evidence: No franchise tooling found; not applicable — IH35 is not a franchisor/franchisee.
+    - spec: NONE
+- `audit3-external-audit-prep-workflow` **needs-design** (tier-3) — External Audit: audit workpaper generation, evidence collection, finding/remediation tracking
+    - diff: External-audit-prep tooling — a genuinely new capability with no existing spec.
+    - evidence: Comprehensive append-only audit trail + transaction source links confirmed built (audit.row_changes, accounting.transaction_source_links). No workpaper-generation, evidence-collect
+    - spec: NONE
+- `audit6-sox-ifrs-compliance-dashboard` **needs-design** (tier-3) — Compliance Audit: SOX documentation, IFRS reporting, compliance-violation tracking/dashboard/certification wor
+    - diff: SOX/IFRS-specific tooling — no spec, low relevance until the company's regulatory posture changes.
+    - evidence: Double-entry accounting + revenue recognition + chart of accounts confirmed built. No SOX docs, IFRS reporting, or compliance-violation dashboard found — genuinely absent and low-p
+    - spec: NONE
+- `dip-mor-pre-post-petition-ap-split` **needs-design** (tier-1) — Split the $1.22M A/P into pre- vs post-petition for the DIP/MOR presentation (ASC 852)
+    - diff: A pre-petition vs post-petition classification field on bills/A/P + MOR presentation logic, CPA/counsel-approved.
+    - evidence: No pre-/post-petition classification field found on accounting.bills or accounting.bill_lines (grep for petition/pre_petition/post_petition across db/migrations returns nothing).
+    - spec: NONE
+- `factoring-asc860-cpa-control-test-open` **needs-design** (tier-1) — CPA must apply the ASC 860 three-part control-surrender test to the actual FARO agreement before the factoring
+    - diff: CPA written ruling on FARO agreement's control-surrender test result, to be encoded as per-factor config in the posting engine
+    - evidence: GUARD live audit (2026-06-29) explicitly states this as an open CPA-gated item; not a code defect. No evidence in repo that the CPA ruling has been captured/documented since.
+    - spec: docs/accounting/FACTORING-ACCOUNTING-STRUCTURE.md
+- `flow2-customer-chargeback-driver-expense` **needs-design** (tier-1) — Automatic customer chargeback mechanism when a driver-caused expense should be billed back to the customer
+    - diff: Design doc defining trigger conditions, GL treatment, and customer-invoice creation rule.
+    - evidence: No spec found under docs/specs/ for a customer-chargeback-from-driver-expense flow; no repo symbol found for it distinct from generic accounting.disputes.routes.ts (a different con
+    - spec: NONE
+- `ifta-sales-tax-booking-location-confirm` **needs-design** (tier-2) — Confirm whether sales tax applies to freight and where IFTA fuel tax is booked
+    - diff: Owner/CPA confirmation of whether any sales tax applies; if so, a sales-tax-payable posting path needs to exist (currently none found).
+    - evidence: IFTA reporting exists (compliance.ifta_reports, plus the Reports module's live IFTA-due KPI); sales-tax-on-freight collection is an open business/CPA question (interstate freight g
+    - spec: NONE
+- `intercompany-trk-transp-consolidation-decision` **needs-design** (tier-1) — Decide independent-books vs common-control consolidation (with intercompany eliminations) for TRK/TRANSP/USMCA
+    - diff: Owner decision: independent books vs common-control consolidation with intercompany eliminations, then build if elected.
+    - evidence: No consolidation/elimination logic found (grep for 'intercompany' + 'elimination'/'consolidat' in apps/backend/src/accounting/ returns nothing); the $293,232.84 TRANSP->TRK payable
+    - spec: NONE
+- `qbo-sync-staleness-detection-transp` **needs-design** (tier-2) — Add a QBO sync staleness threshold/warning so a stale sync doesn't silently display 'OK'
+    - diff: A staleness threshold + a visible warning state (not just 'OK') when QBO sync hasn't run recently.
+    - evidence: apps/backend/src/integrations/qbo/qbo-sync.service.ts tracks sync state but doc's specific complaint ('last ran ~2026-05-17 while header showed OK') implies the staleness indicator
+    - spec: NONE
+- `vend4-dual-qbo-sync-single-source-of-truth-decision` **needs-design** (tier-2) — VEND-4 (=CUST-3): Sync banner reports '0 synced / never' while 490 vendors are actually all projected from qbo
+    - diff: Owner/CPA decision on what 'synced' should mean when data originates from qbo_archive projection rather than a live bidirectional sync event.
+    - evidence: Doc: 'banner reports "0 synced / never" on QBO-sourced data (490 local, all projected from qbo_archive). Same single-source-of-truth decision as customers — apply once for both.' T
+    - spec: NONE
+- `year-end-close-retained-earnings-asc852-freshstart` **needs-design** (tier-1) — Design year-end close + ASC 852 (Reorganizations) fresh-start equity treatment at Ch.11 plan confirmation
+    - diff: Design doc for year-end close + ASC 852 fresh-start equity treatment, CPA-approved.
+    - evidence: No retained-earnings roll-forward automation or ASC 852 fresh-start handling found; this is a specialized Ch.11-confirmation-triggered accounting event requiring CPA/legal input be
+    - spec: NONE
+- `driverprofile-1-companion-tier1-rls-hardening` **needs-recheck** (tier-1) — Companion Tier-1: GET /api/v1/mdata/drivers should fail-closed to the session's current company (RLS-derived),
+    - diff: read apps/backend/src/master-data/drivers (or equivalent) route to confirm session-derived fallback vs fail-closed-to-empty
+    - evidence: UNVERIFIED — requires reading the /mdata/drivers route handler to confirm whether it derives operating_company_id from session context when the query param is absent. [UNVERIFIED-a
+    - spec: NONE
+- `usmca-banking-ingestion-dedup` **needs-recheck** (tier-2) — USMCA banking ingestion: Plaid PRIMARY + CSV fallback backfill with cross-source dedup, entity-scoped, non-pos
+    - diff: grep apps/backend/src/banking for a CSV-import path and a dedup routine (date+amount+description matching)
+    - evidence: UNVERIFIED this pass — not checked whether banking.bank_transactions rows for USMCA exist, whether a CSV-import path is entity-scoped, or whether cross-source dedup logic exists. [
+    - spec: NONE
+- `0007-pattern-6-silent-noop-posting` **not-built** (tier-1) — Systemic Pattern 6: silent flag-gated no-op posting — money actions behind OFF flags toast 'success' while wri
+    - diff: surfaced posted:false in API responses + suppressed success toast on no-op writes for createTransfer/CC-payment/Post-as-bill paths
+    - evidence: Confirmed still current per memory 'banking-posting-flags-go-nogo-2026-07-06' (dated same week as this doc): createTransfer/CC-payment never post to GL (no 'transfer' posting type)
+    - spec: NONE
+- `0008-a-gl-flags-settlement-lease-off` **not-built** (tier-1) — Flip SETTLEMENT_GL_POSTING_ENABLED and LEASE_GL_POSTING_ENABLED OFF in prod (2 broken/locked posting flags)
+    - diff: Prod flag flip SETTLEMENT_GL_POSTING_ENABLED=false and LEASE_GL_POSTING_ENABLED=false for all entities (owner-controlled action, not a code change)
+    - evidence: 0243 doc's live prod read (FLAG-LIVE, FLAG-LEASE waves, verified 2026-07-04 via SELECT on lib.feature_flags @ br-fancy-credit) showed BOTH SETTLEMENT_GL_POSTING_ENABLED and LEASE_G
+    - spec: NONE
+- `0008-g3-qbo-mirror-canonical-mdata` **not-built** (tier-1) — Canonicalize mdata.qbo_* as the QBO mirror; repoint writers off accounting.qbo_*
+    - diff: pick one canonical home (mdata.qbo_*), repoint accounting.qbo_* writers, forbid new accounting.qbo_* clone tables
+    - evidence: Both physical copies still live: apps/backend/src/sync/qbo-accounts-push.ts, qbo-customers-push.ts, qbo-vendors-push.ts (one side) vs apps/backend/src/outbox/handlers/tms-invoice-p
+    - spec: NONE
+- `0008-h-create-bill-line-items-load-id` **not-built** (tier-1) — Create Bill: add line items + load_id so G18 (fuel/diesel/toll must FK a load) is enforceable on the bill path
+    - diff: bill_lines table/columns + load_id FK on the vendor-Bill creation path; wire hasLoadRequiredExpenseCategories to the bill branch (overlaps D2-2/0243)
+    - evidence: grep for 'load_id' and 'bill_lines|line_items' in apps/backend/src/accounting/bills.routes.ts returned no matches — Create Bill still appears header-only (one account+amount), no l
+    - spec: NONE
+- `0091-b1-2` **not-built** (tier-1) — Remove stale factor_reserve_default COA-role (still typed Liability) or repoint fallback to Asset (locked mode
+    - diff: remove factor_reserve_default or repoint its fallback to Asset
+    - evidence: apps/backend/src/accounting/coa-roles/resolver.service.ts:8,21,59 still defines factor_reserve_default: { type: ["Liability"], ... } — confirmed still present with the wrong fallba
+    - spec: NONE
+- `0091-b1-3` **not-built** (tier-1) — Replace DELETE-then-INSERT on accounting.bill_unit_allocation with is_active=false+reinsert (or an explicit vo
+    - diff: switch to is_active=false+reinsert, or add bill_unit_allocation to an explicit void-not-delete mapping-table exemption list
+    - evidence: apps/backend/src/maint/wo-ap-posting.service.ts:359 and accounting/bills.routes.ts:450 both still issue `DELETE FROM accounting.bill_unit_allocation WHERE bill_id=$1 AND tenant_id=
+    - spec: NONE
+- `0091-c1-1` **not-built** (tier-1) — Collapse or bridge the two driver-settlement engines (live driver_finance.* vs orphaned payroll.*) before enab
+    - diff: a single canonical settlement engine, or an explicit bridge layer between payroll.* and driver_finance.*
+    - evidence: Both engines are still live: payroll/driver-settlement.service.ts is registered+reachable (see 0091-m-settle-1), and driver_finance/* is the UI-facing engine (147 file refs vs 10 f
+    - spec: NONE
+- `0091-e1-1` **not-built** (tier-1) — Pick one canonical home for the QBO mirror (accounting.qbo_* vs mdata.qbo_*) and repoint writers to stop the s
+    - diff: an owner decision on canonical schema + a migration/repoint of the losing writer
+    - evidence: accounting.qbo_* tables (0319/0321/0323) still exist and are still referenced by apps/backend/src/integrations/qbo/remote-count-collector.ts and qbo-reconcile-read.service.ts along
+    - spec: NONE
+- `0091-flag-live` **not-built** (tier-1) — Confirm prod GL-posting flag state before relying on any live posting path (all 9 flags reported ON 2026-07-04
+    - diff: prod flag-state re-verification (owner-controlled, not a code fix)
+    - evidence: This is a live prod feature-flag STATE claim (lib.feature_flags / lib.feature_flag_overrides), not a code defect — cannot be re-verified from the repo alone; §1.5 gates direct prod
+    - spec: NONE
+- `0091-g6-4` **not-built** (tier-1) — Make accounting.bills.amount_cents NOT NULL (currently nullable, drops out of SUM aggregates) and pick one can
+    - diff: SET NOT NULL (or CHECK IS NOT NULL) on amount_cents; pick cents canonical and derive/drop the numeric total_amount/paid_amount columns
+    - evidence: db/migrations/0090_p5_d2_bill_payment_balance.sql:15,39,61,81 still declares amount_cents bigint (nullable, no NOT NULL/CHECK constraint) on both accounting.bills and accounting.bi
+    - spec: NONE
+- `0091-g7-4` **not-built** (tier-3) — Write real assertions in 7 empty e2e specs (bill/accident/expense/work-order/sidebar/forms/map-modal) instead 
+    - diff: write real assertions or mark the specs .skip so a passing suite means covered
+    - evidence: `grep -c 'expect(' apps/frontend/e2e/*.spec.ts` confirms accident-create.spec.ts, bill-create.spec.ts, expense-create.spec.ts, work-order-create.spec.ts still have ZERO expect() ca
+    - spec: NONE
+- `0091-m-settle-1` **not-built** (tier-1) — Gate payroll/driver-settlement.service.ts postSettlement() behind SETTLEMENT_GL_POSTING_ENABLED before it call
+    - diff: an isEnabled(SETTLEMENT_GL_POSTING_ENABLED, {operating_company_id}) gate before the createBill/payBill calls in postSettlement()
+    - evidence: apps/backend/src/payroll/driver-settlement.service.ts:397-480 postSettlement() still calls createBill(...) then payBill(...) with NO isEnabled(SETTLEMENT_GL_POSTING_ENABLED) check 
+    - spec: NONE
+- `0243-b1-3-bill-unit-allocation-delete-not-void` **not-built** (tier-1) — DELETE-then-INSERT on accounting.bill_unit_allocation breaks void-not-delete invariant
+    - diff: switch to is_active=false + reinsert, or an explicit exempt-mapping-table allowlist entry in the void-not-delete guard
+    - evidence: apps/backend/src/maint/wo-ap-posting.service.ts:359 and apps/backend/src/accounting/bills.routes.ts:450 both still 'DELETE FROM accounting.bill_unit_allocation WHERE bill_id = $1..
+    - spec: NONE
+- `0243-c1-4-dead-duplicate-components-dispatchlist` **not-built** (tier-3) — DispatchList, RecurringBillList, BookLoadModalV3.deprecated, dead maintenance modals never imported/mounted
+    - diff: archive-not-delete label/comment on DispatchList.tsx (and verify RecurringBillList, BookLoadModalV3.deprecated) confirming intentional orphan status
+    - evidence: grep -rn '<DispatchList' apps/frontend/src --include='*.tsx' only matches DispatchList.test.tsx (4 hits); DispatchBoard.tsx:78 only imports the TYPE (DispatchListProps), never rend
+    - spec: NONE
+- `0243-d1-2-vendors-split-two-tables` **not-built** (tier-1) — Vendors split across mdata.vendors (rich create/edit) and mdata.qbo_vendors (WO/expense/CC pickers) — a vendor
+    - diff: single vendor namespace + resolver (see 0008-g4-vendor-namespace-canonical)
+    - evidence: apps/frontend/src/components/vendors/VendorCreateModal.tsx and apps/frontend/src/pages/maintenance/components/CreateWOSectionIdentification.tsx both still exist as separate surface
+    - spec: NONE
+- `0243-e1-1-qbo-mirror-split-brain` **not-built** (tier-1) — Two physical QBO mirror copies (accounting.qbo_* cloned LIKE mdata.qbo_*) written by different live code, neit
+    - diff: pick one canonical home + repoint writers (see 0008-g3-qbo-mirror-canonical-mdata)
+    - evidence: apps/backend/src/sync/qbo-accounts-push.ts, qbo-customers-push.ts, qbo-vendors-push.ts still exist alongside apps/backend/src/outbox/handlers/tms-invoice-push.handler.ts, tms-vendo
+    - spec: NONE
+- `0243-flag-lease-on-despite-engine-not-built` **not-built** (tier-1) — [STOP-GATE] LEASE_GL_POSTING_ENABLED confirmed ON in prod despite the locked 'never flip until lease engine bu
+    - diff: confirm whether the FIN-22 lease engine is actually built; if not, flip LEASE_GL_POSTING_ENABLED back OFF (owner decision)
+    - evidence: Prod-state finding, same session as FLAG-LIVE — cannot be re-verified from repo alone.
+    - spec: NONE
+- `0243-flag-live-all-9-gl-flags-on-prod` **not-built** (tier-1) — [CRIT/STOP-GATE] Read-only prod SELECT (2026-07-04) confirmed ALL 9 GL-posting flags incl. SETTLEMENT are ON f
+    - diff: owner must verify current prod flag state and confirm whether it still matches this 07-04 snapshot
+    - evidence: This is a prod-state finding, not a code artifact — cannot be re-verified from the repo alone. It directly contradicts owner decision 0008-a which says to flip SETTLEMENT_GL_POSTIN
+    - spec: NONE
+- `0243-g11-5-period-close-no-reopen-path` **not-built** (tier-1) — [STOP-GATE] closed_period_cutoff = MAX(period_end) blocks postings into an open middle period with non-contigu
+    - diff: make the cutoff per-period; add an audited owner-gated reopen route
+    - evidence: grep -n 'reopen' apps/backend/src/accounting/periods.routes.ts returned zero matches — no reopen route found.
+    - spec: NONE
+- `0243-g11-9-escrow-deduction-not-wired-to-liability` **not-built** (tier-1) — [STOP-GATE] Escrow-abandonment deduction resolves escrow_load_abandonment_recovery and credits it, but code se
+    - diff: bind escrow_load_abandonment_recovery to the Driver Escrow liability account through the capped recovery engine
+    - evidence: apps/backend/src/driver-finance/escrow-deduction-pending.service.ts:402 still literally contains the comment '-- NOTE: escrow's recovery floor policy is NOT yet wired through the c
+    - spec: NONE
+- `0243-g5-4-n-plus-1-report-loops-select-star` **not-built** (tier-2) — refreshDeadheadCache does units×weeks per-query (~480 round-trips); lane-profitability/qbo-alert insert loop p
+    - diff: re-verify refreshDeadheadCache is now set-based (GROUP BY) and lane-profitability/qbo-alert use multi-row INSERT; grep accounting/*.ts for SELECT *
+    - evidence: UNVERIFIED: Not independently checked in this pass (effort-budget triage) — reports/deadhead.service.ts:238 and lane-profitability.service.ts:268 were not re-read.
+    - spec: NONE
+- `0243-g6-4-bills-amount-cents-nullable-dual-money` **not-built** (tier-1) — accounting.bills.amount_cents nullable (a null-amount bill drops out of SUM), plus dual money representation (
+    - diff: SET NOT NULL (or CHECK IS NOT NULL) on amount_cents; pick cents canonical, derive/drop the numeric columns
+    - evidence: db/migrations/0090_p5_d2_bill_payment_balance.sql:15,39,61,81 still 'amount_cents bigint' with no NOT NULL / CHECK IS NOT NULL constraint; both amount_cents and numeric total_amoun
+    - spec: NONE
+- `0243-g8-5-no-error-state-blank-forever-spinner` **not-built** (tier-3) — ~9 accounting/driver pages have a loading branch but no isError branch -> render blank/forever-spinner on a li
+    - diff: a shared QueryBoundary (loading/error/empty) wrapper component, applied to FactoringListPage/EscrowPage/InvoiceDetailPage + 6 others
+    - evidence: find apps/frontend/src -iname 'QueryBoundary*' returned zero results — no shared loading/error/empty wrapper component found.
+    - spec: NONE
+- `0243-g9-h6-coa-trailer-lists-cap-50` **not-built** (tier-1) — catalogs/accounts (371 accounts, page max 200, no total) and trailer list silently cap -> oldest foundational 
+    - diff: add total/has_more to the accounts list response; raise/remove the cap; same for mdata/equipment (trailers), locations/items/classes
+    - evidence: grep -n 'has_more|total_count|COUNT(\*)' apps/backend/src/catalogs/accounts.routes.ts returned zero matches — only LIMIT clauses found (lines 154,260,321,395), no total/has_more fi
+    - spec: NONE
+- `0243-h3-2-three-posting-flags-unprotected-no-entity-context` **not-built** (tier-1) — [STOP-GATE] REVENUE_RECOGNITION_POST_ENABLED / PREPAID_EXPENSES_POST_ENABLED / FIXED_ASSET_AUTOPOST_ENABLED na
+    - diff: rename to *_GL_POSTING_ENABLED or add these 3 to POSTING_FLAG_KEYS + pass opco context, before any real poster ships behind them
+    - evidence: apps/backend/src/lib/feature-flags/service.ts's POSTING_FLAG_KEYS enumeration (lines 37-47+) does NOT include REVENUE_RECOGNITION_POST_ENABLED, PREPAID_EXPENSES_POST_ENABLED, or FI
+    - spec: NONE
+- `0243-h5-3-no-r2-evidence-check-dr-drill-stub-7day-links` **not-built** (tier-2) — No R2-evidence presence check (silent dangling pointer on Cloudflare purge); restore drill SKIPs unless NEON_A
+    - diff: nightly R2-presence reconcile; expand checksum to money/evidence/audit tables; shorten presigned links; confirm bucket WORM/no-expiry
+    - evidence: UNVERIFIED: Not independently checked in this pass (effort-budget triage) — storage/r2-client.ts, backup-checksum-monthly.mjs, and dispatch/load-distribution.service.ts:207,279 wer
+    - spec: NONE
+- `0243-h7-1-faro-to-rts-no-public-api` **not-built** (tier-1) — RTS Financial has no public API (FTP/portal file-drop); entire factoring integration is Faro-CSV-shaped -- the
+    - diff: design-doc for RTS as a second file-format adapter behind the existing reconciliation; confirm RTS export columns with their rep
+    - evidence: grep -rln 'RTS|rts-' apps/backend/src/factoring returned zero matches — no RTS adapter code exists yet, matching the doc's own framing that this needs a design-doc first.
+    - spec: NONE
+- `0251-gap11-commodity-gl` **not-built** (tier-2) — Verify commodity affects GL account selection for revenue categorization
+    - diff: product catalog (0251-gap10) is a prerequisite
+    - evidence: Depends on 0251-gap10 (no product catalog exists yet to key GL selection off of).
+    - spec: NONE
+- `0251-gap18-driverbill-gl` **not-built** (tier-1) — Verify driver bill posts Bill + BillPayment to GL
+    - diff: explicit GL posting call (Bill + BillPayment) from createDriverBillArtifacts, or confirmation it is intentionally deferred to a separate flag-gated posting step per 0285's 'GL posting is flag-gated' f
+    - evidence: apps/backend/src/dispatch/book-load.service.ts:248 createDriverBillArtifacts — grep for postSourceTransaction/GL/journal within that function's vicinity found only an unrelated com
+    - spec: NONE
+- `0251-gap19-driverbill-escrow` **not-built** (tier-1) — Verify driver bill includes escrow deduction at book-load time
+    - diff: escrow deduction logic in createDriverBillArtifacts
+    - evidence: grep for 'escrow' inside apps/backend/src/dispatch/book-load.service.ts returned zero matches — no escrow handling found in the driver-bill-creation path at book-load time.
+    - spec: NONE
+- `0251-gap22-lumper-expense-linkage` **not-built** (tier-1) — Verify lumper charges create an expense record so lumper costs are captured in accounting
+    - diff: an expense record created (or linked) per carrier-paid lumper charge
+    - evidence: apps/backend/src/dispatch/book-load.service.ts:41-43,263-289 tracks lumper_required/lumper_paid_by/lumper_amount_cents and computes carrier-paid vs shipper/broker/receiver-paid sum
+    - spec: NONE
+- `0251-gap5-chargecode-gl-mapping` **not-built** (tier-1) — Create a charge-code-to-GL-account mapping table so accessorial/linehaul/fuel-surcharge charge codes map to GL
+    - diff: a dedicated charge-code-to-GL-account catalog table
+    - evidence: `grep -rln accessorial.*gl gl.*accessorial charge_code apps/backend/src/accounting apps/backend/src/dispatch db/migrations` only matched apps/backend/src/dispatch/ratecon-extract.s
+    - spec: NONE
+- `0251-gap7-fuel-surcharge-gl` **not-built** (tier-1) — Verify fuel surcharge posts to fuel revenue GL account
+    - diff: charge-code-to-GL mapping table (0251-gap5) is a prerequisite
+    - evidence: Same root cause as gap5/gap6 — no charge-code-to-GL mapping table exists, so fuel surcharge cannot be routed to a distinct GL account by code.
+    - spec: NONE
+- `0251-gap8-accessorials-gl` **not-built** (tier-1) — Verify each accessorial code posts to the correct GL account
+    - diff: charge-code-to-GL mapping table (0251-gap5) is a prerequisite
+    - evidence: Same root cause as gap5 — no charge-code catalog/mapping table found.
+    - spec: NONE
+- `0280-02-revenue-gl-linkage` **not-built** (tier-3) — Owner Home / Today's Revenue widget: revenue sourced from accounting.invoices with no verification it ties to 
+    - diff: join or cross-check against accounting.journal_entry_postings for revenue-account postings, or an explicit label that this is invoice-basis not GL-basis
+    - evidence: apps/backend/src/home/home-widgets.routes.ts today-revenue query (lines ~34-41, ~160-166) reads directly `FROM accounting.invoices` with no join to accounting.journal_entries or ac
+    - spec: NONE
+- `0282-p0-catalogs-accounts-scope` **not-built** (tier-1) — P0: migrate catalogs.accounts (and by extension other 'global' catalogs tables) to company-scoped, framed as a
+    - diff: This is NOT simply unbuilt — it is a live ARCHITECTURAL DISAGREEMENT with the locked design (see contradicts field). Any 'fix' must go through an owner decision, not a direct migration.
+    - evidence: catalogs.accounts is still a single shared table without a hard per-row operating_company_id enforcement identical to opco-owned tables (confirmed via the separate C2-1 finding tha
+    - spec: NONE
+- `0285-acct-gap2-no-auto-invoice-send` **not-built** (tier-2) — Accounting: invoice creation does not trigger an automatic email to the customer — no automatic invoice delive
+    - diff: an automatic (or explicit) send-invoice-by-email action/route
+    - evidence: 0285's own route inventory for invoices.routes.ts lists Create/List/Detail/Patch/Void/Render endpoints but no 'send' endpoint; not independently re-verified in this pass beyond the
+    - spec: NONE
+- `0285-banking-transfer-gl-gap-not-caught` **not-built** (tier-1) — Doc's Banking section marks 'Create Transfer' as '✅ Implemented' and states 'Critical Gaps: None identified' —
+    - diff: a 'transfer' GL posting type wired into createTransfer
+    - evidence: apps/backend/src/banking/transfers.routes.ts:60,116 call createTransfer with no visible GL-posting call in that file. This corroborates memory 'banking-posting-flags-go-nogo-2026-0
+    - spec: NONE
+- `0285-financehub-ui-only` **not-built** (tier-2) — Finance Hub: no dedicated apps/backend/src/finance-hub/ directory found — functionality (Loans, Amortization, 
+    - diff: real backend for Finance Hub (Loans, Amortization, Calculator) or a decision to fold it fully into Accounting/Driver Finance with real routing
+    - evidence: 0007's per-module rollup independently corroborates this: 'Finance Hub — Overview/Projections/Scenarios static stubs.' Two independent sweeps in this batch both describe Finance Hu
+    - spec: NONE
+- `0394-qbo-bill-invoice-transaction-pull-missing` **not-built** (tier-1) — QBO->TMS transaction pull (bills=A/P, invoices=A/R, bill-payments, credits) was never built — only master data
+    - diff: a QBO->TMS bill/invoice pull job writing into mdata.qbo_bills / mdata.qbo_invoices, on a recurring (CDC) schedule, not the current one-shot master-data-only sync
+    - evidence: apps/backend/src/qbo/master-data-sync.service.ts syncs entity types account/customer/item/vendor (INSERT ... qbo_sync_token patterns for mdata.qbo_vendors/qbo_customers/qbo_items) 
+    - spec: NONE
+- `0441-mod10-cashflow-accounting-routes-dead` **not-built** (tier-2) — Cash Flow /accounting/cash-flow.routes.ts dead (orphans routed /accounting/cash-forecast 404)
+    - diff: either mount registerCashForecastRoutes/registerCashFlowRoutes, or repoint the '/accounting/cash-forecast' nav link and API calls to the live cash-flow module.
+    - evidence: apps/backend/src/accounting/cash-flow.routes.ts exports registerCashFlowRoutes (GET /api/v1/accounting/cash-flow) and apps/backend/src/accounting/cash-forecast.routes.ts exports re
+    - spec: NONE
+- `0441-mod11-ar-ap-aging-export-different-engine` **not-built** (tier-1) — AR/AP Aging export uses different engine than screen
+    - diff: export engine should call the same views.ar_aging/accounting.ar_aging_as_of source the screen uses, or the divergence must be reconciled and documented.
+    - evidence: On-screen engine (apps/backend/src/reports/ar-aging.routes.ts:9-10,95,114) uses `views.ar_aging` (live) or `accounting.ar_aging_as_of($1,$2)` (historical) — the canonical security_
+    - spec: NONE
+- `0441-mod13-coa-merge-accounts-deactivate-only-no-gl-repoint` **not-built** (tier-1) — Lists CoA "Merge accounts" deactivates only - NO GL repoint
+    - diff: A real merge operation (backend) that UPDATEs all GL-referencing rows (journal lines, bill lines, expense lines, budget lines, etc.) from source account_id to target account_id inside a transaction, T
+    - evidence: apps/frontend/src/pages/lists/accounting/CoaBatchActions.tsx:56-82 handleMerge() calls `chartOfAccountsCatalogClient.deactivate(source.id, operatingCompanyId)` (falling back to `de
+    - spec: NONE
+- `0441-mod13-inventory-part-to-accounting-none` **not-built** (tier-1) — Inventory part->accounting NONE
+    - diff: A catalogs.accounts (expense/inventory-asset) linkage on parts and/or on the purchase-recording flow, per LAW OF THE LAND total-connectivity.
+    - evidence: No account_id/gl_account_id/expense_category field found anywhere in apps/frontend/src/pages/inventory/PartCreateDrawer.tsx, InventoryPartsStockPage.tsx, or apps/backend/src/mainte
+    - spec: NONE
+- `0441-mod3-fuel-gl-poster-zero-callers` **not-built** (tier-1) — CRITICAL: Fuel GL poster postFuelExpenseFromEvent has ZERO callers
+    - diff: A production caller (route handler, event consumer, or cron) that invokes postFuelExpenseFromEvent when a fuel transaction/event is created/ingested
+    - evidence: grep -rn postFuelExpenseFromEvent apps/backend/src shows only the definition (apps/backend/src/accounting/fuel-posting/poster.service.ts:223) and 3 test files (__tests__/poster-dri
+    - spec: NONE (referenced only as 'see design doc' in relay-fuel-ingest.service.ts comment, no docs/specs/ file found for fuel GL posting wiring)
+- `0441-mod7-maintenance-repair-fuel-bill-filters` **not-built** (tier-1) — Maintenance/Repair/Fuel bill subnav items are ?category= filters, not creators
+    - diff: These subnav items should open a category-prefilled bill CREATE flow (like VendorBillCreatePage), not just filter the existing list.
+    - evidence: apps/frontend/src/routes/manifest.tsx:3601-3624 — /accounting/bills/maintenance, /accounting/bills/repair, /accounting/bills/fuel each render <Navigate to="/accounting/bills?catego
+    - spec: NONE
+- `0441-mod8-tx-fields-captured-not-sent` **not-built** (tier-2) — Transactions fields captured-not-sent (Payee/Check#/Class/Location/Customer/Billable/Tags)
+    - diff: Add banking.bank_transactions (or a linked table) columns for check_number/class/location/is_billable/tags via migration, extend categorizeBankTransaction's body + backend handler, and wire the alread
+    - evidence: BankingTransactionsDesignView.tsx captures draft.className/location/checkNumber/isBillable/tags in local UI state (ToggleLine/inputs at lines 942-1761) but its save call at line 60
+    - spec: NONE
+- `0441-mod9-merge-vendors-no-gl-repoint` **not-built** (tier-1) — "Merge Vendors" merges QBO ids on driver (no GL repoint, no deactivation)
+    - diff: GL repoint (UPDATE all bill/expense/payment/PO rows carrying the old qbo_vendor_id to the new one, or block merge if historical GL rows exist and require a proper subledger-transfer), and deactivation
+    - evidence: apps/backend/src/data-infra/data-infra.service.ts:27-121 `createDriverVendorMerge` only (a) inserts an mdata.driver_vendor_merges audit row and (b) if `applyToDriver`, UPDATEs `mda
+    - spec: NONE
+- `0441-mod9-quality-history-cant-attach-load-invoice` **not-built** (tier-3) — Customer Quality & History can't attach load/invoice despite backend support
+    - diff: A load picker and invoice picker in the Create Quality Event modal, setting related_load_id/related_invoice_id, which the backend already accepts.
+    - evidence: Backend apps/backend/src/mdata/customer-quality-events.routes.ts fully supports `related_load_id`/`related_invoice_id` in `createCustomerQualityEventBodySchema` (lines 53-54) and t
+    - spec: NONE
+- `0473-2-4-ap-aging-undercounts-partials` **not-built** (tier-1) — Bills stored 'partially_paid' but aging report reads 'partial' -- a value mismatch under-counts partially-paid
+    - diff: align the status value read in ap-aging.routes.ts with the actual stored 'partially_paid' value; add a DB constraint preventing future drift
+    - evidence: grep -n 'partially_paid|partial' apps/backend/src/reports/ap-aging.routes.ts returned zero matches — no evidence the status-value alignment fix landed in the AP aging route.
+    - spec: NONE
+- `0473-2-5-trial-balance-002-cosmetic` **not-built** (tier-1) — Trial balance shows $0.02 Dr/$0.02 Cr gross of the one posted+reversed test invoice (nets to $0, not an error)
+    - diff: decide whether to void/purge the $0.01 test invoice's gross footprint before go-live, or leave it as documented test evidence
+    - evidence: UNVERIFIED: This is a live-data cosmetic artifact (the test invoice's gross Dr/Cr still showing in the trial balance UI), not something checkable from repo code alone. Not independ
+    - spec: NONE
+- `0490-critical-m-settle-1-unflagged-settlement-posting` **not-built** (tier-1) — CRITICAL: payroll/driver-settlement.service.ts postSettlement() posts a real Bill+BillPayment with NO feature-
+    - diff: a role gate (Owner/Finance only) AND a feature-flag check (or full retirement of the payroll.* engine in favor of the canonical driver_finance settlement-posting engine) on this route
+    - evidence: apps/backend/src/payroll/driver-settlement.routes.ts POST /api/v1/payroll/driver-settlements/:settlement_id/post (lines 50-79) checks only `currentAuthUser(req, reply)` — no role c
+    - spec: NONE
+- `0519-lg1-5-nullable-financial-columns` **not-built** (tier-1) — 5 financial columns that should be required are nullable: accounting.bill_lines.account_id, accounting.bill_pa
+    - diff: ALTER TABLE ... ALTER COLUMN ... SET NOT NULL for the 5 listed columns (Tier-1 migration, needs a backfill-safety check first for existing NULL rows)
+    - evidence: No `ALTER COLUMN account_id SET NOT NULL` / `ALTER COLUMN amount_cents SET NOT NULL` found for these tables in db/migrations (grep empty, re-checked with a second pattern) — column
+    - spec: NONE
+- `a-05-bills-no-page-level-create-button` **not-built** (tier-3) — Bills tab has no page-level '+ Create Bill' button - only global dropdown
+    - diff: Add an actions prop with a page-level '+ Create Bill' button to BillsPage's AccountingSubNavWrapper.
+    - evidence: apps/frontend/src/pages/accounting/BillsPage.tsx lines 213-225: <AccountingSubNavWrapper title="Bills" subtitle=... kpiStrip={...}> - no 'actions' prop passed (contrast with Expens
+    - spec: NONE
+- `acct-bills-routes-audit-trail-missing` **not-built** (tier-1) — Areas for Review #1: bills.routes.ts has no direct appendCrudAudit call — verify if audited in service layer
+    - diff: an appendCrudAudit call (or equivalent) somewhere in the bill create/pay/void/allocate path
+    - evidence: grep -n 'appendCrudAudit' apps/backend/src/accounting/bills.routes.ts returned zero matches (re-ran once, still zero — false-empty rule satisfied). Did not locate a bills-specific 
+    - spec: NONE
+- `acct-fmcsa-fire-and-forget-retry` **not-built** (tier-2) — Areas for Review #3: FMCSA SAFER verification is fire-and-forget with no retry logic on transient failures
+    - diff: retry/backoff (or a durable outbox-queued retry) for verifyCustomerWithSafer
+    - evidence: apps/backend/src/mdata/customers.routes.ts:719,1109,1125 call 'void verifyCustomerWithSafer(...)' (the 'void' keyword confirms the call is intentionally not awaited/retried) with n
+    - spec: NONE
+- `arch-docs-1-parallel-books-canonical` **not-built** (tier-3) — Write docs/specs/TMS-QBO-PARALLEL-BOOKS.md as the single canonical parallel-books architecture statement + cro
+    - diff: docs/specs/TMS-QBO-PARALLEL-BOOKS.md itself; cross-link banners in QBO-CLONE-PROGRAM.md, TMS-QBO-RECONCILIATION.md, qbo-parity/ index; docs/CLAUDE.md T11.20.6.x superseded-by notes
+    - evidence: find docs -iname '*parallel*' and grep -rl 'PARALLEL-BOOKS' docs both return empty (re-run confirmed); the file docs/specs/TMS-QBO-PARALLEL-BOOKS.md does not exist
+    - spec: N/A -- this doc IS the spec being requested
+- `audit7-cost-center-tracking` **not-built** (tier-2) — Cost Audit: cost center tracking, activity-based costing, cost variance analysis
+    - diff: A cost-center dimension on expense/GL rows + variance analysis.
+    - evidence: Expense tracking/allocation via expense categories is built (accounting.expenses, accounting.expense_lines, accounting.expense_category_account_map). No cost-center concept found (
+    - spec: NONE
+- `audit9-expense-validation-duplicate-detection` **not-built** (tier-2) — Expense Audit: expense validation rules, duplicate expense detection, expense policy enforcement
+    - diff: Duplicate-expense detection + a policy-enforcement layer on expense entry.
+    - evidence: Expense tracking/categorization built (accounting.expenses/expense_lines); grep for 'duplicate.*expense' across accounting/*.ts returns nothing. A duplicate-PAYMENT detector does e
+    - spec: NONE
+- `bill-status-vocab-partial-vs-partially_paid` **not-built** (tier-1) — Standardize + DB-constrain the A/P bill status vocabulary ('partial' vs 'partially_paid' drift causes aging mi
+    - diff: A single canonical status vocabulary + DB CHECK constraint for bill partial-payment status, replacing the two-spelling drift.
+    - evidence: Both spellings remain live: db/migrations/0123_p6_pre_ledger_drift_reconciliation.sql:1350 CHECK (status IN ('draft','sent','partial','paid','void','factored')) uses 'partial', whi
+    - spec: NONE
+- `bills-billpayments-not-migrated-to-paritytable` **not-built** (tier-3) — Migrate BillsPage + BillPaymentsListPage off hand-rolled nested-table markup onto the shared ParityTable compo
+    - diff: Convert both pages' columns/filterBar/renderExpanded onto ParityTable, matching the already-converted ExpensesListPage.
+    - evidence: grep -l "ParityTable" apps/frontend/src/pages/accounting/BillsPage.tsx apps/frontend/src/pages/accounting/BillPaymentsListPage.tsx returned no matches for either file (re-run confi
+    - spec: NONE
+- `bills-date-range-filter` **not-built** (tier-3) — Bills list date-range filter
+    - diff: a from/to date-range filter control on the Bills list
+    - evidence: apps/frontend/src/pages/accounting/BillsPage.tsx has only preset segmented filters (MTD, overdue, past-90); no from/to date-range filter UI. DatePicker import (line 3) used only fo
+    - spec: docs/specs/qbo-parity/ (Bills list)
+- `bills-list-missing-date-range-filter` **not-built** (tier-3) — BillsPage list has no From/To date filter even though backend + API client already support date_from/date_to
+    - diff: Add two DatePicker (From/To) controls to the BillsPage filter row and thread them into billsQuery's queryKey/queryFn, per the working pattern already in ExpensesListPage.tsx:66-77,149-156.
+    - evidence: apps/frontend/src/pages/accounting/BillsPage.tsx: billsQuery (line 117) passes no date_from/date_to params; grep for "date_from"/"date_to" in the file returns 0 matches. The only D
+    - spec: NONE
+- `biz-flow-2-no-customer-chargeback-mechanism` **not-built** (tier-1) — Auto-create a customer invoice adjustment when a driver-caused expense should be billed back to the customer
+    - diff: no code path that turns a recover_from_driver expense into a customer invoice line
+    - evidence: No grep hits linking accounting.expenses or driver_finance.driver_settlement_deductions creation to an accounting.invoices/invoice_lines write anywhere in apps/backend/src (searche
+    - spec: NONE
+- `biz-flow-3-no-auto-customer-charge-on-cancellation` **not-built** (tier-1) — Auto-create a customer invoice/charge from dispatch.load_cancellations.cancellation_charge_cents
+    - diff: no call from cancelLoad()/approveCancellation() into an invoice-creation function
+    - evidence: apps/backend/src/dispatch/cancellation.service.ts stores cancellation_charge_cents/billable_to_customer (lines 16-17, 63-82) but has zero references to invoice creation (grep for '
+    - spec: NONE
+- `biz-flow-3-no-cancellation-billing-linkage` **not-built** (tier-1) — dispatch.load_cancellations needs a foreign key to the invoice/charge it produced
+    - diff: no invoice_id / charge_id column on dispatch.load_cancellations
+    - evidence: Reviewed every migration that touches dispatch.load_cancellations (db/migrations/0101_p5_f4_cancellation_reasons.sql, 202606300130_load_cancellations_per_entity_fk.sql, 0281_dispat
+    - spec: NONE
+- `biz-flow-6-no-automatic-invoice-sending` **not-built** (tier-2) — Automatically email the invoice to the customer when it is created
+    - diff: no email trigger on invoice creation or a reminder schedule
+    - evidence: grep for 'sendInvoiceEmail' / an automatic-send trigger in apps/backend/src/accounting/invoices.routes.ts returns zero hits; invoice creation (buildInvoiceFromLoad) has no email/no
+    - spec: NONE
+- `biz-flow-6-payment-application-manual` **not-built** (tier-1) — Auto-apply customer payments to the oldest open invoice(s) instead of requiring a manual application
+    - diff: no automatic FIFO/oldest-invoice application logic
+    - evidence: apps/backend/src/accounting/customer-payments.routes.ts:217 shows payment_applications rows are created from explicit caller-supplied application input; no auto-apply-to-oldest-ope
+    - spec: NONE
+- `bl-03-no-address-autocomplete` **not-built** (tier-3) — Address fields in Book Load stops are plain text, no Google Maps autocomplete
+    - diff: Implement address autocomplete via Google Maps API (or equivalent) on Book Load stop address fields.
+    - evidence: grep for google.*maps/autocomplete/Autocomplete/places in apps/frontend/src/pages/dispatch/components/BookLoadStopsSection.tsx returned zero matches.
+    - spec: NONE
+- `bug3-invoices-sort-pickup-date-400` **not-built** (tier-3) — Fix invoices list sort=-pickup_date rejected with 400 by the query validator
+    - diff: confirm whether the invoices list route's sort allowlist includes pickup_date (forward and '-pickup_date' descending) form
+    - evidence: UNVERIFIED — could not locate the invoices sort-validator code path or a regression test for '-pickup_date' in the time available this pass
+    - spec: NONE
+- `catalog-create-split-brain-qbo-mirror` **not-built** (tier-1) — mdata/qbo-master-write.routes.ts inserts new catalog entries into mirror tables (mdata.qbo_vendors/qbo_items/q
+    - diff: Either write directly to the canonical tables (mdata.vendors/catalogs.items/catalogs.accounts) or write to both mirror+canonical atomically.
+    - evidence: apps/backend/src/mdata/qbo-master-write.routes.ts lines 127, 392, 522 confirmed myself: 'INSERT INTO mdata.qbo_vendors (', 'INSERT INTO mdata.qbo_items (', 'INSERT INTO mdata.qbo_a
+    - spec: NONE
+- `db249-finance-schema-naming-drift` **not-built** (tier-2) — finance.* vs accounting.* schema naming drift cleanup
+    - diff: Already-tracked cleanup per memory 'schema-canonicalization-verdicts' (settlement=driver_finance, deprecate settlement.*/payroll); no new action beyond what's already tracked there.
+    - evidence: Doc's own inventory lists a 'finance' schema (10 tables, 'Financial hub (distributed)') alongside accounting (47 tables); grep of db/migrations/*.sql for 'CREATE TABLE finance.' co
+    - spec: NONE
+- `db249-index-optimization-3` **not-built** (tier-2) — Add 3 recommended composite indexes (safety_events driver+occurred, invoices customer+status+issue_date, work_
+    - diff: 3 composite indexes as specified (perf-only, non-financial-math change but still a DB migration).
+    - evidence: grep across db/migrations/*.sql for composite CREATE INDEX on (operating_company_id, subject_driver_id, occurred_at) for safety.safety_events, (operating_company_id, customer_id, s
+    - spec: NONE
+- `dispatch-sweep-gap-20` **not-built** (tier-2) — KPI to GL Linkage — verify KPI queries join with GL tables
+    - diff: A join from the KPI queries to accounting.invoices (and/or catalogs.accounts) so dispatcher KPIs reflect billed/posted state.
+    - evidence: apps/backend/src/dispatcher-board/role-views/dispatcher.service.ts (the actual dispatcher-home KPI service; doc's cited path 'dispatcher.service.ts' has moved under dispatcher-boar
+    - spec: docs/specs/gap-66-dispatcher-home-view.md
+- `dispatch-sweep-gap-21` **not-built** (tier-2) — Active Load to Invoice Linkage — verify active loads query includes invoice status
+    - diff: An invoice-status column/join on the active-loads KPI query.
+    - evidence: loadActiveLoads() in apps/backend/src/dispatcher-board/role-views/dispatcher.service.ts (L157-198, re-read directly) SELECTs l.id, load_number, status, customer_name, pickup/delive
+    - spec: docs/specs/gap-66-dispatcher-home-view.md
+- `dispatch-sweep-gap-23` **not-built** (tier-1) — Reassign to GL Linkage — verify reassignments trigger GL journal entries
+    - diff: No GL journal entry is created on reassignment; any GL effect only happens indirectly, later, if/when a settlement referencing the new driver is posted (gap-17).
+    - evidence: manualReassignLoad (apps/backend/src/dispatch/dispatch-refinements.service.ts) has no call to postSourceTransaction/createJournalEntry/accounting.* anywhere in the file (only appen
+    - spec: docs/specs/DISPATCH-MODULE-SPEC.md
+- `dispatch-sweep-gap-32` **not-built** (tier-1) — Assignment to GL Linkage (Load Assignment Flow) — verify assignments post to GL for cost tracking
+    - diff: No per-assignment GL cost entry; cost only reaches GL later via the settlement posting engine (flag-gated, OFF by default).
+    - evidence: Same as dispatch-sweep-gap-23: no code in dispatch-refinements.service.ts (manualReassignLoad or the initial book-load assignment path) calls postSourceTransaction/createJournalEnt
+    - spec: docs/specs/DISPATCH-MODULE-SPEC.md
+- `dispatch-sweep-gap-36` **not-built** (tier-1) — Detention to Expense Linkage — verify approved detention creates expense record
+    - diff: No accounting.expenses record for detention as an internal cost; only the customer-billing (revenue) side is wired (see gap-38).
+    - evidence: apps/backend/src/dispatch/detention-approval.service.ts finalizeApprovedDetention (L325-393) bridges the accrual straight into buildInvoiceFromLoad — a CUSTOMER-facing invoice/reve
+    - spec: docs/specs/DISPATCH-MODULE-SPEC.md
+- `dispatch-sweep-gap-6` **not-built** (tier-1) — Status Transition to GL Linkage — verify status transitions trigger appropriate GL postings
+    - diff: A hook from the load status-transition handler into buildInvoiceFromLoad / postSourceTransaction on delivery or invoice-eligible transitions.
+    - evidence: apps/backend/src/dispatch/loads.routes.ts owns the status transition state machine (STATUS_NEXT map etc, L338-372) with no accounting/invoice/posting-engine calls anywhere in the f
+    - spec: docs/specs/DISPATCH-MODULE-SPEC.md
+- `expenses-list-route-still-shows-create-wizard` **not-built** (tier-3) — /accounting/expenses must render the real ExpensesListPage (list), not the blank create wizard; move create to
+    - diff: Swap the element rendered at /accounting/expenses to ExpensesListPage; relocate ExpenseCreatePage to /accounting/expenses/new; repoint the 6 named entry points (Topbar.tsx:232, AccountingHubPage.tsx:3
+    - evidence: apps/frontend/src/routes/manifest.tsx:3674-3688 — path="/accounting/expenses" still renders <ExpenseCreatePage/>; the real list (<ExpensesListPage/>) is mounted at the separate pat
+    - spec: NONE
+- `expenses-list-routing-bug` **not-built** (tier-3) — Fix expenses-don't-list routing bug
+    - diff: N/A — appears already resolved; if Jorge still sees the bug live, needs a fresh live repro since the route wiring looks correct
+    - evidence: apps/frontend/src/routes/manifest.tsx:3674-3688 cleanly separates /accounting/expenses (ExpenseCreatePage) from /accounting/expenses/list (ExpensesListPage); subnav-manifest.ts:45-
+    - spec: NONE
+- `expenses-routing-list-stranded` **not-built** (tier-3) — /accounting/expenses routes to ExpenseCreatePage (the wizard) instead of the list; ExpensesListPage is strande
+    - diff: Swap so /accounting/expenses lands on the list (matching every other module's convention) and the wizard moves to /accounting/expenses/new or similar, additively (do not delete the /list path).
+    - evidence: apps/frontend/src/routes/manifest.tsx lines 3674-3689 confirmed myself: path='/accounting/expenses' -> element=<ExpenseCreatePage/>; path='/accounting/expenses/list' -> element=<Ex
+    - spec: NONE
+- `fh-unit-allocation-ui-view-missing` **not-built** (tier-3) — Unit-Allocation (FH-7) read-only sub-ledger view (cost-per-unit roll-up from bills/expenses dimension tags)
+    - diff: Unit-Allocation read-only frontend page/route + api client consuming the unit-allocation dimension on bills/expenses; behind FH_UNIT_ALLOCATION_ENABLED flag
+    - evidence: docs/specs/finance-hub/UNIT-ALLOCATION-DATA-MODEL.md spec exists, but no frontend page found: `find apps/frontend/src -iname '*unit-alloc*' -o -iname '*UnitAlloc*'` returned nothin
+    - spec: docs/specs/finance-hub/UNIT-ALLOCATION-DATA-MODEL.md
+- `fk-expenses-deductions-0289` **not-built** (tier-1) — Critical FK gap #3: Expenses -> Deductions, expected column accounting.expenses.deduction_id
+    - diff: accounting.expenses.deduction_id column + FK to driver_finance.driver_settlement_deductions
+    - evidence: grep -n 'deduction_id' db/migrations/*.sql filtered for 'expense' context returned zero matches; no accounting.expenses.deduction_id column found anywhere in migrations.
+    - spec: NONE
+- `flow3-cancellation-auto-customer-charge` **not-built** (tier-2) — Auto-create a customer invoice/charge when a load is cancelled for driver-fault reasons
+    - diff: Trigger in cancellation.service.ts that creates an accounting.invoices row/line when billable_to_customer=true.
+    - evidence: apps/backend/src/dispatch/cancellation.service.ts (221 lines) records billable_to_customer and cancellation_charge_cents on the cancellation record itself but has no createInvoice/
+    - spec: NONE
+- `flow3-cancellation-billing-deduction-linkage` **not-built** (tier-2) — Load cancellation: auto customer charge + auto escrow deduction on driver-fault cancellation, with cancellatio
+    - diff: cancellation_id column on accounting.invoices / driver_finance.driver_settlement_deductions; trigger in cancellation.service.ts for driver-fault cancellations.
+    - evidence: grep -rl 'cancellation_id' db/migrations/*.sql returned 0 hits (re-run once, still 0). apps/backend/src/dispatch/cancellation.routes.ts exists (module-level CRUD per 0442 catalog) 
+    - spec: NONE
+- `flow3-cancellation-fk-to-billing-and-deductions` **not-built** (tier-2) — Add cancellation_id linkage columns on charges/deductions so a cancellation can be traced forward
+    - diff: cancellation_id uuid FK on the created charge/deduction rows once the flow3 auto-create items land.
+    - evidence: No cancellation_id column found via grep across accounting.invoices / driver_finance.driver_settlement_deductions migrations.
+    - spec: NONE
+- `flow6-auto-payment-application` **not-built** (tier-2) — Auto-apply customer payments to the oldest open invoices
+    - diff: An auto-apply mode that, absent explicit applications, allocates a payment to the customer's oldest open invoices first, with manual override retained; unapplied-payment alerts.
+    - evidence: apps/backend/src/accounting/payments/apply.service.ts (359 lines) requires an explicit applications[] array of {target_kind,target_id,amount_cents} from the caller — no oldest-invo
+    - spec: NONE
+- `flow6-manual-payment-application` **not-built** (tier-2) — Automatic payment application to oldest open invoices, with manual override and unapplied-payment alerts
+    - diff: Auto-apply-to-oldest-open-invoice logic + unapplied-payment alert.
+    - evidence: grep -rl 'autoApplyPayment\|auto_apply' apps/backend/src/accounting returned 0 hits (2 passes). accounting/payment-applications.routes.ts exists but is manual-application CRUD per 
+    - spec: NONE
+- `flow6-no-auto-invoice-sending` **not-built** (tier-3) — Automatic invoice email send with PDF attachment on invoice creation + unpaid reminder schedule
+    - diff: Email-send trigger on invoice creation; reminder schedule for unpaid invoices.
+    - evidence: grep -rl 'sendInvoice\|auto.*send.*invoice' apps/backend/src/accounting returned 0 hits (2 passes).
+    - spec: NONE
+- `h-05-home-kpi-no-date-range-toggle` **not-built** (tier-3) — Home dashboard KPI date range hard-coded to 'last 3 days', no 7d/30d/MTD/YTD toggle
+    - diff: Add a 7d/30d/MTD/YTD selector to the Home KPI row.
+    - evidence: grep for 7d/30d/MTD/YTD/dateRange selector in apps/frontend/src/pages/home/QboStyleHomePage.tsx and OwnerHome.tsx returned no matches (only an unrelated 'paid last 30d' comment).
+    - spec: NONE
+- `inbound-qbo-bill-sync-ap-gap` **not-built** (tier-1) — Build inbound QBO bill sync so TMS A/P ties to QuickBooks' open A/P ($1,220,674.25 across 151 vendors as of th
+    - diff: Inbound QBO bill sync (CDC/polling) so TMS A/P ties to QuickBooks' A/P balance.
+    - evidence: grep for 'qbo.*bill.*(pull|import|inbound)' and 'inbound.*bill' across apps/backend/src/integrations/qbo/*.ts and sync/*.ts returns no inbound-bill sync handler — only outbound pus
+    - spec: NONE
+- `ledger-write-proof-operational-not-found` **not-built** (tier-3) — Build a Neon-branch proof harness (apps/backend/src/accounting/__proofs__/core-ledger-write-proof.spec.ts) pro
+    - diff: The proof harness file and docs/proofs/CORE-LEDGER-WRITE-PROOF-operational.md evidence doc this block asks for.
+    - evidence: Two-pass search (find -iname '*ledger-write-proof*' and grep -rl 'core-ledger-write-proof|CORE-LEDGER-WRITE-PROOF') across apps/backend/src and docs found zero matches; docs/proofs
+    - spec: NONE
+- `p0-catalogs-accounts-company-scoped` **not-built** (tier-1) — Migrate catalogs.accounts (chart of accounts) to company-scoped (add operating_company_id) — flagged P0 'entit
+    - diff: operating_company_id uuid NOT NULL REFERENCES org.companies(id) column + FORCE RLS policy on catalogs.accounts; currently one shared global CoA across TRANSP/TRK/USMCA.
+    - evidence: db/migrations/0010_catalogs_init.sql:6 CREATE TABLE catalogs.accounts has columns id, code, name, type ... parent_account_id, created_by_user_id, updated_by_user_id — NO operating_
+    - spec: NONE
+- `phase8-audit167-ai-audit-na` **not-built** (tier-3) — Audit 167 — AI ethics framework, AI transparency, AI accountability, AI dashboard/analytics
+    - diff: N/A as a product feature — no in-app AI capability exists to govern
+    - evidence: Claude Code/AI-agent tooling is used in the DEVELOPMENT process (per this very session) but is not an AI product FEATURE of the TMS itself; no in-product AI ethics/transparency/acc
+    - spec: NONE
+- `ps-a-item-editor-account-pickers-no-addnew` **not-built** (tier-2) — PS-A-Item-Editor-Account-Pickers: gated inline '+ Add new account' missing on both income and expense account 
+    - diff: allowAddNew prop (matching the ReferenceSelect.tsx / Combobox allowAddNew pattern already used elsewhere per A3 resolution) on both account Comboboxes.
+    - evidence: Read apps/frontend/src/pages/lists/accounting/ItemEditorModal.tsx lines 340-440 myself: the Income account Combobox (line ~361-367) and Expense account Combobox (line ~424-431) eac
+    - spec: NONE
+- `ruling-3-driver-escrow-current-vs-long-term-reclass` **not-built** (tier-1) — Reclassify driver Damage Claim Escrow from OtherLongTermLiabilities to a current-liability subtype (60-90 day 
+    - diff: Reclass Damage Claim Escrow (QBO-1150040187) and year-dated variants from OtherLongTermLiabilities to a current-liability subtype, pending CPA confirmation.
+    - evidence: Damage Claim Escrow accounts remain typed OtherLongTermLiabilities per doc Appendix A; no migration reclassifying to a current-liability subtype found (grep for 'OtherLongTermLiabi
+    - spec: NONE
+- `s-04-no-from-to-date-range-safety-lists` **not-built** (tier-3) — No From/To date range picker on Safety list views - only 5-option window toggle
+    - diff: Add From/To DatePicker fields to SafetyEventsPage and other Safety list views for arbitrary date-range queries (required for DOT audit).
+    - evidence: apps/frontend/src/pages/safety/SafetyEventsPage.tsx filter row (lines ~160-178) has only a severity dropdown and free-text search - no From/To DatePicker fields. DatePicker.tsx is 
+    - spec: NONE
+- `settlement-posting-design-doc-missing` **not-built** (tier-1) — Write docs/specs/SETTLEMENT-POSTING-DESIGN.md (settlement->GL JE shape, FLSA recovery modes, escrow contributi
+    - diff: the consolidated docs/specs/SETTLEMENT-POSTING-DESIGN.md itself, including the 5 explicit owner open-questions (net-pay floor, damage-deduction consent workflow, escrow contribution/cap/forfeit, COA m
+    - evidence: `find docs -iname '*settlement*posting*'` returns nothing; no docs/specs/SETTLEMENT-POSTING-DESIGN.md in the repo. Related pieces exist piecemeal (settlement-posting.service.ts, se
+    - spec: NONE
+- `systemic-pattern-never-toast-success-posted-false` **not-built** (tier-2) — 'Never toast success on posted:false' guard (silent no-op posting must not show a success toast)
+    - diff: a CI guard or lint rule catching a success toast fired when a posting response has posted:false
+    - evidence: No matches for posted:false near toast/success calls; no guard script found matching this pattern (re-checked with alternate terms).
+    - spec: NONE
+- `usmca-posting-enable-hold` **not-built** (tier-1) — Turn GL posting ON for USMCA only (per-entity override), gated on Blocks 01-07 (per-entity flag fix, engine pr
+    - diff: USMCA unhide (Block 07) + COA seed + banking ingest + engine proof all confirmed complete, then a per-entity feature_flag_overrides seed turning USMCA's GL-posting flags ON while TRANSP/TRK stay OFF
+    - evidence: USMCA is still hidden (org.companies.is_active=false per audit-chain-verify.cron.service.ts:73 comment and CLAUDE.md's current 'launches July 2026, hidden until then'), so its own 
+    - spec: NONE
+- `usmca-unhide-entity-switcher` **not-built** (tier-2) — Un-hide USMCA in the entity switcher (visibility-only, gated on COA seed)
+    - diff: org.companies.is_active flip for USMCA (or equivalent app-layer gate) once COA seed + banking ingestion preconditions are confirmed met
+    - evidence: apps/backend/src/audit/audit-chain-verify.cron.service.ts:73 code comment confirms current mechanism and state: '(USMCA stays hidden pre-launch via is_active=false, so it's correct
+    - spec: NONE
+- `0007-pattern-5-split-brain-engines` **partial** (tier-2) — Systemic Pattern 5: split-brain/duplicate engines — 2 factoring (GL vs no-GL), 4 vendor tables, 3 escrow, 3 de
+    - diff: consolidation of the remaining split-brain pairs (deduction systems confirmed still dual as of 0285 in this same batch) + one unifying CI guard
+    - evidence: Memory 'schema-canonicalization-verdicts' (CODER-30) records bank→banking, settlement=driver_finance canonicalization decisions with 2 open Jorge decisions still pending; memory 'D
+    - spec: NONE
+- `0007-pattern-8-reverse-drill-through` **partial** (tier-3) — Systemic Pattern 8 (Law of the Land): reverse drill-through absent — load_id/bill_id/settlement_id carried on 
+    - diff: a shared linked-cell component (doc names AP-Aging/AccountRegister as the good reference implementations to clone) + confirmation of guard CI wiring
+    - evidence: scripts/verify-94-live-counter-linkage.mjs exists (a drill-through/linkage-adoption guard) plus scripts/verify-entity-link-adoption.mjs, but neither is confirmed CI-wired via grep 
+    - spec: NONE
+- `0008-d-abandonment-pay-first-then-escrow` **partial** (tier-1) — Walkoff/abandonment: pay first, escrow only for shortfall, single charge per event, escrow keeps growing 30-45
+    - diff: explicit single-path pay-first/escrow-shortfall logic confirmation; verify migration 0094 trigger was reworked per this decision
+    - evidence: apps/backend/src/driver-finance/abandonment.service.ts has driver_finance.abandonment_chargebacks table+service live, but the exact pay-first-then-escrow-shortfall sequencing (vs t
+    - spec: NONE
+- `0010-f1-orphan-fk-columns` **partial** (tier-1) — F1: 689 columns named *_id/*_uuid across accounting/banking/safety/maintenance/mdata carry no FK constraint
+    - diff: a CI guard enumerating *_id/*_uuid columns without FK constraints (excluding qbo_/plaid_/samsara_/stripe_) and a remediation migration for the remaining 689 columns
+    - evidence: No repo-wide orphan-FK CI guard found (`find scripts -iname '*orphan*fk*'` = empty). Individual FKs have been added piecemeal in later migrations (e.g. 202607031600_safety_incident
+    - spec: NONE
+- `0010-f11-jep-duplicate-idempotency-groups` **partial** (tier-1) — F11: 2 pre-existing duplicate idempotency_key groups exist in accounting.journal_entry_postings (from before t
+    - diff: investigate + repair the 2 existing duplicate idempotency_key groups (owner-gated financial data fix)
+    - evidence: The F10 unique index (202606282200) blocks NEW duplicates going forward but is additive-only and does not delete/merge the 2 existing duplicate groups (would require a data-repair 
+    - spec: NONE
+- `0010-f5-bank-txn-uncategorized` **partial** (tier-1) — F5: all 2,649 banking.bank_transactions rows uncategorized, none posted to GL
+    - diff: live confirmation of categorized-txn count trending toward 0
+    - evidence: Categorization code exists in repo: apps/backend/src/banking/categorization.routes.ts, categorization-rules.routes.ts, pending-categorization.ts — the feature is built, but whether
+    - spec: NONE
+- `0010-f9-nullable-assumed-key-columns` **partial** (tier-1) — F9: 5 nullable assumed-key columns (bill_lines.account_id, bill_payments.amount_cents, bills.amount_cents, inv
+    - diff: same NOT VALID CHECK (or real NOT NULL after backfill) for bill_lines.account_id, bill_payments.amount_cents, invoice_lines.account_id, vendor_balances.operating_company_id
+    - evidence: db/migrations/202607051200_g6_4_bills_amount_cents_canonical.sql fixes ONLY accounting.bills.amount_cents, and only partially: adds `CHECK (amount_cents IS NOT NULL) NOT VALID` (en
+    - spec: docs/specs/repairs/REPAIR-G6-4-BILLS-AMOUNT-CENTS-CANONICAL.md
+- `0033-audit-schema-manifest-tool` **partial** (tier-3) — Build scripts/audit-schema.mjs pulling live schema from Neon into docs/schema/SCHEMA-MANIFEST.json (single sou
+    - diff: the literal live-Neon-pull manifest generator + SCHEMA-MANIFEST.json artifact
+    - evidence: No literal scripts/audit-schema.mjs or docs/schema/SCHEMA-MANIFEST.json found. Equivalent tooling exists instead: docs/schema/SCHEMA_VERIFICATION_STANDARD.md + scripts/verify-backe
+    - spec: NONE
+- `0091-c2-3` **partial** (tier-2) — Scope samsara-position-poll-worker's mdata.units read to COALESCE(currently_leased_to_company_id, owner_compan
+    - diff: confirm whether a WHERE predicate now limits the poll or whether it's still a global read (just with the company id now attached to each row)
+    - evidence: apps/backend/src/jobs/samsara-position-poll-worker.ts:25 selects u.owner_company_id::text AS operating_company_id in its column list, suggesting entity awareness was added, but a W
+    - spec: NONE
+- `0091-flag-lease` **partial** (tier-1) — Confirm LEASE_GL_POSTING_ENABLED prod state matches whether the FIN-22 lease engine is actually built (locked 
+    - diff: confirm prod override state for LEASE_GL_POSTING_ENABLED per entity
+    - evidence: apps/backend/src/accounting/lease-asc842/lease-posting.service.ts:23 documents 'FLAG GATE: LEASE_GL_POSTING_ENABLED (default OFF) -> NO-OP' confirming the code-side gate exists and
+    - spec: NONE
+- `0091-g4-tx1` **partial** (tier-1) — Give GL posters an optional caller-supplied client param so source-row write + GL post share one transaction
+    - diff: cash-advance-disburse.ts (and factoring-advances release / bills.service.ts / lumper-split — not individually re-verified) still need the client-param threading
+    - evidence: apps/backend/src/accounting/payments/apply.service.ts:270 applyPayment now takes client:Queryable as its first param (caller-enlisted transaction) — fixed. apps/backend/src/cash-ad
+    - spec: NONE
+- `0243-d2-2-g18-load-fk-not-enforced-vendor-bill-path` **partial** (tier-1) — G18 load-FK gate only runs for paid_same_day (Expense); vendor_invoice (Bill) branch creates with no diesel/fu
+    - diff: confirm hasLoadRequiredExpenseCategories runs on the vendor_invoice branch too; see 0008-h for the underlying missing bill_lines/load_id schema
+    - evidence: apps/backend/src/maintenance/two-section-service.ts exists (file moved from apps/backend/src/work-orders/ per doc's original path) but hasLoadRequiredExpenseCategories call-site co
+    - spec: NONE
+- `0243-g11-7-factoring-reserve-two-places-asymmetric-idempotency` **partial** (tier-1) — [STOP-GATE] GL poster moves factor_reserve_held while factoring.reserve_movement/v_factor_reserve_balance keep
+    - diff: land the HELD migration 202607130000 (needs Jorge's OK per financial-cluster rule) and reconcile the two reserve balances; key idempotency uniformly on (advance_id,step,figures_hash)
+    - evidence: apps/backend/src/accounting/factoring-posting/poster.service.ts:47,288 comment explicitly: 'Faro Reserve Tracker (accounting.factoring_reserve_movements, migration 202607130000, HE
+    - spec: NONE
+- `0243-g4-deploy-smoke-fixed-unit-test-owner` **partial** (tier-3) — preDeploy boot-aggregate-smoke asserts against one live TRANSP unit (single bad row blocks all deploys); a tes
+    - diff: confirm IH35_SMOKE_UNIT_ID is actually set in Render env (not just supported); confirm test-owner email excluded from prod identity.users listings
+    - evidence: scripts/ci-boot-aggregate-smoke.mjs:19,157-163 now supports IH35_SMOKE_UNIT_ID / IH35_SMOKE_USER_EMAIL env overrides (default still 'integration.owner@test.invalid'), so a fixed sy
+    - spec: NONE
+- `0243-g4-tx1-source-gl-two-transactions` **partial** (tier-1) — [CRIT] GL posters open their own transaction, forcing 'write source row + post GL' across two commits -> orpha
+    - diff: confirm the same client-param pattern was applied to factoring release, cash-advance disburse, expenses, bills, and the lumper-split manual COMMIT
+    - evidence: apps/backend/src/accounting/payments/apply.service.ts:84-270 now takes an explicit 'client: Queryable' param on lockPayment/applyPayment and related functions rather than opening i
+    - spec: NONE
+- `0243-g7-4-empty-e2e-specs-false-green` **partial** (tier-3) — 7 end-to-end specs (bill/accident/expense/work-order/sidebar/forms/map-modal) pass but assert nothing -> false
+    - diff: write real assertions for bill-create/expense-create/accident-create/work-order-create.spec.ts, or mark them explicitly skipped
+    - evidence: apps/frontend/e2e/bill-create.spec.ts, expense-create.spec.ts, accident-create.spec.ts, work-order-create.spec.ts all still show zero 'expect(' calls (grep -L 'expect(' matched all
+    - spec: NONE
+- `0251-gap14-customer-ar-gl-fk` **partial** (tier-1) — Verify customer table has an AR GL account FK
+    - diff: confirmation that every customer resolves to an ar_account_id via revenue_contracts (vs. mdata.customers carrying its own default)
+    - evidence: db/migrations/202606281070_revenue_recognition_data_model.sql:25 defines accounting.revenue_contracts.ar_account_id REFERENCES catalogs.accounts(id) — an AR-account FK exists at th
+    - spec: NONE
+- `0251-gap15-load-completion-invoice-trigger` **partial** (tier-1) — Verify load completion triggers invoice generation automatically
+    - diff: confirmation of an automatic trigger (e.g. status-change hook) calling invoices/from-load, vs. requiring a manual office action
+    - evidence: apps/backend/src/accounting/invoices.routes.ts exposes POST /api/v1/accounting/invoices/from-load (input: load_id) per 0285's own inventory of this route — this is a manual/explici
+    - spec: NONE
+- `0251-gap20-driverbill-settlement-link` **partial** (tier-1) — Verify driver bill links to settlement so all bills are included
+    - diff: confirmation of a settlement_id FK (or join path) from driver_finance.driver_bills to the settlement that paid it
+    - evidence: Memory 'load-advance-loadid-direct-build' records that settlement deduction lines now carry load_id DIRECTLY (fixed, flag OFF) — a related but not identical linkage (deduction-to-l
+    - spec: NONE
+- `0251-gap6-linehaul-revenue-gl` **partial** (tier-1) — Verify linehaul posts to revenue GL account
+    - diff: direct TMS-side linehaul-to-revenue-GL posting (currently relies on QBO sync per 0285)
+    - evidence: 0285 (same batch, Phase 1 Financial Spine Audit) independently found: 'No automatic GL posting in TMS ... GL posting is flag-gated (BILL_GL_POSTING_ENABLED, EXPENSE_GL_POSTING_ENAB
+    - spec: NONE
+- `0441-mod2-g18-no-load-field` **partial** (tier-1) — G18 violations on manual capture (no load field on Bill/Expense)
+    - diff: A load_id column + field on accounting.bills (mirroring accounting.expenses), and make it required (not just optional) for diesel/roadside category bills per CLAUDE.md G18.
+    - evidence: accounting.expenses DOES have load_id: apps/backend/src/accounting/expenses.routes.ts:116 'load_id: z.string().uuid().optional()' in the create schema, plus a full reattribute-to-l
+    - spec: NONE
+- `0441-mod4-dispatch-settings-localstorage-only` **partial** (tier-2) — Settings most toggles localStorage-only
+    - diff: Backend fields/endpoint to persist default_sort, alert_yellow_minutes, alert_red_minutes, auto_routing_enabled/respect_hos/respect_equipment per-user instead of localStorage
+    - evidence: apps/frontend/src/pages/dispatch/DispatchSettingsPage.tsx — 'Default landing view' IS backend-persisted (getDispatchPreferences/updateDispatchPreferences → /api/v1/dispatch/prefere
+    - spec: NONE
+- `0441-mod7-invoices-plaintext-audit-log-dead` **partial** (tier-1) — Invoices customer/source-load plain text + 'View audit log' -> /reports?invoice_id= dead
+    - diff: 'View audit log' button should navigate to the real AccountingAuditTrailPage (filtered by invoice_id), not the generic /reports home.
+    - evidence: Customer and source-load ARE now linked: InvoicesListPage.tsx:268 EntityLink kind="customer"; InvoiceDetailPage.tsx:205 EntityLink kind="load" id={invoice.source_load_id}. BUT Invo
+    - spec: NONE
+- `0441-mod7-je-rows-no-onclick` **partial** (tier-1) — Journal Entries list rows have no onClick — JE detail reachable from exactly one place app-wide
+    - diff: ManualJEListPage.tsx rows need an EntityLink/onClick to JournalEntryDetailPage (the one place that SHOULD link but doesn't is the JE list itself).
+    - evidence: apps/frontend/src/pages/accounting/ManualJEListPage.tsx:114 — <tr key={entry.id} className="border-t border-gray-100"> has no onClick/EntityLink; every cell (date/memo/source/statu
+    - spec: NONE
+- `0441-mod7-myaccountant-flag-no-seed` **partial** (tier-2) — MyAccountantPage flag (MY_ACCOUNTANT_ENABLED) has no seed migration
+    - diff: A seed migration (consistent with every other flag in db/migrations/, e.g. 202607050100_finance_hub_ui_flag.sql) so the flag is discoverable/documented instead of requiring an Owner to know and type t
+    - evidence: grep -rn MY_ACCOUNTANT_ENABLED . (excluding node_modules/.git) returns only apps/frontend/src/pages/accounting/MyAccountantPage.tsx:86 and its own test — zero hits in db/migrations
+    - spec: NONE
+- `0473-1-3-insider-receivables-misclassified-as-ar` **partial** (tier-1) — Two 'Unauthorized Expenses [person]' accounts classified as A/R are actually employee/related-party advances -
+    - diff: confirm with CPA/counsel whether keeping these as accounts_receivable (for active bankruptcy-court pursuit) supersedes the original 'reclassify to OtherCurrentAssets' recommendation, or whether the re
+    - evidence: apps/backend/src/accounting/coa-roles/resolver.service.ts:83 comment confirms the resolver now FAILS CLOSED specifically because 'A/R was debited to Unauthorized Expenses Ignacio M
+    - spec: NONE
+- `0473-1-9-driver-settlement-net-pay-model` **partial** (tier-1) — Confirm clearing-account net-pay flow, 10% net-pay floor (note: superseded by the later 5% lock), all-1099 tre
+    - diff: CPA/counsel written confirmation that drivers genuinely qualify as 1099 contractors (misclassification risk); confirm wage-deduction limits (TX + federal) are compatible with the now-5% floor
+    - evidence: The net-pay floor referenced here (10%) has since been superseded by the owner's later LOCKED 5% decision (0008-c, confirmed built at DEFAULT_NET_PAY_FLOOR_PCT=0.05). The clearing-
+    - spec: NONE
+- `0490-g6-4-bills-nullable-amount-cents-residual` **partial** (tier-1) — G6-4: accounting.bills.amount_cents nullable dual-money-representation bug — referenced as PR #2125, NOT-FIXED
+    - diff: true NOT NULL after backfill (owner-gated data step per the migration's own doc reference)
+    - evidence: db/migrations/202607051200_g6_4_bills_amount_cents_canonical.sql now exists (postdates the 07-05 audit) and adds a NOT VALID presence CHECK on accounting.bills.amount_cents — same 
+    - spec: docs/specs/repairs/REPAIR-G6-4-BILLS-AMOUNT-CENTS-CANONICAL.md
+- `0519-es1-58-unscoped-tables` **partial** (tier-2) — 58 tables have no operating_company_id — mostly global catalogs or child tables inheriting tenant scope via pa
+    - diff: a verification pass confirming every 'parent-scoped' claim actually has an enforced parent FK (not just an assumption)
+    - evidence: The source doc itself rates this LOW ('most unscoped tables are global catalogs or child tables that inherit tenant scope via parent FK'). No repo-level guard confirms EVERY child 
+    - spec: NONE
+- `0519-fl1-2649-bank-tx-uncategorized` **partial** (tier-1) — 2,649 raw Plaid bank transactions never categorized or posted to GL; UI filters them out of the review queue s
+    - diff: live confirmation of current uncategorized bank_transactions count + whether the UI review-queue filter gap is fixed
+    - evidence: Memory note 'Banking Posting Flags GO/NO-GO 07-06' independently confirms 2 UNFLAGGED live banking paths still corrupt books if flipped on (createTransfer/CC never posts GL; Post-a
+    - spec: NONE
+- `0519-ri1-689-orphan-fk-columns` **partial** (tier-2) — 689 *_id/*_uuid columns (all schemas) have no FK constraint, including accounting.bill_lines.bill_id, accounti
+    - diff: comprehensive orphan-FK CI gate + live re-count; specific FKs on bill_lines.bill_id, bills.vendor_id, bank_transactions.matched_bill_id/matched_settlement_id
+    - evidence: Same underlying gap as 0518-r17 — only a narrow guard exists (scripts/verify-fk-integrity-fault-da-records.mjs), not a comprehensive orphan-FK CI gate.
+    - spec: NONE
+- `a-03-expenses-fullpage-form-not-list-drawer` **partial** (tier-3) — Expenses tab renders as a full-page inline form rather than a list + right-drawer create flow
+    - diff: Convert the create flow itself into a right-drawer launched from the list page, and make the list (not the full-page form) the primary 'Expenses' tab destination, per the QBO/NetSuite pattern original
+    - evidence: apps/frontend/src/routes/manifest.tsx:3674-3679 /accounting/expenses still routes to <ExpenseCreatePage /> (a full-page inline RecordExpenseForm, per apps/frontend/src/pages/accoun
+    - spec: NONE
+- `accounting-2-ap-aging-qbo-mirror-population` **partial** (tier-2) — ACCOUNTING-2 (MEDIUM): A/P Aging screen claims to tie to QBO but showed $0 vs live QBO $1,220,674.25/151 vendo
+    - diff: Live confirmation that /accounting/accounts-payable reads the populated mirror and totals equal QBO's live A/P aging.
+    - evidence: Mirror tables exist (db/migrations/0217/0218 qbo_invoices/qbo_bills mirror, 202606290110 qbo_ap_bills_inbound_mirror) confirming infra was built, but whether the A/P Aging screen r
+    - spec: docs/specs/qbo-parity/
+- `accounting-catalog-shared-creator-profile-debox` **partial** (tier-3) — Shared AccountingCatalogListPage: de-box nested borders, QBO-style creator modal, profile drawer, turn Journal
+    - diff: apps/frontend/src/pages/lists/accounting/JournalEntryTypesListPage.tsx:10 still passes `readOnly` to AccountingCatalogListPage -- the doc's explicit step 4 'Turn Journal Entry Types OFF readOnly (drop
+    - evidence: apps/frontend/src/pages/lists/accounting/AccountingCatalogListPage.tsx has a single-framed border pattern (grep shows one outer rounded-sm border wrapper, no nested border-in-borde
+    - spec: NONE
+- `arch-docs1-filename-drift` **partial** (tier-3) — BLOCK-ARCH-DOCS-1: substance delivered as ACCOUNTING-ARCHITECTURE.md; the literally-named TMS-QBO-PARALLEL-BOO
+    - diff: Either rename/alias the doc to the block's literal requested filename, or explicitly note the substitution in the block registry (per the doc, this is flagged not resolved, additive-only so no deletio
+    - evidence: find docs -iname TMS-QBO-PARALLEL-BOOKS.md -o -iname ACCOUNTING-ARCHITECTURE.md returned only docs/specs/ACCOUNTING-ARCHITECTURE.md (confirmed myself).
+    - spec: docs/specs/ACCOUNTING-ARCHITECTURE.md
+- `audit10-payroll-automation-tax-withholding` **partial** (tier-1) — Payroll Audit: automated payroll processing, tax withholding calc, benefit calc, payroll tax reporting
+    - diff: n/a for driver settlements (by design, 1099 model); confirm the two streams (TMS driver settlements vs QBO W-2 payroll) reconcile without double-counting for tax reporting, per the CPA doc's item 13.
+    - evidence: Driver settlement/deduction tracking is built (driver_finance.settlements, deduction_schedule) for the 1099-contractor driver model. W-2 office-payroll tax withholding/benefits del
+    - spec: NONE
+- `audit2-internal-controls-approval-workflow` **partial** (tier-2) — Internal Audit: formal approval workflow system + segregation of duties + governance structure
+    - diff: A unifying cross-module approval-workflow framework (today it's per-domain services) + formal governance-committee documentation (low priority for a private carrier).
+    - evidence: Multiple per-domain approval workflows exist and are live: apps/backend/src/settlements/approval.service.ts + .routes.ts, driver-finance/owner-approval.routes.ts, driver-finance/ca
+    - spec: NONE
+- `audit25-fx-rate-hedging-translation` **partial** (tier-2) — Currency Audit: FX rate management, FX risk assessment, hedging tracking, currency translation, dashboard
+    - diff: FX rate table + translation logic for MXN-denominated transactions.
+    - evidence: currency_code (USD/MXN) tracking exists across financial tables (e.g. mdata.loads CHECK on currency_code); no FX rate management, hedging, or translation logic found — relevant giv
+    - spec: NONE
+- `audit4-tax-return-automation` **partial** (tier-2) — Tax Audit: automated tax return generation, tax liability calculation, tax payment tracking, compliance dashbo
+    - diff: Automated tax return generation, tax liability calc, and payment tracking beyond the existing IFTA status KPI.
+    - evidence: IFTA reporting is built and live (compliance.ifta_reports, Reports module's live IFTA-due KPI with a Texas-Comptroller-cited due-date calc). No automated tax-RETURN generation, lia
+    - spec: NONE
+- `audit5-fraud-anomaly-detection` **partial** (tier-2) — Forensic Audit: fraud detection rules, anomaly detection, fraud investigation workflow/case management/dashboa
+    - diff: Fraud case-management workflow + dashboard on top of the existing detectors.
+    - evidence: apps/backend/src/integrity/anomaly-detector.service.ts, apps/backend/src/jobs/anomaly-detector-worker.ts, apps/backend/src/jobs/fuel-fraud-detector-worker.ts, apps/backend/src/inte
+    - spec: NONE
+- `audit8-revenue-leakage-detection` **partial** (tier-2) — Revenue Audit: revenue leakage detection, unbilled revenue tracking, revenue forecasting/variance analysis
+    - diff: Revenue leakage detection + unbilled-revenue tracking/forecasting views.
+    - evidence: Invoice generation, per-line revenue GL posting (hard-fail, see ruling-7-revenue-per-line-hardfail row), and load-level revenue tracking are built. No dedicated revenue-leakage-det
+    - spec: NONE
+- `banking-b2-bank-coa-bridge` **partial** (tier-2) — B2 — bank account connect auto-creates Bank-type catalogs.accounts row via bank_accounts.ledger_account_id bri
+    - diff: auto-create of a Bank-type catalogs.accounts row at the moment a new bank account is connected — currently only a one-time backfill + manual CashGlSetupPage linking exist
+    - evidence: banking.bank_accounts.ledger_account_id FK -> catalogs.accounts(id) exists (db/migrations/0162_p6_t11196...sql:9, 202606280100..., 202606272100...); backfill migration 202606300070
+    - spec: docs/specs/qbo-parity/BANKING-COA-CATEGORIZE-PHASE-B-DESIGN-2026-06-30.md
+- `banking-b4-driver-vendor-account-mapping` **partial** (tier-2) — B4 — driver/vendor -> GL account mapping table for banking categorization defaults
+    - diff: a driver-keyed default-account mapping (equivalent to vendor default_expense_account_id) for banking categorization
+    - evidence: No standalone driver/vendor mapping table; only mdata.vendors.default_expense_account_id (db/migrations/202607110230_vendor_qbo_parity.sql:22, 'RECOMMENDATION ONLY'). Categorizatio
+    - spec: docs/specs/qbo-parity/BANKING-COA-CATEGORIZE-PHASE-B-DESIGN-2026-06-30.md
+- `banking-grid-sort-resize-rows-per-page` **partial** (tier-3) — Banking transactions grid: rows-per-page selector + sortable headers + resizable columns + Account Register pa
+    - diff: clickable asc/desc sort on Date/Full bank description/Spent/Received/Balance/From-To headers — TableHeaderCell is present but sortable prop hardcoded false on every column
+    - evidence: apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx:133,961 has pageSize selector (50|75|100|200|300) — rows-per-page DONE; :39 imports TableHeaderCell/use
+    - spec: docs/specs/GLOBAL-SORT-RULE.md
+- `bf5-load-settlement-driver-pay-gl` **partial** (tier-1) — BF5 flow: Load -> Settlement -> Driver pay -> GL (doc claims BROKEN: deduction-applier test-only causing drive
+    - diff: could not confirm from repo alone whether the settlement clearing account is relieved on every path (net-pay clearing) — needs a live posting trace, not guessed
+    - evidence: settlement-deduction-cap.service.ts (production service, not test-only) reads BOTH driver_finance.driver_settlement_deductions and driver_finance.driver_deduction_buckets (bucket-l
+    - spec: NONE
+- `bf6-bill-line-items-load-id` **partial** (tier-1) — BF6 flow: Expense/Bill -> GL -> A/P -> Payment -> Bank (doc claims Create Bill is header-only, no line items/l
+    - diff: createBillBodySchema needs a lines[] array (each line: account/category, amount, memo, optional load_id) so a bill can be split and G18-linked to a load per line, matching how bill_lines is consumed d
+    - evidence: apps/backend/src/accounting/bills.routes.ts:50-62 createBillBodySchema CONFIRMED header-only: vendor_id, bill_number, bill_date, due_date, amount_cents, memo, coa_account_id, work_
+    - spec: NONE
+- `bf9b-wo-cost-unit-load-allocation-gl` **partial** (tier-1) — BF9-B flow: Work Order cost -> Unit/Load allocation -> GL (doc claims PARTIAL: creation WORKS (a prior phantom
+    - diff: confirmation of whether a TRK-owned unit's WO cost can be misattributed to TRANSP's books (or vice versa) — needs a targeted trace of apps/backend/src/maintenance/work-orders.routes.ts against mdata.u
+    - evidence: apps/backend/src/accounting/bills.routes.ts:59-60 createBillBodySchema HAS work_order_id and unit_id as real uuid fields (comment: 'HARD cross-module link (maintenance): persist th
+    - spec: NONE
+- `biz-flow-2-no-auto-deduction-from-customer-expense` **partial** (tier-1) — Auto-create a driver settlement deduction when a customer/company expense is attributed to a driver
+    - diff: flag BANK_DRIVER_EXPENSE_DEDUCTION_ENABLED is OFF; the generic accounting.expenses POST route (not bank-tx-categorization) still has no auto-deduction wiring
+    - evidence: The generic POST /api/v1/expenses path (apps/backend/src/accounting/expenses.routes.ts) has zero references to recover_from_driver / auto-deduction (grep confirmed no hits) — the d
+    - spec: NONE
+- `biz-flow-3-approval-workflow-no-downstream-actions` **partial** (tier-1) — Owner cancellation-approval workflow exists but triggers no downstream billing/deduction actions
+    - diff: downstream invoice/escrow triggers off the approval event
+    - evidence: approveCancellation() in apps/backend/src/dispatch/cancellation.service.ts updates dispatch.load_cancellations.status='approved' and mdata.loads.status='cancelled' only (confirmed 
+    - spec: NONE
+- `biz-flow-6-no-automatic-gl-posting-tms` **partial** (tier-1) — TMS should post invoices/bills/payments directly to the GL instead of relying solely on QBO sync
+    - diff: INVOICE_AR_GL_POSTING_ENABLED (and likely the bill/payment counterparts) still default OFF in most/all companies
+    - evidence: apps/backend/src/accounting/posting-engine.service.ts:10 defines PostingSourceType including 'invoice' | 'bill' | 'customer_payment' | 'bill_payment'; apps/backend/src/accounting/p
+    - spec: docs/specs/ACCOUNTING-ARCHITECTURE.md
+- `block5-coa-new-account-type-detail-organized` **partial** (tier-1) — CoA New-Account creator: grouped Account Type picker + filtered Detail Type picker sourced from catalog, persi
+    - diff: catalogs.accounts.detail_type_id FK column does not exist; doc explicitly required STOP-and-open-[HOLD-FOR-JORGE-TIER-1] if the column is missing rather than persisting free text -- that HOLD PR was n
+    - evidence: apps/frontend/src/pages/lists/accounting/AccountDrawer.tsx sources types/detail-types from account-type-catalog.ts (not hardcoded) and filters detailTypesForType by chosen Account 
+    - spec: NONE (doc references live #1725 preview pane, no formal approved-screen)
+- `catalogs-accounts-company-scope-fix` **partial** (tier-2) — Switch catalogs/accounts GET (account picker) from withCurrentUser to withCompanyScope so per-entity COA loads
+    - diff: confirm whether the local withCurrentUser+resolveOperatingCompanyId pattern in catalogs/accounts.routes.ts is functionally equivalent to withCompanyScope (comment claims yes) or whether it is missing 
+    - evidence: apps/backend/src/catalogs/accounts.routes.ts:99,124,174,251,310,384 STILL uses withCurrentUser + manual resolveOperatingCompanyId(client, authUser.uuid) pattern (comment at line 89
+    - spec: NONE
+- `dispatch-sweep-gap-1` **partial** (tier-1) — Load to GL Account Linkage — verify load creation triggers GL posting to revenue accounts
+    - diff: No automatic hook from load creation (mdata.loads INSERT) to GL/invoice; revenue posting only happens if/when a human calls POST /api/v1/accounting/invoices/from-load.
+    - evidence: apps/backend/src/dispatch/loads.routes.ts status-transition handler has NO call to buildInvoiceFromLoad/postSourceTransaction (grep for invoice|accounting|GL|posting|buildInvoiceFr
+    - spec: docs/specs/DISPATCH-MODULE-SPEC.md
+- `dispatch-sweep-gap-2` **partial** (tier-1) — Load to Customer Invoice Linkage — verify load completion triggers invoice generation
+    - diff: Automatic invoke of buildInvoiceFromLoad on load delivery/completion status transition; today it requires an explicit office action.
+    - evidence: buildInvoiceFromLoad (apps/backend/src/accounting/from-load.ts) creates accounting.invoices with source_load_id + resolves revenue account, and is idempotent (re-selects existing i
+    - spec: docs/specs/DISPATCH-MODULE-SPEC.md
+- `dispatch-sweep-gap-25` **partial** (tier-2) — Load Template to Accounting Linkage — verify load templates include accounting item mappings
+    - diff: No explicit accounting-item/revenue-code field inside load_templates.template_json for review/audit purposes (relies entirely on downstream line_type resolution).
+    - evidence: dispatch.load_templates (db/migrations/0159_p6_t11191_dispatch_refinements.sql) stores an arbitrary template_json blob (apps/backend/src/dispatch/dispatch-refinements.service.ts L4
+    - spec: NONE
+- `dispatch-sweep-gap-26` **partial** (tier-2) — Dispatch Sheet to GL Linkage — verify dispatch sheet pulls from GL pay calculations
+    - diff: Not a bug per se — the doc's ask (pull from GL) conflicts with the intentional 'estimate only' design; if Jorge wants the dispatch sheet to show authoritative pay it would need to read driver_finance.
+    - evidence: apps/backend/src/dispatch/dispatch-sheet.routes.ts builds payRows from l.rate_total_cents directly off mdata.loads (L161-172: component 'Estimated trip pay', amountCents: load.rate
+    - spec: docs/specs/DISPATCH-MODULE-SPEC.md
+- `dispatch-sweep-gap-28` **partial** (tier-1) — Load to Invoice Linkage (Load Creation Flow) — verify load creation triggers invoice
+    - diff: Same as gap-2: no automatic trigger from load creation into invoice generation.
+    - evidence: Same underlying flow as dispatch-sweep-gap-2: buildInvoiceFromLoad (accounting/from-load.ts) exists and is idempotent by source_load_id, but is only invoked via the manual POST /ap
+    - spec: docs/specs/DISPATCH-MODULE-SPEC.md
+- `dispatch-sweep-gap-29` **partial** (tier-1) — Load to GL Revenue Linkage (Load Creation Flow) — verify load posts to revenue GL account
+    - diff: Same as gap-1.
+    - evidence: Same underlying flow as dispatch-sweep-gap-1/6: revenue-account resolution exists (invoice-line-revenue-resolution.service.ts) but only fires at invoice-build time, not on load cre
+    - spec: docs/specs/DISPATCH-MODULE-SPEC.md
+- `dispatch-sweep-gap-34` **partial** (tier-1) — Load Complete to GL Revenue Linkage — verify completion posts revenue to GL
+    - diff: Same as gap-1.
+    - evidence: Same underlying flow as dispatch-sweep-gap-1/6/29: revenue-account resolution exists at invoice-build time only, not triggered by the completion status transition, and further gate
+    - spec: docs/specs/DISPATCH-MODULE-SPEC.md
+- `dispatch-sweep-gap-37` **partial** (tier-1) — Detention to GL Linkage — verify detention expenses post to GL
+    - diff: Confirmation that the resulting invoice is actually posted (postSourceTransaction) rather than sitting as an unposted accounting.invoices row.
+    - evidence: Detention accrual is bridged into buildInvoiceFromLoad (detention-approval.service.ts L325-393), which resolves a GL revenue account for the detention invoice line via resolveInvoi
+    - spec: docs/specs/DISPATCH-MODULE-SPEC.md
+- `fact-par-1-submission-workflow` **partial** (tier-2) — Submission queue tab (docs-gated eligibility), batch submit with channel adapter (email/file-drop), Faro CSV i
+    - diff: only the 'manual_download' channel was found wired; no distinct email-adapter or file-drop-adapter code located (doc requires BOTH adapters built, channel = config, defaulting to manual-download) — th
+    - evidence: apps/frontend/src/pages/factoring/SubmissionQueue.tsx and SubmissionWorkqueue.tsx exist; apps/backend/src/factoring/submission-queue.routes.ts:91-103 writes an audit row per FACT-P
+    - spec: NONE named (Alvys Factoring Upload / McLeod clerk workqueue cited as parity basis)
+- `fd2-external-fines` **partial** (tier-1) — External (civil) fines: wire real creator with driver picker + chargeback control (approver+written-consent+re
+    - diff: listDrivers combobox on FineCreateModal (currently raw UUID text input); approver identity capture + written-consent checkbox + recovery_mode on convert-to-liability; docs/specs/EXTERNAL-FINES-GL-DESI
+    - evidence: Part A creator EXISTS but is NOT fixed to spec: apps/frontend/src/pages/safety/components/FineCreateModal.tsx line 68-76 shows a bare text <input placeholder='UUID' required> for '
+    - spec: docs/specs/EXTERNAL-FINES-GL-DESIGN.md (required by this block, not created)
+- `fk-cancellation-billing-0289` **partial** (tier-1) — Critical FK gap #4: Cancellation -> Billing, expected column dispatch.cancellations.charge_id
+    - diff: a charge_id/invoice_id FK linking dispatch.load_cancellations to the actual accounting.invoices row that bills the customer for the cancellation fee
+    - evidence: The actual table is dispatch.load_cancellations (0101_p5_f4_cancellation_reasons.sql), not 'dispatch.cancellations' as the doc names it — a naming drift in the audit doc. It alread
+    - spec: NONE
+- `flow2-auto-deduction-trigger-from-customer-expense` **partial** (tier-2) — Auto-create a driver settlement deduction when a customer-caused/driver-fault expense is logged
+    - diff: An automatic trigger/service call on driver-fault-flagged expense creation that inserts the matching driver_settlement_deductions row.
+    - evidence: The source_expense_id linkage column exists (see flow2-expense-to-deduction-fk row) so a deduction CAN reference its originating expense, but no DB trigger or service call was foun
+    - spec: NONE
+- `flow6-auto-invoice-sending` **partial** (tier-2) — Send invoices to customers automatically (not only via a manual click)
+    - diff: Auto-trigger the send/email path when an invoice leaves draft, plus a reminder schedule for unpaid invoices.
+    - evidence: apps/backend/src/accounting/invoices.routes.ts:601 POST /api/v1/accounting/invoices/:id/send is a real, manually-triggered endpoint that emails a templated invoice (templateKey inv
+    - spec: NONE
+- `global-column-resize-sort-parity-table-phase-a` **partial** (tier-3) — Harden ParityTable primitive with per-column resize + tri-state header sort + a11y, and a CI guard forcing ado
+    - diff: docs/specs/TABLE-UX-STANDARD.md (the column-UX contract doc the guard was supposed to reference) does not exist (find docs/specs -iname *TABLE-UX* returned nothing); the specific baseline-shrinking gu
+    - evidence: apps/frontend/src/components/parity/ParityTable.tsx implements drag-to-resize (line ~233 comment 'Drag-to-resize: capture the column + start geometry on mousedown...'), touch-drag 
+    - spec: docs/specs/TABLE-UX-STANDARD.md
+- `home-7-qbo-vendor-count-single-source` **partial** (tier-2) — Single source of truth for QBO vendor count on Home + honest Sync Health 'last run' timestamp
+    - diff: Could not confirm from static grep whether these were consolidated to one documented definition or whether last_run_at now reflects the real last sync; needs a live Home-page + reconciliation-page cou
+    - evidence: Multiple vendor-count-adjacent endpoints still coexist: apps/backend/src/qbo-sync/vendors.routes.ts (qbo-sync/vendors/status), apps/backend/src/qbo/sync-health.routes.ts, apps/back
+    - spec: NONE
+- `known-catalogs-accounts-global-not-per-entity` **partial** (tier-1) — catalogs.accounts should be per-entity (operating_company_id-scoped) instead of global
+    - diff: Confirm FORCE RLS policy exists on catalogs.accounts using the now-added operating_company_id column (AF-1 per 0264 known-issue).
+    - evidence: db/migrations/202606161000_coa_accounts_entity_columns_stage1.sql and 202606161100_coa_accounts_backfill_transp_stage2.sql show operating_company_id was added and backfilled to TRA
+    - spec: NONE
+- `linkage-cancellation-to-invoice-charge` **partial** (tier-1) — Missing linkage: load cancellation does not automatically create a customer invoice/charge
+    - diff: An explicit trigger/service call from cancellation.service.ts (when billable_to_customer=true) into invoice creation.
+    - evidence: apps/backend/src/dispatch/cancellation.service.ts captures cancellation_charge_cents + billable_to_customer on the cancellation record, and load-cancellations-analytics.routes.ts a
+    - spec: NONE
+- `load-cancellations-fk-per-entity-repoint` **partial** (tier-1) — Migrate dispatch.load_cancellations off the legacy GLOBAL catalogs.cancellation_reasons onto the per-entity ca
+    - diff: repoint the live cancel-load read/write paths off catalogs.cancellation_reasons onto the new reason_code_id FK, then archive (not drop) the legacy global table
+    - evidence: db/migrations/202606300130_load_cancellations_per_entity_fk.sql adds the per-entity FK (reason_code_id -> catalogs.load_cancellation_reasons) and backfills, but its own comment sta
+    - spec: docs/dispatch/BLOCK-10-load-cancellations-fk-mapping.md
+- `remediation-t1.5-force-rls-financial-tables` **partial** (tier-1) — T1.5 - FORCE RLS on ~70 financial-schema tables that are RLS-ENABLED but not FORCED (starting with the driver-
+    - diff: A live query confirming relforcerowsecurity=true for every one of the originally-flagged tables, esp. driver_finance.escrow_ledger/escrow_balances/settlement_lines/settlement_disputes.
+    - evidence: scripts/ contains a large family of FORCE-RLS verification guards (verify-rls-operating-company-scope.mjs, verify-drivers-rls-scope.mjs, verify-safety-rls-coverage.mjs, db-verify-c
+    - spec: NONE
+- `repair-e-escrow-return-and-tieouts-design` **partial** (tier-1) — DESIGN DOC (Tier-1, never build solo): escrow return-on-separation trigger, unify 3 parallel escrow ledgers on
+    - diff: control-account<->sub-ledger tie-out report; confirmation escrow_load_abandonment_recovery role-key was added to the CHECK list; confirmation driver_finance.escrow_balances was retired/bridged rather 
+    - evidence: Some pieces since built: apps/backend/src/driver-finance/escrow-separation.service.ts exists and computes a separation date off mdata.drivers.deactivated_at (the return-on-separati
+    - spec: NONE (design doc is the spec)
+- `repair-program-settlement-consent-gate-live-status` **partial** (tier-1) — CRITICAL (as-of 2026-07-04): SETTLEMENT_GL_POSTING_ENABLED reported ON in prod for all 3 entities while the po
+    - diff: live confirmation that current TRANSP settlement closes actually post successfully (no CONSENT_MISSING/ACCOUNT_ROLE_BINDING_MISSING failures) — cannot confirm from static code alone whether the consen
+    - evidence: The gates described ARE implemented in code today: apps/backend/src/accounting/settlement-posting/settlement-posting.service.ts throws CONSENT_MISSING (line ~266) and ACCOUNT_ROLE_
+    - spec: NONE (this doc IS the design/repair-sequencing doc; REPAIR A-E)
+- `rpt-par1-mgmt-report-test-and-drill` **partial** (tier-3) — BLOCK-RPT-PAR-1: add test for ManagementReportPackagePage; fix AR/AP aging drill to go to invoice/bill lists f
+    - diff: Test file for ManagementReportPackagePage; confirmation/fix of the AR/AP aging drill-through target.
+    - evidence: apps/frontend/src/pages/reports/ManagementReportPackagePage.tsx exists (confirmed via find) but no matching __tests__ file was found alongside it. grep of apps/frontend/src/pages/r
+    - spec: NONE
+- `ruling-4-embezzlement-reclass-off-ar-qbo-source` **partial** (tier-1) — Reclassify the two 'Unauthorized Expenses' (embezzlement, ~$407k) accounts off A/R at the QuickBooks source; C
+    - diff: QBO-side subtype reclassification (owner/CPA action inside QuickBooks, not a TMS code change) + a CPA ruling: write off as theft loss vs book as recovery receivable.
+    - evidence: TMS-side reclass done: db/migrations/202606290072_ar_control_account_designation.sql moves the two Unauthorized Expenses accounts (1150040132/1150040133) off the A/R control design
+    - spec: NONE
+- `shared-catalog-creator-profile-debox` **partial** (tier-3) — De-nest AccountingCatalogListPage layout (remove box-in-box) + build QBO-style creator modal (Code/Name/Descri
+    - diff: (a) a distinct read-only Profile/Detail drawer separate from the edit modal; (b) JournalEntryTypesListPage.tsx still readOnly=true, blocking create+profile for that catalog as the doc required
+    - evidence: apps/frontend/src/pages/lists/accounting/AccountingCatalogListPage.tsx (210 lines): layout is a flat single-surface list (search box + table, no visible nested border-in-border) — 
+    - spec: NONE
+- `sweep-flag-lease-golive-review` **partial** (tier-1) — FLAG-LEASE: LEASE_GL_POSTING_ENABLED confirmed ON in prod feature flags per the sweep, despite locked decision
+    - diff: confirm (outside repo, needs CPA/Jorge) that the lease ASC 842 engine was in fact CPA-reviewed before this go-live migration, per the locked FIN-22 gate
+    - evidence: db/migrations/202607052300_per_entity_posting_flag_golive.sql:31,85,114 shows LEASE_GL_POSTING_ENABLED deliberately turned ON for TRK only, with a documented rationale ('TRK is the
+    - spec: docs/specs/finance-hub/LEASE-ASC842-MODEL.md
+- `sweep-g11-1-deduction-consent-template-missing` **partial** (tier-1) — G11-1: driver-deduction-authorization consent template does not exist, so every settlement with a deduction fa
+    - diff: confirm the driver-deduction-authorization template specifically exists in legal-template-library.generated.ts and that #1639 (or its successor) is merged, unblocking bucketed-deduction settlement pos
+    - evidence: CONSENT_MISSING / consent-template references found in apps/backend/src/accounting/settlement-posting/settlement-posting.service.ts, recover-from-driver.service.ts, and apps/backen
+    - spec: NONE
+
+### banking  (73 open)
+
+- `0091-a2-4` **built** (tier-2) — Widen verify-no-unledgered-migrations and verify-startup-migration-drift-guard regexes to \d{4,} (same class a
+- `0091-g9-c2` **built** (tier-1) — Fix Chapter 11 MOR (form-425c) cash lines reading wrong column (bt.amount vs amount_cents) + add own-transfer 
+- `0091-m-driver-2` **built** (tier-2) — Compute driver escrow from the real escrow ledger instead of the phantom mdata.drivers.escrow_balance column
+- `0091-m-finhub-1` **built** (tier-2) — Unify FINANCE_HUB_UI flag control plane (was split-brain: env-var backend / unseeded DB-flag frontend)
+- `0242-fuel-routes-location-uncertain` **built** (tier-3) — Doc flags fuel backend location as unresolved ('apps/backend/src/fuel/ not found - may be in catalogs/fuel, in
+- `0243-a2-4-two-more-migration-guards-timestamp-blindspot` **built** (tier-3) — verify-no-unledgered-migrations and verify-startup-migration-drift-guard also skip timestamp migrations
+- `0243-g3-2-plaid-webhook-not-body-bound-replayable` **built** (tier-2) — Plaid webhook validates JWT signature but never compares SHA-256(rawBody) to the JWT claim or rejects stale ia
+- `0243-g8-1-driver-pwa-locale-timezone-dates` **built** (tier-3) — 18+ driver-PWA sites call bare toLocaleString()/toLocaleDateString() -> UTC timestamp renders in phone's local
+- `0243-g9-c2-mor-cash-lines-always-zero` **built** (tier-1) — [CRIT] Chapter 11 MOR reads bt.amount (real column is amount_cents) -> 42703 swallowed -> receipts/disbursemen
+- `0518-r16-app-wide-sse-mime-mismatch` **built** (tier-3) — App-wide SSE MIME mismatch: EventSource expects text/event-stream, gets text/html (SPA index) — heartbeat/noti
+- `0519-dc1-bank-master-data-empty-shells` **built** (tier-1) — bank schema (1 table, 0 rows) and master_data (4 tables, 0 rows) are confirmed empty shells, safe to drop afte
+- `bank-register-cashflow-design-docs` **built** (tier-3) — Write Bank Register inline-edit + Cash Flow page design docs under docs/specs/
+- `bnk-01-banking-dates-yyyy-mm-dd` **built** (tier-3) — All date inputs and displays in Banking use YYYY-MM-DD
+- `cascade-11-compliance-uis-built` **built** (tier-3) — Form-425C exhibits, Drug & alcohol program UI, Permits/toll-tags UI (per-entity, read-only, matching approved 
+- `cascade-15-integration-transactions-ui` **built** (tier-3) — Read-only unified Integration-Transactions list (bank/QBO/fuel/Samsara sourced) behind an OFF flag
+- `cascade-16-receipts-ui` **built** (tier-3) — Build Receipts inbox/upload UI (Finance-Hub) reusing existing docs-upload path; OCR/auto-match GATED
+- `cc-05-missing-tables-relocation` **built** (tier-1) — Relocate 6 orphaned-migration tables (auto_deduction_policies, team_split_configs/load_overrides, road_service
+- `coder-28-known-debt-stale-flag-branchA` **built** (tier-3) — Branch A: remove 5 stale match.service.ts entries from sql-write-targets-known-debt.json + make the guard flag
+- `coder-work-order-t3-2-customer-payment-history-envelope` **built** (tier-3) — T3-2: Customer Payment History renders empty due to an envelope mismatch — frontend read 'payments' key, backe
+- `dispatch-sweep-gap-42` **built** (tier-1) — Settlement Calculation Verification — verify settlement calculations match load data
+- `fh-spec-docs-calculator-bankruptcy-tax` **built** (tier-3) — Write Finance-Hub Calculator (FH-4), Bankruptcy Modeler (FH-5, POST-TO-BOOKS LOCKED), and Tax Manager (FH-6) d
+- `fin-21-amortization-unit-allocation-subledger` **built** (tier-3) — Finance-Hub Amortization + Unit-Allocation read-only sub-ledger views over existing schedule tables
+- `fin20-pr1643-asof-honesty-merged` **built** (tier-3) — FIN-20 C4 as-of honesty fix (remove backdated as-of picker) + hold-merge-gate false-positive gate-split, PR #1
+- `five-missing-tables-0628-sweep` **built** (tier-1) — Create/relocate 5 tables confirmed absent on prod: driver_finance.auto_deduction_policies, settlements.team_sp
+- `qbo-parity-datepicker-everywhere` **built** (tier-3) — Shared QB DatePicker used on every date field software-wide (not just banking)
+- `0091-m-driver-1` **needs-design** (tier-2) — Route /maintenance/drivers create/edit through the canonical CreateDriverModal path (rehire-match/vendor-linka
+    - diff: confirm DriversMasterDataPage still bypasses rehire-match/vendor-linkage/invite
+    - evidence: Not independently re-verified this pass.
+    - spec: NONE
+- `0257-audit-83` **needs-design** (tier-3) — Audit 83: Financial Services Audit — Banking regulations, securities laws, insurance compliance
+    - diff: a financial services compliance documentation/banking regulation tracking/insurance compliance tracking/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new financial services compliance documentation/banking regulation tracking/insurance compliance tracking/dashboard systems/dashboards/analytics for th
+    - spec: NONE
+- `flow8-equipment-transfer-notifications` **needs-design** (tier-3) — Notify both drivers on equipment transfer initiation/acknowledgment
+    - diff: Email/SMS/PWA notification wiring.
+    - evidence: No notification call found in equipment-transfer.service.ts.
+    - spec: NONE
+- `phase13-audit216-banking-industry` **needs-design** (tier-3) — Audit 216 — lending operations tracking, banking risk assessment, banking dashboard/analytics
+    - diff: lending-operations tracking (e.g. CCG equipment loans), banking risk assessment, dashboard/analytics on top of existing banking schema
+    - evidence: banking.bank_accounts, banking.bank_transactions, Plaid integration all confirmed real (doc's own ✅). No lending-operations-tracking or banking-risk-assessment surface found (grep 
+    - spec: NONE
+- `sweepfix1727-8` **needs-design** (tier-3) — FIN-2: land /finance sidebar entry on Finance Hub and unify the 4-tab/5-tab subnav split (owner decision requi
+    - diff: Owner decision on /finance landing target + unified subnav; not yet asked/answered per this repo pass.
+    - evidence: apps/frontend/src/routes/manifest.tsx:4004 still routes `<Route path="/finance" element={<ProtectedRoute><FinanceOverviewPage /></ProtectedRoute>} />` — unchanged from the doc's de
+    - spec: NONE
+- `0008-g4-vendor-namespace-canonical` **not-built** (tier-1) — Canonicalize mdata.vendors + a resolver; pickers read it (retire mdata.qbo_vendors split)
+    - diff: a vendor resolver + repoint WO/expense/CC pickers onto mdata.vendors
+    - evidence: apps/frontend/src/components/vendors/VendorCreateModal.tsx (writes mdata.vendors) and apps/frontend/src/pages/maintenance/components/CreateWOSectionIdentification.tsx (reads qbo_ve
+    - spec: NONE
+- `0010-f15-plaid-amex-wf-error-status` **not-built** (tier-2) — F15: live Plaid connections for American Express and Wells Fargo both show ERROR status (transactions not sync
+    - diff: a Plaid reconnect/re-auth UI flow for ERROR-status items, and live reconnection of the AmEx/WF items
+    - evidence: UNVERIFIED at repo level — this is a live third-party connection state (Plaid item status), not something a static code fix alone resolves; no reconnect-flow UI found via grep (`re
+    - spec: NONE
+- `0010-f7-unapplied-migration-files-0392-0394-0395` **not-built** (tier-1) — F7: apps/backend/src/migrations/0392-auto-deductions.sql, 0394-team-splits.sql, 0395-road-service-tickets.sql 
+    - diff: port 0392-auto-deductions.sql, 0394-team-splits.sql, 0395-road-service-tickets.sql into db/migrations/ with fresh numbers above main's max and run them through ih35_migrations, or explicitly retire th
+    - evidence: The 3 files still live only under the legacy apps/backend/src/migrations/ directory (find apps/backend/src/migrations -iname '039*' → 0392-auto-deductions.sql, 0393-settlement-disp
+    - spec: NONE
+- `0091-g7-1` **not-built** (tier-1) — Add a transition-matrix test pinning the driver-settlement payment state machine (unpaid->queued->sent_to_bank
+    - diff: a transition-matrix test file + a compare-and-swap WHERE clause
+    - evidence: apps/backend/src/driver-finance/settlement-payment.service.ts UPDATE statements (queuePayment/markCleared/markPaidManually etc, lines 153,195,238,287,350) still have NO compare-and
+    - spec: NONE
+- `0243-g4-idem1-money-routes-off-allowlist` **not-built** (tier-1) — [CRIT] Idempotency middleware guards a hardcoded allow-list missing several money routes (cash-advance create,
+    - diff: add idempotency keys/dedup/balance caps to every money POST/PATCH on the allow-list gap; fix stale matchers
+    - evidence: grep -n 'idempot' apps/backend/src/cash-advances/cash-advances.routes.ts returned zero matches (file confirmed to exist) — no idempotency handling found in that route file on this 
+    - spec: NONE
+- `0441-mod10-holddeduction-id-mismatch` **not-built** (tier-1) — HoldDeduction ID-mismatch (passes settlement_lines.id to deduction_schedule endpoint -> 404)
+    - diff: either the settlement detail API must surface each deduction line's originating deduction_schedule.id (not settlement_lines.id) for the Hold action, or the hold endpoint must accept a settlement_lines
+    - evidence: SettlementDetailPage.tsx:43-54 toDeductionRows() sets `id: String(line.id)` from the settlement's `lines` array (driver_finance.settlement_lines rows, confirmed at SettlementDetail
+    - spec: NONE
+- `0441-mod13-load-cancellation-reasons-split-brain` **not-built** (tier-2) — Lists Load Cancellation Reasons split-brain
+    - diff: Consolidate to one table (or have the admin catalog page manage the same catalogs.cancellation_reasons table the cancel flow reads).
+    - evidence: Two genuinely separate tables/endpoints: (1) apps/frontend/src/pages/lists/dispatch/LoadCancellationReasonsListPage.tsx manages catalogs.load_cancellation_reasons via /api/v1/catal
+    - spec: NONE
+- `0441-mod2-wo-split-brain` **not-built** (tier-2) — CRITICAL: WO split-brain - two independent create/validate/display-id systems
+    - diff: Consolidate POST /api/v1/work-orders (Console) onto maintenance.next_wo_display_id(), or retire the Console create path in favor of the native one and delete/deprecate generateWorkOrderNumber().
+    - evidence: Two live POST routes both insert into maintenance.work_orders: (1) apps/backend/src/work-orders/work-orders.routes.ts:606 POST /api/v1/work-orders calls generateWorkOrderNumber() (
+    - spec: NONE (WO ID format rule lives in CLAUDE.md §7 / docs/specs/CURSOR-PERMANENT-RULES.md, not a screen spec)
+- `0441-mod5-auto-deductions-team-splits-dead` **not-built** (tier-2) — Auto-deductions/team_splits dead both ends (routes not in manifest, backends unregistered)
+    - diff: 2 <Route> entries in routes/manifest.tsx + app.register() calls for both fp plugins in index.ts
+    - evidence: FRONTEND: routes/manifest.tsx has NO <Route> for '/drivers/auto-deductions' or '/drivers/team-splits'; the wildcard route (manifest.tsx:4031) catches both, so DriversExtendedSubnav
+    - spec: NONE
+- `0441-mod6-hos-violations-source-enum-mismatch` **not-built** (tier-3) — HOS Violations create-vs-list source enum mismatch
+    - diff: Unify to one enum (keep create's manual/eld_import/dot_inspection since that's what's written) and fix the query filter schema + UI option labels to match.
+    - evidence: apps/backend/src/routes/safety/hos-violations.ts:13 list schema: source: z.enum(['samsara_auto','manual_office','dot_citation']).optional() vs line 24 create schema: source: z.enum
+    - spec: NONE
+- `0441-mod6-insurance-units-assets-id-mismatch` **not-built** (tier-1) — Insurance Create-Policy wizard + Create-Claim 500/404 on every real unit (units vs assets id-space bug)
+    - diff: Either point insurance.policy_unit/insurance.claim FKs at mdata.units(id) directly (matches original spec) and retire/alias mdata.assets, or add a bridge lookup (unit_id -> mdata.assets.id via unit_nu
+    - evidence: mdata.assets (db/migrations/0262_asset_registry.sql) is a SEPARATE table with its own gen_random_uuid() PKs, one-time backfilled from mdata.units by unit_number match — mdata.asset
+    - spec: docs/specs/INSURANCE-BLUEPRINT-ADDITION.md
+- `0441-mod8-auto-match-button-dead` **not-built** (tier-3) — Auto-Match button dead
+    - diff: Wire this button to the existing auto_matched_candidates worklist flow (already built and used elsewhere, e.g. BankReconciliationPage.tsx's isAutoMatchCandidate handling).
+    - evidence: apps/frontend/src/pages/banking/ReconciliationWorkspace.tsx:135-137 — <ActionButton disabled>Auto-Match Suggestions</ActionButton> — permanently disabled, no onClick handler at all
+    - spec: NONE
+- `0441-mod8-plaid-sign-deposits-negative` **not-built** (tier-3) — Plaid-sign bug: deposits render negative (money() ignores is_credit)
+    - diff: BankAccountDetail.tsx's transaction table needs the same is_credit-aware sign handling / spent-received split already used in BankingTransactionsDesignView.tsx.
+    - evidence: apps/frontend/src/pages/banking/BankAccountDetail.tsx:22-24 defines a naive money(cents) that does `(cents||0)/100` with no sign handling, and line 215 renders `{money(Number(row.a
+    - spec: NONE
+- `0441-mod8-section7-palette-violation` **not-built** (tier-3) — §7 palette/design-lock band violation in banking
+    - diff: Replace off-palette green/emerald classes in banking components with the locked slate/navy palette; lower the guard's BASELINE as violations are fixed.
+    - evidence: `node scripts/verify-section7-palette-financial.mjs` (which explicitly scans apps/frontend/src/pages/banking) currently reports 'OK... 149 off-palette status classes (< baseline 48
+    - spec: CLAUDE.md §7 (Palette LOCKED)
+- `0441-mod9-customer-taxonomy-mismatch` **not-built** (tier-3) — Customers.tsx tab taxonomy doesn't match CustomerDetail.tsx's own 10-tab taxonomy
+    - diff: A single unified customer-detail taxonomy (or an explicit, documented split-brain rationale) shared between the Customers.tsx list-preview panel and the full CustomerDetail.tsx page.
+    - evidence: apps/frontend/src/pages/Customers.tsx:46-59 CUSTOMER_TABS = [Transaction List, Activity Feed, Statements, Recurring Transactions, Projects, Customer Details, Late Fees, Notes, Task
+    - spec: NONE
+- `banking-2-plaid-connections-error-state` **not-built** (tier-2) — BANKING-2: both Plaid connections (American Express, Wells Fargo) in ERROR/never-synced state; balances/transa
+    - diff: This is a live third-party connection status (Plaid ITEM error), not verifiable from static repo code; a reconnect UI panel exists (apps/frontend/src/pages/banking/components/BankingPlaidConnectionsPa
+    - evidence: UNVERIFIED
+    - spec: NONE
+- `biz-flow-5-dual-deduction-systems` **not-built** (tier-1) — Two live settlement-deduction paths (legacy sum-of-requests vs capped ledger) may cause confusion / overpaymen
+    - diff: REPAIR-A's canonical-ledger unification + wired applier has not shipped (owner sign-off gate, no code/SQL applied per the design doc header)
+    - evidence: Flag SETTLEMENT_CAPPED_RECOVERY_ENABLED still exists (db/migrations/202606131600_settlement_capped_recovery_flag_and_override.sql), still gating a legacy vs capped path per the doc
+    - spec: docs/specs/repairs/REPAIR-A-DEDUCTION-LEDGER-DESIGN.md
+- `biz-flow-8-no-transfer-notifications` **not-built** (tier-3) — Send automatic notifications to both drivers when an equipment transfer is initiated/confirmed
+    - diff: no email/SMS/outbox-event emission on transfer initiate or confirm
+    - evidence: grep for 'notif|email|outbox|emit' across apps/backend/src/dispatch/equipment-transfer/dual-confirm.service.ts and request.service.ts (the newer GAP-37/G14 engine) returns zero hit
+    - spec: docs/dispatch/batches/GAP-37-G14-EQUIPMENT-DUAL-CONFIRM-TRANSFER-GO.md
+- `custvend-par1-g3-customer-statement-engine` **not-built** (tier-1) — CUSTVEND-PAR-1 G3 — customer Statement engine (Balance Forward / Open Item / Transaction types matching QBO)
+    - diff: a customer AR statement generator endpoint + the 3 QBO statement types (Balance Forward/Open Item/Transaction) + send/email + auto-refresh on txn change
+    - evidence: docs/blocks/CUSTVEND-PAR-1-G3-statement-verification.md explicitly scoped as 'read-only AR statement verification checklist... no data written' — a doc, not a feature. apps/fronten
+    - spec: docs/specs/qbo-parity/ (Statements tab — no dedicated design doc found)
+- `fk-equipment-transfer-log-0289` **not-built** (tier-2) — Critical FK gap #8: Equipment Transfer -> Equipment Log, expected column fleet.equipment_transfers.log_id
+    - diff: either a log_id FK to an equipment activity log table, or confirmation no such log table is intended
+    - evidence: The actual table is mdata.equipment_transfers (db/migrations/0102_p5_f5_equipment_dual_confirm_transfer.sql), not 'fleet.equipment_transfers' as the doc names it. Full column list 
+    - spec: NONE
+- `flow8-no-auto-equipment-log-notify` **not-built** (tier-3) — Auto-create equipment_log entry + notify both drivers on equipment transfer confirmation
+    - diff: Auto-insert into mdata.equipment_log on transfer confirm; email/SMS/PWA notification to both drivers.
+    - evidence: apps/backend/src/mdata/equipment-transfer.service.ts only has 'INSERT INTO mdata.equipment_transfers' (line 75); no INSERT into mdata.equipment_log and no notification call found i
+    - spec: NONE
+- `form425c-export-refuse-without-case-number` **not-built** (tier-2) — Form 425C export package must refuse to generate without a bankruptcy case number set
+    - diff: Guard rejecting Form 425C package export when no case number is configured.
+    - evidence: TAIL doc: 'One queued follow-up stands (export must refuse without case number — in sweep notes)' for Module 22 (Form 425C). No case-number guard confirmed in this pass (not indepe
+    - spec: NONE
+- `ledger-proof-period-end-posters` **not-built** (tier-1) — Build a write-proof harness for period-end posters (depreciation, prepaid amortization, revenue recognition, A
+    - diff: docs/proofs/CORE-LEDGER-WRITE-PROOF-period-end.md and the apps/backend/src/accounting/__proofs__/ harness files
+    - evidence: docs/proofs/ directory listing returned empty (no CORE-LEDGER-WRITE-PROOF-period-end.md or any file), and apps/backend/src/accounting/__proofs__/ was not found in prior searches.
+    - spec: NONE
+- `s-13-breadcrumb-vs-active-tab-mismatch` **not-built** (tier-3) — Breadcrumb disagrees with active tab on Safety landing
+    - diff: Confirm live whether breadcrumb and active-tab highlight agree on Safety module landing.
+    - evidence: UNVERIFIED - apps/frontend/src/pages/safety/SafetyLayout.tsx:90 has a comment acknowledging the pattern ('route, so the active-tab + breadcrumb reflect the group the user clicked f
+    - spec: NONE
+- `0091-g4-idem1` **partial** (tier-1) — Add money POST/PATCH routes (cash-advance create, bank transfers/cc-payments, cash-advance disburse, customer-
+    - diff: REQUIRED_MATCHERS entries for /api/v1/cash-advances, /api/v1/banking/transfers, /api/v1/banking/cc-payments, /api/v1/customers/:id/payments, /api/v1/settlements (settlements-mvp)
+    - evidence: apps/backend/src/middleware/idempotency.ts REQUIRED_MATCHERS (lines 38-49) now covers driver-finance/settlements, accounting/invoices|bills|bill-payments|payments|journal-entries|f
+    - spec: NONE
+- `0242-no-auto-equipment-log-on-transfer` **partial** (tier-3) — Equipment transfer confirmation/completion should auto-create an mdata.equipment_log entry, instead of requiri
+    - diff: an INSERT INTO mdata.equipment_log call inside finalizeDualAckTransfer / confirmTransfer in equipment-transfer.service.ts
+    - evidence: mdata.equipment_log table exists (db/migrations/0008_mdata_init.sql:217). apps/backend/src/mdata/equipment-transfer.service.ts confirmTransfer/finalizeDualAckTransfer (lines 300-33
+    - spec: NONE
+- `0243-h7-2-vendor-runtime-hygiene` **partial** (tier-3) — Plaid dead 'development' env branch (decommissioned Jun-2024); QBO health probe still minorversion=65; Node 22
+    - diff: bump the health probe to minorversion=75; roadmap Node 24; align root vs frontend TS major
+    - evidence: Plaid dead-env FIXED: apps/backend/src/integrations/plaid/plaid-client.ts:18 now throws 'Unsupported PLAID_ENV value... development was retired by Plaid' (hard error instead of a s
+    - spec: NONE
+- `0270-no-auto-equipment-log-update-duplicate` **partial** (tier-3) — Equipment transfer completion does not auto-create an mdata.equipment_log entry (doc double-counts this as two
+    - diff: same fix as 0242-no-auto-equipment-log-on-transfer: an INSERT INTO mdata.equipment_log in equipment-transfer.service.ts
+    - evidence: Same root cause as row 0242-no-auto-equipment-log-on-transfer: apps/backend/src/mdata/equipment-transfer.service.ts finalizeDualAckTransfer/confirmTransfer never INSERTs into mdata
+    - spec: NONE
+- `0441-mod8-mark-transfer-404-silent` **partial** (tier-1) — Record Transfer works but mark-transfer sub-call 404s silently — source tx never linked
+    - diff: RecordTransferModal.tsx should be updated to call the now-fixed markBankTransactionTransfer for the bank<->bank case instead of skipping it.
+    - evidence: apps/frontend/src/api/banking.ts:506-520 — markBankTransactionTransfer was REPOINTED from the broken '/mark-transfer' path to the real POST /api/v1/banking/transactions/:id/transfe
+    - spec: NONE
+- `0441-mod8-pages-banking-dead-code` **partial** (tier-3) — ~55% of pages/banking is dead code
+    - diff: n/a for verdict; if pursuing full cleanup: archive (not delete, per CLAUDE.md additive-only rule) the 8 confirmed-orphan files.
+    - evidence: Import-reference sweep of all 44 non-test .tsx files under apps/frontend/src/pages/banking (grep for each component name elsewhere in the frontend) found 8 files with ZERO importer
+    - spec: NONE
+- `0518-r04-10-orphaned-migration-files-4-tables-absent` **partial** (tier-1) — apps/backend/src/migrations/ has 10 files never applied by the runner (which reads only db/migrations/) — 4 ta
+    - diff: remove/reconcile the orphaned apps/backend/src/migrations/ directory (or formally deprecate it) so it can't cause future drift
+    - evidence: The 4 tables now DO have real db/migrations/ entries: 202606281000_auto_deduction_policies.sql, 202606281010_team_split_configs.sql, 202606281020_road_service_tickets.sql, 20260628
+    - spec: NONE
+- `0518-r06-70of145-tables-rls-not-forced` **partial** (tier-1) — 70/145 financial-schema tables (incl. driver_finance.escrow_balances, escrow_ledger, settlement_lines) RLS ENA
+    - diff: ALTER TABLE driver_finance.escrow_balances/escrow_ledger/settlement_lines FORCE ROW LEVEL SECURITY (Tier-1 ceremony)
+    - evidence: No `FORCE ROW LEVEL SECURITY` statement found for driver_finance.escrow_balances / escrow_ledger / settlement_lines in db/migrations/*.sql (grep empty, re-checked). Broad FORCE-RLS
+    - spec: NONE
+- `0518-r09-plaid-amex-wf-error` **partial** (tier-2) — Plaid feeds down — American Express + Wells Fargo bank connections in ERROR state, not syncing
+    - diff: live Plaid reconnect action for the AmEx and Wells Fargo items (an operational action, not a code change)
+    - evidence: This is a live external-connection state, not a repo defect; cannot be confirmed/denied from static code. Repo evidence only shows TRANSP/TRK share one Wells Fargo/Plaid login (app
+    - spec: NONE
+- `0519-bk1-plaid-amex-wf-error` **partial** (tier-2) — Both Plaid connections (American Express + Wells Fargo) in ERROR state; no new transactions syncing, bank bala
+    - diff: live Plaid reconnect for AmEx + Wells Fargo
+    - evidence: Same as 0518-r09 — live external-connection state, not verifiable from static repo. Memory note 'Banking Posting Flags GO/NO-GO 07-06' independently confirms 2 unflagged live banki
+    - spec: NONE
+- `0519-s1-maint-schema-fragmentation` **partial** (tier-1) — S1: maint + maintenance schema split — two schemas writing maintenance data, consolidation needed
+    - diff: a canonicalization verdict for maint vs maintenance
+    - evidence: Duplicate of 0519-dc2 within the same document (same underlying finding, different section ID). Same evidence: maint schema still actively referenced in apps/backend/src/maint/pm.r
+    - spec: docs/audits/SCHEMA-CANONICALIZATION-VERDICTS-2026-06-28.md
+- `0519-sec1-86-tables-rls-not-forced` **partial** (tier-1) — 86 tables RLS enabled but NOT FORCED, including driver_finance.escrow_balances/escrow_ledger/settlement_lines,
+    - diff: ALTER TABLE ... FORCE ROW LEVEL SECURITY for the listed 86 tables, prioritizing driver-money tables first
+    - evidence: Same as 0518-r06 — no FORCE ROW LEVEL SECURITY found for the named driver-money tables in db/migrations grep. Broad RLS-verification tooling exists (30+ scripts) but the specific l
+    - spec: NONE
+- `banking2-plaid-connections-error-state` **partial** (tier-2) — Both Plaid bank-feed connections (AmEx, Wells Fargo) reported in ERROR / never-synced state, running on CSV fa
+    - diff: live confirmation that Plaid connections now show a successful Last-sync (or a documented CSV-only-is-the-posture decision) plus proof of no duplicate ingestion vs the CSV import
+    - evidence: Reconnect infrastructure exists: apps/frontend/src/pages/banking/components/PlaidReconnectButton.tsx, apps/backend/src/integrations/plaid/plaid-sync-state.ts, apps/backend/src/cron
+    - spec: NONE
+- `bf9c-fuel-load-g18-writer` **partial** (tier-1) — BF9-C flow: Fuel -> Load (G18) (doc claims BROKEN: the G18-enforced fuel.fuel_transactions table has NO writer
+    - diff: confirmation that live fuel-card/receipt ingestion actually calls the FUEL-1 import writer into fuel.fuel_transactions rather than only banking.bank_transactions
+    - evidence: fuel.fuel_transactions table DOES exist (db/migrations/0300_create_fuel_transactions.sql) and DOES have a writer per an in-code comment: apps/backend/src/fuel/fuel-transactions.rou
+    - spec: NONE
+- `biz-flow-8-no-equipment-log-auto-update` **partial** (tier-2) — Auto-create an equipment history/log entry when an equipment transfer is confirmed
+    - diff: no dedicated equipment_log table/write distinct from the generic audit trail
+    - evidence: A newer, more robust dual-confirm equipment-transfer engine now exists (apps/backend/src/dispatch/equipment-transfer/{request,dual-confirm}.service.ts + routes.ts, migration db/mig
+    - spec: docs/dispatch/batches/GAP-37-G14-EQUIPMENT-DUAL-CONFIRM-TRANSFER-GO.md
+- `dispatch-sweep-gap-27` **partial** (tier-2) — Dispatch Sheet to Settlement Linkage — verify dispatch sheet matches settlement calculations
+    - diff: Dispatch sheet pay estimate does not include the extra-stop/tarp/lumper adjustments that driver_finance.driver_bills.gross_amount_cents does — it is a simplified estimate, correctly labeled as such.
+    - evidence: Same evidence as gap-26: dispatch-sheet.routes.ts computes 'Estimated trip pay' from mdata.loads.rate_total_cents, not from driver_finance.driver_bills / settlement math, and expli
+    - spec: docs/specs/DISPATCH-MODULE-SPEC.md
+- `qbo-parity-name-plus-type-option-labels` **partial** (tier-3) — 'Name + Type' option labels in reference dropdowns (e.g. 'BOA-CHECKING-1135 Bank')
+    - diff: audit which reference dropdowns actually populate option.type
+    - evidence: apps/frontend/src/components/parity/ReferenceSelect.tsx:29 defines ReferenceOption.type ('Shown after the name, QBO-style Name + Type'); mechanism exists but breadth of adoption ac
+    - spec: docs/specs/qbo-parity/QBO_PARITY_UI_SYSTEM_v2_v3.md
+- `qbo-parity-resizable-columns-everywhere` **partial** (tier-3) — Resizable table columns applied to every list, not just Banking/Dispatch
+    - diff: remaining lists (customers, vendors, drivers, most of the 28-module catalog) not yet using TableHeaderCell sort+resize
+    - evidence: grep -rl TableHeaderCell apps/frontend/src --include=*.tsx -> 9 files beyond Dispatch/Banking: FleetTable.tsx, AccountsPayableAgingPage.tsx, HosTrackerSection.tsx, FleetHosBoardSec
+    - spec: docs/specs/qbo-parity/QBO_PARITY_UI_SYSTEM_v2_v3.md
+- `retire-parallel-payroll-settlement-engine` **partial** (tier-1) — Retire the parallel payroll.*/settlement.* settlement engine (split-brain vs canonical driver_finance.driver_s
+    - diff: decommission (archive-not-delete) the payroll.*/settlements.* routes+services once driver_finance.* is confirmed the sole write path, or explicitly document why both remain live
+    - evidence: apps/backend/src/index.ts:452-1026 still imports+registers registerPayrollDriverSettlementRoutes and registerPayrollAggregatedRoutes; apps/backend/src/payroll/driver-settlement.ser
+    - spec: NONE
+
+### compliance  (56 open)
+
+- `0091-g6-2` **built** (tier-3) — Add a dedup guard (assertUniqueVendorFields) to vendor create — customers have one, vendors didn't
+- `0091-m-comp-1` **built** (tier-2) — Fix IFTA preparer screens computing the naive calendar quarter instead of the filing quarter at point-of-actio
+- `0243-b3-2-form2290-deadline-off-by-one-august` **built** (tier-3) — Form 2290 deadline widget treats all of August as past (month>=7), skips the imminent deadline during the due 
+- `0518-r05-audit-audit-log-phantom-writers` **built** (tier-1) — audit.audit_log is phantom (audit.audit_events is the real sink); 2 live writers (owner/todays-attention route
+- `a-04-vendor-search-may-hit-live-qbo` **built** (tier-3) — Vendor search field says 'Type to search QuickBooks...' - may be hitting live QBO API not local clone
+- `cf-02-predicted-net-inconsistent-decimals` **built** (tier-3) — 'Predicted net cash flow' shows $0 (no cents) while other fields show $0.00
+- `m-10-vendor-search-label-truncated` **built** (tier-3) — Vendor search field label truncated as 'Search QuickBooks vendo...'
+- `rpt1-ifta-next-due-quarter-bug` **built** (tier-3) — IFTA KPI computed the CURRENT calendar quarter's deadline instead of the next-due (just-ended) quarter's deadl
+- `sys-money-root-fix` **built** (tier-3) — Root fix: money INPUT fields render '$ 0.00' with a space instead of '$0.00'
+- `0252-audit136-hr-policy-tracking` **needs-design** (tier-3) — Audit 136 HR: no HR policy/procedure documentation, compliance tracking, dashboard, or analytics module
+    - diff: an HR module spec/approved-screen before any build
+    - evidence: Generic corporate-HR audit template item, not scoped to IH35's trucking-carrier domain; no HR-policy module, spec, or approved-screen exists anywhere in the repo. identity.users an
+    - spec: NONE
+- `0257-audit-100` **needs-design** (tier-3) — Audit 100: Immigration Audit — Work authorization, visa compliance, I-9 verification
+    - diff: a immigration compliance documentation/work authorization tracking/visa compliance monitoring/I-9 verification/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen sp
+    - evidence: Generic gap-audit asking for new immigration compliance documentation/work authorization tracking/visa compliance monitoring/I-9 verification/dashboard systems/dashboards/analytics
+    - spec: NONE
+- `0257-audit-77` **needs-design** (tier-3) — Audit 77: Legal Compliance Audit — Laws and regulations, contract compliance, litigation risk
+    - diff: a legal compliance documentation/contract management system/litigation tracking/legal risk assessment/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new legal compliance documentation/contract management system/litigation tracking/legal risk assessment/dashboard systems/dashboards/analytics for this
+    - spec: NONE
+- `0257-audit-78` **needs-design** (tier-3) — Audit 78: Environmental Audit — Environmental impact, pollution control, sustainability
+    - diff: a environmental compliance documentation/pollution control tracking/sustainability metrics/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new environmental compliance documentation/pollution control tracking/sustainability metrics/dashboard systems/dashboards/analytics for this domain; no
+    - spec: NONE
+- `0257-audit-86` **needs-design** (tier-3) — Audit 86: Government Audit — Public sector compliance, grant management, public funds
+    - diff: a government compliance documentation/government reporting/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new government compliance documentation/government reporting/dashboard systems/dashboards/analytics for this domain; no such system found in apps/front
+    - spec: NONE
+- `0257-audit-87` **needs-design** (tier-3) — Audit 87: Tax Compliance Audit — Tax laws, reporting requirements, tax planning
+    - diff: a tax compliance documentation/tax reporting automation/tax planning/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new tax compliance documentation/tax reporting automation/tax planning/dashboard systems/dashboards/analytics for this domain; no such system found in 
+    - spec: NONE
+- `0257-audit-88` **needs-design** (tier-3) — Audit 88: Import/Export Audit — Customs compliance, trade regulations, tariff classification
+    - diff: a import/export compliance documentation/customs compliance tracking/trade regulation monitoring/tariff classification/dashboard dashboard/analytics/tracking system for this domain, plus an approved-s
+    - evidence: Generic gap-audit asking for new import/export compliance documentation/customs compliance tracking/trade regulation monitoring/tariff classification/dashboard systems/dashboards/a
+    - spec: NONE
+- `0257-audit-89` **needs-design** (tier-3) — Audit 89: Anti-Money Laundering Audit — AML compliance, suspicious activity reporting, KYC
+    - diff: a AML compliance documentation/suspicious activity reporting/KYC implementation/AML monitoring/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new AML compliance documentation/suspicious activity reporting/KYC implementation/AML monitoring/dashboard systems/dashboards/analytics for this domain
+    - spec: NONE
+- `0257-audit-90` **needs-design** (tier-3) — Audit 90: Sanctions Audit — Sanctions compliance, restricted parties, screening procedures
+    - diff: a sanctions compliance documentation/restricted parties screening/sanctions monitoring/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new sanctions compliance documentation/restricted parties screening/sanctions monitoring/dashboard systems/dashboards/analytics for this domain; no suc
+    - spec: NONE
+- `0257-audit-91` **needs-design** (tier-3) — Audit 91: Anti-Bribery Audit — FCPA compliance, bribery prevention, corruption control
+    - diff: a anti-bribery compliance documentation/FCPA compliance/bribery prevention procedures/corruption control/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new anti-bribery compliance documentation/FCPA compliance/bribery prevention procedures/corruption control/dashboard systems/dashboards/analytics for t
+    - spec: NONE
+- `0257-audit-92` **needs-design** (tier-3) — Audit 92: Anti-Trust Audit — Competition law compliance, market dominance, fair competition
+    - diff: a anti-trust compliance documentation/competition law monitoring/market dominance analysis/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new anti-trust compliance documentation/competition law monitoring/market dominance analysis/dashboard systems/dashboards/analytics for this domain; no
+    - spec: NONE
+- `0257-audit-94` **needs-design** (tier-3) — Audit 94: Data Protection Audit — GDPR/CCPA, data handling, privacy rights
+    - diff: a GDPR/CCPA compliance documentation/consent management/data subject rights implementation/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new GDPR/CCPA compliance documentation/consent management/data subject rights implementation/dashboard systems/dashboards/analytics for this domain; no
+    - spec: NONE
+- `0257-audit-95` **needs-design** (tier-3) — Audit 95: Accessibility Audit — WCAG compliance, disability accommodation, accessibility standards
+    - diff: a WCAG compliance documentation/accessibility testing/disability accommodation procedures/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new WCAG compliance documentation/accessibility testing/disability accommodation procedures/dashboard systems/dashboards/analytics for this domain; no 
+    - spec: NONE
+- `0257-audit-97` **needs-design** (tier-3) — Audit 97: Zoning Audit — Land use compliance, zoning regulations, permitted uses
+    - diff: a zoning compliance documentation/land use tracking/zoning regulation monitoring/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new zoning compliance documentation/land use tracking/zoning regulation monitoring/dashboard systems/dashboards/analytics for this domain; no such syst
+    - spec: NONE
+- `0257-audit-98` **needs-design** (tier-3) — Audit 98: Intellectual Property Audit — IP protection, patent/trademark compliance, licensing
+    - diff: a IP protection documentation/patent-trademark tracking/licensing compliance/IP infringement monitoring/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new IP protection documentation/patent-trademark tracking/licensing compliance/IP infringement monitoring/dashboard systems/dashboards/analytics for th
+    - spec: NONE
+- `0257-audit-99` **needs-design** (tier-3) — Audit 99: Employment Law Audit — Labor laws, employment practices, worker classification
+    - diff: a employment law compliance documentation/worker classification validation/labor law monitoring/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new employment law compliance documentation/worker classification validation/labor law monitoring/dashboard systems/dashboards/analytics for this domai
+    - spec: NONE
+- `0258-audit-110` **needs-design** (tier-3) — Audit 110: Yield Audit — Production yield, defect rates, quality improvement
+    - diff: a yield dashboard/defect rate tracking/quality improvement tracking dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new yield dashboard/defect rate tracking/quality improvement tracking systems/dashboards/analytics for this domain; no such system found in apps/fronte
+    - spec: NONE
+- `0262-audit-34` **needs-design** (tier-3) — Audit 34: Data Privacy Audit — GDPR/CCPA compliance, data handling, consent management
+    - diff: a GDPR/CCPA compliance documentation/consent management/data subject rights implementation/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new GDPR/CCPA compliance documentation/consent management/data subject rights implementation/dashboard systems/dashboards/analytics for this domain; no
+    - spec: NONE
+- `phase3-audit68-service-quality-sla` **needs-design** (tier-3) — Audit 68 — SLA definition, SLA compliance tracking, customer experience measurement, service-quality dashboard
+    - diff: formal customer SLA definition + compliance tracking + service-quality dashboard tied to load/dispatch performance
+    - evidence: mdata.loads and dispatch schema exist (confirmed, doc's own ✅). grep -ril '\bSLA\b' apps/backend/src apps/frontend/src -> only apps/frontend/src/pages/safety/components/SafetySetti
+    - spec: NONE
+- `fuel-1-planner-diagram-empty-state` **needs-recheck** (tier-3) — Fuel Planner 'HOS-aware route diagram' shows a misleading flat line instead of an empty-state with 0 active ro
+    - diff: not checked this pass — need to inspect the fuel planner diagram component for an empty-state branch
+    - evidence: UNVERIFIED [UNVERIFIED-agent]
+    - spec: NONE
+- `ground-truth-g5-audit-log-silent-skip-writers` **needs-recheck** (tier-2) — G5: two audit writers (owner/todays-attention, IFTA quarterly-preparer) silently skip when audit.audit_log is 
+    - diff: grep apps/backend/src/owner or apps/backend/src/ifta for 'audit.audit_log' vs 'audit.audit_events'
+    - evidence: UNVERIFIED — not independently checked this pass whether owner/todays-attention/routes.ts:174-178 and ifta/quarterly-preparer.service.ts:205-209 have been repointed to audit.audit_
+    - spec: NONE
+- `0243-d1-4-sub-customer-parent-not-enforced` **not-built** (tier-2) — Sub-customer 'Parent *' field marked required but never validated or sent on submit
+    - diff: confirm isSubCustomer && !parentCustomer blocks submit and forwards the field
+    - evidence: UNVERIFIED: NewCustomerDrawerForm.tsx confirmed to exist and contains D1-1/D1-5 fix comments, but the specific isSubCustomer/parentCustomer validation logic at the originally-repor
+    - spec: NONE
+- `0243-g6-2-vendor-create-no-dedup-guard` **not-built** (tier-1) — mdata/vendors POST has no name-based dedup (customers have assertUniqueCustomerFields, vendors don't)
+    - diff: assertUniqueVendorFields (case-insensitive, entity-scoped) + a partial UNIQUE index migration
+    - evidence: grep -n 'assertUniqueVendorFields|assertUnique' apps/backend/src/mdata/vendors.routes.ts returned zero matches — still no dedup guard on vendor create.
+    - spec: NONE
+- `0441-mod11-ifta-drift-two-preparers` **not-built** (tier-2) — IFTA drift (2 preparers, silent $0-tax outside Q1/Q2-2026)
+    - diff: seed reference.ifta_tax_rates for all quarters the carrier needs to file (ongoing quarterly maintenance), and reconcile/merge the two preparer implementations.
+    - evidence: Two distinct IFTA implementations confirmed: apps/backend/src/reports/queries/ifta-quarterly.ts (used by the live scheduled-report emailer path, reports/scheduled/runner.service.ts
+    - spec: NONE
+- `0441-mod12-eld-module-fake-stub` **not-built** (tier-3) — ELD module 100% fake stub (5 tabs, zero data fetches, zero interactive controls)
+    - diff: Real data fetching per tab (Samsara HOS mirror), interactive controls (filters, driver picker, export), and a working data table for each of the 5 tabs.
+    - evidence: apps/frontend/src/pages/eld/EldPage.tsx (31 lines): only useState for activeTab, no useQuery/apiRequest anywhere; renders a single static empty-state card with emptyTitle/emptyBody
+    - spec: NONE
+- `0441-mod12-legal-matter-detail-shows-3-of-16-fields` **not-built** (tier-3) — Legal Matters detail shows 3 of ~16 persisted fields
+    - diff: Overview tab fields for opposing_party, case_number, court, amount_claimed_against_us, amount_we_seek, financial_reserve_cents, next_hearing_date, statute_of_limitations_at, attorney_name/firm/phone/e
+    - evidence: db/migrations/0133_p8c_i_legal_matters.sql:6-58 legal.matters has ~26 substantive columns (opposing_party, case_number, court, amount_claimed_against_us, amount_we_seek, financial_
+    - spec: NONE
+- `0441-mod13-compliance-hos-history-tab-hardcoded-stub` **not-built** (tier-3) — Compliance HOS History tab hardcoded static stub
+    - diff: A real query against hos.duty_status_events history rendered in a table.
+    - evidence: apps/frontend/src/pages/compliance/ComplianceDashboardPage.tsx:172-174 `{tab === "hos_history" ? <ComplianceEmptyState title="HOS History" message="No HOS history in this range." /
+    - spec: NONE
+- `0441-mod13-compliance-tabs-local-usestate-not-url-synced` **not-built** (tier-3) — Compliance Dashboard tabs local useState (not URL-synced) -> refresh always lands on Overview
+    - diff: URL query-param (or path) sync for the active tab, e.g. useSearchParams.
+    - evidence: apps/frontend/src/pages/compliance/ComplianceDashboardPage.tsx:75 `const [tab, setTab] = useState<ComplianceTab>("filings")` - no useSearchParams/router sync; onClick={() => setTab
+    - spec: NONE
+- `0441-mod13-compliance-violations-tab-hardcoded-empty` **not-built** (tier-3) — Compliance Violations tab hardcoded static empty state
+    - diff: A real query against a violations source (e.g. hos.duty_status_events derived violations or safety.civil_fines/internal_fines) rendered in a table.
+    - evidence: apps/frontend/src/pages/compliance/ComplianceDashboardPage.tsx:169-171 `{tab === "violations" ? <ComplianceEmptyState title="Violations" message="No HOS violations in range." /> : 
+    - spec: NONE
+- `0441-mod3-fuel-compliance-not-available-rows` **not-built** (tier-3) — Compliance panel 2 rows permanently 'Not available yet'
+    - diff: A backend query/aggregate for weekly non-compliance count + top non-compliance reason, and wiring those into CompliancePanel props
+    - evidence: apps/frontend/src/pages/fuel/components/CompliancePanel.tsx:16-17 — hardcoded literal <Row label="Last week non-compliance count" value="Not available yet" /> and <Row label="Top n
+    - spec: NONE
+- `0441-mod6-hos-create-violation-mislabeled-link` **not-built** (tier-3) — HOS dashboard "+ Create violation" is a nav link, not a create action
+    - diff: Either open an inline create modal from the dashboard, or navigate with a param the target tab reads to auto-open its create form.
+    - evidence: apps/frontend/src/pages/safety/HoursOfServicePage.tsx:147-153: <Link to="/safety/hos-violations" data-testid="safety-hos-create-violation-link">+ Create violation</Link> — styled a
+    - spec: NONE
+- `0441-mod6-hos-violations-void-hardcoded-reason` **not-built** (tier-3) — HOS Violations void uses a hardcoded reason, no user input
+    - diff: A reason-required prompt/modal in the frontend + the void mutation/endpoint accepting and persisting a real user-supplied void_reason (per the repo's own Void/Cancel Governance requiring reason-requir
+    - evidence: apps/backend/src/routes/safety/hos-violations.ts:168-194 POST /:id/void: SET voided_at=now(), voided_by=$2, void_reason = COALESCE(void_reason,'voided via endpoint') — always the s
+    - spec: NONE
+- `phase12-audit206-environmental` **not-built** (tier-3) — Audit 206 — environmental impact assessment, sustainability tracking, environmental compliance docs/dashboard
+    - diff: no environmental/sustainability tracking exists; plausible future scope via fuel/emissions data (mdata fuel tables) but zero grounding today
+    - evidence: grep -ril 'environmental.?impact|sustainability.?tracking' apps/ docs/ -> empty (re-run empty).
+    - spec: NONE
+- `phase12-audit215-esg-reporting` **not-built** (tier-3) — Audit 215 — ESG disclosure framework, reporting-standards compliance, ESG data accuracy validation/dashboard
+    - diff: N/A — no ESG-reporting obligation identified for this private carrier; no grounding in repo
+    - evidence: grep -ril 'esg.?report|esg.?disclosure' apps/ docs/ -> empty (re-run empty).
+    - spec: NONE
+- `phase13-audit223-hospitality-na` **not-built** (tier-3) — Audit 223 — hospitality/guest-experience system (doc's own verdict: N/A)
+    - diff: N/A — out of scope
+    - evidence: Doc's own verdict is 'N/A — Not applicable'. No related surface in repo.
+    - spec: NONE
+- `systemic-pattern-column-drift-guard` **not-built** (tier-3) — CI guard: general-purpose column-drift real-Postgres integration test (frontend field names vs actual DB colum
+    - diff: a general-purpose CI guard running against a real/fresh Postgres diffing frontend-referenced field names against actual columns
+    - evidence: No general-purpose integration test found; only scripts/verify-maintenance-insert-column-drift.mjs (maintenance-specific) and scripts/run-guard-audit.mjs (aggregator, not a real-DB
+    - spec: NONE
+- `0257-audit-76` **partial** (tier-3) — Audit 76: Regulatory Compliance Audit — Industry regulations, licensing requirements, reporting obligations
+    - diff: 
+    - evidence: The doc's own ✅ findings confirm real compliance tracking exists (compliance schema for DOT/FMCSA, compliance.ifta_reports, mdata.drivers driver-qualification tracking), AND a live
+    - spec: NONE
+- `0275-audit173-data-privacy-compliance` **partial** (tier-3) — Audit 173: add GDPR/CCPA compliance documentation + consent management + data-subject-rights implementation + 
+    - diff: GDPR/CCPA compliance documentation, a consent-management table, a data-subject-rights (access/erasure request) workflow, and a privacy dashboard
+    - evidence: Company isolation (operating_company_id RLS scoping) and RLS policies are real and extensive (822 CREATE POLICY statements confirmed in db/migrations/*.sql), matching the doc's own
+    - spec: NONE
+- `0441-mod6-hos-exceptions-archived-stub` **partial** (tier-3) — HOS Exceptions page is an archived stub; backend endpoint has no real UI consumer
+    - diff: A real create form (on HosExceptionsPage.tsx or elsewhere) that calls POST /api/v1/safety/hos/exceptions.
+    - evidence: apps/frontend/src/pages/safety/hos/HosExceptionsPage.tsx line 1: '// ARCHIVE (A23-6): orphan exceptions surface ... Sunset 2026-09-01. Do not extend.' Page renders only a back-link
+    - spec: NONE
+- `0441-mod9-vendor-contact-fields-notes-blob` **partial** (tier-2) — Vendor contact fields serialized into notes JSON blob (2000-char ceiling can 400 whole save)
+    - diff: Real mdata.vendors columns for primary/secondary contact name/title/phone/email, general email, accounting contact, disputes contact — the HELD migration 202607110230 does not cover these; a follow-up
+    - evidence: apps/frontend/src/lib/vendorProfileMeta.ts defines VendorProfileMeta with primaryContactName/Title/Phone/Email, secondaryContact*, generalEmail, accountingContact, disputesContact,
+    - spec: NONE
+- `0518-r23-ifta-q2-deadline` **partial** (tier-1) — IFTA Q2 filing due 2026-07-31 (34 days out at audit time; now ~21 days out as of today 2026-07-10)
+    - diff: live confirmation that IFTA Q2 state miles/gallons/tax are accumulating and the filing is on track
+    - evidence: apps/backend/src/ifta/ifta-quarterly-preparer.routes.ts + ifta-quarterly-preparer.test.ts exist — the preparer feature is built. Whether the actual Q2 filing steps have been comple
+    - spec: NONE
+- `0519-rp1-ifta-q2-deadline` **partial** (tier-1) — IFTA Q2 due 2026-07-31 (34 days at audit time) — steps 1-3 still pending backend
+    - diff: live confirmation IFTA Q2 filing steps 1-3 are complete
+    - evidence: Same as 0518-r23 — ifta-quarterly-preparer feature exists in repo (apps/backend/src/ifta/ifta-quarterly-preparer.routes.ts), but filing completion status is a live ops question. De
+    - spec: NONE
+- `m-05-terms-field-raw-db-value` **partial** (tier-3) — Terms field shows raw DB value 'net_30' instead of 'Net 30'
+    - diff: Replace the raw text input at CreateWorkOrderModal.tsx:1081 with the same labeled Combobox pattern used in CreateWOSectionPaymentTiming.tsx.
+    - evidence: apps/frontend/src/pages/maintenance/components/CreateWOSectionPaymentTiming.tsx uses a Combobox with {value:'net_30', label:'Net 30'} (proper label). But apps/frontend/src/pages/ma
+    - spec: NONE
+- `phase14-audit-239` **partial** (tier-3) — Build dependency tracking/dashboard/analytics (dependency inventory, vulnerability scanning, license complianc
+    - diff: License-compliance tracking tool; in-repo dependency dashboard/analytics beyond GitHub's native Dependabot UI.
+    - evidence: .github/dependabot.yml is live and configured: weekly npm (root workspace, dev+prod grouped minor/patch, major updates ungrouped/separate PRs) + github-actions ecosystem updates, r
+    - spec: NONE
+- `phase14-audit-243` **partial** (tier-3) — Build availability tracking/dashboard/analytics (availability monitoring, SLA compliance tracking, redundancy 
+    - diff: SLA-compliance tracking; availability dashboard/analytics with uptime-percentage history.
+    - evidence: GET /api/v1/healthz/shallow (version) + deep /api/v1/healthz (Postgres/Neon/migrations/Redis/R2) per CLAUDE.md provide a live availability signal; monthly-restore-drill.yml provide
+    - spec: NONE
+- `phase14-audit-244` **partial** (tier-3) — Build usability tracking/dashboard/analytics (UX testing, accessibility compliance, learnability assessment, u
+    - diff: Dedicated UX testing process, learnability assessment, usability dashboard/analytics.
+    - evidence: a11y-checks.yml (axe-core CI scan + scripts/verify-a11y-no-critical-violations.mjs baseline) provides an automated accessibility-compliance signal that overlaps usability. No dedic
+    - spec: NONE
+- `phase14-audit-245` **partial** (tier-3) — Build accessibility tracking/dashboard/analytics (WCAG compliance, screen reader testing, keyboard navigation 
+    - diff: Manual screen-reader test suite, dedicated keyboard-navigation test suite, accessibility dashboard/analytics (trend over time).
+    - evidence: .github/workflows/a11y-checks.yml (PR-triggered on apps/frontend/src changes + weekly schedule) runs an automated axe-core walk and enforces a committed zero-critical/serious-viola
+    - spec: NONE
+
+### customers-vendors  (39 open)
+
+- `0010-f16-qbo-vendor-mapping-warning` **built** (tier-3) — F16: QBO Sync Health 'Vendor Mapping Integrity' card shows WARNING (78 total, unmapped/duplicate detail TBD)
+- `0091-d1-1` **built** (tier-3) — Point inline 'New Customer' drawer + Quick-Create at POST /api/v1/mdata/customers (real table) instead of the 
+- `0243-d1-1-inline-new-customer-writes-mirror-table` **built** (tier-1) — Inline 'New Customer' drawer + Quick-Create wrote to mdata.qbo_customers (a mirror), invisible to every real p
+- `0243-d1-5-customer-type-not-enforced-client-side` **built** (tier-3) — customer_type not required client-side though backend requires it -> generic 'Could not save' toast instead of
+- `cust-1-pagination-total-ignored` **built** (tier-3) — CUST-1 — customers list pagination ignores API total (1,159 of 1,209 customers unreachable)
+- `owner-batch-v2-dv1-create-vendor-cta` **built** (tier-3) — D-V1 - Vendors '+ Create Vendor' CTA absent (parity with Customers)
+- `qbo-parity-dv2-vendors-false-empty-race` **built** (tier-3) — D-V2: Vendors list rendered empty state before fetch settled (false-empty race)
+- `qbo-parity-dv3-vendors-status-401` **built** (tier-3) — D-V3: GET /api/v1/qbo-sync/vendors/status returned 401 while other calls succeeded
+- `0007-session-vendors-no-create-button` **needs-design** (tier-3) — Session finding: '+ Create Vendor' button absent on Vendors page (Customers has one)
+    - diff: live re-check of /vendors for a '+ Create' button; if still absent, build per the QBO-parity spec's D-V1 item
+    - evidence: Doc itself says this is 'covered in parity spec build order (D-V1, after Wave-1 V1 catalog)' — i.e. it was deferred to a spec-driven build order rather than fixed ad hoc. Did not r
+    - spec: docs/specs/qbo-parity/ (D-V1 item, exact filename not located in this pass)
+- `0258-audit-114` **needs-design** (tier-3) — Audit 114: Supply Chain Audit — Supply chain efficiency, logistics, vendor performance
+    - diff: a supply chain efficiency metrics/logistics optimization/vendor performance tracking dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new supply chain efficiency metrics/logistics optimization/vendor performance tracking systems/dashboards/analytics for this domain; no such system fou
+    - spec: NONE
+- `0258-audit-117` **needs-design** (tier-3) — Audit 117: Distribution Audit — Distribution network, delivery performance, customer service
+    - diff: a distribution network optimization/delivery performance metrics/customer service metrics dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new distribution network optimization/delivery performance metrics/customer service metrics systems/dashboards/analytics for this domain; no such syste
+    - spec: NONE
+- `0258-audit-118` **needs-design** (tier-3) — Audit 118: Customer Service Audit — Service quality, response time, resolution rate
+    - diff: a customer service tracking/response time metrics/resolution rate tracking dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new customer service tracking/response time metrics/resolution rate tracking systems/dashboards/analytics for this domain; no such system found in apps
+    - spec: NONE
+- `0262-audit-51` **needs-design** (tier-3) — Audit 51: Supply Chain Security Audit — Third-party risk, software composition analysis, vendor security
+    - diff: a supply chain security documentation/software composition analysis/vendor security assessment/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new supply chain security documentation/software composition analysis/vendor security assessment/dashboard systems/dashboards/analytics for this domain
+    - spec: NONE
+- `0265-audit196-marketing-strategy-tracking` **needs-design** (tier-3) — Audit 196: build marketing strategy documentation + execution tracking + effectiveness measurement + dashboard
+    - diff: entire marketing module: strategy doc, execution tracking table(s), effectiveness KPIs, dashboard UI, analytics
+    - evidence: grep for marketing/campaign/seo-tracking under apps/frontend/src/pages and apps/backend/src returns zero files - confirms doc's claim that no marketing module exists anywhere in th
+    - spec: NONE
+- `0265-audit197-digital-marketing-tracking` **needs-design** (tier-3) — Audit 197: build digital marketing strategy + SEO/SEM/social tracking + dashboard + analytics (none exists)
+    - diff: entire digital-marketing tracking module
+    - evidence: No SEO/SEM/social-media tracking code found anywhere in apps/frontend or apps/backend (same negative grep as Audit 196).
+    - spec: NONE
+- `0265-audit198-content-tracking` **needs-design** (tier-3) — Audit 198: build content inventory + quality/relevance/performance tracking + dashboard + analytics (none exis
+    - diff: entire content-tracking module
+    - evidence: No content-management/CMS code found in the repo (no content inventory table or module).
+    - spec: NONE
+- `0265-audit199-seo-tracking` **needs-design** (tier-3) — Audit 199: build SEO strategy + keyword/ranking/traffic tracking + dashboard + analytics (none exists)
+    - diff: entire SEO tracking module
+    - evidence: No SEO code/config found in the repo.
+    - spec: NONE
+- `0265-audit200-social-media-tracking` **needs-design** (tier-3) — Audit 200: build social media strategy + presence/engagement/reputation tracking + dashboard + analytics (none
+    - diff: entire social-media tracking module
+    - evidence: No social-media integration/tracking code found in the repo.
+    - spec: NONE
+- `0265-audit201-email-marketing` **needs-design** (tier-3) — Audit 201: build an email marketing system + campaign/deliverability/engagement tracking + dashboard + analyti
+    - diff: entire email-marketing module
+    - evidence: No email-marketing/campaign code found; the only outbound email in the repo is transactional (driver welcome emails, equipment-transfer notifications per doc 0270's own findings), 
+    - spec: NONE
+- `0265-audit202-website-analytics` **needs-design** (tier-3) — Audit 202: build website performance monitoring + UX testing + conversion tracking + dashboard + analytics (P1
+    - diff: entire website-analytics module - and clarification of whether a public marketing site exists at all
+    - evidence: No public-marketing-website analytics/conversion-tracking code found; the frontend is the authenticated internal TMS app (app.ih35dispatch.com), not a public marketing site.
+    - spec: NONE
+- `0265-audit204-cx-measurement` **needs-design** (tier-3) — Audit 204: build a CX measurement system + satisfaction/loyalty tracking + dashboard + analytics
+    - diff: CX measurement tables + dashboard + analytics
+    - evidence: No CSAT/NPS/loyalty-tracking code found in the repo beyond mdata.customers itself.
+    - spec: NONE
+- `0265-audit205-brand-audit` **needs-design** (tier-3) — Audit 205: build brand strategy documentation + positioning/awareness/perception tracking + dashboard + analyt
+    - diff: entire brand-tracking module
+    - evidence: No brand-tracking code found in the repo.
+    - spec: NONE
+- `0280-32-revenue-to-customer-linkage` **needs-design** (tier-3) — Data flow: Revenue to Customer linkage — verify today's-revenue query includes customer FK
+    - diff: 
+    - evidence: Not independently checked in this pass.
+    - spec: NONE
+- `0772-defect6-vendors-no-create` **needs-design** (tier-3) — '+ Create Vendor' absent on Vendors (Customers has Create) — covered in parity spec build order D-V1
+    - diff: live re-check of /vendors for the button
+    - evidence: Same as 0007-session-vendors-no-create-button; doc defers this to the D-V1 spec item rather than an ad hoc fix.
+    - spec: docs/specs/qbo-parity/ (D-V1)
+- `phase3-audit61-tqm` **needs-design** (tier-3) — Audit 61 — Total Quality Management, quality culture, customer focus metrics, TQM dashboard
+    - diff: TQM framework, quality-culture assessment, customer-focus metrics, TQM dashboard
+    - evidence: grep -ril '\bTQM\b|total.?quality.?management' apps/ docs/ -> empty (re-run empty). 'Customer focus metrics' overlaps with the real mdata.customers surface.
+    - spec: NONE
+- `phase3-audit66-supplier-quality` **needs-design** (tier-3) — Audit 66 — vendor qualification process, supplier quality performance tracking, supplier development, dashboar
+    - diff: vendor qualification workflow, supplier quality-performance scoring, supplier-development tracking, dashboard
+    - evidence: mdata.vendors exists (confirmed real schema, doc's own ✅). No vendor-qualification-process or supplier-quality-performance tracking found (grep 'vendor.?qualif|supplier.?qualif' ap
+    - spec: NONE
+- `phase3-audit67-customer-satisfaction-csat-nps` **needs-design** (tier-3) — Audit 67 — CSAT measurement, NPS tracking, customer feedback collection, satisfaction dashboard
+    - diff: CSAT/NPS survey capture, customer feedback collection, satisfaction dashboard
+    - evidence: mdata.customers exists; no CSAT/NPS/feedback-collection surface found (grep '\bCSAT\b|\bNPS\b|net.?promoter' apps/ -> empty, re-run empty). Note: CustomerDetail.tsx does have a 'Re
+    - spec: NONE
+- `0243-g6-3-customer-dedup-case-sensitive-unscoped` **not-built** (tier-1) — Customer dedup checks WHERE customer_name=$1 — case/whitespace-sensitive, no operating_company_id filter, TOCT
+    - diff: lower(trim()) compare + opco filter + partial UNIQUE index migration
+    - evidence: grep -n 'lower(trim|customer_name.*=.*\$1|operating_company_id' apps/backend/src/mdata/customers.routes.ts returned zero matches — no case-insensitive/opco-scoped dedup found.
+    - spec: NONE
+- `0441-mod13-inventory-part-to-vendor-none` **not-built** (tier-3) — Inventory part->vendor NONE (vendor_default dead NULL)
+    - diff: A vendor picker (Combobox against mdata.vendors) on part create/edit, and a real vendor_id FK column instead of/alongside the free-text vendor_default.
+    - evidence: apps/frontend/src/pages/inventory/PartCreateDrawer.tsx (Inventory module's create-part form) has no vendor field at all. apps/backend/src/maintenance/parts.routes.ts:124,194 hardco
+    - spec: NONE
+- `0441-mod9-coi-duplicated-feature-unequal` **not-built** (tier-3) — Customer COI duplicated feature-unequal (2 tabs, vocab misses)
+    - diff: Consolidate to one COI component reused by both CustomerDetail.tsx and Customers.tsx, with vocabulary corrected to '+ Create' per the locked palette/vocab rule.
+    - evidence: Two separate COI implementations found: apps/frontend/src/pages/customers/tabs/CoiRequestsTab.tsx (179 lines, used by CustomerDetail.tsx's 'COI' tab) uses a standard 'Create' butto
+    - spec: NONE
+- `0441-mod9-customers-list-12-tabs-9-stubs` **not-built** (tier-3) — Customer master-detail shows 12 tabs but only 3 real (9 stubs)
+    - diff: Real components for activity_feed, statements, recurring_transactions, projects, late_fees, notes, tasks, opportunities, conversations (9 tabs).
+    - evidence: apps/frontend/src/pages/Customers.tsx:46-59 `CUSTOMER_TABS` has exactly 12 entries (transaction_list, activity_feed, statements, recurring_transactions, projects, customer_details,
+    - spec: NONE
+- `0441-mod9-four-disjoint-vendor-tables` **not-built** (tier-2) — 4 disjoint vendor tables (no cross-FK)
+    - diff: Real FK constraints: mdata.vendors.qbo_vendor_id -> mdata.qbo_vendors(qbo_id) (or equivalent), catalogs.maintenance_vendors -> mdata.vendors(id), and a decision on whether accounting.qbo_vendors shoul
+    - evidence: 4 vendor tables confirmed: mdata.vendors (db/migrations/0008_mdata_init.sql:126), mdata.qbo_vendors (0142_mdata_qbo_master_data_tables.sql:6), accounting.qbo_vendors (0321_qbo_vend
+    - spec: NONE
+- `0441-mod9-vendordetail-audit-history-placeholder` **not-built** (tier-3) — VendorDetail Audit History = literal placeholder text
+    - diff: Wire VendorDetail's Audit History tab to the existing `EntityAuditHistoryTab` component (already built and used on VehicleProfilePage) with entityType="vendor".
+    - evidence: apps/frontend/src/pages/VendorDetail.tsx:1073-1076 — `{activeTab === "Audit History" ? (<div ...>Audit history viewer placeholder. Full drill-down ships in a later phase.</div>) : 
+    - spec: NONE
+- `cust1-vend1-pager-total-count-bug` **not-built** (tier-3) — Customers/Vendors list pager uses the returned-row count instead of the API's real total, making most rows unr
+    - diff: confirm current pager math uses API total vs returned-row count on both Customers and Vendors list views
+    - evidence: UNVERIFIED — searched apps/frontend/src/pages/Customers.tsx, customers/CustomerListSidebar.tsx (totalCount prop exists) and did not find a conclusive current reproduction or fix co
+    - spec: NONE
+- `vend1-pagination-total-vs-length` **not-built** (tier-3) — VEND-1: Vendors list pager uses returned-array length instead of the server total — 440 of 490 vendors unreach
+    - diff: Wire filteredCount/pager to the real server total (the received totalCount prop) instead of sortedVendors.length, for both VendorListSidebar and (per doc) the shared Customers equivalent.
+    - evidence: apps/frontend/src/pages/vendors/VendorListSidebar.tsx:72 confirmed myself: 'const filteredCount = sortedVendors.length;' and the component destructures its totalCount prop as '_tot
+    - spec: NONE
+- `0518-r10-qbo-sync-workers-off-mirror-stale` **partial** (tier-1) — QBO sync workers OFF → qbo_customers/qbo_vendors mirror stale since 2026-05-23 (~36d at audit time)
+    - diff: 
+    - evidence: Per the locked accounting architecture (memory: accounting-architecture-parallel-clone-reconcile — 'PARALLEL double-books, QBO=SoR thru 12/31/2025, CLONE-ONCE+RECONCILE, no write-b
+    - spec: NONE
+- `0519-qbo2-vendor-mapping-integrity-warning` **partial** (tier-2) — Vendor Mapping Integrity WARNING badge (78 entries) — source unclear, needs DB query
+    - diff: live investigation of the 78-entry vendor mapping integrity warning
+    - evidence: Live data-quality question, not verifiable from static repo.
+    - spec: NONE
+- `custvend-par1-vendor-credits-no-ui` **partial** (tier-2) — BLOCK-CUSTVEND-PAR-1 G2: vendor-credits backend + migration exist but api/vendor-credits.ts has zero frontend 
+    - diff: Frontend UI consuming apps/frontend/src/api/vendor-credits.ts; G3 checklist.
+    - evidence: apps/frontend/src/api/vendor-credits.ts exists (confirmed via find), but grep -rln "from.*vendor-credits" across apps/frontend/src --include=*.tsx --include=*.ts excluding the file
+    - spec: NONE
+- `vend3-test-vendor-rows-visible` **partial** (tier-2) — VEND-3 (=FACT-2): 4 'TEST-VENDOR' rows visible on the live vendor list; cleanup mechanism specified in BLOCK-F
+    - diff: Owner-gated archive of the 4 existing TEST-VENDOR rows in prod data; a create-time guard preventing new TEST-VENDOR rows at the API layer (not just source-code grep); wiring the existing guard into pr
+    - evidence: scripts/verify-no-test-fixture-names.mjs exists and guards against 'TEST-VENDOR' literal strings appearing in production SOURCE CODE (confirmed via file content read), but per the 
+    - spec: NONE
+
+### dispatch  (135 open)
+
+- `0091-e2-2` **built** (tier-1) — Add FKs to mdata.drivers/loads + retype operating_company_id from TEXT to uuid FK on dispatch.driver_layovers
+- `0091-g8-2` **built** (tier-3) — Collapse two live translation directories (locales/{en,es}.json + translations/{en,es}.json) into one to stop 
+- `0091-g9-c1` **built** (tier-2) — Extract shared driver-qualification gate so quick-assign/quicksave/planner enforce the same checks as Book Loa
+- `0091-m-disp-1` **built** (tier-2) — Stop writing a trailer's mdata.units id into assigned_secondary_driver_id (co-driver FK column) in quick-assig
+- `0091-m-docs-1` **built** (tier-3) — Add 'load' to SUPPORTED_LINK_ENTITY_TYPES in docs/files.routes.ts so the Load Documents tab can list/upload (s
+- `0091-m-inv-1` **built** (tier-3) — Fix inventory part SKU being faked as the row UUID (part_number column didn't exist) + stop dropping category/
+- `0181-dispatch-loads-trailer-id-500` **built** (tier-1) — GET /api/v1/dispatch/loads/{id} 500 'column l.trailer_id does not exist' (mdata.loads has no trailer_id; has a
+- `0243-c2-2-launch-readiness-no-entity-scope` **built** (tier-2) — buildLaunchReadinessPayload counts drivers/units/customers/vendors/loads with no opco predicate — TRANSP+TRK+U
+- `0243-d3-3-stale-customer-id-on-retype` **built** (tier-3) — onChange updates qbo id+name but never clears a previously-picked customer_id -> load<->customer mis-linkage
+- `0243-e2-2-driver-layovers-missing-fks-text-opco` **built** (tier-1) — dispatch.driver_layovers: driver_uuid/previous_load_uuid NOT NULL with no FK; operating_company_id is TEXT not
+- `0243-e2-3-border-crossing-missing-fks-text-opco` **built** (tier-1) — dispatch.border_crossing_events: driver_uuid/load_uuid loose, vehicle_id/operating_company_id TEXT — unlinked 
+- `0243-g10-h2-no-hard-delete-guard-not-wired` **built** (tier-3) — scripts/verify-inv1-no-hard-delete-load-stops.mjs exists but has no package.json entry / workflow reference ->
+- `0243-g11-3-three-net-pay-floors-10-vs-50` **built** (tier-1) — [STOP-GATE] FIN-18 default floor 10%, operational cap-service default 50%, third path in payroll -- the 50% en
+- `0243-g3-1-csrf-gap-multipart-uploads` **built** (tier-3) — No CSRF token/Origin check on state-changing routes; prod cookie is sameSite=none + multipart skips CORS prefl
+- `0243-g3-3-no-multipart-filesize-limit` **built** (tier-3) — app.register(multipart) sets no limits -> authenticated large upload can exhaust server memory
+- `0243-g8-2-two-live-translation-directories` **built** (tier-3) — i18n/index.ts loads locales/{en,es}.json AND i18n/i18n.ts merges a second translations/{en,es}.json -> silent 
+- `0490-h1-2-sec-new-1-cors-shared-constant` **built** (tier-3) — H1-2 / SEC-NEW-1: app.ih35dispatch.com dropped from CORS fallback in a rebuild of index.ts; 3 hand-copied CORS
+- `biz-flow-4-partial-load-linkage-cash-advance` **built** (tier-1) — Cash advance load_id linkage is optional — driver-initiated advances without a load have none
+- `bl-01-book-load-dates-yyyy-mm-dd` **built** (tier-3) — All date fields in Book Load wizard use YYYY-MM-DD
+- `bl-02-book-load-money-space` **built** (tier-3) — All rate/money input fields in Book Load show '$ 0.00' with space
+- `c-01-fleet-hos-indefinite-loading` **built** (tier-3) — Fleet HOS table shows 'Loading fleet HOS...' indefinitely - possible API latency/error
+- `cascade-lane-fleet-dead-buttons` **built** (tier-3) — A1 - Fleet dead buttons: wire Edit + Archive (no onClick) in vehicle-profile/ActionBar.tsx
+- `cascade-lane-help-runbooks-404` **built** (tier-3) — A5 - Help runbooks 404: 10 links pointed at /docs/runbooks/*.md with no delivery path
+- `cascade-lane-wo-outside-vendor-picker` **built** (tier-3) — A4 - WO outside-vendor picker: replace hardcoded 3-name <datalist> with real QboCombobox setting vendor_id
+- `chat-1-dispatch-chat-schema` **built** (tier-1) — Build the evidence-grade per-load dispatch chat schema (chat.threads/participants/messages/attachments/message
+- `coder-work-order-t2-2-cors-regression` **built** (tier-3) — T2-2: CORS regression — https://app.ih35dispatch.com missing from allow-list; 3 drifted allow-lists need conso
+- `coder-work-order-t3-1-insurance-units-assets-id-bridge` **built** (tier-1) — T3-1: Insurance Create-Policy/Create-Claim POST mdata.units.id as asset_id into insurance.policy_unit.asset_id
+- `d5-driver-detail-company-scope` **built** (tier-3) — Scope DriverDetailPage getDriver() call by operating_company_id so real drivers stop 404ing
+- `dispatch-1-load-number-utc-date` **built** (tier-2) — Book Load's load-number YYYYMMDD segment must use the company-local business date, not UTC 'today'
+- `dispatch-2-home-load-count-canonical` **built** (tier-3) — Home open-loads-count / in-flight-late must use the same canonical load-state classifier as Dispatch
+- `dispatch-3-home-fleet-endpoint-scoping` **built** (tier-1) — Home fleet KPI endpoints must establish operating_company_id/RLS context like Dispatch's unit reads
+- `dispatch-sweep-gap-12` **built** (tier-3) — Book Load to Rate Confirmation Linkage — verify rate confirmation documents are linked to load
+- `dispatch-sweep-gap-13` **built** (tier-3) — Book Load to Audit Trail — verify book load writes to audit log
+- `dispatch-sweep-gap-24` **built** (tier-3) — Stop Replacement to Audit Trail — verify stop replacement writes to audit log
+- `dispatch-sweep-gap-44` **built** (tier-3) — Maintenance to Load Linkage — verify maintenance events link to loads
+- `dispatch-sweep-gap-5` **built** (tier-3) — Assignment to Audit Trail — verify all assignments write to audit log
+- `dispatch-sweep-gap-7` **built** (tier-3) — Bulk Action to Audit Trail — verify bulk status changes write to audit log
+- `dispatch-w2-assignment-workflow` **built** (tier-3) — Dispatch W2: driver/unit assignment workflow (eligibility checks, conflict prevention, status transition)
+- `dispatch-w3-status-lifecycle-with-audit-emit` **built** (tier-3) — Dispatch W3: load status-transition lifecycle steps with the audit-spine emit hook
+- `dispatch-w4-document-pod-flow` **built** (tier-3) — Dispatch W4: document/POD capture+attach steps on a load
+- `dispatch-w5-exception-alert-flow` **built** (tier-3) — Dispatch W5: exception/alert surfacing (detention, late, missing-POD) over existing data
+- `dispatch-w6-book-load-wizard-live-read` **built** (tier-3) — Dispatch W6: Book Load wizard's initial live-read of available loads/units/drivers
+- `dispatch-w7-detention-accessorial-capture` **built** (tier-3) — Dispatch W7: detention timer + accessorial line capture on a load (operational event only)
+- `dispatch-w8-multi-stop-sequencing` **built** (tier-3) — Dispatch W8: multi-stop/lane sequencing (stop order, per-stop status)
+- `dispatch-w9-ratecon-broker-doc-attach` **built** (tier-3) — Dispatch W9: rate-confirmation/broker-doc attach to a load via docs-upload
+- `driver-pwa-status-doc-inbox-offline-deepening` **built** (tier-3) — Driver PWA deepening: wire missing load-status actions, document/POD capture, inbox message actions (ack/reply
+- `hos-gate-samsara-snapshots-fix` **built** (tier-1) — HOS gate silently dead: views.drivers_with_hos_status gated on a never-created table -> always WHERE false -> 
+- `list-false-empty-settled-query-guard` **built** (tier-3) — Shared list-state primitive: empty-state renders only on settled-success zero-row query (fix Vendors false-emp
+- `ratecon-1-extract-prefill` **built** (tier-2) — Rate-confirmation upload -> AI extraction -> Book Load wizard prefill (flag RATECON_EXTRACT_ENABLED, dispatch.
+- `ratecon-2-dropzone-unify` **built** (tier-3) — Unify rate-con entry: wire OcrDropZone to real extraction via shared useRateConExtraction hook, delete 'cycle 
+- `ratecon-3-retired-model` **built** (tier-3) — Fix retired Anthropic model via central ai/models.ts registry + model-lifecycle monitor + 502/Sentry error vis
+- `rls-target4-load-stops-insert-tenant-gate` **built** (tier-1) — RLS TARGET 4: bring mdata.load_stops INSERT/UPDATE WITH CHECK up to parity with SELECT (require parent load be
+- `sys-date-root-format-fix` **built** (tier-3) — Root-fix date display to MM/DD/YYYY system-wide via a shared formatter/component (was YYYY-MM-DD everywhere) +
+- `tasks-module-w1b` **built** (tier-3) — Tasks module — create/assign/track operational tasks with status lifecycle + load/driver/unit link
+- `0091-e2-3` **needs-design** (tier-1) — Add FKs + retype operating_company_id from TEXT to uuid FK on dispatch.border_crossing_events (same class as E
+    - diff: confirm whether a border_crossing_events integrity migration exists alongside the confirmed driver_layovers one
+    - evidence: Not independently re-verified this pass — E2-2's sibling table border_crossing_events was not checked for an equivalent migration.
+    - spec: NONE
+- `0091-g9-h4` **needs-design** (tier-2) — Funnel all mdata.loads.status writes through the guarded load-state-machine helper (driver-PWA arrival can res
+    - diff: re-verify driver-PWA status writes route through load-state-machine.ts
+    - evidence: Not independently re-verified this pass (driver-pwa/dispatch-view.routes.ts:322-333 not re-checked).
+    - spec: NONE
+- `0091-info-b3-3` **needs-design** (tier-1) — Arm the G18 fuel-transaction trigger against a future load hard-delete path (currently ON DELETE SET NULL, tri
+    - diff: if a load hard-delete path is ever added, switch fuel_transactions.load_id to ON DELETE RESTRICT
+    - evidence: Not independently re-verified this pass; explicitly framed by the original doc as latent-only (loads are void-not-delete today, so no live exposure).
+    - spec: NONE
+- `0091-m-docs-2` **needs-design** (tier-2) — Add size/type validation to docs.files upload (unbounded MIME/size) + role-gate documents.attachments DELETE (
+    - diff: confirm docs.files upload has size/type caps and documents.attachments DELETE is role-gated
+    - evidence: Not independently re-verified this pass.
+    - spec: NONE
+- `0091-m-lists-1` **needs-design** (tier-1) — Add opco predicate + FORCE-RLS/grants to dispatch_flag_colors/load_cancellation_reasons UPDATE + stub-catalog-
+    - diff: re-verify catalogs.load_cancellation_reasons/dispatch_flag_colors UPDATE RLS policy predicates
+    - evidence: Not independently re-verified this pass beyond confirming catalogs.load_cancellation_reasons exists with RLS policies in 0035 — whether the UPDATE policy is opco-scoped or role-onl
+    - spec: NONE
+- `0251-gap12-commodity-equipment-mapping` **needs-design** (tier-2) — Create a commodity-to-equipment mapping for equipment-selection validation (e.g. reefer required for perishabl
+    - diff: spec defining which commodities require which equipment types
+    - evidence: Not verified in this pass; no such mapping table was searched for directly. This is a business-rule feature request, not a reported bug, and has no governing spec.
+    - spec: NONE
+- `0251-gap13-commodity-rate-matrix` **needs-design** (tier-2) — Create a commodity-rate matrix so rates can be commodity-specific
+    - diff: spec for commodity-based rate matrix
+    - evidence: Not verified in this pass; a pricing-feature request with no governing spec located.
+    - spec: NONE
+- `0251-gap21-stop-location-catalog` **needs-design** (tier-3) — Link stops to a location catalog for address validation/consistency
+    - diff: spec for a location catalog + validation rule
+    - evidence: Not independently verified in this pass; no location-catalog table search performed. Feature request without a governing spec.
+    - spec: NONE
+- `0251-gap9-charge-line-audit-trail` **needs-design** (tier-2) — Add audit trail for charge line changes on a booked load
+    - diff: confirmation of audit coverage for post-booking charge-line edits
+    - evidence: Not independently verified in this pass whether charge-line edits after booking are audited; book-load.service.ts writes charge lines as JSONB per the doc's own 'Charge lines store
+    - spec: NONE
+- `0270-no-auto-driver-termination-walkoff-noshow` **needs-design** (tier-2) — Load status transition to driver_walkoff or driver_no_show should automatically trigger driver termination wor
+    - diff: a hook from the driver_walkoff/driver_no_show load-status transition into the driver termination workflow (or at minimum an auto-created pending-termination review item, given termination is a consequ
+    - evidence: apps/backend/src/dispatch/loads.routes.ts references driver_walkoff/driver_no_show as valid load_status_enum members (lines 57-58, 348-349, 361-362, transition table lines 368-376)
+    - spec: NONE
+- `0280-03-open-loads-driver-unit-linkage` **needs-design** (tier-3) — Owner/Dispatcher Home: verify open-loads count query includes driver/unit FK context, not just a status count
+    - diff: read the canonical open-loads KPI function to confirm driver/unit join presence
+    - evidence: General audit recommendation; the canonical KPI function used by the widget was not read line-by-line in this pass.
+    - spec: NONE
+- `0280-09-dispatcher-active-loads-linkage` **needs-design** (tier-3) — Dispatcher Home: active loads panel data has no verification of driver/unit/customer linkage
+    - diff: read the active-loads query for driver/unit/customer joins
+    - evidence: Not independently checked in this pass.
+    - spec: NONE
+- `0280-10-detention-approvals-linkage` **needs-design** (tier-3) — Dispatcher Home: detention approval count has no verification of load/driver linkage
+    - diff: 
+    - evidence: Not independently checked in this pass.
+    - spec: NONE
+- `0280-11-booking-gap-root-cause-linkage` **needs-design** (tier-3) — Dispatcher Home: booking-gap analytics has no verification of root-cause/reason linkage
+    - diff: 
+    - evidence: Not independently checked in this pass.
+    - spec: NONE
+- `0280-12-message-queue-driver-customer-linkage` **needs-design** (tier-3) — Dispatcher Home: incoming message queue count has no verification of driver/customer linkage
+    - diff: 
+    - evidence: Not independently checked in this pass.
+    - spec: NONE
+- `0280-20-cooling-drivers-last-load-linkage` **needs-design** (tier-3) — Driver Manager Home: cooling (idle) drivers list has no verification of last-load linkage explaining why idle
+    - diff: 
+    - evidence: Not independently checked in this pass.
+    - spec: NONE
+- `0490-section-c-2-reporting-vs-reports-drift` **needs-design** (tier-1) — Section C drift #2: lockdown doc names 'reporting' schema canonical, but the live CI guard blocks 'reporting' 
+    - diff: Jorge's decision on reporting vs reports as canonical, then align the lockdown doc + guard
+    - evidence: UNVERIFIED — would require reading docs/lockdown/00_LOCKED_DECISIONS.md plus the specific guard script blocking `reporting` schema growth, neither of which was inspected in this pa
+    - spec: docs/lockdown/00_LOCKED_DECISIONS.md
+- `0007-session-flag-rollout-crossentity` **not-built** (tier-2) — Session finding: SILENT NO-OP FLAG CONTROL — RATECON_EXTRACT_ENABLED rollout=100% had zero effect because the 
+    - diff: PER_ENTITY_ONLY_FLAG_KEYS enforcement, PATCH 400 on rollout-percent for per-entity-only keys, UI restriction
+    - evidence: Not independently re-verified in this pass beyond confirming apps/backend/src/lib/feature-flags/service.ts exists as the flag service. Doc names this BLOCK_FLAG-HARDEN-1 as a writt
+    - spec: NONE
+- `0091-g10-h1` **not-built** (tier-1) — Revoke DELETE grant on mdata.load_stops (8 CASCADE evidence children incl POD/detention) and convert CASCADE c
+    - diff: a REVOKE DELETE ON mdata.load_stops migration + RESTRICT on CASCADE evidence children
+    - evidence: db/migrations/0034_loads_schema.sql:212 still contains `GRANT SELECT, INSERT, UPDATE, DELETE ON mdata.load_stops TO ih35_app` — DELETE grant confirmed still present, not revoked.
+    - spec: NONE
+- `0091-h2-1` **not-built** (tier-2) — Replace xlsx (SheetJS) 0.18.5 (unpatched prototype-pollution+ReDoS CVE) with exceljs on untrusted-upload parse
+    - diff: migrate loves-upload.routes.ts / fuel-transaction-import.routes.ts / excel-uploader.ts parse paths off xlsx onto exceljs (already present in the tree)
+    - evidence: package.json:883 still pins "xlsx": "^0.18.5"; grep confirms xlsx is still imported by apps/backend/src/fuel/loves-upload.routes.ts and fuel-transaction-import.routes.ts — both unt
+    - spec: NONE
+- `0243-b3-3-fuel-g18-trigger-hard-delete-gap` **not-built** (tier-1) — G18 fuel/load-FK trigger not armed against a load hard-delete (fuel_transactions.load_id is ON DELETE SET NULL
+    - diff: if a load hard-delete path is ever added, switch to ON DELETE RESTRICT or re-validate
+    - evidence: db/migrations/0300_create_fuel_transactions.sql:10 load_id uuid NULL REFERENCES mdata.loads(id) ON DELETE SET NULL — unchanged. Doc itself says 'Guard: none needed now' since loads
+    - spec: NONE
+- `0243-d1-3-inline-drawers-drop-captured-fields` **not-built** (tier-2) — Inline New-Customer/New-Vendor drawers collect ~8 fields but the create payload accepts only 4 — the rest sile
+    - diff: diff the full field list collected in the form vs the fields actually sent in the create payload
+    - evidence: UNVERIFIED: Files apps/frontend/src/components/parity/drawers/NewCustomerDrawerForm.tsx and NewVendorDrawerForm.tsx confirmed to exist; the field-count/payload-mapping comparison i
+    - spec: NONE
+- `0243-g10-h1-load-stops-delete-grant-live` **not-built** (tier-1) — 0034 still grants DELETE on mdata.load_stops (loads itself has none); 8 CASCADE children include pod_documents
+    - diff: REVOKE DELETE ON mdata.load_stops (gated migration, Jorge's OK); convert CASCADE children to RESTRICT
+    - evidence: db/migrations/0034_loads_schema.sql:212 still 'GRANT SELECT, INSERT, UPDATE, DELETE ON mdata.load_stops TO ih35_app;' — DELETE privilege has not been revoked.
+    - spec: NONE
+- `0243-g9-h4-load-status-advisory-not-enforced` **not-built** (tier-2) — load-state-machine enforced only in bulk set_status and PATCH /transition; driver-PWA arrival can set status='
+    - diff: confirm driver-pwa arrival/departure routes funnel status writes through the guarded load-state-machine helper
+    - evidence: UNVERIFIED: The route file moved from the doc's original path apps/backend/src/driver-pwa/dispatch-view.routes.ts to apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts; c
+    - spec: NONE
+- `0243-h1-2-cors-wrong-prod-defaults` **not-built** (tier-3) — Code-default CORS origin list omits app.ih35dispatch.com and includes localhost, with credentials:true -- corr
+    - diff: default the real prod origins (app.ih35dispatch.com, api.ih35dispatch.com); drop localhost outside dev; fail-loud if CORS_ALLOWED_ORIGINS unset in production
+    - evidence: apps/backend/src/index.ts:490-491 default still 'https://ih35-tms-web.onrender.com,https://ih35-tms-driver.onrender.com,http://localhost:5173,http://localhost:5174' — does not incl
+    - spec: NONE
+- `0243-h2-1-xlsx-vulnerable-dep` **not-built** (tier-2) — xlsx 0.18.5 (prototype-pollution + ReDoS, no npm fix available) used by 31 files incl. upload parsers reachabl
+    - diff: move parse paths to exceljs (already in the tree) or the patched SheetJS CDN 0.20.2+ build. Runtime dependency bump — requires Jorge's explicit OK per §1.3.
+    - evidence: package.json:883 still '"xlsx": "^0.18.5"' — unchanged.
+    - spec: NONE
+- `0243-h6-1-qbo-refresh-token-race` **not-built** (tier-1) — [STOP-GATE] QBO refreshAccessToken has no lock; hourly cron, 15-min watchdog, per-minute sync runner, and requ
+    - diff: pg_advisory_xact_lock(hashtext('qbo_refresh:'||connection_id)) (or in-process single-flight) around read+refresh+write
+    - evidence: grep -n 'advisory_xact_lock|advisory_lock' apps/backend/src/integrations/qbo/qbo-oauth.service.ts returned zero matches — no advisory lock found around the refresh read+POST+write 
+    - spec: NONE
+- `0251-gap10-commodity-product-catalog` **not-built** (tier-2) — Create a product/service catalog table and link the load's commodity field to a product_id
+    - diff: a product/service catalog table + product_id FK on the commodity field
+    - evidence: `grep -rln product_catalog commodity.*catalog 'CREATE TABLE.*commodities' db/migrations/` returned zero matches. Commodity remains a free-text field on the load per the doc's own f
+    - spec: NONE
+- `0251-gap16-charge-code-catalog` **not-built** (tier-2) — Create a charge code catalog table so charge codes are consistent (not free-typed)
+    - diff: charge code catalog table
+    - evidence: Same grep result as 0251-gap5 — no charge_code_catalog table located in db/migrations/.
+    - spec: NONE
+- `0251-gap17-charge-code-default-rates` **not-built** (tier-2) — Add default rates to the charge code catalog so charge amounts are standardized
+    - diff: charge code catalog (0251-gap16) is a prerequisite
+    - evidence: Depends entirely on 0251-gap16 (charge code catalog) existing first, which was confirmed not-built.
+    - spec: NONE
+- `0441-mod10-cashflow-income-loadid-plaintext` **not-built** (tier-3) — Cash Flow income load_id plain text (no drill-through)
+    - diff: wrap load_number/load_id in a Link to /dispatch or /loads/:id for forward drill-through, per CLAUDE.md §10a Law of the Land.
+    - evidence: apps/frontend/src/pages/cash-flow/tabs/DailyPredictionTab.tsx:206-208 renders `<span className="font-medium text-gray-900">#{item.load_number}</span>` as plain text inside a <div>,
+    - spec: NONE
+- `0441-mod11-dispatch-margin-cash-500` **not-built** (tier-2) — Dispatch-Margin cash-basis 500 (phantom completed_at/delivered_at)
+    - diff: replace l.completed_at/l.delivered_at with real mdata.loads columns (e.g. actual_delivery_at or the correct field per current loads schema).
+    - evidence: apps/backend/src/reports/dispatch-margin.routes.ts:61 — cash-basis date filter is `COALESCE(l.completed_at, l.delivered_at, l.updated_at, l.created_at)::date BETWEEN $2 AND $3`. Re
+    - spec: NONE
+- `0441-mod11-profit-per-truck-cron-double-count` **not-built** (tier-2) — Weekly Profit-Per-Truck cron double-counts (cartesian fan-out + counts cancelled loads)
+    - diff: rewrite profit-per-truck-weekly.ts to use the same load_agg/wo_agg CTE pattern as profit-per-truck.routes.ts, and add `l.status IS DISTINCT FROM 'cancelled'` to the load scope.
+    - evidence: apps/backend/src/reports/queries/profit-per-truck-weekly.ts:42-49 directly does `FROM mdata.units u LEFT JOIN mdata.loads l ON ... LEFT JOIN maintenance.work_orders wo ON ...` in o
+    - spec: NONE
+- `0441-mod12-docs-lowest-uuid-company-bug-live` **not-built** (tier-3) — Docs "lowest-UUID company" upload bug live on every path (operating_company_id never forwarded)
+    - diff: UploadModal.tsx must accept and forward operating_company_id (from useCompanyContext) into every requestUploadUrl() call, matching the rate-con fix pattern.
+    - evidence: apps/frontend/src/api/docs.ts:88-91 requestUploadUrl() explicitly documents the bug ('otherwise the server files it under the lowest-UUID company the user can access, and the scope
+    - spec: NONE
+- `0441-mod2-is-oos-not-read-by-dispatch` **not-built** (tier-2) — is_oos not read by dispatch (OOS unit not blocked from load assignment)
+    - diff: An is_oos (or unit status) check added to the dispatch assignment/qualification gate that blocks assigning an OOS unit to a load.
+    - evidence: mdata.units.is_oos is a real, populated column (apps/backend/src/mdata/units-unified-list.service.ts:29,129,177; set by apps/backend/src/maintenance/severe-repair-estimate.service.
+    - spec: NONE
+- `0441-mod4-dispatch-cancel-bypasses-approval-gate` **not-built** (tier-2) — Load cancellation fires gated approval AND unguarded PATCH (bypasses approval gate)
+    - diff: Remove/gate the second unconditional cancelMutation call so a pending_owner_approval result from cancelDispatchLoad does not get overwritten to 'cancelled' by the unguarded PATCH
+    - evidence: apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx:804-819 — CancelLoadModal onSubmit calls BOTH: (810) `cancelDispatchLoad(load.id, ...)` → POST /api/v1/dispatch/loads/:id
+    - spec: NONE
+- `0441-mod4-dispatch-cancellation-reasons-decoy-page` **not-built** (tier-2) — Load Cancellation Reasons page is DECOY (edits wrong catalog)
+    - diff: Either point the admin list page at catalogs.cancellation_reasons (the real gate table, which also needs a requires_owner_approval editor), or merge the two catalogs into one
+    - evidence: apps/frontend/src/pages/lists/dispatch/LoadCancellationReasonsListPage.tsx calls listLoadCancellationReasons/createLoadCancellationReason (api/catalogs.ts:286-292) → backend apps/b
+    - spec: NONE
+- `0441-mod4-dispatch-chat-no-attachment-upload` **not-built** (tier-2) — Dispatch Chat office side has no attachment/BOL upload
+    - diff: An attachment/photo/BOL upload control in the office-side chat composer, wired to R2 upload-then-commit per the CHAT-2 spec
+    - evidence: apps/frontend/src/pages/chat/DispatchChatPage.tsx (169 lines total) — composer (lines 134-161) has only a <textarea> and two buttons ('Send', 'Send confirmation'); grep for 'upload
+    - spec: docs/specs/PER-LOAD-DISPATCH-CHAT.md (CHAT-1/CHAT-2 explicitly require an attachments table + upload-then-commit R2 flow, dual-file BOL)
+- `0441-mod4-dispatch-detention-in-shop-hardcoded-empty` **not-built** (tier-3) — Detention board 'In shop' hard-coded empty
+    - diff: A real maintenance/work-order-status feed populating the 'In shop' Kanban section instead of a permanent placeholder
+    - evidence: apps/frontend/src/pages/dispatch/DispatchBoard.tsx:200-204 — SECTION_META literally hardcodes: { key: 'in_shop', title: 'In shop', placeholder: 'In-shop (maintenance) feed pending 
+    - spec: NONE
+- `0441-mod4-dispatch-load-templates-nav-dead` **not-built** (tier-3) — Load Templates nav link dead
+    - diff: PlannerCalendarPage (or /dispatch/planner route) must read the 'panel' search param and open LoadTemplateLibrary when panel=templates
+    - evidence: apps/frontend/src/routes/manifest.tsx:41 — subnav item points to '/dispatch/planner?panel=templates'. The /dispatch/planner route (manifest.tsx:956-962) renders only <PlannerCalend
+    - spec: NONE
+- `0441-mod4-dispatch-mapview-no-real-map` **not-built** (tier-3) — MapView no real map, dead load pins
+    - diff: A real map rendering library (Leaflet/Mapbox/etc.) plotting the fetched positions geographically, with clickable pins that open the corresponding load
+    - evidence: apps/frontend/src/pages/dispatch/MapView.tsx (50 lines, entire file read) — no map library (no Leaflet/Mapbox/Google Maps) is imported; 'pins' are literal <button> elements in a CS
+    - spec: NONE
+- `0441-mod4-dispatch-notify-prefs-no-onerror` **not-built** (tier-3) — Notify Prefs no onError
+    - diff: An onError handler on the saveM mutation (e.g. pushToast on failure), consistent with the pattern used elsewhere in the same module (e.g. DispatchSettingsPage.tsx:101 has onError)
+    - evidence: apps/frontend/src/pages/dispatch/NotifyPreferencesPage.tsx:111-117 — the `saveM` useMutation (updateCustomerNotifyPreferences) defines only `onSuccess`, no `onError` handler, so a 
+    - spec: NONE
+- `0441-mod4-dispatch-ocr-queue-no-reprocess-ui` **not-built** (tier-3) — OCR Queue reprocess has no UI
+    - diff: A reprocess/retry action (UI button + backend endpoint) for OCR queue items that failed or need re-extraction
+    - evidence: apps/frontend/src/pages/dispatch/OcrQueuePage.tsx (190 lines) — only per-row action is a 'convert' button (line 59-67, onClick={() => convertM.mutate()}); grep for 'reprocess|Repro
+    - spec: NONE
+- `0441-mod5-onboarding-step-data-only` **not-built** (tier-2) — Onboarding wizard — every step lands only in step_data jsonb, never real driver tables
+    - diff: A promotion step in .../complete or .../admin-override that UPDATEs mdata.drivers identity/CDL fields, INSERTs safety.medical_cards, and fires the real vehicle-assignment call from step_data
+    - evidence: apps/backend/src/safety/onboarding.routes.ts: POST .../complete (line 193) and POST .../admin-override (line 236) only flip status/current_step/completed_at on safety.onboarding_se
+    - spec: NONE
+- `0490-critical-users3-owner-mint-approval-path` **not-built** (tier-1) — USERS-3 (STOP): identity/workflow-routes.ts maker-checker APPROVAL path has no callerIsOwner/last-Owner check 
+    - diff: a callerIsOwner (or minimum-privilege) check + last-active-Owner-count guard on the WF-064-IDENT-002 role-change approval branch before it can grant Owner
+    - evidence: apps/backend/src/identity/workflow-routes.ts lines 290-317: the WF-064-IDENT-002 branch does `const toRole = extractToRole(...); ... UPDATE identity.users SET role = $1 WHERE id = 
+    - spec: NONE
+- `biz-flow-1-no-auto-termination-driver-walkoff` **not-built** (tier-1) — Auto-terminate driver when a load status transitions to driver_walkoff
+    - diff: no trigger call from the load-status-write path to a driver-termination writer
+    - evidence: apps/backend/src/dispatch/load-state-machine.ts:12,53,59 and apps/backend/src/mdata/loads.routes.ts + apps/backend/src/dispatch/loads.routes.ts define driver_walkoff as a terminal 
+    - spec: docs/specs/repairs/REPAIR-D-CONDUCT-CATALOG-DESIGN.md
+- `biz-flow-7-no-automatic-team-assignment` **not-built** (tier-3) — Auto-detect and assign a driver team to a load instead of requiring team_id to be manually supplied
+    - diff: no logic that infers team_id from the assigned primary/secondary driver pair
+    - evidence: apps/backend/src/dispatch/book-load.service.ts requires input.team_id to be explicitly supplied (lines 114, 222-236, 292-308, 458, 923-947) — no auto-detection logic based on prima
+    - spec: NONE
+- `bl-04-no-rate-con-pdf-generation` **not-built** (tier-3) — No rate confirmation PDF generation from Book Load wizard
+    - diff: Add rate-con PDF generation at the Book Load wizard completion step.
+    - evidence: grep for rate.*con.*pdf/RateConPdf/generateRateCon in apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx returned zero matches.
+    - spec: NONE
+- `coder-work-order-t1-7-escrow-ui-zero-callers` **not-built** (tier-1) — T1-7: Escrow open/deposit/release backend routes have zero frontend callers — escrow UI is 100% read-only
+    - diff: frontend UI wiring for escrow open/deposit/release actions (POST calls to the existing backend routes)
+    - evidence: grep for 'escrow/open', 'escrow/deposit', 'escrow/release' across apps/frontend/src returned no matches, confirming the finding that no frontend caller exists for these backend rou
+    - spec: NONE
+- `coder-work-order-t2-3-xlsx-cve` **not-built** (tier-3) — T2-3: xlsx/SheetJS CVE on upload parse (catalogs/excel-uploader.ts, fuel/loves-upload.routes.ts) — needs sandb
+    - diff: upgrade/patch xlsx past the CVE-affected range (or sandbox the parse), add magic-byte validation on upload, bump the transitive ws package
+    - evidence: package.json:883 still pins "xlsx": "^0.18.5" — the known-vulnerable SheetJS version referenced by the finding; no magic-byte validation or sandbox wrapper was checked/found this p
+    - spec: NONE
+- `d-03-truncated-assignment-history-tab-label` **not-built** (tier-3) — Last tab in Load panel has truncated label 'Assign His...'
+    - diff: Confirm live whether the Load panel's tab strip still visually truncates 'Assign His...' - if so, widen the tab, reduce font-size, or abbreviate intentionally.
+    - evidence: UNVERIFIED - apps/frontend/src/pages/dispatch/AssignmentHistoryPage.tsx:64 has title="Assignment History" (full string, correct in that standalone page), but this pass did not loca
+    - spec: NONE
+- `d5-driver-detail-scope-optional-param` **not-built** (tier-2) — BLOCK_D5-DRIVER-DETAIL-SCOPE: getDriver(id, operatingCompanyId?) must become required; DriverHosDetailPage/Dri
+    - diff: Make operatingCompanyId required on getDriver(); pass it from both call sites; a guard covering these files.
+    - evidence: apps/frontend/src/api/mdata.ts:158 'export function getDriver(id: string, operatingCompanyId?: string)' — operatingCompanyId is still optional (confirmed myself). apps/frontend/src
+    - spec: NONE
+- `db5-resize-removal-directive-vs-current-lock` **not-built** (tier-3) — Batch-6 dispatch (2026-06-28) states Jorge AUTHORIZED 'remove resizable app-wide' (CODER-19-DB5-REMOVE-RESIZAB
+    - diff: the removal was never done, and current direction is the opposite (extending resize, not removing it)
+    - evidence: resizable columns are still present and being ACTIVELY EXTENDED: ResizableTh.tsx / ResizableTable.tsx exist; recent commits 947f91612 / c97433f7f (#2296, 2026-07 dated 'wire TableH
+    - spec: NONE
+- `dispatch-sweep-gap-11` **not-built** (tier-3) — Book Load to Product/Service Linkage — verify commodity selection links to product catalog
+    - diff: A commodity_catalog_item_id FK (or equivalent) on mdata.loads / book-load input pointing at a product/service catalog table.
+    - evidence: apps/backend/src/dispatch/book-load.service.ts:70 declares `commodity?: string;` as a plain free-text field on the book-load input. grep across db/migrations/*.sql for 'commodity' 
+    - spec: docs/specs/DISPATCH-MODULE-SPEC.md
+- `dispatch-sweep-gap-40` **not-built** (tier-2) — Geofence to Liability Linkage — verify geofence breaches trigger liability assessment
+    - diff: No liability workflow (safety incident severity scoring, claim linkage, etc.) is triggered from a geofence breach.
+    - evidence: grep of the geofence-breach cron (apps/backend/src/cron/geofence-breach-detector.cron.ts), the detector service, and the breach routes for incidents|safety_events|driver_finance|se
+    - spec: NONE
+- `fk-termination-load-0289` **not-built** (tier-2) — Critical FK gap #1: Termination -> Load, expected column driver_finance.terminations.source_load_id
+    - diff: a driver_finance.terminations (or similar) event table with source_load_id, or confirmation that termination is intentionally tracked only as a driver status flag
+    - evidence: No table named driver_finance.terminations exists anywhere in db/migrations/*.sql (grep for 'CREATE TABLE IF NOT EXISTS driver_finance.terminat' returned zero matches, re-ran broad
+    - spec: NONE
+- `flow1-termination-load-linkage-source-load-id` **not-built** (tier-2) — Link driver termination/separation record to the load that caused it (source_load_id FK)
+    - diff: driver_finance.driver_escrow_separations.source_load_id uuid REFERENCES mdata.loads(id).
+    - evidence: No termination table with a load FK found; driver_finance.driver_escrow_separations (escrow-separation.service.ts) keys off mdata.drivers.deactivated_at with no load reference colu
+    - spec: NONE
+- `flow7-auto-team-assignment` **not-built** (tier-3) — Auto-detect/assign team_id to loads from driver team assignments
+    - diff: A service that reads mdata.driver_teams for the assigned driver and auto-populates load.team_id when a team member is booked.
+    - evidence: grep for 'auto.*team'/'team.*auto' across apps/backend/src/dispatch/*.ts returns nothing; team_id is referenced (book-load.service.ts, loads.routes.ts, update-load.service.ts) only
+    - spec: NONE
+- `flow7-no-auto-team-assignment` **not-built** (tier-3) — Auto-detect and assign team_id to a load based on driver team membership
+    - diff: Trigger/service to derive team_id from driver-team membership at assignment time.
+    - evidence: grep -rli 'auto.*assign.*team\|autoAssignTeam' apps/backend/src/dispatch returned 0 hits (2 passes). apps/backend/src/dispatch/loads.routes.ts references team_id but as a settable 
+    - spec: NONE
+- `gated-blocks-misc-disp-wizard-wo-ent-audit-fh-verify-void-verify-hos` **not-built** (tier-2) — DISP-WIZARD, DISP-WO, ENT-AUDIT, FH-VERIFY, VOID-VERIFY, HOS-FANOUT/MAP/PRC-DATA/PRC2 — misc pending blocks
+    - diff: edit-load wizard (DISP-WIZARD), work-order modal (DISP-WO), entity audit (ENT-AUDIT), finance-hub verification (FH-VERIFY), void-everywhere verification (VOID-VERIFY), HOS telematics fan-out/map/per-d
+    - evidence: Per BLOCK-RECONCILIATION-2026-07-10.md: all listed PENDING(GATED).
+    - spec: docs/specs/qbo-parity/ (per block)
+- `linkage-walkoff-no-auto-termination` **not-built** (tier-2) — Missing linkage: load status driver_walkoff does not trigger automatic driver termination
+    - diff: An automatic (or explicitly gated manual-prompt) linkage from mdata.loads.status='driver_walkoff' to mdata.drivers termination/deactivation.
+    - evidence: Two-pass grep of apps/backend/src/mdata/{loads,drivers}.routes.ts for 'terminat' finds only manual termination_date columns and a prior_driver_not_terminated validation error - no 
+    - spec: NONE
+- `notif-b-android-capacitor-fcm` **not-built** (tier-2) — Capacitor native Android wrapper (com.ih35dispatch.driver) + FCM critical alerts + notifications.device_push_t
+    - diff: entire block: Capacitor scaffold, android/ project, google-services.json, notification channel, device-token registration table+route, backend FCM sender/firebase-admin wiring, release keystore step
+    - evidence: No android/ directory anywhere under apps/driver-pwa (find -iname android returned empty, re-run confirmed); no capacitor reference in apps/driver-pwa/package.json or src (grep -rl
+    - spec: NONE (owner-locked facts doc, no approved-screen; native app has no docs/approved-screens entry)
+- `0007-session-vendors-false-empty` **partial** (tier-3) — Session finding: Vendors list shows false-empty 'No vendors found · 0-0 of 0' mid-fetch, then populates on rel
+    - diff: live re-test of the Vendors list on first load + CI-wiring confirmation for verify-list-empty-settled.mjs
+    - evidence: scripts/verify-list-empty-settled.mjs exists matching this exact concept (see 0007-pattern-3 row) but its CI wiring was not confirmed, and the specific Vendors page was not re-test
+    - spec: NONE
+- `0243-g9-m-eight-workflow-status-defects` **partial** (tier-2) — Bundle of 8: auto-pay cron wrong statuses, load-number MAX+1 500 under concurrency, unguarded bulk set_status,
+    - diff: re-verify all 8 sub-items individually: auto-pay.cron.ts:34 statuses, load-id-reservation.service.ts:54 advisory lock, invoices-bulk.routes.ts:64 guard, cancellation.routes.ts:46 min role, WO void-sta
+    - evidence: Spot check on 1 of 8: apps/backend/src/driver-finance/auto-pay.cron.ts:34 still 'AND s.status IN ('locked', 'final')' — unchanged from the finding (live emits approved/closed inste
+    - spec: NONE
+- `0490-new3-c2-1-detectitemsdrift-scoping` **partial** (tier-2) — NEW-3 / C2-1: detectItemsDrift left unscoped to operating_company_id in the same file as its sibling scoped fu
+    - diff: confirm whether catalogs.items is intentionally global (no scoping needed) or should be scoped in the missingQbo branch
+    - evidence: apps/backend/src/qbo-sync/drift-detector.ts:167 detectItemsDrift(client, operatingCompanyId) now takes operatingCompanyId as a parameter and a dedicated test exists (drift-detector
+    - spec: NONE
+- `0772-defect5-vendors-false-empty` **partial** (tier-3) — FALSE-EMPTY LIST: Vendors first load shows 'No vendors found · 0-0 of 0' mid-fetch, reload shows 490 — BLOCK_L
+    - diff: live re-test + CI-wiring confirmation
+    - evidence: scripts/verify-list-empty-settled.mjs exists (matches the proposed shared list-state primitive concept) but CI wiring unconfirmed; live Vendors page not re-tested in this pass.
+    - spec: NONE
+- `bf10c-driver-conduct-catalogs-scorecard` **partial** (tier-2) — BF10-C flow: Driver conduct -> Catalog -> Scorecard (doc claims BROKEN/SILOED: FOUR disconnected conduct vocab
+    - diff: confirm whether abandonment_chargebacks and escrow_deductions_pending both fire for a single walkoff/abandonment event (double-charge) or whether one has been deprecated since; confirm driver scorecar
+    - evidence: driver_finance.abandonment_chargebacks AND the escrow auto-deduct path (0094 auto_deduct_escrow_load_abandonment) both exist as separate tables/triggers on the same abandonment eve
+    - spec: NONE
+- `bf2-walkoff-termination-trigger` **partial** (tier-2) — BF2 flow: Driver walkoff -> Termination (doc claims BROKEN: walkoff auto-fires escrow but never triggers termi
+    - diff: automatic mdata.drivers status/deactivated_at transition (or a termination record) fired from the load_status_enum='driver_walkoff' transition
+    - evidence: mdata.load_status_enum includes 'driver_walkoff' (per repo CLAUDE.md §4, migration 0094) and driver_finance.abandonment_chargebacks / abandonment_defaults exist (0158) with escrow 
+    - spec: NONE
+- `biz-flow-1-termination-not-linked-to-load` **partial** (tier-1) — Driver termination record must carry the load_id that caused it
+    - diff: WF-064-MDATA-002 payload still has no load_id field; the two termination mechanisms (workflow vs safety-event) are not unified
+    - evidence: The WF-064-MDATA-002 workflow (apps/backend/src/mdata/workflow-routes.ts:8,42,50) targets only target_resource_type='driver' / target_resource_id (no load_id column, payload schema
+    - spec: docs/specs/repairs/REPAIR-D-CONDUCT-CATALOG-DESIGN.md
+- `cascade-lane-docs-upload-company-scope` **partial** (tier-3) — A6 - Docs 'lowest-UUID company' upload bug: UploadModal never forwards operating_company_id; profile Documents
+    - diff: Confirm/forward operating_company_id + entity_type/entity_id through the generic UploadModal for all Documents-tab callers, not just the rate-con path.
+    - evidence: apps/frontend/src/components/documents/UploadModal.tsx has zero matches for operating_company_id (grepped directly) - the component still does not visibly forward it. Auto-memory '
+    - spec: NONE
+- `chain-08-demo-data-purge` **partial** (tier-1) — CHAIN-08 transp-demo-data-purge: DISPATCH-4 oos-board, DRIVERHUB-2 dup drivers, MAINT-1 demo WOs, COMPLIANCE-1
+    - diff: the actual demo-data purge migration/execution on prod, following the audit's row-state findings
+    - evidence: docs/audits/CHAIN-08-TRANSP-DEMO-DATA-AUDIT-2026-07-06.md exists (the audit step is done), but no evidence checked this pass of an executed purge migration; COMPLIANCE-1 (checked s
+    - spec: docs/audits/CHAIN-08-TRANSP-DEMO-DATA-AUDIT-2026-07-06.md
+- `d-01-new-load-overview-http-400` **partial** (tier-1) — New Load panel Overview tab returns HTTP 400 immediately on open (F1 missing grants)
+    - diff: Live confirmation the migration ran on prod and the panel no longer 400s.
+    - evidence: db/migrations/202606271510_f1_ih35app_grants_extend.sql (GRANT SELECT/INSERT/UPDATE/DELETE on safety/owner/analytics/alerts schemas to ih35_app + DEFAULT PRIVILEGES) is merged to o
+    - spec: NONE
+- `d-02-cancel-load-shown-on-unsaved-load` **partial** (tier-3) — 'Cancel Load' button shown in red on an unsaved new load panel
+    - diff: Replace the disabled red 'Cancel Load' with a plain 'Close' action on an unsaved/new load, per the original fix instruction.
+    - evidence: apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx:717: <Button variant="danger" onClick={...} disabled={!load || load.status === 'cancelled'}>Cancel Load</Button> - the bu
+    - spec: NONE
+- `db7-planners-perf-profile` **partial** (tier-3) — Profile the Dispatch Planners view N+1 slowness with measured evidence before fixing (Phase 0/1/2 perf+layout 
+    - diff: confirmation the measured N+1 was actually fixed (Phase 1) and the per-driver Book column layout shipped (Phase 2)
+    - evidence: docs/audits/DB7-PLANNERS-PERF-PROFILE-2026-06-28.md exists (Phase-0 profile committed as required), but Phase-1 (the actual N+1 fix) and Phase-2 (Book-column layout change) were no
+    - spec: NONE
+- `dispatch-board-db2-db7-fixes` **partial** (tier-3) — Kanban header-click-to-filter (DB-2), gear+scroll fix (DB-3), pagination-count fix (DB-4), remove column resiz
+    - diff: confirm DB-2/DB-4/DB-6 status individually; DB-5 should stay parked per the standing memory decision, not be re-attempted
+    - evidence: Supporting guards for several items already exist: scripts/verify-dispatch-board-sections-and-columns.mjs, scripts/verify-steps/71-verify-planner-no-nplus1.mjs (covers DB-7), scrip
+    - spec: docs/specs/DISPATCH-MODULE-SPEC.md
+- `dispatch-sweep-gap-15` **partial** (tier-2) — Assignment to Unit Utilization Linkage — verify assignments update unit utilization metrics
+    - diff: A population job/service that derives utilization.driver_period / utilization.unit_period from load_assignment_history + HOS/GPS data; currently these tables have no confirmed writer, so the Finance s
+    - evidence: utilization.driver_period and utilization.unit_period are real tables (db/migrations/202606111240_w5_time_utilization.sql, CREATE TABLE not a view) surfaced by a live Finance route
+    - spec: NONE
+- `flow1-auto-termination-walkoff-noshow` **partial** (tier-2) — Auto-terminate driver on load status driver_walkoff / driver_no_show
+    - diff: A trigger from load-state-machine transition to driver_walkoff/driver_no_show into a driver termination workflow; abandonment chargeback exists but is a separate code path from termination.
+    - evidence: apps/backend/src/dispatch/load-state-machine.ts: driver_walkoff/driver_no_show are terminal states (lines 59-60, no outgoing transitions). apps/backend/src/driver-finance/abandonme
+    - spec: NONE
+- `home-2-open-loads-inflight-late-consistency-unverified` **partial** (tier-3) — Home 'Open Loads' KPI and Attention panel's 'in-flight late' count must use ONE canonical load-state classifie
+    - diff: Confirm the home-attention-list in-flight-late query in library.routes.ts uses the SAME is_sample_data/soft_deleted_at/operating_company_id filters and status-set as open-loads-count in home-widgets.r
+    - evidence: apps/backend/src/home/home-widgets.routes.ts:180 defines /api/v1/home/open-loads-count and already filters `is_sample_data = false` (line 219). apps/backend/src/reports/library.rou
+    - spec: NONE
+- `phase14-audit-241` **partial** (tier-3) — Build scalability tracking/dashboard/analytics (scalability assessment, load testing, capacity planning, scala
+    - diff: Capacity-planning documentation; scalability dashboard/analytics.
+    - evidence: Real nightly load testing exists: .github/workflows/load-test-nightly.yml (cron 05:30 UTC daily + PR-triggered smoke profile), backed by tests/load/, scripts/verify-load-test-basel
+    - spec: NONE
+- `sweep-fix-17-27-fixture-names-and-pager` **partial** (tier-3) — BLOCK-SWEEP-FIX-17-27: extend verify-no-test-fixture-names.mjs to @example.com / m2-probe / m2-stop; fix CUST-
+    - diff: @example.com/m2-probe/m2-stop coverage in the guard; VendorListSidebar/CustomerListSidebar pager wired to the real server total instead of sortedVendors.length.
+    - evidence: scripts/verify-no-test-fixture-names.mjs exists and guards 'TEST-VENDOR' literal strings, but grep of that file for '@example.com', 'm2-probe', 'm2-stop' found nothing — not extend
+    - spec: NONE
+- `sweepfix1727-11` **partial** (tier-3) — Extend scripts/verify-no-test-fixture-names.mjs to cover user fixture patterns (@example.com, m2-probe, m2-sto
+    - diff: The specific ask — extending THIS script's TEST_PATTERNS to include user-fixture email patterns for non-test/non-cleanup src — was not done; a create-time runtime guard was built instead, which covers
+    - evidence: scripts/verify-no-test-fixture-names.mjs TEST_PATTERNS still only contains /['"`]TEST[-_ ]VENDOR/i (the original FACT-FIX-1 pattern) — no @example.com/m2-probe/m2-stop regex was ad
+    - spec: NONE
+
+### drivers  (39 open)
+
+- `0008-e-escrow-liability-routing-60-90d` **built** (tier-1) — Escrow = held-in-trust liability; 60-90 day return-on-separation net of open claims; draws debit Driver Escrow
+- `0091-h6-2` **built** (tier-1) — Add pg_advisory_xact_lock + UNIQUE(operating_company_id,display_id) to cash-advance display-id generator (sile
+- `0091-m-dhub-1` **built** (tier-2) — Register cash-advances/driver-hub-requests.routes.ts (was built but never registered, 404, false-green tests)
+- `bf8-escrow-return-on-separation` **built** (tier-1) — BF8: Return remaining driver escrow on separation (60-90d) was NOT BUILT — no trigger/cron/schedule, held-in-t
+- `dp-01-create-driver-button-broken` **built** (tier-3) — '+ Create Driver' button routes to /drivers/new which returns 'Driver not found'
+- `dp-02-sidebar-driver-profile-routes-to-broken-new` **built** (tier-3) — Sidebar 'DRIVER PROFILE' routes to /drivers/new - broken
+- `driver-profile-404-and-backarrow-fix` **built** (tier-2) — Fix universal driver-profile 404 (resolveOperatingCompanyId in simple GET path needs lucia bypass) + add backH
+- `driverhub1-scheduler-utc-date-range` **built** (tier-3) — Driver Scheduler default 30d range used UTC date instead of company-local (Central) today
+- `driverhub3-scheduler-unit-column-blank` **built** (tier-3) — Driver Scheduler grid 'Unit' column showed '--' for all drivers; wire in the driver's current unit assignment
+- `driverprofile-1-roster-company-scope` **built** (tier-3) — Driver Profile roster (/drivers) calls /api/v1/mdata/drivers WITHOUT operating_company_id, returns 0 despite 8
+- `hire-date-backfill-flow` **built** (tier-2) — Part B: owner-run, entity-scoped, set-if-null hire-date backfill from Samsara createdAtTime with a preview ste
+- `hire-date-provenance-migration` **built** (tier-2) — Part A: add hire_date_source/hire_date_set_at/hire_date_set_by_user_id provenance columns to mdata.drivers
+- `home-3-drivers-on-duty-denominator` **built** (tier-3) — Home KPI 'Drivers on duty' denominator was hardcoded/zero instead of active-driver count
+- `0091-g5-2` **needs-design** (tier-2) — Move QBO HTTP calls (createDriverWithQboVendor / createUnitWithQboClass) outside the open DB transaction to av
+    - diff: re-verify whether the QBO fetch is still inside withCurrentUser's BEGIN..COMMIT
+    - evidence: Not independently re-verified in this pass (time-limited sweep); qbo-vendor-linkage.service.ts:577,659 not re-checked. Marking needs-design pending a focused re-check since no spec
+    - spec: NONE
+- `0091-g8-1` **needs-design** (tier-3) — Add shared formatDateTime(iso,locale,tz) helper + lint banning bare toLocale* in driver-pwa (18+ sites render 
+    - diff: re-verify driver-pwa date-rendering call sites
+    - evidence: Not independently re-verified this pass (apps/driver-pwa/src/pages/LoadDetail.tsx:93, Earnings.tsx:74, Home.tsx:143 not re-checked).
+    - spec: NONE
+- `0280-18-driver-kpi-profile-linkage` **needs-design** (tier-3) — Driver Manager Home: driver KPI bar has no verification of driver-profile linkage
+    - diff: 
+    - evidence: Not independently checked in this pass.
+    - spec: NONE
+- `0280-23-wo-status-unit-driver-linkage` **needs-design** (tier-3) — home-widgets: WO status counts from maintenance.work_orders have no unit/driver linkage verification
+    - diff: 
+    - evidence: Not independently checked in this pass.
+    - spec: NONE
+- `twice-daily-mandatory-checkin-compliance-feature` **needs-design** (tier-2) — Twice-daily mandatory driver check-in compliance feature (contract clause, no build yet)
+    - diff: a spec for the check-in cadence UI/API + a driver_checkins-style table + Safety-page surfacing of missed check-ins
+    - evidence: no matches for a twice-daily/mandatory check-in compliance feature in apps/backend/src/dispatch, apps/backend/src/driver-pwa-adjacent modules, or apps/driver-pwa/src beyond unrelat
+    - spec: NONE
+- `0243-g5-2-qbo-txn-inside-db-transaction` **not-built** (tier-2) — createDriverWithQboVendor / createUnitWithQboClass hold a pooled DB connection open across an awaited QuickBoo
+    - diff: confirm the QBO fetch for createDriverWithQboVendor/createUnitWithQboClass happens outside the withCurrentUser transaction
+    - evidence: UNVERIFIED: apps/backend/src/integrations/qbo/qbo-vendor-linkage.service.ts still has a fetch(url, init) call at line 58 and 10 separate withCurrentUser(...) blocks (lines 190-659)
+    - spec: NONE
+- `0243-h6-2-cash-advance-display-id-no-lock-no-unique` **not-built** (tier-1) — cash-advances/display-id.ts computes MAX+1 with no advisory lock and no UNIQUE constraint on driver_advances.d
+    - diff: wrap in pg_advisory_xact_lock + add UNIQUE(operating_company_id, display_id) migration
+    - evidence: grep -n 'advisory_lock|UNIQUE' apps/backend/src/cash-advances/display-id.ts returned zero matches — no lock or unique constraint reference found.
+    - spec: NONE
+- `0441-mod5-dqf-panel-free-text-no-fk` **not-built** (tier-3) — DQF panel = free-text rows, zero FK to CDL/medical
+    - diff: A structured item_type (enum or FK) linking each DQF row to the real credential source (CDL fields on mdata.drivers, safety.medical_cards) instead of arbitrary free text
+    - evidence: apps/frontend/src/pages/drivers/components/DriverDqfPanel.tsx: 'Add checklist item' is a single free-text <input> bound to itemName, submitted as item_name with no linkage to any C
+    - spec: NONE
+- `0441-mod6-hos-dashboard-silent-per-driver-catch` **not-built** (tier-3) — HOS dashboard silently swallows per-driver fetch errors
+    - diff: At minimum a console.error/telemetry capture in the catch (Sentry) so per-driver failures are visible instead of silently rendering as empty rows.
+    - evidence: apps/frontend/src/pages/safety/HoursOfServicePage.tsx:74-85 loadFleetHosRows: try { const detail = await getDriverHosDetail(driver.id, operatingCompanyId); ... } catch { return bas
+    - spec: NONE
+- `0441-mod7-escrow-read-only` **not-built** (tier-1) — Escrow 100% read-only — real open/deposit/release backend has zero frontend callers
+    - diff: No UI affordance anywhere to open a new escrow account, deposit into one, or release funds — EscrowPage.tsx is view-only.
+    - evidence: apps/frontend/src/pages/accounting/EscrowPage.tsx (173 lines) only calls listEscrowAccounts/listEscrowPostings (GET). repo-wide grep for 'escrow/open|escrow/deposit|escrow/release|
+    - spec: NONE
+- `dh-01-driver-hub-overview-stub` **not-built** (tier-3) — Driver Hub Overview is a stub below the inbox - no availability grid, on-duty list, or metrics
+    - diff: Build a driver availability grid + on-duty status board on the Driver Hub Overview tab.
+    - evidence: apps/frontend/src/pages/home/DriverHubPage.tsx line 18 defines an 'overview' tab id/label but grep for availability/status board/on-duty/'Overview' content returned only the tab-la
+    - spec: NONE
+- `dp-04-hire-date-blank` **not-built** (tier-2) — HIRE DATE blank for all visible drivers - required for payroll compliance
+    - diff: Populate hire_date or flag missing as a required field on driver create/edit.
+    - evidence: Data-population question (mdata.drivers hire_date column) - a live-data gap, not a code defect.
+    - spec: NONE
+- `driver-d-cluster-scope-guard-missing` **not-built** (tier-3) — BLOCK_DRIVER-D-CLUSTER: create verify-driver-profile-scope.mjs + driver-profile-scope.test.ts
+    - diff: The guard script and its test.
+    - evidence: find scripts -iname verify-driver-profile-scope.mjs returned nothing (confirmed myself, same check as d5 row above).
+    - spec: NONE
+- `flow1-escrow-linked-to-termination-record` **not-built** (tier-2) — Link escrow separation explicitly to a termination reason/record (not just deactivated_at)
+    - diff: A termination_reason or termination_id column on driver_finance.driver_escrow_separations or mdata.drivers.
+    - evidence: escrow-separation.service.ts requires driver.deactivated_at IS NOT NULL as a proxy for 'terminated' but there is no termination_id/termination_reason column distinguishing walkoff/
+    - spec: NONE
+- `m-06-driver-field-plain-text-not-dropdown` **not-built** (tier-3) — Driver field on WO create form is a plain text input, Unit is a searchable dropdown
+    - diff: Replace the plain text driver_id input with a searchable driver Combobox (matching the Unit field pattern), passing limit:200 per the known driver-picker 50-cap landmine.
+    - evidence: apps/frontend/src/pages/maintenance/components/CreateWOSectionIdentification.tsx:123 renders <input {...register('driver_id', {required: requireDriverAndLoad})} className="h-8 w-fu
+    - spec: NONE
+- `m-07-wo-dev-facing-footer-text` **not-built** (tier-3) — 'Posts to QBO with class UNIT-DRIVER on every line' developer text visible in production modal footer
+    - diff: Remove or hide this text from the production UI (dev-only debug aid).
+    - evidence: apps/frontend/src/pages/maintenance/components/CreateWorkOrderModal.tsx:1126: 'Posts to QBO with class {classHint} on every line' still renders as a visible footer div (lines 1125-
+    - spec: NONE
+- `notif-b-android-block` **not-built** (tier-3) — BLOCK-NOTIF-B-ANDROID: driver PWA Android push notification support
+    - diff: apps/driver-pwa/android project, @capacitor/* deps, device_push_tokens table, firebase-admin integration.
+    - evidence: ls apps/driver-pwa/android -> 'No such file or directory'. No @capacitor/* in apps/driver-pwa/package.json; no device_push_tokens migration found in db/migrations/; no firebase-adm
+    - spec: NONE
+- `0441-mod13-lists-driver-vs-drivers-parallel-trees` **partial** (tier-3) — Lists driver vs drivers parallel catalog trees
+    - diff: Remove/redirect the deprecated singular routes entirely (or confirm they share the same backend data source rather than being truly parallel).
+    - evidence: apps/frontend/src/pages/lists/driver/ (singular) and apps/frontend/src/pages/lists/drivers/ (plural) both exist and both have LIVE routes: /lists/driver/license-classes AND /lists/
+    - spec: NONE
+- `0519-co1-0-compliance-notification-rules-configured` **partial** (tier-2) — 0 compliance notification rules configured — no CDL/medical card expiration alerts
+    - diff: live confirmation that CDL/medical/DOT-inspection notification rules have been configured
+    - evidence: The feature is built: apps/backend/src/compliance/compliance-notification-rules.routes.ts + apps/frontend/src/components/compliance/NotificationRulesPanel.tsx both exist. Whether r
+    - spec: NONE
+- `0519-dq1-driver-dummy-test-record-in-prod` **partial** (tier-2) — 'DRIVER DUMMY' test record exists in production driver list
+    - diff: live query confirming whether the 'DRIVER DUMMY' record still exists in mdata.drivers
+    - evidence: Cannot verify from static repo — this is a live-data hygiene question requiring a prod read. Cannot confirm or deny; UNVERIFIED at repo level.
+    - spec: NONE
+- `0519-dq2-driver-placeholder-phone` **partial** (tier-2) — Multiple drivers with placeholder phone '000-000-0000'
+    - diff: live query + data cleanup of placeholder phone numbers
+    - evidence: Live-data hygiene question, not verifiable from static repo.
+    - spec: NONE
+- `0519-dq3-driver-blank-cdl` **partial** (tier-2) — Multiple drivers with blank CDL#
+    - diff: live query + data cleanup / DQF completeness follow-up for drivers with blank CDL#
+    - evidence: Live-data hygiene question, not verifiable from static repo.
+    - spec: NONE
+- `biz-flow-1-abandonment-separate-from-termination-workflow` **partial** (tier-1) — Abandonment chargeback flow does not trigger automatic driver termination
+    - diff: abandonment.service.ts has no call into a termination proposal/workflow
+    - evidence: apps/backend/src/driver-finance/abandonment.service.ts links chargebacks to load+driver+settlement (confirmed by file read) but has zero references to 'Terminated'/termination (gre
+    - spec: docs/specs/repairs/REPAIR-D-CONDUCT-CATALOG-DESIGN.md
+- `driverhub-2-demo-duplicate-drivers-cleanup` **partial** (tier-2) — Driver Scheduler surfaces DEMO/TEST driver rows (DRIVER DUMMY, Maria/Ana/Carlos/Juan Demo *) + unmerged duplic
+    - diff: The reversible master-data migration to remove demo/test driver rows and merge confirmed duplicate pairs (keeping the Samsara-linked canonical row) does not appear to exist in the repo.
+    - evidence: No migration or cleanup script referencing 'DUMMY'/'Demo Garcia'/'Demo Lopez' etc. exists anywhere in apps/backend/src, apps/frontend/src, or db/migrations — a targeted grep for th
+    - spec: NONE
+- `fk-escrow-termination-0289` **partial** (tier-1) — Critical FK gap #2: Escrow -> Termination, expected column driver_finance.escrow.termination_id
+    - diff: 202607111000 needs Jorge/CPA sign-off + a Neon-branch run before it addresses this gap live; currently HELD per its own header
+    - evidence: There is no table literally named 'driver_finance.escrow' (escrow lives in accounting.escrow_accounts/escrow_postings per Block-23, plus driver_finance.escrow_deductions_pending/es
+    - spec: docs/accounting/BLOCK-02-DRIVER-ESCROW-DESIGN.md
+- `hiredate-provenance-partial` **partial** (tier-2) — CODER-DIRECTIVE-HireDate-Provenance: hire_date_set_at + hire_date_set_by_user_id columns; driver_id-keyed CSV 
+    - diff: hire_date_set_at, hire_date_set_by_user_id columns; driver_id-keyed CSV preview->commit flow with 6-category taxonomy.
+    - evidence: db/migrations/202606300050_drivers_hire_date_source.sql confirms hire_date_source shipped (confirmed myself). grep -rl 'hire_date_set_at\|hire_date_set_by_user_id' across db/migrat
+    - spec: NONE
+
+### factoring  (28 open)
+
+- `blueprint-factoring-day35-daily-interest-cron` **built** (tier-1) — Daily default-interest accrual cron after day 35 of a factoring advance (0.067%/day) — 'NEW, not built' per th
+- `coder-30-schema-canonicalization-design` **built** (tier-3) — Produce a decision-ready schema-canonicalization design doc for factor/factoring, bank/banking, settlement/set
+- `coder-work-order-t1-8-factoring-posters-wired` **built** (tier-1) — T1-8: wire the factoring collection + recourse posters (postFactoringCustomerPaymentEvent, postFactoringCharge
+- `fact-fix-1-factoring-profile-truth` **built** (tier-3) — Factoring profile resolves ONLY by active_factor_id (remove name-includes/vendors[0] fallbacks), null-name bac
+- `factoring-day95-recourse-auto-trigger-wire` **built** (tier-1) — Wire the built-but-uncalled factoring collection-route poster + day-95 recourse auto-trigger
+- `factoring-secured-borrowing-poster-rebuild` **built** (tier-1) — Rebuild the factoring poster from sale-model (customer_payment crediting A/R) to ASC 860 secured-borrowing mod
+- `0091-m-home-2` **needs-design** (tier-2) — Fix Cash Position + Factoring Balance home tiles always showing $0 due to response-shape field mismatch
+    - diff: trace api/home.ts field names against home-widgets.routes.ts response shape end-to-end
+    - evidence: home-widgets.routes.ts still returns totalCents in several handlers; the specific field-name alignment with the frontend consumer (fetchHomeCashPosition/fetchHomeFactoringBalance i
+    - spec: NONE
+- `0251-gap4-driver-vendor-mapping` **needs-design** (tier-2) — Verify driver-vendor mapping table exists and is populated (for driver factoring assignment)
+    - diff: a located driver-vendor mapping table, or confirmation none is needed
+    - evidence: Not independently verified in this pass; no driver-vendor mapping table was located by name during this pass's greps.
+    - spec: NONE
+- `fact-par-1-factoring-submission-gating` **needs-design** (tier-2) — Gate factoring batch submission on required documents present (Alvys-parity workflow-stage gating)
+    - diff: Design + build for gating factoring batch submission on required-document presence.
+    - evidence: TAIL doc references 'IH35's factoring submission gating arrives via FACT-PAR-1' as a named/planned block; no FACT-PAR-1 code found via grep across apps/backend/src/factoring/ or ap
+    - spec: NONE
+- `factoring-g3-debtor-credit-check-decision-note` **needs-design** (tier-2) — G3 (owner-decision note) — debtor credit-check surface via factor data, enhancement candidate after G1/G2
+    - diff: a design decision from Jorge on whether/how to surface debtor credit data from Faro daily reports
+    - evidence: Doc explicitly frames this as a note/enhancement candidate, not a defect. No credit-check-via-factor-data surface found in the factoring module this pass.
+    - spec: NONE
+- `migrate-faro-to-rts` **needs-design** (tier-2) — Migrate factoring integration from Faro CSV import to RTS API
+    - diff: RTS API integration design + build, per memory 'planned migration Faro -> RTS' (not yet scheduled).
+    - evidence: Only Faro CSV import found (factoring module; FARO CSV import upserts by statement date/ref per FINDINGS.txt); no RTS integration code found via grep.
+    - spec: NONE
+- `module25-required-docs-ruleset-per-entity` **needs-design** (tier-2) — Define a required-documents RULESET per entity type (Alvys-parity gating), separate from factoring submission 
+    - diff: Owner decision + design doc for a per-entity-type required-documents matrix.
+    - evidence: TAIL doc: 'the required-docs RULESET per entity type remains the queued owner decision.' Docs module has expiration tracking + a Missing-Required KPI already (per doc), but no per-
+    - spec: NONE
+- `remediation-t4.1-duplicate-schema-consolidation` **needs-design** (tier-1) — T4.1 - Consolidate duplicate/fragmented schema pairs (factor/factoring, bank/banking, settlement/settlements, 
+    - diff: Final consolidation of the remaining pairs (esp. maint(144 rows)/maintenance(17,310 rows) - both have data, doc calls for a data-lineage review before any action) and the 2 open Jorge decisions refere
+    - evidence: Auto-memory 'Schema Canonicalization Verdicts' (schema-canonicalization-verdicts) records partial progress: 'CODER-30: bank->banking; settlement=driver_finance, deprecate settlemen
+    - spec: NONE
+- `0091-g10-h3` **not-built** (tier-1) — Build the 6 backend routes the live UI calls but don't exist (404): customer payment unapply, factoring bank-m
+    - diff: backend routes for unapply/bank-match-apply/escrow-forfeit/mark-transfer/dispatch-eligibility/Pre-Flight DVIR under the appropriate money-path feature gate
+    - evidence: grep for 'unapply' across every apps/backend/src/**/*.routes.ts returns zero matches — the frontend still calls /api/v1/customers/:id/payments/:id/unapply (api/customers.ts:59-60) 
+    - spec: NONE
+- `0091-g11-5` **not-built** (tier-1) — Change month-close gate from 'zero A/R+A/P overdue' (unsatisfiable for a factoring carrier) to a reviewed/ackn
+    - diff: a sign-off/override path for can_lock + an audited owner-gated reopen route
+    - evidence: apps/backend/src/accounting/month-close.service.ts:186-244 still computes can_lock = arComplete && apComplete where arComplete = arOverdueCount===0 and apComplete = apOverdueCount=
+    - spec: NONE
+- `0243-b1-2-factor-reserve-default-liability-fallback` **not-built** (tier-1) — Stale factor_reserve_default role still typed Liability fallback despite factor_reserve_held (Asset) being can
+    - diff: remove factor_reserve_default from COA_ROLE_VALUES/ROLE_FALLBACKS or repoint its fallback to Asset
+    - evidence: apps/backend/src/accounting/coa-roles/resolver.service.ts:8,59 factor_reserve_default still present in COA_ROLE_VALUES with ROLE_FALLBACKS type:['Liability']; comment at line 43-45
+    - spec: NONE
+- `0243-g10-h3-six-ui-features-404-routes` **not-built** (tier-1) — Customer payment unapply, factoring bank-match apply, driver escrow forfeit, bank mark-transfer, driver dispat
+    - diff: build the financial routes: customer-payment unapply, factoring bank-match apply, escrow forfeit, bank mark-transfer, driver dispatch-eligibility, Pre-Flight DVIR
+    - evidence: grep -rln 'unapply|escrow.*forfeit|forfeit.*escrow|mark-transfer|dispatch-eligibility' apps/backend/src --include='*.routes.ts' returned zero matches — none of these route names ex
+    - spec: NONE
+- `0243-g11-10-month-close-checklist-unsatisfiable` **not-built** (tier-1) — [STOP-GATE] can_lock requires arOverdueCount==0 AND apOverdueCount==0; a factoring carrier with slow-pay custo
+    - diff: change the gate from 'zero overdue' to 'reviewed/acknowledged' sign-off
+    - evidence: apps/backend/src/accounting/month-close.service.ts:186-193,230-234 still computes arComplete = arOverdueCount===0 and apComplete = apOverdueCount===0 feeding can_lock — unchanged z
+    - spec: NONE
+- `0251-gap1-factoring-vendor-fk-not-stored` **not-built** (tier-1) — Book Load: factoring vendor is selected in BookLoadModalV4.tsx but no FK is stored on the load — add factoring
+    - diff: accounting.factoring_vendor_id (or similar) FK column on mdata.loads, populated at book-load time
+    - evidence: `grep -rn factoring_vendor_id apps/ db/migrations/` returns zero matches (re-ran with a broader `factoring_vendor` term too — only hits were an unrelated 404 error-code string `fac
+    - spec: NONE
+- `core-ledger-write-proof-trucking-evidence` **not-built** (tier-1) — Neon-branch write-proof harness for the trucking-specific posters (driver settlement, factoring, fuel-card) wi
+    - diff: The requested evidence doc + proof-harness test files for driver-settlement/factoring/fuel-card posters have not been produced.
+    - evidence: docs/proofs/CORE-LEDGER-WRITE-PROOF-trucking.md does not exist (find returned nothing) and no apps/backend/src/accounting/__proofs__/ directory was found in the earlier searches of
+    - spec: NONE
+- `dispatch-sweep-gap-9` **not-built** (tier-2) — Book Load to Vendor Linkage — verify book load captures vendor for factoring
+    - diff: No vendor_id / factor selection field captured on mdata.loads or book-load input at booking time.
+    - evidence: grep of apps/backend/src/dispatch/book-load.service.ts for vendor_id|factor found only an unrelated 'dispatch.factoring_packet' audit event-type string at L1250 — no vendor_id capt
+    - spec: docs/specs/DISPATCH-MODULE-SPEC.md
+- `fact-fix1-duplicate-vendors-banner` **not-built** (tier-2) — BLOCK-FACT-FIX-1 / FACT-3: 'Duplicate factoring vendors detected' banner never built
+    - diff: Duplicate-factoring-vendor detection banner UI + backend detection query.
+    - evidence: No grep hit for a duplicate-vendor-detection banner component in apps/frontend/src/pages/factoring or apps/frontend/src/pages/vendors. TEST-VENDOR cleanup (a related but distinct s
+    - spec: NONE
+- `fact-par1-submissionqueue-unrouted` **not-built** (tier-2) — BLOCK-FACT-PAR-1: route SubmissionQueue.tsx ('Submit to Factor' tab) + doc merge-to-PDF + channel adapters + s
+    - diff: Route factoring/index.tsx (or the submit_to_factor tab) into apps/frontend/src/routes/manifest.tsx; doc merge-to-PDF; channel adapters; submission audit row; 'financed' status value.
+    - evidence: apps/frontend/src/pages/factoring/SubmissionQueue.tsx exists and is imported by apps/frontend/src/pages/factoring/index.tsx:5,38 (rendered when tab==='submit_to_factor'), BUT grep 
+    - spec: NONE
+- `factoring-asc860-determination-memo` **not-built** (tier-1) — Formal CPA-ratification-ready ASC 860 sale-vs-secured-borrowing determination memo for the FARO factoring agre
+    - diff: A dedicated ASC 860 determination memo (conditions a/b/c analysis, conclusion=secured borrowing, ratification-pending status) is not present under docs/accounting/.
+    - evidence: docs/accounting/FACTORING-ASC860-DETERMINATION.md does not exist (find returned nothing). Existing docs/accounting/FACTORING-ACCOUNTING-STRUCTURE.md covers account-role bindings (e
+    - spec: NONE
+- `0441-mod8-factoring-virtual-hardcodes-zero` **partial** (tier-1) — Factoring virtual panel hardcodes $0
+    - diff: Either wire BankingHome's Factoring tile to the real /banking/factoring-virtual + accounting.factoring_companies data, or ensure views.banking_account_tiles is kept in sync with it — currently two dis
+    - evidence: apps/backend/src/banking/factoring-virtual.routes.ts implements GET /api/v1/banking/factoring-virtual, reading REAL current_reserve_balance/current_chargeback_balance from accounti
+    - spec: NONE
+- `0518-r18-schema-fragmentation-8-dup-pairs` **partial** (tier-1) — ~8 near-duplicate-concept schema pairs (factor/factoring, bank/banking, settle(s), driver_finance/payroll spli
+    - diff: canonicalization verdicts for maint/maintenance, docs/documents, reports/reporting, mdata/master_data pairs
+    - evidence: docs/audits/SCHEMA-CANONICALIZATION-VERDICTS-2026-06-28.md resolves 3 of the pairs (bank→banking fold, factor≠factoring do-not-fold, settlement.* deprecate vs driver_finance canoni
+    - spec: docs/audits/SCHEMA-CANONICALIZATION-VERDICTS-2026-06-28.md
+- `factoring-coder-directive-item-c-unconfirmed` **partial** (tier-1) — 05_CODER-DIRECTIVE (factoring) Item C: draft-vs-posted immutability + reason-coded true-up — unconfirmed
+    - diff: Direct verification of draft-vs-posted immutability enforcement + reason-coded true-up in the factoring batch/advance posting path.
+    - evidence: UNVERIFIED — I did not independently re-check this item; the 07-10 audit itself marks it 'unconfirmed' rather than asserting a verdict, and I did not find time to grep the factorin
+    - spec: NONE
+- `guard-gap-factoring-treatment-unwired` **partial** (tier-1) — scripts/verify-factoring-treatment.mjs exists (CODER-34, PR #1770 factoring secured-borrowing treatment guard)
+    - diff: A wire-in line in scripts/verify-pre-commit.mjs (or a workflow) calling this guard.
+    - evidence: scripts/verify-factoring-treatment.mjs exists (confirmed via find). grep -n 'verify-factoring-treatment' scripts/verify-pre-commit.mjs .github/workflows/*.yml returned 0 hits (conf
+    - spec: NONE
+
+### finance-hub  (9 open)
+
+- `business-property-allocation-bpp-rendition` **built** (tier-2) — Texas Form 50-144 Business Personal Property (BPP) rendition — filing generator selecting assets by owning ent
+- `fh-01-finance-hub-route-broken` **built** (tier-3) — /finance-hub silently redirects to Home
+- `fin-19-financial-statements-parity` **built** (tier-2) — Build read-only Finance-Hub statements: P&L, Balance Sheet, Trial Balance behind FINANCE_STATEMENTS_UI_ENABLED
+- `legal-template-library-full-build` **built** (tier-2) — Seed 7 new legal templates (4 lease versions + 3 NDA/non-compete versions) ACTIVE + bilingual, unified creator
+- `legal-template-library-lease-nda-plus-unified-creator` **built** (tier-1) — Seed 4 lease + 3 NDA templates as status='draft' and build a unified Lease/NDA/Policy creator behind LEGAL_TEM
+- `owner-batch-v2-s1-form-50144-property-tax` **built** (tier-3) — S1 - Form 50-144 (property tax rendition) creator, per owner_company_id, no auto-file
+- `0258-audit-107` **needs-design** (tier-3) — Audit 107: Utilization Audit — Asset utilization, resource usage, optimization
+    - diff: a utilization dashboard/benchmarking/optimization/analytics/forecasting dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new utilization dashboard/benchmarking/optimization/analytics/forecasting systems/dashboards/analytics for this domain; no such system found in apps/fr
+    - spec: NONE
+- `0451-fin2-finance-lands-on-stub-not-hub` **not-built** (tier-3) — /finance lands on a placeholder stub (Finance Overview) while the real overview lives at /finance/hub — two in
+    - diff: make /finance land on the Hub (keep stub Overview reachable as a tab) and unify the subnav into one tab set including Hub/Statements/Calculator — requires Jorge's word since it changes the landing def
+    - evidence: apps/frontend/src/routes/manifest.tsx:4004 — `<Route path="/finance" element={<FinanceOverviewPage />}>` (the stub) is still separate from `<Route path="/finance/hub" element={<Fin
+    - spec: NONE
+- `phase14-audit-235` **partial** (tier-3) — Build deployment tracking/dashboard/analytics (deployment process docs, release management, rollback procedure
+    - diff: In-repo deployment dashboard/analytics UI (deploy history/rollback trend beyond Render's own console).
+    - evidence: Deployment process is documented and automated: render.yaml (Render deploy pipeline), .github/workflows/deploy-approval.yml, prod-postdeploy-verify.yml (post-deploy health verifica
+    - spec: NONE
+
+### fleet  (50 open)
+
+- `0091-g4-deploy` **built** (tier-2) — Use a seeded fixed IH35_SMOKE_UNIT_ID for preDeploy smoke instead of hinging on one live prod row; exclude the
+- `0091-h4-2` **built** (tier-2) — Implement Samsara's documented v1:timestamp:body webhook signature scheme + reject-before-persist + rate limit
+- `0091-m-eld-1` **built** (tier-2) — Guard ELD edit-history queries against the not-yet-provisioned samsara.hos_log_edits table so the module retur
+- `0091-m-fleet-1` **built** (tier-2) — Fix trailer quick-assign UPDATE mdata.equipment WHERE operating_company_id (phantom column, real columns are o
+- `0181-compliance-dashboard-equipment-opco-500` **built** (tier-1) — compliance dashboard 500 on mdata.equipment.operating_company_id (confirm real entity-scope column, don't inve
+- `0181-insurance-policy-unit-is-active-500` **built** (tier-1) — insurance — policy_unit is_active 500 (find the real column, fix)
+- `0219-samsara-webhook` **built** (tier-2) — Restore/confirm Samsara webhook ingestion path is not broken/stale
+- `0243-e2-5-samsara-fault-history-orphan-fk` **built** (tier-1) — maintenance.samsara_fault_code_history.unit_id NOT NULL with no FK to mdata.units — feeds predictive auto-WO o
+- `0243-g1-1-admin-self-promote-to-owner` **built** (tier-1) — [CRIT/LIVE-EXPLOITABLE] Any Administrator can PATCH their own role to Owner — full privilege escalation to the
+- `0243-h4-2-samsara-webhook-wrong-scheme-writes-before-reject` **built** (tier-2) — Samsara webhook verify HMACs body-only (real scheme is v1:timestamp:body); on bad signature it INSERTs the raw
+- `0277-samsara-webhook-todo` **built** (tier-3) — TODO in Samsara webhook signature verification: align with Samsara's documented webhook signature scheme
+- `0518-r02-compliance-dashboard-equipment-opco-500` **built** (tier-1) — Fix compliance dashboard 500: compliance-aggregate.service.ts queried mdata.equipment for operating_company_id
+- `bug2-mdata-equipment-opco-500` **built** (tier-3) — Fix /compliance 500 caused by filtering mdata.equipment.operating_company_id (column does not exist on mdata.e
+- `coder-11-reefer-15min-poller` **built** (tier-3) — Reefer 15-min poller: scheduled job pulling reefer status from Samsara every 15 minutes
+- `compliance1-live-fleet-stale-units-filter` **built** (tier-3) — Compliance 'Live Fleet' view shows telematics units years-stale (e.g. last update 2022/2024) inline as if curr
+- `fl-04-search-placeholder-truncated` **built** (tier-3) — Fleet search placeholder 'Search Unit #, VIN, Make/Mode...' is truncated
+- `fleet-1-avg-age-kpi` **built** (tier-3) — FLEET-1: AVG AGE KPI shows 0.0y despite trucks spanning 2009-2022 (null-year trailers dragging the average)
+- `fleet-1-avg-age-kpi-2` **built** (tier-3) — Fix FLEET AVG AGE KPI computing 0.0 despite real model years present
+- `maint-3-wo-unit-shows-uuid` **built** (tier-3) — Work-order 'Unit' column rendered a raw UUID fragment instead of the unit display name
+- `0258-audit-105` **needs-design** (tier-3) — Audit 105: Productivity Audit — Output measurement, resource productivity, improvement opportunities
+    - diff: a productivity dashboard/benchmarking/improvement tracking/forecasting dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new productivity dashboard/benchmarking/improvement tracking/forecasting systems/dashboards/analytics for this domain; no such system found in apps/fro
+    - spec: NONE
+- `0258-audit-111` **needs-design** (tier-3) — Audit 111: Downtime Audit — Equipment downtime, availability, reliability
+    - diff: a downtime dashboard/availability metrics/reliability metrics dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new downtime dashboard/availability metrics/reliability metrics systems/dashboards/analytics for this domain; no such system found in apps/frontend/src
+    - spec: NONE
+- `consolidate-distributed-modules-fuel-tasks-financehub` **needs-design** (tier-3) — Consolidate Fuel/Tasks/Finance-Hub functionality into dedicated modules instead of leaving them distributed
+    - diff: A consolidation design decision — additive-only rule means this would be a NEW unifying read-surface, not a removal of the distributed pieces.
+    - evidence: Confirmed still distributed: no dedicated apps/backend/src/fuel/ or apps/backend/src/tasks/ backend directory found (fuel logic lives in dispatch/accounting/compliance/banking; tas
+    - spec: NONE
+- `phase3-audit72-calibration` **needs-design** (tier-3) — Audit 72 — equipment calibration system, measurement accuracy tracking, traceability, calibration schedule/das
+    - diff: a calibration tracking system for any regulated measurement equipment (e.g. ELD/scales) if Jorge wants this scope
+    - evidence: grep -ril 'calibration' apps/ docs/ -> empty (re-run empty). Plausibly relevant to DOT scale/ELD calibration but nothing tracked today.
+    - spec: NONE
+- `0091-m-woid-1` **not-built** (tier-1) — Fix maintenance.next_wo_display_id querying phantom mdata.units.operating_company_id (real columns are owner_c
+    - diff: maintenance.next_wo_display_id must use COALESCE(currently_leased_to_company_id, owner_company_id) instead of operating_company_id when querying mdata.units
+    - evidence: db/migrations/0049_p3_t11_6_1_wo_format_vendor_inventory_integrity.sql, function maintenance.next_wo_display_id, still does `SELECT ... FROM mdata.units WHERE id = p_unit_id AND op
+    - spec: NONE
+- `0243-c2-3-samsara-position-poll-no-entity-scope` **not-built** (tier-2) — samsara-position-poll-worker reads mdata.units under bypass with no owner/leased predicate — enumerates every 
+    - diff: scope query to COALESCE(currently_leased_to_company_id, owner_company_id) = <caller's company>, or explicitly iterate all companies with per-company scoping
+    - evidence: apps/backend/src/jobs/samsara-position-poll-worker.ts:19-42 still selects u.owner_company_id AS operating_company_id with no WHERE clause scoping to a specific company — still read
+    - spec: NONE
+- `0441-mod13-equipment-no-loan-lease-depreciation-section` **not-built** (tier-3) — Equipment no loan/lease/depreciation section
+    - diff: A Loan/Lease/Depreciation tab or section on UnitDetail.tsx that reverse-drills into the Factoring module's equipment-loan records for that unit, and/or ASC 842 lease/depreciation schedule display.
+    - evidence: grep for 'depreciation|loan|lease' (case-insensitive) across apps/frontend/src/pages/units (UnitDetail.tsx, UnitDriverHistoryStrip.tsx, UnitPermitsTab.tsx, UnitTollTagsTab.tsx) ret
+    - spec: NONE
+- `0441-mod13-inventory-part-to-unit-none` **not-built** (tier-3) — Inventory part->unit NONE
+    - diff: unit_id FK on the parts-usage/consumption side (e.g. a parts_usage or work-order-linked table), plus a unit picker in the UI.
+    - evidence: PartsInventoryRow type (apps/frontend/src/api/maintenance.ts:141) and MaintenancePartRow (used by InventoryPartsStockPage.tsx) both lack a unit_id field. PartCreateDrawer.tsx has n
+    - spec: NONE
+- `0441-mod5-actionbar-dead-links` **not-built** (tier-3) — ActionBar Assign Truck/View on Map -> /fleet/map dead
+    - diff: An assign-truck modal wired to the assign_truck query param, and a real '/fleet/map' route (or repoint to an existing fleet-map view)
+    - evidence: apps/frontend/src/components/driver-profile/ActionBar.tsx:41 links to `/drivers/${driverId}?assign_truck=1` — assign_truck referenced nowhere else (no page reads the param), so it 
+    - spec: docs/approved-screens/7-Drivers.png
+- `0441-mod9-create-trailer-no-manual-path` **not-built** (tier-3) — Create TRAILER no manual/office path anywhere
+    - diff: A create-trailer UI (form or modal) calling POST /api/v1/mdata/equipment — backend is ready, only the office/manual UI path is missing.
+    - evidence: apps/backend/src/mdata/equipment.routes.ts:213 `app.post("/api/v1/mdata/equipment", ...)` is live. A repo-wide grep for a frontend `createTrailer`/`createEquipment` call against th
+    - spec: NONE
+- `0441-mod9-create-unit-only-via-maintenance-vehicles` **not-built** (tier-3) — Create UNIT only via /maintenance/vehicles (Maintenance page)
+    - diff: A create-unit path reachable from the Fleet module itself (not only buried in Maintenance master-data admin).
+    - evidence: apps/frontend/src/pages/maintenance/vehicles/VehiclesMasterDataPage.tsx:67-88 is the only frontend caller of a unit-create mutation (`createMaintenanceVehicle`, hitting POST /api/v
+    - spec: NONE
+- `0441-mod9-fleet-insurance-summary-never-rendered` **not-built** (tier-3) — Fleet `insurance_summary` computed but never rendered
+    - diff: Either render `insurance_summary` somewhere distinct (e.g. a dedicated Insurance section with monthly_premium, which ComplianceSection does not show), or remove the duplicate dead field and rely solel
+    - evidence: apps/backend/src/mdata/unit-aggregate.service.ts:644-655 computes `insurance_summary: {us_policy: ..., mx_policy: ...}` on the unit-profile response. apps/frontend/src/pages/fleet/
+    - spec: NONE
+- `0441-mod9-fleet-roster-no-create-actions` **not-built** (tier-3) — Fleet Roster has NO create-unit and NO create-trailer action
+    - diff: A '+ Create' action on the Fleet Roster wired to POST /api/v1/mdata/units (unit) and POST /api/v1/mdata/equipment (trailer) — both backends already exist (see items 17 and 19), this is purely a UI gap
+    - evidence: apps/frontend/src/pages/fleet/FleetHomePage.tsx (29 lines) renders only `<FleetTablePage>`. apps/frontend/src/pages/maintenance/FleetTablePage.tsx (328 lines) has zero matches for 
+    - spec: docs/approved-screens/fleet-table.html
+- `0441-mod9-second-create-unit-backend-orphaned` **not-built** (tier-3) — 2nd create-unit backend (POST /mdata/units) live but UI-orphaned
+    - diff: Either wire a frontend caller to POST /api/v1/mdata/units (e.g. from the Fleet Roster create action in item 11), or deprecate/remove the route in favor of the maintenance/vehicles path — currently two
+    - evidence: apps/backend/src/mdata/units.routes.ts:243 `app.post("/api/v1/mdata/units", ...)` is a fully live, registered route. A repo-wide grep for any frontend fetch to `/api/v1/mdata/units
+    - spec: NONE
+- `0441-mod9-trailerprofile-archive-dead` **not-built** (tier-3) — TrailerProfile "Archive" DEAD
+    - diff: Wire handleArchive to POST /api/v1/mdata/equipment/:id/deactivate (backend already built).
+    - evidence: apps/frontend/src/pages/fleet/TrailerProfilePage.tsx:59-63 `handleArchive` is the identical stub pattern: `pushToast("Archive functionality not yet implemented", "info"); // TODO: 
+    - spec: NONE
+- `fl-01-vin-make-model-year-blank` **not-built** (tier-2) — VIN, Make/Model, Year blank for all 109 active units
+    - diff: Populate VIN/make/model/year from Samsara or require entry at unit create.
+    - evidence: Data-population question (mdata.units VIN/make/model/year) - a live-data gap requiring Samsara sync or manual entry, not a frontend code defect (apps/frontend/src/components/FleetT
+    - spec: NONE
+- `fl-02-location-blank-despite-samsara` **not-built** (tier-2) — LOCATION column blank for all units despite Samsara being connected
+    - diff: Debug Samsara location sync into the fleet table (or confirm it is already working live and this defect is stale).
+    - evidence: Data/pipeline question - whether Samsara GPS data flows into the fleet table's LOCATION column is a live integration-health question, not resolvable from static repo inspection alo
+    - spec: NONE
+- `fleet-2-trailer-master-data-sparse` **not-built** (tier-3) — FLEET-2: Trailers (Dry Van, 72 units) lack VIN/year/make-model in master records
+    - diff: trailer master-data enrichment (VIN/year/make-model) — a data-ops task, not code
+    - evidence: Doc itself notes this is a data-completeness gap, not a code defect; no code change would resolve it — it needs master-data enrichment. No enrichment script/migration found in this
+    - spec: NONE
+- `m-08-integration-strip-duplicates-topbar` **not-built** (tier-3) — In-module Integration status bar (QBO/Samsara/Relay) inside Maintenance duplicates topbar
+    - diff: Remove the redundant IntegrationsStrip render from MaintenanceHome.tsx (the topbar already shows this).
+    - evidence: apps/frontend/src/pages/maintenance/MaintenanceHome.tsx:297 still renders <IntegrationsStrip pendingQboCount={kpis.pending_qbo} />, and apps/frontend/src/pages/maintenance/componen
+    - spec: NONE
+- `phase12-audit207-social` **not-built** (tier-3) — Audit 207 — social impact assessment, community engagement, labor practices documentation/dashboard
+    - diff: N/A — HR/CSR-style tracking, no grounding in this TMS's operational domain
+    - evidence: grep -ril 'social.?impact|community.?engagement|labor.?practices' apps/ docs/ -> empty (re-run empty).
+    - spec: NONE
+- `phase13-audit230-agriculture-na` **not-built** (tier-3) — Audit 230 — farming, agriculture equipment, sustainability (doc's own verdict: N/A)
+    - diff: N/A — out of scope
+    - evidence: Doc's own verdict is 'N/A — Not applicable'. No related surface in repo.
+    - spec: NONE
+- `phase3-audit71-laboratory` **not-built** (tier-3) — Audit 71 — laboratory system, lab procedures, equipment calibration, test-accuracy verification, lab dashboard
+    - diff: N/A — not applicable to a trucking TMS
+    - evidence: grep -ril 'laboratory|lab.?procedure' apps/ docs/ -> empty (re-run empty). No lab function in a trucking carrier.
+    - spec: NONE
+- `0243-g3-5-csp-report-only-samsara-placeholder-sig` **partial** (tier-3) — CSP enforce-flip never happened (still reportOnly); Samsara webhook uses placeholder HMAC scheme; some routes 
+    - diff: flip CSP reportOnly:true -> false to actually enforce; error-message echo not re-checked
+    - evidence: apps/backend/src/middleware/security-headers.ts:25 still reportOnly: true, comment 'switch reportOnly→false to enforce' — NOT flipped. BUT the Samsara scheme is fixed: apps/backend
+    - spec: NONE
+- `0441-mod11-maintenance-cost-unit-typeerror` **partial** (tier-3) — Maintenance-Cost/Unit TypeError crash on real data (field contract break)
+    - diff: align backend response keys (total_parts_cents/total_labor_cents/total_outsourced_cents/miles_driven) with what the frontend reads (parts_cents/labor_cents/outsourced_cents/miles), or vice versa; fix 
+    - evidence: Confirmed field-name mismatch, NOT a confirmed literal TypeError: backend apps/backend/src/reports/maintenance-cost-per-unit.routes.ts:339-346 returns totals as {wo_count, total_pa
+    - spec: NONE
+- `0519-dc2-maint-schema-144-rows-active-alongside-maintenance` **partial** (tier-1) — maint schema (144 rows) actively receiving data alongside maintenance (17,286 rows) — queries against maintena
+    - diff: a canonicalization verdict for maint vs maintenance (which is canonical, consolidation plan)
+    - evidence: apps/backend/src/maint/pm.routes.ts and apps/backend/src/maint/parts.routes.ts still actively reference the maint schema (grep confirmed, re-checked). docs/audits/SCHEMA-CANONICALI
+    - spec: docs/audits/SCHEMA-CANONICALIZATION-VERDICTS-2026-06-28.md
+- `0519-dq4-fleet-blank-vin-make-model` **partial** (tier-2) — Many fleet units with VIN blank, Make/Model blank — affects PM scheduling, IFTA, insurance accuracy
+    - diff: live query + data cleanup for units with blank VIN/Make/Model
+    - evidence: Live-data hygiene question, not verifiable from static repo.
+    - spec: NONE
+- `compliance-1-stale-units-segregation` **partial** (tier-3) — COMPLIANCE-1: Live Fleet Overview table mixes years-stale telematics units with real live units instead of seg
+    - diff: confirmation that stale/decommissioned units are filtered OUT of or segregated into a separate group in the 'Live Fleet' table, vs merely labeled inline as the doc originally observed
+    - evidence: apps/backend/src/telematics/fleet-location-hos.service.ts:9,42 and hos.routes.ts:225-253 compute a per-row 'stale' boolean (STALE_AFTER_MIN=60) and fleet-location-hos.routes.ts:40 
+    - spec: NONE
+- `home-5-chart-empty-states-unverified` **partial** (tier-3) — Home dashboard charts (Weekly revenue, WO by status, Fleet utilization) must show an explicit empty-state mess
+    - diff: Could not confirm an empty-state component wraps the Weekly-revenue/WO-status/Fleet-utilization charts specifically; the chart components may live outside pages/home/ (e.g. a shared charts/ dir) — nee
+    - evidence: grep for "No revenue recorded"/"EmptyState" in apps/frontend/src/pages/home/*.tsx returned 0 matches on first pass; re-grepped broader (case-insensitive "empty") still found no cha
+    - spec: NONE
+- `home6-fleet-rls-opco-context-unverified` **partial** (tier-1) — Home fleet/unit endpoints (fleet-utilization, fleet-snapshot, kpi-summary) return 0 because the RLS operating-
+    - diff: Live confirmation that /home/fleet-utilization and /home/fleet-snapshot (the two endpoints named in the defect) actually route through withCompanyScope with the SAME mechanism and return non-zero coun
+    - evidence: apps/backend/src/home/home-widgets.routes.ts consistently wraps its handlers in `withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {...})` (seen at li
+    - spec: NONE
+- `owner-batch-s2-units-value-catalog` **partial** (tier-2) — S2 — Units Value Catalog: per-unit valuation records (value, source: insurance/market/original-cost/owner-over
+    - diff: a dedicated unit-valuation table/catalog (value, source enum, effective_date, evidence file link, append-only/audit) and its UI, feeding both the Property Tax Rendition (50-144) and Insurance value fi
+    - evidence: Two different grep passes (unit-value/unitvaluation/value_source/valuation, and a second broader pass) found no matching table, route, or page for a dedicated per-unit valuation ca
+    - spec: NONE
+- `phase13-audit224-transportation-dashboard-route-optim` **partial** (tier-3) — Audit 224 — transportation dashboard, transportation analytics, fleet-utilization optimization, route optimiza
+    - diff: a dedicated transportation-analytics dashboard beyond Home's general widgets; fleet-utilization optimization; route optimization (e.g. DAT-360-style load-board/routing intelligence, referenced in memo
+    - evidence: Core TMS surfaces confirmed real (doc's own ✅): mdata.loads, dispatch schema, mdata.units, mdata.drivers, safety.safety_events, safety.dvir_submissions, compliance schema. Home/das
+    - spec: NONE named for a transportation-analytics dashboard; docs/trackers load-board-module-planned covers a related future nav item
+
+### legal  (8 open)
+
+- `0033-verify-schema-contract-guard` **built** (tier-3) — Add verify-schema-contract CI guard failing any PR referencing a table/column absent from the schema manifest 
+- `0091-m-legal-1` **built** (tier-2) — Add Owner/Admin role enforcement to all 11 legal/matters.routes.ts endpoints (any authenticated role could rea
+- `comprehensive-notification-system` **needs-design** (tier-3) — Build a comprehensive cross-module notification center (preferences, history, templates)
+    - diff: Notification center design spanning all modules, not just compliance credentials.
+    - evidence: compliance.notification_rules/notification_log exist for credential expirations only (Phase-9 audit); no general-purpose notification center found.
+    - spec: NONE
+- `0441-mod12-legal-8of10-pages-omit-breadcrumb` **not-built** (tier-3) — Legal 8/10 pages omit breadcrumb
+    - diff: breadcrumb prop on PageHeader/BackArrowHeader for the 12 pages listed above.
+    - evidence: grep -rln 'breadcrumb' apps/frontend/src/pages/legal returns only LegalTemplateDetailPage.tsx and LegalTemplatesListPage.tsx. Of ~14 non-modal legal page files (LegalAttorneyReview
+    - spec: NONE
+- `0441-mod12-legal-emoji-section7-violations` **not-built** (tier-3) — Legal emoji §7 violations
+    - diff: Replace 🔒 emoji with a Lucide icon component or plain text per §7 (no emojis rule).
+    - evidence: grep -rnP unicode emoji ranges over apps/frontend/src/pages/legal found apps/frontend/src/pages/legal/matters/LegalMatterDetailPage.tsx:232 rendering '🔒 Privileged — Owner access o
+    - spec: NONE
+- `0441-mod12-legal-no-reverse-drill-through` **not-built** (tier-3) — Legal no reverse drill-through anywhere
+    - diff: A 'Legal Matters' section/link on driver profile (and other linked entity profiles) that queries legal.matters WHERE related_driver_id = :id.
+    - evidence: grep -rln 'legalMattersApi' across apps/frontend/src/pages excluding pages/legal returns zero results - no driver/customer/vendor/unit profile page links into a related legal matte
+    - spec: NONE
+- `0441-mod12-legal-patch-matters-never-called` **not-built** (tier-3) — Legal PATCH matters/:id built but never called -> create+close but never correct
+    - diff: An edit form/action on LegalMatterDetailPage (or LegalMattersListPage) that calls legalMattersApi.update().
+    - evidence: apps/backend/src/legal/matters.routes.ts:182 registers app.patch('/api/v1/legal/matters/:id', ...). apps/frontend/src/api/legal-matters.ts:52-57 exports legalMattersApi.update() wr
+    - spec: NONE
+- `phase8-audit168-blockchain-na` **not-built** (tier-3) — Audit 168 — blockchain implementation, smart contracts, blockchain security/dashboard/analytics (doc's own ver
+    - diff: N/A — out of scope
+    - evidence: Doc's own verdict is 'N/A — Not applicable to transportation management system'. grep -ril 'blockchain|smart.?contract' apps/ -> empty, confirming no related surface.
+    - spec: NONE
+
+### maintenance  (22 open)
+
+- `0243-d2-3-no-edit-wo-ui-dead-patch` **built** (tier-3) — updateWorkOrder PATCH has zero frontend callers; 'Create / Edit' modal always POSTs a new WO; detail modal is 
+- `0243-e1-5-maint-schema-stranded` **built** (tier-2) — maint.* holds 5 real queried tables (part, pm_schedule, position_history) under the wrong schema name next to 
+- `m-03-wo-date-opened-off-by-one` **built** (tier-3) — WO Date Opened defaults to tomorrow instead of today (timezone off-by-one)
+- `maint1-demo-work-orders-in-live-list` **built** (tier-2) — Remove DEMO-WO-001/002 demo work orders from surfacing in the production Maintenance work-order list (doc aske
+- `0280-41-wo-to-vendor-flow` **needs-design** (tier-3) — Data flow: WO to Vendor linkage — verify WO status query includes vendor FK
+    - diff: 
+    - evidence: Not independently checked in this pass.
+    - spec: NONE
+- `home-4-wo-status-unknown-mapping` **needs-design** (tier-3) — Home 'Work orders by status' donut buckets every WO as Unknown instead of real status
+    - diff: verification of the actual bucket-mapping code path against the WO status enum, and a live check of the Home donut
+    - evidence: apps/backend/src/home/home-widgets.routes.ts:63 GET /api/v1/home/wo-status-counts exists and is opco-scoped (home-widgets.routes.test.ts:83 passes operating_company_id). Status-buc
+    - spec: NONE
+- `0091-h2-3` **not-built** (tier-2) — Plan an in-house session layer to replace the deprecated/unmaintained lucia auth library (sunset Mar 2025)
+    - diff: roadmap item; a migration plan per Lucia's own migration guide reusing Arctic/Oslo (already in the tree)
+    - evidence: package.json:870 still pins "lucia": "3.2.2" — confirmed still the live dependency, unchanged, matching the finding's 'multi-block, non-urgent' framing.
+    - spec: NONE
+- `0091-h5-1` **not-built** (tier-1) — Add monthly range partition + maintenance cron (or R2 archive) for unbounded append-only spine tables (outbox.
+    - diff: a monthly range-partition migration + maintenance cron, or a scheduled archive-to-R2-then-detach job
+    - evidence: Repo-wide grep for PARTITION BY across any outbox/row_changes-related migration returned zero matches — no partitioning found on the live append-only spine tables.
+    - spec: NONE
+- `0243-b3-1-legacy-wo-create-endpoint-malformed-ids` **not-built** (tier-2) — Second, older POST /api/v1/work-orders hardcodes source_type='IS' and mints a non-canonical WO number
+    - diff: remove/410 the legacy route or delegate it to the canonical wo-number.service.ts generator + 7-type enum
+    - evidence: apps/backend/src/work-orders/work-orders.routes.ts:606 still has app.post('/api/v1/work-orders', ...) as a live route alongside :id/approve, :id/start, :id/complete, :id/cancel, :i
+    - spec: NONE
+- `0243-h2-3-lucia-deprecated-auth-lib` **not-built** (tier-2) — Lucia 3.2.2 + adapter-postgresql (core session auth) are sunset/deprecated (Mar 2025) with no future patches; 
+    - diff: plan an in-house session layer per Lucia's migration guide (reuse Arctic/Oslo)
+    - evidence: package.json:855,870 still '"@lucia-auth/adapter-postgresql": "3.1.2"' and '"lucia": "3.2.2"' — unchanged. Doc itself notes this is 'Multi-block, non-urgent' roadmap work.
+    - spec: NONE
+- `0441-mod2-dvir-followup-wo-wrong-table` **not-built** (tier-2) — DVIR Defects follow_up_wo_id written to wrong table
+    - diff: The convert-to-WO write in defects.routes.ts:270-277 needs to UPDATE safety.dvir_defects SET follow_up_wo_id = $2 WHERE id = <defect id> (in addition to or instead of the submissions-level update).
+    - evidence: apps/backend/src/maintenance/defects.routes.ts:216 checks 'already converted' status by reading defect.follow_up_wo_id (sourced from safety.dvir_defects per the SELECT alias 'dd.fo
+    - spec: NONE
+- `0441-mod2-pm-schedule-hardcoded-create` **not-built** (tier-3) — PM Schedule "+ Create" sends hardcoded all-zero garbage body
+    - diff: A create form/modal to select a real unit_id, pm_type, interval_kind, and interval_value before calling createMaintenancePmSchedule.
+    - evidence: apps/frontend/src/pages/maintenance/pm-schedule/PmSchedulePage.tsx:20-32 the createM mutation is invoked with a fixed literal body: unit_id: "00000000-0000-0000-0000-000000000000" 
+    - spec: NONE
+- `0441-mod2-road-service-wrong-source-type` **not-built** (tier-3) — Road Service WO tagged ES not RS
+    - diff: One-line fix: change source_type: "ES" to source_type: "RS" in wo-integration.ts:101.
+    - evidence: apps/backend/src/maintenance/road-service/wo-integration.ts:101 createWorkOrderFromRoadServiceTicket() sets 'source_type: "ES"' when auto-creating a WO from a road service ticket. 
+    - spec: NONE
+- `0441-mod2-settings-view-only` **not-built** (tier-2) — Maintenance Settings 100% view-only ("Save" no onClick)
+    - diff: A persisted maintenance_settings table/columns, a PATCH/POST backend endpoint, and frontend form state + onClick wired to it (both ends are unbuilt, not just the button).
+    - evidence: apps/frontend/src/pages/maintenance/MaintenanceSettingsPage.tsx (64 lines total) - every <input> has readOnly (lines 29, 36, 38, 44, 50, 52); the 'Save' button (lines 57-59) has no
+    - spec: NONE
+- `0441-mod2-vendor-ap-disconnected` **not-built** (tier-3) — Maintenance vendor->AP disconnected (metadata.mdata_vendor_id read-never-written)
+    - diff: A write path (create/update field + buildVendorMetadata inclusion) that sets metadata.mdata_vendor_id when a maintenance vendor is linked to a real AP/mdata vendor record.
+    - evidence: apps/backend/src/maintenance/vendors.routes.ts:190 reads 'metadata.mdata_vendor_id' (and line 191 'metadata.qbo_vendor_id') off catalogs.maintenance_vendors, used to correlate work
+    - spec: NONE
+- `0441-mod9-maintenance-vendor-linkage-broken` **not-built** (tier-3) — Maintenance Vendors linkage broken (metadata.mdata_vendor_id never written)
+    - diff: Add mdata_vendor_id to createSchema/patchSchema + buildVendorMetadata() in maintenance/vendors.routes.ts, and a vendor picker in the maintenance-vendor create/edit UI that sets it (linking catalogs.ma
+    - evidence: apps/backend/src/maintenance/vendors.routes.ts:190 reads `metadata.mdata_vendor_id` if present, but `createSchema` (line 19-31) and `buildVendorMetadata()` (line 80-99) never accep
+    - spec: NONE
+- `m-01-wo-create-duplicate-header-fields` **not-built** (tier-3) — WO create form shows Status/Priority/Repaired By/Authorization # twice (compact row + full header section)
+    - diff: Remove the compact duplicate row (lines 959-964) and keep only the CreateWOSectionRenderV5Header section, or vice versa.
+    - evidence: apps/frontend/src/pages/maintenance/components/CreateWorkOrderModal.tsx lines 959-964 render a compact row with register('wo_priority'), register('status'), register('repaired_by')
+    - spec: NONE
+- `m-09-wo-table-filters-no-visual-indicator` **not-built** (tier-3) — WO table filter inputs (Source type, External vendor id, Search) have no filter icon/label
+    - diff: Add a filter icon or 'Filter:' label prefix to the WO table filter row.
+    - evidence: apps/frontend/src/pages/maintenance/MaintenanceHome.tsx:110-111 defines sourceTypeFilter/externalVendorFilter as plain useState-bound inputs; no funnel icon or 'Filter:' label pref
+    - spec: NONE
+- `0258-audit-112` **partial** (tier-3) — Audit 112: Maintenance Audit — Maintenance effectiveness, PM compliance, asset reliability
+    - diff: 
+    - evidence: A maintenance KPI dashboard DOES exist: apps/frontend/src/pages/maintenance/MaintKpiDashboardPage.tsx — contradicting the doc's implicit framing that maintenance analytics/dashboar
+    - spec: NONE
+- `0519-ma1-0-pm-schedules-for-122-vehicles` **partial** (tier-2) — 0 PM schedules configured for 122 vehicles — preventive maintenance blind, DTC auto-WO and PM countdown inacti
+    - diff: live confirmation PM schedules have been configured for the active fleet
+    - evidence: apps/frontend/src/pages/maintenance/pm-schedule/PmSchedulePage.tsx exists — the PM-schedule feature is built. Whether schedules are actually configured for the fleet is a live data
+    - spec: NONE
+- `maint2-open-wos-kpi-table-consistency` **partial** (tier-3) — Maintenance 'OPEN WOS' KPI shows 0 while the Active WOs table lists WOs with status 'open'/'in_progress' — KPI
+    - diff: confirm the KPI's open_wos computation and the Active-WOs-table query use the exact same shared status-set + demo-exclusion definition
+    - evidence: UNVERIFIED — apps/backend/src/maintenance/dashboard.routes.ts has at least two different open-status filters in the same file (line 85: status NOT IN ('complete','cancelled'); line
+    - spec: NONE
+- `wo-cancellation-reasons-fold-into-void-cancel-catalog` **partial** (tier-1) — Fold catalogs.wo_cancellation_reasons (WO-specific, 6 rows) into the unified per-entity catalogs.void_cancel_r
+    - diff: the migration that maps the 6 wo_cancellation_reasons rows into void_cancel_reasons per-entity, re-points the Cancel WO modal at void_cancel_reasons, and archives (not drops) wo_cancellation_reasons
+    - evidence: catalogs.wo_cancellation_reasons is STILL live and independently served: apps/backend/src/catalogs/wo-cancellation-reasons.routes.ts explicitly documents 'The Cancel WO modal's rea
+    - spec: NONE
+
+### notifications  (6 open)
+
+- `0394-tms-to-qbo-push-schema-bugs` **built** (tier-2) — TMS->QBO push path allegedly writes to columns that don't exist (qbo_sync_token / updated_at) — flagged 'to ve
+- `biz-flow-10-sync-not-real-time` **built** (tier-2) — QBO sync is queue-based outbound + CDC-poll inbound, not push/real-time, so TMS and QBO can be briefly out of 
+- `notif-a-loud-alerts-escalation` **built** (tier-3) — Loud foreground takeover alert + escalation-until-ack cron job + enhanced background web push (requireInteract
+- `notif-a-loud-alerts-escalation-built` **built** (tier-3) — NOTIF-A: loud foreground alert takeover + background web-push enhancement + server-side escalation-until-ackno
+- `rls-target3-user-notification-preferences-scope` **built** (tier-1) — RLS TARGET 3: scope identity.user_notification_preferences_open USING(true) to the session user
+- `0091-g10-h4` **needs-design** (tier-2) — Gate the generic-catch branch of QBO push sync on the same dead-letter attempt cap as the HTTP-status branches
+    - diff: re-verify the generic catch checks the dead-letter cap
+    - evidence: Not independently re-verified this pass (sync-outbound-accounting.ts:635-653 not re-checked).
+    - spec: NONE
+
+### platform  (71 open)
+
+- `0007-pattern-4-orphan-baseline` **built** (tier-3) — Systemic Pattern 4: built-but-unwired dead code — the 193-orphan baseline (wire-or-delete, shrink to ~0)
+- `0008-i-archive-not-delete-policy` **built** (tier-3) — Never delete dead/duplicate components or data — archive only, everything findable in log+audits
+- `0033-schema-canonicalization-doc` **built** (tier-3) — Produce a schema-canonicalization decision doc — one ruling per duplicate-concept schema pair (canonical vs de
+- `0033-verify-entity-scope-guard` **built** (tier-3) — Add verify-entity-scope CI guard failing any financial/operational table missing operating_company_id
+- `0091-a2-1` **built** (tier-2) — Add a CI guard rejecting new duplicate leading-NNNN migration filename numbers (18 historical dup pairs alread
+- `0091-a2-2` **built** (tier-2) — Make the schema-usage grant-gap guard blocking (exit 1) instead of warn-only, and watch all schemas
+- `0091-g10-c4` **built** (tier-2) — Add stale-lock reclaim for orphaned QBO-sync in_flight / email sending rows
+- `0091-g2-1` **built** (tier-1) — Fix raw-string-interpolated events.log_event call in broker-queue decide route (SQL injection via unvalidated 
+- `0091-m-mor-2` **built** (tier-1) — Fix MOR/Exhibits A-D phantom-column reads ($0 filing, understated UST fee) + wire the orphaned Exhibits viewer
+- `0219-ci-conflict-markers` **built** (tier-3) — Scan for and remove leftover git conflict markers (<<<<<<< / ======= / >>>>>>>) in ci.yml or any tracked file
+- `0243-a2-1-dup-migration-number-guard` **built** (tier-3) — 18 reused migration numbers with no CI guard against a new collision
+- `0243-a2-2-grant-gap-guard-blocking-all-schemas` **built** (tier-3) — Schema-usage-grant guard is warn-only, watches only 3 hardcoded schemas, not required in CI
+- `0243-a2-3-immutability-guard-timestamp-blindspot` **built** (tier-3) — verify-applied-migrations-immutable uses 4-digit regex, blind to all 238 timestamp migrations
+- `0243-g10-c1-audit-chain-verifier-never-invoked` **built** (tier-2) — [CRIT] verifyEventChain exists but no cron/route/script/render.yaml calls it; ops.audit_chain_verifications is
+- `0243-g10-c4-qbo-sync-in-flight-orphan-no-reaper` **built** (tier-1) — [CRIT] qbo-sync claims rows in_flight but nothing requeues an in_flight row orphaned by a crash/redeploy; emai
+- `0243-g2-1-sql-injection-broker-queue-audit-log` **built** (tier-1) — [CRIT] POST /alert/broker-queue/:id/decide built events.log_event('${ocId}',...) via raw string interpolation,
+- `0277-dependency-cve-scan-ci` **built** (tier-3) — Run `npm audit` in CI/CD to catch dependency CVEs
+- `cc-01-read-query-phantom-column-gate` **built** (tier-3) — Build scripts/verify-sql-read-targets.mjs - CI gate that fails on a phantom-column SELECT (the read-side compa
+- `cc03-schema-verification-standard-doc` **built** (tier-3) — Author docs/schema/SCHEMA_VERIFICATION_STANDARD.md locking the 6 correct verification methods (existence/privi
+- `coder-02-cc-02-migration-dir-guards` **built** (tier-3) — CI guards: only db/migrations/ may hold .sql migrations (dead sibling folders); new migrations may not referen
+- `phantom-unmask-canonical-regen` **built** (tier-3) — Replace scripts/canonical-relations.json with the GUARD-verified 682-relation set and remove 9 landed tables f
+- `qbo-sync-entity-hardening` **built** (tier-1) — outbox.queue gets operating_company_id + FORCE RLS (worker runs under lucia bypass); views.qbo_sync_health sco
+- `qstd-00-quality-standard-locked` **built** (tier-3) — Create docs/specs/QUALITY-STANDARD-LOCKED.md as Rule #0, wire into CURSOR-PERMANENT-RULES.md, add static CI gu
+- `rls-target2-usmca-activation-admin-gate` **built** (tier-1) — RLS TARGET 2: replace usmca_ops.activation_audit/activation_state USING(true) with an Owner/Administrator role
+- `schema-verification-standard-doc` **built** (tier-3) — Write docs/schema/SCHEMA_VERIFICATION_STANDARD.md defining the canonical V1-V6 methods (table/column existence
+- `sweep-g1-1-owner-role-escalation` **built** (tier-1) — G1-1: any Administrator could PATCH a user to role=Owner (privilege escalation to the money tier), no anti-esc
+- `systemic-pattern-193-orphan-baseline-burndown` **built** (tier-3) — 193-orphan-component baseline burn-down
+- `systemic-pattern-unmounted-backend-guard` **built** (tier-3) — CI guard: frontend API path must hit a mounted backend route (unmounted-backend pattern)
+- `task24-void-cancel-reasons-wiring` **built** (tier-1) — Reason-catalog CRUD + Lists profile + register threading + financial-void surface wiring for void/cancel reaso
+- `task3-team-chat-scoped-comments-mvp` **built** (tier-3) — 'Team Chat' tab on Tasks was an unbuilt stub; needed a scope decision between task-scoped comments+@mentions+a
+- `0258-audit-101` **needs-design** (tier-3) — Audit 101: Operational Audit — Business operations, efficiency, effectiveness
+    - diff: a operational efficiency/effectiveness/bottleneck/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new operational efficiency/effectiveness/bottleneck/dashboard systems/dashboards/analytics for this domain; no such system found in apps/frontend/src (
+    - spec: NONE
+- `0258-audit-103` **needs-design** (tier-3) — Audit 103: Efficiency Audit — Resource utilization, process efficiency, cost optimization
+    - diff: a resource utilization dashboard/process efficiency/cost optimization/benchmarking dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new resource utilization dashboard/process efficiency/cost optimization/benchmarking systems/dashboards/analytics for this domain; no such system found
+    - spec: NONE
+- `0258-audit-106` **needs-design** (tier-3) — Audit 106: Capacity Audit — Capacity planning, resource allocation, scalability
+    - diff: a capacity planning system/resource allocation optimization/scalability assessment/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new capacity planning system/resource allocation optimization/scalability assessment/dashboard systems/dashboards/analytics for this domain; no such sy
+    - spec: NONE
+- `0258-audit-113` **needs-design** (tier-3) — Audit 113: Inventory Turnover Audit — Inventory velocity, carrying costs, stock optimization
+    - diff: a inventory turnover metrics/carrying cost tracking/stock optimization dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new inventory turnover metrics/carrying cost tracking/stock optimization systems/dashboards/analytics for this domain; no such system found in apps/fro
+    - spec: NONE
+- `0262-audit-30` **needs-design** (tier-3) — Audit 30: Cloud Security Audit — Cloud configuration, IAM policies, data protection
+    - diff: a cloud security documentation/IAM policy review/configuration management/data protection/monitoring/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new cloud security documentation/IAM policy review/configuration management/data protection/monitoring/dashboard systems/dashboards/analytics for this 
+    - spec: NONE
+- `0262-audit-32` **needs-design** (tier-3) — Audit 32: Authentication Audit — Password policies, MFA implementation, session management
+    - diff: a password policy enforcement/MFA implementation/session timeout config/failed-login tracking/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new password policy enforcement/MFA implementation/session timeout config/failed-login tracking/dashboard systems/dashboards/analytics for this domain;
+    - spec: NONE
+- `0262-audit-44` **needs-design** (tier-3) — Audit 44: Social Engineering Audit — Human security, manipulation resistance, training effectiveness
+    - diff: a social engineering awareness training/manipulation resistance procedures/training effectiveness measurement/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spe
+    - evidence: Generic gap-audit asking for new social engineering awareness training/manipulation resistance procedures/training effectiveness measurement/dashboard systems/dashboards/analytics 
+    - spec: NONE
+- `0262-audit-50` **needs-design** (tier-3) — Audit 50: DevSecOps Audit — Security in CI/CD, automated security testing, security as code
+    - diff: a DevSecOps documentation/CI-CD security integration/automated security testing/security as code/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new DevSecOps documentation/CI-CD security integration/automated security testing/security as code/dashboard systems/dashboards/analytics for this doma
+    - spec: NONE
+- `0275-audit172-data-governance-framework` **needs-design** (tier-3) — Audit 172: build a formal data-governance framework (policies, stewardship, lineage tracking) + dashboard + an
+    - diff: governance framework doc + stewardship assignment + lineage tracking + dashboard
+    - evidence: No data-governance framework, stewardship role/table, or lineage-tracking code found anywhere in the repo.
+    - spec: NONE
+- `0280-01-owner-home-kpi-linkage-verification` **needs-design** (tier-3) — Owner Home: verify getKpiSummary KPI data links to correct underlying tables with proper RLS
+    - diff: a named endpoint/query to verify
+    - evidence: General audit-style recommendation, not a concrete bug report; no specific query or endpoint named to verify against. The home-widgets endpoints (apps/backend/src/home/home-widgets
+    - spec: NONE
+- `0519-at1-245-tables-missing-created-by-user-id` **needs-design** (tier-1) — 245 financial/operational tables have no created_by_user_id maker column — attribution history exists only in 
+    - diff: a design doc prioritizing which financial tables get created_by_user_id first (journal_entry_postings, bill_lines, invoice_lines, expense_lines, banking.bank_transactions per the doc's own REC-11 prio
+    - evidence: No repo-level guard or backfill plan found for a systematic created_by_user_id rollout across 245 tables. This is a large structural change requiring a prioritized migration plan, 
+    - spec: NONE
+- `phase12-audit213-supply-chain-sustainability` **needs-design** (tier-3) — Audit 213 — sustainable sourcing tracking, ethical procurement docs, supplier ESG assessment/dashboard
+    - diff: supplier ESG assessment fields/workflow on the vendor record, if Jorge wants this scope
+    - evidence: mdata.vendors exists (confirmed real, doc's own ✅). No sustainable-sourcing/ESG-assessment surface found (grep 'sustainable.?sourcing|supplier.?esg' apps/ -> empty, re-run empty).
+    - spec: NONE
+- `phase13-audit217-insurance-industry` **needs-design** (tier-2) — Audit 217 — underwriting process, claims management, solvency tracking, insurance dashboard/analytics
+    - diff: claims intake/tracking workflow, underwriting process tracking, solvency tracking, insurance dashboard
+    - evidence: insurance.policy and insurance.policy_unit confirmed real (doc's own ✅). No claims-management workflow found (grep 'claims.?management|claim.?workflow' apps/ -> empty, re-run empty
+    - spec: docs/specs/qbo-parity/INSURANCE-BLUEPRINT-ADDITION.md
+- `phase3-audit57-process-audit-docs-workflow` **needs-design** (tier-3) — Audit 57 — process documentation, workflow optimization, bottleneck ID, efficiency metrics, process dashboard
+    - diff: process documentation, workflow optimization tooling, bottleneck identification, efficiency metrics, process dashboard
+    - evidence: Load/dispatch/maintenance processes exist as schemas (mdata.loads, dispatch, maintenance — doc's own ✅ items, confirmed real schemas) but no formal process-documentation/workflow-o
+    - spec: NONE
+- `0010-f12-missing-created-by-user-id` **not-built** (tier-1) — F12: 245 financial tables missing created_by_user_id maker-column for audit trail
+    - diff: a CI guard + migration plan adding created_by_user_id (or an equivalent maker column) to the 245 listed financial tables
+    - evidence: No repo-wide guard or migration found enumerating/backfilling created_by_user_id across financial tables (no scripts/*created-by* or *maker* guard). Individual tables (e.g. account
+    - spec: NONE
+- `0243-a2-5-foundation-migrations-not-idempotent` **not-built** (tier-1) — 202606111050/55/56/57 create tables/indexes/policies without IF NOT EXISTS / DO guards
+    - diff: IF NOT EXISTS on the CREATE TABLE/INDEX/POLICY statements in 202606111050/55/56/57
+    - evidence: db/migrations/202606111050_w1a_event_log_spine.sql:10 'create table events.event_log (...' has no IF NOT EXISTS; only 'create schema if not exists events' is guarded. grep -in 'if 
+    - spec: NONE
+- `ci1-build-typecheck-ap-control-race` **not-built** (tier-1) — BLOCK_CI-1: root-cause flaky build-typecheck via verify-db-test-isolation.mjs + advisory-lock 4 ap_control DB 
+    - diff: scripts/verify-db-test-isolation.mjs + a Postgres advisory lock keyed to ap_control serializing the 4 test files.
+    - evidence: find scripts -iname 'verify-db-test-isolation.mjs' returned nothing. Doc names the 4 colliding files: bill-payment-gl-posting, bill-gl-posting, settlement-bill-payment-posting, ban
+    - spec: NONE
+- `guard-gap-qbo-sync-entity-scope-missing` **not-built** (tier-1) — scripts/verify-qbo-sync-entity-scope.mjs never created
+    - diff: The guard script.
+    - evidence: find scripts -iname verify-qbo-sync-entity-scope.mjs returned nothing (confirmed myself). Relevant given auto-memory cross-entity-leak-audit-usmca.md flags QBO-sync CoA reconciler 
+    - spec: NONE
+- `p1-circular-dependencies` **not-built** (tier-3) — P1 recommendation: Resolve Circular Dependencies (16 hours)
+    - diff: doc does not name which circular dependencies (module import cycles vs FK cycles) — needs a madge/dependency-cruiser run to confirm, not attempted in this pass
+    - evidence: UNVERIFIED
+    - spec: NONE
+- `phase12-audit210-energy` **not-built** (tier-3) — Audit 210 — energy consumption tracking, efficiency monitoring, renewable-energy tracking, energy dashboard
+    - diff: N/A — facility/renewable energy tracking, no grounding in this TMS's fleet-operations domain
+    - evidence: grep -ril 'energy.?consumption|renewable.?energy' apps/ docs/ -> empty (re-run empty).
+    - spec: NONE
+- `phase12-audit214-circular-economy` **not-built** (tier-3) — Audit 214 — circular-economy practices, resource-efficiency tracking, waste-reduction tracking/dashboard
+    - diff: N/A — no grounding in this TMS's domain
+    - evidence: grep -ril 'circular.?economy' apps/ docs/ -> empty (re-run empty).
+    - spec: NONE
+- `phase13-audit218-healthcare-na` **not-built** (tier-3) — Audit 218 — healthcare/patient-care system (doc's own verdict: N/A)
+    - diff: N/A — out of scope for a trucking TMS
+    - evidence: Doc's own verdict is 'N/A — Not applicable to transportation management system'. Confirmed no related surface (grep 'patient.?care' apps/ -> empty).
+    - spec: NONE
+- `phase13-audit221-retail-na` **not-built** (tier-3) — Audit 221 — retail store-operations system (doc's own verdict: N/A)
+    - diff: N/A — out of scope
+    - evidence: Doc's own verdict is 'N/A — Not applicable'. No related surface in repo.
+    - spec: NONE
+- `phase13-audit222-restaurant-na` **not-built** (tier-3) — Audit 222 — restaurant/food-service system (doc's own verdict: N/A)
+    - diff: N/A — out of scope
+    - evidence: Doc's own verdict is 'N/A — Not applicable'. No related surface in repo.
+    - spec: NONE
+- `phase13-audit228-energy-duplicate` **not-built** (tier-3) — Audit 228 — energy production tracking, distribution monitoring, efficiency tracking, energy dashboard (indust
+    - diff: N/A — no energy-production/distribution operation in a trucking carrier
+    - evidence: Same ask as Phase12 Audit210; grep -ril 'energy.?production|energy.?distribution' apps/ docs/ -> empty (re-run empty).
+    - spec: NONE
+- `skill-update-additions-2026-07-03-verbatim-commit` **not-built** (tier-3) — Commit 6 specific rule additions verbatim into .claude/skills/ih35-tms-standards/SKILL.md (external-dependency
+    - diff: re-check ~/.claude/skills/ih35-tms-standards/SKILL.md for the 6 named rule blocks and add any missing ones verbatim
+    - evidence: UNVERIFIED — the local skill file at ~/.claude/skills/ih35-tms-standards/ was not readable in this sandbox session (filesystem access to the skills directory was inconsistent betwe
+    - spec: NONE
+- `0010-f2-unscoped-financial-tables` **partial** (tier-1) — F2: 58 financial/operational tables have no operating_company_id/tenant scoping column
+    - diff: per-table disposition (global-by-design vs needs-scoping) for the remaining ~57 tables, plus migrations for any that need it
+    - evidence: db/migrations/202606300090_af3_catalogs_classes_per_entity.sql adds operating_company_id to catalogs.classes (one of the 58 listed) with backfill + NOT NULL + unique index — proves
+    - spec: NONE
+- `0010-f3-rls-missing-force` **partial** (tier-1) — F3: 86 tables have RLS ENABLED but not FORCED (superuser/owner-role queries can bypass row-level policies)
+    - diff: confirmation that all 86 originally-listed tables now carry FORCE (not just the financial subset covered by 202606281050)
+    - evidence: db/migrations/202606281050_force_rls_financial_tables.sql exists and targets financial tables; db/migrations/202607091520_p4_3_recurring_bill_templates_opco_uuid.sql also touches F
+    - spec: NONE
+- `0033-verify-fk-integrity-guard` **partial** (tier-2) — Add verify-fk-integrity scan flagging every *_id column with no FK, with a curated external-id allow-list
+    - diff: a general-purpose orphan-*_id-column-with-no-FK CI scan covering all financial/core schemas with an allowlist for plaid_*/qbo_*/samsara_* ids
+    - evidence: Only found scripts/verify-fk-integrity-fault-da-records.mjs — a narrow single-feature guard (fault/DA records), not a general repo-wide orphan-FK scan with an external-id allowlist
+    - spec: NONE
+- `0243-g8-4-search-filter-inputs-no-aria-label` **partial** (tier-3) — ~1,287 placeholder-only filter/search inputs vs 180 aria-labels across ~65 files; eslint-plugin-jsx-a11y not w
+    - diff: aria-label sweep across remaining files; confirm eslint-plugin-jsx-a11y wired into CI
+    - evidence: apps/frontend/src/pages/drivers/DriversListPage.tsx and Users.tsx now have 1 and 4 aria-label occurrences respectively (nonzero), suggesting incremental fixes, but the scale of the
+    - spec: NONE
+- `0518-r17-147-fk-less-financial-columns` **partial** (tier-2) — 147 (financial-scope) / 689 (all-schema-scope) *_id/*_uuid columns have no declared FK constraint
+    - diff: comprehensive orphan-FK CI gate + a live re-count
+    - evidence: Same underlying gap as 0033-verify-fk-integrity-guard — only a narrow scripts/verify-fk-integrity-fault-da-records.mjs guard exists, not a comprehensive orphan-FK CI gate covering 
+    - spec: NONE
+- `ci1-build-typecheck-flake-root-cause-and-guard` **partial** (tier-3) — Root-cause the cross-PR build-typecheck red and add a static db-test-isolation CI guard
+    - diff: scripts/verify-db-test-isolation.mjs (the required registry-driven guard that fails a *.db.test.ts writing a known shared singleton without either an isolated fixture or the named advisory lock) was n
+    - evidence: The specific shared-singleton race the doc anticipated is already mitigated: pg_advisory_lock(CASH_ADVANCE_MAP_TEST_LOCK_KEY) is acquired in apps/backend/src/banking/__tests__/bank
+    - spec: NONE
+- `coder-32-migration-drift-prod-triage-pending` **partial** (tier-1) — Run scripts/audit-migration-drift.mjs against PROD (read-only) and triage every real drift item beyond the 18-
+    - diff: The actual read-only prod run of scripts/audit-migration-drift.mjs and the per-item (a)/(b) triage + repair stubs docs/audits/MIGRATION-DRIFT-PROD-TRIAGE.md this block asks for.
+    - evidence: docs/audits/MIGRATION-DRIFT-FINDINGS.md exists and contains a completed 'A. Fresh-DB baseline' section (18 declared-but-missing entries, all triaged as phantom/renamed/investigate)
+    - spec: NONE
+- `entitylink-reverse-drill-incomplete` **partial** (tier-3) — EntityLink (Law-of-the-Land reverse drill-through) only wired into 74 pages
+    - diff: Remaining pages needing EntityLink reverse drill-through (exact count/list not enumerated by the source doc).
+    - evidence: Per the 07-10 audit (re-verified against origin/main same-day): EntityLink usage = 74 pages. I did not independently recount in this pass; trusting the same-day repo-verified figur
+    - spec: NONE
+- `events-event-log-force-rls-still-blocked` **partial** (tier-1) — events.event_log (hash-chained audit log) has RLS ENABLED but NOT FORCED — owner role can bypass RLS on the ta
+    - diff: the real FORCE ROW LEVEL SECURITY migration on events.event_log, gated behind landing the spine-emit GUC fix first
+    - evidence: db/migrations/202607080100_event_log_force_rls_blocked_pending_guc_fix.sql (dated 2026-07-08, 2 days before today) explicitly states 'FORCE ROW LEVEL SECURITY on events.event_log i
+    - spec: docs/db-audit/P0-audit-log-rls-DESIGN.md
+- `law-of-land-entitylink-reverse-drill-adoption` **partial** (tier-3) — Law of the Land — EntityLink reverse-drill-through adopted on all id cells (was ~20% of 121)
+    - diff: a full sweep confirming every id/reference cell in every module renders via EntityLink
+    - evidence: apps/frontend/src/components/shared/EntityLink.tsx used in 148 call sites across 84 files — well beyond the doc's 20% baseline, but not verified as covering every id cell in the fu
+    - spec: NONE
+- `module-catalog-26-modules-unfinished-sweep` **partial** (tier-3) — Finish the 26 remaining modules (of 28) to the per-module design/QBO-parity recipe
+    - diff: a fresh per-module completion sweep against docs/specs/qbo-parity/ + docs/approved-screens/*.html
+    - evidence: Multiple modules have had targeted fixes shipped since 07-07 (#2299 accounting transaction editors, #2296 dispatch table sort+resize, #2294 factoring equipment-loan pickers, CUSTVE
+    - spec: docs/specs/qbo-parity/ (per-module)
+- `phase13-audit220-manufacturing-duplicate` **partial** (tier-3) — Audit 220 — production tracking, QC procedures, manufacturing dashboard/analytics (industry-vertical variant)
+    - diff: same gap as phase3-audit70-manufacturing-qc
+    - evidence: Same ✅ items as Phase3 Audit70: maintenance schema + fleet.equipment tracking exist. No production tracking/QC-procedure docs/dashboard found.
+    - spec: NONE
+- `phase13-audit225-logistics-warehousing` **partial** (tier-3) — Audit 225 — supply-chain optimization, warehousing system, distribution optimization, logistics dashboard/anal
+    - diff: supply-chain/distribution optimization tooling and a logistics dashboard; warehousing itself is not applicable to IH35's business model (asset-based trucking, not 3PL/warehousing)
+    - evidence: mdata.loads, dispatch schema, mdata.vendors confirmed real (doc's own ✅). No supply-chain-optimization/warehousing/distribution-optimization surface found (grep empty, re-run empty
+    - spec: NONE
+- `public-audit-log-partitions-no-rls` **partial** (tier-1) — public.audit_log + its 48 monthly partitions (audit_log_partitioned) have NO RLS at all
+    - diff: an RLS-enable(+force) migration for public.audit_log / audit_log_partitioned, scoped per-entity if the table carries operating_company_id, else confirm it is intentionally global/append-only and acces
+    - evidence: db/migrations/202606080940_block26_partition_hot_tables.sql creates public.audit_log + public.audit_log_partitioned + 48 monthly partitions; no ENABLE/FORCE ROW LEVEL SECURITY stat
+    - spec: NONE
+- `users-par-1-permission-matrix` **partial** (tier-2) — Design + build an action-level (view/create/edit/delete/approve per area) permission matrix, replacing the fix
+    - diff: Implementation: DB schema for the permission grid + role/action enforcement wired into routes.
+    - evidence: Design specs already exist: docs/specs/USER-PERMISSION-MATRIX.md ('Block: USERS-PAR-1... Status: DESIGN ONLY — Jorge approves before any build block is cut') and docs/specs/PERMISS
+    - spec: docs/specs/USER-PERMISSION-MATRIX.md
+
+### qbo-import  (7 open)
+
+- `import-0-qbo-reports-client` **built** (tier-1) — QBO Reports API client (qboReport, generic reportName) + exact-cents report parser (parseTrialBalance, parseGe
+- `import-p0-je-push-killswitch` **built** (tier-1) — JE→QBO push kill-switch (3-layer defense: QBO_JE_PUSH_ENABLED flag default-OFF + structural source_system='qbo
+- `import-5-qbo-import-ui` **needs-design** (tier-1) — QBO Import screen — Accounting sub-nav page surfacing import runs/tieouts/variance/cash-basis balances, owner-
+    - diff: no docs/approved-screens/*.html or docs/specs/*.md governs this specific screen's layout/columns — per the ROW-SCHEMA hard rule this makes it needs-design, not not-built; separately, the backend read 
+    - evidence: apps/backend/src has no qbo-import.routes.ts anywhere (find, zero hits). apps/frontend/src has no path matching *qbo-import* (find, zero hits, re-run confirmed). No entry in docs/a
+    - spec: NONE (no approved-screen or qbo-parity spec found specific to the QBO Import runs/tieout screen; nearest neighbors are docs/specs/qbo-parity/QBO-RECONCILIATION-MODULE-SPEC-2026-07-04.md, a different reconcile-only screen, and the generic accounting sub-nav pattern)
+- `import-4v2-gl-detail-hardened` **not-built** (tier-1) — IMPORT-4v2 — hardened GL detail import: leaf-level signed-union-void-aware tieout, re-run-forward orchestratio
+    - diff: apps/backend/src/integrations/qbo/import/gl-detail.service.ts does not exist; admin-jobs 'qbo.import.gl_detail' and 'qbo.import.gl_reverify_forward' operations do not exist; scripts/verify-import-idem
+    - evidence: apps/backend/src/integrations/qbo/import/ directory does not exist (confirmed via find, no results). grep across apps/backend/src for gl_reverify_forward, qbo-gl:{opco}, is_stale, 
+    - spec: docs/trackers/DEFERRED-ITEMS.md item B.4 (finance-review must-fix list, directly maps to this block's amendments A/B/C); docs/lockdown/00_LOCKED_DECISIONS.md §8.2/§8.5
+- `import-block-1-trk-coa-sync` **not-built** (tier-1) — BLOCK-IMPORT-1-trk-full-coa-sync: realm<->opco assertion + TRK realm 1432746210 full COA sync admin op
+    - diff: Entire qbo/import/ directory and IMPORT-1 admin op.
+    - evidence: apps/backend/src/integrations/qbo/import/ does not exist (ls: No such file or directory). .block-ready/ contains only IMPORT-0.json, IMPORT-P0.json, IMPORT-P0b.json, USMCA-MASTERDA
+    - spec: NONE
+- `import-block-4v2-gl-detail-hardened` **not-built** (tier-1) — BLOCK-IMPORT-4v2-gl-detail-hardened: leaf/signed/union tieout, forward-invalidation
+    - diff: Hardened tieout logic with forward-invalidation.
+    - evidence: qbo/import/ directory absent; v2-hardened tieout logic not found anywhere.
+    - spec: NONE
+- `import-1v2-trk-full-coa-equity` **partial** (tier-1) — TRK full COA sync (v2, corrected root cause) — pull ALL 917 TRK QBO accounts including 7-account Equity sectio
+    - diff: realm↔opco hard-assert refusal; Active-inclusive QBO query fix (root cause of TRK 32-row cap unverified/unfixed); two-pass parent_account_id resolution; per-opco advisory lock; admin-jobs 'qbo.account
+    - evidence: Canonical sync file apps/backend/src/qbo-sync/chart-of-accounts-puller.ts (read in full, 150 lines) IS the located path — generic pullChartOfAccountsFromQbo(operatingCompanyId), re
+    - spec: docs/lockdown/00_LOCKED_DECISIONS.md §8.5 (TRK realm 1432746210, TRANSP realm 123145885549599); docs/trackers/DEFERRED-ITEMS.md line 75
+
+### qbo-recon  (52 open)
+
+- `0057-posters-wired` **built** (tier-1) — Wire writeTransactionSourceLink into all 5 named GL posters (journal-entries manual JE, void reversal, recurri
+- `0091-b1-1` **built** (tier-1) — QBO reconciliation source must pull all bank-hitting txn types (Deposit, Purchase, Transfer, BillPayment, Paym
+- `0091-g10-c3` **built** (tier-2) — Init Sentry in cron entrypoints (run-recon etc.) and wrap via wrapBackgroundJobTick
+- `0091-g4-health` **built** (tier-2) — Give recon + money crons a freshness surface (record a run, non-null staleness rules) so a silently-dead recon
+- `0091-m-reconcile-note` **built** (tier-1) — Resolve the contradictory agent findings on which settlement/deduction engine is live vs orphaned before any f
+- `0243-a1-2-recon-cron-health-endpoint` **built** (tier-2) — Recon crons (6AM/7PM) have no health endpoint / freshness surface, fail silently
+- `0243-b1-1-recon-qbo-source-txn-types` **built** (tier-1) — Recon QBO source pulls only Deposit+Purchase, omitting BillPayment/Payment/Transfer/JournalEntry bank-hitting 
+- `0243-g10-c2-dead-qbo-token-shows-connected` **built** (tier-1) — [CRIT/STOP-GATE] getQboConnectionStatus returns connected:true for any non-revoked row; no needs_reauth state;
+- `0243-g4-health-recon-crons-no-freshness` **built** (tier-2) — Recon + several money crons run as separate Render services that only console.log, never write _system.backgro
+- `0518-r08-daily-recon-gate-reads-nonexistent-public-feature-flags` **built** (tier-1) — Daily Recon gate reads nonexistent public.feature_flags (should read lib.feature_flags) — gate permanently ine
+- `bank-account-per-entity-hide-feature` **built** (tier-1) — Bank-account per-entity HIDE/EXCLUDE: shared Wells Fargo/Plaid login pulls 3 TRANSPORTATION + 1 TRUCKING accou
+- `block8-match-status-column-accounting-lists` **built** (tier-3) — LEFT JOIN bank.reconciliation_matches on Bills/Expenses/Bill-Payment list endpoints; add Reconciled status bad
+- `cascade-14-pr1642-rebase-gatesplit-merged` **built** (tier-3) — CASCADE-14 TMS<->QBO daily reconciliation: rebase onto main + hold-merge-gate false-positive fix, PR #1642
+- `cc07-fixa-audit-log-repoint` **built** (tier-2) — Repoint audit.audit_log writers (todays-attention, IFTA quarterly-preparer) to real sink audit.audit_events
+- `coder-21-af1-unblock` **built** (tier-1) — Fix red build-typecheck on PR #1528 (AF-1 catalogs.accounts per-entity migration) via verify:migration-applica
+- `coder23-schema-parity-count-reconcile-doc` **built** (tier-3) — Verification-only doc: reconcile 654-table (fresh-DB) vs 493-table (baseline) count gap, produce docs/audits/S
+- `coder31-schema-parity-baseline-132-table-gap-close` **built** (tier-3) — Close the ~132-table schema-parity baseline coverage hole: enumerate live BASE tables missing from docs/schema
+- `dbwiring-qbo-reconciliation-alerts-opco-uuid-fix` **built** (tier-1) — qbo.reconciliation_alerts: operating_company_id stored as TEXT with cross-tenant DEFAULT 'default' -- migrate 
+- `events-log-event-prod-repo-drift-reconcile` **built** (tier-1) — Reconcile repo's events.log_event migration to prod's out-of-band-patched 13-arg text-typed overload before to
+- `fin20-true-historical-asof-aging` **built** (tier-2) — True historical as-of aging: reconstruct open AR/AP balances as of an arbitrary past date from payment_applica
+- `fin23-pr1641-strictnull-gatesplit-merged` **built** (tier-3) — FIN-23 strict-null fix + gate-split + explicit per-entity opco predicate on qbo-reconcile reads, PR #1641
+- `fin23-qbo-reconcile-captures-readonly-base` **built** (tier-3) — FIN-23 base build: QBO reconcile page surfacing sync health, modify captures, sync conflicts/alerts (read-only
+- `fin23-qbo-reconcile-explicit-opco-predicates` **built** (tier-3) — Add explicit operating_company_id predicates to listQboModifyCaptures/listQboSyncConflicts reads (qbo_inbound_
+- `insurance-1-coverage-gap-count-reconciliation` **built** (tier-3) — INSURANCE-1: /insurance/summary coverage_gap_count (50) disagreed with Coverage Gaps detail tab (0 shown)
+- `insurance1-coverage-gap-kpi-detail-reconcile` **built** (tier-3) — Reconcile insurance summary.coverage_gap_count (50) with Coverage Gaps detail tab (0) so headline and drill-do
+- `owner-decisions-driver-qbo-vendor-gate` **built** (tier-2) — Decision #3: driver-create must not hard-fail on a missing qbo_vendor_id (change create-hard-fail to log+conti
+- `pr2301-mobile-audit-false-positive-fix-shipped` **built** (tier-3) — PR #2301: DailyReconPage.tsx mobile-audit false positive (literal <table> inside a comment tripped the raw-tab
+- `recon00-v2-design-doc-and-block-registration` **built** (tier-3) — Write docs/specs/TMS-QBO-RECONCILIATION.md (RECON-00 architecture spec) + register .block-ready/RECON-00.json,
+- `recon01-schema-jobs-engine` **built** (tier-1) — RECON-01 Appendix A: CREATE TABLE accounting.recon_runs + accounting.recon_exceptions, RLS+FORCE, grants, two-
+- `recon02-ui-runs-exceptions-tabs` **built** (tier-3) — RECON-02 Appendix B: extend QboReconcileCapturesPage.tsx with Runs + Exceptions tabs (ParityTable grammar), so
+- `0091-g11-2` **needs-design** (tier-1) — Reconcile settlement_lines vs driver_settlement_deductions sub-ledgers (order-dependent overpay or FIN-18 hard
+    - diff: re-verify aggregateSettlementTotals / auto_deduction handling
+    - evidence: Not independently re-verified this pass beyond confirming SETTLEMENT_TOTALS_INCONSISTENT is still the live error code in settlement-posting.service.ts:252. Full reconciliation logi
+    - spec: NONE
+- `gated-blocks-conn-plaid-relay-edi` **needs-design** (tier-1) — CONN-1 Plaid reconcile-commit, CONN-3 Relay internal bank, CONN-4 EDI — forward specs, 0 artifacts
+    - diff: all implementation; design docs exist (RELAY-INTERNAL-BANK-DESIGN.md) but zero code artifacts
+    - evidence: Per BLOCK-RECONCILIATION-2026-07-10.md: CONN-1/3/4 all PENDING(GATED) 'forward spec — 0 named artifacts on main'.
+    - spec: docs/specs/qbo-parity/RELAY-INTERNAL-BANK-DESIGN.md
+- `ui1-17-my-accountant-page` **needs-recheck** (tier-3) — Build the My-Accountant read-only summary page (period status, uncategorized count, recon status, QBO sync hea
+    - diff: grep apps/frontend/src/pages/accounting for MyAccountantPage.tsx and apps/backend/src/accounting for a my-accountant route
+    - evidence: UNVERIFIED — not independently checked this pass; only FINANCE_STATEMENTS_UI_ENABLED and receipts/aging pages were confirmed. Need to grep for MyAccountantPage.tsx and /api/v1/acco
+    - spec: NONE
+- `0091-m-factor-1` **not-built** (tier-1) — Pick one canonical factoring reserve ledger — accounting.factoring_companies.current_reserve_balance has no wr
+    - diff: either wire a write path to current_reserve_balance or repoint the dashboard read at the reconciled ledger (factoring.reserve_movement / v_factor_reserve_balance)
+    - evidence: apps/backend/src/banking/factoring-virtual.routes.ts:49 still reads COALESCE(current_reserve_balance, 0); a repo-wide grep for any UPDATE/SET on current_reserve_balance returned ze
+    - spec: NONE
+- `0243-d4-1-samsara-webhook-driver-pairing-equipment-only` **not-built** (tier-2) — resolveLocalIds resolves the unit only via mdata.equipment.current_unit_id, no mdata.units.samsara_vehicle_id 
+    - diff: mirror the units-primary -> equipment-fallback lookup pattern that the reconcile-poll path already uses
+    - evidence: apps/backend/src/telematics/vehicle-driver-lookup.service.ts:133-143 resolveLocalIds still only queries 'FROM mdata.equipment e WHERE ... e.samsara_vehicle_id = $2 AND e.current_un
+    - spec: NONE
+- `0243-e1-6-bank-geo-schema-stranded` **not-built** (tier-2) — bank.reconciliation_matches and geo.* stranded next to canonical banking.* / geofence.*
+    - diff: confirm via migration history whether bank.reconciliation_matches/geo.* were dropped, view-aliased, or are simply orphaned tables with no code path
+    - evidence: UNVERIFIED: grep for direct 'bank.reconciliation_matches' or 'FROM geo.' references in apps/backend/src returned no hits — either already consolidated onto banking.*/geofence.* (al
+    - spec: NONE
+- `0243-swl-2-silent-masks-recon-financehub-mirror` **not-built** (tier-2) — getSuggestionsForTxn().catch(()=>[]), finance-hub cashAtEndCents=0 on error, mirror-integrity local_count=0 ->
+    - diff: log + surface the error instead of returning a benign empty/zero on these 3 read paths
+    - evidence: apps/backend/src/accounting/finance-hub.service.ts:220 'let cashAtEndCents = 0;' and apps/backend/src/integrations/qbo/mirror-integrity.service.ts:28,45 'let local_count = 0; ... l
+    - spec: NONE
+- `0280-04-cash-position-reconciliation-linkage` **not-built** (tier-3) — Cash Position widget: no verification that banking.bank_accounts balances tie to reconciliation records
+    - diff: join to a reconciliation-status table/flag before surfacing the cash number as reconciled
+    - evidence: apps/backend/src/home/home-widgets.routes.ts has no matches for 'reconcil' anywhere in the file — the cash-position widget reads raw bank_accounts balances with no reconciliation-s
+    - spec: NONE
+- `0441-mod11-geofence-recon-green-on-failed-fetch` **not-built** (tier-3) — Geofence-Recon shows green 'No anomalies' on failed fetch
+    - diff: destructure isError from useQuery and render an error state distinct from the empty-success state.
+    - evidence: apps/frontend/src/pages/reports/GeofenceReconciliationReport.tsx:41-52 useQuery throws on !res.ok (`throw new Error('Failed to load reconciliation')`), but the render logic (lines 
+    - spec: NONE
+- `0441-mod8-reconciliation-workspace-no-refetch` **not-built** (tier-1) — No refetch drift on reconciliation-workspace after match/unmatch
+    - diff: Call workspaceQuery.refetch() (or invalidate its query key) after a successful match/unmatch, so the variance summary stays in sync with the optimistic transaction-list update.
+    - evidence: apps/frontend/src/pages/banking/ReconciliationWorkspace.tsx:265-312 — the 'Match selected' and 'Unmatch selected' onClick handlers call matchReconciliationTransaction/unmatchReconc
+    - spec: NONE
+- `accounting2-ap-aging-false-qbo-mirror-claim` **not-built** (tier-2) — A/P Aging screen claims 'aging mirrored from QuickBooks; totals tie to QBO's A/P aging' but computes from TMS 
+    - diff: Either (a) a QBO A/P-aging pull/reconciliation-status feature, or (b) rewording the subtitle to drop the false QBO-tie claim -- neither exists
+    - evidence: apps/frontend/src/pages/accounting/AccountsPayableAgingPage.tsx:144 still renders subtitle 'What we owe vendors — aging mirrored from QuickBooks; totals tie to QBO's A/P aging.' Ba
+    - spec: NONE
+- `banking-1-uncategorized-kpi-reconciliation` **not-built** (tier-2) — BANKING-1: Banking Home 'UNCATEGORIZED 0' KPI does not reflect the actual ~2,650-transaction review/categoriza
+    - diff: Could not locate the specific Banking Home KPI aggregation query in this pass to confirm whether it now counts the real review queue; this is a live-UI KPI-vs-detail mismatch that needs a browser chec
+    - evidence: UNVERIFIED
+    - spec: NONE
+- `bf10b-qbo-recon-six-types` **not-built** (tier-1) — BF10-B flow: QBO clone -> Reconcile -> Divergence (doc claims PARTIAL: recon pulls only 2 of 6 bank-hitting QB
+    - diff: grep for 'BillPayment'/'Payment'/'Transfer'/'JournalEntry' QBO txn types inside apps/backend/src/accounting/reconciliation.routes.ts and apps/backend/src/accounting/recon/*.ts returned no matches in t
+    - evidence: UNVERIFIED
+    - spec: NONE
+- `bnk-03-no-last-reconciled-no-beginning-balance` **not-built** (tier-3) — Bank Reconciliation shows no 'Last reconciled date' and no 'Beginning balance'
+    - diff: Add a 'Last reconciled date' (auto-pulled from the prior closed session) and a 'Beginning balance' display to ReconciliationWorkspace.tsx.
+    - evidence: grep for 'Last Reconciled'/'Beginning Balance'/beginning_balance/last_reconciled across apps/frontend/src/pages/banking (all files) returned zero matches. apps/frontend/src/pages/b
+    - spec: NONE
+- `fin23-qbo-reconcile-modify-captures-harness-extension` **not-built** (tier-3) — Extend existing QBO capture harness to cover QBO's own Reconcile + Modify (edit-transaction) screens; write pa
+    - diff: docs/specs/qbo-parity/QBO-RECONCILE-WORKING-SCREEN.md and docs/specs/qbo-parity/QBO-MODIFY-DROPDOWN.md (same ask duplicated in 0387__CASCADE-23) do not exist in the repo
+    - evidence: FIN-23 base surface exists (qbo-reconcile-read.service.ts, qbo-reconcile-captures.routes.ts, QboReconcileCapturesPage.tsx) but this is the SEPARATE ask of capturing QBO's OWN recon
+    - spec: docs/specs/qbo-parity/
+- `0007-pattern-1-unmounted-backend` **partial** (tier-3) — Systemic Pattern 1: unmounted-backend epidemic — CI guard so every apps/frontend/src/api/* base path resolves 
+    - diff: confirmation that scripts/verify-frontend-api-routes-exist.mjs is invoked by a CI workflow (not found in ci.yml, locked-guards.yml, closure-checks.yml, required-checks.yml, premerge-gates.yml)
+    - evidence: Both named examples are now mounted: apps/backend/src/index.ts:216 registers registerBankingReconciliationRoutes (./banking/reconciliation.routes.js); index.ts:428/679 registers re
+    - spec: NONE
+- `0243-g10-c3-sentry-half-live-crons-pwa` **partial** (tier-2) — [CRIT] run-recon/run-loves-card-import cron entrypoints never init Sentry, bypass wrapBackgroundJobTick; alert
+    - diff: confirm frontend/PWA Sentry init functions are now called and PWA ErrorBoundary reports (not just console.log)
+    - evidence: apps/backend/src/accounting/recon/run-recon.ts:5-11 and apps/backend/src/sync/run-loves-card-import.ts:3-9 both now call initBackendSentry() + wrapBackgroundJobTick() with explicit
+    - spec: NONE
+- `0243-g11-2-two-deduction-subledgers-dont-reconcile` **partial** (tier-1) — [STOP-GATE] settlement_lines (dollars) and driver_settlement_deductions (cents) independent; order-dependent o
+    - diff: collapse to one authoritative sub-ledger (see 0008-b) so the assertion never fires instead of merely detecting the mismatch
+    - evidence: apps/backend/src/accounting/settlement-posting/settlement-posting.service.ts:246,253 now has an explicit reconciliation ASSERTION: 'deductions_total (${headerDeductionCents}c) != S
+    - spec: NONE
+- `0441-mod11-fuel-recon-zero-and-noop-save-link` **partial** (tier-2) — Fuel-Recon $0 (field mismatch) + no-op 'Save link'
+    - diff: live verification of banking.bank_transactions.matched_load_id population rate for fuel-flagged transactions; and a real backend endpoint + persistence for the manual match/'Save link' action.
+    - evidence: 'Save link' no-op CONFIRMED: apps/frontend/src/pages/reports/FuelReconciliationPage.tsx:283-290 — the modal's Save button only does `setMatchOpen(false); setMatchNote('')`, no API 
+    - spec: NONE
+- `bf4-load-invoice-ar-factoring-payment` **partial** (tier-1) — BF4 flow: Load -> Invoice -> A/R -> Factoring -> Payment (doc claims BROKEN: customer payment posts NO GL so A
+    - diff: confirmation (or disproof) that a customer payment write auto-relieves A/R in the GL; reconciliation of the '3 reserve ledgers' claim
+    - evidence: apps/backend/src/accounting/factoring-posting/poster.service.ts and posting-engine.routes.ts exist with postFactoringAdvanceEvent/postFactoringReleaseEvent/postFactoringFeeExpenseE
+    - spec: NONE
+- `daily-tms-qbo-reconciliation-cadence` **partial** (tier-1) — Establish a daily (twice-daily) TMS<->QuickBooks reconciliation with an owner + tolerance, including a reconci
+    - diff: Confirm whether a dedicated reconciliation SCREEN (distinct from the cron job) exists; if not, that remains the gap.
+    - evidence: apps/backend/src/cron/reconciliation-worker.cron.ts exists and memory confirms a 'RECON 6AM/7PM CT' twice-daily cadence is locked/running; the doc's separate claim that 'a reconcil
+    - spec: NONE
+- `dbwiring-qbo-customers-vendors-accounts-split-brain` **partial** (tier-1) — QBO customers/vendors/accounts split-brain: duplicate tables in mdata.qbo_* (recommended canonical) AND accoun
+    - diff: A migration/refactor repointing the remaining accounting.qbo_* writers (qbo-customers-push.ts, qbo-vendors-push.ts, qbo-accounts-push.ts, *-status.routes.ts) to mdata.qbo_* and archiving accounting.qb
+    - evidence: Both sets of tables remain live and referenced in backend code: mdata.qbo_customers/vendors/accounts referenced in 42 backend .ts files (dominant); accounting.qbo_customers/vendors
+    - spec: NONE
+
+### reports  (65 open)
+
+- `0441-mod10-cashflow-manual-daily-no-persist` **built** (tier-2) — Cash Flow Manual Daily no capture-without-persist
+- `0441-mod11-help-runbooks-all-404` **built** (tier-3) — Help /help/runbooks all 10 links 404
+- `0441-mod11-late-arrival-unregistered` **built** (tier-3) — Late Arrival report built but not registered -> unreachable
+- `0441-mod11-onboarding-step5-invite-team-orphan` **built** (tier-3) — Onboarding Step-5 'Invite team' orphan stub
+- `0441-mod11-reportshub-categories-dead` **built** (tier-3) — ReportsHub + 9 categories/* shells dead
+- `bnk-02-statement-balance-input-space` **built** (tier-3) — Statement ending balance input shows '$ 0.00' (space)
+- `financial-statements-parity-pl-bs-tb` **built** (tier-3) — Build read-only Profit & Loss, Balance Sheet, Trial Balance report pages (per-entity, integrity-checked, OFF f
+- `sys-01-date-defaults-tomorrow-rollup` **built** (tier-3) — SYSTEMIC rollup: date defaults to tomorrow on all create forms (off-by-one)
+- `sys-date-root-fix` **built** (tier-3) — Root fix: all user-facing dates render YYYY-MM-DD instead of MM/DD/YYYY
+- `task-4-admin-report` **built** (tier-3) — Build Tasks 'Admin Report' (task throughput/productivity by employee/category, date-range, export) replacing t
+- `0091-g9-h5` **needs-design** (tier-1) — Fix profit-per-truck reports double-counting via cartesian fan-out + including cancelled/voided rows
+    - diff: re-verify CTE structure + status filters on profit-per-truck reports
+    - evidence: Not independently re-verified this pass (reports/profit-per-truck.routes.ts:337, queries/profit-per-truck-weekly.ts:17 not re-checked).
+    - spec: NONE
+- `0280-21-home-routes-redirect-verification` **needs-design** (tier-3) — home.routes.ts: 307 redirects to reports have no verification the target route exists before redirecting
+    - diff: 
+    - evidence: Not independently checked in this pass.
+    - spec: NONE
+- `h-03-open-queue-navy-cta` **needs-design** (tier-3) — 'Open queue' button is dark navy, not green CTA
+    - diff: 
+    - evidence: conflicts with §7 palette lock (green-pill = Class pill only); guard verify-section7-palette fails on new bg-green-*. Confirmed still navy: apps/frontend/src/pages/home/OwnerHome.t
+    - spec: NONE
+- `phase12-audit208-governance` **needs-design** (tier-3) — Audit 208 — corporate governance documentation, ethics framework, transparency reporting/dashboard
+    - diff: a formal governance/ethics/transparency-reporting framework, if Jorge wants this scope
+    - evidence: grep -ril 'governance.?documentation|ethics.?framework' apps/ docs/ -> empty (re-run empty). CLAUDE.md itself functions as an internal governance/permissions document but isn't a f
+    - spec: NONE
+- `phase8-audit164-business-intelligence` **needs-design** (tier-3) — Audit 164 — BI tool documentation, reporting-accuracy validation, BI data-quality monitoring, BI dashboard/ana
+    - diff: a formal BI layer beyond the existing in-app Reports module
+    - evidence: apps/frontend/src/pages/reports/runners/RunnerTable.tsx and a reports module exist for operational reporting, but no dedicated BI tool integration or BI-specific dashboard found (g
+    - spec: NONE
+- `qbo-realtime-webhook-sync` **needs-design** (tier-2) — Move QBO sync from polling to webhook-based real-time
+    - diff: QBO webhook receiver + design for real-time inbound sync.
+    - evidence: Doc itself documents sync method as 'Outbox pattern (outbound), CDC polling (inbound)'; no webhook receiver found via grep for qbo.*webhook in apps/backend/src/integrations/qbo/.
+    - spec: NONE
+- `s-12-log-event-button-navy-cta` **needs-design** (tier-3) — '+ Log Event' button is dark navy, not green CTA
+    - diff: 
+    - evidence: conflicts with §7 palette lock (green-pill = Class pill only); guard verify-section7-palette fails on new bg-green-*. Confirmed still navy: apps/frontend/src/pages/safety/SafetyEve
+    - spec: NONE
+- `0008-g2-reporting-schema-canonical` **not-built** (tier-2) — Canonicalize reporting.* for scheduled reports; migrate reports.* rows in, archive the loser
+    - diff: migrate reports.scheduled_reports rows into reporting.scheduled_reports; repoint apps/backend/src/reports/scheduler.ts and scheduled-report-runner.ts to reporting.*; archive-comment the loser table
+    - evidence: Both engines still live and read/write independently: apps/backend/src/scheduled-reports/scheduled-reports-worker.ts reads/writes reporting.scheduled_reports; apps/backend/src/repo
+    - spec: NONE
+- `0243-e1-3-two-scheduled-report-engines` **not-built** (tier-2) — reports.scheduled_reports (0058) and reporting.scheduled_reports (0164) both live — a report scheduled in one 
+    - diff: see 0008-g2-reporting-schema-canonical
+    - evidence: apps/backend/src/scheduled-reports/scheduled-reports-worker.ts reads/writes reporting.scheduled_reports while apps/backend/src/reports/scheduler.ts:37,63 and scheduled-report-runne
+    - spec: NONE
+- `0243-h1-3-csp-report-only-no-healthcheckpath-bypass-touches-prod` **not-built** (tier-3) — CSP still report-only (promised enforce-flip never happened); render.yaml has no healthCheckPath (TCP-only gat
+    - diff: flip CSP to enforce; add healthCheckPath=/api/v1/healthz/shallow to render.yaml; hard-gate the auth-bypass to NODE_ENV!=='production' in code
+    - evidence: render.yaml:10 preDeployCommand still includes 'IH35_TEST_AUTH_BYPASS=1 npm run ci:boot-aggregate-smoke'; grep for 'healthCheckPath' in render.yaml returned zero matches; security-
+    - spec: NONE
+- `0277-any-type-reports-library-routes` **not-built** (tier-3) — Replace `any` type usage in apps/backend/src/reports/library.routes.ts with proper DB client types
+    - diff: replace `client: any` with the real Fastify/pg client type in relationExists/columnExists
+    - evidence: apps/backend/src/reports/library.routes.ts:40,45 — `async function relationExists(client: any, ...)` and `async function columnExists(client: any, schema: string, table: string, co
+    - spec: NONE
+- `0441-mod1-dual-homepage` **not-built** (tier-3) — Dual homepage implementation (/home vs /app/homepage) - no shared identity
+    - diff: A single canonical Home component (or shared data/layout core) consumed by both entry points; currently two independently-maintained implementations diverge in data sources and layout.
+    - evidence: apps/frontend/src/routes/manifest.tsx:690-720 registers two independent routes: /home -> HomeRoute() (line 544-549, renders OwnerHome or role-based HomePage/OwnerHome.tsx) and /app
+    - spec: docs/approved-screens/1-HOME_PAGE.png (visual reference only - does not address the routing/architecture duplication)
+- `0441-mod10-finalize-5s-staleness-race` **not-built** (tier-1) — Finalize 5-second staleness race (practically unusable)
+    - diff: either a materially longer/adaptive staleness window, or a client-side flow that recomputes debt and immediately submits finalize in one atomic request instead of two round trips separated by user thi
+    - evidence: apps/backend/src/driver-finance/settlements.routes.ts:443-445 — PATCH .../finalize calls recomputeDebtSync then does `if (computedAt && Date.now() - computedAt > 5000) return { blo
+    - spec: NONE
+- `0441-mod11-help-was-this-helpful-not-persisted` **not-built** (tier-3) — Help 'Was this helpful?' never persisted
+    - diff: add a backend endpoint (e.g. POST /api/v1/help/articles/:slug/feedback) and call it from onClick instead of only setting local state.
+    - evidence: apps/frontend/src/pages/help/HelpArticlePage.tsx:10,37,45 — `const [feedback, setFeedback] = useState<'up'|'down'|null>(null)`; the Yes/No buttons only call `setFeedback('up')`/`se
+    - spec: NONE
+- `0441-mod11-owner-mint-maker-checker` **not-built** (tier-1) — Owner-mint via maker-checker (approval path has no callerIsOwner check)
+    - diff: add the same callerIsOwner-style check to the /approve handler for WF-064-IDENT-002 when toRole==='Owner' (or when target's current role==='Owner'), mirroring users.routes.ts:534.
+    - evidence: apps/backend/src/identity/workflow-routes.ts:258-267 POST .../workflow-requests/:id/approve only checks `isAdminRole(authUser.role)` (Owner OR Administrator, line 76) — not callerI
+    - spec: NONE
+- `0441-mod11-three-parallel-scheduled-report-systems` **not-built** (tier-2) — 3 parallel scheduled-report systems (System A cron never called, System B dead)
+    - diff: delete or explicitly deprecate Systems A and B (dead cron trigger + fully unmounted worker/routes) to stop the split-brain; keep System C as canonical.
+    - evidence: Three systems confirmed: (A) apps/backend/src/reports/scheduled-report-runner.ts + apps/backend/src/cron/scheduled-reports.ts (calls runScheduledReport) — cron/scheduled-reports.ts
+    - spec: NONE
+- `0441-mod11-user-detail-activity-tab-stub` **not-built** (tier-3) — User detail Activity tab stub
+    - diff: wire the Activity tab to a real audit query (e.g. audit.audit_events filtered by actor_user_uuid=this user, or events.event_log once the wrong-sink issues above are fixed).
+    - evidence: apps/frontend/src/pages/UserDetail.tsx:402 — `{tab === 'activity' ? <div ...>User activity history will appear here once audit exports are enabled.</div> : null}` — a literal place
+    - spec: NONE
+- `0441-mod11-users-changerole-no-approver-ui` **not-built** (tier-2) — Users Change-Role modal queues workflow but no approver UI exists
+    - diff: build an Approvals page/panel (likely under /admin or /users) that lists Pending identity.workflow_requests and lets an Owner/Administrator approve or reject them.
+    - evidence: apps/frontend/src/pages/Users.tsx:211-212,725-771 has a 'Change Role' modal that calls createIdentityWorkflow (roleWorkflowMutation) — this is the CREATE side only. apps/frontend/s
+    - spec: NONE
+- `0441-mod13-form425c-exhibit-c-opening-balance-hardcoded-zero` **not-built** (tier-1) — Form 425C Exhibit C opening-balance hardcoded 0 but inert
+    - diff: A banking.* per-account historical balance snapshot table (migration, Jorge-gated per CLAUDE.md §1.4) to anchor opening_balance_cents.
+    - evidence: apps/backend/src/reports/form-425c/exhibits/exhibit-c-bank-reconciliation.ts:30-36,73 explicitly hardcodes `const opening = 0` with an inline comment: 'OPENING BALANCE — DEFERRED /
+    - spec: REPAIR spec §5.2 (referenced in code comment; not independently located as a docs/specs/ file in this pass)
+- `0441-mod13-inventory-read-path-raw-fetch` **not-built** (tier-3) — Inventory read path uses raw fetch() not apiRequest -> possible prod 401
+    - diff: Replace the raw fetch() in InventoryPartsStockPage.tsx with apiRequest (as already done for the create path).
+    - evidence: apps/frontend/src/pages/inventory/InventoryPartsStockPage.tsx:91 `const res = await fetch(resolveApiUrl(...))` with no `credentials: 'include'`. Contrast: apps/frontend/src/pages/i
+    - spec: NONE
+- `0441-mod13-inventory-reorder-threshold-dropped` **not-built** (tier-3) — Inventory reorder_threshold captured but dropped
+    - diff: A reorder_threshold / low-stock column or indicator in InventoryPartsStockPage's ParityTable columns.
+    - evidence: apps/frontend/src/pages/inventory/PartCreateDrawer.tsx:50 sends reorder_threshold in the POST body, and the backend column exists (apps/backend/src/maintenance/parts.routes.ts:25).
+    - spec: NONE
+- `0441-mod2-csv-import-mileage-phantom` **not-built** (tier-2) — CSV import 100% broken (mileage phantom column)
+    - diff: A real mileage column on mdata.units (migration) plus updating the SELECT/CREATE paths to stop faking it as NULL.
+    - evidence: apps/backend/src/maintenance/vehicles.routes.ts:344-365 the /api/v1/maintenance/vehicles/import row INSERT references columns 'vehicle_type, mileage' on mdata.units, but every SELE
+    - spec: NONE
+- `0441-mod2-fault-drafts-rules-orphan-nav` **not-built** (tier-3) — Fault Drafts/Rules orphan-nav (URL-only)
+    - diff: A tab entry in MAINTENANCE_NAV_CONFIG.ts / MaintenanceHome.tsx (or another discoverable nav surface) linking to these two pages.
+    - evidence: apps/frontend/src/routes/manifest.tsx:219-220,1778-1792 registers /maintenance/fault-drafts (FaultDraftsPage) and /maintenance/fault-rules (FaultRulesPage) as real, working routes.
+    - spec: NONE
+- `0441-mod3-fuel-expensive-states-free-text` **not-built** (tier-3) — Settings expensive-states free-text, not wired to catalog
+    - diff: Replace the free-text input with a multiselect/combobox reading from the catalogs.expensive_states catalog
+    - evidence: apps/frontend/src/pages/fuel/FuelPlannerHome.tsx:411-419 — PlannerSettingsForm renders a plain <input type="text"> for 'Expensive states (2-letter, comma-separated)', parsed client
+    - spec: NONE
+- `0441-mod3-fuel-fraud-detector-cron-never-invoked` **not-built** (tier-2) — Fuel fraud detector cron initializeFuelFraudDetectorWorker never invoked
+    - diff: A call to initializeFuelFraudDetectorWorker(app) during backend bootstrap (e.g. in index.ts alongside other cron/job initializers)
+    - evidence: grep -rn initializeFuelFraudDetectorWorker apps/backend/src shows only its own definition/self-reference in apps/backend/src/jobs/fuel-fraud-detector-worker.ts:117,133. grep -rln i
+    - spec: NONE
+- `0441-mod3-fuel-import-no-ui-trigger` **not-built** (tier-3) — Fuel transaction import has NO UI trigger
+    - diff: Wire the existing disabled button to the already-registered import endpoint (file upload + call), and update/remove the stale 'requires backend endpoint' toast copy
+    - evidence: apps/frontend/src/pages/fuel/FuelPlannerHome.tsx:232-234 — 'Import Fuel Transactions' ActionButton is `disabled` and onClick only pushes a toast: 'Fuel import UI coming soon (requi
+    - spec: NONE
+- `0441-mod3-fuel-loves-prices-isolated` **not-built** (tier-3) — Loves prices working but isolated
+    - diff: Cross-module linkage per Total Connectivity law (e.g. tie loves_prices_daily into fuel savings/GL-expense-mapping reporting, or IFTA fuel-tax exhibits)
+    - evidence: Loves prices upload/sync IS functional (apps/frontend/src/pages/fuel/components/UploadLovesPricesModal.tsx → uploadLovesPrices → loves-upload.routes.ts; sync status via getLovesSyn
+    - spec: NONE
+- `0441-mod3-fuel-relay-inbox-static-placeholder` **not-built** (tier-3) — /fuel/inbox (Relay) 100% static placeholder
+    - diff: A backend GET endpoint for pending Relay fuel-card exception/review items, and a frontend query+table wired to the relay_inbox tab
+    - evidence: apps/frontend/src/pages/fuel/FuelPlannerHome.tsx:185-191 — tab==='relay_inbox' renders a static <section> with hardcoded text 'No pending Relay items for the selected company.' No 
+    - spec: NONE
+- `0441-mod5-addtraining-drops-expiry` **not-built** (tier-3) — AddTraining drops expiry_date
+    - diff: An expiry-date <input type="date"> field in AddTrainingModal wired into the createDriverTrainingRecord call
+    - evidence: apps/frontend/src/components/drivers/AddTrainingModal.tsx: createDriverTrainingRecord accepts optional expiry_date, but the modal has no expiry-date input and submit() passes only 
+    - spec: NONE
+- `0441-mod5-border-creds-no-edit` **not-built** (tier-3) — Border creds no edit
+    - diff: Edit affordance in BorderCredentialsSection plus backend PATCH support for FAST/SENTRI/TWIC/Mexican-license fields (passport is the only one with any write path)
+    - evidence: apps/frontend/src/components/driver-profile/BorderCredentialsSection.tsx is 38 lines, entirely read-only: FAST/SENTRI/TWIC/Passport/Mexican license/B1 visa rendered as plain <div> 
+    - spec: NONE
+- `0441-mod5-retention-excludes-critical-truncated-uuid` **not-built** (tier-3) — Retention excludes critical tier, shows truncated UUID as name
+    - diff: Fetch/merge both at_risk and critical tiers; join the driver's real name instead of slicing the UUID
+    - evidence: apps/frontend/src/pages/drivers/RetentionDashboard.tsx:23 fetches `.../retention-scores?...&tier=at_risk` — hardcoded to one tier, excluding 'critical' (highest severity per scorer
+    - spec: docs/specs/gap-71-driver-retention-model.md
+- `0441-mod5-suspend-non-atomic` **not-built** (tier-3) — Suspend non-atomic (no rollback)
+    - diff: Wrap both writes in a single backend transaction/endpoint (e.g. POST /drivers/:id/suspend doing the status UPDATE + safety-event INSERT atomically)
+    - evidence: apps/frontend/src/components/drivers/SuspendConfirmModal.tsx submit(): calls await updateDriver(driverId, {status:'Inactive'}) then await createSafetyEvent(driverId, {...}) as two 
+    - spec: NONE
+- `0441-mod5-teams-tab-unreachable` **not-built** (tier-3) — Teams tab unreachable (useState getter only, no setter)
+    - diff: A setter (setActiveTab) wired to a real tab control, and a visible Teams tab/button in the rendered subnav
+    - evidence: apps/frontend/src/pages/Drivers.tsx:128 — `const [activeTab] = useState<"drivers" | "teams">("drivers");` — no setter destructured. Only references are the declaration and render-g
+    - spec: docs/approved-screens/7-Drivers.png
+- `0441-mod6-spawn-liability-fake-stub` **not-built** (tier-1) — Spawn Liability returns null under a success toast; writes to no real table
+    - diff: A real target table (e.g. driver_finance.driver_liabilities or a new safety/insurance liability record) + an INSERT that creates it, with the frontend surfacing the created record id instead of null.
+    - evidence: apps/backend/src/safety/safety.routes.ts:524-549 POST /accidents/:id/spawn-liability writes only an audit-log row (appendCrudAudit 'safety.accident.spawn_liability') and returns { 
+    - spec: NONE
+- `0441-mod7-dispute-queue-stub` **not-built** (tier-1) — DisputeQueue is a 19-line stub with no real UI
+    - diff: A real queue table (list disputes, filter by status/driver), a start-review action, and a decide (approve/deny + resolution text + optional adjustment_cents) form.
+    - evidence: apps/frontend/src/pages/accounting/DisputeQueuePage.tsx is still exactly 19 lines: a PageHeader plus static text describing the API contract (GET /api/v1/disputes, POST /:id/start-
+    - spec: NONE
+- `0441-mod8-backdated-check-dead` **not-built** (tier-3) — 'Create backdated check' menu item is dead
+    - diff: Either wire this action to a real backdated-check creation flow, or remove the dead menu item per the additive-only/archive rule (Jorge would need to say 'remove X').
+    - evidence: apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx:1372-1381 — the 'Create backdated check' button's onClick only does `pushToast("backdated check is avai
+    - spec: NONE
+- `0441-mod9-mileage-dropped-on-create-edit` **not-built** (tier-2) — `mileage` captured but silently dropped on create+edit
+    - diff: A migration adding `mdata.units.mileage` (or a decision to source mileage from Samsara odometer telemetry instead of a manual column), plus wiring the create INSERT and PATCH SET clause to actually pe
+    - evidence: apps/backend/src/maintenance/vehicles.routes.ts: createSchema (line 24) and updateSchema (line 37) both accept `mileage`, but the single-row create INSERT (lines 197-215) never inc
+    - spec: NONE
+- `a-06-save-button-not-above-fold` **not-built** (tier-3) — Save/Submit button not visible without scrolling on create forms
+    - diff: Make the primary action button sticky or move it above the fold on create forms.
+    - evidence: UNVERIFIED - not independently re-checked against a rendered viewport this pass; no sticky-footer CSS class found near the submit button in apps/frontend/src/components/expenses/Re
+    - spec: NONE
+- `f-01-fuel-home-stub` **not-built** (tier-3) — Fuel Home tab is effectively a stub - only shows fraud alert count
+    - diff: Build out Fuel Home with recent fuel transactions, spend-by-truck, MPG trends, and card activity per McLeod/Relay standard.
+    - evidence: apps/frontend/src/pages/fuel/FuelHome.tsx lines 49-57: FuelHomePage() renders literally only <FuelFraudAlertsKpiCard/> inside a max-w-xs div - no transactions, spend summary, MPG, 
+    - spec: NONE
+- `f-02-jump-to-tab-nonstandard` **not-built** (tier-3) — 'Jump to tab' button is a non-standard UX pattern not seen elsewhere
+    - diff: Remove or replace with standard tab navigation.
+    - evidence: apps/frontend/src/pages/fuel/components/RouteDiagramSvg.tsx / FuelPlannerHome.tsx:133 still renders trigger={<button ...>Jump to tab</button>}.
+    - spec: NONE
+- `h-01-entity-badge-conflict` **not-built** (tier-3) — Topbar orange entity badge disagrees with entity switcher dropdown (two conflicting entity signals)
+    - diff: Topbar legalNameChip and CarrierSwitcher must derive from the SAME single source of truth (selectedCompanyId from CompanyContext) instead of two independent queries.
+    - evidence: apps/frontend/src/components/Topbar.tsx lines 150-159: legalNameChip prefers identityCompanyQuery.data?.company_legal_name FIRST, falling back to selectedCompany?.legal_name only i
+    - spec: NONE
+- `h-04-kpi-sublabel-contrast` **not-built** (tier-3) — Home KPI sub-labels in very light grey - possible WCAG AA contrast fail
+    - diff: Darken KPI sub-label text color; add/extend an a11y contrast guard.
+    - evidence: UNVERIFIED - not independently re-checked against a computed contrast ratio this pass; no CI a11y-contrast guard found for this specific home KPI sub-label class in this sweep.
+    - spec: NONE
+- `h-06-owner-approvals-dev-copy` **not-built** (tier-3) — 'Pending Owner Approvals' banner uses developer language ('copy portal links or use the email you received')
+    - diff: Rewrite as owner-facing UX copy.
+    - evidence: apps/frontend/src/pages/home/OwnerHome.tsx:243-244 and apps/frontend/src/pages/home/roles/DefaultHome.tsx:223-224 both still contain the literal string 'copy portal links or use th
+    - spec: NONE
+- `s-01-coverage-gap-count-no-red-alert` **not-built** (tier-3) — COVERAGE GAP COUNT KPI shows 50 with no red styling, no badge, no action prompt
+    - diff: Make the Coverage gap count Card render red/critical styling and an action link when value > 0.
+    - evidence: apps/frontend/src/pages/insurance/InsuranceLanding.tsx lines 5-12: the shared Card component used to render 'Coverage gap count' (line 55) always uses neutral 'border-gray-200 bg-w
+    - spec: NONE
+- `0441-mod1-quickjump-hardcoded-counts` **partial** (tier-3) — Quick Jump counts hardcoded (not live queries)
+    - diff: Live query (or canonical config constant, matching the pattern already used for Maintenance/Safety/Drivers) for Accounting (38), Banking (22), Fuel (19), and Dispatch (27) quick-jump counts.
+    - evidence: apps/frontend/src/pages/home/OwnerHome.tsx:52-66 QUICK_JUMPS array: Maintenance uses MAINTENANCE_HOME_QUICK_JUMP_COUNT, Safety uses SAFETY_CANONICAL_TAB_COUNT, Drivers uses DRIVERS
+    - spec: NONE
+- `0441-mod11-deadhead-phantom-fuel-columns` **partial** (tier-2) — Deadhead PARTIAL (phantom fuel columns -> hardcoded $0.45/mile)
+    - diff: fix the fuel-cost-per-mile query to use real column names (ft.transaction_at instead of transaction_date; there is no per-transaction miles field on fuel_transactions at all, so total_miles needs a re
+    - evidence: apps/backend/src/reports/deadhead.service.ts:373-389 queries `SUM(ft.total_miles)` and filters `ft.transaction_date` against fuel.fuel_transactions — per db/migrations/0300_create_
+    - spec: NONE
+- `0441-mod13-inventory-assignments-not-built` **partial** (tier-3) — Inventory /inventory/assignments NOT BUILT (19-line static text block)
+    - diff: Real part<->unit assignment data model (which unit/work-order a part was issued to) and a distinct query/table from the generic parts_inventory stock ledger.
+    - evidence: apps/frontend/src/pages/inventory/InventoryAssignmentsPage.tsx now issues a real useQuery(listPartsInventory) and renders PartsInventoryTable - no longer a static text block. Howev
+    - spec: NONE
+- `0441-mod13-inventory-purchases-not-built` **partial** (tier-3) — Inventory /inventory/purchases NOT BUILT (static shell)
+    - diff: A genuine purchase-order history view distinct from the generic parts_inventory 'Record Purchase' ledger (currently a relabeled duplicate of the Assignments page).
+    - evidence: apps/frontend/src/pages/inventory/InventoryPurchasesPage.tsx now issues the same useQuery(listPartsInventory) and renders the same PartsInventoryTable component as InventoryAssignm
+    - spec: NONE
+- `0441-mod13-notifications-module-not-fully-audited` **partial** (tier-3) — Notifications module not fully audited
+    - diff: A dedicated audit pass on NotificationCenterPage.tsx + NotificationPreferencesPage.tsx (data wiring, cross-module trigger coverage, delivery-channel correctness).
+    - evidence: apps/frontend/src/pages/notifications/NotificationCenterPage.tsx exists with a test file (NotificationCenterPage.test.tsx), and apps/frontend/src/pages/settings/NotificationPrefere
+    - spec: NONE
+- `0441-mod2-parts-fragmentation` **partial** (tier-2) — Parts fragmentation (3 live + 1 unprovisioned tables, no cross-links)
+    - diff: FK/lookup linkage between maintenance.parts_inventory <-> mdata.maintenance_parts <-> reference.oem_parts so a stocked part can drill through to its catalog master and OEM reference record.
+    - evidence: db/migrations/0357_maint_parts_unify_deprecation.sql (Block B23, 2026-06-03) COMMENT-marked catalogs.parts and maint.part as DEPRECATED/superseded, designating maintenance.parts_in
+    - spec: docs/specs/MAINTENANCE-PARTS-CATALOG.md
+- `0441-mod3-fuel-history-no-transactions` **partial** (tier-3) — /fuel/history shows no transactions (real FuelTransactionsTable orphaned)
+    - diff: A useQuery wired to a real fuel-transactions list endpoint (apps/backend/src/fuel/fuel-transactions.routes.ts exists) feeding FuelTransactionsTable instead of a static []
+    - evidence: apps/frontend/src/pages/fuel/FuelPlannerHome.tsx:240 — <FuelTransactionsTable rows={[]} />. The component IS imported and rendered (not literally orphaned in the reachability sense
+    - spec: NONE
+- `0441-mod5-disputes-no-approve-deny-dual-check` **partial** (tier-2) — Disputes no approve/deny, latent 500 from dual conflicting CHECK constraints
+    - diff: Approve/Deny/Partial buttons in SettlementDisputeList.tsx wired to reviewDispute; and a consolidation decision on which of the 3 dispute tables is canonical (others archived/migrated)
+    - evidence: UI: apps/frontend/src/pages/drivers/SettlementDisputeList.tsx Actions column only renders 'Start review' (submitted->in_review); no approved/denied/partial button, though useSettle
+    - spec: NONE
+- `0441-mod6-idvr-row-not-clickable-session-fake-persist` **partial** (tier-3) — iDVIR row not clickable to detail; photo-comparison SessionDetail accept/reject is fake-persist
+    - diff: (a) pass onRowClick + a detail route to IdvrPage.tsx's ParityTable; (b) wire SessionDetail.tsx's accept/reject to PATCH the manual-override endpoint instead of only local state.
+    - evidence: apps/frontend/src/pages/safety/IdvrPage.tsx's <ParityTable> (lines 90-142) does not pass onRowClick though ParityTable supports it — rows not clickable, confirmed. SEPARATELY: Sess
+    - spec: docs/specs/gap-49-dvir-severity-tagging.md
+- `0441-mod9-vehicleprofile-edit-archive-dead` **partial** (tier-3) — VehicleProfile "Edit" and "Archive" buttons DEAD
+    - diff: Wire handleArchive to call the existing POST /api/v1/mdata/units/:id/deactivate endpoint (no new backend work needed — the comment claiming 'requires backend endpoint' is stale/wrong).
+    - evidence: apps/frontend/src/pages/fleet/VehicleProfilePage.tsx:279 `onEdit={() => setEditModalOpen(true)}` opens a real `<EditVehicleModal>` (line 344-350) — Edit is now functional. But `han
+    - spec: NONE
+- `h-02-qbo-sync-stale-no-action` **partial** (tier-3) — QBO Sync 'Stale' state has no timestamp / no Sync Now button
+    - diff: No inline 'last successful sync' timestamp always shown for the plain Stale state (only last_failed shows), and no dedicated 'Sync now' action button distinct from navigating to the dashboard.
+    - evidence: apps/frontend/src/components/Topbar.tsx line 124 builds a 'Stale' label with pending_count; line 139 appends 'Last failed: <timestamp>' when row.last_failed_sync_at exists. The pil
+    - spec: NONE
+
+### safety  (84 open)
+
+- `0091-d3-1` **built** (tier-2) — Add H-endorsement check to book-load qualification gate so a hazmat load can't be dispatched to an unendorsed 
+- `0091-h4-3` **built** (tier-3) — Add rate limiting to OCR rate-confirmation and safety photo-comparison AI-calling endpoints (unbounded Anthrop
+- `0091-m-home-1` **built** (tier-2) — Fix Safety role-home querying phantom columns (safety.accident_reports.status/investigation_status, da_random_
+- `0091-swl-1` **built** (tier-1) — Stop swallowing spine-event emit failures (emit*SpineEvent(...).catch(()=>undefined)) — log or fail loud inste
+- `0243-constitution-corrections-applied` **built** (tier-3) — Two CLAUDE.md §4 constitution errors corrected in the same 07-04 session: B2-1 (load_status_enum abandonment v
+- `0243-d3-1-hazmat-load-unendorsed-driver` **built** (tier-2) — Book-load qualification gate blocks deactivated/CDL/medical but NOT hazmat H-endorsement; a hazmat load can be
+- `0243-e2-4-da-records-orphan-fk` **built** (tier-1) — safety.da_test_records / da_program_enrollments have driver_uuid NOT NULL with no FK to mdata.drivers — FMCSA 
+- `0243-g9-c1-unqualified-drivers-quick-assign` **built** (tier-2) — [CRIT] quick-assign/quicksave/planner assignment paths check only unit-block/HOS/drug, missing the full qualif
+- `0243-h4-3-ai-cost-endpoints-no-throttle` **built** (tier-3) — OCR rate-confirmation and safety photo-comparison call Anthropic with no rate limit -- unbounded model spend f
+- `block05-safety1-hos-date-default` **built** (tier-3) — SAFETY-1: default the HOS date filter to the current duty day instead of empty/epoch
+- `coder-26-driver-document-expiry-tracking` **built** (tier-3) — Surface CDL/medical-card/insurance/drug-test document-expiry alerts on the Driver profile with a valid/expirin
+- `dispatch-sweep-gap-43` **built** (tier-3) — Safety Event to Load Linkage — verify safety events link to loads
+- `endorsement-h-driver-hazmat-ui-field` **built** (tier-3) — Add a UI field for mdata.drivers.endorsement_h (driver hazmat endorsement bool) — backend column existed, no U
+- `fd1-internal-fines` **built** (tier-3) — Wire dead driver/reason pickers on Internal Fines creator to real catalogs + backend approver_required validat
+- `fd3-complaints-driver-picker-and-type-catalog` **built** (tier-3) — Replace raw-uuid-typing Respondent field with a driver combobox + free-text Type with a complaint-types catalo
+- `repair-d-conduct-catalog-design-doc` **built** (tier-1) — One shared driver-conduct catalog design (unify 4 disconnected conduct vocabularies feeding escrow/termination
+- `rls-target1-password-reset-tokens-scope` **built** (tier-1) — RLS TARGET 1: replace identity.password_reset_tokens_open USING(true) with a deny-all-for-ih35_app policy behi
+- `s-03-five-safety-subroutes-silent-redirect` **built** (tier-3) — 5+ Safety sub-routes silently redirect to Home with no error/coming-soon message
+- `s-05-safety-dates-yyyy-mm-dd` **built** (tier-3) — Date inputs in Safety (Log Event popup and all Safety forms) use YYYY-MM-DD format
+- `s-09-no-export-button-safety-events` **built** (tier-3) — No export button on safety events list (CSV/PDF required for DOT/insurance/legal)
+- `safety-1-hos-date-default-utc` **built** (tier-3) — SAFETY-1: HOS date-default uses UTC instead of company-local today
+- `safety1-hos-violation-utc-date-default` **built** (tier-3) — HOS Violations '+ Create' form's 'occurred' datetime defaults to a UTC-derived value that lands on tomorrow's 
+- `safety2-cert-expiry-nav-verify` **built** (tier-3) — Safety > Compliance Docs & Monitoring 'Cert Expiry' nav item did not change route/breadcrumb/active-tab on cli
+- `sc-cluster-typed-creators` **built** (tier-3) — Typed field config per incident type (damage/interchange/cargo) on shared SafetyIncidentsClusterSurface with d
+- `sc-trailer-fk-repoint-equipment` **built** (tier-2) — Repoint safety.incidents.trailer_id FK from mdata.units to mdata.equipment + enable/require trailer pickers in
+- `sc1-accident-wizard-catalogs-and-layout` **built** (tier-3) — Accident Report wizard: wire dead Driver/Unit/Vendor/Load catalogs (was free-text with zero API calls) + fix l
+- `sc4-cargo-claim-intake-fields` **built** (tier-2) — Add claim_reason_code/claimant_customer_id/claim_filed_at to safety.incidents + wire CargoClaims creator to ca
+- `sm1-safety-driver-creator` **built** (tier-3) — Extract existing create-driver modal into shared CreateDriverModal and mount it on DriversListPage (Safety dri
+- `sm2-drug-alcohol-enrollment-workflow` **built** (tier-3) — Add D&A random-pool enrollment workflow (enroll/unenroll + bulk-enroll-all-active) so the pool is not empty
+- `sm3-safety-home-driver-cards` **built** (tier-3) — Safety Home driver cards (per-driver rollup) + wire the orphaned SafetyDashboardFilter counter bar via setDriv
+- `0091-e2-4` **needs-design** (tier-1) — Add FK driver_uuid -> mdata.drivers on safety.da_test_records / da_program_enrollments (drug-and-alcohol recor
+    - diff: confirm FK presence in db/migrations for safety.da_test_records/da_program_enrollments
+    - evidence: Not independently re-verified this pass.
+    - spec: NONE
+- `0257-audit-79` **needs-design** (tier-3) — Audit 79: Health & Safety Audit — OSHA compliance, workplace safety, employee health
+    - diff: a OSHA compliance documentation/workplace safety procedures/employee health tracking/safety training tracking/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spe
+    - evidence: Generic gap-audit asking for new OSHA compliance documentation/workplace safety procedures/employee health tracking/safety training tracking/dashboard systems/dashboards/analytics 
+    - spec: NONE
+- `0257-audit-93` **needs-design** (tier-3) — Audit 93: Consumer Protection Audit — Consumer rights, fair lending, product safety
+    - diff: a consumer protection documentation/consumer rights tracking/product safety tracking/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new consumer protection documentation/consumer rights tracking/product safety tracking/dashboard systems/dashboards/analytics for this domain; no such 
+    - spec: NONE
+- `0257-audit-96` **needs-design** (tier-3) — Audit 96: Building Code Audit — Building safety, fire codes, occupancy standards
+    - diff: a building code compliance documentation/fire code compliance/occupancy standards tracking/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new building code compliance documentation/fire code compliance/occupancy standards tracking/dashboard systems/dashboards/analytics for this domain; no
+    - spec: NONE
+- `0262-audit-37` **needs-design** (tier-3) — Audit 37: Incident Response Audit — Incident handling, breach response, recovery procedures
+    - diff: a incident response plan/breach response procedures/incident tracking system/recovery procedures/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new incident response plan/breach response procedures/incident tracking system/recovery procedures/dashboard systems/dashboards/analytics for this doma
+    - spec: NONE
+- `0280-16-safety-kpi-driver-unit-linkage` **needs-design** (tier-3) — Safety Home: KPI bar (DVIR defects, HOS violations, expiring certs, accidents) has no verification of driver/u
+    - diff: 
+    - evidence: Not independently checked in this pass.
+    - spec: NONE
+- `0280-17-safety-alerts-incident-claim-linkage` **needs-design** (tier-3) — Safety Home: safety alerts panel has no verification of incident/claim linkage
+    - diff: 
+    - evidence: Not independently checked in this pass.
+    - spec: NONE
+- `0280-45-safety-to-load-flow` **needs-design** (tier-3) — Data flow: Safety to Load linkage — verify safety queries include load FK
+    - diff: 
+    - evidence: Not independently checked in this pass.
+    - spec: NONE
+- `docs-required-docs-ruleset-owner-decision` **needs-design** (tier-2) — Confirm whether the 'required documents' ruleset is configured per entity type (Docs hub 'Missing required' KP
+    - diff: Owner decision on the required-document matrix per entity/role type, then wiring it into the 'Missing required' KPI query.
+    - evidence: Doc states: '"Missing required" KPI at 0 with 92 drivers loaded is worth a one-line follow-up: confirm the required-docs ruleset is configured... an owner decision on which docs ar
+    - spec: NONE
+- `flow9-safety-event-auto-notifications` **needs-design** (tier-2) — Auto-notify stakeholders on safety event creation
+    - diff: Wiring from safety.safety_events into compliance.notification_rules/notification_log (which exist today only for credential expirations, not safety events).
+    - evidence: No hit for 'notify safety event'/'safety event notif' in apps/backend/src/safety/*.ts or notifications/*.ts.
+    - spec: NONE
+- `hiring-bypass-and-safety-contract-alerts` **needs-design** (tier-2) — Hiring bypass ('contract pending upload/sign' state to allow hire before signature) + Safety-page contract ale
+    - diff: a hire-status state machine (contract pending upload/sign) + a Safety-page widget surfacing pending/expiring hire contracts
+    - evidence: only a generic reference to 'contract pending' text found in apps/backend/src/legal/templates/legal-template-library.generated.ts (template copy, not a workflow state machine); no 
+    - spec: NONE
+- `insurance-2-breadcrumb-desync` **needs-design** (tier-3) — INSURANCE-2: Safety shell breadcrumb/active-tab desync on Insurance sub-tabs (reinforces SAFETY-2, same root)
+    - diff: verification against the Safety shell breadcrumb component, and confirmation SAFETY-2 fix covers Insurance sub-tabs
+    - evidence: Doc explicitly says 'fold into the SAFETY-2 fix rather than a separate block' — this is a duplicate symptom of a SAFETY-2 root cause not present in this batch; no independent verif
+    - spec: NONE
+- `tasks-module-consolidation` **needs-design** (tier-3) — Consolidate Tasks functionality (distributed across Home/Dispatch/Maintenance/Safety) into a dedicated module
+    - diff: A dedicated Tasks module/schema, if the owner elects to consolidate (additive-only — would sit alongside, not replace, the distributed sources). Memory notes a 'Tasks Planner Entity-Linked' design ite
+    - evidence: Doc confirms: 'No dedicated task routes found... Tasks functionality appears to be distributed across modules' (Home/Dispatch/Maintenance/Safety); confirmed no apps/backend/src/tas
+    - spec: NONE
+- `0278-eld-none-identified-contradiction` **not-built** (tier-3) — Doc's ELD section claims 'Critical Gaps: None identified' / 'HOS tracking is solid' / 'ELD status monitoring i
+    - diff: a real ELD backend behind the /eld page (currently explicitly documented in-repo as a stub, Owner-role-only, hidden from nav)
+    - evidence: apps/frontend/src/components/layout/sidebar-config.ts:64 contains the code comment '"eld" is a placeholder/stub page (no real backend) — hidden from nav so there are no dead-end pa
+    - spec: NONE
+- `0278-safety-gap1-auto-driver-status` **not-built** (tier-2) — Safety: no automatic driver status update (probation/suspension) triggered by severe/repeated safety events — 
+    - diff: automatic driver-status transition (e.g. to probation/suspended) driven by safety-event severity/frequency rules
+    - evidence: `grep -rn probation|suspension apps/backend/src/safety/*.ts` returned zero matches. No automatic status-transition logic tied to safety-event severity/repetition was found.
+    - spec: NONE
+- `0441-mod11-csa-basic-hazmat-always-null` **not-built** (tier-3) — CSA basic_hazmat always NULL
+    - diff: add a `'hazmat' = ANY(csa_basic_categories)` aggregate to the SELECT and pass it through instead of NULL.
+    - evidence: apps/backend/src/routes/safety/csa-scores.ts — the SELECT that computes the CSA rollup (lines ~38-53) has SUM(...) expressions for unsafe_driving/hos_compliance/driver_fitness/cont
+    - spec: NONE
+- `0441-mod12-eld-export-pdf-window-print` **not-built** (tier-3) — Export PDF for DOT is client-side window.print() (disabled when table missing)
+    - diff: A real server-generated PDF (or at minimum documented as an accepted client-print interim), and it can never actually be exercised until the ELD table exists.
+    - evidence: apps/frontend/src/pages/safety/eld/EldAuditTrailViewer.tsx:80-126 exportPdf() opens a popup.document.write(...) then calls popup.print() via setTimeout - no server-side PDF generat
+    - spec: NONE
+- `0441-mod13-compliance-structural-drift-fmcsa-under-safety` **not-built** (tier-3) — Compliance structural drift (FMCSA/permits/IFTA/drug-alcohol/CSA-BASIC live under Safety, not Compliance)
+    - diff: Either move these under /compliance/* routes, or add cross-links from the Compliance Dashboard to each of these Safety/Reports-hosted pages.
+    - evidence: apps/frontend/src/routes/manifest.tsx: only '/compliance' and '/compliance/property-tax(/:id)' exist under the /compliance prefix. Permits lives at '/safety/permits' (line 1436), C
+    - spec: NONE
+- `0441-mod6-accident-edit-500-status-silent-fail` **not-built** (tier-1) — Accident edit 500s (updated_at column doesn't exist) + status buttons silent-fail
+    - diff: Migration adding safety.accident_reports.status + updated_at columns, then remove the .catch() swallow on the status endpoint.
+    - evidence: safety.accident_reports base table (db/migrations/0049) = id/operating_company_id/driver_id/accident_at/description only. Only later ALTERs: 202607031500 (unit_id/vendor_id/load_id
+    - spec: NONE
+- `0441-mod6-accident-police-claim-numbers-unbound` **not-built** (tier-2) — At-Fault/Preventable persisted but Police Report #/Insurance Claim # inputs are unbound decoration
+    - diff: Bind the two inputs to state, include them in saveAccident payload, and add safety.accident_reports.police_report_number + claim_number columns via migration.
+    - evidence: apps/frontend/src/components/safety/AccidentReportDrawer.tsx:314-318: <Field label="Police Report Number"><input .../></Field> and <Field label="Insurance Claim Number"><input .../
+    - spec: NONE
+- `0441-mod6-damage-insurance-worker-unregistered` **not-built** (tier-2) — Damage-to-Insurance auto-claim worker built but never registered/scheduled
+    - diff: import { initializeDamageContinuityWorker } from './jobs/damage-continuity-worker.js'; + a call site in index.ts's worker bootstrap.
+    - evidence: apps/backend/src/jobs/damage-continuity-worker.ts exports initializeDamageContinuityWorker (line 128) calling autoCreateClaimFromDamage. grep -rln initializeDamageContinuityWorker 
+    - spec: docs/specs/gap-38-damage-insurance-continuity.md
+- `0441-mod6-dot-inspections-pdf-discard` **not-built** (tier-2) — DOT Inspections PDF upload discards the file, fabricates r2:// path
+    - diff: Call the real R2 client (storage/r2-client.ts) to upload file bytes and use its returned real object key/URL instead of a hand-built string.
+    - evidence: apps/backend/src/routes/safety/dot-inspections.ts:353-392 (upload-pdf handler): `const file = await req.file();` is used ONLY for file.filename — no .toBuffer()/stream consumption,
+    - spec: NONE
+- `biz-flow-9-no-automatic-notifications-safety-event` **not-built** (tier-3) — Auto-notify stakeholders (email/dispatcher) when a safety event is created, especially severe ones
+    - diff: no email/SMS/dispatcher call on safety-event creation
+    - evidence: grep for 'notif|email|sendEmail|dispatchNotification' in apps/backend/src/mdata/driver-safety-events.routes.ts returns only an unrelated column alias ('voided_by_user_email' at lin
+    - spec: NONE
+- `coder-work-order-t2-6-accident-liability-stub` **not-built** (tier-1) — T2-6: 'Spawn Liability' accident action is a stub returning spawned_liability_id:null under a success toast; s
+    - diff: the real accident→liability→escrow posting path; a safety.accident_liabilities table; and a status column fix on the action buttons
+    - evidence: apps/backend/src/safety/safety.routes.ts:524-546 POST /api/v1/safety/accidents/:id/spawn-liability still literally returns 'return { accident_id: params.data.id, spawned_liability_
+    - spec: NONE
+- `dp-03-cdl-expires-blank` **not-built** (tier-2) — CDL EXPIRES column blank for nearly all drivers - FMCSA compliance requirement
+    - diff: Populate CDL expiry data for drivers, or add an alert on missing values.
+    - evidence: Data-population question (mdata.drivers CDL expiry column) - cannot be resolved from repo code alone; the column itself exists per CLAUDE.md §4 (drivers table has cdl fields) but w
+    - spec: NONE
+- `fk-safety-events-driver-status-0289` **not-built** (tier-2) — Critical FK gap #6: Safety Events -> Driver Status, expected column safety.safety_events.driver_status_update_
+    - diff: a link from a safety event to whatever driver-status/qualification change it triggered (if any)
+    - evidence: db/migrations/0261_safety_events.sql:3-19 CREATE TABLE safety.safety_events full column list confirmed (id, operating_company_id, event_type, severity, status, kpi_bucket, subject_
+    - spec: NONE
+- `fl-03-dot-oo-dates-blank` **not-built** (tier-2) — DOT O/O (out-of-service) dates blank for all rows
+    - diff: Populate from Samsara or maintenance out-of-service records.
+    - evidence: Data-population question (mdata.units out-of-service date tracking) - live-data gap.
+    - spec: NONE
+- `linkage-safety-event-no-driver-status-update` **not-built** (tier-2) — Missing linkage: severe/repeated safety events do not automatically update driver status (probation/suspension
+    - diff: A rule linking accumulated/severe safety events to a driver status change (probation/suspension), with an audit trail.
+    - evidence: Two-pass grep of apps/backend/src/safety and apps/backend/src/mdata/drivers.routes.ts for 'probation'/'suspend' returns zero matches.
+    - spec: NONE
+- `p1-incident-response` **not-built** (tier-3) — P1 recommendation: Incident Response (80 hours)
+    - diff: written incident response plan
+    - evidence: No incident-response runbook/doc found under docs/ during this pass.
+    - spec: NONE
+- `phase13-audit219-pharmaceutical-na` **not-built** (tier-3) — Audit 219 — pharmaceutical/drug-development system (doc's own verdict: N/A)
+    - diff: N/A — out of scope
+    - evidence: Doc's own verdict is 'N/A — Not applicable'. No related surface in repo.
+    - spec: NONE
+- `phase13-audit226-construction-na` **not-built** (tier-3) — Audit 226 — construction project management, safety, quality (not applicable domain)
+    - diff: N/A — no construction operation in a trucking carrier
+    - evidence: grep -ril 'construction.?project' apps/ docs/ -> empty (re-run empty).
+    - spec: NONE
+- `phase13-audit229-mining-na` **not-built** (tier-3) — Audit 229 — mining extraction, safety, environmental impact (doc's own verdict: N/A)
+    - diff: N/A — out of scope
+    - evidence: Doc's own verdict is 'N/A — Not applicable'. No related surface in repo.
+    - spec: NONE
+- `s-06-log-event-no-time-field` **not-built** (tier-2) — Log Event popup has no time-of-occurrence field (49 CFR 390.15 requires time of accident)
+    - diff: Add a time-of-occurrence (HH:MM) field to the Log Event form, or a dedicated Accident create form that writes safety.accidents.
+    - evidence: apps/frontend/src/pages/safety/SafetyEventsPage.tsx 'Log Safety Event' modal (lines 246-316) fields are: title, event_type, kpi_bucket, severity, status, subject_type, subject_driv
+    - spec: NONE
+- `s-07-log-event-missing-dot-fields` **not-built** (tier-2) — Log Event popup missing DOT-required fields: location, police report #, injury/fatality flag, DOT reportabilit
+    - diff: Add location/address, police report #, injury count, fatality count, tow-away flag, and DOT-reportability checkbox to an accident-specific create/edit form wired to safety.accidents.
+    - evidence: Same modal inspected for s-06-log-event-no-time-field (apps/frontend/src/pages/safety/SafetyEventsPage.tsx lines 246-316) has no location, police report #, injury count, fatality c
+    - spec: NONE
+- `s-08-no-driver-unit-type-date-filters-incidents` **not-built** (tier-3) — No driver/unit/type/date filters on Incidents list - search only covers title/description text
+    - diff: Add driver, unit, type, and date-range filters to SafetyEventsPage's incidents list.
+    - evidence: apps/frontend/src/pages/safety/SafetyEventsPage.tsx filter row only has a severity <select> and a free-text search input bound to title/description (lines ~160-177) - no driver, un
+    - spec: NONE
+- `s-10-no-type-filter-incidents` **not-built** (tier-3) — No TYPE filter on incidents list despite TYPE being a visible table column
+    - diff: Add a Type filter dropdown matching the TYPE table column.
+    - evidence: Same filter row inspected for s-08 (SafetyEventsPage.tsx) has severity + search only, no event_type/TYPE filter despite event_type being tracked (kpi_bucket dropdown in the create 
+    - spec: NONE
+- `systemic-pattern-r2-verify-bytes-guard` **not-built** (tier-2) — Fake-persist / evidence-loss fix: DOT PDFs + damage photos verified actually written to R2 (verify-bytes guard
+    - diff: a guard confirming uploaded evidence files (DOT PDF, damage photos) actually persist to Cloudflare R2 bucket ih35-tms-evidence, not just a DB row
+    - evidence: No R2 verify-bytes guard script found in scripts/*.mjs (re-checked with alternate terms 'r2 verify', 'evidence-bytes').
+    - spec: NONE
+- `wave3-dot-49cfr-fields-missing` **not-built** (tier-1) — 05_DISPATCH-BLOCK-WAVE3 Fix A: add 8 DOT/49-CFR-390.15 fields to accident/incident record (time_of_occurrence,
+    - diff: 8 CFR-390.15 columns on safety.safety_incidents; From/To date filter on the UI list.
+    - evidence: grep -rli 'fatalities\|dot_recordable\|hazmat_release\|police_report\|time_of_occurrence' across db/migrations/*.sql returned 0 hits (2 separate grep passes with different term set
+    - spec: NONE
+- `0007-pattern-9-fake-persist-evidence-loss` **partial** (tier-2) — Systemic Pattern 9 (compliance-critical): fake-persist/evidence loss — DOT-inspection PDF upload discards byte
+    - diff: confirmation r2-verify.mjs runs in CI + live re-check of the three named fake-persist paths (DOT-inspection upload, accident Spawn Liability, damage photos)
+    - evidence: scripts/r2-verify.mjs exists (npm alias r2:verify per package.json:661) matching the proposed 'verify-bytes-persisted' guard concept, but `grep -rn r2-verify .github/workflows/*.ym
+    - spec: NONE
+- `0243-g10-m-seven-integrity-reliability-gaps` **partial** (tier-2) — Bundle of 7 MED: unsigned SHA-256 audit hash (not HMAC), audit.row_changes no mutation trigger, dispatch-refin
+    - diff: re-verify all 7: HMAC/anchor the audit hash chain; row_changes mutation-block trigger; standardize stop archive/re-key; scope the qbo-sync 401 swallow; Twilio idempotency key; durable notifications; P
+    - evidence: Spot check 1 of 7: grep for HMAC/createHmac in apps/backend/src/audit/*.ts returned zero matches — audit hash still appears to be plain SHA-256, not HMAC-signed. The other 6 sub-it
+    - spec: NONE
+- `0243-swl-1-spine-emits-swallowed` **partial** (tier-1) — 61 money/dispatch spine-event emits swallowed with .catch(()=>undefined), zero breadcrumb, likely 500ing silen
+    - diff: confirm spine-emit catch blocks now log the failure instead of silently discarding; confirm the events schema USAGE grant gap itself is closed (memory: events-schema-usage-grant-gap notes this was fix
+    - evidence: grep for the literal pattern 'catch(()=>undefined)' in accounting-spine-emit.ts / banking-spine-emit.ts returned zero matches, suggesting the pattern was changed (possibly to log-a
+    - spec: NONE
+- `0252-audit146-workplace-safety-osha` **partial** (tier-2) — Audit 146 Safety: workplace-safety procedures, incident-prevention tracking, OSHA compliance dashboard, safety
+    - diff: an OSHA-specific workplace-safety dashboard/analytics layer distinct from the existing DOT/FMCSA safety.* tables
+    - evidence: safety.dvir_submissions (apps/backend/src/safety/dvir.routes.ts, dvir-submit.service.ts) and safety.incidents (apps/backend/src/safety/incidents.routes.ts, incidents/) ARE built an
+    - spec: NONE
+- `0270-no-auto-driver-status-from-safety-events` **partial** (tier-2) — Severe driver safety events should automatically update driver status (probation/suspension) for repeated seve
+    - diff: an automatic severity-accumulation rule (e.g. N severe events in M days -> auto-probation) - the explicit-termination-event linkage already exists and is correctly wired
+    - evidence: apps/backend/src/mdata/driver-safety-events.routes.ts:440-449 DOES automatically UPDATE mdata.drivers SET status='Terminated' when a safety event is explicitly created with event_t
+    - spec: NONE
+- `0278-safety-gap3-auto-notifications` **partial** (tier-2) — Safety: safety event creation does not automatically notify stakeholders (no email/SMS for severe events) — ma
+    - diff: confirmation of whether the anomaly-routes notification logic covers the general safety-events creation path, or is scoped only to anomaly detection
+    - evidence: apps/backend/src/safety/anomaly/routes.ts contains notification-related code (matched a broad grep for notify-related safety files), but the specific safety.routes.ts POST /api/v1/
+    - spec: NONE
+- `0441-mod12-eld-orphaned-under-safety-permanent-noop` **partial** (tier-2) — Real ELD feature orphaned under Safety (/safety/eld/audit-trail) - permanent no-op (table doesn't exist)
+    - diff: samsara.hos_log_edits migration (Jorge-gated) + a nav entry linking to /safety/eld/audit-trail from anywhere in Safety.
+    - evidence: apps/backend/src/safety/eld-audit-trail/viewer.service.ts:56-61 gates every read on `to_regclass('samsara.hos_log_edits')`; comment ELD-1 states the table's 'real source + migratio
+    - spec: NONE
+- `0441-mod6-insurance-no-driver-accident-link` **partial** (tier-1) — Insurance has no driver link, no accident_id FK
+    - diff: insurance.claim.driver_id (FK mdata.drivers) and insurance.claim.accident_id (FK safety.accident_reports) forward columns.
+    - evidence: insurance.claim (0285_insurance_claims_lawsuits.sql:5-22) columns: id, tenant_id, claim_number, policy_id, asset_id, accident_date, reported_date, status, amount_claimed_cents, amo
+    - spec: docs/specs/INSURANCE-SAFETY-CONNECTION.md
+- `0519-co2-unassigned-drivers-hos-gap` **partial** (tier-2) — Multiple compliance/safety rows show 'Unassigned' driver — HOS tracking gap for unassigned-driver miles
+    - diff: live confirmation of current unassigned-driver HOS coverage gap
+    - evidence: Live-data/ops question, not verifiable from static repo.
+    - spec: NONE
+- `audit-spine-a1-a9-emit-coverage-task` **partial** (tier-1) — Inventory A1-A9 audit-spine points from docs/specs (SAFETY-TRUST-RECOMMENDATIONS.md + AUDIT spec + QBO-parity 
+    - diff: Direct A1-A9 coverage inventory against the design doc's scope; confirmation of the enum-validity CI guard.
+    - evidence: docs/specs/CODER-12-AUDIT-SPINE-DESIGN.md exists (confirmed myself via grep of headers: 'Problem (verify-first...)', 'Non-negotiable constraints', 'Reusable building blocks', 'Per-
+    - spec: docs/specs/CODER-12-AUDIT-SPINE-DESIGN.md
+- `biz-flow-9-no-automatic-driver-status-update-safety-event` **partial** (tier-2) — Safety events should automatically update driver status (probation/suspension/termination) based on severity
+    - diff: no probation/suspension escalation logic for severe-but-non-termination events
+    - evidence: apps/backend/src/mdata/driver-safety-events.routes.ts:440-449 — when event_type === 'termination' (an explicit, human-selected type, NOT severity-driven), the code automatically se
+    - spec: NONE
+- `dispatch-sweep-gap-8` **partial** (tier-2) — Geofence Breach to Safety Linkage — verify geofence breaches create safety events
+    - diff: safety.geofence_breach_events has no load_id/driver_id FK, and no code path creates a linked safety.incidents / safety_events.safety-events.routes.ts row from a breach.
+    - evidence: Geofence breaches ARE written directly under the safety schema (safety.geofence_breach_events, db/migrations/0236_safety_geofence_breach_events.sql) by apps/backend/src/cron/geofen
+    - spec: docs/specs/DISPATCH-GEOFENCE-TIMING-MODEL.md
+- `s-02-insurance-sidebar-not-standalone` **partial** (tier-3) — Sidebar 'INSURANCE' routes to a Safety sub-page, not a standalone Insurance module
+    - diff: Either fix the suggested label rename ('Safety / Insurance') was never applied - sidebar label still reads plain 'INSURANCE' - or promote Insurance to a first-class top-level module.
+    - evidence: apps/frontend/src/components/layout/sidebar-config.ts:110 insurance item's 'to' is now explicitly '/safety/insurance' (no longer disguised as a standalone path); apps/frontend/src/
+    - spec: NONE
+- `s-11-safety-no-home-dashboard` **partial** (tier-3) — Safety has no home dashboard - lands directly on Incidents & Claims, no aggregate KPI summary
+    - diff: Wire apps/frontend/src/pages/safety/SafetyHome.tsx as the /safety index route instead of Navigate to /safety/safety-events.
+    - evidence: A file apps/frontend/src/pages/safety/SafetyHome.tsx EXISTS, but apps/frontend/src/routes/manifest.tsx:1403 still has <Route index element={<Navigate to="/safety/safety-events" rep
+    - spec: NONE
+- `safety-dot-fields-and-driver-create-fix` **partial** (tier-2) — FIX A: add DOT-required fields (time_of_occurrence, location, injuries, fatalities, towed, hazmat_release, pol
+    - diff: FIX A entirely: safety event table has no DOT-required columns (49 CFR 390.15) and the Log Event popup form has none of the 8 required fields; date range From/To filter on safety events list also not 
+    - evidence: FIX B is BUILT: apps/frontend/src/pages/Drivers.tsx:422,939 and apps/frontend/src/pages/drivers/DriversListPage.tsx:180 open CreateDriverModal (a modal, not a broken /drivers/new r
+    - spec: docs/specs/IH35_MASTER_BLUEPRINT_v3_FULL.md (doc instructs checking this first; not independently confirmed here)
+- `safety2-cert-expiry-nav-distinct-route` **partial** (tier-3) — SAFETY-2: Safety > Compliance Docs & Monitoring > 'Cert Expiry' nav item does not navigate to a distinct route
+    - diff: confirm whether the 'cert-expiry' route should render ExpiryDashboard.tsx instead of DOTComplianceTab, or whether this is an intentional alias
+    - evidence: apps/frontend/src/routes/manifest.tsx:1420 has a distinct route path="cert-expiry" but it renders <DOTComplianceTab /> (the SAME component as DOT Compliance, not a dedicated Cert E
+    - spec: NONE
+
+### settlements  (74 open)
+
+- `0008-c-net-pay-floor-5pct` **built** (tier-1) — One net-pay-floor resolver, 5% default, editable per settlement, Accept/Edit-amount UI control
+- `0091-c1-2` **built** (tier-1) — Move applied_to_settlement_id stamping onto the live driver_finance route (was only stamped by the orphaned pa
+- `0091-g11-1` **built** (tier-1) — Author + seed the driver_deduction_auth legal template so FIN-18 deduction posts are not permanently blocked
+- `0091-g9-h2` **built** (tier-1) — Add partial unique index (opco,driver_id) WHERE model='load_bookended' AND trip_closed_at IS NULL to prevent d
+- `0091-m-settle-3` **built** (tier-2) — Register settlement-dispute.routes.ts (registerSettlementDisputeRoutes) so the Settlements module's own Disput
+- `0243-g7-2-usmca-launch-breakers-todos` **built** (tier-2) — event-spine-heartbeat cron enumerates 'TRANSP only'; book-load PRESETTLEMENT-LINK money link not wired at book
+- `0243-g9-h2-duplicate-open-settlements-no-unique-index` **built** (tier-1) — load-bookended settlement create SELECT..FOR UPDATE locks zero rows when none exist, then INSERT with no parti
+- `bf3-bf5-bf7-deduction-applier-and-consent-fixed` **built** (tier-1) — BF3/BF5/BF7: applied_to_settlement_id stamping, deduction applier wiring, and driver_deduction_auth consent te
+- `blueprint-deduction-applier-wired-into-close` **built** (tier-1) — Wire the orphaned deduction applier into the live settlement close (fixes the driver-overpay bug)
+- `dispatch-sweep-gap-14` **built** (tier-1) — Assignment to Driver Settlement Linkage — verify assignments link to driver settlement calculations
+- `dispatch-sweep-gap-16` **built** (tier-1) — Settlement to Load Linkage Verification — verify settlements include all completed loads
+- `dispatch-sweep-gap-31` **built** (tier-1) — Assignment to Settlement Linkage (Load Assignment Flow) — verify assignments trigger settlement recalculation
+- `dispatch-sweep-gap-35` **built** (tier-1) — Load Complete to Settlement Linkage — verify completion adds to driver settlement
+- `flow4-cash-advance-escrow-fallback` **built** (tier-2) — Use escrow as backup recovery when settlement recovery is insufficient for a cash advance
+- `legal-full-build-library-creator` **built** (tier-1) — Legal contract template library full build: contract_instance_links table, 7 new templates, lifecycle admin (s
+- `load-advance-direct-link-finish` **built** (tier-1) — Finish Block B — Load<->Advance direct load_id linkage: CI guard for recovery-deduction load_id, end-to-end br
+- `settlement-bonus-deduction-computations` **built** (tier-1) — Compute contract-stated settlement bonuses/deductions: MPG +$35, referral $200, late-delivery pass-through, im
+- `st-01-settlements-route-broken` **built** (tier-3) — Sidebar 'SETTLEMENTS' routes to /settlements which silently redirects to Home
+- `0242-no-auto-escrow-deduction-driver-fault-cancellation` **needs-design** (tier-1) — Driver-fault load cancellation should automatically create an escrow deduction, instead of requiring a manual 
+    - diff: a driver-fault-reason branch in cancelLoad() (or a hook off catalogs.cancellation_reasons) that creates a driver_finance.escrow_deductions_pending row with a new source_type, mirroring the existing lo
+    - evidence: cancellation.service.ts has zero references to escrow anywhere (grep for 'escrow' in apps/backend/src/dispatch/*.ts returns no hits inside cancellation.service.ts). The only automa
+    - spec: NONE
+- `0252-audit140-compensation-structure` **needs-design** (tier-3) — Audit 140: no compensation-structure documentation, pay-equity analysis, or benchmarking (separate from driver
+    - diff: spec before build
+    - evidence: The audit's own ✅ positive finding cites 'driver_finance.settlements' (actual canonical table name is driver_finance.driver_settlements — minor naming drift in the doc) as existing
+    - spec: NONE
+- `0270-no-auto-escrow-deduction-safety-events` **needs-design** (tier-1) — Damage-causing driver safety events should automatically create an escrow deduction, instead of requiring a ma
+    - diff: a hook from safety-event creation (for damage-causing event types) into driver_finance.escrow_deductions_pending, mirroring the existing load_abandonment escrow-proposal pattern in escrow-deduction-pe
+    - evidence: grep for 'escrow' in apps/backend/src/mdata/driver-safety-events.routes.ts returns zero hits, and grep for 'driver_safety_events' in apps/backend/src/driver-finance/*.ts also retur
+    - spec: NONE
+- `0280-19-attention-items-driver-settlement-linkage` **needs-design** (tier-3) — Driver Manager Home: attention panel items have no verification of driver/settlement linkage
+    - diff: 
+    - evidence: Not independently checked in this pass.
+    - spec: NONE
+- `expand-escrow-non-bond-deductions` **needs-design** (tier-2) — Expand escrow functionality to non-bond deductions (safety events, customer chargebacks)
+    - diff: New escrow deduction_type values + wiring; overlaps flow9-safety-event-auto-escrow-deduction and the flow3 cancellation items above — this is the roadmap-level summary of those.
+    - evidence: Current escrow deduction types are load-abandonment-scoped (deduction_type='escrow_load_abandonment' per escrow-separation.service.ts); no chargeback/safety-event escrow type found
+    - spec: NONE
+- `flow5-escrow-limited-to-driver-bonds` **needs-design** (tier-1) — Escrow deduction mechanism only covers driver bonds, not other deduction types (safety events, cash advances, 
+    - diff: Owner decision on which deduction classes are allowed to hit escrow vs settlement-only, then a design doc.
+    - evidence: Confirmed by cross-reference: flow1/flow3/flow4/flow9 rows above each independently found no escrow linkage outside the abandonment-chargeback path (driver_finance/abandonment.serv
+    - spec: NONE
+- `0091-e1-4` **not-built** (tier-1) — Collapse driver settlements from 4 schemas (driver_finance.*, payroll.*, settlement.*) to one canonical engine
+    - diff: an owner decision + migration collapsing to driver_finance.* and archiving payroll.*/settlement.*
+    - evidence: grep counts confirm all three are still referenced: driver_finance.* (147 file refs), payroll.driver_settlements (10 refs), settlement.* prototype (10 refs) — no collapse/archive f
+    - spec: NONE
+- `0091-g1-3` **not-built** (tier-1) — Require membership assertion on settlement approval / dispute / cash-advance approve handlers (currently bare 
+    - diff: route every opco handler in settlements/approval.routes.ts (and settlement-dispute.routes.ts, cash-advance-requests.routes.ts) through withCompanyScope or add assertCompanyMembership, matching the G1-
+    - evidence: apps/backend/src/settlements/approval.routes.ts still uses bare withCurrentUser (10 call sites) with operating_company_id taken raw from query params (String(query.operating_compan
+    - spec: NONE
+- `0091-g9-h1` **not-built** (tier-1) — Add compare-and-swap (AND payment_state=$current) or SELECT..FOR UPDATE to prevent settlement double-pay race
+    - diff: compare-and-swap predicate on payment_state in every UPDATE driver_finance.driver_settlements SET payment_state=...
+    - evidence: apps/backend/src/driver-finance/settlement-payment.service.ts UPDATE statements at lines 150-160,195-202,238-244,287-293,350-357 all use only `WHERE id=$1 AND operating_company_id=
+    - spec: NONE
+- `0243-c1-1-orphaned-payroll-settlement-engine` **not-built** (tier-1) — Load-linkage/deduction-stamping work landed in an orphaned parallel payroll.* settlement engine nothing calls
+    - diff: collapse to one engine or formally bridge payroll.*->driver_finance.* before SETTLEMENT_GL_POSTING_ENABLED relies on load-linkage data
+    - evidence: grep -rln 'payroll/driver-settlement.service' apps/backend/src --include='*.ts' excluding the file itself returned ZERO callers — confirmed still orphaned. It now exists alongside 
+    - spec: NONE
+- `0243-g1-3-settlement-cash-advance-approvals-no-membership` **not-built** (tier-1) — settlements/approval, settlement-dispute review/resolve, cash-advance approve handlers take client operating_c
+    - diff: route settlements/approval.routes.ts, driver-finance/settlement-dispute.routes.ts, driver-finance/cash-advance-requests.routes.ts through withCompanyScope/assertCompanyMembership like bills.routes.ts 
+    - evidence: apps/backend/src/settlements/approval.routes.ts still only does 'const operatingCompanyId = String(query.operating_company_id || "")' with a 400-if-empty check, no assertCompanyMem
+    - spec: NONE
+- `0243-g9-h1-settlement-double-pay-race` **not-built** (tier-1) — queuePayment/markPaidManually/markCleared read-then-UPDATE with no payment_state=<current> in the WHERE and no
+    - diff: add AND payment_state=$current (compare-and-swap) or SELECT...FOR UPDATE to every state transition
+    - evidence: apps/backend/src/driver-finance/settlement-payment.service.ts:131-402 — queuePayment/markCleared/markPaidManually all still do a JS-level status check ('throw new Error("invalid_pa
+    - spec: NONE
+- `0285-df-gap1-no-escrow-for-cash-advances` **not-built** (tier-1) — Driver Finance: cash advances use settlement deductions only — no escrow as a backup recovery source; if a dri
+    - diff: an escrow-fallback recovery path when settlement earnings are insufficient to cover a cash-advance deduction
+    - evidence: 0285's own route inventory of cash-advance-requests.routes.ts shows Approve creates 'driver advance' + 'settlement deduction' only — no escrow fallback path listed. Not independent
+    - spec: NONE
+- `0441-mod10-cashflow-driverpay-hardcoded-empty` **not-built** (tier-1) — Cash Flow driver-pay line hardcoded []
+    - diff: resolve settlement_lines -> driver_settlements -> load mapping (or add a direct load_id) and populate expenseItems with real driver-pay accrual rows.
+    - evidence: apps/backend/src/cash-flow/cash-flow.service.ts:196-204 — comment explicitly states 'driver earnings live in driver_finance.settlement_lines ... there is no settlement_lines.load_i
+    - spec: NONE
+- `0441-mod10-deductions-never-reduce-settlement` **not-built** (tier-1) — Deductions never reduce a settlement (weekly-close hardcodes deductions_total=0)
+    - diff: weekly-close must query driver_finance.deduction_schedule (active, non-held rows for the driver/period) and insert corresponding line_type='deduction' settlement_lines, then sum into deductions_total/
+    - evidence: apps/backend/src/driver-finance/weekly-close.routes.ts:90-124 — INSERT into driver_finance.driver_settlements passes literal 0 for deductions_total, 0 for reimbursements_total, and
+    - spec: NONE
+- `0441-mod10-payment-status-panel-404` **not-built** (tier-1) — Payment Status panel 404 (registerSettlementPaymentRoutes unmounted)
+    - diff: import { registerSettlementPaymentRoutes } from './driver-finance/settlement-payment.routes.js' and a corresponding await registerSettlementPaymentRoutes(app); call in index.ts
+    - evidence: apps/backend/src/driver-finance/settlement-payment.routes.ts:68 exports registerSettlementPaymentRoutes, but a repo-wide grep for 'registerSettlementPaymentRoutes' or 'settlement-p
+    - spec: NONE
+- `0441-mod10-settlement-line-ui-nonexistent-columns` **not-built** (tier-1) — Settlement-line UI reads non-existent columns (silent placeholders)
+    - diff: either add real columns (miles, rate, balance_left, is_held, held_by_user_id, pending_ack, receipt_number) to settlement_lines via migration, or compute these server-side by joining deduction_schedule
+    - evidence: db/migrations/0191_driver_finance_settlement_lines.sql defines driver_finance.settlement_lines with only: id, settlement_id, line_type, description, amount, team_id, source_driver_
+    - spec: NONE
+- `0441-mod10-three-settlement-dispute-backends` **not-built** (tier-1) — 3 settlement-dispute backends with incompatible enums
+    - diff: consolidate into one dispute engine/table with one status enum; migrate or deprecate the other two.
+    - evidence: Three separate, all-mounted dispute implementations found: (1) apps/backend/src/driver-finance/settlement-dispute.routes.ts+service.ts -> table driver_finance.driver_settlement_dis
+    - spec: NONE
+- `0441-mod11-deduction-trail-period-close-zero-rows` **not-built** (tier-1) — Deduction Trail + Period-Close History return zero rows always (wrong sink)
+    - diff: UNION audit.audit_events (filtered by event_class patterns and payload opco) into both the deduction-trail and period-close-history queries, mirroring the void-reversal report's fix.
+    - evidence: apps/backend/src/audit/audit-reports.routes.ts:148-177 (deduction-trail) and :246-269 (period-close-history) both query ONLY `events.event_log` for event_type ILIKE patterns. A rep
+    - spec: NONE
+- `0441-mod11-financial-change-log-starved` **not-built** (tier-1) — Financial Change Log starved (wrong sink, same root cause as Deduction Trail)
+    - diff: same fix as deduction-trail: UNION in audit.audit_events filtered by the relevant event_class patterns.
+    - evidence: apps/backend/src/audit/audit-reports.routes.ts:90-116 financial-change-log query is the same pattern: `FROM events.event_log el WHERE el.event_type ILIKE ANY(ARRAY['%invoice%','%bi
+    - spec: NONE
+- `0441-mod5-deductions-tab-wrong-content` **not-built** (tier-3) — Deductions tab shows wrong content (shows cash-advance panel)
+    - diff: A real Deductions panel (e.g. reading driver_finance deduction types/ledger) distinct from the Cash Advance debt-alert panel
+    - evidence: apps/frontend/src/pages/Drivers.tsx:603 — `{subnavTab === "cash_advances" || subnavTab === "deductions" ? (<DataPanel title="Debt Alert · before any payment" ...>` — the Deductions
+    - spec: docs/approved-screens/7-Drivers.png
+- `0441-mod5-settlements-card-deprecated-table` **not-built** (tier-2) — Settlements card reads deprecated payroll.driver_settlements -> $0
+    - diff: Repoint the 3 CTEs in driver-aggregate.service.ts's settlements block from payroll.driver_settlements to driver_finance.driver_settlements
+    - evidence: apps/backend/src/mdata/driver-aggregate.service.ts:358-411 — the settlements block (feeds SettlementsSection.tsx YTD/lifetime/last-4-weeks) queries FROM payroll.driver_settlements 
+    - spec: NONE
+- `bf9a-accident-claim-liability-deduction` **not-built** (tier-1) — BF9-A flow: Accident/Damage/Claim -> Liability -> Deduction (doc claims BROKEN: no fault determination; 'Drive
+    - diff: a claim->deduction producer service; a fault-determination field; linkage from safety.safety_events (or an insurance claim table) to driver_finance.driver_settlement_deductions
+    - evidence: No grep hit in apps/backend/src/safety or apps/backend/src/insurance for a claim-to-deduction producer service; safety.safety_events (0261) has no fault or damage-claim-amount colu
+    - spec: NONE
+- `biz-flow-1-escrow-not-linked-to-termination` **not-built** (tier-1) — Escrow deduction record must be linked to the driver-termination record that triggered it
+    - diff: no termination_id / driver_safety_event_id FK on driver_finance.escrow_deductions_pending or driver_settlement_deductions
+    - evidence: driver_finance.driver_settlement_deductions (created db/migrations/0094_p5_e1_auto_deduct_escrow_load_abandonment.sql:94-104, columns extended by 202606290012 [bucket_id, source_ex
+    - spec: docs/specs/repairs/REPAIR-D-CONDUCT-CATALOG-DESIGN.md
+- `biz-flow-3-no-auto-escrow-deduction-driver-fault-cancellation` **not-built** (tier-1) — Auto-create an escrow deduction when a cancellation reason indicates driver fault
+    - diff: no call from cancelLoad()/approveCancellation() into escrow-deduction-pending.service.ts
+    - evidence: apps/backend/src/dispatch/cancellation.service.ts has zero references to 'escrow' or 'createSettlementDeduction' (grep confirmed no hits).
+    - spec: NONE
+- `biz-flow-3-no-cancellation-deduction-linkage` **not-built** (tier-1) — dispatch.load_cancellations needs a foreign key to the driver deduction it produced
+    - diff: no deduction_id column on dispatch.load_cancellations
+    - evidence: Same migration review as the billing-linkage row — no column on dispatch.load_cancellations references driver_finance.driver_settlement_deductions or driver_finance.escrow_deductio
+    - spec: NONE
+- `biz-flow-4-no-escrow-deduction-cash-advance` **not-built** (tier-1) — Cash advance recovery should be able to fall back to escrow, not only future-settlement deductions
+    - diff: no escrow-balance fallback recovery path if settlement earnings are insufficient
+    - evidence: grep for 'escrow' in apps/backend/src/driver-finance/cash-advance-owner-approval.service.ts and cash-advance-requests.service.ts returns zero hits; both createDriverCashAdvanceCore
+    - spec: docs/specs/repairs/REPAIR-A-DEDUCTION-LEDGER-DESIGN.md
+- `biz-flow-9-no-automatic-escrow-deduction-safety-event` **not-built** (tier-1) — Auto-create an escrow deduction when a safety event indicates driver-caused damage
+    - diff: no linkage between mdata.driver_safety_events and driver_finance.escrow_deductions_pending
+    - evidence: apps/backend/src/mdata/driver-safety-events.routes.ts has zero references to 'escrow' or 'createSettlementDeduction' (grep confirmed no hits).
+    - spec: NONE
+- `d-04-settlements-board-redirect-notice` **not-built** (tier-3) — SETTLEMENTS board inside Load board shows a redirect notice instead of real data
+    - diff: Either show real settlements data inline or remove this section from the Load board view (per the doc's suggested fix).
+    - evidence: apps/frontend/src/pages/Dispatch.tsx:491 still renders: 'Settlement runs, acknowledgements, and payouts live in Driver Finance.' as a static redirect notice, not real data.
+    - spec: NONE
+- `dispatch-sweep-gap-19` **not-built** (tier-1) — Pre-settlement to Driver Escrow Linkage — verify pre-settlements calculate escrow correctly
+    - diff: A call from pre-settlement/settlement calculation into escrow-separation.service.ts so escrow amounts are computed as part of the settlement, not just as a standalone screen.
+    - evidence: apps/backend/src/driver-finance/escrow-separation.service.ts / escrow-separation.math.ts / escrow-separation.routes.ts exist as a dedicated escrow feature. Grep of apps/backend/src
+    - spec: docs/lockdown/00_LOCKED_DECISIONS.md
+- `dispatch-sweep-gap-41` **not-built** (tier-1) — Geofence to Driver Settlement Linkage — verify geofence breaches affect driver settlement
+    - diff: No driver_id on the breach table and no code path from a breach into driver_finance deductions/settlement.
+    - evidence: safety.geofence_breach_events (migration 0236) has no driver_id column at all (only vehicle_id/geofence_id/customer_id), and no code anywhere references driver_finance in the geofe
+    - spec: NONE
+- `fk-cancellation-deductions-0289` **not-built** (tier-1) — Critical FK gap #5: Cancellation -> Deductions, expected column dispatch.cancellations.deduction_id
+    - diff: dispatch.load_cancellations.deduction_id FK to driver_finance.driver_settlement_deductions when a cancellation is driver-caused
+    - evidence: dispatch.load_cancellations (0101_p5_f4_cancellation_reasons.sql) has no deduction_id column (full column list: id, operating_company_id, load_id, reason_code, cancellation_notes, 
+    - spec: NONE
+- `flow1-termination-load-escrow-linkage` **not-built** (tier-2) — Add source_load_id to driver termination records; link escrow deduction to termination record
+    - diff: Termination record schema with source_load_id FK to mdata.loads; escrow deduction row referencing the termination record id.
+    - evidence: No termination table with source_load_id or escrow-deduction FK to a termination_id found via grep across db/migrations/ and apps/backend/src/drivers (2 grep passes, both empty).
+    - spec: NONE
+- `flow3-cancellation-auto-escrow-deduction` **not-built** (tier-2) — Auto-create an escrow deduction when a load is cancelled for driver-fault reasons
+    - diff: Call emitAutoProposedEscrowEvents (or equivalent) from cancellation.service.ts for driver-fault reason codes.
+    - evidence: cancellation.service.ts has no escrow/deduction call, unlike the abandoned/driver_walkoff/driver_no_show path in dispatch/loads.routes.ts:1206 which DOES call emitAutoProposedEscro
+    - spec: NONE
+- `flow9-safety-event-auto-escrow-deduction` **not-built** (tier-2) — Auto-create escrow deduction from damage-causing safety events
+    - diff: safety.safety_events.escrow_deduction_id column + trigger call on damage-causing severities.
+    - evidence: No safety.safety_events.escrow_deduction_id column found in db/migrations; no call from safety routes into emitAutoProposedEscrowEvents or a deduction service was found.
+    - spec: NONE
+- `flow9-safety-event-no-auto-status-escrow-notify` **not-built** (tier-2) — Safety event severity should auto-update driver status (probation/suspension) + auto-create escrow deduction +
+    - diff: Severity-to-status trigger; severity-to-escrow-deduction trigger; notification dispatch.
+    - evidence: apps/backend/src/safety/driver-safety-events.routes.ts / dispatcher-safety-events.routes.ts are CRUD routes per module catalog (0264/0442); no grep hit ties safety-event severity t
+    - spec: NONE
+- `ground-truth-g4-grants-not-reproduced` **not-built** (tier-1) — G4: ih35_app 'missing INSERT grants' on outbox_events/abandonment_defaults/settlement_preview_costs is NOT REP
+    - diff: N/A per the doc's own verdict — no fix is warranted unless a live 42501 is reproduced
+    - evidence: Doc states plainly: 'GRANTS (R07) = NOT REPRODUCED. NO GRANT MIGRATION... has_table_privilege(ih35_app, <t>, INSERT) = TRUE on all 3... DO NOT build a GRANT migration. Act ONLY if 
+    - spec: NONE
+- `linkage-safety-event-no-auto-escrow` **not-built** (tier-1) — Missing linkage: damage-causing safety events do not automatically create an escrow deduction
+    - diff: A safety.* event (damage/accident) -> driver_finance escrow-deduction-pending creation path, per the FLSA/consent-gated deduction rules already built for FIN-18.
+    - evidence: Two-pass grep of apps/backend/src/safety for 'escrow' and 'escrow_deduction_pending' returns zero real linkage code (only an unrelated KPI label string in foundation-kpis.routes.ts
+    - spec: NONE
+- `repair-b-driver-deduction-auth-template-not-seeded` **not-built** (tier-1) — Seed the 'Driver Deduction Authorization' legal template (code driver_deduction_auth) so the settlement consen
+    - diff: A real seed migration inserting the counsel-approved 'driver_deduction_auth' template into legal.contract_templates (idempotent, versioned), plus the e-sign onboarding flow, so hasSignedDeductionAutho
+    - evidence: apps/backend/src/legal/signed-finance-handoff.service.ts:32-33 gates on codes 'driver_deduction_auth'/'driver_deduction_authorization', but the ONLY places that string appears with
+    - spec: NONE
+- `0007-pattern-2-column-drift-500s` **partial** (tier-3) — Systemic Pattern 2: column-drift 500s masked as empty (12 driver Operations views, settlement lines, fuel_tran
+    - diff: a real-Postgres integration guard scoped to the 12 driver Operations views / settlement lines / fuel_transactions specifically (only a generic schema-parity guard + one maintenance-specific guard were
+    - evidence: scripts/verify-schema-parity.mjs exists and is wired (ci.yml:173 `npm run verify:schema-parity`) — a general schema-drift guard. A narrower guard scripts/verify-maintenance-insert-
+    - spec: NONE
+- `0008-b-canonical-deduction-store` **partial** (tier-1) — Canonicalize driver_finance.driver_settlement_deductions as the one deduction store; retire settlement_lines a
+    - diff: settlement_lines auto_deduction path and payroll.* copy not yet retired; payroll engine kept as read-only shadow-comparison (A3-3) rather than fully archived
+    - evidence: driver_finance.driver_settlement_deductions is heavily used live (deductions.service.ts, escrow-deduction-pending.service.ts, abandonment.service.ts, settlement-contract-terms.serv
+    - spec: NONE
+- `0008-f-consent-hire-contract-satisfies-gate` **partial** (tier-1) — No separate driver e-sign/consent template — signed hire contract authorizes payroll deductions, satisfies/rem
+    - diff: clarify whether driver_deduction_auth is auto-satisfied by the hire-contract signature event or is a genuinely separate signable document
+    - evidence: apps/backend/src/legal/signed-finance-handoff.service.ts:32-33 still lists template_code 'driver_deduction_auth'/'driver_deduction_authorization' as the gate; apps/backend/src/lega
+    - spec: NONE
+- `0243-c2-4-bypass-driver-reads-pk-only` **partial** (tier-2) — push-notification and settlement-payment read mdata.drivers under bypass by id only, no operating_company_id c
+    - diff: confirm apps/backend/src/services/push-notification.service.ts also adds AND operating_company_id = $2
+    - evidence: apps/backend/src/driver-finance/settlement-payment.service.ts:29-47 now explicitly scopes by 'AND operating_company_id = $2' with a comment documenting the fix ('callers now receiv
+    - spec: NONE
+- `0243-e1-4-driver-settlements-four-schemas` **partial** (tier-1) — Canonical driver_finance.* coexists with a parallel payroll.* engine and an early settlement.* prototype over 
+    - diff: collapse to driver_finance.* per the owner-locked decision, or formally retire the payroll.* engine once shadow-run evidence is reviewed
+    - evidence: driver_finance.* usage is heavy (745 refs). payroll.driver_settlements/settlement-shadow.service.ts/aggregated.routes.ts/driver-settlement.service.ts still exist, but settlement-sh
+    - spec: NONE
+- `0243-g2-2-operating-company-id-trusted-raw-tenant-scope` **partial** (tier-1) — operating_company_id trusted raw as tenant scope across settlements/dispatch/alerts routes — authorization gap
+    - diff: apply z.string().uuid() + resolveOperatingCompanyId(with membership) across settlements/*, driver-finance/*, dispatch/loads.routes.ts, alerts/*
+    - evidence: Some routes fixed (bills.routes.ts via G1-2, resolveOperatingCompanyId via G1-6), but settlements/approval.routes.ts confirmed still raw (G1-3 not-built) and dispatch/loads.routes.
+    - spec: NONE
+- `0285-df-gap2-dual-deduction-systems` **partial** (tier-1) — Driver Finance: dual deduction systems (legacy vs capped) coexist — may cause confusion, need to standardize o
+    - diff: final canonicalization decision + migration of legacy deduction rows/writers to the capped system
+    - evidence: Corroborated by memory 'schema-canonicalization-verdicts' (CODER-30: settlement=driver_finance canonical, deprecate settlement.*/payroll — with 2 open Jorge decisions still pending
+    - spec: NONE
+- `0441-mod10-autodeductionpolicies-fully-dead` **partial** (tier-1) — AutoDeductionPolicies fully dead
+    - diff: import and register registerAutoDeductionPolicyRoutes in apps/backend/src/index.ts.
+    - evidence: Frontend IS wired: apps/frontend/src/pages/drivers/DriversPage.tsx:9,87 renders <AutoDeductionPoliciesPanel />, and apps/frontend/src/hooks/useAutoDeductionPolicies.ts calls GET/PO
+    - spec: NONE
+- `0490-critical-g11-1-deduction-consent-template-not-seeded` **partial** (tier-1) — CRITICAL: hasSignedDeductionAuthorization() is structurally incapable of returning true because no driver-dedu
+    - diff: seed a legal.contract_templates row (or equivalent) with a template_code in HIRE_CONTRACT_TEMPLATE_CODES/DEDUCTION_AUTH_TEMPLATE_CODES
+    - evidence: apps/backend/src/legal/signed-finance-handoff.service.ts defines HIRE_CONTRACT_TEMPLATE_CODES/DEDUCTION_AUTH_TEMPLATE_CODES and hasSignedDeductionAuthorization() (now consumed corr
+    - spec: NONE
+- `0490-new1-queuepaymentonfinalize-dead-code` **partial** (tier-1) — NEW-1: an early return in queuePaymentOnFinalize makes the real queuePayment call unreachable, so auto_queue_s
+    - diff: confirm (or fix) whether queuePaymentOnFinalize's internal early-return still shadows the real queuePayment call
+    - evidence: apps/backend/src/driver-finance/settlement-payment.service.ts:383 defines queuePaymentOnFinalize(), consumed by settlements.routes.ts:543 `queuePaymentOnFinalize(params.data.id, co
+    - spec: NONE
+- `0519-sf1-82-drivers-0-settlements` **partial** (tier-1) — 82 active drivers but 0 settlements created — driver payroll pathway unclear
+    - diff: live confirmation of current settlement count and whether the driver payroll pathway has since been activated
+    - evidence: The settlements module is built (driver_finance.driver_settlements is the canonical settlement header per SCHEMA-CANONICALIZATION-VERDICTS-2026-06-28.md, with a full settlement-pos
+    - spec: NONE
+- `bf1-driver-fault-liability-deduction` **partial** (tier-1) — BF1 flow: Driver fault determination -> liability -> deduction (doc claims BROKEN: fault not modeled, customer
+    - diff: explicit fault-determination field/workflow (who is at fault: driver/customer/company) feeding a single deduction pipeline; consolidation of the 4 deduction/liability tables into one spine
+    - evidence: driver_finance schema has multiple deduction-adjacent tables confirmed live in db/migrations/*: driver_finance.driver_settlement_deductions (0094), driver_finance.driver_deduction_
+    - spec: NONE
+- `bf7-cash-advance-recovery-engine` **partial** (tier-1) — BF7 flow: Cash advance -> Liability -> Recovery (doc claims BROKEN: cash disburses + liability recorded, but r
+    - diff: confirmation of which settlement engine (shadow vs live) is wired to the production advance-recovery flag
+    - evidence: apps/backend/src/payroll/settlement-capped-recovery.ts and apps/backend/src/accounting/settlement-posting/recover-from-driver.service.ts both exist as live (non-test) recovery serv
+    - spec: NONE
+- `biz-flow-5-escrow-only-driver-bonds` **partial** (tier-1) — Escrow handling at settlement-post time is limited to driver_bond_deduction lines only
+    - diff: the generic pay-first-then-escrow engine is not live (flag OFF)
+    - evidence: apps/backend/src/accounting/settlement-posting/settlement-posting.service.ts:1-8 explicitly marks itself DEPRECATED/SUPERSEDED and states the canonical successor is settlement-bill
+    - spec: docs/specs/repairs/REPAIR-A-DEDUCTION-LEDGER-DESIGN.md
+- `dispatch-sweep-gap-22` **partial** (tier-1) — Reassign to Settlement Linkage — verify reassignments trigger settlement recalculation
+    - diff: An explicit recalculation/adjustment of an already-open driver settlement when one of its bookended loads is reassigned mid-settlement.
+    - evidence: manualReassignLoad (apps/backend/src/dispatch/dispatch-refinements.service.ts:37-140) only UPDATEs mdata.loads.assigned_primary_driver_id, inserts load_assignment_history, an outbo
+    - spec: docs/specs/repairs/SETTLEMENT-ENGINE-TRACE-2026-07-04.md
+- `flow5-dual-deduction-systems-consolidate` **partial** (tier-2) — Consolidate legacy vs capped-recovery driver deduction paths
+    - diff: Deprecation of the legacy path + a single standardized deduction pipeline (financial-adjacent — needs a design/approval pass before touching live deduction math).
+    - evidence: apps/backend/src/driver-finance/settlement-deduction-cap.service.ts (capped path) coexists with apps/backend/src/driver-finance/deductions.service.ts (legacy path) and cash-advance
+    - spec: NONE
+- `flow5-dual-deduction-systems-simplify` **partial** (tier-2) — Simplify dual deduction systems (legacy cash-advance path vs capped-recovery path) into one
+    - diff: Confirm whether a single deduction-recovery code path now exists, or if two paths remain under different naming than the 07-04 doc used.
+    - evidence: UNVERIFIED — grep for 'legacy.*deduction', 'deduction_mode', 'recovery_mode', 'CAPPED_RECOVERY' across apps/backend/src/driver-finance returned 0 hits on 2 separate grep passes, su
+    - spec: NONE
+
+### uncategorized  (139 open)
+
+- `0091-a2-3` **built** (tier-2) — Widen verify-applied-migrations-immutable filename regex from 4-digit to \d{4,} (was blind to all 238 timestam
+- `0091-g10-c1` **built** (tier-2) — Wire verifyEventChain tamper-evident audit hash-chain verifier into a daily cron
+- `0091-g10-c2` **built** (tier-2) — Surface dead QBO refresh token as needs_reauth instead of false connected:true
+- `0091-h1-1` **built** (tier-2) — Add rate limiting to public credential/OTP endpoints (shipper-portal login/reset, office login, phone OTP)
+- `0219-prod-stub-strings` **built** (tier-3) — Gate fixture/stub strings behind the fixture env flag so prod never serves them
+- `0243-a1-1-qbo-mirror-staleness-self-disable` **built** (tier-3) — QBO mirror-staleness alarm must arm independent of QBO_MASTERDATA_SYNC_ENABLED (was self-disabling exactly whe
+- `0243-g1-6-resolveoperatingcompanyid-unvalidated` **built** (tier-1) — resolveOperatingCompanyId returned any requested operating_company_id verbatim, unvalidated against the caller
+- `0243-g6-6-default-payments-list-includes-voided` **built** (tier-1) — payments.routes only filters voided_at IS NULL when status==='active'; with no status param, voided payments a
+- `0243-h1-1-public-auth-otp-no-rate-limit` **built** (tier-3) — Shipper-portal login/forgot/reset, office password login, phone OTP start+verify, email verify all had no rate
+- `0518-r24-write-target-gate-misses-read-phantom-cols` **built** (tier-3) — Extend the write-target gate (which only scans INSERT/UPDATE) to also scan SELECT/JOIN/WHERE column references
+- `0519-qbo3-sync-alerts-entity-type-missing` **built** (tier-1) — qbo.sync_alerts.entity_type column referenced in backend code but does not exist in live DB — QBO alert writes
+- `0519-wr1-19-phantom-write-targets` **built** (tier-2) — 19 phantom write targets suppressed by known-debt: whatsapp.queue (operating_company_id/variables/provider_sta
+- `biz-flow-10-manual-intervention-failed-jobs` **built** (tier-2) — QBO sync dead-letter/failed jobs may require manual investigation and retry
+- `cashflow-1-utc-today-hides-revenue` **built** (tier-3) — Cash Flow 'Projected (Auto)' + 'Actual vs Projected' date defaults used UTC, fetching tomorrow and hiding toda
+- `cashflow-1-utc-vs-central-today` **built** (tier-3) — CASHFLOW-1: Cash Flow 'today' computed as UTC calendar date instead of company-tz today, hiding today's real p
+- `fuel-3-planner-settings-editable` **built** (tier-3) — Fuel > Settings 'Planner settings' shown as static text with no edit control - add PUT/edit UI
+- `gated-blocks-cash-flow-module` **built** (tier-2) — CASH-FLOW-MODULE — cash flow page/design
+- `owner-batch-v2-f1-break-even-analysis` **built** (tier-3) — F1 - Break-even analysis (Finance), read-only cost-per-mile / revenue-per-mile analytics
+- `phase8-audit156-disaster-recovery` **built** (tier-3) — Audit 156 — DR plan, DR testing, recovery procedures, DR dashboard/analytics
+- `ps-b-items-list-paritytable-category-grouping` **built** (tier-3) — Products & Services (Items) list needed ParityTable sort/resize + a Category column with QBO-style grouping
+- `qbo-parity-a2-drawer-576px-standard` **built** (tier-3) — A2 — ~576px (752px items) standardized create/edit drawer used app-wide
+- `qbo-parity-a3-add-new-inside-dropdown` **built** (tier-3) — A3 — '+ Add new' rendered as FIRST row INSIDE the dropdown, not an external button
+- `referenceselect-add-new-inside-dropdown` **built** (tier-3) — Fix ReferenceSelect.tsx to render '+ Add new' as the FIRST option INSIDE the Combobox dropdown, not an always-
+- `reverse-link-endpoints-2255-2256` **built** (tier-2) — #2255/#2256 reverse-link drill-through endpoints
+- `task-5-create-task-date-default` **built** (tier-3) — Create Task modal 'Scheduled date' defaulted to UTC instead of company-local today
+- `transp-opening-balance-importer` **built** (tier-1) — TRANSP opening-balance importer tied to QBO Balance Sheet 12/31/2024 (JE total $11,306,439.74), read-only prev
+- `usmca-preactivation-readiness-audit` **built** (tier-3) — USMCA pre-activation readiness audit: confirm the hidden entity is excluded from every selector/nav before Jul
+- `0252-audit137-recruitment-system` **needs-design** (tier-3) — Audit 137: no recruitment/hiring-pipeline system, time-to-hire or quality-of-hire metrics
+    - diff: spec before build
+    - evidence: No recruitment/applicant-tracking schema or module found anywhere in the repo; generic corporate-HR template item with no IH35-specific spec.
+    - spec: NONE
+- `0252-audit138-training-system` **needs-design** (tier-3) — Audit 138: no employee training system, effectiveness tracking, skill development, or ROI measurement
+    - diff: spec before build
+    - evidence: No training/LMS schema or module found in the repo; generic corporate-HR template item with no IH35-specific spec.
+    - spec: NONE
+- `0252-audit139-performance-management` **needs-design** (tier-3) — Audit 139: no performance-review/goal-setting/feedback system
+    - diff: spec before build
+    - evidence: No performance-review schema or module found in the repo; generic corporate-HR template item with no IH35-specific spec.
+    - spec: NONE
+- `0252-audit141-benefits-administration` **needs-design** (tier-3) — Audit 141: no employee benefits administration/cost-tracking system
+    - diff: spec before build
+    - evidence: No benefits schema or module found in the repo; generic corporate-HR template item with no IH35-specific spec. Drivers are 1099 contractors per the locked driver model (finance-bui
+    - spec: NONE
+- `0252-audit142-engagement-tracking` **needs-design** (tier-3) — Audit 142: no employee engagement/satisfaction/retention tracking
+    - diff: spec before build
+    - evidence: No engagement-tracking schema or module found in the repo; generic corporate-HR template item with no IH35-specific spec.
+    - spec: NONE
+- `0252-audit143-turnover-analysis` **needs-design** (tier-3) — Audit 143: no turnover tracking, retention strategy, or exit-interview process
+    - diff: spec before build
+    - evidence: No turnover-tracking schema or module found; the closest existing analog is mdata.drivers.deactivated_at/archived_at and driver_termination_reasons catalog, which are driver-specif
+    - spec: NONE
+- `0252-audit144-diversity-metrics` **needs-design** (tier-3) — Audit 144: no diversity/inclusion/equity metrics system
+    - diff: spec before build
+    - evidence: No diversity-metrics schema or module found; generic corporate-HR template item with no IH35-specific spec.
+    - spec: NONE
+- `0252-audit145-workplace-culture` **needs-design** (tier-3) — Audit 145: no workplace-culture assessment/values-alignment tracking
+    - diff: spec before build
+    - evidence: No culture-assessment schema or module found; generic corporate-HR template item with no IH35-specific spec.
+    - spec: NONE
+- `0252-audit147-wellness-program` **needs-design** (tier-3) — Audit 147: no employee wellness/health-program/work-life-balance tracking
+    - diff: spec before build
+    - evidence: No wellness schema or module found; generic corporate-HR template item, lowest priority (P3) in the source doc itself.
+    - spec: NONE
+- `0252-audit148-remote-work-policy` **needs-design** (tier-3) — Audit 148: no remote-work policy/productivity/collaboration tracking
+    - diff: spec before build
+    - evidence: No remote-work schema or module found; generic corporate-HR template item, low relevance for a trucking-dispatch operation (drivers are field workers, not remote office staff).
+    - spec: NONE
+- `0252-audit150-employee-relations` **needs-design** (tier-3) — Audit 150: no employee-relations/grievance-handling/labor-relations system
+    - diff: spec before build
+    - evidence: No employee-relations schema or module found; generic corporate-HR template item with no IH35-specific spec.
+    - spec: NONE
+- `0258-audit-102` **needs-design** (tier-3) — Audit 102: Performance Audit — KPI tracking, goal achievement, performance measurement
+    - diff: a KPI dashboard/goal-setting/performance measurement/benchmarking/analytics dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new KPI dashboard/goal-setting/performance measurement/benchmarking/analytics systems/dashboards/analytics for this domain; no such system found in app
+    - spec: NONE
+- `0258-audit-104` **needs-design** (tier-3) — Audit 104: Effectiveness Audit — Goal achievement, outcome measurement, impact assessment
+    - diff: a goal achievement tracking/outcome measurement/impact assessment/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new goal achievement tracking/outcome measurement/impact assessment/dashboard systems/dashboards/analytics for this domain; no such system found in app
+    - spec: NONE
+- `0258-audit-108` **needs-design** (tier-3) — Audit 108: Throughput Audit — Process throughput, bottleneck identification, flow optimization
+    - diff: a throughput dashboard/bottleneck identification/flow optimization/analytics dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new throughput dashboard/bottleneck identification/flow optimization/analytics systems/dashboards/analytics for this domain; no such system found in ap
+    - spec: NONE
+- `0258-audit-109` **needs-design** (tier-3) — Audit 109: Cycle Time Audit — Process duration, lead time, speed improvement
+    - diff: a cycle time dashboard/lead time optimization/speed improvement tracking dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new cycle time dashboard/lead time optimization/speed improvement tracking systems/dashboards/analytics for this domain; no such system found in apps/f
+    - spec: NONE
+- `0258-audit-115` **needs-design** (tier-3) — Audit 115: Logistics Audit — Transportation, warehousing, distribution
+    - diff: a logistics efficiency metrics/warehousing system/distribution optimization dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new logistics efficiency metrics/warehousing system/distribution optimization systems/dashboards/analytics for this domain; no such system found in app
+    - spec: NONE
+- `0258-audit-119` **needs-design** (tier-3) — Audit 119: Sales Audit — Sales process, conversion rates, revenue growth
+    - diff: a sales process tracking/conversion rate metrics/revenue growth tracking/sales analytics dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new sales process tracking/conversion rate metrics/revenue growth tracking/sales analytics systems/dashboards/analytics for this domain; no such system
+    - spec: NONE
+- `0258-audit-120` **needs-design** (tier-3) — Audit 120: Marketing Audit — Marketing effectiveness, ROI, campaign performance
+    - diff: a marketing system/effectiveness tracking/ROI measurement/campaign performance tracking dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new marketing system/effectiveness tracking/ROI measurement/campaign performance tracking systems/dashboards/analytics for this domain; no such system 
+    - spec: NONE
+- `0262-audit-26` **needs-design** (tier-3) — Audit 26: Information Security Audit — Security controls, vulnerability assessment, penetration testing
+    - diff: a vulnerability scanning/penetration testing program/security control documentation/policy enforcement/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new vulnerability scanning/penetration testing program/security control documentation/policy enforcement/dashboard systems/dashboards/analytics for thi
+    - spec: NONE
+- `0262-audit-27` **needs-design** (tier-3) — Audit 27: Network Security Audit — Firewall configuration, network segmentation, intrusion detection
+    - diff: a network architecture documentation/firewall config review/segmentation/intrusion detection/monitoring/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new network architecture documentation/firewall config review/segmentation/intrusion detection/monitoring/dashboard systems/dashboards/analytics for th
+    - spec: NONE
+- `0262-audit-28` **needs-design** (tier-3) — Audit 28: Application Security Audit — Code review, vulnerability scanning, OWASP Top 10
+    - diff: a static code analysis/DAST/OWASP Top 10 review/dependency vulnerability scanning/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new static code analysis/DAST/OWASP Top 10 review/dependency vulnerability scanning/dashboard systems/dashboards/analytics for this domain; no such sys
+    - spec: NONE
+- `0262-audit-29` **needs-design** (tier-3) — Audit 29: Database Security Audit — Access controls, encryption, SQL injection prevention
+    - diff: a database encryption at rest/in-transit documentation/access logging/activity monitoring/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new database encryption at rest/in-transit documentation/access logging/activity monitoring/dashboard systems/dashboards/analytics for this domain; no 
+    - spec: NONE
+- `0262-audit-35` **needs-design** (tier-3) — Audit 35: Encryption Audit — Encryption at rest, encryption in transit, key management
+    - diff: a encryption at rest/in-transit documentation/key management system/algorithm review/key rotation/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new encryption at rest/in-transit documentation/key management system/algorithm review/key rotation/dashboard systems/dashboards/analytics for this dom
+    - spec: NONE
+- `0262-audit-36` **needs-design** (tier-3) — Audit 36: Audit Trail Audit — Log completeness, log immutability, log retention
+    - diff: a log retention policy/log archival process/log analysis capability/log integrity verification/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new log retention policy/log archival process/log analysis capability/log integrity verification/dashboard systems/dashboards/analytics for this domain
+    - spec: NONE
+- `0262-audit-38` **needs-design** (tier-3) — Audit 38: Business Continuity Audit — Disaster recovery, backup procedures, continuity planning
+    - diff: a business continuity plan/disaster recovery plan/backup procedures documentation/continuity testing/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new business continuity plan/disaster recovery plan/backup procedures documentation/continuity testing/dashboard systems/dashboards/analytics for this 
+    - spec: NONE
+- `0262-audit-39` **needs-design** (tier-3) — Audit 39: Disaster Recovery Audit — RTO/RPO validation, failover testing, recovery procedures
+    - diff: a RTO/RPO documentation/failover testing/recovery procedures/DR testing schedule/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new RTO/RPO documentation/failover testing/recovery procedures/DR testing schedule/dashboard systems/dashboards/analytics for this domain; no such syst
+    - spec: NONE
+- `0262-audit-40` **needs-design** (tier-3) — Audit 40: Penetration Testing Audit — Security testing, vulnerability exploitation, remediation
+    - diff: a penetration testing program/vulnerability exploitation testing/remediation tracking/schedule/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new penetration testing program/vulnerability exploitation testing/remediation tracking/schedule/dashboard systems/dashboards/analytics for this domain
+    - spec: NONE
+- `0262-audit-41` **needs-design** (tier-3) — Audit 41: Vulnerability Assessment Audit — Vulnerability scanning, risk prioritization, patch management
+    - diff: a vulnerability scanning/risk prioritization/patch management/tracking/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new vulnerability scanning/risk prioritization/patch management/tracking/dashboard systems/dashboards/analytics for this domain; no such system found i
+    - spec: NONE
+- `0262-audit-42` **needs-design** (tier-3) — Audit 42: Malware Audit — Antivirus effectiveness, malware detection, infection prevention
+    - diff: a antivirus documentation/malware detection system/infection prevention procedures/scanning/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new antivirus documentation/malware detection system/infection prevention procedures/scanning/dashboard systems/dashboards/analytics for this domain; n
+    - spec: NONE
+- `0262-audit-45` **needs-design** (tier-3) — Audit 45: Physical Security Audit — Access control, surveillance, security personnel
+    - diff: a physical security documentation/access control procedures/surveillance system/security personnel procedures/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spe
+    - evidence: Generic gap-audit asking for new physical security documentation/access control procedures/surveillance system/security personnel procedures/dashboard systems/dashboards/analytics 
+    - spec: NONE
+- `0262-audit-46` **needs-design** (tier-3) — Audit 46: Wireless Security Audit — WiFi security, mobile device security, Bluetooth security
+    - diff: a WiFi security documentation/mobile device security/Bluetooth security/wireless monitoring/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new WiFi security documentation/mobile device security/Bluetooth security/wireless monitoring/dashboard systems/dashboards/analytics for this domain; n
+    - spec: NONE
+- `0262-audit-47` **needs-design** (tier-3) — Audit 47: IoT Security Audit — Device security, firmware updates, network segmentation
+    - diff: a IoT device inventory/security documentation/firmware update management/network segmentation/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new IoT device inventory/security documentation/firmware update management/network segmentation/dashboard systems/dashboards/analytics for this domain;
+    - spec: NONE
+- `0262-audit-49` **needs-design** (tier-3) — Audit 49: Container Security Audit — Docker/Kubernetes security, image scanning, runtime protection
+    - diff: a container security documentation/image scanning/runtime protection/configuration review/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new container security documentation/image scanning/runtime protection/configuration review/dashboard systems/dashboards/analytics for this domain; no 
+    - spec: NONE
+- `0262-audit-52` **needs-design** (tier-3) — Audit 52: Zero Trust Audit — Zero trust architecture, identity verification, continuous authentication
+    - diff: a zero trust architecture documentation/identity verification/continuous authentication/least-privilege enforcement/dashboard dashboard/analytics/tracking system for this domain, plus an approved-scre
+    - evidence: Generic gap-audit asking for new zero trust architecture documentation/identity verification/continuous authentication/least-privilege enforcement/dashboard systems/dashboards/anal
+    - spec: NONE
+- `0262-audit-53` **needs-design** (tier-3) — Audit 53: Identity Management Audit — Identity lifecycle, provisioning/deprovisioning, SSO
+    - diff: a identity lifecycle automation/automated provisioning-deprovisioning/SSO implementation/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new identity lifecycle automation/automated provisioning-deprovisioning/SSO implementation/dashboard systems/dashboards/analytics for this domain; no s
+    - spec: NONE
+- `0262-audit-55` **needs-design** (tier-3) — Audit 55: Security Awareness Audit — Training effectiveness, phishing resistance, security culture
+    - diff: a security awareness training/phishing resistance training/culture assessment/training effectiveness measurement/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen 
+    - evidence: Generic gap-audit asking for new security awareness training/phishing resistance training/culture assessment/training effectiveness measurement/dashboard systems/dashboards/analyti
+    - spec: NONE
+- `0275-audit171-data-quality-monitoring` **needs-design** (tier-3) — Audit 171: build data-quality monitoring + dashboard + analytics + a rules engine on top of the existing const
+    - diff: a data-quality rules engine + violation-tracking table(s) + dashboard route + analytics
+    - evidence: Confirmed the underlying constraint layer is real: `grep -c 'CREATE POLICY' db/migrations/*.sql` totals 822 policies (RLS), and CREATE TABLE definitions total 542+ across 73 schema
+    - spec: NONE
+- `0275-audit180-metadata-repository` **needs-design** (tier-3) — Audit 180: build a metadata repository + completeness/accuracy tracking + documentation + dashboard + analytic
+    - diff: a metadata repository (e.g. a table describing tables/columns with descriptions/owners), completeness tracking, and a dashboard
+    - evidence: No dedicated metadata-repository table, column-comment catalog, or metadata dashboard found anywhere in the repo. db/migrations/ itself is the closest thing to a metadata source of
+    - spec: NONE
+- `0275-audit182-data-profiling-system` **needs-design** (tier-3) — Audit 182: build a data-profiling system + pattern analysis + anomaly detection + dashboard + analytics
+    - diff: a general-purpose data-profiling/anomaly-detection system + dashboard
+    - evidence: No data-profiling or anomaly-detection module found anywhere in the repo (the closest adjacent feature, fuel-fraud-detector-worker.ts, is a narrow domain-specific anomaly check for
+    - spec: NONE
+- `0275-audit183-data-catalog-system` **needs-design** (tier-3) — Audit 183: build a data-catalog system + completeness/accuracy/usability tracking + dashboard + analytics
+    - diff: a live data-catalog UI/tool over the 73-schema, 500+-table database
+    - evidence: No live/queryable data-catalog feature found; docs/specs/ and CLAUDE.md serve as human-readable documentation but are not a searchable data-catalog product feature.
+    - spec: NONE
+- `0275-audit184-data-dictionary-system` **needs-design** (tier-3) — Audit 184: build a data-dictionary system + accuracy/completeness/currency tracking + dashboard + analytics
+    - diff: a live, queryable data-dictionary UI + dashboard
+    - evidence: No live data-dictionary tool found; db/migrations/ + docs/specs/*.md are the de facto (static, non-interactive) data dictionary but not a dedicated dictionary product/dashboard.
+    - spec: NONE
+- `0277-csrf-tokens-recommendation` **needs-design** (tier-2) — Add CSRF tokens for state-changing operations (no CSRF tokens found, currently relies on SameSite cookie polic
+    - diff: an explicit owner decision: keep SameSite=None+Secure as the sole CSRF mitigation, or add double-submit CSRF tokens for state-changing routes
+    - evidence: apps/backend/src/auth/session-cookie-policy.ts:16 — 'Production uses SameSite=None + Secure' for cross-subdomain cookies; no CSRF token middleware found in apps/backend/src/auth/.
+    - spec: NONE
+- `0280-06-qbo-sync-health-outbox-linkage` **needs-design** (tier-3) — QBO Sync Health card: verify sync-health status ties to actual outbox event counts
+    - diff: confirm QBO Sync Health card query source matches outbox.events
+    - evidence: Not independently re-verified; accounting-home.service.ts (seen above) does read outbox.events for a pending/failed count, suggesting some real linkage already exists for at least 
+    - spec: NONE
+- `0280-08-quick-jump-navigation-verification` **needs-design** (tier-3) — Owner Home Quick Jump links are hardcoded with no verification target modules exist/are accessible
+    - diff: cross-check each Quick Jump href against manifest.tsx routes + role access
+    - evidence: Not independently checked against apps/frontend/src/routes/manifest.tsx in this pass.
+    - spec: NONE
+- `0280-28-api-response-zod-validation` **needs-design** (tier-3) — home.ts frontend API client: some responses lack Zod schema validation
+    - diff: 
+    - evidence: Not independently checked line-by-line in this pass; the doc's own positive findings note home.ts already has 'Type-safe API calls with Zod schemas' for most functions, implying pa
+    - spec: NONE
+- `0280-29-legacy-fallback-tests` **needs-design** (tier-3) — home.ts: legacy 404-fallback routes may not be tested
+    - diff: 
+    - evidence: Not independently checked in this pass.
+    - spec: NONE
+- `0280-30-error-context-detail` **needs-design** (tier-3) — home API errors lack detailed context for debugging
+    - diff: 
+    - evidence: Not independently checked in this pass.
+    - spec: NONE
+- `0519-mig2-4-applied-migrations-no-file-on-disk` **needs-design** (tier-3) — 4 migration records applied with no corresponding file on disk (recovery gap — cannot re-run if needed)
+    - diff: identify the 4 orphaned applied_migrations rows and document them in a runbook (REC-15)
+    - evidence: This requires a live query against ih35_migrations.applied_migrations vs db/migrations/ file listing to identify the 4 specific orphaned records, then a documentation/runbook decis
+    - spec: NONE
+- `p1-analytics-systems` **needs-design** (tier-3) — P1 recommendation: Analytics Systems (250 hours)
+    - diff: product decision on what 'analytics' means here (usage analytics vs financial analytics — financial analytics already exists via P&L/BS/AR-AP-aging)
+    - evidence: No product-analytics tooling (e.g. Amplitude/Mixpanel/PostHog) or in-house analytics pipeline found via grep of package.json files; this is a large net-new capability with no named
+    - spec: NONE
+- `phase3-audit56-iso9001-quality-mgmt` **needs-design** (tier-3) — Audit 56 — ISO 9001 quality management system, docs, continuous improvement, quality dashboard
+    - diff: ISO 9001 documentation, quality-process docs, continuous-improvement process, quality dashboard — none exist
+    - evidence: grep -ril 'iso.?9001|quality.?management.?system' apps/ docs/ -> empty (re-run with alt term 'ISO9001' also empty). No governing spec in docs/specs/ or docs/approved-screens/.
+    - spec: NONE
+- `phase3-audit64-capa` **needs-design** (tier-3) — Audit 64 — CAPA (corrective/preventive action) system, issue-resolution tracking, recurrence prevention, CAPA 
+    - diff: a formal CAPA system + dashboard
+    - evidence: grep -ril '\bCAPA\b' apps/ docs/ -> empty (re-run empty). GitHub Issues/PRs function as informal issue-resolution tracking but no formal CAPA system.
+    - spec: NONE
+- `phase3-audit65-preventive-action` **needs-design** (tier-3) — Audit 65 — preventive-action system, risk mitigation tracking, prevention-effectiveness dashboard
+    - diff: a preventive-action/risk-mitigation tracking system + dashboard
+    - evidence: grep -ril 'preventive.?action' apps/ docs/ -> empty (re-run empty).
+    - spec: NONE
+- `phase3-audit73-validation` **needs-design** (tier-3) — Audit 73 — system/process validation, qualification procedures, validation documentation/dashboard
+    - diff: a formal validation/qualification documentation system beyond the existing verify-*.mjs CI guard suite
+    - evidence: No formal 'validation' system found (grep 'system.?validation|process.?validation' apps/ docs/ -> empty, re-run empty). The repo's own CI/guard-script discipline (scripts/verify-*.
+    - spec: NONE
+- `phase8-audit162-database-audit` **needs-design** (tier-1) — Audit 162 — database performance monitoring, database security audit, database dashboard/analytics (schema its
+    - diff: a database performance-monitoring/security-audit dashboard; exact live schema/table/index/RLS/FK/trigger/constraint counts need prod verification
+    - evidence: db/migrations contains 651 .sql files with 159 CREATE SCHEMA statements, consistent in scale with the doc's own claim of a comprehensive multi-schema design (its precise '72 schema
+    - spec: NONE
+- `phase8-audit163-data-warehouse` **needs-design** (tier-3) — Audit 163 — data warehouse system, data quality monitoring, data governance, data-warehouse dashboard/analytic
+    - diff: a data warehouse / analytics-store layer, if Jorge wants this scope beyond operational reporting
+    - evidence: grep -ril 'data.?warehouse' apps/ docs/ -> empty (re-run empty). No DW/OLAP layer exists; operational Postgres (Neon) is the only data store.
+    - spec: NONE
+- `systemic-pattern-mandatory-error-states` **needs-design** (tier-3) — Mandatory error-states pattern (outages must not render as false 'No records')
+    - diff: a shared list-state component distinguishing loading/error/empty + a guard preventing a caught fetch error from rendering empty-state copy
+    - evidence: No CI guard or shared component enforcing error-vs-empty distinction found this pass; not independently re-verified against every list.
+    - spec: NONE
+- `0091-g6-6` **not-built** (tier-1) — Default the payments list to exclude voided rows even with no status param (currently defaults to showing ever
+    - diff: default status to 'active' (or always append voided_at IS NULL unless explicitly requesting voided)
+    - evidence: apps/backend/src/accounting/payments.routes.ts:122-123 only pushes p.voided_at IS NULL when q.status==='active' and only pushes voided_at IS NOT NULL when q.status==='voided' — whe
+    - spec: NONE
+- `0091-repo-public` **not-built** (tier-3) — Make GitHub repo tioperfumes07/IH35-TMS PRIVATE (currently public, entire live-carrier codebase+schema readabl
+    - diff: Repo visibility must be flipped to Private in GitHub repo Settings (owner-only action, cannot be done via code)
+    - evidence: `gh repo view tioperfumes07/IH35-TMS --json isPrivate,visibility` returned {"isPrivate":false,"visibility":"PUBLIC"} — confirmed still public as of this verification pass.
+    - spec: NONE
+- `0219-nested-modals` **not-built** (tier-3) — Fix a modal-in-modal stacking/focus bug in the audit UI
+    - diff: identify which 'audit UI' modal-in-modal instance the finding refers to (the doc gives no specific file) and add a structural stacking/focus test
+    - evidence: No dedicated nested-modal / modal-stack structural test or component was found under apps/frontend/src (searched for 'nested-modal', 'ModalStack', 'modal-in-modal', 'nested modal' 
+    - spec: NONE
+- `0243-h2-2-stale-backend-lockfile-unshipped-cves` **not-built** (tier-3) — apps/backend/package-lock.json carries 2 unshipped HIGH CVEs (ws, form-data) — Render never builds from it, bu
+    - diff: delete/regenerate the stale lockfile
+    - evidence: apps/backend/package-lock.json still exists (ls confirmed present).
+    - spec: NONE
+- `0243-h5-1-append-only-spine-unbounded-growth` **not-built** (tier-2) — outbox.events, audit.row_changes, event_log are append-only with zero retention/rolloff -- highest-write table
+    - diff: monthly range partition + maintenance cron, or scheduled pg_dump-to-R2-then-detach past the 7-yr window; a size tripwire in the checksum job
+    - evidence: grep for 'partition|retention' in apps/backend/src/outbox/processor.ts returned zero matches — no retention/partition logic found on the live high-write tables.
+    - spec: NONE
+- `0277-error-swallowing-rollback-catch` **not-built** (tier-3) — Silent error swallowing in DB rollback catch blocks (.catch(() => {})) across 5 files suppresses rollback-fail
+    - diff: add `app.log.error({err}, "Transaction rollback failed")` (or equivalent) to each of the 7 confirmed call sites
+    - evidence: Confirmed still present: apps/backend/src/auth/db.ts:181,206,237; apps/backend/src/cron/samsara-master-sync.cron.ts:112; apps/backend/src/driver-finance/cash-advance-owner-approval
+    - spec: NONE
+- `0280-27-widget-audit-trail-logging` **not-built** (tier-3) — home-widgets: no audit trail logging for who accessed which widget data when
+    - diff: read-access audit logging (or an explicit decision that read-only dashboard views are out of audit scope)
+    - evidence: `grep -n 'appendCrudAudit|audit' apps/backend/src/home/home-widgets.routes.ts` = no matches — confirms no per-read audit logging on these read-only dashboard endpoints.
+    - spec: NONE
+- `0394-qbo-sync-one-shot-not-recurring` **not-built** (tier-1) — QBO master-data sync is a one-shot run (2026-05-17), not on a recurring/CDC schedule — mirrors are stale
+    - diff: a recurring/incremental (CDC cursor-based) schedule for the QBO master-data sync, wired into the cron registry
+    - evidence: mdata.qbo_sync_runs (per the investigation) shows a single full run per entity type on 2026-05-17 with no repeat rows. No cron/scheduler registration found for master-data-sync.ser
+    - spec: NONE
+- `gated-blocks-usmca-launch-gate` **not-built** (tier-1) — USMCA-LAUNCH — gated on entity-independence completion, July 2026 target
+    - diff: full entity-independence verification across accounting/mdata/catalogs before USMCA can go live
+    - evidence: Per BLOCK-RECONCILIATION-2026-07-10.md: PENDING(GATED) Tier-1, launch gate.
+    - spec: docs/lockdown/00_LOCKED_DECISIONS.md
+- `p1-apm` **not-built** (tier-3) — P1 recommendation: Add APM (24 hours)
+    - diff: an APM agent/vendor
+    - evidence: No APM tool (New Relic/Datadog/Sentry Performance) found in apps/backend/package.json during this pass.
+    - spec: NONE
+- `p1-compression` **not-built** (tier-3) — P1 recommendation: Implement Compression (8 hours)
+    - diff: grep for '@fastify/compress' was not run in this pass; treat as unverified rather than a confirmed gap
+    - evidence: UNVERIFIED
+    - spec: NONE
+- `p1-trigger-optimization` **not-built** (tier-1) — P1 recommendation: Optimize Triggers (16 hours)
+    - diff: doc names no specific slow trigger; requires live EXPLAIN/pg_stat on prod triggers to identify a target
+    - evidence: UNVERIFIED
+    - spec: NONE
+- `p1-vulnerability-management` **not-built** (tier-3) — P1 recommendation: Vulnerability Management (80 hours)
+    - diff: automated dependency/vulnerability scanning wired into CI
+    - evidence: No dependency-scanning workflow (e.g. Dependabot alerts config, Snyk, npm audit CI gate) found referenced in .github/workflows during this pass (not exhaustively enumerated — treat
+    - spec: NONE
+- `phase12-audit209-carbon-footprint` **not-built** (tier-3) — Audit 209 — carbon footprint tracking, emissions monitoring, reduction strategies, carbon dashboard/analytics
+    - diff: an emissions-estimation feature built from existing fuel_transactions data — currently zero build, low priority per doc's own P3 rating
+    - evidence: grep -ril 'carbon.?footprint|emissions.?monitoring' apps/ docs/ -> empty (re-run empty). fuel_transactions table exists (db/migrations/0300_create_fuel_transactions.sql) which coul
+    - spec: NONE
+- `phase12-audit211-water` **not-built** (tier-3) — Audit 211 — water usage tracking, conservation measures, water-quality monitoring/dashboard
+    - diff: N/A — no water-usage operation in a trucking carrier
+    - evidence: grep -ril 'water.?usage|water.?quality' apps/ docs/ -> empty (re-run empty).
+    - spec: NONE
+- `phase12-audit212-waste` **not-built** (tier-3) — Audit 212 — waste generation tracking, recycling tracking, waste-reduction strategies/dashboard
+    - diff: N/A — no waste-management operation in a trucking carrier
+    - evidence: grep -ril 'waste.?generation|recycling.?tracking' apps/ docs/ -> empty (re-run empty).
+    - spec: NONE
+- `phase3-audit58-six-sigma` **not-built** (tier-3) — Audit 58 — Six Sigma methodology, process capability, defect reduction, SPC, dashboard
+    - diff: N/A — generic manufacturing quality methodology with no grounding in a TMS/carrier operation
+    - evidence: grep -ril 'six.?sigma' apps/ docs/ -> empty (re-run empty). No related surface in this trucking TMS's actual domain.
+    - spec: NONE
+- `phase3-audit59-lean` **not-built** (tier-3) — Audit 59 — Lean methodology, value-stream mapping, waste elimination, dashboard
+    - diff: N/A — manufacturing Lean methodology, no grounding in this TMS's domain
+    - evidence: grep -ril 'lean.?methodology|value.?stream' apps/ docs/ -> empty (re-run empty).
+    - spec: NONE
+- `phase3-audit60-kaizen` **not-built** (tier-3) — Audit 60 — Kaizen continuous improvement, employee engagement, incremental-change tracking, dashboard
+    - diff: N/A — no grounding in this TMS's domain
+    - evidence: grep -ril 'kaizen' apps/ docs/ -> empty (re-run empty).
+    - spec: NONE
+- `phase3-audit62-spc` **not-built** (tier-3) — Audit 62 — Statistical Process Control, control charts, capability analysis, SPC dashboard
+    - diff: N/A — manufacturing SPC methodology, no grounding in this TMS's domain
+    - evidence: grep -ril 'statistical.?process.?control|control.?chart' apps/ docs/ -> empty (re-run empty).
+    - spec: NONE
+- `phase3-audit69-product-quality` **not-built** (tier-3) — Audit 69 — product quality system, product testing, defect-rate tracking, product-quality dashboard
+    - diff: N/A — no manufactured product in this business model; likely mis-templated from a generic manufacturing audit checklist
+    - evidence: A trucking carrier has no manufactured 'product' to test; grep for 'product.?quality|defect.?rate' apps/ -> empty (re-run empty).
+    - spec: NONE
+- `phase8-audit166-machine-learning-na` **not-built** (tier-3) — Audit 166 — ML model implementation, accuracy tracking, bias detection, explainability, ML dashboard/analytics
+    - diff: N/A — no ML feature exists or is scoped for this TMS today
+    - evidence: grep -ril 'machine.?learning|\bML\b model' apps/ -> empty (re-run empty). No ML models exist in this product.
+    - spec: NONE
+- `type-date-input-sweep-incomplete` **not-built** (tier-3) — type="date" native input still present in 42 pages instead of the QB-style DatePicker component
+    - diff: 42 pages to migrate to the shared DatePicker component.
+    - evidence: Per the 07-10 audit (re-verified against origin/main same-day): 42 pages still use type="date". I did not independently recount in this pass; trusting the same-day repo-verified fi
+    - spec: NONE
+- `0007-pattern-3-missing-error-states` **partial** (tier-3) — Systemic Pattern 3: missing error states — outages render as false 'No records'/green 'No anomalies'/$0 tiles;
+    - diff: confirmation verify-list-empty-settled.mjs runs in CI (not found in any workflow yml)
+    - evidence: scripts/verify-list-empty-settled.mjs exists (npm alias verify:list-empty-settled per package.json:605) matching this exact pattern name, but `grep -rn list-empty-settled .github/w
+    - spec: NONE
+- `0010-f6-phantom-write-targets-whatsapp-sms-qbo-alerts` **partial** (tier-2) — F6: 19 phantom write targets suppressed by known-debt in whatsapp.queue/sms.queue INSERT+UPDATE and qbo.sync_a
+    - diff: fix the qbo/sync-with-retry.ts INSERT to use error_message instead of message
+    - evidence: FALSE-EMPTY re-check: sms.queue and whatsapp.queue DO have provider_status/provider_error/variables/operating_company_id columns (db/migrations/0166_block_h_notification_queues.sql
+    - spec: NONE
+- `0243-c1-3-three-dead-end-buttons` **partial** (tier-3) — Three live buttons dead-end to Home (layover history, fuel fraud alerts, severe repairs typo severe-repair-oos
+    - diff: confirm DriverProfilePage.tsx's layover-history link (originally reported at line 67) now resolves to a real route
+    - evidence: apps/frontend/src/pages/home/HomeFleetRestoreCard.tsx:48 now points to='/maintenance/severe-repairs' (plural, matching the real route — typo fixed). apps/frontend/src/pages/fuel/Fu
+    - spec: NONE
+- `0262-audit-48` **partial** (tier-3) — Audit 48: API Security Audit — API authentication, rate limiting, input validation
+    - diff: 
+    - evidence: API rate limiting DOES exist for a substantial and growing set of routes (confirmed independently in this same batch's 0091 verification: auth/phone-routes.ts, office-login.routes.
+    - spec: NONE
+- `0275-audit174-data-security-hardening` **partial** (tier-3) — Audit 174: add data-encryption-at-rest, encryption-in-transit documentation, data-access (read) logging, and a
+    - diff: a SELECT/read-access logging mechanism (distinct from the existing write-audit trail) and a data-security dashboard; encryption-in-transit documentation (TLS is presumably in place via Render/Neon but
+    - evidence: RLS (822 policies), role-based access, company isolation, and an append-only audit trail (audit.row_changes / audit_events referenced in 13 migration files) are all real, matching 
+    - spec: NONE
+- `0275-audit177-data-integration-monitoring` **partial** (tier-3) — Audit 177: build data-integration documentation + quality/consistency/performance monitoring + dashboard + ana
+    - diff: a dashboard surfacing integration_sync_log health/freshness, and integration-performance metrics beyond raw log rows
+    - evidence: db/migrations/0175_integration_sync_log.sql defines an integration_sync_log table, and it is actively written to from 8 backend files (grep confirmed), giving IH35 an existing per-
+    - spec: NONE
+- `0275-audit178-master-data-governance` **partial** (tier-3) — Audit 178: build master-data quality monitoring + consistency validation + governance + dashboard + analytics 
+    - diff: a master-data quality/consistency dashboard and an automated MDM-style validation job
+    - evidence: mdata schema and catalogs schema both confirmed real and extensively used (per doc 0270's own module-by-module audit of Drivers/Customers/Vendors/Fleet/Equipment, all backed by mda
+    - spec: NONE
+- `0275-audit181-data-lineage-tracking` **partial** (tier-3) — Audit 181: build data-lineage tracking + flow documentation + transformation tracking + impact analysis + dash
+    - diff: true data-flow/transformation lineage tracking and impact analysis (distinct from the existing row-change audit trail) + dashboard
+    - evidence: The append-only audit.row_changes / audit_events tables (confirmed present in 13 migration files) provide a change-history trail (who/what/when changed a row) which is a partial, c
+    - spec: NONE
+- `0275-audit185-data-model-documentation` **partial** (tier-3) — Audit 185: create data-model documentation + model performance monitoring + dashboard + analytics
+    - diff: a formal data-model documentation artifact and a live model-performance-monitoring dashboard
+    - evidence: The doc's own claim of a comprehensive, normalized data model with 72 schemas/619 tables/400+ FKs/800+ indexes/500+ constraints is broadly corroborated: this pass counted 73 CREATE
+    - spec: NONE
+- `0518-r15-a11y-12-critical-234-serious` **partial** (tier-3) — axe-core scan across 30 routes found 12 critical (unnamed buttons/selects) + 234 serious (mostly color-contras
+    - diff: live re-scan to confirm current violation counts
+    - evidence: UNVERIFIED at repo-static level — requires a live axe-core browser scan, which this read-only static pass cannot reproduce. .github/workflows/a11y-checks.yml exists, indicating an 
+    - spec: NONE
+- `0519-qbo1-failed-qbo-sync-event` **partial** (tier-2) — 1 failed QBO sync event needs investigation
+    - diff: live investigation of the failed sync event
+    - evidence: Live ops-state question, not verifiable from static repo.
+    - spec: NONE
+- `p1-caching-strategy` **partial** (tier-2) — P1 recommendation: Implement Caching Strategy (16 hours)
+    - diff: confirmation of which endpoints actually use the cache-tiers vs which still hit Postgres directly for hot reads
+    - evidence: apps/backend/src/lib/redis.client.ts, cache-tiers.ts, ttl-cache.ts all exist — a caching layer exists. Coverage/completeness across all read-heavy endpoints not verified in this pa
+    - spec: NONE
+- `p1-dashboard-implementation` **partial** (tier-3) — P1 recommendation: Dashboard Implementation (200 hours)
+    - diff: specific dashboard(s) intended — undefined without a named spec
+    - evidence: 0289 doc (same batch) section 'Phase 6' confirms 'Home dashboard with KPIs' already exists as part of the Home module (module #1 of 28 in the module catalog). The generic P1 recomm
+    - spec: NONE
+- `p1-data-encryption-at-rest` **partial** (tier-2) — P1 recommendation: Data Encryption (80 hours) — encryption at rest / in transit / key management
+    - diff: formal key management/rotation policy; confirmation of which fields beyond tax_id are column-encrypted
+    - evidence: apps/backend/src/lib/encryption.ts exists and is used for column-level encryption (e.g. mdata/customers.routes.ts imports encrypt/decrypt for sensitive fields like tax_id). Neon Po
+    - spec: NONE
+- `p1-error-handling` **partial** (tier-2) — P1 recommendation: Add Error Handling (32 hours)
+    - diff: retry/backoff wrapper on fire-and-forget external calls (FMCSA at minimum)
+    - evidence: apps/backend/src/lib/zod-http-error.ts (sendValidationError) is used broadly per 0443 doc section 14; FMCSA verification is explicitly documented as fire-and-forget without retry (
+    - spec: NONE
+- `p1-error-tracking` **partial** (tier-2) — P1 recommendation: Implement Error Tracking (16 hours)
+    - diff: backend error-tracking SDK (frontend already has @sentry/react per CLAUDE.md)
+    - evidence: No '@sentry' entry found in apps/backend/package.json during this pass (backend appears to lack error tracking). CLAUDE.md §3 explicitly references a pre-existing '@sentry/react en
+    - spec: NONE
+- `p1-logging-system` **partial** (tier-2) — P1 recommendation: Implement Logging System (16 hours)
+    - diff: confirmation of centralized log aggregation/shipping (vs just stdout)
+    - evidence: apps/backend/src/middleware/request-id.ts and idempotency.ts exist providing request correlation; Fastify's default logger (pino) is standard for this stack but was not explicitly 
+    - spec: NONE
+- `p1-session-timeout` **partial** (tier-2) — P1 recommendation: Configure Session Timeout (8 hours)
+    - diff: confirmation of Lucia session-level (not just OAuth-handshake-cookie) timeout config
+    - evidence: apps/backend/src/auth/session-cookie-policy.ts:40-47 has oauthPkceCookieOptions(maxAgeSeconds) with a maxAge cookie option — a timeout mechanism exists for the OAuth PKCE cookie sp
+    - spec: NONE
+- `phase14-audit-231` **partial** (tier-3) — Build code-quality tracking/dashboard/analytics (metrics, tech-debt tracking, quality dashboard)
+    - diff: In-app code-quality dashboard + technical-debt-tracking UI/table (SonarCloud's own web UI is not 'in-repo'; no design exists for an in-repo equivalent).
+    - evidence: CI already runs 3 independent code-quality/security scanners: .github/workflows/sonarcloud.yml (bugs/code smells/security hotspots/Quality Gate, skips cleanly if SONAR_TOKEN unset)
+    - spec: NONE
+- `phase14-audit-232` **partial** (tier-3) — Build architecture tracking/dashboard/analytics (architecture docs, design-pattern docs, scalability assessmen
+    - diff: Design-pattern documentation, formal scalability assessment, architecture dashboard/analytics UI.
+    - evidence: Architecture documentation exists: docs/IH35-TMS-ARCHITECTURE.md, docs/IH35-TMS-ARCHITECTURE-AND-BLUEPRINT.md, docs/audit-linkage/00-AUDIT-LINKAGE-ARCHITECTURE.md, docs/audits/ARCH
+    - spec: NONE
+- `phase14-audit-233` **partial** (tier-3) — Build design tracking/dashboard/analytics (UI/UX design docs, accessibility testing, usability testing, design
+    - diff: Usability-testing process, design dashboard/analytics UI.
+    - evidence: docs/approved-screens/*.html locked design references exist (per CLAUDE.md 'Design-Parity Lock' memory) functioning as UI/UX design documentation; .github/workflows/a11y-checks.yml
+    - spec: NONE
+- `phase14-audit-234` **partial** (tier-3) — Build testing tracking/dashboard/analytics (coverage tracking, quality metrics, automation, testing dashboard)
+    - diff: Testing dashboard/analytics UI aggregating coverage trend over time (coverage numbers currently live only in CI job output, not a persisted dashboard).
+    - evidence: Real test coverage tracking + automation exist: package.json 'test:coverage' -> 'vitest run --config apps/backend/vitest.config.ts --coverage'; .github/workflows/ci.yml runs dozens
+    - spec: NONE
+- `phase14-audit-236` **partial** (tier-3) — Build monitoring tracking/dashboard/analytics (monitoring system, alerting, observability framework, monitorin
+    - diff: Formal alerting configuration (thresholds/on-call routing) and monitoring analytics/trend history beyond the current-state admin route.
+    - evidence: Sentry is wired in apps/backend/src/index.ts (SENTRY_DSN) plus a live in-app admin route apps/backend/src/admin/observability.routes.ts (GET /api/v1/admin/observability, Owner/Admi
+    - spec: NONE
+- `phase14-audit-240` **partial** (tier-3) — Build performance tracking/dashboard/analytics (performance monitoring, scalability testing, optimization trac
+    - diff: Optimization-tracking system; in-repo performance dashboard/analytics UI (currently CI-job-output only).
+    - evidence: .github/workflows/perf-budget-check.yml runs on PR/push/daily schedule, builds frontend bundles for a size-budget snapshot (performance monitoring signal); .github/workflows/load-t
+    - spec: NONE
+- `phase14-audit-242` **partial** (tier-3) — Build reliability tracking/dashboard/analytics (reliability metrics, uptime monitoring, fault tolerance testin
+    - diff: Reliability metrics (MTTR/MTBF) tracking; reliability dashboard/analytics.
+    - evidence: .github/workflows/monthly-restore-drill.yml runs a CI backup-currency guard (scripts/verify-backups-current.mjs against NEON_PROJECT_ID) on every push/PR plus a monthly full restor
+    - spec: NONE
+- `phase3-audit70-manufacturing-qc` **partial** (tier-3) — Audit 70 — production process documentation, QC procedures, manufacturing dashboard
+    - diff: this audit item is largely mis-scoped (manufacturing QC vs fleet maintenance); if reinterpreted as 'maintenance QC procedures', those docs/dashboard still don't exist
+    - evidence: maintenance schema + fleet.equipment tracking exist (confirmed real, doc's own ✅ — this is fleet maintenance, not manufacturing). No production-process docs / formal QC-procedure d
+    - spec: NONE
+- `phase3-audit75-document-control` **partial** (tier-3) — Audit 75 — document version control, approval workflow, document lifecycle, document-control dashboard
+    - diff: an approval-workflow/lifecycle system for records stored in the docs schema (distinct from git-versioned markdown specs)
+    - evidence: docs schema exists (confirmed, doc's own ✅) for uploaded evidence/records; separately, git provides real version control for docs/*.md specs/trackers. No formal approval-workflow o
+    - spec: NONE
+- `phase8-audit155-backup-audit` **partial** (tier-3) — Audit 155 — backup procedures documentation, recovery testing, retention policy, backup dashboard/analytics
+    - diff: a backup-status dashboard/analytics layer on top of the existing backup/restore-check scripts
+    - evidence: docs/runbooks/dr-backup-drill-2026-05-14.md documents a real backup/restore-validation procedure using npm run db:backup / db:restore-check (apps/backend/scripts/db-backup.ts), dat
+    - spec: docs/runbooks/dr-backup-drill-2026-05-14.md
+- `phase8-audit165-analytics-general` **partial** (tier-3) — Audit 165 — analytics implementation, analytics accuracy validation, insights tracking, analytics dashboard
+    - diff: a formal analytics/insights layer with accuracy validation beyond the existing Home-page KPI widgets
+    - evidence: Home dashboard widgets exist (apps/frontend/src/pages/Home.tsx, components/home/, api/home.ts, api/accountingHome.ts, portal/PortalDashboardPage.tsx) providing operational KPIs, bu
+    - spec: NONE
+- `product-service-categories-rename-and-creator` **partial** (tier-1) — Rename 'QBO Categories' -> 'Product & Service Categories', add QBO-style creator/profile with parent-category 
+    - diff: parent-category nesting was not built: apps/frontend/src/pages/lists/accounting/QboCategoriesListPage.tsx:4-8 comment states 'Parent/sub-category nesting (self-FK) is a separate [HOLD-FOR-JORGE — TIER
+    - evidence: apps/frontend/src/pages/lists/components/AllCatalogsMap.tsx:130 label 'Product & Service Categories'; apps/frontend/src/pages/lists/accounting/QboCategoriesListPage.tsx:13-14 displ
+    - spec: NONE
+- `qbo-parity-a1-paritytable-universal-adoption` **partial** (tier-3) — A1 — ParityTable (shared DataTable) applied to every list app-wide (TBL-STANDARD universal table sweep)
+    - diff: remaining ~211 files with hand-rolled <table> markup not yet converted to ParityTable
+    - evidence: grep -rl ParityTable apps/frontend/src --include=*.tsx -> 120 files (287 call sites) vs grep -rl '<table' -> 211 files (264 raw occurrences) — meaningful adoption, ~211 files still
+    - spec: docs/specs/qbo-parity/QBO_PARITY_UI_SYSTEM_v2_v3.md
+- `tbl-standard-raw-table-sweep-incomplete` **partial** (tier-3) — TBL-STANDARD-universal-table-sweep: 157 pages still hand-roll raw <table> instead of ParityTable
+    - diff: 157 remaining raw-<table> pages to convert.
+    - evidence: Per the 07-10 audit (re-verified against origin/main same-day as this task): ParityTable adoption is now 139 pages, raw <table> down to 157 (up from a prior '27 ParityTable / 306 r
+    - spec: NONE
+- `threewayaudit-biz02-qbo-sync-workers-stale` **partial** (tier-2) — BIZ-02: QBO master-data sync stale 36 days (last synced 2026-05-23); sync workers disabled -- enable ENABLE_QB
+    - diff: N/A from repo -- this is a live Render env-var state question, not a code gap
+    - evidence: apps/backend/src/integrations/qbo/qbo-sync-worker.ts:267-268 confirms the worker checks `process.env.ENABLE_QBO_SYNC_RUN_WORKER === 'false'` and logs 'disabled' when so; apps/backe
+    - spec: NONE
+
+### users-docs-help  (24 open)
+
+- `0091-d5-1` **built** (tier-3) — Fix inventory PartCreateDrawer raw fetch() missing credentials:'include' (401 in prod, cross-origin)
+- `0091-g1-1` **built** (tier-1) — Block Administrator self-promotion to Owner via PATCH /identity/users/:id (privilege escalation)
+- `0181-inventory-parts-404` **built** (tier-3) — inventory parts 404 — restore/repair the route
+- `0243-d5-1-inventory-part-create-broken-prod` **built** (tier-2) — PartCreateDrawer uses raw fetch, omits credentials:'include' -> 401 in prod cross-origin, 'Failed to create pa
+- `home-1-utc-business-date-default` **built** (tier-3) — Central shared company-timezone 'today' helper (replace UTC date defaults app-wide)
+- `module21-inventory-no-defects` **built** (tier-3) — Module 21 Inventory — clean, honest, light-inventory module; no live defects found
+- `task-1-tasks-calendar-view` **built** (tier-3) — Tasks 'Calendar' sub-tab was an unimplemented placeholder heading with no calendar
+- `task-2-my-tasks-built` **built** (tier-3) — Build 'My Tasks' (was a placeholder): list of current-user's tasks, inline status change, overdue highlighting
+- `0258-audit-116` **needs-design** (tier-3) — Audit 116: Warehouse Audit — Warehouse operations, inventory accuracy, space utilization
+    - diff: a warehouse system/inventory accuracy tracking/space utilization dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new warehouse system/inventory accuracy tracking/space utilization systems/dashboards/analytics for this domain; no such system found in apps/frontend/
+    - spec: NONE
+- `0262-audit-31` **needs-design** (tier-3) — Audit 31: Access Control Audit — User access, privilege assignment, access review
+    - diff: a access request workflow/access review process/privilege assignment documentation/certification/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new access request workflow/access review process/privilege assignment documentation/certification/dashboard systems/dashboards/analytics for this doma
+    - spec: NONE
+- `0262-audit-33` **needs-design** (tier-3) — Audit 33: Authorization Audit — Role-based access, permission granularity, privilege escalation
+    - diff: a permission granularity review/privilege escalation prevention/role hierarchy documentation/authorization testing/dashboard dashboard/analytics/tracking system for this domain, plus an approved-scree
+    - evidence: Generic gap-audit asking for new permission granularity review/privilege escalation prevention/role hierarchy documentation/authorization testing/dashboard systems/dashboards/analy
+    - spec: NONE
+- `0262-audit-43` **needs-design** (tier-3) — Audit 43: Phishing Audit — Email security, user awareness, phishing simulation
+    - diff: a email security documentation/phishing awareness training/simulation/email filtering/dashboard dashboard/analytics/tracking system for this domain, plus an approved-screen spec
+    - evidence: Generic gap-audit asking for new email security documentation/phishing awareness training/simulation/email filtering/dashboard systems/dashboards/analytics for this domain; no such
+    - spec: NONE
+- `0518-r22-425c-missing-back-arrow-h1` **not-built** (tier-3) — /425c missing back-arrow + h1 heading (§7 nav-affordance requirement)
+    - diff: BackArrowHeader/ModuleHeader with <h1> on Form425CHome.tsx per §7
+    - evidence: apps/frontend/src/pages/form425c/Form425CHome.tsx first 60 lines — no BackArrow/BackHeader/ModuleHeader import, no <h1>; page opens directly into a SecondaryNavTabs component with 
+    - spec: NONE
+- `form425c-case-number-export-validation-gap` **not-built** (tier-2) — Form 425C should refuse to export/generate a filing package when the entity's Case # is blank ('Case #—' obser
+    - diff: A validation guard in the Merge & Export path that refuses to generate the filing PDF when case_number is null/blank.
+    - evidence: Doc flags this as an observation, not a reproduced defect, since no draft was created during the read-only audit ('confirm the case number populates... if a filing can be generated
+    - spec: NONE
+- `phase8-audit152-server-audit` **not-built** (tier-3) — Audit 152 — server inventory/config docs, performance monitoring, security audit, server dashboard
+    - diff: N/A — traditional server inventory doesn't apply to a Render PaaS deployment model
+    - evidence: No Dockerfile or traditional server inventory found (find -iname Dockerfile* -> empty). Render is PaaS — no owned/managed servers in this repo's scope; Render's own dashboard provi
+    - spec: NONE
+- `phase8-audit158-virtualization-na` **not-built** (tier-3) — Audit 158 — VM inventory, resource allocation tracking, virtualization security/dashboard/analytics
+    - diff: N/A — PaaS deployment has no self-managed VM layer
+    - evidence: No Dockerfile or VM config found in repo; Render PaaS model means no self-managed VMs.
+    - spec: NONE
+- `phase8-audit159-container-audit` **not-built** (tier-3) — Audit 159 — container inventory, orchestration docs, container security/performance/dashboard/analytics
+    - diff: N/A — Render manages containerization internally; nothing in-repo to inventory/orchestrate
+    - evidence: find . -iname Dockerfile* -not -path node_modules -> empty. Render builds/deploys directly from source per render.yaml, no Dockerfile/container orchestration owned by this repo.
+    - spec: NONE
+- `phase8-audit160-microservices-na` **not-built** (tier-3) — Audit 160 — service inventory, microservices architecture docs, service communication/monitoring/dashboard/ana
+    - diff: N/A — this system is architected as a monolith + PaaS, not microservices; the audit's own framing doesn't match the real architecture
+    - evidence: Architecture is a monolith backend (apps/backend, single Fastify service) + separate frontend/driver-pwa apps, not a microservices architecture per render.yaml service list.
+    - spec: NONE
+- `phase8-audit161-api-audit` **not-built** (tier-3) — Audit 161 — API inventory, API documentation, API security audit, API performance monitoring, API dashboard/an
+    - diff: formal OpenAPI/Swagger API documentation, API security audit, performance monitoring, dashboard/analytics
+    - evidence: grep -ril 'openapi|swagger|fastify-swagger' apps/backend/src apps/backend/package.json -> empty (re-run empty). Fastify routes exist and are inventoried informally via scripts/veri
+    - spec: NONE
+- `users-invited-status-distinct-from-active` **not-built** (tier-3) — Add a distinct 'Invited' status so ACTIVE means has-credentials (currently a user with 'Invite pending' auth +
+    - diff: An 'Invited' status value distinct from 'Active' in the identity.users status model.
+    - evidence: Doc observation: 'David Davila shows Active with "Invite pending" auth and Never logged in — status semantics show Active before first login.' Not independently re-checked against 
+    - spec: NONE
+- `help-module-minimal-vs-meets` **partial** (tier-3) — Help module functionality — doc says minimal/no backend routes; a sibling doc in this batch says it MEETS with
+    - diff: n/a - doc-vs-doc contradiction; the TAIL doc's live-rendered description (6 populated categories, real articles) is more likely current given it describes actual UI content, not just an absent-backend
+    - evidence: Doc 0274 (dated 2026-07-04): 'No dedicated help routes found... functionality minimal or external... Robust Implementations: None identified.' Sibling doc TAIL-MODULES-PARITY-FINDI
+    - spec: NONE
+- `p1-role-permissions-review` **partial** (tier-3) — P1 recommendation: Review Role Permissions (32 hours)
+    - diff: a completed review sign-off document (mechanism itself is in place)
+    - evidence: Extensive role-based access helpers confirmed in 0443 doc section 9: isWriteRole(), canReconcile(), canAccessProfitLoss(), canAccessBalanceSheet() — role gating exists broadly acro
+    - spec: NONE
+- `phase14-audit-238` **partial** (tier-3) — Build documentation tracking/dashboard/analytics (API docs, code docs, user docs, documentation dashboard)
+    - diff: Auto-generated API docs (OpenAPI/Swagger), code documentation tooling, end-user documentation, documentation dashboard/analytics.
+    - evidence: Extensive migration/schema/spec documentation exists under docs/ (docs/specs/, docs/lockdown/, docs/audits/, per-block trackers). No generated API documentation (no swagger/openapi
+    - spec: NONE
+- `phase8-audit169-iot-device-management` **partial** (tier-3) — Audit 169 — IoT device inventory, device management, IoT security, data collection, IoT dashboard/analytics
+    - diff: a unified IoT-device inventory/management view (device health, last-check-in, security posture) distinct from the raw telematics data ingest that already exists
+    - evidence: Samsara telematics (ELD/GPS) integration exists and IS IoT device data ingestion: db/migrations reference samsara across multiple files (0300_create_fuel_transactions.sql, 20260607
+    - spec: NONE

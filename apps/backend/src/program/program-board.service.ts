@@ -28,7 +28,7 @@ const CT_ZONE = "America/Chicago";
 const R2_LIVE_SNAPSHOT_KEY = "program-board/live-snapshot.json";
 const SNAPSHOT_TTL_MS = 60_000;
 
-// LIVE lifecycle fields the sync engine derives per row; these (and only these) are overlaid from R2 onto
+// LIVE lifecycle fields the sync engine derives per row; these (and only these) are overlaid from the R2 onto
 // the committed rows. The canonical id/name/descriptive fields are NEVER overlaid.
 const LIVE_OVERLAY_FIELDS = [
   "requested_ct",
@@ -100,6 +100,9 @@ const RECON_REL = "docs/trackers/block-reconciliation-data.json";
 const EXTRA_REL = "docs/trackers/program-board-extra.json";
 // Live board meta (per-tab totals + deltas + deploy version) maintained by the sync engine.
 const META_REL = "docs/trackers/program-board-meta.json";
+// TRUE-state audit snapshot (committed JSON only — never overlaid from the R2). Produced by the 2026-07-10
+// MASTER-MANIFEST audit vs the prod branch; see docs/trackers/program-board-audit.json.
+const AUDIT_REL = "docs/trackers/program-board-audit.json";
 
 // ── types ───────────────────────────────────────────────────────────────────────────────────────────
 export type ReconBlock = {
@@ -184,6 +187,45 @@ export type BoardMeta = {
 // Owner-locked decision surfaced on the board so it isn't buried in a thread.
 export type LockedDecision = { id: string; date_ct: string; decision: string };
 
+// TRUE-state audit snapshot (2026-07-10 MASTER-MANIFEST audit vs prod branch br-fancy-credit-akjnd07a).
+// Read verbatim from the committed docs/trackers/program-board-audit.json — never overlaid from the R2.
+export type ProgramBoardAuditModule = {
+  module: string;
+  built: number;
+  partial: number;
+  not_built: number;
+  needs_design: number;
+};
+export type ProgramBoardAuditFact = { fact: string; detail: string; verdict: string };
+export type ProgramBoardAuditOpenItem = {
+  id: string;
+  module: string;
+  verdict: string;
+  tier: string;
+  title: string;
+  missing: string;
+  evidence: string;
+  spec: string;
+  dup_count: number;
+};
+export type ProgramBoardAudit = {
+  generated_ct: string;
+  source: string;
+  headline: string;
+  why_done_overstates: string[];
+  true_totals: {
+    built: number;
+    partial: number;
+    not_built: number;
+    needs_design: number;
+    note: string;
+  };
+  by_module: ProgramBoardAuditModule[];
+  prod_verified_facts: ProgramBoardAuditFact[];
+  schema_drift_flags: string[];
+  top_open_items: ProgramBoardAuditOpenItem[];
+};
+
 export type SequenceStep = { step: number; label: string };
 
 // Merged-PR spine + HOLD-FOR-JORGE inventory — mirror of the master-tracker tabs "01 Merged PRs" and
@@ -241,6 +283,9 @@ export type BoardResponse = {
   // Live board meta (per-tab totals + additions/deltas + deploy version). null when the file is
   // absent/unparseable (a warning is pushed) — never a 500.
   meta: BoardMeta | null;
+  // TRUE-state audit snapshot (committed JSON only, never overlaid from the R2). null when the file is
+  // absent/unparseable (a warning is pushed) — never a 500.
+  audit: ProgramBoardAudit | null;
   warnings: string[];
 };
 
@@ -355,7 +400,11 @@ export async function getProgramBoard(client: pg.PoolClient): Promise<BoardRespo
   // read via the same cwd-independent resolveMonorepoRoot path as recon/extra; it is the FALLBACK.
   const committedMeta = readRepoJson<BoardMeta>(META_REL, warnings, "program board meta");
 
-  // LIVE snapshot from R2 (refreshed by the scheduled sync WITHOUT a prod redeploy). Meta + per-row
+  // TRUE-state audit snapshot — committed JSON only (never overlaid from the R2/live snapshot). Same
+  // cwd-independent read helper as every other tracker file; degrades to null (never 500) if unreadable.
+  const audit = readRepoJson<ProgramBoardAudit>(AUDIT_REL, warnings, "program board audit");
+
+  // LIVE snapshot from the R2 (refreshed by the scheduled sync WITHOUT a prod redeploy). Meta + per-row
   // lifecycle come from here FIRST; committed JSON is the graceful fallback. Absent/unreadable → null.
   const snapshot = await readLiveSnapshot(warnings);
   const liveMap = snapshot?.live;
@@ -443,6 +492,7 @@ export async function getProgramBoard(client: pg.PoolClient): Promise<BoardRespo
     hold_for_jorge: holdAll,
     locked_decisions: extra?.locked_decisions ?? [],
     meta,
+    audit,
     warnings,
   };
 }

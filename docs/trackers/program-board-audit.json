@@ -1,0 +1,1522 @@
+{
+ "generated_ct": "2026-07-10 (Central)",
+ "source": "MASTER-MANIFEST-2026-07-10 (audit vs prod branch br-fancy-credit-akjnd07a)",
+ "headline": "TRUE STATE \u2014 verdicts carry evidence; includes work the reconcile board can't see (unregistered) and 'partial' (which DONE/PENDING has no slot for).",
+ "why_done_overstates": [
+  "DONE = a PR merged + green CI, NOT verified-built or matches-spec or live.",
+  "Only blocks registered in .block-ready/ appear at all \u2014 unregistered work (QBO import program, NOTIF-B, CI-typecheck) is invisible, so the denominator is too small.",
+  "There is no 'partial' status \u2014 a half-built block shows DONE (if merged) or PENDING, never half."
+ ],
+ "true_totals": {
+  "built": 484,
+  "partial": 262,
+  "not_built": 406,
+  "needs_design": 229,
+  "note": "upper bounds \u2014 residual cross-audit duplication; distinct actionable items are fewer. Relative module heat-map is the trustworthy signal."
+ },
+ "by_module": [
+  {
+   "module": "accounting",
+   "built": 178,
+   "partial": 78,
+   "not_built": 102,
+   "needs_design": 45
+  },
+  {
+   "module": "dispatch",
+   "built": 54,
+   "partial": 19,
+   "not_built": 45,
+   "needs_design": 17
+  },
+  {
+   "module": "uncategorized",
+   "built": 27,
+   "partial": 33,
+   "not_built": 23,
+   "needs_design": 56
+  },
+  {
+   "module": "settlements",
+   "built": 18,
+   "partial": 17,
+   "not_built": 33,
+   "needs_design": 6
+  },
+  {
+   "module": "reports",
+   "built": 10,
+   "partial": 11,
+   "not_built": 37,
+   "needs_design": 7
+  },
+  {
+   "module": "banking",
+   "built": 25,
+   "partial": 19,
+   "not_built": 24,
+   "needs_design": 5
+  },
+  {
+   "module": "safety",
+   "built": 30,
+   "partial": 16,
+   "not_built": 25,
+   "needs_design": 13
+  },
+  {
+   "module": "fleet",
+   "built": 19,
+   "partial": 9,
+   "not_built": 18,
+   "needs_design": 4
+  },
+  {
+   "module": "platform",
+   "built": 30,
+   "partial": 15,
+   "not_built": 12,
+   "needs_design": 14
+  },
+  {
+   "module": "compliance",
+   "built": 9,
+   "partial": 11,
+   "not_built": 15,
+   "needs_design": 19
+  },
+  {
+   "module": "drivers",
+   "built": 13,
+   "partial": 9,
+   "not_built": 12,
+   "needs_design": 5
+  },
+  {
+   "module": "qbo-recon",
+   "built": 30,
+   "partial": 7,
+   "not_built": 12,
+   "needs_design": 2
+  },
+  {
+   "module": "maintenance",
+   "built": 4,
+   "partial": 4,
+   "not_built": 12,
+   "needs_design": 2
+  },
+  {
+   "module": "factoring",
+   "built": 6,
+   "partial": 4,
+   "not_built": 11,
+   "needs_design": 7
+  },
+  {
+   "module": "customers-vendors",
+   "built": 8,
+   "partial": 4,
+   "not_built": 8,
+   "needs_design": 19
+  },
+  {
+   "module": "users-docs-help",
+   "built": 8,
+   "partial": 4,
+   "not_built": 8,
+   "needs_design": 4
+  },
+  {
+   "module": "legal",
+   "built": 2,
+   "partial": 0,
+   "not_built": 5,
+   "needs_design": 1
+  },
+  {
+   "module": "qbo-import",
+   "built": 2,
+   "partial": 1,
+   "not_built": 3,
+   "needs_design": 1
+  },
+  {
+   "module": "finance-hub",
+   "built": 6,
+   "partial": 1,
+   "not_built": 1,
+   "needs_design": 1
+  },
+  {
+   "module": "notifications",
+   "built": 5,
+   "partial": 0,
+   "not_built": 0,
+   "needs_design": 1
+  }
+ ],
+ "prod_verified_facts": [
+  {
+   "fact": "QBO historical-import program never built",
+   "detail": "qbo_import_runs/tieouts/cash_basis_balances absent in every schema. IMPORT-1..5 + v2s = not-built.",
+   "verdict": "not-built"
+  },
+  {
+   "fact": "Reconciliation engine has never run",
+   "detail": "accounting.recon_runs = 0 despite TMS_QBO_RECON_ENABLED ON; recon dashboard backend route not imported in index.ts (404).",
+   "verdict": "not-running"
+  },
+  {
+   "fact": "Money-posting flags effectively ON (INTENTIONAL)",
+   "detail": "Per-entity overrides enabled for TRANSP/TRK/USMCA \u2014 parallel-with-QBO testing + USMCA greenfield. DO NOT REVERT. Only 3 JEs / 34 postings so far.",
+   "verdict": "intentional-on"
+  },
+  {
+   "fact": "DOT accident fields already exist",
+   "detail": "safety.accidents has 7/8 DOT fields; only hazmat_release missing (belongs on safety.accidents, NOT accident_reports). WAVE3-to-letter would duplicate the accident model.",
+   "verdict": "partial"
+  },
+  {
+   "fact": "NOTIF-B push never built",
+   "detail": "device_push_tokens absent.",
+   "verdict": "not-built"
+  },
+  {
+   "fact": "safety.safety_settings latent 500",
+   "detail": "FORCE RLS, 0 INSERT policies -> creating a company 500s (USMCA risk).",
+   "verdict": "not-built"
+  },
+  {
+   "fact": "vendor-type catalog + vendor-credit UI",
+   "detail": "columns/backend exist; dropdown catalog table absent; vendor_credits has no frontend consumers.",
+   "verdict": "partial"
+  }
+ ],
+ "schema_drift_flags": [
+  "ih35-tms-standards skill: claims mdata.loads.hazmat exists (prod: NO) + load_status_enum ends at 'cancelled' (prod: 4 more). STALE.",
+  "root CLAUDE.md: claims abandoned/driver_walkoff/driver_no_show are enum members (prod: NONE). Writing them as enum fails \u2014 cast ::text."
+ ],
+ "top_open_items": [
+  {
+   "id": "0007-pattern-6-silent-noop-posting",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Systemic Pattern 6: silent flag-gated no-op posting \u2014 money actions behind OFF flags toast 'success' while writing zero JEs; fix = surface p",
+   "missing": "surfaced posted:false in API responses + suppressed success toast on no-op writes for createTransfer/CC-payment/Post-as-bill paths",
+   "evidence": "Confirmed still current per memory 'banking-posting-flags-go-nogo-2026-07-06' (dated same week as this doc): createTransfer/CC-payment never post to GL (no 'transfer' posting type), 'Post as bill' cre",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0008-a-gl-flags-settlement-lease-off",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Flip SETTLEMENT_GL_POSTING_ENABLED and LEASE_GL_POSTING_ENABLED OFF in prod (2 broken/locked posting flags)",
+   "missing": "Prod flag flip SETTLEMENT_GL_POSTING_ENABLED=false and LEASE_GL_POSTING_ENABLED=false for all entities (owner-controlled action, not a code change)",
+   "evidence": "0243 doc's live prod read (FLAG-LIVE, FLAG-LEASE waves, verified 2026-07-04 via SELECT on lib.feature_flags @ br-fancy-credit) showed BOTH SETTLEMENT_GL_POSTING_ENABLED and LEASE_GL_POSTING_ENABLED st",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0008-g3-qbo-mirror-canonical-mdata",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Canonicalize mdata.qbo_* as the QBO mirror; repoint writers off accounting.qbo_*",
+   "missing": "pick one canonical home (mdata.qbo_*), repoint accounting.qbo_* writers, forbid new accounting.qbo_* clone tables",
+   "evidence": "Both physical copies still live: apps/backend/src/sync/qbo-accounts-push.ts, qbo-customers-push.ts, qbo-vendors-push.ts (one side) vs apps/backend/src/outbox/handlers/tms-invoice-push.handler.ts, tms-",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0008-h-create-bill-line-items-load-id",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Create Bill: add line items + load_id so G18 (fuel/diesel/toll must FK a load) is enforceable on the bill path",
+   "missing": "bill_lines table/columns + load_id FK on the vendor-Bill creation path; wire hasLoadRequiredExpenseCategories to the bill branch (overlaps D2-2/0243)",
+   "evidence": "grep for 'load_id' and 'bill_lines|line_items' in apps/backend/src/accounting/bills.routes.ts returned no matches \u2014 Create Bill still appears header-only (one account+amount), no load_id column path f",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0091-b1-2",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Remove stale factor_reserve_default COA-role (still typed Liability) or repoint fallback to Asset (locked model = reserve is an ASSET)",
+   "missing": "remove factor_reserve_default or repoint its fallback to Asset",
+   "evidence": "apps/backend/src/accounting/coa-roles/resolver.service.ts:8,21,59 still defines factor_reserve_default: { type: [\"Liability\"], ... } \u2014 confirmed still present with the wrong fallback type, though a co",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0091-b1-3",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Replace DELETE-then-INSERT on accounting.bill_unit_allocation with is_active=false+reinsert (or an explicit void-not-delete exemption) to pr",
+   "missing": "switch to is_active=false+reinsert, or add bill_unit_allocation to an explicit void-not-delete mapping-table exemption list",
+   "evidence": "apps/backend/src/maint/wo-ap-posting.service.ts:359 and accounting/bills.routes.ts:450 both still issue `DELETE FROM accounting.bill_unit_allocation WHERE bill_id=$1 AND tenant_id=$2` \u2014 confirmed the ",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0091-c1-1",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Collapse or bridge the two driver-settlement engines (live driver_finance.* vs orphaned payroll.*) before enabling GL posting",
+   "missing": "a single canonical settlement engine, or an explicit bridge layer between payroll.* and driver_finance.*",
+   "evidence": "Both engines are still live: payroll/driver-settlement.service.ts is registered+reachable (see 0091-m-settle-1), and driver_finance/* is the UI-facing engine (147 file refs vs 10 for payroll.*). No co",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0091-e1-1",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Pick one canonical home for the QBO mirror (accounting.qbo_* vs mdata.qbo_*) and repoint writers to stop the split-brain drift",
+   "missing": "an owner decision on canonical schema + a migration/repoint of the losing writer",
+   "evidence": "accounting.qbo_* tables (0319/0321/0323) still exist and are still referenced by apps/backend/src/integrations/qbo/remote-count-collector.ts and qbo-reconcile-read.service.ts alongside mdata.qbo_* \u2014 n",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0091-flag-live",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Confirm prod GL-posting flag state before relying on any live posting path (all 9 flags reported ON 2026-07-04)",
+   "missing": "prod flag-state re-verification (owner-controlled, not a code fix)",
+   "evidence": "This is a live prod feature-flag STATE claim (lib.feature_flags / lib.feature_flag_overrides), not a code defect \u2014 cannot be re-verified from the repo alone; \u00a71.5 gates direct prod DB access.",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0091-g6-4",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Make accounting.bills.amount_cents NOT NULL (currently nullable, drops out of SUM aggregates) and pick one canonical money representation",
+   "missing": "SET NOT NULL (or CHECK IS NOT NULL) on amount_cents; pick cents canonical and derive/drop the numeric total_amount/paid_amount columns",
+   "evidence": "db/migrations/0090_p5_d2_bill_payment_balance.sql:15,39,61,81 still declares amount_cents bigint (nullable, no NOT NULL/CHECK constraint) on both accounting.bills and accounting.bill_payments.",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0091-m-settle-1",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Gate payroll/driver-settlement.service.ts postSettlement() behind SETTLEMENT_GL_POSTING_ENABLED before it calls createBill+payBill",
+   "missing": "an isEnabled(SETTLEMENT_GL_POSTING_ENABLED, {operating_company_id}) gate before the createBill/payBill calls in postSettlement()",
+   "evidence": "apps/backend/src/payroll/driver-settlement.service.ts:397-480 postSettlement() still calls createBill(...) then payBill(...) with NO isEnabled(SETTLEMENT_GL_POSTING_ENABLED) check anywhere in the func",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0243-b1-3-bill-unit-allocation-delete-not-void",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "DELETE-then-INSERT on accounting.bill_unit_allocation breaks void-not-delete invariant",
+   "missing": "switch to is_active=false + reinsert, or an explicit exempt-mapping-table allowlist entry in the void-not-delete guard",
+   "evidence": "apps/backend/src/maint/wo-ap-posting.service.ts:359 and apps/backend/src/accounting/bills.routes.ts:450 both still 'DELETE FROM accounting.bill_unit_allocation WHERE bill_id = $1...' followed by re-IN",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0243-d1-2-vendors-split-two-tables",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Vendors split across mdata.vendors (rich create/edit) and mdata.qbo_vendors (WO/expense/CC pickers) \u2014 a vendor in one is invisible in the ot",
+   "missing": "single vendor namespace + resolver (see 0008-g4-vendor-namespace-canonical)",
+   "evidence": "apps/frontend/src/components/vendors/VendorCreateModal.tsx and apps/frontend/src/pages/maintenance/components/CreateWOSectionIdentification.tsx both still exist as separate surfaces (same files/lines ",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0243-e1-1-qbo-mirror-split-brain",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Two physical QBO mirror copies (accounting.qbo_* cloned LIKE mdata.qbo_*) written by different live code, neither reads the other",
+   "missing": "pick one canonical home + repoint writers (see 0008-g3-qbo-mirror-canonical-mdata)",
+   "evidence": "apps/backend/src/sync/qbo-accounts-push.ts, qbo-customers-push.ts, qbo-vendors-push.ts still exist alongside apps/backend/src/outbox/handlers/tms-invoice-push.handler.ts, tms-vendor-push.handler.ts, t",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0243-flag-lease-on-despite-engine-not-built",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "[STOP-GATE] LEASE_GL_POSTING_ENABLED confirmed ON in prod despite the locked 'never flip until lease engine built' rule -- either FIN-22 was",
+   "missing": "confirm whether the FIN-22 lease engine is actually built; if not, flip LEASE_GL_POSTING_ENABLED back OFF (owner decision)",
+   "evidence": "Prod-state finding, same session as FLAG-LIVE \u2014 cannot be re-verified from repo alone.",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0243-flag-live-all-9-gl-flags-on-prod",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "[CRIT/STOP-GATE] Read-only prod SELECT (2026-07-04) confirmed ALL 9 GL-posting flags incl. SETTLEMENT are ON for all 3 entities -- money pos",
+   "missing": "owner must verify current prod flag state and confirm whether it still matches this 07-04 snapshot",
+   "evidence": "This is a prod-state finding, not a code artifact \u2014 cannot be re-verified from the repo alone. It directly contradicts owner decision 0008-a which says to flip SETTLEMENT_GL_POSTING_ENABLED OFF.",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0243-g11-5-period-close-no-reopen-path",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "[STOP-GATE] closed_period_cutoff = MAX(period_end) blocks postings into an open middle period with non-contiguous closes; no audited reopen ",
+   "missing": "make the cutoff per-period; add an audited owner-gated reopen route",
+   "evidence": "grep -n 'reopen' apps/backend/src/accounting/periods.routes.ts returned zero matches \u2014 no reopen route found.",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0243-g11-9-escrow-deduction-not-wired-to-liability",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "[STOP-GATE] Escrow-abandonment deduction resolves escrow_load_abandonment_recovery and credits it, but code self-flags the GL account/floor ",
+   "missing": "bind escrow_load_abandonment_recovery to the Driver Escrow liability account through the capped recovery engine",
+   "evidence": "apps/backend/src/driver-finance/escrow-deduction-pending.service.ts:402 still literally contains the comment '-- NOTE: escrow's recovery floor policy is NOT yet wired through the capped engine \u2014 see t",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0243-g6-4-bills-amount-cents-nullable-dual-money",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "accounting.bills.amount_cents nullable (a null-amount bill drops out of SUM), plus dual money representation (total_amount/paid_amount numer",
+   "missing": "SET NOT NULL (or CHECK IS NOT NULL) on amount_cents; pick cents canonical, derive/drop the numeric columns",
+   "evidence": "db/migrations/0090_p5_d2_bill_payment_balance.sql:15,39,61,81 still 'amount_cents bigint' with no NOT NULL / CHECK IS NOT NULL constraint; both amount_cents and numeric total_amount/amount columns sti",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0243-g9-h6-coa-trailer-lists-cap-50",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "catalogs/accounts (371 accounts, page max 200, no total) and trailer list silently cap -> oldest foundational records unreachable",
+   "missing": "add total/has_more to the accounts list response; raise/remove the cap; same for mdata/equipment (trailers), locations/items/classes",
+   "evidence": "grep -n 'has_more|total_count|COUNT(\\*)' apps/backend/src/catalogs/accounts.routes.ts returned zero matches \u2014 only LIMIT clauses found (lines 154,260,321,395), no total/has_more field.",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0243-h3-2-three-posting-flags-unprotected-no-entity-context",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "[STOP-GATE] REVENUE_RECOGNITION_POST_ENABLED / PREPAID_EXPENSES_POST_ENABLED / FIXED_ASSET_AUTOPOST_ENABLED named _POST/_AUTOPOST (not match",
+   "missing": "rename to *_GL_POSTING_ENABLED or add these 3 to POSTING_FLAG_KEYS + pass opco context, before any real poster ships behind them",
+   "evidence": "apps/backend/src/lib/feature-flags/service.ts's POSTING_FLAG_KEYS enumeration (lines 37-47+) does NOT include REVENUE_RECOGNITION_POST_ENABLED, PREPAID_EXPENSES_POST_ENABLED, or FIXED_ASSET_AUTOPOST_E",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0243-h7-1-faro-to-rts-no-public-api",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "RTS Financial has no public API (FTP/portal file-drop); entire factoring integration is Faro-CSV-shaped -- the Faro->RTS migration needs a n",
+   "missing": "design-doc for RTS as a second file-format adapter behind the existing reconciliation; confirm RTS export columns with their rep",
+   "evidence": "grep -rln 'RTS|rts-' apps/backend/src/factoring returned zero matches \u2014 no RTS adapter code exists yet, matching the doc's own framing that this needs a design-doc first.",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0251-gap18-driverbill-gl",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Verify driver bill posts Bill + BillPayment to GL",
+   "missing": "explicit GL posting call (Bill + BillPayment) from createDriverBillArtifacts, or confirmation it is intentionally deferred to a separate flag-gated posting step per 0285's 'GL posting is flag-gated' f",
+   "evidence": "apps/backend/src/dispatch/book-load.service.ts:248 createDriverBillArtifacts \u2014 grep for postSourceTransaction/GL/journal within that function's vicinity found only an unrelated comment ('...GL math). ",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0251-gap19-driverbill-escrow",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Verify driver bill includes escrow deduction at book-load time",
+   "missing": "escrow deduction logic in createDriverBillArtifacts",
+   "evidence": "grep for 'escrow' inside apps/backend/src/dispatch/book-load.service.ts returned zero matches \u2014 no escrow handling found in the driver-bill-creation path at book-load time.",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0251-gap22-lumper-expense-linkage",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Verify lumper charges create an expense record so lumper costs are captured in accounting",
+   "missing": "an expense record created (or linked) per carrier-paid lumper charge",
+   "evidence": "apps/backend/src/dispatch/book-load.service.ts:41-43,263-289 tracks lumper_required/lumper_paid_by/lumper_amount_cents and computes carrier-paid vs shipper/broker/receiver-paid sums, but no call to an",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0251-gap5-chargecode-gl-mapping",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Create a charge-code-to-GL-account mapping table so accessorial/linehaul/fuel-surcharge charge codes map to GL accounts",
+   "missing": "a dedicated charge-code-to-GL-account catalog table",
+   "evidence": "`grep -rln accessorial.*gl gl.*accessorial charge_code apps/backend/src/accounting apps/backend/src/dispatch db/migrations` only matched apps/backend/src/dispatch/ratecon-extract.service.ts (an OCR fi",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0251-gap7-fuel-surcharge-gl",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Verify fuel surcharge posts to fuel revenue GL account",
+   "missing": "charge-code-to-GL mapping table (0251-gap5) is a prerequisite",
+   "evidence": "Same root cause as gap5/gap6 \u2014 no charge-code-to-GL mapping table exists, so fuel surcharge cannot be routed to a distinct GL account by code.",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0251-gap8-accessorials-gl",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Verify each accessorial code posts to the correct GL account",
+   "missing": "charge-code-to-GL mapping table (0251-gap5) is a prerequisite",
+   "evidence": "Same root cause as gap5 \u2014 no charge-code catalog/mapping table found.",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0282-p0-catalogs-accounts-scope",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "P0: migrate catalogs.accounts (and by extension other 'global' catalogs tables) to company-scoped, framed as an 'entity independence violati",
+   "missing": "This is NOT simply unbuilt \u2014 it is a live ARCHITECTURAL DISAGREEMENT with the locked design (see contradicts field). Any 'fix' must go through an owner decision, not a direct migration.",
+   "evidence": "catalogs.accounts is still a single shared table without a hard per-row operating_company_id enforcement identical to opco-owned tables (confirmed via the separate C2-1 finding that catalogs.accounts ",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0285-banking-transfer-gl-gap-not-caught",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Doc's Banking section marks 'Create Transfer' as '\u2705 Implemented' and states 'Critical Gaps: None identified' \u2014 but does not flag that create",
+   "missing": "a 'transfer' GL posting type wired into createTransfer",
+   "evidence": "apps/backend/src/banking/transfers.routes.ts:60,116 call createTransfer with no visible GL-posting call in that file. This corroborates memory 'banking-posting-flags-go-nogo-2026-07-06' (dated the day",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0394-qbo-bill-invoice-transaction-pull-missing",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "QBO->TMS transaction pull (bills=A/P, invoices=A/R, bill-payments, credits) was never built \u2014 only master data (accounts/customers/items/ven",
+   "missing": "a QBO->TMS bill/invoice pull job writing into mdata.qbo_bills / mdata.qbo_invoices, on a recurring (CDC) schedule, not the current one-shot master-data-only sync",
+   "evidence": "apps/backend/src/qbo/master-data-sync.service.ts syncs entity types account/customer/item/vendor (INSERT ... qbo_sync_token patterns for mdata.qbo_vendors/qbo_customers/qbo_items) \u2014 no pullBills/pullI",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0441-mod11-ar-ap-aging-export-different-engine",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "AR/AP Aging export uses different engine than screen",
+   "missing": "export engine should call the same views.ar_aging/accounting.ar_aging_as_of source the screen uses, or the divergence must be reconciled and documented.",
+   "evidence": "On-screen engine (apps/backend/src/reports/ar-aging.routes.ts:9-10,95,114) uses `views.ar_aging` (live) or `accounting.ar_aging_as_of($1,$2)` (historical) \u2014 the canonical security_invoker view/functio",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0441-mod13-coa-merge-accounts-deactivate-only-no-gl-repoint",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Lists CoA \"Merge accounts\" deactivates only - NO GL repoint",
+   "missing": "A real merge operation (backend) that UPDATEs all GL-referencing rows (journal lines, bill lines, expense lines, budget lines, etc.) from source account_id to target account_id inside a transaction, T",
+   "evidence": "apps/frontend/src/pages/lists/accounting/CoaBatchActions.tsx:56-82 handleMerge() calls `chartOfAccountsCatalogClient.deactivate(source.id, operatingCompanyId)` (falling back to `deactivateCatalogAccou",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0441-mod13-inventory-part-to-accounting-none",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Inventory part->accounting NONE",
+   "missing": "A catalogs.accounts (expense/inventory-asset) linkage on parts and/or on the purchase-recording flow, per LAW OF THE LAND total-connectivity.",
+   "evidence": "No account_id/gl_account_id/expense_category field found anywhere in apps/frontend/src/pages/inventory/PartCreateDrawer.tsx, InventoryPartsStockPage.tsx, or apps/backend/src/maintenance/parts.routes.t",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0441-mod3-fuel-gl-poster-zero-callers",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "CRITICAL: Fuel GL poster postFuelExpenseFromEvent has ZERO callers",
+   "missing": "A production caller (route handler, event consumer, or cron) that invokes postFuelExpenseFromEvent when a fuel transaction/event is created/ingested",
+   "evidence": "grep -rn postFuelExpenseFromEvent apps/backend/src shows only the definition (apps/backend/src/accounting/fuel-posting/poster.service.ts:223) and 3 test files (__tests__/poster-driver-advance-path.tes",
+   "spec": "NONE (referenced only as 'see design doc' in relay-fuel-ingest.service.ts comment, no docs/specs/ file found for fuel GL posting wiring)",
+   "dup_count": 1
+  },
+  {
+   "id": "0441-mod7-maintenance-repair-fuel-bill-filters",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Maintenance/Repair/Fuel bill subnav items are ?category= filters, not creators",
+   "missing": "These subnav items should open a category-prefilled bill CREATE flow (like VendorBillCreatePage), not just filter the existing list.",
+   "evidence": "apps/frontend/src/routes/manifest.tsx:3601-3624 \u2014 /accounting/bills/maintenance, /accounting/bills/repair, /accounting/bills/fuel each render <Navigate to=\"/accounting/bills?category=X\" replace/> \u2014 a ",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0441-mod9-merge-vendors-no-gl-repoint",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "\"Merge Vendors\" merges QBO ids on driver (no GL repoint, no deactivation)",
+   "missing": "GL repoint (UPDATE all bill/expense/payment/PO rows carrying the old qbo_vendor_id to the new one, or block merge if historical GL rows exist and require a proper subledger-transfer), and deactivation",
+   "evidence": "apps/backend/src/data-infra/data-infra.service.ts:27-121 `createDriverVendorMerge` only (a) inserts an mdata.driver_vendor_merges audit row and (b) if `applyToDriver`, UPDATEs `mdata.drivers.qbo_vendo",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0473-2-4-ap-aging-undercounts-partials",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Bills stored 'partially_paid' but aging report reads 'partial' -- a value mismatch under-counts partially-paid bills in the AP aging bucket ",
+   "missing": "align the status value read in ap-aging.routes.ts with the actual stored 'partially_paid' value; add a DB constraint preventing future drift",
+   "evidence": "grep -n 'partially_paid|partial' apps/backend/src/reports/ap-aging.routes.ts returned zero matches \u2014 no evidence the status-value alignment fix landed in the AP aging route.",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0473-2-5-trial-balance-002-cosmetic",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Trial balance shows $0.02 Dr/$0.02 Cr gross of the one posted+reversed test invoice (nets to $0, not an error) -- optional cosmetic cleanup ",
+   "missing": "decide whether to void/purge the $0.01 test invoice's gross footprint before go-live, or leave it as documented test evidence",
+   "evidence": "UNVERIFIED: This is a live-data cosmetic artifact (the test invoice's gross Dr/Cr still showing in the trial balance UI), not something checkable from repo code alone. Not independently re-verified.",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0490-critical-m-settle-1-unflagged-settlement-posting",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "CRITICAL: payroll/driver-settlement.service.ts postSettlement() posts a real Bill+BillPayment with NO feature-flag check and NO role/Owner-F",
+   "missing": "a role gate (Owner/Finance only) AND a feature-flag check (or full retirement of the payroll.* engine in favor of the canonical driver_finance settlement-posting engine) on this route",
+   "evidence": "apps/backend/src/payroll/driver-settlement.routes.ts POST /api/v1/payroll/driver-settlements/:settlement_id/post (lines 50-79) checks only `currentAuthUser(req, reply)` \u2014 no role check, no `isEnabled(",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0519-lg1-5-nullable-financial-columns",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "5 financial columns that should be required are nullable: accounting.bill_lines.account_id, accounting.bill_payments.amount_cents, accountin",
+   "missing": "ALTER TABLE ... ALTER COLUMN ... SET NOT NULL for the 5 listed columns (Tier-1 migration, needs a backfill-safety check first for existing NULL rows)",
+   "evidence": "No `ALTER COLUMN account_id SET NOT NULL` / `ALTER COLUMN amount_cents SET NOT NULL` found for these tables in db/migrations (grep empty, re-checked with a second pattern) \u2014 columns remain nullable pe",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "acct-bills-routes-audit-trail-missing",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Areas for Review #1: bills.routes.ts has no direct appendCrudAudit call \u2014 verify if audited in service layer",
+   "missing": "an appendCrudAudit call (or equivalent) somewhere in the bill create/pay/void/allocate path",
+   "evidence": "grep -n 'appendCrudAudit' apps/backend/src/accounting/bills.routes.ts returned zero matches (re-ran once, still zero \u2014 false-empty rule satisfied). Did not locate a bills-specific service-layer file t",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "bill-status-vocab-partial-vs-partially_paid",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Standardize + DB-constrain the A/P bill status vocabulary ('partial' vs 'partially_paid' drift causes aging mis-counts)",
+   "missing": "A single canonical status vocabulary + DB CHECK constraint for bill partial-payment status, replacing the two-spelling drift.",
+   "evidence": "Both spellings remain live: db/migrations/0123_p6_pre_ledger_drift_reconciliation.sql:1350 CHECK (status IN ('draft','sent','partial','paid','void','factored')) uses 'partial', while the same file's l",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "biz-flow-2-no-customer-chargeback-mechanism",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Auto-create a customer invoice adjustment when a driver-caused expense should be billed back to the customer",
+   "missing": "no code path that turns a recover_from_driver expense into a customer invoice line",
+   "evidence": "No grep hits linking accounting.expenses or driver_finance.driver_settlement_deductions creation to an accounting.invoices/invoice_lines write anywhere in apps/backend/src (searched expenses.routes.ts",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "biz-flow-3-no-auto-customer-charge-on-cancellation",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Auto-create a customer invoice/charge from dispatch.load_cancellations.cancellation_charge_cents",
+   "missing": "no call from cancelLoad()/approveCancellation() into an invoice-creation function",
+   "evidence": "apps/backend/src/dispatch/cancellation.service.ts stores cancellation_charge_cents/billable_to_customer (lines 16-17, 63-82) but has zero references to invoice creation (grep for 'createInvoice|invoic",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "biz-flow-3-no-cancellation-billing-linkage",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "dispatch.load_cancellations needs a foreign key to the invoice/charge it produced",
+   "missing": "no invoice_id / charge_id column on dispatch.load_cancellations",
+   "evidence": "Reviewed every migration that touches dispatch.load_cancellations (db/migrations/0101_p5_f4_cancellation_reasons.sql, 202606300130_load_cancellations_per_entity_fk.sql, 0281_dispatch_cancel_reason.sql",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "biz-flow-6-payment-application-manual",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Auto-apply customer payments to the oldest open invoice(s) instead of requiring a manual application",
+   "missing": "no automatic FIFO/oldest-invoice application logic",
+   "evidence": "apps/backend/src/accounting/customer-payments.routes.ts:217 shows payment_applications rows are created from explicit caller-supplied application input; no auto-apply-to-oldest-open-invoice logic foun",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "catalog-create-split-brain-qbo-mirror",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "mdata/qbo-master-write.routes.ts inserts new catalog entries into mirror tables (mdata.qbo_vendors/qbo_items/qbo_accounts) while dropdowns r",
+   "missing": "Either write directly to the canonical tables (mdata.vendors/catalogs.items/catalogs.accounts) or write to both mirror+canonical atomically.",
+   "evidence": "apps/backend/src/mdata/qbo-master-write.routes.ts lines 127, 392, 522 confirmed myself: 'INSERT INTO mdata.qbo_vendors (', 'INSERT INTO mdata.qbo_items (', 'INSERT INTO mdata.qbo_accounts (' \u2014 all thr",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "dispatch-sweep-gap-23",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Reassign to GL Linkage \u2014 verify reassignments trigger GL journal entries",
+   "missing": "No GL journal entry is created on reassignment; any GL effect only happens indirectly, later, if/when a settlement referencing the new driver is posted (gap-17).",
+   "evidence": "manualReassignLoad (apps/backend/src/dispatch/dispatch-refinements.service.ts) has no call to postSourceTransaction/createJournalEntry/accounting.* anywhere in the file (only appendCrudAudit and outbo",
+   "spec": "docs/specs/DISPATCH-MODULE-SPEC.md",
+   "dup_count": 1
+  },
+  {
+   "id": "dispatch-sweep-gap-32",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Assignment to GL Linkage (Load Assignment Flow) \u2014 verify assignments post to GL for cost tracking",
+   "missing": "No per-assignment GL cost entry; cost only reaches GL later via the settlement posting engine (flag-gated, OFF by default).",
+   "evidence": "Same as dispatch-sweep-gap-23: no code in dispatch-refinements.service.ts (manualReassignLoad or the initial book-load assignment path) calls postSourceTransaction/createJournalEntry. Any GL cost trac",
+   "spec": "docs/specs/DISPATCH-MODULE-SPEC.md",
+   "dup_count": 1
+  },
+  {
+   "id": "dispatch-sweep-gap-36",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Detention to Expense Linkage \u2014 verify approved detention creates expense record",
+   "missing": "No accounting.expenses record for detention as an internal cost; only the customer-billing (revenue) side is wired (see gap-38).",
+   "evidence": "apps/backend/src/dispatch/detention-approval.service.ts finalizeApprovedDetention (L325-393) bridges the accrual straight into buildInvoiceFromLoad \u2014 a CUSTOMER-facing invoice/revenue line (accounting",
+   "spec": "docs/specs/DISPATCH-MODULE-SPEC.md",
+   "dup_count": 1
+  },
+  {
+   "id": "dispatch-sweep-gap-6",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Status Transition to GL Linkage \u2014 verify status transitions trigger appropriate GL postings",
+   "missing": "A hook from the load status-transition handler into buildInvoiceFromLoad / postSourceTransaction on delivery or invoice-eligible transitions.",
+   "evidence": "apps/backend/src/dispatch/loads.routes.ts owns the status transition state machine (STATUS_NEXT map etc, L338-372) with no accounting/invoice/posting-engine calls anywhere in the file (grep for invoic",
+   "spec": "docs/specs/DISPATCH-MODULE-SPEC.md",
+   "dup_count": 1
+  },
+  {
+   "id": "fk-expenses-deductions-0289",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Critical FK gap #3: Expenses -> Deductions, expected column accounting.expenses.deduction_id",
+   "missing": "accounting.expenses.deduction_id column + FK to driver_finance.driver_settlement_deductions",
+   "evidence": "grep -n 'deduction_id' db/migrations/*.sql filtered for 'expense' context returned zero matches; no accounting.expenses.deduction_id column found anywhere in migrations.",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "inbound-qbo-bill-sync-ap-gap",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Build inbound QBO bill sync so TMS A/P ties to QuickBooks' open A/P ($1,220,674.25 across 151 vendors as of the audit date)",
+   "missing": "Inbound QBO bill sync (CDC/polling) so TMS A/P ties to QuickBooks' A/P balance.",
+   "evidence": "grep for 'qbo.*bill.*(pull|import|inbound)' and 'inbound.*bill' across apps/backend/src/integrations/qbo/*.ts and sync/*.ts returns no inbound-bill sync handler \u2014 only outbound push entities found (sy",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "p0-catalogs-accounts-company-scoped",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Migrate catalogs.accounts (chart of accounts) to company-scoped (add operating_company_id) \u2014 flagged P0 'entity independence violation'",
+   "missing": "operating_company_id uuid NOT NULL REFERENCES org.companies(id) column + FORCE RLS policy on catalogs.accounts; currently one shared global CoA across TRANSP/TRK/USMCA.",
+   "evidence": "db/migrations/0010_catalogs_init.sql:6 CREATE TABLE catalogs.accounts has columns id, code, name, type ... parent_account_id, created_by_user_id, updated_by_user_id \u2014 NO operating_company_id column an",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "ruling-3-driver-escrow-current-vs-long-term-reclass",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Reclassify driver Damage Claim Escrow from OtherLongTermLiabilities to a current-liability subtype (60-90 day turnover)",
+   "missing": "Reclass Damage Claim Escrow (QBO-1150040187) and year-dated variants from OtherLongTermLiabilities to a current-liability subtype, pending CPA confirmation.",
+   "evidence": "Damage Claim Escrow accounts remain typed OtherLongTermLiabilities per doc Appendix A; no migration reclassifying to a current-liability subtype found (grep for 'OtherLongTermLiabilities' + reclass lo",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "settlement-posting-design-doc-missing",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Write docs/specs/SETTLEMENT-POSTING-DESIGN.md (settlement->GL JE shape, FLSA recovery modes, escrow contribution/forfeit design, period-lock",
+   "missing": "the consolidated docs/specs/SETTLEMENT-POSTING-DESIGN.md itself, including the 5 explicit owner open-questions (net-pay floor, damage-deduction consent workflow, escrow contribution/cap/forfeit, COA m",
+   "evidence": "`find docs -iname '*settlement*posting*'` returns nothing; no docs/specs/SETTLEMENT-POSTING-DESIGN.md in the repo. Related pieces exist piecemeal (settlement-posting.service.ts, settlement-deduction-c",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "usmca-posting-enable-hold",
+   "module": "accounting",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Turn GL posting ON for USMCA only (per-entity override), gated on Blocks 01-07 (per-entity flag fix, engine proof, COA seed, banking ingest,",
+   "missing": "USMCA unhide (Block 07) + COA seed + banking ingest + engine proof all confirmed complete, then a per-entity feature_flag_overrides seed turning USMCA's GL-posting flags ON while TRANSP/TRK stay OFF",
+   "evidence": "USMCA is still hidden (org.companies.is_active=false per audit-chain-verify.cron.service.ts:73 comment and CLAUDE.md's current 'launches July 2026, hidden until then'), so its own precondition Block 0",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0008-d-abandonment-pay-first-then-escrow",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "Walkoff/abandonment: pay first, escrow only for shortfall, single charge per event, escrow keeps growing 30-45+ days after separation",
+   "missing": "explicit single-path pay-first/escrow-shortfall logic confirmation; verify migration 0094 trigger was reworked per this decision",
+   "evidence": "apps/backend/src/driver-finance/abandonment.service.ts has driver_finance.abandonment_chargebacks table+service live, but the exact pay-first-then-escrow-shortfall sequencing (vs the double-fire the f",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0010-f1-orphan-fk-columns",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "F1: 689 columns named *_id/*_uuid across accounting/banking/safety/maintenance/mdata carry no FK constraint",
+   "missing": "a CI guard enumerating *_id/*_uuid columns without FK constraints (excluding qbo_/plaid_/samsara_/stripe_) and a remediation migration for the remaining 689 columns",
+   "evidence": "No repo-wide orphan-FK CI guard found (`find scripts -iname '*orphan*fk*'` = empty). Individual FKs have been added piecemeal in later migrations (e.g. 202607031600_safety_incidents_trailer_fk_to_equi",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0010-f11-jep-duplicate-idempotency-groups",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "F11: 2 pre-existing duplicate idempotency_key groups exist in accounting.journal_entry_postings (from before the F10 unique index)",
+   "missing": "investigate + repair the 2 existing duplicate idempotency_key groups (owner-gated financial data fix)",
+   "evidence": "The F10 unique index (202606282200) blocks NEW duplicates going forward but is additive-only and does not delete/merge the 2 existing duplicate groups (would require a data-repair migration + CPA revi",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0010-f5-bank-txn-uncategorized",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "F5: all 2,649 banking.bank_transactions rows uncategorized, none posted to GL",
+   "missing": "live confirmation of categorized-txn count trending toward 0",
+   "evidence": "Categorization code exists in repo: apps/backend/src/banking/categorization.routes.ts, categorization-rules.routes.ts, pending-categorization.ts \u2014 the feature is built, but whether the live 2,649-row ",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0010-f9-nullable-assumed-key-columns",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "F9: 5 nullable assumed-key columns (bill_lines.account_id, bill_payments.amount_cents, bills.amount_cents, invoice_lines.account_id, vendor_",
+   "missing": "same NOT VALID CHECK (or real NOT NULL after backfill) for bill_lines.account_id, bill_payments.amount_cents, invoice_lines.account_id, vendor_balances.operating_company_id",
+   "evidence": "db/migrations/202607051200_g6_4_bills_amount_cents_canonical.sql fixes ONLY accounting.bills.amount_cents, and only partially: adds `CHECK (amount_cents IS NOT NULL) NOT VALID` (enforces new/updated r",
+   "spec": "docs/specs/repairs/REPAIR-G6-4-BILLS-AMOUNT-CENTS-CANONICAL.md",
+   "dup_count": 1
+  },
+  {
+   "id": "0091-flag-lease",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "Confirm LEASE_GL_POSTING_ENABLED prod state matches whether the FIN-22 lease engine is actually built (locked OFF until then)",
+   "missing": "confirm prod override state for LEASE_GL_POSTING_ENABLED per entity",
+   "evidence": "apps/backend/src/accounting/lease-asc842/lease-posting.service.ts:23 documents 'FLAG GATE: LEASE_GL_POSTING_ENABLED (default OFF) -> NO-OP' confirming the code-side gate exists and defaults OFF; the l",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0091-g4-tx1",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "Give GL posters an optional caller-supplied client param so source-row write + GL post share one transaction",
+   "missing": "cash-advance-disburse.ts (and factoring-advances release / bills.service.ts / lumper-split \u2014 not individually re-verified) still need the client-param threading",
+   "evidence": "apps/backend/src/accounting/payments/apply.service.ts:270 applyPayment now takes client:Queryable as its first param (caller-enlisted transaction) \u2014 fixed. apps/backend/src/cash-advances/cash-advance-",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0243-d2-2-g18-load-fk-not-enforced-vendor-bill-path",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "G18 load-FK gate only runs for paid_same_day (Expense); vendor_invoice (Bill) branch creates with no diesel/fuel/toll load check, bill_lines",
+   "missing": "confirm hasLoadRequiredExpenseCategories runs on the vendor_invoice branch too; see 0008-h for the underlying missing bill_lines/load_id schema",
+   "evidence": "apps/backend/src/maintenance/two-section-service.ts exists (file moved from apps/backend/src/work-orders/ per doc's original path) but hasLoadRequiredExpenseCategories call-site coverage on the vendor",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0243-g11-7-factoring-reserve-two-places-asymmetric-idempotency",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "[STOP-GATE] GL poster moves factor_reserve_held while factoring.reserve_movement/v_factor_reserve_balance keeps its own balance with no tie;",
+   "missing": "land the HELD migration 202607130000 (needs Jorge's OK per financial-cluster rule) and reconcile the two reserve balances; key idempotency uniformly on (advance_id,step,figures_hash)",
+   "evidence": "apps/backend/src/accounting/factoring-posting/poster.service.ts:47,288 comment explicitly: 'Faro Reserve Tracker (accounting.factoring_reserve_movements, migration 202607130000, HELD) \u2014 a...' \u2014 a NEW ",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0243-g4-tx1-source-gl-two-transactions",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "[CRIT] GL posters open their own transaction, forcing 'write source row + post GL' across two commits -> orphaned GL / money-paid-no-JE on c",
+   "missing": "confirm the same client-param pattern was applied to factoring release, cash-advance disburse, expenses, bills, and the lumper-split manual COMMIT",
+   "evidence": "apps/backend/src/accounting/payments/apply.service.ts:84-270 now takes an explicit 'client: Queryable' param on lockPayment/applyPayment and related functions rather than opening its own transaction \u2014",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0251-gap14-customer-ar-gl-fk",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "Verify customer table has an AR GL account FK",
+   "missing": "confirmation that every customer resolves to an ar_account_id via revenue_contracts (vs. mdata.customers carrying its own default)",
+   "evidence": "db/migrations/202606281070_revenue_recognition_data_model.sql:25 defines accounting.revenue_contracts.ar_account_id REFERENCES catalogs.accounts(id) \u2014 an AR-account FK exists at the revenue-contract l",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0251-gap15-load-completion-invoice-trigger",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "Verify load completion triggers invoice generation automatically",
+   "missing": "confirmation of an automatic trigger (e.g. status-change hook) calling invoices/from-load, vs. requiring a manual office action",
+   "evidence": "apps/backend/src/accounting/invoices.routes.ts exposes POST /api/v1/accounting/invoices/from-load (input: load_id) per 0285's own inventory of this route \u2014 this is a manual/explicit-call endpoint, not",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0251-gap20-driverbill-settlement-link",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "Verify driver bill links to settlement so all bills are included",
+   "missing": "confirmation of a settlement_id FK (or join path) from driver_finance.driver_bills to the settlement that paid it",
+   "evidence": "Memory 'load-advance-loadid-direct-build' records that settlement deduction lines now carry load_id DIRECTLY (fixed, flag OFF) \u2014 a related but not identical linkage (deduction-to-load, not driver_bill",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0251-gap6-linehaul-revenue-gl",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "Verify linehaul posts to revenue GL account",
+   "missing": "direct TMS-side linehaul-to-revenue-GL posting (currently relies on QBO sync per 0285)",
+   "evidence": "0285 (same batch, Phase 1 Financial Spine Audit) independently found: 'No automatic GL posting in TMS ... GL posting is flag-gated (BILL_GL_POSTING_ENABLED, EXPENSE_GL_POSTING_ENABLED) ... Relies on Q",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0441-mod2-g18-no-load-field",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "G18 violations on manual capture (no load field on Bill/Expense)",
+   "missing": "A load_id column + field on accounting.bills (mirroring accounting.expenses), and make it required (not just optional) for diesel/roadside category bills per CLAUDE.md G18.",
+   "evidence": "accounting.expenses DOES have load_id: apps/backend/src/accounting/expenses.routes.ts:116 'load_id: z.string().uuid().optional()' in the create schema, plus a full reattribute-to-load endpoint (lines ",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0441-mod7-invoices-plaintext-audit-log-dead",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "Invoices customer/source-load plain text + 'View audit log' -> /reports?invoice_id= dead",
+   "missing": "'View audit log' button should navigate to the real AccountingAuditTrailPage (filtered by invoice_id), not the generic /reports home.",
+   "evidence": "Customer and source-load ARE now linked: InvoicesListPage.tsx:268 EntityLink kind=\"customer\"; InvoiceDetailPage.tsx:205 EntityLink kind=\"load\" id={invoice.source_load_id}. BUT InvoiceDetailPage.tsx:23",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0441-mod7-je-rows-no-onclick",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "Journal Entries list rows have no onClick \u2014 JE detail reachable from exactly one place app-wide",
+   "missing": "ManualJEListPage.tsx rows need an EntityLink/onClick to JournalEntryDetailPage (the one place that SHOULD link but doesn't is the JE list itself).",
+   "evidence": "apps/frontend/src/pages/accounting/ManualJEListPage.tsx:114 \u2014 <tr key={entry.id} className=\"border-t border-gray-100\"> has no onClick/EntityLink; every cell (date/memo/source/status/debits/credits) is",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0473-1-3-insider-receivables-misclassified-as-ar",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "Two 'Unauthorized Expenses [person]' accounts classified as A/R are actually employee/related-party advances -- reclassify off trade A/R per",
+   "missing": "confirm with CPA/counsel whether keeping these as accounts_receivable (for active bankruptcy-court pursuit) supersedes the original 'reclassify to OtherCurrentAssets' recommendation, or whether the re",
+   "evidence": "apps/backend/src/accounting/coa-roles/resolver.service.ts:83 comment confirms the resolver now FAILS CLOSED specifically because 'A/R was debited to Unauthorized Expenses Ignacio Mu\u00f1oz' previously; a ",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0473-1-9-driver-settlement-net-pay-model",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "Confirm clearing-account net-pay flow, 10% net-pay floor (note: superseded by the later 5% lock), all-1099 treatment, and per-deduction post",
+   "missing": "CPA/counsel written confirmation that drivers genuinely qualify as 1099 contractors (misclassification risk); confirm wage-deduction limits (TX + federal) are compatible with the now-5% floor",
+   "evidence": "The net-pay floor referenced here (10%) has since been superseded by the owner's later LOCKED 5% decision (0008-c, confirmed built at DEFAULT_NET_PAY_FLOOR_PCT=0.05). The clearing-account and 1099 mod",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0490-g6-4-bills-nullable-amount-cents-residual",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "G6-4: accounting.bills.amount_cents nullable dual-money-representation bug \u2014 referenced as PR #2125, NOT-FIXED at time of the 07-05 audit",
+   "missing": "true NOT NULL after backfill (owner-gated data step per the migration's own doc reference)",
+   "evidence": "db/migrations/202607051200_g6_4_bills_amount_cents_canonical.sql now exists (postdates the 07-05 audit) and adds a NOT VALID presence CHECK on accounting.bills.amount_cents \u2014 same fix already logged u",
+   "spec": "docs/specs/repairs/REPAIR-G6-4-BILLS-AMOUNT-CENTS-CANONICAL.md",
+   "dup_count": 1
+  },
+  {
+   "id": "0519-fl1-2649-bank-tx-uncategorized",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "2,649 raw Plaid bank transactions never categorized or posted to GL; UI filters them out of the review queue showing 'UNCATEGORIZED: 0'",
+   "missing": "live confirmation of current uncategorized bank_transactions count + whether the UI review-queue filter gap is fixed",
+   "evidence": "Memory note 'Banking Posting Flags GO/NO-GO 07-06' independently confirms 2 UNFLAGGED live banking paths still corrupt books if flipped on (createTransfer/CC never posts GL; Post-as-bill=unpaid AP for",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "audit10-payroll-automation-tax-withholding",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "Payroll Audit: automated payroll processing, tax withholding calc, benefit calc, payroll tax reporting",
+   "missing": "n/a for driver settlements (by design, 1099 model); confirm the two streams (TMS driver settlements vs QBO W-2 payroll) reconcile without double-counting for tax reporting, per the CPA doc's item 13.",
+   "evidence": "Driver settlement/deduction tracking is built (driver_finance.settlements, deduction_schedule) for the 1099-contractor driver model. W-2 office-payroll tax withholding/benefits deliberately run in Qui",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "bf5-load-settlement-driver-pay-gl",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "BF5 flow: Load -> Settlement -> Driver pay -> GL (doc claims BROKEN: deduction-applier test-only causing driver overpayment; two deduction t",
+   "missing": "could not confirm from repo alone whether the settlement clearing account is relieved on every path (net-pay clearing) \u2014 needs a live posting trace, not guessed",
+   "evidence": "settlement-deduction-cap.service.ts (production service, not test-only) reads BOTH driver_finance.driver_settlement_deductions and driver_finance.driver_deduction_buckets (bucket-ledger.service.ts) in",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "bf6-bill-line-items-load-id",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "BF6 flow: Expense/Bill -> GL -> A/P -> Payment -> Bank (doc claims Create Bill is header-only, no line items/load_id -> G18 load-FK impossib",
+   "missing": "createBillBodySchema needs a lines[] array (each line: account/category, amount, memo, optional load_id) so a bill can be split and G18-linked to a load per line, matching how bill_lines is consumed d",
+   "evidence": "apps/backend/src/accounting/bills.routes.ts:50-62 createBillBodySchema CONFIRMED header-only: vendor_id, bill_number, bill_date, due_date, amount_cents, memo, coa_account_id, work_order_id, unit_id, a",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "bf9b-wo-cost-unit-load-allocation-gl",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "BF9-B flow: Work Order cost -> Unit/Load allocation -> GL (doc claims PARTIAL: creation WORKS (a prior phantom-column claim was a false posi",
+   "missing": "confirmation of whether a TRK-owned unit's WO cost can be misattributed to TRANSP's books (or vice versa) \u2014 needs a targeted trace of apps/backend/src/maintenance/work-orders.routes.ts against mdata.u",
+   "evidence": "apps/backend/src/accounting/bills.routes.ts:59-60 createBillBodySchema HAS work_order_id and unit_id as real uuid fields (comment: 'HARD cross-module link (maintenance): persist the WO + unit id as a ",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "biz-flow-2-no-auto-deduction-from-customer-expense",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "Auto-create a driver settlement deduction when a customer/company expense is attributed to a driver",
+   "missing": "flag BANK_DRIVER_EXPENSE_DEDUCTION_ENABLED is OFF; the generic accounting.expenses POST route (not bank-tx-categorization) still has no auto-deduction wiring",
+   "evidence": "The generic POST /api/v1/expenses path (apps/backend/src/accounting/expenses.routes.ts) has zero references to recover_from_driver / auto-deduction (grep confirmed no hits) \u2014 the doc's original claim ",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "biz-flow-3-approval-workflow-no-downstream-actions",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "Owner cancellation-approval workflow exists but triggers no downstream billing/deduction actions",
+   "missing": "downstream invoice/escrow triggers off the approval event",
+   "evidence": "approveCancellation() in apps/backend/src/dispatch/cancellation.service.ts updates dispatch.load_cancellations.status='approved' and mdata.loads.status='cancelled' only (confirmed by file read, lines ",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "biz-flow-6-no-automatic-gl-posting-tms",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "TMS should post invoices/bills/payments directly to the GL instead of relying solely on QBO sync",
+   "missing": "INVOICE_AR_GL_POSTING_ENABLED (and likely the bill/payment counterparts) still default OFF in most/all companies",
+   "evidence": "apps/backend/src/accounting/posting-engine.service.ts:10 defines PostingSourceType including 'invoice' | 'bill' | 'customer_payment' | 'bill_payment'; apps/backend/src/accounting/posting-engine.routes",
+   "spec": "docs/specs/ACCOUNTING-ARCHITECTURE.md",
+   "dup_count": 1
+  },
+  {
+   "id": "block5-coa-new-account-type-detail-organized",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "CoA New-Account creator: grouped Account Type picker + filtered Detail Type picker sourced from catalog, persist detail_type_id FK on catalo",
+   "missing": "catalogs.accounts.detail_type_id FK column does not exist; doc explicitly required STOP-and-open-[HOLD-FOR-JORGE-TIER-1] if the column is missing rather than persisting free text -- that HOLD PR was n",
+   "evidence": "apps/frontend/src/pages/lists/accounting/AccountDrawer.tsx sources types/detail-types from account-type-catalog.ts (not hardcoded) and filters detailTypesForType by chosen Account Type (lines 159-175)",
+   "spec": "NONE (doc references live #1725 preview pane, no formal approved-screen)",
+   "dup_count": 2
+  },
+  {
+   "id": "dispatch-sweep-gap-1",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "Load to GL Account Linkage \u2014 verify load creation triggers GL posting to revenue accounts",
+   "missing": "No automatic hook from load creation (mdata.loads INSERT) to GL/invoice; revenue posting only happens if/when a human calls POST /api/v1/accounting/invoices/from-load.",
+   "evidence": "apps/backend/src/dispatch/loads.routes.ts status-transition handler has NO call to buildInvoiceFromLoad/postSourceTransaction (grep for invoice|accounting|GL|posting|buildInvoiceFromLoad in loads.rout",
+   "spec": "docs/specs/DISPATCH-MODULE-SPEC.md",
+   "dup_count": 1
+  },
+  {
+   "id": "dispatch-sweep-gap-2",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "Load to Customer Invoice Linkage \u2014 verify load completion triggers invoice generation",
+   "missing": "Automatic invoke of buildInvoiceFromLoad on load delivery/completion status transition; today it requires an explicit office action.",
+   "evidence": "buildInvoiceFromLoad (apps/backend/src/accounting/from-load.ts) creates accounting.invoices with source_load_id + resolves revenue account, and is idempotent (re-selects existing invoice by source_loa",
+   "spec": "docs/specs/DISPATCH-MODULE-SPEC.md",
+   "dup_count": 2
+  },
+  {
+   "id": "dispatch-sweep-gap-28",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "Load to Invoice Linkage (Load Creation Flow) \u2014 verify load creation triggers invoice",
+   "missing": "Same as gap-2: no automatic trigger from load creation into invoice generation.",
+   "evidence": "Same underlying flow as dispatch-sweep-gap-2: buildInvoiceFromLoad (accounting/from-load.ts) exists and is idempotent by source_load_id, but is only invoked via the manual POST /api/v1/accounting/invo",
+   "spec": "docs/specs/DISPATCH-MODULE-SPEC.md",
+   "dup_count": 1
+  },
+  {
+   "id": "dispatch-sweep-gap-29",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "Load to GL Revenue Linkage (Load Creation Flow) \u2014 verify load posts to revenue GL account",
+   "missing": "Same as gap-1.",
+   "evidence": "Same underlying flow as dispatch-sweep-gap-1/6: revenue-account resolution exists (invoice-line-revenue-resolution.service.ts) but only fires at invoice-build time, not on load creation itself; and ac",
+   "spec": "docs/specs/DISPATCH-MODULE-SPEC.md",
+   "dup_count": 1
+  },
+  {
+   "id": "dispatch-sweep-gap-34",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "Load Complete to GL Revenue Linkage \u2014 verify completion posts revenue to GL",
+   "missing": "Same as gap-1.",
+   "evidence": "Same underlying flow as dispatch-sweep-gap-1/6/29: revenue-account resolution exists at invoice-build time only, not triggered by the completion status transition, and further gated by GL-posting flag",
+   "spec": "docs/specs/DISPATCH-MODULE-SPEC.md",
+   "dup_count": 1
+  },
+  {
+   "id": "dispatch-sweep-gap-37",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "Detention to GL Linkage \u2014 verify detention expenses post to GL",
+   "missing": "Confirmation that the resulting invoice is actually posted (postSourceTransaction) rather than sitting as an unposted accounting.invoices row.",
+   "evidence": "Detention accrual is bridged into buildInvoiceFromLoad (detention-approval.service.ts L325-393), which resolves a GL revenue account for the detention invoice line via resolveInvoiceLineRevenueAccount",
+   "spec": "docs/specs/DISPATCH-MODULE-SPEC.md",
+   "dup_count": 1
+  },
+  {
+   "id": "fd2-external-fines",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "External (civil) fines: wire real creator with driver picker + chargeback control (approver+written-consent+recovery_mode) + CPA-gated GL de",
+   "missing": "listDrivers combobox on FineCreateModal (currently raw UUID text input); approver identity capture + written-consent checkbox + recovery_mode on convert-to-liability; docs/specs/EXTERNAL-FINES-GL-DESI",
+   "evidence": "Part A creator EXISTS but is NOT fixed to spec: apps/frontend/src/pages/safety/components/FineCreateModal.tsx line 68-76 shows a bare text <input placeholder='UUID' required> for 'Driver ID', not the ",
+   "spec": "docs/specs/EXTERNAL-FINES-GL-DESIGN.md (required by this block, not created)",
+   "dup_count": 3
+  },
+  {
+   "id": "fk-cancellation-billing-0289",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "Critical FK gap #4: Cancellation -> Billing, expected column dispatch.cancellations.charge_id",
+   "missing": "a charge_id/invoice_id FK linking dispatch.load_cancellations to the actual accounting.invoices row that bills the customer for the cancellation fee",
+   "evidence": "The actual table is dispatch.load_cancellations (0101_p5_f4_cancellation_reasons.sql), not 'dispatch.cancellations' as the doc names it \u2014 a naming drift in the audit doc. It already has a cancellation",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "known-catalogs-accounts-global-not-per-entity",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "catalogs.accounts should be per-entity (operating_company_id-scoped) instead of global",
+   "missing": "Confirm FORCE RLS policy exists on catalogs.accounts using the now-added operating_company_id column (AF-1 per 0264 known-issue).",
+   "evidence": "db/migrations/202606161000_coa_accounts_entity_columns_stage1.sql and 202606161100_coa_accounts_backfill_transp_stage2.sql show operating_company_id was added and backfilled to TRANSP on catalogs.acco",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "linkage-cancellation-to-invoice-charge",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "Missing linkage: load cancellation does not automatically create a customer invoice/charge",
+   "missing": "An explicit trigger/service call from cancellation.service.ts (when billable_to_customer=true) into invoice creation.",
+   "evidence": "apps/backend/src/dispatch/cancellation.service.ts captures cancellation_charge_cents + billable_to_customer on the cancellation record, and load-cancellations-analytics.routes.ts aggregates it - the C",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "load-cancellations-fk-per-entity-repoint",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "Migrate dispatch.load_cancellations off the legacy GLOBAL catalogs.cancellation_reasons onto the per-entity catalogs.load_cancellation_reaso",
+   "missing": "repoint the live cancel-load read/write paths off catalogs.cancellation_reasons onto the new reason_code_id FK, then archive (not drop) the legacy global table",
+   "evidence": "db/migrations/202606300130_load_cancellations_per_entity_fk.sql adds the per-entity FK (reason_code_id -> catalogs.load_cancellation_reasons) and backfills, but its own comment states: 'The legacy glo",
+   "spec": "docs/dispatch/BLOCK-10-load-cancellations-fk-mapping.md",
+   "dup_count": 1
+  },
+  {
+   "id": "remediation-t1.5-force-rls-financial-tables",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "T1.5 - FORCE RLS on ~70 financial-schema tables that are RLS-ENABLED but not FORCED (starting with the driver-money 8: escrow_ledger, escrow",
+   "missing": "A live query confirming relforcerowsecurity=true for every one of the originally-flagged tables, esp. driver_finance.escrow_ledger/escrow_balances/settlement_lines/settlement_disputes.",
+   "evidence": "scripts/ contains a large family of FORCE-RLS verification guards (verify-rls-operating-company-scope.mjs, verify-drivers-rls-scope.mjs, verify-safety-rls-coverage.mjs, db-verify-catalogs-rls.mjs, db-",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "repair-e-escrow-return-and-tieouts-design",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "DESIGN DOC (Tier-1, never build solo): escrow return-on-separation trigger, unify 3 parallel escrow ledgers onto accounting.escrow_accounts,",
+   "missing": "control-account<->sub-ledger tie-out report; confirmation escrow_load_abandonment_recovery role-key was added to the CHECK list; confirmation driver_finance.escrow_balances was retired/bridged rather ",
+   "evidence": "Some pieces since built: apps/backend/src/driver-finance/escrow-separation.service.ts exists and computes a separation date off mdata.drivers.deactivated_at (the return-on-separation trigger this doc ",
+   "spec": "NONE (design doc is the spec)",
+   "dup_count": 1
+  },
+  {
+   "id": "repair-program-settlement-consent-gate-live-status",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "CRITICAL (as-of 2026-07-04): SETTLEMENT_GL_POSTING_ENABLED reported ON in prod for all 3 entities while the posting path was broken \u2014 deduct",
+   "missing": "live confirmation that current TRANSP settlement closes actually post successfully (no CONSENT_MISSING/ACCOUNT_ROLE_BINDING_MISSING failures) \u2014 cannot confirm from static code alone whether the consen",
+   "evidence": "The gates described ARE implemented in code today: apps/backend/src/accounting/settlement-posting/settlement-posting.service.ts throws CONSENT_MISSING (line ~266) and ACCOUNT_ROLE_BINDING_MISSING (lin",
+   "spec": "NONE (this doc IS the design/repair-sequencing doc; REPAIR A-E)",
+   "dup_count": 1
+  },
+  {
+   "id": "ruling-4-embezzlement-reclass-off-ar-qbo-source",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "Reclassify the two 'Unauthorized Expenses' (embezzlement, ~$407k) accounts off A/R at the QuickBooks source; CPA rules theft-loss write-off ",
+   "missing": "QBO-side subtype reclassification (owner/CPA action inside QuickBooks, not a TMS code change) + a CPA ruling: write off as theft loss vs book as recovery receivable.",
+   "evidence": "TMS-side reclass done: db/migrations/202606290072_ar_control_account_designation.sql moves the two Unauthorized Expenses accounts (1150040132/1150040133) off the A/R control designation. Per the doc's",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "sweep-flag-lease-golive-review",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "FLAG-LEASE: LEASE_GL_POSTING_ENABLED confirmed ON in prod feature flags per the sweep, despite locked decisions requiring the lease engine b",
+   "missing": "confirm (outside repo, needs CPA/Jorge) that the lease ASC 842 engine was in fact CPA-reviewed before this go-live migration, per the locked FIN-22 gate",
+   "evidence": "db/migrations/202607052300_per_entity_posting_flag_golive.sql:31,85,114 shows LEASE_GL_POSTING_ENABLED deliberately turned ON for TRK only, with a documented rationale ('TRK is the LESSOR (owns units)",
+   "spec": "docs/specs/finance-hub/LEASE-ASC842-MODEL.md",
+   "dup_count": 1
+  },
+  {
+   "id": "sweep-g11-1-deduction-consent-template-missing",
+   "module": "accounting",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "G11-1: driver-deduction-authorization consent template does not exist, so every settlement with a deduction fails GL posting with CONSENT_MI",
+   "missing": "confirm the driver-deduction-authorization template specifically exists in legal-template-library.generated.ts and that #1639 (or its successor) is merged, unblocking bucketed-deduction settlement pos",
+   "evidence": "CONSENT_MISSING / consent-template references found in apps/backend/src/accounting/settlement-posting/settlement-posting.service.ts, recover-from-driver.service.ts, and apps/backend/src/legal/template",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0008-g4-vendor-namespace-canonical",
+   "module": "banking",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Canonicalize mdata.vendors + a resolver; pickers read it (retire mdata.qbo_vendors split)",
+   "missing": "a vendor resolver + repoint WO/expense/CC pickers onto mdata.vendors",
+   "evidence": "apps/frontend/src/components/vendors/VendorCreateModal.tsx (writes mdata.vendors) and apps/frontend/src/pages/maintenance/components/CreateWOSectionIdentification.tsx (reads qbo_vendors-backed picker)",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0010-f7-unapplied-migration-files-0392-0394-0395",
+   "module": "banking",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "F7: apps/backend/src/migrations/0392-auto-deductions.sql, 0394-team-splits.sql, 0395-road-service-tickets.sql were never applied via ih35_mi",
+   "missing": "port 0392-auto-deductions.sql, 0394-team-splits.sql, 0395-road-service-tickets.sql into db/migrations/ with fresh numbers above main's max and run them through ih35_migrations, or explicitly retire th",
+   "evidence": "The 3 files still live only under the legacy apps/backend/src/migrations/ directory (find apps/backend/src/migrations -iname '039*' \u2192 0392-auto-deductions.sql, 0393-settlement-disputes.sql, 0394-team-",
+   "spec": "NONE",
+   "dup_count": 2
+  },
+  {
+   "id": "0091-g7-1",
+   "module": "banking",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Add a transition-matrix test pinning the driver-settlement payment state machine (unpaid->queued->sent_to_bank->cleared->bounced->manual_pai",
+   "missing": "a transition-matrix test file + a compare-and-swap WHERE clause",
+   "evidence": "apps/backend/src/driver-finance/settlement-payment.service.ts UPDATE statements (queuePayment/markCleared/markPaidManually etc, lines 153,195,238,287,350) still have NO compare-and-swap (AND payment_s",
+   "spec": "NONE",
+   "dup_count": 2
+  },
+  {
+   "id": "0243-g4-idem1-money-routes-off-allowlist",
+   "module": "banking",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "[CRIT] Idempotency middleware guards a hardcoded allow-list missing several money routes (cash-advance create, bank transfers, cc-payments, ",
+   "missing": "add idempotency keys/dedup/balance caps to every money POST/PATCH on the allow-list gap; fix stale matchers",
+   "evidence": "grep -n 'idempot' apps/backend/src/cash-advances/cash-advances.routes.ts returned zero matches (file confirmed to exist) \u2014 no idempotency handling found in that route file on this pass.",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0441-mod10-holddeduction-id-mismatch",
+   "module": "banking",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "HoldDeduction ID-mismatch (passes settlement_lines.id to deduction_schedule endpoint -> 404)",
+   "missing": "either the settlement detail API must surface each deduction line's originating deduction_schedule.id (not settlement_lines.id) for the Hold action, or the hold endpoint must accept a settlement_lines",
+   "evidence": "SettlementDetailPage.tsx:43-54 toDeductionRows() sets `id: String(line.id)` from the settlement's `lines` array (driver_finance.settlement_lines rows, confirmed at SettlementDetailPage.tsx:102 `const ",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0441-mod6-insurance-units-assets-id-mismatch",
+   "module": "banking",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Insurance Create-Policy wizard + Create-Claim 500/404 on every real unit (units vs assets id-space bug)",
+   "missing": "Either point insurance.policy_unit/insurance.claim FKs at mdata.units(id) directly (matches original spec) and retire/alias mdata.assets, or add a bridge lookup (unit_id -> mdata.assets.id via unit_nu",
+   "evidence": "mdata.assets (db/migrations/0262_asset_registry.sql) is a SEPARATE table with its own gen_random_uuid() PKs, one-time backfilled from mdata.units by unit_number match \u2014 mdata.assets.id != mdata.units.",
+   "spec": "docs/specs/INSURANCE-BLUEPRINT-ADDITION.md",
+   "dup_count": 1
+  },
+  {
+   "id": "biz-flow-5-dual-deduction-systems",
+   "module": "banking",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Two live settlement-deduction paths (legacy sum-of-requests vs capped ledger) may cause confusion / overpayment",
+   "missing": "REPAIR-A's canonical-ledger unification + wired applier has not shipped (owner sign-off gate, no code/SQL applied per the design doc header)",
+   "evidence": "Flag SETTLEMENT_CAPPED_RECOVERY_ENABLED still exists (db/migrations/202606131600_settlement_capped_recovery_flag_and_override.sql), still gating a legacy vs capped path per the doc's description. docs",
+   "spec": "docs/specs/repairs/REPAIR-A-DEDUCTION-LEDGER-DESIGN.md",
+   "dup_count": 1
+  },
+  {
+   "id": "custvend-par1-g3-customer-statement-engine",
+   "module": "banking",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "CUSTVEND-PAR-1 G3 \u2014 customer Statement engine (Balance Forward / Open Item / Transaction types matching QBO)",
+   "missing": "a customer AR statement generator endpoint + the 3 QBO statement types (Balance Forward/Open Item/Transaction) + send/email + auto-refresh on txn change",
+   "evidence": "docs/blocks/CUSTVEND-PAR-1-G3-statement-verification.md explicitly scoped as 'read-only AR statement verification checklist... no data written' \u2014 a doc, not a feature. apps/frontend/src/pages/Customer",
+   "spec": "docs/specs/qbo-parity/ (Statements tab \u2014 no dedicated design doc found)",
+   "dup_count": 1
+  },
+  {
+   "id": "ledger-proof-period-end-posters",
+   "module": "banking",
+   "verdict": "not-built",
+   "tier": "tier-1",
+   "title": "Build a write-proof harness for period-end posters (depreciation, prepaid amortization, revenue recognition, ASC 842 lease) on a Neon branch",
+   "missing": "docs/proofs/CORE-LEDGER-WRITE-PROOF-period-end.md and the apps/backend/src/accounting/__proofs__/ harness files",
+   "evidence": "docs/proofs/ directory listing returned empty (no CORE-LEDGER-WRITE-PROOF-period-end.md or any file), and apps/backend/src/accounting/__proofs__/ was not found in prior searches.",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0091-g4-idem1",
+   "module": "banking",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "Add money POST/PATCH routes (cash-advance create, bank transfers/cc-payments, cash-advance disburse, customer-payments, settlements-mvp crea",
+   "missing": "REQUIRED_MATCHERS entries for /api/v1/cash-advances, /api/v1/banking/transfers, /api/v1/banking/cc-payments, /api/v1/customers/:id/payments, /api/v1/settlements (settlements-mvp)",
+   "evidence": "apps/backend/src/middleware/idempotency.ts REQUIRED_MATCHERS (lines 38-49) now covers driver-finance/settlements, accounting/invoices|bills|bill-payments|payments|journal-entries|factoring-advances, b",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0441-mod8-mark-transfer-404-silent",
+   "module": "banking",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "Record Transfer works but mark-transfer sub-call 404s silently \u2014 source tx never linked",
+   "missing": "RecordTransferModal.tsx should be updated to call the now-fixed markBankTransactionTransfer for the bank<->bank case instead of skipping it.",
+   "evidence": "apps/frontend/src/api/banking.ts:506-520 \u2014 markBankTransactionTransfer was REPOINTED from the broken '/mark-transfer' path to the real POST /api/v1/banking/transactions/:id/transfer (categorization.ro",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0518-r04-10-orphaned-migration-files-4-tables-absent",
+   "module": "banking",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "apps/backend/src/migrations/ has 10 files never applied by the runner (which reads only db/migrations/) \u2014 4 tables absent live: driver_finan",
+   "missing": "remove/reconcile the orphaned apps/backend/src/migrations/ directory (or formally deprecate it) so it can't cause future drift",
+   "evidence": "The 4 tables now DO have real db/migrations/ entries: 202606281000_auto_deduction_policies.sql, 202606281010_team_split_configs.sql, 202606281020_road_service_tickets.sql, 202606281030_maintenance_par",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0518-r06-70of145-tables-rls-not-forced",
+   "module": "banking",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "70/145 financial-schema tables (incl. driver_finance.escrow_balances, escrow_ledger, settlement_lines) RLS ENABLED but NOT FORCED \u2014 driver-m",
+   "missing": "ALTER TABLE driver_finance.escrow_balances/escrow_ledger/settlement_lines FORCE ROW LEVEL SECURITY (Tier-1 ceremony)",
+   "evidence": "No `FORCE ROW LEVEL SECURITY` statement found for driver_finance.escrow_balances / escrow_ledger / settlement_lines in db/migrations/*.sql (grep empty, re-checked). Broad FORCE-RLS tooling exists (30+",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "0519-s1-maint-schema-fragmentation",
+   "module": "banking",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "S1: maint + maintenance schema split \u2014 two schemas writing maintenance data, consolidation needed",
+   "missing": "a canonicalization verdict for maint vs maintenance",
+   "evidence": "Duplicate of 0519-dc2 within the same document (same underlying finding, different section ID). Same evidence: maint schema still actively referenced in apps/backend/src/maint/pm.routes.ts and parts.r",
+   "spec": "docs/audits/SCHEMA-CANONICALIZATION-VERDICTS-2026-06-28.md",
+   "dup_count": 1
+  },
+  {
+   "id": "0519-sec1-86-tables-rls-not-forced",
+   "module": "banking",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "86 tables RLS enabled but NOT FORCED, including driver_finance.escrow_balances/escrow_ledger/settlement_lines, ifta.state_*_by_quarter, main",
+   "missing": "ALTER TABLE ... FORCE ROW LEVEL SECURITY for the listed 86 tables, prioritizing driver-money tables first",
+   "evidence": "Same as 0518-r06 \u2014 no FORCE ROW LEVEL SECURITY found for the named driver-money tables in db/migrations grep. Broad RLS-verification tooling exists (30+ scripts) but the specific listed tables not con",
+   "spec": "NONE",
+   "dup_count": 1
+  },
+  {
+   "id": "bf9c-fuel-load-g18-writer",
+   "module": "banking",
+   "verdict": "partial",
+   "tier": "tier-1",
+   "title": "BF9-C flow: Fuel -> Load (G18) (doc claims BROKEN: the G18-enforced fuel.fuel_transactions table has NO writer -> fuel receipts write to ban",
+   "missing": "confirmation that live fuel-card/receipt ingestion actually calls the FUEL-1 import writer into fuel.fuel_transactions rather than only banking.bank_transactions",
+   "evidence": "fuel.fuel_transactions table DOES exist (db/migrations/0300_create_fuel_transactions.sql) and DOES have a writer per an in-code comment: apps/backend/src/fuel/fuel-transactions.routes.ts:9-11 'fuel.fu",
+   "spec": "NONE",
+   "dup_count": 1
+  }
+ ]
+}
