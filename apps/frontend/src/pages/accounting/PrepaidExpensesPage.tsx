@@ -58,7 +58,7 @@ function SchedulePanel({ detail, onClose }: { detail: PrepaidAssetDetail; onClos
           </div>
         )}
 
-        <div className="overflow-y-auto flex-1 rounded-sm border border-gray-200">
+        <div className="overflow-y-auto overflow-x-auto flex-1 rounded-sm border border-gray-200">
           <table className="min-w-full text-xs divide-y divide-gray-200">
             <thead className="bg-gray-50 sticky top-0">
               <tr>

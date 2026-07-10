@@ -72,7 +72,7 @@ function DetailPanel({ detail, onClose }: { detail: FixedAssetDetail; onClose: (
           <p className="mb-3 text-xs text-gray-500 rounded-sm bg-gray-50 px-2 py-1">{detail.schedule_note}</p>
         )}
 
-        <div className="overflow-y-auto flex-1 rounded-sm border border-gray-200">
+        <div className="overflow-y-auto overflow-x-auto flex-1 rounded-sm border border-gray-200">
           <table className="min-w-full text-xs divide-y divide-gray-200">
             <thead className="bg-gray-50 sticky top-0">
               <tr>
