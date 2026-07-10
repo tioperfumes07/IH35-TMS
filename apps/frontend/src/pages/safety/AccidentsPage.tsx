@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { formatDateUS } from "../../lib/formatDate";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getSafetyAccidents } from "../../api/safety";
 import { Button } from "../../components/Button";
 import { AccidentReportDrawer } from "../../components/safety/AccidentReportDrawer";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { companyNow } from "../../lib/businessDate";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -44,6 +45,14 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
   const queryClient = useQueryClient();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedAccident, setSelectedAccident] = useState<Record<string, unknown> | null>(null);
+  // S-08 / S-04: driver/unit/date filters — self-contained (local state, not the shared Safety
+  // layout context) so this page keeps working standalone in tests and any other host. The list
+  // API (safety.accident_reports) returns raw driver_id/unit_id only (no joined names), so these
+  // match on the id text itself rather than a resolved display name.
+  const [driverFilter, setDriverFilter] = useState("");
+  const [unitFilter, setUnitFilter] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
 
   const accidentsQuery = useQuery({
     queryKey: ["safety", "accidents", operatingCompanyId],
@@ -51,7 +60,17 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
     enabled: Boolean(operatingCompanyId),
   });
 
-  const rows = accidentsQuery.data?.accidents ?? [];
+  const allRows = accidentsQuery.data?.accidents ?? [];
+  const rows = useMemo(() => {
+    return allRows.filter((row) => {
+      if (driverFilter && !String(row.driver_id ?? "").toLowerCase().includes(driverFilter.trim().toLowerCase())) return false;
+      if (unitFilter && !String(row.unit_id ?? "").toLowerCase().includes(unitFilter.trim().toLowerCase())) return false;
+      const accidentDate = String(row.accident_at ?? "").slice(0, 10);
+      if (fromDate && accidentDate && accidentDate < fromDate) return false;
+      if (toDate && accidentDate && accidentDate > toDate) return false;
+      return true;
+    });
+  }, [allRows, driverFilter, unitFilter, fromDate, toDate]);
   const createMode = String(selectedAccident?.id ?? "") === "__create__";
 
   const openAccident = (row: Record<string, unknown>) => {
@@ -114,6 +133,42 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
         exportFilename="accidents"
         tableTestId="accidents-table"
         rowTestId={(row) => `accident-row-${String(row.id)}`}
+        filterBar={
+          <div className="flex flex-wrap items-center gap-2 text-[11px]">
+            <input
+              value={driverFilter}
+              onChange={(event) => setDriverFilter(event.target.value)}
+              placeholder="Filter by driver ID"
+              className="w-40 rounded-sm border border-gray-300 px-2 py-1 text-xs"
+              data-testid="accidents-driver-filter"
+            />
+            <input
+              value={unitFilter}
+              onChange={(event) => setUnitFilter(event.target.value)}
+              placeholder="Filter by unit ID"
+              className="w-40 rounded-sm border border-gray-300 px-2 py-1 text-xs"
+              data-testid="accidents-unit-filter"
+            />
+            <span className="font-semibold text-slate-500">From:</span>
+            <DatePicker value={fromDate} onChange={setFromDate} className="w-32" max={toDate || undefined} data-testid="accidents-from-date" />
+            <span className="font-semibold text-slate-500">To:</span>
+            <DatePicker value={toDate} onChange={setToDate} className="w-32" min={fromDate || undefined} data-testid="accidents-to-date" />
+            {driverFilter || unitFilter || fromDate || toDate ? (
+              <button
+                type="button"
+                className="rounded-full border border-gray-300 px-2 py-0.5 text-slate-500 hover:bg-gray-100"
+                onClick={() => {
+                  setDriverFilter("");
+                  setUnitFilter("");
+                  setFromDate("");
+                  setToDate("");
+                }}
+              >
+                Clear
+              </button>
+            ) : null}
+          </div>
+        }
       />
 
       <AccidentReportDrawer

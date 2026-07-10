@@ -28,6 +28,11 @@ type SafetyUiContextValue = {
   // so tabs that do not feed the bar no longer show a permanent (lying) "0 active · 0 resolved · 0 total".
   countsReported: boolean;
   clearDriverCounts: () => void;
+  // S-04: shared From/To date-range, additive alongside the existing activity-window toggle. "" = unset.
+  fromDate: string;
+  toDate: string;
+  setFromDate: (next: string) => void;
+  setToDate: (next: string) => void;
 };
 
 const SafetyUiContext = createContext<SafetyUiContextValue | null>(null);
@@ -50,6 +55,8 @@ export function SafetyLayout() {
   const [shownDrivers, setShownDrivers] = useState(0);
   const [totalDrivers, setTotalDrivers] = useState(0);
   const [countsReported, setCountsReported] = useState(false);
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
   const prefsQuery = useQuery({
     queryKey: ["user", "preferences"],
     queryFn: getUserPreferences,
@@ -81,6 +88,10 @@ export function SafetyLayout() {
 
   const activeTabId = useMemo(() => {
     const path = location.pathname;
+    // S-13: the Safety home dashboard (S-11) is not one of the 28 canonical group tabs, so it must be
+    // detected explicitly — otherwise it fell through to the "driver-files" fallback below and the
+    // breadcrumb/nav highlighted "Driver Files & Training" while the page showed something else.
+    if (path === "/safety/home" || path === "/safety") return "home";
     for (const group of SAFETY_GROUPS) {
       for (const tab of group.tabs) {
         if (tab.route === path) return tab.id;
@@ -94,7 +105,7 @@ export function SafetyLayout() {
     return "driver-files";
   }, [location.pathname]);
 
-  const activeMeta = findSafetyTab(activeTabId);
+  const activeMeta = activeTabId === "home" ? null : findSafetyTab(activeTabId);
 
   const contextValue = useMemo<SafetyUiContextValue>(
     () => ({
@@ -125,8 +136,12 @@ export function SafetyLayout() {
         setShownDrivers(0);
         setTotalDrivers(0);
       },
+      fromDate,
+      toDate,
+      setFromDate,
+      setToDate,
     }),
-    [filter, activityWindow, shownDrivers, totalDrivers, countsReported]
+    [filter, activityWindow, shownDrivers, totalDrivers, countsReported, fromDate, toDate]
   );
 
   return (
@@ -145,11 +160,15 @@ export function SafetyLayout() {
               </button>
               <span>Modules</span>
               <span>&gt;</span>
-              <Link to="/safety/driver-files" className="hover:text-slate-600">
+              <Link to="/safety/home" className="hover:text-slate-600">
                 Safety
               </Link>
-              <span>&gt;</span>
-              <span>{activeMeta?.group.label ?? "Driver Files & Training"}</span>
+              {activeTabId === "home" ? null : (
+                <>
+                  <span>&gt;</span>
+                  <span>{activeMeta?.group.label ?? "Driver Files & Training"}</span>
+                </>
+              )}
             </div>
             <h2 className="text-xl font-semibold text-slate-900">Safety</h2>
           </div>
@@ -167,6 +186,10 @@ export function SafetyLayout() {
           shown={shownDrivers}
           total={totalDrivers}
           countsReported={contextValue.countsReported}
+          fromDate={fromDate}
+          toDate={toDate}
+          onFromDateChange={setFromDate}
+          onToDateChange={setToDate}
         />
         <div className="grid gap-2 px-[22px] py-2 lg:grid-cols-[1fr_260px]">
           <SafetyKpiRow kpis={kpisQuery.data} />

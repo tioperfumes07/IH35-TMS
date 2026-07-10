@@ -105,6 +105,7 @@ import {
   InsuranceTab,
   InternalFinesTab,
   PermitsTab,
+  SafetyHomeTab,
   SafetyMeetingsTab,
   SettingsTab,
   TrailerInterchangesTab,
@@ -1401,7 +1402,10 @@ export const ROUTES = React.Children.toArray(
             </ProtectedRoute>
           }
         >
-          <Route index element={<Navigate to="/safety/safety-events" replace />} />
+          {/* S-11: Safety previously had no home dashboard and landed directly on the "Incidents &
+              Claims" tab (Safety Events). Now lands on a dedicated aggregate-KPI home page. */}
+          <Route index element={<Navigate to="/safety/home" replace />} />
+          <Route path="home" element={<SafetyHomeTab />} />
           <Route path="driver-files" element={<DriverFilesTab />} />
           <Route path="/safety/driver-files" element={<DriverFilesTab />} />
           <Route path="drug-alcohol" element={<DrugAlcoholTab />} />
