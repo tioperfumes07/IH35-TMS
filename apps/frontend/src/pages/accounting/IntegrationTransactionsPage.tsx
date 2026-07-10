@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getIntegrationTransactions, type IntegrationTxnItem } from "../../api/integration-transactions";
-import { useListState } from "../../components/list-state";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 const fmtCents = (c: number | null) => (c == null ? "—" : formatUsdCents(c));
 const fmtDate = (s: string | null) => formatDateUS(s) || "—";
@@ -24,127 +24,168 @@ const ENTITY_LABELS: Record<string, string> = {
   invoice: "Invoice", journal_entry: "Journal Entry",
 };
 
+// Backend caps `limit` at 500 (integration-transactions.routes.ts) — fetch the max in one page and
+// let ParityTable's own advanced pager handle client-side paging (same pattern as ExpensesListPage /
+// Customers.tsx). Replaces the old manual offset/Prev-Next pager.
+const FETCH_LIMIT = 500;
+
 export function IntegrationTransactionsPage() {
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
   const [syncStatus, setSyncStatus] = useState("");
   const [entityType, setEntityType] = useState("");
   const [search, setSearch] = useState("");
-  const [offset, setOffset] = useState(0);
-  const limit = 50;
 
   const txnQuery = useQuery({
-    queryKey: ["integration-transactions", operatingCompanyId, syncStatus, entityType, search, offset],
+    queryKey: ["integration-transactions", operatingCompanyId, syncStatus, entityType, search],
     queryFn: () => getIntegrationTransactions({
       operating_company_id: operatingCompanyId,
       sync_status: syncStatus || undefined,
       entity_type: entityType || undefined,
       q: search || undefined,
-      limit, offset,
+      limit: FETCH_LIMIT,
+      offset: 0,
     }),
     enabled: Boolean(selectedCompanyId),
   });
-  const { data, isLoading, isError } = txnQuery;
+  const { data, isPending, isFetching } = txnQuery;
 
   const total = data?.total ?? 0;
   const items = data?.items ?? [];
-  const listState = useListState(txnQuery, items.length === 0);
+
+  const columns: Array<ParityColumn<IntegrationTxnItem>> = [
+    {
+      key: "date",
+      label: "Date",
+      sortable: true,
+      render: (row) => <span className="whitespace-nowrap text-gray-700">{fmtDate(row.bank_transaction?.txn_date ?? row.created_at)}</span>,
+    },
+    {
+      key: "entity_type",
+      label: "Type",
+      sortable: true,
+      render: (row) => (
+        <span className="inline-block whitespace-nowrap rounded-sm bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-700">
+          {ENTITY_LABELS[row.entity_type] ?? row.entity_type}
+        </span>
+      ),
+    },
+    {
+      key: "description",
+      label: "Description / Merchant",
+      render: (row) => (
+        <span className="block max-w-xs truncate text-gray-800">
+          {row.bank_transaction?.merchant_name || row.bank_transaction?.description || <span className="text-gray-400 italic">—</span>}
+        </span>
+      ),
+    },
+    {
+      key: "amount",
+      label: "Amount",
+      sortable: true,
+      className: "text-right",
+      cellClass: "text-right tabular-nums",
+      render: (row) => {
+        const bt = row.bank_transaction;
+        if (!bt) return <span className="whitespace-nowrap">—</span>;
+        return (
+          <span className={`whitespace-nowrap ${bt.is_credit ? "text-emerald-700" : "text-gray-800"}`}>
+            {bt.is_credit ? "+" : "-"}{fmtCents(bt.amount_cents)}
+          </span>
+        );
+      },
+    },
+    {
+      key: "sync_status",
+      label: "Sync Status",
+      sortable: true,
+      render: (row) => (
+        <span className="whitespace-nowrap">
+          <span className={`inline-block rounded-sm px-2 py-0.5 text-xs font-semibold ${STATUS_COLOR[row.sync_status] ?? "bg-gray-100 text-gray-700"}`}>
+            {row.sync_status}
+          </span>
+          {row.error_message && (
+            <span className="ml-1 inline-block max-w-[160px] truncate align-middle text-xs text-red-600" title={row.error_message}>
+              {row.error_message.slice(0, 40)}{row.error_message.length > 40 ? "…" : ""}
+            </span>
+          )}
+        </span>
+      ),
+    },
+    {
+      key: "qbo_id",
+      label: "QBO ID",
+      sortable: true,
+      render: (row) => <span className="whitespace-nowrap font-mono text-xs text-gray-500">{row.qbo_id ?? "—"}</span>,
+    },
+    {
+      key: "attempt_count",
+      label: "Attempts",
+      sortable: true,
+      className: "text-center",
+      cellClass: "text-center",
+      render: (row) => <span className="whitespace-nowrap text-gray-600">{row.attempt_count}</span>,
+    },
+    {
+      key: "synced_at",
+      label: "Synced At",
+      sortable: true,
+      render: (row) => <span className="whitespace-nowrap text-xs text-gray-500">{fmtDate(row.synced_at)}</span>,
+    },
+    {
+      key: "linked_to",
+      label: "Linked To",
+      render: (row) => {
+        const bt = row.bank_transaction;
+        return (
+          <span className="whitespace-nowrap text-xs">
+            {bt?.matched_load_id && <Link to={`/dispatch/loads/${bt.matched_load_id}`} className="mr-2 text-slate-700 hover:underline">Load</Link>}
+            {bt?.matched_bill_id && <Link to={`/accounting/bills/${bt.matched_bill_id}`} className="text-slate-700 hover:underline">Bill</Link>}
+            {!bt?.matched_load_id && !bt?.matched_bill_id && <span className="text-gray-400">—</span>}
+          </span>
+        );
+      },
+    },
+  ];
+
+  const filterBar = (
+    <div className="flex flex-wrap gap-2">
+      <input
+        type="search" placeholder="Search description, QBO ID…" value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm w-56 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+      />
+      <select value={syncStatus} onChange={(e) => setSyncStatus(e.target.value)}
+        className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-emerald-500">
+        <option value="">All statuses</option>
+        {(["pending","in_flight","synced","failed","blocked"] as const).map((s) => (
+          <option key={s} value={s}>{s}</option>
+        ))}
+      </select>
+      <select value={entityType} onChange={(e) => setEntityType(e.target.value)}
+        className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-emerald-500">
+        <option value="">All types</option>
+        {Object.entries(ENTITY_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+      </select>
+      <span className="ml-auto self-center text-xs text-gray-500">{total.toLocaleString()} record{total !== 1 ? "s" : ""}</span>
+    </div>
+  );
 
   return (
     <AccountingSubNavWrapper title="Integration Transactions" subtitle="QBO sync queue — all entity sync statuses">
-      <div className="flex flex-wrap gap-2 mb-4">
-        <input
-          type="search" placeholder="Search description, QBO ID…" value={search}
-          onChange={(e) => { setSearch(e.target.value); setOffset(0); }}
-          className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm w-56 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-        />
-        <select value={syncStatus} onChange={(e) => { setSyncStatus(e.target.value); setOffset(0); }}
-          className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-emerald-500">
-          <option value="">All statuses</option>
-          {(["pending","in_flight","synced","failed","blocked"] as const).map((s) => (
-            <option key={s} value={s}>{s}</option>
-          ))}
-        </select>
-        <select value={entityType} onChange={(e) => { setEntityType(e.target.value); setOffset(0); }}
-          className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-emerald-500">
-          <option value="">All types</option>
-          {Object.entries(ENTITY_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-        </select>
-        <span className="ml-auto self-center text-xs text-gray-500">{total.toLocaleString()} record{total !== 1 ? "s" : ""}</span>
-      </div>
-
-      {isLoading ? (
-        <p className="text-sm text-gray-500 py-8 text-center">Loading…</p>
-      ) : isError ? (
-        <p className="text-sm text-red-600 py-8 text-center">Failed to load integration transactions.</p>
-      ) : listState.isEmpty ? (
-        <p className="text-sm text-gray-500 py-8 text-center">No integration transactions found.</p>
-      ) : (
-        <div className="overflow-x-auto rounded-sm border border-gray-200">
-          <table className="min-w-full divide-y divide-gray-200 text-sm">
-            <thead className="bg-gray-50">
-              <tr>
-                {["Date","Type","Description / Merchant","Amount","Sync Status","QBO ID","Attempts","Synced At","Linked To"].map((h) => (
-                  <th key={h} className="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide whitespace-nowrap">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 bg-white">
-              {items.map((row: IntegrationTxnItem) => {
-                const bt = row.bank_transaction;
-                return (
-                  <tr key={row.id} className="hover:bg-gray-50">
-                    <td className="px-3 py-2 whitespace-nowrap text-gray-700">{fmtDate(bt?.txn_date ?? row.created_at)}</td>
-                    <td className="px-3 py-2 whitespace-nowrap">
-                      <span className="inline-block rounded-sm bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-700">
-                        {ENTITY_LABELS[row.entity_type] ?? row.entity_type}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2 max-w-xs truncate text-gray-800">
-                      {bt?.merchant_name || bt?.description || <span className="text-gray-400 italic">—</span>}
-                    </td>
-                    <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums">
-                      {bt ? (
-                        <span className={bt.is_credit ? "text-emerald-700" : "text-gray-800"}>
-                          {bt.is_credit ? "+" : "-"}{fmtCents(bt.amount_cents)}
-                        </span>
-                      ) : "—"}
-                    </td>
-                    <td className="px-3 py-2 whitespace-nowrap">
-                      <span className={`inline-block rounded-sm px-2 py-0.5 text-xs font-semibold ${STATUS_COLOR[row.sync_status] ?? "bg-gray-100 text-gray-700"}`}>
-                        {row.sync_status}
-                      </span>
-                      {row.error_message && (
-                        <span className="ml-1 text-xs text-red-600 truncate max-w-[160px] inline-block align-middle" title={row.error_message}>
-                          {row.error_message.slice(0, 40)}{row.error_message.length > 40 ? "…" : ""}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-3 py-2 whitespace-nowrap font-mono text-xs text-gray-500">{row.qbo_id ?? "—"}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-center text-gray-600">{row.attempt_count}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-gray-500 text-xs">{fmtDate(row.synced_at)}</td>
-                    <td className="px-3 py-2 whitespace-nowrap text-xs">
-                      {bt?.matched_load_id && <Link to={`/dispatch/loads/${bt.matched_load_id}`} className="text-slate-700 hover:underline mr-2">Load</Link>}
-                      {bt?.matched_bill_id && <Link to={`/accounting/bills/${bt.matched_bill_id}`} className="text-slate-700 hover:underline">Bill</Link>}
-                      {!bt?.matched_load_id && !bt?.matched_bill_id && <span className="text-gray-400">—</span>}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {total > limit && (
-        <div className="flex items-center justify-between mt-3 text-sm text-gray-600">
-          <button onClick={() => setOffset(Math.max(0, offset - limit))} disabled={offset === 0}
-            className="rounded-sm border border-gray-300 px-3 py-1 disabled:opacity-40 hover:bg-gray-50">← Prev</button>
-          <span>{offset + 1}–{Math.min(offset + limit, total)} of {total.toLocaleString()}</span>
-          <button onClick={() => setOffset(offset + limit)} disabled={offset + limit >= total}
-            className="rounded-sm border border-gray-300 px-3 py-1 disabled:opacity-40 hover:bg-gray-50">Next →</button>
-        </div>
-      )}
+      <ParityTable
+        columns={columns}
+        rows={items}
+        rowKey={(row) => row.id}
+        // LIST-EMPTY-1 settled gate: loading stays true while pending, and while a refetch is in
+        // flight with zero current rows — never renders emptyText mid-fetch.
+        loading={isPending || (isFetching && items.length === 0)}
+        filterBar={filterBar}
+        storageKey="integration-transactions"
+        exportFilename="integration-transactions"
+        initialPageSize={50}
+        emptyText="No integration transactions found."
+      />
     </AccountingSubNavWrapper>
   );
 }

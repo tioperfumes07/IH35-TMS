@@ -4,10 +4,11 @@ import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YA
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { getCashForecast, getCashForecastSettings, upsertCashForecastSettings, type CashForecastSettings } from "../../api/accounting";
+import { getCashForecast, getCashForecastSettings, upsertCashForecastSettings, type CashForecastSettings, type CashForecastWeek } from "../../api/accounting";
 import { useToast } from "../../components/Toast";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -62,6 +63,25 @@ export function CashForecastPage() {
       })),
     [forecastQuery.data]
   );
+
+  const forecastColumns: Array<ParityColumn<CashForecastWeek>> = [
+    { key: "week_start", label: "Week start", alwaysVisible: true },
+    { key: "invoices", label: "Invoices", render: (week) => money(week.expected_inflows.invoices) },
+    { key: "factoring", label: "Factoring inflow", render: (week) => money(week.expected_inflows.factoring) },
+    { key: "bills", label: "Bills", render: (week) => money(week.expected_outflows.bills) },
+    { key: "payroll", label: "Payroll", render: (week) => money(week.expected_outflows.payroll) },
+    { key: "fuel_estimate", label: "Fuel est.", render: (week) => money(week.expected_outflows.fuel_estimate) },
+    { key: "factoring_fee", label: "Factoring fee", render: (week) => money(week.expected_outflows.factoring_fee) },
+    {
+      key: "projected_balance",
+      label: "Projected balance",
+      render: (week) => (
+        <span className={`font-semibold ${week.projected_balance < 0 ? "text-red-700" : "text-emerald-700"}`}>
+          {money(week.projected_balance)}
+        </span>
+      ),
+    },
+  ];
 
   return (
     <AccountingSubNavWrapper title="13-week cash forecast" subtitle="Rolling cash projection with AR/AP, factoring, and configurable recurring outflows.">
@@ -141,55 +161,23 @@ export function CashForecastPage() {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-left text-sm">
-          <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
-            <tr>
-              <th className="px-3 py-2">Week start</th>
-              <th className="px-3 py-2">Invoices</th>
-              <th className="px-3 py-2">Factoring inflow</th>
-              <th className="px-3 py-2">Bills</th>
-              <th className="px-3 py-2">Payroll</th>
-              <th className="px-3 py-2">Fuel est.</th>
-              <th className="px-3 py-2">Factoring fee</th>
-              <th className="px-3 py-2">Projected balance</th>
-            </tr>
-          </thead>
-          <tbody>
-            {forecastQuery.data?.weeks.map((week) => (
-              <tr key={week.week_start} className="border-t border-gray-100">
-                <td className="px-3 py-2">{week.week_start}</td>
-                <td className="px-3 py-2">{money(week.expected_inflows.invoices)}</td>
-                <td className="px-3 py-2">{money(week.expected_inflows.factoring)}</td>
-                <td className="px-3 py-2">{money(week.expected_outflows.bills)}</td>
-                <td className="px-3 py-2">{money(week.expected_outflows.payroll)}</td>
-                <td className="px-3 py-2">{money(week.expected_outflows.fuel_estimate)}</td>
-                <td className="px-3 py-2">{money(week.expected_outflows.factoring_fee)}</td>
-                <td className={`px-3 py-2 font-semibold ${week.projected_balance < 0 ? "text-red-700" : "text-emerald-700"}`}>{money(week.projected_balance)}</td>
-              </tr>
-            ))}
-            {forecastQuery.isLoading ? (
-              <tr>
-                <td colSpan={8} className="px-3 py-4 text-gray-500">
-                  Loading forecast...
-                </td>
-              </tr>
-            ) : null}
-            {!forecastQuery.isLoading && forecastQuery.isError ? (
-              <tr>
-                <td colSpan={8} className="px-3 py-2">
-                  <ListErrorState
-                    title="Couldn't load cash forecast"
-                    status={0}
-                    message={(forecastQuery.error as Error | undefined)?.message}
-                    onRetry={() => void forecastQuery.refetch()}
-                  />
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
+      {forecastQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load cash forecast"
+          status={0}
+          message={(forecastQuery.error as Error | undefined)?.message}
+          onRetry={() => void forecastQuery.refetch()}
+        />
+      ) : (
+        <ParityTable
+          columns={forecastColumns}
+          rows={forecastQuery.data?.weeks ?? []}
+          rowKey={(week) => week.week_start}
+          loading={forecastQuery.isLoading}
+          storageKey="cash-forecast"
+          emptyText="No forecast weeks available."
+        />
+      )}
     </AccountingSubNavWrapper>
   );
 }

@@ -6,6 +6,7 @@ import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 function currentPeriodIso() {
   const now = new Date();
@@ -102,6 +103,29 @@ export function MonthClosePage() {
 
   const canLock = Boolean(statusQuery.data?.can_lock);
 
+  const columns: Array<ParityColumn<ChecklistRow>> = [
+    { key: "label", label: "Checklist item", alwaysVisible: true, render: (row) => <span className="font-medium text-gray-900">{row.label}</span> },
+    {
+      key: "complete",
+      label: "Status",
+      render: (row) => (
+        <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
+          {row.complete ? "Complete" : "Pending"}
+        </span>
+      ),
+    },
+    { key: "detail", label: "Detail", render: (row) => <span className="text-gray-700">{row.detail}</span> },
+    {
+      key: "href",
+      label: "Action",
+      render: (row) => (
+        <Link to={row.href} className="text-sm font-medium text-slate-700 hover:underline">
+          Open
+        </Link>
+      ),
+    },
+  ];
+
   return (
     <AccountingSubNavWrapper title="Month close wizard" subtitle="Review month-end checklist and lock the period only when all required checks are green.">
 
@@ -125,50 +149,18 @@ export function MonthClosePage() {
         </label>
       </div>
 
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-left text-sm">
-          <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
-            <tr>
-              <th className="px-3 py-2">Checklist item</th>
-              <th className="px-3 py-2">Status</th>
-              <th className="px-3 py-2">Detail</th>
-              <th className="px-3 py-2">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {statusQuery.isLoading ? (
-              <tr>
-                <td colSpan={4} className="px-3 py-4 text-gray-500">
-                  Loading checklist...
-                </td>
-              </tr>
-            ) : null}
-            {statusQuery.isError ? (
-              <tr>
-                <td colSpan={4} className="px-3 py-4 text-red-600">
-                  Failed to load month-close checklist.
-                </td>
-              </tr>
-            ) : null}
-            {checklistRows.map((row) => (
-              <tr key={row.id} className="border-t border-gray-100">
-                <td className="px-3 py-2 font-medium text-gray-900">{row.label}</td>
-                <td className="px-3 py-2">
-                  <span className={`rounded-sm px-2 py-0.5 text-xs font-semibold ${row.complete ? "bg-slate-100 text-slate-700" : "bg-slate-100 text-slate-700"}`}>
-                    {row.complete ? "Complete" : "Pending"}
-                  </span>
-                </td>
-                <td className="px-3 py-2 text-gray-700">{row.detail}</td>
-                <td className="px-3 py-2">
-                  <Link to={row.href} className="text-sm font-medium text-slate-700 hover:underline">
-                    Open
-                  </Link>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {statusQuery.isError ? (
+        <p className="rounded-sm border border-gray-200 bg-white px-3 py-4 text-sm text-red-600">Failed to load month-close checklist.</p>
+      ) : (
+        <ParityTable
+          columns={columns}
+          rows={checklistRows}
+          rowKey={(row) => row.id}
+          loading={statusQuery.isLoading}
+          storageKey="month-close-checklist"
+          emptyText="No checklist items."
+        />
+      )}
 
       <div className="flex items-center justify-between rounded-sm border border-gray-200 bg-white px-3 py-3">
         <div className="text-sm text-gray-700">
