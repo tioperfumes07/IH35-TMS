@@ -44,7 +44,7 @@ function entityLabel(type: string): string {
 }
 
 // Per-day reconciliation table columns for the shared ParityTable (replaces the hand-rolled
-// per-day `<table>` — B21/TBL-STANDARD). Every day-group renders its own ParityTable instance so
+// per-day markup — B21/TBL-STANDARD). Every day-group renders its own ParityTable instance so
 // the existing day-header rollup ("All reconciled" / "N item(s) need attention") is preserved.
 const RECON_COLUMNS: Array<ParityColumn<DailyReconRow>> = [
   { key: "entity_type", label: "Type", render: (row) => <span className="whitespace-nowrap text-gray-500">{entityLabel(row.entity_type)}</span> },
