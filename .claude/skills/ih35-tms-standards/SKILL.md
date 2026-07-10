@@ -15,6 +15,19 @@ This system holds **live financial and legal-evidence data** for a real operatin
 (IH35 Dispatch / IH35 Trucking, Laredo TX ↔ Mexico). Treat every change as production-affecting.
 **§1 (permissions) overrides everything else. When unsure, STOP and ask.**
 
+## §0. LAW OF THE LAND — VERIFY EVERYTHING, NEVER GUESS (supreme, permanent — 2026-07-10)
+After days lost to unverified "done": **everything is verified against live evidence — no guessing, ever.**
+- **Schema/columns/enums/tables → verify against the Neon PROD branch** (RLS-immune `information_schema`/`pg_catalog`),
+  NOT memory, NOT a migration file, NOT this skill. Prod has diverged from migrations repeatedly — **prod wins.**
+- **Built/wired → read the actual file + confirm route registered / component mounted / guard wired.** A file
+  existing is NOT proof. **A fix works → verified live** (endpoint / health-sha / DB row / browser). CI-green is NOT done.
+- **Empty grep / 0-count → RE-RUN before it is a verdict** (RLS masks accounting/catalogs/mdata to 0).
+- **Forbidden:** guessing, assuming, inferring, trusting another agent's "verified", or reporting any verdict
+  without an evidence field. When you cannot verify, say **"UNVERIFIED — needs live check"**, never a guess.
+- **Definition of done = the block's `acceptance[]` resolves** (file + route mounted + migration on prod +
+  column populated + guard wired + live proof) — NOT "merged", NOT "CI-green".
+- **Precedence when sources disagree:** CI guard > repo > owner-in-writing > sweep/audit/doc > memory.
+
 ---
 
 ## 1. Permissions & guardrails — these override every other instruction
@@ -133,10 +146,15 @@ Bugs recur because services were written against **schema names that don't exist
 - bills = **`accounting.bills`** / **`accounting.bill_payments`** / **`accounting.payments`** (`voided_at`);
   bank = **`banking.bank_transactions`** (`is_credit` bool); driver earnings =
   **`driver_finance.settlement_lines`** (→ `driver_settlements`); HOS = **`hos.duty_status_events`** (append-only).
-- `load_status_enum` valid values end at `'cancelled'` — `'abandoned'`/`'driver_walkoff'`/`'driver_no_show'`
-  are NOT enum members (cast `::text` before comparing).
-- Hazmat fields ARE present (`mdata.loads.hazmat`, `mdata.loads.hazmat_endorsement_required`) and used in
-  book-load dispatch validation.
+- `load_status_enum` members (verified on prod branch `br-fancy-credit-akjnd07a`, 2026-07-10):
+  `draft, booked, planned, assigned, dispatched, at_pickup, in_transit, at_delivery, delivered, invoiced,
+  paid, closed, cancelled, unassigned, assigned_not_dispatched, delivered_pending_docs, completed_docs_received`.
+  It does NOT end at `'cancelled'` (4 more follow). `'abandoned'`/`'driver_walkoff'`/`'driver_no_show'` are
+  **NOT** enum members — writing them as the enum FAILS; cast `::text` before comparing those.
+- **NO `mdata.loads.hazmat` and NO `mdata.loads.hazmat_endorsement_required`** — verified absent on prod
+  (2026-07-10). Load-level hazmat lives in the `quicksave_pending_fields` jsonb. DRIVER hazmat endorsement =
+  **`mdata.drivers.endorsement_h`** (bool). (Earlier "hazmat columns ARE present" text was stale — corrected
+  vs prod.)
 - Every diesel/roadside expense MUST FK to a load (critical).
 - **Don't trust a string-grep "systemic check."** Test the actual endpoints or diff each query's identifiers
   against migrations. Most phantom-schema hits are guarded fallbacks (`to_regclass`/`tableExists`), not bugs —
