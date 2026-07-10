@@ -20,4 +20,11 @@ ACCEPTANCE (GUARD live): Dispatch/Fleet/Insurance (and all bespoke lists) on the
 alignment + page-size + sort/resize consistent everywhere.
 
 STANDING ORDERS (Cursor): foreground only, no subagents. No retries — STOP and paste the exact error. Live updates every 5 min CST (Laredo). Confirm worktree pwd + git status + rev-parse first. Show diff --staged --stat before commit. Stop on anything unexpected.
+
+SHIPPED: `feat/tbl-standard-dispatch-load-table` — PR #2296 (Dispatch sort+resize headers).
+Guard scripts: scripts/verify-table-controls-shared.mjs scripts/verify-table-alignment.mjs
+scripts/verify-tables-use-resizable-th.mjs scripts/verify-parity-table-resize-sort-contract.mjs
+Surfaces: apps/frontend/src/pages/dispatch/DispatchBoard.tsx (TableHeaderCell + useTablePref).
+Fleet already used apps/frontend/src/components/FleetTable.tsx (./table/* infra).
+Insurance already used apps/frontend/src/pages/insurance/PoliciesList.tsx (DataTable).
 ═══════════════════════════════════════════════════════════════════════════════
