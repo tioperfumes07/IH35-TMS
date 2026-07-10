@@ -1,3 +1,4 @@
+export { SafetyHomeTab } from "./SafetyHomeTab";
 export { DriverFilesTab } from "./DriverFilesTab";
 export { DrugAlcoholTab } from "./DrugAlcoholTab";
 export { SafetyMeetingsTab } from "./SafetyMeetingsTab";

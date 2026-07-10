@@ -10,6 +10,7 @@ import {
 } from "../../api/safety";
 import { Modal } from "../../components/Modal";
 import { useListState } from "../../components/list-state";
+import { useSafetyUiContext } from "./SafetyLayout";
 import { SafetyEventsTable } from "./components/SafetyEventsTable";
 
 type Props = {
@@ -45,9 +46,17 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
   const [statusFilter, setStatusFilter] = useState<"" | "open" | "acknowledged" | "closed">("open");
   const [severityFilter, setSeverityFilter] = useState<"" | "low" | "medium" | "high" | "critical">("");
   const [search, setSearch] = useState("");
+  // S-08 / S-10: driver, unit, and type filters (client-side over the loaded page — the backend
+  // events-log endpoint does not accept these params; status/severity/search above are server-side).
+  const [driverFilter, setDriverFilter] = useState("");
+  const [unitFilter, setUnitFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [logModalOpen, setLogModalOpen] = useState(false);
   const [draft, setDraft] = useState<EventDraft>(INITIAL_DRAFT);
+  // S-04: shared From/To date range from the Safety layout's date-range bar (additive to the existing
+  // activity-window toggle), applied here against occurred_at.
+  const { fromDate, toDate } = useSafetyUiContext();
 
   const eventsQuery = useQuery({
     queryKey: ["safety", "events-v2", operatingCompanyId, statusFilter, severityFilter, search],
@@ -101,9 +110,34 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
     },
   });
 
-  const rows = useMemo(() => eventsQuery.data ?? [], [eventsQuery.data]);
+  const allRows = useMemo(() => eventsQuery.data ?? [], [eventsQuery.data]);
+
+  // Distinct event types actually present in the loaded page, so the Type filter never offers a value
+  // that yields zero rows — event_type is free text server-side, not a fixed enum.
+  const availableTypes = useMemo(
+    () => Array.from(new Set(allRows.map((row) => row.event_type).filter(Boolean))).sort(),
+    [allRows]
+  );
+
+  const rows = useMemo(() => {
+    return allRows.filter((row) => {
+      if (typeFilter && row.event_type !== typeFilter) return false;
+      if (driverFilter) {
+        const name = String(row.subject_driver_name ?? row.subject_driver_id ?? "").toLowerCase();
+        if (!name.includes(driverFilter.trim().toLowerCase())) return false;
+      }
+      if (unitFilter) {
+        const unit = String(row.subject_unit_number ?? row.subject_unit_id ?? "").toLowerCase();
+        if (!unit.includes(unitFilter.trim().toLowerCase())) return false;
+      }
+      const occurredDate = String(row.occurred_at ?? "").slice(0, 10);
+      if (fromDate && occurredDate && occurredDate < fromDate) return false;
+      if (toDate && occurredDate && occurredDate > toDate) return false;
+      return true;
+    });
+  }, [allRows, typeFilter, driverFilter, unitFilter, fromDate, toDate]);
   // LIST-EMPTY: each empty message renders only after its own query settles.
-  const listState = useListState(eventsQuery, rows.length === 0);
+  const listState = useListState(eventsQuery, allRows.length === 0);
   // Bulk-select + CSV export table (SafetyEventsTable) — adapt the v2 events-log row shape onto the
   // table's generic field names. Detail remains one click away via the existing side panel.
   const bulkTableRows = useMemo(
@@ -120,6 +154,30 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
       })),
     [rows]
   );
+
+  // S-09: plain "export all loaded/filtered rows" CSV — the existing SafetyEventsTable export only
+  // covers the checkbox-selected subset.
+  const exportAllCsv = () => {
+    const esc = (v: string) => (/[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
+    const cols: Array<[string, (row: (typeof bulkTableRows)[number]) => string]> = [
+      ["Date", (row) => String(row.event_at ?? "").slice(0, 10)],
+      ["Driver", (row) => String(row.driver_full_name ?? "")],
+      ["Unit", (row) => String(row.unit_display_id ?? "")],
+      ["Type", (row) => String(row.event_type ?? "")],
+      ["Severity", (row) => String(row.severity ?? "")],
+      ["Status", (row) => String(row.status ?? "")],
+      ["Title", (row) => String(row.title ?? "")],
+    ];
+    const header = cols.map(([label]) => esc(label)).join(",");
+    const body = bulkTableRows.map((row) => cols.map(([, get]) => esc(get(row))).join(",")).join("\n");
+    const blob = new Blob([`${header}\n${body}`], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `safety-events-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
   const notesListState = useListState(notesQuery, (notesQuery.data ?? []).length === 0);
   const logModalDirty =
     draft.title.trim() !== INITIAL_DRAFT.title.trim() ||
@@ -175,15 +233,56 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
             placeholder="Search title or description"
             className="w-56 rounded-sm border border-gray-300 px-2 py-1 text-xs"
           />
+          {/* S-10: Type filter — despite TYPE being a visible column, no filter previously existed. */}
+          <select
+            value={typeFilter}
+            onChange={(event) => setTypeFilter(event.target.value)}
+            className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+            data-testid="safety-events-type-filter"
+          >
+            <option value="">All types</option>
+            {availableTypes.map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
+          </select>
+          {/* S-08: driver + unit filters — search previously covered only title/description. */}
+          <input
+            value={driverFilter}
+            onChange={(event) => setDriverFilter(event.target.value)}
+            placeholder="Filter by driver"
+            className="w-36 rounded-sm border border-gray-300 px-2 py-1 text-xs"
+            data-testid="safety-events-driver-filter"
+          />
+          <input
+            value={unitFilter}
+            onChange={(event) => setUnitFilter(event.target.value)}
+            placeholder="Filter by unit"
+            className="w-32 rounded-sm border border-gray-300 px-2 py-1 text-xs"
+            data-testid="safety-events-unit-filter"
+          />
         </div>
 
-        <button
-          type="button"
-          onClick={() => setLogModalOpen(true)}
-          className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white"
-        >
-          + Log Event
-        </button>
+        <div className="flex items-center gap-2">
+          {/* S-09: plain CSV export of the currently loaded/filtered rows (no row selection required). */}
+          <button
+            type="button"
+            onClick={exportAllCsv}
+            disabled={bulkTableRows.length === 0}
+            className="rounded-sm border border-gray-300 px-2 py-1 text-xs text-gray-700 hover:bg-gray-50 disabled:opacity-40"
+            data-testid="safety-events-export"
+          >
+            Export CSV
+          </button>
+          <button
+            type="button"
+            onClick={() => setLogModalOpen(true)}
+            className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white"
+          >
+            + Log Event
+          </button>
+        </div>
       </div>
 
       {listState.isEmpty ? (

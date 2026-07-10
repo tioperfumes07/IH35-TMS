@@ -75,7 +75,10 @@ export function SafetyGroupNav({ groups, activeTabId, onTabChange }: Props) {
           );
         })}
         <div className="ml-auto whitespace-nowrap px-4 py-3 text-[11px] text-slate-400">
-          Active: <span className="font-semibold text-[#1f2a44]">{activeMeta?.tab.label ?? "Driver Files"}</span>
+          Active:{" "}
+          <span className="font-semibold text-[#1f2a44]">
+            {activeMeta?.tab.label ?? (activeTabId === "home" ? "Safety Home" : "Driver Files")}
+          </span>
         </div>
       </div>
     </div>
