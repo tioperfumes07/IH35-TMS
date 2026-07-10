@@ -15,7 +15,7 @@ vi.mock("../../../api/identity", () => ({
 // source file. Mounts the section and asserts each design label is rendered.
 function Harness() {
   const form = useForm<CreateWOFormValues>({ defaultValues: { status: "open" } as Partial<CreateWOFormValues> as CreateWOFormValues });
-  return <CreateWOSectionRenderV5Header register={form.register} />;
+  return <CreateWOSectionRenderV5Header register={form.register} watch={form.watch} setValue={form.setValue} />;
 }
 
 describe("CreateWOSectionRenderV5Header — render-v5 header fields render", () => {

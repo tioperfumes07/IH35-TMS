@@ -7,7 +7,9 @@ import { Combobox } from "../../components/Combobox";
 import { Modal } from "../../components/Modal";
 import { UploadZone } from "../../components/UploadZone";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { MoneyInput } from "../../components/forms/MoneyInput";
+import { companyToday } from "../../lib/businessDate";
 
 type Props = {
   open: boolean;
@@ -55,7 +57,7 @@ export function RecordPaymentModal({
   prefillInvoiceId,
 }: Props) {
   const [customerId, setCustomerId] = useState<string | null>(prefillCustomerId ?? null);
-  const [paymentDate, setPaymentDate] = useState(new Date().toISOString().slice(0, 10));
+  const [paymentDate, setPaymentDate] = useState(companyToday());
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("ach");
   const [reference, setReference] = useState("");
   const [amountDollars, setAmountDollars] = useState<number | null>(centsToDollars(prefillAmountCents ?? 0));
@@ -95,7 +97,7 @@ export function RecordPaymentModal({
   useEffect(() => {
     if (!open) return;
     setCustomerId(prefillCustomerId ?? null);
-    setPaymentDate(new Date().toISOString().slice(0, 10));
+    setPaymentDate(companyToday());
     setPaymentMethod("ach");
     setReference("");
     setAmountDollars(centsToDollars(prefillAmountCents ?? 0));
@@ -201,7 +203,7 @@ export function RecordPaymentModal({
 
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
             Payment date
-            <input type="date" value={paymentDate} onChange={(event) => setPaymentDate(event.target.value)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
+            <DatePicker value={paymentDate} onChange={setPaymentDate} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
           </label>
 
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">

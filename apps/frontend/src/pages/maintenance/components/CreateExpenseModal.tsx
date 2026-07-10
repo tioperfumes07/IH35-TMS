@@ -9,6 +9,7 @@ import { Modal } from "../../../components/Modal";
 import { Button } from "../../../components/Button";
 import { useToast } from "../../../components/Toast";
 import { companyToday } from "../../../lib/businessDate";
+import { DatePicker } from "../../../components/forms/DatePicker";
 import { TwoSectionLineEditor, type TwoSectionLine } from "../../../components/forms/TwoSectionLineEditor";
 import { TotalsStack } from "../../../components/forms/shared/TotalsStack";
 import { EXPENSE_TYPE_TABS, TypeTabBar } from "../../../components/forms/shared/TypeTabBar";
@@ -187,7 +188,7 @@ export function CreateExpenseModal({ open, operatingCompanyId, linkedWoDisplayId
             <input className="h-8 w-full rounded-sm border border-gray-300 bg-gray-100 px-2 text-xs" value={EXPENSE_TYPE_TABS.find((tab) => tab.id === expenseType)?.label ?? "Fuel Expense"} readOnly />
           </Field>
           <Field label="Expense Date">
-            <input className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" type="date" value={expenseDate} onChange={(event) => setExpenseDate(event.target.value)} />
+            <DatePicker className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" value={expenseDate} onChange={setExpenseDate} />
           </Field>
           <Field label="Expense Number">
             <input className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" placeholder="Expense Number" value={expenseNumber} onChange={(event) => setExpenseNumber(event.target.value)} />

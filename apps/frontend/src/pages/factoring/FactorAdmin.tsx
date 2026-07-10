@@ -13,17 +13,19 @@ import {
 } from "../../api/factoring";
 import { listCustomers } from "../../api/mdata";
 import { Button } from "../../components/Button";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useListState } from "../../components/list-state";
+import { companyToday } from "../../lib/businessDate";
 
 function formatPct(value: number) {
   return `${(Number(value || 0) * 100).toFixed(2)}%`;
 }
 
 function todayDate() {
-  return new Date().toISOString().slice(0, 10);
+  return companyToday();
 }
 
 type AddFactorForm = {
@@ -549,10 +551,9 @@ export function FactorAdmin() {
               </label>
               <label className="block">
                 <div className="mb-1">Effective date</div>
-                <input
-                  type="date"
+                <DatePicker
                   value={assignEffectiveFrom}
-                  onChange={(event) => setAssignEffectiveFrom(event.target.value)}
+                  onChange={setAssignEffectiveFrom}
                   className="w-full rounded-sm border border-gray-300 px-2 py-1"
                 />
               </label>
@@ -646,19 +647,17 @@ export function FactorAdmin() {
             <div className="space-y-2 text-xs">
               <label className="block">
                 <div className="mb-1 font-medium">Issued Date</div>
-                <input
-                  type="date"
+                <DatePicker
                   value={lorForm.issued_date}
-                  onChange={(event) => setLorForm((current) => ({ ...current, issued_date: event.target.value }))}
+                  onChange={(next) => setLorForm((current) => ({ ...current, issued_date: next }))}
                   className="w-full rounded-sm border border-gray-300 px-2 py-1"
                 />
               </label>
               <label className="block">
                 <div className="mb-1 font-medium">Effective Release Date</div>
-                <input
-                  type="date"
+                <DatePicker
                   value={lorForm.effective_release_date}
-                  onChange={(event) => setLorForm((current) => ({ ...current, effective_release_date: event.target.value }))}
+                  onChange={(next) => setLorForm((current) => ({ ...current, effective_release_date: next }))}
                   className="w-full rounded-sm border border-gray-300 px-2 py-1"
                 />
               </label>

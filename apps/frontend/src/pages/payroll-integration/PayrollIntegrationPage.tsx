@@ -10,6 +10,7 @@ import { PayrollAggregateTable } from "./PayrollAggregateTable";
 import { ClassAllocationView } from "./ClassAllocationView";
 import { useToast } from "../../components/Toast";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { DatePicker } from "../../components/forms/DatePicker";
 
 function cents(n: number) {
   return `$${(n / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -71,17 +72,15 @@ export function PayrollIntegrationPage() {
       {/* Period selector */}
       <div className="flex items-center gap-3 rounded-sm border border-gray-200 bg-white p-3">
         <label className="text-sm font-medium text-gray-700">Period:</label>
-        <input
-          type="date"
+        <DatePicker
           value={period.start}
-          onChange={(e) => setPeriod((p) => ({ ...p, start: e.target.value }))}
+          onChange={(next) => setPeriod((p) => ({ ...p, start: next }))}
           className="rounded-sm border border-gray-300 px-2 py-1 text-sm"
         />
         <span className="text-gray-400">→</span>
-        <input
-          type="date"
+        <DatePicker
           value={period.end}
-          onChange={(e) => setPeriod((p) => ({ ...p, end: e.target.value }))}
+          onChange={(next) => setPeriod((p) => ({ ...p, end: next }))}
           className="rounded-sm border border-gray-300 px-2 py-1 text-sm"
         />
       </div>

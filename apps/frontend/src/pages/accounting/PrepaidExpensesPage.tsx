@@ -3,8 +3,10 @@ import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { companyToday } from "../../lib/businessDate";
 import {
   getPrepaidExpenses, getPrepaidExpenseDetail, createPrepaidExpense,
   type PrepaidAssetListItem, type PrepaidAssetDetail,
@@ -95,8 +97,8 @@ function SchedulePanel({ detail, onClose }: { detail: PrepaidAssetDetail; onClos
 function CreateModal({ companyId, onClose, onCreated }: { companyId: string; onClose: () => void; onCreated: () => void }) {
   const [form, setForm] = useState({
     description: "", asset_number: "",
-    purchase_date: new Date().toISOString().slice(0, 10),
-    start_date: new Date().toISOString().slice(0, 10),
+    purchase_date: companyToday(),
+    start_date: companyToday(),
     periods: "12", total_amount_dollars: null as number | null,
   });
   const [error, setError] = useState<string | null>(null);
@@ -141,13 +143,13 @@ function CreateModal({ companyId, onClose, onCreated }: { companyId: string; onC
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-0.5">Purchase Date *</label>
-              <input type="date" className="w-full rounded-sm border border-gray-300 px-3 py-1.5 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                value={form.purchase_date} onChange={(e) => setForm({ ...form, purchase_date: e.target.value })} />
+              <DatePicker className="w-full rounded-sm border border-gray-300 px-3 py-1.5 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                value={form.purchase_date} onChange={(next) => setForm({ ...form, purchase_date: next })} />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-0.5">Amortization Start *</label>
-              <input type="date" className="w-full rounded-sm border border-gray-300 px-3 py-1.5 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-                value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} />
+              <DatePicker className="w-full rounded-sm border border-gray-300 px-3 py-1.5 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                value={form.start_date} onChange={(next) => setForm({ ...form, start_date: next })} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">

@@ -1,4 +1,5 @@
 import { formatDateUS } from "../../lib/formatDate";
+import { titleize } from "../../lib/titleize";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { listVendorBalances, listVendorBills, getVendorBill, voidVendorBillPayment, type VendorBill } from "../../api/accounting";
@@ -130,7 +131,7 @@ export function VendorBalancesPage() {
                       <div className="text-xs font-semibold text-red-700">{money(remaining)}</div>
                     </div>
                     <div className="mt-0.5 text-xs text-gray-600">
-                      {bill.bill_date} · Due {bill.due_date || "-"} · {bill.status}
+                      {formatDateUS(bill.bill_date)} · Due {bill.due_date ? formatDateUS(bill.due_date) : "-"} · {titleize(bill.status)}
                     </div>
                     <div className={`text-[11px] ${dueTone}`}>{dueDelta === null ? "No due date" : dueDelta < 0 ? "Past due" : `Due in ${dueDelta} days`}</div>
                   </button>

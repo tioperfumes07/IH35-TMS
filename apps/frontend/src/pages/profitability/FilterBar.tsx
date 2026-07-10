@@ -1,3 +1,5 @@
+import { DatePicker } from "../../components/forms/DatePicker";
+
 interface FilterBarProps {
   filters: {
     dateFrom: string;
@@ -22,20 +24,18 @@ export function FilterBar({ filters, onChange }: FilterBarProps) {
     <div className="flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3">
       <div className="flex flex-col gap-1">
         <label className="text-xs text-gray-600">From</label>
-        <input
-          type="date"
+        <DatePicker
           value={filters.dateFrom}
-          onChange={e => onChange({ ...filters, dateFrom: e.target.value })}
+          onChange={next => onChange({ ...filters, dateFrom: next })}
           className="w-[130px] min-h-11 text-sm border rounded-sm px-2"
         />
       </div>
 
       <div className="flex flex-col gap-1">
         <label className="text-xs text-gray-600">To</label>
-        <input
-          type="date"
+        <DatePicker
           value={filters.dateTo}
-          onChange={e => onChange({ ...filters, dateTo: e.target.value })}
+          onChange={next => onChange({ ...filters, dateTo: next })}
           className="w-[130px] min-h-11 text-sm border rounded-sm px-2"
         />
       </div>

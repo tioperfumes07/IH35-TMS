@@ -165,7 +165,7 @@ export function EditTrailerModal({ open, trailerId, operatingCompanyId, onClose,
             <input id="plate_jurisdiction" className={inputClass} value={draft.plate_jurisdiction ?? ""} onChange={(e) => set("plate_jurisdiction", e.target.value)} readOnly />
           </FormField>
           <FormField label="Registration expiry" name="plate_expiration">
-            <input id="plate_expiration" type="date" className={inputClass} value={draft.plate_expiration ?? ""} onChange={(e) => set("plate_expiration", e.target.value)} readOnly />
+            <DatePicker id="plate_expiration" className={inputClass} value={draft.plate_expiration ?? ""} onChange={(v) => set("plate_expiration", v)} disabled />
           </FormField>
           <p className="text-xs text-gray-500">Edit plates in the Compliance section (multi-jurisdiction).</p>
         </FieldSet>

@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getFactoringBatchDetail, getReserveMovements, type FactoringReserveMovement } from "../../api/factoring";
+import { titleize } from "../../lib/titleize";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 
@@ -49,7 +50,7 @@ export function BatchDetail({ batchId, companyId }: { batchId: string; companyId
       <div className="rounded-sm border border-gray-200 p-3 text-sm">
         <div className="font-semibold text-gray-900">{detail.batch.batch_number}</div>
         <div className="text-gray-700">
-          Status: {detail.batch.status} · Face: {asMoney(detail.batch.total_face_cents)} · Advance: {asMoney(detail.batch.expected_advance_cents)} · Fee:{" "}
+          Status: {titleize(detail.batch.status)} · Face: {asMoney(detail.batch.total_face_cents)} · Advance: {asMoney(detail.batch.expected_advance_cents)} · Fee:{" "}
           {asMoney(detail.batch.expected_fee_cents)}
         </div>
         <div className="mt-2 text-xs text-gray-600">Included invoices: {detail.invoices.length}</div>

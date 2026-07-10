@@ -20,6 +20,7 @@ import {
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { MoneyInput } from "../../components/forms/MoneyInput";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useToast } from "../../components/Toast";
 import { useAuth } from "../../auth/useAuth";
@@ -565,11 +566,10 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-sm font-medium text-gray-900">Upsert Faro daily import batch</div>
             <div className="grid gap-2 md:grid-cols-3 mb-3">
-              <input
-                type="date"
+              <DatePicker
                 className="rounded-sm border border-gray-300 px-2 py-1 text-sm"
                 value={faroStatementDate}
-                onChange={(event) => setFaroStatementDate(event.target.value)}
+                onChange={setFaroStatementDate}
               />
               <input
                 className="rounded-sm border border-gray-300 px-2 py-1 text-sm"
@@ -707,7 +707,7 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
                 onChange={(event) => setLoanAprPercent(event.target.value)}
                 placeholder="apr percent"
               />
-              <input type="date" className="rounded-sm border border-gray-300 px-2 py-1 text-xs" value={loanStartedOn} onChange={(event) => setLoanStartedOn(event.target.value)} />
+              <DatePicker className="rounded-sm border border-gray-300 px-2 py-1 text-xs" value={loanStartedOn} onChange={setLoanStartedOn} />
             </div>
             <div className="mt-2">
               <Button

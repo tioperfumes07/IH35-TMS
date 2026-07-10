@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { formatDateTimeUS } from "../../lib/formatDate";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
@@ -93,10 +94,9 @@ export function GeofenceReconciliationReport() {
       <div className="flex items-center gap-4 mb-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Report Date</label>
-          <input
-            type="date"
+          <DatePicker
             value={date}
-            onChange={(e) => setDate(e.target.value)}
+            onChange={setDate}
             max={today}
             className="border rounded-sm px-3 py-1.5 text-sm"
           />

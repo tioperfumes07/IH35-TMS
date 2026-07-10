@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import type { UseFormRegister } from "react-hook-form";
+import type { UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { listAssignableUsers } from "../../../api/identity";
+import { DatePicker } from "../../../components/forms/DatePicker";
 import type { CreateWOFormValues } from "./CreateWorkOrderModal";
 
 // render-v5 §header (maintenance-create-wo-render-v5.html) — the WO header fields that persist to LIVE
@@ -21,7 +22,15 @@ function Cell({ label, children }: { label: string; children: React.ReactNode })
 
 const INPUT = "h-7 w-full rounded-sm border border-gray-300 px-2";
 
-export function CreateWOSectionRenderV5Header({ register }: { register: UseFormRegister<CreateWOFormValues> }) {
+export function CreateWOSectionRenderV5Header({
+  register,
+  watch,
+  setValue,
+}: {
+  register: UseFormRegister<CreateWOFormValues>;
+  watch: UseFormWatch<CreateWOFormValues>;
+  setValue: UseFormSetValue<CreateWOFormValues>;
+}) {
   const usersQuery = useQuery({
     queryKey: ["identity", "users", "wo-authorized-by"],
     queryFn: () => listAssignableUsers(),
@@ -53,14 +62,14 @@ export function CreateWOSectionRenderV5Header({ register }: { register: UseFormR
           </select>
         </Cell>
         <Cell label="Open date">
-          <input type="date" {...register("open_date")} className={INPUT} />
+          <DatePicker value={watch("open_date") || ""} onChange={(v) => setValue("open_date", v, { shouldDirty: true })} className={INPUT} />
         </Cell>
         <Cell label="Open time">
           <input type="time" {...register("open_time")} className={INPUT} />
         </Cell>
         <Cell label="Close date">
           {/* W-FIX-8: render-v5 §A Close date/time → maintenance.work_orders.closed_at (existing column). */}
-          <input type="date" {...register("close_date")} className={INPUT} />
+          <DatePicker value={watch("close_date") || ""} onChange={(v) => setValue("close_date", v, { shouldDirty: true })} className={INPUT} />
         </Cell>
         <Cell label="Close time">
           <input type="time" {...register("close_time")} className={INPUT} />

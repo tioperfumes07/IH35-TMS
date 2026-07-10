@@ -13,6 +13,8 @@ import { Modal } from "../../components/Modal";
 import { useToast } from "../../components/Toast";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { MoneyInput } from "../../components/forms/MoneyInput";
+import { DatePicker } from "../../components/forms/DatePicker";
+import { companyToday } from "../../lib/businessDate";
 
 type Props = {
   open: boolean;
@@ -50,7 +52,7 @@ const transferTypeOptions: Array<{ value: TransferType; label: string }> = [
 ];
 
 function todayIsoDate() {
-  return new Date().toISOString().slice(0, 10);
+  return companyToday();
 }
 
 // M-1: amount stays a DOLLAR number → amount_cents = round(amount*100) unchanged (byte-for-byte).
@@ -260,7 +262,7 @@ export function RecordTransferModal({
           </label>
           <label className="block">
             Date
-            <input type="date" className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2" value={transferDate} onChange={(e) => setTransferDate(e.target.value)} />
+            <DatePicker className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2" value={transferDate} onChange={setTransferDate} />
           </label>
         </div>
         <label className="block">

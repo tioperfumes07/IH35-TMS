@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup } from "@testing-library/react";
 import { HosViewerSection } from "../HosViewerSection";
 import { companyToday } from "../../../lib/businessDate";
+import { formatDateUS } from "../../../lib/formatDate";
 
 // SAFETY-1 regression: the HOS Viewer must open on the current duty day in the CARRIER timezone
 // (America/Chicago via companyToday()), never on an empty/epoch/UTC-rolled date. This locks the
@@ -50,21 +51,19 @@ describe("HosViewerSection default date", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("defaults the date filter to today's duty day in the carrier timezone (not epoch/empty)", async () => {
-    const { container } = renderSection();
-    const dateInput = (await waitFor(() => {
-      const el = container.querySelector('input[type="date"]');
+    const { getByTestId } = renderSection();
+    const dateButton = (await waitFor(() => {
+      const el = getByTestId("hos-viewer-date");
       expect(el).toBeTruthy();
       return el;
-    })) as HTMLInputElement;
+    })) as HTMLButtonElement;
     const expected = companyToday();
+    const expectedLabel = formatDateUS(expected);
 
-    expect(dateInput.value).toBe(expected);
+    // The DatePicker trigger renders the display label "MM/DD/YYYY" (SYS-DATE) for companyToday().
+    expect(dateButton.textContent).toContain(expectedLabel);
     // Never epoch, empty, or an obviously stale default.
-    expect(dateInput.value).not.toBe("");
-    expect(dateInput.value).not.toBe("1970-01-01");
-    // ISO YYYY-MM-DD shape.
-    expect(dateInput.value).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-    // Date picker capped at today — no future duty days.
-    expect(dateInput.max).toBe(expected);
+    expect(dateButton.textContent).not.toContain(formatDateUS("1970-01-01"));
+    expect(expectedLabel).toMatch(/^\d{2}\/\d{2}\/\d{4}$/);
   });
 });

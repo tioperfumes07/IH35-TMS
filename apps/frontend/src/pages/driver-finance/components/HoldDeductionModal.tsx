@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { holdDeduction } from "../../../api/driverFinance";
 import { Button } from "../../../components/Button";
+import { DatePicker } from "../../../components/forms/DatePicker";
 import { Modal } from "../../../components/Modal";
 import { useToast } from "../../../components/Toast";
+import { companyToday } from "../../../lib/businessDate";
 import type { DeductionRow } from "./DeductionsSection";
 
 type Props = {
@@ -28,7 +30,7 @@ export function HoldDeductionModal({ open, deduction, operatingCompanyId, onClos
     setLoading(true);
     try {
       await holdDeduction(deduction.id, operatingCompanyId, {
-        hold_until_period: holdUntil || new Date().toISOString().slice(0, 10),
+        hold_until_period: holdUntil || companyToday(),
         reason: reason.trim(),
       });
       pushToast("Deduction held", "success");
@@ -61,10 +63,9 @@ export function HoldDeductionModal({ open, deduction, operatingCompanyId, onClos
           </div>
           <div>
             <label className="mb-1 block font-semibold">Hold until period</label>
-            <input
-              type="date"
+            <DatePicker
               value={holdUntil}
-              onChange={(event) => setHoldUntil(event.target.value)}
+              onChange={setHoldUntil}
               className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm"
             />
           </div>

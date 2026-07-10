@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DatePicker } from "../components/forms/DatePicker";
 import { FORM_INPUT_CLASS, FORM_SELECT_CLASS, FORM_TEXTAREA_CLASS } from "../components/forms/inputClass";
+import { companyToday } from "../lib/businessDate";
 import { History, Pencil } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -190,7 +191,7 @@ export function DriverDetailPage() {
   const [voidReason, setVoidReason] = useState("");
   const [safetyForm, setSafetyForm] = useState({
     event_type: "incident" as "termination" | "incident" | "complaint" | "commendation" | "dispute",
-    event_date: new Date().toISOString().slice(0, 10),
+    event_date: companyToday(),
     severity: "warning" as "info" | "warning" | "severe",
     summary: "",
     details: "",
@@ -558,7 +559,7 @@ export function DriverDetailPage() {
       setAddSafetyEventOpen(false);
       setSafetyForm({
         event_type: "incident",
-        event_date: new Date().toISOString().slice(0, 10),
+        event_date: companyToday(),
         severity: "warning",
         summary: "",
         details: "",
@@ -1575,11 +1576,10 @@ export function DriverDetailPage() {
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-gray-600">Event date</label>
-              <input
-                type="date"
+              <DatePicker
                 max={new Date().toISOString().slice(0, 10)}
                 value={safetyForm.event_date}
-                onChange={(event) => setSafetyForm((current) => ({ ...current, event_date: event.target.value }))}
+                onChange={(next) => setSafetyForm((current) => ({ ...current, event_date: next }))}
                 className={FORM_INPUT_CLASS}
               />
             </div>

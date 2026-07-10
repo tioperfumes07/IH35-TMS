@@ -17,6 +17,7 @@ import { TotalsStack } from "../forms/shared/TotalsStack";
 import { Combobox } from "../shared/Combobox";
 import { useToast } from "../Toast";
 import { companyToday } from "../../lib/businessDate";
+import { DatePicker } from "../forms/DatePicker";
 
 type Props = {
   open: boolean;
@@ -225,12 +226,11 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
             </Field>
 
             <Field label="Incident Date *">
-              <input
-                type="date"
+              <DatePicker
                 className="h-8 w-full rounded-sm border border-gray-300 px-2"
                 data-testid="accident-incident-date"
                 value={incidentDate}
-                onChange={(event) => setIncidentDate(event.target.value)}
+                onChange={setIncidentDate}
               />
             </Field>
             <Field label="Report Date">

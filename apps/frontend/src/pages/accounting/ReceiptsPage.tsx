@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
+import { titleize } from "../../lib/titleize";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
@@ -128,7 +129,7 @@ export function ReceiptsPage() {
         render: (row) =>
           row.source.status ? (
             <span className={`inline-block rounded-sm px-2 py-0.5 text-xs font-semibold ${STATUS_COLOR[row.source.status] ?? "bg-gray-100 text-gray-600"}`}>
-              {row.source.status}
+              {titleize(row.source.status)}
             </span>
           ) : null,
       },

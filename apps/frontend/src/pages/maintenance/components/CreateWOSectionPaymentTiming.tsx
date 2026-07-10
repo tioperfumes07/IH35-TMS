@@ -1,13 +1,15 @@
-import type { UseFormRegister, UseFormWatch } from "react-hook-form";
+import type { UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { Combobox } from "../../../components/shared/Combobox";
+import { DatePicker } from "../../../components/forms/DatePicker";
 import type { CreateWOFormValues } from "./CreateWorkOrderModal";
 
 type Props = {
   register: UseFormRegister<CreateWOFormValues>;
   watch: UseFormWatch<CreateWOFormValues>;
+  setValue: UseFormSetValue<CreateWOFormValues>;
 };
 
-export function CreateWOSectionPaymentTiming({ register, watch }: Props) {
+export function CreateWOSectionPaymentTiming({ register, watch, setValue }: Props) {
   const paymentTiming = watch("payment_timing");
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3">
@@ -28,11 +30,11 @@ export function CreateWOSectionPaymentTiming({ register, watch }: Props) {
           </div>
           <div className="space-y-1">
             <label className="text-[11px] font-semibold text-gray-600">Bill Date</label>
-            <input type="date" {...register("bill_date")} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
+            <DatePicker value={watch("bill_date") || ""} onChange={(v) => setValue("bill_date", v, { shouldDirty: true })} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm" />
           </div>
           <div className="space-y-1">
             <label className="text-[11px] font-semibold text-gray-600">Due Date (auto)</label>
-            <input type="date" {...register("due_date")} className="h-8 w-full rounded-sm border border-gray-300 bg-gray-100 px-2 text-sm" readOnly />
+            <DatePicker value={watch("due_date") || ""} onChange={(v) => setValue("due_date", v, { shouldDirty: true })} className="h-8 w-full rounded-sm border border-gray-300 bg-gray-100 px-2 text-sm" disabled />
           </div>
         </div>
         <div className="text-[11px] font-semibold text-gray-600">Payment Timing</div>

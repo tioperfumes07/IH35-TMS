@@ -4,9 +4,11 @@ import { getAllAccounts } from "../../../api/banking";
 import type { VendorBill } from "../../../api/accounting";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
+import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useCCPayment } from "../../../hooks/useCCPayment";
+import { companyToday } from "../../../lib/businessDate";
 
 // FINANCIAL GATE (orphan-triage F1): /api/v1/bill-payments/cc posts directly to
 // accounting.bill_payments + accounting.bills (money-moving) and had zero prior UI consumer
@@ -20,7 +22,7 @@ type Props = { open: boolean; operatingCompanyId: string; bill: VendorBill | nul
 
 export function CCPaymentModal({ open, operatingCompanyId, bill, onClose, onSaved }: Props) {
   const [ccAccountId, setCcAccountId] = useState("");
-  const [paymentDate, setPaymentDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [paymentDate, setPaymentDate] = useState(() => companyToday());
   const [amountDollars, setAmountDollars] = useState("0");
   const ccPayment = useCCPayment(operatingCompanyId);
   const accountsQuery = useQuery({ queryKey: ["cc-accounts", operatingCompanyId], queryFn: () => getAllAccounts(operatingCompanyId), enabled: open });
@@ -45,7 +47,7 @@ export function CCPaymentModal({ open, operatingCompanyId, bill, onClose, onSave
         </SelectCombobox>
         {/* M-1: dollars-mode; Math.round(amountDollars*100)=payment_amount_cents byte-for-byte. */}
         <MoneyInput valueDollars={amountDollars ? Number(amountDollars) : null} onChangeDollars={(d) => setAmountDollars(d == null ? "" : String(d))} ariaLabel="Payment amount (USD)" className="w-full" />
-        <input type="date" className="h-9 w-full rounded-sm border px-2 text-[13px]" value={paymentDate} onChange={(e) => setPaymentDate(e.target.value)} />
+        <DatePicker className="h-9 w-full rounded-sm border px-2 text-[13px]" value={paymentDate} onChange={setPaymentDate} />
         {CC_BILL_PAYMENT_GATED ? (
           <div className="rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800">
             <span className="font-semibold">CC bill payment gated.</span> Submit is disabled pending financial-cluster approval. Contact Jorge to enable.

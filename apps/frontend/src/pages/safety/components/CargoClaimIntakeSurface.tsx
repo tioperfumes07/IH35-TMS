@@ -11,6 +11,7 @@ import { listCustomers, listDrivers, listUnits } from "../../../api/mdata";
 import { listLoads } from "../../../api/loads";
 import { Button } from "../../../components/Button";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
+import { DatePicker } from "../../../components/forms/DatePicker";
 import { formatDateUS } from "../../../lib/formatDate";
 import { companyNow } from "../../../lib/businessDate";
 import { useListState } from "../../../components/list-state";
@@ -240,12 +241,11 @@ export function CargoClaimIntakeSurface({
           <div className="grid grid-cols-1 gap-2 text-xs md:grid-cols-2">
             <label className="block">
               <span className={labelSpan}>Date of loss *</span>
-              <input
-                type="date"
+              <DatePicker
                 className={inputClass}
                 data-testid={`${pageTestId}-incident-at`}
                 value={form.incidentDate}
-                onChange={(e) => set({ incidentDate: e.target.value })}
+                onChange={(next) => set({ incidentDate: next })}
               />
             </label>
             <label className="block">
@@ -319,12 +319,11 @@ export function CargoClaimIntakeSurface({
             </label>
             <label className="block">
               <span className={labelSpan}>Claim filed date</span>
-              <input
-                type="date"
+              <DatePicker
                 className={inputClass}
                 data-testid={`${pageTestId}-filed-at`}
                 value={form.claimFiledAt}
-                onChange={(e) => set({ claimFiledAt: e.target.value })}
+                onChange={(next) => set({ claimFiledAt: next })}
               />
             </label>
             <label className="block">

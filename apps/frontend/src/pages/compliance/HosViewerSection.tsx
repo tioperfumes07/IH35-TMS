@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Combobox, type ComboboxOption } from "../../components/Combobox";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { listDrivers } from "../../api/mdata";
 import { getHosDaily, getHosDailyRoster, DUTY_LABEL, DUTY_COLOR, type HosDutyStatus } from "../../api/hosTracker";
 import { companyToday } from "../../lib/businessDate";
@@ -125,12 +126,12 @@ export function HosViewerSection({ operatingCompanyId }: { operatingCompanyId: s
         </div>
         <div>
           <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.06em] text-slate-500">Date</label>
-          <input
-            type="date"
+          <DatePicker
             value={selectedDate}
             max={today}
-            onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
+            onChange={(next) => next && setSelectedDate(next)}
             className="h-[34px] rounded-sm border border-slate-300 px-2 text-[12px] text-slate-800"
+            data-testid="hos-viewer-date"
           />
         </div>
         <div className="flex flex-wrap gap-1">

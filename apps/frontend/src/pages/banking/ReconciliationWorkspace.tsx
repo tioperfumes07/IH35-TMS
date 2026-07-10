@@ -18,6 +18,7 @@ import { StatementUpload } from "../../components/banking/StatementUpload";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { MoneyInput } from "../../components/forms/MoneyInput";
+import { DatePicker } from "../../components/forms/DatePicker";
 
 type CandidateEvent = { id: string; event_date: string; event_type: "load" | "bill" | "settlement" };
 
@@ -142,16 +143,14 @@ export function ReconciliationWorkspacePage() {
         <div className="rounded-sm border border-gray-200 bg-white p-4">
           <p className="mb-2 text-sm font-semibold text-gray-900">Start reconciliation</p>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
-            <input
-              type="date"
+            <DatePicker
               value={periodStart}
-              onChange={(event) => setPeriodStart(event.target.value)}
+              onChange={setPeriodStart}
               className="rounded-sm border border-gray-300 px-2 py-1 text-sm"
             />
-            <input
-              type="date"
+            <DatePicker
               value={periodEnd}
-              onChange={(event) => setPeriodEnd(event.target.value)}
+              onChange={setPeriodEnd}
               className="rounded-sm border border-gray-300 px-2 py-1 text-sm"
             />
             {/* M-1: dollars-mode QBO money entry; balance stays a DOLLAR number → *_cents byte-for-byte. */}
