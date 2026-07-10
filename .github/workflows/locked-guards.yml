@@ -164,6 +164,8 @@ jobs:
 
       - name: verify:factoring-summary-dollars-unit
         run: npm run verify:factoring-summary-dollars-unit
+      - name: verify:factoring-treatment
+        run: npm run verify:factoring-treatment
       - name: verify:booking-driver-names
         run: npm run verify:booking-driver-names
 
