@@ -14,6 +14,7 @@ import {
   type HoldItem,
   type MergedPr,
   type ProgramBoard,
+  type ProgramBoardAudit,
   type ReconBlock,
   type TabTally,
 } from "../../api/program";
@@ -455,6 +456,10 @@ export function ProgramBoardPage() {
         title="Program Board"
         subtitle="Live block/task tracker — two-way. The agent asks; you answer. Nothing is ever lost."
       />
+
+      {/* AUDIT TRUTH — additive, read-only, TRUE-state audit vs prod (committed JSON only). Renders
+          nothing when the board's audit snapshot is absent (older backend / unreadable file). */}
+      {data?.audit ? <AuditTruthSection audit={data.audit} /> : null}
 
       {/* HONEST TIMESTAMPS — two distinct fields, never conflated. Left = the snapshot's true age;
           right = live server compute time (re-polled every 60s). Live counts are recomputed at request
@@ -966,6 +971,232 @@ export function ProgramBoardPage() {
           ))}
         </div>
       ) : null}
+    </div>
+  );
+}
+
+// ── AUDIT TRUTH — additive TRUE-state section (2026-07-10 MASTER-MANIFEST audit vs prod branch
+// br-fancy-credit-akjnd07a). Read-only, committed-JSON only, gated entirely on `board.audit` being
+// present. §7 palette only: navy/slate tokens; --red #dc2626 reserved for not-built/alert emphasis.
+function AuditTruthSection({ audit }: { audit: ProgramBoardAudit }) {
+  const [moduleFilter, setModuleFilter] = useState<string>("all");
+  const [verdictFilter, setVerdictFilter] = useState<string>("all");
+
+  const modules = useMemo(
+    () => Array.from(new Set(audit.top_open_items.map((it) => it.module))).sort(),
+    [audit.top_open_items]
+  );
+  const verdicts = useMemo(
+    () => Array.from(new Set(audit.top_open_items.map((it) => it.verdict))).sort(),
+    [audit.top_open_items]
+  );
+  const filteredOpenItems = useMemo(
+    () =>
+      audit.top_open_items.filter(
+        (it) => (moduleFilter === "all" || it.module === moduleFilter) && (verdictFilter === "all" || it.verdict === verdictFilter)
+      ),
+    [audit.top_open_items, moduleFilter, verdictFilter]
+  );
+
+  const tiles: { label: string; value: number; accent?: string }[] = [
+    { label: "Built", value: audit.true_totals.built },
+    { label: "Partial", value: audit.true_totals.partial },
+    { label: "Not Built", value: audit.true_totals.not_built, accent: "#DC2626" },
+    { label: "Needs Design", value: audit.true_totals.needs_design },
+  ];
+
+  return (
+    <div className="space-y-3 rounded border border-gray-200 bg-white p-3" style={{ borderLeft: "3px solid #1F2A44" }}>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-sm font-semibold text-slate-800">Audit Truth — 2026-07-10</h2>
+        <span className="text-[10px] text-slate-400">{audit.source}</span>
+      </div>
+      <p className="text-xs font-semibold text-slate-700">{audit.headline}</p>
+
+      {audit.why_done_overstates.length > 0 ? (
+        <div>
+          <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+            Why the DONE count overstates completion
+          </div>
+          <ul className="list-disc space-y-0.5 pl-4 text-xs text-slate-600">
+            {audit.why_done_overstates.map((w, i) => (
+              <li key={i}>{w}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      <div>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {tiles.map((t) => (
+            <div
+              key={t.label}
+              className="rounded border border-gray-200 p-2 text-center"
+              style={t.accent ? { borderColor: t.accent } : undefined}
+            >
+              <div className="text-lg font-semibold tabular-nums" style={{ color: t.accent ?? "#1F2A44" }}>
+                {t.value}
+              </div>
+              <div className="text-[10px] uppercase tracking-wide text-slate-500">{t.label}</div>
+            </div>
+          ))}
+        </div>
+        <p className="mt-1 text-[10px] text-slate-400">{audit.true_totals.note}</p>
+      </div>
+
+      <div>
+        <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">By module</div>
+        <div className="overflow-x-auto rounded border border-gray-200">
+          <table className="w-full border-collapse text-[11px]">
+            <thead className="bg-slate-100 text-left text-slate-600">
+              <tr>
+                <th className="px-2 py-1.5 font-semibold">Module</th>
+                <th className="px-2 py-1.5 font-semibold">Built</th>
+                <th className="px-2 py-1.5 font-semibold">Partial</th>
+                <th className="px-2 py-1.5 font-semibold">Not Built</th>
+                <th className="px-2 py-1.5 font-semibold">Needs Design</th>
+              </tr>
+            </thead>
+            <tbody>
+              {audit.by_module.map((m) => (
+                <tr key={m.module} className="border-t border-gray-100">
+                  <td className="px-2 py-1.5 font-semibold text-slate-800">{m.module}</td>
+                  <td className="px-2 py-1.5 tabular-nums text-slate-600">{m.built}</td>
+                  <td className="px-2 py-1.5 tabular-nums text-slate-600">{m.partial}</td>
+                  <td className="px-2 py-1.5 tabular-nums" style={{ color: "#DC2626" }}>
+                    {m.not_built}
+                  </td>
+                  <td className="px-2 py-1.5 tabular-nums text-slate-600">{m.needs_design}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {audit.prod_verified_facts.length > 0 ? (
+        <div>
+          <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Prod-verified facts</div>
+          <ul className="space-y-1.5">
+            {audit.prod_verified_facts.map((f, i) => (
+              <li key={i} className="rounded border border-gray-100 bg-slate-50 px-2 py-1.5 text-xs">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-semibold text-slate-800">{f.fact}</span>
+                  <span
+                    className="rounded px-1.5 py-0.5 text-[10px] font-semibold"
+                    style={{ background: "#E2E8F0", color: "#334155" }}
+                  >
+                    {f.verdict}
+                  </span>
+                </div>
+                <div className="mt-0.5 text-slate-600">{f.detail}</div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {audit.schema_drift_flags.length > 0 ? (
+        <div>
+          <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Schema drift flags</div>
+          <ul className="list-disc space-y-0.5 pl-4 text-xs" style={{ color: "#DC2626" }}>
+            {audit.schema_drift_flags.map((s, i) => (
+              <li key={i}>{s}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      <div>
+        <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+          <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+            Top open items ({filteredOpenItems.length} of {audit.top_open_items.length})
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              value={moduleFilter}
+              onChange={(e) => setModuleFilter(e.target.value)}
+              className="h-7 rounded border border-gray-300 px-1.5 text-[11px]"
+            >
+              <option value="all">All modules</option>
+              {modules.map((m) => (
+                <option key={m} value={m}>
+                  {m}
+                </option>
+              ))}
+            </select>
+            <select
+              value={verdictFilter}
+              onChange={(e) => setVerdictFilter(e.target.value)}
+              className="h-7 rounded border border-gray-300 px-1.5 text-[11px]"
+            >
+              <option value="all">All verdicts</option>
+              {verdicts.map((v) => (
+                <option key={v} value={v}>
+                  {v}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="overflow-x-auto rounded border border-gray-200">
+          <table className="w-full border-collapse text-[11px]">
+            <thead className="bg-slate-100 text-left text-slate-600">
+              <tr>
+                <th className="px-2 py-1.5 font-semibold">ID</th>
+                <th className="px-2 py-1.5 font-semibold">Module</th>
+                <th className="px-2 py-1.5 font-semibold">Verdict</th>
+                <th className="px-2 py-1.5 font-semibold">Tier</th>
+                <th className="px-2 py-1.5 font-semibold">Title</th>
+                <th className="px-2 py-1.5 font-semibold">Missing</th>
+                <th className="px-2 py-1.5 font-semibold">Spec</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredOpenItems.map((it) => {
+                const isNotBuilt = it.verdict.toLowerCase().replace(/\s+/g, "-").includes("not-built");
+                return (
+                  <tr key={it.id} className="border-t border-gray-100">
+                    <td className="whitespace-nowrap px-2 py-1.5 font-mono text-[10px] text-slate-500">{it.id}</td>
+                    <td className="whitespace-nowrap px-2 py-1.5 text-slate-600">{it.module}</td>
+                    <td className="whitespace-nowrap px-2 py-1.5">
+                      <span
+                        className="rounded px-1.5 py-0.5 text-[10px] font-semibold"
+                        style={isNotBuilt ? { background: "#FEE2E2", color: "#991B1B" } : { background: "#E2E8F0", color: "#334155" }}
+                      >
+                        {it.verdict}
+                      </span>
+                    </td>
+                    <td className="whitespace-nowrap px-2 py-1.5 text-slate-600">{it.tier}</td>
+                    <td className="px-2 py-1.5 text-slate-700">
+                      <span className="block max-w-[320px] truncate" title={it.title}>
+                        {it.title}
+                      </span>
+                    </td>
+                    <td className="px-2 py-1.5 text-slate-600">
+                      <span className="block max-w-[280px] truncate" title={it.missing}>
+                        {it.missing}
+                      </span>
+                    </td>
+                    <td className="px-2 py-1.5 text-slate-500">
+                      <span className="block max-w-[140px] truncate" title={it.spec}>
+                        {it.spec}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+              {filteredOpenItems.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-2 py-6 text-center text-slate-400">
+                    No items match this filter.
+                  </td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }
