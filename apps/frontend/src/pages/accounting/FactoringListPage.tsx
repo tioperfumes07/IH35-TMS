@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { formatDateUS } from "../../lib/formatDate";
 import { useQuery } from "@tanstack/react-query";
@@ -12,6 +12,7 @@ import { SubmitFactoringModal } from "./SubmitFactoringModal";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 const STATUS_OPTIONS: Array<{ value: "all" | FactoringAdvance["status"]; label: string }> = [
   { value: "all", label: "All" },
@@ -45,8 +46,6 @@ export function FactoringListPage() {
   const [search, setSearch] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
-  const [pageSize, setPageSize] = useState(50);
-  const [currentPage, setCurrentPage] = useState(1);
   const [submitOpen, setSubmitOpen] = useState(false);
 
   const query = useQuery({
@@ -62,141 +61,88 @@ export function FactoringListPage() {
   });
 
   const rows = query.data ?? [];
-  const totalRows = rows.length;
-  const totalPages = Math.max(1, Math.ceil(totalRows / pageSize));
-  const safeCurrentPage = Math.min(currentPage, totalPages);
-  const pageStartIndex = (safeCurrentPage - 1) * pageSize;
-  const pageRangeStart = totalRows === 0 ? 0 : pageStartIndex + 1;
-  const pageRangeEnd = totalRows === 0 ? 0 : Math.min(pageStartIndex + pageSize, totalRows);
-  const pagedRows = useMemo(
-    () => rows.slice(pageStartIndex, pageStartIndex + pageSize),
-    [pageSize, pageStartIndex, rows]
+
+  const columns = useMemo<ParityColumn<FactoringAdvance>[]>(
+    () => [
+      {
+        key: "display_id",
+        label: "Batch #",
+        sortable: true,
+        render: (row) => <EntityLink kind="factoring_advance" id={row.id} label={row.display_id} />,
+      },
+      { key: "submitted_at", label: "Submitted", sortable: true, render: (row) => formatDateUS(row.submitted_at) },
+      { key: "factoring_company_name", label: "Factor", sortable: true },
+      { key: "invoice_count", label: "Invoices", sortable: true },
+      { key: "invoice_total_cents", label: "Total", sortable: true, render: (row) => money(row.invoice_total_cents) },
+      { key: "advance_amount_cents", label: "Advanced", sortable: true, render: (row) => money(row.advance_amount_cents) },
+      { key: "reserve_amount_cents", label: "Reserve", sortable: true, render: (row) => money(row.reserve_amount_cents) },
+      {
+        key: "status",
+        label: "Status",
+        sortable: true,
+        render: (row) => <span className={statusPill(row.status)}>{row.status.replaceAll("_", " ")}</span>,
+      },
+    ],
+    [],
   );
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [status, search, fromDate, toDate, pageSize]);
+  if (query.isError) {
+    return (
+      <AccountingSubNavWrapper title="Factoring" subtitle="Track factoring submissions, reserves, and releases" actions={<Button onClick={() => setSubmitOpen(true)}>+ Submit New Batch</Button>}>
+        <ListErrorState
+          title="Couldn't load factoring advances"
+          status={0}
+          message={(query.error as Error | undefined)?.message}
+          onRetry={() => void query.refetch()}
+        />
+      </AccountingSubNavWrapper>
+    );
+  }
+
+  const filterBar = (
+    <div className="grid gap-2 md:grid-cols-4 w-full">
+      <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+        Status
+        <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as "all" | FactoringAdvance["status"])} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
+          {STATUS_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </SelectCombobox>
+      </label>
+      <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+        Search
+        <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="FAC-2026-00012" className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
+      </label>
+      <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+        Date from
+        <DatePicker value={fromDate} onChange={(next) => setFromDate(next)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
+      </label>
+      <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+        Date to
+        <DatePicker value={toDate} onChange={(next) => setToDate(next)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
+      </label>
+    </div>
+  );
 
   return (
     <AccountingSubNavWrapper title="Factoring" subtitle="Track factoring submissions, reserves, and releases" actions={<Button onClick={() => setSubmitOpen(true)}>+ Submit New Batch</Button>}>
 
-      <DataPanel title="Filters">
-        <div className="grid gap-2 md:grid-cols-4">
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-            Status
-            <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as "all" | FactoringAdvance["status"])} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
-              {STATUS_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </SelectCombobox>
-          </label>
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-            Search
-            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="FAC-2026-00012" className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
-          </label>
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-            Date from
-            <DatePicker value={fromDate} onChange={(next) => setFromDate(next)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
-          </label>
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-            Date to
-            <DatePicker value={toDate} onChange={(next) => setToDate(next)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
-          </label>
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-            Page size
-            <SelectCombobox value={String(pageSize)} onChange={(event) => setPageSize(Number(event.target.value) || 50)} className="h-9 text-[13px]">
-              <option value="50">50</option>
-              <option value="75">75</option>
-              <option value="100">100</option>
-              <option value="200">200</option>
-              <option value="300">300</option>
-            </SelectCombobox>
-          </label>
-        </div>
-      </DataPanel>
+      <DataPanel title="Filters">{filterBar}</DataPanel>
 
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-left text-xs">
-          <thead className="bg-gray-50">
-            <tr className="text-gray-600">
-              <th className="px-3 py-2 font-semibold">Batch #</th>
-              <th className="px-3 py-2 font-semibold">Submitted</th>
-              <th className="px-3 py-2 font-semibold">Factor</th>
-              <th className="px-3 py-2 font-semibold">Invoices</th>
-              <th className="px-3 py-2 font-semibold">Total</th>
-              <th className="px-3 py-2 font-semibold">Advanced</th>
-              <th className="px-3 py-2 font-semibold">Reserve</th>
-              <th className="px-3 py-2 font-semibold">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {query.isLoading ? (
-              <tr>
-                <td className="px-3 py-3 text-gray-500" colSpan={8}>
-                  Loading factoring advances...
-                </td>
-              </tr>
-            ) : null}
-            {!query.isLoading && query.isError ? (
-              <tr>
-                <td className="px-3 py-3" colSpan={8}>
-                  <ListErrorState
-                    title="Couldn't load factoring advances"
-                    status={0}
-                    message={(query.error as Error | undefined)?.message}
-                    onRetry={() => void query.refetch()}
-                  />
-                </td>
-              </tr>
-            ) : null}
-            {!query.isLoading && !query.isError && rows.length === 0 ? (
-              <tr>
-                <td className="px-3 py-3 text-gray-500" colSpan={8}>
-                  No factoring batches for selected filters.
-                </td>
-              </tr>
-            ) : null}
-            {pagedRows.map((row) => (
-              <tr key={row.id} className="cursor-pointer border-t border-gray-100 hover:bg-gray-50" onClick={() => navigate(`/accounting/factoring/${row.id}`)}>
-                <td className="px-3 py-2 font-semibold text-gray-900" onClick={(e) => e.stopPropagation()}><EntityLink kind="factoring_advance" id={row.id} label={row.display_id} /></td>
-                <td className="px-3 py-2 text-gray-700">{formatDateUS(row.submitted_at)}</td>
-                <td className="px-3 py-2 text-gray-700">{row.factoring_company_name}</td>
-                <td className="px-3 py-2 text-gray-700">{row.invoice_count}</td>
-                <td className="px-3 py-2 text-gray-700">{money(row.invoice_total_cents)}</td>
-                <td className="px-3 py-2 text-gray-700">{money(row.advance_amount_cents)}</td>
-                <td className="px-3 py-2 text-gray-700">{money(row.reserve_amount_cents)}</td>
-                <td className="px-3 py-2 text-gray-700">
-                  <span className={statusPill(row.status)}>{row.status.replaceAll("_", " ")}</span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs text-gray-600">
-        <span>{pageRangeStart}-{pageRangeEnd} of {totalRows}</span>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            className="rounded-sm border border-gray-300 px-2 py-1 disabled:opacity-50"
-            disabled={safeCurrentPage <= 1}
-            onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-          >
-            Previous
-          </button>
-          <span>Page {safeCurrentPage} of {totalPages}</span>
-          <button
-            type="button"
-            className="rounded-sm border border-gray-300 px-2 py-1 disabled:opacity-50"
-            disabled={safeCurrentPage >= totalPages}
-            onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-          >
-            Next
-          </button>
-        </div>
-      </div>
+      <ParityTable
+        columns={columns}
+        rows={rows}
+        rowKey={(row) => row.id}
+        loading={query.isPending || (query.isFetching && rows.length === 0)}
+        onRowClick={(row) => navigate(`/accounting/factoring/${row.id}`)}
+        exportFilename="factoring-advances"
+        storageKey="factoring-list"
+        initialPageSize={50}
+        pageSizeOptions={[50, 75, 100, 200, 300]}
+        emptyText="No factoring batches for selected filters."
+      />
 
       {selectedCompanyId ? (
         <SubmitFactoringModal

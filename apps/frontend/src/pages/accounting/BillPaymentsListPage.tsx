@@ -14,11 +14,7 @@ import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { BillDetailPanel } from "./BillDetailPanel";
 import { PayBillModal } from "./PayBillModal";
 import { CCPaymentModal } from "./bill-payments/CCPaymentModal";
-import { useListState } from "../../components/list-state";
-
-function money(cents: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
-}
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 // BANKREC-LISTSTATUS-01: read-only badge derived from bank.reconciliation_matches (server-side).
 // matched = green check, unmatched = neutral. Additive column only.
@@ -35,6 +31,10 @@ function ReconciledBadge({ isReconciled }: { isReconciled?: boolean }) {
       Unmatched
     </span>
   );
+}
+
+function money(cents: number) {
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
 }
 
 function displayBillLabel(bill: VendorBill) {
@@ -99,8 +99,6 @@ export function BillPaymentsListPage() {
     [rows]
   );
 
-  const listState = useListState(paymentsQuery, rows.length === 0);
-
   const selectedBill = useMemo(() => {
     if (!selectedBillId) return null;
     return (unpaidBillsQuery.data?.rows ?? []).find((bill) => bill.id === selectedBillId) ?? null;
@@ -118,6 +116,97 @@ export function BillPaymentsListPage() {
   });
 
   const canVoid = user?.role === "Owner";
+
+  const columns = useMemo<ParityColumn<BillPayment>[]>(
+    () => [
+      { key: "payment_date", label: "Payment date", sortable: true, render: (row) => formatDateUS(row.payment_date) },
+      { key: "amount_cents", label: "Amount", sortable: true, className: "text-right", cellClass: "text-right tabular-nums", render: (row) => money(row.amount_cents) },
+      { key: "payment_method", label: "Method", sortable: true },
+      { key: "bill_id", label: "Bill ID", render: (row) => <EntityLink kind="bill" id={row.bill_id} label={row.bill_id.slice(0, 8)} /> },
+      { key: "vendor_id", label: "Vendor ID", render: (row) => <EntityLink kind="vendor" id={row.vendor_id} /> },
+      { key: "reference_number", label: "Reference", render: (row) => row.reference_number ?? row.check_number ?? "-" },
+      { key: "memo", label: "Memo", render: (row) => row.memo ?? "-" },
+      { key: "is_reconciled", label: "Reconciled", render: (row) => <ReconciledBadge isReconciled={row.is_reconciled} /> },
+      {
+        key: "actions",
+        label: "Actions",
+        alwaysVisible: true,
+        render: (row) =>
+          canVoid ? (
+            <Button
+              size="sm"
+              variant="secondary"
+              loading={voidMutation.isPending}
+              onClick={() => {
+                const reason = window.prompt("Void reason");
+                if (!reason || reason.trim().length < 3) return;
+                voidMutation.mutate({ paymentId: row.id, reason: reason.trim() });
+              }}
+            >
+              Void
+            </Button>
+          ) : (
+            "-"
+          ),
+      },
+    ],
+    [canVoid, voidMutation],
+  );
+
+  const filterBar = (
+    <div className="grid gap-2 w-full md:grid-cols-5">
+      <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600 md:col-span-2">
+        Unpaid bill selector
+        <SelectCombobox
+          className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
+          value={selectedBillId}
+          onChange={(event) => setSelectedBillId(event.target.value)}
+        >
+          <option value="">Select bill to pay...</option>
+          {(unpaidBillsQuery.data?.rows ?? []).map((bill) => (
+            <option key={bill.id} value={bill.id}>
+              {displayBillLabel(bill)}
+            </option>
+          ))}
+        </SelectCombobox>
+      </label>
+      <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+        Vendor ID
+        <input
+          className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
+          value={vendorId}
+          onChange={(event) => setVendorId(event.target.value)}
+          placeholder="Optional vendor UUID"
+        />
+      </label>
+      <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+        From
+        <DatePicker
+          className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
+          value={dateFrom}
+          onChange={(next) => setDateFrom(next)}
+        />
+      </label>
+      <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+        To
+        <DatePicker
+          className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
+          value={dateTo}
+          onChange={(next) => setDateTo(next)}
+        />
+      </label>
+      <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600 md:col-span-2">
+        Search payment rows
+        <input
+          className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="payment id, bill id, vendor id, method, reference, memo"
+        />
+      </label>
+      <div className="flex items-end text-xs text-gray-600">Total rows amount: <span className="ml-1 font-semibold text-gray-900">{money(totals)}</span></div>
+    </div>
+  );
 
   return (
     <AccountingSubNavWrapper
@@ -151,129 +240,19 @@ export function BillPaymentsListPage() {
 
       {paymentsQuery.isError ? <ListErrorBanner onRetry={() => void paymentsQuery.refetch()} /> : null}
 
-      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-5">
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600 md:col-span-2">
-          Unpaid bill selector
-          <SelectCombobox
-            className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
-            value={selectedBillId}
-            onChange={(event) => setSelectedBillId(event.target.value)}
-          >
-            <option value="">Select bill to pay...</option>
-            {(unpaidBillsQuery.data?.rows ?? []).map((bill) => (
-              <option key={bill.id} value={bill.id}>
-                {displayBillLabel(bill)}
-              </option>
-            ))}
-          </SelectCombobox>
-        </label>
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-          Vendor ID
-          <input
-            className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
-            value={vendorId}
-            onChange={(event) => setVendorId(event.target.value)}
-            placeholder="Optional vendor UUID"
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-          From
-          <DatePicker
-            className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
-            value={dateFrom}
-            onChange={(next) => setDateFrom(next)}
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-          To
-          <DatePicker
-            className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
-            value={dateTo}
-            onChange={(next) => setDateTo(next)}
-          />
-        </label>
-      </div>
-
-      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-2">
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-          Search payment rows
-          <input
-            className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="payment id, bill id, vendor id, method, reference, memo"
-          />
-        </label>
-        <div className="flex items-end text-xs text-gray-600">Total rows amount: <span className="ml-1 font-semibold text-gray-900">{money(totals)}</span></div>
-      </div>
-
       {selectedBill ? <BillDetailPanel bill={selectedBill} /> : null}
 
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-left text-xs">
-          <thead className="bg-gray-50 text-gray-600">
-            <tr>
-              <th className="px-3 py-2 font-semibold">Payment date</th>
-              <th className="px-3 py-2 font-semibold">Amount</th>
-              <th className="px-3 py-2 font-semibold">Method</th>
-              <th className="px-3 py-2 font-semibold">Bill ID</th>
-              <th className="px-3 py-2 font-semibold">Vendor ID</th>
-              <th className="px-3 py-2 font-semibold">Reference</th>
-              <th className="px-3 py-2 font-semibold">Memo</th>
-              <th className="px-3 py-2 font-semibold">Reconciled</th>
-              <th className="px-3 py-2 font-semibold">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {paymentsQuery.isLoading ? (
-              <tr>
-                <td colSpan={9} className="px-3 py-3 text-gray-500">
-                  Loading bill payments...
-                </td>
-              </tr>
-            ) : null}
-            {listState.isEmpty ? (
-              <tr>
-                <td colSpan={9} className="px-3 py-3 text-gray-500">
-                  No bill payments found.
-                </td>
-              </tr>
-            ) : null}
-            {rows.map((row: BillPayment) => (
-              <tr key={row.id} className="border-t border-gray-100">
-                <td className="px-3 py-2 text-gray-700">{formatDateUS(row.payment_date)}</td>
-                <td className="px-3 py-2 text-gray-900">{money(row.amount_cents)}</td>
-                <td className="px-3 py-2 text-gray-700">{row.payment_method}</td>
-                <td className="px-3 py-2 text-gray-700"><EntityLink kind="bill" id={row.bill_id} label={row.bill_id.slice(0, 8)} /></td>
-                <td className="px-3 py-2 text-gray-700"><EntityLink kind="vendor" id={row.vendor_id} /></td>
-                <td className="px-3 py-2 text-gray-700">{row.reference_number ?? row.check_number ?? "-"}</td>
-                <td className="px-3 py-2 text-gray-700">{row.memo ?? "-"}</td>
-                <td className="px-3 py-2">
-                  <ReconciledBadge isReconciled={row.is_reconciled} />
-                </td>
-                <td className="px-3 py-2">
-                  {canVoid ? (
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      loading={voidMutation.isPending}
-                      onClick={() => {
-                        const reason = window.prompt("Void reason");
-                        if (!reason || reason.trim().length < 3) return;
-                        voidMutation.mutate({ paymentId: row.id, reason: reason.trim() });
-                      }}
-                    >
-                      Void
-                    </Button>
-                  ) : (
-                    "-"
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <ParityTable
+        columns={columns}
+        rows={rows}
+        rowKey={(row) => row.id}
+        loading={paymentsQuery.isPending || (paymentsQuery.isFetching && rows.length === 0)}
+        filterBar={filterBar}
+        exportFilename="bill-payments"
+        storageKey="bill-payments-list"
+        initialPageSize={50}
+        emptyText="No bill payments found."
+      />
 
       {companyId ? (
         <PayBillModal

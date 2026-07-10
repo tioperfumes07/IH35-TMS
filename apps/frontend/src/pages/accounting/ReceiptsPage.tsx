@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 import { useQuery } from "@tanstack/react-query";
@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getReceipts, getReceiptDetail, type ReceiptItem } from "../../api/receipts";
-import { useListState } from "../../components/list-state";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 const fmtCents = (c: number | null) => (c == null ? "—" : formatUsdCents(c));
 const fmtDate = (s: string | null) => formatDateUS(s) || "—";
@@ -84,85 +84,97 @@ export function ReceiptsPage() {
     }),
     enabled: Boolean(selectedCompanyId),
   });
-  const { data, isLoading, isError } = listQuery;
+  const { data, isPending, isFetching, isError } = listQuery;
 
   const total = data?.total ?? 0;
   const items = data?.items ?? [];
-  const listState = useListState(listQuery, items.length === 0);
+
+  const columns = useMemo<ParityColumn<ReceiptItem>[]>(
+    () => [
+      { key: "uploaded_at", label: "Uploaded", sortable: true, render: (row) => fmtDate(row.uploaded_at) },
+      {
+        key: "filename",
+        label: "Filename",
+        sortable: true,
+        render: (row) => (
+          <button onClick={() => setDetailId(row.id)} className="text-slate-700 hover:underline text-left truncate max-w-full" title={row.filename}>
+            {row.filename}
+          </button>
+        ),
+      },
+      { key: "size_bytes", label: "Size", sortable: true, render: (row) => fmtBytes(row.size_bytes) },
+      {
+        key: "source_type",
+        label: "Source",
+        sortable: true,
+        render: (row) => (
+          <span className="inline-block rounded-sm bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-700 capitalize">{row.source.type}</span>
+        ),
+      },
+      {
+        key: "ref",
+        label: "Ref #",
+        render: (row) => (
+          <Link to={row.source.detail_path} className="text-slate-700 hover:underline text-xs">
+            {row.source.type === "expense" ? (row.source.expense_number ?? "—") : (row.source.bill_number ?? "—")}
+          </Link>
+        ),
+      },
+      { key: "source_date", label: "Date", render: (row) => fmtDate(row.source.date) },
+      { key: "amount_cents", label: "Amount", className: "text-right", cellClass: "text-right tabular-nums", render: (row) => fmtCents(row.source.amount_cents) },
+      {
+        key: "status",
+        label: "Status",
+        render: (row) =>
+          row.source.status ? (
+            <span className={`inline-block rounded-sm px-2 py-0.5 text-xs font-semibold ${STATUS_COLOR[row.source.status] ?? "bg-gray-100 text-gray-600"}`}>
+              {row.source.status}
+            </span>
+          ) : null,
+      },
+      {
+        key: "actions",
+        label: "Actions",
+        alwaysVisible: true,
+        render: (row) => (
+          <button onClick={() => setDetailId(row.id)} className="text-xs text-slate-700 hover:underline">View</button>
+        ),
+      },
+    ],
+    [],
+  );
+
+  const filterBar = (
+    <div className="flex flex-wrap gap-2 items-center">
+      <input type="search" placeholder="Search filename, notes…" value={search}
+        onChange={(e) => { setSearch(e.target.value); setOffset(0); }}
+        className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm w-56 focus:outline-hidden focus:ring-1 focus:ring-emerald-500" />
+      <select value={entityType} onChange={(e) => { setEntityType(e.target.value as "" | "expense" | "bill"); setOffset(0); }}
+        className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-emerald-500">
+        <option value="">All sources</option>
+        <option value="expense">Expenses</option>
+        <option value="bill">Bills</option>
+      </select>
+      <span className="ml-auto self-center text-xs text-gray-500">{total.toLocaleString()} receipt{total !== 1 ? "s" : ""}</span>
+    </div>
+  );
 
   return (
     <AccountingSubNavWrapper title="Receipts" subtitle="Uploaded receipts linked to expenses and bills">
       {detailId && <ReceiptDetailPanel id={detailId} companyId={operatingCompanyId} onClose={() => setDetailId(null)} />}
 
-      <div className="flex flex-wrap gap-2 mb-4">
-        <input type="search" placeholder="Search filename, notes…" value={search}
-          onChange={(e) => { setSearch(e.target.value); setOffset(0); }}
-          className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm w-56 focus:outline-hidden focus:ring-1 focus:ring-emerald-500" />
-        <select value={entityType} onChange={(e) => { setEntityType(e.target.value as "" | "expense" | "bill"); setOffset(0); }}
-          className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-emerald-500">
-          <option value="">All sources</option>
-          <option value="expense">Expenses</option>
-          <option value="bill">Bills</option>
-        </select>
-        <span className="ml-auto self-center text-xs text-gray-500">{total.toLocaleString()} receipt{total !== 1 ? "s" : ""}</span>
-      </div>
+      {isError ? <p className="text-sm text-red-600 py-2 text-center">Failed to load receipts.</p> : null}
 
-      {isLoading ? (
-        <p className="text-sm text-gray-500 py-8 text-center">Loading…</p>
-      ) : isError ? (
-        <p className="text-sm text-red-600 py-8 text-center">Failed to load receipts.</p>
-      ) : listState.isEmpty ? (
-        <div className="py-12 text-center">
-          <p className="text-sm text-gray-500">No receipts found.</p>
-          <p className="text-xs text-gray-400 mt-1">Upload a receipt when creating an expense or bill.</p>
-        </div>
-      ) : (
-        <div className="overflow-x-auto rounded-sm border border-gray-200">
-          <table className="min-w-full divide-y divide-gray-200 text-sm">
-            <thead className="bg-gray-50">
-              <tr>
-                {["Uploaded","Filename","Size","Source","Ref #","Date","Amount","Status","Actions"].map((h) => (
-                  <th key={h} className="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide whitespace-nowrap">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 bg-white">
-              {items.map((row: ReceiptItem) => (
-                <tr key={row.id} className="hover:bg-gray-50">
-                  <td className="px-3 py-2 whitespace-nowrap text-gray-500 text-xs">{fmtDate(row.uploaded_at)}</td>
-                  <td className="px-3 py-2 max-w-[180px] truncate">
-                    <button onClick={() => setDetailId(row.id)}
-                      className="text-slate-700 hover:underline text-left truncate max-w-full" title={row.filename}>
-                      {row.filename}
-                    </button>
-                  </td>
-                  <td className="px-3 py-2 whitespace-nowrap text-gray-500 text-xs">{fmtBytes(row.size_bytes)}</td>
-                  <td className="px-3 py-2 whitespace-nowrap">
-                    <span className="inline-block rounded-sm bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-700 capitalize">{row.source.type}</span>
-                  </td>
-                  <td className="px-3 py-2 whitespace-nowrap">
-                    <Link to={row.source.detail_path} className="text-slate-700 hover:underline text-xs">
-                      {row.source.type === "expense" ? (row.source.expense_number ?? "—") : (row.source.bill_number ?? "—")}
-                    </Link>
-                  </td>
-                  <td className="px-3 py-2 whitespace-nowrap text-gray-600 text-xs">{fmtDate(row.source.date)}</td>
-                  <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums">{fmtCents(row.source.amount_cents)}</td>
-                  <td className="px-3 py-2 whitespace-nowrap">
-                    {row.source.status && (
-                      <span className={`inline-block rounded-sm px-2 py-0.5 text-xs font-semibold ${STATUS_COLOR[row.source.status] ?? "bg-gray-100 text-gray-600"}`}>
-                        {row.source.status}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-3 py-2 whitespace-nowrap">
-                    <button onClick={() => setDetailId(row.id)} className="text-xs text-slate-700 hover:underline">View</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <ParityTable
+        columns={columns}
+        rows={items}
+        rowKey={(row) => row.id}
+        loading={isPending || (isFetching && items.length === 0)}
+        filterBar={filterBar}
+        storageKey="receipts-list"
+        initialPageSize={limit}
+        emptyText="No receipts found."
+      />
 
       {total > limit && (
         <div className="flex items-center justify-between mt-3 text-sm text-gray-600">

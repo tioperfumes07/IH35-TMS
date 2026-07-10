@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { formatDateUS } from "../../lib/formatDate";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { listJournalEntries, voidJournalEntry, type JournalEntrySource, type JournalEntryStatus } from "../../api/accounting";
+import { listJournalEntries, voidJournalEntry, type JournalEntry, type JournalEntrySource, type JournalEntryStatus } from "../../api/accounting";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useAuth } from "../../auth/useAuth";
 import { Button } from "../../components/Button";
@@ -10,7 +10,7 @@ import { useToast } from "../../components/Toast";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ManualJEModal } from "./ManualJEModal";
-import { useListState } from "../../components/list-state";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
 function humanMemo(memo: string | null | undefined): string {
@@ -57,9 +57,6 @@ export function ManualJEListPage() {
   const pageRows = entriesQuery.data?.journal_entries ?? [];
   const hasNextPage = pageRows.length === PAGE_SIZE;
 
-  // LIST-EMPTY: surface the empty row only once the entries query settles.
-  const listState = useListState(entriesQuery, pageRows.length === 0);
-
   const voidMutation = useMutation({
     mutationFn: ({ id, reason }: { id: string; reason: string }) => voidJournalEntry(id, companyId, reason),
     onSuccess: () => {
@@ -69,85 +66,80 @@ export function ManualJEListPage() {
     onError: (error) => pushToast(String((error as Error)?.message ?? "Void failed"), "error"),
   });
 
+  const columns = useMemo<ParityColumn<JournalEntry>[]>(
+    () => [
+      { key: "entry_date", label: "Date", sortable: true, render: (entry) => formatDateUS(entry.entry_date) },
+      { key: "memo", label: "Memo", sortable: true, render: (entry) => humanMemo(entry.memo) },
+      { key: "source", label: "Source", sortable: true },
+      { key: "status", label: "Status", sortable: true },
+      { key: "debit_total_cents", label: "Debits", sortable: true, className: "text-right", cellClass: "text-right tabular-nums", render: (entry) => `$${((entry.debit_total_cents ?? 0) / 100).toFixed(2)}` },
+      { key: "credit_total_cents", label: "Credits", sortable: true, className: "text-right", cellClass: "text-right tabular-nums", render: (entry) => `$${((entry.credit_total_cents ?? 0) / 100).toFixed(2)}` },
+      {
+        key: "actions",
+        label: "Actions",
+        alwaysVisible: true,
+        render: (entry) =>
+          user?.role === "Owner" && entry.status !== "voided" ? (
+            <Button
+              size="sm"
+              variant="danger"
+              loading={voidMutation.isPending}
+              onClick={() => {
+                const reason = window.prompt("Void reason (required, min 3 chars):", "");
+                if (!reason || reason.trim().length < 3) return;
+                voidMutation.mutate({ id: entry.id, reason: reason.trim() });
+              }}
+            >
+              Void
+            </Button>
+          ) : (
+            "-"
+          ),
+      },
+    ],
+    [user?.role, voidMutation],
+  );
+
+  const filterBar = (
+    <div className="grid grid-cols-5 gap-2 w-full text-xs">
+      <SelectCombobox className="h-8 rounded-sm border border-gray-300 px-2" value={source} onChange={(e) => setSource(e.target.value as JournalEntrySource | "all")}>
+        <option value="all">All sources</option>
+        <option value="manual">Manual</option>
+        <option value="auto">Auto</option>
+      </SelectCombobox>
+      <SelectCombobox className="h-8 rounded-sm border border-gray-300 px-2" value={status} onChange={(e) => setStatus(e.target.value as JournalEntryStatus | "all")}>
+        <option value="all">All statuses</option>
+        <option value="posted">Posted</option>
+        <option value="voided">Voided</option>
+      </SelectCombobox>
+      <DatePicker className="h-8 rounded-sm border border-gray-300 px-2" value={fromDate} onChange={(next) => setFromDate(next)} />
+      <DatePicker className="h-8 rounded-sm border border-gray-300 px-2" value={toDate} onChange={(next) => setToDate(next)} />
+      <input
+        className="h-8 rounded-sm border border-gray-300 px-2"
+        placeholder="Account ID (optional)"
+        value={accountId}
+        onChange={(e) => setAccountId(e.target.value)}
+      />
+    </div>
+  );
+
   return (
     <AccountingSubNavWrapper
       title="Manual Journal Entries"
       subtitle="Filter, review, and void posted entries"
       actions={<Button onClick={() => setCreateOpen(true)} disabled={!companyId}>+ Create</Button>}
     >
-      <div className="grid grid-cols-5 gap-2 rounded-sm border border-gray-200 bg-white p-2 text-xs">
-        <SelectCombobox className="h-8 rounded-sm border border-gray-300 px-2" value={source} onChange={(e) => setSource(e.target.value as JournalEntrySource | "all")}>
-          <option value="all">All sources</option>
-          <option value="manual">Manual</option>
-          <option value="auto">Auto</option>
-        </SelectCombobox>
-        <SelectCombobox className="h-8 rounded-sm border border-gray-300 px-2" value={status} onChange={(e) => setStatus(e.target.value as JournalEntryStatus | "all")}>
-          <option value="all">All statuses</option>
-          <option value="posted">Posted</option>
-          <option value="voided">Voided</option>
-        </SelectCombobox>
-        <DatePicker className="h-8 rounded-sm border border-gray-300 px-2" value={fromDate} onChange={(next) => setFromDate(next)} />
-        <DatePicker className="h-8 rounded-sm border border-gray-300 px-2" value={toDate} onChange={(next) => setToDate(next)} />
-        <input
-          className="h-8 rounded-sm border border-gray-300 px-2"
-          placeholder="Account ID (optional)"
-          value={accountId}
-          onChange={(e) => setAccountId(e.target.value)}
-        />
-      </div>
-
-      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-left text-xs">
-          <thead className="bg-gray-50 text-gray-600">
-            <tr>
-              <th className="px-3 py-2 font-semibold">Date</th>
-              <th className="px-3 py-2 font-semibold">Memo</th>
-              <th className="px-3 py-2 font-semibold">Source</th>
-              <th className="px-3 py-2 font-semibold">Status</th>
-              <th className="px-3 py-2 font-semibold">Debits</th>
-              <th className="px-3 py-2 font-semibold">Credits</th>
-              <th className="px-3 py-2 font-semibold">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(entriesQuery.data?.journal_entries ?? []).map((entry) => (
-              <tr key={entry.id} className="border-t border-gray-100">
-                <td className="px-3 py-2">{formatDateUS(entry.entry_date)}</td>
-                <td className="px-3 py-2">{humanMemo(entry.memo)}</td>
-                <td className="px-3 py-2">{entry.source}</td>
-                <td className="px-3 py-2">{entry.status}</td>
-                <td className="px-3 py-2">${((entry.debit_total_cents ?? 0) / 100).toFixed(2)}</td>
-                <td className="px-3 py-2">${((entry.credit_total_cents ?? 0) / 100).toFixed(2)}</td>
-                <td className="px-3 py-2">
-                  {user?.role === "Owner" && entry.status !== "voided" ? (
-                    <Button
-                      size="sm"
-                      variant="danger"
-                      loading={voidMutation.isPending}
-                      onClick={() => {
-                        const reason = window.prompt("Void reason (required, min 3 chars):", "");
-                        if (!reason || reason.trim().length < 3) return;
-                        voidMutation.mutate({ id: entry.id, reason: reason.trim() });
-                      }}
-                    >
-                      Void
-                    </Button>
-                  ) : (
-                    "-"
-                  )}
-                </td>
-              </tr>
-            ))}
-            {listState.isEmpty ? (
-              <tr>
-                <td className="px-3 py-3 text-gray-500" colSpan={7}>
-                  No journal entries found.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
+      <ParityTable
+        columns={columns}
+        rows={pageRows}
+        rowKey={(entry) => entry.id}
+        loading={entriesQuery.isPending || (entriesQuery.isFetching && pageRows.length === 0)}
+        filterBar={filterBar}
+        storageKey="manual-je-list"
+        initialPageSize={PAGE_SIZE}
+        pageSizeOptions={[PAGE_SIZE]}
+        emptyText="No journal entries found."
+      />
 
       <div className="flex items-center justify-between gap-2 text-xs text-gray-600">
         <span>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -9,7 +9,7 @@ import {
   getPrepaidExpenses, getPrepaidExpenseDetail, createPrepaidExpense,
   type PrepaidAssetListItem, type PrepaidAssetDetail,
 } from "../../api/prepaid-expenses";
-import { useListState } from "../../components/list-state";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 
 const fmtCents = (c: number) => formatUsdCents(c);
@@ -58,7 +58,7 @@ function SchedulePanel({ detail, onClose }: { detail: PrepaidAssetDetail; onClos
           </div>
         )}
 
-        <div className="overflow-y-auto flex-1 rounded-sm border border-gray-200">
+        <div className="overflow-y-auto overflow-x-auto flex-1 rounded-sm border border-gray-200">
           <table className="min-w-full text-xs divide-y divide-gray-200">
             <thead className="bg-gray-50 sticky top-0">
               <tr>
@@ -199,7 +199,7 @@ export function PrepaidExpensesPage() {
     queryFn: () => getPrepaidExpenses({ operating_company_id: operatingCompanyId, status: statusFilter || undefined, limit, offset }),
     enabled: Boolean(selectedCompanyId),
   });
-  const { data, isLoading, isError } = listQuery;
+  const { data, isPending, isFetching, isError } = listQuery;
 
   const { data: detail, isLoading: detailLoading } = useQuery({
     queryKey: ["prepaid-expense-detail", detailId, operatingCompanyId],
@@ -209,10 +209,83 @@ export function PrepaidExpensesPage() {
 
   const total = data?.total ?? 0;
   const items = data?.items ?? [];
-  const listState = useListState(listQuery, items.length === 0);
+
+  const columns = useMemo<ParityColumn<PrepaidAssetListItem>[]>(
+    () => [
+      { key: "asset_number", label: "#", sortable: true, render: (row) => row.asset_number ?? "—" },
+      {
+        key: "description",
+        label: "Description",
+        sortable: true,
+        render: (row) => (
+          <button onClick={() => setDetailId(row.id)} className="text-slate-700 hover:underline text-left font-medium">{row.description}</button>
+        ),
+      },
+      { key: "purchase_date", label: "Purchase Date", sortable: true, render: (row) => fmtDate(row.purchase_date) },
+      { key: "periods", label: "Periods", sortable: true, className: "text-center", cellClass: "text-center", render: (row) => row.periods },
+      { key: "total_amount_cents", label: "Total", sortable: true, className: "text-right", cellClass: "text-right tabular-nums", render: (row) => fmtCents(row.total_amount_cents) },
+      {
+        key: "amortized_cents",
+        label: "Amortized",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right tabular-nums text-emerald-700",
+        render: (row) => fmtCents(row.amortized_cents),
+      },
+      {
+        key: "remaining",
+        label: "Remaining",
+        className: "text-right",
+        cellClass: "text-right tabular-nums text-gray-500",
+        render: (row) => fmtCents(row.total_amount_cents - row.amortized_cents),
+      },
+      { key: "pending_periods", label: "Pending", className: "text-center", cellClass: "text-center text-gray-500", render: (row) => row.pending_periods },
+      {
+        key: "status",
+        label: "Status",
+        sortable: true,
+        render: (row) => (
+          <span className={`inline-block rounded-sm px-2 py-0.5 text-xs font-semibold ${STATUS_COLOR[row.status] ?? "bg-gray-100 text-gray-600"}`}>
+            {row.status.replace("_", " ")}
+          </span>
+        ),
+      },
+      {
+        key: "actions",
+        label: "Actions",
+        alwaysVisible: true,
+        render: (row) => (
+          <button onClick={() => setDetailId(row.id)} className="text-xs text-slate-700 hover:underline">Schedule</button>
+        ),
+      },
+    ],
+    [],
+  );
+
+  const filterBar = (
+    <div className="flex flex-wrap gap-2 items-center">
+      <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setOffset(0); }}
+        className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-emerald-500">
+        <option value="">All statuses</option>
+        <option value="active">Active</option>
+        <option value="fully_amortized">Fully Amortized</option>
+        <option value="voided">Voided</option>
+      </select>
+      <span className="text-xs text-gray-500">{total.toLocaleString()} asset{total !== 1 ? "s" : ""}</span>
+    </div>
+  );
 
   return (
-    <AccountingSubNavWrapper title="Prepaid Expenses" subtitle="Prepaid assets and amortization schedules">
+    <AccountingSubNavWrapper
+      title="Prepaid Expenses"
+      subtitle="Prepaid assets and amortization schedules"
+      actions={
+        <button onClick={() => setShowCreate(true)}
+          className="rounded-sm bg-emerald-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-800">
+          + Create Prepaid
+        </button>
+      }
+    >
       {showCreate && (
         <CreateModal companyId={operatingCompanyId} onClose={() => setShowCreate(false)}
           onCreated={() => queryClient.invalidateQueries({ queryKey: ["prepaid-expenses", operatingCompanyId] })} />
@@ -221,69 +294,18 @@ export function PrepaidExpensesPage() {
         <SchedulePanel detail={detail} onClose={() => setDetailId(null)} />
       )}
 
-      <div className="flex flex-wrap gap-2 mb-4 items-center">
-        <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setOffset(0); }}
-          className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-emerald-500">
-          <option value="">All statuses</option>
-          <option value="active">Active</option>
-          <option value="fully_amortized">Fully Amortized</option>
-          <option value="voided">Voided</option>
-        </select>
-        <span className="text-xs text-gray-500">{total.toLocaleString()} asset{total !== 1 ? "s" : ""}</span>
-        <div className="ml-auto">
-          <button onClick={() => setShowCreate(true)}
-            className="rounded-sm bg-emerald-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-800">
-            + Create Prepaid
-          </button>
-        </div>
-      </div>
+      {isError ? <p className="text-sm text-red-600 py-2 text-center">Failed to load prepaid expenses.</p> : null}
 
-      {isLoading ? (
-        <p className="text-sm text-gray-500 py-8 text-center">Loading…</p>
-      ) : isError ? (
-        <p className="text-sm text-red-600 py-8 text-center">Failed to load prepaid expenses.</p>
-      ) : listState.isEmpty ? (
-        <div className="py-12 text-center">
-          <p className="text-sm text-gray-500">No prepaid expenses found.</p>
-          <p className="text-xs text-gray-400 mt-1">Create a prepaid asset to track insurance, subscriptions, and other prepaid costs.</p>
-        </div>
-      ) : (
-        <div className="overflow-x-auto rounded-sm border border-gray-200">
-          <table className="min-w-full divide-y divide-gray-200 text-sm">
-            <thead className="bg-gray-50">
-              <tr>
-                {["#","Description","Purchase Date","Periods","Total","Amortized","Remaining","Pending","Status","Actions"].map((h) => (
-                  <th key={h} className="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide whitespace-nowrap">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 bg-white">
-              {items.map((row: PrepaidAssetListItem) => (
-                <tr key={row.id} className="hover:bg-gray-50">
-                  <td className="px-3 py-2 whitespace-nowrap text-gray-500 text-xs">{row.asset_number ?? "—"}</td>
-                  <td className="px-3 py-2 max-w-[200px] truncate font-medium">
-                    <button onClick={() => setDetailId(row.id)} className="text-slate-700 hover:underline text-left">{row.description}</button>
-                  </td>
-                  <td className="px-3 py-2 whitespace-nowrap text-gray-600">{fmtDate(row.purchase_date)}</td>
-                  <td className="px-3 py-2 whitespace-nowrap text-center text-gray-600">{row.periods}</td>
-                  <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums">{fmtCents(row.total_amount_cents)}</td>
-                  <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-emerald-700">{fmtCents(row.amortized_cents)}</td>
-                  <td className="px-3 py-2 whitespace-nowrap text-right tabular-nums text-gray-500">{fmtCents(row.total_amount_cents - row.amortized_cents)}</td>
-                  <td className="px-3 py-2 whitespace-nowrap text-center text-gray-500">{row.pending_periods}</td>
-                  <td className="px-3 py-2 whitespace-nowrap">
-                    <span className={`inline-block rounded-sm px-2 py-0.5 text-xs font-semibold ${STATUS_COLOR[row.status] ?? "bg-gray-100 text-gray-600"}`}>
-                      {row.status.replace("_", " ")}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2 whitespace-nowrap">
-                    <button onClick={() => setDetailId(row.id)} className="text-xs text-slate-700 hover:underline">Schedule</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <ParityTable
+        columns={columns}
+        rows={items}
+        rowKey={(row) => row.id}
+        loading={isPending || (isFetching && items.length === 0)}
+        filterBar={filterBar}
+        storageKey="prepaid-expenses-list"
+        initialPageSize={limit}
+        emptyText="No prepaid expenses found."
+      />
 
       {total > limit && (
         <div className="flex items-center justify-between mt-3 text-sm text-gray-600">

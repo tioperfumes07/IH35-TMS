@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { approveAbandonmentChargeback, listAbandonmentChargebacks } from "../../api/abandonment";
+import { approveAbandonmentChargeback, listAbandonmentChargebacks, type AbandonmentChargebackRow } from "../../api/abandonment";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -8,6 +8,7 @@ import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 export function AbandonmentQueuePage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -35,71 +36,77 @@ export function AbandonmentQueuePage() {
 
   const subtitle = useMemo(() => "Office queue for abandonment chargebacks (pending approvals).", []);
 
+  const columns = useMemo<ParityColumn<AbandonmentChargebackRow>[]>(
+    () => [
+      {
+        key: "load_id",
+        label: "Load",
+        render: (row) => {
+          const loadId = String(row.load_id ?? "");
+          return <EntityLink kind="load" id={row.load_id as string | undefined} label={loadId ? `${loadId.slice(0, 8)}…` : undefined} />;
+        },
+      },
+      {
+        key: "driver_id",
+        label: "Driver",
+        render: (row) => {
+          const driverId = String(row.driver_id ?? "");
+          return <EntityLink kind="driver" id={row.driver_id as string | undefined} label={driverId ? `${driverId.slice(0, 8)}…` : undefined} />;
+        },
+      },
+      { key: "total_chargeback_cents", label: "Total ¢", render: (row) => String(row.total_chargeback_cents ?? "") },
+      { key: "status", label: "Status", render: (row) => <span className="capitalize">{String(row.status ?? "")}</span> },
+      {
+        key: "actions",
+        label: "Actions",
+        alwaysVisible: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (row) => {
+          const id = String(row.id ?? "");
+          const st = String(row.status ?? "");
+          return st === "pending" ? (
+            <Button type="button" size="sm" onClick={() => void approveMut.mutateAsync(id)} disabled={approveMut.isPending}>
+              Approve
+            </Button>
+          ) : (
+            <span className="text-xs text-slate-400">—</span>
+          );
+        },
+      },
+    ],
+    [approveMut],
+  );
+
   return (
     <div className="mx-auto max-w-6xl space-y-3 px-3 py-3">
       <PageHeader title="Abandonment chargebacks" subtitle={subtitle} />
 
       {!companyId ? <div className="rounded-sm border border-slate-200 bg-slate-50 p-3 text-sm">Select a company.</div> : null}
 
-      <div className="flex flex-wrap items-center gap-2">
-        <SelectCombobox className="h-9 rounded-sm border border-gray-300 px-2 text-xs" value={status} onChange={(e) => setStatus(e.target.value as typeof status)}>
-          <option value="pending">Pending</option>
-          <option value="all">All</option>
-        </SelectCombobox>
-      </div>
+      {!listQuery.isLoading && listQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load abandonment queue"
+          status={0}
+          message={(listQuery.error as Error | undefined)?.message}
+          onRetry={() => void listQuery.refetch()}
+        />
+      ) : null}
 
-      <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full border-collapse text-left text-[13px]">
-          <thead className="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-600">
-            <tr>
-              <th className="border-b border-gray-200 px-2 py-2">Load</th>
-              <th className="border-b border-gray-200 px-2 py-2">Driver</th>
-              <th className="border-b border-gray-200 px-2 py-2">Total ¢</th>
-              <th className="border-b border-gray-200 px-2 py-2">Status</th>
-              <th className="border-b border-gray-200 px-2 py-2 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => {
-              const id = String(row.id ?? "");
-              const loadId = String(row.load_id ?? "");
-              const driverId = String(row.driver_id ?? "");
-              const total = String(row.total_chargeback_cents ?? "");
-              const st = String(row.status ?? "");
-              return (
-                <tr key={id} className="border-b border-gray-100">
-                  <td className="px-2 py-2 font-mono text-[11px]">
-                    <EntityLink kind="load" id={row.load_id as string | undefined} label={loadId ? `${loadId.slice(0, 8)}…` : undefined} />
-                  </td>
-                  <td className="px-2 py-2 font-mono text-[11px]">
-                    <EntityLink kind="driver" id={row.driver_id as string | undefined} label={driverId ? `${driverId.slice(0, 8)}…` : undefined} />
-                  </td>
-                  <td className="px-2 py-2">{total}</td>
-                  <td className="px-2 py-2 capitalize">{st}</td>
-                  <td className="px-2 py-2 text-right">
-                    {st === "pending" ? (
-                      <Button type="button" size="sm" onClick={() => void approveMut.mutateAsync(id)} disabled={approveMut.isPending}>
-                        Approve
-                      </Button>
-                    ) : (
-                      <span className="text-xs text-slate-400">—</span>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-        {!listQuery.isLoading && listQuery.isError ? (
-          <ListErrorState
-            title="Couldn't load abandonment queue"
-            status={0}
-            message={(listQuery.error as Error | undefined)?.message}
-            onRetry={() => void listQuery.refetch()}
-          />
-        ) : null}
-        {!listQuery.isLoading && !listQuery.isError && rows.length === 0 ? <div className="p-4 text-sm text-slate-500">No rows.</div> : null}
-      </div>
+      <ParityTable
+        columns={columns}
+        rows={rows}
+        rowKey={(row) => String(row.id ?? "")}
+        loading={listQuery.isPending || (listQuery.isFetching && rows.length === 0)}
+        filterBar={
+          <SelectCombobox className="h-9 rounded-sm border border-gray-300 px-2 text-xs" value={status} onChange={(e) => setStatus(e.target.value as typeof status)}>
+            <option value="pending">Pending</option>
+            <option value="all">All</option>
+          </SelectCombobox>
+        }
+        storageKey="abandonment-queue"
+        emptyText="No rows."
+      />
     </div>
   );
 }

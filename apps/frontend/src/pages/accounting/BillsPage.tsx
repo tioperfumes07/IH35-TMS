@@ -1,28 +1,20 @@
 import { formatDateUS } from "../../lib/formatDate";
-import { Fragment, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
-import { ChevronDown, ChevronRight } from "lucide-react";
 import { listBills, listPaymentsForBill, type BillStatus, type VendorBill } from "../../api/accounting";
 import { BillAllocationPanel } from "../../components/allocation";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
-import {
-  BulkActionBar,
-  BulkActionModal,
-  BulkProgressDialog,
-  TableSelection,
-  TableSelectionHeader,
-  useBulkSelection,
-} from "../../components/bulk";
+import { BulkActionModal, BulkProgressDialog } from "../../components/bulk";
 import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
 import { useToast } from "../../components/Toast";
 import { TasksTab } from "../../components/tasks/TasksTab";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
-import { useListState } from "../../components/list-state";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 export const BILL_LIST_CATEGORIES = ["maintenance", "repair", "fuel", "driver"] as const;
 export type BillListCategory = (typeof BILL_LIST_CATEGORIES)[number];
@@ -96,22 +88,52 @@ function billKpiCard(label: string, value: string, sublabel: string, tone: "neut
   );
 }
 
+function BillPaymentsSubTable({ billId, companyId }: { billId: string; companyId: string }) {
+  const paymentsQuery = useQuery({
+    queryKey: ["accounting", "bill-payments", companyId, billId],
+    queryFn: () => listPaymentsForBill(billId, companyId),
+    enabled: Boolean(companyId && billId),
+  });
+  const payments = paymentsQuery.data?.payments ?? [];
+  if (paymentsQuery.isLoading) return <div className="text-xs text-gray-500">Loading payments…</div>;
+  if (payments.length === 0) return null;
+  return (
+    <table className="w-full text-[11px]">
+      <thead>
+        <tr className="text-left text-gray-600">
+          <th className="py-1 pr-2">Payment date</th>
+          <th className="py-1 pr-2 text-right">Amount</th>
+          <th className="py-1 pr-2">Bank account</th>
+          <th className="py-1 pr-2">Memo</th>
+        </tr>
+      </thead>
+      <tbody>
+        {payments.map((p) => (
+          <tr key={p.id}>
+            <td className="py-1 pr-2">{formatDateUS(p.payment_date)}</td>
+            <td className="py-1 pr-2 text-right">{money(p.amount_cents)}</td>
+            <td className="py-1 pr-2 font-mono text-[10px]"><EntityLink kind="bank_account" id={p.from_bank_account_id ?? undefined} label={p.from_bank_account_id ? p.from_bank_account_id.slice(0, 8) : undefined} /></td>
+            <td className="py-1 pr-2 text-gray-700">{p.memo || p.reference_number || "—"}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
 export function BillsPage() {
   const { selectedCompanyId } = useCompanyContext();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const bulk = useEntityBulkAction();
-  const selection = useBulkSelection({
-    cap: 200,
-    onCapExceeded: (error) => pushToast(error.message, "error"),
-  });
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const [scheduledDate, setScheduledDate] = useState("");
+  const [pendingIds, setPendingIds] = useState<string[]>([]);
+  const [tableResetKey, setTableResetKey] = useState(0);
   const companyId = selectedCompanyId ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
   const category = parseBillCategory(searchParams.get("category"));
   const [status, setStatus] = useState<"" | BillStatus | "unpaid">("");
-  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [allocationBillId, setAllocationBillId] = useState<string | null>(null);
 
   const billsQuery = useQuery({
@@ -125,19 +147,11 @@ export function BillsPage() {
     enabled: Boolean(companyId),
   });
 
-  const paymentsQuery = useQuery({
-    queryKey: ["accounting", "bill-payments", companyId, expandedId],
-    queryFn: () => listPaymentsForBill(expandedId!, companyId),
-    enabled: Boolean(companyId && expandedId),
-  });
-
   const rows = useMemo(() => {
     const all = billsQuery.data?.rows ?? [];
     if (!category) return all;
     return all.filter((bill) => billMatchesCategory(bill, category));
   }, [billsQuery.data?.rows, category]);
-  const pageRowIds = useMemo(() => rows.map((bill) => bill.id), [rows]);
-  const listState = useListState(billsQuery, rows.length === 0);
 
   const billKpis = useMemo(() => {
     const all = billsQuery.data?.rows ?? [];
@@ -174,14 +188,15 @@ export function BillsPage() {
         {
           domain: "accounting",
           resource: "bills",
-          ids: Array.from(selection.selectedIds),
+          ids: pendingIds,
           action: "mark_scheduled",
           payload: { scheduled_date: scheduledDate },
           operatingCompanyId: companyId,
           invalidateKeys: [["accounting", "bills", companyId]],
         },
         () => {
-          selection.clear();
+          setPendingIds([]);
+          setTableResetKey((k) => k + 1);
           void queryClient.invalidateQueries({ queryKey: ["accounting", "bills"] });
         }
       );
@@ -190,7 +205,6 @@ export function BillsPage() {
     }
   };
 
-  const expandedBill = useMemo(() => rows.find((b) => b.id === expandedId) ?? null, [rows, expandedId]);
   const allocationBill = useMemo(() => rows.find((b) => b.id === allocationBillId) ?? null, [rows, allocationBillId]);
 
   function setCategory(next: BillListCategory | "") {
@@ -205,28 +219,54 @@ export function BillsPage() {
     );
   }
 
-  function toggleExpand(bill: VendorBill) {
-    if (bill.status !== "partial") return;
-    setExpandedId((cur) => (cur === bill.id ? null : bill.id));
-  }
+  const columns = useMemo<ParityColumn<VendorBill>[]>(
+    () => [
+      { key: "vendor_name", label: "Vendor", sortable: true, render: (bill) => <EntityLink kind="vendor" id={bill.vendor_id} label={bill.vendor_name || bill.vendor_id} /> },
+      { key: "bill_number", label: "Bill #", sortable: true, render: (bill) => <EntityLink kind="bill" id={bill.id} label={bill.bill_number || bill.id.slice(0, 8)} /> },
+      { key: "bill_date", label: "Date", sortable: true, render: (bill) => formatDateUS(bill.bill_date) },
+      { key: "amount_cents", label: "Original", sortable: true, className: "text-right", cellClass: "text-right", render: (bill) => money(bill.amount_cents) },
+      { key: "paid_cents", label: "Paid", sortable: true, className: "text-right", cellClass: "text-right", render: (bill) => money(bill.paid_cents) },
+      {
+        key: "balance",
+        label: "Balance",
+        className: "text-right",
+        cellClass: "text-right font-semibold",
+        render: (bill) => money(bill.balance_cents ?? Math.max(0, bill.amount_cents - bill.paid_cents)),
+      },
+      {
+        key: "status",
+        label: "Status",
+        sortable: true,
+        render: (bill) => <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ${statusBadgeClass(bill.status)}`}>{bill.status}</span>,
+      },
+      { key: "is_reconciled", label: "Reconciled", render: (bill) => <ReconciledBadge isReconciled={bill.is_reconciled} /> },
+      {
+        key: "allocate",
+        label: "Allocate",
+        alwaysVisible: true,
+        render: (bill) =>
+          bill.status === "voided" ? (
+            "—"
+          ) : (
+            <button
+              type="button"
+              className={`rounded border px-2 py-0.5 text-[11px] font-medium ${
+                allocationBillId === bill.id
+                  ? "border-slate-300 bg-slate-100 text-slate-700"
+                  : "border-gray-300 bg-white text-gray-800 hover:bg-gray-50"
+              }`}
+              onClick={() => setAllocationBillId((current) => (current === bill.id ? null : bill.id))}
+            >
+              {allocationBillId === bill.id ? "Selected" : "Allocate"}
+            </button>
+          ),
+      },
+    ],
+    [allocationBillId],
+  );
 
-  return (
-    <AccountingSubNavWrapper
-      title="Bills"
-      subtitle="Vendor bills with paid balance and partial payment history"
-      kpiStrip={
-        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-          {billKpiCard("Open Bills", money(billKpis.openAmount), `${billKpis.openCount} open`, billKpis.openCount ? "danger" : "neutral")}
-          {billKpiCard("MTD Bills", money(billKpis.mtdAmount), `${billKpis.mtdCount} bills`, "warn")}
-          {billKpiCard("Overdue Bills", money(billKpis.overdueAmount), `${billKpis.overdueCount} overdue`, billKpis.overdueCount ? "danger" : "neutral")}
-          {billKpiCard("Past 90 days", money(billKpis.past90Amount), `${billKpis.past90Count} bills`)}
-        </div>
-      }
-    >
-    <div className="space-y-3">
-      {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
-      {billsQuery.isError ? <ListErrorBanner onRetry={() => void billsQuery.refetch()} /> : null}
-
+  const filterBar = (
+    <div className="flex flex-col gap-2 w-full">
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <span className="text-gray-600">Category:</span>
         <button
@@ -260,159 +300,64 @@ export function BillsPage() {
           <option value="voided">Voided</option>
         </SelectCombobox>
       </div>
+    </div>
+  );
 
-      <BulkActionBar
-        selectedCount={selection.count}
-        actions={[{ id: "mark-scheduled", label: "Mark scheduled", onClick: () => setScheduleModalOpen(true) }]}
-        onClear={selection.clear}
-      />
+  return (
+    <AccountingSubNavWrapper
+      title="Bills"
+      subtitle="Vendor bills with paid balance and partial payment history"
+      kpiStrip={
+        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+          {billKpiCard("Open Bills", money(billKpis.openAmount), `${billKpis.openCount} open`, billKpis.openCount ? "danger" : "neutral")}
+          {billKpiCard("MTD Bills", money(billKpis.mtdAmount), `${billKpis.mtdCount} bills`, "warn")}
+          {billKpiCard("Overdue Bills", money(billKpis.overdueAmount), `${billKpis.overdueCount} overdue`, billKpis.overdueCount ? "danger" : "neutral")}
+          {billKpiCard("Past 90 days", money(billKpis.past90Amount), `${billKpis.past90Count} bills`)}
+        </div>
+      }
+    >
+    <div className="space-y-3">
+      {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
+      {billsQuery.isError ? <ListErrorBanner onRetry={() => void billsQuery.refetch()} /> : null}
 
-      <TableSelection
+      <ParityTable
+        key={tableResetKey}
+        columns={columns}
         rows={rows}
-        getId={(bill) => bill.id}
-        selectedIds={selection.selectedIds}
-        onSelectionChange={selection.setSelectedIds}
-        pageRowIds={pageRowIds}
-        onCapExceeded={(message) => pushToast(message, "error")}
-      >
-        {(selectCtx) => (
-      <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-full text-left text-xs">
-          <thead className="border-b border-gray-200 bg-gray-50 text-[11px] font-semibold uppercase tracking-wide text-gray-600">
-            <tr>
-              <th className="px-3 py-2 w-8">
-                <TableSelectionHeader
-                  selectedIds={selection.selectedIds}
-                  pageRowIds={pageRowIds}
-                  onSelectionChange={selection.setSelectedIds}
-                  onCapExceeded={(message) => pushToast(message, "error")}
-                />
-              </th>
-              <th className="px-3 py-2 w-8" />
-              <th className="px-3 py-2">Vendor</th>
-              <th className="px-3 py-2">Bill #</th>
-              <th className="px-3 py-2">Date</th>
-              <th className="px-3 py-2 text-right">Original</th>
-              <th className="px-3 py-2 text-right">Paid</th>
-              <th className="px-3 py-2 text-right">Balance</th>
-              <th className="px-3 py-2">Status</th>
-              <th className="px-3 py-2">Reconciled</th>
-              <th className="px-3 py-2">Allocate</th>
-            </tr>
-          </thead>
-          <tbody>
-            {billsQuery.isLoading ? (
-              <tr>
-                <td colSpan={11} className="px-3 py-4 text-gray-500">
-                  Loading…
-                </td>
-              </tr>
-            ) : null}
-            {listState.isEmpty ? (
-              <tr>
-                <td colSpan={11} className="px-3 py-4 text-gray-500">
-                  No bills found.
-                </td>
-              </tr>
-            ) : null}
-            {rows.map((bill) => {
-              const bal = bill.balance_cents ?? Math.max(0, bill.amount_cents - bill.paid_cents);
-              // Every bill row is expandable (record-level detail incl. its Tasks history); the payment
-              // sub-table only appears for partially-paid bills.
-              const hasPayments = bill.status === "partial";
-              const open = expandedId === bill.id;
-              return (
-                <Fragment key={bill.id}>
-                  <tr className="border-b border-gray-100">
-                    <td className="px-3 py-2" onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}>
-                      <input
-                        type="checkbox"
-                        aria-label={`Select bill ${bill.bill_number || bill.id}`}
-                        checked={selectCtx.isSelected(bill.id)}
-                        onChange={() => selectCtx.toggle(bill.id)}
-                      />
-                    </td>
-                    <td className="px-3 py-2">
-                      <button type="button" className="text-gray-700" onClick={() => toggleExpand(bill)} aria-label={open ? "Collapse details" : "Expand details"}>
-                        {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                      </button>
-                    </td>
-                    <td className="px-3 py-2 font-medium text-gray-900"><EntityLink kind="vendor" id={bill.vendor_id} label={bill.vendor_name || bill.vendor_id} /></td>
-                    <td className="px-3 py-2"><EntityLink kind="bill" id={bill.id} label={bill.bill_number || bill.id.slice(0, 8)} /></td>
-                    <td className="px-3 py-2">{formatDateUS(bill.bill_date)}</td>
-                    <td className="px-3 py-2 text-right">{money(bill.amount_cents)}</td>
-                    <td className="px-3 py-2 text-right">{money(bill.paid_cents)}</td>
-                    <td className="px-3 py-2 text-right font-semibold">{money(bal)}</td>
-                    <td className="px-3 py-2">
-                      <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ${statusBadgeClass(bill.status)}`}>{bill.status}</span>
-                    </td>
-                    <td className="px-3 py-2">
-                      <ReconciledBadge isReconciled={bill.is_reconciled} />
-                    </td>
-                    <td className="px-3 py-2">
-                      {bill.status === "voided" ? (
-                        "—"
-                      ) : (
-                        <button
-                          type="button"
-                          className={`rounded border px-2 py-0.5 text-[11px] font-medium ${
-                            allocationBillId === bill.id
-                              ? "border-slate-300 bg-slate-100 text-slate-700"
-                              : "border-gray-300 bg-white text-gray-800 hover:bg-gray-50"
-                          }`}
-                          onClick={() => setAllocationBillId((current) => (current === bill.id ? null : bill.id))}
-                        >
-                          {allocationBillId === bill.id ? "Selected" : "Allocate"}
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                  {open ? (
-                    <tr key={`${bill.id}-sub`} className="bg-gray-50">
-                      <td colSpan={11} className="space-y-3 px-3 py-2">
-                        {hasPayments ? (
-                          paymentsQuery.isLoading && expandedBill?.id === bill.id ? (
-                            <div className="text-xs text-gray-500">Loading payments…</div>
-                          ) : (
-                            <table className="w-full text-[11px]">
-                              <thead>
-                                <tr className="text-left text-gray-600">
-                                  <th className="py-1 pr-2">Payment date</th>
-                                  <th className="py-1 pr-2 text-right">Amount</th>
-                                  <th className="py-1 pr-2">Bank account</th>
-                                  <th className="py-1 pr-2">Memo</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {(paymentsQuery.data?.payments ?? []).map((p) => (
-                                  <tr key={p.id}>
-                                    <td className="py-1 pr-2">{formatDateUS(p.payment_date)}</td>
-                                    <td className="py-1 pr-2 text-right">{money(p.amount_cents)}</td>
-                                    <td className="py-1 pr-2 font-mono text-[10px]"><EntityLink kind="bank_account" id={p.from_bank_account_id ?? undefined} label={p.from_bank_account_id ? p.from_bank_account_id.slice(0, 8) : undefined} /></td>
-                                    <td className="py-1 pr-2 text-gray-700">{p.memo || p.reference_number || "—"}</td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          )
-                        ) : null}
-                        <TasksTab operatingCompanyId={companyId} targetType="bill" targetId={bill.id} targetLabel={bill.bill_number || bill.id.slice(0, 8)} />
-                      </td>
-                    </tr>
-                  ) : null}
-                </Fragment>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+        rowKey={(bill) => bill.id}
+        loading={billsQuery.isPending || (billsQuery.isFetching && rows.length === 0)}
+        filterBar={filterBar}
+        exportFilename="bills"
+        storageKey="bills-list"
+        initialPageSize={50}
+        selectable
+        maxSelectable={200}
+        onSelectionCapExceeded={() => pushToast("You can select up to 200 bills at once.", "error")}
+        batchActions={(selected) => (
+          <button
+            type="button"
+            className="rounded-sm border border-gray-300 px-1.5 py-0.5"
+            onClick={() => {
+              setPendingIds(selected.map((bill) => bill.id));
+              setScheduleModalOpen(true);
+            }}
+          >
+            Mark scheduled
+          </button>
         )}
-      </TableSelection>
+        renderExpanded={(bill) => (
+          <div className="space-y-3">
+            {bill.status === "partial" ? <BillPaymentsSubTable billId={bill.id} companyId={companyId} /> : null}
+            <TasksTab operatingCompanyId={companyId} targetType="bill" targetId={bill.id} targetLabel={bill.bill_number || bill.id.slice(0, 8)} />
+          </div>
+        )}
+        emptyText="No bills found."
+      />
 
       <BulkActionModal
         open={scheduleModalOpen}
         actionLabel="Mark scheduled"
-        affectedCount={selection.count}
+        affectedCount={pendingIds.length}
         description="Set a scheduled payment date on selected open bills."
         payloadFields={
           <label className="block text-sm text-gray-700">
