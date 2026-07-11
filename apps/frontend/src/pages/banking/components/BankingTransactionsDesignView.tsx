@@ -549,7 +549,11 @@ export function BankingTransactionsDesignView({
     return {
       mode: "categorize",
       transactionType: tx.is_credit ? "Money in" : "Money out",
-      fromTo: description,
+      // FIX-04 — do NOT seed From/To with the raw bank description (that was the defect: the column
+      // just echoed the description and carried no account). From/To is derived from the REAL accounts
+      // by computeFromTo() at render/export time; this field now only holds an explicit operator-typed
+      // (or transfer/CC) From/To override.
+      fromTo: "",
       accountId: "",
       className: "",
       location: "",
@@ -584,6 +588,37 @@ export function BankingTransactionsDesignView({
 
   function setDraft(tx: PlaidBankTransaction, patch: Partial<RowDetailDraft>) {
     setDrafts((prev) => ({ ...prev, [tx.id]: { ...(prev[tx.id] ?? makeDefaultDraft(tx)), ...patch } }));
+  }
+
+  // FIX-04 — the From/To column names the REAL accounts on each side (QBO register style), not the raw
+  // bank description. FROM = the transaction's own bank/cash account (banking.bank_accounts). TO = the
+  // categorize draft's chosen side, reusing the SAME draft fields the Category/Payee/Customer columns
+  // use: the GL category account (draft.accountId → catalogs.accounts name), else the vendor (payee),
+  // else the customer — else an explicit From/To the operator typed (or a transfer/CC target). Money-out
+  // reads "BANK → target"; money-in reverses. While uncategorized we show the bank on its known side and
+  // an honest "Uncategorized" open side — never a fabricated account. Derives from the draft so it
+  // recomputes live as the operator categorizes.
+  function bankAccountLabel(tx: PlaidBankTransaction): string {
+    const acct = accounts.find((a) => a.id === tx.bank_account_id) ?? selectedAccount;
+    return acct?.account_name?.trim() || "Bank account";
+  }
+
+  function computeFromTo(tx: PlaidBankTransaction, draft: RowDetailDraft): string {
+    // An explicit From/To the operator typed (or a transfer/CC modal target) already names real
+    // accounts — respect it verbatim.
+    const explicit = draft.fromTo.trim();
+    if (explicit) return explicit;
+    const bank = bankAccountLabel(tx);
+    const glName = draft.accountId
+      ? ((coaQuery.data?.accounts ?? []).find((a) => a.id === draft.accountId)?.account_name ?? "").trim()
+      : "";
+    const target =
+      glName ||
+      (draft.vendorId ? draft.payee.trim() : "") ||
+      (draft.customerId ? draft.customerProject.trim() : "");
+    const otherSide = target || "Uncategorized";
+    const isMoneyIn = tx.is_credit || Number(tx.amount_cents ?? 0) < 0;
+    return isMoneyIn ? `${otherSide} → ${bank}` : `${bank} → ${otherSide}`;
   }
 
   async function postTransaction(tx: PlaidBankTransaction) {
@@ -657,7 +692,7 @@ export function BankingTransactionsDesignView({
         spent > 0 ? (spent / 100).toFixed(2) : "",
         received > 0 ? (received / 100).toFixed(2) : "",
         bal == null ? "" : (bal / 100).toFixed(2),
-        draft.fromTo,
+        computeFromTo(tx, draft),
         draft.customerProject,
         draft.productService,
       ];
@@ -1303,7 +1338,7 @@ export function BankingTransactionsDesignView({
                         </td>
                       );
                     })()}
-                    <td className="truncate px-1 py-2 align-top text-gray-700">{draft.fromTo || "—"}</td>
+                    <td className="truncate px-1 py-2 align-top text-gray-700">{computeFromTo(tx, draft) || "—"}</td>
                     <td className="truncate px-1 py-2 align-top text-gray-700">
                       {draft.customerId ? (
                         <EntityLink kind="customer" id={draft.customerId} label={draft.customerProject || "—"} />
