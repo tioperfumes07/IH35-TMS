@@ -1,0 +1,17 @@
+{
+  "block_id": "bf9b-wo-cost-unit-load-allocation-gl_DISPATCH",
+  "status": "NEEDS-VERIFY",
+  "classification": "FINANCIAL",
+  "phase": "tier1",
+  "source": "MASTER-6 authored dispatch (03-TIER1-BLOCKS)",
+  "source_file": "083_bf9b-wo-cost-unit-load-allocation-gl_DISPATCH.txt",
+  "allowed_files": [
+    "additive only; ALTER/CREATE on existing financial tables = PROTECTED (owner-ceremony). No delete."
+  ],
+  "acceptance": [
+    {
+      "check": "Authored claim (no explicit ACCEPTANCE[] in dispatch): BF9-B flow: Work Order cost -> Unit/Load allocation -> GL (doc claims PARTIAL: creation WORKS (a prior phantom-column claim was a false posi"
+    }
+  ],
+  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+}

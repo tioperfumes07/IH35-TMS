@@ -1,0 +1,17 @@
+{
+  "block_id": "load-cancellations-fk-per-entity-repoi_DISPATCH",
+  "status": "NEEDS-VERIFY",
+  "classification": "FINANCIAL",
+  "phase": "tier1",
+  "source": "MASTER-6 authored dispatch (03-TIER1-BLOCKS)",
+  "source_file": "098_load-cancellations-fk-per-entity-repoi_DISPATCH.txt",
+  "allowed_files": [
+    "additive only; ALTER/CREATE on existing financial tables = PROTECTED (owner-ceremony). No delete."
+  ],
+  "acceptance": [
+    {
+      "check": "Authored claim (no explicit ACCEPTANCE[] in dispatch): Migrate dispatch.load_cancellations off the legacy GLOBAL catalogs.cancellation_reasons onto the per-entity catalogs.load_cancellation_reaso"
+    }
+  ],
+  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+}

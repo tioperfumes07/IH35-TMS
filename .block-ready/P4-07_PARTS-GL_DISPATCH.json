@@ -1,0 +1,20 @@
+{
+  "block_id": "P4-07_PARTS-GL_DISPATCH",
+  "status": "NEEDS-VERIFY",
+  "classification": "FINANCIAL",
+  "phase": "phase4",
+  "source": "MASTER-6 authored dispatch (04-PHASE4-CROSS-MODULE)",
+  "source_file": "P4-07_PARTS-GL_DISPATCH.txt",
+  "allowed_files": [
+    "parts + accounting posting; DESIGN-FIRST; PROTECTED (financial + schema) owner-ceremony; reuse posters. No delete."
+  ],
+  "acceptance": [
+    {
+      "check": "Design doc; then part receipt posts an inventory-asset JE, WO consumption posts COGS + links the WO; parts_inventory carries sku/category/notes; void sets a real flag."
+    },
+    {
+      "check": "Neon-branch proof."
+    }
+  ],
+  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+}

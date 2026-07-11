@@ -1,0 +1,17 @@
+{
+  "block_id": "0010-f11-jep-duplicate-idempotency-gro_STALE",
+  "status": "NEEDS-VERIFY",
+  "classification": "FINANCIAL",
+  "phase": "tier1",
+  "source": "MASTER-6 authored dispatch (03-TIER1-BLOCKS)",
+  "source_file": "061_0010-f11-jep-duplicate-idempotency-gro_STALE.txt",
+  "allowed_files": [
+    "authored dispatch — LANE LOCK not explicit; scope per 03-TIER1-BLOCKS"
+  ],
+  "acceptance": [
+    {
+      "check": "Authored claim (no explicit ACCEPTANCE[] in dispatch): F11: 2 pre-existing duplicate idempotency_key groups exist in accounting.journal_entry_postings (from before the F10 unique index)"
+    }
+  ],
+  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+}

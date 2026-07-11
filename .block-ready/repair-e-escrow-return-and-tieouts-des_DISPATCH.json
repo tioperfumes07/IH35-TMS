@@ -1,0 +1,17 @@
+{
+  "block_id": "repair-e-escrow-return-and-tieouts-des_DISPATCH",
+  "status": "NEEDS-VERIFY",
+  "classification": "FINANCIAL",
+  "phase": "tier1",
+  "source": "MASTER-6 authored dispatch (03-TIER1-BLOCKS)",
+  "source_file": "100_repair-e-escrow-return-and-tieouts-des_DISPATCH.txt",
+  "allowed_files": [
+    "additive only; ALTER/CREATE on existing financial tables = PROTECTED (owner-ceremony). No delete."
+  ],
+  "acceptance": [
+    {
+      "check": "Authored claim (no explicit ACCEPTANCE[] in dispatch): DESIGN DOC (Tier-1, never build solo): escrow return-on-separation trigger, unify 3 parallel escrow ledgers onto accounting.escrow_accounts,"
+    }
+  ],
+  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+}

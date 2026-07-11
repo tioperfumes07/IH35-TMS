@@ -1,0 +1,29 @@
+{
+  "block_id": "UI-02_QUICKBOOKS-PARITY-AND-WORKING-CREATE_DISPATCH",
+  "status": "NEEDS-VERIFY",
+  "classification": "FINANCIAL",
+  "phase": "design-parity",
+  "source": "MASTER-6 authored dispatch (07-UI-DESIGN)",
+  "source_file": "UI-02_QUICKBOOKS-PARITY-AND-WORKING-CREATE_DISPATCH.txt",
+  "allowed_files": [
+    "apps/frontend/src/** (presentation + wiring to EXISTING endpoints) + scripts/** + ci guard list. NO backend endpoint changes, NO db/migrations, NO posting/GL/amount math. Additive-safe: never remove a field/tab/route; remove only dead-stub gaps, raw date inputs, redundant inner frames. Ships on green."
+  ],
+  "acceptance": [
+    {
+      "check": "Every Create/wizard/creator/catalog persists + confirms + shows the new row (list render proof or test). 0 dead create forms (guard)."
+    },
+    {
+      "check": "0 raw type=\"date\" remain (guard); every date field opens the QuickBooks month-grid picker."
+    },
+    {
+      "check": "No new boxes-within-boxes (guard); existing flattened where safe (list what changed)."
+    },
+    {
+      "check": "Expenses + creators/wizards/catalogs visually match docs/specs/qbo-parity/ + approved screens."
+    },
+    {
+      "check": "All 4 guards wired (G3 passes), --selftests pass, tsc clean, mobile-responsive new_vs_baseline=0."
+    }
+  ],
+  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+}

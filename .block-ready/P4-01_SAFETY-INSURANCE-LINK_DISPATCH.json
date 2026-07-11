@@ -1,0 +1,20 @@
+{
+  "block_id": "P4-01_SAFETY-INSURANCE-LINK_DISPATCH",
+  "status": "NEEDS-VERIFY",
+  "classification": "FINANCIAL",
+  "phase": "phase4",
+  "source": "MASTER-6 authored dispatch (04-PHASE4-CROSS-MODULE)",
+  "source_file": "P4-01_SAFETY-INSURANCE-LINK_DISPATCH.txt",
+  "allowed_files": [
+    "safety.* + insurance.claim columns/FK; add-column+FK = PROTECTED owner-ceremony. No delete. Coordinate with P4-UNIT-IDENTITY (asset vs unit)."
+  ],
+  "acceptance": [
+    {
+      "check": "Test: an insurable accident opens/links a claim; both-way FK resolves; non-insurable -> explicit 'no claim' recorded (not silent)."
+    },
+    {
+      "check": "Neon-branch proof of the additive columns+FKs."
+    }
+  ],
+  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+}

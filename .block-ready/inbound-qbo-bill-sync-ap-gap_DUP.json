@@ -1,0 +1,17 @@
+{
+  "block_id": "inbound-qbo-bill-sync-ap-gap_DUP",
+  "status": "duplicate",
+  "classification": "FINANCIAL",
+  "phase": "tier1",
+  "source": "MASTER-6 authored dispatch (03-TIER1-BLOCKS)",
+  "source_file": "054_inbound-qbo-bill-sync-ap-gap_DUP.txt",
+  "allowed_files": [
+    "authored dispatch — LANE LOCK not explicit; scope per 03-TIER1-BLOCKS"
+  ],
+  "acceptance": [
+    {
+      "check": "Authored claim (no explicit ACCEPTANCE[] in dispatch): Build inbound QBO bill sync so TMS A/P ties to QuickBooks' open A/P ($1,220,674.25 across 151 vendors as of the audit date)"
+    }
+  ],
+  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+}

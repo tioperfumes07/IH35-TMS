@@ -1,0 +1,17 @@
+{
+  "block_id": "catalog-create-split-brain-qbo-mirror_DUP",
+  "status": "duplicate",
+  "classification": "FINANCIAL",
+  "phase": "tier1",
+  "source": "MASTER-6 authored dispatch (03-TIER1-BLOCKS)",
+  "source_file": "048_catalog-create-split-brain-qbo-mirror_DUP.txt",
+  "allowed_files": [
+    "authored dispatch — LANE LOCK not explicit; scope per 03-TIER1-BLOCKS"
+  ],
+  "acceptance": [
+    {
+      "check": "Authored claim (no explicit ACCEPTANCE[] in dispatch): mdata/qbo-master-write.routes.ts inserts new catalog entries into mirror tables (mdata.qbo_vendors/qbo_items/qbo_accounts) while dropdowns r"
+    }
+  ],
+  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+}

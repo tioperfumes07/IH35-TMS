@@ -1,0 +1,17 @@
+{
+  "block_id": "0518-r06-70of145-tables-rls-not-forced_STALE",
+  "status": "NEEDS-VERIFY",
+  "classification": "FINANCIAL",
+  "phase": "tier1",
+  "source": "MASTER-6 authored dispatch (03-TIER1-BLOCKS)",
+  "source_file": "117_0518-r06-70of145-tables-rls-not-forced_STALE.txt",
+  "allowed_files": [
+    "authored dispatch — LANE LOCK not explicit; scope per 03-TIER1-BLOCKS"
+  ],
+  "acceptance": [
+    {
+      "check": "Authored claim (no explicit ACCEPTANCE[] in dispatch): 70/145 financial-schema tables (incl. driver_finance.escrow_balances, escrow_ledger, settlement_lines) RLS ENABLED but NOT FORCED — driver-m"
+    }
+  ],
+  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+}

@@ -1,0 +1,17 @@
+{
+  "block_id": "PHASE2_BANK-AUTOMATCH_never-runs_DISPATCH",
+  "status": "NEEDS-VERIFY",
+  "classification": "FINANCIAL",
+  "phase": "money-wiring",
+  "source": "MASTER-6 authored dispatch (02-MONEY-WIRING-P1-P3)",
+  "source_file": "PHASE2_BANK-AUTOMATCH_never-runs_DISPATCH.txt",
+  "allowed_files": [
+    "authored dispatch — LANE LOCK not explicit; scope per 02-MONEY-WIRING-P1-P3"
+  ],
+  "acceptance": [
+    {
+      "check": "Authored claim (no explicit ACCEPTANCE[] in dispatch): Nightly bank-feed auto-match cron is env-disabled by default and has never run in prod"
+    }
+  ],
+  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+}

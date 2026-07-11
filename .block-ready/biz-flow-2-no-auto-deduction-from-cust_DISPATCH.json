@@ -1,0 +1,17 @@
+{
+  "block_id": "biz-flow-2-no-auto-deduction-from-cust_DISPATCH",
+  "status": "NEEDS-VERIFY",
+  "classification": "FINANCIAL",
+  "phase": "tier1",
+  "source": "MASTER-6 authored dispatch (03-TIER1-BLOCKS)",
+  "source_file": "084_biz-flow-2-no-auto-deduction-from-cust_DISPATCH.txt",
+  "allowed_files": [
+    "additive only; ALTER/CREATE on existing financial tables = PROTECTED (owner-ceremony). No delete."
+  ],
+  "acceptance": [
+    {
+      "check": "Authored claim (no explicit ACCEPTANCE[] in dispatch): Auto-create a driver settlement deduction when a customer/company expense is attributed to a driver"
+    }
+  ],
+  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+}

@@ -1,0 +1,20 @@
+{
+  "block_id": "P4-06_WO-FK_DISPATCH",
+  "status": "NEEDS-VERIFY",
+  "classification": "FINANCIAL",
+  "phase": "phase4",
+  "source": "MASTER-6 authored dispatch (04-PHASE4-CROSS-MODULE)",
+  "source_file": "P4-06_WO-FK_DISPATCH.txt",
+  "allowed_files": [
+    "work_orders FK + vendor repoint; add-FK = PROTECTED owner-ceremony; canonical = mdata.vendors, NOT qbo_vendors. No delete. Depends on P4-UNIT-IDENTITY."
+  ],
+  "acceptance": [
+    {
+      "check": "0 orphans; FKs validated on ci-migration-test; a WO with a bad unit/driver is now rejected; new WOs write mdata.vendors."
+    },
+    {
+      "check": "Neon-branch proof."
+    }
+  ],
+  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+}

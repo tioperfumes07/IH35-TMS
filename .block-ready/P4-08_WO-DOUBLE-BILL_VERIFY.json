@@ -1,0 +1,20 @@
+{
+  "block_id": "P4-08_WO-DOUBLE-BILL_VERIFY",
+  "status": "NEEDS-VERIFY",
+  "classification": "FINANCIAL",
+  "phase": "phase4",
+  "source": "MASTER-6 authored dispatch (04-PHASE4-CROSS-MODULE)",
+  "source_file": "P4-08_WO-DOUBLE-BILL_VERIFY.txt",
+  "allowed_files": [
+    "maintenance/accounting bill-create path; PROTECTED (financial) owner-ceremony if a UNIQUE index/migration is added. No delete."
+  ],
+  "acceptance": [
+    {
+      "check": "Test: closing a WO creates exactly ONE bill (idempotent under repeat + concurrent close)."
+    },
+    {
+      "check": "If a UNIQUE index is added: Neon-branch proof."
+    }
+  ],
+  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+}

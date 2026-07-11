@@ -1,0 +1,17 @@
+{
+  "block_id": "PHASE2_LOAD-INVOICE_no-auto-ar_DISPATCH",
+  "status": "NEEDS-VERIFY",
+  "classification": "FINANCIAL",
+  "phase": "money-wiring",
+  "source": "MASTER-6 authored dispatch (02-MONEY-WIRING-P1-P3)",
+  "source_file": "PHASE2_LOAD-INVOICE_no-auto-ar_DISPATCH.txt",
+  "allowed_files": [
+    "authored dispatch — LANE LOCK not explicit; scope per 02-MONEY-WIRING-P1-P3"
+  ],
+  "acceptance": [
+    {
+      "check": "Authored claim (no explicit ACCEPTANCE[] in dispatch): Load delivery/completion never auto-creates a customer invoice (AR) — the entire dispatch->revenue bridge is manual"
+    }
+  ],
+  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+}

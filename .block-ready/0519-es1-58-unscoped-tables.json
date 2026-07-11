@@ -1,0 +1,17 @@
+{
+  "block_id": "0519-es1-58-unscoped-tables",
+  "status": "PARTIAL",
+  "classification": "FINANCIAL",
+  "phase": "tier2",
+  "source": "MASTER-6 authored dispatch (05-TIER2-BLOCKS)",
+  "source_file": "0519-es1-58-unscoped-tables.txt",
+  "allowed_files": [
+    "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
+  ],
+  "acceptance": [
+    {
+      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
+    }
+  ],
+  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+}

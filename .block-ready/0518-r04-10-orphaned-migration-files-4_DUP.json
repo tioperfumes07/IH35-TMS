@@ -1,0 +1,17 @@
+{
+  "block_id": "0518-r04-10-orphaned-migration-files-4_DUP",
+  "status": "duplicate",
+  "classification": "FINANCIAL",
+  "phase": "tier1",
+  "source": "MASTER-6 authored dispatch (03-TIER1-BLOCKS)",
+  "source_file": "116_0518-r04-10-orphaned-migration-files-4_DUP.txt",
+  "allowed_files": [
+    "authored dispatch — LANE LOCK not explicit; scope per 03-TIER1-BLOCKS"
+  ],
+  "acceptance": [
+    {
+      "check": "Authored claim (no explicit ACCEPTANCE[] in dispatch): apps/backend/src/migrations/ has 10 files never applied by the runner (which reads only db/migrations/) — 4 tables absent live: driver_finan"
+    }
+  ],
+  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+}

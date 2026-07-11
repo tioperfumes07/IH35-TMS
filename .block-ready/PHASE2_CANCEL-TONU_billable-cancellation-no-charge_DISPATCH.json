@@ -1,0 +1,17 @@
+{
+  "block_id": "PHASE2_CANCEL-TONU_billable-cancellation-no-charge_DISPATCH",
+  "status": "NEEDS-VERIFY",
+  "classification": "FINANCIAL",
+  "phase": "money-wiring",
+  "source": "MASTER-6 authored dispatch (02-MONEY-WIRING-P1-P3)",
+  "source_file": "PHASE2_CANCEL-TONU_billable-cancellation-no-charge_DISPATCH.txt",
+  "allowed_files": [
+    "authored dispatch — LANE LOCK not explicit; scope per 02-MONEY-WIRING-P1-P3"
+  ],
+  "acceptance": [
+    {
+      "check": "Authored claim (no explicit ACCEPTANCE[] in dispatch): Billable load cancellation captures a charge but never creates the TONU customer AR charge, and has no invoice linkage"
+    }
+  ],
+  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+}
