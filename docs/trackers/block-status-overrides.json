@@ -58,7 +58,7 @@
   {
    "id": "AF-5-stub-catalogs",
    "status": "PENDING (GATED)",
-   "evidence": "partial \u2014 catalog buildout ongoing, not confirmably complete",
+   "evidence": "partial — catalog buildout ongoing, not confirmably complete",
    "verified_on": "2026-07-03"
   },
   {
@@ -70,7 +70,7 @@
   {
    "id": "AF-1-entity-coa-fix",
    "status": "PENDING (GATED)",
-   "evidence": "held Tier-1 DO-NOT-RUN migration; prod still global \u2014 not applied",
+   "evidence": "held Tier-1 DO-NOT-RUN migration; prod still global — not applied",
    "verified_on": "2026-07-03"
   },
   {
@@ -114,6 +114,42 @@
    "status": "PENDING",
    "evidence": "TMS->QBO payroll write-bridge unbuilt (deferred)",
    "verified_on": "2026-07-03"
+  },
+  {
+   "id": "FIX-01-CUSTOMER-VENDOR-LIST-RESIZE-QBO",
+   "status": "NEEDS-VERIFY",
+   "evidence": "built in PR #2347 (ResizableTable), pending merge/deploy + browser drag confirm",
+   "verified_on": "2026-07-11"
+  },
+  {
+   "id": "FIX-02-CATEGORY-CREATE-FULL-COA-WIZARD",
+   "status": "PENDING",
+   "evidence": "owner-verified broken: category + hard-codes Expense/OtherExpense; full COA creator not built",
+   "verified_on": "2026-07-11"
+  },
+  {
+   "id": "FIX-03-PRODUCTS-SERVICES-ACCOUNT-LINK",
+   "status": "PENDING",
+   "evidence": "owner-verified broken: item create drops income/expense account link; account dropdown empty",
+   "verified_on": "2026-07-11"
+  },
+  {
+   "id": "FIX-04-BANKING-FROM-TO-ACCOUNTS",
+   "status": "PENDING",
+   "evidence": "owner-verified broken: From/To column echoes raw description, not accounts",
+   "verified_on": "2026-07-11"
+  },
+  {
+   "id": "FIX-05-BANKING-SPLIT-ENABLE-AND-WIRE",
+   "status": "PENDING (GATED)",
+   "evidence": "owner-verified: split modal built but button disabled Wave-2 + flag OFF; wire+dedupe pending, flag=owner",
+   "verified_on": "2026-07-11"
+  },
+  {
+   "id": "FIX-06-INLINE-CREATE-COVERAGE-SWEEP",
+   "status": "PENDING",
+   "evidence": "owner-verified: RecurringBillCreate vendor + CreateMultipleBills A/P are raw selects, no inline +Create",
+   "verified_on": "2026-07-11"
   }
  ]
 }

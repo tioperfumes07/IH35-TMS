@@ -1,0 +1,17 @@
+{
+  "block_id": "FIX-02-CATEGORY-CREATE-FULL-COA-WIZARD",
+  "status": "pending",
+  "classification": "NON-FINANCIAL",
+  "priority": "P1",
+  "module": "accounting",
+  "phase": "design-parity",
+  "source": "CODER-VERIFIED-FIXES-2026-07-11 / 02 (owner-verified)",
+  "allowed_files": ["apps/frontend/src/components/forms/shared/QuickCreateEntityModal.tsx", "apps/frontend/src/pages/lists/accounting/AccountDrawer.tsx", "apps/frontend/src/components/parity/drawers/NewAccountDrawerForm.tsx", "apps/frontend/src/components/parity/ReferenceSelect.tsx"],
+  "acceptance": [
+    { "check": "Category '+ Create' opens the FULL QBO account creator: Account Type select -> Detail Type (filtered by type) -> Name (+ optional number/description) — NOT the name-only forced-Expense mini-form.", "resolved": false },
+    { "check": "The CHOSEN account_type/subtype persists to catalogs.accounts via chartOfAccountsCatalogClient (verify in catalogs.accounts) — an Income category is Income, not Expense. Never hard-coded.", "resolved": false },
+    { "check": "Same creator opens from Chart of Accounts AND from every inline category/account '+' (ReferenceSelect createKind=category); returned record selected inline + survives reload (QB-STD-3/4/5).", "resolved": false },
+    { "check": "Browser-confirmed (§9).", "resolved": false }
+  ],
+  "note": "VERIFIED broken (live code): QuickCreateEntityModal kind=category hard-codes account_type=Expense/OtherExpense. Canonical: catalogs.accounts. Frontend wiring to the EXISTING chartOfAccountsCatalogClient endpoint (non-financial per owner). Account-type taxonomy sourced from the existing COA list."
+}

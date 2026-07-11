@@ -1,0 +1,17 @@
+{
+  "block_id": "FIX-04-BANKING-FROM-TO-ACCOUNTS",
+  "status": "pending",
+  "classification": "NON-FINANCIAL",
+  "priority": "P1",
+  "module": "banking",
+  "phase": "design-parity",
+  "source": "CODER-VERIFIED-FIXES-2026-07-11 / 04 (owner-verified)",
+  "allowed_files": ["apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx"],
+  "acceptance": [
+    { "check": "From/To shows the actual account(s): FROM = the txn's bank account (banking.bank_accounts -> ledger_account_id -> catalogs.accounts); TO = the categorize draft gl_account_id (catalogs.accounts) OR vendor/customer (mdata.*) OR transfer target — QBO-style 'BANK -> Category'. Not the raw description.", "resolved": false },
+    { "check": "The From/To cell updates live as the operator categorizes/matches.", "resolved": false },
+    { "check": "Uncategorized rows show the bank account on the known side + honest '—'/'Uncategorized' on the open side (no fake account). Description keeps its own column.", "resolved": false },
+    { "check": "Browser-confirmed on real transactions (§9).", "resolved": false }
+  ],
+  "note": "VERIFIED broken (live code): BankingTransactionsDesignView line ~553 fromTo: description (raw text), rendered ~1307. Presentation-only fix reusing the categorize row's existing draft fields — no posting/GL/amount change."
+}

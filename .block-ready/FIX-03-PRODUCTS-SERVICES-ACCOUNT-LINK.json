@@ -1,0 +1,17 @@
+{
+  "block_id": "FIX-03-PRODUCTS-SERVICES-ACCOUNT-LINK",
+  "status": "pending",
+  "classification": "NON-FINANCIAL",
+  "priority": "P1",
+  "module": "accounting",
+  "phase": "design-parity",
+  "source": "CODER-VERIFIED-FIXES-2026-07-11 / 03 (owner-verified)",
+  "allowed_files": ["apps/frontend/src/components/forms/shared/QuickCreateEntityModal.tsx", "apps/frontend/src/components/parity/drawers/NewServiceDrawerForm.tsx", "apps/frontend/src/components/parity/drawers/InlineCreateDrawer.tsx", "apps/frontend/src/api/catalogs.ts"],
+  "acceptance": [
+    { "check": "Product/Service creator (quick item path + service drawer) shows POPULATED Income and Expense/COGS account dropdowns from catalogs.accounts (getCoaAccounts) — the dropdown is never empty.", "resolved": false },
+    { "check": "Saving persists default_income_account_id (+ default_expense_account_id when purchasable) on catalogs.items.metadata; reopen the item -> account still set.", "resolved": false },
+    { "check": "Each account dropdown carries the inline '+ Create' (FIX-02 COA creator).", "resolved": false },
+    { "check": "Browser-confirmed: pick an income account, save, reopen -> still set (§9).", "resolved": false }
+  ],
+  "note": "VERIFIED broken (live code): QuickCreateEntityModal kind=item drops the income/expense account link; NewServiceDrawerForm account dropdown empty. Canonical: catalogs.items -> default_income/expense_account_id -> catalogs.accounts (item<->GL link). May need backend item-create to accept/store the mapping — confirm; if backend schema change on catalogs.items -> re-classify FINANCIAL + queue HOLD."
+}

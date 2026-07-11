@@ -1,0 +1,17 @@
+{
+  "block_id": "FIX-05-BANKING-SPLIT-ENABLE-AND-WIRE",
+  "status": "pending",
+  "classification": "FINANCIAL",
+  "priority": "P1",
+  "module": "banking",
+  "phase": "money-wiring",
+  "source": "CODER-VERIFIED-FIXES-2026-07-11 / 05 (owner-verified)",
+  "owner_gated": true,
+  "allowed_files": ["apps/frontend/src/pages/banking/components/BankingReviewCenter.tsx", "apps/frontend/src/pages/banking/components/forms/SplitTransactionModal.tsx", "apps/frontend/src/pages/banking/components/BankTransactionSplitModal.tsx"],
+  "acceptance": [
+    { "check": "The Split button/Action-menu is ENABLED (remove the 'Split ships with Wave 2' disabled state) and opens BankTransactionSplitModal (the multi-vendor modal).", "resolved": false },
+    { "check": "Dedupe: BankTransactionSplitModal is canonical; the older SplitTransactionModal is ARCHIVED (not deleted).", "resolved": false },
+    { "check": "With BANK_TX_SPLIT_ENABLED ON (owner flip) for an entity: $1,000 split across 3 vendors ties to the cent, posts one balanced result, each line vendor-tagged 1099-eligible Expense/Check (or Bill-Payment) with a single cash credit — NOT a raw JE. GUARD Neon-proves.", "resolved": false }
+  ],
+  "note": "MIXED: enabling the button + wiring the modal + dedupe = non-financial UI (ships on green). The BANK_TX_SPLIT_ENABLED flag flip is the OWNER's sole switch; the multi-vendor GL assembly stays Tier-1 build-and-hold (already built, verified in the UI-03 PART B design doc). Split UI portion ships; flag + GL enable = HOLD-FOR-JORGE."
+}

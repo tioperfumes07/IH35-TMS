@@ -1,0 +1,18 @@
+{
+  "block_id": "FIX-01-CUSTOMER-VENDOR-LIST-RESIZE-QBO",
+  "status": "in-progress",
+  "classification": "NON-FINANCIAL",
+  "priority": "P1",
+  "module": "customers-vendors",
+  "phase": "design-parity",
+  "source": "CODER-VERIFIED-FIXES-2026-07-11 / 01 (owner-verified)",
+  "pr": 2347,
+  "allowed_files": ["apps/frontend/src/pages/customers/CustomerListSidebar.tsx", "apps/frontend/src/pages/vendors/VendorListSidebar.tsx", "scripts/**"],
+  "acceptance": [
+    { "check": "The list column drags to resize; width persists across reload (shared ResizableTable/useColumnWidths).", "resolved": false },
+    { "check": "Renders as a QBO columnar table (Name / Open Balance / Status), not a 216px card rail; search+sort+pagination kept.", "resolved": false },
+    { "check": "verify-mobile-responsive-audit new_vs_baseline=0 + resizable-columns CI guard pass; list items stay CardLink anchors.", "resolved": false },
+    { "check": "Browser-confirmed the column actually drags (§9 — owner).", "resolved": false }
+  ],
+  "note": "BUILT in PR #2347 (CustomerListSidebar + VendorListSidebar now use shared ResizableTable; Name cell is a CardLink anchor). Status flips to done/live-verified once #2347 merges + deploys; browser-drag confirmation is the owner's."
+}
