@@ -505,3 +505,8 @@ jobs:
         run: node scripts/verify-filter-input-aria-labels.mjs --selftest
       - name: verify:filter-input-aria-labels
         run: npm run verify:filter-input-aria-labels
+
+      - name: verify:excel-upload-jobs-rls-forced --selftest
+        run: node scripts/verify-excel-upload-jobs-rls-forced.mjs --selftest
+      - name: verify:excel-upload-jobs-rls-forced
+        run: npm run verify:excel-upload-jobs-rls-forced
