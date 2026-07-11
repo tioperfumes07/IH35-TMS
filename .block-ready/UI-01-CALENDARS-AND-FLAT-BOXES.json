@@ -1,0 +1,21 @@
+{
+  "block": "UI-01-CALENDARS-AND-FLAT-BOXES",
+  "title": "QuickBooks-format calendars everywhere + no boxes-within-boxes (ratchet)",
+  "tier": "TIER-3",
+  "financial": false,
+  "pr_target": "fix/ui-quickbooks-calendars-and-flat-boxes -> main",
+  "summary": "PART 1: converted the last raw <input type=\"date\"> (ManualJEForm) to the shared QuickBooks-style DatePicker; guard verify-no-raw-date-input blocks any new raw native date box. PART 2: verify-no-nested-box ratchet with per-file baseline (scripts/.nested-box-baseline.json) blocks any NEW card-in-card nesting.",
+  "acceptance": [
+    { "id": "no-raw-date", "check": "0 raw <input type=\"date\"> under apps/frontend/src", "proof": "verify:no-raw-date-input PASS; --selftest PASS (detects raw input, ignores Field prop/comment/passthrough)" },
+    { "id": "manualje-datepicker", "check": "Manual JE date field uses shared DatePicker", "proof": "ManualJEForm.tsx imports DatePicker; raw input removed; @archived marker preserved (verify-banking-workflow-b-archived still OK)" },
+    { "id": "customerdetail-datepicker", "check": "CustomerDetail Event Date opens the shared picker", "proof": "already routed — Field type=='date' branch renders <DatePicker> (line ~2456); no raw input renders" },
+    { "id": "nested-box-ratchet", "check": "no NEW box-in-box; today baselined green", "proof": "verify:no-nested-box PASS at baseline (118 files / 265 offenders); --selftest PASS (nesting detected, flat/sibling ignored)" },
+    { "id": "guards-wired", "check": "both guards in verify-pre-commit + locked-guards", "proof": "verify-steps/107 + /108; package.json verify:no-raw-date-input + verify:no-nested-box (appended at END); locked-guards steps appended at END; verify:guard-wired PASS" }
+  ],
+  "deferred": [
+    "Bulk-flatten the 265 baselined nested boxes — requires browser visual verification per file (many offenders are intentional bordered inputs / value chips / table scroll containers, NOT redundant card-in-card frames); safe flatten is a follow-up browser-verified pass, not a blind sweep.",
+    "Tighten the box-definition heuristic to exclude small bordered chips/inputs if the baseline proves noisy over time (re-baseline via --update)."
+  ],
+  "lane_lock": "apps/frontend/src/** (presentation only) + scripts/** + ci guard list. No backend, no db/migrations, no posting/GL/amount logic.",
+  "ship": "green CI (non-financial TIER-3)"
+}
