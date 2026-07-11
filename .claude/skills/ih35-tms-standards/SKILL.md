@@ -26,7 +26,9 @@ After days lost to unverified "done": **everything is verified against live evid
   without an evidence field. When you cannot verify, say **"UNVERIFIED — needs live check"**, never a guess.
 - **Definition of done = the block's `acceptance[]` resolves** (file + route mounted + migration on prod +
   column populated + guard wired + live proof) — NOT "merged", NOT "CI-green".
-- **Precedence when sources disagree:** CI guard > repo > owner-in-writing > sweep/audit/doc > memory.
+- **Precedence — split FACTS vs DECISIONS (they resolve differently):**
+  - *Prod-verified FACTS* (schema/columns/enums/tables/live state): **prod (live Neon) > CI guard > repo/reference > sweep/audit/doc > memory.** A doc, a migration file, this skill, or another agent's "verified" **never** overrides prod. Prod has diverged from migrations repeatedly — re-verify against prod.
+  - *Owner DECISIONS* (approvals, canonical picks, merges, flag flips): **owner-in-writing is AUTHORITY and is never overridden by a doc, guard, or agent claim.** A guard/acceptance can prove a fact; it can never overrule the owner's decision.
 
 ---
 
@@ -240,6 +242,51 @@ Bugs recur because services were written against **schema names that don't exist
   auto-memory) in the same session, so the next agent starts knowing it. That is how we stop the forgetting.
 
 ---
+
+## §10. LINKAGE LAW + CANONICAL WIRING (auto-load — supreme with §0, permanent)
+
+This section exists because it kept being "not in context": the LINKAGE law + canonical table map lived
+only in tracker files no session auto-loads, so fresh sessions started blind on wiring and produced
+canonical-direction errors (e.g. SETTLE-FK repointed a FK toward the RETIRE `payroll` table). This skill
+auto-loads for every session, so the law lives here now. Enforced by CI guards G1–G4.
+
+**(a) OPENING MOVE — before any block:** READ `docs/trackers/FINAL-TABLES-WIRING-FOR-CODER-2026-07-05.md`
+(canonical/RETIRE map §A, hub tables §E, full 531-table inventory) and the LINKAGE-LAW clauses (below /
+`01-LINKAGE-LAW`). **These override code-reads for canonical direction.** Then verify the specific table
+against **prod** (§0). Never infer the canonical table from whichever one the code happens to write today —
+the code is often the bug.
+
+**(b) CANONICAL TABLE DECISIONS — NEVER write (INSERT/UPDATE) or FK a RETIRE table** (G4 fails CI on it):
+| Concept | ✅ CANONICAL | ⛔ RETIRE (read-only during retirement, never a new write/FK) |
+|---|---|---|
+| Driver settlement | **`driver_finance.*`** | `payroll.driver_settlements` / `payroll.driver_settlement_line_items` / `settlement.*` |
+| QBO mirror | **`mdata.qbo_*`** | `accounting.qbo_accounts` / `accounting.qbo_vendors` / `accounting.qbo_customers` |
+| Banking | **`banking.*`** | `bank.*` |
+| Maintenance | **`maintenance.*`** | `maint.part` / `maint.pm_schedule` / `maint.position_*` / `maint.part_position_assignment` |
+| Vendors (AP truth) | **`mdata.vendors`** | WO picker writing `mdata.qbo_vendors`; keep `catalogs.maintenance_vendors.metadata.mdata_vendor_id` FK |
+| Loads | **`mdata.loads`** | verify `dispatch.loads` before use |
+| Cancellation reasons | **`catalogs.cancellation_reasons`** | `catalogs.load_cancellation_reasons` (as a write/Cancel target) |
+(DECISIONS still open — owner picks: `geo.*` guard-vs-name, `reporting.*` lockdown-vs-guard.)
+
+**(c) HUB TABLES — every record must connect back to its backbone** (FINAL §E; keep clean, never orphan):
+`org.companies` (385 refs) · `identity.users` (214) · `mdata.drivers` (100) · `mdata.units` (67) ·
+`mdata.loads` (59) · `catalogs.accounts` (26) · `mdata.customers` (25) · `maintenance.work_orders` (21) ·
+`mdata.vendors` (18) · `accounting.journal_entries` (17) · `docs.files` (10) · `mdata.equipment` (10).
+
+**(d) CROSS-MODULE LINKAGE MATRIX (Clause 3) — a record missing a link is a DEFECT, not "done":** every
+record links **both ways** to (i) its **financial primitives** — vendor / customer / bill / expense /
+bill-payment / journal-entry / liability-or-asset account — AND (ii) every relevant **operational module** —
+safety, insurance, legal, maintenance, dispatch, driver, unit, trailer, load. Build the link, or declare an
+explicit `N/A → deferred` in the block. **Silence is a defect.** (e.g. a safety event touching insurance must
+wire safety↔insurance↔legal↔maintenance, not only its money leg.)
+
+**(e) LINKAGE-LAW clauses C1–C9:** C1 name **and prove** every table (vs prod) · C2 prove no duplicate/split-brain
+(pick the canonical, don't add a 2nd) · C3 declare the cross-module linkage matrix (d) · C4 same-entity FK +
+FORCED RLS (`operating_company_id`/`tenant_id`) · C5 wiring **is part of the build**, not a follow-up · C6
+machine-checkable `acceptance[]` at cut time (kinds: table/column/fk/rls/route/mounted/guard/data/live/design/
+effective) · C7 G1–G4 guards **enforce** the law (registry-complete, acceptance, guard-wired, canonical-writes)
+— they don't rely on diligence · C8 an `acceptance[]` can prove a fact but can **never** prove "wrong"/overrule
+the owner · C9 **additive-only** — archive, never delete/reorder.
 
 ## Quick gate check (run this in your head before every merge)
 1. Does the diff touch `accounting.*`, `catalogs.accounts`, any `db/migrations/*.sql`, posting/GL/balances,

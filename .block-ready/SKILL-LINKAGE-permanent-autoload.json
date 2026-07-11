@@ -1,0 +1,24 @@
+{
+  "block_id": "SKILL-LINKAGE-permanent-autoload",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "PHASE-0-PERMANENCE",
+  "task": "SKILL-LINKAGE: fold the LINKAGE LAW + canonical table map + hub tables + cross-module matrix + clauses C1-C9 into the auto-loaded skill so they can never be 'not in context' again (root cause of repeated canonical-direction errors like SETTLE-FK). Added .claude/skills/ih35-tms-standards/SKILL.md §10 with (a) opening move (read FINAL-TABLES-WIRING first; overrides code-reads), (b) canonical/RETIRE table decisions, (c) hub tables (FINAL §E verbatim), (d) cross-module linkage matrix (silence=defect), (e) clauses C1-C9. Fixed §0 precedence to split FACTS (prod>guard>repo>doc>memory) vs owner DECISIONS (authority). Added matching pointer to docs/CLAUDE.md. Docs/skill only — no code/schema/delete.",
+  "branch": "docs/skill-add-linkage-law",
+  "lane": "PERMANENCE",
+  "allowed_files": [
+    ".claude/skills/ih35-tms-standards/SKILL.md",
+    "docs/CLAUDE.md",
+    ".block-ready/SKILL-LINKAGE-permanent-autoload.json"
+  ],
+  "acceptance": [
+    { "kind": "design", "spec": ".claude/skills/ih35-tms-standards/SKILL.md", "sections": ["§10 (a)-(e) present", "§0 facts-vs-decisions split"] },
+    { "kind": "design", "spec": "docs/trackers/FINAL-TABLES-WIRING-FOR-CODER-2026-07-05.md", "sections": ["§A canonical/RETIRE", "§E hub tables — match verbatim"] },
+    { "kind": "live", "assert": "SKILL §10 canonical list matches FINAL §A (driver_finance/mdata.qbo_*/banking/maintenance/mdata.vendors/mdata.loads/catalogs.cancellation_reasons); hub list matches FINAL §E (12 hubs org.companies..mdata.equipment); docs/CLAUDE.md pointer added" }
+  ],
+  "linkage": "N/A — governance/docs; no entity record, no FK",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "note": "01-LINKAGE-LAW.md is NOT in the repo (only on Desktop) — its C1-C9 clauses are folded into SKILL §10(e) so the pointer content is self-contained. Flag: add 01-LINKAGE-LAW.md to the repo in a follow-up if a standalone copy is wanted."
+}

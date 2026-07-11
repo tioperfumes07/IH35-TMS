@@ -11,6 +11,17 @@
 - Keep verification-first workflow: implement, run targeted verify scripts, then full pass when block is substantial.
 - If a verify script fails (except known phone-auth Twilio blocker), stop and fix before merge.
 
+## 1a) LINKAGE LAW + CANONICAL WIRING (read before any block)
+
+The LINKAGE law + canonical table map now lives in the **auto-loaded** skill
+`.claude/skills/ih35-tms-standards/SKILL.md` **§10** (so it can never be "not in context" again).
+Before writing any block, read SKILL §10 + `docs/trackers/FINAL-TABLES-WIRING-FOR-CODER-2026-07-05.md`
+(canonical/RETIRE §A, hub tables §E). **Never write/FK a RETIRE table** — canonical: `driver_finance.*`
+(not `payroll.*`/`settlement.*`), `mdata.qbo_*` (not `accounting.qbo_*`), `banking.*` (not `bank.*`),
+`maintenance.*` (not `maint.*`), `mdata.vendors`, `mdata.loads`, `catalogs.cancellation_reasons`.
+Enforced by CI guards **G1–G4** (registry-complete, acceptance, guard-wired, canonical-table-writes).
+Precedence: prod-verified FACTS resolve prod > guard > repo > doc > memory; owner DECISIONS are AUTHORITY.
+
 ## 2) Jorge & Business Context
 
 - Company: IH35 Dispatch / IH35 Trucking operations.
