@@ -530,3 +530,8 @@ jobs:
         run: node scripts/verify-recon-cron-registered.mjs --selftest
       - name: verify:recon-cron-registered
         run: npm run verify:recon-cron-registered
+
+      - name: verify:block-lifecycle --selftest
+        run: node scripts/verify-block-lifecycle.mjs --selftest
+      - name: verify:block-lifecycle
+        run: npm run verify:block-lifecycle

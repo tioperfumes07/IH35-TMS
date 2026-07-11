@@ -867,7 +867,8 @@
     "verify:excel-upload-jobs-rls-forced": "node scripts/verify-excel-upload-jobs-rls-forced.mjs",
     "verify:transaction-company-isolation": "node scripts/verify-transaction-company-isolation.mjs",
     "verify:master-data-list-active-company-scope": "node scripts/verify-master-data-list-active-company-scope.mjs",
-    "verify:qbo-refresh-uses-access-token": "node scripts/verify-qbo-refresh-uses-access-token.mjs"
+    "verify:qbo-refresh-uses-access-token": "node scripts/verify-qbo-refresh-uses-access-token.mjs",
+    "verify:block-lifecycle": "node scripts/verify-block-lifecycle.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",

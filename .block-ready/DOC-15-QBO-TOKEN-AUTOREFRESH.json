@@ -1,0 +1,29 @@
+{
+  "block_id": "DOC-15-QBO-TOKEN-AUTOREFRESH",
+  "status": "in-progress",
+  "classification": "NON-FINANCIAL (backend)",
+  "priority": "P0",
+  "module": "qbo-integration",
+  "phase": "connectivity",
+  "source": "GUARD doc 15 (2026-07-11)",
+  "pr": 2366,
+  "allowed_files": [
+    "apps/backend/src/cron/qbo-token-refresh.ts",
+    "apps/backend/src/integrations/qbo/qbo-oauth.service.ts",
+    "scripts/verify-qbo-refresh-uses-access-token.mjs"
+  ],
+  "acceptance": [
+    {
+      "check": "Token-refresh cron selects on access_token_expires_at (not refresh_token_expires_at); refreshes ALL non-revoked; guard locks it. (merged #2366)",
+      "resolved": true
+    },
+    {
+      "kind": "live",
+      "check": "UNVERIFIED — needs live check: after deploy + one hourly tick, a connection with an expired access token gets last_refreshed_at advanced + access_token_expires_at in the future (prod).",
+      "resolved": false
+    }
+  ],
+  "db_required": false,
+  "guard_required": true,
+  "registered_on": "2026-07-11"
+}

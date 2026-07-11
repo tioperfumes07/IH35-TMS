@@ -1,0 +1,33 @@
+{
+  "block_id": "ITEM-14-TXN-COMPANY-ISOLATION-GUARD",
+  "status": "done",
+  "classification": "NON-FINANCIAL (CI guard)",
+  "priority": "P1",
+  "module": "rls-isolation",
+  "phase": "governance",
+  "source": "CODER-VERIFIED-FIXES-2026-07-11 / 14",
+  "pr": 2363,
+  "allowed_files": [
+    "scripts/verify-transaction-company-isolation.mjs",
+    "package.json",
+    ".github/workflows/locked-guards.yml"
+  ],
+  "acceptance": [
+    {
+      "kind": "guard",
+      "script": "scripts/verify-transaction-company-isolation.mjs",
+      "wired_into": ".github/workflows/locked-guards.yml"
+    },
+    {
+      "kind": "live",
+      "check": "Verified on prod (Neon MCP, 2026-07-11): all accounting.*/banking.*/driver_finance.* policies scope to app.operating_company_id; 0 tables in those schemas lack RLS. 141 txn policies pass; guard merged #2363."
+    },
+    {
+      "kind": "note",
+      "check": "Master data (mdata.*) exempt by design (owner ruling A); units stay cross-entity."
+    }
+  ],
+  "db_required": false,
+  "guard_required": true,
+  "registered_on": "2026-07-11"
+}

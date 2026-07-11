@@ -162,6 +162,42 @@
    "status": "DONE",
    "evidence": "merged + deployed to prod 2026-07-11",
    "verified_on": "2026-07-11"
+  },
+  {
+   "id": "ITEM-13-CEREMONY-VALIDATE-FKS",
+   "status": "DONE",
+   "evidence": "8 ceremony FKs convalidated=true on prod br-fancy-credit-akjnd07a (Neon MCP read-only)",
+   "verified_on": "2026-07-11"
+  },
+  {
+   "id": "ITEM-14-TXN-COMPANY-ISOLATION-GUARD",
+   "status": "DONE",
+   "evidence": "prod: all accounting/banking/driver_finance policies scope to app.operating_company_id, 0 gaps; guard merged #2363",
+   "verified_on": "2026-07-11"
+  },
+  {
+   "id": "ITEM-03B-MDATA-LIST-ACTIVE-COMPANY",
+   "status": "NEEDS-VERIFY",
+   "evidence": "merged #2365; awaiting post-deploy live list-filter proof",
+   "verified_on": "2026-07-11"
+  },
+  {
+   "id": "DOC-15-QBO-TOKEN-AUTOREFRESH",
+   "status": "NEEDS-VERIFY",
+   "evidence": "merged #2366; awaiting post-deploy hourly-tick refresh proof",
+   "verified_on": "2026-07-11"
+  },
+  {
+   "id": "DOC-16-RECON-INPROCESS-SCHEDULER",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #2367; awaiting first accounting.recon_runs row",
+   "verified_on": "2026-07-11"
+  },
+  {
+   "id": "ITEM-02-EXCEL-UPLOAD-RLS-REASSERT",
+   "status": "PENDING (GATED)",
+   "evidence": "HELD PR #2369; owner approves + runs as neondb_owner",
+   "verified_on": "2026-07-11"
   }
  ]
 }

@@ -1,27 +1,48 @@
 {
  "date": "2026-07-11",
- "generated_at_iso": "2026-07-11T17:54:12.292Z",
+ "generated_at_iso": "2026-07-11T21:01:58.928Z",
  "counts": {
   "PENDING": 3,
-  "PENDING (GATED)": 940,
-  "NEEDS-VERIFY": 38,
-  "DONE": 513
+  "PENDING (GATED)": 942,
+  "NEEDS-VERIFY": 41,
+  "DONE": 515
  },
  "universe": {
-  "total_blocks_after_dedup": 1494,
+  "total_blocks_after_dedup": 1501,
   "by_source_after_dedup": {
    "program": 61,
-   ".block-ready": 1320,
+   ".block-ready": 1327,
    "enterprise-29": 29,
    "accounting": 27,
    "gap-spec": 57
   },
   "raw_file_counts": {
-   ".block-ready (*.json files)": 1331
+   ".block-ready (*.json files)": 1338
   },
   "note": "Total = union of 5 sources (.block-ready, docs/blocks program, docs/accounting, docs/dispatch enterprise-29, docs/specs gap), de-duped by id. So the block count is NOT the .block-ready file count."
  },
  "delta": [
+  {
+   "id": "DOC-15-QBO-TOKEN-AUTOREFRESH",
+   "status": "NEEDS-VERIFY",
+   "pr": null,
+   "registered_on": "2026-07-11",
+   "title": ""
+  },
+  {
+   "id": "DOC-16-RECON-INPROCESS-SCHEDULER",
+   "status": "NEEDS-VERIFY",
+   "pr": 2367,
+   "registered_on": "2026-07-11",
+   "title": ""
+  },
+  {
+   "id": "DOC-17-DEFINITION-OF-DONE",
+   "status": "PENDING (GATED)",
+   "pr": null,
+   "registered_on": "2026-07-11",
+   "title": ""
+  },
   {
    "id": "DOC-CATALOGS-ACCOUNTS-FK-INVENTORY",
    "status": "DONE",
@@ -98,6 +119,34 @@
    "pr": 1802,
    "registered_on": "2026-07-02",
    "title": "IMPORT-P0b — entity-push kill-switch: gate every TMS→QBO write of invoice/bill/customer/vendor/account/item so nothing r"
+  },
+  {
+   "id": "ITEM-02-EXCEL-UPLOAD-RLS-REASSERT",
+   "status": "PENDING (GATED)",
+   "pr": 2369,
+   "registered_on": "2026-07-11",
+   "title": ""
+  },
+  {
+   "id": "ITEM-03B-MDATA-LIST-ACTIVE-COMPANY",
+   "status": "NEEDS-VERIFY",
+   "pr": null,
+   "registered_on": "2026-07-11",
+   "title": ""
+  },
+  {
+   "id": "ITEM-13-CEREMONY-VALIDATE-FKS",
+   "status": "DONE",
+   "pr": 2368,
+   "registered_on": "2026-07-11",
+   "title": ""
+  },
+  {
+   "id": "ITEM-14-TXN-COMPANY-ISOLATION-GUARD",
+   "status": "DONE",
+   "pr": 2363,
+   "registered_on": "2026-07-11",
+   "title": ""
   },
   {
    "id": "QBO-SYNC-DRIFT-401-FIX",
@@ -7396,6 +7445,17 @@
    "pr": null
   },
   {
+   "id": "DOC-17-DEFINITION-OF-DONE",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "PENDING (GATED)",
+   "evidence": "0/1 signature file(s) on main",
+   "name": "",
+   "registered_on": "2026-07-11",
+   "pr": null
+  },
+  {
    "id": "docs-required-docs-ruleset-owner-decision",
    "source": ".block-ready",
    "fin": true,
@@ -8433,6 +8493,17 @@
    "name": "",
    "registered_on": null,
    "pr": null
+  },
+  {
+   "id": "ITEM-02-EXCEL-UPLOAD-RLS-REASSERT",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "PENDING (GATED)",
+   "evidence": "[verified 2026-07-11] HELD PR #2369; owner approves + runs as neondb_owner",
+   "name": "",
+   "registered_on": "2026-07-11",
+   "pr": 2369
   },
   {
    "id": "known-catalogs-accounts-global-not-per_DUP",
@@ -10637,6 +10708,28 @@
    "pr": 2135
   },
   {
+   "id": "DOC-15-QBO-TOKEN-AUTOREFRESH",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "[verified 2026-07-11] merged #2366; awaiting post-deploy hourly-tick refresh proof",
+   "name": "",
+   "registered_on": "2026-07-11",
+   "pr": null
+  },
+  {
+   "id": "DOC-16-RECON-INPROCESS-SCHEDULER",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "[verified 2026-07-11] PR #2367; awaiting first accounting.recon_runs row",
+   "name": "",
+   "registered_on": "2026-07-11",
+   "pr": 2367
+  },
+  {
    "id": "driverhub-2-demo-duplicate-drivers-cleanup",
    "source": ".block-ready",
    "fin": true,
@@ -10675,10 +10768,10 @@
    "fin": true,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #2334 title-match only, unverified",
+   "evidence": "PR #2364 title-match only, unverified",
    "name": "",
    "registered_on": null,
-   "pr": 2334
+   "pr": 2364
   },
   {
    "id": "fuel-1-planner-diagram-empty-state",
@@ -10712,6 +10805,17 @@
    "name": "",
    "registered_on": null,
    "pr": 1722
+  },
+  {
+   "id": "ITEM-03B-MDATA-LIST-ACTIVE-COMPANY",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "[verified 2026-07-11] merged #2365; awaiting post-deploy live list-filter proof",
+   "name": "",
+   "registered_on": "2026-07-11",
+   "pr": null
   },
   {
    "id": "m-01-wo-create-duplicate-header-fields",
@@ -15255,6 +15359,28 @@
    "pr": null
   },
   {
+   "id": "ITEM-13-CEREMONY-VALIDATE-FKS",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-11] 8 ceremony FKs convalidated=true on prod br-fancy-credit-akjnd07a (Neon MCP read-only)",
+   "name": "",
+   "registered_on": "2026-07-11",
+   "pr": 2368
+  },
+  {
+   "id": "ITEM-14-TXN-COMPANY-ISOLATION-GUARD",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-11] prod: all accounting/banking/driver_finance policies scope to app.operating_company_id, 0 gaps; gu",
+   "name": "",
+   "registered_on": "2026-07-11",
+   "pr": 2363
+  },
+  {
    "id": "ITEM1-TWO-SIDED-ITEM",
    "source": ".block-ready",
    "fin": true,
@@ -16419,6 +16545,72 @@
   }
  ],
  "merged_prs": [
+  {
+   "number": 2368,
+   "title": "docs(ceremony): TASK-B ledger-backfill SQL for the 8 held+applied ceremony migrations (ITEM-13)",
+   "mergedAt": "2026-07-11T20:56:23Z",
+   "branch": "docs/ceremony-task-b-ledger-backfill"
+  },
+  {
+   "number": 2366,
+   "title": "fix(qbo): token-refresh cron selects on access_token_expires_at (P0 — connection stays live)",
+   "mergedAt": "2026-07-11T20:54:00Z",
+   "branch": "fix/qbo-token-refresh-access-token"
+  },
+  {
+   "number": 2365,
+   "title": "[REVIEW-FOR-JORGE] feat(mdata): ITEM 3=B — Customers/Vendors lists pinned to active company",
+   "mergedAt": "2026-07-11T20:39:10Z",
+   "branch": "feat/item3-list-active-company-scope-v2"
+  },
+  {
+   "number": 2364,
+   "title": "[HOLD-FOR-JORGE] feat(migration): VALIDATE the 8 ceremony NOT-VALID FKs (ITEM-13)",
+   "mergedAt": "2026-07-11T20:36:06Z",
+   "branch": "feat/ceremony-validate-fks"
+  },
+  {
+   "number": 2363,
+   "title": "chore(guard): lock transaction-company isolation (ITEM-14)",
+   "mergedAt": "2026-07-11T20:26:28Z",
+   "branch": "chore/guard-transaction-company-isolation"
+  },
+  {
+   "number": 2362,
+   "title": "chore(guard): lock catalogs.excel_upload_jobs FORCED-RLS contract (ITEM-2)",
+   "mergedAt": "2026-07-11T20:00:30Z",
+   "branch": "chore/guard-excel-upload-jobs-rls"
+  },
+  {
+   "number": 2361,
+   "title": "fix(ui): TIER-3 batch 4 — honest error render on 7 direct-empty list pages",
+   "mergedAt": "2026-07-11T18:50:25Z",
+   "branch": "fix/list-error-state-batch4"
+  },
+  {
+   "number": 2360,
+   "title": "fix(ui): TIER-3 batch 3 — honest error states on 8 more list pages",
+   "mergedAt": "2026-07-11T18:38:19Z",
+   "branch": "fix/list-error-state-batch3"
+  },
+  {
+   "number": 2359,
+   "title": "fix(ui): TIER-3 batch 2 — filter/search aria-labels on 8 list pages + regression guard",
+   "mergedAt": "2026-07-11T18:29:07Z",
+   "branch": "fix/tier3-batch2-filter-aria"
+  },
+  {
+   "number": 2358,
+   "title": "fix(ui): TIER-3 batch — legal breadcrumbs (8 pages) + WorkOrders/Safety filter aria-labels",
+   "mergedAt": "2026-07-11T18:16:56Z",
+   "branch": "fix/tier3-legal-breadcrumbs-a11y"
+  },
+  {
+   "number": 2357,
+   "title": "chore(tracker): mark the 7 merged owner-verified fixes DONE (honest tracker status)",
+   "mergedAt": "2026-07-11T18:05:42Z",
+   "branch": "chore/tracker-reflect-merged-fixes"
+  },
   {
    "number": 2356,
    "title": "fix(accounting): FIX-06 — inline + Create sweep (ReferenceSelect) + coverage ratchet guard",
@@ -19952,76 +20144,16 @@
    "title": "test(qbo-sync): A/P bill projection → FIN-20 aging regression test",
    "mergedAt": "2026-07-01T12:14:51Z",
    "branch": "feat/qbo-ap-bill-inbound-sync-hold"
-  },
-  {
-   "number": 1734,
-   "title": "[HOLD-FOR-JORGE — TIER 1] fix(catalogs): account_role_bindings per-entity (close last USMCA cross-entity leak, non-breaking)",
-   "mergedAt": "2026-07-01T12:12:38Z",
-   "branch": "fix/account-role-bindings-per-entity-hold"
-  },
-  {
-   "number": 1733,
-   "title": "[HOLD-FOR-JORGE — TIER 1] fix(accounting): entity-scope fuel-posting GL resolvers — cross-entity money leak",
-   "mergedAt": "2026-07-01T10:54:37Z",
-   "branch": "fix/entity-scope-leaks-fuelposting-hold"
-  },
-  {
-   "number": 1732,
-   "title": "fix(integrations): entity-scope driver-vendor-mapping monitor — cross-entity leak (audit batch 2)",
-   "mergedAt": "2026-07-01T07:12:39Z",
-   "branch": "fix/entity-scope-leaks-nonfinancial-batch2"
-  },
-  {
-   "number": 1731,
-   "title": "fix(safety): entity-scope DVIR unit/trailer lookup — cross-entity leak (audit batch 1)",
-   "mergedAt": "2026-07-01T06:59:38Z",
-   "branch": "fix/entity-scope-leaks-nonfinancial-batch1"
-  },
-  {
-   "number": 1730,
-   "title": "[HOLD-FOR-JORGE — TIER 1] feat(governance): Task #24 void/cancel wiring — reason catalog CRUD + Lists + register + void-surface wiring (flags OFF)",
-   "mergedAt": "2026-07-01T11:29:58Z",
-   "branch": "feat/void-cancel-wiring-task24-hold"
-  },
-  {
-   "number": 1729,
-   "title": "[HOLD-FOR-JORGE — TIER 1] feat(banking): BLOCK-6 driver dimension + loan-to-driver posting (flag OFF)",
-   "mergedAt": "2026-07-01T06:27:32Z",
-   "branch": "feat/block6-driver-advance-posting-hold"
-  },
-  {
-   "number": 1728,
-   "title": "[HOLD-FOR-JORGE — TIER 1] chore(dispatch): CODER-10 load_cancellations → per-entity reason FK (foundation)",
-   "mergedAt": "2026-07-01T06:12:51Z",
-   "branch": "chore/coder-10-11-cleanup-hold"
-  },
-  {
-   "number": 1727,
-   "title": "[HOLD-FOR-JORGE — TIER 1] feat(catalogs): AF-2b item→account mapping backfill (loader + no-op migration template)",
-   "mergedAt": "2026-07-01T05:54:25Z",
-   "branch": "feat/af2b-item-account-backfill-hold"
-  },
-  {
-   "number": 1726,
-   "title": "[HOLD-FOR-JORGE] feat(tasks): task-scoped Team Chat — comments + @mention + activity feed (TASK-3 option a)",
-   "mergedAt": "2026-07-01T05:54:17Z",
-   "branch": "feat/tasks-team-chat-hold"
-  },
-  {
-   "number": 1725,
-   "title": "feat(accounting-ui): New Account dialog — Make-subaccount + Preview pane + Balance-As-Of box fix (BLOCK-3)",
-   "mergedAt": "2026-07-01T04:57:56Z",
-   "branch": "feat/block3-account-subaccount-preview"
-  },
-  {
-   "number": 1724,
-   "title": "fix(banking): reconcile uncategorized KPI with review queue (BANKING-1)",
-   "mergedAt": "2026-07-01T04:42:11Z",
-   "branch": "fix/cashflow-settlements-banking"
   }
  ],
- "merged_pr_total": 2238,
+ "merged_pr_total": 2249,
  "hold_for_jorge": [
+  {
+   "number": 2364,
+   "title": "[HOLD-FOR-JORGE] feat(migration): VALIDATE the 8 ceremony NOT-VALID FKs (ITEM-13)",
+   "mergedAt": "2026-07-11T20:36:06Z",
+   "category": "HOLD"
+  },
   {
    "number": 2353,
    "title": "[HOLD-FOR-JORGE] fix(accounting): FIX-03 — product/service + Create populates + persists income/expense account link",

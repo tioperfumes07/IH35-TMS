@@ -1,0 +1,30 @@
+{
+  "block_id": "DOC-16-RECON-INPROCESS-SCHEDULER",
+  "status": "in-progress",
+  "classification": "NON-FINANCIAL (scheduler wiring)",
+  "priority": "P1",
+  "module": "recon",
+  "phase": "connectivity",
+  "source": "GUARD doc 16 (2026-07-11)",
+  "pr": 2367,
+  "allowed_files": [
+    "apps/backend/src/cron/recon.cron.ts",
+    "apps/backend/src/cron/audit-chain-verify.cron.ts",
+    "apps/backend/src/index.ts",
+    "scripts/verify-recon-cron-registered.mjs"
+  ],
+  "acceptance": [
+    {
+      "check": "initializeReconCron + initializeAuditChainVerifyCron wired into bootstrap; guard registered. (PR #2367)",
+      "resolved": false
+    },
+    {
+      "kind": "live",
+      "check": "UNVERIFIED — needs live check: after deploy, a real row appears in accounting.recon_runs (AM/PM pass) + _system.background_jobs shows accounting.recon_am_bank_count/_pm_categorization_diff. Depends on doc-15 live first.",
+      "resolved": false
+    }
+  ],
+  "db_required": true,
+  "guard_required": true,
+  "registered_on": "2026-07-11"
+}

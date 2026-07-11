@@ -1,0 +1,31 @@
+{
+  "block_id": "ITEM-13-CEREMONY-VALIDATE-FKS",
+  "status": "done",
+  "classification": "FINANCIAL (migration — owner-approved)",
+  "priority": "P1",
+  "module": "cross-module-fks",
+  "phase": "ceremony",
+  "source": "CODER-VERIFIED-FIXES-2026-07-11 / 13",
+  "pr": 2364,
+  "allowed_files": [
+    "db/migrations/202607260000_validate_ceremony_fks.sql"
+  ],
+  "acceptance": [
+    {
+      "kind": "migration",
+      "value": "202607260000_validate_ceremony_fks"
+    },
+    {
+      "kind": "live",
+      "check": "All 8 ceremony FKs show pg_constraint.convalidated=true on prod branch br-fancy-credit-akjnd07a (Neon MCP read-only, 2026-07-11); VALIDATE ran with 0 orphans."
+    },
+    {
+      "kind": "note",
+      "check": "TASK B (ledger backfill) artifact shipped PR #2368; owner runs the SQL — separate follow-up."
+    }
+  ],
+  "db_required": true,
+  "guard_required": false,
+  "registered_on": "2026-07-11",
+  "note": "TASK A DONE + LIVE-VERIFIED on prod 2026-07-11. TASK B = owner runs docs/ceremony backfill SQL."
+}

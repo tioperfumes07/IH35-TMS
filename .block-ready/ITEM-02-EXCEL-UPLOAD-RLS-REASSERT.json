@@ -1,0 +1,28 @@
+{
+  "block_id": "ITEM-02-EXCEL-UPLOAD-RLS-REASSERT",
+  "status": "pending",
+  "classification": "FINANCIAL (catalogs.* migration — owner-gated)",
+  "priority": "P2",
+  "module": "catalogs-rls",
+  "phase": "isolation",
+  "source": "GUARD doc 12 ITEM 2 (2026-07-11)",
+  "pr": 2369,
+  "allowed_files": [
+    "db/migrations/202607270000_reassert_excel_upload_jobs_rls.sql"
+  ],
+  "acceptance": [
+    {
+      "check": "New idempotent migration re-asserts 0383's RLS contract on catalogs.excel_upload_jobs. (PR #2369, HELD)",
+      "resolved": true
+    },
+    {
+      "kind": "live",
+      "check": "UNVERIFIED — owner runs as neondb_owner: prod shows catalogs.excel_upload_jobs relforcerowsecurity=true + Owner/Admin policies (currently relrowsecurity=false, 0 policies — ledger-vs-reality drift verified 2026-07-11).",
+      "resolved": false
+    }
+  ],
+  "db_required": true,
+  "guard_required": true,
+  "registered_on": "2026-07-11",
+  "note": "Root cause verified live: 0383 ledger-applied but RLS never effective. Owner approves + runs #2369."
+}
