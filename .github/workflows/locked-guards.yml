@@ -466,3 +466,12 @@ jobs:
 
       - name: verify:phase4-crossmodule-fks
         run: npm run verify:phase4-crossmodule-fks
+      - name: verify:no-raw-date-input --selftest
+        run: node scripts/verify-no-raw-date-input.mjs --selftest
+      - name: verify:no-raw-date-input
+        run: npm run verify:no-raw-date-input
+
+      - name: verify:no-nested-box --selftest
+        run: node scripts/verify-no-nested-box.mjs --selftest
+      - name: verify:no-nested-box
+        run: npm run verify:no-nested-box
