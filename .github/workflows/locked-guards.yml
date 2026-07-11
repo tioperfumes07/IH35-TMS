@@ -25,6 +25,12 @@ jobs:
       - name: verify:load-advance-persistence
         run: npm run verify:load-advance-persistence
 
+      - name: verify:guard-wired --selftest
+        run: node scripts/verify-guard-wired.mjs --selftest
+
+      - name: verify:guard-wired
+        run: npm run verify:guard-wired
+
       - name: verify:deep-audit-b-bell-icon
         run: npm run verify:deep-audit-b-bell-icon
 
