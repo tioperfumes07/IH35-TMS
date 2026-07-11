@@ -743,10 +743,11 @@ export async function payBill(input: PayBillInput, userId: string) {
 
   // P1-BILLPAY-GL: a bill payment moves cash and MUST post DR ap_control / CR bank in the same breath.
   // Gate the whole payment on BILL_PAYMENT_GL_POSTING_ENABLED — OFF => block entirely (no payment row,
-  // no bank mutation, no JE), so cash never moves without its offsetting journal entry.
+  // no bank mutation, no JE), so cash never moves without its offsetting journal entry. Throw an explicit
+  // policy error (never a silent success); the route maps it to 409 and internal callers fail loud.
   const glPostingEnabled = await isBillPaymentGlPostingEnabled(input.operatingCompanyId, userId);
   if (!glPostingEnabled) {
-    return { result: "blocked_flag_off" as const };
+    throw new Error("bill_payment_gl_posting_disabled");
   }
 
   const payment = await withCurrentUser(userId, async (client) => {

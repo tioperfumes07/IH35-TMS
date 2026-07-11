@@ -251,11 +251,8 @@ export async function registerBillsRoutes(app: FastifyInstance) {
         },
         String(user.uuid)
       );
-      // P1-BILLPAY-GL: flag OFF => the payment was blocked entirely (no cash moved, no JE). Surface it
-      // as a 409, not a fake 201 success.
-      if ("result" in payment && payment.result === "blocked_flag_off") {
-        return reply.code(409).send({ error: "bill_payment_gl_posting_disabled", result: payment.result });
-      }
+      // P1-BILLPAY-GL: when BILL_PAYMENT_GL_POSTING is OFF, payBill throws "bill_payment_gl_posting_disabled",
+      // which the catch below maps to a 409 (explicit blocked, never a fake 201 success).
       void withCompanyScope(String(user.uuid), query.data.operating_company_id, (client) =>
         emitAccountingSpineEvent(client, {
           operating_company_id: query.data.operating_company_id,

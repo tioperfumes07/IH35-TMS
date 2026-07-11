@@ -493,12 +493,9 @@ export async function postSettlement(input: PostSettlementInput, userId: string)
       },
       userId
     );
-    // P1-BILLPAY-GL: payBill blocks entirely when BILL_PAYMENT_GL_POSTING_ENABLED is OFF for the entity.
-    // Reaching here means SETTLEMENT_GL_POSTING is ON but bill-payment posting is OFF — a misconfiguration;
-    // fail loud rather than treat the blocked marker as a real payment (dormant while all GL flags are ON).
-    if ("result" in payment && payment.result === "blocked_flag_off") {
-      throw new Error("bill_payment_gl_posting_disabled");
-    }
+    // P1-BILLPAY-GL: payBill throws "bill_payment_gl_posting_disabled" when BILL_PAYMENT_GL_POSTING is OFF
+    // (misconfig if SETTLEMENT_GL is ON but bill-payment posting is OFF). That propagates here and fails the
+    // settlement loud rather than paying without a GL entry (dormant while all GL flags are ON).
 
     const bondLineTotal = await client.query<{ amount_cents: number | null }>(
       `

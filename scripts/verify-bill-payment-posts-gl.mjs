@@ -39,8 +39,8 @@ export function check() {
   if (!/isBillPaymentGlPostingEnabled/.test(body)) {
     failures.push(`${BILLS}: payBill() must gate on isBillPaymentGlPostingEnabled (BILL_PAYMENT_GL_POSTING_ENABLED) — OFF must block the whole payment`);
   }
-  if (!/blocked_flag_off/.test(body)) {
-    failures.push(`${BILLS}: payBill() must return an explicit blocked_flag_off when posting is disabled (no silent success)`);
+  if (!/bill_payment_gl_posting_disabled/.test(body)) {
+    failures.push(`${BILLS}: payBill() must explicitly block when posting is disabled (throw bill_payment_gl_posting_disabled → 409), never a silent success`);
   }
   if (!/postSourceTransactionInClientTx/.test(body)) {
     failures.push(`${BILLS}: payBill() must post the bill_payment JE via postSourceTransactionInClientTx (atomic, same txn as updateBankBalance) — else the bank decrements with no offsetting JE (P1-BILLPAY-GL regression)`);
@@ -51,11 +51,11 @@ export function check() {
 export { check as run };
 
 if (process.argv.includes("--selftest")) {
-  const good = `export async function payBill(input, userId) { const e = await isBillPaymentGlPostingEnabled(x,userId); if(!e) return {result:"blocked_flag_off"}; return withCurrentUser(userId, async client => { insert(); updateBankBalance(client,-a); await postSourceTransactionInClientTx(client, {source_transaction_type:"bill_payment"}, {userId}); return p; }); }`;
+  const good = `export async function payBill(input, userId) { const e = await isBillPaymentGlPostingEnabled(x,userId); if(!e) throw new Error("bill_payment_gl_posting_disabled"); return withCurrentUser(userId, async client => { insert(); updateBankBalance(client,-a); await postSourceTransactionInClientTx(client, {source_transaction_type:"bill_payment"}, {userId}); return p; }); }`;
   const bad = `export async function payBill(input, userId) { return withCurrentUser(userId, async client => { insert(); updateBankBalance(client,-a); return p; }); }`;
   const body = (s) => { const i = s.search(/export\s+async\s+function\s+payBill\s*\(/); return s.slice(i); };
   const checks = [
-    ["wired payBill (gate + atomic post) passes", /isBillPaymentGlPostingEnabled/.test(body(good)) && /postSourceTransactionInClientTx/.test(body(good)) && /blocked_flag_off/.test(body(good))],
+    ["wired payBill (gate + atomic post) passes", /isBillPaymentGlPostingEnabled/.test(body(good)) && /postSourceTransactionInClientTx/.test(body(good)) && /bill_payment_gl_posting_disabled/.test(body(good))],
     ["unwired payBill (bank mutated, no JE) is caught", !/postSourceTransactionInClientTx/.test(body(bad))],
   ];
   const failed = checks.filter(([, ok]) => !ok);
