@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
@@ -6,8 +6,16 @@ import { createPartsInventoryPurchase } from "../../../api/maintenance";
 import { createVendor, createCustomer } from "../../../api/mdata";
 import { chartOfAccountsCatalogClient, itemsCatalogClient } from "../../../api/catalogs-accounting";
 import { fetchAccountTypeCatalog, detailTypesForAccountType, ACCOUNT_TYPE_GROUPS } from "../../../api/coa-list";
+import { getCoaAccounts } from "../../../api/banking";
+import { Combobox, type ComboboxOption } from "../../../components/Combobox";
 import { Modal } from "../../../components/Modal";
 import { useToast } from "../../../components/Toast";
+
+// FIX-03: an item's income/expense account is a REFERENCED catalogs.accounts record (QBO parity), not
+// text. Mirror ItemEditorModal's type filters + carrier default so quick-create + full editor agree.
+const INCOME_TYPES = ["Income", "OtherIncome"];
+const EXPENSE_TYPES = ["Expense", "CostOfGoodsSold", "OtherExpense"];
+const CARRIER_DEFAULT_INCOME_NAME = "Sales of Service Income";
 
 export type QuickCreateKind = "vendor" | "customer" | "item" | "category" | "part";
 
@@ -88,6 +96,38 @@ export function QuickCreateEntityModal({
     () => detailTypesForAccountType(accountTypeCatalogQuery.data, selectedAccountType),
     [accountTypeCatalogQuery.data, selectedAccountType],
   );
+  // FIX-03 (item only): populate + persist the income/expense GL account link that was previously
+  // DROPPED at create. Held in local state (Combobox isn't a native input) alongside react-hook-form.
+  const [incomeAccountId, setIncomeAccountId] = useState<string | null>(null);
+  const [buyEnabled, setBuyEnabled] = useState(false);
+  const [expenseAccountId, setExpenseAccountId] = useState<string | null>(null);
+  const accountsQuery = useQuery({
+    // Same source as the categorize row + ItemEditorModal; entity-scoped server-side.
+    queryKey: ["catalogs", "accounts", "for-items", operatingCompanyId],
+    queryFn: () => getCoaAccounts(operatingCompanyId),
+    enabled: open && kind === "item" && !!operatingCompanyId,
+  });
+  const accounts = accountsQuery.data?.accounts ?? [];
+  const incomeOptions: ComboboxOption[] = useMemo(
+    () =>
+      accounts
+        .filter((a) => a.account_type && INCOME_TYPES.includes(a.account_type))
+        .map((a) => ({ value: a.id, label: a.account_name, sublabel: a.account_number })),
+    [accounts]
+  );
+  const expenseOptions: ComboboxOption[] = useMemo(
+    () =>
+      accounts
+        .filter((a) => a.account_type && EXPENSE_TYPES.includes(a.account_type))
+        .map((a) => ({ value: a.id, label: a.account_name, sublabel: a.account_number })),
+    [accounts]
+  );
+  // Carrier default: preselect "Sales of Service Income" for a sellable item when nothing is chosen.
+  useEffect(() => {
+    if (kind !== "item" || incomeAccountId) return;
+    const dflt = accounts.find((a) => a.account_name === CARRIER_DEFAULT_INCOME_NAME && a.account_type && INCOME_TYPES.includes(a.account_type));
+    if (dflt) setIncomeAccountId(dflt.id);
+  }, [kind, accounts, incomeAccountId]);
 
   const submit = form.handleSubmit(async (raw) => {
     const parsed = schema.safeParse(raw);
@@ -132,6 +172,19 @@ export function QuickCreateEntityModal({
         // QB-STD-5: write to catalogs.items (canonical) — same table itemsCatalogClient.list()
         // reads. Previously wrote to mdata.qbo_items (mirror), invisible after refresh.
         // item_type defaults to "Service" (factory requiredMetadata["item_type"]).
+        // FIX-03: PERSIST the income/expense GL account link (was DROPPED at create). The backend
+        // /catalogs/accounting/items maps default_income_account_id / default_expense_account_id
+        // straight to catalogs.items columns and validates account-type server-side.
+        if (!incomeAccountId) {
+          pushToast("Income account is required for a product/service.", "error");
+          setSaving(false);
+          return;
+        }
+        if (buyEnabled && !expenseAccountId) {
+          pushToast("Expense account is required when you purchase this item.", "error");
+          setSaving(false);
+          return;
+        }
         const nameSlug = (parsed.data.sku?.trim() || parsed.data.name.replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 20) || "ITEM").slice(0, 120);
         const itemCode = nameSlug || "ITEM";
         const res = await itemsCatalogClient.create(operatingCompanyId, {
@@ -140,6 +193,8 @@ export function QuickCreateEntityModal({
           metadata: {
             item_type: "Service",
             unit_price_cents: parsed.data.unitPrice ?? 0,
+            default_income_account_id: incomeAccountId,
+            default_expense_account_id: buyEnabled ? expenseAccountId : null,
           },
         });
         onCreated({ id: String(res.id), label: parsed.data.name });
@@ -175,6 +230,9 @@ export function QuickCreateEntityModal({
       }
       pushToast("Created successfully", "success");
       form.reset();
+      setIncomeAccountId(null);
+      setBuyEnabled(false);
+      setExpenseAccountId(null);
       onClose();
     } catch (error) {
       pushToast(String((error as Error).message ?? "Create failed"), "error");
@@ -252,15 +310,56 @@ export function QuickCreateEntityModal({
         ) : null}
 
         {kind === "item" ? (
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-            <label>
-              <span className="text-xs font-medium text-gray-600">SKU (used as item code)</span>
-              <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" {...form.register("sku")} aria-label="Quick create SKU" />
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+              <label>
+                <span className="text-xs font-medium text-gray-600">SKU (used as item code)</span>
+                <input className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" {...form.register("sku")} aria-label="Quick create SKU" />
+              </label>
+              <label>
+                <span className="text-xs font-medium text-gray-600">Unit price (cents)</span>
+                <input type="number" className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" {...form.register("unitPrice")} aria-label="Quick create unit price cents" />
+              </label>
+            </div>
+            {/* FIX-03: income account is REQUIRED (a product/service maps to a sales income account in QBO);
+            the picker is populated from catalogs.accounts and the id persists on the item. */}
+            <label className="block">
+              <span className="text-xs font-medium text-gray-600">
+                Income account *{" "}
+                <span className="font-normal text-gray-400">(carrier default: Service income)</span>
+              </span>
+              <div className="mt-1">
+                <Combobox
+                  options={incomeOptions}
+                  value={incomeAccountId}
+                  onChange={setIncomeAccountId}
+                  placeholder="Select income account"
+                  loading={accountsQuery.isLoading}
+                  allowClear
+                  dataField="quick-create-income-account"
+                />
+              </div>
             </label>
-            <label>
-              <span className="text-xs font-medium text-gray-600">Unit price (cents)</span>
-              <input type="number" className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" {...form.register("unitPrice")} aria-label="Quick create unit price cents" />
+            <label className="flex items-center gap-2 text-xs font-medium text-gray-600">
+              <input type="checkbox" checked={buyEnabled} onChange={(e) => setBuyEnabled(e.target.checked)} aria-label="Quick create purchase this item" />
+              I purchase this product/service from a vendor
             </label>
+            {buyEnabled ? (
+              <label className="block">
+                <span className="text-xs font-medium text-gray-600">Expense / COGS account *</span>
+                <div className="mt-1">
+                  <Combobox
+                    options={expenseOptions}
+                    value={expenseAccountId}
+                    onChange={setExpenseAccountId}
+                    placeholder="Select expense account"
+                    loading={accountsQuery.isLoading}
+                    allowClear
+                    dataField="quick-create-expense-account"
+                  />
+                </div>
+              </label>
+            ) : null}
           </div>
         ) : null}
 
