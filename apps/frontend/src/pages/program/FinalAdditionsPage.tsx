@@ -178,7 +178,7 @@ export function FinalAdditionsPage() {
               </span>
             </div>
             {remaining.length === 0 ? (
-              <div className="px-3 py-6 text-center text-sm text-slate-500">Nothing left — all blocks shipped. 🎉</div>
+              <div className="px-3 py-6 text-center text-sm text-slate-500">Nothing left — all blocks shipped.</div>
             ) : (
               remaining.map((b) => <BlockRow key={b.id} b={b} />)
             )}
