@@ -204,6 +204,10 @@
     {
       "file": "202607250000_phase4_crossmodule_fks.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1] PHASE-4 BATCH (P4-01/02/03) — safety.accident_reports.insurance_claim_id, legal.matters.{insurance_claim_id,insurance_lawsuit_id,incident_id,unit_id}, mdata.assets.unit_id — additive cols + FKs to canonical (insurance.claim/lawsuit, safety.incidents, mdata.units). GUARD-verified 0 orphans. Backfill+resolver+route fix deferred."
+    },
+    {
+      "file": "202607230000_work_orders_unit_driver_fk.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] P4-06 — maintenance.work_orders.unit_id -> mdata.units + driver_id -> mdata.drivers FKs (NOT VALID; GUARD 0-orphan check + VALIDATE on Neon). vendor_id mirror->AP-truth repoint deferred."
     }
   ]
 }

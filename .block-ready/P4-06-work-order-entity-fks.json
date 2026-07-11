@@ -1,0 +1,33 @@
+{
+  "block_id": "P4-06-work-order-entity-fks",
+  "status": "BUILD",
+  "classification": "FINANCIAL",
+  "phase": "PHASE-4-CROSS-MODULE",
+  "task": "P4-06 (WO-FK): GUARD+AGENT-confirmed (pg_constraint) maintenance.work_orders.unit_id + driver_id are unconstrained uuids (no FK) — a WO can reference a nonexistent unit/driver (Total Connectivity §10a break). Verify-first: columns exist (indexed 0145) but NO FK. Migration 202607230000 adds FK work_orders.unit_id -> mdata.units(id) + driver_id -> mdata.drivers(id) (canonical hubs) as NOT VALID (enforces new rows without failing on orphans; GUARD 0-orphan-check + VALIDATE on Neon). Idempotent (pg_constraint guard). vendor_id points at the mdata.qbo_vendors MIRROR not the canonical AP truth mdata.vendors — repointing that writer+FK is a coordinated deferred follow-up (item 18 / vendor namespace). Static guard verify-work-order-entity-fks.",
+  "branch": "feat/work-order-entity-fks-p4",
+  "lane": "PHASE-4-CROSS-MODULE",
+  "allowed_files": [
+    "db/migrations/202607230000_work_orders_unit_driver_fk.sql",
+    "db/migrations/.held-migrations.json",
+    "scripts/verify-work-order-entity-fks.mjs",
+    "scripts/verify-steps/104-verify-work-order-entity-fks.mjs",
+    ".block-ready/P4-06-work-order-entity-fks.json",
+    "package.json",
+    ".github/workflows/locked-guards.yml"
+  ],
+  "acceptance": [
+    { "kind": "fk", "from": "maintenance.work_orders.unit_id", "to": "mdata.units.id", "note": "NOT VALID; GUARD VALIDATEs after 0-orphan check on Neon" },
+    { "kind": "fk", "from": "maintenance.work_orders.driver_id", "to": "mdata.drivers.id", "note": "NOT VALID" },
+    { "kind": "guard", "script": "scripts/verify-work-order-entity-fks.mjs", "wired_into": "verify-pre-commit (verify-steps/104) + locked-guards + package.json verify:work-order-entity-fks" },
+    { "kind": "live", "assert": "--selftest PASS; guard PASS; hold-migrations-registered + G4 canonical-table-writes PASS. FK-only (no new column → no schema-parity baseline change). 0-orphan check + VALIDATE owed to GUARD on Neon.", "verified_by": "GUARD Neon branch-proof" },
+    { "kind": "design", "spec": "04-PHASE4/P4-06_WO-FK dispatch + FINAL-TABLES-WIRING hubs", "sections": ["work_orders -> unit/driver FK"] }
+  ],
+  "linkage": "maintenance.work_orders -> unit (mdata.units) + driver (mdata.drivers) — the cross-module hub linkage this block enforces (Total Connectivity §10a). Existing WO->bill/expense FK (linked_work_order_uuid) unchanged. FORCED RLS unchanged.",
+  "db_required": true,
+  "guard_required": true,
+  "extra_gates": [],
+  "hold": "TIER-1 MIGRATION — build-and-hold. DO NOT RUN ON PROD (registered held). Owner runs on Neon; GUARD 0-orphan-checks + VALIDATEs; owner merges.",
+  "deferred": [
+    { "item": "repoint work_orders.vendor_id from the mdata.qbo_vendors MIRROR to canonical mdata.vendors (writer + FK + data)", "reason": "vendor identity split — depends on the vendor-namespace work (item 18); needs writer-change + backfill, a coordinated follow-up, not silently dropped." }
+  ]
+}
