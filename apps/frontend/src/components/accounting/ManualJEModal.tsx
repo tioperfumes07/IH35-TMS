@@ -5,6 +5,7 @@ import { Button } from "../Button";
 import { Modal } from "../Modal";
 import { MoneyInput } from "../forms/MoneyInput";
 import { useToast } from "../Toast";
+import { DatePicker } from "../forms/DatePicker";
 import { SelectCombobox } from "../shared/SelectCombobox";
 import { InlineCreateDrawer } from "../parity/InlineCreateDrawer";
 
@@ -154,11 +155,10 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
             <p className="text-[11px] text-gray-600">Enter the journal header. Line items are added on the next step.</p>
             <label className="block">
               Journal date
-              <input
-                type="date"
+              <DatePicker
                 className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2"
                 value={date}
-                onChange={(e) => setDate(e.target.value)}
+                onChange={setDate}
               />
             </label>
             <label className="block">
