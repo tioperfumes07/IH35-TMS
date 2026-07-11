@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
+import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { createPartsInventoryPurchase } from "../../../api/maintenance";
 import { createVendor, createCustomer } from "../../../api/mdata";
 import { chartOfAccountsCatalogClient, itemsCatalogClient } from "../../../api/catalogs-accounting";
+import { fetchAccountTypeCatalog, detailTypesForAccountType, ACCOUNT_TYPE_GROUPS } from "../../../api/coa-list";
 import { Modal } from "../../../components/Modal";
 import { useToast } from "../../../components/Toast";
 
@@ -44,6 +46,10 @@ const schema = z.object({
   taxId: z.string().trim().optional(),
   track1099: z.boolean().optional(),
   defaultExpenseAccount: z.string().trim().optional(),
+  // category: full COA classification — account_type is the 8-value COA group enum, account_subtype
+  // is the chosen Detail Type name (both persisted to catalogs.accounts.metadata).
+  accountType: z.string().trim().optional(),
+  detailType: z.string().trim().optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -66,8 +72,22 @@ export function QuickCreateEntityModal({
   const { pushToast } = useToast();
   const [saving, setSaving] = useState(false);
   const form = useForm<FormValues>({
-    defaultValues: { name: "", company: "", email: "", phone: "", vendorType: "Other", sku: "", unitPrice: 0, qtyReceived: 1, location: "", street: "", city: "", state: "", zip: "", accountNumber: "", terms: "", taxId: "", track1099: false, defaultExpenseAccount: "" },
+    defaultValues: { name: "", company: "", email: "", phone: "", vendorType: "Other", sku: "", unitPrice: 0, qtyReceived: 1, location: "", street: "", city: "", state: "", zip: "", accountNumber: "", terms: "", taxId: "", track1099: false, defaultExpenseAccount: "", accountType: "", detailType: "" },
   });
+
+  // category: live COA Detail Type taxonomy — same source the Chart-of-Accounts page uses
+  // (catalogs.account_types via fetchAccountTypeCatalog), filtered by the chosen account type.
+  const selectedAccountType = form.watch("accountType") ?? "";
+  const accountTypeCatalogQuery = useQuery({
+    queryKey: ["account-type-catalog"],
+    queryFn: fetchAccountTypeCatalog,
+    staleTime: 5 * 60 * 1000,
+    enabled: open && kind === "category",
+  });
+  const detailTypeOptions = useMemo(
+    () => detailTypesForAccountType(accountTypeCatalogQuery.data, selectedAccountType),
+    [accountTypeCatalogQuery.data, selectedAccountType],
+  );
 
   const submit = form.handleSubmit(async (raw) => {
     const parsed = schema.safeParse(raw);
@@ -124,10 +144,14 @@ export function QuickCreateEntityModal({
         });
         onCreated({ id: String(res.id), label: parsed.data.name });
       } else if (kind === "category") {
-        // QB-STD-5: write to catalogs.accounts (canonical) — same table getCoaAccounts reads via
-        // /api/v1/catalogs/accounts. Previously wrote to mdata.qbo_accounts (mirror), invisible
-        // after refresh. chartOfAccountsCatalogClient maps to tableName:"accounts" in the factory.
-        // Default account_type/subtype = Expense/OtherExpense (appropriate for a cost category).
+        // FIX-02: full QBO COA classification — persist the CHOSEN account_type (8-value COA group
+        // enum) + Detail Type, never a hard-coded Expense. Writes to catalogs.accounts (canonical) —
+        // same table getCoaAccounts reads via /api/v1/catalogs/accounts. chartOfAccountsCatalogClient
+        // maps to tableName:"accounts" in the factory (NOT the gated NewAccountDrawerForm path).
+        if (!parsed.data.accountType) {
+          pushToast("Account type is required.", "error");
+          return;
+        }
         const rawSlug = parsed.data.name.replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 12) || "ACCT";
         const safeSlug = /^[A-Z]/.test(rawSlug) ? rawSlug : `E${rawSlug}`;
         // Timestamp suffix avoids account_number unique-constraint violations on same-name creates.
@@ -135,7 +159,10 @@ export function QuickCreateEntityModal({
         const res = await chartOfAccountsCatalogClient.create(operatingCompanyId, {
           code: accountCode,
           display_name: parsed.data.name,
-          metadata: { account_type: "Expense", account_subtype: "OtherExpense" },
+          metadata: {
+            account_type: parsed.data.accountType,
+            account_subtype: parsed.data.detailType?.trim() || undefined,
+          },
         });
         onCreated({ id: String(res.id), label: parsed.data.name });
       } else {
@@ -233,6 +260,48 @@ export function QuickCreateEntityModal({
             <label>
               <span className="text-xs font-medium text-gray-600">Unit price (cents)</span>
               <input type="number" className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1" {...form.register("unitPrice")} aria-label="Quick create unit price cents" />
+            </label>
+          </div>
+        ) : null}
+
+        {kind === "category" ? (
+          <div className="space-y-3">
+            <label className="block">
+              <span className="text-xs font-medium text-gray-600">Account type *</span>
+              <select
+                className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
+                aria-label="Quick create account type"
+                {...form.register("accountType", { onChange: () => form.setValue("detailType", "") })}
+              >
+                <option value="">Select a type…</option>
+                {ACCOUNT_TYPE_GROUPS.map((group) => (
+                  <optgroup key={group.label} label={group.label}>
+                    {group.types.map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+            </label>
+            <label className="block">
+              <span className="text-xs font-medium text-gray-600">Detail type</span>
+              <select
+                className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm disabled:bg-gray-50 disabled:text-gray-400"
+                aria-label="Quick create detail type"
+                disabled={detailTypeOptions.length === 0}
+                {...form.register("detailType")}
+              >
+                <option value="">
+                  {!selectedAccountType
+                    ? "Select an account type first"
+                    : detailTypeOptions.length === 0
+                      ? "No detail types available"
+                      : "Select a detail type…"}
+                </option>
+                {detailTypeOptions.map((dt) => (
+                  <option key={dt.id} value={dt.name}>{dt.name}</option>
+                ))}
+              </select>
             </label>
           </div>
         ) : null}
