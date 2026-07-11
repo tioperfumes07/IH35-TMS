@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ListErrorState } from "../../components/ListErrorState";
 import { ReportsSubNav } from "./ReportsSubNav";
 
 interface DispatcherStats {
@@ -36,7 +37,7 @@ export function BookingGapReport() {
   const [period, setPeriod] = useState<Period>("week");
   const { from, to } = periodDates(period);
 
-  const { data, isLoading } = useQuery<{ data: { dispatchers: DispatcherStats[] } }>({
+  const { data, isLoading, isError, error, refetch } = useQuery<{ data: { dispatchers: DispatcherStats[] } }>({
     queryKey: ["booking-gap", operatingCompanyId, from, to],
     queryFn: async () => {
       const res = await fetch(
@@ -85,7 +86,16 @@ export function BookingGapReport() {
 
       {isLoading && <p className="text-gray-400">Loading...</p>}
 
-      {!isLoading && dispatchers.length === 0 && (
+      {isError && (
+        <ListErrorState
+          title="Couldn't load booking gap report"
+          status={0}
+          message={(error as Error)?.message}
+          onRetry={() => void refetch()}
+        />
+      )}
+
+      {!isLoading && !isError && dispatchers.length === 0 && (
         <p className="text-gray-400">No data available for this period.</p>
       )}
 

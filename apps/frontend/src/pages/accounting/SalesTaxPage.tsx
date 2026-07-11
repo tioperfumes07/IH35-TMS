@@ -10,6 +10,7 @@ import {
   prepareSalesTaxReturn,
 } from "../../api/accounting";
 import { Button } from "../../components/Button";
+import { ListErrorState } from "../../components/ListErrorState";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
@@ -213,7 +214,18 @@ export function SalesTaxPage() {
                 </td>
               </tr>
             ))}
-            {(returnsQuery.data?.returns ?? []).length === 0 ? (
+            {returnsQuery.isError ? (
+              <tr>
+                <td colSpan={7}>
+                  <ListErrorState
+                    title="Couldn't load sales tax returns"
+                    status={0}
+                    message={(returnsQuery.error as Error)?.message}
+                    onRetry={() => void returnsQuery.refetch()}
+                  />
+                </td>
+              </tr>
+            ) : (returnsQuery.data?.returns ?? []).length === 0 ? (
               <tr>
                 <td className="px-3 py-4 text-gray-500" colSpan={7}>
                   No sales tax returns prepared yet.

@@ -9,6 +9,7 @@ import {
   type FactorReconciliationRun,
 } from "../../api/accounting";
 import { Button } from "../../components/Button";
+import { ListErrorState } from "../../components/ListErrorState";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
@@ -64,7 +65,14 @@ export function FactorReconciliationPage() {
 
       <DataPanel title="Import candidates (Faro statements)">
         <div className="space-y-2">
-          {(candidatesQuery.data ?? []).length === 0 ? <div className="text-xs text-gray-500">No pending statement imports.</div> : null}
+          {candidatesQuery.isError ? (
+            <ListErrorState
+              title="Couldn't load import candidates"
+              status={0}
+              message={(candidatesQuery.error as Error)?.message}
+              onRetry={() => void candidatesQuery.refetch()}
+            />
+          ) : (candidatesQuery.data ?? []).length === 0 ? <div className="text-xs text-gray-500">No pending statement imports.</div> : null}
           {(candidatesQuery.data ?? []).map((candidate) => (
             <div key={candidate.id} className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 p-2 text-xs">
               <div className="space-y-0.5">
@@ -96,7 +104,14 @@ export function FactorReconciliationPage() {
       <div className="grid gap-3 md:grid-cols-2">
         <DataPanel title="Recent reconciliation runs">
           <div className="space-y-2">
-            {(runsQuery.data ?? []).length === 0 ? <div className="text-xs text-gray-500">No runs yet.</div> : null}
+            {runsQuery.isError ? (
+              <ListErrorState
+                title="Couldn't load reconciliation runs"
+                status={0}
+                message={(runsQuery.error as Error)?.message}
+                onRetry={() => void runsQuery.refetch()}
+              />
+            ) : (runsQuery.data ?? []).length === 0 ? <div className="text-xs text-gray-500">No runs yet.</div> : null}
             {(runsQuery.data ?? []).map((run: FactorReconciliationRun) => (
               <button
                 key={run.id}
