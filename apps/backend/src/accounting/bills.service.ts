@@ -867,7 +867,9 @@ export async function payBill(input: PayBillInput, userId: string) {
     return {
       ...paymentRes.rows[0],
       amount_cents: Number(paymentRes.rows[0].amount_cents ?? Math.round(Number(paymentRes.rows[0].amount ?? 0) * 100)),
-      gl_posting: glPostingEnabled ? ("posted" as const) : ("blocked_flag_off" as const),
+      gl_posting: glPostingEnabled
+        ? ({ posted: true } as const)
+        : ({ posted: false, reason: "blocked_flag_off" } as const),
     };
   });
 
