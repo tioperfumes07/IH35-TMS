@@ -101,8 +101,17 @@ export function computeProgramTracker(now: Date): ProgramTracker {
   const phaseByNorm = new Map<string, string>();
   for (const p of manifest.phases) for (const b of p.blocks) phaseByNorm.set(normId(b.id), p.key);
 
+  // Real merge timestamps by PR number, from the git-derived merged-PR spine (never fabricated).
+  const mergedAtByPr = new Map<number, string>();
+  for (const p of recon.merged_prs ?? []) if (typeof p.number === "number" && p.mergedAt) mergedAtByPr.set(p.number, p.mergedAt);
+
   const rows: TrackerBlockRow[] = (recon.blocks ?? []).map((b) => {
-    const liveVerified = String(b.status).toUpperCase() === "DONE" && b.live_state === "deployed";
+    const isDone = String(b.status).toUpperCase() === "DONE";
+    // Merge to main IS the prod deploy (§1.1), so a merged PR is the live-verified proof. Accept an explicit
+    // live_state=deployed too. A bare "done" with NO merged PR is NOT live-verified → stays In Progress.
+    const liveVerified = isDone && (b.pr != null || b.live_state === "deployed");
+    const prMergedAt = b.pr != null ? mergedAtByPr.get(b.pr) ?? null : null;
+    const mergedAt = b.merged_at ?? prMergedAt ?? null;
     return {
       id: b.id,
       name: String(b.name ?? b.id).slice(0, 200),
@@ -111,9 +120,9 @@ export function computeProgramTracker(now: Date): ProgramTracker {
       tab: classify(String(b.status), liveVerified),
       live_verified: liveVerified,
       pr: b.pr ?? null,
-      last_changed_at: b.merged_at ?? b.synced_at ?? null,
+      last_changed_at: mergedAt ?? b.synced_at ?? null,
       last_changed_ct: b.merged_ct ?? null,
-      completed_at: liveVerified ? b.merged_at ?? null : null,
+      completed_at: liveVerified ? mergedAt : null,
       completed_ct: liveVerified ? b.deployed_ct ?? b.merged_ct ?? null : null,
       financial: Boolean(b.fin),
     };
@@ -136,7 +145,7 @@ export function computeProgramTracker(now: Date): ProgramTracker {
     for (const blk of p.blocks) {
       const rb = reconByNorm.get(normId(blk.id));
       const status = rb ? String(rb.status) : "pending";
-      const lv = rb ? String(rb.status).toUpperCase() === "DONE" && rb.live_state === "deployed" : false;
+      const lv = rb ? String(rb.status).toUpperCase() === "DONE" && (rb.pr != null || rb.live_state === "deployed") : false;
       const t = classify(status, lv);
       if (t === "completed") completed++;
       else if (t === "in_progress") inProg++;
