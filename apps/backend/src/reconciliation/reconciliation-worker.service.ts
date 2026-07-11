@@ -754,11 +754,15 @@ async function listCompaniesForCategory(
   mirrorCategory: MirrorCategory
 ): Promise<string[]> {
   if (integration === "qbo") {
+    // RECON-RLS-VISIBILITY: integrations.qbo_connections is FORCE-RLS company-scoped, so a raw SELECT here
+    // (no app.operating_company_id set) returns 0 rows and the reconciler never runs for any entity. The
+    // SECURITY DEFINER enumerator returns ONLY the DISTINCT active operating_company_ids past the policy;
+    // the per-company loop below still sets app.operating_company_id before every row-data read, so entity
+    // isolation on the actual reconciliation reads is preserved (see migration 202607190000).
     const rows = await client.query<{ operating_company_id: string }>(
       `
-        SELECT DISTINCT operating_company_id::text AS operating_company_id
-        FROM integrations.qbo_connections
-        WHERE revoked_at IS NULL
+        SELECT id::text AS operating_company_id
+        FROM integrations.list_active_qbo_company_ids() AS id
       `
     );
     return rows.rows.map((r) => r.operating_company_id).filter(Boolean);
