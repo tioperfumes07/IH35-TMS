@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
-import { companyHasQboConnectionRecord, getConnectionsExpiringWithin, getQboConnectionStatus, refreshAccessToken } from "../integrations/qbo/qbo-oauth.service.js";
+import { companyHasQboConnectionRecord, getConnectionsWithAccessTokenExpiringWithin, getQboConnectionStatus, refreshAccessToken } from "../integrations/qbo/qbo-oauth.service.js";
 import { sendEmail } from "../notifications/email.service.js";
 import { markRunnerFailed, markRunnerInitialized, markRunnerTick } from "../admin/runner-status.store.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
@@ -42,7 +42,10 @@ export async function initializeQboTokenRefreshCron(app: FastifyInstance) {
         "qbo.token_refresh_cron",
         async () => {
           markRunnerTick("token_refresh_cron");
-          const expiring = await getConnectionsExpiringWithin(12 * 3600);
+          // Select on the ACCESS token's expiry (not the ~100-day refresh token) with a 12h window —
+          // comfortably wider than the 1h tick — so every already-dead or soon-to-die access token is
+          // caught and refreshed each tick, keeping the QBO link continuously live after each re-auth.
+          const expiring = await getConnectionsWithAccessTokenExpiringWithin(12 * 3600);
           for (const conn of expiring) {
             assertTenantContext(conn.operating_company_id, "qbo.token_refresh_cron");
             try {
