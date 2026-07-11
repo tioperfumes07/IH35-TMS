@@ -29,7 +29,7 @@ function normId(s: string): string {
 // Registry entry text per block (allowed_files + acceptance + classification + linkage), keyed by normId, so
 // the endpoint can AUTO-DERIVE layers/kind/cross-module/wired from the block's declared scope — never hand-entered.
 const NEEDS_DESIGN_RE = /needs[_-]design|design[_-]pending/i;
-type RegistryEntry = { scopeText: string; linkageText: string; needsDesign: boolean; classification: string | null; phase: string | null };
+type RegistryEntry = { id: string; scopeText: string; linkageText: string; needsDesign: boolean; classification: string | null; phase: string | null; status: string | null; name: string | null };
 function readRegistry(): Map<string, RegistryEntry> {
   const map = new Map<string, RegistryEntry>();
   const dir = path.join(ROOT, ".block-ready");
@@ -46,7 +46,7 @@ function readRegistry(): Map<string, RegistryEntry> {
       // needs_design ONLY when an explicit marker is present — NEVER inferred from absence (§0 verify-everything).
       const needsDesign = j.needs_design === true || j.design_pending === true || NEEDS_DESIGN_RE.test(scopeText) || NEEDS_DESIGN_RE.test(String(j.status ?? ""));
       const id = String(j.block_id ?? j.block ?? f.replace(/\.json$/, ""));
-      map.set(normId(id), { scopeText, linkageText, needsDesign, classification: (j.classification as string) ?? (j.financial === true ? "FINANCIAL" : j.financial === false ? "NON-FINANCIAL" : null), phase: (j.phase as string) ?? null });
+      map.set(normId(id), { id, scopeText, linkageText, needsDesign, classification: (j.classification as string) ?? (j.financial === true ? "FINANCIAL" : j.financial === false ? "NON-FINANCIAL" : null), phase: (j.phase as string) ?? null, status: j.status != null ? String(j.status) : null, name: (j.task as string) ?? (j.name as string) ?? null });
     } catch { /* skip unparseable */ }
   }
   return map;
@@ -187,7 +187,27 @@ export function computeProgramTracker(now: Date): ProgramTracker {
   const mergedAtByPr = new Map<number, string>();
   for (const p of recon.merged_prs ?? []) if (typeof p.number === "number" && p.mergedAt) mergedAtByPr.set(p.number, p.mergedAt);
 
-  const rows: TrackerBlockRow[] = (recon.blocks ?? []).map((b) => {
+  // Build the row set from the LIVE registry UNIONED with the reconcile artifact, so a newly-registered block
+  // appears IMMEDIATELY (in its own registry status) and a block's status transitions AUTOMATICALLY: the
+  // reconcile artifact (auto-refreshed on every merge by program-tracker-artifacts-sync.yml) carries the
+  // evidence-derived status (merged-PR → DONE), which WINS when present; a brand-new block not yet reconciled
+  // shows in its registry-declared status (pending/in-progress) until the next auto-sync flips it. Nothing is
+  // frozen and nothing is dropped: recon-only legacy blocks (no .block-ready file) are still included.
+  const reconById = new Map<string, ReconBlock>();
+  for (const rb of recon.blocks ?? []) reconById.set(normId(rb.id), rb);
+  const unionIds = new Set<string>([...registry.keys(), ...reconById.keys()]);
+  const blockInputs: ReconBlock[] = [...unionIds].map((nid) => {
+    const rb = reconById.get(nid);
+    const entry = registry.get(nid);
+    if (rb) {
+      // Reconcile status WINS (it applies overrides + evidence like merged-PR→DONE = the automatic transition).
+      return rb;
+    }
+    // Registry-only block (registered but not yet reconciled): show it live in its own declared status.
+    return { id: entry!.id, status: entry!.status ?? "pending", name: entry!.name ?? entry!.id, fin: entry!.classification === "FINANCIAL", pr: null, live_state: null };
+  });
+
+  const rows: TrackerBlockRow[] = blockInputs.map((b) => {
     const isDone = String(b.status).toUpperCase() === "DONE";
     // Merge to main IS the prod deploy (§1.1), so a merged PR is the live-verified proof. Accept an explicit
     // live_state=deployed too. A bare "done" with NO merged PR is NOT live-verified → stays In Progress.
