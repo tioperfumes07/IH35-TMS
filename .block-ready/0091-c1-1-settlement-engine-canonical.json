@@ -1,0 +1,22 @@
+{
+  "block_id": "0091-c1-1-settlement-engine-canonical",
+  "status": "BUILD",
+  "classification": "FINANCIAL",
+  "phase": "PHASE-1-POSTING-INTEGRITY",
+  "task": "Tier-1 0091-c1-1: two driver-settlement engines. DESIGN ONLY. Verified live (main) THREE settlement code paths: A postSettlement (payroll.*, LIVE, posts Bill+Payment, gated SETTLEMENT_GL_POSTING_ENABLED); B postSettlementToGl (FIN-18, DORMANT, route unregistered, posts JE, reads driver_finance.*); C closeLoadBookendedSettlementForDriver (driver_finance.*, LIVE, posts NO GL — the canonical lifecycle). Committed docs/specs/SETTLEMENT-ENGINE-CANONICAL.md: canonical = driver_finance.* record model; drive GL posting FROM it; freeze payroll.* read-only; ONE open decision (Bill vs JE GL detail) deferred to Jorge per REPAIR §7. Re-verified REPAIR doc drift (H3-4 fixed, deduction applier now wired). NO code/behavior/migration change.",
+  "branch": "design/settlement-engine-single-source",
+  "lane": "PHASE-1-POSTING-INTEGRITY",
+  "allowed_files": [
+    "docs/specs/SETTLEMENT-ENGINE-CANONICAL.md",
+    ".block-ready/0091-c1-1-settlement-engine-canonical.json"
+  ],
+  "acceptance": [
+    { "kind": "design", "spec": "docs/specs/SETTLEMENT-ENGINE-CANONICAL.md", "sections": ["canonical decision", "retirement sequence", "Bill-vs-JE open decision"] },
+    { "kind": "live", "assert": "no code/behavior change — design doc only; three engine paths verified at file:line on main this session (postSettlement:403, postSettlementToGl:213 unregistered, closeLoadBookendedSettlementForDriver:220)" }
+  ],
+  "linkage": "Design doc maps the driver settlement money path: dispatch/load close (C, driver_finance) ↔ GL posting (A, accounting.bills/bill_payments) ↔ dormant JE (B). Names the wiring gap (canonical record model posts no GL) that S2 closes. No new FK/table.",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "hold": "TIER-1 FINANCIAL DECISION — design only, but records a canonical-engine decision + defers Bill-vs-JE to owner. HOLD for Jorge's ratification before any S2+ code."
+}
