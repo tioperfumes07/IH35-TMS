@@ -1,53 +1,195 @@
 {
-  "_README": "G4 canonical-write baseline (2026-07-11). Each key = pre-existing write/FK to a RETIRE table, grandfathered so today is green. Retire via #07 (settlement) etc.; any NEW retire-write fails CI. Remove a key when its write is repointed to the canonical table.",
-  "apps/backend/src/accounting/bank-recon/match.service.ts::bank.reconciliation_matches::INSERT INTO": "baselined 2026-07-11 — pre-existing INSERT INTO bank.reconciliation_matches at apps/backend/src/accounting/bank-recon/match.service.ts:446; retire to banking.*",
-  "apps/backend/src/accounting/bank-recon/recon-worklist.service.ts::bank.reconciliation_matches::INSERT INTO": "baselined 2026-07-11 — pre-existing INSERT INTO bank.reconciliation_matches at apps/backend/src/accounting/bank-recon/recon-worklist.service.ts:182; retire to banking.*",
-  "apps/backend/src/catalogs/load-cancellation-reasons.routes.ts::catalogs.load_cancellation_reasons::INSERT INTO": "baselined 2026-07-11 — pre-existing INSERT INTO catalogs.load_cancellation_reasons at apps/backend/src/catalogs/load-cancellation-reasons.routes.ts:132; retire to catalogs.cancellation_reasons",
-  "apps/backend/src/catalogs/load-cancellation-reasons.routes.ts::catalogs.load_cancellation_reasons::UPDATE": "baselined 2026-07-11 — pre-existing UPDATE catalogs.load_cancellation_reasons at apps/backend/src/catalogs/load-cancellation-reasons.routes.ts:209; retire to catalogs.cancellation_reasons",
-  "apps/backend/src/maint/parts.routes.ts::maint.part::INSERT INTO": "baselined 2026-07-11 — pre-existing INSERT INTO maint.part at apps/backend/src/maint/parts.routes.ts:112; retire to maintenance.part",
-  "apps/backend/src/maint/parts.routes.ts::maint.part::UPDATE": "baselined 2026-07-11 — pre-existing UPDATE maint.part at apps/backend/src/maint/parts.routes.ts:173; retire to maintenance.part",
-  "apps/backend/src/maint/pm.routes.ts::maint.pm_schedule::INSERT INTO": "baselined 2026-07-11 — pre-existing INSERT INTO maint.pm_schedule at apps/backend/src/maint/pm.routes.ts:215; retire to maintenance.pm_schedule",
-  "apps/backend/src/maint/pm.routes.ts::maint.pm_schedule::UPDATE": "baselined 2026-07-11 — pre-existing UPDATE maint.pm_schedule at apps/backend/src/maint/pm.routes.ts:300; retire to maintenance.pm_schedule",
-  "apps/backend/src/onboarding/usmca-carrier-bootstrap.ts::accounting.qbo_accounts::INSERT INTO": "baselined 2026-07-11 — pre-existing INSERT INTO accounting.qbo_accounts at apps/backend/src/onboarding/usmca-carrier-bootstrap.ts:136; retire to mdata.qbo_accounts",
-  "apps/backend/src/onboarding/usmca-carrier-bootstrap.ts::accounting.qbo_accounts::UPDATE": "baselined 2026-07-11 — pre-existing UPDATE accounting.qbo_accounts at apps/backend/src/onboarding/usmca-carrier-bootstrap.ts:162; retire to mdata.qbo_accounts",
-  "apps/backend/src/payroll/driver-settlement.service.ts::payroll.driver_settlements::INSERT INTO": "baselined 2026-07-11 — pre-existing INSERT INTO payroll.driver_settlements at apps/backend/src/payroll/driver-settlement.service.ts:330; retire to driver_finance.driver_settlements",
-  "apps/backend/src/payroll/driver-settlement.service.ts::payroll.driver_settlement_line_items::INSERT INTO": "baselined 2026-07-11 — pre-existing INSERT INTO payroll.driver_settlement_line_items at apps/backend/src/payroll/driver-settlement.service.ts:361; retire to driver_finance.*",
-  "apps/backend/src/payroll/driver-settlement.service.ts::payroll.driver_settlements::UPDATE": "baselined 2026-07-11 — pre-existing UPDATE payroll.driver_settlements at apps/backend/src/payroll/driver-settlement.service.ts:623; retire to driver_finance.driver_settlements",
-  "apps/backend/src/safety/position-history/position-history.routes.ts::maint.position_history::INSERT INTO": "baselined 2026-07-11 — pre-existing INSERT INTO maint.position_history at apps/backend/src/safety/position-history/position-history.routes.ts:178; retire to maintenance.position_*",
-  "apps/backend/src/settlements/approval.service.ts::settlement.settlement_line::UPDATE": "baselined 2026-07-11 — pre-existing UPDATE settlement.settlement_line at apps/backend/src/settlements/approval.service.ts:245; retire to driver_finance.*",
-  "apps/backend/src/settlements/approval.service.ts::settlement.settlement::UPDATE": "baselined 2026-07-11 — pre-existing UPDATE settlement.settlement at apps/backend/src/settlements/approval.service.ts:426; retire to driver_finance.*",
-  "apps/backend/src/settlements/auto-deductions/apply.ts::payroll.driver_settlement_line_items::INSERT INTO": "baselined 2026-07-11 — pre-existing INSERT INTO payroll.driver_settlement_line_items at apps/backend/src/settlements/auto-deductions/apply.ts:58; retire to driver_finance.*",
-  "apps/backend/src/settlements/auto-deductions/apply.ts::payroll.driver_settlements::UPDATE": "baselined 2026-07-11 — pre-existing UPDATE payroll.driver_settlements at apps/backend/src/settlements/auto-deductions/apply.ts:94; retire to driver_finance.driver_settlements",
-  "apps/backend/src/settlements/team-splits/apply.ts::payroll.driver_settlement_line_items::INSERT INTO": "baselined 2026-07-11 — pre-existing INSERT INTO payroll.driver_settlement_line_items at apps/backend/src/settlements/team-splits/apply.ts:159; retire to driver_finance.*",
-  "apps/backend/src/sync/qbo-accounts-push.ts::accounting.qbo_accounts::UPDATE": "baselined 2026-07-11 — pre-existing UPDATE accounting.qbo_accounts at apps/backend/src/sync/qbo-accounts-push.ts:158; retire to mdata.qbo_accounts",
-  "apps/backend/src/sync/qbo-customers-push.ts::accounting.qbo_customers::UPDATE": "baselined 2026-07-11 — pre-existing UPDATE accounting.qbo_customers at apps/backend/src/sync/qbo-customers-push.ts:160; retire to mdata.qbo_customers",
-  "apps/backend/src/sync/qbo-vendors-push.ts::accounting.qbo_vendors::UPDATE": "baselined 2026-07-11 — pre-existing UPDATE accounting.qbo_vendors at apps/backend/src/sync/qbo-vendors-push.ts:165; retire to mdata.qbo_vendors",
-  "db/migrations/0035_load_cancellation_reasons.sql::catalogs.load_cancellation_reasons::INSERT INTO": "baselined 2026-07-11 — pre-existing INSERT INTO catalogs.load_cancellation_reasons at db/migrations/0035_load_cancellation_reasons.sql:122; retire to catalogs.cancellation_reasons",
-  "db/migrations/0123_p6_pre_ledger_drift_reconciliation.sql::catalogs.load_cancellation_reasons::INSERT INTO": "baselined 2026-07-11 — pre-existing INSERT INTO catalogs.load_cancellation_reasons at db/migrations/0123_p6_pre_ledger_drift_reconciliation.sql:47; retire to catalogs.cancellation_reasons",
-  "db/migrations/0233_block_22_driver_settlement_engine.sql::payroll.driver_settlements::REFERENCES": "baselined 2026-07-11 — pre-existing REFERENCES payroll.driver_settlements at db/migrations/0233_block_22_driver_settlement_engine.sql:35; retire to driver_finance.driver_settlements",
-  "db/migrations/0277_mnt5_parts_catalog_seed.sql::maint.part::INSERT INTO": "baselined 2026-07-11 — pre-existing INSERT INTO maint.part at db/migrations/0277_mnt5_parts_catalog_seed.sql:236; retire to maintenance.part",
-  "db/migrations/0277_mnt5_parts_catalog_seed.sql::maint.pm_schedule::UPDATE": "baselined 2026-07-11 — pre-existing UPDATE maint.pm_schedule at db/migrations/0277_mnt5_parts_catalog_seed.sql:287; retire to maintenance.pm_schedule",
-  "db/migrations/0277_mnt5_parts_catalog_seed.sql::maint.pm_schedule::INSERT INTO": "baselined 2026-07-11 — pre-existing INSERT INTO maint.pm_schedule at db/migrations/0277_mnt5_parts_catalog_seed.sql:300; retire to maintenance.pm_schedule",
-  "db/migrations/0319_qbo_customers_push_sync_status.sql::accounting.qbo_customers::INSERT INTO": "baselined 2026-07-11 — pre-existing INSERT INTO accounting.qbo_customers at db/migrations/0319_qbo_customers_push_sync_status.sql:11; retire to mdata.qbo_customers",
-  "db/migrations/0319_qbo_customers_push_sync_status.sql::accounting.qbo_customers::UPDATE": "baselined 2026-07-11 — pre-existing UPDATE accounting.qbo_customers at db/migrations/0319_qbo_customers_push_sync_status.sql:23; retire to mdata.qbo_customers",
-  "db/migrations/0320_archive_test_seed_data.sql::accounting.qbo_customers::UPDATE": "baselined 2026-07-11 — pre-existing UPDATE accounting.qbo_customers at db/migrations/0320_archive_test_seed_data.sql:119; retire to mdata.qbo_customers",
-  "db/migrations/0321_qbo_vendors_push_sync_status.sql::accounting.qbo_vendors::INSERT INTO": "baselined 2026-07-11 — pre-existing INSERT INTO accounting.qbo_vendors at db/migrations/0321_qbo_vendors_push_sync_status.sql:11; retire to mdata.qbo_vendors",
-  "db/migrations/0321_qbo_vendors_push_sync_status.sql::accounting.qbo_vendors::UPDATE": "baselined 2026-07-11 — pre-existing UPDATE accounting.qbo_vendors at db/migrations/0321_qbo_vendors_push_sync_status.sql:26; retire to mdata.qbo_vendors",
-  "db/migrations/0323_qbo_accounts_sync_state.sql::accounting.qbo_accounts::INSERT INTO": "baselined 2026-07-11 — pre-existing INSERT INTO accounting.qbo_accounts at db/migrations/0323_qbo_accounts_sync_state.sql:11; retire to mdata.qbo_accounts",
-  "db/migrations/0323_qbo_accounts_sync_state.sql::accounting.qbo_accounts::REFERENCES": "baselined 2026-07-11 — pre-existing REFERENCES accounting.qbo_accounts at db/migrations/0323_qbo_accounts_sync_state.sql:35; retire to mdata.qbo_accounts",
-  "db/migrations/0323_qbo_accounts_sync_state.sql::accounting.qbo_accounts::UPDATE": "baselined 2026-07-11 — pre-existing UPDATE accounting.qbo_accounts at db/migrations/0323_qbo_accounts_sync_state.sql:40; retire to mdata.qbo_accounts",
-  "db/migrations/0387_usmca_chart_of_accounts_seed.sql::accounting.qbo_accounts::INSERT INTO": "baselined 2026-07-11 — pre-existing INSERT INTO accounting.qbo_accounts at db/migrations/0387_usmca_chart_of_accounts_seed.sql:51; retire to mdata.qbo_accounts",
-  "db/migrations/0387_usmca_chart_of_accounts_seed.sql::accounting.qbo_accounts::UPDATE": "baselined 2026-07-11 — pre-existing UPDATE accounting.qbo_accounts at db/migrations/0387_usmca_chart_of_accounts_seed.sql:90; retire to mdata.qbo_accounts",
-  "db/migrations/202606120100_c1_pre_settlements.sql::settlement.settlement::REFERENCES": "baselined 2026-07-11 — pre-existing REFERENCES settlement.settlement at db/migrations/202606120100_c1_pre_settlements.sql:39; retire to driver_finance.*",
-  "db/migrations/202606120600_d1_settlement_approval.sql::settlement.settlement_line::REFERENCES": "baselined 2026-07-11 — pre-existing REFERENCES settlement.settlement_line at db/migrations/202606120600_d1_settlement_approval.sql:83; retire to driver_finance.*",
-  "db/migrations/202606120600_d1_settlement_approval.sql::settlement.settlement::REFERENCES": "baselined 2026-07-11 — pre-existing REFERENCES settlement.settlement at db/migrations/202606120600_d1_settlement_approval.sql:114; retire to driver_finance.*",
-  "db/migrations/202606122215_m1_positioned_parts_picker.sql::maint.position_set::REFERENCES": "baselined 2026-07-11 — pre-existing REFERENCES maint.position_set at db/migrations/202606122215_m1_positioned_parts_picker.sql:65; retire to maintenance.position_*",
-  "db/migrations/202606122215_m1_positioned_parts_picker.sql::maint.position_set::INSERT INTO": "baselined 2026-07-11 — pre-existing INSERT INTO maint.position_set at db/migrations/202606122215_m1_positioned_parts_picker.sql:141; retire to maintenance.position_*",
-  "db/migrations/202606122230_m2_position_history.sql::maint.position_set::REFERENCES": "baselined 2026-07-11 — pre-existing REFERENCES maint.position_set at db/migrations/202606122230_m2_position_history.sql:16; retire to maintenance.position_*",
-  "db/migrations/202606122230_m2_position_history.sql::maint.part::REFERENCES": "baselined 2026-07-11 — pre-existing REFERENCES maint.part at db/migrations/202606122230_m2_position_history.sql:20; retire to maintenance.part",
-  "db/migrations/202606272100_af1_catalogs_accounts_per_entity.sql::payroll.driver_settlement_line_items::UPDATE": "baselined 2026-07-11 — pre-existing UPDATE payroll.driver_settlement_line_items at db/migrations/202606272100_af1_catalogs_accounts_per_entity.sql:170; retire to driver_finance.*",
-  "db/migrations/202606300130_load_cancellations_per_entity_fk.sql::catalogs.load_cancellation_reasons::INSERT INTO": "baselined 2026-07-11 — pre-existing INSERT INTO catalogs.load_cancellation_reasons at db/migrations/202606300130_load_cancellations_per_entity_fk.sql:74; retire to catalogs.cancellation_reasons",
-  "db/migrations/202606300130_load_cancellations_per_entity_fk.sql::catalogs.load_cancellation_reasons::REFERENCES": "baselined 2026-07-11 — pre-existing REFERENCES catalogs.load_cancellation_reasons at db/migrations/202606300130_load_cancellations_per_entity_fk.sql:96; retire to catalogs.cancellation_reasons",
-  "db/migrations/202607110220_escrow_ledger_repoint_fk_to_canonical.sql::settlement.settlement::REFERENCES": "baselined 2026-07-11 — pre-existing REFERENCES settlement.settlement at db/migrations/202607110220_escrow_ledger_repoint_fk_to_canonical.sql:11; retire to driver_finance.*",
-  "db/migrations/202607110220_escrow_ledger_repoint_fk_to_canonical.sql::settlement.settlement_line::REFERENCES": "baselined 2026-07-11 — pre-existing REFERENCES settlement.settlement_line at db/migrations/202607110220_escrow_ledger_repoint_fk_to_canonical.sql:12; retire to driver_finance.*"
+  "_README": "G4 canonical-write baseline (2026-07-11, count-keyed, comments stripped). Each key = pre-existing write/FK to a RETIRE table with its COUNT; live count > baseline count fails CI (a NEW retire-write, even in an already-baselined file). Retire via #07 (settlement)/#03 (qbo) etc.; lower the count when a write is repointed to canonical.",
+  "apps/backend/src/accounting/bank-recon/match.service.ts::bank.reconciliation_matches::INSERT INTO": {
+    "count": 1,
+    "reason": "baselined 2026-07-11 — pre-existing INSERT INTO bank.reconciliation_matches; retire to banking.*"
+  },
+  "apps/backend/src/accounting/bank-recon/recon-worklist.service.ts::bank.reconciliation_matches::INSERT INTO": {
+    "count": 1,
+    "reason": "baselined 2026-07-11 — pre-existing INSERT INTO bank.reconciliation_matches; retire to banking.*"
+  },
+  "apps/backend/src/catalogs/load-cancellation-reasons.routes.ts::catalogs.load_cancellation_reasons::INSERT INTO": {
+    "count": 1,
+    "reason": "baselined 2026-07-11 — pre-existing INSERT INTO catalogs.load_cancellation_reasons; retire to catalogs.cancellation_reasons"
+  },
+  "apps/backend/src/catalogs/load-cancellation-reasons.routes.ts::catalogs.load_cancellation_reasons::UPDATE": {
+    "count": 3,
+    "reason": "baselined 2026-07-11 — pre-existing UPDATE catalogs.load_cancellation_reasons; retire to catalogs.cancellation_reasons"
+  },
+  "apps/backend/src/maint/parts.routes.ts::maint.part::INSERT INTO": {
+    "count": 1,
+    "reason": "baselined 2026-07-11 — pre-existing INSERT INTO maint.part; retire to maintenance.part"
+  },
+  "apps/backend/src/maint/parts.routes.ts::maint.part::UPDATE": {
+    "count": 1,
+    "reason": "baselined 2026-07-11 — pre-existing UPDATE maint.part; retire to maintenance.part"
+  },
+  "apps/backend/src/maint/pm.routes.ts::maint.pm_schedule::INSERT INTO": {
+    "count": 1,
+    "reason": "baselined 2026-07-11 — pre-existing INSERT INTO maint.pm_schedule; retire to maintenance.pm_schedule"
+  },
+  "apps/backend/src/maint/pm.routes.ts::maint.pm_schedule::UPDATE": {
+    "count": 1,
+    "reason": "baselined 2026-07-11 — pre-existing UPDATE maint.pm_schedule; retire to maintenance.pm_schedule"
+  },
+  "apps/backend/src/onboarding/usmca-carrier-bootstrap.ts::accounting.qbo_accounts::INSERT INTO": {
+    "count": 1,
+    "reason": "baselined 2026-07-11 — pre-existing INSERT INTO accounting.qbo_accounts; retire to mdata.qbo_accounts"
+  },
+  "apps/backend/src/onboarding/usmca-carrier-bootstrap.ts::accounting.qbo_accounts::UPDATE": {
+    "count": 1,
+    "reason": "baselined 2026-07-11 — pre-existing UPDATE accounting.qbo_accounts; retire to mdata.qbo_accounts"
+  },
+  "apps/backend/src/payroll/driver-settlement.service.ts::payroll.driver_settlements::INSERT INTO": {
+    "count": 1,
+    "reason": "baselined 2026-07-11 — pre-existing INSERT INTO payroll.driver_settlements; retire to driver_finance.driver_settlements"
+  },
+  "apps/backend/src/payroll/driver-settlement.service.ts::payroll.driver_settlement_line_items::INSERT INTO": {
+    "count": 1,
+    "reason": "baselined 2026-07-11 — pre-existing INSERT INTO payroll.driver_settlement_line_items; retire to driver_finance.*"
+  },
+  "apps/backend/src/payroll/driver-settlement.service.ts::payroll.driver_settlements::UPDATE": {
+    "count": 1,
+    "reason": "baselined 2026-07-11 — pre-existing UPDATE payroll.driver_settlements; retire to driver_finance.driver_settlements"
+  },
+  "apps/backend/src/safety/position-history/position-history.routes.ts::maint.position_history::INSERT INTO": {
+    "count": 1,
+    "reason": "baselined 2026-07-11 — pre-existing INSERT INTO maint.position_history; retire to maintenance.position_*"
+  },
+  "apps/backend/src/settlements/approval.service.ts::settlement.settlement_line::UPDATE": {
+    "count": 2,
+    "reason": "baselined 2026-07-11 — pre-existing UPDATE settlement.settlement_line; retire to driver_finance.*"
+  },
+  "apps/backend/src/settlements/approval.service.ts::settlement.settlement::UPDATE": {
+    "count": 3,
+    "reason": "baselined 2026-07-11 — pre-existing UPDATE settlement.settlement; retire to driver_finance.*"
+  },
+  "apps/backend/src/settlements/auto-deductions/apply.ts::payroll.driver_settlement_line_items::INSERT INTO": {
+    "count": 1,
+    "reason": "baselined 2026-07-11 — pre-existing INSERT INTO payroll.driver_settlement_line_items; retire to driver_finance.*"
+  },
+  "apps/backend/src/settlements/auto-deductions/apply.ts::payroll.driver_settlements::UPDATE": {
+    "count": 1,
+    "reason": "baselined 2026-07-11 — pre-existing UPDATE payroll.driver_settlements; retire to driver_finance.driver_settlements"
+  },
+  "apps/backend/src/settlements/team-splits/apply.ts::payroll.driver_settlement_line_items::INSERT INTO": {
+    "count": 1,
+    "reason": "baselined 2026-07-11 — pre-existing INSERT INTO payroll.driver_settlement_line_items; retire to driver_finance.*"
+  },
+  "apps/backend/src/sync/qbo-accounts-push.ts::accounting.qbo_accounts::UPDATE": {
+    "count": 7,
+    "reason": "baselined 2026-07-11 — pre-existing UPDATE accounting.qbo_accounts; retire to mdata.qbo_accounts"
+  },
+  "apps/backend/src/sync/qbo-customers-push.ts::accounting.qbo_customers::UPDATE": {
+    "count": 4,
+    "reason": "baselined 2026-07-11 — pre-existing UPDATE accounting.qbo_customers; retire to mdata.qbo_customers"
+  },
+  "apps/backend/src/sync/qbo-vendors-push.ts::accounting.qbo_vendors::UPDATE": {
+    "count": 4,
+    "reason": "baselined 2026-07-11 — pre-existing UPDATE accounting.qbo_vendors; retire to mdata.qbo_vendors"
+  },
+  "db/migrations/0035_load_cancellation_reasons.sql::catalogs.load_cancellation_reasons::INSERT INTO": {
+    "count": 1,
+    "reason": "baselined 2026-07-11 — pre-existing INSERT INTO catalogs.load_cancellation_reasons; retire to catalogs.cancellation_reasons"
+  },
+  "db/migrations/0123_p6_pre_ledger_drift_reconciliation.sql::catalogs.load_cancellation_reasons::INSERT INTO": {
+    "count": 1,
+    "reason": "baselined 2026-07-11 — pre-existing INSERT INTO catalogs.load_cancellation_reasons; retire to catalogs.cancellation_reasons"
+  },
+  "db/migrations/0233_block_22_driver_settlement_engine.sql::payroll.driver_settlements::REFERENCES": {
+    "count": 1,
+    "reason": "baselined 2026-07-11 — pre-existing REFERENCES payroll.driver_settlements; retire to driver_finance.driver_settlements"
+  },
+  "db/migrations/0277_mnt5_parts_catalog_seed.sql::maint.part::INSERT INTO": {
+    "count": 1,
+    "reason": "baselined 2026-07-11 — pre-existing INSERT INTO maint.part; retire to maintenance.part"
+  },
+  "db/migrations/0277_mnt5_parts_catalog_seed.sql::maint.pm_schedule::UPDATE": {
+    "count": 1,
+    "reason": "baselined 2026-07-11 — pre-existing UPDATE maint.pm_schedule; retire to maintenance.pm_schedule"
+  },
+  "db/migrations/0277_mnt5_parts_catalog_seed.sql::maint.pm_schedule::INSERT INTO": {
+    "count": 1,
+    "reason": "baselined 2026-07-11 — pre-existing INSERT INTO maint.pm_schedule; retire to maintenance.pm_schedule"
+  },
+  "db/migrations/0319_qbo_customers_push_sync_status.sql::accounting.qbo_customers::INSERT INTO": {
+    "count": 1,
+    "reason": "baselined 2026-07-11 — pre-existing INSERT INTO accounting.qbo_customers; retire to mdata.qbo_customers"
+  },
+  "db/migrations/0319_qbo_customers_push_sync_status.sql::accounting.qbo_customers::UPDATE": {
+    "count": 1,
+    "reason": "baselined 2026-07-11 — pre-existing UPDATE accounting.qbo_customers; retire to mdata.qbo_customers"
+  },
+  "db/migrations/0320_archive_test_seed_data.sql::accounting.qbo_customers::UPDATE": {
+    "count": 1,
+    "reason": "baselined 2026-07-11 — pre-existing UPDATE accounting.qbo_customers; retire to mdata.qbo_customers"
+  },
+  "db/migrations/0321_qbo_vendors_push_sync_status.sql::accounting.qbo_vendors::INSERT INTO": {
+    "count": 1,
+    "reason": "baselined 2026-07-11 — pre-existing INSERT INTO accounting.qbo_vendors; retire to mdata.qbo_vendors"
+  },
+  "db/migrations/0321_qbo_vendors_push_sync_status.sql::accounting.qbo_vendors::UPDATE": {
+    "count": 1,
+    "reason": "baselined 2026-07-11 — pre-existing UPDATE accounting.qbo_vendors; retire to mdata.qbo_vendors"
+  },
+  "db/migrations/0323_qbo_accounts_sync_state.sql::accounting.qbo_accounts::INSERT INTO": {
+    "count": 1,
+    "reason": "baselined 2026-07-11 — pre-existing INSERT INTO accounting.qbo_accounts; retire to mdata.qbo_accounts"
+  },
+  "db/migrations/0323_qbo_accounts_sync_state.sql::accounting.qbo_accounts::REFERENCES": {
+    "count": 1,
+    "reason": "baselined 2026-07-11 — pre-existing REFERENCES accounting.qbo_accounts; retire to mdata.qbo_accounts"
+  },
+  "db/migrations/0323_qbo_accounts_sync_state.sql::accounting.qbo_accounts::UPDATE": {
+    "count": 3,
+    "reason": "baselined 2026-07-11 — pre-existing UPDATE accounting.qbo_accounts; retire to mdata.qbo_accounts"
+  },
+  "db/migrations/0387_usmca_chart_of_accounts_seed.sql::accounting.qbo_accounts::INSERT INTO": {
+    "count": 1,
+    "reason": "baselined 2026-07-11 — pre-existing INSERT INTO accounting.qbo_accounts; retire to mdata.qbo_accounts"
+  },
+  "db/migrations/0387_usmca_chart_of_accounts_seed.sql::accounting.qbo_accounts::UPDATE": {
+    "count": 1,
+    "reason": "baselined 2026-07-11 — pre-existing UPDATE accounting.qbo_accounts; retire to mdata.qbo_accounts"
+  },
+  "db/migrations/202606120100_c1_pre_settlements.sql::settlement.settlement::REFERENCES": {
+    "count": 2,
+    "reason": "baselined 2026-07-11 — pre-existing REFERENCES settlement.settlement; retire to driver_finance.*"
+  },
+  "db/migrations/202606120600_d1_settlement_approval.sql::settlement.settlement_line::REFERENCES": {
+    "count": 2,
+    "reason": "baselined 2026-07-11 — pre-existing REFERENCES settlement.settlement_line; retire to driver_finance.*"
+  },
+  "db/migrations/202606120600_d1_settlement_approval.sql::settlement.settlement::REFERENCES": {
+    "count": 2,
+    "reason": "baselined 2026-07-11 — pre-existing REFERENCES settlement.settlement; retire to driver_finance.*"
+  },
+  "db/migrations/202606122215_m1_positioned_parts_picker.sql::maint.position_set::REFERENCES": {
+    "count": 1,
+    "reason": "baselined 2026-07-11 — pre-existing REFERENCES maint.position_set; retire to maintenance.position_*"
+  },
+  "db/migrations/202606122215_m1_positioned_parts_picker.sql::maint.position_set::INSERT INTO": {
+    "count": 1,
+    "reason": "baselined 2026-07-11 — pre-existing INSERT INTO maint.position_set; retire to maintenance.position_*"
+  },
+  "db/migrations/202606122230_m2_position_history.sql::maint.position_set::REFERENCES": {
+    "count": 1,
+    "reason": "baselined 2026-07-11 — pre-existing REFERENCES maint.position_set; retire to maintenance.position_*"
+  },
+  "db/migrations/202606122230_m2_position_history.sql::maint.part::REFERENCES": {
+    "count": 1,
+    "reason": "baselined 2026-07-11 — pre-existing REFERENCES maint.part; retire to maintenance.part"
+  },
+  "db/migrations/202606272100_af1_catalogs_accounts_per_entity.sql::payroll.driver_settlement_line_items::UPDATE": {
+    "count": 1,
+    "reason": "baselined 2026-07-11 — pre-existing UPDATE payroll.driver_settlement_line_items; retire to driver_finance.*"
+  },
+  "db/migrations/202606300130_load_cancellations_per_entity_fk.sql::catalogs.load_cancellation_reasons::INSERT INTO": {
+    "count": 1,
+    "reason": "baselined 2026-07-11 — pre-existing INSERT INTO catalogs.load_cancellation_reasons; retire to catalogs.cancellation_reasons"
+  },
+  "db/migrations/202606300130_load_cancellations_per_entity_fk.sql::catalogs.load_cancellation_reasons::REFERENCES": {
+    "count": 1,
+    "reason": "baselined 2026-07-11 — pre-existing REFERENCES catalogs.load_cancellation_reasons; retire to catalogs.cancellation_reasons"
+  }
 }

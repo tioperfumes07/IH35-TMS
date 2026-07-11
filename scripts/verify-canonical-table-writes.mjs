@@ -5,9 +5,15 @@
 // It WOULD HAVE CAUGHT PR #2314 (SETTLE-FK repointed a FK to payroll.driver_settlements, a RETIRE table).
 //
 // Scans apps/backend/src/** (non-test) + db/migrations/** for INSERT INTO / UPDATE / REFERENCES against a
-// RETIRE table (SELECT-only reads are allowed during the retirement window). Current offenders (the live
-// payroll settlement engine that #07 consolidation retires, etc.) are BASELINED in
-// scripts/.canonical-write-exempt.json — any NEW write/FK to a RETIRE table fails. Self-test: --selftest.
+// RETIRE table (SELECT-only reads are allowed during the retirement window). COMMENTS ARE STRIPPED before
+// matching so a `-- ... REFERENCES settlement.x` doc line is not a false positive (GUARD finding 1).
+// Current writes are BASELINED WITH A PER-KEY COUNT in scripts/.canonical-write-exempt.json — a NEW
+// write/FK fails CI even when added to an already-baselined file (live count > baseline count; GUARD
+// finding 2). Self-test: --selftest.
+//
+// COVERAGE BOUNDARY (GUARD finding 4): scans only apps/backend/src + db/migrations — where all SQL writers
+// live (frontend/driver-pwa call the API, they don't issue SQL). If a worker/packages/ root ever issues
+// SQL, extend SCAN_ROOTS below.
 
 import fs from "node:fs";
 import path from "node:path";
@@ -17,9 +23,12 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const EXEMPT_REL = "scripts/.canonical-write-exempt.json";
 
 // RETIRE table -> canonical (from FINAL-TABLES-WIRING-FOR-CODER-2026-07-05.md §A). Regex fragments.
+// payroll.* is retired WHOLESALE (LINKAGE-LAW) — wildcard for parity with the law (GUARD finding 3);
+// the two specific rows precede it only for a nicer canonical-name suggestion.
 const RETIRE = [
   { pat: "payroll\\.driver_settlement_line_items", canonical: "driver_finance.*" },
   { pat: "payroll\\.driver_settlements", canonical: "driver_finance.driver_settlements" },
+  { pat: "payroll\\.\\w+", canonical: "driver_finance.*" },
   { pat: "settlement\\.\\w+", canonical: "driver_finance.*" },
   { pat: "accounting\\.qbo_accounts", canonical: "mdata.qbo_accounts" },
   { pat: "accounting\\.qbo_vendors", canonical: "mdata.qbo_vendors" },
@@ -36,34 +45,49 @@ const RETIRE_ALT = RETIRE.map((r) => r.pat).join("|");
 const WRITE_RE = new RegExp(`(INSERT\\s+INTO|UPDATE|REFERENCES)\\s+(?:ONLY\\s+)?(${RETIRE_ALT})`, "gi");
 
 function canonicalFor(table) {
-  for (const r of RETIRE) if (new RegExp(`^${r.pat}$`).test(table)) return r.canonical;
+  for (const r of RETIRE) if (new RegExp(`^${r.pat}$`, "i").test(table)) return r.canonical;
   return "the canonical table";
 }
 
+// Blank out comment CONTENT (keep newlines so line numbers stay accurate) so commented-out or descriptive
+// SQL/TS is not matched. Handles /* block */ (both), -- line (.sql), // line (.ts).
+export function blankComments(src, isSql) {
+  const blank = (m) => m.replace(/[^\n]/g, " ");
+  let out = src.replace(/\/\*[\s\S]*?\*\//g, blank); // block comments (both)
+  if (isSql) out = out.replace(/--[^\n]*/g, blank); // SQL line comments
+  else out = out.replace(/\/\/[^\n]*/g, blank); // TS line comments (our matches live in backtick SQL, not //)
+  return out;
+}
+
+const SCAN_ROOTS = [
+  { dir: "apps/backend/src", filter: (n) => /\.ts$/.test(n) && !/\.(test|spec)\.ts$/.test(n) && !/__tests__/.test(n), sql: false },
+  { dir: "db/migrations", filter: (n) => /\.sql$/.test(n), sql: true },
+];
+
 function listFiles() {
   const out = [];
-  const walk = (dir, filter) => {
+  const walk = (dir, filter, sql) => {
     let entries;
     try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
     for (const e of entries) {
       const abs = path.join(dir, e.name);
-      if (e.isDirectory()) { if (e.name === "node_modules") continue; walk(abs, filter); }
-      else if (filter(e.name)) out.push(abs);
+      if (e.isDirectory()) { if (e.name === "node_modules") continue; walk(abs, filter, sql); }
+      else if (filter(e.name)) out.push({ abs, sql });
     }
   };
-  // backend production source (exclude tests — retirement-window test writes are allowed)
-  walk(path.join(ROOT, "apps/backend/src"), (n) => /\.ts$/.test(n) && !/\.(test|spec)\.ts$/.test(n) && !/__tests__/.test(n));
-  // migrations (this is what would have caught the #2314 FK repoint)
-  walk(path.join(ROOT, "db/migrations"), (n) => /\.sql$/.test(n));
+  for (const r of SCAN_ROOTS) walk(path.join(ROOT, r.dir), r.filter, r.sql);
   return out;
 }
 
 /** Return offenders: {key, file, line, verb, table, canonical}. key is line-stable (file::table::verb). */
 export function scan(files) {
   const offenders = [];
-  for (const abs of files) {
-    let src;
-    try { src = fs.readFileSync(abs, "utf8"); } catch { continue; }
+  for (const f of files) {
+    const abs = typeof f === "string" ? f : f.abs;
+    const isSql = typeof f === "string" ? /\.sql$/.test(f) : f.sql;
+    let raw;
+    try { raw = fs.readFileSync(abs, "utf8"); } catch { continue; }
+    const src = blankComments(raw, isSql);
     const rel = path.relative(ROOT, abs);
     let m;
     WRITE_RE.lastIndex = 0;
@@ -77,41 +101,78 @@ export function scan(files) {
   return offenders;
 }
 
+/** Baseline map: key -> {count, reason}. Back-compat: a string value counts as {count: Infinity-ish}? No —
+ *  we require the object form so the ratchet can compare counts. */
 function loadExempt() {
+  const map = new Map();
   try {
     const obj = JSON.parse(fs.readFileSync(path.join(ROOT, EXEMPT_REL), "utf8"));
-    return new Set(Object.keys(obj).filter((k) => !k.startsWith("_")));
-  } catch { return new Set(); }
+    for (const [k, v] of Object.entries(obj)) {
+      if (k.startsWith("_")) continue;
+      map.set(k, typeof v === "object" && v && Number.isFinite(v.count) ? v.count : 0);
+    }
+  } catch { /* no baseline */ }
+  return map;
+}
+
+function liveCountsByKey(offenders) {
+  const counts = new Map();
+  for (const o of offenders) counts.set(o.key, (counts.get(o.key) ?? 0) + 1);
+  return counts;
 }
 
 function run() {
   const offenders = scan(listFiles());
-  const exempt = loadExempt();
-  const unexempted = offenders.filter((o) => !exempt.has(o.key));
-  console.log(`verify:canonical-table-writes — ${offenders.length} RETIRE-writes (${exempt.size} baseline-exempt, ${unexempted.length} unaccounted)`);
-  return unexempted.map((o) => `${o.file}:${o.line} — ${o.verb} ${o.table} (RETIRE) — write to canonical ${o.canonical} instead`);
+  const baseline = loadExempt();
+  const live = liveCountsByKey(offenders);
+  const failures = [];
+  let baselinedTotal = 0;
+  for (const [key, liveN] of live) {
+    const baseN = baseline.get(key) ?? 0;
+    baselinedTotal += Math.min(liveN, baseN);
+    if (liveN > baseN) {
+      const offs = offenders.filter((o) => o.key === key);
+      const first = offs[0];
+      failures.push(
+        `${first.file}: ${liveN} write(s) to RETIRE '${first.table}' via ${first.verb} (baseline ${baseN}) — a NEW write/FK was added; use canonical ${first.canonical}. Lines: ${offs.map((o) => o.line).join(", ")}`
+      );
+    }
+  }
+  console.log(`verify:canonical-table-writes — ${offenders.length} RETIRE-writes across ${live.size} keys (${baselinedTotal} within baseline, ${failures.length} keys over baseline)`);
+  return failures;
 }
 
 export { run };
 
 if (process.argv.includes("--selftest")) {
-  const inject = [
-    `INSERT INTO payroll.driver_settlements (id) VALUES ($1)`,
-    `UPDATE bank.transactions SET x=1`,
-    `CONSTRAINT fk FOREIGN KEY (sid) REFERENCES payroll.driver_settlements(id)`,
-    `SELECT * FROM payroll.driver_settlements WHERE id=$1`, // read — allowed
-    `INSERT INTO driver_finance.driver_settlements (id) VALUES ($1)`, // canonical — allowed
+  const injectSql = [
+    `INSERT INTO payroll.driver_settlements (id) VALUES ($1);`,
+    `UPDATE bank.transactions SET x=1;`,
+    `CONSTRAINT fk FOREIGN KEY (sid) REFERENCES payroll.driver_settlements(id),`,
+    `-- old:  sid UUID REFERENCES settlement.settlement(id),   <- COMMENT, must NOT match`,
+    `SELECT * FROM payroll.driver_settlements WHERE id=$1;`, // read — allowed
+    `INSERT INTO driver_finance.driver_settlements (id) VALUES ($1);`, // canonical — allowed
+    `INSERT INTO payroll.tax_withholding (id) VALUES ($1);`, // wildcard payroll.* must catch (finding 3)
   ].join("\n");
+  const blanked = blankComments(injectSql, true);
   const found = [];
   WRITE_RE.lastIndex = 0;
   let m;
-  while ((m = WRITE_RE.exec(inject)) !== null) found.push(m[2]);
+  while ((m = WRITE_RE.exec(blanked)) !== null) found.push(m[2]);
+  // count-ratchet logic check
+  const base = new Map([["f::payroll.driver_settlements::INSERT INTO", 1]]);
+  const liveA = new Map([["f::payroll.driver_settlements::INSERT INTO", 1]]);
+  const liveB = new Map([["f::payroll.driver_settlements::INSERT INTO", 2]]); // a NEW same-file write
+  const overBase = (live) => [...live].some(([k, n]) => n > (base.get(k) ?? 0));
   const checks = [
     ["INSERT INTO a RETIRE table is flagged", found.includes("payroll.driver_settlements")],
     ["UPDATE a RETIRE table is flagged", found.includes("bank.transactions")],
     ["a new FK REFERENCES a RETIRE table is flagged (#2314 class)", found.filter((t) => t === "payroll.driver_settlements").length >= 2],
-    ["SELECT from a RETIRE table is NOT flagged", !/SELECT\s+\*\s+FROM.*payroll/i.test(found.join(""))],
+    ["a COMMENTED REFERENCES is NOT flagged (finding 1)", !found.includes("settlement.settlement")],
+    ["payroll.* wildcard catches a non-enumerated payroll table (finding 3)", found.includes("payroll.tax_withholding")],
     ["INSERT INTO the CANONICAL table is NOT flagged", !found.includes("driver_finance.driver_settlements")],
+    ["count-ratchet: live==baseline passes (finding 2)", !overBase(liveA)],
+    ["count-ratchet: a NEW same-file write (live>baseline) FAILS (finding 2)", overBase(liveB)],
   ];
   const failed = checks.filter(([, ok]) => !ok);
   if (failed.length) { console.error("verify:canonical-table-writes --selftest FAIL:"); for (const [n] of failed) console.error("  ✗ " + n); process.exit(1); }
@@ -126,8 +187,8 @@ if (isMain) {
     console.error("verify:canonical-table-writes FAIL — new write/FK to a RETIRE table (map marks it retired):");
     for (const f of failures) console.error("  ✗ " + f);
     console.error(`\nRETIRE writes must target the canonical table (FINAL-TABLES-WIRING §A). If this is a legitimate`);
-    console.error(`retirement/backfill, add the key to ${EXEMPT_REL} with a reason.`);
+    console.error(`retirement/backfill, bump the key's count in ${EXEMPT_REL} with a reason.`);
     process.exit(1);
   }
-  console.log("verify:canonical-table-writes PASS (no un-baselined write/FK to a RETIRE table)");
+  console.log("verify:canonical-table-writes PASS (no write/FK to a RETIRE table above its baseline count)");
 }
