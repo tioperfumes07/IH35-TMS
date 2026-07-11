@@ -13,6 +13,7 @@ import {
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ListErrorState } from "../../components/ListErrorState";
 
 function applicantName(row: DriverApplicant) {
   return `${row.first_name ?? ""} ${row.last_name ?? ""}`.trim() || "Applicant";
@@ -135,6 +136,9 @@ export function ApplicantsPipelinePage() {
       />
 
       {applicantsQ.isLoading ? <p className="text-sm text-gray-500">Loading applicants…</p> : null}
+      {applicantsQ.isError ? (
+        <ListErrorState title="Couldn't load applicants" status={0} message={(applicantsQ.error as Error)?.message} onRetry={() => void applicantsQ.refetch()} />
+      ) : null}
 
       <div className="grid gap-3 lg:grid-cols-5">
         {APPLICANT_PIPELINE_COLUMNS.map((col) => (

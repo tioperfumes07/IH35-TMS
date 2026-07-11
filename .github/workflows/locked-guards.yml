@@ -490,3 +490,8 @@ jobs:
         run: node scripts/verify-reference-dropdown-inline-create.mjs --selftest
       - name: verify:reference-dropdown-inline-create
         run: npm run verify:reference-dropdown-inline-create
+
+      - name: verify:list-error-state-coverage --selftest
+        run: node scripts/verify-list-error-state-coverage.mjs --selftest
+      - name: verify:list-error-state-coverage
+        run: npm run verify:list-error-state-coverage

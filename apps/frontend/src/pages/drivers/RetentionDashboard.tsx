@@ -4,6 +4,7 @@ import { apiRequest } from "../../api/client";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AtRiskDriverCard } from "../../components/drivers/AtRiskDriverCard";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ListErrorState } from "../../components/ListErrorState";
 
 type RetentionRow = {
   driver_uuid: string;
@@ -37,6 +38,9 @@ export function RetentionDashboard() {
       />
       {!companyId ? <p className="text-sm text-gray-500">Select operating company.</p> : null}
       {scoresQ.isLoading ? <p className="text-sm text-gray-500">Loading retention scores…</p> : null}
+      {scoresQ.isError ? (
+        <ListErrorState title="Couldn't load retention scores" status={0} message={(scoresQ.error as Error)?.message} onRetry={() => void scoresQ.refetch()} />
+      ) : null}
       <div className="grid gap-3 md:grid-cols-2">
         {rows.map((row) => {
           const factors = Object.entries(row.contributing_factors ?? {})
