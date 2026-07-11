@@ -480,3 +480,8 @@ jobs:
         run: node scripts/verify-create-forms-wired.mjs --selftest
       - name: verify:create-forms-wired
         run: npm run verify:create-forms-wired
+
+      - name: verify:dead-forms-unmounted --selftest
+        run: node scripts/verify-dead-forms-unmounted.mjs --selftest
+      - name: verify:dead-forms-unmounted
+        run: npm run verify:dead-forms-unmounted
