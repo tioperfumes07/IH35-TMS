@@ -46,7 +46,7 @@ export function LegalPoliciesPage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader title="Legal Policies" subtitle="Policy acknowledgments and governance" />
+      <PageHeader breadcrumb={["Legal", "Policies"]} title="Legal Policies" subtitle="Policy acknowledgments and governance" />
       <LegalModuleTabs activeTabId="policies" />
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 text-sm font-semibold text-gray-900">Policy Templates</div>

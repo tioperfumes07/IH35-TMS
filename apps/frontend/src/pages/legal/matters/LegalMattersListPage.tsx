@@ -77,6 +77,7 @@ export function LegalMattersListPage() {
   return (
     <div className="space-y-3">
       <PageHeader
+        breadcrumb={["Legal", "Matters"]}
         title="Legal matters"
         subtitle="Lawsuits, claims, and regulatory matters"
         actions={

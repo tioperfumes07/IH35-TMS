@@ -47,7 +47,7 @@ export function LegalReportsLandingPage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader title="Legal reports" subtitle="Exposure and deadline rollups" />
+      <PageHeader breadcrumb={["Legal", "Reports"]} title="Legal reports" subtitle="Exposure and deadline rollups" />
       <LegalModuleTabs activeTabId="reports" />
       {!companyId ? (
         <p className="text-sm text-gray-600">Select an operating company.</p>

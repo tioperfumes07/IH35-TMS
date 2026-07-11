@@ -207,6 +207,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white p-2">
         <div className="flex flex-wrap items-center gap-2">
           <select
+            aria-label="Filter by status"
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value as "" | "open" | "acknowledged" | "closed")}
             className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
@@ -217,6 +218,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
             <option value="closed">Closed</option>
           </select>
           <select
+            aria-label="Filter by severity"
             value={severityFilter}
             onChange={(event) => setSeverityFilter(event.target.value as "" | "low" | "medium" | "high" | "critical")}
             className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
@@ -228,6 +230,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
             <option value="critical">Critical</option>
           </select>
           <input
+            aria-label="Search safety events by title or description"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search title or description"
@@ -235,6 +238,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
           />
           {/* S-10: Type filter — despite TYPE being a visible column, no filter previously existed. */}
           <select
+            aria-label="Filter by event type"
             value={typeFilter}
             onChange={(event) => setTypeFilter(event.target.value)}
             className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
@@ -249,6 +253,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
           </select>
           {/* S-08: driver + unit filters — search previously covered only title/description. */}
           <input
+            aria-label="Filter by driver"
             value={driverFilter}
             onChange={(event) => setDriverFilter(event.target.value)}
             placeholder="Filter by driver"
@@ -256,6 +261,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
             data-testid="safety-events-driver-filter"
           />
           <input
+            aria-label="Filter by unit"
             value={unitFilter}
             onChange={(event) => setUnitFilter(event.target.value)}
             placeholder="Filter by unit"
