@@ -485,3 +485,8 @@ jobs:
         run: node scripts/verify-dead-forms-unmounted.mjs --selftest
       - name: verify:dead-forms-unmounted
         run: npm run verify:dead-forms-unmounted
+
+      - name: verify:reference-dropdown-inline-create --selftest
+        run: node scripts/verify-reference-dropdown-inline-create.mjs --selftest
+      - name: verify:reference-dropdown-inline-create
+        run: npm run verify:reference-dropdown-inline-create
