@@ -3,6 +3,7 @@ import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ListErrorState } from "../../components/ListErrorState";
 import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportsSubNav } from "./ReportsSubNav";
@@ -52,6 +53,14 @@ export function CashFlowReport() {
         <Button onClick={() => setApplied(asOf)}>Apply</Button>
       </div>
       {query.isLoading ? <p>Loading…</p> : null}
+      {query.isError ? (
+        <ListErrorState
+          title="Couldn't load cash flow"
+          status={0}
+          message={(query.error as Error)?.message}
+          onRetry={() => void query.refetch()}
+        />
+      ) : null}
       {summary ? (
         <div className="grid gap-4 md:grid-cols-2">
           <div className="rounded-sm border bg-white p-4">

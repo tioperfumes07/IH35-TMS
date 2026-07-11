@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ListErrorState } from "../../components/ListErrorState";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { DatePicker } from "../../components/forms/DatePicker";
@@ -39,7 +40,7 @@ export function GeofenceReconciliationReport() {
   const [date, setDate] = useState(yesterday);
   const qc = useQueryClient();
 
-  const { data, isLoading } = useQuery<{ data: Finding[] }>({
+  const { data, isLoading, isError, error, refetch } = useQuery<{ data: Finding[] }>({
     queryKey: ["geofence-recon", operatingCompanyId, date],
     queryFn: async () => {
       const res = await fetch(
@@ -103,7 +104,15 @@ export function GeofenceReconciliationReport() {
         </div>
       </div>
       {isLoading && <p className="text-gray-500">Loading...</p>}
-      {!isLoading && findings.length === 0 && (
+      {isError && (
+        <ListErrorState
+          title="Couldn't load reconciliation"
+          status={0}
+          message={(error as Error)?.message}
+          onRetry={() => void refetch()}
+        />
+      )}
+      {!isLoading && !isError && findings.length === 0 && (
         <div className="bg-green-50 border border-green-200 rounded-sm p-4 text-green-700">
           No anomalies found for {date}.
         </div>

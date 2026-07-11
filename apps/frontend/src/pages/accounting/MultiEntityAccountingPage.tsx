@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getMultiEntityAccountingSummary } from "../../api/accounting";
 import { listMyCompanies } from "../../api/org";
 import { Button } from "../../components/Button";
+import { ListErrorState } from "../../components/ListErrorState";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 
 function money(cents: number) {
@@ -89,6 +90,15 @@ export function MultiEntityAccountingPage() {
           </div>
         </div>
       </div>
+
+      {summaryQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load consolidated summary"
+          status={0}
+          message={(summaryQuery.error as Error)?.message}
+          onRetry={() => void summaryQuery.refetch()}
+        />
+      ) : null}
 
       {summaryQuery.data ? (
         <>

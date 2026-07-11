@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
+import { ListErrorState } from "../../components/ListErrorState";
 import { useToast } from "../../components/Toast";
 import { listCoaAccountsForJe, listCoaRoles, type CoaRole, COA_ROLE_VALUES, upsertCoaRole, validateCoaRoles } from "../../api/accounting";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -87,6 +88,14 @@ export function CoaRolesPage() {
         </div>
       ) : null}
 
+      {rowsQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load CoA role mappings"
+          status={0}
+          message={(rowsQuery.error as Error)?.message}
+          onRetry={() => void rowsQuery.refetch()}
+        />
+      ) : (
       <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-full text-left text-xs">
           <thead className="bg-gray-50 text-gray-600">
@@ -141,6 +150,7 @@ export function CoaRolesPage() {
           </tbody>
         </table>
       </div>
+      )}
     </AccountingSubNavWrapper>
   );
 }
