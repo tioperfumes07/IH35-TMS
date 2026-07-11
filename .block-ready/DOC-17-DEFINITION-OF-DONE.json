@@ -1,0 +1,27 @@
+{
+  "block_id": "DOC-17-DEFINITION-OF-DONE",
+  "status": "in-progress",
+  "classification": "NON-FINANCIAL (governance + CI guard)",
+  "priority": "P1",
+  "module": "governance",
+  "phase": "governance",
+  "source": "owner directive doc 17 (2026-07-11)",
+  "allowed_files": [
+    "scripts/verify-block-lifecycle.mjs",
+    ".block-ready/**",
+    "docs/trackers/block-status-overrides.json"
+  ],
+  "acceptance": [
+    {
+      "check": "verify-block-lifecycle.mjs enforces: DONE overrides need evidence+verified_on; done code blocks need a live-proof acceptance. Wired REQUIRED.",
+      "resolved": false
+    },
+    {
+      "check": "Session blocks registered + live-verified ones marked done with live proof; reconcile:blocks run.",
+      "resolved": false
+    }
+  ],
+  "db_required": false,
+  "guard_required": true,
+  "registered_on": "2026-07-11"
+}

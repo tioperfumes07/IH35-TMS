@@ -1,0 +1,29 @@
+{
+  "block_id": "ITEM-03B-MDATA-LIST-ACTIVE-COMPANY",
+  "status": "in-progress",
+  "classification": "MDATA (app-layer read-scope — owner-directed)",
+  "priority": "P1",
+  "module": "customers-vendors",
+  "phase": "isolation",
+  "source": "owner directive 2026-07-11 (ITEM 3 = B)",
+  "pr": 2365,
+  "allowed_files": [
+    "apps/backend/src/mdata/customers.routes.ts",
+    "apps/backend/src/mdata/vendors.routes.ts",
+    "scripts/verify-master-data-list-active-company-scope.mjs"
+  ],
+  "acceptance": [
+    {
+      "check": "Customers + Vendors list endpoints apply active-company filter behind opt-in flag; pickers unchanged; units untouched. (merged #2365)",
+      "resolved": true
+    },
+    {
+      "kind": "live",
+      "check": "UNVERIFIED — needs live check: after deploy, operating as an entity, the Customers/Vendors lists return only that entity's rows (endpoint with active_company_only=true).",
+      "resolved": false
+    }
+  ],
+  "db_required": false,
+  "guard_required": true,
+  "registered_on": "2026-07-11"
+}
