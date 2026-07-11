@@ -120,13 +120,18 @@ describe("driver settlement engine (Block-22)", () => {
     mocked.createBillMock.mockResolvedValue({ id: "bill-1", qbo_bill_id: null });
     mocked.payBillMock.mockResolvedValue({ id: "bp-1", qbo_bill_payment_id: null });
 
-    mocked.queryMock.mockImplementation(async (sql: string) => {
+    mocked.queryMock.mockImplementation(async (sql: string, values?: unknown[]) => {
       if (sql.includes("SELECT set_config('app.operating_company_id'")) return { rows: [] };
-      // A3-2: cutover flag OFF => legacy blunt path (these fixtures assert the legacy behavior).
-      // H3-4: isEnabled() now issues two reads (lib.feature_flags + lib.feature_flag_overrides); the
-      // override read must return no rows (checked first — "feature_flag_overrides" contains the
-      // "feature_flag" stem) so it can't fall through to the flag-row branch or the raw throw.
-      if (sql.includes("feature_flag_overrides")) return { rows: [] };
+      // SETTLE-GATE: posting now requires SETTLEMENT_GL_POSTING_ENABLED ON for this entity — enable it via
+      // a tenant override so this "posts" fixture still posts (this is now also the flag-ON acceptance case).
+      // SETTLEMENT_CAPPED_RECOVERY stays OFF (no override) so the legacy blunt path is asserted, unchanged.
+      if (sql.includes("feature_flag_overrides")) {
+        const flagKey = String(values?.[0] ?? "");
+        if (flagKey === "SETTLEMENT_GL_POSTING_ENABLED") {
+          return { rows: [{ operating_company_id: "oc-1", user_uuid: null, enabled: true, expires_at: null }] };
+        }
+        return { rows: [] };
+      }
       if (sql.includes("feature_flags")) return { rows: [{ default_enabled: false }] };
       if (sql.includes("FROM payroll.driver_settlements") && sql.includes("FOR UPDATE")) {
         return {
@@ -183,7 +188,50 @@ describe("driver settlement engine (Block-22)", () => {
 
     expect(mocked.createBillMock).toHaveBeenCalledOnce();
     expect(mocked.payBillMock).toHaveBeenCalledOnce();
-    expect(result.idempotent).toBe(false);
+    expect("result" in result).toBe(false); // posted, not gated-off
+    expect((result as { idempotent?: boolean }).idempotent).toBe(false);
     expect(result.settlement.status).toBe("posted");
+  });
+
+  it("SETTLE-GATE: SETTLEMENT_GL_POSTING_ENABLED OFF → posts nothing, returns blocked_flag_off, stays draft", async () => {
+    mocked.resolveRoleAccountMock.mockResolvedValue("exp-account");
+
+    mocked.queryMock.mockImplementation(async (sql: string) => {
+      if (sql.includes("SELECT set_config('app.operating_company_id'")) return { rows: [] };
+      // No override + default OFF => SETTLEMENT_GL_POSTING_ENABLED resolves OFF (per-entity-gated flag).
+      if (sql.includes("feature_flag_overrides")) return { rows: [] };
+      if (sql.includes("feature_flags")) return { rows: [{ default_enabled: false }] };
+      if (sql.includes("FROM payroll.driver_settlements") && sql.includes("FOR UPDATE")) {
+        return {
+          rows: [
+            {
+              id: "settlement-1",
+              operating_company_id: "oc-1",
+              driver_id: "driver-1",
+              pay_period_start: "2026-05-01",
+              pay_period_end: "2026-05-07",
+              gross_cents: 90000,
+              deductions_cents: 15000,
+              net_cents: 75000,
+              bank_settle_date: "2026-05-08",
+              accounting_bill_id: null,
+              accounting_bill_payment_id: null,
+              qbo_bill_id: null,
+              qbo_bill_payment_id: null,
+              status: "draft",
+            },
+          ],
+        };
+      }
+      // Any SQL past the gate means it FAILED to block (createBill / driver lookup / etc. ran).
+      throw new Error(`SETTLE-GATE leak — unexpected SQL after flag-off gate: ${sql}`);
+    });
+
+    const result = await postSettlement({ settlementId: "settlement-1", operatingCompanyId: "oc-1" }, "user-1");
+
+    expect((result as { result?: string }).result).toBe("blocked_flag_off");
+    expect(result.settlement.status).toBe("draft");
+    expect(mocked.createBillMock).not.toHaveBeenCalled();
+    expect(mocked.payBillMock).not.toHaveBeenCalled();
   });
 });

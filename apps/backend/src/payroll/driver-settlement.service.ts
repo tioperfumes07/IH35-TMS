@@ -121,6 +121,9 @@ async function loadSettlementByPeriod(client: DbClient, input: ComputeSettlement
 /** A3-2 cutover flag. OFF (default) = legacy blunt path; ON = capped-ledger engine. */
 const SETTLEMENT_CAPPED_RECOVERY_FLAG_KEY = "SETTLEMENT_CAPPED_RECOVERY_ENABLED";
 
+/** SETTLE-GATE kill-switch: gates whether postSettlement writes the Bill+BillPayment (+escrow +JE) to the GL. */
+const SETTLEMENT_GL_POSTING_FLAG_KEY = "SETTLEMENT_GL_POSTING_ENABLED";
+
 // H3-4: resolve the cutover flag through the canonical isEnabled() resolver, scoped to the settling
 // operating company — NOT a raw default_enabled read of the lib.feature_flags row. The raw read (a)
 // bypassed per-entity/user overrides (only a GLOBAL default flip could ever turn it on, flipping the
@@ -437,6 +440,18 @@ export async function postSettlement(input: PostSettlementInput, userId: string)
     }
     if (settlement.status !== "draft") throw new Error("driver_settlement_must_be_draft");
     if (asCents(settlement.net_cents) <= 0) throw new Error("driver_settlement_net_non_positive");
+
+    // SETTLE-GATE (Tier-1 kill-switch): postSettlement writes a Bill + BillPayment (+ escrow + a capped-
+    // recovery JE) to the GL. That posting must NOT run unless SETTLEMENT_GL_POSTING_ENABLED is ON for this
+    // entity. Resolved via the canonical isEnabled() resolver (honors per-entity override + expiry), the
+    // same path settlementCappedRecoveryEnabled uses. OFF => post NOTHING, leave the settlement 'draft',
+    // return a policy result. No silent success, no partial write (no bill, no payment, no escrow, no JE).
+    const settlementPostingEnabled = await isEnabled(client as never, SETTLEMENT_GL_POSTING_FLAG_KEY, {
+      operating_company_id: input.operatingCompanyId,
+    });
+    if (!settlementPostingEnabled) {
+      return { settlement, result: "blocked_flag_off" as const };
+    }
 
     const driverRes = await client.query<{ qbo_vendor_id: string | null }>(
       `
