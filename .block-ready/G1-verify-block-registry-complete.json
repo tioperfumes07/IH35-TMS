@@ -1,0 +1,25 @@
+{
+  "block_id": "G1-verify-block-registry-complete",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "PHASE-0-ENFORCEMENT",
+  "task": "G1 (LINKAGE-LAW Clause 7): add scripts/verify-block-registry-complete.mjs so issued/changed blocks that are unregistered, or new/changed .block-ready entries missing the contract (block_id/status/classification/allowed_files/acceptance[]), fail CI. Grandfathers the 368 legacy entries; enforces going forward. Wired into verify:pre-commit + locked-guards with a --selftest negative control.",
+  "branch": "feat/guard-block-registry-complete",
+  "lane": "ENFORCEMENT",
+  "allowed_files": [
+    "scripts/verify-block-registry-complete.mjs",
+    "scripts/verify-steps/92-verify-block-registry-complete.mjs",
+    ".block-ready/G1-verify-block-registry-complete.json",
+    "package.json",
+    ".github/workflows/locked-guards.yml"
+  ],
+  "acceptance": [
+    { "kind": "guard", "script": "scripts/verify-block-registry-complete.mjs", "wired_into": "verify-pre-commit (verify-steps/92) + .github/workflows/locked-guards.yml" },
+    { "kind": "live", "assert": "node scripts/verify-block-registry-complete.mjs --selftest passes; negative control (missing acceptance[] / unregistered Block: trailer) fails" },
+    { "kind": "design", "spec": "01-LINKAGE-LAW.md", "sections": ["Clause 7 (G1)"] }
+  ],
+  "linkage": "N/A — enforcement infra; no entity record, no operating_company_id, no cross-module FK",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
