@@ -17,6 +17,10 @@ jobs:
 
       - name: verify:deep-audit-b-invoices-subnav
         run: npm run verify:deep-audit-b-invoices-subnav
+      - name: verify:block-acceptance (G2 self-test)
+        run: node scripts/verify-block-acceptance.mjs --selftest
+      - name: verify:block-acceptance
+        run: npm run verify:block-acceptance
 
       - name: verify:load-advance-persistence
         run: npm run verify:load-advance-persistence

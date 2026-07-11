@@ -393,6 +393,7 @@
     "verify:no-seed-data-in-prod-fixtures": "node scripts/verify-no-seed-data-in-prod-fixtures.mjs",
     "verify:canary-replacement": "node scripts/verify-canary-replacement.mjs",
     "verify:sidebar-contract": "node scripts/verify-sidebar-contract.mjs",
+    "verify:block-acceptance": "node scripts/verify-block-acceptance.mjs",
     "verify:cashflow-module": "node scripts/verify-cashflow-module.mjs",
     "verify:insurance-financial-writes": "node scripts/verify-insurance-financial-writes.mjs",
     "verify:sidebar-route-resolution": "node scripts/verify-sidebar-route-resolution.mjs",
