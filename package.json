@@ -863,6 +863,7 @@
     "verify:reference-dropdown-inline-create": "node scripts/verify-reference-dropdown-inline-create.mjs",
     "verify:list-error-state-coverage": "node scripts/verify-list-error-state-coverage.mjs",
     "verify:referenceselect-coverage-ratchet": "node scripts/verify-referenceselect-coverage-ratchet.mjs",
+    "verify:banking-designview-qbo-parity": "node scripts/verify-banking-designview-qbo-parity.mjs",
     "verify:filter-input-aria-labels": "node scripts/verify-filter-input-aria-labels.mjs",
     "verify:excel-upload-jobs-rls-forced": "node scripts/verify-excel-upload-jobs-rls-forced.mjs",
     "verify:transaction-company-isolation": "node scripts/verify-transaction-company-isolation.mjs",

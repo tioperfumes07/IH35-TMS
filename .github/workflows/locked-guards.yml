@@ -535,3 +535,8 @@ jobs:
         run: node scripts/verify-block-lifecycle.mjs --selftest
       - name: verify:block-lifecycle
         run: npm run verify:block-lifecycle
+
+      - name: verify:banking-designview-qbo-parity --selftest
+        run: node scripts/verify-banking-designview-qbo-parity.mjs --selftest
+      - name: verify:banking-designview-qbo-parity
+        run: npm run verify:banking-designview-qbo-parity
