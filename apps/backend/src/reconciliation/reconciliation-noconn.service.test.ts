@@ -24,7 +24,7 @@ describe("RECON-NOCONN — QBO reconciliation fails loud on 0 connections", () =
     const audits: Array<unknown[]> = [];
     h.client = {
       async query(sql: string, values?: unknown[]) {
-        if (sql.includes("FROM integrations.qbo_connections")) return { rows: [] }; // 0 active connections
+        if (sql.includes("list_active_qbo_company_ids")) return { rows: [] }; // 0 active connections
         if (sql.includes("audit.append_event")) {
           audits.push(values ?? []);
           return { rows: [] };
@@ -49,7 +49,7 @@ describe("RECON-NOCONN — QBO reconciliation fails loud on 0 connections", () =
     const recentIso = new Date().toISOString();
     h.client = {
       async query(sql: string, _values?: unknown[]) {
-        if (sql.includes("FROM integrations.qbo_connections")) {
+        if (sql.includes("list_active_qbo_company_ids")) {
           return { rows: [{ operating_company_id: TRANSP }] }; // one active connection
         }
         // the RECON-NOCONN stale-feed probe (distinguished by the is_stale projection) — feed is fresh
