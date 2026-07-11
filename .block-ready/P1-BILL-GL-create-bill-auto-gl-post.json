@@ -1,0 +1,29 @@
+{
+  "block_id": "P1-BILL-GL-create-bill-auto-gl-post",
+  "status": "BUILD",
+  "classification": "FINANCIAL",
+  "phase": "PHASE-1-POSTING-INTEGRITY",
+  "task": "P1-BILL-GL: createBill() inserted accounting.bills but never posted the internal DR expense / CR ap_control JE (the only bill->GL path was a separate Owner/Admin TRANSP-only manual endpoint the UI never calls), so the internal double-entry ledger was blind to A/P. Verified live on main. Wired createBill() to the canonical poster via new accounting/bill-gl.service.ts postBillGlIfEnabled (reuse postSourceTransaction 'bill' — NO new GL math), gated per-entity by BILL_GL_POSTING_ENABLED (GUARD-confirmed ON for all 3 entities). Idempotent (poster idempotency key = one batch per bill). Flag OFF -> bill still created + honest gl_posting:{posted:false,reason:'posting_disabled'} (no silent success — creating a bill moves no cash so it is not blocked). A PostingEngineError surfaces as post_failed + a warning audit event, does NOT roll back the committed bill, retriable via the manual endpoint. Return adds gl_posting (additive). Static regression guard verify-bill-create-posts-gl.",
+  "branch": "fix/create-bill-auto-gl-post",
+  "lane": "PHASE-1-POSTING-INTEGRITY",
+  "allowed_files": [
+    "apps/backend/src/accounting/bill-gl.service.ts",
+    "apps/backend/src/accounting/bills.service.ts",
+    "scripts/verify-bill-create-posts-gl.mjs",
+    "scripts/verify-steps/97-verify-bill-create-posts-gl.mjs",
+    ".block-ready/P1-BILL-GL-create-bill-auto-gl-post.json",
+    "package.json",
+    ".github/workflows/locked-guards.yml"
+  ],
+  "acceptance": [
+    { "kind": "guard", "script": "scripts/verify-bill-create-posts-gl.mjs", "wired_into": "verify-pre-commit (verify-steps/97) + .github/workflows/locked-guards.yml + package.json verify:bill-create-posts-gl" },
+    { "kind": "route", "value": "apps/backend/src/accounting/bills.service.ts", "note": "createBill() now calls postBillGlIfEnabled after commit; returns gl_posting status" },
+    { "kind": "live", "assert": "static guard PASSES on the fixed tree + --selftest passes; guard FAILS on origin/main createBill (unwired, verified this session). BEHAVIORAL Neon-branch proof OWED TO GUARD (Tier-1 build-and-hold): create Bill flag ON -> balanced DR expense / CR ap_control JE + idempotent on repeat; flag OFF -> no JE + explicit unposted status.", "verified_by": "GUARD Neon branch-proof" },
+    { "kind": "design", "spec": "docs/specs/repairs/REPAIR-C-BOUNDARY-AUTOPOSTS-DESIGN.md", "sections": ["bill/bill-payment GL not auto-wired"] }
+  ],
+  "linkage": "Bill (accounting.bills) -> vendor (mdata.vendors via vendor key) | load (mdata.loads via bill_lines) | unit (mdata.units) | expense account (catalogs.accounts) | GL balanced JE (accounting.journal_entries via canonical poster) behind per-entity BILL_GL_POSTING_ENABLED | operating_company_id + FORCED RLS. Makes the A/P money path (bill -> internal ledger) exist end-to-end.",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "hold": "TIER-1 FINANCIAL (money posting). Build-and-hold: builder wired it; GUARD proves the balanced JE + idempotency on a Neon branch; owner merges. Coordinate with P1-BILLPAY-GL (bill must post before bill_payment can)."
+}
