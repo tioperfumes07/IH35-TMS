@@ -4,12 +4,26 @@
  * BUY side: expense account + preferred vendor.
  * QB-STD-5: writes to catalogs.items (canonical) so the created item survives reload.
  * Previously used createQboItem → mdata.qbo_items (mirror), invisible after refresh.
+ * FIX-03: the Income/Expense ACCOUNT pickers are now POPULATED from catalogs.accounts
+ * (getCoaAccounts, the same source the categorize row + ItemEditorModal use) and the chosen
+ * account ids PERSIST onto catalogs.items.default_income_account_id / default_expense_account_id
+ * (metadata keys the /catalogs/accounting/items backend maps straight to columns). Previously the
+ * account was a free-text box that was DROPPED at create — the item saved with no GL mapping.
  */
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { itemsCatalogClient } from "../../../api/catalogs-accounting";
+import { getCoaAccounts } from "../../../api/banking";
+import { Combobox, type ComboboxOption } from "../../Combobox";
 import { MoneyInput } from "../../forms/MoneyInput";
 import { useToast } from "../../Toast";
 import type { InlineCreateResult } from "../InlineCreateDrawer";
+
+// FIX-03: mirror ItemEditorModal's account-type filters + carrier default so the two Product/Service
+// creators behave identically (QBO parity: an item's income account is a referenced record, not text).
+const INCOME_TYPES = ["Income", "OtherIncome"];
+const EXPENSE_TYPES = ["Expense", "CostOfGoodsSold", "OtherExpense"];
+const CARRIER_DEFAULT_INCOME_NAME = "Sales of Service Income";
 
 type Props = {
   operatingCompanyId: string;
@@ -31,12 +45,12 @@ type FormState = {
   sellEnabled: boolean;
   sellDescription: string;
   sellPrice: number | null;
-  incomeAccount: string;
+  incomeAccountId: string | null;
   buyEnabled: boolean;
   buyDescription: string;
   buyCost: number | null;
   preferredVendor: string;
-  expenseAccount: string;
+  expenseAccountId: string | null;
 };
 
 export function NewServiceDrawerForm({ operatingCompanyId, onCreated, onClose }: Props) {
@@ -50,13 +64,43 @@ export function NewServiceDrawerForm({ operatingCompanyId, onCreated, onClose }:
     sellEnabled: true,
     sellDescription: "",
     sellPrice: null,
-    incomeAccount: "Sales of Service Income",
+    incomeAccountId: null,
     buyEnabled: false,
     buyDescription: "",
     buyCost: null,
     preferredVendor: "",
-    expenseAccount: "",
+    expenseAccountId: null,
   });
+
+  // FIX-03: populate the Income/Expense pickers from catalogs.accounts (same source as the categorize
+  // row + ItemEditorModal). getCoaAccounts is entity-scoped server-side (passes operating_company_id).
+  const accountsQuery = useQuery({
+    queryKey: ["catalogs", "accounts", "for-items", operatingCompanyId],
+    queryFn: () => getCoaAccounts(operatingCompanyId),
+    enabled: !!operatingCompanyId,
+  });
+  const accounts = accountsQuery.data?.accounts ?? [];
+  const incomeOptions: ComboboxOption[] = useMemo(
+    () =>
+      accounts
+        .filter((a) => a.account_type && INCOME_TYPES.includes(a.account_type))
+        .map((a) => ({ value: a.id, label: a.account_name, sublabel: a.account_number })),
+    [accounts]
+  );
+  const expenseOptions: ComboboxOption[] = useMemo(
+    () =>
+      accounts
+        .filter((a) => a.account_type && EXPENSE_TYPES.includes(a.account_type))
+        .map((a) => ({ value: a.id, label: a.account_name, sublabel: a.account_number })),
+    [accounts]
+  );
+
+  // Carrier default: on a sellable item with nothing chosen, preselect "Sales of Service Income".
+  useEffect(() => {
+    if (form.incomeAccountId || !form.sellEnabled) return;
+    const dflt = accounts.find((a) => a.account_name === CARRIER_DEFAULT_INCOME_NAME && a.account_type && INCOME_TYPES.includes(a.account_type));
+    if (dflt) setForm((prev) => (prev.incomeAccountId ? prev : { ...prev, incomeAccountId: dflt.id }));
+  }, [accounts, form.incomeAccountId, form.sellEnabled]);
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -65,22 +109,32 @@ export function NewServiceDrawerForm({ operatingCompanyId, onCreated, onClose }:
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.name.trim()) { pushToast("Item name is required.", "error"); return; }
-    if (form.sellEnabled && !form.incomeAccount.trim()) {
+    if (form.sellEnabled && !form.incomeAccountId) {
       pushToast("Income account is required when selling this item.", "error");
+      return;
+    }
+    if (form.buyEnabled && !form.expenseAccountId) {
+      pushToast("Expense account is required when purchasing this item.", "error");
       return;
     }
     setSaving(true);
     try {
       // M-1: sellPrice stays a DOLLAR number → unit_price_cents = round(price*100) unchanged (byte-for-byte).
-      // QB-STD-5: canonical catalogs.items — survives reload. incomeAccount is form UI only (no catalog column).
-      // Buy side (buyCost/buyDescription/preferredVendor/expenseAccount) collected here but not yet persisted;
-      // adding those catalog columns is a separate HELD migration.
+      // QB-STD-5: canonical catalogs.items — survives reload.
+      // FIX-03: PERSIST the chosen GL accounts — default_income_account_id (sell) + default_expense_account_id
+      // (buy). The backend /catalogs/accounting/items maps these metadata keys straight to columns and
+      // validates account-type server-side. Buy-side desc/cost/vendor remain form-only (separate columns).
       const priceCents = form.sellPrice != null ? Math.round(form.sellPrice * 100) : 0;
       const nameSlug = (form.sku.trim() || form.name.trim().replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 20) || "ITEM").slice(0, 120);
       const res = await itemsCatalogClient.create(operatingCompanyId, {
         code: nameSlug || "ITEM",
         display_name: form.name.trim(),
-        metadata: { item_type: form.itemType, unit_price_cents: priceCents },
+        metadata: {
+          item_type: form.itemType,
+          unit_price_cents: priceCents,
+          default_income_account_id: form.sellEnabled ? form.incomeAccountId : null,
+          default_expense_account_id: form.buyEnabled ? form.expenseAccountId : null,
+        },
       });
       onCreated({ id: String(res.id), label: form.name.trim() });
       pushToast("Item created", "success");
@@ -165,12 +219,16 @@ export function NewServiceDrawerForm({ operatingCompanyId, onCreated, onClose }:
                 Income account *{" "}
                 <span className="font-normal text-gray-400">(carrier: defaults to Service income)</span>
               </span>
-              <input
-                className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm"
-                value={form.incomeAccount}
-                onChange={(e) => set("incomeAccount", e.target.value)}
-                placeholder="Sales of Service Income"
-              />
+              <div className="mt-1">
+                <Combobox
+                  options={incomeOptions}
+                  value={form.incomeAccountId}
+                  onChange={(v) => set("incomeAccountId", v)}
+                  placeholder="Select income account"
+                  loading={accountsQuery.isLoading}
+                  allowClear
+                />
+              </div>
             </label>
           </div>
         )}
@@ -200,7 +258,7 @@ export function NewServiceDrawerForm({ operatingCompanyId, onCreated, onClose }:
             </label>
             <label className="block">
               <span className="text-xs font-medium text-gray-700">Cost</span>
-              {/* M-1: dollars-mode QBO money entry. NOTE: buy side not yet persisted (see handleSubmit). */}
+              {/* M-1: dollars-mode QBO money entry. FIX-03 persists the expense ACCOUNT; cost/vendor stay form-only. */}
               <MoneyInput
                 valueDollars={form.buyCost}
                 onChangeDollars={(d) => set("buyCost", d)}
@@ -218,12 +276,16 @@ export function NewServiceDrawerForm({ operatingCompanyId, onCreated, onClose }:
             </label>
             <label className="block">
               <span className="text-xs font-medium text-gray-700">Expense account *</span>
-              <input
-                className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-sm"
-                value={form.expenseAccount}
-                onChange={(e) => set("expenseAccount", e.target.value)}
-                placeholder="e.g. Operating Expenses"
-              />
+              <div className="mt-1">
+                <Combobox
+                  options={expenseOptions}
+                  value={form.expenseAccountId}
+                  onChange={(v) => set("expenseAccountId", v)}
+                  placeholder="Select expense account"
+                  loading={accountsQuery.isLoading}
+                  allowClear
+                />
+              </div>
             </label>
           </div>
         )}
