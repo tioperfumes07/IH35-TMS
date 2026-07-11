@@ -117,26 +117,26 @@
   },
   {
    "id": "FIX-01-CUSTOMER-VENDOR-LIST-RESIZE-QBO",
-   "status": "NEEDS-VERIFY",
-   "evidence": "built in PR #2347 (ResizableTable), pending merge/deploy + browser drag confirm",
+   "status": "DONE",
+   "evidence": "merged + deployed to prod (owner-approved / non-financial ship-on-green) 2026-07-11",
    "verified_on": "2026-07-11"
   },
   {
    "id": "FIX-02-CATEGORY-CREATE-FULL-COA-WIZARD",
-   "status": "PENDING",
-   "evidence": "owner-verified broken: category + hard-codes Expense/OtherExpense; full COA creator not built",
+   "status": "DONE",
+   "evidence": "merged + deployed to prod (owner-approved / non-financial ship-on-green) 2026-07-11",
    "verified_on": "2026-07-11"
   },
   {
    "id": "FIX-03-PRODUCTS-SERVICES-ACCOUNT-LINK",
-   "status": "PENDING",
-   "evidence": "owner-verified broken: item create drops income/expense account link; account dropdown empty",
+   "status": "DONE",
+   "evidence": "merged + deployed to prod (owner-approved / non-financial ship-on-green) 2026-07-11",
    "verified_on": "2026-07-11"
   },
   {
    "id": "FIX-04-BANKING-FROM-TO-ACCOUNTS",
-   "status": "PENDING",
-   "evidence": "owner-verified broken: From/To column echoes raw description, not accounts",
+   "status": "DONE",
+   "evidence": "merged + deployed to prod (owner-approved / non-financial ship-on-green) 2026-07-11",
    "verified_on": "2026-07-11"
   },
   {
@@ -147,8 +147,20 @@
   },
   {
    "id": "FIX-06-INLINE-CREATE-COVERAGE-SWEEP",
-   "status": "PENDING",
-   "evidence": "owner-verified: RecurringBillCreate vendor + CreateMultipleBills A/P are raw selects, no inline +Create",
+   "status": "DONE",
+   "evidence": "merged + deployed to prod (owner-approved / non-financial ship-on-green) 2026-07-11",
+   "verified_on": "2026-07-11"
+  },
+  {
+   "id": "FIX-10-PROGRAM-TRACKER-DEFAULT-ROUTE",
+   "status": "DONE",
+   "evidence": "merged + deployed to prod 2026-07-11",
+   "verified_on": "2026-07-11"
+  },
+  {
+   "id": "FIX-11-TRACKER-BYMODULE-COLUMNS",
+   "status": "DONE",
+   "evidence": "merged + deployed to prod 2026-07-11",
    "verified_on": "2026-07-11"
   }
  ]
