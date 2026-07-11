@@ -22,9 +22,10 @@ function normId(s: string): string {
   return String(s).replace(/_(DISPATCH|VERIFY|SUPERSEDED|LIKELY-STALE|STALE|DUP|DUPLICATE|DONE)$/i, "").toUpperCase().replace(/[^A-Z0-9]/g, "");
 }
 
-// Registry entry text per block (allowed_files + acceptance + classification), keyed by normId, so the
-// endpoint can AUTO-DERIVE layers/kind/cross-module from the block's declared scope — never hand-entered.
-type RegistryEntry = { scopeText: string; classification: string | null; phase: string | null };
+// Registry entry text per block (allowed_files + acceptance + classification + linkage), keyed by normId, so
+// the endpoint can AUTO-DERIVE layers/kind/cross-module/wired from the block's declared scope — never hand-entered.
+const NEEDS_DESIGN_RE = /needs[_-]design|design[_-]pending/i;
+type RegistryEntry = { scopeText: string; linkageText: string; needsDesign: boolean; classification: string | null; phase: string | null };
 function readRegistry(): Map<string, RegistryEntry> {
   const map = new Map<string, RegistryEntry>();
   const dir = path.join(ROOT, ".block-ready");
@@ -35,13 +36,25 @@ function readRegistry(): Map<string, RegistryEntry> {
       const j = JSON.parse(readFileSync(path.join(dir, f), "utf8")) as Record<string, unknown>;
       const allowed = Array.isArray(j.allowed_files) ? j.allowed_files.join(" ") : String(j.allowed_files ?? "");
       const acc = Array.isArray(j.acceptance) ? j.acceptance.map((a) => (typeof a === "string" ? a : JSON.stringify(a))).join(" ") : "";
-      const scopeText = `${allowed} ${acc} ${String(j.lane_lock ?? "")} ${String(j.summary ?? "")}`;
+      const scopeText = `${allowed} ${acc} ${String(j.lane_lock ?? "")} ${String(j.summary ?? "")} ${String(j.task ?? "")} ${String(j.note ?? "")}`;
+      // linkage field (string or array) — the block's DECLARED both-way wiring; absent on most legacy entries.
+      const linkageText = typeof j.linkage === "string" ? j.linkage : Array.isArray(j.linkage) ? (j.linkage as unknown[]).map(String).join(" ") : String(j.linkage ?? "");
+      // needs_design ONLY when an explicit marker is present — NEVER inferred from absence (§0 verify-everything).
+      const needsDesign = j.needs_design === true || j.design_pending === true || NEEDS_DESIGN_RE.test(scopeText) || NEEDS_DESIGN_RE.test(String(j.status ?? ""));
       const id = String(j.block_id ?? j.block ?? f.replace(/\.json$/, ""));
-      map.set(normId(id), { scopeText, classification: (j.classification as string) ?? (j.financial === true ? "FINANCIAL" : j.financial === false ? "NON-FINANCIAL" : null), phase: (j.phase as string) ?? null });
+      map.set(normId(id), { scopeText, linkageText, needsDesign, classification: (j.classification as string) ?? (j.financial === true ? "FINANCIAL" : j.financial === false ? "NON-FINANCIAL" : null), phase: (j.phase as string) ?? null });
     } catch { /* skip unparseable */ }
   }
   return map;
 }
+
+// ── FIX-11: LIVE Wired / Missing-linkage derivation from the SAME registry text that feeds layers{}/cross_module ──
+// Linkage-Law (§10 d): every record must link BOTH ways to (a) a financial primitive, (b) an operational module,
+// and (c) a hub/backbone table. We detect each declared edge from the block's scope + linkage text. A block is
+// WIRED only when all three edges are DECLARED; otherwise the undeclared edges are reported in `missing` so the
+// chip row and the Wired/Missing columns are the exact inverse of one another (never disagree, never guessed).
+const FIN_PRIMITIVE_RE = /vendor|customer|\bbill\b|bill[_-]?payment|expense|\bpayment|journal[_-]?entr|liabilit|asset account|catalogs\.accounts|accounting\.|\bgl\b|ledger|invoice|escrow|settlement|receivable|payable/i;
+const HUB_TABLE_RE = /org\.companies|identity\.users|mdata\.drivers|mdata\.units|mdata\.loads|catalogs\.accounts|mdata\.customers|maintenance\.work_orders|mdata\.vendors|accounting\.journal_entries|docs\.files|mdata\.equipment/i;
 
 function deriveLayers(text: string) {
   const t = text.toLowerCase();
@@ -99,6 +112,11 @@ export type TrackerBlockRow = {
   kind: "migration" | "ui" | "guard" | "feature" | "other";
   feature_incomplete: boolean; // FEATURE built on one side only (FE xor BE) — red-flag
   cross_module: string[]; // from the block's linkage/scope text
+  // ── FIX-11: LIVE completeness signals, all derived from the SAME registry text as layers{}/cross_module ──
+  wired: boolean; // Linkage-Law: financial-primitive AND operational-module AND hub-table edges all declared
+  needs_design: boolean; // true ONLY when an explicit needs_design/design-pending marker exists — never inferred
+  missing: string[]; // exact inverse of present layers + declared links: absent layer abbrs + undeclared link edges
+  completeness: number; // 0-100 deterministic (see formula in computeProgramTracker); live-verified = 100
 };
 
 export type TrackerPhase = {
@@ -177,6 +195,34 @@ export function computeProgramTracker(now: Date): ProgramTracker {
     const feOnlyNeedsBe = layers.frontend && !layers.backend && /\bendpoint\b|\broute\b|\bapi\b|\bservice\b|POST |GET /i.test(scope);
     const beOnlyNeedsFe = layers.backend && !layers.frontend && !layers.db && !layers.guard;
     const crossModule = deriveCrossModule(scope + " " + String(b.name ?? ""));
+
+    // ── FIX-11 (Linkage-Law §10 d) — WIRED + MISSING, derived LIVE from the block's declared scope + linkage ──
+    // A block is WIRED only when it DECLARES all three Linkage-Law edges: a financial primitive, an operational
+    // module, and a hub/backbone table. No linkage declaration → wired=false (honest conservative; never hardcoded).
+    const linkText = `${scope} ${entry?.linkageText ?? ""} ${String(b.name ?? "")}`;
+    const hasFinPrimitive = FIN_PRIMITIVE_RE.test(linkText);
+    const hasOperationalModule = crossModule.length > 0;
+    const hasHubTable = HUB_TABLE_RE.test(linkText);
+    const wired = hasFinPrimitive && hasOperationalModule && hasHubTable;
+    // MISSING = exact inverse of the layer chips (only layers that are false) + undeclared Linkage-Law edges,
+    // so the Missing column can never disagree with the FE/BE/DB/GL/RLS/G/T chips shown on the same row.
+    const LAYER_ABBR: [keyof typeof layers, string][] = [["frontend", "FE"], ["backend", "BE"], ["db", "DB"], ["gl", "GL"], ["rls", "RLS"], ["guard", "Guard"], ["tests", "Tests"]];
+    const missing: string[] = [
+      ...LAYER_ABBR.filter(([k]) => !layers[k]).map(([, a]) => a),
+      ...(hasFinPrimitive ? [] : ["link:financial-primitive"]),
+      ...(hasOperationalModule ? [] : ["link:operational-module"]),
+      ...(hasHubTable ? [] : ["link:hub-table"]),
+    ];
+    const needs_design = entry?.needsDesign ?? NEEDS_DESIGN_RE.test(scope);
+    // COMPLETENESS 0-100, DETERMINISTIC (never eyeballed):
+    //   • live-verified (registry DONE + merged/deployed) → 100 (a completed+live block is 100% done).
+    //   • otherwise → 100 · (0.5·layersPresentRatio + 0.2·wired + 0.3·in_progress), CAPPED at 95 so a bare
+    //     "done" WITHOUT merged+deployed proof is ALWAYS < 100 (matches classify(): done-without-live = In Progress).
+    const layersPresentRatio = LAYER_ABBR.filter(([k]) => layers[k]).length / LAYER_ABBR.length;
+    const inProgressBit = classify(String(b.status), liveVerified) === "in_progress" ? 1 : 0;
+    const completeness = liveVerified
+      ? 100
+      : Math.min(95, Math.round(100 * (0.5 * layersPresentRatio + 0.2 * (wired ? 1 : 0) + 0.3 * inProgressBit)));
     return {
       id: b.id,
       name: String(b.name ?? b.id).slice(0, 200),
@@ -195,6 +241,10 @@ export function computeProgramTracker(now: Date): ProgramTracker {
       kind,
       feature_incomplete: feOnlyNeedsBe || beOnlyNeedsFe,
       cross_module: crossModule,
+      wired,
+      needs_design,
+      missing,
+      completeness,
     };
   });
 
