@@ -515,3 +515,8 @@ jobs:
         run: node scripts/verify-transaction-company-isolation.mjs --selftest
       - name: verify:transaction-company-isolation
         run: npm run verify:transaction-company-isolation
+
+      - name: verify:master-data-list-active-company-scope --selftest
+        run: node scripts/verify-master-data-list-active-company-scope.mjs --selftest
+      - name: verify:master-data-list-active-company-scope
+        run: npm run verify:master-data-list-active-company-scope

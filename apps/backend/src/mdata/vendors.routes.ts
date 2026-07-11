@@ -58,6 +58,10 @@ const listQuerySchema = z.object({
   autocomplete: z.coerce.boolean().optional().default(false),
   q: z.string().trim().max(100).optional(),
   active_only: z.coerce.boolean().optional(),
+  // ITEM 3 = B (owner ruling 2026-07-11): master data is SHARED by design, but the Vendors LIST VIEW
+  // must show ONLY the ACTIVE company's records. OPT-IN flag passed by the Vendors list page alone; shared
+  // pickers/autocomplete NEVER pass it, so cross-entity bill/expense vendor dropdowns are unaffected.
+  active_company_only: z.coerce.boolean().optional().default(false),
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });
@@ -200,7 +204,7 @@ export async function registerVendorRoutes(app: FastifyInstance) {
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
-    const { limit, offset, status, search, vendor_type, operating_company_id, autocomplete, q, active_only } = parsedQuery.data;
+    const { limit, offset, status, search, vendor_type, operating_company_id, autocomplete, q, active_only, active_company_only } = parsedQuery.data;
     const resolvedOperatingCompanyId = await withCurrentUser(authUser.uuid, async (client) =>
       resolveOperatingCompanyId(client, authUser.uuid, operating_company_id)
     );
@@ -239,6 +243,13 @@ export async function registerVendorRoutes(app: FastifyInstance) {
       }
       values.push(resolvedOperatingCompanyId);
       filters.push(`operating_company_id = $${values.length}`);
+      // ITEM 3 = B: LIST-VIEW-ONLY active-company pin. When the Vendors list page opts in, additionally
+      // constrain rows to the ACTIVE session company (app.operating_company_id, set above). Layered ON TOP
+      // of the existing access check so the list can never regress to a cross-entity roster; shared pickers
+      // do not pass the flag and keep their per-call operating_company_id scope untouched.
+      if (active_company_only) {
+        filters.push(`operating_company_id = current_setting('app.operating_company_id', true)::uuid`);
+      }
       const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
       const countRes = await client.query<{ total: number }>(
         `SELECT count(*)::int AS total FROM mdata.vendors ${whereClause}`,

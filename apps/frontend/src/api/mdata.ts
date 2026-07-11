@@ -968,6 +968,10 @@ type CompanyScopedListParams = {
   // limit: client-side pickers must pass it — vendors/customers endpoints default to 50, so a >50 set
   // silently truncates the picker (same class as the driver/unit 50-cap). Endpoint max is 200.
   limit?: number;
+  // ITEM 3 = B (owner ruling 2026-07-11): opt-in flag passed ONLY by the Customers/Vendors LIST pages so
+  // the list shows solely the ACTIVE company's records. Shared pickers/dropdowns MUST NOT pass this (they
+  // legitimately need the per-call operating_company_id scope for cross-entity booking).
+  active_company_only?: boolean;
 };
 
 function appendCompanyScopedQuery(query: URLSearchParams, params: CompanyScopedListParams) {
@@ -978,6 +982,7 @@ function appendCompanyScopedQuery(query: URLSearchParams, params: CompanyScopedL
   if (params.customer_type) query.set("customer_type", params.customer_type);
   if (params.operating_company_id) query.set("operating_company_id", params.operating_company_id);
   if (params.limit != null) query.set("limit", String(params.limit));
+  if (params.active_company_only) query.set("active_company_only", "true");
 }
 
 export function listCustomers(params: CompanyScopedListParams = {}) {

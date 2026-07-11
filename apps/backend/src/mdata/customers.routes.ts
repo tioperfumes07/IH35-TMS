@@ -22,6 +22,10 @@ const listQuerySchema = z.object({
   autocomplete: z.coerce.boolean().optional().default(false),
   customer_type: z.enum(["broker", "direct_shipper"]).optional(),
   operating_company_id: z.string().uuid().optional(),
+  // ITEM 3 = B (owner ruling 2026-07-11): master data is SHARED by design, but the Customers LIST VIEW
+  // must show ONLY the ACTIVE company's records. This is an OPT-IN flag passed by the Customers list page
+  // alone; shared pickers/autocomplete NEVER pass it, so cross-entity booking dropdowns are unaffected.
+  active_company_only: z.coerce.boolean().optional().default(false),
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });
@@ -472,7 +476,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
-    const { limit, offset, status, search, q, active_only, autocomplete, customer_type, operating_company_id } = parsedQuery.data;
+    const { limit, offset, status, search, q, active_only, autocomplete, customer_type, operating_company_id, active_company_only } = parsedQuery.data;
     const term = (q ?? search ?? "").trim();
     if (autocomplete) {
       if (!operating_company_id) {
@@ -517,6 +521,13 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
       }
       values.push(resolvedOperatingCompanyId);
       filters.push(`operating_company_id = $${values.length}`);
+      // ITEM 3 = B: LIST-VIEW-ONLY active-company pin. When the Customers list page opts in, additionally
+      // constrain rows to the ACTIVE session company (app.operating_company_id, set above). This is layered
+      // ON TOP of the existing access check so the list can never regress to a cross-entity roster; shared
+      // pickers do not pass the flag and keep their per-call operating_company_id scope untouched.
+      if (active_company_only) {
+        filters.push(`operating_company_id = current_setting('app.operating_company_id', true)::uuid`);
+      }
       if (customer_type) {
         values.push(customer_type);
         filters.push(`customer_type = $${values.length}`);

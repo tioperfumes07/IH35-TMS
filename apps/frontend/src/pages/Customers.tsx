@@ -238,7 +238,7 @@ export function CustomersPage() {
     queryKey: ["customers", "page", companyId],
     // CUST-1: load the FULL customer roster (the client-side table below paginates/searches over it).
     // Without an explicit limit the endpoint returns only the default 50, hiding the rest of the roster.
-    queryFn: () => listCustomers({ operating_company_id: companyId, limit: 5000 }).then((result) => result.customers),
+    queryFn: () => listCustomers({ operating_company_id: companyId, limit: 5000, active_company_only: true }).then((result) => result.customers),
     enabled: Boolean(companyId),
   });
   // D1-4: eligible parents for the create form = active, TOP-LEVEL customers (never a sub-customer).

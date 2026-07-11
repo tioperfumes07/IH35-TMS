@@ -864,7 +864,8 @@
     "verify:referenceselect-coverage-ratchet": "node scripts/verify-referenceselect-coverage-ratchet.mjs",
     "verify:filter-input-aria-labels": "node scripts/verify-filter-input-aria-labels.mjs",
     "verify:excel-upload-jobs-rls-forced": "node scripts/verify-excel-upload-jobs-rls-forced.mjs",
-    "verify:transaction-company-isolation": "node scripts/verify-transaction-company-isolation.mjs"
+    "verify:transaction-company-isolation": "node scripts/verify-transaction-company-isolation.mjs",
+    "verify:master-data-list-active-company-scope": "node scripts/verify-master-data-list-active-company-scope.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",
