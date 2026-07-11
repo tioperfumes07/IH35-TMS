@@ -545,3 +545,8 @@ jobs:
         run: node scripts/verify-banking-register-categorize-capable.mjs --selftest
       - name: verify:banking-register-categorize-capable
         run: npm run verify:banking-register-categorize-capable
+
+      - name: verify:tracker-artifacts-fresh --selftest
+        run: node scripts/verify-tracker-artifacts-fresh.mjs --selftest
+      - name: verify:tracker-artifacts-fresh
+        run: npm run verify:tracker-artifacts-fresh

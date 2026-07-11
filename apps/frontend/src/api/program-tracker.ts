@@ -46,8 +46,10 @@ export type ProgramTracker = {
   deployed_sha: string;
   source: string;
   authored_total: number;
-  registered_total: number;
+  registered_total: number; // LIVE count of ALL .block-ready blocks — headline "Registered"
+  authored_registered_total: number; // authored MASTER-6 blocks that are registered (authored-progress denom)
   not_registered_total: number;
+  recon_synced_at: string | null; // when per-block status was last reconciled (A3 honest "as of last sync")
   held_migrations_open: number;
   merged_pr_total: number;
   recent_merged: { number: number; title: string; mergedAt: string | null }[];

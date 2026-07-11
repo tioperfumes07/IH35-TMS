@@ -1,13 +1,17 @@
 // Program Tracker service — NON-FINANCIAL, READ-ONLY internal tooling. Computes the Build-Progress view
-// LIVE at request time from the DEPLOYED repo artifacts (no DB writes, no accounting/catalogs/mdata):
-//   • docs/trackers/program-phase-manifest.json  — authored MASTER-6 sequence → the 8 phases (denominator).
+// at request time from the DEPLOYED repo artifacts (no DB writes, no accounting/catalogs/mdata):
+//   • .block-ready/*.json — the LIVE block registry, read directly (readRegistry). The headline "Registered"
+//     count is `registry.size` counted HERE at request time, so a newly-registered/committed block bumps the
+//     number on the very next deploy — no script re-run, no manual edit (A2, owner's core ask 2026-07-11).
+//   • docs/trackers/program-phase-manifest.json  — authored MASTER-6 sequence → the 8 phases (authored
+//     DENOMINATOR + authored-registered figure). Refreshed by the scheduled program-tracker-artifacts-sync
+//     workflow; NOT the headline registered total.
 //   • docs/trackers/block-reconciliation-data.json — reconcile:blocks per-block status + real timestamps +
-//     live_state (the LIVE registry rollup). This is the status source of truth.
+//     live_state. Per-block status/phase rollup come from this artifact = "as of last sync" (recon_synced_at),
+//     refreshed on schedule + on merge-to-main; NOT recomputed per request. Honest caption reflects that (A3).
 //   • db/migrations/.held-migrations.json — open build-and-hold migration count.
-// EVERY count is derived here at request time — nothing is stored/frozen. A newly-registered block appears
-// in the right tab + increments the right count on the next refresh, no manual edit. Honest failure (§0):
-// unreadable manifest/reconcile → THROW (route 503s, page shows an error state, never stale numbers).
-// Timestamps are always real (from the registry) or null → "—"; never now()/fabricated.
+// Honest failure (§0): unreadable manifest/reconcile → THROW (route 503s, page shows an error state, never
+// fabricated numbers). Timestamps are always real (registry/sync) or null → "—"; never now()/fabricated.
 
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import path from "node:path";
@@ -88,7 +92,7 @@ type ManifestBlock = { id: string; registered: boolean; block_ready_key?: string
 type ManifestPhase = { n: number; key: string; label: string; authored_total: number; blocks: ManifestBlock[] };
 type Manifest = { authored_total: number; registered_total: number; not_registered_total: number; phases: ManifestPhase[] };
 type ReconBlock = { id: string; status: string; name?: string; fin?: boolean; pr?: number | null; live_state?: string | null; merged_at?: string | null; merged_ct?: string | null; deployed_ct?: string | null; synced_at?: string | null };
-type Recon = { counts?: Record<string, number>; blocks?: ReconBlock[]; merged_prs?: { number: number; title: string; mergedAt?: string }[]; merged_pr_total?: number };
+type Recon = { counts?: Record<string, number>; blocks?: ReconBlock[]; merged_prs?: { number: number; title: string; mergedAt?: string }[]; merged_pr_total?: number; generated_at_iso?: string };
 
 export type Tab = "pending" | "in_progress" | "completed" | "not_counted";
 
@@ -136,8 +140,10 @@ export type ProgramTracker = {
   deployed_sha: string;
   source: string;
   authored_total: number;
-  registered_total: number;
-  not_registered_total: number;
+  registered_total: number; // LIVE count of ALL .block-ready blocks (registry.size) — the headline "Registered"
+  authored_registered_total: number; // how many authored MASTER-6 blocks are registered (authored-progress denom)
+  not_registered_total: number; // authored blocks not yet registered (authored_total − authored_registered_total)
+  recon_synced_at: string | null; // when the per-block status artifact was last reconciled (A3 honest "as of")
   held_migrations_open: number;
   merged_pr_total: number;
   recent_merged: { number: number; title: string; mergedAt: string | null }[];
@@ -285,10 +291,17 @@ export function computeProgramTracker(now: Date): ProgramTracker {
   return {
     generated_at: now.toISOString(),
     deployed_sha: resolveBackendVersion(),
-    source: "block registry (.block-ready via reconcile:blocks) + authored phase manifest (MASTER-6)",
+    source: "live .block-ready registry (headline count) + authored phase manifest (MASTER-6) + reconcile sync",
     authored_total: manifest.authored_total,
-    registered_total: manifest.registered_total,
+    // A2 — headline "Registered" = ALL live-registered .block-ready blocks, counted right here at request time
+    // from the DEPLOYED registry directory. A newly-committed block bumps this on the next deploy with NO script
+    // re-run (the frozen manifest.registered_total is kept below as the authored-progress figure, never as headline).
+    registered_total: registry.size,
+    authored_registered_total: manifest.registered_total,
     not_registered_total: manifest.not_registered_total,
+    // A3 — per-block status/PR/timestamps + phase rollup are from the last reconcile sync artifact (refreshed on
+    // schedule + on merge), NOT recomputed per request → surface "as of last sync" so the UI never overclaims live.
+    recon_synced_at: recon.generated_at_iso ?? null,
     held_migrations_open: heldOpen,
     merged_pr_total: recon.merged_pr_total ?? (recon.merged_prs?.length ?? 0),
     recent_merged: (recon.merged_prs ?? []).slice(0, 12).map((p) => ({ number: p.number, title: p.title, mergedAt: p.mergedAt ?? null })),
