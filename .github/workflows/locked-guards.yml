@@ -510,3 +510,8 @@ jobs:
         run: node scripts/verify-excel-upload-jobs-rls-forced.mjs --selftest
       - name: verify:excel-upload-jobs-rls-forced
         run: npm run verify:excel-upload-jobs-rls-forced
+
+      - name: verify:transaction-company-isolation --selftest
+        run: node scripts/verify-transaction-company-isolation.mjs --selftest
+      - name: verify:transaction-company-isolation
+        run: npm run verify:transaction-company-isolation
