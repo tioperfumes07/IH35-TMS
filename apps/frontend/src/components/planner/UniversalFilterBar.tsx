@@ -201,7 +201,6 @@ export function UniversalFilterBar({ value, onChange, summaryText }: UniversalFi
           aria-haspopup="listbox"
           aria-expanded={isOpen}
         >
-          <span>📅</span>
           <span>{PRESET_LABELS[value.period]}</span>
           <span>▼</span>
         </button>

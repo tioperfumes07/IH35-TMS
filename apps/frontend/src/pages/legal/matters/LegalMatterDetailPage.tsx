@@ -229,7 +229,7 @@ export function LegalMatterDetailPage() {
                   return (
                     <li key={String(d.id ?? "")} className="flex items-center justify-between gap-2 text-sm">
                       <span>
-                        {privileged ? "🔒 Privileged — Owner access only" : String(d.title ?? "")}
+                        {privileged ? "Privileged — Owner access only" : String(d.title ?? "")}
                         {d.is_privileged && !privileged ? " (privileged)" : ""}
                       </span>
                       {!privileged ? (
