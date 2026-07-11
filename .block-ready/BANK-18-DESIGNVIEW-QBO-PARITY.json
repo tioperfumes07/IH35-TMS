@@ -1,0 +1,27 @@
+{
+  "block_id": "BANK-18-DESIGNVIEW-QBO-PARITY",
+  "status": "in-progress",
+  "classification": "NON-FINANCIAL (UI)",
+  "priority": "P1",
+  "module": "banking",
+  "phase": "qbo-parity",
+  "source": "GUARD doc 18 defects 1,7,9,10-Customer (2026-07-11)",
+  "allowed_files": [
+    "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
+    "scripts/verify-banking-designview-qbo-parity.mjs"
+  ],
+  "acceptance": [
+    {
+      "kind": "guard",
+      "script": "scripts/verify-banking-designview-qbo-parity.mjs",
+      "wired_into": ".github/workflows/locked-guards.yml"
+    },
+    {
+      "kind": "live",
+      "check": "UNVERIFIED — browser: Split bottom-left of categorize panel; Match reveals ranked candidates; Amount sorts asc/desc + month/all toggle; Customer has +Add new customer (persists after reload)."
+    }
+  ],
+  "db_required": false,
+  "guard_required": true,
+  "registered_on": "2026-07-11"
+}
