@@ -1,0 +1,4 @@
+{
+  "count": 153,
+  "note": "Baseline of native <input>/<textarea> with a placeholder but no accessible name (aria-label/aria-labelledby/id/title). Forward-only ratchet (verify-a11y-input-labels.mjs) — any NEW one fails CI. LOWER this as they get fixed; never raise it. Complements the runtime axe audit (a11y-checks.yml). eslint-plugin-jsx-a11y is not usable on eslint 10 (peer caps at 9)."
+}

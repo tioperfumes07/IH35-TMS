@@ -1,0 +1,27 @@
+{
+  "block_id": "0243-g8-4-a11y-input-labels",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "TIER-3",
+  "task": "0243-g8-4: placeholder-only filter/search inputs lack an accessible name; eslint-plugin-jsx-a11y 'not wired'. VERIFY-FIRST: (1) a11y is ALREADY comprehensively wired via the runtime axe audit (a11y-checks.yml → a11y:audit: axe walk + keyboard + contrast + screen-reader + verify-a11y-no-critical-violations, @axe-core/cli). (2) eslint-plugin-jsx-a11y@6.10.2 CANNOT install on this repo's eslint 10 (peer caps at eslint 9); forcing it needs a repo-wide legacy-peer-deps that masks OTHER peer conflicts (rejected — §10 no-shortcut). So the input-accessible-name rule is enforced the eslint-10-compatible way: a custom forward-only ratchet guard verify-a11y-input-labels.mjs that flags native <input>/<textarea> with a placeholder but no accessible name (aria-label/aria-labelledby/id/title). 153 current violations baselined; any NEW one fails CI. Complements (does not replace) the runtime axe audit.",
+  "branch": "feat/a11y-input-label-guard",
+  "lane": "TIER-3",
+  "allowed_files": [
+    "scripts/verify-a11y-input-labels.mjs",
+    "scripts/verify-steps/99-verify-a11y-input-labels.mjs",
+    "scripts/.a11y-input-label-baseline.json",
+    ".block-ready/0243-g8-4-a11y-input-labels.json",
+    "package.json",
+    ".github/workflows/locked-guards.yml"
+  ],
+  "acceptance": [
+    { "kind": "guard", "script": "scripts/verify-a11y-input-labels.mjs", "wired_into": "verify-pre-commit (verify-steps/99) + locked-guards.yml + package.json verify:a11y-input-labels" },
+    { "kind": "live", "assert": "--selftest passes (6 checks: placeholder-only flagged; aria-label/aria-labelledby/id/title clear it; no-placeholder + textarea handled); guard PASSES at baseline 153; an injected new placeholder-only input → 154 > 153 → FAILS (verified this session)" },
+    { "kind": "design", "spec": "AGENTS.md / a11y-checks.yml", "sections": ["a11y enforcement", "eslint 10 vs jsx-a11y incompatibility"] }
+  ],
+  "linkage": "N/A — accessibility enforcement infra; no entity/data/FK",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "note": "eslint-plugin-jsx-a11y left UNWIRED intentionally (eslint-10 peer incompatibility); revisit if the plugin ships eslint-10 support. The 153 baseline should be LOWERED as inputs get aria-labels (never raised)."
+}

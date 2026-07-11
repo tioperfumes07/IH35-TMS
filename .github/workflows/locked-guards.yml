@@ -43,6 +43,12 @@ jobs:
       - name: verify:nav-integrity
         run: npm run verify:nav-integrity
 
+      - name: verify:a11y-input-labels --selftest
+        run: node scripts/verify-a11y-input-labels.mjs --selftest
+
+      - name: verify:a11y-input-labels
+        run: npm run verify:a11y-input-labels
+
       - name: verify:no-silent-noop-posting --selftest
         run: node scripts/verify-no-silent-noop-posting.mjs --selftest
 
