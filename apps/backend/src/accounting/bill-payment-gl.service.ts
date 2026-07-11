@@ -7,7 +7,7 @@
 // for the entity. Default OFF (migration 202607011100). Mirrors CHAIN-03's BILL_GL_POSTING_ENABLED
 // gate (bill-gl-draft.routes.ts). No new GL math is introduced here. Tier-1 financial — build-and-hold.
 
-import { withCompanyScope } from "./shared.js";
+import { withCurrentUser } from "../auth/db.js";
 import { postSourceTransaction } from "./posting-engine.service.js";
 
 export const BILL_PAYMENT_GL_POSTING_FLAG_KEY = "BILL_PAYMENT_GL_POSTING_ENABLED";
@@ -30,12 +30,17 @@ export async function isBillPaymentGlPostingEnabled(
   operatingCompanyId: string,
   userId: string
 ): Promise<boolean> {
-  return withCompanyScope(userId, operatingCompanyId, (client) =>
-    isEnabled(client, BILL_PAYMENT_GL_POSTING_FLAG_KEY, {
+  // withCurrentUser + set_config (not withCompanyScope): the callers (payBill / the route gate) are
+  // already authenticated and scoped, so a flag-READ needs no membership re-assertion — and this keeps
+  // the company-membership/luciaPool dependency out of the bill-payment / createBill load path (else a
+  // partial auth/db mock in the recurring-bill template test breaks). Same flag semantics.
+  return withCurrentUser(userId, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+    return isEnabled(client, BILL_PAYMENT_GL_POSTING_FLAG_KEY, {
       operating_company_id: operatingCompanyId,
       user_uuid: userId,
-    })
-  );
+    });
+  });
 }
 
 /**
