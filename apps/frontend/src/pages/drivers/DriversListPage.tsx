@@ -6,6 +6,7 @@ import { listDriverQualificationItems, type DriverQualificationFileItem } from "
 import { Button } from "../../components/Button";
 import { CreateDriverModal } from "../../components/drivers/CreateDriverModal";
 import { KpiCard } from "../../components/layout/KpiCard";
+import { ListErrorState } from "../../components/ListErrorState";
 import { KpiStrip } from "../../components/layout/KpiStrip";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -193,7 +194,9 @@ export function DriversListPage({ onOpenProfile }: DriversListPageProps) {
       </KpiStrip>
 
       <section className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        {driversQ.isLoading ? (
+        {driversQ.isError ? (
+          <ListErrorState title="Couldn't load drivers" status={0} message={(driversQ.error as Error)?.message} onRetry={() => void driversQ.refetch()} />
+        ) : driversQ.isLoading ? (
           <div className="px-3 py-6 text-center text-slate-500 text-xs">Loading drivers...</div>
         ) : (
           <DriversTable rows={rows} onOpenProfile={onOpenProfile} />

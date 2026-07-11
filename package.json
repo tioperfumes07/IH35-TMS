@@ -859,7 +859,8 @@
     "verify:no-nested-box": "node scripts/verify-no-nested-box.mjs",
     "verify:create-forms-wired": "node scripts/verify-create-forms-wired.mjs",
     "verify:dead-forms-unmounted": "node scripts/verify-dead-forms-unmounted.mjs",
-    "verify:reference-dropdown-inline-create": "node scripts/verify-reference-dropdown-inline-create.mjs"
+    "verify:reference-dropdown-inline-create": "node scripts/verify-reference-dropdown-inline-create.mjs",
+    "verify:list-error-state-coverage": "node scripts/verify-list-error-state-coverage.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",

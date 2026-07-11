@@ -11,6 +11,7 @@ import {
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { ListErrorState } from "../../components/ListErrorState";
 import { SendMessageModal } from "../../components/drivers/SendMessageModal";
 
 function formatWhen(iso: string) {
@@ -157,6 +158,14 @@ export function MessagesInboxPage() {
 
   if (!operatingCompanyId) {
     return <div className="p-6 text-sm text-gray-600">Select an operating company to view driver messages.</div>;
+  }
+
+  if (inboxQuery.isError) {
+    return (
+      <div className="p-4">
+        <ListErrorState title="Couldn't load messages" status={0} message={(inboxQuery.error as Error)?.message} onRetry={() => void inboxQuery.refetch()} />
+      </div>
+    );
   }
 
   return (

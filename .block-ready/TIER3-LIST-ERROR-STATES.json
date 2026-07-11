@@ -1,0 +1,27 @@
+{
+  "block": "TIER3-LIST-ERROR-STATES",
+  "title": "Honest error states on list pages (no blank-forever / false-empty on outage) — 0243-g8-5 / pattern-3",
+  "tier": "TIER-3",
+  "financial": false,
+  "pr_target": "fix/list-error-states-rollout -> main",
+  "summary": "Owner root cause: a list/query page with a loading branch but no error branch shows an outage as a fake 'No records' / $0. Rolled the existing ListErrorState pattern (model: Vendors.tsx AUTO-13) to 4 more genuine query-list pages, and added a regression guard so they stay fixed. Presentation-only (renders only on query error) — non-financial, ships on green.",
+  "acceptance": [
+    { "id": "error-branches", "check": "4 list pages render ListErrorState on query error", "proof": "RetentionDashboard (scoresQ.isError), ApplicantsPipelinePage (applicantsQ.isError), MessagesInboxPage (inboxQuery.isError early-return), DriversListPage (driversQ.isError branch in the loading ternary); frontend tsc clean; mobile-responsive new_vs_baseline=0" },
+    { "id": "regression-guard", "check": "guard fails if a fixed page loses its error state", "proof": "verify:list-error-state-coverage PASS (5 pages incl. Vendors model); --selftest PASS (requires isError + ListErrorState; flags loading-only)" },
+    { "id": "guard-wired", "check": "guard in verify-pre-commit + locked-guards", "proof": "verify-steps/112; package.json (END); locked-guards step (END); verify:guard-wired PASS" }
+  ],
+  "deferred": [
+    "Error-state rollout to remaining query pages: accounting FactorReconciliationPage / SalesTaxPage / CoaRolesPage / CreateMultipleBillsPage / RecurringBillCreate (presentation-only, but financial-adjacent — batch separately with browser verify), plus SettlementDisputeList (its useSettlementDisputes hook does not expose isError — needs a small hook change first).",
+    "0243-g8-4 aria-labels: 153 placeholder-only inputs remain unlabeled (guard verify-a11y-input-labels already blocks NEW ones at baseline 153); add aria-label + ratchet the baseline down — mechanical, deferred. eslint-plugin-jsx-a11y not installed (optional add).",
+    "A broad error-branch-coverage CI guard across all query-list pages (this one is a narrow regression guard on the fixed set; a broad one needs to distinguish query-list from mutation pages to avoid false positives)."
+  ],
+  "already_built_cleared": [
+    "0243-c1-3 three dead-end buttons — all 3 route correctly (fuel/fraud-alerts, maintenance/severe-repairs, dispatch/layovers); the 'severe-repair-oos' typo does not exist.",
+    "0243-c1-4 dead duplicate components — RecurringBillList mounted; BookLoadModalV3 doesn't exist; each named modal has non-test importers; only DispatchList is a true orphan (archive-not-delete, no action).",
+    "0219 nested modals (audit UI) — AuditEventCard is an inline card, not a modal; no modal-in-modal in the audit UI.",
+    "0007 vendors no-create-button — '+ Create Vendor' button + VendorCreateModal present + tested (Vendors.tsx:269).",
+    "0007 vendors false-empty — useListState gates empty state until fetch settles (VendorsListView.tsx:110)."
+  ],
+  "lane_lock": "apps/frontend/src/pages/drivers/** (presentation) + scripts/** + ci. No backend, no db/migrations, no posting/GL.",
+  "ship": "green CI (non-financial TIER-3)"
+}
