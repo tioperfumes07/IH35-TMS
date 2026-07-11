@@ -66,6 +66,7 @@ export function LegalLandingPage() {
   return (
     <div className="space-y-3">
       <PageHeader
+        breadcrumb={["Legal", "Contracts"]}
         title="Legal"
         subtitle="Contracts and compliance workflows"
         actions={

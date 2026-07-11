@@ -162,6 +162,7 @@ export function LegalContractInstancesPage() {
   return (
     <div className="space-y-3">
       <PageHeader
+        breadcrumb={["Legal", "Contracts"]}
         title="Legal Contracts"
         subtitle="Instance tracking and signer workflows"
         actions={

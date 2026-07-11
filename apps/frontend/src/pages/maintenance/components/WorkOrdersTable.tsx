@@ -175,12 +175,14 @@ export function WorkOrdersTable({
               </SelectCombobox>
             </label>
             <input
+              aria-label="Filter by external vendor id"
               className="min-h-12 rounded-sm border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
               value={externalVendorFilter}
               onChange={(e) => onExternalVendorChange(e.target.value)}
               placeholder="External vendor id…"
             />
             <input
+              aria-label="Search work orders by WO, unit, driver, or status"
               className="min-h-12 w-full max-w-xs rounded-sm border border-gray-300 px-2 text-sm sm:h-9 sm:min-h-0"
               value={search}
               onChange={(e) => setSearch(e.target.value)}

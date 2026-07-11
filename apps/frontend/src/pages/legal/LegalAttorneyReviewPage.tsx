@@ -52,7 +52,7 @@ export function LegalAttorneyReviewPage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader title="Attorney Review" subtitle="Templates pending legal approval" />
+      <PageHeader breadcrumb={["Legal", "Attorney Review"]} title="Attorney Review" subtitle="Templates pending legal approval" />
       <LegalModuleTabs activeTabId="attorney-review" />
 
       <div className="rounded-sm border border-gray-200 bg-white p-3">

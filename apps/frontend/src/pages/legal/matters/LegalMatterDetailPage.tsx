@@ -109,6 +109,7 @@ export function LegalMatterDetailPage() {
   return (
     <div className="space-y-3">
       <PageHeader
+        breadcrumb={["Legal", "Matters"]}
         title={matter ? String(matter.matter_number ?? "Matter") : "Matter"}
         subtitle={matter ? String(matter.type ?? "") : ""}
         actions={
