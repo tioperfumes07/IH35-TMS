@@ -1,0 +1,33 @@
+{
+  "block_id": "P2-BILLLINE-LOADID-bill-lines-load-id",
+  "status": "BUILD",
+  "classification": "FINANCIAL",
+  "phase": "PHASE-2-CORE-ACCOUNTING-WIRING",
+  "task": "P2-BILLLINE-LOADID (item 04): accounting.bill_lines had no load_id → no per-load cost attribution on bills (expense_lines HAS load_id since 0093). GUARD-verified vs live prod (column confirmed missing). Additive migration 202607200000_bill_lines_load_id.sql adds bill_lines.load_id uuid FK -> the canonical hub mdata.loads(id) + a partial index, mirroring expense_lines.load_id. No backfill (a load link is not derivable for existing rows — never fabricate). FORCED RLS + grants unchanged (new column inherits). Static guard verify-bill-lines-load-id asserts the FK targets mdata.loads (not a RETIRE loads table) + the index. HELD (Tier-1 migration): DO NOT RUN ON PROD marker + registered in .held-migrations.json; runs on a Neon branch by owner, then ledger-backfill.",
+  "branch": "feat/bill-lines-load-id-p2",
+  "lane": "PHASE-2-CORE-ACCOUNTING-WIRING",
+  "allowed_files": [
+    "db/migrations/202607200000_bill_lines_load_id.sql",
+    "db/migrations/.held-migrations.json",
+    "scripts/verify-bill-lines-load-id.mjs",
+    "scripts/verify-steps/100-verify-bill-lines-load-id.mjs",
+    ".block-ready/P2-BILLLINE-LOADID-bill-lines-load-id.json",
+    "package.json",
+    ".github/workflows/locked-guards.yml"
+  ],
+  "acceptance": [
+    { "kind": "column", "table": "accounting.bill_lines", "column": "load_id", "note": "uuid, nullable, FK -> mdata.loads(id) — verified on the Neon branch after the migration runs (GUARD)" },
+    { "kind": "fk", "from": "accounting.bill_lines.load_id", "to": "mdata.loads.id", "note": "canonical hub, NOT dispatch.loads/RETIRE" },
+    { "kind": "guard", "script": "scripts/verify-bill-lines-load-id.mjs", "wired_into": "verify-pre-commit (verify-steps/100) + locked-guards + package.json verify:bill-lines-load-id" },
+    { "kind": "live", "assert": "--selftest passes (3 checks: canonical FK+index passes; missing FK caught; RETIRE dispatch.loads target caught); guard PASS on the migration; hold-migrations-registered + migration-filenames + no-unledgered + canonical-table-writes all PASS with the new held migration. Neon-branch column/FK proof OWED TO GUARD.", "verified_by": "GUARD Neon branch-proof" },
+    { "kind": "design", "spec": "02-MONEY-WIRING/_GUARD-VERIFIED-LIVE-SCHEMA-2026-07-11.md", "sections": ["ITEM 04 bill_lines.load_id CONFIRMED MISSING"] }
+  ],
+  "linkage": "bill_lines -> load (mdata.loads, the canonical hub) via the new FK — the per-load cost-attribution linkage this block BUILDS; mirrors expense_lines.load_id. bill_lines already FK bill_id -> accounting.bills. operating_company_id/FORCED RLS on bill_lines unchanged.",
+  "db_required": true,
+  "guard_required": true,
+  "extra_gates": [],
+  "hold": "TIER-1 FINANCIAL MIGRATION — build-and-hold. DO NOT RUN ON PROD (registered held). Owner runs it on a Neon branch + ledger-backfills; GUARD proves the column+FK; owner merges.",
+  "deferred": [
+    { "item": "populate bill_lines.load_id from the bill-creation flows", "reason": "no current bill-line writer carries a load context (maintenance WO-bill is unit-based; FIN-18 is dormant; createBill takes workOrderId/unitId not loadId). The column enables attribution now; population wires in when a load-carrying bill flow exists — explicit follow-up, not silently dropped." }
+  ]
+}

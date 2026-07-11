@@ -413,6 +413,12 @@ jobs:
       - name: verify:detention-invoice-fk
         run: npm run verify:detention-invoice-fk
 
+      - name: verify:bill-lines-load-id --selftest
+        run: node scripts/verify-bill-lines-load-id.mjs --selftest
+
+      - name: verify:bill-lines-load-id
+        run: npm run verify:bill-lines-load-id
+
       - name: verify:pwa-date-format
         run: npm run verify:pwa-date-format
 

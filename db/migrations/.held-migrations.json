@@ -188,6 +188,10 @@
     {
       "file": "202607150000_transfer_gl_posting_flag.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1] BANKING-GL-COMPLETION — TRANSFER_GL_POSTING_ENABLED flag seed only (no schema change). Gates the new banking.transfers -> GL posting call (createTransfer/revokeTransfer, transfers.service.ts) added behind this flag. Default OFF."
+    },
+    {
+      "file": "202607200000_bill_lines_load_id.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] P2-BILLLINE-LOADID (item 04) — additive accounting.bill_lines.load_id uuid FK -> mdata.loads (+ partial index), mirroring expense_lines.load_id (0093). Enables per-load cost attribution on bill lines. No backfill (not derivable). GUARD-verified vs live prod (column confirmed missing)."
     }
   ]
 }
