@@ -5,6 +5,7 @@ import { legalTemplatesApi, type LegalTemplateSummary } from "../../api/legal-te
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { ListErrorState } from "../../components/ListErrorState";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { LegalModuleTabs } from "./LegalModuleTabs";
 
@@ -50,16 +51,25 @@ export function LegalPoliciesPage() {
       <LegalModuleTabs activeTabId="policies" />
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 text-sm font-semibold text-gray-900">Policy Templates</div>
-        <ParityTable
-          rows={rows}
-          columns={columns}
-          rowKey={(row) => row.id}
-          // Settled-only empty (LIST-EMPTY-1 invariant): loading stays true while pending OR while a
-          // refetch is in flight with zero current rows, so emptyText never flashes mid-fetch.
-          loading={query.isPending || (query.isFetching && rows.length === 0)}
-          storageKey="legal-policies"
-          emptyText="No policy templates found. Create one from Templates."
-        />
+        {query.isError ? (
+          <ListErrorState
+            title="Couldn't load policy templates"
+            status={0}
+            message={(query.error as Error)?.message}
+            onRetry={() => void query.refetch()}
+          />
+        ) : (
+          <ParityTable
+            rows={rows}
+            columns={columns}
+            rowKey={(row) => row.id}
+            // Settled-only empty (LIST-EMPTY-1 invariant): loading stays true while pending OR while a
+            // refetch is in flight with zero current rows, so emptyText never flashes mid-fetch.
+            loading={query.isPending || (query.isFetching && rows.length === 0)}
+            storageKey="legal-policies"
+            emptyText="No policy templates found. Create one from Templates."
+          />
+        )}
       </div>
     </div>
   );

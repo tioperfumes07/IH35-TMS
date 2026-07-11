@@ -8,6 +8,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { FaultRuleModal, type FaultRuleFormValues } from "../../components/maintenance/FaultRuleModal";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { ListErrorState } from "../../components/ListErrorState";
 
 type FaultRule = FaultRuleFormValues & { id: string; active?: boolean };
 
@@ -129,15 +130,24 @@ export function FaultRulesPage() {
         </Button>
       </div>
 
-      <ParityTable
-        rows={rules}
-        columns={columns}
-        rowKey={(row) => row.id}
-        loading={rulesQuery.isLoading}
-        storageKey="maintenance-fault-rules"
-        emptyText="No fault rules configured yet."
-        exportFilename="fault-rules"
-      />
+      {rulesQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load fault rules"
+          status={0}
+          message={(rulesQuery.error as Error)?.message}
+          onRetry={() => void rulesQuery.refetch()}
+        />
+      ) : (
+        <ParityTable
+          rows={rules}
+          columns={columns}
+          rowKey={(row) => row.id}
+          loading={rulesQuery.isLoading}
+          storageKey="maintenance-fault-rules"
+          emptyText="No fault rules configured yet."
+          exportFilename="fault-rules"
+        />
+      )}
 
       {modalOpen ? (
         <FaultRuleModal

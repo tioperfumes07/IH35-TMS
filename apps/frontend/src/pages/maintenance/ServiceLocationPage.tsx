@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { ListErrorState } from "../../components/ListErrorState";
 
 type Props = {
   operatingCompanyId: string;
@@ -99,15 +100,24 @@ export function ServiceLocationPage({ operatingCompanyId }: Props) {
         <BucketTile label="Locations" value={kpis.unique_locations} />
       </div>
 
-      <ParityTable<ServiceLocationRow>
-        columns={columns}
-        rows={rows}
-        rowKey={(row) => `${row.service_location}-${row.bucket}`}
-        loading={rowsQuery.isLoading}
-        emptyText="Active work orders grouped by service location will render here."
-        storageKey="maint-service-location"
-        exportFilename="service-location"
-      />
+      {rowsQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load service locations"
+          status={0}
+          message={(rowsQuery.error as Error)?.message}
+          onRetry={() => void rowsQuery.refetch()}
+        />
+      ) : (
+        <ParityTable<ServiceLocationRow>
+          columns={columns}
+          rows={rows}
+          rowKey={(row) => `${row.service_location}-${row.bucket}`}
+          loading={rowsQuery.isLoading}
+          emptyText="Active work orders grouped by service location will render here."
+          storageKey="maint-service-location"
+          exportFilename="service-location"
+        />
+      )}
     </div>
   );
 }

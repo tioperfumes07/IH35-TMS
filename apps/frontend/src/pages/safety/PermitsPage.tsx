@@ -10,6 +10,7 @@ import {
   type SafetyPermitType,
 } from "../../api/safety";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { ListErrorState } from "../../components/ListErrorState";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 type Props = {
@@ -226,16 +227,25 @@ export function PermitsPage({ operatingCompanyId }: Props) {
         </label>
       </div>
 
-      <ParityTable<PermitRow>
-        columns={permitColumns}
-        rows={activePermits}
-        rowKey={(row) => String(row.id)}
-        loading={permitsQuery.isLoading}
-        emptyText="No permits tracked yet. Use + Create permit to book operating authority and compliance documents."
-        storageKey="safety-permits"
-        exportFilename="permits"
-        tableTestId="permits-table"
-      />
+      {permitsQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load permits"
+          status={0}
+          message={(permitsQuery.error as Error)?.message}
+          onRetry={() => void permitsQuery.refetch()}
+        />
+      ) : (
+        <ParityTable<PermitRow>
+          columns={permitColumns}
+          rows={activePermits}
+          rowKey={(row) => String(row.id)}
+          loading={permitsQuery.isLoading}
+          emptyText="No permits tracked yet. Use + Create permit to book operating authority and compliance documents."
+          storageKey="safety-permits"
+          exportFilename="permits"
+          tableTestId="permits-table"
+        />
+      )}
 
       {createOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" data-testid="permits-create-modal">
