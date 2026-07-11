@@ -134,14 +134,19 @@ export function BillsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const category = parseBillCategory(searchParams.get("category"));
   const [status, setStatus] = useState<"" | BillStatus | "unpaid">("");
+  // BILLS-DATERANGE-01: From/To bill_date filter (server-side via listBills date_from/date_to).
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [allocationBillId, setAllocationBillId] = useState<string | null>(null);
 
   const billsQuery = useQuery({
-    queryKey: ["accounting", "bills", companyId, status, category],
+    queryKey: ["accounting", "bills", companyId, status, category, dateFrom, dateTo],
     queryFn: () =>
       listBills(companyId, {
         include_balance: true,
         status: status || undefined,
+        date_from: dateFrom || undefined,
+        date_to: dateTo || undefined,
         limit: 200,
       }),
     enabled: Boolean(companyId),
@@ -299,6 +304,25 @@ export function BillsPage() {
           <option value="paid">Paid</option>
           <option value="voided">Voided</option>
         </SelectCombobox>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2 text-sm">
+        <span className="text-gray-600">From:</span>
+        <DatePicker value={dateFrom} onChange={setDateFrom} max={dateTo || undefined} className="w-36" />
+        <span className="text-gray-600">To:</span>
+        <DatePicker value={dateTo} onChange={setDateTo} min={dateFrom || undefined} className="w-36" />
+        {dateFrom || dateTo ? (
+          <button
+            type="button"
+            className="rounded-full border border-gray-300 bg-white px-2.5 py-0.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+            onClick={() => {
+              setDateFrom("");
+              setDateTo("");
+            }}
+          >
+            Clear dates
+          </button>
+        ) : null}
       </div>
     </div>
   );
