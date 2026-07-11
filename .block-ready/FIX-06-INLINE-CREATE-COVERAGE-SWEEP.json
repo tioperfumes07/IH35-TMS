@@ -1,0 +1,17 @@
+{
+  "block_id": "FIX-06-INLINE-CREATE-COVERAGE-SWEEP",
+  "status": "pending",
+  "classification": "NON-FINANCIAL",
+  "priority": "P1",
+  "module": "accounting",
+  "phase": "design-parity",
+  "source": "CODER-VERIFIED-FIXES-2026-07-11 / 06 (owner-verified)",
+  "allowed_files": ["apps/frontend/src/pages/accounting/bills/RecurringBillCreate.tsx", "apps/frontend/src/pages/accounting/CreateMultipleBillsPage.tsx", "apps/frontend/src/components/parity/ReferenceSelect.tsx", "scripts/**"],
+  "acceptance": [
+    { "check": "Every accounting create/edit dropdown for vendor/customer/category(account)/item/product-service/vendor-type is a ReferenceSelect with the right createKind — '+ Add new ___' as first row, creates+links to the canonical table. Named offenders fixed: RecurringBillCreate 'Vendor *' (raw select), CreateMultipleBillsPage per-row A/P account (SelectCombobox).", "resolved": false },
+    { "check": "Filter/config selects (status, aging bucket, payment method, period, frequency, sort) correctly do NOT get '+ Create'.", "resolved": false },
+    { "check": "CI guard verify:referenceselect-qbo-standard fails if a plain <select> appears on an accounting create form.", "resolved": false },
+    { "check": "Browser-confirmed on named offenders + sweep list (§9).", "resolved": false }
+  ],
+  "note": "Mechanism (ReferenceSelect) is BUILT + correct; coverage incomplete. Depends on FIX-02 (category '+' = full COA creator) + FIX-03 (product/service accounts). createKind->canonical: vendor->mdata.vendors, customer->mdata.customers, category->catalogs.accounts, item/service->catalogs.items, part->maintenance parts."
+}
