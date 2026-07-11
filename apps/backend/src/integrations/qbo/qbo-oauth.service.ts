@@ -664,6 +664,14 @@ export async function getQboConnectionStatus(operatingCompanyId: string) {
   };
 }
 
+/**
+ * @deprecated Selects on `refresh_token_expires_at` — WRONG for the hourly token-refresh cron.
+ * Refresh tokens last ~100 days, so a connection whose ~1h ACCESS token is already dead is never
+ * returned here and its access token is never refreshed, silently going stale ~1h after each re-auth.
+ * The token-refresh cron now uses {@link getConnectionsWithAccessTokenExpiringWithin} instead. Kept
+ * only for backward compatibility; do NOT use it for the refresh cron (CI guard
+ * verify-qbo-refresh-uses-access-token enforces this).
+ */
 export async function getConnectionsExpiringWithin(secondsAhead: number) {
   return withLuciaBypass(async (client) => {
     const companies = await client.query<{ id: string }>(
@@ -706,6 +714,53 @@ export async function getConnectionsExpiringWithin(secondsAhead: number) {
       if (isExpiringRes.rows[0]?.expiring) {
         out.push(latest);
       }
+    }
+    return out;
+  });
+}
+
+/**
+ * Selects EVERY non-revoked QBO connection whose ACCESS token is expired or expires within
+ * `secondsAhead` seconds. This is the correct selector for the hourly token-refresh cron: it mirrors
+ * the on-demand `getValidAccessToken` freshness test (`access_token_expires_at`), NOT the ~100-day
+ * `refresh_token_expires_at`. The `<=` comparison self-heals connections whose access token is ALREADY
+ * dead. There is intentionally NO `LIMIT 1` — all non-revoked connections across every entity (TRANSP,
+ * TRK, future USMCA) are refreshed each tick. Per-company GUC is set so FORCE-RLS on
+ * integrations.qbo_connections lets each company's rows be read (a raw cross-company SELECT returns 0).
+ */
+export async function getConnectionsWithAccessTokenExpiringWithin(secondsAhead: number) {
+  return withLuciaBypass(async (client) => {
+    const companies = await client.query<{ id: string }>(
+      `SELECT id::text AS id FROM org.companies WHERE is_active = true ORDER BY id`
+    );
+
+    const out: Array<{
+      id: string;
+      operating_company_id: string;
+      realm_id: string;
+      access_token_expires_at: string;
+      revoked_at: string | null;
+    }> = [];
+
+    for (const company of companies.rows) {
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [company.id]);
+      const res = await client.query<{
+        id: string;
+        operating_company_id: string;
+        realm_id: string;
+        access_token_expires_at: string;
+        revoked_at: string | null;
+      }>(
+        `
+          SELECT id, operating_company_id, realm_id, access_token_expires_at, revoked_at
+          FROM integrations.qbo_connections
+          WHERE revoked_at IS NULL
+            AND access_token_expires_at <= now() + ($1::int * interval '1 second')
+          ORDER BY authorized_at DESC, updated_at DESC
+        `,
+        [secondsAhead]
+      );
+      for (const row of res.rows) out.push(row);
     }
     return out;
   });

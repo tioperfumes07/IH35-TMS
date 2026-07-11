@@ -520,3 +520,8 @@ jobs:
         run: node scripts/verify-master-data-list-active-company-scope.mjs --selftest
       - name: verify:master-data-list-active-company-scope
         run: npm run verify:master-data-list-active-company-scope
+
+      - name: verify:qbo-refresh-uses-access-token --selftest
+        run: node scripts/verify-qbo-refresh-uses-access-token.mjs --selftest
+      - name: verify:qbo-refresh-uses-access-token
+        run: npm run verify:qbo-refresh-uses-access-token
