@@ -13,11 +13,19 @@ let initialized = false;
  * internally stores an auto_matched record when score + amount + date criteria
  * are all satisfied (Q11 tolerance rule).
  */
-export async function runBankReconAutoMatchTick() {
+export type BankReconAutoMatchSummary = { companies: number; scanned: number; autoMatched: number };
+
+export async function runBankReconAutoMatchTick(
+  log?: { info?: (obj: unknown, msg?: string) => void }
+): Promise<BankReconAutoMatchSummary> {
+  let totalScanned = 0;
+  let totalAutoMatched = 0;
+  let companyCount = 0;
   await withLuciaBypass(async (client) => {
     const companies = await client.query<{ id: string }>(
       `SELECT id::text AS id FROM org.companies WHERE is_active = true AND deactivated_at IS NULL ORDER BY id`
     );
+    companyCount = companies.rows.length;
 
     for (const company of companies.rows) {
       assertTenantContext(String(company.id ?? ""), "accounting.bank_recon_auto_match_cron");
@@ -52,12 +60,21 @@ export async function runBankReconAutoMatchTick() {
         if (candidates.some((c) => c.auto_match)) autoMatchedCount += 1;
       }
 
+      // P2-BANK-AUTOMATCH: do NOT discard the metric. Surface per-company scanned/auto-matched counts so
+      // an enabled run is observable (was `void {...}` → silently dropped).
+      totalScanned += txns.rows.length;
+      totalAutoMatched += autoMatchedCount;
       if (txns.rows.length > 0) {
-        // logged via wrapBackgroundJobTick at the outer level
-        void { operating_company_id: company.id, scanned: txns.rows.length, auto_matched: autoMatchedCount };
+        log?.info?.(
+          { operating_company_id: company.id, scanned: txns.rows.length, auto_matched: autoMatchedCount },
+          "[bank-recon-auto-match] company tick"
+        );
       }
     }
   });
+  const summary: BankReconAutoMatchSummary = { companies: companyCount, scanned: totalScanned, autoMatched: totalAutoMatched };
+  log?.info?.(summary, "[bank-recon-auto-match] tick summary");
+  return summary;
 }
 
 export function initializeBankReconAutoMatchCron(app: FastifyInstance) {
@@ -76,7 +93,7 @@ export function initializeBankReconAutoMatchCron(app: FastifyInstance) {
       await wrapBackgroundJobTick(
         "accounting.bank_recon_auto_match_cron",
         async () => {
-          await runBankReconAutoMatchTick();
+          await runBankReconAutoMatchTick(app.log);
         },
         app.log
       );
