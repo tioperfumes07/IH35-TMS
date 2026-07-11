@@ -454,3 +454,9 @@ jobs:
 
       - name: verify:program-board-repo-root
         run: npm run verify:program-board-repo-root
+
+      - name: verify:phase4-crossmodule-fks --selftest
+        run: node scripts/verify-phase4-crossmodule-fks.mjs --selftest
+
+      - name: verify:phase4-crossmodule-fks
+        run: npm run verify:phase4-crossmodule-fks

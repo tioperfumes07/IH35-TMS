@@ -852,7 +852,8 @@
     "verify:money-format": "node scripts/verify-money-format.mjs",
     "verify:chain-04-bill-payment-bank-tieout": "node scripts/verify-chain-04-bill-payment-bank-tieout.mjs",
     "verify:chain-06-factoring-ar-tieout": "node scripts/verify-chain-06-factoring-ar-tieout.mjs",
-    "verify:custvend-par1": "node scripts/verify-custvend-par1.mjs"
+    "verify:custvend-par1": "node scripts/verify-custvend-par1.mjs",
+    "verify:phase4-crossmodule-fks": "node scripts/verify-phase4-crossmodule-fks.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",
