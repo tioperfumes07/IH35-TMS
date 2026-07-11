@@ -1,0 +1,30 @@
+{
+  "block_id": "P3-INVOICE-FK-detention-invoice-fk",
+  "status": "BUILD",
+  "classification": "FINANCIAL",
+  "phase": "PHASE-3-MASTER-DATA-INTEGRITY",
+  "task": "P3-INVOICE-FK (residual): verify-first found MOST of the block already-built — invoice_lines.account_id FK -> catalogs.accounts (migration 0221) and invoices/invoice_lines.source_load_id FK -> mdata.loads (migration 0060 inline REFERENCES; the dispatch's 'index only' claim was stale). The ONE genuine gap: dispatch.detention_requests.invoice_id / invoice_line_id are soft uuid NULL with NO FK. Migration 202607210000 adds detention_requests.invoice_id -> accounting.invoices(id) + invoice_line_id -> accounting.invoice_lines(id) as NOT VALID (enforces new rows without failing on pre-existing orphans; GUARD runs orphan-check + VALIDATE on Neon) + a partial index. Cross-schema dispatch.* -> accounting.* (both canonical). Idempotent (pg_constraint guard). Static guard verify-detention-invoice-fk.",
+  "branch": "feat/detention-invoice-fk-p3",
+  "lane": "PHASE-3-MASTER-DATA-INTEGRITY",
+  "allowed_files": [
+    "db/migrations/202607210000_detention_requests_invoice_fk.sql",
+    "db/migrations/.held-migrations.json",
+    "scripts/verify-detention-invoice-fk.mjs",
+    "scripts/verify-steps/102-verify-detention-invoice-fk.mjs",
+    ".block-ready/P3-INVOICE-FK-detention-invoice-fk.json",
+    "package.json",
+    ".github/workflows/locked-guards.yml"
+  ],
+  "acceptance": [
+    { "kind": "fk", "from": "dispatch.detention_requests.invoice_id", "to": "accounting.invoices.id", "note": "NOT VALID; GUARD VALIDATEs after orphan-check on Neon" },
+    { "kind": "fk", "from": "dispatch.detention_requests.invoice_line_id", "to": "accounting.invoice_lines.id", "note": "NOT VALID" },
+    { "kind": "guard", "script": "scripts/verify-detention-invoice-fk.mjs", "wired_into": "verify-pre-commit (verify-steps/102) + locked-guards + package.json verify:detention-invoice-fk" },
+    { "kind": "live", "assert": "--selftest PASS (2 checks: both FKs+NOT VALID+idempotent; missing NOT VALID caught); guard PASS; hold-migrations-registered + migration-filenames + no-unledgered + G4 all PASS. Pre-migration orphan check (=0) + VALIDATE owed to GUARD on Neon.", "verified_by": "GUARD Neon branch-proof" },
+    { "kind": "design", "spec": "PHASE3_INVOICE-FK dispatch", "sections": ["detention_requests invoice linkage (account_id/source_load_id already-built)"] }
+  ],
+  "linkage": "dispatch.detention_requests -> accounting.invoices + accounting.invoice_lines (the revenue linkage this block enforces) + existing FKs load_id->mdata.loads, customer_id->mdata.customers, operating_company_id->org.companies. FORCED RLS unchanged.",
+  "db_required": true,
+  "guard_required": true,
+  "extra_gates": [],
+  "hold": "TIER-1 MIGRATION — build-and-hold. DO NOT RUN ON PROD (registered held). Owner runs on Neon; GUARD orphan-checks + VALIDATEs; owner merges."
+}
