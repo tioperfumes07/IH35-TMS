@@ -415,6 +415,7 @@
     "verify:nav-integrity": "node scripts/verify-nav-integrity.mjs",
     "verify:block-ready-c5-no-duplicate-arch-design": "node scripts/verify-block-ready-c5-no-duplicate-arch-design.mjs",
     "verify:vehicle-profile-sections-complete": "node scripts/verify-vehicle-profile-sections-complete.mjs",
+    "verify:canonical-table-writes": "node scripts/verify-canonical-table-writes.mjs",
     "verify:vehicle-profile-plates-multi-jurisdiction": "node scripts/verify-vehicle-profile-plates-multi-jurisdiction.mjs",
     "verify:vehicle-profile-driver-dual-tracking": "node scripts/verify-vehicle-profile-driver-dual-tracking.mjs",
     "verify:vehicle-profile-audit-coverage": "node scripts/verify-vehicle-profile-audit-coverage.mjs",
