@@ -550,3 +550,13 @@ jobs:
         run: node scripts/verify-tracker-artifacts-fresh.mjs --selftest
       - name: verify:tracker-artifacts-fresh
         run: npm run verify:tracker-artifacts-fresh
+
+      - name: verify:inline-create-writes-canonical --selftest
+        run: node scripts/verify-inline-create-writes-canonical.mjs --selftest
+      - name: verify:inline-create-writes-canonical
+        run: npm run verify:inline-create-writes-canonical
+
+      - name: verify:manual-txn-date-patch --selftest
+        run: node scripts/verify-manual-txn-date-patch.mjs --selftest
+      - name: verify:manual-txn-date-patch
+        run: npm run verify:manual-txn-date-patch

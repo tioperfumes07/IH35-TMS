@@ -59,6 +59,14 @@ const updateLinkBodySchema = z.object({
   plaid_item_id: z.string().trim().min(3),
 });
 
+// Doc-18 GAP B — governed edit of a MANUAL transaction's date (QBO parity). Only manual, non-bank-fed
+// rows are editable; bank-fed rows (plaid/qbo_import/csv_import, or any row carrying a plaid_transaction_id)
+// stay locked.
+const manualTxnDatePatchBodySchema = z.object({
+  operating_company_id: z.string().uuid(),
+  transaction_date: z.string().date(),
+});
+
 const itemDisconnectBodySchema = z.object({
   operating_company_id: z.string().uuid(),
   plaid_item_id: z.string().trim().min(3),
@@ -514,6 +522,8 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
           bt.matched_settlement_id,
           bt.notes,
           bt.created_at,
+          bt.source,
+          bt.plaid_transaction_id,
           ba.institution_name,
           ba.account_name,
           ba.account_mask,
@@ -534,5 +544,80 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
     });
 
     return { transactions: rows };
+  });
+
+  // Doc-18 GAP B — governed PATCH of a MANUAL transaction's date. QBO lets you edit a manually-entered
+  // transaction's date; a bank-fed (Plaid/QBO/CSV import) row's date is locked to what the feed reported.
+  // Manual-only guard: editable ONLY when source = 'manual' AND plaid_transaction_id IS NULL. Any bank-fed
+  // row is rejected with a clear error and never mutated. The change is append-only audit-logged.
+  app.patch("/api/v1/banking/transactions/:id", async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!ensureRole(reply, user.role, ownerAdminRoles)) return;
+
+    const params = accountParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return sendValidationError(reply, params.error);
+    const body = manualTxnDatePatchBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return sendValidationError(reply, body.error);
+
+    const outcome = await withCompanyScope(user.uuid, body.data.operating_company_id, async (client) => {
+      // Read current state (RLS-scoped) to distinguish not-found from bank-fed-locked and to audit the delta.
+      const existing = await client.query<{
+        id: string;
+        source: string;
+        plaid_transaction_id: string | null;
+        transaction_date: string;
+      }>(
+        `SELECT id, source, plaid_transaction_id, transaction_date::text AS transaction_date
+           FROM banking.bank_transactions
+          WHERE id = $1 AND operating_company_id = $2`,
+        [params.data.id, body.data.operating_company_id]
+      );
+      const row = existing.rows[0] ?? null;
+      if (!row) return { status: "not_found" as const };
+      // Bank-fed rows stay locked. Belt-and-suspenders: source must be 'manual' AND no plaid id.
+      if (row.source !== "manual" || row.plaid_transaction_id !== null) {
+        return { status: "locked" as const, source: row.source };
+      }
+
+      const updated = await client.query<{ id: string; transaction_date: string }>(
+        `UPDATE banking.bank_transactions
+            SET transaction_date = $3, updated_at = now()
+          WHERE id = $1
+            AND operating_company_id = $2
+            AND source = 'manual'
+            AND plaid_transaction_id IS NULL
+          RETURNING id, transaction_date::text AS transaction_date`,
+        [params.data.id, body.data.operating_company_id, body.data.transaction_date]
+      );
+      const result = updated.rows[0] ?? null;
+      if (!result) return { status: "locked" as const, source: row.source };
+
+      await appendCrudAudit(
+        client,
+        user.uuid,
+        "banking.transaction.date_edited",
+        {
+          resource_type: "banking.bank_transactions",
+          resource_id: result.id,
+          operating_company_id: body.data.operating_company_id,
+          source: row.source,
+          old_transaction_date: row.transaction_date,
+          new_transaction_date: result.transaction_date,
+        },
+        "warning",
+        "DOC18-GAPB-MANUAL-TXN-DATE"
+      );
+      return { status: "ok" as const, id: result.id, transaction_date: result.transaction_date };
+    });
+
+    if (outcome.status === "not_found") return reply.code(404).send({ error: "bank_transaction_not_found" });
+    if (outcome.status === "locked") {
+      return reply.code(422).send({
+        error: "bank_fed_transaction_date_locked",
+        message: `Transaction date is locked for bank-fed rows (source="${outcome.source}"). Only manually-entered transactions can have their date edited.`,
+      });
+    }
+    return { ok: true, id: outcome.id, transaction_date: outcome.transaction_date };
   });
 }

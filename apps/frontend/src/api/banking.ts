@@ -56,7 +56,31 @@ export type PlaidBankTransaction = {
   matched_kind?: string | null;
   notes: string | null;
   created_at: string;
+  // Doc-18 GAP B: feed origin. 'manual' = hand-entered (date is editable); 'plaid'/'qbo_import'/'csv_import'
+  // = bank-fed (date locked). plaid_transaction_id present ⇒ bank-fed regardless of source.
+  source?: string | null;
+  plaid_transaction_id?: string | null;
 };
+
+/** Doc-18 GAP B: a transaction is date-editable only when it is manually entered (non-bank-fed). */
+export function isManualBankTransaction(tx: PlaidBankTransaction): boolean {
+  return tx.source === "manual" && !tx.plaid_transaction_id;
+}
+
+/**
+ * Doc-18 GAP B — edit a MANUAL transaction's date (governed backend PATCH). The backend rejects any
+ * bank-fed row (422 bank_fed_transaction_date_locked); callers should only offer this on manual rows.
+ */
+export function updateBankTransactionDate(
+  transactionId: string,
+  operatingCompanyId: string,
+  transactionDate: string
+) {
+  return apiRequest<{ ok: true; id: string; transaction_date: string }>(
+    `/api/v1/banking/transactions/${transactionId}`,
+    { method: "PATCH", body: { operating_company_id: operatingCompanyId, transaction_date: transactionDate } }
+  );
+}
 
 export type ReconciliationSession = {
   id: string;

@@ -871,7 +871,9 @@
     "verify:transaction-company-isolation": "node scripts/verify-transaction-company-isolation.mjs",
     "verify:master-data-list-active-company-scope": "node scripts/verify-master-data-list-active-company-scope.mjs",
     "verify:qbo-refresh-uses-access-token": "node scripts/verify-qbo-refresh-uses-access-token.mjs",
-    "verify:block-lifecycle": "node scripts/verify-block-lifecycle.mjs"
+    "verify:block-lifecycle": "node scripts/verify-block-lifecycle.mjs",
+    "verify:inline-create-writes-canonical": "node scripts/verify-inline-create-writes-canonical.mjs",
+    "verify:manual-txn-date-patch": "node scripts/verify-manual-txn-date-patch.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",
