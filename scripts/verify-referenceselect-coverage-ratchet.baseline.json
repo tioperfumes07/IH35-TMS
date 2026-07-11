@@ -2,6 +2,7 @@
   "_comment": "FIX-06 forward-only ratchet baseline. Each fingerprint <relpath>::<valueIdentifier> is a pre-existing plain accounting-entity <select>/<SelectCombobox> that is LEGITIMATELY EXEMPT: a bank-account scope/navigation/filter selector (bank-account creation is owner-gated, not a QuickCreate kind); a category-KIND enum; a transactional-record picker; OR a picker that already has inline-create via the older external-'+ Add new'-button + InlineCreateDrawer pattern (ManualJEModal account line — keystone migration is a separate follow-up, not a coverage gap). A NEW entity-select with no inline-create must be a ReferenceSelect, not added here. Regenerate: node scripts/verify-referenceselect-coverage-ratchet.mjs --write-baseline",
   "fingerprints": [
     "apps/frontend/src/components/accounting/ManualJEModal.tsx::line.account_id",
+    "apps/frontend/src/components/expenses/RecordExpenseForm.tsx::values.paymentAccountId",
     "apps/frontend/src/pages/accounting/AccountRegisterPage.tsx::accountId",
     "apps/frontend/src/pages/accounting/AccountingAuditTrailPage.tsx::accountId",
     "apps/frontend/src/pages/accounting/ExpenseCategoryMapPage.tsx::form.category_kind",

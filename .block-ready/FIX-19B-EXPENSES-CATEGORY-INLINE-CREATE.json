@@ -1,0 +1,31 @@
+{
+  "block_id": "FIX-19B-EXPENSES-CATEGORY-INLINE-CREATE",
+  "status": "in-progress",
+  "classification": "NON-FINANCIAL (UI) + financial follow-up flagged",
+  "priority": "P1",
+  "module": "accounting-expenses",
+  "phase": "qbo-parity",
+  "source": "GUARD doc 19-B (2026-07-11)",
+  "allowed_files": [
+    "apps/frontend/src/components/expenses/RecordExpenseForm.tsx",
+    "scripts/verify-referenceselect-coverage-ratchet.mjs"
+  ],
+  "acceptance": [
+    {
+      "kind": "guard",
+      "script": "scripts/verify-referenceselect-coverage-ratchet.mjs",
+      "wired_into": ".github/workflows/locked-guards.yml"
+    },
+    {
+      "kind": "live",
+      "check": "UNVERIFIED — browser: /accounting/expenses Record-expense form Category shows '+ Add new category' first row → full COA wizard → persists to catalogs.accounts + reselects after reload (QB-STD-5)."
+    },
+    {
+      "kind": "note",
+      "check": "FLAGGED financial follow-up (BANK-18-A class): a brand-new LOCAL category has no QBO bridge, so posting an expense with it returns categoryUnbridged until bridged. Existing categories work end-to-end."
+    }
+  ],
+  "db_required": false,
+  "guard_required": true,
+  "registered_on": "2026-07-11"
+}

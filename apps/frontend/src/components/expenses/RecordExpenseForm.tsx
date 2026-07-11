@@ -8,6 +8,7 @@ import { Button } from "../Button";
 import { DatePicker } from "../forms/DatePicker";
 import { MoneyInput } from "../forms/MoneyInput";
 import { QboCombobox } from "../forms/QboCombobox";
+import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { SelectCombobox } from "../shared/SelectCombobox";
 import { UploadZone } from "../UploadZone";
 import {
@@ -125,28 +126,37 @@ export function RecordExpenseForm({
       <label className="text-xs font-semibold text-gray-700" htmlFor={fieldId("category")}>
         Category
         <div className="mt-1">
-          <SelectCombobox
-            id={fieldId("category")}
-            className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
-            value={values.categoryId}
-            onChange={(event) => {
-              const nextId = event.target.value;
-              const match = categoryOptions.find((row) => row.id === nextId);
+          {/* Doc-19-B: shared ReferenceSelect gives the Category picker the inline "+ Add new category"
+              first row (full COA wizard → canonical catalogs.accounts), matching Bills / the split modal
+              (FIX-02). Existing categories map their QBO account id (category_qbo_id) on select; a freshly
+              created local category selects + persists to catalogs.accounts (survives reload in the CoA). */}
+          <ReferenceSelect
+            value={values.categoryId || null}
+            onChange={(next) => {
+              if (!next) {
+                setValues((prev) => ({ ...prev, categoryId: "", categoryLabel: "", categoryQboId: null }));
+                return;
+              }
+              const match = categoryOptions.find((row) => row.id === next);
+              // A just-created category isn't in categoryOptions yet — onOptionCreated already set the
+              // values for it, so don't clobber when there's no match.
+              if (!match) return;
               setValues((prev) => ({
                 ...prev,
-                categoryId: nextId,
-                categoryLabel: match?.label ?? "",
-                categoryQboId: match?.qboId ?? null,
+                categoryId: next,
+                categoryLabel: match.label,
+                categoryQboId: match.qboId,
               }));
             }}
-          >
-            <option value="">Select category…</option>
-            {categoryOptions.map((row) => (
-              <option key={row.id} value={row.id}>
-                {row.label}
-              </option>
-            ))}
-          </SelectCombobox>
+            options={categoryOptions.map((row) => ({ value: row.id, label: row.label }))}
+            createKind="category"
+            operatingCompanyId={operatingCompanyId}
+            placeholder="Select category…"
+            onOptionCreated={(opt) => {
+              setValues((prev) => ({ ...prev, categoryId: opt.value, categoryLabel: opt.label, categoryQboId: null }));
+              void costContextQuery.refetch();
+            }}
+          />
         </div>
       </label>
 
