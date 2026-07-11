@@ -11,6 +11,7 @@ import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ManualJEModal } from "./ManualJEModal";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 
 const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
 function humanMemo(memo: string | null | undefined): string {
@@ -129,6 +130,8 @@ export function ManualJEListPage() {
       subtitle="Filter, review, and void posted entries"
       actions={<Button onClick={() => setCreateOpen(true)} disabled={!companyId}>+ Create</Button>}
     >
+      {/* 0243-g8-5: a query error must surface a retryable banner, not a blank grid / forever spinner. */}
+      {entriesQuery.isError ? <ListErrorBanner onRetry={() => void entriesQuery.refetch()} /> : null}
       <ParityTable
         columns={columns}
         rows={pageRows}

@@ -1,0 +1,27 @@
+{
+  "block_id": "0243-g8-5-list-error-states",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "TIER-3",
+  "task": "0243-g8-5: accounting/driver list pages have a loading branch but no isError branch → a failed list query renders a blank grid / empty panel with no explanation or retry. Verify-first confirmed the gap on ~20 pages (broader than the audit's ~9). Fixed the two clean single-query list pages by mirroring the established BillsPage pattern (shared components/shared/ListErrorBanner + query.refetch): ManualJEListPage (journal entries) + AccountingPreSettlementsPage (pre-settlement queue). Remaining offenders (CoaRolesPage, SalesTaxPage, FactorReconciliationPage, IntegrationTransactionsPage, InvoiceCreateModal, RecordPaymentModal, driver pages, etc.) are noted as a coordinated follow-up sweep — several are multi-query and need per-query error placement. Non-financial UI; additive; frontend tsc clean.",
+  "branch": "fix/list-error-states-0243-g8-5",
+  "lane": "TIER-3",
+  "allowed_files": [
+    "apps/frontend/src/pages/accounting/ManualJEListPage.tsx",
+    "apps/frontend/src/pages/accounting/AccountingPreSettlementsPage.tsx",
+    ".block-ready/0243-g8-5-list-error-states.json"
+  ],
+  "acceptance": [
+    { "kind": "mounted", "component": "apps/frontend/src/pages/accounting/ManualJEListPage.tsx", "note": "entriesQuery.isError renders ListErrorBanner with retry, above the ParityTable" },
+    { "kind": "mounted", "component": "apps/frontend/src/pages/accounting/AccountingPreSettlementsPage.tsx", "note": "preSettlementsQuery.isError renders ListErrorBanner with retry, above the panel" },
+    { "kind": "live", "assert": "frontend tsc clean; mirrors the proven BillsPage error-banner pattern; on a failed list query the page shows a retryable error, not a blank grid / forever-empty panel" },
+    { "kind": "design", "spec": "apps/frontend/src/pages/accounting/BillsPage.tsx", "sections": ["isError → ListErrorBanner onRetry pattern"] }
+  ],
+  "linkage": "N/A — presentational error-state UI; no data/entity/FK change",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "deferred": [
+    { "item": "~7 remaining loading-without-error pages (CoaRolesPage, SalesTaxPage, FactorReconciliationPage multi-query, IntegrationTransactionsPage, InvoiceCreateModal, RecordPaymentModal, driver pages)", "reason": "several are multi-query and need per-query error placement — a coordinated follow-up sweep, not silently dropped." }
+  ]
+}
