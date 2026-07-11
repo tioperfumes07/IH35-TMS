@@ -16,6 +16,7 @@ import {
 } from "../../api/form425c";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { PageHeader } from "../../components/layout/PageHeader";
 import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
 import { buildPrintHTML, suggestedFilename } from "./lib/buildPrintHTML";
 import { DEFAULT_PROFILES } from "./lib/constants";
@@ -298,6 +299,9 @@ export function Form425CHome() {
 
   return (
     <div className="min-h-screen bg-slate-100" data-form425c-page="true">
+      <div className="px-4 pt-4">
+        <PageHeader title="Form 425C" backHref="/" breadcrumb={["Home", "Form 425C"]} />
+      </div>
       <div className="flex items-center justify-between gap-2 bg-linear-to-r from-slate-900 to-slate-400 px-5 py-3 text-white">
         <div>
           <div className="text-lg font-extrabold">IH 35 GROUP</div>

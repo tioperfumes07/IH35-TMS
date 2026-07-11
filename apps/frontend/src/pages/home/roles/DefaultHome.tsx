@@ -220,8 +220,8 @@ export function DefaultHome({ auth }: Props) {
                   : `${ownerCashPending.length} cash advance request${ownerCashPending.length === 1 ? "" : "s"} awaiting Owner action`}
               </div>
               <p className="mt-1 max-w-2xl text-xs text-slate-700/90">
-                Above-policy driver requests escalated from the office queue. Open the cash advance requests page to copy portal links or use the
-                email you received.
+                Above-policy driver requests escalated from the office for your approval. Open the queue to review each request and approve or
+                decline it.
               </p>
             </div>
             <Link

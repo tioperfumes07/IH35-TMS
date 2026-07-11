@@ -205,7 +205,7 @@ export function QboStyleHomePage({ auth }: Props) {
             ) : (
               <>
                 <p className="text-2xl font-semibold text-gray-900">{fmt$(totalBankBalance * 100)}</p>
-                <p className="mb-3 text-xs text-gray-400">Total bank balance</p>
+                <p className="mb-3 text-xs text-slate-600">Total bank balance</p>
                 <div className="space-y-2">
                   {tiles.slice(0, 5).map((tile) => (
                     <div key={tile.id} className="flex items-center justify-between text-sm">
@@ -251,7 +251,7 @@ export function QboStyleHomePage({ auth }: Props) {
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-gray-400">Net revenue today</p>
+                <p className="text-xs text-slate-600">Net revenue today</p>
                 <div className="mt-3 space-y-1">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Income</span>
@@ -277,7 +277,7 @@ export function QboStyleHomePage({ auth }: Props) {
             ) : (
               <>
                 <p className="text-2xl font-semibold text-gray-900">{fmt$(apTotal)}</p>
-                <p className="text-xs text-gray-400">Outstanding A/P</p>
+                <p className="text-xs text-slate-600">Outstanding A/P</p>
                 <div className="mt-3 space-y-1.5">
                   {[
                     { label: "Operational", pct: 52 },
@@ -314,7 +314,7 @@ export function QboStyleHomePage({ auth }: Props) {
             ) : (
               <>
                 <p className="text-2xl font-semibold text-gray-900">{fmt$(arTotal)}</p>
-                <p className="text-xs text-gray-400">Unpaid (last 365 days)</p>
+                <p className="text-xs text-slate-600">Unpaid (last 365 days)</p>
                 <div className="mt-3 space-y-1">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Current (0–30 days)</span>
@@ -343,15 +343,15 @@ export function QboStyleHomePage({ auth }: Props) {
             <div className="grid grid-cols-3 gap-2">
               <div className="text-center">
                 <p className="text-xl font-semibold text-gray-900">{integrationTotal}</p>
-                <p className="text-xs text-gray-400">Total</p>
+                <p className="text-xs text-slate-500">Total</p>
               </div>
               <div className="text-center">
                 <p className="text-xl font-semibold text-slate-700">{integrationConnected}</p>
-                <p className="text-xs text-gray-400">Connected</p>
+                <p className="text-xs text-slate-500">Connected</p>
               </div>
               <div className="text-center">
                 <p className={`text-xl font-semibold ${integrationIssues > 0 ? "text-red-600" : "text-gray-400"}`}>{integrationIssues}</p>
-                <p className="text-xs text-gray-400">Issues</p>
+                <p className="text-xs text-slate-500">Issues</p>
               </div>
             </div>
             <div className="mt-3 space-y-1.5 text-xs text-gray-600">
@@ -378,7 +378,7 @@ export function QboStyleHomePage({ auth }: Props) {
 
       {/* ── Cash Position footer ── */}
       {cashQuery.data && (
-        <div className="flex items-center gap-2 text-xs text-gray-400">
+        <div className="flex items-center gap-2 text-xs text-slate-500">
           <DollarSign className="h-3.5 w-3.5" />
           <span>
             Cash position: <span className="font-medium text-gray-600">{fmt$(cashQuery.data.balance_cents)}</span>
