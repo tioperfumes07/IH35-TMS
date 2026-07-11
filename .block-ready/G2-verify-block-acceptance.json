@@ -1,0 +1,25 @@
+{
+  "block_id": "G2-verify-block-acceptance",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "PHASE-0-ENFORCEMENT",
+  "task": "G2 (LINKAGE-LAW Clause 6/8): add scripts/verify-block-acceptance.mjs so a done/complete .block-ready entry cannot pass CI with any unresolved acceptance[] item. Resolves STATIC kinds (migration/guard/mounted/route/design/file); DB kinds (table/column/fk/rls/data/effective) are checked well-formed and deferred to the Neon proof. Mandatory: a block declaring a flag must carry an effective item. Forward-only (grandfathers legacy); degrades to pass on shallow git history. Wired into verify:pre-commit + locked-guards with a --selftest hollow-block negative control.",
+  "branch": "feat/guard-block-acceptance",
+  "lane": "ENFORCEMENT",
+  "allowed_files": [
+    "scripts/verify-block-acceptance.mjs",
+    "scripts/verify-steps/93-verify-block-acceptance.mjs",
+    ".block-ready/G2-verify-block-acceptance.json",
+    "package.json",
+    ".github/workflows/locked-guards.yml"
+  ],
+  "acceptance": [
+    { "kind": "guard", "script": "scripts/verify-block-acceptance.mjs", "wired_into": "verify-pre-commit (verify-steps/93) + .github/workflows/locked-guards.yml" },
+    { "kind": "live", "assert": "node scripts/verify-block-acceptance.mjs --selftest passes; hollow done-block (unmet guard / missing effective) fails; resolved block passes" },
+    { "kind": "design", "spec": "docs/trackers/IH35-TMS-MASTER-LINKAGE-WIRING-REFERENCE-2026-07-10.md", "sections": ["Clause 6", "Clause 8"] }
+  ],
+  "linkage": "N/A — enforcement infra; no entity record, no operating_company_id, no cross-module FK",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
