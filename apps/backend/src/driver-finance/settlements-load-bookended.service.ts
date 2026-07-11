@@ -1,5 +1,6 @@
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
+import { recordPostingFlagSkip } from "../accounting/posting-flag-skip-audit.js";
 import { applyApprovedAbandonmentChargebacksToSettlement } from "./abandonment.service.js";
 import { applyPendingDeductionsToSettlementWithNetFloor } from "./settlement-deduction-cap.service.js";
 import { computeSettlementContractTerms, SETTLEMENT_CONTRACT_TERMS_FLAG } from "./settlement-contract-terms.service.js";
@@ -330,6 +331,15 @@ async function closeLoadBookendedSettlementForDriver(
       operatingCompanyId: opts.operatingCompanyId,
       actorUserId: opts.actorUserId,
     });
+  } else {
+    // Flag OFF: contract-terms money is not applied. Record the skip append-only so the settlement
+    // close is never a silent no-op on this leg (verify-no-silent-noop-posting).
+    await recordPostingFlagSkip(client, opts.actorUserId, {
+      flagKey: SETTLEMENT_CONTRACT_TERMS_FLAG,
+      postingDomain: "driver_finance.settlement_contract_terms",
+      operatingCompanyId: opts.operatingCompanyId,
+      context: { settlement_id: settlementId, driver_id: opts.driverId, last_load_id: opts.load.id },
+    });
   }
 
   // ── Deduction applier (OFF-flag-gated) ─────────────────────────────────────────────────────────
@@ -371,6 +381,15 @@ async function closeLoadBookendedSettlementForDriver(
       "info",
       "REPAIR-A-DEDUCTION-APPLY"
     );
+  } else {
+    // Flag OFF: pending deductions are NOT applied (net pay unchanged). Record the skip append-only
+    // so this never silently overpays a driver undetected (verify-no-silent-noop-posting; REPAIR-A).
+    await recordPostingFlagSkip(client, opts.actorUserId, {
+      flagKey: SETTLEMENT_DEDUCTION_APPLY_FLAG,
+      postingDomain: "driver_finance.settlement_deductions",
+      operatingCompanyId: opts.operatingCompanyId,
+      context: { settlement_id: settlementId, driver_id: opts.driverId, last_load_id: opts.load.id },
+    });
   }
 
   const totals = await aggregateSettlementTotals(client, settlementId);

@@ -27,6 +27,12 @@ jobs:
       - name: verify:nav-integrity
         run: npm run verify:nav-integrity
 
+      - name: verify:no-silent-noop-posting --selftest
+        run: node scripts/verify-no-silent-noop-posting.mjs --selftest
+
+      - name: verify:no-silent-noop-posting
+        run: npm run verify:no-silent-noop-posting
+
       - name: verify:ob1-nav-header-unify
         run: npm run verify:ob1-nav-header-unify
 

@@ -1,6 +1,7 @@
 import { nextCreditMemoDisplayId } from "../display-id.js";
 import { postSourceTransaction } from "../posting-engine.service.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
+import { recordPostingFlagSkip, POSTING_FLAG_SKIP_RESULT } from "../posting-flag-skip-audit.js";
 
 // CHAIN-06 — per-entity GL-posting kill switch for the customer-payment (A/R receipt) JE. The payment and
 // its applications (AR reduced at the payment_applications level) are always written; posting the balanced
@@ -331,6 +332,15 @@ export async function applyPayment(client: Queryable, input: ApplyPaymentInput, 
       },
       { userId: actor.user_id }
     );
+  } else {
+    // Flag OFF: the payment + applications above still stand, but the GL receipt JE is skipped.
+    // Record the skip append-only so this is never a silent success (verify-no-silent-noop-posting).
+    await recordPostingFlagSkip(client, actor.user_id, {
+      flagKey: CUSTOMER_PAYMENT_GL_POSTING_FLAG_KEY,
+      postingDomain: "customer_payment",
+      operatingCompanyId: input.operating_company_id,
+      context: { payment_id: input.payment_id },
+    });
   }
 
   const refreshedPaymentRes = await client.query<{ amount_unapplied_cents: number }>(
@@ -355,5 +365,8 @@ export async function applyPayment(client: Queryable, input: ApplyPaymentInput, 
     application_ids: applicationIds,
     amount_unapplied_cents: unappliedAfter,
     overpayment_credit_memo_display_id: overpaymentCreditMemoDisplayId,
+    // Honest posting signal: "posted" when the GL receipt JE was written, the discriminated
+    // skip value when the CUSTOMER_PAYMENT_GL_POSTING flag was OFF. Never a silent success.
+    gl_posting: customerPaymentPostingEnabled ? ("posted" as const) : POSTING_FLAG_SKIP_RESULT,
   };
 }
