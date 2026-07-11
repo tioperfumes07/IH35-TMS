@@ -183,12 +183,16 @@ Bugs recur because services were written against **schema names that don't exist
   `USMCA` (future carrier, launches July 2026, hidden until then). `mdata.*`/`catalogs.*` RLS is
   role-scoped, not entity-scoped today — cross-entity leaks are masked now and break at USMCA launch;
   entity-scope remediation must land before USMCA.
-- **Accounting architecture is PARALLEL double-books** (not a sync): TMS + QBO run independently; QBO is the
-  system-of-record through 12/31/2025; CLONE-ONCE + RECONCILE-ONLY; **NO write-back**. JE/entity push behind
-  default-OFF kill-switches. Reconciliation = a twice-daily correctness test that flags every transaction
-  whose categorization differs.
+- **Accounting architecture is PARALLEL double-books** (not a sync): TMS + QBO run **in parallel indefinitely —
+  no fixed cutover date**. **QuickBooks is the source of truth**; CLONE-ONCE + RECONCILE-ONLY; **NO write-back**.
+  JE/entity push behind default-OFF kill-switches. The **twice-daily RECONCILIATION is the trust mechanism** —
+  a correctness test that flags every transaction whose categorization differs.
 - **Factoring** is treated as secured-borrowing/recourse. Drivers are Mexican B1 (W-8BEN, yearly renewal).
-  Money-posting env flags stay **OFF** until CPA sign-off + Neon tie-out.
+- **Enabling money-posting / flipping any GL flag / declaring the system trustworthy is the OWNER's SOLE
+  decision — NO external, CPA, or accountant sign-off, ever.** GUARD supplies technical-correctness proof
+  (Neon tie-out, 0-orphan, balanced-JE) to **inform** the decision; it **never gates** it. Env flags default
+  **OFF** and are flipped only by the owner. See project doc
+  `docs/OWNER-RULING-flag-flips-sole-owner-decision-2026-07-11.md`.
 
 ---
 
