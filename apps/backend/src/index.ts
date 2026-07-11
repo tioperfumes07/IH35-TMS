@@ -390,6 +390,8 @@ import { registerQboAccountsPushStatusRoutes } from "./sync/qbo-accounts-status.
 import { initializeQboAccountsPushScheduler, stopQboAccountsPushScheduler } from "./sync/qbo-accounts-push.js";
 import { registerLovesSyncStatusRoutes } from "./sync/loves-status.routes.js";
 import { initializeLovesCardImportCron } from "./cron/loves-card-import.cron.js";
+import { initializeReconCron } from "./cron/recon.cron.js";
+import { initializeAuditChainVerifyCron } from "./cron/audit-chain-verify.cron.js";
 import { initializePlaidDailySyncCron } from "./cron/plaid-daily-sync.js";
 import { initializePlaidDailyRefreshCron } from "./integrations/plaid/daily-refresh.cron.js";
 import { initializeDriverSettlementAutoPayCron } from "./driver-finance/auto-pay.cron.js";
@@ -1183,6 +1185,20 @@ async function main() {
     app.log.info("[STARTUP] loves-card-import-cron initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] loves-card-import-cron failed");
+  }
+
+  try {
+    initializeReconCron(app);
+    app.log.info("[STARTUP] recon-cron initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] recon-cron failed");
+  }
+
+  try {
+    initializeAuditChainVerifyCron(app);
+    app.log.info("[STARTUP] audit-chain-verify-cron initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] audit-chain-verify-cron failed");
   }
 
   try {
