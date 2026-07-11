@@ -7,6 +7,7 @@ import { FineCreateModal } from "./components/FineCreateModal";
 import { FineDetailDrawer } from "./components/FineDetailDrawer";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { ListErrorState } from "../../components/ListErrorState";
 
 type FineRow = Record<string, unknown>;
 
@@ -107,6 +108,14 @@ export function FinesPage({ operatingCompanyId }: Props) {
         </button>
       </div>
 
+      {finesQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load fines"
+          status={0}
+          message={(finesQuery.error as Error)?.message}
+          onRetry={() => void finesQuery.refetch()}
+        />
+      ) : (
       <ParityTable<FineRow>
         columns={columns}
         rows={rows}
@@ -151,6 +160,7 @@ export function FinesPage({ operatingCompanyId }: Props) {
           </div>
         }
       />
+      )}
 
       <FineCreateModal
         open={createOpen}

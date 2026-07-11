@@ -6,6 +6,7 @@ import { createComplaint, getComplaints } from "../../api/safety";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { companyToday } from "../../lib/businessDate";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { ListErrorState } from "../../components/ListErrorState";
 
 type Props = {
   operatingCompanyId: string;
@@ -85,15 +86,24 @@ export function ComplaintsPage({ operatingCompanyId, role }: Props) {
           + Create Complaint
         </button>
       </div>
-      <ParityTable<ComplaintRow>
-        columns={columns}
-        rows={query.data?.complaints ?? []}
-        rowKey={(row) => String(row.id)}
-        loading={query.isLoading}
-        emptyText="No complaints found."
-        storageKey="safety-complaints"
-        exportFilename="complaints"
-      />
+      {query.isError ? (
+        <ListErrorState
+          title="Couldn't load complaints"
+          status={0}
+          message={(query.error as Error)?.message}
+          onRetry={() => void query.refetch()}
+        />
+      ) : (
+        <ParityTable<ComplaintRow>
+          columns={columns}
+          rows={query.data?.complaints ?? []}
+          rowKey={(row) => String(row.id)}
+          loading={query.isLoading}
+          emptyText="No complaints found."
+          storageKey="safety-complaints"
+          exportFilename="complaints"
+        />
+      )}
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { createDotInspection, followUpDotInspectionEvent, getDotInspections, lis
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { companyToday } from "../../lib/businessDate";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { ListErrorState } from "../../components/ListErrorState";
 
 type Props = {
   operatingCompanyId: string;
@@ -75,15 +76,24 @@ export function DotInspectionsPage({ operatingCompanyId }: Props) {
           + Create DOT Inspection
         </button>
       </div>
-      <ParityTable<DotInspectionRow>
-        columns={columns}
-        rows={query.data?.inspections ?? []}
-        rowKey={(row) => String(row.id)}
-        loading={query.isLoading}
-        emptyText="No DOT inspections recorded."
-        storageKey="safety-dot-inspections"
-        exportFilename="dot-inspections"
-      />
+      {query.isError ? (
+        <ListErrorState
+          title="Couldn't load DOT inspections"
+          status={0}
+          message={(query.error as Error)?.message}
+          onRetry={() => void query.refetch()}
+        />
+      ) : (
+        <ParityTable<DotInspectionRow>
+          columns={columns}
+          rows={query.data?.inspections ?? []}
+          rowKey={(row) => String(row.id)}
+          loading={query.isLoading}
+          emptyText="No DOT inspections recorded."
+          storageKey="safety-dot-inspections"
+          exportFilename="dot-inspections"
+        />
+      )}
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <h3 className="mb-2 text-xs font-semibold text-gray-800">Open DOT Station Dwell Events (last captured)</h3>
         {(openEventsQuery.data?.events ?? []).length === 0 ? (

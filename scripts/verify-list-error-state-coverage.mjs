@@ -29,6 +29,15 @@ const REQUIRED_ERROR_STATE = [
   "apps/frontend/src/pages/drivers/ApplicantsPipelinePage.tsx",
   "apps/frontend/src/pages/drivers/MessagesInboxPage.tsx",
   "apps/frontend/src/pages/drivers/DriversListPage.tsx",
+  // TIER-3 batch 3 (safety / maintenance / legal list pages — honest error instead of false-empty "No records" on outage).
+  "apps/frontend/src/pages/safety/ComplaintsPage.tsx",
+  "apps/frontend/src/pages/safety/CompanyViolationsPage.tsx",
+  "apps/frontend/src/pages/safety/DotInspectionsPage.tsx",
+  "apps/frontend/src/pages/safety/FinesPage.tsx",
+  "apps/frontend/src/pages/safety/PermitsPage.tsx",
+  "apps/frontend/src/pages/maintenance/ServiceLocationPage.tsx",
+  "apps/frontend/src/pages/maintenance/FaultRulesPage.tsx",
+  "apps/frontend/src/pages/legal/LegalPoliciesPage.tsx",
 ];
 
 function stripComments(src) {

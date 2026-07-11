@@ -3,6 +3,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCompanyViolations } from "../../api/safety";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { ListErrorState } from "../../components/ListErrorState";
 import { CompanyViolationCreateModal } from "./components/CompanyViolationCreateModal";
 import { CompanyViolationDetailDrawer } from "./components/CompanyViolationDetailDrawer";
 
@@ -54,16 +55,25 @@ export function CompanyViolationsPage({ operatingCompanyId }: Props) {
           + Create Company Violation
         </button>
       </div>
-      <ParityTable<CompanyViolationRow>
-        columns={columns}
-        rows={query.data?.company_violations ?? []}
-        rowKey={(row) => String(row.id)}
-        loading={query.isLoading}
-        emptyText="No company violations found."
-        storageKey="safety-company-violations"
-        exportFilename="company-violations"
-        tableTestId="company-violations-table"
-      />
+      {query.isError ? (
+        <ListErrorState
+          title="Couldn't load company violations"
+          status={0}
+          message={(query.error as Error)?.message}
+          onRetry={() => void query.refetch()}
+        />
+      ) : (
+        <ParityTable<CompanyViolationRow>
+          columns={columns}
+          rows={query.data?.company_violations ?? []}
+          rowKey={(row) => String(row.id)}
+          loading={query.isLoading}
+          emptyText="No company violations found."
+          storageKey="safety-company-violations"
+          exportFilename="company-violations"
+          tableTestId="company-violations-table"
+        />
+      )}
 
       <CompanyViolationCreateModal
         open={createOpen}
