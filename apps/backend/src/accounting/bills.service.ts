@@ -4,6 +4,7 @@ import { reassignDraftAttachments } from "../documents/attachments.service.js";
 import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
 import { enqueueTmsBillPushRequested } from "../qbo/tms-bill-push-chain.service.js";
+import { postBillGlIfEnabled } from "./bill-gl.service.js";
 import {
   auditVoid,
   canVoid,
@@ -705,7 +706,31 @@ export async function createBill(input: CreateBillInput, userId: string) {
     });
   });
 
-  return bill;
+  // P1-BILL-GL: auto-post the bill's balanced DR expense / CR ap_control JE via the canonical poster,
+  // gated per-entity by BILL_GL_POSTING_ENABLED. Idempotent (one posting batch per bill). Flag OFF ->
+  // honest unposted status (bill still stands — creating a bill moves no cash). A post failure is
+  // surfaced (not swallowed, not silent) and does not roll back the committed bill; it is retriable.
+  const glPosting = await postBillGlIfEnabled(input.operatingCompanyId, bill.id, { userId });
+  if (!glPosting.posted && glPosting.reason === "post_failed") {
+    await withCurrentUser(userId, (client) =>
+      appendCrudAudit(
+        client,
+        userId,
+        "accounting.bill.gl_post_failed",
+        {
+          resource_type: "accounting.bills",
+          resource_id: bill.id,
+          operating_company_id: input.operatingCompanyId,
+          code: glPosting.code,
+          message: glPosting.message,
+        },
+        "warning",
+        "P1-BILL-GL"
+      )
+    );
+  }
+
+  return { ...bill, gl_posting: glPosting };
 }
 
 export async function payBill(input: PayBillInput, userId: string) {

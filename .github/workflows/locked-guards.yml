@@ -395,6 +395,12 @@ jobs:
       - name: verify:money-input-format
         run: npm run verify:money-input-format
 
+      - name: verify:bill-create-posts-gl --selftest
+        run: node scripts/verify-bill-create-posts-gl.mjs --selftest
+
+      - name: verify:bill-create-posts-gl
+        run: npm run verify:bill-create-posts-gl
+
       - name: verify:pwa-date-format
         run: npm run verify:pwa-date-format
 

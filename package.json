@@ -414,6 +414,7 @@
     "verify:maint-jump-to-tab-removed": "node scripts/verify-maint-jump-to-tab-removed.mjs",
     "verify:money-input-format": "node scripts/verify-money-input-format.mjs",
     "verify:guard-wired": "node scripts/verify-guard-wired.mjs",
+    "verify:bill-create-posts-gl": "node scripts/verify-bill-create-posts-gl.mjs",
     "verify:nav-integrity": "node scripts/verify-nav-integrity.mjs",
     "verify:no-silent-noop-posting": "node scripts/verify-no-silent-noop-posting.mjs",
     "verify:block-ready-c5-no-duplicate-arch-design": "node scripts/verify-block-ready-c5-no-duplicate-arch-design.mjs",
