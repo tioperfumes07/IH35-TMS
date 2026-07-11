@@ -244,15 +244,15 @@ function TrackerBody({ data, moved }: { data: ProgramTracker; moved: Set<string>
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-600">
         <span className="inline-flex items-center gap-1 rounded-sm border border-gray-300 bg-white px-2 py-1">
-          <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#334155]" /> Live · updated {relTime(data.generated_at)}
+          <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#334155]" /> Registered count live · loaded {relTime(data.generated_at)}
         </span>
-        <span className="rounded-sm border border-gray-300 bg-white px-2 py-1">As of <span className="font-semibold">{ctDateTime(data.generated_at)}</span></span>
+        <span className="rounded-sm border border-gray-300 bg-white px-2 py-1">Status as of last sync <span className="font-semibold">{ctDateTime(data.recon_synced_at)}</span></span>
         <span className="rounded-sm border border-gray-300 bg-white px-2 py-1">Deploy <span className="font-mono">{data.deployed_sha}</span></span>
       </div>
 
       <div className="flex flex-wrap gap-3">
-        <StatCard n={data.authored_total} label="Blocks authored" />
-        <StatCard n={data.registered_total} label="Registered (live-tracked)" />
+        <StatCard n={data.registered_total} label="Registered (live from .block-ready)" />
+        <StatCard n={`${data.authored_registered_total}/${data.authored_total}`} label="Authored registered" />
         <StatCard n={data.view_counts.pending} label="Pending" />
         <StatCard n={data.view_counts.in_progress} label="In progress" />
         <StatCard n={data.view_counts.completed} label="Completed & live" />
@@ -287,10 +287,12 @@ function TrackerBody({ data, moved }: { data: ProgramTracker; moved: Set<string>
         </div>
       ) : null}
       <div className="text-[11px] text-slate-400">
-        Every count is computed live from the deployed <span className="font-mono">.block-ready</span> registry
-        (reconcile:blocks) + the authored phase manifest — recomputed on load, on tab focus, and every 60s; nothing is
-        stored. A newly-registered block appears in its tab on the next refresh. "Completed" = registry DONE <b>and</b>
-        merged + deployed (live-verified) — a bare done marker without live proof stays In Progress, never Completed.
+        The headline <b>Registered</b> count is computed live at request time from the deployed
+        <span className="font-mono"> .block-ready</span> registry, so a newly-registered block bumps it on the next
+        deploy with no script re-run. Per-block <b>status / PR / timestamps</b> and the phase rollup come from the
+        last reconcile sync (Status as of last sync, above) — refreshed automatically on schedule and on merge-to-main,
+        not fabricated per request. "Completed" = registry DONE <b>and</b> merged + deployed (live-verified) — a bare
+        done marker without live proof stays In Progress, never Completed.
       </div>
     </div>
   );

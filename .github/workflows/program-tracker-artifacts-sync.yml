@@ -1,0 +1,83 @@
+name: program-tracker-artifacts-sync
+
+# Scheduled + on-merge REFRESH of the Program Tracker's committed artifacts (NON-FINANCIAL, reporting only):
+#   • docs/trackers/block-reconciliation-data.json  — per-block status / PR / real timestamps (reconcile:blocks)
+#   • docs/trackers/program-phase-manifest.json      — authored MASTER-6 phase map + authored-registered flags
+#
+# WHY this exists (Doc-19-A, 2026-07-11): previously these two artifacts only moved when a human ran
+# `npm run reconcile:blocks` + the manifest generator by hand and committed the output — so the tracker's
+# per-block STATUS froze for days. This job runs both in CI and auto-commits the refreshed JSON.
+#
+# NOTE ON THE HEADLINE "Registered" COUNT: it is NOT produced here. The backend counts ALL .block-ready blocks
+# LIVE at request time (registry.size), so a newly-registered block bumps the headline on the next deploy with no
+# script run. This job only refreshes the DERIVED per-block status/phase rollup ("as of last sync" on the page).
+#
+# DEPLOY COST: every commit to `main` is a prod deploy (§1.1). That is why:
+#   • the schedule is modest (every 6h, NOT the board-sync 20-min cadence), and
+#   • the push trigger fires ONLY on block-SOURCE paths (.block-ready/**, docs/blocks/**), never on the output
+#     artifacts under docs/trackers/** — so the auto-commit can never re-trigger this workflow (no loop), and
+#   • the auto-commit carries `[skip ci]`.
+# The separate program-board-sync.yml stays commit-free (writes to R2); this workflow is the ONLY committer,
+# and it commits ONLY the two tracker JSON artifacts.
+
+on:
+  schedule:
+    - cron: "17 */6 * * *" # every 6 hours
+  push:
+    branches: [main]
+    paths:
+      - ".block-ready/**"
+      - "docs/blocks/**"
+      - "db/migrations/.held-migrations.json"
+  workflow_dispatch: {}
+
+# Only one refresh in flight; a newer run supersedes a queued one.
+concurrency:
+  group: program-tracker-artifacts-sync
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout main (full history for git ls-tree origin/main)
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22.x"
+
+      - name: Install deps
+        run: npm ci --no-audit --no-fund
+
+      - name: Reconcile block status (reads origin/main + merged PRs via gh)
+        env:
+          # reconcile-block-status.mjs runs `gh pr list` for merged-PR signals; degrades gracefully if absent.
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run reconcile:blocks
+
+      - name: Regenerate authored phase manifest (refreshes registered flags from live .block-ready)
+        # No MASTER-6 path in CI → generator preserves the prior authored lists and refreshes only the
+        # `registered` flags from the live .block-ready set (documented fallback in the generator).
+        run: node scripts/gen-program-phase-manifest.mjs
+
+      - name: Auto-commit refreshed tracker artifacts (only if changed)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Stage ONLY the two tracker artifacts — never the dated .md / .xlsx side-outputs, never anything else.
+          git add docs/trackers/block-reconciliation-data.json docs/trackers/program-phase-manifest.json
+          if git diff --cached --quiet; then
+            echo "[program-tracker-artifacts-sync] no changes — tracker artifacts already fresh"
+            exit 0
+          fi
+          git commit -m "chore(tracker): auto-refresh reconcile + phase-manifest artifacts [skip ci]"
+          git push origin HEAD:main
