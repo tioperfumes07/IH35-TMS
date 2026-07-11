@@ -1,0 +1,27 @@
+{
+  "block_id": "P2-BANK-AUTOMATCH-observable",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "PHASE-2-CORE-ACCOUNTING-WIRING",
+  "task": "P2-BANK-AUTOMATCH (observability half): the nightly bank-recon auto-match tick discarded its metric via `void { ...auto_matched }`, so even an enabled run left no observable count (silent no-op). Verify-first confirmed: cron gated OFF by BANK_RECON_AUTO_MATCH_CRON_ENABLED (owner decides enable — NOT flipped here) + the void-discard. Fixed the discard additively: runBankReconAutoMatchTick now accumulates companies/scanned/autoMatched, logs per-company + a tick summary, and returns a BankReconAutoMatchSummary. wrapBackgroundJobTick already writes the _system.background_jobs row; now the metric is surfaced (logged) instead of dropped. NO enable, NO money change, NO schema. Static guard verify-bank-automatch-observable prevents regression to the void-discard.",
+  "branch": "fix/bank-automatch-observable-p2",
+  "lane": "PHASE-2-CORE-ACCOUNTING-WIRING",
+  "allowed_files": [
+    "apps/backend/src/cron/bank-recon-auto-match.cron.ts",
+    "scripts/verify-bank-automatch-observable.mjs",
+    "scripts/verify-steps/101-verify-bank-automatch-observable.mjs",
+    ".block-ready/P2-BANK-AUTOMATCH-observable.json",
+    "package.json",
+    ".github/workflows/locked-guards.yml"
+  ],
+  "acceptance": [
+    { "kind": "guard", "script": "scripts/verify-bank-automatch-observable.mjs", "wired_into": "verify-pre-commit (verify-steps/101) + locked-guards + package.json verify:bank-automatch-observable" },
+    { "kind": "route", "value": "apps/backend/src/cron/bank-recon-auto-match.cron.ts", "note": "runBankReconAutoMatchTick returns + logs a summary (companies/scanned/autoMatched); no void-discard" },
+    { "kind": "live", "assert": "--selftest passes (observable tick passes; void-discard caught); guard PASS; only 1 caller (the schedule) updated to pass app.log; brace/paren balanced" }
+  ],
+  "linkage": "N/A — observability of the bank-recon auto-match cron (background_jobs + logs); no entity/data/FK change. Reads banking.bank_transactions + bank.reconciliation_matches (unchanged).",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "note": "The OWNER DECISION to actually enable the cron (BANK_RECON_AUTO_MATCH_CRON_ENABLED) is Jorge's — this block only makes the run observable (stops the silent metric discard). Enable + a disabled-by-config job row are a follow-up once the owner decides."
+}

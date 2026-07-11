@@ -418,6 +418,7 @@
     "verify:bill-create-posts-gl": "node scripts/verify-bill-create-posts-gl.mjs",
     "verify:detention-invoice-fk": "node scripts/verify-detention-invoice-fk.mjs",
     "verify:bill-lines-load-id": "node scripts/verify-bill-lines-load-id.mjs",
+    "verify:bank-automatch-observable": "node scripts/verify-bank-automatch-observable.mjs",
     "verify:nav-integrity": "node scripts/verify-nav-integrity.mjs",
     "verify:no-silent-noop-posting": "node scripts/verify-no-silent-noop-posting.mjs",
     "verify:block-ready-c5-no-duplicate-arch-design": "node scripts/verify-block-ready-c5-no-duplicate-arch-design.mjs",
