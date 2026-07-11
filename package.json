@@ -417,6 +417,7 @@
     "verify:guard-wired": "node scripts/verify-guard-wired.mjs",
     "verify:bill-create-posts-gl": "node scripts/verify-bill-create-posts-gl.mjs",
     "verify:incidents-auto-claim-fk": "node scripts/verify-incidents-auto-claim-fk.mjs",
+    "verify:work-order-entity-fks": "node scripts/verify-work-order-entity-fks.mjs",
     "verify:detention-invoice-fk": "node scripts/verify-detention-invoice-fk.mjs",
     "verify:bill-lines-load-id": "node scripts/verify-bill-lines-load-id.mjs",
     "verify:bank-automatch-observable": "node scripts/verify-bank-automatch-observable.mjs",

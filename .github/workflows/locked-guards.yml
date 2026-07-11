@@ -413,6 +413,12 @@ jobs:
       - name: verify:incidents-auto-claim-fk
         run: npm run verify:incidents-auto-claim-fk
 
+      - name: verify:work-order-entity-fks --selftest
+        run: node scripts/verify-work-order-entity-fks.mjs --selftest
+
+      - name: verify:work-order-entity-fks
+        run: npm run verify:work-order-entity-fks
+
       - name: verify:detention-invoice-fk --selftest
         run: node scripts/verify-detention-invoice-fk.mjs --selftest
 
