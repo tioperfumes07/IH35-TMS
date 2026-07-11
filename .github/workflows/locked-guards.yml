@@ -425,6 +425,12 @@ jobs:
       - name: verify:bank-automatch-observable
         run: npm run verify:bank-automatch-observable
 
+      - name: verify:bills-mdata-vendor-fk --selftest
+        run: node scripts/verify-bills-mdata-vendor-fk.mjs --selftest
+
+      - name: verify:bills-mdata-vendor-fk
+        run: npm run verify:bills-mdata-vendor-fk
+
       - name: verify:pwa-date-format
         run: npm run verify:pwa-date-format
 

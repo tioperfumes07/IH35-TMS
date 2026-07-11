@@ -1,0 +1,33 @@
+{
+  "block_id": "item18-bills-mdata-vendor-fk",
+  "status": "BUILD",
+  "classification": "FINANCIAL",
+  "phase": "PHASE-3-MASTER-DATA-INTEGRITY",
+  "task": "Item 18 (vendor namespace): accounting.bills references vendors via two soft TEXT keys (vendor_id, vendor_uuid), NEITHER an FK to the canonical AP truth mdata.vendors (GUARD-verified vs live prod) — a 1099/AP integrity risk (typo/cross-entity/QBO-mirror id uncaught). Migration 202607220000 adds the real key accounting.bills.mdata_vendor_id uuid FK -> mdata.vendors(id) (nullable → FK holds while unpopulated) + a partial index. GUARD-prescribed first step. NO backfill / NO NOT-NULL here (GUARD backfills from the text keys + proves coverage; writers repointed to stop populating the QBO-mirror id as the AP vendor — deferred follow-up). Additive, idempotent. Static guard verify-bills-mdata-vendor-fk asserts the FK targets mdata.vendors, NOT mdata.qbo_vendors.",
+  "branch": "feat/bills-mdata-vendor-fk-p3",
+  "lane": "PHASE-3-MASTER-DATA-INTEGRITY",
+  "allowed_files": [
+    "db/migrations/202607220000_bills_mdata_vendor_fk.sql",
+    "db/migrations/.held-migrations.json",
+    "scripts/verify-bills-mdata-vendor-fk.mjs",
+    "scripts/verify-steps/103-verify-bills-mdata-vendor-fk.mjs",
+    ".block-ready/item18-bills-mdata-vendor-fk.json",
+    "package.json",
+    ".github/workflows/locked-guards.yml"
+  ],
+  "acceptance": [
+    { "kind": "column", "table": "accounting.bills", "column": "mdata_vendor_id", "note": "uuid nullable FK -> mdata.vendors(id) — verified on Neon after the migration (GUARD)" },
+    { "kind": "fk", "from": "accounting.bills.mdata_vendor_id", "to": "mdata.vendors.id", "note": "canonical AP truth, NOT mdata.qbo_vendors mirror" },
+    { "kind": "guard", "script": "scripts/verify-bills-mdata-vendor-fk.mjs", "wired_into": "verify-pre-commit (verify-steps/103) + locked-guards + package.json verify:bills-mdata-vendor-fk" },
+    { "kind": "live", "assert": "--selftest PASS (2 checks incl. qbo_vendors-mirror-target caught); guard PASS; hold-migrations-registered + G4 canonical-table-writes PASS. Backfill coverage + writer repoint owed to GUARD/follow-up.", "verified_by": "GUARD Neon branch-proof" },
+    { "kind": "design", "spec": "02-MONEY-WIRING/_GUARD-VERIFIED-LIVE-SCHEMA-2026-07-11.md", "sections": ["ITEM 18 bills vendor key — two soft TEXT keys, no FK"] }
+  ],
+  "linkage": "accounting.bills -> vendor (mdata.vendors, canonical AP truth / hub) via the new mdata_vendor_id FK — the 1099/AP linkage this block establishes. Existing bill FKs (operating_company_id, linked_work_order_uuid, unit_id) unchanged. FORCED RLS unchanged.",
+  "db_required": true,
+  "guard_required": true,
+  "extra_gates": [],
+  "hold": "TIER-1 MIGRATION — build-and-hold. DO NOT RUN ON PROD (registered held). Owner runs on Neon; GUARD proves the column+FK; owner merges.",
+  "deferred": [
+    { "item": "backfill accounting.bills.mdata_vendor_id from vendor_id/vendor_uuid + repoint writers (createBill etc.) to populate it and stop using the QBO-mirror id as the AP vendor; then consider NOT NULL after coverage proof", "reason": "backfill is a data step (owner/GUARD on Neon, prove coverage first) and the writer repoint needs vendor-resolution logic — an explicit coordinated follow-up, not silently dropped." }
+  ]
+}
