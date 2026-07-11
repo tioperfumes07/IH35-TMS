@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import type { VendorOption } from "../../api/mdata";
 import { vendorQualityKind, vendorQualityClass } from "../../lib/quality-badge";
-import { CardLink } from "../../components/shared/CardLink";
+import { ResizableTable } from "../../components/shared/ResizableTable";
 import { SidebarPagination } from "../../components/shared/SidebarPagination";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useListState, type ListQueryStatus } from "../../components/list-state";
@@ -84,7 +84,7 @@ export function VendorListSidebar({
   const listState = useListState(status, pagedVendors.length === 0);
 
   return (
-    <aside className="w-[216px] shrink-0 rounded-sm border border-gray-200 bg-white p-2" data-vendor-list-sidebar="true">
+    <aside className="w-full min-w-[300px] max-w-[560px] shrink-0 rounded-sm border border-gray-200 bg-white p-2" data-vendor-list-sidebar="true">
       <SidebarPagination
         page={safePage}
         pageSize={pageSize}
@@ -107,23 +107,38 @@ export function VendorListSidebar({
         <option value="name_asc">Sort by name</option>
         <option value="name_desc">Sort by name (Z-A)</option>
       </SelectCombobox>
-      <div className="max-h-[760px] space-y-1 overflow-y-auto">
-        {pagedVendors.map((vendor) => (
-          <CardLink
-            key={vendor.id}
-            href={`/vendors/${vendor.id}`}
-            onNavigate={() => onSelectVendor(vendor.id)}
-            className={`block w-full rounded border px-2 py-2 text-left ${
-              selectedVendorId === vendor.id ? "border-slate-300 bg-slate-100" : "border-transparent hover:bg-gray-50"
-            }`}
-          >
-            <p className="truncate text-sm font-medium text-gray-900">{vendor.name}</p>
-            <p className="text-xs text-gray-600">Open balance {fmtMoney(openByVendorId.get(vendor.id) ?? 0)}</p>
-            <p className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${vendorQualityLabel(vendor.notes).className}`}>
-              {vendorQualityLabel(vendor.notes).label}
-            </p>
-          </CardLink>
-        ))}
+      {/* QBO columnar list: resizable, per-user-persisted column widths (shared ResizableTable/ResizableTh). */}
+      <div className="max-h-[760px] overflow-y-auto">
+        <ResizableTable
+          tableId="vendors-master-list"
+          columns={[
+            { id: "name", label: "Name", defaultWidth: 180, align: "left" },
+            { id: "open_balance", label: "Open Balance", defaultWidth: 110, align: "right" },
+            { id: "status", label: "Status", defaultWidth: 100, align: "left" },
+          ]}
+        >
+          {(widths) => (
+            <tbody>
+              {pagedVendors.map((vendor) => {
+                const rating = vendorQualityLabel(vendor.notes);
+                const selected = selectedVendorId === vendor.id;
+                return (
+                  <tr
+                    key={vendor.id}
+                    onClick={() => onSelectVendor(vendor.id)}
+                    className={`cursor-pointer border-b border-gray-100 ${selected ? "bg-slate-100" : "hover:bg-gray-50"}`}
+                  >
+                    <td style={{ width: widths.name }} className="max-w-0 truncate px-2 py-1.5 text-sm font-medium text-gray-900">{vendor.name}</td>
+                    <td style={{ width: widths.open_balance }} className="px-2 py-1.5 text-right text-xs tabular-nums text-gray-700">{fmtMoney(openByVendorId.get(vendor.id) ?? 0)}</td>
+                    <td style={{ width: widths.status }} className="px-2 py-1.5">
+                      <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${rating.className}`}>{rating.label}</span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          )}
+        </ResizableTable>
         {listState.isLoading ? <p className="px-1 py-2 text-xs text-slate-500">Loading vendors…</p> : null}
         {listState.isEmpty ? <p className="px-1 py-2 text-xs text-slate-500">No vendors found.</p> : null}
       </div>
