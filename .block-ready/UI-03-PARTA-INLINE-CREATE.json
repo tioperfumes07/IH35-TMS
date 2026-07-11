@@ -1,0 +1,22 @@
+{
+  "block": "UI-03-PARTA-INLINE-CREATE",
+  "title": "Inline + Create on accounting dropdowns — vocab fix + coverage regression guard",
+  "tier": "TIER-3",
+  "financial": false,
+  "pr_target": "fix/ui-03-parta-inline-create-guard -> main",
+  "summary": "VERIFY-FIRST sweep (2026-07-11): the inline-create machinery already exists (Combobox.allowAddNew + the ReferenceSelect keystone -> existing create endpoints), and coverage is PARTIAL. Vendor + banking split/design category/service + item-category + JE-account already ship it. Fixed one §7 vocab-lock bug (shared/Combobox hardcoded bare 'Add new' -> '+ Add new') and added a regression guard so the shipped coverage 'stays fixed'. The MISSING coverage is owner/backend-gated (see deferred).",
+  "acceptance": [
+    { "id": "vocab-fix", "check": "no bare 'Add new' / '+ New' / '+ Add' inline label", "proof": "components/shared/Combobox.tsx label 'Add new' -> '+ Add new'; verify:reference-dropdown-inline-create scans all *.tsx for bad labels -> PASS" },
+    { "id": "coverage-regression-guard", "check": "8 live parity surfaces keep inline + Create", "proof": "verify:reference-dropdown-inline-create PASS (BankTransactionSplitModal, BankingTransactionsDesignView, VendorBillForm, RecurringBillCreate, CreateMultipleBillsPage, ItemEditorModal, CustomerProfileForm, accounting/ManualJEModal); --selftest PASS (flags bad vocab + a dropped control; accepts + Add new + ReferenceSelect)" },
+    { "id": "guard-wired", "check": "guard in verify-pre-commit + locked-guards", "proof": "verify-steps/111; package.json (END); locked-guards step (END); verify:guard-wired PASS" }
+  ],
+  "deferred": [
+    "Account/COA picker inline +Create (BankTxCategorizationPage [unmounted @archived], banking ManualJEModal, CCPaymentModal, PayBillModal, CreateExpenseModal) — OWNER-GATED: account create is ACCOUNT_CREATE_GATED (NewAccountDrawerForm blocks with an 'awaiting approval' toast). Needs owner ungate before wiring.",
+    "Vendor/Customer TYPE inline +Create (VendorCreateModal, NewVendorDrawerForm, NewCustomerDrawerForm) — backend-blocked: no type-create endpoint (gated migration).",
+    "Class inline +Create — backend-blocked: no class-create endpoint (InlineCreateDrawer/NewClassDrawerForm note the gap).",
+    "Vendor/Customer inline +Create on the live maintenance CreateBillModal/CreateExpenseModal + RecordPaymentModal Customer — safe (established pattern) but the +Create additions need per-screen BROWSER verification (§9) before shipping; recommended next once owner can eyeball.",
+    "shared/SelectCombobox exposes no allowAddNew — a future enhancement to make the <select> drop-in inline-create-capable."
+  ],
+  "lane_lock": "apps/frontend/src/components/shared/Combobox.tsx (vocab, 1 line) + scripts/** + ci. No backend, no db/migrations, no posting/GL. No account/type/class create (gated/blocked).",
+  "ship": "green CI (non-financial TIER-3)"
+}

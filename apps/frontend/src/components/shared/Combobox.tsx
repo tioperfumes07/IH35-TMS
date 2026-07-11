@@ -50,7 +50,7 @@ export function Combobox({
       allowAddNew={
         allowAddNew && onAddNew
           ? {
-              label: "Add new",
+              label: "+ Add new",
               onAdd: onAddNew,
             }
           : undefined
