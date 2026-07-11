@@ -49,6 +49,7 @@ export type ProgramTracker = {
   phases: TrackerPhase[];
   views: { pending: TrackerBlockRow[]; in_progress: TrackerBlockRow[]; completed: TrackerBlockRow[]; not_counted: TrackerBlockRow[] };
   view_counts: { pending: number; in_progress: number; completed: number; not_counted: number };
+  modules: { module: string; built: number; partial: number; not_built: number; total: number }[];
 };
 
 export function getProgramTracker() {

@@ -154,13 +154,62 @@ function SequenceTable({ phases }: { phases: TrackerPhase[] }) {
   );
 }
 
+function ByModuleView({ data, moved }: { data: ProgramTracker; moved: Set<string> }) {
+  const [open, setOpen] = useState<string | null>(null);
+  const allRows = [...data.views.completed, ...data.views.in_progress, ...data.views.pending];
+  const totals = data.modules.reduce((a, m) => ({ built: a.built + m.built, partial: a.partial + m.partial, not_built: a.not_built + m.not_built }), { built: 0, partial: 0, not_built: 0 });
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap gap-3">
+        <StatCard n={totals.built} label="Built (live-verified)" />
+        <StatCard n={totals.partial} label="Partial / in progress" />
+        <StatCard n={totals.not_built} label="Not built" />
+        <StatCard n={data.modules.length} label="Modules" />
+      </div>
+      <p className="text-[11px] text-slate-400">Upper bounds — residual cross-audit duplication; the relative module heat-map is the trustworthy signal. Counts computed live from the registry.</p>
+      <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
+        <table className="w-full border-collapse text-[13px]">
+          <thead>
+            <tr className="border-b border-gray-200 text-[11px] uppercase tracking-wide text-slate-500">
+              <th className="px-3 py-2 text-left">Module</th>
+              <th className="px-3 py-2 text-right">Built</th>
+              <th className="px-3 py-2 text-right">Partial</th>
+              <th className="px-3 py-2 text-right">Not built</th>
+              <th className="px-3 py-2 text-right">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.modules.map((m) => [
+              <tr key={m.module} className="cursor-pointer border-b border-gray-100 hover:bg-gray-50" onClick={() => setOpen(open === m.module ? null : m.module)}>
+                <td className="px-3 py-2 text-slate-800">{open === m.module ? "▾ " : "▸ "}{m.module}</td>
+                <td className="px-3 py-2 text-right tabular-nums text-slate-700">{m.built}</td>
+                <td className="px-3 py-2 text-right tabular-nums text-slate-500">{m.partial}</td>
+                <td className={`px-3 py-2 text-right tabular-nums ${m.not_built > 0 ? "font-semibold text-[#dc2626]" : "text-slate-400"}`}>{m.not_built}</td>
+                <td className="px-3 py-2 text-right tabular-nums text-slate-700">{m.total}</td>
+              </tr>,
+              open === m.module ? (
+                <tr key={m.module + "-drill"}>
+                  <td colSpan={5} className="bg-gray-50 px-3 py-2">
+                    <BlockTable rows={allRows.filter((r) => (r.module ?? "uncategorized") === m.module)} kind="open" moved={moved} />
+                  </td>
+                </tr>
+              ) : null,
+            ])}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 function TrackerBody({ data, moved }: { data: ProgramTracker; moved: Set<string> }) {
-  const [tab, setTab] = useState<Tab | "sequence">("pending");
-  const tabs: { key: Tab | "sequence"; label: string; count?: number }[] = [
+  const [tab, setTab] = useState<Tab | "sequence" | "modules">("pending");
+  const tabs: { key: Tab | "sequence" | "modules"; label: string; count?: number }[] = [
     { key: "pending", label: "Pending", count: data.view_counts.pending },
     { key: "in_progress", label: "In Progress", count: data.view_counts.in_progress },
     { key: "completed", label: "Completed", count: data.view_counts.completed },
     { key: "sequence", label: "Sequence" },
+    { key: "modules", label: "By Module" },
   ];
   return (
     <div className="space-y-4">
@@ -191,6 +240,8 @@ function TrackerBody({ data, moved }: { data: ProgramTracker; moved: Set<string>
 
       {tab === "sequence" ? (
         <SequenceTable phases={data.phases} />
+      ) : tab === "modules" ? (
+        <ByModuleView data={data} moved={moved} />
       ) : tab === "completed" ? (
         <CompletedSection rows={data.views.completed} moved={moved} />
       ) : (

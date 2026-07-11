@@ -126,6 +126,7 @@ export type ProgramTracker = {
   phases: TrackerPhase[];
   views: { pending: TrackerBlockRow[]; in_progress: TrackerBlockRow[]; completed: TrackerBlockRow[]; not_counted: TrackerBlockRow[] };
   view_counts: { pending: number; in_progress: number; completed: number; not_counted: number };
+  modules: { module: string; built: number; partial: number; not_built: number; total: number }[];
 };
 
 function countHeld(): number {
@@ -244,5 +245,21 @@ export function computeProgramTracker(now: Date): ProgramTracker {
     phases,
     views,
     view_counts: { pending: views.pending.length, in_progress: views.in_progress.length, completed: views.completed.length, not_counted: views.not_counted.length },
+    modules: (() => {
+      // Live per-module heat-map: Built = completed (live-verified), Partial = in_progress, Not Built = pending.
+      const m = new Map<string, { built: number; partial: number; not_built: number }>();
+      for (const r of rows) {
+        if (r.tab === "not_counted") continue;
+        const key = r.module ?? "uncategorized";
+        const e = m.get(key) ?? { built: 0, partial: 0, not_built: 0 };
+        if (r.tab === "completed") e.built++;
+        else if (r.tab === "in_progress") e.partial++;
+        else e.not_built++;
+        m.set(key, e);
+      }
+      return [...m.entries()]
+        .map(([module, c]) => ({ module, ...c, total: c.built + c.partial + c.not_built }))
+        .sort((a, b) => b.total - a.total);
+    })(),
   };
 }
