@@ -1,0 +1,36 @@
+{
+  "block_id": "P4-CROSSMODULE-FKS-batch",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "PHASE-4-CROSS-MODULE",
+  "task": "Phase-4 cross-module linkage BATCH (P4-01 + P4-02 + P4-03 migration parts) — Total Connectivity §10a. GUARD-verified vs live prod (2026-07-11) as all additive/idempotent, canonical-targeted, 0 orphans, SAFE. Migration 202607250000 adds: P4-01 safety.accident_reports.insurance_claim_id -> insurance.claim (accidents never reached insurance); P4-02 legal.matters.{insurance_claim_id->insurance.claim, insurance_lawsuit_id->insurance.lawsuit, incident_id->safety.incidents, unit_id->mdata.units} (legal.matters was an orphan); P4-03 mdata.assets.unit_id -> mdata.units (asset<->unit identity bridge). New columns are all-NULL on add so the inline FK holds trivially (no NOT VALID). Verify-first: accident_reports/legal.matters/assets exist, these columns/FKs were missing; target tables all canonical. Batched into ONE PR (per GUARD process note) with the guard appended at the END of package.json + locked-guards to stop the guard-anchor conflict churn. Static guard verify-phase4-crossmodule-fks. Backfill + resolver + Create-Claim/Policy 500/404 fix (P4-03 code) DEFERRED.",
+  "branch": "feat/phase4-crossmodule-fks-batch",
+  "lane": "PHASE-4-CROSS-MODULE",
+  "allowed_files": [
+    "db/migrations/202607250000_phase4_crossmodule_fks.sql",
+    "db/migrations/.held-migrations.json",
+    "docs/schema-parity-baseline.json",
+    "scripts/verify-phase4-crossmodule-fks.mjs",
+    "scripts/verify-steps/106-verify-phase4-crossmodule-fks.mjs",
+    ".block-ready/P4-CROSSMODULE-FKS-batch.json",
+    "package.json",
+    ".github/workflows/locked-guards.yml"
+  ],
+  "acceptance": [
+    { "kind": "fk", "from": "safety.accident_reports.insurance_claim_id", "to": "insurance.claim.id", "note": "new col; FK holds (all NULL)" },
+    { "kind": "fk", "from": "legal.matters.insurance_claim_id/insurance_lawsuit_id/incident_id/unit_id", "to": "insurance.claim / insurance.lawsuit / safety.incidents / mdata.units", "note": "legal.matters de-orphaned" },
+    { "kind": "fk", "from": "mdata.assets.unit_id", "to": "mdata.units.id", "note": "asset<->unit bridge (column+FK; backfill+resolver deferred)" },
+    { "kind": "guard", "script": "scripts/verify-phase4-crossmodule-fks.mjs", "wired_into": "verify-pre-commit (verify-steps/106) + locked-guards + package.json (appended at END, not the shared anchor)" },
+    { "kind": "live", "assert": "--selftest PASS; guard PASS (5 canonical FKs); schema-parity baseline updated (+columns); hold-migrations-registered + G4 PASS. Neon column/FK proof owed to GUARD (already GUARD-cleared as 0-orphan safe).", "verified_by": "GUARD Neon branch-proof (pre-cleared)" },
+    { "kind": "design", "spec": "04-PHASE4 P4-01/02/03 dispatches + GUARD-PROOF-2026-07-11", "sections": ["safety->insurance, legal de-orphan, asset<->unit bridge"] }
+  ],
+  "linkage": "safety.accident_reports->insurance.claim; legal.matters->insurance.claim+lawsuit+safety.incidents+mdata.units; mdata.assets->mdata.units — the cross-module hub linkages this batch enforces (Total Connectivity §10a). FORCED RLS unchanged.",
+  "db_required": true,
+  "guard_required": true,
+  "extra_gates": [],
+  "hold": "TIER-1 MIGRATION — build-and-hold. DO NOT RUN ON PROD (registered held). GUARD pre-cleared 0-orphan safe; owner runs on Neon + merges.",
+  "deferred": [
+    { "item": "P4-03 backfill mdata.assets.unit_id (by vin/unit_number) + unit->asset resolver + fix Create-Claim/Policy 500/404", "reason": "data backfill + code/route logic — a coordinated follow-up beyond the additive bridge column+FK." },
+    { "item": "P4-01 accidents/violations tables + P4-02 populate-on-escalation code", "reason": "safety.accidents/violations tables do not exist as named (only accident_reports); populating the legal links on lawsuit->matter escalation is code — follow-up." }
+  ]
+}
