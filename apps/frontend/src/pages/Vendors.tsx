@@ -75,7 +75,7 @@ export function VendorsPage() {
     queryKey: ["vendors", "page", companyId],
     // VEND-1: load the FULL vendor roster (the client-side table paginates/searches over it); without an
     // explicit limit the endpoint returns only the default 50.
-    queryFn: () => listVendors({ operating_company_id: companyId, limit: 5000 }).then((result) => result.vendors),
+    queryFn: () => listVendors({ operating_company_id: companyId, limit: 5000, active_company_only: true }).then((result) => result.vendors),
     enabled: Boolean(companyId),
   });
   const balancesQuery = useQuery({
