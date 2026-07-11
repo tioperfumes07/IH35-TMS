@@ -73,7 +73,9 @@ function LayerChips({ r }: { r: TrackerBlockRow }) {
   );
 }
 
-function BlockTable({ rows, kind, moved }: { rows: TrackerBlockRow[]; kind: "open" | "completed"; moved: Set<string> }) {
+// `extended` (By-Module drill-down only) adds 4 LIVE-from-registry columns: Wired / Needs design / Missing /
+// Completeness. Top-level Pending/In-Progress/Completed tables stay compact (extended omitted → false).
+function BlockTable({ rows, kind, moved, extended = false }: { rows: TrackerBlockRow[]; kind: "open" | "completed"; moved: Set<string>; extended?: boolean }) {
   if (rows.length === 0) return <p className="px-3 py-4 text-sm text-slate-500">None.</p>;
   return (
     <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
@@ -83,6 +85,10 @@ function BlockTable({ rows, kind, moved }: { rows: TrackerBlockRow[]; kind: "ope
             <th className="px-3 py-2 text-left">Block</th>
             <th className="px-3 py-2 text-left">Kind</th>
             <th className="px-3 py-2 text-left">Layers</th>
+            {extended ? <th className="px-3 py-2 text-center">Wired</th> : null}
+            {extended ? <th className="px-3 py-2 text-left">Needs design</th> : null}
+            {extended ? <th className="px-3 py-2 text-left">Missing</th> : null}
+            {extended ? <th className="px-3 py-2 text-left">Completeness</th> : null}
             <th className="px-3 py-2 text-left">Status</th>
             <th className="px-3 py-2 text-left">PR</th>
             <th className="px-3 py-2 text-right">{kind === "completed" ? "Completed (deployed)" : "Last change"}</th>
@@ -99,6 +105,29 @@ function BlockTable({ rows, kind, moved }: { rows: TrackerBlockRow[]; kind: "ope
               </td>
               <td className="px-3 py-2 text-slate-500">{r.kind}</td>
               <td className="px-3 py-2"><LayerChips r={r} /></td>
+              {extended ? (
+                <td className="px-3 py-2 text-center">
+                  {r.wired
+                    ? <span className="font-semibold text-slate-600" title="Linkage declared: financial primitive + operational module + hub table">✓</span>
+                    : <span className="font-semibold text-[#dc2626]" title={`Undeclared linkage: ${r.missing.filter((m) => m.startsWith("link:")).join(", ") || "—"}`}>✗</span>}
+                </td>
+              ) : null}
+              {extended ? (
+                <td className="px-3 py-2 text-slate-500">
+                  {r.needs_design ? <span className="rounded-sm bg-slate-100 px-1 text-[11px] text-slate-700">Needs design</span> : "—"}
+                </td>
+              ) : null}
+              {extended ? (
+                <td className="px-3 py-2 text-[11px] text-slate-500">{r.missing.length ? r.missing.join(", ") : "—"}</td>
+              ) : null}
+              {extended ? (
+                <td className="px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <ProgressBar done={r.completeness} total={100} />
+                    <span className="tabular-nums text-[11px] text-slate-600">{r.completeness}%</span>
+                  </div>
+                </td>
+              ) : null}
               <td className="px-3 py-2 text-slate-600">{r.status}{kind === "completed" ? " · live" : ""}</td>
               <td className="px-3 py-2 font-mono text-slate-500">{r.pr ? `#${r.pr}` : "—"}</td>
               <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums text-slate-500">{kind === "completed" ? doneStamp(r) : changedStamp(r)}</td>
@@ -190,7 +219,7 @@ function ByModuleView({ data, moved }: { data: ProgramTracker; moved: Set<string
               open === m.module ? (
                 <tr key={m.module + "-drill"}>
                   <td colSpan={5} className="bg-gray-50 px-3 py-2">
-                    <BlockTable rows={allRows.filter((r) => (r.module ?? "uncategorized") === m.module)} kind="open" moved={moved} />
+                    <BlockTable rows={allRows.filter((r) => (r.module ?? "uncategorized") === m.module)} kind="open" moved={moved} extended />
                   </td>
                 </tr>
               ) : null,

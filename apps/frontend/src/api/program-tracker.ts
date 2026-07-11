@@ -22,6 +22,11 @@ export type TrackerBlockRow = {
   kind: "migration" | "ui" | "guard" | "feature" | "other";
   feature_incomplete: boolean;
   cross_module: string[];
+  // FIX-11: LIVE completeness signals computed server-side from the same registry data as layers{}/cross_module.
+  wired: boolean;
+  needs_design: boolean;
+  missing: string[];
+  completeness: number;
 };
 
 export type TrackerPhase = {
