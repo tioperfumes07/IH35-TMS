@@ -475,3 +475,8 @@ jobs:
         run: node scripts/verify-no-nested-box.mjs --selftest
       - name: verify:no-nested-box
         run: npm run verify:no-nested-box
+
+      - name: verify:create-forms-wired --selftest
+        run: node scripts/verify-create-forms-wired.mjs --selftest
+      - name: verify:create-forms-wired
+        run: npm run verify:create-forms-wired
