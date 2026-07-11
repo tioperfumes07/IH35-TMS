@@ -57,6 +57,7 @@ export const SIDEBAR_ITEM_IDS = [
   "docs",
   "users",
   "help",
+  "program",
 ] as const;
 
 export type SidebarItemId = (typeof SIDEBAR_ITEM_IDS)[number];
@@ -134,6 +135,8 @@ export const SIDEBAR_ITEM_META: Record<SidebarItemId, SidebarItemMeta> = {
     dataTour: "tour-nav-admin",
   },
   help: { id: "help", label: "HELP", Icon: CircleHelp, to: "/help" },
+  // Program Tracker (Build Progress) — Owner/Admin internal build-status dashboard; owner-requested sidebar entry.
+  program: { id: "program", label: "PROGRAM", Icon: ListChecks, to: "/program", visibleRoles: ["Owner", "Administrator", "SuperAdmin"] },
 };
 
 /**
