@@ -1,0 +1,26 @@
+{
+  "block_id": "G3-verify-guard-wired",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "PHASE-0-ENFORCEMENT",
+  "task": "G3 (LINKAGE-LAW Clause 7): add scripts/verify-guard-wired.mjs so a guard cannot exist unwired (an unwired verify-*.mjs never runs = a silent fake-green, e.g. verify:factoring-treatment ran in no chain until #2309). Enumerates every scripts/verify-*.mjs; asserts each is WIRED (verify-pre-commit / a verify-steps step / a workflow / package.json) OR listed in scripts/.guard-exempt.json with a reason. The 173 pre-existing unwired guards are baselined in .guard-exempt.json (grandfathered, each to be wired or justified individually); any NEW unwired guard fails CI. Wired into verify:pre-commit (verify-steps/94) + locked-guards, with a --selftest negative control (orphan fails, wired/exempt passes).",
+  "branch": "feat/guard-guard-wired",
+  "lane": "ENFORCEMENT",
+  "allowed_files": [
+    "scripts/verify-guard-wired.mjs",
+    "scripts/verify-steps/94-verify-guard-wired.mjs",
+    "scripts/.guard-exempt.json",
+    ".block-ready/G3-verify-guard-wired.json",
+    "package.json",
+    ".github/workflows/locked-guards.yml"
+  ],
+  "acceptance": [
+    { "kind": "guard", "script": "scripts/verify-guard-wired.mjs", "wired_into": "verify-pre-commit (verify-steps/94) + .github/workflows/locked-guards.yml + package.json verify:guard-wired" },
+    { "kind": "live", "assert": "node scripts/verify-guard-wired.mjs --selftest passes (orphan flagged, wired+exempt not flagged); node scripts/verify-guard-wired.mjs passes (0 unaccounted — every guard wired or baseline-exempt)" },
+    { "kind": "design", "spec": "docs/trackers/IH35-TMS-MASTER-LINKAGE-WIRING-REFERENCE-2026-07-10.md", "sections": ["Clause 7"] }
+  ],
+  "linkage": "N/A — enforcement infra; no entity record, no operating_company_id, no cross-module FK",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
