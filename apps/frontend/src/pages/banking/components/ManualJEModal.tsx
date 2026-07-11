@@ -4,6 +4,7 @@ import { createJournalEntry, listClassesForJe, listCoaAccountsForJe } from "../.
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
+import { DatePicker } from "../../../components/forms/DatePicker";
 import { useToast } from "../../../components/Toast";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
@@ -236,7 +237,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
             </div>
             <label className="block">
               Journal date
-              <input type="date" className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2" value={date} onChange={(e) => setDate(e.target.value)} />
+              <DatePicker className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2" value={date} onChange={setDate} />
             </label>
             <label className="block">
               Reference number (optional)
