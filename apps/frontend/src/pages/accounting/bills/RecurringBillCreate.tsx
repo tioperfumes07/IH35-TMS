@@ -8,6 +8,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { useToast } from "../../../components/Toast";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
+import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 
 const FREQUENCIES: { value: RecurringBillFrequency; label: string }[] = [
   { value: "weekly", label: "Weekly" },
@@ -129,18 +130,18 @@ export function RecurringBillCreate() {
           {/* Vendor */}
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">Vendor *</label>
-            <select
-              className="w-full rounded-sm border border-gray-300 px-3 py-2 text-sm focus:border-slate-300 focus:outline-hidden"
-              value={vendorUuid}
-              onChange={(e) => setVendorUuid(e.target.value)}
-            >
-              <option value="">— Select vendor —</option>
-              {vendors.map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.name}
-                </option>
-              ))}
-            </select>
+            {/* D-CREATE-INLINE: shared ReferenceSelect gives the vendor picker the inline "+ Add new
+                vendor" row (writes to canonical mdata.vendors — the same table this list reads, so a
+                newly created vendor is immediately selectable, QB-STD-5). */}
+            <ReferenceSelect
+              value={vendorUuid || null}
+              onChange={(next) => setVendorUuid(next ?? "")}
+              options={vendors.map((v) => ({ value: v.id, label: v.name }))}
+              createKind="vendor"
+              operatingCompanyId={companyId}
+              placeholder="Select vendor..."
+              disabled={!companyId}
+            />
           </div>
 
           {/* Amount */}
