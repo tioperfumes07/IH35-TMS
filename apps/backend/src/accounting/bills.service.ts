@@ -741,14 +741,13 @@ export async function payBill(input: PayBillInput, userId: string) {
     throw new Error("check_number_required");
   }
 
-  // P1-BILLPAY-GL: a bill payment moves cash and MUST post DR ap_control / CR bank in the same breath.
-  // Gate the whole payment on BILL_PAYMENT_GL_POSTING_ENABLED — OFF => block entirely (no payment row,
-  // no bank mutation, no JE), so cash never moves without its offsetting journal entry. Throw an explicit
-  // policy error (never a silent success); the route maps it to 409 and internal callers fail loud.
+  // P1-BILLPAY-GL: resolve BILL_PAYMENT_GL_POSTING_ENABLED for the entity. When ON, the payment records
+  // its balanced DR ap_control / CR bank JE ATOMICALLY in the same transaction as the bank-cache decrement.
+  // When OFF (the current prod default for every entity), the payment + bank decrement still happen exactly
+  // as before — NO regression to bill-paying — but the GL leg is skipped and surfaced honestly as
+  // gl_posting:"blocked_flag_off" (no silent success, matching P1-BILL-GL / no-silent-noop-posting). Flag
+  // flips per entity are the owner's, after the entity's ap_control + bank-GL-account prerequisites are met.
   const glPostingEnabled = await isBillPaymentGlPostingEnabled(input.operatingCompanyId, userId);
-  if (!glPostingEnabled) {
-    throw new Error("bill_payment_gl_posting_disabled");
-  }
 
   const payment = await withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operatingCompanyId]);
@@ -847,24 +846,28 @@ export async function payBill(input: PayBillInput, userId: string) {
       "P5-D2-BILL-PAYMENT"
     );
 
-    // Post the balanced DR ap_control / CR bank JE ATOMICALLY in THIS transaction (GUARD 2026-07-11:
-    // the bank-balance cache and the GL cash account are SEPARATE stores — recording −amount in both is
-    // correct double-entry + cache coherence, not double-counting). Because it runs on the same client,
-    // a posting failure rolls back the payment insert + bill update + bank decrement together — the
-    // bank and GL can never diverge. Idempotent (one batch per bill_payment). Relieves A/P via ap_control.
-    await postSourceTransactionInClientTx(
-      client,
-      {
-        operating_company_id: input.operatingCompanyId,
-        source_transaction_type: "bill_payment",
-        source_transaction_id: paymentRes.rows[0].id,
-      },
-      { userId }
-    );
+    // When posting is ON for this entity, post the balanced DR ap_control / CR bank JE ATOMICALLY in THIS
+    // transaction (GUARD 2026-07-11: the bank-balance cache and the GL cash account are SEPARATE stores —
+    // recording −amount in both is correct double-entry + cache coherence, not double-counting). Running it
+    // on the same client means a posting failure rolls back the payment insert + bill update + bank
+    // decrement together — bank and GL can never diverge. Idempotent (one batch per bill_payment). When OFF,
+    // the payment + bank decrement above stand as-is (no regression) and no JE is written.
+    if (glPostingEnabled) {
+      await postSourceTransactionInClientTx(
+        client,
+        {
+          operating_company_id: input.operatingCompanyId,
+          source_transaction_type: "bill_payment",
+          source_transaction_id: paymentRes.rows[0].id,
+        },
+        { userId }
+      );
+    }
 
     return {
       ...paymentRes.rows[0],
       amount_cents: Number(paymentRes.rows[0].amount_cents ?? Math.round(Number(paymentRes.rows[0].amount ?? 0) * 100)),
+      gl_posting: glPostingEnabled ? ("posted" as const) : ("blocked_flag_off" as const),
     };
   });
 

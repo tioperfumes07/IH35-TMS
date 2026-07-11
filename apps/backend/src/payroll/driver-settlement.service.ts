@@ -493,9 +493,9 @@ export async function postSettlement(input: PostSettlementInput, userId: string)
       },
       userId
     );
-    // P1-BILLPAY-GL: payBill throws "bill_payment_gl_posting_disabled" when BILL_PAYMENT_GL_POSTING is OFF
-    // (misconfig if SETTLEMENT_GL is ON but bill-payment posting is OFF). That propagates here and fails the
-    // settlement loud rather than paying without a GL entry (dormant while all GL flags are ON).
+    // P1-BILLPAY-GL: payBill records the settlement bill-payment regardless of the flag; when
+    // BILL_PAYMENT_GL_POSTING is ON for the entity it also posts the balanced JE atomically, else
+    // payment.gl_posting is "blocked_flag_off". No behavior change to settlement while the flag is OFF.
 
     const bondLineTotal = await client.query<{ amount_cents: number | null }>(
       `
