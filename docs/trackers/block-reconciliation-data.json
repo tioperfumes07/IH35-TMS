@@ -1,23 +1,23 @@
 {
  "date": "2026-07-11",
- "generated_at_iso": "2026-07-11T16:28:21.030Z",
+ "generated_at_iso": "2026-07-11T17:54:12.292Z",
  "counts": {
-  "PENDING": 7,
+  "PENDING": 3,
   "PENDING (GATED)": 940,
   "NEEDS-VERIFY": 38,
-  "DONE": 506
+  "DONE": 513
  },
  "universe": {
-  "total_blocks_after_dedup": 1491,
+  "total_blocks_after_dedup": 1494,
   "by_source_after_dedup": {
    "program": 61,
-   ".block-ready": 1317,
+   ".block-ready": 1320,
    "enterprise-29": 29,
    "accounting": 27,
    "gap-spec": 57
   },
   "raw_file_counts": {
-   ".block-ready (*.json files)": 1328
+   ".block-ready (*.json files)": 1331
   },
   "note": "Total = union of 5 sources (.block-ready, docs/blocks program, docs/accounting, docs/dispatch enterprise-29, docs/specs gap), de-duped by id. So the block count is NOT the .block-ready file count."
  },
@@ -174,50 +174,6 @@
    "tier": "",
    "status": "PENDING",
    "evidence": "no merged PR / no files on main",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "FIX-02-CATEGORY-CREATE-FULL-COA-WIZARD",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "[verified 2026-07-11] owner-verified broken: category + hard-codes Expense/OtherExpense; full COA creator not built",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "FIX-03-PRODUCTS-SERVICES-ACCOUNT-LINK",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "[verified 2026-07-11] owner-verified broken: item create drops income/expense account link; account dropdown empty",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "FIX-04-BANKING-FROM-TO-ACCOUNTS",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "[verified 2026-07-11] owner-verified broken: From/To column echoes raw description, not accounts",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "FIX-06-INLINE-CREATE-COVERAGE-SWEEP",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING",
-   "evidence": "[verified 2026-07-11] owner-verified: RecurringBillCreate vendor + CreateMultipleBills A/P are raw selects, no inline +C",
    "name": "",
    "registered_on": null,
    "pr": null
@@ -10571,10 +10527,10 @@
    "fin": true,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #2333 title-match only, unverified",
+   "evidence": "PR #2355 title-match only, unverified",
    "name": "",
    "registered_on": null,
-   "pr": 2333
+   "pr": 2355
   },
   {
    "id": "block-26-factoring-reconciliation",
@@ -10703,15 +10659,15 @@
    "pr": 1742
   },
   {
-   "id": "FIX-01-CUSTOMER-VENDOR-LIST-RESIZE-QBO",
+   "id": "FIX-06-referenceselect-inline-create-sweep",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "[verified 2026-07-11] built in PR #2347 (ResizableTable), pending merge/deploy + browser drag confirm",
-   "name": "",
+   "evidence": "PR #2356 title-match only, unverified",
+   "name": "Inline '+ Create' on remaining accounting dropdowns — ReferenceSelect coverage sweep + forward-only regression ratchet. ",
    "registered_on": null,
-   "pr": 2347
+   "pr": 2356
   },
   {
    "id": "fk-safety-events-driver-status-0289",
@@ -13388,6 +13344,83 @@
    "name": "Final Additions launch punch-list page",
    "registered_on": null,
    "pr": 1924
+  },
+  {
+   "id": "FIX-01-CUSTOMER-VENDOR-LIST-RESIZE-QBO",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-11] merged + deployed to prod (owner-approved / non-financial ship-on-green) 2026-07-11",
+   "name": "",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "FIX-02-CATEGORY-CREATE-FULL-COA-WIZARD",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-11] merged + deployed to prod (owner-approved / non-financial ship-on-green) 2026-07-11",
+   "name": "",
+   "registered_on": null,
+   "pr": 2351
+  },
+  {
+   "id": "FIX-03-PRODUCTS-SERVICES-ACCOUNT-LINK",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-11] merged + deployed to prod (owner-approved / non-financial ship-on-green) 2026-07-11",
+   "name": "",
+   "registered_on": null,
+   "pr": 2353
+  },
+  {
+   "id": "FIX-04-BANKING-FROM-TO-ACCOUNTS",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-11] merged + deployed to prod (owner-approved / non-financial ship-on-green) 2026-07-11",
+   "name": "",
+   "registered_on": null,
+   "pr": 2349
+  },
+  {
+   "id": "FIX-06-INLINE-CREATE-COVERAGE-SWEEP",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-11] merged + deployed to prod (owner-approved / non-financial ship-on-green) 2026-07-11",
+   "name": "",
+   "registered_on": null,
+   "pr": 2356
+  },
+  {
+   "id": "FIX-10-PROGRAM-TRACKER-DEFAULT-ROUTE",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-11] merged + deployed to prod 2026-07-11",
+   "name": "",
+   "registered_on": null,
+   "pr": 2350
+  },
+  {
+   "id": "FIX-11-TRACKER-BYMODULE-COLUMNS",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-11] merged + deployed to prod 2026-07-11",
+   "name": "",
+   "registered_on": null,
+   "pr": 2352
   },
   {
    "id": "FIX-AT-RISK-LOADS-SD-CITY",
@@ -16386,6 +16419,66 @@
   }
  ],
  "merged_prs": [
+  {
+   "number": 2356,
+   "title": "fix(accounting): FIX-06 — inline + Create sweep (ReferenceSelect) + coverage ratchet guard",
+   "mergedAt": "2026-07-11T17:53:03Z",
+   "branch": "fix/fix-06-referenceselect-sweep"
+  },
+  {
+   "number": 2355,
+   "title": "fix(ui): P4 — bills date-range filter + vendors/customers pager server-total + parallel-books doc",
+   "mergedAt": "2026-07-11T17:39:55Z",
+   "branch": "fix/p4-bills-datefilter-pager-total-doc"
+  },
+  {
+   "number": 2354,
+   "title": "fix(ui): P4 — 425c §7 header + owner-approvals owner-facing copy + home KPI AA contrast",
+   "mergedAt": "2026-07-11T17:17:34Z",
+   "branch": "fix/p4-425c-header-home-copy-contrast"
+  },
+  {
+   "number": 2353,
+   "title": "[HOLD-FOR-JORGE] fix(accounting): FIX-03 — product/service + Create populates + persists income/expense account link",
+   "mergedAt": "2026-07-11T17:30:51Z",
+   "branch": "fix/fix-03-product-service-account-link-hold"
+  },
+  {
+   "number": 2352,
+   "title": "feat(program): FIX-11 — By-Module drill-down adds Wired/Needs-design/Missing/Completeness columns",
+   "mergedAt": "2026-07-11T17:00:36Z",
+   "branch": "feat/tracker-bymodule-columns"
+  },
+  {
+   "number": 2351,
+   "title": "[HOLD-FOR-JORGE] fix(accounting): FIX-02 — category + Create opens full COA creator (Account Type + Detail Type)",
+   "mergedAt": "2026-07-11T17:14:16Z",
+   "branch": "fix/fix-02-category-coa-creator-hold"
+  },
+  {
+   "number": 2350,
+   "title": "fix(program): FIX-10 — /program defaults to the clean Program Tracker (archive old board)",
+   "mergedAt": "2026-07-11T16:49:39Z",
+   "branch": "fix/program-tracker-default-route"
+  },
+  {
+   "number": 2349,
+   "title": "fix(banking): FIX-04 — From/To column shows real from/to accounts (was echoing raw description)",
+   "mergedAt": "2026-07-11T16:46:53Z",
+   "branch": "fix/banking-from-to-accounts"
+  },
+  {
+   "number": 2348,
+   "title": "chore(registry): register 6 owner-verified fixes (P1) — appear in Program Tracker at true status",
+   "mergedAt": "2026-07-11T16:39:53Z",
+   "branch": "chore/register-coder-verified-fixes"
+  },
+  {
+   "number": 2347,
+   "title": "fix(ui): Customers/Vendors master-detail list → shared resizable QBO table",
+   "mergedAt": "2026-07-11T16:30:49Z",
+   "branch": "fix/customers-vendors-resizable-list"
+  },
   {
    "number": 2346,
    "title": "feat(program): live Program Tracker page — Pending / In Progress / Completed & live / Sequence tabs",
@@ -19925,70 +20018,22 @@
    "title": "fix(banking): reconcile uncategorized KPI with review queue (BANKING-1)",
    "mergedAt": "2026-07-01T04:42:11Z",
    "branch": "fix/cashflow-settlements-banking"
-  },
-  {
-   "number": 1723,
-   "title": "fix(safety): SAFETY-1 missed UTC date-default + guard, SAFETY-2 Cert Expiry own-route (Module 07)",
-   "mergedAt": "2026-07-01T04:59:01Z",
-   "branch": "fix/module07-safety-blocks"
-  },
-  {
-   "number": 1722,
-   "title": "fix(qbo): sync-health surfaces CDC master-data runs (HOME-7 part B)",
-   "mergedAt": "2026-07-01T04:35:46Z",
-   "branch": "fix/home6-home7-fuel2"
-  },
-  {
-   "number": 1721,
-   "title": "fix(fleet): exclude demo/sample rows from live boards (DISPATCH-4/DRIVERHUB-2/MAINT-1)",
-   "mergedAt": "2026-07-01T04:34:10Z",
-   "branch": "fix/demo-data-exclusions"
-  },
-  {
-   "number": 1720,
-   "title": "fix(compliance): segregate stale/offline units on live fleet board (COMPLIANCE-1)",
-   "mergedAt": "2026-07-01T04:33:35Z",
-   "branch": "fix/modules-08-09-10-blocks"
-  },
-  {
-   "number": 1719,
-   "title": "docs(tracker): 2026-06-30 Downloads blocks reconciliation (24 pending countdown)",
-   "mergedAt": "2026-07-01T04:26:59Z",
-   "branch": "chore/downloads-blocks-tracker"
-  },
-  {
-   "number": 1718,
-   "title": "chore(security): tighten mdata-entity-scope baseline (drop 10 remediated cross-entity leaks)",
-   "mergedAt": "2026-07-01T03:57:47Z",
-   "branch": "chore/tighten-mdata-entity-scope-baseline"
-  },
-  {
-   "number": 1717,
-   "title": "[HOLD-FOR-JORGE — TIER 1] fix(qbo-sync): entity-scope items + accounts pullers/reconciler (AF-1/AF-2 live break)",
-   "mergedAt": "2026-07-01T03:50:00Z",
-   "branch": "fix/qbo-sync-items-accounts-entity-scope-hold"
-  },
-  {
-   "number": 1716,
-   "title": "[HOLD-FOR-JORGE — TIER 1] feat(catalogs): AF-2c(+2) items editor — full QBO/NetSuite parity (accounts · category · two-sided purchasing · preferred vendor) + en",
-   "mergedAt": "2026-07-01T03:36:53Z",
-   "branch": "feat/af2c-items-editor-coa-category-hold"
-  },
-  {
-   "number": 1715,
-   "title": "[HOLD-FOR-JORGE — TIER 1] feat(catalogs): AF-3 catalogs.classes per-entity",
-   "mergedAt": "2026-07-01T02:57:01Z",
-   "branch": "feat/af3-catalogs-classes-per-entity-hold"
-  },
-  {
-   "number": 1714,
-   "title": "[HOLD-FOR-JORGE — TIER 1] feat(catalogs): AF-2 catalogs.items per-entity",
-   "mergedAt": "2026-07-01T02:41:51Z",
-   "branch": "feat/af2-catalogs-items-per-entity-hold"
   }
  ],
- "merged_pr_total": 2228,
+ "merged_pr_total": 2238,
  "hold_for_jorge": [
+  {
+   "number": 2353,
+   "title": "[HOLD-FOR-JORGE] fix(accounting): FIX-03 — product/service + Create populates + persists income/expense account link",
+   "mergedAt": "2026-07-11T17:30:51Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 2351,
+   "title": "[HOLD-FOR-JORGE] fix(accounting): FIX-02 — category + Create opens full COA creator (Account Type + Detail Type)",
+   "mergedAt": "2026-07-11T17:14:16Z",
+   "category": "HOLD"
+  },
   {
    "number": 2336,
    "title": "feat(schema): Phase-4 cross-module FK batch (P4-01/02/03) — safety↔insurance↔legal + asset↔unit [HOLD-FOR-JORGE — TIER 1]",
