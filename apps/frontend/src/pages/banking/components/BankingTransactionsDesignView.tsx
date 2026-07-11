@@ -8,7 +8,9 @@ import {
   getCoaAccounts,
   getMatchCandidates,
   getPlaidCompanyTransactions,
+  isManualBankTransaction,
   skipBankTransactionInvestigation,
+  updateBankTransactionDate,
   uploadBankStatementCsv,
   type BankMatchCandidate,
   type BankMatchCandidateKind,
@@ -1330,11 +1332,26 @@ export function BankingTransactionsDesignView({
                     </td>
                     <td className="px-1 py-2 align-top text-gray-700">
                       {viewSettings.editableDateField && expanded ? (
-                        // QB-style calendar (§7); still display-only — there is no PATCH transaction-date
-                        // endpoint yet, so this mirrors the prior readOnly input's non-functional state
-                        // rather than silently pretending a bank transaction's date can be edited here.
+                        // Doc-18 GAP B: QB-style calendar. A MANUAL (hand-entered) transaction's date is now
+                        // editable via PATCH /api/v1/banking/transactions/:id; bank-fed rows stay locked
+                        // (disabled) since their date reflects the feed and the backend rejects the edit.
                         <div onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}>
-                          <DatePicker value={tx.transaction_date.slice(0, 10)} onChange={() => {}} disabled className="w-32" />
+                          <DatePicker
+                            value={tx.transaction_date.slice(0, 10)}
+                            disabled={!isManualBankTransaction(tx)}
+                            className="w-32"
+                            onChange={(next) => {
+                              if (!next || !isManualBankTransaction(tx) || next === tx.transaction_date.slice(0, 10)) return;
+                              void updateBankTransactionDate(tx.id, companyId, next)
+                                .then(() => {
+                                  pushToast("Transaction date updated", "success");
+                                  void transactionsQuery.refetch();
+                                })
+                                .catch((error: unknown) => {
+                                  pushToast(String((error as Error)?.message ?? "Could not update date"), "error");
+                                });
+                            }}
+                          />
                         </div>
                       ) : (
                         formatBankTransactionDate(tx.transaction_date)
@@ -1533,11 +1550,13 @@ export function BankingTransactionsDesignView({
                                 Payee (vendor)
                                 <div className="mt-0.5">
                                   {/* QBO parity — inline "+ Add new vendor" (ReferenceSelect, A2 keystone).
-                                  Note: the create call lands in the mdata.qbo_vendors mirror while this list
-                                  reads mdata.vendors (a pre-existing split-brain in ReferenceSelect/
-                                  QuickCreateEntityModal, not introduced here) — the new vendor stays selectable
-                                  for this session via ReferenceSelect's own "created" state, but won't
-                                  reappear in the list after a refetch/reload until that backend gap is fixed. */}
+                                  Doc-18 GAP A (2026-07-11): the split-brain is CLOSED. QuickCreateEntityModal
+                                  createKind="vendor" writes the CANONICAL mdata.vendors (createVendor → POST
+                                  /api/v1/mdata/vendors → INSERT INTO mdata.vendors), the SAME table this list
+                                  reads — so the new vendor persists and re-appears after refetch/reload
+                                  (QB-STD-5). Regression-guarded by scripts/verify-inline-create-writes-canonical.mjs.
+                                  (Earlier this comment claimed the create landed in the mdata.qbo_vendors mirror —
+                                  that was stale: the canonical fix already shipped in QuickCreateEntityModal.) */}
                                   <ReferenceSelect
                                     value={draft.vendorId || null}
                                     onChange={(vid) => {
@@ -1630,11 +1649,13 @@ export function BankingTransactionsDesignView({
                                 <div className="mt-0.5">
                                   {/* QBO parity — inline "+ Add new product/service" reuses ReferenceSelect's
                                   "service" create kind (InlineCreateDrawer → NewServiceDrawerForm), the kind
-                                  purpose-built for this exact field (BK7). Note: like Payee/Category above,
-                                  the create call lands in the mdata.qbo_items mirror while this list reads
-                                  catalogs.items (pre-existing split-brain, not introduced here) — the new item
-                                  stays selectable for this session but won't persist into the catalog list
-                                  until that backend gap is fixed. */}
+                                  purpose-built for this exact field (BK7). Doc-18 GAP A (2026-07-11): the
+                                  split-brain is CLOSED. NewServiceDrawerForm writes the CANONICAL catalogs.items
+                                  (itemsCatalogClient.create → POST /api/v1/catalogs/accounting/items → INSERT
+                                  INTO catalogs.items), the SAME table this list reads — so the new item persists
+                                  into the catalog and re-appears after refetch/reload (QB-STD-5). Regression-guarded
+                                  by scripts/verify-inline-create-writes-canonical.mjs. (Earlier this comment claimed
+                                  the create landed in the mdata.qbo_items mirror — that was stale.) */}
                                   <ReferenceSelect
                                     value={draft.itemId || null}
                                     onChange={(iid) => {
