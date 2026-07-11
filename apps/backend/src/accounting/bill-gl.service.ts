@@ -10,7 +10,7 @@
 // is still recorded and the return carries an explicit unposted status (never a silent success).
 
 import { postSourceTransaction, PostingEngineError } from "./posting-engine.service.js";
-import { withCompanyScope } from "./shared.js";
+import { withCurrentUser } from "../auth/db.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 
 export const BILL_GL_POSTING_FLAG_KEY = "BILL_GL_POSTING_ENABLED";
@@ -22,14 +22,20 @@ export type BillGlPostOutcome =
   | { posted: false; reason: "post_failed"; code: string; message: string }
   | { posted: true; result: PostingResult };
 
-/** Resolve BILL_GL_POSTING_ENABLED for an entity (user override first, then per-company override, then default). */
+/**
+ * Resolve BILL_GL_POSTING_ENABLED for an entity (user override first, then per-company override, then
+ * default). Uses withCurrentUser + set_config (not withCompanyScope) — the caller (createBill) is already
+ * authenticated and scoped, so this flag-read needs no membership re-assertion, and avoiding
+ * withCompanyScope keeps the heavy company-membership/luciaPool dependency out of the createBill hot path.
+ */
 export async function isBillGlPostingEnabled(operatingCompanyId: string, userId: string): Promise<boolean> {
-  return withCompanyScope(userId, operatingCompanyId, (client) =>
-    isEnabled(client, BILL_GL_POSTING_FLAG_KEY, {
+  return withCurrentUser(userId, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+    return isEnabled(client, BILL_GL_POSTING_FLAG_KEY, {
       operating_company_id: operatingCompanyId,
       user_uuid: userId,
-    })
-  );
+    });
+  });
 }
 
 /**
