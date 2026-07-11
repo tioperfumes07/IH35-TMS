@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import type { Customer } from "../../api/mdata";
 import { customerQualityKind, customerQualityClass } from "../../lib/quality-badge";
 import { ResizableTable } from "../../components/shared/ResizableTable";
+import { CardLink } from "../../components/shared/CardLink";
 import { SidebarPagination } from "../../components/shared/SidebarPagination";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useListState, type ListQueryStatus } from "../../components/list-state";
@@ -123,10 +124,14 @@ export function CustomerListSidebar({
                 return (
                   <tr
                     key={customer.id}
-                    onClick={() => onSelectCustomer(customer.id)}
-                    className={`cursor-pointer border-b border-gray-100 ${selected ? "bg-slate-100" : "hover:bg-gray-50"}`}
+                    className={`border-b border-gray-100 ${selected ? "bg-slate-100" : "hover:bg-gray-50"}`}
                   >
-                    <td style={{ width: widths.name }} className="max-w-0 truncate px-2 py-1.5 text-sm font-medium text-gray-900">{customer.name}</td>
+                    <td style={{ width: widths.name }} className="max-w-0 truncate px-2 py-1.5">
+                      {/* Anchor navigation (cmd-click / keyboard) via CardLink; also selects the master-detail row. */}
+                      <CardLink href={`/customers/${customer.id}`} onNavigate={() => onSelectCustomer(customer.id)} className="block truncate text-sm font-medium text-gray-900 hover:underline">
+                        {customer.name}
+                      </CardLink>
+                    </td>
                     <td style={{ width: widths.open_balance }} className="px-2 py-1.5 text-right text-xs tabular-nums text-gray-700">{fmtMoney(openByCustomerId.get(customer.id) ?? 0)}</td>
                     <td style={{ width: widths.status }} className="px-2 py-1.5">
                       <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${rating.className}`}>{rating.label}</span>

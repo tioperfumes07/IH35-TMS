@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import type { VendorOption } from "../../api/mdata";
 import { vendorQualityKind, vendorQualityClass } from "../../lib/quality-badge";
 import { ResizableTable } from "../../components/shared/ResizableTable";
+import { CardLink } from "../../components/shared/CardLink";
 import { SidebarPagination } from "../../components/shared/SidebarPagination";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useListState, type ListQueryStatus } from "../../components/list-state";
@@ -125,10 +126,14 @@ export function VendorListSidebar({
                 return (
                   <tr
                     key={vendor.id}
-                    onClick={() => onSelectVendor(vendor.id)}
-                    className={`cursor-pointer border-b border-gray-100 ${selected ? "bg-slate-100" : "hover:bg-gray-50"}`}
+                    className={`border-b border-gray-100 ${selected ? "bg-slate-100" : "hover:bg-gray-50"}`}
                   >
-                    <td style={{ width: widths.name }} className="max-w-0 truncate px-2 py-1.5 text-sm font-medium text-gray-900">{vendor.name}</td>
+                    <td style={{ width: widths.name }} className="max-w-0 truncate px-2 py-1.5">
+                      {/* Anchor navigation (cmd-click / keyboard) via CardLink; also selects the master-detail row. */}
+                      <CardLink href={`/vendors/${vendor.id}`} onNavigate={() => onSelectVendor(vendor.id)} className="block truncate text-sm font-medium text-gray-900 hover:underline">
+                        {vendor.name}
+                      </CardLink>
+                    </td>
                     <td style={{ width: widths.open_balance }} className="px-2 py-1.5 text-right text-xs tabular-nums text-gray-700">{fmtMoney(openByVendorId.get(vendor.id) ?? 0)}</td>
                     <td style={{ width: widths.status }} className="px-2 py-1.5">
                       <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${rating.className}`}>{rating.label}</span>
