@@ -1,0 +1,17 @@
+{
+  "block_id": "0091-flag-lease_SUPERSEDED",
+  "status": "superseded",
+  "classification": "FINANCIAL",
+  "phase": "tier1",
+  "source": "MASTER-6 authored dispatch (03-TIER1-BLOCKS)",
+  "source_file": "064_0091-flag-lease_SUPERSEDED.txt",
+  "allowed_files": [
+    "authored dispatch — LANE LOCK not explicit; scope per 03-TIER1-BLOCKS"
+  ],
+  "acceptance": [
+    {
+      "check": "Authored claim (no explicit ACCEPTANCE[] in dispatch): Confirm LEASE_GL_POSTING_ENABLED prod state matches whether the FIN-22 lease engine is actually built (locked OFF until then)"
+    }
+  ],
+  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+}

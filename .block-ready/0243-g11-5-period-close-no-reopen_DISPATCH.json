@@ -1,0 +1,17 @@
+{
+  "block_id": "0243-g11-5-period-close-no-reopen_DISPATCH",
+  "status": "NEEDS-VERIFY",
+  "classification": "FINANCIAL",
+  "phase": "tier1",
+  "source": "MASTER-6 authored dispatch (03-TIER1-BLOCKS)",
+  "source_file": "17_0243-g11-5-period-close-no-reopen_DISPATCH.txt",
+  "allowed_files": [
+    "authored dispatch — LANE LOCK not explicit; scope per 03-TIER1-BLOCKS"
+  ],
+  "acceptance": [
+    {
+      "check": "Authored claim (no explicit ACCEPTANCE[] in dispatch): [STOP-GATE] closed_period_cutoff = MAX(period_end) blocks postings into an open middle period; no reopen path"
+    }
+  ],
+  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+}

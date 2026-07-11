@@ -1,0 +1,4751 @@
+{
+ "schema": "program-phase-manifest/v1",
+ "source": "MASTER-6 authored build sequence + live .block-ready registration flags",
+ "authored_total": 935,
+ "registered_total": 931,
+ "not_registered_total": 4,
+ "phases": [
+  {
+   "n": 1,
+   "key": "enforcement",
+   "label": "Enforcement (G1–G4 + SKILL-LINKAGE)",
+   "authored_total": 5,
+   "registered_count": 5,
+   "blocks": [
+    {
+     "id": "G1_verify-block-registry-complete_DISPATCH",
+     "registered": true,
+     "block_ready_key": "G1-verify-block-registry-complete"
+    },
+    {
+     "id": "G2_verify-block-acceptance_DISPATCH",
+     "registered": true,
+     "block_ready_key": "G2-verify-block-acceptance"
+    },
+    {
+     "id": "G3_verify-guard-wired_DISPATCH",
+     "registered": true,
+     "block_ready_key": "G3-verify-guard-wired"
+    },
+    {
+     "id": "G4_verify-canonical-table-writes_DISPATCH",
+     "registered": true,
+     "block_ready_key": "G4-verify-canonical-table-writes"
+    },
+    {
+     "id": "SKILL-LINKAGE_permanent-autoload_DISPATCH",
+     "registered": true,
+     "block_ready_key": "SKILL-LINKAGE-permanent-autoload"
+    }
+   ]
+  },
+  {
+   "n": 2,
+   "key": "money-wiring",
+   "label": "Money-wiring P1–P3",
+   "authored_total": 17,
+   "registered_count": 15,
+   "blocks": [
+    {
+     "id": "00_INDEX_BatchB_money-cluster",
+     "registered": false
+    },
+    {
+     "id": "00_INDEX_PHASES",
+     "registered": false
+    },
+    {
+     "id": "PHASE0_DEPLOY-DRIFT_prod-older-than-main_VERIFY",
+     "registered": true,
+     "block_ready_key": "PHASE0_DEPLOY-DRIFT_prod-older-than-main_VERIFY"
+    },
+    {
+     "id": "PHASE1_BILL-GL_create-bill-never-posts_DISPATCH",
+     "registered": true,
+     "block_ready_key": "PHASE1_BILL-GL_create-bill-never-posts_DISPATCH"
+    },
+    {
+     "id": "PHASE1_BILLPAY-GL_bank-mutated-no-JE_DISPATCH",
+     "registered": true,
+     "block_ready_key": "PHASE1_BILLPAY-GL_bank-mutated-no-JE_DISPATCH"
+    },
+    {
+     "id": "PHASE1_ESCROW-DEBIT_phantom-cash_DISPATCH",
+     "registered": true,
+     "block_ready_key": "PHASE1_ESCROW-DEBIT_phantom-cash_DISPATCH"
+    },
+    {
+     "id": "PHASE1_SETTLE-FK_cross-schema-fk-violation_DISPATCH",
+     "registered": true,
+     "block_ready_key": "PHASE1_SETTLE-FK_cross-schema-fk-violation_DISPATCH"
+    },
+    {
+     "id": "PHASE2_ACCESSORIAL-REVENUE_divergent-engine_DISPATCH",
+     "registered": true,
+     "block_ready_key": "PHASE2_ACCESSORIAL-REVENUE_divergent-engine_DISPATCH"
+    },
+    {
+     "id": "PHASE2_BANK-AUTOMATCH_never-runs_DISPATCH",
+     "registered": true,
+     "block_ready_key": "PHASE2_BANK-AUTOMATCH_never-runs_DISPATCH"
+    },
+    {
+     "id": "PHASE2_BILLLINE-LOADID_no-per-load-attribution_DISPATCH",
+     "registered": true,
+     "block_ready_key": "PHASE2_BILLLINE-LOADID_no-per-load-attribution_DISPATCH"
+    },
+    {
+     "id": "PHASE2_CANCEL-TONU_billable-cancellation-no-charge_DISPATCH",
+     "registered": true,
+     "block_ready_key": "PHASE2_CANCEL-TONU_billable-cancellation-no-charge_DISPATCH"
+    },
+    {
+     "id": "PHASE2_CC-PAYMENT_dead-stub_VERIFY",
+     "registered": true,
+     "block_ready_key": "PHASE2_CC-PAYMENT_dead-stub_VERIFY"
+    },
+    {
+     "id": "PHASE2_LOAD-INVOICE_no-auto-ar_DISPATCH",
+     "registered": true,
+     "block_ready_key": "PHASE2_LOAD-INVOICE_no-auto-ar_DISPATCH"
+    },
+    {
+     "id": "PHASE2_LUMPER_gated-off-expense_VERIFY",
+     "registered": true,
+     "block_ready_key": "PHASE2_LUMPER_gated-off-expense_VERIFY"
+    },
+    {
+     "id": "PHASE2_RECON-COLLECTOR_frozen-feed_DISPATCH",
+     "registered": true,
+     "block_ready_key": "PHASE2_RECON-COLLECTOR_frozen-feed_DISPATCH"
+    },
+    {
+     "id": "PHASE3_INVOICE-FK_unenforced-linkages_DISPATCH",
+     "registered": true,
+     "block_ready_key": "PHASE3_INVOICE-FK_unenforced-linkages_DISPATCH"
+    },
+    {
+     "id": "PHASE3_TRANSFER-MIGRATION-DRIFT_held-but-live_VERIFY",
+     "registered": true,
+     "block_ready_key": "PHASE3_TRANSFER-MIGRATION-DRIFT_held-but-live_VERIFY"
+    }
+   ]
+  },
+  {
+   "n": 3,
+   "key": "held-fk",
+   "label": "Held FK migrations (money + Phase-4)",
+   "authored_total": 0,
+   "registered_count": 0,
+   "blocks": []
+  },
+  {
+   "n": 4,
+   "key": "phase4",
+   "label": "Phase-4 cross-module (safety/insurance/legal, maint)",
+   "authored_total": 8,
+   "registered_count": 8,
+   "blocks": [
+    {
+     "id": "P4-01_SAFETY-INSURANCE-LINK_DISPATCH",
+     "registered": true,
+     "block_ready_key": "P4-01_SAFETY-INSURANCE-LINK_DISPATCH"
+    },
+    {
+     "id": "P4-02_LEGAL-LINK_DISPATCH",
+     "registered": true,
+     "block_ready_key": "P4-02_LEGAL-LINK_DISPATCH"
+    },
+    {
+     "id": "P4-03_UNIT-IDENTITY_DISPATCH",
+     "registered": true,
+     "block_ready_key": "P4-03_UNIT-IDENTITY_DISPATCH"
+    },
+    {
+     "id": "P4-04_SAFETY-COST-GL_DISPATCH",
+     "registered": true,
+     "block_ready_key": "P4-04_SAFETY-COST-GL_DISPATCH"
+    },
+    {
+     "id": "P4-05_DAMAGE-CLAIM-FK_DISPATCH",
+     "registered": true,
+     "block_ready_key": "P4-05_DAMAGE-CLAIM-FK_DISPATCH"
+    },
+    {
+     "id": "P4-06_WO-FK_DISPATCH",
+     "registered": true,
+     "block_ready_key": "P4-06_WO-FK_DISPATCH"
+    },
+    {
+     "id": "P4-07_PARTS-GL_DISPATCH",
+     "registered": true,
+     "block_ready_key": "P4-07_PARTS-GL_DISPATCH"
+    },
+    {
+     "id": "P4-08_WO-DOUBLE-BILL_VERIFY",
+     "registered": true,
+     "block_ready_key": "P4-08_WO-DOUBLE-BILL_VERIFY"
+    }
+   ]
+  },
+  {
+   "n": 5,
+   "key": "tier1",
+   "label": "Tier-1 remainder",
+   "authored_total": 273,
+   "registered_count": 271,
+   "blocks": [
+    {
+     "id": "0008-b-canonical-deduction-store",
+     "registered": true,
+     "block_ready_key": "0008-b-canonical-deduction-store"
+    },
+    {
+     "id": "0008-f-consent-hire-contract-satisfies-gate",
+     "registered": true,
+     "block_ready_key": "0008-f-consent-hire-contract-satisfies-gate"
+    },
+    {
+     "id": "0010-f12-missing-created-by-user-id",
+     "registered": true,
+     "block_ready_key": "0010-f12-missing-created-by-user-id"
+    },
+    {
+     "id": "0010-f2-unscoped-financial-tables",
+     "registered": true,
+     "block_ready_key": "0010-f2-unscoped-financial-tables"
+    },
+    {
+     "id": "0010-f3-rls-missing-force",
+     "registered": true,
+     "block_ready_key": "0010-f3-rls-missing-force"
+    },
+    {
+     "id": "0091-e1-4",
+     "registered": true,
+     "block_ready_key": "0091-e1-4"
+    },
+    {
+     "id": "0091-e2-3",
+     "registered": true,
+     "block_ready_key": "0091-e2-3"
+    },
+    {
+     "id": "0091-e2-4",
+     "registered": true,
+     "block_ready_key": "0091-e2-4"
+    },
+    {
+     "id": "0091-g1-3",
+     "registered": true,
+     "block_ready_key": "0091-g1-3"
+    },
+    {
+     "id": "0091-g10-h1",
+     "registered": true,
+     "block_ready_key": "0091-g10-h1"
+    },
+    {
+     "id": "0091-g10-h3",
+     "registered": true,
+     "block_ready_key": "0091-g10-h3"
+    },
+    {
+     "id": "0091-g11-2",
+     "registered": true,
+     "block_ready_key": "0091-g11-2"
+    },
+    {
+     "id": "0091-g11-5",
+     "registered": true,
+     "block_ready_key": "0091-g11-5"
+    },
+    {
+     "id": "0091-g6-1",
+     "registered": true,
+     "block_ready_key": "0091-g6-1"
+    },
+    {
+     "id": "0091-g6-6",
+     "registered": true,
+     "block_ready_key": "0091-g6-6"
+    },
+    {
+     "id": "0091-g9-h1",
+     "registered": true,
+     "block_ready_key": "0091-g9-h1"
+    },
+    {
+     "id": "0091-g9-h5",
+     "registered": true,
+     "block_ready_key": "0091-g9-h5"
+    },
+    {
+     "id": "0091-h3-3",
+     "registered": true,
+     "block_ready_key": "0091-h3-3"
+    },
+    {
+     "id": "0091-h5-1",
+     "registered": true,
+     "block_ready_key": "0091-h5-1"
+    },
+    {
+     "id": "0091-info-b3-3",
+     "registered": true,
+     "block_ready_key": "0091-info-b3-3"
+    },
+    {
+     "id": "0091-m-factor-1",
+     "registered": true,
+     "block_ready_key": "0091-m-factor-1"
+    },
+    {
+     "id": "0091-m-lists-1",
+     "registered": true,
+     "block_ready_key": "0091-m-lists-1"
+    },
+    {
+     "id": "0091-m-lists-2",
+     "registered": true,
+     "block_ready_key": "0091-m-lists-2"
+    },
+    {
+     "id": "0091-m-woid-1",
+     "registered": true,
+     "block_ready_key": "0091-m-woid-1"
+    },
+    {
+     "id": "01_0007-pattern-6-silent-noop-posting_DISPATCH",
+     "registered": true,
+     "block_ready_key": "0007-pattern-6-silent-noop-posting_DISPATCH"
+    },
+    {
+     "id": "0242-no-auto-customer-charge-on-cancellation",
+     "registered": true,
+     "block_ready_key": "0242-no-auto-customer-charge-on-cancellation"
+    },
+    {
+     "id": "0242-no-auto-escrow-deduction-driver-fault-can",
+     "registered": true,
+     "block_ready_key": "0242-no-auto-escrow-deduction-driver-fault-can"
+    },
+    {
+     "id": "0243-a2-5-foundation-migrations-not-idempotent",
+     "registered": true,
+     "block_ready_key": "0243-a2-5-foundation-migrations-not-idempotent"
+    },
+    {
+     "id": "0243-b1-2-factor-reserve-default-liability-fal",
+     "registered": true,
+     "block_ready_key": "0243-b1-2-factor-reserve-default-liability-fal"
+    },
+    {
+     "id": "0243-b3-3-fuel-g18-trigger-hard-delete-gap",
+     "registered": true,
+     "block_ready_key": "0243-b3-3-fuel-g18-trigger-hard-delete-gap"
+    },
+    {
+     "id": "0243-c1-1-orphaned-payroll-settlement-engine",
+     "registered": true,
+     "block_ready_key": "0243-c1-1-orphaned-payroll-settlement-engine"
+    },
+    {
+     "id": "0243-e1-4-driver-settlements-four-schemas",
+     "registered": true,
+     "block_ready_key": "0243-e1-4-driver-settlements-four-schemas"
+    },
+    {
+     "id": "0243-g1-3-settlement-cash-advance-approvals-no",
+     "registered": true,
+     "block_ready_key": "0243-g1-3-settlement-cash-advance-approvals-no"
+    },
+    {
+     "id": "0243-g10-h1-load-stops-delete-grant-live",
+     "registered": true,
+     "block_ready_key": "0243-g10-h1-load-stops-delete-grant-live"
+    },
+    {
+     "id": "0243-g10-h3-six-ui-features-404-routes",
+     "registered": true,
+     "block_ready_key": "0243-g10-h3-six-ui-features-404-routes"
+    },
+    {
+     "id": "0243-g11-10-month-close-checklist-unsatisfiabl",
+     "registered": true,
+     "block_ready_key": "0243-g11-10-month-close-checklist-unsatisfiabl"
+    },
+    {
+     "id": "0243-g11-2-two-deduction-subledgers-dont-recon",
+     "registered": true,
+     "block_ready_key": "0243-g11-2-two-deduction-subledgers-dont-recon"
+    },
+    {
+     "id": "0243-g2-2-operating-company-id-trusted-raw-ten",
+     "registered": true,
+     "block_ready_key": "0243-g2-2-operating-company-id-trusted-raw-ten"
+    },
+    {
+     "id": "0243-g6-2-vendor-create-no-dedup-guard",
+     "registered": true,
+     "block_ready_key": "0243-g6-2-vendor-create-no-dedup-guard"
+    },
+    {
+     "id": "0243-g6-3-customer-dedup-case-sensitive-unscop",
+     "registered": true,
+     "block_ready_key": "0243-g6-3-customer-dedup-case-sensitive-unscop"
+    },
+    {
+     "id": "0243-g9-h1-settlement-double-pay-race",
+     "registered": true,
+     "block_ready_key": "0243-g9-h1-settlement-double-pay-race"
+    },
+    {
+     "id": "0243-h6-1-qbo-refresh-token-race",
+     "registered": true,
+     "block_ready_key": "0243-h6-1-qbo-refresh-token-race"
+    },
+    {
+     "id": "0243-h6-2-cash-advance-display-id-no-lock-no-u",
+     "registered": true,
+     "block_ready_key": "0243-h6-2-cash-advance-display-id-no-lock-no-u"
+    },
+    {
+     "id": "0243-swl-1-spine-emits-swallowed",
+     "registered": true,
+     "block_ready_key": "0243-swl-1-spine-emits-swallowed"
+    },
+    {
+     "id": "0251-gap1-factoring-vendor-fk-not-stored",
+     "registered": true,
+     "block_ready_key": "0251-gap1-factoring-vendor-fk-not-stored"
+    },
+    {
+     "id": "0251-gap2-vendor-gl-linkage",
+     "registered": true,
+     "block_ready_key": "0251-gap2-vendor-gl-linkage"
+    },
+    {
+     "id": "0251-gap3-vendor-invoice-linkage",
+     "registered": true,
+     "block_ready_key": "0251-gap3-vendor-invoice-linkage"
+    },
+    {
+     "id": "0270-no-auto-escrow-deduction-safety-events",
+     "registered": true,
+     "block_ready_key": "0270-no-auto-escrow-deduction-safety-events"
+    },
+    {
+     "id": "0280-05-factoring-balance-invoice-linkage",
+     "registered": true,
+     "block_ready_key": "0280-05-factoring-balance-invoice-linkage"
+    },
+    {
+     "id": "0280-14-ap-aging-bill-vendor-linkage",
+     "registered": true,
+     "block_ready_key": "0280-14-ap-aging-bill-vendor-linkage"
+    },
+    {
+     "id": "0280-47-driver-to-escrow-flow",
+     "registered": true,
+     "block_ready_key": "0280-47-driver-to-escrow-flow"
+    },
+    {
+     "id": "0285-acct-gap3-manual-payment-application",
+     "registered": true,
+     "block_ready_key": "0285-acct-gap3-manual-payment-application"
+    },
+    {
+     "id": "0285-df-gap1-no-escrow-for-cash-advances",
+     "registered": true,
+     "block_ready_key": "0285-df-gap1-no-escrow-for-cash-advances"
+    },
+    {
+     "id": "0285-df-gap2-dual-deduction-systems",
+     "registered": true,
+     "block_ready_key": "0285-df-gap2-dual-deduction-systems"
+    },
+    {
+     "id": "02_0008-a-gl-flags-settlement-lease-off_SUPERSEDED",
+     "registered": true,
+     "block_ready_key": "0008-a-gl-flags-settlement-lease-off_SUPERSEDED"
+    },
+    {
+     "id": "0394-qbo-sync-one-shot-not-recurring",
+     "registered": true,
+     "block_ready_key": "0394-qbo-sync-one-shot-not-recurring"
+    },
+    {
+     "id": "03_0008-g3-qbo-mirror-canonical_DISPATCH",
+     "registered": true,
+     "block_ready_key": "0008-g3-qbo-mirror-canonical_DISPATCH"
+    },
+    {
+     "id": "041_0519-lg1-5-nullable-financial-columns_DISPATCH",
+     "registered": true,
+     "block_ready_key": "0519-lg1-5-nullable-financial-columns_DISPATCH"
+    },
+    {
+     "id": "042_acct-bills-routes-audit-trail-missing_DISPATCH",
+     "registered": true,
+     "block_ready_key": "acct-bills-routes-audit-trail-missing_DISPATCH"
+    },
+    {
+     "id": "043_bill-status-vocab-partial-vs-partially_DUP",
+     "registered": true,
+     "block_ready_key": "bill-status-vocab-partial-vs-partially_DUP"
+    },
+    {
+     "id": "0441-mod10-autodeductionpolicies-fully-dead",
+     "registered": true,
+     "block_ready_key": "0441-mod10-autodeductionpolicies-fully-dead"
+    },
+    {
+     "id": "0441-mod10-cashflow-driverpay-hardcoded-empty",
+     "registered": true,
+     "block_ready_key": "0441-mod10-cashflow-driverpay-hardcoded-empty"
+    },
+    {
+     "id": "0441-mod10-deductions-never-reduce-settlement",
+     "registered": true,
+     "block_ready_key": "0441-mod10-deductions-never-reduce-settlement"
+    },
+    {
+     "id": "0441-mod10-finalize-5s-staleness-race",
+     "registered": true,
+     "block_ready_key": "0441-mod10-finalize-5s-staleness-race"
+    },
+    {
+     "id": "0441-mod10-payment-status-panel-404",
+     "registered": true,
+     "block_ready_key": "0441-mod10-payment-status-panel-404"
+    },
+    {
+     "id": "0441-mod10-settlement-line-ui-nonexistent-colu",
+     "registered": true,
+     "block_ready_key": "0441-mod10-settlement-line-ui-nonexistent-colu"
+    },
+    {
+     "id": "0441-mod10-three-settlement-dispute-backends",
+     "registered": true,
+     "block_ready_key": "0441-mod10-three-settlement-dispute-backends"
+    },
+    {
+     "id": "0441-mod11-deduction-trail-period-close-zero-r",
+     "registered": true,
+     "block_ready_key": "0441-mod11-deduction-trail-period-close-zero-r"
+    },
+    {
+     "id": "0441-mod11-financial-change-log-starved",
+     "registered": true,
+     "block_ready_key": "0441-mod11-financial-change-log-starved"
+    },
+    {
+     "id": "0441-mod11-owner-mint-maker-checker",
+     "registered": true,
+     "block_ready_key": "0441-mod11-owner-mint-maker-checker"
+    },
+    {
+     "id": "0441-mod13-form425c-exhibit-c-opening-balance-",
+     "registered": true,
+     "block_ready_key": "0441-mod13-form425c-exhibit-c-opening-balance-"
+    },
+    {
+     "id": "0441-mod6-accident-edit-500-status-silent-fail",
+     "registered": true,
+     "block_ready_key": "0441-mod6-accident-edit-500-status-silent-fail"
+    },
+    {
+     "id": "0441-mod6-insurance-no-driver-accident-link",
+     "registered": true,
+     "block_ready_key": "0441-mod6-insurance-no-driver-accident-link"
+    },
+    {
+     "id": "0441-mod6-spawn-liability-fake-stub",
+     "registered": true,
+     "block_ready_key": "0441-mod6-spawn-liability-fake-stub"
+    },
+    {
+     "id": "0441-mod7-dispute-queue-stub",
+     "registered": true,
+     "block_ready_key": "0441-mod7-dispute-queue-stub"
+    },
+    {
+     "id": "0441-mod7-escrow-read-only",
+     "registered": true,
+     "block_ready_key": "0441-mod7-escrow-read-only"
+    },
+    {
+     "id": "0441-mod8-factoring-virtual-hardcodes-zero",
+     "registered": true,
+     "block_ready_key": "0441-mod8-factoring-virtual-hardcodes-zero"
+    },
+    {
+     "id": "0441-mod8-reconciliation-workspace-no-refetch",
+     "registered": true,
+     "block_ready_key": "0441-mod8-reconciliation-workspace-no-refetch"
+    },
+    {
+     "id": "044_biz-flow-2-no-customer-chargeback-mech_DISPATCH",
+     "registered": true,
+     "block_ready_key": "biz-flow-2-no-customer-chargeback-mech_DISPATCH"
+    },
+    {
+     "id": "045_biz-flow-3-no-auto-customer-charge-on-_DUP",
+     "registered": true,
+     "block_ready_key": "biz-flow-3-no-auto-customer-charge-on-_DUP"
+    },
+    {
+     "id": "046_biz-flow-3-no-cancellation-billing-lin_DUP",
+     "registered": true,
+     "block_ready_key": "biz-flow-3-no-cancellation-billing-lin_DUP"
+    },
+    {
+     "id": "0473-1-1-default-revenue-account-unmapped-line",
+     "registered": true,
+     "block_ready_key": "0473-1-1-default-revenue-account-unmapped-line"
+    },
+    {
+     "id": "0473-1-10-year-end-close-retained-earnings-asc",
+     "registered": true,
+     "block_ready_key": "0473-1-10-year-end-close-retained-earnings-asc"
+    },
+    {
+     "id": "0473-1-4-factoring-asc860-sale-vs-secured-borr",
+     "registered": true,
+     "block_ready_key": "0473-1-4-factoring-asc860-sale-vs-secured-borr"
+    },
+    {
+     "id": "0473-1-6-wo-void-reversal-grain",
+     "registered": true,
+     "block_ready_key": "0473-1-6-wo-void-reversal-grain"
+    },
+    {
+     "id": "0473-1-8-tk-transp-lease-asc842",
+     "registered": true,
+     "block_ready_key": "0473-1-8-tk-transp-lease-asc842"
+    },
+    {
+     "id": "0473-2-7-bank-transactions-uncategorized-plaid",
+     "registered": true,
+     "block_ready_key": "0473-2-7-bank-transactions-uncategorized-plaid"
+    },
+    {
+     "id": "047_biz-flow-6-payment-application-manual_DISPATCH",
+     "registered": true,
+     "block_ready_key": "biz-flow-6-payment-application-manual_DISPATCH"
+    },
+    {
+     "id": "048_catalog-create-split-brain-qbo-mirror_DUP",
+     "registered": true,
+     "block_ready_key": "catalog-create-split-brain-qbo-mirror_DUP"
+    },
+    {
+     "id": "0490-critical-g11-1-deduction-consent-template",
+     "registered": true,
+     "block_ready_key": "0490-critical-g11-1-deduction-consent-template"
+    },
+    {
+     "id": "0490-critical-idempotency-posting-engine-vendo",
+     "registered": true,
+     "block_ready_key": "0490-critical-idempotency-posting-engine-vendo"
+    },
+    {
+     "id": "0490-critical-users3-owner-mint-approval-path",
+     "registered": true,
+     "block_ready_key": "0490-critical-users3-owner-mint-approval-path"
+    },
+    {
+     "id": "0490-new1-queuepaymentonfinalize-dead-code",
+     "registered": true,
+     "block_ready_key": "0490-new1-queuepaymentonfinalize-dead-code"
+    },
+    {
+     "id": "0490-section-c-2-reporting-vs-reports-drift",
+     "registered": true,
+     "block_ready_key": "0490-section-c-2-reporting-vs-reports-drift"
+    },
+    {
+     "id": "0490-structural-fix-asset-identity-fragmentati",
+     "registered": true,
+     "block_ready_key": "0490-structural-fix-asset-identity-fragmentati"
+    },
+    {
+     "id": "0490-structural-fix-liability-deduction-fk-spi",
+     "registered": true,
+     "block_ready_key": "0490-structural-fix-liability-deduction-fk-spi"
+    },
+    {
+     "id": "049_dispatch-sweep-gap-23_DUP",
+     "registered": true,
+     "block_ready_key": "dispatch-sweep-gap-11"
+    },
+    {
+     "id": "04_0008-h-create-bill-line-items-load-id_DISPATCH",
+     "registered": true,
+     "block_ready_key": "0008-h-create-bill-line-items-load-id_DISPATCH"
+    },
+    {
+     "id": "050_dispatch-sweep-gap-32_STALE",
+     "registered": true,
+     "block_ready_key": "dispatch-sweep-gap-11"
+    },
+    {
+     "id": "0518-r10-qbo-sync-workers-off-mirror-stale",
+     "registered": true,
+     "block_ready_key": "0518-r10-qbo-sync-workers-off-mirror-stale"
+    },
+    {
+     "id": "0518-r18-schema-fragmentation-8-dup-pairs",
+     "registered": true,
+     "block_ready_key": "0518-r18-schema-fragmentation-8-dup-pairs"
+    },
+    {
+     "id": "0518-r23-ifta-q2-deadline",
+     "registered": true,
+     "block_ready_key": "0518-r23-ifta-q2-deadline"
+    },
+    {
+     "id": "0519-at1-245-tables-missing-created-by-user-id",
+     "registered": true,
+     "block_ready_key": "0519-at1-245-tables-missing-created-by-user-id"
+    },
+    {
+     "id": "0519-at2-no-db-enforced-sod",
+     "registered": true,
+     "block_ready_key": "0519-at2-no-db-enforced-sod"
+    },
+    {
+     "id": "0519-dc2-maint-schema-144-rows-active-alongsid",
+     "registered": true,
+     "block_ready_key": "0519-dc2-maint-schema-144-rows-active-alongsid"
+    },
+    {
+     "id": "0519-rp1-ifta-q2-deadline",
+     "registered": true,
+     "block_ready_key": "0519-rp1-ifta-q2-deadline"
+    },
+    {
+     "id": "0519-sf1-82-drivers-0-settlements",
+     "registered": true,
+     "block_ready_key": "0519-sf1-82-drivers-0-settlements"
+    },
+    {
+     "id": "051_dispatch-sweep-gap-36_DISPATCH",
+     "registered": true,
+     "block_ready_key": "dispatch-sweep-gap-11"
+    },
+    {
+     "id": "052_dispatch-sweep-gap-6_DUP",
+     "registered": true,
+     "block_ready_key": "dispatch-sweep-gap-11"
+    },
+    {
+     "id": "053_fk-expenses-deductions-0289_STALE",
+     "registered": true,
+     "block_ready_key": "fk-expenses-deductions-0289_STALE"
+    },
+    {
+     "id": "054_inbound-qbo-bill-sync-ap-gap_DUP",
+     "registered": true,
+     "block_ready_key": "inbound-qbo-bill-sync-ap-gap_DUP"
+    },
+    {
+     "id": "055_p0-catalogs-accounts-company-scoped_DUP",
+     "registered": true,
+     "block_ready_key": "0282-p0-catalogs-accounts-scope_PARTIAL"
+    },
+    {
+     "id": "056_ruling-3-driver-escrow-current-vs-long_DISPATCH",
+     "registered": true,
+     "block_ready_key": "ruling-3-driver-escrow-current-vs-long_DISPATCH"
+    },
+    {
+     "id": "057_settlement-posting-design-doc-missing_DISPATCH",
+     "registered": true,
+     "block_ready_key": "settlement-posting-design-doc-missing_DISPATCH"
+    },
+    {
+     "id": "058_usmca-posting-enable-hold_SUPERSEDED",
+     "registered": true,
+     "block_ready_key": "usmca-posting-enable-hold_SUPERSEDED"
+    },
+    {
+     "id": "059_0008-d-abandonment-pay-first-then-escr_DISPATCH",
+     "registered": true,
+     "block_ready_key": "0008-d-abandonment-pay-first-then-escr_DISPATCH"
+    },
+    {
+     "id": "05_0091-b1-2-factor-reserve-default-role_LIKELY-STALE",
+     "registered": true,
+     "block_ready_key": "0091-b1-2-factor-reserve-default-role_LIKELY-STALE"
+    },
+    {
+     "id": "060_0010-f1-orphan-fk-columns_DISPATCH",
+     "registered": true,
+     "block_ready_key": "0010-f1-orphan-fk-columns_DISPATCH"
+    },
+    {
+     "id": "061_0010-f11-jep-duplicate-idempotency-gro_STALE",
+     "registered": true,
+     "block_ready_key": "0010-f11-jep-duplicate-idempotency-gro_STALE"
+    },
+    {
+     "id": "062_0010-f5-bank-txn-uncategorized_DUP",
+     "registered": true,
+     "block_ready_key": "0010-f5-bank-txn-uncategorized_DUP"
+    },
+    {
+     "id": "063_0010-f9-nullable-assumed-key-columns_DUP",
+     "registered": true,
+     "block_ready_key": "0010-f9-nullable-assumed-key-columns_DUP"
+    },
+    {
+     "id": "064_0091-flag-lease_SUPERSEDED",
+     "registered": true,
+     "block_ready_key": "0091-flag-lease_SUPERSEDED"
+    },
+    {
+     "id": "065_0091-g4-tx1_DUP",
+     "registered": false
+    },
+    {
+     "id": "066_0243-d2-2-g18-load-fk-not-enforced-ven_DUP",
+     "registered": true,
+     "block_ready_key": "0243-d2-2-g18-load-fk-not-enforced-ven_DUP"
+    },
+    {
+     "id": "067_0243-g11-7-factoring-reserve-two-place_DISPATCH",
+     "registered": true,
+     "block_ready_key": "0243-g11-7-factoring-reserve-two-place_DISPATCH"
+    },
+    {
+     "id": "068_0243-g4-tx1-source-gl-two-transactions_DISPATCH",
+     "registered": true,
+     "block_ready_key": "0243-g4-tx1-source-gl-two-transactions_DISPATCH"
+    },
+    {
+     "id": "069_0251-gap14-customer-ar-gl-fk_DISPATCH",
+     "registered": true,
+     "block_ready_key": "0251-gap14-customer-ar-gl-fk_DISPATCH"
+    },
+    {
+     "id": "06_0091-b1-3-bill-unit-allocation-delete-not-void_DISPATCH",
+     "registered": true,
+     "block_ready_key": "0091-b1-3-bill-unit-allocation-delete-not-void_DISPATCH"
+    },
+    {
+     "id": "070_0251-gap15-load-completion-invoice-tri_DUP",
+     "registered": true,
+     "block_ready_key": "0251-gap15-load-completion-invoice-tri_DUP"
+    },
+    {
+     "id": "071_0251-gap20-driverbill-settlement-link_DISPATCH",
+     "registered": true,
+     "block_ready_key": "0251-gap20-driverbill-settlement-link_DISPATCH"
+    },
+    {
+     "id": "072_0251-gap6-linehaul-revenue-gl_DUP",
+     "registered": true,
+     "block_ready_key": "0251-gap6-linehaul-revenue-gl_DUP"
+    },
+    {
+     "id": "073_0441-mod2-g18-no-load-field_DUP",
+     "registered": true,
+     "block_ready_key": "0441-mod2-g18-no-load-field_DUP"
+    },
+    {
+     "id": "074_0441-mod7-invoices-plaintext-audit-log_DISPATCH",
+     "registered": true,
+     "block_ready_key": "0441-mod7-invoices-plaintext-audit-log_DISPATCH"
+    },
+    {
+     "id": "075_0441-mod7-je-rows-no-onclick_DISPATCH",
+     "registered": true,
+     "block_ready_key": "0441-mod7-je-rows-no-onclick_DISPATCH"
+    },
+    {
+     "id": "076_0473-1-3-insider-receivables-misclassi_DUP",
+     "registered": true,
+     "block_ready_key": "0473-1-3-insider-receivables-misclassi_DUP"
+    },
+    {
+     "id": "077_0473-1-9-driver-settlement-net-pay-mod_DISPATCH",
+     "registered": true,
+     "block_ready_key": "0243-e1-4-driver-settlements-four-schemas"
+    },
+    {
+     "id": "078_0490-g6-4-bills-nullable-amount-cents-_DUP",
+     "registered": true,
+     "block_ready_key": "0490-g6-4-bills-nullable-amount-cents-_DUP"
+    },
+    {
+     "id": "079_0519-fl1-2649-bank-tx-uncategorized_DISPATCH",
+     "registered": true,
+     "block_ready_key": "0519-fl1-2649-bank-tx-uncategorized_DISPATCH"
+    },
+    {
+     "id": "07_0091-c1-1-two-settlement-engines_DISPATCH",
+     "registered": true,
+     "block_ready_key": "0091-c1-1-two-settlement-engines_DISPATCH"
+    },
+    {
+     "id": "080_audit10-payroll-automation-tax-withhol_DISPATCH",
+     "registered": true,
+     "block_ready_key": "audit10-payroll-automation-tax-withhol_DISPATCH"
+    },
+    {
+     "id": "081_bf5-load-settlement-driver-pay-gl_DUP",
+     "registered": true,
+     "block_ready_key": "bf5-load-settlement-driver-pay-gl_DUP"
+    },
+    {
+     "id": "082_bf6-bill-line-items-load-id_DUP",
+     "registered": true,
+     "block_ready_key": "bf6-bill-line-items-load-id_DUP"
+    },
+    {
+     "id": "083_bf9b-wo-cost-unit-load-allocation-gl_DISPATCH",
+     "registered": true,
+     "block_ready_key": "bf9b-wo-cost-unit-load-allocation-gl_DISPATCH"
+    },
+    {
+     "id": "084_biz-flow-2-no-auto-deduction-from-cust_DISPATCH",
+     "registered": true,
+     "block_ready_key": "biz-flow-2-no-auto-deduction-from-cust_DISPATCH"
+    },
+    {
+     "id": "085_biz-flow-3-approval-workflow-no-downst_DUP",
+     "registered": true,
+     "block_ready_key": "biz-flow-3-approval-workflow-no-downst_DUP"
+    },
+    {
+     "id": "086_biz-flow-6-no-automatic-gl-posting-tms_DUP",
+     "registered": true,
+     "block_ready_key": "biz-flow-6-no-automatic-gl-posting-tms_DUP"
+    },
+    {
+     "id": "087_block5-coa-new-account-type-detail-org_DISPATCH",
+     "registered": true,
+     "block_ready_key": "block5-coa-new-account-type-detail-org_DISPATCH"
+    },
+    {
+     "id": "088_dispatch-sweep-gap-1_DUP",
+     "registered": true,
+     "block_ready_key": "dispatch-sweep-gap-11"
+    },
+    {
+     "id": "089_dispatch-sweep-gap-2_DUP",
+     "registered": true,
+     "block_ready_key": "dispatch-sweep-gap-11"
+    },
+    {
+     "id": "08_0091-e1-1-qbo-mirror-home_DUPLICATE",
+     "registered": true,
+     "block_ready_key": "0091-e1-1-qbo-mirror-home_DUPLICATE"
+    },
+    {
+     "id": "090_dispatch-sweep-gap-28_DUP",
+     "registered": true,
+     "block_ready_key": "dispatch-sweep-gap-11"
+    },
+    {
+     "id": "091_dispatch-sweep-gap-29_DUP",
+     "registered": true,
+     "block_ready_key": "dispatch-sweep-gap-11"
+    },
+    {
+     "id": "092_dispatch-sweep-gap-34_DUP",
+     "registered": true,
+     "block_ready_key": "dispatch-sweep-gap-11"
+    },
+    {
+     "id": "093_dispatch-sweep-gap-37_DUP",
+     "registered": true,
+     "block_ready_key": "dispatch-sweep-gap-11"
+    },
+    {
+     "id": "094_fd2-external-fines_DISPATCH",
+     "registered": true,
+     "block_ready_key": "fd2-external-fines_DISPATCH"
+    },
+    {
+     "id": "095_fk-cancellation-billing-0289_DUP",
+     "registered": true,
+     "block_ready_key": "fk-cancellation-billing-0289_DUP"
+    },
+    {
+     "id": "096_known-catalogs-accounts-global-not-per_DUP",
+     "registered": true,
+     "block_ready_key": "catalogs-accounts-company-scope-fix"
+    },
+    {
+     "id": "097_linkage-cancellation-to-invoice-charge_DUP",
+     "registered": true,
+     "block_ready_key": "linkage-cancellation-to-invoice-charge_DUP"
+    },
+    {
+     "id": "098_load-cancellations-fk-per-entity-repoi_DISPATCH",
+     "registered": true,
+     "block_ready_key": "0441-mod13-load-cancellation-reasons-split-bra"
+    },
+    {
+     "id": "099_remediation-t1.5-force-rls-financial-t_STALE",
+     "registered": true,
+     "block_ready_key": "remediation-t1.5-force-rls-financial-t_STALE"
+    },
+    {
+     "id": "09_0091-flag-live-confirm-flag-state_DONE",
+     "registered": true,
+     "block_ready_key": "0091-flag-live-confirm-flag-state_DONE"
+    },
+    {
+     "id": "100_repair-e-escrow-return-and-tieouts-des_DISPATCH",
+     "registered": true,
+     "block_ready_key": "repair-e-escrow-return-and-tieouts-des_DISPATCH"
+    },
+    {
+     "id": "101_repair-program-settlement-consent-gate_DUP",
+     "registered": true,
+     "block_ready_key": "repair-program-settlement-consent-gate_DUP"
+    },
+    {
+     "id": "102_ruling-4-embezzlement-reclass-off-ar-q_DISPATCH",
+     "registered": true,
+     "block_ready_key": "ruling-4-embezzlement-reclass-off-ar-q_DISPATCH"
+    },
+    {
+     "id": "103_sweep-flag-lease-golive-review_SUPERSEDED",
+     "registered": true,
+     "block_ready_key": "sweep-flag-lease-golive-review_SUPERSEDED"
+    },
+    {
+     "id": "104_sweep-g11-1-deduction-consent-template_DISPATCH",
+     "registered": true,
+     "block_ready_key": "sweep-g11-1-deduction-consent-template_DISPATCH"
+    },
+    {
+     "id": "105_0008-g4-vendor-namespace-canonical_DUP",
+     "registered": true,
+     "block_ready_key": "0008-g4-vendor-namespace-canonical_DUP"
+    },
+    {
+     "id": "106_0010-f7-unapplied-migration-files-0392_DISPATCH",
+     "registered": true,
+     "block_ready_key": "0010-f7-unapplied-migration-files-0392_DISPATCH"
+    },
+    {
+     "id": "107_0091-g7-1_DISPATCH",
+     "registered": false
+    },
+    {
+     "id": "108_0243-g4-idem1-money-routes-off-allowli_DISPATCH",
+     "registered": true,
+     "block_ready_key": "0243-g4-idem1-money-routes-off-allowli_DISPATCH"
+    },
+    {
+     "id": "109_0441-mod10-holddeduction-id-mismatch_DISPATCH",
+     "registered": true,
+     "block_ready_key": "0441-mod10-holddeduction-id-mismatch_DISPATCH"
+    },
+    {
+     "id": "10_0091-g6-4-bills-amount-cents-nullable_DISPATCH",
+     "registered": true,
+     "block_ready_key": "0091-g6-4-bills-amount-cents-nullable_DISPATCH"
+    },
+    {
+     "id": "110_0441-mod6-insurance-units-assets-id-mi_DISPATCH",
+     "registered": true,
+     "block_ready_key": "0441-mod6-insurance-no-driver-accident-link"
+    },
+    {
+     "id": "111_biz-flow-5-dual-deduction-systems_DUP",
+     "registered": true,
+     "block_ready_key": "biz-flow-5-dual-deduction-systems_DUP"
+    },
+    {
+     "id": "112_custvend-par1-g3-customer-statement-en_DISPATCH",
+     "registered": true,
+     "block_ready_key": "CUSTVEND-PAR-1"
+    },
+    {
+     "id": "113_ledger-proof-period-end-posters_DISPATCH",
+     "registered": true,
+     "block_ready_key": "ledger-proof-period-end-posters_DISPATCH"
+    },
+    {
+     "id": "114_0091-g4-idem1_DUP",
+     "registered": true,
+     "block_ready_key": "0091-g4-idem1_DUP"
+    },
+    {
+     "id": "115_0441-mod8-mark-transfer-404-silent_DISPATCH",
+     "registered": true,
+     "block_ready_key": "0441-mod8-mark-transfer-404-silent_DISPATCH"
+    },
+    {
+     "id": "116_0518-r04-10-orphaned-migration-files-4_DUP",
+     "registered": true,
+     "block_ready_key": "0518-r04-10-orphaned-migration-files-4_DUP"
+    },
+    {
+     "id": "117_0518-r06-70of145-tables-rls-not-forced_STALE",
+     "registered": true,
+     "block_ready_key": "0518-r06-70of145-tables-rls-not-forced_STALE"
+    },
+    {
+     "id": "118_0519-s1-maint-schema-fragmentation_DISPATCH",
+     "registered": true,
+     "block_ready_key": "0519-s1-maint-schema-fragmentation_DISPATCH"
+    },
+    {
+     "id": "119_0519-sec1-86-tables-rls-not-forced_STALE",
+     "registered": true,
+     "block_ready_key": "0519-sec1-86-tables-rls-not-forced_STALE"
+    },
+    {
+     "id": "11_0091-m-settle-1-settlement-gl-killswitch_DISPATCH",
+     "registered": true,
+     "block_ready_key": "0091-m-settle-1-settlement-gl-killswitch_DISPATCH"
+    },
+    {
+     "id": "120_bf9c-fuel-load-g18-writer_DUP",
+     "registered": true,
+     "block_ready_key": "bf9c-fuel-load-g18-writer_DUP"
+    },
+    {
+     "id": "12_0243-b1-3_DUPLICATE",
+     "registered": true,
+     "block_ready_key": "0243-b1-3_DUPLICATE"
+    },
+    {
+     "id": "13_0243-d1-2-vendors-split-two-tables_DISPATCH",
+     "registered": true,
+     "block_ready_key": "0243-d1-2-vendors-split-two-tables_DISPATCH"
+    },
+    {
+     "id": "14_0243-e1-1_DUPLICATE",
+     "registered": true,
+     "block_ready_key": "0243-e1-1_DUPLICATE"
+    },
+    {
+     "id": "15_0243-flag-lease-on-despite-engine_SUPERSEDED-WITH-RESIDUAL",
+     "registered": true,
+     "block_ready_key": "0243-flag-lease-on-despite-engine_SUPERSEDED-WITH-RESIDUAL"
+    },
+    {
+     "id": "16_0243-flag-live-all-9-gl-flags-on_DONE",
+     "registered": true,
+     "block_ready_key": "0243-flag-live-all-9-gl-flags-on_DONE"
+    },
+    {
+     "id": "17_0243-g11-5-period-close-no-reopen_DISPATCH",
+     "registered": true,
+     "block_ready_key": "0243-g11-5-period-close-no-reopen_DISPATCH"
+    },
+    {
+     "id": "18_0243-g11-9-escrow-deduction-liability_DISPATCH",
+     "registered": true,
+     "block_ready_key": "0243-g11-9-escrow-deduction-liability_DISPATCH"
+    },
+    {
+     "id": "19_0243-g6-4_DUPLICATE-plus-dualmoney",
+     "registered": true,
+     "block_ready_key": "0243-g6-4_DUPLICATE-plus-dualmoney"
+    },
+    {
+     "id": "20_0243-g9-h6-coa-list-cap_DISPATCH",
+     "registered": true,
+     "block_ready_key": "0243-g9-h6-coa-list-cap_DISPATCH"
+    },
+    {
+     "id": "21_0243-h3-2-three-posting-flags-unprotected_DISPATCH",
+     "registered": true,
+     "block_ready_key": "0243-h3-2-three-posting-flags-unprotected_DISPATCH"
+    },
+    {
+     "id": "22_0243-h7-1-faro-rts-no-api_DESIGN",
+     "registered": true,
+     "block_ready_key": "0243-h7-1-faro-rts-no-api_DESIGN"
+    },
+    {
+     "id": "23_0251-gap18-driverbill-gl_VERIFY",
+     "registered": true,
+     "block_ready_key": "0251-gap18-driverbill-gl_VERIFY"
+    },
+    {
+     "id": "24_0251-gap19-driverbill-escrow_VERIFY",
+     "registered": true,
+     "block_ready_key": "0251-gap19-driverbill-escrow_VERIFY"
+    },
+    {
+     "id": "25_0251-gap22-lumper-expense_VERIFY",
+     "registered": true,
+     "block_ready_key": "0251-gap22-lumper-expense_VERIFY"
+    },
+    {
+     "id": "26_0251-gap5-chargecode-gl-mapping_DISPATCH",
+     "registered": true,
+     "block_ready_key": "0251-gap5-chargecode-gl-mapping_DISPATCH"
+    },
+    {
+     "id": "27_0251-gap7-fuel-surcharge-gl_VERIFY",
+     "registered": true,
+     "block_ready_key": "0251-gap7-fuel-surcharge-gl_VERIFY"
+    },
+    {
+     "id": "28_0251-gap8-accessorials-gl_VERIFY",
+     "registered": true,
+     "block_ready_key": "0251-gap8-accessorials-gl_VERIFY"
+    },
+    {
+     "id": "29_0282-p0-catalogs-accounts-scope_PARTIAL",
+     "registered": true,
+     "block_ready_key": "0282-p0-catalogs-accounts-scope_PARTIAL"
+    },
+    {
+     "id": "30_0285-banking-transfer-gl-gap_VERIFY",
+     "registered": true,
+     "block_ready_key": "0285-banking-transfer-gl-gap_VERIFY"
+    },
+    {
+     "id": "31_0394-qbo-transaction-pull-missing_DISPATCH",
+     "registered": true,
+     "block_ready_key": "0394-qbo-transaction-pull-missing_DISPATCH"
+    },
+    {
+     "id": "32_0441-mod11-aging-export-engine_DISPATCH",
+     "registered": true,
+     "block_ready_key": "0441-mod11-aging-export-engine_DISPATCH"
+    },
+    {
+     "id": "33_0441-mod13-coa-merge-no-gl-repoint_DISPATCH",
+     "registered": true,
+     "block_ready_key": "0441-mod13-coa-merge-no-gl-repoint_DISPATCH"
+    },
+    {
+     "id": "34_0441-mod13-inventory-accounting-none_DESIGN",
+     "registered": true,
+     "block_ready_key": "0441-mod13-inventory-accounting-none_DESIGN"
+    },
+    {
+     "id": "35_0441-mod3-fuel-poster-zero-callers_DISPATCH",
+     "registered": true,
+     "block_ready_key": "0441-mod3-fuel-poster-zero-callers_DISPATCH"
+    },
+    {
+     "id": "36_0441-mod7-bill-subnav-filters-not-creators_UI",
+     "registered": true,
+     "block_ready_key": "0441-mod7-bill-subnav-filters-not-creators_UI"
+    },
+    {
+     "id": "37_0441-mod9-merge-vendors-no-gl-repoint_DISPATCH",
+     "registered": true,
+     "block_ready_key": "0441-mod9-merge-vendors-no-gl-repoint_DISPATCH"
+    },
+    {
+     "id": "38_0473-2-4-ap-aging-partial-mismatch_DISPATCH",
+     "registered": true,
+     "block_ready_key": "0473-2-4-ap-aging-partial-mismatch_DISPATCH"
+    },
+    {
+     "id": "39_0473-2-5-trial-balance-002-cosmetic_CLEANUP",
+     "registered": true,
+     "block_ready_key": "0473-2-5-trial-balance-002-cosmetic_CLEANUP"
+    },
+    {
+     "id": "40_0490-settlement-unflagged_DUPLICATE",
+     "registered": true,
+     "block_ready_key": "0490-settlement-unflagged_DUPLICATE"
+    },
+    {
+     "id": "audit-spine-a1-a9-emit-coverage-task",
+     "registered": true,
+     "block_ready_key": "audit-spine-a1-a9-emit-coverage-task"
+    },
+    {
+     "id": "bf1-driver-fault-liability-deduction",
+     "registered": true,
+     "block_ready_key": "bf1-driver-fault-liability-deduction"
+    },
+    {
+     "id": "bf10b-qbo-recon-six-types",
+     "registered": true,
+     "block_ready_key": "bf10b-qbo-recon-six-types"
+    },
+    {
+     "id": "bf4-load-invoice-ar-factoring-payment",
+     "registered": true,
+     "block_ready_key": "bf4-load-invoice-ar-factoring-payment"
+    },
+    {
+     "id": "bf7-cash-advance-recovery-engine",
+     "registered": true,
+     "block_ready_key": "bf7-cash-advance-recovery-engine"
+    },
+    {
+     "id": "bf9a-accident-claim-liability-deduction",
+     "registered": true,
+     "block_ready_key": "bf9a-accident-claim-liability-deduction"
+    },
+    {
+     "id": "biz-flow-1-abandonment-separate-from-terminati",
+     "registered": true,
+     "block_ready_key": "biz-flow-1-abandonment-separate-from-terminati"
+    },
+    {
+     "id": "biz-flow-1-escrow-not-linked-to-termination",
+     "registered": true,
+     "block_ready_key": "biz-flow-1-escrow-not-linked-to-termination"
+    },
+    {
+     "id": "biz-flow-1-no-auto-termination-driver-walkoff",
+     "registered": true,
+     "block_ready_key": "biz-flow-1-no-auto-termination-driver-walkoff"
+    },
+    {
+     "id": "biz-flow-1-termination-not-linked-to-load",
+     "registered": true,
+     "block_ready_key": "biz-flow-1-termination-not-linked-to-load"
+    },
+    {
+     "id": "biz-flow-3-no-auto-escrow-deduction-driver-fau",
+     "registered": true,
+     "block_ready_key": "biz-flow-3-no-auto-escrow-deduction-driver-fau"
+    },
+    {
+     "id": "biz-flow-3-no-cancellation-deduction-linkage",
+     "registered": true,
+     "block_ready_key": "biz-flow-3-no-cancellation-deduction-linkage"
+    },
+    {
+     "id": "biz-flow-4-no-escrow-deduction-cash-advance",
+     "registered": true,
+     "block_ready_key": "biz-flow-4-no-escrow-deduction-cash-advance"
+    },
+    {
+     "id": "biz-flow-5-escrow-only-driver-bonds",
+     "registered": true,
+     "block_ready_key": "biz-flow-5-escrow-only-driver-bonds"
+    },
+    {
+     "id": "biz-flow-9-no-automatic-escrow-deduction-safet",
+     "registered": true,
+     "block_ready_key": "biz-flow-9-no-automatic-escrow-deduction-safet"
+    },
+    {
+     "id": "chain-08-demo-data-purge",
+     "registered": true,
+     "block_ready_key": "chain-08-demo-data-purge"
+    },
+    {
+     "id": "ci1-build-typecheck-ap-control-race",
+     "registered": true,
+     "block_ready_key": "ci1-build-typecheck-ap-control-race"
+    },
+    {
+     "id": "coder-32-migration-drift-prod-triage-pending",
+     "registered": true,
+     "block_ready_key": "coder-32-migration-drift-prod-triage-pending"
+    },
+    {
+     "id": "coder-work-order-t1-7-escrow-ui-zero-callers",
+     "registered": true,
+     "block_ready_key": "coder-work-order-t1-7-escrow-ui-zero-callers"
+    },
+    {
+     "id": "coder-work-order-t2-6-accident-liability-stub",
+     "registered": true,
+     "block_ready_key": "coder-work-order-t2-6-accident-liability-stub"
+    },
+    {
+     "id": "core-ledger-write-proof-trucking-evidence",
+     "registered": true,
+     "block_ready_key": "core-ledger-write-proof-trucking-evidence"
+    },
+    {
+     "id": "d-01-new-load-overview-http-400",
+     "registered": true,
+     "block_ready_key": "d-01-new-load-overview-http-400"
+    },
+    {
+     "id": "daily-tms-qbo-reconciliation-cadence",
+     "registered": true,
+     "block_ready_key": "daily-tms-qbo-reconciliation-cadence"
+    },
+    {
+     "id": "dbwiring-qbo-customers-vendors-accounts-split-",
+     "registered": true,
+     "block_ready_key": "dbwiring-qbo-customers-vendors-accounts-split-"
+    },
+    {
+     "id": "dip-mor-pre-post-petition-ap-split",
+     "registered": true,
+     "block_ready_key": "dip-mor-pre-post-petition-ap-split"
+    },
+    {
+     "id": "dispatch-sweep-gap-19",
+     "registered": true,
+     "block_ready_key": "dispatch-sweep-gap-19"
+    },
+    {
+     "id": "dispatch-sweep-gap-22",
+     "registered": true,
+     "block_ready_key": "dispatch-sweep-gap-22"
+    },
+    {
+     "id": "dispatch-sweep-gap-41",
+     "registered": true,
+     "block_ready_key": "dispatch-sweep-gap-41"
+    },
+    {
+     "id": "driverprofile-1-companion-tier1-rls-hardening",
+     "registered": true,
+     "block_ready_key": "driverprofile-1-companion-tier1-rls-hardening"
+    },
+    {
+     "id": "events-event-log-force-rls-still-blocked",
+     "registered": true,
+     "block_ready_key": "events-event-log-force-rls-still-blocked"
+    },
+    {
+     "id": "factoring-asc860-cpa-control-test-open",
+     "registered": true,
+     "block_ready_key": "factoring-asc860-cpa-control-test-open"
+    },
+    {
+     "id": "factoring-asc860-determination-memo",
+     "registered": true,
+     "block_ready_key": "factoring-asc860-determination-memo"
+    },
+    {
+     "id": "factoring-coder-directive-item-c-unconfirmed",
+     "registered": true,
+     "block_ready_key": "factoring-coder-directive-item-c-unconfirmed"
+    },
+    {
+     "id": "fk-cancellation-deductions-0289",
+     "registered": true,
+     "block_ready_key": "fk-cancellation-deductions-0289"
+    },
+    {
+     "id": "fk-escrow-termination-0289",
+     "registered": true,
+     "block_ready_key": "fk-escrow-termination-0289"
+    },
+    {
+     "id": "flow2-customer-chargeback-driver-expense",
+     "registered": true,
+     "block_ready_key": "flow2-customer-chargeback-driver-expense"
+    },
+    {
+     "id": "flow5-escrow-limited-to-driver-bonds",
+     "registered": true,
+     "block_ready_key": "flow5-escrow-limited-to-driver-bonds"
+    },
+    {
+     "id": "gated-blocks-conn-plaid-relay-edi",
+     "registered": true,
+     "block_ready_key": "gated-blocks-conn-plaid-relay-edi"
+    },
+    {
+     "id": "gated-blocks-usmca-launch-gate",
+     "registered": true,
+     "block_ready_key": "gated-blocks-usmca-launch-gate"
+    },
+    {
+     "id": "ground-truth-g4-grants-not-reproduced",
+     "registered": true,
+     "block_ready_key": "ground-truth-g4-grants-not-reproduced"
+    },
+    {
+     "id": "guard-gap-factoring-treatment-unwired",
+     "registered": true,
+     "block_ready_key": "guard-gap-factoring-treatment-unwired"
+    },
+    {
+     "id": "guard-gap-qbo-sync-entity-scope-missing",
+     "registered": true,
+     "block_ready_key": "guard-gap-qbo-sync-entity-scope-missing"
+    },
+    {
+     "id": "home6-fleet-rls-opco-context-unverified",
+     "registered": true,
+     "block_ready_key": "home6-fleet-rls-opco-context-unverified"
+    },
+    {
+     "id": "import-1v2-trk-full-coa-equity",
+     "registered": true,
+     "block_ready_key": "import-1v2-trk-full-coa-equity"
+    },
+    {
+     "id": "import-4v2-gl-detail-hardened",
+     "registered": true,
+     "block_ready_key": "import-4v2-gl-detail-hardened"
+    },
+    {
+     "id": "import-5-qbo-import-ui",
+     "registered": true,
+     "block_ready_key": "import-5-qbo-import-ui"
+    },
+    {
+     "id": "import-block-1-trk-coa-sync",
+     "registered": true,
+     "block_ready_key": "import-block-1-trk-coa-sync"
+    },
+    {
+     "id": "import-block-4v2-gl-detail-hardened",
+     "registered": true,
+     "block_ready_key": "import-block-4v2-gl-detail-hardened"
+    },
+    {
+     "id": "intercompany-trk-transp-consolidation-decision",
+     "registered": true,
+     "block_ready_key": "intercompany-trk-transp-consolidation-decision"
+    },
+    {
+     "id": "linkage-safety-event-no-auto-escrow",
+     "registered": true,
+     "block_ready_key": "linkage-safety-event-no-auto-escrow"
+    },
+    {
+     "id": "p1-trigger-optimization",
+     "registered": true,
+     "block_ready_key": "p1-trigger-optimization"
+    },
+    {
+     "id": "phase8-audit162-database-audit",
+     "registered": true,
+     "block_ready_key": "phase8-audit162-database-audit"
+    },
+    {
+     "id": "product-service-categories-rename-and-creator",
+     "registered": true,
+     "block_ready_key": "product-service-categories-rename-and-creator"
+    },
+    {
+     "id": "public-audit-log-partitions-no-rls",
+     "registered": true,
+     "block_ready_key": "public-audit-log-partitions-no-rls"
+    },
+    {
+     "id": "remediation-t4.1-duplicate-schema-consolidatio",
+     "registered": true,
+     "block_ready_key": "remediation-t4.1-duplicate-schema-consolidatio"
+    },
+    {
+     "id": "repair-b-driver-deduction-auth-template-not-se",
+     "registered": true,
+     "block_ready_key": "repair-b-driver-deduction-auth-template-not-se"
+    },
+    {
+     "id": "retire-parallel-payroll-settlement-engine",
+     "registered": true,
+     "block_ready_key": "retire-parallel-payroll-settlement-engine"
+    },
+    {
+     "id": "wave3-dot-49cfr-fields-missing",
+     "registered": true,
+     "block_ready_key": "wave3-dot-49cfr-fields-missing"
+    },
+    {
+     "id": "wo-cancellation-reasons-fold-into-void-cancel-",
+     "registered": true,
+     "block_ready_key": "wo-cancellation-reasons-fold-into-void-cancel-"
+    },
+    {
+     "id": "year-end-close-retained-earnings-asc852-freshs",
+     "registered": true,
+     "block_ready_key": "year-end-close-retained-earnings-asc852-freshs"
+    }
+   ]
+  },
+  {
+   "n": 6,
+   "key": "tier2",
+   "label": "Tier-2",
+   "authored_total": 206,
+   "registered_count": 206,
+   "blocks": [
+    {
+     "id": "0007-pattern-5-split-brain-engines",
+     "registered": true,
+     "block_ready_key": "0007-pattern-5-split-brain-engines"
+    },
+    {
+     "id": "0007-pattern-9-fake-persist-evidence-loss",
+     "registered": true,
+     "block_ready_key": "0007-pattern-9-fake-persist-evidence-loss"
+    },
+    {
+     "id": "0007-session-flag-rollout-crossentity",
+     "registered": true,
+     "block_ready_key": "0007-session-flag-rollout-crossentity"
+    },
+    {
+     "id": "0008-g2-reporting-schema-canonical",
+     "registered": true,
+     "block_ready_key": "0008-g2-reporting-schema-canonical"
+    },
+    {
+     "id": "0010-f15-plaid-amex-wf-error-status",
+     "registered": true,
+     "block_ready_key": "0010-f15-plaid-amex-wf-error-status"
+    },
+    {
+     "id": "0010-f6-phantom-write-targets-whatsapp-sms-qbo",
+     "registered": true,
+     "block_ready_key": "0010-f6-phantom-write-targets-whatsapp-sms-qbo"
+    },
+    {
+     "id": "0033-verify-fk-integrity-guard",
+     "registered": true,
+     "block_ready_key": "0033-verify-fk-integrity-guard"
+    },
+    {
+     "id": "0091-c2-3",
+     "registered": true,
+     "block_ready_key": "0091-c2-3"
+    },
+    {
+     "id": "0091-d1-2",
+     "registered": true,
+     "block_ready_key": "0091-d1-2"
+    },
+    {
+     "id": "0091-g10-h4",
+     "registered": true,
+     "block_ready_key": "0091-g10-h4"
+    },
+    {
+     "id": "0091-g5-2",
+     "registered": true,
+     "block_ready_key": "0091-g5-2"
+    },
+    {
+     "id": "0091-g9-h4",
+     "registered": true,
+     "block_ready_key": "0091-g9-h4"
+    },
+    {
+     "id": "0091-h2-1",
+     "registered": true,
+     "block_ready_key": "0091-h2-1"
+    },
+    {
+     "id": "0091-h2-3",
+     "registered": true,
+     "block_ready_key": "0091-h2-3"
+    },
+    {
+     "id": "0091-m-docs-2",
+     "registered": true,
+     "block_ready_key": "0091-m-docs-2"
+    },
+    {
+     "id": "0091-m-driver-1",
+     "registered": true,
+     "block_ready_key": "0091-m-driver-1"
+    },
+    {
+     "id": "0091-m-home-2",
+     "registered": true,
+     "block_ready_key": "0091-m-home-2"
+    },
+    {
+     "id": "0243-b3-1-legacy-wo-create-endpoint-malformed-",
+     "registered": true,
+     "block_ready_key": "0243-b3-1-legacy-wo-create-endpoint-malformed-"
+    },
+    {
+     "id": "0243-c2-3-samsara-position-poll-no-entity-scop",
+     "registered": true,
+     "block_ready_key": "0243-c2-3-samsara-position-poll-no-entity-scop"
+    },
+    {
+     "id": "0243-c2-4-bypass-driver-reads-pk-only",
+     "registered": true,
+     "block_ready_key": "0243-c2-4-bypass-driver-reads-pk-only"
+    },
+    {
+     "id": "0243-d1-3-inline-drawers-drop-captured-fields",
+     "registered": true,
+     "block_ready_key": "0243-d1-3-inline-drawers-drop-captured-fields"
+    },
+    {
+     "id": "0243-d1-4-sub-customer-parent-not-enforced",
+     "registered": true,
+     "block_ready_key": "0243-d1-4-sub-customer-parent-not-enforced"
+    },
+    {
+     "id": "0243-d4-1-samsara-webhook-driver-pairing-equip",
+     "registered": true,
+     "block_ready_key": "0243-d4-1-samsara-webhook-driver-pairing-equip"
+    },
+    {
+     "id": "0243-e1-3-two-scheduled-report-engines",
+     "registered": true,
+     "block_ready_key": "0243-e1-3-two-scheduled-report-engines"
+    },
+    {
+     "id": "0243-e1-6-bank-geo-schema-stranded",
+     "registered": true,
+     "block_ready_key": "0243-e1-6-bank-geo-schema-stranded"
+    },
+    {
+     "id": "0243-g10-c3-sentry-half-live-crons-pwa",
+     "registered": true,
+     "block_ready_key": "0243-g10-c3-sentry-half-live-crons-pwa"
+    },
+    {
+     "id": "0243-g10-m-seven-integrity-reliability-gaps",
+     "registered": true,
+     "block_ready_key": "0243-g10-m-seven-integrity-reliability-gaps"
+    },
+    {
+     "id": "0243-g5-2-qbo-txn-inside-db-transaction",
+     "registered": true,
+     "block_ready_key": "0243-g5-2-qbo-txn-inside-db-transaction"
+    },
+    {
+     "id": "0243-g5-4-n-plus-1-report-loops-select-star",
+     "registered": true,
+     "block_ready_key": "0243-g5-4-n-plus-1-report-loops-select-star"
+    },
+    {
+     "id": "0243-g9-h4-load-status-advisory-not-enforced",
+     "registered": true,
+     "block_ready_key": "0243-g9-h4-load-status-advisory-not-enforced"
+    },
+    {
+     "id": "0243-g9-m-eight-workflow-status-defects",
+     "registered": true,
+     "block_ready_key": "0243-g9-m-eight-workflow-status-defects"
+    },
+    {
+     "id": "0243-h2-1-xlsx-vulnerable-dep",
+     "registered": true,
+     "block_ready_key": "0243-h2-1-xlsx-vulnerable-dep"
+    },
+    {
+     "id": "0243-h2-3-lucia-deprecated-auth-lib",
+     "registered": true,
+     "block_ready_key": "0243-h2-3-lucia-deprecated-auth-lib"
+    },
+    {
+     "id": "0243-h5-1-append-only-spine-unbounded-growth",
+     "registered": true,
+     "block_ready_key": "0243-h5-1-append-only-spine-unbounded-growth"
+    },
+    {
+     "id": "0243-h5-3-no-r2-evidence-check-dr-drill-stub-7",
+     "registered": true,
+     "block_ready_key": "0243-h5-3-no-r2-evidence-check-dr-drill-stub-7"
+    },
+    {
+     "id": "0243-swl-2-silent-masks-recon-financehub-mirro",
+     "registered": true,
+     "block_ready_key": "0243-swl-2-silent-masks-recon-financehub-mirro"
+    },
+    {
+     "id": "0251-gap10-commodity-product-catalog",
+     "registered": true,
+     "block_ready_key": "0251-gap10-commodity-product-catalog"
+    },
+    {
+     "id": "0251-gap11-commodity-gl",
+     "registered": true,
+     "block_ready_key": "0251-gap11-commodity-gl"
+    },
+    {
+     "id": "0251-gap12-commodity-equipment-mapping",
+     "registered": true,
+     "block_ready_key": "0251-gap12-commodity-equipment-mapping"
+    },
+    {
+     "id": "0251-gap13-commodity-rate-matrix",
+     "registered": true,
+     "block_ready_key": "0251-gap13-commodity-rate-matrix"
+    },
+    {
+     "id": "0251-gap16-charge-code-catalog",
+     "registered": true,
+     "block_ready_key": "0251-gap16-charge-code-catalog"
+    },
+    {
+     "id": "0251-gap17-charge-code-default-rates",
+     "registered": true,
+     "block_ready_key": "0251-gap17-charge-code-default-rates"
+    },
+    {
+     "id": "0251-gap4-driver-vendor-mapping",
+     "registered": true,
+     "block_ready_key": "0251-gap4-driver-vendor-mapping"
+    },
+    {
+     "id": "0251-gap9-charge-line-audit-trail",
+     "registered": true,
+     "block_ready_key": "0251-gap9-charge-line-audit-trail"
+    },
+    {
+     "id": "0252-audit146-workplace-safety-osha",
+     "registered": true,
+     "block_ready_key": "0252-audit146-workplace-safety-osha"
+    },
+    {
+     "id": "0270-no-auto-driver-status-from-safety-events",
+     "registered": true,
+     "block_ready_key": "0270-no-auto-driver-status-from-safety-events"
+    },
+    {
+     "id": "0270-no-auto-driver-termination-walkoff-noshow",
+     "registered": true,
+     "block_ready_key": "0270-no-auto-driver-termination-walkoff-noshow"
+    },
+    {
+     "id": "0277-csrf-tokens-recommendation",
+     "registered": true,
+     "block_ready_key": "0277-csrf-tokens-recommendation"
+    },
+    {
+     "id": "0278-safety-gap1-auto-driver-status",
+     "registered": true,
+     "block_ready_key": "0278-safety-gap1-auto-driver-status"
+    },
+    {
+     "id": "0278-safety-gap3-auto-notifications",
+     "registered": true,
+     "block_ready_key": "0278-safety-gap3-auto-notifications"
+    },
+    {
+     "id": "0285-acct-gap2-no-auto-invoice-send",
+     "registered": true,
+     "block_ready_key": "0285-acct-gap2-no-auto-invoice-send"
+    },
+    {
+     "id": "0285-financehub-ui-only",
+     "registered": true,
+     "block_ready_key": "0285-financehub-ui-only"
+    },
+    {
+     "id": "0441-mod10-cashflow-accounting-routes-dead",
+     "registered": true,
+     "block_ready_key": "0441-mod10-cashflow-accounting-routes-dead"
+    },
+    {
+     "id": "0441-mod11-deadhead-phantom-fuel-columns",
+     "registered": true,
+     "block_ready_key": "0441-mod11-deadhead-phantom-fuel-columns"
+    },
+    {
+     "id": "0441-mod11-dispatch-margin-cash-500",
+     "registered": true,
+     "block_ready_key": "0441-mod11-dispatch-margin-cash-500"
+    },
+    {
+     "id": "0441-mod11-fuel-recon-zero-and-noop-save-link",
+     "registered": true,
+     "block_ready_key": "0441-mod11-fuel-recon-zero-and-noop-save-link"
+    },
+    {
+     "id": "0441-mod11-ifta-drift-two-preparers",
+     "registered": true,
+     "block_ready_key": "0441-mod11-ifta-drift-two-preparers"
+    },
+    {
+     "id": "0441-mod11-profit-per-truck-cron-double-count",
+     "registered": true,
+     "block_ready_key": "0441-mod11-profit-per-truck-cron-double-count"
+    },
+    {
+     "id": "0441-mod11-three-parallel-scheduled-report-sys",
+     "registered": true,
+     "block_ready_key": "0441-mod11-three-parallel-scheduled-report-sys"
+    },
+    {
+     "id": "0441-mod11-users-changerole-no-approver-ui",
+     "registered": true,
+     "block_ready_key": "0441-mod11-users-changerole-no-approver-ui"
+    },
+    {
+     "id": "0441-mod12-eld-orphaned-under-safety-permanent",
+     "registered": true,
+     "block_ready_key": "0441-mod12-eld-orphaned-under-safety-permanent"
+    },
+    {
+     "id": "0441-mod13-load-cancellation-reasons-split-bra",
+     "registered": true,
+     "block_ready_key": "0441-mod13-load-cancellation-reasons-split-bra"
+    },
+    {
+     "id": "0441-mod2-csv-import-mileage-phantom",
+     "registered": true,
+     "block_ready_key": "0441-mod2-csv-import-mileage-phantom"
+    },
+    {
+     "id": "0441-mod2-dvir-followup-wo-wrong-table",
+     "registered": true,
+     "block_ready_key": "0441-mod2-dvir-followup-wo-wrong-table"
+    },
+    {
+     "id": "0441-mod2-is-oos-not-read-by-dispatch",
+     "registered": true,
+     "block_ready_key": "0441-mod2-is-oos-not-read-by-dispatch"
+    },
+    {
+     "id": "0441-mod2-parts-fragmentation",
+     "registered": true,
+     "block_ready_key": "0441-mod2-parts-fragmentation"
+    },
+    {
+     "id": "0441-mod2-settings-view-only",
+     "registered": true,
+     "block_ready_key": "0441-mod2-settings-view-only"
+    },
+    {
+     "id": "0441-mod2-wo-split-brain",
+     "registered": true,
+     "block_ready_key": "0441-mod2-wo-split-brain"
+    },
+    {
+     "id": "0441-mod3-fuel-fraud-detector-cron-never-invok",
+     "registered": true,
+     "block_ready_key": "0441-mod3-fuel-fraud-detector-cron-never-invok"
+    },
+    {
+     "id": "0441-mod4-dispatch-cancel-bypasses-approval-ga",
+     "registered": true,
+     "block_ready_key": "0441-mod4-dispatch-cancel-bypasses-approval-ga"
+    },
+    {
+     "id": "0441-mod4-dispatch-cancellation-reasons-decoy-",
+     "registered": true,
+     "block_ready_key": "0441-mod4-dispatch-cancellation-reasons-decoy-"
+    },
+    {
+     "id": "0441-mod4-dispatch-chat-no-attachment-upload",
+     "registered": true,
+     "block_ready_key": "0441-mod4-dispatch-chat-no-attachment-upload"
+    },
+    {
+     "id": "0441-mod4-dispatch-settings-localstorage-only",
+     "registered": true,
+     "block_ready_key": "0441-mod4-dispatch-settings-localstorage-only"
+    },
+    {
+     "id": "0441-mod5-auto-deductions-team-splits-dead",
+     "registered": true,
+     "block_ready_key": "0441-mod5-auto-deductions-team-splits-dead"
+    },
+    {
+     "id": "0441-mod5-disputes-no-approve-deny-dual-check",
+     "registered": true,
+     "block_ready_key": "0441-mod5-disputes-no-approve-deny-dual-check"
+    },
+    {
+     "id": "0441-mod5-onboarding-step-data-only",
+     "registered": true,
+     "block_ready_key": "0441-mod5-onboarding-step-data-only"
+    },
+    {
+     "id": "0441-mod5-settlements-card-deprecated-table",
+     "registered": true,
+     "block_ready_key": "0441-mod5-settlements-card-deprecated-table"
+    },
+    {
+     "id": "0441-mod6-accident-police-claim-numbers-unboun",
+     "registered": true,
+     "block_ready_key": "0441-mod6-accident-police-claim-numbers-unboun"
+    },
+    {
+     "id": "0441-mod6-damage-insurance-worker-unregistered",
+     "registered": true,
+     "block_ready_key": "0441-mod6-damage-insurance-worker-unregistered"
+    },
+    {
+     "id": "0441-mod6-dot-inspections-pdf-discard",
+     "registered": true,
+     "block_ready_key": "0441-mod6-dot-inspections-pdf-discard"
+    },
+    {
+     "id": "0441-mod7-myaccountant-flag-no-seed",
+     "registered": true,
+     "block_ready_key": "0441-mod7-myaccountant-flag-no-seed"
+    },
+    {
+     "id": "0441-mod8-tx-fields-captured-not-sent",
+     "registered": true,
+     "block_ready_key": "0441-mod8-tx-fields-captured-not-sent"
+    },
+    {
+     "id": "0441-mod9-four-disjoint-vendor-tables",
+     "registered": true,
+     "block_ready_key": "0441-mod9-four-disjoint-vendor-tables"
+    },
+    {
+     "id": "0441-mod9-mileage-dropped-on-create-edit",
+     "registered": true,
+     "block_ready_key": "0441-mod9-mileage-dropped-on-create-edit"
+    },
+    {
+     "id": "0441-mod9-vendor-contact-fields-notes-blob",
+     "registered": true,
+     "block_ready_key": "0441-mod9-vendor-contact-fields-notes-blob"
+    },
+    {
+     "id": "0490-new3-c2-1-detectitemsdrift-scoping",
+     "registered": true,
+     "block_ready_key": "0490-new3-c2-1-detectitemsdrift-scoping"
+    },
+    {
+     "id": "0518-r09-plaid-amex-wf-error",
+     "registered": true,
+     "block_ready_key": "0518-r09-plaid-amex-wf-error"
+    },
+    {
+     "id": "0518-r17-147-fk-less-financial-columns",
+     "registered": true,
+     "block_ready_key": "0518-r17-147-fk-less-financial-columns"
+    },
+    {
+     "id": "0519-bk1-plaid-amex-wf-error",
+     "registered": true,
+     "block_ready_key": "0519-bk1-plaid-amex-wf-error"
+    },
+    {
+     "id": "0519-co1-0-compliance-notification-rules-confi",
+     "registered": true,
+     "block_ready_key": "0519-co1-0-compliance-notification-rules-confi"
+    },
+    {
+     "id": "0519-co2-unassigned-drivers-hos-gap",
+     "registered": true,
+     "block_ready_key": "0519-co2-unassigned-drivers-hos-gap"
+    },
+    {
+     "id": "0519-dq1-driver-dummy-test-record-in-prod",
+     "registered": true,
+     "block_ready_key": "0519-dq1-driver-dummy-test-record-in-prod"
+    },
+    {
+     "id": "0519-dq2-driver-placeholder-phone",
+     "registered": true,
+     "block_ready_key": "0519-dq2-driver-placeholder-phone"
+    },
+    {
+     "id": "0519-dq3-driver-blank-cdl",
+     "registered": true,
+     "block_ready_key": "0519-dq3-driver-blank-cdl"
+    },
+    {
+     "id": "0519-dq4-fleet-blank-vin-make-model",
+     "registered": true,
+     "block_ready_key": "0519-dq4-fleet-blank-vin-make-model"
+    },
+    {
+     "id": "0519-es1-58-unscoped-tables",
+     "registered": true,
+     "block_ready_key": "0519-es1-58-unscoped-tables"
+    },
+    {
+     "id": "0519-ma1-0-pm-schedules-for-122-vehicles",
+     "registered": true,
+     "block_ready_key": "0519-ma1-0-pm-schedules-for-122-vehicles"
+    },
+    {
+     "id": "0519-qbo1-failed-qbo-sync-event",
+     "registered": true,
+     "block_ready_key": "0519-qbo1-failed-qbo-sync-event"
+    },
+    {
+     "id": "0519-qbo2-vendor-mapping-integrity-warning",
+     "registered": true,
+     "block_ready_key": "0519-qbo2-vendor-mapping-integrity-warning"
+    },
+    {
+     "id": "0519-ri1-689-orphan-fk-columns",
+     "registered": true,
+     "block_ready_key": "0519-ri1-689-orphan-fk-columns"
+    },
+    {
+     "id": "accounting-2-ap-aging-qbo-mirror-population",
+     "registered": true,
+     "block_ready_key": "accounting-2-ap-aging-qbo-mirror-population"
+    },
+    {
+     "id": "accounting2-ap-aging-false-qbo-mirror-claim",
+     "registered": true,
+     "block_ready_key": "accounting2-ap-aging-false-qbo-mirror-claim"
+    },
+    {
+     "id": "acct-fmcsa-fire-and-forget-retry",
+     "registered": true,
+     "block_ready_key": "acct-fmcsa-fire-and-forget-retry"
+    },
+    {
+     "id": "audit16-budget-tracking-system",
+     "registered": true,
+     "block_ready_key": "audit16-budget-tracking-system"
+    },
+    {
+     "id": "audit17-procurement-purchase-order-system",
+     "registered": true,
+     "block_ready_key": "audit17-procurement-purchase-order-system"
+    },
+    {
+     "id": "audit2-internal-controls-approval-workflow",
+     "registered": true,
+     "block_ready_key": "audit2-internal-controls-approval-workflow"
+    },
+    {
+     "id": "audit21-capex-tracking-approval",
+     "registered": true,
+     "block_ready_key": "audit21-capex-tracking-approval"
+    },
+    {
+     "id": "audit25-fx-rate-hedging-translation",
+     "registered": true,
+     "block_ready_key": "audit25-fx-rate-hedging-translation"
+    },
+    {
+     "id": "audit4-tax-return-automation",
+     "registered": true,
+     "block_ready_key": "audit4-tax-return-automation"
+    },
+    {
+     "id": "audit5-fraud-anomaly-detection",
+     "registered": true,
+     "block_ready_key": "audit5-fraud-anomaly-detection"
+    },
+    {
+     "id": "audit7-cost-center-tracking",
+     "registered": true,
+     "block_ready_key": "audit7-cost-center-tracking"
+    },
+    {
+     "id": "audit8-revenue-leakage-detection",
+     "registered": true,
+     "block_ready_key": "audit8-revenue-leakage-detection"
+    },
+    {
+     "id": "audit9-expense-validation-duplicate-detection",
+     "registered": true,
+     "block_ready_key": "audit9-expense-validation-duplicate-detection"
+    },
+    {
+     "id": "banking-1-uncategorized-kpi-reconciliation",
+     "registered": true,
+     "block_ready_key": "banking-1-uncategorized-kpi-reconciliation"
+    },
+    {
+     "id": "banking-2-plaid-connections-error-state",
+     "registered": true,
+     "block_ready_key": "banking-2-plaid-connections-error-state"
+    },
+    {
+     "id": "banking-b2-bank-coa-bridge",
+     "registered": true,
+     "block_ready_key": "banking-b2-bank-coa-bridge"
+    },
+    {
+     "id": "banking-b4-driver-vendor-account-mapping",
+     "registered": true,
+     "block_ready_key": "banking-b4-driver-vendor-account-mapping"
+    },
+    {
+     "id": "banking2-plaid-connections-error-state",
+     "registered": true,
+     "block_ready_key": "banking-2-plaid-connections-error-state"
+    },
+    {
+     "id": "bf10c-driver-conduct-catalogs-scorecard",
+     "registered": true,
+     "block_ready_key": "bf10c-driver-conduct-catalogs-scorecard"
+    },
+    {
+     "id": "bf2-walkoff-termination-trigger",
+     "registered": true,
+     "block_ready_key": "bf2-walkoff-termination-trigger"
+    },
+    {
+     "id": "biz-flow-6-no-automatic-invoice-sending",
+     "registered": true,
+     "block_ready_key": "biz-flow-6-no-automatic-invoice-sending"
+    },
+    {
+     "id": "biz-flow-8-no-equipment-log-auto-update",
+     "registered": true,
+     "block_ready_key": "biz-flow-8-no-equipment-log-auto-update"
+    },
+    {
+     "id": "biz-flow-9-no-automatic-driver-status-update-s",
+     "registered": true,
+     "block_ready_key": "biz-flow-9-no-automatic-driver-status-update-s"
+    },
+    {
+     "id": "catalogs-accounts-company-scope-fix",
+     "registered": true,
+     "block_ready_key": "catalogs-accounts-company-scope-fix"
+    },
+    {
+     "id": "custvend-par1-vendor-credits-no-ui",
+     "registered": true,
+     "block_ready_key": "custvend-par1-vendor-credits-no-ui"
+    },
+    {
+     "id": "d5-driver-detail-scope-optional-param",
+     "registered": true,
+     "block_ready_key": "d5-driver-detail-scope-optional-param"
+    },
+    {
+     "id": "db249-finance-schema-naming-drift",
+     "registered": true,
+     "block_ready_key": "db249-finance-schema-naming-drift"
+    },
+    {
+     "id": "db249-index-optimization-3",
+     "registered": true,
+     "block_ready_key": "db249-index-optimization-3"
+    },
+    {
+     "id": "dispatch-sweep-gap-15",
+     "registered": true,
+     "block_ready_key": "dispatch-sweep-gap-15"
+    },
+    {
+     "id": "dispatch-sweep-gap-20",
+     "registered": true,
+     "block_ready_key": "dispatch-sweep-gap-20"
+    },
+    {
+     "id": "dispatch-sweep-gap-21",
+     "registered": true,
+     "block_ready_key": "dispatch-sweep-gap-21"
+    },
+    {
+     "id": "dispatch-sweep-gap-25",
+     "registered": true,
+     "block_ready_key": "dispatch-sweep-gap-25"
+    },
+    {
+     "id": "dispatch-sweep-gap-26",
+     "registered": true,
+     "block_ready_key": "dispatch-sweep-gap-26"
+    },
+    {
+     "id": "dispatch-sweep-gap-27",
+     "registered": true,
+     "block_ready_key": "dispatch-sweep-gap-27"
+    },
+    {
+     "id": "dispatch-sweep-gap-40",
+     "registered": true,
+     "block_ready_key": "dispatch-sweep-gap-40"
+    },
+    {
+     "id": "dispatch-sweep-gap-8",
+     "registered": true,
+     "block_ready_key": "dispatch-sweep-gap-8"
+    },
+    {
+     "id": "dispatch-sweep-gap-9",
+     "registered": true,
+     "block_ready_key": "dispatch-sweep-gap-9"
+    },
+    {
+     "id": "docs-required-docs-ruleset-owner-decision",
+     "registered": true,
+     "block_ready_key": "docs-required-docs-ruleset-owner-decision"
+    },
+    {
+     "id": "dp-03-cdl-expires-blank",
+     "registered": true,
+     "block_ready_key": "dp-03-cdl-expires-blank"
+    },
+    {
+     "id": "dp-04-hire-date-blank",
+     "registered": true,
+     "block_ready_key": "dp-04-hire-date-blank"
+    },
+    {
+     "id": "driverhub-2-demo-duplicate-drivers-cleanup",
+     "registered": true,
+     "block_ready_key": "driverhub-2-demo-duplicate-drivers-cleanup"
+    },
+    {
+     "id": "expand-escrow-non-bond-deductions",
+     "registered": true,
+     "block_ready_key": "expand-escrow-non-bond-deductions"
+    },
+    {
+     "id": "fact-fix1-duplicate-vendors-banner",
+     "registered": true,
+     "block_ready_key": "fact-fix1-duplicate-vendors-banner"
+    },
+    {
+     "id": "fact-par-1-factoring-submission-gating",
+     "registered": true,
+     "block_ready_key": "fact-par-1-factoring-submission-gating"
+    },
+    {
+     "id": "fact-par-1-submission-workflow",
+     "registered": true,
+     "block_ready_key": "fact-par-1-submission-workflow"
+    },
+    {
+     "id": "fact-par1-submissionqueue-unrouted",
+     "registered": true,
+     "block_ready_key": "fact-par1-submissionqueue-unrouted"
+    },
+    {
+     "id": "factoring-g3-debtor-credit-check-decision-note",
+     "registered": true,
+     "block_ready_key": "factoring-g3-debtor-credit-check-decision-note"
+    },
+    {
+     "id": "fk-equipment-transfer-log-0289",
+     "registered": true,
+     "block_ready_key": "fk-equipment-transfer-log-0289"
+    },
+    {
+     "id": "fk-safety-events-driver-status-0289",
+     "registered": true,
+     "block_ready_key": "fk-safety-events-driver-status-0289"
+    },
+    {
+     "id": "fk-termination-load-0289",
+     "registered": true,
+     "block_ready_key": "fk-termination-load-0289"
+    },
+    {
+     "id": "fl-01-vin-make-model-year-blank",
+     "registered": true,
+     "block_ready_key": "fl-01-vin-make-model-year-blank"
+    },
+    {
+     "id": "fl-02-location-blank-despite-samsara",
+     "registered": true,
+     "block_ready_key": "fl-02-location-blank-despite-samsara"
+    },
+    {
+     "id": "fl-03-dot-oo-dates-blank",
+     "registered": true,
+     "block_ready_key": "fl-03-dot-oo-dates-blank"
+    },
+    {
+     "id": "flow1-auto-termination-walkoff-noshow",
+     "registered": true,
+     "block_ready_key": "flow1-auto-termination-walkoff-noshow"
+    },
+    {
+     "id": "flow1-escrow-linked-to-termination-record",
+     "registered": true,
+     "block_ready_key": "flow1-escrow-linked-to-termination-record"
+    },
+    {
+     "id": "flow1-termination-load-escrow-linkage",
+     "registered": true,
+     "block_ready_key": "flow1-termination-load-escrow-linkage"
+    },
+    {
+     "id": "flow1-termination-load-linkage-source-load-id",
+     "registered": true,
+     "block_ready_key": "flow1-termination-load-linkage-source-load-id"
+    },
+    {
+     "id": "flow2-auto-deduction-trigger-from-customer-exp",
+     "registered": true,
+     "block_ready_key": "flow2-auto-deduction-trigger-from-customer-exp"
+    },
+    {
+     "id": "flow3-cancellation-auto-customer-charge",
+     "registered": true,
+     "block_ready_key": "flow3-cancellation-auto-customer-charge"
+    },
+    {
+     "id": "flow3-cancellation-auto-escrow-deduction",
+     "registered": true,
+     "block_ready_key": "flow3-cancellation-auto-escrow-deduction"
+    },
+    {
+     "id": "flow3-cancellation-billing-deduction-linkage",
+     "registered": true,
+     "block_ready_key": "flow3-cancellation-billing-deduction-linkage"
+    },
+    {
+     "id": "flow3-cancellation-fk-to-billing-and-deduction",
+     "registered": true,
+     "block_ready_key": "flow3-cancellation-fk-to-billing-and-deduction"
+    },
+    {
+     "id": "flow5-dual-deduction-systems-consolidate",
+     "registered": true,
+     "block_ready_key": "flow5-dual-deduction-systems-consolidate"
+    },
+    {
+     "id": "flow5-dual-deduction-systems-simplify",
+     "registered": true,
+     "block_ready_key": "flow5-dual-deduction-systems-simplify"
+    },
+    {
+     "id": "flow6-auto-invoice-sending",
+     "registered": true,
+     "block_ready_key": "flow6-auto-invoice-sending"
+    },
+    {
+     "id": "flow6-auto-payment-application",
+     "registered": true,
+     "block_ready_key": "flow6-auto-payment-application"
+    },
+    {
+     "id": "flow6-manual-payment-application",
+     "registered": true,
+     "block_ready_key": "flow6-manual-payment-application"
+    },
+    {
+     "id": "flow9-safety-event-auto-escrow-deduction",
+     "registered": true,
+     "block_ready_key": "flow9-safety-event-auto-escrow-deduction"
+    },
+    {
+     "id": "flow9-safety-event-auto-notifications",
+     "registered": true,
+     "block_ready_key": "flow9-safety-event-auto-notifications"
+    },
+    {
+     "id": "flow9-safety-event-no-auto-status-escrow-notif",
+     "registered": true,
+     "block_ready_key": "flow9-safety-event-no-auto-status-escrow-notif"
+    },
+    {
+     "id": "form425c-case-number-export-validation-gap",
+     "registered": true,
+     "block_ready_key": "form425c-case-number-export-validation-gap"
+    },
+    {
+     "id": "form425c-export-refuse-without-case-number",
+     "registered": true,
+     "block_ready_key": "form425c-export-refuse-without-case-number"
+    },
+    {
+     "id": "gated-blocks-misc-disp-wizard-wo-ent-audit-fh-",
+     "registered": true,
+     "block_ready_key": "gated-blocks-misc-disp-wizard-wo-ent-audit-fh-"
+    },
+    {
+     "id": "ground-truth-g5-audit-log-silent-skip-writers",
+     "registered": true,
+     "block_ready_key": "ground-truth-g5-audit-log-silent-skip-writers"
+    },
+    {
+     "id": "hiredate-provenance-partial",
+     "registered": true,
+     "block_ready_key": "hiredate-provenance-partial"
+    },
+    {
+     "id": "hiring-bypass-and-safety-contract-alerts",
+     "registered": true,
+     "block_ready_key": "hiring-bypass-and-safety-contract-alerts"
+    },
+    {
+     "id": "home-7-qbo-vendor-count-single-source",
+     "registered": true,
+     "block_ready_key": "home-7-qbo-vendor-count-single-source"
+    },
+    {
+     "id": "ifta-sales-tax-booking-location-confirm",
+     "registered": true,
+     "block_ready_key": "ifta-sales-tax-booking-location-confirm"
+    },
+    {
+     "id": "linkage-safety-event-no-driver-status-update",
+     "registered": true,
+     "block_ready_key": "linkage-safety-event-no-driver-status-update"
+    },
+    {
+     "id": "linkage-walkoff-no-auto-termination",
+     "registered": true,
+     "block_ready_key": "linkage-walkoff-no-auto-termination"
+    },
+    {
+     "id": "migrate-faro-to-rts",
+     "registered": true,
+     "block_ready_key": "migrate-faro-to-rts"
+    },
+    {
+     "id": "module25-required-docs-ruleset-per-entity",
+     "registered": true,
+     "block_ready_key": "module25-required-docs-ruleset-per-entity"
+    },
+    {
+     "id": "notif-b-android-capacitor-fcm",
+     "registered": true,
+     "block_ready_key": "notif-b-android-capacitor-fcm"
+    },
+    {
+     "id": "owner-batch-s2-units-value-catalog",
+     "registered": true,
+     "block_ready_key": "owner-batch-s2-units-value-catalog"
+    },
+    {
+     "id": "p1-caching-strategy",
+     "registered": true,
+     "block_ready_key": "p1-caching-strategy"
+    },
+    {
+     "id": "p1-data-encryption-at-rest",
+     "registered": true,
+     "block_ready_key": "p1-data-encryption-at-rest"
+    },
+    {
+     "id": "p1-error-handling",
+     "registered": true,
+     "block_ready_key": "p1-error-handling"
+    },
+    {
+     "id": "p1-error-tracking",
+     "registered": true,
+     "block_ready_key": "p1-error-tracking"
+    },
+    {
+     "id": "p1-logging-system",
+     "registered": true,
+     "block_ready_key": "p1-logging-system"
+    },
+    {
+     "id": "p1-session-timeout",
+     "registered": true,
+     "block_ready_key": "p1-session-timeout"
+    },
+    {
+     "id": "phase13-audit217-insurance-industry",
+     "registered": true,
+     "block_ready_key": "phase13-audit217-insurance-industry"
+    },
+    {
+     "id": "ps-a-item-editor-account-pickers-no-addnew",
+     "registered": true,
+     "block_ready_key": "ps-a-item-editor-account-pickers-no-addnew"
+    },
+    {
+     "id": "qbo-realtime-webhook-sync",
+     "registered": true,
+     "block_ready_key": "qbo-realtime-webhook-sync"
+    },
+    {
+     "id": "qbo-sync-staleness-detection-transp",
+     "registered": true,
+     "block_ready_key": "qbo-sync-staleness-detection-transp"
+    },
+    {
+     "id": "s-06-log-event-no-time-field",
+     "registered": true,
+     "block_ready_key": "s-06-log-event-no-time-field"
+    },
+    {
+     "id": "s-07-log-event-missing-dot-fields",
+     "registered": true,
+     "block_ready_key": "s-07-log-event-missing-dot-fields"
+    },
+    {
+     "id": "safety-dot-fields-and-driver-create-fix",
+     "registered": true,
+     "block_ready_key": "safety-dot-fields-and-driver-create-fix"
+    },
+    {
+     "id": "systemic-pattern-never-toast-success-posted-fa",
+     "registered": true,
+     "block_ready_key": "systemic-pattern-never-toast-success-posted-fa"
+    },
+    {
+     "id": "systemic-pattern-r2-verify-bytes-guard",
+     "registered": true,
+     "block_ready_key": "systemic-pattern-r2-verify-bytes-guard"
+    },
+    {
+     "id": "threewayaudit-biz02-qbo-sync-workers-stale",
+     "registered": true,
+     "block_ready_key": "threewayaudit-biz02-qbo-sync-workers-stale"
+    },
+    {
+     "id": "twice-daily-mandatory-checkin-compliance-featu",
+     "registered": true,
+     "block_ready_key": "twice-daily-mandatory-checkin-compliance-featu"
+    },
+    {
+     "id": "users-par-1-permission-matrix",
+     "registered": true,
+     "block_ready_key": "users-par-1-permission-matrix"
+    },
+    {
+     "id": "usmca-banking-ingestion-dedup",
+     "registered": true,
+     "block_ready_key": "usmca-banking-ingestion-dedup"
+    },
+    {
+     "id": "usmca-unhide-entity-switcher",
+     "registered": true,
+     "block_ready_key": "usmca-unhide-entity-switcher"
+    },
+    {
+     "id": "vend3-test-vendor-rows-visible",
+     "registered": true,
+     "block_ready_key": "vend3-test-vendor-rows-visible"
+    },
+    {
+     "id": "vend4-dual-qbo-sync-single-source-of-truth-dec",
+     "registered": true,
+     "block_ready_key": "vend4-dual-qbo-sync-single-source-of-truth-dec"
+    }
+   ]
+  },
+  {
+   "n": 7,
+   "key": "tier3",
+   "label": "Tier-3 (UI / docs / tests — ship on green)",
+   "authored_total": 423,
+   "registered_count": 423,
+   "blocks": [
+    {
+     "id": "0007-pattern-1-unmounted-backend",
+     "registered": true,
+     "block_ready_key": "0007-pattern-1-unmounted-backend"
+    },
+    {
+     "id": "0007-pattern-2-column-drift-500s",
+     "registered": true,
+     "block_ready_key": "0007-pattern-2-column-drift-500s"
+    },
+    {
+     "id": "0007-pattern-3-missing-error-states",
+     "registered": true,
+     "block_ready_key": "0007-pattern-3-missing-error-states"
+    },
+    {
+     "id": "0007-pattern-8-reverse-drill-through",
+     "registered": true,
+     "block_ready_key": "0007-pattern-8-reverse-drill-through"
+    },
+    {
+     "id": "0007-session-vendors-false-empty",
+     "registered": true,
+     "block_ready_key": "0007-session-vendors-false-empty"
+    },
+    {
+     "id": "0007-session-vendors-no-create-button",
+     "registered": true,
+     "block_ready_key": "0007-session-vendors-no-create-button"
+    },
+    {
+     "id": "0033-audit-schema-manifest-tool",
+     "registered": true,
+     "block_ready_key": "0033-audit-schema-manifest-tool"
+    },
+    {
+     "id": "0091-g7-4",
+     "registered": true,
+     "block_ready_key": "0091-g7-4"
+    },
+    {
+     "id": "0091-g8-1",
+     "registered": true,
+     "block_ready_key": "0091-g8-1"
+    },
+    {
+     "id": "0091-g9-h6",
+     "registered": true,
+     "block_ready_key": "0091-g9-h6"
+    },
+    {
+     "id": "0091-repo-public",
+     "registered": true,
+     "block_ready_key": "0091-repo-public"
+    },
+    {
+     "id": "0219-nested-modals",
+     "registered": true,
+     "block_ready_key": "0219-nested-modals"
+    },
+    {
+     "id": "0242-no-auto-equipment-log-on-transfer",
+     "registered": true,
+     "block_ready_key": "0242-no-auto-equipment-log-on-transfer"
+    },
+    {
+     "id": "0243-c1-3-three-dead-end-buttons",
+     "registered": true,
+     "block_ready_key": "0243-c1-3-three-dead-end-buttons"
+    },
+    {
+     "id": "0243-c1-4-dead-duplicate-components-dispatchli",
+     "registered": true,
+     "block_ready_key": "0243-c1-4-dead-duplicate-components-dispatchli"
+    },
+    {
+     "id": "0243-g3-5-csp-report-only-samsara-placeholder-",
+     "registered": true,
+     "block_ready_key": "0243-g3-5-csp-report-only-samsara-placeholder-"
+    },
+    {
+     "id": "0243-g4-deploy-smoke-fixed-unit-test-owner",
+     "registered": true,
+     "block_ready_key": "0243-g4-deploy-smoke-fixed-unit-test-owner"
+    },
+    {
+     "id": "0243-g7-4-empty-e2e-specs-false-green",
+     "registered": true,
+     "block_ready_key": "0243-g7-4-empty-e2e-specs-false-green"
+    },
+    {
+     "id": "0243-g8-4-search-filter-inputs-no-aria-label",
+     "registered": true,
+     "block_ready_key": "0243-g8-4-search-filter-inputs-no-aria-label"
+    },
+    {
+     "id": "0243-g8-5-no-error-state-blank-forever-spinner",
+     "registered": true,
+     "block_ready_key": "0243-g8-5-no-error-state-blank-forever-spinner"
+    },
+    {
+     "id": "0243-h1-2-cors-wrong-prod-defaults",
+     "registered": true,
+     "block_ready_key": "0243-h1-2-cors-wrong-prod-defaults"
+    },
+    {
+     "id": "0243-h1-3-csp-report-only-no-healthcheckpath-b",
+     "registered": true,
+     "block_ready_key": "0243-h1-3-csp-report-only-no-healthcheckpath-b"
+    },
+    {
+     "id": "0243-h2-2-stale-backend-lockfile-unshipped-cve",
+     "registered": true,
+     "block_ready_key": "0243-h2-2-stale-backend-lockfile-unshipped-cve"
+    },
+    {
+     "id": "0243-h7-2-vendor-runtime-hygiene",
+     "registered": true,
+     "block_ready_key": "0243-h7-2-vendor-runtime-hygiene"
+    },
+    {
+     "id": "0251-gap21-stop-location-catalog",
+     "registered": true,
+     "block_ready_key": "0251-gap21-stop-location-catalog"
+    },
+    {
+     "id": "0252-audit136-hr-policy-tracking",
+     "registered": true,
+     "block_ready_key": "0252-audit136-hr-policy-tracking"
+    },
+    {
+     "id": "0252-audit137-recruitment-system",
+     "registered": true,
+     "block_ready_key": "0252-audit137-recruitment-system"
+    },
+    {
+     "id": "0252-audit138-training-system",
+     "registered": true,
+     "block_ready_key": "0252-audit138-training-system"
+    },
+    {
+     "id": "0252-audit139-performance-management",
+     "registered": true,
+     "block_ready_key": "0252-audit139-performance-management"
+    },
+    {
+     "id": "0252-audit140-compensation-structure",
+     "registered": true,
+     "block_ready_key": "0252-audit140-compensation-structure"
+    },
+    {
+     "id": "0252-audit141-benefits-administration",
+     "registered": true,
+     "block_ready_key": "0252-audit141-benefits-administration"
+    },
+    {
+     "id": "0252-audit142-engagement-tracking",
+     "registered": true,
+     "block_ready_key": "0252-audit142-engagement-tracking"
+    },
+    {
+     "id": "0252-audit143-turnover-analysis",
+     "registered": true,
+     "block_ready_key": "0252-audit143-turnover-analysis"
+    },
+    {
+     "id": "0252-audit144-diversity-metrics",
+     "registered": true,
+     "block_ready_key": "0252-audit144-diversity-metrics"
+    },
+    {
+     "id": "0252-audit145-workplace-culture",
+     "registered": true,
+     "block_ready_key": "0252-audit145-workplace-culture"
+    },
+    {
+     "id": "0252-audit147-wellness-program",
+     "registered": true,
+     "block_ready_key": "0252-audit147-wellness-program"
+    },
+    {
+     "id": "0252-audit148-remote-work-policy",
+     "registered": true,
+     "block_ready_key": "0252-audit148-remote-work-policy"
+    },
+    {
+     "id": "0252-audit150-employee-relations",
+     "registered": true,
+     "block_ready_key": "0252-audit150-employee-relations"
+    },
+    {
+     "id": "0257-audit-100",
+     "registered": true,
+     "block_ready_key": "0257-audit-100"
+    },
+    {
+     "id": "0257-audit-76",
+     "registered": true,
+     "block_ready_key": "0257-audit-76"
+    },
+    {
+     "id": "0257-audit-77",
+     "registered": true,
+     "block_ready_key": "0257-audit-77"
+    },
+    {
+     "id": "0257-audit-78",
+     "registered": true,
+     "block_ready_key": "0257-audit-78"
+    },
+    {
+     "id": "0257-audit-79",
+     "registered": true,
+     "block_ready_key": "0257-audit-79"
+    },
+    {
+     "id": "0257-audit-83",
+     "registered": true,
+     "block_ready_key": "0257-audit-83"
+    },
+    {
+     "id": "0257-audit-86",
+     "registered": true,
+     "block_ready_key": "0257-audit-86"
+    },
+    {
+     "id": "0257-audit-87",
+     "registered": true,
+     "block_ready_key": "0257-audit-87"
+    },
+    {
+     "id": "0257-audit-88",
+     "registered": true,
+     "block_ready_key": "0257-audit-88"
+    },
+    {
+     "id": "0257-audit-89",
+     "registered": true,
+     "block_ready_key": "0257-audit-89"
+    },
+    {
+     "id": "0257-audit-90",
+     "registered": true,
+     "block_ready_key": "0257-audit-90"
+    },
+    {
+     "id": "0257-audit-91",
+     "registered": true,
+     "block_ready_key": "0257-audit-91"
+    },
+    {
+     "id": "0257-audit-92",
+     "registered": true,
+     "block_ready_key": "0257-audit-92"
+    },
+    {
+     "id": "0257-audit-93",
+     "registered": true,
+     "block_ready_key": "0257-audit-93"
+    },
+    {
+     "id": "0257-audit-94",
+     "registered": true,
+     "block_ready_key": "0257-audit-94"
+    },
+    {
+     "id": "0257-audit-95",
+     "registered": true,
+     "block_ready_key": "0257-audit-95"
+    },
+    {
+     "id": "0257-audit-96",
+     "registered": true,
+     "block_ready_key": "0257-audit-96"
+    },
+    {
+     "id": "0257-audit-97",
+     "registered": true,
+     "block_ready_key": "0257-audit-97"
+    },
+    {
+     "id": "0257-audit-98",
+     "registered": true,
+     "block_ready_key": "0257-audit-98"
+    },
+    {
+     "id": "0257-audit-99",
+     "registered": true,
+     "block_ready_key": "0257-audit-99"
+    },
+    {
+     "id": "0258-audit-101",
+     "registered": true,
+     "block_ready_key": "0258-audit-101"
+    },
+    {
+     "id": "0258-audit-102",
+     "registered": true,
+     "block_ready_key": "0258-audit-102"
+    },
+    {
+     "id": "0258-audit-103",
+     "registered": true,
+     "block_ready_key": "0258-audit-103"
+    },
+    {
+     "id": "0258-audit-104",
+     "registered": true,
+     "block_ready_key": "0258-audit-104"
+    },
+    {
+     "id": "0258-audit-105",
+     "registered": true,
+     "block_ready_key": "0258-audit-105"
+    },
+    {
+     "id": "0258-audit-106",
+     "registered": true,
+     "block_ready_key": "0258-audit-106"
+    },
+    {
+     "id": "0258-audit-107",
+     "registered": true,
+     "block_ready_key": "0258-audit-107"
+    },
+    {
+     "id": "0258-audit-108",
+     "registered": true,
+     "block_ready_key": "0258-audit-108"
+    },
+    {
+     "id": "0258-audit-109",
+     "registered": true,
+     "block_ready_key": "0258-audit-109"
+    },
+    {
+     "id": "0258-audit-110",
+     "registered": true,
+     "block_ready_key": "0258-audit-110"
+    },
+    {
+     "id": "0258-audit-111",
+     "registered": true,
+     "block_ready_key": "0258-audit-111"
+    },
+    {
+     "id": "0258-audit-112",
+     "registered": true,
+     "block_ready_key": "0258-audit-112"
+    },
+    {
+     "id": "0258-audit-113",
+     "registered": true,
+     "block_ready_key": "0258-audit-113"
+    },
+    {
+     "id": "0258-audit-114",
+     "registered": true,
+     "block_ready_key": "0258-audit-114"
+    },
+    {
+     "id": "0258-audit-115",
+     "registered": true,
+     "block_ready_key": "0258-audit-115"
+    },
+    {
+     "id": "0258-audit-116",
+     "registered": true,
+     "block_ready_key": "0258-audit-116"
+    },
+    {
+     "id": "0258-audit-117",
+     "registered": true,
+     "block_ready_key": "0258-audit-117"
+    },
+    {
+     "id": "0258-audit-118",
+     "registered": true,
+     "block_ready_key": "0258-audit-118"
+    },
+    {
+     "id": "0258-audit-119",
+     "registered": true,
+     "block_ready_key": "0258-audit-119"
+    },
+    {
+     "id": "0258-audit-120",
+     "registered": true,
+     "block_ready_key": "0258-audit-120"
+    },
+    {
+     "id": "0262-audit-26",
+     "registered": true,
+     "block_ready_key": "0262-audit-26"
+    },
+    {
+     "id": "0262-audit-27",
+     "registered": true,
+     "block_ready_key": "0262-audit-27"
+    },
+    {
+     "id": "0262-audit-28",
+     "registered": true,
+     "block_ready_key": "0262-audit-28"
+    },
+    {
+     "id": "0262-audit-29",
+     "registered": true,
+     "block_ready_key": "0262-audit-29"
+    },
+    {
+     "id": "0262-audit-30",
+     "registered": true,
+     "block_ready_key": "0262-audit-30"
+    },
+    {
+     "id": "0262-audit-31",
+     "registered": true,
+     "block_ready_key": "0262-audit-31"
+    },
+    {
+     "id": "0262-audit-32",
+     "registered": true,
+     "block_ready_key": "0262-audit-32"
+    },
+    {
+     "id": "0262-audit-33",
+     "registered": true,
+     "block_ready_key": "0262-audit-33"
+    },
+    {
+     "id": "0262-audit-34",
+     "registered": true,
+     "block_ready_key": "0262-audit-34"
+    },
+    {
+     "id": "0262-audit-35",
+     "registered": true,
+     "block_ready_key": "0262-audit-35"
+    },
+    {
+     "id": "0262-audit-36",
+     "registered": true,
+     "block_ready_key": "0262-audit-36"
+    },
+    {
+     "id": "0262-audit-37",
+     "registered": true,
+     "block_ready_key": "0262-audit-37"
+    },
+    {
+     "id": "0262-audit-38",
+     "registered": true,
+     "block_ready_key": "0262-audit-38"
+    },
+    {
+     "id": "0262-audit-39",
+     "registered": true,
+     "block_ready_key": "0262-audit-39"
+    },
+    {
+     "id": "0262-audit-40",
+     "registered": true,
+     "block_ready_key": "0262-audit-40"
+    },
+    {
+     "id": "0262-audit-41",
+     "registered": true,
+     "block_ready_key": "0262-audit-41"
+    },
+    {
+     "id": "0262-audit-42",
+     "registered": true,
+     "block_ready_key": "0262-audit-42"
+    },
+    {
+     "id": "0262-audit-43",
+     "registered": true,
+     "block_ready_key": "0262-audit-43"
+    },
+    {
+     "id": "0262-audit-44",
+     "registered": true,
+     "block_ready_key": "0262-audit-44"
+    },
+    {
+     "id": "0262-audit-45",
+     "registered": true,
+     "block_ready_key": "0262-audit-45"
+    },
+    {
+     "id": "0262-audit-46",
+     "registered": true,
+     "block_ready_key": "0262-audit-46"
+    },
+    {
+     "id": "0262-audit-47",
+     "registered": true,
+     "block_ready_key": "0262-audit-47"
+    },
+    {
+     "id": "0262-audit-48",
+     "registered": true,
+     "block_ready_key": "0262-audit-48"
+    },
+    {
+     "id": "0262-audit-49",
+     "registered": true,
+     "block_ready_key": "0262-audit-49"
+    },
+    {
+     "id": "0262-audit-50",
+     "registered": true,
+     "block_ready_key": "0262-audit-50"
+    },
+    {
+     "id": "0262-audit-51",
+     "registered": true,
+     "block_ready_key": "0262-audit-51"
+    },
+    {
+     "id": "0262-audit-52",
+     "registered": true,
+     "block_ready_key": "0262-audit-52"
+    },
+    {
+     "id": "0262-audit-53",
+     "registered": true,
+     "block_ready_key": "0262-audit-53"
+    },
+    {
+     "id": "0262-audit-54",
+     "registered": true,
+     "block_ready_key": "0262-audit-54"
+    },
+    {
+     "id": "0262-audit-55",
+     "registered": true,
+     "block_ready_key": "0262-audit-55"
+    },
+    {
+     "id": "0265-audit196-marketing-strategy-tracking",
+     "registered": true,
+     "block_ready_key": "0265-audit196-marketing-strategy-tracking"
+    },
+    {
+     "id": "0265-audit197-digital-marketing-tracking",
+     "registered": true,
+     "block_ready_key": "0265-audit197-digital-marketing-tracking"
+    },
+    {
+     "id": "0265-audit198-content-tracking",
+     "registered": true,
+     "block_ready_key": "0265-audit198-content-tracking"
+    },
+    {
+     "id": "0265-audit199-seo-tracking",
+     "registered": true,
+     "block_ready_key": "0265-audit199-seo-tracking"
+    },
+    {
+     "id": "0265-audit200-social-media-tracking",
+     "registered": true,
+     "block_ready_key": "0265-audit200-social-media-tracking"
+    },
+    {
+     "id": "0265-audit201-email-marketing",
+     "registered": true,
+     "block_ready_key": "0265-audit201-email-marketing"
+    },
+    {
+     "id": "0265-audit202-website-analytics",
+     "registered": true,
+     "block_ready_key": "0265-audit202-website-analytics"
+    },
+    {
+     "id": "0265-audit204-cx-measurement",
+     "registered": true,
+     "block_ready_key": "0265-audit204-cx-measurement"
+    },
+    {
+     "id": "0265-audit205-brand-audit",
+     "registered": true,
+     "block_ready_key": "0265-audit205-brand-audit"
+    },
+    {
+     "id": "0270-no-auto-equipment-log-update-duplicate",
+     "registered": true,
+     "block_ready_key": "0270-no-auto-equipment-log-update-duplicate"
+    },
+    {
+     "id": "0275-audit171-data-quality-monitoring",
+     "registered": true,
+     "block_ready_key": "0275-audit171-data-quality-monitoring"
+    },
+    {
+     "id": "0275-audit172-data-governance-framework",
+     "registered": true,
+     "block_ready_key": "0275-audit172-data-governance-framework"
+    },
+    {
+     "id": "0275-audit173-data-privacy-compliance",
+     "registered": true,
+     "block_ready_key": "0275-audit173-data-privacy-compliance"
+    },
+    {
+     "id": "0275-audit174-data-security-hardening",
+     "registered": true,
+     "block_ready_key": "0275-audit174-data-security-hardening"
+    },
+    {
+     "id": "0275-audit177-data-integration-monitoring",
+     "registered": true,
+     "block_ready_key": "0275-audit177-data-integration-monitoring"
+    },
+    {
+     "id": "0275-audit178-master-data-governance",
+     "registered": true,
+     "block_ready_key": "0275-audit178-master-data-governance"
+    },
+    {
+     "id": "0275-audit180-metadata-repository",
+     "registered": true,
+     "block_ready_key": "0275-audit180-metadata-repository"
+    },
+    {
+     "id": "0275-audit181-data-lineage-tracking",
+     "registered": true,
+     "block_ready_key": "0275-audit181-data-lineage-tracking"
+    },
+    {
+     "id": "0275-audit182-data-profiling-system",
+     "registered": true,
+     "block_ready_key": "0275-audit182-data-profiling-system"
+    },
+    {
+     "id": "0275-audit183-data-catalog-system",
+     "registered": true,
+     "block_ready_key": "0275-audit183-data-catalog-system"
+    },
+    {
+     "id": "0275-audit184-data-dictionary-system",
+     "registered": true,
+     "block_ready_key": "0275-audit184-data-dictionary-system"
+    },
+    {
+     "id": "0275-audit185-data-model-documentation",
+     "registered": true,
+     "block_ready_key": "0275-audit185-data-model-documentation"
+    },
+    {
+     "id": "0277-any-type-reports-library-routes",
+     "registered": true,
+     "block_ready_key": "0277-any-type-reports-library-routes"
+    },
+    {
+     "id": "0277-error-swallowing-rollback-catch",
+     "registered": true,
+     "block_ready_key": "0277-error-swallowing-rollback-catch"
+    },
+    {
+     "id": "0278-eld-none-identified-contradiction",
+     "registered": true,
+     "block_ready_key": "0278-eld-none-identified-contradiction"
+    },
+    {
+     "id": "0280-01-owner-home-kpi-linkage-verification",
+     "registered": true,
+     "block_ready_key": "0280-01-owner-home-kpi-linkage-verification"
+    },
+    {
+     "id": "0280-02-revenue-gl-linkage",
+     "registered": true,
+     "block_ready_key": "0280-02-revenue-gl-linkage"
+    },
+    {
+     "id": "0280-03-open-loads-driver-unit-linkage",
+     "registered": true,
+     "block_ready_key": "0280-03-open-loads-driver-unit-linkage"
+    },
+    {
+     "id": "0280-04-cash-position-reconciliation-linkage",
+     "registered": true,
+     "block_ready_key": "0280-04-cash-position-reconciliation-linkage"
+    },
+    {
+     "id": "0280-06-qbo-sync-health-outbox-linkage",
+     "registered": true,
+     "block_ready_key": "0280-06-qbo-sync-health-outbox-linkage"
+    },
+    {
+     "id": "0280-08-quick-jump-navigation-verification",
+     "registered": true,
+     "block_ready_key": "0280-08-quick-jump-navigation-verification"
+    },
+    {
+     "id": "0280-09-dispatcher-active-loads-linkage",
+     "registered": true,
+     "block_ready_key": "0280-09-dispatcher-active-loads-linkage"
+    },
+    {
+     "id": "0280-10-detention-approvals-linkage",
+     "registered": true,
+     "block_ready_key": "0280-10-detention-approvals-linkage"
+    },
+    {
+     "id": "0280-11-booking-gap-root-cause-linkage",
+     "registered": true,
+     "block_ready_key": "0280-11-booking-gap-root-cause-linkage"
+    },
+    {
+     "id": "0280-12-message-queue-driver-customer-linkage",
+     "registered": true,
+     "block_ready_key": "0280-12-message-queue-driver-customer-linkage"
+    },
+    {
+     "id": "0280-13-ar-aging-invoice-customer-linkage",
+     "registered": true,
+     "block_ready_key": "0280-13-ar-aging-invoice-customer-linkage"
+    },
+    {
+     "id": "0280-15-pending-approvals-gl-linkage",
+     "registered": true,
+     "block_ready_key": "0280-15-pending-approvals-gl-linkage"
+    },
+    {
+     "id": "0280-16-safety-kpi-driver-unit-linkage",
+     "registered": true,
+     "block_ready_key": "0280-16-safety-kpi-driver-unit-linkage"
+    },
+    {
+     "id": "0280-17-safety-alerts-incident-claim-linkage",
+     "registered": true,
+     "block_ready_key": "0280-17-safety-alerts-incident-claim-linkage"
+    },
+    {
+     "id": "0280-18-driver-kpi-profile-linkage",
+     "registered": true,
+     "block_ready_key": "0280-18-driver-kpi-profile-linkage"
+    },
+    {
+     "id": "0280-19-attention-items-driver-settlement-link",
+     "registered": true,
+     "block_ready_key": "0280-19-attention-items-driver-settlement-link"
+    },
+    {
+     "id": "0280-20-cooling-drivers-last-load-linkage",
+     "registered": true,
+     "block_ready_key": "0280-20-cooling-drivers-last-load-linkage"
+    },
+    {
+     "id": "0280-21-home-routes-redirect-verification",
+     "registered": true,
+     "block_ready_key": "0280-21-home-routes-redirect-verification"
+    },
+    {
+     "id": "0280-23-wo-status-unit-driver-linkage",
+     "registered": true,
+     "block_ready_key": "0280-23-wo-status-unit-driver-linkage"
+    },
+    {
+     "id": "0280-27-widget-audit-trail-logging",
+     "registered": true,
+     "block_ready_key": "0280-27-widget-audit-trail-logging"
+    },
+    {
+     "id": "0280-28-api-response-zod-validation",
+     "registered": true,
+     "block_ready_key": "0280-28-api-response-zod-validation"
+    },
+    {
+     "id": "0280-29-legacy-fallback-tests",
+     "registered": true,
+     "block_ready_key": "0280-29-legacy-fallback-tests"
+    },
+    {
+     "id": "0280-30-error-context-detail",
+     "registered": true,
+     "block_ready_key": "0280-30-error-context-detail"
+    },
+    {
+     "id": "0280-32-revenue-to-customer-linkage",
+     "registered": true,
+     "block_ready_key": "0280-32-revenue-to-customer-linkage"
+    },
+    {
+     "id": "0280-37-cash-to-gl-flow",
+     "registered": true,
+     "block_ready_key": "0280-37-cash-to-gl-flow"
+    },
+    {
+     "id": "0280-41-wo-to-vendor-flow",
+     "registered": true,
+     "block_ready_key": "0280-41-wo-to-vendor-flow"
+    },
+    {
+     "id": "0280-42-wo-to-expense-flow",
+     "registered": true,
+     "block_ready_key": "0280-42-wo-to-expense-flow"
+    },
+    {
+     "id": "0280-45-safety-to-load-flow",
+     "registered": true,
+     "block_ready_key": "0280-45-safety-to-load-flow"
+    },
+    {
+     "id": "0441-mod1-dual-homepage",
+     "registered": true,
+     "block_ready_key": "0441-mod1-dual-homepage"
+    },
+    {
+     "id": "0441-mod1-quickjump-hardcoded-counts",
+     "registered": true,
+     "block_ready_key": "0441-mod1-quickjump-hardcoded-counts"
+    },
+    {
+     "id": "0441-mod10-cashflow-income-loadid-plaintext",
+     "registered": true,
+     "block_ready_key": "0441-mod10-cashflow-income-loadid-plaintext"
+    },
+    {
+     "id": "0441-mod11-csa-basic-hazmat-always-null",
+     "registered": true,
+     "block_ready_key": "0441-mod11-csa-basic-hazmat-always-null"
+    },
+    {
+     "id": "0441-mod11-geofence-recon-green-on-failed-fetc",
+     "registered": true,
+     "block_ready_key": "0441-mod11-geofence-recon-green-on-failed-fetc"
+    },
+    {
+     "id": "0441-mod11-help-was-this-helpful-not-persisted",
+     "registered": true,
+     "block_ready_key": "0441-mod11-help-was-this-helpful-not-persisted"
+    },
+    {
+     "id": "0441-mod11-maintenance-cost-unit-typeerror",
+     "registered": true,
+     "block_ready_key": "0441-mod11-maintenance-cost-unit-typeerror"
+    },
+    {
+     "id": "0441-mod11-user-detail-activity-tab-stub",
+     "registered": true,
+     "block_ready_key": "0441-mod11-user-detail-activity-tab-stub"
+    },
+    {
+     "id": "0441-mod12-docs-lowest-uuid-company-bug-live",
+     "registered": true,
+     "block_ready_key": "0441-mod12-docs-lowest-uuid-company-bug-live"
+    },
+    {
+     "id": "0441-mod12-eld-export-pdf-window-print",
+     "registered": true,
+     "block_ready_key": "0441-mod12-eld-export-pdf-window-print"
+    },
+    {
+     "id": "0441-mod12-eld-module-fake-stub",
+     "registered": true,
+     "block_ready_key": "0441-mod12-eld-module-fake-stub"
+    },
+    {
+     "id": "0441-mod12-legal-8of10-pages-omit-breadcrumb",
+     "registered": true,
+     "block_ready_key": "0441-mod12-legal-8of10-pages-omit-breadcrumb"
+    },
+    {
+     "id": "0441-mod12-legal-emoji-section7-violations",
+     "registered": true,
+     "block_ready_key": "0441-mod12-legal-emoji-section7-violations"
+    },
+    {
+     "id": "0441-mod12-legal-matter-detail-shows-3-of-16-f",
+     "registered": true,
+     "block_ready_key": "0441-mod12-legal-matter-detail-shows-3-of-16-f"
+    },
+    {
+     "id": "0441-mod12-legal-no-reverse-drill-through",
+     "registered": true,
+     "block_ready_key": "0441-mod12-legal-no-reverse-drill-through"
+    },
+    {
+     "id": "0441-mod12-legal-patch-matters-never-called",
+     "registered": true,
+     "block_ready_key": "0441-mod12-legal-patch-matters-never-called"
+    },
+    {
+     "id": "0441-mod13-compliance-hos-history-tab-hardcode",
+     "registered": true,
+     "block_ready_key": "0441-mod13-compliance-hos-history-tab-hardcode"
+    },
+    {
+     "id": "0441-mod13-compliance-structural-drift-fmcsa-u",
+     "registered": true,
+     "block_ready_key": "0441-mod13-compliance-structural-drift-fmcsa-u"
+    },
+    {
+     "id": "0441-mod13-compliance-tabs-local-usestate-not-",
+     "registered": true,
+     "block_ready_key": "0441-mod13-compliance-tabs-local-usestate-not-"
+    },
+    {
+     "id": "0441-mod13-compliance-violations-tab-hardcoded",
+     "registered": true,
+     "block_ready_key": "0441-mod13-compliance-violations-tab-hardcoded"
+    },
+    {
+     "id": "0441-mod13-equipment-no-loan-lease-depreciatio",
+     "registered": true,
+     "block_ready_key": "0441-mod13-equipment-no-loan-lease-depreciatio"
+    },
+    {
+     "id": "0441-mod13-inventory-assignments-not-built",
+     "registered": true,
+     "block_ready_key": "0441-mod13-inventory-assignments-not-built"
+    },
+    {
+     "id": "0441-mod13-inventory-part-to-unit-none",
+     "registered": true,
+     "block_ready_key": "0441-mod13-inventory-part-to-unit-none"
+    },
+    {
+     "id": "0441-mod13-inventory-part-to-vendor-none",
+     "registered": true,
+     "block_ready_key": "0441-mod13-inventory-part-to-vendor-none"
+    },
+    {
+     "id": "0441-mod13-inventory-purchases-not-built",
+     "registered": true,
+     "block_ready_key": "0441-mod13-inventory-purchases-not-built"
+    },
+    {
+     "id": "0441-mod13-inventory-read-path-raw-fetch",
+     "registered": true,
+     "block_ready_key": "0441-mod13-inventory-read-path-raw-fetch"
+    },
+    {
+     "id": "0441-mod13-inventory-reorder-threshold-dropped",
+     "registered": true,
+     "block_ready_key": "0441-mod13-inventory-reorder-threshold-dropped"
+    },
+    {
+     "id": "0441-mod13-lists-driver-vs-drivers-parallel-tr",
+     "registered": true,
+     "block_ready_key": "0441-mod13-lists-driver-vs-drivers-parallel-tr"
+    },
+    {
+     "id": "0441-mod13-notifications-module-not-fully-audi",
+     "registered": true,
+     "block_ready_key": "0441-mod13-notifications-module-not-fully-audi"
+    },
+    {
+     "id": "0441-mod2-fault-drafts-rules-orphan-nav",
+     "registered": true,
+     "block_ready_key": "0441-mod2-fault-drafts-rules-orphan-nav"
+    },
+    {
+     "id": "0441-mod2-pm-schedule-hardcoded-create",
+     "registered": true,
+     "block_ready_key": "0441-mod2-pm-schedule-hardcoded-create"
+    },
+    {
+     "id": "0441-mod2-road-service-wrong-source-type",
+     "registered": true,
+     "block_ready_key": "0441-mod2-road-service-wrong-source-type"
+    },
+    {
+     "id": "0441-mod2-vendor-ap-disconnected",
+     "registered": true,
+     "block_ready_key": "0441-mod2-vendor-ap-disconnected"
+    },
+    {
+     "id": "0441-mod3-fuel-compliance-not-available-rows",
+     "registered": true,
+     "block_ready_key": "0441-mod3-fuel-compliance-not-available-rows"
+    },
+    {
+     "id": "0441-mod3-fuel-expensive-states-free-text",
+     "registered": true,
+     "block_ready_key": "0441-mod3-fuel-expensive-states-free-text"
+    },
+    {
+     "id": "0441-mod3-fuel-history-no-transactions",
+     "registered": true,
+     "block_ready_key": "0441-mod3-fuel-history-no-transactions"
+    },
+    {
+     "id": "0441-mod3-fuel-import-no-ui-trigger",
+     "registered": true,
+     "block_ready_key": "0441-mod3-fuel-import-no-ui-trigger"
+    },
+    {
+     "id": "0441-mod3-fuel-loves-prices-isolated",
+     "registered": true,
+     "block_ready_key": "0441-mod3-fuel-loves-prices-isolated"
+    },
+    {
+     "id": "0441-mod3-fuel-relay-inbox-static-placeholder",
+     "registered": true,
+     "block_ready_key": "0441-mod3-fuel-relay-inbox-static-placeholder"
+    },
+    {
+     "id": "0441-mod4-dispatch-detention-in-shop-hardcoded",
+     "registered": true,
+     "block_ready_key": "0441-mod4-dispatch-detention-in-shop-hardcoded"
+    },
+    {
+     "id": "0441-mod4-dispatch-load-templates-nav-dead",
+     "registered": true,
+     "block_ready_key": "0441-mod4-dispatch-load-templates-nav-dead"
+    },
+    {
+     "id": "0441-mod4-dispatch-mapview-no-real-map",
+     "registered": true,
+     "block_ready_key": "0441-mod4-dispatch-mapview-no-real-map"
+    },
+    {
+     "id": "0441-mod4-dispatch-notify-prefs-no-onerror",
+     "registered": true,
+     "block_ready_key": "0441-mod4-dispatch-notify-prefs-no-onerror"
+    },
+    {
+     "id": "0441-mod4-dispatch-ocr-queue-no-reprocess-ui",
+     "registered": true,
+     "block_ready_key": "0441-mod4-dispatch-ocr-queue-no-reprocess-ui"
+    },
+    {
+     "id": "0441-mod5-actionbar-dead-links",
+     "registered": true,
+     "block_ready_key": "0441-mod5-actionbar-dead-links"
+    },
+    {
+     "id": "0441-mod5-addtraining-drops-expiry",
+     "registered": true,
+     "block_ready_key": "0441-mod5-addtraining-drops-expiry"
+    },
+    {
+     "id": "0441-mod5-border-creds-no-edit",
+     "registered": true,
+     "block_ready_key": "0441-mod5-border-creds-no-edit"
+    },
+    {
+     "id": "0441-mod5-deductions-tab-wrong-content",
+     "registered": true,
+     "block_ready_key": "0441-mod5-deductions-tab-wrong-content"
+    },
+    {
+     "id": "0441-mod5-dqf-panel-free-text-no-fk",
+     "registered": true,
+     "block_ready_key": "0441-mod5-dqf-panel-free-text-no-fk"
+    },
+    {
+     "id": "0441-mod5-retention-excludes-critical-truncate",
+     "registered": true,
+     "block_ready_key": "0441-mod5-retention-excludes-critical-truncate"
+    },
+    {
+     "id": "0441-mod5-suspend-non-atomic",
+     "registered": true,
+     "block_ready_key": "0441-mod5-suspend-non-atomic"
+    },
+    {
+     "id": "0441-mod5-teams-tab-unreachable",
+     "registered": true,
+     "block_ready_key": "0441-mod5-teams-tab-unreachable"
+    },
+    {
+     "id": "0441-mod6-hos-create-violation-mislabeled-link",
+     "registered": true,
+     "block_ready_key": "0441-mod6-hos-create-violation-mislabeled-link"
+    },
+    {
+     "id": "0441-mod6-hos-dashboard-silent-per-driver-catc",
+     "registered": true,
+     "block_ready_key": "0441-mod6-hos-dashboard-silent-per-driver-catc"
+    },
+    {
+     "id": "0441-mod6-hos-exceptions-archived-stub",
+     "registered": true,
+     "block_ready_key": "0441-mod6-hos-exceptions-archived-stub"
+    },
+    {
+     "id": "0441-mod6-hos-violations-source-enum-mismatch",
+     "registered": true,
+     "block_ready_key": "0441-mod6-hos-violations-source-enum-mismatch"
+    },
+    {
+     "id": "0441-mod6-hos-violations-void-hardcoded-reason",
+     "registered": true,
+     "block_ready_key": "0441-mod6-hos-violations-void-hardcoded-reason"
+    },
+    {
+     "id": "0441-mod6-idvr-row-not-clickable-session-fake-",
+     "registered": true,
+     "block_ready_key": "0441-mod6-idvr-row-not-clickable-session-fake-"
+    },
+    {
+     "id": "0441-mod8-auto-match-button-dead",
+     "registered": true,
+     "block_ready_key": "0441-mod8-auto-match-button-dead"
+    },
+    {
+     "id": "0441-mod8-backdated-check-dead",
+     "registered": true,
+     "block_ready_key": "0441-mod8-backdated-check-dead"
+    },
+    {
+     "id": "0441-mod8-pages-banking-dead-code",
+     "registered": true,
+     "block_ready_key": "0441-mod8-pages-banking-dead-code"
+    },
+    {
+     "id": "0441-mod8-plaid-sign-deposits-negative",
+     "registered": true,
+     "block_ready_key": "0441-mod8-plaid-sign-deposits-negative"
+    },
+    {
+     "id": "0441-mod8-section7-palette-violation",
+     "registered": true,
+     "block_ready_key": "0441-mod8-section7-palette-violation"
+    },
+    {
+     "id": "0441-mod9-coi-duplicated-feature-unequal",
+     "registered": true,
+     "block_ready_key": "0441-mod9-coi-duplicated-feature-unequal"
+    },
+    {
+     "id": "0441-mod9-create-trailer-no-manual-path",
+     "registered": true,
+     "block_ready_key": "0441-mod9-create-trailer-no-manual-path"
+    },
+    {
+     "id": "0441-mod9-create-unit-only-via-maintenance-veh",
+     "registered": true,
+     "block_ready_key": "0441-mod9-create-unit-only-via-maintenance-veh"
+    },
+    {
+     "id": "0441-mod9-customer-taxonomy-mismatch",
+     "registered": true,
+     "block_ready_key": "0441-mod9-customer-taxonomy-mismatch"
+    },
+    {
+     "id": "0441-mod9-customers-list-12-tabs-9-stubs",
+     "registered": true,
+     "block_ready_key": "0441-mod9-customers-list-12-tabs-9-stubs"
+    },
+    {
+     "id": "0441-mod9-fleet-insurance-summary-never-render",
+     "registered": true,
+     "block_ready_key": "0441-mod9-fleet-insurance-summary-never-render"
+    },
+    {
+     "id": "0441-mod9-fleet-roster-no-create-actions",
+     "registered": true,
+     "block_ready_key": "0441-mod9-fleet-roster-no-create-actions"
+    },
+    {
+     "id": "0441-mod9-maintenance-vendor-linkage-broken",
+     "registered": true,
+     "block_ready_key": "0441-mod9-maintenance-vendor-linkage-broken"
+    },
+    {
+     "id": "0441-mod9-quality-history-cant-attach-load-inv",
+     "registered": true,
+     "block_ready_key": "0441-mod9-quality-history-cant-attach-load-inv"
+    },
+    {
+     "id": "0441-mod9-second-create-unit-backend-orphaned",
+     "registered": true,
+     "block_ready_key": "0441-mod9-second-create-unit-backend-orphaned"
+    },
+    {
+     "id": "0441-mod9-trailerprofile-archive-dead",
+     "registered": true,
+     "block_ready_key": "0441-mod9-trailerprofile-archive-dead"
+    },
+    {
+     "id": "0441-mod9-vehicleprofile-edit-archive-dead",
+     "registered": true,
+     "block_ready_key": "0441-mod9-vehicleprofile-edit-archive-dead"
+    },
+    {
+     "id": "0441-mod9-vendordetail-audit-history-placehold",
+     "registered": true,
+     "block_ready_key": "0441-mod9-vendordetail-audit-history-placehold"
+    },
+    {
+     "id": "0451-fin2-finance-lands-on-stub-not-hub",
+     "registered": true,
+     "block_ready_key": "0451-fin2-finance-lands-on-stub-not-hub"
+    },
+    {
+     "id": "0518-r15-a11y-12-critical-234-serious",
+     "registered": true,
+     "block_ready_key": "0518-r15-a11y-12-critical-234-serious"
+    },
+    {
+     "id": "0518-r22-425c-missing-back-arrow-h1",
+     "registered": true,
+     "block_ready_key": "0518-r22-425c-missing-back-arrow-h1"
+    },
+    {
+     "id": "0519-mig2-4-applied-migrations-no-file-on-disk",
+     "registered": true,
+     "block_ready_key": "0519-mig2-4-applied-migrations-no-file-on-disk"
+    },
+    {
+     "id": "0772-defect5-vendors-false-empty",
+     "registered": true,
+     "block_ready_key": "0772-defect5-vendors-false-empty"
+    },
+    {
+     "id": "0772-defect6-vendors-no-create",
+     "registered": true,
+     "block_ready_key": "0772-defect6-vendors-no-create"
+    },
+    {
+     "id": "a-03-expenses-fullpage-form-not-list-drawer",
+     "registered": true,
+     "block_ready_key": "a-03-expenses-fullpage-form-not-list-drawer"
+    },
+    {
+     "id": "a-05-bills-no-page-level-create-button",
+     "registered": true,
+     "block_ready_key": "a-05-bills-no-page-level-create-button"
+    },
+    {
+     "id": "a-06-save-button-not-above-fold",
+     "registered": true,
+     "block_ready_key": "a-06-save-button-not-above-fold"
+    },
+    {
+     "id": "accounting-catalog-shared-creator-profile-debo",
+     "registered": true,
+     "block_ready_key": "accounting-catalog-shared-creator-profile-debo"
+    },
+    {
+     "id": "arch-docs-1-parallel-books-canonical",
+     "registered": true,
+     "block_ready_key": "arch-docs-1-parallel-books-canonical"
+    },
+    {
+     "id": "arch-docs1-filename-drift",
+     "registered": true,
+     "block_ready_key": "arch-docs1-filename-drift"
+    },
+    {
+     "id": "audit18-treasury-management",
+     "registered": true,
+     "block_ready_key": "audit18-treasury-management"
+    },
+    {
+     "id": "audit19-ma-due-diligence-framework",
+     "registered": true,
+     "block_ready_key": "audit19-ma-due-diligence-framework"
+    },
+    {
+     "id": "audit20-dividend-tracking-system",
+     "registered": true,
+     "block_ready_key": "audit20-dividend-tracking-system"
+    },
+    {
+     "id": "audit23-royalty-tracking-system",
+     "registered": true,
+     "block_ready_key": "audit23-royalty-tracking-system"
+    },
+    {
+     "id": "audit24-franchise-tracking-system",
+     "registered": true,
+     "block_ready_key": "audit24-franchise-tracking-system"
+    },
+    {
+     "id": "audit3-external-audit-prep-workflow",
+     "registered": true,
+     "block_ready_key": "audit3-external-audit-prep-workflow"
+    },
+    {
+     "id": "audit6-sox-ifrs-compliance-dashboard",
+     "registered": true,
+     "block_ready_key": "audit6-sox-ifrs-compliance-dashboard"
+    },
+    {
+     "id": "banking-grid-sort-resize-rows-per-page",
+     "registered": true,
+     "block_ready_key": "banking-grid-sort-resize-rows-per-page"
+    },
+    {
+     "id": "bills-billpayments-not-migrated-to-paritytable",
+     "registered": true,
+     "block_ready_key": "bills-billpayments-not-migrated-to-paritytable"
+    },
+    {
+     "id": "bills-date-range-filter",
+     "registered": true,
+     "block_ready_key": "bills-date-range-filter"
+    },
+    {
+     "id": "bills-list-missing-date-range-filter",
+     "registered": true,
+     "block_ready_key": "bills-list-missing-date-range-filter"
+    },
+    {
+     "id": "biz-flow-7-no-automatic-team-assignment",
+     "registered": true,
+     "block_ready_key": "biz-flow-7-no-automatic-team-assignment"
+    },
+    {
+     "id": "biz-flow-8-no-transfer-notifications",
+     "registered": true,
+     "block_ready_key": "biz-flow-8-no-transfer-notifications"
+    },
+    {
+     "id": "biz-flow-9-no-automatic-notifications-safety-e",
+     "registered": true,
+     "block_ready_key": "biz-flow-9-no-automatic-notifications-safety-e"
+    },
+    {
+     "id": "bl-03-no-address-autocomplete",
+     "registered": true,
+     "block_ready_key": "bl-03-no-address-autocomplete"
+    },
+    {
+     "id": "bl-04-no-rate-con-pdf-generation",
+     "registered": true,
+     "block_ready_key": "bl-04-no-rate-con-pdf-generation"
+    },
+    {
+     "id": "bnk-03-no-last-reconciled-no-beginning-balance",
+     "registered": true,
+     "block_ready_key": "bnk-03-no-last-reconciled-no-beginning-balance"
+    },
+    {
+     "id": "bug3-invoices-sort-pickup-date-400",
+     "registered": true,
+     "block_ready_key": "bug3-invoices-sort-pickup-date-400"
+    },
+    {
+     "id": "cascade-lane-docs-upload-company-scope",
+     "registered": true,
+     "block_ready_key": "cascade-lane-docs-upload-company-scope"
+    },
+    {
+     "id": "ci1-build-typecheck-flake-root-cause-and-guard",
+     "registered": true,
+     "block_ready_key": "ci1-build-typecheck-flake-root-cause-and-guard"
+    },
+    {
+     "id": "coder-work-order-t2-3-xlsx-cve",
+     "registered": true,
+     "block_ready_key": "coder-work-order-t2-3-xlsx-cve"
+    },
+    {
+     "id": "compliance-1-stale-units-segregation",
+     "registered": true,
+     "block_ready_key": "compliance-1-stale-units-segregation"
+    },
+    {
+     "id": "comprehensive-notification-system",
+     "registered": true,
+     "block_ready_key": "comprehensive-notification-system"
+    },
+    {
+     "id": "consolidate-distributed-modules-fuel-tasks-fin",
+     "registered": true,
+     "block_ready_key": "consolidate-distributed-modules-fuel-tasks-fin"
+    },
+    {
+     "id": "cust1-vend1-pager-total-count-bug",
+     "registered": true,
+     "block_ready_key": "cust1-vend1-pager-total-count-bug"
+    },
+    {
+     "id": "d-02-cancel-load-shown-on-unsaved-load",
+     "registered": true,
+     "block_ready_key": "d-02-cancel-load-shown-on-unsaved-load"
+    },
+    {
+     "id": "d-03-truncated-assignment-history-tab-label",
+     "registered": true,
+     "block_ready_key": "d-03-truncated-assignment-history-tab-label"
+    },
+    {
+     "id": "d-04-settlements-board-redirect-notice",
+     "registered": true,
+     "block_ready_key": "d-04-settlements-board-redirect-notice"
+    },
+    {
+     "id": "db5-resize-removal-directive-vs-current-lock",
+     "registered": true,
+     "block_ready_key": "db5-resize-removal-directive-vs-current-lock"
+    },
+    {
+     "id": "db7-planners-perf-profile",
+     "registered": true,
+     "block_ready_key": "db7-planners-perf-profile"
+    },
+    {
+     "id": "dh-01-driver-hub-overview-stub",
+     "registered": true,
+     "block_ready_key": "dh-01-driver-hub-overview-stub"
+    },
+    {
+     "id": "dispatch-board-db2-db7-fixes",
+     "registered": true,
+     "block_ready_key": "dispatch-board-db2-db7-fixes"
+    },
+    {
+     "id": "dispatch-sweep-gap-11",
+     "registered": true,
+     "block_ready_key": "dispatch-sweep-gap-11"
+    },
+    {
+     "id": "driver-d-cluster-scope-guard-missing",
+     "registered": true,
+     "block_ready_key": "driver-d-cluster-scope-guard-missing"
+    },
+    {
+     "id": "entitylink-reverse-drill-incomplete",
+     "registered": true,
+     "block_ready_key": "entitylink-reverse-drill-incomplete"
+    },
+    {
+     "id": "expenses-list-route-still-shows-create-wizard",
+     "registered": true,
+     "block_ready_key": "expenses-list-route-still-shows-create-wizard"
+    },
+    {
+     "id": "expenses-list-routing-bug",
+     "registered": true,
+     "block_ready_key": "expenses-list-routing-bug"
+    },
+    {
+     "id": "expenses-routing-list-stranded",
+     "registered": true,
+     "block_ready_key": "expenses-routing-list-stranded"
+    },
+    {
+     "id": "f-01-fuel-home-stub",
+     "registered": true,
+     "block_ready_key": "f-01-fuel-home-stub"
+    },
+    {
+     "id": "f-02-jump-to-tab-nonstandard",
+     "registered": true,
+     "block_ready_key": "f-02-jump-to-tab-nonstandard"
+    },
+    {
+     "id": "fh-unit-allocation-ui-view-missing",
+     "registered": true,
+     "block_ready_key": "fh-unit-allocation-ui-view-missing"
+    },
+    {
+     "id": "fin23-qbo-reconcile-modify-captures-harness-ex",
+     "registered": true,
+     "block_ready_key": "fin23-qbo-reconcile-modify-captures-harness-ex"
+    },
+    {
+     "id": "fleet-2-trailer-master-data-sparse",
+     "registered": true,
+     "block_ready_key": "fleet-2-trailer-master-data-sparse"
+    },
+    {
+     "id": "flow6-no-auto-invoice-sending",
+     "registered": true,
+     "block_ready_key": "flow6-no-auto-invoice-sending"
+    },
+    {
+     "id": "flow7-auto-team-assignment",
+     "registered": true,
+     "block_ready_key": "flow7-auto-team-assignment"
+    },
+    {
+     "id": "flow7-no-auto-team-assignment",
+     "registered": true,
+     "block_ready_key": "flow7-no-auto-team-assignment"
+    },
+    {
+     "id": "flow8-equipment-transfer-notifications",
+     "registered": true,
+     "block_ready_key": "flow8-equipment-transfer-notifications"
+    },
+    {
+     "id": "flow8-no-auto-equipment-log-notify",
+     "registered": true,
+     "block_ready_key": "flow8-no-auto-equipment-log-notify"
+    },
+    {
+     "id": "fuel-1-planner-diagram-empty-state",
+     "registered": true,
+     "block_ready_key": "fuel-1-planner-diagram-empty-state"
+    },
+    {
+     "id": "global-column-resize-sort-parity-table-phase-a",
+     "registered": true,
+     "block_ready_key": "global-column-resize-sort-parity-table-phase-a"
+    },
+    {
+     "id": "h-01-entity-badge-conflict",
+     "registered": true,
+     "block_ready_key": "h-01-entity-badge-conflict"
+    },
+    {
+     "id": "h-02-qbo-sync-stale-no-action",
+     "registered": true,
+     "block_ready_key": "h-02-qbo-sync-stale-no-action"
+    },
+    {
+     "id": "h-03-open-queue-navy-cta",
+     "registered": true,
+     "block_ready_key": "h-03-open-queue-navy-cta"
+    },
+    {
+     "id": "h-04-kpi-sublabel-contrast",
+     "registered": true,
+     "block_ready_key": "h-04-kpi-sublabel-contrast"
+    },
+    {
+     "id": "h-05-home-kpi-no-date-range-toggle",
+     "registered": true,
+     "block_ready_key": "h-05-home-kpi-no-date-range-toggle"
+    },
+    {
+     "id": "h-06-owner-approvals-dev-copy",
+     "registered": true,
+     "block_ready_key": "h-06-owner-approvals-dev-copy"
+    },
+    {
+     "id": "help-module-minimal-vs-meets",
+     "registered": true,
+     "block_ready_key": "help-module-minimal-vs-meets"
+    },
+    {
+     "id": "home-2-open-loads-inflight-late-consistency-un",
+     "registered": true,
+     "block_ready_key": "home-2-open-loads-inflight-late-consistency-un"
+    },
+    {
+     "id": "home-4-wo-status-unknown-mapping",
+     "registered": true,
+     "block_ready_key": "home-4-wo-status-unknown-mapping"
+    },
+    {
+     "id": "home-5-chart-empty-states-unverified",
+     "registered": true,
+     "block_ready_key": "home-5-chart-empty-states-unverified"
+    },
+    {
+     "id": "insurance-2-breadcrumb-desync",
+     "registered": true,
+     "block_ready_key": "insurance-2-breadcrumb-desync"
+    },
+    {
+     "id": "law-of-land-entitylink-reverse-drill-adoption",
+     "registered": true,
+     "block_ready_key": "law-of-land-entitylink-reverse-drill-adoption"
+    },
+    {
+     "id": "ledger-write-proof-operational-not-found",
+     "registered": true,
+     "block_ready_key": "ledger-write-proof-operational-not-found"
+    },
+    {
+     "id": "m-01-wo-create-duplicate-header-fields",
+     "registered": true,
+     "block_ready_key": "m-01-wo-create-duplicate-header-fields"
+    },
+    {
+     "id": "m-05-terms-field-raw-db-value",
+     "registered": true,
+     "block_ready_key": "m-05-terms-field-raw-db-value"
+    },
+    {
+     "id": "m-06-driver-field-plain-text-not-dropdown",
+     "registered": true,
+     "block_ready_key": "m-06-driver-field-plain-text-not-dropdown"
+    },
+    {
+     "id": "m-07-wo-dev-facing-footer-text",
+     "registered": true,
+     "block_ready_key": "m-07-wo-dev-facing-footer-text"
+    },
+    {
+     "id": "m-08-integration-strip-duplicates-topbar",
+     "registered": true,
+     "block_ready_key": "m-08-integration-strip-duplicates-topbar"
+    },
+    {
+     "id": "m-09-wo-table-filters-no-visual-indicator",
+     "registered": true,
+     "block_ready_key": "m-09-wo-table-filters-no-visual-indicator"
+    },
+    {
+     "id": "maint2-open-wos-kpi-table-consistency",
+     "registered": true,
+     "block_ready_key": "maint2-open-wos-kpi-table-consistency"
+    },
+    {
+     "id": "module-catalog-26-modules-unfinished-sweep",
+     "registered": true,
+     "block_ready_key": "module-catalog-26-modules-unfinished-sweep"
+    },
+    {
+     "id": "notif-b-android-block",
+     "registered": true,
+     "block_ready_key": "notif-b-android-block"
+    },
+    {
+     "id": "p1-analytics-systems",
+     "registered": true,
+     "block_ready_key": "p1-analytics-systems"
+    },
+    {
+     "id": "p1-apm",
+     "registered": true,
+     "block_ready_key": "p1-apm"
+    },
+    {
+     "id": "p1-circular-dependencies",
+     "registered": true,
+     "block_ready_key": "p1-circular-dependencies"
+    },
+    {
+     "id": "p1-compression",
+     "registered": true,
+     "block_ready_key": "p1-compression"
+    },
+    {
+     "id": "p1-dashboard-implementation",
+     "registered": true,
+     "block_ready_key": "p1-dashboard-implementation"
+    },
+    {
+     "id": "p1-incident-response",
+     "registered": true,
+     "block_ready_key": "p1-incident-response"
+    },
+    {
+     "id": "p1-role-permissions-review",
+     "registered": true,
+     "block_ready_key": "p1-role-permissions-review"
+    },
+    {
+     "id": "p1-vulnerability-management",
+     "registered": true,
+     "block_ready_key": "p1-vulnerability-management"
+    },
+    {
+     "id": "phase12-audit206-environmental",
+     "registered": true,
+     "block_ready_key": "phase12-audit206-environmental"
+    },
+    {
+     "id": "phase12-audit207-social",
+     "registered": true,
+     "block_ready_key": "phase12-audit207-social"
+    },
+    {
+     "id": "phase12-audit208-governance",
+     "registered": true,
+     "block_ready_key": "phase12-audit208-governance"
+    },
+    {
+     "id": "phase12-audit209-carbon-footprint",
+     "registered": true,
+     "block_ready_key": "phase12-audit209-carbon-footprint"
+    },
+    {
+     "id": "phase12-audit210-energy",
+     "registered": true,
+     "block_ready_key": "phase12-audit210-energy"
+    },
+    {
+     "id": "phase12-audit211-water",
+     "registered": true,
+     "block_ready_key": "phase12-audit211-water"
+    },
+    {
+     "id": "phase12-audit212-waste",
+     "registered": true,
+     "block_ready_key": "phase12-audit212-waste"
+    },
+    {
+     "id": "phase12-audit213-supply-chain-sustainability",
+     "registered": true,
+     "block_ready_key": "phase12-audit213-supply-chain-sustainability"
+    },
+    {
+     "id": "phase12-audit214-circular-economy",
+     "registered": true,
+     "block_ready_key": "phase12-audit214-circular-economy"
+    },
+    {
+     "id": "phase12-audit215-esg-reporting",
+     "registered": true,
+     "block_ready_key": "phase12-audit215-esg-reporting"
+    },
+    {
+     "id": "phase13-audit216-banking-industry",
+     "registered": true,
+     "block_ready_key": "phase13-audit216-banking-industry"
+    },
+    {
+     "id": "phase13-audit218-healthcare-na",
+     "registered": true,
+     "block_ready_key": "phase13-audit218-healthcare-na"
+    },
+    {
+     "id": "phase13-audit219-pharmaceutical-na",
+     "registered": true,
+     "block_ready_key": "phase13-audit219-pharmaceutical-na"
+    },
+    {
+     "id": "phase13-audit220-manufacturing-duplicate",
+     "registered": true,
+     "block_ready_key": "phase13-audit220-manufacturing-duplicate"
+    },
+    {
+     "id": "phase13-audit221-retail-na",
+     "registered": true,
+     "block_ready_key": "phase13-audit221-retail-na"
+    },
+    {
+     "id": "phase13-audit222-restaurant-na",
+     "registered": true,
+     "block_ready_key": "phase13-audit222-restaurant-na"
+    },
+    {
+     "id": "phase13-audit223-hospitality-na",
+     "registered": true,
+     "block_ready_key": "phase13-audit223-hospitality-na"
+    },
+    {
+     "id": "phase13-audit224-transportation-dashboard-rout",
+     "registered": true,
+     "block_ready_key": "phase13-audit224-transportation-dashboard-rout"
+    },
+    {
+     "id": "phase13-audit225-logistics-warehousing",
+     "registered": true,
+     "block_ready_key": "phase13-audit225-logistics-warehousing"
+    },
+    {
+     "id": "phase13-audit226-construction-na",
+     "registered": true,
+     "block_ready_key": "phase13-audit226-construction-na"
+    },
+    {
+     "id": "phase13-audit228-energy-duplicate",
+     "registered": true,
+     "block_ready_key": "phase13-audit228-energy-duplicate"
+    },
+    {
+     "id": "phase13-audit229-mining-na",
+     "registered": true,
+     "block_ready_key": "phase13-audit229-mining-na"
+    },
+    {
+     "id": "phase13-audit230-agriculture-na",
+     "registered": true,
+     "block_ready_key": "phase13-audit230-agriculture-na"
+    },
+    {
+     "id": "phase14-audit-231",
+     "registered": true,
+     "block_ready_key": "phase14-audit-231"
+    },
+    {
+     "id": "phase14-audit-232",
+     "registered": true,
+     "block_ready_key": "phase14-audit-232"
+    },
+    {
+     "id": "phase14-audit-233",
+     "registered": true,
+     "block_ready_key": "phase14-audit-233"
+    },
+    {
+     "id": "phase14-audit-234",
+     "registered": true,
+     "block_ready_key": "phase14-audit-234"
+    },
+    {
+     "id": "phase14-audit-235",
+     "registered": true,
+     "block_ready_key": "phase14-audit-235"
+    },
+    {
+     "id": "phase14-audit-236",
+     "registered": true,
+     "block_ready_key": "phase14-audit-236"
+    },
+    {
+     "id": "phase14-audit-238",
+     "registered": true,
+     "block_ready_key": "phase14-audit-238"
+    },
+    {
+     "id": "phase14-audit-239",
+     "registered": true,
+     "block_ready_key": "phase14-audit-239"
+    },
+    {
+     "id": "phase14-audit-240",
+     "registered": true,
+     "block_ready_key": "phase14-audit-240"
+    },
+    {
+     "id": "phase14-audit-241",
+     "registered": true,
+     "block_ready_key": "phase14-audit-241"
+    },
+    {
+     "id": "phase14-audit-242",
+     "registered": true,
+     "block_ready_key": "phase14-audit-242"
+    },
+    {
+     "id": "phase14-audit-243",
+     "registered": true,
+     "block_ready_key": "phase14-audit-243"
+    },
+    {
+     "id": "phase14-audit-244",
+     "registered": true,
+     "block_ready_key": "phase14-audit-244"
+    },
+    {
+     "id": "phase14-audit-245",
+     "registered": true,
+     "block_ready_key": "phase14-audit-245"
+    },
+    {
+     "id": "phase3-audit56-iso9001-quality-mgmt",
+     "registered": true,
+     "block_ready_key": "phase3-audit56-iso9001-quality-mgmt"
+    },
+    {
+     "id": "phase3-audit57-process-audit-docs-workflow",
+     "registered": true,
+     "block_ready_key": "phase3-audit57-process-audit-docs-workflow"
+    },
+    {
+     "id": "phase3-audit58-six-sigma",
+     "registered": true,
+     "block_ready_key": "phase3-audit58-six-sigma"
+    },
+    {
+     "id": "phase3-audit59-lean",
+     "registered": true,
+     "block_ready_key": "phase3-audit59-lean"
+    },
+    {
+     "id": "phase3-audit60-kaizen",
+     "registered": true,
+     "block_ready_key": "phase3-audit60-kaizen"
+    },
+    {
+     "id": "phase3-audit61-tqm",
+     "registered": true,
+     "block_ready_key": "phase3-audit61-tqm"
+    },
+    {
+     "id": "phase3-audit62-spc",
+     "registered": true,
+     "block_ready_key": "phase3-audit62-spc"
+    },
+    {
+     "id": "phase3-audit64-capa",
+     "registered": true,
+     "block_ready_key": "phase3-audit64-capa"
+    },
+    {
+     "id": "phase3-audit65-preventive-action",
+     "registered": true,
+     "block_ready_key": "phase3-audit65-preventive-action"
+    },
+    {
+     "id": "phase3-audit66-supplier-quality",
+     "registered": true,
+     "block_ready_key": "phase3-audit66-supplier-quality"
+    },
+    {
+     "id": "phase3-audit67-customer-satisfaction-csat-nps",
+     "registered": true,
+     "block_ready_key": "phase3-audit67-customer-satisfaction-csat-nps"
+    },
+    {
+     "id": "phase3-audit68-service-quality-sla",
+     "registered": true,
+     "block_ready_key": "phase3-audit68-service-quality-sla"
+    },
+    {
+     "id": "phase3-audit69-product-quality",
+     "registered": true,
+     "block_ready_key": "phase3-audit69-product-quality"
+    },
+    {
+     "id": "phase3-audit70-manufacturing-qc",
+     "registered": true,
+     "block_ready_key": "phase3-audit70-manufacturing-qc"
+    },
+    {
+     "id": "phase3-audit71-laboratory",
+     "registered": true,
+     "block_ready_key": "phase3-audit71-laboratory"
+    },
+    {
+     "id": "phase3-audit72-calibration",
+     "registered": true,
+     "block_ready_key": "phase3-audit72-calibration"
+    },
+    {
+     "id": "phase3-audit73-validation",
+     "registered": true,
+     "block_ready_key": "phase3-audit73-validation"
+    },
+    {
+     "id": "phase3-audit75-document-control",
+     "registered": true,
+     "block_ready_key": "phase3-audit75-document-control"
+    },
+    {
+     "id": "phase8-audit152-server-audit",
+     "registered": true,
+     "block_ready_key": "phase8-audit152-server-audit"
+    },
+    {
+     "id": "phase8-audit155-backup-audit",
+     "registered": true,
+     "block_ready_key": "phase8-audit155-backup-audit"
+    },
+    {
+     "id": "phase8-audit158-virtualization-na",
+     "registered": true,
+     "block_ready_key": "phase8-audit158-virtualization-na"
+    },
+    {
+     "id": "phase8-audit159-container-audit",
+     "registered": true,
+     "block_ready_key": "phase8-audit159-container-audit"
+    },
+    {
+     "id": "phase8-audit160-microservices-na",
+     "registered": true,
+     "block_ready_key": "phase8-audit160-microservices-na"
+    },
+    {
+     "id": "phase8-audit161-api-audit",
+     "registered": true,
+     "block_ready_key": "phase8-audit161-api-audit"
+    },
+    {
+     "id": "phase8-audit163-data-warehouse",
+     "registered": true,
+     "block_ready_key": "phase8-audit163-data-warehouse"
+    },
+    {
+     "id": "phase8-audit164-business-intelligence",
+     "registered": true,
+     "block_ready_key": "phase8-audit164-business-intelligence"
+    },
+    {
+     "id": "phase8-audit165-analytics-general",
+     "registered": true,
+     "block_ready_key": "phase8-audit165-analytics-general"
+    },
+    {
+     "id": "phase8-audit166-machine-learning-na",
+     "registered": true,
+     "block_ready_key": "phase8-audit166-machine-learning-na"
+    },
+    {
+     "id": "phase8-audit167-ai-audit-na",
+     "registered": true,
+     "block_ready_key": "phase8-audit167-ai-audit-na"
+    },
+    {
+     "id": "phase8-audit168-blockchain-na",
+     "registered": true,
+     "block_ready_key": "phase8-audit168-blockchain-na"
+    },
+    {
+     "id": "phase8-audit169-iot-device-management",
+     "registered": true,
+     "block_ready_key": "phase8-audit169-iot-device-management"
+    },
+    {
+     "id": "qbo-parity-a1-paritytable-universal-adoption",
+     "registered": true,
+     "block_ready_key": "qbo-parity-a1-paritytable-universal-adoption"
+    },
+    {
+     "id": "qbo-parity-name-plus-type-option-labels",
+     "registered": true,
+     "block_ready_key": "qbo-parity-name-plus-type-option-labels"
+    },
+    {
+     "id": "qbo-parity-resizable-columns-everywhere",
+     "registered": true,
+     "block_ready_key": "qbo-parity-resizable-columns-everywhere"
+    },
+    {
+     "id": "rpt-par1-mgmt-report-test-and-drill",
+     "registered": true,
+     "block_ready_key": "rpt-par1-mgmt-report-test-and-drill"
+    },
+    {
+     "id": "s-01-coverage-gap-count-no-red-alert",
+     "registered": true,
+     "block_ready_key": "s-01-coverage-gap-count-no-red-alert"
+    },
+    {
+     "id": "s-02-insurance-sidebar-not-standalone",
+     "registered": true,
+     "block_ready_key": "s-02-insurance-sidebar-not-standalone"
+    },
+    {
+     "id": "s-04-no-from-to-date-range-safety-lists",
+     "registered": true,
+     "block_ready_key": "s-04-no-from-to-date-range-safety-lists"
+    },
+    {
+     "id": "s-08-no-driver-unit-type-date-filters-incident",
+     "registered": true,
+     "block_ready_key": "s-08-no-driver-unit-type-date-filters-incident"
+    },
+    {
+     "id": "s-10-no-type-filter-incidents",
+     "registered": true,
+     "block_ready_key": "s-10-no-type-filter-incidents"
+    },
+    {
+     "id": "s-11-safety-no-home-dashboard",
+     "registered": true,
+     "block_ready_key": "s-11-safety-no-home-dashboard"
+    },
+    {
+     "id": "s-12-log-event-button-navy-cta",
+     "registered": true,
+     "block_ready_key": "s-12-log-event-button-navy-cta"
+    },
+    {
+     "id": "s-13-breadcrumb-vs-active-tab-mismatch",
+     "registered": true,
+     "block_ready_key": "s-13-breadcrumb-vs-active-tab-mismatch"
+    },
+    {
+     "id": "safety2-cert-expiry-nav-distinct-route",
+     "registered": true,
+     "block_ready_key": "safety2-cert-expiry-nav-distinct-route"
+    },
+    {
+     "id": "shared-catalog-creator-profile-debox",
+     "registered": true,
+     "block_ready_key": "shared-catalog-creator-profile-debox"
+    },
+    {
+     "id": "skill-update-additions-2026-07-03-verbatim-com",
+     "registered": true,
+     "block_ready_key": "skill-update-additions-2026-07-03-verbatim-com"
+    },
+    {
+     "id": "sweep-fix-17-27-fixture-names-and-pager",
+     "registered": true,
+     "block_ready_key": "sweep-fix-17-27-fixture-names-and-pager"
+    },
+    {
+     "id": "sweepfix1727-11",
+     "registered": true,
+     "block_ready_key": "sweepfix1727-11"
+    },
+    {
+     "id": "sweepfix1727-8",
+     "registered": true,
+     "block_ready_key": "sweepfix1727-8"
+    },
+    {
+     "id": "systemic-pattern-column-drift-guard",
+     "registered": true,
+     "block_ready_key": "systemic-pattern-column-drift-guard"
+    },
+    {
+     "id": "systemic-pattern-mandatory-error-states",
+     "registered": true,
+     "block_ready_key": "systemic-pattern-mandatory-error-states"
+    },
+    {
+     "id": "tasks-module-consolidation",
+     "registered": true,
+     "block_ready_key": "tasks-module-consolidation"
+    },
+    {
+     "id": "tbl-standard-raw-table-sweep-incomplete",
+     "registered": true,
+     "block_ready_key": "tbl-standard-raw-table-sweep-incomplete"
+    },
+    {
+     "id": "type-date-input-sweep-incomplete",
+     "registered": true,
+     "block_ready_key": "type-date-input-sweep-incomplete"
+    },
+    {
+     "id": "ui1-17-my-accountant-page",
+     "registered": true,
+     "block_ready_key": "ui1-17-my-accountant-page"
+    },
+    {
+     "id": "users-invited-status-distinct-from-active",
+     "registered": true,
+     "block_ready_key": "users-invited-status-distinct-from-active"
+    },
+    {
+     "id": "vend1-pagination-total-vs-length",
+     "registered": true,
+     "block_ready_key": "vend1-pagination-total-vs-length"
+    }
+   ]
+  },
+  {
+   "n": 8,
+   "key": "design-parity",
+   "label": "Design-parity (owner UI locks)",
+   "authored_total": 3,
+   "registered_count": 3,
+   "blocks": [
+    {
+     "id": "UI-01_CALENDARS-AND-BOXES_DISPATCH",
+     "registered": true,
+     "block_ready_key": "UI-01_CALENDARS-AND-BOXES_DISPATCH"
+    },
+    {
+     "id": "UI-02_QUICKBOOKS-PARITY-AND-WORKING-CREATE_DISPATCH",
+     "registered": true,
+     "block_ready_key": "UI-02_QUICKBOOKS-PARITY-AND-WORKING-CREATE_DISPATCH"
+    },
+    {
+     "id": "UI-03_INLINE-CREATE-AND-BANKING-SPLIT_DISPATCH",
+     "registered": true,
+     "block_ready_key": "UI-03_INLINE-CREATE-AND-BANKING-SPLIT_DISPATCH"
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,17 @@
+{
+  "block_id": "0091-b1-2-factor-reserve-default-role_LIKELY-STALE",
+  "status": "NEEDS-VERIFY",
+  "classification": "FINANCIAL",
+  "phase": "tier1",
+  "source": "MASTER-6 authored dispatch (03-TIER1-BLOCKS)",
+  "source_file": "05_0091-b1-2-factor-reserve-default-role_LIKELY-STALE.txt",
+  "allowed_files": [
+    "authored dispatch — LANE LOCK not explicit; scope per 03-TIER1-BLOCKS"
+  ],
+  "acceptance": [
+    {
+      "check": "Authored claim (no explicit ACCEPTANCE[] in dispatch): Remove stale factor_reserve_default COA-role (still typed Liability) or repoint fallback"
+    }
+  ],
+  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+}

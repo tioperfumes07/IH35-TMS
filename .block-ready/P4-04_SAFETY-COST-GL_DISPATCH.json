@@ -1,0 +1,20 @@
+{
+  "block_id": "P4-04_SAFETY-COST-GL_DISPATCH",
+  "status": "NEEDS-VERIFY",
+  "classification": "FINANCIAL",
+  "phase": "phase4",
+  "source": "MASTER-6 authored dispatch (04-PHASE4-CROSS-MODULE)",
+  "source_file": "P4-04_SAFETY-COST-GL_DISPATCH.txt",
+  "allowed_files": [
+    "additive posting wiring; reuse posters; per-entity flag-gated; PROTECTED (financial) owner-ceremony. No new GL math. Depends on P4-01/P4-02 links."
+  ],
+  "acceptance": [
+    {
+      "check": "Test: recording a claim payout/settlement/legal fee posts a balanced JE + links the source record; flag OFF -> explicit blocked, no silent write."
+    },
+    {
+      "check": "Neon-branch proof."
+    }
+  ],
+  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+}

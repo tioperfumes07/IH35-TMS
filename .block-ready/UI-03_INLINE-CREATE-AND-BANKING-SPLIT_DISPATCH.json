@@ -1,0 +1,26 @@
+{
+  "block_id": "UI-03_INLINE-CREATE-AND-BANKING-SPLIT_DISPATCH",
+  "status": "NEEDS-VERIFY",
+  "classification": "FINANCIAL",
+  "phase": "design-parity",
+  "source": "MASTER-6 authored dispatch (07-UI-DESIGN)",
+  "source_file": "UI-03_INLINE-CREATE-AND-BANKING-SPLIT_DISPATCH.txt",
+  "allowed_files": [
+    "apps/frontend/src/** + reuse existing create/categorize/posting endpoints + scripts/**. The multi-vendor GL assembly is FINANCIAL -> that portion is Tier-1 build-and-hold for GUARD (Neon-branch proof of the balanced multi-vendor JE); the dropdown \"+ Create\" + split UI ship on green. NO new backend endpoints without a separate block; additive-only; never remove a field/tab/route."
+  ],
+  "acceptance": [
+    {
+      "check": "Split a $1,000 transaction into 3 lines with 3 DIFFERENT vendors + 3 different categories; Post -> one balanced JE (3 vendor-tagged expense debits + one $1,000 cash credit), tie-out to the cent; each vendor's A/P/1099 reflects only its portion (test)."
+    },
+    {
+      "check": "Post blocked if lines != total. \"Split N ways by driver\" produces per-driver linked lines."
+    },
+    {
+      "check": "Every accounting dropdown (incl. per-line Vendor/Category/Item) has working \"+ Create\"."
+    },
+    {
+      "check": "Guards wired (G3 passes); tsc clean; mobile new_vs_baseline=0; matches IH35-Banking-transactions-design.html."
+    }
+  ],
+  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+}

@@ -1,0 +1,17 @@
+{
+  "block_id": "0441-mod9-merge-vendors-no-gl-repoint_DISPATCH",
+  "status": "NEEDS-VERIFY",
+  "classification": "FINANCIAL",
+  "phase": "tier1",
+  "source": "MASTER-6 authored dispatch (03-TIER1-BLOCKS)",
+  "source_file": "37_0441-mod9-merge-vendors-no-gl-repoint_DISPATCH.txt",
+  "allowed_files": [
+    "authored dispatch — LANE LOCK not explicit; scope per 03-TIER1-BLOCKS"
+  ],
+  "acceptance": [
+    {
+      "check": "Authored claim (no explicit ACCEPTANCE[] in dispatch): 'Merge Vendors' merges QBO ids on driver but no GL repoint / no deactivation"
+    }
+  ],
+  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+}

@@ -1,0 +1,17 @@
+{
+  "block_id": "0441-mod11-aging-export-engine_DISPATCH",
+  "status": "NEEDS-VERIFY",
+  "classification": "FINANCIAL",
+  "phase": "tier1",
+  "source": "MASTER-6 authored dispatch (03-TIER1-BLOCKS)",
+  "source_file": "32_0441-mod11-aging-export-engine_DISPATCH.txt",
+  "allowed_files": [
+    "authored dispatch — LANE LOCK not explicit; scope per 03-TIER1-BLOCKS"
+  ],
+  "acceptance": [
+    {
+      "check": "Authored claim (no explicit ACCEPTANCE[] in dispatch): AR/AP Aging export uses a different engine than the on-screen aging"
+    }
+  ],
+  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+}
