@@ -1,0 +1,30 @@
+{
+  "block_id": "0007-no-silent-noop-posting",
+  "status": "BUILD",
+  "classification": "FINANCIAL",
+  "phase": "PHASE-1-POSTING-INTEGRITY",
+  "task": "Tier-1 0007: silent flag-gated no-op posting. A money-posting leg gated behind an OFF feature flag must never return success while writing nothing (fake-green). Enumerated 20 posting writers this session; the codebase is overwhelmingly disciplined (fail-loud). Found + fixed the 3 genuine silent no-ops (positive if(flag){post} gates with no else/signal): accounting/payments/apply.service.ts (customer-payment GL receipt), driver-finance/settlements-load-bookended.service.ts x2 (contract-terms leg + deduction-apply leg — the REPAIR-A overpay class). Added shared helper accounting/posting-flag-skip-audit.ts (recordPostingFlagSkip → append-only <domain>.posting.skipped_flag_off with result:blocked_flag_off). Added CI guard verify-no-silent-noop-posting that fails on any positive flag-gate with no honest OFF-signal. NO posting-math change, NO migration, additive only.",
+  "branch": "fix/no-silent-noop-posting",
+  "lane": "PHASE-1-POSTING-INTEGRITY",
+  "allowed_files": [
+    "apps/backend/src/accounting/posting-flag-skip-audit.ts",
+    "apps/backend/src/accounting/payments/apply.service.ts",
+    "apps/backend/src/driver-finance/settlements-load-bookended.service.ts",
+    "scripts/verify-no-silent-noop-posting.mjs",
+    "scripts/verify-steps/95-verify-no-silent-noop-posting.mjs",
+    ".block-ready/0007-no-silent-noop-posting.json",
+    "package.json",
+    ".github/workflows/locked-guards.yml"
+  ],
+  "acceptance": [
+    { "kind": "guard", "script": "scripts/verify-no-silent-noop-posting.mjs", "wired_into": "verify-pre-commit (verify-steps/95) + .github/workflows/locked-guards.yml + package.json verify:no-silent-noop-posting" },
+    { "kind": "live", "assert": "node scripts/verify-no-silent-noop-posting.mjs --selftest passes; guard PASSES on the fixed tree (20 writers, 0 offenders); guard's analyze() flags EXACTLY the 3 pre-fix offenders on origin/main (negative proof, verified this session)" },
+    { "kind": "route", "value": "apps/backend/src/accounting/payments/apply.service.ts", "note": "applyPayment OFF-branch now records skip + returns gl_posting:'blocked_flag_off' instead of a silent success" },
+    { "kind": "design", "spec": "docs/trackers/IH35-TMS-MASTER-LINKAGE-WIRING-REFERENCE-2026-07-10.md", "sections": ["Phase 1 posting integrity", "hardline no-fake-green"] }
+  ],
+  "linkage": "Posting legs → append-only audit (audit.append_event) on skip; customer_payment → accounting.payments; settlement legs → driver_finance settlement close. No new FK/table; additive audit signal only. Cross-module: makes the driver-settlement money path (dispatch→driver→GL) honest end-to-end.",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "hold": "TIER-1 FINANCIAL — builder STOPS after build for GUARD branch-proof. Jorge merges. Design fork flagged in PR (surface-skip-signal vs hard-block-whole-op)."
+}
