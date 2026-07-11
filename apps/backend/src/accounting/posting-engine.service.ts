@@ -1581,13 +1581,21 @@ async function markBatchFailed(
   });
 }
 
-export async function postSourceTransaction(input: PostSourceInput, actor: Actor): Promise<PostingResult> {
+type PostingExecCtx = {
+  input: PostSourceInput;
+  actor: Actor;
+  sourceType: PostingSourceType;
+  sourceId: string;
+  postingPurpose: PostingPurpose;
+  idempotencyKey: string;
+};
+
+function buildPostingExecCtx(input: PostSourceInput, actor: Actor): PostingExecCtx {
   const sourceType = normalizeSourceType(input.source_transaction_type);
   const sourceId = normalizeSourceId(input.source_transaction_id);
   const postingPurpose: PostingPurpose = input.posting_purpose ?? "initial_post";
   const normalizedLineId = normalizeSourceLineId(input.source_transaction_line_id ?? null);
   const idempotencyLinePart = postingPurpose === "initial_post" ? null : normalizedLineId;
-
   const idempotencyKey = buildPostingMvpIdempotencyKey({
     operating_company_id: input.operating_company_id,
     source_transaction_type: sourceType,
@@ -1595,102 +1603,129 @@ export async function postSourceTransaction(input: PostSourceInput, actor: Actor
     source_transaction_line_id: idempotencyLinePart,
     posting_purpose: postingPurpose,
   });
+  return { input, actor, sourceType, sourceId, postingPurpose, idempotencyKey };
+}
 
+// The core posting logic, operating on a CALLER-SUPPLIED client so it can run inside the caller's own
+// transaction. Extracted verbatim from the former postSourceTransaction body (no behavior change) so
+// P1-BILLPAY-GL can post a bill_payment JE ATOMICALLY with payBill's bank-cache decrement (both commit
+// or both roll back — never diverge). Idempotent, balanced, and closed-period-gated exactly as before.
+async function executePostingOnClient(client: DbClient, ctx: PostingExecCtx): Promise<PostingResult> {
+  const { input, actor, sourceType, sourceId, postingPurpose, idempotencyKey } = ctx;
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
+
+  const existing = await getExistingPostingResultByIdempotencyKey(
+    client,
+    input.operating_company_id,
+    idempotencyKey,
+    postingPurpose,
+    sourceType,
+    sourceId
+  );
+  if (existing) return existing;
+
+  const draft = await buildPostingDraft(
+    client,
+    sourceType,
+    input.operating_company_id,
+    sourceId,
+    input.credit_account_id ?? null
+  );
+  await ensureOpenPeriod(client, input.operating_company_id, draft.postingDate);
+  assertBalanced(draft.lines);
+
+  const batch = await client.query<{ id: string }>(
+    `
+      INSERT INTO accounting.posting_batches (
+        operating_company_id,
+        batch_status,
+        source_transaction_type,
+        source_transaction_id,
+        idempotency_key,
+        created_by_user_id,
+        created_at,
+        updated_at
+      )
+      VALUES ($1::uuid, 'queued', $2, $3, $4, $5::uuid, now(), now())
+      RETURNING id::text
+    `,
+    [input.operating_company_id, sourceType, sourceId, idempotencyKey, actor.userId]
+  );
+  const postingBatchId = batch.rows[0]?.id;
+  if (!postingBatchId) throw new Error("posting_batch_create_failed");
+
+  await client.query(
+    `
+      UPDATE accounting.posting_batches
+      SET batch_status = 'in_progress',
+          updated_at = now()
+      WHERE id = $1::uuid
+    `,
+    [postingBatchId]
+  );
+
+  const journalEntryId = await createJournalEntryHeader(
+    client,
+    input.operating_company_id,
+    draft.postingDate,
+    draft.memo,
+    actor.userId
+  );
+
+  const postingIds = await insertPostingLines({
+    client,
+    operatingCompanyId: input.operating_company_id,
+    journalEntryId,
+    postingBatchId,
+    idempotencyKey,
+    sourceType,
+    sourceId,
+    lines: draft.lines,
+  });
+
+  await client.query(
+    `
+      UPDATE accounting.posting_batches
+      SET batch_status = 'posted',
+          updated_at = now()
+      WHERE id = $1::uuid
+    `,
+    [postingBatchId]
+  );
+
+  return {
+    result: "posted",
+    posting_batch_id: postingBatchId,
+    journal_entry_id: journalEntryId,
+    journal_entry_posting_ids: postingIds,
+    idempotency_key: idempotencyKey,
+    posting_purpose: postingPurpose,
+    source_transaction_type: sourceType,
+    source_transaction_id: sourceId,
+    account_resolution_trace: draft.accountResolutionTrace,
+  };
+}
+
+/**
+ * Post a source transaction WITHIN the caller's existing transaction/client (atomic with the caller's
+ * other writes). Used by payBill so the bill_payment JE + bank-cache decrement commit or roll back
+ * together. Same idempotency + balance + closed-period guarantees as postSourceTransaction; because the
+ * caller owns the transaction, a failure rolls back the caller's whole txn (no separate failed-batch
+ * record is written — nothing was committed).
+ */
+export async function postSourceTransactionInClientTx(
+  client: DbClient,
+  input: PostSourceInput,
+  actor: Actor
+): Promise<PostingResult> {
+  return executePostingOnClient(client, buildPostingExecCtx(input, actor));
+}
+
+export async function postSourceTransaction(input: PostSourceInput, actor: Actor): Promise<PostingResult> {
+  const ctx = buildPostingExecCtx(input, actor);
+  const { sourceType, sourceId, idempotencyKey } = ctx;
   try {
-    return await withCurrentUser(actor.userId, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
-
-      const existing = await getExistingPostingResultByIdempotencyKey(
-        client,
-        input.operating_company_id,
-        idempotencyKey,
-        postingPurpose,
-        sourceType,
-        sourceId
-      );
-      if (existing) return existing;
-
-      const draft = await buildPostingDraft(
-        client,
-        sourceType,
-        input.operating_company_id,
-        sourceId,
-        input.credit_account_id ?? null
-      );
-      await ensureOpenPeriod(client, input.operating_company_id, draft.postingDate);
-      assertBalanced(draft.lines);
-
-      const batch = await client.query<{ id: string }>(
-        `
-          INSERT INTO accounting.posting_batches (
-            operating_company_id,
-            batch_status,
-            source_transaction_type,
-            source_transaction_id,
-            idempotency_key,
-            created_by_user_id,
-            created_at,
-            updated_at
-          )
-          VALUES ($1::uuid, 'queued', $2, $3, $4, $5::uuid, now(), now())
-          RETURNING id::text
-        `,
-        [input.operating_company_id, sourceType, sourceId, idempotencyKey, actor.userId]
-      );
-      const postingBatchId = batch.rows[0]?.id;
-      if (!postingBatchId) throw new Error("posting_batch_create_failed");
-
-      await client.query(
-        `
-          UPDATE accounting.posting_batches
-          SET batch_status = 'in_progress',
-              updated_at = now()
-          WHERE id = $1::uuid
-        `,
-        [postingBatchId]
-      );
-
-      const journalEntryId = await createJournalEntryHeader(
-        client,
-        input.operating_company_id,
-        draft.postingDate,
-        draft.memo,
-        actor.userId
-      );
-
-      const postingIds = await insertPostingLines({
-        client,
-        operatingCompanyId: input.operating_company_id,
-        journalEntryId,
-        postingBatchId,
-        idempotencyKey,
-        sourceType,
-        sourceId,
-        lines: draft.lines,
-      });
-
-      await client.query(
-        `
-          UPDATE accounting.posting_batches
-          SET batch_status = 'posted',
-              updated_at = now()
-          WHERE id = $1::uuid
-        `,
-        [postingBatchId]
-      );
-
-      return {
-        result: "posted",
-        posting_batch_id: postingBatchId,
-        journal_entry_id: journalEntryId,
-        journal_entry_posting_ids: postingIds,
-        idempotency_key: idempotencyKey,
-        posting_purpose: postingPurpose,
-        source_transaction_type: sourceType,
-        source_transaction_id: sourceId,
-        account_resolution_trace: draft.accountResolutionTrace,
-      };
-    });
+    return await withCurrentUser(actor.userId, (client) => executePostingOnClient(client, ctx));
   } catch (error) {
     // Failure-recording must NEVER mask the original posting error. If markBatchFailed
     // itself throws (e.g. its own SQL/RLS issue), preserve and rethrow the original.

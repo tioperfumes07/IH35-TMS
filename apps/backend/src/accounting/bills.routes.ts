@@ -251,6 +251,9 @@ export async function registerBillsRoutes(app: FastifyInstance) {
         },
         String(user.uuid)
       );
+      // P1-BILLPAY-GL: payBill always records the payment + bank decrement; payment.gl_posting reports
+      // whether the balanced JE was also posted ("posted") or skipped because the per-entity flag is OFF
+      // ("blocked_flag_off") — no silent success, no bill-payment outage for flag-OFF entities.
       void withCompanyScope(String(user.uuid), query.data.operating_company_id, (client) =>
         emitAccountingSpineEvent(client, {
           operating_company_id: query.data.operating_company_id,
