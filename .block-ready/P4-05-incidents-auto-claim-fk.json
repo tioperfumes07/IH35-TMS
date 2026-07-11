@@ -1,0 +1,29 @@
+{
+  "block_id": "P4-05-incidents-auto-claim-fk",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "PHASE-4-CROSS-MODULE",
+  "task": "P4-05 (DAMAGE-CLAIM-FK): AGENT-confirmed safety.incidents.auto_created_claim_id (added by 202606071600 WITHOUT a FK) is a dangling pointer — the damage_report -> insurance.claim auto-create worker writes it but nothing enforces the target exists. Verify-first: column present, no REFERENCES. Migration 202607240000 adds FK safety.incidents.auto_created_claim_id -> insurance.claim(id) (canonical, 0285) NOT VALID + ON DELETE SET NULL + partial index (GUARD 0-orphan check + VALIDATE on Neon). Idempotent (pg_constraint guard). Safety(incident) -> Insurance(claim) referential integrity (Total Connectivity §10a). Static guard verify-incidents-auto-claim-fk.",
+  "branch": "feat/damage-claim-fk-p4",
+  "lane": "PHASE-4-CROSS-MODULE",
+  "allowed_files": [
+    "db/migrations/202607240000_incidents_auto_claim_fk.sql",
+    "db/migrations/.held-migrations.json",
+    "scripts/verify-incidents-auto-claim-fk.mjs",
+    "scripts/verify-steps/105-verify-incidents-auto-claim-fk.mjs",
+    ".block-ready/P4-05-incidents-auto-claim-fk.json",
+    "package.json",
+    ".github/workflows/locked-guards.yml"
+  ],
+  "acceptance": [
+    { "kind": "fk", "from": "safety.incidents.auto_created_claim_id", "to": "insurance.claim.id", "note": "NOT VALID + ON DELETE SET NULL; GUARD VALIDATEs after 0-orphan check on Neon" },
+    { "kind": "guard", "script": "scripts/verify-incidents-auto-claim-fk.mjs", "wired_into": "verify-pre-commit (verify-steps/105) + locked-guards + package.json verify:incidents-auto-claim-fk" },
+    { "kind": "live", "assert": "--selftest PASS; guard PASS; hold-migrations-registered + G4 PASS. FK-only (no new column → no schema-parity change). 0-orphan check + VALIDATE owed to GUARD on Neon.", "verified_by": "GUARD Neon branch-proof" },
+    { "kind": "design", "spec": "04-PHASE4/P4-05 dispatch", "sections": ["safety.incidents -> insurance.claim FK"] }
+  ],
+  "linkage": "safety.incidents -> insurance.claim (the safety->insurance cross-module linkage this block enforces, Total Connectivity §10a). ON DELETE SET NULL preserves the incident. FORCED RLS unchanged.",
+  "db_required": true,
+  "guard_required": true,
+  "extra_gates": [],
+  "hold": "TIER-1 MIGRATION — build-and-hold. DO NOT RUN ON PROD (registered held). Owner runs on Neon; GUARD 0-orphan-checks + VALIDATEs; owner merges."
+}

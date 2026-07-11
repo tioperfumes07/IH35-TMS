@@ -2,6 +2,10 @@
   "note": "HELD MIGRATIONS — each carries a 'DO NOT RUN ON PROD' marker and must run ONLY on a Neon branch by Jorge's hand, then be ledger-backfilled so prod db:migrate skips it. verify:hold-migrations-registered enforces bidirectional parity: every migration whose header says DO-NOT-RUN must be listed here, and every entry here must still carry the marker — so a held migration can never silently lose its marker (which would let db:migrate fire it on prod).",
   "held": [
     {
+      "file": "202607240000_incidents_auto_claim_fk.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] P4-05 — safety.incidents.auto_created_claim_id -> insurance.claim FK (NOT VALID, ON DELETE SET NULL; GUARD 0-orphan check + VALIDATE on Neon). Safety->Insurance referential integrity."
+    },
+    {
       "file": "202607210000_detention_requests_invoice_fk.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1] P3-INVOICE-FK (residual) — add dispatch.detention_requests.invoice_id -> accounting.invoices + invoice_line_id -> accounting.invoice_lines FKs (NOT VALID; GUARD runs orphan-check + VALIDATE on Neon). account_id (0221) + source_load_id (0060) FKs already exist."
     },
