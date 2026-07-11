@@ -500,3 +500,8 @@ jobs:
         run: node scripts/verify-referenceselect-coverage-ratchet.mjs --selftest
       - name: verify:referenceselect-coverage-ratchet
         run: npm run verify:referenceselect-coverage-ratchet
+
+      - name: verify:filter-input-aria-labels --selftest
+        run: node scripts/verify-filter-input-aria-labels.mjs --selftest
+      - name: verify:filter-input-aria-labels
+        run: npm run verify:filter-input-aria-labels

@@ -98,6 +98,7 @@ export function VendorListSidebar({
       <input
         value={search}
         onChange={(event) => onSearchChange(event.target.value)}
+        aria-label="Search vendors by name or details"
         placeholder="Search by name or details"
         className="mb-2 mt-2 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
       />
