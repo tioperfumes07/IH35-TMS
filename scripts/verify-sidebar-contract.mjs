@@ -4,8 +4,9 @@
  * CI guard: asserts SIDEBAR_ITEM_IDS in sidebar-config.ts matches the locked current array.
  * Fails with a descriptive error if length, specific indexes, full order, or additive ids drift.
  *
- * Last updated: SIDEBAR-V4-28 (28-item Owner default; finance + form_425 added;
- *   eld→cash-flow→settlements→accounting adjacency enforced).
+ * Last updated: SIDEBAR-V4-29 (29-item Owner default; "program" appended at END — owner-requested
+ *   Program Tracker / Build Progress sidebar entry, Owner/Admin-scoped; prior 28 unchanged in order;
+ *   finance + form_425 added earlier; eld→cash-flow→settlements→accounting adjacency enforced).
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -16,7 +17,7 @@ const sidebarPath = path.join(
   "apps/frontend/src/components/layout/sidebar-config.ts"
 );
 
-/** Locked Owner-default sidebar order — SIDEBAR-V4-28 (28 items). */
+/** Locked Owner-default sidebar order — SIDEBAR-V4-29 (29 items; "program" appended at END). */
 const LOCKED_ORDER = [
   "home",
   "tasks",
@@ -46,6 +47,7 @@ const LOCKED_ORDER = [
   "docs",
   "users",
   "help",
+  "program",
 ];
 
 /** All ids are shipped — nothing pending. */

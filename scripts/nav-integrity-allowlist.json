@@ -91,6 +91,10 @@
     {
       "path": "/program/final-additions",
       "reason": "Final Additions launch punch-list; standalone sub-page of /program Topbar tracker (non-sidebar by design, sidebar locked at 28)"
+    },
+    {
+      "path": "/program/tracker",
+      "reason": "Program Tracker (Build Progress) live dashboard; standalone sub-page of /program, reachable via the Build Progress link on the Program Board (non-sidebar by design, sidebar locked at 28)"
     }
   ],
   "BLOCK_43_TODO": [
