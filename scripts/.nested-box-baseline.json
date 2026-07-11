@@ -46,7 +46,7 @@
   "apps/frontend/src/pages/banking/components/BankTransactionSplitModal.tsx": 1,
   "apps/frontend/src/pages/banking/components/BankingPlaidConnectionsPanel.tsx": 1,
   "apps/frontend/src/pages/banking/components/BankingReviewCenter.tsx": 2,
-  "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx": 13,
+  "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx": 14,
   "apps/frontend/src/pages/banking/components/CategorizeDrawer.tsx": 1,
   "apps/frontend/src/pages/banking/components/DriverEscrowTabContent.tsx": 5,
   "apps/frontend/src/pages/cash-advances/components/AdvanceDetailDrawer.tsx": 2,
