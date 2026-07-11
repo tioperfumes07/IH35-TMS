@@ -495,3 +495,8 @@ jobs:
         run: node scripts/verify-list-error-state-coverage.mjs --selftest
       - name: verify:list-error-state-coverage
         run: npm run verify:list-error-state-coverage
+
+      - name: verify:referenceselect-coverage-ratchet --selftest
+        run: node scripts/verify-referenceselect-coverage-ratchet.mjs --selftest
+      - name: verify:referenceselect-coverage-ratchet
+        run: npm run verify:referenceselect-coverage-ratchet
