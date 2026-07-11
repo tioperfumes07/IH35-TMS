@@ -1,0 +1,43 @@
+{
+  "block_id": "FIX-06-referenceselect-inline-create-sweep",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "FIX",
+  "task": "Inline '+ Create' on remaining accounting dropdowns — ReferenceSelect coverage sweep + forward-only regression ratchet. Non-financial UI wiring to EXISTING create endpoints (mdata.vendors) already live on the banking view + VendorBillForm; no schema change, no new posting.",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/FIX-06-referenceselect-inline-create-sweep.json",
+    "apps/frontend/src/pages/accounting/SubmitFactoringModal.tsx",
+    "scripts/verify-referenceselect-coverage-ratchet.mjs",
+    "scripts/verify-referenceselect-coverage-ratchet.baseline.json",
+    "scripts/verify-steps/100-verify-referenceselect-coverage-ratchet.mjs",
+    "package.json",
+    ".github/workflows/locked-guards.yml"
+  ],
+  "runtime_path": "apps/frontend/src",
+  "db_required": false,
+  "guard_required": true,
+  "acceptance": [
+    {
+      "kind": "code",
+      "check": "SubmitFactoringModal.tsx 'Factoring company' vendor picker uses <ReferenceSelect createKind=\"vendor\" operatingCompanyId={operatingCompanyId}> (was a plain <SelectCombobox>); inline '+ Add new vendor' writes canonical mdata.vendors — the create path already live in VendorBillForm/RecurringBillCreate/CreateMultipleBillsPage, no new capability.",
+      "proof": "grep ReferenceSelect apps/frontend/src/pages/accounting/SubmitFactoringModal.tsx; SelectCombobox import removed."
+    },
+    {
+      "kind": "guard",
+      "check": "scripts/verify-referenceselect-coverage-ratchet.mjs is a forward-only ratchet: FAILS on a NEW plain <select>/<SelectCombobox> selecting an accounting entity on an accounting form; 7 legitimately-exempt pre-existing selects baselined so today is GREEN.",
+      "proof": "node scripts/verify-referenceselect-coverage-ratchet.mjs --selftest (6 checks PASS); real run PASS 7 baselined 0 new; probe injection exits 1."
+    },
+    {
+      "kind": "guard",
+      "check": "guard wired into verify-steps/100 + package.json verify:referenceselect-coverage-ratchet + .github/workflows/locked-guards.yml (both --selftest and run steps).",
+      "proof": "node scripts/verify-guard-wired.mjs PASS; node scripts/verify-block-registry-complete.mjs PASS."
+    },
+    {
+      "kind": "live",
+      "check": "frontend typechecks clean for changed files; verify-mobile-responsive-audit new_vs_baseline=0; verify-section7-palette-nonfinancial clean.",
+      "proof": "cd apps/frontend && npx tsc -b --pretty false; node scripts/verify-mobile-responsive-audit.mjs; node scripts/verify-section7-palette-nonfinancial.mjs."
+    }
+  ],
+  "note": "The two originally-named offenders (RecurringBillCreate.tsx vendor, CreateMultipleBillsPage.tsx vendor + A/P account) were ALREADY converted to ReferenceSelect under UI-03 PART A (verify-first per §0 — repo wins over the dispatch text). This block adds the one remaining real offender (SubmitFactoringModal vendor) + the negative coverage ratchet. ManualJEModal account line, bank-account scope selectors, category-KIND enum, and filter selects are baselined (not gaps)."
+}
