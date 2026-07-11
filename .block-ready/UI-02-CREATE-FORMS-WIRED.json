@@ -1,0 +1,21 @@
+{
+  "block": "UI-02-CREATE-FORMS-WIRED",
+  "title": "Every Create form actually creates — regression ratchet (UI-02 PART 1)",
+  "tier": "TIER-3",
+  "financial": false,
+  "pr_target": "fix/ui-create-forms-wired-guard -> main",
+  "summary": "VERIFY-FIRST found UI-02 PART 1 already-built: the two audit-named dead modals (maintenance CreateBillModal, CreateExpenseModal) are fully wired to createVendorBill/createExpense, and every other Create/wizard/creator across apps/frontend/src is wired (mutation/API/save-callback). Net-new deliverable = a ratchet guard so a NEW dead create form can never ship. UI-02 PART 3 (calendars) + PART 4 (nested-box) were delivered by UI-01 (#2337). PART 2 (QBO-parity layout) deferred to a browser-verified design pass.",
+  "acceptance": [
+    { "id": "part1-already-wired", "check": "0 live dead create forms", "proof": "read-only sweep 2026-07-11: CreateBillModal (useMutation L103 -> createVendorBill), CreateExpenseModal (useMutation L145 -> createExpense), + all Create*/New*/Add* modals/forms/pages/drawers wired; only orphans WorkOrderCreateModal.tsx (0 importers) + createLoad helper are dead code (no submit)" },
+    { "id": "ratchet-guard", "check": "guard fails on any NEW unwired create form", "proof": "verify:create-forms-wired PASS (1 baselined stub = @archived banking CreateExpenseForm); --selftest PASS (dead stub detected; useMutation + onSubmit/onComplete callback wiring recognized so legit callback-forms are NOT false-flagged)" },
+    { "id": "guard-wired", "check": "guard in verify-pre-commit + locked-guards", "proof": "verify-steps/109; package.json verify:create-forms-wired (END); locked-guards step (END); verify:guard-wired PASS" }
+  ],
+  "deferred": [
+    "UI-02 PART 2 — QBO-parity layout for expenses/creators/wizards/catalogs: subjective design-parity vs docs/specs/qbo-parity + approved-screens, needs per-screen browser verification, not a blind sweep.",
+    "Orphan cleanup (ARCHIVE, not delete): pages/maintenance/WorkOrderCreateModal.tsx (0 importers) + api/loads.ts createLoad helper (0 callers) — dead but harmless; per additive-only, archive if/when Jorge OKs.",
+    "NewServiceDrawerForm buy-side persistence (buyCost/preferredVendor/expenseAccount) — separate HELD catalog-columns migration.",
+    "NewAccountDrawerForm is intentionally gated (ACCOUNT_CREATE_GATED) — not dead; owner decision."
+  ],
+  "lane_lock": "scripts/** + ci guard list only (this PR adds no component changes — PART 1 was already wired). No backend, no db/migrations, no posting/GL/amount logic.",
+  "ship": "green CI (non-financial TIER-3)"
+}

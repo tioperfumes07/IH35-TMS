@@ -856,7 +856,8 @@
     "verify:custvend-par1": "node scripts/verify-custvend-par1.mjs",
     "verify:phase4-crossmodule-fks": "node scripts/verify-phase4-crossmodule-fks.mjs",
     "verify:no-raw-date-input": "node scripts/verify-no-raw-date-input.mjs",
-    "verify:no-nested-box": "node scripts/verify-no-nested-box.mjs"
+    "verify:no-nested-box": "node scripts/verify-no-nested-box.mjs",
+    "verify:create-forms-wired": "node scripts/verify-create-forms-wired.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",
