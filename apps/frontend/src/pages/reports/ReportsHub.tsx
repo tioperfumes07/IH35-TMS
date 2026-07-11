@@ -46,6 +46,7 @@ export function ReportsHubPage() {
       <ReportCategoryHoverNav />
       <input
         type="search"
+        aria-label="Search reports"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         placeholder="Search reports…"

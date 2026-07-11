@@ -256,6 +256,7 @@ export function LegalContractInstancesPage() {
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
+              aria-label="Search contracts by signer or template code"
               className="h-9 rounded-sm border border-gray-300 px-2 text-sm xl:col-span-2"
               placeholder="Search signer or template code"
             />

@@ -186,6 +186,7 @@ export function VehiclesMasterDataPage() {
         <div className="flex items-center gap-2">
           <input
             className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
+            aria-label="Search vehicles"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search vehicles"

@@ -151,18 +151,18 @@ export function IntegrationTransactionsPage() {
   const filterBar = (
     <div className="flex flex-wrap gap-2">
       <input
-        type="search" placeholder="Search description, QBO ID…" value={search}
+        type="search" aria-label="Search transactions by description or QBO ID" placeholder="Search description, QBO ID…" value={search}
         onChange={(e) => setSearch(e.target.value)}
         className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm w-56 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
       />
-      <select value={syncStatus} onChange={(e) => setSyncStatus(e.target.value)}
+      <select aria-label="Filter by sync status" value={syncStatus} onChange={(e) => setSyncStatus(e.target.value)}
         className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-emerald-500">
         <option value="">All statuses</option>
         {(["pending","in_flight","synced","failed","blocked"] as const).map((s) => (
           <option key={s} value={s}>{s}</option>
         ))}
       </select>
-      <select value={entityType} onChange={(e) => setEntityType(e.target.value)}
+      <select aria-label="Filter by entity type" value={entityType} onChange={(e) => setEntityType(e.target.value)}
         className="rounded-sm border border-gray-300 px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-emerald-500">
         <option value="">All types</option>
         {Object.entries(ENTITY_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}

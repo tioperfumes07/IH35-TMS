@@ -99,6 +99,7 @@ export function LegalTemplatesListPage() {
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
+              aria-label="Search templates by code or display name"
               placeholder="Search code or display name"
               className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-2"
             />
