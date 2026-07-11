@@ -56,6 +56,7 @@
     "verify:driver-picker-limit": "node scripts/verify-driver-picker-limit.mjs",
     "verify:orphan-components": "node scripts/verify-orphan-components.mjs",
     "verify:banking-workflow-b-archived": "node scripts/verify-banking-workflow-b-archived.mjs",
+    "verify:banking-register-categorize-capable": "node scripts/verify-banking-register-categorize-capable.mjs",
     "verify:no-sidebar-flyout": "node scripts/verify-no-sidebar-flyout.mjs",
     "verify:orphan-components:update": "node scripts/verify-orphan-components.mjs --update",
     "verify:orphan-components:list": "node scripts/verify-orphan-components.mjs --list",

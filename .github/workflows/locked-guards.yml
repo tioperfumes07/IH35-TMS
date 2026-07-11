@@ -540,3 +540,8 @@ jobs:
         run: node scripts/verify-banking-designview-qbo-parity.mjs --selftest
       - name: verify:banking-designview-qbo-parity
         run: npm run verify:banking-designview-qbo-parity
+
+      - name: verify:banking-register-categorize-capable --selftest
+        run: node scripts/verify-banking-register-categorize-capable.mjs --selftest
+      - name: verify:banking-register-categorize-capable
+        run: npm run verify:banking-register-categorize-capable
