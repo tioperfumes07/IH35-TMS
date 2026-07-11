@@ -40,7 +40,7 @@ type Props = {
 export function VendorListSidebar({
   vendors,
   status,
-  totalCount: _totalCount,
+  totalCount,
   page,
   pageSize,
   search,
@@ -70,8 +70,9 @@ export function VendorListSidebar({
     return rows;
   }, [vendors, search, sortByName]);
 
-  const filteredCount = sortedVendors.length;
-  const totalPages = Math.max(1, Math.ceil(filteredCount / pageSize));
+  // PAGER-SERVERTOTAL-01: the pager count/totalPages reflect the server roster total
+  // (totalCount prop, e.g. "440 of 490"), NOT the current in-memory array length.
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
   const safePage = Math.min(Math.max(1, page), totalPages);
   const pageStart = (safePage - 1) * pageSize;
   const pagedVendors = useMemo(
@@ -89,7 +90,7 @@ export function VendorListSidebar({
       <SidebarPagination
         page={safePage}
         pageSize={pageSize}
-        totalCount={filteredCount}
+        totalCount={totalCount}
         onPageChange={onPageChange}
         onPageSizeChange={onPageSizeChange}
         loading={listState.isLoading}
@@ -151,7 +152,7 @@ export function VendorListSidebar({
         <SidebarPagination
           page={safePage}
           pageSize={pageSize}
-          totalCount={filteredCount}
+          totalCount={totalCount}
           onPageChange={onPageChange}
           onPageSizeChange={onPageSizeChange}
           loading={listState.isLoading}
