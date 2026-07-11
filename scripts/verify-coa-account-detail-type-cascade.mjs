@@ -15,8 +15,14 @@ import path from "node:path";
 
 const ROOT = process.cwd();
 const LABEL = "verify-coa-account-detail-type-cascade";
-const FILE = "apps/frontend/src/pages/lists/accounting/AccountDrawer.tsx";
-const src = fs.existsSync(path.join(ROOT, FILE)) ? fs.readFileSync(path.join(ROOT, FILE), "utf8") : "";
+// COA_ENUM_TO_CATALOG_CODES was extracted to the shared api/coa-list.ts (single source of truth, anti-drift)
+// and is imported by both AccountDrawer and the QuickCreate category creator. Read BOTH so the contract is
+// found wherever it lives (the map moving files must not break this guard).
+const FILES = [
+  "apps/frontend/src/api/coa-list.ts",
+  "apps/frontend/src/pages/lists/accounting/AccountDrawer.tsx",
+];
+const src = FILES.map((f) => (fs.existsSync(path.join(ROOT, f)) ? fs.readFileSync(path.join(ROOT, f), "utf8") : "")).join("\n");
 const failures = [];
 
 const ENUMS = ["Asset", "Liability", "Equity", "Income", "Expense", "CostOfGoodsSold", "OtherIncome", "OtherExpense"];
@@ -25,7 +31,8 @@ if (!src) {
   failures.push(`missing ${FILE}`);
 } else {
   // 1. Every COA group enum must map to ≥1 catalog code (else its Detail Type dropdown is empty).
-  const mapMatch = src.match(/COA_ENUM_TO_CATALOG_CODES[^{]*\{([\s\S]*?)\}/);
+  // Anchor on the const DECLARATION (not a comment/type mention) so the map body is captured, wherever it lives.
+  const mapMatch = src.match(/const\s+COA_ENUM_TO_CATALOG_CODES[^{]*\{([\s\S]*?)\}/);
   if (!mapMatch) {
     failures.push("COA_ENUM_TO_CATALOG_CODES map missing (Detail Type cascade would be empty)");
   } else {
