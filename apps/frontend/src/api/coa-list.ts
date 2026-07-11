@@ -37,6 +37,67 @@ export function fetchAccountTypeCatalog() {
   return apiRequest<AccountTypeCatalogEntry[]>("/api/v1/accounting/account-type-catalog");
 }
 
+// ── Shared COA account-type taxonomy ────────────────────────────────────────────────────────────
+// Single source of truth for the Chart-of-Accounts type/detail-type pickers. catalogs.accounts
+// .account_type is the 8-value COA group enum below; the finer Detail Type list is fetched LIVE from
+// catalogs.account_types (fetchAccountTypeCatalog) and matched to the chosen enum via
+// COA_ENUM_TO_CATALOG_CODES. Consumed by both AccountDrawer (COA list page) and the category
+// quick-create so the two never drift (§9).
+export const ACCOUNT_TYPES = [
+  "Asset",
+  "Liability",
+  "Equity",
+  "Income",
+  "Expense",
+  "CostOfGoodsSold",
+  "OtherIncome",
+  "OtherExpense",
+] as const;
+
+export type CoaAccountType = (typeof ACCOUNT_TYPES)[number];
+
+// QBO groups the account-type picker under its two financial statements (Balance Sheet vs Profit &
+// Loss). Same 8 enum values, presented in statement-grouped <optgroup>s. The stored value is still
+// the flat account_type enum.
+export const ACCOUNT_TYPE_GROUPS: Array<{ label: string; types: CoaAccountType[] }> = [
+  { label: "Balance Sheet", types: ["Asset", "Liability", "Equity"] },
+  { label: "Profit & Loss", types: ["Income", "CostOfGoodsSold", "Expense", "OtherIncome", "OtherExpense"] },
+];
+
+// catalogs.accounts.account_type is the 8-value COA group enum, but the account-type catalog
+// (catalogs.account_types) is keyed by the 15 finer QBO types (codes BANK/AR/OCA/EXP/…). Map each
+// enum to its catalog code(s) so the dependent Detail Type dropdown populates.
+export const COA_ENUM_TO_CATALOG_CODES: Record<string, string[]> = {
+  Asset: ["BANK", "AR", "OCA", "FA", "OA"],
+  Liability: ["CC", "AP", "OCL", "LTL"],
+  Equity: ["EQ"],
+  Income: ["INC"],
+  OtherIncome: ["OINC"],
+  CostOfGoodsSold: ["COGS"],
+  Expense: ["EXP"],
+  OtherExpense: ["OEXP"],
+};
+
+// Detail types available for a chosen account_type enum, derived from the LIVE account-type catalog.
+export function detailTypesForAccountType(
+  catalog: AccountTypeCatalogEntry[] | undefined,
+  accountType: string,
+): AccountTypeCatalogEntry["detailTypes"] {
+  if (!catalog || !accountType) return [];
+  const codes = new Set(COA_ENUM_TO_CATALOG_CODES[accountType] ?? []);
+  const out: AccountTypeCatalogEntry["detailTypes"] = [];
+  const seen = new Set<string>();
+  for (const e of catalog) {
+    if (!(codes.has(e.code) || e.accountType === accountType || e.code === accountType)) continue;
+    for (const dt of e.detailTypes) {
+      if (seen.has(dt.name)) continue;
+      seen.add(dt.name);
+      out.push(dt);
+    }
+  }
+  return out;
+}
+
 export function fetchAccountBalances(operatingCompanyId: string, asOfDate: string) {
   const params = new URLSearchParams({
     operating_company_id: operatingCompanyId,

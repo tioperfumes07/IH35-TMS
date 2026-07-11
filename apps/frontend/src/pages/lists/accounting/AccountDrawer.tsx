@@ -7,7 +7,13 @@ import {
   updateCatalogAccount,
   type CatalogAccount,
 } from "../../../api/catalog-accounts";
-import { fetchAccountTypeCatalog, type AccountTypeCatalogEntry } from "../../../api/coa-list";
+import {
+  fetchAccountTypeCatalog,
+  detailTypesForAccountType,
+  ACCOUNT_TYPE_GROUPS,
+  COA_ENUM_TO_CATALOG_CODES,
+  type AccountTypeCatalogEntry,
+} from "../../../api/coa-list";
 import { getCoaAccounts } from "../../../api/banking";
 import { Button } from "../../../components/Button";
 import { Combobox, type ComboboxOption } from "../../../components/Combobox";
@@ -24,40 +30,8 @@ type Props = {
   onSaved: () => void;
 };
 
-const ACCOUNT_TYPES = [
-  "Asset",
-  "Liability",
-  "Equity",
-  "Income",
-  "Expense",
-  "CostOfGoodsSold",
-  "OtherIncome",
-  "OtherExpense",
-] as const;
-
-// QBO groups the account-type picker under its two financial statements (Balance Sheet vs Profit &
-// Loss). Same 8 enum values, just presented in statement-grouped <optgroup>s so the picker reads like
-// QBO's New-Account dialog. Additive — the stored value is still the flat account_type enum.
-const ACCOUNT_TYPE_GROUPS: Array<{ label: string; types: Array<(typeof ACCOUNT_TYPES)[number]> }> = [
-  { label: "Balance Sheet", types: ["Asset", "Liability", "Equity"] },
-  { label: "Profit & Loss", types: ["Income", "CostOfGoodsSold", "Expense", "OtherIncome", "OtherExpense"] },
-];
-
-// catalogs.accounts.account_type is the 8-value COA group enum, but the account-type catalog
-// (catalogs.account_types) is keyed by the 15 finer QBO types (codes BANK/AR/OCA/EXP/…). The Detail Type
-// dropdown was always empty ("No detail types available") because the 8-enum never matched a 15-type
-// code/name. Map each enum to its catalog code(s) so the dependent dropdown populates with the right
-// detail types (Asset → Bank/AR/OtherCurrentAsset/FixedAsset/OtherAsset detail types, etc.).
-const COA_ENUM_TO_CATALOG_CODES: Record<string, string[]> = {
-  Asset: ["BANK", "AR", "OCA", "FA", "OA"],
-  Liability: ["CC", "AP", "OCL", "LTL"],
-  Equity: ["EQ"],
-  Income: ["INC"],
-  OtherIncome: ["OINC"],
-  CostOfGoodsSold: ["COGS"],
-  Expense: ["EXP"],
-  OtherExpense: ["OEXP"],
-};
+// ACCOUNT_TYPES / ACCOUNT_TYPE_GROUPS / COA_ENUM_TO_CATALOG_CODES now live in ../../../api/coa-list
+// (shared single source of truth, also consumed by the category quick-create) — imported above.
 
 // Preview-pane display mappings. All source values come straight from catalogs.account_types (seeded in
 // Block 2, migration 202606080010): statement ∈ {BS, P&L}; normal_balance ∈ {Debit, Credit};
@@ -156,23 +130,10 @@ export function AccountDrawer({ open, mode, account, operatingCompanyId, onClose
     staleTime: 5 * 60 * 1000,
   });
 
-  const detailTypesForType = useMemo<AccountTypeCatalogEntry["detailTypes"]>(() => {
-    if (!typeCatalogQuery.data || !form.account_type) return [];
-    // Match by the catalog code(s) that the selected COA group enum maps to; also keep the legacy
-    // direct match (accountType/code) so an exact 15-type value still works.
-    const codes = new Set(COA_ENUM_TO_CATALOG_CODES[form.account_type] ?? []);
-    const out: AccountTypeCatalogEntry["detailTypes"] = [];
-    const seen = new Set<string>();
-    for (const e of typeCatalogQuery.data) {
-      if (!(codes.has(e.code) || e.accountType === form.account_type || e.code === form.account_type)) continue;
-      for (const dt of e.detailTypes) {
-        if (seen.has(dt.name)) continue;
-        seen.add(dt.name);
-        out.push(dt);
-      }
-    }
-    return out;
-  }, [typeCatalogQuery.data, form.account_type]);
+  const detailTypesForType = useMemo<AccountTypeCatalogEntry["detailTypes"]>(
+    () => detailTypesForAccountType(typeCatalogQuery.data, form.account_type),
+    [typeCatalogQuery.data, form.account_type],
+  );
 
   // Parent-account candidates for the subaccount picker. getCoaAccounts is entity-scoped server-side
   // (passes operating_company_id → af1 RLS), so this NEVER lists another entity's accounts. We further
