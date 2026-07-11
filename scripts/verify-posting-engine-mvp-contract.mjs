@@ -41,10 +41,13 @@ try {
     "getExistingPostingResultByIdempotencyKey(",
     "Service-level idempotency pre-check helper is missing",
   );
-  const postFnStart = service.indexOf("export async function postSourceTransaction(");
-  const postFnEnd = service.indexOf("export async function reversePostedSourceTransaction(");
+  // P1-BILLPAY-GL extracted the posting body into executePostingOnClient (client-accepting, so payBill can
+  // post atomically in its own txn); postSourceTransaction is now a thin wrapper. The idempotency-before-
+  // batch-insert invariant lives in executePostingOnClient — check it there (invariant unchanged, relocated).
+  const postFnStart = service.indexOf("async function executePostingOnClient(");
+  const postFnEnd = service.indexOf("export async function postSourceTransactionInClientTx(");
   if (postFnStart < 0 || postFnEnd < 0 || postFnEnd <= postFnStart) {
-    throw new Error("postSourceTransaction function boundaries not found");
+    throw new Error("executePostingOnClient function boundaries not found");
   }
   const postFnSource = service.slice(postFnStart, postFnEnd);
   const existingIdx = postFnSource.indexOf("const existing = await getExistingPostingResultByIdempotencyKey(");
