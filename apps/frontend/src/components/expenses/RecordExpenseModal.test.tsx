@@ -46,6 +46,30 @@ vi.mock("../shared/SelectCombobox", () => ({
   ),
 }));
 
+// Doc-19-B: Category is now the shared ReferenceSelect (inline "+ Add new category"). Render it as a
+// native <select> so the test drives the existing-category select path deterministically; onChange takes
+// the option value (or null), matching the real ReferenceSelect contract.
+vi.mock("../parity/ReferenceSelect", () => ({
+  ReferenceSelect: ({
+    value,
+    onChange,
+    options,
+  }: {
+    value: string | null;
+    onChange: (v: string | null) => void;
+    options: Array<{ value: string; label: string }>;
+  }) => (
+    <select aria-label="Category" value={value ?? ""} onChange={(event) => onChange(event.target.value || null)}>
+      <option value="">Select category…</option>
+      {options.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  ),
+}));
+
 vi.mock("../forms/QboCombobox", () => ({
   QboCombobox: ({
     onChange,

@@ -37,9 +37,14 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+// High-traffic accounting record forms live outside pages/accounting too: the "Record a vendor expense"
+// form is under components/expenses, and the shared money forms under components/{forms,parity}. Doc-19-B
+// widened the scan to these so an accounting-entity <select> on those record forms can no longer slip the
+// ratchet by living in a sibling directory (that gap hid the Expenses Category dropdown from FIX-02/06).
 const SCAN_DIRS = [
   "apps/frontend/src/pages/accounting",
   "apps/frontend/src/components/accounting",
+  "apps/frontend/src/components/expenses",
 ];
 const BASELINE_REL = "scripts/verify-referenceselect-coverage-ratchet.baseline.json";
 
