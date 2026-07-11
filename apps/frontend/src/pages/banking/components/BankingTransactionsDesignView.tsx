@@ -233,6 +233,10 @@ export function BankingTransactionsDesignView({
 }: Props) {
   const { pushToast } = useToast();
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
+  // DEFECT-7 — the expanded-row "Match candidates" pane. Clicking the Match button expands the row (so
+  // matchCandidatesQuery runs) and scrolls this pane into view, surfacing the ranked candidates that were
+  // previously only reachable by manually expanding the row.
+  const matchPaneRef = useRef<HTMLDivElement | null>(null);
   const [activeReviewTab, setActiveReviewTab] = useState<ReviewTabId>("for_review");
   const [descriptionFilter, setDescriptionFilter] = useState("");
   const [amountFilter, setAmountFilter] = useState<AmountFilter>("all");
@@ -385,8 +389,8 @@ export function BankingTransactionsDesignView({
     return out;
   }, [scopedRows]);
 
-  const [sortBy, setSortBy] = useState<{ key: "date" | "description" | "spent" | "received"; dir: "asc" | "desc" }>({ key: "date", dir: "desc" });
-  const toggleSort = (key: "date" | "description" | "spent" | "received") =>
+  const [sortBy, setSortBy] = useState<{ key: "date" | "description" | "spent" | "received" | "amount"; dir: "asc" | "desc" }>({ key: "date", dir: "desc" });
+  const toggleSort = (key: "date" | "description" | "spent" | "received" | "amount") =>
     setSortBy((prev) => (prev.key === key ? { key, dir: prev.dir === "asc" ? "desc" : "asc" } : { key, dir: key === "date" ? "desc" : "asc" }));
   // Resizable columns (QBO parity) — reuses the shared TableHeaderCell/useTablePref pair (the current
   // repo-wide resizable-header standard: RunnerTable.tsx, VendorsListView.tsx, AccountsPayableAgingPage.tsx,
@@ -411,7 +415,7 @@ export function BankingTransactionsDesignView({
     action: 150,
   };
   const txColWidth = (key: string) => txColWidths[key] ?? TX_COLUMN_DEFAULTS[key] ?? 120;
-  const onToggleSortCol = (key: string) => toggleSort(key as "date" | "description" | "spent" | "received");
+  const onToggleSortCol = (key: string) => toggleSort(key as "date" | "description" | "spent" | "received" | "amount");
 
   const tableRows = useMemo(() => {
     const source = reviewTabBuckets[activeReviewTab];
@@ -460,6 +464,13 @@ export function BankingTransactionsDesignView({
       if (sortBy.key === "description") return (tx.description ?? tx.merchant_name ?? "").toLowerCase();
       if (sortBy.key === "spent") return spentReceived(tx).spent;
       if (sortBy.key === "received") return spentReceived(tx).received;
+      // DEFECT-9a — the single "Amount" column (Show amounts in 1 column) sorts by the SIGNED amount
+      // (received positive, spent negative), so ascending runs biggest-spend→biggest-receive and
+      // descending reverses it — the same numeric ordering QBO's Amount column uses.
+      if (sortBy.key === "amount") {
+        const { spent, received } = spentReceived(tx);
+        return received - spent;
+      }
       return tx.transaction_date ?? "";
     };
     return [...filtered].sort((a, b) => {
@@ -911,6 +922,25 @@ export function BankingTransactionsDesignView({
           >
             Collapse all groupings
           </button>
+          {/* DEFECT-9b — visible month/all-dates grouping toggle (QBO parity). "By month" keeps the
+          existing month grouping; "All dates" flattens to a single date-sorted list. Both honor the
+          active asc/desc sort. Drives the same viewSettings.turnOffGrouping the groupedRows memo reads. */}
+          <div className="inline-flex overflow-hidden rounded-sm border border-gray-300 bg-white text-xs">
+            <button
+              type="button"
+              className={`px-2.5 py-1 ${!viewSettings.turnOffGrouping ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}
+              onClick={() => setViewSettings((prev) => ({ ...prev, turnOffGrouping: false }))}
+            >
+              By month
+            </button>
+            <button
+              type="button"
+              className={`border-l border-gray-300 px-2.5 py-1 ${viewSettings.turnOffGrouping ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}
+              onClick={() => setViewSettings((prev) => ({ ...prev, turnOffGrouping: true }))}
+            >
+              All dates
+            </button>
+          </div>
           <SelectCombobox
             value={selectedTransactionType}
             onChange={(event) => setSelectedTransactionType(event.target.value)}
@@ -1092,7 +1122,6 @@ export function BankingTransactionsDesignView({
                 <TableHeaderCell
                   columnKey="amount"
                   label="Amount"
-                  sortable={false}
                   sortKey={sortBy.key}
                   sortDir={sortBy.dir}
                   onToggleSort={onToggleSortCol}
@@ -1455,7 +1484,16 @@ export function BankingTransactionsDesignView({
                               <button
                                 type="button"
                                 className={`rounded-sm px-2 py-1 text-xs ${draft.mode === "match" ? "bg-slate-100 text-slate-700" : "bg-gray-100 text-gray-700"}`}
-                                  onClick={() => setDraft(tx, { mode: "match" })}
+                                  onClick={() => {
+                                    // DEFECT-7 — Match previously only flipped the mode badge; the ranked
+                                    // candidates never surfaced on click. Now it also expands this row (so
+                                    // matchCandidatesQuery loads) and scrolls the candidates pane into view.
+                                    setDraft(tx, { mode: "match" });
+                                    setExpandedTxId(tx.id);
+                                    requestAnimationFrame(() =>
+                                      matchPaneRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" })
+                                    );
+                                  }}
                               >
                                 Match
                               </button>
@@ -1629,22 +1667,28 @@ export function BankingTransactionsDesignView({
                               </label>
                               <label className="text-xs text-gray-600">
                                 Customer/project
-                                <SelectCombobox
-                                  className="mt-0.5 w-full"
-                                  value={draft.customerId}
-                                  onChange={(event) => {
-                                    const cid = event.target.value;
-                                    const c = (customersQuery.data ?? []).find((x) => x.id === cid);
-                                    setDraft(tx, { customerId: cid, customerProject: c?.name ?? "" });
-                                  }}
-                                >
-                                  <option value="">Select customer</option>
-                                  {(customersQuery.data ?? []).map((c) => (
-                                    <option key={c.id} value={c.id}>
-                                      {c.name}
-                                    </option>
-                                  ))}
-                                </SelectCombobox>
+                                <div className="mt-0.5">
+                                  {/* DEFECT-10 — QBO parity: inline "+ Add new customer" (ReferenceSelect,
+                                  A2 keystone) to match Payee/Category/Product-Service. createKind="customer"
+                                  creates through QuickCreateEntityModal into the canonical mdata.customers
+                                  table the list reads from, so a new customer persists + reselects after
+                                  reload. */}
+                                  <ReferenceSelect
+                                    value={draft.customerId || null}
+                                    onChange={(cid) => {
+                                      const c = (customersQuery.data ?? []).find((x) => x.id === cid);
+                                      setDraft(tx, { customerId: cid ?? "", customerProject: c?.name ?? "" });
+                                    }}
+                                    options={(customersQuery.data ?? []).map((c) => ({ value: c.id, label: c.name }))}
+                                    createKind="customer"
+                                    operatingCompanyId={companyId}
+                                    placeholder="Select customer"
+                                    onOptionCreated={(opt) => {
+                                      void customersQuery.refetch();
+                                      setDraft(tx, { customerProject: opt.label });
+                                    }}
+                                  />
+                                </div>
                               </label>
                               <label className="flex items-center gap-2 text-xs text-gray-700">
                                 <input
@@ -1806,17 +1850,25 @@ export function BankingTransactionsDesignView({
                             <div className="mt-2 rounded-sm border border-dashed border-gray-300 bg-gray-50 px-3 py-4 text-center text-xs text-gray-500">
                               Files drag/drop area
                             </div>
-                            <div className="mt-2 flex justify-end gap-2">
-                              <Button type="button" variant="secondary" onClick={() => setExpandedTxId(null)}>
-                                Cancel
+                            {/* DEFECT-1 — QBO parity: Split sits at the BOTTOM-LEFT of the categorize
+                            footer (opposite Post), not only inside the row ▾ menu. Opens the same
+                            multi-line BankTransactionSplitModal via setSplitTx. */}
+                            <div className="mt-2 flex items-center justify-between gap-2">
+                              <Button type="button" variant="secondary" onClick={() => setSplitTx(tx)}>
+                                Split
                               </Button>
-                              <Button type="button" onClick={() => void postTransaction(tx)} disabled={postingTxId === tx.id}>
-                                {postingTxId === tx.id ? "Posting..." : "Post"}
-                              </Button>
+                              <div className="flex gap-2">
+                                <Button type="button" variant="secondary" onClick={() => setExpandedTxId(null)}>
+                                  Cancel
+                                </Button>
+                                <Button type="button" onClick={() => void postTransaction(tx)} disabled={postingTxId === tx.id}>
+                                  {postingTxId === tx.id ? "Posting..." : "Post"}
+                                </Button>
+                              </div>
                             </div>
                           </div>
 
-                          <div className="rounded-sm border border-gray-200 bg-white p-2">
+                          <div ref={matchPaneRef} className="rounded-sm border border-gray-200 bg-white p-2">
                             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Match candidates</p>
                             <p className="mt-0.5 text-[11px] text-gray-500">
                               Ranked matchable ledger records (amount, date, memo) from the reconciliation match

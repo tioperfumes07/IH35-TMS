@@ -1,0 +1,29 @@
+{
+  "block_id": "BANK-18-KEYSTONE-CATEGORIZE-REGISTER",
+  "status": "in-progress",
+  "classification": "NON-FINANCIAL (UI rewire)",
+  "priority": "P1",
+  "module": "banking",
+  "phase": "qbo-parity",
+  "source": "GUARD doc 18 KEYSTONE (2026-07-11)",
+  "allowed_files": [
+    "apps/frontend/src/pages/banking/BankAccountDetail.tsx",
+    "apps/frontend/src/pages/banking/components/RegisterTable.tsx",
+    "apps/frontend/src/pages/banking/components/RegisterRow.tsx",
+    "scripts/verify-banking-register-categorize-capable.mjs"
+  ],
+  "acceptance": [
+    {
+      "kind": "guard",
+      "script": "scripts/verify-banking-register-categorize-capable.mjs",
+      "wired_into": ".github/workflows/locked-guards.yml"
+    },
+    {
+      "kind": "live",
+      "check": "UNVERIFIED — browser: clicking a bank account opens a register whose rows open the categorize panel (post/categorize/match/split), tab strip + From/To + resizable; only ONE live categorize table. Kills defects 2,3,4,5,6,8."
+    }
+  ],
+  "db_required": false,
+  "guard_required": true,
+  "registered_on": "2026-07-11"
+}

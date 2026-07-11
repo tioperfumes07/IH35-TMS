@@ -5,6 +5,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   disconnectPlaidBankAccount,
   getPlaidBankAccount,
+  getPlaidBankAccounts,
   getPlaidBankTransactions,
   syncPlaidBankAccount,
 } from "../../api/banking";
@@ -16,6 +17,7 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useListState } from "../../components/list-state";
+import { BankingTransactionsDesignView } from "./components/BankingTransactionsDesignView";
 
 const PAGE_SIZE = 50;
 
@@ -32,6 +34,13 @@ function syncStatusClasses(status: string) {
   return "bg-gray-100 text-gray-700";
 }
 
+// KEYSTONE (Doc-18 defects 2,3,4,5,6,8) — clicking a bank account on Banking Home lands the operator on
+// the SAME categorize-capable register as the Transactions tab, not the old read-only <table>. We mount
+// the single live transaction surface (BankingTransactionsDesignView) pre-filtered to this account, so the
+// operator gets the full power (categorize / post / match / split, tab strip, From/To column, resizable,
+// responsive) instead of an inert grid whose rows had no onClick. The route (/banking/accounts/:id) and the
+// account header + balance KPIs + Sync/Disconnect actions are preserved (additive). The prior inert table is
+// ARCHIVED below (ArchivedBankAccountDetailTable) — kept importable, clearly retired, never mounted.
 export function BankAccountDetailPage() {
   const { id = "" } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -40,9 +49,6 @@ export function BankAccountDetailPage() {
   const auth = useAuth();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [offset, setOffset] = useState(0);
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
   const [syncing, setSyncing] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
 
@@ -54,23 +60,15 @@ export function BankAccountDetailPage() {
     queryFn: () => getPlaidBankAccount(id, companyId),
     enabled: Boolean(id && companyId),
   });
-  const transactionsQuery = useQuery({
-    queryKey: ["banking", "plaid-account-transactions", id, companyId, offset, startDate, endDate],
-    queryFn: () =>
-      getPlaidBankTransactions(id, companyId, {
-        limit: PAGE_SIZE,
-        offset,
-        startDate: startDate || undefined,
-        endDate: endDate || undefined,
-      }),
-    enabled: Boolean(id && companyId),
+  // Full account roster for the register's account chip strip (so the operator can pivot to another
+  // account without leaving the register), same source BankingHome feeds the Transactions tab.
+  const accountsQuery = useQuery({
+    queryKey: ["banking", "plaid-accounts", companyId],
+    queryFn: () => getPlaidBankAccounts(companyId),
+    enabled: Boolean(companyId),
   });
 
-  const transactions = transactionsQuery.data?.transactions ?? [];
-  const hasNextPage = transactions.length === PAGE_SIZE;
   const account = detailQuery.data?.account;
-  // Empty message renders only once the transactions query settles, never mid-fetch.
-  const listState = useListState(transactionsQuery, transactions.length === 0);
 
   const headerTitle = useMemo(() => {
     if (!account) return "Bank Account";
@@ -96,8 +94,7 @@ export function BankAccountDetailPage() {
                       pushToast(`Sync complete: +${res.added} / ~${res.modified} / -${res.removed}`, "success");
                       return Promise.all([
                         queryClient.invalidateQueries({ queryKey: ["banking", "plaid-account-detail", id, companyId] }),
-                        queryClient.invalidateQueries({ queryKey: ["banking", "plaid-account-transactions", id] }),
-                        queryClient.invalidateQueries({ queryKey: ["banking", "plaid-accounts"] }),
+                        queryClient.invalidateQueries({ queryKey: ["banking"] }),
                       ]);
                     })
                     .catch((error) => pushToast(String((error as Error).message || "Sync failed"), "error"))
@@ -130,11 +127,11 @@ export function BankAccountDetailPage() {
         }
       />
 
-      {detailQuery.isError || transactionsQuery.isError ? (
+      {detailQuery.isError || accountsQuery.isError ? (
         <ListErrorBanner
           onRetry={() => {
             void detailQuery.refetch();
-            void transactionsQuery.refetch();
+            void accountsQuery.refetch();
           }}
         />
       ) : null}
@@ -159,107 +156,157 @@ export function BankAccountDetailPage() {
         </div>
       </div>
 
-      <div className="rounded-sm border border-gray-200 bg-white p-4">
-        <div className="mb-3 flex flex-wrap items-end gap-3">
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-gray-600">Start date</label>
-            <DatePicker
-              value={startDate}
-              onChange={(next) => {
-                setOffset(0);
-                setStartDate(next);
-              }}
-              className="rounded-sm border border-gray-300 px-2 py-1 text-sm"
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-gray-600">End date</label>
-            <DatePicker
-              value={endDate}
-              onChange={(next) => {
-                setOffset(0);
-                setEndDate(next);
-              }}
-              className="rounded-sm border border-gray-300 px-2 py-1 text-sm"
-            />
-          </div>
-          <ActionButton
-            onClick={() => {
-              setOffset(0);
-              void transactionsQuery.refetch();
-            }}
-          >
-            Apply Filter
-          </ActionButton>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="min-w-full border-separate border-spacing-0 text-sm">
-            <thead>
-              <tr className="text-left text-xs uppercase tracking-wide text-gray-500">
-                <th className="border-b border-gray-200 px-2 py-2">Date</th>
-                <th className="border-b border-gray-200 px-2 py-2">Description</th>
-                <th className="border-b border-gray-200 px-2 py-2">Amount</th>
-                <th className="border-b border-gray-200 px-2 py-2">Category</th>
-                <th className="border-b border-gray-200 px-2 py-2">Matched</th>
-              </tr>
-            </thead>
-            <tbody>
-              {transactions.map((row) => (
-                <tr key={row.id} className="align-top">
-                  <td className="border-b border-gray-100 px-2 py-2 text-gray-700">{row.transaction_date}</td>
-                  <td className="border-b border-gray-100 px-2 py-2 text-gray-700">
-                    <div className="font-medium text-gray-900">{row.description || "Bank transaction"}</div>
-                    {row.merchant_name ? <div className="text-xs text-gray-500">{row.merchant_name}</div> : null}
-                  </td>
-                  <td className="border-b border-gray-100 px-2 py-2 text-gray-700">{money(Number(row.amount_cents))}</td>
-                  <td className="border-b border-gray-100 px-2 py-2 text-gray-700">
-                    {Array.isArray(row.plaid_category) && row.plaid_category.length > 0 ? row.plaid_category.join(" / ") : "Uncategorized"}
-                  </td>
-                  <td className="border-b border-gray-100 px-2 py-2 text-gray-700">
-                    {row.matched_load_id ? (
-                      <EntityLink kind="load" id={row.matched_load_id} label="Load" />
-                    ) : row.matched_bill_id ? (
-                      <EntityLink kind="bill" id={row.matched_bill_id} label="Bill" />
-                    ) : row.matched_settlement_id ? (
-                      <EntityLink kind="settlement" id={row.matched_settlement_id} label="Settlement" />
-                    ) : (
-                      "No"
-                    )}
-                  </td>
-                </tr>
-              ))}
-              {listState.isEmpty ? (
-                <tr>
-                  <td colSpan={5} className="px-2 py-4 text-center text-sm text-gray-500">
-                    No transactions found for this filter.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="mt-3 flex items-center justify-end gap-2">
-          <ActionButton
-            disabled={offset === 0}
-            onClick={() => {
-              setOffset((current) => Math.max(0, current - PAGE_SIZE));
-            }}
-          >
-            Previous
-          </ActionButton>
-          <ActionButton
-            disabled={!hasNextPage}
-            onClick={() => {
-              setOffset((current) => current + PAGE_SIZE);
-            }}
-          >
-            Next
-          </ActionButton>
-        </div>
-      </div>
+      {/* KEYSTONE — the categorize-capable register (single live transaction surface), pre-filtered to this
+      account. Selecting another account chip keeps the URL in sync via onSelectAccount → navigate. */}
+      <BankingTransactionsDesignView
+        companyId={companyId}
+        accounts={accountsQuery.data?.accounts ?? []}
+        selectedAccountId={id}
+        onSelectAccount={(accountId) => navigate(`/banking/accounts/${accountId}`)}
+        onManageConnections={() => navigate("/banking")}
+        onDataChanged={() => {
+          void queryClient.invalidateQueries({ queryKey: ["banking"] });
+        }}
+      />
     </div>
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────────────────────────────
+// @archived — the original read-only bank-account transactions table (Doc-18 BAD surface): a plain <table>
+// whose rows had no onClick and no categorize/post/match/split, a box-in-box calendar, no tab strip, no
+// From/To column, not resizable. SUPERSEDED by BankingTransactionsDesignView, now mounted by
+// BankAccountDetailPage above. Kept importable for audit history; NEVER re-wire this into a route. Enforced
+// by scripts/verify-banking-register-categorize-capable.mjs (asserts the route mounts the design view and
+// only ONE live categorize table exists). The date pickers below were made borderless so no box-in-box
+// residue survives even in the archived source (Doc-18 defect #3).
+// ─────────────────────────────────────────────────────────────────────────────────────────────────────
+export function ArchivedBankAccountDetailTable() {
+  const { id = "" } = useParams<{ id: string }>();
+  const { pushToast: _pushToast } = useToast();
+  const { selectedCompanyId } = useCompanyContext();
+  const companyId = selectedCompanyId ?? "";
+  const [offset, setOffset] = useState(0);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  void _pushToast;
+
+  const transactionsQuery = useQuery({
+    queryKey: ["banking", "plaid-account-transactions", id, companyId, offset, startDate, endDate],
+    queryFn: () =>
+      getPlaidBankTransactions(id, companyId, {
+        limit: PAGE_SIZE,
+        offset,
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
+      }),
+    enabled: false,
+  });
+
+  const transactions = transactionsQuery.data?.transactions ?? [];
+  const hasNextPage = transactions.length === PAGE_SIZE;
+  const listState = useListState(transactionsQuery, transactions.length === 0);
+
+  return (
+    <div className="rounded-sm border border-gray-200 bg-white p-4">
+      <div className="mb-3 flex flex-wrap items-end gap-3">
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-gray-600">Start date</label>
+          <DatePicker
+            value={startDate}
+            onChange={(next) => {
+              setOffset(0);
+              setStartDate(next);
+            }}
+            className="mt-0.5 w-full text-sm"
+          />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-gray-600">End date</label>
+          <DatePicker
+            value={endDate}
+            onChange={(next) => {
+              setOffset(0);
+              setEndDate(next);
+            }}
+            className="mt-0.5 w-full text-sm"
+          />
+        </div>
+        <ActionButton
+          onClick={() => {
+            setOffset(0);
+            void transactionsQuery.refetch();
+          }}
+        >
+          Apply Filter
+        </ActionButton>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="min-w-full border-separate border-spacing-0 text-sm">
+          <thead>
+            <tr className="text-left text-xs uppercase tracking-wide text-gray-500">
+              <th className="border-b border-gray-200 px-2 py-2">Date</th>
+              <th className="border-b border-gray-200 px-2 py-2">Description</th>
+              <th className="border-b border-gray-200 px-2 py-2">Amount</th>
+              <th className="border-b border-gray-200 px-2 py-2">Category</th>
+              <th className="border-b border-gray-200 px-2 py-2">Matched</th>
+            </tr>
+          </thead>
+          <tbody>
+            {transactions.map((row) => (
+              <tr key={row.id} className="align-top">
+                <td className="border-b border-gray-100 px-2 py-2 text-gray-700">{row.transaction_date}</td>
+                <td className="border-b border-gray-100 px-2 py-2 text-gray-700">
+                  <div className="font-medium text-gray-900">{row.description || "Bank transaction"}</div>
+                  {row.merchant_name ? <div className="text-xs text-gray-500">{row.merchant_name}</div> : null}
+                </td>
+                <td className="border-b border-gray-100 px-2 py-2 text-gray-700">{money(Number(row.amount_cents))}</td>
+                <td className="border-b border-gray-100 px-2 py-2 text-gray-700">
+                  {Array.isArray(row.plaid_category) && row.plaid_category.length > 0 ? row.plaid_category.join(" / ") : "Uncategorized"}
+                </td>
+                <td className="border-b border-gray-100 px-2 py-2 text-gray-700">
+                  {row.matched_load_id ? (
+                    <EntityLink kind="load" id={row.matched_load_id} label="Load" />
+                  ) : row.matched_bill_id ? (
+                    <EntityLink kind="bill" id={row.matched_bill_id} label="Bill" />
+                  ) : row.matched_settlement_id ? (
+                    <EntityLink kind="settlement" id={row.matched_settlement_id} label="Settlement" />
+                  ) : (
+                    "No"
+                  )}
+                </td>
+              </tr>
+            ))}
+            {listState.isEmpty ? (
+              <tr>
+                <td colSpan={5} className="px-2 py-4 text-center text-sm text-gray-500">
+                  No transactions found for this filter.
+                </td>
+              </tr>
+            ) : null}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="mt-3 flex items-center justify-end gap-2">
+        <ActionButton
+          disabled={offset === 0}
+          onClick={() => {
+            setOffset((current) => Math.max(0, current - PAGE_SIZE));
+          }}
+        >
+          Previous
+        </ActionButton>
+        <ActionButton
+          disabled={!hasNextPage}
+          onClick={() => {
+            setOffset((current) => current + PAGE_SIZE);
+          }}
+        >
+          Next
+        </ActionButton>
+      </div>
+    </div>
+  );
+}
