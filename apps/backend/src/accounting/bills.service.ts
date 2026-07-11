@@ -5,6 +5,8 @@ import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
 import { enqueueTmsBillPushRequested } from "../qbo/tms-bill-push-chain.service.js";
 import { postBillGlIfEnabled } from "./bill-gl.service.js";
+import { postSourceTransactionInClientTx } from "./posting-engine.service.js";
+import { isBillPaymentGlPostingEnabled } from "./bill-payment-gl.service.js";
 import {
   auditVoid,
   canVoid,
@@ -738,6 +740,15 @@ export async function payBill(input: PayBillInput, userId: string) {
   if (input.paymentMethod === "check" && !input.checkNumber?.trim()) {
     throw new Error("check_number_required");
   }
+
+  // P1-BILLPAY-GL: a bill payment moves cash and MUST post DR ap_control / CR bank in the same breath.
+  // Gate the whole payment on BILL_PAYMENT_GL_POSTING_ENABLED — OFF => block entirely (no payment row,
+  // no bank mutation, no JE), so cash never moves without its offsetting journal entry.
+  const glPostingEnabled = await isBillPaymentGlPostingEnabled(input.operatingCompanyId, userId);
+  if (!glPostingEnabled) {
+    return { result: "blocked_flag_off" as const };
+  }
+
   const payment = await withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operatingCompanyId]);
     const billRes = await client.query<BillRow>(
@@ -833,6 +844,21 @@ export async function payBill(input: PayBillInput, userId: string) {
       },
       "info",
       "P5-D2-BILL-PAYMENT"
+    );
+
+    // Post the balanced DR ap_control / CR bank JE ATOMICALLY in THIS transaction (GUARD 2026-07-11:
+    // the bank-balance cache and the GL cash account are SEPARATE stores — recording −amount in both is
+    // correct double-entry + cache coherence, not double-counting). Because it runs on the same client,
+    // a posting failure rolls back the payment insert + bill update + bank decrement together — the
+    // bank and GL can never diverge. Idempotent (one batch per bill_payment). Relieves A/P via ap_control.
+    await postSourceTransactionInClientTx(
+      client,
+      {
+        operating_company_id: input.operatingCompanyId,
+        source_transaction_type: "bill_payment",
+        source_transaction_id: paymentRes.rows[0].id,
+      },
+      { userId }
     );
 
     return {

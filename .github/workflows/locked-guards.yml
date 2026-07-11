@@ -404,6 +404,12 @@ jobs:
       - name: verify:pwa-date-format
         run: npm run verify:pwa-date-format
 
+      - name: verify:bill-payment-posts-gl --selftest
+        run: node scripts/verify-bill-payment-posts-gl.mjs --selftest
+
+      - name: verify:bill-payment-posts-gl
+        run: npm run verify:bill-payment-posts-gl
+
       - name: verify:multipart-size-limits
         run: npm run verify:multipart-size-limits
 
