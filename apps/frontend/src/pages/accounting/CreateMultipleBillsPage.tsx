@@ -6,7 +6,6 @@ import { getCoaAccounts } from "../../api/banking";
 import { listVendors } from "../../api/mdata";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
-import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useToast } from "../../components/Toast";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { MoneyInput } from "../../components/forms/MoneyInput";
@@ -220,14 +219,21 @@ export function CreateMultipleBillsPage() {
                   />
                 </td>
                 <td className="px-2 py-1.5">
-                  <SelectCombobox className="h-8 min-w-[180px] rounded-sm border border-gray-300 px-2" value={row.coa_account_id} onChange={(event) => updateRow(row.id, { coa_account_id: event.target.value })}>
-                    <option value="">Optional</option>
-                    {(coaQuery.data?.accounts ?? []).map((account) => (
-                      <option key={account.id} value={account.id}>
-                        {account.account_number} - {account.account_name}
-                      </option>
-                    ))}
-                  </SelectCombobox>
+                  {/* D-CREATE-INLINE: the A/P account picker gets the inline "+ Add new category" row
+                      (creates in catalogs.accounts, immediately selectable), matching the split modal. */}
+                  <ReferenceSelect
+                    value={row.coa_account_id || null}
+                    onChange={(next) => updateRow(row.id, { coa_account_id: next ?? "" })}
+                    options={(coaQuery.data?.accounts ?? []).map((account) => ({
+                      value: account.id,
+                      label: account.account_name,
+                      type: account.account_number ?? undefined,
+                    }))}
+                    createKind="category"
+                    operatingCompanyId={companyId}
+                    placeholder="Optional"
+                    onOptionCreated={() => void coaQuery.refetch()}
+                  />
                 </td>
                 <td className="px-2 py-1.5">
                   <input className="h-8 min-w-[220px] rounded-sm border border-gray-300 px-2" value={row.memo} onChange={(event) => updateRow(row.id, { memo: event.target.value })} />

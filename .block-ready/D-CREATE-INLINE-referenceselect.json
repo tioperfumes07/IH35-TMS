@@ -1,0 +1,25 @@
+{
+  "block_id": "D-CREATE-INLINE-referenceselect",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "DESIGN-PARITY",
+  "task": "D-CREATE-INLINE (DESIGN-PARITY REQ 4): every accounting create-form dropdown offers the inline '+ Create' via the shared ReferenceSelect (writes to the canonical table, immediately selectable). Converted the two named offenders: RecurringBillCreate.tsx 'Vendor *' (was a raw <select>) -> ReferenceSelect createKind='vendor'; CreateMultipleBillsPage.tsx per-row A/P account (was a plain SelectCombobox) -> ReferenceSelect createKind='category' with onOptionCreated refetch. Left config/filter selects (frequency, etc.) as-is (they correctly need no +Create). Non-financial UI; frontend tsc clean; verify:referenceselect-qbo-standard PASS.",
+  "branch": "fix/create-inline-referenceselect",
+  "lane": "DESIGN-PARITY",
+  "allowed_files": [
+    "apps/frontend/src/pages/accounting/bills/RecurringBillCreate.tsx",
+    "apps/frontend/src/pages/accounting/CreateMultipleBillsPage.tsx",
+    ".block-ready/D-CREATE-INLINE-referenceselect.json"
+  ],
+  "acceptance": [
+    { "kind": "mounted", "component": "apps/frontend/src/pages/accounting/bills/RecurringBillCreate.tsx", "note": "Vendor picker renders ReferenceSelect createKind='vendor' with inline +Create" },
+    { "kind": "mounted", "component": "apps/frontend/src/pages/accounting/CreateMultipleBillsPage.tsx", "note": "A/P account picker renders ReferenceSelect createKind='category' with inline +Create" },
+    { "kind": "guard", "script": "scripts/verify-referenceselect-qbo-standard.mjs", "wired_into": "existing arch-design suite (unchanged) — PASS" },
+    { "kind": "live", "assert": "frontend tsc clean; verify:referenceselect-qbo-standard PASS; config/filter selects (frequency) correctly left without +Create" },
+    { "kind": "design", "spec": "DESIGN-PARITY-AUDIT-2026-07-11", "sections": ["REQ 4 D-CREATE-INLINE"] }
+  ],
+  "linkage": "Vendor picker -> mdata.vendors (canonical, +Create writes there); category picker -> catalogs.accounts (+Create writes there). Presentational wiring to canonical create flows; no new data/FK.",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
