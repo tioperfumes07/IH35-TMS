@@ -525,3 +525,8 @@ jobs:
         run: node scripts/verify-qbo-refresh-uses-access-token.mjs --selftest
       - name: verify:qbo-refresh-uses-access-token
         run: npm run verify:qbo-refresh-uses-access-token
+
+      - name: verify:recon-cron-registered --selftest
+        run: node scripts/verify-recon-cron-registered.mjs --selftest
+      - name: verify:recon-cron-registered
+        run: npm run verify:recon-cron-registered
