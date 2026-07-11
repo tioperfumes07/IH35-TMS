@@ -1,0 +1,18 @@
+{
+  "block": "D-CREATE-VERIFY-DEAD-FORMS-UNMOUNTED",
+  "title": "Prove every @archived/dead-stub create form is UNMOUNTED (nothing-gets-created root cause)",
+  "tier": "TIER-3",
+  "financial": false,
+  "pr_target": "fix/dead-forms-unmounted-guard -> main",
+  "summary": "VERIFY-FIRST: the owner 'nothing gets created / looks like shit' rot is not missing create logic (live forms are wired) but dead/superseded forms leaking onto the live surface. Confirmed all 11 dead modules are already unmounted — the @archived Workflow-B banking chain (BankTxCategorizationPage has zero live importers; superseded by BankingTransactionsDesignView) + the orphan maintenance WorkOrderCreateModal (0 importers). Net-new = a guard that proves they STAY unmounted; the existing verify-banking-workflow-b-archived only checks the @archived marker, not un-mountedness. Additive, no rebuild, archive-not-delete.",
+  "acceptance": [
+    { "id": "dead-unmounted-now", "check": "0 live imports of any dead form", "proof": "import-graph sweep 2026-07-11: BankTxCategorizationPage imported only by its .test.tsx; CategorizeDrawer 0 importers; forms imported only by CategorizeDrawer (itself dead); WorkOrderCreateModal 0 importers; router has no reference" },
+    { "id": "guard", "check": "guard fails if a dead form is re-mounted", "proof": "verify:dead-forms-unmounted PASS (11 dead forms unmounted; test/dead-cluster refs only); --selftest PASS (detects a live import of a dead form, ignores the live BankingTransactionsDesignView)" },
+    { "id": "guard-wired", "check": "guard in verify-pre-commit + locked-guards", "proof": "verify-steps/110; package.json verify:dead-forms-unmounted (END); locked-guards step (END); verify:guard-wired PASS" }
+  ],
+  "deferred": [
+    "Orphan ARCHIVE (not delete, per additive-only): pages/maintenance/WorkOrderCreateModal.tsx + api/loads.ts createLoad helper (0 callers) — dead but harmless; formal archive annotation if/when the owner OKs."
+  ],
+  "lane_lock": "scripts/** + ci guard list only (no component change; dead forms already unmounted). No backend, no db/migrations, no posting/GL.",
+  "ship": "green CI (non-financial TIER-3)"
+}
