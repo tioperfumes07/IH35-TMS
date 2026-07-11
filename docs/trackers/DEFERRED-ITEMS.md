@@ -116,3 +116,19 @@ are pointed to Section C.
   `00_LOCKED_DECISIONS.md` §8.
 - Import design corrections: auto-memory `qbo-import-design-corrections`.
 - CPA-locked decisions: auto-memory `cpa-locked-decisions-2026-07-01`.
+
+---
+
+## F. VERIFY-BLOCK FINDINGS (2026-07-11 sequence run)
+
+- **P4-08 WO→bill double-bill risk** [OWNER-GATED] · **what:** `maintenance/two-section-service.autoCreateBillFromWO`
+  does an *unconditional* `INSERT accounting.bills` (no existing-bill guard), while
+  `accounting/maintenance-posting/poster.service.processMaintenanceWorkOrderClose` reuses via a SELECT-existing
+  guard — but the two run in *separate transactions/clients* (SELECT-then-INSERT race), and
+  `idx_bills_linked_work_order_uuid` is **non-UNIQUE**, so nothing DB-enforced prevents two bills for one WO
+  under concurrency. **why deferred:** root-cause fix = a `UNIQUE(linked_work_order_uuid)` partial index, which
+  is a **financial Tier-1 migration** AND requires a live prod duplicate-count first (a UNIQUE index won't build
+  if dups already exist) — both owner-gated (§1.4 + §1.5). **what unblocks it:** Jorge OKs (a) a prod
+  `SELECT linked_work_order_uuid, count(*) ... GROUP BY 1 HAVING count(*)>1` check, then (b) collapse to the
+  poster as the single canonical path + add the UNIQUE partial index via held migration + Neon ceremony.
+  **source:** MASTER 6 · 04-PHASE4 · P4-08_WO-DOUBLE-BILL_VERIFY.
