@@ -1,13 +1,13 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Breadcrumb } from "../../components/shared/Breadcrumb";
 import { ListErrorState } from "../../components/ListErrorState";
-import { getProgramTracker, type ProgramTracker, type TrackerPhase, type TrackerBlockRow } from "../../api/program-tracker";
+import { getProgramTracker, type ProgramTracker, type TrackerPhase, type TrackerBlockRow, type Tab } from "../../api/program-tracker";
 
 const CT = "America/Chicago";
 
-// Real Central-Time stamps only — never hardcoded/placeholder (§0). All timestamps come from the server.
+// Real Central-Time stamps only — never hardcoded/now() (§0). All timestamps come from the server; unknown → "—".
 function ctDateTime(iso: string | null | undefined): string {
   if (!iso) return "—";
   const d = new Date(iso);
@@ -24,10 +24,8 @@ function relTime(iso: string | null | undefined): string {
   if (s < 86400) return `${Math.round(s / 3600)}h ago`;
   return `${Math.round(s / 86400)}d ago`;
 }
-// Prefer the registry's own CT string; fall back to formatting the ISO.
-function bestStamp(row: TrackerBlockRow): string {
-  return row.deployed_ct || row.merged_ct || ctDateTime(row.merged_at);
-}
+const changedStamp = (r: TrackerBlockRow) => r.last_changed_ct || ctDateTime(r.last_changed_at);
+const doneStamp = (r: TrackerBlockRow) => r.completed_ct || ctDateTime(r.completed_at);
 
 const PILL: Record<TrackerPhase["status"], { label: string; cls: string }> = {
   done: { label: "Done", cls: "bg-[#d1fae5] text-slate-800" },
@@ -54,7 +52,7 @@ function ProgressBar({ done, total }: { done: number; total: number }) {
   );
 }
 
-function BlockTable({ rows, showLive }: { rows: TrackerBlockRow[]; showLive?: boolean }) {
+function BlockTable({ rows, kind, moved }: { rows: TrackerBlockRow[]; kind: "open" | "completed"; moved: Set<string> }) {
   if (rows.length === 0) return <p className="px-3 py-4 text-sm text-slate-500">None.</p>;
   return (
     <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
@@ -64,24 +62,31 @@ function BlockTable({ rows, showLive }: { rows: TrackerBlockRow[]; showLive?: bo
             <th className="px-3 py-2 text-left">Block</th>
             <th className="px-3 py-2 text-left">Phase</th>
             <th className="px-3 py-2 text-left">Status</th>
-            {showLive ? <th className="px-3 py-2 text-left">Live</th> : null}
             <th className="px-3 py-2 text-left">PR</th>
-            <th className="px-3 py-2 text-right">{showLive ? "Deployed / merged" : "Updated"}</th>
+            <th className="px-3 py-2 text-right">{kind === "completed" ? "Completed (deployed)" : "Last change"}</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((r) => (
-            <tr key={r.id} className="border-b border-gray-100 last:border-b-0 align-top">
+            <tr key={r.id} className={`border-b border-gray-100 last:border-b-0 align-top ${moved.has(r.id) ? "bg-[#d1fae5]" : ""}`}>
               <td className="px-3 py-2 text-slate-800">{r.name}{r.financial ? <span className="ml-1 rounded-sm bg-slate-100 px-1 text-[10px] text-slate-500">FIN</span> : null}</td>
               <td className="px-3 py-2 text-slate-500">{r.phase ?? "—"}</td>
-              <td className="px-3 py-2 text-slate-600">{r.status}</td>
-              {showLive ? <td className="px-3 py-2 text-slate-500">{r.live_state ?? "—"}</td> : null}
+              <td className="px-3 py-2 text-slate-600">{r.status}{kind === "completed" ? " · live" : ""}</td>
               <td className="px-3 py-2 font-mono text-slate-500">{r.pr ? `#${r.pr}` : "—"}</td>
-              <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums text-slate-500">{bestStamp(r)}</td>
+              <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums text-slate-500">{kind === "completed" ? doneStamp(r) : changedStamp(r)}</td>
             </tr>
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+function CompletedSection({ rows, moved }: { rows: TrackerBlockRow[]; moved: Set<string> }) {
+  return (
+    <div className="space-y-2">
+      <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Completed &amp; live ({rows.length}) — 100% done, merged + deployed</h2>
+      <BlockTable rows={rows} kind="completed" moved={moved} />
     </div>
   );
 }
@@ -95,8 +100,9 @@ function SequenceTable({ phases }: { phases: TrackerPhase[] }) {
             <th className="px-3 py-2 text-left">#</th>
             <th className="px-3 py-2 text-left">Phase</th>
             <th className="px-3 py-2 text-right">Total</th>
-            <th className="px-3 py-2 text-right">Done</th>
-            <th className="px-3 py-2 text-right">Held</th>
+            <th className="px-3 py-2 text-right">Pending</th>
+            <th className="px-3 py-2 text-right">In prog</th>
+            <th className="px-3 py-2 text-right">Done+live</th>
             <th className="px-3 py-2 text-left">Progress</th>
             <th className="px-3 py-2 text-left">Status</th>
           </tr>
@@ -107,9 +113,10 @@ function SequenceTable({ phases }: { phases: TrackerPhase[] }) {
               <td className="px-3 py-2 text-slate-500">{p.n}</td>
               <td className="px-3 py-2 text-slate-800">{p.label}</td>
               <td className="px-3 py-2 text-right tabular-nums text-slate-700">{p.total}</td>
-              <td className="px-3 py-2 text-right tabular-nums text-slate-700">{p.done}</td>
-              <td className="px-3 py-2 text-right tabular-nums text-slate-700">{p.held}</td>
-              <td className="px-3 py-2"><ProgressBar done={p.done} total={p.total} /></td>
+              <td className="px-3 py-2 text-right tabular-nums text-slate-500">{p.pending}</td>
+              <td className="px-3 py-2 text-right tabular-nums text-slate-500">{p.in_progress}</td>
+              <td className="px-3 py-2 text-right tabular-nums text-slate-700">{p.completed}</td>
+              <td className="px-3 py-2"><ProgressBar done={p.completed} total={p.total} /></td>
               <td className="px-3 py-2"><span className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${PILL[p.status].cls}`}>{PILL[p.status].label}</span></td>
             </tr>
           ))}
@@ -119,22 +126,14 @@ function SequenceTable({ phases }: { phases: TrackerPhase[] }) {
   );
 }
 
-type TabKey = "pending" | "in_progress" | "completed" | "sequence";
-
-function TrackerBody({ data }: { data: ProgramTracker }) {
-  const [tab, setTab] = useState<TabKey>("pending");
-  const tabs: { key: TabKey; label: string; count?: number }[] = [
+function TrackerBody({ data, moved }: { data: ProgramTracker; moved: Set<string> }) {
+  const [tab, setTab] = useState<Tab | "sequence">("pending");
+  const tabs: { key: Tab | "sequence"; label: string; count?: number }[] = [
     { key: "pending", label: "Pending", count: data.view_counts.pending },
     { key: "in_progress", label: "In Progress", count: data.view_counts.in_progress },
-    { key: "completed", label: "Completed & live", count: data.view_counts.completed },
+    { key: "completed", label: "Completed", count: data.view_counts.completed },
     { key: "sequence", label: "Sequence" },
   ];
-  const CompletedSection = (
-    <div className="space-y-2">
-      <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Completed &amp; live ({data.view_counts.completed}) — 100% done, deployed</h2>
-      <BlockTable rows={data.views.completed} showLive />
-    </div>
-  );
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-600">
@@ -148,19 +147,15 @@ function TrackerBody({ data }: { data: ProgramTracker }) {
       <div className="flex flex-wrap gap-3">
         <StatCard n={data.authored_total} label="Blocks authored" />
         <StatCard n={data.registered_total} label="Registered (live-tracked)" />
-        <StatCard n={data.view_counts.completed} label="Completed & live" />
+        <StatCard n={data.view_counts.pending} label="Pending" />
         <StatCard n={data.view_counts.in_progress} label="In progress" />
-        <StatCard n={data.view_counts.pending + data.not_registered_total} label="Pending (+ unregistered)" />
+        <StatCard n={data.view_counts.completed} label="Completed & live" />
       </div>
 
       <div className="flex flex-wrap gap-1 border-b border-gray-200">
         {tabs.map((t) => (
-          <button
-            key={t.key}
-            type="button"
-            onClick={() => setTab(t.key)}
-            className={`-mb-px border-b-2 px-3 py-2 text-sm ${tab === t.key ? "border-[#1f2a44] font-semibold text-slate-900" : "border-transparent text-slate-500 hover:text-slate-700"}`}
-          >
+          <button key={t.key} type="button" onClick={() => setTab(t.key)}
+            className={`-mb-px border-b-2 px-3 py-2 text-sm ${tab === t.key ? "border-[#1f2a44] font-semibold text-slate-900" : "border-transparent text-slate-500 hover:text-slate-700"}`}>
             {t.label}{typeof t.count === "number" ? <span className="ml-1 tabular-nums text-slate-400">({t.count})</span> : null}
           </button>
         ))}
@@ -169,19 +164,25 @@ function TrackerBody({ data }: { data: ProgramTracker }) {
       {tab === "sequence" ? (
         <SequenceTable phases={data.phases} />
       ) : tab === "completed" ? (
-        CompletedSection
+        <CompletedSection rows={data.views.completed} moved={moved} />
       ) : (
         <div className="space-y-6">
-          <BlockTable rows={tab === "pending" ? data.views.pending : data.views.in_progress} showLive={tab === "in_progress"} />
-          {/* per owner: pending/in-progress tabs show the completed-and-live ones at the bottom */}
-          <div className="border-t border-gray-200 pt-4">{CompletedSection}</div>
+          <BlockTable rows={tab === "pending" ? data.views.pending : data.views.in_progress} kind="open" moved={moved} />
+          {/* owner request: pending + in-progress tabs pin the completed-and-live list at the bottom */}
+          <div className="border-t border-gray-200 pt-4"><CompletedSection rows={data.views.completed} moved={moved} /></div>
         </div>
       )}
 
+      {data.view_counts.not_counted > 0 ? (
+        <div className="text-[11px] text-slate-400">
+          Not counted: {data.view_counts.not_counted} superseded/duplicate block(s) — excluded from the pending / in-progress / completed totals (honest, §0).
+        </div>
+      ) : null}
       <div className="text-[11px] text-slate-400">
-        Numbers + timestamps are recomputed live from the deployed <span className="font-mono">.block-ready</span> registry
-        (reconcile:blocks) + the authored phase manifest — on load, on tab focus, and every 60s. "Completed &amp; live"
-        is registry-DONE <b>and</b> deployed (live_state=deployed) — not merged-but-hollow false-done.
+        Every count is computed live from the deployed <span className="font-mono">.block-ready</span> registry
+        (reconcile:blocks) + the authored phase manifest — recomputed on load, on tab focus, and every 60s; nothing is
+        stored. A newly-registered block appears in its tab on the next refresh. "Completed" = registry DONE <b>and</b>
+        merged + deployed (live-verified) — a bare done marker without live proof stays In Progress, never Completed.
       </div>
     </div>
   );
@@ -196,16 +197,38 @@ export function ProgramTrackerPage() {
     refetchOnMount: true,
     staleTime: 0,
   });
+
+  // Highlight blocks that changed tab since the last refetch, so movement is visible.
+  const prevTab = useRef<Record<string, Tab>>({});
+  const [moved, setMoved] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    if (!query.data) return;
+    const now: Record<string, Tab> = {};
+    const changed = new Set<string>();
+    for (const key of ["pending", "in_progress", "completed", "not_counted"] as Tab[]) {
+      for (const r of query.data.views[key]) {
+        now[r.id] = key;
+        if (prevTab.current[r.id] && prevTab.current[r.id] !== key) changed.add(r.id);
+      }
+    }
+    prevTab.current = now;
+    if (changed.size > 0) {
+      setMoved(changed);
+      const t = setTimeout(() => setMoved(new Set()), 4000);
+      return () => clearTimeout(t);
+    }
+  }, [query.data]);
+
   return (
     <div className="space-y-3">
       <Breadcrumb items={[{ label: "Program Board", href: "/program" }, { label: "Build Progress" }]} />
-      <PageHeader title="Program Tracker" subtitle="Build Progress — live from the block registry. Pending / In Progress / Completed & live / Sequence. Auto-refreshes on open, focus, and every 60s." backHref="/program" />
+      <PageHeader title="Program Tracker" subtitle="Build Progress — live from the block registry. Pending / In Progress / Completed / Sequence. Auto-refreshes on open, focus, and every 60s." backHref="/program" />
       {query.isLoading ? (
         <p className="text-sm text-slate-500">Loading live tracker…</p>
       ) : query.isError ? (
         <ListErrorState title="Couldn't load the tracker" status={0} message={(query.error as Error)?.message} onRetry={() => void query.refetch()} />
       ) : query.data ? (
-        <TrackerBody data={query.data} />
+        <TrackerBody data={query.data} moved={moved} />
       ) : null}
     </div>
   );
