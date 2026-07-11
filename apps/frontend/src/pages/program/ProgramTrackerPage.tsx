@@ -300,8 +300,16 @@ export function ProgramTrackerPage() {
 
   return (
     <div className="space-y-3">
-      <Breadcrumb items={[{ label: "Program Board", href: "/program" }, { label: "Build Progress" }]} />
-      <PageHeader title="Program Tracker" subtitle="Build Progress — live from the block registry. Pending / In Progress / Completed / Sequence. Auto-refreshes on open, focus, and every 60s." backHref="/program" />
+      <Breadcrumb items={[{ label: "Program Tracker" }]} />
+      <PageHeader
+        title="Program Tracker"
+        subtitle="Build Progress — live from the block registry. Pending / In Progress / Completed / Sequence / By Module. Auto-refreshes on open, focus, and every 60s."
+        actions={
+          <a href="/program/legacy-board" className="rounded-sm border border-gray-300 bg-white px-3 py-1.5 text-xs text-slate-600 hover:bg-gray-50">
+            Legacy audit board
+          </a>
+        }
+      />
       {query.isLoading ? (
         <p className="text-sm text-slate-500">Loading live tracker…</p>
       ) : query.isError ? (

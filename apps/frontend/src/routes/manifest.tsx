@@ -697,8 +697,27 @@ export const ROUTES = React.Children.toArray(
             </ProtectedRoute>
           }
         />
+        {/* FIX-10: /program now defaults to the clean Program Tracker (was the old 68KB audit board). */}
         <Route
           path="/program"
+          element={
+            <ProtectedRoute>
+              <ProgramTrackerPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* /program/tracker kept as an alias so saved links still resolve. */}
+        <Route
+          path="/program/tracker"
+          element={
+            <ProtectedRoute>
+              <ProgramTrackerPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* Old Audit-Truth board ARCHIVED here (never deleted) — reachable, no longer the default. */}
+        <Route
+          path="/program/legacy-board"
           element={
             <ProtectedRoute>
               <ProgramBoardPage />
@@ -710,14 +729,6 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <FinalAdditionsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/program/tracker"
-          element={
-            <ProtectedRoute>
-              <ProgramTrackerPage />
             </ProtectedRoute>
           }
         />
