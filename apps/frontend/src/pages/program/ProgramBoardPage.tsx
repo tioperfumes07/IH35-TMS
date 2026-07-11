@@ -455,6 +455,11 @@ export function ProgramBoardPage() {
       <PageHeader
         title="Program Board"
         subtitle="Live block/task tracker — two-way. The agent asks; you answer. Nothing is ever lost."
+        actions={
+          <a href="/program/tracker" className="rounded-sm border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-gray-50">
+            Build Progress →
+          </a>
+        }
       />
 
       {/* AUDIT TRUTH — additive, read-only, TRUE-state audit vs prod (committed JSON only). Renders

@@ -10,6 +10,7 @@ const CustomerDetailPage = React.lazy(() => import("../pages/CustomerDetail").th
 const ListsHubPage = React.lazy(() => import("../pages/lists/ListsHubPage").then((m) => ({ default: m.ListsHubPage })));
 const ProgramBoardPage = React.lazy(() => import("../pages/program/ProgramBoardPage").then((m) => ({ default: m.ProgramBoardPage })));
 const FinalAdditionsPage = React.lazy(() => import("../pages/program/FinalAdditionsPage").then((m) => ({ default: m.FinalAdditionsPage })));
+const ProgramTrackerPage = React.lazy(() => import("../pages/program/ProgramTrackerPage").then((m) => ({ default: m.ProgramTrackerPage })));
 const DomainCatalogHubPage = React.lazy(() => import("../pages/lists/DomainCatalogHubPage").then((m) => ({ default: m.DomainCatalogHubPage })));
 // CATALOG-2 — factory-backed generic catalog CRUD (registry-driven, additive to the hand-rolled
 // per-catalog list pages). Distinct route namespace (/lists/catalogs/...) so it never collides with
@@ -709,6 +710,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <FinalAdditionsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/program/tracker"
+          element={
+            <ProtectedRoute>
+              <ProgramTrackerPage />
             </ProtectedRoute>
           }
         />

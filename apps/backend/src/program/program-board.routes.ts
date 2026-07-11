@@ -6,6 +6,7 @@ import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { getProgramBoard, insertOwnerNote } from "./program-board.service.js";
+import { computeProgramTracker } from "./program-tracker.service.js";
 
 const noteSchema = z.object({
   block_id: z.string().trim().min(1).max(200).nullish(),
@@ -46,6 +47,22 @@ export async function registerProgramBoardRoutes(app: FastifyInstance) {
       return reply
         .code(503)
         .send({ error: "notes_unavailable", message: "Program Board notes storage is not yet enabled (pending migration)." });
+    }
+  });
+
+  // Build-Progress tracker — read-only, recomputed LIVE per request from the deployed repo artifacts
+  // (phase manifest + reconcile:blocks registry + held-migrations). Honest failure (§0): if a required
+  // artifact is unreadable, return 503 with an explicit error so the page shows an error state, never
+  // stale/placeholder numbers.
+  app.get("/api/v1/program/tracker", async (req, reply) => {
+    if (!requireAuth(req, reply)) return;
+    try {
+      return reply.send(computeProgramTracker(new Date()));
+    } catch (err) {
+      req.log.error({ err }, "program tracker compute failed");
+      return reply
+        .code(503)
+        .send({ error: "tracker_unavailable", message: "Program tracker source (phase manifest / block registry) is unreadable in this deploy." });
     }
   });
 }
