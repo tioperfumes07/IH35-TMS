@@ -9,7 +9,7 @@
 // unreadable manifest/reconcile → THROW (route 503s, page shows an error state, never stale numbers).
 // Timestamps are always real (from the registry) or null → "—"; never now()/fabricated.
 
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync, existsSync } from "node:fs";
 import path from "node:path";
 import { resolveMonorepoRoot } from "../lib/monorepo-root.js";
 import { resolveBackendVersion } from "../health/health.routes.js";
@@ -22,6 +22,55 @@ function normId(s: string): string {
   return String(s).replace(/_(DISPATCH|VERIFY|SUPERSEDED|LIKELY-STALE|STALE|DUP|DUPLICATE|DONE)$/i, "").toUpperCase().replace(/[^A-Z0-9]/g, "");
 }
 
+// Registry entry text per block (allowed_files + acceptance + classification), keyed by normId, so the
+// endpoint can AUTO-DERIVE layers/kind/cross-module from the block's declared scope — never hand-entered.
+type RegistryEntry = { scopeText: string; classification: string | null; phase: string | null };
+function readRegistry(): Map<string, RegistryEntry> {
+  const map = new Map<string, RegistryEntry>();
+  const dir = path.join(ROOT, ".block-ready");
+  if (!existsSync(dir)) return map;
+  for (const f of readdirSync(dir)) {
+    if (!f.endsWith(".json")) continue;
+    try {
+      const j = JSON.parse(readFileSync(path.join(dir, f), "utf8")) as Record<string, unknown>;
+      const allowed = Array.isArray(j.allowed_files) ? j.allowed_files.join(" ") : String(j.allowed_files ?? "");
+      const acc = Array.isArray(j.acceptance) ? j.acceptance.map((a) => (typeof a === "string" ? a : JSON.stringify(a))).join(" ") : "";
+      const scopeText = `${allowed} ${acc} ${String(j.lane_lock ?? "")} ${String(j.summary ?? "")}`;
+      const id = String(j.block_id ?? j.block ?? f.replace(/\.json$/, ""));
+      map.set(normId(id), { scopeText, classification: (j.classification as string) ?? (j.financial === true ? "FINANCIAL" : j.financial === false ? "NON-FINANCIAL" : null), phase: (j.phase as string) ?? null });
+    } catch { /* skip unparseable */ }
+  }
+  return map;
+}
+
+function deriveLayers(text: string) {
+  const t = text.toLowerCase();
+  return {
+    frontend: /apps\/frontend|driver-pwa/.test(t),
+    backend: /apps\/backend/.test(t),
+    db: /db\/migrations/.test(t),
+    gl: /accounting\.|journal_entr|posting|\bgl\b|ledger|catalogs\.accounts/.test(t),
+    rls: /\brls\b|grant\b|policy|policies|force row level|security_invoker/.test(t),
+    guard: /scripts\/verify-|verify-[a-z0-9-]+\.mjs/.test(t),
+    tests: /\.test\.|\.spec\.|__tests__/.test(t),
+  };
+}
+
+const MODULES = ["dispatch", "safety", "insurance", "legal", "maintenance", "driver", "fleet", "accounting", "banking", "factoring", "settlement", "compliance", "fuel", "reports", "customer", "vendor", "unit", "load"];
+function deriveCrossModule(text: string): string[] {
+  const t = text.toLowerCase();
+  return MODULES.filter((m) => t.includes(m));
+}
+
+function deriveKind(layers: ReturnType<typeof deriveLayers>): "migration" | "ui" | "guard" | "feature" | "other" {
+  if (layers.frontend && layers.backend) return "feature";
+  if (layers.db && !layers.frontend && !layers.backend) return "migration";
+  if (layers.guard && !layers.frontend && !layers.backend && !layers.db) return "guard";
+  if (layers.frontend && !layers.backend) return "ui";
+  if (layers.backend && !layers.frontend) return "feature"; // backend-only feature (may be missing FE)
+  return "other";
+}
+
 type ManifestBlock = { id: string; registered: boolean; block_ready_key?: string };
 type ManifestPhase = { n: number; key: string; label: string; authored_total: number; blocks: ManifestBlock[] };
 type Manifest = { authored_total: number; registered_total: number; not_registered_total: number; phases: ManifestPhase[] };
@@ -30,10 +79,13 @@ type Recon = { counts?: Record<string, number>; blocks?: ReconBlock[]; merged_pr
 
 export type Tab = "pending" | "in_progress" | "completed" | "not_counted";
 
+export type BlockLayers = { frontend: boolean; backend: boolean; db: boolean; gl: boolean; rls: boolean; guard: boolean; tests: boolean };
+
 export type TrackerBlockRow = {
   id: string;
   name: string;
   phase: string | null;
+  module: string | null;
   status: string; // raw registry status
   tab: Tab;
   live_verified: boolean; // done AND merged+deployed — the ONLY path into Completed
@@ -43,6 +95,10 @@ export type TrackerBlockRow = {
   completed_at: string | null; // ISO merged/deployed time when live-verified, else null
   completed_ct: string | null; // CT display string
   financial: boolean;
+  layers: BlockLayers; // auto-derived from allowed_files — never hand-entered
+  kind: "migration" | "ui" | "guard" | "feature" | "other";
+  feature_incomplete: boolean; // FEATURE built on one side only (FE xor BE) — red-flag
+  cross_module: string[]; // from the block's linkage/scope text
 };
 
 export type TrackerPhase = {
@@ -100,6 +156,7 @@ export function computeProgramTracker(now: Date): ProgramTracker {
 
   const phaseByNorm = new Map<string, string>();
   for (const p of manifest.phases) for (const b of p.blocks) phaseByNorm.set(normId(b.id), p.key);
+  const registry = readRegistry();
 
   // Real merge timestamps by PR number, from the git-derived merged-PR spine (never fabricated).
   const mergedAtByPr = new Map<number, string>();
@@ -112,10 +169,18 @@ export function computeProgramTracker(now: Date): ProgramTracker {
     const liveVerified = isDone && (b.pr != null || b.live_state === "deployed");
     const prMergedAt = b.pr != null ? mergedAtByPr.get(b.pr) ?? null : null;
     const mergedAt = b.merged_at ?? prMergedAt ?? null;
+    const entry = registry.get(normId(b.id));
+    const scope = entry?.scopeText ?? String(b.name ?? "");
+    const layers = deriveLayers(scope);
+    const kind = deriveKind(layers);
+    const feOnlyNeedsBe = layers.frontend && !layers.backend && /\bendpoint\b|\broute\b|\bapi\b|\bservice\b|POST |GET /i.test(scope);
+    const beOnlyNeedsFe = layers.backend && !layers.frontend && !layers.db && !layers.guard;
+    const crossModule = deriveCrossModule(scope + " " + String(b.name ?? ""));
     return {
       id: b.id,
       name: String(b.name ?? b.id).slice(0, 200),
-      phase: phaseByNorm.get(normId(b.id)) ?? null,
+      phase: phaseByNorm.get(normId(b.id)) ?? entry?.phase ?? null,
+      module: crossModule[0] ?? phaseByNorm.get(normId(b.id)) ?? "uncategorized",
       status: String(b.status),
       tab: classify(String(b.status), liveVerified),
       live_verified: liveVerified,
@@ -124,7 +189,11 @@ export function computeProgramTracker(now: Date): ProgramTracker {
       last_changed_ct: b.merged_ct ?? null,
       completed_at: liveVerified ? mergedAt : null,
       completed_ct: liveVerified ? b.deployed_ct ?? b.merged_ct ?? null : null,
-      financial: Boolean(b.fin),
+      financial: Boolean(b.fin) || entry?.classification === "FINANCIAL",
+      layers,
+      kind,
+      feature_incomplete: feOnlyNeedsBe || beOnlyNeedsFe,
+      cross_module: crossModule,
     };
   });
 

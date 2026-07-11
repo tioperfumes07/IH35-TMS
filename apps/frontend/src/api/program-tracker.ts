@@ -2,10 +2,13 @@ import { apiRequest } from "./client";
 
 export type Tab = "pending" | "in_progress" | "completed" | "not_counted";
 
+export type BlockLayers = { frontend: boolean; backend: boolean; db: boolean; gl: boolean; rls: boolean; guard: boolean; tests: boolean };
+
 export type TrackerBlockRow = {
   id: string;
   name: string;
   phase: string | null;
+  module: string | null;
   status: string;
   tab: Tab;
   live_verified: boolean;
@@ -15,6 +18,10 @@ export type TrackerBlockRow = {
   completed_at: string | null;
   completed_ct: string | null;
   financial: boolean;
+  layers: BlockLayers;
+  kind: "migration" | "ui" | "guard" | "feature" | "other";
+  feature_incomplete: boolean;
+  cross_module: string[];
 };
 
 export type TrackerPhase = {

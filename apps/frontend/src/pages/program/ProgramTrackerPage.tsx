@@ -52,6 +52,27 @@ function ProgressBar({ done, total }: { done: number; total: number }) {
   );
 }
 
+const LAYER_DEFS: { key: keyof TrackerBlockRow["layers"]; abbr: string; title: string }[] = [
+  { key: "frontend", abbr: "FE", title: "Front End" },
+  { key: "backend", abbr: "BE", title: "Back End" },
+  { key: "db", abbr: "DB", title: "DB/Migration" },
+  { key: "gl", abbr: "GL", title: "GL/Accounting" },
+  { key: "rls", abbr: "RLS", title: "RLS/Security" },
+  { key: "guard", abbr: "G", title: "Guard" },
+  { key: "tests", abbr: "T", title: "Tests" },
+];
+
+function LayerChips({ r }: { r: TrackerBlockRow }) {
+  return (
+    <span className="inline-flex flex-wrap gap-0.5">
+      {LAYER_DEFS.map((l) => (
+        <span key={l.abbr} title={l.title}
+          className={`rounded-sm px-1 text-[10px] ${r.layers[l.key] ? "bg-slate-200 text-slate-700" : "bg-slate-50 text-slate-300"}`}>{l.abbr}</span>
+      ))}
+    </span>
+  );
+}
+
 function BlockTable({ rows, kind, moved }: { rows: TrackerBlockRow[]; kind: "open" | "completed"; moved: Set<string> }) {
   if (rows.length === 0) return <p className="px-3 py-4 text-sm text-slate-500">None.</p>;
   return (
@@ -60,7 +81,8 @@ function BlockTable({ rows, kind, moved }: { rows: TrackerBlockRow[]; kind: "ope
         <thead>
           <tr className="border-b border-gray-200 text-[11px] uppercase tracking-wide text-slate-500">
             <th className="px-3 py-2 text-left">Block</th>
-            <th className="px-3 py-2 text-left">Phase</th>
+            <th className="px-3 py-2 text-left">Kind</th>
+            <th className="px-3 py-2 text-left">Layers</th>
             <th className="px-3 py-2 text-left">Status</th>
             <th className="px-3 py-2 text-left">PR</th>
             <th className="px-3 py-2 text-right">{kind === "completed" ? "Completed (deployed)" : "Last change"}</th>
@@ -69,8 +91,14 @@ function BlockTable({ rows, kind, moved }: { rows: TrackerBlockRow[]; kind: "ope
         <tbody>
           {rows.map((r) => (
             <tr key={r.id} className={`border-b border-gray-100 last:border-b-0 align-top ${moved.has(r.id) ? "bg-[#d1fae5]" : ""}`}>
-              <td className="px-3 py-2 text-slate-800">{r.name}{r.financial ? <span className="ml-1 rounded-sm bg-slate-100 px-1 text-[10px] text-slate-500">FIN</span> : null}</td>
-              <td className="px-3 py-2 text-slate-500">{r.phase ?? "—"}</td>
+              <td className="px-3 py-2 text-slate-800">
+                {r.name}
+                {r.financial ? <span className="ml-1 rounded-sm bg-slate-100 px-1 text-[10px] text-slate-500">FIN</span> : null}
+                {r.feature_incomplete ? <span className="ml-1 rounded-sm border border-[#dc2626] px-1 text-[10px] text-[#dc2626]">FEATURE INCOMPLETE</span> : null}
+                {r.cross_module.length ? <div className="mt-0.5 text-[10px] text-slate-400">links: {r.cross_module.join(", ")}</div> : null}
+              </td>
+              <td className="px-3 py-2 text-slate-500">{r.kind}</td>
+              <td className="px-3 py-2"><LayerChips r={r} /></td>
               <td className="px-3 py-2 text-slate-600">{r.status}{kind === "completed" ? " · live" : ""}</td>
               <td className="px-3 py-2 font-mono text-slate-500">{r.pr ? `#${r.pr}` : "—"}</td>
               <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums text-slate-500">{kind === "completed" ? doneStamp(r) : changedStamp(r)}</td>
