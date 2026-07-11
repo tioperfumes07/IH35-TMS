@@ -34,6 +34,12 @@ jobs:
       - name: verify:deep-audit-b-bell-icon
         run: npm run verify:deep-audit-b-bell-icon
 
+      - name: verify:canonical-table-writes --selftest
+        run: node scripts/verify-canonical-table-writes.mjs --selftest
+
+      - name: verify:canonical-table-writes
+        run: npm run verify:canonical-table-writes
+
       - name: verify:nav-integrity
         run: npm run verify:nav-integrity
 

@@ -1,0 +1,26 @@
+{
+  "block_id": "G4-verify-canonical-table-writes",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "PHASE-0-ENFORCEMENT",
+  "task": "G4 (LINKAGE-LAW canonical enforcement): add scripts/verify-canonical-table-writes.mjs so code can never WRITE to (or FK at) a table the canonical map marks RETIRE — the most expensive error class (invisible until runtime; corrupts canonical data). Would have caught PR #2314 (SETTLE-FK repointed a FK to the RETIRE payroll.driver_settlements). Scans apps/backend/src/** (non-test) + db/migrations/** for INSERT INTO / UPDATE / REFERENCES against RETIRE tables (payroll.*/settlement.* -> driver_finance.*; accounting.qbo_* -> mdata.qbo_*; bank.* -> banking.*; maint.* -> maintenance.*; catalogs.load_cancellation_reasons -> catalogs.cancellation_reasons). SELECT reads allowed (retirement window). 73 current writes baselined in scripts/.canonical-write-exempt.json (50 keys) so today is green; any NEW retire-write fails CI. Wired into verify:pre-commit (verify-steps/96) + locked-guards + package.json, with a --selftest negative control.",
+  "branch": "feat/guard-canonical-table-writes",
+  "lane": "ENFORCEMENT",
+  "allowed_files": [
+    "scripts/verify-canonical-table-writes.mjs",
+    "scripts/verify-steps/96-verify-canonical-table-writes.mjs",
+    "scripts/.canonical-write-exempt.json",
+    ".block-ready/G4-verify-canonical-table-writes.json",
+    "package.json",
+    ".github/workflows/locked-guards.yml"
+  ],
+  "acceptance": [
+    { "kind": "guard", "script": "scripts/verify-canonical-table-writes.mjs", "wired_into": "verify-pre-commit (verify-steps/96) + .github/workflows/locked-guards.yml + package.json verify:canonical-table-writes" },
+    { "kind": "live", "assert": "--selftest passes (INSERT/UPDATE/REFERENCES to a RETIRE table flagged incl. the #2314 FK class; SELECT + canonical write not flagged); guard PASSES with the baseline (73 writes, 50 exempt, 0 unaccounted); an injected INSERT INTO payroll.driver_settlement_line_items in a real src file is flagged (verified this session)" },
+    { "kind": "design", "spec": "docs/trackers/FINAL-TABLES-WIRING-FOR-CODER-2026-07-05.md", "sections": ["§A canonical/RETIRE map"] }
+  ],
+  "linkage": "N/A — enforcement infra; no entity record, no operating_company_id, no cross-module FK",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": []
+}
