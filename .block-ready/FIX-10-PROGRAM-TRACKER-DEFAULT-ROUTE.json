@@ -1,0 +1,17 @@
+{
+  "block_id": "FIX-10-PROGRAM-TRACKER-DEFAULT-ROUTE",
+  "status": "in-progress",
+  "classification": "NON-FINANCIAL",
+  "priority": "P1",
+  "module": "program-tracker",
+  "phase": "design-parity",
+  "source": "CODER-VERIFIED-FIXES-2026-07-11 / 10 (owner-verified)",
+  "allowed_files": ["apps/frontend/src/routes/manifest.tsx", "apps/frontend/src/pages/program/ProgramTrackerPage.tsx", "scripts/nav-integrity-allowlist.json"],
+  "acceptance": [
+    { "check": "Visiting /program shows the clean 5-tab Program Tracker (Pending/In-Progress/Completed/Sequence/By-Module) — NOT the old 68KB audit board.", "resolved": false },
+    { "check": "The old ProgramBoardPage is ARCHIVED at /program/legacy-board (reachable, not deleted); linked from the tracker header.", "resolved": false },
+    { "check": "/program/tracker still resolves (alias); no route orphaned (nav-integrity OK).", "resolved": false },
+    { "check": "Browser-confirmed: /program renders ProgramTrackerPage by default (§9).", "resolved": false }
+  ],
+  "note": "ROOT CAUSE: the clean tracker was buried at /program/tracker while /program defaulted to the old ProgramBoardPage. Reroute (no third tracker). Linkage-Law: one canonical page, archive the retired one."
+}

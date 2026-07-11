@@ -1,0 +1,17 @@
+{
+  "block_id": "FIX-11-TRACKER-BYMODULE-COLUMNS",
+  "status": "pending",
+  "classification": "NON-FINANCIAL",
+  "priority": "P1",
+  "module": "program-tracker",
+  "phase": "design-parity",
+  "source": "CODER-VERIFIED-FIXES-2026-07-11 / 11 (owner-verified)",
+  "allowed_files": ["apps/backend/src/program/program-tracker.service.ts", "apps/frontend/src/api/program-tracker.ts", "apps/frontend/src/pages/program/ProgramTrackerPage.tsx"],
+  "acceptance": [
+    { "check": "By-Module drill-down shows per block: Wired (yes/no + which linkage edge missing), Needs-design ('No/pre-designed' norm, amber only for real exception), Missing (in words: absent layers + undeclared links), Completeness % (with ProgressBar) — alongside the existing FE/BE/DB/GL/RLS/G/T chips, FIN, links, FEATURE-INCOMPLETE.", "resolved": false },
+    { "check": "Backend TrackerBlockRow returns wired:bool, needs_design:bool, missing:string[], completeness:0-100 — computed LIVE from .block-ready registry + acceptance[] + linkage; documented formula, never hardcoded/guessed.", "resolved": false },
+    { "check": "Numbers reconcile: Missing = inverse of present layers + declared links; Completeness never 100 for a block not merged+deployed; Needs-design only from a real registry marker.", "resolved": false },
+    { "check": "Every field on the 60s/focus/mount refresh cycle. Browser-confirmed (§9).", "resolved": false }
+  ],
+  "note": "Extends the By-Module view (FIX-11). wired = both-way linkage to financial primitives + operational modules + hub tables declared. Depends on the tracker being the default page (FIX-10)."
+}
