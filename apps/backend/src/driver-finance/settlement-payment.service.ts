@@ -3,6 +3,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { sendEmail } from "../notifications/email.service.js";
 import { enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
+import { resolveDefaultAchToken } from "./driver-payment-methods.service.js";
 
 type PaymentState = "unpaid" | "queued" | "sent_to_bank" | "cleared" | "bounced" | "manual_paid";
 type PaymentEventType = "queued" | "sent" | "cleared" | "bounced" | "retried" | "marked_paid_manually";
@@ -93,27 +94,20 @@ async function ownerEmailsForCompany(operatingCompanyId: string) {
   });
 }
 
+// A driver is "bank configured" for ACH when they have an active default ACH method with a token in the
+// canonical store (driver_finance.driver_payment_methods). This replaces a probe against mdata.drivers
+// direct-deposit token columns that never existed (so ACH could never be queued). Flag-gated
+// (DRIVER_PAYMENT_METHODS_ENABLED, per-entity default OFF) and expand/contract-safe (resolveDefaultAchToken
+// no-ops if the flag is OFF or the HELD table isn't migrated), so default behavior is unchanged until the
+// owner flips the flag per entity.
 async function hasDriverBankToken(
   client: { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> },
-  driverId: string | null
+  driverId: string | null,
+  operatingCompanyId: string
 ) {
   if (!driverId) return false;
-  const columns = await client.query<{ column_name: string }>(
-    `
-      SELECT column_name
-      FROM information_schema.columns
-      WHERE table_schema = 'mdata'
-        AND table_name = 'drivers'
-        AND column_name IN ('bank_account_token', 'ach_bank_account_token', 'direct_deposit_token')
-    `
-  );
-  if (columns.rows.length === 0) return false;
-  for (const column of columns.rows) {
-    const sql = `SELECT ${column.column_name}::text AS token FROM mdata.drivers WHERE id = $1 LIMIT 1`;
-    const tokenRes = await client.query<{ token: string | null }>(sql, [driverId]);
-    if (tokenRes.rows[0]?.token) return true;
-  }
-  return false;
+  const token = await resolveDefaultAchToken(client, operatingCompanyId, driverId);
+  return token != null;
 }
 
 function validateTransition(current: PaymentState, next: PaymentState) {
@@ -143,7 +137,7 @@ export async function queuePayment(settlementId: string, operatingCompanyId: str
       throw new Error("invalid_payment_state_transition");
     }
 
-    const bankConfigured = await hasDriverBankToken(client, settlement.driver_id);
+    const bankConfigured = await hasDriverBankToken(client, settlement.driver_id, operatingCompanyId);
     if (!bankConfigured && (settlement.payment_method ?? "") !== "check") {
       throw new Error("driver_bank_configuration_required");
     }

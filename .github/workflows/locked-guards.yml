@@ -665,6 +665,10 @@ jobs:
         run: node scripts/verify-je-void-reverses-not-voids.mjs --selftest
       - name: verify:je-void-reverses-not-voids
         run: npm run verify:je-void-reverses-not-voids
+      - name: verify:driver-payment-method-tenant-scope --selftest
+        run: node scripts/verify-driver-payment-method-tenant-scope.mjs --selftest
+      - name: verify:driver-payment-method-tenant-scope
+        run: npm run verify:driver-payment-method-tenant-scope
       - name: verify:period-money-control-flag-gate --selftest
         run: node scripts/verify-period-money-control-flag-gate.mjs --selftest
       - name: verify:period-money-control-flag-gate

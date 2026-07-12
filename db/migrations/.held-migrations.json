@@ -220,6 +220,10 @@
     {
       "file": "202607340000_je_reversal_linkage.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1] JE-VOID Option 1 (NetSuite/QBO reversing-entry model). accounting.journal_entries additive header linkage: reversed_by_je_id / reverses_je_id (self-ref FKs + unique partial indexes) so a void posts a LINKED reversing JE and NEVER flips the original. Additive/idempotent, inherits existing FORCE RLS. Run only on a Neon branch by Jorge, then ledger-backfill."
+    },
+    {
+      "file": "202607370000_driver_payment_methods.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] Canonical driver payment-method master data (driver_finance.driver_payment_methods). Fills the store the settlement payment path was probing for (mdata.drivers token columns that never existed, so ACH could never queue). Master data only, NO GL/posting; tokenized reference + last4, never raw account numbers. FORCED RLS + 0065 grants (no DELETE, void-not-delete). Seeds DRIVER_PAYMENT_METHODS_ENABLED (default OFF, per-entity). Additive/idempotent. Run only on a Neon branch by Jorge, then ledger-backfill."
     }
   ]
 }

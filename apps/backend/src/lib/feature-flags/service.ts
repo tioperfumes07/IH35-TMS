@@ -104,6 +104,12 @@ export function isPostingFlag(flagKey: string): boolean {
 // ignored (treated OFF). Known keys are enumerated; the pattern fallback auto-covers any future flag
 // named with the `_PER_ENTITY_ONLY` convention suffix.
 export const PER_ENTITY_ONLY_FLAG_KEYS: ReadonlySet<string> = new Set([
+  // DRIVER-PAYMENT-METHODS: repoints the settlement payment path to resolve a driver's default ACH/check
+  // method from driver_finance.driver_payment_methods (instead of the non-existent mdata.drivers token
+  // columns). It changes real payment behavior (ACH becomes possible where it always failed), so it must
+  // be flipped ONE ENTITY AT A TIME (TRANSP first) — a global default/rollout enable would alter payment
+  // behavior for EVERY entity (incl. USMCA / TRK). Per-entity override only; default OFF. Owner flips.
+  "DRIVER_PAYMENT_METHODS_ENABLED",
   // RATECON-1: AI rate-con extractor. The extract endpoint passes operating_company_id only (no
   // user_uuid) → rollout_pct silently no-ops. Live-enabled for TRANSP via a tenant override.
   "RATECON_EXTRACT_ENABLED",
