@@ -9,26 +9,19 @@
 --   original.reversed_by_je_id -> reversal.id   AND   reversal.reverses_je_id -> original.id
 -- (Line-level reversal links already exist on journal_entry_postings from 0195; this is the header link.)
 --
--- Additive only. Idempotent (ADD COLUMN IF NOT EXISTS + FK guarded). Same table → inherits the existing
--- FORCE RLS + entity policies (no new grants needed; journal_entries already granted to ih35_app).
+-- Additive only. Idempotent (ADD COLUMN IF NOT EXISTS carries the inline, named self-ref FK, so a re-run
+-- skips column + constraint together). Same table → inherits the existing FORCE RLS + entity policies
+-- (no new grants needed; journal_entries already granted to ih35_app).
 
 BEGIN;
 
+-- Inline, NAMED self-referential FKs (not a separate ADD CONSTRAINT block) so the orphan-FK ratchet sees
+-- the REFERENCES on the column definition and the constraint is created atomically with the column.
 ALTER TABLE accounting.journal_entries
-  ADD COLUMN IF NOT EXISTS reversed_by_je_id uuid,
-  ADD COLUMN IF NOT EXISTS reverses_je_id uuid;
-
-DO $$
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_je_reversed_by_je_id' AND conrelid = 'accounting.journal_entries'::regclass) THEN
-    ALTER TABLE accounting.journal_entries
-      ADD CONSTRAINT fk_je_reversed_by_je_id FOREIGN KEY (reversed_by_je_id) REFERENCES accounting.journal_entries(id);
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_je_reverses_je_id' AND conrelid = 'accounting.journal_entries'::regclass) THEN
-    ALTER TABLE accounting.journal_entries
-      ADD CONSTRAINT fk_je_reverses_je_id FOREIGN KEY (reverses_je_id) REFERENCES accounting.journal_entries(id);
-  END IF;
-END $$;
+  ADD COLUMN IF NOT EXISTS reversed_by_je_id uuid
+    CONSTRAINT fk_je_reversed_by_je_id REFERENCES accounting.journal_entries(id),
+  ADD COLUMN IF NOT EXISTS reverses_je_id uuid
+    CONSTRAINT fk_je_reverses_je_id REFERENCES accounting.journal_entries(id);
 
 -- A JE reverses at most one original; an original is reversed by at most one JE (prevents double-reversal
 -- at the schema level too).
