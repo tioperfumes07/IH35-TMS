@@ -100,7 +100,7 @@ export function DriverPaymentMethodsCard({ driverId, companyId }: { driverId: st
       </div>
 
       {showAdd && manage ? (
-        <div className="mt-3 grid gap-2 rounded-sm border border-gray-100 p-3 text-xs">
+        <div className="mt-3 grid gap-2 border-t border-gray-100 pt-3 text-xs">
           <label className="grid gap-1">
             <span className="font-semibold text-gray-600">Method</span>
             <select
