@@ -888,7 +888,9 @@
     "verify:relay-backfill-route-mounted": "node scripts/verify-relay-backfill-route-mounted.mjs",
     "verify:relay-csv-import-route-mounted": "node scripts/verify-relay-csv-import-route-mounted.mjs",
     "verify:relay-csv-code-rows-only": "node scripts/verify-relay-csv-code-rows-only.mjs",
-    "verify:tracker-bymodule-sequence": "node scripts/verify-tracker-bymodule-sequence.mjs"
+    "verify:tracker-bymodule-sequence": "node scripts/verify-tracker-bymodule-sequence.mjs",
+    "tracker:sync:r2": "node scripts/sync-tracker-r2.mjs",
+    "verify:program-tracker-r2-live": "node scripts/verify-program-tracker-r2-live.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",

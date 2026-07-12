@@ -17,6 +17,7 @@ import { readFileSync, readdirSync, existsSync } from "node:fs";
 import path from "node:path";
 import { resolveMonorepoRoot } from "../lib/monorepo-root.js";
 import { resolveBackendVersion } from "../health/health.routes.js";
+import { getObjectTextIfExists } from "../storage/r2-client.js";
 
 const ROOT = resolveMonorepoRoot(import.meta.url);
 function readJson(rel: string): unknown {
@@ -193,9 +194,40 @@ function classify(statusRaw: string, liveVerified: boolean): Tab {
   return "pending"; // pending / build / to-build / gated / unknown → not started
 }
 
-export function computeProgramTracker(now: Date): ProgramTracker {
+// LIVE reconcile artifact from Cloudflare R2 — the same CI→R2 mechanism the program board uses
+// (program-board-sync.yml runs reconcile:blocks with git+gh, then uploads here). This is what makes the
+// per-block STATUS rollup refresh on every merge WITHOUT a deploy: the prod backend has no git/gh so it
+// cannot recompute the merged-PR DONE signal itself; it reads the CI-computed snapshot from R2 and falls
+// back to the committed file only when R2 is empty/unconfigured/unparseable (never a 500).
+const R2_TRACKER_RECON_KEY = "program-tracker/block-reconciliation-data.json";
+const RECON_TTL_MS = 60_000;
+let reconCache: { at: number; value: Recon | null } | null = null;
+
+async function loadReconFromR2(nowMs: number): Promise<Recon | null> {
+  if (reconCache && nowMs - reconCache.at < RECON_TTL_MS) return reconCache.value;
+  let value: Recon | null = null;
+  try {
+    const text = await getObjectTextIfExists(R2_TRACKER_RECON_KEY);
+    if (text) value = JSON.parse(text) as Recon;
+  } catch {
+    // Present-but-corrupt R2 snapshot → fall back to the committed file (below). Never throw.
+    value = null;
+  }
+  reconCache = { at: nowMs, value };
+  return value;
+}
+
+/** Async live variant: source the reconcile artifact from R2 (fresh, CI-computed) when available, else the
+ *  committed file. Delegates the derivation to computeProgramTracker with the resolved recon. */
+export async function computeProgramTrackerLive(now: Date): Promise<ProgramTracker> {
+  const r2Recon = await loadReconFromR2(now.getTime());
+  return computeProgramTracker(now, r2Recon ?? undefined);
+}
+
+export function computeProgramTracker(now: Date, reconOverride?: Recon): ProgramTracker {
   const manifest = readJson("docs/trackers/program-phase-manifest.json") as Manifest;
-  const recon = readJson("docs/trackers/block-reconciliation-data.json") as Recon;
+  // R2 live snapshot (fresh, refreshed every merge) WINS; committed file is the cold fallback.
+  const recon = reconOverride ?? (readJson("docs/trackers/block-reconciliation-data.json") as Recon);
 
   // DOC-20 Sequence fix: authored manifest ids (e.g. "G1_..._DISPATCH") and recon/registry ids
   // ("G1-...") are DISJOINT namespaces — bridge them via the manifest's block_ready_key so merged work

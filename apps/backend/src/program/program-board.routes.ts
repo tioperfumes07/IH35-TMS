@@ -6,7 +6,7 @@ import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { getProgramBoard, insertOwnerNote } from "./program-board.service.js";
-import { computeProgramTracker } from "./program-tracker.service.js";
+import { computeProgramTrackerLive } from "./program-tracker.service.js";
 
 const noteSchema = z.object({
   block_id: z.string().trim().min(1).max(200).nullish(),
@@ -57,7 +57,7 @@ export async function registerProgramBoardRoutes(app: FastifyInstance) {
   app.get("/api/v1/program/tracker", async (req, reply) => {
     if (!requireAuth(req, reply)) return;
     try {
-      return reply.send(computeProgramTracker(new Date()));
+      return reply.send(await computeProgramTrackerLive(new Date()));
     } catch (err) {
       req.log.error({ err }, "program tracker compute failed");
       return reply

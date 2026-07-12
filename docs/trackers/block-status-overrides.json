@@ -1,389 +1,503 @@
 {
- "note": "Human-verified verdicts (independent read-only sweep vs origin/main, 2026-07-03). These take precedence over the reconciler's weak auto-detection (e.g. hollow PR-title matches). Add an entry only from a real verification.",
- "overrides": [
-  {
-   "id": "AF-0-rebaseline",
-   "status": "DONE",
-   "evidence": "doc block; PR #1264 doc on main",
-   "verified_on": "2026-07-03"
-  },
-  {
-   "id": "AF-3-account-registers",
-   "status": "DONE",
-   "evidence": "account-register routes/service + page live on main",
-   "verified_on": "2026-07-03"
-  },
-  {
-   "id": "AF-6-finance-hub",
-   "status": "DONE",
-   "evidence": "finance-hub routes/service + page on main (flag-gated OFF by design)",
-   "verified_on": "2026-07-03"
-  },
-  {
-   "id": "CHAIN-01-vendor-picker-fix",
-   "status": "DONE",
-   "evidence": "VendorBillForm states live on main",
-   "verified_on": "2026-07-03"
-  },
-  {
-   "id": "CHAIN-02-account-register-params",
-   "status": "DONE",
-   "evidence": "AccountRegisterPage error-surface live",
-   "verified_on": "2026-07-03"
-  },
-  {
-   "id": "CHAIN-03-create-bill-gl-autopost",
-   "status": "DONE",
-   "evidence": "bill-gl-draft routes/service on main; posting flag OFF by design",
-   "verified_on": "2026-07-03"
-  },
-  {
-   "id": "STMT-1-balance-sheet-cash-flow",
-   "status": "DONE",
-   "evidence": "balance-sheet + cash-flow routes live read-only",
-   "verified_on": "2026-07-03"
-  },
-  {
-   "id": "block-37-qbo-sync-repair-pipeline",
-   "status": "DONE",
-   "evidence": "sync-state-machine + dashboard live",
-   "verified_on": "2026-07-03"
-  },
-  {
-   "id": "block-40-accounting-audit-trail",
-   "status": "DONE",
-   "evidence": "audit-trail routes + page live",
-   "verified_on": "2026-07-03"
-  },
-  {
-   "id": "AF-5-stub-catalogs",
-   "status": "PENDING (GATED)",
-   "evidence": "partial — catalog buildout ongoing, not confirmably complete",
-   "verified_on": "2026-07-03"
-  },
-  {
-   "id": "AF-7-money-controls",
-   "status": "PENDING (GATED)",
-   "evidence": "partial built-gated; money flags OFF",
-   "verified_on": "2026-07-03"
-  },
-  {
-   "id": "AF-1-entity-coa-fix",
-   "status": "PENDING (GATED)",
-   "evidence": "held Tier-1 DO-NOT-RUN migration; prod still global — not applied",
-   "verified_on": "2026-07-03"
-  },
-  {
-   "id": "AF-2-qbo-drift",
-   "status": "PENDING (GATED)",
-   "evidence": "drift-resolution write feature not built",
-   "verified_on": "2026-07-03"
-  },
-  {
-   "id": "AF-4-ap-bills-migration",
-   "status": "PENDING (GATED)",
-   "evidence": "~$1.18M A/P migration not executed (Tier-1 held)",
-   "verified_on": "2026-07-03"
-  },
-  {
-   "id": "CHAIN-04-bill-payment-tieout",
-   "status": "PENDING (GATED)",
-   "evidence": "HOLD design doc only, no feature code",
-   "verified_on": "2026-07-03"
-  },
-  {
-   "id": "CHAIN-05-bank-feed-live-proof",
-   "status": "PENDING (GATED)",
-   "evidence": "HOLD design doc only, no feature code",
-   "verified_on": "2026-07-03"
-  },
-  {
-   "id": "CHAIN-06-invoice-ar-chain-proof",
-   "status": "PENDING (GATED)",
-   "evidence": "HOLD design doc only, no feature code",
-   "verified_on": "2026-07-03"
-  },
-  {
-   "id": "CHAIN-07-settlements-500-fix",
-   "status": "PENDING (GATED)",
-   "evidence": "HOLD design doc only, no 500 fix shipped",
-   "verified_on": "2026-07-03"
-  },
-  {
-   "id": "AF-8-payroll-bridge",
-   "status": "PENDING",
-   "evidence": "TMS->QBO payroll write-bridge unbuilt (deferred)",
-   "verified_on": "2026-07-03"
-  },
-  {
-   "id": "FIX-01-CUSTOMER-VENDOR-LIST-RESIZE-QBO",
-   "status": "DONE",
-   "evidence": "merged + deployed to prod (owner-approved / non-financial ship-on-green) 2026-07-11",
-   "verified_on": "2026-07-11"
-  },
-  {
-   "id": "FIX-02-CATEGORY-CREATE-FULL-COA-WIZARD",
-   "status": "DONE",
-   "evidence": "merged + deployed to prod (owner-approved / non-financial ship-on-green) 2026-07-11",
-   "verified_on": "2026-07-11"
-  },
-  {
-   "id": "FIX-03-PRODUCTS-SERVICES-ACCOUNT-LINK",
-   "status": "DONE",
-   "evidence": "merged + deployed to prod (owner-approved / non-financial ship-on-green) 2026-07-11",
-   "verified_on": "2026-07-11"
-  },
-  {
-   "id": "FIX-04-BANKING-FROM-TO-ACCOUNTS",
-   "status": "DONE",
-   "evidence": "merged + deployed to prod (owner-approved / non-financial ship-on-green) 2026-07-11",
-   "verified_on": "2026-07-11"
-  },
-  {
-   "id": "FIX-05-BANKING-SPLIT-ENABLE-AND-WIRE",
-   "status": "PENDING (GATED)",
-   "evidence": "owner-verified: split modal built but button disabled Wave-2 + flag OFF; wire+dedupe pending, flag=owner",
-   "verified_on": "2026-07-11"
-  },
-  {
-   "id": "FIX-06-INLINE-CREATE-COVERAGE-SWEEP",
-   "status": "DONE",
-   "evidence": "merged + deployed to prod (owner-approved / non-financial ship-on-green) 2026-07-11",
-   "verified_on": "2026-07-11"
-  },
-  {
-   "id": "FIX-10-PROGRAM-TRACKER-DEFAULT-ROUTE",
-   "status": "DONE",
-   "evidence": "merged + deployed to prod 2026-07-11",
-   "verified_on": "2026-07-11"
-  },
-  {
-   "id": "FIX-11-TRACKER-BYMODULE-COLUMNS",
-   "status": "DONE",
-   "evidence": "merged + deployed to prod 2026-07-11",
-   "verified_on": "2026-07-11"
-  },
-  {
-   "id": "ITEM-13-CEREMONY-VALIDATE-FKS",
-   "status": "DONE",
-   "evidence": "8 ceremony FKs convalidated=true on prod br-fancy-credit-akjnd07a (Neon MCP read-only)",
-   "verified_on": "2026-07-11"
-  },
-  {
-   "id": "ITEM-14-TXN-COMPANY-ISOLATION-GUARD",
-   "status": "DONE",
-   "evidence": "prod: all accounting/banking/driver_finance policies scope to app.operating_company_id, 0 gaps; guard merged #2363",
-   "verified_on": "2026-07-11"
-  },
-  {
-   "id": "ITEM-03B-MDATA-LIST-ACTIVE-COMPANY",
-   "status": "NEEDS-VERIFY",
-   "evidence": "merged #2365; awaiting post-deploy live list-filter proof",
-   "verified_on": "2026-07-11"
-  },
-  {
-   "id": "DOC-15-QBO-TOKEN-AUTOREFRESH",
-   "status": "NEEDS-VERIFY",
-   "evidence": "merged #2366; awaiting post-deploy hourly-tick refresh proof",
-   "verified_on": "2026-07-11"
-  },
-  {
-   "id": "DOC-16-RECON-INPROCESS-SCHEDULER",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2367; awaiting first accounting.recon_runs row",
-   "verified_on": "2026-07-11"
-  },
-  {
-   "id": "ITEM-02-EXCEL-UPLOAD-RLS-REASSERT",
-   "status": "PENDING (GATED)",
-   "evidence": "HELD PR #2369; owner approves + runs as neondb_owner",
-   "verified_on": "2026-07-11"
-  },
-  {
-   "id": "m-01-wo-create-duplicate-header-fields",
-   "status": "DONE",
-   "evidence": "PR #2304 merged f869528c4 (non-financial WO-modal visual sweep); apps/frontend/src/pages/maintenance/components/CreateWorkOrderModal.tsx on main",
-   "verified_on": "2026-07-11"
-  },
-  {
-   "id": "m-05-terms-field-raw-db-value",
-   "status": "DONE",
-   "evidence": "PR #2304 merged f869528c4; apps/frontend/src/lib/billTermsLabel.ts humanizes raw terms enum, present on main",
-   "verified_on": "2026-07-11"
-  },
-  {
-   "id": "m-07-wo-dev-facing-footer-text",
-   "status": "DONE",
-   "evidence": "PR #2304 merged f869528c4; CreateWorkOrderModal.tsx footer copy fixed, present on main",
-   "verified_on": "2026-07-11"
-  },
-  {
-   "id": "m-08-integration-strip-duplicates-topbar",
-   "status": "DONE",
-   "evidence": "PR #2304 merged f869528c4; CreateWorkOrderModal.tsx integration-strip dedup, present on main",
-   "verified_on": "2026-07-11"
-  },
-  {
-   "id": "m-09-wo-table-filters-no-visual-indicator",
-   "status": "DONE",
-   "evidence": "PR #2304 merged f869528c4; apps/frontend/src/pages/maintenance/components/WorkOrdersTable.tsx active-filter indicator, present on main",
-   "verified_on": "2026-07-11"
-  },
-  {
-   "id": "s-01-coverage-gap-count-no-red-alert",
-   "status": "DONE",
-   "evidence": "PR #2306 merged 107d5e09b (non-financial Safety visual sweep); apps/frontend/src/pages/safety/tabs/SafetyHomeTab.tsx alert tile on main",
-   "verified_on": "2026-07-11"
-  },
-  {
-   "id": "UI-01-CALENDARS-AND-FLAT-BOXES",
-   "status": "DONE",
-   "evidence": "PR #2337 merged 9baa803e0 — QuickBooks-format calendars everywhere + no-nested-box ratchet (2 guards); subject-matched on main",
-   "verified_on": "2026-07-11"
-  },
-  {
-   "id": "UI-01_CALENDARS-AND-BOXES_DISPATCH",
-   "status": "DONE",
-   "evidence": "dispatch twin of UI-01; PR #2337 merged 9baa803e0 (QB calendars + no-nested-box ratchet) on main",
-   "verified_on": "2026-07-11"
-  },
-  {
-   "id": "UI-02-CREATE-FORMS-WIRED",
-   "status": "DONE",
-   "evidence": "PR #2339 merged 21bcc13c5; scripts/verify-create-forms-wired.mjs guard wired into locked-guards.yml + package.json, present on main",
-   "verified_on": "2026-07-11"
-  },
-  {
-   "id": "UI-02_QUICKBOOKS-PARITY-AND-WORKING-CREATE_DISPATCH",
-   "status": "DONE",
-   "evidence": "dispatch twin of UI-02; PR #2339 merged 21bcc13c5 (create-forms-wired verify-first ratchet) on main",
-   "verified_on": "2026-07-11"
-  },
-  {
-   "id": "UI-03-PARTA-INLINE-CREATE",
-   "status": "DONE",
-   "evidence": "PR #2342 merged a1e520409 — inline '+ Create' vocab fix; scripts/verify-reference-dropdown-inline-create.mjs guard wired on main (banking-split PART B remains FIX-05 gated)",
-   "verified_on": "2026-07-11"
-  },
-  {
-   "id": "FIX-06-referenceselect-inline-create-sweep",
-   "status": "DONE",
-   "evidence": "PR #2356 merged 1a74e671d; scripts/verify-referenceselect-coverage-ratchet.mjs guard + step 113 wired, SubmitFactoringModal ReferenceSelect on main",
-   "verified_on": "2026-07-11"
-  },
-  {
-   "id": "compliance-1-stale-units-segregation",
-   "status": "DONE",
-   "evidence": "PR #1720 merged a53ceabff (non-financial); apps/frontend/src/pages/compliance/FleetHosBoardSection.tsx segregates telematics-stale units, present on main",
-   "verified_on": "2026-07-11"
-  },
-  {
-   "id": "driverhub-2-demo-duplicate-drivers-cleanup",
-   "status": "DONE",
-   "evidence": "PR #1721 merged 27cf6a9ce; demo-data-exclusion guard test + units.routes.ts/driver-scheduler.service.ts exclude demo rows, on main",
-   "verified_on": "2026-07-11"
-  },
-  {
-   "id": "banking-1-uncategorized-kpi-reconciliation",
-   "status": "DONE",
-   "evidence": "PR #1724 merged 707ebd735 (KPI count alignment, no money movement); apps/backend/src/banking/pending-categorization.ts + test on main",
-   "verified_on": "2026-07-11"
-  },
-  {
-   "id": "ui1-17-my-accountant-page",
-   "status": "DONE",
-   "evidence": "apps/frontend/src/pages/accounting/MyAccountantPage.tsx present + routed at /accounting/my-accountant (routes/manifest.tsx:3808, 'UI-1 6/6 modules built')",
-   "verified_on": "2026-07-11"
-  },
-  {
-   "id": "FIX-DISPATCH-DRIVER-PICKER-50-CAP",
-   "status": "DONE",
-   "evidence": "InlineDriverPicker.tsx:26 + BookLoadEquipmentSection.tsx:92 pass limit:200",
-   "verified_on": "2026-07-12"
-  },
-  {
-   "id": "FIX-PICKERS-50-CAP-UNITS-VENDORS-CUSTOMERS",
-   "status": "DONE",
-   "evidence": "api/mdata.ts:26 forwards limit; InlineUnitPicker/InlineTrailerPicker limit:500",
-   "verified_on": "2026-07-12"
-  },
-  {
-   "id": "FIX-DRIVERS-FULL-NAME-PHANTOM",
-   "status": "DONE",
-   "evidence": "no d.full_name refs remain; guard test driver-full-name-phantom.db.test.ts asserts count=0",
-   "verified_on": "2026-07-12"
-  },
-  {
-   "id": "FIX-LEGAL-FLEET-VEHICLE-TYPE-PHANTOM",
-   "status": "DONE",
-   "evidence": "lease-to-own.service.ts:131 selects real u.vehicle_type AS unit_type + guard test",
-   "verified_on": "2026-07-12"
-  },
-  {
-   "id": "FIX-MAINTENANCE-SERVICES-ETA-PHANTOM",
-   "status": "DONE",
-   "evidence": "services.routes.ts:107/118 repointed to telematics.vehicle_latest_position + maintenance.pm_schedules",
-   "verified_on": "2026-07-12"
-  },
-  {
-   "id": "FIX-PER-TRUCK-CPM-PERMITS-CTE",
-   "status": "DONE",
-   "evidence": "cpm-calculator.service.ts:107 repointed to master_data.unit_permits (migration 0407)",
-   "verified_on": "2026-07-12"
-  },
-  {
-   "id": "QBO-SYNC-DRIFT-401-FIX",
-   "status": "DONE",
-   "evidence": "QBOSyncDriftDashboard.tsx:39/47 use apiRequest (credentials:include)",
-   "verified_on": "2026-07-12"
-  },
-  {
-   "id": "TBL-STANDARD-INSURANCE-POLICIES",
-   "status": "DONE",
-   "evidence": "PoliciesList.tsx:12/172 migrated to shared DataTable",
-   "verified_on": "2026-07-12"
-  },
-  {
-   "id": "UNIFIED-TXN-REGISTER",
-   "status": "DONE",
-   "evidence": "transaction-register.routes.ts present + autoloaded (index.ts:1011); FE lazy-mounted manifest.tsx:245/3430",
-   "verified_on": "2026-07-12"
-  },
-  {
-   "id": "D-CREATE-VERIFY-DEAD-FORMS-UNMOUNTED",
-   "status": "DONE",
-   "evidence": "verify-dead-forms-unmounted.mjs + verify-steps/110 + package.json:866; guard PASS (11 dead forms unmounted)",
-   "verified_on": "2026-07-12"
-  },
-  {
-   "id": "TIER3-LIST-ERROR-STATES",
-   "status": "DONE",
-   "evidence": "verify-list-error-state-coverage.mjs + verify-steps/112; guard PASS (20 list pages keep isError->ListErrorState)",
-   "verified_on": "2026-07-12"
-  },
-  {
-   "id": "IMPORT-0",
-   "status": "DONE",
-   "evidence": "merged PR #1796 (non-financial import)",
-   "verified_on": "2026-07-12"
-  },
-  {
-   "id": "IMPORT-P0",
-   "status": "DONE",
-   "evidence": "merged PR #1797",
-   "verified_on": "2026-07-12"
-  },
-  {
-   "id": "IMPORT-P0b",
-   "status": "DONE",
-   "evidence": "merged PR #1802",
-   "verified_on": "2026-07-12"
-  },
-  {
-   "id": "USERS-1-PR-B",
-   "status": "DONE",
-   "evidence": "merged PR #2281",
-   "verified_on": "2026-07-12"
-  }
- ]
+  "note": "Human-verified verdicts (independent read-only sweep vs origin/main, 2026-07-03). These take precedence over the reconciler's weak auto-detection (e.g. hollow PR-title matches). Add an entry only from a real verification.",
+  "overrides": [
+    {
+      "id": "AF-0-rebaseline",
+      "status": "DONE",
+      "evidence": "doc block; PR #1264 doc on main",
+      "verified_on": "2026-07-03"
+    },
+    {
+      "id": "AF-3-account-registers",
+      "status": "DONE",
+      "evidence": "account-register routes/service + page live on main",
+      "verified_on": "2026-07-03"
+    },
+    {
+      "id": "AF-6-finance-hub",
+      "status": "DONE",
+      "evidence": "finance-hub routes/service + page on main (flag-gated OFF by design)",
+      "verified_on": "2026-07-03"
+    },
+    {
+      "id": "CHAIN-01-vendor-picker-fix",
+      "status": "DONE",
+      "evidence": "VendorBillForm states live on main",
+      "verified_on": "2026-07-03"
+    },
+    {
+      "id": "CHAIN-02-account-register-params",
+      "status": "DONE",
+      "evidence": "AccountRegisterPage error-surface live",
+      "verified_on": "2026-07-03"
+    },
+    {
+      "id": "CHAIN-03-create-bill-gl-autopost",
+      "status": "DONE",
+      "evidence": "bill-gl-draft routes/service on main; posting flag OFF by design",
+      "verified_on": "2026-07-03"
+    },
+    {
+      "id": "STMT-1-balance-sheet-cash-flow",
+      "status": "DONE",
+      "evidence": "balance-sheet + cash-flow routes live read-only",
+      "verified_on": "2026-07-03"
+    },
+    {
+      "id": "block-37-qbo-sync-repair-pipeline",
+      "status": "DONE",
+      "evidence": "sync-state-machine + dashboard live",
+      "verified_on": "2026-07-03"
+    },
+    {
+      "id": "block-40-accounting-audit-trail",
+      "status": "DONE",
+      "evidence": "audit-trail routes + page live",
+      "verified_on": "2026-07-03"
+    },
+    {
+      "id": "AF-5-stub-catalogs",
+      "status": "PENDING (GATED)",
+      "evidence": "partial — catalog buildout ongoing, not confirmably complete",
+      "verified_on": "2026-07-03"
+    },
+    {
+      "id": "AF-7-money-controls",
+      "status": "PENDING (GATED)",
+      "evidence": "partial built-gated; money flags OFF",
+      "verified_on": "2026-07-03"
+    },
+    {
+      "id": "AF-1-entity-coa-fix",
+      "status": "PENDING (GATED)",
+      "evidence": "held Tier-1 DO-NOT-RUN migration; prod still global — not applied",
+      "verified_on": "2026-07-03"
+    },
+    {
+      "id": "AF-2-qbo-drift",
+      "status": "PENDING (GATED)",
+      "evidence": "drift-resolution write feature not built",
+      "verified_on": "2026-07-03"
+    },
+    {
+      "id": "AF-4-ap-bills-migration",
+      "status": "PENDING (GATED)",
+      "evidence": "~$1.18M A/P migration not executed (Tier-1 held)",
+      "verified_on": "2026-07-03"
+    },
+    {
+      "id": "CHAIN-04-bill-payment-tieout",
+      "status": "PENDING (GATED)",
+      "evidence": "HOLD design doc only, no feature code",
+      "verified_on": "2026-07-03"
+    },
+    {
+      "id": "CHAIN-05-bank-feed-live-proof",
+      "status": "PENDING (GATED)",
+      "evidence": "HOLD design doc only, no feature code",
+      "verified_on": "2026-07-03"
+    },
+    {
+      "id": "CHAIN-06-invoice-ar-chain-proof",
+      "status": "PENDING (GATED)",
+      "evidence": "HOLD design doc only, no feature code",
+      "verified_on": "2026-07-03"
+    },
+    {
+      "id": "CHAIN-07-settlements-500-fix",
+      "status": "PENDING (GATED)",
+      "evidence": "HOLD design doc only, no 500 fix shipped",
+      "verified_on": "2026-07-03"
+    },
+    {
+      "id": "AF-8-payroll-bridge",
+      "status": "PENDING",
+      "evidence": "TMS->QBO payroll write-bridge unbuilt (deferred)",
+      "verified_on": "2026-07-03"
+    },
+    {
+      "id": "FIX-01-CUSTOMER-VENDOR-LIST-RESIZE-QBO",
+      "status": "DONE",
+      "evidence": "merged + deployed to prod (owner-approved / non-financial ship-on-green) 2026-07-11",
+      "verified_on": "2026-07-11"
+    },
+    {
+      "id": "FIX-02-CATEGORY-CREATE-FULL-COA-WIZARD",
+      "status": "DONE",
+      "evidence": "merged + deployed to prod (owner-approved / non-financial ship-on-green) 2026-07-11",
+      "verified_on": "2026-07-11"
+    },
+    {
+      "id": "FIX-03-PRODUCTS-SERVICES-ACCOUNT-LINK",
+      "status": "DONE",
+      "evidence": "merged + deployed to prod (owner-approved / non-financial ship-on-green) 2026-07-11",
+      "verified_on": "2026-07-11"
+    },
+    {
+      "id": "FIX-04-BANKING-FROM-TO-ACCOUNTS",
+      "status": "DONE",
+      "evidence": "merged + deployed to prod (owner-approved / non-financial ship-on-green) 2026-07-11",
+      "verified_on": "2026-07-11"
+    },
+    {
+      "id": "FIX-05-BANKING-SPLIT-ENABLE-AND-WIRE",
+      "status": "PENDING (GATED)",
+      "evidence": "owner-verified: split modal built but button disabled Wave-2 + flag OFF; wire+dedupe pending, flag=owner",
+      "verified_on": "2026-07-11"
+    },
+    {
+      "id": "FIX-06-INLINE-CREATE-COVERAGE-SWEEP",
+      "status": "DONE",
+      "evidence": "merged + deployed to prod (owner-approved / non-financial ship-on-green) 2026-07-11",
+      "verified_on": "2026-07-11"
+    },
+    {
+      "id": "FIX-10-PROGRAM-TRACKER-DEFAULT-ROUTE",
+      "status": "DONE",
+      "evidence": "merged + deployed to prod 2026-07-11",
+      "verified_on": "2026-07-11"
+    },
+    {
+      "id": "FIX-11-TRACKER-BYMODULE-COLUMNS",
+      "status": "DONE",
+      "evidence": "merged + deployed to prod 2026-07-11",
+      "verified_on": "2026-07-11"
+    },
+    {
+      "id": "ITEM-13-CEREMONY-VALIDATE-FKS",
+      "status": "DONE",
+      "evidence": "8 ceremony FKs convalidated=true on prod br-fancy-credit-akjnd07a (Neon MCP read-only)",
+      "verified_on": "2026-07-11"
+    },
+    {
+      "id": "ITEM-14-TXN-COMPANY-ISOLATION-GUARD",
+      "status": "DONE",
+      "evidence": "prod: all accounting/banking/driver_finance policies scope to app.operating_company_id, 0 gaps; guard merged #2363",
+      "verified_on": "2026-07-11"
+    },
+    {
+      "id": "ITEM-03B-MDATA-LIST-ACTIVE-COMPANY",
+      "status": "NEEDS-VERIFY",
+      "evidence": "merged #2365; awaiting post-deploy live list-filter proof",
+      "verified_on": "2026-07-11"
+    },
+    {
+      "id": "DOC-15-QBO-TOKEN-AUTOREFRESH",
+      "status": "NEEDS-VERIFY",
+      "evidence": "merged #2366; awaiting post-deploy hourly-tick refresh proof",
+      "verified_on": "2026-07-11"
+    },
+    {
+      "id": "DOC-16-RECON-INPROCESS-SCHEDULER",
+      "status": "NEEDS-VERIFY",
+      "evidence": "PR #2367; awaiting first accounting.recon_runs row",
+      "verified_on": "2026-07-11"
+    },
+    {
+      "id": "ITEM-02-EXCEL-UPLOAD-RLS-REASSERT",
+      "status": "PENDING (GATED)",
+      "evidence": "HELD PR #2369; owner approves + runs as neondb_owner",
+      "verified_on": "2026-07-11"
+    },
+    {
+      "id": "m-01-wo-create-duplicate-header-fields",
+      "status": "DONE",
+      "evidence": "PR #2304 merged f869528c4 (non-financial WO-modal visual sweep); apps/frontend/src/pages/maintenance/components/CreateWorkOrderModal.tsx on main",
+      "verified_on": "2026-07-11"
+    },
+    {
+      "id": "m-05-terms-field-raw-db-value",
+      "status": "DONE",
+      "evidence": "PR #2304 merged f869528c4; apps/frontend/src/lib/billTermsLabel.ts humanizes raw terms enum, present on main",
+      "verified_on": "2026-07-11"
+    },
+    {
+      "id": "m-07-wo-dev-facing-footer-text",
+      "status": "DONE",
+      "evidence": "PR #2304 merged f869528c4; CreateWorkOrderModal.tsx footer copy fixed, present on main",
+      "verified_on": "2026-07-11"
+    },
+    {
+      "id": "m-08-integration-strip-duplicates-topbar",
+      "status": "DONE",
+      "evidence": "PR #2304 merged f869528c4; CreateWorkOrderModal.tsx integration-strip dedup, present on main",
+      "verified_on": "2026-07-11"
+    },
+    {
+      "id": "m-09-wo-table-filters-no-visual-indicator",
+      "status": "DONE",
+      "evidence": "PR #2304 merged f869528c4; apps/frontend/src/pages/maintenance/components/WorkOrdersTable.tsx active-filter indicator, present on main",
+      "verified_on": "2026-07-11"
+    },
+    {
+      "id": "s-01-coverage-gap-count-no-red-alert",
+      "status": "DONE",
+      "evidence": "PR #2306 merged 107d5e09b (non-financial Safety visual sweep); apps/frontend/src/pages/safety/tabs/SafetyHomeTab.tsx alert tile on main",
+      "verified_on": "2026-07-11"
+    },
+    {
+      "id": "UI-01-CALENDARS-AND-FLAT-BOXES",
+      "status": "DONE",
+      "evidence": "PR #2337 merged 9baa803e0 — QuickBooks-format calendars everywhere + no-nested-box ratchet (2 guards); subject-matched on main",
+      "verified_on": "2026-07-11"
+    },
+    {
+      "id": "UI-01_CALENDARS-AND-BOXES_DISPATCH",
+      "status": "DONE",
+      "evidence": "dispatch twin of UI-01; PR #2337 merged 9baa803e0 (QB calendars + no-nested-box ratchet) on main",
+      "verified_on": "2026-07-11"
+    },
+    {
+      "id": "UI-02-CREATE-FORMS-WIRED",
+      "status": "DONE",
+      "evidence": "PR #2339 merged 21bcc13c5; scripts/verify-create-forms-wired.mjs guard wired into locked-guards.yml + package.json, present on main",
+      "verified_on": "2026-07-11"
+    },
+    {
+      "id": "UI-02_QUICKBOOKS-PARITY-AND-WORKING-CREATE_DISPATCH",
+      "status": "DONE",
+      "evidence": "dispatch twin of UI-02; PR #2339 merged 21bcc13c5 (create-forms-wired verify-first ratchet) on main",
+      "verified_on": "2026-07-11"
+    },
+    {
+      "id": "UI-03-PARTA-INLINE-CREATE",
+      "status": "DONE",
+      "evidence": "PR #2342 merged a1e520409 — inline '+ Create' vocab fix; scripts/verify-reference-dropdown-inline-create.mjs guard wired on main (banking-split PART B remains FIX-05 gated)",
+      "verified_on": "2026-07-11"
+    },
+    {
+      "id": "FIX-06-referenceselect-inline-create-sweep",
+      "status": "DONE",
+      "evidence": "PR #2356 merged 1a74e671d; scripts/verify-referenceselect-coverage-ratchet.mjs guard + step 113 wired, SubmitFactoringModal ReferenceSelect on main",
+      "verified_on": "2026-07-11"
+    },
+    {
+      "id": "compliance-1-stale-units-segregation",
+      "status": "DONE",
+      "evidence": "PR #1720 merged a53ceabff (non-financial); apps/frontend/src/pages/compliance/FleetHosBoardSection.tsx segregates telematics-stale units, present on main",
+      "verified_on": "2026-07-11"
+    },
+    {
+      "id": "driverhub-2-demo-duplicate-drivers-cleanup",
+      "status": "DONE",
+      "evidence": "PR #1721 merged 27cf6a9ce; demo-data-exclusion guard test + units.routes.ts/driver-scheduler.service.ts exclude demo rows, on main",
+      "verified_on": "2026-07-11"
+    },
+    {
+      "id": "banking-1-uncategorized-kpi-reconciliation",
+      "status": "DONE",
+      "evidence": "PR #1724 merged 707ebd735 (KPI count alignment, no money movement); apps/backend/src/banking/pending-categorization.ts + test on main",
+      "verified_on": "2026-07-11"
+    },
+    {
+      "id": "ui1-17-my-accountant-page",
+      "status": "DONE",
+      "evidence": "apps/frontend/src/pages/accounting/MyAccountantPage.tsx present + routed at /accounting/my-accountant (routes/manifest.tsx:3808, 'UI-1 6/6 modules built')",
+      "verified_on": "2026-07-11"
+    },
+    {
+      "id": "FIX-DISPATCH-DRIVER-PICKER-50-CAP",
+      "status": "DONE",
+      "evidence": "InlineDriverPicker.tsx:26 + BookLoadEquipmentSection.tsx:92 pass limit:200",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "FIX-PICKERS-50-CAP-UNITS-VENDORS-CUSTOMERS",
+      "status": "DONE",
+      "evidence": "api/mdata.ts:26 forwards limit; InlineUnitPicker/InlineTrailerPicker limit:500",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "FIX-DRIVERS-FULL-NAME-PHANTOM",
+      "status": "DONE",
+      "evidence": "no d.full_name refs remain; guard test driver-full-name-phantom.db.test.ts asserts count=0",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "FIX-LEGAL-FLEET-VEHICLE-TYPE-PHANTOM",
+      "status": "DONE",
+      "evidence": "lease-to-own.service.ts:131 selects real u.vehicle_type AS unit_type + guard test",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "FIX-MAINTENANCE-SERVICES-ETA-PHANTOM",
+      "status": "DONE",
+      "evidence": "services.routes.ts:107/118 repointed to telematics.vehicle_latest_position + maintenance.pm_schedules",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "FIX-PER-TRUCK-CPM-PERMITS-CTE",
+      "status": "DONE",
+      "evidence": "cpm-calculator.service.ts:107 repointed to master_data.unit_permits (migration 0407)",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "QBO-SYNC-DRIFT-401-FIX",
+      "status": "DONE",
+      "evidence": "QBOSyncDriftDashboard.tsx:39/47 use apiRequest (credentials:include)",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "TBL-STANDARD-INSURANCE-POLICIES",
+      "status": "DONE",
+      "evidence": "PoliciesList.tsx:12/172 migrated to shared DataTable",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "UNIFIED-TXN-REGISTER",
+      "status": "DONE",
+      "evidence": "transaction-register.routes.ts present + autoloaded (index.ts:1011); FE lazy-mounted manifest.tsx:245/3430",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "D-CREATE-VERIFY-DEAD-FORMS-UNMOUNTED",
+      "status": "DONE",
+      "evidence": "verify-dead-forms-unmounted.mjs + verify-steps/110 + package.json:866; guard PASS (11 dead forms unmounted)",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "TIER3-LIST-ERROR-STATES",
+      "status": "DONE",
+      "evidence": "verify-list-error-state-coverage.mjs + verify-steps/112; guard PASS (20 list pages keep isError->ListErrorState)",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "IMPORT-0",
+      "status": "DONE",
+      "evidence": "merged PR #1796 (non-financial import)",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "IMPORT-P0",
+      "status": "DONE",
+      "evidence": "merged PR #1797",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "IMPORT-P0b",
+      "status": "DONE",
+      "evidence": "merged PR #1802",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "USERS-1-PR-B",
+      "status": "DONE",
+      "evidence": "merged PR #2281",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "chain-08-demo-data-purge",
+      "status": "PENDING",
+      "evidence": "agent: audit lists only, purge Pass2 never ran (CHAIN-08-TRANSP-DEMO-DATA-AUDIT)",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "CHAIN-08-transp-demo-data-purge",
+      "status": "PENDING",
+      "evidence": "agent: same PR #2221 explicitly no-purge per file header",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "consolidate-distributed-modules-fuel-tasks-fin",
+      "status": "NEEDS-VERIFY",
+      "evidence": "agent: PR #2135 docs-only, no code/migration touched",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "driverprofile-1-companion-tier1-rls-hardening",
+      "status": "PENDING",
+      "evidence": "agent: PR #1742 frontend test/UI only, zero RLS/backend touched",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "fk-safety-events-driver-status-0289",
+      "status": "PENDING",
+      "evidence": "agent: migration validates unrelated FKs, no safety_events/driver_status FK exists",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "UI-03_INLINE-CREATE-AND-BANKING-SPLIT_DISPATCH",
+      "status": "NEEDS-VERIFY",
+      "evidence": "agent: PR #2342 Part-A vocab only; Account/COA inline-create still deferred",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "accounting-2-ap-aging-qbo-mirror-population",
+      "status": "PENDING",
+      "evidence": "agent: mirror table unpopulated; inbound-sync PR #1682 CLOSED unmerged",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "bill-status-vocab-partial-vs-partially_DUP",
+      "status": "NEEDS-VERIFY",
+      "evidence": "agent: no DB constraint, writers still diverge (bills.service.ts:166,172)",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "product-service-categories-rename-and-creator",
+      "status": "NEEDS-VERIFY",
+      "evidence": "agent: parent-category creator not built (QboCategoriesListPage.tsx)",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "PHASE3_INVOICE-FK_unenforced-linkages_DISPATCH",
+      "status": "NEEDS-VERIFY",
+      "evidence": "agent: not dispositioned in #2385; needs live FK check",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "PHASE3_TRANSFER-MIGRATION-DRIFT_held-but-live_VERIFY",
+      "status": "NEEDS-VERIFY",
+      "evidence": "agent: not dispositioned in #2385; needs live migration-drift check",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "CONN-2-factoring-faro",
+      "status": "DONE",
+      "evidence": "agent: routes+reserve-tracker wired, migration HELD (poster.service.ts:276-530)",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "repair-b-driver-deduction-auth-template-not-se",
+      "status": "DONE",
+      "evidence": "agent: gate live-wired via hire-contract codes (signed-finance-handoff.service.ts:224-238)",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "block-26-factoring-reconciliation",
+      "status": "DONE",
+      "evidence": "agent: routes autoloaded + guard registry-executed (verify-architectural-design:510-513)",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "block-31-sales-tax-handling",
+      "status": "DONE",
+      "evidence": "agent: posting-engine.service.ts:545-548 tax split + 2 guards executed",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "block-36-multi-entity-accounting",
+      "status": "DONE",
+      "evidence": "agent: multi-entity/routes.ts + manifest.tsx:3435 route + 2 guards",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "block-41-posting-lineage-ui",
+      "status": "DONE",
+      "evidence": "agent: PostingLineagePage + audit-trail source-lineage endpoint live",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "type-date-input-sweep-incomplete",
+      "status": "DONE",
+      "evidence": "agent: 0 raw type=date + verify-no-raw-date-input guard passes",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "home-7-qbo-vendor-count-single-source",
+      "status": "DONE",
+      "evidence": "agent: fixed PR #1668 (DefaultHome.tsx:168, OwnerHome.tsx:181)",
+      "verified_on": "2026-07-12"
+    }
+  ]
 }
