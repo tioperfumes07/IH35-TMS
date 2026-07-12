@@ -875,7 +875,8 @@
     "verify:qbo-refresh-uses-access-token": "node scripts/verify-qbo-refresh-uses-access-token.mjs",
     "verify:block-lifecycle": "node scripts/verify-block-lifecycle.mjs",
     "verify:inline-create-writes-canonical": "node scripts/verify-inline-create-writes-canonical.mjs",
-    "verify:manual-txn-date-patch": "node scripts/verify-manual-txn-date-patch.mjs"
+    "verify:manual-txn-date-patch": "node scripts/verify-manual-txn-date-patch.mjs",
+    "verify:owner-home-linkage": "node scripts/verify-owner-home-linkage.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",
