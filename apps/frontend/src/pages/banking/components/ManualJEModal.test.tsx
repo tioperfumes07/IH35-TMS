@@ -50,6 +50,8 @@ describe("ManualJEModal", () => {
       created_by_user_id: null,
       voided_at: null,
       void_reason: null,
+      reversed_by_je_id: null,
+      reverses_je_id: null,
       qbo_journal_entry_id: null,
       qbo_sync_pending: false,
       created_at: new Date().toISOString(),
