@@ -22,18 +22,20 @@ export function FreshnessIndicatorUsageExample() {
   return (
     <div className="space-y-2 p-4">
       <h3 className="text-sm font-semibold text-slate-900">Samsara freshness pill — tiers &amp; colors</h3>
-      <table className="text-[13px]">
-        <tbody>
-          {EXAMPLES.map((ex) => (
-            <tr key={ex.label} className="align-middle">
-              <td className="py-1 pr-4">
-                <FreshnessIndicator lastFetchedAt={ex.lastFetchedAt} cacheTier={ex.cacheTier} />
-              </td>
-              <td className="py-1 text-slate-600">{ex.label}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="overflow-x-auto">
+        <table className="text-[13px]">
+          <tbody>
+            {EXAMPLES.map((ex) => (
+              <tr key={ex.label} className="align-middle">
+                <td className="py-1 pr-4">
+                  <FreshnessIndicator lastFetchedAt={ex.lastFetchedAt} cacheTier={ex.cacheTier} />
+                </td>
+                <td className="py-1 text-slate-600">{ex.label}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
