@@ -198,6 +198,102 @@
    "status": "PENDING (GATED)",
    "evidence": "HELD PR #2369; owner approves + runs as neondb_owner",
    "verified_on": "2026-07-11"
+  },
+  {
+   "id": "m-01-wo-create-duplicate-header-fields",
+   "status": "DONE",
+   "evidence": "PR #2304 merged f869528c4 (non-financial WO-modal visual sweep); apps/frontend/src/pages/maintenance/components/CreateWorkOrderModal.tsx on main",
+   "verified_on": "2026-07-11"
+  },
+  {
+   "id": "m-05-terms-field-raw-db-value",
+   "status": "DONE",
+   "evidence": "PR #2304 merged f869528c4; apps/frontend/src/lib/billTermsLabel.ts humanizes raw terms enum, present on main",
+   "verified_on": "2026-07-11"
+  },
+  {
+   "id": "m-07-wo-dev-facing-footer-text",
+   "status": "DONE",
+   "evidence": "PR #2304 merged f869528c4; CreateWorkOrderModal.tsx footer copy fixed, present on main",
+   "verified_on": "2026-07-11"
+  },
+  {
+   "id": "m-08-integration-strip-duplicates-topbar",
+   "status": "DONE",
+   "evidence": "PR #2304 merged f869528c4; CreateWorkOrderModal.tsx integration-strip dedup, present on main",
+   "verified_on": "2026-07-11"
+  },
+  {
+   "id": "m-09-wo-table-filters-no-visual-indicator",
+   "status": "DONE",
+   "evidence": "PR #2304 merged f869528c4; apps/frontend/src/pages/maintenance/components/WorkOrdersTable.tsx active-filter indicator, present on main",
+   "verified_on": "2026-07-11"
+  },
+  {
+   "id": "s-01-coverage-gap-count-no-red-alert",
+   "status": "DONE",
+   "evidence": "PR #2306 merged 107d5e09b (non-financial Safety visual sweep); apps/frontend/src/pages/safety/tabs/SafetyHomeTab.tsx alert tile on main",
+   "verified_on": "2026-07-11"
+  },
+  {
+   "id": "UI-01-CALENDARS-AND-FLAT-BOXES",
+   "status": "DONE",
+   "evidence": "PR #2337 merged 9baa803e0 — QuickBooks-format calendars everywhere + no-nested-box ratchet (2 guards); subject-matched on main",
+   "verified_on": "2026-07-11"
+  },
+  {
+   "id": "UI-01_CALENDARS-AND-BOXES_DISPATCH",
+   "status": "DONE",
+   "evidence": "dispatch twin of UI-01; PR #2337 merged 9baa803e0 (QB calendars + no-nested-box ratchet) on main",
+   "verified_on": "2026-07-11"
+  },
+  {
+   "id": "UI-02-CREATE-FORMS-WIRED",
+   "status": "DONE",
+   "evidence": "PR #2339 merged 21bcc13c5; scripts/verify-create-forms-wired.mjs guard wired into locked-guards.yml + package.json, present on main",
+   "verified_on": "2026-07-11"
+  },
+  {
+   "id": "UI-02_QUICKBOOKS-PARITY-AND-WORKING-CREATE_DISPATCH",
+   "status": "DONE",
+   "evidence": "dispatch twin of UI-02; PR #2339 merged 21bcc13c5 (create-forms-wired verify-first ratchet) on main",
+   "verified_on": "2026-07-11"
+  },
+  {
+   "id": "UI-03-PARTA-INLINE-CREATE",
+   "status": "DONE",
+   "evidence": "PR #2342 merged a1e520409 — inline '+ Create' vocab fix; scripts/verify-reference-dropdown-inline-create.mjs guard wired on main (banking-split PART B remains FIX-05 gated)",
+   "verified_on": "2026-07-11"
+  },
+  {
+   "id": "FIX-06-referenceselect-inline-create-sweep",
+   "status": "DONE",
+   "evidence": "PR #2356 merged 1a74e671d; scripts/verify-referenceselect-coverage-ratchet.mjs guard + step 113 wired, SubmitFactoringModal ReferenceSelect on main",
+   "verified_on": "2026-07-11"
+  },
+  {
+   "id": "compliance-1-stale-units-segregation",
+   "status": "DONE",
+   "evidence": "PR #1720 merged a53ceabff (non-financial); apps/frontend/src/pages/compliance/FleetHosBoardSection.tsx segregates telematics-stale units, present on main",
+   "verified_on": "2026-07-11"
+  },
+  {
+   "id": "driverhub-2-demo-duplicate-drivers-cleanup",
+   "status": "DONE",
+   "evidence": "PR #1721 merged 27cf6a9ce; demo-data-exclusion guard test + units.routes.ts/driver-scheduler.service.ts exclude demo rows, on main",
+   "verified_on": "2026-07-11"
+  },
+  {
+   "id": "banking-1-uncategorized-kpi-reconciliation",
+   "status": "DONE",
+   "evidence": "PR #1724 merged 707ebd735 (KPI count alignment, no money movement); apps/backend/src/banking/pending-categorization.ts + test on main",
+   "verified_on": "2026-07-11"
+  },
+  {
+   "id": "ui1-17-my-accountant-page",
+   "status": "DONE",
+   "evidence": "apps/frontend/src/pages/accounting/MyAccountantPage.tsx present + routed at /accounting/my-accountant (routes/manifest.tsx:3808, 'UI-1 6/6 modules built')",
+   "verified_on": "2026-07-11"
   }
  ]
 }
