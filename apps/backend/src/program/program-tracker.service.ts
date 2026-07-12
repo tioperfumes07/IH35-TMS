@@ -29,7 +29,7 @@ function normId(s: string): string {
 // Registry entry text per block (allowed_files + acceptance + classification + linkage), keyed by normId, so
 // the endpoint can AUTO-DERIVE layers/kind/cross-module/wired from the block's declared scope — never hand-entered.
 const NEEDS_DESIGN_RE = /needs[_-]design|design[_-]pending/i;
-type RegistryEntry = { id: string; scopeText: string; linkageText: string; needsDesign: boolean; classification: string | null; phase: string | null; status: string | null; name: string | null };
+type RegistryEntry = { id: string; allowedFiles: string; moduleField: string | null; scopeText: string; linkageText: string; needsDesign: boolean; classification: string | null; phase: string | null; status: string | null; name: string | null };
 function readRegistry(): Map<string, RegistryEntry> {
   const map = new Map<string, RegistryEntry>();
   const dir = path.join(ROOT, ".block-ready");
@@ -46,7 +46,10 @@ function readRegistry(): Map<string, RegistryEntry> {
       // needs_design ONLY when an explicit marker is present — NEVER inferred from absence (§0 verify-everything).
       const needsDesign = j.needs_design === true || j.design_pending === true || NEEDS_DESIGN_RE.test(scopeText) || NEEDS_DESIGN_RE.test(String(j.status ?? ""));
       const id = String(j.block_id ?? j.block ?? f.replace(/\.json$/, ""));
-      map.set(normId(id), { id, scopeText, linkageText, needsDesign, classification: (j.classification as string) ?? (j.financial === true ? "FINANCIAL" : j.financial === false ? "NON-FINANCIAL" : null), phase: (j.phase as string) ?? null, status: j.status != null ? String(j.status) : null, name: (j.task as string) ?? (j.name as string) ?? null });
+      // DOC-20: module derivation uses ONLY the allowed_files PATHS + an explicit `module` field — never the
+      // note/task/summary prose (whose boilerplate "dispatch" mentions caused deriveCrossModule to tag ~1006
+      // blocks as dispatch). Keep allowedFiles separate from scopeText for that reason.
+      map.set(normId(id), { id, allowedFiles: allowed, moduleField: typeof j.module === "string" ? j.module : null, scopeText, linkageText, needsDesign, classification: (j.classification as string) ?? (j.financial === true ? "FINANCIAL" : j.financial === false ? "NON-FINANCIAL" : null), phase: (j.phase as string) ?? null, status: j.status != null ? String(j.status) : null, name: (j.task as string) ?? (j.name as string) ?? null });
     } catch { /* skip unparseable */ }
   }
   return map;
@@ -77,6 +80,21 @@ const MODULES = ["dispatch", "safety", "insurance", "legal", "maintenance", "dri
 function deriveCrossModule(text: string): string[] {
   const t = text.toLowerCase();
   return MODULES.filter((m) => t.includes(m));
+}
+
+// DOC-20: the By-Module tab's per-block `module` — derived from an explicit `module` field OR the block's
+// allowed_files PATHS with a WORD-BOUNDARY match (path segment / camel boundary), NEVER from prose (which
+// made every block match "dispatch"). No default-to-MODULES[0]; unknown → "uncategorized".
+function deriveModule(allowedFiles: string, moduleField: string | null): string {
+  const explicit = (moduleField ?? "").trim().toLowerCase();
+  if (explicit && MODULES.includes(explicit)) return explicit;
+  const paths = allowedFiles.toLowerCase();
+  for (const m of MODULES) {
+    // match the module name only as a path segment or bounded token, e.g. "/banking/", "pages/fuel", "fuel-"
+    const re = new RegExp(`(^|[\\/_.-])${m}([\\/_.-]|$)`);
+    if (re.test(paths)) return m;
+  }
+  return "uncategorized";
 }
 
 function deriveKind(layers: ReturnType<typeof deriveLayers>): "migration" | "ui" | "guard" | "feature" | "other" {
@@ -179,8 +197,11 @@ export function computeProgramTracker(now: Date): ProgramTracker {
   const manifest = readJson("docs/trackers/program-phase-manifest.json") as Manifest;
   const recon = readJson("docs/trackers/block-reconciliation-data.json") as Recon;
 
+  // DOC-20 Sequence fix: authored manifest ids (e.g. "G1_..._DISPATCH") and recon/registry ids
+  // ("G1-...") are DISJOINT namespaces — bridge them via the manifest's block_ready_key so merged work
+  // actually shows up in its authored phase (was reading ~5 done of 935).
   const phaseByNorm = new Map<string, string>();
-  for (const p of manifest.phases) for (const b of p.blocks) phaseByNorm.set(normId(b.id), p.key);
+  for (const p of manifest.phases) for (const b of p.blocks) phaseByNorm.set(normId(b.block_ready_key ?? b.id), p.key);
   const registry = readRegistry();
 
   // Real merge timestamps by PR number, from the git-derived merged-PR spine (never fabricated).
@@ -253,7 +274,7 @@ export function computeProgramTracker(now: Date): ProgramTracker {
       id: b.id,
       name: String(b.name ?? b.id).slice(0, 200),
       phase: phaseByNorm.get(normId(b.id)) ?? entry?.phase ?? null,
-      module: crossModule[0] ?? phaseByNorm.get(normId(b.id)) ?? "uncategorized",
+      module: deriveModule(entry?.allowedFiles ?? "", entry?.moduleField ?? null),
       status: String(b.status),
       tab: classify(String(b.status), liveVerified),
       live_verified: liveVerified,
@@ -289,7 +310,7 @@ export function computeProgramTracker(now: Date): ProgramTracker {
   const phases: TrackerPhase[] = manifest.phases.map((p) => {
     let pending = 0, inProg = 0, completed = 0, notCounted = 0;
     for (const blk of p.blocks) {
-      const rb = reconByNorm.get(normId(blk.id));
+      const rb = reconByNorm.get(normId(blk.block_ready_key ?? blk.id)) ?? reconByNorm.get(normId(blk.id));
       const status = rb ? String(rb.status) : "pending";
       const lv = rb ? String(rb.status).toUpperCase() === "DONE" && (rb.pr != null || rb.live_state === "deployed") : false;
       const t = classify(status, lv);
