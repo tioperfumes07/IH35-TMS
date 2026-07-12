@@ -9,6 +9,7 @@ import {
   type SafetyEventLogRow,
 } from "../../api/safety";
 import { Modal } from "../../components/Modal";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { useListState } from "../../components/list-state";
 import { useSafetyUiContext } from "./SafetyLayout";
 import { SafetyEventsTable } from "./components/SafetyEventsTable";
@@ -321,6 +322,19 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
             <div><span className="font-semibold">Severity:</span> {detailQuery.data?.severity ?? "—"}</div>
             <div><span className="font-semibold">Status:</span> {detailQuery.data?.status ?? "—"}</div>
             <div><span className="font-semibold">Occurred:</span> {String(detailQuery.data?.occurred_at ?? "").slice(0, 19).replace("T", " ") || "—"}</div>
+            <div>
+              <span className="font-semibold">Related load:</span>{" "}
+              {detailQuery.data?.related_load_id ? (
+                <EntityLink
+                  kind="load"
+                  id={detailQuery.data.related_load_id}
+                  label={detailQuery.data.related_load_number ?? detailQuery.data.related_load_id}
+                  data-testid="safety-event-related-load-link"
+                />
+              ) : (
+                "—"
+              )}
+            </div>
             <div><span className="font-semibold">Description:</span> {detailQuery.data?.description ?? "—"}</div>
           </div>
 

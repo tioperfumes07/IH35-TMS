@@ -102,10 +102,14 @@ export async function registerSafetyEventsRoutes(app: FastifyInstance) {
             e.created_by::text,
             e.created_at::text,
             CONCAT_WS(' ', d.first_name, d.last_name) AS subject_driver_name,
-            u.unit_number AS subject_unit_number
+            u.unit_number AS subject_unit_number,
+            l.load_number AS related_load_number
           FROM safety.safety_events e
           LEFT JOIN mdata.drivers d ON d.id = e.subject_driver_id
           LEFT JOIN mdata.units u ON u.id = e.subject_unit_id
+          LEFT JOIN mdata.loads l
+            ON l.id = e.related_load_id
+            AND l.operating_company_id = e.operating_company_id
           WHERE ${filters.join(" AND ")}
           ORDER BY e.occurred_at DESC, e.created_at DESC
           LIMIT $${limitParam}::int
@@ -173,10 +177,14 @@ export async function registerSafetyEventsRoutes(app: FastifyInstance) {
             e.created_by::text,
             e.created_at::text,
             CONCAT_WS(' ', d.first_name, d.last_name) AS subject_driver_name,
-            u.unit_number AS subject_unit_number
+            u.unit_number AS subject_unit_number,
+            l.load_number AS related_load_number
           FROM safety.safety_events e
           LEFT JOIN mdata.drivers d ON d.id = e.subject_driver_id
           LEFT JOIN mdata.units u ON u.id = e.subject_unit_id
+          LEFT JOIN mdata.loads l
+            ON l.id = e.related_load_id
+            AND l.operating_company_id = e.operating_company_id
           WHERE e.id = $1::uuid
             AND e.operating_company_id = $2::uuid
           LIMIT 1
