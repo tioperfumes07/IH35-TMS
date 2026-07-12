@@ -13,6 +13,7 @@ export type TrackerBlockRow = {
   tab: Tab;
   live_verified: boolean;
   pr: number | null;
+  created_at: string | null;
   last_changed_at: string | null;
   last_changed_ct: string | null;
   completed_at: string | null;
@@ -57,6 +58,16 @@ export type ProgramTracker = {
   views: { pending: TrackerBlockRow[]; in_progress: TrackerBlockRow[]; completed: TrackerBlockRow[]; not_counted: TrackerBlockRow[] };
   view_counts: { pending: number; in_progress: number; completed: number; not_counted: number };
   modules: { module: string; built: number; partial: number; not_built: number; total: number }[];
+  since_jul1: {
+    since: string;
+    total: number;
+    pending: number;
+    in_progress: number;
+    completed: number;
+    not_counted: number;
+    undated: number;
+    modules: { module: string; built: number; partial: number; not_built: number; total: number }[];
+  };
 };
 
 export function getProgramTracker() {

@@ -258,6 +258,22 @@ function TrackerBody({ data, moved }: { data: ProgramTracker; moved: Set<string>
         <StatCard n={data.view_counts.completed} label="Completed & live" />
       </div>
 
+      {/* FIX B — "Since Jul 1": the same breakdown restricted to blocks created (git add-date) on/after
+          2026-07-01, side-by-side with the full view. Undated blocks are surfaced, never guessed in. */}
+      {data.since_jul1 ? (
+        <div className="rounded-sm border border-gray-200 bg-slate-50 p-3">
+          <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+            Since Jul 1 <span className="font-normal normal-case text-slate-400">(blocks created on/after {data.since_jul1.since} · {data.since_jul1.total} of {data.registered_total} · {data.since_jul1.undated} undated)</span>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <StatCard n={data.since_jul1.total} label="Registered since Jul 1" />
+            <StatCard n={data.since_jul1.pending} label="Pending" />
+            <StatCard n={data.since_jul1.in_progress} label="In progress" />
+            <StatCard n={data.since_jul1.completed} label="Completed & live" />
+          </div>
+        </div>
+      ) : null}
+
       <div className="flex flex-wrap gap-1 border-b border-gray-200">
         {tabs.map((t) => (
           <button key={t.key} type="button" onClick={() => setTab(t.key)}

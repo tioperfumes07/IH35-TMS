@@ -53,6 +53,17 @@ async function main() {
   // ACCEPTANCE (GUARD): prove the NUMBER, not just "the upload ran". If gh was absent, DONE would be the
   // ~334 undercount instead of ~539 — log the counts so the build/run makes it visible.
   console.log(`[tracker:sync] uploaded -> r2://${bucket}/${R2_KEY} (${body.length} bytes). counts=${JSON.stringify(counts)}`);
+
+  // FIX B — also upload the git-derived per-block created-dates map (powers the "Since Jul 1" view). The
+  // backend has no git, so this map is generated in CI (gen-block-created-dates.mjs) and served from R2 with
+  // the committed file as cold fallback. Optional: skip quietly if it hasn't been generated.
+  const CREATED = path.join(ROOT, "docs/trackers/block-created-dates.json");
+  if (fs.existsSync(CREATED)) {
+    const craw = fs.readFileSync(CREATED, "utf8");
+    await client.send(new PutObjectCommand({ Bucket: bucket, Key: "program-tracker/block-created-dates.json", Body: Buffer.from(craw), ContentType: "application/json" }));
+    let cmeta = {}; try { const j = JSON.parse(craw); cmeta = { dated: j.dated, undated: j.undated }; } catch { /* verbatim */ }
+    console.log(`[tracker:sync] uploaded -> r2://${bucket}/program-tracker/block-created-dates.json (${craw.length} bytes). ${JSON.stringify(cmeta)}`);
+  }
 }
 
 main().catch((e) => { console.error(`[tracker:sync] upload failed: ${e?.message ?? e}`); process.exit(1); });
