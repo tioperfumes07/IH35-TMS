@@ -1,27 +1,55 @@
 {
- "date": "2026-07-11",
- "generated_at_iso": "2026-07-11T21:01:58.928Z",
+ "date": "2026-07-12",
+ "generated_at_iso": "2026-07-12T13:19:28.507Z",
  "counts": {
-  "PENDING": 3,
-  "PENDING (GATED)": 942,
-  "NEEDS-VERIFY": 41,
-  "DONE": 515
+  "PENDING": 6,
+  "PENDING (GATED)": 904,
+  "NEEDS-VERIFY": 48,
+  "DONE": 547
  },
  "universe": {
-  "total_blocks_after_dedup": 1501,
+  "total_blocks_after_dedup": 1505,
   "by_source_after_dedup": {
+   ".block-ready": 1331,
    "program": 61,
-   ".block-ready": 1327,
    "enterprise-29": 29,
    "accounting": 27,
    "gap-spec": 57
   },
   "raw_file_counts": {
-   ".block-ready (*.json files)": 1338
+   ".block-ready (*.json files)": 1342
   },
   "note": "Total = union of 5 sources (.block-ready, docs/blocks program, docs/accounting, docs/dispatch enterprise-29, docs/specs gap), de-duped by id. So the block count is NOT the .block-ready file count."
  },
  "delta": [
+  {
+   "id": "BANK-18-A-INLINE-CREATE-CANONICAL",
+   "status": "PENDING (GATED)",
+   "pr": null,
+   "registered_on": "2026-07-11",
+   "title": ""
+  },
+  {
+   "id": "BANK-18-B-MANUAL-TXN-DATE-PATCH",
+   "status": "DONE",
+   "pr": null,
+   "registered_on": "2026-07-11",
+   "title": ""
+  },
+  {
+   "id": "BANK-18-DESIGNVIEW-QBO-PARITY",
+   "status": "DONE",
+   "pr": null,
+   "registered_on": "2026-07-11",
+   "title": ""
+  },
+  {
+   "id": "BANK-18-KEYSTONE-CATEGORIZE-REGISTER",
+   "status": "DONE",
+   "pr": null,
+   "registered_on": "2026-07-11",
+   "title": ""
+  },
   {
    "id": "DOC-15-QBO-TOKEN-AUTOREFRESH",
    "status": "NEEDS-VERIFY",
@@ -38,8 +66,8 @@
   },
   {
    "id": "DOC-17-DEFINITION-OF-DONE",
-   "status": "PENDING (GATED)",
-   "pr": null,
+   "status": "DONE",
+   "pr": 2370,
    "registered_on": "2026-07-11",
    "title": ""
   },
@@ -56,6 +84,13 @@
    "pr": 1519,
    "registered_on": "2026-06-27",
    "title": "catalogs.classes per-entity FK inventory — companion to AF-1."
+  },
+  {
+   "id": "FIX-19B-EXPENSES-CATEGORY-INLINE-CREATE",
+   "status": "DONE",
+   "pr": null,
+   "registered_on": "2026-07-11",
+   "title": ""
   },
   {
    "id": "FIX-DISPATCH-DRIVER-PICKER-50-CAP",
@@ -207,6 +242,17 @@
  ],
  "blocks": [
   {
+   "id": "accounting-2-ap-aging-qbo-mirror-population",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "[verified 2026-07-12] agent: mirror table unpopulated; inbound-sync PR #1682 CLOSED unmerged",
+   "name": "",
+   "registered_on": null,
+   "pr": 1686
+  },
+  {
    "id": "AF-8-payroll-bridge",
    "source": "program",
    "fin": true,
@@ -217,26 +263,47 @@
    "pr": null
   },
   {
-   "id": "D-CREATE-VERIFY-DEAD-FORMS-UNMOUNTED",
+   "id": "chain-08-demo-data-purge",
    "source": ".block-ready",
-   "fin": false,
+   "fin": true,
    "tier": "",
    "status": "PENDING",
-   "evidence": "no merged PR / no files on main",
+   "evidence": "[verified 2026-07-12] agent: audit lists only, purge Pass2 never ran (CHAIN-08-TRANSP-DEMO-DATA-AUDIT)",
    "name": "",
    "registered_on": null,
-   "pr": null
+   "pr": 2221
   },
   {
-   "id": "TIER3-LIST-ERROR-STATES",
+   "id": "CHAIN-08-transp-demo-data-purge",
+   "source": "program",
+   "fin": true,
+   "tier": "1",
+   "status": "PENDING",
+   "evidence": "[verified 2026-07-12] agent: same PR #2221 explicitly no-purge per file header",
+   "name": "ACCOUNTING-CHAIN / TASK 8 — TRANSP demo/seed data purge (PRE-GO-LIVE, LAST)",
+   "pr": 2221
+  },
+  {
+   "id": "driverprofile-1-companion-tier1-rls-hardening",
    "source": ".block-ready",
-   "fin": false,
+   "fin": true,
    "tier": "",
    "status": "PENDING",
-   "evidence": "no merged PR / no files on main",
+   "evidence": "[verified 2026-07-12] agent: PR #1742 frontend test/UI only, zero RLS/backend touched",
    "name": "",
    "registered_on": null,
-   "pr": null
+   "pr": 1742
+  },
+  {
+   "id": "fk-safety-events-driver-status-0289",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "PENDING",
+   "evidence": "[verified 2026-07-12] agent: migration validates unrelated FKs, no safety_events/driver_status FK exists",
+   "name": "",
+   "registered_on": null,
+   "pr": 2364
   },
   {
    "id": "0007-pattern-1-unmounted-backend",
@@ -1185,17 +1252,6 @@
    "pr": null
   },
   {
-   "id": "0243-c2-3-samsara-position-poll-no-entity-scop",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "0243-c2-4-bypass-driver-reads-pk-only",
    "source": ".block-ready",
    "fin": true,
@@ -1241,17 +1297,6 @@
   },
   {
    "id": "0243-d2-2-g18-load-fk-not-enforced-ven_DUP",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "0243-d4-1-samsara-webhook-driver-pairing-equip",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
@@ -1548,17 +1593,6 @@
    "pr": null
   },
   {
-   "id": "0243-g7-4-empty-e2e-specs-false-green",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "0243-g8-4-search-filter-inputs-no-aria-label",
    "source": ".block-ready",
    "fin": true,
@@ -1615,17 +1649,6 @@
   },
   {
    "id": "0243-g9-m-eight-workflow-status-defects",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "0243-h1-2-cors-wrong-prod-defaults",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
@@ -6207,6 +6230,17 @@
    "pr": null
   },
   {
+   "id": "BANK-18-A-INLINE-CREATE-CANONICAL",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "PENDING (GATED)",
+   "evidence": "no merged PR / no files on main",
+   "name": "",
+   "registered_on": "2026-07-11",
+   "pr": null
+  },
+  {
    "id": "banking-2-plaid-connections-error-state",
    "source": ".block-ready",
    "fin": true,
@@ -7442,17 +7476,6 @@
    "evidence": "no merged PR / no files on main",
    "name": "",
    "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "DOC-17-DEFINITION-OF-DONE",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "0/1 signature file(s) on main",
-   "name": "",
-   "registered_on": "2026-07-11",
    "pr": null
   },
   {
@@ -9122,160 +9145,6 @@
    "pr": null
   },
   {
-   "id": "phase13-audit216-banking-industry",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "phase13-audit217-insurance-industry",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "phase13-audit218-healthcare-na",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "phase13-audit219-pharmaceutical-na",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "phase13-audit220-manufacturing-duplicate",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "phase13-audit221-retail-na",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "phase13-audit222-restaurant-na",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "phase13-audit223-hospitality-na",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "phase13-audit224-transportation-dashboard-rout",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "phase13-audit225-logistics-warehousing",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "phase13-audit226-construction-na",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "phase13-audit228-energy-duplicate",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "phase13-audit229-mining-na",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "phase13-audit230-agriculture-na",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
    "id": "phase14-audit-231",
    "source": ".block-ready",
    "fin": true,
@@ -9508,226 +9377,6 @@
   },
   {
    "id": "PHASE2_RECON-COLLECTOR_frozen-feed_DISPATCH",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "PHASE3_INVOICE-FK_unenforced-linkages_DISPATCH",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "PHASE3_TRANSFER-MIGRATION-DRIFT_held-but-live_VERIFY",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "phase3-audit56-iso9001-quality-mgmt",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "phase3-audit57-process-audit-docs-workflow",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "phase3-audit58-six-sigma",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "phase3-audit59-lean",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "phase3-audit60-kaizen",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "phase3-audit61-tqm",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "phase3-audit62-spc",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "phase3-audit64-capa",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "phase3-audit65-preventive-action",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "phase3-audit66-supplier-quality",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "phase3-audit67-customer-satisfaction-csat-nps",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "phase3-audit68-service-quality-sla",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "phase3-audit69-product-quality",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "phase3-audit70-manufacturing-qc",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "phase3-audit71-laboratory",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "phase3-audit72-calibration",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "phase3-audit73-validation",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "PENDING (GATED)",
-   "evidence": "no merged PR / no files on main",
-   "name": "",
-   "registered_on": null,
-   "pr": null
-  },
-  {
-   "id": "phase3-audit75-document-control",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
@@ -10571,26 +10220,26 @@
    "pr": null
   },
   {
-   "id": "accounting-2-ap-aging-qbo-mirror-population",
+   "id": "0243-g7-4-empty-e2e-specs-false-green",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #1686 title-match only, unverified",
-   "name": "",
+   "evidence": "1/2 signature file(s) on main — partial, unverified",
+   "name": "7 end-to-end specs (bill/accident/expense/work-order/sidebar/forms/map-modal) previously passed while asserting nothing ",
    "registered_on": null,
-   "pr": 1686
+   "pr": null
   },
   {
-   "id": "banking-1-uncategorized-kpi-reconciliation",
+   "id": "0243-h1-2-cors-wrong-prod-defaults",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #1724 title-match only, unverified",
-   "name": "",
+   "evidence": "3/4 signature file(s) on main — partial, unverified",
+   "name": "The code-default CORS origin list diverged: index.ts getAllowedOrigins() OMITTED the real prod frontend origin https://a",
    "registered_on": null,
-   "pr": 1724
+   "pr": null
   },
   {
    "id": "bill-status-vocab-partial-vs-partially_DUP",
@@ -10598,50 +10247,10 @@
    "fin": true,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #2355 title-match only, unverified",
+   "evidence": "[verified 2026-07-12] agent: no DB constraint, writers still diverge (bills.service.ts:166,172)",
    "name": "",
    "registered_on": null,
    "pr": 2355
-  },
-  {
-   "id": "block-26-factoring-reconciliation",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "partial 9/10 artifact(s) on main — unverified",
-   "name": "block-26-factoring-reconciliation",
-   "pr": null
-  },
-  {
-   "id": "block-31-sales-tax-handling",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "partial 9/10 artifact(s) on main — unverified",
-   "name": "block-31-sales-tax-handling",
-   "pr": null
-  },
-  {
-   "id": "block-36-multi-entity-accounting",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "partial 8/9 artifact(s) on main — unverified",
-   "name": "block-36-multi-entity-accounting",
-   "pr": null
-  },
-  {
-   "id": "block-41-posting-lineage-ui",
-   "source": "accounting",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "partial 4/5 artifact(s) on main — unverified",
-   "name": "block-41-posting-lineage-ui",
-   "pr": null
   },
   {
    "id": "C7-ACCT-SUBNAV-CHROME",
@@ -10655,54 +10264,12 @@
    "pr": null
   },
   {
-   "id": "chain-08-demo-data-purge",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2221 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2221
-  },
-  {
-   "id": "CHAIN-08-transp-demo-data-purge",
-   "source": "program",
-   "fin": true,
-   "tier": "1",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2221 title-match only, unverified",
-   "name": "ACCOUNTING-CHAIN / TASK 8 — TRANSP demo/seed data purge (PRE-GO-LIVE, LAST)",
-   "pr": 2221
-  },
-  {
-   "id": "compliance-1-stale-units-segregation",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #1720 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 1720
-  },
-  {
-   "id": "CONN-2-factoring-faro",
-   "source": "program",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2223 title-match only, unverified",
-   "name": "CONNECTIONS / TASK 2 — Factoring / Faro reserve tracker + packet",
-   "pr": 2223
-  },
-  {
    "id": "consolidate-distributed-modules-fuel-tasks-fin",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #2135 title-match only, unverified",
+   "evidence": "[verified 2026-07-12] agent: PR #2135 docs-only, no code/migration touched",
    "name": "",
    "registered_on": null,
    "pr": 2135
@@ -10730,50 +10297,6 @@
    "pr": 2367
   },
   {
-   "id": "driverhub-2-demo-duplicate-drivers-cleanup",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #1721 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 1721
-  },
-  {
-   "id": "driverprofile-1-companion-tier1-rls-hardening",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #1742 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 1742
-  },
-  {
-   "id": "FIX-06-referenceselect-inline-create-sweep",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2356 title-match only, unverified",
-   "name": "Inline '+ Create' on remaining accounting dropdowns — ReferenceSelect coverage sweep + forward-only regression ratchet. ",
-   "registered_on": null,
-   "pr": 2356
-  },
-  {
-   "id": "fk-safety-events-driver-status-0289",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2364 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2364
-  },
-  {
    "id": "fuel-1-planner-diagram-empty-state",
    "source": ".block-ready",
    "fin": true,
@@ -10796,17 +10319,6 @@
    "pr": 2058
   },
   {
-   "id": "home-7-qbo-vendor-count-single-source",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #1722 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 1722
-  },
-  {
    "id": "ITEM-03B-MDATA-LIST-ACTIVE-COMPANY",
    "source": ".block-ready",
    "fin": false,
@@ -10818,59 +10330,378 @@
    "pr": null
   },
   {
-   "id": "m-01-wo-create-duplicate-header-fields",
+   "id": "phase13-audit216-banking-industry",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #2304 title-match only, unverified",
+   "evidence": "PR #2385 title-match only, unverified",
    "name": "",
    "registered_on": null,
-   "pr": 2304
+   "pr": 2385
   },
   {
-   "id": "m-05-terms-field-raw-db-value",
+   "id": "phase13-audit217-insurance-industry",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #2304 title-match only, unverified",
+   "evidence": "PR #2385 title-match only, unverified",
    "name": "",
    "registered_on": null,
-   "pr": 2304
+   "pr": 2385
   },
   {
-   "id": "m-07-wo-dev-facing-footer-text",
+   "id": "phase13-audit218-healthcare-na",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #2304 title-match only, unverified",
+   "evidence": "PR #2385 title-match only, unverified",
    "name": "",
    "registered_on": null,
-   "pr": 2304
+   "pr": 2385
   },
   {
-   "id": "m-08-integration-strip-duplicates-topbar",
+   "id": "phase13-audit219-pharmaceutical-na",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #2304 title-match only, unverified",
+   "evidence": "PR #2385 title-match only, unverified",
    "name": "",
    "registered_on": null,
-   "pr": 2304
+   "pr": 2385
   },
   {
-   "id": "m-09-wo-table-filters-no-visual-indicator",
+   "id": "phase13-audit220-manufacturing-duplicate",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #2304 title-match only, unverified",
+   "evidence": "PR #2385 title-match only, unverified",
    "name": "",
    "registered_on": null,
-   "pr": 2304
+   "pr": 2385
+  },
+  {
+   "id": "phase13-audit221-retail-na",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #2385 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
+  },
+  {
+   "id": "phase13-audit222-restaurant-na",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #2385 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
+  },
+  {
+   "id": "phase13-audit223-hospitality-na",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #2385 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
+  },
+  {
+   "id": "phase13-audit224-transportation-dashboard-rout",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #2385 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
+  },
+  {
+   "id": "phase13-audit225-logistics-warehousing",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #2385 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
+  },
+  {
+   "id": "phase13-audit226-construction-na",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #2385 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
+  },
+  {
+   "id": "phase13-audit228-energy-duplicate",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #2385 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
+  },
+  {
+   "id": "phase13-audit229-mining-na",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #2385 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
+  },
+  {
+   "id": "phase13-audit230-agriculture-na",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #2385 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
+  },
+  {
+   "id": "PHASE3_INVOICE-FK_unenforced-linkages_DISPATCH",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "[verified 2026-07-12] agent: not dispositioned in #2385; needs live FK check",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
+  },
+  {
+   "id": "PHASE3_TRANSFER-MIGRATION-DRIFT_held-but-live_VERIFY",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "[verified 2026-07-12] agent: not dispositioned in #2385; needs live migration-drift check",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
+  },
+  {
+   "id": "phase3-audit56-iso9001-quality-mgmt",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #2385 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
+  },
+  {
+   "id": "phase3-audit57-process-audit-docs-workflow",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #2385 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
+  },
+  {
+   "id": "phase3-audit58-six-sigma",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #2385 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
+  },
+  {
+   "id": "phase3-audit59-lean",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #2385 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
+  },
+  {
+   "id": "phase3-audit60-kaizen",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #2385 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
+  },
+  {
+   "id": "phase3-audit61-tqm",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #2385 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
+  },
+  {
+   "id": "phase3-audit62-spc",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #2385 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
+  },
+  {
+   "id": "phase3-audit64-capa",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #2385 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
+  },
+  {
+   "id": "phase3-audit65-preventive-action",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #2385 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
+  },
+  {
+   "id": "phase3-audit66-supplier-quality",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #2385 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
+  },
+  {
+   "id": "phase3-audit67-customer-satisfaction-csat-nps",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #2385 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
+  },
+  {
+   "id": "phase3-audit68-service-quality-sla",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #2385 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
+  },
+  {
+   "id": "phase3-audit69-product-quality",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #2385 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
+  },
+  {
+   "id": "phase3-audit70-manufacturing-qc",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #2385 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
+  },
+  {
+   "id": "phase3-audit71-laboratory",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #2385 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
+  },
+  {
+   "id": "phase3-audit72-calibration",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #2385 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
+  },
+  {
+   "id": "phase3-audit73-validation",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #2385 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
+  },
+  {
+   "id": "phase3-audit75-document-control",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "NEEDS-VERIFY",
+   "evidence": "PR #2385 title-match only, unverified",
+   "name": "",
+   "registered_on": null,
+   "pr": 2385
   },
   {
    "id": "product-service-categories-rename-and-creator",
@@ -10878,7 +10709,7 @@
    "fin": true,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #501 title-match only, unverified",
+   "evidence": "[verified 2026-07-12] agent: parent-category creator not built (QboCategoriesListPage.tsx)",
    "name": "",
    "registered_on": null,
    "pr": 501
@@ -10895,28 +10726,6 @@
    "pr": 1831
   },
   {
-   "id": "repair-b-driver-deduction-auth-template-not-se",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2029 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2029
-  },
-  {
-   "id": "s-01-coverage-gap-count-no-red-alert",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2306 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2306
-  },
-  {
    "id": "STMT-2-opening-balances",
    "source": "program",
    "fin": true,
@@ -10927,92 +10736,15 @@
    "pr": 2227
   },
   {
-   "id": "type-date-input-sweep-incomplete",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #1892 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 1892
-  },
-  {
-   "id": "UI-01_CALENDARS-AND-BOXES_DISPATCH",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2337 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2337
-  },
-  {
-   "id": "UI-01-CALENDARS-AND-FLAT-BOXES",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2337 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2337
-  },
-  {
-   "id": "UI-02_QUICKBOOKS-PARITY-AND-WORKING-CREATE_DISPATCH",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2339 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2339
-  },
-  {
-   "id": "UI-02-CREATE-FORMS-WIRED",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2339 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2339
-  },
-  {
    "id": "UI-03_INLINE-CREATE-AND-BANKING-SPLIT_DISPATCH",
    "source": ".block-ready",
    "fin": true,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #2342 title-match only, unverified",
+   "evidence": "[verified 2026-07-12] agent: PR #2342 Part-A vocab only; Account/COA inline-create still deferred",
    "name": "",
    "registered_on": null,
    "pr": 2342
-  },
-  {
-   "id": "UI-03-PARTA-INLINE-CREATE",
-   "source": ".block-ready",
-   "fin": false,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #2342 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 2342
-  },
-  {
-   "id": "ui1-17-my-accountant-page",
-   "source": ".block-ready",
-   "fin": true,
-   "tier": "",
-   "status": "NEEDS-VERIFY",
-   "evidence": "PR #1547 title-match only, unverified",
-   "name": "",
-   "registered_on": null,
-   "pr": 1547
   },
   {
    "id": "0007-no-silent-noop-posting",
@@ -11035,6 +10767,17 @@
    "name": "Tier-1 0091-c1-1: two driver-settlement engines. DESIGN ONLY. Verified live (main) THREE settlement code paths: A postSe",
    "registered_on": null,
    "pr": 2320
+  },
+  {
+   "id": "0243-d4-1-samsara-webhook-driver-pairing-equip",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 3 file(s) on main",
+   "name": "The Samsara vehicle-driver-pairing WEBHOOK path (telematics/vehicle-driver-lookup.service.ts resolveLocalIds) resolved t",
+   "registered_on": null,
+   "pr": null
   },
   {
    "id": "0243-g8-4-a11y-input-labels",
@@ -11318,6 +11061,50 @@
    "name": "AR+AP payment recording 400 contract fix",
    "registered_on": null,
    "pr": 1923
+  },
+  {
+   "id": "BANK-18-B-MANUAL-TXN-DATE-PATCH",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 1 file(s) on main",
+   "name": "",
+   "registered_on": "2026-07-11",
+   "pr": null
+  },
+  {
+   "id": "BANK-18-DESIGNVIEW-QBO-PARITY",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 2 file(s) on main",
+   "name": "",
+   "registered_on": "2026-07-11",
+   "pr": null
+  },
+  {
+   "id": "BANK-18-KEYSTONE-CATEGORIZE-REGISTER",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 4 file(s) on main",
+   "name": "",
+   "registered_on": "2026-07-11",
+   "pr": null
+  },
+  {
+   "id": "banking-1-uncategorized-kpi-reconciliation",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-11] PR #1724 merged 707ebd735 (KPI count alignment, no money movement); apps/backend/src/banking/pendi",
+   "name": "",
+   "registered_on": null,
+   "pr": 1724
   },
   {
    "id": "BANKING-CATEGORIZE-C1",
@@ -11731,6 +11518,16 @@
    "pr": null
   },
   {
+   "id": "block-26-factoring-reconciliation",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-12] agent: routes autoloaded + guard registry-executed (verify-architectural-design:510-513)",
+   "name": "block-26-factoring-reconciliation",
+   "pr": null
+  },
+  {
    "id": "BLOCK-26-of-29-TIER4-PARTITION",
    "source": "enterprise-29",
    "fin": false,
@@ -11811,6 +11608,16 @@
    "pr": null
   },
   {
+   "id": "block-31-sales-tax-handling",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-12] agent: posting-engine.service.ts:545-548 tax split + 2 guards executed",
+   "name": "block-31-sales-tax-handling",
+   "pr": null
+  },
+  {
    "id": "block-33-invoice-line-revenue-mapping",
    "source": "accounting",
    "fin": true,
@@ -11841,6 +11648,16 @@
    "pr": null
   },
   {
+   "id": "block-36-multi-entity-accounting",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-12] agent: multi-entity/routes.ts + manifest.tsx:3435 route + 2 guards",
+   "name": "block-36-multi-entity-accounting",
+   "pr": null
+  },
+  {
    "id": "block-37-qbo-sync-repair-pipeline",
    "source": "accounting",
    "fin": true,
@@ -11858,6 +11675,16 @@
    "status": "DONE",
    "evidence": "[verified 2026-07-03] audit-trail routes + page live",
    "name": "block-40-accounting-audit-trail",
+   "pr": null
+  },
+  {
+   "id": "block-41-posting-lineage-ui",
+   "source": "accounting",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-12] agent: PostingLineagePage + audit-trail source-lineage endpoint live",
+   "name": "block-41-posting-lineage-ui",
    "pr": null
   },
   {
@@ -12364,6 +12191,27 @@
    "pr": 789
   },
   {
+   "id": "compliance-1-stale-units-segregation",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-11] PR #1720 merged a53ceabff (non-financial); apps/frontend/src/pages/compliance/FleetHosBoardSection",
+   "name": "",
+   "registered_on": null,
+   "pr": 1720
+  },
+  {
+   "id": "CONN-2-factoring-faro",
+   "source": "program",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-12] agent: routes+reserve-tracker wired, migration HELD (poster.service.ts:276-530)",
+   "name": "CONNECTIONS / TASK 2 — Factoring / Faro reserve tracker + packet",
+   "pr": null
+  },
+  {
    "id": "CUSTVEND-PAR-1",
    "source": ".block-ready",
    "fin": true,
@@ -12395,6 +12243,17 @@
    "name": "D-CREATE-INLINE (DESIGN-PARITY REQ 4): every accounting create-form dropdown offers the inline '+ Create' via the shared",
    "registered_on": null,
    "pr": 2326
+  },
+  {
+   "id": "D-CREATE-VERIFY-DEAD-FORMS-UNMOUNTED",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-12] verify-dead-forms-unmounted.mjs + verify-steps/110 + package.json:866; guard PASS (11 dead forms u",
+   "name": "",
+   "registered_on": null,
+   "pr": null
   },
   {
    "id": "D-SECTION7-EMOJI-cleanup",
@@ -12579,6 +12438,17 @@
    "name": "Dispatch live ETA columns — driver status, Samsara ETA, on-time prediction",
    "registered_on": null,
    "pr": 688
+  },
+  {
+   "id": "DOC-17-DEFINITION-OF-DONE",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 1 file(s) on main",
+   "name": "",
+   "registered_on": "2026-07-11",
+   "pr": 2370
   },
   {
    "id": "DOC-CATALOGS-ACCOUNTS-FK-INVENTORY",
@@ -12887,6 +12757,17 @@
    "name": "Docs-only design spec for the VOID-EVERYWHERE cross-cutting block (finance build package construction block #1, BUILD FI",
    "registered_on": null,
    "pr": 964
+  },
+  {
+   "id": "driverhub-2-demo-duplicate-drivers-cleanup",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-11] PR #1721 merged 27cf6a9ce; demo-data-exclusion guard test + units.routes.ts/driver-scheduler.servi",
+   "name": "",
+   "registered_on": null,
+   "pr": 1721
   },
   {
    "id": "E1-SMOKE-SERVICE-TOKEN-AUTH",
@@ -13505,6 +13386,17 @@
    "pr": 2356
   },
   {
+   "id": "FIX-06-referenceselect-inline-create-sweep",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-11] PR #2356 merged 1a74e671d; scripts/verify-referenceselect-coverage-ratchet.mjs guard + step 113 wi",
+   "name": "Inline '+ Create' on remaining accounting dropdowns — ReferenceSelect coverage sweep + forward-only regression ratchet. ",
+   "registered_on": null,
+   "pr": 2356
+  },
+  {
    "id": "FIX-10-PROGRAM-TRACKER-DEFAULT-ROUTE",
    "source": ".block-ready",
    "fin": true,
@@ -13525,6 +13417,17 @@
    "name": "",
    "registered_on": null,
    "pr": 2352
+  },
+  {
+   "id": "FIX-19B-EXPENSES-CATEGORY-INLINE-CREATE",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "all 2 file(s) on main",
+   "name": "",
+   "registered_on": "2026-07-11",
+   "pr": null
   },
   {
    "id": "FIX-AT-RISK-LOADS-SD-CITY",
@@ -13642,7 +13545,7 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #1530 merged 2026-06-27",
+   "evidence": "[verified 2026-07-12] InlineDriverPicker.tsx:26 + BookLoadEquipmentSection.tsx:92 pass limit:200",
    "name": "Book Load driver picker 50-cap — load full active set (limit:200) so drivers past newest 50 appear (Mecor). Also #1529 i",
    "registered_on": "2026-06-27",
    "pr": 1530
@@ -13675,7 +13578,7 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #1534 merged 2026-06-27",
+   "evidence": "[verified 2026-07-12] no d.full_name refs remain; guard test driver-full-name-phantom.db.test.ts asserts count=0",
    "name": "mdata.drivers.full_name phantom across 5 endpoints (42703) → CONCAT_WS(first,last); +db-test guard.",
    "registered_on": "2026-06-27",
    "pr": 1534
@@ -13730,7 +13633,7 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #1520 merged 2026-06-26",
+   "evidence": "[verified 2026-07-12] lease-to-own.service.ts:131 selects real u.vehicle_type AS unit_type + guard test",
    "name": "Legal lease-to-own /fleet 500 — phantom u.unit_type → vehicle_type.",
    "registered_on": "2026-06-27",
    "pr": 1520
@@ -13741,7 +13644,7 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #1532 merged 2026-06-27",
+   "evidence": "[verified 2026-07-12] services.routes.ts:107/118 repointed to telematics.vehicle_latest_position + maintenance.pm_schedu",
    "name": "services/eta 500 — 3 phantom mdata.units cols → telematics.vehicle_latest_position + maintenance.pm_schedules.",
    "registered_on": "2026-06-27",
    "pr": 1532
@@ -13763,7 +13666,7 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #1517 merged 2026-06-26",
+   "evidence": "[verified 2026-07-12] cpm-calculator.service.ts:107 repointed to master_data.unit_permits (migration 0407)",
    "name": "per-truck-cpm permits CTE 500 fix — repoint phantom CTE to the real unit relation; +static CI guard.",
    "registered_on": "2026-06-27",
    "pr": 1517
@@ -13774,7 +13677,7 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #1533 merged 2026-06-27",
+   "evidence": "[verified 2026-07-12] api/mdata.ts:26 forwards limit; InlineUnitPicker/InlineTrailerPicker limit:500",
    "name": "50-cap class — unit/vendor/customer client pickers load full active set (limit forwarded in mdata.ts).",
    "registered_on": "2026-06-27",
    "pr": 1533
@@ -15285,6 +15188,17 @@
    "pr": 723
   },
   {
+   "id": "home-7-qbo-vendor-count-single-source",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-12] agent: fixed PR #1668 (DefaultHome.tsx:168, OwnerHome.tsx:181)",
+   "name": "",
+   "registered_on": null,
+   "pr": 1722
+  },
+  {
    "id": "HOS-BUG-DRIVERASSIGN",
    "source": "program",
    "fin": false,
@@ -15321,7 +15235,7 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #1796 merged 2026-07-02",
+   "evidence": "[verified 2026-07-12] merged PR #1796 (non-financial import)",
    "name": "IMPORT-0 QBO Reports API client (TrialBalance + GeneralLedger, v2 response shape) + exact-cents parsers + monthly date c",
    "registered_on": "2026-07-02",
    "pr": 1796
@@ -15332,7 +15246,7 @@
    "fin": true,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #1797 merged 2026-07-02",
+   "evidence": "[verified 2026-07-12] merged PR #1797",
    "name": "IMPORT-P0 JE→QBO push kill-switch + masterdata echo guard. HARD PREREQUISITE: no import run (opening balance or GL detai",
    "registered_on": "2026-07-02",
    "pr": 1797
@@ -15343,7 +15257,7 @@
    "fin": true,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #1802 merged 2026-07-02",
+   "evidence": "[verified 2026-07-12] merged PR #1802",
    "name": "IMPORT-P0b — entity-push kill-switch: gate every TMS→QBO write of invoice/bill/customer/vendor/account/item so nothing r",
    "registered_on": "2026-07-02",
    "pr": 1802
@@ -15412,6 +15326,61 @@
    "name": "Anti-regression CI guards — sidebar 23-target additive check, cash-flow module pending gate, insurance atomic financial ",
    "registered_on": null,
    "pr": 755
+  },
+  {
+   "id": "m-01-wo-create-duplicate-header-fields",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-11] PR #2304 merged f869528c4 (non-financial WO-modal visual sweep); apps/frontend/src/pages/maintenan",
+   "name": "",
+   "registered_on": null,
+   "pr": 2304
+  },
+  {
+   "id": "m-05-terms-field-raw-db-value",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-11] PR #2304 merged f869528c4; apps/frontend/src/lib/billTermsLabel.ts humanizes raw terms enum, prese",
+   "name": "",
+   "registered_on": null,
+   "pr": 2304
+  },
+  {
+   "id": "m-07-wo-dev-facing-footer-text",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-11] PR #2304 merged f869528c4; CreateWorkOrderModal.tsx footer copy fixed, present on main",
+   "name": "",
+   "registered_on": null,
+   "pr": 2304
+  },
+  {
+   "id": "m-08-integration-strip-duplicates-topbar",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-11] PR #2304 merged f869528c4; CreateWorkOrderModal.tsx integration-strip dedup, present on main",
+   "name": "",
+   "registered_on": null,
+   "pr": 2304
+  },
+  {
+   "id": "m-09-wo-table-filters-no-visual-indicator",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-11] PR #2304 merged f869528c4; apps/frontend/src/pages/maintenance/components/WorkOrdersTable.tsx acti",
+   "name": "",
+   "registered_on": null,
+   "pr": 2304
   },
   {
    "id": "M1-POSITIONED-PARTS",
@@ -15669,7 +15638,7 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #1535 merged 2026-06-27",
+   "evidence": "[verified 2026-07-12] QBOSyncDriftDashboard.tsx:39/47 use apiRequest (credentials:include)",
    "name": "QBO Sync Drift dashboard 401 — data calls send session cookie via apiRequest (was raw fetch).",
    "registered_on": "2026-06-27",
    "pr": 1535
@@ -15719,6 +15688,17 @@
    "pr": 1922
   },
   {
+   "id": "repair-b-driver-deduction-auth-template-not-se",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-12] agent: gate live-wired via hire-contract codes (signed-finance-handoff.service.ts:224-238)",
+   "name": "",
+   "registered_on": null,
+   "pr": 2029
+  },
+  {
    "id": "RPT-MODULE",
    "source": "program",
    "fin": false,
@@ -15738,6 +15718,17 @@
    "name": "",
    "registered_on": null,
    "pr": null
+  },
+  {
+   "id": "s-01-coverage-gap-count-no-red-alert",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-11] PR #2306 merged 107d5e09b (non-financial Safety visual sweep); apps/frontend/src/pages/safety/tabs",
+   "name": "",
+   "registered_on": null,
+   "pr": 2306
   },
   {
    "id": "SAFE-W3",
@@ -15895,7 +15886,7 @@
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #1531 merged 2026-06-27",
+   "evidence": "[verified 2026-07-12] PoliciesList.tsx:12/172 migrated to shared DataTable",
    "name": "TBL-STANDARD surface 1 — migrate Insurance Policies list to the shared DataTable.",
    "registered_on": "2026-06-27",
    "pr": 1531
@@ -16021,12 +16012,100 @@
    "pr": 813
   },
   {
+   "id": "TIER3-LIST-ERROR-STATES",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-12] verify-list-error-state-coverage.mjs + verify-steps/112; guard PASS (20 list pages keep isError->L",
+   "name": "",
+   "registered_on": null,
+   "pr": null
+  },
+  {
+   "id": "type-date-input-sweep-incomplete",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-12] agent: 0 raw type=date + verify-no-raw-date-input guard passes",
+   "name": "",
+   "registered_on": null,
+   "pr": 1892
+  },
+  {
+   "id": "UI-01_CALENDARS-AND-BOXES_DISPATCH",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-11] dispatch twin of UI-01; PR #2337 merged 9baa803e0 (QB calendars + no-nested-box ratchet) on main",
+   "name": "",
+   "registered_on": null,
+   "pr": 2337
+  },
+  {
+   "id": "UI-01-CALENDARS-AND-FLAT-BOXES",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-11] PR #2337 merged 9baa803e0 — QuickBooks-format calendars everywhere + no-nested-box ratchet (2 guar",
+   "name": "",
+   "registered_on": null,
+   "pr": 2337
+  },
+  {
+   "id": "UI-02_QUICKBOOKS-PARITY-AND-WORKING-CREATE_DISPATCH",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-11] dispatch twin of UI-02; PR #2339 merged 21bcc13c5 (create-forms-wired verify-first ratchet) on mai",
+   "name": "",
+   "registered_on": null,
+   "pr": 2339
+  },
+  {
+   "id": "UI-02-CREATE-FORMS-WIRED",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-11] PR #2339 merged 21bcc13c5; scripts/verify-create-forms-wired.mjs guard wired into locked-guards.ym",
+   "name": "",
+   "registered_on": null,
+   "pr": 2339
+  },
+  {
+   "id": "UI-03-PARTA-INLINE-CREATE",
+   "source": ".block-ready",
+   "fin": false,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-11] PR #2342 merged a1e520409 — inline '+ Create' vocab fix; scripts/verify-reference-dropdown-inline-",
+   "name": "",
+   "registered_on": null,
+   "pr": 2342
+  },
+  {
+   "id": "ui1-17-my-accountant-page",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "[verified 2026-07-11] apps/frontend/src/pages/accounting/MyAccountantPage.tsx present + routed at /accounting/my-account",
+   "name": "",
+   "registered_on": null,
+   "pr": 1547
+  },
+  {
    "id": "UNIFIED-TXN-REGISTER",
    "source": ".block-ready",
    "fin": false,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #1536 merged 2026-06-27",
+   "evidence": "[verified 2026-07-12] transaction-register.routes.ts present + autoloaded (index.ts:1011); FE lazy-mounted manifest.tsx:",
    "name": "Unified Transaction Register — bank+fuel+AR+AP+settlement in one read-only entity-scoped register.",
    "registered_on": "2026-06-27",
    "pr": 1536
@@ -16037,7 +16116,7 @@
    "fin": true,
    "tier": "",
    "status": "DONE",
-   "evidence": "PR #2281 merged 2026-07-07",
+   "evidence": "[verified 2026-07-12] merged PR #2281",
    "name": "USERS-1 PR B: deactivate_probe_accounts admin-job operation + verify-no-fixture-users-prod-guard CI guard",
    "registered_on": "2026-07-07",
    "pr": 2281
@@ -16546,10 +16625,172 @@
  ],
  "merged_prs": [
   {
+   "number": 2395,
+   "title": "feat(relay): owner-only CSV import endpoint (ingest historical fuel transactions) — doc 21/23",
+   "mergedAt": "2026-07-12T13:02:14Z",
+   "branch": "feat/relay-csv-import-endpoint"
+  },
+  {
+   "number": 2394,
+   "title": "feat(relay): owner-only fuel backfill endpoint (seed full history) — doc 21/23 Part A",
+   "mergedAt": "2026-07-12T05:36:10Z",
+   "branch": "feat/relay-fuel-backfill-endpoint"
+  },
+  {
+   "number": 2393,
+   "title": "fix(relay): enroll RELAY_FUEL_INGEST_ENABLED in PER_ENTITY_ONLY_FLAG_KEYS (doc 21 gap 2)",
+   "mergedAt": "2026-07-12T05:22:25Z",
+   "branch": "fix/relay-flag-per-entity-only"
+  },
+  {
+   "number": 2392,
+   "title": "fix(tracker): By-Module path-based + Sequence block_ready_key bridge (Doc 20)",
+   "mergedAt": "2026-07-12T05:56:30Z",
+   "branch": "fix/doc20-tracker-bymodule-sequence"
+  },
+  {
+   "number": 2391,
+   "title": "fix(relay): wire the orphaned fuel-ingest cron into the scheduler (doc 21 Part A gap 1)",
+   "mergedAt": "2026-07-12T05:11:40Z",
+   "branch": "fix/relay-fuel-ingest-cron-wired"
+  },
+  {
+   "number": 2390,
+   "title": "fix: QBO minorversion 65→75 consistency guard + orphan-FK inventory ratchet (flagged non-financial sub-items)",
+   "mergedAt": "2026-07-12T05:00:36Z",
+   "branch": "fix/qbo-minorversion-and-orphan-fk-ratchet"
+  },
+  {
+   "number": 2389,
+   "title": "fix(g2-2): alerts routes assert company membership (cross-entity leak) + 4 DONE flips",
+   "mergedAt": "2026-07-12T11:53:03Z",
+   "branch": "fix/g2-2-alerts-membership-leak"
+  },
+  {
+   "number": 2388,
+   "title": "chore(tracker): 11 named FIX-* blocks verified-DONE (recon was stale)",
+   "mergedAt": "2026-07-12T04:34:07Z",
+   "branch": "chore/named-blocks-verified-done"
+  },
+  {
+   "number": 2387,
+   "title": "fix(p1): break 2 real import cycles + circular-dependency regression guard",
+   "mergedAt": "2026-07-12T04:43:18Z",
+   "branch": "fix/p1-circular-dependencies"
+  },
+  {
+   "number": 2385,
+   "title": "docs(specs): 0252 HR + phase13 vertical + phase3 quality-mgmt cluster dispositions (46 blocks, all design-gated/N-A)",
+   "mergedAt": "2026-07-12T04:37:59Z",
+   "branch": "docs/0252-hr-design"
+  },
+  {
+   "number": 2384,
+   "title": "fix(0243): CORS prod-defaults single-source + fail-loud (h1-2) + e2e assert-or-skip guard (g7-4)",
+   "mergedAt": "2026-07-12T04:30:10Z",
+   "branch": "fix/0243-cors-and-e2e-guard"
+  },
+  {
+   "number": 2383,
+   "title": "fix(0243-d4-1): Samsara webhook unit resolution (units-primary lookup) + cluster design doc",
+   "mergedAt": "2026-07-12T04:10:08Z",
+   "branch": "fix/0243-samsara-webhook-and-designs"
+  },
+  {
+   "number": 2382,
+   "title": "fix(0091): Samsara position cross-entity leak + CoA-list pagination total (+ cluster design doc)",
+   "mergedAt": "2026-07-12T03:56:49Z",
+   "branch": "fix/0091-entity-leak-and-coa-pagination"
+  },
+  {
+   "number": 2381,
+   "title": "feat(safety): events-log surfaces the related load (safety-event→load reverse linkage) + REPAIR-F design",
+   "mergedAt": "2026-07-12T03:37:41Z",
+   "branch": "feat/biz-flow-safety-load-linkage"
+  },
+  {
+   "number": 2380,
+   "title": "fix(0519): banking-uncategorized-KPI regression guard + DB-integrity/maint design docs",
+   "mergedAt": "2026-07-12T03:35:30Z",
+   "branch": "fix/0519-banking-kpi-guard-and-designs"
+  },
+  {
+   "number": 2379,
+   "title": "chore(tracker): 16 blocks verified-DONE (evidence-backed) — visible progress",
+   "mergedAt": "2026-07-12T03:30:35Z",
+   "branch": "chore/verified-done-overrides"
+  },
+  {
+   "number": 2378,
+   "title": "docs(specs): 0251 factoring/commodity/charge-code/stop-location design docs (enables owner-approved build)",
+   "mergedAt": "2026-07-12T03:28:15Z",
+   "branch": "docs/0251-financial-cluster-designs"
+  },
+  {
+   "number": 2377,
+   "title": "feat(dispatch): loads listing surfaces invoice status (load→invoice reverse linkage, gap-21)",
+   "mergedAt": "2026-07-12T03:13:21Z",
+   "branch": "feat/dispatch-load-invoice-linkage"
+  },
+  {
+   "number": 2376,
+   "title": "fix(dispatch): Load-Templates dead nav wired + notify-prefs save error handling (0441 cluster)",
+   "mergedAt": "2026-07-12T02:57:25Z",
+   "branch": "feat/0441-dispatch-nav-fixes"
+  },
+  {
+   "number": 2375,
+   "title": "feat(dispatch): active-loads home widget links to assigned driver + unit (0280-03/09 linkage)",
+   "mergedAt": "2026-07-12T03:11:54Z",
+   "branch": "feat/0280-dispatcher-load-linkage"
+  },
+  {
+   "number": 2374,
+   "title": "[HOLD-FOR-JORGE] feat(banking): manual-txn date PATCH + canonical inline-create guard (Doc-18 A+B)",
+   "mergedAt": "2026-07-11T22:27:47Z",
+   "branch": "feat/bank18-ab-canonical-and-date-patch"
+  },
+  {
+   "number": 2373,
+   "title": "fix(tracker): headline counts ALL registered blocks + auto-refresh on merge (Doc-19-A)",
+   "mergedAt": "2026-07-11T22:16:11Z",
+   "branch": "fix/tracker-truly-live"
+  },
+  {
+   "number": 2372,
+   "title": "fix(expenses): Category '+ Add new' on the Record-expense form + widen ratchet (Doc-19-B)",
+   "mergedAt": "2026-07-11T21:35:15Z",
+   "branch": "fix/expenses-category-inline-create"
+  },
+  {
+   "number": 2371,
+   "title": "feat(banking): Doc-18 QBO-parity — categorize-capable register (KEYSTONE) + design-view wins",
+   "mergedAt": "2026-07-11T21:39:14Z",
+   "branch": "feat/bank18-designview-qbo-parity"
+  },
+  {
+   "number": 2370,
+   "title": "feat(governance): DOC-17 end-to-end Definition of Done — lifecycle guard + block registry",
+   "mergedAt": "2026-07-11T21:19:10Z",
+   "branch": "feat/doc17-block-lifecycle"
+  },
+  {
+   "number": 2369,
+   "title": "[HOLD-FOR-JORGE] fix(rls): re-assert FORCED RLS on catalogs.excel_upload_jobs (ITEM-2)",
+   "mergedAt": "2026-07-11T21:12:01Z",
+   "branch": "fix/reassert-excel-upload-jobs-rls"
+  },
+  {
    "number": 2368,
    "title": "docs(ceremony): TASK-B ledger-backfill SQL for the 8 held+applied ceremony migrations (ITEM-13)",
    "mergedAt": "2026-07-11T20:56:23Z",
    "branch": "docs/ceremony-task-b-ledger-backfill"
+  },
+  {
+   "number": 2367,
+   "title": "feat(cron): wire recon + audit-chain-verify into the in-process scheduler (Doc 16 — recon runs on its own)",
+   "mergedAt": "2026-07-11T21:05:49Z",
+   "branch": "feat/recon-inprocess-scheduler"
   },
   {
    "number": 2366,
@@ -19982,172 +20223,22 @@
    "title": "feat(chat): CHAT-7 driver PWA offline outbox (never lose a message on bad signal)",
    "mergedAt": "2026-07-01T23:59:06Z",
    "branch": "feat/dispatch-chat-offline-outbox"
-  },
-  {
-   "number": 1764,
-   "title": "feat(chat): CHAT-6 archive thread on load close (read-only derivation)",
-   "mergedAt": "2026-07-01T23:46:12Z",
-   "branch": "feat/dispatch-chat-archive-on-close"
-  },
-  {
-   "number": 1763,
-   "title": "feat(chat): CHAT-5 in-thread confirmations + cash-advance cards (read-only, no GL)",
-   "mergedAt": "2026-07-01T23:32:03Z",
-   "branch": "feat/dispatch-chat-cash-advance-confirm"
-  },
-  {
-   "number": 1762,
-   "title": "feat(chat): CHAT-4 driver PWA per-load dispatch chat (ES/EN, polling)",
-   "mergedAt": "2026-07-01T23:07:23Z",
-   "branch": "feat/dispatch-chat-driver-pwa"
-  },
-  {
-   "number": 1761,
-   "title": "feat(chat): CHAT-3 office Dispatch Chat UI — per-load threads + composer (polling)",
-   "mergedAt": "2026-07-01T22:57:25Z",
-   "branch": "feat/dispatch-chat-office-ui"
-  },
-  {
-   "number": 1760,
-   "title": "feat(chat): CHAT-2 dispatch-chat backend — threads/messages/receipts/presign (office + driver)",
-   "mergedAt": "2026-07-01T23:03:41Z",
-   "branch": "feat/dispatch-chat-backend"
-  },
-  {
-   "number": 1759,
-   "title": "[HOLD-FOR-JORGE — TIER 1] feat(chat): CHAT-1 per-load dispatch-chat schema (evidence-grade, no money path)",
-   "mergedAt": "2026-07-01T22:15:52Z",
-   "branch": "feat/dispatch-chat-schema-hold"
-  },
-  {
-   "number": 1758,
-   "title": "docs(chat): per-load dispatch chat design + CHAT-1 schema draft [FOR JORGE REVIEW]",
-   "mergedAt": "2026-07-01T21:53:21Z",
-   "branch": "docs/per-load-dispatch-chat-design"
-  },
-  {
-   "number": 1757,
-   "title": "feat(accounting): Expenses list (read-only browse) — GET /api/v1/expenses + ParityTable page",
-   "mergedAt": "2026-07-01T21:51:15Z",
-   "branch": "feat/expenses-list-readonly"
-  },
-  {
-   "number": 1756,
-   "title": "chore(ci): wire orphan CHAIN-05 bank-feed GL posting guard into CI",
-   "mergedAt": "2026-07-01T21:37:52Z",
-   "branch": "chore/wire-chain05-bank-feed-gl-guard"
-  },
-  {
-   "number": 1755,
-   "title": "BANKREC-LISTSTATUS-01: Match/Unmatched status on Bills + Bill-Payments lists",
-   "mergedAt": "2026-07-01T21:06:53Z",
-   "branch": "feat/accounting-lists-match-status"
-  },
-  {
-   "number": 1754,
-   "title": "[HOLD-FOR-JORGE — TIER 2] feat(banking): BANKREC-CONFIRM-01 enable Confirm-match (exact matches only)",
-   "mergedAt": "2026-07-01T20:51:06Z",
-   "branch": "feat/bankrec-confirm-match-exact-only"
-  },
-  {
-   "number": 1753,
-   "title": "feat(accounting): Block 5 — CoA creator statement-grouped Account Type + cascade lock guard",
-   "mergedAt": "2026-07-01T20:36:10Z",
-   "branch": "feat/coa-grouped-account-detail-type"
-  },
-  {
-   "number": 1752,
-   "title": "feat(ui): Block 6 — global column resize keyboard+touch a11y + framework contract guard",
-   "mergedAt": "2026-07-01T20:27:36Z",
-   "branch": "feat/global-column-resize-sort-framework"
-  },
-  {
-   "number": 1751,
-   "title": "[HOLD-FOR-JORGE — TIER 1] feat(accounting): COA-DETAILTYPE-01 — per-entity Detail Type catalog + creator",
-   "mergedAt": "2026-07-01T20:15:12Z",
-   "branch": "feat/coa-detail-type-catalog-creator"
-  },
-  {
-   "number": 1750,
-   "title": "feat(accounting-lists): CAT-PSCAT-01 — rename QBO Categories → Product & Service Categories",
-   "mergedAt": "2026-07-01T19:31:09Z",
-   "branch": "feat/product-service-categories-creator"
-  },
-  {
-   "number": 1749,
-   "title": "feat(accounting-lists): CAT-CREATOR-01 core — shared catalog creator upgrades + expense map link",
-   "mergedAt": "2026-07-01T19:00:32Z",
-   "branch": "feat/accounting-catalog-shared-creator-profile"
-  },
-  {
-   "number": 1748,
-   "title": "feat(lists): LISTS-REORG-01 — domain ordering + per-domain hubs + scroll-restore",
-   "mergedAt": "2026-07-01T18:42:06Z",
-   "branch": "feat/lists-reorg-domain-hubs-scroll"
-  },
-  {
-   "number": 1747,
-   "title": "[HOLD-FOR-JORGE — TIER 1] feat(bank-recon): BLOCK-01 Part 2a expense-link accept",
-   "mergedAt": "2026-07-01T17:30:40Z",
-   "branch": "feat/bank-recon-expense-match-part2a"
-  },
-  {
-   "number": 1746,
-   "title": "[HOLD-FOR-JORGE — TIER 1] fix(bank-recon): variance poster reads ledger_account_id, not phantom coa_account_id (BLOCK-01)",
-   "mergedAt": "2026-07-01T16:44:41Z",
-   "branch": "fix/bank-recon-poster-ledger-account-id-hold"
-  },
-  {
-   "number": 1745,
-   "title": "[HOLD-FOR-JORGE — TIER 1] feat(accounting): CHAIN-04 bill-payment → GL gap-closure (flag OFF + bank-leg fix + bill-first)",
-   "mergedAt": "2026-07-01T16:06:32Z",
-   "branch": "feat/chain-04-bill-payment-gapclosure-hold"
-  },
-  {
-   "number": 1744,
-   "title": "[HOLD-FOR-JORGE — TIER 1] feat(accounting): CHAIN-05 bank-feed categorize → GL (BANK_FEED_GL_POSTING_ENABLED, OFF)",
-   "mergedAt": "2026-07-01T16:06:17Z",
-   "branch": "feat/chain-05-bank-feed-gapclosure-hold"
-  },
-  {
-   "number": 1743,
-   "title": "[HOLD-FOR-JORGE — TIER 1] feat(accounting): CHAIN-06 invoice→A/R kill-switch (INVOICE_AR_GL_POSTING_ENABLED, OFF)",
-   "mergedAt": "2026-07-01T15:39:37Z",
-   "branch": "feat/chain-06-invoice-ar-killswitch-hold"
-  },
-  {
-   "number": 1742,
-   "title": "feat: BLOCK-05 minor non-financial (SAFETY-1 HOS date, FUEL-2 GL-coverage, DRIVERPROFILE-1)",
-   "mergedAt": "2026-07-01T15:24:31Z",
-   "branch": "feat/block-05-minor-nonfinancial"
-  },
-  {
-   "number": 1741,
-   "title": "[HOLD-FOR-JORGE — TIER 1] BLOCK-00: TRANSP CoA role-map seed (ap_control→QBO-47, ar_control→QBO-45)",
-   "mergedAt": "2026-07-01T15:13:31Z",
-   "branch": "block-00-transp-role-map-seed-hold"
-  },
-  {
-   "number": 1737,
-   "title": "feat(banking): Match drawer + bill/expense candidates — Part 1 (read-only, direction-aware)",
-   "mergedAt": "2026-07-01T15:17:09Z",
-   "branch": "feat/banking-match-drawer-part1"
-  },
-  {
-   "number": 1736,
-   "title": "docs(qbo-parity): CHAIN-04/05/06 posting-engine design docs (design-only, HOLD context)",
-   "mergedAt": "2026-07-01T14:52:23Z",
-   "branch": "docs/chain-04-05-06-posting-designs"
-  },
-  {
-   "number": 1735,
-   "title": "test(qbo-sync): A/P bill projection → FIN-20 aging regression test",
-   "mergedAt": "2026-07-01T12:14:51Z",
-   "branch": "feat/qbo-ap-bill-inbound-sync-hold"
   }
  ],
- "merged_pr_total": 2249,
+ "merged_pr_total": 2276,
  "hold_for_jorge": [
+  {
+   "number": 2374,
+   "title": "[HOLD-FOR-JORGE] feat(banking): manual-txn date PATCH + canonical inline-create guard (Doc-18 A+B)",
+   "mergedAt": "2026-07-11T22:27:47Z",
+   "category": "HOLD"
+  },
+  {
+   "number": 2369,
+   "title": "[HOLD-FOR-JORGE] fix(rls): re-assert FORCED RLS on catalogs.excel_upload_jobs (ITEM-2)",
+   "mergedAt": "2026-07-11T21:12:01Z",
+   "category": "HOLD"
+  },
   {
    "number": 2364,
    "title": "[HOLD-FOR-JORGE] feat(migration): VALIDATE the 8 ceremony NOT-VALID FKs (ITEM-13)",
