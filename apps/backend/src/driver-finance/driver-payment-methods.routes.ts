@@ -62,7 +62,7 @@ function mapServiceError(error: unknown, reply: FastifyReply) {
 
 export async function registerDriverPaymentMethodRoutes(app: FastifyInstance) {
   // List a driver's payment methods.
-  app.get("/api/v1/driver-finance/drivers/:driverId/payment-methods", async (req, reply) => {
+  app.get("/api/v1/driver-finance/drivers/:driverId/payment-methods", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canRead(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -78,7 +78,7 @@ export async function registerDriverPaymentMethodRoutes(app: FastifyInstance) {
   });
 
   // Create a payment method for a driver.
-  app.post("/api/v1/driver-finance/drivers/:driverId/payment-methods", async (req, reply) => {
+  app.post("/api/v1/driver-finance/drivers/:driverId/payment-methods", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isOwnerOrAdmin(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -105,7 +105,7 @@ export async function registerDriverPaymentMethodRoutes(app: FastifyInstance) {
   });
 
   // Set a method as the driver's default (unsets any prior default in the same transaction).
-  app.patch("/api/v1/driver-finance/driver-payment-methods/:id/default", async (req, reply) => {
+  app.patch("/api/v1/driver-finance/driver-payment-methods/:id/default", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isOwnerOrAdmin(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -123,7 +123,7 @@ export async function registerDriverPaymentMethodRoutes(app: FastifyInstance) {
   });
 
   // Void (soft-delete) a payment method.
-  app.patch("/api/v1/driver-finance/driver-payment-methods/:id/void", async (req, reply) => {
+  app.patch("/api/v1/driver-finance/driver-payment-methods/:id/void", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isOwnerOrAdmin(user.role)) return reply.code(403).send({ error: "forbidden" });
