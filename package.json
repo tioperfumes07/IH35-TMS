@@ -884,7 +884,8 @@
     "verify:manual-txn-date-patch": "node scripts/verify-manual-txn-date-patch.mjs",
     "verify:owner-home-linkage": "node scripts/verify-owner-home-linkage.mjs",
     "verify:relay-cron-registered": "node scripts/verify-relay-cron-registered.mjs",
-    "verify:relay-backfill-route-mounted": "node scripts/verify-relay-backfill-route-mounted.mjs"
+    "verify:relay-backfill-route-mounted": "node scripts/verify-relay-backfill-route-mounted.mjs",
+    "verify:tracker-bymodule-sequence": "node scripts/verify-tracker-bymodule-sequence.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",

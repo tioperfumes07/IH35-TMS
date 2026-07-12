@@ -195,7 +195,7 @@ function ByModuleView({ data, moved }: { data: ProgramTracker; moved: Set<string
         <StatCard n={totals.not_built} label="Not built" />
         <StatCard n={data.modules.length} label="Modules" />
       </div>
-      <p className="text-[11px] text-slate-400">Upper bounds — residual cross-audit duplication; the relative module heat-map is the trustworthy signal. Counts computed live from the registry.</p>
+      <p className="text-[11px] text-slate-400">Each block counted once, by module (from its file paths); reconciles to the registered total. Computed live from the registry.</p>
       <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="w-full border-collapse text-[13px]">
           <thead>
