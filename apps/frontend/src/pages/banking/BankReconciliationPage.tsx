@@ -158,11 +158,11 @@ export function BankReconciliationPage() {
             </div>
           ) : null}
           {worklistQuery.data && worklistQuery.data.progress.total_transactions === 0 && accountId && periodStart && periodEnd ? (
-            <div className="mb-2 rounded-sm border border-gray-100 bg-gray-50 px-2 py-2 text-xs text-gray-600">
+            <p className="mb-2 px-1 text-xs text-gray-600">
               No bank transactions in this period. Reconciliation is statement-driven: import a bank statement (CSV) above,
               or connect a bank feed, to populate the worklist. A posted journal entry is a match target, not a worklist row —
               once transactions exist here, match them to the JE (Manual match → kind &ldquo;je&rdquo;).
-            </div>
+            </p>
           ) : null}
           <div className="max-h-[520px] space-y-1 overflow-auto">
             {[...(worklistQuery.data?.unmatched_transactions ?? []), ...(worklistQuery.data?.auto_matched_candidates ?? [])].map((row) => (
