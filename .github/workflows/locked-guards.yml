@@ -629,6 +629,22 @@ jobs:
       - name: verify:bill-expense-category-full-coa
         run: npm run verify:bill-expense-category-full-coa
 
+      - name: verify:amortization-gl-flag-gate --selftest
+        run: node scripts/verify-amortization-gl-flag-gate.mjs --selftest
+      - name: verify:amortization-gl-flag-gate
+        run: npm run verify:amortization-gl-flag-gate
+      - name: verify:prepaid-post-flag-gate --selftest
+        run: node scripts/verify-prepaid-post-flag-gate.mjs --selftest
+      - name: verify:prepaid-post-flag-gate
+        run: npm run verify:prepaid-post-flag-gate
+      - name: verify:void-enforcement-flag-gate --selftest
+        run: node scripts/verify-void-enforcement-flag-gate.mjs --selftest
+      - name: verify:void-enforcement-flag-gate
+        run: npm run verify:void-enforcement-flag-gate
+      - name: verify:wo-void-flag-gate --selftest
+        run: node scripts/verify-wo-void-flag-gate.mjs --selftest
+      - name: verify:wo-void-flag-gate
+        run: npm run verify:wo-void-flag-gate
       - name: verify:chain07-settlements-redirect --selftest
         run: node scripts/verify-chain07-settlements-redirect.mjs --selftest
       - name: verify:chain07-settlements-redirect
