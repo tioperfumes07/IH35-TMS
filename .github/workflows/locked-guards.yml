@@ -628,3 +628,8 @@ jobs:
         run: node scripts/verify-relay-internal-bank-no-post.mjs --selftest
       - name: verify:relay-internal-bank-no-post
         run: npm run verify:relay-internal-bank-no-post
+
+      - name: verify:chain07-settlements-redirect --selftest
+        run: node scripts/verify-chain07-settlements-redirect.mjs --selftest
+      - name: verify:chain07-settlements-redirect
+        run: npm run verify:chain07-settlements-redirect

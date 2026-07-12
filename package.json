@@ -894,7 +894,9 @@
     "verify:tracker-bymodule-sequence": "node scripts/verify-tracker-bymodule-sequence.mjs",
     "tracker:sync:r2": "node scripts/sync-tracker-r2.mjs",
     "verify:program-tracker-r2-live": "node scripts/verify-program-tracker-r2-live.mjs",
-    "verify:tracker-since-jul1": "node scripts/verify-tracker-since-jul1.mjs"
+    "verify:freshness-indicator": "node scripts/verify-freshness-indicator.mjs",
+    "verify:tracker-since-jul1": "node scripts/verify-tracker-since-jul1.mjs",
+    "verify:chain07-settlements-redirect": "node scripts/verify-chain07-settlements-redirect.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",

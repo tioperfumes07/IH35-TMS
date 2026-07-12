@@ -87,15 +87,15 @@
     },
     {
       "id": "CHAIN-04-bill-payment-tieout",
-      "status": "PENDING (GATED)",
-      "evidence": "HOLD design doc only, no feature code",
-      "verified_on": "2026-07-03"
+      "status": "NEEDS-VERIFY",
+      "evidence": "code-guard passes + reuses the CHAIN-05-proven posting engine, but 0 open bills on TRANSP to exercise — live-proof deferred to first real bill payment (GUARD verifies then). No fake bill created.",
+      "verified_on": "2026-07-12"
     },
     {
       "id": "CHAIN-05-bank-feed-live-proof",
-      "status": "PENDING (GATED)",
-      "evidence": "HOLD design doc only, no feature code",
-      "verified_on": "2026-07-03"
+      "status": "DONE",
+      "evidence": "GUARD LIVE-VERIFIED on prod: categorized LOVES→Fuel Expense posted → accounting.journal_entries 8d622927-5c3d-4e91-8b14-b6c46f482c2d status=posted, BALANCED (Dr Fuel Expense 449.90 / Cr Business Platinum 449.90), qbo_sync_pending=true",
+      "verified_on": "2026-07-12"
     },
     {
       "id": "CHAIN-06-invoice-ar-chain-proof",
@@ -364,7 +364,7 @@
     {
       "id": "IMPORT-0",
       "status": "DONE",
-      "evidence": "merged PR #1796 (non-financial import)",
+      "evidence": "block own verify-*.mjs guard passes on main (built+wired)",
       "verified_on": "2026-07-12"
     },
     {
@@ -497,6 +497,84 @@
       "id": "home-7-qbo-vendor-count-single-source",
       "status": "DONE",
       "evidence": "agent: fixed PR #1668 (DefaultHome.tsx:168, OwnerHome.tsx:181)",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "A2-AUDIT-EMIT-DISPATCH",
+      "status": "DONE",
+      "evidence": "block own verify-*.mjs guard passes on main (built+wired)",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "A3-AUDIT-EMIT-MAINTENANCE",
+      "status": "DONE",
+      "evidence": "block own verify-*.mjs guard passes on main (built+wired)",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "A5-AUDIT-EMIT-BANKING",
+      "status": "DONE",
+      "evidence": "block own verify-*.mjs guard passes on main (built+wired)",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "A6-AUDIT-UNIVERSAL-VIEW",
+      "status": "DONE",
+      "evidence": "block own verify-*.mjs guard passes on main (built+wired)",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "A7-AUDIT-PER-ENTITY-TABS",
+      "status": "DONE",
+      "evidence": "block own verify-*.mjs guard passes on main (built+wired)",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "A8-AUDIT-REPORTS-SECTION",
+      "status": "DONE",
+      "evidence": "block own verify-*.mjs guard passes on main (built+wired)",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "E1-SMOKE-SERVICE-TOKEN-AUTH",
+      "status": "DONE",
+      "evidence": "block own verify-*.mjs guard passes on main (built+wired)",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "FEAT-SIDEBAR-V2-REORG-25",
+      "status": "DONE",
+      "evidence": "block own verify-*.mjs guard passes on main (built+wired)",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "GAP-23",
+      "status": "DONE",
+      "evidence": "block own verify-*.mjs guard passes on main (built+wired)",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "NOTIF-A",
+      "status": "DONE",
+      "evidence": "block own verify-*.mjs guard passes on main (built+wired)",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "OB1-NAV-HEADER-UNIFY",
+      "status": "DONE",
+      "evidence": "block own verify-*.mjs guard passes on main (built+wired)",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "SHADOW-ROUTE-REDIRECTS",
+      "status": "DONE",
+      "evidence": "block own verify-*.mjs guard passes on main (built+wired)",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "CONN-1-plaid-reconcile-commit",
+      "status": "NEEDS-VERIFY",
+      "evidence": "code-guard passes + reuses the CHAIN-05-proven posting engine, but 0 reconciliation sessions on TRANSP to exercise — live-proof deferred to first real reconcile-commit. No fake session created.",
       "verified_on": "2026-07-12"
     }
   ]
