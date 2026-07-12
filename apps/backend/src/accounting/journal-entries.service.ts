@@ -10,6 +10,31 @@ import { auditVoid, canVoid, postVoidReversal } from "./void.service.js";
 type JournalEntrySource = "manual" | "auto";
 type JournalEntryStatus = "posted" | "voided";
 
+type QueryableClient = {
+  query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
+};
+
+// Expand/contract (parallel-change) schema compat for the JE reversal-linkage columns.
+// reversed_by_je_id / reverses_je_id ship in HELD migration 202607340000, which a prod deploy SKIPS until
+// Jorge runs it by hand — so this process must tolerate their absence, or an UNCONDITIONAL read (the JE
+// list) would 500 if the code deploys before the migration lands. The columns are additive and never
+// dropped, so once we observe them present we cache it for the process lifetime (zero steady-state cost);
+// while absent we re-probe cheaply on each call so the code SELF-HEALS the instant the migration is applied.
+let reversalLinkageColumnsPresent = false;
+async function hasReversalLinkageColumns(client: QueryableClient): Promise<boolean> {
+  if (reversalLinkageColumnsPresent) return true;
+  const res = await client.query<{ n: number }>(
+    `SELECT count(*)::int AS n
+       FROM information_schema.columns
+      WHERE table_schema = 'accounting'
+        AND table_name = 'journal_entries'
+        AND column_name IN ('reversed_by_je_id', 'reverses_je_id')`
+  );
+  const present = Number(res.rows[0]?.n ?? 0) === 2;
+  if (present) reversalLinkageColumnsPresent = true;
+  return present;
+}
+
 type CreatePostingInput = {
   account_id: string;
   class_id?: string | null;
@@ -246,6 +271,11 @@ export async function voidJournalEntry(
     // Mandatory non-empty reason (audit/GAAP requirement) — enforced server-side, not just in the UI.
     if (!voidReason || !voidReason.trim()) throw new Error("void_reason_required");
 
+    // Option-1 void REQUIRES the reversal-linkage columns. The per-entity money-control flag above already
+    // gates this path (verify-then-flip means the HELD migration is applied before an entity is flipped ON),
+    // but if it were ever reached pre-migration, fail cleanly (503) instead of a raw missing-column SQL error.
+    if (!(await hasReversalLinkageColumns(client))) throw new Error("journal_entry_reversal_columns_unavailable");
+
     const existingRes = await client.query<{ id: string; status: JournalEntryStatus; entry_date: string; reversed_by_je_id: string | null }>(
       `
         SELECT id, status, entry_date::text AS entry_date, reversed_by_je_id::text AS reversed_by_je_id
@@ -357,6 +387,12 @@ export async function listJournalEntries(input: {
       )`);
     }
     values.push(input.limit, input.offset);
+    // Reversal-linkage columns are HELD-migration-gated (see hasReversalLinkageColumns): select them when
+    // present, else NULL so a pre-migration prod cannot 500 the list. Both forms yield the same output
+    // columns; the boolean is server-derived (no user input), so interpolation here is injection-safe.
+    const linkageCols = (await hasReversalLinkageColumns(client))
+      ? "je.reversed_by_je_id::text,\n          je.reverses_je_id::text,"
+      : "NULL::text AS reversed_by_je_id,\n          NULL::text AS reverses_je_id,";
     const res = await client.query(
       `
         SELECT
@@ -369,8 +405,7 @@ export async function listJournalEntries(input: {
           je.created_by_user_id::text,
           je.voided_at::text,
           je.void_reason,
-          je.reversed_by_je_id::text,
-          je.reverses_je_id::text,
+          ${linkageCols}
           je.qbo_journal_entry_id,
           je.qbo_sync_pending,
           je.created_at::text,
