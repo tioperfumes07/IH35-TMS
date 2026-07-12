@@ -33,9 +33,55 @@
 // Run modes:  (default) gate this PR   |   --self-test  run the embedded behavior fixtures.
 
 import { execSync } from "node:child_process";
+import fs from "node:fs";
 
 const APPROVE_LABEL = "JORGE-APPROVED";
 const HOLD_TITLE_RE = /\[HOLD-FOR-JORGE/i;
+
+// ── FIREWALL-PRESENCE HARD GATE (2026-07-12) ─────────────────────────────────
+// Root cause of the repeated incident: an APPROVED + green PR that ADDS a held migration merged BEFORE the
+// runtime firewall (#2408) was on main, so the held migration ran on prod on the deploy. JORGE-APPROVED
+// (the normal hold-merge-gate pass) did NOT stop it — the firewall's presence was never a merge condition.
+// This gate makes it one, LABEL-INDEPENDENTLY: if a PR introduces a held migration, the runtime firewall
+// (shouldSkipHeldOnProd wired into scripts/db-migrate.mjs) MUST be present on the PR's head — else the
+// deploy would execute the held migration. A stale branch that predates the firewall fails here until it is
+// rebased onto main (which carries #2408). This cannot be bypassed by the approval label.
+const HELD_MARKER = /DO NOT RUN ON PROD|never run on prod|runs? on a neon branch/i;
+
+/** Does the migration runner source enforce the held-migration prod firewall? */
+export function runnerHasFirewall(src) {
+  const s = String(src || "");
+  return (
+    /shouldSkipHeldOnProd/.test(s) &&
+    /(loadHeldSet|held-migrations\.mjs|\.held-migrations\.json)/.test(s) &&
+    /\bcontinue\b/.test(s)
+  );
+}
+
+/**
+ * Which held migration (if any) does this PR introduce? A changed db/migrations/*.sql whose head content
+ * carries the DO-NOT-RUN marker, OR a newly-registered entry in .held-migrations.json.
+ * @param {string[]} changedFiles
+ * @param {(p:string)=>string|null} readHead - returns head content of a path (null if absent)
+ * @param {string} heldRegistryDiff - unified diff of .held-migrations.json (added lines start with '+')
+ * @returns {string|null} the offending file/marker, or null
+ */
+export function heldMigrationIntroduced(changedFiles, readHead, heldRegistryDiff) {
+  for (const f of changedFiles || []) {
+    if (/^.*db\/migrations\/.*\.sql$/.test(f)) {
+      const c = readHead(f) || "";
+      if (HELD_MARKER.test(c.slice(0, 1500))) return f;
+    }
+  }
+  const added = String(heldRegistryDiff || "")
+    .split("\n")
+    .filter((l) => l.startsWith("+") && !l.startsWith("+++"));
+  for (const l of added) {
+    const m = /"file"\s*:\s*"([^"]+)"/.exec(l);
+    if (m) return `.held-migrations.json:${m[1]}`;
+  }
+  return null;
+}
 
 // Path globs that are ALWAYS protected (financial / posting / migration tooling).
 const PROTECTED_GLOBS = [
@@ -261,6 +307,24 @@ function selfTest() {
   }
   if (failed) { console.error(`\nself-test FAILED: ${failed}/${cases.length} cases`); process.exit(1); }
   console.log(`\nself-test PASS: ${cases.length}/${cases.length}`);
+
+  // --- firewall-presence hard-gate helpers ---
+  const FIRE = "await shouldSkipHeldOnProd({file, heldSet, isProd: TARGET_IS_PROD}); loadHeldSet('x'); continue;";
+  const fwCases = [
+    { name: "runner WITH firewall -> true", got: runnerHasFirewall(FIRE), want: true },
+    { name: "runner WITHOUT firewall -> false", got: runnerHasFirewall("for (const f of files) applyMigration(f); continue;"), want: false },
+    { name: "held .sql marker in head -> detected", got: !!heldMigrationIntroduced(["db/migrations/202607290000_x.sql"], () => "-- [HOLD] DO NOT RUN ON PROD\nCREATE TABLE x;", ""), want: true },
+    { name: "normal .sql -> not detected", got: !!heldMigrationIntroduced(["db/migrations/0500_x.sql"], () => "CREATE TABLE x;", ""), want: false },
+    { name: "new .held-migrations.json entry -> detected", got: !!heldMigrationIntroduced([], () => null, '+    "file": "202607300000_y.sql",'), want: true },
+  ];
+  let fwFailed = 0;
+  for (const c of fwCases) {
+    const ok = c.got === c.want;
+    if (!ok) fwFailed++;
+    console.log(`${ok ? "ok  " : "FAIL"}  [firewall-gate] ${c.name}  (got ${c.got}, want ${c.want})`);
+  }
+  if (fwFailed) { console.error(`\nfirewall-gate self-test FAILED: ${fwFailed}/${fwCases.length}`); process.exit(1); }
+  console.log(`firewall-gate self-test PASS: ${fwCases.length}/${fwCases.length}`);
 }
 
 function main() {
@@ -271,6 +335,23 @@ function main() {
   const title = process.env.GATE_PR_TITLE || "";
   const labels = parseLabels(process.env.GATE_PR_LABELS || "");
   const { changedFiles, diffByFile } = gatherFromGit();
+
+  // FIREWALL-PRESENCE HARD GATE — runs FIRST and is LABEL-INDEPENDENT (JORGE-APPROVED cannot bypass it).
+  const heldIntro = heldMigrationIntroduced(
+    changedFiles,
+    (p) => { try { return fs.readFileSync(p, "utf8"); } catch { return null; } },
+    diffByFile["db/migrations/.held-migrations.json"] || ""
+  );
+  if (heldIntro) {
+    let runnerSrc = "";
+    try { runnerSrc = fs.readFileSync("scripts/db-migrate.mjs", "utf8"); } catch { /* absent → no firewall */ }
+    if (!runnerHasFirewall(runnerSrc)) {
+      console.error(`\nFAIL hold-merge-gate (firewall-presence): this PR introduces a held migration (${heldIntro}) but scripts/db-migrate.mjs on this branch does NOT enforce the held-migration prod firewall (shouldSkipHeldOnProd + skip/continue). A held migration must NOT merge unless the firewall (#2408) is present on the branch, or the next deploy will run it on prod (the 2026-07-12 incident). Rebase this branch onto main. This check is LABEL-INDEPENDENT — JORGE-APPROVED does not bypass it.`);
+      process.exit(1);
+    }
+    console.log(`firewall-presence: OK — held migration introduced (${heldIntro}) and the runtime firewall IS present on this branch.`);
+  }
+
   const result = classify({ title, labels, changedFiles, diffByFile });
 
   console.log("\n=== HOLD-MERGE-GATE ===");
