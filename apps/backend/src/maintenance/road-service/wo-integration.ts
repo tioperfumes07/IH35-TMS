@@ -1,4 +1,4 @@
-import type { DbClient } from "./tickets.routes.js";
+import type { DbClient } from "./db-client.type.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { autoCreateBillFromWO, createWorkOrderWithLines, type SectionALine, type TwoSectionHeader } from "../two-section-service.js";
 

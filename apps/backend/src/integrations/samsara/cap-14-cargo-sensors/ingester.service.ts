@@ -10,9 +10,8 @@ import {
   type CargoThresholdRange,
 } from "./threshold.service.js";
 
-export type DbClient = {
-  query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
-};
+export type { DbClient } from "./db-client.type.js";
+import type { DbClient } from "./db-client.type.js";
 
 export type DoorStatus = "open" | "closed" | "unknown";
 

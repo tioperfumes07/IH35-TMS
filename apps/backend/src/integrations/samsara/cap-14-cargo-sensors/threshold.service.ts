@@ -2,7 +2,7 @@
  * CAP-14 Cargo Sensor Threshold Service — GAP-64
  */
 import { createNotification, listCompanyNotifyUserIds } from "../../../notifications/notification.service.js";
-import type { DbClient } from "./ingester.service.js";
+import type { DbClient } from "./db-client.type.js";
 
 export type CargoThresholdRange = {
   min_temp_c: number;
