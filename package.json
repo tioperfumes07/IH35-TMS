@@ -895,7 +895,11 @@
     "verify:program-tracker-r2-live": "node scripts/verify-program-tracker-r2-live.mjs",
     "verify:freshness-indicator": "node scripts/verify-freshness-indicator.mjs",
     "verify:tracker-since-jul1": "node scripts/verify-tracker-since-jul1.mjs",
-    "verify:chain07-settlements-redirect": "node scripts/verify-chain07-settlements-redirect.mjs"
+    "verify:chain07-settlements-redirect": "node scripts/verify-chain07-settlements-redirect.mjs",
+    "verify:amortization-gl-flag-gate": "node scripts/verify-amortization-gl-flag-gate.mjs",
+    "verify:prepaid-post-flag-gate": "node scripts/verify-prepaid-post-flag-gate.mjs",
+    "verify:void-enforcement-flag-gate": "node scripts/verify-void-enforcement-flag-gate.mjs",
+    "verify:wo-void-flag-gate": "node scripts/verify-wo-void-flag-gate.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",
