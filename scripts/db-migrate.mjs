@@ -81,6 +81,7 @@ const SEARCH_PATH =
   "mdata, dispatch, docs, catalogs, identity, org, integrations, qbo_archive, accounting, banking, factor, documents, pwa, audit, outbox, safety, fuel, driver_finance, maintenance, views, public, email";
 const MIGRATIONS_DIR = path.resolve("db/migrations");
 const CHECKSUM_OVERRIDES_FILE = path.resolve("scripts/lib/migration-checksum-overrides.json");
+const HELD_REGISTRY_FILE = path.join(MIGRATIONS_DIR, ".held-migrations.json");
 const CANONICAL_LEDGER_TABLE = "_system._schema_migrations";
 const MIRROR_LEDGER_TABLE = "ih35_migrations.applied_migrations";
 const ARGS = new Set(process.argv.slice(2));
@@ -145,6 +146,54 @@ function isChecksumOverrideMatch(overridesByFile, file, ledgerChecksum, diskChec
   const override = overridesByFile.get(file);
   if (!override) return false;
   return override.ledger_checksum === ledgerChecksum && override.disk_checksum === diskChecksum;
+}
+
+// ── HELD-MIGRATION PROD-EXECUTION GUARD (2026-07-12) ─────────────────────────
+// Why: a migration carrying a "DO NOT RUN ON PROD" marker (registered in
+// db/migrations/.held-migrations.json) must run ONLY on a Neon branch by the
+// owner's hand. Previously the registry was a documentation/marker-parity
+// artifact only — nothing here consulted it, so a held migration merged to main
+// FIRED on the next prod deploy (this happened to #2396's
+// 202607280000_relay_deposit_classifier.sql: integrations.relay_deposits +
+// relay_company_cards were created on prod that never should have been). The
+// intended protection ("run on a Neon branch, then ledger-backfill so prod
+// skips it") relied on a human remembering to backfill BEFORE the deploy ran —
+// a latent hole. This guard makes the runner itself refuse to execute a held
+// migration against prod: it records the file in BOTH ledgers WITHOUT running a
+// single statement, so the startup drift guard is satisfied (app boots) while
+// the DDL never touches prod. On non-prod targets (fresh CI DB, local, a Neon
+// dev branch) held migrations still apply normally.
+function loadHeldMigrations() {
+  try {
+    const parsed = JSON.parse(fs.readFileSync(HELD_REGISTRY_FILE, "utf8"));
+    return new Set((parsed.held || []).map((h) => h.file).filter(Boolean));
+  } catch {
+    // No registry / unreadable → treat nothing as held. The static guard
+    // verify:hold-migrations-not-runnable keeps the registry present + wired.
+    return new Set();
+  }
+}
+
+async function recordHeldSkip(client, file, checksum) {
+  // Ledger-record the held migration as applied-via-hold-skip WITHOUT running
+  // its DDL. `applied_by` carries an explicit, queryable marker so the prod
+  // ledger never masquerades a held migration as genuinely executed.
+  await client.query(
+    `
+      INSERT INTO ${CANONICAL_LEDGER_TABLE} (filename, checksum, applied_by, duration_ms)
+      VALUES ($1, $2, 'held-skip:not-executed-on-prod', 0)
+      ON CONFLICT (filename) DO NOTHING;
+    `,
+    [file, checksum]
+  );
+  await client.query(
+    `
+      INSERT INTO ${MIRROR_LEDGER_TABLE} (name)
+      VALUES ($1)
+      ON CONFLICT (name) DO NOTHING;
+    `,
+    [file]
+  );
 }
 
 async function ensureLedgers(client) {
@@ -324,6 +373,12 @@ try {
   const ledgerByFile = new Map(ledgerRows.map((row) => [row.filename, row]));
   const mirrorByFile = new Map(mirrorRows.map((row) => [row.name, row]));
   const overridesByFile = loadChecksumOverrides();
+  const heldMigrations = loadHeldMigrations();
+  // A held migration must NEVER execute against production. Prod is any target
+  // the safety guard above flagged as PRODUCTION, OR any run explicitly opted
+  // into prod via ALLOW_PROD_MIGRATE=1 (the signal the Render deploy sets) — so
+  // even if host detection drifts, an intentional prod migrate still skips held.
+  const RUNNING_AGAINST_PROD = TARGET_IS_PROD || process.env.ALLOW_PROD_MIGRATE === "1";
 
   if (VERIFY_ONLY) {
     await runVerifyOnly(client, diskMigrations, ledgerByFile, mirrorByFile, overridesByFile);
@@ -351,6 +406,17 @@ try {
         continue;
       }
       console.log(`SKIP ${file} (already applied)`);
+      continue;
+    }
+
+    if (heldMigrations.has(file) && RUNNING_AGAINST_PROD) {
+      // HELD on prod → never execute the DDL. Record in the ledger as a
+      // hold-skip so the startup drift guard is satisfied and the app boots.
+      console.log(
+        `HOLD-SKIP ${file} (registered in .held-migrations.json — DO NOT RUN ON PROD; ledger-recorded, DDL not executed)`
+      );
+      await recordHeldSkip(client, file, checksum);
+      ledgerByFile.set(file, { filename: file, checksum });
       continue;
     }
 
