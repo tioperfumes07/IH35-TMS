@@ -624,3 +624,8 @@ jobs:
         run: node scripts/verify-tracker-since-jul1.mjs --selftest
       - name: verify:tracker-since-jul1
         run: npm run verify:tracker-since-jul1
+
+      - name: verify:chain07-settlements-redirect --selftest
+        run: node scripts/verify-chain07-settlements-redirect.mjs --selftest
+      - name: verify:chain07-settlements-redirect
+        run: npm run verify:chain07-settlements-redirect
