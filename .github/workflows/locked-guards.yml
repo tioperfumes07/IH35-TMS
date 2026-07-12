@@ -586,3 +586,8 @@ jobs:
         run: node scripts/verify-owner-home-linkage.mjs --selftest
       - name: verify:owner-home-linkage
         run: npm run verify:owner-home-linkage
+
+      - name: verify:relay-cron-registered --selftest
+        run: node scripts/verify-relay-cron-registered.mjs --selftest
+      - name: verify:relay-cron-registered
+        run: npm run verify:relay-cron-registered

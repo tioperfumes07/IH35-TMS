@@ -392,6 +392,7 @@ import { registerLovesSyncStatusRoutes } from "./sync/loves-status.routes.js";
 import { initializeLovesCardImportCron } from "./cron/loves-card-import.cron.js";
 import { initializeReconCron } from "./cron/recon.cron.js";
 import { initializeAuditChainVerifyCron } from "./cron/audit-chain-verify.cron.js";
+import { initializeRelayFuelIngestCron } from "./integrations/relay-payments/relay-fuel-ingest.cron.js";
 import { initializePlaidDailySyncCron } from "./cron/plaid-daily-sync.js";
 import { initializePlaidDailyRefreshCron } from "./integrations/plaid/daily-refresh.cron.js";
 import { initializeDriverSettlementAutoPayCron } from "./driver-finance/auto-pay.cron.js";
@@ -1115,6 +1116,17 @@ async function main() {
     app.log.info("[STARTUP] samsara-health-cron initialized");
   } catch (error) {
     app.log.error({ err: error }, "[STARTUP] samsara-health-cron failed");
+  }
+
+  try {
+    // RELAY-FUEL-INGEST-1 (doc 21 Part A gap 1): the cron was defined but never registered. It is
+    // gated by RELAY_FUEL_INGEST_CRON_ENABLED (env, default true) AND the per-entity RELAY_FUEL_INGEST_ENABLED
+    // flag (default OFF), so wiring it here is a no-op until the owner sets the key + flips the flag. Staging
+    // ingest only — writes integrations.relay_fuel_transactions*, no GL, no accounting.* / fuel.* write.
+    initializeRelayFuelIngestCron(app);
+    app.log.info("[STARTUP] relay-fuel-ingest-cron initialized");
+  } catch (error) {
+    app.log.error({ err: error }, "[STARTUP] relay-fuel-ingest-cron failed");
   }
 
   try {
