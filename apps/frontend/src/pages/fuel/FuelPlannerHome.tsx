@@ -183,7 +183,13 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
 
       {tab === "home" ? <FuelHomePage /> : null}
 
-      {tab === "relay_inbox" ? <RelayDepositReview companyId={companyId} /> : null}
+      {tab === "relay_inbox" ? (
+        <div className="space-y-3">
+          {/* Keep the locked "Relay inbox" named section (verify-architectural-design), then the review queue. */}
+          <h3 className="text-sm font-semibold text-gray-900">Relay inbox</h3>
+          <RelayDepositReview companyId={companyId} />
+        </div>
+      ) : null}
 
       {tab === "settings" ? (
         settingsQuery.isLoading ? (
