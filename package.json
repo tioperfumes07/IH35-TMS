@@ -890,7 +890,8 @@
     "verify:relay-csv-code-rows-only": "node scripts/verify-relay-csv-code-rows-only.mjs",
     "verify:tracker-bymodule-sequence": "node scripts/verify-tracker-bymodule-sequence.mjs",
     "tracker:sync:r2": "node scripts/sync-tracker-r2.mjs",
-    "verify:program-tracker-r2-live": "node scripts/verify-program-tracker-r2-live.mjs"
+    "verify:program-tracker-r2-live": "node scripts/verify-program-tracker-r2-live.mjs",
+    "verify:freshness-indicator": "node scripts/verify-freshness-indicator.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",

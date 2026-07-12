@@ -1,6 +1,6 @@
 {
   "block_id": "GAP-24-FRESHNESS-INDICATOR",
-  "status": "BUILD",
+  "status": "done",
   "classification": "ADDITIVE",
   "phase": "GAP-MEDIUM",
   "task": "Samsara freshness indicator pill (L1-L4, green/amber/red)",
@@ -34,7 +34,9 @@
   "forbidden_paths": [
     "apps/frontend/src/config/sidebar-config.ts"
   ],
-  "extra_gates": ["verify:freshness-indicator"],
+  "extra_gates": [
+    "verify:freshness-indicator"
+  ],
   "runtime_path": "src",
   "db_required": false,
   "guard_required": true
