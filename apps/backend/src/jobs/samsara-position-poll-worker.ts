@@ -22,7 +22,13 @@ export async function pollSamsaraPositions(app: FastifyInstance): Promise<void> 
         lng: number | null;
         speed_mph: number | null;
       }>(
-        `SELECT u.id::text AS unit_uuid, u.owner_company_id::text AS operating_company_id,
+        // 0091-c2-3 (cross-entity leak): a unit's OPERATING entity is the lessee when it is on
+        // lease (TRANSP/USMCA), else the owner (TRK). Reading bare owner_company_id attributed every
+        // leased unit's live position to the asset-holder, so an RLS-scoped read by the operating
+        // carrier missed its own trucks. Scope by COALESCE(currently_leased_to_company_id,
+        // owner_company_id) — the same operator-attribution rule used across the fleet reads (§4).
+        `SELECT u.id::text AS unit_uuid,
+                COALESCE(u.currently_leased_to_company_id, u.owner_company_id)::text AS operating_company_id,
                 u.samsara_vehicle_id,
                 COALESCE(p.lat, 0) AS lat, COALESCE(p.lng, 0) AS lng, p.speed_mph
          FROM mdata.units u

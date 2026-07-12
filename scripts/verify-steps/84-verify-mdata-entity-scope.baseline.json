@@ -586,9 +586,9 @@
       "preview": "` SELECT DISTINCT operating_company_id::text AS operating_company_id FROM mdata.drivers WHERE deactivated_at IS NULL `"
     },
     {
-      "key": "apps/backend/src/jobs/samsara-position-poll-worker.ts#f016f79328a8772f4f727b6e7938d80cfcea9748",
+      "key": "apps/backend/src/jobs/samsara-position-poll-worker.ts#1c5183540355cdd401762209d4832b2ef0588f74",
       "file": "apps/backend/src/jobs/samsara-position-poll-worker.ts",
-      "preview": "`SELECT u.id::text AS unit_uuid, u.owner_company_id::text AS operating_company_id, u.samsara_vehicle_id, COALESCE(p.lat,"
+      "preview": "`SELECT u.id::text AS unit_uuid, COALESCE(u.currently_leased_to_company_id, u.owner_company_id)::text AS operating_compa"
     },
     {
       "key": "apps/backend/src/jobs/search-indexer-incremental.ts#080cfeb585cda38b4fc1713c298893f97311dba2",
