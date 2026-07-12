@@ -605,3 +605,7 @@ jobs:
         run: node scripts/verify-relay-csv-code-rows-only.mjs --selftest
       - name: verify:relay-csv-code-rows-only
         run: npm run verify:relay-csv-code-rows-only
+      - name: verify:relay-deposit-classifier-no-post --selftest
+        run: node scripts/verify-relay-deposit-classifier-no-post.mjs --selftest
+      - name: verify:relay-deposit-classifier-no-post
+        run: npm run verify:relay-deposit-classifier-no-post

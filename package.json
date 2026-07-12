@@ -886,7 +886,8 @@
     "verify:relay-cron-registered": "node scripts/verify-relay-cron-registered.mjs",
     "verify:relay-backfill-route-mounted": "node scripts/verify-relay-backfill-route-mounted.mjs",
     "verify:relay-csv-import-route-mounted": "node scripts/verify-relay-csv-import-route-mounted.mjs",
-    "verify:relay-csv-code-rows-only": "node scripts/verify-relay-csv-code-rows-only.mjs"
+    "verify:relay-csv-code-rows-only": "node scripts/verify-relay-csv-code-rows-only.mjs",
+    "verify:relay-deposit-classifier-no-post": "node scripts/verify-relay-deposit-classifier-no-post.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",
