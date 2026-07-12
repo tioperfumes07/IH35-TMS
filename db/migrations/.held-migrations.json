@@ -208,6 +208,10 @@
     {
       "file": "202607230000_work_orders_unit_driver_fk.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1] P4-06 — maintenance.work_orders.unit_id -> mdata.units + driver_id -> mdata.drivers FKs (NOT VALID; GUARD 0-orphan check + VALIDATE on Neon). vendor_id mirror->AP-truth repoint deferred."
+    },
+    {
+      "file": "202607280000_relay_deposit_classifier.sql",
+      "reason": "[HOLD-FOR-JORGE — FINANCIAL] Relay deposit-funding classifier + review queue (Part B). integrations.relay_deposits + relay_company_cards, FORCE entity-RLS, no GL. Run only on a Neon branch by Jorge, then ledger-backfill."
     }
   ]
 }
