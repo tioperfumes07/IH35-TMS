@@ -91,6 +91,18 @@ if (callMatch && !/if\s*\(\s*shouldSkipHeldOnProd[\s\S]{0,900}?continue;/.test(r
   errs.push("the shouldSkipHeldOnProd branch does not `continue` (skip) — a held migration must be skipped, not applied/ledgered");
 }
 
+// ---- (4) the guarded runner IS the deploy path (render.yaml preDeploy runs db:migrate) ----
+// Without this, the control could be bypassed by a deploy that migrates some other way.
+const RENDER = path.join(ROOT, "render.yaml");
+if (!fs.existsSync(RENDER)) {
+  errs.push("render.yaml not found — cannot confirm the deploy uses the guarded db:migrate runner");
+} else {
+  const render = fs.readFileSync(RENDER, "utf8");
+  if (!/preDeployCommand:[^\n]*npm run db:migrate/.test(render)) {
+    errs.push("render.yaml preDeployCommand does not run `npm run db:migrate` — the guarded runner is not the deploy migration path");
+  }
+}
+
 if (errs.length) {
   console.error(`[${LABEL}] FAILED — ${errs.length} issue(s):`);
   for (const e of errs) console.error(`  ✗ ${e}`);
