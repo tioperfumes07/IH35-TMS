@@ -71,15 +71,25 @@ export function RecordExpenseForm({
     [paymentAccountsQuery.data?.accounts]
   );
 
-  const categoryOptions = useMemo(
-    () =>
-      (costContextQuery.data?.expense_categories ?? []).map((entry) => ({
-        id: String(entry.id ?? ""),
-        label: String(entry.name ?? ""),
-        qboId: entry.qbo_id ? String(entry.qbo_id) : null,
-      })),
-    [costContextQuery.data?.expense_categories]
-  );
+  // LIVE-DEFECT fix (GUARD 2026-07-12): surface the FULL Chart-of-Accounts as Category options (same COA the
+  // banking categorize screen uses) instead of the limited/empty expense_categories list. paymentAccountsQuery
+  // already fetches the full chart; filter to postable accounts that carry a QBO id (category_qbo_id is REQUIRED
+  // to post). Fallback to expense_categories only if the COA query hasn't resolved.
+  const categoryOptions = useMemo(() => {
+    const fromCoa = (paymentAccountsQuery.data?.accounts ?? [])
+      .filter((acct) => acct.is_postable && acct.qbo_account_id)
+      .map((acct) => ({
+        id: String(acct.id),
+        label: acct.account_number ? `${acct.account_number} · ${acct.account_name}` : acct.account_name,
+        qboId: acct.qbo_account_id,
+      }));
+    if (fromCoa.length > 0) return fromCoa;
+    return (costContextQuery.data?.expense_categories ?? []).map((entry) => ({
+      id: String(entry.id ?? ""),
+      label: String(entry.name ?? ""),
+      qboId: entry.qbo_id ? String(entry.qbo_id) : null,
+    }));
+  }, [paymentAccountsQuery.data?.accounts, costContextQuery.data?.expense_categories]);
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
