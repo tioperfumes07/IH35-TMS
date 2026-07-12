@@ -8,6 +8,7 @@ import {
   validateMigrationFilenames,
   listMigrationFiles,
 } from "./lib/migration-filename-validation.mjs";
+import { loadHeldSet, shouldSkipHeldOnProd } from "./lib/held-migrations.mjs";
 
 dotenv.config();
 
@@ -74,6 +75,30 @@ if (TARGET_IS_PROD && process.env.ALLOW_PROD_MIGRATE !== "1") {
 }
 if (TARGET_IS_PROD && process.env.ALLOW_PROD_MIGRATE === "1") {
   console.error("[db:migrate] WARNING: ALLOW_PROD_MIGRATE=1 — proceeding against PRODUCTION.");
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── HELD-MIGRATION SAFETY GUARD (2026-07-12) ─────────────────────────────────
+// A migration registered in db/migrations/.held-migrations.json ("DO NOT RUN ON PROD")
+// must NEVER be executed by an automated prod deploy — it runs only on a Neon branch by
+// the owner's hand. `.held-migrations.json` + the SQL marker + verify-hold-migrations-
+// registered.mjs are static checks with no runtime teeth; the runner below now enforces
+// the hold at execution time. Held migrations still apply on non-prod targets (CI fresh
+// DB, local, Neon branch) so the schema stays complete. The ceremony flag is separate
+// from ALLOW_PROD_MIGRATE on purpose (prod deploys set that, so reusing it would defeat
+// the control) — an explicit ALLOW_HELD_PROD_MIGRATE=1 is required to apply a held
+// migration against prod.
+const ALLOW_HELD_PROD_MIGRATE = process.env.ALLOW_HELD_PROD_MIGRATE === "1";
+let HELD_SET;
+try {
+  HELD_SET = loadHeldSet(path.resolve("db/migrations"));
+} catch (error) {
+  console.error(`[db:migrate] REFUSED — could not load .held-migrations.json: ${error.message}`);
+  console.error("  The held-migration registry gates prod execution; a migrate cannot proceed without it.");
+  process.exit(1);
+}
+if (TARGET_IS_PROD && ALLOW_HELD_PROD_MIGRATE) {
+  console.error("[db:migrate] WARNING: ALLOW_HELD_PROD_MIGRATE=1 — HELD migrations WILL be applied to PRODUCTION.");
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -335,6 +360,7 @@ try {
     process.exit(0);
   }
 
+  const heldSkipped = [];
   for (const file of diskMigrations) {
     const sql = fs.readFileSync(path.join(MIGRATIONS_DIR, file), "utf8");
     const checksum = sha256(sql);
@@ -354,11 +380,24 @@ try {
       continue;
     }
 
+    if (shouldSkipHeldOnProd({ file, heldSet: HELD_SET, isProd: TARGET_IS_PROD, allowHeldProdMigrate: ALLOW_HELD_PROD_MIGRATE })) {
+      // Registered HELD + target is prod + no explicit ceremony flag → do NOT execute.
+      // Not ledgered: it stays honestly pending on prod until the owner applies it by hand.
+      heldSkipped.push(file);
+      console.log(`HELD-SKIP ${file} (registered in .held-migrations.json — not run on prod; owner applies on a Neon branch)`);
+      continue;
+    }
+
     console.log(`APPLY ${file}`);
     await applyMigration(client, file, sql, checksum);
     ledgerByFile.set(file, { filename: file, checksum });
   }
 
+  if (heldSkipped.length > 0) {
+    console.log(
+      `Held (NOT applied on prod): ${heldSkipped.length} migration(s) — ${heldSkipped.join(", ")}`
+    );
+  }
   console.log("Migrations applied successfully.");
 } catch (error) {
   console.error("Migration failed:", error.message);
