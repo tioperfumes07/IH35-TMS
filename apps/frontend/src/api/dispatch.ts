@@ -52,6 +52,10 @@ export type DispatchLoad = {
   pickup_state: string | null;
   delivery_city: string | null;
   delivery_state: string | null;
+  // gap-21: read-only load→invoice reverse linkage surfaced from the listing (billing state per load).
+  invoice_display_id?: string | null;
+  invoice_status?: "draft" | "sent" | "partial" | "paid" | "factored" | null;
+  invoice_amount_open_cents?: number | null;
   driver_lifecycle_stage: DispatchLifecycleStage;
   latest_eta_prediction?: {
     confidence_class?: DispatchConfidenceClass;
