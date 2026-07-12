@@ -641,3 +641,7 @@ jobs:
         run: node scripts/verify-wo-void-flag-gate.mjs --selftest
       - name: verify:wo-void-flag-gate
         run: npm run verify:wo-void-flag-gate
+      - name: verify:chain07-settlements-redirect --selftest
+        run: node scripts/verify-chain07-settlements-redirect.mjs --selftest
+      - name: verify:chain07-settlements-redirect
+        run: npm run verify:chain07-settlements-redirect
