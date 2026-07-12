@@ -169,6 +169,8 @@ export async function registerJournalEntryRoutes(app: FastifyInstance) {
       if (message === "void_reason_required") return reply.code(400).send({ error: message });
       if (message === "journal_entry_not_found") return reply.code(404).send({ error: message });
       if (message === "journal_entry_already_voided") return reply.code(409).send({ error: message });
+      // AF-7 money-control kill switch OFF for this entity → the void action is not enabled (policy error).
+      if (message === "void_reversal_disabled") return reply.code(409).send({ error: message });
       throw error;
     }
   });

@@ -657,3 +657,7 @@ jobs:
         run: node scripts/verify-held-migrations-not-runnable.mjs --selftest
       - name: verify:held-migrations-not-runnable
         run: npm run verify:held-migrations-not-runnable
+      - name: verify:je-void-money-control-flag-gate --selftest
+        run: node scripts/verify-je-void-money-control-flag-gate.mjs --selftest
+      - name: verify:je-void-money-control-flag-gate
+        run: npm run verify:je-void-money-control-flag-gate
