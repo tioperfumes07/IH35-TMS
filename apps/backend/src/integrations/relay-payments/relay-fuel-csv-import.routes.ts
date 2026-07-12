@@ -49,6 +49,16 @@ function toIso(v: string | undefined, fallbackDate: string | undefined): string 
 function csvRowToApiShape(g: (name: string) => string | undefined): Record<string, unknown> | null {
   const id = S(g("id"));
   if (!id) return null;
+  // CRITICAL (verified 2026-07-12): the Relay CSV mixes type=code (fuel PURCHASED at the pump) with
+  // type=deposit (money FUNDED into the Relay account). Only 'code' rows are fuel transactions; 'deposit'
+  // rows are account funding and belong to the Relay-wallet ledger (Part B), NOT this fuel table. Summing
+  // them was the bug. Skip anything that is not a fuel-purchase code row.
+  const rowType = (S(g("type")) ?? "").toLowerCase();
+  if (rowType !== "code") return null;
+  // Never count a canceled/voided pre-auth as spend (spec doc 24). In the verified Mar–Jun export every
+  // 'code' row is 'settled' and only deposits carry 'canceled'; this guard keeps future exports honest.
+  const rowStatus = (S(g("status")) ?? "").toLowerCase();
+  if (rowStatus === "canceled" || rowStatus === "cancelled" || rowStatus === "voided") return null;
   const created_at = toIso(g("processing time"), g("work_date"));
   if (!created_at) return null;
   const fuel_items: Record<string, unknown>[] = [];
@@ -67,6 +77,12 @@ function csvRowToApiShape(g: (name: string) => string | undefined): Record<strin
       total_retail_price: totalGross, total_discounted_price: totalPrice,
     });
   }
+  // "Other" bucket (~3% of code rows): a fuel code carrying a non-fuel item (service/advance/flat fee) has
+  // an amount but NO product breakdown. Record one 'other' line so the amount is never forced into diesel/DEF.
+  const amount = Number(S(g("amount")) ?? "");
+  if (fuel_items.length === 0 && Number.isFinite(amount) && amount > 0) {
+    fuel_items.push({ fuel_type: "other", volume: null, volume_uom: null, total_discounted_price: S(g("amount")), total_retail_price: S(g("amount")) });
+  }
   const prompts = ([["Truck #", "Truck #"], ["Load #", "Load #"], ["Odometer", "Odometer"], ["Trailer #", "Trailer #"], ["Trip #", "Trip #"], ["Driver #", "Driver #"]] as const)
     .map(([label, col]) => ({ label, value: S(g(col)) }))
     .filter((p) => p.value != null) as { label: string; value: string }[];
@@ -83,7 +99,10 @@ function csvRowToApiShape(g: (name: string) => string | undefined): Record<strin
       : null,
     merchant: { name: S(g("merchant_name")) ?? S(g("location")) },
     location: { name: S(g("location")), address: S(g("location_address")), city: S(g("location_city")), state: S(g("location_state")), zip_code: S(g("location_zip")) },
-    prompts, fuel_items, fees: [], products: S(g("products")) ? [{ name: S(g("products")) }] : [],
+    prompts, fuel_items,
+    // Every code row carries a flat Relay fee (CSV `fee` col, typically $2.00) on top of the fuel amount.
+    fees: S(g("fee")) && Number(g("fee")) > 0 ? [{ type: "relay_fee", amount: S(g("fee")) }] : [],
+    products: S(g("products")) ? [{ name: S(g("products")) }] : [],
   };
 }
 

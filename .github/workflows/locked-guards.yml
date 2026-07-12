@@ -601,3 +601,7 @@ jobs:
         run: node scripts/verify-relay-csv-import-route-mounted.mjs --selftest
       - name: verify:relay-csv-import-route-mounted
         run: npm run verify:relay-csv-import-route-mounted
+      - name: verify:relay-csv-code-rows-only --selftest
+        run: node scripts/verify-relay-csv-code-rows-only.mjs --selftest
+      - name: verify:relay-csv-code-rows-only
+        run: npm run verify:relay-csv-code-rows-only
