@@ -50,11 +50,17 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_relay_company_cards_opco_card
   ON integrations.relay_company_cards (operating_company_id, card_last4);
 
 -- Seed the three verified TRANSP company cards (idempotent). TRANSP operating_company_id is fixed.
+-- FK-SAFE for a fresh CI DB (built from 0001, where TRANSP does not exist): INSERT ... SELECT guarded
+-- by EXISTS on org.companies, so on a fresh/empty DB this seeds 0 rows instead of violating the FK
+-- (CLAUDE.md §2 landmine: db:migrate runs on a fresh DB in CI — never fail on absent synced data).
 INSERT INTO integrations.relay_company_cards (operating_company_id, card_last4, label, source_hint)
-VALUES
-  ('91e0bf0a-133f-4ce8-a734-2586cfa66d96', '5007', 'Amex Business Platinum', 'live-verified vs banking.bank_transactions'),
-  ('91e0bf0a-133f-4ce8-a734-2586cfa66d96', '9104', 'WF debit — checking 6103', 'live-verified vs banking.bank_transactions'),
-  ('91e0bf0a-133f-4ce8-a734-2586cfa66d96', '9869', 'WF debit — checking 6103', 'live-verified vs banking.bank_transactions')
+SELECT v.opco, v.card, v.label, v.hint
+FROM (VALUES
+  ('91e0bf0a-133f-4ce8-a734-2586cfa66d96'::uuid, '5007', 'Amex Business Platinum', 'live-verified vs banking.bank_transactions'),
+  ('91e0bf0a-133f-4ce8-a734-2586cfa66d96'::uuid, '9104', 'WF debit — checking 6103', 'live-verified vs banking.bank_transactions'),
+  ('91e0bf0a-133f-4ce8-a734-2586cfa66d96'::uuid, '9869', 'WF debit — checking 6103', 'live-verified vs banking.bank_transactions')
+) AS v(opco, card, label, hint)
+WHERE EXISTS (SELECT 1 FROM org.companies c WHERE c.id = v.opco)
 ON CONFLICT DO NOTHING;
 
 -- ── 3. integrations.relay_deposits — one row per Relay deposit id (type=deposit). Stores the funding
