@@ -20,7 +20,7 @@ export type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
 };
 
-export type RelayIngestSource = "daily_pull" | "webhook";
+export type RelayIngestSource = "daily_pull" | "webhook" | "csv_import";
 
 export type RelayIngestResult = {
   relay_fuel_transaction_id: string;
