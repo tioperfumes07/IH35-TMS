@@ -121,6 +121,11 @@
       "preview": "` SELECT id, deactivated_at, is_locked FROM catalogs.accounts WHERE id = $1 LIMIT 1 `"
     },
     {
+      "key": "apps/backend/src/catalogs/accounts.routes.ts#540361591309a28d8e495ad138a4dbc48c2e1fe5",
+      "file": "apps/backend/src/catalogs/accounts.routes.ts",
+      "preview": "`SELECT COUNT(*)::int AS total FROM catalogs.accounts ${whereClause}`"
+    },
+    {
       "key": "apps/backend/src/catalogs/accounts.routes.ts#d368f11c412b143d313ac4700bfd5cee91082ed9",
       "file": "apps/backend/src/catalogs/accounts.routes.ts",
       "preview": "` SELECT ${ACCOUNT_SELECT_COLS} FROM catalogs.accounts ${whereClause} ORDER BY created_at DESC LIMIT $${values.length - "
@@ -276,11 +281,6 @@
       "preview": "`LEFT JOIN mdata.equipment te ON te.id = // l.trailer_id`"
     },
     {
-      "key": "apps/backend/src/dispatch/loads.routes.ts#f690f704b774d30d3f800921843ab301a5dbafc8",
-      "file": "apps/backend/src/dispatch/loads.routes.ts",
-      "preview": "` SELECT l.*, c.customer_name, u.unit_number, tr.unit_number AS trailer_number, CASE WHEN d.id IS NULL THEN NULL ELSE CO"
-    },
-    {
       "key": "apps/backend/src/dispatch/planner.service.ts#5be3959a0d5c5d0568322ff8600286d02527d09e",
       "file": "apps/backend/src/dispatch/planner.service.ts",
       "preview": "` SELECT l.id::text AS id, l.load_number, l.status::text AS status, l.assigned_primary_driver_id::text AS driver_id, c.c"
@@ -309,11 +309,6 @@
       "key": "apps/backend/src/dispatcher-board/role-views/dispatcher.service.ts#0d574209d2b2f63f99305b0e85188e1f3f26afe1",
       "file": "apps/backend/src/dispatcher-board/role-views/dispatcher.service.ts",
       "preview": "` SELECT COUNT(*)::int AS loads_booked_7d, COUNT(*) FILTER (WHERE l.status::text = ANY($${company.values.length > 0 ? \"4"
-    },
-    {
-      "key": "apps/backend/src/dispatcher-board/role-views/dispatcher.service.ts#3b634770443c7cf4316d49f99107036e0a4b23a8",
-      "file": "apps/backend/src/dispatcher-board/role-views/dispatcher.service.ts",
-      "preview": "` SELECT l.id::text, l.load_number::text, l.status::text, c.customer_name::text, pickup.city::text AS pickup_city, deliv"
     },
     {
       "key": "apps/backend/src/dispatcher-board/role-views/dispatcher.service.ts#7c381f12260b6295b2867b9de03b072c5dff569c",
@@ -586,9 +581,9 @@
       "preview": "` SELECT DISTINCT operating_company_id::text AS operating_company_id FROM mdata.drivers WHERE deactivated_at IS NULL `"
     },
     {
-      "key": "apps/backend/src/jobs/samsara-position-poll-worker.ts#f016f79328a8772f4f727b6e7938d80cfcea9748",
+      "key": "apps/backend/src/jobs/samsara-position-poll-worker.ts#1c5183540355cdd401762209d4832b2ef0588f74",
       "file": "apps/backend/src/jobs/samsara-position-poll-worker.ts",
-      "preview": "`SELECT u.id::text AS unit_uuid, u.owner_company_id::text AS operating_company_id, u.samsara_vehicle_id, COALESCE(p.lat,"
+      "preview": "`SELECT u.id::text AS unit_uuid, COALESCE(u.currently_leased_to_company_id, u.owner_company_id)::text AS operating_compa"
     },
     {
       "key": "apps/backend/src/jobs/search-indexer-incremental.ts#080cfeb585cda38b4fc1713c298893f97311dba2",
@@ -744,11 +739,6 @@
       "key": "apps/backend/src/mdata/driver-teams.routes.ts#c3d2423b0bca3098d0e18cc6a6ef05bba2620ae5",
       "file": "apps/backend/src/mdata/driver-teams.routes.ts",
       "preview": "` SELECT d.id FROM mdata.drivers d JOIN org.user_company_access uca ON uca.user_id = d.identity_user_id WHERE d.id = $1 "
-    },
-    {
-      "key": "apps/backend/src/mdata/drivers.routes.ts#0e0abbe4575aba645b513543320e57e62521daf5",
-      "file": "apps/backend/src/mdata/drivers.routes.ts",
-      "preview": "` SELECT id, identity_user_id, first_name, last_name, phone, email, cdl_number, cdl_state, cdl_class, cdl_expires_at, hi"
     },
     {
       "key": "apps/backend/src/mdata/drivers.routes.ts#19b9c19156281ab094bfddade48f8e9197880633",
@@ -921,11 +911,6 @@
       "preview": "` SELECT id::text AS id FROM mdata.units WHERE unit_number = 'TEST-001' LIMIT 1 `"
     },
     {
-      "key": "apps/backend/src/qbo-sync/drift-detector.ts#47fa9248ace0debffccc395a9074e4881db63ca2",
-      "file": "apps/backend/src/qbo-sync/drift-detector.ts",
-      "preview": "` SELECT id::text AS id, account_name FROM catalogs.accounts WHERE deactivated_at IS NULL AND qbo_account_id IS NULL AND"
-    },
-    {
       "key": "apps/backend/src/reconciliation/reconciliation-worker.service.ts#e6d99df0f1bf60750c98f9d8ef4dce1d185367e8",
       "file": "apps/backend/src/reconciliation/reconciliation-worker.service.ts",
       "preview": "` SELECT DISTINCT operating_company_id::text AS operating_company_id FROM mdata.drivers WHERE samsara_driver_id IS NOT N"
@@ -959,11 +944,6 @@
       "key": "apps/backend/src/safety/dvir.routes.ts#b3f60d118823f2f42e928fe2c0fce56eae6b52d7",
       "file": "apps/backend/src/safety/dvir.routes.ts",
       "preview": "` SELECT ds.id, ds.submitted_at, ds.type, ds.has_major_defect, ds.has_any_defect, ds.follow_up_wo_id, ds.driver_id, ds.u"
-    },
-    {
-      "key": "apps/backend/src/safety/events/safety-events.routes.ts#e481d442c44b2685dcffc10256a754d54ec12577",
-      "file": "apps/backend/src/safety/events/safety-events.routes.ts",
-      "preview": "` SELECT e.id::text, e.operating_company_id::text, e.event_type, e.severity, e.status, e.kpi_bucket, e.subject_type, e.s"
     },
     {
       "key": "apps/backend/src/safety/events/safety-events.routes.ts#ee304eb2a93592933ffe59d1458392317904382a",

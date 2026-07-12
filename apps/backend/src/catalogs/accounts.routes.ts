@@ -122,9 +122,9 @@ export async function registerAccountRoutes(app: FastifyInstance) {
     const operatingCompanyId =
       parsed.data.operating_company_id ??
       (await withCurrentUser(authUser.uuid, (client) => resolveOperatingCompanyId(client, authUser.uuid)));
-    if (!operatingCompanyId) return { accounts: [] };
+    if (!operatingCompanyId) return { accounts: [], total: 0, limit, offset, has_more: false };
 
-    const accounts = await withScopedCompany(authUser.uuid, operatingCompanyId, async (client) => {
+    const result = await withScopedCompany(authUser.uuid, operatingCompanyId, async (client) => {
       const values: unknown[] = [];
       const filters: string[] = [];
       if (status === "active") filters.push("deactivated_at IS NULL");
@@ -142,9 +142,20 @@ export async function registerAccountRoutes(app: FastifyInstance) {
         values.push(parent_account_id);
         filters.push(`parent_account_id = $${values.length}`);
       }
+      const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
+
+      // 0091-g9-h6: return the total row count of the (filtered) set so the UI can page past the
+      // first 50. Without it the CoA management list capped silently at limit=50 with no way to size a
+      // pager, leaving the oldest accounts unreachable. Count uses the same filter predicates/values
+      // (before limit/offset are appended) under the same entity-scoped RLS client.
+      const countRes = await client.query(
+        `SELECT COUNT(*)::int AS total FROM catalogs.accounts ${whereClause}`,
+        values
+      );
+      const total = Number((countRes.rows[0] as { total?: number } | undefined)?.total ?? 0);
+
       values.push(limit);
       values.push(offset);
-      const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
       const res = await client.query(
         `
           SELECT ${ACCOUNT_SELECT_COLS}
@@ -156,10 +167,17 @@ export async function registerAccountRoutes(app: FastifyInstance) {
         `,
         values
       );
-      return res.rows;
+      return { rows: res.rows, total };
     });
 
-    return { accounts };
+    // Additive response shape: `accounts` unchanged; `total`/`has_more`/`limit`/`offset` added for paging.
+    return {
+      accounts: result.rows,
+      total: result.total,
+      limit,
+      offset,
+      has_more: offset + result.rows.length < result.total,
+    };
   });
 
   app.post("/api/v1/catalogs/accounts", async (req, reply) => {
