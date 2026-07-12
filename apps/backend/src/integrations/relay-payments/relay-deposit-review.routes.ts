@@ -26,7 +26,7 @@ function requireOwnerAdmin(req: unknown, reply: { code: (n: number) => { send: (
 
 export async function registerRelayDepositReviewRoutes(app: FastifyInstance) {
   // ── Review queue: deposits + summary ──
-  app.get("/api/integrations/relay/deposits", async (req, reply) => {
+  app.get("/api/integrations/relay/deposits", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!requireAuth(req, reply)) return;
     if (!requireOwnerAdmin(req, reply)) return;
     const q = (req.query ?? {}) as { operating_company_id?: string; classification?: string };
@@ -73,7 +73,7 @@ export async function registerRelayDepositReviewRoutes(app: FastifyInstance) {
   });
 
   // ── Company-card map: read ──
-  app.get("/api/integrations/relay/company-cards", async (req, reply) => {
+  app.get("/api/integrations/relay/company-cards", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!requireAuth(req, reply)) return;
     if (!requireOwnerAdmin(req, reply)) return;
     const opco = String(((req.query ?? {}) as { operating_company_id?: string }).operating_company_id ?? "");
@@ -92,7 +92,7 @@ export async function registerRelayDepositReviewRoutes(app: FastifyInstance) {
   });
 
   // ── Company-card map: upsert one card (owner adds/labels/deactivates). Re-classifies deposits. ──
-  app.put("/api/integrations/relay/company-cards", async (req, reply) => {
+  app.put("/api/integrations/relay/company-cards", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!requireAuth(req, reply)) return;
     if (!requireOwnerAdmin(req, reply)) return;
     const opco = String(((req.query ?? {}) as { operating_company_id?: string }).operating_company_id ?? "");

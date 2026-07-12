@@ -609,3 +609,7 @@ jobs:
         run: node scripts/verify-relay-deposit-classifier-no-post.mjs --selftest
       - name: verify:relay-deposit-classifier-no-post
         run: npm run verify:relay-deposit-classifier-no-post
+      - name: verify:relay-routes-rate-limited --selftest
+        run: node scripts/verify-relay-routes-rate-limited.mjs --selftest
+      - name: verify:relay-routes-rate-limited
+        run: npm run verify:relay-routes-rate-limited

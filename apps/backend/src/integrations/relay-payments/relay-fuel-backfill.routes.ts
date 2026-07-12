@@ -12,7 +12,7 @@ import { requireAuth } from "../../auth/session-middleware.js";
 import { runRelayFuelBackfill } from "./relay-fuel-ingest.cron.js";
 
 export async function registerRelayFuelBackfillRoute(app: FastifyInstance) {
-  app.post("/api/integrations/relay/fuel/backfill", async (req, reply) => {
+  app.post("/api/integrations/relay/fuel/backfill", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!requireAuth(req, reply)) return;
     const role = String((req.user as { role?: string } | undefined)?.role ?? "");
     if (!["Owner", "Administrator"].includes(role)) {
