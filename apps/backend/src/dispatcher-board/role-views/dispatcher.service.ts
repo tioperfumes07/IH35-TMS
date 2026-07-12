@@ -187,6 +187,7 @@ async function loadActiveLoads(
       JOIN mdata.customers c ON c.id = l.customer_id
       LEFT JOIN mdata.drivers dr ON dr.id = l.assigned_primary_driver_id
       LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
+        AND (u.owner_company_id = l.operating_company_id OR u.currently_leased_to_company_id = l.operating_company_id)
       LEFT JOIN LATERAL (
         SELECT ls.city, ls.scheduled_arrival_at
         FROM mdata.load_stops ls
