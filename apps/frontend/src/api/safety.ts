@@ -50,6 +50,7 @@ export type SafetyEventLogRow = {
   created_at: string;
   subject_driver_name?: string | null;
   subject_unit_number?: string | null;
+  related_load_number?: string | null;
 };
 
 export function listSafetyEventLog(
