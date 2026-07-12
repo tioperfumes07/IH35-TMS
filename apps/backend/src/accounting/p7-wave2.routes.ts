@@ -7,9 +7,18 @@ import { enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
 import crypto from "node:crypto";
 import { insertRetainedEarningsClosingJournalIfNeeded } from "./period-close-retained-earnings.service.js";
 import { writePeriodCashBasisSnapshotAtClose } from "./cash-basis/period-close-snapshot.service.js";
+import { isEnabled } from "../lib/feature-flags/service.js";
 
 const financeRoles = new Set(["Owner", "Administrator", "Manager", "Accountant"]);
 const periodCloseRoles = new Set(["Owner", "Administrator", "Accountant"]);
+
+// AF-7 money-control kill switches (per-entity, default OFF) — gate the accounting.periods CLOSE and REOPEN
+// actions so an owner enables them entity-by-entity (verify-then-flip). Seeds live in the held migration
+// 202607110320_af7_money_control_flags.sql. When OFF/absent the action is refused with a policy error
+// BEFORE any read/write (no silent no-op; nothing posts). Independent of the DB trigger in 0183 which
+// already blocks POSTING INTO a closed period — these gate the close/reopen ACTIONS themselves.
+const MONEY_CONTROL_PERIOD_CLOSE_FLAG_KEY = "MONEY_CONTROL_PERIOD_CLOSE_ENABLED";
+const MONEY_CONTROL_PERIOD_REOPEN_FLAG_KEY = "MONEY_CONTROL_PERIOD_REOPEN_ENABLED";
 
 function finance(req: Parameters<typeof currentAuthUser>[0], reply: Parameters<typeof currentAuthUser>[1]) {
   const user = currentAuthUser(req, reply);
@@ -225,6 +234,13 @@ export async function registerAccountingP7Wave2Routes(app: FastifyInstance) {
 
     try {
       await withCompanyScope(user.uuid, body.data.operating_company_id, async (client) => {
+        // AF-7 money-control gate: refuse the period-CLOSE action unless enabled for THIS entity.
+        // Resolved before BEGIN so an OFF entity never posts the retained-earnings JE or mutates a period.
+        const closeEnabled = await isEnabled(client, MONEY_CONTROL_PERIOD_CLOSE_FLAG_KEY, {
+          operating_company_id: body.data.operating_company_id,
+          user_uuid: user.uuid,
+        });
+        if (!closeEnabled) throw new Error("period_close_disabled");
         await client.query("BEGIN");
         try {
           const periodRes = await client.query(
@@ -307,6 +323,7 @@ export async function registerAccountingP7Wave2Routes(app: FastifyInstance) {
       return { ok: true, retained_earnings_entry_id: retainedEarningsJeId };
     } catch (err) {
       const msg = String((err as Error)?.message ?? err ?? "");
+      if (msg === "period_close_disabled") return reply.code(409).send({ error: "period_close_disabled" });
       if (msg === "period_not_found") return reply.code(404).send({ error: "not_found" });
       if (msg === "period_not_open") return reply.code(409).send({ error: "period_not_open" });
       if (msg === "period_close_race") return reply.code(409).send({ error: "period_close_race" });
@@ -324,21 +341,33 @@ export async function registerAccountingP7Wave2Routes(app: FastifyInstance) {
     const body = z.object({ operating_company_id: z.string().uuid(), reason: z.string().min(1) }).safeParse(req.body ?? {});
     if (!params.success || !body.success) return reply.code(400).send({ error: "validation_error" });
 
-    await withCompanyScope(user.uuid, body.data.operating_company_id, async (client) => {
-      await client.query(
-        `
-          UPDATE accounting.periods
-          SET status = 'open',
-              closed_at = NULL,
-              closed_by_user_id = NULL,
-              locks_txn_dates_le = NULL,
-              updated_at = now()
-          WHERE id = $1 AND operating_company_id = $2
-        `,
-        [params.data.id, body.data.operating_company_id]
-      );
-      await appendCrudAudit(client, user.uuid, "accounting.period_reopened", { period_id: params.data.id, reason: body.data.reason }, "warning", "P7-W2-ACC");
-    });
+    try {
+      await withCompanyScope(user.uuid, body.data.operating_company_id, async (client) => {
+        // AF-7 money-control gate: refuse the period-REOPEN action unless enabled for THIS entity.
+        const reopenEnabled = await isEnabled(client, MONEY_CONTROL_PERIOD_REOPEN_FLAG_KEY, {
+          operating_company_id: body.data.operating_company_id,
+          user_uuid: user.uuid,
+        });
+        if (!reopenEnabled) throw new Error("period_reopen_disabled");
+        await client.query(
+          `
+            UPDATE accounting.periods
+            SET status = 'open',
+                closed_at = NULL,
+                closed_by_user_id = NULL,
+                locks_txn_dates_le = NULL,
+                updated_at = now()
+            WHERE id = $1 AND operating_company_id = $2
+          `,
+          [params.data.id, body.data.operating_company_id]
+        );
+        await appendCrudAudit(client, user.uuid, "accounting.period_reopened", { period_id: params.data.id, reason: body.data.reason }, "warning", "P7-W2-ACC");
+      });
+    } catch (err) {
+      const msg = String((err as Error)?.message ?? err ?? "");
+      if (msg === "period_reopen_disabled") return reply.code(409).send({ error: "period_reopen_disabled" });
+      throw err;
+    }
     return { ok: true };
   });
 

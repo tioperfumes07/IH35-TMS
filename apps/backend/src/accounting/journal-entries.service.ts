@@ -3,6 +3,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { writeTransactionSourceLink } from "./accounting-spine-emit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
+import { isEnabled } from "../lib/feature-flags/service.js";
 import { pushJournalEntryToQuickBooksImmediateBestEffort } from "./journal-entry-qbo-push.service.js";
 import {
   auditVoid,
@@ -218,6 +219,13 @@ export async function createJournalEntry(input: CreateJournalEntryInput, actor: 
   return created;
 }
 
+// AF-7 money-control kill switch: per-entity, default OFF. Gates the void ACTION on a posted journal
+// entry (the "void/reversing-JE UX"), independent of VOID_ENFORCEMENT_ENABLED which only controls whether
+// a reversing JE posts on void. Enabling is per-entity-only (an explicit tenant override) — see
+// db/migrations/202607110320_af7_money_control_flags.sql. When OFF/absent the void action is refused with
+// a policy error (no silent no-op); nothing new posts, and the existing void path is otherwise unchanged.
+const MONEY_CONTROL_VOID_REVERSAL_FLAG_KEY = "MONEY_CONTROL_VOID_REVERSAL_ENABLED";
+
 export async function voidJournalEntry(
   operatingCompanyId: string,
   journalEntryId: string,
@@ -226,6 +234,14 @@ export async function voidJournalEntry(
 ) {
   const result = await withCurrentUser(actor.userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+
+    // AF-7 money-control gate (per-entity, default OFF): refuse the void action unless the owner has
+    // enabled it for THIS entity. Resolved before any read/write so an OFF entity can never mutate a JE.
+    const voidActionEnabled = await isEnabled(client, MONEY_CONTROL_VOID_REVERSAL_FLAG_KEY, {
+      operating_company_id: operatingCompanyId,
+      user_uuid: actor.userId,
+    });
+    if (!voidActionEnabled) throw new Error("void_reversal_disabled");
 
     // VOID-EVERYWHERE (gated): when ON, void posts an equal-and-opposite reversing JE and VOID = Owner+Accountant.
     // When OFF (default), behaviour is unchanged — Owner-only status flip, no reversing entry.
