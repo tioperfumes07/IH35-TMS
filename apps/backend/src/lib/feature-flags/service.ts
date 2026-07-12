@@ -163,6 +163,12 @@ export const PER_ENTITY_ONLY_FLAG_KEYS: ReadonlySet<string> = new Set([
   "MONEY_CONTROL_VOID_REVERSAL_ENABLED",
   "MONEY_CONTROL_PERIOD_CLOSE_ENABLED",
   "MONEY_CONTROL_PERIOD_REOPEN_ENABLED",
+  // RELAY-FUEL-INGEST-1 (doc 21/22 Part A gap 2): the Relay fuel-transaction ingest is a per-entity feed —
+  // its seed migration is described "per entity" and the ingest cron resolves this DB flag per
+  // operating_company_id. Enroll it here so a global default/rollout can never turn it on for EVERY entity
+  // (incl. USMCA / TRK) at once; enable is an explicit per-entity owner flip. Default OFF. Staging ingest
+  // only (no GL) but per-entity protection matters (each entity's fuel data must stay scoped).
+  "RELAY_FUEL_INGEST_ENABLED",
 ]);
 
 export function isPerEntityOnlyFlag(flagKey: string): boolean {
