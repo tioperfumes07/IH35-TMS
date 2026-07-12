@@ -17,6 +17,14 @@ jobs:
 
       - name: verify:deep-audit-b-invoices-subnav
         run: npm run verify:deep-audit-b-invoices-subnav
+      - name: verify:planner-load-templates --selftest
+        run: node scripts/verify-planner-load-templates.mjs --selftest
+      - name: verify:planner-load-templates
+        run: npm run verify:planner-load-templates
+      - name: verify:dispatch-notify-prefs-onerror --selftest
+        run: node scripts/verify-dispatch-notify-prefs-onerror.mjs --selftest
+      - name: verify:dispatch-notify-prefs-onerror
+        run: npm run verify:dispatch-notify-prefs-onerror
       - name: verify:block-acceptance (G2 self-test)
         run: node scripts/verify-block-acceptance.mjs --selftest
       - name: verify:block-acceptance
