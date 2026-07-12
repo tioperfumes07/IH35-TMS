@@ -596,3 +596,7 @@ jobs:
         run: node scripts/verify-relay-backfill-route-mounted.mjs --selftest
       - name: verify:relay-backfill-route-mounted
         run: npm run verify:relay-backfill-route-mounted
+      - name: verify:tracker-bymodule-sequence --selftest
+        run: node scripts/verify-tracker-bymodule-sequence.mjs --selftest
+      - name: verify:tracker-bymodule-sequence
+        run: npm run verify:tracker-bymodule-sequence
