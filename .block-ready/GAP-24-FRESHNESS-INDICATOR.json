@@ -34,7 +34,9 @@
   "forbidden_paths": [
     "apps/frontend/src/config/sidebar-config.ts"
   ],
-  "extra_gates": ["verify:freshness-indicator"],
+  "extra_gates": [
+    "verify:freshness-indicator"
+  ],
   "runtime_path": "src",
   "db_required": false,
   "guard_required": true
