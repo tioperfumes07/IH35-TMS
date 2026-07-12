@@ -29,6 +29,15 @@ jobs:
         run: node scripts/verify-samsara-webhook-unit-fallback.mjs --selftest
       - name: verify:samsara-webhook-unit-fallback
         run: npm run verify:samsara-webhook-unit-fallback
+
+      - name: verify:cors-prod-defaults --selftest
+        run: node scripts/verify-cors-prod-defaults.mjs --selftest
+      - name: verify:cors-prod-defaults
+        run: npm run verify:cors-prod-defaults
+      - name: verify:e2e-specs-assert-or-skip --selftest
+        run: node scripts/verify-e2e-specs-assert-or-skip.mjs --selftest
+      - name: verify:e2e-specs-assert-or-skip
+        run: npm run verify:e2e-specs-assert-or-skip
       - name: verify:block-acceptance (G2 self-test)
         run: node scripts/verify-block-acceptance.mjs --selftest
       - name: verify:block-acceptance

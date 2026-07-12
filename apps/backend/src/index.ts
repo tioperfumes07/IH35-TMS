@@ -457,6 +457,7 @@ import { registerDriverSubAccountBackfillRoutes } from "./accounting/driver-suba
 import { registerPayrollAggregatedRoutes } from "./payroll/aggregated.routes.js";
 import { registerUsmcaActivationRoutes } from "./usmca/activation/activation.routes.js";
 import { applyEnvStartupChecks, isFeatureDisabled, setDisabledFeatures } from "./config/required-env.js";
+import { getCorsAllowedOrigins } from "./config/cors-allowed-origins.js";
 import { registerBookingGapRoutes } from "./dispatch/analytics/booking-gap.routes.js";
 import { initializeBookingGapAggregatorWorker, stopBookingGapAggregatorWorker } from "./jobs/booking-gap-aggregator-worker.js";
 import { registerLateArrivalAnalyticsRoutes } from "./dispatch/analytics/late-arrival.routes.js";
@@ -487,14 +488,11 @@ const app = Fastify({ logger: true });
 attachHttpErrorMonitor(app);
 let shuttingDown = false;
 
+// 0243-h1-2: delegate to the single shared source of truth (config/cors-allowed-origins.ts) so the
+// boot-time CORS registration and the CSRF-origin guard can never diverge, prod origins are versioned
+// in code, localhost is dev-only, and an unset CORS_ALLOWED_ORIGINS in production fails loud.
 function getAllowedOrigins(): string[] {
-  const origins =
-    process.env.CORS_ALLOWED_ORIGINS ??
-    "https://ih35-tms-web.onrender.com,https://ih35-tms-driver.onrender.com,http://localhost:5173,http://localhost:5174";
-  return origins
-    .split(",")
-    .map((value) => value.trim())
-    .filter(Boolean);
+  return getCorsAllowedOrigins();
 }
 
 // Required for BT-1-AUTH-DRIVER phone auth:
