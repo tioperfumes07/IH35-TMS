@@ -16,6 +16,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { ActionButton } from "../../components/shared/ActionButton";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { DatePicker } from "../../components/forms/DatePicker";
+import { StatementUpload } from "../../components/banking/StatementUpload";
 import { useToast } from "../../components/Toast";
 
 function money(cents: number) {
@@ -144,6 +145,25 @@ export function BankReconciliationPage() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="rounded-sm border border-gray-200 bg-white p-3">
           <div className="mb-2 text-sm font-semibold text-gray-900">Bank transactions worklist</div>
+          {accountId ? (
+            <div className="mb-3">
+              <StatementUpload
+                bankAccountId={accountId}
+                onUploaded={() =>
+                  void queryClient.invalidateQueries({
+                    queryKey: ["bank-recon", "worklist", selectedCompanyId, accountId, periodStart, periodEnd],
+                  })
+                }
+              />
+            </div>
+          ) : null}
+          {worklistQuery.data && worklistQuery.data.progress.total_transactions === 0 && accountId && periodStart && periodEnd ? (
+            <div className="mb-2 rounded-sm border border-gray-100 bg-gray-50 px-2 py-2 text-xs text-gray-600">
+              No bank transactions in this period. Reconciliation is statement-driven: import a bank statement (CSV) above,
+              or connect a bank feed, to populate the worklist. A posted journal entry is a match target, not a worklist row —
+              once transactions exist here, match them to the JE (Manual match → kind &ldquo;je&rdquo;).
+            </div>
+          ) : null}
           <div className="max-h-[520px] space-y-1 overflow-auto">
             {[...(worklistQuery.data?.unmatched_transactions ?? []), ...(worklistQuery.data?.auto_matched_candidates ?? [])].map((row) => (
               <button
