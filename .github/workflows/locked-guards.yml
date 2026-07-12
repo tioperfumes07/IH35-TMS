@@ -612,3 +612,7 @@ jobs:
         run: node scripts/verify-program-tracker-r2-live.mjs --selftest
       - name: verify:program-tracker-r2-live
         run: npm run verify:program-tracker-r2-live
+      - name: verify:tracker-since-jul1 --selftest
+        run: node scripts/verify-tracker-since-jul1.mjs --selftest
+      - name: verify:tracker-since-jul1
+        run: npm run verify:tracker-since-jul1
