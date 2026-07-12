@@ -624,6 +624,10 @@ jobs:
         run: node scripts/verify-tracker-since-jul1.mjs --selftest
       - name: verify:tracker-since-jul1
         run: npm run verify:tracker-since-jul1
+      - name: verify:bill-expense-category-full-coa --selftest
+        run: node scripts/verify-bill-expense-category-full-coa.mjs --selftest
+      - name: verify:bill-expense-category-full-coa
+        run: npm run verify:bill-expense-category-full-coa
 
       - name: verify:amortization-gl-flag-gate --selftest
         run: node scripts/verify-amortization-gl-flag-gate.mjs --selftest

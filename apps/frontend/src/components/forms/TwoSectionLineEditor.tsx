@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { tirePositionsCatalogClient } from "../../api/catalogs-fleet";
+import { getCoaAccounts } from "../../api/banking";
 import { getWoCostContext } from "../../api/maintenance";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useAccountingCategoriesQuery } from "../../hooks/useAccountingCategoriesQuery";
@@ -73,6 +74,16 @@ export function TwoSectionLineEditor({
     enabled: Boolean(operatingCompanyId),
     staleTime: 30_000,
   });
+  // LIVE-DEFECT fix (GUARD 2026-07-12): the Bill/Expense Section-A Category selector must surface the FULL
+  // Chart-of-Accounts — the SAME source the banking categorize screen uses (getCoaAccounts → /catalogs/accounts).
+  // The old /api/v1/accounting/categories source returned empty/filtered, forcing users to create duplicate COA
+  // accounts. Full COA is the primary source below; accounting-categories / cost-context stay as fallbacks.
+  const coaAccountsQuery = useQuery({
+    queryKey: ["catalogs", "coa-accounts", "line-category", operatingCompanyId],
+    queryFn: () => getCoaAccounts(operatingCompanyId),
+    enabled: Boolean(operatingCompanyId) && (mode === "bill" || categoryFetchActive),
+    staleTime: 30_000,
+  });
   const tirePositionsQuery = useQuery({
     queryKey: ["catalogs", "fleet", "tire-positions", operatingCompanyId, "active"],
     queryFn: () =>
@@ -93,6 +104,13 @@ export function TwoSectionLineEditor({
   const sectionA = useMemo(() => lines.filter((line) => line.section === "A"), [lines]) as CategoryLine[];
   const sectionB = useMemo(() => lines.filter((line) => line.section === "B"), [lines]) as ItemLine[];
   const expenseCategoryOptions = useMemo<CostContextOption[]>(() => {
+    // PRIMARY: the full Chart-of-Accounts (same as banking categorize) — searchable existing accounts.
+    const fromCoa = (coaAccountsQuery.data?.accounts ?? []).map((account) => ({
+      id: String(account.id ?? ""),
+      label: `${account.account_number ?? ""} · ${account.account_name ?? ""}`.replace(/^ · /, "").trim(),
+    }));
+    if (fromCoa.length > 0) return fromCoa;
+    // FALLBACKS (only if the COA query hasn't resolved): accounting-categories, then cost-context.
     const fromAccounting = (accountingCategoriesQuery.data ?? []).map((entry) => ({
       id: String(entry.id ?? ""),
       label: `${entry.account_number ?? entry.qbo_id ?? ""} · ${entry.name ?? ""}`.trim(),
@@ -102,7 +120,7 @@ export function TwoSectionLineEditor({
       id: String(entry.id ?? ""),
       label: String(entry.name ?? ""),
     }));
-  }, [accountingCategoriesQuery.data, costContextQuery.data?.expense_categories]);
+  }, [coaAccountsQuery.data, accountingCategoriesQuery.data, costContextQuery.data?.expense_categories]);
   const itemOptions = useMemo<CostContextOption[]>(() => {
     const fromAccounting = (accountingItemsQuery.data ?? []).map((entry) => ({
       id: String(entry.id ?? ""),
