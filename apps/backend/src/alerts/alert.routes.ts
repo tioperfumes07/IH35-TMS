@@ -8,6 +8,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
@@ -56,6 +57,8 @@ export default async function alertRoutes(fastify: FastifyInstance) {
     if (!user) return;
 
     const { operating_company_id } = z.object({ operating_company_id: z.string().uuid() }).parse(request.query);
+    // G2-2: uuid-valid is not membership — assert the caller belongs to this company before scoping RLS to it.
+    await assertCompanyMembership(user.uuid, operating_company_id);
 
     return withCurrentUser(user.uuid, async (client) => {
       await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operating_company_id]);
@@ -73,7 +76,9 @@ export default async function alertRoutes(fastify: FastifyInstance) {
     if (!user) return;
 
     const input = ProfileSchema.parse(request.body);
-    const ocId = (request.body as { operating_company_id: string }).operating_company_id;
+    const ocId = z.string().uuid().parse((request.body as { operating_company_id: string }).operating_company_id);
+    // G2-2: uuid-valid is not membership — assert the caller belongs to this company before writing under it.
+    await assertCompanyMembership(user.uuid, ocId);
 
     return withCurrentUser(user.uuid, async (client) => {
       await client.query("SELECT set_config('app.operating_company_id', $1, true)", [ocId]);
@@ -96,6 +101,8 @@ export default async function alertRoutes(fastify: FastifyInstance) {
       profile_id: z.string().uuid(),
       operating_company_id: z.string().uuid(),
     }).parse(request.query);
+    // G2-2: uuid-valid is not membership — assert the caller belongs to this company before scoping RLS to it.
+    await assertCompanyMembership(user.uuid, operating_company_id);
 
     return withCurrentUser(user.uuid, async (client) => {
       await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operating_company_id]);
@@ -113,7 +120,9 @@ export default async function alertRoutes(fastify: FastifyInstance) {
     if (!user) return;
 
     const input = RuleSchema.parse(request.body);
-    const ocId = (request.body as { operating_company_id: string }).operating_company_id;
+    const ocId = z.string().uuid().parse((request.body as { operating_company_id: string }).operating_company_id);
+    // G2-2: uuid-valid is not membership — assert the caller belongs to this company before writing under it.
+    await assertCompanyMembership(user.uuid, ocId);
 
     return withCurrentUser(user.uuid, async (client) => {
       await client.query("SELECT set_config('app.operating_company_id', $1, true)", [ocId]);
@@ -143,11 +152,13 @@ export default async function alertRoutes(fastify: FastifyInstance) {
     if (!user) return;
 
     const { operating_company_id } = z.object({ operating_company_id: z.string().uuid() }).parse(request.query);
+    // G2-2: uuid-valid is not membership — assert the caller belongs to this company before scoping RLS to it.
+    await assertCompanyMembership(user.uuid, operating_company_id);
 
     return withCurrentUser(user.uuid, async (client) => {
       await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operating_company_id]);
       const sql = `
-        SELECT 
+        SELECT
           q.*,
           l.load_number,
           c.customer_name as broker_name
@@ -171,6 +182,8 @@ export default async function alertRoutes(fastify: FastifyInstance) {
     const input = QueueDecisionSchema.parse(request.body);
     // Use the uuid-validated value off the parsed schema (G2-1) — never a raw cast off request.body.
     const ocId = input.operating_company_id;
+    // G2-2: uuid-valid is not membership — assert the caller belongs to this company before deciding under it.
+    await assertCompanyMembership(user.uuid, ocId);
 
     return withCurrentUser(user.uuid, async (client) => {
       await client.query("SELECT set_config('app.operating_company_id', $1, true)", [ocId]);

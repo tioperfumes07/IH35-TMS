@@ -360,6 +360,30 @@
    "status": "DONE",
    "evidence": "verify-list-error-state-coverage.mjs + verify-steps/112; guard PASS (20 list pages keep isError->ListErrorState)",
    "verified_on": "2026-07-12"
+  },
+  {
+   "id": "IMPORT-0",
+   "status": "DONE",
+   "evidence": "merged PR #1796 (non-financial import)",
+   "verified_on": "2026-07-12"
+  },
+  {
+   "id": "IMPORT-P0",
+   "status": "DONE",
+   "evidence": "merged PR #1797",
+   "verified_on": "2026-07-12"
+  },
+  {
+   "id": "IMPORT-P0b",
+   "status": "DONE",
+   "evidence": "merged PR #1802",
+   "verified_on": "2026-07-12"
+  },
+  {
+   "id": "USERS-1-PR-B",
+   "status": "DONE",
+   "evidence": "merged PR #2281",
+   "verified_on": "2026-07-12"
   }
  ]
 }

@@ -13,6 +13,11 @@ describe("dispatch alerts routes (B21-D6)", () => {
     expect(src).toContain("listLateArrivalLoads");
   });
 
+  it("asserts company membership before scoping to a client operating_company_id (G2-2 cross-entity leak)", () => {
+    const src = readFileSync(routesPath, "utf8");
+    expect(src).toContain("assertCompanyMembership");
+  });
+
   it("queries dispatch loads with ETA vs scheduled grace in service layer", () => {
     const src = readFileSync(servicePath, "utf8");
     expect(src).toContain("views.dispatch_load_with_driver_status");
