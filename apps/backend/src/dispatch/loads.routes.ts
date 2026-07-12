@@ -590,7 +590,14 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             sp.city AS pickup_city,
             sp.state AS pickup_state,
             sd.city AS delivery_city,
-            sd.state AS delivery_state
+            sd.state AS delivery_state,
+            -- gap-21: Active Load → Invoice reverse linkage (read-only drill-through, §10 Linkage Law).
+            -- Surfaces the load's most-recent non-void invoice so the dispatch board can show billing
+            -- state per load. Pure display enrichment — no write / no GL posting. accounting.invoices is
+            -- already read in this file (credit-limit block), so grants/RLS are established here.
+            inv.invoice_display_id,
+            inv.invoice_status,
+            inv.invoice_amount_open_cents
           FROM views.dispatch_load_with_driver_status l
           JOIN mdata.customers c ON c.id = l.customer_id
           LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
@@ -623,6 +630,18 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             ORDER BY sequence_number DESC
             LIMIT 1
           ) sd ON true
+          LEFT JOIN LATERAL (
+            SELECT
+              i.display_id AS invoice_display_id,
+              i.status AS invoice_status,
+              i.amount_open_cents AS invoice_amount_open_cents
+            FROM accounting.invoices i
+            WHERE i.source_load_id = l.id
+              AND i.operating_company_id = l.operating_company_id
+              AND i.status <> 'void'
+            ORDER BY i.issue_date DESC, i.created_at DESC
+            LIMIT 1
+          ) inv ON true
           ${whereClause}
           ORDER BY sp.scheduled_arrival_at NULLS LAST, l.created_at DESC
           LIMIT $${limitIdx}
