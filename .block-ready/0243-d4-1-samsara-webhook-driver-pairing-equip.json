@@ -1,17 +1,32 @@
 {
   "block_id": "0243-d4-1-samsara-webhook-driver-pairing-equip",
-  "status": "PENDING",
-  "classification": "FINANCIAL",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
   "phase": "tier2",
   "source": "MASTER-6 authored dispatch (05-TIER2-BLOCKS)",
   "source_file": "0243-d4-1-samsara-webhook-driver-pairing-equip.txt",
+  "task": "The Samsara vehicle-driver-pairing WEBHOOK path (telematics/vehicle-driver-lookup.service.ts resolveLocalIds) resolved the local unit ONLY via mdata.equipment.samsara_vehicle_id -> current_unit_id, with no mdata.units.samsara_vehicle_id PRIMARY lookup. Because mdata.equipment.samsara_vehicle_id is usually unpopulated, webhook-delivered driver logins dropped until the 5-min reconcile poll papered over them. FIX: mirror the proven units-primary -> equipment-fallback pattern already used by integrations/samsara/vehicle-driver-pairing/pairing.service.ts resolveLocalUnitAndDriver. Reads mdata.units/mdata.equipment; writes telematics.vehicle_driver_assignments (non-financial).",
+  "branch": "fix/0243-nonfin-batch",
   "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
+    "apps/backend/src/telematics/vehicle-driver-lookup.service.ts",
+    "scripts/verify-samsara-webhook-unit-fallback.mjs",
+    "scripts/verify-steps/119-verify-samsara-webhook-unit-fallback.mjs",
+    "package.json",
+    ".github/workflows/locked-guards.yml"
   ],
   "acceptance": [
     {
-      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
+      "kind": "guard",
+      "script": "scripts/verify-samsara-webhook-unit-fallback.mjs",
+      "wired_into": "verify-steps/119 + locked-guards.yml + package.json verify:samsara-webhook-unit-fallback"
+    },
+    {
+      "kind": "live",
+      "assert": "backend tsc 0 errors; guard --selftest passes (units-primary clears, equipment-only fails); scan green; pattern copied verbatim from pairing.service.ts resolveLocalUnitAndDriver."
     }
   ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+  "linkage": "mdata.units (PRIMARY read) / mdata.equipment (fallback read) -> telematics.vehicle_driver_assignments; entity-scoped COALESCE(currently_leased_to_company_id, owner_company_id); driver<->unit pairing continuity.",
+  "db_required": false,
+  "guard_required": true,
+  "note": "Verified against live code: resolveLocalIds was equipment-only while pairing.service.ts already had units-primary. Non-financial read-path resilience; no accounting/catalogs/mdata write, no migration."
 }

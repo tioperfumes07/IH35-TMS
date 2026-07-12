@@ -134,19 +134,38 @@ async function resolveLocalIds(client: DbClient, event: SamsaraWebhookEvent, fal
   const samsaraVehicleId = extractSamsaraVehicleId(event, fallbackVehicleId);
   if (!samsaraVehicleId) return null;
 
-  const unitRes = await client.query<{ unit_id: string }>(
+  // 0243-d4-1: PRIMARY — resolve the unit on the SAME key the fleet board + position ingest use
+  // (mdata.units.samsara_vehicle_id), mirroring pairing.service.ts resolveLocalUnitAndDriver. The old
+  // equipment-only lookup dropped webhook-delivered driver logins whenever mdata.equipment.samsara_vehicle_id
+  // was unpopulated (the common case), papered over only by the 5-min reconcile poll.
+  const unitsRes = await client.query<{ unit_id: string }>(
     `
-      SELECT e.current_unit_id::text AS unit_id
-      FROM mdata.equipment e
-      WHERE COALESCE(e.currently_leased_to_company_id, e.owner_company_id) = $1::uuid
-        AND e.samsara_vehicle_id = $2
-        AND e.current_unit_id IS NOT NULL
-      ORDER BY e.updated_at DESC NULLS LAST, e.created_at DESC
+      SELECT id::text AS unit_id
+      FROM mdata.units
+      WHERE COALESCE(currently_leased_to_company_id, owner_company_id) = $1::uuid
+        AND samsara_vehicle_id = $2
+        AND deactivated_at IS NULL
       LIMIT 1
     `,
     [event.operating_company_id, samsaraVehicleId]
   );
-  const unitId = unitRes.rows[0]?.unit_id;
+  let unitId = unitsRes.rows[0]?.unit_id;
+  if (!unitId) {
+    // FALLBACK: legacy equipment-keyed mapping (kept so nothing that worked before regresses).
+    const unitRes = await client.query<{ unit_id: string }>(
+      `
+        SELECT e.current_unit_id::text AS unit_id
+        FROM mdata.equipment e
+        WHERE COALESCE(e.currently_leased_to_company_id, e.owner_company_id) = $1::uuid
+          AND e.samsara_vehicle_id = $2
+          AND e.current_unit_id IS NOT NULL
+        ORDER BY e.updated_at DESC NULLS LAST, e.created_at DESC
+        LIMIT 1
+      `,
+      [event.operating_company_id, samsaraVehicleId]
+    );
+    unitId = unitRes.rows[0]?.unit_id;
+  }
   if (!unitId) return null;
 
   const samsaraDriverId = extractSamsaraDriverId(event);

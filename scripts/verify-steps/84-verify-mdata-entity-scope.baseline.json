@@ -1016,6 +1016,11 @@
       "preview": "` SELECT e.current_unit_id::text AS unit_id FROM mdata.equipment e WHERE COALESCE(e.currently_leased_to_company_id, e.ow"
     },
     {
+      "key": "apps/backend/src/telematics/vehicle-driver-lookup.service.ts#8cb1a694b5e88f48dfb5a00ce932869287f2967d",
+      "file": "apps/backend/src/telematics/vehicle-driver-lookup.service.ts",
+      "preview": "` SELECT id::text AS unit_id FROM mdata.units WHERE COALESCE(currently_leased_to_company_id, owner_company_id) = $1::uui"
+    },
+    {
       "key": "apps/backend/src/telematics/vehicle-driver-pairing.routes.ts#4d648545a7bef1055dfac775427d039b347f03b3",
       "file": "apps/backend/src/telematics/vehicle-driver-pairing.routes.ts",
       "preview": "` SELECT a.id::text, a.unit_id::text, u.unit_number, a.driver_id::text, CASE WHEN d.id IS NULL THEN NULL ELSE trim(conca"

@@ -25,6 +25,10 @@ jobs:
         run: node scripts/verify-dispatch-notify-prefs-onerror.mjs --selftest
       - name: verify:dispatch-notify-prefs-onerror
         run: npm run verify:dispatch-notify-prefs-onerror
+      - name: verify:samsara-webhook-unit-fallback --selftest
+        run: node scripts/verify-samsara-webhook-unit-fallback.mjs --selftest
+      - name: verify:samsara-webhook-unit-fallback
+        run: npm run verify:samsara-webhook-unit-fallback
       - name: verify:block-acceptance (G2 self-test)
         run: node scripts/verify-block-acceptance.mjs --selftest
       - name: verify:block-acceptance

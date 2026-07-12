@@ -866,6 +866,7 @@
     "verify:dead-forms-unmounted": "node scripts/verify-dead-forms-unmounted.mjs",
     "verify:reference-dropdown-inline-create": "node scripts/verify-reference-dropdown-inline-create.mjs",
     "verify:list-error-state-coverage": "node scripts/verify-list-error-state-coverage.mjs",
+    "verify:samsara-webhook-unit-fallback": "node scripts/verify-samsara-webhook-unit-fallback.mjs",
     "verify:referenceselect-coverage-ratchet": "node scripts/verify-referenceselect-coverage-ratchet.mjs",
     "verify:banking-designview-qbo-parity": "node scripts/verify-banking-designview-qbo-parity.mjs",
     "verify:filter-input-aria-labels": "node scripts/verify-filter-input-aria-labels.mjs",
