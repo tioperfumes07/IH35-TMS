@@ -104,7 +104,7 @@ export function DriverPaymentMethodsCard({ driverId, companyId }: { driverId: st
           <label className="grid gap-1">
             <span className="font-semibold text-gray-600">Method</span>
             <select
-              className="h-8 rounded-sm border border-gray-300 px-2"
+              className="h-10 rounded-sm border border-gray-300 px-2"
               value={form.method}
               onChange={(e) => setForm((p) => ({ ...p, method: e.target.value as DriverPaymentMethod["method"] }))}
             >
@@ -115,7 +115,7 @@ export function DriverPaymentMethodsCard({ driverId, companyId }: { driverId: st
           <label className="grid gap-1">
             <span className="font-semibold text-gray-600">Account holder</span>
             <input
-              className="h-8 rounded-sm border border-gray-300 px-2"
+              className="h-10 rounded-sm border border-gray-300 px-2"
               value={form.account_holder_name ?? ""}
               onChange={(e) => setForm((p) => ({ ...p, account_holder_name: e.target.value }))}
               placeholder="Name on account"
@@ -126,7 +126,7 @@ export function DriverPaymentMethodsCard({ driverId, companyId }: { driverId: st
               <label className="grid gap-1">
                 <span className="font-semibold text-gray-600">Bank token (from vault) *</span>
                 <input
-                  className="h-8 rounded-sm border border-gray-300 px-2"
+                  className="h-10 rounded-sm border border-gray-300 px-2"
                   value={form.account_token ?? ""}
                   onChange={(e) => setForm((p) => ({ ...p, account_token: e.target.value }))}
                   placeholder="tok_… (tokenized reference; no raw account #)"
@@ -136,7 +136,7 @@ export function DriverPaymentMethodsCard({ driverId, companyId }: { driverId: st
                 <label className="grid gap-1">
                   <span className="font-semibold text-gray-600">Routing last 4</span>
                   <input
-                    className="h-8 rounded-sm border border-gray-300 px-2"
+                    className="h-10 rounded-sm border border-gray-300 px-2"
                     value={form.routing_last4 ?? ""}
                     onChange={(e) => setForm((p) => ({ ...p, routing_last4: e.target.value }))}
                     placeholder="1234"
@@ -146,7 +146,7 @@ export function DriverPaymentMethodsCard({ driverId, companyId }: { driverId: st
                 <label className="grid gap-1">
                   <span className="font-semibold text-gray-600">Account last 4</span>
                   <input
-                    className="h-8 rounded-sm border border-gray-300 px-2"
+                    className="h-10 rounded-sm border border-gray-300 px-2"
                     value={form.account_last4 ?? ""}
                     onChange={(e) => setForm((p) => ({ ...p, account_last4: e.target.value }))}
                     placeholder="5678"
@@ -178,7 +178,8 @@ export function DriverPaymentMethodsCard({ driverId, companyId }: { driverId: st
         </div>
       ) : null}
 
-      <table className="mt-3 w-full text-left text-xs">
+      <div className="mt-3 overflow-x-auto">
+      <table className="w-full text-left text-xs">
         <thead>
           <tr className="text-gray-500">
             <th className="py-1">Method</th>
@@ -241,6 +242,7 @@ export function DriverPaymentMethodsCard({ driverId, companyId }: { driverId: st
           )}
         </tbody>
       </table>
+      </div>
     </section>
   );
 }
