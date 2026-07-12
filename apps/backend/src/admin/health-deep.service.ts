@@ -158,7 +158,7 @@ async function probeQboCompanyInfo(): Promise<void> {
   const ctx = resolveQboRealmAndToken();
   if (!ctx) throw new Error("qbo_credentials_missing");
 
-  const url = `https://quickbooks.api.intuit.com/v3/company/${encodeURIComponent(ctx.realmId)}/companyinfo/${encodeURIComponent(ctx.realmId)}?minorversion=65`;
+  const url = `https://quickbooks.api.intuit.com/v3/company/${encodeURIComponent(ctx.realmId)}/companyinfo/${encodeURIComponent(ctx.realmId)}?minorversion=75`;
   const res = await fetch(url, {
     method: "GET",
     headers: {
