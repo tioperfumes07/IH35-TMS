@@ -591,3 +591,8 @@ jobs:
         run: node scripts/verify-relay-cron-registered.mjs --selftest
       - name: verify:relay-cron-registered
         run: npm run verify:relay-cron-registered
+
+      - name: verify:relay-backfill-route-mounted --selftest
+        run: node scripts/verify-relay-backfill-route-mounted.mjs --selftest
+      - name: verify:relay-backfill-route-mounted
+        run: npm run verify:relay-backfill-route-mounted

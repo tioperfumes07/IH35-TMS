@@ -26,6 +26,7 @@ import { registerIntegrationHealthRoutes } from "./integrations/integration-heal
 import { initializeDataSovereigntyDailySync } from "./integrations/samsara/daily-sync-job.js";
 import { registerSamsaraEngineFaultRoutes } from "./integrations/samsara/engine-faults/routes.js";
 import { registerSamsaraWebhookRoutes } from "./integrations/samsara/samsara-webhook.routes.js";
+import { registerRelayFuelBackfillRoute } from "./integrations/relay-payments/relay-fuel-backfill.routes.js";
 import { registerSamsaraVendorMappingActionsRoutes } from "./integrations/samsara/vendor-mapping-actions.routes.js";
 import { registerSamsaraVendorMappingIntegrityRoutes } from "./integrations/samsara/vendor-mapping.routes.js";
 import { registerDriverVendorMappingIntegrityRoutes } from "./integrations/integrity-monitors/driver-vendor-mapping.routes.js";
@@ -641,6 +642,7 @@ async function main() {
   await registerQboOAuthRoutes(app);
   await registerQboWebhookRoutes(app);
   await registerSamsaraWebhookRoutes(app);
+  await registerRelayFuelBackfillRoute(app);
   await registerSamsaraEngineFaultRoutes(app);
   await registerSamsaraConfigRoutes(app);
   await registerSamsaraLivePositionRoutes(app);
