@@ -668,6 +668,14 @@
     {
       "file": "apps/backend/src/accounting/ap-import/qbo-ap-import-preview.service.ts",
       "reason": "AF-4 A/P import PREVIEW scaffold (flag OFF, read-only QBO pull — no money-moving write, no GL/expense posting). Its INSERTs into accounting.ap_import_batches / ap_import_preview_lines ARE the append-only audit trail of each review cycle (who ran it, when, QBO as-of, totals, approve/reject disposition), void-not-delete with REVOKE UPDATE/DELETE on the preview lines — the tables themselves are the audit record, not a separate spine-auditable business commit. Same disposition as the FIN-18 bucket-ledger and ratecon-extraction append-only-artifact entries above; the spine-auditable event is the downstream approved A/P bill creation that consumes an approved batch."
+    },
+    {
+      "file": "apps/backend/src/integrations/relay-payments/relay-deposit-classifier.service.ts",
+      "reason": "Relay deposit STAGING ingest (Part B) — the upsert into integrations.relay_deposits IS the append-only staging record of a Relay-wallet funding row (posted_to_gl stays false, NO financial commit); void-not-delete via is_active/voided_at. Same disposition as relay-fuel-ingest.service.ts (sibling staging ingest). The spine-auditable financial event is the DEFERRED Part-B booking, which is HELD."
+    },
+    {
+      "file": "apps/backend/src/integrations/relay-payments/relay-deposit-review.routes.ts",
+      "reason": "Relay deposit review queue (Part B) — display + owner-editable company-card config over the same staging rows; the classification UPDATE is a non-financial status snapshot (posted_to_gl untouched), the company-card upsert is config. No GL/financial commit. Same disposition as relay-deposit-classifier.service.ts."
     }
   ]
 }

@@ -14,6 +14,7 @@ import { requireAuth } from "../../auth/session-middleware.js";
 import { withLuciaBypass } from "../../auth/db.js";
 import { parseRelayFuelTransactionRow } from "./relay-client.js";
 import { upsertRelayFuelTransaction } from "./relay-fuel-ingest.service.js";
+import { loadCompanyCardSet, upsertRelayDeposit } from "./relay-deposit-classifier.service.js";
 
 // RFC-4180-ish CSV parser: quoted fields, embedded commas/quotes/newlines.
 function parseCsv(text: string): string[][] {
@@ -125,13 +126,38 @@ export async function registerRelayFuelCsvImportRoute(app: FastifyInstance) {
     const header = rows[0].map((h) => h.trim());
     const idx = new Map(header.map((h, i) => [h, i]));
 
-    let imported = 0, skipped = 0, lines = 0;
+    let imported = 0, skipped = 0, lines = 0, deposits = 0, depositCompany = 0, depositUnclassified = 0;
     await withLuciaBypass(async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [opco]);
+      // Owner-editable company-card set — used to classify deposit funding sources (Part B). Loaded once.
+      const companyCards = await loadCompanyCardSet(client, opco);
       for (let i = 1; i < rows.length; i++) {
         const r = rows[i];
         if (!r || r.length < 3) { continue; }
         const g = (name: string) => (idx.has(name) ? r[idx.get(name)!] : undefined);
+        const rowType = String(g("type") ?? "").trim().toLowerCase();
+
+        // type=deposit → Relay-wallet FUNDING (money put INTO Relay), NOT fuel. Classify + store only;
+        // never posts. External/unknown-card deposits land in the owner-review queue (classification).
+        if (rowType === "deposit") {
+          const depId = String(g("id") ?? "").trim();
+          const created = toIso(g("processing time"), g("work_date"));
+          const total = g("total") ?? g("amount");
+          if (!depId || !created || total == null || String(total).trim() === "") { skipped++; continue; }
+          const rowObj: Record<string, string> = {};
+          for (const [h, ci] of idx) rowObj[h] = r[ci] ?? "";
+          const dres = await upsertRelayDeposit(
+            client, opco,
+            { deposit_id: depId, relay_created_at: created, status: String(g("status") ?? ""), total_amount: String(total), note: (g("Note") ?? null) as string | null, raw: rowObj },
+            companyCards, "csv_import"
+          );
+          deposits++;
+          if (dres.classification === "company") depositCompany++;
+          else if (dres.classification === "unclassified") depositUnclassified++;
+          continue;
+        }
+
+        // type=code → fuel purchased at the pump.
         const raw = csvRowToApiShape(g);
         const tx = raw ? parseRelayFuelTransactionRow(raw) : null;
         if (!tx) { skipped++; continue; }
@@ -141,7 +167,7 @@ export async function registerRelayFuelCsvImportRoute(app: FastifyInstance) {
         void res;
       }
     });
-    app.log.info({ operating_company_id: opco, imported, skipped, lines, role }, "[RELAY_FUEL_CSV_IMPORT] complete");
-    return reply.code(200).send({ status: "imported", operating_company_id: opco, imported, skipped, lines });
+    app.log.info({ operating_company_id: opco, imported, skipped, lines, deposits, depositCompany, depositUnclassified, role }, "[RELAY_FUEL_CSV_IMPORT] complete");
+    return reply.code(200).send({ status: "imported", operating_company_id: opco, imported, skipped, lines, deposits, depositCompany, depositUnclassified });
   });
 }

@@ -26,6 +26,7 @@ import { CompliancePanel } from "./components/CompliancePanel";
 import { FuelGlMappingCoverage } from "./components/FuelGlMappingCoverage";
 import { FuelKpiRow } from "./components/FuelKpiRow";
 import { HosRulesBox } from "./components/HosRulesBox";
+import { RelayDepositReview } from "./components/RelayDepositReview";
 import { RouteDiagramSvg } from "./components/RouteDiagramSvg";
 import { SavingsPanel } from "./components/SavingsPanel";
 import { StopReasoningTable } from "./components/StopReasoningTable";
@@ -183,11 +184,11 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
       {tab === "home" ? <FuelHomePage /> : null}
 
       {tab === "relay_inbox" ? (
-        <section className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-700">
+        <div className="space-y-3">
+          {/* Keep the locked "Relay inbox" named section (verify-architectural-design), then the review queue. */}
           <h3 className="text-sm font-semibold text-gray-900">Relay inbox</h3>
-          <p className="mt-2 text-xs text-gray-600">Incoming Relay fuel-card transactions and exception review queue.</p>
-          <p className="mt-2 text-xs text-gray-500">No pending Relay items for the selected company.</p>
-        </section>
+          <RelayDepositReview companyId={companyId} />
+        </div>
       ) : null}
 
       {tab === "settings" ? (
