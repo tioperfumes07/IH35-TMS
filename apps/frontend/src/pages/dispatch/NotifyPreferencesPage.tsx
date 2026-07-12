@@ -13,6 +13,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { useToast } from "../../components/Toast";
 
 function PrefToggle({
   label,
@@ -88,6 +89,7 @@ export function NotifyPreferencesPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
+  const { pushToast } = useToast();
   const [customerId, setCustomerId] = useState("");
 
   const customersQuery = useQuery({
@@ -114,12 +116,21 @@ export function NotifyPreferencesPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customer-notify-prefs", companyId, customerId] });
     },
+    onError: (error) => {
+      // Previously silent: a failed toggle looked like it saved. Surface the error and refetch so the
+      // toggle reverts to the true persisted state.
+      pushToast(error instanceof Error ? error.message : "Could not save notification preference", "error");
+      queryClient.invalidateQueries({ queryKey: ["customer-notify-prefs", companyId, customerId] });
+    },
   });
 
   const syncM = useMutation({
     mutationFn: () => syncCustomerNotify(companyId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customer-notify-log", companyId] });
+    },
+    onError: (error) => {
+      pushToast(error instanceof Error ? error.message : "Notification sync failed", "error");
     },
   });
 

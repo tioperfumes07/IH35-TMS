@@ -1,7 +1,7 @@
 import { DndContext, type DragEndEvent, useDraggable, useDroppable } from "@dnd-kit/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   getDispatchPlannerWeek,
   patchDispatchPlannerLoadStartAt,
@@ -11,6 +11,7 @@ import {
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { LoadTemplateLibrary } from "./LoadTemplateLibrary";
 
 function dayKey(date: Date): string {
   return date.toISOString().slice(0, 10);
@@ -113,6 +114,20 @@ export function PlannerCalendarPage() {
   const { pushToast } = useToast();
   const [weekStart, setWeekStart] = useState(() => dayKey(parseWeekStart()));
   const [showHosOverlay, setShowHosOverlay] = useState(true);
+  // Load Templates library — openable from the Dispatch subnav deep-link (?panel=templates) and the
+  // header button. Previously the subnav "Load Templates" link landed here with no template UI (dead nav).
+  const [searchParams, setSearchParams] = useSearchParams();
+  const templatesOpen = searchParams.get("panel") === "templates";
+  const openTemplates = () => {
+    const next = new URLSearchParams(searchParams);
+    next.set("panel", "templates");
+    setSearchParams(next, { replace: true });
+  };
+  const closeTemplates = () => {
+    const next = new URLSearchParams(searchParams);
+    next.delete("panel");
+    setSearchParams(next, { replace: true });
+  };
 
   const weekQ = useQuery({
     queryKey: ["dispatch", "planner-week", companyId, weekStart],
@@ -196,12 +211,21 @@ export function PlannerCalendarPage() {
               />
               HOS overlay
             </label>
+            <button
+              type="button"
+              className="rounded-sm border px-3 py-1.5 text-sm"
+              onClick={openTemplates}
+            >
+              Load Templates
+            </button>
             <Link to="/dispatch" className="rounded-sm border px-3 py-1.5 text-sm">
               Dispatch Home
             </Link>
           </div>
         }
       />
+
+      <LoadTemplateLibrary open={templatesOpen} onClose={closeTemplates} operatingCompanyId={companyId} />
 
       <section className="overflow-x-auto rounded-sm border bg-white">
         {weekQ.isLoading ? (
