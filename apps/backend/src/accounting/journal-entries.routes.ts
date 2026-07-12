@@ -167,6 +167,9 @@ export async function registerJournalEntryRoutes(app: FastifyInstance) {
       if (message === "forbidden_void_owner_or_accountant_only") return reply.code(403).send({ error: message });
       if (message === "void_reason_required") return reply.code(400).send({ error: message });
       if (message === "journal_entry_not_found") return reply.code(404).send({ error: message });
+      // HELD reversal-linkage migration not yet applied on this env → temporarily unavailable (self-heals
+      // once the migration lands; the per-entity flag makes this effectively unreachable in practice).
+      if (message === "journal_entry_reversal_columns_unavailable") return reply.code(503).send({ error: message });
       // Option-1 reversing-void conflicts + AF-7 money-control kill switch OFF → 409 policy errors.
       if (
         message === "journal_entry_not_postable" ||
