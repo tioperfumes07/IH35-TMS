@@ -25,6 +25,12 @@ export type DispatcherHomeActiveLoad = {
   delivery_city: string | null;
   is_late: boolean;
   detention_expected: boolean;
+  // 0280-03 / 0280-09 — load↔driver↔unit linkage (LINKAGE LAW §10d): surface the
+  // assigned driver + power unit so the Active-loads widget drills through to each.
+  driver_id: string | null;
+  driver_name: string | null;
+  unit_id: string | null;
+  unit_number: string | null;
 };
 
 export type DispatcherHomePendingActions = {
@@ -172,9 +178,15 @@ async function loadActiveLoads(
           l.status IN ('assigned_not_dispatched', 'dispatched', 'in_transit')
           AND COALESCE(pickup.scheduled_arrival_at, delivery.scheduled_arrival_at) < now()
         ) AS is_late,
-        COALESCE(l.detention_expected_y_n, false) AS detention_expected
+        COALESCE(l.detention_expected_y_n, false) AS detention_expected,
+        l.assigned_primary_driver_id::text AS driver_id,
+        NULLIF(TRIM(CONCAT_WS(' ', dr.first_name, dr.last_name)), '')::text AS driver_name,
+        l.assigned_unit_id::text AS unit_id,
+        u.unit_number::text AS unit_number
       FROM mdata.loads l
       JOIN mdata.customers c ON c.id = l.customer_id
+      LEFT JOIN mdata.drivers dr ON dr.id = l.assigned_primary_driver_id
+      LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
       LEFT JOIN LATERAL (
         SELECT ls.city, ls.scheduled_arrival_at
         FROM mdata.load_stops ls
@@ -209,6 +221,10 @@ async function loadActiveLoads(
     delivery_city: row.delivery_city ? String(row.delivery_city) : null,
     is_late: bool(row.is_late),
     detention_expected: bool(row.detention_expected),
+    driver_id: row.driver_id ? String(row.driver_id) : null,
+    driver_name: row.driver_name ? String(row.driver_name) : null,
+    unit_id: row.unit_id ? String(row.unit_id) : null,
+    unit_number: row.unit_number ? String(row.unit_number) : null,
   }));
 }
 

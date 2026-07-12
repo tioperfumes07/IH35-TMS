@@ -560,3 +560,8 @@ jobs:
         run: node scripts/verify-manual-txn-date-patch.mjs --selftest
       - name: verify:manual-txn-date-patch
         run: npm run verify:manual-txn-date-patch
+
+      - name: verify:owner-home-linkage --selftest
+        run: node scripts/verify-owner-home-linkage.mjs --selftest
+      - name: verify:owner-home-linkage
+        run: npm run verify:owner-home-linkage

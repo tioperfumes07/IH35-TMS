@@ -9,6 +9,12 @@ export type DispatcherActiveLoadRow = {
   delivery_city: string | null;
   is_late: boolean;
   detention_expected: boolean;
+  // 0280-03 / 0280-09 — load↔driver↔unit linkage: each active load drills through
+  // to its assigned driver profile and power unit (LINKAGE LAW §10d, forward links).
+  driver_id: string | null;
+  driver_name: string | null;
+  unit_id: string | null;
+  unit_number: string | null;
 };
 
 type DispatcherActiveLoadsPanelProps = {
@@ -61,6 +67,28 @@ export function DispatcherActiveLoadsPanel({ rows, isLoading, isError, onRetry }
               <span className="min-w-40 flex-1 truncate text-slate-900">{row.customer_name}</span>
               <span className="min-w-0 truncate text-xs text-slate-500">
                 {row.pickup_city ?? "—"} to {row.delivery_city ?? "—"}
+              </span>
+              <span className="min-w-0 shrink-0 truncate text-xs text-slate-500">
+                {row.driver_id ? (
+                  <Link
+                    to={`/drivers/${encodeURIComponent(row.driver_id)}`}
+                    className="single-line-name text-slate-700 hover:underline"
+                    title={row.driver_name ?? undefined}
+                  >
+                    {row.driver_name ?? "Driver"}
+                  </Link>
+                ) : (
+                  <span className="text-slate-400">Unassigned</span>
+                )}
+              </span>
+              <span className="shrink-0 font-mono text-xs">
+                {row.unit_id ? (
+                  <Link to={`/fleet/units/${encodeURIComponent(row.unit_id)}`} className="text-slate-700 hover:underline">
+                    {row.unit_number ?? "Unit"}
+                  </Link>
+                ) : (
+                  <span className="text-slate-400">—</span>
+                )}
               </span>
               <span className={`rounded-sm px-2 py-0.5 text-[11px] font-semibold ${badgeClass(row.is_late, row.detention_expected)}`}>
                 {badgeLabel(row.is_late, row.detention_expected)}
