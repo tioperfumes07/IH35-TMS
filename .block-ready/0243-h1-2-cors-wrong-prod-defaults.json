@@ -1,17 +1,33 @@
 {
   "block_id": "0243-h1-2-cors-wrong-prod-defaults",
-  "status": "PENDING",
-  "classification": "FINANCIAL",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
   "phase": "tier3",
   "source": "MASTER-6 authored dispatch (06-TIER3-BLOCKS)",
   "source_file": "0243-h1-2-cors-wrong-prod-defaults.txt",
+  "task": "The code-default CORS origin list diverged: index.ts getAllowedOrigins() OMITTED the real prod frontend origin https://app.ih35dispatch.com and baked in localhost unconditionally, while config/cors-allowed-origins.ts kept a second, different default — so correctness hinged entirely on the unversioned Render CORS_ALLOWED_ORIGINS env var and a silent dev fallback if unset. FIX: consolidate to one source of truth (config/cors-allowed-origins.ts) with prod origins (app + api .ih35dispatch.com + render hosts) versioned in code, localhost gated to non-production, and a FAIL-LOUD throw when CORS_ALLOWED_ORIGINS is unset in production. index.ts now delegates to getCorsAllowedOrigins(). Non-financial backend security config.",
+  "branch": "fix/0243-nonfin-batch",
   "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
+    "apps/backend/src/config/cors-allowed-origins.ts",
+    "apps/backend/src/index.ts",
+    "scripts/verify-cors-prod-defaults.mjs",
+    "scripts/verify-steps/116-verify-cors-prod-defaults.mjs",
+    "package.json",
+    ".github/workflows/locked-guards.yml"
   ],
   "acceptance": [
     {
-      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
+      "kind": "guard",
+      "script": "scripts/verify-cors-prod-defaults.mjs",
+      "wired_into": "verify-steps/116 + locked-guards.yml + package.json verify:cors-prod-defaults"
+    },
+    {
+      "kind": "live",
+      "assert": "backend tsc 0 errors; guard --selftest passes; scan asserts config lists both prod origins, fails loud in production when env unset, and index.ts carries no divergent localhost default (delegates to getCorsAllowedOrigins)."
     }
   ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+  "linkage": "N/A — backend CORS/CSRF-origin boundary config; single source of truth shared by index.ts CORS registration, csrf-origin-guard, forensic-live and notifications-stream routes.",
+  "db_required": false,
+  "guard_required": true,
+  "note": "Verified against live code: index.ts default omitted app.ih35dispatch.com and diverged from the config file. Non-financial config hardening; no schema/data/migration."
 }
