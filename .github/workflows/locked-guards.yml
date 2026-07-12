@@ -649,3 +649,7 @@ jobs:
         run: node scripts/verify-chain07-settlements-redirect.mjs --selftest
       - name: verify:chain07-settlements-redirect
         run: npm run verify:chain07-settlements-redirect
+      - name: verify:held-migrations-not-runnable --selftest
+        run: node scripts/verify-held-migrations-not-runnable.mjs --selftest
+      - name: verify:held-migrations-not-runnable
+        run: npm run verify:held-migrations-not-runnable
