@@ -3,7 +3,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 
 // Canonical driver payment-method master data (driver_finance.driver_payment_methods, migration
-// 202607350000). This is the store the settlement payment path was probing for on mdata.drivers (columns
+// 202607370000). This is the store the settlement payment path was probing for on mdata.drivers (columns
 // that never existed). Master data only — NO GL/posting, NO money movement. Tokenized reference + last4
 // for display; raw account/routing numbers are never persisted here.
 

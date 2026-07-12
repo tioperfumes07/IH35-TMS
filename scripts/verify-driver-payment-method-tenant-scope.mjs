@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Driver payment-method master-data guard (canonical driver_finance.driver_payment_methods, migration
- * 202607350000). Locks the invariants so they can't regress:
+ * 202607370000). Locks the invariants so they can't regress:
  *   (1) TABLE: driver_finance.driver_payment_methods created with FORCE ROW LEVEL SECURITY, an
  *       operating_company_id tenant policy (current_setting('app.operating_company_id')), and grants to
  *       ih35_app that DO NOT include DELETE (void-not-delete via is_active/voided_at).
@@ -21,7 +21,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-driver-payment-method-tenant-scope";
-const MIGRATION = "db/migrations/202607350000_driver_payment_methods.sql";
+const MIGRATION = "db/migrations/202607370000_driver_payment_methods.sql";
 const SETTLEMENT_PAY = "apps/backend/src/driver-finance/settlement-payment.service.ts";
 const PM_SERVICE = "apps/backend/src/driver-finance/driver-payment-methods.service.ts";
 const FLAG_SERVICE = "apps/backend/src/lib/feature-flags/service.ts";
