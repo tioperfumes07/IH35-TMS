@@ -11,6 +11,7 @@ import {
 } from "../../api/accounting";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Button } from "../../components/Button";
+import { ConfirmModal } from "../../components/shared/ConfirmModal";
 import { useToast } from "../../components/Toast";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { useListState } from "../../components/list-state";
@@ -49,6 +50,7 @@ export function ExpenseCategoryMapPage() {
   const { pushToast } = useToast();
   const [showAddModal, setShowAddModal] = useState(false);
   const [includeInactive, setIncludeInactive] = useState(false);
+  const [deactivateTarget, setDeactivateTarget] = useState<string | null>(null);
   const [form, setForm] = useState<AddFormState>(DEFAULT_FORM);
 
   const mapQuery = useQuery({
@@ -188,10 +190,7 @@ export function ExpenseCategoryMapPage() {
                       size="sm"
                       variant="danger"
                       loading={deactivateMutation.isPending}
-                      onClick={() => {
-                        if (!window.confirm("Deactivate this mapping? This is a soft delete.")) return;
-                        deactivateMutation.mutate(row.id);
-                      }}
+                      onClick={() => setDeactivateTarget(row.id)}
                     >
                       Deactivate
                     </Button>
@@ -300,6 +299,19 @@ export function ExpenseCategoryMapPage() {
           </div>
         </div>
       ) : null}
+      <ConfirmModal
+        open={Boolean(deactivateTarget)}
+        title="Deactivate mapping"
+        message="Deactivate this mapping? This is a soft delete — it is not removed."
+        confirmLabel="Deactivate"
+        danger
+        onClose={() => setDeactivateTarget(null)}
+        onConfirm={async () => {
+          if (!deactivateTarget) return;
+          await deactivateMutation.mutateAsync(deactivateTarget);
+          setDeactivateTarget(null);
+        }}
+      />
     </AccountingSubNavWrapper>
   );
 }

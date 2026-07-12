@@ -6,6 +6,7 @@ import { listVendorBalances, listVendorBills, getVendorBill, voidVendorBillPayme
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { Button } from "../../components/Button";
+import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useAuth } from "../../auth/useAuth";
 import { useToast } from "../../components/Toast";
@@ -33,6 +34,7 @@ export function VendorBalancesPage() {
   const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
   const [selectedBillId, setSelectedBillId] = useState<string | null>(null);
   const [payModalOpen, setPayModalOpen] = useState(false);
+  const [voidTarget, setVoidTarget] = useState<string | null>(null);
   const [multiPayModalOpen, setMultiPayModalOpen] = useState(false);
 
   const balancesQuery = useQuery({
@@ -171,22 +173,7 @@ export function VendorBalancesPage() {
                 <div className="mt-1 flex items-center justify-between">
                   <span className="text-[11px] text-gray-500">By {payment.created_by_user_id ? payment.created_by_user_id.slice(0, 8) : "system"}</span>
                   {ownerOnly ? (
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={() => {
-                        const reason = window.prompt("Void reason");
-                        if (!reason) return;
-                        void voidVendorBillPayment(payment.id, companyId, reason)
-                          .then(() => {
-                            pushToast("Bill payment voided", "success");
-                            void queryClient.invalidateQueries({ queryKey: ["accounting", "vendor-balances", companyId] });
-                            void queryClient.invalidateQueries({ queryKey: ["accounting", "vendor-bills", companyId, selectedVendorId] });
-                            void queryClient.invalidateQueries({ queryKey: ["accounting", "vendor-bill-detail", companyId, selectedBillId] });
-                          })
-                          .catch((error) => pushToast(String((error as Error)?.message ?? "Void failed"), "error"));
-                      }}
-                    >
+                    <Button size="sm" variant="secondary" onClick={() => setVoidTarget(payment.id)}>
                       Void
                     </Button>
                   ) : null}
@@ -225,6 +212,21 @@ export function VendorBalancesPage() {
           }}
         />
       ) : null}
+      <VoidReasonModal
+        open={Boolean(voidTarget)}
+        title="Void Bill Payment"
+        minLength={1}
+        onClose={() => setVoidTarget(null)}
+        onSubmit={async (reason) => {
+          if (!voidTarget) return;
+          await voidVendorBillPayment(voidTarget, companyId, reason);
+          pushToast("Bill payment voided", "success");
+          void queryClient.invalidateQueries({ queryKey: ["accounting", "vendor-balances", companyId] });
+          void queryClient.invalidateQueries({ queryKey: ["accounting", "vendor-bills", companyId, selectedVendorId] });
+          void queryClient.invalidateQueries({ queryKey: ["accounting", "vendor-bill-detail", companyId, selectedBillId] });
+          setVoidTarget(null);
+        }}
+      />
     </div>
   );
 }

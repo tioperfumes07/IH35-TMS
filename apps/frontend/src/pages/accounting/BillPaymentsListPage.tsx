@@ -7,6 +7,7 @@ import { listBillPayments, listBills, type BillPayment, type VendorBill, voidVen
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useAuth } from "../../auth/useAuth";
 import { Button } from "../../components/Button";
+import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useToast } from "../../components/Toast";
@@ -115,6 +116,8 @@ export function BillPaymentsListPage() {
     onError: (error) => pushToast(String((error as Error)?.message ?? "Void failed"), "error"),
   });
 
+  const [voidTarget, setVoidTarget] = useState<string | null>(null);
+
   const canVoid = user?.role === "Owner";
 
   const columns = useMemo<ParityColumn<BillPayment>[]>(
@@ -136,12 +139,7 @@ export function BillPaymentsListPage() {
             <Button
               size="sm"
               variant="secondary"
-              loading={voidMutation.isPending}
-              onClick={() => {
-                const reason = window.prompt("Void reason");
-                if (!reason || reason.trim().length < 3) return;
-                voidMutation.mutate({ paymentId: row.id, reason: reason.trim() });
-              }}
+              onClick={() => setVoidTarget(row.id)}
             >
               Void
             </Button>
@@ -286,6 +284,17 @@ export function BillPaymentsListPage() {
           }}
         />
       ) : null}
+      <VoidReasonModal
+        open={Boolean(voidTarget)}
+        title="Void Bill Payment"
+        minLength={3}
+        onClose={() => setVoidTarget(null)}
+        onSubmit={async (reason) => {
+          if (!voidTarget) return;
+          await voidMutation.mutateAsync({ paymentId: voidTarget, reason });
+          setVoidTarget(null);
+        }}
+      />
     </AccountingSubNavWrapper>
   );
 }

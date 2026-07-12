@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { applyPayment, getPayment, listInvoices, unapplyPayment, voidPayment } from "../../api/accounting";
 import { Button } from "../../components/Button";
+import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { ListErrorState } from "../../components/ListErrorState";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
@@ -81,6 +82,8 @@ export function PaymentDetailPage() {
     },
   });
 
+  const [voidOpen, setVoidOpen] = useState(false);
+
   if (detailQuery.isLoading) return <div className="text-sm text-gray-500">Loading payment...</div>;
   if (detailQuery.isError)
     return (
@@ -107,17 +110,21 @@ export function PaymentDetailPage() {
           <div className="flex items-center gap-2">
             {isVoided ? <StatusBadge variant="neutral">voided</StatusBadge> : null}
             {!isVoided ? (
-              <Button
-                variant="danger"
-                onClick={() => {
-                  const reason = window.prompt("Void reason");
-                  if (!reason) return;
-                  voidMutation.mutate(reason);
-                }}
-                loading={voidMutation.isPending}
-              >
-                Void
-              </Button>
+              <>
+                <Button variant="danger" onClick={() => setVoidOpen(true)}>
+                  Void
+                </Button>
+                <VoidReasonModal
+                  open={voidOpen}
+                  title="Void Payment"
+                  minLength={1}
+                  onClose={() => setVoidOpen(false)}
+                  onSubmit={async (reason) => {
+                    await voidMutation.mutateAsync(reason);
+                    setVoidOpen(false);
+                  }}
+                />
+              </>
             ) : null}
           </div>
         }

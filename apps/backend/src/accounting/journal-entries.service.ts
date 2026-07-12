@@ -5,13 +5,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { pushJournalEntryToQuickBooksImmediateBestEffort } from "./journal-entry-qbo-push.service.js";
-import {
-  auditVoid,
-  canVoid,
-  isVoidEnforcementEnabled,
-  postVoidReversal,
-  type VoidReversalResult,
-} from "./void.service.js";
+import { auditVoid, canVoid, postVoidReversal } from "./void.service.js";
 
 type JournalEntrySource = "manual" | "auto";
 type JournalEntryStatus = "posted" | "voided";
@@ -243,19 +237,18 @@ export async function voidJournalEntry(
     });
     if (!voidActionEnabled) throw new Error("void_reversal_disabled");
 
-    // VOID-EVERYWHERE (gated): when ON, void posts an equal-and-opposite reversing JE and VOID = Owner+Accountant.
-    // When OFF (default), behaviour is unchanged — Owner-only status flip, no reversing entry.
-    const flagOn = await isVoidEnforcementEnabled(client, operatingCompanyId, actor.userId);
-    if (flagOn) {
-      if (!canVoid(actor.role)) throw new Error("forbidden_void_owner_or_accountant_only");
-      if (!voidReason || !voidReason.trim()) throw new Error("void_reason_required");
-    } else if (actor.role !== "Owner") {
-      throw new Error("forbidden_owner_only");
-    }
+    // Option 1 (NetSuite/QBO reversing-entry model): voiding a posted JE NEVER mutates/flips the original.
+    // It posts a LINKED reversing JE (equal/opposite, status='posted') and records the bidirectional header
+    // link; the original stays status='posted'. The GL reports exclude 'voided' (trial-balance /
+    // balance-sheet / cash-flow / account-register all filter `je.status <> 'voided'`), so a status flip
+    // would SILENTLY DROP the entry from the GL — which is why the flip model is unsafe and this reverses.
+    if (!canVoid(actor.role)) throw new Error("forbidden_void_owner_or_accountant_only");
+    // Mandatory non-empty reason (audit/GAAP requirement) — enforced server-side, not just in the UI.
+    if (!voidReason || !voidReason.trim()) throw new Error("void_reason_required");
 
-    const existingRes = await client.query<{ id: string; status: JournalEntryStatus; entry_date: string }>(
+    const existingRes = await client.query<{ id: string; status: JournalEntryStatus; entry_date: string; reversed_by_je_id: string | null }>(
       `
-        SELECT id, status, entry_date::text AS entry_date
+        SELECT id, status, entry_date::text AS entry_date, reversed_by_je_id::text AS reversed_by_je_id
         FROM accounting.journal_entries
         WHERE id = $1
           AND operating_company_id = $2
@@ -266,72 +259,49 @@ export async function voidJournalEntry(
     );
     const existing = existingRes.rows[0];
     if (!existing) throw new Error("journal_entry_not_found");
-    if (existing.status === "voided") throw new Error("journal_entry_already_voided");
+    if (existing.status !== "posted") throw new Error("journal_entry_not_postable");
+    // Double-reversal guard: an original can be reversed at most once.
+    if (existing.reversed_by_je_id) throw new Error("journal_entry_already_reversed");
 
-    let reversal: VoidReversalResult = {
-      reversal_journal_entry_id: null,
-      reversal_date: null,
-      closed_period_reversal: false,
-      reversed_line_count: 0,
-    };
-    if (flagOn) {
-      reversal = await postVoidReversal(
-        client,
-        {
-          operatingCompanyId,
-          entityType: "journal_entry",
-          entityId: journalEntryId,
-          originalDate: existing.entry_date,
-          memo: `Void reversal of journal entry ${journalEntryId}: ${voidReason}`,
-        },
-        { userId: actor.userId }
-      );
-    }
-
-    await client.query(
-      `
-        UPDATE accounting.journal_entries
-        SET status = 'voided',
-            voided_at = now(),
-            voided_by_user_id = $3,
-            void_reason = $4,
-            qbo_sync_pending = true,
-            updated_at = now()
-        WHERE id = $1
-          AND operating_company_id = $2
-      `,
-      [journalEntryId, operatingCompanyId, actor.userId, voidReason]
-    );
-
-    if (flagOn) {
-      await auditVoid(client, actor.userId, "journal_entry", {
-        operatingCompanyId,
-        entityId: journalEntryId,
-        reason: voidReason,
-        reversal,
-      });
-      return {
-        ok: true,
-        reversal_journal_entry_id: reversal.reversal_journal_entry_id,
-        reversal_date: reversal.reversal_date,
-        closed_period_reversal: reversal.closed_period_reversal,
-      };
-    }
-
-    await appendCrudAudit(
+    const reversal = await postVoidReversal(
       client,
-      actor.userId,
-      "accounting.journal_entry.voided",
       {
-        resource_type: "accounting.journal_entries",
-        resource_id: journalEntryId,
-        operating_company_id: operatingCompanyId,
-        void_reason: voidReason,
+        operatingCompanyId,
+        entityType: "journal_entry",
+        entityId: journalEntryId,
+        originalDate: existing.entry_date,
+        memo: `Reversal of journal entry ${journalEntryId}: ${voidReason.trim()}`,
       },
-      "warning",
-      "P5-D4-MANUAL-JE"
+      { userId: actor.userId }
     );
-    return { ok: true };
+    if (!reversal.reversal_journal_entry_id) throw new Error("journal_entry_nothing_to_reverse");
+
+    // Bidirectional header linkage (Linkage-Law). The original is NEVER flipped — status stays 'posted'.
+    await client.query(
+      `UPDATE accounting.journal_entries SET reversed_by_je_id = $2::uuid, updated_at = now()
+         WHERE id = $1 AND operating_company_id = $3`,
+      [journalEntryId, reversal.reversal_journal_entry_id, operatingCompanyId]
+    );
+    await client.query(
+      `UPDATE accounting.journal_entries SET reverses_je_id = $2::uuid, void_reason = $3, updated_at = now()
+         WHERE id = $1 AND operating_company_id = $4`,
+      [reversal.reversal_journal_entry_id, journalEntryId, voidReason.trim(), operatingCompanyId]
+    );
+
+    // Immutable audit-log row (who / when / why).
+    await auditVoid(client, actor.userId, "journal_entry", {
+      operatingCompanyId,
+      entityId: journalEntryId,
+      reason: voidReason.trim(),
+      reversal,
+    });
+
+    return {
+      ok: true,
+      reversal_journal_entry_id: reversal.reversal_journal_entry_id,
+      reversal_date: reversal.reversal_date,
+      closed_period_reversal: reversal.closed_period_reversal,
+    };
   });
 
   // [IMPORT-P0 qbo-import-exclusion] Void of a TMS-origin JE. Both push paths (queue drain + immediate)
@@ -399,6 +369,8 @@ export async function listJournalEntries(input: {
           je.created_by_user_id::text,
           je.voided_at::text,
           je.void_reason,
+          je.reversed_by_je_id::text,
+          je.reverses_je_id::text,
           je.qbo_journal_entry_id,
           je.qbo_sync_pending,
           je.created_at::text,

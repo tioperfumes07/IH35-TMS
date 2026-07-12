@@ -883,6 +883,8 @@ export type JournalEntry = {
   created_by_user_id: string | null;
   voided_at: string | null;
   void_reason: string | null;
+  reversed_by_je_id: string | null;
+  reverses_je_id: string | null;
   qbo_journal_entry_id: string | null;
   qbo_sync_pending: boolean;
   debit_total_cents?: number;

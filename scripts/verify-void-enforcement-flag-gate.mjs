@@ -25,10 +25,13 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SERVICE = "apps/backend/src/accounting/void.service.ts";
 const MIGRATION = "db/migrations/202606141200_void_enforcement_flag.sql";
+// NOTE: journal-entries.service.ts was REMOVED (2026-07-12). JE void moved to the Option-1 NetSuite/QBO
+// reversing-entry model: it ALWAYS posts a linked reversing JE (never a status flip), gated by the AF-7
+// MONEY_CONTROL_VOID_REVERSAL_ENABLED kill switch, not VOID_ENFORCEMENT_ENABLED. Its invariant is locked by
+// verify-je-void-reverses-not-voids.mjs. Invoices/bills keep the VOID_ENFORCEMENT_ENABLED model (this guard).
 const CALLERS = [
   "apps/backend/src/accounting/invoices.routes.ts",
   "apps/backend/src/accounting/bills.service.ts",
-  "apps/backend/src/accounting/journal-entries.service.ts",
 ];
 
 function stripSql(src) {

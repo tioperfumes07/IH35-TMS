@@ -10,8 +10,8 @@
  *   (1) FLAG KEY: journal-entries.service.ts defines
  *       MONEY_CONTROL_VOID_REVERSAL_FLAG_KEY = 'MONEY_CONTROL_VOID_REVERSAL_ENABLED'.
  *   (2) GATE BEFORE MUTATION: voidJournalEntry resolves isEnabled(client, MONEY_CONTROL_VOID_REVERSAL_FLAG_KEY, …)
- *       and throws 'void_reversal_disabled' when OFF, BEFORE the `UPDATE … SET status = 'voided'` — so an
- *       OFF entity can never mutate a JE (no silent no-op; a hard policy error).
+ *       and throws 'void_reversal_disabled' when OFF, BEFORE the reversing-JE post (postVoidReversal(...)) — so an
+ *       OFF entity can never post a reversal (no silent no-op; a hard policy error).
  *   (3) ROUTE MAPS 409: journal-entries.routes.ts maps 'void_reversal_disabled' → reply.code(409).
  *   (4) PER-ENTITY-ONLY: the flag is in PER_ENTITY_ONLY_FLAG_KEYS (feature-flags service) so default/rollout
  *       can never turn it on globally — enable is only via an explicit per-entity override.
@@ -46,15 +46,16 @@ export function assertGate({ service, routes, flagService, migration }) {
   // (2) gate resolved BEFORE the status mutation, throwing void_reversal_disabled when off
   const gateIdx = service.search(/isEnabled\(\s*client\s*,\s*MONEY_CONTROL_VOID_REVERSAL_FLAG_KEY/);
   const throwIdx = service.search(/throw new Error\(\s*["']void_reversal_disabled["']\s*\)/);
-  const mutateIdx = service.search(/UPDATE[\s\S]{0,80}?accounting\.journal_entries[\s\S]{0,120}?status\s*=\s*'voided'/);
+  // Option-1 void's first write is the reversing-JE post; the gate must precede it (an OFF entity posts nothing).
+  const mutateIdx = service.search(/postVoidReversal\s*\(/);
   if (gateIdx < 0) errors.push(`${SERVICE}: voidJournalEntry does not resolve isEnabled(client, MONEY_CONTROL_VOID_REVERSAL_FLAG_KEY, …)`);
   if (throwIdx < 0) errors.push(`${SERVICE}: does not throw 'void_reversal_disabled' when the flag is OFF`);
-  if (mutateIdx < 0) errors.push(`${SERVICE}: could not locate the JE status='voided' mutation (guard anchor)`);
+  if (mutateIdx < 0) errors.push(`${SERVICE}: could not locate postVoidReversal(...) (guard anchor)`);
   if (gateIdx >= 0 && throwIdx >= 0 && gateIdx > throwIdx) {
     errors.push(`${SERVICE}: the isEnabled(...) resolve must precede the throw`);
   }
   if (gateIdx >= 0 && mutateIdx >= 0 && gateIdx > mutateIdx) {
-    errors.push(`${SERVICE}: the money-control gate must run BEFORE the JE is mutated (an OFF entity must not mutate a JE)`);
+    errors.push(`${SERVICE}: the money-control gate must run BEFORE postVoidReversal (an OFF entity must not post a reversal)`);
   }
 
   // (3) route maps the policy error to 409
@@ -89,7 +90,7 @@ function selftest() {
       `const MONEY_CONTROL_VOID_REVERSAL_FLAG_KEY = "${KEY}";\n` +
       `const voidActionEnabled = await isEnabled(client, MONEY_CONTROL_VOID_REVERSAL_FLAG_KEY, { operating_company_id: x });\n` +
       `if (!voidActionEnabled) throw new Error("void_reversal_disabled");\n` +
-      `await client.query(\`UPDATE accounting.journal_entries SET status = 'voided'\`);`,
+      `const reversal = await postVoidReversal(client, { id }, { reason });`,
     routes: `if (message === "void_reversal_disabled") return reply.code(409).send({ error: message });`,
     flagService: `export const PER_ENTITY_ONLY_FLAG_KEYS = new Set(["${KEY}"])`,
     migration: `INSERT INTO lib.feature_flags VALUES ('${KEY}', 'desc', false, 0)`,
@@ -99,7 +100,7 @@ function selftest() {
     { name: "missing flag key const", in: { ...good, service: good.service.replace(/MONEY_CONTROL_VOID_REVERSAL_FLAG_KEY = "[^"]+"/, "X = 1") }, wantMin: 1 },
     { name: "gate AFTER mutation → error", in: { ...good, service:
       `const MONEY_CONTROL_VOID_REVERSAL_FLAG_KEY = "${KEY}";\n` +
-      `await client.query(\`UPDATE accounting.journal_entries SET status = 'voided'\`);\n` +
+      `const reversal = await postVoidReversal(client, { id }, { reason });\n` +
       `const voidActionEnabled = await isEnabled(client, MONEY_CONTROL_VOID_REVERSAL_FLAG_KEY, {});\n` +
       `if (!voidActionEnabled) throw new Error("void_reversal_disabled");` }, wantMin: 1 },
     { name: "route not 409", in: { ...good, routes: `// no mapping` }, wantMin: 1 },

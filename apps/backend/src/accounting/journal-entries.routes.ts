@@ -164,13 +164,17 @@ export async function registerJournalEntryRoutes(app: FastifyInstance) {
       return result;
     } catch (error) {
       const message = String((error as Error)?.message ?? "journal_entry_void_failed");
-      if (message === "forbidden_owner_only" || message === "forbidden_void_owner_or_accountant_only")
-        return reply.code(403).send({ error: message });
+      if (message === "forbidden_void_owner_or_accountant_only") return reply.code(403).send({ error: message });
       if (message === "void_reason_required") return reply.code(400).send({ error: message });
       if (message === "journal_entry_not_found") return reply.code(404).send({ error: message });
-      if (message === "journal_entry_already_voided") return reply.code(409).send({ error: message });
-      // AF-7 money-control kill switch OFF for this entity → the void action is not enabled (policy error).
-      if (message === "void_reversal_disabled") return reply.code(409).send({ error: message });
+      // Option-1 reversing-void conflicts + AF-7 money-control kill switch OFF → 409 policy errors.
+      if (
+        message === "journal_entry_not_postable" ||
+        message === "journal_entry_already_reversed" ||
+        message === "journal_entry_nothing_to_reverse" ||
+        message === "void_reversal_disabled"
+      )
+        return reply.code(409).send({ error: message });
       throw error;
     }
   });
