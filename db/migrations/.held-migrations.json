@@ -212,6 +212,10 @@
     {
       "file": "202607280000_relay_deposit_classifier.sql",
       "reason": "[HOLD-FOR-JORGE — FINANCIAL] Relay deposit-funding classifier + review queue (Part B). integrations.relay_deposits + relay_company_cards, FORCE entity-RLS, no GL. Run only on a Neon branch by Jorge, then ledger-backfill."
+    },
+    {
+      "file": "202607290000_relay_internal_bank_seed.sql",
+      "reason": "[HOLD-FOR-JORGE — FINANCIAL] CONN-3 — Relay as its own internal bank (Part B), master-data SEED only. catalogs.accounts 'Relay Fuel Wallet' (Other Current Asset, system_purpose relay_fuel_wallet, per operating company) + catalogs.items Diesel/DEF/Reefer fuel product-services + 2 Relay fee items. No GL/posting, no flag, posted_to_gl untouched; reuses existing posting engine (design only). Canonical tables only. Run only on a Neon branch by Jorge, then ledger-backfill."
     }
   ]
 }
