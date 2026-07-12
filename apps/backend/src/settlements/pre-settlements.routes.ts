@@ -16,15 +16,10 @@ function authGuard(req: Parameters<typeof requireAuth>[0], reply: Parameters<typ
   return true;
 }
 
-const listQuerySchema = z.object({
-  operating_company_id: z.string().uuid(),
-  driver_id:            z.string().uuid().optional(),
-  status:               z.enum(["open", "ready", "closed", "disputed"]).optional(),
-  from:                 z.string().optional(),
-  to:                   z.string().optional(),
-  limit:                z.coerce.number().int().min(1).max(500).default(100),
-  offset:               z.coerce.number().int().min(0).default(0),
-});
+// CHAIN-07 — the list-query schema for the retired `GET /api/v1/settlements` handler was removed with
+// that handler (it now 308-redirects to the canonical driver-finance settlements subledger and no
+// longer parses/queries the RETIRE settlement.* ledger). Archived here for history; do not restore a
+// second settlement list ledger.
 
 const idParamsSchema = z.object({ id: z.string().uuid() });
 
@@ -37,62 +32,31 @@ const pendingDedQuerySchema = z.object({
 
 export async function registerPreSettlementsRoutes(app: FastifyInstance) {
 
-  /** GET /api/v1/settlements — list with 4 metric-card aggregates */
+  /**
+   * GET /api/v1/settlements — RETIRED (CHAIN-07, 2026-07-12).
+   *
+   * This legacy list handler queried the RETIRE `settlement.settlement` duplicate ledger, which no
+   * longer exists on prod and returned a 500. It has been archived (kept for history, never deleted)
+   * and now permanently redirects (308) to the single canonical driver-finance settlements subledger
+   * at `/api/v1/driver-finance/settlements`. Single-subledger rule (QBO/NetSuite/McLeod/Alvys): NEVER
+   * resurrect a 2nd settlement ledger. This handler MUST NOT read/write `settlement.*` / `payroll.*`.
+   * Guarded by scripts/verify-chain07-settlements-redirect.mjs.
+   *
+   * ── Archived original implementation (do NOT re-enable — RETIRE schema) ──────────────────────────
+   *   SELECT ... FROM settlement.settlement s JOIN mdata.drivers d ON d.id = s.driver_id ...
+   *   (4 metric-card aggregates FROM settlement.settlement) — removed; caused the accounting
+   *   "Settlements" surface 500. Canonical replacement: apps/backend/src/driver-finance/settlements.routes.ts
+   * ────────────────────────────────────────────────────────────────────────────────────────────────
+   */
   app.get("/api/v1/settlements", async (req, reply) => {
-    if (!authGuard(req, reply)) return;
-    const parsed = listQuerySchema.safeParse(req.query ?? {});
-    if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
-    const p = parsed.data;
-    const values: unknown[] = [p.operating_company_id];
-    const filters = [`s.operating_company_id = $1::uuid`, `s.is_active = true`];
-    if (p.driver_id) { values.push(p.driver_id); filters.push(`s.driver_id = $${values.length}::uuid`); }
-    if (p.status)    { values.push(p.status);    filters.push(`s.status = $${values.length}`); }
-    if (p.from) { values.push(p.from); filters.push(`s.pay_period_start >= $${values.length}::date`); }
-    if (p.to)   { values.push(p.to);   filters.push(`s.pay_period_end   <= $${values.length}::date`); }
-    values.push(p.limit);  const limPos = values.length;
-    values.push(p.offset); const offPos = values.length;
-
-    const sql = `
-      SELECT
-        s.id::text, s.driver_id::text, s.pay_period_start::text, s.pay_period_end::text,
-        s.status, s.gross_cents, s.deductions_cents, s.net_cents, s.notes,
-        s.created_at::text, s.updated_at::text,
-        d.first_name || ' ' || d.last_name AS driver_name,
-        count(*) OVER()::int AS total_count
-      FROM settlement.settlement s
-      JOIN mdata.drivers d ON d.id = s.driver_id
-      WHERE ${filters.join(" AND ")}
-      ORDER BY s.pay_period_start DESC, s.created_at DESC
-      LIMIT $${limPos} OFFSET $${offPos}`;
-
-    const aggSql = `
-      SELECT
-        count(*) FILTER (WHERE s.status = 'open')     AS open_count,
-        count(*) FILTER (WHERE s.status = 'ready')    AS ready_count,
-        count(*) FILTER (WHERE s.status = 'closed')   AS closed_count,
-        count(*) FILTER (WHERE s.status = 'disputed') AS disputed_count
-      FROM settlement.settlement s
-      WHERE s.operating_company_id = $1::uuid AND s.is_active = true`;
-
-    return withCurrentUser(req.user!.uuid, async (client) => {
-      await assertCompanyMembership(req.user!.uuid, p.operating_company_id);
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [p.operating_company_id]);
-      const [rows, agg] = await Promise.all([
-        client.query(sql, values),
-        client.query(aggSql, [p.operating_company_id]),
-      ]);
-      return {
-        settlements: rows.rows,
-        total_count: Number(rows.rows[0]?.total_count ?? 0),
-        limit: p.limit,
-        offset: p.offset,
-        metrics: {
-          open_count:     Number(agg.rows[0]?.open_count ?? 0),
-          ready_count:    Number(agg.rows[0]?.ready_count ?? 0),
-          closed_count:   Number(agg.rows[0]?.closed_count ?? 0),
-          disputed_count: Number(agg.rows[0]?.disputed_count ?? 0),
-        },
-      };
+    const rawUrl = req.raw.url ?? "";
+    const qs = rawUrl.includes("?") ? rawUrl.slice(rawUrl.indexOf("?")) : "";
+    const canonical = `/api/v1/driver-finance/settlements${qs}`;
+    reply.header("location", canonical);
+    return reply.code(308).send({
+      error: "gone",
+      message: "The legacy settlements ledger is retired. Use the canonical driver-finance settlements subledger.",
+      canonical_endpoint: canonical,
     });
   });
 
