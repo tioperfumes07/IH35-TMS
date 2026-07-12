@@ -78,6 +78,9 @@ jobs:
         run: |
           git fetch origin main --quiet || true
           npm run reconcile:blocks
+          # FIX B: git-derived per-block creation dates (first commit that added each .block-ready file) →
+          # powers the "Since Jul 1" filtered view. Needs git (present here), unavailable at runtime.
+          node scripts/gen-block-created-dates.mjs
       - name: Upload tracker artifact → Cloudflare R2 (NO commit, NO redeploy)
         env:
           R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}

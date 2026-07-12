@@ -126,6 +126,7 @@ export type TrackerBlockRow = {
   tab: Tab;
   live_verified: boolean; // done AND merged+deployed — the ONLY path into Completed
   pr: number | null;
+  created_at: string | null; // FIX B: git-derived add-date of the block's .block-ready file (null = undated)
   last_changed_at: string | null; // ISO real registry change time; never faked
   last_changed_ct: string | null; // CT display string from the registry when present
   completed_at: string | null; // ISO merged/deployed time when live-verified, else null
@@ -170,6 +171,18 @@ export type ProgramTracker = {
   views: { pending: TrackerBlockRow[]; in_progress: TrackerBlockRow[]; completed: TrackerBlockRow[]; not_counted: TrackerBlockRow[] };
   view_counts: { pending: number; in_progress: number; completed: number; not_counted: number };
   modules: { module: string; built: number; partial: number; not_built: number; total: number }[];
+  // FIX B: the SAME breakdown restricted to blocks created on/after 2026-07-01 (git add-date). `undated` =
+  // blocks with no determinable add-date (never counted into the window). Side-by-side with the full view.
+  since_jul1: {
+    since: string;
+    total: number;
+    pending: number;
+    in_progress: number;
+    completed: number;
+    not_counted: number;
+    undated: number;
+    modules: { module: string; built: number; partial: number; not_built: number; total: number }[];
+  };
 };
 
 function countHeld(): number {
@@ -217,14 +230,40 @@ async function loadReconFromR2(nowMs: number): Promise<Recon | null> {
   return value;
 }
 
-/** Async live variant: source the reconcile artifact from R2 (fresh, CI-computed) when available, else the
- *  committed file. Delegates the derivation to computeProgramTracker with the resolved recon. */
-export async function computeProgramTrackerLive(now: Date): Promise<ProgramTracker> {
-  const r2Recon = await loadReconFromR2(now.getTime());
-  return computeProgramTracker(now, r2Recon ?? undefined);
+// FIX B — per-block creation dates (git add-date of each .block-ready file), generated in CI and served
+// from R2 (program-tracker/block-created-dates.json) with the committed file as cold fallback. Powers the
+// "Since Jul 1" view. A block with no add-date → null (undated, never guessed into the window).
+const R2_CREATED_DATES_KEY = "program-tracker/block-created-dates.json";
+let createdCache: { at: number; value: Record<string, string | null> } | null = null;
+async function loadCreatedDates(nowMs: number): Promise<Record<string, string | null>> {
+  if (createdCache && nowMs - createdCache.at < RECON_TTL_MS) return createdCache.value;
+  let dates: Record<string, string | null> = {};
+  try {
+    const text = await getObjectTextIfExists(R2_CREATED_DATES_KEY);
+    if (text) dates = (JSON.parse(text)?.dates ?? {}) as Record<string, string | null>;
+    else dates = ((readJson("docs/trackers/block-created-dates.json") as { dates?: Record<string, string | null> })?.dates) ?? {};
+  } catch {
+    try { dates = ((readJson("docs/trackers/block-created-dates.json") as { dates?: Record<string, string | null> })?.dates) ?? {}; }
+    catch { dates = {}; }
+  }
+  // Normalise keys so a block matches whether the map is keyed by raw id or normId.
+  const norm: Record<string, string | null> = { ...dates };
+  for (const [k, v] of Object.entries(dates)) norm[normId(k)] = v;
+  createdCache = { at: nowMs, value: norm };
+  return norm;
 }
 
-export function computeProgramTracker(now: Date, reconOverride?: Recon): ProgramTracker {
+/** Async live variant: source the reconcile artifact + created-dates from R2 (fresh, CI-computed) when
+ *  available, else the committed files. Delegates the derivation to computeProgramTracker. */
+export async function computeProgramTrackerLive(now: Date): Promise<ProgramTracker> {
+  const [r2Recon, createdDates] = await Promise.all([loadReconFromR2(now.getTime()), loadCreatedDates(now.getTime())]);
+  return computeProgramTracker(now, r2Recon ?? undefined, createdDates);
+}
+
+// FIX B: blocks created on/after this date populate the "Since Jul 1" view (owner request 2026-07-12).
+const SINCE_JUL1 = "2026-07-01";
+
+export function computeProgramTracker(now: Date, reconOverride?: Recon, createdDates: Record<string, string | null> = {}): ProgramTracker {
   const manifest = readJson("docs/trackers/program-phase-manifest.json") as Manifest;
   // R2 live snapshot (fresh, refreshed every merge) WINS; committed file is the cold fallback.
   const recon = reconOverride ?? (readJson("docs/trackers/block-reconciliation-data.json") as Recon);
@@ -311,6 +350,7 @@ export function computeProgramTracker(now: Date, reconOverride?: Recon): Program
       tab: classify(String(b.status), liveVerified),
       live_verified: liveVerified,
       pr: b.pr ?? null,
+      created_at: createdDates[b.id] ?? createdDates[normId(b.id)] ?? null,
       last_changed_at: mergedAt ?? b.synced_at ?? null,
       last_changed_ct: b.merged_ct ?? null,
       completed_at: liveVerified ? mergedAt : null,
@@ -396,6 +436,32 @@ export function computeProgramTracker(now: Date, reconOverride?: Recon): Program
       return [...m.entries()]
         .map(([module, c]) => ({ module, ...c, total: c.built + c.partial + c.not_built }))
         .sort((a, b) => b.total - a.total);
+    })(),
+    since_jul1: (() => {
+      // Same breakdown, restricted to blocks whose git add-date is >= 2026-07-01. Undated blocks are counted
+      // separately (never guessed into the window). Completed/In-Progress/Pending mirror the tab classification.
+      const inWindow = rows.filter((r) => r.created_at != null && r.created_at >= SINCE_JUL1);
+      const undated = rows.filter((r) => r.created_at == null).length;
+      const mm = new Map<string, { built: number; partial: number; not_built: number }>();
+      let pending = 0, inProg = 0, completed = 0, notCounted = 0;
+      for (const r of inWindow) {
+        if (r.tab === "completed") completed++;
+        else if (r.tab === "in_progress") inProg++;
+        else if (r.tab === "not_counted") { notCounted++; continue; }
+        else pending++;
+        const key = r.module ?? "uncategorized";
+        const e = mm.get(key) ?? { built: 0, partial: 0, not_built: 0 };
+        if (r.tab === "completed") e.built++;
+        else if (r.tab === "in_progress") e.partial++;
+        else e.not_built++;
+        mm.set(key, e);
+      }
+      return {
+        since: SINCE_JUL1,
+        total: inWindow.length,
+        pending, in_progress: inProg, completed, not_counted: notCounted, undated,
+        modules: [...mm.entries()].map(([module, c]) => ({ module, ...c, total: c.built + c.partial + c.not_built })).sort((a, b) => b.total - a.total),
+      };
     })(),
   };
 }
