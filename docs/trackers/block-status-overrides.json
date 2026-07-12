@@ -87,15 +87,15 @@
     },
     {
       "id": "CHAIN-04-bill-payment-tieout",
-      "status": "PENDING (GATED)",
-      "evidence": "HOLD design doc only, no feature code",
-      "verified_on": "2026-07-03"
+      "status": "NEEDS-VERIFY",
+      "evidence": "code-guard passes + reuses the CHAIN-05-proven posting engine, but 0 open bills on TRANSP to exercise — live-proof deferred to first real bill payment (GUARD verifies then). No fake bill created.",
+      "verified_on": "2026-07-12"
     },
     {
       "id": "CHAIN-05-bank-feed-live-proof",
-      "status": "PENDING (GATED)",
-      "evidence": "HOLD design doc only, no feature code",
-      "verified_on": "2026-07-03"
+      "status": "DONE",
+      "evidence": "GUARD LIVE-VERIFIED on prod: categorized LOVES→Fuel Expense posted → accounting.journal_entries 8d622927-5c3d-4e91-8b14-b6c46f482c2d status=posted, BALANCED (Dr Fuel Expense 449.90 / Cr Business Platinum 449.90), qbo_sync_pending=true",
+      "verified_on": "2026-07-12"
     },
     {
       "id": "CHAIN-06-invoice-ar-chain-proof",
@@ -569,6 +569,12 @@
       "id": "SHADOW-ROUTE-REDIRECTS",
       "status": "DONE",
       "evidence": "block own verify-*.mjs guard passes on main (built+wired)",
+      "verified_on": "2026-07-12"
+    },
+    {
+      "id": "CONN-1-plaid-reconcile-commit",
+      "status": "NEEDS-VERIFY",
+      "evidence": "code-guard passes + reuses the CHAIN-05-proven posting engine, but 0 reconciliation sessions on TRANSP to exercise — live-proof deferred to first real reconcile-commit. No fake session created.",
       "verified_on": "2026-07-12"
     }
   ]
