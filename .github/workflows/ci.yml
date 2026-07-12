@@ -1240,6 +1240,9 @@ jobs:
       - name: verify:custvend-par1
         run: npm run verify:custvend-par1
 
+      - name: verify:freshness-indicator
+        run: npm run verify:freshness-indicator
+
       - name: Boot smoke — compiled dist/index.js must answer /api/v1/health
         run: npm run ci:boot-api-smoke
 
