@@ -6,6 +6,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { addInvoiceLine, deleteInvoiceLine, getInvoice, patchInvoiceLine, sendInvoice, voidInvoice, type InvoiceLine } from "../../api/accounting";
 import { resolveApiUrl } from "../../api/client";
 import { Button } from "../../components/Button";
+import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { ListErrorState } from "../../components/ListErrorState";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
@@ -62,6 +63,8 @@ export function InvoiceDetailPage() {
       void queryClient.invalidateQueries({ queryKey: ["accounting", "invoices"] });
     },
   });
+
+  const [voidOpen, setVoidOpen] = useState(false);
 
   const addLineMutation = useMutation({
     mutationFn: (payload: { description: string; unit_amount_cents: number }) =>
@@ -219,16 +222,21 @@ export function InvoiceDetailPage() {
             </Button>
             <Button
               variant="danger"
-              onClick={() => {
-                const reason = window.prompt("Void reason");
-                if (!reason) return;
-                voidMutation.mutate(reason);
-              }}
-              loading={voidMutation.isPending}
+              onClick={() => setVoidOpen(true)}
               disabled={invoice.status === "paid" || invoice.status === "void"}
             >
               Void
             </Button>
+            <VoidReasonModal
+              open={voidOpen}
+              title="Void Invoice"
+              minLength={1}
+              onClose={() => setVoidOpen(false)}
+              onSubmit={async (reason) => {
+                await voidMutation.mutateAsync(reason);
+                setVoidOpen(false);
+              }}
+            />
           </div>
         }
       />

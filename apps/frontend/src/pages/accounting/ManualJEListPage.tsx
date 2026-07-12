@@ -10,6 +10,7 @@ import { useToast } from "../../components/Toast";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ManualJEModal } from "./ManualJEModal";
+import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 
@@ -32,6 +33,7 @@ export function ManualJEListPage() {
   const [toDate, setToDate] = useState("");
   const [accountId, setAccountId] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
+  const [voidTarget, setVoidTarget] = useState<JournalEntry | null>(null);
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 200;
 
@@ -84,12 +86,7 @@ export function ManualJEListPage() {
             <Button
               size="sm"
               variant="danger"
-              loading={voidMutation.isPending}
-              onClick={() => {
-                const reason = window.prompt("Void reason (required, min 3 chars):", "");
-                if (!reason || reason.trim().length < 3) return;
-                voidMutation.mutate({ id: entry.id, reason: reason.trim() });
-              }}
+              onClick={() => setVoidTarget(entry)}
             >
               Void
             </Button>
@@ -171,6 +168,22 @@ export function ManualJEListPage() {
           }}
         />
       ) : null}
+      <VoidReasonModal
+        open={Boolean(voidTarget)}
+        title="Void Journal Entry"
+        entityRef={
+          voidTarget
+            ? `JE ${formatDateUS(voidTarget.entry_date)} · $${((voidTarget.debit_total_cents ?? 0) / 100).toFixed(2)}`
+            : undefined
+        }
+        minLength={3}
+        onClose={() => setVoidTarget(null)}
+        onSubmit={async (reason) => {
+          if (!voidTarget) return;
+          await voidMutation.mutateAsync({ id: voidTarget.id, reason });
+          setVoidTarget(null);
+        }}
+      />
     </AccountingSubNavWrapper>
   );
 }
