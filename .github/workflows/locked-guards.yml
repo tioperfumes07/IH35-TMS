@@ -616,3 +616,7 @@ jobs:
         run: node scripts/verify-tracker-bymodule-sequence.mjs --selftest
       - name: verify:tracker-bymodule-sequence
         run: npm run verify:tracker-bymodule-sequence
+      - name: verify:program-tracker-r2-live --selftest
+        run: node scripts/verify-program-tracker-r2-live.mjs --selftest
+      - name: verify:program-tracker-r2-live
+        run: npm run verify:program-tracker-r2-live

@@ -67,3 +67,21 @@ jobs:
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           R2_BUCKET: ${{ secrets.R2_BUCKET }}
         run: npm run board:sync:r2
+
+      # ── Program TRACKER live refresh (same CI→R2 mechanism, so the tracker's per-block STATUS rollup
+      #    — Pending/In-Progress/Completed/By-Module/Sequence — refreshes on every merge, NOT a manual
+      #    reconcile. gh runs natively here (GITHUB_TOKEN) so the merged-PR DONE signal is captured (real
+      #    ~539 DONE, not the ~334 files-only undercount). Regenerate the artifact, then upload it to R2. ──
+      - name: Regenerate block reconciliation (gh merged-PR signal available here)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git fetch origin main --quiet || true
+          npm run reconcile:blocks
+      - name: Upload tracker artifact → Cloudflare R2 (NO commit, NO redeploy)
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+        run: npm run tracker:sync:r2

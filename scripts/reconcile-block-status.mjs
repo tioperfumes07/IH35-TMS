@@ -38,10 +38,32 @@ const arg = (n, d) => (process.argv.find((a) => a.startsWith(`--${n}=`)) || `--$
 const todayISO = () => { const d = new Date(), p = (n) => String(n).padStart(2, "0"); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; };
 const date = arg("date", todayISO());
 
-const mainFiles = new Set(
-  execFileSync("git", ["ls-tree", "-r", "origin/main", "--name-only"], { cwd: ROOT, encoding: "utf8" })
-    .split(/\r?\n/).filter(Boolean)
-);
+// The set of files "on main" = the evidence for files-present DONE detection. At DEPLOY/BUILD time this
+// script runs inside Render's build (git present) but a shallow build clone may NOT have an `origin/main`
+// ref — and the checked-out tree IS the deployed main commit anyway. So: try origin/main, then HEAD, then
+// fall back to a filesystem walk of the working tree (never throw — a build must not fail on this).
+function listRepoFiles() {
+  for (const ref of ["origin/main", "HEAD"]) {
+    try {
+      const out = execFileSync("git", ["ls-tree", "-r", ref, "--name-only"], { cwd: ROOT, encoding: "utf8" })
+        .split(/\r?\n/).filter(Boolean);
+      if (out.length) return new Set(out);
+    } catch { /* ref unavailable in this clone — try the next fallback */ }
+  }
+  // No usable git ref (shallow build clone): enumerate the working tree = the deployed commit's files.
+  const out = new Set();
+  (function walk(dir, rel) {
+    let entries;
+    try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
+    for (const e of entries) {
+      if (e.name === ".git" || e.name === "node_modules" || e.name === "dist") continue;
+      const abs = path.join(dir, e.name), r = rel ? `${rel}/${e.name}` : e.name;
+      if (e.isDirectory()) walk(abs, r); else out.add(r);
+    }
+  })(ROOT, "");
+  return out;
+}
+const mainFiles = listRepoFiles();
 
 let mergedByBranch = new Map();
 let mergedPRs = [];
