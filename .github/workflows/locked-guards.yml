@@ -669,3 +669,5 @@ jobs:
         run: node scripts/verify-period-money-control-flag-gate.mjs --selftest
       - name: verify:period-money-control-flag-gate
         run: npm run verify:period-money-control-flag-gate
+      - name: verify:feature-flag-key-shape
+        run: npm run verify:feature-flag-key-shape
