@@ -84,6 +84,8 @@
     "_comment_41: banking sub-component pending Cascade banking visual pass — sync status display strip",
     "apps/frontend/src/pages/banking/components/SyncStatusStrip.tsx",
     "_comment_42: banking-specific ManualJE modal (separate from accounting/ManualJEModal); used by BankTxCategorizationPage (Workflow-B archived)",
-    "apps/frontend/src/pages/banking/components/ManualJEModal.tsx"
+    "apps/frontend/src/pages/banking/components/ManualJEModal.tsx",
+    "_comment_freshness: GAP-24 usage-example doc — required by verify-freshness-indicator.mjs, intentionally standalone (not routed)",
+    "apps/frontend/src/components/dispatch/FreshnessIndicator.usage.example.tsx"
   ]
 }

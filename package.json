@@ -893,6 +893,7 @@
     "verify:tracker-bymodule-sequence": "node scripts/verify-tracker-bymodule-sequence.mjs",
     "tracker:sync:r2": "node scripts/sync-tracker-r2.mjs",
     "verify:program-tracker-r2-live": "node scripts/verify-program-tracker-r2-live.mjs",
+    "verify:freshness-indicator": "node scripts/verify-freshness-indicator.mjs",
     "verify:tracker-since-jul1": "node scripts/verify-tracker-since-jul1.mjs",
     "verify:amortization-gl-flag-gate": "node scripts/verify-amortization-gl-flag-gate.mjs",
     "verify:prepaid-post-flag-gate": "node scripts/verify-prepaid-post-flag-gate.mjs",
