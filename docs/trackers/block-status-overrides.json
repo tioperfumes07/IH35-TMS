@@ -296,69 +296,15 @@
    "verified_on": "2026-07-11"
   },
   {
-   "id": "FIX-DISPATCH-DRIVER-PICKER-50-CAP",
+   "id": "C7-ACCT-SUBNAV-CHROME",
    "status": "DONE",
-   "evidence": "InlineDriverPicker.tsx:26 + BookLoadEquipmentSection.tsx:92 pass limit:200",
+   "evidence": "NON-FINANCIAL nav chrome (verify-sweep #2): all 6 QBO-parity shell pages present on main — apps/frontend/src/pages/accounting/{IntegrationTransactions,Receipts,RevenueRecognition,FixedAssets,PrepaidExpenses,MyAccountant}Page.tsx — plus nav guard scripts/verify-accounting-nav.mjs; QboAccountingSubNav.tsx intentionally retired per locked top-nav rule (block-ready resolution B, deleted PR #1552, CI-enforced absent), so the reconciler's 9/10 is complete-not-partial",
    "verified_on": "2026-07-12"
   },
   {
-   "id": "FIX-PICKERS-50-CAP-UNITS-VENDORS-CUSTOMERS",
+   "id": "RECON-01",
    "status": "DONE",
-   "evidence": "api/mdata.ts:26 forwards limit; InlineUnitPicker/InlineTrailerPicker limit:500",
-   "verified_on": "2026-07-12"
-  },
-  {
-   "id": "FIX-DRIVERS-FULL-NAME-PHANTOM",
-   "status": "DONE",
-   "evidence": "no d.full_name refs remain; guard test driver-full-name-phantom.db.test.ts asserts count=0",
-   "verified_on": "2026-07-12"
-  },
-  {
-   "id": "FIX-LEGAL-FLEET-VEHICLE-TYPE-PHANTOM",
-   "status": "DONE",
-   "evidence": "lease-to-own.service.ts:131 selects real u.vehicle_type AS unit_type + guard test",
-   "verified_on": "2026-07-12"
-  },
-  {
-   "id": "FIX-MAINTENANCE-SERVICES-ETA-PHANTOM",
-   "status": "DONE",
-   "evidence": "services.routes.ts:107/118 repointed to telematics.vehicle_latest_position + maintenance.pm_schedules",
-   "verified_on": "2026-07-12"
-  },
-  {
-   "id": "FIX-PER-TRUCK-CPM-PERMITS-CTE",
-   "status": "DONE",
-   "evidence": "cpm-calculator.service.ts:107 repointed to master_data.unit_permits (migration 0407)",
-   "verified_on": "2026-07-12"
-  },
-  {
-   "id": "QBO-SYNC-DRIFT-401-FIX",
-   "status": "DONE",
-   "evidence": "QBOSyncDriftDashboard.tsx:39/47 use apiRequest (credentials:include)",
-   "verified_on": "2026-07-12"
-  },
-  {
-   "id": "TBL-STANDARD-INSURANCE-POLICIES",
-   "status": "DONE",
-   "evidence": "PoliciesList.tsx:12/172 migrated to shared DataTable",
-   "verified_on": "2026-07-12"
-  },
-  {
-   "id": "UNIFIED-TXN-REGISTER",
-   "status": "DONE",
-   "evidence": "transaction-register.routes.ts present + autoloaded (index.ts:1011); FE lazy-mounted manifest.tsx:245/3430",
-   "verified_on": "2026-07-12"
-  },
-  {
-   "id": "D-CREATE-VERIFY-DEAD-FORMS-UNMOUNTED",
-   "status": "DONE",
-   "evidence": "verify-dead-forms-unmounted.mjs + verify-steps/110 + package.json:866; guard PASS (11 dead forms unmounted)",
-   "verified_on": "2026-07-12"
-  },
-  {
-   "id": "TIER3-LIST-ERROR-STATES",
-   "status": "DONE",
-   "evidence": "verify-list-error-state-coverage.mjs + verify-steps/112; guard PASS (20 list pages keep isError->ListErrorState)",
+   "evidence": "verify-sweep #2 (financial — file/route/guard presence only, no prod-DB claim): recon engine live on main — apps/backend/src/accounting/recon/recon-engine.service.ts + recon.routes.ts, registerReconRoutes wired apps/backend/src/index.ts:219, recon-cron initialized index.ts:393/:1192; migration db/migrations/202607022100_recon_runs_exceptions.sql present + NOT in .held-migrations.json; read-only guard scripts/verify-recon-read-only.mjs (package.json:844); PR #1831",
    "verified_on": "2026-07-12"
   }
  ]
