@@ -304,10 +304,22 @@ export async function listOverrides(client: Queryable, flagKey?: string) {
   return res.rows;
 }
 
+// A flag_key must be a stable UPPER_SNAKE identifier, never a UUID. A company/entity UUID getting written
+// as a flag_key produced a junk lib.feature_flags row that is not a real flag (2026-07-12). Reject it at the
+// app boundary; the DB CHECK constraint (migration 202607360000) is the belt-and-suspenders enforcement.
+const UUID_SHAPED_KEY_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+
+/** Throw if `flagKey` is UUID-shaped (a company/entity id mistakenly used as a flag key) or empty. */
+export function assertPlausibleFlagKey(flagKey: string): void {
+  if (!flagKey || !flagKey.trim()) throw new Error("invalid_flag_key_empty");
+  if (UUID_SHAPED_KEY_RE.test(flagKey.trim())) throw new Error("invalid_flag_key_uuid_shaped");
+}
+
 export async function createFlag(
   client: Queryable,
   input: { flag_key: string; description?: string | null; default_enabled?: boolean; rollout_pct?: number }
 ) {
+  assertPlausibleFlagKey(input.flag_key);
   const res = await client.query<FeatureFlagRow>(
     `
       INSERT INTO lib.feature_flags (flag_key, description, default_enabled, rollout_pct)
@@ -349,6 +361,7 @@ export async function setOverride(
     expires_at?: string | null;
   }
 ) {
+  assertPlausibleFlagKey(input.flag_key);
   if (!input.operating_company_id && !input.user_uuid) {
     throw new Error("override_target_required");
   }
