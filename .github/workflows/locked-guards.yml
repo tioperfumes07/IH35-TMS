@@ -661,3 +661,7 @@ jobs:
         run: node scripts/verify-je-void-money-control-flag-gate.mjs --selftest
       - name: verify:je-void-money-control-flag-gate
         run: npm run verify:je-void-money-control-flag-gate
+      - name: verify:period-money-control-flag-gate --selftest
+        run: node scripts/verify-period-money-control-flag-gate.mjs --selftest
+      - name: verify:period-money-control-flag-gate
+        run: npm run verify:period-money-control-flag-gate

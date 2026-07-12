@@ -38,8 +38,24 @@ this gate can instead treat flag-absent as "open" (a different, less strict post
 - `isEnabled` (`lib/feature-flags/service.ts`) — the canonical per-entity flag resolver.
 - No migration authored here — AF-7 already exists as a held migration.
 
-## Guard
-`scripts/verify-je-void-money-control-flag-gate.mjs` (wired into `verify:arch-design` + `locked-guards.yml`,
-with `--selftest`) locks the gate: flag-key const present; `isEnabled(client, KEY, …)` resolves and throws
-`void_reversal_disabled` **before** the `status='voided'` mutation; the route maps it to 409; the flag is in
-`PER_ENTITY_ONLY_FLAG_KEYS`; and AF-7 seeds it `default_enabled=false`. Self-test covers pass + each failure mode.
+## Period close / reopen — same money-control pattern
+This block also wires the other two AF-7 flags onto the existing period actions in `p7-wave2.routes.ts`:
+- **`MONEY_CONTROL_PERIOD_CLOSE_ENABLED`** on `POST /api/v1/accounting/periods/:id/close`. The gate resolves
+  **before `BEGIN`**, so an OFF entity never posts the retained-earnings closing JE or mutates the period;
+  refused with `period_close_disabled` → 409.
+- **`MONEY_CONTROL_PERIOD_REOPEN_ENABLED`** on `POST /api/v1/accounting/periods/:id/reopen`. Gate before the
+  `status='open'` UPDATE; refused with `period_reopen_disabled` → 409.
+
+These gate the **close/reopen ACTIONS**; they are independent of the DB trigger (migration 0183) that already
+blocks *posting into* a closed period unconditionally. Same behavior posture (A/B) as JE void — all three are
+per-entity, default OFF, seeded by the held AF-7 migration.
+
+## Guards
+- `scripts/verify-je-void-money-control-flag-gate.mjs` — JE void gate.
+- `scripts/verify-period-money-control-flag-gate.mjs` — period close + reopen gates.
+
+Both (wired into `verify:arch-design` + `locked-guards.yml`, with `--selftest`) lock the invariant: flag-key
+const present; `isEnabled(client, KEY, …)` resolves and throws the policy error **before** the mutation
+(the JE `status='voided'` write / the close `BEGIN` / the reopen `status='open'` write); the route maps each
+to 409; the flags are in `PER_ENTITY_ONLY_FLAG_KEYS`; and AF-7 seeds each `default_enabled=false`. Self-tests
+cover pass + each failure mode.
