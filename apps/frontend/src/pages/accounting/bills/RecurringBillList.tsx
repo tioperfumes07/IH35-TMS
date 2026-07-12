@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, Link } from "react-router-dom";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { ConfirmModal } from "../../../components/shared/ConfirmModal";
 import { ArrowLeft, RefreshCw, ToggleLeft, Zap } from "lucide-react";
 import {
   listRecurringBillTemplates,
@@ -36,6 +37,7 @@ export function RecurringBillList() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [showInactive, setShowInactive] = useState(false);
+  const [deactivateTarget, setDeactivateTarget] = useState<{ uuid: string; name: string } | null>(null);
 
   const templatesQuery = useQuery({
     queryKey: ["accounting", "recurring-bills", "templates", companyId, showInactive],
@@ -174,11 +176,7 @@ export function RecurringBillList() {
                           <button
                             title="Deactivate template"
                             disabled={deactivateMutation.isPending}
-                            onClick={() => {
-                              if (confirm(`Deactivate "${tmpl.template_name}"?`)) {
-                                deactivateMutation.mutate(tmpl.uuid);
-                              }
-                            }}
+                            onClick={() => setDeactivateTarget({ uuid: tmpl.uuid, name: tmpl.template_name })}
                             className="rounded-sm p-1 text-gray-400 hover:bg-gray-100 hover:text-red-600 disabled:opacity-50"
                           >
                             <ToggleLeft className="h-3.5 w-3.5" />
@@ -193,6 +191,19 @@ export function RecurringBillList() {
           </table>
         </div>
       )}
+      <ConfirmModal
+        open={Boolean(deactivateTarget)}
+        title="Deactivate template"
+        message={`Deactivate "${deactivateTarget?.name ?? ""}"? It stops generating new bills (soft delete — it is not removed).`}
+        confirmLabel="Deactivate"
+        danger
+        onClose={() => setDeactivateTarget(null)}
+        onConfirm={async () => {
+          if (!deactivateTarget) return;
+          await deactivateMutation.mutateAsync(deactivateTarget.uuid);
+          setDeactivateTarget(null);
+        }}
+      />
     </div>
   );
 }

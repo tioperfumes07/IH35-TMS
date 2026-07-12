@@ -82,7 +82,11 @@ export function ManualJEListPage() {
         label: "Actions",
         alwaysVisible: true,
         render: (entry) =>
-          user?.role === "Owner" && entry.status !== "voided" ? (
+          entry.reversed_by_je_id ? (
+            <span className="text-xs text-gray-500" title={`Reversed by JE ${entry.reversed_by_je_id.slice(0, 8)}`}>
+              Reversed
+            </span>
+          ) : user?.role === "Owner" && entry.status === "posted" ? (
             <Button
               size="sm"
               variant="danger"
