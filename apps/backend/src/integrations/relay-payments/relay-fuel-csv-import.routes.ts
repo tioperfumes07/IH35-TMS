@@ -110,7 +110,8 @@ export async function registerRelayFuelCsvImportRoute(app: FastifyInstance) {
   // Accept raw CSV bodies (text/csv, text/plain) — store the raw string, parse in the handler.
   app.addContentTypeParser(["text/csv", "text/plain"], { parseAs: "string" }, (_req, body, done) => done(null, body));
 
-  app.post("/api/integrations/relay/fuel/import-csv", async (req, reply) => {
+  // Heavy owner-only bulk import — tight rate limit (CodeQL js/missing-rate-limiting; DoS guard).
+  app.post("/api/integrations/relay/fuel/import-csv", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!requireAuth(req, reply)) return;
     const role = String((req.user as { role?: string } | undefined)?.role ?? "");
     if (!["Owner", "Administrator"].includes(role)) return reply.code(403).send({ error: "forbidden" });
