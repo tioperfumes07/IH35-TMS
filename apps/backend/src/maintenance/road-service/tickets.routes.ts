@@ -7,9 +7,8 @@ import { requireAuth } from "../../auth/session-middleware.js";
 import { createWorkOrderFromRoadServiceTicket } from "./wo-integration.js";
 import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
 
-export type DbClient = {
-  query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
-};
+export type { DbClient } from "./db-client.type.js";
+import type { DbClient } from "./db-client.type.js";
 
 const serviceTypeSchema = z.enum(["tire_change", "jump_start", "fuel_delivery", "lockout", "tow", "other"]);
 const statusSchema = z.enum(["open", "completed", "invoiced", "paid"]);
