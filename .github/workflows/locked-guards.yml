@@ -628,3 +628,8 @@ jobs:
         run: node scripts/verify-bill-expense-category-full-coa.mjs --selftest
       - name: verify:bill-expense-category-full-coa
         run: npm run verify:bill-expense-category-full-coa
+
+      - name: verify:chain07-settlements-redirect --selftest
+        run: node scripts/verify-chain07-settlements-redirect.mjs --selftest
+      - name: verify:chain07-settlements-redirect
+        run: npm run verify:chain07-settlements-redirect
