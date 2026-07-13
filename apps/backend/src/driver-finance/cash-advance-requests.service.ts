@@ -13,6 +13,23 @@ import { resolveAccountForCategory } from "../accounting/expense-category-map/re
 const CASH_ADVANCE_REQUEST_TYPE = "cash_advance";
 const CASH_ADVANCE_REQUEST_SOURCE_TABLE = "driver_finance.cash_advance_requests";
 
+// I4 (owner-locked, Phase 2b): maker≠checker authority for cash advances.
+//   AUTHORITY roles create + approve with NO separate approval (they ARE the authority; when an authority
+//   approves their OWN office-created request the reviewer stays NULL — the DB CHECK
+//   cash_advance_requests_maker_ne_checker treats a NULL reviewer as satisfied).
+//   All OTHER roles' requests require a DISTINCT approver drawn from the CHECKER set (Admin/Accountant/Owner).
+//   The maker (submitted_by_user_id) can NEVER be the checker (reviewed_by_user_id) — enforced here with a
+//   409 maker_checker_violation AND by the DB CHECK.
+const AUTHORITY_ROLES = new Set(["Owner", "Administrator"]);
+const CHECKER_ROLES = new Set(["Owner", "Administrator", "Accountant"]);
+
+export function isCashAdvanceAuthorityRole(role: string | null | undefined): boolean {
+  return AUTHORITY_ROLES.has(String(role ?? ""));
+}
+export function isCashAdvanceCheckerRole(role: string | null | undefined): boolean {
+  return CHECKER_ROLES.has(String(role ?? ""));
+}
+
 export type CashAdvanceCascadeBranch = "load_bill" | "open_bill" | "loan";
 export type CashAdvanceCascadeDetection = {
   branch: CashAdvanceCascadeBranch;
@@ -267,6 +284,109 @@ export async function createCashAdvanceRequest(
   });
 
   return { request: row };
+}
+
+export const officeCreateCashAdvanceRequestSchema = z.object({
+  driver_id: z.string().uuid(),
+  requested_amount_cents: z.number().int().positive(),
+  reason: z.string().trim().min(10).max(4000),
+  proposed_recovery_per_settlement_cents: z.number().int().positive().optional(),
+  load_id: z.string().uuid().nullable().optional(),
+  // Owner/Admin office-created requests may carry the approve-time options (auto-approve path).
+  approval_notes: z.string().trim().max(4000).optional(),
+  posting_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  credit_account_id: z.string().uuid().optional(),
+});
+
+/**
+ * I4 OFFICE create path: an office user (the "maker") creates a cash-advance request for a driver. Records
+ * submitted_by_user_id = the maker + submitted_via='office'. An AUTHORITY maker (Owner/Administrator)
+ * auto-approves in the same call (role IS the authority; reviewer stays NULL, satisfying maker≠checker).
+ * A non-authority maker's request stays 'pending' — it needs a DISTINCT Admin/Accountant/Owner checker.
+ * Above-policy requests always stay pending (owner-approval flow), regardless of maker role.
+ */
+export async function createOfficeCashAdvanceRequest(
+  client: QueryableClient,
+  args: {
+    operatingCompanyId: string;
+    actorUserId: string;
+    actorRole: string;
+    body: z.infer<typeof officeCreateCashAdvanceRequestSchema>;
+  }
+) {
+  const input = officeCreateCashAdvanceRequestSchema.parse(args.body);
+  const driverId = input.driver_id;
+  const thresholdDollars = await resolveCompanyCashAdvanceThresholdDollars(client, args.operatingCompanyId);
+  const isAbovePolicy = input.requested_amount_cents / 100 > thresholdDollars;
+  const displayId = await nextCashAdvanceRequestDisplayId(client, args.operatingCompanyId);
+  const actorName = await resolveActorLabel(client, args.actorUserId);
+
+  const ins = await client.query(
+    `
+      INSERT INTO driver_finance.cash_advance_requests (
+        operating_company_id, driver_id, display_id, submitted_via,
+        requested_amount_cents, reason, proposed_recovery_per_settlement_cents,
+        status, is_above_policy, load_id, submitted_by_user_id
+      ) VALUES ($1, $2, $3, 'office', $4, $5, $6, 'pending', $7, $8, $9)
+      RETURNING *
+    `,
+    [
+      args.operatingCompanyId,
+      driverId,
+      displayId,
+      input.requested_amount_cents,
+      input.reason,
+      input.proposed_recovery_per_settlement_cents ?? null,
+      isAbovePolicy,
+      input.load_id ?? null,
+      args.actorUserId,
+    ]
+  );
+  const row = ins.rows[0]!;
+  const requestId = String(row.id);
+
+  await appendRequestAudit(client, {
+    operatingCompanyId: args.operatingCompanyId,
+    requestId,
+    eventType: "cash_advance_request_submitted",
+    payload: { display_id: displayId, requested_amount_cents: input.requested_amount_cents, is_above_policy: isAbovePolicy, submitted_via: "office", submitted_by_user_id: args.actorUserId },
+    actorUserId: args.actorUserId,
+    actorName,
+  });
+  await emitDriverRequestSpineEvent(client, "requested", {
+    operating_company_id: args.operatingCompanyId,
+    request_id: requestId,
+    request_type: CASH_ADVANCE_REQUEST_TYPE,
+    source_table: CASH_ADVANCE_REQUEST_SOURCE_TABLE,
+    actor_type: "user",
+    actor_user_id: args.actorUserId,
+    actor_role: args.actorRole,
+    payload: { display_id: displayId, submitted_via: "office" },
+  });
+  await appendCrudAudit(client, args.actorUserId, "driver_finance.cash_advance_request.submitted", {
+    request_id: requestId, display_id: displayId, driver_id: driverId, requested_amount_cents: input.requested_amount_cents, submitted_via: "office",
+  }, "info");
+  await enqueueDriverFinanceOutbox(client, "driver_finance.cash_advance_request.submitted", {
+    operating_company_id: args.operatingCompanyId, request_id: requestId, driver_id: driverId, display_id: displayId,
+  });
+
+  // AUTHORITY maker + within policy → auto-approve now (reviewer stays NULL; maker≠checker satisfied).
+  if (isCashAdvanceAuthorityRole(args.actorRole) && !isAbovePolicy) {
+    const approved = await approveCashAdvanceRequest(client, {
+      operatingCompanyId: args.operatingCompanyId,
+      requestId,
+      actorUserId: args.actorUserId,
+      actorRole: args.actorRole,
+      body: {
+        approval_notes: input.approval_notes,
+        posting_date: input.posting_date,
+        credit_account_id: input.credit_account_id,
+      },
+    });
+    return { request: row, auto_approved: true as const, approval: approved };
+  }
+
+  return { request: row, auto_approved: false as const };
 }
 
 export async function listMyCashAdvanceRequests(client: QueryableClient, operatingCompanyId: string, driverId: string) {
@@ -584,6 +704,18 @@ export async function approveCashAdvanceRequest(
   if (new Date(String(row.expires_at)).getTime() < Date.now()) return { error: "expired" as const };
   if (Boolean(row.is_above_policy)) return { error: "above_policy_requires_owner" as const };
 
+  // I4 maker≠checker. The approver MUST hold a CHECKER role (Owner/Administrator/Accountant). An AUTHORITY
+  // role approving their OWN office-created request auto-approves with reviewer NULL (role IS the authority);
+  // in every other case the recorded reviewer must be a DIFFERENT user than the office maker (submitted_by).
+  const role = String(args.actorRole ?? "");
+  if (!isCashAdvanceCheckerRole(role)) return { error: "checker_role_forbidden" as const };
+  const submittedBy = row.submitted_by_user_id ? String(row.submitted_by_user_id) : null;
+  const isAuthority = isCashAdvanceAuthorityRole(role);
+  const reviewerToRecord = isAuthority && submittedBy && submittedBy === args.actorUserId ? null : args.actorUserId;
+  if (reviewerToRecord && submittedBy && reviewerToRecord === submittedBy) {
+    return { error: "maker_checker_violation" as const };
+  }
+
   const driverId = String(row.driver_id);
   const amountDollars = Number(row.requested_amount_cents) / 100;
   const amountCents = Number(row.requested_amount_cents);
@@ -652,7 +784,9 @@ export async function approveCashAdvanceRequest(
       WHERE operating_company_id = $1 AND id = $2
       RETURNING *
     `,
-    [args.operatingCompanyId, args.requestId, args.actorUserId, notes, core.advanceId]
+    // I4: reviewerToRecord is NULL for an AUTHORITY self-approval (role IS the authority), else the distinct
+    // checker (maker≠checker already asserted above; the DB CHECK is the backstop).
+    [args.operatingCompanyId, args.requestId, reviewerToRecord, notes, core.advanceId]
   );
   const updated = upd.rows[0]!;
 
