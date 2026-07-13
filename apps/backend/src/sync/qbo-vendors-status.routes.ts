@@ -17,6 +17,11 @@ function officeRole(role: string) {
 }
 
 export type QboVendorsPushStatus = {
+  // HOME-7A: a TRUE total (COUNT(*)) so Home renders "{synced}/{total}". `total_local` was
+  // COUNT FILTER (qbo_id IS NULL) = the UNSYNCED count (0 in prod), which mislabeled Home as "872/0".
+  // NOTE: source stays accounting.qbo_vendors — the canonical mdata.qbo_vendors lacks sync_status /
+  // qbo_push_attempts, so repointing would break the pushing/failed/dead_letter workflow metrics.
+  total: number;
   total_local: number;
   synced: number;
   unsynced: number;
@@ -34,10 +39,11 @@ export async function fetchQboVendorsPushStatus(
 
     const exists = await client.query(`SELECT to_regclass('accounting.qbo_vendors') IS NOT NULL AS ok`);
     if (!exists.rows[0]?.ok) {
-      return { total_local: 0, synced: 0, unsynced: 0, pushing: 0, failed: 0, dead_letter: 0 };
+      return { total: 0, total_local: 0, synced: 0, unsynced: 0, pushing: 0, failed: 0, dead_letter: 0 };
     }
 
     const res = await client.query<{
+      total: string;
       total_local: string;
       synced: string;
       unsynced: string;
@@ -47,6 +53,7 @@ export async function fetchQboVendorsPushStatus(
     }>(
       `
         SELECT
+          COUNT(*)::text AS total,
           COUNT(*) FILTER (WHERE qbo_id IS NULL)::text AS total_local,
           COUNT(*) FILTER (WHERE qbo_id IS NOT NULL)::text AS synced,
           COUNT(*) FILTER (WHERE qbo_id IS NULL AND sync_status = 'unsynced')::text AS unsynced,
@@ -68,6 +75,7 @@ export async function fetchQboVendorsPushStatus(
 
     const row = res.rows[0];
     return {
+      total: Number(row?.total ?? 0),
       total_local: Number(row?.total_local ?? 0),
       synced: Number(row?.synced ?? 0),
       unsynced: Number(row?.unsynced ?? 0),
