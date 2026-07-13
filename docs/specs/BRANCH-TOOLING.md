@@ -41,7 +41,17 @@ Behavior:
 - Halts on first failure and prints failing step plus output tail.
 - Prints `READY TO PUSH: <branch> at <sha>` on success.
 
-## 3) Safe branch switching
+### Standing order — run `npm run verify:static` before EVERY push
+
+CI's `build-typecheck` runs ~250 `scripts/verify-*.mjs` guards; a single stale string-anchored guard
+tripping on a refactor reads as a "typecheck failure" and costs a full CI round-trip. **Before every push,
+run `npm run verify:static` and fix any `FAIL(gated)` locally — never push into a red static guard.**
+
+- It runs every static guard with NO reachable database (a dead-port sentinel — it can never touch prod),
+  classifying each `PASS` / `SKIP-needs-db` / `SKIP-needs-env` / `FAIL`.
+- It exits non-zero **only** on a `FAIL(gated)` — a guard CI actually runs. `SKIP-*` and `FAIL(unwired)`
+  (orphan guards CI does not run) never fail the run; unwired FAILs are surfaced as informational.
+- `node scripts/verify-static.mjs --selftest` self-checks the runner (incl. the sentinel-isolation lock).
 
 Command:
 

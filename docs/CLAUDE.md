@@ -10,6 +10,9 @@
 - Do not introduce schema/features outside the active block.
 - Keep verification-first workflow: implement, run targeted verify scripts, then full pass when block is substantial.
 - If a verify script fails (except known phone-auth Twilio blocker), stop and fix before merge.
+- **Before EVERY push, run `npm run verify:static`** and fix any `FAIL(gated)` locally — never push into a
+  red static guard. It runs all `scripts/verify-*.mjs` with no reachable DB (dead-port sentinel; never
+  touches prod) and fails only on a guard CI actually runs. See `docs/specs/BRANCH-TOOLING.md` §2.
 
 ## 1a) LINKAGE LAW + CANONICAL WIRING (read before any block)
 
