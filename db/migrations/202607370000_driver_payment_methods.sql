@@ -23,8 +23,13 @@ CREATE TABLE IF NOT EXISTS driver_finance.driver_payment_methods (
   id                   uuid NOT NULL DEFAULT gen_random_uuid(),
   operating_company_id uuid NOT NULL REFERENCES org.companies(id),
   driver_id            uuid NOT NULL REFERENCES mdata.drivers(id),
-  -- how the driver is paid. 'ach' requires a tokenized bank reference; 'check' does not.
-  method               text NOT NULL CHECK (method IN ('ach', 'check')),
+  -- SETTLE-PAYRUN EXPAND (2026-07-13): `method` free-text is being REPLACED by payment_method_id -> the
+  -- owner-editable catalogs.payment_methods catalog (created in 202607380000). During expand BOTH exist:
+  -- `method` is relaxed to NULLABLE (no longer the sole source of truth); payment_method_id (nullable here,
+  -- FK added in 202607380000 once the catalog table exists — ordering) is the canonical pointer going forward.
+  -- Safe to amend this HELD migration: it has never run on prod (held-migration firewall).
+  method               text NULL CHECK (method IS NULL OR method IN ('ach', 'check')),
+  payment_method_id    uuid NULL,
   -- opaque tokenized bank reference (from a processor/vault). NEVER a raw account/routing number.
   account_token        text NULL,
   routing_last4        text NULL CHECK (routing_last4 IS NULL OR routing_last4 ~ '^[0-9]{4}$'),
