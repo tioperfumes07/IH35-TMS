@@ -74,7 +74,7 @@ export function CoverageGapDashboard() {
 
   const mismatchedColumns = useMemo<ParityColumn<InsuranceCoverageGapUnit>[]>(
     () => [
-      { key: "unit_number", label: "Unit", render: (row) => unitLabel(row) },
+      { key: "unit_number", label: "Unit", render: (row) => <EntityLink kind="unit" id={row.unit_id} label={unitLabel(row)} /> },
       { key: "missing_types", label: "Missing Required Types", render: (row) => row.missing_types.join(", ") },
     ],
     [],

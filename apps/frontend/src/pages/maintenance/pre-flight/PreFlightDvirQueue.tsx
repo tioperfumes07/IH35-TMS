@@ -78,7 +78,7 @@ export function PreFlightDvirQueue() {
         render: (row) => (row.submitted_at ? new Date(row.submitted_at).toLocaleString() : "—"),
       },
       { key: "unit_id", label: "Unit", render: (row) => <EntityLink kind="unit" id={row.unit_id} label={row.unit_number ?? undefined} /> },
-      { key: "driver_name", label: "Driver", sortable: true, render: (row) => row.driver_name ?? "—" },
+      { key: "driver_name", label: "Driver", sortable: true, render: (row) => <EntityLink kind="driver" id={row.driver_id ?? undefined} label={row.driver_name ?? "—"} /> },
       { key: "item_key", label: "Item", sortable: true, render: (row) => <span title={row.notes ?? undefined}>{row.item_key}</span> },
       { key: "severity", label: "Severity", sortable: true, render: (row) => <DvirSeverityBadge severity={row.severity} /> },
       { key: "major_defect_code", label: "CFR Code", render: (row) => row.major_defect_code ?? "—" },

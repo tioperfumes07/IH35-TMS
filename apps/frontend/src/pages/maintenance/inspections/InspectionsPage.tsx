@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { confirmUpload, requestUploadUrl } from "../../../api/docs";
@@ -205,7 +206,7 @@ export function InspectionsPage() {
     () => [
       { key: "inspection_date", label: "Date", sortable: true, render: (row) => String(row.inspection_date ?? row.scheduled_date ?? "—") },
       { key: "inspection_type", label: "Type", sortable: true, render: (row) => row.inspection_type_label ?? row.inspection_type },
-      { key: "unit_number", label: "Unit", sortable: true, render: (row) => String(row.unit_number ?? row.unit_id ?? "—") },
+      { key: "unit_number", label: "Unit", sortable: true, render: (row) => <EntityLink kind="unit" id={row.unit_id ?? undefined} label={String(row.unit_number ?? row.unit_id ?? "—")} /> },
       { key: "inspector_name", label: "Inspector", sortable: true, render: (row) => String(row.inspector_name ?? "—") },
       { key: "outcome", label: "Outcome", sortable: true, render: (row) => String(row.outcome ?? row.status ?? "—") },
       { key: "dvir_submission_id", label: "DVIR", render: (row) => (row.dvir_submission_id ? "Linked" : "—") },
