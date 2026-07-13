@@ -745,3 +745,8 @@ jobs:
         run: node scripts/verify-open-wo-shared-predicate.mjs --selftest
       - name: verify:open-wo-shared-predicate
         run: npm run verify:open-wo-shared-predicate
+
+      - name: verify:home-attention-late-canonical --selftest
+        run: node scripts/verify-home-attention-late-canonical.mjs --selftest
+      - name: verify:home-attention-late-canonical
+        run: npm run verify:home-attention-late-canonical
