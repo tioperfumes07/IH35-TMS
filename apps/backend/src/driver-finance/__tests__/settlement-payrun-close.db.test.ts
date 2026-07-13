@@ -58,6 +58,10 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
   // per-driver escrow liability sub-accounts (grandparent -> parent -> per-driver leaf)
   const escrowGrandparent = randomUUID();
   const escrowParent = randomUUID();
+  // Distinct, non-Faro (<> 1150040084) QBO ids per escrow account: uq_accounts_company_qbo_account_id forbids
+  // reuse within a company, and the escrow resolver only requires a Liability that is NOT Faro (never a
+  // specific id) — so each account in the Damage-Claim liability family carries its own id, as in prod.
+  const escrowQbo = (tag: string) => `1150040187-${suffix}-${tag}`;
 
   type Scenario = { driverId: string; escrowSub: string; settlementId: string; displayId: string; advanceId?: string; liabilityId?: string };
   const below: Scenario = { driverId: randomUUID(), escrowSub: randomUUID(), settlementId: randomUUID(), displayId: `PR-BELOW-${suffix}` };
@@ -118,7 +122,7 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
        VALUES ($1::uuid,$2::uuid,'PayRun',$3,$4)`,
       [s.driverId, companyId, `D-${s.displayId}`, `+1006${randomUUID().slice(0, 7)}`]
     );
-    await mkAcct(s.escrowSub, `${s.displayId} — Driver Escrow`, "Liability", escrowParent, "1150040187");
+    await mkAcct(s.escrowSub, `${s.displayId} — Driver Escrow`, "Liability", escrowParent, escrowQbo(s.displayId));
     await upsertDriverEscrowAccountLink(db, { operatingCompanyId: companyId, driverId: s.driverId, coaAccountId: s.escrowSub });
     // running escrow balance (drives the cap check)
     await db.query(
@@ -182,8 +186,8 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
       await mkAcct(acct.advanceClearing, `Advance Clearing ${suffix}`, "Asset", null, null);
       await mkAcct(acct.chargebackRecovery, `Chargeback Recovery ${suffix}`, "Income", null, null);
       await mkAcct(acct.cash, `Operating Cash ${suffix}`, "Asset", null, null);
-      await mkAcct(escrowGrandparent, `Damage Claim Escrow ${suffix}`, "Liability", null, "1150040187");
-      await mkAcct(escrowParent, `Driver Escrow ${suffix}`, "Liability", escrowGrandparent, "1150040187");
+      await mkAcct(escrowGrandparent, `Damage Claim Escrow ${suffix}`, "Liability", null, escrowQbo("GP"));
+      await mkAcct(escrowParent, `Driver Escrow ${suffix}`, "Liability", escrowGrandparent, escrowQbo("P"));
       await bind("driver_pay_expense", acct.driverPay);
       await bind("insurance_recovery", acct.insuranceRecovery);
       await bind("advance_recovery", acct.advanceClearing);
