@@ -67,6 +67,36 @@ jobs:
       - name: verify:no-duplicate-financial-ledger
         run: npm run verify:no-duplicate-financial-ledger
 
+      - name: verify:settlement-escrow-resolver --selftest
+        run: node scripts/verify-settlement-escrow-resolver.mjs --selftest
+
+      - name: verify:settlement-escrow-resolver
+        run: npm run verify:settlement-escrow-resolver
+
+      - name: verify:settlement-escrow-cap --selftest
+        run: node scripts/verify-settlement-escrow-cap.mjs --selftest
+
+      - name: verify:settlement-escrow-cap
+        run: npm run verify:settlement-escrow-cap
+
+      - name: verify:cash-advance-maker-checker --selftest
+        run: node scripts/verify-cash-advance-maker-checker.mjs --selftest
+
+      - name: verify:cash-advance-maker-checker
+        run: npm run verify:cash-advance-maker-checker
+
+      - name: verify:settlement-payrun-gl-flag-gate --selftest
+        run: node scripts/verify-settlement-payrun-gl-flag-gate.mjs --selftest
+
+      - name: verify:settlement-payrun-gl-flag-gate
+        run: npm run verify:settlement-payrun-gl-flag-gate
+
+      - name: verify:payment-methods-catalog --selftest
+        run: node scripts/verify-payment-methods-catalog.mjs --selftest
+
+      - name: verify:payment-methods-catalog
+        run: npm run verify:payment-methods-catalog
+
       - name: verify:nav-integrity
         run: npm run verify:nav-integrity
 
@@ -700,6 +730,11 @@ jobs:
 
       - name: verify:expense-create-modal-catalog
         run: npm run verify:expense-create-modal-catalog
+
+      - name: verify:settlement-dispute-je-gate --selftest
+        run: node scripts/verify-settlement-dispute-je-gate.mjs --selftest
+      - name: verify:settlement-dispute-je-gate
+        run: npm run verify:settlement-dispute-je-gate
 
       - name: verify:home-attention-late-canonical --selftest
         run: node scripts/verify-home-attention-late-canonical.mjs --selftest

@@ -46,6 +46,7 @@ import {
   driverEscrowSubAccountName,
   planDriverEscrowSubAccount,
 } from "../driver-subaccount-provision.service.js";
+import { EscrowResolverError, resolveDriverEscrowLiabilityAccount } from "../../driver-finance/escrow-resolver.service.js";
 import {
   SETTLEMENT_GL_POSTING_FLAG_KEY,
   SettlementBillPaymentError,
@@ -183,23 +184,16 @@ async function resolveDriverOwnAccount(
   if (kind === "escrow") {
     const reg = await client.query<{ ok: boolean }>(`SELECT to_regclass('accounting.escrow_accounts') IS NOT NULL AS ok`);
     if (reg.rows[0]?.ok) {
-      const found = await client.query<{ account_id: string }>(
-        `
-          SELECT ea.coa_account_id::text AS account_id
-          FROM accounting.escrow_accounts ea
-          JOIN catalogs.accounts a ON a.id = ea.coa_account_id
-          WHERE ea.operating_company_id = $1::uuid
-            AND ea.holder_id = $2::uuid
-            AND ea.holder_type = 'driver'
-            AND a.parent_account_id IS NOT NULL      -- a per-driver SUB-account, never the shared default
-            AND a.deactivated_at IS NULL
-            AND a.is_postable = true
-            AND a.operating_company_id = $1::uuid
-          LIMIT 1
-        `,
-        [operatingCompanyId, driverId]
-      );
-      if (found.rows[0]?.account_id) return found.rows[0].account_id;
+      // Reuse the SHARED escrow resolver (I3): the driver-keyed bridge → the per-driver escrow LIABILITY
+      // sub-account, fail-loud asserting Liability + NOT the Faro factoring-reserve asset (QBO-1150040084).
+      // UNBOUND falls through to the canonical-name fallback (pre-bridge charts); WRONG_TYPE / IS_FARO
+      // rethrow so a mis-provisioned escrow bridge can never credit the wrong account.
+      try {
+        const resolved = await resolveDriverEscrowLiabilityAccount(client, operatingCompanyId, driverId);
+        return resolved.accountId;
+      } catch (e) {
+        if (!(e instanceof EscrowResolverError) || e.code !== "DRIVER_ESCROW_ACCOUNT_UNBOUND") throw e;
+      }
     }
     // Canonical provisioned per-driver escrow leaf: two-level nesting under the year-agnostic
     // "Driver Escrow" sub-parent, itself under top-level "Damage Claim Escrow" (STOP-DECISION #1).

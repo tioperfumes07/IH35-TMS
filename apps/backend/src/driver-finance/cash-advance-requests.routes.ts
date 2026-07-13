@@ -8,10 +8,12 @@ import {
   approveCashAdvanceRequest,
   cancelMyCashAdvanceRequest,
   createCashAdvanceRequest,
+  createOfficeCashAdvanceRequest,
   denyCashAdvanceRequest,
   driverCreateCashAdvanceRequestSchema,
   getCashAdvanceRequestDetail,
   getCashAdvanceRequestTimeline,
+  officeCreateCashAdvanceRequestSchema,
   previewCashAdvanceCascade,
   listCashAdvanceRequests,
   listMyCashAdvanceRequests,
@@ -37,6 +39,9 @@ const listQuerySchema = companyQuerySchema.extend({
 const uuidParamsSchema = z.object({
   id: z.string().uuid(),
 });
+
+// Per-route rate limits (fastify limiter is { global: false } — each NEW route opts in).
+const WRITE_RL = { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } };
 
 function sendValidationError(reply: FastifyReply, error: z.ZodError) {
   return reply.code(400).send({ error: "validation_error", details: error.flatten() });
@@ -288,6 +293,54 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
     return { timeline };
   });
 
+  // I4 OFFICE create: an office user (the "maker") creates a request for a driver (submitted_by = maker).
+  // Owner/Administrator makers auto-approve + disburse in the same call (role IS the authority, reviewer
+  // NULL); other office roles create a pending request that needs a DISTINCT Admin/Accountant/Owner checker.
+  app.post("/api/v1/driver-finance/cash-advance-requests", WRITE_RL, async (req, reply) => {
+    const user = currentUser(req, reply);
+    if (!user) return;
+    if (!canReviewCashAdvanceRequest(String(user.role ?? ""))) {
+      return reply.code(403).send({ error: "forbidden" });
+    }
+    const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
+    const parsedBody = officeCreateCashAdvanceRequestSchema.safeParse(req.body ?? {});
+    if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
+
+    const result = await withCurrentUser(user.uuid, async (client) => {
+      await assertCompanyMembership(user.uuid, parsedQuery.data.operating_company_id);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [parsedQuery.data.operating_company_id]);
+      return createOfficeCashAdvanceRequest(client, {
+        operatingCompanyId: parsedQuery.data.operating_company_id,
+        actorUserId: user.uuid,
+        actorRole: String(user.role ?? ""),
+        body: parsedBody.data,
+      });
+    });
+
+    // If an authority maker auto-approved, disburse + post (Dr QBO-149 / Cr cash) on a separate idempotent
+    // tx — records the disbursement; back-dating posting_date is role-gated to Owner/Administrator inside.
+    if (result.auto_approved && result.approval && !("error" in result.approval)) {
+      const disbursement = await disburseDriverAdvanceCore(
+        user.uuid,
+        String(user.role ?? ""),
+        parsedQuery.data.operating_company_id,
+        {
+          advance_id: result.approval.advanceId,
+          posting_date: parsedBody.data.posting_date ?? null,
+          credit_account_id: parsedBody.data.credit_account_id ?? null,
+        }
+      );
+      return reply.code(201).send({ request: result.request, auto_approved: true, approval: result.approval, disbursement });
+    }
+    if (result.auto_approved && result.approval && "error" in result.approval) {
+      // Auto-approve attempt failed (e.g. maker_checker_violation shouldn't happen for authority self, but
+      // advance_create_failed can) — surface it without losing the created request.
+      return reply.code(201).send({ request: result.request, auto_approved: false, approval_error: result.approval.error });
+    }
+    return reply.code(201).send({ request: result.request, auto_approved: false });
+  });
+
   app.post("/api/v1/driver-finance/cash-advance-requests/:id/approve", async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
@@ -318,6 +371,8 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
       if (result.error === "advance_create_failed") {
         return reply.code(400).send({ error: result.error, details: result.details });
       }
+      // I4: a non-checker approver → 403; maker==checker → 409 maker_checker_violation.
+      if (result.error === "checker_role_forbidden") return reply.code(403).send({ error: result.error });
       return reply.code(409).send({ error: result.error });
     }
 

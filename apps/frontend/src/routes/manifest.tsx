@@ -61,6 +61,7 @@ const BorderCrossingHistoryPage = React.lazy(() => import("../pages/dispatch/Bor
 import { BorderCrossingHistory as GpsBorderCrossingHistory } from "../pages/dispatch/borders/BorderCrossingHistory";
 const SettlementsPage = React.lazy(() => import("../pages/driver-finance/SettlementsPage").then((m) => ({ default: m.SettlementsPage })));
 const CashAdvanceRequestsPage = React.lazy(() => import("../pages/driver-finance/CashAdvanceRequestsPage").then((m) => ({ default: m.CashAdvanceRequestsPage })));
+const SettlementCloseArrivalPage = React.lazy(() => import("../pages/driver-finance/SettlementCloseArrivalPage").then((m) => ({ default: m.SettlementCloseArrivalPage })));
 const OwnerApprovalPortalPage = React.lazy(() => import("../pages/driver-finance/OwnerApprovalPortalPage").then((m) => ({ default: m.OwnerApprovalPortalPage })));
 import { PortalLayout } from "../portal/PortalLayout";
 const PortalLoginPage = React.lazy(() => import("../portal/PortalLoginPage").then((m) => ({ default: m.PortalLoginPage })));
@@ -163,6 +164,7 @@ const FixedAssetsPage = React.lazy(() => import("../pages/accounting/FixedAssets
 const QboReconcileCapturesPage = React.lazy(() => import("../pages/accounting/QboReconcileCapturesPage").then((m) => ({ default: m.QboReconcileCapturesPage })));
 const AccountTypeCatalogPage = React.lazy(() => import("../pages/accounting/AccountTypeCatalogPage").then((m) => ({ default: m.AccountTypeCatalogPage })));
 const MyAccountantPage = React.lazy(() => import("../pages/accounting/MyAccountantPage").then((m) => ({ default: m.MyAccountantPage })));
+const PaymentMethodsCatalogPage = React.lazy(() => import("../pages/accounting/PaymentMethodsCatalogPage").then((m) => ({ default: m.PaymentMethodsCatalogPage })));
 const BulkDemoPage = React.lazy(() => import("../pages/dev/BulkDemoPage").then((m) => ({ default: m.BulkDemoPage })));
 const SamsaraIntegrationPage = React.lazy(() => import("../pages/integrations/SamsaraIntegrationPage").then((m) => ({ default: m.SamsaraIntegrationPage })));
 const DriverAppLandingPage = React.lazy(() => import("../pages/DriverAppLandingPage").then((m) => ({ default: m.DriverAppLandingPage })));
@@ -1974,6 +1976,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <CashAdvanceRequestsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/driver-finance/settlement-close"
+          element={
+            <ProtectedRoute>
+              <SettlementCloseArrivalPage />
             </ProtectedRoute>
           }
         />
@@ -3806,6 +3816,7 @@ export const ROUTES = React.Children.toArray(
         <Route path="/accounting/prepaid-expenses" element={<ProtectedRoute><PrepaidExpensesPage /></ProtectedRoute>} />
         <Route path="/accounting/account-type-catalog" element={<ProtectedRoute><AccountTypeCatalogPage /></ProtectedRoute>} />
         <Route path="/accounting/my-accountant" element={<ProtectedRoute><MyAccountantPage /></ProtectedRoute>} />
+        <Route path="/accounting/payment-methods-catalog" element={<ProtectedRoute><PaymentMethodsCatalogPage /></ProtectedRoute>} />
         <Route
           path="/reports/run/:reportId"
           element={

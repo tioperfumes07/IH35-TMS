@@ -25,10 +25,35 @@ export type CashAdvanceCascadePreview = {
 // B6: the B4 accountability timeline row (5 steps + actor/role + elapsed seconds).
 export type CashAdvanceRequestTimeline = Record<string, unknown> | null;
 
+// Phase 3 Settlement Pay-Run — office-side (Owner/Admin/Manager/Accountant/Dispatcher) create.
+// Maker<>checker (I4, migration 202607380000): the created request stamps submitted_by_user_id =
+// the office user who created it. Owner/Administrator MAY self-approve immediately (auto_approve:
+// true — role IS the authority, no checker needed, reviewed_by stays NULL). Any other role's
+// request is left pending and requires a DIFFERENT Owner/Administrator/Accountant approver — the
+// backend CHECK constraint (cash_advance_requests_maker_ne_checker) rejects submitted_by ===
+// reviewed_by when both are set; the frontend additionally disables the Approve action for the
+// submitter (see CashAdvanceRequestsPage) so the maker never even sees an enabled Approve button.
+export type CashAdvanceOfficeCreatePayload = {
+  driver_id: string;
+  requested_amount_cents: number;
+  reason: string;
+  proposed_recovery_per_settlement_cents?: number;
+  load_id?: string | null;
+  /** Owner/Administrator only — self-approve at create time (no separate checker needed). */
+  auto_approve?: boolean;
+};
+
 export const cashAdvanceRequestsOfficeApi = {
   listPending(operatingCompanyId: string) {
     return apiRequest<{ requests: CashAdvanceRequestRow[] }>(
       withCompanyQuery("/api/v1/driver-finance/cash-advance-requests/pending", operatingCompanyId)
+    );
+  },
+
+  create(operatingCompanyId: string, body: CashAdvanceOfficeCreatePayload) {
+    return apiRequest<{ request: CashAdvanceRequestRow }>(
+      withCompanyQuery("/api/v1/driver-finance/cash-advance-requests", operatingCompanyId),
+      { method: "POST", body: { ...body, submitted_via: "office" } }
     );
   },
 
