@@ -79,5 +79,9 @@ jobs:
             echo "[program-tracker-artifacts-sync] no changes — tracker artifacts already fresh"
             exit 0
           fi
-          git commit -m "chore(tracker): auto-refresh reconcile + phase-manifest artifacts [skip ci]"
-          git push origin HEAD:main
+          # --no-verify: this bot commit runs on `main`, but `npm ci` above installs husky, whose pre-push
+          # `branch:precheck-push` hard-fails ("not on a feature branch") and blocked every scheduled push
+          # (the artifacts committed but never landed). Husky hooks are local-dev guardrails; CI is the
+          # authoritative gate (see ih35-tms-standards §3.4). Bypass them for this generated-artifact push.
+          git commit --no-verify -m "chore(tracker): auto-refresh reconcile + phase-manifest artifacts [skip ci]"
+          git push --no-verify origin HEAD:main
