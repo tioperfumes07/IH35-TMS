@@ -745,6 +745,10 @@ jobs:
         run: node scripts/verify-open-wo-shared-predicate.mjs --selftest
       - name: verify:open-wo-shared-predicate
         run: npm run verify:open-wo-shared-predicate
+      - name: verify:mdata-write-entity-scope --selftest
+        run: node scripts/verify-mdata-write-entity-scope.mjs --selftest
+      - name: verify:mdata-write-entity-scope
+        run: npm run verify:mdata-write-entity-scope
 
       - name: verify:home-attention-late-canonical --selftest
         run: node scripts/verify-home-attention-late-canonical.mjs --selftest
