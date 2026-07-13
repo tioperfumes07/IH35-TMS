@@ -87,6 +87,7 @@
     "ops:detect-migration-drift": "node scripts/runbook-detect-migration-drift.mjs",
     "ops:replay-missing-migrations": "node scripts/runbook-replay-missing-migrations.mjs",
     "verify:pre-commit": "node scripts/verify-pre-commit.mjs",
+    "verify:local-ci-parity": "node scripts/verify-local-ci-parity.mjs",
     "verify:static": "node scripts/verify-static.mjs",
     "verify:local-ci": "node scripts/verify-local-ci.mjs",
     "verify:unit-retire-open-wo-gate": "node scripts/verify-unit-retire-open-wo-gate.mjs",
