@@ -740,3 +740,8 @@ jobs:
         run: node scripts/verify-driverhub-unit-source.mjs --selftest
       - name: verify:driverhub-unit-source
         run: npm run verify:driverhub-unit-source
+
+      - name: verify:mdata-write-entity-scope --selftest
+        run: node scripts/verify-mdata-write-entity-scope.mjs --selftest
+      - name: verify:mdata-write-entity-scope
+        run: npm run verify:mdata-write-entity-scope

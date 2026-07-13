@@ -920,7 +920,8 @@
     "verify:settlement-escrow-cap": "node scripts/verify-settlement-escrow-cap.mjs",
     "verify:cash-advance-maker-checker": "node scripts/verify-cash-advance-maker-checker.mjs",
     "verify:settlement-payrun-gl-flag-gate": "node scripts/verify-settlement-payrun-gl-flag-gate.mjs",
-    "verify:payment-methods-catalog": "node scripts/verify-payment-methods-catalog.mjs"
+    "verify:payment-methods-catalog": "node scripts/verify-payment-methods-catalog.mjs",
+    "verify:mdata-write-entity-scope": "node scripts/verify-mdata-write-entity-scope.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",
