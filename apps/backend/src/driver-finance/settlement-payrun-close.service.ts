@@ -247,7 +247,8 @@ async function resolvePaymentMethod(
 ): Promise<{ id: string; name: string; glAccountId: string }> {
   const res = await client.query<{ id: string; name: string; gl_account_id: string | null }>(
     `
-      SELECT id::text, name, gl_account_id::text AS gl_account_id
+      -- canonical 0152 catalog is code-keyed with a display_name (no name column) -- alias it back to name.
+      SELECT id::text, display_name AS name, gl_account_id::text AS gl_account_id
       FROM catalogs.payment_methods
       WHERE id = $2::uuid AND operating_company_id = $1::uuid AND is_active AND voided_at IS NULL
       LIMIT 1
