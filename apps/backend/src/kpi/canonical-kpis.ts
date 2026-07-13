@@ -31,6 +31,19 @@ function statusList(statuses: readonly string[]): string {
   return statuses.map((s) => `'${s}'`).join(", ");
 }
 
+/**
+ * MAINT-2: the ONE canonical "open work order" WHERE fragment (alias-parameterized) — the open-status set
+ * AND not voided. Used by BOTH the KPI counts here and the maintenance WO list route so the KPI open-count
+ * == the table open-row count (they diverged before: the KPI had no exclusion, the list had a display_id
+ * ILIKE 'DEMO-%' hack). maintenance.work_orders has NO is_sample_data column; demo/test WOs are excluded
+ * because they are VOIDED (voided_at IS NULL), the canonical void-not-delete signal — GUARD voided
+ * DEMO-WO-001/002 on prod, so this replaces the name-pattern hack with the real void flag.
+ */
+export function openWorkOrderPredicate(alias = ""): string {
+  const a = alias ? `${alias}.` : "";
+  return `${a}status IN (${statusList(OPEN_MAINTENANCE_WO_STATUSES)}) AND ${a}voided_at IS NULL`;
+}
+
 /** HOME + Maintenance KPI row — same filter as maintenance dashboard open_wos. */
 export async function countOpenMaintenanceWorkOrders(client: Queryable, operatingCompanyId: string): Promise<number> {
   const res = await client.query<{ count: number }>(
@@ -38,21 +51,21 @@ export async function countOpenMaintenanceWorkOrders(client: Queryable, operatin
       SELECT count(*)::int AS count
       FROM maintenance.work_orders
       WHERE operating_company_id = $1::uuid
-        AND status IN (${statusList(OPEN_MAINTENANCE_WO_STATUSES)})
+        AND ${openWorkOrderPredicate()}
     `,
     [operatingCompanyId]
   );
   return Number(res.rows[0]?.count ?? 0);
 }
 
-/** Open WOs for ONE unit — the retire/sell gate (WF-064). Reuses the canonical open-status list. */
+/** Open WOs for ONE unit — the retire/sell gate (WF-064). Reuses the canonical open-WO predicate. */
 export async function countOpenWorkOrdersForUnit(client: Queryable, unitId: string): Promise<number> {
   const res = await client.query<{ count: number }>(
     `
       SELECT count(*)::int AS count
       FROM maintenance.work_orders
       WHERE unit_id = $1::uuid
-        AND status IN (${statusList(OPEN_MAINTENANCE_WO_STATUSES)})
+        AND ${openWorkOrderPredicate()}
     `,
     [unitId]
   );

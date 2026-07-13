@@ -735,3 +735,8 @@ jobs:
         run: node scripts/verify-settlement-dispute-je-gate.mjs --selftest
       - name: verify:settlement-dispute-je-gate
         run: npm run verify:settlement-dispute-je-gate
+
+      - name: verify:open-wo-shared-predicate --selftest
+        run: node scripts/verify-open-wo-shared-predicate.mjs --selftest
+      - name: verify:open-wo-shared-predicate
+        run: npm run verify:open-wo-shared-predicate
