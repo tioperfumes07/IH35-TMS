@@ -675,3 +675,16 @@ jobs:
         run: npm run verify:period-money-control-flag-gate
       - name: verify:feature-flag-key-shape
         run: npm run verify:feature-flag-key-shape
+
+      # CI-WIRE-CRITICAL-GUARDS: 5 green, DB-free, non-financial guards whose fixes are live on main
+      # but were unwired from every CI job (regression-audit finding). Additive coverage — no gate rename.
+      - name: verify:driver-qual-gate
+        run: npm run verify:driver-qual-gate
+      - name: verify:user-role-escalation
+        run: npm run verify:user-role-escalation
+      - name: verify:audit-chain-cron
+        run: npm run verify:audit-chain-cron
+      - name: verify:legal-entity-scope
+        run: npm run verify:legal-entity-scope
+      - name: verify:legal-matters-role-gate
+        run: npm run verify:legal-matters-role-gate
