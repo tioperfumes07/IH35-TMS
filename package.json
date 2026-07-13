@@ -88,6 +88,7 @@
     "ops:replay-missing-migrations": "node scripts/runbook-replay-missing-migrations.mjs",
     "verify:pre-commit": "node scripts/verify-pre-commit.mjs",
     "verify:driverhub-unit-source": "node scripts/verify-driverhub-unit-source.mjs",
+    "verify:home-attention-late-canonical": "node scripts/verify-home-attention-late-canonical.mjs",
     "verify:local-ci-parity": "node scripts/verify-local-ci-parity.mjs",
     "verify:static": "node scripts/verify-static.mjs",
     "verify:local-ci": "node scripts/verify-local-ci.mjs",
