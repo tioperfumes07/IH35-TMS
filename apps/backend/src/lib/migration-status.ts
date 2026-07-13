@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import type pg from "pg";
+import { loadHeldMigrationSet } from "../db/held-migrations.js";
 
 const MIGRATION_FILE_PATTERN = /^(?:\d{4}[a-z]?|\d{12})_.+\.sql$/i;
 
@@ -129,8 +130,24 @@ export async function assertMigrationDriftBootGuard(opts: {
     return;
   }
   const drift = await findMigrationDrift(opts.client, opts.repoRoot);
-  if (drift.missingInDB.length === 0) return;
 
-  const msg = `[boot] migration drift detected: missing in DB: ${drift.missingInDB.join(", ")}`;
+  // HELD migrations are deliberately unledgered on prod (the db:migrate runner
+  // HELD-SKIPs them; the owner hand-applies on a Neon branch). They are "pending",
+  // not drift — excluding them keeps this boot guard from refusing boot on a deploy
+  // that carries an unrun held migration, while still catching missing NORMAL ones.
+  const heldSet = loadHeldMigrationSet(opts.repoRoot);
+  const heldPending = drift.missingInDB.filter((name) => heldSet.has(name));
+  const missingInDB = drift.missingInDB.filter((name) => !heldSet.has(name));
+
+  if (heldPending.length > 0) {
+    opts.logError(
+      { event: "migration_drift_held_pending_ignored", held_pending: heldPending },
+      "[boot] held migrations pending on prod (expected — not drift)"
+    );
+  }
+
+  if (missingInDB.length === 0) return;
+
+  const msg = `[boot] migration drift detected: missing in DB: ${missingInDB.join(", ")}`;
   throw new Error(msg);
 }
