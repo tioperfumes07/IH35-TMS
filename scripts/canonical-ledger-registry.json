@@ -1,0 +1,26 @@
+{
+  "_doc": "Owner-maintained money-concept -> THE ONE canonical ledger table. Enforced by scripts/verify-no-duplicate-financial-ledger.mjs. A NEW financial table (or any table whose name-token collides with a concept below) fails CI unless its migration declares either '-- SUPERSEDES: <schema.table> (JORGE-APPROVED <YYYY-MM-DD>)' or a '-- CANONICAL-CHECK:' block that EXPLICITLY NAMES the colliding canonical table and states why the new one is distinct. Purpose: make a split-brain money ledger (e.g. a new driver_finance.cash_advances beside driver_finance.driver_advances) STRUCTURALLY UNMERGEABLE.",
+  "_add_a_concept_only_after": "verifying the canonical table exists on main (LAW-OF-THE-LAND Section 0). Every path below was grep-verified against db/migrations on 2026-07-13.",
+  "financial_schemas": ["driver_finance", "accounting", "banking", "factoring", "factor"],
+  "concepts": {
+    "advance": "driver_finance.driver_advances",
+    "cash_advance": "driver_finance.driver_advances",
+    "cash_advance_request": "driver_finance.cash_advance_requests",
+    "settlement": "driver_finance.driver_settlements",
+    "settlement_line": "driver_finance.settlement_lines",
+    "settlement_deduction": "driver_finance.driver_settlement_deductions",
+    "driver_payment_method": "driver_finance.driver_payment_methods",
+    "payment_method": "driver_finance.driver_payment_methods",
+    "escrow": "driver_finance.escrow_ledger",
+    "factoring_ledger": "factoring.*",
+    "invoice": "accounting.invoices",
+    "bill": "accounting.bills",
+    "journal_entry": "accounting.journal_entries",
+    "bank_transaction": "banking.bank_transactions"
+  },
+  "_notes": {
+    "factor_vs_factoring": "factoring.* is the real factoring ledger (factoring.batch / reserve_movement / letter_of_release / etc.). factor.* is FARO daily-import STAGING (factor.faro_daily_imports / faro_invoice_lines / reconciliation_runs) — a DISTINCT staging area, not a second factoring ledger.",
+    "escrow": "canonical escrow ledger = driver_finance.escrow_ledger; the separation/return flow = driver_finance.driver_escrow_separations; accounting.escrow_postings is the GL projection. Distinct sub-concepts of the ONE escrow ledger — not duplicates.",
+    "payment_method": "driver_finance.driver_payment_methods is the per-driver method row. The future owner-editable catalogs.payment_methods CATALOG (settlement pay-run build) is distinct: driver_payment_methods will reference it. A new catalogs.payment_methods must therefore carry a CANONICAL-CHECK that names driver_payment_methods and states the catalog-vs-per-driver distinction."
+  }
+}

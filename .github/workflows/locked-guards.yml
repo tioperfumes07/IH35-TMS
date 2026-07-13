@@ -61,6 +61,12 @@ jobs:
       - name: verify:canonical-table-writes
         run: npm run verify:canonical-table-writes
 
+      - name: verify:no-duplicate-financial-ledger --selftest
+        run: node scripts/verify-no-duplicate-financial-ledger.mjs --selftest
+
+      - name: verify:no-duplicate-financial-ledger
+        run: npm run verify:no-duplicate-financial-ledger
+
       - name: verify:nav-integrity
         run: npm run verify:nav-integrity
 
