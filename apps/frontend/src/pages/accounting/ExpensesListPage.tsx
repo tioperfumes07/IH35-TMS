@@ -11,13 +11,14 @@ import { formatDateUS } from "../../lib/formatDate";
  * no blue/green/emojis).
  */
 import { useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useQuery } from "@tanstack/react-query";
 import { listExpenses, type ExpenseListRow, type ExpenseListStatus } from "../../api/accounting";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { RecordExpenseModal } from "../../components/expenses/RecordExpenseModal";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
@@ -66,6 +67,7 @@ export function ExpensesListPage() {
   const [status, setStatus] = useState<"" | ExpenseListStatus>("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const [createOpen, setCreateOpen] = useState(false);
 
   const query = useQuery({
     queryKey: ["accounting", "expenses", companyId, status, fromDate, toDate],
@@ -168,14 +170,24 @@ export function ExpensesListPage() {
       title="Expenses"
       subtitle="Recorded expenses (read-only)"
       actions={
-        <Link
-          to="/accounting/expenses"
-          className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-sm font-medium text-gray-800 hover:bg-gray-50"
+        <button
+          type="button"
+          onClick={() => setCreateOpen(true)}
+          disabled={!companyId}
+          className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-60"
         >
           + Record expense
-        </Link>
+        </button>
       }
     >
+      {/* Create = MODAL (skill §7). The /accounting/expenses/create page route stays as a deep-link
+          fallback (additive); the list trigger opens RecordExpenseModal in place. */}
+      <RecordExpenseModal
+        open={createOpen}
+        operatingCompanyId={companyId}
+        onClose={() => setCreateOpen(false)}
+        onCreated={() => void query.refetch()}
+      />
       <div className="space-y-3">
         {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
         {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}

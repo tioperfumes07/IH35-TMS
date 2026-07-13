@@ -688,3 +688,9 @@ jobs:
         run: npm run verify:legal-entity-scope
       - name: verify:legal-matters-role-gate
         run: npm run verify:legal-matters-role-gate
+
+      - name: verify:expense-create-modal-catalog --selftest
+        run: node scripts/verify-expense-create-modal-catalog.mjs --selftest
+
+      - name: verify:expense-create-modal-catalog
+        run: npm run verify:expense-create-modal-catalog

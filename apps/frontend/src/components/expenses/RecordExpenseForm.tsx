@@ -2,12 +2,11 @@ import type { FormEvent } from "react";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getWoCostContext } from "../../api/maintenance";
-import { listUnits } from "../../api/mdata";
+import { listUnits, listVendors } from "../../api/mdata";
 import { listCatalogAccounts } from "../../api/catalog-accounts";
 import { Button } from "../Button";
 import { DatePicker } from "../forms/DatePicker";
 import { MoneyInput } from "../forms/MoneyInput";
-import { QboCombobox } from "../forms/QboCombobox";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { SelectCombobox } from "../shared/SelectCombobox";
 import { UploadZone } from "../UploadZone";
@@ -50,6 +49,12 @@ export function RecordExpenseForm({
     queryFn: () => listUnits({ status: "Active", operating_company_id: operatingCompanyId, limit: 500 }),
     enabled: Boolean(operatingCompanyId),
   });
+  const vendorsQuery = useQuery({
+    queryKey: ["record-expense", "vendors", operatingCompanyId],
+    queryFn: () => listVendors({ operating_company_id: operatingCompanyId, limit: 500 }),
+    enabled: Boolean(operatingCompanyId),
+    staleTime: 60_000,
+  });
   const paymentAccountsQuery = useQuery({
     queryKey: ["record-expense", "payment-accounts", operatingCompanyId],
     // No explicit limit → listCatalogAccounts pages through the FULL chart (backend caps limit at 200; the
@@ -58,6 +63,13 @@ export function RecordExpenseForm({
     enabled: Boolean(operatingCompanyId),
     staleTime: 60_000,
   });
+
+  // Vendor options from the CANONICAL mdata.vendors roster (same table the inline "+ Add new vendor"
+  // QuickCreate writes to) so a created vendor selects + survives reload (QB-STD-5).
+  const vendorOptions = useMemo(
+    () => (vendorsQuery.data?.vendors ?? []).map((v) => ({ value: v.id, label: v.name })),
+    [vendorsQuery.data?.vendors]
+  );
 
   // Payment account = the cash/bank account the expense was paid FROM → postable Asset accounts.
   const paymentAccountOptions = useMemo(
@@ -118,16 +130,29 @@ export function RecordExpenseForm({
       <label className="text-xs font-semibold text-gray-700" htmlFor={fieldId("vendor")}>
         Vendor
         <div className="mt-1">
-          <QboCombobox
-            entityType="vendor"
-            operatingCompanyId={operatingCompanyId}
-            value={values.vendorId}
-            displayValue={values.vendorDisplay}
-            onChange={(qboId, displayName) => {
-              setValues((prev) => ({ ...prev, vendorId: qboId, vendorDisplay: displayName, vendorUuid: null }));
+          {/* Shared ReferenceSelect gives Vendor the inline "+ Add new vendor" first row (QuickCreate →
+              canonical mdata.vendors), matching Category. The submit sends vendor_uuid (canonical id) only;
+              a freshly created vendor selects + persists (survives reload). No free-text-only picker. */}
+          <ReferenceSelect
+            value={values.vendorUuid || null}
+            onChange={(next) => {
+              if (!next) {
+                setValues((prev) => ({ ...prev, vendorUuid: null, vendorId: null, vendorDisplay: "" }));
+                return;
+              }
+              const match = vendorOptions.find((row) => row.value === next);
+              // A just-created vendor isn't in vendorOptions yet — onOptionCreated set the values already,
+              // so don't clobber when there's no match.
+              if (!match) return;
+              setValues((prev) => ({ ...prev, vendorUuid: next, vendorId: null, vendorDisplay: match.label }));
             }}
-            onPick={(row) => {
-              setValues((prev) => ({ ...prev, vendorId: row.qbo_id, vendorUuid: row.id, vendorDisplay: row.display_name }));
+            options={vendorOptions}
+            createKind="vendor"
+            operatingCompanyId={operatingCompanyId}
+            placeholder="Select vendor…"
+            onOptionCreated={(opt) => {
+              setValues((prev) => ({ ...prev, vendorUuid: opt.value, vendorId: null, vendorDisplay: opt.label }));
+              void vendorsQuery.refetch();
             }}
           />
         </div>

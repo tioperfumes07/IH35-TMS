@@ -14,7 +14,8 @@ export function ExpenseCreatePage() {
   return (
     <AccountingSubNavWrapper title="Expenses" subtitle="Record a vendor expense or bill payment">
       {!companyId ? <div className="text-sm text-red-600">Select an operating company in the shell header.</div> : null}
-      <div className="mx-auto max-w-3xl rounded-sm border border-gray-200 bg-white p-4">
+      {/* Flat: AccountingSubNavWrapper is the single frame — no inner bordered card (no box-in-box). */}
+      <div className="mx-auto max-w-3xl">
         {companyId ? (
           <RecordExpenseForm
             operatingCompanyId={companyId}
