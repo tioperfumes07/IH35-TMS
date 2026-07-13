@@ -736,6 +736,11 @@ jobs:
       - name: verify:settlement-dispute-je-gate
         run: npm run verify:settlement-dispute-je-gate
 
+      - name: verify:driverhub-unit-source --selftest
+        run: node scripts/verify-driverhub-unit-source.mjs --selftest
+      - name: verify:driverhub-unit-source
+        run: npm run verify:driverhub-unit-source
+
       - name: verify:open-wo-shared-predicate --selftest
         run: node scripts/verify-open-wo-shared-predicate.mjs --selftest
       - name: verify:open-wo-shared-predicate

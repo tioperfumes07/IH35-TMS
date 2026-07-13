@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { DISPATCH_ACTIVE_LOAD_STATUSES } from "../dispatch/active-loads-count.js";
 
 export type QueryableClient = {
   query: (query: string, values?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }>;
@@ -844,6 +845,8 @@ export async function getFleetSchedule(
   client: QueryableClient,
   args: { operatingCompanyId: string; startDate: string; endDate: string }
 ) {
+  // DRIVERHUB-3: canonical active-load status set for "the driver's current tractor".
+  const activeStatusList = DISPATCH_ACTIVE_LOAD_STATUSES.map((s) => `'${s}'`).join(", ");
   const driversRes = await client.query(
     `
       SELECT
@@ -853,9 +856,24 @@ export async function getFleetSchedule(
         u.id AS unit_id,
         u.unit_number
       FROM mdata.drivers d
+      -- DRIVERHUB-3: the CURRENT tractor for a driver is the unit assigned on their most-recent ACTIVE
+      -- dispatch load (mdata.loads.assigned_unit_id where assigned_primary_driver_id = d.id), NOT the
+      -- unpopulated mdata.units.assigned_driver_id column (always NULL in prod → the Unit cell was blank).
+      LEFT JOIN LATERAL (
+        SELECT l.assigned_unit_id
+        FROM mdata.loads l
+        WHERE l.assigned_primary_driver_id = d.id
+          AND l.operating_company_id = $1
+          AND l.soft_deleted_at IS NULL
+          AND l.assigned_unit_id IS NOT NULL
+          AND l.status::text IN (${activeStatusList})
+        ORDER BY l.created_at DESC
+        LIMIT 1
+      ) al ON TRUE
       LEFT JOIN mdata.units u
-        ON u.assigned_driver_id = d.id
+        ON u.id = al.assigned_unit_id
         AND u.deactivated_at IS NULL
+        AND (u.owner_company_id = $1 OR u.currently_leased_to_company_id = $1)
       WHERE d.operating_company_id = $1
         AND d.deactivated_at IS NULL
         -- DRIVERHUB-2: never list non-genuine drivers on the Scheduler. Exclude onboarding sample
