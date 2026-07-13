@@ -35,6 +35,19 @@ function stripSql(src) {
   return src.replace(/--.*$/gm, "");
 }
 
+/** Extract a named function body (declaration marker → next top-level boundary). Mirrors the helper in
+ *  verify-je-void-reverses-not-voids.mjs so this guard can scope assertion (2) to voidJournalEntry's OWN
+ *  body — the reverseJournalEntryNoFlip helper is defined ABOVE it and itself calls postVoidReversal, so a
+ *  whole-file anchor is fooled (the helper's call precedes the gate). */
+export function extractFn(src, marker) {
+  const start = src.indexOf(marker);
+  if (start < 0) return null;
+  const rest = src.slice(start + marker.length);
+  const bounds = ["\nexport ", "\nconst execute", "\nfunction "].map((b) => rest.indexOf(b)).filter((i) => i >= 0);
+  const end = bounds.length ? Math.min(...bounds) : rest.length;
+  return src.slice(start, start + marker.length + end);
+}
+
 export function assertGate({ service, routes, flagService, migration }) {
   const errors = [];
 
@@ -43,19 +56,26 @@ export function assertGate({ service, routes, flagService, migration }) {
     errors.push(`${SERVICE}: MONEY_CONTROL_VOID_REVERSAL_FLAG_KEY const ('${KEY}') missing`);
   }
 
-  // (2) gate resolved BEFORE the status mutation, throwing void_reversal_disabled when off
-  const gateIdx = service.search(/isEnabled\(\s*client\s*,\s*MONEY_CONTROL_VOID_REVERSAL_FLAG_KEY/);
-  const throwIdx = service.search(/throw new Error\(\s*["']void_reversal_disabled["']\s*\)/);
-  // Option-1 void's first write is the reversing-JE post; the gate must precede it (an OFF entity posts nothing).
-  const mutateIdx = service.search(/postVoidReversal\s*\(/);
-  if (gateIdx < 0) errors.push(`${SERVICE}: voidJournalEntry does not resolve isEnabled(client, MONEY_CONTROL_VOID_REVERSAL_FLAG_KEY, …)`);
-  if (throwIdx < 0) errors.push(`${SERVICE}: does not throw 'void_reversal_disabled' when the flag is OFF`);
-  if (mutateIdx < 0) errors.push(`${SERVICE}: could not locate postVoidReversal(...) (guard anchor)`);
-  if (gateIdx >= 0 && throwIdx >= 0 && gateIdx > throwIdx) {
-    errors.push(`${SERVICE}: the isEnabled(...) resolve must precede the throw`);
-  }
-  if (gateIdx >= 0 && mutateIdx >= 0 && gateIdx > mutateIdx) {
-    errors.push(`${SERVICE}: the money-control gate must run BEFORE postVoidReversal (an OFF entity must not post a reversal)`);
+  // (2) gate resolved BEFORE the reversal, throwing void_reversal_disabled when off — scoped to
+  //     voidJournalEntry's OWN body (the reverseJournalEntryNoFlip helper sits above it and calls
+  //     postVoidReversal, so a whole-file anchor false-positives). Anchor on the reversal trigger the body
+  //     actually calls (reverseJournalEntryNoFlip), not postVoidReversal.
+  const voidBody = extractFn(service, "export async function voidJournalEntry");
+  if (!voidBody) {
+    errors.push(`${SERVICE}: voidJournalEntry not found`);
+  } else {
+    const gateIdx = voidBody.search(/isEnabled\(\s*client\s*,\s*MONEY_CONTROL_VOID_REVERSAL_FLAG_KEY/);
+    const throwIdx = voidBody.search(/throw new Error\(\s*["']void_reversal_disabled["']\s*\)/);
+    const mutateIdx = voidBody.search(/reverseJournalEntryNoFlip\s*\(/);
+    if (gateIdx < 0) errors.push(`${SERVICE}: voidJournalEntry does not resolve isEnabled(client, MONEY_CONTROL_VOID_REVERSAL_FLAG_KEY, …)`);
+    if (throwIdx < 0) errors.push(`${SERVICE}: does not throw 'void_reversal_disabled' when the flag is OFF`);
+    if (mutateIdx < 0) errors.push(`${SERVICE}: could not locate reverseJournalEntryNoFlip(...) (guard anchor)`);
+    if (gateIdx >= 0 && throwIdx >= 0 && gateIdx > throwIdx) {
+      errors.push(`${SERVICE}: the isEnabled(...) resolve must precede the throw`);
+    }
+    if (gateIdx >= 0 && mutateIdx >= 0 && gateIdx > mutateIdx) {
+      errors.push(`${SERVICE}: the money-control gate must run BEFORE the reversal (reverseJournalEntryNoFlip)`);
+    }
   }
 
   // (3) route maps the policy error to 409
@@ -88,9 +108,11 @@ function selftest() {
   const good = {
     service:
       `const MONEY_CONTROL_VOID_REVERSAL_FLAG_KEY = "${KEY}";\n` +
-      `const voidActionEnabled = await isEnabled(client, MONEY_CONTROL_VOID_REVERSAL_FLAG_KEY, { operating_company_id: x });\n` +
-      `if (!voidActionEnabled) throw new Error("void_reversal_disabled");\n` +
-      `const reversal = await postVoidReversal(client, { id }, { reason });`,
+      `export async function voidJournalEntry() {\n` +
+      `  const voidActionEnabled = await isEnabled(client, MONEY_CONTROL_VOID_REVERSAL_FLAG_KEY, { operating_company_id: x });\n` +
+      `  if (!voidActionEnabled) throw new Error("void_reversal_disabled");\n` +
+      `  const { reversal } = await reverseJournalEntryNoFlip(client, {});\n` +
+      `}\nexport function next(){}`,
     routes: `if (message === "void_reversal_disabled") return reply.code(409).send({ error: message });`,
     flagService: `export const PER_ENTITY_ONLY_FLAG_KEYS = new Set(["${KEY}"])`,
     migration: `INSERT INTO lib.feature_flags VALUES ('${KEY}', 'desc', false, 0)`,
@@ -100,9 +122,11 @@ function selftest() {
     { name: "missing flag key const", in: { ...good, service: good.service.replace(/MONEY_CONTROL_VOID_REVERSAL_FLAG_KEY = "[^"]+"/, "X = 1") }, wantMin: 1 },
     { name: "gate AFTER mutation → error", in: { ...good, service:
       `const MONEY_CONTROL_VOID_REVERSAL_FLAG_KEY = "${KEY}";\n` +
-      `const reversal = await postVoidReversal(client, { id }, { reason });\n` +
-      `const voidActionEnabled = await isEnabled(client, MONEY_CONTROL_VOID_REVERSAL_FLAG_KEY, {});\n` +
-      `if (!voidActionEnabled) throw new Error("void_reversal_disabled");` }, wantMin: 1 },
+      `export async function voidJournalEntry() {\n` +
+      `  const { reversal } = await reverseJournalEntryNoFlip(client, {});\n` +
+      `  const voidActionEnabled = await isEnabled(client, MONEY_CONTROL_VOID_REVERSAL_FLAG_KEY, {});\n` +
+      `  if (!voidActionEnabled) throw new Error("void_reversal_disabled");\n` +
+      `}\nexport function next(){}` }, wantMin: 1 },
     { name: "route not 409", in: { ...good, routes: `// no mapping` }, wantMin: 1 },
     { name: "not per-entity-only", in: { ...good, flagService: `export const PER_ENTITY_ONLY_FLAG_KEYS = new Set([])` }, wantMin: 1 },
     { name: "not default OFF", in: { ...good, migration: `INSERT INTO lib.feature_flags VALUES ('${KEY}', 'd', true, 0)` }, wantMin: 1 },

@@ -19,6 +19,7 @@
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { settleWorkOrderFinancialLinkage } from "../work-orders/work-orders.routes.js";
 import { auditVoid, isVoidEnforcementEnabled, postVoidReversal } from "../accounting/void.service.js";
+import { reverseJournalEntryNoFlip } from "../accounting/journal-entries.service.js";
 import { reverseSettlementBillPayment } from "../accounting/settlement-posting/settlement-bill-payment-posting.service.js";
 
 export type VoidCancelAction = "void" | "cancel";
@@ -316,69 +317,74 @@ const executeInvoice: EntityExecutor = async (ctx) => {
   return { kind: "ok", reversing_entry_ref: reversingEntryRef, closed_period_reversal: closedPeriod };
 };
 
-// VOID-EVERYWHERE PR-3 — journal_entry executor. Mirrors journal-entries.service.ts voidJournalEntry's
-// money-safe rule (postVoidReversal, gated VOID_ENFORCEMENT_ENABLED) but runs on ctx.client so it is
-// atomic with the governance decision. NO new GL math.
+// VOID-EVERYWHERE PR-3 + GOV-JE-VOID-FIX — journal_entry executor. REVERSES-not-flips: it calls the SHARED
+// reverseJournalEntryNoFlip helper (same mechanics as the direct journal-entries.service.ts voidJournalEntry)
+// on ctx.client so it is atomic with the governance decision. The original is NEVER flipped to 'voided' (GL
+// readers exclude 'voided', so a flip silently drops the original; the reversing JE nets the GL). NO new GL
+// math. Gate stays VOID_ENFORCEMENT_ENABLED (R2 — per-surface, unchanged).
 const executeJournalEntry: EntityExecutor = async (ctx) => {
   const { client, operatingCompanyId, entityId, userId, reason } = ctx;
 
   const ready = await client.query<{ ok: boolean }>(`SELECT to_regclass('accounting.journal_entries') IS NOT NULL AS ok`);
   if (!ready.rows[0]?.ok) return { kind: "unsupported_entity" };
 
-  const pre = await client.query<{ status: string; entry_date: string | null }>(
-    `SELECT status::text AS status, entry_date::text AS entry_date
+  const pre = await client.query<{ status: string }>(
+    `SELECT status::text AS status
        FROM accounting.journal_entries WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1 FOR UPDATE`,
     [entityId, operatingCompanyId]
   );
   if (!pre.rows[0]) return { kind: "not_found" };
+  // Reverse-not-flip means the original stays 'posted' after a successful reversal — so a legacy 'voided'
+  // row is the only "already done" reachable from status alone; an already-REVERSED (still-posted) original
+  // is caught by the helper's double-reversal guard below. A non-posted (draft) JE cannot be reversed.
   if (String(pre.rows[0].status) === "voided") return { kind: "already_done" };
+  if (String(pre.rows[0].status) !== "posted") return { kind: "not_completable" };
 
+  // GOV-JE-VOID-FIX (owner ruling): compute posted GL from the JE's OWN postings (journal_entry_uuid) — a
+  // directly-created JE links its postings that way and does NOT carry source_transaction_type='journal_entry',
+  // so countPostedGl() would read 0 and wrongly yield flip_only. A JE ALWAYS carries balanced GL, so a plain
+  // status flip is never safe: flag OFF -> blocked, flag ON -> reverse; flip_only is unreachable for a real JE.
+  const glCount = await client.query<{ n: number }>(
+    `SELECT count(*)::int AS n FROM accounting.journal_entry_postings
+       WHERE operating_company_id = $1::uuid AND journal_entry_uuid = $2::uuid`,
+    [operatingCompanyId, entityId]
+  );
   const flagOn = await isVoidEnforcementEnabled(client, operatingCompanyId, userId);
-  const postedCount = await countPostedGl(client, operatingCompanyId, "journal_entry", entityId);
-  const gate = resolveSurfaceVoidGate(flagOn, postedCount > 0);
-  if (gate === "blocked") return { kind: "financial_blocked" };
+  const gate = resolveSurfaceVoidGate(flagOn, Number(glCount.rows[0]?.n ?? 0) > 0);
+  // Anything that is not a reversal is BLOCKED for a JE (never silently drop it via a status flip; a zero-GL
+  // JE has nothing to drop but is defaulted to blocked per the owner ruling — no silent no-op, no flip).
+  if (gate !== "reverse") return { kind: "financial_blocked" };
 
-  let reversingEntryRef: string | null = null;
-  let closedPeriod = false;
-  if (gate === "reverse") {
-    const ed = pre.rows[0].entry_date;
-    const originalDate = ed && ed.length >= 10 ? ed.slice(0, 10) : new Date().toISOString().slice(0, 10);
-    const reversal = await postVoidReversal(
-      client,
-      { operatingCompanyId, entityType: "journal_entry", entityId, originalDate, memo: `Void reversal of journal entry ${entityId}: ${reason}` },
-      { userId }
-    );
-    reversingEntryRef = reversal.reversal_journal_entry_id;
-    closedPeriod = reversal.closed_period_reversal;
-    await auditVoid(client, userId, "journal_entry", { operatingCompanyId, entityId, reason, reversal });
+  let reversal;
+  try {
+    reversal = (await reverseJournalEntryNoFlip(client, { operatingCompanyId, journalEntryId: entityId, reason, actorUserId: userId })).reversal;
+  } catch (err) {
+    const msg = String((err as Error)?.message ?? "");
+    if (msg === "journal_entry_already_reversed") return { kind: "already_done" };
+    if (msg === "journal_entry_not_postable") return { kind: "not_completable" };
+    if (msg === "journal_entry_not_found") return { kind: "not_found" };
+    throw err; // unexpected — surface it, never swallow (no fake success)
   }
 
-  const flipped = await client.query<{ id: string }>(
-    `UPDATE accounting.journal_entries
-        SET status = 'voided', voided_at = now(), voided_by_user_id = $3::uuid, void_reason = $4,
-            qbo_sync_pending = true, updated_at = now()
-      WHERE id = $1::uuid AND operating_company_id = $2::uuid AND status <> 'voided'
-      RETURNING id::text`,
-    [entityId, operatingCompanyId, userId, reason]
-  );
-  if (!flipped.rows[0]) return { kind: "already_done" };
+  await auditVoid(client, userId, "journal_entry", { operatingCompanyId, entityId, reason, reversal });
   await appendCrudAudit(
     client,
     userId,
-    "accounting.journal_entries.voided",
+    "accounting.journal_entries.reversed",
     {
       resource_type: "accounting.journal_entries",
       resource_id: entityId,
       operating_company_id: operatingCompanyId,
       reason,
-      reversing_entry_ref: reversingEntryRef,
-      financial_void: reversingEntryRef != null,
+      reversing_entry_ref: reversal.reversal_journal_entry_id,
+      financial_void: true,
+      reverses_not_flips: true, // original stays status='posted'; the reversing JE nets the GL
       via: "governance.void_cancel_requests",
     },
     "warning",
     "VOID-CANCEL-GOV"
   );
-  return { kind: "ok", reversing_entry_ref: reversingEntryRef, closed_period_reversal: closedPeriod };
+  return { kind: "ok", reversing_entry_ref: reversal.reversal_journal_entry_id, closed_period_reversal: reversal.closed_period_reversal };
 };
 
 // VOID-EVERYWHERE PR-3 — expense executor. expenses.routes.ts' direct /void route requires

@@ -245,6 +245,79 @@ export async function createJournalEntry(input: CreateJournalEntryInput, actor: 
 // a policy error (no silent no-op); nothing new posts, and the existing void path is otherwise unchanged.
 const MONEY_CONTROL_VOID_REVERSAL_FLAG_KEY = "MONEY_CONTROL_VOID_REVERSAL_ENABLED";
 
+export type ReverseJournalEntryNoFlipResult = {
+  reversal: Awaited<ReturnType<typeof postVoidReversal>>;
+  linkage_written: boolean;
+};
+
+/**
+ * SHARED reverse-not-flip mechanics for a posted journal entry (GOV-JE-VOID-FIX — the ONE helper called
+ * by BOTH the direct voidJournalEntry AND the governance executeJournalEntry, so neither re-implements
+ * JE-void). Posts a LINKED reversing JE via postVoidReversal and writes the bidirectional header linkage.
+ * The original is NEVER flipped to status='voided' — GL total readers exclude 'voided' (13 sites), so a
+ * flip would SILENTLY DROP the original; the reversing JE is what nets the GL to zero.
+ *
+ * Expand/contract-safe: the reversal-linkage columns ship in HELD migration 202607340000 — when ABSENT
+ * the linkage write is skipped (reversal still posts, status still not flipped → GL correct in EVERY
+ * migration state); postVoidReversal's void:{type}:{id} idempotency key blocks a second reversal in that
+ * pre-migration window. Reuses the EXISTING hasReversalLinkageColumns probe (no new probe).
+ *
+ * Runs on the CALLER's transaction client. Contains NO gate-flag logic (R2 — each surface keeps its own
+ * gate: direct = MONEY_CONTROL_VOID_REVERSAL_ENABLED, governance = VOID_ENFORCEMENT_ENABLED).
+ */
+export async function reverseJournalEntryNoFlip(
+  client: QueryableClient,
+  params: { operatingCompanyId: string; journalEntryId: string; reason: string; actorUserId: string }
+): Promise<ReverseJournalEntryNoFlipResult> {
+  const { operatingCompanyId, journalEntryId } = params;
+  const reason = params.reason.trim();
+  const hasLinkage = await hasReversalLinkageColumns(client);
+
+  const existingRes = await client.query<{ status: JournalEntryStatus; entry_date: string; reversed_by_je_id: string | null }>(
+    `SELECT status, entry_date::text AS entry_date, ${hasLinkage ? "reversed_by_je_id::text" : "NULL::text"} AS reversed_by_je_id
+       FROM accounting.journal_entries
+      WHERE id = $1 AND operating_company_id = $2
+      LIMIT 1 FOR UPDATE`,
+    [journalEntryId, operatingCompanyId]
+  );
+  const existing = existingRes.rows[0];
+  if (!existing) throw new Error("journal_entry_not_found");
+  if (existing.status !== "posted") throw new Error("journal_entry_not_postable");
+  // Double-reversal guard: an original can be reversed at most once (enforceable when the linkage columns
+  // exist; the postVoidReversal idempotency key blocks a second reversal in the pre-migration window).
+  if (hasLinkage && existing.reversed_by_je_id) throw new Error("journal_entry_already_reversed");
+
+  const reversal = await postVoidReversal(
+    client,
+    {
+      operatingCompanyId,
+      entityType: "journal_entry",
+      entityId: journalEntryId,
+      originalDate: existing.entry_date,
+      memo: `Reversal of journal entry ${journalEntryId}: ${reason}`,
+    },
+    { userId: params.actorUserId }
+  );
+  if (!reversal.reversal_journal_entry_id) throw new Error("journal_entry_nothing_to_reverse");
+
+  // Bidirectional header linkage (Linkage-Law). The original is NEVER flipped — status stays 'posted'.
+  let linkageWritten = false;
+  if (hasLinkage) {
+    await client.query(
+      `UPDATE accounting.journal_entries SET reversed_by_je_id = $2::uuid, updated_at = now()
+         WHERE id = $1 AND operating_company_id = $3`,
+      [journalEntryId, reversal.reversal_journal_entry_id, operatingCompanyId]
+    );
+    await client.query(
+      `UPDATE accounting.journal_entries SET reverses_je_id = $2::uuid, void_reason = $3, updated_at = now()
+         WHERE id = $1 AND operating_company_id = $4`,
+      [reversal.reversal_journal_entry_id, journalEntryId, reason, operatingCompanyId]
+    );
+    linkageWritten = true;
+  }
+  return { reversal, linkage_written: linkageWritten };
+}
+
 export async function voidJournalEntry(
   operatingCompanyId: string,
   journalEntryId: string,
@@ -276,47 +349,15 @@ export async function voidJournalEntry(
     // but if it were ever reached pre-migration, fail cleanly (503) instead of a raw missing-column SQL error.
     if (!(await hasReversalLinkageColumns(client))) throw new Error("journal_entry_reversal_columns_unavailable");
 
-    const existingRes = await client.query<{ id: string; status: JournalEntryStatus; entry_date: string; reversed_by_je_id: string | null }>(
-      `
-        SELECT id, status, entry_date::text AS entry_date, reversed_by_je_id::text AS reversed_by_je_id
-        FROM accounting.journal_entries
-        WHERE id = $1
-          AND operating_company_id = $2
-        LIMIT 1
-        FOR UPDATE
-      `,
-      [journalEntryId, operatingCompanyId]
-    );
-    const existing = existingRes.rows[0];
-    if (!existing) throw new Error("journal_entry_not_found");
-    if (existing.status !== "posted") throw new Error("journal_entry_not_postable");
-    // Double-reversal guard: an original can be reversed at most once.
-    if (existing.reversed_by_je_id) throw new Error("journal_entry_already_reversed");
-
-    const reversal = await postVoidReversal(
-      client,
-      {
-        operatingCompanyId,
-        entityType: "journal_entry",
-        entityId: journalEntryId,
-        originalDate: existing.entry_date,
-        memo: `Reversal of journal entry ${journalEntryId}: ${voidReason.trim()}`,
-      },
-      { userId: actor.userId }
-    );
-    if (!reversal.reversal_journal_entry_id) throw new Error("journal_entry_nothing_to_reverse");
-
-    // Bidirectional header linkage (Linkage-Law). The original is NEVER flipped — status stays 'posted'.
-    await client.query(
-      `UPDATE accounting.journal_entries SET reversed_by_je_id = $2::uuid, updated_at = now()
-         WHERE id = $1 AND operating_company_id = $3`,
-      [journalEntryId, reversal.reversal_journal_entry_id, operatingCompanyId]
-    );
-    await client.query(
-      `UPDATE accounting.journal_entries SET reverses_je_id = $2::uuid, void_reason = $3, updated_at = now()
-         WHERE id = $1 AND operating_company_id = $4`,
-      [reversal.reversal_journal_entry_id, journalEntryId, voidReason.trim(), operatingCompanyId]
-    );
+    // Reverse-not-flip via the SHARED helper (the SAME mechanics the governance JE-void path uses now).
+    // The original is NEVER flipped to 'voided' — postVoidReversal posts the equal/opposite JE and the
+    // bidirectional header linkage is written inside the helper.
+    const { reversal } = await reverseJournalEntryNoFlip(client, {
+      operatingCompanyId,
+      journalEntryId,
+      reason: voidReason,
+      actorUserId: actor.userId,
+    });
 
     // Immutable audit-log row (who / when / why).
     await auditVoid(client, actor.userId, "journal_entry", {
