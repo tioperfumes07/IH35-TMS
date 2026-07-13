@@ -1,6 +1,8 @@
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { createJournalEntry } from "../accounting/journal-entries.service.js";
+import { isEnabled } from "../lib/feature-flags/service.js";
+import { SETTLEMENT_GL_POSTING_FLAG_KEY } from "../accounting/settlement-posting/settlement-posting.math.js";
 
 const CLOSED_STATUSES = new Set(["resolved_in_favor", "resolved_rejected", "partially_resolved", "withdrawn"]);
 
@@ -104,6 +106,15 @@ export async function createCorrectiveJournalEntry(params: {
 }) {
   return withCurrentUser(params.actorUserId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [params.operatingCompanyId]);
+    // FLAG GATE — OFF => post NOTHING (checked BEFORE any account read / JE insert), mirroring
+    // settlement-posting.service.ts. This corrective JE previously posted UNGATED, so with
+    // SETTLEMENT_GL_POSTING_ENABLED ON in prod it went live regardless of intent. Honor per-entity
+    // overrides via isEnabled(); when OFF the dispute still resolves, resolution_journal_entry_id stays null.
+    const flagOn = await isEnabled(client as never, SETTLEMENT_GL_POSTING_FLAG_KEY, {
+      operating_company_id: params.operatingCompanyId,
+      user_uuid: params.actorUserId,
+    });
+    if (!flagOn) return null;
     const accounts = await pickCorrectionAccounts(client, params.operatingCompanyId);
     const today = new Date().toISOString().slice(0, 10);
     const je = await createJournalEntry(

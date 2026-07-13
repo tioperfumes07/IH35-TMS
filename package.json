@@ -904,6 +904,7 @@
     "verify:prepaid-post-flag-gate": "node scripts/verify-prepaid-post-flag-gate.mjs",
     "verify:void-enforcement-flag-gate": "node scripts/verify-void-enforcement-flag-gate.mjs",
     "verify:expense-create-modal-catalog": "node scripts/verify-expense-create-modal-catalog.mjs",
+    "verify:settlement-dispute-je-gate": "node scripts/verify-settlement-dispute-je-gate.mjs",
     "verify:je-void-money-control-flag-gate": "node scripts/verify-je-void-money-control-flag-gate.mjs",
     "verify:je-void-reverses-not-voids": "node scripts/verify-je-void-reverses-not-voids.mjs",
     "verify:feature-flag-key-shape": "node scripts/verify-feature-flag-key-shape.mjs",
