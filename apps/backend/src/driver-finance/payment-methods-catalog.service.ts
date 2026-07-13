@@ -3,8 +3,8 @@ import { withCurrentUser } from "../auth/db.js";
 
 // Owner-editable payment-method CATALOG (catalogs.payment_methods, migration 202607380000). The list of
 // methods a company can pay by (ACH/Wire/Check/Cash/…), each pinned to the cash/bank GL account it draws
-// from. Master data only — NO GL/posting, NO money movement. DISTINCT from driver_finance.driver_payment_
-// methods (the per-driver method, which FKs into this catalog). void-not-delete (is_active + voided_at).
+// from. Master data only — NO GL/posting, NO money movement. DISTINCT from the per-driver method table
+// (which FKs into this catalog). void-not-delete (is_active + voided_at).
 
 type QueryableClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
