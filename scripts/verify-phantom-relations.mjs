@@ -62,7 +62,6 @@ const KNOWN_PHANTOM_DEBT = [
   // ── forward-refs to unbuilt modules (bucket-4 — map to pending gap-specs, not bugs) ──
   { rel: "insurance.insurance_policies", why: "forward-ref — insurance module unbuilt" },
   { rel: "insurance.insurance_policy_units", why: "forward-ref — insurance module unbuilt" },
-  { rel: "insurance.policies", why: "forward-ref — insurance module unbuilt" },
   { rel: "fuel.loves_prices_daily", why: "forward-ref — Love's price feed unbuilt" },
   { rel: "fuel.recommended_stops", why: "forward-ref — fuel routing unbuilt" },
   { rel: "fuel.route_recommendations", why: "forward-ref — fuel routing unbuilt" },
@@ -72,7 +71,6 @@ const KNOWN_PHANTOM_DEBT = [
   { rel: "safety.training_completions", why: "forward-ref — training module unbuilt" },
   { rel: "banking.bank_account_balances", why: "forward-ref — balances cache unbuilt" },
   { rel: "mdata.load_assignments", why: "forward-ref — legacy; canonical=dispatch.load_assignment_history" },
-  { rel: "documents.evidence_records", why: "forward-ref — legacy docs schema; canonical=docs.*" },
   { rel: "accounting.factoring_companies", why: "forward-ref — canonical=catalogs/mdata factoring refs" },
   { rel: "ops.program_board_notes", why: "[HOLD-FOR-JORGE] forward-ref — Program Board two-way notes table ships in gated migration 202607031200 (not yet applied to prod); read path is try/catch degrade-safe. Remove from debt when that migration merges." },
   { rel: "tasks.task_link", why: "[HOLD-FOR-JORGE] forward-ref — Tasks Planner v2 polymorphic task<->record link table ships in gated migration 202607031700_tasks_connectivity.sql (not yet applied to prod); task link/completion routes are build-and-hold and only exercised after the migration lands. Remove from debt when that migration merges." },
