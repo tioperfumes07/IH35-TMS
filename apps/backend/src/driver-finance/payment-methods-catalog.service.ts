@@ -21,16 +21,39 @@ export type PaymentMethod = {
   updated_at: string;
 };
 
+// The canonical 0152 table is code-keyed (UNIQUE(operating_company_id, code)) with a display_name. The API
+// contract keeps a friendly `name` field → it maps to display_name; `code` is a deterministic, collision-safe
+// derivation kept internal (two distinct names can never collapse to one code — see deriveUniqueCode).
 const SELECT_COLS = `
   id,
   operating_company_id::text AS operating_company_id,
-  name,
+  display_name AS name,
   gl_account_id::text AS gl_account_id,
   is_active,
   sort_order,
   created_at::text AS created_at,
   updated_at::text AS updated_at
 `;
+
+/** Deterministic base code from a display name (uppercase, non-alphanumerics → underscore). */
+function baseCode(name: string): string {
+  return name.trim().toUpperCase().replace(/[^A-Z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 32) || "METHOD";
+}
+
+/** Pick a code unique within the entity so two DIFFERENT display names can NEVER collapse to one code
+ *  (lock #2). The DB UNIQUE(operating_company_id, code) is the hard guarantee; this avoids the collision. */
+async function deriveUniqueCode(client: QueryableClient, operatingCompanyId: string, name: string): Promise<string> {
+  const base = baseCode(name);
+  const { rows } = await client.query<{ code: string }>(
+    `SELECT code FROM catalogs.payment_methods WHERE operating_company_id = $1 AND (code = $2 OR code LIKE $3)`,
+    [operatingCompanyId, base, `${base}\\_%`]
+  );
+  const taken = new Set(rows.map((r) => r.code));
+  if (!taken.has(base)) return base;
+  let n = 2;
+  while (taken.has(`${base}_${n}`)) n++;
+  return `${base}_${n}`;
+}
 
 async function setScope(client: QueryableClient, operatingCompanyId: string) {
   await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
@@ -48,7 +71,7 @@ export async function listPaymentMethods(
       ? `operating_company_id = $1`
       : `operating_company_id = $1 AND is_active AND voided_at IS NULL`;
     const { rows } = await client.query<PaymentMethod>(
-      `SELECT ${SELECT_COLS} FROM catalogs.payment_methods WHERE ${where} ORDER BY sort_order ASC, lower(name) ASC`,
+      `SELECT ${SELECT_COLS} FROM catalogs.payment_methods WHERE ${where} ORDER BY sort_order ASC, lower(display_name) ASC`,
       [operatingCompanyId]
     );
     return rows;
@@ -63,12 +86,14 @@ export async function createPaymentMethod(
 ): Promise<PaymentMethod> {
   return withCurrentUser(userId, async (client) => {
     await setScope(client, operatingCompanyId);
+    const displayName = input.name.trim();
+    const code = await deriveUniqueCode(client, operatingCompanyId, displayName);
     const { rows } = await client.query<PaymentMethod>(
       `INSERT INTO catalogs.payment_methods
-         (operating_company_id, name, gl_account_id, sort_order, created_by_user_id, updated_by_user_id)
-       VALUES ($1, $2, $3, COALESCE($4, 0), $5, $5)
+         (operating_company_id, code, display_name, gl_account_id, sort_order, created_by_user_id, updated_by_user_id)
+       VALUES ($1, $2, $3, $4, COALESCE($5, 0), $6, $6)
        RETURNING ${SELECT_COLS}`,
-      [operatingCompanyId, input.name.trim(), input.gl_account_id ?? null, input.sort_order ?? null, userId]
+      [operatingCompanyId, code, displayName, input.gl_account_id ?? null, input.sort_order ?? null, userId]
     );
     const created = rows[0]!;
     await appendCrudAudit(
@@ -94,7 +119,7 @@ export async function updatePaymentMethod(
     await setScope(client, operatingCompanyId);
     const { rows } = await client.query<PaymentMethod>(
       `UPDATE catalogs.payment_methods
-          SET name          = COALESCE($3, name),
+          SET display_name  = COALESCE($3, display_name),
               gl_account_id  = COALESCE($4, gl_account_id),
               sort_order     = COALESCE($5, sort_order),
               is_active      = COALESCE($6, is_active),

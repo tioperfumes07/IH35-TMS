@@ -1,14 +1,22 @@
 #!/usr/bin/env node
 /**
- * Payment-methods CATALOG guard (Phase 4 GUARDS, Settlement Pay-Run — migration 202607380000).
+ * Payment-methods CATALOG guard (Settlement Pay-Run — migration 202607380000).
  *
- * catalogs.payment_methods is the owner-editable payment-method catalog (QBO pattern). Locks:
- *   (1) ENTITY-SCOPED: operating_company_id uuid NOT NULL REFERENCES org.companies(id).
- *   (2) FORCE ROW LEVEL SECURITY (not just ENABLE — FORCE, so even the table owner is scoped).
- *   (3) GRANTs SELECT/INSERT/UPDATE to ih35_app with NO DELETE (void-not-delete via voided_at).
- *   (4) The seed is EXISTS-guarded via a CROSS JOIN on org.companies, so a fresh CI DB (0 companies)
- *       seeds 0 rows — never a hardcoded/unconditional seed that would insert on an empty DB.
- *   (5) UNIQUE (operating_company_id, lower(name)) — one method name per entity, case-insensitive.
+ * CANONICAL-CHECK: catalogs.payment_methods is the ONE canonical payment-method catalog, CREATED by 0152
+ * (Lists-Hub) as a code-keyed table (UNIQUE(operating_company_id, code), display_name, grants incl DELETE,
+ * ENABLE RLS `company_scope`). The Settlement Pay-Run migration must REUSE-AND-EXTEND it — never re-create
+ * it and never stand up a parallel key. An earlier CREATE TABLE IF NOT EXISTS with a `name` column NO-OP'd
+ * against the existing code-based table and the seed failed `column "name" does not exist` — the split-brain
+ * this guard now forbids. Locks:
+ *   (1) REUSE: NO `CREATE TABLE ... catalogs.payment_methods`; the migration ALTERs it to ADD gl_account_id
+ *       (uuid REFERENCES catalogs.accounts) — extend, not re-create.
+ *   (2) GL SAME-ENTITY: a BEFORE INSERT/UPDATE trigger asserts gl_account_id's account is in the same
+ *       operating_company (no cross-entity GL pointer).
+ *   (3) DELETE GRANT PRESERVED: the migration does NOT REVOKE DELETE on the table (0152's Lists-Hub DELETE
+ *       grant stays; void-not-delete is enforced in the service, not by yanking the grant).
+ *   (4) SEED ON THE CANONICAL KEY: INSERT ... FROM org.companies CROSS JOIN (VALUES ...) ON CONFLICT
+ *       (operating_company_id, code) DO NOTHING — extends by `code` (never lower(name)); a fresh CI DB
+ *       (0 companies) seeds 0 rows.
  *
  * --selftest exercises assertGuard() against inline fixtures (pass + each failure mode).
  */
@@ -29,53 +37,31 @@ const TABLE = "catalogs.payment_methods";
 export function assertGuard({ migration }) {
   const errors = [];
 
-  if (!/CREATE TABLE IF NOT EXISTS\s+catalogs\.payment_methods/.test(migration)) {
-    errors.push(`${MIGRATION}: ${TABLE} table not created (idempotent CREATE TABLE IF NOT EXISTS)`);
+  // (1) REUSE, not re-create — 0152 owns the canonical table.
+  if (/CREATE TABLE[^;]*\bcatalogs\.payment_methods\b/i.test(migration)) {
+    errors.push(`${MIGRATION}: must NOT CREATE ${TABLE} — 0152 already created it; REUSE-AND-EXTEND (ALTER) only`);
+  }
+  if (!/ALTER TABLE\s+catalogs\.payment_methods[\s\S]{0,400}?ADD COLUMN IF NOT EXISTS\s+gl_account_id\s+uuid[\s\S]{0,80}?REFERENCES\s+catalogs\.accounts/i.test(migration)) {
+    errors.push(`${MIGRATION}: must ALTER ${TABLE} ADD COLUMN IF NOT EXISTS gl_account_id uuid REFERENCES catalogs.accounts(id)`);
   }
 
-  // (1) entity-scoped
-  if (!/operating_company_id\s+uuid\s+NOT NULL\s+REFERENCES\s+org\.companies\s*\(\s*id\s*\)/i.test(migration)) {
-    errors.push(`${MIGRATION}: ${TABLE} must have operating_company_id uuid NOT NULL REFERENCES org.companies(id)`);
+  // (2) GL account must be same-entity (trigger).
+  if (!/assert_payment_method_gl_same_entity/.test(migration) ||
+      !/BEFORE INSERT OR UPDATE ON\s+catalogs\.payment_methods/i.test(migration)) {
+    errors.push(`${MIGRATION}: missing same-entity GL trigger (assert_payment_method_gl_same_entity BEFORE INSERT OR UPDATE)`);
   }
 
-  // (2) FORCE ROW LEVEL SECURITY
-  if (!/ALTER TABLE\s+catalogs\.payment_methods\s+FORCE ROW LEVEL SECURITY/i.test(migration)) {
-    errors.push(`${MIGRATION}: ${TABLE} must FORCE ROW LEVEL SECURITY`);
+  // (3) DELETE grant preserved — the migration must not REVOKE DELETE (0152's Lists-Hub grant stays).
+  if (/REVOKE[\s\S]{0,60}?\bDELETE\b[\s\S]{0,60}?catalogs\.payment_methods/i.test(migration)) {
+    errors.push(`${MIGRATION}: must NOT REVOKE DELETE on ${TABLE} (leave 0152's Lists-Hub DELETE grant; void-not-delete lives in the service)`);
   }
 
-  // (3) grants SELECT/INSERT/UPDATE, no DELETE
-  const grant = /GRANT\s+([A-Z,\s]+?)\s+ON\s+catalogs\.payment_methods\s+TO\s+ih35_app/i.exec(migration);
-  if (!grant) {
-    errors.push(`${MIGRATION}: missing GRANT ... ON ${TABLE} TO ih35_app`);
-  } else {
-    const verbs = grant[1].toUpperCase();
-    if (/\bDELETE\b/.test(verbs)) {
-      errors.push(`${MIGRATION}: grants on ${TABLE} must NOT include DELETE (void-not-delete)`);
-    }
-    for (const v of ["SELECT", "INSERT", "UPDATE"]) {
-      if (!new RegExp(`\\b${v}\\b`).test(verbs)) {
-        errors.push(`${MIGRATION}: grants on ${TABLE} must include ${v}`);
-      }
-    }
+  // (4) seed extends by the canonical key `code`, EXISTS-guarded via CROSS JOIN org.companies.
+  if (!/INSERT INTO\s+catalogs\.payment_methods[\s\S]{0,600}?FROM\s+org\.companies[\s\S]{0,300}?CROSS JOIN/i.test(migration)) {
+    errors.push(`${MIGRATION}: seed must be INSERT ... FROM org.companies ... CROSS JOIN (VALUES ...) so a fresh CI DB (0 companies) seeds 0 rows`);
   }
-
-  // (4) seed EXISTS-guarded via CROSS JOIN org.companies (a fresh CI DB w/ 0 companies seeds 0 rows)
-  if (
-    !/INSERT INTO\s+catalogs\.payment_methods[\s\S]{0,600}?FROM\s+org\.companies[\s\S]{0,300}?CROSS JOIN/i.test(migration)
-  ) {
-    errors.push(
-      `${MIGRATION}: seed must be an INSERT ... FROM org.companies ... CROSS JOIN (VALUES ...) so a fresh ` +
-        "CI DB with 0 companies seeds 0 rows"
-    );
-  }
-
-  // (5) UNIQUE (operating_company_id, lower(name))
-  if (
-    !/CREATE UNIQUE INDEX[\s\S]{0,150}?ON\s+catalogs\.payment_methods\s*\(\s*operating_company_id\s*,\s*lower\(\s*name\s*\)\s*\)/i.test(
-      migration
-    )
-  ) {
-    errors.push(`${MIGRATION}: missing UNIQUE (operating_company_id, lower(name)) index on ${TABLE}`);
+  if (!/ON CONFLICT\s*\(\s*operating_company_id\s*,\s*code\s*\)\s*DO NOTHING/i.test(migration)) {
+    errors.push(`${MIGRATION}: seed must ON CONFLICT (operating_company_id, code) DO NOTHING — extend by the canonical key, never a parallel lower(name) key`);
   }
 
   return errors;
@@ -89,51 +75,33 @@ function read(rel) {
 
 function selftest() {
   const good = `
-CREATE TABLE IF NOT EXISTS catalogs.payment_methods (
-  id                   uuid NOT NULL DEFAULT gen_random_uuid(),
-  operating_company_id uuid NOT NULL REFERENCES org.companies(id),
-  name                 text NOT NULL CHECK (length(trim(name)) > 0),
-  gl_account_id        uuid NULL REFERENCES catalogs.accounts(id),
-  is_active            boolean NOT NULL DEFAULT true,
-  voided_at            timestamptz NULL,
-  PRIMARY KEY (id)
-);
+-- CANONICAL-CHECK: reuse-and-extend the 0152 catalogs.payment_methods (code-keyed). Do NOT re-create.
+ALTER TABLE catalogs.payment_methods
+  ADD COLUMN IF NOT EXISTS gl_account_id uuid NULL REFERENCES catalogs.accounts(id),
+  ADD COLUMN IF NOT EXISTS voided_at timestamptz NULL;
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_payment_methods_company_lower_name
-  ON catalogs.payment_methods (operating_company_id, lower(name));
+CREATE OR REPLACE FUNCTION catalogs.assert_payment_method_gl_same_entity()
+RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END $$;
+DROP TRIGGER IF EXISTS trg_payment_method_gl_same_entity ON catalogs.payment_methods;
+CREATE TRIGGER trg_payment_method_gl_same_entity
+  BEFORE INSERT OR UPDATE ON catalogs.payment_methods
+  FOR EACH ROW EXECUTE FUNCTION catalogs.assert_payment_method_gl_same_entity();
 
-ALTER TABLE catalogs.payment_methods ENABLE ROW LEVEL SECURITY;
-ALTER TABLE catalogs.payment_methods FORCE ROW LEVEL SECURITY;
-CREATE POLICY payment_methods_tenant_scope ON catalogs.payment_methods
-FOR ALL TO ih35_app
-USING ( operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid );
-GRANT SELECT, INSERT, UPDATE ON catalogs.payment_methods TO ih35_app;
-
-INSERT INTO catalogs.payment_methods (operating_company_id, name, sort_order)
-SELECT c.id, m.name, m.ord
+INSERT INTO catalogs.payment_methods (operating_company_id, code, display_name, sort_order)
+SELECT c.id, m.code, m.display_name, m.ord
 FROM org.companies c
-CROSS JOIN (VALUES ('ACH', 1), ('Wire', 2)) AS m(name, ord)
-ON CONFLICT (operating_company_id, lower(name)) DO NOTHING;
+CROSS JOIN (VALUES ('CHECK','Check',40), ('CASH','Cash',50)) AS m(code, display_name, ord)
+ON CONFLICT (operating_company_id, code) DO NOTHING;
 `;
 
   const cases = [
-    { name: "well-formed → 0 errors", in: { migration: good }, want: 0 },
-    { name: "missing table create", in: { migration: good.replace("CREATE TABLE IF NOT EXISTS catalogs.payment_methods", "CREATE TABLE catalogs.other_table") }, wantMin: 1 },
-    { name: "not entity-scoped (no operating_company_id FK)", in: { migration: good.replace("operating_company_id uuid NOT NULL REFERENCES org.companies(id),", "") }, wantMin: 1 },
-    { name: "no FORCE RLS", in: { migration: good.replace("ALTER TABLE catalogs.payment_methods FORCE ROW LEVEL SECURITY;", "") }, wantMin: 1 },
-    { name: "grants DELETE", in: { migration: good.replace("GRANT SELECT, INSERT, UPDATE ON catalogs.payment_methods TO ih35_app;", "GRANT SELECT, INSERT, UPDATE, DELETE ON catalogs.payment_methods TO ih35_app;") }, wantMin: 1 },
-    { name: "grants missing UPDATE", in: { migration: good.replace("GRANT SELECT, INSERT, UPDATE ON catalogs.payment_methods TO ih35_app;", "GRANT SELECT, INSERT ON catalogs.payment_methods TO ih35_app;") }, wantMin: 1 },
-    {
-      name: "seed NOT exists-guarded (unconditional VALUES insert, no CROSS JOIN org.companies)",
-      in: {
-        migration: good.replace(
-          `INSERT INTO catalogs.payment_methods (operating_company_id, name, sort_order)\nSELECT c.id, m.name, m.ord\nFROM org.companies c\nCROSS JOIN (VALUES ('ACH', 1), ('Wire', 2)) AS m(name, ord)\nON CONFLICT (operating_company_id, lower(name)) DO NOTHING;`,
-          `INSERT INTO catalogs.payment_methods (operating_company_id, name, sort_order) VALUES ('11111111-1111-1111-1111-111111111111', 'ACH', 1);`
-        ),
-      },
-      wantMin: 1,
-    },
-    { name: "no unique (operating_company_id, lower(name)) index", in: { migration: good.replace(/CREATE UNIQUE INDEX[\s\S]*?lower\(name\)\);\n\n/, "") }, wantMin: 1 },
+    { name: "well-formed reuse-extend → 0 errors", in: { migration: good }, want: 0 },
+    { name: "re-creates the canonical table → error", in: { migration: good + "\nCREATE TABLE IF NOT EXISTS catalogs.payment_methods (id uuid);" }, wantMin: 1 },
+    { name: "no gl_account_id ALTER → error", in: { migration: good.replace(/ADD COLUMN IF NOT EXISTS gl_account_id[^,]*,/, "") }, wantMin: 1 },
+    { name: "no same-entity GL trigger → error", in: { migration: good.replace(/assert_payment_method_gl_same_entity/g, "noop_fn") }, wantMin: 1 },
+    { name: "REVOKEs DELETE → error", in: { migration: good + "\nREVOKE DELETE ON catalogs.payment_methods FROM ih35_app;" }, wantMin: 1 },
+    { name: "seed on lower(name) not code → error", in: { migration: good.replace("ON CONFLICT (operating_company_id, code) DO NOTHING", "ON CONFLICT (operating_company_id, lower(name)) DO NOTHING") }, wantMin: 1 },
+    { name: "seed not exists-guarded → error", in: { migration: good.replace(/INSERT INTO[\s\S]*DO NOTHING;/, "INSERT INTO catalogs.payment_methods (operating_company_id, code, display_name) VALUES ('11111111-1111-1111-1111-111111111111','CHECK','Check');") }, wantMin: 1 },
   ];
 
   let failed = 0;
@@ -160,4 +128,4 @@ if (errors.length) {
   for (const e of errors) console.error(`  ✗ ${e}`);
   process.exit(1);
 }
-console.log(`[${LABEL}] OK — ${TABLE} is entity-scoped, FORCE RLS, SELECT/INSERT/UPDATE-only grants, EXISTS-guarded seed, UNIQUE (operating_company_id, lower(name)).`);
+console.log(`[${LABEL}] OK — ${TABLE} is REUSED-and-extended from 0152 (code key kept, DELETE grant intact, gl_account_id same-entity, code-keyed seed).`);

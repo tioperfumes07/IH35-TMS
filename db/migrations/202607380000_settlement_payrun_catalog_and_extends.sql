@@ -31,33 +31,29 @@
 
 BEGIN;
 
--- ── 1. NEW owner-editable payment-method catalog ────────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS catalogs.payment_methods (
-  id                   uuid NOT NULL DEFAULT gen_random_uuid(),
-  operating_company_id uuid NOT NULL REFERENCES org.companies(id),
-  name                 text NOT NULL CHECK (length(trim(name)) > 0),
-  -- the cash/bank GL account this method draws from (owner assigns; nullable until set — a settlement
-  -- disbursement cannot post via a method whose gl_account_id is unset, enforced in the posting path).
-  gl_account_id        uuid NULL REFERENCES catalogs.accounts(id),
-  is_active            boolean NOT NULL DEFAULT true,
-  sort_order           integer NOT NULL DEFAULT 0,
-  -- void-not-delete (grants carry no DELETE).
-  voided_at            timestamptz NULL,
-  voided_by_user_id    uuid NULL REFERENCES identity.users(id),
-  void_reason          text NULL,
-  created_by_user_id   uuid NULL REFERENCES identity.users(id),
-  updated_by_user_id   uuid NULL REFERENCES identity.users(id),
-  created_at           timestamptz NOT NULL DEFAULT now(),
-  updated_at           timestamptz NOT NULL DEFAULT now(),
-  PRIMARY KEY (id)
-);
+-- ── 1. REUSE-AND-EXTEND the canonical catalogs.payment_methods (migration 0152) ───────────────────
+-- CANONICAL: catalogs.payment_methods ALREADY EXISTS (0152 lists-hub catalog): columns
+-- (id, operating_company_id, code, display_name, description, metadata, is_active, sort_order,
+-- created_at, updated_at), UNIQUE(operating_company_id, code), ENABLE RLS policy `company_scope`,
+-- grants SELECT/INSERT/UPDATE/DELETE (Lists-Hub uses DELETE). We EXTEND it — never re-create it, never
+-- add a parallel key. A CREATE TABLE IF NOT EXISTS here NO-OP'd on the existing code-based table and the
+-- name-based seed then failed with `column "name" does not exist` (the split-brain this resolves).
+-- Additive columns only; the existing `code` stays the canonical key; the DELETE grant is left intact.
+ALTER TABLE catalogs.payment_methods
+  -- the cash/bank GL account this method draws from (owner assigns; nullable until set — the posting path
+  -- refuses to disburse via a method whose gl_account_id is unset).
+  ADD COLUMN IF NOT EXISTS gl_account_id      uuid NULL REFERENCES catalogs.accounts(id),
+  -- void-not-delete columns (the service voids; the existing DELETE grant is left for Lists-Hub).
+  ADD COLUMN IF NOT EXISTS voided_at          timestamptz NULL,
+  ADD COLUMN IF NOT EXISTS voided_by_user_id  uuid NULL REFERENCES identity.users(id),
+  ADD COLUMN IF NOT EXISTS void_reason        text NULL,
+  ADD COLUMN IF NOT EXISTS created_by_user_id uuid NULL REFERENCES identity.users(id),
+  ADD COLUMN IF NOT EXISTS updated_by_user_id uuid NULL REFERENCES identity.users(id);
 
--- one method name per entity (case-insensitive) — the catalog is a set, not a bag.
-CREATE UNIQUE INDEX IF NOT EXISTS uq_payment_methods_company_lower_name
-  ON catalogs.payment_methods (operating_company_id, lower(name));
 CREATE INDEX IF NOT EXISTS ix_payment_methods_company_active
   ON catalogs.payment_methods (operating_company_id) WHERE is_active AND voided_at IS NULL;
 
+-- touch updated_at on UPDATE (0152's generic table has no such trigger; additive/idempotent).
 CREATE OR REPLACE FUNCTION catalogs.touch_payment_methods_updated_at()
 RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN NEW.updated_at := now(); RETURN NEW; END;
@@ -67,32 +63,37 @@ CREATE TRIGGER trg_touch_payment_methods_updated_at
   BEFORE UPDATE ON catalogs.payment_methods
   FOR EACH ROW EXECUTE FUNCTION catalogs.touch_payment_methods_updated_at();
 
--- FORCED entity-RLS (0065 pattern) + runtime grants (no DELETE — void-not-delete).
-ALTER TABLE catalogs.payment_methods ENABLE ROW LEVEL SECURITY;
-ALTER TABLE catalogs.payment_methods FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS payment_methods_tenant_scope ON catalogs.payment_methods;
-CREATE POLICY payment_methods_tenant_scope ON catalogs.payment_methods
-FOR ALL TO ih35_app
-USING (
-  identity.is_lucia_bypass()
-  OR operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid
-)
-WITH CHECK (
-  identity.is_lucia_bypass()
-  OR operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid
-);
-GRANT SELECT, INSERT, UPDATE ON catalogs.payment_methods TO ih35_app;
+-- lock #3: a method's GL account must belong to the SAME entity — no cross-entity account pointer.
+CREATE OR REPLACE FUNCTION catalogs.assert_payment_method_gl_same_entity()
+RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF NEW.gl_account_id IS NOT NULL
+     AND NOT EXISTS (SELECT 1 FROM catalogs.accounts a
+                     WHERE a.id = NEW.gl_account_id
+                       AND a.operating_company_id = NEW.operating_company_id) THEN
+    RAISE EXCEPTION 'payment_method gl_account_id % is not in operating_company %',
+      NEW.gl_account_id, NEW.operating_company_id;
+  END IF;
+  RETURN NEW;
+END $$;
+DROP TRIGGER IF EXISTS trg_payment_method_gl_same_entity ON catalogs.payment_methods;
+CREATE TRIGGER trg_payment_method_gl_same_entity
+  BEFORE INSERT OR UPDATE ON catalogs.payment_methods
+  FOR EACH ROW EXECUTE FUNCTION catalogs.assert_payment_method_gl_same_entity();
 
--- Seed the standard method list PER ENTITY. EXISTS-guarded via the CROSS JOIN on org.companies, so a fresh
--- CI DB (0 companies) seeds 0 rows; ON CONFLICT keeps it idempotent + owner-editable (never clobbers edits).
-INSERT INTO catalogs.payment_methods (operating_company_id, name, sort_order)
-SELECT c.id, m.name, m.ord
+-- NO RLS/grant change: 0152's ENABLE RLS `company_scope` policy + SELECT/INSERT/UPDATE/DELETE grant stand
+-- (lock #4 — the DELETE grant Lists-Hub uses is left in place; void-not-delete is enforced in the service).
+
+-- lock #1: EXTEND the seed on the EXISTING key (code). 0152 already seeded ACH/WIRE/CARD, so ON CONFLICT
+-- (operating_company_id, code) skips them — no collision, no duplicate. Fresh CI DB (0 companies) seeds 0.
+INSERT INTO catalogs.payment_methods (operating_company_id, code, display_name, sort_order)
+SELECT c.id, m.code, m.display_name, m.ord
 FROM org.companies c
 CROSS JOIN (VALUES
-  ('ACH', 1), ('Wire', 2), ('Check', 3), ('Cash', 4),
-  ('Petty Cash', 5), ('Comchek', 6), ('Zelle', 7), ('Cash App', 8)
-) AS m(name, ord)
-ON CONFLICT (operating_company_id, lower(name)) DO NOTHING;
+  ('CHECK', 'Check', 40), ('CASH', 'Cash', 50), ('PETTY_CASH', 'Petty Cash', 60),
+  ('COMCHEK', 'Comchek', 70), ('ZELLE', 'Zelle', 80), ('CASH_APP', 'Cash App', 90)
+) AS m(code, display_name, ord)
+ON CONFLICT (operating_company_id, code) DO NOTHING;
 
 -- ── 2. FK: per-driver method -> the catalog (expand; column added nullable in 202607370000) ─────────
 DO $$

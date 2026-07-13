@@ -190,9 +190,10 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
       await bind("abandonment_chargeback_recovery", acct.chargebackRecovery);
       // owner-editable payment method pinned to the cash account
       await db.query(
-        `INSERT INTO catalogs.payment_methods (id, operating_company_id, name, gl_account_id, is_active)
-         VALUES ($1::uuid,$2::uuid,$3,$4::uuid,true)`,
-        [paymentMethodId, companyId, `ACH ${suffix}`, acct.cash]
+        // canonical 0152 table is code-keyed (code + display_name), not `name`.
+        `INSERT INTO catalogs.payment_methods (id, operating_company_id, code, display_name, gl_account_id, is_active)
+         VALUES ($1::uuid,$2::uuid,$3,$4,$5::uuid,true)`,
+        [paymentMethodId, companyId, `ACH_${suffix}`, `ACH ${suffix}`, acct.cash]
       );
       await db.query(
         `INSERT INTO integrations.qbo_connections
