@@ -69,6 +69,7 @@ export const SUBNAV_ITEMS: readonly AccountingSubNavItem[] = [
   { label: "Cash forecast", path: "/accounting/cash-forecast", section: "direct" },
   { label: "Period comparison", path: "/accounting/period-comparison", section: "direct" },
   { label: "Pre-settlements", path: "/accounting/pre-settlements", section: "direct" },
+  { label: "Payment methods catalog", path: "/accounting/payment-methods-catalog", section: "settings" },
   { label: "Vendor balances", path: "/accounting/vendor-balances", section: "direct" },
   { label: "Accounts payable", path: "/accounting/accounts-payable", section: "direct" },
   { label: "Journal entries", path: "/accounting/journal-entries", section: "direct" },
@@ -109,6 +110,7 @@ export const ACCOUNTING_MORE_TABS = [
   { label: "Posting Lineage",   to: "/accounting/posting-lineage" },
   { label: "QBO Sync Drift",    to: "/accounting/qbo-sync" },
   { label: "Account Type Catalog", to: "/accounting/account-type-catalog" },
+  { label: "Payment Methods Catalog", to: "/accounting/payment-methods-catalog" },
   { label: "Settings",          to: "/accounting/settings/expense-category-map" },
 ] as const;
 

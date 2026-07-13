@@ -137,6 +137,7 @@ import { registerDriverEscrowSeparationRoutes } from "./driver-finance/escrow-se
 import { registerCashAdvanceRequestRoutes } from "./driver-finance/cash-advance-requests.routes.js";
 import { registerDriverPaymentMethodRoutes } from "./driver-finance/driver-payment-methods.routes.js";
 import { registerPaymentMethodsCatalogRoutes } from "./driver-finance/payment-methods-catalog.routes.js";
+import { registerSettlementPayRunCloseRoutes } from "./driver-finance/settlement-payrun-close.routes.js";
 import { registerDriverInboxReportingRoutes } from "./driver-finance/inbox-reporting.routes.js";
 import { registerOwnerApprovalPortalRoutes } from "./driver-finance/owner-approval.routes.js";
 import { registerAbandonmentRoutes } from "./driver-finance/abandonment.routes.js";
@@ -852,6 +853,7 @@ async function main() {
   await registerCashAdvanceRequestRoutes(app);
   await registerDriverPaymentMethodRoutes(app);
   registerPaymentMethodsCatalogRoutes(app);
+  registerSettlementPayRunCloseRoutes(app);
   registerDriverInboxReportingRoutes(app);
   await registerAbandonmentRoutes(app);
   await registerHomeRoutes(app);

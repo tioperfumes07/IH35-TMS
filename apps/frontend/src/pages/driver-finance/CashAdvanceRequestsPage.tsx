@@ -1,19 +1,33 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { cashAdvanceRequestsOfficeApi, type CashAdvanceRequestRow } from "../../api/cashAdvanceRequests";
+import { listDrivers } from "../../api/mdata";
 import { useAuth } from "../../auth/useAuth";
 import { Button } from "../../components/Button";
+import { Combobox } from "../../components/Combobox";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { useToast } from "../../components/Toast";
 
 function formatUsdFromCents(cents: unknown) {
   const n = Number(cents ?? 0);
   return new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }).format(n / 100);
 }
 
+// Maker<>checker (migration 202607380000, I4): a request's reviewer can never be the office user
+// who created it. Owner/Administrator requests auto-approve at create (no checker needed, so this
+// never fires for their own submissions since they're never left "pending"). For every other role
+// this disables Approve for the submitter — the CHECK constraint is the source of truth server-side;
+// this is the client-side guard so the maker never even sees an enabled Approve button.
+function isMakerOfRequest(row: CashAdvanceRequestRow, currentUserId: string): boolean {
+  const submittedBy = String((row as Record<string, unknown>).submitted_by_user_id ?? "");
+  return Boolean(submittedBy) && Boolean(currentUserId) && submittedBy === currentUserId;
+}
+
 export function CashAdvanceRequestsPage() {
   const { selectedCompanyId } = useCompanyContext();
   const { user } = useAuth();
+  const { pushToast } = useToast();
   const companyId = selectedCompanyId ?? "";
   const qc = useQueryClient();
   const [denyForId, setDenyForId] = useState<string | null>(null);
@@ -21,8 +35,52 @@ export function CashAdvanceRequestsPage() {
   const [approveNotesById, setApproveNotesById] = useState<Record<string, string>>({});
   const [ownerUrlById, setOwnerUrlById] = useState<Record<string, string>>({});
 
+  const [createOpen, setCreateOpen] = useState(false);
+  const [newDriverId, setNewDriverId] = useState<string | null>(null);
+  const [newAmountDollars, setNewAmountDollars] = useState("");
+  const [newReason, setNewReason] = useState("");
+
   const role = String(user?.role ?? "");
+  const currentUserId = String(user?.uuid ?? "");
   const canEscalateToOwner = ["Owner", "Administrator", "Manager"].includes(role);
+  const isOwnerOrAdmin = role === "Owner" || role === "Administrator";
+
+  const driversQuery = useQuery({
+    queryKey: ["mdata", "drivers", "for-cash-advance-create", companyId],
+    queryFn: () => listDrivers({ operating_company_id: companyId, status: "Active", limit: 500 }),
+    enabled: createOpen && Boolean(companyId),
+  });
+  const driverOptions = useMemo(
+    () =>
+      (driversQuery.data?.drivers ?? []).map((d) => ({
+        value: d.id,
+        label: `${d.first_name ?? ""} ${d.last_name ?? ""}`.trim() || d.id,
+      })),
+    [driversQuery.data]
+  );
+
+  const createMut = useMutation({
+    mutationFn: () => {
+      const cents = Math.round(Number(newAmountDollars || "0") * 100);
+      return cashAdvanceRequestsOfficeApi.create(companyId, {
+        driver_id: String(newDriverId),
+        requested_amount_cents: cents,
+        reason: newReason.trim(),
+        auto_approve: isOwnerOrAdmin,
+      });
+    },
+    onSuccess: () => {
+      pushToast(isOwnerOrAdmin ? "Cash advance created and self-approved" : "Request submitted — awaiting a different approver", "success");
+      setCreateOpen(false);
+      setNewDriverId(null);
+      setNewAmountDollars("");
+      setNewReason("");
+      void qc.invalidateQueries({ queryKey: ["driver-finance", "cash-advance-requests"] });
+    },
+    onError: (err) => pushToast(err instanceof Error ? err.message : "Create failed", "error"),
+  });
+
+  const canCreate = Boolean(newDriverId) && Number(newAmountDollars) > 0 && newReason.trim().length >= 10;
 
   const pendingQuery = useQuery({
     queryKey: ["driver-finance", "cash-advance-requests", "pending", companyId],
@@ -83,7 +141,66 @@ export function CashAdvanceRequestsPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Cash advance requests" subtitle="Driver-submitted requests pending office action" />
+      <PageHeader
+        title="Cash advance requests"
+        subtitle="Driver-submitted + office-created requests pending action"
+        actions={
+          companyId ? (
+            <Button onClick={() => setCreateOpen((v) => !v)}>{createOpen ? "Cancel" : "+ Create"}</Button>
+          ) : null
+        }
+      />
+
+      {createOpen ? (
+        <div className="space-y-3 border-t border-gray-200 pt-3">
+          <p className="text-xs text-gray-600">
+            {isOwnerOrAdmin
+              ? "As Owner/Administrator you can self-approve on create — no separate approver needed."
+              : "Your request will be created pending — a different Admin, Accountant, or Owner must approve it (maker ≠ checker)."}
+          </p>
+          <div className="grid gap-3 md:grid-cols-3">
+            <label className="block">
+              <span className="text-xs font-medium text-gray-600">Driver *</span>
+              <div className="mt-1">
+                <Combobox
+                  options={driverOptions}
+                  value={newDriverId}
+                  onChange={setNewDriverId}
+                  placeholder="Select driver"
+                  loading={driversQuery.isLoading}
+                />
+              </div>
+            </label>
+            <label className="block">
+              <span className="text-xs font-medium text-gray-600">Amount (USD) *</span>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                className="mt-1 h-10 w-full rounded-sm border border-gray-300 px-2 text-sm"
+                value={newAmountDollars}
+                onChange={(e) => setNewAmountDollars(e.target.value)}
+                aria-label="Cash advance amount"
+              />
+            </label>
+            <label className="block md:col-span-1">
+              <span className="text-xs font-medium text-gray-600">Reason * (min 10 chars)</span>
+              <input
+                className="mt-1 h-10 w-full rounded-sm border border-gray-300 px-2 text-sm"
+                value={newReason}
+                onChange={(e) => setNewReason(e.target.value)}
+                placeholder="e.g. Border crossing fee for load SB-1042"
+                aria-label="Cash advance reason"
+              />
+            </label>
+          </div>
+          <div className="flex justify-end">
+            <Button disabled={!canCreate || createMut.isPending} loading={createMut.isPending} onClick={() => createMut.mutate()}>
+              {isOwnerOrAdmin ? "Create & self-approve" : "Create request"}
+            </Button>
+          </div>
+        </div>
+      ) : null}
 
       {!companyId ? (
         <p className="text-sm text-gray-600">Select an operating company to view requests.</p>
@@ -164,14 +281,23 @@ export function CashAdvanceRequestsPage() {
                       />
                     </td>
                     <td className="space-x-2 px-3 py-2 whitespace-nowrap">
-                      <Button
-                        size="sm"
-                        disabled={above || approveMut.isPending}
-                        onClick={() => approveMut.mutate(row)}
-                        className={busyId === id ? "opacity-70" : ""}
-                      >
-                        Approve
-                      </Button>
+                      {(() => {
+                        const isMaker = isMakerOfRequest(row, currentUserId);
+                        return (
+                          <Button
+                            size="sm"
+                            disabled={above || isMaker || approveMut.isPending}
+                            onClick={() => approveMut.mutate(row)}
+                            className={busyId === id ? "opacity-70" : ""}
+                            title={isMaker ? "You submitted this request — a different approver is required (maker ≠ checker)." : undefined}
+                          >
+                            Approve
+                          </Button>
+                        );
+                      })()}
+                      {isMakerOfRequest(row, currentUserId) ? (
+                        <div className="mt-1 text-[10px] text-amber-700">You submitted this — needs a different approver.</div>
+                      ) : null}
                       {above && canEscalateToOwner ? (
                         <Button
                           size="sm"

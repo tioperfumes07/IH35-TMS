@@ -1,0 +1,379 @@
+import { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  getDebtSummary,
+  getPreSettlementForDriver,
+  listOpenPreSettlements,
+  settleAndPay,
+  type PreSettlementLine,
+} from "../../api/driverFinance";
+import { listDrivers } from "../../api/mdata";
+import { getCoaAccounts } from "../../api/banking";
+import { useAuth } from "../../auth/useAuth";
+import { Button } from "../../components/Button";
+import { Combobox } from "../../components/Combobox";
+import { PageHeader } from "../../components/layout/PageHeader";
+import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
+import { PaymentMethodPicker } from "../../components/driver-finance/PaymentMethodPicker";
+import { useToast } from "../../components/Toast";
+import { useCompanyContext } from "../../contexts/CompanyContext";
+import { formatUsd } from "../../lib/money";
+
+// Owner-locked driver-bond/escrow cap (Phase 3 Settlement Pay-Run spec). This is the total escrow
+// balance ceiling shown as a progress indicator on the close screen — NOT a GL posting rule; the
+// actual escrow-contribution deduction amount continues to come from the existing settlement lines.
+const ESCROW_CAP_DOLLARS = 2000;
+
+const DEDUCTION_LINE_TYPES = new Set(["deduction", "abandonment_chargeback"]);
+const ESCROW_LINE_TYPES = new Set(["escrow_contribution"]);
+const ADVANCE_RECOVERY_LINE_TYPES = new Set(["advance_recovery"]);
+const EARNINGS_LINE_TYPES = new Set(["earnings", "extra_pay", "team_split_primary", "team_split_secondary"]);
+const REIMBURSEMENT_LINE_TYPES = new Set(["reimbursement"]);
+
+// Roles permitted to Close a settlement on this screen — mirrors the review-role set used
+// elsewhere in driver-finance (cash-advance-requests office review, settlement finalize).
+const CLOSE_ROLES = new Set(["Owner", "Administrator", "Manager", "Accountant"]);
+
+function sumLines(lines: PreSettlementLine[], types: Set<string>): number {
+  return lines.filter((l) => types.has(l.line_type)).reduce((sum, l) => sum + Number(l.amount ?? 0), 0);
+}
+
+export function SettlementCloseArrivalPage() {
+  const { selectedCompanyId } = useCompanyContext();
+  const { user } = useAuth();
+  const { pushToast } = useToast();
+  const qc = useQueryClient();
+  const companyId = selectedCompanyId ?? "";
+  const role = String(user?.role ?? "");
+  const currentUserId = String(user?.uuid ?? "");
+  const canClose = CLOSE_ROLES.has(role);
+
+  const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null);
+  const [paymentMethodId, setPaymentMethodId] = useState<string | null>(null);
+  const [paymentMethodGlAccountId, setPaymentMethodGlAccountId] = useState<string | null>(null);
+
+  const openQuery = useQuery({
+    queryKey: ["driver-finance", "pre-settlements", "open-by-driver", companyId],
+    queryFn: () => listOpenPreSettlements(companyId),
+    enabled: Boolean(companyId),
+  });
+
+  const driversQuery = useQuery({
+    queryKey: ["mdata", "drivers", "for-settlement-close", companyId],
+    queryFn: () => listDrivers({ operating_company_id: companyId, status: "Active", limit: 500 }),
+    enabled: Boolean(companyId),
+  });
+  const driverNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const d of driversQuery.data?.drivers ?? []) map.set(d.id, `${d.first_name ?? ""} ${d.last_name ?? ""}`.trim() || d.id);
+    return map;
+  }, [driversQuery.data]);
+
+  const openOptions = useMemo(
+    () =>
+      (openQuery.data?.pre_settlements ?? []).map((row) => ({
+        value: row.driver_id,
+        label: `${driverNameById.get(row.driver_id) ?? row.driver_id} — ${row.settlement_number ?? row.settlement_id.slice(0, 8)}`,
+        sublabel: `Net ${formatUsd(row.net_pay)} · ${row.status}`,
+      })),
+    [openQuery.data, driverNameById]
+  );
+
+  const detailQuery = useQuery({
+    queryKey: ["driver-finance", "pre-settlements", "by-driver", companyId, selectedDriverId],
+    queryFn: () => getPreSettlementForDriver(String(selectedDriverId), companyId),
+    enabled: Boolean(companyId) && Boolean(selectedDriverId),
+  });
+
+  const debtQuery = useQuery({
+    queryKey: ["driver-finance", "debt-summary", companyId, selectedDriverId],
+    queryFn: () => getDebtSummary(String(selectedDriverId), companyId),
+    enabled: Boolean(companyId) && Boolean(selectedDriverId),
+  });
+
+  const accountsQuery = useQuery({
+    queryKey: ["catalogs", "accounts", "for-settlement-close-preview", companyId],
+    queryFn: () => getCoaAccounts(companyId),
+    enabled: Boolean(paymentMethodGlAccountId) && Boolean(companyId),
+  });
+  const paymentMethodGlName = useMemo(() => {
+    if (!paymentMethodGlAccountId) return null;
+    return (accountsQuery.data?.accounts ?? []).find((a) => a.id === paymentMethodGlAccountId)?.account_name ?? null;
+  }, [accountsQuery.data, paymentMethodGlAccountId]);
+
+  const closeMut = useMutation({
+    mutationFn: () => settleAndPay(String(detailQuery.data?.settlement.id), companyId),
+    onSuccess: () => {
+      pushToast("Settlement closed and driver notified", "success");
+      setSelectedDriverId(null);
+      void qc.invalidateQueries({ queryKey: ["driver-finance", "pre-settlements"] });
+    },
+    onError: (err) => pushToast(err instanceof Error ? err.message : "Close failed", "error"),
+  });
+
+  const settlement = detailQuery.data?.settlement ?? null;
+  const lines = detailQuery.data?.lines ?? [];
+
+  const gross = Number(settlement?.gross_pay ?? 0);
+  const earnings = sumLines(lines, EARNINGS_LINE_TYPES);
+  const otherDeductions = lines.filter((l) => DEDUCTION_LINE_TYPES.has(l.line_type));
+  const otherDeductionsTotal = sumLines(lines, DEDUCTION_LINE_TYPES);
+  const escrowLines = lines.filter((l) => ESCROW_LINE_TYPES.has(l.line_type));
+  const escrowContributionThisSettlement = sumLines(lines, ESCROW_LINE_TYPES);
+  const advanceRecoveryLines = lines.filter((l) => ADVANCE_RECOVERY_LINE_TYPES.has(l.line_type));
+  const advanceRecoveryTotal = sumLines(lines, ADVANCE_RECOVERY_LINE_TYPES);
+  const reimbursements = sumLines(lines, REIMBURSEMENT_LINE_TYPES);
+  const netPay = Number(settlement?.net_pay ?? 0);
+
+  // Escrow cap indicator: current total escrow balance (pre + post clause, from the shared debt
+  // summary) vs the $2,000 owner-locked cap. "$X to cap" = headroom remaining BEFORE this
+  // settlement's contribution is added; the closing escrow_contribution line above shows what
+  // this settlement adds toward it.
+  const currentEscrowTotal = Number(debtQuery.data?.escrow_pre_clause ?? 0) + Number(debtQuery.data?.escrow_post_clause ?? 0);
+  const escrowToCap = Math.max(0, ESCROW_CAP_DOLLARS - currentEscrowTotal);
+  const escrowCapPct = Math.min(100, Math.max(0, (currentEscrowTotal / ESCROW_CAP_DOLLARS) * 100));
+
+  // maker <> checker: when the backend surfaces who opened/acknowledged this pre-settlement, the
+  // Close action is disabled for that same user (mirrors the acknowledge->finalize separation on
+  // the periodic settlement flow). Defensive optional read — a safe no-op until that field lands.
+  const makerId = String((settlement as unknown as Record<string, unknown> | null)?.acknowledged_by_user_id ?? "");
+  const isMaker = Boolean(makerId) && makerId === currentUserId;
+
+  const canSubmitClose =
+    canClose && !isMaker && Boolean(settlement) && ["closed", "open"].includes(String(settlement?.status ?? ""));
+
+  return (
+    <div className="space-y-4">
+      <PageHeader title="Settlement Close — Driver Arrival" subtitle="Close ONE driver's settlement on arrival: gross, deductions, escrow, advances, net" />
+
+      <NavyPageSubNav
+        items={[
+          { label: "Pre-Settlements", to: "/drivers/pre-settlements" },
+          { label: "Settlements", to: "/driver-finance/settlements" },
+          { label: "Cash Advance Requests", to: "/driver-finance/cash-advance-requests" },
+          { label: "Settlement Close", to: "/driver-finance/settlement-close" },
+          { label: "Escrow", to: "/accounting/escrow" },
+        ]}
+      />
+
+      {!companyId ? (
+        <p className="text-sm text-gray-600">Select an operating company first.</p>
+      ) : (
+        <>
+          <label className="block max-w-xl">
+            <span className="text-xs font-medium text-gray-600">Driver with an open pre-settlement (on arrival)</span>
+            <div className="mt-1">
+              <Combobox
+                options={openOptions}
+                value={selectedDriverId}
+                onChange={setSelectedDriverId}
+                placeholder="Select driver"
+                loading={openQuery.isLoading}
+                allowClear
+              />
+            </div>
+          </label>
+
+          {selectedDriverId && detailQuery.isLoading ? <p className="text-sm text-gray-600">Loading settlement…</p> : null}
+          {selectedDriverId && detailQuery.isError ? <p className="text-sm text-red-600">No active pre-settlement found for this driver.</p> : null}
+
+          {settlement ? (
+            <div className="space-y-4 border-t border-gray-200 pt-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <div className="text-sm font-semibold text-gray-900">
+                    {driverNameById.get(settlement.driver_id) ?? settlement.driver_id} — {settlement.display_id ?? settlement.id.slice(0, 8)}
+                  </div>
+                  <div className="text-xs text-gray-600">
+                    {settlement.first_load_number ?? "—"} → {settlement.last_load_number ?? "—"} · status: {settlement.status}
+                  </div>
+                </div>
+              </div>
+
+              {/* Gross / earnings */}
+              <div className="border-t border-gray-100 pt-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-semibold text-gray-900">Gross pay</span>
+                  <span className="font-semibold text-gray-900">{formatUsd(gross || earnings)}</span>
+                </div>
+              </div>
+
+              {/* Deductions */}
+              <div className="border-t border-gray-100 pt-2">
+                <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Deductions</div>
+                {otherDeductions.length === 0 ? (
+                  <p className="text-xs text-gray-500">No deductions on this settlement.</p>
+                ) : (
+                  otherDeductions.map((l) => (
+                    <div key={l.id} className="flex items-center justify-between text-sm text-gray-700">
+                      <span>{l.description}</span>
+                      <span>-{formatUsd(Math.abs(l.amount))}</span>
+                    </div>
+                  ))
+                )}
+                <div className="mt-1 flex items-center justify-between border-t border-gray-100 pt-1 text-xs text-gray-600">
+                  <span>Deductions total</span>
+                  <span>-{formatUsd(Math.abs(otherDeductionsTotal))}</span>
+                </div>
+              </div>
+
+              {/* Escrow contribution + cap indicator */}
+              <div className="border-t border-gray-100 pt-2">
+                <div className="mb-1 flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  <span>Escrow contribution</span>
+                  <span>Cap {formatUsd(ESCROW_CAP_DOLLARS)}</span>
+                </div>
+                {escrowLines.length === 0 ? (
+                  <p className="text-xs text-gray-500">No escrow contribution on this settlement.</p>
+                ) : (
+                  escrowLines.map((l) => (
+                    <div key={l.id} className="flex items-center justify-between text-sm text-gray-700">
+                      <span>{l.description}</span>
+                      <span>-{formatUsd(Math.abs(l.amount))}</span>
+                    </div>
+                  ))
+                )}
+                <div className="mt-1 flex items-center justify-between text-xs text-gray-600">
+                  <span>Contribution this settlement</span>
+                  <span>{formatUsd(escrowContributionThisSettlement)}</span>
+                </div>
+                <div className="mt-2">
+                  <div className="h-2 w-full rounded-sm bg-gray-200">
+                    <div className="h-2 rounded-sm bg-slate-600" style={{ width: `${escrowCapPct}%` }} />
+                  </div>
+                  <div className="mt-1 flex items-center justify-between text-[11px] text-gray-600">
+                    <span>Current escrow balance: {formatUsd(currentEscrowTotal)}</span>
+                    <span className={escrowToCap === 0 ? "font-semibold text-amber-700" : ""}>
+                      {escrowToCap === 0 ? "At cap" : `${formatUsd(escrowToCap)} to cap`}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Advance recoveries */}
+              <div className="border-t border-gray-100 pt-2">
+                <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Advance recoveries</div>
+                {advanceRecoveryLines.length === 0 ? (
+                  <p className="text-xs text-gray-500">No advance recovery on this settlement.</p>
+                ) : (
+                  advanceRecoveryLines.map((l) => (
+                    <div key={l.id} className="flex items-center justify-between text-sm text-gray-700">
+                      <span>{l.description}</span>
+                      <span>-{formatUsd(Math.abs(l.amount))}</span>
+                    </div>
+                  ))
+                )}
+                <div className="mt-1 flex items-center justify-between text-xs text-gray-600">
+                  <span>Total active debt (all liabilities)</span>
+                  <span>{formatUsd(debtQuery.data?.total_active_debt ?? 0)}</span>
+                </div>
+              </div>
+
+              {/* Reimbursements */}
+              {reimbursements !== 0 ? (
+                <div className="border-t border-gray-100 pt-2">
+                  <div className="flex items-center justify-between text-sm text-gray-700">
+                    <span>Reimbursements</span>
+                    <span>{formatUsd(reimbursements)}</span>
+                  </div>
+                </div>
+              ) : null}
+
+              {/* NET */}
+              <div className="border-t border-gray-200 pt-2">
+                <div className="flex items-center justify-between text-base font-semibold text-gray-900">
+                  <span>NET PAY</span>
+                  <span>{formatUsd(netPay)}</span>
+                </div>
+              </div>
+
+              {/* Payment method */}
+              <div className="border-t border-gray-100 pt-2">
+                <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Payment method</div>
+                <div className="max-w-sm">
+                  <PaymentMethodPicker
+                    operatingCompanyId={companyId}
+                    value={paymentMethodId}
+                    onChange={(id, glAccountId) => {
+                      setPaymentMethodId(id);
+                      setPaymentMethodGlAccountId(glAccountId);
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Draft JE preview */}
+              <div className="border-t border-gray-100 pt-2">
+                <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Draft JE preview (not posted)</div>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-left text-xs">
+                    <thead className="text-[10px] uppercase text-gray-500">
+                      <tr>
+                        <th className="py-1 pr-3">Account</th>
+                        <th className="py-1 pr-3 text-right">Debit</th>
+                        <th className="py-1 text-right">Credit</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="border-t border-gray-100">
+                        <td className="py-1 pr-3">Driver pay expense</td>
+                        <td className="py-1 pr-3 text-right">{formatUsd(gross || earnings)}</td>
+                        <td className="py-1 text-right">—</td>
+                      </tr>
+                      {escrowContributionThisSettlement !== 0 ? (
+                        <tr className="border-t border-gray-100">
+                          <td className="py-1 pr-3">Driver escrow liability</td>
+                          <td className="py-1 pr-3 text-right">—</td>
+                          <td className="py-1 text-right">{formatUsd(Math.abs(escrowContributionThisSettlement))}</td>
+                        </tr>
+                      ) : null}
+                      {advanceRecoveryTotal !== 0 ? (
+                        <tr className="border-t border-gray-100">
+                          <td className="py-1 pr-3">Driver advances receivable</td>
+                          <td className="py-1 pr-3 text-right">—</td>
+                          <td className="py-1 text-right">{formatUsd(Math.abs(advanceRecoveryTotal))}</td>
+                        </tr>
+                      ) : null}
+                      {otherDeductionsTotal !== 0 ? (
+                        <tr className="border-t border-gray-100">
+                          <td className="py-1 pr-3">Other settlement deductions</td>
+                          <td className="py-1 pr-3 text-right">—</td>
+                          <td className="py-1 text-right">{formatUsd(Math.abs(otherDeductionsTotal))}</td>
+                        </tr>
+                      ) : null}
+                      <tr className="border-t border-gray-100">
+                        <td className="py-1 pr-3">{paymentMethodGlName ?? "Cash / bank (select payment method)"}</td>
+                        <td className="py-1 pr-3 text-right">—</td>
+                        <td className="py-1 text-right">{formatUsd(netPay)}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <p className="mt-1 text-[10px] text-gray-500">
+                  Preview only — computed client-side from this settlement's lines for review before Close. Actual GL
+                  posting reuses the existing settlement posting path (behind SETTLEMENT_GL_POSTING_ENABLED).
+                </p>
+              </div>
+
+              {/* Close action */}
+              <div className="flex items-center justify-end gap-2 border-t border-gray-200 pt-3">
+                {!canClose ? <span className="text-xs text-gray-500">Your role cannot close settlements.</span> : null}
+                {isMaker ? (
+                  <span className="text-xs text-amber-700">You opened this settlement — a different approver must close it (maker ≠ checker).</span>
+                ) : null}
+                <Button
+                  disabled={!canSubmitClose || closeMut.isPending}
+                  loading={closeMut.isPending}
+                  onClick={() => closeMut.mutate()}
+                  title={isMaker ? "Maker ≠ checker — a different user must close this settlement." : undefined}
+                >
+                  Close settlement
+                </Button>
+              </div>
+            </div>
+          ) : null}
+        </>
+      )}
+    </div>
+  );
+}

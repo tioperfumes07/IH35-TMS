@@ -79,6 +79,8 @@ export function SettlementsPage() {
           { label: "Profiles",           to: "/drivers/profiles" },
           { label: "Pre-Settlements",    to: "/drivers/pre-settlements" },
           { label: "Settlements",        to: "/driver-finance/settlements" },
+          { label: "Settlement Close",   to: "/driver-finance/settlement-close" },
+          { label: "Cash Advance Requests", to: "/driver-finance/cash-advance-requests" },
           { label: "Cash Advances",      to: "/cash-advances" },
           { label: "Liabilities",        to: "/liabilities" },
           { label: "Escrow",             to: "/accounting/escrow" },
