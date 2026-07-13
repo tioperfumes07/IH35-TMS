@@ -69,6 +69,18 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
   const off: Scenario = { driverId: randomUUID(), escrowSub: randomUUID(), settlementId: randomUUID(), displayId: `PR-OFF-${suffix}` };
   const mkUser1 = randomUUID();
   const mkUser2 = randomUUID();
+  // Dedicated flag actor for THIS file only. The SETTLEMENT_GL_POSTING_ENABLED override is contended on
+  // the SHARED TRANSP company by concurrent sibling real-Postgres suites (settlement-gl-posting.db.test.ts
+  // + settlement-bill-payment-posting.db.test.ts) under vitest pool:"forks": their setFlag DELETE+INSERTs
+  // the (flag_key, operating_company_id, user_uuid IS NULL) tenant row and their afterAll deletes EVERY
+  // override for operating_company_id=companyId — so a company-scoped tenant override here can be flipped
+  // OFF (or deleted) in the window between our setFlag(true) and closeSettlementPayRun's flag read, making
+  // the run PREVIEW instead of POST. We instead pin a USER-scoped override to this dedicated actor
+  // (operating_company_id NULL, user_uuid=flagActor) and drive closeSettlementPayRun AS that actor:
+  // resolveFlagEnabled checks the per-user override FIRST (beats any tenant row), the siblings never touch
+  // a user_uuid-non-NULL / company-NULL row, and they read with a DIFFERENT actor (TEST_OWNER) so they
+  // never fetch ours — the flag state is immune in BOTH directions (no cross-suite contamination).
+  const flagActor = randomUUID();
   const allDrivers = [below.driverId, atcap.driverId, off.driverId];
 
   async function bypass(fn: () => Promise<void>) {
@@ -86,15 +98,18 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
     catch (e) { await db.query("ROLLBACK").catch(() => {}); throw e; }
   }
   async function setFlag(enabled: boolean) {
+    // USER-scoped (not company-scoped) so concurrent sibling suites on the SAME TRANSP company cannot race
+    // this override (see flagActor note above). operating_company_id is NULL for a pure per-user override
+    // (matches idx_ff_override_user + setOverride()); closeSettlementPayRun reads it AS flagActor.
     await bypass(async () => {
       await db.query(
-        `DELETE FROM lib.feature_flag_overrides WHERE flag_key='SETTLEMENT_GL_POSTING_ENABLED' AND operating_company_id=$1::uuid AND user_uuid IS NULL`,
-        [companyId]
+        `DELETE FROM lib.feature_flag_overrides WHERE flag_key='SETTLEMENT_GL_POSTING_ENABLED' AND user_uuid=$1::uuid`,
+        [flagActor]
       );
       await db.query(
         `INSERT INTO lib.feature_flag_overrides (flag_key, operating_company_id, user_uuid, enabled, set_by_user_uuid)
-         VALUES ('SETTLEMENT_GL_POSTING_ENABLED', $1::uuid, NULL, $2, $3::uuid)`,
-        [companyId, enabled, userId]
+         VALUES ('SETTLEMENT_GL_POSTING_ENABLED', NULL, $1::uuid, $2, $3::uuid)`,
+        [flagActor, enabled, userId]
       );
     });
   }
@@ -176,9 +191,16 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
     await bypass(async () => {
       await db.query(
         `INSERT INTO identity.users (id, email, role, preferred_language) VALUES
-           ($1::uuid,$2,'Owner','en'),($3::uuid,$4,'Dispatcher','en'),($5::uuid,$6,'Accountant','en')
+           ($1::uuid,$2,'Owner','en'),($3::uuid,$4,'Dispatcher','en'),($5::uuid,$6,'Accountant','en'),
+           ($7::uuid,$8,'Owner','en')
          ON CONFLICT (id) DO NOTHING`,
-        [userId, `pr-owner-${suffix}@test.local`, mkUser1, `pr-mk-${suffix}@test.local`, mkUser2, `pr-ck-${suffix}@test.local`]
+        [userId, `pr-owner-${suffix}@test.local`, mkUser1, `pr-mk-${suffix}@test.local`, mkUser2, `pr-ck-${suffix}@test.local`, flagActor, `pr-flag-${suffix}@test.local`]
+      );
+      // flagActor is the dedicated actor closeSettlementPayRun runs as (its per-user posting-flag override is
+      // immune to sibling contamination — see note above). Grant it TRANSP access to mirror production Owners.
+      await db.query(
+        `INSERT INTO org.user_company_access (user_id, company_id) VALUES ($1::uuid,$2::uuid) ON CONFLICT (user_id, company_id) DO NOTHING`,
+        [flagActor, companyId]
       );
       // shared role-target accounts
       await mkAcct(acct.driverPay, `Driver Pay Expense ${suffix}`, "Expense", null, null);
@@ -236,7 +258,7 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
           [below.escrowSub, atcap.escrowSub, off.escrowSub, escrowParent, escrowGrandparent, acct.driverPay, acct.insuranceRecovery, acct.advanceClearing, acct.chargebackRecovery, acct.cash],
         ]);
         await db.query(`DELETE FROM catalogs.account_role_bindings WHERE role_key = ANY($1)`, [["driver_pay_expense", "insurance_recovery", "advance_recovery", "abandonment_chargeback_recovery"]]);
-        await db.query(`DELETE FROM lib.feature_flag_overrides WHERE flag_key='SETTLEMENT_GL_POSTING_ENABLED' AND operating_company_id=$1::uuid`, [companyId]);
+        await db.query(`DELETE FROM lib.feature_flag_overrides WHERE flag_key='SETTLEMENT_GL_POSTING_ENABLED' AND (operating_company_id=$1::uuid OR user_uuid=$2::uuid)`, [companyId, flagActor]);
         await db.query(`DELETE FROM integrations.qbo_connections WHERE operating_company_id=$1::uuid AND realm_id=$2`, [companyId, realm]);
       });
     } catch { /* best-effort */ } finally { await db.end(); }
@@ -256,7 +278,7 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
     await setFlag(true);
     const res = await closeSettlementPayRun(
       { operatingCompanyId: companyId, settlementId: below.settlementId, paymentMethodId },
-      { userId }
+      { userId: flagActor }
     );
     expect(res.result).toBe("posted");
     expect(res.journal_entry_id).toBeTruthy();
@@ -311,7 +333,7 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
     await setFlag(true);
     const res2 = await closeSettlementPayRun(
       { operatingCompanyId: companyId, settlementId: below.settlementId, paymentMethodId },
-      { userId }
+      { userId: flagActor }
     );
     expect(res2.result).toBe("posted");
     // no new advances recovered on the re-run (already recovered)
@@ -329,7 +351,7 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
     await setFlag(true);
     const res = await closeSettlementPayRun(
       { operatingCompanyId: companyId, settlementId: atcap.settlementId, paymentMethodId },
-      { userId }
+      { userId: flagActor }
     );
     expect(res.result).toBe("posted");
     expect(res.breakdown.escrow_balance_before_cents).toBe(CAP);
@@ -350,7 +372,7 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
     await setFlag(false);
     const res = await closeSettlementPayRun(
       { operatingCompanyId: companyId, settlementId: off.settlementId, paymentMethodId },
-      { userId }
+      { userId: flagActor }
     );
     expect(res.result).toBe("previewed");
     expect(res.posting_enabled).toBe(false);
@@ -377,31 +399,33 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
   });
 
   it("(4) maker==checker cash-advance is rejected; authority (reviewer NULL) and distinct maker<>checker allowed", async () => {
-    // maker == checker -> DB CHECK rejects
+    // maker == checker -> DB CHECK (cash_advance_requests_maker_ne_checker) rejects. The raw insert must
+    // supply the base-table NOT-NULL-no-default columns (display_id, submitted_via, reason) so the row
+    // reaches the maker<>checker CHECK instead of tripping a not-null on display_id first (0131 base DDL).
     await expect(
       read(
         `INSERT INTO driver_finance.cash_advance_requests
-           (operating_company_id, driver_id, requested_amount_cents, submitted_by_user_id, reviewed_by_user_id)
-         VALUES ($1::uuid,$2::uuid,5000,$3::uuid,$3::uuid)`,
-        [companyId, below.driverId, mkUser1]
+           (operating_company_id, driver_id, display_id, submitted_via, reason, requested_amount_cents, submitted_by_user_id, reviewed_by_user_id)
+         VALUES ($1::uuid,$2::uuid,$4,'office','maker equals checker rejection test',5000,$3::uuid,$3::uuid)`,
+        [companyId, below.driverId, mkUser1, `CAR-MK-${suffix}`]
       )
     ).rejects.toThrow(/maker_ne_checker|check/i);
     // Owner/authority auto-approve leaves reviewer NULL -> allowed
     await bypass(async () => {
       await db.query(
         `INSERT INTO driver_finance.cash_advance_requests
-           (operating_company_id, driver_id, requested_amount_cents, submitted_by_user_id, reviewed_by_user_id)
-         VALUES ($1::uuid,$2::uuid,5000,$3::uuid,NULL)`,
-        [companyId, below.driverId, userId]
+           (operating_company_id, driver_id, display_id, submitted_via, reason, requested_amount_cents, submitted_by_user_id, reviewed_by_user_id)
+         VALUES ($1::uuid,$2::uuid,$4,'office','owner authority auto-approve test',5000,$3::uuid,NULL)`,
+        [companyId, below.driverId, userId, `CAR-NULL-${suffix}`]
       );
     });
     // distinct maker <> checker -> allowed
     await bypass(async () => {
       await db.query(
         `INSERT INTO driver_finance.cash_advance_requests
-           (operating_company_id, driver_id, requested_amount_cents, submitted_by_user_id, reviewed_by_user_id)
-         VALUES ($1::uuid,$2::uuid,5000,$3::uuid,$4::uuid)`,
-        [companyId, below.driverId, mkUser1, mkUser2]
+           (operating_company_id, driver_id, display_id, submitted_via, reason, requested_amount_cents, submitted_by_user_id, reviewed_by_user_id)
+         VALUES ($1::uuid,$2::uuid,$5,'office','distinct maker and checker test',5000,$3::uuid,$4::uuid)`,
+        [companyId, below.driverId, mkUser1, mkUser2, `CAR-DIST-${suffix}`]
       );
     });
     const c = await read<{ c: string }>(`SELECT count(*)::text AS c FROM driver_finance.cash_advance_requests WHERE driver_id=$1::uuid`, [below.driverId]);
