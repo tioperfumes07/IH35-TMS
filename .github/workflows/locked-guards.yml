@@ -735,3 +735,8 @@ jobs:
         run: node scripts/verify-settlement-dispute-je-gate.mjs --selftest
       - name: verify:settlement-dispute-je-gate
         run: npm run verify:settlement-dispute-je-gate
+
+      - name: verify:ap-aging-qbo-tie --selftest
+        run: node scripts/verify-ap-aging-qbo-tie.mjs --selftest
+      - name: verify:ap-aging-qbo-tie
+        run: npm run verify:ap-aging-qbo-tie

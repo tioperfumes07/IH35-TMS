@@ -1007,6 +1007,8 @@ export type ApAgingResponse = {
   vendors: ApAgingVendor[];
   totals: ApAgingTotals;
   basis?: string;
+  // ACCT-2: last QBO A/P mirror sync for this entity; null until the read-only pull runs (flags OFF).
+  qbo_synced_at?: string | null;
 };
 export function getApAgingByVendor(operatingCompanyId: string, asOfDate: string) {
   return apiRequest<ApAgingResponse>(
