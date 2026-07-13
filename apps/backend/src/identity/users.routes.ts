@@ -7,6 +7,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { findReturningDispatcherMatches } from "../mdata/dispatcher-safety-events.routes.js";
 import { sendEmail } from "../notifications/email.service.js";
+import { FIXTURE_USER_EMAIL_RE } from "./fixture-email-pattern.js";
 import { officePasswordSchema } from "./office-password-policy.js";
 import { EXCLUDE_ARCHIVED_IDENTITY_USERS_SQL } from "../mdata/test-seed-archive.js";
 
@@ -59,10 +60,9 @@ const createUserBodySchema = z.object({
   send_password_setup_invite: z.boolean().optional().default(false),
 });
 
-// USERS-1 fixture-user guard (see the create handler). @example.* is an RFC-2606 reserved test domain
-// (never a real user); m2-probe/m2-stop/verifyfix are the migration/CI probe-harness naming patterns that
-// created the offending ACTIVE Owner accounts on prod. Enforced only in production so CI/test fixtures work.
-const FIXTURE_USER_EMAIL_RE = /@example\.(com|org|net)$|(^|[.+_-])(m2-probe|m2-stop|verifyfix)\b/i;
+// USERS-1 fixture-user guard (see the create handler). The FIXTURE_USER_EMAIL_RE pattern is the shared
+// single source of truth in ./fixture-email-pattern.js (also used by the admin deactivate-probe-accounts
+// job). Enforced only in production so CI/test fixtures work.
 const IS_PROD_ENV = process.env.NODE_ENV === "production";
 
 type IdentityUserRow = {
