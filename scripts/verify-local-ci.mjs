@@ -110,13 +110,18 @@ async function main() {
   // Pin the connection local for every child; blank DATABASE_DIRECT_URL so dotenv can't reload a prod URL.
   const pinned = { DATABASE_URL: dbUrl, DATABASE_DIRECT_URL: "", PGCONNECT_TIMEOUT: "5" };
 
+  // The failure classes that actually redden build-typecheck: migration-on-fresh-DB, backend TS, frontend
+  // TS, schema-parity drift (verify-steps/68 — a migration adding a column MUST rebaseline it), and the
+  // static-guard suite. --tests adds the *.db.test.ts class. (build-typecheck runs these via verify:pre-commit;
+  // we run them directly so no localhost:54329/ih35_verify db-reset convention is required.)
   step("db:migrate (fresh-DB migration chain)", "npm", ["run", "db:migrate"], pinned);
   step("build:backend (tsc + emit)", "npm", ["run", "build:backend"], pinned);
   step("frontend tsc", "npx", ["tsc", "-b", "--pretty", "false"], pinned, path.join(ROOT, "apps/frontend"));
+  step("verify:schema-parity (baseline drift — rebaseline after any migration adds a column)", "npm", ["run", "verify:schema-parity"], pinned);
   step("verify:arch-design (static guard suite)", "npm", ["run", "verify:arch-design"], pinned);
   if (runTests) step("backend db tests", "npm", ["run", "test:coverage"], pinned);
 
-  console.log(`\n[${LABEL}] OK — build-typecheck reproduced GREEN locally${runTests ? " (incl. tests)" : " (add --tests for db.test coverage)"}. Safe to push.`);
+  console.log(`\n[${LABEL}] OK — build-typecheck failure classes reproduced GREEN locally${runTests ? " (incl. tests)" : " (add --tests for db.test coverage)"}. Safe to push.`);
 }
 
 main().catch((err) => { console.error(`[${LABEL}] ERROR: ${err.message}`); process.exit(1); });
