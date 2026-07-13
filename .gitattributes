@@ -7,3 +7,17 @@
 docs/schema-parity-baseline.json        merge=json-union
 db/migrations/.held-migrations.json     merge=json-union
 scripts/entity-isolation-allowlist.json merge=json-union
+
+# CONFLICT-TREADMILL KILLER (2026-07-13): every guard/verify PR appends a `verify:*` script to
+# package.json and a run-step to locked-guards.yml at the SAME tail anchor, so whichever PR merges
+# first conflicts EVERY other open PR on these two files — the endless hand-resolve treadmill.
+#   - package.json: the json-union driver deep-unions the scripts object (verified: JSON.parse →
+#     JSON.stringify(_,null,2) roundtrips package.json byte-identically, so unchanged content never
+#     churns — only the newly-added keys from both sides survive). Driver auto-registered by the
+#     `prepare` npm script (scripts/setup-git-merge-drivers.mjs) on every install.
+#   - locked-guards.yml: git's built-in `union` driver keeps BOTH sides of an append-only conflict
+#     hunk (the guard step list only ever grows at the tail), yielding valid YAML with every branch's
+#     steps. (union is line-based — safe here BECAUSE we only ever APPEND guard steps, never edit
+#     existing lines; keep it that way.)
+package.json                            merge=json-union
+.github/workflows/locked-guards.yml     merge=union
