@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createMaintenanceWarrantyClaim,
@@ -117,7 +118,7 @@ export function WarrantyClaimsPage() {
   const columns = useMemo<ParityColumn<MaintenanceWarrantyClaimRow>[]>(
     () => [
       { key: "part_description", label: "Part", sortable: true, render: (row) => row.part_description },
-      { key: "vendor_name", label: "Vendor", sortable: true, render: (row) => row.vendor_name ?? "—" },
+      { key: "vendor_name", label: "Vendor", sortable: true, render: (row) => <EntityLink kind="vendor" id={row.vendor_id ?? undefined} label={row.vendor_name ?? "—"} /> },
       { key: "claim_number", label: "Claim #", sortable: true, render: (row) => row.claim_number || "—" },
       { key: "status", label: "Status", sortable: true, render: (row) => row.status_label ?? row.status },
       { key: "claim_amount_cents", label: "Amount", render: (row) => `$${((row.claim_amount_cents ?? 0) / 100).toFixed(2)}` },
