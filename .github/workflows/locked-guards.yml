@@ -750,3 +750,8 @@ jobs:
         run: node scripts/verify-home-attention-late-canonical.mjs --selftest
       - name: verify:home-attention-late-canonical
         run: npm run verify:home-attention-late-canonical
+
+      - name: verify:border-crossing-canonical-relations --selftest
+        run: node scripts/verify-border-crossing-canonical-relations.mjs --selftest
+      - name: verify:border-crossing-canonical-relations
+        run: npm run verify:border-crossing-canonical-relations

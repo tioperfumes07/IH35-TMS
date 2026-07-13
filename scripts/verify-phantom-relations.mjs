@@ -67,7 +67,9 @@ const KNOWN_PHANTOM_DEBT = [
   { rel: "fuel.recommended_stops", why: "forward-ref — fuel routing unbuilt" },
   { rel: "fuel.route_recommendations", why: "forward-ref — fuel routing unbuilt" },
   { rel: "samsara.hos_log_edits", why: "forward-ref — Samsara HOS-edit ingest unbuilt" },
-  { rel: "integrations.samsara_positions", why: "forward-ref — Samsara positions ingest unbuilt" },
+  // integrations.samsara_positions REMOVED 2026-07-13 — border-crossing detector now reads the real
+  // integrations.samsara_vehicle_positions; no backend SQL references the phantom anymore, so it is
+  // locked out (verify-border-crossing-canonical-relations.mjs enforces the two files stay canonical).
   { rel: "safety.csa_scores_cache", why: "forward-ref — CSA scores cache unbuilt" },
   { rel: "safety.training_completions", why: "forward-ref — training module unbuilt" },
   { rel: "banking.bank_account_balances", why: "forward-ref — balances cache unbuilt" },
