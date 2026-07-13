@@ -5,6 +5,7 @@ import { listDrivers } from "../../api/mdata";
 import { useAuth } from "../../auth/useAuth";
 import { Button } from "../../components/Button";
 import { Combobox } from "../../components/Combobox";
+import { MoneyInput } from "../../components/forms/MoneyInput";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
@@ -37,7 +38,7 @@ export function CashAdvanceRequestsPage() {
 
   const [createOpen, setCreateOpen] = useState(false);
   const [newDriverId, setNewDriverId] = useState<string | null>(null);
-  const [newAmountDollars, setNewAmountDollars] = useState("");
+  const [newAmountCents, setNewAmountCents] = useState<number | null>(null);
   const [newReason, setNewReason] = useState("");
 
   const role = String(user?.role ?? "");
@@ -61,7 +62,7 @@ export function CashAdvanceRequestsPage() {
 
   const createMut = useMutation({
     mutationFn: () => {
-      const cents = Math.round(Number(newAmountDollars || "0") * 100);
+      const cents = newAmountCents ?? 0;
       return cashAdvanceRequestsOfficeApi.create(companyId, {
         driver_id: String(newDriverId),
         requested_amount_cents: cents,
@@ -73,14 +74,14 @@ export function CashAdvanceRequestsPage() {
       pushToast(isOwnerOrAdmin ? "Cash advance created and self-approved" : "Request submitted — awaiting a different approver", "success");
       setCreateOpen(false);
       setNewDriverId(null);
-      setNewAmountDollars("");
+      setNewAmountCents(null);
       setNewReason("");
       void qc.invalidateQueries({ queryKey: ["driver-finance", "cash-advance-requests"] });
     },
     onError: (err) => pushToast(err instanceof Error ? err.message : "Create failed", "error"),
   });
 
-  const canCreate = Boolean(newDriverId) && Number(newAmountDollars) > 0 && newReason.trim().length >= 10;
+  const canCreate = Boolean(newDriverId) && (newAmountCents ?? 0) > 0 && newReason.trim().length >= 10;
 
   const pendingQuery = useQuery({
     queryKey: ["driver-finance", "cash-advance-requests", "pending", companyId],
@@ -173,14 +174,11 @@ export function CashAdvanceRequestsPage() {
             </label>
             <label className="block">
               <span className="text-xs font-medium text-gray-600">Amount (USD) *</span>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                className="mt-1 h-10 w-full rounded-sm border border-gray-300 px-2 text-sm"
-                value={newAmountDollars}
-                onChange={(e) => setNewAmountDollars(e.target.value)}
-                aria-label="Cash advance amount"
+              <MoneyInput
+                className="mt-1 h-10 w-full"
+                valueCents={newAmountCents}
+                onChangeCents={setNewAmountCents}
+                ariaLabel="Cash advance amount"
               />
             </label>
             <label className="block md:col-span-1">
