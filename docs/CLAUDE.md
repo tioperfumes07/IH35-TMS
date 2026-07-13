@@ -13,6 +13,12 @@
 - **Before EVERY push, run `npm run verify:static`** and fix any `FAIL(gated)` locally — never push into a
   red static guard. It runs all `scripts/verify-*.mjs` with no reachable DB (dead-port sentinel; never
   touches prod) and fails only on a guard CI actually runs. See `docs/specs/BRANCH-TOOLING.md` §2.
+- **To reproduce CI's `build-typecheck` in full (migrations + backend/frontend tsc + guard suite), run
+  `npm run verify:local-ci`** (`--tests` adds the db.test suite). It resets a THROWAWAY local Postgres
+  (`ci-migration-test`) and runs the exact CI chain, pinning the connection local + blanking
+  `DATABASE_DIRECT_URL` so the `db:migrate`-hits-prod landmine cannot fire (it refuses any non-local host).
+  This catches the failures `verify:static` cannot — a migration that errors on a fresh DB, a TS error, a
+  db.test failure — so a PR never lands `build-typecheck` red. Requires a local Postgres on `127.0.0.1:5432`.
 
 ## 1a) LINKAGE LAW + CANONICAL WIRING (read before any block)
 
