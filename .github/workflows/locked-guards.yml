@@ -754,3 +754,8 @@ jobs:
         run: node scripts/verify-home-attention-late-canonical.mjs --selftest
       - name: verify:home-attention-late-canonical
         run: npm run verify:home-attention-late-canonical
+
+      - name: verify:safety-canonical-table-reads --selftest
+        run: node scripts/verify-safety-canonical-table-reads.mjs --selftest
+      - name: verify:safety-canonical-table-reads
+        run: npm run verify:safety-canonical-table-reads

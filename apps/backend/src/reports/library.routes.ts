@@ -195,15 +195,19 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
         woRel.rows[0]?.ok === true
           ? await countPastDueMaintenanceWorkOrders(client, query.data.operating_company_id)
           : 0;
+      // Canonical table is `safety.accident_reports` (migration 0049); `safety.accidents` never
+      // existed, so the old to_regclass guard degraded this KPI to 0 forever. The table has no
+      // `status`/lifecycle column (verified: 0049 base + all ALTERs; the create endpoint writes
+      // none), so "Open Damage" = accident reports on file for the company. Adding a phantom
+      // status filter would keep it 0 (or 500) — do NOT reintroduce `a.status`.
       const openDamageRes = await client.query(
         `
           SELECT CASE
-            WHEN to_regclass('safety.accidents') IS NULL THEN 0
+            WHEN to_regclass('safety.accident_reports') IS NULL THEN 0
             ELSE (
               SELECT count(*)::bigint
-              FROM safety.accidents a
+              FROM safety.accident_reports a
               WHERE a.operating_company_id = $1
-                AND COALESCE(a.status::text, '') IN ('open', 'under-investigation')
             )
           END AS total
         `,
