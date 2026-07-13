@@ -21,6 +21,8 @@
 --           (the office "maker") + maker<>checker CHECK vs reviewed_by_user_id (I4). Owner/Admin auto-approve
 --           leaves reviewed_by NULL (role IS the authority); other roles need a DISTINCT approver.
 --   5. EXTEND driver_finance.settlement_lines line_type CHECK: + 'advance_recovery' + 'escrow_contribution'.
+--  5b. WIDEN catalogs.account_role_bindings.role_key CHECK: + 'abandonment_chargeback_recovery' (the pay-run
+--           chargeback recovery credit role — was missing, so chargeback settlements failed to post).
 --   6. NEW  driver_finance.payrun_gl_runs — a one-row-per-settlement GL-run IDEMPOTENCY ANCHOR (NOT a ledger;
 --           UNIQUE (operating_company_id, settlement_id) so a repeated pay-run close cannot double-post the JE;
 --           FORCE RLS + 0065 grants, no-DELETE). See its CANONICAL-CHECK block below.
@@ -156,6 +158,31 @@ BEGIN
 EXCEPTION WHEN duplicate_object THEN
   NULL; -- constraint already swapped on a re-run
 END $$;
+
+-- ── 5b. WIDEN catalogs.account_role_bindings.role_key CHECK: + 'abandonment_chargeback_recovery' ────
+-- The pay-run credits abandonment chargebacks to the 'abandonment_chargeback_recovery' role account
+-- (settlement-payrun-close.service.ts:resolveRoleBindingAccount). That role_key was MISSING from the
+-- account_role_bindings_role_key_check enum (last widened in 202607080310), so the owner could never bind
+-- an account to it — every settlement carrying an abandonment chargeback threw CHARGEBACK_RECOVERY_ACCOUNT_
+-- MISSING (a dead money leg). Re-add the constraint with the full 202607080310 superset PLUS the new key
+-- (idempotent DROP+ADD; the list must remain the complete superset so no existing role is dropped).
+ALTER TABLE catalogs.account_role_bindings DROP CONSTRAINT IF EXISTS account_role_bindings_role_key_check;
+ALTER TABLE catalogs.account_role_bindings ADD CONSTRAINT account_role_bindings_role_key_check CHECK (
+  role_key = ANY (ARRAY[
+    'ar_clearing', 'ap_clearing', 'cash_dip', 'cash_payroll', 'cash_petty',
+    'fuel_expense', 'maintenance_expense', 'driver_payroll_clearing',
+    'factor_advances_receivable', 'factor_chargebacks_payable', 'undeposited_funds',
+    'driver_pay_expense', 'reimbursement_expense',
+    'advance_recovery', 'damage_recovery', 'lease_recovery', 'insurance_recovery',
+    'fuel_advance_recovery', 'other_recovery',
+    'rental_income', 'lease_receivable', 'interest_income', 'gain_loss_on_disposal',
+    'factoring_advance_liability', 'ar_assigned_to_factor', 'factoring_recoursed_ar',
+    'default_interest_expense', 'factor_reserve_held', 'factor_fee_expense',
+    'property_tax_expense', 'property_tax_payable',
+    -- SETTLE-PAYRUN (2026-07-13): the abandonment-chargeback recovery credit role for the pay-run close.
+    'abandonment_chargeback_recovery'
+  ])
+);
 
 -- ── 6. NEW pay-run GL-RUN idempotency anchor (driver_finance.payrun_gl_runs) ───────────────────────
 -- CANONICAL-CHECK: payrun_gl_run_idempotency_anchor. driver_finance.payrun_gl_runs is NOT a money ledger and
