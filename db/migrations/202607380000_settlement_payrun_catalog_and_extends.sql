@@ -21,6 +21,9 @@
 --           (the office "maker") + maker<>checker CHECK vs reviewed_by_user_id (I4). Owner/Admin auto-approve
 --           leaves reviewed_by NULL (role IS the authority); other roles need a DISTINCT approver.
 --   5. EXTEND driver_finance.settlement_lines line_type CHECK: + 'advance_recovery' + 'escrow_contribution'.
+--   6. NEW  driver_finance.payrun_gl_runs — a one-row-per-settlement GL-run IDEMPOTENCY ANCHOR (NOT a ledger;
+--           UNIQUE (operating_company_id, settlement_id) so a repeated pay-run close cannot double-post the JE;
+--           FORCE RLS + 0065 grants, no-DELETE). See its CANONICAL-CHECK block below.
 -- Additive/idempotent (ADD COLUMN IF NOT EXISTS, guarded constraint swaps, seed EXISTS-guarded + ON CONFLICT).
 -- No GL/posting math here (that reuses the existing settlement poster behind SETTLEMENT_GL_POSTING_ENABLED).
 
@@ -153,5 +156,50 @@ BEGIN
 EXCEPTION WHEN duplicate_object THEN
   NULL; -- constraint already swapped on a re-run
 END $$;
+
+-- ── 6. NEW pay-run GL-RUN idempotency anchor (driver_finance.payrun_gl_runs) ───────────────────────
+-- CANONICAL-CHECK: payrun_gl_run_idempotency_anchor. driver_finance.payrun_gl_runs is NOT a money ledger and
+--   NOT a duplicate of any canonical ledger — it is a one-row-per-settlement IDEMPOTENCY ANCHOR for the
+--   settlement pay-run GL close. It records THAT a balanced pay-run journal entry was posted for a settlement
+--   (UNIQUE (operating_company_id, settlement_id) => a repeated close can never double-post the JE), pointing
+--   at the SINGLE canonical journal_entry_id in accounting.journal_entries (the real ledger). It holds no
+--   amounts and no per-driver balances. It does NOT duplicate:
+--     • driver_finance.driver_settlements (the settlement itself — this only anchors its GL run),
+--     • driver_finance.driver_advances / driver_finance.escrow_ledger (the money ledgers — untouched here),
+--     • accounting.journal_entries (the canonical GL — this REFERENCES it, one run -> one JE).
+--   It mirrors the existing driver_finance.driver_settlement_gl_runs anchor for the Bill+BillPayment poster;
+--   this one anchors the pay-run single-JE close path. (Reconciled 2026-07-13.)
+CREATE TABLE IF NOT EXISTS driver_finance.payrun_gl_runs (
+  id                   uuid NOT NULL DEFAULT gen_random_uuid(),
+  operating_company_id uuid NOT NULL REFERENCES org.companies(id),
+  settlement_id        uuid NOT NULL REFERENCES driver_finance.driver_settlements(id),
+  -- the ONE balanced pay-run JE this run posted (nullable: a row can be claimed before the JE id is known,
+  -- though the service inserts it with the JE id in the same tx). Points at the canonical GL, no amount here.
+  journal_entry_id     uuid NULL REFERENCES accounting.journal_entries(id),
+  status               text NOT NULL DEFAULT 'posted' CHECK (status IN ('posted', 'void')),
+  created_by_user_id   uuid NULL REFERENCES identity.users(id),
+  created_at           timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (id),
+  -- IDEMPOTENCY: at most ONE pay-run GL run per settlement per entity — a repeated pay-run close for the
+  -- same settlement cannot double-post the balanced JE (the service inserts ON CONFLICT DO NOTHING and skips
+  -- posting when a run row already exists).
+  CONSTRAINT uq_payrun_gl_runs_company_settlement UNIQUE (operating_company_id, settlement_id)
+);
+
+-- FORCED entity-RLS (0065 pattern) + runtime grants (no DELETE — an idempotency anchor is append-only).
+ALTER TABLE driver_finance.payrun_gl_runs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE driver_finance.payrun_gl_runs FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS payrun_gl_runs_tenant_scope ON driver_finance.payrun_gl_runs;
+CREATE POLICY payrun_gl_runs_tenant_scope ON driver_finance.payrun_gl_runs
+FOR ALL TO ih35_app
+USING (
+  identity.is_lucia_bypass()
+  OR operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid
+)
+WITH CHECK (
+  identity.is_lucia_bypass()
+  OR operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid
+);
+GRANT SELECT, INSERT, UPDATE ON driver_finance.payrun_gl_runs TO ih35_app;
 
 COMMIT;

@@ -453,7 +453,40 @@ export async function closeSettlementPayRun(
       };
     }
 
-    // ── FLAG ON → POST. Idempotent advance recovery + escrow-ledger hold + balanced JE + disbursement. ─
+    // ── FLAG ON → POST. Idempotent DOUBLE-POST GUARD: claim the per-settlement pay-run GL-run anchor row
+    //   FIRST (UNIQUE (operating_company_id, settlement_id), ON CONFLICT DO NOTHING). If the row already
+    //   exists (rowCount 0), a prior pay-run close already posted the balanced JE for this settlement — SKIP
+    //   posting entirely and return the already-posted run (never double-post, never double-recover). ──────
+    const claim = await client.query<{ id: string; journal_entry_id: string | null }>(
+      `
+        INSERT INTO driver_finance.payrun_gl_runs
+          (operating_company_id, settlement_id, status, created_by_user_id)
+        VALUES ($1::uuid, $2::uuid, 'posted', $3::uuid)
+        ON CONFLICT (operating_company_id, settlement_id) DO NOTHING
+        RETURNING id::text, journal_entry_id::text
+      `,
+      [opco, settlementId, actor.userId]
+    );
+    if ((claim.rowCount ?? 0) === 0) {
+      // Already posted by an earlier close — read back the existing run's JE and return it unchanged.
+      const existing = await client.query<{ id: string; journal_entry_id: string | null }>(
+        `SELECT id::text, journal_entry_id::text FROM driver_finance.payrun_gl_runs
+          WHERE operating_company_id = $1::uuid AND settlement_id = $2::uuid LIMIT 1`,
+        [opco, settlementId]
+      );
+      return {
+        result: "posted" as const,
+        posting_enabled: true,
+        settlement_id: settlementId,
+        journal_entry_id: existing.rows[0]?.journal_entry_id ?? null,
+        breakdown,
+        recovered_advance_ids: [],
+        je_preview: legs,
+        disbursement: { recorded: false, payment_method_id: paymentMethod?.id ?? null, payment_method_name: paymentMethod?.name ?? null },
+      };
+    }
+    const payrunRunId = claim.rows[0]!.id;
+
     const recoveredIds: string[] = [];
     for (const adv of recoverable) {
       const upd = await client.query(
@@ -490,6 +523,14 @@ export async function closeSettlementPayRun(
         postings: legs.map((l) => ({ account_id: l.account_id, debit_or_credit: l.debit_or_credit, amount_cents: l.amount_cents, description: l.description })),
       },
       { userId: actor.userId, role: "system" }
+    );
+
+    // Stamp the posted JE id onto the pay-run GL-run anchor (the anchor was claimed above; this records the
+    // canonical journal_entry_id it corresponds to, one run -> one JE).
+    await client.query(
+      `UPDATE driver_finance.payrun_gl_runs SET journal_entry_id = $3::uuid
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+      [payrunRunId, opco, je.id]
     );
 
     // Records-only disbursement: stamp the chosen method + reference + both-way bank-txn link. No money moves.
