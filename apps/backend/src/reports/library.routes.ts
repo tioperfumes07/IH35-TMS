@@ -334,7 +334,6 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
             (await columnExists(client, "mdata", "load_stops", "scheduled_arrival_at")) &&
             (await columnExists(client, "mdata", "load_stops", "actual_arrival_at"));
           const whereParts: string[] = [
-            `l.operating_company_id = ${tenantSettingExpr}`,
             // in-flight only (NOT booked/planned/assigned) — a load must be moving to be "running late".
             `COALESCE(l.status::text, '') IN ('dispatched','at_pickup','in_transit','at_delivery')`,
           ];
@@ -346,8 +345,9 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
               `EXISTS (SELECT 1 FROM mdata.load_stops s WHERE s.load_id = l.id ` +
                 `AND s.scheduled_arrival_at IS NOT NULL AND s.scheduled_arrival_at < now() AND s.actual_arrival_at IS NULL)`,
             );
+            // operating_company_id kept LITERAL in the statement (entity-scope guard scans the SQL string).
             const res = await client.query(
-              `SELECT count(*)::text AS total FROM mdata.loads l WHERE ${whereParts.join(" AND ")}`,
+              `SELECT count(*)::text AS total FROM mdata.loads l WHERE l.operating_company_id = ${tenantSettingExpr} AND ${whereParts.join(" AND ")}`,
             );
             lateInFlightLoads = Number((res.rows[0] as { total?: string } | undefined)?.total ?? 0);
           }
