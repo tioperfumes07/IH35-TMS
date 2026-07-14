@@ -20,18 +20,18 @@ async function tick(app: FastifyInstance) {
     // Get positions from last tick window near border area (TX/Tamaulipas bounding box)
     const windowMs = intervalMs() + 60_000; // slight overlap
     const res = await client.query(
-      `SELECT DISTINCT ON (vehicle_id)
-              vehicle_id,
+      `SELECT DISTINCT ON (unit_uuid)
+              unit_uuid,
               operating_company_id,
-              latitude,
-              longitude,
+              lat,
+              lng,
               'northbound' AS direction,
-              occurred_at::text
-       FROM integrations.samsara_positions
-       WHERE occurred_at >= now() - ($1 * INTERVAL '1 millisecond')
-         AND latitude BETWEEN 27.0 AND 29.0
-         AND longitude BETWEEN -100.5 AND -99.0
-       ORDER BY vehicle_id, occurred_at DESC`,
+              recorded_at::text
+       FROM integrations.samsara_vehicle_positions
+       WHERE recorded_at >= now() - ($1 * INTERVAL '1 millisecond')
+         AND lat BETWEEN 27.0 AND 29.0
+         AND lng BETWEEN -100.5 AND -99.0
+       ORDER BY unit_uuid, recorded_at DESC`,
       [windowMs]
     );
 
