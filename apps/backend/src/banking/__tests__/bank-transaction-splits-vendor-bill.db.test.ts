@@ -62,14 +62,23 @@ describeIntegration("BANKING-GL-COMPLETION bank-transaction-splits vendor-bill l
     }
   }
 
+  // FLAKE FIX: write a USER-scoped override (user_uuid = this file's unique actor), NOT a per-company
+  // (tenant) override. ensureIntegrationPrerequisites() hands EVERY integration test the SAME cached
+  // company, so a tenant-scoped BILL_GL_POSTING_ENABLED override on it is clobberable by any parallel
+  // *.db.test.ts that toggles the same flag on that shared company in the window before commitSplit reads
+  // it — the bill's GL leg then silently no-ops and billDebit is undefined (the intermittent CI failure).
+  // The resolver (feature-flags/service.ts resolveFlagEnabled) checks the USER override BEFORE the tenant
+  // override, and commitSplit resolves these flags with user_uuid = this same userId
+  // (bill-gl.service / bill-payment-gl.service / bank-transaction-splits.service), so a user-scoped
+  // override is immune to cross-file tenant contention. userId 00000000-...-f7 is unique to this file.
   async function setFlagOverride(flagKey: string, enabled: boolean) {
     await bypass(async () => {
       await db.query(
-        `INSERT INTO lib.feature_flag_overrides (flag_key, operating_company_id, enabled, set_by_user_uuid)
-         VALUES ($1,$2::uuid,$3,$4::uuid)
-         ON CONFLICT (flag_key, operating_company_id) WHERE user_uuid IS NULL AND operating_company_id IS NOT NULL
+        `INSERT INTO lib.feature_flag_overrides (flag_key, operating_company_id, user_uuid, enabled, set_by_user_uuid)
+         VALUES ($1,$2::uuid,$3::uuid,$4,$3::uuid)
+         ON CONFLICT (flag_key, user_uuid) WHERE user_uuid IS NOT NULL
          DO UPDATE SET enabled = EXCLUDED.enabled`,
-        [flagKey, companyId, enabled, userId]
+        [flagKey, companyId, userId, enabled]
       );
     });
   }
