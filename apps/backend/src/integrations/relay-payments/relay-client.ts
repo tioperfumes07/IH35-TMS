@@ -48,9 +48,14 @@ function relayApiBase(): string {
 export function relayApiKey(entityCode?: string | null): string | null {
   const code = entityCode?.trim().toUpperCase().replace(/[^A-Z0-9]+/g, "_").replace(/^_+|_+$/g, "");
   if (code) {
+    // Entity-scoped: resolve ONLY the scoped key. If unset, return null (the caller throws
+    // relay_not_configured) — NEVER fall back to the bare global key, which would pull ANOTHER
+    // entity's fuel transactions under the wrong operating_company_id (cross-entity financial-data
+    // leak). The global fallback is legitimate ONLY when no entityCode is supplied (legacy path).
     const scoped = process.env[`RELAY_API_KEY_${code}`]?.trim();
-    if (scoped && scoped.length > 0) return scoped;
+    return scoped && scoped.length > 0 ? scoped : null;
   }
+  // Legacy single-entity path (no entityCode supplied): the bare global key.
   const key = process.env.RELAY_API_KEY?.trim();
   return key && key.length > 0 ? key : null;
 }

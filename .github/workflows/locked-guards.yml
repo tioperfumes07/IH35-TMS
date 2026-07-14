@@ -853,3 +853,8 @@ jobs:
         run: node scripts/verify-claim-crossmodule-fks.mjs --selftest
       - name: verify:claim-crossmodule-fks
         run: npm run verify:claim-crossmodule-fks
+
+      - name: verify:relay-key-no-cross-entity-fallback --selftest
+        run: node scripts/verify-relay-key-no-cross-entity-fallback.mjs --selftest
+      - name: verify:relay-key-no-cross-entity-fallback
+        run: npm run verify:relay-key-no-cross-entity-fallback

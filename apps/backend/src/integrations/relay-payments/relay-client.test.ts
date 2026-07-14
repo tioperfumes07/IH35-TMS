@@ -20,13 +20,15 @@ describe("relayApiKey — per-entity resolution", () => {
     process.env.RELAY_API_KEY = "global";
     process.env.RELAY_API_KEY_TRANSP = "transp-key";
     expect(relayApiKey("TRANSP")).toBe("transp-key");
-    expect(relayApiKey("USMCA")).toBe("global"); // no USMCA-scoped key → falls back
+    expect(relayApiKey("USMCA")).toBeNull(); // entity-scoped + no USMCA key → null, NEVER the global key
   });
 
-  it("falls back to the global key when no scoped key is set", () => {
+  it("uses the global key ONLY on the legacy no-entityCode path — never for a scoped entity", () => {
     clearKeys();
     process.env.RELAY_API_KEY = "global";
-    expect(relayApiKey("USMCA")).toBe("global");
+    // entity-scoped call whose scoped key is unset => null (no cross-entity borrow of the global key)
+    expect(relayApiKey("USMCA")).toBeNull();
+    // legacy single-entity path (no entityCode) => the bare global key is legitimate
     expect(relayApiKey(null)).toBe("global");
     expect(relayApiKey(undefined)).toBe("global");
   });
