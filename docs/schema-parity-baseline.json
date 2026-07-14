@@ -4889,6 +4889,7 @@
     ],
     "insurance.claim": [
       "accident_date",
+      "accident_report_id",
       "adjuster_email",
       "adjuster_name",
       "amount_claimed_cents",
@@ -4896,7 +4897,9 @@
       "asset_id",
       "claim_number",
       "created_at",
+      "driver_id",
       "id",
+      "load_id",
       "notes",
       "policy_id",
       "reported_date",

@@ -236,6 +236,9 @@
     {
       "file": "202607420000_vendor_types_catalog.sql",
       "reason": "[HOLD-FOR-JORGE — financial] Vendor Type catalog (catalogs.vendor_types) + mdata.vendors linkage, mirroring the AF-1/AF-2/AF-3 per-entity catalog pattern (FORCED entity+role RLS, ih35_app grants, no DELETE — void-not-delete). Seeds 8 system vendor types per operating company + additive mdata.vendors.vendor_type_id linkage. POSTS NOTHING. Run only on a Neon branch by Jorge, then ledger-backfill."
-    }
+    },
+    {
+      "file": "202607410000_claim_crossmodule_fks.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] 11-insurance G11-1 (LINKAGE half only) — insurance.claim forward FKs: accident_report_id -> safety.accident_reports, load_id -> mdata.loads, driver_id -> mdata.drivers (all ON DELETE SET NULL). Every prior cross-module FK pointed INTO the claim (P4-01/02/05); the claim itself had no forward link to its accident/load/driver. Additive cols all-NULL on add so inline FK holds trivially (no NOT VALID, no backfill). Canonical hubs only (NOT dispatch.loads). FORCED RLS + grants unchanged (cols inherit the 0285 tenant_id-scoped policy). NO GL/posting (payout-JE is design-only). Verified vs live prod (Neon br-raspy-haze). Run only on a Neon branch by Jorge, then ledger-backfill."    }
   ]
 }
