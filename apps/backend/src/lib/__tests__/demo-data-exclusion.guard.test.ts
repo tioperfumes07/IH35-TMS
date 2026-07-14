@@ -41,9 +41,11 @@ describe("MAINT-1: work-order lists exclude DEMO-/TEST- seed work orders", () =>
     expect(woList).toMatch(/COALESCE\(w\.display_id, ''\) NOT ILIKE 'TEST-%'/);
     expect(woList).toMatch(/MAINT-1/);
   });
-  it("filters DEMO-/TEST- display_id out of /api/v1/maintenance/work-orders", () => {
-    expect(maintWoList).toMatch(/COALESCE\(w\.display_id, ''\) NOT ILIKE 'DEMO-%'/);
-    expect(maintWoList).toMatch(/COALESCE\(w\.display_id, ''\) NOT ILIKE 'TEST-%'/);
-    expect(maintWoList).toMatch(/MAINT-1/);
+  it("excludes voided (demo/test) WOs out of /api/v1/maintenance/work-orders", () => {
+    // MAINT-2: the display_id ILIKE 'DEMO-%'/'TEST-%' name-pattern hack was replaced by the canonical void
+    // flag (maintenance.work_orders has no is_sample_data column; GUARD voided DEMO-WO-001/002 on prod). The
+    // list now shares openWorkOrderPredicate's voided_at exclusion with the KPI — a stronger, structural rule.
+    expect(maintWoList).toMatch(/w\.voided_at IS NULL/);
+    expect(maintWoList).toMatch(/MAINT-2/);
   });
 });

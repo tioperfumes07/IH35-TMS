@@ -195,15 +195,19 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
         woRel.rows[0]?.ok === true
           ? await countPastDueMaintenanceWorkOrders(client, query.data.operating_company_id)
           : 0;
+      // Canonical table is `safety.accident_reports` (migration 0049); `safety.accidents` never
+      // existed, so the old to_regclass guard degraded this KPI to 0 forever. The table has no
+      // `status`/lifecycle column (verified: 0049 base + all ALTERs; the create endpoint writes
+      // none), so "Open Damage" = accident reports on file for the company. Adding a phantom
+      // status filter would keep it 0 (or 500) — do NOT reintroduce `a.status`.
       const openDamageRes = await client.query(
         `
           SELECT CASE
-            WHEN to_regclass('safety.accidents') IS NULL THEN 0
+            WHEN to_regclass('safety.accident_reports') IS NULL THEN 0
             ELSE (
               SELECT count(*)::bigint
-              FROM safety.accidents a
+              FROM safety.accident_reports a
               WHERE a.operating_company_id = $1
-                AND COALESCE(a.status::text, '') IN ('open', 'under-investigation')
             )
           END AS total
         `,
@@ -319,43 +323,40 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
           action_label: string;
         }> = [];
 
+        // HOME-2 (canonical): count IN-FLIGHT loads that are actually LATE. Canonical loads table is
+        // mdata.loads (dispatch.loads is a phantom/island). The old code probed delivery-deadline columns
+        // (delivery_due_at/eta_at/…) that DO NOT exist on mdata.loads, so lateColumn was always null and the
+        // query counted EVERY open load — including soft-deleted + is_sample_data demo loads — as "late".
+        // Real deadline source = mdata.load_stops.scheduled_arrival_at (a stop whose scheduled arrival is
+        // past and was never arrived at). Excludes soft-deleted + sample; scoped by operating_company_id.
         let lateInFlightLoads = 0;
-        const loadRelation = (await relationExists(client, "dispatch.loads"))
-          ? { schema: "dispatch", table: "loads" }
-          : (await relationExists(client, "mdata.loads"))
-            ? { schema: "mdata", table: "loads" }
-            : null;
-        if (loadRelation) {
-          const hasOperatingCompany = await columnExists(client, loadRelation.schema, loadRelation.table, "operating_company_id");
-          const hasStatus = await columnExists(client, loadRelation.schema, loadRelation.table, "status");
-          const lateColumnCandidates = ["delivery_due_at", "delivery_deadline_at", "scheduled_delivery_at", "eta_at", "delivery_at"];
-          let lateColumn: string | null = null;
-          for (const candidate of lateColumnCandidates) {
-            if (await columnExists(client, loadRelation.schema, loadRelation.table, candidate)) {
-              lateColumn = candidate;
-              break;
-            }
-          }
-          const whereParts: string[] = [];
-          if (hasOperatingCompany) whereParts.push(`operating_company_id = ${tenantSettingExpr}`);
-          if (hasStatus) {
+        if (await relationExists(client, "mdata.loads")) {
+          const hasSoftDelete = await columnExists(client, "mdata", "loads", "soft_deleted_at");
+          const hasSample = await columnExists(client, "mdata", "loads", "is_sample_data");
+          const hasStopTiming =
+            (await relationExists(client, "mdata.load_stops")) &&
+            (await columnExists(client, "mdata", "load_stops", "scheduled_arrival_at")) &&
+            (await columnExists(client, "mdata", "load_stops", "actual_arrival_at"));
+          const whereParts: string[] = [
+            // in-flight only (NOT booked/planned/assigned) — a load must be moving to be "running late".
+            `COALESCE(l.status::text, '') IN ('dispatched','at_pickup','in_transit','at_delivery')`,
+          ];
+          if (hasSoftDelete) whereParts.push(`l.soft_deleted_at IS NULL`);
+          if (hasSample) whereParts.push(`l.is_sample_data IS NOT TRUE`);
+          if (hasStopTiming) {
+            // late = a stop whose scheduled arrival is in the past and has no actual arrival recorded.
             whereParts.push(
-              `COALESCE(status::text, '') IN ('booked','planned','assigned','dispatched','at_pickup','in_transit','at_delivery','assigned_not_dispatched')`,
+              `EXISTS (SELECT 1 FROM mdata.load_stops s WHERE s.load_id = l.id ` +
+                `AND s.scheduled_arrival_at IS NOT NULL AND s.scheduled_arrival_at < now() AND s.actual_arrival_at IS NULL)`,
             );
-          }
-          if (lateColumn) {
-            whereParts.push(`${lateColumn} IS NOT NULL AND ${lateColumn} < now()`);
-          }
-          if (whereParts.length > 0) {
+            // operating_company_id kept LITERAL in the statement (entity-scope guard scans the SQL string).
             const res = await client.query(
-              `
-                SELECT count(*)::text AS total
-                FROM ${loadRelation.schema}.${loadRelation.table}
-                WHERE ${whereParts.join(" AND ")}
-              `,
+              `SELECT count(*)::text AS total FROM mdata.loads l WHERE l.operating_company_id = ${tenantSettingExpr} AND ${whereParts.join(" AND ")}`,
             );
             lateInFlightLoads = Number((res.rows[0] as { total?: string } | undefined)?.total ?? 0);
           }
+          // If the deadline source is unavailable (no stop-timing columns), report 0 ("unavailable") rather
+          // than silently counting every in-flight load — never regress to the phantom-column behavior.
         }
         items.push({
           type: "dispatch_loads_in_flight_late",
@@ -538,6 +539,20 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
             trailers += count;
           }
         }
+      }
+
+      // HOME-6: power units (Trucks) live in mdata.units, NOT mdata.equipment (which holds trailers only —
+      // the equipment "truck/tractor/power" match above is structurally 0). Source Trucks from mdata.units
+      // scoped to the entity (owns OR leases), excluding deactivated. vehicle_type is NULL for every unit so
+      // each active power unit counts as a Truck (do not fabricate a sub-class). Trailer buckets stay from equipment.
+      if (await relationExists(client, "mdata.units")) {
+        const unitsRes = await client.query(
+          `SELECT count(*)::text AS total FROM mdata.units
+             WHERE deactivated_at IS NULL
+               AND (owner_company_id = $1::uuid OR currently_leased_to_company_id = $1::uuid)`,
+          [companyId]
+        );
+        trucks = Number((unitsRes.rows[0] as { total?: string } | undefined)?.total ?? 0);
       }
 
       let inShop = 0;

@@ -446,14 +446,22 @@ export async function registerDispatchViewRoutes(app: FastifyInstance) {
       const stop = stopRes.rows[0] ?? null;
       if (!stop) return { error: "forbidden" as const };
 
+      // The driver PWA mints evidence_uuid via POST /api/safety/photo-comparison/evidence, which INSERTs
+      // into documents.damage_photo_evidence and returns its id (session.service.ts uploadTripPhotoEvidence).
+      // The old lookup targeted documents.evidence_records — a table that never existed → every call
+      // 42P01'd → a raw 500 to the driver's phone, blocking POD/BOL evidence linking. RLS on
+      // damage_photo_evidence keys on app.operating_company_id (no lucia bypass), so set it from the
+      // stop's load before the read and scope the lookup to that entity.
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [stop.operating_company_id]);
       const evidenceRes = await client.query<{ id: string }>(
         `
           SELECT id
-          FROM documents.evidence_records
+          FROM documents.damage_photo_evidence
           WHERE id = $1::uuid
+            AND operating_company_id = $2::uuid
           LIMIT 1
         `,
-        [body.data.evidence_uuid]
+        [body.data.evidence_uuid, stop.operating_company_id]
       );
       if (!evidenceRes.rows[0]) return { error: "evidence_not_found" as const };
 

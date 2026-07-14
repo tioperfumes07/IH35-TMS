@@ -740,3 +740,26 @@ jobs:
         run: node scripts/verify-units-vin-dup-prevention.mjs --selftest
       - name: verify:units-vin-dup-prevention
         run: npm run verify:units-vin-dup-prevention
+      - name: verify:driverhub-unit-source --selftest
+        run: node scripts/verify-driverhub-unit-source.mjs --selftest
+      - name: verify:driverhub-unit-source
+        run: npm run verify:driverhub-unit-source
+
+      - name: verify:open-wo-shared-predicate --selftest
+        run: node scripts/verify-open-wo-shared-predicate.mjs --selftest
+      - name: verify:open-wo-shared-predicate
+        run: npm run verify:open-wo-shared-predicate
+      - name: verify:mdata-write-entity-scope --selftest
+        run: node scripts/verify-mdata-write-entity-scope.mjs --selftest
+      - name: verify:mdata-write-entity-scope
+        run: npm run verify:mdata-write-entity-scope
+
+      - name: verify:home-attention-late-canonical --selftest
+        run: node scripts/verify-home-attention-late-canonical.mjs --selftest
+      - name: verify:home-attention-late-canonical
+        run: npm run verify:home-attention-late-canonical
+
+      - name: verify:safety-canonical-table-reads --selftest
+        run: node scripts/verify-safety-canonical-table-reads.mjs --selftest
+      - name: verify:safety-canonical-table-reads
+        run: npm run verify:safety-canonical-table-reads

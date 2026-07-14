@@ -314,6 +314,13 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
     }
 
     const row = await withCurrentUser(authUser.uuid, async (client) => {
+      // Entity scope (USMCA cross-entity leak fix): the non-aggregate GET-by-id path must gate on
+      // owner/lessee so a caller cannot read another entity's trailer by omitting operating_company_id.
+      const scopedCompanyId = await resolveOperatingCompanyId(
+        client,
+        authUser.uuid,
+        (req.query as { operating_company_id?: string } | undefined)?.operating_company_id
+      );
       const res = await client.query(
         `
           SELECT
@@ -339,9 +346,10 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
             updated_by_user_id
           FROM mdata.equipment
           WHERE id = $1
+            AND (owner_company_id = $2 OR currently_leased_to_company_id = $2)
           LIMIT 1
         `,
-        [parsedParams.data.id]
+        [parsedParams.data.id, scopedCompanyId]
       );
       return res.rows[0] ?? null;
     });
@@ -448,6 +456,15 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
     const idIdx = values.length;
     try {
       const updated = await withCurrentUser(authUser.uuid, async (client) => {
+        // Entity scope (USMCA cross-entity leak fix): mdata.equipment RLS is role-scoped, so a bare
+        // `WHERE id = $1` write reaches ANY entity's trailer (and this PATCH can rewrite owner/lessee).
+        // Resolve the caller's company and gate the read + UPDATE on owner/lessee — mirrors the
+        // status-change predicate already in this module.
+        const scopedCompanyId = await resolveOperatingCompanyId(
+          client,
+          authUser.uuid,
+          (req.query as { operating_company_id?: string } | undefined)?.operating_company_id
+        );
         const oldRes = await client.query(
           `
             SELECT
@@ -473,18 +490,22 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
               updated_by_user_id
             FROM mdata.equipment
             WHERE id = $1
+              AND (owner_company_id = $2 OR currently_leased_to_company_id = $2)
             LIMIT 1
           `,
-          [parsedParams.data.id]
+          [parsedParams.data.id, scopedCompanyId]
         );
         const oldRow = oldRes.rows[0] ?? null;
         if (!oldRow) return null;
 
+        values.push(scopedCompanyId);
+        const scopeIdx = values.length;
         const res = await client.query(
           `
             UPDATE mdata.equipment
             SET ${setParts.join(", ")}
             WHERE id = $${idIdx}
+              AND (owner_company_id = $${scopeIdx} OR currently_leased_to_company_id = $${scopeIdx})
             RETURNING
               id,
               equipment_number,
@@ -540,14 +561,22 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
 
     const deactivated = await withCurrentUser(authUser.uuid, async (client) => {
+      // Entity scope (USMCA cross-entity leak fix): gate the read + soft-delete on owner/lessee so one
+      // entity cannot deactivate another entity's trailer by guessing its UUID.
+      const scopedCompanyId = await resolveOperatingCompanyId(
+        client,
+        authUser.uuid,
+        (req.query as { operating_company_id?: string } | undefined)?.operating_company_id
+      );
       const oldRes = await client.query(
         `
           SELECT id, deactivated_at
           FROM mdata.equipment
           WHERE id = $1
+            AND (owner_company_id = $2 OR currently_leased_to_company_id = $2)
           LIMIT 1
         `,
-        [parsedParams.data.id]
+        [parsedParams.data.id, scopedCompanyId]
       );
       const oldRow = oldRes.rows[0] ?? null;
       if (!oldRow) return null;
@@ -568,8 +597,9 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
             SET deactivated_at = now(), updated_by_user_id = $2
             WHERE id = $1
               AND deactivated_at IS NULL
+              AND (owner_company_id = $3 OR currently_leased_to_company_id = $3)
           `,
-          [parsedParams.data.id, authUser.uuid]
+          [parsedParams.data.id, authUser.uuid, scopedCompanyId]
         );
         // now() is transaction-scoped (constant for the whole txn), so reading it back here returns the
         // exact value just written — DB-authoritative — without re-reading the now-SELECT-invisible row.

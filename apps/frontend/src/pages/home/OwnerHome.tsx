@@ -181,7 +181,7 @@ export function OwnerHome({ auth }: Props) {
       label: "QBO Vendors",
       number: qboVendorsPushStatusQuery.data ? String(qboVendorsPushStatusQuery.data.synced) : "—",
       meta: qboVendorsPushStatusQuery.data
-        ? `${qboVendorsPushStatusQuery.data.synced}/${qboVendorsPushStatusQuery.data.total_local} synced to QBO`
+        ? `${qboVendorsPushStatusQuery.data.synced}/${qboVendorsPushStatusQuery.data.total} synced to QBO`
         : "—",
     },
     { label: "Vehicles in Service", number: String(kpiSummaryQuery.data?.live_units ?? 0), meta: "tenant-scoped active units", healthy: true },

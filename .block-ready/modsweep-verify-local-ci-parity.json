@@ -1,0 +1,22 @@
+{
+  "block_id": "modsweep-verify-local-ci-parity",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (CI tooling / permanence guard)",
+  "phase": "MODULE-SWEEP-1-16",
+  "priority": "P0",
+  "module": "ci-tooling",
+  "db_required": false,
+  "guard_required": true,
+  "source": "GUARD 2026-07-13 — lock the verify:local-ci permanent fix",
+  "allowed_files": [
+    "scripts/verify-local-ci-parity.mjs (new)",
+    "scripts/verify-steps/127-verify-local-ci-parity.mjs",
+    "additive only; no schema; no financial paths"
+  ],
+  "acceptance": [
+    { "check": "guard asserts CI build-typecheck runs 'verify:pre-commit' AND verify-local-ci invokes the same command AND contains no curated-subset run-steps" },
+    { "check": "--selftest PASS (good passes, subset fails, changed-gate fails)" },
+    { "check": "wired into build-typecheck (runs on every PR via verify-steps/127); green on main; reverting verify:local-ci to a subset turns CI red" }
+  ],
+  "note": "Ships with the verify:local-ci rewrite (#2436). Makes local==CI parity a machine-enforced rule so this class cannot regress (the #2432 failure mode)."
+}

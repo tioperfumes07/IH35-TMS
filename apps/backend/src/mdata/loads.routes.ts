@@ -1096,7 +1096,14 @@ export async function registerLoadRoutes(app: FastifyInstance) {
 
     try {
       const created = await withCurrentUser(authUser.uuid, async (client) => {
-        const loadRes = await client.query(`SELECT id FROM mdata.loads WHERE id = $1 LIMIT 1`, [parsedParams.data.id]);
+        // Entity scope (USMCA cross-entity leak fix): only create a stop under a load owned by the
+        // caller's operating company. mdata RLS is role-scoped, so a bare load-id lookup reaches any
+        // entity's load — mirror the operating_company_id predicate the loads GET/PATCH already use.
+        const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
+        const loadRes = await client.query(
+          `SELECT id FROM mdata.loads WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+          [parsedParams.data.id, scopedCompanyId]
+        );
         if (loadRes.rows.length === 0) return null;
 
         const res = await client.query(
@@ -1195,6 +1202,15 @@ export async function registerLoadRoutes(app: FastifyInstance) {
 
     try {
       const updated = await withCurrentUser(authUser.uuid, async (client) => {
+        // Entity scope (USMCA cross-entity leak fix): gate the whole stop mutation on the parent load
+        // belonging to the caller's operating company (load_stops has no own operating_company_id).
+        const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
+        const loadOwnRes = await client.query(
+          `SELECT 1 FROM mdata.loads WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+          [parsedParams.data.id, scopedCompanyId]
+        );
+        if (loadOwnRes.rows.length === 0) return null;
+
         const oldRes = await client.query(
           `
             SELECT
@@ -1282,6 +1298,15 @@ export async function registerLoadRoutes(app: FastifyInstance) {
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
 
     const removed = await withCurrentUser(authUser.uuid, async (client) => {
+      // Entity scope (USMCA cross-entity leak fix): only soft-delete a stop under a load owned by the
+      // caller's operating company (load_stops has no own operating_company_id).
+      const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
+      const loadOwnRes = await client.query(
+        `SELECT 1 FROM mdata.loads WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        [parsedParams.data.id, scopedCompanyId]
+      );
+      if (loadOwnRes.rows.length === 0) return null;
+
       // INV-1: void-never-delete — soft-delete, never hard-delete POD/stop evidence.
       const res = await client.query(
         `
