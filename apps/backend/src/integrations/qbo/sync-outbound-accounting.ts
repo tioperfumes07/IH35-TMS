@@ -11,6 +11,7 @@ import type { AccountingOutboundEntityType, SyncEntityOutcome, SyncEntityToQboRe
 import { evaluateJeQboPushGate, JE_QBO_PUSH_FLAG, QBO_PUSH_REFUSED_IMPORT_SOURCE } from "../../accounting/qbo-je-push-gate.js";
 import { evaluateEntityPushGate } from "../../qbo/qbo-entity-push-gate.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
+import { qboWriteDisabled } from "./qbo-write-disabled.js";
 
 export type { AccountingOutboundEntityType, SyncEntityOutcome, SyncEntityToQboResult } from "./sync-outbound-accounting.types.js";
 
@@ -129,6 +130,14 @@ function shallowDiffKeys(a: Record<string, unknown>, b: Record<string, unknown>)
   return out.sort();
 }
 
+// QBO-WRITE-KILL — reconcile-only architecture lock. This was the outbound POST/PATCH the queue drain
+// used to create/update EVERY accounting object in QuickBooks (invoice / bill / journal_entry / payment /
+// bill_payment / credit_memo / factoring_advance / expense). Under the parallel-books, reconcile-only
+// architecture TMS never writes to QBO, so the entity write is permanently removed — this hard-fails
+// instead of issuing HTTP. The syncEntityToQbo gates still make ZERO calls for the default (flag OFF) /
+// import-source cases; any residual path now dead-letters here rather than writing. The read side
+// (qboGetJson, a GET used only for 409 conflict snapshots) is retained. Enforced by
+// scripts/verify-no-qbo-write-path.mjs.
 async function qboSendJson(params: {
   realmId: string;
   accessToken: string;
@@ -137,23 +146,8 @@ async function qboSendJson(params: {
   body: Record<string, unknown>;
   idempotencyKey: string;
 }): Promise<{ status: number; json: Record<string, unknown>; text: string }> {
-  const base = qboApiBase();
-  const idSegment =
-    params.method === "PATCH" && typeof params.body.Id === "string" ? `/${encodeURIComponent(params.body.Id)}` : "";
-  const url = `${base}/${params.realmId}/${params.entityPath}${idSegment}?minorversion=${MINOR_VERSION}`;
-  const headers: Record<string, string> = {
-    Authorization: `Bearer ${params.accessToken}`,
-    Accept: "application/json",
-    "Content-Type": "application/json",
-    "Idempotency-Key": params.idempotencyKey,
-  };
-  const response = await fetch(url, {
-    method: params.method,
-    headers,
-    body: JSON.stringify(params.body),
-  });
-  const text = await response.text();
-  return { status: response.status, json: parseJsonSafe(text), text };
+  void params;
+  return qboWriteDisabled(`outbound_accounting:${params.entityPath}`);
 }
 
 async function qboGetJson(params: {

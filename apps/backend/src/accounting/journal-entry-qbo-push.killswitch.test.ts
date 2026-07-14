@@ -120,19 +120,19 @@ describe("IMPORT-P0 — JE→QBO push kill-switch (zero-call proof)", () => {
     expect(mockPoolClient.query.mock.calls.some((c) => /INSERT INTO outbox\.events/.test(String(c[0])))).toBe(false);
   });
 
-  it("(f) still pushes a normal TMS JE when the flag is ON for the entity — exactly one fetch (gate does not over-block)", async () => {
+  it("(f) QBO-WRITE-KILL: even a normal TMS JE with the flag ON never writes to QBO — hard-fails, zero fetch, no token", async () => {
+    // Reconcile-only architecture lock: the outbound JE POST was permanently removed. A gate-passing
+    // (flag ON, source_system='tms', non-voided) entry now hard-fails at the removed write instead of
+    // creating a QBO object. The gate itself still fetches no token here.
     currentProbe.source_system = "tms";
     isEnabledMock.mockResolvedValue(true);
     getTokenMock.mockResolvedValue({ access_token: "tok", realm_id: "R1" });
     loadMock.mockResolvedValue({ header: { id: JE, status: "posted" } });
-    fetchSpy.mockResolvedValue({
-      ok: true,
-      text: async () => JSON.stringify({ JournalEntry: { Id: "QBO-9" } }),
-    } as unknown as Response);
-    const res = await pushJournalEntryToQuickBooksFromQueue({ operating_company_id: OC, entity_id: JE });
-    expect(res.qboId).toBe("QBO-9");
-    expect(fetchSpy).toHaveBeenCalledTimes(1);
-    expect(getTokenMock).toHaveBeenCalledTimes(1);
+    await expect(
+      pushJournalEntryToQuickBooksFromQueue({ operating_company_id: OC, entity_id: JE })
+    ).rejects.toThrow("qbo_write_disabled_reconcile_only");
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(getTokenMock).not.toHaveBeenCalled();
   });
 });
 

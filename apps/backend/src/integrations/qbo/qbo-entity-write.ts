@@ -1,64 +1,18 @@
-import { qboSyncWithRetry } from "../../qbo/sync-with-retry.js";
-import { getValidAccessToken } from "./qbo-oauth.service.js";
+import { qboWriteDisabled } from "./qbo-write-disabled.js";
 
-function qboApiBase() {
-  const env = (process.env.QBO_ENV ?? "production").toLowerCase();
-  return env === "sandbox"
-    ? "https://sandbox-quickbooks.api.intuit.com/v3/company"
-    : "https://quickbooks.api.intuit.com/v3/company";
-}
-
-async function sleep(ms: number) {
-  await new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-async function requestWithRetry(url: string, init: RequestInit, maxRetries = 4): Promise<Response> {
-  let attempt = 0;
-  while (true) {
-    const response = await fetch(url, init);
-    if (response.ok) return response;
-    if (attempt >= maxRetries || (response.status < 500 && response.status !== 429)) return response;
-    await sleep(Math.min(10_000, 400 * 2 ** attempt));
-    attempt += 1;
-  }
-}
-
+// QBO-WRITE-KILL — reconcile-only architecture lock. qboPostMasterJson was the single outbound funnel
+// that POSTed masterdata / invoice / bill objects INTO QuickBooks. Under the parallel-books,
+// reconcile-only architecture TMS never writes to QBO, so the outbound entity write is permanently
+// removed here — the function hard-fails instead of issuing an HTTP POST. unwrapIntuitEntity (a pure
+// response reader used by mirror/read code) is retained. Enforced by scripts/verify-no-qbo-write-path.mjs.
 export async function qboPostMasterJson(
   operatingCompanyId: string,
   relativePath: string,
-  body: Record<string, unknown>,
-  operation: "create" | "update"
+  _body: Record<string, unknown>,
+  _operation: "create" | "update"
 ): Promise<Record<string, unknown>> {
-  const value = await qboSyncWithRetry({
-    operatingCompanyId,
-    entityType: `qbo.master.${relativePath}`,
-    operation,
-    swallow_errors: false,
-    replayPayload: { replay_kind: "qbo_master_write", relativePath, body },
-    attempt: async () => {
-      const token = await getValidAccessToken(operatingCompanyId);
-      const url = `${qboApiBase()}/${token.realm_id}/${relativePath}?minorversion=75`;
-      const response = await requestWithRetry(url, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token.access_token}`,
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
-      });
-      const text = await response.text();
-      if (!response.ok) {
-        const err = new Error(`qbo_master_write_failed_status_${response.status}:${text.slice(0, 240)}`);
-        (err as { status?: number }).status = response.status;
-        (err as { bodyPreview?: string }).bodyPreview = text.slice(0, 500);
-        throw err;
-      }
-      return JSON.parse(text) as Record<string, unknown>;
-    },
-  });
-  if (!value) throw new Error("qbo_master_write_failed");
-  return value;
+  void operatingCompanyId;
+  return qboWriteDisabled(`qbo_master_write:${relativePath}`);
 }
 
 export function unwrapIntuitEntity(response: Record<string, unknown>): Record<string, unknown> {
