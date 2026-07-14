@@ -30,6 +30,21 @@ function normId(s: string): string {
 // Registry entry text per block (allowed_files + acceptance + classification + linkage), keyed by normId, so
 // the endpoint can AUTO-DERIVE layers/kind/cross-module/wired from the block's declared scope — never hand-entered.
 const NEEDS_DESIGN_RE = /needs[_-]design|design[_-]pending/i;
+// A registry file is RETIRED (excluded from the headline "Registered" count) when a DUP/DUPLICATE/STALE/
+// LIKELY-STALE/SUPERSEDED marker is present — via the filename suffix, a status field, or an explicit
+// superseded_by/duplicate_of. Mirrors scripts/verify-tracker-no-duplicate-block-ids.mjs + reconcile-block-
+// status.mjs so the tracker headline, the reconcile report, and the CI guard can never disagree. Retirement
+// is ADDITIVE (§7): duplicates are ARCHIVED (status:"superseded"), never deleted — so registered_total is
+// UNIQUE registered blocks, not the raw .block-ready file count.
+const RETIRE_FILENAME_RE = /[_-](DUP|DUPLICATE|STALE|LIKELY-STALE|SUPERSEDED)\.json$/i;
+const RETIRE_STATUS_RE = /^(superseded|duplicate|dup|stale)$/i;
+function isRetiredBlockFile(filename: string, j: Record<string, unknown>): boolean {
+  if (RETIRE_FILENAME_RE.test(filename)) return true;
+  const status = j.status;
+  if (typeof status === "string" && RETIRE_STATUS_RE.test(status.trim())) return true;
+  if (j.superseded_by != null || j.duplicate_of != null) return true;
+  return false;
+}
 type RegistryEntry = { id: string; allowedFiles: string; moduleField: string | null; scopeText: string; linkageText: string; needsDesign: boolean; classification: string | null; phase: string | null; status: string | null; name: string | null };
 function readRegistry(): Map<string, RegistryEntry> {
   const map = new Map<string, RegistryEntry>();
@@ -39,6 +54,7 @@ function readRegistry(): Map<string, RegistryEntry> {
     if (!f.endsWith(".json")) continue;
     try {
       const j = JSON.parse(readFileSync(path.join(dir, f), "utf8")) as Record<string, unknown>;
+      if (isRetiredBlockFile(f, j)) continue; // dedup: retired duplicates excluded from registered_total
       const allowed = Array.isArray(j.allowed_files) ? j.allowed_files.join(" ") : String(j.allowed_files ?? "");
       const acc = Array.isArray(j.acceptance) ? j.acceptance.map((a) => (typeof a === "string" ? a : JSON.stringify(a))).join(" ") : "";
       const scopeText = `${allowed} ${acc} ${String(j.lane_lock ?? "")} ${String(j.summary ?? "")} ${String(j.task ?? "")} ${String(j.note ?? "")}`;

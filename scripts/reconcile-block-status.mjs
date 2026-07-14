@@ -128,10 +128,27 @@ function classifyByEvidence(body, { fin, tokPrId } = {}) {
 
 const all = [];
 
+// A registry file is RETIRED (excluded from every count) when a DUP/DUPLICATE/STALE/LIKELY-STALE/SUPERSEDED
+// marker is present — via the filename suffix, a status field, or an explicit superseded_by/duplicate_of.
+// Mirrors scripts/verify-tracker-no-duplicate-block-ids.mjs + the program-tracker service so the reconcile
+// header, the tracker headline, and the guard can never disagree. Retirement is ADDITIVE (§7): duplicates
+// are ARCHIVED (status:"superseded"), never deleted.
+const RETIRE_FILENAME = /[_-](DUP|DUPLICATE|STALE|LIKELY-STALE|SUPERSEDED)\.json$/i;
+const RETIRE_STATUS = /^(superseded|duplicate|dup|stale)$/i;
+function isRetiredBlockFile(filename, j) {
+  if (RETIRE_FILENAME.test(filename)) return true;
+  if (typeof j?.status === "string" && RETIRE_STATUS.test(j.status.trim())) return true;
+  if (j?.superseded_by != null || j?.duplicate_of != null) return true;
+  return false;
+}
+
 // (A) .block-ready/*.json
 const brDir = path.join(ROOT, ".block-ready");
-for (const f of fs.readdirSync(brDir).filter((x) => x.endsWith(".json"))) {
+const brFilesAll = fs.readdirSync(brDir).filter((x) => x.endsWith(".json"));
+let brRetired = 0;
+for (const f of brFilesAll) {
   let j; try { j = JSON.parse(fs.readFileSync(path.join(brDir, f), "utf8")); } catch { continue; }
+  if (isRetiredBlockFile(f, j)) { brRetired++; continue; } // dedup: retired duplicates never counted
   const id = j.block_id || f.replace(/\.json$/, "");
   const fin = /FINANC/i.test(String(j.classification || ""));
   const sig = (Array.isArray(j.allowed_files) ? j.allowed_files : []).filter((x) => isSig(x) && !dropBoiler(x));
@@ -242,7 +259,7 @@ const counts = {};
 for (const b of blocks) counts[b.status] = (counts[b.status] || 0) + 1;
 const gatedN = blocks.filter((b) => b.status === "PENDING (GATED)").length;
 const c4 = (k) => counts[k] || 0;
-console.log(`[reconcile:blocks] ${blocks.length} blocks — DONE=${c4("DONE")}  NEEDS-VERIFY=${c4("NEEDS-VERIFY")}  PENDING=${c4("PENDING")}  PENDING (GATED)=${c4("PENDING (GATED)")}`);
+console.log(`[reconcile:blocks] ${blocks.length} blocks (unique block_id, ${brRetired} retired dup/stale/superseded excluded) — DONE=${c4("DONE")}  NEEDS-VERIFY=${c4("NEEDS-VERIFY")}  PENDING=${c4("PENDING")}  PENDING (GATED)=${c4("PENDING (GATED)")}`);
 
 // DISPATCH-D — per-block PR + delta + universe so "is block X counted?" is a readable yes/no.
 const prOf = (b) => (b.pr ?? Number((String(b.evidence).match(/PR #(\d+)/) || [])[1])) || null;
@@ -256,13 +273,15 @@ const delta = blocks
 const bySource = {};
 for (const b of blocks) bySource[b.source] = (bySource[b.source] || 0) + 1;
 const rawCounts = {
-  ".block-ready (*.json files)": fs.readdirSync(brDir).filter((x) => x.endsWith(".json")).length,
+  ".block-ready (*.json files)": brFilesAll.length,
+  ".block-ready retired (dup/stale/superseded, excluded)": brRetired,
+  ".block-ready active (counted)": brFilesAll.length - brRetired,
 };
 const universe = {
   total_blocks_after_dedup: blocks.length,
   by_source_after_dedup: bySource,
   raw_file_counts: rawCounts,
-  note: "Total = union of 5 sources (.block-ready, docs/blocks program, docs/accounting, docs/dispatch enterprise-29, docs/specs gap), de-duped by id. So the block count is NOT the .block-ready file count.",
+  note: "Total = union of 5 sources (.block-ready, docs/blocks program, docs/accounting, docs/dispatch enterprise-29, docs/specs gap), de-duped by UNIQUE block_id, EXCLUDING files marked DUP/STALE/SUPERSEDED (filename suffix or status field). So the block count is neither the raw .block-ready file count nor inflated by duplicate/retired registrations.",
 };
 const blocksOut = blocks.map((b) => ({ ...b, pr: prOf(b) }));
 console.log(`[reconcile:blocks] delta (blocks added since ${DELTA_SINCE}): ${delta.length} → ${delta.map((d) => d.id).join(", ") || "none"}`);
@@ -330,9 +349,9 @@ ${legend}
 ${Object.entries(counts).map(([k, v]) => `- **${k}**: ${v}`).join("\n")}
 
 ## Universe — why ${blocks.length} blocks (the "456 vs 294 .block-ready" gap, explained)
-The reconciler spans **5 sources**, de-duped by id — the block count is the union, **not** the \`.block-ready\` file count.
+The reconciler spans **5 sources**, de-duped by **unique block_id** and **excluding retired duplicates** — the block count is the union, **not** the raw \`.block-ready\` file count.
 - ${universe.note}
-- **\`.block-ready/*.json\` files on disk:** ${rawCounts[".block-ready (*.json files)"]}
+- **\`.block-ready/*.json\` files on disk:** ${rawCounts[".block-ready (*.json files)"]} (of which **${brRetired} retired** dup/stale/superseded are excluded → **${rawCounts[".block-ready active (counted)"]} active**)
 - **By source (after de-dup):** ${Object.entries(bySource).map(([k, v]) => `${k}: ${v}`).join(" · ")}
 
 ## Delta — blocks added since ${DELTA_SINCE} (today's work, now counted)
