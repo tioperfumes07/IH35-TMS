@@ -854,6 +854,10 @@ jobs:
       - name: verify:claim-crossmodule-fks
         run: npm run verify:claim-crossmodule-fks
 
+      - name: verify:banking-sync-strip-transaction-count --selftest
+        run: node scripts/verify-banking-sync-strip-transaction-count.mjs --selftest
+      - name: verify:banking-sync-strip-transaction-count
+        run: npm run verify:banking-sync-strip-transaction-count
       - name: verify:docs-upload-viewed-entity --selftest
         run: node scripts/verify-docs-upload-viewed-entity.mjs --selftest
       - name: verify:docs-upload-viewed-entity

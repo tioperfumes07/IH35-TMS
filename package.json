@@ -342,7 +342,6 @@
     "verify:docs-tenant-scope": "node scripts/verify-docs-tenant-scope.mjs",
     "verify:resolve-opco-membership": "node scripts/verify-resolve-opco-membership.mjs",
     "verify:docs-routes-bootstrapped": "node scripts/verify-docs-routes-bootstrapped.mjs",
-    "verify:docs-upload-viewed-entity": "node scripts/verify-docs-upload-viewed-entity.mjs",
     "verify:asset-registry": "node scripts/verify-asset-registry.mjs",
     "verify:allocation-integrity": "node scripts/verify-allocation-integrity.mjs",
     "verify:pse-mirror": "node scripts/verify-pse-mirror.mjs",
@@ -868,6 +867,7 @@
     "verify:custvend-par1": "node scripts/verify-custvend-par1.mjs",
     "verify:phase4-crossmodule-fks": "node scripts/verify-phase4-crossmodule-fks.mjs",
     "verify:claim-crossmodule-fks": "node scripts/verify-claim-crossmodule-fks.mjs",
+    "verify:banking-sync-strip-transaction-count": "node scripts/verify-banking-sync-strip-transaction-count.mjs",
     "verify:no-raw-date-input": "node scripts/verify-no-raw-date-input.mjs",
     "verify:no-nested-box": "node scripts/verify-no-nested-box.mjs",
     "verify:create-forms-wired": "node scripts/verify-create-forms-wired.mjs",
@@ -950,7 +950,8 @@
     "verify:road-service-route-mounted": "node scripts/verify-road-service-route-mounted.mjs",
     "verify:qbo-parity-customers": "node scripts/verify-qbo-parity-customers.mjs",
     "verify:fleet-table-owner-leased-scope": "node scripts/verify-fleet-table-owner-leased-scope.mjs",
-    "verify:no-emoji-in-dispatch-chrome": "node scripts/verify-no-emoji-in-dispatch-chrome.mjs"
+    "verify:no-emoji-in-dispatch-chrome": "node scripts/verify-no-emoji-in-dispatch-chrome.mjs",
+    "verify:docs-upload-viewed-entity": "node scripts/verify-docs-upload-viewed-entity.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",
