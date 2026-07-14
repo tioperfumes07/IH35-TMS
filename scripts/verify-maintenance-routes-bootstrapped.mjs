@@ -17,6 +17,12 @@ function readSource(filePath) {
 
 function discoverMaintenanceRouteModules(maintenanceDir) {
   if (!fs.existsSync(maintenanceDir)) return [];
+  // TOP-LEVEL maintenance route files. These must each be imported AND registered directly in
+  // index.ts (the completeness invariant). Sub-package routes (e.g. maintenance/road-service/,
+  // maintenance/fault-auto-wo/) are intentionally NOT required here — some are composed through a
+  // sibling registrar (fault-auto-wo is mounted from compliance/form-425c.routes.ts), and requiring
+  // direct index.ts mounting would be wrong. Nested imports are validated by file-existence in the
+  // "extra module" check below (a real nested file is fine; a phantom import is not).
   return fs
     .readdirSync(maintenanceDir, { withFileTypes: true })
     .filter((entry) => entry.isFile() && entry.name.endsWith(".routes.ts"))
@@ -68,7 +74,13 @@ function main() {
   const importedSpecifiers = new Set(importedMaintenanceFns.values());
   const missingModules = [...expectedSpecifiers].filter((spec) => !importedSpecifiers.has(spec));
   const unregisteredFns = [...importedMaintenanceFns.keys()].filter((fn) => !registeredFns.has(fn));
-  const extraRegisteredModules = [...importedSpecifiers].filter((spec) => !expectedSpecifiers.has(spec));
+  // An import is "extra" only if it points at a maintenance module file that does NOT exist on disk
+  // (a phantom/stale import). A nested sub-package import (./maintenance/road-service/tickets.routes.js)
+  // that resolves to a real file is valid — it need not be a top-level module.
+  const extraRegisteredModules = [...importedSpecifiers].filter((spec) => {
+    const rel = spec.replace(/^\.\/maintenance\//, "").replace(/\.js$/, ".ts");
+    return !fs.existsSync(path.join(MAINTENANCE_DIR, rel));
+  });
 
   if (missingModules.length || unregisteredFns.length || extraRegisteredModules.length) {
     console.error("verify:maintenance-routes-bootstrapped FAIL");
