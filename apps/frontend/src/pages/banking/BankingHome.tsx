@@ -7,6 +7,7 @@ import {
   getBankingTiles,
   getBankingUncategorized,
   getPlaidBankAccounts,
+  getQboSyncQueueStats,
   getReconciliationSessions,
   startReconciliationSession,
   type BankingTile,
@@ -21,6 +22,8 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ManageAccountsModal } from "./components/ManageAccountsModal";
+import { AccountTilesRow } from "./components/AccountTilesRow";
+import { SyncStatusStrip } from "./components/SyncStatusStrip";
 import { ManualJEModal } from "../accounting/ManualJEModal";
 import { BankingPlaidConnectionsPanel } from "./components/BankingPlaidConnectionsPanel";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
@@ -100,6 +103,13 @@ export function BankingHomePage({ initialTab }: Props = {}) {
     queryFn: () => getReconciliationSessions(companyId),
     enabled: Boolean(companyId),
   });
+  // QBO sync-queue stats power the top SyncStatusStrip (last sync + txn/pending counts). Read-only,
+  // existing endpoint — no new backend surface.
+  const qboSyncStatsQuery = useQuery({
+    queryKey: ["banking", "qbo-sync-stats", companyId],
+    queryFn: () => getQboSyncQueueStats(companyId),
+    enabled: Boolean(companyId),
+  });
   const tiles = useMemo(() => filterBankingTilesForCompany(tilesQuery.data?.tiles ?? [], companyId), [tilesQuery.data?.tiles, companyId]);
 
   const uncategorizedQuery = useQuery({
@@ -122,6 +132,12 @@ export function BankingHomePage({ initialTab }: Props = {}) {
     () => [...tiles].sort((a, b) => a.display_order - b.display_order),
     [tiles]
   );
+  // SyncStatusStrip data (QBO sync queue). transactionCount = successfully-synced queue entities
+  // (best available proxy from loaded data; a true bank-transaction total would need a new endpoint).
+  const qboStats = qboSyncStatsQuery.data;
+  const syncedAt = qboStats?.last_successful_sync_at ?? null;
+  const syncTransactionCount = Number(qboStats?.synced ?? 0);
+  const pendingSyncCount = Number(qboStats?.pending ?? 0);
   const bankAccountsPanelRows = useMemo(() => {
     const realTiles = sortedBankTiles.filter((tile) => String(tile.tile_kind) === "real");
     if (realTiles.length > 0) {
@@ -243,6 +259,23 @@ export function BankingHomePage({ initialTab }: Props = {}) {
       />
       {activeTab === "accounts" ? (
         <>
+          {/* QBO-parity banking home: horizontal account-tiles row + QBO sync strip (May-1 spec).
+              Additive — the KPI grid, vertical Bank-accounts list, and register below are unchanged. */}
+          <SyncStatusStrip
+            syncedAt={syncedAt}
+            transactionCount={syncTransactionCount}
+            uncategorizedCount={uncategorizedCount}
+            pendingSyncCount={pendingSyncCount}
+          />
+          <AccountTilesRow
+            tiles={sortedBankTiles}
+            selectedId={selectedId}
+            onSelect={(id) => {
+              setSelectedAccountId(id);
+              navigate(`/banking/accounts/${id}`);
+            }}
+            onManageAccounts={() => setManageOpen(true)}
+          />
           <div className="grid auto-rows-fr grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-6">
             <button
               type="button"
