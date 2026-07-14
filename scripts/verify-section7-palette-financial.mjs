@@ -35,7 +35,7 @@ const ROOTS = [
 const OFF_PALETTE = /\b(bg|text|border|ring|from|to|via|divide|ring-offset|outline|decoration|placeholder|accent|fill|stroke)-(amber|emerald|green|yellow)-\d{2,3}\b/g;
 
 // Frozen count of pre-existing off-palette status classes in the financial tree (grandfathered).
-const BASELINE = 481; // set by PALETTE_BASELINE_PRINT (2026-07-01) — grandfathered; ratchet only downward
+const BASELINE = 150; // set by PALETTE_BASELINE_PRINT (2026-07-14, module-13 cash-flow fixes) — grandfathered; ratchet only downward
 
 function walk(dir) {
   let out = [];
