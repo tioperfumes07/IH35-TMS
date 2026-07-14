@@ -771,3 +771,8 @@ jobs:
         run: node scripts/verify-safety-canonical-table-reads.mjs --selftest
       - name: verify:safety-canonical-table-reads
         run: npm run verify:safety-canonical-table-reads
+
+      - name: verify:consolidated-elimination --selftest
+        run: node scripts/verify-consolidated-elimination.mjs --selftest
+      - name: verify:consolidated-elimination
+        run: npm run verify:consolidated-elimination
