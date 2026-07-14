@@ -6,6 +6,7 @@ import { DatePicker } from "../../components/forms/DatePicker";
 import { TableControls, TableSearch, TableHeaderCell, useTableController, type TableColumn } from "../../components/table";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getApAgingByVendor, type ApAgingVendor, type ApAgingDisplayGroup } from "../../api/accounting";
+import { formatDateUS } from "../../lib/formatDate";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 
 function money(cents: number) {
@@ -81,6 +82,13 @@ export function AccountsPayableAgingPage() {
   });
   const vendors = useMemo(() => query.data?.vendors ?? [], [query.data?.vendors]);
 
+  // ACCT-2 (Path A): only claim a QBO tie when the read-only mirror has actually synced. Until the owner
+  // enables the QBO A/P mirror pull, name the real source (TMS bills) instead of falsely asserting a QBO tie.
+  const qboSyncedAt = query.data?.qbo_synced_at ?? null;
+  const apSubtitle = qboSyncedAt
+    ? `What we owe vendors — synced from QuickBooks as of ${formatDateUS(qboSyncedAt)}.`
+    : "What we owe vendors — from TMS bills. QBO A/P mirror not yet enabled.";
+
   const typeFiltered = useMemo(
     () => (typeFilter === "all" ? vendors : vendors.filter((v) => v.display_group === typeFilter)),
     [vendors, typeFilter]
@@ -141,7 +149,7 @@ export function AccountsPayableAgingPage() {
   }
 
   return (
-    <AccountingSubNavWrapper title="Accounts Payable" subtitle="What we owe vendors — aging mirrored from QuickBooks; totals tie to QBO's A/P aging.">
+    <AccountingSubNavWrapper title="Accounts Payable" subtitle={apSubtitle}>
       <div className="mb-3 flex flex-wrap items-end gap-3 print:hidden">
         <label className="text-xs font-semibold text-slate-600">
           As of
