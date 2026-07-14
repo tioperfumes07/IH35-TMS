@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -56,10 +56,28 @@ export function TrailerProfilePage() {
     void queryClient.invalidateQueries({ queryKey: ["trailer-profile", id, companyId] });
   };
 
+  // Dead-click fix (0441-mod9-trailerprofile-archive-dead): this used to be a "not yet
+  // implemented" no-op even though the real endpoint (reused by FleetTable's bulk "Inactivate
+  // selected" for trailers) already exists — POST /api/v1/mdata/equipment/:id/deactivate.
+  // Soft-delete only (deactivated_at), never a hard delete; reversible via "Reactivate" on the
+  // Fleet roster.
+  const archiveMutation = useMutation({
+    mutationFn: () =>
+      apiRequest(`/api/v1/mdata/equipment/${id}/deactivate?operating_company_id=${encodeURIComponent(companyId)}`, {
+        method: "POST",
+        body: {},
+      }),
+    onSuccess: () => {
+      pushToast("Trailer archived (soft-deleted) — reversible from the Fleet roster.", "success");
+      invalidateProfile();
+      void queryClient.invalidateQueries({ queryKey: ["maintenance", "fleet-table"] });
+    },
+    onError: (e) => pushToast(e instanceof Error ? e.message : "Failed to archive trailer", "error"),
+  });
+
   const handleArchive = () => {
-    // Archive functionality - requires backend endpoint
-    // TODO: Implement when archive endpoint is available
-    pushToast("Archive functionality not yet implemented", "info");
+    if (!window.confirm("Archive this trailer? This soft-deletes it (reversible) — the record is retained.")) return;
+    archiveMutation.mutate();
   };
 
   if (!companyId) {

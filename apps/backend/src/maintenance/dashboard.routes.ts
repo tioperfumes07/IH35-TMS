@@ -239,6 +239,12 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
       // (which collapsed the KPI to ~0). Aggregate only the year-bearing units' model years and
       // compute the average in JS via the avgAgeYears helper so null/0-year units (the 72
       // trailers) are excluded from BOTH numerator and denominator.
+      //
+      // §4 scope fix: a unit's OPERATING entity is owner_company_id (TRK owns) OR
+      // currently_leased_to_company_id (TRANSP/USMCA lease) — every other mdata.units-scoped
+      // query in the repo uses this OR pattern (units.routes.ts, equipment.routes.ts,
+      // unit-bulk-update.routes.ts, etc.). This endpoint previously scoped by owner_company_id
+      // ONLY, so TRANSP/USMCA (which lease, not own, their units) saw zero/undercounted KPIs.
       const units = await client.query(
         `
           SELECT
@@ -251,7 +257,7 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
               ARRAY[]::int[]
             )::int[] AS model_years
           FROM mdata.units
-          WHERE owner_company_id = $1::uuid
+          WHERE (owner_company_id = $1::uuid OR currently_leased_to_company_id = $1::uuid)
             AND deactivated_at IS NULL
         `,
         [companyId]
@@ -304,6 +310,9 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
         ? `(SELECT COUNT(*) FROM maintenance.work_orders wo
              WHERE wo.unit_id = u.id AND wo.status NOT IN ('complete', 'cancelled'))`
         : `0`;
+      // §4 scope fix (same root cause as fleet-table/kpis above): scope by owner OR lessee, not
+      // owner_company_id alone, so leased-in units' live maintenance status (odometer/next PM
+      // due/open WO count) isn't silently dropped for TRANSP/USMCA.
       const res = await client.query(
         `
           SELECT
@@ -323,7 +332,7 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
             ${pmExpr} AS next_due_odometer,
             ${woExpr}::int AS open_wo_count
           FROM mdata.units u
-          WHERE u.owner_company_id = $1::uuid
+          WHERE (u.owner_company_id = $1::uuid OR u.currently_leased_to_company_id = $1::uuid)
             AND u.deactivated_at IS NULL
           ORDER BY u.unit_number ASC
           LIMIT 500

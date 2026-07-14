@@ -155,10 +155,27 @@ export function VehicleProfilePage() {
     void queryClient.invalidateQueries({ queryKey: ["unit-profile", id, companyId] });
   };
 
+  // Dead-click fix: this used to be a "not yet implemented" no-op even though the real endpoint
+  // (reused by FleetTable's bulk "Inactivate selected") already exists — POST
+  // /api/v1/mdata/units/:id/deactivate. Soft-delete only (deactivated_at), never a hard delete;
+  // reversible via "Reactivate" on the Fleet roster.
+  const archiveMutation = useMutation({
+    mutationFn: () =>
+      apiRequest(`/api/v1/mdata/units/${id}/deactivate?operating_company_id=${encodeURIComponent(companyId)}`, {
+        method: "POST",
+        body: {},
+      }),
+    onSuccess: () => {
+      pushToast("Unit archived (soft-deleted) — reversible from the Fleet roster.", "success");
+      invalidateProfile();
+      void queryClient.invalidateQueries({ queryKey: ["maintenance", "fleet-table"] });
+    },
+    onError: (e) => pushToast(e instanceof Error ? e.message : "Failed to archive unit", "error"),
+  });
+
   const handleArchive = () => {
-    // Archive functionality - requires backend endpoint
-    // TODO: Implement when archive endpoint is available
-    pushToast("Archive functionality not yet implemented", "info");
+    if (!window.confirm("Archive this unit? This soft-deletes it (reversible) — the record is retained.")) return;
+    archiveMutation.mutate();
   };
 
   const telemetry = telemetryQuery.data ?? profile;
@@ -169,7 +186,7 @@ export function VehicleProfilePage() {
   return (
     <div className="space-y-3 p-4 pb-24">
       <div className="flex items-center justify-between gap-2">
-        <PageHeader backHref="/fleet" breadcrumb={["Fleet", `Unit ${unitNumber}`]} title={`Unit ${unitNumber}`} subtitle="Vehicle profile · fleet unit" />
+        <PageHeader backHref="/fleet" breadcrumb={["Fleet", `Unit ${unitNumber}`]} title={`Unit ${unitNumber}`} subtitle="Vehicle profile" />
         <MissingRequiredChip operatingCompanyId={companyId} entityKind="unit" entityId={id} />
       </div>
       {profileQuery.isError ? <ListErrorBanner onRetry={() => void profileQuery.refetch()} /> : null}
