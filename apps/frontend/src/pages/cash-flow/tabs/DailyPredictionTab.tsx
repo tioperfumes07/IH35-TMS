@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Minus, Plus, BarChart2 } from "lucide-react";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
@@ -39,11 +40,24 @@ function formatCents(cents: number, opts?: { sign?: boolean }): string {
   return cents < 0 ? `−${dollars}` : dollars;
 }
 
+// DEFECT (punchlist #194): the 7-Day Outlook strip has 7 fixed columns in a narrow card; a full
+// "$1,234.56" figure overflows/wraps at that width. Abbreviate to whole-dollar "$1.2k" here (the
+// strip is a directional glance, not a source-of-truth figure — the exact amount is still available
+// via the day's own KPI row and the title tooltip below).
+function formatCompactUsd(cents: number): string {
+  const dollars = Math.abs(cents) / 100;
+  const sign = cents < 0 ? "−" : cents > 0 ? "+" : "";
+  if (dollars >= 10000) return `${sign}$${Math.round(dollars / 1000)}k`;
+  if (dollars >= 1000) return `${sign}$${(dollars / 1000).toFixed(1)}k`;
+  return `${sign}$${Math.round(dollars)}`;
+}
+
 type Props = {
   operatingCompanyId: string;
 };
 
 export function DailyPredictionTab({ operatingCompanyId }: Props) {
+  const navigate = useNavigate();
   const [date, setDate] = useState<string>(todayIso());
   const [addLabel, setAddLabel] = useState("");
   const [addAmount, setAddAmount] = useState("");
@@ -140,7 +154,9 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
             {isLoading ? "—" : formatCents(data?.expense_subtotal_cents ?? 0)}
           </p>
         </div>
-        <div className={`rounded-lg border px-4 py-3 ${netPositive ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50"}`}>
+        {/* PUNCHLIST #71: card background is neutral (§7 palette lock — emerald/red backgrounds are
+            reserved off-palette); the sign-based color stays on the icon + amount TEXT only. */}
+        <div className="rounded-lg border border-gray-200 bg-white px-4 py-3">
           <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Predicted Net</p>
           <div className="mt-1 flex items-center gap-1">
             {netPositive ? (
@@ -202,10 +218,22 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
             </div>
           ) : (
             <div className="divide-y divide-gray-50">
+              {/* DEFECT: rows showed the load number/customer as inert text with no way to drill
+                  into the load — the load_id is already returned by the API, it just wasn't wired
+                  to a link. Same pattern as ExpensesListPage.tsx (`navigate('/dispatch/loads/${id}')`). */}
               {data?.income_items.map((item) => (
-                <div key={item.load_id} className="flex items-start justify-between px-4 py-2.5 text-sm">
+                <div
+                  key={item.load_id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => navigate(`/dispatch/loads/${item.load_id}`)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") navigate(`/dispatch/loads/${item.load_id}`);
+                  }}
+                  className="flex cursor-pointer items-start justify-between px-4 py-2.5 text-sm hover:bg-gray-50"
+                >
                   <div className="min-w-0 flex-1">
-                    <span className="font-medium text-gray-900">#{item.load_number}</span>
+                    <span className="font-medium text-gray-900 hover:underline">#{item.load_number}</span>
                     <span className="ml-2 text-gray-600">{item.customer_name}</span>
                     {item.delivery_time && (
                       <span className="ml-2 text-xs text-gray-400">
@@ -258,11 +286,12 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                   {data?.expense_items.map((item, idx) => (
                     <div key={item.adjustment_id ?? item.load_id ?? idx} className="flex items-start justify-between px-4 py-2.5 text-sm">
                       <div className="min-w-0 flex-1">
+                        {/* PUNCHLIST #70: 'Bill Due' pill recolored off-palette orange -> slate. */}
                         <span className={`inline-flex rounded-full px-1.5 py-0.5 text-xs font-medium mr-2 ${
                           item.kind === "driver_pay"
                             ? "bg-slate-100 text-slate-700"
                             : item.kind === "bill_due"
-                            ? "bg-orange-50 text-orange-700"
+                            ? "bg-slate-100 text-slate-700"
                             : "bg-gray-100 text-gray-600"
                         }`}>
                           {item.kind === "driver_pay" ? "Driver Pay" : item.kind === "bill_due" ? "Bill Due" : "Manual"}
@@ -314,9 +343,9 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
         </div>
       </div>
 
-      {/* Predicted Net Bar */}
+      {/* Predicted Net Bar — PUNCHLIST #71: neutral background, sign-color kept on the amount text only. */}
       {!isLoading && data && (
-        <div className={`flex items-center justify-between rounded-lg border px-5 py-4 ${netPositive ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50"}`}>
+        <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-5 py-4">
           <span className="text-sm font-semibold text-gray-700">Predicted net cash flow for {fmtDate(date)}</span>
           <span className={`text-2xl font-bold ${netPositive ? "text-emerald-700" : "text-red-700"}`}>
             {formatCents(net, { sign: true })}
@@ -324,37 +353,42 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
         </div>
       )}
 
-      {/* 7-Day Predicted-Net Strip */}
+      {/* 7-Day Predicted-Net Strip — PUNCHLIST #194: full "$1,234.56" figures were overflowing the
+          narrow 1/7-width columns with no scroll fallback. Fixed with a whole-dollar compact format
+          (full precision still available via the `title` tooltip) plus a horizontal-scroll fallback
+          so a wide/negative value never clips on small viewports. */}
       {!isLoading && (data?.seven_day_strip?.length ?? 0) > 0 && (
         <div className="rounded-lg border border-gray-200 bg-white p-4">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">7-Day Outlook</p>
-          <div className="grid grid-cols-7 gap-1">
-            {data?.seven_day_strip.map((entry: SevenDayEntry) => {
-              const isToday = entry.date === todayIso();
-              const isSelected = entry.date === date;
-              const pos = entry.predicted_net_cents >= 0;
-              return (
-                <button
-                  key={entry.date}
-                  type="button"
-                  onClick={() => setDate(entry.date)}
-                  className={`flex flex-col items-center rounded-lg py-2 transition-colors ${
-                    isSelected ? "ring-2 ring-[#1f2a44]" : "hover:bg-gray-50"
-                  } ${isToday ? "bg-slate-100" : ""}`}
-                >
-                  <span className="text-xs text-gray-500">
-                    {new Date(entry.date + "T00:00:00Z").toLocaleDateString("en-US", { weekday: "short" })}
-                  </span>
-                  <span className="text-xs text-gray-400">
-                    {new Date(entry.date + "T00:00:00Z").toLocaleDateString("en-US", { month: "numeric", day: "numeric" })}
-                  </span>
-                  <span className={`mt-1 text-xs font-bold ${pos ? "text-emerald-600" : "text-red-600"}`}>
-                    {pos ? "+" : ""}
-                    {formatUsdCents(entry.predicted_net_cents)}
-                  </span>
-                </button>
-              );
-            })}
+          <div className="overflow-x-auto">
+            <div className="grid grid-cols-7 gap-1 min-w-[420px]">
+              {data?.seven_day_strip.map((entry: SevenDayEntry) => {
+                const isToday = entry.date === todayIso();
+                const isSelected = entry.date === date;
+                const pos = entry.predicted_net_cents >= 0;
+                return (
+                  <button
+                    key={entry.date}
+                    type="button"
+                    onClick={() => setDate(entry.date)}
+                    title={`${pos ? "+" : ""}${formatUsdCents(entry.predicted_net_cents)}`}
+                    className={`flex flex-col items-center rounded-lg py-2 transition-colors ${
+                      isSelected ? "ring-2 ring-[#1f2a44]" : "hover:bg-gray-50"
+                    } ${isToday ? "bg-slate-100" : ""}`}
+                  >
+                    <span className="text-xs text-gray-500">
+                      {new Date(entry.date + "T00:00:00Z").toLocaleDateString("en-US", { weekday: "short" })}
+                    </span>
+                    <span className="text-xs text-gray-400">
+                      {new Date(entry.date + "T00:00:00Z").toLocaleDateString("en-US", { month: "numeric", day: "numeric" })}
+                    </span>
+                    <span className={`mt-1 text-xs font-bold ${pos ? "text-emerald-600" : "text-red-600"}`}>
+                      {formatCompactUsd(entry.predicted_net_cents)}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}
