@@ -92,7 +92,7 @@ function AssetLocationMap({ parts, onAdd, onChange, onRemove }: { parts: Seriali
       <div className="flex items-center gap-2 bg-[#0f1a30] px-2.5 py-1.5 text-white">
         <span className="text-[10px] font-extrabold uppercase tracking-wide">Asset location &amp; serial</span>
         <span className="ml-auto text-[10px] text-[#aab6cd]">tires · batteries · lamps · mirrors — where it sits + serial</span>
-        <button type="button" data-testid="wo-add-serialized-part" onClick={onAdd} className="rounded-sm bg-[#1f2a44] px-2 py-0.5 text-[10px] font-semibold text-white">+ Add part</button>
+        <button type="button" data-testid="wo-add-serialized-part" onClick={onAdd} className="rounded-sm bg-[#1f2a44] px-2 py-0.5 text-[10px] font-semibold text-white">+ Create part</button>
       </div>
       {parts.length === 0 ? (
         <div className="px-3 py-3 text-[11px] text-[#94a3b8]">No serialized items placed. Add a tire/battery/lamp/mirror to capture its position + serial (chain-of-custody).</div>
@@ -872,7 +872,7 @@ export function CreateWorkOrderModal({ open, operatingCompanyId, initialType = "
               </table>
             </div>
             <div className="mt-2 flex items-center gap-2">
-              <button type="button" data-testid="edit-wo-add-line" onClick={addEditLine} className="rounded-sm bg-[#1f2a44] px-2.5 py-1 text-[11px] font-semibold text-white">+ Add cost line</button>
+              <button type="button" data-testid="edit-wo-add-line" onClick={addEditLine} className="rounded-sm bg-[#1f2a44] px-2.5 py-1 text-[11px] font-semibold text-white">+ Create line</button>
               <span className="ml-auto text-[12px] font-semibold text-sidebar-active">Total ${editLinesTotal.toFixed(2)}</span>
             </div>
           </SectionCard>

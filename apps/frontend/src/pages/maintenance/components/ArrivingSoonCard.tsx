@@ -9,7 +9,7 @@ type Props = {
 
 function severityClass(card: ArrivingSoonCardType) {
   if (card.severe_count > 0) return "border-l-4 border-l-red-500";
-  if (card.already_arrived) return "border-l-4 border-l-green-500";
+  if (card.already_arrived) return "border-l-4 border-l-slate-500";
   return "border-l-4 border-l-gray-300";
 }
 
@@ -32,7 +32,7 @@ export function ArrivingSoonCard({ card, canConvert, onConvert }: Props) {
         {card.final_dest_is_yard
           ? `ETA: ${card.predicted_yard_arrival_at ? new Date(card.predicted_yard_arrival_at).toLocaleString() : "unscheduled"}`
           : "DEADHEAD-BACK PENDING · ETA unscheduled — confirm with dispatch"}
-        {card.already_arrived ? <span className="ml-2 rounded-sm bg-green-100 px-1 py-0.5 text-green-700">AT YARD</span> : null}
+        {card.already_arrived ? <span className="ml-2 rounded-sm bg-slate-100 px-1 py-0.5 text-slate-700">AT YARD</span> : null}
       </div>
 
       <div className="mt-2">
