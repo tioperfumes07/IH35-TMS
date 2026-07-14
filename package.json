@@ -932,7 +932,8 @@
     "verify:qbo-ap-pull-dbflag": "node scripts/verify-qbo-ap-pull-dbflag.mjs",
     "verify:no-test-fixture-names": "node scripts/verify-no-test-fixture-names.mjs",
     "verify:wo-audit-entity-type": "node scripts/verify-wo-audit-entity-type.mjs",
-    "verify:system-module": "node scripts/verify-system-module.mjs"
+    "verify:system-module": "node scripts/verify-system-module.mjs",
+    "verify:qbo-parity-vendors": "node scripts/verify-qbo-parity-vendors.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",
