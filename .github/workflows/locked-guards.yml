@@ -500,6 +500,12 @@ jobs:
       - name: verify:bills-mdata-vendor-fk
         run: npm run verify:bills-mdata-vendor-fk
 
+      - name: verify:vendor-types-catalog --selftest
+        run: node scripts/verify-vendor-types-catalog.mjs --selftest
+
+      - name: verify:vendor-types-catalog
+        run: npm run verify:vendor-types-catalog
+
       - name: verify:pwa-date-format
         run: npm run verify:pwa-date-format
 
