@@ -22,6 +22,15 @@ type UploadModalProps = {
   entityId?: string;
   entityName?: string;
   parentFileId?: string;
+  // FIX-2 (docs-upload-viewed-entity): the operating_company_id of the VIEWED entity (the
+  // company selected in CompanyContext when the profile was opened). Without this,
+  // requestUploadUrl falls back to the server's resolveOperatingCompanyId (the caller's
+  // default_company_id), which for a multi-entity user does not necessarily match the company
+  // being viewed — so the file gets filed under the wrong entity and never reappears when the
+  // profile refetches its company-scoped document list (unit/equipment/driver aggregates all
+  // read documents with an exact `f.operating_company_id = $2` match). Always pass the VIEWED
+  // company here, never the uploader's default.
+  operatingCompanyId?: string;
   onClose: () => void;
   onUploadSuccess: () => void;
 };
@@ -64,6 +73,7 @@ export function UploadModal({
   entityId,
   entityName,
   parentFileId,
+  operatingCompanyId,
   onClose,
   onUploadSuccess,
 }: UploadModalProps) {
@@ -143,6 +153,8 @@ export function UploadModal({
             category_id: categoryId,
             // standalone upload (Documents page) sends no entity link
             ...(entityType && entityId ? { entity_links: [{ entity_type: entityType, entity_id: entityId }] } : {}),
+            // FIX-2: file under the VIEWED company, not the uploader's default_company_id.
+            ...(operatingCompanyId ? { operating_company_id: operatingCompanyId } : {}),
           });
 
       await uploadWithProgress(uploadInit.presigned_url, selectedFile, setProgress, (abortFn) => {

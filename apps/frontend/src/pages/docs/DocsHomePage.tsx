@@ -86,6 +86,10 @@ export function DocsHomePage() {
 
       {uploadOpen ? (
         <UploadModal
+          // FIX-2: this page's list/KPIs are scoped to `companyId` (the viewed company), so a
+          // standalone upload with no operating_company_id can file under the uploader's default
+          // company and never show up in this company-filtered list.
+          operatingCompanyId={companyId || undefined}
           onClose={() => setUploadOpen(false)}
           onUploadSuccess={() => {
             setUploadOpen(false);
