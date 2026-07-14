@@ -20,6 +20,7 @@ import { TrainingRecordsSection } from "../../components/driver-profile/Training
 import { W8BenSection } from "../../components/driver-profile/W8BenSection";
 import { AddTrainingModal } from "../../components/drivers/AddTrainingModal";
 import { DriverCommunicationsTab } from "../../components/drivers/DriverCommunicationsTab";
+import { EntityAuditHistoryTab } from "../../components/audit/EntityAuditHistoryTab";
 import { W8BenModal } from "../../components/drivers/W8BenModal";
 import { KpiCard } from "../../components/layout/KpiCard";
 import { KpiStrip } from "../../components/layout/KpiStrip";
@@ -379,6 +380,11 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
           onActionComplete={refreshDriver}
         />
       </div>
+
+      <section data-testid="dp-section-audit-history" className="rounded-sm border border-gray-200 bg-white p-3">
+        <h2 className="mb-3 text-sm font-semibold text-slate-900">Audit History</h2>
+        <EntityAuditHistoryTab operatingCompanyId={companyId} entityType="driver" entityId={id} />
+      </section>
     </div>
   );
 }

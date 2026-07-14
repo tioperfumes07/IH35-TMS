@@ -15,6 +15,7 @@ import { CancelLoadModal } from "./CancelLoadModal";
 import { LoadDetailDriverPayTab } from "./LoadDetailDriverPayTab";
 import { LoadDetailSettlementTab } from "./LoadDetailSettlementTab";
 import { LoadDetailGeofenceTimelineTab } from "./LoadDetailGeofenceTimelineTab";
+import { EntityAuditHistoryTab } from "../audit/EntityAuditHistoryTab";
 import { STATUS_LABEL, formatMoneyCents } from "./constants";
 import { LoadReassignModal } from "../../pages/dispatch/LoadReassignModal";
 import { MultiStopEditor } from "../../pages/dispatch/MultiStopEditor";
@@ -618,19 +619,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
           ) : null}
 
           {activeTab === "Audit" ? (
-            <div className="space-y-2">
-              {auditQuery.isLoading ? <div className="text-sm text-gray-500">Loading audit history...</div> : null}
-              {(auditQuery.data ?? []).map((event) => (
-                <div key={event.uuid} className="rounded-sm border border-gray-200 p-3 text-sm">
-                  <div className="font-semibold text-gray-800">{event.event_class}</div>
-                  <div className="text-xs text-gray-500">{new Date(event.created_at).toLocaleString()}</div>
-                  <pre className="mt-2 overflow-x-auto rounded-sm bg-gray-50 p-2 text-xs text-gray-700">
-                    {JSON.stringify(event.payload, null, 2)}
-                  </pre>
-                </div>
-              ))}
-              {!auditQuery.isLoading && (auditQuery.data ?? []).length === 0 ? <div className="text-sm text-gray-500">No audit events found.</div> : null}
-            </div>
+            <EntityAuditHistoryTab operatingCompanyId={load.operating_company_id} entityType="load" entityId={load.id} />
           ) : null}
           {activeTab === "Assignment History" ? (
             <div className="space-y-3">
