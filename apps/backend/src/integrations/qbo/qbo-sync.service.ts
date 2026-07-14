@@ -8,6 +8,7 @@ import { getValidAccessToken } from "./qbo-oauth.service.js";
 import { deriveQboClass, extractVendorIdFromForensic, mapBankTxnToExpense } from "./qbo-mappers.js";
 import { syncEntityToQbo } from "./sync-outbound-accounting.js";
 import { isEntityPushEnabled } from "../../qbo/qbo-entity-push-gate.js";
+import { qboWriteDisabled } from "./qbo-write-disabled.js";
 
 export type QueueEntityType =
   | "bank_transaction"
@@ -215,62 +216,16 @@ async function syncTransferPreview(job: QueueRow) {
 
 type QboSyncSuccess = { qboId: string; syncToken: string | null };
 
+// QBO-WRITE-KILL — reconcile-only architecture lock. This path POSTed a Purchase (bank-transaction
+// expense) INTO QuickBooks. Under the parallel-books, reconcile-only architecture TMS never writes to
+// QBO, so the outbound write is permanently removed — the function hard-fails instead of issuing HTTP.
+// Bank transactions are booked in QBO via the bank feed and reconciled; TMS does not push them.
+// Enforced by scripts/verify-no-qbo-write-path.mjs.
 export async function syncBankTransaction(txn: BankTxnContext, realmId: string, accessToken: string): Promise<QboSyncSuccess> {
-  const expenseAccountId = await pickExpenseAccountId(txn.operating_company_id);
-  if (!expenseAccountId) throw new Error("qbo_expense_account_not_found");
-
-  const className = deriveQboClass(txn.driver_last_name, txn.unit_number);
-  const classId = await pickClassId(txn.operating_company_id, className);
-  const vendorId = txn.merchant_name ? await extractVendorIdFromForensic(txn.operating_company_id, txn.merchant_name) : null;
-  const payload = mapBankTxnToExpense({
-    transactionDate: txn.transaction_date.slice(0, 10),
-    amountCents: txn.amount_cents,
-    description: txn.description ?? txn.merchant_name ?? "Bank transaction sync",
-    vendorQboId: vendorId,
-    expenseAccountQboId: expenseAccountId,
-    classQboId: classId,
-  });
-
-  const result = await qboSyncWithRetry({
-    operatingCompanyId: txn.operating_company_id,
-    entityType: "bank_transaction",
-    entityId: txn.id,
-    operation: "create",
-    swallow_errors: false,
-    replayPayload: {
-      replay_kind: "qbo_purchase",
-      bank_transaction_id: txn.id,
-      realm_id: realmId,
-    },
-    attempt: async () => {
-      const url = `${qboApiBase()}/${realmId}/purchase?minorversion=75`;
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-      const responseText = await response.text();
-      if (!response.ok) {
-        const err = new Error(`qbo_purchase_sync_failed_status_${response.status}`);
-        (err as { status?: number }).status = response.status;
-        (err as { bodyPreview?: string }).bodyPreview = redactErrorPreview(responseText);
-        throw err;
-      }
-      const parsed = JSON.parse(responseText) as { Purchase?: { Id?: string; SyncToken?: string } };
-      const qboId = parsed.Purchase?.Id ?? null;
-      if (!qboId) {
-        throw new Error("qbo_purchase_missing_id");
-      }
-      return { qboId, syncToken: parsed.Purchase?.SyncToken ?? null };
-    },
-  });
-
-  if (!result) throw new Error("qbo_purchase_sync_failed");
-  return result;
+  void txn;
+  void realmId;
+  void accessToken;
+  return qboWriteDisabled("bank_transaction_purchase");
 }
 
 export async function enqueueSyncJob(

@@ -1,9 +1,8 @@
 import { pool, withLuciaBypass } from "../auth/db.js";
-import { qboApiBase } from "../integrations/qbo/qbo-client.js";
-import { getValidAccessToken } from "../integrations/qbo/qbo-oauth.service.js";
-import { loadJournalEntryForSync, mapJournalEntryToQboPayload } from "../integrations/qbo/journal-entry-qbo-mapping.js";
+import { loadJournalEntryForSync } from "../integrations/qbo/journal-entry-qbo-mapping.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { evaluateJeQboPushGate, JE_QBO_PUSH_FLAG, QBO_PUSH_REFUSED_IMPORT_SOURCE } from "./qbo-je-push-gate.js";
+import { qboWriteDisabled } from "../integrations/qbo/qbo-write-disabled.js";
 
 // IMPORT-P0 — JE→QBO push kill-switch (immediate best-effort path). QBO is the system of record through
 // 12/31/2025; the TMS must not write journal entries into QuickBooks unless the owner enables it per
@@ -14,13 +13,6 @@ import { evaluateJeQboPushGate, JE_QBO_PUSH_FLAG, QBO_PUSH_REFUSED_IMPORT_SOURCE
 // Re-exported for the proof harness + callers.
 export { JE_QBO_PUSH_FLAG, QBO_PUSH_REFUSED_IMPORT_SOURCE } from "./qbo-je-push-gate.js";
 const P0_SYSTEM_ACTOR = "00000000-0000-4000-8000-000000000001";
-
-function preview(text: string) {
-  return text
-    .replace(/"access_token"\s*:\s*"[^"]*"/g, '"access_token":"[REDACTED]"')
-    .replace(/"refresh_token"\s*:\s*"[^"]*"/g, '"refresh_token":"[REDACTED]"')
-    .slice(0, 500);
-}
 
 async function persistJournalFailureAlert(operatingCompanyId: string, journalEntryId: string, error: unknown) {
   const message = String((error as Error)?.message ?? "journal_entry_qbo_push_failed");
@@ -230,51 +222,15 @@ export async function pushJournalEntryToQuickBooksFromQueue(job: { operating_com
     return { qboId: null as string | null };
   }
 
-  const token = await getValidAccessToken(oc);
-  const payload = {
-    ...mapJournalEntryToQboPayload(ctx),
-    DocNumber: ctx.header.id.replace(/-/g, "").slice(0, 21),
-  };
-
-  const url = `${qboApiBase()}/${token.realm_id}/journalentry?minorversion=75`;
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token.access_token}`,
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-
-  const responseText = await response.text();
-  if (!response.ok) {
-    const err = new Error(`qbo_journal_entry_failed_status_${response.status}`);
-    (err as { status?: number }).status = response.status;
-    (err as { bodyPreview?: string }).bodyPreview = preview(responseText);
-    throw err;
-  }
-
-  const parsed = JSON.parse(responseText) as { JournalEntry?: { Id?: string } };
-  const qboId = parsed.JournalEntry?.Id ?? null;
-  if (!qboId) throw new Error("qbo_journal_entry_missing_id");
-
-  await withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [oc]);
-    await client.query(
-      `
-        UPDATE accounting.journal_entries
-        SET qbo_journal_entry_id = $3,
-            qbo_sync_pending = false,
-            updated_at = now()
-        WHERE id = $1
-          AND operating_company_id = $2
-      `,
-      [job.entity_id, oc, qboId]
-    );
-  });
-
-  return { qboId };
+  // QBO-WRITE-KILL — reconcile-only architecture lock. Past this point the legacy path fetched a QBO
+  // token and POSTed a JournalEntry into QuickBooks. Under the parallel-books, reconcile-only
+  // architecture TMS never writes to QBO, so the outbound POST is permanently removed: the gate above
+  // still makes ZERO HTTP for the default (flag OFF) / import-source cases, and a hypothetically enabled
+  // TMS JE now hard-fails here instead of writing. ctx is loaded above only to run the existing
+  // voided-entry mirror cleanup (a local DB write, not a QBO write). Enforced by
+  // scripts/verify-no-qbo-write-path.mjs.
+  void ctx;
+  return qboWriteDisabled("journal_entry");
 }
 
 export async function pushJournalEntryToQuickBooksImmediateBestEffort(params: { operatingCompanyId: string; journalEntryId: string }) {
