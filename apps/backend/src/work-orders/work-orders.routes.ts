@@ -735,7 +735,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
             [wo.id, user.uuid, "Created via /api/v1/work-orders"]
           );
 
-          await appendCrudAudit(client, user.uuid, "maintenance.wo.created", { resource_id: wo.id, display_id: wo.display_id }, "info", "P6-T11179");
+          await appendCrudAudit(client, user.uuid, "maintenance.wo.created", { resource_id: wo.id, entity_type: "work_order", entity_id: wo.id, display_id: wo.display_id }, "info", "P6-T11179");
           await enqueueWorkOrderOutbox(client, "work_order.created", {
             work_order_id: wo.id,
             operating_company_id: body.operating_company_id,
@@ -895,7 +895,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
       `;
       const updated = await client.query(updateSql, vals);
       const wo = updated.rows[0];
-      await appendCrudAudit(client, user.uuid, "maintenance.work_order.updated", { resource_id: wo.id }, "info", "P6-T11179");
+      await appendCrudAudit(client, user.uuid, "maintenance.work_order.updated", { resource_id: wo.id, entity_type: "work_order", entity_id: wo.id }, "info", "P6-T11179");
       await enqueueWorkOrderOutbox(client, "work_order.updated", { work_order_id: wo.id });
       return { kind: "ok" as const, wo };
     });
@@ -935,7 +935,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
         const ures = await client.query(`SELECT unit_number FROM mdata.units WHERE id = $1 LIMIT 1`, [wo.unit_id]);
         unitLabel = ures.rows[0]?.unit_number != null ? String(ures.rows[0].unit_number) : null;
       }
-      await appendCrudAudit(client, user.uuid, "maintenance.work_order.approved", { resource_id: wo.id }, "info", "P6-T11179");
+      await appendCrudAudit(client, user.uuid, "maintenance.work_order.approved", { resource_id: wo.id, entity_type: "work_order", entity_id: wo.id }, "info", "P6-T11179");
       await enqueueWorkOrderOutbox(client, "work_order.approved", { work_order_id: wo.id, approved_by: user.uuid });
 
       const recipients = (process.env.WO_APPROVED_NOTIFY_EMAIL ?? "")
@@ -990,7 +990,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
       );
       const wo = res.rows[0];
       if (!wo) return { kind: "missing" as const };
-      await appendCrudAudit(client, user.uuid, "maintenance.work_order.started", { resource_id: wo.id }, "info", "P6-T11179");
+      await appendCrudAudit(client, user.uuid, "maintenance.work_order.started", { resource_id: wo.id, entity_type: "work_order", entity_id: wo.id }, "info", "P6-T11179");
       await enqueueWorkOrderOutbox(client, "work_order.started", { work_order_id: wo.id });
       return { kind: "ok" as const, wo };
     });
@@ -1033,7 +1033,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
       const wo = res.rows[0];
       if (!wo) return { kind: "blocked" as const };
 
-      await appendCrudAudit(client, user.uuid, "maintenance.wo.completed", { resource_id: wo.id }, "info", "P6-T11179");
+      await appendCrudAudit(client, user.uuid, "maintenance.wo.completed", { resource_id: wo.id, entity_type: "work_order", entity_id: wo.id }, "info", "P6-T11179");
       await enqueueWorkOrderOutbox(client, "work_order.completed", { work_order_id: wo.id });
 
       const vendorUuid = String(prior.vendor_id ?? prior.external_vendor_id ?? prior.assigned_vendor ?? "").trim();
@@ -1147,7 +1147,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
         client,
         user.uuid,
         "maintenance.work_order.cancelled",
-        { resource_id: wo.id, reason: parsed.data.cancellation_reason, reversing_entry_ref: reversingEntryRef, financial_void: reversingEntryRef != null },
+        { resource_id: wo.id, entity_type: "work_order", entity_id: wo.id, reason: parsed.data.cancellation_reason, reversing_entry_ref: reversingEntryRef, financial_void: reversingEntryRef != null },
         "warning",
         "P6-T11179"
       );
@@ -1242,6 +1242,8 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
         {
           resource_type: "maintenance.work_orders",
           resource_id: wo.id,
+          entity_type: "work_order",
+          entity_id: wo.id,
           operating_company_id: query.data.operating_company_id,
           status_at_void: wo.status,
           reason: parsed.data.reason,
