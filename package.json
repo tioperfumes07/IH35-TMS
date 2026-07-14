@@ -932,11 +932,12 @@
     "verify:qbo-ap-pull-dbflag": "node scripts/verify-qbo-ap-pull-dbflag.mjs",
     "verify:no-test-fixture-names": "node scripts/verify-no-test-fixture-names.mjs",
     "verify:wo-audit-entity-type": "node scripts/verify-wo-audit-entity-type.mjs",
+    "verify:consolidated-elimination": "node scripts/verify-consolidated-elimination.mjs",
+    "verify:system-module": "node scripts/verify-system-module.mjs",
+    "verify:qbo-parity-bills-invoices-lists": "node scripts/verify-qbo-parity-bills-invoices-lists.mjs",
     "verify:qbo-parity-banking-home": "node scripts/verify-qbo-parity-banking-home.mjs",
     "verify:ent-audit-all-entity-types": "node scripts/verify-ent-audit-all-entity-types.mjs",
-    "verify:system-module": "node scripts/verify-system-module.mjs",
-    "verify:tracker-no-duplicate-block-ids": "node scripts/verify-tracker-no-duplicate-block-ids.mjs",
-    "verify:consolidated-elimination": "node scripts/verify-consolidated-elimination.mjs"
+    "verify:tracker-no-duplicate-block-ids": "node scripts/verify-tracker-no-duplicate-block-ids.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",
