@@ -780,6 +780,10 @@ jobs:
         run: node scripts/verify-consolidated-elimination.mjs --selftest
       - name: verify:consolidated-elimination
         run: npm run verify:consolidated-elimination
+      - name: verify:tracker-no-duplicate-block-ids --selftest
+        run: node scripts/verify-tracker-no-duplicate-block-ids.mjs --selftest
+      - name: verify:tracker-no-duplicate-block-ids
+        run: npm run verify:tracker-no-duplicate-block-ids
       - name: verify:ent-audit-all-entity-types --selftest
         run: node scripts/verify-ent-audit-all-entity-types.mjs --selftest
       - name: verify:ent-audit-all-entity-types
