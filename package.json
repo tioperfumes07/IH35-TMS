@@ -55,6 +55,7 @@
     "verify:users-add-user-submits": "node scripts/verify-users-add-user-submits.mjs",
     "verify:master-data-create-targets": "node scripts/verify-master-data-create-targets.mjs",
     "verify:driver-picker-limit": "node scripts/verify-driver-picker-limit.mjs",
+    "verify:create-drawer-and-datepicker": "node scripts/verify-create-drawer-and-datepicker.mjs",
     "verify:orphan-components": "node scripts/verify-orphan-components.mjs",
     "verify:banking-workflow-b-archived": "node scripts/verify-banking-workflow-b-archived.mjs",
     "verify:banking-register-categorize-capable": "node scripts/verify-banking-register-categorize-capable.mjs",

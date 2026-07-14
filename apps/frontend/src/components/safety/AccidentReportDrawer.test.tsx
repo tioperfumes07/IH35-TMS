@@ -174,4 +174,12 @@ describe("AccidentReportDrawer catalogs (SC1)", () => {
     expect(photoLabel).toHaveAttribute("title", "Save the report first to attach photos");
     expect(screen.getByTestId("accident-photo-gate-note")).toBeInTheDocument();
   });
+
+  it("B9: Report Date renders the shared calendar DatePicker, not a raw text input", async () => {
+    render(wrap(<AccidentReportDrawer open operatingCompanyId="co-1" accident={draft} createMode onClose={() => {}} onUpdated={() => {}} />));
+    const reportDateWrap = await screen.findByTestId("accident-report-date");
+    // The shared DatePicker renders a <button> that opens a calendar — never a raw <input>.
+    expect(within(reportDateWrap).getByRole("button")).toBeInTheDocument();
+    expect(reportDateWrap.querySelector("input")).toBeNull();
+  });
 });
