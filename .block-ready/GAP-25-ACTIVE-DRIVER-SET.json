@@ -1,7 +1,7 @@
 {
   "block_id": "GAP-25",
   "task": "Active Driver Set 15-min Recompute",
-  "status": "READY",
+  "status": "superseded",
   "branch": "feature/gap-25-active-driver-set",
   "migration": "db/migrations/202606080001_active_driver_set_cache.sql",
   "files_created": [
@@ -30,5 +30,7 @@
     "rls_scoped": true,
     "ih35_app_role_only": true
   },
-  "hold_merge_until": "GO-25 from Jorge"
+  "hold_merge_until": "GO-25 from Jorge",
+  "superseded_by": "GAP-25.json",
+  "superseded_note": "Additive dedup (P1 tracker-live-accurate): duplicate block_id registration; canonical entry retained active. ARCHIVED not deleted (§7)."
 }
