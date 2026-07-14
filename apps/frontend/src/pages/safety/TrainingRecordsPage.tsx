@@ -20,7 +20,7 @@ function expiryLabel(expiryDate: string | null | undefined) {
   const days = Math.ceil((new Date(`${expiryDate}T00:00:00`).getTime() - Date.now()) / (24 * 60 * 60 * 1000));
   if (days < 0) return { text: "Expired", tone: "text-red-700" };
   if (days <= 30) return { text: `Due in ${days}d`, tone: "text-slate-700" };
-  return { text: expiryDate, tone: "text-slate-700" };
+  return { text: formatDateUS(expiryDate), tone: "text-slate-700" };
 }
 
 export function TrainingRecordsPage({ operatingCompanyId }: Props) {
@@ -89,7 +89,7 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
       sortable: true,
       render: (row) => String(row.training_type ?? row.training_name ?? row.name ?? "Training"),
     },
-    { key: "expiry_date", label: "Expiry", sortable: true, render: (row) => String(row.expiry_date ?? row.due_at ?? "—") },
+    { key: "expiry_date", label: "Expiry", sortable: true, render: (row) => (row.expiry_date || row.due_at ? formatDateUS(row.expiry_date ?? row.due_at) : "—") },
     {
       key: "status",
       label: "Status",
