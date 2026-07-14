@@ -77,6 +77,10 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
   const [loadId, setLoadId] = useState(initialLoadId);
   const [incidentDate, setIncidentDate] = useState(initialIncidentDate);
   const [memo, setMemo] = useState(initialMemo);
+  // B9: Report Date is display-only (not part of the accidents create/update payload — the API has
+  // no report_date column; see CreateAccidentInput/PatchAccidentInput in ../../api/safety.ts) but must
+  // still use the shared calendar DatePicker like every other date field, not a raw text input.
+  const [reportDate, setReportDate] = useState(() => companyToday());
 
   useEffect(() => {
     setDriverId(initialDriverId);
@@ -234,7 +238,12 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
               />
             </Field>
             <Field label="Report Date">
-              <input className="h-8 w-full rounded-sm border border-gray-300 px-2" defaultValue={companyToday()} />
+              <DatePicker
+                className="h-8 w-full rounded-sm border border-gray-300 px-2"
+                data-testid="accident-report-date"
+                value={reportDate}
+                onChange={setReportDate}
+              />
             </Field>
 
             <Field label="Driver">

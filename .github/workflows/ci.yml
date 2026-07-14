@@ -1243,6 +1243,9 @@ jobs:
       - name: verify:freshness-indicator
         run: npm run verify:freshness-indicator
 
+      - name: verify:create-drawer-and-datepicker
+        run: npm run verify:create-drawer-and-datepicker
+
       - name: Boot smoke — compiled dist/index.js must answer /api/v1/health
         run: npm run ci:boot-api-smoke
 
