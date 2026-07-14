@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Modal } from "../../../components/Modal";
 import { Button } from "../../../components/Button";
+import { DatePicker } from "../../../components/forms/DatePicker";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useToast } from "../../../components/Toast";
 import { legalContractsApi, type LegalContractLanguage, type LegalSignerType } from "../../../api/legal-contracts";
@@ -342,13 +343,22 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
                       {name.replace(/_/g, " ")}
                       {def.required ? <span className="text-crit"> *</span> : null}
                     </span>
-                    <input
-                      type={def.type === "date" ? "date" : def.type === "number" ? "number" : "text"}
-                      value={filled[name] ?? ""}
-                      onChange={(e) => setFilled((prev) => ({ ...prev, [name]: e.target.value }))}
-                      className="rounded-sm border border-slate-300 px-2 py-1"
-                      placeholder={def.description ?? ""}
-                    />
+                    {def.type === "date" ? (
+                      <DatePicker
+                        value={filled[name] ?? ""}
+                        onChange={(value) => setFilled((prev) => ({ ...prev, [name]: value }))}
+                        className="rounded-sm border border-slate-300 px-2 py-1"
+                        placeholder={def.description ?? ""}
+                      />
+                    ) : (
+                      <input
+                        type={def.type === "number" ? "number" : "text"}
+                        value={filled[name] ?? ""}
+                        onChange={(e) => setFilled((prev) => ({ ...prev, [name]: e.target.value }))}
+                        className="rounded-sm border border-slate-300 px-2 py-1"
+                        placeholder={def.description ?? ""}
+                      />
+                    )}
                   </label>
                 ))}
               </div>

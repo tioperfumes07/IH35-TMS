@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ApiError } from "../../api/client";
 import type { CatalogFieldConfig, CatalogRow } from "../../hooks/useCatalogQuery";
 import { Button } from "../Button";
+import { DatePicker } from "../forms/DatePicker";
 import { Modal } from "../Modal";
 import { SelectCombobox } from "../shared/SelectCombobox";
 
@@ -91,7 +92,18 @@ function FieldInput({
     );
   }
 
-  const inputType = field.type === "number" ? "number" : field.type === "date" ? "date" : "text";
+  if (field.type === "date") {
+    return (
+      <DatePicker
+        value={String(value ?? "")}
+        disabled={disabled}
+        onChange={(next) => onChange(next)}
+        className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm"
+      />
+    );
+  }
+
+  const inputType = field.type === "number" ? "number" : "text";
 
   return (
     <input
