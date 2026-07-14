@@ -63,6 +63,24 @@ export function getHosDaily(operatingCompanyId: string, driverId: string, date: 
   );
 }
 
+// Raw duty-status event history for a driver over an arbitrary window (Compliance "HOS History" tab —
+// FMCSA audit / drill-down). Distinct from the daily/roster endpoints above, which are anchored to a
+// single home-terminal calendar day; this reads `hos.duty_status_events` verbatim across a date range.
+export type HosEvent = {
+  driver_id: string;
+  duty_status: HosDutyStatus;
+  started_at: string;
+  ended_at: string | null;
+  started_ct: string;
+  ended_ct: string | null;
+};
+
+export function getHosEvents(operatingCompanyId: string, driverId: string, fromUtcIso: string, toUtcIso: string) {
+  return apiRequest<{ events: HosEvent[]; count: number }>(
+    `/api/v1/telematics/hos/events?operating_company_id=${encodeURIComponent(operatingCompanyId)}&driver_id=${encodeURIComponent(driverId)}&from=${encodeURIComponent(fromUtcIso)}&to=${encodeURIComponent(toUtcIso)}`
+  );
+}
+
 // Duty-status display + the locked in-content band colors (Block 03 timeline + status dots).
 export const DUTY_LABEL: Record<HosDutyStatus, string> = {
   driving: "Driving",

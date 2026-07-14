@@ -19,7 +19,12 @@ import { FilingsComplianceDueSection } from "./FilingsComplianceDueSection";
 import { FleetHosBoardSection } from "./FleetHosBoardSection";
 import { HosTrackerSection } from "./HosTrackerSection";
 import { HosViewerSection } from "./HosViewerSection";
+import { HosHistorySection } from "./HosHistorySection";
 import { RequiredDocumentsSection } from "./RequiredDocumentsSection";
+// Reuse the existing HOS Violations list (GET /api/v1/safety/hos-violations, safety.hos_violations) —
+// same component the Safety module's own HOS Violations tab renders; wiring the Compliance
+// "Violations" tab to it instead of duplicating the fetch+table.
+import { HOSViolationsTab } from "../safety/tabs/HOSViolationsTab";
 import { SectionErrorBoundary } from "../../components/SectionErrorBoundary";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
@@ -38,15 +43,6 @@ const COMPLIANCE_TABS: { id: ComplianceTab; label: string }[] = [
   { id: "hos_history", label: "HOS History" },
   { id: "required_docs", label: "Required Documents" },
 ];
-
-function ComplianceEmptyState({ title, message }: { title: string; message: string }) {
-  return (
-    <div className="rounded-sm border border-slate-200 bg-white px-4 py-12 text-center">
-      <div className="text-sm font-semibold text-slate-700">{title}</div>
-      <div className="mt-1 text-xs text-slate-500">{message}</div>
-    </div>
-  );
-}
 
 function exportCsv(rows: ComplianceCredential[]) {
   const header = ["type", "owner_type", "owner_name", "expiration_date", "days_until_expiration", "severity"];
@@ -167,10 +163,16 @@ export function ComplianceDashboardPage() {
         </SectionErrorBoundary>
       ) : null}
       {tab === "violations" ? (
-        <ComplianceEmptyState title="Violations" message="No HOS violations in range." />
+        <SectionErrorBoundary name="Violations">
+          <section data-testid="compliance-section-violations">
+            <HOSViolationsTab />
+          </section>
+        </SectionErrorBoundary>
       ) : null}
       {tab === "hos_history" ? (
-        <ComplianceEmptyState title="HOS History" message="No HOS history in this range." />
+        <SectionErrorBoundary name="HOS History">
+          <HosHistorySection operatingCompanyId={companyId} />
+        </SectionErrorBoundary>
       ) : null}
       {tab === "required_docs" ? (
         <SectionErrorBoundary name="Required Documents">
