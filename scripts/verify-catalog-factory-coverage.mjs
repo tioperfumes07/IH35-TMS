@@ -29,7 +29,13 @@ const EXCLUDED_TABLE_SUFFIXES = [
 // and tax_form_thresholds (year-keyed IRS reporting thresholds read by box1-aggregation). Neither fits the
 // generic factory model (no free-form Excel upload; specialized effective-dated/tax-year semantics), so
 // they are grandfathered here rather than force-fit onto the generic catalog factory.
-const KNOWN_STUB_TABLES = ["payee_tax_profile", "tax_form_thresholds"];
+// vendor_types (202607420000_vendor_types_catalog) is a per-entity, QBO-mirrorable catalog built on the
+// AF-1/AF-2/AF-3 pattern (catalogs.accounts / items / classes), NOT the generic Excel-upload CRUD model:
+// it carries qbo_vendor_type_id mirror + is_system-seeded rows + vendor_type_name/vendor_type_code columns
+// (no code/display_name/sort_order the generic factory requires). Its DEDICATED per-entity CRUD route +
+// QBO-mirror reconcile (mirroring accounts/items/classes .routes.ts) is follow-on block work; until that
+// ships it is grandfathered here — same treatment void_cancel_reasons had before its dedicated route landed.
+const KNOWN_STUB_TABLES = ["payee_tax_profile", "tax_form_thresholds", "vendor_types"];
 
 function fail(message) {
   console.error(`verify:catalog-factory-coverage FAIL: ${message}`);

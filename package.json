@@ -429,6 +429,7 @@
     "verify:bill-lines-load-id": "node scripts/verify-bill-lines-load-id.mjs",
     "verify:bank-automatch-observable": "node scripts/verify-bank-automatch-observable.mjs",
     "verify:bills-mdata-vendor-fk": "node scripts/verify-bills-mdata-vendor-fk.mjs",
+    "verify:vendor-types-catalog": "node scripts/verify-vendor-types-catalog.mjs",
     "verify:nav-integrity": "node scripts/verify-nav-integrity.mjs",
     "verify:no-silent-noop-posting": "node scripts/verify-no-silent-noop-posting.mjs",
     "verify:block-ready-c5-no-duplicate-arch-design": "node scripts/verify-block-ready-c5-no-duplicate-arch-design.mjs",
@@ -867,7 +868,6 @@
     "verify:custvend-par1": "node scripts/verify-custvend-par1.mjs",
     "verify:phase4-crossmodule-fks": "node scripts/verify-phase4-crossmodule-fks.mjs",
     "verify:claim-crossmodule-fks": "node scripts/verify-claim-crossmodule-fks.mjs",
-    "verify:banking-sync-strip-transaction-count": "node scripts/verify-banking-sync-strip-transaction-count.mjs",
     "verify:no-raw-date-input": "node scripts/verify-no-raw-date-input.mjs",
     "verify:no-nested-box": "node scripts/verify-no-nested-box.mjs",
     "verify:create-forms-wired": "node scripts/verify-create-forms-wired.mjs",
@@ -951,7 +951,8 @@
     "verify:qbo-parity-customers": "node scripts/verify-qbo-parity-customers.mjs",
     "verify:fleet-table-owner-leased-scope": "node scripts/verify-fleet-table-owner-leased-scope.mjs",
     "verify:no-emoji-in-dispatch-chrome": "node scripts/verify-no-emoji-in-dispatch-chrome.mjs",
-    "verify:docs-upload-viewed-entity": "node scripts/verify-docs-upload-viewed-entity.mjs"
+    "verify:docs-upload-viewed-entity": "node scripts/verify-docs-upload-viewed-entity.mjs",
+    "verify:banking-sync-strip-transaction-count": "node scripts/verify-banking-sync-strip-transaction-count.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",
