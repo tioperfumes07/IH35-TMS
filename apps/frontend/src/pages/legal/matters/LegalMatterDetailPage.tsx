@@ -14,8 +14,15 @@ import { PageHeader } from "../../../components/layout/PageHeader";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { formatDateUS, formatDateTimeUS } from "../../../lib/formatDate";
+import { formatUsd, formatUsdCents } from "../../../lib/money";
 
 type Tab = "overview" | "timeline" | "documents" | "deadlines" | "notes";
+
+function fieldOrDash(value: unknown): string {
+  if (value === null || value === undefined || value === "") return "—";
+  return String(value);
+}
 
 export function LegalMatterDetailPage() {
   const { id = "" } = useParams();
@@ -144,9 +151,43 @@ export function LegalMatterDetailPage() {
             <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-800">
               <p>
                 <strong>Status:</strong> {String(matter?.status ?? "")} · <strong>Severity:</strong>{" "}
-                {String(matter?.severity ?? "")}
+                {String(matter?.severity ?? "")} · <strong>Our role:</strong> {fieldOrDash(matter?.our_role)}
               </p>
               <p className="mt-2">{String(matter?.description ?? "")}</p>
+
+              <div className="mt-3 grid gap-x-4 gap-y-1 border-t border-gray-100 pt-3 md:grid-cols-2">
+                <div><strong>Opposing party:</strong> {fieldOrDash(matter?.opposing_party)}</div>
+                <div><strong>Case number:</strong> {fieldOrDash(matter?.case_number)}</div>
+                <div><strong>Court:</strong> {fieldOrDash(matter?.court)}</div>
+                <div>
+                  <strong>Related driver:</strong>{" "}
+                  {matter?.related_driver_id ? (
+                    <Link to={`/drivers/${String(matter.related_driver_id)}/profile`} className="text-slate-700 underline">
+                      Open driver profile
+                    </Link>
+                  ) : (
+                    "—"
+                  )}
+                </div>
+                <div><strong>Amount claimed against us:</strong> {matter?.amount_claimed_against_us != null ? formatUsd(matter.amount_claimed_against_us as string | number) : "—"}</div>
+                <div><strong>Amount we seek:</strong> {matter?.amount_we_seek != null ? formatUsd(matter.amount_we_seek as string | number) : "—"}</div>
+                <div><strong>Financial reserve:</strong> {matter?.financial_reserve_cents != null ? formatUsdCents(matter.financial_reserve_cents as number) : "—"}</div>
+                <div><strong>Next hearing date:</strong> {matter?.next_hearing_date ? formatDateUS(matter.next_hearing_date) : "—"}</div>
+                <div><strong>Statute of limitations:</strong> {matter?.statute_of_limitations_at ? formatDateUS(matter.statute_of_limitations_at) : "—"}</div>
+                <div><strong>Closed at:</strong> {matter?.closed_at ? formatDateTimeUS(matter.closed_at as string) : "—"}</div>
+                <div><strong>Attorney:</strong> {fieldOrDash(matter?.attorney_name)}</div>
+                <div><strong>Attorney firm:</strong> {fieldOrDash(matter?.attorney_firm)}</div>
+                <div><strong>Attorney phone:</strong> {fieldOrDash(matter?.attorney_phone)}</div>
+                <div><strong>Attorney email:</strong> {fieldOrDash(matter?.attorney_email)}</div>
+              </div>
+
+              {matter?.outcome_summary ? (
+                <div className="mt-3 border-t border-gray-100 pt-3">
+                  <div className="text-xs font-semibold uppercase text-gray-500">Outcome summary</div>
+                  <p className="mt-1 whitespace-pre-wrap">{String(matter.outcome_summary)}</p>
+                </div>
+              ) : null}
+
               {admin &&
               ["settled", "dismissed", "judgment"].includes(String(matter?.status ?? "")) &&
               String(matter?.status ?? "") !== "closed" ? (
