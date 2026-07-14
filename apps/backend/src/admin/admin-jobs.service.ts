@@ -8,6 +8,7 @@ import { runForensicImportDeduped } from "../integrations/qbo/forensic-import.se
 import { auditBatchEvent, auditForensicImportError } from "../integrations/qbo/forensic-audit.service.js";
 import { runSamsaraHealthCheckForRow } from "../integrations/samsara/samsara.service.js";
 import { runAdminDeepHealthProbe } from "./health-deep.service.js";
+import { FIXTURE_USER_EMAIL_RE } from "../identity/fixture-email-pattern.js";
 
 export type AdminJobStatus = "queued" | "running" | "completed" | "failed";
 
@@ -350,9 +351,10 @@ async function markJobFailed(job: AdminJobRecord, errorMessage: string) {
   );
 }
 
-// USERS-1 PR B: RFC-2606 reserved test domain + CI probe naming patterns. Mirrors the
-// frontend FIXTURE_USER_EMAIL_RE in users.routes.ts — kept in sync manually.
-const PROBE_EMAIL_RE = /@example\.(com|org|net)$|(^|[.+_-])(m2-probe|m2-stop|verifyfix)\b/i;
+// USERS-1 PR B: RFC-2606 reserved test domain + CI probe naming patterns. The pattern is the shared
+// single source of truth in ../identity/fixture-email-pattern.js (also used by the users.routes create
+// guard) so the two can never drift.
+const PROBE_EMAIL_RE = FIXTURE_USER_EMAIL_RE;
 
 async function runOperation(job: AdminJobRecord): Promise<Record<string, unknown>> {
   // users.deactivate_probe_accounts operates on identity.users globally — no company RLS needed.
