@@ -810,6 +810,10 @@ jobs:
       - name: verify:qbo-parity-vendors
         run: npm run verify:qbo-parity-vendors
 
+      - name: verify:banking-inline-create --selftest
+        run: node scripts/verify-banking-inline-create.mjs --selftest
+      - name: verify:banking-inline-create
+        run: npm run verify:banking-inline-create
       - name: verify:compliance-violations-hos-wired --selftest
         run: node scripts/verify-compliance-violations-hos-wired.mjs --selftest
       - name: verify:compliance-violations-hos-wired
