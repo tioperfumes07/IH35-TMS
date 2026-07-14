@@ -19,6 +19,7 @@ import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { UploadZone } from "../../components/UploadZone";
 import { LaborTracker } from "../../components/maintenance/LaborTracker";
 import { TasksTab } from "../../components/tasks/TasksTab";
+import { EntityAuditHistoryTab } from "../../components/audit/EntityAuditHistoryTab";
 import { CreateBillModal } from "./components/CreateBillModal";
 import { CreateExpenseModal } from "./components/CreateExpenseModal";
 import { listWorkOrderLinkedFinancials } from "../../api/accounting";
@@ -729,6 +730,11 @@ export function WorkOrderDetailPage() {
 
       <section className="rounded-sm border border-gray-200 bg-white p-3">
         <TasksTab operatingCompanyId={companyId} targetType="work_order" targetId={id} targetLabel={`Work Order ${woNumber}`} />
+      </section>
+
+      <section className="rounded-sm border border-gray-200 bg-white p-3">
+        <h3 className="mb-2 text-sm font-semibold text-slate-900">Audit History</h3>
+        <EntityAuditHistoryTab operatingCompanyId={companyId} entityType="work_order" entityId={id ?? ""} />
       </section>
 
       <CreateBillModal
