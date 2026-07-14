@@ -943,7 +943,8 @@
     "verify:compliance-violations-hos-wired": "node scripts/verify-compliance-violations-hos-wired.mjs",
     "verify:banking-inline-create": "node scripts/verify-banking-inline-create.mjs",
     "verify:no-dead-clicks": "node scripts/verify-no-dead-clicks.mjs",
-    "verify:fuel-history-import-wired": "node scripts/verify-fuel-history-import-wired.mjs"
+    "verify:fuel-history-import-wired": "node scripts/verify-fuel-history-import-wired.mjs",
+    "verify:qbo-parity-vendors": "node scripts/verify-qbo-parity-vendors.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",
