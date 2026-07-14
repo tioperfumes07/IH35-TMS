@@ -129,7 +129,13 @@ export function TrailerProfilePage() {
         <ComplianceSection compliance={aggregate.compliance} plates={aggregate.plates} />
       </div>
       <div data-testid="tp-section-7-documents">
-        <DocumentsSection equipmentId={id} companyId={companyId} documents={aggregate.documents} />
+        <DocumentsSection
+          equipmentId={id}
+          equipmentNumber={String(equipment.equipment_number ?? id)}
+          companyId={companyId}
+          documents={aggregate.documents}
+          onUploaded={invalidateProfile}
+        />
       </div>
       <TrailerRecentActivitySection equipmentId={id} companyId={companyId} />
       <div data-testid="tp-section-8-action-bar">
