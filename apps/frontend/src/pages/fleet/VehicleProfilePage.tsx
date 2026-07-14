@@ -282,9 +282,11 @@ export function VehicleProfilePage() {
           <div data-testid="vp-section-10-documents">
           <DocumentsSection
             unitId={id}
+            unitNumber={unitNumber}
             companyId={companyId}
             documents={(profile.documents ?? []) as Parameters<typeof DocumentsSection>[0]["documents"]}
             photosSlot={<PhotoGallery photos={(profile.photos ?? []) as Parameters<typeof PhotoGallery>[0]["photos"]} />}
+            onUploaded={() => void profileQuery.refetch()}
           />
           </div>
           <div data-testid="vp-section-11-action-bar">

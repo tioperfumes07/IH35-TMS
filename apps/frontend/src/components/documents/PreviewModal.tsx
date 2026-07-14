@@ -77,7 +77,7 @@ export function PreviewModal({ file, canEditMetadata, onClose, onRequestEditMeta
             <img src={downloadUrl} alt={file.original_filename} className="max-h-[60vh] w-full rounded-sm object-contain" />
           ) : null}
           {!isLoading && !errorMessage && downloadUrl && isPdf(file.mime_type) ? (
-            <object data={downloadUrl} type="application/pdf" className="h-[60vh] w-full rounded-sm border border-gray-200">
+            <object data={downloadUrl} type="application/pdf" className="h-[60vh] w-full rounded-sm">
               <p className="p-3 text-sm text-gray-600">PDF preview unavailable in this browser. Use Download.</p>
             </object>
           ) : null}
