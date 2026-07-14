@@ -151,7 +151,7 @@ describeIntegration("FIN-18 settlement GL posting (real Postgres)", () => {
         `INSERT INTO identity.users (id, email, role, preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
         [userId, `fin18-${suffix}@test.local`]
       );
-      // Grant the dedicated actor company access — postSettlementToGl runs withCurrentUser(actor.userId)
+      // Grant the dedicated actor company access — postSettlementToGl runs under the actor's own user session (userId)
       // and its writes are RLS-scoped to a company the actor can access.
       await db.query(
         `INSERT INTO org.user_company_access (user_id, company_id) VALUES ($1::uuid,$2::uuid) ON CONFLICT (user_id, company_id) DO NOTHING`,
