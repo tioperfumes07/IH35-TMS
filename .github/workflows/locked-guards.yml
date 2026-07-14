@@ -775,6 +775,11 @@ jobs:
         run: node scripts/verify-safety-canonical-table-reads.mjs --selftest
       - name: verify:safety-canonical-table-reads
         run: npm run verify:safety-canonical-table-reads
+
+      - name: verify:ent-audit-all-entity-types --selftest
+        run: node scripts/verify-ent-audit-all-entity-types.mjs --selftest
+      - name: verify:ent-audit-all-entity-types
+        run: npm run verify:ent-audit-all-entity-types
       - name: verify:safety-csa-canonical-read --selftest
         run: node scripts/verify-safety-csa-canonical-read.mjs --selftest
       - name: verify:safety-csa-canonical-read
@@ -788,3 +793,7 @@ jobs:
         run: node scripts/verify-qbo-parity-banking-home.mjs --selftest
       - name: verify:qbo-parity-banking-home
         run: npm run verify:qbo-parity-banking-home
+      - name: verify:system-module --selftest
+        run: node scripts/verify-system-module.mjs --selftest
+      - name: verify:system-module
+        run: npm run verify:system-module
