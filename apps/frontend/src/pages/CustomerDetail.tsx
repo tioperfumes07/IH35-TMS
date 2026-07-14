@@ -60,6 +60,7 @@ import { FreeTimeDetentionEditor } from "../components/customers/FreeTimeDetenti
 import { CustomerRelationshipScore } from "../components/customers/CustomerRelationshipScore";
 import { DocumentsTab } from "../components/documents/DocumentsTab";
 import { TasksTab } from "../components/tasks/TasksTab";
+import { EntityAuditHistoryTab } from "../components/audit/EntityAuditHistoryTab";
 import { CustomerContractsTab } from "../components/customers/CustomerContractsTab";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { Modal } from "../components/Modal";
@@ -81,7 +82,7 @@ import { useCompanyContext } from "../contexts/CompanyContext";
 import { useListState } from "../components/list-state";
 import { EntityLink } from "../components/shared/EntityLink";
 
-const tabs = ["Profile", "Contacts", "Billing & Receivables", "Quality & History", "Lanes & Pricing", "Documents", "COI", "Contracts", "Portal Users", "Tasks", "Loads", "Per-Customer P&L"] as const;
+const tabs = ["Profile", "Contacts", "Billing & Receivables", "Quality & History", "Lanes & Pricing", "Documents", "COI", "Contracts", "Portal Users", "Tasks", "Loads", "Per-Customer P&L", "Audit History"] as const;
 type CustomerTab = (typeof tabs)[number];
 
 // Per-Customer P&L default window — trailing 12 months (ISO yyyy-mm-dd), matching the report's date model.
@@ -1751,6 +1752,10 @@ export function CustomerDetailPage() {
             )}
           </DataPanel>
         </div>
+      ) : null}
+
+      {activeTab === "Audit History" ? (
+        <EntityAuditHistoryTab operatingCompanyId={operatingCompanyId ?? ""} entityType="customer" entityId={customer.id} />
       ) : null}
 
       {activeTab === "Contacts" ? (
