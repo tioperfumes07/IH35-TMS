@@ -13,11 +13,14 @@ import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
 import { SendMessageModal } from "../../components/drivers/SendMessageModal";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
+// Office-facing timestamps must render through the shared US/Central formatter (never device
+// locale/timezone) — same rule already applied on DriverHosDetailPage; this inbox was the one
+// driver-module surface still calling the raw Date.toLocaleString().
 function formatWhen(iso: string) {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString();
+  const formatted = formatDateTimeUS(iso);
+  return formatted ? `${formatted} CT` : iso;
 }
 
 function ConversationList({

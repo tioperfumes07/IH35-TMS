@@ -548,6 +548,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Search by name"
+                  aria-label="Search drivers by name"
                   className="h-8 w-full max-w-xs rounded-sm border border-gray-300 px-2 text-[13px]"
                 />
               </div>
