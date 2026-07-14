@@ -28,6 +28,13 @@ function hasReqCompanyExtraction(source) {
 function hasMembershipGuard(source, category) {
   if (source.includes("assertCompanyMembership(")) return true;
 
+  // assertAccessibleCompanyScope() is the MULTI-company equivalent of assertCompanyMembership: it
+  // queries org.user_company_access and returns true only when the caller can access EVERY requested
+  // operating_company_id (Owner bypass). It is the sanctioned membership check for cross-entity
+  // read-only reports (multi-entity roll-up + consolidated statements), which legitimately take a LIST
+  // of operating_company_ids. Recognizing it is not a weakening — it enforces membership per company.
+  if (source.includes("assertAccessibleCompanyScope(")) return true;
+
   if (category === "accounting") {
     const importsSharedWithScope =
       /\bwithCompanyScope\b/.test(source) &&
