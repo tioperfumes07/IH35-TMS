@@ -242,8 +242,11 @@ function ProjectionPanel({
           {form.id ? (
             <button type="button" className="h-7 rounded-sm border border-gray-300 bg-white px-2 hover:bg-gray-50" onClick={() => { setForm(emptyRow()); setShowMore(false); }}>Cancel</button>
           ) : null}
+          {/* PUNCHLIST #193: this is the panel's PRIMARY submit action (not a reference-dropdown mini-
+              create), so it takes the locked "+ Create" vocab; "+ Add new ___" is reserved for the
+              inline dropdown-create pattern elsewhere. */}
           <button type="button" className="h-7 rounded-sm bg-slate-700 px-3 font-semibold text-white hover:bg-slate-800 disabled:opacity-50" disabled={saveMutation.isPending} onClick={() => saveMutation.mutate()}>
-            {form.id ? "Save" : `+ Add new ${direction}`}
+            {form.id ? "Save" : `+ Create ${direction} line`}
           </button>
         </div>
       </div>
