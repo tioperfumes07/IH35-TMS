@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { DispatchLoadRow } from "../../api/loads";
 import { listOpenPreSettlements } from "../../api/driverFinance";
 import { listUnitsWithoutLoad } from "../../api/dispatch";
-import { FLAG_EMOJI_BY_CODE, STATUS_LABEL, formatMoneyCents, toRouteSummary } from "../../components/dispatch/constants";
+import { flagDotColor, flagDotLabel, flagDotTag, hasVisibleFlag, STATUS_LABEL, formatMoneyCents, toRouteSummary } from "../../components/dispatch/constants";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import type { DataTableErrorState } from "../../lib/tableError";
@@ -60,7 +60,15 @@ function TripCard({
           {tag ? (
             <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">{tag}</span>
           ) : null}
-          <span className="text-sm">{FLAG_EMOJI_BY_CODE[load.flag_code] ?? "⚪"}</span>
+          {hasVisibleFlag(load.flag_code) ? (
+            <span
+              className="inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full text-[8px] font-bold text-white"
+              style={{ backgroundColor: flagDotColor(load.flag_code) }}
+              title={flagDotLabel(load.flag_code)}
+            >
+              {flagDotTag(load.flag_code)}
+            </span>
+          ) : null}
         </div>
       </div>
       <div className="mt-1 text-xs text-gray-700">{load.customer_name ?? "—"}</div>

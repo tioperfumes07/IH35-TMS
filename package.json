@@ -944,6 +944,7 @@
     "verify:compliance-violations-hos-wired": "node scripts/verify-compliance-violations-hos-wired.mjs",
     "verify:banking-inline-create": "node scripts/verify-banking-inline-create.mjs",
     "verify:no-dead-clicks": "node scripts/verify-no-dead-clicks.mjs",
+    "verify:no-emoji-in-dispatch-chrome": "node scripts/verify-no-emoji-in-dispatch-chrome.mjs",
     "verify:fuel-history-import-wired": "node scripts/verify-fuel-history-import-wired.mjs",
     "verify:qbo-parity-vendors": "node scripts/verify-qbo-parity-vendors.mjs",
     "verify:road-service-route-mounted": "node scripts/verify-road-service-route-mounted.mjs"

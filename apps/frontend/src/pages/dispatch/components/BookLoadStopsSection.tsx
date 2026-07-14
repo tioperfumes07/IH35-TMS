@@ -73,7 +73,7 @@ export function BookLoadStopsSection({ control, register, setValue }: Props) {
                   {`${currentStops[index]?.address_full || currentStops[index]?.address_line1 || (isPickup ? "first stop is always a pickup" : "auto-added because a pickup exists")}`}
                 </span>
                 {index >= 2 ? (
-                  <button type="button" className={`text-[10px] font-semibold ${isPickup ? "text-white" : "text-[#A32D2D]"}`} onClick={() => remove(index)}>
+                  <button type="button" className={`text-[10px] font-semibold ${isPickup ? "text-white" : "text-[#dc2626]"}`} onClick={() => remove(index)}>
                     Remove
                   </button>
                 ) : null}
@@ -213,15 +213,15 @@ export function BookLoadStopsSection({ control, register, setValue }: Props) {
 
       {/* render-v6 §C stop-add buttons. */}
       <div className="flex flex-wrap gap-3">
-        <button type="button" className="text-xs font-semibold text-[#16203a] hover:underline" onClick={() => append(newStop("pickup", fields.length + 1))}>
+        <button type="button" className="text-xs font-semibold text-[#1f2a44] hover:underline" onClick={() => append(newStop("pickup", fields.length + 1))}>
           + Create pickup
         </button>
-        <button type="button" className="text-xs font-semibold text-[#16203a] hover:underline" onClick={() => append(newStop("delivery", fields.length + 1))}>
+        <button type="button" className="text-xs font-semibold text-[#1f2a44] hover:underline" onClick={() => append(newStop("delivery", fields.length + 1))}>
           + Create delivery
         </button>
         <button
           type="button"
-          className="text-xs font-semibold text-[#16203a] hover:underline"
+          className="text-xs font-semibold text-[#1f2a44] hover:underline"
           onClick={() => append(newStop(fields.length % 2 === 0 ? "pickup" : "delivery", fields.length + 1))}
         >
           + Create stop · multi-leg

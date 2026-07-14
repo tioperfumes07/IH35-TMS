@@ -4,7 +4,7 @@ import "../../design/design-tokens.css";
 import type { DataTableErrorState } from "../../lib/tableError";
 import { Button } from "../Button";
 import { ListErrorState } from "../ListErrorState";
-import { FLAG_EMOJI_BY_CODE, STATUS_LABEL, formatMoneyCents } from "./constants";
+import { flagDotColor, flagDotLabel, flagDotTag, hasVisibleFlag, STATUS_LABEL, formatMoneyCents } from "./constants";
 import { InTransitEtaChip } from "./InTransitEtaChip";
 import { DriverHosPill } from "../../pages/dispatch/DriverHosPill";
 import { DriverHosClockCells, DriverHosStatusDot } from "./hos/DriverHosClocks";
@@ -254,7 +254,17 @@ export function DispatchList({
                         />
                       </td>
                     ) : null}
-                    <td className="px-3 py-2">{FLAG_EMOJI_BY_CODE[load.flag_code] ?? "⚪"}</td>
+                    <td className="px-3 py-2">
+                      {hasVisibleFlag(load.flag_code) ? (
+                        <span
+                          className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full text-[8px] font-bold text-white"
+                          style={{ backgroundColor: flagDotColor(load.flag_code) }}
+                          title={flagDotLabel(load.flag_code)}
+                        >
+                          {flagDotTag(load.flag_code)}
+                        </span>
+                      ) : null}
+                    </td>
                     <td className="code-cell px-3 py-2 font-medium text-gray-800">{load.load_number}</td>
                     <td className="min-w-0 max-w-[240px] px-3 py-2">
                       <span title={load.customer_name ?? undefined} className="single-line-name">
@@ -358,7 +368,7 @@ export function DispatchList({
                     <tr className="border-b border-slate-200 bg-slate-100">
                       <td colSpan={colSpan} className="px-3 py-1.5">
                         <div className="flex items-center gap-2 text-xs text-slate-700">
-                          <span className="font-semibold">⚠ Driver has open pre-settlement</span>
+                          <span className="font-semibold">Driver has open pre-settlement</span>
                           {openPreSettlement.settlement_number ? (
                             <span className="font-mono text-slate-700">{openPreSettlement.settlement_number}</span>
                           ) : null}
@@ -403,7 +413,17 @@ export function DispatchList({
             >
               <div className="flex items-center justify-between">
                 <div className="code-cell font-semibold">{load.load_number}</div>
-                <div>{FLAG_EMOJI_BY_CODE[load.flag_code] ?? "⚪"}</div>
+                <div>
+                  {hasVisibleFlag(load.flag_code) ? (
+                    <span
+                      className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full text-[8px] font-bold text-white"
+                      style={{ backgroundColor: flagDotColor(load.flag_code) }}
+                      title={flagDotLabel(load.flag_code)}
+                    >
+                      {flagDotTag(load.flag_code)}
+                    </span>
+                  ) : null}
+                </div>
               </div>
               <div className="mt-1 min-w-0 text-sm text-gray-700">
                 <span title={load.customer_name ?? undefined} className="single-line-name">

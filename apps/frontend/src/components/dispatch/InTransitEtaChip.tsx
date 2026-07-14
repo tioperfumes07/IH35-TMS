@@ -8,7 +8,7 @@ type Props = {
 };
 
 function sourceGlyph(source: string) {
-  if (source === "samsara") return "📡";
+  if (source === "samsara") return "◉";
   if (source === "manual") return "✎";
   return "◌";
 }
