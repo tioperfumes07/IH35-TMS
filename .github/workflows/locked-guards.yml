@@ -797,3 +797,8 @@ jobs:
         run: node scripts/verify-system-module.mjs --selftest
       - name: verify:system-module
         run: npm run verify:system-module
+
+      - name: verify:fuel-history-import-wired --selftest
+        run: node scripts/verify-fuel-history-import-wired.mjs --selftest
+      - name: verify:fuel-history-import-wired
+        run: npm run verify:fuel-history-import-wired
