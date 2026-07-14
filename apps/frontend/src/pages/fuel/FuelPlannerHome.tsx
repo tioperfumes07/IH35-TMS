@@ -5,6 +5,7 @@ import {
   getFuelActiveRoutes,
   getFuelComplianceSummary,
   getFuelDashboard,
+  getFuelTransactions,
   getLovesSyncStatus,
   getFuelPlannerSettings,
   getFuelRecommendationDetail,
@@ -26,6 +27,7 @@ import { CompliancePanel } from "./components/CompliancePanel";
 import { FuelGlMappingCoverage } from "./components/FuelGlMappingCoverage";
 import { FuelKpiRow } from "./components/FuelKpiRow";
 import { HosRulesBox } from "./components/HosRulesBox";
+import { ImportFuelTransactionsModal } from "./components/ImportFuelTransactionsModal";
 import { RelayDepositReview } from "./components/RelayDepositReview";
 import { RouteDiagramSvg } from "./components/RouteDiagramSvg";
 import { SavingsPanel } from "./components/SavingsPanel";
@@ -60,6 +62,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
   const queryClient = useQueryClient();
   const companyId = selectedCompanyId ?? "";
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [tab, setTab] = useState<FuelTabId>(initialTab);
 
   useEffect(() => {
@@ -97,6 +100,13 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
     queryKey: ["fuel", "planner", "savings", companyId],
     queryFn: () => getFuelSavingsSummary(companyId),
     enabled: Boolean(companyId),
+  });
+  // FUEL-4: History tab real data — GET /api/v1/fuel/transactions (already existed on the
+  // backend; the tab previously hardcoded `rows={[]}`). Only fetched while the History tab is active.
+  const fuelTransactionsQuery = useQuery({
+    queryKey: ["fuel", "transactions", companyId],
+    queryFn: () => getFuelTransactions(companyId, { limit: 200 }),
+    enabled: Boolean(companyId) && tab === "history",
   });
 
   const activeRoute = activeRoutesQuery.data?.routes?.[0] ?? null;
@@ -230,15 +240,21 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
           <section className="rounded-sm border border-gray-200 bg-white p-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-gray-900">Fuel Transactions</h3>
-              <ActionButton disabled onClick={() => pushToast("Fuel import UI coming soon (requires backend endpoint)", "info")}>
-                Import Fuel Transactions
-              </ActionButton>
+              <ActionButton onClick={() => setImportOpen(true)}>Import Fuel Transactions</ActionButton>
             </div>
             <p className="mt-2 text-xs text-gray-600">
-              Fuel transaction history (requires backend API endpoint for real data).
+              Fuel transaction history from fleet-card imports (Love&apos;s / WEX / EFS / Comdata).
             </p>
             <div className="mt-3">
-              <FuelTransactionsTable rows={[]} />
+              {fuelTransactionsQuery.isLoading ? (
+                <p className="text-xs text-gray-500">Loading fuel transactions…</p>
+              ) : fuelTransactionsQuery.isError ? (
+                <p className="text-xs text-red-700">
+                  {String((fuelTransactionsQuery.error as Error)?.message || "Failed to load fuel transactions.")}
+                </p>
+              ) : (
+                <FuelTransactionsTable rows={fuelTransactionsQuery.data?.transactions ?? []} />
+              )}
             </div>
           </section>
         </div>
@@ -345,6 +361,15 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
         onClose={() => setUploadOpen(false)}
         onUploaded={() => {
           void queryClient.invalidateQueries({ queryKey: ["fuel", "planner"] });
+        }}
+      />
+
+      <ImportFuelTransactionsModal
+        open={importOpen}
+        operatingCompanyId={companyId}
+        onClose={() => setImportOpen(false)}
+        onImported={() => {
+          void queryClient.invalidateQueries({ queryKey: ["fuel", "transactions", companyId] });
         }}
       />
     </div>

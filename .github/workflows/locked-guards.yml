@@ -815,6 +815,10 @@ jobs:
         run: node scripts/verify-road-service-route-mounted.mjs --selftest
       - name: verify:road-service-route-mounted
         run: npm run verify:road-service-route-mounted
+      - name: verify:fuel-history-import-wired --selftest
+        run: node scripts/verify-fuel-history-import-wired.mjs --selftest
+      - name: verify:fuel-history-import-wired
+        run: npm run verify:fuel-history-import-wired
       - name: verify:banking-inline-create --selftest
         run: node scripts/verify-banking-inline-create.mjs --selftest
       - name: verify:banking-inline-create
