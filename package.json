@@ -928,14 +928,14 @@
     "verify:safety-canonical-table-reads": "node scripts/verify-safety-canonical-table-reads.mjs",
     "verify:border-crossing-canonical-relations": "node scripts/verify-border-crossing-canonical-relations.mjs",
     "verify:units-vin-dup-prevention": "node scripts/verify-units-vin-dup-prevention.mjs",
-    "verify:tracker-no-duplicate-block-ids": "node scripts/verify-tracker-no-duplicate-block-ids.mjs",
+    "verify:safety-csa-canonical-read": "node scripts/verify-safety-csa-canonical-read.mjs",
     "verify:qbo-ap-pull-dbflag": "node scripts/verify-qbo-ap-pull-dbflag.mjs",
     "verify:no-test-fixture-names": "node scripts/verify-no-test-fixture-names.mjs",
     "verify:wo-audit-entity-type": "node scripts/verify-wo-audit-entity-type.mjs",
-    "verify:safety-csa-canonical-read": "node scripts/verify-safety-csa-canonical-read.mjs",
     "verify:system-module": "node scripts/verify-system-module.mjs",
+    "verify:qbo-parity-customers": "node scripts/verify-qbo-parity-customers.mjs",
     "verify:ent-audit-all-entity-types": "node scripts/verify-ent-audit-all-entity-types.mjs",
-    "verify:road-service-route-mounted": "node scripts/verify-road-service-route-mounted.mjs",
+    "verify:tracker-no-duplicate-block-ids": "node scripts/verify-tracker-no-duplicate-block-ids.mjs",
     "verify:qbo-parity-banking-home": "node scripts/verify-qbo-parity-banking-home.mjs",
     "verify:consolidated-elimination": "node scripts/verify-consolidated-elimination.mjs",
     "verify:qbo-parity-bills-invoices-lists": "node scripts/verify-qbo-parity-bills-invoices-lists.mjs",
@@ -944,7 +944,8 @@
     "verify:banking-inline-create": "node scripts/verify-banking-inline-create.mjs",
     "verify:no-dead-clicks": "node scripts/verify-no-dead-clicks.mjs",
     "verify:fuel-history-import-wired": "node scripts/verify-fuel-history-import-wired.mjs",
-    "verify:qbo-parity-vendors": "node scripts/verify-qbo-parity-vendors.mjs"
+    "verify:qbo-parity-vendors": "node scripts/verify-qbo-parity-vendors.mjs",
+    "verify:road-service-route-mounted": "node scripts/verify-road-service-route-mounted.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",

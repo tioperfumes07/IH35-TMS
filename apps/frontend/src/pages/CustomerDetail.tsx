@@ -12,6 +12,8 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { z } from "zod";
 import { listInvoices, type Invoice } from "../api/accounting";
+import { listLoads, type DispatchLoadRow } from "../api/loads";
+import { getCustomerProfitability, type CustomerProfitabilityRow } from "../api/reports";
 import { listCustomerPayments, recordCustomerPayment, unapplyCustomerPayment, type CustomerPaymentListRow } from "../api/customers";
 import { listUsStates } from "../api/catalogs";
 import { ApiError, apiRequest } from "../api/client";
@@ -80,8 +82,23 @@ import { useCompanyContext } from "../contexts/CompanyContext";
 import { useListState } from "../components/list-state";
 import { EntityLink } from "../components/shared/EntityLink";
 
-const tabs = ["Profile", "Contacts", "Billing & Receivables", "Quality & History", "Lanes & Pricing", "Documents", "COI", "Contracts", "Portal Users", "Tasks", "Audit History"] as const;
+const tabs = ["Profile", "Contacts", "Billing & Receivables", "Quality & History", "Lanes & Pricing", "Documents", "COI", "Contracts", "Portal Users", "Tasks", "Loads", "Per-Customer P&L", "Audit History"] as const;
 type CustomerTab = (typeof tabs)[number];
+
+// Per-Customer P&L default window — trailing 12 months (ISO yyyy-mm-dd), matching the report's date model.
+function trailing12mRange(): { start: string; end: string } {
+  const now = new Date();
+  const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const start = new Date(Date.UTC(now.getUTCFullYear() - 1, now.getUTCMonth(), now.getUTCDate()));
+  return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) };
+}
+
+function loadStatusVariant(status: string | null | undefined): "crit" | "warn" | "positive" | "neutral" {
+  if (status === "delivered" || status === "completed" || status === "invoiced" || status === "paid") return "positive";
+  if (status === "cancelled" || status === "abandoned" || status === "driver_walkoff" || status === "driver_no_show") return "crit";
+  if (status === "in_transit" || status === "dispatched" || status === "assigned") return "warn";
+  return "neutral";
+}
 
 function formatBillingSummaryError(error: unknown): string {
   if (error instanceof ApiError) {
@@ -334,6 +351,7 @@ export function CustomerDetailPage() {
   const { selectedCompanyId } = useCompanyContext();
 
   const [activeTab, setActiveTab] = useState<CustomerTab>("Profile");
+  const [pnlRange, setPnlRange] = useState(trailing12mRange);
   useEffect(() => {
     if (searchParams.get("tab") === "billing") {
       setActiveTab("Billing & Receivables");
@@ -469,6 +487,40 @@ export function CustomerDetailPage() {
     queryFn: () => listFmcsaLookups({ limit: 25 }).then((res) => res.lookups),
     enabled: fmcsaHistoryOpen,
   });
+  // TMS Loads tab — reuse the shared loads list endpoint (mdata.loads), scoped to this customer +
+  // operating company. Lazy: only fetches once the Loads tab is opened. No new backend.
+  const customerLoadsQuery = useQuery({
+    queryKey: ["customer-loads", id, operatingCompanyId],
+    queryFn: () =>
+      listLoads({
+        customer_id: id,
+        operating_company_id: operatingCompanyId ? [operatingCompanyId] : undefined,
+        limit: 200,
+        sort: "created_at:desc",
+      }).then((res) => res.loads),
+    enabled: Boolean(id && operatingCompanyId && activeTab === "Loads"),
+  });
+  // Per-Customer P&L tab — reuse the EXISTING Customer Profitability report endpoint
+  // (getCustomerProfitability). The report PAGE takes no customer prop (it reads companyId from
+  // context and returns every customer), so we reuse its DATA SOURCE scoped to this customer and pick
+  // this customer's row. min_revenue_cents=0 so this customer is never filtered out. No new backend.
+  const customerPnlQuery = useQuery({
+    queryKey: ["customer-pnl", id, operatingCompanyId, pnlRange.start, pnlRange.end],
+    queryFn: () =>
+      getCustomerProfitability({
+        operating_company_id: operatingCompanyId!,
+        period_start: pnlRange.start,
+        period_end: pnlRange.end,
+        min_revenue_cents: 0,
+      }),
+    enabled: Boolean(id && operatingCompanyId && activeTab === "Per-Customer P&L"),
+    retry: false,
+  });
+  const customerPnlRow: CustomerProfitabilityRow | undefined = useMemo(
+    () => (customerPnlQuery.data?.by_customer ?? []).find((r) => r.customer_id === id),
+    [customerPnlQuery.data, id]
+  );
+
   const customer = detailQuery.data;
   const contacts = contactsQuery.data ?? customer?.contacts ?? [];
   const factoringVendors = useMemo(
@@ -916,6 +968,8 @@ export function CustomerDetailPage() {
   const recentInvoicesListState = useListState(recentInvoicesQuery, recentInvoices.length === 0);
   const customerLanesListState = useListState(lanesQuery, customerLanes.length === 0);
   const fmcsaHistoryListState = useListState(fmcsaHistoryQuery, (fmcsaHistoryQuery.data ?? []).length === 0);
+  const customerLoads = customerLoadsQuery.data ?? [];
+  const customerLoadsListState = useListState(customerLoadsQuery, customerLoads.length === 0);
 
   if (detailQuery.isLoading) return <div className="text-sm text-gray-500">Loading customer...</div>;
   if (!customer) {
@@ -1583,6 +1637,121 @@ export function CustomerDetailPage() {
         <DataPanel title="Tasks">
           <TasksTab operatingCompanyId={operatingCompanyId ?? ""} targetType="customer" targetId={customer.id} targetLabel={customer.name} />
         </DataPanel>
+      ) : null}
+
+      {activeTab === "Loads" ? (
+        <DataPanel title="Loads">
+          <ParityTable<DispatchLoadRow>
+            rows={customerLoads}
+            rowKey={(load) => load.id}
+            loading={customerLoadsListState.isLoading}
+            storageKey="customer-detail-loads"
+            emptyText="No loads for this customer yet."
+            exportFilename="customer-loads"
+            onRowClick={(load) => navigate(`/dispatch/loads/${load.id}`)}
+            columns={[
+              {
+                key: "load_number",
+                label: "Load #",
+                sortable: true,
+                cellClass: "font-medium",
+                render: (load) => (
+                  <EntityLink kind="load" id={load.id} label={load.load_number} className="text-slate-700 hover:underline" />
+                ),
+              },
+              {
+                key: "status",
+                label: "Status",
+                sortable: true,
+                render: (load) => <StatusBadge variant={loadStatusVariant(load.status)}>{load.status ?? "—"}</StatusBadge>,
+              },
+              { key: "lane", label: "Lane", render: (load) => `${load.first_pickup_city ?? "—"} → ${load.first_delivery_city ?? "—"}` },
+              { key: "assigned_primary_driver_name", label: "Driver", render: (load) => load.assigned_primary_driver_name ?? "—" },
+              { key: "assigned_unit_number", label: "Unit", render: (load) => load.assigned_unit_number ?? "—" },
+              {
+                key: "rate_total_cents",
+                label: "Rate",
+                sortable: true,
+                cellClass: "text-right tabular-nums",
+                render: (load) => formatUsdCents(Number(load.rate_total_cents ?? 0)),
+              },
+              {
+                key: "created_at",
+                label: "Created",
+                sortable: true,
+                cellClass: "text-right tabular-nums",
+                render: (load) => (load.created_at ? new Date(load.created_at).toLocaleDateString() : "—"),
+              },
+            ]}
+          />
+        </DataPanel>
+      ) : null}
+
+      {activeTab === "Per-Customer P&L" ? (
+        <div className="space-y-3">
+          <DataPanel title="Per-Customer profitability">
+            <div className="mb-3 flex flex-wrap items-end gap-3">
+              <label className="text-xs font-semibold text-gray-600">
+                From
+                <DatePicker
+                  className="mt-1 block h-9 rounded-sm border border-gray-300 px-2"
+                  value={pnlRange.start}
+                  onChange={(next) => setPnlRange((p) => ({ ...p, start: next }))}
+                />
+              </label>
+              <label className="text-xs font-semibold text-gray-600">
+                To
+                <DatePicker
+                  className="mt-1 block h-9 rounded-sm border border-gray-300 px-2"
+                  value={pnlRange.end}
+                  onChange={(next) => setPnlRange((p) => ({ ...p, end: next }))}
+                />
+              </label>
+              <button
+                type="button"
+                className="text-xs font-semibold text-slate-700 underline"
+                onClick={() => navigate("/reports/customer-profitability")}
+              >
+                Open full report
+              </button>
+            </div>
+            {customerPnlQuery.isError ? (
+              <ListErrorBanner
+                message={(customerPnlQuery.error as Error)?.message ?? "Failed to load profitability."}
+                onRetry={() => void customerPnlQuery.refetch()}
+              />
+            ) : customerPnlQuery.isLoading ? (
+              <div className="text-xs text-gray-500">Loading profitability…</div>
+            ) : !customerPnlRow ? (
+              <div className="text-sm text-gray-600">No profitability data for this customer in the selected period.</div>
+            ) : (
+              <>
+                <FlatFieldGrid
+                  columns={4}
+                  fields={[
+                    { label: "Loads", value: String(customerPnlRow.load_count) },
+                    { label: "Revenue", value: formatUsdCents(customerPnlRow.revenue_cents) },
+                    { label: "Direct cost", value: formatUsdCents(customerPnlRow.direct_cost_cents) },
+                    { label: "Gross margin", value: formatUsdCents(customerPnlRow.gross_margin_cents) },
+                    { label: "Margin %", value: `${(Number(customerPnlRow.gross_margin_pct) || 0).toFixed(1)}%` },
+                    { label: "Avg rev / load", value: formatUsdCents(customerPnlRow.avg_revenue_per_load_cents) },
+                    { label: "A/R aging", value: formatUsdCents(customerPnlRow.ar_aging_balance_cents) },
+                    { label: "Days since last load", value: customerPnlRow.days_since_last_load == null ? "—" : `${customerPnlRow.days_since_last_load}d` },
+                  ]}
+                />
+                {(customerPnlRow.flags ?? []).length > 0 ? (
+                  <div className="mt-3 flex flex-wrap gap-1">
+                    {(customerPnlRow.flags ?? []).map((f) => (
+                      <span key={f} className="rounded-sm border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-[#1f2a44]">
+                        {f}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+              </>
+            )}
+          </DataPanel>
+        </div>
       ) : null}
 
       {activeTab === "Audit History" ? (
