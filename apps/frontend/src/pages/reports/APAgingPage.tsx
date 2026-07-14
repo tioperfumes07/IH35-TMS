@@ -4,6 +4,7 @@ import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { exportApAging, getApAgingReport, type APAgingRow } from "../../api/reports";
+import { formatDateUS } from "../../lib/formatDate";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -94,7 +95,7 @@ export function APAgingPage() {
       { key: "bucket_31_60_cents", label: "31–60", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.bucket_31_60_cents) },
       { key: "bucket_61_90_cents", label: "61–90", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.bucket_61_90_cents) },
       { key: "bucket_91_plus_cents", label: "91+", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.bucket_91_plus_cents) },
-      { key: "last_payment_date", label: "Last Pmt", sortable: true, render: (r) => r.last_payment_date ?? "—" },
+      { key: "last_payment_date", label: "Last Pmt", sortable: true, render: (r) => (r.last_payment_date ? formatDateUS(r.last_payment_date) : "—") },
     ],
     [],
   );
@@ -110,7 +111,7 @@ export function APAgingPage() {
       <ReportsSubNav />
       <PageHeader
         title="A/P aging"
-        subtitle={`As of ${asOf} · open bills by vendor · Accrual basis`}
+        subtitle={`As of ${formatDateUS(asOf)} · open bills by vendor · Accrual basis`}
         backHref="/reports"
         breadcrumb={["Reports", "A/P Aging"]}
         actions={
@@ -195,7 +196,7 @@ export function APAgingPage() {
           <div className="text-lg font-semibold">{money(kpis.day31_60)}</div>
         </div>
         <div
-          className={`rounded-sm border bg-white px-3 py-2 ${kpis.day61p > 1_000_000 ? "border-2 border-[#DC3545]" : "border border-gray-200"}`}
+          className={`rounded-sm border bg-white px-3 py-2 ${kpis.day61p > 1_000_000 ? "border-2 border-[#dc2626]" : "border border-gray-200"}`}
         >
           <div className="text-[11px] font-semibold uppercase text-gray-500">61+ days</div>
           <div className="text-lg font-semibold">{money(kpis.day61p)}</div>
@@ -216,9 +217,19 @@ export function APAgingPage() {
           }
           navigate(`/vendors/${r.vendor_id}?tab=ap`);
         }}
-        rowActions={() => (
+        rowActions={(r) => (
           <div className="flex flex-wrap justify-end gap-1">
-            <Button size="sm" variant="secondary" disabled onClick={() => pushToast("Pay bills from Banking → Credit Card / Check flow", "info")}>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                if (!isVendorUuid(r.vendor_id)) {
+                  pushToast("This row is not linked to a vendor master record. Resolve vendor UUID on bills first.", "info");
+                  return;
+                }
+                navigate(`/accounting/bills?vendor_id=${r.vendor_id}&status=unpaid`);
+              }}
+            >
               Pay now
             </Button>
             <Button size="sm" variant="secondary" disabled onClick={() => pushToast("Scheduled payments ship Phase 6+", "info")}>

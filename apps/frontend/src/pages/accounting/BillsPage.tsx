@@ -161,12 +161,18 @@ export function BillsPage() {
   const companyId = selectedCompanyId ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
   const category = parseBillCategory(searchParams.get("category"));
-  const [status, setStatus] = useState<"" | BillStatus | "unpaid">("");
+  // RPT-155: honor a deep link's ?status=&vendor_id= (e.g. A/P Aging "Pay now") as the initial filter
+  // so a drill-through from another module lands pre-filtered instead of on the unfiltered "All open items" view.
+  const STATUS_FILTER_VALUES = new Set(["unpaid", "partial", "paid", "voided"]);
+  const initialStatus = searchParams.get("status");
+  const [status, setStatus] = useState<"" | BillStatus | "unpaid">(
+    initialStatus && STATUS_FILTER_VALUES.has(initialStatus) ? (initialStatus as BillStatus | "unpaid") : ""
+  );
   // BILLS-DATERANGE-01: From/To bill_date filter (server-side via listBills date_from/date_to).
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   // BILLS-VENDORFILTER-01: server-side vendor filter (listBills already accepts vendor_id).
-  const [vendorId, setVendorId] = useState("");
+  const [vendorId, setVendorId] = useState(() => searchParams.get("vendor_id") ?? "");
   const [allocationBillId, setAllocationBillId] = useState<string | null>(null);
 
   // Vendor picker options — pass limit:200 (endpoint defaults to 50, would silently truncate).

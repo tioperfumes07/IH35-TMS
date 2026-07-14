@@ -9,6 +9,7 @@ import { ScheduledReportsPanel } from "./ScheduledReportsPanel";
 import { CustomReportBuilder } from "./CustomReportBuilder";
 import { IftaPreparerCard } from "../../components/reports/IftaPreparerCard";
 import { getFrequentlyRun, getIftaStatus, getKpiSummary, getScheduledReports, type FrequentlyRunReport, type ReportCategory } from "../../api/reports";
+import { formatDateUS } from "../../lib/formatDate";
 import { useMemo, useState } from "react";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
@@ -90,7 +91,7 @@ export function ReportsHomePage() {
     { label: "Scheduled", value: String(kpiQuery.data?.scheduled ?? 0), meta: "auto-emailed" },
     { label: "Run last 7 days", value: String(kpiQuery.data?.run_last_7d ?? 0), meta: "across all users" },
     ifta
-      ? { label: `IFTA ${ifta.quarter} due`, value: `${ifta.daysUntilDue}d`, meta: `${ifta.dueAt} — file before`, warn: true }
+      ? { label: `IFTA ${ifta.quarter} due`, value: `${ifta.daysUntilDue}d`, meta: `${formatDateUS(ifta.dueAt)} — file before`, warn: true }
       : { label: "IFTA due", value: "—", meta: "Loading…", warn: false },
   ];
 

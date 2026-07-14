@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import type { IftaStatus } from "../../api/reports";
+import { formatDateUS } from "../../lib/formatDate";
 import { Modal } from "../Modal";
 
 type Props = {
@@ -8,12 +9,14 @@ type Props = {
 };
 
 function ReadyBadge({ label }: { label: string }) {
+  // §7 palette: the green pill (#d1fae5) is reserved for the Class field only — every other
+  // status badge (including this "ready" state) uses the locked neutral navy/slate palette.
   const palette =
     label === "awaits Q close"
       ? { bg: "#f1f5f9", fg: "#334155" }
       : label === "pending · awaits backend"
         ? { bg: "#e2e8f0", fg: "#334155" }
-        : { bg: "#d1fae5", fg: "#065f46" };
+        : { bg: "#e2e8f0", fg: "#1f2a44" };
   return (
     <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.04em]" style={{ background: palette.bg, color: palette.fg }}>
       {label}
@@ -33,7 +36,7 @@ export function IftaPreparerCard({ status }: Props) {
       <div className="flex items-center justify-between border-b border-[#334155] bg-[#f1f5f9] px-3 py-2">
         <h3 className="text-xs font-semibold uppercase tracking-[0.04em] text-[#334155]">IFTA Quarterly Preparer</h3>
         <div className="text-xs text-[#334155]">
-          {status.currentQuarter} due {status.nextDueAt} ({status.daysUntilDue}d)
+          {status.currentQuarter} due {formatDateUS(status.nextDueAt)} ({status.daysUntilDue}d)
         </div>
       </div>
 
@@ -58,7 +61,7 @@ export function IftaPreparerCard({ status }: Props) {
         </div>
         <div className="grid grid-cols-[24px_1fr_auto] items-center gap-2">
           <span className="font-semibold text-slate-500">4</span>
-          <span className="text-slate-700">⚡ Finalize and generate IFTA-ready filing package</span>
+          <span className="text-slate-700">Finalize and generate IFTA-ready filing package</span>
           <ReadyBadge label={status.step4WaitsClose ? "awaits Q close" : "auto · ready"} />
         </div>
       </div>
@@ -70,7 +73,7 @@ export function IftaPreparerCard({ status }: Props) {
             disabled
             className="inline-flex items-center gap-1 rounded-sm border border-[#334155] px-3 py-1.5 text-xs font-semibold text-[#334155] opacity-60"
           >
-            ⚡ Generate IFTA-ready CSV
+            Generate IFTA-ready CSV
           </button>
         ) : (
           <button
@@ -78,7 +81,7 @@ export function IftaPreparerCard({ status }: Props) {
             onClick={() => setConfirmOpen(true)}
             className="inline-flex items-center gap-1 rounded-sm border border-[#334155] bg-[#f1f5f9] px-3 py-1.5 text-xs font-semibold text-[#334155] hover:bg-[#e2e8f0]"
           >
-            ⚡ Generate IFTA-ready CSV
+            Generate IFTA-ready CSV
           </button>
         )}
       </div>

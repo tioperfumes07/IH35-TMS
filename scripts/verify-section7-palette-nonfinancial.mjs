@@ -40,7 +40,7 @@ const FINANCIAL_SEGMENTS = [
 const OFF_PALETTE = /\b(bg|text|border|ring|from|to|via|divide|ring-offset|outline|decoration|placeholder|accent|fill|stroke)-(amber|emerald|green|yellow)-\d{2,3}\b/g;
 
 // Frozen count of pre-existing (grandfathered) off-palette status classes in the non-financial tree.
-const BASELINE = 504; // lowered 2026-07-14 (module-maintenance defect fixes: CreateWOSectionValidation/CostBreakdown, InTransitTriageBand, ArrivingSoonCard, MaintenanceHome reorder-OK pill off amber/green/emerald) — ratchet only downward
+const BASELINE = 502; // lowered 2026-07-14 (module-reports defect fixes: IftaPreparerCard ready badge + BalanceSheetPage Balanced tile off emerald/rose) — ratchet only downward; previously 504 (module-maintenance)
 
 function walk(dir) {
   let out = [];

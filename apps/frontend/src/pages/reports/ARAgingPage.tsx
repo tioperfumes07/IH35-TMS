@@ -4,6 +4,7 @@ import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { exportArAging, getArAgingReport, type ARAgingRow } from "../../api/reports";
+import { formatDateUS } from "../../lib/formatDate";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -75,7 +76,7 @@ export function ARAgingPage() {
       { key: "bucket_31_60_cents", label: "31–60", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.bucket_31_60_cents) },
       { key: "bucket_61_90_cents", label: "61–90", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.bucket_61_90_cents) },
       { key: "bucket_91_plus_cents", label: "91+", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.bucket_91_plus_cents) },
-      { key: "last_payment_date", label: "Last Pmt", sortable: true, render: (r) => r.last_payment_date ?? "—" },
+      { key: "last_payment_date", label: "Last Pmt", sortable: true, render: (r) => (r.last_payment_date ? formatDateUS(r.last_payment_date) : "—") },
     ],
     [],
   );
@@ -113,7 +114,7 @@ export function ARAgingPage() {
       <ReportsSubNav />
       <PageHeader
         title="A/R aging"
-        subtitle={`As of ${asOf} · open invoices by customer · Accrual basis`}
+        subtitle={`As of ${formatDateUS(asOf)} · open invoices by customer · Accrual basis`}
         backHref="/reports"
         breadcrumb={["Reports", "A/R Aging"]}
         actions={
@@ -198,7 +199,7 @@ export function ARAgingPage() {
           <div className="text-lg font-semibold">{money(kpis.day31_60)}</div>
         </div>
         <div
-          className={`rounded-sm border bg-white px-3 py-2 ${kpis.day61p > 1_000_000 ? "border-2 border-[#DC3545]" : "border border-gray-200"}`}
+          className={`rounded-sm border bg-white px-3 py-2 ${kpis.day61p > 1_000_000 ? "border-2 border-[#dc2626]" : "border border-gray-200"}`}
         >
           <div className="text-[11px] font-semibold uppercase text-gray-500">61+ days</div>
           <div className="text-lg font-semibold">{money(kpis.day61p)}</div>

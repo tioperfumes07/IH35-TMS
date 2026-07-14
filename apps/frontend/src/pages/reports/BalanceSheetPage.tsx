@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { formatDateUS } from "../../lib/formatDate";
 import { BasisSelector, type AccountingBasis } from "../../components/accounting/BasisSelector";
 import {
   exportBalanceSheetReport,
@@ -75,7 +76,7 @@ export function BalanceSheetPage() {
       <ReportsSubNav />
       <PageHeader
         title="Balance sheet"
-        subtitle={`As of ${appliedAsOf} · ${basis === "cash" ? "Cash" : "Accrual"} basis`}
+        subtitle={`As of ${formatDateUS(appliedAsOf)} · ${basis === "cash" ? "Cash" : "Accrual"} basis`}
         backHref="/reports"
         breadcrumb={["Reports", "Balance Sheet"]}
         actions={
@@ -139,9 +140,9 @@ export function BalanceSheetPage() {
             <div className="text-[11px] font-semibold uppercase text-gray-500">Liabilities + equity</div>
             <div className="text-lg font-semibold">{money(query.data.total_liabilities_and_equity)}</div>
           </div>
-          <div className={`rounded-sm border bg-white px-3 py-2 ${query.data.balanced ? "border-emerald-200" : "border-rose-300"}`}>
+          <div className={`rounded-sm border bg-white px-3 py-2 ${query.data.balanced ? "border-gray-200" : "border-2 border-[#dc2626]"}`}>
             <div className="text-[11px] font-semibold uppercase text-gray-500">Balance check</div>
-            <div className={`text-lg font-semibold ${query.data.balanced ? "text-emerald-700" : "text-rose-700"}`}>
+            <div className={`text-lg font-semibold ${query.data.balanced ? "text-[#1f2a44]" : "text-[#dc2626]"}`}>
               {query.data.balanced ? "Balanced" : "Out of balance"}
             </div>
           </div>
