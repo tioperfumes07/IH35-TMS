@@ -50,6 +50,11 @@ const SYSTEM_DERIVED_ALLOWLIST = [
     fragment: "/api/v1/driver/loads/:loadId/stops/:stopId/pod",
     reason: "driver PWA: opco derived from the assigned load's row (mdata.loads), not the request",
   },
+  {
+    file: "dispatch/driver-pwa/dispatch-view.routes.ts",
+    fragment: "/api/dispatch/driver-pwa/load/:uuid/stops/:stop_uuid/document",
+    reason: "driver PWA: opco derived from the assigned load's row (mdata.loads via the load_stops→loads join gated by assigned_primary/secondary_driver), not the request — set to satisfy documents.damage_photo_evidence RLS",
+  },
 ];
 
 function listRouteFiles() {

@@ -419,11 +419,12 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       if (!(await maintenanceReady(client))) return { rows: [], total: 0 };
       const values: unknown[] = [q.operating_company_id];
       const where: string[] = ["w.operating_company_id = $1"];
-      // MAINT-1: hide DEMO-/TEST- seed work orders (e.g. DEMO-WO-001) from the live Maintenance WO
-      // list. Applied to the shared `where` so both the count and the rows exclude them. Read-only —
-      // the WO rows stay in maintenance.work_orders (void-not-delete), just hidden from live views.
-      where.push("COALESCE(w.display_id, '') NOT ILIKE 'DEMO-%'");
-      where.push("COALESCE(w.display_id, '') NOT ILIKE 'TEST-%'");
+      // MAINT-2: exclude VOIDED work orders via the canonical void flag (void-not-delete), the SAME
+      // exclusion the KPI countOpenMaintenanceWorkOrders now uses (openWorkOrderPredicate) — so the KPI
+      // open-count and this list's open rows can't diverge. GUARD voided DEMO-WO-001/002 on prod, so this
+      // replaces the old display_id ILIKE 'DEMO-%'/'TEST-%' name-pattern hack (maintenance.work_orders has
+      // no is_sample_data column; the demo WOs are excluded by being voided).
+      where.push("w.voided_at IS NULL");
       if (q.status) {
         values.push(q.status);
         where.push(`w.status = $${values.length}`);

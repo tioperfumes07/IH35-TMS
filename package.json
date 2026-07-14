@@ -923,7 +923,9 @@
     "verify:settlement-payrun-gl-flag-gate": "node scripts/verify-settlement-payrun-gl-flag-gate.mjs",
     "verify:payment-methods-catalog": "node scripts/verify-payment-methods-catalog.mjs",
     "verify:mdata-write-entity-scope": "node scripts/verify-mdata-write-entity-scope.mjs",
-    "verify:no-test-fixture-names": "node scripts/verify-no-test-fixture-names.mjs"
+    "verify:no-test-fixture-names": "node scripts/verify-no-test-fixture-names.mjs",
+    "verify:open-wo-shared-predicate": "node scripts/verify-open-wo-shared-predicate.mjs",
+    "verify:safety-canonical-table-reads": "node scripts/verify-safety-canonical-table-reads.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",
