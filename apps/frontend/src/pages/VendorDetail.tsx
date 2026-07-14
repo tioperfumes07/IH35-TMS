@@ -41,7 +41,8 @@ type SaferEntityStatus = {
   safer_oos_status: string | null;
 };
 
-const tabs = ["Profile", "A/P", "Documents", "Audit History", "Tasks"] as const;
+// QBO-PARITY-VENDORS — "W-9 / 1099 Status" appended at END (additive, §7: never reorder existing tabs).
+const tabs = ["Profile", "A/P", "Documents", "Audit History", "Tasks", "W-9 / 1099"] as const;
 type VendorTab = (typeof tabs)[number];
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
@@ -1078,6 +1079,43 @@ export function VendorDetailPage() {
       {activeTab === "Tasks" ? (
         <DataPanel title="Tasks">
           <TasksTab operatingCompanyId={companyId} targetType="vendor" targetId={vendor.id} targetLabel={vendor.name} />
+        </DataPanel>
+      ) : null}
+
+      {/* QBO-PARITY-VENDORS — read-only W-9 / 1099 summary. Mirrors QBO's vendor 1099 panel:
+          1099-tracking eligibility, Tax ID, and W-9 document status. Editing the eligibility/Tax ID
+          lives on the Profile tab; the W-9 FILE itself lives on the Documents tab. This tab is
+          display + drill-through only (no upload, no posting). */}
+      {activeTab === "W-9 / 1099" ? (
+        <DataPanel title="W-9 / 1099 Status">
+          <FlatFieldGrid
+            columns={3}
+            className="mb-3"
+            fields={[
+              { label: "1099 tracking", value: vendor.eligible_1099 ? "Eligible (Form 1099-NEC)" : "Not tracked" },
+              { label: "Tax ID (TIN/EIN/SSN)", value: vendor.tax_id || "— (add on Profile tab)" },
+              { label: "Print-on-check name", value: vendor.print_on_check_name || vendor.name },
+            ]}
+          />
+          <DataPanelRow>
+            <span className="text-xs font-semibold text-gray-600">W-9 on file</span>
+            <div className="flex flex-wrap items-center gap-2 text-sm text-gray-700">
+              <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700">
+                Managed in Documents
+              </span>
+              {canViewDocuments ? (
+                <Button type="button" size="sm" variant="secondary" onClick={() => setActiveTab("Documents")}>
+                  Open Documents tab
+                </Button>
+              ) : (
+                <span className="text-xs text-gray-500">Upload/verify the signed W-9 in the Documents tab.</span>
+              )}
+            </div>
+          </DataPanelRow>
+          <p className="mt-2 text-xs text-gray-500">
+            A signed W-9 is required before issuing a Form 1099-NEC. This panel is read-only — set
+            1099 eligibility and Tax ID on the Profile tab; attach the W-9 file on the Documents tab.
+          </p>
         </DataPanel>
       ) : null}
     </div>

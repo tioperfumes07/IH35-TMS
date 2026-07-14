@@ -84,6 +84,12 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, on
   const { pushToast } = useToast();
   const bulkPermission = useBulkPermission();
   const [search, setSearch] = useState("");
+  // QBO-PARITY-VENDORS — additive client-side filter chips over data already loaded on the row
+  // (deactivated_at, eligible_1099, open balance). Independent toggles, all default OFF so the
+  // unfiltered roster still shows by default. Non-financial: display filtering only.
+  const [activeOnly, setActiveOnly] = useState(false);
+  const [only1099, setOnly1099] = useState(false);
+  const [withOpen, setWithOpen] = useState(false);
   // Remount key: bumping this after a successful bulk mutation resets ParityTable's internal
   // selection state (mirrors the old selection.clear() call — ParityTable has no controlled/
   // external selection API to clear imperatively).
@@ -106,8 +112,20 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, on
     [searchedRows, openByVendorId]
   );
 
+  // QBO-PARITY-VENDORS — apply the filter chips (Active / 1099-eligible / With open).
+  const filteredRows = useMemo<VendorRow[]>(
+    () =>
+      enrichedRows.filter((row) => {
+        if (activeOnly && row.deactivated_at != null) return false;
+        if (only1099 && !row.eligible_1099) return false;
+        if (withOpen && row.open_balance <= 0) return false;
+        return true;
+      }),
+    [enrichedRows, activeOnly, only1099, withOpen]
+  );
+
   // LIST-EMPTY-1: the empty row renders only once the roster fetch settles.
-  const listState = useListState(status, enrichedRows.length === 0);
+  const listState = useListState(status, filteredRows.length === 0);
 
   const bulkMutation = useMutation({
     mutationFn: async ({ ids, action, payload, reason }: { ids: string[]; action: string; payload?: Record<string, unknown>; reason?: string }) =>
@@ -124,7 +142,7 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, on
     <div className="space-y-2" data-vendors-list-view="true" data-bulk-selectable="true" data-entity-type="vendors">
       <ParityTable<VendorRow>
         key={tableResetKey}
-        rows={enrichedRows}
+        rows={filteredRows}
         rowKey={(row) => row.id}
         storageKey="vendors-list"
         initialPageSize={50}
@@ -139,6 +157,29 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, on
         filterBar={
           <div className="flex flex-wrap items-center gap-2">
             <TableSearch value={search} onChange={setSearch} placeholder="Search name, code, email…" className="w-56" />
+            {/* QBO-PARITY-VENDORS — additive filter chips (Active / 1099-eligible / With open). */}
+            <div className="inline-flex flex-wrap items-center gap-1" data-vendor-filter-chips="true">
+              {(
+                [
+                  { key: "active", label: "Active", on: activeOnly, toggle: () => setActiveOnly((v) => !v) },
+                  { key: "1099", label: "1099-eligible", on: only1099, toggle: () => setOnly1099((v) => !v) },
+                  { key: "with-open", label: "With open", on: withOpen, toggle: () => setWithOpen((v) => !v) },
+                ] as const
+              ).map((chip) => (
+                <button
+                  key={chip.key}
+                  type="button"
+                  aria-pressed={chip.on}
+                  data-vendor-filter-chip={chip.key}
+                  onClick={chip.toggle}
+                  className={`rounded-sm border px-2 py-1 text-xs font-medium ${
+                    chip.on ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                  }`}
+                >
+                  {chip.label}
+                </button>
+              ))}
+            </div>
           </div>
         }
         batchActions={(selected) => {
@@ -221,6 +262,27 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, on
             sortable: true,
             cellClass: "text-right tabular-nums",
             render: (row) => (row.created_at ? new Date(row.created_at).toLocaleDateString() : "—"),
+          },
+          // QBO-PARITY-VENDORS — additive columns appended at END (never reorder existing columns, §7).
+          {
+            key: "eligible_1099",
+            label: "1099?",
+            sortable: true,
+            render: (row) => (row.eligible_1099 ? "Yes" : "No"),
+          },
+          {
+            key: "deactivated_at",
+            label: "Status",
+            sortable: true,
+            render: (row) => (
+              <span
+                className={`inline-flex rounded-sm px-2 py-0.5 text-[10px] font-semibold ${
+                  row.deactivated_at ? "bg-gray-200 text-gray-700" : "bg-slate-100 text-slate-700"
+                }`}
+              >
+                {row.deactivated_at ? "Inactive" : "Active"}
+              </span>
+            ),
           },
         ]}
       />
