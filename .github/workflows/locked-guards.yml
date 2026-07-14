@@ -779,3 +779,8 @@ jobs:
         run: node scripts/verify-wo-audit-entity-type.mjs --selftest
       - name: verify:wo-audit-entity-type
         run: npm run verify:wo-audit-entity-type
+
+      - name: verify:system-module --selftest
+        run: node scripts/verify-system-module.mjs --selftest
+      - name: verify:system-module
+        run: npm run verify:system-module
