@@ -618,7 +618,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
             )
           ) : null}
 
-          {activeTab === "Audit" ? (
+          {activeTab === "Audit" && load ? (
             <EntityAuditHistoryTab operatingCompanyId={load.operating_company_id} entityType="load" entityId={load.id} />
           ) : null}
           {activeTab === "Assignment History" ? (
