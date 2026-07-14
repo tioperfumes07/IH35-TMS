@@ -20,6 +20,13 @@ export default defineConfig({
     include: ["apps/backend/src/**/*.test.ts", "tests/integration/**/*.test.ts"],
     environment: "node",
     pool: "forks",
+    // Real-Postgres db.tests share ONE database, so concurrent forks can race on the same company-scope
+    // rows (the documented shared-company contamination — settlement "expected +0 to be 3", sync-health
+    // 403). Retry doesn't help (the interfering state persists), so verify:local-ci runs the suite
+    // SERIALLY (VLCI_SERIAL=1) — one file at a time against the shared DB — which removes the race and
+    // makes a green local run a faithful CI mirror. CI keeps parallel (it passes today); this only
+    // changes the local pre-push gate. The proper fix (per-test company isolation) is tracked separately.
+    ...(process.env.VLCI_SERIAL === "1" ? { fileParallelism: false } : {}),
     setupFiles: [path.join(repoRoot, "apps/backend/test-helpers/setup-env.ts")],
     coverage: {
       provider: "v8",
