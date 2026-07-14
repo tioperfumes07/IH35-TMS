@@ -848,3 +848,8 @@ jobs:
         run: node scripts/verify-qbo-parity-banking-home.mjs --selftest
       - name: verify:qbo-parity-banking-home
         run: npm run verify:qbo-parity-banking-home
+
+      - name: verify:claim-crossmodule-fks --selftest
+        run: node scripts/verify-claim-crossmodule-fks.mjs --selftest
+      - name: verify:claim-crossmodule-fks
+        run: npm run verify:claim-crossmodule-fks
