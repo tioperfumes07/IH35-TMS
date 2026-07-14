@@ -276,7 +276,7 @@ export function DefaultHome({ auth }: Props) {
             tr != null && tr.delta_pct_vs_yesterday != null && Number.isFinite(tr.delta_pct_vs_yesterday) ? (
               <span
                 className={`inline-flex rounded px-1.5 py-0.5 font-semibold ${
-                  tr.delta_pct_vs_yesterday >= 0 ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-800"
+                  tr.delta_pct_vs_yesterday >= 0 ? "bg-slate-100 text-slate-700" : "bg-red-100 text-red-800"
                 }`}
               >
                 {tr.delta_pct_vs_yesterday >= 0 ? "↑ " : "↓ "}
