@@ -776,6 +776,10 @@ jobs:
       - name: verify:safety-canonical-table-reads
         run: npm run verify:safety-canonical-table-reads
 
+      - name: verify:consolidated-elimination --selftest
+        run: node scripts/verify-consolidated-elimination.mjs --selftest
+      - name: verify:consolidated-elimination
+        run: npm run verify:consolidated-elimination
       - name: verify:tracker-no-duplicate-block-ids --selftest
         run: node scripts/verify-tracker-no-duplicate-block-ids.mjs --selftest
       - name: verify:tracker-no-duplicate-block-ids
@@ -793,6 +797,10 @@ jobs:
       - name: verify:wo-audit-entity-type
         run: npm run verify:wo-audit-entity-type
 
+      - name: verify:qbo-parity-banking-home --selftest
+        run: node scripts/verify-qbo-parity-banking-home.mjs --selftest
+      - name: verify:qbo-parity-banking-home
+        run: npm run verify:qbo-parity-banking-home
       - name: verify:system-module --selftest
         run: node scripts/verify-system-module.mjs --selftest
       - name: verify:system-module
