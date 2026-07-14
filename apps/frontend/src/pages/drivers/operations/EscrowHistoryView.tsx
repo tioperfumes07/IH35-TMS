@@ -9,7 +9,7 @@ export function EscrowHistoryView({ driverId, operatingCompanyId }: Props) {
       operatingCompanyId={operatingCompanyId}
       subView="escrow-history"
       title="Escrow History"
-      description="Escrow deposits, forfeitures and releases."
+      description="Escrow deposits, deductions and releases."
       columns={[
         { key: "entry_type", label: "Entry" },
         { key: "amount", label: "Amount" },
