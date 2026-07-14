@@ -46,6 +46,13 @@ export function DocumentsPage() {
   const [showDeleted, setShowDeleted] = useState(false);
   const [selectedPreviewFile, setSelectedPreviewFile] = useState<DocsFile | null>(null);
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  // DOCS-fix: the backend's GET /api/v1/docs/files caps `limit` at 200 (files.routes.ts
+  // listQuerySchema.max(200)); this page was requesting limit:500, which zod rejects with a
+  // validation_error, so the entire library errored out on every load. Match the server cap and
+  // page through the results server-side instead (also closes the punchlist #84 "rows past 500
+  // are unreachable" gap).
+  const PAGE_SIZE = 200;
 
   const isOwnerOrAdmin = user?.role === "Owner" || user?.role === "Administrator";
   const isOwner = user?.role === "Owner";
@@ -63,19 +70,22 @@ export function DocumentsPage() {
   });
 
   const filesQuery = useQuery({
-    queryKey: ["all-documents-page", showDeleted],
+    queryKey: ["all-documents-page", showDeleted, page],
     queryFn: () =>
       listFiles({
         include_deleted: showDeleted && isOwner,
-        limit: 500,
-        offset: 0,
-      }).then((result) => result.files),
+        limit: PAGE_SIZE,
+        offset: (page - 1) * PAGE_SIZE,
+      }),
     enabled: isOwnerOrAdmin,
   });
+  const files = filesQuery.data?.files ?? [];
+  const totalFiles = filesQuery.data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalFiles / PAGE_SIZE));
 
   const filteredFiles = useMemo(() => {
     const now = new Date();
-    return [...(filesQuery.data ?? [])]
+    return [...files]
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       .filter((file) => {
         if (categoryFilter && file.category_id !== categoryFilter) return false;
@@ -99,7 +109,7 @@ export function DocumentsPage() {
         }
         return true;
       });
-  }, [filesQuery.data, categoryFilter, entityTypeFilter, uploaderFilter, search, dateFrom, dateTo, expiringDays]);
+  }, [files, categoryFilter, entityTypeFilter, uploaderFilter, search, dateFrom, dateTo, expiringDays]);
 
   if (!isOwnerOrAdmin) {
     return <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">Only Owner/Administrator can access company-wide documents.</div>;
@@ -205,7 +215,14 @@ export function DocumentsPage() {
         </div>
         {isOwner ? (
           <label className="flex items-center gap-2 text-xs text-gray-600 md:col-span-4">
-            <input type="checkbox" checked={showDeleted} onChange={(event) => setShowDeleted(event.target.checked)} />
+            <input
+              type="checkbox"
+              checked={showDeleted}
+              onChange={(event) => {
+                setShowDeleted(event.target.checked);
+                setPage(1);
+              }}
+            />
             Show deleted
           </label>
         ) : null}
@@ -252,6 +269,30 @@ export function DocumentsPage() {
           },
         ]}
       />
+
+      <div className="flex items-center justify-between text-xs text-gray-600">
+        <span>
+          Page {page} of {totalPages} · {totalFiles} total
+        </span>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            className="rounded-sm border border-gray-300 px-2 py-1 disabled:opacity-50"
+            disabled={page <= 1}
+            onClick={() => setPage((current) => Math.max(1, current - 1))}
+          >
+            Previous
+          </button>
+          <button
+            type="button"
+            className="rounded-sm border border-gray-300 px-2 py-1 disabled:opacity-50"
+            disabled={page >= totalPages}
+            onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+          >
+            Next
+          </button>
+        </div>
+      </div>
 
       {selectedPreviewFile ? (
         <PreviewModal
