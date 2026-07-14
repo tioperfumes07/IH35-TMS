@@ -100,14 +100,19 @@ export function ProfilesTab({ profiles, activeCompany, setActiveCompany, onChang
       </div>
 
       <div className="rounded-sm border bg-white">
-        <div className="border-b bg-slate-800 px-3 py-2 text-sm font-semibold text-white">Default Questionnaire Answers</div>
+        <div className="border-b bg-[#1f2a44] px-3 py-2 text-sm font-semibold text-white">Default Questionnaire Answers</div>
         {QUESTIONNAIRE.map((q) => {
           const answer = profile.defaultAnswers[q.num] ?? (q.expectYes ? "yes" : "no");
           const flagged = (q.expectYes && answer === "no") || (!q.expectYes && answer === "yes");
           return (
-            <div key={q.num} className={`grid grid-cols-[24px_1fr_auto] items-center gap-2 border-b px-3 py-2 text-sm ${flagged ? "bg-red-50" : ""}`}>
+            <div key={q.num} className={`grid grid-cols-[24px_1fr_auto] items-center gap-2 border-b px-3 py-2 text-sm ${flagged ? "bg-slate-100" : ""}`}>
               <span className="font-semibold text-slate-500">{q.num}.</span>
-              <span className={flagged ? "text-red-700" : ""}>{q.text}</span>
+              <span className="flex items-center gap-2">
+                {q.text}
+                {flagged ? (
+                  <span className="rounded-sm bg-[#1f2a44] px-1.5 py-0.5 text-[10px] font-semibold uppercase text-white">Exhibit required</span>
+                ) : null}
+              </span>
               <div className="flex gap-2">
                 {(["yes", "no", "na"] as const).map((v) => (
                   <label key={v} className="flex items-center gap-1 text-xs uppercase text-slate-600">
