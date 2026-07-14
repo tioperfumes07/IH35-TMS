@@ -87,6 +87,8 @@ const executeWorkOrder: EntityExecutor = async (ctx) => {
       {
         resource_type: "maintenance.work_orders",
         resource_id: wo.id,
+        entity_type: "work_order",
+        entity_id: wo.id,
         operating_company_id: operatingCompanyId,
         status_at_void: wo.status,
         reason,
@@ -135,6 +137,8 @@ const executeWorkOrder: EntityExecutor = async (ctx) => {
     "maintenance.work_order.cancelled",
     {
       resource_id: wo.id,
+      entity_type: "work_order",
+      entity_id: wo.id,
       reason,
       reversing_entry_ref: fin.reversing_entry_ref,
       financial_void: fin.reversing_entry_ref != null,
