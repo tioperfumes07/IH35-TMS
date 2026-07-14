@@ -14,7 +14,7 @@ import {
   type DispatcherSafetyEvent,
 } from "../api/identity";
 import { listCustomers, listDrivers } from "../api/mdata";
-import { formatDateUS } from "../lib/formatDate";
+import { formatDateTimeUS, formatDateUS } from "../lib/formatDate";
 import { Button } from "../components/Button";
 import { Combobox, type ComboboxOption } from "../components/Combobox";
 import { MoneyInput } from "../components/forms/MoneyInput";
@@ -264,7 +264,7 @@ export function UserDetailPage() {
             <div><span className="text-xs text-gray-500">Email</span><div>{targetUser.email ?? "—"}</div></div>
             <div><span className="text-xs text-gray-500">Role</span><div>{targetUser.role}</div></div>
             <div><span className="text-xs text-gray-500">Status</span><div>{targetUser.deactivated_at ? "Inactive" : "Active"}</div></div>
-            <div><span className="text-xs text-gray-500">Created at</span><div>{new Date(targetUser.created_at).toLocaleString()}</div></div>
+            <div><span className="text-xs text-gray-500">Created at</span><div>{formatDateTimeUS(targetUser.created_at)}</div></div>
             <div><span className="text-xs text-gray-500">Default company</span><div>{targetUser.default_company_id ?? "—"}</div></div>
             <div><span className="text-xs text-gray-500">Has driver record</span><div>{userDetailQuery.data?.has_driver_record ? "Yes" : "No"}</div></div>
           </div>
@@ -389,7 +389,7 @@ export function UserDetailPage() {
                     </div>
                     {event.voided_at ? (
                       <div className="font-semibold">
-                        VOIDED on {new Date(event.voided_at).toLocaleString()} by {event.voided_by_user_email ?? event.voided_by_user_id}:{" "}
+                        VOIDED on {formatDateTimeUS(event.voided_at)} by {event.voided_by_user_email ?? event.voided_by_user_id}:{" "}
                         {event.void_reason}
                       </div>
                     ) : null}

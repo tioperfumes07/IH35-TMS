@@ -31,6 +31,7 @@ import { useBulkSelection } from "../hooks/useBulkSelection";
 import { useUnsavedChanges } from "../hooks/useUnsavedChanges";
 import { evaluatePasswordStrength, OFFICE_PASSWORD_HINT } from "../auth/office-password-ui";
 import { parseApiErrorPayload } from "../components/forms/useFormValidation";
+import { formatDateTimeUS } from "../lib/formatDate";
 import { formatLastLoginAt } from "../lib/formatLastLoginAt";
 import { dataTableErrorState } from "../lib/tableError";
 import { colors } from "../design/tokens";
@@ -60,7 +61,13 @@ const ROLE_LABEL: Record<UserRole | "Viewer", string> = {
   Mechanic: "Mechanic",
   Viewer: "Viewer",
 };
-const roleComboboxOptions = ROLE_OPTIONS.map((role) => ({ value: role, label: ROLE_LABEL[role] }));
+// Viewer is a future-phase role: submitInvite() always rejects it with a "future phase" toast, so it must
+// never be selectable in the Create User combobox (was a dead-end pick). Mirrors the exclusion already
+// applied to roleChangeComboboxOptions below.
+const roleComboboxOptions = ROLE_OPTIONS.filter((role) => role !== "Viewer").map((role) => ({
+  value: role,
+  label: ROLE_LABEL[role],
+}));
 const roleChangeComboboxOptions = ROLE_OPTIONS.filter((role): role is UserRole => role !== "Viewer").map((role) => ({
   value: role,
   label: ROLE_LABEL[role],
@@ -608,7 +615,7 @@ export function UsersPage() {
       <Modal
         open={inviteOpen}
         onClose={() => setInviteOpen(false)}
-        title="Add User"
+        title="Create User"
         confirmDiscardOnClose
         isDirty={inviteIsDirty}
       >
@@ -802,7 +809,7 @@ export function UsersPage() {
                       {probeJobQuery.data.status}
                     </span>
                     {probeJobQuery.data.completedAt
-                      ? ` — finished ${new Date(probeJobQuery.data.completedAt).toLocaleTimeString()}`
+                      ? ` — finished ${formatDateTimeUS(probeJobQuery.data.completedAt)}`
                       : ""}
                   </p>
                 ) : probeJobId && !probeJobQuery.data ? (

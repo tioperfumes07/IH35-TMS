@@ -54,7 +54,7 @@ function wrap(ui: ReactElement) {
 async function openInviteModal(user: ReturnType<typeof userEvent.setup>) {
   const btns = screen.getAllByRole("button", { name: /\+ Create User/i });
   await user.click(btns[0]!);
-  await screen.findByRole("heading", { name: /add user/i });
+  await screen.findByRole("heading", { name: /create user/i });
 }
 
 async function chooseSetPasswordMode(user: ReturnType<typeof userEvent.setup>) {
