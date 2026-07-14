@@ -928,7 +928,8 @@
     "verify:safety-canonical-table-reads": "node scripts/verify-safety-canonical-table-reads.mjs",
     "verify:border-crossing-canonical-relations": "node scripts/verify-border-crossing-canonical-relations.mjs",
     "verify:units-vin-dup-prevention": "node scripts/verify-units-vin-dup-prevention.mjs",
-    "verify:ent-audit-all-entity-types": "node scripts/verify-ent-audit-all-entity-types.mjs"
+    "verify:ent-audit-all-entity-types": "node scripts/verify-ent-audit-all-entity-types.mjs",
+    "verify:no-test-fixture-names": "node scripts/verify-no-test-fixture-names.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",
