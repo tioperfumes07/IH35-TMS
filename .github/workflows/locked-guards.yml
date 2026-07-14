@@ -788,3 +788,8 @@ jobs:
         run: node scripts/verify-system-module.mjs --selftest
       - name: verify:system-module
         run: npm run verify:system-module
+
+      - name: verify:qbo-parity-customers --selftest
+        run: node scripts/verify-qbo-parity-customers.mjs --selftest
+      - name: verify:qbo-parity-customers
+        run: npm run verify:qbo-parity-customers
