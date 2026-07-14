@@ -54,11 +54,13 @@ const TYPE_OPTIONS: Array<{ value: MaintenanceInspectionRow["inspection_type"]; 
   { value: "custom", label: "Custom" },
 ];
 
-async function uploadInspectionPhoto(file: File, unitId: string) {
+async function uploadInspectionPhoto(file: File, unitId: string, operatingCompanyId: string) {
   const { file_id, presigned_url } = await requestUploadUrl({
     original_filename: file.name,
     mime_type: file.type || "application/octet-stream",
     size_bytes: file.size,
+    // File under the VIEWED entity, not the uploader's default_company_id (backend fallback).
+    operating_company_id: operatingCompanyId || undefined,
     entity_links: unitId ? [{ entity_type: "unit", entity_id: unitId }] : undefined,
   });
   await fetch(presigned_url, {
@@ -130,7 +132,7 @@ export function InspectionsPage() {
     mutationFn: async () => {
       const created = await createMaintenanceInspection(buildPayload());
       if (photoFile && created.id) {
-        const docsFileId = await uploadInspectionPhoto(photoFile, draft.unit_id);
+        const docsFileId = await uploadInspectionPhoto(photoFile, draft.unit_id, companyId);
         await attachMaintenanceInspectionPhoto(String(created.id), {
           operating_company_id: companyId,
           docs_file_id: docsFileId,
@@ -153,7 +155,7 @@ export function InspectionsPage() {
       if (!editing) throw new Error("No inspection selected");
       const updated = await updateMaintenanceInspection(String(editing.id), buildPayload());
       if (photoFile && editing.id) {
-        const docsFileId = await uploadInspectionPhoto(photoFile, draft.unit_id || String(editing.unit_id));
+        const docsFileId = await uploadInspectionPhoto(photoFile, draft.unit_id || String(editing.unit_id), companyId);
         await attachMaintenanceInspectionPhoto(String(editing.id), {
           operating_company_id: companyId,
           docs_file_id: docsFileId,

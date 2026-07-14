@@ -206,6 +206,7 @@ export function CustomerContractsTab({ customerId, customerName, operatingCompan
           entityType="customer"
           entityId={customerId}
           entityName={customerName}
+          operatingCompanyId={operatingCompanyId}
           onClose={() => setUploadOpen(false)}
           onUploadSuccess={handleUploadSuccess}
         />
