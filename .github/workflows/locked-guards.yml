@@ -776,6 +776,10 @@ jobs:
       - name: verify:safety-canonical-table-reads
         run: npm run verify:safety-canonical-table-reads
 
+      - name: verify:consolidated-elimination --selftest
+        run: node scripts/verify-consolidated-elimination.mjs --selftest
+      - name: verify:consolidated-elimination
+        run: npm run verify:consolidated-elimination
       - name: verify:tracker-no-duplicate-block-ids --selftest
         run: node scripts/verify-tracker-no-duplicate-block-ids.mjs --selftest
       - name: verify:tracker-no-duplicate-block-ids

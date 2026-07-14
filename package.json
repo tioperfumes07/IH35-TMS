@@ -935,7 +935,8 @@
     "verify:safety-csa-canonical-read": "node scripts/verify-safety-csa-canonical-read.mjs",
     "verify:system-module": "node scripts/verify-system-module.mjs",
     "verify:ent-audit-all-entity-types": "node scripts/verify-ent-audit-all-entity-types.mjs",
-    "verify:compliance-violations-hos-wired": "node scripts/verify-compliance-violations-hos-wired.mjs"
+    "verify:compliance-violations-hos-wired": "node scripts/verify-compliance-violations-hos-wired.mjs",
+    "verify:consolidated-elimination": "node scripts/verify-consolidated-elimination.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",
