@@ -239,6 +239,7 @@ import { registerMaintenanceDashboardKpisRoutes } from "./maintenance/dashboard-
 import { registerMaintenancePmAlertsRoutes } from "./maintenance/pm-alerts.routes.js";
 import { registerMaintenanceTriageRoutes } from "./maintenance/triage.routes.js";
 import { registerMaintenanceArrivingSoonRoutes } from "./maintenance/arriving-soon.routes.js";
+import { registerRoadServiceTicketRoutes } from "./maintenance/road-service/tickets.routes.js";
 import { registerMaintenanceDriverReportsRoutes } from "./maintenance/driver-reports.routes.js";
 import { registerMaintenanceLaborRoutes } from "./maintenance/labor.routes.js";
 import { registerWoTimeEntriesRoutes } from "./maintenance/time-entries.routes.js";
@@ -967,6 +968,7 @@ async function main() {
   await registerMaintenancePmAlertsRoutes(app);
   await registerMaintenanceTriageRoutes(app);
   await registerMaintenanceArrivingSoonRoutes(app);
+  await registerRoadServiceTicketRoutes(app);
   await registerMaintenancePartsInventoryRoutes(app);
   await internalLaborRoutes(app);
   await registerMaintenancePartsInvoiceLinksRoutes(app);

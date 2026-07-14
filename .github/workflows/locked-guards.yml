@@ -815,6 +815,10 @@ jobs:
       - name: verify:qbo-parity-vendors
         run: npm run verify:qbo-parity-vendors
 
+      - name: verify:road-service-route-mounted --selftest
+        run: node scripts/verify-road-service-route-mounted.mjs --selftest
+      - name: verify:road-service-route-mounted
+        run: npm run verify:road-service-route-mounted
       - name: verify:fuel-history-import-wired --selftest
         run: node scripts/verify-fuel-history-import-wired.mjs --selftest
       - name: verify:fuel-history-import-wired
