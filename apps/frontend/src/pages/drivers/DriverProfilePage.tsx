@@ -86,13 +86,13 @@ function LayoverSummaryCard({ driverId, companyId }: { driverId: string; company
             <p className="text-lg font-bold text-slate-900">{totalHours.toFixed(1)}</p>
             <p className="text-xs text-gray-500">Total hours</p>
           </div>
-          <div className="rounded-sm bg-slate-100 p-3 text-center">
-            <p className="text-lg font-bold text-slate-700">{billableCount}</p>
-            <p className="text-xs text-slate-700">Billable</p>
+          <div className="rounded-sm bg-gray-50 p-3 text-center">
+            <p className="text-lg font-bold text-slate-900">{billableCount}</p>
+            <p className="text-xs text-gray-500">Billable</p>
           </div>
-          <div className="rounded-sm bg-slate-100 p-3 text-center">
-            <p className="text-lg font-bold text-slate-700">{perDiemCount}</p>
-            <p className="text-xs text-slate-700">Per diem eligible</p>
+          <div className="rounded-sm bg-gray-50 p-3 text-center">
+            <p className="text-lg font-bold text-slate-900">{perDiemCount}</p>
+            <p className="text-xs text-gray-500">Per diem eligible</p>
           </div>
         </div>
       )}
