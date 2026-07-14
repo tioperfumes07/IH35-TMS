@@ -951,7 +951,8 @@
     "verify:qbo-parity-customers": "node scripts/verify-qbo-parity-customers.mjs",
     "verify:fleet-table-owner-leased-scope": "node scripts/verify-fleet-table-owner-leased-scope.mjs",
     "verify:no-emoji-in-dispatch-chrome": "node scripts/verify-no-emoji-in-dispatch-chrome.mjs",
-    "verify:docs-upload-viewed-entity": "node scripts/verify-docs-upload-viewed-entity.mjs"
+    "verify:docs-upload-viewed-entity": "node scripts/verify-docs-upload-viewed-entity.mjs",
+    "verify:banking-sync-strip-transaction-count": "node scripts/verify-banking-sync-strip-transaction-count.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",
