@@ -177,7 +177,6 @@
     "apps/backend/src/safety/fuel-gps-match.service.ts: s.operating_company_id — column \"operating_company_id\" does not exist on mdata.load_stops",
     "apps/backend/src/safety/position-history/position-history.routes.ts: p.part_name — column \"part_name\" does not exist on maint.part",
     "apps/backend/src/safety/position-history/position-history.routes.ts: ps.name — column \"name\" does not exist on maint.position_set",
-    "apps/backend/src/safety/safety.routes.ts: FROM/JOIN safety.csa_scores_cache — TABLE not in migrated schema",
     "apps/backend/src/search/universal/indexer.service.ts: d.driver_code — column \"driver_code\" does not exist on mdata.drivers",
     "apps/backend/src/settlements/approval.routes.ts: settlement.settlement — column \"settlement\" does not exist on settlement.settlement",
     "apps/backend/src/settlements/approval.service.ts: li.load_number — column \"load_number\" does not exist on settlement.settlement_line",

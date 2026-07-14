@@ -69,7 +69,10 @@ const KNOWN_PHANTOM_DEBT = [
   // integrations.samsara_positions REMOVED 2026-07-13 — border-crossing detector now reads the real
   // integrations.samsara_vehicle_positions; no backend SQL references the phantom anymore, so it is
   // locked out (verify-border-crossing-canonical-relations.mjs enforces the two files stay canonical).
-  { rel: "safety.csa_scores_cache", why: "forward-ref — CSA scores cache unbuilt" },
+  // safety.csa_scores_cache REMOVED 2026-07-13 — safety.routes.ts (KPI dashboard + /csa/latest) now
+  // reads the real safety.csa_scores (migration 0051; columns computed_at + per-BASIC numerics), not the
+  // phantom cache table. No backend SQL references the phantom anymore, so it is locked out
+  // (verify-safety-csa-canonical-read.mjs enforces safety.routes.ts stays on the canonical table).
   { rel: "safety.training_completions", why: "forward-ref — training module unbuilt" },
   { rel: "banking.bank_account_balances", why: "forward-ref — balances cache unbuilt" },
   { rel: "mdata.load_assignments", why: "forward-ref — legacy; canonical=dispatch.load_assignment_history" },
