@@ -53,7 +53,7 @@ export function TripCostCalculator({ unitId, companyId }: { unitId: string; comp
               <div className="font-semibold">Suggested quote floor: {usd(r.suggested_quote_floor_cents)}</div>
               <div className="text-gray-500">{r.estimated_miles} mi estimated</div>
               <Button size="sm" className="mt-1" disabled title="V1 no-op">
-                + Add to Quote
+                Add to quote
               </Button>
             </div>
           ) : null}
