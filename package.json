@@ -936,7 +936,8 @@
     "verify:ent-audit-all-entity-types": "node scripts/verify-ent-audit-all-entity-types.mjs",
     "verify:system-module": "node scripts/verify-system-module.mjs",
     "verify:tracker-no-duplicate-block-ids": "node scripts/verify-tracker-no-duplicate-block-ids.mjs",
-    "verify:consolidated-elimination": "node scripts/verify-consolidated-elimination.mjs"
+    "verify:consolidated-elimination": "node scripts/verify-consolidated-elimination.mjs",
+    "verify:banking-nav-clickthrough": "node scripts/verify-banking-nav-clickthrough.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",

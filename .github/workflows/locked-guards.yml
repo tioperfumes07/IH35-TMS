@@ -805,3 +805,8 @@ jobs:
         run: node scripts/verify-system-module.mjs --selftest
       - name: verify:system-module
         run: npm run verify:system-module
+
+      - name: verify:banking-nav-clickthrough --selftest
+        run: node scripts/verify-banking-nav-clickthrough.mjs --selftest
+      - name: verify:banking-nav-clickthrough
+        run: npm run verify:banking-nav-clickthrough
