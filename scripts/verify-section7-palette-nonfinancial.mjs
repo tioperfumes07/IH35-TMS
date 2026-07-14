@@ -40,7 +40,7 @@ const FINANCIAL_SEGMENTS = [
 const OFF_PALETTE = /\b(bg|text|border|ring|from|to|via|divide|ring-offset|outline|decoration|placeholder|accent|fill|stroke)-(amber|emerald|green|yellow)-\d{2,3}\b/g;
 
 // Frozen count of pre-existing (grandfathered) off-palette status classes in the non-financial tree.
-const BASELINE = 528; // lowered 2026-07-14 (module-09 driver defect fixes: DriverProfilePage layover tiles + DriverLoadStatusesPage active pill off green) — ratchet only downward
+const BASELINE = 524; // lowered 2026-07-14 (module-06 ELD defect fixes: EldEditHistoryTimeline before/after diff chips off red/green) — ratchet only downward
 
 function walk(dir) {
   let out = [];

@@ -8,7 +8,8 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { Button } from "../../../components/Button";
 import { PageHeader } from "../../../components/forms/shared/PageHeader";
 import { EldEditHistoryTimeline, type EldEditHistoryEntry } from "../../../components/safety/EldEditHistoryTimeline";
-import { formatDateUS } from "../../../lib/formatDate";
+import { formatDateUS, formatDateTimeUS } from "../../../lib/formatDate";
+import { companyToday, addDaysIso } from "../../../lib/businessDate";
 
 type EldAuditTrailResponse = {
   driver_uuid: string;
@@ -28,14 +29,15 @@ type EldAuditTrailResponse = {
   };
 };
 
+// Central Time (CLAUDE.md §8 "Central Time always" / businessDate.ts) — `.toISOString().slice(0,10)`
+// returns the UTC calendar date, which after ~19:00 Central has already rolled to tomorrow and
+// silently shrinks/shifts the default 7-day audit window.
 function defaultFromDate() {
-  const date = new Date();
-  date.setUTCDate(date.getUTCDate() - 7);
-  return date.toISOString().slice(0, 10);
+  return addDaysIso(companyToday(), -7);
 }
 
 function defaultToDate() {
-  return new Date().toISOString().slice(0, 10);
+  return companyToday();
 }
 
 export function EldAuditTrailViewer() {
@@ -86,7 +88,7 @@ export function EldAuditTrailViewer() {
       .map(
         (edit) => `
           <tr>
-            <td>${edit.edited_at}</td>
+            <td>${formatDateTimeUS(edit.edited_at)} CT</td>
             <td>${edit.field_name}</td>
             <td>${edit.before_state ?? ""}</td>
             <td>${edit.after_state ?? ""}</td>
@@ -103,7 +105,7 @@ export function EldAuditTrailViewer() {
           <h1>${payload.title}</h1>
           <p>Driver: ${payload.driver_name ?? payload.driver_uuid}</p>
           <p>Period: ${formatDateUS(payload.period.from)} to ${formatDateUS(payload.period.to)}</p>
-          <p>Generated: ${payload.generated_at}</p>
+          <p>Generated: ${formatDateTimeUS(payload.generated_at)} CT</p>
           <p>${payload.fmcsa_notice}</p>
           <table border="1" cellpadding="6" cellspacing="0" width="100%">
             <thead>
@@ -182,11 +184,17 @@ export function EldAuditTrailViewer() {
         </div>
       </section>
 
-      <section ref={printRef} className="rounded-sm border border-gray-200 bg-white p-4 print:border-0">
+      <section ref={printRef} className="p-4 print:border-0">
         {historyQuery.isLoading ? <p className="text-sm text-gray-500">Loading edit history…</p> : null}
         {driverUuid && !historyQuery.isLoading ? (
           historyQuery.data?.edits.length ? (
-            <EldEditHistoryTimeline driverUuid={driverUuid} operatingCompanyId={companyId} />
+            <EldEditHistoryTimeline
+              driverUuid={driverUuid}
+              operatingCompanyId={companyId}
+              edits={historyQuery.data.edits}
+              from={historyQuery.data.from}
+              to={historyQuery.data.to}
+            />
           ) : (
             <p className="text-sm text-gray-600">No edits found for the selected driver and date range.</p>
           )
