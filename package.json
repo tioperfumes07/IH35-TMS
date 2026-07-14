@@ -935,7 +935,8 @@
     "verify:system-module": "node scripts/verify-system-module.mjs",
     "verify:qbo-parity-vendors": "node scripts/verify-qbo-parity-vendors.mjs",
     "verify:ent-audit-all-entity-types": "node scripts/verify-ent-audit-all-entity-types.mjs",
-    "verify:tracker-no-duplicate-block-ids": "node scripts/verify-tracker-no-duplicate-block-ids.mjs"
+    "verify:tracker-no-duplicate-block-ids": "node scripts/verify-tracker-no-duplicate-block-ids.mjs",
+    "verify:consolidated-elimination": "node scripts/verify-consolidated-elimination.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",
