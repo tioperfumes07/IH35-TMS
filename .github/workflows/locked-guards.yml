@@ -775,6 +775,10 @@ jobs:
         run: node scripts/verify-safety-canonical-table-reads.mjs --selftest
       - name: verify:safety-canonical-table-reads
         run: npm run verify:safety-canonical-table-reads
+      - name: verify:safety-csa-canonical-read --selftest
+        run: node scripts/verify-safety-csa-canonical-read.mjs --selftest
+      - name: verify:safety-csa-canonical-read
+        run: npm run verify:safety-csa-canonical-read
       - name: verify:wo-audit-entity-type --selftest
         run: node scripts/verify-wo-audit-entity-type.mjs --selftest
       - name: verify:wo-audit-entity-type

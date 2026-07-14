@@ -133,10 +133,17 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
       const csaRes = await client
         .query<{ score: number }>(
           `
-            SELECT COALESCE(score_total, 0)::numeric AS score
-            FROM safety.csa_scores_cache
+            SELECT (
+              COALESCE(basic_unsafe_driving, 0)
+              + COALESCE(basic_hos_compliance, 0)
+              + COALESCE(basic_driver_fitness, 0)
+              + COALESCE(basic_controlled_substances, 0)
+              + COALESCE(basic_vehicle_maintenance, 0)
+              + COALESCE(basic_crash_indicator, 0)
+            )::numeric AS score
+            FROM safety.csa_scores
             WHERE operating_company_id = $1
-            ORDER BY cached_at DESC
+            ORDER BY computed_at DESC
             LIMIT 1
           `,
           [companyId]
@@ -665,9 +672,9 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
         .query(
           `
             SELECT *
-            FROM safety.csa_scores_cache
+            FROM safety.csa_scores
             WHERE operating_company_id = $1
-            ORDER BY cached_at DESC
+            ORDER BY computed_at DESC
             LIMIT 1
           `,
           [query.data.operating_company_id]
