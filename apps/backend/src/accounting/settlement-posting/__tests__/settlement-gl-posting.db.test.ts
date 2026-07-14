@@ -11,7 +11,6 @@ import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../../lib/pg-connection-options.js";
 import { ensureIntegrationPrerequisites } from "../../../../test-helpers/db-fixture.js";
-import { TEST_OWNER_USER_ID } from "../../../../test-helpers/constants.js";
 import { postSettlementToGl, type SettlementPostingResult } from "../settlement-posting.service.js";
 import { SettlementPostingError } from "../settlement-posting.math.js";
 
@@ -21,7 +20,10 @@ describeIntegration("FIN-18 settlement GL posting (real Postgres)", () => {
   let db: pg.Client;
   let companyId: string;
   const suffix = randomUUID().slice(0, 8);
-  const userId = TEST_OWNER_USER_ID;
+  // Dedicated, UNIQUE actor for THIS file only (see setFlag). Must differ from every other suite that
+  // toggles SETTLEMENT_GL_POSTING_ENABLED on the shared TRANSP company (settlement-bill-payment-posting,
+  // settlement-payrun-close) so their user-scoped overrides never share this file's (flag_key, user_uuid).
+  const userId = "00000000-0000-4000-8000-0000000000d1";
 
   const acct = {
     driverPay: randomUUID(),
@@ -50,16 +52,22 @@ describeIntegration("FIN-18 settlement GL posting (real Postgres)", () => {
     catch (e) { await db.query("ROLLBACK").catch(() => {}); throw e; }
   }
 
+  // FLAKE FIX: write a USER-scoped override (user_uuid = this file's UNIQUE actor), NOT a tenant-scoped
+  // (operating_company_id, user_uuid IS NULL) one. ensureIntegrationPrerequisites() hands EVERY integration
+  // test the SAME cached TRANSP company, so a tenant-scoped SETTLEMENT_GL_POSTING_ENABLED override on it is
+  // clobberable by any parallel sibling *.db.test.ts that toggles the same flag on that shared company
+  // (settlement-bill-payment-posting) in the window before postSettlementToGl reads it — the poster then
+  // silently no-ops. resolveFlagEnabled (feature-flags/service.ts) checks the USER override BEFORE the
+  // tenant override, and postSettlementToGl resolves this flag with user_uuid=actor.userId, so a user-scoped
+  // override for this file's dedicated actor is immune to cross-file tenant contention. Carries
+  // operating_company_id so the afterAll cleanup (delete by operating_company_id) still removes it.
   async function setFlag(enabled: boolean) {
     await bypass(async () => {
       await db.query(
-        `DELETE FROM lib.feature_flag_overrides WHERE flag_key='SETTLEMENT_GL_POSTING_ENABLED' AND operating_company_id=$1::uuid AND user_uuid IS NULL`,
-        [companyId]
-      );
-      await db.query(
         `INSERT INTO lib.feature_flag_overrides (flag_key, operating_company_id, user_uuid, enabled, set_by_user_uuid)
-         VALUES ('SETTLEMENT_GL_POSTING_ENABLED', $1::uuid, NULL, $2, $3::uuid)`,
-        [companyId, enabled, userId]
+         VALUES ('SETTLEMENT_GL_POSTING_ENABLED', $1::uuid, $2::uuid, $3, $2::uuid)
+         ON CONFLICT (flag_key, user_uuid) WHERE user_uuid IS NOT NULL DO UPDATE SET enabled = EXCLUDED.enabled`,
+        [companyId, userId, enabled]
       );
     });
   }
@@ -143,6 +151,12 @@ describeIntegration("FIN-18 settlement GL posting (real Postgres)", () => {
         `INSERT INTO identity.users (id, email, role, preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
         [userId, `fin18-${suffix}@test.local`]
       );
+      // Grant the dedicated actor company access — postSettlementToGl runs under the actor's own user session (userId)
+      // and its writes are RLS-scoped to a company the actor can access.
+      await db.query(
+        `INSERT INTO org.user_company_access (user_id, company_id) VALUES ($1::uuid,$2::uuid) ON CONFLICT (user_id, company_id) DO NOTHING`,
+        [userId, companyId]
+      );
       const mk = async (id: string, n: string, type: string) =>
         db.query(
           `INSERT INTO catalogs.accounts (id, operating_company_id, account_number, account_name, account_type, is_postable)
@@ -199,6 +213,7 @@ describeIntegration("FIN-18 settlement GL posting (real Postgres)", () => {
         await db.query(`DELETE FROM catalogs.account_role_bindings WHERE role_key = ANY($1)`, [roleKeys]);
         await db.query(`DELETE FROM accounting.settlement_posting_config WHERE operating_company_id = $1::uuid`, [companyId]);
         await db.query(`DELETE FROM lib.feature_flag_overrides WHERE flag_key = 'SETTLEMENT_GL_POSTING_ENABLED' AND operating_company_id = $1::uuid`, [companyId]);
+        await db.query(`DELETE FROM org.user_company_access WHERE user_id=$1::uuid AND company_id=$2::uuid`, [userId, companyId]);
       });
     } catch { /* best-effort */ }
     await db.end();
