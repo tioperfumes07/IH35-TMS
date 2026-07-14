@@ -26,9 +26,11 @@ export default defineConfig({
     // SERIALLY (VLCI_SERIAL=1) — one file at a time against the shared DB — which removes the race and
     // makes a green local run a faithful CI mirror. CI keeps parallel (it passes today); this only
     // changes the local pre-push gate. The proper fix (per-test company isolation) is tracked separately.
-    // Also serial in CI (GITHUB_ACTIONS): the same race intermittently fails settlement/sync-health on
-    // CI too — the real source of PRs "always failing" — so serial there ends the flaky for good.
-    ...(process.env.VLCI_SERIAL === "1" || process.env.GITHUB_ACTIONS === "true" ? { fileParallelism: false } : {}),
+    // Serial ONLY for verify:local-ci (VLCI_SERIAL). CI stays PARALLEL/fast: making the whole 743-file
+    // suite serial in CI pushed build-typecheck past the 15-min job timeout (every PR then failed on
+    // TIMEOUT). The shared-company flaky (settlement/sync-health) is instead handled by re-running the
+    // failed job (it passes on rerun); the durable fix is per-test company isolation (tracked follow-up).
+    ...(process.env.VLCI_SERIAL === "1" ? { fileParallelism: false } : {}),
     setupFiles: [path.join(repoRoot, "apps/backend/test-helpers/setup-env.ts")],
     coverage: {
       provider: "v8",
