@@ -1,0 +1,36 @@
+{
+  "block_id": "G11-1-CLAIM-CROSSMODULE-FKS",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "11-INSURANCE",
+  "task": "11-insurance G11-1 (LINKAGE half only) — insurance.claim had NO forward link to the accident it arose from, the load involved, or the driver, even though every prior cross-module FK pointed INTO the claim (P4-01 safety.accident_reports.insurance_claim_id, P4-05 safety.incidents.auto_created_claim_id, P4-02 legal.matters.insurance_claim_id). Verify-first vs live prod (Neon br-raspy-haze-ak8kty33, forked from br-fancy-credit-akjnd07a, 2026-07-14): insurance.claim carried only policy_id/asset_id/tenant_id; safety.accident_reports, mdata.loads, mdata.drivers all exist with uuid id. Migration 202607410000 adds insurance.claim.{accident_report_id -> safety.accident_reports, load_id -> mdata.loads, driver_id -> mdata.drivers} (all ON DELETE SET NULL) + partial indexes. New cols all-NULL on add so the inline FK holds trivially (no NOT VALID, no backfill). Canonical hubs only (NOT dispatch.loads). FORCED RLS + grants unchanged (cols inherit the 0285 tenant_id-scoped policy). Static guard verify-claim-crossmodule-fks. Applied+idempotency-proven on the Neon branch (3 FKs to canonical targets, on_delete SET NULL, RLS forced; second run no-op, still 3 FKs). OUT OF SCOPE (design-only): GL posting of claim payouts (amount_paid_cents -> JE).",
+  "branch": "feat/claim-accident-load-driver-fk-hold",
+  "lane": "11-INSURANCE",
+  "allowed_files": [
+    "db/migrations/202607410000_claim_crossmodule_fks.sql",
+    "db/migrations/.held-migrations.json",
+    "docs/schema-parity-baseline.json",
+    "scripts/verify-claim-crossmodule-fks.mjs",
+    "scripts/verify-steps/130-verify-claim-crossmodule-fks.mjs",
+    ".block-ready/G11-1-CLAIM-CROSSMODULE-FKS.json",
+    "package.json",
+    ".github/workflows/locked-guards.yml"
+  ],
+  "acceptance": [
+    { "kind": "fk", "from": "insurance.claim.accident_report_id", "to": "safety.accident_reports.id", "note": "new col all-NULL; ON DELETE SET NULL; the accident the claim arose from" },
+    { "kind": "fk", "from": "insurance.claim.load_id", "to": "mdata.loads.id", "note": "canonical loads hub, NOT dispatch.loads/RETIRE" },
+    { "kind": "fk", "from": "insurance.claim.driver_id", "to": "mdata.drivers.id", "note": "canonical drivers hub" },
+    { "kind": "guard", "script": "scripts/verify-claim-crossmodule-fks.mjs", "wired_into": "verify-pre-commit (verify-steps/130) + locked-guards + package.json verify:claim-crossmodule-fks + verify:arch-design chain" },
+    { "kind": "live", "assert": "Applied on Neon br-raspy-haze-ak8kty33: 3 FKs to safety.accident_reports/mdata.loads/mdata.drivers, on_delete SET NULL, all cols nullable, 3 partial indexes, RLS enabled+forced; idempotent (second ALTER a no-op, still 3 FKs). Branch deleted after proof.", "verified_by": "GUARD Neon branch-proof" },
+    { "kind": "design", "spec": "11-insurance G11-1", "sections": ["claim -> accident/load/driver linkage (GL payout posting is the design-only half)"] }
+  ],
+  "linkage": "insurance.claim -> safety.accident_reports / mdata.loads / mdata.drivers — the forward cross-module linkages this block enforces (Total Connectivity §10a / LINKAGE-LAW §10(d) both-ways). Reverse links already exist (P4-01/02/05). ON DELETE SET NULL preserves the claim. FORCED RLS (tenant_id-scoped, 0285) unchanged.",
+  "db_required": true,
+  "guard_required": true,
+  "extra_gates": [],
+  "hold": "TIER-1 MIGRATION — build-and-hold. DO NOT RUN ON PROD (registered held). Owner runs 202607410000 on a Neon branch, then ledger-backfill; owner merges. NEVER self-merge (financial cluster: db/migrations/*).",
+  "deferred": [
+    { "item": "Populate insurance.claim.{accident_report_id,load_id,driver_id} from the claim-create / accident-escalation flows + surface the links in the claim UI", "reason": "code/route follow-up — this block adds the columns+FKs so attribution is possible now; the writers wire in when the create/escalation flow carries that context. Explicit follow-up, not silently dropped." },
+    { "item": "GL posting of claim payouts (amount_paid_cents -> journal entry)", "reason": "the posting/GL-math half of G11-1 is design-only (never built solo); reuses the existing posting engine behind a default-OFF flag when specced." }
+  ]
+}
