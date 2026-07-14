@@ -21,6 +21,9 @@ const PROBE_PATTERN = /@example\.(com|org|net)|(m2-probe|m2-stop|verifyfix)/i;
 const ALLOWLIST = new Set([
   "apps/backend/src/identity/users.routes.ts",
   "apps/backend/src/admin/admin-jobs.service.ts",
+  // canonical fixture-email pattern definition (single source of truth for the probe regex —
+  // users.routes.ts + admin-jobs.service.ts now import it instead of holding their own literals)
+  "apps/backend/src/identity/fixture-email-pattern.ts",
   // archive-test-users: detects @example.com emails for filtering, not hardcoded accounts
   "apps/backend/src/identity/seed-cleanup/archive-test-users.routes.ts",
   "apps/backend/src/onboarding/seed-sample-data.ts",
