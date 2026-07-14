@@ -860,6 +860,10 @@ jobs:
       - name: verify:claim-crossmodule-fks
         run: npm run verify:claim-crossmodule-fks
 
+      - name: verify:relay-key-no-cross-entity-fallback --selftest
+        run: node scripts/verify-relay-key-no-cross-entity-fallback.mjs --selftest
+      - name: verify:relay-key-no-cross-entity-fallback
+        run: npm run verify:relay-key-no-cross-entity-fallback
       - name: verify:banking-sync-strip-transaction-count --selftest
         run: node scripts/verify-banking-sync-strip-transaction-count.mjs --selftest
       - name: verify:banking-sync-strip-transaction-count
