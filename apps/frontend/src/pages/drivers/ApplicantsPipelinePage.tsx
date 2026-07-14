@@ -142,7 +142,7 @@ export function ApplicantsPipelinePage() {
 
       <div className="grid gap-3 lg:grid-cols-5">
         {APPLICANT_PIPELINE_COLUMNS.map((col) => (
-          <section key={col.key} className="rounded-sm border border-gray-200 bg-gray-50 p-2" data-testid={`pipeline-column-${col.key}`}>
+          <section key={col.key} className="rounded-sm bg-gray-50 p-2" data-testid={`pipeline-column-${col.key}`}>
             <h2 className="mb-2 text-sm font-semibold text-gray-800">
               {col.label} ({grouped[col.key]?.length ?? 0})
             </h2>
