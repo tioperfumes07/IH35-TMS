@@ -41,9 +41,10 @@ type CustomerRow = Customer & {
   open_balance: number;
   health_tier_label: string;
   quality_flag_label: string;
+  overdue_label: string;
 };
 
-type FilterChip = "all" | "late_pay" | "medium" | "active" | "overdue";
+type FilterChip = "all" | "late_pay" | "medium" | "active" | "overdue" | "with_open";
 
 type Props = {
   companyId: string;
@@ -93,6 +94,7 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
       if (filter === "medium") return badge.label === "Medium";
       if (filter === "active") return badge.label === "Active";
       if (filter === "overdue") return open > 0 && badge.label === "Late-pay";
+      if (filter === "with_open") return open > 0;
       return true;
     });
   }, [customers, filter, openByCustomerId]);
@@ -110,6 +112,8 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
         open_balance: openByCustomerId.get(c.id) ?? 0,
         health_tier_label: relationshipTierBadge(c.relationship_health_tier ?? (atRiskCustomerIds.has(c.id) ? "at_risk" : null)).label,
         quality_flag_label: qualityBadge(c).label,
+        // Promote the heuristic "overdue" chip (open balance + Late-pay) to a real, sortable column.
+        overdue_label: (openByCustomerId.get(c.id) ?? 0) > 0 && qualityBadge(c).label === "Late-pay" ? "Yes" : "No",
       })),
     [searchedRows, openByCustomerId, atRiskCustomerIds]
   );
@@ -183,6 +187,7 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
     { id: "medium", label: "Medium" },
     { id: "active", label: "Active" },
     { id: "overdue", label: "Has overdue" },
+    { id: "with_open", label: "With open" },
   ];
 
   return (
@@ -302,6 +307,17 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
             sortable: true,
             cellClass: "text-right tabular-nums",
             render: (row) => fmtMoney(row.open_balance),
+          },
+          {
+            key: "overdue_label",
+            label: "Overdue",
+            sortable: true,
+            render: (row) =>
+              row.overdue_label === "Yes" ? (
+                <span className="inline-flex rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-800">Yes</span>
+              ) : (
+                <span className="text-gray-400">—</span>
+              ),
           },
           {
             key: "fmcsa_verified_at",
