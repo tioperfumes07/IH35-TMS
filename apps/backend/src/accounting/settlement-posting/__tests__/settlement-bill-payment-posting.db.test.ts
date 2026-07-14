@@ -18,7 +18,7 @@ import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../../lib/pg-connection-options.js";
 import { ensureIntegrationPrerequisites } from "../../../../test-helpers/db-fixture.js";
-import { TEST_OWNER_USER_ID, TEST_ENCRYPTION_KEY } from "../../../../test-helpers/constants.js";
+import { TEST_ENCRYPTION_KEY } from "../../../../test-helpers/constants.js";
 import { postSettlementBillPayment, type SettlementBillPaymentResult } from "../settlement-bill-payment-posting.service.js";
 import { upsertDriverEscrowAccountLink, upsertDriverAdvanceAccountLink } from "../../driver-subaccount-provision.service.js";
 
@@ -47,7 +47,10 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
   let db: pg.Client;
   let companyId: string;
   const suffix = randomUUID().slice(0, 8);
-  const userId = TEST_OWNER_USER_ID;
+  // Dedicated, UNIQUE actor for THIS file only (see setFlag). Must differ from every other suite that
+  // toggles SETTLEMENT_GL_POSTING_ENABLED on the shared TRANSP company (settlement-gl-posting,
+  // settlement-payrun-close) so their user-scoped overrides never share this file's (flag_key, user_uuid).
+  const userId = "00000000-0000-4000-8000-0000000000d2";
 
   const acct = {
     ap: randomUUID(),
@@ -118,16 +121,20 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
     );
     return rows.map((r) => r.je_id).filter((id): id is string => Boolean(id));
   }
+  // FLAKE FIX: USER-scoped override (user_uuid = this file's UNIQUE actor), NOT tenant-scoped. The shared
+  // TRANSP company (ensureIntegrationPrerequisites) is handed to every integration test, so a tenant-scoped
+  // SETTLEMENT_GL_POSTING_ENABLED override on it is clobberable by a parallel sibling suite toggling the same
+  // flag on that company (settlement-gl-posting) in the window before postSettlementBillPayment reads it.
+  // resolveFlagEnabled checks the USER override BEFORE the tenant override, and postSettlementBillPayment
+  // resolves the flag with user_uuid=actor.userId, so a user-scoped row for this file's dedicated actor is
+  // immune to cross-file tenant contention. Carries operating_company_id so afterAll cleanup still removes it.
   async function setFlag(enabled: boolean) {
     await bypass(async () => {
       await db.query(
-        `DELETE FROM lib.feature_flag_overrides WHERE flag_key='SETTLEMENT_GL_POSTING_ENABLED' AND operating_company_id=$1::uuid AND user_uuid IS NULL`,
-        [companyId]
-      );
-      await db.query(
         `INSERT INTO lib.feature_flag_overrides (flag_key, operating_company_id, user_uuid, enabled, set_by_user_uuid)
-         VALUES ('SETTLEMENT_GL_POSTING_ENABLED', $1::uuid, NULL, $2, $3::uuid)`,
-        [companyId, enabled, userId]
+         VALUES ('SETTLEMENT_GL_POSTING_ENABLED', $1::uuid, $2::uuid, $3, $2::uuid)
+         ON CONFLICT (flag_key, user_uuid) WHERE user_uuid IS NOT NULL DO UPDATE SET enabled = EXCLUDED.enabled`,
+        [companyId, userId, enabled]
       );
     });
   }
@@ -177,6 +184,11 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
       await db.query(
         `INSERT INTO identity.users (id, email, role, preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
         [userId, `sbp-${suffix}@test.local`]
+      );
+      // Grant the dedicated actor company access — postSettlementBillPayment runs withCurrentUser(actor.userId).
+      await db.query(
+        `INSERT INTO org.user_company_access (user_id, company_id) VALUES ($1::uuid,$2::uuid) ON CONFLICT (user_id, company_id) DO NOTHING`,
+        [userId, companyId]
       );
       await db.query(
         `INSERT INTO mdata.customers (id, operating_company_id, customer_name) VALUES ($1::uuid,$2::uuid,$3)`,
@@ -310,6 +322,7 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
         await db.query(`DELETE FROM mdata.drivers WHERE id = $1::uuid`, [driverId]);
         await db.query(`DELETE FROM mdata.customers WHERE id = $1::uuid`, [customerId]);
         await db.query(`DELETE FROM lib.feature_flag_overrides WHERE flag_key='SETTLEMENT_GL_POSTING_ENABLED' AND operating_company_id=$1::uuid`, [companyId]);
+        await db.query(`DELETE FROM org.user_company_access WHERE user_id=$1::uuid AND company_id=$2::uuid`, [userId, companyId]);
         await db.query(`DELETE FROM integrations.qbo_sync_queue WHERE operating_company_id=$1::uuid AND entity_id = ANY($2::uuid[])`, [companyId, glBillIds]);
         await db.query(`DELETE FROM integrations.qbo_connections WHERE operating_company_id=$1::uuid AND realm_id=$2`, [companyId, `TEST-REALM-${suffix}`]);
       });

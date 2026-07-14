@@ -20,7 +20,7 @@ import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
 import { ensureIntegrationPrerequisites } from "../../../test-helpers/db-fixture.js";
-import { CASH_ADVANCE_MAP_TEST_LOCK_KEY, TEST_OWNER_USER_ID } from "../../../test-helpers/constants.js";
+import { CASH_ADVANCE_MAP_TEST_LOCK_KEY } from "../../../test-helpers/constants.js";
 import {
   BANK_FEED_GL_POSTING_FLAG_KEY,
   maybePostBankCategorizationToGl,
@@ -32,7 +32,10 @@ describeIntegration("CHAIN-05 bank-feed categorization → GL posting (real Post
   let db: pg.Client;
   let companyId: string;
   const suffix = randomUUID().slice(0, 8);
-  const userId = TEST_OWNER_USER_ID;
+  // Dedicated, UNIQUE actor for THIS file only (see setFlag). Must differ from the sibling suite that
+  // toggles BANK_FEED_GL_POSTING_ENABLED on the shared TRANSP company (bank-feed-transfer-dedup) so their
+  // user-scoped overrides never share this file's (flag_key, user_uuid).
+  const userId = "00000000-0000-4000-8000-0000000000d3";
 
   const acct = {
     expense: randomUUID(), // Expense
@@ -73,16 +76,21 @@ describeIntegration("CHAIN-05 bank-feed categorization → GL posting (real Post
     }
   }
 
+  // FLAKE FIX: USER-scoped override (user_uuid = this file's UNIQUE actor), NOT tenant-scoped. The shared
+  // TRANSP company (ensureIntegrationPrerequisites) is handed to every integration test, so a tenant-scoped
+  // BANK_FEED_GL_POSTING_ENABLED override on it is clobberable by a parallel sibling suite toggling the same
+  // flag on that company (bank-feed-transfer-dedup) in the window before maybePostBankCategorizationToGl
+  // reads it. resolveFlagEnabled checks the USER override BEFORE the tenant override, and
+  // maybePostBankCategorizationToGl resolves the flag with user_uuid=actorUserUuid, so a user-scoped row for
+  // this file's dedicated actor is immune to cross-file tenant contention. Carries operating_company_id so
+  // the afterAll cleanup (delete by operating_company_id) still removes it.
   async function setFlag(enabled: boolean) {
     await bypass(async () => {
       await db.query(
-        `DELETE FROM lib.feature_flag_overrides WHERE flag_key=$1 AND operating_company_id=$2::uuid AND user_uuid IS NULL`,
-        [BANK_FEED_GL_POSTING_FLAG_KEY, companyId]
-      );
-      await db.query(
         `INSERT INTO lib.feature_flag_overrides (flag_key, operating_company_id, user_uuid, enabled, set_by_user_uuid)
-         VALUES ($1, $2::uuid, NULL, $3, $4::uuid)`,
-        [BANK_FEED_GL_POSTING_FLAG_KEY, companyId, enabled, userId]
+         VALUES ($1, $2::uuid, $3::uuid, $4, $3::uuid)
+         ON CONFLICT (flag_key, user_uuid) WHERE user_uuid IS NOT NULL DO UPDATE SET enabled = EXCLUDED.enabled`,
+        [BANK_FEED_GL_POSTING_FLAG_KEY, companyId, userId, enabled]
       );
     });
   }
@@ -165,6 +173,11 @@ describeIntegration("CHAIN-05 bank-feed categorization → GL posting (real Post
         `INSERT INTO identity.users (id, email, role, preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
         [userId, `c5-${suffix}@test.local`]
       );
+      // Grant the dedicated actor company access — maybePostBankCategorizationToGl runs as this actor.
+      await db.query(
+        `INSERT INTO org.user_company_access (user_id, company_id) VALUES ($1::uuid,$2::uuid) ON CONFLICT (user_id, company_id) DO NOTHING`,
+        [userId, companyId]
+      );
       const mk = async (id: string, n: string, type: string) =>
         db.query(
           `INSERT INTO catalogs.accounts (id, operating_company_id, account_number, account_name, account_type, is_postable)
@@ -233,6 +246,7 @@ describeIntegration("CHAIN-05 bank-feed categorization → GL posting (real Post
           BANK_FEED_GL_POSTING_FLAG_KEY,
           companyId,
         ]);
+        await db.query(`DELETE FROM org.user_company_access WHERE user_id=$1::uuid AND company_id=$2::uuid`, [userId, companyId]);
       });
     } catch {
       /* best-effort */
