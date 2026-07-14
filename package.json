@@ -923,12 +923,13 @@
     "verify:settlement-payrun-gl-flag-gate": "node scripts/verify-settlement-payrun-gl-flag-gate.mjs",
     "verify:payment-methods-catalog": "node scripts/verify-payment-methods-catalog.mjs",
     "verify:mdata-write-entity-scope": "node scripts/verify-mdata-write-entity-scope.mjs",
-    "verify:no-test-fixture-names": "node scripts/verify-no-test-fixture-names.mjs",
+    "verify:border-crossing-canonical-relations": "node scripts/verify-border-crossing-canonical-relations.mjs",
     "verify:open-wo-shared-predicate": "node scripts/verify-open-wo-shared-predicate.mjs",
     "verify:safety-canonical-table-reads": "node scripts/verify-safety-canonical-table-reads.mjs",
-    "verify:border-crossing-canonical-relations": "node scripts/verify-border-crossing-canonical-relations.mjs",
+    "verify:qbo-ap-pull-dbflag": "node scripts/verify-qbo-ap-pull-dbflag.mjs",
     "verify:units-vin-dup-prevention": "node scripts/verify-units-vin-dup-prevention.mjs",
-    "verify:ap-aging-qbo-tie": "node scripts/verify-ap-aging-qbo-tie.mjs"
+    "verify:ap-aging-qbo-tie": "node scripts/verify-ap-aging-qbo-tie.mjs",
+    "verify:no-test-fixture-names": "node scripts/verify-no-test-fixture-names.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",

@@ -122,6 +122,10 @@ describeIntegration("QBO-AP-PULL Stage 2 projection -> A/P aging (real Postgres)
       await db
         .query(`DELETE FROM mdata.vendors WHERE id = ANY($1::uuid[])`, [[vendorMatchedUuid, vendorNativeUuid]])
         .catch(() => {});
+      // Restore the flag default so this file's ON-enable can't leak into other db.tests sharing the CI DB.
+      await db
+        .query(`UPDATE lib.feature_flags SET default_enabled = false WHERE flag_key = 'QBO_AP_BILLS_PROJECTION_ENABLED'`)
+        .catch(() => {});
       await db.end().catch(() => {});
     }
     vi.unstubAllEnvs();
@@ -158,8 +162,11 @@ describeIntegration("QBO-AP-PULL Stage 2 projection -> A/P aging (real Postgres)
   });
 
   it("flag ON: mirrored QBO bill is projected and appears in views.ap_aging at the right amount/vendor/entity", async () => {
-    vi.stubEnv("QBO_AP_BILLS_PROJECTION_ENABLED", "true");
-    vi.resetModules();
+    // The puller now resolves the flag from the DB (isEnabled), NOT process.env — enable it in the test
+    // DB. (resolveFlagEnabled honors default_enabled for this non-per-entity-gated flag.)
+    await db.query(
+      `UPDATE lib.feature_flags SET default_enabled = true WHERE flag_key = 'QBO_AP_BILLS_PROJECTION_ENABLED'`
+    );
     const mod = await import("../ap-bills-puller.js");
     const res = await mod.projectApBillsToLedger(companyId);
     expect(res.enabled).toBe(true);

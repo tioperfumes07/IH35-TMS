@@ -1,0 +1,26 @@
+{
+  "block_id": "qbo-ap-pull-dbflag-wire",
+  "status": "BUILD",
+  "classification": "FINANCIAL (accounting.bills subledger projection + flag seed migration)",
+  "phase": "ACCOUNTING",
+  "priority": "P0",
+  "module": "qbo-sync / accounts-payable",
+  "hold": "HOLD-FOR-JORGE",
+  "guard_required": true,
+  "source": "Owner defect 2026-07-13: Accounting/Expenses A/P tab empty ('no wiring'). GUARD root-caused live.",
+  "allowed_files": [
+    "apps/backend/src/qbo-sync/ap-bills-puller.ts",
+    "db/migrations/202607390000_qbo_ap_pull_dbflag_and_enable.sql",
+    "scripts/verify-qbo-ap-pull-dbflag.mjs",
+    "scripts/verify-steps/06b-verify-qbo-ap-pull-dbflag.mjs",
+    "package.json"
+  ],
+  "acceptance": [
+    { "check": "puller gates both stages on isEnabled() DB flag, not process.env (guard verify-qbo-ap-pull-dbflag green + wired into verify:pre-commit)" },
+    { "check": "migration 202607390000 registers both flags in lib.feature_flags (default OFF) and sets per-entity ON overrides for TRANSP + TRK; replays clean on a fresh CI DB from 0001 (0 override rows when no owner user)" },
+    { "check": "after merge+deploy + one sync tick: mdata.qbo_ap_bills and accounting.bills(source_system='qbo') populated for TRANSP; A/P Aging/Expenses shows ~$1,347,306.86 / 151 vendors; zero JEs posted by this path" }
+  ],
+  "linkage": "Vendor(mdata.vendors) <-> Bill(accounting.bills) <-> operating_company_id + FORCED RLS; QBO mirror mdata.qbo_ap_bills. Reconcile-only, QBO->TMS one-directional, no GL, no TMS->QBO write.",
+  "root_cause": "puller env-gated + flags never registered => scheduler tick permanent no-op => accounting.bills=0 while QBO A/P ~$1.35M.",
+  "note": "GUARD pre-validated the migration on a prod-schema Neon branch (ON CONFLICT partial-index inference correct, idempotent, 2 flags x TRANSP/TRK = 4 ON overrides). Apply the patch; do not re-derive."
+}
