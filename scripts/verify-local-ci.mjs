@@ -68,10 +68,14 @@ function startEphemeralPg(pgBin) {
     fs.rmSync(dataDir, { recursive: true, force: true });
     throw new Error(`initdb failed:\n${init.stderr || init.stdout}`);
   }
-  // listen on localhost only, on the CI port; socket in the data dir.
+  // listen on localhost only, on the CI port; socket in the data dir. Throwaway cluster → run it in
+  // FAST/DURABILITY-OFF mode (fsync/synchronous_commit/full_page_writes off, bigger buffers, more
+  // connections) so the full backend db.test suite doesn't hit 5s test timeouts on an underpowered
+  // local box the way it did on default settings — CI's Postgres service is more resourced. Safe: the
+  // data dir is destroyed on exit, so losing durability guarantees is irrelevant.
   const start = run(pgBin, "pg_ctl", [
     "-D", dataDir,
-    "-o", `-p ${PORT} -c listen_addresses=localhost -k ${dataDir}`,
+    "-o", `-p ${PORT} -c listen_addresses=localhost -k ${dataDir} -c fsync=off -c synchronous_commit=off -c full_page_writes=off -c shared_buffers=256MB -c work_mem=32MB -c max_connections=200`,
     "-l", logFile, "-w", "-t", "30", "start",
   ]);
   if (start.status !== 0) {
@@ -131,13 +135,26 @@ function main() {
     const res = spawnSync("npm", ["run", "verify:pre-commit"], {
       cwd: ROOT,
       stdio: "inherit",
-      // Pin the connection to the ephemeral local cluster; blank DATABASE_DIRECT_URL so dotenv can't reload
-      // a prod URL. Local-safe by construction — the cluster is a throwaway created above.
+      // Pin BOTH connection vars to the ephemeral local cluster, and set GITHUB_ACTIONS=true so the
+      // backend `.db.test.ts` suite actually RUNS (it is gated `describe.skipIf(GITHUB_ACTIONS!=="true")`;
+      // without this the db.tests silently skip locally and a broken one — e.g. a flag-gated projection —
+      // only fails in CI *after* push. This is exactly the leak that kept PRs going red post-push).
+      //
+      // PROD-SAFE by construction, and safer than the old blank DIRECT_URL: DATABASE_DIRECT_URL is set to
+      // the ephemeral LOCAL url (a truthy value), so dotenv.config() — which only fills vars it sees as
+      // UNSET, and treats "" as unset — can NEVER reload the prod Neon DIRECT_URL over it. The db.tests
+      // therefore connect to the throwaway localhost:PORT/ih35_verify cluster (created above, torn down on
+      // exit), never prod. verify:pre-commit's db-reset anti-prod guard still pins the same target.
       env: {
         ...process.env,
         // pg toolchain on PATH so any psql/pg_dump inside the guard suite resolves.
         PATH: `${pgBin}:${process.env.PATH}`,
-        DATABASE_URL: url, DATABASE_DIRECT_URL: "", PGHOST: "localhost", PGPORT: String(PORT), PGUSER, CI_MIGRATION_TEST: "1",
+        DATABASE_URL: url, DATABASE_DIRECT_URL: url, PGHOST: "localhost", PGPORT: String(PORT), PGUSER,
+        CI_MIGRATION_TEST: "1", GITHUB_ACTIONS: "true",
+        // Run the db.test suite serially against the single ephemeral DB so concurrent forks can't race
+        // on shared company-scope rows (the contamination that fails settlement/sync-health locally but
+        // not on CI). Makes a green local run a faithful CI mirror. See apps/backend/vitest.config.ts.
+        VLCI_SERIAL: "1",
       },
     });
     status = res.status ?? 1;
