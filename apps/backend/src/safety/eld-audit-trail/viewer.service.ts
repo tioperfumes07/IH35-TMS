@@ -1,3 +1,5 @@
+import { companyBusinessDate } from "../../lib/company-business-date.js";
+
 export type EldLogEditRow = {
   id: string;
   driver_uuid: string;
@@ -147,10 +149,12 @@ export async function getRecentEditHistory(
   driverUuid: string,
   limit = 25
 ): Promise<EldEditHistoryResult> {
-  const to = new Date().toISOString().slice(0, 10);
-  const fromDate = new Date();
-  fromDate.setUTCDate(fromDate.getUTCDate() - 30);
-  const from = fromDate.toISOString().slice(0, 10);
+  // Company wall-clock day (America/Chicago), not the UTC calendar day — `.toISOString().slice(0,10)`
+  // rolls to tomorrow after ~19:00 Central, silently shifting the "last 30 days" window (same root
+  // cause as company-business-date.ts's Load Number bug).
+  const now = new Date();
+  const to = companyBusinessDate(now);
+  const from = companyBusinessDate(new Date(now.getTime() - 30 * 86_400_000));
 
   // ELD-1: honest empty history when the Samsara mirror table is not yet provisioned (no 500).
   if (!(await eldEditSourceExists(client))) {
