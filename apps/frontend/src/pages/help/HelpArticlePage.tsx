@@ -12,7 +12,7 @@ export function HelpArticlePage() {
   if (!article) {
     return (
       <div className="space-y-3">
-        <PageHeader title="Article not found" />
+        <PageHeader breadcrumb={["Help"]} title="Article not found" />
         <p className="text-sm text-gray-700">
           <Link to="/help" className="text-slate-700 hover:underline">
             Back to help home
@@ -24,7 +24,7 @@ export function HelpArticlePage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title={article.title} subtitle={article.category} />
+      <PageHeader breadcrumb={["Help", article.category]} title={article.title} subtitle={article.category} />
       <article className="prose prose-sm max-w-none text-gray-900">
         <ReactMarkdown>{article.body}</ReactMarkdown>
       </article>
@@ -50,7 +50,7 @@ export function HelpArticlePage() {
         </div>
         {feedback ? (
           <p className="mt-2 text-sm text-gray-600" role="status">
-            Thanks — we use this to prioritize documentation updates.
+            Thanks for the feedback.
           </p>
         ) : null}
         <p className="mt-3 text-sm">

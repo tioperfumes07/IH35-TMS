@@ -5,15 +5,21 @@ export { RUNBOOKS } from "./runbooks-data";
 
 // Bundle runbook markdown files via Vite's import.meta.glob with eager loading.
 // Includes docs/runbooks/operational-tuning-catalog.md (see ./runbooks-data), rendered below.
-const runbookModules = import.meta.glob("../../../docs/runbooks/*.md", { as: "url", eager: true });
+// Path is relative to this file (apps/frontend/src/pages/help/) -> repo-root docs/runbooks
+// needs 5 levels up (help -> pages -> src -> frontend -> apps -> root), not 3.
+const runbookModules = import.meta.glob("../../../../../docs/runbooks/*.md", {
+  query: "?url",
+  import: "default",
+  eager: true,
+});
 
 export function RunbooksIndex() {
   return (
     <div className="space-y-4" data-testid="runbooks-index">
-      <PageHeader title="Operator runbooks" subtitle="Step-by-step procedures for recurring office workflows" />
+      <PageHeader breadcrumb={["Help", "Runbooks"]} title="Operator runbooks" subtitle="Step-by-step procedures for recurring office workflows" />
       <ul className="grid gap-3 md:grid-cols-2">
         {RUNBOOKS.map((rb) => {
-          const moduleKey = `../../../${rb.docPath}`;
+          const moduleKey = `../../../../../${rb.docPath}`;
           const runbookUrl = runbookModules[moduleKey] as string | undefined;
           return (
             <li key={rb.slug} className="rounded-sm border border-gray-200 bg-white p-4">

@@ -21,7 +21,7 @@ export function HelpCenterPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Help center" subtitle="Guides for dispatch, finance, and account tasks" />
+      <PageHeader breadcrumb={["Help"]} title="Help center" subtitle="Guides for dispatch, finance, and account tasks" />
       <div>
         <label htmlFor="help-search" className="sr-only">
           Search help articles
