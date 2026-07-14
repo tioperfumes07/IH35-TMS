@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   getBankingRegister,
   getEscrowDriverBalances,
@@ -31,6 +31,8 @@ function timelineToRegisterRow(row: EscrowDriverTimelineRow): Record<string, unk
     balance: 0,
     status: "synced",
     category: row.bucket ?? row.entry_type ?? "escrow",
+    // Doc-18 defect #12 — carry the driver forward so the row is clickable (drill to the driver profile).
+    driver_id: row.driver_id ?? "",
   };
 }
 
@@ -46,10 +48,14 @@ function registerToEscrowRow(row: Record<string, unknown>): Record<string, unkno
     balance: 0,
     status: String(row.status ?? "synced"),
     category: String(row.category ?? "escrow"),
+    // Doc-18 defect #12 — the account-level register now surfaces driver_id (banking.routes.ts fix),
+    // so a row can drill through to the driver even in the "All drivers" view.
+    driver_id: String(row.driver_id ?? ""),
   };
 }
 
 export function DriverEscrowTabContent({ operatingCompanyId, driverEscrowBalance }: Props) {
+  const navigate = useNavigate();
   const [selectedDriverId, setSelectedDriverId] = useState("");
 
   const driverBalancesQuery = useQuery({
@@ -158,20 +164,31 @@ export function DriverEscrowTabContent({ operatingCompanyId, driverEscrowBalance
               </tr>
             </thead>
             <tbody>
-              {tableRows.map((row) => (
-                <tr key={String(row.id ?? "")} className="border-t border-gray-100 text-xs">
-                  <td className="px-2 py-1">{formatDateUS(row.txn_date)}</td>
-                  <td className="px-2 py-1">{String(row.description ?? "")}</td>
-                  <td className="px-2 py-1 text-green-700">
-                    {Number(row.deposits ?? 0) > 0 ? `$${Number(row.deposits ?? 0).toFixed(2)}` : "—"}
-                  </td>
-                  <td className="px-2 py-1 text-red-700">
-                    {Number(row.withdrawals ?? 0) > 0 ? `$${Number(row.withdrawals ?? 0).toFixed(2)}` : "—"}
-                  </td>
-                  <td className="px-2 py-1">{String(row.status ?? "synced")}</td>
-                  <td className="px-2 py-1">{String(row.category ?? "escrow")}</td>
-                </tr>
-              ))}
+              {tableRows.map((row) => {
+                const rowDriverId = String(row.driver_id ?? "");
+                // Doc-18 defect #12 — a register row must never be a dead click: drill through to the
+                // driver the escrow movement belongs to (same target the "Ledger scope" driver link
+                // above uses). Rows without a resolvable driver stay inert rather than faking a link.
+                const openable = Boolean(rowDriverId);
+                return (
+                  <tr
+                    key={String(row.id ?? "")}
+                    className={`border-t border-gray-100 text-xs ${openable ? "cursor-pointer hover:bg-slate-50" : ""}`}
+                    onClick={openable ? () => navigate(`/drivers/${rowDriverId}`) : undefined}
+                  >
+                    <td className="px-2 py-1">{formatDateUS(row.txn_date)}</td>
+                    <td className="px-2 py-1">{String(row.description ?? "")}</td>
+                    <td className="px-2 py-1 text-green-700">
+                      {Number(row.deposits ?? 0) > 0 ? `$${Number(row.deposits ?? 0).toFixed(2)}` : "—"}
+                    </td>
+                    <td className="px-2 py-1 text-red-700">
+                      {Number(row.withdrawals ?? 0) > 0 ? `$${Number(row.withdrawals ?? 0).toFixed(2)}` : "—"}
+                    </td>
+                    <td className="px-2 py-1">{String(row.status ?? "synced")}</td>
+                    <td className="px-2 py-1">{String(row.category ?? "escrow")}</td>
+                  </tr>
+                );
+              })}
               {listState.isEmpty ? (
                 <tr>
                   <td colSpan={6} className="px-2 py-3 text-center text-xs text-gray-500">

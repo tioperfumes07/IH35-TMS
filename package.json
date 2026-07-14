@@ -938,7 +938,8 @@
     "verify:road-service-route-mounted": "node scripts/verify-road-service-route-mounted.mjs",
     "verify:qbo-parity-banking-home": "node scripts/verify-qbo-parity-banking-home.mjs",
     "verify:consolidated-elimination": "node scripts/verify-consolidated-elimination.mjs",
-    "verify:qbo-parity-bills-invoices-lists": "node scripts/verify-qbo-parity-bills-invoices-lists.mjs"
+    "verify:qbo-parity-bills-invoices-lists": "node scripts/verify-qbo-parity-bills-invoices-lists.mjs",
+    "verify:banking-nav-clickthrough": "node scripts/verify-banking-nav-clickthrough.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",
