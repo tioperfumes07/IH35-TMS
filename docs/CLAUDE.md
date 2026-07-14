@@ -13,12 +13,14 @@
 - **Before EVERY push, run `npm run verify:static`** and fix any `FAIL(gated)` locally — never push into a
   red static guard. It runs all `scripts/verify-*.mjs` with no reachable DB (dead-port sentinel; never
   touches prod) and fails only on a guard CI actually runs. See `docs/specs/BRANCH-TOOLING.md` §2.
-- **To reproduce CI's `build-typecheck` in full (migrations + backend/frontend tsc + guard suite), run
-  `npm run verify:local-ci`** (`--tests` adds the db.test suite). It resets a THROWAWAY local Postgres
-  (`ci-migration-test`) and runs the exact CI chain, pinning the connection local + blanking
-  `DATABASE_DIRECT_URL` so the `db:migrate`-hits-prod landmine cannot fire (it refuses any non-local host).
-  This catches the failures `verify:static` cannot — a migration that errors on a fresh DB, a TS error, a
-  db.test failure — so a PR never lands `build-typecheck` red. Requires a local Postgres on `127.0.0.1:5432`.
+- **To reproduce CI's `build-typecheck` EXACTLY before pushing, run `npm run verify:local-ci`.** It spins up
+  an EPHEMERAL throwaway local Postgres (a fresh cluster on `localhost:54329/ih35_verify`, destroyed on exit —
+  never touches an existing DB or prod) and runs the **exact CI command, `npm run verify:pre-commit`** — every
+  one of the ~156 `scripts/verify-steps/*.mjs` (db-reset → migrate → build → tsc → the full ~250-guard suite →
+  backend db.tests). Because it runs literally what CI runs, it **cannot miss a guard** — the earlier
+  hand-picked-subset version silently skipped guards (schema-parity, mdata-entity-scope) that live in a
+  verify-step but not `verify:arch-design`, and PRs kept going red. Requires a local Postgres SERVER binary
+  (Postgres.app or `brew install postgresql@16`); takes ~6-10 min. Run it before every substantive push.
 
 ## 1a) LINKAGE LAW + CANONICAL WIRING (read before any block)
 

@@ -400,15 +400,31 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
     const idIdx = values.length;
     try {
       const updated = await withCurrentUser(authUser.uuid, async (client) => {
-        const oldRes = await client.query(`SELECT * FROM mdata.units WHERE id = $1 LIMIT 1`, [parsedParams.data.id]);
+        // Entity scope (USMCA cross-entity leak fix): mdata.units has no operating_company_id and its
+        // RLS is role-scoped, so a bare `WHERE id = $1` write reaches ANY entity's truck. Resolve the
+        // caller's company (default, or an explicit ?operating_company_id validated for membership) and
+        // gate both the existence read and the UPDATE on owner/lessee — mirrors the GET-list / status
+        // predicate already in this module.
+        const scopedCompanyId = await resolveOperatingCompanyId(
+          client,
+          authUser.uuid,
+          (req.query as { operating_company_id?: string } | undefined)?.operating_company_id
+        );
+        const oldRes = await client.query(
+          `SELECT * FROM mdata.units WHERE id = $1 AND (owner_company_id = $2 OR currently_leased_to_company_id = $2) LIMIT 1`,
+          [parsedParams.data.id, scopedCompanyId]
+        );
         const oldRow = oldRes.rows[0] ?? null;
         if (!oldRow) return null;
 
+        values.push(scopedCompanyId);
+        const scopeIdx = values.length;
         const res = await client.query(
           `
             UPDATE mdata.units
             SET ${setParts.join(", ")}
             WHERE id = $${idIdx}
+              AND (owner_company_id = $${scopeIdx} OR currently_leased_to_company_id = $${scopeIdx})
             RETURNING *
           `,
           values
@@ -455,14 +471,22 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
 
     const deactivated = await withCurrentUser(authUser.uuid, async (client) => {
+      // Entity scope (USMCA cross-entity leak fix): gate the read + soft-delete on owner/lessee so one
+      // entity cannot deactivate another entity's truck by guessing its UUID.
+      const scopedCompanyId = await resolveOperatingCompanyId(
+        client,
+        authUser.uuid,
+        (req.query as { operating_company_id?: string } | undefined)?.operating_company_id
+      );
       const oldRes = await client.query(
         `
           SELECT id, deactivated_at, status
           FROM mdata.units
           WHERE id = $1
+            AND (owner_company_id = $2 OR currently_leased_to_company_id = $2)
           LIMIT 1
         `,
-        [parsedParams.data.id]
+        [parsedParams.data.id, scopedCompanyId]
       );
       const oldRow = oldRes.rows[0] ?? null;
       if (!oldRow) return null;
@@ -490,8 +514,9 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
                 updated_by_user_id = $3
             WHERE id = $1
               AND deactivated_at IS NULL
+              AND (owner_company_id = $4 OR currently_leased_to_company_id = $4)
           `,
-          [parsedParams.data.id, newStatus, authUser.uuid]
+          [parsedParams.data.id, newStatus, authUser.uuid, scopedCompanyId]
         );
         // now() is transaction-scoped (constant for the whole txn), so reading it back here returns the
         // exact value just written — DB-authoritative — without re-reading the now-SELECT-invisible row.
@@ -522,7 +547,13 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
     const updated = await withCurrentUser(authUser.uuid, async (client) => {
-      const oldRes = await client.query(`SELECT * FROM mdata.units WHERE id = $1 LIMIT 1`, [parsedParams.data.id]);
+      // Entity scope (USMCA cross-entity leak fix): gate on owner/lessee. parsedQuery already carries a
+      // required operating_company_id — validate membership + scope the read and write to it.
+      const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, parsedQuery.data.operating_company_id);
+      const oldRes = await client.query(
+        `SELECT * FROM mdata.units WHERE id = $1 AND (owner_company_id = $2 OR currently_leased_to_company_id = $2) LIMIT 1`,
+        [parsedParams.data.id, scopedCompanyId]
+      );
       const oldRow = oldRes.rows[0];
       if (!oldRow) return null;
       const res = await client.query(
@@ -530,11 +561,13 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
           UPDATE mdata.units
           SET quick_availability = $2, updated_by_user_id = $3, updated_at = now()
           WHERE id = $1
+            AND (owner_company_id = $4 OR currently_leased_to_company_id = $4)
           RETURNING id, quick_availability
         `,
-        [parsedParams.data.id, parsedBody.data.value, authUser.uuid]
+        [parsedParams.data.id, parsedBody.data.value, authUser.uuid, scopedCompanyId]
       );
       const row = res.rows[0];
+      if (!row) return null;
       await appendCrudAudit(client, authUser.uuid, "mdata.unit.quick_availability_changed", {
         resource_id: row.id,
         before: oldRow.quick_availability,

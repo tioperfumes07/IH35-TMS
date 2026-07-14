@@ -201,7 +201,7 @@ describe("dispatch-view routes (GAP-34)", () => {
       if (sql.includes("JOIN mdata.loads l ON l.id = s.load_id")) {
         return { rows: [{ id: STOP_A, operating_company_id: "11111111-1111-4111-8111-111111111111" }] };
       }
-      if (sql.includes("FROM documents.evidence_records")) {
+      if (sql.includes("FROM documents.damage_photo_evidence")) {
         expect(values?.[0]).toBe(EVIDENCE);
         return { rows: [{ id: EVIDENCE }] };
       }
