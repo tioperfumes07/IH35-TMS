@@ -236,7 +236,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
           partNeedsReorder(row.qty_on_hand, row.reorder_threshold) ? (
             <span className="rounded-sm bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-700">REORDER</span>
           ) : (
-            <span className="rounded-sm bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">OK</span>
+            <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700">OK</span>
           ),
       },
     ],

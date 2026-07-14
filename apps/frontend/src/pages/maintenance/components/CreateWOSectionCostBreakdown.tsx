@@ -69,7 +69,7 @@ export function CreateWOSectionCostBreakdown({ control, register, watch }: Props
           + Create line
         </Button>
       </div>
-      <div className="mt-2 rounded-sm border border-green-200 bg-green-50 px-2 py-1 text-xs">
+      <div className="mt-2 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 text-xs">
         Parts Subtotal: <span className="font-semibold">${totals.parts.toFixed(2)}</span> · Labor Subtotal:{" "}
         <span className="font-semibold">${totals.labor.toFixed(2)}</span> · Estimated Total:{" "}
         <span className="font-semibold">${totals.total.toFixed(2)}</span>
