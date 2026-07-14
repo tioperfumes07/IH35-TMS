@@ -172,9 +172,20 @@ export function BankingHomePage({ initialTab }: Props = {}) {
     setStartReconOpen(true);
   };
 
-  const headerActions =
+  // Doc-18 defects #10/#11 — QBO always surfaces "Bank Register" + "Chart of Accounts" as persistent
+  // Banking nav actions (not buried in Lists), so both render on every Banking tab, alongside whatever
+  // tab-specific actions apply. Bank Register opens the running-balance GL register (AccountRegisterPage,
+  // the same page Chart of Accounts "View register" links to); Chart of Accounts opens the COA list.
+  const navActions = (
+    <>
+      <ActionButton onClick={() => navigate("/accounting/account-register")}>Bank Register</ActionButton>
+      <ActionButton onClick={() => navigate("/lists/accounting/chart-of-accounts")}>Chart of Accounts</ActionButton>
+    </>
+  );
+
+  const tabActions =
     activeTab === "accounts" ? (
-      <div className="flex flex-wrap items-center gap-2">
+      <>
         <span title="Import a statement CSV from the Transactions tab (per bank account).">
           <ActionButton onClick={() => navigate(BANKING_TAB_PATH.transactions)}>+ Import Statement</ActionButton>
         </span>
@@ -203,21 +214,27 @@ export function BankingHomePage({ initialTab }: Props = {}) {
             void queryClient.invalidateQueries({ queryKey: ["banking", "plaid-accounts", companyId] });
           }}
         />
-      </div>
+      </>
     ) : activeTab === "transactions" ? (
-      <div className="flex flex-wrap items-center gap-2">
+      <>
         <ActionButton onClick={() => setManualJeOpen(true)}>+ Manual JE</ActionButton>
         <ActionButton onClick={() => setTransferModalOpen(true)}>+ Record Transfer</ActionButton>
         <ActionButton onClick={() => setCcPaymentModalOpen(true)}>+ Pay Credit Card</ActionButton>
         <ActionButton onClick={() => navigate("/banking/transfers")}>View Transfers</ActionButton>
-        <ActionButton onClick={() => navigate("/lists/accounting/chart-of-accounts")}>Chart of Accounts</ActionButton>
-      </div>
+      </>
     ) : activeTab === "reconciliation" ? (
-      <div className="flex flex-wrap items-center gap-2">
+      <>
         <ActionButton onClick={openStartReconciliation}>+ Reconcile</ActionButton>
         <ActionButton onClick={() => navigate("/banking/reconcile")}>Open Reconcile Queue</ActionButton>
-      </div>
+      </>
     ) : null;
+
+  const headerActions = (
+    <div className="flex flex-wrap items-center gap-2">
+      {navActions}
+      {tabActions}
+    </div>
+  );
 
   return (
     <div className="space-y-3">
