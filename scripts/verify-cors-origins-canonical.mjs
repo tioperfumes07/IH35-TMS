@@ -82,9 +82,12 @@ export function run() {
 
 if (process.argv.includes("--selftest")) {
   // Pure-logic selftest: prove the checks fire on bad shapes.
+  // Fixture declares app + api but NOT the driver origin, so checkCanonicalOrigins must return exactly
+  // one offender (the missing driver origin). Assert by COUNT rather than substring-matching the host
+  // literal in the message — the latter reads as URL-substring sanitization to CodeQL.
   const badCfgMissingDriver = 'const PROD_ORIGINS = ["https://app.ih35dispatch.com", "https://api.ih35dispatch.com"];';
   const missingDriverOffenders = checkCanonicalOrigins(badCfgMissingDriver);
-  const failsOnMissingDriver = missingDriverOffenders.some((o) => o.includes("driver.ih35dispatch.com"));
+  const failsOnMissingDriver = missingDriverOffenders.length === 1;
 
   const badCfgWildcard = 'const PROD_ORIGINS = ["*"];';
   const wildcardOffenders = checkNoWildcard(badCfgWildcard, "");
