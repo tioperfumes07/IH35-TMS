@@ -45,3 +45,26 @@ export async function countUncategorizedTransactions(
   );
   return Number(res.rows[0]?.count ?? 0);
 }
+
+// FIX-3 (banking sync strip honesty): the Banking Home "Transactions" metric must be a count of
+// REAL bank transactions (banking.bank_transactions — the canonical table, migration 0073), never a
+// proxy count of qbo_sync_queue entities in status 'synced'. The queue count answers "how many things
+// pushed to QBO" (any entity type), not "how many bank transactions exist" — a company with hundreds
+// of categorized-but-not-yet-pushed transactions previously showed "Transactions: 0". Entity-scoped,
+// same hidden-account convention as countUncategorizedTransactions so all three counts agree.
+export async function countTotalBankTransactions(
+  client: Queryable,
+  operatingCompanyId: string
+): Promise<number> {
+  const hideOn = await isBankAccountHideEnabled(client, operatingCompanyId);
+  const res = await client.query<{ count: number }>(
+    `
+      SELECT count(*)::int AS count
+      FROM banking.bank_transactions bt
+      WHERE bt.operating_company_id = $1::uuid
+        ${bankTransactionHiddenFilterSql(hideOn, "bt")}
+    `,
+    [operatingCompanyId]
+  );
+  return Number(res.rows[0]?.count ?? 0);
+}

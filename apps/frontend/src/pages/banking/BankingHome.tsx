@@ -103,8 +103,10 @@ export function BankingHomePage({ initialTab }: Props = {}) {
     queryFn: () => getReconciliationSessions(companyId),
     enabled: Boolean(companyId),
   });
-  // QBO sync-queue stats power the top SyncStatusStrip (last sync + txn/pending counts). Read-only,
-  // existing endpoint — no new backend surface.
+  // QBO sync-queue stats power the top SyncStatusStrip's "Last sync" + "Pending QBO sync" fields —
+  // those are genuinely about the sync queue. FIX-3: they must NOT feed the "Transactions" count (that
+  // metric now comes from kpiQuery.data.total_transactions, the real banking.bank_transactions total —
+  // see below). Read-only, existing endpoint — no new backend surface.
   const qboSyncStatsQuery = useQuery({
     queryKey: ["banking", "qbo-sync-stats", companyId],
     queryFn: () => getQboSyncQueueStats(companyId),
@@ -132,11 +134,13 @@ export function BankingHomePage({ initialTab }: Props = {}) {
     () => [...tiles].sort((a, b) => a.display_order - b.display_order),
     [tiles]
   );
-  // SyncStatusStrip data (QBO sync queue). transactionCount = successfully-synced queue entities
-  // (best available proxy from loaded data; a true bank-transaction total would need a new endpoint).
+  // SyncStatusStrip data. FIX-3: "Transactions" must be the REAL bank-transaction total (canonical
+  // banking.bank_transactions, entity-scoped) — it previously read qboStats.synced, a count of
+  // qbo_sync_queue entities (any type) in status 'synced', which is NOT a bank-transaction total and
+  // showed "Transactions: 0" for companies with hundreds of un-pushed categorized transactions.
   const qboStats = qboSyncStatsQuery.data;
   const syncedAt = qboStats?.last_successful_sync_at ?? null;
-  const syncTransactionCount = Number(qboStats?.synced ?? 0);
+  const syncTransactionCount = Number(kpiQuery.data?.total_transactions ?? 0);
   const pendingSyncCount = Number(qboStats?.pending ?? 0);
   const bankAccountsPanelRows = useMemo(() => {
     const realTiles = sortedBankTiles.filter((tile) => String(tile.tile_kind) === "real");

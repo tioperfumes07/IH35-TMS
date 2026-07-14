@@ -853,3 +853,8 @@ jobs:
         run: node scripts/verify-claim-crossmodule-fks.mjs --selftest
       - name: verify:claim-crossmodule-fks
         run: npm run verify:claim-crossmodule-fks
+
+      - name: verify:banking-sync-strip-transaction-count --selftest
+        run: node scripts/verify-banking-sync-strip-transaction-count.mjs --selftest
+      - name: verify:banking-sync-strip-transaction-count
+        run: npm run verify:banking-sync-strip-transaction-count

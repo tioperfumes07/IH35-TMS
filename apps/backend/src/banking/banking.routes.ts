@@ -13,7 +13,7 @@ import {
   unhideBankAccountForEntity,
 } from "./bank-account-visibility.js";
 import { countDriverEscrowKpis } from "./driver-escrow-counts.js";
-import { countUncategorizedTransactions } from "./pending-categorization.js";
+import { countTotalBankTransactions, countUncategorizedTransactions } from "./pending-categorization.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -175,6 +175,11 @@ export async function registerBankingRoutes(app: FastifyInstance) {
       const uncategorizedCount = await countUncategorizedTransactions(client, companyId).catch(() =>
         Number(kpiRes.rows[0]?.total_uncategorized ?? 0)
       );
+      // FIX-3: the Banking Home SyncStatusStrip "Transactions" metric must read the REAL bank-transaction
+      // total from the canonical banking.bank_transactions table — NOT a count of qbo_sync_queue entities
+      // in status 'synced' (that queue counts pushed-to-QBO entities of ANY type, not bank transactions,
+      // and previously showed "Transactions: 0" for companies with hundreds of un-pushed transactions).
+      const totalTransactions = await countTotalBankTransactions(client, companyId).catch(() => 0);
       return {
         ...(kpiRes.rows[0] ?? {
           operating_company_id: companyId,
@@ -188,6 +193,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
         }),
         total_cash: authoritativeTotalCash,
         total_uncategorized: uncategorizedCount,
+        total_transactions: totalTransactions,
         pending_bills: pendingBills,
         ...escrowCounts,
       };
