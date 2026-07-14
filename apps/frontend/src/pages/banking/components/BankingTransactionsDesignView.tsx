@@ -31,7 +31,7 @@ import { UnitAutocomplete } from "../../../components/banking/UnitAutocomplete";
 import { TrailerAutocomplete } from "../../../components/banking/TrailerAutocomplete";
 import { LoadAutocomplete } from "../../../components/banking/LoadAutocomplete";
 import { listVendors, listCustomers } from "../../../api/mdata";
-import { itemsCatalogClient, type AccountingCatalogRow } from "../../../api/catalogs-accounting";
+import { classesCatalogClient, itemsCatalogClient, type AccountingCatalogRow } from "../../../api/catalogs-accounting";
 import { BankTransactionSplitModal } from "./BankTransactionSplitModal";
 import { MatchDrawer } from "./MatchDrawer";
 import { RecordTransferModal } from "../RecordTransferModal";
@@ -62,7 +62,11 @@ type RowDetailDraft = {
   transactionType: string;
   fromTo: string;
   accountId: string;
+  // Class = QBO reporting DIMENSION (catalogs.classes). classId is the real catalog FK the inline
+  // "+ Add new class" writes/links; className is the label kept for the table cell + export (mirrors the
+  // payee/vendorId, customerProject/customerId, productService/itemId pattern).
   className: string;
+  classId: string;
   location: string;
   // Catalog-linkage: the free-text label is kept for the table cell + export; the *_id is the real catalog
   // FK the transaction links to (forward + reverse). Payee→vendor, Customer/project→customer, Product/
@@ -360,6 +364,17 @@ export function BankingTransactionsDesignView({
     enabled: Boolean(companyId),
     staleTime: 120_000,
   });
+  // Class options for the inline "+ Add new class" ReferenceSelect — same canonical catalogs.classes source
+  // (classesCatalogClient) the ItemEditorModal class picker reads, so a class created inline persists + reappears.
+  const classesQuery = useQuery({
+    queryKey: ["banking", "tx-classes", companyId],
+    queryFn: () =>
+      classesCatalogClient
+        .list({ operating_company_id: companyId, is_active: "true", limit: 200, offset: 0 })
+        .then((r) => r.rows ?? []),
+    enabled: Boolean(companyId),
+    staleTime: 120_000,
+  });
 
   const scopedRows = useMemo(() => {
     const rows = transactionsQuery.data?.transactions ?? [];
@@ -569,6 +584,7 @@ export function BankingTransactionsDesignView({
       fromTo: "",
       accountId: "",
       className: "",
+      classId: "",
       location: "",
       productService: "",
       itemId: "",
@@ -1630,11 +1646,32 @@ export function BankingTransactionsDesignView({
                               </label>
                               <label className="text-xs text-gray-600">
                                 Class
-                                <input
-                                  className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
-                                  value={draft.className}
-                                  onChange={(event) => setDraft(tx, { className: event.target.value })}
-                                />
+                                <div className="mt-0.5">
+                                  {/* #5 QBO parity — inline "+ Add new class" (ReferenceSelect, A2 keystone).
+                                  createKind="class" creates through QuickCreateEntityModal into the CANONICAL
+                                  catalogs.classes table this list reads from (classesCatalogClient →
+                                  POST /api/v1/catalogs/accounting/classes → INSERT INTO catalogs.classes,
+                                  entity-scoped under FORCE-RLS), so a new class persists + reselects after
+                                  reload (QB-STD-5). A Class is a reporting DIMENSION, not a GL account — NON-
+                                  financial (like Item → catalogs.items). Was a bare free-text <input>; the
+                                  earlier "class backend-blocked" tracker note is stale (the create route is live). */}
+                                  <ReferenceSelect
+                                    value={draft.classId || null}
+                                    onChange={(cid) => {
+                                      const c = (classesQuery.data ?? []).find((x) => x.id === cid);
+                                      setDraft(tx, { classId: cid ?? "", className: c?.display_name ?? "" });
+                                    }}
+                                    options={(classesQuery.data ?? []).map((c: AccountingCatalogRow) => ({ value: c.id, label: c.display_name }))}
+                                    createKind="class"
+                                    addNewLabel="+ Add new class"
+                                    operatingCompanyId={companyId}
+                                    placeholder="Select class"
+                                    onOptionCreated={(opt) => {
+                                      void classesQuery.refetch();
+                                      setDraft(tx, { className: opt.label });
+                                    }}
+                                  />
+                                </div>
                               </label>
                               <label className="text-xs text-gray-600">
                                 Location
