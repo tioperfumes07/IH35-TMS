@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { listSettlements } from "../../api/driverFinance";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -118,13 +118,17 @@ export function SettlementsPage() {
 
       {activeTab === "settlements" ? (
         <>
+      {/* B10 dead-click rollout: Total Unpaid / This Period / YTD Settlements drill into the existing
+          ?payment_state= filter (same mechanism as the Payment Pipeline buttons below). Drivers w/ Debt,
+          Pending Acks, and Held Deductions have no matching filter (live_debt_flag / has_pending_acks /
+          status="held" are not filterable here) — left dead intentionally. */}
       <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-6">
-        <KpiCard label="Total Unpaid" value={kpis.total_unpaid} />
-        <KpiCard label="This Period" value={kpis.this_period} />
+        <KpiCard label="Total Unpaid" value={kpis.total_unpaid} to="/driver-finance/settlements?payment_state=unpaid" />
+        <KpiCard label="This Period" value={kpis.this_period} to="/driver-finance/settlements" />
         <KpiCard label="Drivers w/ Debt" value={kpis.drivers_with_debt} />
         <KpiCard label="Pending Acks" value={kpis.pending_acks} />
         <KpiCard label="Held Deductions" value={kpis.held_deductions} />
-        <KpiCard label="YTD Settlements" value={kpis.ytd_settlements} />
+        <KpiCard label="YTD Settlements" value={kpis.ytd_settlements} to="/driver-finance/settlements" />
       </div>
       <div className="rounded-sm border border-gray-200 bg-white p-2">
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Payment Pipeline</p>
@@ -184,11 +188,19 @@ function setFilter(
   setSearchParams(next);
 }
 
-function KpiCard({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-[11px]">
+function KpiCard({ label, value, to }: { label: string; value: number; to?: string }) {
+  const content = (
+    <>
       <div className="text-[10px] uppercase tracking-wide text-gray-500">{label}</div>
       <div className="font-semibold">{value}</div>
-    </div>
+    </>
   );
+  if (to) {
+    return (
+      <Link to={to} className="block rounded-sm border border-gray-200 bg-white px-2 py-1 text-[11px] transition hover:shadow-xs">
+        {content}
+      </Link>
+    );
+  }
+  return <div className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-[11px]">{content}</div>;
 }

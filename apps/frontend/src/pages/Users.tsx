@@ -460,10 +460,12 @@ export function UsersPage() {
       <PageHeader title="Users" subtitle={`${filteredUsers.length} records`} actions={<ActionButton onClick={openInvite}>+ Create User</ActionButton>} />
 
       <KpiStrip>
-        <KpiCard label="Total users" number={tabCounts.all} accent={colors.info.strong} />
-        <KpiCard label="Active" number={tabCounts.active} accent={colors.positive.strong} />
-        <KpiCard label="Pending (new)" number={tabCounts.pending} accent={colors.warn.strong} />
-        <KpiCard label="Deactivated" number={tabCounts.deactivated} accent={colors.crit.strong} />
+        {/* B10 dead-click rollout: each card drills into the existing ?tab= list filter (already wired
+            below via SecondaryNavTabs/parseUserListTab) — no new filter logic, just exposing it on the KPI. */}
+        <KpiCard label="Total users" number={tabCounts.all} accent={colors.info.strong} to="/users" />
+        <KpiCard label="Active" number={tabCounts.active} accent={colors.positive.strong} to="/users?tab=active" />
+        <KpiCard label="Pending (new)" number={tabCounts.pending} accent={colors.warn.strong} to="/users?tab=pending" />
+        <KpiCard label="Deactivated" number={tabCounts.deactivated} accent={colors.crit.strong} to="/users?tab=deactivated" />
       </KpiStrip>
 
       <SecondaryNavTabs

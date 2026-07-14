@@ -25,15 +25,17 @@ function KpiTile({
   value,
   hint,
   accent,
+  to,
 }: {
   label: string;
   value: number;
   hint: string;
   accent?: string;
+  to?: string;
 }) {
   return (
     <div className="space-y-1">
-      <KpiCard label={label} number={value} accent={accent} />
+      <KpiCard label={label} number={value} accent={accent} to={to} />
       <p className="px-1 text-[11px] text-slate-500">{hint}</p>
     </div>
   );
@@ -63,18 +65,21 @@ export function DriverManagerKpiBar({ kpis, loading }: Props) {
         value={snapshot.unread_driver_comms}
         hint="Inbound messages from drivers awaiting review"
         accent={snapshot.unread_driver_comms > 0 ? ACCENT.warning : ACCENT.neutral}
+        to="/drivers/messages"
       />
       <KpiTile
         label="Late arrivals (7d)"
         value={snapshot.late_arrivals_7d}
         hint="Stop arrivals past scheduled window this week"
         accent={snapshot.late_arrivals_7d > 0 ? ACCENT.warning : ACCENT.neutral}
+        to="/dispatch/alerts/late-arrivals"
       />
       <KpiTile
         label="Pending settlements"
         value={snapshot.pending_settlements}
         hint="Draft or submitted settlements needing validation"
         accent={snapshot.pending_settlements > 0 ? ACCENT.warning : ACCENT.neutral}
+        to="/driver-finance/settlements"
       />
     </div>
   );
