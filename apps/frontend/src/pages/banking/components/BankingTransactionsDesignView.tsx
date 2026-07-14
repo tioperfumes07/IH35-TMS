@@ -1658,8 +1658,17 @@ export function BankingTransactionsDesignView({
                                   <ReferenceSelect
                                     value={draft.classId || null}
                                     onChange={(cid) => {
+                                      // FIX-4 (2026-07-14): mirror the vendor pattern above — only overwrite
+                                      // className when the lookup resolves. On inline "+ Add new class", this
+                                      // onChange fires right after ReferenceSelect.handleCreated's
+                                      // onOptionCreated (which already set className from the created option's
+                                      // label); classesQuery.data is still stale at that instant (the new
+                                      // record lives in ReferenceSelect's local `created` state, not the query
+                                      // yet), so an unconditional `c?.display_name ?? ""` wiped the label back
+                                      // to "" immediately after it was set. Omitting the key when the lookup
+                                      // misses preserves whatever className is already in the draft.
                                       const c = (classesQuery.data ?? []).find((x) => x.id === cid);
-                                      setDraft(tx, { classId: cid ?? "", className: c?.display_name ?? "" });
+                                      setDraft(tx, { classId: cid ?? "", ...(c ? { className: c.display_name } : {}) });
                                     }}
                                     options={(classesQuery.data ?? []).map((c: AccountingCatalogRow) => ({ value: c.id, label: c.display_name }))}
                                     createKind="class"
