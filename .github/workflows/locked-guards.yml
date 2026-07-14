@@ -528,6 +528,11 @@ jobs:
       - name: verify:no-raw-date-input
         run: npm run verify:no-raw-date-input
 
+      - name: verify:no-dead-clicks --selftest
+        run: node scripts/verify-no-dead-clicks.mjs --selftest
+      - name: verify:no-dead-clicks
+        run: npm run verify:no-dead-clicks
+
       - name: verify:no-nested-box --selftest
         run: node scripts/verify-no-nested-box.mjs --selftest
       - name: verify:no-nested-box
@@ -806,6 +811,10 @@ jobs:
       - name: verify:system-module
         run: npm run verify:system-module
 
+      - name: verify:fuel-history-import-wired --selftest
+        run: node scripts/verify-fuel-history-import-wired.mjs --selftest
+      - name: verify:fuel-history-import-wired
+        run: npm run verify:fuel-history-import-wired
       - name: verify:banking-inline-create --selftest
         run: node scripts/verify-banking-inline-create.mjs --selftest
       - name: verify:banking-inline-create

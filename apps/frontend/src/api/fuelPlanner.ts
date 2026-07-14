@@ -1,4 +1,4 @@
-import { apiRequest } from "./client";
+import { apiRequest, apiRequestFormData } from "./client";
 
 export type LovesSyncStatus = {
   last_synced_at: string | null;
@@ -164,4 +164,66 @@ export async function uploadLovesPrices(
     rows_skipped: Number(payload.rows_skipped ?? 0),
     etag: response.headers.get("ETag"),
   };
+}
+
+// FUEL-4: History tab wiring. GET /api/v1/fuel/transactions already existed
+// (apps/backend/src/fuel/fuel-transactions.routes.ts, registered in index.ts) as a read model for
+// FuelTransactionsTable but had no frontend fetch hook — the History tab rendered `rows={[]}` hardcoded.
+export type FuelTransactionListItem = {
+  id: string;
+  transaction_date: string;
+  driver_name: string;
+  gallons: number;
+  amount_cents: number;
+  station: string;
+  // Drill-through ids returned by the backend (Law of the Land — total connectivity).
+  driver_id: string | null;
+  unit_id: string | null;
+  unit_number: string | null;
+  load_id: string | null;
+  load_number: string | null;
+  vendor_id: string | null;
+};
+
+export type FuelTransactionListResponse = {
+  transactions: FuelTransactionListItem[];
+  total_count: number;
+  has_more: boolean;
+};
+
+export function getFuelTransactions(
+  companyId: string,
+  params: { limit?: number; offset?: number; driver_id?: string; unit_id?: string; load_id?: string; from?: string; to?: string } = {}
+) {
+  const search = new URLSearchParams({ operating_company_id: companyId });
+  if (params.limit !== undefined) search.set("limit", String(params.limit));
+  if (params.offset !== undefined) search.set("offset", String(params.offset));
+  if (params.driver_id) search.set("driver_id", params.driver_id);
+  if (params.unit_id) search.set("unit_id", params.unit_id);
+  if (params.load_id) search.set("load_id", params.load_id);
+  if (params.from) search.set("from", params.from);
+  if (params.to) search.set("to", params.to);
+  return apiRequest<FuelTransactionListResponse>(`/api/v1/fuel/transactions?${search.toString()}`);
+}
+
+// FUEL-5: Import button wiring. POST /api/v1/fuel/transactions/import already existed
+// (apps/backend/src/fuel/fuel-transaction-import.routes.ts, registered in index.ts) accepting a
+// fleet-card (Love's/WEX/EFS/Comdata) .xlsx/.csv export — the History tab's Import button was
+// `disabled` with a "coming soon" toast instead of calling it.
+export type FuelTransactionImportResult = {
+  rows_inserted: number;
+  rows_duplicate: number;
+  rows_skipped: number;
+  rows_unlinked_to_load: number;
+  dead_letters: number;
+  dead_letter_details: Array<Record<string, unknown>>;
+};
+
+export function importFuelTransactions(companyId: string, file: File): Promise<FuelTransactionImportResult> {
+  const form = new FormData();
+  form.append("file", file);
+  return apiRequestFormData<FuelTransactionImportResult>(
+    `/api/v1/fuel/transactions/import?${q(companyId)}`,
+    form
+  );
 }
