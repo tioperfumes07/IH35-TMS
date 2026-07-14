@@ -54,7 +54,7 @@ const CREATE_ACTIONS = [
   { label: "Record expense", to: "/accounting/expenses" },
   { label: "Receive payment", to: "/accounting/payments" },
   { label: "Create bill", to: "/accounting/bills/vendor" },
-  { label: "Add bank deposit", to: "/accounting/bill-payments" },
+  { label: "Add bank deposit", to: "/banking/transactions" },
   { label: "Journal entry", to: "/accounting/journal-entries" },
 ];
 
@@ -245,7 +245,7 @@ export function QboStyleHomePage({ auth }: Props) {
                 <div className="flex items-end gap-2">
                   <p className="text-2xl font-semibold text-gray-900">{fmt$(revenueCents)}</p>
                   {deltaVsYesterday != null && (
-                    <span className={`mb-1 flex items-center gap-0.5 text-xs font-semibold ${deltaVsYesterday >= 0 ? "text-green-600" : "text-red-600"}`}>
+                    <span className={`mb-1 flex items-center gap-0.5 text-xs font-semibold ${deltaVsYesterday >= 0 ? "text-slate-600" : "text-red-600"}`}>
                       {deltaVsYesterday >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                       {fmtPct(deltaVsYesterday)}
                     </span>
@@ -278,27 +278,7 @@ export function QboStyleHomePage({ auth }: Props) {
               <>
                 <p className="text-2xl font-semibold text-gray-900">{fmt$(apTotal)}</p>
                 <p className="text-xs text-slate-600">Outstanding A/P</p>
-                <div className="mt-3 space-y-1.5">
-                  {[
-                    { label: "Operational", pct: 52 },
-                    { label: "Transportation", pct: 28 },
-                    { label: "Admin & professional", pct: 12 },
-                    { label: "Other", pct: 8 },
-                  ].map((cat) => (
-                    <div key={cat.label}>
-                      <div className="flex justify-between text-xs text-gray-600">
-                        <span>{cat.label}</span>
-                        <span>{cat.pct}%</span>
-                      </div>
-                      <div className="mt-0.5 h-1.5 w-full rounded-full bg-gray-100">
-                        <div
-                          className="h-1.5 rounded-full bg-[#1F2A44]"
-                          style={{ width: `${cat.pct}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <p className="mt-3 text-xs text-slate-400">Category breakdown not yet available</p>
               </>
             )}
           </div>
