@@ -16,6 +16,7 @@ import { Modal } from "../Modal";
 import { SelectCombobox } from "../shared/SelectCombobox";
 import { StatusBadge } from "../StatusBadge";
 import { useToast } from "../Toast";
+import { DatePicker } from "../forms/DatePicker";
 import { FieldError, fieldErrorClassname } from "../forms/FieldError";
 import { FormErrorBanner } from "../forms/FormErrorBanner";
 import { SaveDropdown } from "../forms/SaveDropdown";
@@ -489,17 +490,29 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated }: Creat
           ].map(([key, label]) => (
             <div key={key} className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-gray-600">{label}</label>
-              <input
-                data-field={key}
-                type={key.includes("date") || key.includes("expires") ? "date" : "text"}
-                value={form[key] ?? ""}
-                aria-describedby={driverFieldErrors[key] ? `${key}-error` : undefined}
-                onChange={(event) => {
-                  clearDriverFieldError(key);
-                  setForm((current) => ({ ...current, [key]: event.target.value }));
-                }}
-                className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded-sm border h-9 px-2 text-[13px]")}
-              />
+              {key.includes("date") || key.includes("expires") ? (
+                <DatePicker
+                  data-testid={key}
+                  value={form[key] ?? ""}
+                  onChange={(value) => {
+                    clearDriverFieldError(key);
+                    setForm((current) => ({ ...current, [key]: value }));
+                  }}
+                  className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded-sm border h-9 px-2 text-[13px]")}
+                />
+              ) : (
+                <input
+                  data-field={key}
+                  type="text"
+                  value={form[key] ?? ""}
+                  aria-describedby={driverFieldErrors[key] ? `${key}-error` : undefined}
+                  onChange={(event) => {
+                    clearDriverFieldError(key);
+                    setForm((current) => ({ ...current, [key]: event.target.value }));
+                  }}
+                  className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded-sm border h-9 px-2 text-[13px]")}
+                />
+              )}
               <FieldError id={key} message={driverFieldErrors[key]} />
             </div>
           ))}
@@ -684,17 +697,29 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated }: Creat
                 ].map(([key, label]) => (
                   <div key={key} className="flex flex-col gap-1">
                     <label className="text-xs font-semibold text-gray-600">{label}</label>
-                    <input
-                      data-field={key}
-                      type={key.includes("expires") ? "date" : "text"}
-                      value={form[key] ?? ""}
-                      aria-describedby={driverFieldErrors[key] ? `${key}-error` : undefined}
-                      onChange={(event) => {
-                        clearDriverFieldError(key);
-                        setForm((current) => ({ ...current, [key]: event.target.value }));
-                      }}
-                      className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded-sm border h-9 px-2 text-[13px]")}
-                    />
+                    {key.includes("expires") ? (
+                      <DatePicker
+                        data-testid={key}
+                        value={form[key] ?? ""}
+                        onChange={(value) => {
+                          clearDriverFieldError(key);
+                          setForm((current) => ({ ...current, [key]: value }));
+                        }}
+                        className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded-sm border h-9 px-2 text-[13px]")}
+                      />
+                    ) : (
+                      <input
+                        data-field={key}
+                        type="text"
+                        value={form[key] ?? ""}
+                        aria-describedby={driverFieldErrors[key] ? `${key}-error` : undefined}
+                        onChange={(event) => {
+                          clearDriverFieldError(key);
+                          setForm((current) => ({ ...current, [key]: event.target.value }));
+                        }}
+                        className={fieldErrorClassname(Boolean(driverFieldErrors[key]), "rounded-sm border h-9 px-2 text-[13px]")}
+                      />
+                    )}
                     <FieldError id={key} message={driverFieldErrors[key]} />
                   </div>
                 ))}
