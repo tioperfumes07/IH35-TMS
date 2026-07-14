@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { createPartsInventoryPurchase } from "../../../api/maintenance";
 import { createVendor, createCustomer } from "../../../api/mdata";
-import { chartOfAccountsCatalogClient, itemsCatalogClient } from "../../../api/catalogs-accounting";
+import { chartOfAccountsCatalogClient, classesCatalogClient, itemsCatalogClient } from "../../../api/catalogs-accounting";
 import { fetchAccountTypeCatalog, detailTypesForAccountType, ACCOUNT_TYPE_GROUPS } from "../../../api/coa-list";
 import { getCoaAccounts } from "../../../api/banking";
 import { Combobox, type ComboboxOption } from "../../../components/Combobox";
@@ -17,7 +17,9 @@ const INCOME_TYPES = ["Income", "OtherIncome"];
 const EXPENSE_TYPES = ["Expense", "CostOfGoodsSold", "OtherExpense"];
 const CARRIER_DEFAULT_INCOME_NAME = "Sales of Service Income";
 
-export type QuickCreateKind = "vendor" | "customer" | "item" | "category" | "part";
+// "class" writes catalogs.classes (a reporting DIMENSION, NOT catalogs.accounts — no GL/posting math),
+// via the entity-scoped POST /api/v1/catalogs/accounting/classes route. Non-financial, same pattern as item.
+export type QuickCreateKind = "vendor" | "customer" | "item" | "category" | "part" | "class";
 
 type Props = {
   open: boolean;
@@ -67,6 +69,7 @@ function titleFor(kind: QuickCreateKind): string {
   if (kind === "customer") return "Quick Create Customer";
   if (kind === "item") return "Quick Create Product/Service";
   if (kind === "category") return "Quick Create Category";
+  if (kind === "class") return "Quick Create Class";
   return "Quick Create Part";
 }
 
@@ -218,6 +221,20 @@ export function QuickCreateEntityModal({
             account_type: parsed.data.accountType,
             account_subtype: parsed.data.detailType?.trim() || undefined,
           },
+        });
+        onCreated({ id: String(res.id), label: parsed.data.name });
+      } else if (kind === "class") {
+        // QB-STD-5: write to catalogs.classes (canonical) — same table classesCatalogClient.list()
+        // reads (and the ItemEditorModal class picker uses). A Class is a QBO reporting DIMENSION, not a
+        // GL account — no posting/ledger math, so this is NON-financial (like item → catalogs.items).
+        // The entity-scoped POST /api/v1/catalogs/accounting/classes route writes operating_company_id +
+        // asserts company membership under FORCE-RLS. code must be 1-120 chars (class_code column).
+        const rawSlug = parsed.data.name.replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 12) || "CLASS";
+        // Timestamp suffix avoids class_code unique-constraint collisions on same-name creates.
+        const classCode = `${rawSlug}${String(Date.now()).slice(-6)}`;
+        const res = await classesCatalogClient.create(operatingCompanyId, {
+          code: classCode,
+          display_name: parsed.data.name,
         });
         onCreated({ id: String(res.id), label: parsed.data.name });
       } else {
