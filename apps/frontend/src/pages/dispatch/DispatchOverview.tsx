@@ -1,4 +1,5 @@
-import { useMemo } from "react";
+import { useMemo, type CSSProperties } from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import {
@@ -48,17 +49,15 @@ function shortId(value: string | null | undefined): string {
   return value.length > 8 ? `${value.slice(0, 8)}…` : value;
 }
 
-function KpiCard({ label, value, hint }: { label: string; value: number | string; hint?: string }) {
-  return (
-    <div
-      className="bg-white"
-      style={{
-        border: `1px solid ${colors.cardBorder}`,
-        borderRadius: spacing.radiusCard,
-        padding: `${spacing.panelPaddingY}px ${spacing.panelPaddingX}px`,
-      }}
-      data-testid={`dispatch-overview-kpi-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
-    >
+function KpiCard({ label, value, hint, to }: { label: string; value: number | string; hint?: string; to?: string }) {
+  const testId = `dispatch-overview-kpi-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+  const style: CSSProperties = {
+    border: `1px solid ${colors.cardBorder}`,
+    borderRadius: spacing.radiusCard,
+    padding: `${spacing.panelPaddingY}px ${spacing.panelPaddingX}px`,
+  };
+  const body = (
+    <>
       <p
         className="uppercase"
         style={{
@@ -72,6 +71,20 @@ function KpiCard({ label, value, hint }: { label: string; value: number | string
       </p>
       <p style={{ fontSize: typography.pageHeading, fontWeight: 600, color: colors.pageHeading, lineHeight: 1.2 }}>{value}</p>
       {hint ? <p style={{ fontSize: typography.bodyTextSmall, color: colors.mutedText }}>{hint}</p> : null}
+    </>
+  );
+  // B10 dead-click rollout: `to` drills into the existing dispatch board/queue that already owns this
+  // metric's data (e.g. the At-Risk queue panel just below uses the same /dispatch/at-risk href).
+  if (to) {
+    return (
+      <Link to={to} data-testid={testId} className="block bg-white transition hover:shadow-xs" style={style}>
+        {body}
+      </Link>
+    );
+  }
+  return (
+    <div className="bg-white" style={style} data-testid={testId}>
+      {body}
     </div>
   );
 }
@@ -236,18 +249,28 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
 
   return (
     <div className="space-y-3" data-testid="dispatch-overview-page">
+      {/* B10 dead-click rollout: Active loads / At-risk / Units available drill into the exact same
+          routes the panels below already use as their own "view all" href (real, existing destinations).
+          Units needing return has no dedicated filtered view anywhere in the app — left dead intentionally. */}
       <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
         <KpiCard
           label="Active loads"
           value={dashboardQ.isLoading ? "—" : (dashboardQ.data?.active_loads ?? 0)}
           hint={dashboardQ.data ? `${dashboardQ.data.in_transit} in transit` : undefined}
+          to="/dispatch/loads"
         />
         <KpiCard
           label="At-risk / late"
           value={atRiskQ.isLoading || lateQ.isLoading ? "—" : atRiskLateTotal}
           hint={atRiskLateTotal > 0 ? `${atRiskCount} at-risk · ${lateCount} late` : "none flagged"}
+          to="/dispatch/at-risk"
         />
-        <KpiCard label="Units available" value={unitsWithoutLoadQ.isLoading ? "—" : unitsAvailable} hint="idle, no active load" />
+        <KpiCard
+          label="Units available"
+          value={unitsWithoutLoadQ.isLoading ? "—" : unitsAvailable}
+          hint="idle, no active load"
+          to="/dispatch?view=loads"
+        />
         <KpiCard
           label="Units needing return"
           value={unitsWithoutLoadQ.isLoading ? "—" : unitsNeedingReturn}

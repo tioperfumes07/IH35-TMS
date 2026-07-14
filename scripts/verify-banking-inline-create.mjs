@@ -16,6 +16,15 @@
  *   - Item (Products&Services) → ReferenceSelect createKind="service"  (catalogs.items)
  *   - Customer/project         → ReferenceSelect createKind="customer" (mdata.customers)
  *   - Class                    → ReferenceSelect createKind="class"    (catalogs.classes)  ← this block (#5)
+ *   - Location                 → INTENTIONAL free-text <input>  (NO inline-create — see below)
+ *
+ * The QBO categorize panel has SIX reference fields (QBO_PARITY_UI_SYSTEM.md §7 line 94): Payee,
+ * Category, Product/Service, Customer/project, Class, Location. The first five all ship inline-create
+ * (rows above). LOCATION is deliberately EXEMPT and this guard keeps it exempt: it is a locked free-text
+ * dimension (BANKING-COA-CATEGORIZE-PHASE-B-DESIGN §147), IH35 maps Location=driver (a CPA-gated owner
+ * decision, QBO_PARITY_UI_SYSTEM §76 / B4-RECLASSIFY §89), and there is NO canonical reporting-location
+ * create endpoint — the only location routes (mdata.locations facilities, fleet asset-locations,
+ * maintenance shop-locations) are different entities, so wiring Location to them would be a fake-wire (§0).
  *
  * It ALSO asserts that QuickCreateEntityModal actually SUPPORTS the "class" kind AND has a real
  * classesCatalogClient create branch (so the Class picker's "+ Add new class" is WIRED, not a stub), and
@@ -74,6 +83,25 @@ export function assertGuard({ designView, quickCreate }) {
     errors.push(`${DESIGN_VIEW}: Class is still a bare <input> (must be ReferenceSelect createKind="class")`);
   }
 
+  // LOCATION — the 6th categorize reference field in QBO_PARITY_UI_SYSTEM.md §7 line 94. It is
+  // DELIBERATELY exempt from inline-create and this guard enforces that it STAYS exempt:
+  //   1. Locked design decision (BANKING-COA-CATEGORIZE-PHASE-B-DESIGN-2026-06-30.md:147) — "Class /
+  //      Location → free-text (separate QBO dimensions), unchanged."
+  //   2. IH35's Location dimension = DRIVER (QBO_PARITY_UI_SYSTEM.md:76, B4-RECLASSIFY:89), a mapping
+  //      that is CPA-gated / owner-decided, NOT a builder call.
+  //   3. There is NO canonical reporting-location dimension catalog + create endpoint. The only
+  //      location create routes — mdata.locations (physical shipper/consignee/cross-dock facilities),
+  //      fleet asset-locations (yards), maintenance shop-locations — are SEMANTICALLY DIFFERENT
+  //      entities. Wiring the categorize Location to any of them is a fake/wrong wire (design-law §0).
+  // So: Location must remain a bare free-text <input value={draft.location}>, and NO createKind="location"
+  // may appear (that would imply a fake-wire to a non-canonical facilities catalog).
+  if (!/value=\{draft\.location\}/.test(dv)) {
+    errors.push(`${DESIGN_VIEW}: Location lost its intentional free-text <input value={draft.location}> (locked Phase-B design; do not (fake-)wire it — see BANKING-COA-CATEGORIZE-PHASE-B-DESIGN §147)`);
+  }
+  if (/createKind=["']location["']/.test(dv)) {
+    errors.push(`${DESIGN_VIEW}: Location was wired createKind="location" — there is NO canonical reporting-location create endpoint; mdata.locations/asset-locations/shop-locations are different entities. This is a fake-wire (design-law §0). Location stays free-text until the CPA-gated Location=driver mapping is decided.`);
+  }
+
   // QuickCreateEntityModal must actually SUPPORT the class kind (type union) AND have a real create branch
   // that writes the canonical catalogs.classes via classesCatalogClient — else the picker's "+ Add new
   // class" is a stub that 400s.
@@ -100,6 +128,7 @@ function selftest() {
     <ReferenceSelect createKind="customer" />
     <ReferenceSelect createKind="service" addNewLabel="+ Add new product/service" />
     <ReferenceSelect createKind="class" addNewLabel="+ Add new class" />
+    <input className="x" value={draft.location} />
   `;
   const goodQuickCreate = `
     export type QuickCreateKind = "vendor" | "customer" | "item" | "category" | "part" | "class";
@@ -116,6 +145,8 @@ function selftest() {
     { name: "Customer dropdown lost inline-create → FAIL", in: { designView: goodDesignView.replace('createKind="customer"', 'value=""'), quickCreate: goodQuickCreate }, wantMin: 1 },
     { name: "QuickCreateEntityModal missing class kind in union → FAIL", in: { designView: goodDesignView, quickCreate: goodQuickCreate.replace('| "part" | "class"', '| "part"') }, wantMin: 1 },
     { name: "QuickCreateEntityModal class branch is a stub (no classesCatalogClient.create) → FAIL", in: { designView: goodDesignView, quickCreate: goodQuickCreate.replace("await classesCatalogClient.create(operatingCompanyId, { code, display_name });", "throw new Error('not implemented');") }, wantMin: 1 },
+    { name: "Location lost its intentional free-text input → FAIL", in: { designView: goodDesignView.replace('<input className="x" value={draft.location} />', '<span/>'), quickCreate: goodQuickCreate }, wantMin: 1 },
+    { name: 'Location fake-wired createKind="location" (no canonical endpoint) → FAIL', in: { designView: goodDesignView + '\n<ReferenceSelect createKind="location" />', quickCreate: goodQuickCreate }, wantMin: 1 },
   ];
 
   let failed = 0;
@@ -143,4 +174,4 @@ if (errors.length) {
   for (const e of errors) console.error(`  ✗ ${e}`);
   process.exit(1);
 }
-console.log(`[${LABEL}] OK — Banking categorize dropdowns (vendor/category/customer/item/class) keep inline "+ Add new" writing the canonical TMS catalog; class create branch is wired (catalogs.classes), not a stub.`);
+console.log(`[${LABEL}] OK — Banking categorize dropdowns (vendor/category/customer/item/class) keep inline "+ Add new" writing the canonical TMS catalog; class create branch is wired (catalogs.classes), not a stub; Location stays intentional free-text (locked Phase-B design; no fake-wire to a facilities catalog).`);

@@ -99,9 +99,30 @@ export function DocsHomePage() {
         />
       ) : null}
 
+      {/* B10 dead-click rollout: Total Docs / Expiring 30 Days drive the existing local filter state
+          (same mechanism as the "Reset filters" button and the Expiration-before date picker below —
+          no new filter logic). Missing Required / Recent Uploads have no filter param on this list
+          endpoint (listDocsFoundation only accepts entity/type/expires_before) — left dead intentionally. */}
       <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-        <KpiCard label="Total Docs" value={String(kpisQuery.data?.total_docs ?? 0)} />
-        <KpiCard label="Expiring 30 Days" value={String(kpisQuery.data?.expiring_30_days ?? 0)} />
+        <KpiCard
+          label="Total Docs"
+          value={String(kpisQuery.data?.total_docs ?? 0)}
+          onClick={() => {
+            setTypeFilter("");
+            setExpiresBefore("");
+            setActiveTab("all");
+            setPage(1);
+          }}
+        />
+        <KpiCard
+          label="Expiring 30 Days"
+          value={String(kpisQuery.data?.expiring_30_days ?? 0)}
+          onClick={() => {
+            const in30 = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
+            setExpiresBefore(in30);
+            setPage(1);
+          }}
+        />
         <KpiCard label="Missing Required" value={String(kpisQuery.data?.missing_required ?? 0)} />
         <KpiCard label="Recent Uploads" value={String(kpisQuery.data?.recent_uploads ?? 0)} />
       </div>
@@ -219,13 +240,25 @@ export function DocsHomePage() {
   );
 }
 
-function KpiCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
+function KpiCard({ label, value, onClick }: { label: string; value: string; onClick?: () => void }) {
+  const content = (
+    <>
       <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">{label}</div>
       <div className="text-lg font-semibold text-gray-900">{value}</div>
-    </div>
+    </>
   );
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-left transition hover:shadow-xs"
+      >
+        {content}
+      </button>
+    );
+  }
+  return <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">{content}</div>;
 }
 
 function DocsRow({ row }: { row: DocsFoundationRow }) {
