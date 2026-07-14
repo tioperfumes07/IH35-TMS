@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ArrowRightCircle } from "lucide-react";
 import { listInvoices, type Invoice, type InvoiceStatus } from "../../api/accounting";
+import { listCustomers } from "../../api/mdata";
 import { Button } from "../../components/Button";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
@@ -23,7 +24,18 @@ import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
 import { useToast } from "../../components/Toast";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
-const STATUS_OPTIONS: Array<{ value: "" | InvoiceStatus; label: string }> = [
+// INVOICE-LISTFILTER-01: real InvoiceStatus values go to the backend `status` param; the pseudo-values
+// ("not_sent" / "with_balance") are QBO-style client-side derived filters over already-fetched rows.
+// NOTE: QBO's "Viewed" filter is intentionally NOT offered — accounting.invoices has no read-receipt /
+// viewed_at tracking field, so a "Viewed" option would silently return nothing (do not fabricate).
+type InvoiceListFilter = "" | InvoiceStatus | "not_sent" | "with_balance";
+
+const REAL_INVOICE_STATUSES: InvoiceStatus[] = ["draft", "sent", "partial", "paid", "void", "factored"];
+function isRealInvoiceStatus(value: string): value is InvoiceStatus {
+  return (REAL_INVOICE_STATUSES as string[]).includes(value);
+}
+
+const STATUS_OPTIONS: Array<{ value: InvoiceListFilter; label: string }> = [
   { value: "", label: "All statuses" },
   { value: "draft", label: "Draft" },
   { value: "sent", label: "Sent" },
@@ -31,6 +43,8 @@ const STATUS_OPTIONS: Array<{ value: "" | InvoiceStatus; label: string }> = [
   { value: "paid", label: "Paid" },
   { value: "void", label: "Void" },
   { value: "factored", label: "Factored" },
+  { value: "not_sent", label: "Not sent" },
+  { value: "with_balance", label: "With balance" },
 ];
 
 function money(cents: number) {
@@ -47,20 +61,31 @@ export function InvoicesListPage() {
   const [factoredModalOpen, setFactoredModalOpen] = useState(false);
   const [pendingIds, setPendingIds] = useState<string[]>([]);
   const [batchId, setBatchId] = useState("");
-  const [status, setStatus] = useState<"" | InvoiceStatus>("");
+  const [status, setStatus] = useState<InvoiceListFilter>("");
+  const [customerId, setCustomerId] = useState("");
   const [search, setSearch] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+
+  // Customer picker options — pass limit:200 (endpoint defaults to 50, would silently truncate).
+  const customersQuery = useQuery({
+    queryKey: ["mdata", "customers", "invoice-filter", selectedCompanyId],
+    queryFn: () => listCustomers({ operating_company_id: selectedCompanyId!, limit: 200 }),
+    enabled: Boolean(selectedCompanyId),
+  });
+  const customerOptions = customersQuery.data?.customers ?? [];
   const [createType, setCreateType] = useState<"driver_damage" | "driver_misc" | "vendor_chargeback" | "customer_adjustment" | "manual" | "from_load">("from_load");
   const [openModalType, setOpenModalType] = useState<null | "driver_damage" | "driver_misc" | "vendor_chargeback" | "customer_adjustment" | "manual">(null);
   const [createFlowOpen, setCreateFlowOpen] = useState(false);
   const [tableResetKey, setTableResetKey] = useState(0);
 
   const query = useQuery({
-    queryKey: ["accounting", "invoices", selectedCompanyId, status, search, fromDate, toDate],
+    queryKey: ["accounting", "invoices", selectedCompanyId, status, customerId, search, fromDate, toDate],
     queryFn: () =>
       listInvoices(selectedCompanyId!, {
-        status: status || undefined,
+        // Only real statuses hit the backend; pseudo-filters (not_sent/with_balance) apply client-side below.
+        status: isRealInvoiceStatus(status) ? status : undefined,
+        customer_id: customerId || undefined,
         search: search || undefined,
         from_date: fromDate || undefined,
         to_date: toDate || undefined,
@@ -68,7 +93,13 @@ export function InvoicesListPage() {
     enabled: Boolean(selectedCompanyId),
   });
 
-  const invoices = query.data ?? [];
+  const invoices = useMemo(() => {
+    const all = query.data ?? [];
+    // Client-side QBO pseudo-filters over the fetched page.
+    if (status === "not_sent") return all.filter((row) => row.status === "draft" || !row.sent_at);
+    if (status === "with_balance") return all.filter((row) => Number(row.amount_open_cents ?? 0) > 0);
+    return all;
+  }, [query.data, status]);
 
   const runInvoiceBulk = async (action: "mark_sent" | "mark_factored", payload?: Record<string, unknown>) => {
     if (!selectedCompanyId) {
@@ -148,19 +179,48 @@ export function InvoicesListPage() {
       },
       { key: "total_cents", label: "Total", sortable: true, className: "text-right", cellClass: "text-right tabular-nums", render: (row) => money(row.total_cents) },
       { key: "amount_open_cents", label: "Open", sortable: true, className: "text-right", cellClass: "text-right tabular-nums", render: (row) => money(row.amount_open_cents) },
+      {
+        key: "source_load_id",
+        label: "Load #",
+        render: (row) =>
+          row.source_load_id ? <EntityLink kind="load" id={row.source_load_id} label={row.source_load_id.slice(0, 8)} /> : "—",
+      },
+      {
+        key: "memo",
+        label: "Memo",
+        render: (row) => {
+          const memo = row.internal_notes ?? row.customer_notes;
+          return (
+            <span title={memo ?? undefined} className="single-line-name">
+              {memo || "—"}
+            </span>
+          );
+        },
+      },
     ],
     [],
   );
 
   const filterBar = (
     <DataPanel title="Filters">
-      <div className="grid gap-2 md:grid-cols-5">
+      <div className="grid gap-2 md:grid-cols-6">
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Status
-          <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as "" | InvoiceStatus)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
+          <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as InvoiceListFilter)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
             {STATUS_OPTIONS.map((option) => (
               <option key={option.label} value={option.value}>
                 {option.label}
+              </option>
+            ))}
+          </SelectCombobox>
+        </label>
+        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          Customer
+          <SelectCombobox value={customerId} onChange={(event) => setCustomerId(event.target.value)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
+            <option value="">All customers</option>
+            {customerOptions.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
               </option>
             ))}
           </SelectCombobox>

@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { listBills, listPaymentsForBill, type BillStatus, type VendorBill } from "../../api/accounting";
+import { listVendors } from "../../api/mdata";
 import { BillAllocationPanel } from "../../components/allocation";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -63,6 +64,32 @@ function billMatchesCategory(bill: VendorBill, category: BillListCategory): bool
 function billBalanceCents(bill: VendorBill) {
   if (bill.balance_cents != null) return Number(bill.balance_cents);
   return Number(bill.amount_cents) - Number(bill.paid_cents ?? 0);
+}
+
+// BILLS-DUEBADGE-01: per-row Overdue / Due-soon(7d) badge. Reuses the SAME open+overdue predicate the
+// KPI cards use (status open|partial AND balance>0 AND due_date < today). Due-soon = due within 7 days.
+// Palette: Overdue = red (bg-red-50/text-red-800, matches statusBadgeClass), Due soon = slate. No orange.
+function billDueStatus(bill: VendorBill): "overdue" | "due_soon" | null {
+  const isOpenWithBalance = (bill.status === "open" || bill.status === "partial") && billBalanceCents(bill) > 0;
+  if (!isOpenWithBalance) return null;
+  const due = bill.due_date ?? "";
+  if (!due) return null;
+  const today = new Date().toISOString().slice(0, 10);
+  if (due < today) return "overdue";
+  const in7 = daysAgoIso(-7);
+  if (due <= in7) return "due_soon";
+  return null;
+}
+
+function BillDueBadge({ bill }: { bill: VendorBill }) {
+  const s = billDueStatus(bill);
+  if (s === "overdue") {
+    return <span className="ml-1 inline-flex rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-semibold text-red-800">Overdue</span>;
+  }
+  if (s === "due_soon") {
+    return <span className="ml-1 inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700">Due soon</span>;
+  }
+  return null;
 }
 
 function monthStartIso(date = new Date()) {
@@ -137,14 +164,25 @@ export function BillsPage() {
   // BILLS-DATERANGE-01: From/To bill_date filter (server-side via listBills date_from/date_to).
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  // BILLS-VENDORFILTER-01: server-side vendor filter (listBills already accepts vendor_id).
+  const [vendorId, setVendorId] = useState("");
   const [allocationBillId, setAllocationBillId] = useState<string | null>(null);
 
+  // Vendor picker options — pass limit:200 (endpoint defaults to 50, would silently truncate).
+  const vendorsQuery = useQuery({
+    queryKey: ["mdata", "vendors", "bills-filter", companyId],
+    queryFn: () => listVendors({ operating_company_id: companyId, limit: 200 }),
+    enabled: Boolean(companyId),
+  });
+  const vendorOptions = vendorsQuery.data?.vendors ?? [];
+
   const billsQuery = useQuery({
-    queryKey: ["accounting", "bills", companyId, status, category, dateFrom, dateTo],
+    queryKey: ["accounting", "bills", companyId, status, category, dateFrom, dateTo, vendorId],
     queryFn: () =>
       listBills(companyId, {
         include_balance: true,
         status: status || undefined,
+        vendor_id: vendorId || undefined,
         date_from: dateFrom || undefined,
         date_to: dateTo || undefined,
         limit: 200,
@@ -246,6 +284,26 @@ export function BillsPage() {
       },
       { key: "is_reconciled", label: "Reconciled", render: (bill) => <ReconciledBadge isReconciled={bill.is_reconciled} /> },
       {
+        key: "due_date",
+        label: "Due date",
+        sortable: true,
+        render: (bill) => (
+          <span className="inline-flex items-center whitespace-nowrap">
+            {bill.due_date ? formatDateUS(bill.due_date) : "—"}
+            <BillDueBadge bill={bill} />
+          </span>
+        ),
+      },
+      {
+        key: "memo",
+        label: "Memo",
+        render: (bill) => (
+          <span className="single-line-name" title={bill.memo ?? undefined}>
+            {bill.memo || "—"}
+          </span>
+        ),
+      },
+      {
         key: "allocate",
         label: "Allocate",
         alwaysVisible: true,
@@ -303,6 +361,15 @@ export function BillsPage() {
           <option value="partial">Partial</option>
           <option value="paid">Paid</option>
           <option value="voided">Voided</option>
+        </SelectCombobox>
+        <span className="text-gray-600">Vendor:</span>
+        <SelectCombobox className="rounded-sm border border-gray-300 px-2 py-1" value={vendorId} onChange={(e) => setVendorId(e.target.value)}>
+          <option value="">All vendors</option>
+          {vendorOptions.map((v) => (
+            <option key={v.id} value={v.id}>
+              {v.name}
+            </option>
+          ))}
         </SelectCombobox>
       </div>
 
