@@ -232,6 +232,10 @@
     {
       "file": "202607380000_settlement_payrun_catalog_and_extends.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1] Settlement Pay-Run — NEW catalogs.payment_methods owner-editable catalog + reuse-and-extend of canonical driver_finance advance/settlement infra (driver_advances recovery linkage + payment_method_id; cash_advance_requests maker<>checker; settlement_lines line_type += advance_recovery/escrow_contribution; driver_payment_methods.payment_method_id FK). Master-data + schema only; NO GL math (posting reuses the existing settlement poster behind SETTLEMENT_GL_POSTING_ENABLED, default OFF). FORCED RLS + 0065 grants (no DELETE). Run only on a Neon branch by Jorge, then ledger-backfill."
+    },
+    {
+      "file": "202607420000_vendor_types_catalog.sql",
+      "reason": "[HOLD-FOR-JORGE — financial] Vendor Type catalog (catalogs.vendor_types) + mdata.vendors linkage, mirroring the AF-1/AF-2/AF-3 per-entity catalog pattern (FORCED entity+role RLS, ih35_app grants, no DELETE — void-not-delete). Seeds 8 system vendor types per operating company + additive mdata.vendors.vendor_type_id linkage. POSTS NOTHING. Run only on a Neon branch by Jorge, then ledger-backfill."
     }
   ]
 }

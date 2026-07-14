@@ -1,6 +1,8 @@
 -- [HOLD-FOR-JORGE — financial] Vendor Type catalog (catalogs.vendor_types) + mdata.vendors linkage.
 -- POSTS NOTHING. Owner merges (financial cluster: catalogs.* + a migration).
 --
+-- *** DO NOT RUN ON PROD. *** Validate on a Neon branch only, then ledger-backfill so prod db:migrate skips it.
+--
 -- ROOT CAUSE: QuickBooks exposes a "Vendor Type" list, and the TMS reconcile projection already counts a
 -- remote `catalog.vendor_types` entity (0055/0123/0201 qbo_remote_counts), but there is NO local vendor-type
 -- catalog. Today `mdata.vendors.vendor_type` is a hardcoded CHECK-text column
