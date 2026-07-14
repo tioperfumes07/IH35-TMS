@@ -591,6 +591,9 @@ jobs:
       - name: Verify modal no doubled header
         run: npm run verify:modal-no-doubled-header
 
+      - name: Verify no nested modal frames
+        run: npm run verify:no-nested-modal-frames
+
       - name: verify:all-modals-have-x-close
         run: npm run verify:all-modals-have-x-close
 
