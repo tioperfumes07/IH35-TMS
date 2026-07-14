@@ -1,4 +1,12 @@
 import { PlatesTable } from "./PlatesTable";
+import { formatDateUS } from "../../lib/formatDate";
+
+// §7 punchlist #107 (dates rendered raw instead of MM/DD/YYYY) applies identically here — same
+// antipattern as the vehicle-profile ComplianceSection.
+function fmtDate(value: unknown): string {
+  if (value === null || value === undefined || value === "") return "—";
+  return formatDateUS(value as string) || "—";
+}
 
 export function ComplianceSection({
   compliance,
@@ -14,9 +22,9 @@ export function ComplianceSection({
     <section className="rounded-sm border border-gray-200 bg-white p-4">
       <h2 className="text-sm font-semibold text-gray-800">Compliance</h2>
       <div className="mt-2 grid gap-2 text-xs sm:grid-cols-3">
-        <div>DOT next due: {String(dot?.next_due ?? "—")}</div>
-        <div>US insurance exp: {String(us?.expiration ?? "—")}</div>
-        <div>MX insurance exp: {String(mx?.expiration ?? "—")}</div>
+        <div>DOT next due: {fmtDate(dot?.next_due)}</div>
+        <div>US insurance exp: {fmtDate(us?.expiration)}</div>
+        <div>MX insurance exp: {fmtDate(mx?.expiration)}</div>
       </div>
       <PlatesTable plates={plates} />
     </section>

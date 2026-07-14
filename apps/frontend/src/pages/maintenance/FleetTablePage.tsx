@@ -219,8 +219,10 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
 
   return (
     <div className="space-y-2">
-      <div className="text-xs text-gray-700">
-        Total Fleet: {counters.total} · Trucks: {counters.trucks} · Trailers: {counters.trailers}
+      <div className="flex flex-wrap gap-2 text-xs text-gray-700">
+        <span className="rounded-sm border border-gray-200 bg-white px-2 py-0.5">Total Fleet: {counters.total}</span>
+        <span className="rounded-sm border border-gray-200 bg-white px-2 py-0.5">Trucks: {counters.trucks}</span>
+        <span className="rounded-sm border border-gray-200 bg-white px-2 py-0.5">Trailers: {counters.trailers}</span>
       </div>
 
       {/* Sub-tabs: Trucks / Trailers / Company Vehicles (unit_class) */}
@@ -290,7 +292,7 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
             void downloadFleetLocationHosXlsx(operatingCompanyId).catch(() => undefined);
           }}
         >
-          ⬇ Export Location + HOS (Excel)
+          Export Location + HOS (Excel)
         </button>
         {hasActiveFilter ? (
           <button

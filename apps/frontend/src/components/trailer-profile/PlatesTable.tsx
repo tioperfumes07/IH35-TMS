@@ -1,3 +1,10 @@
+import { formatDateUS } from "../../lib/formatDate";
+
+function fmtDate(value: unknown): string {
+  if (value === null || value === undefined || value === "") return "—";
+  return formatDateUS(value as string) || "—";
+}
+
 export function PlatesTable({ plates }: { plates: Array<Record<string, unknown>> }) {
   return (
     <table className="mt-3 w-full text-left text-xs" data-testid="tp-plates-table">
@@ -22,7 +29,7 @@ export function PlatesTable({ plates }: { plates: Array<Record<string, unknown>>
               <td className="py-1">{String(p.country ?? "—")}</td>
               <td>{String(p.jurisdiction ?? "—")}</td>
               <td>{String(p.plate_number ?? "—")}</td>
-              <td>{String(p.expiration ?? "—")}</td>
+              <td>{fmtDate(p.expiration)}</td>
             </tr>
           ))
         )}

@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
+import { formatDateUS } from "../../lib/formatDate";
 
 type Plate = { id: string; country: string; jurisdiction: string; plate_number: string; expiration?: string | null; status: string };
 
@@ -48,7 +49,7 @@ export function PlatesTable({ unitId, companyId, plates }: { unitId: string; com
       <div className="mb-2 flex items-center justify-between">
         <div className="text-xs font-semibold text-gray-600">Plates</div>
         <Button size="sm" variant="secondary" onClick={() => setOpen(true)}>
-          + Add Plate
+          + Create Plate
         </Button>
       </div>
       <table className="min-w-full text-xs">
@@ -68,7 +69,7 @@ export function PlatesTable({ unitId, companyId, plates }: { unitId: string; com
               <td className="px-2 py-1">{p.country}</td>
               <td className="px-2 py-1">{p.jurisdiction}</td>
               <td className="px-2 py-1">{p.plate_number}</td>
-              <td className="px-2 py-1">{p.expiration ?? "—"}</td>
+              <td className="px-2 py-1">{p.expiration ? formatDateUS(p.expiration) || "—" : "—"}</td>
               <td className="px-2 py-1">{p.status}</td>
               <td className="px-2 py-1">
                 <button type="button" className="text-slate-700 underline" onClick={() => archiveMutation.mutate(p.id)}>
