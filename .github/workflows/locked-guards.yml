@@ -797,3 +797,8 @@ jobs:
         run: node scripts/verify-system-module.mjs --selftest
       - name: verify:system-module
         run: npm run verify:system-module
+
+      - name: verify:road-service-route-mounted --selftest
+        run: node scripts/verify-road-service-route-mounted.mjs --selftest
+      - name: verify:road-service-route-mounted
+        run: npm run verify:road-service-route-mounted
