@@ -311,8 +311,10 @@ function DocComplianceCell({ load }: { load: DispatchLoadRow }) {
 function RiskCell({ load }: { load: DispatchLoadRow }) {
   return (
     <div className="flex flex-col items-start gap-1">
-      <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${riskTierClass(load)}`}>
-        {isAtRiskOfLate(load) ? "⚠ " : ""}
+      <span
+        className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${riskTierClass(load)}`}
+        title={isAtRiskOfLate(load) ? "At risk of late delivery" : undefined}
+      >
         {riskTierLabel(load)}
       </span>
       <OnTimePredictionColumn load={load} />
@@ -722,7 +724,7 @@ export function DispatchBoard({
       <tr className="border-b border-slate-200 bg-slate-100">
         <td colSpan={colSpan} className="px-3 py-1.5">
           <div className="flex items-center gap-2 text-xs text-slate-700">
-            <span className="font-semibold">⚠ Driver has open pre-settlement</span>
+            <span className="font-semibold">Driver has open pre-settlement</span>
             {openPreSettlement.settlement_number ? (
               <span className="font-mono text-slate-700">{openPreSettlement.settlement_number}</span>
             ) : null}

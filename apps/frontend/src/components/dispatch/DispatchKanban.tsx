@@ -7,7 +7,7 @@ import type { DataTableErrorState } from "../../lib/tableError";
 import { classifyProfit, formatProfitCents, getLoadProfitability, profitBadgeClassName } from "../../lib/loadProfit";
 import { ListErrorState } from "../ListErrorState";
 import { useToast } from "../Toast";
-import { canDragLoad, FLAG_EMOJI_BY_CODE, toRouteSummary } from "./constants";
+import { canDragLoad, flagDotColor, flagDotLabel, flagDotTag, hasVisibleFlag, toRouteSummary } from "./constants";
 
 type Props = {
   loads: DispatchLoadRow[];
@@ -318,7 +318,15 @@ function KanbanDispatchCard({
       {/* DISPATCH-UI-REFINE-2 ITEM 2 — unit primary, load # secondary (when a unit is assigned). */}
       <div className="flex items-center justify-between gap-2">
         <div className="font-semibold text-gray-900" data-kanban-card-primary="unit">{cardPrimaryLabel(load)}</div>
-        <div className="text-sm">{FLAG_EMOJI_BY_CODE[load.flag_code] ?? "⚪"}</div>
+        {hasVisibleFlag(load.flag_code) ? (
+          <span
+            className="inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full text-[8px] font-bold text-white"
+            style={{ backgroundColor: flagDotColor(load.flag_code) }}
+            title={flagDotLabel(load.flag_code)}
+          >
+            {flagDotTag(load.flag_code)}
+          </span>
+        ) : null}
       </div>
       {cardSecondaryLoadNumber(load) ? (
         <div className="font-mono text-[11px] text-gray-500" data-kanban-card-secondary="load-number">
@@ -461,7 +469,15 @@ function KanbanStandardCard({
         </span>
         {hasActiveGeofenceBreach ? <span className="shrink-0 text-red-600" title="Geofence breach">◆</span> : null}
         {isBreakdown(load) ? <span className="shrink-0 text-red-600" title="Breakdown">▲</span> : null}
-        <span className="shrink-0 text-sm">{FLAG_EMOJI_BY_CODE[load.flag_code] ?? "⚪"}</span>
+        {hasVisibleFlag(load.flag_code) ? (
+          <span
+            className="inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full text-[8px] font-bold text-white"
+            style={{ backgroundColor: flagDotColor(load.flag_code) }}
+            title={flagDotLabel(load.flag_code)}
+          >
+            {flagDotTag(load.flag_code)}
+          </span>
+        ) : null}
       </div>
       {/* line 2 — secondary: load # · driver · lane */}
       <div className="flex items-center gap-1.5 truncate text-[10px] text-gray-500">
