@@ -96,7 +96,6 @@ export function UnitsWithoutLoadTable({ rows, onRowClick, loading }: Props) {
           numeric: true,
           render: (row) => (
             <span className={idleClass(row.hours_since_last_delivery)}>
-              {row.hours_since_last_delivery !== null && row.hours_since_last_delivery >= 72 ? "⚠ " : ""}
               {row.hours_since_last_delivery !== null ? `${row.hours_since_last_delivery}h idle` : "-"}
             </span>
           ),

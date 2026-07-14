@@ -95,7 +95,7 @@ export function AccessorialEditor({ operatingCompanyId, rows, onRowsChange, onDe
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-2">
-        <button type="button" className="text-[10.5px] font-semibold text-[#16203a] hover:underline" onClick={handleCreateCharge}>
+        <button type="button" className="text-[10.5px] font-semibold text-[#1f2a44] hover:underline" onClick={handleCreateCharge}>
           + Create charge
         </button>
         <span className="text-[10px] text-gray-400">·</span>
@@ -103,7 +103,7 @@ export function AccessorialEditor({ operatingCompanyId, rows, onRowsChange, onDe
           <button
             key={preset}
             type="button"
-            className="text-[10.5px] font-semibold capitalize text-[#16203a] hover:underline"
+            className="text-[10.5px] font-semibold capitalize text-[#1f2a44] hover:underline"
             onClick={() => handleSeed(preset)}
           >
             {preset}

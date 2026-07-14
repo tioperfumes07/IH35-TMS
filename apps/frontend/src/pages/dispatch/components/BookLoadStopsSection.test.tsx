@@ -68,11 +68,13 @@ describe("BookLoadStopsSection — render-v6 §C two-row stop card", () => {
     }
   });
 
-  it("offers Add pickup / Add delivery / multi-leg buttons", () => {
+  it("offers Create pickup / Create delivery / multi-leg buttons", () => {
     render(<Harness />);
-    expect(screen.getByText("+ Add pickup")).toBeInTheDocument();
-    expect(screen.getByText("+ Add delivery")).toBeInTheDocument();
-    expect(screen.getByText(/Add stop/)).toBeInTheDocument();
+    // CLAUDE.md §7 vocab lock: "+ Create" / "+ Book" only, never "+ New" / "+ Add" — the component
+    // already renders the locked vocab; this test was stale (still asserting the pre-lock "+ Add" text).
+    expect(screen.getByText("+ Create pickup")).toBeInTheDocument();
+    expect(screen.getByText("+ Create delivery")).toBeInTheDocument();
+    expect(screen.getByText(/Create stop/)).toBeInTheDocument();
   });
 });
 

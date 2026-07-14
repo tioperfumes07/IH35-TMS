@@ -217,11 +217,11 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           label="Assignment mode"
           input={
             <div className="inline-flex h-7 overflow-hidden rounded-sm border border-gray-300 bg-white text-[11px]">
-              <label className={`flex cursor-pointer items-center px-3 ${assignmentMode === "solo" ? "bg-[#16203a] text-white" : "text-gray-700"}`}>
+              <label className={`flex cursor-pointer items-center px-3 ${assignmentMode === "solo" ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}>
                 <input type="radio" value="solo" className="hidden" {...register("assignment_mode")} />
                 Solo
               </label>
-              <label className={`flex cursor-pointer items-center border-l border-gray-300 px-3 ${assignmentMode === "team" ? "bg-[#16203a] text-white" : "text-gray-700"}`}>
+              <label className={`flex cursor-pointer items-center border-l border-gray-300 px-3 ${assignmentMode === "team" ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}>
                 <input type="radio" value="team" className="hidden" {...register("assignment_mode")} />
                 Team
               </label>
@@ -324,7 +324,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
       {/* RENDER-A-v2 §B: "Equipment & driver instructions" expander — equipment requirement chips + the
           driver-visible instructions, combined into one expander after the trailer panels. */}
       <details open data-testid="equipment-driver-instructions" className="rounded-sm border border-gray-200">
-        <summary className="cursor-pointer px-2 py-1 text-[11px] font-semibold text-[#16203a]">
+        <summary className="cursor-pointer px-2 py-1 text-[11px] font-semibold text-[#1f2a44]">
           Equipment &amp; driver instructions <span className="font-normal text-gray-400">requirements · visible to driver</span>
         </summary>
         <div className="space-y-2 border-t border-gray-200 p-2">
@@ -334,7 +334,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
               {toggles.map((toggle) => (
                 <label key={toggle.field} className="cursor-pointer">
                   <input type="checkbox" {...register(toggle.field)} className="peer sr-only" />
-                  <span className="inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-semibold tracking-[0.3px] text-gray-600 ring-1 ring-gray-300 peer-checked:bg-[#16203a] peer-checked:text-white peer-checked:ring-[#16203a]">
+                  <span className="inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-semibold tracking-[0.3px] text-gray-600 ring-1 ring-gray-300 peer-checked:bg-[#1f2a44] peer-checked:text-white peer-checked:ring-[#1f2a44]">
                     {toggle.label}
                   </span>
                 </label>
@@ -348,7 +348,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           Driver HOS clock set (always shown; "No HOS data" until a driver + Samsara HOS) + the chargeback /
           detention / late-risk callout. */}
       <details open data-testid="expected-adjustments" className="rounded-sm border border-gray-200">
-        <summary className="cursor-pointer px-2 py-1 text-[11px] font-semibold text-[#16203a]">
+        <summary className="cursor-pointer px-2 py-1 text-[11px] font-semibold text-[#1f2a44]">
           Expected adjustments <span className="font-normal text-gray-400">HOS · detention · late risk</span>
         </summary>
         <div className="space-y-2 border-t border-gray-200 p-2">

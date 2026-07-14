@@ -60,7 +60,7 @@ function onTimeLabel(prediction: DispatchLoadRow["on_time_prediction"]): string 
 }
 
 function sourceGlyph(source: DispatchLoadRow["samsara_eta_source"]): string {
-  if (source === "samsara") return "📡";
+  if (source === "samsara") return "◉";
   if (source === "manual") return "✎";
   if (source === "prediction") return "◎";
   return "◌";
