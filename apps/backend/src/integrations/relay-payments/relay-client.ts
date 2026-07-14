@@ -36,8 +36,21 @@ function relayApiBase(): string {
   return base.endsWith("/") ? base : `${base}/`;
 }
 
-/** Reads the Relay API key from env ONLY. Never persisted, logged, or echoed back. */
-function relayApiKey(): string | null {
+/**
+ * Reads the Relay API key from env ONLY. Never persisted, logged, or echoed back.
+ *
+ * PER-ENTITY: Relay issues a distinct key per carrier (e.g. IH35 Transportation vs USMCA Freight). The
+ * entity-scoped var `RELAY_API_KEY_<CODE>` (e.g. `RELAY_API_KEY_TRANSP`, `RELAY_API_KEY_USMCA` — CODE is
+ * the org.companies.code, upper-cased) takes precedence; the bare `RELAY_API_KEY` remains the fallback so
+ * a single-entity setup keeps working unchanged. A company whose flag is ON but whose key var is unset
+ * resolves to null and the caller throws relay_not_configured — never silently pulls another entity's key.
+ */
+export function relayApiKey(entityCode?: string | null): string | null {
+  const code = entityCode?.trim().toUpperCase().replace(/[^A-Z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+  if (code) {
+    const scoped = process.env[`RELAY_API_KEY_${code}`]?.trim();
+    if (scoped && scoped.length > 0) return scoped;
+  }
   const key = process.env.RELAY_API_KEY?.trim();
   return key && key.length > 0 ? key : null;
 }
@@ -242,8 +255,10 @@ export function parseRelayFuelTransactionRow(row: Record<string, unknown>): Rela
 export async function listRelayFuelTransactions(params: {
   startDate: string; // ISO 8601 date, e.g. "2026-07-01"
   endDate: string;
+  /** org.companies.code of the entity being pulled — selects RELAY_API_KEY_<CODE> (falls back to RELAY_API_KEY). */
+  entityCode?: string | null;
 }): Promise<RelayFuelTransaction[]> {
-  const key = relayApiKey();
+  const key = relayApiKey(params.entityCode);
   if (!key) {
     throw new RelayApiError("relay_not_configured", null, null, false);
   }

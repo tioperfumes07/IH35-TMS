@@ -58,11 +58,11 @@ function monthlyWindows(months: number): Array<{ startDate: string; endDate: str
   return windows;
 }
 
-async function listActiveCompanyIds(client: DbClient): Promise<string[]> {
-  const res = await client.query<{ id: string }>(
-    `SELECT id::text AS id FROM org.companies WHERE is_active = true AND deactivated_at IS NULL ORDER BY id`
+async function listActiveCompanyIds(client: DbClient): Promise<{ id: string; code: string | null }[]> {
+  const res = await client.query<{ id: string; code: string | null }>(
+    `SELECT id::text AS id, code FROM org.companies WHERE is_active = true AND deactivated_at IS NULL ORDER BY id`
   );
-  return res.rows.map((r) => r.id);
+  return res.rows.map((r) => ({ id: r.id, code: r.code }));
 }
 
 async function ingestForCompany(
@@ -70,12 +70,14 @@ async function ingestForCompany(
   app: FastifyInstance,
   operatingCompanyId: string,
   startDate: string,
-  endDate: string
+  endDate: string,
+  entityCode: string | null
 ): Promise<{ pulled: number; upserted: number; skipped: number }> {
   assertTenantContext(operatingCompanyId, "relay_payments.fuel_ingest_cron");
   await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
 
-  const rawRows = await listRelayFuelTransactions({ startDate, endDate });
+  // Per-entity Relay key: each carrier (TRANSP / USMCA / …) has its own key via RELAY_API_KEY_<CODE>.
+  const rawRows = await listRelayFuelTransactions({ startDate, endDate, entityCode });
   let upserted = 0;
   let skipped = 0;
 
@@ -131,12 +133,12 @@ export function initializeRelayFuelIngestCron(app: FastifyInstance) {
 
       await withLuciaBypass(async (client) => {
         const companyIds = await listActiveCompanyIds(client);
-        for (const operatingCompanyId of companyIds) {
+        for (const { id: operatingCompanyId, code: entityCode } of companyIds) {
           const flagOn = await isEnabled(client, "RELAY_FUEL_INGEST_ENABLED", { operating_company_id: operatingCompanyId });
           if (!flagOn) continue;
 
           try {
-            const stats = await ingestForCompany(client, app, operatingCompanyId, startDate, endDate);
+            const stats = await ingestForCompany(client, app, operatingCompanyId, startDate, endDate, entityCode);
             app.log.info({ operating_company_id: operatingCompanyId, ...stats }, "[RELAY_FUEL_INGEST_CRON] run complete");
           } catch (error) {
             // Log loudly, record to the shared audit stream, and keep processing the REMAINING
@@ -192,7 +194,7 @@ export async function runRelayFuelBackfill(app: FastifyInstance, opts?: { months
 
   await withLuciaBypass(async (client) => {
     const companyIds = await listActiveCompanyIds(client);
-    for (const operatingCompanyId of companyIds) {
+    for (const { id: operatingCompanyId, code: entityCode } of companyIds) {
       const flagOn = await isEnabled(client, "RELAY_FUEL_INGEST_ENABLED", { operating_company_id: operatingCompanyId });
       if (!flagOn) continue;
 
@@ -201,7 +203,7 @@ export async function runRelayFuelBackfill(app: FastifyInstance, opts?: { months
       let skipped = 0;
       try {
         for (const w of windows) {
-          const stats = await ingestForCompany(client, app, operatingCompanyId, w.startDate, w.endDate);
+          const stats = await ingestForCompany(client, app, operatingCompanyId, w.startDate, w.endDate, entityCode);
           pulled += stats.pulled;
           upserted += stats.upserted;
           skipped += stats.skipped;
