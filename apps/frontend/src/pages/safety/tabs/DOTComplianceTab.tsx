@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { acknowledgeSafetyReminder, listSafetyReminders, type SafetyReminderRow } from "../../../api/safety";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { formatDateUS } from "../../../lib/formatDate";
 import { ExpiryDashboard } from "../expiry-tracking/ExpiryDashboard";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
@@ -110,7 +111,7 @@ export function DOTComplianceTab() {
     () => [
       { key: "driver_name", label: "Driver", sortable: true, render: (row) => <EntityLink kind="driver" id={row.driver_id} label={row.driver_name ?? undefined} /> },
       { key: "item_name", label: "Item", sortable: true },
-      { key: "due_date", label: "Due", sortable: true },
+      { key: "due_date", label: "Due", sortable: true, render: (row) => formatDateUS(row.due_date) },
       { key: "days_to_expiry", label: "Days", sortable: true },
       {
         key: "severity",

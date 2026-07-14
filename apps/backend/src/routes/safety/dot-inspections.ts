@@ -5,6 +5,7 @@ import { withCurrentUser } from "../../auth/db.js";
 import { requireAuth } from "../../auth/session-middleware.js";
 import { createWorkOrderWithLines } from "../../maintenance/two-section-service.js";
 import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
+import { putObjectBytes, isR2Configured } from "../../storage/r2-client.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -361,9 +362,16 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
 
     const file = await req.file();
     if (!file) return reply.code(400).send({ error: "file_required" });
+    if (!isR2Configured()) return reply.code(503).send({ error: "r2_not_configured" });
+
+    const fileBuffer = await file.toBuffer();
+    if (!fileBuffer || fileBuffer.length === 0) return reply.code(400).send({ error: "file_empty" });
+    const contentType = file.mimetype || "application/pdf";
+    const r2Key = `safety/dot-inspections/${params.data.id}/${Date.now()}-${file.filename}`;
+    await putObjectBytes(r2Key, fileBuffer, contentType);
 
     const payload = await withCompany(user.uuid, user.role, query.data.operating_company_id, async (client) => {
-      const pdfUrl = `r2://safety/dot-inspections/${params.data.id}/${Date.now()}-${file.filename}`;
+      const pdfUrl = `r2://${r2Key}`;
       const updated = await client.query(
         `
           UPDATE safety.dot_inspections
