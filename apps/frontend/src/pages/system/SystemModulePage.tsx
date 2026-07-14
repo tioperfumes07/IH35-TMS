@@ -193,6 +193,7 @@ function OverviewTab({ data, onOpen }: { data: SystemData; onOpen: (id: SystemTa
   const apObj = findApObject(recon.data);
   const reconAlerts = recon.data?.open_findings_count ?? null;
   const syncConnected = syncHealth.data?.status === "healthy" || syncHealth.data?.status === "syncing";
+  const syncBroken = syncHealth.data?.status === "error" || syncHealth.data?.needs_reconnect === true;
   const apVendorCount = apAging.data?.vendors.length ?? null;
   const healthGreen = health.data?.ok === true;
 
@@ -221,7 +222,15 @@ function OverviewTab({ data, onOpen }: { data: SystemData; onOpen: (id: SystemTa
       {/* QuickBooks Sync */}
       <Card
         title="QuickBooks Sync"
-        pill={syncConnected ? <Pill tone="ok">CONNECTED</Pill> : <Pill tone="warn">CHECKING</Pill>}
+        pill={
+          syncConnected ? (
+            <Pill tone="ok">CONNECTED</Pill>
+          ) : syncBroken ? (
+            <Pill tone="off">{syncHealth.data?.needs_reconnect ? "RECONNECT NEEDED" : "ERROR"}</Pill>
+          ) : (
+            <Pill tone="warn">CHECKING</Pill>
+          )
+        }
         sub="Pull-only from QuickBooks — no write-back (by design)."
         footer={<GhostButton onClick={() => onOpen("qbo-sync")}>Open QuickBooks Sync</GhostButton>}
       >
@@ -322,7 +331,7 @@ function QboReconTab({ data }: { data: SystemData }) {
             </table>
           </div>
         ) : (
-          <p className="text-[12px] text-slate-500">{recon.isError ? "Reconciliation module not enabled (TMS_QBO_RECON_ENABLED OFF)." : "Loading…"}</p>
+          <p className="text-[12px] text-slate-500">{recon.isError ? "Reconciliation module not enabled (TMS_QBO_RECON_UI_ENABLED OFF)." : "Loading…"}</p>
         )}
       </Card>
     </div>
@@ -346,6 +355,11 @@ function QboSyncTab({ data }: { data: SystemData }) {
         <Row label="Pending / errors">
           <span className="tabular-nums">{syncHealth.data ? `${syncHealth.data.pending_count} / ${syncHealth.data.error_count}` : "—"}</span>
         </Row>
+        {syncHealth.data?.needs_reconnect ? (
+          <Row label="Connection">
+            <Pill tone="off">RECONNECT NEEDED{syncHealth.data.reconnect_reason ? ` — ${syncHealth.data.reconnect_reason}` : ""}</Pill>
+          </Row>
+        ) : null}
         <Row label="Pulled into TMS (accounting.bills)">{fmtUsd(apAging.data?.totals.total_open_cents)}</Row>
         <Row label="QBO write-back">
           <Pill tone="ok">OFF (by design)</Pill>
@@ -478,9 +492,10 @@ function SoftwareTab({ data }: { data: SystemData }) {
 }
 
 function ClaudeCoderTab({ data }: { data: SystemData }) {
-  const { health, recon } = data;
+  const { health, recon, tracker } = data;
   const [copied, setCopied] = useState<string | null>(null);
   const apObj = findApObject(recon.data);
+  const recentMerged = tracker.data?.recent_merged ?? [];
   const copy = (which: string) => {
     void navigator.clipboard?.writeText(LAUNCH_COMMAND).catch(() => undefined);
     setCopied(which);
@@ -513,40 +528,40 @@ function ClaudeCoderTab({ data }: { data: SystemData }) {
           <table className="w-full border-collapse text-[12px]">
             <thead>
               <tr className="text-[11px] uppercase tracking-wide text-slate-500">
-                <th className="border-b border-gray-200 px-1.5 py-2 text-left">Item</th>
-                <th className="border-b border-gray-200 px-1.5 py-2 text-left">Type</th>
-                <th className="border-b border-gray-200 px-1.5 py-2 text-left">CI</th>
-                <th className="border-b border-gray-200 px-1.5 py-2 text-left">Gate</th>
-                <th className="border-b border-gray-200 px-1.5 py-2 text-left">Status</th>
+                <th className="border-b border-gray-200 px-1.5 py-2 text-left">PR</th>
+                <th className="border-b border-gray-200 px-1.5 py-2 text-left">Title</th>
+                <th className="border-b border-gray-200 px-1.5 py-2 text-left">Merged</th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td className="border-b border-gray-100 px-1.5 py-2 text-slate-700">feat: gate QBO A/P pull on DB flag (TRANSP/TRK)</td>
-                <td className="border-b border-gray-100 px-1.5 py-2 text-slate-500">Financial</td>
-                <td className="border-b border-gray-100 px-1.5 py-2"><Pill tone="ok">GREEN</Pill></td>
-                <td className="border-b border-gray-100 px-1.5 py-2"><Pill tone="warn">HOLD-FOR-JORGE</Pill></td>
-                <td className="border-b border-gray-100 px-1.5 py-2 text-slate-500">awaiting your merge</td>
-              </tr>
-              <tr>
-                <td className="border-b border-gray-100 px-1.5 py-2 text-slate-700">tracker-live-accurate (seq #3)</td>
-                <td className="border-b border-gray-100 px-1.5 py-2 text-slate-500">Non-financial</td>
-                <td className="border-b border-gray-100 px-1.5 py-2"><Pill tone="neutral">QUEUED</Pill></td>
-                <td className="border-b border-gray-100 px-1.5 py-2"><Pill tone="neutral">self-merge</Pill></td>
-                <td className="border-b border-gray-100 px-1.5 py-2 text-slate-500">next in sequence</td>
-              </tr>
-              <tr>
-                <td className="border-b border-gray-100 px-1.5 py-2 text-slate-700">Relay diesel approve-step (seq #6)</td>
-                <td className="border-b border-gray-100 px-1.5 py-2 text-slate-500">Non-financial</td>
-                <td className="border-b border-gray-100 px-1.5 py-2"><Pill tone="neutral">QUEUED</Pill></td>
-                <td className="border-b border-gray-100 px-1.5 py-2"><Pill tone="neutral">self-merge</Pill></td>
-                <td className="border-b border-gray-100 px-1.5 py-2 text-slate-500">key arriving</td>
-              </tr>
+              {recentMerged.slice(0, 8).map((p) => (
+                <tr key={p.number}>
+                  <td className="border-b border-gray-100 px-1.5 py-2 font-semibold">
+                    <a
+                      href={`https://github.com/tioperfumes07/IH35-TMS/pull/${p.number}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-slate-700 underline hover:text-[#1f2a44]"
+                    >
+                      #{p.number}
+                    </a>
+                  </td>
+                  <td className="border-b border-gray-100 px-1.5 py-2 text-slate-700">{p.title}</td>
+                  <td className="border-b border-gray-100 px-1.5 py-2 text-slate-500">{ctDateTime(p.mergedAt)}</td>
+                </tr>
+              ))}
+              {recentMerged.length === 0 ? (
+                <tr>
+                  <td colSpan={3} className="px-1.5 py-4 text-center text-slate-400">
+                    {tracker.isError ? "Tracker unavailable." : tracker.isLoading ? "Loading…" : "No recently merged PRs."}
+                  </td>
+                </tr>
+              ) : null}
             </tbody>
           </table>
         </div>
         <p className="mt-2 text-[11px] text-slate-400">
-          The activity list above is an illustrative read-only snapshot (there is no in-app build-activity feed to wire); the terminal mirror below injects live values where available.
+          Live feed of the most recently merged PRs (from the Program Tracker's GitHub sync); the terminal mirror below injects live health/QBO values.
         </p>
 
         <div className="mt-3.5 overflow-auto rounded-[10px] bg-[#0f1729] px-4 py-3.5 font-mono text-[11.5px] leading-[1.7] text-[#cbd5e1]">
