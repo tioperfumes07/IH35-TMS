@@ -39,7 +39,27 @@ const TAG_NAMES = ["KpiCard", "HomeKpiCard"];
 // Frozen count of pre-existing dead (no to=/onClick=) KpiCard/HomeKpiCard usages, computed 2026-07-14
 // via DEAD_CLICK_BASELINE_PRINT=1. Grandfathered — ratchet only downward. Do NOT raise without wiring a
 // reason (a genuinely non-actionable summary tile) into this comment.
-const BASELINE = 49;
+//
+// B10 click-through rollout (2026-07-14): 49 -> 23. Wired 26 KPI cards to a REAL, pre-existing
+// destination (a route/filter/panel that already exists — never a fabricated page): Drivers.tsx
+// (Active/On Leave/Settle Due/Drivers Owe/Escrow), Users.tsx (all 4, via ?tab=), DispatchOverview.tsx
+// (Active loads/At-risk-late/Units available), DocsHomePage.tsx (Total Docs/Expiring 30 Days, via local
+// filter state), driver-finance/SettlementsPage.tsx (Total Unpaid/This Period/YTD Settlements, via
+// ?payment_state=), ReserveTracker.tsx (FARO Reserve Held/Chargebacks Pending/Fees Paid YTD/Active
+// Factor -> /factoring/reserves, /factoring/chargebacks-fees, /factoring/factors), FinanceHubPage.tsx
+// (made the whole card a Link to the already-real kpi.drill_to, not just the footer), SafetyEventsPage.tsx
+// (Total events/Open, via existing statusFilter state), DriverManagerKpiBar.tsx + SafetyKpiBar.tsx (all 6,
+// -> /drivers/messages, /dispatch/alerts/late-arrivals, /driver-finance/settlements, /safety/idvr,
+// /safety/hos/exceptions, /safety/cert-expiry). The remaining 23 are genuine gaps, NOT fake-wired: either
+// the feature/filter genuinely doesn't exist yet (e.g. DriversListPage.tsx DQF-compliance-level filter,
+// SettlementsPage "Drivers w/ Debt"/"Pending Acks"/"Held Deductions" have no matching filter param,
+// ReserveTracker "Submitted (batches)"/"Advances Received" have no batches-list route — only
+// /factoring/batches/new and /factoring/batches/:id exist) or the tile is a genuinely non-actionable
+// aggregate (FleetTablePage "Avg Age", DriverProfilePage's 5 DQF summary tiles with no per-status filter
+// on DriverDqfPanel, SafetyEventsPage "Severe"/"Commendations" with no matching list-endpoint filter,
+// Drivers.tsx "On Loads"/"Available", DispatchOverview "Units needing return", DocsHomePage "Missing
+// Required"/"Recent Uploads").
+const BASELINE = 23;
 
 /** Brace/quote-aware JSX opening-tag extractor — a `>` inside a `{...}` expression (e.g.
  *  `delta={pct > 0 ? up : down}`) must not prematurely close the tag. Only a `>` at brace depth 0 and

@@ -25,15 +25,17 @@ function KpiTile({
   value,
   hint,
   accent,
+  to,
 }: {
   label: string;
   value: number;
   hint: string;
   accent?: string;
+  to?: string;
 }) {
   return (
     <div className="space-y-1">
-      <KpiCard label={label} number={value} accent={accent} />
+      <KpiCard label={label} number={value} accent={accent} to={to} />
       <p className="px-1 text-[11px] text-slate-500">{hint}</p>
     </div>
   );
@@ -63,18 +65,21 @@ export function SafetyKpiBar({ kpis, loading }: Props) {
         value={snapshot.open_dvir_major_defects}
         hint="Major/critical defects awaiting resolution"
         accent={snapshot.open_dvir_major_defects > 0 ? ACCENT.warning : ACCENT.neutral}
+        to="/safety/idvr"
       />
       <KpiTile
         label="HOS violations today"
         value={snapshot.hos_violations_today}
         hint="Violations recorded today"
         accent={snapshot.hos_violations_today > 0 ? ACCENT.warning : ACCENT.neutral}
+        to="/safety/hos/exceptions"
       />
       <KpiTile
         label="Certs expiring (30d)"
         value={snapshot.expiring_certs_30d}
         hint="CDL, medical, hazmat, TWIC within 30 days"
         accent={snapshot.expiring_certs_30d > 0 ? ACCENT.warning : ACCENT.neutral}
+        to="/safety/cert-expiry"
       />
     </div>
   );
