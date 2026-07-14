@@ -125,7 +125,6 @@
  "verify-nav-pattern.mjs": "baselined 2026-07-10 — pre-existing standalone guard; wire into verify:pre-commit/workflow or justify individually",
  "verify-no-empty-string-uuid-bind.mjs": "baselined 2026-07-10 — pre-existing standalone guard; wire into verify:pre-commit/workflow or justify individually",
  "verify-no-overflow-at-edge-breakpoints.mjs": "baselined 2026-07-10 — pre-existing standalone guard; wire into verify:pre-commit/workflow or justify individually",
- "verify-no-test-fixture-names.mjs": "baselined 2026-07-10 — pre-existing standalone guard; wire into verify:pre-commit/workflow or justify individually",
  "verify-onboarding-flow-completes.mjs": "baselined 2026-07-10 — pre-existing standalone guard; wire into verify:pre-commit/workflow or justify individually",
  "verify-owner-todays-attention.mjs": "baselined 2026-07-10 — pre-existing standalone guard; wire into verify:pre-commit/workflow or justify individually",
  "verify-p0-settlement-schema-grants.mjs": "baselined 2026-07-10 — pre-existing standalone guard; wire into verify:pre-commit/workflow or justify individually",
