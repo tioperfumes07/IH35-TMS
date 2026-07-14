@@ -13,6 +13,7 @@ vi.mock("../../../api/banking", async (importOriginal) => {
     ...actual,
     getPlaidCompanyTransactions: vi.fn(),
     getBankingSuggestions: vi.fn().mockResolvedValue({ suggestions: [] }),
+    getMatchCandidates: vi.fn().mockResolvedValue({ candidates: [], match_candidates_count: 0 }),
     getCoaAccounts: vi.fn().mockResolvedValue({ accounts: [] }),
     categorizeTransaction: vi.fn().mockResolvedValue({ ok: true }),
     skipBankTransactionInvestigation: vi.fn().mockResolvedValue({ ok: true }),
@@ -20,6 +21,49 @@ vi.mock("../../../api/banking", async (importOriginal) => {
     uploadBankStatementCsv: vi.fn().mockResolvedValue({ added: 0, errors: [] }),
   };
 });
+
+// FIX-4: the Class ReferenceSelect reads from `catalogs.classes` (classesCatalogClient) and
+// vendors/customers/items from mdata — stub them out so the inline "+ Add new class" test below
+// exercises only the onChange/onOptionCreated wiring under test, not real network calls.
+vi.mock("../../../api/mdata", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../../api/mdata")>();
+  return {
+    ...actual,
+    listVendors: vi.fn().mockResolvedValue({ vendors: [], total: 0 }),
+    listCustomers: vi.fn().mockResolvedValue({ customers: [], total: 0 }),
+  };
+});
+
+vi.mock("../../../api/catalogs-accounting", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../../api/catalogs-accounting")>();
+  return {
+    ...actual,
+    classesCatalogClient: { ...actual.classesCatalogClient, list: vi.fn().mockResolvedValue({ rows: [], total: 0 }) },
+    itemsCatalogClient: { ...actual.itemsCatalogClient, list: vi.fn().mockResolvedValue({ rows: [], total: 0 }) },
+  };
+});
+
+// Mock the inline create modal (same pattern as ReferenceSelect.test.tsx) so the test can trigger
+// onCreated directly — this is exactly what a real inline "+ Add new class" create returns: a new
+// id + label, BEFORE classesQuery has refetched (the stale-lookup window that caused the bug).
+vi.mock("../../../components/forms/shared/QuickCreateEntityModal", () => ({
+  QuickCreateEntityModal: ({
+    open,
+    kind,
+    onCreated,
+  }: {
+    open: boolean;
+    kind: string;
+    onCreated: (r: { id: string; label: string }) => void;
+  }) =>
+    open ? (
+      <div data-testid="quick-create" data-kind={kind}>
+        <button type="button" onClick={() => onCreated({ id: "class-new-1", label: "TRK-101-SMITH" })}>
+          mock-create-class
+        </button>
+      </div>
+    ) : null,
+}));
 
 function wrap(ui: ReactElement) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -319,5 +363,69 @@ describe("BankingTransactionsDesignView date formatting", () => {
         expect.objectContaining({ bank_account_id: "acct-2", limit: 500, offset: 0, sort: "date_desc" })
       )
     );
+  });
+});
+
+// FIX-4 (2026-07-14): inline "+ Add new class" was wiping the label it had just set. Root cause:
+// ReferenceSelect.handleCreated calls onOptionCreated (parent sets className correctly) THEN
+// onChange(newId) (parent looked up newId in the still-stale classesQuery.data, found nothing, and
+// reset className to ""). Regression guard: after create, the Class cell must show the new name
+// without a reselect/reload.
+describe("BankingTransactionsDesignView inline class create (FIX-4)", () => {
+  it("keeps the new class label after inline create, without needing a reselect", async () => {
+    vi.mocked(bankingApi.getPlaidCompanyTransactions).mockResolvedValue({
+      transactions: [tx("tx-class-1", "acct-1", 5000, "2026-05-17T00:00:00.000Z", "Class create test txn")],
+    });
+
+    render(
+      wrap(
+        <BankingTransactionsDesignView
+          companyId="company-1"
+          accounts={[
+            {
+              id: "acct-1",
+              operating_company_id: "company-1",
+              institution_name: "Chase",
+              account_name: "Operating",
+              account_mask: "1234",
+              account_type: "depository",
+              current_balance_cents: 100000,
+              available_balance_cents: 100000,
+              currency_code: "USD",
+              is_active: true,
+              sync_status: "active",
+              last_synced_at: null,
+              plaid_item_id: "item-1",
+              created_at: "2026-05-01T00:00:00.000Z",
+              updated_at: "2026-05-01T00:00:00.000Z",
+            },
+          ]}
+          selectedAccountId="acct-1"
+          onSelectAccount={() => {}}
+          onManageConnections={() => {}}
+          onDataChanged={() => {}}
+        />
+      )
+    );
+
+    // Turn on the Class column (hidden by default) via the view-settings gear.
+    expect(await screen.findByText("Class create test txn")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "View settings" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Class" }));
+
+    // Expand the row (Categorize is the default mode) to reveal the Class ReferenceSelect.
+    fireEvent.click(screen.getByText("Class create test txn"));
+
+    // The "+ Add new class" row is the Combobox dropdown's permanent first option — it only
+    // renders once the dropdown is open (focus opens it).
+    const classInput = await screen.findByPlaceholderText("Select class");
+    fireEvent.focus(classInput);
+    const addNewClass = await screen.findByRole("option", { name: /\+ Add new class/i });
+    fireEvent.click(addNewClass);
+    expect(screen.getByTestId("quick-create")).toHaveAttribute("data-kind", "class");
+    fireEvent.click(screen.getByText("mock-create-class"));
+
+    // The collapsed row's Class cell must show the new name immediately — no reopen/reselect.
+    expect(await screen.findByText("TRK-101-SMITH")).toBeInTheDocument();
   });
 });

@@ -1069,7 +1069,7 @@ export function VendorDetailPage() {
       ) : null}
 
       {activeTab === "Documents" && canViewDocuments ? (
-        <DocumentsTab entityType="vendor" entityId={vendor.id} entityName={vendor.name} />
+        <DocumentsTab entityType="vendor" entityId={vendor.id} entityName={vendor.name} operatingCompanyId={companyId} />
       ) : null}
 
       {activeTab === "Audit History" ? (
