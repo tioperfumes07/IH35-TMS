@@ -22,20 +22,21 @@ function kpiDisplay(kpi: FinanceHubKpi): string {
   return String(kpi.value ?? "—");
 }
 
-function KpiCard({ kpi }: { kpi: FinanceHubKpi }) {
+// B10 dead-click rollout: the whole card is now the clickable region (was only the "drill" footer link
+// before) — `kpi.drill_to` is the same real, existing drill-down route the footer link already used.
+function KpiCard({ kpi, to }: { kpi: FinanceHubKpi; to: string }) {
   return (
-    <div className="flex flex-col justify-between rounded-sm border border-slate-200 bg-white p-4">
+    <Link
+      to={to}
+      className="flex flex-col justify-between rounded-sm border border-slate-200 bg-white p-4 transition hover:shadow-xs"
+    >
       <div>
         <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{kpi.label}</div>
         <div className="mt-1 text-2xl font-semibold tabular-nums text-slate-900">{kpiDisplay(kpi)}</div>
         {kpi.secondary ? <div className="mt-1 text-xs text-slate-500">{kpi.secondary}</div> : null}
       </div>
-      <div className="mt-4">
-        <Link to={kpi.drill_to} className="text-sm font-medium text-slate-700 underline-offset-2 hover:underline">
-          {kpi.drill_label} →
-        </Link>
-      </div>
-    </div>
+      <div className="mt-4 text-sm font-medium text-slate-700 underline-offset-2">{kpi.drill_label} →</div>
+    </Link>
   );
 }
 
@@ -97,7 +98,7 @@ export function FinanceHubPage() {
         <>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {overviewQuery.data.kpis.map((kpi) => (
-              <KpiCard key={kpi.key} kpi={kpi} />
+              <KpiCard key={kpi.key} kpi={kpi} to={kpi.drill_to} />
             ))}
           </div>
           <p className="mt-4 text-xs text-slate-400">

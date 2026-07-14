@@ -13,6 +13,7 @@
  * All data from existing reserve/factoring APIs — no new financial code.
  */
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   getFactoringSummary,
@@ -40,14 +41,22 @@ const fmtDt = (v: string | null | undefined) => {
   return Number.isNaN(d.getTime()) ? "—" : d.toLocaleString();
 };
 
-function KpiCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
-  return (
-    <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
+function KpiCard({ label, value, sub, to }: { label: string; value: string; sub?: string; to?: string }) {
+  const content = (
+    <>
       <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">{label}</div>
       <div className="mt-1 text-lg font-bold text-gray-900">{value}</div>
       {sub ? <div className="mt-0.5 text-[11px] text-gray-500">{sub}</div> : null}
-    </div>
+    </>
   );
+  if (to) {
+    return (
+      <Link to={to} className="block rounded-sm border border-gray-200 bg-white p-3 text-sm transition hover:shadow-xs">
+        {content}
+      </Link>
+    );
+  }
+  return <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">{content}</div>;
 }
 
 // ─── component ────────────────────────────────────────────────────────────────
@@ -206,7 +215,11 @@ export function ReserveTracker() {
 
   return (
     <div className="space-y-4" data-testid="faro-reserve-tracker">
-      {/* KPI strip */}
+      {/* KPI strip. B10 dead-click rollout: FARO Reserve Held / Chargebacks Pending / Fees Paid YTD /
+          Active Factor drill into the existing, real /factoring/reserves, /factoring/chargebacks-fees, and
+          /factoring/factors pages. Submitted (batches) / Advances Received have no batches-list route
+          anywhere in the app (only /factoring/batches/new and /factoring/batches/:id exist) — left dead
+          intentionally rather than invent a destination. */}
       <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-6">
         <KpiCard
           label="Submitted (batches)"
@@ -222,17 +235,20 @@ export function ReserveTracker() {
           label="FARO Reserve Held"
           value={fmtM(totalReserveHeld)}
           sub={`across ${(balancesQ.data ?? []).length} factor(s)`}
+          to="/factoring/reserves"
         />
-        <KpiCard label="Fees Paid YTD" value={fmtM(totalFeesYtd)} />
+        <KpiCard label="Fees Paid YTD" value={fmtM(totalFeesYtd)} to="/factoring/chargebacks-fees" />
         <KpiCard
           label="Chargebacks Pending"
           value={fmtM(chargebacksPending)}
           sub={chargebacksPending > 0 ? "review needed" : "none"}
+          to="/factoring/chargebacks-fees"
         />
         <KpiCard
           label="Active Factor"
           value={summaryQ.data?.active_factor_name ?? "—"}
           sub={`${summaryQ.data?.recourse_days ?? 90}-day recourse`}
+          to="/factoring/factors"
         />
       </div>
 

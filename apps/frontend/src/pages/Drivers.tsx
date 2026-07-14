@@ -427,13 +427,17 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
       />
 
       <KpiStrip>
-        <KpiCard label="Active" number={`${activeCount}/${allDrivers.length}`} accent={colors.drivers.strong} />
+        {/* B10 dead-click rollout: Active/On Leave drill into the existing roster status filter
+            (DRIVERS_LIST_STATUS_TABS), Settle Due/Drivers Owe into the existing subnav panels that already
+            render this exact data, Escrow into the existing driver-escrow banking tab. On Loads/Available
+            have no dedicated filtered view anywhere in the app — left dead intentionally (see guard comment). */}
+        <KpiCard label="Active" number={`${activeCount}/${allDrivers.length}`} accent={colors.drivers.strong} to="/drivers?status=active" />
         <KpiCard label="On Loads" number={String(onLoadsCount)} accent={colors.dispatch.strong} />
         <KpiCard label="Available" number={String(availableCount)} accent={colors.info.strong} />
-        <KpiCard label="On Leave" number={String(onLeaveCount)} accent={colors.warn.strong} />
-        <KpiCard label="Settle Due" number={String(settleDueCount)} accent={colors.accounting.strong} />
-        <KpiCard label="Drivers Owe" number={formatMoney(totalDriversOwe)} accent={colors.crit.strong} />
-        <KpiCard label="Escrow" number={formatMoney(escrowTotal)} accent={colors.fleet.strong} />
+        <KpiCard label="On Leave" number={String(onLeaveCount)} accent={colors.warn.strong} to="/drivers?status=on_leave" />
+        <KpiCard label="Settle Due" number={String(settleDueCount)} accent={colors.accounting.strong} to="/drivers/settlements" />
+        <KpiCard label="Drivers Owe" number={formatMoney(totalDriversOwe)} accent={colors.crit.strong} to="/drivers/cash-advances" />
+        <KpiCard label="Escrow" number={formatMoney(escrowTotal)} accent={colors.fleet.strong} to="/banking/driver-escrow" />
       </KpiStrip>
 
       <div className="flex flex-wrap items-center gap-3">

@@ -198,9 +198,13 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
 
   return (
     <div className="space-y-3">
+      {/* B10 dead-click rollout: Total events / Open drive the existing statusFilter state (same
+          mechanism as the "Filter by status" dropdown below). Severe / Commendations have no matching
+          filter — statusFilter/severityFilter don't support a "severe" value or a kpi_bucket filter on
+          this list endpoint — left dead intentionally. */}
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard label="Total events" value={Number(kpiQuery.data?.total ?? 0)} />
-        <KpiCard label="Open" value={Number(kpiQuery.data?.open_count ?? 0)} />
+        <KpiCard label="Total events" value={Number(kpiQuery.data?.total ?? 0)} onClick={() => setStatusFilter("")} />
+        <KpiCard label="Open" value={Number(kpiQuery.data?.open_count ?? 0)} onClick={() => setStatusFilter("open")} />
         <KpiCard label="Severe" value={Number(kpiQuery.data?.severe_count ?? 0)} />
         <KpiCard label="Commendations" value={Number(kpiQuery.data?.commendations_count ?? 0)} />
       </div>
@@ -449,13 +453,25 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
   );
 }
 
-function KpiCard({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
+function KpiCard({ label, value, onClick }: { label: string; value: number; onClick?: () => void }) {
+  const content = (
+    <>
       <div className="text-[11px] uppercase text-gray-500">{label}</div>
       <div className="text-lg font-semibold text-gray-900">{value}</div>
-    </div>
+    </>
   );
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-left transition hover:shadow-xs"
+      >
+        {content}
+      </button>
+    );
+  }
+  return <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">{content}</div>;
 }
 
 function renderSubject(row: SafetyEventLogRow) {
