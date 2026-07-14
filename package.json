@@ -937,7 +937,8 @@
     "verify:ent-audit-all-entity-types": "node scripts/verify-ent-audit-all-entity-types.mjs",
     "verify:tracker-no-duplicate-block-ids": "node scripts/verify-tracker-no-duplicate-block-ids.mjs",
     "verify:qbo-parity-banking-home": "node scripts/verify-qbo-parity-banking-home.mjs",
-    "verify:consolidated-elimination": "node scripts/verify-consolidated-elimination.mjs"
+    "verify:consolidated-elimination": "node scripts/verify-consolidated-elimination.mjs",
+    "verify:qbo-parity-bills-invoices-lists": "node scripts/verify-qbo-parity-bills-invoices-lists.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",
