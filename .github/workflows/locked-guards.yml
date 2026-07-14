@@ -853,3 +853,8 @@ jobs:
         run: node scripts/verify-claim-crossmodule-fks.mjs --selftest
       - name: verify:claim-crossmodule-fks
         run: npm run verify:claim-crossmodule-fks
+
+      - name: verify:docs-upload-viewed-entity --selftest
+        run: node scripts/verify-docs-upload-viewed-entity.mjs --selftest
+      - name: verify:docs-upload-viewed-entity
+        run: npm run verify:docs-upload-viewed-entity

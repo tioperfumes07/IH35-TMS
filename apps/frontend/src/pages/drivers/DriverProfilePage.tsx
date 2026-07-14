@@ -347,7 +347,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         {/* Inline the full Documents module (upload + R2 + versions + download) on the driver profile —
             same component DriverDetail uses. Replaces the read-only stub that only linked out to /docs, so
             CDLs / medical cards / insurance can be uploaded here directly. Per-entity scoped (driver). */}
-        <DocumentsTab entityType="driver" entityId={id} entityName={displayName} />
+        <DocumentsTab entityType="driver" entityId={id} entityName={displayName} operatingCompanyId={companyId} />
       </div>
 
       <div data-testid="dp-section-communications" className="rounded-sm border border-gray-200 bg-white p-3">

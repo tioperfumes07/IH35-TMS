@@ -21,10 +21,13 @@ function expColor(dateStr: string | null | undefined): string {
 export function DocumentsSection({
   unitId,
   unitNumber,
-  // companyId is accepted for call-site compatibility (VehicleProfilePage passes the active
-  // operating company) but is not needed here: UploadModal resolves the caller's operating
-  // company from the session, same as every other entity-scoped UploadModal usage.
-  companyId: _companyId,
+  // FIX-2 (docs-upload-viewed-entity): companyId is the VIEWED operating company (the one the
+  // unit profile is currently scoped to). It must be threaded into UploadModal — without it the
+  // backend falls back to the uploader's default_company_id, which for a multi-entity user can
+  // differ from the viewed company, so the upload files under the wrong entity and never
+  // reappears on refetch (unit-aggregate.service.ts reads documents with an exact
+  // `f.operating_company_id = $2` match, not "any accessible company").
+  companyId,
   documents,
   photosSlot,
   onUploaded,
@@ -60,6 +63,7 @@ export function DocumentsSection({
           entityType="unit"
           entityId={unitId}
           entityName={unitNumber ?? unitId}
+          operatingCompanyId={companyId}
           onClose={() => setUploadOpen(false)}
           onUploadSuccess={() => {
             setUploadOpen(false);

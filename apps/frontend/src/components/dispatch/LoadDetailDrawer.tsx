@@ -611,7 +611,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                     </div>
                   </div>
                 </div>
-                <DocumentsTab entityType="load" entityId={load.id} entityName={load.load_number} />
+                <DocumentsTab entityType="load" entityId={load.id} entityName={load.load_number} operatingCompanyId={load.operating_company_id} />
               </div>
             ) : (
               <div className="text-sm text-gray-500">Loading...</div>
