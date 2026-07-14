@@ -90,11 +90,6 @@ import { registerDriverAdvancesRoutes } from "./drivers/advances.routes.js";
 import { registerMaintenancePartsMasterRoutes } from "./catalogs/maintenance/parts.routes.js";
 import { registerMaintenanceServicesCatalogRoutes } from "./catalogs/maintenance/services.routes.js";
 import { registerDamagePhotoEvidenceRoutes } from "./safety/damage-reports/photo-evidence.routes.js";
-import { registerDamageContinuityRoutes } from "./safety/damage-continuity/continuity.routes.js";
-// NOTE: the hourly damage-continuity auto-claim cron worker (see jobs/damage-continuity-worker.ts)
-// is intentionally NOT wired here. It auto-drafts insurance.claim rows above a $1,000 threshold with
-// zero human review before first run — that is a new automated real-world action, not a pure wiring
-// fix, so it needs an explicit owner decision before going live. See PR body / QUEUED FOR JORGE.
 import { registerEdiRoutes } from "./integrations/edi/edi.routes.js";
 import { registerLoadsBulkRoutes } from "./dispatch/loads-bulk.routes.js";
 import { registerDispatchCancelLoadRoutes } from "./dispatch/cancel-load.routes.js";
@@ -802,7 +797,6 @@ async function main() {
   await registerMaintenancePartsMasterRoutes(app);
   await registerMaintenanceServicesCatalogRoutes(app);
   await registerDamagePhotoEvidenceRoutes(app);
-  await registerDamageContinuityRoutes(app);
   await registerEdiRoutes(app);
   await registerLoadsBulkRoutes(app);
   await registerDispatchCancelLoadRoutes(app);
