@@ -58,6 +58,7 @@ import { FreeTimeDetentionEditor } from "../components/customers/FreeTimeDetenti
 import { CustomerRelationshipScore } from "../components/customers/CustomerRelationshipScore";
 import { DocumentsTab } from "../components/documents/DocumentsTab";
 import { TasksTab } from "../components/tasks/TasksTab";
+import { EntityAuditHistoryTab } from "../components/audit/EntityAuditHistoryTab";
 import { CustomerContractsTab } from "../components/customers/CustomerContractsTab";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { Modal } from "../components/Modal";
@@ -79,7 +80,7 @@ import { useCompanyContext } from "../contexts/CompanyContext";
 import { useListState } from "../components/list-state";
 import { EntityLink } from "../components/shared/EntityLink";
 
-const tabs = ["Profile", "Contacts", "Billing & Receivables", "Quality & History", "Lanes & Pricing", "Documents", "COI", "Contracts", "Portal Users", "Tasks"] as const;
+const tabs = ["Profile", "Contacts", "Billing & Receivables", "Quality & History", "Lanes & Pricing", "Documents", "COI", "Contracts", "Portal Users", "Tasks", "Audit History"] as const;
 type CustomerTab = (typeof tabs)[number];
 
 function formatBillingSummaryError(error: unknown): string {
@@ -1582,6 +1583,10 @@ export function CustomerDetailPage() {
         <DataPanel title="Tasks">
           <TasksTab operatingCompanyId={operatingCompanyId ?? ""} targetType="customer" targetId={customer.id} targetLabel={customer.name} />
         </DataPanel>
+      ) : null}
+
+      {activeTab === "Audit History" ? (
+        <EntityAuditHistoryTab operatingCompanyId={operatingCompanyId ?? ""} entityType="customer" entityId={customer.id} />
       ) : null}
 
       {activeTab === "Contacts" ? (
