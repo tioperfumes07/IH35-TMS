@@ -18,6 +18,7 @@ import {
   Scale,
   Shield,
   ShieldCheck,
+  SlidersHorizontal,
   SquareStack,
   TrendingUp,
   Truck,
@@ -58,6 +59,7 @@ export const SIDEBAR_ITEM_IDS = [
   "users",
   "help",
   "program",
+  "system",
 ] as const;
 
 export type SidebarItemId = (typeof SIDEBAR_ITEM_IDS)[number];
@@ -137,6 +139,9 @@ export const SIDEBAR_ITEM_META: Record<SidebarItemId, SidebarItemMeta> = {
   help: { id: "help", label: "HELP", Icon: CircleHelp, to: "/help" },
   // Program Tracker (Build Progress) — Owner/Admin internal build-status dashboard; owner-requested sidebar entry.
   program: { id: "program", label: "PROGRAM", Icon: ListChecks, to: "/program", visibleRoles: ["Owner", "Administrator", "SuperAdmin"] },
+  // SYSTEM — Owner-only single home for QuickBooks Reconciliation, QuickBooks Sync, Program Tracker,
+  // Software/Build health, and Claude Coder (owner-supplied design). Appended at END (additive).
+  system: { id: "system", label: "SYSTEM", Icon: SlidersHorizontal, to: "/system", visibleRoles: ["Owner"] },
 };
 
 /**
