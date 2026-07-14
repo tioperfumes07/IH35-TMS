@@ -15,6 +15,7 @@ import { useAuth } from "../auth/useAuth";
 import { EntityLink } from "../components/shared/EntityLink";
 import { DocumentsTab } from "../components/documents/DocumentsTab";
 import { TasksTab } from "../components/tasks/TasksTab";
+import { EntityAuditHistoryTab } from "../components/audit/EntityAuditHistoryTab";
 import { Button } from "../components/Button";
 import { useToast } from "../components/Toast";
 import { DataPanel } from "../components/layout/DataPanel";
@@ -1071,9 +1072,7 @@ export function VendorDetailPage() {
       ) : null}
 
       {activeTab === "Audit History" ? (
-        <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">
-          Audit history viewer placeholder. Full drill-down ships in a later phase.
-        </div>
+        <EntityAuditHistoryTab operatingCompanyId={companyId} entityType="vendor" entityId={vendor.id} />
       ) : null}
 
       {activeTab === "Tasks" ? (
