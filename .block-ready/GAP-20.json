@@ -1,6 +1,6 @@
 {
   "block_id": "GAP-20",
-  "status": "READY",
+  "status": "superseded",
   "branch": "feature/gap-20-recurring-bills",
   "spec": "docs/specs/gap-20-recurring-bills.md",
   "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-gap20",
@@ -27,5 +27,7 @@
     "auto_post": true,
     "deactivation_no_delete": true,
     "ci_guard": true
-  }
+  },
+  "superseded_by": "GAP-20-RECURRING-BILLS.json",
+  "superseded_note": "Additive dedup (P1 tracker-live-accurate): duplicate block_id registration; canonical entry retained active. ARCHIVED not deleted (§7)."
 }

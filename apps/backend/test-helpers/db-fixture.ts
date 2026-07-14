@@ -75,6 +75,14 @@ export async function ensureSecondEntityLoad(): Promise<{ companyId: string; loa
     const companyId = compRes.rows[0]?.id;
     if (!companyId) throw new Error("integration tests require org.companies seed row code=USMCA (second entity)");
     const loadId = await seedLoadForCompany(client, companyId, `2E-${randomUUID().slice(0, 8)}`);
+    // Grant the integration Owner user membership of the SECOND entity too — routes assert
+    // assertCompanyMembership (no Owner bypass; it checks org.user_company_access), so a test that hits
+    // a route scoped to this entity 403s without it. (ensureIntegrationPrerequisites grants the first
+    // entity the same way.) Idempotent; makes the second-entity tests self-contained, not order-dependent.
+    await client.query(
+      `INSERT INTO org.user_company_access (user_id, company_id) VALUES ($1::uuid, $2::uuid) ON CONFLICT (user_id, company_id) DO NOTHING`,
+      [TEST_OWNER_USER_ID, companyId]
+    );
     await client.query("COMMIT");
     cachedSecondEntity = { companyId, loadId };
     return cachedSecondEntity;
