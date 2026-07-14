@@ -22,7 +22,6 @@ export function PartCreateDrawer({ isOpen, onClose, operatingCompanyId }: PartCr
     unit_cost: "",
     location: "",
     notes: "",
-    is_active: true,
   });
 
   const createMutation = useMutation({
@@ -38,6 +37,11 @@ export function PartCreateDrawer({ isOpen, onClose, operatingCompanyId }: PartCr
       // INV-1: SKU/category/notes are now REAL, persisted backend columns. Send the SKU only when the
       // user typed one — leaving it blank lets the backend generate a stable "PART-XXXXXXXX" SKU (no
       // longer falls back to the part name, and no longer a fake id::text SKU). category + notes persist.
+      // INV-2: is_active is NOT sent — maintenance.parts_inventory has no is_active/archive column, and
+      // the backend zod schema only accepts-and-ignores it (see parts.routes.ts createSchema comment:
+      // "forward-compat: the drawer also posts is_active; accept + ignore"). Sending it made the "Make
+      // inactive" checkbox a dead control that silently did nothing. Removed here; re-add once a real
+      // archive/is_active column + persistence ship (needs a migration — queued for Jorge).
       return apiRequest<{ id: string }>(
         `/api/v1/maintenance/parts?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
         {
@@ -51,7 +55,6 @@ export function PartCreateDrawer({ isOpen, onClose, operatingCompanyId }: PartCr
             unit_cost: Number(data.unit_cost) || 0,
             location: data.location.trim() || undefined,
             notes: data.notes.trim() || undefined,
-            is_active: data.is_active,
           },
         }
       );
@@ -68,7 +71,6 @@ export function PartCreateDrawer({ isOpen, onClose, operatingCompanyId }: PartCr
         unit_cost: "",
         location: "",
         notes: "",
-        is_active: true,
       });
     },
   });
@@ -168,17 +170,6 @@ export function PartCreateDrawer({ isOpen, onClose, operatingCompanyId }: PartCr
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
             />
           </div>
-          <label className="flex items-center gap-2">
-            {/* D5-1: the checkbox reads "Make inactive", so a checked box must mean inactive. It was
-                bound directly to is_active (checked => active) — inverted vs its own label. Bind to the
-                negation so the default (is_active:true) renders unchecked. */}
-            <input
-              type="checkbox"
-              checked={!formData.is_active}
-              onChange={(e) => setFormData({ ...formData, is_active: !e.target.checked })}
-            />
-            <span className="text-sm">Make inactive</span>
-          </label>
           <div className="flex justify-end gap-2 pt-4">
             <Button variant="secondary" onClick={onClose}>Cancel</Button>
             <Button type="submit" loading={createMutation.isPending}>Save</Button>
