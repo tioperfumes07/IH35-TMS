@@ -1,233 +1,237 @@
 {
-  "note": "HELD MIGRATIONS \u2014 each carries a 'DO NOT RUN ON PROD' marker and must run ONLY on a Neon branch by Jorge's hand, then be ledger-backfilled so prod db:migrate skips it. verify:hold-migrations-registered enforces bidirectional parity: every migration whose header says DO-NOT-RUN must be listed here, and every entry here must still carry the marker \u2014 so a held migration can never silently lose its marker (which would let db:migrate fire it on prod).",
+  "note": "HELD MIGRATIONS — each carries a 'DO NOT RUN ON PROD' marker and must run ONLY on a Neon branch by Jorge's hand, then be ledger-backfilled so prod db:migrate skips it. verify:hold-migrations-registered enforces bidirectional parity: every migration whose header says DO-NOT-RUN must be listed here, and every entry here must still carry the marker — so a held migration can never silently lose its marker (which would let db:migrate fire it on prod).",
   "held": [
     {
+      "file": "202607400000_units_vin_no_synthetic_dup.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] modsweep-migA2 — CHECK blocking the 07-04 bulk-dup synthetic vin \"-U\" suffix on active mdata.units (prevent recurrence). GUARD Neon proof: no active unit has a -U vin."
+    },
+    {
       "file": "202607240000_incidents_auto_claim_fk.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] P4-05 \u2014 safety.incidents.auto_created_claim_id -> insurance.claim FK (NOT VALID, ON DELETE SET NULL; GUARD 0-orphan check + VALIDATE on Neon). Safety->Insurance referential integrity."
+      "reason": "[HOLD-FOR-JORGE — TIER 1] P4-05 — safety.incidents.auto_created_claim_id -> insurance.claim FK (NOT VALID, ON DELETE SET NULL; GUARD 0-orphan check + VALIDATE on Neon). Safety->Insurance referential integrity."
     },
     {
       "file": "202607210000_detention_requests_invoice_fk.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] P3-INVOICE-FK (residual) \u2014 add dispatch.detention_requests.invoice_id -> accounting.invoices + invoice_line_id -> accounting.invoice_lines FKs (NOT VALID; GUARD runs orphan-check + VALIDATE on Neon). account_id (0221) + source_load_id (0060) FKs already exist."
+      "reason": "[HOLD-FOR-JORGE — TIER 1] P3-INVOICE-FK (residual) — add dispatch.detention_requests.invoice_id -> accounting.invoices + invoice_line_id -> accounting.invoice_lines FKs (NOT VALID; GUARD runs orphan-check + VALIDATE on Neon). account_id (0221) + source_load_id (0060) FKs already exist."
     },
     {
       "file": "202606272100_af1_catalogs_accounts_per_entity.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] AF-1 \u2014 catalogs.accounts per-entity (entity-COA) migration"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] AF-1 — catalogs.accounts per-entity (entity-COA) migration"
     },
     {
       "file": "202606272300_deduction_line_load_id_direct.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] Load\u2194Advance: carry load_id DIRECTLY on the settlement deduction line"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] Load↔Advance: carry load_id DIRECTLY on the settlement deduction line"
     },
     {
       "file": "202606300050_drivers_hire_date_source.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 PROTECTED] mdata.drivers.hire_date_source \u2014 provenance for hire dates"
+      "reason": "[HOLD-FOR-JORGE — PROTECTED] mdata.drivers.hire_date_source — provenance for hire dates"
     },
     {
       "file": "202606300060_usmca_coa_seed.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] B1 \u2014 seed USMCA's chart of accounts (Path B Stage 5)"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] B1 — seed USMCA's chart of accounts (Path B Stage 5)"
     },
     {
       "file": "202606300070_bank_coa_bridge_backfill.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] B2 (backfill) \u2014 link connected bank accounts to a Bank-type COA account"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] B2 (backfill) — link connected bank accounts to a Bank-type COA account"
     },
     {
       "file": "202606300080_af2_catalogs_items_per_entity.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] AF-2 \u2014 catalogs.items per-entity (entity item master)"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] AF-2 — catalogs.items per-entity (entity item master)"
     },
     {
       "file": "202606300090_af3_catalogs_classes_per_entity.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] AF-3 \u2014 catalogs.classes per-entity. POSTS NOTHING."
+      "reason": "[HOLD-FOR-JORGE — TIER 1] AF-3 — catalogs.classes per-entity. POSTS NOTHING."
     },
     {
       "file": "202606300100_af2c_items_category_id.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] AF-2c \u2014 catalogs.items.category_id (item \u2192 per-entity Category link)."
+      "reason": "[HOLD-FOR-JORGE — TIER 1] AF-2c — catalogs.items.category_id (item → per-entity Category link)."
     },
     {
       "file": "202606300110_af2c2_items_purchasing.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] AF-2c.2 \u2014 full QBO two-sided item: Purchasing info + Preferred vendor."
+      "reason": "[HOLD-FOR-JORGE — TIER 1] AF-2c.2 — full QBO two-sided item: Purchasing info + Preferred vendor."
     },
     {
       "file": "202606300160_af2b_item_account_mapping_backfill.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] AF-2b \u2014 item -> income/expense account mapping backfill (TEMPLATE)"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] AF-2b — item -> income/expense account mapping backfill (TEMPLATE)"
     },
     {
       "file": "202607010010_bank_transactions_categorization_driver_id.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] BLOCK-6 \u2014 Driver dimension on bank categorize + loan-to-driver posting."
+      "reason": "[HOLD-FOR-JORGE — TIER 1] BLOCK-6 — Driver dimension on bank categorize + loan-to-driver posting."
     },
     {
       "file": "202607010700_account_role_bindings_per_entity.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] account_role_bindings per-entity \u2014 last deferred cross-entity leak (USMCA "
+      "reason": "[HOLD-FOR-JORGE — TIER 1] account_role_bindings per-entity — last deferred cross-entity leak (USMCA "
     },
     {
       "file": "202607070100_bank_categorize_unit_trip_driver_deduction.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] BLOCK-6b \u2014 Unit + Trip(Load) dimensions + Item(Products&Services) linkage on bank categorize + driver auto-deduction (fine\u2192driver\u2192settlement, flag OFF)"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] BLOCK-6b — Unit + Trip(Load) dimensions + Item(Products&Services) linkage on bank categorize + driver auto-deduction (fine→driver→settlement, flag OFF)"
     },
     {
       "file": "202607080000_settlement_contract_terms.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] Settlement contract-terms computation engine (driver hire-contract bonuses/deductions)"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] Settlement contract-terms computation engine (driver hire-contract bonuses/deductions)"
     },
     {
       "file": "202607080100_event_log_force_rls_blocked_pending_guc_fix.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] P0 DB-audit \u2014 events.event_log FORCE RLS is a documented NO-OP/BLOCKED: forcing today would break the hash chain (spine-emit GUC gap must be fixed in code first)"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] P0 DB-audit — events.event_log FORCE RLS is a documented NO-OP/BLOCKED: forcing today would break the hash chain (spine-emit GUC gap must be fixed in code first)"
     },
     {
       "file": "202607080200_audit_log_legacy_grant_lockdown.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] P0 DB-audit \u2014 public.audit_log (+48 monthly partitions) legacy table: REVOKE INSERT/UPDATE/DELETE from ih35_app + REVOKE ALL from PUBLIC, SELECT-only lockdown"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] P0 DB-audit — public.audit_log (+48 monthly partitions) legacy table: REVOKE INSERT/UPDATE/DELETE from ih35_app + REVOKE ALL from PUBLIC, SELECT-only lockdown"
     },
     {
       "file": "202607080300_property_tax_rendition_filing.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] Business-Property Allocation \u2014 TX property-tax rendition filing tables (compliance schema; posts nothing, but a schema change \u2014 never self-merge)"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] Business-Property Allocation — TX property-tax rendition filing tables (compliance schema; posts nothing, but a schema change — never self-merge)"
     },
     {
       "file": "202607080310_property_tax_accrual_posting.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] Business-Property Allocation \u2014 property-tax accrual/payment GL scaffolding (accounting.*/catalogs.* + COA roles + PROPERTY_TAX_GL_POSTING_ENABLED flag OFF; financial cluster)"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] Business-Property Allocation — property-tax accrual/payment GL scaffolding (accounting.*/catalogs.* + COA roles + PROPERTY_TAX_GL_POSTING_ENABLED flag OFF; financial cluster)"
     },
     {
       "file": "202607090000_event_log_guc_reconcile.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] P0 prerequisite \u2014 events.log_event() sets app.current_operating_company_id from its own argument so FORCE RLS (P0-a, separate PR) becomes safe"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] P0 prerequisite — events.log_event() sets app.current_operating_company_id from its own argument so FORCE RLS (P0-a, separate PR) becomes safe"
     },
     {
       "file": "202607091500_p4_1_stop_extra_rates_opco_uuid.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] P4-1 DB-audit \u2014 dispatch.stop_extra_rates operating_company_id TEXT -> uuid + FK; run only after prod data-audit confirms no non-uuid rows"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] P4-1 DB-audit — dispatch.stop_extra_rates operating_company_id TEXT -> uuid + FK; run only after prod data-audit confirms no non-uuid rows"
     },
     {
       "file": "202607091510_p4_2_qbo_reconciliation_alerts_opco_uuid.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] P4-2 DB-audit (most urgent) \u2014 qbo.reconciliation_alerts operating_company_id TEXT DEFAULT 'default' -> uuid + FK; prod data-audit 2026-07-05 confirmed 0 rows (clean, no remap)"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] P4-2 DB-audit (most urgent) — qbo.reconciliation_alerts operating_company_id TEXT DEFAULT 'default' -> uuid + FK; prod data-audit 2026-07-05 confirmed 0 rows (clean, no remap)"
     },
     {
       "file": "202607091520_p4_3_recurring_bill_templates_opco_uuid.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] P4-3 DB-audit \u2014 accounting.recurring_bill_templates operating_company_id TEXT -> uuid + FK (financial cluster); prod data-audit 2026-07-05 confirmed 0 rows"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] P4-3 DB-audit — accounting.recurring_bill_templates operating_company_id TEXT -> uuid + FK (financial cluster); prod data-audit 2026-07-05 confirmed 0 rows"
     },
     {
       "file": "202607091530_p4_4_scheduled_subscriptions_opco_uuid.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] P4-4 DB-audit \u2014 reports.scheduled_subscriptions operating_company_id TEXT -> uuid + FK; prod data-audit 2026-07-05 confirmed 0 rows (seed rows valid-uuid in CI)"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] P4-4 DB-audit — reports.scheduled_subscriptions operating_company_id TEXT -> uuid + FK; prod data-audit 2026-07-05 confirmed 0 rows (seed rows valid-uuid in CI)"
     },
     {
       "file": "202607091540_p4_5_anomaly_alert_rules_opco_uuid.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] P4-5 DB-audit \u2014 safety.anomaly_alert_rules operating_company_id TEXT -> uuid + FK; prod data-audit 2026-07-05 confirmed 0 rows"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] P4-5 DB-audit — safety.anomaly_alert_rules operating_company_id TEXT -> uuid + FK; prod data-audit 2026-07-05 confirmed 0 rows"
     },
     {
       "file": "202607091550_p4_6_anomaly_alerts_opco_uuid.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] P4-6 DB-audit \u2014 safety.anomaly_alerts operating_company_id TEXT -> uuid + FK; prod data-audit 2026-07-05 confirmed 0 rows"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] P4-6 DB-audit — safety.anomaly_alerts operating_company_id TEXT -> uuid + FK; prod data-audit 2026-07-05 confirmed 0 rows"
     },
     {
       "file": "202607091560_p4_7_integrity_findings_opco_uuid.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] P4-7 DB-audit \u2014 safety.integrity_findings operating_company_id TEXT -> uuid + FK; prod data-audit 2026-07-05 confirmed 0 rows"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] P4-7 DB-audit — safety.integrity_findings operating_company_id TEXT -> uuid + FK; prod data-audit 2026-07-05 confirmed 0 rows"
     },
     {
       "file": "202607091600_driver_settlements_reversal_columns.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] VOID-EVERYWHERE \u2014 driver_finance.driver_settlements reversed_at/reversed_by_user_id/reversal_reason (additive) so the governed 'driver_settlement' void/cancel executor can record a row-level reversal audit trail"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] VOID-EVERYWHERE — driver_finance.driver_settlements reversed_at/reversed_by_user_id/reversal_reason (additive) so the governed 'driver_settlement' void/cancel executor can record a row-level reversal audit trail"
     },
     {
       "file": "202607110200_civil_fines_voidable.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] P2 civil_fines void-not-delete"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] P2 civil_fines void-not-delete"
     },
     {
       "file": "202607110210_maintenance_wo_lines_status_history_rls.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] P2 maintenance wo_lines+status_history RLS"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] P2 maintenance wo_lines+status_history RLS"
     },
     {
       "file": "202607110220_escrow_ledger_repoint_fk_to_canonical.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] P2 escrow_ledger FK repoint"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] P2 escrow_ledger FK repoint"
     },
     {
       "file": "202607110000_relay_fuel_ingest.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] Relay Payments fuel ingest storage \u2014 integrations.relay_fuel_transactions/_lines + mdata.drivers.integration_id (additive). Storage only, no GL posting; RELAY_FUEL_INGEST_ENABLED OFF."
+      "reason": "[HOLD-FOR-JORGE — TIER 1] Relay Payments fuel ingest storage — integrations.relay_fuel_transactions/_lines + mdata.drivers.integration_id (additive). Storage only, no GL posting; RELAY_FUEL_INGEST_ENABLED OFF."
     },
     {
       "file": "202607110230_vendor_qbo_parity.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] VENDOR-QBO-PARITY \u2014 additive mdata.vendors columns (website, print-on-check name, payment terms, default expense account Option-B recommendation); pure ADD COLUMN, no data touched"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] VENDOR-QBO-PARITY — additive mdata.vendors columns (website, print-on-check name, payment terms, default expense account Option-B recommendation); pure ADD COLUMN, no data touched"
     },
     {
       "file": "202607110240_customer_qbo_parity.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] CUSTOMER-QBO-PARITY \u2014 additive mdata.customers columns (Cc/Bcc email, print-on-invoice name, shipping address, delivery/payment/language preferences, tax-exempt, default income account Option-B recommendation); pure ADD COLUMN, no data touched"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] CUSTOMER-QBO-PARITY — additive mdata.customers columns (Cc/Bcc email, print-on-invoice name, shipping address, delivery/payment/language preferences, tax-exempt, default income account Option-B recommendation); pure ADD COLUMN, no data touched"
     },
     {
       "file": "202607100100_block01_depreciation_loan_link_and_autopost_log.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] BLOCK-01 Fixed-Asset Depreciation \u2014 additive-only: fixed_assets.financing_loan_id (CCG loan linkage) + append-only depreciation_autopost_runs log. No posting, no new GL math, no flag flips."
+      "reason": "[HOLD-FOR-JORGE — TIER 1] BLOCK-01 Fixed-Asset Depreciation — additive-only: fixed_assets.financing_loan_id (CCG loan linkage) + append-only depreciation_autopost_runs log. No posting, no new GL math, no flag flips."
     },
     {
       "file": "202607121000_bank_account_entity_hide.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] Per-entity bank-account hide/exclude \u2014 banking.bank_accounts.hidden_at/hidden_by_user_id/hidden_reason (void-not-delete) + BANK_ACCOUNT_HIDE_ENABLED flag (per-entity-only, default OFF). No new GL math."
+      "reason": "[HOLD-FOR-JORGE — TIER 1] Per-entity bank-account hide/exclude — banking.bank_accounts.hidden_at/hidden_by_user_id/hidden_reason (void-not-delete) + BANK_ACCOUNT_HIDE_ENABLED flag (per-entity-only, default OFF). No new GL math."
     },
     {
       "file": "202607110100_banking_split_transactions_and_trailer_link.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] BANK-SPLIT-1 \u2014 banking.bank_transaction_splits (QBO-style split-transactions popup) + categorization_trailer_id linkage; flags OFF"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] BANK-SPLIT-1 — banking.bank_transaction_splits (QBO-style split-transactions popup) + categorization_trailer_id linkage; flags OFF"
     },
     {
       "file": "202607120000_af5_journal_entry_types_catalog.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] AF-5 \u2014 catalogs.journal_entry_types real table (closes the last true stub catalog: Journal Entry Types); global reference taxonomy, no FK from any posting/GL table, posts nothing"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] AF-5 — catalogs.journal_entry_types real table (closes the last true stub catalog: Journal Entry Types); global reference taxonomy, no FK from any posting/GL table, posts nothing"
     },
     {
       "file": "202607111000_block02_driver_escrow_separation_return.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] BLOCK-02 driver escrow \u2014 driver_finance.driver_escrow_separations (>=90-day post-separation return path tracking) + DRIVER_ESCROW_SEPARATION_RETURN_ENABLED flag OFF; reuses existing Block-23 escrow release JE, no new GL math"
+      "reason": "[HOLD-FOR-JORGE — TIER 1] BLOCK-02 driver escrow — driver_finance.driver_escrow_separations (>=90-day post-separation return path tracking) + DRIVER_ESCROW_SEPARATION_RETURN_ENABLED flag OFF; reuses existing Block-23 escrow release JE, no new GL math"
     },
     {
       "file": "202607110300_af2_master_data_drift_readonly.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] AF-2 \u2014 QBO master-data drift DETECT-ONLY extension: gates the vendors/customers/COA reconciler auto-heal behind QBO_MASTER_DATA_HEAL_ENABLED (default OFF) + widens accounting.recon_runs.run_type for 3 new read-only master-data drift passes. No write-back, no posting."
+      "reason": "[HOLD-FOR-JORGE — TIER 1] AF-2 — QBO master-data drift DETECT-ONLY extension: gates the vendors/customers/COA reconciler auto-heal behind QBO_MASTER_DATA_HEAL_ENABLED (default OFF) + widens accounting.recon_runs.run_type for 3 new read-only master-data drift passes. No write-back, no posting."
     },
     {
       "file": "202607110310_af4_ap_import_scaffold.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] AF-4 \u2014 A/P bills migration SCAFFOLD: accounting.ap_import_batches/ap_import_preview_lines (audited reviewable bill list) + AP_IMPORT_ENABLED flag (default OFF). The accounting.bills write path is NOT built in this PR (design-only, never build posting logic solo) \u2014 schema/preview layer only."
+      "reason": "[HOLD-FOR-JORGE — TIER 1] AF-4 — A/P bills migration SCAFFOLD: accounting.ap_import_batches/ap_import_preview_lines (audited reviewable bill list) + AP_IMPORT_ENABLED flag (default OFF). The accounting.bills write path is NOT built in this PR (design-only, never build posting logic solo) — schema/preview layer only."
     },
     {
       "file": "202607110320_af7_money_control_flags.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] AF-7 \u2014 money-control flag infra: 3 per-entity-only flags (void/reversal, period-close, period-reopen \u2014 all default OFF) + accounting.periods RLS role-gate fix (INSERT/UPDATE now requires Owner/Administrator, closing a documented open gap). No posting turned on."
+      "reason": "[HOLD-FOR-JORGE — TIER 1] AF-7 — money-control flag infra: 3 per-entity-only flags (void/reversal, period-close, period-reopen — all default OFF) + accounting.periods RLS role-gate fix (INSERT/UPDATE now requires Owner/Administrator, closing a documented open gap). No posting turned on."
     },
     {
       "file": "202607130000_factoring_reserve_movements.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] CONN-2 \u2014 accounting.factoring_reserve_movements per-advance reserve ledger + views.factoring_reserve_balances (Faro Reserve Tracker). Storage/reporting only, no new GL math; FACTORING_GL_POSTING_ENABLED stays OFF."
+      "reason": "[HOLD-FOR-JORGE — TIER 1] CONN-2 — accounting.factoring_reserve_movements per-advance reserve ledger + views.factoring_reserve_balances (Faro Reserve Tracker). Storage/reporting only, no new GL math; FACTORING_GL_POSTING_ENABLED stays OFF."
     },
     {
       "file": "202607130200_block03_ifta_trip_methodology_extend.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] BLOCK-03 \u2014 IFTA preparer extension: reference.ifta_tax_rates + reference.non_ifta_jurisdictions catalogs, TRIP=practical-miles-less-personal-conveyance columns, PDF archive linkage. Additive-only on top of live IFTA v1 (0372/0373). IFTA_TRIP_METHODOLOGY_ENABLED OFF."
+      "reason": "[HOLD-FOR-JORGE — TIER 1] BLOCK-03 — IFTA preparer extension: reference.ifta_tax_rates + reference.non_ifta_jurisdictions catalogs, TRIP=practical-miles-less-personal-conveyance columns, PDF archive linkage. Additive-only on top of live IFTA v1 (0372/0373). IFTA_TRIP_METHODOLOGY_ENABLED OFF."
     },
     {
       "file": "202607140000_opening_balance_import_flag.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] STMT-2 \u2014 OPENING_BALANCE_IMPORT_ENABLED flag seed only (no schema change). Gates the read-only TRANSP 12/31/2024 opening-balance importer preview endpoint; the importer never posts (owner-entered only)."
+      "reason": "[HOLD-FOR-JORGE — TIER 1] STMT-2 — OPENING_BALANCE_IMPORT_ENABLED flag seed only (no schema change). Gates the read-only TRANSP 12/31/2024 opening-balance importer preview endpoint; the importer never posts (owner-entered only)."
     },
     {
       "file": "202607130100_block17_24_tax_document_engine.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] BLOCK-17/24 \u2014 1099-NEC/1042-S annual generation + general tax-document PDF engine (catalogs.payee_tax_profile, catalogs.tax_form_thresholds, accounting.tax_document(_batch), accounting.form_1099_nec, accounting.form_1042_s). No new GL math, no e-file/transmission logic. TAX_DOC_1099_ENABLED OFF."
+      "reason": "[HOLD-FOR-JORGE — TIER 1] BLOCK-17/24 — 1099-NEC/1042-S annual generation + general tax-document PDF engine (catalogs.payee_tax_profile, catalogs.tax_form_thresholds, accounting.tax_document(_batch), accounting.form_1099_nec, accounting.form_1042_s). No new GL math, no e-file/transmission logic. TAX_DOC_1099_ENABLED OFF."
     },
     {
       "file": "202607150000_transfer_gl_posting_flag.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] BANKING-GL-COMPLETION \u2014 TRANSFER_GL_POSTING_ENABLED flag seed only (no schema change). Gates the new banking.transfers -> GL posting call (createTransfer/revokeTransfer, transfers.service.ts) added behind this flag. Default OFF."
+      "reason": "[HOLD-FOR-JORGE — TIER 1] BANKING-GL-COMPLETION — TRANSFER_GL_POSTING_ENABLED flag seed only (no schema change). Gates the new banking.transfers -> GL posting call (createTransfer/revokeTransfer, transfers.service.ts) added behind this flag. Default OFF."
     },
     {
       "file": "202607200000_bill_lines_load_id.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] P2-BILLLINE-LOADID (item 04) \u2014 additive accounting.bill_lines.load_id uuid FK -> mdata.loads (+ partial index), mirroring expense_lines.load_id (0093). Enables per-load cost attribution on bill lines. No backfill (not derivable). GUARD-verified vs live prod (column confirmed missing)."
+      "reason": "[HOLD-FOR-JORGE — TIER 1] P2-BILLLINE-LOADID (item 04) — additive accounting.bill_lines.load_id uuid FK -> mdata.loads (+ partial index), mirroring expense_lines.load_id (0093). Enables per-load cost attribution on bill lines. No backfill (not derivable). GUARD-verified vs live prod (column confirmed missing)."
     },
     {
       "file": "202607220000_bills_mdata_vendor_fk.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] item 18 \u2014 accounting.bills.mdata_vendor_id uuid FK -> mdata.vendors (nullable). Real AP vendor key vs the soft TEXT vendor_id/vendor_uuid. Backfill + writer repoint deferred (GUARD)."
+      "reason": "[HOLD-FOR-JORGE — TIER 1] item 18 — accounting.bills.mdata_vendor_id uuid FK -> mdata.vendors (nullable). Real AP vendor key vs the soft TEXT vendor_id/vendor_uuid. Backfill + writer repoint deferred (GUARD)."
     },
     {
       "file": "202607250000_phase4_crossmodule_fks.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] PHASE-4 BATCH (P4-01/02/03) \u2014 safety.accident_reports.insurance_claim_id, legal.matters.{insurance_claim_id,insurance_lawsuit_id,incident_id,unit_id}, mdata.assets.unit_id \u2014 additive cols + FKs to canonical (insurance.claim/lawsuit, safety.incidents, mdata.units). GUARD-verified 0 orphans. Backfill+resolver+route fix deferred."
+      "reason": "[HOLD-FOR-JORGE — TIER 1] PHASE-4 BATCH (P4-01/02/03) — safety.accident_reports.insurance_claim_id, legal.matters.{insurance_claim_id,insurance_lawsuit_id,incident_id,unit_id}, mdata.assets.unit_id — additive cols + FKs to canonical (insurance.claim/lawsuit, safety.incidents, mdata.units). GUARD-verified 0 orphans. Backfill+resolver+route fix deferred."
     },
     {
       "file": "202607230000_work_orders_unit_driver_fk.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] P4-06 \u2014 maintenance.work_orders.unit_id -> mdata.units + driver_id -> mdata.drivers FKs (NOT VALID; GUARD 0-orphan check + VALIDATE on Neon). vendor_id mirror->AP-truth repoint deferred."
+      "reason": "[HOLD-FOR-JORGE — TIER 1] P4-06 — maintenance.work_orders.unit_id -> mdata.units + driver_id -> mdata.drivers FKs (NOT VALID; GUARD 0-orphan check + VALIDATE on Neon). vendor_id mirror->AP-truth repoint deferred."
     },
     {
       "file": "202607280000_relay_deposit_classifier.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 FINANCIAL] Relay deposit-funding classifier + review queue (Part B). integrations.relay_deposits + relay_company_cards, FORCE entity-RLS, no GL. Run only on a Neon branch by Jorge, then ledger-backfill."
+      "reason": "[HOLD-FOR-JORGE — FINANCIAL] Relay deposit-funding classifier + review queue (Part B). integrations.relay_deposits + relay_company_cards, FORCE entity-RLS, no GL. Run only on a Neon branch by Jorge, then ledger-backfill."
     },
     {
       "file": "202607290000_relay_internal_bank_seed.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 FINANCIAL] CONN-3 \u2014 Relay as its own internal bank (Part B), master-data SEED only. catalogs.accounts 'Relay Fuel Wallet' (Other Current Asset, system_purpose relay_fuel_wallet, per operating company) + catalogs.items Diesel/DEF/Reefer fuel product-services + 2 Relay fee items. No GL/posting, no flag, posted_to_gl untouched; reuses existing posting engine (design only). Canonical tables only. Run only on a Neon branch by Jorge, then ledger-backfill."
+      "reason": "[HOLD-FOR-JORGE — FINANCIAL] CONN-3 — Relay as its own internal bank (Part B), master-data SEED only. catalogs.accounts 'Relay Fuel Wallet' (Other Current Asset, system_purpose relay_fuel_wallet, per operating company) + catalogs.items Diesel/DEF/Reefer fuel product-services + 2 Relay fee items. No GL/posting, no flag, posted_to_gl untouched; reuses existing posting engine (design only). Canonical tables only. Run only on a Neon branch by Jorge, then ledger-backfill."
     },
     {
       "file": "202607340000_je_reversal_linkage.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] JE-VOID Option 1 (NetSuite/QBO reversing-entry model). accounting.journal_entries additive header linkage: reversed_by_je_id / reverses_je_id (self-ref FKs + unique partial indexes) so a void posts a LINKED reversing JE and NEVER flips the original. Additive/idempotent, inherits existing FORCE RLS. Run only on a Neon branch by Jorge, then ledger-backfill."
+      "reason": "[HOLD-FOR-JORGE — TIER 1] JE-VOID Option 1 (NetSuite/QBO reversing-entry model). accounting.journal_entries additive header linkage: reversed_by_je_id / reverses_je_id (self-ref FKs + unique partial indexes) so a void posts a LINKED reversing JE and NEVER flips the original. Additive/idempotent, inherits existing FORCE RLS. Run only on a Neon branch by Jorge, then ledger-backfill."
     },
     {
       "file": "202607370000_driver_payment_methods.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] Canonical driver payment-method master data (driver_finance.driver_payment_methods). Fills the store the settlement payment path was probing for (mdata.drivers token columns that never existed, so ACH could never queue). Master data only, NO GL/posting; tokenized reference + last4, never raw account numbers. FORCED RLS + 0065 grants (no DELETE, void-not-delete). Seeds DRIVER_PAYMENT_METHODS_ENABLED (default OFF, per-entity). Additive/idempotent. Run only on a Neon branch by Jorge, then ledger-backfill."
+      "reason": "[HOLD-FOR-JORGE — TIER 1] Canonical driver payment-method master data (driver_finance.driver_payment_methods). Fills the store the settlement payment path was probing for (mdata.drivers token columns that never existed, so ACH could never queue). Master data only, NO GL/posting; tokenized reference + last4, never raw account numbers. FORCED RLS + 0065 grants (no DELETE, void-not-delete). Seeds DRIVER_PAYMENT_METHODS_ENABLED (default OFF, per-entity). Additive/idempotent. Run only on a Neon branch by Jorge, then ledger-backfill."
     },
     {
       "file": "202607380000_settlement_payrun_catalog_and_extends.sql",
-      "reason": "[HOLD-FOR-JORGE \u2014 TIER 1] Settlement Pay-Run \u2014 NEW catalogs.payment_methods owner-editable catalog + reuse-and-extend of canonical driver_finance advance/settlement infra (driver_advances recovery linkage + payment_method_id; cash_advance_requests maker<>checker; settlement_lines line_type += advance_recovery/escrow_contribution; driver_payment_methods.payment_method_id FK). Master-data + schema only; NO GL math (posting reuses the existing settlement poster behind SETTLEMENT_GL_POSTING_ENABLED, default OFF). FORCED RLS + 0065 grants (no DELETE). Run only on a Neon branch by Jorge, then ledger-backfill."
+      "reason": "[HOLD-FOR-JORGE — TIER 1] Settlement Pay-Run — NEW catalogs.payment_methods owner-editable catalog + reuse-and-extend of canonical driver_finance advance/settlement infra (driver_advances recovery linkage + payment_method_id; cash_advance_requests maker<>checker; settlement_lines line_type += advance_recovery/escrow_contribution; driver_payment_methods.payment_method_id FK). Master-data + schema only; NO GL math (posting reuses the existing settlement poster behind SETTLEMENT_GL_POSTING_ENABLED, default OFF). FORCED RLS + 0065 grants (no DELETE). Run only on a Neon branch by Jorge, then ledger-backfill."
     }
   ]
 }

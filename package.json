@@ -926,7 +926,8 @@
     "verify:no-test-fixture-names": "node scripts/verify-no-test-fixture-names.mjs",
     "verify:open-wo-shared-predicate": "node scripts/verify-open-wo-shared-predicate.mjs",
     "verify:safety-canonical-table-reads": "node scripts/verify-safety-canonical-table-reads.mjs",
-    "verify:border-crossing-canonical-relations": "node scripts/verify-border-crossing-canonical-relations.mjs"
+    "verify:border-crossing-canonical-relations": "node scripts/verify-border-crossing-canonical-relations.mjs",
+    "verify:units-vin-dup-prevention": "node scripts/verify-units-vin-dup-prevention.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",
