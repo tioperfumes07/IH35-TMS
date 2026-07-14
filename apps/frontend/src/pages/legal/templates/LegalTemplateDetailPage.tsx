@@ -7,6 +7,7 @@ import { Button } from "../../../components/Button";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
+import { formatDateTimeUS } from "../../../lib/formatDate";
 
 function parseError(error: unknown, fallback: string): string {
   if (error instanceof ApiError) {
@@ -246,14 +247,14 @@ export function LegalTemplateDetailPage() {
             </label>
           </div>
 
-          <div className="rounded-sm border border-slate-200 bg-slate-50 p-2 text-xs text-slate-700">
+          <div className="rounded-sm bg-slate-50 p-2 text-xs text-slate-700">
             <div><span className="font-semibold">Status:</span> {template.status}</div>
             <div><span className="font-semibold">Attorney approval:</span> {template.attorney_approved_by ?? "pending"}</div>
-            <div><span className="font-semibold">Approved at:</span> {template.attorney_approved_at ?? "pending"}</div>
+            <div><span className="font-semibold">Approved at:</span> {template.attorney_approved_at ? formatDateTimeUS(template.attorney_approved_at) : "pending"}</div>
           </div>
 
           {template.status === "pending_review" ? (
-            <div className="space-y-2 rounded-sm border border-slate-300 bg-slate-100/80 p-2">
+            <div className="space-y-2 rounded-sm bg-slate-100/80 p-2">
               <div className="text-xs font-semibold text-slate-700">Attorney review link</div>
               <p className="text-xs text-slate-700">
                 Share this URL with outside counsel. It is single-use and expires in 30 days. Regenerate invalidates prior links.
@@ -286,7 +287,7 @@ export function LegalTemplateDetailPage() {
             </div>
           ) : null}
 
-          <div className="space-y-2 rounded-sm border border-gray-200 p-2">
+          <div className="space-y-2 border-t border-gray-100 pt-2">
             <div className="text-xs font-semibold uppercase text-gray-500">Attorney approval input</div>
             <label className="block text-xs font-semibold text-gray-600">
               Attorney Name

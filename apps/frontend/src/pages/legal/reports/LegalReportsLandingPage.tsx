@@ -3,6 +3,7 @@ import { legalMattersApi } from "../../../api/legal-matters";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
+import { formatUsd } from "../../../lib/money";
 
 function Card({ label, value }: { label: string; value: string }) {
   return (
@@ -13,10 +14,12 @@ function Card({ label, value }: { label: string; value: string }) {
   );
 }
 
+// Locked palette (§7): no red/orange/yellow section bands — severity is distinguished by neutral
+// slate shade intensity only. Red stays reserved for delete/Accident.
 const SEVERITY_STYLES: Record<string, string> = {
-  critical: "bg-red-100 text-red-800",
-  high: "bg-orange-100 text-orange-800",
-  medium: "bg-yellow-100 text-yellow-800",
+  critical: "bg-slate-800 text-white",
+  high: "bg-slate-300 text-slate-900",
+  medium: "bg-slate-200 text-slate-700",
   low: "bg-slate-100 text-slate-700",
 };
 const SEVERITY_ORDER = ["critical", "high", "medium", "low"] as const;
@@ -61,10 +64,17 @@ export function LegalReportsLandingPage() {
             <div className="text-[11px] uppercase tracking-wide text-gray-500">Open by severity</div>
             <SeverityChips bySeverity={(s.open_by_severity as Record<string, number>) ?? {}} />
           </div>
-          <Card label="Amount at risk (open)" value={String(s.total_amount_at_risk ?? "0")} />
-          <Card label="Amount we seek (plaintiff)" value={String(s.total_amount_we_seek ?? "0")} />
+          <Card label="Amount at risk (open)" value={formatUsd(s.total_amount_at_risk as number | string | null | undefined)} />
+          <Card label="Amount we seek (plaintiff)" value={formatUsd(s.total_amount_we_seek as number | string | null | undefined)} />
           <Card label="Closed matters (count)" value={String((s.settlement_history as { closed_n?: number })?.closed_n ?? 0)} />
-          <Card label="Avg settled claim" value={String((s.settlement_history as { avg_settled_claim?: string })?.avg_settled_claim ?? "—")} />
+          <Card
+            label="Avg settled claim"
+            value={
+              (s.settlement_history as { avg_settled_claim?: string | null })?.avg_settled_claim != null
+                ? formatUsd((s.settlement_history as { avg_settled_claim?: string })?.avg_settled_claim)
+                : "—"
+            }
+          />
           <Card label="Deadlines (30d)" value={String(s.deadlines_next_30_days ?? 0)} />
           <Card label="SOL within 90d" value={String(s.statute_limitations_approaching_90d ?? 0)} />
         </div>
