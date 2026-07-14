@@ -272,6 +272,47 @@ function selftest() {
   console.log(`\n${LABEL} SELFTEST PASS`);
 }
 
+/**
+ * Comprehensive scan: EVERY frontend file that calls requestUploadUrl() directly must pass
+ * operating_company_id in the call object — otherwise the backend falls back to the uploader's
+ * default_company_id and the doc is filed under the wrong entity. This catches direct callers that
+ * bypass UploadModal/DocumentsTab entirely (e.g. the onboarding wizard, inspection-photo upload), which
+ * the hardcoded mount-site lists above cannot see.
+ * @returns {string[]} errors
+ */
+function scanDirectRequestUploadCallers() {
+  const errors = [];
+  const root = path.join(ROOT, "apps/frontend/src");
+  if (!fs.existsSync(root)) return errors;
+  const stack = [root];
+  while (stack.length) {
+    const dir = stack.pop();
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      const p = path.join(dir, e.name);
+      if (e.isDirectory()) { if (e.name !== "node_modules" && e.name !== "__tests__") stack.push(p); continue; }
+      // Product code only — test/story files may call requestUploadUrl with mocks/fixtures.
+      if (!/\.tsx?$/.test(e.name) || /\.(test|spec|stories)\.tsx?$/.test(e.name)) continue;
+      const src = stripComments(fs.readFileSync(p, "utf8"));
+      let i = 0;
+      while ((i = src.indexOf("requestUploadUrl(", i)) !== -1) {
+        const open = src.indexOf("{", i);
+        if (open === -1) { i += "requestUploadUrl(".length; continue; }
+        let depth = 0, j = open;
+        for (; j < src.length; j++) { if (src[j] === "{") depth++; else if (src[j] === "}") { depth--; if (depth === 0) break; } }
+        const call = src.slice(open, j + 1);
+        if (!/operating_company_id/.test(call)) {
+          errors.push(
+            `${path.relative(ROOT, p)}: a requestUploadUrl() call does not pass operating_company_id — ` +
+              "the doc files under the uploader's default company, not the viewed entity"
+          );
+        }
+        i = j + 1;
+      }
+    }
+  }
+  return errors;
+}
+
 if (process.argv.includes("--selftest")) { selftest(); process.exit(0); }
 
 const uploadModal = readReal(UPLOAD_MODAL);
@@ -285,6 +326,7 @@ const documentsTabMounts = {};
 for (const rel of DOCUMENTS_TAB_MOUNT_SITES) documentsTabMounts[rel] = readReal(rel);
 
 const errors = assertGuard({ uploadModal, documentsTab, directMounts, documentsTabMounts });
+errors.push(...scanDirectRequestUploadCallers());
 if (errors.length) {
   console.error(`[${LABEL}] FAILED — ${errors.length} issue(s):`);
   for (const e of errors) console.error(`  ✗ ${e}`);

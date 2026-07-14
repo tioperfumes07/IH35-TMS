@@ -25,11 +25,13 @@ function stepDataFor(session: OnboardingSession | undefined, key: string) {
   return (session?.step_data?.[key] as Record<string, unknown> | undefined) ?? {};
 }
 
-async function uploadDriverDoc(file: File, driverId: string | null | undefined) {
+async function uploadDriverDoc(file: File, driverId: string | null | undefined, operatingCompanyId: string) {
   const { file_id, presigned_url } = await requestUploadUrl({
     original_filename: file.name,
     mime_type: file.type || "application/octet-stream",
     size_bytes: file.size,
+    // File under the VIEWED entity, not the uploader's default_company_id (backend fallback).
+    operating_company_id: operatingCompanyId || undefined,
     entity_links: driverId ? [{ entity_type: "driver", entity_id: driverId }] : undefined,
   });
   await fetch(presigned_url, {
@@ -110,7 +112,7 @@ export function OnboardingWizardPage() {
     async (step: number, extra: Record<string, unknown>, file: File) => {
       setUploadingKey(String(step));
       try {
-        const uploaded = await uploadDriverDoc(file, driverId);
+        const uploaded = await uploadDriverDoc(file, driverId, companyId);
         await uploadForStep(step, { ...extra, ...uploaded });
       } catch (err) {
         setError(err instanceof Error ? err.message : "Upload failed");
@@ -263,7 +265,7 @@ export function OnboardingWizardPage() {
             onUpload={async (key, file) => {
               setUploadingKey(key);
               try {
-                const uploaded = await uploadDriverDoc(file, driverId);
+                const uploaded = await uploadDriverDoc(file, driverId, companyId);
                 await uploadForStep(4, { ...dqf, [key]: uploaded });
               } catch (err) {
                 setError(err instanceof Error ? err.message : "Upload failed");
