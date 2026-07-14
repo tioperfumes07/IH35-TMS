@@ -145,11 +145,16 @@ export async function computeLoadProfitability(
          -- §4: mdata.units has NO operating_company_id — a unit is operated by a company when it OWNS it
          -- (owner_company_id) or LEASES it (currently_leased_to_company_id). Old u.operating_company_id 42703'd.
          GREATEST((SELECT COUNT(*)::int FROM mdata.units u WHERE (u.owner_company_id = $1 OR u.currently_leased_to_company_id = $1) AND u.deactivated_at IS NULL), 1)::text AS active_unit_count
-       FROM insurance.policies ip
-       WHERE ip.operating_company_id = $1
-         AND ip.status IN ('active', 'bound')
+       -- insurance.policy (singular): tenant-scoped via tenant_id (RLS keys on app.operating_company_id,
+       -- set by the route), date column is expiry_date, status enum is active/expired/cancelled/pending
+       -- (no 'bound'). The old insurance.policies / operating_company_id / expiration_date / 'bound'
+       -- identifiers never existed → the query 42P01'd, was swallowed, and every profitability report
+       -- silently allocated $0 insurance (overstating margin).
+       FROM insurance.policy ip
+       WHERE ip.tenant_id = $1
+         AND ip.status = 'active'
          AND ip.effective_date <= $2::date
-         AND ip.expiration_date >= $2::date`,
+         AND ip.expiry_date >= $2::date`,
       [operatingCompanyId, tripEnd.slice(0, 10) || new Date().toISOString().slice(0, 10)]
     );
     if (insRes.rows[0]) {

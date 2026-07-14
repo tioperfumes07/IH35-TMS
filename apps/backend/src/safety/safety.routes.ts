@@ -205,7 +205,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
         .query(
           `
             SELECT *
-            FROM safety.training_completions
+            FROM safety.training_records
             WHERE operating_company_id = $1
             ORDER BY completed_at DESC
             LIMIT 500

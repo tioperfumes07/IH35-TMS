@@ -28,8 +28,8 @@ check(routes.includes('error: "E_UNIT_HAS_OPEN_WO"') && routes.includes("reply.c
 const kpis = read("apps/backend/src/kpi/canonical-kpis.ts");
 check(/export async function countOpenWorkOrdersForUnit/.test(kpis),
   "canonical-kpis.ts: countOpenWorkOrdersForUnit must exist.");
-check(/countOpenWorkOrdersForUnit[\s\S]*OPEN_MAINTENANCE_WO_STATUSES/.test(kpis),
-  "canonical-kpis.ts: countOpenWorkOrdersForUnit must reuse OPEN_MAINTENANCE_WO_STATUSES (no ad-hoc status list).");
+check(/countOpenWorkOrdersForUnit[\s\S]{0,500}?(OPEN_MAINTENANCE_WO_STATUSES|openWorkOrderPredicate\s*\()/.test(kpis),
+  "canonical-kpis.ts: countOpenWorkOrdersForUnit must reuse the canonical open-WO set — OPEN_MAINTENANCE_WO_STATUSES directly, or the shared openWorkOrderPredicate() which encapsulates it (MAINT-2). No ad-hoc status list.");
 
 const modal = read("apps/frontend/src/components/vehicle-profile/StatusChangeModal.tsx");
 check(modal.includes("E_UNIT_HAS_OPEN_WO"),
