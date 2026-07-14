@@ -90,22 +90,43 @@ export function CurrentPeriodTab({
         <div className="self-end text-xs text-slate-500">{autoSaveLabel}</div>
       </div>
 
-      <div className="rounded-sm border bg-slate-50 p-3 text-xs text-slate-700">
-        <strong>{profiles[activeCompany].name}</strong> · Case #{profiles[activeCompany].caseNumber || "—"} · Court {profiles[activeCompany].division},{" "}
-        {profiles[activeCompany].district} · Petition date is managed by report creation.
+      <div className="grid grid-cols-1 gap-3 rounded-sm border bg-slate-50 p-3 text-xs text-slate-700 md:grid-cols-4">
+        <div>
+          <div className="font-semibold uppercase tracking-wide text-slate-500">Debtor</div>
+          <div>{profiles[activeCompany].name}</div>
+        </div>
+        <div>
+          <div className="font-semibold uppercase tracking-wide text-slate-500">Case Number</div>
+          <div>{profiles[activeCompany].caseNumber || "—"}</div>
+        </div>
+        <div>
+          <div className="font-semibold uppercase tracking-wide text-slate-500">Court</div>
+          <div>
+            {profiles[activeCompany].division}, {profiles[activeCompany].district}
+          </div>
+        </div>
+        <div>
+          <div className="font-semibold uppercase tracking-wide text-slate-500">Petition Date</div>
+          <div>Managed by report creation</div>
+        </div>
       </div>
 
       <div className="rounded-sm border bg-white">
-        <div className="border-b bg-slate-800 px-3 py-2 text-sm font-semibold text-white">Part 1 — Questionnaire (Lines 1-18)</div>
+        <div className="border-b bg-[#1f2a44] px-3 py-2 text-sm font-semibold text-white">Part 1 — Questionnaire (Lines 1-18)</div>
         {QUESTIONNAIRE.map((q, i) => {
           const answer = form.answers[q.num] ?? (q.expectYes ? "yes" : "no");
           const flagged = (q.expectYes && answer === "no") || (!q.expectYes && answer === "yes");
           return (
             <div key={q.num}>
               {i === 9 ? <div className="border-b bg-slate-100 px-3 py-1 text-xs italic text-slate-600">Lines 10-18: if Yes, Exhibit B entry required.</div> : null}
-              <div className={`grid grid-cols-[24px_1fr_auto] items-center gap-2 border-b px-3 py-2 text-sm ${flagged ? "bg-red-50" : ""}`}>
+              <div className={`grid grid-cols-[24px_1fr_auto] items-center gap-2 border-b px-3 py-2 text-sm ${flagged ? "bg-slate-100" : ""}`}>
                 <span className="font-semibold text-slate-500">{q.num}.</span>
-                <span className={flagged ? "text-red-700" : ""}>{q.text}</span>
+                <span className="flex items-center gap-2">
+                  {q.text}
+                  {flagged ? (
+                    <span className="rounded-sm bg-[#1f2a44] px-1.5 py-0.5 text-[10px] font-semibold uppercase text-white">Exhibit required</span>
+                  ) : null}
+                </span>
                 <div className="flex gap-2">
                   {(["yes", "no", "na"] as const).map((v) => (
                     <label key={v} className="flex items-center gap-1 text-xs uppercase text-slate-600">
@@ -130,7 +151,7 @@ export function CurrentPeriodTab({
       </div>
 
       <div className="rounded-sm border bg-white">
-        <div className="border-b bg-slate-800 px-3 py-2 text-sm font-semibold text-white">Part 2 — Summary of Cash Activity (Lines 19-23)</div>
+        <div className="border-b bg-[#1f2a44] px-3 py-2 text-sm font-semibold text-white">Part 2 — Summary of Cash Activity (Lines 19-23)</div>
         {[
           ["19", "openingBalance", "Total opening balance of all accounts"],
           ["20", "totalReceipts", "Total cash receipts"],
@@ -180,7 +201,7 @@ export function CurrentPeriodTab({
       </div>
 
       <div className="rounded-sm border bg-white">
-        <div className="border-b bg-[#1F2A44] px-3 py-2 text-sm font-semibold text-white">Part 7 — Projections (Lines 32-37)</div>
+        <div className="border-b bg-[#1f2a44] px-3 py-2 text-sm font-semibold text-white">Part 7 — Projections (Lines 32-37)</div>
         {form.hasCarryForward ? (
           <div className="border-b bg-slate-100 px-3 py-2 text-xs text-slate-700">
             Column A came from previous month carry-forward. Manual edits require reason (30+ chars).
@@ -233,7 +254,7 @@ export function CurrentPeriodTab({
       </div>
 
       <div className="rounded-sm border bg-white">
-        <div className="border-b bg-slate-800 px-3 py-2 text-sm font-semibold text-white">Part 8 — Attachments</div>
+        <div className="border-b bg-[#1f2a44] px-3 py-2 text-sm font-semibold text-white">Part 8 — Attachments</div>
         {[
           ["att38", "38. Bank statements"],
           ["att39", "39. Bank reconciliation reports"],
@@ -256,7 +277,7 @@ export function CurrentPeriodTab({
         <button type="button" onClick={onSave} disabled={!form.reportId || loading} className="rounded-sm bg-slate-800 px-3 py-2 text-sm font-semibold text-white">
           Save Draft
         </button>
-        <button type="button" onClick={onGeneratePdf} disabled={!form.reportId || loading} className="rounded-sm bg-[#1F2A44] px-3 py-2 text-sm font-semibold text-white">
+        <button type="button" onClick={onGeneratePdf} disabled={!form.reportId || loading} className="rounded-sm bg-[#1f2a44] px-3 py-2 text-sm font-semibold text-white">
           Save & Generate Filing PDF
         </button>
         <button type="button" onClick={onMarkFiled} disabled={!form.reportId || loading} className="rounded-sm bg-slate-700 px-3 py-2 text-sm font-semibold text-white">

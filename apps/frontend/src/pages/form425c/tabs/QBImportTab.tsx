@@ -84,7 +84,7 @@ export function QBImportTab({ activeCompany, setActiveCompany, profiles, onApply
             </thead>
             <tbody>
               {parsed.map((row, idx) => (
-                <tr key={`${row.date}-${idx}`} className={row.include ? "border-b" : "border-b bg-red-50"}>
+                <tr key={`${row.date}-${idx}`} className={row.include ? "border-b" : "border-b bg-slate-100 text-slate-400 line-through"}>
                   <td className="px-2 py-1">
                     <input
                       type="checkbox"

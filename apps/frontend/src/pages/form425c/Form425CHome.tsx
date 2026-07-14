@@ -204,7 +204,7 @@ export function Form425CHome() {
     mutationFn: () =>
       createForm425CReport(companyId, {
         reporting_month: `${monthKey(year, month)}-01`,
-        case_number: profiles[activeCompany].caseNumber || "25-00000",
+        case_number: profiles[activeCompany].caseNumber,
         court_district: `${profiles[activeCompany].division} Division · ${profiles[activeCompany].district} District`,
         petition_date: "2025-02-03",
         subchapter: "V",
@@ -302,7 +302,7 @@ export function Form425CHome() {
       <div className="px-4 pt-4">
         <PageHeader title="Form 425C" backHref="/" breadcrumb={["Home", "Form 425C"]} />
       </div>
-      <div className="flex items-center justify-between gap-2 bg-linear-to-r from-slate-900 to-slate-400 px-5 py-3 text-white">
+      <div className="flex items-center justify-between gap-2 bg-[#1f2a44] px-5 py-3 text-white">
         <div>
           <div className="text-lg font-extrabold">IH 35 GROUP</div>
           <div className="text-xs opacity-75">Official Form 425C — Monthly Operating Report System</div>
@@ -352,6 +352,10 @@ export function Form425CHome() {
             if (selectedReport?.id) {
               queryClient.invalidateQueries({ queryKey: ["form-425c", "detail", companyId, selectedReport.id] });
               pushToast("Loaded existing report for selected period", "success");
+              return;
+            }
+            if (!profiles[activeCompany].caseNumber?.trim()) {
+              pushToast("Set the case number in Profiles & Defaults before creating a report", "error");
               return;
             }
             createMutation.mutate();

@@ -33,6 +33,17 @@ const QUESTIONNAIRE = [
   [18, "Have you allowed any checks to clear the bank that were issued before you filed bankruptcy?", false],
 ] as const;
 
+// Placeholder values the frontend used to silently substitute when the entity profile had no real
+// bankruptcy case number set (Form425CHome.tsx previously defaulted to "25-00000" on report creation).
+// A court filing generated or marked filed with one of these is not a validation gap to warn about
+// later — it is a fabricated case number on a real Chapter 11 filing. Refuse outright.
+const PLACEHOLDER_CASE_NUMBERS = new Set(["25-00000"]);
+
+export function isInvalidCaseNumber(caseNumber: unknown): boolean {
+  const trimmed = String(caseNumber ?? "").trim();
+  return trimmed.length === 0 || PLACEHOLDER_CASE_NUMBERS.has(trimmed);
+}
+
 function nv(v: unknown) {
   const n = Number(v ?? 0);
   return Number.isFinite(n) ? n : 0;
@@ -122,6 +133,9 @@ export async function generateForm425CPdf({ client, userId, reportId, operatingC
   );
   const report = reportRes.rows[0];
   if (!report) throw new Error("form_425c_report_not_found");
+  if (isInvalidCaseNumber(report.case_number)) {
+    throw new Error("form_425c_case_number_required");
+  }
 
   const profileRes = await client.query(
     `
