@@ -24,7 +24,7 @@ const HELP_TILES: HelpTile[] = [
 export function HelpPage() {
   return (
     <div className="space-y-4" data-testid="help-page">
-      <PageHeader title="Help" subtitle="Articles and operator runbooks" />
+      <PageHeader breadcrumb={["Help"]} title="Help" subtitle="Articles and operator runbooks" />
       <div className="grid gap-4 md:grid-cols-2">
         {HELP_TILES.map((tile) => (
           <Link
