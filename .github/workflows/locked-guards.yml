@@ -740,6 +740,10 @@ jobs:
         run: node scripts/verify-ap-aging-qbo-tie.mjs --selftest
       - name: verify:ap-aging-qbo-tie
         run: npm run verify:ap-aging-qbo-tie
+      - name: verify:units-vin-dup-prevention --selftest
+        run: node scripts/verify-units-vin-dup-prevention.mjs --selftest
+      - name: verify:units-vin-dup-prevention
+        run: npm run verify:units-vin-dup-prevention
       - name: verify:driverhub-unit-source --selftest
         run: node scripts/verify-driverhub-unit-source.mjs --selftest
       - name: verify:driverhub-unit-source
