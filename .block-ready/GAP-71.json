@@ -23,8 +23,13 @@
     "package.json",
     ".github/workflows/ci.yml"
   ],
-  "extra_gates": ["verify:driver-retention"],
+  "extra_gates": [
+    "verify:driver-retention"
+  ],
   "runtime_path": "src",
   "db_required": true,
-  "guard_required": true
+  "guard_required": true,
+  "status": "superseded",
+  "superseded_by": "FEATURE-GAP-71-DRIVER-RETENTION.json",
+  "superseded_note": "Additive dedup (P1 tracker-live-accurate): duplicate block_id registration; canonical entry retained active. ARCHIVED not deleted (§7)."
 }

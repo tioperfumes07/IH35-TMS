@@ -771,3 +771,8 @@ jobs:
         run: node scripts/verify-safety-canonical-table-reads.mjs --selftest
       - name: verify:safety-canonical-table-reads
         run: npm run verify:safety-canonical-table-reads
+
+      - name: verify:tracker-no-duplicate-block-ids --selftest
+        run: node scripts/verify-tracker-no-duplicate-block-ids.mjs --selftest
+      - name: verify:tracker-no-duplicate-block-ids
+        run: npm run verify:tracker-no-duplicate-block-ids

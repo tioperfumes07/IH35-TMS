@@ -3,8 +3,8 @@
   "gap": "BLOCK-11",
   "branch": "feat/accounting-periods-init",
   "phase": "PHASE-A-PERIOD-FOUNDATION",
-  "task": "Accounting Periods Init \u2014 ops seed for Jan\u2013Jun 2026 periods for TRANSP (IH 35 Transportation LLC). Adds unique index on (operating_company_id, period_start) for idempotent ON CONFLICT semantics. Registers two guard flags in lib.feature_flags: PERIODS_INIT_ENABLED (controls whether the 6-row INSERT executes; default false) and OPENING_BALANCE_BOOKKEEPER_CONFIRM (bookkeeper sign-off gate; default false, never auto-posted by any migration). No opening-balance journal entries written. GATED: bookkeeper must sign off before prod posting.",
-  "financial_rule": "No journal entries written. No balances fabricated. Seed INSERT is behind PERIODS_INIT_ENABLED flag (default false). OPENING_BALANCE_BOOKKEEPER_CONFIRM flag registered as default false \u2014 entry point only, no auto-post.",
+  "task": "Accounting Periods Init — ops seed for Jan–Jun 2026 periods for TRANSP (IH 35 Transportation LLC). Adds unique index on (operating_company_id, period_start) for idempotent ON CONFLICT semantics. Registers two guard flags in lib.feature_flags: PERIODS_INIT_ENABLED (controls whether the 6-row INSERT executes; default false) and OPENING_BALANCE_BOOKKEEPER_CONFIRM (bookkeeper sign-off gate; default false, never auto-posted by any migration). No opening-balance journal entries written. GATED: bookkeeper must sign off before prod posting.",
+  "financial_rule": "No journal entries written. No balances fabricated. Seed INSERT is behind PERIODS_INIT_ENABLED flag (default false). OPENING_BALANCE_BOOKKEEPER_CONFIRM flag registered as default false — entry point only, no auto-post.",
   "allowed_files": [
     ".block-ready/ACCT-BLOCK-11-PERIODS-INIT.json",
     "db/migrations/202606080210_accounting_periods_init.sql",
@@ -14,5 +14,8 @@
   "extra_gates": [],
   "runtime_path": "src",
   "db_required": true,
-  "guard_required": false
+  "guard_required": false,
+  "status": "superseded",
+  "superseded_by": "ACCT-BLOCK-11-PERIODS-INIT.json",
+  "superseded_note": "Additive dedup (P1 tracker-live-accurate): duplicate block_id registration; canonical entry retained active. ARCHIVED not deleted (§7)."
 }
