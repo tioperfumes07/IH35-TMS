@@ -7,11 +7,20 @@
  * was unset — so correctness hinged entirely on an unversioned Render env var. Now: the prod origins are
  * the versioned default, localhost is dev-only, and an unset env var in production FAILS LOUD (refuses to
  * boot / 500s the origin check) instead of silently degrading.
+ *
+ * fix/cors-origins-canonical: the list still OMITTED the real production Driver PWA custom domain
+ * `https://driver.ih35dispatch.com` — the domain the driver invite emails link to
+ * (mdata/drivers.routes.ts), the frontend's own production fallback
+ * (frontend/src/pages/DriverAppLandingPage.tsx), and the domain documented across
+ * docs/IH35-TMS-ARCHITECTURE.md, docs/user-guides/, and docs/training/driver/. A browser session on that
+ * origin calling the API would be rejected unless the Render `CORS_ALLOWED_ORIGINS` env var happened to
+ * carry it — added it to the versioned default so the driver PWA is not solely env-var-dependent.
  */
 
 /** Real production browser/API origins — always allowed, versioned in code (not just the env var). */
 const PROD_ORIGINS = [
   "https://app.ih35dispatch.com",
+  "https://driver.ih35dispatch.com",
   "https://api.ih35dispatch.com",
   "https://ih35-tms-web.onrender.com",
   "https://ih35-tms-driver.onrender.com",

@@ -32,6 +32,8 @@ export function run() {
   const cfg = read(CONFIG);
   if (!cfg.includes("https://app.ih35dispatch.com"))
     offenders.push(`${CONFIG}: missing prod origin https://app.ih35dispatch.com in the versioned default`);
+  if (!cfg.includes("https://driver.ih35dispatch.com"))
+    offenders.push(`${CONFIG}: missing prod origin https://driver.ih35dispatch.com in the versioned default`);
   if (!cfg.includes("https://api.ih35dispatch.com"))
     offenders.push(`${CONFIG}: missing prod origin https://api.ih35dispatch.com in the versioned default`);
   if (!(/NODE_ENV\s*===\s*"production"/.test(cfg) && /throw new Error/.test(cfg)))
