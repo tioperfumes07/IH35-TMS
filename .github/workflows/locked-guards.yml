@@ -810,6 +810,10 @@ jobs:
         run: node scripts/verify-compliance-violations-hos-wired.mjs --selftest
       - name: verify:compliance-violations-hos-wired
         run: npm run verify:compliance-violations-hos-wired
+      - name: verify:banking-nav-clickthrough --selftest
+        run: node scripts/verify-banking-nav-clickthrough.mjs --selftest
+      - name: verify:banking-nav-clickthrough
+        run: npm run verify:banking-nav-clickthrough
       - name: verify:qbo-parity-bills-invoices-lists --selftest
         run: node scripts/verify-qbo-parity-bills-invoices-lists.mjs --selftest
       - name: verify:qbo-parity-bills-invoices-lists
