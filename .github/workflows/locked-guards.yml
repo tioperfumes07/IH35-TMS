@@ -797,3 +797,8 @@ jobs:
         run: node scripts/verify-system-module.mjs --selftest
       - name: verify:system-module
         run: npm run verify:system-module
+
+      - name: verify:compliance-violations-hos-wired --selftest
+        run: node scripts/verify-compliance-violations-hos-wired.mjs --selftest
+      - name: verify:compliance-violations-hos-wired
+        run: npm run verify:compliance-violations-hos-wired
