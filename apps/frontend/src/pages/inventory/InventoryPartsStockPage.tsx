@@ -110,15 +110,15 @@ export function InventoryPartsStockPage() {
         }
       />
       <InventoryModuleTabs />
-      <div className="rounded-sm border border-gray-200 bg-white">
-        <ParityTable
-          columns={columns}
-          rows={rows}
-          loading={partsQuery.isLoading}
-          emptyText="No parts found. Create your first part to get started."
-          rowKey={(row: { id: string }) => row.id}
-        />
-      </div>
+      {/* ParityTable is already a self-contained card (own rounded/border/bg-white wrapper) — the extra
+          wrapper div here produced a box-in-box double border. Render it directly. */}
+      <ParityTable
+        columns={columns}
+        rows={rows}
+        loading={partsQuery.isLoading}
+        emptyText="No parts found. Create your first part to get started."
+        rowKey={(row: { id: string }) => row.id}
+      />
       <PartCreateDrawer
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
