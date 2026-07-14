@@ -41,51 +41,56 @@ export function findGeofenceForPosition(lat: number, lng: number): BorderGeofenc
 export async function detectCrossings(
   client: PoolClient,
   events: Array<{
-    vehicle_id: string;
+    /** mdata.units(id) — canonical unit identifier from integrations.samsara_vehicle_positions.unit_uuid */
+    unit_uuid: string;
     operating_company_id: string;
-    latitude: number;
-    longitude: number;
+    lat: number;
+    lng: number;
     direction: "northbound" | "southbound";
-    occurred_at: string;
+    recorded_at: string;
   }>
 ): Promise<number> {
   let inserted = 0;
   for (const ev of events) {
-    const gf = findGeofenceForPosition(ev.latitude, ev.longitude);
+    const gf = findGeofenceForPosition(ev.lat, ev.lng);
     if (!gf) continue;
+
+    // dispatch.border_crossing_events.vehicle_id is a TEXT stable identifier; we key it on the unit UUID.
+    const vehicleId = ev.unit_uuid;
 
     // Check if there's an open entry for this vehicle at this crossing
     const existing = await client.query<{ uuid: string }>(
       `SELECT uuid FROM dispatch.border_crossing_events
        WHERE vehicle_id = $1 AND crossing_point = $2 AND exited_geofence_at IS NULL
        ORDER BY entered_geofence_at DESC LIMIT 1`,
-      [ev.vehicle_id, gf.crossingPoint]
+      [vehicleId, gf.crossingPoint]
     );
 
     if (existing.rows.length === 0) {
-      // New entry
-      const activeLoad = await client.query<{ uuid: string }>(
-        `SELECT l.uuid FROM mdata.loads l
-         JOIN mdata.load_assignments la ON la.load_uuid = l.uuid
-         WHERE la.vehicle_id = $1
+      // New entry — resolve the active load for this unit (canonical: mdata.loads.assigned_unit_id).
+      const activeLoad = await client.query<{ id: string }>(
+        `SELECT l.id FROM mdata.loads l
+         WHERE l.assigned_unit_id = $1::uuid
            AND l.status IN ('assigned','in_transit')
-           AND l.operating_company_id = $2
-         ORDER BY l.created_at DESC LIMIT 1`,
-        [ev.vehicle_id, ev.operating_company_id]
+           AND l.operating_company_id = $2::uuid
+           AND l.soft_deleted_at IS NULL
+         ORDER BY l.updated_at DESC NULLS LAST, l.created_at DESC
+         LIMIT 1`,
+        [ev.unit_uuid, ev.operating_company_id]
       );
       await client.query(
         `INSERT INTO dispatch.border_crossing_events
            (operating_company_id, vehicle_id, crossing_point, direction, entered_geofence_at, load_uuid)
          VALUES ($1, $2, $3, $4, $5, $6)
          ON CONFLICT DO NOTHING`,
-        [ev.operating_company_id, ev.vehicle_id, gf.crossingPoint, ev.direction, ev.occurred_at, activeLoad.rows[0]?.uuid ?? null]
+        [ev.operating_company_id, vehicleId, gf.crossingPoint, ev.direction, ev.recorded_at, activeLoad.rows[0]?.id ?? null]
       );
       inserted++;
     } else {
       // Mark exit
       await client.query(
         `UPDATE dispatch.border_crossing_events SET exited_geofence_at = $1 WHERE uuid = $2`,
-        [ev.occurred_at, existing.rows[0].uuid]
+        [ev.recorded_at, existing.rows[0].uuid]
       );
     }
   }

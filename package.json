@@ -88,7 +88,6 @@
     "ops:replay-missing-migrations": "node scripts/runbook-replay-missing-migrations.mjs",
     "verify:pre-commit": "node scripts/verify-pre-commit.mjs",
     "verify:driverhub-unit-source": "node scripts/verify-driverhub-unit-source.mjs",
-    "verify:open-wo-shared-predicate": "node scripts/verify-open-wo-shared-predicate.mjs",
     "verify:home-attention-late-canonical": "node scripts/verify-home-attention-late-canonical.mjs",
     "verify:local-ci-parity": "node scripts/verify-local-ci-parity.mjs",
     "verify:static": "node scripts/verify-static.mjs",
@@ -924,6 +923,8 @@
     "verify:settlement-payrun-gl-flag-gate": "node scripts/verify-settlement-payrun-gl-flag-gate.mjs",
     "verify:payment-methods-catalog": "node scripts/verify-payment-methods-catalog.mjs",
     "verify:mdata-write-entity-scope": "node scripts/verify-mdata-write-entity-scope.mjs",
+    "verify:border-crossing-canonical-relations": "node scripts/verify-border-crossing-canonical-relations.mjs",
+    "verify:open-wo-shared-predicate": "node scripts/verify-open-wo-shared-predicate.mjs",
     "verify:safety-canonical-table-reads": "node scripts/verify-safety-canonical-table-reads.mjs"
   },
   "dependencies": {
