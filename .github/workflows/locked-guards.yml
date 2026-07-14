@@ -805,3 +805,13 @@ jobs:
         run: node scripts/verify-system-module.mjs --selftest
       - name: verify:system-module
         run: npm run verify:system-module
+
+      - name: verify:qbo-parity-bills-invoices-lists --selftest
+        run: node scripts/verify-qbo-parity-bills-invoices-lists.mjs --selftest
+      - name: verify:qbo-parity-bills-invoices-lists
+        run: npm run verify:qbo-parity-bills-invoices-lists
+
+      - name: verify:qbo-parity-banking-home --selftest
+        run: node scripts/verify-qbo-parity-banking-home.mjs --selftest
+      - name: verify:qbo-parity-banking-home
+        run: npm run verify:qbo-parity-banking-home
