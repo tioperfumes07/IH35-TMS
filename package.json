@@ -928,7 +928,9 @@
     "verify:safety-canonical-table-reads": "node scripts/verify-safety-canonical-table-reads.mjs",
     "verify:border-crossing-canonical-relations": "node scripts/verify-border-crossing-canonical-relations.mjs",
     "verify:units-vin-dup-prevention": "node scripts/verify-units-vin-dup-prevention.mjs",
-    "verify:tracker-no-duplicate-block-ids": "node scripts/verify-tracker-no-duplicate-block-ids.mjs"
+    "verify:tracker-no-duplicate-block-ids": "node scripts/verify-tracker-no-duplicate-block-ids.mjs",
+    "verify:qbo-ap-pull-dbflag": "node scripts/verify-qbo-ap-pull-dbflag.mjs",
+    "verify:no-test-fixture-names": "node scripts/verify-no-test-fixture-names.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",
