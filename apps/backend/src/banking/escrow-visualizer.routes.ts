@@ -9,7 +9,6 @@ const escrowQuerySchema = z.object({
   from: z.string().optional(),
   to: z.string().optional(),
   type: z.string().optional(),
-  bucket: z.string().optional(),
 });
 
 const driverParamsSchema = z.object({
@@ -97,16 +96,26 @@ export async function registerBankingEscrowVisualizerRoutes(app: FastifyInstance
       }
       if (q.type) {
         values.push(q.type);
-        filters.push(`entry_type = $${values.length}`);
+        filters.push(`transaction_type = $${values.length}`);
       }
-      if (q.bucket) {
-        values.push(q.bucket);
-        filters.push(`bucket = $${values.length}`);
-      }
+      // §4 landmine fix: driver_finance.escrow_ledger has NO entry_type/bucket/memo/amount columns
+      // (migration 202606120600) — SELECT * used to leave the frontend's EscrowDriverTimelineRow
+      // contract (entry_type/bucket/amount/memo) entirely unfilled, so every timeline row rendered a
+      // generic "Escrow movement" label with a $0.00 amount. Real columns: transaction_type,
+      // amount_cents, description. Aliased here to match the existing frontend contract (no bucket
+      // concept exists on this ledger — always null, same honest-— rather than fabricated behavior
+      // already used elsewhere in this codebase for missing dimensions).
       const res = await client
         .query(
           `
-            SELECT *
+            SELECT
+              id,
+              driver_id,
+              transaction_type AS entry_type,
+              NULL::text AS bucket,
+              (amount_cents::numeric / 100) AS amount,
+              description AS memo,
+              created_at
             FROM driver_finance.escrow_ledger
             WHERE ${filters.join(" AND ")}
             ORDER BY created_at DESC

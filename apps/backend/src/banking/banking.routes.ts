@@ -323,13 +323,19 @@ export async function registerBankingRoutes(app: FastifyInstance) {
         const res = await client
           .query(
             `
+              -- §4 landmine fix: driver_finance.escrow_ledger has NO memo/entry_type/amount columns
+              -- (migration 202606120600) — the prior query referenced them, hard-errored, and the
+              -- .catch below silently returned zero rows for every account-level escrow register
+              -- request. Real columns: description, transaction_type, amount_cents. driver_id is
+              -- surfaced so the register row can drill through to the driver (Doc-18 defect #12).
               SELECT
                 el.id,
                 el.created_at::date AS txn_date,
-                COALESCE(el.memo, el.entry_type, 'Escrow movement') AS description,
-                el.amount,
-                el.entry_type AS category,
-                'synced'::text AS status
+                COALESCE(el.description, el.transaction_type, 'Escrow movement') AS description,
+                (el.amount_cents::numeric / 100) AS amount,
+                el.transaction_type AS category,
+                'synced'::text AS status,
+                el.driver_id::text AS driver_id
               FROM driver_finance.escrow_ledger el
               WHERE el.operating_company_id = $1
               ORDER BY el.created_at DESC
