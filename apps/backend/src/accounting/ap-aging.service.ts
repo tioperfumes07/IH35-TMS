@@ -39,6 +39,10 @@ export type ApAgingTotals = {
 export type ApAgingReport = {
   vendors: ApAgingVendorRow[];
   totals: ApAgingTotals;
+  // ACCT-2: the last time the QBO A/P mirror (mdata.qbo_ap_bills) was synced for this entity — NULL when the
+  // read-only mirror pull has never run (flags QBO_AP_MIRROR_PULL_ENABLED/QBO_AP_BILLS_PROJECTION_ENABLED
+  // still OFF). The page keys its subtitle on this so it only claims a QBO tie when one actually exists.
+  qbo_synced_at: string | null;
 };
 
 function parseIsoDateOnly(value: string): number {
@@ -180,6 +184,17 @@ export async function getApAgingReport(input: {
       }
     );
 
-    return { vendors, totals };
+    // ACCT-2: the QBO A/P mirror's last sync for this entity (NULL when the read-only pull has never run).
+    // to_regclass-guarded so a DB without the mirror table (pre-migration) degrades to NULL, not a 500.
+    let qboSyncedAt: string | null = null;
+    const mirror = await client.query<{ synced_at: string | null }>(
+      `SELECT CASE WHEN to_regclass('mdata.qbo_ap_bills') IS NULL THEN NULL
+                   ELSE (SELECT MAX(updated_at)::text FROM mdata.qbo_ap_bills WHERE operating_company_id = $1::uuid)
+              END AS synced_at`,
+      [input.operating_company_id]
+    );
+    qboSyncedAt = mirror.rows[0]?.synced_at ?? null;
+
+    return { vendors, totals, qbo_synced_at: qboSyncedAt };
   });
 }

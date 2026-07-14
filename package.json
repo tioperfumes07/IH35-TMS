@@ -927,7 +927,8 @@
     "verify:open-wo-shared-predicate": "node scripts/verify-open-wo-shared-predicate.mjs",
     "verify:safety-canonical-table-reads": "node scripts/verify-safety-canonical-table-reads.mjs",
     "verify:border-crossing-canonical-relations": "node scripts/verify-border-crossing-canonical-relations.mjs",
-    "verify:units-vin-dup-prevention": "node scripts/verify-units-vin-dup-prevention.mjs"
+    "verify:units-vin-dup-prevention": "node scripts/verify-units-vin-dup-prevention.mjs",
+    "verify:ap-aging-qbo-tie": "node scripts/verify-ap-aging-qbo-tie.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1041.0",
