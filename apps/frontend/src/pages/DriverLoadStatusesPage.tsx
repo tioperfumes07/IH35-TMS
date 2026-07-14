@@ -159,7 +159,7 @@ export function DriverLoadStatusesPage() {
                     <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700">{phaseLabel[status.phase]}</span>
                     <span
                       className={`rounded px-2 py-0.5 text-[10px] font-semibold ${
-                        status.is_active ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-600"
+                        status.is_active ? "bg-slate-100 text-slate-700" : "bg-gray-200 text-gray-600"
                       }`}
                     >
                       {status.is_active ? "Active" : "Inactive"}
