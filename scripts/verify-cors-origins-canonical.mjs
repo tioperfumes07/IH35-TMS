@@ -41,10 +41,19 @@ function read(rel) {
   return fs.readFileSync(path.join(repoRoot, rel), "utf8");
 }
 
+// Parse the quoted origin string LITERALS from the source into an exact set, then assert membership by
+// exact equality (Set.has) — NOT String.includes(<url>) substring matching. This means a look-alike host
+// that merely CONTAINS a required origin as a substring can never satisfy the check, and CodeQL's
+// incomplete-URL-substring-sanitization query does not fire on this guard.
+function declaredOrigins(source) {
+  return new Set([...source.matchAll(/["'](https?:\/\/[^"'\s]+)["']/g)].map((m) => m[1]));
+}
+
 function checkCanonicalOrigins(cfgSource) {
   const offenders = [];
+  const declared = declaredOrigins(cfgSource);
   for (const origin of REAL_PROD_ORIGINS) {
-    if (!cfgSource.includes(`"${origin}"`)) {
+    if (!declared.has(origin)) {
       offenders.push(`${CONFIG}: missing known real prod origin ${origin} from the canonical default list`);
     }
   }

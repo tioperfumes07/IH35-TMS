@@ -27,15 +27,22 @@ function read(rel) {
   return fs.readFileSync(path.join(repoRoot, rel), "utf8");
 }
 
+// Parse the quoted origin string LITERALS out of a source file into an exact set. Using Array/Set
+// membership (exact equality) — NOT String.includes(<url>) substring matching — so a host that merely
+// CONTAINS a required origin as a substring (e.g. "https://driver.ih35dispatch.com.evil.test") can never
+// satisfy the check, and CodeQL's incomplete-URL-substring-sanitization query does not fire.
+function declaredOrigins(source) {
+  return new Set([...source.matchAll(/["'](https?:\/\/[^"'\s]+)["']/g)].map((m) => m[1]));
+}
+
 export function run() {
   const offenders = [];
   const cfg = read(CONFIG);
-  if (!cfg.includes("https://app.ih35dispatch.com"))
-    offenders.push(`${CONFIG}: missing prod origin https://app.ih35dispatch.com in the versioned default`);
-  if (!cfg.includes("https://driver.ih35dispatch.com"))
-    offenders.push(`${CONFIG}: missing prod origin https://driver.ih35dispatch.com in the versioned default`);
-  if (!cfg.includes("https://api.ih35dispatch.com"))
-    offenders.push(`${CONFIG}: missing prod origin https://api.ih35dispatch.com in the versioned default`);
+  const declared = declaredOrigins(cfg);
+  for (const origin of ["https://app.ih35dispatch.com", "https://driver.ih35dispatch.com", "https://api.ih35dispatch.com"]) {
+    if (!declared.has(origin))
+      offenders.push(`${CONFIG}: missing prod origin ${origin} in the versioned default`);
+  }
   if (!(/NODE_ENV\s*===\s*"production"/.test(cfg) && /throw new Error/.test(cfg)))
     offenders.push(`${CONFIG}: must fail loud (throw) in production when CORS_ALLOWED_ORIGINS is unset`);
 
@@ -52,7 +59,7 @@ export function run() {
 if (process.argv.includes("--selftest")) {
   // Pure-logic selftest: prove the checks fire on a bad shape.
   const badCfg = 'export function getCorsAllowedOrigins(){ return (process.env.CORS_ALLOWED_ORIGINS ?? "http://localhost:5173").split(","); }';
-  const failsOnMissingProd = !badCfg.includes("https://app.ih35dispatch.com");
+  const failsOnMissingProd = !declaredOrigins(badCfg).has("https://app.ih35dispatch.com");
   const failsOnNoThrow = !(/NODE_ENV\s*===\s*"production"/.test(badCfg) && /throw new Error/.test(badCfg));
   if (failsOnMissingProd && failsOnNoThrow) {
     console.log("verify:cors-prod-defaults selftest OK (bad config correctly flagged)");
