@@ -10,6 +10,7 @@ import { BillAllocationPanel } from "../../components/allocation";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { ReferenceSelect, type ReferenceOption } from "../../components/parity/ReferenceSelect";
 import { BulkActionModal, BulkProgressDialog } from "../../components/bulk";
 import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
 import { useToast } from "../../components/Toast";
@@ -175,6 +176,12 @@ export function BillsPage() {
     enabled: Boolean(companyId),
   });
   const vendorOptions = vendorsQuery.data?.vendors ?? [];
+  // BILLS-VENDORFILTER-01: ReferenceSelect options for the filter dropdown — "All vendors" (empty
+  // value clears the server-side filter) plus the canonical vendor list ReferenceSelect reads/writes.
+  const vendorFilterOptions = useMemo<ReferenceOption[]>(
+    () => [{ value: "", label: "All vendors" }, ...vendorOptions.map((v) => ({ value: v.id, label: v.name }))],
+    [vendorOptions]
+  );
 
   const billsQuery = useQuery({
     queryKey: ["accounting", "bills", companyId, status, category, dateFrom, dateTo, vendorId],
@@ -363,14 +370,19 @@ export function BillsPage() {
           <option value="voided">Voided</option>
         </SelectCombobox>
         <span className="text-gray-600">Vendor:</span>
-        <SelectCombobox className="rounded-sm border border-gray-300 px-2 py-1" value={vendorId} onChange={(e) => setVendorId(e.target.value)}>
-          <option value="">All vendors</option>
-          {vendorOptions.map((v) => (
-            <option key={v.id} value={v.id}>
-              {v.name}
-            </option>
-          ))}
-        </SelectCombobox>
+        {/* A3/FIX-06: shared ReferenceSelect gives the vendor FILTER the inline "+ Add new vendor" row
+            too (writes to canonical mdata.vendors — same table vendorOptions reads from). */}
+        <div className="w-56">
+          <ReferenceSelect
+            value={vendorId || null}
+            onChange={(next) => setVendorId(next ?? "")}
+            options={vendorFilterOptions}
+            createKind="vendor"
+            operatingCompanyId={companyId}
+            placeholder="All vendors"
+            disabled={!companyId}
+          />
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-2 text-sm">

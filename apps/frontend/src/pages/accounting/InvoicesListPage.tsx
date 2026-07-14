@@ -19,6 +19,7 @@ import { VendorChargebackModal } from "./modals/VendorChargebackModal";
 import { InvoiceCreateModal } from "./InvoiceCreateModal";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { ReferenceSelect, type ReferenceOption } from "../../components/parity/ReferenceSelect";
 import { BulkActionModal, BulkProgressDialog } from "../../components/bulk";
 import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
 import { useToast } from "../../components/Toast";
@@ -74,6 +75,12 @@ export function InvoicesListPage() {
     enabled: Boolean(selectedCompanyId),
   });
   const customerOptions = customersQuery.data?.customers ?? [];
+  // FIX-06: ReferenceSelect options for the filter dropdown — "All customers" (empty value clears
+  // the server-side filter) plus the canonical customer list ReferenceSelect reads/writes.
+  const customerFilterOptions = useMemo<ReferenceOption[]>(
+    () => [{ value: "", label: "All customers" }, ...customerOptions.map((c) => ({ value: c.id, label: c.name }))],
+    [customerOptions]
+  );
   const [createType, setCreateType] = useState<"driver_damage" | "driver_misc" | "vendor_chargeback" | "customer_adjustment" | "manual" | "from_load">("from_load");
   const [openModalType, setOpenModalType] = useState<null | "driver_damage" | "driver_misc" | "vendor_chargeback" | "customer_adjustment" | "manual">(null);
   const [createFlowOpen, setCreateFlowOpen] = useState(false);
@@ -216,14 +223,18 @@ export function InvoicesListPage() {
         </label>
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Customer
-          <SelectCombobox value={customerId} onChange={(event) => setCustomerId(event.target.value)} className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]">
-            <option value="">All customers</option>
-            {customerOptions.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </SelectCombobox>
+          {/* A3/FIX-06: shared ReferenceSelect gives the customer FILTER the inline "+ Add new
+              customer" row too (writes to canonical mdata.customers — same table customerOptions
+              reads from). */}
+          <ReferenceSelect
+            value={customerId || null}
+            onChange={(next) => setCustomerId(next ?? "")}
+            options={customerFilterOptions}
+            createKind="customer"
+            operatingCompanyId={selectedCompanyId ?? ""}
+            placeholder="All customers"
+            disabled={!selectedCompanyId}
+          />
         </label>
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600 md:col-span-2">
           Search
