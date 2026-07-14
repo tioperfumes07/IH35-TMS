@@ -19,13 +19,15 @@
 import type { PoolClient } from "pg";
 import { qboCompanyContext, qboPaginateEntity } from "../integrations/qbo/qbo-client.js";
 import { withLuciaBypass } from "../auth/db.js";
+import { isEnabled } from "../lib/feature-flags/service.js";
 
-// Default-OFF financial flags (same convention as BILL_GL_POSTING_ENABLED). A flag is ON only when
-// the env var is exactly "true"; anything else (unset/empty/"false") keeps the stage disabled.
-const AP_MIRROR_PULL_ENABLED =
-  process.env.QBO_AP_MIRROR_PULL_ENABLED === "true";
-const AP_BILLS_PROJECTION_ENABLED =
-  process.env.QBO_AP_BILLS_PROJECTION_ENABLED === "true";
+// Default-OFF financial flags (financial cluster — HOLD for owner approval). SINGLE SOURCE OF TRUTH
+// is the DB feature flag resolved PER-ENTITY via isEnabled() (lib.feature_flag_overrides keyed on
+// operating_company_id) — NOT a process.env var. This removes the prior hidden env dependency so a
+// stage turns on for an entity only when that entity has an ON override; isEnabled() returns false
+// when the flag row/override is absent, so an unregistered flag stays SAFE-OFF.
+const AP_MIRROR_PULL_FLAG = "QBO_AP_MIRROR_PULL_ENABLED";
+const AP_BILLS_PROJECTION_FLAG = "QBO_AP_BILLS_PROJECTION_ENABLED";
 
 export type ApBillsPullResult = {
   enabled: boolean;
@@ -149,20 +151,21 @@ async function upsertApBillMirror(
 
 /**
  * Stage 1 — clone QBO Bills into the read-only mirror mdata.qbo_ap_bills. Idempotent (upsert by
- * qbo_id) so a one-time backfill and the recurring tick both converge. No-op unless
- * QBO_AP_MIRROR_PULL_ENABLED=true.
+ * qbo_id) so a one-time backfill and the recurring tick both converge. No-op unless the QBO_AP_MIRROR_PULL_ENABLED feature flag is ON for this entity.
  */
 export async function pullApBillsFromQbo(operatingCompanyId: string): Promise<ApBillsPullResult> {
   const pulledAt = new Date().toISOString();
-  if (!AP_MIRROR_PULL_ENABLED) {
-    return { enabled: false, rowsPulled: 0, rowsUpserted: 0, pulledAt };
-  }
 
+  let enabled = false;
   let rowsPulled = 0;
   let rowsUpserted = 0;
 
   await withLuciaBypass(async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    enabled = await isEnabled(client, AP_MIRROR_PULL_FLAG, {
+      operating_company_id: operatingCompanyId,
+    });
+    if (!enabled) return;
     const ctx = await qboCompanyContext(operatingCompanyId);
     for await (const page of qboPaginateEntity<Record<string, unknown>>(ctx, "Bill", "", { pageSize: 1000 })) {
       for (const row of page) {
@@ -173,26 +176,27 @@ export async function pullApBillsFromQbo(operatingCompanyId: string): Promise<Ap
     }
   });
 
-  return { enabled: true, rowsPulled, rowsUpserted, pulledAt };
+  return { enabled, rowsPulled, rowsUpserted, pulledAt };
 }
 
 /**
  * Stage 2 — project the QBO A/P mirror into accounting.bills (source_system='qbo'). Set-based,
  * idempotent upsert on the existing uq_bills_company_qbo_bill_id key. Vendor linkage resolves
  * mdata.vendors via qbo_vendor_id so the aging view can render names. Bills with no positive total
- * are skipped (accounting.bills enforces amount_cents > 0). No-op unless
- * QBO_AP_BILLS_PROJECTION_ENABLED=true.
+ * are skipped (accounting.bills enforces amount_cents > 0). No-op unless the QBO_AP_BILLS_PROJECTION_ENABLED feature flag is ON for this entity.
  */
 export async function projectApBillsToLedger(operatingCompanyId: string): Promise<ApBillsProjectResult> {
   const projectedAt = new Date().toISOString();
-  if (!AP_BILLS_PROJECTION_ENABLED) {
-    return { enabled: false, rowsProjected: 0, projectedAt };
-  }
 
+  let enabled = false;
   let rowsProjected = 0;
 
   await withLuciaBypass(async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    enabled = await isEnabled(client, AP_BILLS_PROJECTION_FLAG, {
+      operating_company_id: operatingCompanyId,
+    });
+    if (!enabled) return;
     const res = await client.query(
       `
         INSERT INTO accounting.bills (
@@ -269,5 +273,5 @@ export async function projectApBillsToLedger(operatingCompanyId: string): Promis
     rowsProjected = res.rowCount ?? 0;
   });
 
-  return { enabled: true, rowsProjected, projectedAt };
+  return { enabled, rowsProjected, projectedAt };
 }
