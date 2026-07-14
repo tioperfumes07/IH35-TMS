@@ -763,6 +763,10 @@ jobs:
       - name: verify:home-attention-late-canonical
         run: npm run verify:home-attention-late-canonical
 
+      # CI-WIRE-DEAD-GUARD: verify-no-test-fixture-names existed but was wired into no runner
+      # (dead guard = false protection). Green, DB-free, static, non-financial. No --selftest support.
+      - name: verify:no-test-fixture-names
+        run: npm run verify:no-test-fixture-names
       - name: verify:border-crossing-canonical-relations --selftest
         run: node scripts/verify-border-crossing-canonical-relations.mjs --selftest
       - name: verify:border-crossing-canonical-relations
