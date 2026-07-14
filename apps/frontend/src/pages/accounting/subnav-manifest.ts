@@ -114,6 +114,44 @@ export const ACCOUNTING_MORE_TABS = [
   { label: "Settings",          to: "/accounting/settings/expense-category-map" },
 ] as const;
 
+/**
+ * C7-ACCT-SUBNAV-CHROME — QBO-parity mirror-scope items, in QuickBooks' exact order.
+ *
+ * Source: docs/specs/qbo-parity/QBO_PARITY_UI_SYSTEM.md B5 ("Accounting sub-nav (mirror scope,
+ * additive)"). These are the same 11 items + exact labels/order that shipped in the original C7
+ * commit (PR #865 / 282b9b41c, "Accounting sub-nav 12 QBO items + global topbar + Create / Tasks")
+ * as `QBO_ACCOUNTING_SUBNAV`. That array was rendered through a standalone left-rail component
+ * (`QboAccountingSubNav.tsx`) which nav-unification (PR #1552) deliberately deleted for violating
+ * the top-bar-only nav rule (CLAUDE.md §7) — but the array itself, and the routes it pointed at,
+ * were never re-wired into the surviving `AccountingSubNavWrapper` chrome. That left these 11 pages
+ * (6 of them dedicated shell routes: Receipts / Integration Transactions / Revenue Recognition /
+ * Fixed Assets / Prepaid Expenses / My Accountant, plus Recurring Transactions, plus the 3 items
+ * that route into the Banking module) reachable ONLY by typing the URL directly — no link anywhere
+ * in the Accounting module chrome. This constant + the "QBO ▾" menu in AccountingSubNavWrapper is
+ * the additive fix: it restores reachability without touching/reordering ACCOUNTING_CLEAN_TABS or
+ * ACCOUNTING_MORE_TABS (Chart of Accounts intentionally appears in BOTH menus — its existing position
+ * in ACCOUNTING_MORE_TABS is untouched; this list needs it too to preserve the QBO relative order).
+ *
+ * NOTE ON THE "12" COUNT: the original commit message + `docs/trackers/MASTER_TRACKER_2026-06-17.md`
+ * both say "12 QBO items", but neither the canonical spec (line above) nor the original
+ * `QBO_ACCOUNTING_SUBNAV` array ever enumerated more than these 11 — the "12" does not resolve to a
+ * documented 12th item anywhere in docs/specs/ or docs/trackers/. Treated as a historical miscount,
+ * not a missing item; do not invent a 12th entry.
+ */
+export const ACCOUNTING_QBO_MIRROR_TABS = [
+  { label: "Bank transactions",        to: "/banking" },
+  { label: "Integration transactions", to: "/accounting/integration-transactions" },
+  { label: "Receipts",                 to: "/accounting/receipts" },
+  { label: "Reconcile",                to: "/banking/reconcile" },
+  { label: "Rules",                    to: "/banking/categorization-rules" },
+  { label: "Chart of accounts",        to: "/lists/accounting/chart-of-accounts" },
+  { label: "Recurring transactions",   to: "/accounting/recurring-transactions" },
+  { label: "Revenue recognition",      to: "/accounting/revenue-recognition" },
+  { label: "Fixed assets",             to: "/accounting/fixed-assets" },
+  { label: "Prepaid expenses",         to: "/accounting/prepaid-expenses" },
+  { label: "My accountant",            to: "/accounting/my-accountant" },
+] as const;
+
 export const ACCOUNTING_SUB_NAV_ITEMS: readonly NavItem[] = [
   {
     label: GROUP_LABELS.bills,

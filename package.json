@@ -306,6 +306,7 @@
     "verify:qbo-sync-status-endpoints-return-200": "node scripts/verify-qbo-sync-status-endpoints-return-200.mjs",
     "verify:no-clipped-subtabs-at-1024": "node scripts/verify-no-clipped-subtabs-at-1024.mjs",
     "verify:accounting-subpages-have-subnav": "node scripts/verify-accounting-subpages-have-subnav.mjs",
+    "verify:accounting-subnav-order": "node scripts/verify-accounting-subnav-order.mjs",
     "verify:list-cards-are-anchors": "node scripts/verify-list-cards-are-anchors.mjs",
     "verify:invoice-create-does-not-leave-accounting": "node scripts/verify-invoice-create-does-not-leave-accounting.mjs",
     "verify:factoring-destructive-actions-have-confirm": "node scripts/verify-factoring-destructive-actions-have-confirm.mjs",
