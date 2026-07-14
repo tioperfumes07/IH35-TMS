@@ -1362,7 +1362,7 @@ export function DriverDetailPage() {
       {activeTab === "Documents" ? (
         canViewDocuments ? (
           <ErrorBoundary>
-            <DocumentsTab entityType="driver" entityId={driver.id} entityName={`${driver.first_name} ${driver.last_name}`} />
+            <DocumentsTab entityType="driver" entityId={driver.id} entityName={`${driver.first_name} ${driver.last_name}`} operatingCompanyId={driver.operating_company_id ?? companyId} />
           </ErrorBoundary>
         ) : (
           <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">

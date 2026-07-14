@@ -1594,7 +1594,7 @@ export function CustomerDetailPage() {
       {activeTab === "Documents" ? (
         canViewDocuments ? (
           <ErrorBoundary>
-            <DocumentsTab entityType="customer" entityId={customer.id} entityName={customer.name} />
+            <DocumentsTab entityType="customer" entityId={customer.id} entityName={customer.name} operatingCompanyId={operatingCompanyId ?? undefined} />
           </ErrorBoundary>
         ) : (
           <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600">

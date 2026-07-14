@@ -25,6 +25,11 @@ type DocumentsTabProps = {
   entityType: "driver" | "customer" | "vendor" | "unit" | "equipment" | "load";
   entityId: string;
   entityName: string;
+  // FIX-2 (docs-upload-viewed-entity): the VIEWED operating company (from CompanyContext at the
+  // call site). Threaded into UploadModal so the upload files under the entity being viewed, not
+  // the uploader's default_company_id — same root cause/fix as vehicle/trailer DocumentsSection.
+  // Optional because some callers (e.g. LoadDetailDrawer) may not always have it loaded yet.
+  operatingCompanyId?: string;
 };
 
 function formatDate(value: string | null) {
@@ -35,7 +40,7 @@ function isUuid(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
-export function DocumentsTab({ entityType, entityId, entityName }: DocumentsTabProps) {
+export function DocumentsTab({ entityType, entityId, entityName, operatingCompanyId }: DocumentsTabProps) {
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const { user } = useAuth();
@@ -245,6 +250,7 @@ export function DocumentsTab({ entityType, entityId, entityName }: DocumentsTabP
           entityType={entityType}
           entityId={entityId}
           entityName={entityName}
+          operatingCompanyId={operatingCompanyId}
           onClose={() => setUploadOpen(false)}
           onUploadSuccess={() => {
             setUploadOpen(false);
