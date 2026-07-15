@@ -17,7 +17,10 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-no-swallow-on-money-paths";
 const SRC = path.join(ROOT, "apps/backend/src");
-const MONEY = /accounting\/|poster\.service|driver-finance\/|-posting\/|spine-emit|factoring\/|settlement/i;
+// D4 (2026-07-15): also cover banking/ and qbo-sync/ — the QBO A/P puller path (qbo-sync/) is where a
+// swallowed error hid the "A/P bills = $0" failure (B-A2), and banking/ carries GL-affecting money paths.
+// Verified this broadening keeps the guard green (0 existing swallows there) — pure coverage extension.
+const MONEY = /accounting\/|poster\.service|driver-finance\/|-posting\/|spine-emit|factoring\/|settlement|qbo-sync\/|banking\//i;
 // empty catch OR catch whose body is only comments/whitespace = silent swallow
 const SWALLOW = /catch\s*\([^)]*\)\s*\{\s*(\/\/[^\n]*\s*|\/\*[\s\S]*?\*\/\s*)*\}/g;
 
