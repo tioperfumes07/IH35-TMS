@@ -157,12 +157,21 @@ const CONTENT_SCAN_EXCLUDE = [
 ];
 const isExcludedFromContentScan = (f) => CONTENT_SCAN_EXCLUDE.some((re) => re.test(f));
 
-const GL_CONTENT_PATH_RE = /(apps\/backend\/src\/accounting\/|apps\/backend\/src\/driver-finance\/).*\.ts$/;
+// Path coverage (2026-07-15, D2 map): GL writes also live OUTSIDE accounting/ + driver-finance/ — the posting
+// engine is called from banking/ (bank-feed-gl, transfers, bank-driver-advance, bulk-transactions),
+// bill-payments/ (cc-payment), and cash-advances/ (disburse). A GL-writing file in those dirs previously
+// bypassed the content scan entirely (a real self-merge risk). Include them.
+const GL_CONTENT_PATH_RE = /apps\/backend\/src\/(accounting|driver-finance|banking|bill-payments|cash-advances)\/.*\.ts$/;
+// GL-write markers. Beyond the raw INSERT + the direct journal-entry helpers, a file that posts by CALLING the
+// posting engine (postSourceTransaction / postVoidReversal / voidJournalEntry / reverse*) is just as much a GL
+// writer — the D2 map found 15 such files invisible to the old marker set. Match those poster entry points too.
+// (postSourceTransactionInClientTx is covered by the postSourceTransaction substring.)
 const GL_WRITE_MARKERS = [
   /INSERT\s+INTO\s+accounting\.journal/i,
   /journal_entry_postings/i,
   /journal_entries/i,
   /postJournalEntry|insertJournalEntry|createJournalEntry|buildBalancedJe|postBalancedJe/i,
+  /postSourceTransaction|reversePostedSourceTransaction|reverseJournalEntryNoFlip|voidJournalEntry|postVoidReversal/i,
   /payment_applications/i,
 ];
 
@@ -264,6 +273,11 @@ function selfTest() {
     { name: "posting tooling -> fail", in: { title: "x", labels: [], changedFiles: ["apps/backend/src/accounting/posting-engine.service.ts"], diffByFile: {} }, want: "fail" },
     { name: "accounting .ts WITHOUT GL markers -> neutral", in: { title: "x", labels: [], changedFiles: ["apps/backend/src/accounting/ar-aging.service.ts"], diffByFile: { "apps/backend/src/accounting/ar-aging.service.ts": "+ const x = 1;" } }, want: "pass-neutral" },
     { name: "accounting .ts WITH GL write -> fail", in: { title: "x", labels: [], changedFiles: ["apps/backend/src/accounting/bills.service.ts"], diffByFile: { "apps/backend/src/accounting/bills.service.ts": "+ await client.query('INSERT INTO accounting.journal_entries ...')" } }, want: "fail" },
+    // D2 marker/path coverage (2026-07-15): a file that POSTS by calling the engine (no raw INSERT) is a GL writer.
+    { name: "accounting file calling postSourceTransaction -> fail", in: { title: "x", labels: [], changedFiles: ["apps/backend/src/accounting/bills.service.ts"], diffByFile: { "apps/backend/src/accounting/bills.service.ts": "+ await postSourceTransaction(client, { source: 'bill', ... });" } }, want: "fail" },
+    { name: "banking GL poster (bank-feed) -> fail (path now covered)", in: { title: "x", labels: [], changedFiles: ["apps/backend/src/banking/bank-feed-gl-posting.service.ts"], diffByFile: { "apps/backend/src/banking/bank-feed-gl-posting.service.ts": "+ const je = await postSourceTransaction(client, payload);" } }, want: "fail" },
+    { name: "cash-advances disburse posting voidReversal -> fail", in: { title: "x", labels: [], changedFiles: ["apps/backend/src/cash-advances/cash-advance-disburse.ts"], diffByFile: { "apps/backend/src/cash-advances/cash-advance-disburse.ts": "+ await postVoidReversal(client, jeId);" } }, want: "fail" },
+    { name: "benign banking .ts (no GL marker) -> neutral (broadening does not over-trigger)", in: { title: "x", labels: [], changedFiles: ["apps/backend/src/banking/bank-account-visibility.ts"], diffByFile: { "apps/backend/src/banking/bank-account-visibility.ts": "+ const hidden = rows.filter((r) => r.is_hidden);" } }, want: "pass-neutral" },
     { name: "flag flip ON -> fail", in: { title: "x", labels: [], changedFiles: ["apps/backend/src/accounting/expenses.routes.ts"], diffByFile: { "apps/backend/src/accounting/expenses.routes.ts": "-  EXPENSE_GL_POSTING_ENABLED = false\n+  EXPENSE_GL_POSTING_ENABLED = true" } }, want: "fail" },
     { name: "flag flip ON, but JORGE-APPROVED -> pass", in: { title: "x", labels: ["JORGE-APPROVED"], changedFiles: ["a.ts"], diffByFile: { "a.ts": "+ FEATURE_VOID_ENABLED = 'on'" } }, want: "pass-approved" },
     { name: "plain frontend PR -> neutral", in: { title: "feat(ux): table", labels: [], changedFiles: ["apps/frontend/src/pages/Vendors.tsx"], diffByFile: { "apps/frontend/src/pages/Vendors.tsx": "+ <div/>" } }, want: "pass-neutral" },
