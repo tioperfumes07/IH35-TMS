@@ -244,6 +244,11 @@
     },
     {
       "file": "202607410000_claim_crossmodule_fks.sql",
-      "reason": "[HOLD-FOR-JORGE — TIER 1] 11-insurance G11-1 (LINKAGE half only) — insurance.claim forward FKs: accident_report_id -> safety.accident_reports, load_id -> mdata.loads, driver_id -> mdata.drivers (all ON DELETE SET NULL). Every prior cross-module FK pointed INTO the claim (P4-01/02/05); the claim itself had no forward link to its accident/load/driver. Additive cols all-NULL on add so inline FK holds trivially (no NOT VALID, no backfill). Canonical hubs only (NOT dispatch.loads). FORCED RLS + grants unchanged (cols inherit the 0285 tenant_id-scoped policy). NO GL/posting (payout-JE is design-only). Verified vs live prod (Neon br-raspy-haze). Run only on a Neon branch by Jorge, then ledger-backfill."    }
+      "reason": "[HOLD-FOR-JORGE — TIER 1] 11-insurance G11-1 (LINKAGE half only) — insurance.claim forward FKs: accident_report_id -> safety.accident_reports, load_id -> mdata.loads, driver_id -> mdata.drivers (all ON DELETE SET NULL). Every prior cross-module FK pointed INTO the claim (P4-01/02/05); the claim itself had no forward link to its accident/load/driver. Additive cols all-NULL on add so inline FK holds trivially (no NOT VALID, no backfill). Canonical hubs only (NOT dispatch.loads). FORCED RLS + grants unchanged (cols inherit the 0285 tenant_id-scoped policy). NO GL/posting (payout-JE is design-only). Verified vs live prod (Neon br-raspy-haze). Run only on a Neon branch by Jorge, then ledger-backfill."
+    },
+    {
+      "file": "202607450000_relay_wallet_banking_registration.sql",
+      "reason": "[HOLD-FOR-JORGE — FINANCIAL] CONN-3 Part B step 1 — register the Relay Fuel Wallet (catalogs.accounts #1295) as a banking.bank_accounts row (account_class='depository', mirrors QBO Relay bank account) so it appears on /banking. Additive, idempotent, no GL. Depends on 202607290000 (wallet seed) applied first. Owner runs on a Neon branch."
+    }
   ]
 }
