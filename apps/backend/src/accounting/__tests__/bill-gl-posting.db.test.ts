@@ -10,7 +10,7 @@
  */
 import { randomUUID } from "node:crypto";
 import pg from "pg";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
 import { ensureIntegrationPrerequisites } from "../../../test-helpers/db-fixture.js";
 import { postSourceTransaction, PostingEngineError } from "../posting-engine.service.js";
@@ -46,6 +46,37 @@ describeIntegration("bill → GL posting end-to-end (real Postgres)", () => {
     try { const r = await db.query(sql, params); await db.query("COMMIT"); return r.rows as T[]; }
     catch (e) { await db.query("ROLLBACK").catch(() => {}); throw e; }
   }
+
+  // ── Shared-singleton COA-role serialization (TEST HYGIENE) ───────────────────────────────────────────
+  // ap_control is a per-(company, role) SINGLETON on the shared TRANSP company and is ALSO seeded by
+  // bill-payment-gl-posting / bank-transaction-splits / settlement-bill-payment (which already hold this
+  // lock). Under vitest pool:"forks" a parallel sibling can delete/repoint the active ap_control row between
+  // this file's seed and its liveRole()/posting reads. Serialize on the SAME advisory lock and re-ensure
+  // the roles inside the lock before each test. Enforced by scripts/verify-shared-coa-role-tests-serialized.mjs.
+  const COA_ROLE_TEST_LOCK = 4200000001;
+  async function ensureRolesMapped() {
+    await bypass(async () => {
+      await db.query(
+        `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
+         VALUES ($1::uuid,'ap_control',$2::uuid,true)
+         ON CONFLICT (operating_company_id, role) WHERE is_active = true DO NOTHING`,
+        [companyId, apAccountId]
+      );
+      await db.query(
+        `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
+         VALUES ($1::uuid,'uncategorized_expense',$2::uuid,true)
+         ON CONFLICT (operating_company_id, role) WHERE is_active = true DO NOTHING`,
+        [companyId, uncatAccountId]
+      );
+    });
+  }
+  beforeEach(async () => {
+    await db.query("SELECT pg_advisory_lock($1::bigint)", [COA_ROLE_TEST_LOCK]);
+    await ensureRolesMapped();
+  });
+  afterEach(async () => {
+    await db.query("SELECT pg_advisory_unlock($1::bigint)", [COA_ROLE_TEST_LOCK]).catch(() => {});
+  });
 
   beforeAll(async () => {
     companyId = await ensureIntegrationPrerequisites();
@@ -89,6 +120,9 @@ describeIntegration("bill → GL posting end-to-end (real Postgres)", () => {
   afterAll(async () => {
     if (!db) return;
     try {
+      // Serialize the shared ap_control / uncategorized_expense role deletes on the lock the per-test hooks
+      // use, so they can't run while a parallel sibling holds a role window.
+      await db.query("SELECT pg_advisory_lock($1::bigint)", [COA_ROLE_TEST_LOCK]);
       await bypass(async () => {
         await db.query(`DELETE FROM accounting.journal_entry_postings WHERE source_transaction_id = ANY($1) AND source_transaction_type='bill'`, [createdBillIds]);
         await db.query(`DELETE FROM accounting.posting_batches WHERE source_transaction_id = ANY($1) AND source_transaction_type='bill'`, [createdBillIds]);
@@ -98,6 +132,7 @@ describeIntegration("bill → GL posting end-to-end (real Postgres)", () => {
         await db.query(`DELETE FROM accounting.chart_of_accounts_roles WHERE operating_company_id=$1::uuid AND account_id = ANY($2::uuid[])`, [companyId, [apAccountId, uncatAccountId]]);
       });
     } catch { /* best-effort cleanup */ }
+    finally { await db.query("SELECT pg_advisory_unlock($1::bigint)", [COA_ROLE_TEST_LOCK]).catch(() => {}); }
     await db.end();
   });
 

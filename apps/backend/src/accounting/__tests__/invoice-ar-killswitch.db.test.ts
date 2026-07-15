@@ -15,7 +15,7 @@
 import { randomUUID } from "node:crypto";
 import type { FastifyInstance } from "fastify";
 import pg from "pg";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
 import { ensureIntegrationPrerequisites, getOperatingCompanyId } from "../../../test-helpers/db-fixture.js";
 import { createIntegrationApp } from "../../../test-helpers/http-app.js";
@@ -77,6 +77,31 @@ describeIntegration("CHAIN-06 invoice→A/R kill switch (real Postgres, route le
     );
     return Number(rows[0].c);
   }
+
+  // ── Shared-singleton COA-role serialization (TEST HYGIENE) ───────────────────────────────────────────
+  // ar_control is a per-(company, role) SINGLETON on the shared TRANSP company and is ALSO seeded by
+  // chain-06-factoring-ar-tieout.db.test.ts. Under vitest pool:"forks" this file's afterAll delete could
+  // clobber chain-06's active mapping mid-window (and vice-versa). Serialize on the same advisory lock the
+  // ap_control writers use, and re-ensure ar_control inside the lock before each test.
+  // Enforced by scripts/verify-shared-coa-role-tests-serialized.mjs.
+  const COA_ROLE_TEST_LOCK = 4200000001;
+  async function ensureArControlMapped() {
+    await bypass(async () => {
+      await db.query(
+        `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
+         VALUES ($1::uuid,'ar_control',$2::uuid,true)
+         ON CONFLICT (operating_company_id, role) WHERE is_active = true DO NOTHING`,
+        [companyId, arAccountId]
+      );
+    });
+  }
+  beforeEach(async () => {
+    await db.query("SELECT pg_advisory_lock($1::bigint)", [COA_ROLE_TEST_LOCK]);
+    await ensureArControlMapped();
+  });
+  afterEach(async () => {
+    await db.query("SELECT pg_advisory_unlock($1::bigint)", [COA_ROLE_TEST_LOCK]).catch(() => {});
+  });
 
   beforeAll(async () => {
     companyId = await ensureIntegrationPrerequisites();
@@ -147,6 +172,9 @@ describeIntegration("CHAIN-06 invoice→A/R kill switch (real Postgres, route le
     if (app) await app.close();
     if (!db) return;
     try {
+      // Serialize the shared ar_control role delete on the same lock the per-test hooks use, so it can't
+      // run while a parallel sibling (chain-06) holds a role window.
+      await db.query("SELECT pg_advisory_lock($1::bigint)", [COA_ROLE_TEST_LOCK]);
       await bypass(async () => {
         await db.query(`DELETE FROM accounting.journal_entry_postings WHERE source_transaction_id=$1 AND source_transaction_type='invoice'`, [invoiceId]);
         await db.query(`DELETE FROM accounting.posting_batches WHERE source_transaction_id=$1 AND source_transaction_type='invoice'`, [invoiceId]);
@@ -159,6 +187,7 @@ describeIntegration("CHAIN-06 invoice→A/R kill switch (real Postgres, route le
         await db.query(`DELETE FROM org.user_company_access WHERE user_id=$1::uuid AND company_id=$2::uuid`, [userId, companyId]);
       });
     } catch { /* best-effort cleanup */ }
+    finally { await db.query("SELECT pg_advisory_unlock($1::bigint)", [COA_ROLE_TEST_LOCK]).catch(() => {}); }
     await db.end();
   });
 
