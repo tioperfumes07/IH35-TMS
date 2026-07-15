@@ -42,25 +42,8 @@ CREATE POLICY event_log_opco_select ON events.event_log
 -- public.audit_log: add opco, backfill, enable+force RLS, WORM policy
 -- ============================================================================
 ALTER TABLE public.audit_log ADD COLUMN IF NOT EXISTS operating_company_id uuid;
-
--- Add the column to every existing partition so it inherits the parent; partitions created later inherit
--- automatically. This is a no-op if already present.
-DO $partitions$
-DECLARE
-  part text;
-BEGIN
-  FOR part IN
-    SELECT inh.relname
-    FROM pg_inherits
-    JOIN pg_class parent ON pg_inherits.inhparent = parent.oid
-    JOIN pg_class inh ON pg_inherits.inhrelid = inh.oid
-    JOIN pg_namespace n ON n.oid = parent.relnamespace
-    WHERE parent.relname = 'audit_log' AND n.nspname = 'public'
-  LOOP
-    EXECUTE format('ALTER TABLE public.%I ADD COLUMN IF NOT EXISTS operating_company_id uuid', part);
-  END LOOP;
-END
-$partitions$;
+-- The column automatically propagates from the parent partitioned table to all existing and future
+-- partitions; Postgres forbids adding it directly to a partition.
 
 -- Best-effort backfill for known entity-scoped tables referenced by audit_log.table_name/record_id.
 -- Each UPDATE is independent so a missing/split table does not abort the rest. NULL rows are left for the
