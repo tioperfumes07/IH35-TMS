@@ -32,12 +32,19 @@ else pass("ACCOUNTING_CLEAN_TABS exported from subnav-manifest");
 if (!wrapper.includes("startsWith(`${to}/`)")) fail("AccountingSubNavWrapper must keep nested-route tab-active matching (was HoverDropdownNav's job pre-unification)");
 else pass("AccountingSubNavWrapper correctly keeps nested-route tab-active matching (post-unification)");
 
-// AccountingSubNavWrapper uses ACCOUNTING_CLEAN_TABS from manifest (not a local duplicate)
+// AccountingSubNavWrapper renders the grouped nav from the manifest (not a local duplicate)
 if (wrapper.includes("const ACCOUNTING_TABS")) fail("AccountingSubNavWrapper still defines local ACCOUNTING_TABS (should import from manifest)");
 else pass("AccountingSubNavWrapper: no local ACCOUNTING_TABS duplicate");
 
-if (!wrapper.includes("ACCOUNTING_CLEAN_TABS")) fail("AccountingSubNavWrapper does not use ACCOUNTING_CLEAN_TABS from manifest");
-else pass("AccountingSubNavWrapper uses ACCOUNTING_CLEAN_TABS from manifest");
+// REDESIGN (approved 3-Accounting-Dropdown.png + NAVIGATION-PATTERN-RULE): the wrapper renders the
+// grouped click-open HoverDropdownNav sourced from ACCOUNTING_SUB_NAV_ITEMS, superseding the flat
+// ACCOUNTING_CLEAN_TABS render (undocumented #1552 drift). The CLEAN_TABS export is retained in the
+// manifest (asserted below) but is no longer rendered.
+if (!wrapper.includes("ACCOUNTING_SUB_NAV_ITEMS")) fail("AccountingSubNavWrapper must render grouped ACCOUNTING_SUB_NAV_ITEMS from manifest");
+else pass("AccountingSubNavWrapper renders grouped ACCOUNTING_SUB_NAV_ITEMS from manifest");
+
+if (!wrapper.includes("HoverDropdownNav")) fail("AccountingSubNavWrapper must render the shared HoverDropdownNav (top-bar grouped dropdowns)");
+else pass("AccountingSubNavWrapper renders the shared HoverDropdownNav");
 
 // Factoring tab present in clean tabs
 if (!manifest.includes('"Factoring"') || !manifest.includes('"/accounting/factoring"')) fail("ACCOUNTING_CLEAN_TABS missing Factoring tab");

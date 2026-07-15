@@ -6,9 +6,19 @@ import "./HoverDropdownNav.css";
 export type NavChild = { label: string; href: string };
 export type NavItem = { label: string; href?: string; children?: readonly NavChild[] };
 
+/**
+ * `openOn` selects the group-menu open trigger:
+ *  - "hover" (DEFAULT) — legacy hover-reveal with a 150ms exit grace (Dispatch/Reports/Lists/Maintenance).
+ *  - "click" — the group menu opens on CLICK and STAYS OPEN until an item is chosen, an outside click,
+ *    or Escape (NOT hover). This is the LOCKED top-bar sub-nav rule per Jorge directive 2026-06-09
+ *    (`docs/specs/NAVIGATION-PATTERN-RULE.md`). Keyboard open (Enter/Space/ArrowDown) works in both modes.
+ */
+export type NavOpenTrigger = "hover" | "click";
+
 export type HoverDropdownNavProps = {
   items: NavItem[];
   activeHref?: string;
+  openOn?: NavOpenTrigger;
 };
 
 const EXIT_MS = 150;
@@ -19,9 +29,18 @@ function itemOrChildActive(item: NavItem, activeHref?: string): boolean {
   return item.children?.some((c) => c.href === activeHref) ?? false;
 }
 
-function DropdownColumn({ item, activeHref }: { item: NavItem; activeHref?: string }) {
+function DropdownColumn({
+  item,
+  activeHref,
+  openOn,
+}: {
+  item: NavItem;
+  activeHref?: string;
+  openOn: NavOpenTrigger;
+}) {
   const menuId = useId().replace(/:/g, "");
   const [open, setOpen] = useState(false);
+  const isClick = openOn === "click";
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const menuRef = useRef<HTMLUListElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -126,7 +145,10 @@ function DropdownColumn({ item, activeHref }: { item: NavItem; activeHref?: stri
 
   return (
     <li role="none" className="nav-item-with-dropdown">
-      <div onMouseEnter={show} onMouseLeave={scheduleHide}>
+      <div
+        onMouseEnter={isClick ? undefined : show}
+        onMouseLeave={isClick ? undefined : scheduleHide}
+      >
         <button
           ref={btnRef}
           type="button"
@@ -136,6 +158,7 @@ function DropdownColumn({ item, activeHref }: { item: NavItem; activeHref?: stri
           aria-controls={menuId}
           className={parentActive ? "active" : undefined}
           id={`${menuId}-trigger`}
+          onClick={isClick ? () => setOpen((o) => !o) : undefined}
           onKeyDown={onButtonKeyDown}
         >
           {item.label}
@@ -183,16 +206,23 @@ function LeafItem({ item, activeHref }: { item: NavItem; activeHref?: string }) 
 }
 
 /**
- * Top horizontal hover sub-nav (invariant #20). Dropdown width follows longest label (MUST 6.3.1.1).
- * Not wired to module routes in this primitive commit.
+ * Top horizontal grouped sub-nav (invariant #20). Dropdown width follows longest label (MUST 6.3.1.1).
+ * `openOn` selects hover-reveal (default, legacy) vs. click-open-persistent (LOCKED top-bar rule).
  */
-export function HoverDropdownNav({ items, activeHref }: HoverDropdownNavProps) {
+export function HoverDropdownNav({ items, activeHref, openOn = "hover" }: HoverDropdownNavProps) {
   return (
-    <nav className="hover-dropdown-nav" aria-label="Module sub-navigation (hover dropdown)">
+    <nav
+      className="hover-dropdown-nav"
+      aria-label={
+        openOn === "click"
+          ? "Module sub-navigation (click dropdown)"
+          : "Module sub-navigation (hover dropdown)"
+      }
+    >
       <ul role="menubar">
         {items.map((item) =>
           item.children?.length ? (
-            <DropdownColumn key={item.label} item={item} activeHref={activeHref} />
+            <DropdownColumn key={item.label} item={item} activeHref={activeHref} openOn={openOn} />
           ) : (
             <LeafItem key={item.label} item={item} activeHref={activeHref} />
           ),
