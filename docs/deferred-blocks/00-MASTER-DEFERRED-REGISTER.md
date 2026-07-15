@@ -67,6 +67,15 @@ PHASE D — FINANCIAL (max rigor · double-entry · GATED on explicit OK · need
 PHASE E — FINAL
   E1  SMOKE-SERVICE-TOKEN-AUTH     (final hardening/smoke)
 
+PHASE F — INFRA (owner-scheduled, no product urgency — sequence AFTER product work)
+  F1  TS7-NATIVE-MIGRATION         (TypeScript 7 native/major, 5.9.3→7.x — dedicated
+                                    owner-scheduled block: pin the version → run the TS
+                                    migration codemod → fix breakages module-by-module →
+                                    full verify:local-ci green → staged rollout. Build-time
+                                    only, no runtime/security exposure; 5.9.3 is supported.
+                                    Dependabot #2425 closed 2026-07-14 rather than left
+                                    permanent-red as queue noise.)
+
 ═══════════════════════════════════════════════════════════════════════════════
 DEPENDENCY NOTES
 ═══════════════════════════════════════════════════════════════════════════════

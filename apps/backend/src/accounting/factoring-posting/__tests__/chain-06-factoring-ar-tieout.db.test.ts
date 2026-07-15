@@ -31,7 +31,7 @@
  */
 import crypto, { randomUUID } from "node:crypto";
 import pg from "pg";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../../lib/pg-connection-options.js";
 import { ensureIntegrationPrerequisites } from "../../../../test-helpers/db-fixture.js";
 import { TEST_OWNER_USER_ID, TEST_ENCRYPTION_KEY } from "../../../../test-helpers/constants.js";
@@ -226,6 +226,26 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
         [companyId, `TEST-REALM-T06-${suffix}`, encryptTestToken("test-access-token"), encryptTestToken("test-refresh-token"), TEST_OWNER_USER_ID]
       );
     });
+  });
+
+  // ── Shared-singleton COA-role serialization (TEST HYGIENE — poster.service.ts is UNCHANGED) ──────────
+  // ar_control (also seeded by invoice-ar-killswitch.db.test.ts) and cash_clearing are per-(company, role)
+  // SINGLETONs on the shared TRANSP prerequisite company — ensureIntegrationPrerequisites() hands every
+  // db.test the SAME company. Under vitest pool:"forks" a parallel sibling's afterAll can DELETE the active
+  // role row between this file's seed and its liveRole()/poster reads, so liveRole() throws "no mapped
+  // ar_control role" (the flake). Serialize on the SAME advisory lock the ap_control writers already use
+  // (bill-payment-gl-posting / bank-transaction-splits / settlement-bill-payment) and RE-ENSURE the roles
+  // inside the lock before each test, so every test window observes a valid, stable mapping. This does NOT
+  // touch the poster's entity-scoped FACTORING_GL_POSTING_ENABLED resolution or its role resolution.
+  // Enforced by scripts/verify-shared-coa-role-tests-serialized.mjs.
+  const COA_ROLE_TEST_LOCK = 4200000001;
+  beforeEach(async () => {
+    await db.query("SELECT pg_advisory_lock($1::bigint)", [COA_ROLE_TEST_LOCK]);
+    await ensureRoleMapped("cash_clearing");
+    await ensureRoleMapped("ar_control");
+  });
+  afterEach(async () => {
+    await db.query("SELECT pg_advisory_unlock($1::bigint)", [COA_ROLE_TEST_LOCK]).catch(() => {});
   });
 
   afterAll(async () => {
