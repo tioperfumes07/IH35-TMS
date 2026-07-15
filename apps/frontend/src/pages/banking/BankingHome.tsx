@@ -14,6 +14,7 @@ import {
 } from "../../api/banking";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { MoneyInput } from "../../components/forms/MoneyInput";
+import { EntityEmptyState } from "../../components/shared/EntityEmptyState";
 import { PlaidLinkButton } from "../../components/banking/PlaidLinkButton";
 import { PlaidLink } from "../../components/banking/PlaidLink";
 import { PlaidSyncStatusPanel } from "../../components/banking/PlaidSyncStatusPanel";
@@ -53,7 +54,7 @@ type Props = {
 export function BankingHomePage({ initialTab }: Props = {}) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { selectedCompanyId } = useCompanyContext();
+  const { selectedCompanyId, selectedCompany } = useCompanyContext();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const companyId = selectedCompanyId ?? "";
@@ -372,7 +373,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                     <span className="font-medium">{money.format(row.balance)}</span>
                   </button>
                 ))}
-                {bankAccountsPanelRows.length === 0 ? <p className="px-3 py-3 text-sm text-gray-500">No accounts yet.</p> : null}
+                {bankAccountsPanelRows.length === 0 ? <EntityEmptyState entityName={selectedCompany?.legal_name} noun="bank accounts" /> : null}
               </div>
               <label className="flex cursor-pointer items-center gap-2 px-3 py-2 text-xs text-gray-600">
                 <input type="checkbox" checked={showDisconnectedBankAccounts} onChange={(e) => setShowDisconnectedBankAccounts(e.target.checked)} />
