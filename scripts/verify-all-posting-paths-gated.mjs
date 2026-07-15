@@ -17,10 +17,9 @@
  *      request body), so a literal scan can't see it. Enforce that it references `isEnabled(` AND the
  *      posting flag for every source type it can post (bill / bill_payment / customer_payment / invoice).
  *
- * SCOPE NOTE — `driver_advance` is intentionally NOT monitored here. Its posting flag
- * (BANK_DRIVER_ADVANCE_ENABLED) is enforced at the bank-categorization / cash-advance-request layer, not
- * inside the shared disburse core (cash-advances/cash-advance-disburse.ts). Gating that shared core is a
- * separate item; adding it to this guard would flag a pre-existing, out-of-scope path.
+ * SCOPE NOTE — `driver_advance` is now monitored via its dedicated per-entity posting flag
+ * DRIVER_ADVANCE_GL_POSTING_ENABLED inside cash-advances/cash-advance-disburse.ts. The older
+ * BANK_DRIVER_ADVANCE_ENABLED gate at the bank-categorization layer remains separate.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -44,6 +43,7 @@ const MONITORED = {
   customer_payment: ["CUSTOMER_PAYMENT_GL_POSTING_ENABLED", "CUSTOMER_PAYMENT_GL_POSTING_FLAG_KEY"],
   invoice: ["INVOICE_AR_GL_POSTING_ENABLED", "INVOICE_AR_GL_POSTING_FLAG_KEY"],
   bank_categorization: ["BANK_FEED_GL_POSTING_ENABLED", "BANK_FEED_GL_POSTING_FLAG_KEY"],
+  driver_advance: ["DRIVER_ADVANCE_GL_POSTING_ENABLED", "DRIVER_ADVANCE_GL_POSTING_FLAG_KEY"],
 };
 
 // A "gate" is present if the file resolves a flag at all: the shared resolver `isEnabled(` or a known

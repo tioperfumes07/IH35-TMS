@@ -70,6 +70,8 @@ export const POSTING_FLAG_KEYS: ReadonlySet<string> = new Set([
   // single global flip could turn posting on for EVERY entity (incl. USMCA / TRK), bypassing the
   // per-entity kill-switch. Enrolled so enable is ONLY via an explicit per-entity/user override. Default OFF.
   "BANK_DRIVER_ADVANCE_ENABLED",
+  // B3-DISBURSE: the cash-advance disburse core calls postSourceTransaction('driver_advance')...
+  "DRIVER_ADVANCE_GL_POSTING_ENABLED",
   // IMPORT-P0: gates whether TMS pushes journal entries INTO QuickBooks. QBO is the system of record
   // through 12/31/2025 (double books + reconciliation, no sync-back), so this must be per-entity-only —
   // a global flip would start echoing every entity's JEs into QBO. Enable is an explicit per-entity

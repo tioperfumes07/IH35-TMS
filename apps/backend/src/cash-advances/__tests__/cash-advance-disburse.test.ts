@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 // B3: disburse + posting_date edit. Pure unit test — DB, engine, audit, role helper mocked.
 
-const { mockQuery, mockWithCurrentUser, mockPost, mockAudit } = vi.hoisted(() => {
+const { mockQuery, mockWithCurrentUser, mockPost, mockAudit, mockIsEnabled } = vi.hoisted(() => {
   const query = vi.fn();
   return {
     mockQuery: query,
@@ -11,12 +11,14 @@ const { mockQuery, mockWithCurrentUser, mockPost, mockAudit } = vi.hoisted(() =>
     ),
     mockPost: vi.fn(),
     mockAudit: vi.fn(),
+    mockIsEnabled: vi.fn(),
   };
 });
 
 vi.mock("../../auth/db.js", () => ({ withCurrentUser: mockWithCurrentUser }));
 vi.mock("../../accounting/posting-engine.service.js", () => ({ postSourceTransaction: mockPost }));
 vi.mock("../../audit/crud-audit.js", () => ({ appendCrudAudit: mockAudit }));
+vi.mock("../../lib/feature-flags/service.js", () => ({ isEnabled: mockIsEnabled }));
 // Mirror the real isOwnerOrAdmin predicate (Owner/Administrator) for test isolation.
 vi.mock("../../bulk/bulk-update.factory.js", () => ({
   isOwnerOrAdmin: (role: string) => role === "Owner" || role === "Administrator",
@@ -31,6 +33,8 @@ const CREDIT = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
 
 function installApproved() {
   mockQuery.mockReset();
+  mockIsEnabled.mockReset();
+  mockIsEnabled.mockResolvedValue(true);
   mockQuery.mockImplementation(async (sql: string) => {
     if (sql.includes("set_config")) return { rows: [] };
     if (sql.includes("SELECT") && sql.includes("driver_advances")) {
@@ -110,6 +114,24 @@ describe("disburseDriverAdvanceCore (B3)", () => {
       }),
       { userId: ACTOR }
     );
+  });
+
+  it("flag OFF: disburses but skips GL post and leaves advance unposted (no-op, no throw)", async () => {
+    mockWithCurrentUser.mockClear();
+    mockAudit.mockReset();
+    mockPost.mockReset();
+    installApproved();
+    mockIsEnabled.mockReset();
+    mockIsEnabled.mockResolvedValue(false);
+
+    const r = await disburseDriverAdvanceCore(ACTOR, "Owner", OPCO, {
+      advance_id: ADV,
+      posting_date: "2026-05-25",
+      credit_account_id: CREDIT,
+    });
+
+    expect(r.ok).toBe(true);
+    expect(mockPost).not.toHaveBeenCalled();
   });
 });
 
