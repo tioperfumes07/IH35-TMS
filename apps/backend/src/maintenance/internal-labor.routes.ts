@@ -213,31 +213,17 @@ export async function internalLaborRoutes(app: FastifyInstance) {
         `, [part.qty, part.part_id]);
       }
 
-      // 4. Post journal entry if labor cost > 0
-      // Dr. Vehicle Maintenance Expense
-      // Cr. Internal Labor Recovery
-      // Cr. Parts Inventory (asset)
-      if (closed.labor_cost_cents > 0 || totalPartsCost > 0) {
-        const totalCost = (closed.labor_cost_cents ?? 0) + totalPartsCost;
-
-        const { rows: jeRows } = await client.query(`
-          INSERT INTO accounting.journal_entries (
-            operating_company_id, entry_date, memo, status, source, created_by_user_id
-          ) VALUES ($1, current_date, $2, 'posted', 'auto', $3)
-          RETURNING id
-        `, [
-          body.operating_company_id,
-          `Internal WO close: WO ${entry.work_order_id} — labor ${closed.labor_cost_cents}¢ + parts ${totalPartsCost}¢`,
-          user.uuid,
-        ]);
-        const jeId = jeRows[0].id;
-
-        // Link JE back to labor log
-        await client.query(
-          `UPDATE maintenance.internal_labor_log SET journal_entry_id = $1 WHERE id = $2`,
-          [jeId, id]
-        );
-      }
+      // 4. GL POSTING — REMOVED (was a DEFECT): this previously INSERTed a `status='posted'`
+      // accounting.journal_entries HEADER with NO journal_entry_postings LINES — an unbalanced, empty JE
+      // (header total 0, no DR/CR), which corrupts the ledger and can never tie out. Per the void-not-fake
+      // and "no new GL math solo / reuse the existing poster" rules, we STOP writing the broken lineless JE
+      // rather than post a mis-derived entry. Closing the WO still updates the labor log + decrements parts
+      // inventory (above); it simply no longer creates an invalid JE.
+      //
+      // FOLLOW-UP (build-and-HOLD, owner-reviewed): if internal WO labor/parts should hit the GL, post a
+      // BALANCED entry through the EXISTING posting engine — DR Vehicle Maintenance Expense, CR Internal
+      // Labor Recovery (labor portion), CR Parts Inventory (parts portion) — behind a default-OFF per-entity
+      // flag, with the three accounts resolved via the CoA role resolver (no hardcoded account math here).
 
       await client.query("COMMIT");
       return closed;
