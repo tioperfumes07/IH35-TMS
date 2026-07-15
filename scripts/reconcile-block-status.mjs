@@ -160,7 +160,14 @@ for (const f of brFilesAll) {
   else if (sig.length && present.length === sig.length) { status = "DONE"; evidence = `all ${sig.length} file(s) on main`; }
   else if (tokPr) { status = "NEEDS-VERIFY"; evidence = `PR #${tokPr.number} title-match only, unverified`; }
   else if (present.length) { status = "NEEDS-VERIFY"; evidence = `${present.length}/${sig.length} signature file(s) on main — partial, unverified`; }
-  else { status = fin ? "PENDING (GATED)" : "PENDING"; evidence = sig.length ? `0/${sig.length} signature file(s) on main` : "no merged PR / no files on main"; }
+  // AUDIT-NOTE (truthful-counter fix 2026-07-16): a block with ZERO signature files (its allowed_files is a
+  // prose governance note, not file paths) and no merged branch is UNMEASURABLE by this tool — it has nothing
+  // to check on main. Calling it "PENDING (GATED)" falsely implied ~817 unbuilt financial features (the phantom
+  // 845 the owner rightly distrusted). These are module-audit FINDINGS; their real status is proven against the
+  // code / live, not this counter (many were resolved by the merged module-defect sweeps #2469–2485). We do NOT
+  // mass-mark them DONE (that would be fake-green) — we label them honestly and exclude them from the build-backlog.
+  else if (sig.length === 0) { status = "AUDIT-NOTE"; evidence = "no signature files in registry (prose note) — audit-finding; verify vs code/live, not this counter"; }
+  else { status = fin ? "PENDING (GATED)" : "PENDING"; evidence = `0/${sig.length} signature file(s) on main`; }
   const pr = mergedPr?.number ?? tokPr?.number ?? null;
   // registered_on = date a block was added to the registry (string). Distinct from any `added` field
   // (some legacy files use `added` as a file list, not a date) so the delta can't false-match.
@@ -252,14 +259,19 @@ try {
   }
 } catch { /* no overrides file — auto-detection only */ }
 
-const ORDER = { "PENDING": 0, "PENDING (GATED)": 1, "NEEDS-VERIFY": 2, "DONE": 3 };
+const ORDER = { "PENDING": 0, "PENDING (GATED)": 1, "NEEDS-VERIFY": 2, "DONE": 3, "AUDIT-NOTE": 4 };
 blocks.sort((a, b) => (ORDER[a.status] - ORDER[b.status]) || a.id.localeCompare(b.id));
 
 const counts = {};
 for (const b of blocks) counts[b.status] = (counts[b.status] || 0) + 1;
 const gatedN = blocks.filter((b) => b.status === "PENDING (GATED)").length;
 const c4 = (k) => counts[k] || 0;
-console.log(`[reconcile:blocks] ${blocks.length} blocks (unique block_id, ${brRetired} retired dup/stale/superseded excluded) — DONE=${c4("DONE")}  NEEDS-VERIFY=${c4("NEEDS-VERIFY")}  PENDING=${c4("PENDING")}  PENDING (GATED)=${c4("PENDING (GATED)")}`);
+// MEASURABLE = blocks the tool can actually verify (they carry real signature files). AUDIT-NOTE = registry
+// entries with a prose note instead of files → unmeasurable by this counter (verify vs code/live). Report both
+// so the DONE/PENDING/GATED figures reflect only measurable build-backlog, not the phantom finding count.
+const auditNoteN = c4("AUDIT-NOTE");
+const measurable = blocks.length - auditNoteN;
+console.log(`[reconcile:blocks] ${blocks.length} blocks (unique block_id, ${brRetired} retired dup/stale/superseded excluded) — DONE=${c4("DONE")}  NEEDS-VERIFY=${c4("NEEDS-VERIFY")}  PENDING=${c4("PENDING")}  PENDING (GATED)=${c4("PENDING (GATED)")}  |  MEASURABLE=${measurable}  AUDIT-NOTE=${auditNoteN} (no signature files — verify vs code, not this counter)`);
 
 // DISPATCH-D — per-block PR + delta + universe so "is block X counted?" is a readable yes/no.
 const prOf = (b) => (b.pr ?? Number((String(b.evidence).match(/PR #(\d+)/) || [])[1])) || null;
