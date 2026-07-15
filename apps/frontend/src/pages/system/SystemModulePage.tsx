@@ -264,6 +264,19 @@ function OverviewTab({ data, onOpen }: { data: SystemData; onOpen: (id: SystemTa
         <Row label="Deployed backend">
           <span className="font-mono text-[11.5px]">{health.data?.version ?? "—"}</span>
         </Row>
+        <Row label="Frontend build">
+          <span className="font-mono text-[11.5px]">{__APP_VERSION__}</span>
+        </Row>
+        <Row label="Deploy parity">
+          {(() => {
+            // B-B: frontend is a separate Render static deploy that can lag the backend. Surface a stale
+            // frontend here (previously invisible). Only compare when both are real shas.
+            const be = health.data?.version;
+            if (!be || be === "—" || __APP_VERSION__ === "dev") return <Pill tone="neutral">—</Pill>;
+            const inSync = be === __APP_VERSION__;
+            return <Pill tone={inSync ? "ok" : "off"}>{inSync ? "IN SYNC" : "FRONTEND STALE"}</Pill>;
+          })()}
+        </Row>
         <Row label="Service health">
           {health.data ? <Pill tone={healthGreen ? "ok" : "off"}>{healthGreen ? "GREEN" : "RED"}</Pill> : <Pill tone="neutral">—</Pill>}
         </Row>
