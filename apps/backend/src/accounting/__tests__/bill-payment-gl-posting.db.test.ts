@@ -211,14 +211,24 @@ describeIntegration("CHAIN-04 bill-payment → GL gap-closure end-to-end (real P
     return Number(r[0].c);
   }
 
+  // FLAKE FIX: write a USER-scoped override (user_uuid = this file's dedicated actor userId), NOT a
+  // tenant-scoped (operating_company_id, user_uuid IS NULL) one. ensureIntegrationPrerequisites() hands
+  // EVERY integration test the SAME cached TRANSP company, so a tenant-scoped BILL_PAYMENT_GL_POSTING_ENABLED
+  // override on it is clobberable by any parallel sibling *.db.test.ts that toggles the same flag on that
+  // shared company (e.g. bank-transaction-splits-vendor-bill.db.test.ts, which shares this company + the
+  // ap_control role and already coordinates via pg_advisory_lock(4200000001) below) in the window before
+  // isBillPaymentGlPostingEnabled reads it — the poster then silently no-ops. isBillPaymentGlPostingEnabled
+  // (bill-payment-gl.service.ts) resolves the USER override BEFORE the tenant override, and this file always
+  // posts as its own dedicated actor (userId), so a user-scoped override for that actor is immune to
+  // cross-file tenant contention. Still carries operating_company_id so the existing cleanup deletes
+  // (by flag_key + operating_company_id) continue to remove it.
   async function setFlagOverride(enabled: boolean) {
     await bypass(async () => {
       await db.query(
-        `INSERT INTO lib.feature_flag_overrides (flag_key, operating_company_id, enabled, set_by_user_uuid)
-         VALUES ('BILL_PAYMENT_GL_POSTING_ENABLED',$1::uuid,$2,$3::uuid)
-         ON CONFLICT (flag_key, operating_company_id) WHERE user_uuid IS NULL AND operating_company_id IS NOT NULL
-         DO UPDATE SET enabled = EXCLUDED.enabled`,
-        [companyId, enabled, userId]
+        `INSERT INTO lib.feature_flag_overrides (flag_key, operating_company_id, user_uuid, enabled, set_by_user_uuid)
+         VALUES ('BILL_PAYMENT_GL_POSTING_ENABLED',$1::uuid,$2::uuid,$3,$2::uuid)
+         ON CONFLICT (flag_key, user_uuid) WHERE user_uuid IS NOT NULL DO UPDATE SET enabled = EXCLUDED.enabled`,
+        [companyId, userId, enabled]
       );
     });
   }

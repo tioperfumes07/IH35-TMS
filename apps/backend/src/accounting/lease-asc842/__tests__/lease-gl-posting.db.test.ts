@@ -15,7 +15,6 @@ import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../../lib/pg-connection-options.js";
 import { ensureIntegrationPrerequisites } from "../../../../test-helpers/db-fixture.js";
-import { TEST_OWNER_USER_ID } from "../../../../test-helpers/constants.js";
 import { generateSchedule, type LeaseElection } from "../lease.math.js";
 import { LeasePostingError } from "../lease.math.js";
 import {
@@ -33,7 +32,10 @@ describeIntegration("FIN-22 lease ASC 842 GL posting (real Postgres)", () => {
   let trkId: string; // the lessor entity (Trucking) — TRK books the lease
   let transpId: string; // a non-TRK entity, to prove the re-title guard
   const suffix = randomUUID().slice(0, 8);
-  const userId = TEST_OWNER_USER_ID;
+  // Dedicated, UNIQUE actor for THIS file only (see setFlag). Must differ from every other suite that
+  // toggles a GL-posting flag on the shared TRK company so this file's user-scoped override never shares
+  // a (flag_key, user_uuid) with a sibling.
+  const userId = "00000000-0000-4000-8000-0000000000e7";
 
   const acct: Record<string, string> = {};
   const roleKeys = ["rental_income", "lease_receivable", "interest_income", "gain_loss_on_disposal", "undeposited_funds"] as const;
@@ -58,13 +60,22 @@ describeIntegration("FIN-22 lease ASC 842 GL posting (real Postgres)", () => {
     catch (e) { await db.query("ROLLBACK").catch(() => {}); throw e; }
   }
 
+  // FLAKE FIX: write a USER-scoped override (user_uuid = this file's dedicated actor), NOT a tenant-scoped
+  // (operating_company_id, user_uuid IS NULL) one. ensureIntegrationPrerequisites() plus the TRK lookup
+  // hands every lease/depreciation integration test the SAME cached companies, so a tenant-scoped
+  // LEASE_GL_POSTING_ENABLED override on TRK would be clobberable by any parallel sibling *.db.test.ts that
+  // toggles the same flag on that shared company. Every lease-posting.service.ts entrypoint (flagOn())
+  // resolves the flag via isEnabled(client, key, {operating_company_id, user_uuid: userId}) and this file
+  // always posts as its own dedicated actor (userId), so a user-scoped override for that actor is immune to
+  // cross-file tenant contention. Still carries operating_company_id so the existing cleanup delete (by
+  // flag_key + operating_company_id) continues to remove it.
   async function setFlag(enabled: boolean) {
     await bypass(async () => {
-      await db.query(`DELETE FROM lib.feature_flag_overrides WHERE flag_key='LEASE_GL_POSTING_ENABLED' AND operating_company_id=$1::uuid AND user_uuid IS NULL`, [trkId]);
       await db.query(
         `INSERT INTO lib.feature_flag_overrides (flag_key, operating_company_id, user_uuid, enabled, set_by_user_uuid)
-         VALUES ('LEASE_GL_POSTING_ENABLED', $1::uuid, NULL, $2, $3::uuid)`,
-        [trkId, enabled, userId]
+         VALUES ('LEASE_GL_POSTING_ENABLED', $1::uuid, $2::uuid, $3, $2::uuid)
+         ON CONFLICT (flag_key, user_uuid) WHERE user_uuid IS NOT NULL DO UPDATE SET enabled = EXCLUDED.enabled`,
+        [trkId, userId, enabled]
       );
     });
   }
