@@ -14,7 +14,6 @@ import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../../lib/pg-connection-options.js";
 import { ensureIntegrationPrerequisites, getIntegrationWorkOrderSeedIds } from "../../../../test-helpers/db-fixture.js";
-import { TEST_OWNER_USER_ID } from "../../../../test-helpers/constants.js";
 import {
   postPrepaidAmortization,
   postDepreciation,
@@ -30,7 +29,10 @@ describeIntegration("FIN-21 amortization + depreciation GL posting (real Postgre
   let companyId: string;
   let unitId: string;
   const suffix = randomUUID().slice(0, 8);
-  const userId = TEST_OWNER_USER_ID;
+  // Dedicated, UNIQUE actor for THIS file only (see setFlag). Must differ from every other suite that
+  // toggles a GL-posting flag on the shared TRANSP company so this file's user-scoped override never
+  // shares a (flag_key, user_uuid) with a sibling.
+  const userId = "00000000-0000-4000-8000-0000000000e6";
 
   const acct = {
     prepaidAsset: randomUUID(),
@@ -62,16 +64,22 @@ describeIntegration("FIN-21 amortization + depreciation GL posting (real Postgre
     catch (e) { await db.query("ROLLBACK").catch(() => {}); throw e; }
   }
 
+  // FLAKE FIX: write a USER-scoped override (user_uuid = this file's dedicated actor), NOT a tenant-scoped
+  // (operating_company_id, user_uuid IS NULL) one. ensureIntegrationPrerequisites() hands EVERY integration
+  // test the SAME cached TRANSP company, so a tenant-scoped AMORTIZATION_GL_POSTING_ENABLED override on it
+  // would be clobberable by any parallel sibling *.db.test.ts that toggles the same flag on that shared
+  // company. postPrepaidAmortization/postDepreciation (amortization-posting.service.ts) resolve the flag
+  // via isEnabled(client, key, {operating_company_id, user_uuid: actor.userId}) and this file always posts
+  // as its own dedicated actor (userId), so a user-scoped override for that actor is immune to cross-file
+  // tenant contention. Still carries operating_company_id so the existing cleanup delete (by flag_key +
+  // operating_company_id) continues to remove it.
   async function setFlag(enabled: boolean) {
     await bypass(async () => {
       await db.query(
-        `DELETE FROM lib.feature_flag_overrides WHERE flag_key='AMORTIZATION_GL_POSTING_ENABLED' AND operating_company_id=$1::uuid AND user_uuid IS NULL`,
-        [companyId]
-      );
-      await db.query(
         `INSERT INTO lib.feature_flag_overrides (flag_key, operating_company_id, user_uuid, enabled, set_by_user_uuid)
-         VALUES ('AMORTIZATION_GL_POSTING_ENABLED', $1::uuid, NULL, $2, $3::uuid)`,
-        [companyId, enabled, userId]
+         VALUES ('AMORTIZATION_GL_POSTING_ENABLED', $1::uuid, $2::uuid, $3, $2::uuid)
+         ON CONFLICT (flag_key, user_uuid) WHERE user_uuid IS NOT NULL DO UPDATE SET enabled = EXCLUDED.enabled`,
+        [companyId, userId, enabled]
       );
     });
   }

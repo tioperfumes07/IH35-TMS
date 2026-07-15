@@ -20,7 +20,6 @@ import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
 import { ensureIntegrationPrerequisites, getOperatingCompanyId } from "../../../test-helpers/db-fixture.js";
 import { createIntegrationApp } from "../../../test-helpers/http-app.js";
 import { testAuthHeaders } from "../../../test-helpers/auth-fixture.js";
-import { TEST_OWNER_USER_ID } from "../../../test-helpers/constants.js";
 import { registerPostingEngineRoutes } from "../posting-engine.routes.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
@@ -31,6 +30,10 @@ describeIntegration("CHAIN-06 invoice→A/R kill switch (real Postgres, route le
   let db: pg.Client;
   let companyId: string;
   const suffix = randomUUID().slice(0, 6);
+  // Dedicated, UNIQUE actor for THIS file only (see setFlagOverride). Must differ from every other suite
+  // toggling a GL-posting flag on the shared TRANSP company so this file's user-scoped override never
+  // shares a (flag_key, user_uuid) with a sibling.
+  const userId = "00000000-0000-4000-8000-0000000000e5";
   const incomeAccountId = randomUUID();
   const arAccountId = randomUUID();
   const customerId = randomUUID();
@@ -85,6 +88,16 @@ describeIntegration("CHAIN-06 invoice→A/R kill switch (real Postgres, route le
     await db.query("SET ROLE ih35_app");
 
     await bypass(async () => {
+      await db.query(
+        `INSERT INTO identity.users (id, email, role, preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
+        [userId, `chain06-${suffix}@test.local`]
+      );
+      // Grant the dedicated actor company access — postInvoice runs the route under the actor's own user
+      // session (userId) and assertCompanyMembership requires an org.user_company_access row.
+      await db.query(
+        `INSERT INTO org.user_company_access (user_id, company_id) VALUES ($1::uuid,$2::uuid) ON CONFLICT (user_id, company_id) DO NOTHING`,
+        [userId, companyId]
+      );
       // Income (revenue) account for the invoice line + an A/R account for the ar_control role.
       await db.query(
         `INSERT INTO catalogs.accounts (id, operating_company_id, account_number, account_name, account_type, is_postable)
@@ -143,6 +156,7 @@ describeIntegration("CHAIN-06 invoice→A/R kill switch (real Postgres, route le
         await db.query(`DELETE FROM lib.feature_flag_overrides WHERE flag_key=$1 AND operating_company_id=$2::uuid`, [FLAG_KEY, companyId]);
         await db.query(`DELETE FROM accounting.chart_of_accounts_roles WHERE operating_company_id=$1::uuid AND account_id=$2::uuid`, [companyId, arAccountId]);
         await db.query(`DELETE FROM catalogs.accounts WHERE id = ANY($1::uuid[])`, [[incomeAccountId, arAccountId]]);
+        await db.query(`DELETE FROM org.user_company_access WHERE user_id=$1::uuid AND company_id=$2::uuid`, [userId, companyId]);
       });
     } catch { /* best-effort cleanup */ }
     await db.end();
@@ -152,7 +166,7 @@ describeIntegration("CHAIN-06 invoice→A/R kill switch (real Postgres, route le
     return app.inject({
       method: "POST",
       url: `/api/v1/accounting/posting-engine-mvp/post?operating_company_id=${companyId}`,
-      headers: testAuthHeaders(),
+      headers: testAuthHeaders(userId),
       payload: { source_transaction_type: "invoice", source_transaction_id: invoiceId },
     });
   }
@@ -165,11 +179,21 @@ describeIntegration("CHAIN-06 invoice→A/R kill switch (real Postgres, route le
   });
 
   it("flag ON (per-entity override) → posts the BALANCED DR ar_control / CR income JE", async () => {
+    // FLAKE FIX: write a USER-scoped override (user_uuid = this file's dedicated actor), NOT a tenant-scoped
+    // (operating_company_id, user_uuid IS NULL) one. ensureIntegrationPrerequisites() hands EVERY integration
+    // test the SAME cached TRANSP company, so a tenant-scoped INVOICE_AR_GL_POSTING_ENABLED override on it
+    // would be clobberable by any parallel sibling *.db.test.ts that toggles the same flag on that shared
+    // company. The posting-engine-mvp/post route resolves the flag via isEnabled(client, key,
+    // {operating_company_id, user_uuid: user.uuid}) (posting-engine.routes.ts) and this test always calls
+    // the route as its own dedicated actor (userId via testAuthHeaders(userId)), so a user-scoped override
+    // for that actor is immune to cross-file tenant contention. Still carries operating_company_id so the
+    // existing cleanup delete (by flag_key + operating_company_id) continues to remove it.
     await bypass(async () => {
       await db.query(
         `INSERT INTO lib.feature_flag_overrides (flag_key, operating_company_id, user_uuid, enabled, set_by_user_uuid)
-         VALUES ($1,$2::uuid,NULL,true,$3::uuid)`,
-        [FLAG_KEY, companyId, TEST_OWNER_USER_ID]
+         VALUES ($1,$2::uuid,$3::uuid,true,$3::uuid)
+         ON CONFLICT (flag_key, user_uuid) WHERE user_uuid IS NOT NULL DO UPDATE SET enabled = EXCLUDED.enabled`,
+        [FLAG_KEY, companyId, userId]
       );
     });
 
