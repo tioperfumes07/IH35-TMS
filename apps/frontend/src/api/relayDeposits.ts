@@ -50,3 +50,9 @@ export function putRelayCompanyCard(
     body,
   });
 }
+
+// B3a — owner-triggered historical Relay fuel backfill (3-day windows, idempotent). Returns 202 immediately;
+// the pull runs in the background and rows land in integrations.relay_fuel_transactions as windows complete.
+export function runRelayFuelBackfill(months: number): Promise<{ status: string; months: number }> {
+  return apiRequest(`/api/integrations/relay/fuel/backfill`, { method: "POST", body: { months } });
+}
