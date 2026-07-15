@@ -633,8 +633,8 @@ export function BankingTransactionsDesignView({
   }
 
   function computeFromTo(tx: PlaidBankTransaction, draft: RowDetailDraft): string {
-    // An explicit From/To the operator typed (or a transfer/CC modal target) already names real
-    // accounts — respect it verbatim.
+    // An explicit From/To set by the Transfer / CC-Payment modal already names real accounts — respect it
+    // verbatim. (Money-in/out categorization no longer has a free-text From/To input; it derives below.)
     const explicit = draft.fromTo.trim();
     if (explicit) return explicit;
     const bank = bankAccountLabel(tx);
@@ -1617,11 +1617,17 @@ export function BankingTransactionsDesignView({
                                     {draft.fromTo || "Select CC payment details…"}
                                   </button>
                                 ) : (
-                                  <input
-                                    className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
-                                    value={draft.fromTo}
-                                    onChange={(event) => setDraft(tx, { fromTo: event.target.value })}
-                                  />
+                                  // B-A4: From/To for a money-in/out categorization is DERIVED (BANK → the
+                                  // category / payee you pick), per the locked FIX-04 decision — it is not a
+                                  // free-text field. The old editable input only updated local draft state and
+                                  // was dropped before persistence, so it read as an unwired input. Show the
+                                  // derived value read-only instead.
+                                  <span
+                                    className="mt-0.5 block w-full px-2 py-1 text-sm text-gray-500"
+                                    title="Derived from the category / payee you select — not a free-text field."
+                                  >
+                                    {computeFromTo(tx, draft) || "Auto — set by the category / payee"}
+                                  </span>
                                 )}
                               </label>
                               <label className="text-xs text-gray-600">
