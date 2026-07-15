@@ -21,6 +21,8 @@ ALTER TABLE events.event_log ENABLE ROW LEVEL SECURITY, FORCE ROW LEVEL SECURITY
 
 DROP POLICY IF EXISTS event_log_tenant_insert ON events.event_log;
 DROP POLICY IF EXISTS event_log_tenant_isolation ON events.event_log;
+DROP POLICY IF EXISTS event_log_opco_insert ON events.event_log;
+DROP POLICY IF EXISTS event_log_opco_select ON events.event_log;
 
 CREATE POLICY event_log_opco_insert ON events.event_log
   FOR INSERT TO ih35_app

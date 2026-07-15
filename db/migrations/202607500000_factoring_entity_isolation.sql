@@ -60,6 +60,7 @@ $seed$;
 -- 3. Replace tenant_id RLS policies with operating_company_id-scoped policies and ensure RLS is forced.
 ALTER TABLE factoring.bank_match_suggestion ENABLE ROW LEVEL SECURITY, FORCE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS factoring_bank_match_suggestion_tenant_scope ON factoring.bank_match_suggestion;
+DROP POLICY IF EXISTS factoring_bank_match_suggestion_opco_scope ON factoring.bank_match_suggestion;
 CREATE POLICY factoring_bank_match_suggestion_opco_scope ON factoring.bank_match_suggestion
   FOR ALL TO ih35_app
   USING (identity.is_lucia_bypass() OR operating_company_id::text = current_setting('app.operating_company_id', true))
@@ -67,6 +68,7 @@ CREATE POLICY factoring_bank_match_suggestion_opco_scope ON factoring.bank_match
 
 ALTER TABLE factoring.batch ENABLE ROW LEVEL SECURITY, FORCE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS factoring_batch_tenant_scope ON factoring.batch;
+DROP POLICY IF EXISTS factoring_batch_opco_scope ON factoring.batch;
 CREATE POLICY factoring_batch_opco_scope ON factoring.batch
   FOR ALL TO ih35_app
   USING (identity.is_lucia_bypass() OR operating_company_id::text = current_setting('app.operating_company_id', true))
@@ -74,6 +76,7 @@ CREATE POLICY factoring_batch_opco_scope ON factoring.batch
 
 ALTER TABLE factoring.customer_factor_assignment ENABLE ROW LEVEL SECURITY, FORCE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS factoring_customer_factor_assignment_tenant_scope ON factoring.customer_factor_assignment;
+DROP POLICY IF EXISTS factoring_customer_factor_assignment_opco_scope ON factoring.customer_factor_assignment;
 CREATE POLICY factoring_customer_factor_assignment_opco_scope ON factoring.customer_factor_assignment
   FOR ALL TO ih35_app
   USING (identity.is_lucia_bypass() OR operating_company_id::text = current_setting('app.operating_company_id', true))
@@ -81,6 +84,7 @@ CREATE POLICY factoring_customer_factor_assignment_opco_scope ON factoring.custo
 
 ALTER TABLE factoring.factor ENABLE ROW LEVEL SECURITY, FORCE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS factoring_factor_tenant_scope ON factoring.factor;
+DROP POLICY IF EXISTS factoring_factor_opco_scope ON factoring.factor;
 CREATE POLICY factoring_factor_opco_scope ON factoring.factor
   FOR ALL TO ih35_app
   USING (identity.is_lucia_bypass() OR operating_company_id::text = current_setting('app.operating_company_id', true))
@@ -88,6 +92,7 @@ CREATE POLICY factoring_factor_opco_scope ON factoring.factor
 
 ALTER TABLE factoring.letter_of_release ENABLE ROW LEVEL SECURITY, FORCE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS factoring_letter_of_release_tenant_scope ON factoring.letter_of_release;
+DROP POLICY IF EXISTS factoring_letter_of_release_opco_scope ON factoring.letter_of_release;
 CREATE POLICY factoring_letter_of_release_opco_scope ON factoring.letter_of_release
   FOR ALL TO ih35_app
   USING (identity.is_lucia_bypass() OR operating_company_id::text = current_setting('app.operating_company_id', true))
@@ -95,6 +100,7 @@ CREATE POLICY factoring_letter_of_release_opco_scope ON factoring.letter_of_rele
 
 ALTER TABLE factoring.reserve_movement ENABLE ROW LEVEL SECURITY, FORCE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS factoring_reserve_movement_tenant_scope ON factoring.reserve_movement;
+DROP POLICY IF EXISTS factoring_reserve_movement_opco_scope ON factoring.reserve_movement;
 CREATE POLICY factoring_reserve_movement_opco_scope ON factoring.reserve_movement
   FOR ALL TO ih35_app
   USING (identity.is_lucia_bypass() OR operating_company_id::text = current_setting('app.operating_company_id', true))

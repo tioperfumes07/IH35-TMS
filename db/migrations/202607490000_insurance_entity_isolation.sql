@@ -18,7 +18,9 @@ DECLARE
 BEGIN
   PERFORM set_config('app.bypass_rls', 'lucia', true);
 
-  -- 1. Add nullable operating_company_id to every insurance table.
+  -- 1. Add nullable operating_company_id to the 7 per-entity insurance tables.
+  --    insurance.type_catalog is shared reference data (45 rows across all 3 entities) and is
+  --    intentionally excluded from opco isolation; it gets a shared read policy below.
   FOREACH tbl IN ARRAY ARRAY[
     'insurance.claim',
     'insurance.coi_request',
@@ -26,8 +28,7 @@ BEGIN
     'insurance.payment_schedule',
     'insurance.policy',
     'insurance.policy_unit',
-    'insurance.refund_obligation',
-    'insurance.type_catalog'
+    'insurance.refund_obligation'
   ]
   LOOP
     EXECUTE format('ALTER TABLE %I.%I ADD COLUMN IF NOT EXISTS operating_company_id uuid', split_part(tbl, '.', 1), split_part(tbl, '.', 2));
@@ -42,8 +43,7 @@ BEGIN
     'insurance.payment_schedule',
     'insurance.policy',
     'insurance.policy_unit',
-    'insurance.refund_obligation',
-    'insurance.type_catalog'
+    'insurance.refund_obligation'
   ]
   LOOP
     EXECUTE format(
@@ -66,6 +66,7 @@ $seed$;
 --    The lucia bypass allows GUARD/owner maintenance queries across entities.
 ALTER TABLE insurance.claim ENABLE ROW LEVEL SECURITY, FORCE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS insurance_claim_tenant_scope ON insurance.claim;
+DROP POLICY IF EXISTS insurance_claim_opco_scope ON insurance.claim;
 CREATE POLICY insurance_claim_opco_scope ON insurance.claim
   FOR ALL TO ih35_app
   USING (identity.is_lucia_bypass() OR operating_company_id::text = current_setting('app.operating_company_id', true))
@@ -73,6 +74,7 @@ CREATE POLICY insurance_claim_opco_scope ON insurance.claim
 
 ALTER TABLE insurance.coi_request ENABLE ROW LEVEL SECURITY, FORCE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS coi_request_tenant_scope ON insurance.coi_request;
+DROP POLICY IF EXISTS coi_request_opco_scope ON insurance.coi_request;
 CREATE POLICY coi_request_opco_scope ON insurance.coi_request
   FOR ALL TO ih35_app
   USING (identity.is_lucia_bypass() OR operating_company_id::text = current_setting('app.operating_company_id', true))
@@ -80,6 +82,7 @@ CREATE POLICY coi_request_opco_scope ON insurance.coi_request
 
 ALTER TABLE insurance.lawsuit ENABLE ROW LEVEL SECURITY, FORCE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS insurance_lawsuit_tenant_scope ON insurance.lawsuit;
+DROP POLICY IF EXISTS insurance_lawsuit_opco_scope ON insurance.lawsuit;
 CREATE POLICY insurance_lawsuit_opco_scope ON insurance.lawsuit
   FOR ALL TO ih35_app
   USING (identity.is_lucia_bypass() OR operating_company_id::text = current_setting('app.operating_company_id', true))
@@ -87,6 +90,7 @@ CREATE POLICY insurance_lawsuit_opco_scope ON insurance.lawsuit
 
 ALTER TABLE insurance.payment_schedule ENABLE ROW LEVEL SECURITY, FORCE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS payment_schedule_tenant_scope ON insurance.payment_schedule;
+DROP POLICY IF EXISTS payment_schedule_opco_scope ON insurance.payment_schedule;
 CREATE POLICY payment_schedule_opco_scope ON insurance.payment_schedule
   FOR ALL TO ih35_app
   USING (identity.is_lucia_bypass() OR operating_company_id::text = current_setting('app.operating_company_id', true))
@@ -94,6 +98,7 @@ CREATE POLICY payment_schedule_opco_scope ON insurance.payment_schedule
 
 ALTER TABLE insurance.policy ENABLE ROW LEVEL SECURITY, FORCE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS insurance_policy_tenant_scope ON insurance.policy;
+DROP POLICY IF EXISTS insurance_policy_opco_scope ON insurance.policy;
 CREATE POLICY insurance_policy_opco_scope ON insurance.policy
   FOR ALL TO ih35_app
   USING (identity.is_lucia_bypass() OR operating_company_id::text = current_setting('app.operating_company_id', true))
@@ -101,6 +106,7 @@ CREATE POLICY insurance_policy_opco_scope ON insurance.policy
 
 ALTER TABLE insurance.policy_unit ENABLE ROW LEVEL SECURITY, FORCE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS insurance_policy_unit_tenant_scope ON insurance.policy_unit;
+DROP POLICY IF EXISTS insurance_policy_unit_opco_scope ON insurance.policy_unit;
 CREATE POLICY insurance_policy_unit_opco_scope ON insurance.policy_unit
   FOR ALL TO ih35_app
   USING (identity.is_lucia_bypass() OR operating_company_id::text = current_setting('app.operating_company_id', true))
@@ -108,16 +114,20 @@ CREATE POLICY insurance_policy_unit_opco_scope ON insurance.policy_unit
 
 ALTER TABLE insurance.refund_obligation ENABLE ROW LEVEL SECURITY, FORCE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS refund_obligation_tenant_scope ON insurance.refund_obligation;
+DROP POLICY IF EXISTS refund_obligation_opco_scope ON insurance.refund_obligation;
 CREATE POLICY refund_obligation_opco_scope ON insurance.refund_obligation
   FOR ALL TO ih35_app
   USING (identity.is_lucia_bypass() OR operating_company_id::text = current_setting('app.operating_company_id', true))
   WITH CHECK (identity.is_lucia_bypass() OR operating_company_id::text = current_setting('app.operating_company_id', true));
 
-ALTER TABLE insurance.type_catalog ENABLE ROW LEVEL SECURITY, FORCE ROW LEVEL SECURITY;
+-- Shared reference table: enable RLS with a read-all policy, but do NOT opco-isolate the rows.
+-- The 45 reference rows are intentionally visible to all entities; writes remain restricted to
+-- the table owner / maintenance bypass.
+ALTER TABLE insurance.type_catalog ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS insurance_type_catalog_tenant_scope ON insurance.type_catalog;
-CREATE POLICY insurance_type_catalog_opco_scope ON insurance.type_catalog
-  FOR ALL TO ih35_app
-  USING (identity.is_lucia_bypass() OR operating_company_id::text = current_setting('app.operating_company_id', true))
-  WITH CHECK (identity.is_lucia_bypass() OR operating_company_id::text = current_setting('app.operating_company_id', true));
+DROP POLICY IF EXISTS insurance_type_catalog_shared_read ON insurance.type_catalog;
+CREATE POLICY insurance_type_catalog_shared_read ON insurance.type_catalog
+  FOR SELECT TO ih35_app
+  USING (true);
 
 COMMIT;
