@@ -1,0 +1,9 @@
+{
+  "_comment": "G4 (settlement engine collapse). SHRINK-ONLY baseline of remaining dead-branch writers to the RETIRE payroll.* settlement ledger. Regenerate: UPDATE_PAYROLL_SETTLEMENT_WRITE_BASELINE=1. A new key fails CI; this list may only shrink as branches are retired.",
+  "count": 3,
+  "keys": [
+    "apps/backend/src/settlements/auto-deductions/apply.ts::INSERT payroll.driver_settlement_line_items",
+    "apps/backend/src/settlements/auto-deductions/apply.ts::UPDATE payroll.driver_settlements",
+    "apps/backend/src/settlements/team-splits/apply.ts::INSERT payroll.driver_settlement_line_items"
+  ]
+}

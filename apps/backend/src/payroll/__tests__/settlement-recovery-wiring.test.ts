@@ -13,7 +13,7 @@ vi.mock("../../accounting/expense-category-map/resolver.service.js", () => ({
   resolveAccountForCategory: vi.fn(async () => ({ account_id: "qbo-149", posting_side: "debit" })),
 }));
 
-const { buildDraftLines } = await import("../driver-settlement.service.js");
+const { buildDraftLines } = await import("../driver-settlement.service.deprecated.js");
 
 type MakeOpts = {
   flagOn: boolean;

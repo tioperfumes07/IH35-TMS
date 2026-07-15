@@ -21,7 +21,7 @@ vi.mock("../../accounting/coa-roles/resolver.service.js", () => ({
   resolveRoleAccount: mocked.resolveRoleAccountMock,
 }));
 
-import { computeSettlement, postSettlement } from "../driver-settlement.service.js";
+import { computeSettlement, postSettlement } from "../driver-settlement.service.deprecated.js";
 
 describe("driver settlement engine (Block-22)", () => {
   beforeEach(() => {

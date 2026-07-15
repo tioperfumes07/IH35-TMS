@@ -1,3 +1,22 @@
+// =====================================================================================================
+// ⛔ ARCHIVED / RETIRED (settlement engine collapse Step 2, 2026-07-15) — void-not-delete.
+//
+// This is the RETIRE payroll settlement engine (computeSettlement / postSettlement) that wrote the
+// duplicate payroll.driver_settlements / driver_settlement_line_items ledger. It is UNMOUNTED — its
+// routes (driver-settlement.routes.ts) now 308-redirect to the canonical driver-finance settlements
+// subledger, and nothing imports this file. Kept for history only; do NOT re-wire or import it.
+//
+// SUPERSEDED BY (parity verified 2026-07-15 — canonical is a strict superset):
+//   * cap math + net floor        -> driver_finance/settlement-deduction-cap.service.ts
+//                                    (owner-locked 5% floor + PAY-FIRST-THEN-ESCROW, 2026-07-04)
+//   * capped advance-recovery JE  -> driver_finance/settlement-payrun-close.service.ts
+//                                    (Cr `advance_recovery` role binding — NOT the hardcoded QBO-149 here)
+//   * A/P bill + bill payment     -> accounting/settlement-posting/settlement-bill-payment-posting.service.ts
+//   * settlement create           -> driver-finance/settlements.routes.ts (POST /api/v1/driver-finance/settlements)
+//
+// Guarded by scripts/verify-no-payroll-settlement-writes.mjs (G4): new payroll.* settlement writes in
+// LIVE (non-.deprecated, non-test) code fail CI. This archived file is exempt.
+// =====================================================================================================
 import { withCurrentUser } from "../auth/db.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { createBill, payBill } from "../accounting/bills.service.js";
