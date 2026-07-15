@@ -2,6 +2,11 @@
   "note": "HELD MIGRATIONS — each carries a 'DO NOT RUN ON PROD' marker and must run ONLY on a Neon branch by Jorge's hand, then be ledger-backfilled so prod db:migrate skips it. verify:hold-migrations-registered enforces bidirectional parity: every migration whose header says DO-NOT-RUN must be listed here, and every entry here must still carry the marker — so a held migration can never silently lose its marker (which would let db:migrate fire it on prod).",
   "held": [
     {
+      "file": "202607430000_settlement_lines_approval_columns.sql",
+      "reason": "[HOLD-FOR-JORGE — FINANCIAL] Settlement collapse Phase 1 — additive approval/dispute/source columns on canonical driver_finance.settlement_lines (Phase-2 approval.service.ts repoint needs them). APPLIED on prod Neon + ledger-backfilled by GUARD; prod db:migrate skips it, CI fresh-from-0001 builds the columns.",
+      "applied_on_prod": true
+    },
+    {
       "file": "202607400000_units_vin_no_synthetic_dup.sql",
       "reason": "[HOLD-FOR-JORGE — TIER 1] modsweep-migA2 — CHECK blocking the 07-04 bulk-dup synthetic vin \"-U\" suffix on active mdata.units (prevent recurrence). GUARD Neon proof: no active unit has a -U vin."
     },
