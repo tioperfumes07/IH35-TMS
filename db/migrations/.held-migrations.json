@@ -269,6 +269,18 @@
     {
       "file": "202607480000_driver_advance_gl_posting_flag.sql",
       "reason": "[HOLD-FOR-JORGE — B3-DISBURSE] Gate the cash-advance disburse GL post behind DRIVER_ADVANCE_GL_POSTING_ENABLED per entity. Seeds flag default OFF + overrides ON for TRANSP/USMCA/TRK so current behavior is preserved. Owner applies on Neon branch + ledger-backfills."
+    },
+    {
+      "file": "202607490000_insurance_entity_isolation.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] Add operating_company_id to 7 per-entity insurance tables (type_catalog excluded — shared reference), backfill from tenant_id, make CREATE POLICY apply-twice safe, replace RLS policies with opco scope, FORCE RLS. Owner applies on Neon branch + ledger-backfills."
+    },
+    {
+      "file": "202607500000_factoring_entity_isolation.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] Add operating_company_id to factoring schema (6 tables), backfill from tenant_id, make CREATE POLICY apply-twice safe, replace RLS policies with opco scope, FORCE RLS. Owner applies on Neon branch + ledger-backfills."
+    },
+    {
+      "file": "202607510000_events_audit_log_entity_isolation.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1] events.event_log: force RLS + canonical app.operating_company_id policy. public.audit_log: add operating_company_id, best-effort backfill from referenced record tables, enable+force RLS with WORM (SELECT/INSERT only); removed invalid per-partition column-add loop. Owner applies on Neon branch + ledger-backfills."
     }
   ]
 }
