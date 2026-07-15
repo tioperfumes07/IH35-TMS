@@ -108,3 +108,55 @@ describe("HoverDropdownNav primitive (invariant #20)", () => {
     expect(document.activeElement).toBe(links[0]);
   });
 });
+
+describe('HoverDropdownNav openOn="click" (LOCKED top-bar rule — NAVIGATION-PATTERN-RULE 2026-06-09)', () => {
+  function renderClick() {
+    render(
+      <MemoryRouter>
+        <HoverDropdownNav items={accountingDemo} activeHref="/accounting/bills" openOn="click" />
+      </MemoryRouter>,
+    );
+    return screen.getByRole("menuitem", { name: /^Bills$/i });
+  }
+
+  it("does NOT open on hover in click mode (hover-reveal is disabled)", () => {
+    const billsBtn = renderClick();
+    const hoverTarget = billsBtn.parentElement;
+    if (!hoverTarget) throw new Error("expected Bills wrapper");
+    fireEvent.mouseEnter(hoverTarget);
+    expect(screen.queryByTestId("bills-dropdown-menu")).toBeNull();
+  });
+
+  it("opens on CLICK and STAYS OPEN on mouse-leave (persistent, not hover)", () => {
+    vi.useFakeTimers();
+    const billsBtn = renderClick();
+    fireEvent.click(billsBtn);
+    expect(screen.getByTestId("bills-dropdown-menu")).toBeInTheDocument();
+    // Mouse leaving the group must NOT close it in click mode.
+    const hoverTarget = billsBtn.parentElement!;
+    fireEvent.mouseLeave(hoverTarget);
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+    expect(screen.getByTestId("bills-dropdown-menu")).toBeInTheDocument();
+  });
+
+  it("closes on a second click (toggle) and on Escape", () => {
+    const billsBtn = renderClick();
+    fireEvent.click(billsBtn);
+    expect(screen.getByTestId("bills-dropdown-menu")).toBeInTheDocument();
+    fireEvent.click(billsBtn);
+    expect(screen.queryByTestId("bills-dropdown-menu")).toBeNull();
+    fireEvent.click(billsBtn);
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByTestId("bills-dropdown-menu")).toBeNull();
+  });
+
+  it("closes on outside click", () => {
+    const billsBtn = renderClick();
+    fireEvent.click(billsBtn);
+    expect(screen.getByTestId("bills-dropdown-menu")).toBeInTheDocument();
+    fireEvent.mouseDown(document.body);
+    expect(screen.queryByTestId("bills-dropdown-menu")).toBeNull();
+  });
+});

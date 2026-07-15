@@ -1,39 +1,71 @@
 import type { NavItem } from "../../components/forms/shared/HoverDropdownNav";
 import { COLLECTIONS_SUBNAV_ITEM } from "./subnav-collections";
 
+/**
+ * Accounting top-bar sub-nav — GROUPED click-open dropdowns.
+ *
+ * Source of truth (LOCKED): `docs/approved-screens/3-Accounting-Dropdown.png`
+ * (Jorge, approved 2026-05) + `docs/specs/NAVIGATION-PATTERN-RULE.md` (Jorge directive
+ * 2026-06-09: top-bar sub-nav groups open on CLICK and STAY OPEN until an item is chosen /
+ * outside-click / Escape — NOT hover). Recorded in `docs/lockdown/00_LOCKED_DECISIONS.md`.
+ *
+ * The approved top row is exactly:
+ *   Accounting · Bills ▾ · Expenses ▾ · Bill payment ▾ · Maintenance & shop ▾ · Vendors · Customers · Reports
+ * plus an overflow **More ▾** for back-office / AR / factoring / catalog / settings routes the PNG
+ * does not surface as top nodes (so every routed accounting page is reachable by a click — many were
+ * URL-only under the previous flat `ACCOUNTING_CLEAN_TABS` render).
+ *
+ * This grouped model SUPERSEDES the flat `ACCOUNTING_CLEAN_TABS` / `ACCOUNTING_MORE_TABS` tab bar that
+ * the nav-unification (undocumented drift, PR #1552) rendered. Per CLAUDE.md §7/§9 the approved screen
+ * wins over undocumented drift. `ACCOUNTING_CLEAN_TABS` / `ACCOUNTING_MORE_TABS` are RETAINED below as
+ * exports ONLY because several CI guards still assert against them (verify-accounting-nav Check 2,
+ * verify-ob1-nav-header-unify, verify-chain07-settlements-redirect, verify-daily-recon); they are NO
+ * LONGER RENDERED. `SUBNAV_ITEMS` (with `path` + `section`) is the flat registry; `bySection()` is the
+ * grouping primitive; `ACCOUNTING_SUB_NAV_ITEMS` is the single rendered nav model.
+ *
+ * Do NOT re-introduce a competing left-rail QBO subnav component — `QboAccountingSubNav.tsx` is
+ * CI-enforced absent (`scripts/verify-accounting-nav.mjs` Check 7; CLAUDE.md §7: all nav on the top bar).
+ */
+
+export type AccountingSubNavSection =
+  | "home"
+  | "bills"
+  | "expenses"
+  | "billpay"
+  | "maint_shop"
+  | "vendors"
+  | "customers"
+  | "reports"
+  | "more";
+
 export type AccountingSubNavItem = {
   label: string;
   path: string;
-  section: "bills" | "settlements" | "settings" | "direct";
+  section: AccountingSubNavSection;
 };
+
+/** Approved top-node group labels (PNG source-of-truth). */
+export const GROUP_LABELS = {
+  home: "Accounting",
+  bills: "Bills",
+  expenses: "Expenses",
+  billpay: "Bill payment",
+  maint_shop: "Maintenance & shop",
+  vendors: "Vendors",
+  customers: "Customers",
+  reports: "Reports",
+  more: "More",
+} as const satisfies Record<AccountingSubNavSection, string>;
 
 /**
- * C7 — QBO-parity Accounting sub-nav (SUPERSEDED by the nav-unification, PR #1552 / commit e8933bb7).
- *
- * The original C7 design rendered these items through a standalone `QboAccountingSubNav.tsx`
- * component laid out as a vertical left-rail strip. That component was deliberately deleted in the
- * nav-unification work and is now CI-enforced absent (`scripts/verify-accounting-nav.mjs` Check 7),
- * because a left-rail nav strip violates the locked UI rule (CLAUDE.md §7: all nav lives on the top
- * horizontal bar; the 80px navy sidebar is the ONLY left panel — no second left tree).
- *
- * The live, unified accounting chrome is `AccountingSubNavWrapper`, which renders
- * `ACCOUNTING_CLEAN_TABS` (top tab bar) + `ACCOUNTING_MORE_TABS` (More ▾) + a `+ Create ▾` menu.
- * Those constants (below) are the single source of truth; the QBO-parity shell routes
- * (Receipts / Integration transactions / Revenue recognition / Fixed assets / Prepaid expenses /
- * My accountant) already exist as routed pages wrapped by `AccountingSubNavWrapper`.
- *
- * The former `QBO_ACCOUNTING_SUBNAV` array + `QboSubNavItem` type were dead exports (consumed by
- * nothing after the component's removal) and have been retired to remove schema/nav drift.
- * Do NOT re-introduce a competing QBO subnav component — see the CI guard above.
+ * Flat registry of every accounting sub-nav destination + its primary group. Every `path` resolves to
+ * a mounted route (or canonical redirect) — enforced by `scripts/verify-nav-integrity.mjs`.
  */
-
-const GROUP_LABELS: Record<Exclude<AccountingSubNavItem["section"], "direct">, string> = {
-  bills: "Bills",
-  settlements: "Settlements",
-  settings: "Settings",
-};
-
 export const SUBNAV_ITEMS: readonly AccountingSubNavItem[] = [
+  // Home
+  { label: "Accounting", path: "/accounting", section: "home" },
+
+  // Bills ▾ (PNG order)
   { label: "Bill", path: "/accounting/bills", section: "bills" },
   { label: "Maintenance bill", path: "/accounting/bills/maintenance", section: "bills" },
   { label: "Repair bill", path: "/accounting/bills/repair", section: "bills" },
@@ -42,47 +74,102 @@ export const SUBNAV_ITEMS: readonly AccountingSubNavItem[] = [
   { label: "Vendor bill", path: "/accounting/bills/vendor", section: "bills" },
   { label: "Multiple bills", path: "/accounting/bills/multiple", section: "bills" },
   { label: "Recurring bills", path: "/accounting/bills/recurring", section: "bills" },
-  { label: "Expenses", path: "/accounting/expenses", section: "direct" },
-  { label: "Expenses List", path: "/accounting/expenses/list", section: "direct" },
-  { label: "Bill payment", path: "/accounting/bill-payments", section: "direct" },
-  { label: "Maintenance & shop", path: "/accounting/maintenance-shop", section: "direct" },
-  { label: "Vendors", path: "/accounting/vendors", section: "direct" },
-  { label: "Customers", path: "/accounting/customers", section: "direct" },
-  { label: "Reports", path: "/accounting/reports", section: "direct" },
-  { label: "AR Aging", path: "/reports/ar-aging", section: "direct" },
+
+  // Expenses ▾
+  { label: "Expenses", path: "/accounting/expenses", section: "expenses" },
+  { label: "Expenses List", path: "/accounting/expenses/list", section: "expenses" },
+  { label: "Receipts", path: "/accounting/receipts", section: "expenses" },
+
+  // Bill payment ▾
+  { label: "Bill payment", path: "/accounting/bill-payments", section: "billpay" },
+  { label: "Vendor balances", path: "/accounting/vendor-balances", section: "billpay" },
+  { label: "Accounts payable", path: "/accounting/accounts-payable", section: "billpay" },
+  { label: "AP Aging", path: "/reports/ap-aging", section: "billpay" },
+
+  // Maintenance & shop ▾
+  { label: "Maintenance & shop", path: "/accounting/maintenance-shop", section: "maint_shop" },
+
+  // Vendors / Customers / Reports (top-level leaves)
+  { label: "Vendors", path: "/accounting/vendors", section: "vendors" },
+  { label: "Customers", path: "/accounting/customers", section: "customers" },
+  { label: "Reports", path: "/accounting/reports", section: "reports" },
+
+  // More ▾ — AR / receivables
+  { label: "Invoices", path: "/accounting/invoices", section: "more" },
+  { label: "Receive Payment", path: "/accounting/payments", section: "more" },
+  { label: "AR Aging", path: "/reports/ar-aging", section: "more" },
   COLLECTIONS_SUBNAV_ITEM,
-  { label: "AP Aging", path: "/reports/ap-aging", section: "direct" },
-  { label: "Invoices", path: "/accounting/invoices", section: "direct" },
-  { label: "Multi-entity", path: "/accounting/multi-entity", section: "direct" },
-  { label: "Receive Payment", path: "/accounting/payments", section: "direct" },
-  { label: "Dispute queue", path: "/accounting/dispute-queue", section: "settlements" },
-  { label: "Abandonment queue", path: "/accounting/abandonment-queue", section: "settlements" },
-  { label: "Factoring", path: "/accounting/factoring", section: "direct" },
-  { label: "Faro CSV import", path: "/factoring/faro-import", section: "direct" },
-  { label: "Factor reconciliation", path: "/accounting/factor-reconciliation", section: "direct" },
-  { label: "Sales tax", path: "/accounting/sales-tax", section: "direct" },
-  { label: "Month close", path: "/accounting/month-close", section: "direct" },
-  { label: "Audit trail", path: "/accounting/audit-trail", section: "direct" },
-  { label: "QBO sync drift", path: "/accounting/qbo-sync", section: "direct" },
-  { label: "Posting lineage", path: "/accounting/posting-lineage", section: "direct" },
-  { label: "Escrow", path: "/accounting/escrow", section: "direct" },
-  { label: "Cash forecast", path: "/accounting/cash-forecast", section: "direct" },
-  { label: "Period comparison", path: "/accounting/period-comparison", section: "direct" },
-  { label: "Pre-settlements", path: "/accounting/pre-settlements", section: "direct" },
-  { label: "Payment methods catalog", path: "/accounting/payment-methods-catalog", section: "settings" },
-  { label: "Vendor balances", path: "/accounting/vendor-balances", section: "direct" },
-  { label: "Accounts payable", path: "/accounting/accounts-payable", section: "direct" },
-  { label: "Journal entries", path: "/accounting/journal-entries", section: "direct" },
-  { label: "All Transactions", path: "/accounting/transactions", section: "direct" },
-  { label: "Expense category map", path: "/accounting/settings/expense-category-map", section: "settings" },
-  { label: "CoA roles", path: "/accounting/settings/coa-roles", section: "settings" },
+
+  // More ▾ — factoring
+  { label: "Factoring", path: "/accounting/factoring", section: "more" },
+  { label: "Faro CSV import", path: "/factoring/faro-import", section: "more" },
+  { label: "Factor reconciliation", path: "/accounting/factor-reconciliation", section: "more" },
+
+  // More ▾ — reconciliation
+  { label: "Daily Recon", path: "/accounting/daily-recon", section: "more" },
+  { label: "Reconciliation", path: "/accounting/reconciliation", section: "more" },
+  { label: "QBO reconcile", path: "/accounting/qbo-reconcile", section: "more" },
+
+  // More ▾ — settlements / driver finance
+  { label: "Settlements", path: "/driver-finance/settlements", section: "more" },
+  { label: "Pre-settlements", path: "/accounting/pre-settlements", section: "more" },
+  { label: "Dispute queue", path: "/accounting/dispute-queue", section: "more" },
+  { label: "Abandonment queue", path: "/accounting/abandonment-queue", section: "more" },
+  { label: "Escrow", path: "/accounting/escrow", section: "more" },
+
+  // More ▾ — ledger / transactions
+  { label: "Journal entries", path: "/accounting/journal-entries", section: "more" },
+  { label: "Account Register", path: "/accounting/account-register", section: "more" },
+  { label: "All Transactions", path: "/accounting/transactions", section: "more" },
+  { label: "Recurring transactions", path: "/accounting/recurring-transactions", section: "more" },
+  { label: "Integration transactions", path: "/accounting/integration-transactions", section: "more" },
+
+  // More ▾ — period / analysis
+  { label: "Sales tax", path: "/accounting/sales-tax", section: "more" },
+  { label: "Month close", path: "/accounting/month-close", section: "more" },
+  { label: "Period comparison", path: "/accounting/period-comparison", section: "more" },
+  { label: "Cash forecast", path: "/accounting/cash-forecast", section: "more" },
+  { label: "Multi-entity", path: "/accounting/multi-entity", section: "more" },
+
+  // More ▾ — QBO-parity back office
+  { label: "Revenue recognition", path: "/accounting/revenue-recognition", section: "more" },
+  { label: "Fixed assets", path: "/accounting/fixed-assets", section: "more" },
+  { label: "Prepaid expenses", path: "/accounting/prepaid-expenses", section: "more" },
+  { label: "My accountant", path: "/accounting/my-accountant", section: "more" },
+  { label: "Payroll", path: "/accounting/payroll", section: "more" },
+
+  // More ▾ — audit / lineage / sync
+  { label: "Audit trail", path: "/accounting/audit-trail", section: "more" },
+  { label: "Posting lineage", path: "/accounting/posting-lineage", section: "more" },
+  { label: "QBO sync drift", path: "/accounting/qbo-sync", section: "more" },
+
+  // More ▾ — catalogs / settings
+  { label: "Chart of Accounts", path: "/lists/accounting/chart-of-accounts", section: "more" },
+  { label: "Account Type Catalog", path: "/accounting/account-type-catalog", section: "more" },
+  { label: "Payment methods catalog", path: "/accounting/payment-methods-catalog", section: "more" },
+  { label: "Expense category map", path: "/accounting/settings/expense-category-map", section: "more" },
+  { label: "CoA roles", path: "/accounting/settings/coa-roles", section: "more" },
 ] as const;
 
-function bySection(section: AccountingSubNavItem["section"]): AccountingSubNavItem[] {
+export function bySection(section: AccountingSubNavSection): AccountingSubNavItem[] {
   return SUBNAV_ITEMS.filter((item) => item.section === section);
 }
 
-/** OB1 — canonical QBO-parity accounting tab bar. Rendered identically on every accounting route. */
+function leafOf(path: string): { label: string; href: string } {
+  const found = SUBNAV_ITEMS.find((item) => item.path === path);
+  if (!found) throw new Error(`subnav-manifest: no registry entry for ${path}`);
+  return { label: found.label, href: found.path };
+}
+
+function childrenOf(section: AccountingSubNavSection) {
+  return bySection(section).map((item) => ({ label: item.label, href: item.path }));
+}
+
+/**
+ * OB1 (RETAINED, NO LONGER RENDERED) — the pre-redesign flat QBO-parity tab bar. Kept as an export
+ * because CI guards still assert its shape (see file header). The live render is
+ * `ACCOUNTING_SUB_NAV_ITEMS` (grouped, below).
+ */
 export const ACCOUNTING_CLEAN_TABS = [
   { label: "Home",             to: "/accounting" },
   { label: "Bills",            to: "/accounting/bills" },
@@ -101,7 +188,7 @@ export const ACCOUNTING_CLEAN_TABS = [
   { label: "Reports",          to: "/reports" },
 ] as const;
 
-/** Back-office / operator items — shown in a "More ▾" submenu, not top-level tabs. */
+/** OB1 (RETAINED, NO LONGER RENDERED) — former "More ▾" back-office submenu. See file header. */
 export const ACCOUNTING_MORE_TABS = [
   { label: "Chart of Accounts", to: "/lists/accounting/chart-of-accounts" },
   { label: "Month Close",       to: "/accounting/month-close" },
@@ -114,18 +201,30 @@ export const ACCOUNTING_MORE_TABS = [
   { label: "Settings",          to: "/accounting/settings/expense-category-map" },
 ] as const;
 
+/**
+ * LIVE rendered model — the approved grouped click-open sub-nav (PNG source-of-truth).
+ * Rendered by `AccountingSubNavWrapper` through the shared `HoverDropdownNav` (openOn="click").
+ *
+ * Maintenance & shop ▾ surfaces the maintenance-shop overview plus the three shop-cost bill types as
+ * contextual shortcuts (their primary home is Bills ▾, per the PNG) so the group has label-appropriate
+ * content with no dead nodes.
+ */
 export const ACCOUNTING_SUB_NAV_ITEMS: readonly NavItem[] = [
+  leafOf("/accounting"), // Accounting (Home)
+  { label: GROUP_LABELS.bills, children: childrenOf("bills") },
+  { label: GROUP_LABELS.expenses, children: childrenOf("expenses") },
+  { label: GROUP_LABELS.billpay, children: childrenOf("billpay") },
   {
-    label: GROUP_LABELS.bills,
-    children: bySection("bills").map((item) => ({ label: item.label, href: item.path })),
+    label: GROUP_LABELS.maint_shop,
+    children: [
+      leafOf("/accounting/maintenance-shop"),
+      leafOf("/accounting/bills/maintenance"),
+      leafOf("/accounting/bills/repair"),
+      leafOf("/accounting/bills/fuel"),
+    ],
   },
-  {
-    label: GROUP_LABELS.settlements,
-    children: bySection("settlements").map((item) => ({ label: item.label, href: item.path })),
-  },
-  ...bySection("direct").map((item) => ({ label: item.label, href: item.path })),
-  {
-    label: GROUP_LABELS.settings,
-    children: bySection("settings").map((item) => ({ label: item.label, href: item.path })),
-  },
+  leafOf("/accounting/vendors"), // Vendors
+  leafOf("/accounting/customers"), // Customers
+  leafOf("/accounting/reports"), // Reports
+  { label: GROUP_LABELS.more, children: childrenOf("more") },
 ];

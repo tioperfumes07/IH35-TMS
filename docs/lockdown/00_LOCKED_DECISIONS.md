@@ -128,3 +128,23 @@ Locked by the owner while triaging the shared 130-finding audit. Source of truth
 9.8 **Never delete — ARCHIVE only.** Everything stays findable in the log + audits (§7 additive-only).
 
 9.9 **GL posting flags:** `SETTLEMENT_GL_POSTING_ENABLED` + `LEASE_GL_POSTING_ENABLED` → **OFF per-entity** until Repairs A+B land + CPA-verify (owner-confirmed 2026-07-04). The other 7 GL flags remain ON.
+
+## 10. ACCOUNTING SUB-NAV = APPROVED GROUPED CLICK-OPEN DROPDOWNS (locked — supersedes flat clean-tabs)
+- The Accounting module top-bar sub-nav is the **APPROVED grouped click-open dropdown** row per
+  `docs/approved-screens/3-Accounting-Dropdown.png`. Top nodes, in order:
+  **Accounting · Bills ▾ · Expenses ▾ · Bill payment ▾ · Maintenance & shop ▾ · Vendors · Customers · Reports**,
+  plus an overflow **More ▾** for back-office / AR / factoring / catalog / settings routes the PNG does not
+  surface as top nodes (so **every** routed accounting page is reachable by a click — many were URL-only).
+- **Bills ▾** = Bill · Maintenance bill · Repair bill · Fuel bill · Driver bill · Vendor bill · Multiple bills
+  (+ Recurring bills, additive). Labels follow the PNG where PNG label ≠ data label.
+- Groups **open on CLICK and stay open** until an item is chosen / outside-click / Escape — **NOT hover**
+  (Jorge directive 2026-06-09, `docs/specs/NAVIGATION-PATTERN-RULE.md`). Rendered via the shared
+  `HoverDropdownNav` (`openOn="click"`) from `ACCOUNTING_SUB_NAV_ITEMS` in
+  `apps/frontend/src/pages/accounting/subnav-manifest.ts`.
+- **This SUPERSEDES the flat `ACCOUNTING_CLEAN_TABS` render** (undocumented nav-unification #1552 drift).
+  Per §7/§9 the approved screen wins over undocumented drift. `ACCOUNTING_CLEAN_TABS`/`ACCOUNTING_MORE_TABS`
+  are retained as exports only for legacy CI guards; they are no longer rendered.
+- TOP-BAR ONLY — never a left rail (CLAUDE.md §7; `scripts/verify-accounting-nav.mjs` Check 7 keeps
+  `QboAccountingSubNav.tsx` absent). Enforced by `scripts/verify-accounting-subnav-grouped.mjs`
+  (asserts grouped click-open render + approved top-group set; flat clean-tabs cannot silently return).
+- Vocab stays locked: **`+ Create`** (kept as `+ Create ▾`), never `+ Add`/`+ New`.

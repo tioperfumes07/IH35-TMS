@@ -119,6 +119,11 @@ jobs:
       - name: verify:ob1-nav-header-unify
         run: npm run verify:ob1-nav-header-unify
 
+      - name: verify:accounting-subnav-grouped --selftest
+        run: node scripts/verify-accounting-subnav-grouped.mjs --selftest
+      - name: verify:accounting-subnav-grouped
+        run: npm run verify:accounting-subnav-grouped
+
       - name: verify:settlements-sidebar
         run: npm run verify:settlements-sidebar
 

@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Link, NavLink, useLocation } from "react-router-dom";
-import { ACCOUNTING_CLEAN_TABS, ACCOUNTING_MORE_TABS } from "./subnav-manifest";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { HoverDropdownNav, type NavItem } from "../../components/forms/shared/HoverDropdownNav";
+import { ACCOUNTING_SUB_NAV_ITEMS } from "./subnav-manifest";
 
 const CREATE_MENU = [
   { label: "New Bill", to: "/accounting/bills/vendor" },
@@ -18,25 +19,40 @@ type Props = {
   kpiStrip?: ReactNode;
 };
 
+/** True when `to` is the active tab for `pathname` (exact, or a nested detail route under it). */
 function tabActive(pathname: string, to: string): boolean {
   if (to === "/accounting") return pathname === "/accounting";
   if (to === "/accounting/bills") return pathname === "/accounting/bills" || pathname.startsWith("/accounting/bills/");
   return pathname === to || pathname.startsWith(`${to}/`);
 }
 
+/** All leaf hrefs (top-level leaves + every group child) from the grouped nav model. */
+function leafHrefs(items: readonly NavItem[]): string[] {
+  const out: string[] = [];
+  for (const item of items) {
+    if (item.href) out.push(item.href);
+    for (const child of item.children ?? []) out.push(child.href);
+  }
+  return out;
+}
+
+/** Pick the most-specific (longest) leaf href that is active for the current path. */
+function activeHrefFor(pathname: string): string | undefined {
+  const matches = leafHrefs(ACCOUNTING_SUB_NAV_ITEMS).filter((href) => tabActive(pathname, href));
+  if (matches.length === 0) return undefined;
+  return matches.reduce((best, href) => (href.length > best.length ? href : best));
+}
+
 export function AccountingSubNavWrapper({ title = "Accounting", subtitle, actions, children, kpiStrip }: Props) {
   const { pathname } = useLocation();
   const [createMenuOpen, setCreateMenuOpen] = useState(false);
-  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
   const createMenuRef = useRef<HTMLDivElement | null>(null);
-  const moreMenuRef = useRef<HTMLDivElement | null>(null);
 
-  const moreActive = ACCOUNTING_MORE_TABS.some((t) => pathname === t.to || pathname.startsWith(`${t.to}/`));
+  const activeHref = useMemo(() => activeHrefFor(pathname), [pathname]);
 
   useEffect(() => {
     const onDown = (event: MouseEvent) => {
       if (!createMenuRef.current?.contains(event.target as Node)) setCreateMenuOpen(false);
-      if (!moreMenuRef.current?.contains(event.target as Node)) setMoreMenuOpen(false);
     };
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
@@ -83,53 +99,14 @@ export function AccountingSubNavWrapper({ title = "Accounting", subtitle, action
         </div>
       </div>
 
-      <nav className="overflow-x-auto rounded-sm border border-gray-200 bg-white px-2 py-1" aria-label="Accounting sub-navigation">
-        <div className="flex min-w-max gap-1">
-          {ACCOUNTING_CLEAN_TABS.map((tab) => {
-            const active = tabActive(pathname, tab.to);
-            return (
-              <NavLink
-                key={tab.label}
-                to={tab.to}
-                className={`rounded px-3 py-1 text-sm whitespace-nowrap ${
-                  active ? "border-b-2 border-slate-300 bg-gray-100 font-semibold text-gray-900" : "text-gray-700 hover:bg-gray-50"
-                }`}
-              >
-                {tab.label}
-              </NavLink>
-            );
-          })}
-          <div ref={moreMenuRef} className="relative">
-            <button
-              type="button"
-              onClick={() => setMoreMenuOpen((o) => !o)}
-              className={`rounded px-3 py-1 text-sm whitespace-nowrap ${
-                moreActive ? "border-b-2 border-slate-300 bg-gray-100 font-semibold text-gray-900" : "text-gray-700 hover:bg-gray-50"
-              }`}
-            >
-              More ▾
-            </button>
-            {moreMenuOpen ? (
-              <div className="absolute left-0 top-full z-20 mt-1 min-w-[200px] rounded-sm border border-gray-200 bg-white shadow-md">
-                {ACCOUNTING_MORE_TABS.map((item) => (
-                  <NavLink
-                    key={item.label}
-                    to={item.to}
-                    onClick={() => setMoreMenuOpen(false)}
-                    className={({ isActive }: { isActive: boolean }) =>
-                      `block border-b border-gray-100 px-3 py-2 text-sm last:border-b-0 ${
-                        isActive ? "bg-gray-100 font-semibold text-gray-900" : "text-gray-800 hover:bg-gray-50"
-                      }`
-                    }
-                  >
-                    {item.label}
-                  </NavLink>
-                ))}
-              </div>
-            ) : null}
-          </div>
-        </div>
-      </nav>
+      {/*
+        Approved grouped click-open sub-nav (docs/approved-screens/3-Accounting-Dropdown.png).
+        Groups open on CLICK and stay open until an item is chosen / outside-click / Escape (NOT hover) —
+        LOCKED per docs/specs/NAVIGATION-PATTERN-RULE.md. Sourced from ACCOUNTING_SUB_NAV_ITEMS.
+      */}
+      <div className="overflow-x-auto">
+        <HoverDropdownNav items={[...ACCOUNTING_SUB_NAV_ITEMS]} activeHref={activeHref} openOn="click" />
+      </div>
 
       {kpiStrip}
 

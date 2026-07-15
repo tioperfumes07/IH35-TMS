@@ -6,7 +6,9 @@ import process from "node:process";
 const repoRoot = process.cwd();
 
 const WRAPPER_FILE = "apps/frontend/src/pages/accounting/AccountingSubNavWrapper.tsx";
-const REQUIRED_WRAPPER_MARKERS = ["ACCOUNTING_CLEAN_TABS", "+ Create", "+ Vendor", "data-accounting-subnav-wrapper"];
+// Grouped click-open redesign (3-Accounting-Dropdown.png): wrapper renders ACCOUNTING_SUB_NAV_ITEMS via
+// the shared HoverDropdownNav, keeping the + Create / + Vendor actions + wrapper data-attr.
+const REQUIRED_WRAPPER_MARKERS = ["ACCOUNTING_SUB_NAV_ITEMS", "HoverDropdownNav", "+ Create", "+ Vendor", "data-accounting-subnav-wrapper"];
 
 const REQUIRED_PAGES = ["apps/frontend/src/pages/accounting/BillsPage.tsx"];
 
