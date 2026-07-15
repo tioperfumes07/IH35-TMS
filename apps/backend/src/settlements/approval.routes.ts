@@ -275,12 +275,13 @@ export async function registerSettlementApprovalRoutes(app: FastifyInstance) {
 
     return withCurrentUser(user.uuid, async (client) => {
       const scopedCompanyId = await resolveOperatingCompanyId(client, user.uuid, operatingCompanyId);
+      if (!scopedCompanyId) return reply.code(403).send({ error: "forbidden" });
       // Check if settlement is finalized
-      const check = await approvalService.checkAllLinesApproved(client, parsed.data.settlement_id);
+      const check = await approvalService.checkAllLinesApproved(client, parsed.data.settlement_id, scopedCompanyId);
 
-      // Get settlement status
+      // Get settlement status — canonical header (driver_finance.driver_settlements), P2.4a repoint.
       const statusResult = await client.query<{ approval_status: string }>(`
-        SELECT approval_status FROM settlement.settlement
+        SELECT approval_status FROM driver_finance.driver_settlements
         WHERE id = $1 AND operating_company_id = $2
       `, [parsed.data.settlement_id, scopedCompanyId]);
       
