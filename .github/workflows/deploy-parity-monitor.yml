@@ -1,0 +1,34 @@
+# DEPLOY-PARITY MONITOR (B-B) — the frontend is a SEPARATE Render static deploy that can lag the backend/main;
+# a stale frontend was previously invisible ("fixed in main but old shows live", 2026-07-15). This job fetches
+# the SERVED frontend sha (/version.json), the SERVED backend sha (/api/v1/healthz/shallow), and compares both
+# to main HEAD. It goes RED (notifies via the failed run) when a component is stale. Runs on a schedule and can
+# be dispatched right after a deploy. Non-financial, read-only (HTTP GETs only).
+name: deploy-parity-monitor
+
+on:
+  schedule:
+    - cron: "17 * * * *" # hourly, offset from the top of the hour
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-parity:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (need origin/main sha)
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - name: Deploy-parity check (frontend vs backend vs main)
+        env:
+          DEPLOY_PARITY_LIVE: "1"
+          EXPECTED_MAIN_SHA: ${{ github.sha }}
+          FRONTEND_URL: https://app.ih35dispatch.com
+          BACKEND_URL: https://api.ih35dispatch.com
+        run: node scripts/verify-deploy-parity.mjs
