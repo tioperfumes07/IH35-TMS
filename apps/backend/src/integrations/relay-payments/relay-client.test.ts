@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { relayApiKey } from "./relay-client.js";
+import { relayApiBase, relayApiKey, RelayApiError } from "./relay-client.js";
 
 // Per-entity Relay key resolution: RELAY_API_KEY_<CODE> takes precedence, RELAY_API_KEY is the fallback,
 // and a missing key resolves to null (caller throws relay_not_configured — never borrows another entity's key).
@@ -44,5 +44,35 @@ describe("relayApiKey — per-entity resolution", () => {
     clearKeys();
     expect(relayApiKey("TRANSP")).toBeNull();
     expect(relayApiKey(null)).toBeNull();
+  });
+});
+
+// FAIL-LOUD: a missing RELAY_API_BASE in production must THROW, never silently fall back to staging (that
+// silent fallback cost hours of "auth works but 0 rows" debugging on 2026-07-15).
+describe("relayApiBase — fail-loud in production", () => {
+  const saved = { ...process.env };
+  afterEach(() => {
+    delete process.env.RELAY_API_BASE;
+    delete process.env.NODE_ENV;
+    Object.assign(process.env, saved);
+  });
+
+  it("throws in production when RELAY_API_BASE is unset (no staging fallback)", () => {
+    delete process.env.RELAY_API_BASE;
+    process.env.NODE_ENV = "production";
+    expect(() => relayApiBase()).toThrow(RelayApiError);
+    expect(() => relayApiBase()).toThrow(/relay_api_base_missing/);
+  });
+
+  it("falls back to the staging default OUTSIDE production", () => {
+    delete process.env.RELAY_API_BASE;
+    process.env.NODE_ENV = "test";
+    expect(relayApiBase()).toContain("staging.relaypayments.com");
+  });
+
+  it("uses the configured base (trailing slash normalized) when set", () => {
+    process.env.NODE_ENV = "production";
+    process.env.RELAY_API_BASE = "https://app.relaypayments.com/api/fuel/transactions";
+    expect(relayApiBase()).toBe("https://app.relaypayments.com/api/fuel/transactions/");
   });
 });

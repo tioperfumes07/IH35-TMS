@@ -26,14 +26,41 @@ export class RelayApiError extends Error {
   }
 }
 
-// Confirmed live (staging). Prod base differs — set RELAY_API_BASE in Render before flipping the
-// per-entity RELAY_FUEL_INGEST_ENABLED flag on in prod.
+// Confirmed live (staging). Prod base differs — set RELAY_API_BASE in Render.
 const DEFAULT_RELAY_API_BASE = "https://staging.relaypayments.com/api/fuel/transactions/";
 
-function relayApiBase(): string {
+// FAIL-LOUD (2026-07-15): a missing/blank RELAY_API_BASE in production must THROW, never silently fall back
+// to the STAGING endpoint. The silent staging fallback cost hours of "auth works but 0 rows" debugging. The
+// staging default is allowed ONLY outside production (NODE_ENV !== "production").
+export function relayApiBase(): string {
   const raw = process.env.RELAY_API_BASE?.trim();
-  const base = raw && raw.length > 0 ? raw : DEFAULT_RELAY_API_BASE;
-  return base.endsWith("/") ? base : `${base}/`;
+  if (!raw || raw.length === 0) {
+    if ((process.env.NODE_ENV ?? "").trim() === "production") {
+      throw new RelayApiError(
+        "relay_api_base_missing:RELAY_API_BASE must be set in production — refusing to fall back to the staging endpoint",
+        null,
+        null,
+        false
+      );
+    }
+    return DEFAULT_RELAY_API_BASE;
+  }
+  return raw.endsWith("/") ? raw : `${raw}/`;
+}
+
+// Per-request timeout. TRANSP has real volume (March 2026→now); the old 15s default aborted the pull before
+// anything committed ("This operation was aborted"). Configurable via RELAY_API_TIMEOUT_MS; default 60s.
+function relayTimeoutMs(): number {
+  const raw = Number(process.env.RELAY_API_TIMEOUT_MS);
+  return Number.isFinite(raw) && raw > 0 ? raw : 60000;
+}
+
+// Bounded retry with exponential backoff for a slow/aborted window (retryable errors: aborted network
+// timeout, 429, 5xx). A single slow window must not kill the whole company backfill.
+const RELAY_MAX_RETRIES = 3;
+const RELAY_RETRY_BASE_MS = 750;
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
@@ -84,6 +111,42 @@ async function readJsonResponse(res: Response): Promise<unknown> {
     return JSON.parse(text);
   } catch {
     return { _raw: text };
+  }
+}
+
+// One request attempt: fetch (timeout-bounded) + classify. Throws a RelayApiError (retryable flag set) on a
+// network/abort error or a non-2xx response.
+async function relayGetOnce(url: URL, key: string): Promise<Response> {
+  let res: Response;
+  try {
+    res = await withCircuitBreaker("relay", () => relayFetch(url, { headers: relayHeaders(key) }, relayTimeoutMs()));
+  } catch (error) {
+    throw new RelayApiError(`relay_network_error:${String((error as Error)?.message ?? error)}`, null, null, true);
+  }
+  if (!res.ok) {
+    const body = await readJsonResponse(res);
+    const retryable = res.status === 429 || res.status >= 500;
+    throw new RelayApiError(`relay_http_${res.status}`, res.status, body, retryable);
+  }
+  return res;
+}
+
+// Retry a retryable failure (aborted/timeout, 429, 5xx) with exponential backoff. A non-retryable error
+// (auth/4xx, relay_not_configured) throws immediately.
+async function relayGetWithRetry(url: URL, key: string): Promise<Response> {
+  let attempt = 0;
+  for (;;) {
+    try {
+      return await relayGetOnce(url, key);
+    } catch (error) {
+      const retryable = error instanceof RelayApiError && error.retryable;
+      if (retryable && attempt < RELAY_MAX_RETRIES) {
+        await sleep(RELAY_RETRY_BASE_MS * 2 ** attempt);
+        attempt += 1;
+        continue;
+      }
+      throw error;
+    }
   }
 }
 
@@ -268,32 +331,61 @@ export async function listRelayFuelTransactions(params: {
     throw new RelayApiError("relay_not_configured", null, null, false);
   }
 
-  const url = new URL(relayApiBase());
-  url.searchParams.set("start_date", params.startDate);
-  url.searchParams.set("end_date", params.endDate);
+  const first = new URL(relayApiBase());
+  first.searchParams.set("start_date", params.startDate);
+  first.searchParams.set("end_date", params.endDate);
 
-  let res: Response;
+  // Retry + defensive pagination. Each page is fetched with timeout + bounded retry (relayGetWithRetry).
+  // Windows are 3 days at the ingest layer so a single page almost always returns everything; this loop is a
+  // safety net that follows a `next`/`next_page` URL if Relay sends one. MAX_PAGES + a no-progress guard
+  // prevent any runaway loop. De-dup by transaction_id so an overlapping cursor page can't double-count.
+  const collected: RelayFuelTransaction[] = [];
+  const seen = new Set<string>();
+  let nextUrl: URL | null = first;
+  let pages = 0;
+  const MAX_PAGES = 500;
+
+  while (nextUrl && pages < MAX_PAGES) {
+    pages += 1;
+    const res = await relayGetWithRetry(nextUrl, key);
+    const json = await readJsonResponse(res);
+    const obj = asObject(json);
+    const rows: unknown[] = Array.isArray(json)
+      ? json
+      : Array.isArray(obj?.data)
+        ? (obj?.data as unknown[])
+        : Array.isArray(obj?.results)
+          ? (obj?.results as unknown[])
+          : [];
+    for (const r of rows) {
+      const row = asObject(r);
+      if (!row) continue;
+      const parsed = parseRelayFuelTransactionRow(row);
+      if (parsed && !seen.has(parsed.transaction_id)) {
+        seen.add(parsed.transaction_id);
+        collected.push(parsed);
+      }
+    }
+    nextUrl = resolveNextPage(obj, nextUrl);
+  }
+
+  return collected;
+}
+
+// Conservative next-page resolver. Relay's exact pagination shape is UNCONFIRMED, so this follows ONLY an
+// explicit `next`/`next_page` URL (the standard REST cursor pattern) and stops otherwise — it does NOT guess
+// cursor query-param names (which could loop or mis-page). Combined with 3-day ingest windows, single-page is
+// the normal case; this is a safety net. Returns null (stop) if absent or if the URL doesn't advance.
+function resolveNextPage(obj: Record<string, unknown> | null, current: URL): URL | null {
+  if (!obj) return null;
+  const paging = asObject(obj.paging) ?? asObject(obj.pagination) ?? {};
+  const nextRaw = str(obj.next) ?? str(obj.next_page) ?? str(paging.next) ?? str(paging.next_page);
+  if (!nextRaw) return null;
+  let candidate: URL;
   try {
-    res = await withCircuitBreaker("relay", () => relayFetch(url, { headers: relayHeaders(key) }));
-  } catch (error) {
-    throw new RelayApiError(`relay_network_error:${String((error as Error)?.message ?? error)}`, null, null, true);
+    candidate = new URL(nextRaw, current);
+  } catch {
+    return null;
   }
-
-  if (!res.ok) {
-    const body = await readJsonResponse(res);
-    const retryable = res.status === 429 || res.status >= 500;
-    throw new RelayApiError(`relay_http_${res.status}`, res.status, body, retryable);
-  }
-
-  const json = await readJsonResponse(res);
-  const rows: unknown[] = Array.isArray(json)
-    ? json
-    : Array.isArray((json as Record<string, unknown> | null)?.data)
-      ? ((json as Record<string, unknown>).data as unknown[])
-      : [];
-
-  return rows
-    .filter((r): r is Record<string, unknown> => Boolean(r && typeof r === "object"))
-    .map((r) => parseRelayFuelTransactionRow(r))
-    .filter((t): t is RelayFuelTransaction => t !== null);
+  return candidate.toString() === current.toString() ? null : candidate;
 }

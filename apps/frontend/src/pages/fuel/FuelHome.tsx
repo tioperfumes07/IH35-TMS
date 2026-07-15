@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { FuelFraudBadge } from "../../components/fuel/FuelFraudBadge";
+import { RelayHistoryImport } from "./components/RelayHistoryImport";
 
 type FraudSummary = {
   open_critical: number;
@@ -51,6 +52,9 @@ export function FuelHomePage() {
     <div className="space-y-3">
       <div className="max-w-xs">
         <FuelFraudAlertsKpiCard />
+      </div>
+      <div className="max-w-md">
+        <RelayHistoryImport />
       </div>
     </div>
   );

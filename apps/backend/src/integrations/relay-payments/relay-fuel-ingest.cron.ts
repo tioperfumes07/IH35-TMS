@@ -45,15 +45,34 @@ function isoDateMonthsAgo(n: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+/** Ingest window size in days (owner directive 2026-07-15: pull in 3-DAY windows so a busy carrier's month
+ *  can't exceed the request timeout in one call). Configurable via RELAY_FUEL_INGEST_WINDOW_DAYS; default 3. */
+function relayIngestWindowDays(): number {
+  const raw = Number.parseInt(process.env.RELAY_FUEL_INGEST_WINDOW_DAYS ?? "3", 10);
+  return Number.isFinite(raw) && raw > 0 ? raw : 3;
+}
+
 /**
- * Inclusive monthly [startDate,endDate] windows from `months` ago through today (UTC).
- * Chunked monthly so a deep historical pull stays within Relay API response limits; any
- * boundary overlap is harmless because the upsert is idempotent by transaction_id.
+ * Inclusive, contiguous [startDate,endDate] windows of `windowDays` each covering [startIso, endIso],
+ * oldest→newest, with NO gaps and NO overlaps (each window's end is the day before the next window's start).
+ * Small windows keep every Relay API call well under the request timeout regardless of carrier volume; the
+ * upsert is idempotent by transaction_id so a boundary or re-run never duplicates. The daily cron reuses this
+ * with a 1-day range (start === end) → a single window.
  */
-function monthlyWindows(months: number): Array<{ startDate: string; endDate: string }> {
+export function dayWindows(startIso: string, endIso: string, windowDays: number): Array<{ startDate: string; endDate: string }> {
   const windows: Array<{ startDate: string; endDate: string }> = [];
-  for (let i = months; i >= 0; i -= 1) {
-    windows.push({ startDate: isoDateMonthsAgo(i), endDate: i === 0 ? todayIsoDate() : isoDateMonthsAgo(i - 1) });
+  const end = new Date(`${endIso}T00:00:00Z`);
+  const step = Math.max(1, windowDays);
+  let cursor = new Date(`${startIso}T00:00:00Z`);
+  // Guard against a bad range (start after end) → no windows rather than an infinite loop.
+  while (cursor.getTime() <= end.getTime()) {
+    const wEnd = new Date(cursor);
+    wEnd.setUTCDate(wEnd.getUTCDate() + step - 1);
+    if (wEnd.getTime() > end.getTime()) wEnd.setTime(end.getTime());
+    windows.push({ startDate: cursor.toISOString().slice(0, 10), endDate: wEnd.toISOString().slice(0, 10) });
+    const next = new Date(wEnd);
+    next.setUTCDate(next.getUTCDate() + 1);
+    cursor = next;
   }
   return windows;
 }
@@ -182,14 +201,17 @@ export function initializeRelayFuelIngestCron(app: FastifyInstance) {
 /**
  * One-shot HISTORICAL BACKFILL — pulls the maximum available past Relay fuel transactions
  * for each active, flag-ON operating company. Default 24 months (RELAY_FUEL_INGEST_BACKFILL_MONTHS),
- * chunked monthly. Idempotent (upsert by transaction_id), so safe to re-run; Relay returns only
- * what exists, so "24 months or more" naturally yields whatever history is available.
- * Jorge 2026-07-05: "set to maximum past time, 24 months or more if available."
+ * chunked into small (default 3-day, RELAY_FUEL_INGEST_WINDOW_DAYS) windows so a busy carrier's volume never
+ * exceeds the per-request timeout. Idempotent + RESUMABLE (upsert by transaction_id), so a re-run continues
+ * rather than duplicating or restarting; Relay returns only what exists, so "24 months or more" naturally
+ * yields whatever history is available. Jorge 2026-07-05: "set to maximum past time, 24 months or more if
+ * available." Owner directive 2026-07-15: pull in 3-day windows.
  */
 export async function runRelayFuelBackfill(app: FastifyInstance, opts?: { months?: number }): Promise<void> {
   const months =
     opts?.months ?? (Number.parseInt(process.env.RELAY_FUEL_INGEST_BACKFILL_MONTHS ?? "24", 10) || 24);
-  const windows = monthlyWindows(months);
+  const windowDays = relayIngestWindowDays();
+  const windows = dayWindows(isoDateMonthsAgo(months), todayIsoDate(), windowDays);
   const failures: { operating_company_id: string; error: unknown }[] = [];
 
   await withLuciaBypass(async (client) => {
@@ -202,14 +224,28 @@ export async function runRelayFuelBackfill(app: FastifyInstance, opts?: { months
       let upserted = 0;
       let skipped = 0;
       try {
-        for (const w of windows) {
+        for (const [idx, w] of windows.entries()) {
           const stats = await ingestForCompany(client, app, operatingCompanyId, w.startDate, w.endDate, entityCode);
           pulled += stats.pulled;
           upserted += stats.upserted;
           skipped += stats.skipped;
+          // Per-window visibility — so progress is observable and "0 rows because empty" vs "0 rows because a
+          // window errored" is never ambiguous (a failing window throws out of ingestForCompany → caught below).
+          app.log.info(
+            {
+              operating_company_id: operatingCompanyId,
+              window: `${w.startDate}..${w.endDate}`,
+              window_index: idx + 1,
+              window_total: windows.length,
+              pulled: stats.pulled,
+              upserted: stats.upserted,
+              skipped: stats.skipped,
+            },
+            "[RELAY_FUEL_INGEST_BACKFILL] window complete"
+          );
         }
         app.log.info(
-          { operating_company_id: operatingCompanyId, months, windows: windows.length, pulled, upserted, skipped },
+          { operating_company_id: operatingCompanyId, months, window_days: windowDays, windows: windows.length, pulled, upserted, skipped },
           "[RELAY_FUEL_INGEST_BACKFILL] company backfill complete"
         );
       } catch (error) {
