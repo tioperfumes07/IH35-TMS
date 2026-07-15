@@ -1,7 +1,8 @@
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
+import * as Sentry from "@sentry/node";
 import { withLuciaBypass } from "../auth/db.js";
-import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
+import { recordBackgroundJobRun, wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { pullChartOfAccountsFromQbo } from "./chart-of-accounts-puller.js";
 import { reconcileChartOfAccounts } from "./chart-of-accounts-reconciler.js";
 import { pullItemsFromQbo } from "./items-puller.js";
@@ -12,79 +13,136 @@ import { maybeFireDriftAlert } from "./sync-alerts.js";
 
 let initialized = false;
 
-async function pullEntityIfModuleExists(modulePath: string, exportName: string, operatingCompanyId: string) {
+export type SyncStepFailure = { operating_company_id: string; step: string; error: string };
+
+// B-A2 — per-STEP error isolation + NO SILENT SWALLOW (root cause of "A/P bills = $0 while QBO live + flags
+// ON"): the tick ran COA→Items→customers→vendors→A/P as bare awaits, so a transient failure on ANY earlier
+// step (a QBO 5xx/429, a token blip) threw out of the whole tick before the A/P stages ran — and
+// wrapBackgroundJobTick swallowed it into Sentry, invisible in the UI. Now each step is isolated: a failure
+// logs loudly, is captured to Sentry, and is recorded as a FAILED background-job run (health surface). It is
+// NEVER swallowed, and it never blocks the remaining steps or later companies. Aggregated failures are
+// returned so the caller/route can report them.
+async function runStep(
+  step: string,
+  operatingCompanyId: string,
+  fn: () => Promise<unknown>,
+  failures: SyncStepFailure[],
+  log?: FastifyInstance["log"]
+): Promise<void> {
   try {
-    const mod = (await import(modulePath)) as Record<string, (id: string) => Promise<unknown>>;
-    const fn = mod[exportName];
-    if (typeof fn === "function") {
-      await fn(operatingCompanyId);
-    }
-  } catch {
-    // optional puller not yet deployed (e.g. QBO-SYNC-3 customers/vendors)
-  }
-}
-
-async function reconcileEntityIfModuleExists(modulePath: string, exportName: string, operatingCompanyId: string) {
-  try {
-    const mod = (await import(modulePath)) as Record<string, (id: string) => Promise<unknown>>;
-    const fn = mod[exportName];
-    if (typeof fn === "function") {
-      await fn(operatingCompanyId);
-    }
-  } catch {
-    // optional reconciler not yet deployed
-  }
-}
-
-async function runScheduledSyncForCompany(operatingCompanyId: string, log?: FastifyInstance["log"]) {
-  await pullChartOfAccountsFromQbo(operatingCompanyId);
-  await reconcileChartOfAccounts(operatingCompanyId);
-
-  await pullItemsFromQbo(operatingCompanyId);
-  await reconcileItems(operatingCompanyId);
-
-  await pullEntityIfModuleExists("./customers-puller.js", "pullCustomersFromQbo", operatingCompanyId);
-  await reconcileEntityIfModuleExists("./customers-reconciler.js", "reconcileCustomers", operatingCompanyId);
-
-  await pullEntityIfModuleExists("./vendors-puller.js", "pullVendorsFromQbo", operatingCompanyId);
-  await reconcileEntityIfModuleExists("./vendors-reconciler.js", "reconcileVendors", operatingCompanyId);
-
-  // Inbound A/P (QBO Bills -> mdata.qbo_ap_bills mirror -> accounting.bills). Both stages are
-  // internally gated by default-OFF flags (QBO_AP_MIRROR_PULL_ENABLED / QBO_AP_BILLS_PROJECTION_ENABLED)
-  // and no-op until the owner enables them, so default scheduler behavior is unchanged.
-  await pullApBillsFromQbo(operatingCompanyId);
-  await projectApBillsToLedger(operatingCompanyId);
-
-  const driftResults = await detectDriftForCompany(operatingCompanyId);
-  for (const result of driftResults) {
-    const unresolved = await countUnresolvedDrift(operatingCompanyId, result.entityType);
-    const alert = await maybeFireDriftAlert({
-      operatingCompanyId,
-      entityType: result.entityType,
-      driftCount: unresolved,
-    });
-    log?.info(
-      {
-        operating_company_id: operatingCompanyId,
-        entity_type: result.entityType,
-        inserted: result.inserted,
-        unresolved,
-        alert_sent: alert.sent,
-      },
-      "[qbo-sync-scheduler] drift detection complete"
+    await fn();
+  } catch (error) {
+    const msg = String((error as Error)?.message ?? error);
+    failures.push({ operating_company_id: operatingCompanyId, step, error: msg });
+    log?.error(
+      { operating_company_id: operatingCompanyId, step, err: msg },
+      `[qbo-sync-scheduler] step '${step}' FAILED — isolated, continuing with the next step`
     );
+    Sentry.captureException(error, {
+      tags: { job_name: "qbo_sync.drift_scheduler", step, operating_company_id: operatingCompanyId },
+    });
+    await recordBackgroundJobRun(`qbo_sync.step.${step}`, false, `${operatingCompanyId}: ${msg}`);
   }
 }
 
-export async function runQboSyncSchedulerTick(log?: FastifyInstance["log"]) {
+// Optional puller/reconciler modules (e.g. customers/vendors not yet deployed): a MISSING module is skipped
+// silently (import fails), but a module that IS present and THROWS at call time surfaces via runStep — no
+// blanket swallow of real errors (the old pullEntityIfModuleExists caught both, hiding real failures).
+async function loadOptionalFn(
+  modulePath: string,
+  exportName: string
+): Promise<((id: string) => Promise<unknown>) | null> {
+  try {
+    const mod = (await import(modulePath)) as Record<string, (id: string) => Promise<unknown>>;
+    const fn = mod[exportName];
+    return typeof fn === "function" ? fn : null;
+  } catch {
+    return null; // module not deployed — optional, skip (not an error)
+  }
+}
+
+async function runScheduledSyncForCompany(
+  operatingCompanyId: string,
+  failures: SyncStepFailure[],
+  log?: FastifyInstance["log"]
+): Promise<void> {
+  await runStep("chart_of_accounts_pull", operatingCompanyId, () => pullChartOfAccountsFromQbo(operatingCompanyId), failures, log);
+  await runStep("chart_of_accounts_reconcile", operatingCompanyId, () => reconcileChartOfAccounts(operatingCompanyId), failures, log);
+
+  await runStep("items_pull", operatingCompanyId, () => pullItemsFromQbo(operatingCompanyId), failures, log);
+  await runStep("items_reconcile", operatingCompanyId, () => reconcileItems(operatingCompanyId), failures, log);
+
+  const customersPull = await loadOptionalFn("./customers-puller.js", "pullCustomersFromQbo");
+  if (customersPull) await runStep("customers_pull", operatingCompanyId, () => customersPull(operatingCompanyId), failures, log);
+  const customersReconcile = await loadOptionalFn("./customers-reconciler.js", "reconcileCustomers");
+  if (customersReconcile) await runStep("customers_reconcile", operatingCompanyId, () => customersReconcile(operatingCompanyId), failures, log);
+
+  const vendorsPull = await loadOptionalFn("./vendors-puller.js", "pullVendorsFromQbo");
+  if (vendorsPull) await runStep("vendors_pull", operatingCompanyId, () => vendorsPull(operatingCompanyId), failures, log);
+  const vendorsReconcile = await loadOptionalFn("./vendors-reconciler.js", "reconcileVendors");
+  if (vendorsReconcile) await runStep("vendors_reconcile", operatingCompanyId, () => vendorsReconcile(operatingCompanyId), failures, log);
+
+  // Inbound A/P (QBO Bills -> mdata.qbo_ap_bills mirror -> accounting.bills). MUST run even if an earlier step
+  // failed — that isolation IS the A/P-shows-$0 fix. Both stages are internally gated by default-OFF flags
+  // (QBO_AP_MIRROR_PULL_ENABLED / QBO_AP_BILLS_PROJECTION_ENABLED) and idempotent (upsert), so re-running is safe.
+  await runStep("ap_bills_pull", operatingCompanyId, () => pullApBillsFromQbo(operatingCompanyId), failures, log);
+  await runStep("ap_bills_project", operatingCompanyId, () => projectApBillsToLedger(operatingCompanyId), failures, log);
+
+  await runStep(
+    "drift_detect",
+    operatingCompanyId,
+    async () => {
+      const driftResults = await detectDriftForCompany(operatingCompanyId);
+      for (const result of driftResults) {
+        const unresolved = await countUnresolvedDrift(operatingCompanyId, result.entityType);
+        const alert = await maybeFireDriftAlert({ operatingCompanyId, entityType: result.entityType, driftCount: unresolved });
+        log?.info(
+          {
+            operating_company_id: operatingCompanyId,
+            entity_type: result.entityType,
+            inserted: result.inserted,
+            unresolved,
+            alert_sent: alert.sent,
+          },
+          "[qbo-sync-scheduler] drift detection complete"
+        );
+      }
+    },
+    failures,
+    log
+  );
+}
+
+// Runs one full tick across every active company. Returns the aggregated isolated failures (never throws for
+// a per-step/per-company error). Reused by the 4h cron AND the owner-only manual trigger route.
+export async function runQboSyncSchedulerTick(log?: FastifyInstance["log"]): Promise<SyncStepFailure[]> {
+  const failures: SyncStepFailure[] = [];
   await withLuciaBypass(async (client) => {
     const companies = await client.query<{ id: string }>(
       `SELECT id::text AS id FROM org.companies WHERE is_active = true AND deactivated_at IS NULL ORDER BY id`
     );
     for (const company of companies.rows) {
-      await runScheduledSyncForCompany(company.id, log);
+      // B-A2 — per-COMPANY isolation: TRANSP failing must not block TRK. Every step is already isolated, so
+      // runScheduledSyncForCompany should not throw; this outer guard is belt-and-suspenders for anything
+      // unexpected (e.g. an error outside a step).
+      try {
+        await runScheduledSyncForCompany(company.id, failures, log);
+      } catch (error) {
+        const msg = String((error as Error)?.message ?? error);
+        failures.push({ operating_company_id: company.id, step: "company", error: msg });
+        log?.error({ operating_company_id: company.id, err: msg }, "[qbo-sync-scheduler] company sync FAILED — isolated, continuing with the next company");
+        Sentry.captureException(error, { tags: { job_name: "qbo_sync.drift_scheduler", operating_company_id: company.id } });
+        await recordBackgroundJobRun("qbo_sync.company", false, `${company.id}: ${msg}`);
+      }
     }
   });
+  if (failures.length) {
+    log?.warn(
+      { failure_count: failures.length, failures },
+      "[qbo-sync-scheduler] tick completed WITH isolated step failures (each captured to Sentry + a failed job run; the tick did NOT abort)"
+    );
+  }
+  return failures;
 }
 
 export function initializeQboSyncDriftScheduler(app: FastifyInstance) {
