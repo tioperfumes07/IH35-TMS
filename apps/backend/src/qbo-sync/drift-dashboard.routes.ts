@@ -6,6 +6,10 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 import { fetchChartOfAccountsSyncStatus } from "./chart-of-accounts-reconciler.js";
 import { fetchItemsSyncStatus } from "./items-reconciler.js";
 import type { DriftEntityType } from "./drift-detector.js";
+import { runQboSyncSchedulerTick } from "./sync-scheduler.js";
+
+// B-A2 — single-flight flag so overlapping owner-triggered syncs return 409 instead of racing.
+let triggerRunning = false;
 
 const querySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -228,4 +232,27 @@ export async function registerQboSyncDriftDashboardRoutes(app: FastifyInstance) 
     if (!updated) return reply.code(404).send({ error: "drift_log_not_found" });
     return reply.send({ ok: true, id: updated });
   });
+
+  // B-A2 — OWNER-ONLY manual trigger for the inbound QBO sync (COA/items/customers/vendors/A-P/drift). Lets
+  // the owner (and GUARD) force a tick instead of waiting up to 4h for the cron — the missing on-demand path
+  // that left "A/P shows $0" un-fixable without waiting. IDEMPOTENT: every underlying puller/projection is
+  // upsert-based, so re-running never double-writes. The single-flight flag rejects overlapping triggers (409).
+  app.post(
+    "/api/v1/qbo-sync/trigger",
+    { config: { rateLimit: { max: 6, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const authUser = currentAuthUser(req, reply);
+      if (!authUser) return;
+      if (authUser.role !== "Owner") return reply.code(403).send({ error: "forbidden", detail: "owner only" });
+      if (triggerRunning) return reply.code(409).send({ error: "already_running", detail: "a manual QBO sync is already in progress" });
+      triggerRunning = true;
+      try {
+        req.log.info({ actor: authUser.uuid }, "[qbo-sync] owner-triggered manual sync starting");
+        const failures = await runQboSyncSchedulerTick(req.log);
+        return reply.send({ ok: failures.length === 0, failure_count: failures.length, failures });
+      } finally {
+        triggerRunning = false;
+      }
+    }
+  );
 }
