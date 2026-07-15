@@ -60,52 +60,28 @@ export async function registerPreSettlementsRoutes(app: FastifyInstance) {
     });
   });
 
-  /** GET /api/v1/settlements/:id — one settlement with lines + deductions */
+  /**
+   * GET /api/v1/settlements/:id — RETIRED (CHAIN-07 extension, P2.4b 2026-07-15).
+   *
+   * The legacy detail handler queried the RETIRE `settlement.settlement` / `settlement.settlement_line`
+   * / `settlement.settlement_deduction` duplicate ledger (empty on prod — verified 0 rows on branch
+   * br-fancy-credit-akjnd07a — so it always 404'd). Nothing calls it: the only `/api/v1/settlements/:id/*`
+   * consumer is the disputes sub-route. Like the retired LIST handler above, it now permanently
+   * 308-redirects to the single canonical driver-finance settlement detail. Single-subledger rule
+   * (QBO/NetSuite/McLeod/Alvys): NEVER resurrect a 2nd settlement ledger. MUST NOT read/write
+   * `settlement.*` / `payroll.*`. Guarded by scripts/verify-chain07-settlements-redirect.mjs.
+   */
   app.get("/api/v1/settlements/:id", async (req, reply) => {
-    if (!authGuard(req, reply)) return;
     const params = idParamsSchema.safeParse(req.params);
     if (!params.success) return reply.code(400).send({ error: "validation_error" });
-    const query = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
-    if (!query.success) return reply.code(400).send({ error: "validation_error" });
-    const companyId = query.data.operating_company_id;
-
-    const settleSql = `
-      SELECT s.id::text, s.driver_id::text, s.pay_period_start::text, s.pay_period_end::text,
-             s.status, s.gross_cents, s.deductions_cents, s.net_cents, s.notes,
-             s.created_at::text, s.updated_at::text,
-             d.first_name || ' ' || d.last_name AS driver_name
-      FROM settlement.settlement s
-      JOIN mdata.drivers d ON d.id = s.driver_id
-      WHERE s.id = $1::uuid AND s.operating_company_id = $2::uuid AND s.is_active = true`;
-
-    const linesSql = `
-      SELECT id::text, line_type, description, amount_cents, load_id::text, source_table,
-             source_reference_id::text, created_at::text
-      FROM settlement.settlement_line
-      WHERE settlement_id = $1::uuid AND is_active = true
-      ORDER BY created_at ASC`;
-
-    const dedSql = `
-      SELECT id::text, deduction_type, description, amount_cents, source_table,
-             source_reference_id::text, created_at::text
-      FROM settlement.settlement_deduction
-      WHERE settlement_id = $1::uuid AND is_active = true
-      ORDER BY created_at ASC`;
-
-    await assertCompanyMembership(req.user!.uuid, companyId);
-    return withCurrentUser(req.user!.uuid, async (client) => {
-      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
-      const [settle, lines, deductions] = await Promise.all([
-        client.query(settleSql, [params.data.id, companyId]),
-        client.query(linesSql,  [params.data.id]),
-        client.query(dedSql,    [params.data.id]),
-      ]);
-      if (settle.rows.length === 0) return reply.code(404).send({ error: "not_found" });
-      await client.query(`SELECT events.log_event(
-        $1::uuid, 'settlement.viewed', 'user', $2::uuid,
-        'settlement', $3::uuid, now(), '{}'::jsonb, 'pre-settlements-routes', true, null, null, $2::uuid, null
-      )`, [companyId, req.user!.uuid, params.data.id]);
-      return { settlement: settle.rows[0], lines: lines.rows, deductions: deductions.rows };
+    const rawUrl = req.raw.url ?? "";
+    const qs = rawUrl.includes("?") ? rawUrl.slice(rawUrl.indexOf("?")) : "";
+    const canonical = `/api/v1/driver-finance/settlements/${params.data.id}${qs}`;
+    reply.header("location", canonical);
+    return reply.code(308).send({
+      error: "gone",
+      message: "The legacy settlement detail is retired. Use the canonical driver-finance settlements subledger.",
+      canonical_endpoint: canonical,
     });
   });
 
