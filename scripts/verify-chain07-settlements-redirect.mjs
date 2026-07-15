@@ -78,22 +78,69 @@ export function computeChain07Failures(files) {
     }
   }
 
+  // 4. (P2.4b) The retired legacy GET /api/v1/settlements/:id DETAIL handler must likewise be a 308
+  //    redirect to the canonical driver-finance detail, and must NOT query settlement.*/payroll.*.
+  const detailMatch = legacyRoute.match(
+    /app\.get\(\s*["']\/api\/v1\/settlements\/:id["']\s*,\s*async\s*\(req,\s*reply\)\s*=>\s*\{([\s\S]*?)\n {2}\}\);/
+  );
+  if (!detailMatch) {
+    errors.push('pre-settlements.routes.ts: could not locate the GET /api/v1/settlements/:id handler');
+  } else {
+    const body = detailMatch[1];
+    if (!/reply\.code\(\s*308\s*\)/.test(body)) {
+      errors.push('pre-settlements.routes.ts: retired GET /api/v1/settlements/:id must return reply.code(308)');
+    }
+    if (!body.includes(CANONICAL_BE)) {
+      errors.push(`pre-settlements.routes.ts: retired GET /api/v1/settlements/:id must redirect to ${CANONICAL_BE}`);
+    }
+    const activeBody = body
+      .split("\n")
+      .filter((l) => !l.trim().startsWith("*") && !l.trim().startsWith("//") && !l.trim().startsWith("/*"))
+      .join("\n");
+    if (/\b(FROM|INTO|UPDATE|JOIN)\s+settlement\./i.test(activeBody) || /\b(FROM|INTO|UPDATE|JOIN)\s+payroll\./i.test(activeBody)) {
+      errors.push('pre-settlements.routes.ts: retired GET /api/v1/settlements/:id must NOT query settlement.*/payroll.* on the redirect path');
+    }
+  }
+
   return errors;
 }
 
 function selftest() {
   const goodSubnav = '{ label: "Settlements",      to: "/driver-finance/settlements" },';
   const goodManifest = '<Route path="/accounting/settlements" element={<ProtectedRoute><Navigate to="/driver-finance/settlements" replace /></ProtectedRoute>} />';
+  const goodDetail = [
+    'app.get("/api/v1/settlements/:id", async (req, reply) => {',
+    '    const canonical = `/api/v1/driver-finance/settlements/${params.data.id}${qs}`;',
+    '    reply.header("location", canonical);',
+    '    return reply.code(308).send({ error: "gone", canonical_endpoint: canonical });',
+    '  });',
+  ].join("\n");
   const goodLegacy = [
     'app.get("/api/v1/settlements", async (req, reply) => {',
     '    const canonical = `/api/v1/driver-finance/settlements${qs}`;',
     '    reply.header("location", canonical);',
     '    return reply.code(308).send({ error: "gone", canonical_endpoint: canonical });',
     '  });',
+    goodDetail,
   ].join("\n");
 
   if (computeChain07Failures({ subnav: goodSubnav, manifest: goodManifest, legacyRoute: goodLegacy }).length) {
     console.error(`${LABEL} --selftest FAILED: fully-fixed case should pass`); process.exit(1);
+  }
+  // Detail handler resurrected to query settlement.* must fail.
+  const detailResurrected = [
+    'app.get("/api/v1/settlements", async (req, reply) => {',
+    '    const canonical = `/api/v1/driver-finance/settlements${qs}`;',
+    '    reply.header("location", canonical);',
+    '    return reply.code(308).send({ error: "gone", canonical_endpoint: canonical });',
+    '  });',
+    'app.get("/api/v1/settlements/:id", async (req, reply) => {',
+    '    const sql = `SELECT * FROM settlement.settlement s WHERE s.id = $1`;',
+    '    return reply.send(await client.query(sql));',
+    '  });',
+  ].join("\n");
+  if (!computeChain07Failures({ subnav: goodSubnav, manifest: goodManifest, legacyRoute: detailResurrected }).length) {
+    console.error(`${LABEL} --selftest FAILED: resurrected /:id settlement.* query should fail`); process.exit(1);
   }
   // Missing FE tab redirect.
   if (!computeChain07Failures({ subnav: '{ label: "Settlements", to: "/accounting/settlements" },', manifest: goodManifest, legacyRoute: goodLegacy }).length) {
@@ -121,6 +168,7 @@ function selftest() {
     '    reply.header("location", canonical);',
     '    return reply.code(308).send({ error: "gone", canonical_endpoint: canonical });',
     '  });',
+    goodDetail,
   ].join("\n");
   if (computeChain07Failures({ subnav: goodSubnav, manifest: goodManifest, legacyRoute: withArchivalComment }).length) {
     console.error(`${LABEL} --selftest FAILED: archival comment should be ignored`); process.exit(1);
