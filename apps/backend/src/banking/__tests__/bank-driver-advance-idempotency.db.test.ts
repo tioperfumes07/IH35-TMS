@@ -25,6 +25,8 @@ import {
   maybePostBankDriverAdvanceForCategorization,
 } from "../bank-driver-advance.service.js";
 
+const DRIVER_ADVANCE_GL_POSTING_FLAG_KEY = "DRIVER_ADVANCE_GL_POSTING_ENABLED";
+
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 
 describeIntegration("BLOCK-6 IDEMPOTENCY FIX — bank-driver-advance re-run never double-books (real Postgres)", () => {
@@ -71,15 +73,17 @@ describeIntegration("BLOCK-6 IDEMPOTENCY FIX — bank-driver-advance re-run neve
 
   async function setFlag(enabled: boolean) {
     await bypass(async () => {
-      await db.query(
-        `DELETE FROM lib.feature_flag_overrides WHERE flag_key=$1 AND operating_company_id=$2::uuid AND user_uuid IS NULL`,
-        [BANK_DRIVER_ADVANCE_FLAG_KEY, companyId]
-      );
-      await db.query(
-        `INSERT INTO lib.feature_flag_overrides (flag_key, operating_company_id, user_uuid, enabled, set_by_user_uuid)
-         VALUES ($1, $2::uuid, NULL, $3, $4::uuid)`,
-        [BANK_DRIVER_ADVANCE_FLAG_KEY, companyId, enabled, userId]
-      );
+      for (const key of [BANK_DRIVER_ADVANCE_FLAG_KEY, DRIVER_ADVANCE_GL_POSTING_FLAG_KEY]) {
+        await db.query(
+          `DELETE FROM lib.feature_flag_overrides WHERE flag_key=$1 AND operating_company_id=$2::uuid AND user_uuid IS NULL`,
+          [key, companyId]
+        );
+        await db.query(
+          `INSERT INTO lib.feature_flag_overrides (flag_key, operating_company_id, user_uuid, enabled, set_by_user_uuid)
+           VALUES ($1, $2::uuid, NULL, $3, $4::uuid)`,
+          [key, companyId, enabled, userId]
+        );
+      }
     });
   }
 
@@ -191,10 +195,10 @@ describeIntegration("BLOCK-6 IDEMPOTENCY FIX — bank-driver-advance re-run neve
           [companyId, acct.driverAdvance]
         );
         await db.query(`DELETE FROM catalogs.accounts WHERE id = ANY($1::uuid[])`, [[acct.driverAdvance, acct.bank]]);
-        await db.query(`DELETE FROM lib.feature_flag_overrides WHERE flag_key = $1 AND operating_company_id = $2::uuid`, [
-          BANK_DRIVER_ADVANCE_FLAG_KEY,
-          companyId,
-        ]);
+        await db.query(
+          `DELETE FROM lib.feature_flag_overrides WHERE flag_key = ANY($1) AND operating_company_id = $2::uuid`,
+          [[BANK_DRIVER_ADVANCE_FLAG_KEY, DRIVER_ADVANCE_GL_POSTING_FLAG_KEY], companyId]
+        );
       });
     } catch {
       /* best-effort */

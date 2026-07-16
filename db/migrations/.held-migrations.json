@@ -265,6 +265,10 @@
     {
       "file": "202607470000_relay_wallet_banking_registration.sql",
       "reason": "[HOLD-FOR-JORGE — FINANCIAL] CONN-3 Part B step 1 — register the Relay Fuel Wallet (catalogs.accounts #1295) as a banking.bank_accounts row (account_class='depository', mirrors QBO Relay bank account) so it appears on /banking. Additive, idempotent, no GL. Depends on 202607290000 (wallet seed) applied first. Owner runs on a Neon branch."
+    },
+    {
+      "file": "202607480000_driver_advance_gl_posting_flag.sql",
+      "reason": "[HOLD-FOR-JORGE — B3-DISBURSE] Gate the cash-advance disburse GL post behind DRIVER_ADVANCE_GL_POSTING_ENABLED per entity. Seeds flag default OFF + overrides ON for TRANSP/USMCA/TRK so current behavior is preserved. Owner applies on Neon branch + ledger-backfills."
     }
   ]
 }

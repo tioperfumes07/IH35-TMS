@@ -4,6 +4,9 @@ import { isOwnerOrAdmin } from "../bulk/bulk-update.factory.js";
 import { postSourceTransaction } from "../accounting/posting-engine.service.js";
 import { emitDriverRequestSpineEvent } from "../driver-finance/driver-request-spine-emit.js";
 import { logger } from "../observability/structured-logger.js";
+import { isEnabled } from "../lib/feature-flags/service.js";
+
+const DRIVER_ADVANCE_GL_POSTING_FLAG_KEY = "DRIVER_ADVANCE_GL_POSTING_ENABLED";
 
 type PostingResult = Awaited<ReturnType<typeof postSourceTransaction>>;
 
@@ -30,6 +33,11 @@ const AUDIT_TAG = "B3-EMPLOYEE-LOAN-LEDGER";
  * user-settable posting_date, then posts the GL entry via the 'driver_advance' source type
  * (DEBIT QBO-149 receivable / CREDIT source cash). Role-gated to Owner/Administrator
  * (reuses isOwnerOrAdmin); the posting_date set is audited (old/new) via appendCrudAudit.
+ *
+ * GL-posting is gated per entity by DRIVER_ADVANCE_GL_POSTING_ENABLED (default OFF). When the
+ * flag is OFF for the entity/user, the advance is still disbursed but the GL post is skipped
+ * (no-op), leaving the advance unposted until the flag is enabled. This mirrors the expense and
+ * other money-posting kill-switches.
  *
  * Two phases on purpose: the disbursed flip must COMMIT before the posting reads the row,
  * so buildDriverAdvanceLines (a separate pooled connection) sees disbursement_status='disbursed'.
@@ -99,10 +107,21 @@ export async function disburseDriverAdvanceCore(
       AUDIT_TAG
     );
 
-    return { ok: true as const, postingDate: postingDateNew };
+    const glPostingEnabled = await isEnabled(client, DRIVER_ADVANCE_GL_POSTING_FLAG_KEY, {
+      operating_company_id: companyId,
+      user_uuid: actorUserUuid,
+    });
+
+    return { ok: true as const, postingDate: postingDateNew, glPostingEnabled };
   });
 
   if (!phase1.ok) return phase1;
+
+  if (!phase1.glPostingEnabled) {
+    // Flag OFF: disbursement committed above, but GL post is a no-op. The advance stays
+    // unposted; enabling the flag later will let a subsequent/retry path post it.
+    return { ok: true, advanceId: input.advance_id, postingDate: phase1.postingDate };
+  }
 
   const posting = await postSourceTransaction(
     {
@@ -139,7 +158,11 @@ export async function disburseDriverAdvanceCore(
           actor_type: "user",
           actor_user_id: actorUserUuid,
           actor_role: actorRole,
-          payload: { driver_advance_id: input.advance_id, journal_entry_id: posting.journal_entry_id },
+          payload: {
+            driver_advance_id: input.advance_id,
+            journal_entry_id: posting.journal_entry_id,
+            gl_posting_enabled: true,
+          },
         });
       }
     });
