@@ -5,12 +5,22 @@ title-blindly merged 5 `[HOLD-FOR-JORGE]` PRs (#1266–#1270) that were meant to
 Impact was zero only because they were design docs, not posting code. **A title is a request, not a
 control.** This gate is the control.
 
+## Squash-inspection law (B-A5 / D1b, 2026-07-15)
+
+The gate classifies **every file** in the PR's `base..head` diff (`git diff --name-only` + per-file
+diff). A PR title, "non-financial" claim, or agent/block classification **never** neutralizes a
+protected file. A financial migration or `accounting.` / `catalogs.` / `mdata.` / `banking.` /
+`driver_finance.` write **cannot ride into `main` inside an otherwise-benign squash**. Planted
+self-tests lock this: mixed frontend + sneaky migration / schema-write → **FAIL** without
+`JORGE-APPROVED`.
+
 ## What it does
 `scripts/verify-hold-merge-gate.mjs` runs as the CI job **`hold-merge-gate`**
 (`.github/workflows/hold-merge-gate.yml`) on every pull request. It marks a PR **PROTECTED** if ANY of:
 
 - the **title** contains `[HOLD-FOR-JORGE]` (case-insensitive), OR
-- a changed file matches a **protected path glob**: `**/*posting*.ts`, `**/*posting*.mjs`, OR
+- a changed file matches a **protected path glob**: `**/*posting*.ts`, `**/*posting*.mjs`,
+  `**/held-migrations.json`, OR
 - a changed **migration** (`*.sql` / `**/migrations/**`) is **NOT provably additive-new-table**
   (CREATE-TABLE-only neutral, 2026-06-20). A migration is **neutral** only if it `CREATE TABLE`s a new
   table and does nothing dangerous — **no** `ALTER TABLE` / `DROP` / `DELETE FROM` / `TRUNCATE` /
@@ -20,9 +30,12 @@ control.** This gate is the control.
   SECURITY`, the idempotent policy recreate, indexes — on the NEW table is allowed; the same op on an
   EXISTING table, or an unresolvable/dynamic target, stays PROTECTED). Anything else stays **PROTECTED** —
   conservative: if it can't be proven additive-new-table, it's protected, OR
-- a changed **backend accounting/driver-finance `.ts`** file whose diff shows **GL-write markers**
+- a changed **backend accounting/driver-finance/banking/… `.ts`** file whose diff shows **GL-write markers**
   (`INSERT INTO accounting.journal…`, `journal_entry_postings`, `payment_applications`, post/JE helpers),
   OR
+- **any** changed file's **added** lines contain **financial-schema DML**
+  (`INSERT INTO` / `UPDATE` / `DELETE FROM` against `accounting.` / `catalogs.` / `mdata.` / `banking.` /
+  `driver_finance.`) — path-independent squash-inspection, OR
 - the diff **flips a `*_ENABLED` / `*_FLAG` / `FEATURE_*` from false/OFF → true/ON**.
 
 Verdict:
@@ -33,11 +46,11 @@ Verdict:
 | PROTECTED **and** label `JORGE-APPROVED` present | pass |
 | not PROTECTED | pass (neutral) |
 
-Content-based detectors (GL markers, flag-flip) skip `*.md`, test files (`*.test.*`, `*.spec.*`,
+Content-based detectors (GL markers, financial-schema writes, flag-flip) skip `*.md`, test files (`*.test.*`, `*.spec.*`,
 `__tests__/`), and the gate script's own fixtures, so prose/tests that merely *mention* a flag don't
-false-positive. The migration analyzer and `*posting*` path globs still catch the dangerous cases
-regardless. The script self-tests its full decision table on every run (`--self-test`, 37 cases incl. the
-CREATE-TABLE-only migration matrix).
+false-positive. The migration analyzer and `*posting*` / held-registry path globs still catch the dangerous cases
+regardless. The script self-tests its full decision table on every run (`--self-test`, incl. the
+CREATE-TABLE-only migration matrix **and** B-A5 squash-inspection planted failures).
 
 ## The one human step Jorge does (once, in the GitHub UI)
 1. **Make `hold-merge-gate` a REQUIRED status check** in branch protection on `main`
@@ -63,3 +76,5 @@ standing operational rule still holds:
    `hold-merge-gate` goes **RED** → `gh pr merge` on it **fails**.
 2. Apply the `JORGE-APPROVED` label → the check re-runs and goes **GREEN**.
 3. A normal non-financial PR → check is **neutral/green**. Close the test PR.
+4. Planted proof (local): `npm run verify:hold-merge-gate:self-test` — mixed non-financial title +
+   financial migration / schema-write cases must print `FAIL` → overall self-test PASS.
