@@ -1,0 +1,148 @@
+#!/usr/bin/env node
+/**
+ * verify-dispatch-factoring-queue-deeplinks.mjs  (audit gap #9)
+ *
+ * Root cause (pre-#2537): Factoring Queue linked `/dispatch?view=loads&load=` while
+ * Dispatch.tsx only read `load_id` → LoadDetailDrawer never opened. Subnav
+ * "Reserve a Load" emitted `?book_load=1` which Dispatch never read → Book Load modal
+ * never opened. Fixed on main (#2537): producer emits `load_id`, consumer also honors
+ * legacy `load`, and `book_load=1` opens the modal.
+ *
+ * This guard locks the producer↔consumer contract so the dead deep-links cannot return.
+ *
+ * Usage:
+ *   node scripts/verify-dispatch-factoring-queue-deeplinks.mjs            # scan
+ *   node scripts/verify-dispatch-factoring-queue-deeplinks.mjs --selftest # planted-failure harness
+ */
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const LABEL = "verify-dispatch-factoring-queue-deeplinks";
+
+const QUEUE = "apps/frontend/src/pages/dispatch/FactoringQueuePage.tsx";
+const DISPATCH = "apps/frontend/src/pages/Dispatch.tsx";
+const SUBNAV = "apps/frontend/src/components/dispatch/DispatchSubnav.tsx";
+
+function read(rel) {
+  const p = path.join(ROOT, rel);
+  if (!fs.existsSync(p)) return { ok: false, src: "", err: `MISSING ${rel}` };
+  return { ok: true, src: fs.readFileSync(p, "utf8"), err: null };
+}
+
+/** Exported for --selftest planted fixtures. */
+export function checkFactoringQueueProducer(src) {
+  const failures = [];
+  // Canonical producer: load_id= (not legacy load= alone).
+  if (!/to=\{`\/dispatch\?view=loads&load_id=\$\{row\.load_id\}`\}/.test(src)) {
+    failures.push(
+      `${QUEUE}: Factoring Queue load link must use /dispatch?view=loads&load_id=\${row.load_id}`,
+    );
+  }
+  // Regression: the original dead producer.
+  if (/to=\{`\/dispatch\?view=loads&load=\$\{row\.load_id\}`\}/.test(src)) {
+    failures.push(
+      `${QUEUE}: must not emit legacy ?load= alone (drawer never opened) — use load_id=`,
+    );
+  }
+  return failures;
+}
+
+export function checkDispatchConsumer(src) {
+  const failures = [];
+  // Canonical + legacy fallback so old bookmarks still open the drawer.
+  if (!/searchParams\.get\(\s*["']load_id["']\s*\)\s*\?\?\s*searchParams\.get\(\s*["']load["']\s*\)/.test(src)) {
+    failures.push(
+      `${DISPATCH}: must honor load_id (canonical) with legacy ?load= fallback for the drawer`,
+    );
+  }
+  // Reserve-a-Load deep link must open the Book Load modal.
+  if (!/searchParams\.get\(\s*["']book_load["']\s*\)\s*!==\s*["']1["']/.test(src) &&
+      !/searchParams\.get\(\s*["']book_load["']\s*\)\s*===\s*["']1["']/.test(src)) {
+    failures.push(`${DISPATCH}: must read ?book_load=1 deep link`);
+  }
+  if (!/setNewLoadOpen\(\s*true\s*\)/.test(src)) {
+    failures.push(`${DISPATCH}: ?book_load=1 path must call setNewLoadOpen(true)`);
+  }
+  // Ensure book_load handling is not a dead comment — the effect must mention book_load.
+  if (!/book_load/.test(src) || !/useEffect/.test(src)) {
+    failures.push(`${DISPATCH}: book_load deep-link must be handled in a useEffect`);
+  }
+  return failures;
+}
+
+export function checkSubnavReserveHref(src) {
+  const failures = [];
+  if (!/label:\s*["']Reserve a Load["'][\s\S]{0,80}?href:\s*["'][^"']*book_load=1["']/.test(src)) {
+    failures.push(
+      `${SUBNAV}: "Reserve a Load" nav href must include book_load=1`,
+    );
+  }
+  return failures;
+}
+
+export function run() {
+  const failures = [];
+  for (const rel of [QUEUE, DISPATCH, SUBNAV]) {
+    const { ok, src, err } = read(rel);
+    if (!ok) {
+      failures.push(err);
+      continue;
+    }
+    if (rel === QUEUE) failures.push(...checkFactoringQueueProducer(src));
+    if (rel === DISPATCH) failures.push(...checkDispatchConsumer(src));
+    if (rel === SUBNAV) failures.push(...checkSubnavReserveHref(src));
+  }
+  return { ok: failures.length === 0, failures };
+}
+
+if (process.argv.includes("--selftest")) {
+  const goodQueue =
+    'to={`/dispatch?view=loads&load_id=${row.load_id}`}';
+  const badQueue =
+    'to={`/dispatch?view=loads&load=${row.load_id}`}';
+  const goodDispatch = `
+    const loadId = searchParams.get("load_id") ?? searchParams.get("load");
+    useEffect(() => {
+      if (searchParams.get("book_load") !== "1") return;
+      setNewLoadOpen(true);
+    }, [searchParams]);
+  `;
+  const badDispatchNoLoad = `const loadId = searchParams.get("load_id");`;
+  const badDispatchNoBook = `
+    const loadId = searchParams.get("load_id") ?? searchParams.get("load");
+    // no book_load handling
+  `;
+  const goodSubnav = `{ label: "Reserve a Load", href: "/dispatch/book-load?book_load=1" }`;
+  const badSubnav = `{ label: "Reserve a Load", href: "/dispatch/book-load" }`;
+
+  const checks = [
+    ["good queue passes", checkFactoringQueueProducer(goodQueue).length === 0],
+    ["bad queue fails", checkFactoringQueueProducer(badQueue).length > 0],
+    ["good dispatch passes", checkDispatchConsumer(goodDispatch).length === 0],
+    ["dispatch missing load fallback fails", checkDispatchConsumer(badDispatchNoLoad).length > 0],
+    ["dispatch missing book_load fails", checkDispatchConsumer(badDispatchNoBook).length > 0],
+    ["good subnav passes", checkSubnavReserveHref(goodSubnav).length === 0],
+    ["bad subnav fails", checkSubnavReserveHref(badSubnav).length > 0],
+  ];
+  const failed = checks.filter(([, ok]) => !ok);
+  if (failed.length) {
+    console.error(`${LABEL} --selftest FAIL:`);
+    for (const [name] of failed) console.error(`  ✗ ${name}`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} --selftest PASS (${checks.length} checks)`);
+  process.exit(0);
+}
+
+const { ok, failures } = run();
+if (!ok) {
+  console.error(`${LABEL}: FAIL`);
+  for (const f of failures) console.error(`  - ${f}`);
+  process.exit(1);
+}
+console.log(
+  `${LABEL}: OK — Factoring Queue load_id producer + Dispatch load/book_load consumers locked`,
+);
+process.exit(0);

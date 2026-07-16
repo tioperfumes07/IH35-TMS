@@ -1013,7 +1013,8 @@
     "verify:bank-register-account-picker": "node scripts/verify-bank-register-account-picker.mjs",
     "verify:bank-register-sort-group": "node scripts/verify-bank-register-sort-group.mjs",
     "verify:bills-page-bill-id-deeplink": "node scripts/verify-bills-page-bill-id-deeplink.mjs",
-    "verify:banking-categorize-ux-honesty": "node scripts/verify-banking-categorize-ux-honesty.mjs"
+    "verify:banking-categorize-ux-honesty": "node scripts/verify-banking-categorize-ux-honesty.mjs",
+    "verify:dispatch-factoring-queue-deeplinks": "node scripts/verify-dispatch-factoring-queue-deeplinks.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1087.0",
