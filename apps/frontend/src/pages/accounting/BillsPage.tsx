@@ -1,8 +1,8 @@
 import { formatDateUS } from "../../lib/formatDate";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { listBills, listPaymentsForBill, type BillStatus, type VendorBill } from "../../api/accounting";
 import { listVendors } from "../../api/mdata";
@@ -152,6 +152,7 @@ function BillPaymentsSubTable({ billId, companyId }: { billId: string; companyId
 export function BillsPage() {
   const { selectedCompanyId } = useCompanyContext();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { pushToast } = useToast();
   const bulk = useEntityBulkAction();
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
@@ -161,6 +162,10 @@ export function BillsPage() {
   const companyId = selectedCompanyId ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
   const category = parseBillCategory(searchParams.get("category"));
+  // Audit 14-MAINTENANCE / 99-CROSSCUTTING: WO + legacy links use ?bill_id= — honor it (highlight + select).
+  // EntityLink kind="bill" still prefers /accounting/bills/:id (BillDetailPage); this covers list deep-links.
+  const deepLinkBillId = searchParams.get("bill_id");
+  const [highlightedBillId, setHighlightedBillId] = useState<string | null>(() => deepLinkBillId);
   // RPT-155: honor a deep link's ?status=&vendor_id= (e.g. A/P Aging "Pay now") as the initial filter
   // so a drill-through from another module lands pre-filtered instead of on the unfiltered "All open items" view.
   const STATUS_FILTER_VALUES = new Set(["unpaid", "partial", "paid", "voided"]);
@@ -173,7 +178,13 @@ export function BillsPage() {
   const [dateTo, setDateTo] = useState("");
   // BILLS-VENDORFILTER-01: server-side vendor filter (listBills already accepts vendor_id).
   const [vendorId, setVendorId] = useState(() => searchParams.get("vendor_id") ?? "");
-  const [allocationBillId, setAllocationBillId] = useState<string | null>(null);
+  const [allocationBillId, setAllocationBillId] = useState<string | null>(() => deepLinkBillId);
+
+  useEffect(() => {
+    if (!deepLinkBillId) return;
+    setHighlightedBillId(deepLinkBillId);
+    setAllocationBillId(deepLinkBillId);
+  }, [deepLinkBillId]);
 
   // Vendor picker options — pass limit:200 (endpoint defaults to 50, would silently truncate).
   const vendorsQuery = useQuery({
@@ -205,9 +216,19 @@ export function BillsPage() {
 
   const rows = useMemo(() => {
     const all = billsQuery.data?.rows ?? [];
-    if (!category) return all;
-    return all.filter((bill) => billMatchesCategory(bill, category));
-  }, [billsQuery.data?.rows, category]);
+    // Keep deep-linked bill visible even when a category chip would filter it out.
+    let next = category
+      ? all.filter((bill) => bill.id === deepLinkBillId || billMatchesCategory(bill, category))
+      : [...all];
+    if (deepLinkBillId) {
+      const idx = next.findIndex((bill) => bill.id === deepLinkBillId);
+      if (idx > 0) {
+        const [hit] = next.splice(idx, 1);
+        next = [hit, ...next];
+      }
+    }
+    return next;
+  }, [billsQuery.data?.rows, category, deepLinkBillId]);
 
   const billKpis = useMemo(() => {
     const all = billsQuery.data?.rows ?? [];
@@ -428,6 +449,17 @@ export function BillsPage() {
     <div className="space-y-3">
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
       {billsQuery.isError ? <ListErrorBanner onRetry={() => void billsQuery.refetch()} /> : null}
+      {highlightedBillId ? (
+        <p
+          className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700"
+          data-testid="bills-deeplink-banner"
+        >
+          Deep-link bill <span className="font-mono font-semibold">{highlightedBillId.slice(0, 8)}</span>
+          {rows.some((bill) => bill.id === highlightedBillId)
+            ? " — highlighted and selected for allocation below."
+            : " — not in the current filter window (widen status/vendor/dates or confirm company)."}
+        </p>
+      ) : null}
 
       <ParityTable
         key={tableResetKey}
@@ -442,6 +474,12 @@ export function BillsPage() {
         selectable
         maxSelectable={200}
         onSelectionCapExceeded={() => pushToast("You can select up to 200 bills at once.", "error")}
+        onRowClick={(bill) => {
+          setHighlightedBillId(bill.id);
+          setAllocationBillId(bill.id);
+          void navigate(`/accounting/bills?bill_id=${encodeURIComponent(bill.id)}`, { replace: true });
+        }}
+        rowClassName={(bill) => (highlightedBillId === bill.id ? "bg-slate-100" : "")}
         batchActions={(selected) => (
           <button
             type="button"

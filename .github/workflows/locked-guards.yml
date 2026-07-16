@@ -592,6 +592,10 @@ jobs:
         run: node scripts/verify-customer-invoice-customer-id-deeplink.mjs --selftest
       - name: verify:customer-invoice-customer-id-deeplink
         run: npm run verify:customer-invoice-customer-id-deeplink
+      - name: verify:bills-page-bill-id-deeplink --selftest
+        run: node scripts/verify-bills-page-bill-id-deeplink.mjs --selftest
+      - name: verify:bills-page-bill-id-deeplink
+        run: npm run verify:bills-page-bill-id-deeplink
 
       - name: verify:fact-chargebacks-entitylinks --selftest
         run: node scripts/verify-fact-chargebacks-entitylinks.mjs --selftest
