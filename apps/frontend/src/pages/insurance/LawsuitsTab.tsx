@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { listInsuranceLawsuits, type InsuranceLawsuit, type InsuranceLawsuitStatus } from "../../api/insurance";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { Button } from "../../components/Button";
 import { LawsuitCreateModal } from "../../components/insurance/LawsuitCreateModal";
 import { DataPanel } from "../../components/layout/DataPanel";
@@ -75,9 +75,7 @@ export function LawsuitsTab({ operatingCompanyId, claimId }: Props) {
         label: "Claim",
         render: (lawsuit) =>
           lawsuit.claim_id ? (
-            <Link className="text-slate-700 underline" to={`/safety/insurance/claims?claim_id=${lawsuit.claim_id}`}>
-              {lawsuit.claim_id.slice(0, 8)}
-            </Link>
+            <EntityLink kind="claim" id={lawsuit.claim_id} label={lawsuit.claim_id.slice(0, 8)} />
           ) : (
             "-"
           ),

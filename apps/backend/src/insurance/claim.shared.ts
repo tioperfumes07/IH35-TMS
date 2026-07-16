@@ -21,6 +21,13 @@ export const listClaimsQuerySchema = operatingCompanySchema.extend({
   asset_id: z.string().uuid().optional(),
 });
 
+/** Forward graph FKs (prod-live via 202607410000) — link existing hubs only; never invent amounts. */
+const claimGraphFkFields = {
+  accident_report_id: z.string().uuid().nullable().optional(),
+  load_id: z.string().uuid().nullable().optional(),
+  driver_id: z.string().uuid().nullable().optional(),
+} as const;
+
 export const createClaimBodySchema = z.object({
   operating_company_id: z.string().uuid(),
   claim_number: z.string().trim().min(1).max(120),
@@ -34,6 +41,7 @@ export const createClaimBodySchema = z.object({
   adjuster_name: z.string().trim().max(250).nullable().optional(),
   adjuster_email: z.string().trim().email().max(320).nullable().optional(),
   notes: z.string().trim().max(4000).nullable().optional(),
+  ...claimGraphFkFields,
 });
 
 export const updateClaimBodySchema = z
@@ -49,6 +57,7 @@ export const updateClaimBodySchema = z
     adjuster_name: z.string().trim().max(250).nullable().optional(),
     adjuster_email: z.string().trim().email().max(320).nullable().optional(),
     notes: z.string().trim().max(4000).nullable().optional(),
+    ...claimGraphFkFields,
   })
   .refine((value) => Object.keys(value).length > 0, { message: "at least one field is required" });
 

@@ -53,6 +53,10 @@ export const matterCreateSchema = z.object({
   attorney_email: z.string().trim().email().optional().nullable(),
   related_user_id: z.string().uuid().optional().nullable(),
   related_driver_id: z.string().uuid().optional().nullable(),
+  insurance_claim_id: z.string().uuid().optional().nullable(),
+  insurance_lawsuit_id: z.string().uuid().optional().nullable(),
+  incident_id: z.string().uuid().optional().nullable(),
+  unit_id: z.string().uuid().optional().nullable(),
 });
 
 export const matterUpdateSchema = matterCreateSchema.partial().omit({ matter_number: true });
@@ -297,6 +301,10 @@ export async function createMatter(
         attorney_email,
         related_user_id,
         related_driver_id,
+        insurance_claim_id,
+        insurance_lawsuit_id,
+        incident_id,
+        unit_id,
         created_by_user_id,
         updated_by_user_id
       ) VALUES (
@@ -304,8 +312,9 @@ export async function createMatter(
         COALESCE($4, 'open'),
         COALESCE($5, 'medium'),
         COALESCE($6, 'defendant'),
-        $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23,
-        $23
+        $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22,
+        $23, $24, $25, $26,
+        $27, $27
       )
       RETURNING *
     `,
@@ -332,6 +341,10 @@ export async function createMatter(
       input.attorney_email ?? null,
       input.related_user_id ?? null,
       input.related_driver_id ?? null,
+      input.insurance_claim_id ?? null,
+      input.insurance_lawsuit_id ?? null,
+      input.incident_id ?? null,
+      input.unit_id ?? null,
       args.actorUserId,
     ]
   );
@@ -391,6 +404,10 @@ export async function updateMatter(
   if (input.attorney_email !== undefined) push("attorney_email", input.attorney_email);
   if (input.related_user_id !== undefined) push("related_user_id", input.related_user_id);
   if (input.related_driver_id !== undefined) push("related_driver_id", input.related_driver_id);
+  if (input.insurance_claim_id !== undefined) push("insurance_claim_id", input.insurance_claim_id);
+  if (input.insurance_lawsuit_id !== undefined) push("insurance_lawsuit_id", input.insurance_lawsuit_id);
+  if (input.incident_id !== undefined) push("incident_id", input.incident_id);
+  if (input.unit_id !== undefined) push("unit_id", input.unit_id);
   if (fields.length === 0) {
     const cur = await client.query(`SELECT * FROM legal.matters WHERE id = $1 AND operating_company_id = $2`, [
       args.matterId,

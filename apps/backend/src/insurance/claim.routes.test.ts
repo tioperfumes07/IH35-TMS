@@ -7,7 +7,7 @@ const requireAuthState = { allowed: true };
 const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
   if (sql.includes("SET LOCAL app.operating_company_id")) return { rows: [] };
 
-  if (sql.includes("FROM insurance.claim") && sql.includes("ORDER BY accident_date DESC")) {
+  if (sql.includes("FROM insurance.claim") && sql.includes("ORDER BY c.accident_date DESC")) {
     return {
       rows: [
         {
@@ -16,6 +16,7 @@ const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
           claim_number: "CLM-001",
           policy_id: String(values?.[1] ?? "22222222-2222-4222-8222-222222222222"),
           asset_id: String(values?.[3] ?? "33333333-3333-4333-8333-333333333333"),
+          unit_id: "55555555-5555-4555-8555-555555555555",
           accident_date: "2026-05-01",
           reported_date: "2026-05-02",
           status: String(values?.[2] ?? "open"),
@@ -25,9 +26,51 @@ const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
           adjuster_email: "alice@example.com",
           notes: "Initial claim",
           created_at: "2026-05-03T00:00:00.000Z",
+          accident_report_id: null,
+          load_id: null,
+          driver_id: null,
         },
       ],
     };
+  }
+
+  if (sql.includes("FROM insurance.claim c") && sql.includes("c.id = $2")) {
+    const claimId = String(values?.[1] ?? "11111111-1111-4111-8111-111111111111");
+    const isCreate = claimId === "44444444-4444-4444-8444-444444444444";
+    return {
+      rows: [
+        {
+          id: claimId,
+          tenant_id: String(values?.[0] ?? ""),
+          claim_number: isCreate ? "CLM-100" : "CLM-001",
+          policy_id: "22222222-2222-4222-8222-222222222222",
+          asset_id: "33333333-3333-4333-8333-333333333333",
+          unit_id: null,
+          accident_date: "2026-05-01",
+          reported_date: "2026-05-02",
+          status: isCreate ? "open" : "investigating",
+          amount_claimed_cents: isCreate ? 100000 : 250000,
+          amount_paid_cents: 0,
+          adjuster_name: isCreate ? null : "Alice Adjuster",
+          adjuster_email: isCreate ? null : "alice@example.com",
+          notes: isCreate ? null : "Updated",
+          created_at: "2026-05-03T00:00:00.000Z",
+          accident_report_id: null,
+          load_id: null,
+          driver_id: null,
+        },
+      ],
+    };
+  }
+
+  if (
+    sql.includes("FROM safety.accident_reports") ||
+    sql.includes("FROM insurance.lawsuit") ||
+    sql.includes("FROM legal.matters") ||
+    sql.includes("FROM safety.incidents") ||
+    sql.includes("FROM safety.damage_continuity_chains")
+  ) {
+    return { rows: [] };
   }
 
   if (sql.includes("FROM insurance.policy")) {
@@ -45,19 +88,6 @@ const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
       rows: [
         {
           id: "44444444-4444-4444-8444-444444444444",
-          tenant_id: String(values?.[0]),
-          claim_number: String(values?.[1]),
-          policy_id: String(values?.[2]),
-          asset_id: values?.[3] ? String(values?.[3]) : null,
-          accident_date: String(values?.[4]),
-          reported_date: String(values?.[5]),
-          status: String(values?.[6]),
-          amount_claimed_cents: Number(values?.[7]),
-          amount_paid_cents: Number(values?.[8]),
-          adjuster_name: values?.[9] ? String(values?.[9]) : null,
-          adjuster_email: values?.[10] ? String(values?.[10]) : null,
-          notes: values?.[11] ? String(values?.[11]) : null,
-          created_at: "2026-05-04T00:00:00.000Z",
         },
       ],
     };
@@ -74,24 +104,7 @@ const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
     const claimId = String(values?.[1] ?? "");
     if (claimId === "99999999-9999-4999-8999-999999999999") return { rows: [] };
     return {
-      rows: [
-        {
-          id: claimId,
-          tenant_id: String(values?.[0]),
-          claim_number: "CLM-001",
-          policy_id: "22222222-2222-4222-8222-222222222222",
-          asset_id: "33333333-3333-4333-8333-333333333333",
-          accident_date: "2026-05-01",
-          reported_date: "2026-05-02",
-          status: String(values?.[2] ?? "investigating"),
-          amount_claimed_cents: 250000,
-          amount_paid_cents: 0,
-          adjuster_name: "Alice Adjuster",
-          adjuster_email: "alice@example.com",
-          notes: "Updated",
-          created_at: "2026-05-03T00:00:00.000Z",
-        },
-      ],
+      rows: [{ id: claimId }],
     };
   }
 
@@ -206,6 +219,23 @@ describe("insurance claim routes", () => {
 
     expect(response.statusCode).toBe(400);
     expect(response.json()).toMatchObject({ error: "invalid_status_transition", from: "closed", to: "investigating" });
+  });
+
+  it("GET claim graph returns reverse fan-out shell", async () => {
+    const app = await buildApp();
+    const response = await app.inject({
+      method: "GET",
+      url: "/api/v1/insurance/claims/11111111-1111-4111-8111-111111111111/graph?operating_company_id=11111111-1111-4111-8111-111111111111",
+    });
+    expect(response.statusCode).toBe(200);
+    const body = response.json() as {
+      claim: { id: string };
+      reverse: { accidents: unknown[] };
+      gaps: { expense: string };
+    };
+    expect(body.claim.id).toBe("11111111-1111-4111-8111-111111111111");
+    expect(body.reverse.accidents).toEqual([]);
+    expect(body.gaps.expense).toContain("no accounting.expenses.claim_id");
   });
 
   it("PATCH enforces tenant isolation", async () => {
