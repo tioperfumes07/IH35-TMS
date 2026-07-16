@@ -322,6 +322,7 @@
     "verify:drivers-fk-wired": "node scripts/verify-drivers-fk-wired.mjs",
     "verify:drivers-count-nav-integrity": "node scripts/verify-drivers-count-nav-integrity.mjs",
     "verify:drivers-profile-action-bar": "node scripts/verify-drivers-profile-action-bar.mjs",
+    "verify:driver-profile-dead-actions": "node scripts/verify-driver-profile-dead-actions.mjs",
     "verify:drivers-comm-center": "node scripts/verify-drivers-comm-center.mjs",
     "verify:drivers-audit-history-tab": "node scripts/verify-drivers-audit-history-tab.mjs",
     "verify:drivers-training-crud-on-profile": "node scripts/verify-drivers-training-crud-on-profile.mjs",

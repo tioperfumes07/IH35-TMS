@@ -551,6 +551,11 @@ jobs:
       - name: verify:no-dead-clicks
         run: npm run verify:no-dead-clicks
 
+      - name: verify:driver-profile-dead-actions --selftest
+        run: node scripts/verify-driver-profile-dead-actions.mjs --selftest
+      - name: verify:driver-profile-dead-actions
+        run: npm run verify:driver-profile-dead-actions
+
       - name: verify:entitylink-deep-links
         run: npm run verify:entitylink-deep-links
 
