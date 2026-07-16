@@ -70,7 +70,7 @@ export async function registerRelayHealthRoutes(app: FastifyInstance) {
         }
         const isConfigured = hasKey && hasBase;
 
-        const enabled = await isEnabled(client, "RELAY_FUEL_INGEST_ENABLED", { operating_company_id: oc });
+        const relayIngestFlagOn = await isEnabled(client, "RELAY_FUEL_INGEST_ENABLED", { operating_company_id: oc });
 
         const lastPullAt = await withSavepoint(
           client,
@@ -142,7 +142,7 @@ export async function registerRelayHealthRoutes(app: FastifyInstance) {
 
         return {
           is_configured: isConfigured,
-          is_enabled: enabled,
+          is_enabled: relayIngestFlagOn,
           last_pull_at: lastPullAt,
           last_health_status: lastHealthStatus,
           last_error: latestUnrecoveredError,
