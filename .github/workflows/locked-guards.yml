@@ -732,6 +732,12 @@ jobs:
       - name: verify:feature-flag-key-shape
         run: npm run verify:feature-flag-key-shape
 
+      - name: verify:append-event-severity-domain
+        run: npm run verify:append-event-severity-domain
+
+      - name: verify:relay-ingest-per-company-isolation
+        run: npm run verify:relay-ingest-per-company-isolation
+
       # CI-WIRE-CRITICAL-GUARDS: 5 green, DB-free, non-financial guards whose fixes are live on main
       # but were unwired from every CI job (regression-audit finding). Additive coverage — no gate rename.
       - name: verify:driver-qual-gate

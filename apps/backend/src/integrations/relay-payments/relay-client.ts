@@ -126,7 +126,15 @@ async function relayGetOnce(url: URL, key: string): Promise<Response> {
   if (!res.ok) {
     const body = await readJsonResponse(res);
     const retryable = res.status === 429 || res.status >= 500;
-    throw new RelayApiError(`relay_http_${res.status}`, res.status, body, retryable);
+    // Preserve Retry-After so relayGetWithRetry can honor it (GUARD live 429 stack 2026-07-16).
+    const retryAfter = res.headers.get("Retry-After");
+    const enriched =
+      retryAfter && body && typeof body === "object" && !Array.isArray(body)
+        ? { ...(body as Record<string, unknown>), retry_after: retryAfter }
+        : retryAfter
+          ? { retry_after: retryAfter, _body: body }
+          : body;
+    throw new RelayApiError(`relay_http_${res.status}`, res.status, enriched, retryable);
   }
   return res;
 }
@@ -141,13 +149,34 @@ async function relayGetWithRetry(url: URL, key: string): Promise<Response> {
     } catch (error) {
       const retryable = error instanceof RelayApiError && error.retryable;
       if (retryable && attempt < RELAY_MAX_RETRIES) {
-        await sleep(RELAY_RETRY_BASE_MS * 2 ** attempt);
+        // Honor Retry-After on 429 when present; otherwise exponential backoff.
+        const retryAfterMs = retryAfterMsFromRelayError(error);
+        const backoffMs = retryAfterMs ?? RELAY_RETRY_BASE_MS * 2 ** attempt;
+        await sleep(backoffMs);
         attempt += 1;
         continue;
       }
       throw error;
     }
   }
+}
+
+/** Parse Retry-After (seconds or HTTP-date) from a 429 RelayApiError body/headers proxy. */
+export function retryAfterMsFromRelayError(error: unknown): number | null {
+  if (!(error instanceof RelayApiError) || error.statusCode !== 429) return null;
+  const body = error.body;
+  let header: string | null = null;
+  if (body && typeof body === "object" && !Array.isArray(body)) {
+    const rec = body as Record<string, unknown>;
+    const raw = rec.retry_after ?? rec.retryAfter ?? rec["Retry-After"];
+    if (typeof raw === "string" || typeof raw === "number") header = String(raw);
+  }
+  if (!header) return null;
+  const asSeconds = Number(header);
+  if (Number.isFinite(asSeconds) && asSeconds >= 0) return Math.min(asSeconds * 1000, 120_000);
+  const asDate = Date.parse(header);
+  if (Number.isFinite(asDate)) return Math.min(Math.max(asDate - Date.now(), 0), 120_000);
+  return null;
 }
 
 export type RelayFuelPrompt = { label: string; value: string };
@@ -348,41 +377,54 @@ export function parseRelayFuelTransactionRow(row: Record<string, unknown>): Rela
   };
 }
 
+/** UTC calendar date (YYYY-MM-DD) from a Relay `created_at` timestamp. */
+export function relayTransactionCalendarDate(createdAt: string): string | null {
+  const trimmed = createdAt.trim();
+  if (trimmed.length >= 10 && /^\d{4}-\d{2}-\d{2}/.test(trimmed)) return trimmed.slice(0, 10);
+  const parsed = Date.parse(trimmed);
+  if (!Number.isFinite(parsed)) return null;
+  return new Date(parsed).toISOString().slice(0, 10);
+}
+
+/** Inclusive [startDate,endDate] filter on Relay `created_at` (UTC calendar day). */
+export function filterRelayFuelTransactionsByDateRange(
+  rows: RelayFuelTransaction[],
+  startDate: string,
+  endDate: string
+): RelayFuelTransaction[] {
+  return rows.filter((row) => {
+    const day = relayTransactionCalendarDate(row.created_at);
+    return day != null && day >= startDate && day <= endDate;
+  });
+}
+
+type RelayFuelFetchMeta = {
+  api_row_count: number;
+  pages_fetched: number;
+  envelope: string;
+};
+
 /**
- * GET the fuel-transactions feed for a date range.
+ * Pull the full fuel-transaction feed from Relay (prod-verified 2026-07-16).
  *
- * NOTE — query-parameter names are NOT yet confirmed against live Relay API docs beyond the base URL
- * + auth + response-schema facts given for this build; `start_date`/`end_date` (ISO 8601 dates) are the
- * conventional Relay pattern and are used here, but MUST be verified against Relay's own API reference
- * (or a live smoke pull) before this cron is enabled in any environment. Flagged in
- * docs/specs/relay-fuel-ingest.md as a pre-launch verification item — never silently assumed correct.
- *
- * Pagination shape is likewise unconfirmed; this reads a single page and returns whatever Relay sends
- * back as a top-level array (or a `data` array wrapper) — extend here if Relay's docs show a cursor.
+ * The production endpoint returns the carrier's full history as a top-level JSON array and **does not
+ * honor** `start_date` / `end_date` query parameters (same row count with or without them). Date windows
+ * are applied client-side via filterRelayFuelTransactionsByDateRange.
  */
-export async function listRelayFuelTransactions(params: {
-  startDate: string; // ISO 8601 date, e.g. "2026-07-01"
-  endDate: string;
-  /** org.companies.code of the entity being pulled — selects RELAY_API_KEY_<CODE> (falls back to RELAY_API_KEY). */
-  entityCode?: string | null;
-}): Promise<RelayFuelTransaction[]> {
-  const key = relayApiKey(params.entityCode);
+export async function fetchAllRelayFuelTransactions(
+  entityCode?: string | null
+): Promise<{ rows: RelayFuelTransaction[]; meta: RelayFuelFetchMeta }> {
+  const key = relayApiKey(entityCode);
   if (!key) {
     throw new RelayApiError("relay_not_configured", null, null, false);
   }
 
   const first = new URL(relayApiBase());
-  first.searchParams.set("start_date", params.startDate);
-  first.searchParams.set("end_date", params.endDate);
-
-  // Retry + defensive pagination. Each page is fetched with timeout + bounded retry (relayGetWithRetry).
-  // Windows are 3 days at the ingest layer so a single page almost always returns everything; this loop is a
-  // safety net that follows a `next`/`next_page` URL if Relay sends one. MAX_PAGES + a no-progress guard
-  // prevent any runaway loop. De-dup by transaction_id so an overlapping cursor page can't double-count.
   const collected: RelayFuelTransaction[] = [];
   const seen = new Set<string>();
   let nextUrl: URL | null = first;
   let pages = 0;
+  let lastEnvelope = "none";
   const MAX_PAGES = 500;
 
   while (nextUrl && pages < MAX_PAGES) {
@@ -391,6 +433,7 @@ export async function listRelayFuelTransactions(params: {
     const json = await readJsonResponse(res);
     const obj = asObject(json);
     const { rows, envelope } = extractRelayRowArray(json);
+    lastEnvelope = envelope;
     let parsedCount = 0;
     let skippedCount = 0;
     for (const r of rows) {
@@ -408,7 +451,6 @@ export async function listRelayFuelTransactions(params: {
         skippedCount += 1;
       }
     }
-    // Empty parse with a non-empty body must be loud — matches live USMCA "success / pulled=0" failure mode.
     if (rows.length === 0 || (rows.length > 0 && parsedCount === 0)) {
       const sampleKeys = rows
         .slice(0, 1)
@@ -422,7 +464,41 @@ export async function listRelayFuelTransactions(params: {
     nextUrl = resolveNextPage(obj, nextUrl);
   }
 
-  return collected;
+  return {
+    rows: collected,
+    meta: { api_row_count: collected.length, pages_fetched: pages, envelope: lastEnvelope },
+  };
+}
+
+/**
+ * GET fuel transactions for an inclusive UTC date window.
+ *
+ * Relay prod does not filter server-side — we fetch once and slice by `created_at` calendar day.
+ */
+export async function listRelayFuelTransactions(params: {
+  startDate: string; // ISO 8601 date, e.g. "2026-07-01"
+  endDate: string;
+  /** org.companies.code of the entity being pulled — selects RELAY_API_KEY_<CODE> (falls back to RELAY_API_KEY). */
+  entityCode?: string | null;
+  /** When set (backfill), skip the HTTP round-trip and filter this in-memory snapshot. */
+  preloaded?: RelayFuelTransaction[];
+}): Promise<RelayFuelTransaction[]> {
+  const source = params.preloaded ?? (await fetchAllRelayFuelTransactions(params.entityCode)).rows;
+  const filtered = filterRelayFuelTransactionsByDateRange(source, params.startDate, params.endDate);
+
+  if (source.length > 0 && filtered.length === 0) {
+    // eslint-disable-next-line no-console -- fail-loud: distinguishes empty account vs wrong date slice
+    console.warn(
+      `[RELAY_FUEL] date_filter_zero api_rows=${source.length} window=${params.startDate}..${params.endDate} entity=${params.entityCode ?? "legacy"}`
+    );
+  } else if (!params.preloaded && source.length > filtered.length + 5) {
+    // eslint-disable-next-line no-console -- prod proof: Relay ignores start_date/end_date query params
+    console.warn(
+      `[RELAY_FUEL] server_date_filter_ignored api_rows=${source.length} client_filtered=${filtered.length} window=${params.startDate}..${params.endDate}`
+    );
+  }
+
+  return filtered;
 }
 
 // Conservative next-page resolver. Relay's exact pagination shape is UNCONFIRMED, so this follows ONLY an

@@ -1,5 +1,14 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { parseRelayFuelTransactionRow, relayApiBase, relayApiKey, RelayApiError } from "./relay-client.js";
+import {
+  filterRelayFuelTransactionsByDateRange,
+  parseRelayFuelTransactionRow,
+  relayApiBase,
+  relayApiKey,
+  relayTransactionCalendarDate,
+  retryAfterMsFromRelayError,
+  RelayApiError,
+  type RelayFuelTransaction,
+} from "./relay-client.js";
 
 // Per-entity Relay key resolution: RELAY_API_KEY_<CODE> takes precedence, RELAY_API_KEY is the fallback,
 // and a missing key resolves to null (caller throws relay_not_configured — never borrows another entity's key).
@@ -108,5 +117,62 @@ describe("parseRelayFuelTransactionRow — id aliases (API vs CSV)", () => {
 
   it("returns null when identity/timestamp missing (no fabricated rows)", () => {
     expect(parseRelayFuelTransactionRow({ total_amount_paid: "1" })).toBeNull();
+  });
+});
+
+describe("filterRelayFuelTransactionsByDateRange — client-side Relay date slice", () => {
+  const sample = (created_at: string, id = "txn-1"): RelayFuelTransaction => ({
+    transaction_id: id,
+    created_at,
+    relay_fuel_code: null,
+    total_amount_paid: "1",
+    total_retail_price: "1",
+    total_amount_saved: null,
+    is_direct_bill: null,
+    currency_code: "USD",
+    cash_advance: null,
+    fuel_code_type: null,
+    linked_org: null,
+    driver: null,
+    merchant: null,
+    location: null,
+    prompts: [],
+    fuel_items: [],
+    fees: [],
+    products: [],
+  });
+
+  it("keeps rows whose created_at calendar day falls in the inclusive window", () => {
+    const rows = [
+      sample("2026-03-01T12:00:00Z", "a"),
+      sample("2026-03-03T23:59:59Z", "b"),
+      sample("2026-03-04T00:00:00Z", "c"),
+      sample("2026-02-28T12:00:00Z", "d"),
+    ];
+    expect(filterRelayFuelTransactionsByDateRange(rows, "2026-03-01", "2026-03-03").map((r) => r.transaction_id)).toEqual([
+      "a",
+      "b",
+    ]);
+  });
+
+  it("extracts UTC calendar dates from Relay timestamps", () => {
+    expect(relayTransactionCalendarDate("2026-07-16T05:42:29Z")).toBe("2026-07-16");
+  });
+});
+
+describe("retryAfterMsFromRelayError — honor Relay Retry-After on 429", () => {
+  it("returns null for non-429 errors", () => {
+    expect(retryAfterMsFromRelayError(new RelayApiError("relay_http_500", 500, {}, true))).toBeNull();
+    expect(retryAfterMsFromRelayError(new Error("nope"))).toBeNull();
+  });
+
+  it("parses Retry-After seconds from the enriched error body", () => {
+    const err = new RelayApiError("relay_http_429", 429, { retry_after: "3" }, true);
+    expect(retryAfterMsFromRelayError(err)).toBe(3000);
+  });
+
+  it("caps Retry-After at 120s", () => {
+    const err = new RelayApiError("relay_http_429", 429, { retry_after: "999" }, true);
+    expect(retryAfterMsFromRelayError(err)).toBe(120_000);
   });
 });

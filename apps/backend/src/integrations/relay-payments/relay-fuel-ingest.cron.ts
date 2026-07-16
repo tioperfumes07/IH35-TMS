@@ -22,7 +22,14 @@ import {
   flushFuelGlPostsAfterCommit,
   type FuelTxnGlPostCandidate,
 } from "../../accounting/fuel-posting/maybe-post-from-fuel-transaction.service.js";
-import { listRelayFuelTransactions, parseRelayFuelTransactionRow, RelayApiError } from "./relay-client.js";
+import {
+  fetchAllRelayFuelTransactions,
+  filterRelayFuelTransactionsByDateRange,
+  listRelayFuelTransactions,
+  parseRelayFuelTransactionRow,
+  type RelayFuelTransaction,
+  RelayApiError,
+} from "./relay-client.js";
 import { upsertRelayFuelTransaction } from "./relay-fuel-ingest.service.js";
 
 let initialized = false;
@@ -94,13 +101,21 @@ async function ingestForCompany(
   operatingCompanyId: string,
   startDate: string,
   endDate: string,
-  entityCode: string | null
+  entityCode: string | null,
+  opts?: { preloaded?: RelayFuelTransaction[] }
 ): Promise<{ pulled: number; upserted: number; skipped: number; gl_post_candidates: FuelTxnGlPostCandidate[] }> {
   assertTenantContext(operatingCompanyId, "relay_payments.fuel_ingest_cron");
   await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
 
-  // Per-entity Relay key: each carrier (TRANSP / USMCA / …) has its own key via RELAY_API_KEY_<CODE>.
-  const rawRows = await listRelayFuelTransactions({ startDate, endDate, entityCode });
+  // Network I/O must stay OUTSIDE withLuciaBypass — callers pass `preloaded` for backfill, or we filter a
+  // single in-memory snapshot (daily cron fetches once per company before opening the DB txn).
+  const rawRows =
+    opts?.preloaded ??
+    (await listRelayFuelTransactions({
+      startDate,
+      endDate,
+      entityCode,
+    }));
   let upserted = 0;
   let skipped = 0;
   const gl_post_candidates: FuelTxnGlPostCandidate[] = [];
@@ -157,34 +172,53 @@ export function initializeRelayFuelIngestCron(app: FastifyInstance) {
       const failures: { operating_company_id: string; error: unknown }[] = [];
       const pendingGlPosts: FuelTxnGlPostCandidate[] = [];
 
-      await withLuciaBypass(async (client) => {
-        const companyIds = await listActiveCompanyIds(client);
-        for (const { id: operatingCompanyId, code: entityCode } of companyIds) {
-          const flagOn = await isEnabled(client, "RELAY_FUEL_INGEST_ENABLED", { operating_company_id: operatingCompanyId });
-          if (!flagOn) continue;
+      const companyIds = await withLuciaBypass(async (client) => listActiveCompanyIds(client));
 
-          try {
-            const stats = await ingestForCompany(client, app, operatingCompanyId, startDate, endDate, entityCode);
-            pendingGlPosts.push(...stats.gl_post_candidates);
-            app.log.info(
-              {
-                operating_company_id: operatingCompanyId,
-                pulled: stats.pulled,
-                upserted: stats.upserted,
-                skipped: stats.skipped,
-                gl_post_pending: stats.gl_post_candidates.length,
-              },
-              "[RELAY_FUEL_INGEST_CRON] run complete"
-            );
-          } catch (error) {
-            // Log loudly, record to the shared audit stream, and keep processing the REMAINING
-            // companies — but never swallow: the error is collected and re-thrown after the loop.
-            app.log.error({ err: error, operating_company_id: operatingCompanyId }, "[RELAY_FUEL_INGEST_CRON] company ingest failed");
-            failures.push({ operating_company_id: operatingCompanyId, error });
+      for (const { id: operatingCompanyId, code: entityCode } of companyIds) {
+        const flagOn = await withLuciaBypass(async (client) =>
+          isEnabled(client, "RELAY_FUEL_INGEST_ENABLED", { operating_company_id: operatingCompanyId })
+        );
+        if (!flagOn) continue;
+
+        try {
+          // One HTTP pull per company (Relay returns full history); DB txn stays short.
+          const { rows: apiRows, meta } = await fetchAllRelayFuelTransactions(entityCode);
+          const windowRows = filterRelayFuelTransactionsByDateRange(apiRows, startDate, endDate);
+          app.log.info(
+            {
+              operating_company_id: operatingCompanyId,
+              entity_code: entityCode,
+              api_rows: meta.api_row_count,
+              window_rows: windowRows.length,
+              window: `${startDate}..${endDate}`,
+            },
+            "[RELAY_FUEL_INGEST_CRON] relay pull complete"
+          );
+
+          const stats = await withLuciaBypass(async (client) =>
+            ingestForCompany(client, app, operatingCompanyId, startDate, endDate, entityCode, {
+              preloaded: windowRows,
+            })
+          );
+          pendingGlPosts.push(...stats.gl_post_candidates);
+          app.log.info(
+            {
+              operating_company_id: operatingCompanyId,
+              pulled: stats.pulled,
+              upserted: stats.upserted,
+              skipped: stats.skipped,
+              gl_post_pending: stats.gl_post_candidates.length,
+            },
+            "[RELAY_FUEL_INGEST_CRON] run complete"
+          );
+        } catch (error) {
+          app.log.error({ err: error, operating_company_id: operatingCompanyId }, "[RELAY_FUEL_INGEST_CRON] company ingest failed");
+          failures.push({ operating_company_id: operatingCompanyId, error });
+          await withLuciaBypass(async (client) => {
             await client
               .query(`SELECT audit.append_event($1, $2, $3::jsonb, NULL, $4)`, [
                 "integrations.relay_fuel_ingest_daily_pull_failed",
-                "error",
+                "warning",
                 JSON.stringify({
                   operating_company_id: operatingCompanyId,
                   error: error instanceof RelayApiError
@@ -196,9 +230,9 @@ export function initializeRelayFuelIngestCron(app: FastifyInstance) {
               .catch((auditErr) => {
                 app.log.warn({ err: auditErr, operating_company_id: operatingCompanyId }, "[RELAY_FUEL_INGEST_CRON] failure-audit write failed");
               });
-          }
+          });
         }
-      });
+      }
 
       // AFTER COMMIT — TMS GL only, gated by EXPENSE_GL_POSTING_ENABLED (default OFF).
       await flushFuelGlPostsAfterCommit(pendingGlPosts, app.log);
@@ -235,24 +269,57 @@ export async function runRelayFuelBackfill(app: FastifyInstance, opts?: { months
   const failures: { operating_company_id: string; error: unknown }[] = [];
   const pendingGlPosts: FuelTxnGlPostCandidate[] = [];
 
-  await withLuciaBypass(async (client) => {
-    const companyIds = await listActiveCompanyIds(client);
-    for (const { id: operatingCompanyId, code: entityCode } of companyIds) {
-      const flagOn = await isEnabled(client, "RELAY_FUEL_INGEST_ENABLED", { operating_company_id: operatingCompanyId });
-      if (!flagOn) continue;
+  const companyIds = await withLuciaBypass(async (client) => listActiveCompanyIds(client));
 
-      let pulled = 0;
-      let upserted = 0;
-      let skipped = 0;
-      try {
+  // Inter-company gap so consecutive full-feed pulls don't re-trip Relay 429 (GUARD 2026-07-16).
+  const interCompanyDelayMs = Number.parseInt(process.env.RELAY_FUEL_INGEST_INTER_COMPANY_MS ?? "1500", 10) || 1500;
+  let companiesPulled = 0;
+
+  for (const { id: operatingCompanyId, code: entityCode } of companyIds) {
+    const flagOn = await withLuciaBypass(async (client) =>
+      isEnabled(client, "RELAY_FUEL_INGEST_ENABLED", { operating_company_id: operatingCompanyId })
+    );
+    if (!flagOn) continue;
+
+    if (companiesPulled > 0 && interCompanyDelayMs > 0) {
+      await new Promise((r) => setTimeout(r, interCompanyDelayMs));
+    }
+    companiesPulled += 1;
+
+    let pulled = 0;
+    let upserted = 0;
+    let skipped = 0;
+    try {
+      const { rows: apiRows, meta } = await fetchAllRelayFuelTransactions(entityCode);
+      app.log.info(
+        {
+          operating_company_id: operatingCompanyId,
+          entity_code: entityCode,
+          api_rows: meta.api_row_count,
+          windows: windows.length,
+          months,
+        },
+        "[RELAY_FUEL_INGEST_BACKFILL] relay pull complete — slicing windows client-side"
+      );
+
+      if (apiRows.length === 0) {
+        app.log.warn(
+          { operating_company_id: operatingCompanyId, entity_code: entityCode },
+          "[RELAY_FUEL_INGEST_BACKFILL] relay API returned zero transactions for entity — verify key/account with Relay"
+        );
+      }
+
+      // One DB commit per company so partial progress + audit rows survive a later-window failure.
+      await withLuciaBypass(async (client) => {
         for (const [idx, w] of windows.entries()) {
-          const stats = await ingestForCompany(client, app, operatingCompanyId, w.startDate, w.endDate, entityCode);
+          const windowRows = filterRelayFuelTransactionsByDateRange(apiRows, w.startDate, w.endDate);
+          const stats = await ingestForCompany(client, app, operatingCompanyId, w.startDate, w.endDate, entityCode, {
+            preloaded: windowRows,
+          });
           pulled += stats.pulled;
           upserted += stats.upserted;
           skipped += stats.skipped;
           pendingGlPosts.push(...stats.gl_post_candidates);
-          // Per-window visibility — so progress is observable and "0 rows because empty" vs "0 rows because a
-          // window errored" is never ambiguous (a failing window throws out of ingestForCompany → caught below).
           app.log.info(
             {
               operating_company_id: operatingCompanyId,
@@ -267,24 +334,23 @@ export async function runRelayFuelBackfill(app: FastifyInstance, opts?: { months
             "[RELAY_FUEL_INGEST_BACKFILL] window complete"
           );
         }
-        app.log.info(
-          { operating_company_id: operatingCompanyId, months, window_days: windowDays, windows: windows.length, pulled, upserted, skipped },
-          "[RELAY_FUEL_INGEST_BACKFILL] company backfill complete"
-        );
-      } catch (error) {
-        // Isolate per-company failure, never swallow — collected and re-thrown after the loop.
-        // Also append a durable audit row (same as daily cron). Without this, a missing
-        // RELAY_API_KEY_TRANSP leaves ZERO evidence in Neon that TRANSP never ran — which is
-        // exactly what happened on 2026-07-15 (USMCA got 128 success windows; TRANSP silent).
-        app.log.error(
-          { err: error, operating_company_id: operatingCompanyId },
-          "[RELAY_FUEL_INGEST_BACKFILL] company backfill failed"
-        );
-        failures.push({ operating_company_id: operatingCompanyId, error });
+      });
+
+      app.log.info(
+        { operating_company_id: operatingCompanyId, months, window_days: windowDays, windows: windows.length, pulled, upserted, skipped },
+        "[RELAY_FUEL_INGEST_BACKFILL] company backfill complete"
+      );
+    } catch (error) {
+      app.log.error(
+        { err: error, operating_company_id: operatingCompanyId },
+        "[RELAY_FUEL_INGEST_BACKFILL] company backfill failed"
+      );
+      failures.push({ operating_company_id: operatingCompanyId, error });
+      await withLuciaBypass(async (client) => {
         await client
           .query(`SELECT audit.append_event($1, $2, $3::jsonb, NULL, $4)`, [
             "integrations.relay_fuel_ingest_backfill_failed",
-            "error",
+            "warning",
             JSON.stringify({
               operating_company_id: operatingCompanyId,
               entity_code: entityCode,
@@ -302,11 +368,10 @@ export async function runRelayFuelBackfill(app: FastifyInstance, opts?: { months
               "[RELAY_FUEL_INGEST_BACKFILL] failure-audit write failed"
             );
           });
-      }
+      });
     }
-  });
+  }
 
-  // AFTER COMMIT — TMS GL only, gated by EXPENSE_GL_POSTING_ENABLED (default OFF).
   await flushFuelGlPostsAfterCommit(pendingGlPosts, app.log);
 
   if (failures.length > 0) {
