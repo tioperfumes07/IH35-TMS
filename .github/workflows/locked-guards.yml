@@ -576,6 +576,11 @@ jobs:
       - name: verify:list-error-state-coverage
         run: npm run verify:list-error-state-coverage
 
+      - name: verify:finance-hub-off-honest-state --selftest
+        run: node scripts/verify-finance-hub-off-honest-state.mjs --selftest
+      - name: verify:finance-hub-off-honest-state
+        run: npm run verify:finance-hub-off-honest-state
+
       - name: verify:referenceselect-coverage-ratchet --selftest
         run: node scripts/verify-referenceselect-coverage-ratchet.mjs --selftest
       - name: verify:referenceselect-coverage-ratchet

@@ -882,6 +882,7 @@
     "verify:dead-forms-unmounted": "node scripts/verify-dead-forms-unmounted.mjs",
     "verify:reference-dropdown-inline-create": "node scripts/verify-reference-dropdown-inline-create.mjs",
     "verify:list-error-state-coverage": "node scripts/verify-list-error-state-coverage.mjs",
+    "verify:finance-hub-off-honest-state": "node scripts/verify-finance-hub-off-honest-state.mjs",
     "verify:samsara-webhook-unit-fallback": "node scripts/verify-samsara-webhook-unit-fallback.mjs",
     "verify:cors-prod-defaults": "node scripts/verify-cors-prod-defaults.mjs",
     "verify:cors-origins-canonical": "node scripts/verify-cors-origins-canonical.mjs",

@@ -72,13 +72,31 @@ export function FinanceHubPage() {
     );
   }
 
+  // Honest OFF-state (audit gap #14): the Finance Hub is turned on per operating company (owner-gated,
+  // read-only). When it is not enabled for the selected company we keep the module fully reachable —
+  // the finance sub-nav, header, and a working link back to Finance stay rendered — and show an
+  // owner/operator message that this is expected, NOT a broken screen. We never expose the raw internal
+  // flag name to operators, never invent fake hub data, and never flip the flag from the UI.
   if (!enabled) {
     return (
       <div className="p-6">
         <FinanceModuleTabs />
         {header}
-        <div className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-          The Finance Hub is not yet enabled for this company. (Feature flag <code>{FINANCE_HUB_UI_FLAG}</code> is off.)
+        <div
+          data-testid="finance-hub-disabled"
+          className="rounded-sm border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700"
+        >
+          <p className="font-medium text-slate-900">Finance Hub is not enabled for this entity.</p>
+          <p className="mt-1 text-slate-600">
+            This read-only overview is turned on per operating company. It isn’t active for the company
+            you have selected — this is expected, not an error. Contact the owner or an administrator to
+            enable the Finance Hub for this company, or switch to a company where it’s already enabled.
+          </p>
+          <p className="mt-3">
+            <Link to="/finance" className="font-medium text-[#1f2a44] underline underline-offset-2">
+              Back to Finance overview
+            </Link>
+          </p>
         </div>
       </div>
     );
