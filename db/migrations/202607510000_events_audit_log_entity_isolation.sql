@@ -7,7 +7,7 @@
 -- app.current_operating_company_id GUC and are not FORCED. This migration forces RLS and replaces the
 -- policies with the canonical app.operating_company_id GUC + identity.is_lucia_bypass() escape hatch.
 --
--- public.audit_log: has no operating_company_id and no RLS. This migration adds the column, attempts a
+-- public.audit_log: has no operating_company_id and no RLS. This migration adds the column with an inline FK to org.companies(id), attempts a
 -- best-effort backfill from the record FK for known entity-scoped tables, then enables+forces RLS with a
 -- WORM (write-once-read-many) policy: SELECT/INSERT only, no UPDATE/DELETE for ih35_app. Un-backfilled
 -- rows remain NULL and are visible only under identity.is_lucia_bypass() until the owner classifies them.
