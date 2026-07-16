@@ -37,9 +37,19 @@ export function DocsHomePage() {
   const [activeTab, setActiveTab] = useState<FileEntityType | "all">("all");
   const [typeFilter, setTypeFilter] = useState("");
   const [expiresBefore, setExpiresBefore] = useState("");
+  /** KPI drill-down filters — lockstep with GET /api/v1/docs/kpis predicates (server-side; list is paginated). */
+  const [kpiFilter, setKpiFilter] = useState<"none" | "missing_required" | "recent_uploads">("none");
   const [page, setPage] = useState(1);
   const [uploadOpen, setUploadOpen] = useState(false);
   const limit = 25;
+
+  const clearListFilters = () => {
+    setTypeFilter("");
+    setExpiresBefore("");
+    setKpiFilter("none");
+    setActiveTab("all");
+    setPage(1);
+  };
 
   const kpisQuery = useQuery({
     queryKey: ["docs", "foundation", "kpis", companyId],
@@ -48,13 +58,15 @@ export function DocsHomePage() {
   });
 
   const listQuery = useQuery({
-    queryKey: ["docs", "foundation", "list", companyId, activeTab, typeFilter, expiresBefore, page, limit],
+    queryKey: ["docs", "foundation", "list", companyId, activeTab, typeFilter, expiresBefore, kpiFilter, page, limit],
     queryFn: () =>
       listDocsFoundation({
         operating_company_id: companyId,
         entity: activeTab === "all" ? undefined : activeTab,
         type: typeFilter.trim() || undefined,
         expires_before: expiresBefore || undefined,
+        missing_required: kpiFilter === "missing_required" ? true : undefined,
+        recent_uploads: kpiFilter === "recent_uploads" ? true : undefined,
         page,
         limit,
       }),
@@ -99,32 +111,41 @@ export function DocsHomePage() {
         />
       ) : null}
 
-      {/* B10 dead-click rollout: Total Docs / Expiring 30 Days drive the existing local filter state
-          (same mechanism as the "Reset filters" button and the Expiration-before date picker below —
-          no new filter logic). Missing Required / Recent Uploads have no filter param on this list
-          endpoint (listDocsFoundation only accepts entity/type/expires_before) — left dead intentionally. */}
+      {/* All four KPIs drill into the list via real filters (server predicates lockstep with /docs/kpis). */}
       <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
         <KpiCard
           label="Total Docs"
           value={String(kpisQuery.data?.total_docs ?? 0)}
-          onClick={() => {
-            setTypeFilter("");
-            setExpiresBefore("");
-            setActiveTab("all");
-            setPage(1);
-          }}
+          onClick={clearListFilters}
         />
         <KpiCard
           label="Expiring 30 Days"
           value={String(kpisQuery.data?.expiring_30_days ?? 0)}
           onClick={() => {
             const in30 = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
+            setKpiFilter("none");
             setExpiresBefore(in30);
             setPage(1);
           }}
         />
-        <KpiCard label="Missing Required" value={String(kpisQuery.data?.missing_required ?? 0)} />
-        <KpiCard label="Recent Uploads" value={String(kpisQuery.data?.recent_uploads ?? 0)} />
+        <KpiCard
+          label="Missing Required"
+          value={String(kpisQuery.data?.missing_required ?? 0)}
+          onClick={() => {
+            setExpiresBefore("");
+            setKpiFilter("missing_required");
+            setPage(1);
+          }}
+        />
+        <KpiCard
+          label="Recent Uploads"
+          value={String(kpisQuery.data?.recent_uploads ?? 0)}
+          onClick={() => {
+            setExpiresBefore("");
+            setKpiFilter("recent_uploads");
+            setPage(1);
+          }}
+        />
       </div>
 
       <SecondaryNavTabs
@@ -161,16 +182,16 @@ export function DocsHomePage() {
               className="h-9 w-full rounded-sm border border-gray-300 px-2 text-sm font-normal"
             />
           </label>
-          <div className="flex items-end">
+          <div className="flex items-end gap-2">
+            {kpiFilter !== "none" ? (
+              <span className="pb-2 text-xs font-semibold text-gray-600">
+                {kpiFilter === "missing_required" ? "Missing required (no category or incomplete upload)" : "Recent uploads (last 7 days)"}
+              </span>
+            ) : null}
             <button
               type="button"
               className="h-9 rounded-sm border border-gray-300 bg-white px-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-              onClick={() => {
-                setTypeFilter("");
-                setExpiresBefore("");
-                setActiveTab("all");
-                setPage(1);
-              }}
+              onClick={clearListFilters}
             >
               Reset filters
             </button>

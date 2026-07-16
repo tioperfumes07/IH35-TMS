@@ -10,6 +10,9 @@ const listQuerySchema = z.object({
     .enum(["driver", "customer", "vendor", "unit", "equipment", "load", "settlement", "invoice"])
     .optional(),
   expires_before: z.string().date().optional(),
+  // KPI drill-downs — predicates MUST stay lockstep with /api/v1/docs/kpis COUNT FILTER clauses.
+  missing_required: z.enum(["true", "false"]).optional(),
+  recent_uploads: z.enum(["true", "false"]).optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(200).default(25),
   operating_company_id: z.string().uuid().optional(),
@@ -129,6 +132,16 @@ export async function registerDocsFoundationRoutes(app: FastifyInstance) {
         params.push(query.expires_before);
         const idx = params.length;
         whereClauses.push(`f.expiration_date IS NOT NULL AND f.expiration_date <= $${idx}::date`);
+      }
+
+      // Lockstep with kpis.missing_required: category_id IS NULL OR upload_completed_at IS NULL
+      if (query.missing_required === "true") {
+        whereClauses.push(`(f.category_id IS NULL OR f.upload_completed_at IS NULL)`);
+      }
+
+      // Lockstep with kpis.recent_uploads: created_at >= (NOW() - INTERVAL '7 days')
+      if (query.recent_uploads === "true") {
+        whereClauses.push(`f.created_at >= (NOW() - INTERVAL '7 days')`);
       }
 
       const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";

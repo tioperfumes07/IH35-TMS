@@ -150,6 +150,10 @@ export function listDocsFoundation(filters: Partial<{
   type: string;
   entity: FileEntityType;
   expires_before: string;
+  /** KPI drill-down — matches /docs/kpis missing_required predicate */
+  missing_required: boolean;
+  /** KPI drill-down — matches /docs/kpis recent_uploads (last 7 days) predicate */
+  recent_uploads: boolean;
   page: number;
   limit: number;
   operating_company_id: string;
@@ -158,6 +162,8 @@ export function listDocsFoundation(filters: Partial<{
   if (filters.type) query.set("type", filters.type);
   if (filters.entity) query.set("entity", filters.entity);
   if (filters.expires_before) query.set("expires_before", filters.expires_before);
+  if (filters.missing_required === true) query.set("missing_required", "true");
+  if (filters.recent_uploads === true) query.set("recent_uploads", "true");
   if (filters.page) query.set("page", String(filters.page));
   if (filters.limit) query.set("limit", String(filters.limit));
   if (filters.operating_company_id) query.set("operating_company_id", filters.operating_company_id);
