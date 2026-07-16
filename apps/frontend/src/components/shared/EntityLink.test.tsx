@@ -26,6 +26,7 @@ describe("resolveEntityRoute", () => {
   it("resolves liability and expense to list query-param drill-through (real consumers)", () => {
     expect(resolveEntityRoute("liability", "id1")).toBe("/liabilities?liability_id=id1");
     expect(resolveEntityRoute("expense", "id1")).toBe("/accounting/expenses/list?expense_id=id1");
+    expect(resolveEntityRoute("bank_transaction", "txn1")).toBe("/banking/transactions?txn_id=txn1");
     expect(resolveEntityRoute("bill", "id1")).toBe("/accounting/bills/id1");
   });
 });

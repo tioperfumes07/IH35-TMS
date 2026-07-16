@@ -26,6 +26,7 @@ import { listWorkOrderLinkedFinancials } from "../../api/accounting";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useAuth } from "../../auth/useAuth";
 import { useToast } from "../../components/Toast";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 /** Matches apps/backend/src/maintenance/wo-oos-estimator.ts DEFAULT_DAILY_LOSS_CENTS */
@@ -682,9 +683,7 @@ export function WorkOrderDetailPage() {
                       {linkedFinancialsQ.data.bills.map((bill) => (
                         <tr key={bill.id} className="border-t border-gray-100">
                           <td className="px-2 py-1">
-                            <a className="text-slate-700 underline" href={`/accounting/bills?bill_id=${encodeURIComponent(bill.id)}`}>
-                              {bill.bill_number || bill.id.slice(0, 8)}
-                            </a>
+                            <EntityLink kind="bill" id={bill.id} label={bill.bill_number || bill.id.slice(0, 8)} />
                           </td>
                           <td className="px-2 py-1">{bill.bill_date || "—"}</td>
                           <td className="px-2 py-1">{bill.status || "—"}</td>
@@ -710,9 +709,7 @@ export function WorkOrderDetailPage() {
                       {linkedFinancialsQ.data.expenses.map((expense) => (
                         <tr key={expense.id} className="border-t border-gray-100">
                           <td className="px-2 py-1">
-                            <a className="text-slate-700 underline" href={`/accounting/expenses?expense_id=${encodeURIComponent(expense.id)}`}>
-                              {expense.id.slice(0, 8)}
-                            </a>
+                            <EntityLink kind="expense" id={expense.id} label={expense.id.slice(0, 8)} />
                           </td>
                           <td className="px-2 py-1">{expense.transaction_date || "—"}</td>
                           <td className="px-2 py-1">{expense.status || "—"}</td>

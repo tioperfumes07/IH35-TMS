@@ -32,7 +32,8 @@ export type EntityKind =
   | "bank_account"
   | "factoring_advance"
   | "payment"
-  | "work_order";
+  | "work_order"
+  | "bank_transaction";
 
 export interface EntityLinkProps {
   kind: EntityKind;
@@ -62,6 +63,7 @@ const DEFAULT_LINK_CLASSNAME =
  * "settlement" / "liability" / "expense" use query-param drill-through (list+drawer/highlight).
  * "payment" → /accounting/payments/:id · "work_order" → /maintenance/work-orders/:id
  * "bill" → /accounting/bills/:id
+ * "bank_transaction" → /banking/transactions?txn_id= (BankingHome expands row)
  */
 export function resolveEntityRoute(kind: EntityKind, id: string): string | null {
   switch (kind) {
@@ -97,6 +99,8 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/liabilities?liability_id=${id}`;
     case "expense":
       return `/accounting/expenses/list?expense_id=${id}`;
+    case "bank_transaction":
+      return `/banking/transactions?txn_id=${id}`;
     default:
       return null;
   }

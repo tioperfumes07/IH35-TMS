@@ -1,6 +1,7 @@
 import { reverseCashAdvance } from "../../../api/cashAdvances";
 import { Button } from "../../../components/Button";
 import { useToast } from "../../../components/Toast";
+import { EntityLink } from "../../../components/shared/EntityLink";
 
 type Props = {
   open: boolean;
@@ -42,7 +43,14 @@ export function AdvanceDetailDrawer({ open, operatingCompanyId, advance, onClose
           <div>Driver: {String(advance.driver_full_name ?? "—")}</div>
           <div>Recipient: {String(advance.recipient_name ?? "Driver")}</div>
           <div>Outstanding: ${Number(advance.outstanding_balance ?? 0).toFixed(2)}</div>
-          <div>Liability ID: {String(advance.liability_id ?? "—")}</div>
+          <div>
+            Liability ID:{" "}
+            {advance.liability_id ? (
+              <EntityLink kind="liability" id={String(advance.liability_id)} label={String(advance.liability_id).slice(0, 8)} />
+            ) : (
+              "—"
+            )}
+          </div>
         </div>
 
         <div className="mt-2 rounded-sm border border-slate-300 bg-slate-100 p-2">
@@ -59,9 +67,11 @@ export function AdvanceDetailDrawer({ open, operatingCompanyId, advance, onClose
               <div>
                 Linked to bill {String(advance.linked_bill_display_id ?? advance.linked_bill_id)} ({String(advance.linked_bill_vendor_id ?? "vendor")})
               </div>
-              <a className="text-slate-700 underline" href={`/bills/${String(advance.linked_bill_id)}`}>
-                Open bill detail
-              </a>
+              <EntityLink
+                kind="bill"
+                id={String(advance.linked_bill_id)}
+                label={String(advance.linked_bill_display_id ?? advance.linked_bill_id)}
+              />
             </>
           ) : (
             <div className="text-gray-500">No linked bill.</div>
@@ -70,7 +80,11 @@ export function AdvanceDetailDrawer({ open, operatingCompanyId, advance, onClose
 
         <div className="mt-2 rounded-sm border border-gray-200 p-2">
           <div className="font-semibold">Linked Bank Transaction</div>
-          <div>{String(advance.linked_bank_txn_id ?? "No bank transaction linked yet.")}</div>
+          {advance.linked_bank_txn_id ? (
+            <EntityLink kind="bank_transaction" id={String(advance.linked_bank_txn_id)} label={String(advance.linked_bank_txn_id).slice(0, 8)} />
+          ) : (
+            <div className="text-gray-500">No bank transaction linked yet.</div>
+          )}
         </div>
 
         <div className="mt-2 rounded-sm border border-gray-200 p-2">
