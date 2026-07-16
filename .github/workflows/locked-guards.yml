@@ -116,6 +116,16 @@ jobs:
       - name: verify:no-silent-noop-posting
         run: npm run verify:no-silent-noop-posting
 
+      # B-D4 — tighten no-silent-failure (extend existing; planted A/P puller swallow → red)
+      - name: verify:no-swallow-on-money-paths --selftest
+        run: node scripts/verify-no-swallow-on-money-paths.mjs --selftest
+
+      - name: verify:no-swallow-on-money-paths
+        run: npm run verify:no-swallow-on-money-paths
+
+      - name: verify:qbo-outbound-generic-catch-deadletter
+        run: npm run verify:qbo-outbound-generic-catch-deadletter
+
       - name: verify:ob1-nav-header-unify
         run: npm run verify:ob1-nav-header-unify
 
