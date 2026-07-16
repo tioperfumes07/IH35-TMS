@@ -874,6 +874,10 @@ jobs:
         run: node scripts/verify-banking-nav-clickthrough.mjs --selftest
       - name: verify:banking-nav-clickthrough
         run: npm run verify:banking-nav-clickthrough
+      - name: verify:banking-empty-state-entity-aware --self-test
+        run: node scripts/verify-banking-empty-state-entity-aware.mjs --self-test
+      - name: verify:banking-empty-state-entity-aware
+        run: npm run verify:banking-empty-state-entity-aware
       - name: verify:qbo-parity-bills-invoices-lists --selftest
         run: node scripts/verify-qbo-parity-bills-invoices-lists.mjs --selftest
       - name: verify:qbo-parity-bills-invoices-lists
