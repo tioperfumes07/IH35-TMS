@@ -969,6 +969,7 @@
     "verify:fuel-gl-poster-callers": "node scripts/verify-fuel-gl-poster-callers.mjs",
     "verify:no-dead-clicks": "node scripts/verify-no-dead-clicks.mjs",
     "verify:entitylink-deep-links": "node scripts/verify-entitylink-deep-links.mjs",
+    "verify:customer-invoice-customer-id-deeplink": "node scripts/verify-customer-invoice-customer-id-deeplink.mjs",
     "verify:fact-chargebacks-entitylinks": "node scripts/verify-fact-chargebacks-entitylinks.mjs",
     "verify:qbo-parity-vendors": "node scripts/verify-qbo-parity-vendors.mjs",
     "verify:road-service-route-mounted": "node scripts/verify-road-service-route-mounted.mjs",
