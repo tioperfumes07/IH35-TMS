@@ -211,4 +211,15 @@ describe("parseRelayFuelTransactionRow — cash_advance dollar string (Mike Brun
     });
     expect(parsed?.cash_advance).toBe(false);
   });
+
+  it("coerces a positive cash-advance dollar amount to true", () => {
+    const parsed = parseRelayFuelTransactionRow({
+      transaction_id: "txn_2",
+      created_at: "2026-07-16T05:42:29Z",
+      total_amount_paid: "25.00",
+      total_retail_price: "0.00",
+      cash_advance: "25.00",
+    });
+    expect(parsed?.cash_advance).toBe(true);
+  });
 });
