@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { BulkSelectableTable } from "../../components/shared/BulkSelectableTable";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { useToast } from "../../components/Toast";
 
 export type RecoursePipelineRow = {
@@ -96,7 +97,13 @@ export function RecoursePipelineTable({ rows, fmtCurrency, fmtDate }: Props) {
               {rows.map((row) => (
                 <tr key={row.factoring_advance_id}>
                   <td className="px-2 py-2">{ctx.renderRowCheckbox(row.factoring_advance_id)}</td>
-                  <td className="px-2 py-2 font-medium text-gray-900">{row.invoice_reference}</td>
+                  <td className="px-2 py-2 font-medium text-gray-900">
+                    <EntityLink
+                      kind="factoring_advance"
+                      id={row.factoring_advance_id}
+                      label={row.invoice_reference || row.factoring_advance_id.slice(0, 8)}
+                    />
+                  </td>
                   <td className="px-2 py-2">{row.customer_name}</td>
                   <td className="px-2 py-2">{fmtCurrency(row.advance_amount)}</td>
                   <td className="px-2 py-2">{fmtCurrency(row.reserve_amount)}</td>

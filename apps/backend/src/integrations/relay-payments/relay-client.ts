@@ -221,13 +221,53 @@ function str(value: unknown): string | null {
   return typeof value === "string" && value.trim().length > 0 ? value : null;
 }
 
+/** Coerce Relay id/timestamp fields that may arrive as number or alternate keys (CSV uses `id`). */
+function strOrCoerce(value: unknown): string | null {
+  const direct = str(value);
+  if (direct) return direct;
+  if (typeof value === "number" && Number.isFinite(value)) return String(value);
+  return null;
+}
+
+function coerceCreatedAt(row: Record<string, unknown>): string | null {
+  const candidates = [row.created_at, row.createdAt, row.processing_time, row.processed_at, row.timestamp];
+  for (const c of candidates) {
+    const s = strOrCoerce(c);
+    if (s) return s;
+  }
+  return null;
+}
+
+function extractRelayRowArray(json: unknown): { rows: unknown[]; envelope: string } {
+  if (Array.isArray(json)) return { rows: json, envelope: "array" };
+  const obj = asObject(json);
+  if (!obj) return { rows: [], envelope: "non_object" };
+  const nestedData = asObject(obj.data);
+  const candidates: Array<[string, unknown]> = [
+    ["data", obj.data],
+    ["results", obj.results],
+    ["transactions", obj.transactions],
+    ["items", obj.items],
+    ["fuel_transactions", obj.fuel_transactions],
+    ["data.results", nestedData?.results],
+    ["data.transactions", nestedData?.transactions],
+    ["data.items", nestedData?.items],
+  ];
+  for (const [name, value] of candidates) {
+    if (Array.isArray(value)) return { rows: value, envelope: name };
+  }
+  return { rows: [], envelope: `keys:${Object.keys(obj).slice(0, 12).join(",")}` };
+}
+
 /** Defensive parse of one raw transaction row into the confirmed shape. Never throws on shape drift —
  *  a malformed/unexpected row is skipped by the caller (dead-lettered), not allowed to crash the whole
  *  pull. The FULL raw row is separately archived verbatim by the ingest service regardless of parse
  *  outcome, so nothing Relay sends is ever silently lost. */
 export function parseRelayFuelTransactionRow(row: Record<string, unknown>): RelayFuelTransaction | null {
-  const transaction_id = str(row.transaction_id);
-  const created_at = str(row.created_at);
+  // API often sends `id`; CSV importer already maps id→transaction_id. Accept both (add-only).
+  const transaction_id =
+    strOrCoerce(row.transaction_id) ?? strOrCoerce(row.id) ?? strOrCoerce(row.transactionId);
+  const created_at = coerceCreatedAt(row);
   if (!transaction_id || !created_at) return null;
 
   const linkedOrgRaw = asObject(row.linked_org);
@@ -350,21 +390,34 @@ export async function listRelayFuelTransactions(params: {
     const res = await relayGetWithRetry(nextUrl, key);
     const json = await readJsonResponse(res);
     const obj = asObject(json);
-    const rows: unknown[] = Array.isArray(json)
-      ? json
-      : Array.isArray(obj?.data)
-        ? (obj?.data as unknown[])
-        : Array.isArray(obj?.results)
-          ? (obj?.results as unknown[])
-          : [];
+    const { rows, envelope } = extractRelayRowArray(json);
+    let parsedCount = 0;
+    let skippedCount = 0;
     for (const r of rows) {
       const row = asObject(r);
-      if (!row) continue;
+      if (!row) {
+        skippedCount += 1;
+        continue;
+      }
       const parsed = parseRelayFuelTransactionRow(row);
       if (parsed && !seen.has(parsed.transaction_id)) {
         seen.add(parsed.transaction_id);
         collected.push(parsed);
+        parsedCount += 1;
+      } else if (!parsed) {
+        skippedCount += 1;
       }
+    }
+    // Empty parse with a non-empty body must be loud — matches live USMCA "success / pulled=0" failure mode.
+    if (rows.length === 0 || (rows.length > 0 && parsedCount === 0)) {
+      const sampleKeys = rows
+        .slice(0, 1)
+        .map((r) => Object.keys(asObject(r) ?? {}).slice(0, 20).join(","))
+        .join("|");
+      // eslint-disable-next-line no-console -- intentional ops signal until structured logger is injected here
+      console.warn(
+        `[RELAY_FUEL] empty_parse envelope=${envelope} raw_rows=${rows.length} parsed=${parsedCount} skipped=${skippedCount} sample_keys=${sampleKeys || "n/a"}`
+      );
     }
     nextUrl = resolveNextPage(obj, nextUrl);
   }

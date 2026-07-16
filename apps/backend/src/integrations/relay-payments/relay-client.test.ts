@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { relayApiBase, relayApiKey, RelayApiError } from "./relay-client.js";
+import { parseRelayFuelTransactionRow, relayApiBase, relayApiKey, RelayApiError } from "./relay-client.js";
 
 // Per-entity Relay key resolution: RELAY_API_KEY_<CODE> takes precedence, RELAY_API_KEY is the fallback,
 // and a missing key resolves to null (caller throws relay_not_configured — never borrows another entity's key).
@@ -74,5 +74,39 @@ describe("relayApiBase — fail-loud in production", () => {
     process.env.NODE_ENV = "production";
     process.env.RELAY_API_BASE = "https://app.relaypayments.com/api/fuel/transactions";
     expect(relayApiBase()).toBe("https://app.relaypayments.com/api/fuel/transactions/");
+  });
+});
+
+describe("parseRelayFuelTransactionRow — id aliases (API vs CSV)", () => {
+  it("accepts transaction_id + created_at (confirmed shape)", () => {
+    const parsed = parseRelayFuelTransactionRow({
+      transaction_id: "txn-1",
+      created_at: "2026-07-01T12:00:00Z",
+      total_amount_paid: "10.00",
+    });
+    expect(parsed?.transaction_id).toBe("txn-1");
+    expect(parsed?.created_at).toBe("2026-07-01T12:00:00Z");
+  });
+
+  it("accepts API-style id + numeric id (CSV/API parity)", () => {
+    const parsed = parseRelayFuelTransactionRow({
+      id: 12345,
+      created_at: "2026-07-01T12:00:00Z",
+      total_amount_paid: "10.00",
+    });
+    expect(parsed?.transaction_id).toBe("12345");
+  });
+
+  it("accepts createdAt camelCase", () => {
+    const parsed = parseRelayFuelTransactionRow({
+      id: "abc",
+      createdAt: "2026-07-01T12:00:00Z",
+    });
+    expect(parsed?.transaction_id).toBe("abc");
+    expect(parsed?.created_at).toBe("2026-07-01T12:00:00Z");
+  });
+
+  it("returns null when identity/timestamp missing (no fabricated rows)", () => {
+    expect(parseRelayFuelTransactionRow({ total_amount_paid: "1" })).toBeNull();
   });
 });

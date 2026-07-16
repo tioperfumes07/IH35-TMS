@@ -230,11 +230,17 @@ export async function upsertRelayFuelTransaction(
     throw new Error(`relay_fuel_ingest: upsert did not return an id for transaction_id=${tx.transaction_id}`);
   }
 
-  // Line items: replace-in-place under the SAME transaction id (delete-then-insert keeps line_index
-  // contiguous even if Relay's fuel_items array shrinks/reorders on a webhook re-delivery).
-  await client.query(`DELETE FROM integrations.relay_fuel_transaction_lines WHERE relay_fuel_transaction_id = $1`, [
-    relayFuelTransactionId,
-  ]);
+  // Line items: void-then-upsert (ih35_app has NO DELETE on lines — REVOKE DELETE in 202607110000).
+  // Unique (relay_fuel_transaction_id, line_index) is preserved via ON CONFLICT UPDATE.
+  await client.query(
+    `
+      UPDATE integrations.relay_fuel_transaction_lines
+      SET is_active = false, voided_at = COALESCE(voided_at, now()), updated_at = now()
+      WHERE relay_fuel_transaction_id = $1
+        AND is_active = true
+    `,
+    [relayFuelTransactionId]
+  );
 
   const fuelItems = tx.fuel_items ?? [];
   for (let i = 0; i < fuelItems.length; i += 1) {
@@ -247,8 +253,25 @@ export async function upsertRelayFuelTransaction(
           retail_price_per_unit_cents, discounted_price_per_unit_cents,
           volume, volume_uom,
           total_retail_price_cents, total_discounted_price_cents,
-          fee_type, fee_amount_cents
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+          fee_type, fee_amount_cents,
+          is_active, voided_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, true, NULL)
+        ON CONFLICT (relay_fuel_transaction_id, line_index)
+        DO UPDATE SET
+          fuel_type = EXCLUDED.fuel_type,
+          fuel_type_description = EXCLUDED.fuel_type_description,
+          fuel_product_code = EXCLUDED.fuel_product_code,
+          retail_price_per_unit_cents = EXCLUDED.retail_price_per_unit_cents,
+          discounted_price_per_unit_cents = EXCLUDED.discounted_price_per_unit_cents,
+          volume = EXCLUDED.volume,
+          volume_uom = EXCLUDED.volume_uom,
+          total_retail_price_cents = EXCLUDED.total_retail_price_cents,
+          total_discounted_price_cents = EXCLUDED.total_discounted_price_cents,
+          fee_type = EXCLUDED.fee_type,
+          fee_amount_cents = EXCLUDED.fee_amount_cents,
+          is_active = true,
+          voided_at = NULL,
+          updated_at = now()
       `,
       [
         operatingCompanyId,

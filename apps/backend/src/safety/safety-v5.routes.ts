@@ -5,6 +5,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { createWorkOrderWithLines } from "../maintenance/two-section-service.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { createSettlementDeduction } from "../driver-finance/deductions.service.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -255,6 +256,16 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
           );
           liability = liabRes.rows[0] ?? null;
           if (liability) {
+            const amountCents = Math.round(Number(body.data.amount) * 100);
+            const deduction = await createSettlementDeduction(client, {
+              driverId: body.data.driver_uuid,
+              operatingCompanyId: query.data.operating_company_id,
+              amountCents,
+              reason: `Internal fine recovery: ${String(fine.id)}`,
+              sourceType: "fine",
+              loadId: body.data.related_load_uuid ?? null,
+              createdByUserId: user.uuid,
+            });
             await client.query(
               `UPDATE safety.internal_fines SET status = 'converted_to_liability', driver_liability_id = $2 WHERE id = $1`,
               [fine.id, (liability as { id?: string }).id ?? null]
@@ -263,7 +274,11 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
               client,
               user.uuid,
               "safety.internal_fine.converted_to_liability",
-              { internal_fine_id: fine.id, liability_id: (liability as { id?: string }).id ?? null },
+              {
+                internal_fine_id: fine.id,
+                liability_id: (liability as { id?: string }).id ?? null,
+                driver_settlement_deduction_id: deduction.id,
+              },
               "warning",
               "P3-T11.17-TWO-SECTION-V5"
             );

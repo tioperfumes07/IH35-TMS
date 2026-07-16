@@ -4,6 +4,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { createSettlementDeduction } from "../driver-finance/deductions.service.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -363,17 +364,34 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
         const liability = liabilityRes.rows[0] as Record<string, unknown> | undefined;
         if (!liability) throw new Error("liability_create_failed");
 
+        // LAW: convert must seed canonical pending settlement deduction (REPAIR-A), not liability-only.
+        // Apply-to-net stays behind SETTLEMENT_DEDUCTION_APPLY_ENABLED (owner flip). Seed is always on for amount > 0.
+        let deductionId: string | null = null;
+        if (amount > 0) {
+          const deduction = await createSettlementDeduction(client, {
+            driverId: String(fine.subject_driver_id),
+            operatingCompanyId: query.data.operating_company_id,
+            amountCents: amount,
+            reason: `Civil fine recovery: ${String(fine.violation_description)}`,
+            sourceType: "fine",
+            loadId: fine.related_load_id ? String(fine.related_load_id) : null,
+            createdByUserId: user.uuid,
+          });
+          deductionId = deduction.id;
+        }
+
         const fineUpdateRes = await client.query(
           `
             UPDATE safety.civil_fines
             SET converted_to_liability_id = $2,
                 converted_at = now(),
                 converted_by_user_id = $3,
-                updated_by_user_id = $3
+                updated_by_user_id = $3,
+                driver_settlement_deduction_id = COALESCE($4, driver_settlement_deduction_id)
             WHERE id = $1
             RETURNING *
           `,
-          [fine.id, liability.id, user.uuid]
+          [fine.id, liability.id, user.uuid, deductionId]
         );
         const updatedFine = fineUpdateRes.rows[0] as Record<string, unknown> | undefined;
 
@@ -384,6 +402,7 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
           {
             fine_id: fine.id,
             liability_id: liability.id,
+            driver_settlement_deduction_id: deductionId,
             driver_id: fine.subject_driver_id,
             amount_cents: amount,
             workflow: "WF-035",
@@ -397,8 +416,10 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
           code: 200 as const,
           fine: updatedFine ?? fine,
           liability,
-          message:
-            "Fine converted to driver liability. Will be deducted from next driver settlement.",
+          deduction_id: deductionId,
+          message: deductionId
+            ? "Fine converted to driver liability and pending settlement deduction seeded. Deduction applies on close when SETTLEMENT_DEDUCTION_APPLY_ENABLED is on."
+            : "Fine converted to driver liability (zero amount — no deduction seeded).",
         };
       } catch (error) {
         await client.query("ROLLBACK");

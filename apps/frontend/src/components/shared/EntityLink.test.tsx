@@ -23,9 +23,10 @@ describe("resolveEntityRoute", () => {
     );
   });
 
-  it("returns null for kinds with no per-id detail route (never fabricate a route)", () => {
-    expect(resolveEntityRoute("bill", "id1")).toBeNull();
-    expect(resolveEntityRoute("expense", "id1")).toBeNull();
+  it("resolves liability and expense to list query-param drill-through (real consumers)", () => {
+    expect(resolveEntityRoute("liability", "id1")).toBe("/liabilities?liability_id=id1");
+    expect(resolveEntityRoute("expense", "id1")).toBe("/accounting/expenses/list?expense_id=id1");
+    expect(resolveEntityRoute("bill", "id1")).toBe("/accounting/bills/id1");
   });
 });
 
@@ -41,24 +42,18 @@ describe("EntityLink", () => {
     expect(link.className).toContain("text-slate-700");
   });
 
-  it("falls back to plain text (no link) for a kind with no detail route, e.g. bill", () => {
+  it("renders a real <Link> for bill and expense drill-through", () => {
     render(
       <MemoryRouter>
         <EntityLink kind="bill" id="bill-1" label="BILL-0001" />
-      </MemoryRouter>,
-    );
-    expect(screen.queryByRole("link")).not.toBeInTheDocument();
-    expect(screen.getByText("BILL-0001")).toBeInTheDocument();
-  });
-
-  it("falls back to plain text (no link) for a kind with no detail route, e.g. expense", () => {
-    render(
-      <MemoryRouter>
         <EntityLink kind="expense" id="exp-1" label="EXP-0001" />
       </MemoryRouter>,
     );
-    expect(screen.queryByRole("link")).not.toBeInTheDocument();
-    expect(screen.getByText("EXP-0001")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "BILL-0001" })).toHaveAttribute("href", "/accounting/bills/bill-1");
+    expect(screen.getByRole("link", { name: "EXP-0001" })).toHaveAttribute(
+      "href",
+      "/accounting/expenses/list?expense_id=exp-1",
+    );
   });
 
   it("renders plain text (no link, no crash) when id is missing", () => {

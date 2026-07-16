@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { formatDateUS } from "../../../lib/formatDate";
 import { ModalCloseButton } from "../../../components/ModalCloseButton";
 import { useEscapeKey } from "../../../hooks/useEscapeKey";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { FineConvertConfirmModal } from "./FineConvertConfirmModal";
 import { FinePaymentLinkBanner } from "./FinePaymentLinkBanner";
 
@@ -83,7 +84,18 @@ export function FineDetailDrawer({ open, fine, converting, onClose, onConvertToL
           <div><strong>Authority:</strong> {String(fine.issued_by_authority ?? "—")}</div>
           <div><strong>Issued date:</strong> {formatDateUS(fine.issued_date)}</div>
           <div><strong>Amount:</strong> ${(Number(fine.amount_cents ?? 0) / 100).toFixed(2)}</div>
-          <div><strong>Converted liability:</strong> {String(fine.converted_to_liability_id ?? "No")}</div>
+          <div>
+            <strong>Converted liability:</strong>{" "}
+            {fine.converted_to_liability_id ? (
+              <EntityLink
+                kind="liability"
+                id={String(fine.converted_to_liability_id)}
+                label={String(fine.converted_to_liability_id).slice(0, 8)}
+              />
+            ) : (
+              "No"
+            )}
+          </div>
         </div>
 
         <div className="mt-3">

@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { getActiveLiabilities, getLiabilitiesKpis, getLiabilityDetail } from "../../api/liabilities";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -14,10 +15,19 @@ export function LiabilitiesHomePage() {
   const { selectedCompanyId } = useCompanyContext();
   const queryClient = useQueryClient();
   const companyId = selectedCompanyId ?? "";
+  const [searchParams] = useSearchParams();
+  const deepLinkLiabilityId = searchParams.get("liability_id");
   const [tab, setTab] = useState<(typeof SUBNAV)[number]>("All Active");
   const [selectedLiabilityId, setSelectedLiabilityId] = useState<string | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [ackModalOpen, setAckModalOpen] = useState(false);
+
+  // LAW: EntityLink kind=liability → /liabilities?liability_id= opens the detail drawer (settlement parity).
+  useEffect(() => {
+    if (!deepLinkLiabilityId) return;
+    setSelectedLiabilityId(deepLinkLiabilityId);
+    setDetailOpen(true);
+  }, [deepLinkLiabilityId]);
 
   const kpisQuery = useQuery({
     queryKey: ["liabilities", "kpis", companyId],
