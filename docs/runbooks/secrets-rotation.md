@@ -181,17 +181,25 @@
 
 ---
 
-### 10. ComData / Relay Fuel Card API Keys (`COMDATA_API_KEY`, `RELAY_API_KEY`)
+### 10. ComData / Relay Fuel Card API Keys (`COMDATA_API_KEY`, `RELAY_API_KEY_*`, `RELAY_API_BASE`)
 
 **What it provides:** Fuel card transaction imports.  
 **Downtime/impact during rotation:** Fuel import paused until new key active.  
 **Coordination needed:** May require contacting ComData/Relay support.  
 **Last rotated:** 2026-06-08
 
+**Relay env vars (Render API service):**
+
+| Variable | Role |
+|---|---|
+| `RELAY_API_KEY_<CODE>` | Per-entity key. `CODE` = `org.companies.code` upper-cased (e.g. `RELAY_API_KEY_TRANSP`, `RELAY_API_KEY_USMCA`). Required for that entity’s ingest/cron/backfill. |
+| `RELAY_API_KEY` | Legacy/global only — used when no `entityCode` is supplied. When an entity code is present, the scoped key is required; there is **no** fallback to the bare global key (avoids cross-entity fuel leak). |
+| `RELAY_API_BASE` | Relay fuel-transactions API base URL. **Required in production** (missing/blank throws; no silent staging fallback). |
+
 #### Rotation steps:
 1. Contact ComData/Relay support (or use their portal if self-serve) to rotate API credentials.
-2. Update `COMDATA_API_KEY` / `RELAY_API_KEY` in Render env vars.
-3. Redeploy; verify next import run completes successfully.
+2. Update `COMDATA_API_KEY` and the relevant `RELAY_API_KEY_<CODE>` (e.g. `RELAY_API_KEY_TRANSP`) in Render env vars. Confirm `RELAY_API_BASE` is set to the **prod** fuel transactions URL.
+3. Redeploy (or Manual Restart); verify next import/backfill for that entity completes successfully.
 4. Update this doc.
 
 ---
