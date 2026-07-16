@@ -612,6 +612,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
 
     const result = await withCompanyScope(user.uuid, body.data.operating_company_id, async (client) => {
       let categorized = 0;
+      const categorizedIds: string[] = [];
       const errors: Array<{ transaction_id: string; error: string }> = [];
 
       for (const id of body.data.transaction_ids) {
@@ -641,6 +642,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
             continue;
           }
           categorized += 1;
+          categorizedIds.push(id);
           await enqueueAccountingOutbox(
             client,
             body.data.operating_company_id,
@@ -653,15 +655,53 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
               bulk: true,
             }
           );
+          // CRUD/spine audit parity with the single-row categorize route above (#2585 review follow-up):
+          // same event class + source tag per affected ID, with bulk:true so the trail distinguishes the
+          // path. Audit-only — this route posts no GL.
+          await appendCrudAudit(
+            client,
+            user.uuid,
+            "banking.transaction.categorized.p6_t11204",
+            {
+              resource_type: "banking.bank_transactions",
+              resource_id: id,
+              operating_company_id: body.data.operating_company_id,
+              category_kind: body.data.category_kind,
+              bulk: true,
+            },
+            "info",
+            "P6-T11204-BANK-TX"
+          );
         } catch (e) {
           errors.push({ transaction_id: id, error: String((e as Error)?.message ?? "update_failed") });
         }
       }
 
-      return { categorized_count: categorized, errors };
+      return { categorized_count: categorized, categorizedIds, errors };
     });
 
-    return result;
+    // Spine-event parity with the single-row route: one transaction.categorized per affected ID,
+    // fire-and-forget (the categorization + CRUD audit are already committed above).
+    for (const id of result.categorizedIds) {
+      void withCompanyScope(user.uuid, body.data.operating_company_id, (client) =>
+        emitBankingSpineEvent(client, {
+          operating_company_id: body.data.operating_company_id,
+          actor_user_id: String(user.uuid),
+          event_type: "transaction.categorized",
+          entity_id: id,
+          entity_type: "bank_transaction",
+          source_table: "banking.bank_transactions",
+          payload: { category_kind: body.data.category_kind, bulk: true },
+        })
+      ).catch((err) =>
+        req.log.warn(
+          { err, bank_transaction_id: id, company_id: body.data.operating_company_id },
+          "spine_emit_banking_transaction_categorized_failed"
+        )
+      );
+    }
+
+    return { categorized_count: result.categorized_count, errors: result.errors };
   });
 
   app.post("/api/v1/banking/transactions/:id/transfer", async (req, reply) => {

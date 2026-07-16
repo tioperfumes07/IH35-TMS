@@ -67,4 +67,34 @@ for (const file of mdataRoutes) {
   }
 }
 
+// Banking bulk categorize (#2585 review follow-up): POST /banking/transactions/categorize-bulk must
+// emit the SAME per-ID CRUD audit + spine event as the single-row categorize route — a bulk path that
+// mutates banking.bank_transactions silently is an audit hole.
+const categorizationRoutes = path.join(repoRoot, "apps/backend/src/banking/categorization.routes.ts");
+{
+  const source = fs.readFileSync(categorizationRoutes, "utf8");
+  const rel = path.relative(repoRoot, categorizationRoutes);
+  const start = source.indexOf('"/api/v1/banking/transactions/categorize-bulk"');
+  if (start === -1) {
+    console.error(`[verify-bulk-audit-per-id] ${rel} missing categorize-bulk route`);
+    process.exit(1);
+  }
+  // `start` sits inside the categorize-bulk `app.post(` call, so the next `app.post(` is the
+  // following route registration — the slice covers this whole handler (loop + post-commit spine emits).
+  const nextRoute = source.indexOf("app.post(", start);
+  const block = source.slice(start, nextRoute === -1 ? undefined : nextRoute);
+  if (!block.includes("for (const id of body.data.transaction_ids)")) {
+    console.error(`[verify-bulk-audit-per-id] ${rel} categorize-bulk missing per-ID loop`);
+    process.exit(1);
+  }
+  if (!block.includes("appendCrudAudit(")) {
+    console.error(`[verify-bulk-audit-per-id] ${rel} categorize-bulk must appendCrudAudit per affected ID`);
+    process.exit(1);
+  }
+  if (!block.includes("emitBankingSpineEvent(")) {
+    console.error(`[verify-bulk-audit-per-id] ${rel} categorize-bulk must emit transaction.categorized spine event per affected ID`);
+    process.exit(1);
+  }
+}
+
 console.log("[verify-bulk-audit-per-id] OK");
