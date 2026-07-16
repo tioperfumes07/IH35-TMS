@@ -17,6 +17,7 @@ import {
 import { DataPanel } from "../../components/layout/DataPanel";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
 import { colors, spacing, typography } from "../../design/tokens";
+import { NOT_AVAILABLE_YET } from "../../lib/prodEmptyStateCopy";
 
 type Props = {
   operatingCompanyId: string;
@@ -49,12 +50,27 @@ function shortId(value: string | null | undefined): string {
   return value.length > 8 ? `${value.slice(0, 8)}…` : value;
 }
 
-function KpiCard({ label, value, hint, to }: { label: string; value: number | string; hint?: string; to?: string }) {
+function KpiCard({
+  label,
+  value,
+  hint,
+  to,
+  disabled,
+  disabledReason,
+}: {
+  label: string;
+  value: number | string;
+  hint?: string;
+  to?: string;
+  disabled?: boolean;
+  disabledReason?: string;
+}) {
   const testId = `dispatch-overview-kpi-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   const style: CSSProperties = {
     border: `1px solid ${colors.cardBorder}`,
     borderRadius: spacing.radiusCard,
     padding: `${spacing.panelPaddingY}px ${spacing.panelPaddingX}px`,
+    opacity: disabled ? 0.72 : 1,
   };
   const body = (
     <>
@@ -75,6 +91,20 @@ function KpiCard({ label, value, hint, to }: { label: string; value: number | st
   );
   // B10 dead-click rollout: `to` drills into the existing dispatch board/queue that already owns this
   // metric's data (e.g. the At-Risk queue panel just below uses the same /dispatch/at-risk href).
+  if (disabled) {
+    return (
+      <div
+        className="cursor-not-allowed bg-white"
+        style={style}
+        data-testid={testId}
+        aria-disabled="true"
+        title={disabledReason}
+        data-kpi-disabled="true"
+      >
+        {body}
+      </div>
+    );
+  }
   if (to) {
     return (
       <Link to={to} data-testid={testId} className="block bg-white transition hover:shadow-xs" style={style}>
@@ -249,9 +279,8 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
 
   return (
     <div className="space-y-3" data-testid="dispatch-overview-page">
-      {/* B10 dead-click rollout: Active loads / At-risk / Units available drill into the exact same
-          routes the panels below already use as their own "view all" href (real, existing destinations).
-          Units needing return has no dedicated filtered view anywhere in the app — left dead intentionally. */}
+      {/* B-A3: Active loads / At-risk / Units available → real panel routes. Units needing return has
+          no dedicated filtered view — honest disabled (not /dispatch?view=loads guess). */}
       <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
         <KpiCard
           label="Active loads"
@@ -275,6 +304,8 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
           label="Units needing return"
           value={unitsWithoutLoadQ.isLoading ? "—" : unitsNeedingReturn}
           hint="recent drop, no return booked"
+          disabled
+          disabledReason={NOT_AVAILABLE_YET}
         />
       </div>
 

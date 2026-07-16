@@ -11,7 +11,7 @@ import { KpiStrip } from "../../components/layout/KpiStrip";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { colors } from "../../design/tokens";
-import { driverDisplayName, summarizeDriverDqf } from "../../lib/driverDqf";
+import { type DqfComplianceLevel, driverDisplayName, summarizeDriverDqf } from "../../lib/driverDqf";
 import { formatDateUS } from "../../lib/formatDate";
 import { DriversTable } from "./DriversTable";
 
@@ -26,12 +26,16 @@ type DriverDqfSummaryRow = {
   summary: ReturnType<typeof summarizeDriverDqf>;
 };
 
+type DqfFocus = Exclude<DqfComplianceLevel, "unknown"> | null;
+
 export function DriversListPage({ onOpenProfile }: DriversListPageProps) {
   const { selectedCompanyId } = useCompanyContext();
   const queryClient = useQueryClient();
   const companyId = selectedCompanyId ?? "";
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
+  // B-A3: KPI focus — filters the loaded DQF summary rows by the same level the KPI counts.
+  const [dqfFocus, setDqfFocus] = useState<DqfFocus>(null);
   const [showImport, setShowImport] = useState(false);
   // SM1: single-driver create action on the shared DQF surface (Drivers "Profiles" + Safety "Driver
   // Files") — reuses the SAME canonical CreateDriverModal as the Drivers module, never a second creator.
@@ -89,6 +93,15 @@ export function DriversListPage({ onOpenProfile }: DriversListPageProps) {
       empty,
     };
   }, [rows, totalDrivers]);
+
+  const focusedRows = useMemo(() => {
+    if (!dqfFocus) return rows;
+    return rows.filter((row) => row.summary.level === dqfFocus);
+  }, [rows, dqfFocus]);
+
+  const toggleDqfFocus = (level: Exclude<DqfComplianceLevel, "unknown"> | null) => {
+    setDqfFocus((prev) => (prev === level ? null : level));
+  };
 
   const rangeStart = totalDrivers === 0 ? 0 : page * pageSize + 1;
   const rangeEnd = Math.min(page * pageSize + pageDrivers.length, totalDrivers);
@@ -186,11 +199,36 @@ export function DriversListPage({ onOpenProfile }: DriversListPageProps) {
       />
 
       <KpiStrip>
-        <KpiCard label="Drivers" number={String(totals.total)} accent={colors.info.strong} />
-        <KpiCard label="Compliant" number={String(totals.compliant)} accent={colors.positive.strong} />
-        <KpiCard label="Needs attention" number={String(totals.attention)} accent={colors.warn.strong} />
-        <KpiCard label="Non-compliant" number={String(totals.nonCompliant)} accent={colors.crit.strong} />
-        <KpiCard label="No DQF items" number={String(totals.empty)} accent={colors.drivers.strong} />
+        <KpiCard
+          label="Drivers"
+          number={String(totals.total)}
+          accent={colors.info.strong}
+          onClick={() => setDqfFocus(null)}
+        />
+        <KpiCard
+          label="Compliant"
+          number={String(totals.compliant)}
+          accent={colors.positive.strong}
+          onClick={() => toggleDqfFocus("compliant")}
+        />
+        <KpiCard
+          label="Needs attention"
+          number={String(totals.attention)}
+          accent={colors.warn.strong}
+          onClick={() => toggleDqfFocus("attention")}
+        />
+        <KpiCard
+          label="Non-compliant"
+          number={String(totals.nonCompliant)}
+          accent={colors.crit.strong}
+          onClick={() => toggleDqfFocus("non_compliant")}
+        />
+        <KpiCard
+          label="No DQF items"
+          number={String(totals.empty)}
+          accent={colors.drivers.strong}
+          onClick={() => toggleDqfFocus("empty")}
+        />
       </KpiStrip>
 
       <section className="overflow-x-auto rounded-sm border border-gray-200 bg-white">
@@ -199,7 +237,7 @@ export function DriversListPage({ onOpenProfile }: DriversListPageProps) {
         ) : driversQ.isLoading ? (
           <div className="px-3 py-6 text-center text-slate-500 text-xs">Loading drivers...</div>
         ) : (
-          <DriversTable rows={rows} onOpenProfile={onOpenProfile} />
+          <DriversTable rows={focusedRows} onOpenProfile={onOpenProfile} />
         )}
         <div className="flex items-center justify-between border-t border-gray-200 px-3 py-2 text-xs text-slate-600">
           <span>{totalDrivers === 0 ? "0 of 0" : `${rangeStart}–${rangeEnd} of ${totalDrivers}`}</span>

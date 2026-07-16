@@ -12,6 +12,9 @@ const kpi = read("apps/frontend/src/components/layout/KpiCard.tsx");
 if (kpi) {
   if (!/to\?:\s*string/.test(kpi)) failures.push("KpiCard.tsx: must accept an optional `to` drill-down route");
   if (!/<Link/.test(kpi)) failures.push("KpiCard.tsx: must render a <Link> when `to` is set");
+  // B-A3: honest non-navigable tiles must be expressible (no dead inert cards without disabled).
+  if (!/disabled\?:\s*boolean/.test(kpi)) failures.push("KpiCard.tsx: must accept optional `disabled` for honest no-destination KPIs");
+  if (!/data-kpi-disabled/.test(kpi)) failures.push("KpiCard.tsx: disabled state must set data-kpi-disabled for a11y/guard cues");
 }
 
 const home = read("apps/frontend/src/pages/home/roles/DefaultHome.tsx");

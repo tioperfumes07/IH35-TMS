@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { colors, spacing, typography } from "../../design/tokens";
+import { NOT_AVAILABLE_YET } from "../../lib/prodEmptyStateCopy";
 
 type Props = {
   label: string;
@@ -8,9 +9,18 @@ type Props = {
   /** When set, the whole KPI card becomes a link to the relevant filtered/detail view
    *  (GLOBAL clickable-KPI behavior — QuickBooks-style drill-down). */
   to?: string;
+  /** Local drill-down (same page filter / scroll). Prefer `to` when a real route exists. */
+  onClick?: () => void;
+  /**
+   * Honest non-navigable state — use when NO real destination exists for this metric.
+   * Do NOT invent placeholder/nearest-guess routes. Guard: verify-no-dead-clicks.
+   */
+  disabled?: boolean;
+  /** Native tooltip for disabled tiles (defaults to NOT_AVAILABLE_YET). */
+  disabledReason?: string;
 };
 
-export function KpiCard({ label, number, accent, to }: Props) {
+export function KpiCard({ label, number, accent, to, onClick, disabled, disabledReason }: Props) {
   const card = (
     <div
       className="flex min-w-[150px] flex-1 items-center justify-between bg-white"
@@ -21,6 +31,7 @@ export function KpiCard({ label, number, accent, to }: Props) {
         border: `1px solid ${colors.cardBorder}`,
         borderRadius: spacing.radiusCard,
         borderLeft: accent ? `${spacing.subAreaTileBorderLeft}px solid ${accent}` : `1px solid ${colors.cardBorder}`,
+        opacity: disabled ? 0.72 : 1,
       }}
     >
       <span
@@ -33,6 +44,19 @@ export function KpiCard({ label, number, accent, to }: Props) {
     </div>
   );
 
+  if (disabled) {
+    return (
+      <div
+        className="block flex-1 cursor-not-allowed rounded-sm"
+        aria-disabled="true"
+        title={disabledReason ?? NOT_AVAILABLE_YET}
+        data-kpi-disabled="true"
+      >
+        {card}
+      </div>
+    );
+  }
+
   if (to) {
     return (
       <Link to={to} aria-label={`${label} — view details`} className="block flex-1 rounded-sm transition hover:shadow-xs focus:outline-hidden focus:ring-2 focus:ring-slate-400">
@@ -40,5 +64,19 @@ export function KpiCard({ label, number, accent, to }: Props) {
       </Link>
     );
   }
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label={`${label} — view details`}
+        className="block w-full flex-1 rounded-sm text-left transition hover:shadow-xs focus:outline-hidden focus:ring-2 focus:ring-slate-400"
+      >
+        {card}
+      </button>
+    );
+  }
+
   return card;
 }

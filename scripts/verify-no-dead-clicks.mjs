@@ -1,29 +1,21 @@
 #!/usr/bin/env node
 /**
- * UI-STANDARD guard — click-through everywhere (CLAUDE.md, master-sequence item 4, 2026-07-14):
- * no dead clicks. This guard is deliberately CONSERVATIVE and targets one well-defined, high-traffic
- * "primary card" component family rather than trying to audit every clickable-looking element in the
- * app (which would be noisy and false-positive-prone).
+ * UI-STANDARD guard — click-through everywhere (CLAUDE.md, master-sequence item 4, B-A3 2026-07-16):
+ * no dead clicks on KpiCard / HomeKpiCard.
  *
- * Target: <KpiCard/> and <HomeKpiCard/> (apps/frontend/src/components/layout/KpiCard.tsx,
- * apps/frontend/src/pages/home/HomeKpiCard.tsx) — the shared "QuickBooks-style clickable-KPI" stat
- * tile used across primary list/detail pages (Drivers, Users, DispatchOverview, SettlementsPage,
- * DriverProfilePage, DriversListPage, ReserveTracker, FinanceHubPage, FleetTablePage,
- * SafetyEventsPage, DocsHomePage, the home KPI bars). Both components only become navigable when
- * given a `to` (react-router Link) prop — with neither `to` nor `onClick` they render as an inert
- * <div>, i.e. a dead click: a stat tile that looks like every other clickable KPI but does nothing.
+ * Target: <KpiCard/> and <HomeKpiCard/> — shared + page-local helpers with those tag names
+ * (apps/frontend/src/components/layout/KpiCard.tsx, apps/frontend/src/pages/home/HomeKpiCard.tsx,
+ * and local function KpiCard in DispatchOverview / Settlements / Safety / Fleet / ReserveTracker / Docs).
  *
- * This is a RATCHET, not a full audit: a large number of pre-existing KpiCard/HomeKpiCard usages
- * (BASELINE below) are already non-navigable and are deliberately grandfathered — flattening them all
- * to `to=` is a separate, larger drill-down-routing effort, not this guard's job. The guard fails only
- * when a NEW dead KpiCard/HomeKpiCard is introduced (count goes up). To lower the baseline after wiring
- * more drill-downs: run `DEAD_CLICK_BASELINE_PRINT=1 node scripts/verify-no-dead-clicks.mjs` and set
- * BASELINE to the printed number.
+ * A KPI is OK when it has a real navigation prop (to / onClick / onNavigate) OR an honest
+ * `disabled` state (no real destination — NOT_AVAILABLE_YET tooltip). A KPI is DEAD when it has
+ * neither. No-op onClick handlers (empty body / undefined) are treated as DEAD unless also disabled.
  *
- * Not a duplicate of scripts/verify-clickable-kpis.mjs: that guard only asserts (a) KpiCard.tsx
- * exposes a `to` prop + renders a <Link>, and (b) apps/frontend/src/pages/home/roles/DefaultHome.tsx
- * alone has >=4 wired KPIs. This guard is a repo-wide ratchet across every KpiCard/HomeKpiCard call
- * site, catching a NEW dead card on any page — broader coverage, not a rebuild of that check.
+ * Do NOT invent placeholder/nearest-guess routes to shrink the dead count — that is a patch.
+ * Prefer wiring a filter/route that returns the same metric's data, else mark disabled.
+ *
+ * BASELINE is the count of unresolved dead cards. Target is 0. Ratchet only downward.
+ * Print inventory: DEAD_CLICK_BASELINE_PRINT=1 node scripts/verify-no-dead-clicks.mjs
  *
  * --selftest exercises assertGuard() against inline fixtures (pass + violation).
  */
@@ -36,31 +28,9 @@ const LABEL = "verify-no-dead-clicks";
 const ROOTS = ["apps/frontend/src"];
 const TAG_NAMES = ["KpiCard", "HomeKpiCard"];
 
-// Frozen count of pre-existing dead (no to=/onClick=) KpiCard/HomeKpiCard usages, computed 2026-07-14
-// via DEAD_CLICK_BASELINE_PRINT=1. Grandfathered — ratchet only downward. Do NOT raise without wiring a
-// reason (a genuinely non-actionable summary tile) into this comment.
-//
-// B10 click-through rollout (2026-07-14): 49 -> 23. Wired 26 KPI cards to a REAL, pre-existing
-// destination (a route/filter/panel that already exists — never a fabricated page): Drivers.tsx
-// (Active/On Leave/Settle Due/Drivers Owe/Escrow), Users.tsx (all 4, via ?tab=), DispatchOverview.tsx
-// (Active loads/At-risk-late/Units available), DocsHomePage.tsx (Total Docs/Expiring 30 Days, via local
-// filter state), driver-finance/SettlementsPage.tsx (Total Unpaid/This Period/YTD Settlements, via
-// ?payment_state=), ReserveTracker.tsx (FARO Reserve Held/Chargebacks Pending/Fees Paid YTD/Active
-// Factor -> /factoring/reserves, /factoring/chargebacks-fees, /factoring/factors), FinanceHubPage.tsx
-// (made the whole card a Link to the already-real kpi.drill_to, not just the footer), SafetyEventsPage.tsx
-// (Total events/Open, via existing statusFilter state), DriverManagerKpiBar.tsx + SafetyKpiBar.tsx (all 6,
-// -> /drivers/messages, /dispatch/alerts/late-arrivals, /driver-finance/settlements, /safety/idvr,
-// /safety/hos/exceptions, /safety/cert-expiry).
-//
-// 2026-07-16 dead-clickthrough sweep: 23 -> 21. Drivers.tsx On Loads → /dispatch?view=loads;
-// Available → /drivers?status=active (closest honest roster filter). Remaining 21 are genuine gaps
-// (DQF filters, Settlements debt/acks/held, ReserveTracker batches list, Fleet Avg Age, Safety
-// Severe/Commendations, Docs Missing Required/Recent Uploads, DispatchOverview Units needing return).
-//
-// 2026-07-16 audit gap #13: 21 -> 19. DocsHomePage Missing Required / Recent Uploads → list query
-// params missing_required / recent_uploads (lockstep with /docs/kpis SQL). Guard:
-// verify:docs-home-kpi-clicks.
-const BASELINE = 19;
+// Unresolved dead KPI cards (neither nav nor honest disabled). B-A3 closed the ratchet to 0:
+// remaining no-destination tiles must use disabled= (with NOT_AVAILABLE_YET), not inert divs.
+const BASELINE = 0;
 
 /** Brace/quote-aware JSX opening-tag extractor — a `>` inside a `{...}` expression (e.g.
  *  `delta={pct > 0 ? up : down}`) must not prematurely close the tag. Only a `>` at brace depth 0 and
@@ -103,13 +73,30 @@ function extractTags(src, tagNames) {
 }
 
 const NAV_PROP = /\b(to|onClick|onNavigate)=/;
+const DISABLED_PROP = /\bdisabled(?:\s|=|\/|>)/;
+/** Empty / no-op onClick bodies that look clickable but do nothing. */
+const NOOP_ONCLICK =
+  /\bonClick=\{\s*(?:\(\)\s*=>\s*(?:\{\s*\}|undefined|null|void\s+0)?\s*|undefined|null)\s*\}/;
 
 export function assertGuard({ file, source }) {
   const errors = [];
   const tags = extractTags(source, TAG_NAMES);
   for (const tag of tags) {
+    const snippet = tag.replace(/\s+/g, " ").slice(0, 160);
+    const isDisabled = DISABLED_PROP.test(tag);
+    if (isDisabled) continue;
+
+    if (NOOP_ONCLICK.test(tag)) {
+      errors.push(
+        `${file}: no-op onClick KPI (empty/undefined handler) without disabled= — wire a real drill-down or mark disabled. Tag: ${snippet}`
+      );
+      continue;
+    }
+
     if (!NAV_PROP.test(tag)) {
-      errors.push(`${file}: dead-click KPI card — no to=/onClick= navigation prop. Tag: ${tag.replace(/\s+/g, " ").slice(0, 140)}`);
+      errors.push(
+        `${file}: dead-click KPI card — no to=/onClick=/onNavigate= and no disabled=. Tag: ${snippet}`
+      );
     }
   }
   return errors;
@@ -151,6 +138,30 @@ function selftest() {
       file: "Fixture.tsx",
       src: `<KpiCard label="Loads" number={12} accent="#334155" />`,
       want: 1,
+    },
+    {
+      n: "KpiCard disabled without nav → 0 (honest)",
+      file: "Fixture.tsx",
+      src: `<KpiCard label="Avg Age" number="3.2 y" disabled disabledReason="Not available yet" />`,
+      want: 0,
+    },
+    {
+      n: "KpiCard disabled shorthand → 0",
+      file: "Fixture.tsx",
+      src: `<KpiCard label="Severe" value={3} disabled />`,
+      want: 0,
+    },
+    {
+      n: "KpiCard no-op onClick → 1",
+      file: "Fixture.tsx",
+      src: `<KpiCard label="Loads" value={1} onClick={() => {}} />`,
+      want: 1,
+    },
+    {
+      n: "KpiCard no-op onClick + disabled → 0",
+      file: "Fixture.tsx",
+      src: `<KpiCard label="Loads" value={1} onClick={() => {}} disabled />`,
+      want: 0,
     },
     {
       n: "HomeKpiCard multi-line, inline comparison expr in a prop, no nav → 1",
@@ -201,20 +212,24 @@ for (const abs of files) {
 const total = allErrors.length;
 
 if (process.env.DEAD_CLICK_BASELINE_PRINT) {
-  console.log(`dead-click KpiCard/HomeKpiCard usages: ${total}`);
+  console.log(`unresolved dead-click KpiCard/HomeKpiCard usages: ${total}`);
   for (const e of allErrors) console.log(`  - ${e}`);
-  process.exit(0);
+  process.exit(total === 0 ? 0 : 1);
 }
 
 if (total > BASELINE) {
-  console.error(`[${LABEL}] FAILED — ${total} dead-click KPI card(s) found, baseline is ${BASELINE}.`);
+  console.error(`[${LABEL}] FAILED — ${total} unresolved dead-click KPI card(s), baseline is ${BASELINE}.`);
   for (const e of allErrors) console.error(`  ✗ ${e}`);
-  console.error(`\nA NEW KpiCard/HomeKpiCard usage was added without a to=/onClick= navigation prop. Wire a drill-down route, or if the tile is genuinely non-actionable, this is intentional — re-run with DEAD_CLICK_BASELINE_PRINT=1 and raise BASELINE with a reason.`);
+  console.error(
+    `\nWire a real drill-down (to=/onClick= that filters/navigates to the metric's data), OR mark the tile disabled= with an honest reason. Do NOT invent nearest-guess routes.`
+  );
   process.exit(1);
 }
 
 if (total < BASELINE) {
-  console.log(`OK ${LABEL}: ${total} dead-click KPI cards (< baseline ${BASELINE}). You wired up some drill-downs — please lower BASELINE to ${total} (DEAD_CLICK_BASELINE_PRINT=1) so the ratchet tightens.`);
+  console.log(
+    `OK ${LABEL}: ${total} unresolved dead-click KPI cards (< baseline ${BASELINE}). Lower BASELINE to ${total} (DEAD_CLICK_BASELINE_PRINT=1).`
+  );
 } else {
-  console.log(`[${LABEL}] OK — ${total} dead-click KPI card(s) == baseline ${BASELINE} (frozen; no NET-NEW dead clicks).`);
+  console.log(`[${LABEL}] OK — ${total} unresolved dead-click KPI card(s) == baseline ${BASELINE} (all tiles wired or honestly disabled).`);
 }
