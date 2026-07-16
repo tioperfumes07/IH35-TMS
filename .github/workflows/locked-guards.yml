@@ -584,6 +584,10 @@ jobs:
         run: node scripts/verify-driver-profile-dead-actions.mjs --selftest
       - name: verify:driver-profile-dead-actions
         run: npm run verify:driver-profile-dead-actions
+      - name: verify:banking-categorize-ux-honesty --selftest
+        run: node scripts/verify-banking-categorize-ux-honesty.mjs --selftest
+      - name: verify:banking-categorize-ux-honesty
+        run: npm run verify:banking-categorize-ux-honesty
 
       - name: verify:entitylink-deep-links
         run: npm run verify:entitylink-deep-links

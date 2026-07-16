@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { ChevronDown, ChevronRight, Download, MessageSquare, Paperclip, Printer, Settings } from "lucide-react";
 import {
   categorizeBankTransaction,
+  categorizeTransactionsBulk,
   getBankingSuggestions,
   getCoaAccounts,
   getMatchCandidates,
@@ -269,6 +270,12 @@ export function BankingTransactionsDesignView({
   const [matchDrawerTxId, setMatchDrawerTxId] = useState<string | null>(null);
   const [transferModalTx, setTransferModalTx] = useState<PlaidBankTransaction | null>(null);
   const [ccPaymentModalTx, setCcPaymentModalTx] = useState<PlaidBankTransaction | null>(null);
+  // Bulk categorize-to-account (QBO parity): the operator multi-selects for-review rows, picks ONE GL
+  // account, and the real POST /banking/transactions/categorize-bulk applies it. No new GL math — the
+  // chosen COA account IS the category, exactly like the single-row Post.
+  const [bulkCategorizeOpen, setBulkCategorizeOpen] = useState(false);
+  const [bulkCategorizeAccountId, setBulkCategorizeAccountId] = useState<string>("");
+  const [bulkCategorizeBusy, setBulkCategorizeBusy] = useState(false);
 
   const [viewSettings, setViewSettings] = useState<ViewSettings>({
     showCheckNo: false,
@@ -765,6 +772,56 @@ export function BankingTransactionsDesignView({
     onDataChanged();
   }
 
+  // Bulk categorize (H3): real multi-select categorize-to-account via POST /banking/transactions/
+  // categorize-bulk. Opens a picker instead of a fake toast; the chosen COA account IS the category.
+  function openBulkCategorize() {
+    if (selectedTableRows().length === 0) {
+      pushToast("Select transactions to categorize.", "error");
+      return;
+    }
+    setBulkCategorizeAccountId("");
+    setBulkCategorizeOpen(true);
+  }
+
+  async function confirmBulkCategorize() {
+    const rows = selectedTableRows();
+    if (rows.length === 0) {
+      pushToast("Select transactions to categorize.", "error");
+      return;
+    }
+    const account = (coaQuery.data?.accounts ?? []).find((a) => a.id === bulkCategorizeAccountId);
+    if (!account) {
+      pushToast("Choose an account to categorize the selected transactions.", "error");
+      return;
+    }
+    const categoryKind =
+      account.account_name ||
+      (account.account_number ? String(account.account_number) : "") ||
+      "Uncategorized";
+    setBulkCategorizeBusy(true);
+    try {
+      const result = await categorizeTransactionsBulk(companyId, {
+        transaction_ids: rows.map((tx) => tx.id),
+        category_kind: categoryKind,
+        gl_account_id: account.id,
+      });
+      const failed = result.errors?.length ?? 0;
+      pushToast(
+        failed === 0
+          ? `Categorized ${result.categorized_count} transaction(s) to ${categoryKind}.`
+          : `Categorized ${result.categorized_count} of ${rows.length}; ${failed} could not be categorized (no longer pending).`,
+        result.categorized_count > 0 ? "success" : "error"
+      );
+      setBulkCategorizeOpen(false);
+      bulkSelection.clearSelection();
+      onDataChanged();
+    } catch (error) {
+      pushToast(String((error as Error).message || "Bulk categorize failed"), "error");
+    } finally {
+      setBulkCategorizeBusy(false);
+    }
+  }
+
   function bulkExport() {
     const rows = selectedTableRows();
     if (rows.length === 0) {
@@ -1145,7 +1202,18 @@ export function BankingTransactionsDesignView({
 
       <BulkActionBar
         {...bulkSelection.bulkActionBarProps([
-          { id: "categorize", label: "Categorize", onClick: () => pushToast("Open a transaction and choose its account to categorize. Bulk categorize-by-account is coming next.", "info") },
+          {
+            id: "categorize",
+            label: "Categorize",
+            // Categorize-to-account only applies to still-pending (for-review) rows. On the
+            // Categorized / Excluded tabs it is honestly disabled with the reason, never a fake action.
+            disabled: activeReviewTab !== "for_review",
+            title:
+              activeReviewTab !== "for_review"
+                ? "Bulk categorize applies to for-review transactions only."
+                : "Categorize the selected transactions to one account",
+            onClick: () => openBulkCategorize(),
+          },
           { id: "exclude", label: "Exclude", onClick: () => void bulkExclude() },
           { id: "export", label: "Export Selected", onClick: () => bulkExport() },
         ])}
@@ -1471,9 +1539,30 @@ export function BankingTransactionsDesignView({
                             </div>
                           )}
                         </div>
-                        <div className="inline-flex items-center gap-1 text-gray-500">
-                          <Paperclip className="h-4 w-4" />
-                          <MessageSquare className="h-4 w-4" />
+                        <div className="inline-flex items-center gap-1 text-gray-400">
+                          {/* Honest-disabled: bank transactions are not a supported attachments
+                          entity_type (attachments.routes.ts enum), so there is no attach flow to wire
+                          here yet. Kept visible (never deleted) + disabled with the reason, not a fake
+                          click. Attach a receipt on the Bill/Expense the transaction posts to instead. */}
+                          <button
+                            type="button"
+                            disabled
+                            aria-label="Attach file (not available for bank transactions)"
+                            title="Attachments aren't supported on bank feed rows yet — attach the receipt to the Bill or Expense this transaction posts to."
+                            className="cursor-not-allowed opacity-60"
+                          >
+                            <Paperclip className="h-4 w-4" />
+                          </button>
+                          {/* Honest-disabled: inline per-row notes have no editor wired in this grid yet. */}
+                          <button
+                            type="button"
+                            disabled
+                            aria-label="Add note (not available here)"
+                            title="Notes aren't editable from this grid yet."
+                            className="cursor-not-allowed opacity-60"
+                          >
+                            <MessageSquare className="h-4 w-4" />
+                          </button>
                         </div>
                       </div>
                     </td>
@@ -2176,6 +2265,60 @@ export function BankingTransactionsDesignView({
         onClose={() => setMatchDrawerTxId(null)}
         onAccepted={() => onDataChanged()}
       />
+      {/* Bulk categorize-to-account modal — real POST /banking/transactions/categorize-bulk (no new GL
+      math; the chosen COA account IS the category, same as the single-row Post). */}
+      {bulkCategorizeOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-md bg-white p-4 shadow-xl">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-gray-900">
+                Categorize {bulkSelection.selectedIds.size} transaction(s)
+              </h2>
+              <button
+                type="button"
+                aria-label="Close"
+                className="rounded-sm px-2 py-1 text-gray-500 hover:bg-gray-100"
+                onClick={() => setBulkCategorizeOpen(false)}
+              >
+                ✕
+              </button>
+            </div>
+            <label className="text-xs text-gray-600">
+              Category (Chart of Accounts)
+              <div className="mt-1">
+                <ReferenceSelect
+                  value={bulkCategorizeAccountId || null}
+                  onChange={(v) => setBulkCategorizeAccountId(v ?? "")}
+                  options={(coaQuery.data?.accounts ?? []).map((account) => ({
+                    value: account.id,
+                    label: account.account_name,
+                    type: account.account_number ? String(account.account_number) : undefined,
+                  }))}
+                  createKind="category"
+                  operatingCompanyId={companyId}
+                  placeholder="Select category account"
+                  onOptionCreated={() => void coaQuery.refetch()}
+                />
+              </div>
+            </label>
+            <p className="mt-2 text-[11px] text-gray-500">
+              Applies to for-review transactions only. GL posting stays governed by the accounting posting
+              flags — this only assigns the category account.
+            </p>
+            <div className="mt-4 flex justify-end gap-2">
+              <Button variant="secondary" onClick={() => setBulkCategorizeOpen(false)} disabled={bulkCategorizeBusy}>
+                Cancel
+              </Button>
+              <Button
+                onClick={() => void confirmBulkCategorize()}
+                disabled={bulkCategorizeBusy || !bulkCategorizeAccountId}
+              >
+                {bulkCategorizeBusy ? "Categorizing..." : "Categorize"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       {/* HELD financial-actions wiring — the fully-built RecordTransferModal (createTransfer, gated),
       pre-seeded from the row's amount/date + this account as one leg. */}
       <RecordTransferModal
