@@ -36,7 +36,7 @@ function classifyRelayConfigError(err: unknown): RelayHealthStatus {
 }
 
 export async function registerRelayHealthRoutes(app: FastifyInstance) {
-  app.get("/api/integrations/relay/health", async (req, reply) => {
+  app.get("/api/integrations/relay/health", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentOfficeUser(req, reply);
     if (!user) return;
 
