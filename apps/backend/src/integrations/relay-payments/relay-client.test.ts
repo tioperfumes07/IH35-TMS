@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import {
+  applyRelayDateRangeParams,
   filterRelayFuelTransactionsByDateRange,
   parseRelayFuelTransactionRow,
   relayApiBase,
@@ -174,5 +175,51 @@ describe("retryAfterMsFromRelayError — honor Relay Retry-After on 429", () => 
   it("caps Retry-After at 120s", () => {
     const err = new RelayApiError("relay_http_429", 429, { retry_after: "999" }, true);
     expect(retryAfterMsFromRelayError(err)).toBe(120_000);
+  });
+});
+
+describe("applyRelayDateRangeParams — Mike-confirmed dtstart/dtend (2026-07-16)", () => {
+  it("sets dtstart and dtend from YYYY-MM-DD", () => {
+    const url = applyRelayDateRangeParams(
+      new URL("https://app.relaypayments.com/api/fuel/transactions/"),
+      "2026-03-01",
+      "2026-07-16"
+    );
+    expect(url.searchParams.get("dtstart")).toBe("2026-03-01");
+    expect(url.searchParams.get("dtend")).toBe("2026-07-16");
+    expect(url.searchParams.has("start_date")).toBe(false);
+    expect(url.searchParams.has("end_date")).toBe(false);
+  });
+
+  it("strips wrong start_date/end_date if present", () => {
+    const url = new URL("https://app.relaypayments.com/api/fuel/transactions/?start_date=x&end_date=y");
+    applyRelayDateRangeParams(url, "2026-07-01", "2026-07-02");
+    expect(url.searchParams.has("start_date")).toBe(false);
+    expect(url.searchParams.has("end_date")).toBe(false);
+    expect(url.searchParams.get("dtstart")).toBe("2026-07-01");
+  });
+});
+
+describe("parseRelayFuelTransactionRow — cash_advance dollar string (Mike Bruno)", () => {
+  it("coerces cash_advance '0.00' to false", () => {
+    const parsed = parseRelayFuelTransactionRow({
+      transaction_id: "txn_1",
+      created_at: "2026-07-16T05:42:29Z",
+      total_amount_paid: "61.86",
+      total_retail_price: "61.86",
+      cash_advance: "0.00",
+    });
+    expect(parsed?.cash_advance).toBe(false);
+  });
+
+  it("coerces a positive cash-advance dollar amount to true", () => {
+    const parsed = parseRelayFuelTransactionRow({
+      transaction_id: "txn_2",
+      created_at: "2026-07-16T05:42:29Z",
+      total_amount_paid: "25.00",
+      total_retail_price: "0.00",
+      cash_advance: "25.00",
+    });
+    expect(parsed?.cash_advance).toBe(true);
   });
 });

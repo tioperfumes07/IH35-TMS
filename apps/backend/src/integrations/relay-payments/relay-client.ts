@@ -50,10 +50,24 @@ export function relayApiBase(): string {
 }
 
 // Per-request timeout — single source of truth lives in lib/relay-timeout.ts so the circuit breaker's
-// timeout can be derived from the SAME value (breaker = fetch + slack). Relay returns the FULL history in
-// one response (live-proven; date params ignored), so this must cover a whole-feed download, not a window.
+// timeout can be derived from the SAME value (breaker = fetch + slack). Full-history pulls can exceed 40s
+// (Mike Bruno 2026-07-16: 41.35s / 2.1MB); date-filtered pulls use dtstart/dtend (Mike) and are shorter.
 function relayTimeoutMs(): number {
   return relayApiTimeoutMs();
+}
+
+/**
+ * Relay date-range query params (Mike Masteller, Relay, 2026-07-16 — LOCKED).
+ * Wrong names (`start_date`/`end_date`) are IGNORED by production; the live-proven names are
+ * `dtstart` and `dtend`. Format: YYYY-MM-DD (inclusive calendar range).
+ */
+export function applyRelayDateRangeParams(url: URL, startDate?: string | null, endDate?: string | null): URL {
+  if (startDate && /^\d{4}-\d{2}-\d{2}$/.test(startDate)) url.searchParams.set("dtstart", startDate);
+  if (endDate && /^\d{4}-\d{2}-\d{2}$/.test(endDate)) url.searchParams.set("dtend", endDate);
+  // Never send the wrong param names — they silently no-op and look like "Relay ignores dates".
+  url.searchParams.delete("start_date");
+  url.searchParams.delete("end_date");
+  return url;
 }
 
 // Bounded retry with exponential backoff for a slow/aborted window (retryable errors: aborted network
@@ -268,6 +282,20 @@ function coerceCreatedAt(row: Record<string, unknown>): string | null {
   return null;
 }
 
+/** Normalize Relay cash_advance (bool OR dollar string like "0.00") into boolean | null for our schema. */
+function coerceCashAdvance(value: unknown): boolean | null {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number" && Number.isFinite(value)) return value !== 0;
+  const s = strOrCoerce(value);
+  if (!s) return null;
+  const n = Number(s);
+  if (Number.isFinite(n)) return n !== 0;
+  const lower = s.toLowerCase();
+  if (lower === "true" || lower === "yes") return true;
+  if (lower === "false" || lower === "no") return false;
+  return null;
+}
+
 function extractRelayRowArray(json: unknown): { rows: unknown[]; envelope: string } {
   if (Array.isArray(json)) return { rows: json, envelope: "array" };
   const obj = asObject(json);
@@ -338,7 +366,8 @@ export function parseRelayFuelTransactionRow(row: Record<string, unknown>): Rela
     total_amount_saved: str(row.total_amount_saved),
     is_direct_bill: typeof row.is_direct_bill === "boolean" ? row.is_direct_bill : null,
     currency_code: str(row.currency_code),
-    cash_advance: typeof row.cash_advance === "boolean" ? row.cash_advance : null,
+    // Prod sends dollar strings ("0.00") — Mike Bruno 2026-07-16 — not always boolean.
+    cash_advance: coerceCashAdvance(row.cash_advance),
     fuel_code_type: str(row.fuel_code_type),
     linked_org: linkedOrgRaw
       ? { id: str(linkedOrgRaw.id), name: str(linkedOrgRaw.name), number: str(linkedOrgRaw.number) }
@@ -406,21 +435,23 @@ type RelayFuelFetchMeta = {
 };
 
 /**
- * Pull the full fuel-transaction feed from Relay (prod-verified 2026-07-16).
+ * Pull fuel transactions from Relay (prod-verified 2026-07-16).
  *
- * The production endpoint returns the carrier's full history as a top-level JSON array and **does not
- * honor** `start_date` / `end_date` query parameters (same row count with or without them). Date windows
- * are applied client-side via filterRelayFuelTransactionsByDateRange.
+ * - No dates → full history (Mike: "You can pull all history via the API").
+ * - With startDate/endDate → server filter via `dtstart`/`dtend` (Mike 2026-07-16). The old
+ *   `start_date`/`end_date` names are ignored by Relay — that was the "dates don't work" false finding.
+ * - Client-side filter remains as a safety net after the server response.
  */
 export async function fetchAllRelayFuelTransactions(
-  entityCode?: string | null
+  entityCode?: string | null,
+  opts?: { startDate?: string | null; endDate?: string | null }
 ): Promise<{ rows: RelayFuelTransaction[]; meta: RelayFuelFetchMeta }> {
   const key = relayApiKey(entityCode);
   if (!key) {
     throw new RelayApiError("relay_not_configured", null, null, false);
   }
 
-  const first = new URL(relayApiBase());
+  const first = applyRelayDateRangeParams(new URL(relayApiBase()), opts?.startDate, opts?.endDate);
   const collected: RelayFuelTransaction[] = [];
   const seen = new Set<string>();
   let nextUrl: URL | null = first;
@@ -474,7 +505,7 @@ export async function fetchAllRelayFuelTransactions(
 /**
  * GET fuel transactions for an inclusive UTC date window.
  *
- * Relay prod does not filter server-side — we fetch once and slice by `created_at` calendar day.
+ * Server filter: `dtstart`/`dtend` (Mike). Client filter: belt-and-suspenders on `created_at`.
  */
 export async function listRelayFuelTransactions(params: {
   startDate: string; // ISO 8601 date, e.g. "2026-07-01"
@@ -484,18 +515,20 @@ export async function listRelayFuelTransactions(params: {
   /** When set (backfill), skip the HTTP round-trip and filter this in-memory snapshot. */
   preloaded?: RelayFuelTransaction[];
 }): Promise<RelayFuelTransaction[]> {
-  const source = params.preloaded ?? (await fetchAllRelayFuelTransactions(params.entityCode)).rows;
+  const source =
+    params.preloaded ??
+    (
+      await fetchAllRelayFuelTransactions(params.entityCode, {
+        startDate: params.startDate,
+        endDate: params.endDate,
+      })
+    ).rows;
   const filtered = filterRelayFuelTransactionsByDateRange(source, params.startDate, params.endDate);
 
   if (source.length > 0 && filtered.length === 0) {
     // eslint-disable-next-line no-console -- fail-loud: distinguishes empty account vs wrong date slice
     console.warn(
       `[RELAY_FUEL] date_filter_zero api_rows=${source.length} window=${params.startDate}..${params.endDate} entity=${params.entityCode ?? "legacy"}`
-    );
-  } else if (!params.preloaded && source.length > filtered.length + 5) {
-    // eslint-disable-next-line no-console -- prod proof: Relay ignores start_date/end_date query params
-    console.warn(
-      `[RELAY_FUEL] server_date_filter_ignored api_rows=${source.length} client_filtered=${filtered.length} window=${params.startDate}..${params.endDate}`
     );
   }
 

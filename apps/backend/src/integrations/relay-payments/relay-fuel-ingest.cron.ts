@@ -57,20 +57,26 @@ function isoDateMonthsAgo(n: number): string {
 }
 
 /** Ingest window size in days — DB BATCHING ONLY (owner directive 2026-07-15 kept the 3-day granularity).
- *  NOT an HTTP optimization: Relay ignores start_date/end_date and returns the full history in one response
- *  (live-proven 2026-07-16), so windows slice the already-fetched rows for upsert batching + audit
- *  granularity. Configurable via RELAY_FUEL_INGEST_WINDOW_DAYS; default 3. */
+ *  HTTP filtering uses Relay `dtstart`/`dtend` (Mike 2026-07-16). These windows still slice an already-
+ *  fetched (or date-filtered) snapshot for upsert batching + audit granularity.
+ *  Configurable via RELAY_FUEL_INGEST_WINDOW_DAYS; default 3. */
 function relayIngestWindowDays(): number {
   const raw = Number.parseInt(process.env.RELAY_FUEL_INGEST_WINDOW_DAYS ?? "3", 10);
   return Number.isFinite(raw) && raw > 0 ? raw : 3;
 }
 
+/** Mike (Relay, 2026-07-16): "We have a 10 second limit on pulling transactions" — min gap between pulls. */
+function relayInterCompanyDelayMs(): number {
+  const raw = Number.parseInt(process.env.RELAY_FUEL_INGEST_INTER_COMPANY_MS ?? "10000", 10);
+  return Number.isFinite(raw) && raw > 0 ? raw : 10000;
+}
+
 /**
  * Inclusive, contiguous [startDate,endDate] windows of `windowDays` each covering [startIso, endIso],
  * oldest→newest, with NO gaps and NO overlaps (each window's end is the day before the next window's start).
- * Windows batch the CLIENT-SIDE slicing of the one full-feed pull (Relay ignores date params — live-proven);
- * the upsert is idempotent by transaction_id so a boundary or re-run never duplicates. The daily cron reuses
- * this with a 1-day range (start === end) → a single window.
+ * Windows batch DB upserts after a server-filtered (`dtstart`/`dtend`) or full-history pull; the upsert is
+ * idempotent by transaction_id so a boundary or re-run never duplicates. The daily cron reuses this with a
+ * 1-day range (start === end) → a single window.
  */
 export function dayWindows(startIso: string, endIso: string, windowDays: number): Array<{ startDate: string; endDate: string }> {
   const windows: Array<{ startDate: string; endDate: string }> = [];
@@ -175,6 +181,8 @@ export function initializeRelayFuelIngestCron(app: FastifyInstance) {
       const pendingGlPosts: FuelTxnGlPostCandidate[] = [];
 
       const companyIds = await withLuciaBypass(async (client) => listActiveCompanyIds(client));
+      const interCompanyDelayMs = relayInterCompanyDelayMs();
+      let companiesPulled = 0;
 
       for (const { id: operatingCompanyId, code: entityCode } of companyIds) {
         const flagOn = await withLuciaBypass(async (client) =>
@@ -182,9 +190,18 @@ export function initializeRelayFuelIngestCron(app: FastifyInstance) {
         );
         if (!flagOn) continue;
 
+        if (companiesPulled > 0 && interCompanyDelayMs > 0) {
+          await new Promise((r) => setTimeout(r, interCompanyDelayMs));
+        }
+        companiesPulled += 1;
+
         try {
-          // One HTTP pull per company (Relay returns full history); DB txn stays short.
-          const { rows: apiRows, meta } = await fetchAllRelayFuelTransactions(entityCode);
+          // Server-side date filter via dtstart/dtend (Mike 2026-07-16) — daily delta, not full dump.
+          // Client-side filter remains as a defensive fallback after the response.
+          const { rows: apiRows, meta } = await fetchAllRelayFuelTransactions(entityCode, {
+            startDate,
+            endDate,
+          });
           const windowRows = filterRelayFuelTransactionsByDateRange(apiRows, startDate, endDate);
           app.log.info(
             {
@@ -193,6 +210,8 @@ export function initializeRelayFuelIngestCron(app: FastifyInstance) {
               api_rows: meta.api_row_count,
               window_rows: windowRows.length,
               window: `${startDate}..${endDate}`,
+              dtstart: startDate,
+              dtend: endDate,
             },
             "[RELAY_FUEL_INGEST_CRON] relay pull complete"
           );
@@ -273,8 +292,7 @@ export async function runRelayFuelBackfill(app: FastifyInstance, opts?: { months
 
   const companyIds = await withLuciaBypass(async (client) => listActiveCompanyIds(client));
 
-  // Inter-company gap so consecutive full-feed pulls don't re-trip Relay 429 (GUARD 2026-07-16).
-  const interCompanyDelayMs = Number.parseInt(process.env.RELAY_FUEL_INGEST_INTER_COMPANY_MS ?? "1500", 10) || 1500;
+  const interCompanyDelayMs = relayInterCompanyDelayMs();
   let companiesPulled = 0;
 
   for (const { id: operatingCompanyId, code: entityCode } of companyIds) {
@@ -292,7 +310,14 @@ export async function runRelayFuelBackfill(app: FastifyInstance, opts?: { months
     let upserted = 0;
     let skipped = 0;
     try {
-      const { rows: apiRows, meta } = await fetchAllRelayFuelTransactions(entityCode);
+      // Server-side date filter via dtstart/dtend (Mike) — avoids downloading history older than the
+      // requested months window. Client-side windowing still batches DB upserts.
+      const rangeStart = isoDateMonthsAgo(months);
+      const rangeEnd = todayIsoDate();
+      const { rows: apiRows, meta } = await fetchAllRelayFuelTransactions(entityCode, {
+        startDate: rangeStart,
+        endDate: rangeEnd,
+      });
       app.log.info(
         {
           operating_company_id: operatingCompanyId,
@@ -300,6 +325,8 @@ export async function runRelayFuelBackfill(app: FastifyInstance, opts?: { months
           api_rows: meta.api_row_count,
           windows: windows.length,
           months,
+          dtstart: rangeStart,
+          dtend: rangeEnd,
         },
         "[RELAY_FUEL_INGEST_BACKFILL] relay pull complete — slicing windows client-side"
       );
