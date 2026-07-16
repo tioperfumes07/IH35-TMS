@@ -24,6 +24,7 @@ import {
   listFactors,
   listFactoringBatches,
 } from "../../api/factoring";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
@@ -418,7 +419,7 @@ export function ReserveTracker() {
               <thead className="bg-gray-50 text-left uppercase tracking-wide text-gray-500">
                 <tr>
                   <th className="px-2 py-2">Date</th>
-                  <th className="px-2 py-2">Statement</th>
+                  <th className="px-2 py-2">Advance</th>
                   <th className="px-2 py-2 text-right">Chargeback</th>
                   <th className="px-2 py-2 text-right">Fee</th>
                 </tr>
@@ -427,7 +428,13 @@ export function ReserveTracker() {
                 {(chargebacksQ.data?.history ?? []).slice(0, 50).map((row) => (
                   <tr key={row.factoring_advance_id + row.created_at}>
                     <td className="px-2 py-2">{fmtD(row.created_at)}</td>
-                    <td className="px-2 py-2">{row.statement_reference ?? "—"}</td>
+                    <td className="px-2 py-2">
+                      <EntityLink
+                        kind="factoring_advance"
+                        id={row.factoring_advance_id}
+                        label={row.statement_reference || row.factoring_advance_id.slice(0, 8)}
+                      />
+                    </td>
                     <td className="px-2 py-2 text-right text-red-700">
                       {row.chargeback_amount > 0 ? fmtM(row.chargeback_amount) : "—"}
                     </td>
