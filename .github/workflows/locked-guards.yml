@@ -974,3 +974,8 @@ jobs:
         run: node scripts/verify-bank-register-account-picker.mjs --selftest
       - name: verify:bank-register-account-picker
         run: npm run verify:bank-register-account-picker
+      # Audit gap #5 residual — Bank Register sort/group ≠ QBO (month ASC, Money in/out, sort→group→page)
+      - name: verify:bank-register-sort-group --selftest
+        run: node scripts/verify-bank-register-sort-group.mjs --selftest
+      - name: verify:bank-register-sort-group
+        run: npm run verify:bank-register-sort-group
