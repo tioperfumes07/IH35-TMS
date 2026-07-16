@@ -20,6 +20,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
 import { buildPrintHTML, suggestedFilename } from "./lib/buildPrintHTML";
 import { DEFAULT_PROFILES } from "./lib/constants";
+import { casePetitionDateFromReports, resolveCreatePetitionDate } from "./lib/petitionDate";
 import type { CompanyKey, CompanyProfiles, CurrentFormState, HistoryReportRow } from "./types";
 import { CurrentPeriodTab } from "./tabs/CurrentPeriodTab";
 import { HistoryTab } from "./tabs/HistoryTab";
@@ -170,16 +171,7 @@ export function Form425CHome() {
 
   // Hydrate petition date from the earliest existing report (case SoR) — never invent a literal.
   useEffect(() => {
-    const reports = reportsQuery.data?.reports ?? [];
-    const withPetition = [...reports]
-      .map((r) => String(r.petition_date ?? "").slice(0, 10))
-      .filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d));
-    if (withPetition.length === 0) return;
-    // Prefer chronological case filing: reports are ordered month DESC — take the last non-empty by created order via earliest reporting_month among those with petition_date
-    const sorted = [...reports]
-      .filter((r) => /^\d{4}-\d{2}-\d{2}$/.test(String(r.petition_date ?? "").slice(0, 10)))
-      .sort((a, b) => String(a.created_at ?? a.reporting_month).localeCompare(String(b.created_at ?? b.reporting_month)));
-    const caseDate = String(sorted[0]?.petition_date ?? "").slice(0, 10);
+    const caseDate = casePetitionDateFromReports(reportsQuery.data?.reports ?? []);
     if (!caseDate) return;
     setProfiles((prev) => ({
       trucking: { ...prev.trucking, petitionDate: prev.trucking.petitionDate || caseDate },
@@ -222,10 +214,7 @@ export function Form425CHome() {
 
   const createMutation = useMutation({
     mutationFn: () => {
-      const petitionDate = profiles[activeCompany].petitionDate?.trim() ?? "";
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(petitionDate)) {
-        return Promise.reject(new Error("Set Petition Date (YYYY-MM-DD) in Profiles & Defaults before creating a report — never hardcode"));
-      }
+      const petitionDate = resolveCreatePetitionDate(profiles[activeCompany].petitionDate);
       return createForm425CReport(companyId, {
         reporting_month: `${monthKey(year, month)}-01`,
         case_number: profiles[activeCompany].caseNumber,
