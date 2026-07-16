@@ -56,8 +56,10 @@ function isoDateMonthsAgo(n: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-/** Ingest window size in days (owner directive 2026-07-15: pull in 3-DAY windows so a busy carrier's month
- *  can't exceed the request timeout in one call). Configurable via RELAY_FUEL_INGEST_WINDOW_DAYS; default 3. */
+/** Ingest window size in days — DB BATCHING ONLY (owner directive 2026-07-15 kept the 3-day granularity).
+ *  NOT an HTTP optimization: Relay ignores start_date/end_date and returns the full history in one response
+ *  (live-proven 2026-07-16), so windows slice the already-fetched rows for upsert batching + audit
+ *  granularity. Configurable via RELAY_FUEL_INGEST_WINDOW_DAYS; default 3. */
 function relayIngestWindowDays(): number {
   const raw = Number.parseInt(process.env.RELAY_FUEL_INGEST_WINDOW_DAYS ?? "3", 10);
   return Number.isFinite(raw) && raw > 0 ? raw : 3;
@@ -66,9 +68,9 @@ function relayIngestWindowDays(): number {
 /**
  * Inclusive, contiguous [startDate,endDate] windows of `windowDays` each covering [startIso, endIso],
  * oldest→newest, with NO gaps and NO overlaps (each window's end is the day before the next window's start).
- * Small windows keep every Relay API call well under the request timeout regardless of carrier volume; the
- * upsert is idempotent by transaction_id so a boundary or re-run never duplicates. The daily cron reuses this
- * with a 1-day range (start === end) → a single window.
+ * Windows batch the CLIENT-SIDE slicing of the one full-feed pull (Relay ignores date params — live-proven);
+ * the upsert is idempotent by transaction_id so a boundary or re-run never duplicates. The daily cron reuses
+ * this with a 1-day range (start === end) → a single window.
  */
 export function dayWindows(startIso: string, endIso: string, windowDays: number): Array<{ startDate: string; endDate: string }> {
   const windows: Array<{ startDate: string; endDate: string }> = [];

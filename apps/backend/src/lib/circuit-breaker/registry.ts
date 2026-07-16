@@ -3,6 +3,8 @@
  */
 import CircuitBreaker from "opossum";
 
+import { relayBreakerTimeoutMs } from "../relay-timeout.js";
+
 export type ExternalDep = "qbo" | "samsara" | "plaid" | "sentry" | "openai" | "comdata" | "relay";
 
 export type BreakerState = "closed" | "open" | "halfOpen";
@@ -34,7 +36,12 @@ export const BREAKER_CONFIGS: Record<ExternalDep, BreakerConfig> = {
   sentry: { ...DEFAULTS, enabled: false, volumeThreshold: 999, fallbackMode: "throw" },
   openai: { ...DEFAULTS, enabled: true, volumeThreshold: 3, rollingCountTimeout: 60_000, resetTimeout: 60_000, fallbackMode: "skip" },
   comdata: { ...DEFAULTS, enabled: true, volumeThreshold: 5, rollingCountTimeout: 60_000, resetTimeout: 90_000, fallbackMode: "throw" },
-  relay: { ...DEFAULTS, enabled: true, volumeThreshold: 5, rollingCountTimeout: 60_000, resetTimeout: 90_000, fallbackMode: "throw" },
+  // TIMEOUT HIERARCHY (GUARD 2026-07-16): Relay returns the FULL transaction history in one response
+  // (date params ignored — live-proven). The breaker timeout MUST exceed the relayFetch AbortController
+  // timeout, or the breaker fires first and the pull can never complete ("Timed out after 30000ms" on
+  // deploy eba6220 while the fetch allowed 60s). Derived from the same env as the client — see
+  // lib/relay-timeout.ts; enforced by scripts/verify-relay-timeout-hierarchy.mjs.
+  relay: { ...DEFAULTS, enabled: true, timeout: relayBreakerTimeoutMs(), volumeThreshold: 5, rollingCountTimeout: 60_000, resetTimeout: 90_000, fallbackMode: "throw" },
 };
 
 export type BreakerTransitionEvent = {
