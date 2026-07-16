@@ -10,9 +10,11 @@
  * which are all already click-through per prior KEYSTONE fixes.
  *
  * This guard asserts, so it can never regress:
- *   1. BankingHome.tsx renders a persistent "Bank Register" action (navigates to the real GL register,
- *      /accounting/account-register) AND a persistent "Chart of Accounts" action
- *      (/lists/accounting/chart-of-accounts) — both present regardless of which Banking tab is active.
+ *   1. BankingHome.tsx renders a persistent "Bank Register" action that opens the real GL register
+ *      (QBO parity: pre-bound `/accounting/chart-of-accounts/register/:ledgerAccountId` via the selected
+ *      bank's ledger_account_id; legacy unbound `/accounting/account-register` also accepted) AND a
+ *      persistent "Chart of Accounts" action (/lists/accounting/chart-of-accounts) — both present
+ *      regardless of which Banking tab is active.
  *   2. DriverEscrowTabContent.tsx's register <tr> rows carry a real onClick / row-navigation handler
  *      (not a dead click) — clicking a row must go somewhere.
  *
@@ -39,8 +41,13 @@ export function assertGuard({ bankingHomeSrc, escrowTabSrc }) {
   if (!/Bank Register/.test(bankingHomeSrc)) {
     failures.push(`${BANKING_HOME_REL} — no "Bank Register" action found (Doc-18 defect #10)`);
   }
-  if (!/navigate\(\s*["']\/accounting\/account-register["']\s*\)/.test(bankingHomeSrc)) {
-    failures.push(`${BANKING_HOME_REL} — "Bank Register" must navigate to /accounting/account-register (the real GL register)`);
+  if (
+    !/navigate\(\s*[`'"]\/accounting\/chart-of-accounts\/register\//.test(bankingHomeSrc) &&
+    !/navigate\(\s*["']\/accounting\/account-register["']\s*\)/.test(bankingHomeSrc)
+  ) {
+    failures.push(
+      `${BANKING_HOME_REL} — "Bank Register" must open the GL register (pre-bound /accounting/chart-of-accounts/register/:id preferred; /accounting/account-register accepted)`
+    );
   }
 
   // (2) Chart of Accounts button — a persistent nav action (Doc-18 defects #10/#11: COA was only
@@ -89,9 +96,12 @@ function runReal() {
 
 function runSelftest() {
   const goodBankingHome = `
+    const openBankRegister = () => {
+      navigate(\`/accounting/chart-of-accounts/register/\${ledgerAccountId}\`);
+    };
     const navActions = (
       <>
-        <ActionButton onClick={() => navigate("/accounting/account-register")}>Bank Register</ActionButton>
+        <ActionButton onClick={openBankRegister}>Bank Register</ActionButton>
         <ActionButton onClick={() => navigate("/lists/accounting/chart-of-accounts")}>Chart of Accounts</ActionButton>
       </>
     );
@@ -111,7 +121,7 @@ function runSelftest() {
     {
       name: "regression: no Bank Register action",
       input: {
-        bankingHomeSrc: goodBankingHome.replace(/Bank Register/g, "Something Else").replace(/account-register/g, "somewhere-else"),
+        bankingHomeSrc: goodBankingHome.replace(/Bank Register/g, "Something Else").replace(/chart-of-accounts\/register/g, "somewhere-else"),
         escrowTabSrc: goodEscrowTab,
       },
       expectPass: false,
