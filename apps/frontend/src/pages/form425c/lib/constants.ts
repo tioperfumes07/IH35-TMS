@@ -67,6 +67,7 @@ export const DEFAULT_PROFILES: CompanyProfiles = {
   trucking: {
     name: "IH 35 TRUCKING LLC",
     caseNumber: "",
+    petitionDate: "",
     district: "Texas",
     division: "San Antonio",
     judge: "",
@@ -80,6 +81,7 @@ export const DEFAULT_PROFILES: CompanyProfiles = {
   transportation: {
     name: "IH 35 TRANSPORTATION LLC",
     caseNumber: "",
+    petitionDate: "",
     district: "Texas",
     division: "San Antonio",
     judge: "",

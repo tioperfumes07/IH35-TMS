@@ -195,8 +195,18 @@ export function DispatchPage({
   });
 
   const statusMutation = useUpdateLoadStatus();
-  const loadId = searchParams.get("load_id");
+  // Honor load_id (canonical) and legacy ?load= from older queue links so the drawer still opens.
+  const loadId = searchParams.get("load_id") ?? searchParams.get("load");
   const canEdit = true;
+
+  // "Reserve a Load" deep link (?book_load=1) must open the book-load modal — previously unread.
+  useEffect(() => {
+    if (searchParams.get("book_load") !== "1") return;
+    setNewLoadOpen(true);
+    const next = new URLSearchParams(searchParams);
+    next.delete("book_load");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   const customers = useMemo(
     () =>
@@ -453,6 +463,7 @@ export function DispatchPage({
               next.set("view", "list");
               next.set("statuses", statuses.join(","));
               next.delete("load_id");
+              next.delete("load");
               setSearchParams(next);
             }}
             onBookForUnit={(unitId) => {
@@ -511,6 +522,7 @@ export function DispatchPage({
         onClose={() => {
           const next = new URLSearchParams(searchParams);
           next.delete("load_id");
+          next.delete("load");
           setSearchParams(next);
         }}
       />

@@ -15,6 +15,8 @@ export type BankAccount = {
 export type CompanyProfile = {
   name: string;
   caseNumber: string;
+  /** Ch.11 petition / case filing date (YYYY-MM-DD). Single source for Form 425C — never invent. */
+  petitionDate: string;
   district: string;
   division: string;
   judge: string;

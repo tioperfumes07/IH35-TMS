@@ -153,6 +153,7 @@ export function Form425CHome() {
       merged[row.company_key] = {
         name: row.company_name,
         caseNumber: row.case_number,
+        petitionDate: "",
         district: row.district,
         division: row.division,
         judge: row.judge,
@@ -166,6 +167,25 @@ export function Form425CHome() {
     }
     setProfiles(merged);
   }, [profilesQuery.data?.profiles]);
+
+  // Hydrate petition date from the earliest existing report (case SoR) — never invent a literal.
+  useEffect(() => {
+    const reports = reportsQuery.data?.reports ?? [];
+    const withPetition = [...reports]
+      .map((r) => String(r.petition_date ?? "").slice(0, 10))
+      .filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d));
+    if (withPetition.length === 0) return;
+    // Prefer chronological case filing: reports are ordered month DESC — take the last non-empty by created order via earliest reporting_month among those with petition_date
+    const sorted = [...reports]
+      .filter((r) => /^\d{4}-\d{2}-\d{2}$/.test(String(r.petition_date ?? "").slice(0, 10)))
+      .sort((a, b) => String(a.created_at ?? a.reporting_month).localeCompare(String(b.created_at ?? b.reporting_month)));
+    const caseDate = String(sorted[0]?.petition_date ?? "").slice(0, 10);
+    if (!caseDate) return;
+    setProfiles((prev) => ({
+      trucking: { ...prev.trucking, petitionDate: prev.trucking.petitionDate || caseDate },
+      transportation: { ...prev.transportation, petitionDate: prev.transportation.petitionDate || caseDate },
+    }));
+  }, [reportsQuery.data?.reports]);
 
   useEffect(() => {
     if (!detailQuery.data?.report) {
@@ -201,14 +221,19 @@ export function Form425CHome() {
   });
 
   const createMutation = useMutation({
-    mutationFn: () =>
-      createForm425CReport(companyId, {
+    mutationFn: () => {
+      const petitionDate = profiles[activeCompany].petitionDate?.trim() ?? "";
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(petitionDate)) {
+        return Promise.reject(new Error("Set Petition Date (YYYY-MM-DD) in Profiles & Defaults before creating a report — never hardcode"));
+      }
+      return createForm425CReport(companyId, {
         reporting_month: `${monthKey(year, month)}-01`,
         case_number: profiles[activeCompany].caseNumber,
         court_district: `${profiles[activeCompany].division} Division · ${profiles[activeCompany].district} District`,
-        petition_date: "2025-02-03",
+        petition_date: petitionDate,
         subchapter: "V",
-      }),
+      });
+    },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["form-425c", "reports", companyId] });
       pushToast("Report created", "success");
@@ -356,6 +381,11 @@ export function Form425CHome() {
             }
             if (!profiles[activeCompany].caseNumber?.trim()) {
               pushToast("Set the case number in Profiles & Defaults before creating a report", "error");
+              return;
+            }
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(profiles[activeCompany].petitionDate?.trim() ?? "")) {
+              pushToast("Set Petition Date in Profiles & Defaults before creating a report (court case filing date — never hardcode)", "error");
+              setTab("profile");
               return;
             }
             createMutation.mutate();

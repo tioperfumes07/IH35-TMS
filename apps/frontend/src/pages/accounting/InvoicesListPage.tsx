@@ -2,7 +2,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ArrowRightCircle } from "lucide-react";
 import { listInvoices, type Invoice, type InvoiceStatus } from "../../api/accounting";
@@ -54,6 +54,7 @@ function money(cents: number) {
 
 export function InvoicesListPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const { selectedCompanyId } = useCompanyContext();
@@ -63,7 +64,8 @@ export function InvoicesListPage() {
   const [pendingIds, setPendingIds] = useState<string[]>([]);
   const [batchId, setBatchId] = useState("");
   const [status, setStatus] = useState<InvoiceListFilter>("");
-  const [customerId, setCustomerId] = useState("");
+  // Mirror BillsPage vendor_id deep-link: Customers "New transaction" → ?customer_id=
+  const [customerId, setCustomerId] = useState(() => searchParams.get("customer_id") ?? "");
   const [search, setSearch] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
