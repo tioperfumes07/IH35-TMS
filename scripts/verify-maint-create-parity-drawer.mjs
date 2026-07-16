@@ -58,9 +58,15 @@ if (manifest) {
   if (!/label:\s*GROUP_LABELS\.expenses,\s*href:\s*["']\/accounting\/expenses\/list["']/.test(manifest)) {
     failures.push("subnav-manifest: Expenses group href must be /accounting/expenses/list");
   }
-  // Create hub stays reachable under a non-primary label (never delete the route).
-  if (!/label:\s*["']Record expense["'],\s*path:\s*["']\/accounting\/expenses["']/.test(manifest)) {
-    failures.push('subnav-manifest: /accounting/expenses must remain as "Record expense"');
+  // Create hub stays reachable (never delete the route). Label stays "Expenses" for locked-ui-surface.
+  if (!/label:\s*["']Expenses["'],\s*path:\s*["']\/accounting\/expenses["']/.test(manifest)) {
+    failures.push('subnav-manifest: /accounting/expenses must remain labeled "Expenses"');
+  }
+  const subnavBlock = manifest.match(/export const SUBNAV_ITEMS[\s\S]*?^\];/m)?.[0] ?? manifest;
+  const listIdx = subnavBlock.search(/path:\s*["']\/accounting\/expenses\/list["']/);
+  const createIdx = subnavBlock.search(/path:\s*["']\/accounting\/expenses["'](?!\/)/);
+  if (listIdx === -1 || createIdx === -1 || listIdx > createIdx) {
+    failures.push("subnav-manifest: Expenses List must precede /accounting/expenses (browse-first)");
   }
 }
 
