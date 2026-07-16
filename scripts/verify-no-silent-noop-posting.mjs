@@ -17,9 +17,13 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 // Posting WRITERS that resolve a flag and (may) post GL. Enumerated 2026-07-10 (Tier-1 0007 sweep).
+// B-D4 (2026-07-16): extend list with proven money writers that were outside the original sweep
+// (bank-feed / splits / transfers / fuel / bill-gl / settlement payrun+dispute / cash-advance disburse).
+// Do NOT rebuild — only add files that already use isEnabled + a posting flag.
 const POSTING_FILES = [
   "apps/backend/src/accounting/payments/apply.service.ts",
   "apps/backend/src/accounting/bill-payment-gl.service.ts",
+  "apps/backend/src/accounting/bill-gl.service.ts",
   "apps/backend/src/accounting/settlement-posting/settlement-posting.service.ts",
   "apps/backend/src/accounting/settlement-posting/settlement-bill-payment-posting.service.ts",
   "apps/backend/src/accounting/property-tax-posting/poster.service.ts",
@@ -29,6 +33,7 @@ const POSTING_FILES = [
   "apps/backend/src/accounting/factoring-posting/poster.service.ts",
   "apps/backend/src/accounting/factoring-posting/default-interest.service.ts",
   "apps/backend/src/accounting/opening-balance-import/opening-balance-import.service.ts",
+  "apps/backend/src/accounting/fuel-posting/maybe-post-from-fuel-transaction.service.ts",
   "apps/backend/src/accounting/expenses.routes.ts",
   "apps/backend/src/accounting/bill-gl-draft.routes.ts",
   "apps/backend/src/accounting/posting-engine.routes.ts",
@@ -36,7 +41,13 @@ const POSTING_FILES = [
   "apps/backend/src/driver-finance/escrow-separation.service.ts",
   "apps/backend/src/driver-finance/driver-reimbursement.service.ts",
   "apps/backend/src/driver-finance/settlements-load-bookended.service.ts",
+  "apps/backend/src/driver-finance/settlement-payrun-close.service.ts",
+  "apps/backend/src/driver-finance/settlement-dispute.service.ts",
   "apps/backend/src/banking/bank-driver-advance.service.ts",
+  "apps/backend/src/banking/bank-feed-gl-posting.service.ts",
+  "apps/backend/src/banking/bank-transaction-splits.service.ts",
+  "apps/backend/src/banking/transfers.service.ts",
+  "apps/backend/src/cash-advances/cash-advance-disburse.ts",
   "apps/backend/src/qbo/qbo-entity-push-gate.ts",
 ];
 

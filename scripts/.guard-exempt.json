@@ -266,7 +266,6 @@
  "verify-qbo-entity-push-gates.mjs": "baselined 2026-07-16 B-D2 — package.json script exists but no CI workflow/verify-steps execution; wire into locked-guards.yml or ci.yml, or justify individually",
  "verify-qbo-invoices-mirror-shape.mjs": "baselined 2026-07-10 — pre-existing standalone guard; wire into verify:pre-commit/workflow or justify individually",
  "verify-qbo-money-parse.mjs": "baselined 2026-07-16 B-D2 — package.json script exists but no CI workflow/verify-steps execution; wire into locked-guards.yml or ci.yml, or justify individually",
- "verify-qbo-outbound-generic-catch-deadletter.mjs": "baselined 2026-07-10 — pre-existing standalone guard; wire into verify:pre-commit/workflow or justify individually",
  "verify-qbo-push-gates.mjs": "baselined 2026-07-16 B-D2 — package.json script exists but no CI workflow/verify-steps execution; wire into locked-guards.yml or ci.yml, or justify individually",
  "verify-qbo-reauth-observability.mjs": "baselined 2026-07-16 B-D2 — package.json script exists but no CI workflow/verify-steps execution; wire into locked-guards.yml or ci.yml, or justify individually",
  "verify-qbo-sync-event-log-tenant-scope.mjs": "baselined 2026-07-10 — pre-existing standalone guard; wire into verify:pre-commit/workflow or justify individually",
