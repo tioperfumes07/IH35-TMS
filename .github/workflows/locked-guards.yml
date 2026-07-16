@@ -136,6 +136,13 @@ jobs:
       - name: verify:no-bare-health-references
         run: npm run verify:no-bare-health-references
 
+      # B-B residual — guard existed package.json-only; lock into locked-guards so
+      # frontend __APP_VERSION__/version.json + CDN must-revalidate cannot regress without CI fail
+      - name: verify:frontend-version-stamp --self-test
+        run: node scripts/verify-frontend-version-stamp.mjs --self-test
+      - name: verify:frontend-version-stamp
+        run: npm run verify:frontend-version-stamp
+
       - name: verify:no-internal-language-in-prod-ui
         run: npm run verify:no-internal-language-in-prod-ui
 
