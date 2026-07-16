@@ -59,7 +59,17 @@ export type PlaidBankTransaction = {
   // Doc-18 GAP B: feed origin. 'manual' = hand-entered (date is editable); 'plaid'/'qbo_import'/'csv_import'
   // = bank-fed (date locked). plaid_transaction_id present ⇒ bank-fed regardless of source.
   source?: string | null;
+  source_ref?: string | null;
   plaid_transaction_id?: string | null;
+  /** Auto-linked ops tags (Relay wallet feed + manual categorize). */
+  categorization_driver_id?: string | null;
+  categorization_driver_name?: string | null;
+  categorization_unit_id?: string | null;
+  categorization_unit_number?: string | null;
+  categorization_trailer_id?: string | null;
+  categorization_trailer_number?: string | null;
+  categorization_load_id?: string | null;
+  categorization_load_number?: string | null;
 };
 
 /** Doc-18 GAP B: a transaction is date-editable only when it is manually entered (non-bank-fed). */

@@ -602,14 +602,14 @@ export function BankingTransactionsDesignView({
       billable: false,
       tags: "",
       memo: viewSettings.copyBankDetailToMemo ? description : tx.notes || "",
-      driverId: "",
-      driverName: "",
-      unitId: "",
-      unitName: "",
-      trailerId: "",
-      trailerName: "",
-      loadId: "",
-      loadName: "",
+      driverId: tx.categorization_driver_id ?? "",
+      driverName: tx.categorization_driver_name ?? "",
+      unitId: tx.categorization_unit_id ?? "",
+      unitName: tx.categorization_unit_number ?? "",
+      trailerId: tx.categorization_trailer_id ?? "",
+      trailerName: tx.categorization_trailer_number ?? "",
+      loadId: tx.categorization_load_id ?? tx.matched_load_id ?? "",
+      loadName: tx.categorization_load_number ?? "",
       recoverFromDriver: false,
       recoverDeductionType: "fine",
     };
@@ -1381,7 +1381,52 @@ export function BankingTransactionsDesignView({
                     </td>
                     <td className="px-1 py-2 align-top">
                       <div className="flex items-start justify-between gap-2">
-                        <p className="truncate text-gray-900">{transactionLabel(tx)}</p>
+                        <div className="min-w-0">
+                          <p className="truncate text-gray-900">{transactionLabel(tx)}</p>
+                          {(tx.categorization_unit_id ||
+                            tx.categorization_driver_id ||
+                            tx.categorization_load_id ||
+                            tx.matched_load_id ||
+                            tx.matched_settlement_id ||
+                            tx.categorization_trailer_id) && (
+                            <div
+                              className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-[11px]"
+                              onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}
+                            >
+                              {tx.categorization_unit_id ? (
+                                <EntityLink
+                                  kind="unit"
+                                  id={tx.categorization_unit_id}
+                                  label={tx.categorization_unit_number || "Unit"}
+                                />
+                              ) : null}
+                              {tx.categorization_trailer_id ? (
+                                <EntityLink
+                                  kind="trailer"
+                                  id={tx.categorization_trailer_id}
+                                  label={tx.categorization_trailer_number || "Trailer"}
+                                />
+                              ) : null}
+                              {tx.categorization_driver_id ? (
+                                <EntityLink
+                                  kind="driver"
+                                  id={tx.categorization_driver_id}
+                                  label={tx.categorization_driver_name || "Driver"}
+                                />
+                              ) : null}
+                              {(tx.categorization_load_id || tx.matched_load_id) ? (
+                                <EntityLink
+                                  kind="load"
+                                  id={tx.categorization_load_id || tx.matched_load_id}
+                                  label={tx.categorization_load_number || "Trip"}
+                                />
+                              ) : null}
+                              {tx.matched_settlement_id ? (
+                                <EntityLink kind="settlement" id={tx.matched_settlement_id} label="Settlement" />
+                              ) : null}
+                            </div>
+                          )}
+                        </div>
                         <div className="inline-flex items-center gap-1 text-gray-500">
                           <Paperclip className="h-4 w-4" />
                           <MessageSquare className="h-4 w-4" />

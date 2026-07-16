@@ -11,6 +11,7 @@
 import type { RelayFuelTransaction } from "./relay-client.js";
 import type { DbClient } from "./db-client.type.js";
 import { bridgeRelayFuelToCanonical } from "./relay-fuel-canonical-bridge.js";
+import { upsertRelayWalletBankFeedRow } from "./relay-wallet-bank-feed.service.js";
 import type { FuelTxnGlPostCandidate } from "../../accounting/fuel-posting/maybe-post-from-fuel-transaction.service.js";
 
 export type { DbClient } from "./db-client.type.js";
@@ -302,6 +303,22 @@ export async function upsertRelayFuelTransaction(
   const bridge = await bridgeRelayFuelToCanonical(client, operatingCompanyId, tx, {
     driver_id: matchedDriverId,
     unit_id: matchedUnitId,
+  });
+
+  // Wallet bank feed (Banking → Relay Fuel Wallet). Visibility + linkage only — no GL.
+  await upsertRelayWalletBankFeedRow(client, {
+    operating_company_id: operatingCompanyId,
+    transaction_id: tx.transaction_id,
+    relay_created_at: tx.created_at,
+    amount_cents: totalAmountPaidCents,
+    merchant_name: tx.merchant?.name ?? null,
+    location_city: tx.location?.city ?? null,
+    location_state: tx.location?.state ?? null,
+    matched_unit_id: matchedUnitId,
+    matched_unit_number: truckNumber,
+    matched_driver_id: matchedDriverId,
+    fuel_transaction_id: bridge.fuel_transaction_id,
+    prompts: tx.prompts ?? [],
   });
 
   let glPostCandidate: FuelTxnGlPostCandidate | null = null;
