@@ -13,7 +13,8 @@ description: >-
 > **Rule #0 (LOCKED, every session):** `docs/specs/QUALITY-STANDARD-LOCKED.md` — hardline quality law.
 > **Cursor charter (every session):** `docs/specs/CURSOR-OPERATING-CONSTITUTION.md` — permanent operating constitution; more conservative reading wins on conflict.
 > **Law of the Land:** `docs/specs/ARCHITECTURE-BLUEPRINT-2026-07-05.md` — total connectivity / linkage checklist.
-> **Cursor auto-load:** `.cursor/rules/00`–`07` + `10`–`15` + `dual-lane-never-idle.mdc` (`alwaysApply: true`).
+> **Cursor auto-load:** `.cursor/rules/00`–`07` + `10`–`16` + `dual-lane-never-idle.mdc` (`alwaysApply: true`).
+> **Evidence before done:** `.claude/skills/ih35-evidence-before-done/SKILL.md` + Rule 16 `.cursor/rules/16-fix-not-patch-evidence-law.mdc`.
 
 
 This system holds **live financial and legal-evidence data** for a real operating carrier

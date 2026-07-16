@@ -9,7 +9,21 @@ Before any work, read docs/specs/QUALITY-STANDARD-LOCKED.md. It is the first law
 
 > **Claude (planning): include the directive "Read docs/specs/CURSOR-PERMANENT-RULES.md FIRST before writing any code." at the top of every paste box.**
 
-Last updated: 2026-05-06 by Jorge
+Last updated: 2026-07-16 by Jorge
+
+---
+
+## RULE 16 — FIX, DON'T PATCH · NEVER DEFER · EVIDENCE BEFORE DONE (owner law)
+
+Canonical file: `.cursor/rules/16-fix-not-patch-evidence-law.mdc` (`alwaysApply: true`).
+
+- Fix **root cause** — not symptoms. No prod ad-hoc DDL patches.
+- **Never defer** root problems (only owner-approved tracker + future block id).
+- **Evidence before done** — ROOT CAUSE / FIX / GUARD / LIVE PROOF (or UNVERIFIED).
+- Every bug fix ships a `scripts/verify-*.mjs` CI guard.
+- Skill: `.claude/skills/ih35-evidence-before-done/SKILL.md`
+- PR template: `docs/templates/ACCEPTANCE-EVIDENCE-BLOCK.md`
+- Session hook: `.cursor/hooks/session-evidence-law.sh`
 
 ---
 

@@ -2,7 +2,9 @@
 
 > **Rule #0 (LOCKED):** Before any work, read [docs/specs/QUALITY-STANDARD-LOCKED.md](docs/specs/QUALITY-STANDARD-LOCKED.md) — the first standing quality law; it supersedes other docs on hardline conflict.
 
-> **Cursor permanent charter:** [docs/specs/CURSOR-OPERATING-CONSTITUTION.md](docs/specs/CURSOR-OPERATING-CONSTITUTION.md) — applies to every Cursor session/agent; when instructions conflict, the more conservative / more protective reading wins. Enforced by always-apply `.cursor/rules/00`–`07` + `10`–`15`.
+> **Cursor permanent charter:** [docs/specs/CURSOR-OPERATING-CONSTITUTION.md](docs/specs/CURSOR-OPERATING-CONSTITUTION.md) — applies to every Cursor session/agent; when instructions conflict, the more conservative / more protective reading wins. Enforced by always-apply `.cursor/rules/00`–`07` + `10`–`16`.
+
+> **Rule 16 (owner law):** [`.cursor/rules/16-fix-not-patch-evidence-law.mdc`](.cursor/rules/16-fix-not-patch-evidence-law.mdc) — fix root cause, never patch, never defer without written tracker entry, evidence before done. Skill: `.claude/skills/ih35-evidence-before-done`. Template: `docs/templates/ACCEPTANCE-EVIDENCE-BLOCK.md`. Session hook: `.cursor/hooks/session-evidence-law.sh`.
 
 > **★ CONSOLIDATED ARCHITECTURE GUARDRAIL (read this too):** [docs/specs/ARCHITECTURE-BLUEPRINT-2026-07-05.md](docs/specs/ARCHITECTURE-BLUEPRINT-2026-07-05.md) is the current consolidated guardrail — the **Law of the Land** total-connectivity rule, the driver **Bill + BillPayment** settlement model, the **Faro** exact factoring terms, the auto-provisioned **driver accounts**, the **posting flags**, and the **per-build-block linkage checklist**. **Every build block (especially financial) conforms to it.** See the checklist reproduced at the bottom of this file.
 
