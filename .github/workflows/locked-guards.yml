@@ -551,6 +551,11 @@ jobs:
       - name: verify:entitylink-deep-links
         run: npm run verify:entitylink-deep-links
 
+      - name: verify:fact-chargebacks-entitylinks --selftest
+        run: node scripts/verify-fact-chargebacks-entitylinks.mjs --selftest
+      - name: verify:fact-chargebacks-entitylinks
+        run: npm run verify:fact-chargebacks-entitylinks
+
       - name: verify:no-nested-box --selftest
         run: node scripts/verify-no-nested-box.mjs --selftest
       - name: verify:no-nested-box
