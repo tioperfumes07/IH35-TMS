@@ -56,7 +56,11 @@ const TAG_NAMES = ["KpiCard", "HomeKpiCard"];
 // Available → /drivers?status=active (closest honest roster filter). Remaining 21 are genuine gaps
 // (DQF filters, Settlements debt/acks/held, ReserveTracker batches list, Fleet Avg Age, Safety
 // Severe/Commendations, Docs Missing Required/Recent Uploads, DispatchOverview Units needing return).
-const BASELINE = 21;
+//
+// 2026-07-16 audit gap #13: 21 -> 19. DocsHomePage Missing Required / Recent Uploads → list query
+// params missing_required / recent_uploads (lockstep with /docs/kpis SQL). Guard:
+// verify:docs-home-kpi-clicks.
+const BASELINE = 19;
 
 /** Brace/quote-aware JSX opening-tag extractor — a `>` inside a `{...}` expression (e.g.
  *  `delta={pct > 0 ? up : down}`) must not prematurely close the tag. Only a `>` at brace depth 0 and

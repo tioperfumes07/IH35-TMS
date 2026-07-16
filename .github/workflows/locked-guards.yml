@@ -901,3 +901,7 @@ jobs:
         run: node scripts/verify-docs-upload-viewed-entity.mjs --selftest
       - name: verify:docs-upload-viewed-entity
         run: npm run verify:docs-upload-viewed-entity
+      - name: verify:docs-home-kpi-clicks --selftest
+        run: node scripts/verify-docs-home-kpi-clicks.mjs --selftest
+      - name: verify:docs-home-kpi-clicks
+        run: npm run verify:docs-home-kpi-clicks
