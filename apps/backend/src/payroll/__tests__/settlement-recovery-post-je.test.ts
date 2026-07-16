@@ -23,7 +23,7 @@ vi.mock("../../driver-finance/settlement-deduction-cap.service.js", () => ({ res
 vi.mock("../../accounting/expense-category-map/resolver.service.js", () => ({ resolveAccountForCategory: m.resolveCategoryMock }));
 vi.mock("../../accounting/journal-entries.service.js", () => ({ createJournalEntry: m.createJournalEntryMock }));
 
-const { postSettlement } = await import("../driver-settlement.service.js");
+const { postSettlement } = await import("../driver-settlement.service.deprecated.js");
 
 const SETTLEMENT = {
   id: "settlement-1",

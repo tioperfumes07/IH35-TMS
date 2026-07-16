@@ -2,7 +2,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const servicePath = path.join(process.cwd(), "apps/backend/src/payroll/driver-settlement.service.ts");
+const servicePath = path.join(process.cwd(), "apps/backend/src/payroll/driver-settlement.service.deprecated.ts");
 
 function fail(message) {
   console.error(`verify:driver-settlement-uses-bill-not-je — FAILED\n- ${message}`);

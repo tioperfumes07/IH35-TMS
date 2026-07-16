@@ -1,85 +1,33 @@
-import type { FastifyInstance } from "fastify";
-import { z } from "zod";
-import { companyQuerySchema, currentAuthUser, validationError } from "../accounting/shared.js";
-import { computeSettlement, postSettlement } from "./driver-settlement.service.js";
+import type { FastifyInstance, FastifyReply } from "fastify";
 
-const computeBodySchema = z.object({
-  driver_id: z.string().uuid(),
-  period_start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  period_end: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  bank_settle_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-});
+// =====================================================================================================
+// RETIRED (settlement engine collapse Step 2, 2026-07-15). The payroll settlement engine
+// (computeSettlement / postSettlement -> payroll.driver_settlements / driver_settlement_line_items) is a
+// duplicate ledger, superseded by the canonical driver-finance settlements subledger + posting services
+// (parity verified 2026-07-15 — see driver-settlement.service.deprecated.ts for the full map). These two
+// endpoints had ZERO frontend callers; they now permanently 308-redirect to the canonical engine.
+// Single-subledger rule (QBO/NetSuite/McLeod/Alvys): never resurrect the payroll settlement ledger.
+// MUST NOT write payroll.* — guarded by scripts/verify-no-payroll-settlement-writes.mjs (G4).
+// =====================================================================================================
 
-const postParamsSchema = z.object({
-  settlement_id: z.string().uuid(),
-});
+const CANONICAL = "/api/v1/driver-finance/settlements";
 
-const postBodySchema = z.object({
-  payment_method: z.enum(["check", "ach", "wire", "cash", "credit_card"]).optional(),
-});
+function gone(reply: FastifyReply, canonical: string) {
+  reply.header("location", canonical);
+  return reply.code(308).send({
+    error: "gone",
+    message: "The payroll settlement engine is retired. Use the canonical driver-finance settlements subledger.",
+    canonical_endpoint: canonical,
+  });
+}
 
 export async function registerPayrollDriverSettlementRoutes(app: FastifyInstance) {
-  app.post("/api/v1/payroll/driver-settlements/compute", async (req, reply) => {
-    const user = currentAuthUser(req, reply);
-    if (!user) return;
+  // POST /api/v1/payroll/driver-settlements/compute — RETIRED -> canonical create.
+  app.post("/api/v1/payroll/driver-settlements/compute", async (_req, reply) => gone(reply, CANONICAL));
 
-    const query = companyQuerySchema.safeParse(req.query ?? {});
-    if (!query.success) return validationError(reply, query.error);
-    const body = computeBodySchema.safeParse(req.body ?? {});
-    if (!body.success) return validationError(reply, body.error);
-
-    try {
-      const payload = await computeSettlement(
-        {
-          operatingCompanyId: query.data.operating_company_id,
-          driverId: body.data.driver_id,
-          periodStart: body.data.period_start,
-          periodEnd: body.data.period_end,
-          bankSettleDate: body.data.bank_settle_date ?? null,
-        },
-        user.uuid
-      );
-      return reply.code(201).send(payload);
-    } catch (error) {
-      const message = String((error as Error)?.message ?? "driver_settlement_compute_failed");
-      if (message.includes("COA_ROLE_MAPPING_NOT_FOUND")) return reply.code(409).send({ error: "coa_role_mapping_missing" });
-      return reply.code(500).send({ error: message });
-    }
-  });
-
+  // POST /api/v1/payroll/driver-settlements/:settlement_id/post — RETIRED -> canonical subledger detail.
   app.post("/api/v1/payroll/driver-settlements/:settlement_id/post", async (req, reply) => {
-    const user = currentAuthUser(req, reply);
-    if (!user) return;
-
-    const query = companyQuerySchema.safeParse(req.query ?? {});
-    if (!query.success) return validationError(reply, query.error);
-    const params = postParamsSchema.safeParse(req.params ?? {});
-    if (!params.success) return validationError(reply, params.error);
-    const body = postBodySchema.safeParse(req.body ?? {});
-    if (!body.success) return validationError(reply, body.error);
-
-    try {
-      const payload = await postSettlement(
-        {
-          settlementId: params.data.settlement_id,
-          operatingCompanyId: query.data.operating_company_id,
-          paymentMethod: body.data.payment_method,
-        },
-        user.uuid
-      );
-      // SETTLE-GATE: SETTLEMENT_GL_POSTING_ENABLED was OFF for this entity — nothing posted, settlement
-      // stayed draft. Surface as a 409 policy response, not a 200 success.
-      if ("result" in payload && payload.result === "blocked_flag_off") {
-        return reply.code(409).send(payload);
-      }
-      return reply.code(200).send(payload);
-    } catch (error) {
-      const message = String((error as Error)?.message ?? "driver_settlement_post_failed");
-      if (message === "driver_settlement_not_found") return reply.code(404).send({ error: message });
-      if (message === "driver_settlement_must_be_draft") return reply.code(409).send({ error: message });
-      if (message === "driver_settlement_net_non_positive") return reply.code(409).send({ error: message });
-      if (message === "driver_vendor_missing") return reply.code(409).send({ error: message });
-      return reply.code(500).send({ error: message });
-    }
+    const id = (req.params as { settlement_id?: string })?.settlement_id;
+    return gone(reply, id ? `${CANONICAL}/${id}` : CANONICAL);
   });
 }
