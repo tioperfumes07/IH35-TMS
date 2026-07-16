@@ -1,6 +1,6 @@
 -- [HOLD-FOR-JORGE — B3-AR] TRANSP override for CUSTOMER_PAYMENT_GL_POSTING_ENABLED.
 --
--- *** DO NOT apply on prod without Jorge's explicit approval. Build-and-HOLD; owner applies on Neon branch
+-- *** DO NOT RUN ON PROD without Jorge's explicit approval. Build-and-HOLD; owner applies on Neon branch
 -- and ledger-backfills so prod db:migrate skips it. ***
 --
 -- WHY: TRANSP invoices post A/R but customer payments currently post no GL JE, causing A/R to overstate.
