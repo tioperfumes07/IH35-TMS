@@ -211,11 +211,13 @@ export const ACCOUNTING_MORE_TABS = [
  */
 export const ACCOUNTING_SUB_NAV_ITEMS: readonly NavItem[] = [
   leafOf("/accounting"), // Accounting (Home)
-  { label: GROUP_LABELS.bills, children: childrenOf("bills") },
-  { label: GROUP_LABELS.expenses, children: childrenOf("expenses") },
-  { label: GROUP_LABELS.billpay, children: childrenOf("billpay") },
+  // Group labels navigate to the primary list (nav-split); chevron opens the dropdown.
+  { label: GROUP_LABELS.bills, href: "/accounting/bills", children: childrenOf("bills") },
+  { label: GROUP_LABELS.expenses, href: "/accounting/expenses/list", children: childrenOf("expenses") },
+  { label: GROUP_LABELS.billpay, href: "/accounting/bill-payments", children: childrenOf("billpay") },
   {
     label: GROUP_LABELS.maint_shop,
+    href: "/accounting/maintenance-shop",
     children: [
       leafOf("/accounting/maintenance-shop"),
       leafOf("/accounting/bills/maintenance"),
@@ -226,5 +228,6 @@ export const ACCOUNTING_SUB_NAV_ITEMS: readonly NavItem[] = [
   leafOf("/accounting/vendors"), // Vendors
   leafOf("/accounting/customers"), // Customers
   leafOf("/accounting/reports"), // Reports
+  // More stays chevron-only (no single default destination).
   { label: GROUP_LABELS.more, children: childrenOf("more") },
 ];

@@ -44,7 +44,9 @@ function DropdownColumn({
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const menuRef = useRef<HTMLUListElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
+  const splitRef = useRef<HTMLDivElement>(null);
   const openViaKey = useRef(false);
+  const hasDefaultHref = item.href != null && item.href.length > 0;
 
   const clearHide = useCallback(() => {
     if (hideTimer.current != null) {
@@ -74,7 +76,7 @@ function DropdownColumn({
 
     const onDocMouse = (e: MouseEvent) => {
       const t = e.target as Node;
-      if (menuRef.current?.contains(t) || btnRef.current?.contains(t)) return;
+      if (menuRef.current?.contains(t) || splitRef.current?.contains(t) || btnRef.current?.contains(t)) return;
       setOpen(false);
     };
 
@@ -146,22 +148,31 @@ function DropdownColumn({
   return (
     <li role="none" className="nav-item-with-dropdown">
       <div
+        ref={splitRef}
+        className={hasDefaultHref ? "nav-split" : undefined}
         onMouseEnter={isClick ? undefined : show}
         onMouseLeave={isClick ? undefined : scheduleHide}
       >
+        {hasDefaultHref ? (
+          // Label navigates to the group's default list (Dispatch nav-split pattern). Chevron opens the menu.
+          <Link role="menuitem" to={item.href!} className={parentActive ? "active" : undefined}>
+            {item.label}
+          </Link>
+        ) : null}
         <button
           ref={btnRef}
           type="button"
-          role="menuitem"
+          role={hasDefaultHref ? undefined : "menuitem"}
           aria-haspopup="true"
           aria-expanded={open}
           aria-controls={menuId}
-          className={parentActive ? "active" : undefined}
+          aria-label={hasDefaultHref ? `${item.label} submenu` : undefined}
+          className={!hasDefaultHref && parentActive ? "active" : undefined}
           id={`${menuId}-trigger`}
           onClick={isClick ? () => setOpen((o) => !o) : undefined}
           onKeyDown={onButtonKeyDown}
         >
-          {item.label}
+          {hasDefaultHref ? null : item.label}
           <ChevronDown size={12} aria-hidden />
         </button>
         {open ? (
