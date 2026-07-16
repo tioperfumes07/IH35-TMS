@@ -38,13 +38,19 @@ export function ActionBar({
         <Button size="sm" variant="secondary" onClick={() => navigate(`/drivers/${driverId}`)} data-testid="dp-action-edit">
           Edit
         </Button>
-        <a className={linkClass} href={`/drivers/${driverId}?assign_truck=1`}>
+        <Button
+          size="sm"
+          variant="secondary"
+          disabled
+          title="Assign a driver from the Fleet unit profile."
+          data-testid="dp-action-assign-truck"
+        >
           Assign Truck
-        </a>
+        </Button>
         <Button size="sm" variant="secondary" onClick={() => setMessageOpen(true)} data-testid="dp-action-send-message">
           Send Message
         </Button>
-        <a className={linkClass} href={`/dispatch/map?driver=${driverId}`} data-testid="dp-action-view-map">
+        <a className={linkClass} href={`/dispatch/map?driver=${encodeURIComponent(driverId)}`} data-testid="dp-action-view-map">
           View on Map
         </a>
         <a className={linkClass} href={pdfUrl} download data-testid="dp-export-pdf">

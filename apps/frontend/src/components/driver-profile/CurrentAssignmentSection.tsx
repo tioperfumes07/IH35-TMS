@@ -49,7 +49,10 @@ export function CurrentAssignmentSection({
         <div>
           <div className="font-semibold text-slate-800">Current load</div>
           {load ? (
-            <Link to={`/dispatch/loads/${load.load_id}`} className="text-slate-700 hover:underline">
+            <Link
+              to={`/dispatch?load_id=${encodeURIComponent(String(load.load_id))}`}
+              className="text-slate-700 hover:underline"
+            >
               {String(load.load_number ?? load.load_id)} · {String(load.status ?? "—")}
             </Link>
           ) : (

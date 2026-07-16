@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as mdataApi from "../../../api/mdata";
 import { ActionBar } from "../ActionBar";
 
@@ -30,6 +30,8 @@ function renderBar(status = "Active") {
 }
 
 describe("ActionBar", () => {
+  afterEach(cleanup);
+
   beforeEach(() => {
     navigateMock.mockReset();
     vi.spyOn(mdataApi, "sendDriverProfileMessage").mockResolvedValue({
@@ -71,6 +73,14 @@ describe("ActionBar", () => {
     expect(link.getAttribute("href")).toBe("/dispatch/map?driver=d-1");
   });
 
+  it("honestly disables assign truck instead of emitting an unread query link", () => {
+    renderBar();
+    const action = screen.getByTestId("dp-action-assign-truck");
+    expect(action.hasAttribute("disabled")).toBe(true);
+    expect(action.getAttribute("title")).toBe("Assign a driver from the Fleet unit profile.");
+    expect(action.closest("a")).toBeNull();
+  });
+
   it("suspends driver via PATCH + safety event", async () => {
     renderBar();
     fireEvent.click(screen.getByTestId("dp-action-suspend"));
@@ -86,6 +96,10 @@ describe("ActionBar", () => {
     renderBar();
     fireEvent.click(screen.getByTestId("dp-action-terminate"));
     await waitFor(() => expect(screen.getByTestId("terminate-summary")).toBeTruthy());
+    const reasonInput = screen.getByRole("combobox", { name: "" });
+    fireEvent.click(reasonInput);
+    fireEvent.change(reasonInput, { target: { value: "Voluntary" } });
+    fireEvent.click(await screen.findByText("Voluntary"));
     fireEvent.change(screen.getByTestId("terminate-summary"), { target: { value: "End of contract" } });
     fireEvent.click(screen.getByTestId("terminate-confirm"));
     await waitFor(() => expect(mdataApi.createSafetyEvent).toHaveBeenCalled());
