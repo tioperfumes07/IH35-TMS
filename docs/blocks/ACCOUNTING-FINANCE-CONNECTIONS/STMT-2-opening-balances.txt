@@ -4,6 +4,11 @@ PR URL: <paste PR link here>
 ═══════════════════════════════════════════════════════════════════════════════
 STATUS: Tier 1 (writes opening equity/balances to the GL). STOPS for Jorge. GATED on Jorge's figures.
 
+CH.11 FRESH-START (OWNER-FINAL 2026-07-16; supersedes the prior 07/01/2026 cutover / 06/30/2026 opening lock):
+  opening-balance as-of anchor = QBO Balance Sheet 03/31/2026 per entity (Ch.11 approved end of March 2026 →
+  fresh-start line); TMS posts live in parallel from 04/01/2026. Re-syncable until the owner locks the figures.
+  Canonical spec: docs/specs/OPENING-BALANCE-IMPORT-AND-CUTOVER-2026-07-16.md.
+
 LOCKS: per-entity; reverse never delete; North-Star. RESPOND-BEFORE-CODE.
 
 WHY: real statements need opening balances. Owner-entered per entity (TRK/TRANSP/USMCA) — gates accurate

@@ -2,6 +2,11 @@
 
 Draft training materials for office team and drivers during cutover prep.
 
+> **⚑ Ch.11 FRESH-START (OWNER-FINAL 2026-07-16).** Cutover to **live parallel TMS posting = 04/01/2026**;
+> opening balances = QBO BS **as of 03/31/2026** per entity (supersedes the prior 07/01/2026 / 06/30/2026 lock).
+> Any May cutover-week dates in these draft materials are stale. Canonical spec:
+> `docs/specs/OPENING-BALANCE-IMPORT-AND-CUTOVER-2026-07-16.md`.
+
 ## Files in this folder
 - `README.md`
 - `day_by_day_runbook.md`
