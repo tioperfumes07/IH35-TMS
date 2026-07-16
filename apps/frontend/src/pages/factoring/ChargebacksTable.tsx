@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { BulkSelectableTable } from "../../components/shared/BulkSelectableTable";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { useToast } from "../../components/Toast";
 
 export type ChargebackFeeRow = {
@@ -46,8 +47,9 @@ export function ChargebacksTable({ rows, fmtCurrency, fmtDate }: Props) {
     }
     downloadCsv(
       `factoring-chargebacks-${new Date().toISOString().slice(0, 10)}.csv`,
-      ["Date", "Statement Ref", "Chargeback", "Fee"],
+      ["Advance Id", "Date", "Statement Ref", "Chargeback", "Fee"],
       selected.map((row) => [
+        row.factoring_advance_id,
         fmtDate(row.created_at),
         row.statement_reference || "",
         fmtCurrency(row.chargeback_amount),
@@ -80,6 +82,7 @@ export function ChargebacksTable({ rows, fmtCurrency, fmtDate }: Props) {
             <thead className="bg-gray-50 text-left uppercase tracking-wide text-gray-500">
               <tr>
                 <th className="w-8 px-2 py-2">{ctx.renderHeaderCheckbox()}</th>
+                <th className="px-2 py-2">Advance</th>
                 <th className="px-2 py-2">Date</th>
                 <th className="px-2 py-2">Statement Ref</th>
                 <th className="px-2 py-2">Chargeback</th>
@@ -90,6 +93,13 @@ export function ChargebacksTable({ rows, fmtCurrency, fmtDate }: Props) {
               {rows.map((row) => (
                 <tr key={row.factoring_advance_id}>
                   <td className="px-2 py-2">{ctx.renderRowCheckbox(row.factoring_advance_id)}</td>
+                  <td className="px-2 py-2">
+                    <EntityLink
+                      kind="factoring_advance"
+                      id={row.factoring_advance_id}
+                      label={row.statement_reference || row.factoring_advance_id.slice(0, 8)}
+                    />
+                  </td>
                   <td className="px-2 py-2">{fmtDate(row.created_at)}</td>
                   <td className="px-2 py-2">{row.statement_reference || "—"}</td>
                   <td className="px-2 py-2">{fmtCurrency(row.chargeback_amount)}</td>
@@ -98,7 +108,7 @@ export function ChargebacksTable({ rows, fmtCurrency, fmtDate }: Props) {
               ))}
               {rows.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-2 py-4 text-gray-500">
+                  <td colSpan={6} className="px-2 py-4 text-gray-500">
                     No chargeback/fee rows available.
                   </td>
                 </tr>

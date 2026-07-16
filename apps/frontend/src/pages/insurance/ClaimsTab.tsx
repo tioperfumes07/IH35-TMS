@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { listInsuranceClaims, type InsuranceClaim, type InsuranceClaimStatus } from "../../api/insurance";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { Button } from "../../components/Button";
@@ -44,7 +44,14 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
   const { selectedCompanyId } = useCompanyContext();
   const queryClient = useQueryClient();
   const companyId = operatingCompanyId ?? selectedCompanyId ?? "";
+  const [searchParams] = useSearchParams();
+  const deepLinkClaimId = searchParams.get("claim_id");
   const [createOpen, setCreateOpen] = useState(false);
+  const [highlightedClaimId, setHighlightedClaimId] = useState<string | null>(deepLinkClaimId);
+
+  useEffect(() => {
+    if (deepLinkClaimId) setHighlightedClaimId(deepLinkClaimId);
+  }, [deepLinkClaimId]);
 
   const query = useQuery({
     queryKey: ["insurance-claims", companyId || "none", policyId ?? "all", assetId ?? "all"],
@@ -78,7 +85,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
         key: "policy_id",
         label: "Policy",
         render: (claim) => (
-          <Link className="text-slate-700 underline" to={`/safety/insurance?policy_id=${claim.policy_id}`}>
+          <Link className="text-slate-700 underline" to={`/safety/insurance/policies/${claim.policy_id}`}>
             {claim.policy_id.slice(0, 8)}
           </Link>
         ),
@@ -102,6 +109,13 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
         </Button>
       </div>
 
+      {highlightedClaimId ? (
+        <p className="mb-2 rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+          Deep-link claim <span className="font-mono font-semibold">{highlightedClaimId.slice(0, 8)}</span>
+          {rows.some((r) => r.id === highlightedClaimId) ? " — highlighted below." : " — not in current list."}
+        </p>
+      ) : null}
+
       {query.isError ? <div className="rounded-sm border border-red-200 bg-red-50 p-2 text-sm text-red-700">Failed to load claims.</div> : null}
 
       <ParityTable
@@ -111,6 +125,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
         loading={listState.isLoading}
         storageKey="insurance-claims"
         emptyText="No claims found."
+        rowClassName={(claim) => (highlightedClaimId === claim.id ? "bg-slate-100" : "")}
       />
       <ClaimCreateModal
         open={createOpen}
