@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
@@ -34,6 +34,9 @@ export function FaultDraftsPage() {
   const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
+  // Vehicle profile "View fault history" → ?unit_id= (MaintenanceSnapshotSection).
+  const deepLinkUnitId = searchParams.get("unit_id");
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const draftsQuery = useQuery({
@@ -59,7 +62,11 @@ export function FaultDraftsPage() {
     onError: () => pushToast("Could not confirm draft work order.", "error"),
   });
 
-  const drafts = draftsQuery.data?.drafts ?? [];
+  const drafts = useMemo(() => {
+    const all = draftsQuery.data?.drafts ?? [];
+    if (!deepLinkUnitId) return all;
+    return all.filter((d) => d.unit_id === deepLinkUnitId);
+  }, [draftsQuery.data?.drafts, deepLinkUnitId]);
   const selected = drafts.find((d) => d.id === selectedId) ?? null;
 
   const columns = useMemo<ParityColumn<FaultDraft>[]>(
@@ -106,13 +113,27 @@ export function FaultDraftsPage() {
 
       {draftsQuery.isError ? <p className="text-sm text-red-600">Failed to load fault-driven drafts.</p> : null}
 
+      {deepLinkUnitId ? (
+        <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+          Filtered to unit <span className="font-mono font-semibold">{deepLinkUnitId.slice(0, 8)}</span>
+          {" — "}
+          <Link to="/maintenance/fault-drafts" className="underline">
+            clear filter
+          </Link>
+        </p>
+      ) : null}
+
       <ParityTable
         rows={drafts}
         columns={columns}
         rowKey={(row) => row.id}
         loading={draftsQuery.isLoading}
         storageKey="maintenance-fault-drafts"
-        emptyText="No fault-driven draft work orders pending review."
+        emptyText={
+          deepLinkUnitId
+            ? "No fault-driven drafts for this unit."
+            : "No fault-driven draft work orders pending review."
+        }
         exportFilename="fault-drafts"
       />
 

@@ -60,9 +60,9 @@ const DEFAULT_LINK_CLASSNAME =
 /**
  * Resolves an entity kind + id to its real per-id detail route.
  *
- * Verified against apps/frontend/src/routes/manifest.tsx. Kinds that do NOT have a real
- * consumer for deep-link params return null on purpose — never fabricate a dead link.
- * "settlement" / "liability" / "expense" / "claim" use query-param drill-through (list+highlight).
+ * Verified against apps/frontend/src/routes/manifest.tsx. Every declared EntityKind resolves —
+ * never fabricate a dead link. Query-param drill-through kinds (settlement / liability / expense /
+ * claim / bank_transaction) require the target page to honor the param (CI: verify-entitylink-deep-links).
  * "payment" → /accounting/payments/:id · "work_order" → /maintenance/work-orders/:id
  * "bill" → /accounting/bills/:id · "matter" → /legal/matters/:id
  * "bank_transaction" → /banking/transactions?txn_id= (BankingHome expands row)

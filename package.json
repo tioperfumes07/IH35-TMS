@@ -962,6 +962,7 @@
     "verify:fuel-history-import-wired": "node scripts/verify-fuel-history-import-wired.mjs",
     "verify:fuel-gl-poster-callers": "node scripts/verify-fuel-gl-poster-callers.mjs",
     "verify:no-dead-clicks": "node scripts/verify-no-dead-clicks.mjs",
+    "verify:entitylink-deep-links": "node scripts/verify-entitylink-deep-links.mjs",
     "verify:qbo-parity-vendors": "node scripts/verify-qbo-parity-vendors.mjs",
     "verify:road-service-route-mounted": "node scripts/verify-road-service-route-mounted.mjs",
     "verify:qbo-parity-customers": "node scripts/verify-qbo-parity-customers.mjs",

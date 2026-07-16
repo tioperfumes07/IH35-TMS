@@ -299,7 +299,13 @@ export function InvoiceDetailPage() {
               <div className="text-xs font-semibold text-gray-500">Customer notes</div>
               <div>{invoice.customer_notes || "-"}</div>
             </div>
-            <button className="text-xs font-semibold text-slate-700 underline" onClick={() => navigate(`/reports?invoice_id=${invoice.id}`)} type="button">
+            <button
+              className="text-xs font-semibold text-slate-700 underline"
+              onClick={() =>
+                navigate(`/accounting/audit-trail?source_type=invoice&source_id=${encodeURIComponent(invoice.id)}`)
+              }
+              type="button"
+            >
               View audit log
             </button>
           </div>
