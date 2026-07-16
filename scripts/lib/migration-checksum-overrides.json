@@ -204,5 +204,37 @@
     "ledger_checksum": "2cca4179981cf46bee3bdfb79c83cd7d32cd783a3d0d14aab97c07d840a9e76a",
     "disk_checksum": "93385bd9b537c3a18eed05d9481aecd14b64fd2aeeb51cfe4660b52b8e5ecbb2",
     "reason": "#2152 edited already-applied #2151 migration (inert CoA role-CHECK reconcile); accept drift instead of mutating an applied migration. Unblocks prod deploy."
+  },
+  {
+    "filename": "202607480000_driver_advance_gl_posting_flag.sql",
+    "ledger_checksum": "f13e2cbbeb769c75ca6f9b415ed1e0469ba176a90d009ff91f6c9c47bf43842c",
+    "disk_checksum": "ebf852db488fc820fdc8bc88106dae498f6c036fbe64be1e05a19e85ec5df95e",
+    "reason": "2026-07-15: held migration was applied on prod, then SQL was amended in later PR commits before merge. Ledger has pre-amend checksum; disk has final. Override unblocks Render preDeploy db:migrate (checksum mismatch exit 1).",
+    "added_at": "2026-07-16",
+    "added_in_pr": "hotfix/predeploy-checksum-48-51"
+  },
+  {
+    "filename": "202607490000_insurance_entity_isolation.sql",
+    "ledger_checksum": "3b60d39fbd7a64af8dac30dcacb2be8f4a2f6dddd27b2b3f2c95ec38d519212b",
+    "disk_checksum": "35ceed02c84a1528ed6eb9f4a03eff67ab842451882f814e96369dfef1a2e219",
+    "reason": "2026-07-15: #2528 entity-isolation SQL amended after prod apply (apply-twice / FK / DO NOT RUN markers). Override unblocks Render preDeploy.",
+    "added_at": "2026-07-16",
+    "added_in_pr": "hotfix/predeploy-checksum-48-51"
+  },
+  {
+    "filename": "202607500000_factoring_entity_isolation.sql",
+    "ledger_checksum": "35322bb7bc804ec7097fc4177b528f28659fb51303b43fc4d3474213c420671f",
+    "disk_checksum": "f728fb8b71a03d3e9179fd084db5b8a2b7674c48f9524514a06b879d07a39c9e",
+    "reason": "2026-07-15: #2528 factoring isolation SQL amended after prod apply. Override unblocks Render preDeploy.",
+    "added_at": "2026-07-16",
+    "added_in_pr": "hotfix/predeploy-checksum-48-51"
+  },
+  {
+    "filename": "202607510000_events_audit_log_entity_isolation.sql",
+    "ledger_checksum": "f2abcd740aff67f4fc7406bf9242b05ff6b1a31f4cbb450a58c21caaba46625e",
+    "disk_checksum": "f92e428c0688c3be5380e5587b85edf5eac9b2d13a18ca30feb4e434a3cb1dd4",
+    "reason": "2026-07-15: #2528 audit_log/event_log isolation SQL amended after prod apply (partition loop / inline FK). Override unblocks Render preDeploy.",
+    "added_at": "2026-07-16",
+    "added_in_pr": "hotfix/predeploy-checksum-48-51"
   }
 ]
