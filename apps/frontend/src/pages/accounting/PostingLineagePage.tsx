@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
-import { EntityLink } from "../../components/shared/EntityLink";
+import { useMemo, useState, type ReactNode } from "react";
+import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
 import { getAccountingSourceLineage, type AccountingSourceLineageRow } from "../../api/accounting";
 import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -16,6 +16,71 @@ function formatWhen(iso: string) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
   return d.toLocaleString();
+}
+
+function postingEntityKind(type: string | null | undefined): EntityKind | null {
+  const t = (type ?? "").toLowerCase();
+  switch (t) {
+    case "invoice":
+      return "invoice";
+    case "bill":
+      return "bill";
+    case "customer_payment":
+    case "payment":
+    case "bill_payment":
+      return "payment";
+    case "expense":
+      return "expense";
+    case "settlement":
+    case "driver_settlement":
+    case "driver_settlement_deduction":
+      return "settlement";
+    case "journal_entry":
+      return "journal_entry";
+    case "load":
+      return "load";
+    case "vendor":
+      return "vendor";
+    case "customer":
+      return "customer";
+    case "unit":
+      return "unit";
+    case "driver":
+      return "driver";
+    case "trailer":
+      return "trailer";
+    case "work_order":
+      return "work_order";
+    case "factoring_advance":
+      return "factoring_advance";
+    case "bank_transaction":
+    case "bank_categorization":
+      return "bank_transaction";
+    case "claim":
+      return "claim";
+    case "matter":
+      return "matter";
+    case "liability":
+      return "liability";
+    default:
+      return null;
+  }
+}
+
+function PostingEntityLink({
+  type,
+  id,
+  label,
+}: {
+  type: string | null | undefined;
+  id: string | null | undefined;
+  label?: ReactNode;
+}) {
+  const kind = postingEntityKind(type);
+  if (!kind || !id) {
+    return <>{label ?? id ?? ""}</>;
+  }
+  return <EntityLink kind={kind} id={id} label={label ?? id.slice(0, 8)} />;
 }
 
 export function PostingLineagePage() {
@@ -104,7 +169,12 @@ export function PostingLineagePage() {
       {submitted ? (
         <div className="rounded-sm border border-slate-200 bg-white p-3">
           <div className="text-sm font-semibold text-slate-800">
-            Source: {submitted.sourceType} / {submitted.sourceId}
+            Source: {submitted.sourceType} /{" "}
+            <PostingEntityLink
+              type={submitted.sourceType}
+              id={submitted.sourceId}
+              label={submitted.sourceId.slice(0, 8)}
+            />
           </div>
           <div className="mt-1 text-xs text-slate-600">
             Debit {formatMoney(totals.debit)} · Credit {formatMoney(totals.credit)} ·{" "}
@@ -142,7 +212,16 @@ export function PostingLineagePage() {
                   <td className="px-2 py-2">{formatMoney(row.amount_cents)}</td>
                   <td className="px-2 py-2">
                     {row.linked_object_type ?? "—"}
-                    {row.linked_object_id ? ` / ${row.linked_object_id}` : ""}
+                    {row.linked_object_id ? (
+                      <>
+                        {" / "}
+                        <PostingEntityLink
+                          type={row.linked_object_type}
+                          id={row.linked_object_id}
+                          label={row.linked_object_id.slice(0, 8)}
+                        />
+                      </>
+                    ) : null}
                     {row.relationship_role ? ` (${row.relationship_role})` : ""}
                   </td>
                 </tr>

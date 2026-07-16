@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listSubmissionQueue, submitFactoringQueueBatch, type SubmissionQueueItem } from "../../api/factoring";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -132,7 +133,13 @@ export function SubmissionQueue() {
                     onChange={() => toggle(item.invoice_id)}
                   />
                 </td>
-                <td className="py-1.5 pr-3 font-mono">{item.display_id ?? item.invoice_id.slice(0, 8)}</td>
+                <td className="py-1.5 pr-3 font-mono">
+                  <EntityLink
+                    kind="invoice"
+                    id={item.invoice_id}
+                    label={item.display_id ?? item.invoice_id.slice(0, 8)}
+                  />
+                </td>
                 <td className="py-1.5 pr-3">{item.customer_name ?? "—"}</td>
                 <td className="py-1.5 pr-3">{item.issue_date ? formatDateUS(item.issue_date) : "—"}</td>
                 <td className="py-1.5 pr-3 text-right tabular-nums">{asMoney(item.total_cents)}</td>

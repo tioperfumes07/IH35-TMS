@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { EntityLink } from "../../components/shared/EntityLink";
 import {
   completeReconciliationSession,
   getReconciliationWorkspace,
@@ -21,6 +22,17 @@ import { MoneyInput } from "../../components/forms/MoneyInput";
 import { DatePicker } from "../../components/forms/DatePicker";
 
 type CandidateEvent = { id: string; event_date: string; event_type: "load" | "bill" | "settlement" };
+
+function candidateEntityKind(eventType: CandidateEvent["event_type"]) {
+  switch (eventType) {
+    case "load":
+      return "load" as const;
+    case "bill":
+      return "bill" as const;
+    case "settlement":
+      return "settlement" as const;
+  }
+}
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -222,6 +234,23 @@ export function ReconciliationWorkspacePage() {
                     </div>
                     <div className="truncate text-sm font-medium text-gray-900">{tx.description || "Bank transaction"}</div>
                     <div className="text-sm text-gray-700">{money(Number(tx.amount_cents))}</div>
+                    {matched ? (
+                      <div className="mt-1 flex flex-wrap gap-2 text-xs">
+                        {tx.matched_load_id ? (
+                          <EntityLink kind="load" id={tx.matched_load_id} label={`Load ${tx.matched_load_id.slice(0, 8)}`} />
+                        ) : null}
+                        {tx.matched_bill_id ? (
+                          <EntityLink kind="bill" id={tx.matched_bill_id} label={`Bill ${tx.matched_bill_id.slice(0, 8)}`} />
+                        ) : null}
+                        {tx.matched_settlement_id ? (
+                          <EntityLink
+                            kind="settlement"
+                            id={tx.matched_settlement_id}
+                            label={`Settlement ${tx.matched_settlement_id.slice(0, 8)}`}
+                          />
+                        ) : null}
+                      </div>
+                    ) : null}
                   </button>
                 );
               })}
@@ -253,7 +282,13 @@ export function ReconciliationWorkspacePage() {
                   }`}
                 >
                   <div className="text-xs uppercase tracking-wide text-gray-500">{event.event_type}</div>
-                  <div className="truncate text-sm font-medium text-gray-900">{event.id}</div>
+                  <div className="truncate text-sm font-medium text-gray-900">
+                    <EntityLink
+                      kind={candidateEntityKind(event.event_type)}
+                      id={event.id}
+                      label={event.id.slice(0, 8)}
+                    />
+                  </div>
                   <div className="text-xs text-gray-600">{event.event_date}</div>
                 </button>
               ))}
