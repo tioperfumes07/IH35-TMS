@@ -669,6 +669,32 @@ export function listPartsInventory(operatingCompanyId: string) {
   ).then((result) => result.rows);
 }
 
+/** WO part consumption / assignment trail — SoR: maintenance.parts_invoice_links (not stock on-hand). */
+export type PartsAssignmentRow = {
+  id: string;
+  operating_company_id: string;
+  work_order_id: string;
+  work_order_display_id: string | null;
+  unit_id: string | null;
+  unit_number: string | null;
+  parts_inventory_id: string | null;
+  part_description: string;
+  part_number: string | null;
+  qty_used: number;
+  vendor_id: string;
+  vendor_name: string | null;
+  vendor_invoice_number: string;
+  vendor_invoice_amount: number;
+  created_at: string;
+  created_by_user_id: string | null;
+};
+
+export function listPartsAssignments(operatingCompanyId: string) {
+  return apiRequest<{ rows: PartsAssignmentRow[] }>(
+    `/api/v1/maintenance/parts-invoice-links?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  ).then((result) => result.rows);
+}
+
 export function adjustPartsInventory(
   rowId: string,
   operatingCompanyId: string,

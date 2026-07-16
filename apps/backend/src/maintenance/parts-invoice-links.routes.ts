@@ -31,6 +31,59 @@ async function withCompany<T>(userId: string, companyId: string, fn: (client: an
 }
 
 export async function registerMaintenancePartsInvoiceLinksRoutes(app: FastifyInstance) {
+  /**
+   * Company-wide assignment trail: parts consumed / linked onto work orders.
+   * SoR = maintenance.parts_invoice_links (blueprint: WO part usage + optional stock decrement).
+   * ADD-ONLY — does not replace Purchases stock list or delete create/delete link routes.
+   */
+  app.get(
+    "/api/v1/maintenance/parts-invoice-links",
+    { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    const query = querySchema.safeParse(req.query ?? {});
+    if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
+
+    const rows = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
+      const res = await client.query(
+        `
+          SELECT
+            pil.id::text AS id,
+            pil.operating_company_id::text AS operating_company_id,
+            pil.work_order_id::text AS work_order_id,
+            wo.display_id AS work_order_display_id,
+            wo.unit_id::text AS unit_id,
+            u.unit_number AS unit_number,
+            pil.parts_inventory_id::text AS parts_inventory_id,
+            pil.part_description,
+            pi.part_number,
+            pil.qty_used,
+            pil.vendor_id::text AS vendor_id,
+            v.vendor_name AS vendor_name,
+            pil.vendor_invoice_number,
+            pil.vendor_invoice_amount::float8 AS vendor_invoice_amount,
+            pil.created_at,
+            pil.created_by_user_id::text AS created_by_user_id
+          FROM maintenance.parts_invoice_links pil
+          INNER JOIN maintenance.work_orders wo
+            ON wo.id = pil.work_order_id
+           AND wo.operating_company_id = pil.operating_company_id
+          LEFT JOIN mdata.units u ON u.id = wo.unit_id
+          LEFT JOIN mdata.vendors v ON v.id = pil.vendor_id
+          LEFT JOIN maintenance.parts_inventory pi ON pi.id = pil.parts_inventory_id
+          WHERE pil.operating_company_id = $1
+          ORDER BY pil.created_at DESC
+          LIMIT 500
+        `,
+        [query.data.operating_company_id]
+      );
+      return res.rows;
+    });
+
+    return { rows };
+  });
+
   app.post("/api/v1/maintenance/work-orders/:id/parts-invoice-links", async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
