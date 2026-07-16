@@ -1,20 +1,14 @@
 /**
- * Relay Payments fuel-transaction INGEST — storage only (no GL/expense posting; see design doc).
+ * Relay Payments fuel-transaction INGEST — staging + canonical fuel history bridge (no GL).
  *
  * Upserts each pulled/webhook transaction into integrations.relay_fuel_transactions (+ _lines) by
- * (operating_company_id, transaction_id) — idempotent, safe to re-run over the same window or receive
- * the same webhook twice. Resolves (read-only) the driver via mdata.drivers.integration_id (= Relay's
- * driver.integration_id, the fuel-card/driver number) and the unit via the "Truck #" prompt's value
- * matched against mdata.units.unit_number. Money fields are converted from Relay's string dollar
- * amounts to integer cents at this layer.
+ * (operating_company_id, transaction_id) — idempotent. Then bridges into fuel.fuel_transactions for
+ * IFTA/Fuel History (posted_to_gl stays false on staging; GL poster NOT called here).
  *
- * ERROR POLICY: every DB/parse error is logged (via the caller-supplied logger) and RE-THROWN — this
- * ingest never silently swallows a failure. Callers (cron tick / webhook handler) decide whether to
- * isolate a single row's failure from the rest of a batch, but the failure itself is always surfaced.
- *
- * @packageDocumentation
+ * Resolves (read-only) the driver via mdata.drivers.integration_id and the unit via the "Truck #" prompt.
  */
 import type { RelayFuelTransaction } from "./relay-client.js";
+import { bridgeRelayFuelToCanonical } from "./relay-fuel-canonical-bridge.js";
 
 export type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
@@ -28,6 +22,8 @@ export type RelayIngestResult = {
   matched_driver_id: string | null;
   matched_unit_id: string | null;
   line_count: number;
+  /** Canonical fuel.fuel_transactions id when bridge succeeded (no GL). */
+  fuel_transaction_id: string | null;
 };
 
 /** Relay sends dollar amounts as strings (e.g. "182.44"). Converts to integer cents; never silently
@@ -274,11 +270,17 @@ export async function upsertRelayFuelTransaction(
     );
   }
 
+  const bridge = await bridgeRelayFuelToCanonical(client, operatingCompanyId, tx, {
+    driver_id: matchedDriverId,
+    unit_id: matchedUnitId,
+  });
+
   return {
     relay_fuel_transaction_id: relayFuelTransactionId,
     transaction_id: tx.transaction_id,
     matched_driver_id: matchedDriverId,
     matched_unit_id: matchedUnitId,
     line_count: fuelItems.length,
+    fuel_transaction_id: bridge.fuel_transaction_id,
   };
 }
