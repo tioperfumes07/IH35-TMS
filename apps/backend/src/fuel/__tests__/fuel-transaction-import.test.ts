@@ -164,6 +164,14 @@ describe("importFuelCardTransactionsForCompany", () => {
 
     expect(counts.rows_inserted).toBe(1);
     expect(counts.rows_unlinked_to_load).toBe(0);
+    expect(counts.gl_post_candidates).toHaveLength(1);
+    expect(counts.gl_post_candidates[0]).toMatchObject({
+      operating_company_id: COMPANY,
+      fuel_transaction_id: "new-id",
+      fuel_type: "diesel",
+      amount_cents: 38914,
+      actor_user_id: "user-1",
+    });
 
     const ins = insertCall(captured);
     const v = ins.values!;

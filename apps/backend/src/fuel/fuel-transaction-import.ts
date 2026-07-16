@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import type { FuelTxnGlPostCandidate } from "../accounting/fuel-posting/maybe-post-from-fuel-transaction.service.js";
 
 /**
  * FUEL-1 — Fuel-card TRANSACTION import writer.
@@ -66,6 +67,8 @@ export type FuelImportCounts = {
   rows_skipped: number;
   rows_unlinked_to_load: number; // G18 gap: persisted with exemption reason, needs manual load link
   dead_letters: number;
+  /** Callers flush these AFTER the import transaction commits (EXPENSE_GL_POSTING_ENABLED). */
+  gl_post_candidates: FuelTxnGlPostCandidate[];
 };
 
 function pick(row: Record<string, unknown>, candidates: string[]): unknown {
@@ -347,6 +350,7 @@ export async function importFuelCardTransactionsForCompany(
     rows_skipped: 0,
     rows_unlinked_to_load: 0,
     dead_letters: parsed.dead_letters.length,
+    gl_post_candidates: [],
   };
 
   for (const row of parsed.rows) {
@@ -428,6 +432,22 @@ export async function importFuelCardTransactionsForCompany(
     if ((insertRes.rowCount ?? 0) > 0) {
       counts.rows_inserted += 1;
       if (!loadId) counts.rows_unlinked_to_load += 1;
+      const fuelTxnId = insertRes.rows[0]?.id;
+      const amountCents = Math.round(Number(row.total_cost ?? 0) * 100);
+      if (fuelTxnId && amountCents > 0) {
+        counts.gl_post_candidates.push({
+          operating_company_id: companyId,
+          actor_user_id: opts?.userId ?? null,
+          fuel_transaction_id: fuelTxnId,
+          fuel_type: row.fuel_type,
+          transaction_at: row.transaction_at,
+          amount_cents: amountCents,
+          driver_id: driverId,
+          location_state: row.location_state,
+          gallons: row.gallons,
+          cash_advance: false,
+        });
+      }
     } else {
       counts.rows_duplicate += 1;
     }

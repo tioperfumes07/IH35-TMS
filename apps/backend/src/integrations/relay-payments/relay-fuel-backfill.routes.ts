@@ -3,8 +3,8 @@
  * transactions. The daily cron only pulls yesterday; this endpoint runs runRelayFuelBackfill (the exported
  * 24-month backfill) so the owner can seed the full history on demand. Owner/Administrator only. It ingests
  * per-entity ONLY for operating companies whose RELAY_FUEL_INGEST_ENABLED flag is ON (runRelayFuelBackfill
- * enforces this), reads RELAY_API_KEY/RELAY_API_BASE from env, and is STAGING ingest only — writes
- * integrations.relay_fuel_transactions(+lines), posted_to_gl stays false, NO GL / accounting / fuel write.
+ * enforces this), reads RELAY_API_KEY/RELAY_API_BASE from env, and writes staging + canonical fuel rows.
+ * TMS GL post is deferred to flushFuelGlPostsAfterCommit after commit (EXPENSE_GL_POSTING_ENABLED).
  * The backfill can take a while (API pull per month per company), so it runs in the background and returns 202.
  */
 import type { FastifyInstance } from "fastify";

@@ -10,6 +10,7 @@ import {
   importFuelCardTransactionsForCompany,
   type DbClient,
 } from "./fuel-transaction-import.js";
+import { flushFuelGlPostsAfterCommit } from "../accounting/fuel-posting/maybe-post-from-fuel-transaction.service.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -112,8 +113,13 @@ export async function registerFuelTransactionImportRoutes(app: FastifyInstance) 
     if ("unavailable" in result) {
       return reply.code(501).send({ error: "fuel_transactions_unavailable" });
     }
+
+    // AFTER COMMIT — TMS GL only (EXPENSE_GL_POSTING_ENABLED); never QBO push.
+    await flushFuelGlPostsAfterCommit(result.counts.gl_post_candidates, req.log);
+
+    const { gl_post_candidates: _gl, ...publicCounts } = result.counts;
     return {
-      ...result.counts,
+      ...publicCounts,
       dead_letter_details: parsed.dead_letters.slice(0, 25),
     };
   });

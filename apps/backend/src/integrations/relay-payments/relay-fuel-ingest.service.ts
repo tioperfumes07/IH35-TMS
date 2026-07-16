@@ -1,15 +1,17 @@
 /**
- * Relay Payments fuel-transaction INGEST — staging + canonical fuel history bridge (no GL).
+ * Relay Payments fuel-transaction INGEST — staging + canonical fuel history bridge.
  *
- * Upserts each pulled/webhook transaction into integrations.relay_fuel_transactions (+ _lines) by
+ * Upserts each pulled/webhook/CSV transaction into integrations.relay_fuel_transactions (+ _lines) by
  * (operating_company_id, transaction_id) — idempotent. Then bridges into fuel.fuel_transactions for
- * IFTA/Fuel History (posted_to_gl stays false on staging; GL poster NOT called here).
+ * IFTA/Fuel History. Returns a gl_post_candidate so the CALLER can invoke maybePostFuelExpenseFromCanonicalTxn
+ * AFTER this transaction commits (EXPENSE_GL_POSTING_ENABLED, default OFF). Do not post inside this txn.
  *
  * Resolves (read-only) the driver via mdata.drivers.integration_id and the unit via the "Truck #" prompt.
  */
 import type { RelayFuelTransaction } from "./relay-client.js";
 import type { DbClient } from "./db-client.type.js";
 import { bridgeRelayFuelToCanonical } from "./relay-fuel-canonical-bridge.js";
+import type { FuelTxnGlPostCandidate } from "../../accounting/fuel-posting/maybe-post-from-fuel-transaction.service.js";
 
 export type { DbClient } from "./db-client.type.js";
 
@@ -21,8 +23,13 @@ export type RelayIngestResult = {
   matched_driver_id: string | null;
   matched_unit_id: string | null;
   line_count: number;
-  /** Canonical fuel.fuel_transactions id when bridge succeeded (no GL). */
+  /** Canonical fuel.fuel_transactions id when bridge succeeded. */
   fuel_transaction_id: string | null;
+  /**
+   * Present when bridge succeeded. Caller MUST flush via flushFuelGlPostsAfterCommit AFTER the
+   * ingest transaction commits (never inside this function — avoids orphan JEs on outer ROLLBACK).
+   */
+  gl_post_candidate: FuelTxnGlPostCandidate | null;
 };
 
 /** Relay sends dollar amounts as strings (e.g. "182.44"). Converts to integer cents; never silently
@@ -297,6 +304,36 @@ export async function upsertRelayFuelTransaction(
     unit_id: matchedUnitId,
   });
 
+  let glPostCandidate: FuelTxnGlPostCandidate | null = null;
+  if (bridge.fuel_transaction_id && totalAmountPaidCents > 0) {
+    let gallons = 0;
+    let fuelType = "diesel";
+    for (const item of fuelItems) {
+      const vol = item.volume != null && item.volume !== "" ? Number(item.volume) : NaN;
+      if (Number.isFinite(vol) && vol > 0) gallons += vol;
+      if (item.fuel_type || item.fuel_type_description) {
+        const raw = String(item.fuel_type_description ?? item.fuel_type ?? "").toLowerCase();
+        if (raw.includes("def") || raw.includes("urea")) fuelType = "def";
+        else if (raw.includes("reefer") || raw.includes("refriger")) fuelType = "reefer_diesel";
+        else if (raw.includes("gas") || raw.includes("unleaded")) fuelType = "gas";
+        else if (raw.includes("diesel") || raw.includes("ulsd")) fuelType = "diesel";
+        else fuelType = "other";
+      }
+    }
+    glPostCandidate = {
+      operating_company_id: operatingCompanyId,
+      fuel_transaction_id: bridge.fuel_transaction_id,
+      fuel_type: fuelType,
+      transaction_at: tx.created_at,
+      amount_cents: totalAmountPaidCents,
+      driver_id: matchedDriverId,
+      location_state: tx.location?.state ?? null,
+      gallons: gallons > 0 ? gallons : null,
+      cash_advance: Boolean(tx.cash_advance),
+      relay_fuel_transaction_id: relayFuelTransactionId,
+    };
+  }
+
   return {
     relay_fuel_transaction_id: relayFuelTransactionId,
     transaction_id: tx.transaction_id,
@@ -304,5 +341,6 @@ export async function upsertRelayFuelTransaction(
     matched_unit_id: matchedUnitId,
     line_count: fuelItems.length,
     fuel_transaction_id: bridge.fuel_transaction_id,
+    gl_post_candidate: glPostCandidate,
   };
 }
