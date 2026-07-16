@@ -3,6 +3,7 @@ import type { QboReportResponse } from "../qbo-client.js";
 import {
   amountToCents,
   parseTrialBalance,
+  parseBalanceSheet,
   parseGeneralLedger,
   chunkDateRangeMonthly,
 } from "../qbo-report-parser.js";
@@ -149,6 +150,248 @@ describe("parseTrialBalance", () => {
     const creditSum = parsed.lines.reduce((a, l) => a + l.credit_cents, 0n);
     expect(debitSum).toBe(100000n);
     expect(creditSum).toBe(100000n);
+  });
+});
+
+// ── Balance Sheet fixtures (Intuit nested Section + Account/Total shape) ────
+// Mirrors public Intuit BalanceSheet samples: nested ASSETS → Current Assets →
+// Bank Accounts → leaf Data rows with account id; Summary/TOTAL rows have no id.
+const BS_INTUIT_NESTED: QboReportResponse = {
+  Header: {
+    ReportName: "BalanceSheet",
+    ReportBasis: "Accrual",
+    StartPeriod: "2026-03-31",
+    EndPeriod: "2026-03-31",
+    Currency: "USD",
+  },
+  Columns: {
+    Column: [
+      { ColTitle: "", ColType: "Account", MetaData: [{ Name: "ColKey", Value: "account" }] },
+      { ColTitle: "Total", ColType: "Money", MetaData: [{ Name: "ColKey", Value: "total" }] },
+    ],
+  },
+  Rows: {
+    Row: [
+      {
+        type: "Section",
+        Header: { ColData: [{ value: "ASSETS" }, { value: "" }] },
+        Rows: {
+          Row: [
+            {
+              type: "Section",
+              Header: { ColData: [{ value: "Current Assets" }, { value: "" }] },
+              Rows: {
+                Row: [
+                  {
+                    type: "Section",
+                    Header: { ColData: [{ value: "Bank Accounts" }, { value: "" }] },
+                    Rows: {
+                      Row: [
+                        {
+                          type: "Data",
+                          ColData: [{ value: "Checking", id: "35" }, { value: "1,350.55" }],
+                        },
+                        {
+                          type: "Data",
+                          ColData: [{ value: "Savings", id: "36" }, { value: "800.00" }],
+                        },
+                      ],
+                    },
+                    Summary: { ColData: [{ value: "Total Bank Accounts" }, { value: "2,150.55" }] },
+                  },
+                  {
+                    type: "Data",
+                    ColData: [{ value: "Accounts Receivable (A/R)", id: "84" }, { value: "500.50" }],
+                  },
+                ],
+              },
+              Summary: { ColData: [{ value: "Total Current Assets" }, { value: "2,651.05" }] },
+            },
+          ],
+        },
+        Summary: { ColData: [{ value: "TOTAL ASSETS" }, { value: "2,651.05" }] },
+        group: "TotalAssets",
+      },
+      {
+        type: "Section",
+        Header: { ColData: [{ value: "LIABILITIES AND EQUITY" }, { value: "" }] },
+        Rows: {
+          Row: [
+            {
+              type: "Section",
+              Header: { ColData: [{ value: "Liabilities" }, { value: "" }] },
+              Rows: {
+                Row: [
+                  {
+                    type: "Data",
+                    ColData: [{ value: "Accounts Payable (A/P)", id: "33" }, { value: "400.00" }],
+                  },
+                ],
+              },
+              Summary: { ColData: [{ value: "Total Liabilities" }, { value: "400.00" }] },
+            },
+            {
+              type: "Section",
+              Header: { ColData: [{ value: "Equity" }, { value: "" }] },
+              Rows: {
+                Row: [
+                  {
+                    type: "Data",
+                    ColData: [{ value: "Opening Balance Equity", id: "90" }, { value: "2,251.05" }],
+                  },
+                ],
+              },
+              Summary: { ColData: [{ value: "Total Equity" }, { value: "2,251.05" }] },
+            },
+          ],
+        },
+        Summary: { ColData: [{ value: "TOTAL LIABILITIES AND EQUITY" }, { value: "2,651.05" }] },
+        group: "TotalLiabilitiesAndEquity",
+      },
+    ],
+  },
+};
+
+// v2 empty cells + Total column before Account (metadata resolution, not index).
+const BS_V2_REORDERED: QboReportResponse = {
+  Header: {
+    ReportName: "BalanceSheet",
+    ReportBasis: "Cash",
+    StartPeriod: "2026-03-31",
+    EndPeriod: "2026-03-31",
+    Currency: "USD",
+  },
+  Columns: {
+    Column: [
+      { ColTitle: "Total", ColType: "Money" },
+      { ColTitle: "Account", ColType: "Account" },
+    ],
+  },
+  Rows: {
+    Row: [
+      {
+        type: "Section",
+        Header: { ColData: [{ value: "" }, { value: "ASSETS" }] },
+        Rows: {
+          Row: [
+            {
+              type: "Data",
+              ColData: [{ value: "1,000.00" }, { value: "Checking", id: "35" }],
+            },
+            {
+              type: "Data",
+              ColData: [{ value: "" }, { value: "Zero Balance Account", id: "99" }],
+            },
+          ],
+        },
+        Summary: { ColData: [{ value: "1,000.00" }, { value: "TOTAL ASSETS" }] },
+      },
+    ],
+  },
+};
+
+// Ambiguous multi-period money columns (summarize_columns_by=Month without Total) → fail closed.
+const BS_AMBIGUOUS_MONEY: QboReportResponse = {
+  Header: {
+    ReportName: "BalanceSheet",
+    ReportBasis: "Accrual",
+    StartPeriod: "2026-01-01",
+    EndPeriod: "2026-03-31",
+    Currency: "USD",
+  },
+  Columns: {
+    Column: [
+      { ColTitle: "", ColType: "Account" },
+      { ColTitle: "Jan 2026", ColType: "Money" },
+      { ColTitle: "Feb 2026", ColType: "Money" },
+      { ColTitle: "Mar 2026", ColType: "Money" },
+    ],
+  },
+  Rows: {
+    Row: [
+      {
+        type: "Data",
+        ColData: [
+          { value: "Checking", id: "35" },
+          { value: "100.00" },
+          { value: "200.00" },
+          { value: "300.00" },
+        ],
+      },
+    ],
+  },
+};
+
+describe("parseBalanceSheet", () => {
+  it("parses nested Intuit-shaped sections, skips Summary/TOTAL rows, exact cents", () => {
+    const parsed = parseBalanceSheet(BS_INTUIT_NESTED);
+    expect(parsed.reportBasis).toBe("Accrual");
+    expect(parsed.startPeriod).toBe("2026-03-31");
+    expect(parsed.endPeriod).toBe("2026-03-31");
+    expect(parsed.currency).toBe("USD");
+    expect(parsed.lines).toHaveLength(5);
+    expect(parsed.skippedRowCount).toBe(0); // Summary-only sections have no ColData leaf → not counted
+
+    const byId = new Map(parsed.lines.map((l) => [l.qbo_account_id, l]));
+    expect(byId.get("35")).toEqual({
+      qbo_account_id: "35",
+      account_name: "Checking",
+      balance_cents: 135055n,
+    });
+    expect(byId.get("36")?.balance_cents).toBe(80000n);
+    expect(byId.get("84")?.balance_cents).toBe(50050n);
+    expect(byId.get("33")?.balance_cents).toBe(40000n);
+    expect(byId.get("90")?.balance_cents).toBe(225105n);
+
+    // Leaf balances as QBO presents on BS (natural-side positive amounts).
+    const sum = parsed.lines.reduce((a, l) => a + l.balance_cents, 0n);
+    expect(sum).toBe(135055n + 80000n + 50050n + 40000n + 225105n);
+  });
+
+  it("resolves Total/Account by metadata regardless of column order; empty Total → 0", () => {
+    const parsed = parseBalanceSheet(BS_V2_REORDERED);
+    expect(parsed.reportBasis).toBe("Cash");
+    expect(parsed.lines).toHaveLength(2);
+    const checking = parsed.lines.find((l) => l.qbo_account_id === "35");
+    expect(checking?.balance_cents).toBe(100000n);
+    const zero = parsed.lines.find((l) => l.qbo_account_id === "99");
+    expect(zero?.balance_cents).toBe(0n);
+  });
+
+  it("fails closed when multiple Money columns exist without ColTitle Total", () => {
+    expect(() => parseBalanceSheet(BS_AMBIGUOUS_MONEY)).toThrow(
+      /cannot resolve a single as-of money column/,
+    );
+  });
+
+  it("fails closed when Columns metadata is missing", () => {
+    expect(() =>
+      parseBalanceSheet({
+        Header: { ReportName: "BalanceSheet" },
+        Rows: { Row: [] },
+      }),
+    ).toThrow(/no Columns metadata/);
+  });
+
+  it("throws on unparseable money cells (never silently mis-parses)", () => {
+    const bad: QboReportResponse = {
+      Header: { ReportName: "BalanceSheet", EndPeriod: "2026-03-31" },
+      Columns: {
+        Column: [
+          { ColTitle: "", ColType: "Account" },
+          { ColTitle: "Total", ColType: "Money" },
+        ],
+      },
+      Rows: {
+        Row: [
+          {
+            type: "Data",
+            ColData: [{ value: "Checking", id: "35" }, { value: "not-money" }],
+          },
+        ],
+      },
+    };
+    expect(() => parseBalanceSheet(bad)).toThrow(/Unparseable/);
   });
 });
 

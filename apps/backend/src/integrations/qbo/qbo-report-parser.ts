@@ -1,5 +1,5 @@
-// QBO Reports parser (IMPORT-0). Turns the raw QBO TrialBalance / GeneralLedger report envelope into
-// flat, typed, exact-cents rows. Two hard rules drive every line of this file:
+// QBO Reports parser (IMPORT-0). Turns the raw QBO TrialBalance / BalanceSheet / GeneralLedger
+// report envelope into flat, typed, exact-cents rows. Two hard rules drive every line of this file:
 //
 //   1. MONEY IS EXACT. Amounts are parsed to integer cents via string math (BigInt) — never parseFloat /
 //      Number(), which lose precision on values like 1234.56 or accumulate float error across a ledger.
@@ -188,6 +188,106 @@ export function parseTrialBalance(report: QboReportResponse): ParsedTrialBalance
         account_name: cellValue(colData, acctCol),
         debit_cents: amountToCents(cellValue(colData, debitIdx)),
         credit_cents: amountToCents(cellValue(colData, creditIdx)),
+      });
+    }
+  };
+  walk(report.Rows?.Row);
+
+  return {
+    reportBasis: report.Header?.ReportBasis ?? "",
+    startPeriod: report.Header?.StartPeriod ?? "",
+    endPeriod: report.Header?.EndPeriod ?? "",
+    currency: report.Header?.Currency ?? "",
+    lines,
+    skippedRowCount,
+  };
+}
+
+// ── Balance Sheet ───────────────────────────────────────────────────────────
+// Shape verified against Intuit Reports API docs + public BalanceSheet samples
+// (developer.intuit.com run-reports + BalanceSheet entity): nested Section rows
+// (ASSETS → Current Assets → Bank Accounts → …) with leaf Data rows carrying
+// account id on the Account cell and a single Money column titled "Total".
+// Summary / TOTAL * rows have no account id and are skipped (same as TB).
+// Multi-period / summarize_columns_by≠Total shapes with ambiguous Money columns
+// fail closed — OB as-of pull must request a single Total column.
+
+export type BalanceSheetLine = {
+  qbo_account_id: string;
+  account_name: string;
+  /** Signed cents as QBO presents the Total cell (exact string math). Not debit/credit. */
+  balance_cents: bigint;
+};
+
+export type ParsedBalanceSheet = {
+  reportBasis: string;
+  startPeriod: string;
+  endPeriod: string;
+  currency: string;
+  lines: BalanceSheetLine[];
+  /** Count of ColData rows dropped for lacking an account id (section totals / grand totals). */
+  skippedRowCount: number;
+};
+
+/**
+ * Resolve the Balance Sheet money column by metadata. Prefer ColTitle "Total"; if absent and
+ * exactly one Money column exists, use that. Otherwise throw — never guess which period/column
+ * holds the as-of balance.
+ */
+function resolveBalanceSheetMoneyColIndex(columns: QboReportColumn[]): number {
+  const totalIdx = findColIndex(columns, { title: "Total" });
+  if (totalIdx >= 0) return totalIdx;
+
+  const moneyIndices = columns
+    .map((col, idx) => (norm(col.ColType) === "money" ? idx : -1))
+    .filter((idx) => idx >= 0);
+  if (moneyIndices.length === 1) return moneyIndices[0]!;
+
+  const titles = columns.map((c) => JSON.stringify(c.ColTitle ?? "")).join(", ");
+  throw new Error(
+    `parseBalanceSheet: cannot resolve a single as-of money column ` +
+      `(need ColTitle "Total", or exactly one ColType Money). Columns: [${titles}]`,
+  );
+}
+
+/**
+ * Parse a BalanceSheet report into per-account balance cents. Account rows are identified by a
+ * non-empty account id on the account cell; section Summary / TOTAL rows (no id) are skipped.
+ * Recurses into nested Rows so Assets / Liabilities / Equity groupings are handled. Amounts use
+ * exact-cents string math; money column is resolved by metadata (never by hardcoded index).
+ */
+export function parseBalanceSheet(report: QboReportResponse): ParsedBalanceSheet {
+  const columns = getColumns(report);
+  if (columns.length === 0) {
+    throw new Error("parseBalanceSheet: report has no Columns metadata");
+  }
+
+  const accountIdx = findColIndex(columns, { type: "Account" }, { title: ["", "Account"] });
+  const acctCol = accountIdx >= 0 ? accountIdx : 0;
+  const moneyIdx = resolveBalanceSheetMoneyColIndex(columns);
+
+  const lines: BalanceSheetLine[] = [];
+  let skippedRowCount = 0;
+
+  const walk = (rows: QboReportRow[] | undefined) => {
+    for (const row of flattenRows(rows)) {
+      if (row.Rows?.Row) {
+        // Section header = grouping only (ASSETS / Bank Accounts / …). Do NOT push its balance —
+        // that would double-count against leaf account rows. Same rule as parseTrialBalance.
+        walk(row.Rows.Row);
+        continue;
+      }
+      const colData = row.ColData;
+      if (!colData) continue;
+      const acctId = colData[acctCol]?.id?.trim() ?? "";
+      if (!acctId) {
+        skippedRowCount += 1; // summary / TOTAL row (no account id) → skip
+        continue;
+      }
+      lines.push({
+        qbo_account_id: acctId,
+        account_name: cellValue(colData, acctCol),
+        balance_cents: amountToCents(cellValue(colData, moneyIdx)),
       });
     }
   };
