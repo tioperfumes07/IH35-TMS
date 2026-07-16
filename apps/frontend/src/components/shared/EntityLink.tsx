@@ -28,6 +28,7 @@ export type EntityKind =
   | "driver"
   | "trailer"
   | "expense"
+  | "liability"
   | "bank_account"
   | "factoring_advance"
   | "payment"
@@ -56,16 +57,11 @@ const DEFAULT_LINK_CLASSNAME =
 /**
  * Resolves an entity kind + id to its real per-id detail route.
  *
- * Verified against apps/frontend/src/routes/manifest.tsx (2026-07-07 sweep). Kinds that do
- * NOT have a per-id detail route return null on purpose — EntityLink renders plain text for
- * those rather than fabricating a dead link:
- *   - "expense": /accounting/expenses is ExpenseCreatePage (a create form) and
- *     /accounting/expenses/list is the list; no :id detail route exists yet.
- * "settlement" has no path-param route either, but SettlementsPage does support a real
- * query-param drill-through (?settlement_id=), so it resolves to that instead of null.
- * "payment" → /accounting/payments/:id (PaymentDetailPage, confirmed in manifest.tsx).
- * "work_order" → /maintenance/work-orders/:id (WorkOrderDetailPage, confirmed in manifest.tsx).
- * "bill" → /accounting/bills/:id (BillDetailPage, added 2026-07-07).
+ * Verified against apps/frontend/src/routes/manifest.tsx. Kinds that do NOT have a real
+ * consumer for deep-link params return null on purpose — never fabricate a dead link.
+ * "settlement" / "liability" / "expense" use query-param drill-through (list+drawer/highlight).
+ * "payment" → /accounting/payments/:id · "work_order" → /maintenance/work-orders/:id
+ * "bill" → /accounting/bills/:id
  */
 export function resolveEntityRoute(kind: EntityKind, id: string): string | null {
   switch (kind) {
@@ -97,8 +93,10 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/maintenance/work-orders/${id}`;
     case "settlement":
       return `/driver-finance/settlements?settlement_id=${id}`;
+    case "liability":
+      return `/liabilities?liability_id=${id}`;
     case "expense":
-      return null;
+      return `/accounting/expenses/list?expense_id=${id}`;
     default:
       return null;
   }

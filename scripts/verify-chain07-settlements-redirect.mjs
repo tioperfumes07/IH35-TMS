@@ -47,9 +47,13 @@ export function computeChain07Failures(files) {
   }
 
   // 2. The route manifest must redirect /accounting/settlements -> canonical driver-finance page.
-  const redirectRe = /path="\/accounting\/settlements"[\s\S]*?<Navigate\s+to="\/driver-finance\/settlements"\s+replace/;
+  // Accept either bare Navigate (legacy) or PreserveSearchNavigate (keeps ?driver_id / ?settlement_id).
+  const redirectRe =
+    /path="\/accounting\/settlements"[\s\S]*?<(?:Navigate|PreserveSearchNavigate)\s+to="\/driver-finance\/settlements"/;
   if (!redirectRe.test(manifest)) {
-    errors.push('manifest.tsx: "/accounting/settlements" must <Navigate to="/driver-finance/settlements" replace />');
+    errors.push(
+      'manifest.tsx: "/accounting/settlements" must Navigate/PreserveSearchNavigate to="/driver-finance/settlements"'
+    );
   }
 
   // 3. The retired legacy GET /api/v1/settlements handler must be a 308 redirect to the canonical
@@ -107,7 +111,8 @@ export function computeChain07Failures(files) {
 
 function selftest() {
   const goodSubnav = '{ label: "Settlements",      to: "/driver-finance/settlements" },';
-  const goodManifest = '<Route path="/accounting/settlements" element={<ProtectedRoute><Navigate to="/driver-finance/settlements" replace /></ProtectedRoute>} />';
+  const goodManifest =
+    '<Route path="/accounting/settlements" element={<ProtectedRoute><PreserveSearchNavigate to="/driver-finance/settlements" /></ProtectedRoute>} />';
   const goodDetail = [
     'app.get("/api/v1/settlements/:id", async (req, reply) => {',
     '    const canonical = `/api/v1/driver-finance/settlements/${params.data.id}${qs}`;',

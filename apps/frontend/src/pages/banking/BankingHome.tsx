@@ -179,11 +179,25 @@ export function BankingHomePage({ initialTab }: Props = {}) {
 
   // Doc-18 defects #10/#11 — QBO always surfaces "Bank Register" + "Chart of Accounts" as persistent
   // Banking nav actions (not buried in Lists), so both render on every Banking tab, alongside whatever
-  // tab-specific actions apply. Bank Register opens the running-balance GL register (AccountRegisterPage,
-  // the same page Chart of Accounts "View register" links to); Chart of Accounts opens the COA list.
+  // tab-specific actions apply. Bank Register MUST pre-bind the selected bank's Cash GL
+  // (ledger_account_id) — same path as CoA "View register". Never open the unbound empty picker.
+  const openBankRegister = () => {
+    const bankRow = (allAccountsQuery.data?.accounts ?? []).find((a) => String(a.id) === String(selectedId ?? ""));
+    const ledgerAccountId = bankRow?.ledger_account_id ? String(bankRow.ledger_account_id) : null;
+    if (ledgerAccountId) {
+      navigate(`/accounting/chart-of-accounts/register/${ledgerAccountId}`);
+      return;
+    }
+    pushToast(
+      selectedId
+        ? "This bank has no Cash GL mapping. Link it under Banking → Cash GL setup, then open Bank Register."
+        : "Select a bank account first, then open Bank Register.",
+      "error"
+    );
+  };
   const navActions = (
     <>
-      <ActionButton onClick={() => navigate("/accounting/account-register")}>Bank Register</ActionButton>
+      <ActionButton onClick={openBankRegister}>Bank Register</ActionButton>
       <ActionButton onClick={() => navigate("/lists/accounting/chart-of-accounts")}>Chart of Accounts</ActionButton>
     </>
   );

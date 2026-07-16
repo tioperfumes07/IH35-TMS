@@ -126,7 +126,16 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
     { key: "reason_code", label: "Reason", render: (row) => String(row.reason_code ?? row.reason_name ?? "—") },
     { key: "amount", label: "Amount", render: (row) => `$${Number(row.amount ?? 0).toFixed(2)}` },
     { key: "status", label: "Status", sortable: true, render: (row) => toStatusLabel(String(row.status ?? "pending")) },
-    { key: "driver_liability_id", label: "Liability", render: (row) => String(row.driver_liability_id ?? "—") },
+    {
+      key: "driver_liability_id",
+      label: "Liability",
+      render: (row) =>
+        row.driver_liability_id ? (
+          <EntityLink kind="liability" id={String(row.driver_liability_id)} label={String(row.driver_liability_id).slice(0, 8)} />
+        ) : (
+          "—"
+        ),
+    },
   ];
 
   return (

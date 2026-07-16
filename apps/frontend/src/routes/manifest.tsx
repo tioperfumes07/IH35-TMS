@@ -638,6 +638,12 @@ function UnderscoreLegacyRedirect({ from, to }: { from: string; to: string }) {
   return <Navigate to={to} replace />;
 }
 
+/** Preserve ?query + #hash on alias redirects (LAW: never drop driver_id / settlement_id). */
+function PreserveSearchNavigate({ to }: { to: string }) {
+  const location = useLocation();
+  return <Navigate to={`${to}${location.search}${location.hash}`} replace />;
+}
+
 function ListsDomainRoute() {
   const { domain } = useParams();
   const location = useLocation();
@@ -4081,13 +4087,14 @@ export const ROUTES = React.Children.toArray(
         <Route path="/accounting/all-transactions" element={<ProtectedRoute><Navigate to="/accounting/transactions" replace /></ProtectedRoute>} />
         <Route path="/accounting/receive-payment" element={<ProtectedRoute><Navigate to="/accounting/payments" replace /></ProtectedRoute>} />
         <Route path="/accounting/bill-payment" element={<ProtectedRoute><Navigate to="/accounting/bill-payments" replace /></ProtectedRoute>} />
-        <Route path="/settlements" element={<ProtectedRoute><Navigate to="/driver-finance/settlements" replace /></ProtectedRoute>} />
+        <Route path="/settlements" element={<ProtectedRoute><PreserveSearchNavigate to="/driver-finance/settlements" /></ProtectedRoute>} />
         {/* CHAIN-07 — the accounting "Settlements" surface is redirected to the single canonical
             driver-finance settlements subledger. The legacy accounting/settlement.* duplicate ledger
             is RETIRED (see apps/backend/src/settlements/pre-settlements.routes.ts). Single-subledger
             rule (QBO/NetSuite/McLeod/Alvys): never resurrect a 2nd settlement ledger.
-            Guarded by scripts/verify-chain07-settlements-redirect.mjs. */}
-        <Route path="/accounting/settlements" element={<ProtectedRoute><Navigate to="/driver-finance/settlements" replace /></ProtectedRoute>} />
+            Guarded by scripts/verify-chain07-settlements-redirect.mjs.
+            PreserveSearchNavigate keeps driver_id / settlement_id (LAW — never drop deep-link params). */}
+        <Route path="/accounting/settlements" element={<ProtectedRoute><PreserveSearchNavigate to="/driver-finance/settlements" /></ProtectedRoute>} />
         <Route path="/finance-hub" element={<ProtectedRoute><Navigate to="/finance/hub" replace /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
         <Route path="/insurance" element={<Navigate to="/safety/insurance" replace />} />

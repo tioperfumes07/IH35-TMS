@@ -1,17 +1,5 @@
-import { formatDateUS } from "../../lib/formatDate";
-/**
- * ExpensesListPage — READ-ONLY browse of accounting.expenses (GAP-EXPENSES browse side).
- *
- * The Record-Expense flow (ExpenseCreatePage) had no list/browse counterpart; recorded expenses
- * were invisible. This screen lists them via GET /api/v1/expenses using the shared ParityTable
- * (sortable / resizable / sticky / CSV export). Strictly read-only — no create/edit/void here.
- *
- * The "Bank Match" column is derived server-side from bank.reconciliation_matches (read-only,
- * additive), following the #1755 precedent for Bills/Bill-Payments. §7 palette only (navy/slate,
- * no blue/green/emojis).
- */
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useQuery } from "@tanstack/react-query";
 import { listExpenses, type ExpenseListRow, type ExpenseListStatus } from "../../api/accounting";
@@ -22,6 +10,7 @@ import { RecordExpenseModal } from "../../components/expenses/RecordExpenseModal
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { formatDateUS } from "../../lib/formatDate";
 
 const STATUS_OPTIONS: Array<{ value: "" | ExpenseListStatus; label: string }> = [
   { value: "", label: "All statuses" },
@@ -64,10 +53,17 @@ export function ExpensesListPage() {
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const [searchParams] = useSearchParams();
+  const deepLinkExpenseId = searchParams.get("expense_id");
   const [status, setStatus] = useState<"" | ExpenseListStatus>("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
+  const [highlightedExpenseId, setHighlightedExpenseId] = useState<string | null>(deepLinkExpenseId);
+
+  useEffect(() => {
+    if (deepLinkExpenseId) setHighlightedExpenseId(deepLinkExpenseId);
+  }, [deepLinkExpenseId]);
 
   const query = useQuery({
     queryKey: ["accounting", "expenses", companyId, status, fromDate, toDate],
@@ -191,13 +187,25 @@ export function ExpensesListPage() {
       <div className="space-y-3">
         {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
         {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
+        {highlightedExpenseId ? (
+          <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+            Deep-link expense <span className="font-mono font-semibold">{highlightedExpenseId.slice(0, 8)}</span>
+            {rows.some((r) => r.id === highlightedExpenseId)
+              ? " — highlighted in the list below."
+              : " — not in the current filter window (widen dates/status or confirm company)."}
+          </p>
+        ) : null}
 
         <ParityTable
           columns={columns}
           rows={rows}
           rowKey={(r) => r.id}
           loading={query.isLoading}
-          onRowClick={(r) => (r.load_id ? navigate(`/dispatch/loads/${r.load_id}`) : undefined)}
+          onRowClick={(r) => {
+            setHighlightedExpenseId(r.id);
+            void navigate(`/accounting/expenses/list?expense_id=${r.id}`, { replace: true });
+          }}
+          rowClassName={(r) => (highlightedExpenseId === r.id ? "bg-slate-100" : "")}
           filterBar={filterBar}
           exportFilename="expenses"
           storageKey="expenses-list"
