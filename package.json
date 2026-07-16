@@ -1014,7 +1014,8 @@
     "verify:bank-register-sort-group": "node scripts/verify-bank-register-sort-group.mjs",
     "verify:bills-page-bill-id-deeplink": "node scripts/verify-bills-page-bill-id-deeplink.mjs",
     "verify:banking-categorize-ux-honesty": "node scripts/verify-banking-categorize-ux-honesty.mjs",
-    "verify:dispatch-factoring-queue-deeplinks": "node scripts/verify-dispatch-factoring-queue-deeplinks.mjs"
+    "verify:dispatch-factoring-queue-deeplinks": "node scripts/verify-dispatch-factoring-queue-deeplinks.mjs",
+    "verify:425c-petition-not-hardcoded": "node scripts/verify-425c-petition-not-hardcoded.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1087.0",
