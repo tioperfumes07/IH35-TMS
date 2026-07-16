@@ -1,6 +1,6 @@
 -- [HOLD-FOR-JORGE — TIER 0 cosmetic] Mark legacy public.audit_log / public.audit_log_partitioned as retired.
 --
--- *** DO NOT apply on prod without Jorge's explicit approval. Build-and-HOLD; owner applies on Neon branch and
+-- *** DO NOT RUN ON PROD without Jorge's explicit approval. Build-and-HOLD; owner applies on Neon branch and
 -- ledger-backfills so prod db:migrate skips it. ***
 --
 -- WHY: The real audit table is audit.row_changes (71K rows, already forced-RLS + tenant-scoped). The public.audit_log
