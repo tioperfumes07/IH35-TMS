@@ -1195,6 +1195,8 @@ Guards: `verify:relay-timeout-hierarchy`, `verify:relay-dtstart-dtend`, `verify:
 
 ---
 
+---
+
 ## 2026-07-16 — Maintenance Create Expense/Bill = QBO side panels (LOCKED)
 
 Owner creator-chrome lock (same as Accounting Expense / Bill / Bill payment):
@@ -1205,3 +1207,17 @@ Owner creator-chrome lock (same as Accounting Expense / Bill / Bill payment):
 - Accounting Expenses group primary href = `/accounting/expenses/list` (browse-first). Create hub `/accounting/expenses` remains reachable as **Expenses** (locked-ui-surface label).
 
 Guard: `scripts/verify-maint-create-parity-drawer.mjs`.
+
+---
+
+## 2026-07-16 — Relay Fuel Wallet bank feed (LOCKED — owner)
+
+Banking → **Relay Fuel Wallet** is the operator surface for Relay fuel drawdowns (QBO Relay-Diesel bank account parity). Fuel History remains for IFTA; the wallet feed is what operators browse/match.
+
+- Each ingested Relay fuel purchase upserts `banking.bank_transactions` on the Relay Fuel Wallet account (`source='csv_import'`, `source_ref=relay_fuel:{transaction_id}`).
+- **No GL** from this path (EXPENSE_GL_POSTING stays separate / default OFF).
+- Auto-linkage (when resolvable): unit from Truck #, trailer/reefer from prompts → `mdata.equipment`, driver from `integration_id` else unit/load assignment, load/trip for unit at txn time, settlement via `settlement_lines.load_id` or driver period.
+- Backfill: `POST /api/integrations/relay/wallet-bank-feed/backfill` (Owner/Admin).
+
+Guard: `verify:relay-wallet-bank-feed`.
+

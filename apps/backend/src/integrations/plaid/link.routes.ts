@@ -523,7 +523,16 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
           bt.notes,
           bt.created_at,
           bt.source,
+          bt.source_ref,
           bt.plaid_transaction_id,
+          bt.categorization_driver_id::text AS categorization_driver_id,
+          NULLIF(TRIM(CONCAT(d.first_name, ' ', d.last_name)), '') AS categorization_driver_name,
+          bt.categorization_unit_id::text AS categorization_unit_id,
+          u.unit_number AS categorization_unit_number,
+          bt.categorization_trailer_id::text AS categorization_trailer_id,
+          eq.equipment_number AS categorization_trailer_number,
+          bt.categorization_load_id::text AS categorization_load_id,
+          l.load_number AS categorization_load_number,
           ba.institution_name,
           ba.account_name,
           ba.account_mask,
@@ -535,6 +544,18 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
           END AS matched_kind
         FROM banking.bank_transactions bt
         JOIN banking.bank_accounts ba ON ba.id = bt.bank_account_id
+        LEFT JOIN mdata.drivers d
+          ON d.id = bt.categorization_driver_id
+         AND d.operating_company_id = bt.operating_company_id
+        LEFT JOIN mdata.units u
+          ON u.id = bt.categorization_unit_id
+         AND (u.owner_company_id = bt.operating_company_id OR u.currently_leased_to_company_id = bt.operating_company_id)
+        LEFT JOIN mdata.equipment eq
+          ON eq.id = bt.categorization_trailer_id
+         AND (eq.owner_company_id = bt.operating_company_id OR eq.currently_leased_to_company_id = bt.operating_company_id)
+        LEFT JOIN mdata.loads l
+          ON l.id = bt.categorization_load_id
+         AND l.operating_company_id = bt.operating_company_id
         WHERE ${predicates.join(" AND ")}
         ORDER BY ${sortSql}
         LIMIT $${limitIdx} OFFSET $${offsetIdx}
