@@ -50,16 +50,13 @@ const TAG_NAMES = ["KpiCard", "HomeKpiCard"];
 // (made the whole card a Link to the already-real kpi.drill_to, not just the footer), SafetyEventsPage.tsx
 // (Total events/Open, via existing statusFilter state), DriverManagerKpiBar.tsx + SafetyKpiBar.tsx (all 6,
 // -> /drivers/messages, /dispatch/alerts/late-arrivals, /driver-finance/settlements, /safety/idvr,
-// /safety/hos/exceptions, /safety/cert-expiry). The remaining 23 are genuine gaps, NOT fake-wired: either
-// the feature/filter genuinely doesn't exist yet (e.g. DriversListPage.tsx DQF-compliance-level filter,
-// SettlementsPage "Drivers w/ Debt"/"Pending Acks"/"Held Deductions" have no matching filter param,
-// ReserveTracker "Submitted (batches)"/"Advances Received" have no batches-list route — only
-// /factoring/batches/new and /factoring/batches/:id exist) or the tile is a genuinely non-actionable
-// aggregate (FleetTablePage "Avg Age", DriverProfilePage's 5 DQF summary tiles with no per-status filter
-// on DriverDqfPanel, SafetyEventsPage "Severe"/"Commendations" with no matching list-endpoint filter,
-// Drivers.tsx "On Loads"/"Available", DispatchOverview "Units needing return", DocsHomePage "Missing
-// Required"/"Recent Uploads").
-const BASELINE = 23;
+// /safety/hos/exceptions, /safety/cert-expiry).
+//
+// 2026-07-16 dead-clickthrough sweep: 23 -> 21. Drivers.tsx On Loads → /dispatch?view=loads;
+// Available → /drivers?status=active (closest honest roster filter). Remaining 21 are genuine gaps
+// (DQF filters, Settlements debt/acks/held, ReserveTracker batches list, Fleet Avg Age, Safety
+// Severe/Commendations, Docs Missing Required/Recent Uploads, DispatchOverview Units needing return).
+const BASELINE = 21;
 
 /** Brace/quote-aware JSX opening-tag extractor — a `>` inside a `{...}` expression (e.g.
  *  `delta={pct > 0 ? up : down}`) must not prematurely close the tag. Only a `>` at brace depth 0 and

@@ -17,7 +17,7 @@ export function LoadLivePositionCell({ position, loadId }: { position: LivePosit
         {position.stale ? " (stale)" : ""}
       </span>
       <span className="text-slate-500">{new Date(position.recorded_at).toLocaleTimeString()}</span>
-      <Link to={`/dispatch/map?load=${loadId}`} className="text-[#1f2a44] underline">View map</Link>
+      <Link to={`/dispatch/map?load_id=${loadId}`} className="text-[#1f2a44] underline">View map</Link>
     </div>
   );
 }

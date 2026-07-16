@@ -623,6 +623,14 @@ function DispatchLoadDetailRedirect() {
   return <Navigate to={`/dispatch?load_id=${encodeURIComponent(id)}`} replace />;
 }
 
+/** Legacy `/fleet/:unitId` bookmarks → canonical `/fleet/units/:id` (never collide with known fleet leaves). */
+const FLEET_LEAF_SEGMENTS = new Set(["transfers-in-progress", "units", "trailers", "map"]);
+function FleetUnitLegacyRedirect() {
+  const { id } = useParams<{ id: string }>();
+  if (!id || FLEET_LEAF_SEGMENTS.has(id)) return <Navigate to="/fleet" replace />;
+  return <Navigate to={`/fleet/units/${encodeURIComponent(id)}`} replace />;
+}
+
 /** Legacy bookmarked underscore paths → hyphen canonical routes (Block A10). */
 const UNDERSCORE_LEGACY_REDIRECTS: ReadonlyArray<readonly [string, string]> = [
   ["/lists/driver/pay_rate_templates", "/lists/driver/pay-rate-templates"],
@@ -4027,6 +4035,31 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <TrailerProfilePage />
+            </ProtectedRoute>
+          }
+        />
+        {/* Legacy dead hrefs from driver profile / bookmarks — preserve query (driver, load_id). */}
+        <Route
+          path="/fleet/map"
+          element={
+            <ProtectedRoute>
+              <PreserveSearchNavigate to="/dispatch/map" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/fleet/:id"
+          element={
+            <ProtectedRoute>
+              <FleetUnitLegacyRedirect />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/loads/:id"
+          element={
+            <ProtectedRoute>
+              <DispatchLoadDetailRedirect />
             </ProtectedRoute>
           }
         />

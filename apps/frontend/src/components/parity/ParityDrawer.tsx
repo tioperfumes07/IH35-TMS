@@ -3,8 +3,9 @@
  *
  * Additive presentational shell (no financial wiring). ~576px on desktop,
  * full-width on mobile; header + scrollable body + sticky footer. Used by
- * B1–B3 for item/customer/vendor/account create-edit panels. Transaction
- * editors are full-page and do NOT use this drawer.
+ * B1–B3 for item/customer/vendor/account create-edit panels, and by owner
+ * creator-chrome lock for Expense / Bill / Bill-payment create (QBO-like
+ * side panels). Create Vendor / Create Customer stay centered rich modals.
  */
 import { useEffect, type ReactNode } from "react";
 import { PARITY_DRAWER_WIDTH, PARITY_DRAWER_WIDTH_WIDE } from "./sizing";

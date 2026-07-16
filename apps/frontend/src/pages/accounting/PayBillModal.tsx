@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { payVendorBill, type BillPaymentMethod, type VendorBill } from "../../api/accounting";
 import { getAllAccounts } from "../../api/banking";
 import { Button } from "../../components/Button";
-import { Modal } from "../../components/Modal";
+import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { MoneyInput } from "../../components/forms/MoneyInput";
@@ -67,7 +67,7 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
   const needsBankAccount = paymentMethod === "check" || paymentMethod === "ach" || paymentMethod === "wire" || paymentMethod === "credit_card";
 
   return (
-    <Modal open={open} onClose={onClose} title="Pay Bill">
+    <ParityDrawer open={open} onClose={onClose} title="Pay Bill" size="wide">
       {!bill ? (
         <div className="text-sm text-gray-600">No bill selected.</div>
       ) : (
@@ -215,6 +215,6 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
           </div>
         </form>
       )}
-    </Modal>
+    </ParityDrawer>
   );
 }

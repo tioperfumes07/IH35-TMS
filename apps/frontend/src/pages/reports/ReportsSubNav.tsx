@@ -62,10 +62,11 @@ const AUDIT_REPORT_CHILDREN: NavChild[] = [
 export const REPORTS_SUB_NAV_ITEMS: NavItem[] = [
   { label: "Reports", href: "/reports" },
   { label: "Category hub", href: "/reports/hub" },
-  { label: "Run report", children: flattenReportRunLinks() },
+  // Label navigates to hub; chevron lists every runner (nav-split — same class as Accounting).
+  { label: "Run report", href: "/reports/hub", children: flattenReportRunLinks() },
   { label: "Cancellations", href: "/reports/cancellations" },
   { label: "Scheduled (custom)", href: "/reports/scheduled-custom" },
-  { label: "Audit", children: AUDIT_REPORT_CHILDREN },
+  { label: "Audit", href: "/reports/audit/activity-by-user", children: AUDIT_REPORT_CHILDREN },
 ];
 
 export function reportsSubNavActiveHref(pathname: string): string {

@@ -527,6 +527,7 @@ function maintenanceSubNavActiveHref(pathname: string): string {
 const MAINTENANCE_MODULE_NAV_ITEMS: NavItem[] = [
   {
     label: "Master Data",
+    href: MAINTENANCE_MASTER_DATA_LINKS[0]?.path ?? "/maintenance/vehicles",
     children: MAINTENANCE_MASTER_DATA_LINKS.map((item) => ({ label: item.label, href: item.path })),
   },
 ];

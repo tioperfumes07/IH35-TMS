@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { listVendorBills, type VendorBill } from "../../api/accounting";
 import { recordApBillPayment } from "../../api/ap";
 import { Button } from "../Button";
-import { Modal } from "../Modal";
+import { ParityDrawer } from "../parity/ParityDrawer";
 import { SelectCombobox } from "../shared/SelectCombobox";
 import { TaskLinkPicker } from "../tasks/TaskLinkPicker";
 import { useToast } from "../Toast";
@@ -134,7 +134,7 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
   }, [open, vendorId]);
 
   return (
-    <Modal open={open} onClose={onClose} title="Bill payment — multiple bills">
+    <ParityDrawer open={open} onClose={onClose} title="Bill payment — multiple bills" size="wide">
       <form
         className="space-y-3"
         onSubmit={async (event) => {
@@ -325,6 +325,6 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
           </div>
         )}
       </form>
-    </Modal>
+    </ParityDrawer>
   );
 }

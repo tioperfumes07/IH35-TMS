@@ -24,6 +24,7 @@ export const LISTS_SUB_NAV_ITEMS: NavItem[] = [
   { label: "Catalog Index", href: "/lists/catalogs" },
   {
     label: "Catalog domains",
+    href: "/lists/catalogs",
     children: DOMAIN_ORDER.map((domain) => ({
       label: DOMAIN_LABELS[domain],
       href: `/lists/${domain}`,
@@ -31,6 +32,7 @@ export const LISTS_SUB_NAV_ITEMS: NavItem[] = [
   },
   {
     label: "Safety catalogs",
+    href: "/lists/safety/internal-fine-reasons",
     children: [
       { label: "Internal Fine Reasons", href: "/lists/safety/internal-fine-reasons" },
       { label: "Civil Fine Types", href: "/lists/safety/civil-fine-types" },
@@ -39,6 +41,7 @@ export const LISTS_SUB_NAV_ITEMS: NavItem[] = [
   },
   {
     label: "Maintenance catalogs",
+    href: "/lists/maintenance/parts-catalog",
     children: [
       { label: "Parts Catalog", href: "/lists/maintenance/parts-catalog" },
     ],

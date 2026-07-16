@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Modal } from "../Modal";
+import { ParityDrawer } from "../parity/ParityDrawer";
 import { RecordExpenseForm } from "./RecordExpenseForm";
 
 type Props = {
@@ -9,12 +9,17 @@ type Props = {
   onCreated?: () => void;
 };
 
+/**
+ * Expense create chrome — QBO-like right-side panel (owner creator-chrome lock).
+ * Reuses ParityDrawer; form body is unchanged RecordExpenseForm.
+ * Export name kept so list / Quick Actions callers stay additive.
+ */
 export function RecordExpenseModal({ open, operatingCompanyId, onClose, onCreated }: Props) {
   return (
-    <Modal open={open} onClose={onClose} title="Record expense" modalKind="record-expense" sizePreset="md">
+    <ParityDrawer open={open} onClose={onClose} title="Record expense" size="wide">
       <div className="space-y-4">
-        {/* UploadZone now lives INSIDE RecordExpenseForm so its draft id is the one sent in the create
-            payload and reconciled onto the real expense (Option B) — no separate, orphaning draft id here. */}
+        {/* UploadZone lives INSIDE RecordExpenseForm so its draft id is the one sent in the create
+            payload and reconciled onto the real expense (Option B) — no separate, orphaning draft id. */}
         <RecordExpenseForm
           operatingCompanyId={operatingCompanyId}
           idPrefix="record-expense-modal"
@@ -25,11 +30,11 @@ export function RecordExpenseModal({ open, operatingCompanyId, onClose, onCreate
           }}
         />
         <p className="text-xs text-gray-600">
-          <Link className="text-slate-700 underline" to="/accounting/expenses">
+          <Link className="text-slate-700 underline" to="/accounting/expenses/list">
             View all expenses
           </Link>
         </p>
       </div>
-    </Modal>
+    </ParityDrawer>
   );
 }

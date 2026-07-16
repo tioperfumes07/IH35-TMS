@@ -1,5 +1,5 @@
 import type { FormEvent } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getWoCostContext } from "../../api/maintenance";
 import { listUnits, listVendors } from "../../api/mdata";
@@ -23,7 +23,18 @@ type Props = {
   onSubmitted?: (created?: { targetType: "expense"; targetId: string }) => void;
   showSubmitButton?: boolean;
   submitLabel?: string;
+  /** Optional test id on the primary submit button (maintenance modal reuse). */
+  submitTestId?: string;
   idPrefix?: string;
+  /**
+   * Optional HARD FK to maintenance.work_orders — when set, createExpense payload includes
+   * work_order_id. Absent → default accounting create (non-breaking).
+   */
+  workOrderId?: string;
+  /** Optional WO-context unit prefill + unit_id fallback when the picker is empty. */
+  defaultUnitId?: string;
+  /** Human-readable WO id for memo + banner (maintenance linkage). */
+  linkedWoDisplayId?: string;
 };
 
 export function RecordExpenseForm({
@@ -31,12 +42,25 @@ export function RecordExpenseForm({
   onSubmitted,
   showSubmitButton = true,
   submitLabel = "Save expense",
+  submitTestId,
   idPrefix = "record-expense",
+  workOrderId,
+  defaultUnitId,
+  linkedWoDisplayId,
 }: Props) {
-  const [values, setValues] = useState<RecordExpenseFormValues>(initialRecordExpenseFormValues);
+  const [values, setValues] = useState<RecordExpenseFormValues>(() => {
+    const initial = initialRecordExpenseFormValues();
+    return defaultUnitId ? { ...initial, unitId: defaultUnitId } : initial;
+  });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [draftAttachmentEntityId, setDraftAttachmentEntityId] = useState(() => crypto.randomUUID());
+
+  // Prefill unit from WO context without clobbering a user picker change.
+  useEffect(() => {
+    if (!defaultUnitId) return;
+    setValues((prev) => (prev.unitId ? prev : { ...prev, unitId: defaultUnitId }));
+  }, [defaultUnitId]);
 
   const costContextQuery = useQuery({
     queryKey: ["record-expense", "cost-context", operatingCompanyId],
@@ -103,6 +127,18 @@ export function RecordExpenseForm({
     }));
   }, [paymentAccountsQuery.data?.accounts, costContextQuery.data?.expense_categories]);
 
+  // Resolve unit label for memo when WO context prefills unitId before the user touches the picker.
+  useEffect(() => {
+    if (!values.unitId || values.unitLabel) return;
+    const units = (unitsQuery.data?.units ?? []) as Array<Record<string, unknown>>;
+    const match = units.find((row) => String(row.id ?? "") === values.unitId);
+    if (!match) return;
+    setValues((prev) => ({
+      ...prev,
+      unitLabel: String(match.unit_number ?? match.id ?? ""),
+    }));
+  }, [values.unitId, values.unitLabel, unitsQuery.data?.units]);
+
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     if (!operatingCompanyId) {
@@ -112,8 +148,13 @@ export function RecordExpenseForm({
     setSubmitting(true);
     setError(null);
     try {
-      const created = await submitRecordExpense(operatingCompanyId, values, draftAttachmentEntityId);
-      setValues(initialRecordExpenseFormValues());
+      const created = await submitRecordExpense(operatingCompanyId, values, draftAttachmentEntityId, {
+        workOrderId,
+        unitId: defaultUnitId,
+        linkedWoDisplayId,
+      });
+      const reset = initialRecordExpenseFormValues();
+      setValues(defaultUnitId ? { ...reset, unitId: defaultUnitId } : reset);
       setDraftAttachmentEntityId(crypto.randomUUID());
       onSubmitted?.(created?.expense_id ? { targetType: "expense", targetId: created.expense_id } : undefined);
     } catch (submitError) {
@@ -127,6 +168,11 @@ export function RecordExpenseForm({
 
   return (
     <form className="space-y-3" onSubmit={onSubmit} data-testid="record-expense-form">
+      {linkedWoDisplayId ? (
+        <div className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-xs text-slate-700">
+          Linked — {linkedWoDisplayId}
+        </div>
+      ) : null}
       <label className="text-xs font-semibold text-gray-700" htmlFor={fieldId("vendor")}>
         Vendor
         <div className="mt-1">
@@ -319,7 +365,11 @@ export function RecordExpenseForm({
 
       {showSubmitButton ? (
         <div className="flex justify-end">
-          <Button type="submit" disabled={submitting || !operatingCompanyId}>
+          <Button
+            type="submit"
+            data-testid={submitTestId}
+            disabled={submitting || !operatingCompanyId}
+          >
             {submitting ? "Saving…" : submitLabel}
           </Button>
         </div>

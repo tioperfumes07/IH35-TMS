@@ -1,6 +1,6 @@
 import type { JSX } from "react";
 import type { FormEvent } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listDrivers, listUnits, listVendors } from "../../api/mdata";
 import { DatePicker } from "../forms/DatePicker";
@@ -23,12 +23,30 @@ export type VendorBillFormSubmitPayload = {
   // Draft id used by UploadZone for create-time attachments; sent so the backend reconciles the
   // uploaded files onto the new bill (Option B — otherwise the attachment orphans).
   attachment_draft_id?: string;
+  // HARD cross-module link (maintenance): real FKs — only present when linkage props / unit picker set.
+  work_order_id?: string;
+  unit_id?: string;
 };
 
 type Props = {
   operatingCompanyId: string;
   submitting?: boolean;
   onSubmit: (payload: VendorBillFormSubmitPayload) => void | Promise<void>;
+  /**
+   * Optional HARD FK to maintenance.work_orders — when set, submit payload includes work_order_id.
+   * Absent → default accounting create (non-breaking).
+   */
+  linkedWoId?: string;
+  /** Optional WO-context unit prefill + unit_id fallback when the picker is empty. */
+  linkedUnitId?: string;
+  /** Human-readable WO id for memo + banner (maintenance linkage). */
+  linkedWoDisplayId?: string;
+  submitLabel?: string;
+  /** Optional test id on the primary submit button (maintenance modal reuse). */
+  submitTestId?: string;
+  /** Optional cancel control (maintenance modal keeps Cancel + Create). */
+  onCancel?: () => void;
+  cancelLabel?: string;
 };
 
 function lineSubtotal(lines: TwoSectionLine[]) {
@@ -57,7 +75,18 @@ function buildContractStubMemo(lines: TwoSectionLine[], taxRate: number, billTyp
   return parts.join(" · ");
 }
 
-export function VendorBillForm({ operatingCompanyId, submitting = false, onSubmit }: Props) {
+export function VendorBillForm({
+  operatingCompanyId,
+  submitting = false,
+  onSubmit,
+  linkedWoId,
+  linkedUnitId,
+  linkedWoDisplayId,
+  submitLabel = "Create bill",
+  submitTestId,
+  onCancel,
+  cancelLabel = "Cancel",
+}: Props) {
   const [lines, setLines] = useState<TwoSectionLine[]>([]);
   const [taxRate, setTaxRate] = useState(8.25);
   const [billType, setBillType] = useState("repair");
@@ -69,10 +98,16 @@ export function VendorBillForm({ operatingCompanyId, submitting = false, onSubmi
   const [vendorId, setVendorId] = useState("");
   const [loadNumber, setLoadNumber] = useState("");
   const [driverId, setDriverId] = useState("");
-  const [unitId, setUnitId] = useState("");
+  const [unitId, setUnitId] = useState(linkedUnitId ?? "");
   const [className, setClassName] = useState("");
   const [accountQboId, setAccountQboId] = useState<string | null>(null);
   const [accountDisplay, setAccountDisplay] = useState("");
+
+  // Prefill unit from WO context without clobbering a user picker change.
+  useEffect(() => {
+    if (!linkedUnitId) return;
+    setUnitId((prev) => prev || linkedUnitId);
+  }, [linkedUnitId]);
 
   const vendorsQuery = useQuery({
     queryKey: ["vendor-bill-form", "vendors", operatingCompanyId],
@@ -110,11 +145,15 @@ export function VendorBillForm({ operatingCompanyId, submitting = false, onSubmi
     if (totalCents <= 0) return;
 
     const memoParts = [buildContractStubMemo(lines, taxRate, billType, accountDisplay || undefined)];
+    if (linkedWoDisplayId) memoParts.push(`WO: ${linkedWoDisplayId}`);
     if (loadNumber.trim()) memoParts.push(`load:${loadNumber.trim()}`);
     if (driverId) memoParts.push(`driver:${driverId}`);
     if (unitId) memoParts.push(`unit:${unitId}`);
     if (className.trim()) memoParts.push(`class:${className.trim()}`);
+    // Terms belong in the payload memo (audit: fork had Terms UI but never submitted them).
     if (terms) memoParts.push(`terms:${terms}`);
+
+    const resolvedUnitId = unitId || linkedUnitId || undefined;
 
     await onSubmit({
       vendor_id: vendorKey,
@@ -125,11 +164,19 @@ export function VendorBillForm({ operatingCompanyId, submitting = false, onSubmi
       memo: memoParts.join(" · "),
       coa_account_id: accountQboId && accountQboId.includes("-") ? accountQboId : undefined,
       attachment_draft_id: draftAttachmentEntityId,
+      // HARD cross-module FKs — only when linkage / picker supplies them.
+      ...(linkedWoId ? { work_order_id: linkedWoId } : {}),
+      ...(resolvedUnitId ? { unit_id: resolvedUnitId } : {}),
     });
   }
 
   return (
     <form className="space-y-3" onSubmit={handleSubmit}>
+      {linkedWoDisplayId ? (
+        <div className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-xs text-slate-700">
+          Linked — {linkedWoDisplayId}
+        </div>
+      ) : null}
       <TypeTabBar tabs={BILL_TYPE_TABS} activeId={billType} onChange={setBillType} />
 
       <div className="rounded-sm border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">
@@ -275,13 +322,24 @@ export function VendorBillForm({ operatingCompanyId, submitting = false, onSubmi
         title="Bill Attachments"
       />
 
-      <div className="flex justify-end">
+      <div className="flex items-center justify-end gap-2">
+        {onCancel ? (
+          <button
+            type="button"
+            disabled={submitting}
+            onClick={onCancel}
+            className="rounded-sm border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {cancelLabel}
+          </button>
+        ) : null}
         <button
           type="submit"
+          data-testid={submitTestId}
           disabled={submitting || !operatingCompanyId || totalCents <= 0 || !vendorId.trim()}
           className="rounded-sm bg-slate-800 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {submitting ? "Saving…" : "Create bill"}
+          {submitting ? "Saving…" : submitLabel}
         </button>
       </div>
     </form>
