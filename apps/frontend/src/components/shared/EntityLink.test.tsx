@@ -15,12 +15,15 @@ describe("resolveEntityRoute", () => {
     expect(resolveEntityRoute("trailer", "id1")).toBe("/fleet/trailers/id1");
     expect(resolveEntityRoute("bank_account", "id1")).toBe("/banking/accounts/id1");
     expect(resolveEntityRoute("factoring_advance", "id1")).toBe("/accounting/factoring/id1");
+    expect(resolveEntityRoute("bill", "id1")).toBe("/accounting/bills/id1");
+    expect(resolveEntityRoute("matter", "id1")).toBe("/legal/matters/id1");
   });
 
-  it("resolves settlement to the query-param drill-through (no path-param route exists)", () => {
+  it("resolves settlement and claim to query-param drill-through", () => {
     expect(resolveEntityRoute("settlement", "id1")).toBe(
       "/driver-finance/settlements?settlement_id=id1",
     );
+    expect(resolveEntityRoute("claim", "id1")).toBe("/safety/insurance/claims?claim_id=id1");
   });
 
   it("resolves liability and expense to list query-param drill-through (real consumers)", () => {
@@ -41,6 +44,20 @@ describe("EntityLink", () => {
     const link = screen.getByRole("link", { name: "John Doe" });
     expect(link).toHaveAttribute("href", "/drivers/drv-1");
     expect(link.className).toContain("text-slate-700");
+  });
+
+  it("renders claim and matter deep-links", () => {
+    render(
+      <MemoryRouter>
+        <EntityLink kind="claim" id="clm-1" label="CLM-1" />
+        <EntityLink kind="matter" id="mat-1" label="MAT-1" />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole("link", { name: "CLM-1" })).toHaveAttribute(
+      "href",
+      "/safety/insurance/claims?claim_id=clm-1",
+    );
+    expect(screen.getByRole("link", { name: "MAT-1" })).toHaveAttribute("href", "/legal/matters/mat-1");
   });
 
   it("renders a real <Link> for bill and expense drill-through", () => {

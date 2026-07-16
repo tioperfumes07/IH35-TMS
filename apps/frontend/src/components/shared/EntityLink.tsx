@@ -33,7 +33,9 @@ export type EntityKind =
   | "factoring_advance"
   | "payment"
   | "work_order"
-  | "bank_transaction";
+  | "bank_transaction"
+  | "claim"
+  | "matter";
 
 export interface EntityLinkProps {
   kind: EntityKind;
@@ -60,9 +62,9 @@ const DEFAULT_LINK_CLASSNAME =
  *
  * Verified against apps/frontend/src/routes/manifest.tsx. Kinds that do NOT have a real
  * consumer for deep-link params return null on purpose — never fabricate a dead link.
- * "settlement" / "liability" / "expense" use query-param drill-through (list+drawer/highlight).
+ * "settlement" / "liability" / "expense" / "claim" use query-param drill-through (list+highlight).
  * "payment" → /accounting/payments/:id · "work_order" → /maintenance/work-orders/:id
- * "bill" → /accounting/bills/:id
+ * "bill" → /accounting/bills/:id · "matter" → /legal/matters/:id
  * "bank_transaction" → /banking/transactions?txn_id= (BankingHome expands row)
  */
 export function resolveEntityRoute(kind: EntityKind, id: string): string | null {
@@ -101,6 +103,10 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/accounting/expenses/list?expense_id=${id}`;
     case "bank_transaction":
       return `/banking/transactions?txn_id=${id}`;
+    case "claim":
+      return `/safety/insurance/claims?claim_id=${id}`;
+    case "matter":
+      return `/legal/matters/${id}`;
     default:
       return null;
   }

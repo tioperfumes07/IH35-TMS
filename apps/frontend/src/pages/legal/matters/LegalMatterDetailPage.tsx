@@ -11,6 +11,7 @@ import {
 import { useAuth } from "../../../auth/useAuth";
 import { Button } from "../../../components/Button";
 import { PageHeader } from "../../../components/layout/PageHeader";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
@@ -162,8 +163,36 @@ export function LegalMatterDetailPage() {
                 <div>
                   <strong>Related driver:</strong>{" "}
                   {matter?.related_driver_id ? (
-                    <Link to={`/drivers/${String(matter.related_driver_id)}/profile`} className="text-slate-700 underline">
-                      Open driver profile
+                    <EntityLink kind="driver" id={String(matter.related_driver_id)} label="Open driver" />
+                  ) : (
+                    "—"
+                  )}
+                </div>
+                <div>
+                  <strong>Insurance claim:</strong>{" "}
+                  {matter?.insurance_claim_id ? (
+                    <EntityLink
+                      kind="claim"
+                      id={String(matter.insurance_claim_id)}
+                      label={String(matter.insurance_claim_id).slice(0, 8)}
+                    />
+                  ) : (
+                    "—"
+                  )}
+                </div>
+                <div>
+                  <strong>Unit:</strong>{" "}
+                  {matter?.unit_id ? (
+                    <EntityLink kind="unit" id={String(matter.unit_id)} label={String(matter.unit_id).slice(0, 8)} />
+                  ) : (
+                    "—"
+                  )}
+                </div>
+                <div>
+                  <strong>Incident:</strong>{" "}
+                  {matter?.incident_id ? (
+                    <Link className="text-slate-700 underline" to={`/safety/accidents`}>
+                      {String(matter.incident_id).slice(0, 8)}
                     </Link>
                   ) : (
                     "—"
