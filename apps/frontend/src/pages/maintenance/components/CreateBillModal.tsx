@@ -1,11 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createVendorBill } from "../../../api/accounting";
-import { Modal } from "../../../components/Modal";
-import { useToast } from "../../../components/Toast";
 import {
   VendorBillForm,
   type VendorBillFormSubmitPayload,
 } from "../../../components/accounting/VendorBillForm";
+import { ParityDrawer } from "../../../components/parity/ParityDrawer";
+import { useToast } from "../../../components/Toast";
 
 type Props = {
   open: boolean;
@@ -22,9 +22,9 @@ type Props = {
 };
 
 /**
- * Maintenance entry point for Create Bill — keeps the modal + WO/unit linkage props, but reuses the
- * canonical VendorBillForm (ReferenceSelect + Add new vendor, terms in memo, correct A/P mapping) so
- * this surface does not diverge from Accounting.
+ * Maintenance entry point for Create Bill — keeps the WO/unit linkage props, but uses the same
+ * QBO-like ParityDrawer + VendorBillForm chrome as Accounting (ReferenceSelect + Add new vendor).
+ * Entry point stays; only the shell matches owner creator-chrome lock.
  */
 export function CreateBillModal({
   open,
@@ -58,7 +58,7 @@ export function CreateBillModal({
   });
 
   return (
-    <Modal open={open} onClose={onClose} title="Create Bill">
+    <ParityDrawer open={open} onClose={onClose} title="Create Bill" size="wide">
       <VendorBillForm
         operatingCompanyId={operatingCompanyId}
         submitting={createMutation.isPending}
@@ -72,6 +72,6 @@ export function CreateBillModal({
           await createMutation.mutateAsync(payload);
         }}
       />
-    </Modal>
+    </ParityDrawer>
   );
 }

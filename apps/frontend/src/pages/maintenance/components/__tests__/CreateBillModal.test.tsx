@@ -19,9 +19,9 @@ vi.mock("../../../../api/mdata", () => ({
   listUnits: vi.fn(() => Promise.resolve({ units: [{ id: UNIT_ID, unit_number: "T-101" }] })),
 }));
 
-vi.mock("../../../../components/Modal", () => ({
-  Modal: ({ open, children }: { open: boolean; children: React.ReactNode }) =>
-    open ? <div data-testid="modal">{children}</div> : null,
+vi.mock("../../../../components/parity/ParityDrawer", () => ({
+  ParityDrawer: ({ open, children }: { open: boolean; children: React.ReactNode }) =>
+    open ? <div data-testid="parity-drawer">{children}</div> : null,
 }));
 vi.mock("../../../../components/forms/TwoSectionLineEditor", () => ({
   TwoSectionLineEditor: ({ onChange }: { onChange: (lines: unknown[]) => void }) => (

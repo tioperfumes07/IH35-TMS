@@ -75,9 +75,9 @@ export const SUBNAV_ITEMS: readonly AccountingSubNavItem[] = [
   { label: "Multiple bills", path: "/accounting/bills/multiple", section: "bills" },
   { label: "Recurring bills", path: "/accounting/bills/recurring", section: "bills" },
 
-  // Expenses ▾
-  { label: "Expenses", path: "/accounting/expenses", section: "expenses" },
+  // Expenses ▾ — list first (QBO browse); create route keeps locked label "Expenses".
   { label: "Expenses List", path: "/accounting/expenses/list", section: "expenses" },
+  { label: "Expenses", path: "/accounting/expenses", section: "expenses" },
   { label: "Receipts", path: "/accounting/receipts", section: "expenses" },
 
   // Bill payment ▾

@@ -1,7 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { Modal } from "../../../components/Modal";
-import { useToast } from "../../../components/Toast";
 import { RecordExpenseForm } from "../../../components/expenses/RecordExpenseForm";
+import { ParityDrawer } from "../../../components/parity/ParityDrawer";
+import { useToast } from "../../../components/Toast";
 
 type Props = {
   open: boolean;
@@ -17,9 +17,9 @@ type Props = {
 };
 
 /**
- * Maintenance entry point for Create Expense — keeps the modal + WO/unit linkage props, but reuses the
- * canonical RecordExpenseForm (ReferenceSelect + Add new, correct category/payment mapping) so this
- * surface does not diverge from Accounting.
+ * Maintenance entry point for Create Expense — keeps the WO/unit linkage props, but uses the same
+ * QBO-like ParityDrawer + RecordExpenseForm chrome as Accounting (ReferenceSelect + Add new).
+ * Entry point stays; only the shell matches owner creator-chrome lock.
  */
 export function CreateExpenseModal({
   open,
@@ -34,7 +34,7 @@ export function CreateExpenseModal({
   const queryClient = useQueryClient();
 
   return (
-    <Modal open={open} onClose={onClose} title="Create Expense">
+    <ParityDrawer open={open} onClose={onClose} title="Create Expense" size="wide">
       <RecordExpenseForm
         operatingCompanyId={operatingCompanyId}
         idPrefix="maintenance-create-expense"
@@ -51,6 +51,6 @@ export function CreateExpenseModal({
           onClose();
         }}
       />
-    </Modal>
+    </ParityDrawer>
   );
 }

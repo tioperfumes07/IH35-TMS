@@ -43,9 +43,9 @@ vi.mock("../../../../api/catalog-accounts", () => ({
   ),
 }));
 
-vi.mock("../../../../components/Modal", () => ({
-  Modal: ({ open, children }: { open: boolean; children: React.ReactNode }) =>
-    open ? <div data-testid="modal">{children}</div> : null,
+vi.mock("../../../../components/parity/ParityDrawer", () => ({
+  ParityDrawer: ({ open, children }: { open: boolean; children: React.ReactNode }) =>
+    open ? <div data-testid="parity-drawer">{children}</div> : null,
 }));
 vi.mock("../../../../components/UploadZone", () => ({ UploadZone: () => <div /> }));
 vi.mock("../../../../components/shared/SelectCombobox", () => ({

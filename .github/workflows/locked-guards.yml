@@ -743,6 +743,11 @@ jobs:
 
       - name: verify:relay-dtstart-dtend
         run: npm run verify:relay-dtstart-dtend
+      - name: verify:maint-create-parity-drawer
+        run: npm run verify:maint-create-parity-drawer
+
+      - name: verify:help-module-guides-visible
+        run: npm run verify:help-module-guides-visible
 
       # CI-WIRE-CRITICAL-GUARDS: 5 green, DB-free, non-financial guards whose fixes are live on main
       # but were unwired from every CI job (regression-audit finding). Additive coverage — no gate rename.

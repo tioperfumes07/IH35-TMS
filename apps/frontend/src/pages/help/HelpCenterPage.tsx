@@ -10,6 +10,8 @@ const CATEGORY_ORDER: HelpCategory[] = [
   "Banking & Reconciliation",
   "Reports",
   "Account & Billing",
+  // Audit gap #18 — content exists in helpCenterContent; must stay in render order.
+  "Module Guides",
 ];
 
 export function HelpCenterPage() {
