@@ -13,6 +13,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { useListState } from "../../components/list-state";
 import { useSafetyUiContext } from "./SafetyLayout";
 import { SafetyEventsTable } from "./components/SafetyEventsTable";
+import { NOT_AVAILABLE_YET } from "../../lib/prodEmptyStateCopy";
 
 type Props = {
   operatingCompanyId: string;
@@ -198,15 +199,23 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
 
   return (
     <div className="space-y-3">
-      {/* B10 dead-click rollout: Total events / Open drive the existing statusFilter state (same
-          mechanism as the "Filter by status" dropdown below). Severe / Commendations have no matching
-          filter — statusFilter/severityFilter don't support a "severe" value or a kpi_bucket filter on
-          this list endpoint — left dead intentionally. */}
+      {/* B-A3: Total / Open → statusFilter. Severe = high|critical (no single severity); Commendations
+          need kpi_bucket on the list API — honest disabled (do not guess severity=high). */}
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard label="Total events" value={Number(kpiQuery.data?.total ?? 0)} onClick={() => setStatusFilter("")} />
         <KpiCard label="Open" value={Number(kpiQuery.data?.open_count ?? 0)} onClick={() => setStatusFilter("open")} />
-        <KpiCard label="Severe" value={Number(kpiQuery.data?.severe_count ?? 0)} />
-        <KpiCard label="Commendations" value={Number(kpiQuery.data?.commendations_count ?? 0)} />
+        <KpiCard
+          label="Severe"
+          value={Number(kpiQuery.data?.severe_count ?? 0)}
+          disabled
+          disabledReason={NOT_AVAILABLE_YET}
+        />
+        <KpiCard
+          label="Commendations"
+          value={Number(kpiQuery.data?.commendations_count ?? 0)}
+          disabled
+          disabledReason={NOT_AVAILABLE_YET}
+        />
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white p-2">
@@ -453,13 +462,37 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
   );
 }
 
-function KpiCard({ label, value, onClick }: { label: string; value: number; onClick?: () => void }) {
+function KpiCard({
+  label,
+  value,
+  onClick,
+  disabled,
+  disabledReason,
+}: {
+  label: string;
+  value: number;
+  onClick?: () => void;
+  disabled?: boolean;
+  disabledReason?: string;
+}) {
   const content = (
     <>
       <div className="text-[11px] uppercase text-gray-500">{label}</div>
       <div className="text-lg font-semibold text-gray-900">{value}</div>
     </>
   );
+  if (disabled) {
+    return (
+      <div
+        className="cursor-not-allowed rounded-sm border border-gray-200 bg-white px-3 py-2 opacity-70"
+        aria-disabled="true"
+        title={disabledReason}
+        data-kpi-disabled="true"
+      >
+        {content}
+      </div>
+    );
+  }
   if (onClick) {
     return (
       <button

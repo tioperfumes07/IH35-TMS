@@ -28,6 +28,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { colors } from "../../design/tokens";
+import { NOT_AVAILABLE_YET } from "../../lib/prodEmptyStateCopy";
 import { driverDisplayName, summarizeDriverDqf } from "../../lib/driverDqf";
 import { DriverDqfComplianceChip } from "./components/DriverDqfComplianceChip";
 import { DriverDqfPanel } from "./components/DriverDqfPanel";
@@ -354,15 +355,43 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         <DriverCommunicationsTab driverId={id} operatingCompanyId={companyId} />
       </div>
 
+      {/* B-A3: DQF summary tiles — checklist below has no status/expiry filter yet; honest disabled
+          (no guess-route to a nearest Safety/Docs page). */}
       <KpiStrip>
-        <KpiCard label="Checklist items" number={String(summary.itemCount)} accent={colors.drivers.strong} />
-        <KpiCard label="Present" number={String(summary.presentCount)} accent={colors.positive.strong} />
-        <KpiCard label="Missing" number={String(summary.missingCount)} accent={colors.warn.strong} />
-        <KpiCard label="Expired" number={String(summary.expiredCount)} accent={colors.crit.strong} />
+        <KpiCard
+          label="Checklist items"
+          number={String(summary.itemCount)}
+          accent={colors.drivers.strong}
+          disabled
+          disabledReason={NOT_AVAILABLE_YET}
+        />
+        <KpiCard
+          label="Present"
+          number={String(summary.presentCount)}
+          accent={colors.positive.strong}
+          disabled
+          disabledReason={NOT_AVAILABLE_YET}
+        />
+        <KpiCard
+          label="Missing"
+          number={String(summary.missingCount)}
+          accent={colors.warn.strong}
+          disabled
+          disabledReason={NOT_AVAILABLE_YET}
+        />
+        <KpiCard
+          label="Expired"
+          number={String(summary.expiredCount)}
+          accent={colors.crit.strong}
+          disabled
+          disabledReason={NOT_AVAILABLE_YET}
+        />
         <KpiCard
           label="Expiry alerts"
           number={`${summary.redExpiryCount} red · ${summary.amberExpiryCount} amber`}
           accent={colors.info.strong}
+          disabled
+          disabledReason={NOT_AVAILABLE_YET}
         />
       </KpiStrip>
 

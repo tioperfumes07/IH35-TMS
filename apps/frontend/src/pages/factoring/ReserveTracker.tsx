@@ -26,6 +26,7 @@ import {
 } from "../../api/factoring";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { NOT_AVAILABLE_YET } from "../../lib/prodEmptyStateCopy";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -42,7 +43,21 @@ const fmtDt = (v: string | null | undefined) => {
   return Number.isNaN(d.getTime()) ? "—" : d.toLocaleString();
 };
 
-function KpiCard({ label, value, sub, to }: { label: string; value: string; sub?: string; to?: string }) {
+function KpiCard({
+  label,
+  value,
+  sub,
+  to,
+  disabled,
+  disabledReason,
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  to?: string;
+  disabled?: boolean;
+  disabledReason?: string;
+}) {
   const content = (
     <>
       <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">{label}</div>
@@ -50,6 +65,18 @@ function KpiCard({ label, value, sub, to }: { label: string; value: string; sub?
       {sub ? <div className="mt-0.5 text-[11px] text-gray-500">{sub}</div> : null}
     </>
   );
+  if (disabled) {
+    return (
+      <div
+        className="cursor-not-allowed rounded-sm border border-gray-200 bg-white p-3 text-sm opacity-70"
+        aria-disabled="true"
+        title={disabledReason}
+        data-kpi-disabled="true"
+      >
+        {content}
+      </div>
+    );
+  }
   if (to) {
     return (
       <Link to={to} className="block rounded-sm border border-gray-200 bg-white p-3 text-sm transition hover:shadow-xs">
@@ -216,21 +243,22 @@ export function ReserveTracker() {
 
   return (
     <div className="space-y-4" data-testid="faro-reserve-tracker">
-      {/* KPI strip. B10 dead-click rollout: FARO Reserve Held / Chargebacks Pending / Fees Paid YTD /
-          Active Factor drill into the existing, real /factoring/reserves, /factoring/chargebacks-fees, and
-          /factoring/factors pages. Submitted (batches) / Advances Received have no batches-list route
-          anywhere in the app (only /factoring/batches/new and /factoring/batches/:id exist) — left dead
-          intentionally rather than invent a destination. */}
+      {/* B-A3: Reserve / fees / chargebacks / factor → real routes. Submitted / Advances have no
+          batches-list route (only /factoring/batches/new and /:id) — honest disabled, not Submission Queue. */}
       <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-6">
         <KpiCard
           label="Submitted (batches)"
           value={String(totalSubmittedCount)}
           sub={fmtM(totalSubmittedFace) + " face"}
+          disabled
+          disabledReason={NOT_AVAILABLE_YET}
         />
         <KpiCard
           label="Advances Received"
           value={fmtM(totalAdvances)}
           sub={`${batchesFundedQ.data?.batches.length ?? 0} funded`}
+          disabled
+          disabledReason={NOT_AVAILABLE_YET}
         />
         <KpiCard
           label="FARO Reserve Held"

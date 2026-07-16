@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
@@ -8,6 +9,13 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SettlementDetailPage } from "./SettlementDetailPage";
 import { SettlementDisputesTab } from "./components/SettlementDisputesTab";
 import { SettlementsTable } from "./components/SettlementsTable";
+
+type FocusFilter = "debt" | "pending_acks" | "held" | null;
+
+function parseFocus(raw: string | null): FocusFilter {
+  if (raw === "debt" || raw === "pending_acks" || raw === "held") return raw;
+  return null;
+}
 
 export function SettlementsPage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -25,6 +33,8 @@ export function SettlementsPage() {
     | "bounced"
     | "manual_paid"
     | null;
+  // B-A3: KPI focus filter — same predicates as the KPI counts (not a guess-route).
+  const focusFilter = parseFocus(searchParams.get("focus"));
 
   const listQuery = useQuery({
     queryKey: ["driver-finance", "settlements", companyId, selectedPaymentState ?? ""],
@@ -42,6 +52,25 @@ export function SettlementsPage() {
     pending_acks: settlements.filter((s) => s.has_pending_acks).length,
     held_deductions: settlements.filter((s) => s.status === "held").length,
     ytd_settlements: settlements.length,
+  };
+  const focusedSettlements = useMemo(() => {
+    if (focusFilter === "debt") {
+      return settlements.filter((s) => typeof s.live_debt_flag === "number" && s.live_debt_flag > 0);
+    }
+    if (focusFilter === "pending_acks") {
+      return settlements.filter((s) => s.has_pending_acks);
+    }
+    if (focusFilter === "held") {
+      return settlements.filter((s) => s.status === "held");
+    }
+    return settlements;
+  }, [settlements, focusFilter]);
+
+  const setFocus = (next: FocusFilter) => {
+    const params = new URLSearchParams(searchParams);
+    if (next) params.set("focus", next);
+    else params.delete("focus");
+    setSearchParams(params);
   };
   const paymentPipeline = {
     unpaid: settlements.filter((s) => (s.payment_state ?? "unpaid") === "unpaid").length,
@@ -122,16 +151,29 @@ export function SettlementsPage() {
 
       {activeTab === "settlements" ? (
         <>
-      {/* B10 dead-click rollout: Total Unpaid / This Period / YTD Settlements drill into the existing
-          ?payment_state= filter (same mechanism as the Payment Pipeline buttons below). Drivers w/ Debt,
-          Pending Acks, and Held Deductions have no matching filter (live_debt_flag / has_pending_acks /
-          status="held" are not filterable here) — left dead intentionally. */}
+      {/* B-A3: Total Unpaid / This Period / YTD → payment_state routes; Debt / Pending Acks / Held →
+          ?focus= predicates matching the KPI counts on this same list (real data, not guess-routes). */}
       <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-6">
         <KpiCard label="Total Unpaid" value={kpis.total_unpaid} to="/driver-finance/settlements?payment_state=unpaid" />
         <KpiCard label="This Period" value={kpis.this_period} to="/driver-finance/settlements" />
-        <KpiCard label="Drivers w/ Debt" value={kpis.drivers_with_debt} />
-        <KpiCard label="Pending Acks" value={kpis.pending_acks} />
-        <KpiCard label="Held Deductions" value={kpis.held_deductions} />
+        <KpiCard
+          label="Drivers w/ Debt"
+          value={kpis.drivers_with_debt}
+          active={focusFilter === "debt"}
+          onClick={() => setFocus(focusFilter === "debt" ? null : "debt")}
+        />
+        <KpiCard
+          label="Pending Acks"
+          value={kpis.pending_acks}
+          active={focusFilter === "pending_acks"}
+          onClick={() => setFocus(focusFilter === "pending_acks" ? null : "pending_acks")}
+        />
+        <KpiCard
+          label="Held Deductions"
+          value={kpis.held_deductions}
+          active={focusFilter === "held"}
+          onClick={() => setFocus(focusFilter === "held" ? null : "held")}
+        />
         <KpiCard label="YTD Settlements" value={kpis.ytd_settlements} to="/driver-finance/settlements" />
       </div>
       <div className="rounded-sm border border-gray-200 bg-white p-2">
@@ -167,7 +209,7 @@ export function SettlementsPage() {
       </div>
 
       <SettlementsTable
-        rows={settlements}
+        rows={focusedSettlements}
         onOpen={(id) => {
           const next = new URLSearchParams(searchParams);
           next.set("settlement_id", id);
@@ -192,19 +234,52 @@ function setFilter(
   setSearchParams(next);
 }
 
-function KpiCard({ label, value, to }: { label: string; value: number; to?: string }) {
+function KpiCard({
+  label,
+  value,
+  to,
+  onClick,
+  active,
+  disabled,
+  disabledReason,
+}: {
+  label: string;
+  value: number;
+  to?: string;
+  onClick?: () => void;
+  active?: boolean;
+  disabled?: boolean;
+  disabledReason?: string;
+}) {
   const content = (
     <>
       <div className="text-[10px] uppercase tracking-wide text-gray-500">{label}</div>
       <div className="font-semibold">{value}</div>
     </>
   );
+  const base = `rounded-sm border px-2 py-1 text-[11px] ${
+    active ? "border-slate-500 bg-slate-50" : "border-gray-200 bg-white"
+  }`;
+  if (disabled) {
+    return (
+      <div className={`${base} cursor-not-allowed opacity-70`} aria-disabled="true" title={disabledReason} data-kpi-disabled="true">
+        {content}
+      </div>
+    );
+  }
   if (to) {
     return (
-      <Link to={to} className="block rounded-sm border border-gray-200 bg-white px-2 py-1 text-[11px] transition hover:shadow-xs">
+      <Link to={to} className={`block ${base} transition hover:shadow-xs`}>
         {content}
       </Link>
     );
   }
-  return <div className="rounded-sm border border-gray-200 bg-white px-2 py-1 text-[11px]">{content}</div>;
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} aria-pressed={Boolean(active)} className={`${base} w-full text-left transition hover:shadow-xs`}>
+        {content}
+      </button>
+    );
+  }
+  return <div className={base}>{content}</div>;
 }

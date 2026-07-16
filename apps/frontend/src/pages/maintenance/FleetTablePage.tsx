@@ -6,6 +6,7 @@ import { FleetTable, type FleetRow, type SoftDeleteFilter } from "../../componen
 import { FLEET_TYPE_FILTER_OPTIONS, parseFleetTypeFilter } from "../../components/fleet/fleetTypeFilter";
 import { downloadFleetLocationHosXlsx, getFleetLocationHos } from "../../api/reports";
 import { useListState } from "../../components/list-state";
+import { NOT_AVAILABLE_YET } from "../../lib/prodEmptyStateCopy";
 
 type Props = {
   operatingCompanyId: string;
@@ -35,11 +36,15 @@ function KpiCard({
   value,
   active,
   onClick,
+  disabled,
+  disabledReason,
 }: {
   label: string;
   value: string | number;
   active?: boolean;
   onClick?: () => void;
+  disabled?: boolean;
+  disabledReason?: string;
 }) {
   const cls = `rounded border px-2 py-1 text-left text-[11px] ${
     active ? "border-slate-500 bg-slate-50" : "border-gray-200 bg-white"
@@ -50,6 +55,13 @@ function KpiCard({
       <div className="font-semibold">{value}</div>
     </>
   );
+  if (disabled) {
+    return (
+      <div className={`${cls} cursor-not-allowed opacity-70`} aria-disabled="true" title={disabledReason} data-kpi-disabled="true">
+        {inner}
+      </div>
+    );
+  }
   if (!onClick) return <div className={cls}>{inner}</div>;
   return (
     <button type="button" onClick={onClick} aria-pressed={Boolean(active)} className={`${cls} hover:bg-gray-50`}>
@@ -257,6 +269,8 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
         <KpiCard
           label="Avg Age"
           value={kpis.avg_age_years == null ? "-" : `${Number(kpis.avg_age_years).toFixed(1)} y`}
+          disabled
+          disabledReason={NOT_AVAILABLE_YET}
         />
       </div>
 
