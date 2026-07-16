@@ -12,6 +12,9 @@
  *  3. AccountingAuditTrailPage seeds filters from ?source_type=&source_id=
  *  4. FaultDraftsPage reads ?unit_id= (MaintenanceSnapshotSection emits it)
  *  5. No regression to /reports?invoice_id= or /reports?payment_id=
+ *  6. EntityLink expense ≠ null → /accounting/expenses/list?expense_id= (Desktop audit
+ *     99-CROSSCUTTING-ENTITYLINK WILL FAIL); ExpensesListPage honors ?expense_id=; WO detail
+ *     producer uses EntityLink kind="expense". No ExpenseDetailPage invent — list deep-link only.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -35,6 +38,10 @@ const invoice = read("apps/frontend/src/pages/accounting/InvoiceDetailPage.tsx")
 const payment = read("apps/frontend/src/pages/accounting/PaymentDetailPage.tsx");
 const audit = read("apps/frontend/src/pages/accounting/AccountingAuditTrailPage.tsx");
 const faults = read("apps/frontend/src/pages/maintenance/FaultDraftsPage.tsx");
+const entityLink = read("apps/frontend/src/components/shared/EntityLink.tsx");
+const expensesList = read("apps/frontend/src/pages/accounting/ExpensesListPage.tsx");
+const woDetail = read("apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx");
+const manifest = read("apps/frontend/src/routes/manifest.tsx");
 
 if (invoice) {
   if (/\/reports\?invoice_id=/.test(invoice)) {
@@ -77,12 +84,54 @@ if (faults) {
   }
 }
 
+// Desktop audit 99-CROSSCUTTING-ENTITYLINK: expense must never resolve to null.
+if (entityLink) {
+  if (/case\s+["']expense["']\s*:\s*return\s+null/.test(entityLink)) {
+    failures.push('EntityLink: case "expense" must not return null (WILL FAIL drill-through)');
+  }
+  if (!/case\s+["']expense["']\s*:\s*return\s+`\/accounting\/expenses\/list\?expense_id=\$\{id\}`/.test(entityLink)) {
+    failures.push(
+      'EntityLink: case "expense" must resolve to `/accounting/expenses/list?expense_id=${id}` (no fake detail page)',
+    );
+  }
+}
+
+if (expensesList) {
+  if (!/useSearchParams/.test(expensesList)) {
+    failures.push("ExpensesListPage: must use useSearchParams to honor EntityLink expense deep-links");
+  }
+  if (!/searchParams\.get\(["']expense_id["']\)/.test(expensesList)) {
+    failures.push("ExpensesListPage: must honor ?expense_id= (EntityLink consumer)");
+  }
+  if (!/kind=["']expense["']/.test(expensesList)) {
+    failures.push("ExpensesListPage: expense # column must render EntityLink kind=\"expense\"");
+  }
+}
+
+if (woDetail) {
+  if (!/EntityLink\s+kind=["']expense["']/.test(woDetail)) {
+    failures.push('WorkOrderDetailPage: expense producer must use <EntityLink kind="expense" …>');
+  }
+  // Forbid the pre-fix dead producer that landed on the create page and ignored the id.
+  if (/to=\{`?\/accounting\/expenses\?expense_id=/.test(woDetail) || /to=["']\/accounting\/expenses\?expense_id=/.test(woDetail)) {
+    failures.push(
+      "WorkOrderDetailPage: must not link /accounting/expenses?expense_id= (create page ignores param)",
+    );
+  }
+}
+
+if (manifest) {
+  if (!/path=["']\/accounting\/expenses\/list["']/.test(manifest)) {
+    failures.push("manifest: /accounting/expenses/list route must exist for expense EntityLink target");
+  }
+}
+
 if (failures.length) {
   console.error(`${LABEL}: FAIL`);
   for (const f of failures) console.error(`  - ${f}`);
   process.exit(1);
 }
 console.log(
-  `${LABEL}: OK — invoice/payment audit log + fault drafts unit_id deep-links honored`,
+  `${LABEL}: OK — invoice/payment audit log + fault drafts unit_id + expense EntityLink deep-links honored`,
 );
 process.exit(0);
