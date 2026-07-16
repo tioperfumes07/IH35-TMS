@@ -1,12 +1,12 @@
 # IH35-TMS — Continuous Build Progress
-**As of:** 2026-07-16 ~23:00 CDT · **Cadence:** every 10 blocks · **Blocks this slice:** 10 / 10 (report #2)
+**As of:** 2026-07-15 ~23:37 CDT · **Cadence:** every 10 blocks · **Blocks this slice:** report #3 (Relay/QBO live)
 
 | Status | Count |
 |--------|------:|
-| Done | 5 |
+| Done | 6 |
 | In progress | 1 |
-| Pending queue | 5 PRs |
-| Blocked (Jorge manual) | 2 |
+| Pending queue | see below |
+| Blocked (Jorge manual) | Relay ceremony / env |
 
 ## DONE
 1. #2535 checksum hotfix merged (`d18695861`) — hold-gate **neutral** (no `JORGE-APPROVED`)
@@ -14,25 +14,22 @@
 3. Relay verify path locked: `RELAY_API_BASE` + `RELAY_API_KEY_TRANSP` + flag ON → Owner **API backfill** (cron ≠ history)
 4. WIP split agreed: 5 PRs (425C → URL → Relay HOLD → QBO Step-2 HOLD → docs)
 5. PR-A file list locked (6 Form 425C files)
+6. **#2538 MERGED** — merge commit `c667723ad` · live `healthz` reports **c667723** (relay → canonical fuel bridge **on prod**)
 
 ## IN PROGRESS
-- Cut PR-A (425C) locally in worktree — **no Cursor Run / no push until you push from Terminal**
+- **#2539** still **OPEN** — waiting **build-typecheck** then merge (QBO Step-2 mdata + write guard; HOLD title + `JORGE-APPROVED`)
 
-## PENDING QUEUE
-| # | PR | JORGE-APPROVED? |
-|---|-----|-----------------|
-| 1 | 425C petition_date SoR | No |
-| 2 | Dispatch/invoice deep-links | No |
-| 3 | Relay bridge + backfill failure audit | **Yes** (HOLD title) |
-| 4 | QBO Step-2 mdata + write guard | **Yes** (HOLD title) |
-| 5 | CURSOR-AUDIT docs pack | No |
+## PENDING / NEXT
+1. Merge **#2539** after build-typecheck green
+2. Owner **Relay ceremony** (env + flag + API backfill TRANSP) — agent does not bypass
 
-CSV import = follow-on after PR-3 proves API path.
-
-## BLOCKED (you — Run UI broken; agent will not bypass)
-1. Render: confirm #2535 deploy **Live**; paste `curl -sS https://api.ih35dispatch.com/api/v1/healthz/shallow`
-2. After Live: Manual Restart if Relay env changed → Fuel → API backfill (TRANSP)
+## BLOCKED / LIVE GAPS (Relay TRANSP)
+- Neon `relay_fuel_transactions` (TRANSP): still **0 rows**
+- Feature **flag override missing**
+- Need **`RELAY_API_KEY_TRANSP`** on Render (plus restart after env change)
+- After #2539 merge → owner Relay ceremony (flag ON + key + API backfill)
 
 ## LIVE FACTS
-- Neon `relay_fuel_transactions`: **0** (last check)
-- Agent policy: no Smart Mode bypass, no Run pushback
+- Prod shallow healthz deploy SHA: **c667723** (#2538 relay bridge)
+- Neon TRANSP fuel rows: **0** (last check)
+- Agent policy: no Smart Mode bypass, no Run pushback; **do not merge** from agent without explicit owner go
