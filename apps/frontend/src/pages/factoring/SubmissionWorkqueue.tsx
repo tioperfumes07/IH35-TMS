@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { listWorkqueue, type WorkqueueItem } from "../../api/factoring";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
 
@@ -84,7 +85,13 @@ export function SubmissionWorkqueue() {
         <tbody>
           {items.map((item) => (
             <tr key={item.invoice_id} className="border-b border-slate-100 hover:bg-slate-50">
-              <td className="py-1.5 pr-3 font-mono text-slate-700">{item.display_id ?? item.invoice_id.slice(0, 8)}</td>
+              <td className="py-1.5 pr-3 font-mono text-slate-700">
+                <EntityLink
+                  kind="invoice"
+                  id={item.invoice_id}
+                  label={item.display_id ?? item.invoice_id.slice(0, 8)}
+                />
+              </td>
               <td className="py-1.5 pr-3">{item.customer_name ?? "—"}</td>
               <td className="py-1.5 pr-3 font-mono text-slate-500">{item.batch_number ?? "—"}</td>
               <td className="py-1.5 pr-3 text-slate-500">{item.submitted_at ? formatDateUS(item.submitted_at.slice(0, 10)) : "—"}</td>

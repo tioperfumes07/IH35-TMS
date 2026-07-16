@@ -1,8 +1,9 @@
 // FIN-23 — QBO Reconcile / Modify Captures (READ-ONLY surfacing).
 // Surfaces sync health, modify captures (changes made directly in QBO), and conflicts/alerts.
 // No resolve/apply: this page only reads and displays. Gated behind QBO_RECONCILE_UI_ENABLED.
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
@@ -45,6 +46,43 @@ function Pill({ map, value }: { map: Record<string, string>; value: string }) {
       {titleize(value)}
     </span>
   );
+}
+
+/** Map TMS entity_type / applied_to_tms_entity_table to a resolvable EntityLink kind (local ids only). */
+function tmsEntityKind(entityTypeOrTable: string | null | undefined): EntityKind | null {
+  const raw = (entityTypeOrTable ?? "").toLowerCase();
+  if (!raw) return null;
+  if (raw.includes("invoice")) return "invoice";
+  if (raw.includes("bill_payment") || raw === "payment" || raw === "customer_payment") return "payment";
+  if (raw.includes("bill")) return "bill";
+  if (raw.includes("expense")) return "expense";
+  if (raw.includes("settlement")) return "settlement";
+  if (raw.includes("journal")) return "journal_entry";
+  if (raw.includes("vendor")) return "vendor";
+  if (raw.includes("customer")) return "customer";
+  if (raw.includes("driver") && !raw.includes("advance")) return "driver";
+  if (raw.includes("unit")) return "unit";
+  if (raw.includes("trailer")) return "trailer";
+  if (raw.includes("work_order") || raw.includes("workorder")) return "work_order";
+  if (raw.includes("factoring")) return "factoring_advance";
+  if (raw.includes("bank_transaction") || raw.includes("bank_tx")) return "bank_transaction";
+  return null;
+}
+
+function TmsEntityLink({
+  entityType,
+  entityId,
+  label,
+}: {
+  entityType: string | null | undefined;
+  entityId: string | null | undefined;
+  label?: ReactNode;
+}) {
+  const kind = tmsEntityKind(entityType);
+  if (!kind || !entityId) {
+    return <>{label ?? entityId ?? "—"}</>;
+  }
+  return <EntityLink kind={kind} id={entityId} label={label ?? entityId.slice(0, 8)} />;
 }
 
 type Tab = "overview" | "captures" | "conflicts" | "runs" | "exceptions";
@@ -172,7 +210,20 @@ function CapturesTab({ companyId }: { companyId: string }) {
                   <td className="px-3 py-2 whitespace-nowrap text-gray-600">{fmtDt(row.qbo_last_updated_at)}</td>
                   <td className="px-3 py-2 whitespace-nowrap text-gray-600">
                     {row.applied_at ? (
-                      <span>{fmtDt(row.applied_at)}<span className="ml-1 text-xs text-gray-400">{titleize(row.applied_to_tms_entity_table)}</span></span>
+                      <span>
+                        {fmtDt(row.applied_at)}
+                        {row.applied_to_tms_entity_id ? (
+                          <span className="ml-1 text-xs text-gray-600">
+                            <TmsEntityLink
+                              entityType={row.applied_to_tms_entity_table ?? row.qbo_entity_type}
+                              entityId={row.applied_to_tms_entity_id}
+                              label={row.applied_to_tms_entity_id.slice(0, 8)}
+                            />
+                          </span>
+                        ) : row.applied_to_tms_entity_table ? (
+                          <span className="ml-1 text-xs text-gray-400">{titleize(row.applied_to_tms_entity_table)}</span>
+                        ) : null}
+                      </span>
                     ) : (
                       <span className="text-xs text-gray-400">Not reflected</span>
                     )}
@@ -244,7 +295,18 @@ function ConflictsTab({ companyId }: { companyId: string }) {
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 bg-gray-50 px-3 py-2">
                   <div className="text-sm font-medium text-gray-800">
                     <span className="capitalize">{titleize(conflict.entity_type)}</span>
-                    <span className="ml-2 font-mono text-xs text-gray-500">{conflict.qbo_id ?? conflict.entity_id}</span>
+                    <span className="ml-2 font-mono text-xs text-gray-500">
+                      <TmsEntityLink
+                        entityType={conflict.entity_type}
+                        entityId={conflict.entity_id}
+                        label={conflict.entity_id.slice(0, 8)}
+                      />
+                    </span>
+                    {conflict.qbo_id ? (
+                      <span className="ml-2 font-mono text-xs text-gray-400" title="QuickBooks id (no TMS route)">
+                        QBO {conflict.qbo_id}
+                      </span>
+                    ) : null}
                   </div>
                   <div className="flex items-center gap-2">
                     <Pill map={SEVERITY_PILL} value={conflict.severity} />
