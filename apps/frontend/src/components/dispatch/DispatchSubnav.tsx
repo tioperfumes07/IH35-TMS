@@ -40,7 +40,7 @@ const DISPATCH_NAV_ITEMS: readonly NavItem[] = [
       { label: "Planner Calendar", href: "/dispatch/planner" },
       { label: "Load Templates", href: "/dispatch/planner?panel=templates", badgeKey: "load_templates" },
       { label: "Unassigned Units", href: "/dispatch?view=overview&panel=unassigned", badgeKey: "unassigned_units" },
-      { label: "Reserve a Load", href: "/dispatch?book_load=1" },
+      { label: "Reserve a Load", href: "/dispatch/book-load?book_load=1" },
     ],
   },
   {
@@ -81,6 +81,8 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   "/dispatch/planner?panel=templates": "Load Templates",
   "/dispatch?view=overview&panel=unassigned": "Unassigned Units",
   "/dispatch?book_load=1": "Reserve a Load",
+  "/dispatch/book-load": "Reserve a Load",
+  "/dispatch/book-load?book_load=1": "Reserve a Load",
   "/driver-finance/settlements": "Settlements",
   "/accounting/pre-settlements": "Pre-settlements",
   "/dispatch/pod-review": "POD Review",
@@ -101,8 +103,10 @@ export function dispatchSubNavActiveHref(pathname: string, search: string): stri
   const panel = params.get("panel");
   const bookLoad = params.get("book_load");
 
+  if (pathname === "/dispatch/book-load" || bookLoad === "1") {
+    return bookLoad === "1" ? "/dispatch/book-load?book_load=1" : "/dispatch/book-load";
+  }
   if (pathname === "/dispatch" || pathname === "/dispatch/loads") {
-    if (bookLoad === "1") return "/dispatch?book_load=1";
     if (view === "overview" && panel === "unassigned") return "/dispatch?view=overview&panel=unassigned";
     if (view === "overview") return "/dispatch?view=overview";
     if (pathname === "/dispatch/loads" || view === "list") return "/dispatch?view=list";
