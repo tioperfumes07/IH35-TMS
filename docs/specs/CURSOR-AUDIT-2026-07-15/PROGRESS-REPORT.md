@@ -1,38 +1,49 @@
 # IH35-TMS — Continuous Build Progress
-**As of:** 2026-07-16 ~23:00 CDT · **Cadence:** every 10 blocks · **Blocks this slice:** 10 / 10 (report #2)
+**As of:** 2026-07-16 ~04:30Z · **Slice:** post #2535–#2540 · Live catch-up
 
 | Status | Count |
 |--------|------:|
-| Done | 5 |
-| In progress | 1 |
-| Pending queue | 5 PRs |
-| Blocked (Jorge manual) | 2 |
+| Merged this wave | 4 (#2535–#2537, #2540) |
+| Open / merge-ready | 2 (#2538, #2539) |
+| Live SHA | `574092d` (matches `origin/main` tip) |
+| Blocked (ops) | Relay TRANSP key + entity flag + API backfill |
 
-## DONE
-1. #2535 checksum hotfix merged (`d18695861`) — hold-gate **neutral** (no `JORGE-APPROVED`)
-2. Bugbot + security review on hotfix: no bugs / no medium+ security issues; post-deploy drift audit recommended for mig 49–51
-3. Relay verify path locked: `RELAY_API_BASE` + `RELAY_API_KEY_TRANSP` + flag ON → Owner **API backfill** (cron ≠ history)
-4. WIP split agreed: 5 PRs (425C → URL → Relay HOLD → QBO Step-2 HOLD → docs)
-5. PR-A file list locked (6 Form 425C files)
+## MERGED (on `origin/main` tip `574092d`)
+- **#2535** MERGED — checksum overrides mig 48–51; mergeCommit `d18695861`
+- **#2536** MERGED — 425C `petition_date` from case SoR
+- **#2537** MERGED — dispatch/invoice deeplinks
+- **#2540** MERGED — CURSOR-AUDIT-2026-07-15 docs pack (`574092d94`)
 
-## IN PROGRESS
-- Cut PR-A (425C) locally in worktree — **no Cursor Run / no push until you push from Terminal**
+**Live proof:** `healthz` version = **`574092d`** (Render caught up; no longer lagging on `d186958`).
 
-## PENDING QUEUE
-| # | PR | JORGE-APPROVED? |
-|---|-----|-----------------|
-| 1 | 425C petition_date SoR | No |
-| 2 | Dispatch/invoice deep-links | No |
-| 3 | Relay bridge + backfill failure audit | **Yes** (HOLD title) |
-| 4 | QBO Step-2 mdata + write guard | **Yes** (HOLD title) |
-| 5 | CURSOR-AUDIT docs pack | No |
+## OPEN
+- **#2538** Relay fuel bridge — `JORGE-APPROVED`; CI in flight (cycle-fix landed on bridge branch)
+- **#2539** QBO Step-2 mdata repoint — `JORGE-APPROVED`; merge when CI green on latest tip
 
-CSV import = follow-on after PR-3 proves API path.
+## LIVE / OPS (Neon TRANSP)
+| Check | Result |
+|-------|--------|
+| `integrations.relay_fuel_transactions` (TRANSP) | **0** |
+| `fuel.fuel_transactions` (TRANSP) | **0** |
+| `RELAY_FUEL_INGEST_ENABLED` default | **false** |
+| Entity override row (TRANSP) | **NONE** |
 
-## BLOCKED (you — Run UI broken; agent will not bypass)
-1. Render: confirm #2535 deploy **Live**; paste `curl -sS https://api.ih35dispatch.com/api/v1/healthz/shallow`
-2. After Live: Manual Restart if Relay env changed → Fuel → API backfill (TRANSP)
+After **#2538** merges + deploys, Owner must:
+1. Set Render secret **`RELAY_API_KEY_TRANSP`**
+2. Turn entity flag **ON** for TRANSP (`RELAY_FUEL_INGEST_ENABLED` override)
+3. **POST API backfill** (cron ≠ history)
+4. Prove Neon `relay_txns` / `fuel_txns` > 0 for TRANSP
 
-## LIVE FACTS
-- Neon `relay_fuel_transactions`: **0** (last check)
-- Agent policy: no Smart Mode bypass, no Run pushback
+## OWNER MERGE HELPER
+- Script: **`OWNER-MERGE-REMAINING.sh`**
+- Run with **`CONFIRM=1`** (no blind merges)
+
+```bash
+CONFIRM=1 ./OWNER-MERGE-REMAINING.sh
+```
+
+## NEXT ACTIONS
+1. Babysit **#2538** → CI green → squash merge (`CONFIRM=1` helper OK)
+2. Babysit **#2539** → CI green → squash merge
+3. Post-bridge: Relay env + entity flag ON + POST backfill → prove rows > 0
+4. Continue queue non-stop; do not idle either lane
