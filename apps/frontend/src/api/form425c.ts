@@ -8,6 +8,8 @@ export type Form425CReport = Record<string, unknown> & {
   id: string;
   reporting_month: string;
   status: "draft" | "ready_to_file" | "filed" | "amended";
+  petition_date?: string;
+  case_number?: string;
 };
 
 export type Form425CProfileRecord = {

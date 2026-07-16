@@ -34,6 +34,7 @@ export function ProfilesTab({ profiles, activeCompany, setActiveCompany, onChang
         {[
           ["Company Name", "name"],
           ["Case Number", "caseNumber"],
+          ["Petition Date (YYYY-MM-DD)", "petitionDate"],
           ["District", "district"],
           ["Division", "division"],
           ["Judge", "judge"],
@@ -45,6 +46,7 @@ export function ProfilesTab({ profiles, activeCompany, setActiveCompany, onChang
           <label key={key} className="block text-xs font-semibold uppercase tracking-wide text-slate-600">
             {label}
             <input
+              type={key === "petitionDate" ? "date" : "text"}
               className="mt-1 w-full rounded-sm border px-2 py-1.5 text-sm font-normal normal-case"
               value={String((profile as Record<string, unknown>)[key] ?? "")}
               onChange={(e) => onChange(activeCompany, (draft) => ({ ...draft, [key]: e.target.value }))}

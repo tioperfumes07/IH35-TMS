@@ -340,7 +340,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
     const reports = await withCompanyScope(user.uuid, companyId, async (client) => {
       const res = await client.query(
         `
-          SELECT id, reporting_month, status, filed_at, filed_by_user_id, amended_from_uuid, created_at, updated_at
+          SELECT id, reporting_month, status, petition_date, case_number, filed_at, filed_by_user_id, amended_from_uuid, created_at, updated_at
           FROM compliance.form_425c_reports
           WHERE operating_company_id = $1
           ORDER BY reporting_month DESC, created_at DESC
@@ -501,6 +501,25 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
 
     const created = await withCompanyScope(user.uuid, b.operating_company_id, async (client) => {
       await ensureDefaultProfiles(client, b.operating_company_id, user.uuid);
+
+      // Case petition date is a single source of truth for the Ch.11 case — never invent a literal.
+      // Prefer the petition_date already recorded on any prior report for this entity; otherwise require body.
+      const casePetitionRes = await client.query<{ petition_date: string }>(
+        `
+          SELECT petition_date::text AS petition_date
+          FROM compliance.form_425c_reports
+          WHERE operating_company_id = $1
+          ORDER BY created_at ASC
+          LIMIT 1
+        `,
+        [b.operating_company_id]
+      );
+      const casePetitionDate = casePetitionRes.rows[0]?.petition_date?.slice(0, 10) ?? null;
+      const petitionDate = casePetitionDate ?? b.petition_date;
+      if (!petitionDate || !/^\d{4}-\d{2}-\d{2}$/.test(petitionDate)) {
+        return { error: "petition_date_required" as const };
+      }
+
       const prevRes = await client.query(
         `
           SELECT id, line_35_next_proj_receipts, line_36_next_proj_disbursements, line_37_next_proj_net_cash_flow
@@ -540,7 +559,7 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
           b.case_number,
           b.court_district,
           b.subchapter,
-          b.petition_date,
+          petitionDate,
           line32,
           line33,
           line34,
@@ -564,6 +583,13 @@ export async function registerForm425CRoutes(app: FastifyInstance) {
       );
       return report;
     });
+    if (created && typeof created === "object" && "error" in created && created.error === "petition_date_required") {
+      return reply.code(400).send({
+        error: "petition_date_required",
+        message:
+          "petition_date (YYYY-MM-DD) is required when no prior Form 425C report exists for this company. Set it on Profiles & Defaults — never hardcode.",
+      });
+    }
     return reply.code(201).send(created);
   });
 
