@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   isEnabled,
   isPerEntityGatedFlag,
@@ -8,6 +8,7 @@ import {
   POSTING_FLAG_KEYS,
   resolveFlagEnabled,
   rolloutBucket,
+  setOverride,
   type FeatureFlagOverrideRow,
   type FeatureFlagRow,
 } from "../service.js";
@@ -328,5 +329,64 @@ describe("BANK_DRIVER_ADVANCE_ENABLED is under the per-entity posting kill-switc
     // The override read is scoped by operating_company_id, so a different entity gets no matching row.
     const { client } = makeClient({ flag: postingFlag, overrides: [] });
     expect(await isEnabled(client, FLAG_KEY, { operating_company_id: "company-2" })).toBe(false);
+  });
+});
+
+describe("setOverride ON CONFLICT targets match partial unique indexes", () => {
+  const actor = "22222222-2222-4222-8222-222222222222";
+  const companyId = "91e0bf0a-133f-4ce8-a734-2586cfa66d96";
+  const userId = "33333333-3333-4333-8333-333333333333";
+
+  function makeClient() {
+    const calls: Array<{ sql: string; values?: unknown[] }> = [];
+    const client = {
+      query: vi.fn(async (sql: string, values?: unknown[]) => {
+        calls.push({ sql, values });
+        return {
+          rows: [
+            {
+              uuid: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+              flag_key: "TEST_FLAG",
+              operating_company_id: companyId,
+              user_uuid: null,
+              enabled: true,
+              set_by_user_uuid: actor,
+              set_at: "2026-01-01T00:00:00Z",
+              expires_at: null,
+            },
+          ],
+        };
+      }),
+    };
+    return { client, calls };
+  }
+
+  it("tenant override uses idx_ff_override_oci predicate exactly", async () => {
+    const { client, calls } = makeClient();
+    await setOverride(client, {
+      flag_key: "TEST_FLAG",
+      operating_company_id: companyId,
+      enabled: true,
+      set_by_user_uuid: actor,
+    });
+    const insert = calls.find((entry) => entry.sql.includes("INSERT INTO lib.feature_flag_overrides"));
+    expect(insert?.sql).toContain(
+      "ON CONFLICT (flag_key, operating_company_id) WHERE user_uuid IS NULL AND operating_company_id IS NOT NULL"
+    );
+    expect(insert?.sql).not.toMatch(
+      /ON CONFLICT \(flag_key, operating_company_id\) WHERE user_uuid IS NULL\s*\n\s*DO UPDATE/
+    );
+  });
+
+  it("user override uses idx_ff_override_user predicate exactly", async () => {
+    const { client, calls } = makeClient();
+    await setOverride(client, {
+      flag_key: "TEST_FLAG",
+      user_uuid: userId,
+      enabled: true,
+      set_by_user_uuid: actor,
+    });
+    const insert = calls.find((entry) => entry.sql.includes("INSERT INTO lib.feature_flag_overrides"));
+    expect(insert?.sql).toContain("ON CONFLICT (flag_key, user_uuid) WHERE user_uuid IS NOT NULL");
   });
 });
