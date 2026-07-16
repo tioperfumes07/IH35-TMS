@@ -161,15 +161,18 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
   });
 
   /** Read-only reverse fan-out: claim → accidents / lawsuits / matters / incidents already linked in. */
-  app.get("/api/v1/insurance/claims/:id/graph", async (req, reply) => {
-    const user = authUser(req, reply);
-    if (!user) return;
-    const params = claimIdParamsSchema.safeParse(req.params ?? {});
-    if (!params.success) return reply.code(400).send({ error: "validation_error", details: params.error.flatten() });
-    const query = operatingCompanySchema.safeParse(req.query ?? {});
-    if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
+  app.get(
+    "/api/v1/insurance/claims/:id/graph",
+    { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const user = authUser(req, reply);
+      if (!user) return;
+      const params = claimIdParamsSchema.safeParse(req.params ?? {});
+      if (!params.success) return reply.code(400).send({ error: "validation_error", details: params.error.flatten() });
+      const query = operatingCompanySchema.safeParse(req.query ?? {});
+      if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
 
-    const graph = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      const graph = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const claimRes = await client.query(
         `
           SELECT ${claimSelectColumns("c")}
@@ -255,11 +258,12 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
           settlement_deduction: "no driver_finance.driver_settlement_deductions.source claim FK on prod",
         },
       };
-    });
+      });
 
-    if (!graph) return reply.code(404).send({ error: "claim_not_found" });
-    return graph;
-  });
+      if (!graph) return reply.code(404).send({ error: "claim_not_found" });
+      return graph;
+    }
+  );
 
   app.post("/api/v1/insurance/claims", async (req, reply) => {
     const user = authUser(req, reply);
