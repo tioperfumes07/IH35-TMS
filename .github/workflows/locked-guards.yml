@@ -65,6 +65,12 @@ jobs:
       - name: verify:canonical-table-writes
         run: npm run verify:canonical-table-writes
 
+      - name: verify:no-payroll-settlement-writes --selftest
+        run: node scripts/verify-no-payroll-settlement-writes.mjs --selftest
+
+      - name: verify:no-payroll-settlement-writes
+        run: npm run verify:no-payroll-settlement-writes
+
       - name: verify:no-duplicate-financial-ledger --selftest
         run: node scripts/verify-no-duplicate-financial-ledger.mjs --selftest
 

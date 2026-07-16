@@ -191,5 +191,25 @@
   "db/migrations/202606300130_load_cancellations_per_entity_fk.sql::catalogs.load_cancellation_reasons::REFERENCES": {
     "count": 1,
     "reason": "baselined 2026-07-11 — pre-existing REFERENCES catalogs.load_cancellation_reasons; retire to catalogs.cancellation_reasons"
+  },
+  "apps/backend/src/settlements/disputes/disputes.routes.ts::settlements.settlement_disputes::INSERT INTO": {
+    "count": 1,
+    "reason": "B-C.P4 — legacy plural RETIRE disputes create; repoint P2e → driver_finance.driver_settlement_disputes"
+  },
+  "apps/backend/src/settlements/disputes/disputes.routes.ts::settlements.settlement_disputes::UPDATE": {
+    "count": 2,
+    "reason": "B-C.P4 — legacy plural RETIRE disputes status/resolve updates; shrink on P2e/P3"
+  },
+  "apps/backend/src/settlements/team-splits/team-splits.routes.ts::settlements.team_split_configs::INSERT INTO": {
+    "count": 1,
+    "reason": "B-C.P4 — legacy plural RETIRE team-split config create; repoint P2f → driver_finance.team_settlement_splits"
+  },
+  "apps/backend/src/settlements/team-splits/team-splits.routes.ts::settlements.team_split_configs::UPDATE": {
+    "count": 1,
+    "reason": "B-C.P4 — legacy plural RETIRE team-split config end; shrink on P2f/P3"
+  },
+  "apps/backend/src/settlements/team-splits/team-splits.routes.ts::settlements.team_split_load_overrides::INSERT INTO": {
+    "count": 1,
+    "reason": "B-C.P4 — legacy plural RETIRE load override create; shrink on P2f/P3"
   }
 }

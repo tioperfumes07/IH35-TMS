@@ -249,7 +249,7 @@ No frontend file contains `payroll.driver_settlements` or `driver_finance.driver
 | **P2f** | Team-split config → `team_settlement_splits` | Routes still write `settlements.team_split_*`; DF table also written from `driver-team.service` |
 | **P1** | Additive approval columns | HOLD migration (owner apply) — not this PR |
 | **P3** | Unmount + archive | After P2* |
-| **P4** | G4 harden | Sibling: `verify-no-payroll-settlement-writes.mjs` exists (**unwired** today); this PR adds inventory ratchet |
+| **P4** | G4 harden + route-mount | Inventory §10–12 + G4 `settlements.*` + wire `verify-no-payroll-settlement-writes` |
 
 ---
 
@@ -263,14 +263,37 @@ apps/backend/src/payroll/driver-settlement.service.deprecated.ts
 
 ---
 
-## 11. Related existing guards
+## 11. Machine allowlist — `settlements.*` (plural RETIRE) WRITE files
 
-| Guard | Role | Wired? |
-|---|---|---|
-| `scripts/verify-canonical-table-writes.mjs` | G4 RETIRE write/FK ratchet (broader) | yes |
-| `scripts/verify-no-payroll-settlement-writes.mjs` | Shrink-only payroll settlement writers (excludes `.deprecated.ts`) | **no** (baseline count 0) |
-| `scripts/verify-settlement-engine-inventory.mjs` | This PR — new file writing payroll settlement tables must appear in §10 | **yes (this PR)** |
+Any **new** file (not listed) that `INSERT INTO` / `UPDATE` `settlements.settlement_disputes`, `settlements.team_split_configs`, or `settlements.team_split_load_overrides` fails CI. Legacy writers stay allowlisted until P2e/P2f/P3 repoint+unmount.
+
+```settlement-engine-settlements-write-allowlist
+apps/backend/src/settlements/disputes/disputes.routes.ts
+apps/backend/src/settlements/team-splits/team-splits.routes.ts
+```
 
 ---
 
-*End of inventory. Refresh this doc when a P2* PR removes or moves a site; update §10 allowlist only when removing the last deprecated writer (allowlist may shrink, never grow without owner note).*
+## 12. Machine allowlist — RETIRE create/post route mounts (`index.ts`)
+
+Watched registrars: `registerPayrollDriverSettlementRoutes`, `registerSettlementsDisputesRoutes`, `registerTeamSplitRoutes`.
+Names listed below may remain mounted (legacy until P3). A **new** mount of a watched registrar not listed here fails CI (e.g. remounting unmounted `registerTeamSplitRoutes`).
+
+```settlement-engine-retire-route-mount-allowlist
+registerPayrollDriverSettlementRoutes
+registerSettlementsDisputesRoutes
+```
+
+---
+
+## 13. Related existing guards
+
+| Guard | Role | Wired? |
+|---|---|---|
+| `scripts/verify-canonical-table-writes.mjs` | G4 RETIRE write/FK ratchet (includes `settlements.*` plural as of P4) | yes |
+| `scripts/verify-no-payroll-settlement-writes.mjs` | Shrink-only live (non-`.deprecated`) payroll settlement writers | yes (P4) |
+| `scripts/verify-settlement-engine-inventory.mjs` | Allowlist ratchet for payroll + `settlements.*` writers + retire route mounts (§10–12) | yes |
+
+---
+
+*End of inventory. Refresh this doc when a P2* PR removes or moves a site; update §10–12 allowlists only when shrinking (or with owner note if a temporary grow is required).*
