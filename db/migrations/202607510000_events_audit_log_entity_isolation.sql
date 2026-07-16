@@ -44,7 +44,7 @@ CREATE POLICY event_log_opco_select ON events.event_log
 -- ============================================================================
 -- public.audit_log: add opco, backfill, enable+force RLS, WORM policy
 -- ============================================================================
-ALTER TABLE public.audit_log ADD COLUMN IF NOT EXISTS operating_company_id uuid;
+ALTER TABLE public.audit_log ADD COLUMN IF NOT EXISTS operating_company_id uuid REFERENCES org.companies(id);
 -- The column automatically propagates from the parent partitioned table to all existing and future
 -- partitions; Postgres forbids adding it directly to a partition.
 
