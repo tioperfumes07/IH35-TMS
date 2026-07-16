@@ -10,10 +10,14 @@
  * for idempotent upsert. Does NOT post journal entries.
  */
 import { createHash } from "node:crypto";
+import { appendCrudAudit } from "../../audit/crud-audit.js";
 import type { DbClient } from "./db-client.type.js";
 import { normalizeBankTransactionDescription } from "../../banking/transaction-ingestion.js";
 
 export const RELAY_WALLET_SOURCE_REF_PREFIX = "relay_fuel:";
+const RELAY_WALLET_FEED_AUDIT_SOURCE = "RELAY-WALLET-BANK-FEED";
+/** System actor for cron/ingest paths (matches factoring-posting / auto-pay cron). */
+const SYSTEM_ACTOR_ID = process.env.SYSTEM_ACTOR_USER_ID ?? "00000000-0000-4000-8000-000000000001";
 
 export type RelayWalletFeedInput = {
   operating_company_id: string;
@@ -211,6 +215,45 @@ async function resolveSettlementForLoadOrDriver(
   return byDriver.rows[0]?.id ?? null;
 }
 
+async function emitRelayWalletFeedAudit(
+  client: DbClient,
+  status: "inserted" | "updated",
+  payload: {
+    bank_transaction_id: string;
+    operating_company_id: string;
+    bank_account_id: string;
+    source_ref: string;
+    relay_transaction_id: string;
+    amount_cents: number;
+    matched_unit_id: string | null;
+    matched_driver_id: string | null;
+    matched_load_id: string | null;
+    matched_settlement_id: string | null;
+  },
+): Promise<void> {
+  await appendCrudAudit(
+    client,
+    SYSTEM_ACTOR_ID,
+    status === "inserted" ? "banking.transaction.imported" : "banking.transaction.updated",
+    {
+      source: "relay_wallet_bank_feed",
+      resource_type: "banking.bank_transactions",
+      resource_id: payload.bank_transaction_id,
+      operating_company_id: payload.operating_company_id,
+      bank_account_id: payload.bank_account_id,
+      source_ref: payload.source_ref,
+      relay_transaction_id: payload.relay_transaction_id,
+      amount_cents: payload.amount_cents,
+      matched_unit_id: payload.matched_unit_id,
+      matched_driver_id: payload.matched_driver_id,
+      matched_load_id: payload.matched_load_id,
+      matched_settlement_id: payload.matched_settlement_id,
+    },
+    "info",
+    RELAY_WALLET_FEED_AUDIT_SOURCE,
+  );
+}
+
 /**
  * Upsert one wallet bank-feed row for a Relay fuel purchase. Idempotent on source_ref.
  */
@@ -342,6 +385,18 @@ export async function upsertRelayWalletBankFeedRow(
         settlementId,
       ],
     );
+    await emitRelayWalletFeedAudit(client, "updated", {
+      bank_transaction_id: id,
+      operating_company_id: input.operating_company_id,
+      bank_account_id: walletAccountId,
+      source_ref: sourceRef,
+      relay_transaction_id: input.transaction_id,
+      amount_cents: input.amount_cents,
+      matched_unit_id: input.matched_unit_id,
+      matched_driver_id: driverId,
+      matched_load_id: loadId,
+      matched_settlement_id: settlementId,
+    });
     return { status: "updated", bank_transaction_id: id };
   }
 
@@ -416,6 +471,18 @@ export async function upsertRelayWalletBankFeedRow(
 
   const id = inserted.rows[0]?.id;
   if (!id) throw new Error(`relay_wallet_bank_feed: insert returned no id for ${input.transaction_id}`);
+  await emitRelayWalletFeedAudit(client, "inserted", {
+    bank_transaction_id: id,
+    operating_company_id: input.operating_company_id,
+    bank_account_id: walletAccountId,
+    source_ref: sourceRef,
+    relay_transaction_id: input.transaction_id,
+    amount_cents: input.amount_cents,
+    matched_unit_id: input.matched_unit_id,
+    matched_driver_id: driverId,
+    matched_load_id: loadId,
+    matched_settlement_id: settlementId,
+  });
   return { status: "inserted", bank_transaction_id: id };
 }
 
