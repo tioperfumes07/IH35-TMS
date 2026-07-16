@@ -53,14 +53,13 @@ Prod backend deploy at handoff: health `version=756b7a6`.
   **State:** green + `JORGE-APPROVED`, **but columns absent on prod → HOLD until owner applies on Neon.**
   Registered HELD; orphan-fk baselined; schema-parity regenerated.
 
-- **STEP 2 — #2529** `feat/settlement-collapse-step2-retire-payroll-engine-HOLD` (code only, no migration)
+- **STEP 2 — #2529 ✅ MERGED** (code only, no migration; retire landed on main 2026-07-16)
   **DECISION (GUARD): RETIRE, not repoint** — canonical is a strict superset (parity verified: cap math +
   net floor = `driver_finance/settlement-deduction-cap.service.ts` owner-locked; advance-recovery JE =
   `settlement-payrun-close.service.ts` via `advance_recovery` role, not hardcoded QBO-149; A/P bill =
   `settlement-bill-payment-posting.service.ts`). Archived `payroll/driver-settlement.service.ts` →
   `.deprecated.ts`; routes 308-redirect to canonical; **G4 guard** `verify-no-payroll-settlement-writes.mjs`
-  fails CI on new `payroll.*` settlement writes. `JORGE-APPROVED`; guard-fix commits pushed (the rename
-  broke 4 guards + 2 allowlists — all fixed). **Merges on green** (no migration → no Neon gate).
+  fails CI on new `payroll.*` settlement writes. `JORGE-APPROVED`; the rename broke 4 guards + 2 allowlists — all fixed. MERGED on green.
 
 - **STEP 3 — NOT BUILT (Cursor):** retire the **2 baselined dead-branch writers** in
   `settlements/auto-deductions/apply.ts` (`applyAutoDeductionsForSettlement`, already 0 callers) and
