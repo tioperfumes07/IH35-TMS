@@ -51,12 +51,16 @@ export async function autoCreateClaimFromDamage(
     damage_amount_cents: number;
     incident_at: string;
     auto_created_claim_id: string | null;
+    driver_id: string | null;
+    load_id: string | null;
   }>(
     `
       SELECT id::text,
              damage_amount_cents::bigint,
              incident_at::text,
-             auto_created_claim_id::text
+             auto_created_claim_id::text,
+             driver_id::text,
+             load_id::text
       FROM safety.incidents
       WHERE id = $1::uuid
         AND incident_type = 'damage_report'
@@ -110,7 +114,9 @@ export async function autoCreateClaimFromDamage(
         status,
         amount_claimed_cents,
         amount_paid_cents,
-        notes
+        notes,
+        driver_id,
+        load_id
       )
       VALUES (
         $1::uuid,
@@ -122,7 +128,9 @@ export async function autoCreateClaimFromDamage(
         'open',
         $6,
         0,
-        $7
+        $7,
+        $8::uuid,
+        $9::uuid
       )
       ON CONFLICT (tenant_id, claim_number) DO NOTHING
       RETURNING id::text, claim_number, policy_id::text, status, amount_claimed_cents::bigint
@@ -137,6 +145,8 @@ export async function autoCreateClaimFromDamage(
       `Auto-created from damage report ${params.damageIncidentId} per WF-027 (estimate >= $${(
         AUTO_CLAIM_THRESHOLD_CENTS / 100
       ).toFixed(2)}).`,
+      incident.driver_id,
+      incident.load_id,
     ]
   );
 

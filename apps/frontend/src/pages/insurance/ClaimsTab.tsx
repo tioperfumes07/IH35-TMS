@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
-import { listInsuranceClaims, type InsuranceClaim, type InsuranceClaimStatus } from "../../api/insurance";
+import {
+  getInsuranceClaimGraph,
+  listInsuranceClaims,
+  type InsuranceClaim,
+  type InsuranceClaimStatus,
+} from "../../api/insurance";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { Button } from "../../components/Button";
 import { ClaimCreateModal } from "../../components/insurance/ClaimCreateModal";
@@ -64,6 +69,12 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
     enabled: Boolean(companyId),
   });
 
+  const graphQuery = useQuery({
+    queryKey: ["insurance-claim-graph", companyId, highlightedClaimId],
+    queryFn: () => getInsuranceClaimGraph(highlightedClaimId!, companyId),
+    enabled: Boolean(companyId && highlightedClaimId),
+  });
+
   // Empty message renders only once the claims query settles (no first-fetch flash).
   const listState = useListState(query, (query.data ?? []).length === 0);
 
@@ -76,11 +87,30 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
   }
 
   const rows = query.data ?? [];
+  const graph = graphQuery.data;
 
   const columns = useMemo<ParityColumn<InsuranceClaim>[]>(
     () => [
-      { key: "claim_number", label: "Claim #", sortable: true, render: (claim) => <span className="font-medium text-gray-800">{claim.claim_number}</span> },
-      { key: "status", label: "Status", sortable: true, render: (claim) => <StatusBadge variant={claimStatusVariant(claim.status)}>{claim.status}</StatusBadge> },
+      {
+        key: "claim_number",
+        label: "Claim #",
+        sortable: true,
+        render: (claim) => (
+          <button
+            type="button"
+            className="font-medium text-slate-700 underline"
+            onClick={() => setHighlightedClaimId(claim.id)}
+          >
+            {claim.claim_number}
+          </button>
+        ),
+      },
+      {
+        key: "status",
+        label: "Status",
+        sortable: true,
+        render: (claim) => <StatusBadge variant={claimStatusVariant(claim.status)}>{claim.status}</StatusBadge>,
+      },
       {
         key: "policy_id",
         label: "Policy",
@@ -90,10 +120,57 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
           </Link>
         ),
       },
-      { key: "asset_id", label: "Asset", render: (claim) => <EntityLink kind="unit" id={claim.asset_id ?? undefined} label={claim.asset_id ? claim.asset_id.slice(0, 8) : undefined} /> },
-      { key: "accident_date", label: "Accident", sortable: true, render: (claim) => formatDateUS(claim.accident_date) },
-      { key: "amount_claimed_cents", label: "Claimed", sortable: true, render: (claim) => formatMoney(claim.amount_claimed_cents) },
-      { key: "amount_paid_cents", label: "Paid", sortable: true, render: (claim) => formatMoney(claim.amount_paid_cents) },
+      {
+        key: "unit_id",
+        label: "Unit",
+        render: (claim) => (
+          <EntityLink
+            kind="unit"
+            id={claim.unit_id ?? undefined}
+            label={claim.unit_id ? claim.unit_id.slice(0, 8) : undefined}
+          />
+        ),
+      },
+      {
+        key: "driver_id",
+        label: "Driver",
+        render: (claim) => (
+          <EntityLink
+            kind="driver"
+            id={claim.driver_id ?? undefined}
+            label={claim.driver_id ? claim.driver_id.slice(0, 8) : undefined}
+          />
+        ),
+      },
+      {
+        key: "load_id",
+        label: "Load",
+        render: (claim) => (
+          <EntityLink
+            kind="load"
+            id={claim.load_id ?? undefined}
+            label={claim.load_id ? claim.load_id.slice(0, 8) : undefined}
+          />
+        ),
+      },
+      {
+        key: "accident_date",
+        label: "Accident",
+        sortable: true,
+        render: (claim) => formatDateUS(claim.accident_date),
+      },
+      {
+        key: "amount_claimed_cents",
+        label: "Claimed",
+        sortable: true,
+        render: (claim) => formatMoney(claim.amount_claimed_cents),
+      },
+      {
+        key: "amount_paid_cents",
+        label: "Paid",
+        sortable: true,
+        render: (claim) => formatMoney(claim.amount_paid_cents),
+      },
     ],
     [],
   );
@@ -110,13 +187,58 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
       </div>
 
       {highlightedClaimId ? (
-        <p className="mb-2 rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
-          Deep-link claim <span className="font-mono font-semibold">{highlightedClaimId.slice(0, 8)}</span>
-          {rows.some((r) => r.id === highlightedClaimId) ? " — highlighted below." : " — not in current list."}
-        </p>
+        <div className="mb-3 space-y-2 rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+          <p>
+            Claim graph <span className="font-mono font-semibold">{highlightedClaimId.slice(0, 8)}</span>
+            {rows.some((r) => r.id === highlightedClaimId) ? " — highlighted below." : " — not in current list."}
+          </p>
+          {graphQuery.isLoading ? <p>Loading reverse links…</p> : null}
+          {graph ? (
+            <div className="grid gap-1 md:grid-cols-2">
+              <div>
+                <strong>Forward:</strong>{" "}
+                <EntityLink kind="driver" id={graph.claim.driver_id} label={graph.claim.driver_id ? "Driver" : undefined} />
+                {" · "}
+                <EntityLink kind="load" id={graph.claim.load_id} label={graph.claim.load_id ? "Load" : undefined} />
+                {" · "}
+                <EntityLink kind="unit" id={graph.claim.unit_id} label={graph.claim.unit_id ? "Unit" : undefined} />
+                {graph.claim.accident_report_id ? (
+                  <>
+                    {" · "}
+                    <Link className="text-slate-700 underline" to={`/safety/accidents`}>
+                      Accident {graph.claim.accident_report_id.slice(0, 8)}
+                    </Link>
+                  </>
+                ) : null}
+              </div>
+              <div>
+                <strong>Reverse:</strong>{" "}
+                {graph.reverse.lawsuits.map((l) => (
+                  <span key={l.id} className="mr-2">
+                    Lawsuit {l.case_number}
+                  </span>
+                ))}
+                {graph.reverse.matters.map((m) => (
+                  <EntityLink key={m.id} kind="matter" id={m.id} label={m.matter_number} className="mr-2 text-slate-700 underline" />
+                ))}
+                {graph.reverse.accidents.length === 0 &&
+                graph.reverse.lawsuits.length === 0 &&
+                graph.reverse.matters.length === 0 &&
+                graph.reverse.incidents.length === 0
+                  ? "none linked yet"
+                  : null}
+              </div>
+              <p className="md:col-span-2 text-[11px] text-slate-500">
+                Expense / WO / settlement FKs not on schema yet — {graph.gaps.expense.split(" ")[0]} gap documented by API.
+              </p>
+            </div>
+          ) : null}
+        </div>
       ) : null}
 
-      {query.isError ? <div className="rounded-sm border border-red-200 bg-red-50 p-2 text-sm text-red-700">Failed to load claims.</div> : null}
+      {query.isError ? (
+        <div className="rounded-sm border border-red-200 bg-red-50 p-2 text-sm text-red-700">Failed to load claims.</div>
+      ) : null}
 
       <ParityTable
         rows={rows}

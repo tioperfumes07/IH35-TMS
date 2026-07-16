@@ -187,6 +187,8 @@ export type InsuranceClaim = {
   claim_number: string;
   policy_id: string;
   asset_id: string | null;
+  /** Resolved from mdata.assets.unit_id when asset is linked (asset ≠ unit). */
+  unit_id?: string | null;
   accident_date: string;
   reported_date: string;
   status: InsuranceClaimStatus;
@@ -196,6 +198,25 @@ export type InsuranceClaim = {
   adjuster_email: string | null;
   notes: string | null;
   created_at: string;
+  accident_report_id?: string | null;
+  load_id?: string | null;
+  driver_id?: string | null;
+};
+
+export type InsuranceClaimGraph = {
+  claim: InsuranceClaim;
+  reverse: {
+    accidents: Array<{ id: string; insurance_claim_id: string | null; driver_id: string | null; unit_id: string | null; accident_at: string | null }>;
+    lawsuits: Array<{ id: string; case_number: string; claim_id: string | null; status: string; filed_date: string | null }>;
+    matters: Array<{ id: string; matter_number: string; insurance_claim_id: string | null; status: string; type: string }>;
+    incidents: Array<{ id: string; auto_created_claim_id: string | null; incident_type: string | null; incident_at: string | null }>;
+    damage_continuity_chains: Array<{ id: string; insurance_claim_id: string | null; final_resolution_status: string | null }>;
+  };
+  gaps: {
+    expense: string;
+    work_order: string;
+    settlement_deduction: string;
+  };
 };
 
 export type CreateInsuranceClaimPayload = {
@@ -211,6 +232,9 @@ export type CreateInsuranceClaimPayload = {
   adjuster_name?: string | null;
   adjuster_email?: string | null;
   notes?: string | null;
+  accident_report_id?: string | null;
+  load_id?: string | null;
+  driver_id?: string | null;
 };
 
 export type UpdateInsuranceClaimPayload = {
@@ -225,6 +249,9 @@ export type UpdateInsuranceClaimPayload = {
   adjuster_name?: string | null;
   adjuster_email?: string | null;
   notes?: string | null;
+  accident_report_id?: string | null;
+  load_id?: string | null;
+  driver_id?: string | null;
 };
 
 export type InsuranceLawsuit = {
@@ -574,6 +601,12 @@ export function listInsuranceClaims(params: {
   asset_id?: string;
 }) {
   return insuranceClaimsApi.list(params);
+}
+
+export function getInsuranceClaimGraph(id: string, operatingCompanyId: string) {
+  return apiRequest<InsuranceClaimGraph>(
+    `/api/v1/insurance/claims/${id}/graph?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
+  );
 }
 
 export function createInsuranceClaim(payload: CreateInsuranceClaimPayload) {
