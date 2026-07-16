@@ -20,8 +20,8 @@ function ensureFinanceUser(req: FastifyRequest, reply: FastifyReply) {
 }
 
 async function registerQboOb20260331LivePullRoutes(app: FastifyInstance) {
-  // Live QBO BalanceSheet + TrialBalance as_of 2026-03-31 Accrual — preview + mdata map only.
-  // No createJournalEntry / no JE assemble / no GL writes. Unmapped lines surfaced, never guessed.
+  // Live QBO BalanceSheet + TrialBalance as_of 2026-03-31 Accrual — preview + mdata map + JE assemble.
+  // No createJournalEntry / no GL writes. Unmapped lines surfaced; never claim balanced if unmapped remain.
   app.get(
     "/api/v1/accounting/opening-balance-import/qbo-live/2026-03-31/preview",
     async (req, reply) => {
