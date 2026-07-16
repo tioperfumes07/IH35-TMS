@@ -9,11 +9,44 @@ import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { listCoaAccountsForJe, listAccountingAuditTrail } from "../../api/accounting";
+import { getAllAccounts } from "../../api/banking";
 import { getAccountRegister, type AccountRegisterReport, type AccountRegisterRow } from "../../api/account-register";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 const fmtCents = (cents: number) => formatUsdCents(cents);
+
+/** Bank row shape from GET /api/v1/banking/accounts/all (picker + QBO ?accountId= resolve). */
+export type BankRegisterPickerRow = {
+  id: string;
+  ledger_account_id?: string | null;
+  display_name?: string | null;
+  account_name?: string | null;
+  institution_name?: string | null;
+  account_mask?: string | null;
+};
+
+/**
+ * Resolve a deep-link id to the Cash/CC GL account the register query needs.
+ * QBO uses ?accountId= for the bank; TMS banking accounts carry ledger_account_id.
+ * If the id is already a CoA/GL id (or an unmapped bank), pass it through unchanged.
+ */
+export function resolveRegisterAccountId(
+  requestedId: string | null | undefined,
+  bankAccounts: BankRegisterPickerRow[]
+): string {
+  const raw = (requestedId ?? "").trim();
+  if (!raw) return "";
+  const bank = bankAccounts.find((a) => String(a.id) === raw);
+  if (bank?.ledger_account_id) return String(bank.ledger_account_id);
+  return raw;
+}
+
+function bankPickerLabel(a: BankRegisterPickerRow): string {
+  const name = String(a.display_name ?? a.account_name ?? a.institution_name ?? "Bank").trim();
+  const mask = a.account_mask ? ` ···${String(a.account_mask)}` : "";
+  return `${name}${mask}`;
+}
 
 // Drill-through: map a register row's source transaction to its REAL detail/source route (all verified to
 // exist in routes/manifest.tsx). invoice + customer_payment + bill have true per-id detail; the rest
@@ -89,32 +122,61 @@ export function AccountRegisterPage() {
   const companyId = selectedCompanyId ?? "";
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  // Deep-link: the Chart of Accounts "View register" link routes to
-  // /accounting/chart-of-accounts/register/:accountId — preselect that account here.
-  // Report drilldowns pass ?from_date=&to_date=&basis= as query params.
+  // Deep-link (QBO parity):
+  // - CoA "View register" → /accounting/chart-of-accounts/register/:accountId (GL id)
+  // - Banking → /accounting/account-register?accountId=<bankAccountId> (resolved via banking API → ledger_account_id)
+  // Report drilldowns also pass ?from_date=&to_date=&basis= as query params.
   const { accountId: routeAccountId } = useParams<{ accountId?: string }>();
+  const queryAccountId = searchParams.get("accountId");
+  const deepLinkAccountId = (routeAccountId ?? queryAccountId ?? "").trim();
 
   const initial = monthBounds(new Date());
   const paramFrom = searchParams.get("from_date");
   const paramTo = searchParams.get("to_date");
-  const [accountId, setAccountId] = useState(routeAccountId ?? "");
+  const [accountId, setAccountId] = useState(deepLinkAccountId);
   const [fromDate, setFromDate] = useState(paramFrom ?? initial.from);
   const [toDate, setToDate] = useState(paramTo ?? initial.to);
   const [preset, setPreset] = useState(paramFrom ? "custom" : "this_month");
   const [view, setView] = useState<"register" | "audit">("register");
 
-  useEffect(() => {
-    if (routeAccountId) setAccountId(routeAccountId);
-  }, [routeAccountId]);
   const [filterOpen, setFilterOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [typeLabel, setTypeLabel] = useState("");
+
+  const bankAccountsQuery = useQuery({
+    queryKey: ["banking", "accounts-all", companyId, "register-picker"],
+    queryFn: () => getAllAccounts(companyId),
+    enabled: Boolean(companyId),
+  });
 
   const accountsQuery = useQuery({
     queryKey: ["coa-accounts", companyId],
     queryFn: () => listCoaAccountsForJe(),
     enabled: Boolean(companyId),
   });
+
+  const bankPickerRows = useMemo((): BankRegisterPickerRow[] => {
+    return (bankAccountsQuery.data?.accounts ?? [])
+      .map((row) => {
+        const r = row as Record<string, unknown>;
+        return {
+          id: String(r.id ?? ""),
+          ledger_account_id: r.ledger_account_id != null ? String(r.ledger_account_id) : null,
+          display_name: r.display_name != null ? String(r.display_name) : null,
+          account_name: r.account_name != null ? String(r.account_name) : null,
+          institution_name: r.institution_name != null ? String(r.institution_name) : null,
+          account_mask: r.account_mask != null ? String(r.account_mask) : null,
+        };
+      })
+      .filter((a) => a.id && a.ledger_account_id);
+  }, [bankAccountsQuery.data?.accounts]);
+
+  // Bind deep link (route param or ?accountId=) to the GL id the register API expects.
+  useEffect(() => {
+    if (!deepLinkAccountId) return;
+    const resolved = resolveRegisterAccountId(deepLinkAccountId, bankPickerRows);
+    setAccountId(resolved);
+  }, [deepLinkAccountId, bankPickerRows]);
 
   const registerQuery = useQuery({
     queryKey: ["account-register", companyId, accountId, fromDate, toDate, search, typeLabel],
@@ -197,6 +259,12 @@ export function AccountRegisterPage() {
   };
 
   const accounts = accountsQuery.data?.accounts ?? [];
+  // Ledger ids already offered as Bank accounts (avoid duplicate options in the CoA group).
+  const bankLedgerIds = useMemo(() => new Set(bankPickerRows.map((b) => String(b.ledger_account_id))), [bankPickerRows]);
+  const coaPickerAccounts = useMemo(
+    () => accounts.filter((a) => !bankLedgerIds.has(String(a.id))),
+    [accounts, bankLedgerIds]
+  );
   const normalLabel = report ? (report.account.normal_balance === "debit" ? "Dr" : "Cr") : "";
   const normal: "debit" | "credit" = report?.account.normal_balance ?? "debit";
 
@@ -272,11 +340,22 @@ export function AccountRegisterPage() {
           Account
           <SelectCombobox value={accountId} onChange={(e) => setAccountId(e.target.value)} className={`${inputCls} min-w-[16rem]`}>
             <option value="">Select an account…</option>
-            {accounts.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.account_number} · {a.account_name}
-              </option>
-            ))}
+            {bankPickerRows.length > 0 ? (
+              <optgroup label="Bank accounts">
+                {bankPickerRows.map((a) => (
+                  <option key={`bank-${a.id}`} value={String(a.ledger_account_id)}>
+                    {bankPickerLabel(a)}
+                  </option>
+                ))}
+              </optgroup>
+            ) : null}
+            <optgroup label="Chart of accounts">
+              {coaPickerAccounts.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.account_number} · {a.account_name}
+                </option>
+              ))}
+            </optgroup>
           </SelectCombobox>
         </label>
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">

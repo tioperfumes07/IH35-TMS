@@ -549,10 +549,13 @@ export function BankingTransactionsDesignView({
       arr.push(tx);
       bucket.set(key, arr);
     }
+    // Audit gap #5 (sort/group UI): month bands must follow the active date sort direction.
+    // Previously months were always newest-first, so date ASC still showed newest month on top.
+    const monthDir = sortBy.key === "date" && sortBy.dir === "asc" ? 1 : -1;
     return [...bucket.entries()]
-      .sort(([a], [b]) => (a < b ? 1 : -1))
+      .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0) * monthDir)
       .map(([monthKey, rows]) => ({ monthKey, title: monthTitleFromKey(monthKey), rows }));
-  }, [pagedRows, viewSettings.turnOffGrouping]);
+  }, [pagedRows, sortBy.dir, sortBy.key, viewSettings.turnOffGrouping]);
 
   // Running balance ("Balance" column), computed over the FULL account ledger — not the visible page —
   // so each row shows its true post-transaction balance even when the view is filtered or paginated.
@@ -826,7 +829,13 @@ export function BankingTransactionsDesignView({
                   Manage connections
                 </button>
                 <Link
-                  to={selectedAccount ? `/banking/accounts/${selectedAccount.id}` : "/banking"}
+                  // QBO parity: register?accountId=… pre-bound. Pass the bank account id; AccountRegisterPage
+                  // resolves it to Cash/CC GL via GET /banking/accounts/all → ledger_account_id.
+                  to={
+                    selectedAccount
+                      ? `/accounting/account-register?accountId=${encodeURIComponent(selectedAccount.id)}`
+                      : "/accounting/account-register"
+                  }
                   className="block px-3 py-2 text-sm hover:bg-gray-50"
                   onClick={() => setLinkMenuOpen(false)}
                 >
