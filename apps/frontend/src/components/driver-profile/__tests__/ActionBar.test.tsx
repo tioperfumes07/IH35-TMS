@@ -68,7 +68,7 @@ describe("ActionBar", () => {
   it("renders view-on-map link with driver query", () => {
     renderBar();
     const link = screen.getByTestId("dp-action-view-map");
-    expect(link.getAttribute("href")).toBe("/fleet/map?driver=d-1");
+    expect(link.getAttribute("href")).toBe("/dispatch/map?driver=d-1");
   });
 
   it("suspends driver via PATCH + safety event", async () => {

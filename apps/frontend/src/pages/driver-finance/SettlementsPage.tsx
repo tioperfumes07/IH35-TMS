@@ -15,6 +15,8 @@ export function SettlementsPage() {
   const companyId = selectedCompanyId ?? "";
   const activeTab = searchParams.get("tab") === "disputes" ? "disputes" : "settlements";
   const selectedSettlementId = searchParams.get("settlement_id");
+  // Driver profile "Full settlements" → /settlements?driver_id= (PreserveSearchNavigate keeps param).
+  const filterDriverId = searchParams.get("driver_id");
   const selectedPaymentState = searchParams.get("payment_state") as
     | "unpaid"
     | "queued"
@@ -30,7 +32,9 @@ export function SettlementsPage() {
     enabled: Boolean(companyId),
   });
 
-  const settlements = listQuery.data?.settlements ?? [];
+  const settlements = (listQuery.data?.settlements ?? []).filter((s) =>
+    filterDriverId ? s.driver_id === filterDriverId : true,
+  );
   const kpis = {
     total_unpaid: settlements.filter((s) => s.status !== "paid").length,
     this_period: settlements.length,

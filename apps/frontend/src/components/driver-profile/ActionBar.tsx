@@ -44,7 +44,7 @@ export function ActionBar({
         <Button size="sm" variant="secondary" onClick={() => setMessageOpen(true)} data-testid="dp-action-send-message">
           Send Message
         </Button>
-        <a className={linkClass} href={`/fleet/map?driver=${driverId}`} data-testid="dp-action-view-map">
+        <a className={linkClass} href={`/dispatch/map?driver=${driverId}`} data-testid="dp-action-view-map">
           View on Map
         </a>
         <a className={linkClass} href={pdfUrl} download data-testid="dp-export-pdf">
