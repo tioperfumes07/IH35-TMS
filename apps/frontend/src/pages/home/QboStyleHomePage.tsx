@@ -1,9 +1,9 @@
 /**
- * C6 — QBO-Style Home Dashboard (component retained; never-delete).
+ * C6 — QBO-Style Home Dashboard (mounted at `/app/homepage`; never-delete).
  *
- * Canonical operator HOME is design MODULE 1 at `/home` (sidebar + training).
- * Route `/app/homepage` redirects to `/home` so bookmarks land on the same surface.
- * This page component stays in-repo for parity/reference and future additive remount.
+ * Canonical operator/training HOME is design MODULE 1 at `/home` (sidebar).
+ * `/app/homepage` stays a reachable QBO-style surface for bookmarks and C6 parity —
+ * dual surfaces, one canonical sidebar HOME.
  *
  * Mirrors the exact QBO home layout captured live 2026-06-10:
  *   1. Header — "Welcome, <name>!" · Customize · Privacy

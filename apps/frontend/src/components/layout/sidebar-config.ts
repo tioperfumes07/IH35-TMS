@@ -88,7 +88,7 @@ export type SidebarItemMeta = {
 
 /** Per-item presentation + routes. Order is controlled ONLY by `SIDEBAR_DEFAULT_ORDER` (uniform for all users; no per-user or per-role override). */
 export const SIDEBAR_ITEM_META: Record<SidebarItemId, SidebarItemMeta> = {
-  // Canonical HOME = design MODULE 1 `/home` (OwnerHome / role homes). `/app/homepage` is a redirect alias.
+  // Canonical training HOME = design MODULE 1 `/home`. `/app/homepage` remains QBO-style home (additive).
   home: { id: "home", label: "HOME", Icon: Home, to: "/home", dataTour: "tour-nav-home" },
   maintenance: {
     id: "maintenance",

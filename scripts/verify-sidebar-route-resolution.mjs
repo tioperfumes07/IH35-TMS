@@ -4,8 +4,8 @@
  * the matched route is not itself a bare Navigate → /home (dead-end / wrong home).
  *
  * Scope the redirect check to the single Route block for that path — do not scan
- * unbounded across later routes (e.g. `/app/homepage` → `/home` alias must not
- * false-fail sidebar `/home`, `/program`, `/system`).
+ * unbounded across later routes (e.g. sibling `/app/homepage` must not false-fail
+ * sidebar `/home`, `/program`, `/system`).
  */
 import fs from "node:fs";
 import path from "node:path";

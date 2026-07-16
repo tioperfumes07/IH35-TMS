@@ -554,11 +554,11 @@
     },
     {
       "path": "/home",
-      "reason": "Canonical design MODULE 1 home (OwnerHome / role homes); sidebar HOME points here. /app/homepage redirects here for bookmark compat."
+      "reason": "Canonical design MODULE 1 home (OwnerHome / role homes); sidebar HOME points here."
     },
     {
       "path": "/app/homepage",
-      "reason": "Additive redirect alias \u2192 /home (C6 bookmark compat). Not a second training home; QboStyleHomePage.tsx retained on disk."
+      "reason": "Additive QBO-style home (C6) mounting QboStyleHomePage. Bookmarks stay valid; not sidebar training HOME."
     },
     {
       "path": "/finance/ar-ap-aging",

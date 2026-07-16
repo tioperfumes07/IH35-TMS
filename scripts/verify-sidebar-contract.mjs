@@ -166,7 +166,7 @@ if (!homeToMatch) {
   errors.push('canonical-home: could not find home item `to` in SIDEBAR_ITEM_META');
 } else if (homeToMatch[1] !== "/home") {
   errors.push(
-    `canonical-home: sidebar HOME to="${homeToMatch[1]}" — expected "/home" (design MODULE 1; /app/homepage is redirect-only)`
+    `canonical-home: sidebar HOME to="${homeToMatch[1]}" — expected "/home" (design MODULE 1; /app/homepage stays QBO-style home)`
   );
 }
 
