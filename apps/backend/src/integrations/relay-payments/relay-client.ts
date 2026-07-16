@@ -11,6 +11,7 @@
  * @packageDocumentation
  */
 import { withCircuitBreaker } from "../../lib/circuit-breaker/index.js";
+import { relayApiTimeoutMs } from "../../lib/relay-timeout.js";
 
 export class RelayApiError extends Error {
   readonly statusCode: number | null;
@@ -48,11 +49,11 @@ export function relayApiBase(): string {
   return raw.endsWith("/") ? raw : `${raw}/`;
 }
 
-// Per-request timeout. TRANSP has real volume (March 2026→now); the old 15s default aborted the pull before
-// anything committed ("This operation was aborted"). Configurable via RELAY_API_TIMEOUT_MS; default 60s.
+// Per-request timeout — single source of truth lives in lib/relay-timeout.ts so the circuit breaker's
+// timeout can be derived from the SAME value (breaker = fetch + slack). Relay returns the FULL history in
+// one response (live-proven; date params ignored), so this must cover a whole-feed download, not a window.
 function relayTimeoutMs(): number {
-  const raw = Number(process.env.RELAY_API_TIMEOUT_MS);
-  return Number.isFinite(raw) && raw > 0 ? raw : 60000;
+  return relayApiTimeoutMs();
 }
 
 // Bounded retry with exponential backoff for a slow/aborted window (retryable errors: aborted network
