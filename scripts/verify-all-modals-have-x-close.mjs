@@ -33,6 +33,10 @@ function hasXCloseContract(source) {
   if (/<Modal[\s/>]/.test(source) && /from\s+["'][^"']*\/Modal["']/.test(source)) {
     return true;
   }
+  // Owner creator-chrome lock: ParityDrawer ships a header ✕ with aria-label="Close".
+  if (/<ParityDrawer[\s/>]/.test(source) && /from\s+["'][^"']*parity\/ParityDrawer["']/.test(source)) {
+    return true;
+  }
   if (/ModalCloseButton/.test(source)) {
     return true;
   }
