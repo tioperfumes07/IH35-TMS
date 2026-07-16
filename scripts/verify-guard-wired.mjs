@@ -1,12 +1,18 @@
 #!/usr/bin/env node
-// verify-guard-wired (G3, LINKAGE-LAW Clause 7)
-// An unwired guard never runs — a fake green (verify:factoring-treatment existed but ran in no chain
-// until #2309). This asserts every scripts/verify-*.mjs is either WIRED (referenced by
-// verify-pre-commit.mjs / a verify-steps step / a workflow / a package.json script) or explicitly listed
-// in scripts/.guard-exempt.json with a reason. A NEW guard that is neither wired nor exempted fails CI.
+// verify-guard-wired (G3, LINKAGE-LAW Clause 7) — B-D2 coverage-of-coverage
+// An unwired guard never runs — a fake green. B-A1 shipped verify-banking-empty-state-entity-aware
+// in package.json only; locked-guards/ci never ran it. This asserts every scripts/verify-*.mjs is
+// FULLY WIRED:
+//   (1) referenced by a package.json script, AND
+//   (2) actually executed in CI — via .github/workflows/*.yml (npm run / node scripts/…)
+//       OR via scripts/verify-steps/* when ci.yml runs verify:pre-commit
+// OR explicitly listed in scripts/.guard-exempt.json with a reviewed reason.
 //
-// The 173 pre-existing unwired guards are BASELINED in .guard-exempt.json (so today stays green); each
-// should be wired or justified individually. Self-test: node scripts/verify-guard-wired.mjs --selftest
+// package.json-only = NOT fully wired (fails unless exempt).
+// workflow-only (no package.json script) = NOT fully wired (fails unless exempt).
+//
+// Pre-existing partials are BASELINED in .guard-exempt.json; any NEW partial/orphan fails CI.
+// Self-test: node scripts/verify-guard-wired.mjs --selftest
 // LINKAGE: N/A (enforcement infra). Additive only.
 
 import fs from "node:fs";
@@ -16,58 +22,274 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SCRIPTS = path.join(ROOT, "scripts");
 const EXEMPT_REL = "scripts/.guard-exempt.json";
+const WF_DIR = path.join(ROOT, ".github/workflows");
+const STEPS_DIR = path.join(SCRIPTS, "verify-steps");
 
-function readIf(rel) { try { return fs.readFileSync(path.join(ROOT, rel), "utf8"); } catch { return ""; } }
+function readIf(rel) {
+  try {
+    return fs.readFileSync(path.join(ROOT, rel), "utf8");
+  } catch {
+    return "";
+  }
+}
 
-/** Build the corpus of files that could WIRE a guard: verify-pre-commit + verify-steps + workflows + package.json. */
-function wiredCorpus() {
-  let corpus = readIf("scripts/verify-pre-commit.mjs") + readIf("package.json");
-  const stepsDir = path.join(SCRIPTS, "verify-steps");
-  if (fs.existsSync(stepsDir)) for (const f of fs.readdirSync(stepsDir)) corpus += readIf(path.join("scripts/verify-steps", f));
-  const wf = path.join(ROOT, ".github/workflows");
-  if (fs.existsSync(wf)) for (const f of fs.readdirSync(wf)) corpus += readIf(path.join(".github/workflows", f));
+function listGuards() {
+  return fs.readdirSync(SCRIPTS).filter((f) => /^verify-.*\.mjs$/.test(f)).sort();
+}
+
+function loadExempt() {
+  let exempt = {};
+  try {
+    exempt = JSON.parse(readIf(EXEMPT_REL));
+  } catch {
+    exempt = {};
+  }
+  return new Set(Object.keys(exempt).filter((k) => !k.startsWith("_")));
+}
+
+/** Map each guard file → package.json script names that invoke it. */
+function packageScriptsByGuard(guards) {
+  let pkg = {};
+  try {
+    pkg = JSON.parse(readIf("package.json"));
+  } catch {
+    pkg = {};
+  }
+  const scripts = pkg.scripts && typeof pkg.scripts === "object" ? pkg.scripts : {};
+  const map = new Map();
+  for (const g of guards) map.set(g, []);
+  for (const [name, cmd] of Object.entries(scripts)) {
+    if (typeof cmd !== "string") continue;
+    for (const g of guards) {
+      if (cmd.includes(g)) map.get(g).push(name);
+    }
+  }
+  return map;
+}
+
+function workflowCorpus() {
+  if (!fs.existsSync(WF_DIR)) return "";
+  let corpus = "";
+  for (const f of fs.readdirSync(WF_DIR)) {
+    if (!/\.ya?ml$/i.test(f)) continue;
+    corpus += readIf(path.join(".github/workflows", f)) + "\n";
+  }
   return corpus;
 }
 
-export function computeUnwired() {
-  const guards = fs.readdirSync(SCRIPTS).filter((f) => /^verify-.*\.mjs$/.test(f));
-  const corpus = wiredCorpus();
-  let exempt = {};
-  try { exempt = JSON.parse(readIf(EXEMPT_REL)); } catch { exempt = {}; }
-  const exemptSet = new Set(Object.keys(exempt).filter((k) => !k.startsWith("_")));
-  const wired = [], unexempted = [];
-  for (const g of guards) {
-    if (corpus.includes(g)) wired.push(g);
-    else if (exemptSet.has(g)) { /* exempted */ }
-    else unexempted.push(g);
+function verifyStepsCorpus() {
+  if (!fs.existsSync(STEPS_DIR)) return "";
+  let corpus = "";
+  for (const f of fs.readdirSync(STEPS_DIR)) {
+    if (!f.endsWith(".mjs") || f.startsWith("_")) continue;
+    corpus += readIf(path.join("scripts/verify-steps", f)) + "\n";
   }
-  return { total: guards.length, wired: wired.length, exempted: exemptSet.size, unexempted };
+  return corpus;
+}
+
+function ciRunsPreCommit(wfCorpus) {
+  return /\bnpm run verify:pre-commit\b/.test(wfCorpus) || wfCorpus.includes("verify-pre-commit.mjs");
+}
+
+/**
+ * True when CI will execute this guard:
+ * - workflow mentions the .mjs path, OR
+ * - workflow runs an npm script that points at it, OR
+ * - it is imported/referenced from verify-steps AND ci.yml runs verify:pre-commit
+ */
+function isExecutedInCi(guard, npmNames, wfCorpus, stepsCorpus, preCommitInCi) {
+  if (wfCorpus.includes(guard)) return true;
+  for (const name of npmNames) {
+    // npm run verify:foo  /  run: npm run verify:foo
+    if (new RegExp(String.raw`\bnpm run ${escapeRegExp(name)}\b`).test(wfCorpus)) return true;
+  }
+  if (preCommitInCi && stepsCorpus.includes(guard)) return true;
+  return false;
+}
+
+function escapeRegExp(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Classify every guard. Returns { fullyWired, pkgOnly, wfOnly, orphan, exempted }.
+ * Unaccounted = pkgOnly + wfOnly + orphan (anything not fullyWired and not exempt).
+ */
+export function classifyGuards() {
+  const guards = listGuards();
+  const pkgMap = packageScriptsByGuard(guards);
+  const wfCorpus = workflowCorpus();
+  const stepsCorpus = verifyStepsCorpus();
+  const preCommitInCi = ciRunsPreCommit(wfCorpus);
+  const exemptSet = loadExempt();
+
+  const fullyWired = [];
+  const pkgOnly = [];
+  const wfOnly = [];
+  const orphan = [];
+  const exempted = [];
+
+  for (const g of guards) {
+    const npmNames = pkgMap.get(g) || [];
+    const inPkg = npmNames.length > 0;
+    const inCi = isExecutedInCi(g, npmNames, wfCorpus, stepsCorpus, preCommitInCi);
+
+    if (inPkg && inCi) {
+      fullyWired.push(g);
+      continue;
+    }
+    if (exemptSet.has(g)) {
+      exempted.push(g);
+      continue;
+    }
+    if (inPkg && !inCi) pkgOnly.push(g);
+    else if (!inPkg && inCi) wfOnly.push(g);
+    else orphan.push(g);
+  }
+
+  return {
+    total: guards.length,
+    fullyWired,
+    pkgOnly,
+    wfOnly,
+    orphan,
+    exempted,
+    unaccounted: [...pkgOnly, ...wfOnly, ...orphan],
+  };
+}
+
+/** @deprecated use classifyGuards — kept for verify-steps import compatibility shape */
+export function computeUnwired() {
+  const c = classifyGuards();
+  return {
+    total: c.total,
+    wired: c.fullyWired.length,
+    exempted: c.exempted.length,
+    unexempted: c.unaccounted,
+  };
 }
 
 function run() {
-  const { total, wired, exempted, unexempted } = computeUnwired();
-  console.log(`verify:guard-wired — ${total} guards: ${wired} wired, ${exempted} baseline-exempt, ${unexempted.length} unaccounted`);
-  if (unexempted.length) {
-    return unexempted.map((g) => `${g}: neither wired (verify-pre-commit/verify-steps/workflow/package.json) nor in ${EXEMPT_REL}`);
+  const c = classifyGuards();
+  console.log(
+    `verify:guard-wired — ${c.total} guards: ${c.fullyWired.length} fully-wired (package.json+CI), ` +
+      `${c.exempted.length} exempt, ${c.unaccounted.length} unaccounted ` +
+      `(pkg-only=${c.pkgOnly.length}, wf-only=${c.wfOnly.length}, orphan=${c.orphan.length})`,
+  );
+  if (!c.unaccounted.length) return [];
+
+  const failures = [];
+  for (const g of c.pkgOnly) {
+    failures.push(
+      `${g}: package.json-only — not executed by any CI workflow (or verify-steps via verify:pre-commit). ` +
+        `Wire into locked-guards.yml / ci.yml, or add to ${EXEMPT_REL} with a reviewed reason.`,
+    );
   }
-  return [];
+  for (const g of c.wfOnly) {
+    failures.push(
+      `${g}: workflow-only — add a package.json script (verify:…) that points at this file, ` +
+        `or add to ${EXEMPT_REL} with a reviewed reason.`,
+    );
+  }
+  for (const g of c.orphan) {
+    failures.push(
+      `${g}: orphan — neither package.json nor CI. Wire both, or add to ${EXEMPT_REL} with a reviewed reason.`,
+    );
+  }
+  return failures;
 }
 
 export { run };
 
 if (process.argv.includes("--selftest")) {
-  // pure-logic selftest against synthetic inputs
-  const guards = ["verify-a.mjs", "verify-b.mjs", "verify-c.mjs"];
-  const corpus = "npm run verify:a via verify-a.mjs here";
-  const exempt = new Set(["verify-b.mjs"]);
-  const unexempted = guards.filter((g) => !corpus.includes(g) && !exempt.has(g));
-  const checks = [
-    ["orphan (verify-c) is flagged", unexempted.includes("verify-c.mjs")],
-    ["wired (verify-a) not flagged", !unexempted.includes("verify-a.mjs")],
-    ["exempt (verify-b) not flagged", !unexempted.includes("verify-b.mjs")],
+  // Synthetic classification logic (mirrors isExecutedInCi + dual requirement).
+  const cases = [
+    {
+      name: "fully-wired (pkg+wf npm run)",
+      inPkg: true,
+      npmNames: ["verify:a"],
+      guard: "verify-a.mjs",
+      wf: "run: npm run verify:a\n",
+      steps: "",
+      preCommit: false,
+      exempt: false,
+      want: "fully",
+    },
+    {
+      name: "fully-wired (pkg + verify-steps via pre-commit)",
+      inPkg: true,
+      npmNames: ["verify:b"],
+      guard: "verify-b.mjs",
+      wf: "run: npm run verify:pre-commit\n",
+      steps: 'import "../verify-b.mjs"',
+      preCommit: true,
+      exempt: false,
+      want: "fully",
+    },
+    {
+      name: "pkg-only is NOT fully wired",
+      inPkg: true,
+      npmNames: ["verify:c"],
+      guard: "verify-c.mjs",
+      wf: "",
+      steps: "",
+      preCommit: false,
+      exempt: false,
+      want: "pkg-only",
+    },
+    {
+      name: "wf-only is NOT fully wired",
+      inPkg: false,
+      npmNames: [],
+      guard: "verify-d.mjs",
+      wf: "run: node scripts/verify-d.mjs\n",
+      steps: "",
+      preCommit: false,
+      exempt: false,
+      want: "wf-only",
+    },
+    {
+      name: "exempt pkg-only passes",
+      inPkg: true,
+      npmNames: ["verify:e"],
+      guard: "verify-e.mjs",
+      wf: "",
+      steps: "",
+      preCommit: false,
+      exempt: true,
+      want: "exempt",
+    },
+    {
+      name: "orphan flagged",
+      inPkg: false,
+      npmNames: [],
+      guard: "verify-f.mjs",
+      wf: "",
+      steps: "",
+      preCommit: false,
+      exempt: false,
+      want: "orphan",
+    },
   ];
+
+  const checks = [];
+  for (const c of cases) {
+    const inCi = isExecutedInCi(c.guard, c.npmNames, c.wf, c.steps, c.preCommit);
+    let got;
+    if (c.inPkg && inCi) got = "fully";
+    else if (c.exempt) got = "exempt";
+    else if (c.inPkg && !inCi) got = "pkg-only";
+    else if (!c.inPkg && inCi) got = "wf-only";
+    else got = "orphan";
+    checks.push([c.name, got === c.want]);
+  }
+
   const failed = checks.filter(([, ok]) => !ok);
-  if (failed.length) { console.error("verify:guard-wired --selftest FAIL:"); for (const [n] of failed) console.error("  ✗ " + n); process.exit(1); }
+  if (failed.length) {
+    console.error("verify:guard-wired --selftest FAIL:");
+    for (const [n] of failed) console.error("  ✗ " + n);
+    process.exit(1);
+  }
   console.log(`verify:guard-wired --selftest PASS (${checks.length} checks)`);
   process.exit(0);
 }
@@ -76,9 +298,9 @@ const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPat
 if (isMain) {
   const failures = run();
   if (failures.length) {
-    console.error("verify:guard-wired FAIL — a guard is neither wired nor exempted:");
+    console.error("verify:guard-wired FAIL — guard is not fully wired (package.json + CI) and not exempted:");
     for (const f of failures) console.error("  ✗ " + f);
     process.exit(1);
   }
-  console.log("verify:guard-wired PASS (every verify-*.mjs is wired or baseline-exempt)");
+  console.log("verify:guard-wired PASS (every verify-*.mjs is fully wired or baseline-exempt)");
 }

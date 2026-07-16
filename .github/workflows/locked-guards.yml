@@ -922,3 +922,8 @@ jobs:
         run: node scripts/verify-docs-home-kpi-clicks.mjs --selftest
       - name: verify:docs-home-kpi-clicks
         run: npm run verify:docs-home-kpi-clicks
+      # B-D2 / B-A1: package.json-only was NOT fully wired — close the concrete gap
+      - name: verify:banking-empty-state-entity-aware --self-test
+        run: node scripts/verify-banking-empty-state-entity-aware.mjs --self-test
+      - name: verify:banking-empty-state-entity-aware
+        run: npm run verify:banking-empty-state-entity-aware

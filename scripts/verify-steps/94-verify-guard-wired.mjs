@@ -1,5 +1,6 @@
-// G3 (LINKAGE-LAW Clause 7) wired into verify:pre-commit. Fails when a verify-*.mjs guard is neither
-// wired into the run chain nor listed in scripts/.guard-exempt.json. Import-safe.
+// G3 + B-D2: every verify-*.mjs must be FULLY WIRED (package.json script AND CI execution
+// via workflow or verify-steps/pre-commit) or listed in scripts/.guard-exempt.json.
+// package.json-only = fail (B-A1 regression class). Import-safe.
 import { run } from "../verify-guard-wired.mjs";
 
 export default {
