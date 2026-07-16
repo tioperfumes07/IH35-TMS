@@ -588,6 +588,11 @@ jobs:
       - name: verify:entitylink-deep-links
         run: npm run verify:entitylink-deep-links
 
+      - name: verify:customer-invoice-customer-id-deeplink --selftest
+        run: node scripts/verify-customer-invoice-customer-id-deeplink.mjs --selftest
+      - name: verify:customer-invoice-customer-id-deeplink
+        run: npm run verify:customer-invoice-customer-id-deeplink
+
       - name: verify:fact-chargebacks-entitylinks --selftest
         run: node scripts/verify-fact-chargebacks-entitylinks.mjs --selftest
       - name: verify:fact-chargebacks-entitylinks

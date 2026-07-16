@@ -1,0 +1,33 @@
+{
+  "block_id": "FIX-CUSTOMER-INVOICE-CUSTOMER-ID-DEEPLINK",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "AUDIT-FIX",
+  "task": "Audit gap #11 — CI lock so Customers New transaction ?customer_id= cannot be dropped by InvoicesListPage. Root-cause UI emit/consume already on origin/main + live (healthz f8502af); this block adds scripts/verify-customer-invoice-customer-id-deeplink.mjs + package.json + locked-guards.yml wiring.",
+  "branch": "fix/customer-invoice-customer-id-deeplink",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/FIX-CUSTOMER-INVOICE-CUSTOMER-ID-DEEPLINK.json",
+    "scripts/verify-customer-invoice-customer-id-deeplink.mjs",
+    "package.json",
+    ".github/workflows/locked-guards.yml"
+  ],
+  "acceptance": [
+    {
+      "kind": "guard",
+      "script": "scripts/verify-customer-invoice-customer-id-deeplink.mjs",
+      "wired_into": "package.json verify:customer-invoice-customer-id-deeplink + .github/workflows/locked-guards.yml (selftest + scan)"
+    },
+    {
+      "kind": "live",
+      "assert": "node scripts/verify-customer-invoice-customer-id-deeplink.mjs --selftest passes; clean tree passes; planted removal of searchParams.get(\"customer_id\") fails"
+    }
+  ],
+  "linkage": "N/A — UI deep-link emit/consume lock only (Customers → InvoicesListPage); no schema, no GL, no posting",
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [
+    "verify:customer-invoice-customer-id-deeplink"
+  ]
+}
