@@ -8039,7 +8039,8 @@
       "created_at",
       "id",
       "record_id",
-      "table_name"
+      "table_name",
+      "operating_company_id"
     ],
     "public.audit_log_partitioned": [
       "action",
