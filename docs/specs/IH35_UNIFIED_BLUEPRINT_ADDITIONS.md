@@ -1175,3 +1175,20 @@ The module that captures consent must NEVER post money. Authoritative detail:
 
 See also `docs/specs/MULTI-ENTITY-SEPARATION.md` — each entity (TRANSP/TRK/USMCA) books
 its own side of any lease/deduction in its own opco; the Legal handoff is opco-scoped.
+
+---
+
+## Relay Payments fuel API contract (LOCKED 2026-07-16 — Mike Masteller)
+
+Production fuel transactions for TMS ingest:
+
+- **URL:** `GET https://app.relaypayments.com/api/fuel/transactions/`
+- **Auth:** header `Authorization: <raw API key>` (no Bearer). Per-entity keys (`RELAY_API_KEY_TRANSP`, `RELAY_API_KEY_USMCA`).
+- **Driver match:** `driver.integration_id` — the value on the Relay driver profile visible to users (NOT `driver.id` alone).
+- **Date filter:** query params **`dtstart`** and **`dtend`** (YYYY-MM-DD). Wrong names `start_date`/`end_date` are ignored by Relay.
+- **Full history:** supported with no date params (proven ~2.1MB / ~41s for TRANSP).
+- **Rate limit:** 10 seconds between transaction pulls (only stated limit). Interpret as inter-pull gap, not a 10s request timeout (full pulls exceed 10s).
+- **USMCA:** empty until the account is used — not a defect.
+- **Response shape:** top-level JSON array; money as dollar strings; `transaction_id`, `created_at`, nested `driver`/`merchant`/`location`.
+
+Guards: `verify:relay-timeout-hierarchy`, `verify:relay-dtstart-dtend`, `verify:relay-ingest-per-company-isolation`.

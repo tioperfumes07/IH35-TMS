@@ -741,6 +741,9 @@ jobs:
       - name: verify:relay-timeout-hierarchy
         run: npm run verify:relay-timeout-hierarchy
 
+      - name: verify:relay-dtstart-dtend
+        run: npm run verify:relay-dtstart-dtend
+
       # CI-WIRE-CRITICAL-GUARDS: 5 green, DB-free, non-financial guards whose fixes are live on main
       # but were unwired from every CI job (regression-audit finding). Additive coverage — no gate rename.
       - name: verify:driver-qual-gate

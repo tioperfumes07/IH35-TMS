@@ -273,8 +273,9 @@ export async function runRelayFuelBackfill(app: FastifyInstance, opts?: { months
 
   const companyIds = await withLuciaBypass(async (client) => listActiveCompanyIds(client));
 
-  // Inter-company gap so consecutive full-feed pulls don't re-trip Relay 429 (GUARD 2026-07-16).
-  const interCompanyDelayMs = Number.parseInt(process.env.RELAY_FUEL_INGEST_INTER_COMPANY_MS ?? "1500", 10) || 1500;
+  // Mike (Relay, 2026-07-16): "We have a 10 second limit on pulling transactions" — treat as min gap
+  // between pulls (his full-history Bruno call took 41s, so this is NOT a 10s request timeout).
+  const interCompanyDelayMs = Number.parseInt(process.env.RELAY_FUEL_INGEST_INTER_COMPANY_MS ?? "10000", 10) || 10000;
   let companiesPulled = 0;
 
   for (const { id: operatingCompanyId, code: entityCode } of companyIds) {
@@ -292,7 +293,14 @@ export async function runRelayFuelBackfill(app: FastifyInstance, opts?: { months
     let upserted = 0;
     let skipped = 0;
     try {
-      const { rows: apiRows, meta } = await fetchAllRelayFuelTransactions(entityCode);
+      // Server-side date filter via dtstart/dtend (Mike) — avoids downloading history older than the
+      // requested months window. Client-side windowing still batches DB upserts.
+      const rangeStart = isoDateMonthsAgo(months);
+      const rangeEnd = todayIsoDate();
+      const { rows: apiRows, meta } = await fetchAllRelayFuelTransactions(entityCode, {
+        startDate: rangeStart,
+        endDate: rangeEnd,
+      });
       app.log.info(
         {
           operating_company_id: operatingCompanyId,
@@ -300,6 +308,8 @@ export async function runRelayFuelBackfill(app: FastifyInstance, opts?: { months
           api_rows: meta.api_row_count,
           windows: windows.length,
           months,
+          dtstart: rangeStart,
+          dtend: rangeEnd,
         },
         "[RELAY_FUEL_INGEST_BACKFILL] relay pull complete — slicing windows client-side"
       );
