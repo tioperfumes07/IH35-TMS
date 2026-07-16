@@ -7,14 +7,19 @@
 // merge loop can no longer bypass a HOLD/financial PR.
 //
 // Decision (classify()):
+//   SQUASH-INSPECTION LAW (B-A5 / D1b, 2026-07-15): EVERY file in the base..head diff is inspected.
+//   A PR title / "non-financial" claim / agent classification NEVER neutralizes a protected file.
+//   A financial migration or schema-write can never ride into main inside an otherwise-benign squash.
 //   PROTECTED if ANY of:
 //     • title contains "[HOLD-FOR-JORGE]" (case-insensitive), OR
-//     • a changed file matches a PROTECTED_GLOBS entry (*posting* tooling), OR
+//     • a changed file matches a PROTECTED_GLOBS entry (*posting* tooling / held-migrations registry), OR
 //     • a changed migration is NOT provably additive-new-table (CREATE-TABLE-only neutral, 2026-06-20:
 //       a migration is neutral ONLY if it CREATEs a new table and does nothing dangerous — no ALTER /
 //       DROP / DELETE / TRUNCATE / UPDATE-SET, no financial/accounting table, no INSERT into an existing
 //       table; INSERT into the same new table is allowed. Anything else stays PROTECTED — conservative), OR
 //     • a changed backend accounting/driver-finance .ts file whose DIFF shows GL-write markers, OR
+//     • ANY changed file's ADDED diff lines write accounting.|catalogs.|mdata.|banking.|driver_finance.
+//       (INSERT/UPDATE/DELETE — constitution §2 financial cluster; catches riders outside GL dirs), OR
 //     • the diff flips a *_ENABLED / *_FLAG / FEATURE_* from false/OFF -> true/ON.
 //   Verdict:
 //     • PROTECTED and label JORGE-APPROVED absent  -> FAIL (exit 1, RED)   <- blocks the merge
@@ -87,6 +92,9 @@ export function heldMigrationIntroduced(changedFiles, readHead, heldRegistryDiff
 const PROTECTED_GLOBS = [
   "**/*posting*.ts",
   "**/*posting*.mjs",
+  // Held-migration registry mutations are always Tier-1 (runtime firewall + owner apply).
+  "**/held-migrations.json",
+  "**/.held-migrations.json",
 ];
 
 // Migration safety (CREATE-TABLE-only neutral, Jorge-approved 2026-06-20). A migration is NEUTRAL only if
@@ -175,6 +183,26 @@ const GL_WRITE_MARKERS = [
   /payment_applications/i,
 ];
 
+// Financial-cluster schema writes (constitution §2): any ADDED DML against these schemas is PROTECTED
+// regardless of path or PR title. Scans EVERY changed file (squash-inspection) so a rider under
+// mdata/ / catalogs/ / banking/ cannot hide behind a "non-financial" frontend squash.
+const FINANCIAL_SCHEMA_WRITE_RE =
+  /\b(?:INSERT\s+INTO|UPDATE|DELETE\s+FROM)\s+(?:accounting|catalogs|mdata|banking|driver_finance)\./i;
+
+/** Return only added lines of a unified diff (no +++ headers). */
+export function addedDiffText(diffText) {
+  return String(diffText || "")
+    .split("\n")
+    .filter((l) => l.startsWith("+") && !l.startsWith("+++"))
+    .map((l) => l.slice(1))
+    .join("\n");
+}
+
+/** True when ADDED diff lines contain DML against a financial-cluster schema. */
+export function hasFinancialSchemaWrite(diffText) {
+  return FINANCIAL_SCHEMA_WRITE_RE.test(addedDiffText(diffText));
+}
+
 // A flag flip to ON: an added line turning a *_ENABLED / *_FLAG / FEATURE_* to a truthy on-value.
 const FLAG_FLIP_RE = /^\+(?!\+).*(?:[A-Z][A-Z0-9_]*_ENABLED|[A-Z][A-Z0-9_]*_FLAG|FEATURE_[A-Z0-9_]+)\b[^\n]*(?:=|:|\bset\b|\(['"]).*\b(?:true|on|enabled|1)\b/i;
 
@@ -222,6 +250,16 @@ export function classify(input) {
     if (GL_CONTENT_PATH_RE.test(f)) {
       const d = diffByFile[f] || "";
       if (GL_WRITE_MARKERS.some((re) => re.test(d))) reasons.push(`GL-write diff in: ${f}`);
+    }
+  }
+
+  // Squash-inspection: EVERY non-excluded file's ADDED lines — financial-schema DML is PROTECTED
+  // even when the title claims non-financial and other files are benign frontend/docs.
+  for (const f of changedFiles) {
+    if (isExcludedFromContentScan(f)) continue;
+    if (isMigrationFile(f)) continue; // migrations already classified by analyzeMigrationSql
+    if (hasFinancialSchemaWrite(diffByFile[f] || "")) {
+      reasons.push(`financial-schema write in: ${f}`);
     }
   }
 
@@ -281,6 +319,62 @@ function selfTest() {
     { name: "flag flip ON -> fail", in: { title: "x", labels: [], changedFiles: ["apps/backend/src/accounting/expenses.routes.ts"], diffByFile: { "apps/backend/src/accounting/expenses.routes.ts": "-  EXPENSE_GL_POSTING_ENABLED = false\n+  EXPENSE_GL_POSTING_ENABLED = true" } }, want: "fail" },
     { name: "flag flip ON, but JORGE-APPROVED -> pass", in: { title: "x", labels: ["JORGE-APPROVED"], changedFiles: ["a.ts"], diffByFile: { "a.ts": "+ FEATURE_VOID_ENABLED = 'on'" } }, want: "pass-approved" },
     { name: "plain frontend PR -> neutral", in: { title: "feat(ux): table", labels: [], changedFiles: ["apps/frontend/src/pages/Vendors.tsx"], diffByFile: { "apps/frontend/src/pages/Vendors.tsx": "+ <div/>" } }, want: "pass-neutral" },
+    // --- B-A5 / D1b squash-inspection planted failures ---
+    // Title / "non-financial" claim MUST NOT neutralize a protected rider in the same squash.
+    { name: "squash-inspection: non-financial title + frontend + financial migration -> fail", in: {
+      title: "feat(ux): table polish (non-financial)",
+      labels: [],
+      changedFiles: [
+        "apps/frontend/src/pages/Vendors.tsx",
+        "db/migrations/202607990000_sneaky_financial.sql",
+      ],
+      diffByFile: {
+        "apps/frontend/src/pages/Vendors.tsx": "+ <div/>",
+        "db/migrations/202607990000_sneaky_financial.sql": "+ALTER TABLE accounting.invoices ADD COLUMN x text;",
+      },
+    }, want: "fail" },
+    { name: "squash-inspection: non-financial title + frontend + mdata INSERT rider -> fail", in: {
+      title: "chore(ui): tidy vendors page",
+      labels: [],
+      changedFiles: [
+        "apps/frontend/src/pages/Vendors.tsx",
+        "apps/backend/src/mdata/vendors.routes.ts",
+      ],
+      diffByFile: {
+        "apps/frontend/src/pages/Vendors.tsx": "+ <div/>",
+        "apps/backend/src/mdata/vendors.routes.ts": "+ await client.query('INSERT INTO mdata.vendors (name) VALUES ($1)');",
+      },
+    }, want: "fail" },
+    { name: "squash-inspection: catalogs.accounts write outside GL path -> fail", in: {
+      title: "fix: account helper",
+      labels: [],
+      changedFiles: ["apps/backend/src/lib/account-helpers.ts"],
+      diffByFile: {
+        "apps/backend/src/lib/account-helpers.ts": "+ await client.query('INSERT INTO catalogs.accounts (id) VALUES ($1)');",
+      },
+    }, want: "fail" },
+    { name: "squash-inspection: banking.bank_transactions DELETE rider -> fail", in: {
+      title: "refactor(banking): cleanup",
+      labels: [],
+      changedFiles: ["apps/backend/src/banking/cleanup.ts"],
+      diffByFile: {
+        "apps/backend/src/banking/cleanup.ts": "+ await client.query('DELETE FROM banking.bank_transactions WHERE id = $1');",
+      },
+    }, want: "fail" },
+    { name: "squash-inspection: held-migrations.json path always protected -> fail", in: {
+      title: "chore: registry",
+      labels: [],
+      changedFiles: ["db/migrations/.held-migrations.json"],
+      diffByFile: { "db/migrations/.held-migrations.json": '+  "file": "x.sql"' },
+    }, want: "fail" },
+    { name: "squash-inspection: SELECT-only mdata touch stays neutral", in: {
+      title: "fix: vendor list",
+      labels: [],
+      changedFiles: ["apps/backend/src/mdata/vendors.routes.ts"],
+      diffByFile: {
+        "apps/backend/src/mdata/vendors.routes.ts": "+ const rows = await client.query('SELECT id FROM mdata.vendors');",
+      },
+    }, want: "pass-neutral" },
     { name: "label case-insensitive -> pass", in: { title: "[hold-for-jorge] x", labels: ["jorge-approved"], changedFiles: [], diffByFile: {} }, want: "pass-approved" },
     { name: "the gate script's own fixtures do NOT self-trip -> neutral", in: { title: "fix(ci): gate", labels: [], changedFiles: ["scripts/verify-hold-merge-gate.mjs"], diffByFile: { "scripts/verify-hold-merge-gate.mjs": "+ EXPENSE_GL_POSTING_ENABLED = true\n+ INSERT INTO accounting.journal_entries" } }, want: "pass-neutral" },
     { name: "a test file mentioning a flag flip -> neutral", in: { title: "test: x", labels: [], changedFiles: ["apps/backend/src/accounting/bills.service.test.ts"], diffByFile: { "apps/backend/src/accounting/bills.service.test.ts": "+ FOO_ENABLED = true\n+ journal_entries" } }, want: "pass-neutral" },
@@ -371,7 +465,7 @@ function main() {
   console.log("\n=== HOLD-MERGE-GATE ===");
   console.log(`title:    ${title || "(none)"}`);
   console.log(`labels:   ${labels.join(", ") || "(none)"}`);
-  console.log(`changed:  ${changedFiles.length} file(s)`);
+  console.log(`changed:  ${changedFiles.length} file(s)  [squash-inspection: every file classified; title never neutralizes]`);
   console.log(`protected: ${result.protected}  approved: ${result.approved}`);
   if (result.reasons.length) result.reasons.forEach((r) => console.log(`  • ${r}`));
 
