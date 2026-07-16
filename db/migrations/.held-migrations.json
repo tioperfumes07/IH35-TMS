@@ -2,6 +2,10 @@
   "note": "HELD MIGRATIONS — each carries a 'DO NOT RUN ON PROD' marker and must run ONLY on a Neon branch by Jorge's hand, then be ledger-backfilled so prod db:migrate skips it. verify:hold-migrations-registered enforces bidirectional parity: every migration whose header says DO-NOT-RUN must be listed here, and every entry here must still carry the marker — so a held migration can never silently lose its marker (which would let db:migrate fire it on prod).",
   "held": [
     {
+      "file": "202607560000_mdata_qbo_sync_columns_for_collapse.sql",
+      "reason": "[HOLD-FOR-JORGE — FINANCIAL] QBO dual-write collapse STEP 1 — additive QBO push-status sync columns on canonical mdata.qbo_accounts/customers/vendors (sync_status, qbo_push_attempts, qbo_last_push_at, qbo_last_error + accounts parent_id/parent_synced + vendors default_ap_account_qbo_id/eligible_1099/payment_terms_qbo_id) mirroring accounting.qbo_* exactly, so the Step-2 writer repoint (accounting.qbo_* -> mdata.qbo_*) has them. ADDITIVE + IDEMPOTENT; NOT-NULL-with-default backfills existing rows instantly (both mirrors carry live data). NOT YET applied on prod — GUARD validates on throwaway Postgres, owner applies on Neon then ledger-backfills; CI fresh-from-0001 builds the columns."
+    },
+    {
       "file": "202607520000_driver_finance_settlement_posting_linkage_columns.sql",
       "reason": "[HOLD-FOR-JORGE — FINANCIAL] Settlement engine collapse STEP 1 — additive posting/QBO-bill linkage columns on canonical driver_finance.driver_settlements + settlement_lines (accounting_bill_id, accounting_bill_payment_id, qbo_bill_id, qbo_bill_payment_id, posted_at, posted_by_user_id, bank_settle_date, created_by_user_id, line posting_account_id) so the Step-2 writer repoint (payroll.*/settlement.* -> driver_finance.*) has them. ADDITIVE + IDEMPOTENT; both RETIRE tables EMPTY on prod (no data migration). NOT YET applied on prod — GUARD validates on throwaway Postgres, owner applies on Neon then ledger-backfills; CI fresh-from-0001 builds the columns."
     },
