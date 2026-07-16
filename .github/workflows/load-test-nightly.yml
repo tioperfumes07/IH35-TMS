@@ -44,8 +44,18 @@ jobs:
         with:
           node-version: 22
 
+      # Install from Grafana's apt mirror (dl.k6.io). Do NOT use grafana/setup-k6-action —
+      # that action calls GitHub Releases API (/repos/grafana/k6/releases/latest) and fails
+      # hard whenever GitHub returns 503, which reds every PR that touches package.json.
       - name: Setup k6
-        uses: grafana/setup-k6-action@v1
+        run: |
+          set -euo pipefail
+          sudo mkdir -p /usr/share/keyrings
+          curl -fsSL https://dl.k6.io/key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/k6-archive-keyring.gpg
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install -y k6
+          k6 version
 
       - name: Verify load-test baseline assets
         run: node scripts/verify-load-test-baseline.mjs
@@ -82,8 +92,18 @@ jobs:
         with:
           node-version: 22
 
+      # Install from Grafana's apt mirror (dl.k6.io). Do NOT use grafana/setup-k6-action —
+      # that action calls GitHub Releases API (/repos/grafana/k6/releases/latest) and fails
+      # hard whenever GitHub returns 503, which reds every PR that touches package.json.
       - name: Setup k6
-        uses: grafana/setup-k6-action@v1
+        run: |
+          set -euo pipefail
+          sudo mkdir -p /usr/share/keyrings
+          curl -fsSL https://dl.k6.io/key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/k6-archive-keyring.gpg
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install -y k6
+          k6 version
 
       - name: Verify load-test baseline assets
         run: node scripts/verify-load-test-baseline.mjs
