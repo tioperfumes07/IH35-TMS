@@ -2268,8 +2268,13 @@ export function BankingTransactionsDesignView({
       {/* Bulk categorize-to-account modal — real POST /banking/transactions/categorize-bulk (no new GL
       math; the chosen COA account IS the category, same as the single-row Post). */}
       {bulkCategorizeOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-md bg-white p-4 shadow-xl">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/40 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Bulk categorize transactions"
+        >
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-md bg-white p-4 shadow-xl">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-sm font-semibold text-gray-900">
                 Categorize {bulkSelection.selectedIds.size} transaction(s)
