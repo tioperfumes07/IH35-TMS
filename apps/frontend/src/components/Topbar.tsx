@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getQboConnectionStatus, getQboAuthorizeStartUrl } from "../api/forensic";
 import { getQboSyncHealth } from "../api/qbo-integration";
+import { getRelayHealth } from "../api/relay";
 import { getSamsaraHealth } from "../api/samsara";
 import { getIdentityCurrentCompany, signOut } from "../api/identity";
 import { colors, spacing, typography } from "../design/tokens";
@@ -15,7 +16,7 @@ import { NotificationBell } from "./notifications/NotificationBell";
 import { PageHelpLink } from "./PageHelpLink";
 import { useToast } from "./Toast";
 import { useCompanyContext } from "../contexts/CompanyContext";
-import { qboConnectionLabel, RELAY_NOT_CONFIGURED, resolveSamsaraVisualStatus } from "../lib/integration-telematics-status";
+import { qboConnectionLabel, resolveRelayVisualStatus, resolveSamsaraVisualStatus } from "../lib/integration-telematics-status";
 import { LocaleSwitcher } from "../i18n/locale-switcher";
 import { useTranslation } from "../hooks/useTranslation";
 
@@ -75,6 +76,14 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
     refetchInterval: 60_000,
   });
 
+  const relayQuery = useQuery({
+    queryKey: ["integrations", "relay", "health", companyId],
+    queryFn: () => getRelayHealth(companyId),
+    enabled: Boolean(companyId) && office,
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  });
+
   const identityCompanyQuery = useQuery({
     queryKey: ["identity", "me", "current-company"],
     queryFn: getIdentityCurrentCompany,
@@ -103,7 +112,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
 
   const samsaraVis = resolveSamsaraVisualStatus(samsaraQuery.data);
   const qboVis = qboConnectionLabel(qboQuery.data?.connected);
-  const relayVis = RELAY_NOT_CONFIGURED;
+  const relayVis = resolveRelayVisualStatus(relayQuery.data);
 
   const qboSyncPill = useMemo(() => {
     if (qboSyncHealthQuery.isError) return null;
