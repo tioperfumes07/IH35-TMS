@@ -935,6 +935,7 @@
     "verify:no-duplicate-financial-ledger": "node scripts/verify-no-duplicate-financial-ledger.mjs",
     "verify:settlement-escrow-resolver": "node scripts/verify-settlement-escrow-resolver.mjs",
     "verify:settlement-escrow-cap": "node scripts/verify-settlement-escrow-cap.mjs",
+    "verify:settlement-engine-inventory": "node scripts/verify-settlement-engine-inventory.mjs",
     "verify:cash-advance-maker-checker": "node scripts/verify-cash-advance-maker-checker.mjs",
     "verify:settlement-payrun-gl-flag-gate": "node scripts/verify-settlement-payrun-gl-flag-gate.mjs",
     "verify:payment-methods-catalog": "node scripts/verify-payment-methods-catalog.mjs",

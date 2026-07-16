@@ -83,6 +83,12 @@ jobs:
       - name: verify:settlement-escrow-cap
         run: npm run verify:settlement-escrow-cap
 
+      - name: verify:settlement-engine-inventory --selftest
+        run: node scripts/verify-settlement-engine-inventory.mjs --selftest
+
+      - name: verify:settlement-engine-inventory
+        run: npm run verify:settlement-engine-inventory
+
       - name: verify:cash-advance-maker-checker --selftest
         run: node scripts/verify-cash-advance-maker-checker.mjs --selftest
 
