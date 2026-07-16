@@ -548,6 +548,9 @@ jobs:
       - name: verify:no-dead-clicks
         run: npm run verify:no-dead-clicks
 
+      - name: verify:entitylink-deep-links
+        run: npm run verify:entitylink-deep-links
+
       - name: verify:no-nested-box --selftest
         run: node scripts/verify-no-nested-box.mjs --selftest
       - name: verify:no-nested-box

@@ -1,5 +1,6 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { useInfiniteQuery, useMutation } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
 import {
   getAccountingSourceLineage,
@@ -93,8 +94,10 @@ function PostingEntityLink({
 export function AccountingAuditTrailPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [sourceType, setSourceType] = useState("");
-  const [sourceId, setSourceId] = useState("");
+  const [searchParams] = useSearchParams();
+  // Deep-link from invoice/payment "View audit log" (?source_type=&source_id=).
+  const [sourceType, setSourceType] = useState(() => searchParams.get("source_type") ?? "");
+  const [sourceId, setSourceId] = useState(() => searchParams.get("source_id") ?? "");
   const [accountId, setAccountId] = useState("");
   const [lineageRows, setLineageRows] = useState<AccountingSourceLineageRow[] | null>(null);
   const [lineageKey, setLineageKey] = useState<{ source_transaction_type: string; source_transaction_id: string } | null>(null);

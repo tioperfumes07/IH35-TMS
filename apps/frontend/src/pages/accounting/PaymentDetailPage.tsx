@@ -225,7 +225,15 @@ export function PaymentDetailPage() {
       ) : null}
 
       <div>
-        <button type="button" className="text-xs font-semibold text-slate-700 underline" onClick={() => navigate(`/reports?payment_id=${payment.id}`)}>
+        <button
+          type="button"
+          className="text-xs font-semibold text-slate-700 underline"
+          onClick={() =>
+            navigate(
+              `/accounting/audit-trail?source_type=customer_payment&source_id=${encodeURIComponent(payment.id)}`,
+            )
+          }
+        >
           View audit log
         </button>
       </div>
