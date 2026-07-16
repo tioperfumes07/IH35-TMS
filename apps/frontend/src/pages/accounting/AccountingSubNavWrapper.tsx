@@ -104,7 +104,8 @@ export function AccountingSubNavWrapper({ title = "Accounting", subtitle, action
         Groups open on CLICK and stay open until an item is chosen / outside-click / Escape (NOT hover) —
         LOCKED per docs/specs/NAVIGATION-PATTERN-RULE.md. Sourced from ACCOUNTING_SUB_NAV_ITEMS.
       */}
-      <div className="overflow-x-auto">
+      {/* No overflow-x-auto here: it clips absolute .nav-dropdown menus (Safety hotfix class of bug). */}
+      <div className="relative z-10">
         <HoverDropdownNav items={[...ACCOUNTING_SUB_NAV_ITEMS]} activeHref={activeHref} openOn="click" />
       </div>
 

@@ -159,4 +159,27 @@ describe('HoverDropdownNav openOn="click" (LOCKED top-bar rule — NAVIGATION-PA
     fireEvent.mouseDown(document.body);
     expect(screen.queryByTestId("bills-dropdown-menu")).toBeNull();
   });
+
+  it("nav-split: group label Link navigates; chevron opens the menu", async () => {
+    const splitItems: NavItem[] = [
+      {
+        label: "Bills",
+        href: "/accounting/bills",
+        children: [
+          { label: "Bill", href: "/accounting/bills" },
+          { label: "Maintenance bill", href: "/accounting/bills/maintenance" },
+        ],
+      },
+    ];
+    render(
+      <MemoryRouter>
+        <HoverDropdownNav items={splitItems} activeHref="/accounting/bills" openOn="click" />
+      </MemoryRouter>,
+    );
+    const labelLink = screen.getByRole("menuitem", { name: /^Bills$/i });
+    expect(labelLink).toHaveAttribute("href", "/accounting/bills");
+    const chevron = screen.getByRole("button", { name: /Bills submenu/i });
+    fireEvent.click(chevron);
+    expect(await screen.findByTestId("bills-dropdown-menu")).toBeInTheDocument();
+  });
 });
