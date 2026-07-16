@@ -5,6 +5,7 @@ import {
   relayApiBase,
   relayApiKey,
   relayTransactionCalendarDate,
+  retryAfterMsFromRelayError,
   RelayApiError,
   type RelayFuelTransaction,
 } from "./relay-client.js";
@@ -156,5 +157,22 @@ describe("filterRelayFuelTransactionsByDateRange — client-side Relay date slic
 
   it("extracts UTC calendar dates from Relay timestamps", () => {
     expect(relayTransactionCalendarDate("2026-07-16T05:42:29Z")).toBe("2026-07-16");
+  });
+});
+
+describe("retryAfterMsFromRelayError — honor Relay Retry-After on 429", () => {
+  it("returns null for non-429 errors", () => {
+    expect(retryAfterMsFromRelayError(new RelayApiError("relay_http_500", 500, {}, true))).toBeNull();
+    expect(retryAfterMsFromRelayError(new Error("nope"))).toBeNull();
+  });
+
+  it("parses Retry-After seconds from the enriched error body", () => {
+    const err = new RelayApiError("relay_http_429", 429, { retry_after: "3" }, true);
+    expect(retryAfterMsFromRelayError(err)).toBe(3000);
+  });
+
+  it("caps Retry-After at 120s", () => {
+    const err = new RelayApiError("relay_http_429", 429, { retry_after: "999" }, true);
+    expect(retryAfterMsFromRelayError(err)).toBe(120_000);
   });
 });

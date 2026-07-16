@@ -218,7 +218,7 @@ export function initializeRelayFuelIngestCron(app: FastifyInstance) {
             await client
               .query(`SELECT audit.append_event($1, $2, $3::jsonb, NULL, $4)`, [
                 "integrations.relay_fuel_ingest_daily_pull_failed",
-                "error",
+                "warning",
                 JSON.stringify({
                   operating_company_id: operatingCompanyId,
                   error: error instanceof RelayApiError
@@ -271,11 +271,20 @@ export async function runRelayFuelBackfill(app: FastifyInstance, opts?: { months
 
   const companyIds = await withLuciaBypass(async (client) => listActiveCompanyIds(client));
 
+  // Inter-company gap so consecutive full-feed pulls don't re-trip Relay 429 (GUARD 2026-07-16).
+  const interCompanyDelayMs = Number.parseInt(process.env.RELAY_FUEL_INGEST_INTER_COMPANY_MS ?? "1500", 10) || 1500;
+  let companiesPulled = 0;
+
   for (const { id: operatingCompanyId, code: entityCode } of companyIds) {
     const flagOn = await withLuciaBypass(async (client) =>
       isEnabled(client, "RELAY_FUEL_INGEST_ENABLED", { operating_company_id: operatingCompanyId })
     );
     if (!flagOn) continue;
+
+    if (companiesPulled > 0 && interCompanyDelayMs > 0) {
+      await new Promise((r) => setTimeout(r, interCompanyDelayMs));
+    }
+    companiesPulled += 1;
 
     let pulled = 0;
     let upserted = 0;
@@ -341,7 +350,7 @@ export async function runRelayFuelBackfill(app: FastifyInstance, opts?: { months
         await client
           .query(`SELECT audit.append_event($1, $2, $3::jsonb, NULL, $4)`, [
             "integrations.relay_fuel_ingest_backfill_failed",
-            "error",
+            "warning",
             JSON.stringify({
               operating_company_id: operatingCompanyId,
               entity_code: entityCode,

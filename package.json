@@ -924,6 +924,8 @@
     "verify:je-void-money-control-flag-gate": "node scripts/verify-je-void-money-control-flag-gate.mjs",
     "verify:je-void-reverses-not-voids": "node scripts/verify-je-void-reverses-not-voids.mjs",
     "verify:feature-flag-key-shape": "node scripts/verify-feature-flag-key-shape.mjs",
+    "verify:append-event-severity-domain": "node scripts/verify-append-event-severity-domain.mjs",
+    "verify:relay-ingest-per-company-isolation": "node scripts/verify-relay-ingest-per-company-isolation.mjs",
     "verify:driver-payment-method-tenant-scope": "node scripts/verify-driver-payment-method-tenant-scope.mjs",
     "verify:period-money-control-flag-gate": "node scripts/verify-period-money-control-flag-gate.mjs",
     "verify:wo-void-flag-gate": "node scripts/verify-wo-void-flag-gate.mjs",

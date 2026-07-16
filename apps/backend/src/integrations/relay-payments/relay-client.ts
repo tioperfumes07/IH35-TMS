@@ -126,7 +126,15 @@ async function relayGetOnce(url: URL, key: string): Promise<Response> {
   if (!res.ok) {
     const body = await readJsonResponse(res);
     const retryable = res.status === 429 || res.status >= 500;
-    throw new RelayApiError(`relay_http_${res.status}`, res.status, body, retryable);
+    // Preserve Retry-After so relayGetWithRetry can honor it (GUARD live 429 stack 2026-07-16).
+    const retryAfter = res.headers.get("Retry-After");
+    const enriched =
+      retryAfter && body && typeof body === "object" && !Array.isArray(body)
+        ? { ...(body as Record<string, unknown>), retry_after: retryAfter }
+        : retryAfter
+          ? { retry_after: retryAfter, _body: body }
+          : body;
+    throw new RelayApiError(`relay_http_${res.status}`, res.status, enriched, retryable);
   }
   return res;
 }
@@ -141,13 +149,34 @@ async function relayGetWithRetry(url: URL, key: string): Promise<Response> {
     } catch (error) {
       const retryable = error instanceof RelayApiError && error.retryable;
       if (retryable && attempt < RELAY_MAX_RETRIES) {
-        await sleep(RELAY_RETRY_BASE_MS * 2 ** attempt);
+        // Honor Retry-After on 429 when present; otherwise exponential backoff.
+        const retryAfterMs = retryAfterMsFromRelayError(error);
+        const backoffMs = retryAfterMs ?? RELAY_RETRY_BASE_MS * 2 ** attempt;
+        await sleep(backoffMs);
         attempt += 1;
         continue;
       }
       throw error;
     }
   }
+}
+
+/** Parse Retry-After (seconds or HTTP-date) from a 429 RelayApiError body/headers proxy. */
+export function retryAfterMsFromRelayError(error: unknown): number | null {
+  if (!(error instanceof RelayApiError) || error.statusCode !== 429) return null;
+  const body = error.body;
+  let header: string | null = null;
+  if (body && typeof body === "object" && !Array.isArray(body)) {
+    const rec = body as Record<string, unknown>;
+    const raw = rec.retry_after ?? rec.retryAfter ?? rec["Retry-After"];
+    if (typeof raw === "string" || typeof raw === "number") header = String(raw);
+  }
+  if (!header) return null;
+  const asSeconds = Number(header);
+  if (Number.isFinite(asSeconds) && asSeconds >= 0) return Math.min(asSeconds * 1000, 120_000);
+  const asDate = Date.parse(header);
+  if (Number.isFinite(asDate)) return Math.min(Math.max(asDate - Date.now(), 0), 120_000);
+  return null;
 }
 
 export type RelayFuelPrompt = { label: string; value: string };
