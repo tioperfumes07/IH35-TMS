@@ -5,6 +5,13 @@ gated blocks into one ceremony. **Nothing here is executed** — the opening JE 
 the flag flips are owner-approved (CLAUDE.md §1.4). This doc = the diff + the sequence, staged for
 Jorge's go.
 
+> **⚑ Ch.11 FRESH-START (OWNER-FINAL 2026-07-16).** The go-forward **opening-balance anchor is now the QBO
+> Balance Sheet as of 03/31/2026** (Ch.11 approved end of March 2026 → fresh-start line; TMS posts live in
+> parallel from 04/01/2026). This **supersedes the prior 07/01/2026 cutover / 06/30/2026 opening lock**. The
+> `12/31/2024` anchor below is the **historical QBO-clone tie-out** (the 2024 conversion, §8.5) — a different,
+> unchanged anchor; the Ch.11 opening tie-out runs against the 03/31/2026 snapshot. Canonical spec:
+> `docs/specs/OPENING-BALANCE-IMPORT-AND-CUTOVER-2026-07-16.md`.
+
 ## 1. The anchor — live QBO Balance Sheet, IH35 Transportation, as of 12/31/2024 (accrual, signed-actual)
 
 | Section | QBO amount (signed-actual) |

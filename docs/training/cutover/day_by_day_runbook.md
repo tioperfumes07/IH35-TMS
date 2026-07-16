@@ -1,5 +1,11 @@
 # Day-by-Day Runbook (May 16-21)
 
+> **⚑ Ch.11 FRESH-START (OWNER-FINAL 2026-07-16).** The cutover to **live parallel TMS posting is 04/01/2026**
+> (opening balances = QBO BS **as of 03/31/2026** per entity; Ch.11 approved end of March 2026). This **supersedes
+> the prior 07/01/2026 cutover / 06/30/2026 opening lock** — and the "May 16-21" week dates below are **stale draft
+> guidance**, kept for structure only; re-anchor the daily rhythm to the 04/01/2026 go-live. Canonical spec:
+> `docs/specs/OPENING-BALANCE-IMPORT-AND-CUTOVER-2026-07-16.md`.
+
 ## Purpose
 High-level cutover week runbook: who does what, when to escalate, and daily rhythm.
 

@@ -93,6 +93,15 @@ has already passed — we remain in the parallel window until the ceremony compl
 the date as permission to flip a flag. At cutover: TMS becomes authoritative; period-lock + a final
 court/CPA-grade tieout snapshot. Nothing locks/closes during the reconciliation window.
 
+> **⚑ Ch.11 FRESH-START (OWNER-FINAL 2026-07-16; supersedes the prior 07/01/2026 cutover / 06/30/2026 opening lock).**
+> Ch.11 was approved end of March 2026 → the books change in April, so **03/31/2026 is the fresh-start line**:
+> **opening balances = QBO Balance Sheet as of 03/31/2026 per entity** (re-syncable until the owner locks them),
+> and **TMS posts live in parallel + reconciles daily from 04/01/2026** (per entity, after opening tie-out). This
+> is the **internal GL-posting** go-live — it does **not** change the rule above: the **QBO-PUSH authority cutover
+> stays EVENT-gated** and the historical clone conversion (`01/01/2024`) is unchanged. Apr/May/Jun 2026 move from
+> "mirror QBO" to LIVE TMS posting (3 more live months than the old 07/01 line) — expected. Canonical spec:
+> `docs/specs/OPENING-BALANCE-IMPORT-AND-CUTOVER-2026-07-16.md`.
+
 ## Locked owner decisions (2026-07-02 — resolved; reconciled with GUARD)
 1. **`factoring_advance` JE push — GATED OFF.** It composes a QBO JournalEntry from
    `accounting.factoring_advances`; folded into the JE kill-switch (`QBO_JE_PUSH_ENABLED`, default OFF) in
