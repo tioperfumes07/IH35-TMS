@@ -1,0 +1,46 @@
+---
+description: Fix root cause — never patch, never defer, evidence before done (owner law)
+alwaysApply: true
+---
+
+# RULE 16 — FIX, DON'T PATCH · NEVER DEFER · EVIDENCE BEFORE DONE
+
+Owner permanent law (2026-07-16). Applies every session, every agent, every block.
+
+## The law (non-negotiable)
+
+1. **Fix the root cause** — not the symptom. No band-aids, no "good enough for now," no hiding failures.
+2. **Never defer** a root problem because it is hard. Deferral is allowed **only** when Jorge explicitly approves in writing with a **named tracker entry** and **future block id** (phase law). Silent "later" is forbidden.
+3. **Never patch** over architecture, money, audit, linkage, or trust. If the fix needs schema + code + guard + live proof — ship all of it.
+4. **Evidence before done** — no "fixed", "works", "merged", or "verified" without live proof. If unverified, say **UNVERIFIED**.
+5. **Every bug fix gets a guard** — `scripts/verify-*.mjs` wired into CI so the exact regression cannot return.
+
+## Patch vs fix (examples)
+
+| Patch (forbidden) | Fix (required) |
+|---|---|
+| Ad-hoc ALTER on prod to bypass a CHECK | Code matches DB domain + CI guard |
+| Catch-and-swallow so the UI shows empty | Surface error + valid audit row + isolated txn |
+| "Re-run later" while Relay 429 is hot | Throttle + Retry-After + stop hammering |
+| CI-green = done | Deploy sha + row count + log proof |
+| One txn for all companies | Per-company commit + test/guard |
+
+## Required reply shape before claiming done
+
+```
+ROOT CAUSE: [one sentence]
+FIX: [what changed — not symptom]
+GUARD: [verify-*.mjs or test name]
+LIVE PROOF: [health sha / Neon row / log line / endpoint] OR UNVERIFIED — [what blocked proof]
+REMAINING: [none] OR [explicit tracker deferral with block id]
+```
+
+## Mandatory skills & connectors
+
+- **Skills:** `ih35-evidence-before-done`, `ih35-guard-verification`, `ih35-code-review` (independent on non-trivial work)
+- **Connectors:** GitHub PR+CI, Render logs, Neon prod read (RLS bypass discipline), live app browser
+- **Template:** `docs/templates/ACCEPTANCE-EVIDENCE-BLOCK.md`
+
+## Tie-breakers (same as Rule #0)
+
+Speed < trust · easy < correct · guess < verify · move forward < protect the company
