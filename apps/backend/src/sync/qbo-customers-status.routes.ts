@@ -30,7 +30,7 @@ export async function fetchQboCustomersPushStatus(operatingCompanyId: string): P
   return withLuciaBypass(async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
 
-    const exists = await client.query(`SELECT to_regclass('accounting.qbo_customers') IS NOT NULL AS ok`);
+    const exists = await client.query(`SELECT to_regclass('mdata.qbo_customers') IS NOT NULL AS ok`);
     if (!exists.rows[0]?.ok) {
       return { total_local: 0, synced: 0, unsynced: 0, pushing: 0, failed: 0, dead_letter: 0 };
     }
@@ -58,7 +58,7 @@ export async function fetchQboCustomersPushStatus(operatingCompanyId: string): P
             WHERE qbo_id IS NULL
               AND qbo_push_attempts >= 5
           )::text AS dead_letter
-        FROM accounting.qbo_customers
+        FROM mdata.qbo_customers
         WHERE operating_company_id = $1::uuid
       `,
       [operatingCompanyId]

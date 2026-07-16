@@ -100,16 +100,16 @@ async function cloneCoaIfEmpty(
   templateCarrierId: string,
   newCarrierId: string
 ): Promise<number> {
-  if (!(await tableExists(client, "accounting.qbo_accounts"))) return 0;
+  if (!(await tableExists(client, "mdata.qbo_accounts"))) return 0;
 
   const existing = await client.query<{ c: number }>(
-    `SELECT count(*)::int AS c FROM accounting.qbo_accounts WHERE operating_company_id = $1`,
+    `SELECT count(*)::int AS c FROM mdata.qbo_accounts WHERE operating_company_id = $1`,
     [newCarrierId]
   );
   if (Number(existing.rows[0]?.c ?? 0) > 0) return 0;
 
   const templateCount = await client.query<{ c: number }>(
-    `SELECT count(*)::int AS c FROM accounting.qbo_accounts WHERE operating_company_id = $1`,
+    `SELECT count(*)::int AS c FROM mdata.qbo_accounts WHERE operating_company_id = $1`,
     [templateCarrierId]
   );
   if (Number(templateCount.rows[0]?.c ?? 0) === 0) return 0;
@@ -126,14 +126,14 @@ async function cloneCoaIfEmpty(
     `
       INSERT INTO tmp_bootstrap_coa_map (old_id, new_id)
       SELECT id, gen_random_uuid()
-      FROM accounting.qbo_accounts
+      FROM mdata.qbo_accounts
       WHERE operating_company_id = $1
     `,
     [templateCarrierId]
   );
   const insertRes = await client.query(
     `
-      INSERT INTO accounting.qbo_accounts (
+      INSERT INTO mdata.qbo_accounts (
         id, operating_company_id, qbo_id, name, full_qualified_name,
         account_type, account_sub_type, active, mirrored_at, payload_json,
         sync_status, qbo_push_attempts
@@ -151,7 +151,7 @@ async function cloneCoaIfEmpty(
         src.payload_json,
         'unsynced',
         0
-      FROM accounting.qbo_accounts src
+      FROM mdata.qbo_accounts src
       JOIN tmp_bootstrap_coa_map m ON m.old_id = src.id
       WHERE src.operating_company_id = $1::uuid
     `,
@@ -159,9 +159,9 @@ async function cloneCoaIfEmpty(
   );
   await client.query(
     `
-      UPDATE accounting.qbo_accounts usmca_child
+      UPDATE mdata.qbo_accounts usmca_child
       SET parent_id = parent_map.new_id
-      FROM accounting.qbo_accounts src_child
+      FROM mdata.qbo_accounts src_child
       JOIN tmp_bootstrap_coa_map child_map ON child_map.old_id = src_child.id
       JOIN tmp_bootstrap_coa_map parent_map ON parent_map.old_id = src_child.parent_id
       WHERE usmca_child.id = child_map.new_id

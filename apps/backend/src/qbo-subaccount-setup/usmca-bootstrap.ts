@@ -26,7 +26,7 @@ export async function bootstrapUsmcaSubaccount(
   const subaccountId = (existing.rows[0] as { id?: string } | undefined)?.id ?? null;
 
   const coa = await client.query<{ count: string }>(
-    `SELECT count(*)::text AS count FROM accounting.qbo_accounts WHERE operating_company_id = (SELECT id FROM org.companies WHERE company_code = $1 LIMIT 1)`,
+    `SELECT count(*)::text AS count FROM mdata.qbo_accounts WHERE operating_company_id = (SELECT id FROM org.companies WHERE company_code = $1 LIMIT 1)`,
     [carrierCode]
   );
   const coaCloned = Number((coa.rows[0] as { count?: string } | undefined)?.count ?? 0) > 0;

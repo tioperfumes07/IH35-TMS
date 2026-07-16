@@ -17,7 +17,7 @@ const assertCompanyMembershipMock = vi.fn(async (userId: string, operatingCompan
 const queryMock = vi.fn(async (sql: string) => {
   if (sql.includes("set_config")) return { rows: [] };
   if (sql.includes("to_regclass")) return { rows: [{ ok: true }] };
-  if (sql.includes("FROM accounting.qbo_customers")) {
+  if (sql.includes("FROM mdata.qbo_customers")) {
     return {
       rows: [
         {
