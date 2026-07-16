@@ -55,6 +55,8 @@ type Props = {
   // Banking Home "Uncategorized" KPI tile — can land on this tab pre-filtered instead of losing the
   // filter on tab switch. Defaults to "all" (unfiltered), matching prior behavior.
   initialTransactionType?: string;
+  /** Deep-link from EntityLink bank_transaction — expand the matching row when present in the loaded page. */
+  highlightTransactionId?: string | null;
 };
 
 type RowDetailDraft = {
@@ -236,6 +238,7 @@ export function BankingTransactionsDesignView({
   onManageConnections,
   onDataChanged,
   initialTransactionType,
+  highlightTransactionId,
 }: Props) {
   const { pushToast } = useToast();
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
@@ -256,6 +259,9 @@ export function BankingTransactionsDesignView({
   const [viewSettingsOpen, setViewSettingsOpen] = useState(false);
   const [printExportMenuOpen, setPrintExportMenuOpen] = useState(false);
   const [expandedTxId, setExpandedTxId] = useState<string | null>(null);
+  useEffect(() => {
+    if (highlightTransactionId) setExpandedTxId(highlightTransactionId);
+  }, [highlightTransactionId]);
   const [actionMenuTxId, setActionMenuTxId] = useState<string | null>(null);
   const [linkMenuOpen, setLinkMenuOpen] = useState(false);
   const [postingTxId, setPostingTxId] = useState<string | null>(null);

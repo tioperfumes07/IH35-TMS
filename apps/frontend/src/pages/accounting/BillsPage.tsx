@@ -490,7 +490,7 @@ export function BillsPage() {
         failed={bulk.progress.failed}
         bulk_call_id={bulk.progress.bulk_call_id}
         onClose={() => bulk.setProgressOpen(false)}
-        resolveRowHref={(id) => `/accounting/bills?bill_id=${encodeURIComponent(id)}`}
+        resolveRowHref={(id) => `/accounting/bills/${encodeURIComponent(id)}`}
       />
 
       {allocationBill && companyId ? (

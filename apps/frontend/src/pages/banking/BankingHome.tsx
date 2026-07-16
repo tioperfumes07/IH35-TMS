@@ -27,7 +27,7 @@ import { AccountTilesRow } from "./components/AccountTilesRow";
 import { SyncStatusStrip } from "./components/SyncStatusStrip";
 import { ManualJEModal } from "../accounting/ManualJEModal";
 import { BankingPlaidConnectionsPanel } from "./components/BankingPlaidConnectionsPanel";
-import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { TransferModal } from "./TransferModal";
 import { RecordCCPaymentModal } from "./RecordCCPaymentModal";
 import { filterBankingTilesForCompany } from "../../lib/banking-company-filter";
@@ -54,6 +54,8 @@ type Props = {
 export function BankingHomePage({ initialTab }: Props = {}) {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const deepLinkTxnId = searchParams.get("txn_id");
   const { selectedCompanyId, selectedCompany } = useCompanyContext();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
@@ -448,6 +450,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
           onSelectAccount={setSelectedAccountId}
           onManageConnections={() => setActiveTab("accounts")}
           initialTransactionType={transactionsInitialFilter}
+          highlightTransactionId={deepLinkTxnId}
           onDataChanged={() => {
             void queryClient.invalidateQueries({ queryKey: ["banking"] });
           }}
