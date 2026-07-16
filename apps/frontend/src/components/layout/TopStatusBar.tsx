@@ -88,7 +88,7 @@ export function TopStatusBar({
         {samsaraVis.label}
       </span>
       <span style={{ color: muted }}>·</span>
-      <span className="inline-flex items-center gap-1 whitespace-nowrap" style={{ color: active }}>
+      <span className="inline-flex items-center gap-1 whitespace-nowrap" style={{ color: active }} title={relayVis.title}>
         <span className={`inline-block h-2 w-2 rounded-full ${topbarDotClass(relayVis.dot)}`} />
         {relayVis.label}
       </span>

@@ -52,7 +52,12 @@ export function StatusBarMobile({
       dot: samsaraVis.dot,
       detail: samsaraVis.title ? `${samsaraVis.label} — ${samsaraVis.title}` : samsaraVis.label,
     },
-    { key: "relay", label: "Relay", dot: relayVis.dot, detail: relayVis.label },
+    {
+      key: "relay",
+      label: "Relay",
+      dot: relayVis.dot,
+      detail: relayVis.title ? `${relayVis.label} — ${relayVis.title}` : relayVis.label,
+    },
   ];
 
   if (qboSyncPill) {

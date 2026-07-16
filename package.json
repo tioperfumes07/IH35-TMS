@@ -908,6 +908,7 @@
     "verify:relay-deposit-classifier-no-post": "node scripts/verify-relay-deposit-classifier-no-post.mjs",
     "verify:relay-routes-rate-limited": "node scripts/verify-relay-routes-rate-limited.mjs",
     "verify:relay-internal-bank-no-post": "node scripts/verify-relay-internal-bank-no-post.mjs",
+    "verify:relay-status-not-hardcoded": "node scripts/verify-relay-status-not-hardcoded.mjs",
     "verify:tracker-bymodule-sequence": "node scripts/verify-tracker-bymodule-sequence.mjs",
     "tracker:sync:r2": "node scripts/sync-tracker-r2.mjs",
     "verify:program-tracker-r2-live": "node scripts/verify-program-tracker-r2-live.mjs",

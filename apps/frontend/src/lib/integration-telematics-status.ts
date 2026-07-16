@@ -1,6 +1,8 @@
 import type { SamsaraPublicHealth } from "../api/samsara";
+import type { RelayPublicHealth } from "../api/relay";
 
 const HOUR_MS = 60 * 60 * 1000;
+const RELAY_STALE_MS = 26 * HOUR_MS;
 
 function checkOlderThan(iso: string | null, ms: number): boolean {
   if (!iso) return true;
@@ -63,3 +65,20 @@ export function qboConnectionLabel(
 }
 
 export const RELAY_NOT_CONFIGURED: SamsaraVisualStatus = { label: "Relay: not configured", dot: "gray" };
+
+export function resolveRelayVisualStatus(health: RelayPublicHealth | undefined): SamsaraVisualStatus {
+  if (!health) return { label: "Relay: …", dot: "gray" };
+  if (!health.is_configured) return { label: "Relay: not configured", dot: "gray" };
+  if (!health.is_enabled) return { label: "Relay: disabled", dot: "gray" };
+  if (health.last_health_status === "auth_failed") {
+    return { label: "Relay: auth error", dot: "red", title: health.last_error ?? undefined };
+  }
+  if (health.last_health_status === "error") {
+    return { label: "Relay: error", dot: "red", title: health.last_error ?? undefined };
+  }
+  if (health.last_pull_at && Date.now() - Date.parse(health.last_pull_at) > RELAY_STALE_MS) {
+    return { label: "Relay: stale", dot: "yellow" };
+  }
+  if (health.last_pull_at) return { label: "Relay: connected", dot: "green" };
+  return { label: "Relay: no data yet", dot: "yellow" };
+}
