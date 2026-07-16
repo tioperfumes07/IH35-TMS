@@ -1,0 +1,11 @@
+---
+description: Investigate before recommending — match/surpass QBO/NetSuite/McLeod/Alvys; cite the standard
+alwaysApply: true
+---
+# Research mandate (owner law)
+Do not recommend from memory when the answer needs current verification. For every accounting/dispatch/finance/report/operational decision, research and match or surpass the target systems, and cite the standard:
+- Accounting → QuickBooks trust + NetSuite controls; US GAAP/ASC (470-60 Ch.11, 606 revenue, 842 leases).
+- Trucking ops → McLeod seriousness + Alvys modern workflow (dispatch/settlements/IFTA/fuel/factoring).
+- Compliance → FMCSA (USDOT/MC, HOS, DQ, clearinghouse, IFTA, 2290, 425C).
+- Security/integrity → RLS, WORM audit, security_invoker views, least-privilege grants.
+State which system/standard a material recommendation matches and why. If unknown, research it; if unverifiable, say so.

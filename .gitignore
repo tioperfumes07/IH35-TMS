@@ -33,6 +33,12 @@ docs/audits/PASS-8-PRE-PROD-SMOKE-RESULTS.*
 !.cursor/rules/05-architectural-design-is-law.mdc
 !.cursor/rules/06-quality-hardline-and-law.mdc
 !.cursor/rules/07-never-delete-only-add.mdc
+!.cursor/rules/10-verification-and-neon-rls.mdc
+!.cursor/rules/11-multi-agent-orchestration.mdc
+!.cursor/rules/12-model-tiering.mdc
+!.cursor/rules/13-financial-and-accounting-law.mdc
+!.cursor/rules/14-linkage-law-enforcement.mdc
+!.cursor/rules/15-research-mandate.mdc
 !.cursor/rules/dual-lane-never-idle.mdc
 
 # Office/Excel lock files (created while a workbook is open; never commit)

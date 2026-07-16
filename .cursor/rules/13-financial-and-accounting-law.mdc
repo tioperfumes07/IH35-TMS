@@ -1,0 +1,11 @@
+---
+description: Financial cluster = build-and-HOLD; reuse the poster; ASC/GAAP; parallel books; QBO never written
+globs: ["**/accounting/**","**/driver-finance/**","**/banking/**","db/migrations/**","**/*posting*","**/settlements/**","**/factoring/**"]
+alwaysApply: true
+---
+# Financial law (owner-gated, CPA-grade)
+- Anything touching `accounting.*`/`catalogs.accounts`/`db/migrations/*`/posting/GL/ledger/balances/periods/grants/RLS/money = **financial cluster → build-and-HOLD**. Owner `JORGE-APPROVED` + owner Neon-apply required. Never self-merge. Never build finance/posting logic solo (design docs only) — **reuse the existing poster, write no new GL math**.
+- Parallel double-books; **QBO is NEVER written to** (reconcile-only, clone-once). Money-posting env flags default **OFF**, per-entity override only, until CPA sign-off + Neon tie-out.
+- Standards: US GAAP / FASB ASC. Chapter 11 = **ASC 470-60 debt restructuring (NOT ASC 852 fresh-start)**. ASC 606 revenue; ASC 842 for TRK↔USMCA truck leases. Factoring = secured borrowing (recourse), not a sale.
+- Cutover 04/01/2026; opening balances as-of 03/31/2026 (owner-entered only). Balanced opening JE, OBE plug.
+- The Financial/Accounting Agent must pass (GL correct, debits=credits, right accounts, flags OFF, entity-scoped) before any money PR merges.

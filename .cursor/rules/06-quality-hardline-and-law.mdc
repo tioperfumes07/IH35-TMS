@@ -5,9 +5,9 @@ alwaysApply: true
 
 # IH35 — Quality hardline + Law of the Land (ALWAYS)
 
-**Canonical full text:** `docs/specs/QUALITY-STANDARD-LOCKED.md` (Rule #0 — supersedes every other rule/doc on conflict).
+**Canonical full text:** `docs/specs/QUALITY-STANDARD-LOCKED.md` (Rule #0) and `docs/specs/CURSOR-OPERATING-CONSTITUTION.md` (Cursor permanent charter — more conservative reading wins on conflict).
 
-This file is auto-loaded every Cursor session. Companion always-apply rules: `00`–`05`, `07`, `dual-lane-never-idle`.
+This file is auto-loaded every Cursor session. Companion always-apply rules: `00`–`05`, `07`, `10`–`15`, `dual-lane-never-idle`.
 
 ## Hardline rule
 
