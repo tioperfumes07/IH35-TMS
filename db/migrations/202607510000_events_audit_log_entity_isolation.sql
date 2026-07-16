@@ -1,5 +1,8 @@
 -- [HOLD-FOR-JORGE — TIER 1] Entity isolation for events.event_log and public.audit_log.
 --
+-- *** DO NOT RUN ON PROD without Jorge's explicit approval. Build-and-HOLD; owner applies on a Neon branch
+-- and ledger-backfills so prod db:migrate skips it. ***
+--
 -- events.event_log: already has operating_company_id and RLS enabled, but the policies use the old
 -- app.current_operating_company_id GUC and are not FORCED. This migration forces RLS and replaces the
 -- policies with the canonical app.operating_company_id GUC + identity.is_lucia_bypass() escape hatch.

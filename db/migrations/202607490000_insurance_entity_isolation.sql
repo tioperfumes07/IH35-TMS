@@ -1,6 +1,9 @@
 -- [HOLD-FOR-JORGE — TIER 1] Entity isolation for insurance schema.
 --
--- Adds operating_company_id to all 8 insurance tables, backfills from the existing tenant_id where it
+-- *** DO NOT RUN ON PROD without Jorge's explicit approval. Build-and-HOLD; owner applies on a Neon branch
+-- and ledger-backfills so prod db:migrate skips it. ***
+--
+-- Adds operating_company_id to all 7 per-entity insurance tables (type_catalog excluded — shared reference), backfills from the existing tenant_id where it
 -- resolves to a real org.companies row, then replaces tenant_id-scoped RLS policies with operating_company_id-
 -- scoped policies and forces RLS. Rows whose entity is not derivable are LEFT NULL and are only visible
 -- under identity.is_lucia_bypass(); owner classifies them later.
