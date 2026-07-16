@@ -71,6 +71,8 @@ DO $fks$
 DECLARE
   tbl text;
   parts text[];
+  con text;
+  relid regclass;
 BEGIN
   FOREACH tbl IN ARRAY ARRAY[
     'insurance.claim',
@@ -83,11 +85,17 @@ BEGIN
   ]
   LOOP
     parts := string_to_array(tbl, '.');
-    EXECUTE format(
-      'ALTER TABLE %I.%I ADD CONSTRAINT IF NOT EXISTS %I FOREIGN KEY (operating_company_id) REFERENCES org.companies(id)',
-      parts[1], parts[2],
-      parts[2] || '_operating_company_id_fk'
-    );
+    con := parts[2] || '_operating_company_id_fk';
+    relid := format('%I.%I', parts[1], parts[2])::regclass;
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_constraint
+      WHERE conname = con AND conrelid = relid
+    ) THEN
+      EXECUTE format(
+        'ALTER TABLE %I.%I ADD CONSTRAINT %I FOREIGN KEY (operating_company_id) REFERENCES org.companies(id)',
+        parts[1], parts[2], con
+      );
+    END IF;
   END LOOP;
 END
 $fks$;
