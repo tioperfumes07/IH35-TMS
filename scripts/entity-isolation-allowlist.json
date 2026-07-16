@@ -1,6 +1,11 @@
 {
   "global": [
     {
+      "schema": "insurance",
+      "table": "type_catalog",
+      "reason": "shared insurance claim/type reference catalog (45 rows); intentionally readable by all operating companies, no per-entity variation"
+    },
+    {
       "schema": "reference",
       "table": "cbp_wait_times_cache",
       "reason": "universal CBP border-wait-time cache; no per-entity variation, keyed by port/date only"
