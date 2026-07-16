@@ -102,11 +102,16 @@ describe("RecordExpenseModal", () => {
     await waitFor(() => expect(maintenanceApi.getWoCostContext).toHaveBeenCalled());
     await waitFor(() => expect(mdataApi.listUnits).toHaveBeenCalled());
 
-    await user.selectOptions(screen.getByLabelText(/^category/i), "cat-1");
-    await user.type(screen.getByLabelText(/amount/i), "42.50");
-    await user.selectOptions(screen.getByLabelText(/payment method/i), "cash");
-    await user.selectOptions(screen.getByLabelText(/payment account/i), "acct-1");
     const form = screen.getByTestId("record-expense-form");
+    // Vendor + Category both use ReferenceSelect; pick the Category label's select (has Fuel option).
+    const categorySelect = within(form)
+      .getAllByLabelText(/^category/i)
+      .find((el) => Array.from(el.querySelectorAll("option")).some((opt) => opt.value === "cat-1"));
+    expect(categorySelect).toBeTruthy();
+    await user.selectOptions(categorySelect!, "cat-1");
+    await user.type(within(form).getByLabelText(/amount/i), "42.50");
+    await user.selectOptions(within(form).getByLabelText(/payment method/i), "cash");
+    await user.selectOptions(within(form).getByLabelText(/payment account/i), "acct-1");
     await user.click(within(form).getByRole("button", { name: /record expense/i }));
 
     await waitFor(() => expect(accountingApi.createExpense).toHaveBeenCalledTimes(1));

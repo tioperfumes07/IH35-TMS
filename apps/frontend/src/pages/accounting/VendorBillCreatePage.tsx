@@ -1,12 +1,20 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { createVendorBill } from "../../api/accounting";
 import { VendorBillForm } from "../../components/accounting/VendorBillForm";
+import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { TaskLinkPicker } from "../../components/tasks/TaskLinkPicker";
-import { PageHeader } from "../../components/layout/PageHeader";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 
+/**
+ * Create vendor bill route (`/accounting/bills/vendor`).
+ * Owner chrome lock: VendorBillForm in a QBO-like right-side ParityDrawer (not a thin full page).
+ * Route stays reachable; close returns to the bills list.
+ */
 export function VendorBillCreatePage() {
+  const navigate = useNavigate();
   const { pushToast } = useToast();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -14,45 +22,59 @@ export function VendorBillCreatePage() {
   const [lastBillId, setLastBillId] = useState<string | null>(null);
 
   return (
-    <div className="space-y-4 p-4">
-      <PageHeader
-        title="Create vendor bill"
-        subtitle="Locked 12x6 header grid and cost breakdown box (P7-ACCT-BILLFORM-FIX)."
-      />
+    <AccountingSubNavWrapper title="Bills" subtitle="Create vendor bill">
       {!companyId ? <div className="text-sm text-red-600">Select an operating company in the shell header.</div> : null}
-      <div className="mx-auto max-w-6xl rounded-sm border border-gray-200 bg-white p-4">
-        <VendorBillForm
-          operatingCompanyId={companyId}
-          submitting={submitting}
-          onSubmit={async (payload) => {
-            if (!companyId) {
-              pushToast("Select operating company first", "error");
-              return;
-            }
-            setSubmitting(true);
-            try {
-              const res = await createVendorBill(companyId, payload);
-              pushToast("Vendor bill created", "success");
-              setLastBillId(res?.bill?.id ?? null);
-            } catch (error) {
-              pushToast(String((error as Error).message || "Failed to create bill"), "error");
-            } finally {
-              setSubmitting(false);
-            }
-          }}
-        />
-        {companyId && lastBillId ? (
-          <div className="mt-4 flex items-center justify-between border-t border-gray-200 pt-3">
-            <span className="text-xs text-gray-600">Close an open task this bill fulfils:</span>
-            <TaskLinkPicker
+      <p className="text-sm text-gray-600">
+        Creating a vendor bill in the side panel.{" "}
+        <button type="button" className="text-slate-700 underline" onClick={() => navigate("/accounting/bills")}>
+          Open bills list
+        </button>
+      </p>
+      <ParityDrawer
+        open
+        title="Create vendor bill"
+        subtitle="Locked 12×6 header grid and cost breakdown"
+        size="wide"
+        onClose={() => navigate("/accounting/bills")}
+      >
+        {companyId ? (
+          <div className="space-y-4">
+            <VendorBillForm
               operatingCompanyId={companyId}
-              targetType="bill"
-              targetId={lastBillId}
-              onLinked={() => setLastBillId(null)}
+              submitting={submitting}
+              onSubmit={async (payload) => {
+                if (!companyId) {
+                  pushToast("Select operating company first", "error");
+                  return;
+                }
+                setSubmitting(true);
+                try {
+                  const res = await createVendorBill(companyId, payload);
+                  pushToast("Vendor bill created", "success");
+                  setLastBillId(res?.bill?.id ?? null);
+                } catch (error) {
+                  pushToast(String((error as Error).message || "Failed to create bill"), "error");
+                } finally {
+                  setSubmitting(false);
+                }
+              }}
             />
+            {lastBillId ? (
+              <div className="flex items-center justify-between border-t border-gray-200 pt-3">
+                <span className="text-xs text-gray-600">Close an open task this bill fulfils:</span>
+                <TaskLinkPicker
+                  operatingCompanyId={companyId}
+                  targetType="bill"
+                  targetId={lastBillId}
+                  onLinked={() => setLastBillId(null)}
+                />
+              </div>
+            ) : null}
           </div>
-        ) : null}
-      </div>
-    </div>
+        ) : (
+          <div className="text-sm text-red-600">Select an operating company in the shell header.</div>
+        )}
+      </ParityDrawer>
+    </AccountingSubNavWrapper>
   );
 }

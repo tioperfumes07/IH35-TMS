@@ -172,12 +172,12 @@ export function ExpensesListPage() {
           disabled={!companyId}
           className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-60"
         >
-          + Record expense
+          + Create
         </button>
       }
     >
-      {/* Create = MODAL (skill §7). The /accounting/expenses/create page route stays as a deep-link
-          fallback (additive); the list trigger opens RecordExpenseModal in place. */}
+      {/* Create = QBO-like right ParityDrawer (owner chrome). /accounting/expenses deep-link
+          still hosts ExpenseCreatePage as a panel-over-shell route (additive). */}
       <RecordExpenseModal
         open={createOpen}
         operatingCompanyId={companyId}
