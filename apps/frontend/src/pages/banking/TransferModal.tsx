@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { createTransfer, getPlaidBankAccounts, markBankTransactionTransfer, type TransferAccountKind } from "../../api/banking";
+import { createTransfer, getAllAccounts, markBankTransactionTransfer, type TransferAccountKind } from "../../api/banking";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { useToast } from "../../components/Toast";
@@ -8,6 +8,7 @@ import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { companyToday } from "../../lib/businessDate";
+import { formatBankAccountPickerLabel, type BankAccountPickerRow } from "./transferAccountPicker";
 
 type Props = {
   open: boolean;
@@ -67,20 +68,28 @@ export function TransferModal({ open, operatingCompanyId, onClose, onSaved, pref
     }
   }, [open, prefill]);
 
+  // QBO parity: all active banking.bank_accounts (includes Relay Fuel Wallet — no Plaid link).
   const bankAccountsQuery = useQuery({
-    queryKey: ["banking", "plaid-accounts", operatingCompanyId, "transfer-modal"],
-    queryFn: () => getPlaidBankAccounts(operatingCompanyId),
+    queryKey: ["banking", "accounts-all", operatingCompanyId, "transfer-modal"],
+    queryFn: () => getAllAccounts(operatingCompanyId),
     enabled: open && Boolean(operatingCompanyId),
   });
 
-  const bankAccounts = useMemo(
-    () =>
-      (bankAccountsQuery.data?.accounts ?? []).map((account) => ({
-        id: account.id,
-        name: `${account.institution_name || "Bank"} - ${account.account_name || "Account"}${account.account_mask ? ` ••••${account.account_mask}` : ""}`,
-      })),
-    [bankAccountsQuery.data?.accounts]
-  );
+  const bankAccounts = useMemo(() => {
+    const rows = (bankAccountsQuery.data?.accounts ?? []).map(
+      (row): BankAccountPickerRow => ({
+        id: String(row.id ?? ""),
+        display_name: (row.display_name as string | null | undefined) ?? null,
+        account_name: (row.account_name as string | null | undefined) ?? null,
+        institution_name: (row.institution_name as string | null | undefined) ?? null,
+        account_mask: (row.account_mask as string | null | undefined) ?? null,
+        ledger_account_id: (row.ledger_account_id as string | null | undefined) ?? null,
+      })
+    );
+    return rows
+      .filter((account) => account.id.length > 0)
+      .map((account) => ({ id: account.id, name: formatBankAccountPickerLabel(account) }));
+  }, [bankAccountsQuery.data?.accounts]);
 
   const amountCents = centsFromAmount(amount);
   const dateOk = transferDate >= minD && transferDate <= todayIsoDate();
