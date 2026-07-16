@@ -1,3 +1,4 @@
+import { DatePicker } from "../../../components/forms/DatePicker";
 import type { CompanyKey, CompanyProfiles } from "../types";
 import { QUESTIONNAIRE } from "../lib/constants";
 
@@ -31,10 +32,20 @@ export function ProfilesTab({ profiles, activeCompany, setActiveCompany, onChang
       </div>
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <label className="block text-xs font-semibold uppercase tracking-wide text-slate-600">
+          Petition Date
+          <div className="mt-1 font-normal normal-case">
+            <DatePicker
+              value={profile.petitionDate ?? ""}
+              onChange={(value) => onChange(activeCompany, (draft) => ({ ...draft, petitionDate: value }))}
+              className="w-full rounded-sm border px-2 py-1.5 text-sm"
+              data-testid="form425c-petition-date"
+            />
+          </div>
+        </label>
         {[
           ["Company Name", "name"],
           ["Case Number", "caseNumber"],
-          ["Petition Date (YYYY-MM-DD)", "petitionDate"],
           ["District", "district"],
           ["Division", "division"],
           ["Judge", "judge"],
@@ -46,7 +57,6 @@ export function ProfilesTab({ profiles, activeCompany, setActiveCompany, onChang
           <label key={key} className="block text-xs font-semibold uppercase tracking-wide text-slate-600">
             {label}
             <input
-              type={key === "petitionDate" ? "date" : "text"}
               className="mt-1 w-full rounded-sm border px-2 py-1.5 text-sm font-normal normal-case"
               value={String((profile as Record<string, unknown>)[key] ?? "")}
               onChange={(e) => onChange(activeCompany, (draft) => ({ ...draft, [key]: e.target.value }))}
