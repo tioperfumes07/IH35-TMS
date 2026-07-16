@@ -6,6 +6,14 @@
       "reason": "[HOLD-FOR-JORGE — FINANCIAL] Settlement engine collapse STEP 1 — additive posting/QBO-bill linkage columns on canonical driver_finance.driver_settlements + settlement_lines (accounting_bill_id, accounting_bill_payment_id, qbo_bill_id, qbo_bill_payment_id, posted_at, posted_by_user_id, bank_settle_date, created_by_user_id, line posting_account_id) so the Step-2 writer repoint (payroll.*/settlement.* -> driver_finance.*) has them. ADDITIVE + IDEMPOTENT; both RETIRE tables EMPTY on prod (no data migration). NOT YET applied on prod — GUARD validates on throwaway Postgres, owner applies on Neon then ledger-backfills; CI fresh-from-0001 builds the columns."
     },
     {
+      "file": "202607550000_audit_log_legacy_retired_comment.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 0 cosmetic] COMMENT public.audit_log / public.audit_log_partitioned as retired legacy; real audit is audit.row_changes. Owner applies on Neon branch + ledger-backfills."
+    },
+    {
+      "file": "202607540000_customer_payment_transp_override.sql",
+      "reason": "[HOLD-FOR-JORGE — B3-AR] Seed TRANSP override enabling CUSTOMER_PAYMENT_GL_POSTING_ENABLED so customer-payment GL posting matches invoicing for the operating carrier. Owner applies on Neon branch + ledger-backfills."
+    },
+    {
       "file": "202607430000_settlement_lines_approval_columns.sql",
       "reason": "[HOLD-FOR-JORGE — FINANCIAL] Settlement collapse Phase 1 — additive approval/dispute/source columns on canonical driver_finance.settlement_lines (Phase-2 approval.service.ts repoint needs them). APPLIED on prod Neon + ledger-backfilled by GUARD; prod db:migrate skips it, CI fresh-from-0001 builds the columns.",
       "applied_on_prod": true
