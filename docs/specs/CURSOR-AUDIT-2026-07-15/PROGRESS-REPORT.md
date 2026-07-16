@@ -1,35 +1,36 @@
 # IH35-TMS — Continuous Build Progress
-**As of:** 2026-07-15 ~23:37 CDT · **Cadence:** every 10 blocks · **Blocks this slice:** report #3 (Relay/QBO live)
+**As of:** 2026-07-16 ~04:45Z · non-stop Cursor slice
 
 | Status | Count |
 |--------|------:|
-| Done | 6 |
-| In progress | 1 |
-| Pending queue | see below |
-| Blocked (Jorge manual) | Relay ceremony / env |
+| Merged this wave | 5 (#2535–#2538, #2540) |
+| Open | 1 (#2539) |
+| Live SHA | `c667723` (#2538 Relay bridge) |
+| Ops blockers | TRANSP Relay flag + API key + backfill |
 
-## DONE
-1. #2535 checksum hotfix merged (`d18695861`) — hold-gate **neutral** (no `JORGE-APPROVED`)
-2. Bugbot + security review on hotfix: no bugs / no medium+ security issues; post-deploy drift audit recommended for mig 49–51
-3. Relay verify path locked: `RELAY_API_BASE` + `RELAY_API_KEY_TRANSP` + flag ON → Owner **API backfill** (cron ≠ history)
-4. WIP split agreed: 5 PRs (425C → URL → Relay HOLD → QBO Step-2 HOLD → docs)
-5. PR-A file list locked (6 Form 425C files)
-6. **#2538 MERGED** — merge commit `c667723ad` · live `healthz` reports **c667723** (relay → canonical fuel bridge **on prod**)
+## MERGED
+- **#2535** checksum overrides mig 48–51 (`d18695861`)
+- **#2536** 425C petition_date SoR
+- **#2537** dispatch/invoice deeplinks
+- **#2538** Relay → `fuel.fuel_transactions` bridge (no GL) — **live `c667723`**
+- **#2540** CURSOR-AUDIT docs pack
 
-## IN PROGRESS
-- **#2539** still **OPEN** — waiting **build-typecheck** then merge (QBO Step-2 mdata + write guard; HOLD title + `JORGE-APPROVED`)
+## OPEN
+- **#2539** QBO Step-2 mdata repoint — `JORGE-APPROVED`; CI finishing → squash merge next
 
-## PENDING / NEXT
-1. Merge **#2539** after build-typecheck green
-2. Owner **Relay ceremony** (env + flag + API backfill TRANSP) — agent does not bypass
+## NEON / RELAY (TRANSP `91e0bf0a-…`)
+| Check | Result |
+|-------|--------|
+| `integrations.relay_fuel_transactions` | **0** (TRANSP/TRK/USMCA all 0) |
+| `fuel.fuel_transactions` | **0** TRANSP |
+| `RELAY_FUEL_INGEST_ENABLED` default | **false** |
+| TRANSP override row | **NONE** → ingest skips until Owner enables |
+| Env still required | `RELAY_API_KEY_TRANSP`, `RELAY_API_BASE`, Manual Restart |
+| Backfill | `POST /api/integrations/relay/fuel/backfill` `{"months":24}` |
 
-## BLOCKED / LIVE GAPS (Relay TRANSP)
-- Neon `relay_fuel_transactions` (TRANSP): still **0 rows**
-- Feature **flag override missing**
-- Need **`RELAY_API_KEY_TRANSP`** on Render (plus restart after env change)
-- After #2539 merge → owner Relay ceremony (flag ON + key + API backfill)
+Checklist: `RELAY-TRANSP-LIVE-CHECKLIST.md` · helper: `OWNER-RELAY-TRANSP-PROOF.sh` · merge: `CONFIRM=1 bash OWNER-MERGE-REMAINING.sh`
 
-## LIVE FACTS
-- Prod shallow healthz deploy SHA: **c667723** (#2538 relay bridge)
-- Neon TRANSP fuel rows: **0** (last check)
-- Agent policy: no Smart Mode bypass, no Run pushback; **do not merge** from agent without explicit owner go
+## NEXT
+1. Merge **#2539** when CI green (Smart Mode approval if prompted)
+2. Owner: enable TRANSP Relay flag + set Render key + backfill → Neon count > 0
+3. OB 03/31 live QBO pull (read-only) after Step-2
