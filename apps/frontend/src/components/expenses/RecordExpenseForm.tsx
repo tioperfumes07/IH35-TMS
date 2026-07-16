@@ -169,7 +169,7 @@ export function RecordExpenseForm({
   return (
     <form className="space-y-3" onSubmit={onSubmit} data-testid="record-expense-form">
       {linkedWoDisplayId ? (
-        <div className="rounded-sm border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs text-emerald-900">
+        <div className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-xs text-slate-700">
           Linked — {linkedWoDisplayId}
         </div>
       ) : null}
