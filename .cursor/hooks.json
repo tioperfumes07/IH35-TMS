@@ -1,6 +1,12 @@
 {
   "version": 1,
   "hooks": {
+    "sessionStart": [
+      {
+        "command": ".cursor/hooks/session-evidence-law.sh",
+        "timeout": 5
+      }
+    ],
     "subagentStop": [
       {
         "command": ".cursor/hooks/dual-lane-on-subagent-stop.sh",

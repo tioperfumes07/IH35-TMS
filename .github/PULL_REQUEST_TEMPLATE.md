@@ -20,6 +20,21 @@
 - [ ] `npm run build` passes
 - [ ] `npm run verify:arch-design` passes (CI gate confirms)
 - [ ] All `db:verify:*` pass (only known pre-existing failures acceptable)
+- [ ] **Rule 16:** I filled `docs/templates/ACCEPTANCE-EVIDENCE-BLOCK.md` below (ROOT CAUSE / FIX / GUARD / LIVE PROOF / REMAINING)
+
+## Acceptance evidence (Rule 16 — required before merge claim)
+
+<!-- Copy from docs/templates/ACCEPTANCE-EVIDENCE-BLOCK.md -->
+
+### ROOT CAUSE
+
+### FIX
+
+### GUARD
+
+### LIVE PROOF
+
+### REMAINING
 
 ## Spec sources reviewed
 <!-- List the specific sections / files / PNGs you read. Be precise: section numbers, file paths, PNG names. -->

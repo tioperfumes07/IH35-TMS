@@ -32,6 +32,7 @@ const REQUIRED = [
   "13-financial-and-accounting-law.mdc",
   "14-linkage-law-enforcement.mdc",
   "15-research-mandate.mdc",
+  "16-fix-not-patch-evidence-law.mdc",
   "dual-lane-never-idle.mdc",
 ];
 
@@ -40,6 +41,8 @@ const REQUIRED_DOCS = [
   "docs/specs/QUALITY-STANDARD-LOCKED.md",
   "docs/specs/ARCHITECTURE-BLUEPRINT-2026-07-05.md",
   "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
+  "docs/templates/ACCEPTANCE-EVIDENCE-BLOCK.md",
+  ".claude/skills/ih35-evidence-before-done/SKILL.md",
 ];
 
 const GITIGNORE_UNIGNORES = [
@@ -47,6 +50,7 @@ const GITIGNORE_UNIGNORES = [
   "!.cursor/rules/07-never-delete-only-add.mdc",
   "!.cursor/rules/10-verification-and-neon-rls.mdc",
   "!.cursor/rules/15-research-mandate.mdc",
+  "!.cursor/rules/16-fix-not-patch-evidence-law.mdc",
 ];
 
 const failures = [];
