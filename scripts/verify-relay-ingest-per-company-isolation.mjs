@@ -50,8 +50,14 @@ if (!/await\s+withLuciaBypass\s*\(/.test(afterLoopOpen)) {
   process.exit(1);
 }
 
-if (!/RELAY_FUEL_INGEST_INTER_COMPANY_MS/.test(body)) {
-  console.error(`[${LABEL}] FAIL — missing inter-company throttle env (BUG-3)`);
+// Throttle may live in a shared helper (relayInterCompanyDelayMs) used by daily + backfill —
+// require the call inside backfill AND the env default somewhere in this file.
+if (!/relayInterCompanyDelayMs\s*\(/.test(body) && !/RELAY_FUEL_INGEST_INTER_COMPANY_MS/.test(body)) {
+  console.error(`[${LABEL}] FAIL — missing inter-company throttle (BUG-3)`);
+  process.exit(1);
+}
+if (!/RELAY_FUEL_INGEST_INTER_COMPANY_MS \?\? ["']10000["']/.test(src)) {
+  console.error(`[${LABEL}] FAIL — inter-company throttle default must be 10000ms (Mike 10s pull limit)`);
   process.exit(1);
 }
 
