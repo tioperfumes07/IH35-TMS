@@ -1192,3 +1192,16 @@ Production fuel transactions for TMS ingest:
 - **Response shape:** top-level JSON array; money as dollar strings; `transaction_id`, `created_at`, nested `driver`/`merchant`/`location`.
 
 Guards: `verify:relay-timeout-hierarchy`, `verify:relay-dtstart-dtend`, `verify:relay-ingest-per-company-isolation`.
+
+---
+
+## 2026-07-16 — Maintenance Create Expense/Bill = QBO side panels (LOCKED)
+
+Owner creator-chrome lock (same as Accounting Expense / Bill / Bill payment):
+
+- **Expense / Bill / Bill payment** create = QBO-like **right-side `ParityDrawer`** (not thin full page, not centered modal).
+- **Create Vendor / Create Customer** stay **centered rich modals**.
+- Maintenance `CreateExpenseModal` / `CreateBillModal` **entry points stay** (never delete) but must render the same `ParityDrawer` + canonical `RecordExpenseForm` / `VendorBillForm` (ReferenceSelect +Add) so payee/GL mapping cannot drift from Accounting.
+- Accounting Expenses group primary href = `/accounting/expenses/list` (browse-first). Create hub `/accounting/expenses` remains reachable as **Expenses** (locked-ui-surface label).
+
+Guard: `scripts/verify-maint-create-parity-drawer.mjs`.

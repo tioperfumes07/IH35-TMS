@@ -971,7 +971,9 @@
     "verify:banking-sync-strip-transaction-count": "node scripts/verify-banking-sync-strip-transaction-count.mjs",
     "verify:customers-vendors-gaps": "node scripts/verify-customers-vendors-gaps.mjs",
     "verify:banking-empty-state-entity-aware": "node scripts/verify-banking-empty-state-entity-aware.mjs",
-    "verify:banking-fromto-derived": "node scripts/verify-banking-fromto-derived.mjs"
+    "verify:banking-fromto-derived": "node scripts/verify-banking-fromto-derived.mjs",
+    "verify:maint-create-parity-drawer": "node scripts/verify-maint-create-parity-drawer.mjs",
+    "verify:help-module-guides-visible": "node scripts/verify-help-module-guides-visible.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1087.0",
