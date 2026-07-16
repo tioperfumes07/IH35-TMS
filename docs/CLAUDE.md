@@ -1,5 +1,8 @@
 # IH35-TMS — Durable Handoff Context
 
+> **SESSION LAW (auto-loaded every Cursor session):** Rule #0 `docs/specs/QUALITY-STANDARD-LOCKED.md` + Law of the Land `docs/specs/ARCHITECTURE-BLUEPRINT-2026-07-05.md` + always-apply `.cursor/rules/00`–`07`. Trust over speed. Verify live. No guess / patch / defer. Never delete modules — only add.
+
+
 ## 1) Instructions For Next Claude/Agent
 
 - Run a pre-flight inspection before writing code:

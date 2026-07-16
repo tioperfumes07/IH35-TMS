@@ -1,0 +1,75 @@
+---
+description: Quality hardline + Law of the Land — trust over speed; never guess/defer/patch; verify live. Rule #0 companion.
+alwaysApply: true
+---
+
+# IH35 — Quality hardline + Law of the Land (ALWAYS)
+
+**Canonical full text:** `docs/specs/QUALITY-STANDARD-LOCKED.md` (Rule #0 — supersedes every other rule/doc on conflict).
+
+This file is auto-loaded every Cursor session. Companion always-apply rules: `00`–`05`, `07`, `dual-lane-never-idle`.
+
+## Hardline rule
+
+We never take the short or easy way if it creates risk, weak architecture, confusion, future bugs, financial mistakes, or unfinished work. We do not patch over problems. We do not defer important issues because they are complicated. We do not guess. We fix the root cause correctly.
+
+If there is a conflict between **speed and trust**, choose **trust**.
+If there is a conflict between **easy and correct**, choose **correct**.
+If there is a conflict between **guessing and verifying**, **verify**.
+If there is a conflict between **moving forward and protecting the company**, **protect the company**.
+
+## Market standard (match and surpass)
+
+Every recommendation, audit, migration, accounting/dispatch/finance/report feature must be researched against real standards of:
+
+- **QuickBooks** — accounting trust, bank feed, books integrity
+- **NetSuite** — structure, controls, auditability
+- **McLeod** — trucking operational seriousness
+- **Alvys** — modern transportation workflow
+- Professional ERP / TMS / accounting software worldwide
+- Accepted accounting principles and financial controls
+- Security, auditability, integrity, production reliability
+
+Investigate first. Do not recommend from outdated memory. Verify current code, branch, production, database, PR state, and business requirements.
+
+## What quality means on this project
+
+- Correct accounting; honest financial reporting; traceable numbers
+- Reliable dispatch; strong audit trails; no silent failures
+- No skipped migrations; no fake green checks; no unverified production claims
+- No unsafe financial writes; no guessed mappings; no hidden assumptions
+- No shortcuts that reduce trust; no design changes without approval
+- No “done” without proof
+
+Every recommendation as if later reviewed by a CPA, auditor, attorney, insurance company, lender, customer, DOT/FMCSA, architect, or court.
+
+## Evidence law
+
+- Be honest. Be professional. Investigate before recommending.
+- Do not guess, assume, or defer root problems.
+- Do not create temporary patches that cause future conflicts.
+- Do not say done unless verified. Do not hide uncertainty.
+- Do not make financial, accounting, QBO, RLS, migration, role-mapping, period-close, production, or security decisions without proof.
+- Prefer live app (`app.ih35dispatch.com`), current repo, DB/prod evidence, and owner decisions.
+- **False-empty rule:** a `0` row-count on FORCED-RLS tables (`catalogs.*`, `banking.*`, `lib.*`, `mdata.*`, `accounting.*`) is not proof of absence until re-run with `SET app.bypass_rls = 'lucia'` (or equivalent scoped GUC) in the same transaction.
+
+## Law of the Land (canonical pointers)
+
+1. `docs/specs/QUALITY-STANDARD-LOCKED.md` — Rule #0
+2. `docs/specs/ARCHITECTURE-BLUEPRINT-2026-07-05.md` — total connectivity / linkage law
+3. `docs/lockdown/00_LOCKED_DECISIONS.md` (§8 parallel books; §7.6 creator chrome; §8.9 OB 03/31 / 04/01)
+4. `docs/specs/IH35_ARCHITECTURAL_DESIGN.md` (Rule 05 tab law)
+5. `07-never-delete-only-add.mdc` — never delete modules; only add
+
+Parallel TMS + QBO books; **no TMS→QBO write-back**. Opening-balance decision files only — no blind date find-replace.
+
+## Creator / banking chrome (owner)
+
+- Keep Create Vendor / Create Customer centered rich modals.
+- Expense / Bill / Bill payment = QBO-like **side panels** (not thin full pages).
+- Nested `+ Add new` uses the same entity create chrome.
+- Design HTML / audit packs: show for review; Desktop only after Approve (or when owner orders Desktop audit pack).
+
+## Audit deliverables when owner asks for full audit
+
+Write honest, evidence-based module files under the owner Desktop audit folder (`~/Desktop/IH35-CURSOR-AUDIT/`) — one file per module, button/surface inventory, live + repo proof, HAVE / MISSING / DRIFT / WILL FAIL. Never claim done without verification.

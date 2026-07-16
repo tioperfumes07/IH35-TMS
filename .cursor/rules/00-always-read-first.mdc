@@ -1,5 +1,5 @@
 ---
-description: ALWAYS READ FIRST — Cursor must consult these spec files before any code work
+description: ALWAYS READ FIRST — Rule #0 quality + Law of the Land + specs before any code
 alwaysApply: true
 ---
 
@@ -7,15 +7,34 @@ alwaysApply: true
 
 This file is auto-loaded by Cursor at the start of every interaction in this repo.
 
+## STEP 0 — SESSION LAW (bound every session, before everything else)
+
+These are standing law. They load via always-apply Cursor rules AND must be treated as already in force:
+
+1. **`docs/specs/QUALITY-STANDARD-LOCKED.md`** — Rule #0. Hardline: no shortcut, no patch, no defer, no guess. Trust over speed. Correct over easy. Verify over assume. Protect the company. Supersedes every other rule/doc on conflict.
+2. **`docs/specs/ARCHITECTURE-BLUEPRINT-2026-07-05.md`** — Law of the Land (total connectivity / linkage checklist). Every build block — especially financial — conforms.
+3. **`.cursor/rules/06-quality-hardline-and-law.mdc`** — always-apply companion (QuickBooks / NetSuite / McLeod / Alvys bar + evidence law + false-empty RLS rule).
+4. **`.cursor/rules/05-architectural-design-is-law.mdc`** + **`docs/specs/IH35_ARCHITECTURAL_DESIGN.md`** — tab count / tab name law.
+5. **`.cursor/rules/07-never-delete-only-add.mdc`** — never delete modules/surfaces; only add.
+
+Also load skill `.claude/skills/ih35-tms-standards/SKILL.md` for operating standards (permissions, migrations, landmines).
+
 ## STEP 1 — Before writing ANY code, read these files in order:
 
-1. `docs/specs/CURSOR-PERMANENT-RULES.md` — the permanent ruleset
-2. `docs/specs/IH35_MASTER_BLUEPRINT_v3_FULL.md` — the formal canonical blueprint (read the section relevant to the current block)
-3. `docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md` — chat-derived additions and refinements
-4. `docs/specs/IH35_ARCHITECTURAL_DESIGN.md` — every module, every tab, what each does
-5. `docs/approved-screens/<relevant-module>.png` — the approved UI for the module being touched
+1. `docs/specs/QUALITY-STANDARD-LOCKED.md` — Rule #0 (if not already loaded this session)
+2. `docs/specs/ARCHITECTURE-BLUEPRINT-2026-07-05.md` — Law of the Land / linkage (financial or cross-module work)
+3. `docs/specs/CURSOR-PERMANENT-RULES.md` — the permanent ruleset
+4. `docs/specs/IH35_MASTER_BLUEPRINT_v3_FULL.md` — the formal canonical blueprint (read the section relevant to the current block)
+5. `docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md` — chat-derived additions and refinements
+6. `docs/specs/IH35_ARCHITECTURAL_DESIGN.md` — every module, every tab, what each does
+7. `docs/approved-screens/<relevant-module>.png` — the approved UI for the module being touched
 
-If guidance conflicts: chat-derived additions WIN over the formal blueprint, and the architectural design WINS over both for tab-count and tab-name questions.
+If guidance conflicts:
+
+- **QUALITY-STANDARD-LOCKED wins over everything**
+- Architectural design WINS for tab-count / tab-name / tab-purpose
+- Chat-derived additions WIN over the formal blueprint for everything else where they conflict
+- Formal blueprint is authoritative when neither of the above addresses the question
 
 ## STEP 2 — RESPOND BEFORE CODING
 
@@ -53,6 +72,7 @@ This response is the audit gate. Code generation does NOT begin without it.
 - Display IDs server-generated, never editable
 - Production NEVER serves fake data — env-gate fixture fallbacks
 - Primary buttons: "+ Create" or "+ Book" (NEVER "+ New", NEVER "+ Add")
+- False-empty: never treat a `0` on FORCED-RLS tables as absence without `app.bypass_rls='lucia'` re-run
 
 ## STEP 4 — POST-PUSH CONFIRMATION
 
@@ -83,5 +103,6 @@ If you discover a tab in code that is NOT in the architectural design: STOP. Ask
 - Do NOT mutate the canonical blueprint MD file (additions go in `IH35_UNIFIED_BLUEPRINT_ADDITIONS.md`)
 - Do NOT add a tab without updating `IH35_ARCHITECTURAL_DESIGN.md` in the same commit
 - Do NOT use "+ New" or "+ Add" — always "+ Create" or "+ Book"
+- Do NOT delete modules/tabs/surfaces to "simplify" — only add (`07-never-delete-only-add`)
 
 End of mandatory startup file.

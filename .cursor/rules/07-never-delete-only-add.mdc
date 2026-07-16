@@ -1,0 +1,27 @@
+---
+description: NEVER DELETE — only ADD. Never remove modules, tabs, creators, or accounting surfaces.
+alwaysApply: true
+---
+
+# IH35 — Never delete, only add
+
+Owner permanent law (2026-07-15). Always apply.
+
+## Absolute
+
+- **NEVER DELETE** modules, sidebar items, tabs, pages, creators, wizards, bank accounts/surfaces, catalogs, reports, or documented workflows because they look redundant.
+- **NEVER DELETE** “to simplify,” “to clean up,” or “QBO doesn’t have this” when TMS already has a surface used for trucking, factoring, escrow, DIP, maintenance, or audit.
+- **ONLY ADD** missing capability (UI chrome, fields, linkage, posts, reconcile, audit, parity with QBO Banking, etc.).
+- Deprecation is **archive + relocate + keep reachable**, not remove. Mark `@archived` / HOLD / route-kept; do not ship a PR that deletes a module a user can already open in prod.
+- Consolidation of duplicate *forms* may wire shared components **behind every existing entry point** — entry points stay; internals may share.
+- Schema: prefer additive migrations. Do not drop columns/tables that hold financial history without an explicit owner-locked migration plan (separate from this UI law).
+
+## Opening-balance / cutover date edits (companion restraint)
+
+- Do **not** blind find-replace `06/30`, `07/01`, or `202606…` across the repo.
+- Most hits are test fixtures, migration timestamps, or quarter/business-date logic and **must not change**.
+- Correct the cutover decision only in the authoritative handful of files listed by owner (OB import spec, locked decisions §8, ACCOUNTING-ARCHITECTURE / tieout / pre-cutover / training cutover, `opening-balance-import/*`, STMT-2 opening balances).
+
+## Banking / QBO parity implication
+
+When closing gaps vs QuickBooks Banking: **add** REVIEW/ACCEPTED/EXCLUDED (or equivalent), Match/Categorize, rules, attachments, bank-vs-posted per account, split, find-match, exclude, transfer — **without deleting** TMS Banking Home tiles, Factoring virtual bank, Driver Escrow, Plaid connect, DIP, or other TMS-only modules.

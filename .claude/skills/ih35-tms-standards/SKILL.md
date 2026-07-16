@@ -1,15 +1,19 @@
 ---
 name: ih35-tms-standards
 description: >-
-  The durable operating standards for the IH35-TMS repository — permissions and merge
-  gates, migration/schema invariants, per-change workflow, schema landmines, product and
-  design locks, and communication norms. Load this at the start of ANY work in this repo
-  (code, migrations, accounting, UI, docs) and follow it exactly. It is the version-controlled,
-  shareable companion to the (git-excluded) root CLAUDE.md constitution. When this skill and a
-  handoff document disagree, this skill wins.
+  Load at the start of ANY IH35-TMS work. Bound by Rule #0 docs/specs/QUALITY-STANDARD-LOCKED.md
+  (hardline: no guess/patch/defer; trust over speed) and Law of the Land
+  docs/specs/ARCHITECTURE-BLUEPRINT-2026-07-05.md. Durable operating standards — permissions,
+  merge gates, migration/schema invariants, landmines, product/design locks. When this skill and
+  a handoff disagree, QUALITY-STANDARD-LOCKED wins, then this skill.
 ---
 
 # IH35-TMS — Operating Standards
+
+> **Rule #0 (LOCKED, every session):** `docs/specs/QUALITY-STANDARD-LOCKED.md` — hardline quality law; supersedes on conflict.
+> **Law of the Land:** `docs/specs/ARCHITECTURE-BLUEPRINT-2026-07-05.md` — total connectivity / linkage checklist.
+> **Cursor auto-load:** `.cursor/rules/00`–`07` + `dual-lane-never-idle.mdc` (`alwaysApply: true`).
+
 
 This system holds **live financial and legal-evidence data** for a real operating carrier
 (IH35 Dispatch / IH35 Trucking, Laredo TX ↔ Mexico). Treat every change as production-affecting.
