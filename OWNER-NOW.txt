@@ -1,0 +1,19 @@
+OWNER NOW — law of the land: trust > speed; verify; Tier-1 HOLD; no invent.
+
+LIVE: healthz `566e42b` (#2546 docs on tip; #2545 OB preview still in ancestry). Flag OFF by default.
+
+## Integrity order (GUARD)
+425C ✅ → Relay bridge ✅ → QBO Step-2 ✅ → OB live pull/parse ✅ → OB map HOLD #2547 → settlement STEP 3 (RETIRE writer kill) → …
+
+## YOU — Relay TRANSP (Neon dig: missing key, not empty pull)
+Flag ON since Jul 12; **0** RELAY audits for TRANSP (USMCA has 128× pulled=0).
+1) Render: `RELAY_API_BASE` + `RELAY_API_KEY_TRANSP` → Manual Restart
+2) Backfill: `POST /api/integrations/relay/fuel/backfill` `{"months":24}` or `/fuel` → Import Relay history
+3) Prove: TRANSP audits appear + `integrations.relay_fuel_transactions` COUNT > 0
+
+## YOU — OB
+- Label **#2547** `JORGE-APPROVED` after review (map only, no JE)
+- Enable `OPENING_BALANCE_IMPORT_ENABLED` for TRANSP (USMCA/TRK already ON)
+
+## NEXT CODE (after #2547 / parallel non-money)
+Settlement collapse STEP 3: delete dead payroll branches in auto-deductions + team-splits `apply.ts`; shrink G4 baseline to 0. No money flags.

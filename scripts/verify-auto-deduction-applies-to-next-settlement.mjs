@@ -58,8 +58,11 @@ function main() {
     fail("routes must expose GET /api/v1/auto-deductions/policies");
   }
 
-  if (!apply.includes("applyAutoDeductionsForSettlement")) {
-    fail("apply.ts must export settlement-time hook");
+  if (!apply.includes("applyAutoDeductionsToSettlement")) {
+    fail("apply.ts must export canonical driver_finance settlement-time hook");
+  }
+  if (/INSERT\s+INTO\s+payroll\.|UPDATE\s+payroll\./i.test(apply)) {
+    fail("apply.ts must not write RETIRE payroll.driver_settlements / line_items");
   }
   if (!apply.includes("auto_deduction")) {
     fail("apply.ts must create auto_deduction line items");
@@ -68,7 +71,7 @@ function main() {
     fail("apply.ts must update policy.deducted_so_far_cents");
   }
 
-  if (!tests.includes("applyAutoDeductionsForSettlement")) {
+  if (!tests.includes("applyAutoDeductionsToSettlement")) {
     fail("tests must cover settlement-time deduction application");
   }
 

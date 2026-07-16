@@ -1,6 +1,6 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { applyAutoDeductionsForSettlement } from "./apply.js";
+import { applyAutoDeductionsToSettlement } from "./apply.js";
 import { registerAutoDeductionPolicyRoutes } from "./policy.routes.js";
 
 const queryMock = vi.hoisted(() => vi.fn());
@@ -98,6 +98,7 @@ describe("auto-deduction policies (CLOSURE-4)", () => {
     };
 
     queryMock.mockImplementation(async (sql: string, values?: unknown[]) => {
+      if (sql.includes("to_regclass")) return { rows: [{ ok: true }] };
       if (sql.includes("FROM driver_finance.auto_deduction_policies")) return { rows: [{ ...policyState }] };
       if (sql.includes("UPDATE driver_finance.auto_deduction_policies")) {
         policyState.deducted_so_far_cents = Number(values?.[1] ?? 0);
@@ -106,13 +107,12 @@ describe("auto-deduction policies (CLOSURE-4)", () => {
       return { rows: [] };
     });
 
-    const result = await applyAutoDeductionsForSettlement(
+    const result = await applyAutoDeductionsToSettlement(
       { query: queryMock },
       {
         operatingCompanyId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
         driverId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
         settlementId: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
-        deductionAccountId: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
       }
     );
 
@@ -134,6 +134,7 @@ describe("auto-deduction policies (CLOSURE-4)", () => {
     };
 
     queryMock.mockImplementation(async (sql: string, values?: unknown[]) => {
+      if (sql.includes("to_regclass")) return { rows: [{ ok: true }] };
       if (sql.includes("FROM driver_finance.auto_deduction_policies")) {
         if (policyState.status !== "active" || policyState.deducted_so_far_cents >= policyState.total_owed_cents) {
           return { rows: [] };
@@ -149,13 +150,12 @@ describe("auto-deduction policies (CLOSURE-4)", () => {
     });
 
     for (let i = 0; i < 5; i += 1) {
-      await applyAutoDeductionsForSettlement(
+      await applyAutoDeductionsToSettlement(
         { query: queryMock },
         {
           operatingCompanyId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
           driverId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
           settlementId: `cccccccc-cccc-4ccc-8ccc-cccccccccc${i}`,
-          deductionAccountId: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
         }
       );
     }
@@ -166,17 +166,17 @@ describe("auto-deduction policies (CLOSURE-4)", () => {
 
   it("does not deduct when no active policies exist (paused)", async () => {
     queryMock.mockImplementation(async (sql: string) => {
+      if (sql.includes("to_regclass")) return { rows: [{ ok: true }] };
       if (sql.includes("FROM driver_finance.auto_deduction_policies")) return { rows: [] };
       return { rows: [] };
     });
 
-    const result = await applyAutoDeductionsForSettlement(
+    const result = await applyAutoDeductionsToSettlement(
       { query: queryMock },
       {
         operatingCompanyId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
         driverId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
         settlementId: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
-        deductionAccountId: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
       }
     );
     expect(result.applied).toHaveLength(0);
