@@ -65,6 +65,33 @@ BEGIN
 END
 $seed$;
 
+-- 2b. Add FK from operating_company_id to org.companies(id) so every per-entity table satisfies the
+--     TOTAL entity-isolation guard. The column is nullable; NULL rows remain valid.
+DO $fks$
+DECLARE
+  tbl text;
+  parts text[];
+BEGIN
+  FOREACH tbl IN ARRAY ARRAY[
+    'insurance.claim',
+    'insurance.coi_request',
+    'insurance.lawsuit',
+    'insurance.payment_schedule',
+    'insurance.policy',
+    'insurance.policy_unit',
+    'insurance.refund_obligation'
+  ]
+  LOOP
+    parts := string_to_array(tbl, '.');
+    EXECUTE format(
+      'ALTER TABLE %I.%I ADD CONSTRAINT IF NOT EXISTS %I FOREIGN KEY (operating_company_id) REFERENCES org.companies(id)',
+      parts[1], parts[2],
+      parts[2] || '_operating_company_id_fk'
+    );
+  END LOOP;
+END
+$fks$;
+
 -- 3. Replace tenant_id RLS policies with operating_company_id-scoped policies and ensure RLS is forced.
 --    The lucia bypass allows GUARD/owner maintenance queries across entities.
 ALTER TABLE insurance.claim ENABLE ROW LEVEL SECURITY, FORCE ROW LEVEL SECURITY;
