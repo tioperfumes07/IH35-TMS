@@ -272,7 +272,7 @@ export function FactoringQueuePage() {
                 <tr key={row.load_id} className="border-b last:border-b-0 hover:bg-gray-50">
                   <td className="px-3 py-2 font-medium">
                     <Link
-                      to={`/dispatch?view=loads&load=${row.load_id}`}
+                      to={`/dispatch?view=loads&load_id=${row.load_id}`}
                       className="text-slate-700 hover:underline"
                     >
                       {row.load_number}
