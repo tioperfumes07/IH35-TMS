@@ -44,7 +44,7 @@ jobs:
         with:
           node-version: 22
 
-      # Install from Grafana's apt mirror (dl.k6.io). Do NOT use grafana/setup-k6-action —
+      # Install from Grafana's apt mirror (dl.k6.io). Do NOT use grafana k6 GitHub Action —
       # that action calls GitHub Releases API (/repos/grafana/k6/releases/latest) and fails
       # hard whenever GitHub returns 503, which reds every PR that touches package.json.
       - name: Setup k6
@@ -92,7 +92,7 @@ jobs:
         with:
           node-version: 22
 
-      # Install from Grafana's apt mirror (dl.k6.io). Do NOT use grafana/setup-k6-action —
+      # Install from Grafana's apt mirror (dl.k6.io). Do NOT use grafana k6 GitHub Action —
       # that action calls GitHub Releases API (/repos/grafana/k6/releases/latest) and fails
       # hard whenever GitHub returns 503, which reds every PR that touches package.json.
       - name: Setup k6
