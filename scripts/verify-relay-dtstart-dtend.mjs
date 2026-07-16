@@ -32,8 +32,17 @@ if (!/searchParams\.set\("dtstart"/.test(client) || !/searchParams\.set\("dtend"
 if (/searchParams\.set\("start_date"/.test(client) || /searchParams\.set\("end_date"/.test(client)) {
   failures.push("relay-client.ts must NOT set start_date/end_date (Relay ignores those names)");
 }
-if (!/applyRelayDateRangeParams\(/.test(client)) {
-  failures.push("fetch path must call applyRelayDateRangeParams");
+// Must be a real call site (not the function definition alone) — review finding on #2567.
+if (!/(?<!function )applyRelayDateRangeParams\(/.test(client)) {
+  failures.push("fetch path must CALL applyRelayDateRangeParams (definition alone is not enough)");
+}
+// Extra belt: the fetchAll body must wire dates through the helper.
+if (
+  !/export async function fetchAllRelayFuelTransactions[\s\S]*?applyRelayDateRangeParams\(\s*new URL\(relayApiBase\(\)\)/.test(
+    client
+  )
+) {
+  failures.push("fetchAllRelayFuelTransactions must pass relayApiBase() through applyRelayDateRangeParams");
 }
 
 /** True if `fnName` body contains a fetchAll call that passes a 2nd opts arg with startDate+endDate. */
