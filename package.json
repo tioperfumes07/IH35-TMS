@@ -1010,7 +1010,8 @@
     "verify:relay-wallet-bank-feed": "node scripts/verify-relay-wallet-bank-feed.mjs",
     "verify:qbo-outbound-generic-catch-deadletter": "node scripts/verify-qbo-outbound-generic-catch-deadletter.mjs",
     "verify:settlement-engine-inventory": "node scripts/verify-settlement-engine-inventory.mjs",
-    "verify:bank-register-account-picker": "node scripts/verify-bank-register-account-picker.mjs"
+    "verify:bank-register-account-picker": "node scripts/verify-bank-register-account-picker.mjs",
+    "verify:bank-register-sort-group": "node scripts/verify-bank-register-sort-group.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1087.0",

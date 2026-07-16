@@ -39,6 +39,11 @@ import { RecordCCPaymentModal } from "../RecordCCPaymentModal";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { TableHeaderCell, useTablePref } from "../../../components/table";
+import {
+  buildPagedBankTxnGroups,
+  type BankTxnGroupMode,
+  type BankTxnSort,
+} from "./bankTxnSortGroup";
 
 // BLOCK-6b — recoverable-expense bucket types a bank-categorized driver expense can charge (a fine/toll
 // the company paid on the driver's behalf → recovered from settlement). Mirrors the backend allow-list.
@@ -130,7 +135,10 @@ type ViewSettings = {
   showPayee: boolean;
   showClass: boolean;
   showLocation: boolean;
+  /** Flat list (All dates). When true, groupMode is ignored. */
   turnOffGrouping: boolean;
+  /** month | money — only applied when turnOffGrouping is false. */
+  groupMode: Exclude<BankTxnGroupMode, "none">;
   addNewVendors: boolean;
   showAmountsInOneColumn: boolean;
   showTagsField: boolean;
@@ -211,21 +219,6 @@ function transactionLabel(tx: PlaidBankTransaction) {
   return tx.description || tx.merchant_name || "—";
 }
 
-function monthKeyFromDate(rawDate: string) {
-  const dt = new Date(rawDate);
-  if (Number.isNaN(dt.getTime())) return "Unknown";
-  return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, "0")}`;
-}
-
-function monthTitleFromKey(monthKey: string) {
-  const [yearRaw, monthRaw] = monthKey.split("-");
-  const year = Number(yearRaw);
-  const month = Number(monthRaw);
-  if (!Number.isFinite(year) || !Number.isFinite(month)) return "Unknown";
-  const dt = new Date(Date.UTC(year, month - 1, 1));
-  return dt.toLocaleString("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
-}
-
 function toExcelValue(value: string) {
   return value.includes(",") || value.includes('"') || value.includes("\n") ? `"${value.replace(/"/g, '""')}"` : value;
 }
@@ -283,6 +276,7 @@ export function BankingTransactionsDesignView({
     showClass: false,
     showLocation: false,
     turnOffGrouping: false,
+    groupMode: "month",
     addNewVendors: false,
     showAmountsInOneColumn: false,
     showTagsField: true,
@@ -412,8 +406,8 @@ export function BankingTransactionsDesignView({
     return out;
   }, [scopedRows]);
 
-  const [sortBy, setSortBy] = useState<{ key: "date" | "description" | "spent" | "received" | "amount"; dir: "asc" | "desc" }>({ key: "date", dir: "desc" });
-  const toggleSort = (key: "date" | "description" | "spent" | "received" | "amount") =>
+  const [sortBy, setSortBy] = useState<BankTxnSort>({ key: "date", dir: "desc" });
+  const toggleSort = (key: BankTxnSort["key"]) =>
     setSortBy((prev) => (prev.key === key ? { key, dir: prev.dir === "asc" ? "desc" : "asc" } : { key, dir: key === "date" ? "desc" : "asc" }));
   // Resizable columns (QBO parity) — reuses the shared TableHeaderCell/useTablePref pair (the current
   // repo-wide resizable-header standard: RunnerTable.tsx, VendorsListView.tsx, AccountsPayableAgingPage.tsx,
@@ -518,9 +512,26 @@ export function BankingTransactionsDesignView({
     viewSettings.pageSize,
   ]);
 
-  const totalPages = useMemo(() => Math.max(1, Math.ceil(tableRows.length / viewSettings.pageSize)), [tableRows.length, viewSettings.pageSize]);
+  // Audit gap #5 — sort FULL set → group → page (never page-then-group). Month ASC follows date;
+  // Money in/out grouping; non-date sort with month mode auto-flattens (group-off when sorting).
+  const requestedGroupMode: BankTxnGroupMode = viewSettings.turnOffGrouping ? "none" : viewSettings.groupMode;
+  const pagedGroups = useMemo(
+    () =>
+      buildPagedBankTxnGroups(
+        tableRows,
+        requestedGroupMode,
+        sortBy,
+        currentPage,
+        viewSettings.pageSize
+      ),
+    [currentPage, requestedGroupMode, sortBy, tableRows, viewSettings.pageSize]
+  );
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(pagedGroups.totalRows / viewSettings.pageSize) || 1),
+    [pagedGroups.totalRows, viewSettings.pageSize]
+  );
   const safeCurrentPage = Math.min(currentPage, totalPages);
-  const pageStartIndex = (safeCurrentPage - 1) * viewSettings.pageSize;
+  const pageStartIndex = pagedGroups.pageStartIndex;
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -528,34 +539,20 @@ export function BankingTransactionsDesignView({
     }
   }, [currentPage, totalPages]);
 
-  const pagedRows = useMemo(
-    () => tableRows.slice(pageStartIndex, pageStartIndex + viewSettings.pageSize),
-    [pageStartIndex, tableRows, viewSettings.pageSize]
+  const groupedRows = useMemo(
+    () => pagedGroups.groups.map((g) => ({ monthKey: g.key, title: g.title, rows: g.rows })),
+    [pagedGroups.groups]
   );
-  const pageRangeStart = tableRows.length === 0 ? 0 : pageStartIndex + 1;
-  const pageRangeEnd = tableRows.length === 0 ? 0 : Math.min(pageStartIndex + viewSettings.pageSize, tableRows.length);
+  const pagedRows = useMemo(() => groupedRows.flatMap((g) => g.rows), [groupedRows]);
+  const showGroupHeaders = pagedGroups.effectiveMode !== "none";
+  const pageRangeStart = pagedGroups.totalRows === 0 ? 0 : pageStartIndex + 1;
+  const pageRangeEnd =
+    pagedGroups.totalRows === 0 ? 0 : Math.min(pageStartIndex + viewSettings.pageSize, pagedGroups.totalRows);
   const pageRowIds = useMemo(() => pagedRows.map((tx) => tx.id), [pagedRows]);
   const bulkSelection = useBulkSelection({
     cap: 200,
     onCapExceeded: (error) => pushToast(error.message, "error"),
   });
-
-  const groupedRows = useMemo(() => {
-    if (viewSettings.turnOffGrouping) return [{ monthKey: "all", title: "All transactions", rows: pagedRows }];
-    const bucket = new Map<string, PlaidBankTransaction[]>();
-    for (const tx of pagedRows) {
-      const key = monthKeyFromDate(tx.transaction_date);
-      const arr = bucket.get(key) ?? [];
-      arr.push(tx);
-      bucket.set(key, arr);
-    }
-    // Audit gap #5 (sort/group UI): month bands must follow the active date sort direction.
-    // Previously months were always newest-first, so date ASC still showed newest month on top.
-    const monthDir = sortBy.key === "date" && sortBy.dir === "asc" ? 1 : -1;
-    return [...bucket.entries()]
-      .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0) * monthDir)
-      .map(([monthKey, rows]) => ({ monthKey, title: monthTitleFromKey(monthKey), rows }));
-  }, [pagedRows, sortBy.dir, sortBy.key, viewSettings.turnOffGrouping]);
 
   // Running balance ("Balance" column), computed over the FULL account ledger — not the visible page —
   // so each row shows its true post-transaction balance even when the view is filtered or paginated.
@@ -955,16 +952,23 @@ export function BankingTransactionsDesignView({
           >
             Collapse all groupings
           </button>
-          {/* DEFECT-9b — visible month/all-dates grouping toggle (QBO parity). "By month" keeps the
-          existing month grouping; "All dates" flattens to a single date-sorted list. Both honor the
-          active asc/desc sort. Drives the same viewSettings.turnOffGrouping the groupedRows memo reads. */}
+          {/* DEFECT-9b + audit gap #5 — QBO grouping: By month | Money in/out | All dates (flat).
+          Pipeline sorts the full set, then groups, then pages. Month bands follow date ASC/DESC.
+          turnOffGrouping remains the flat-list switch (settings + All dates). */}
           <div className="inline-flex overflow-hidden rounded-sm border border-gray-300 bg-white text-xs">
             <button
               type="button"
-              className={`px-2.5 py-1 ${!viewSettings.turnOffGrouping ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}
-              onClick={() => setViewSettings((prev) => ({ ...prev, turnOffGrouping: false }))}
+              className={`px-2.5 py-1 ${!viewSettings.turnOffGrouping && viewSettings.groupMode === "month" ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}
+              onClick={() => setViewSettings((prev) => ({ ...prev, turnOffGrouping: false, groupMode: "month" }))}
             >
               By month
+            </button>
+            <button
+              type="button"
+              className={`border-l border-gray-300 px-2.5 py-1 ${!viewSettings.turnOffGrouping && viewSettings.groupMode === "money" ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}
+              onClick={() => setViewSettings((prev) => ({ ...prev, turnOffGrouping: false, groupMode: "money" }))}
+            >
+              Money in/out
             </button>
             <button
               type="button"
@@ -1002,7 +1006,9 @@ export function BankingTransactionsDesignView({
               ))}
             </div>
             <span className="text-xs text-gray-500">
-              {pageRangeStart > 0 ? `${pageRangeStart}-${pageRangeEnd} of ${tableRows.length}` : `0 of ${tableRows.length}`}
+              {pageRangeStart > 0
+                ? `${pageRangeStart}-${pageRangeEnd} of ${pagedGroups.totalRows}`
+                : `0 of ${pagedGroups.totalRows}`}
             </span>
             <div className="inline-flex items-center gap-1 rounded-sm border border-gray-300 bg-white px-1 py-0.5 text-xs text-gray-700">
               <button
@@ -1042,7 +1048,35 @@ export function BankingTransactionsDesignView({
                     <ToggleLine label="Location" checked={viewSettings.showLocation} onChange={(checked) => setViewSettings((prev) => ({ ...prev, showLocation: checked }))} />
                   </div>
                   <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Groups</p>
-                  <ToggleLine label="Turn off grouping" checked={viewSettings.turnOffGrouping} onChange={(checked) => setViewSettings((prev) => ({ ...prev, turnOffGrouping: checked }))} />
+                  <ToggleLine
+                    label="Turn off grouping"
+                    checked={viewSettings.turnOffGrouping}
+                    onChange={(checked) =>
+                      setViewSettings((prev) => ({
+                        ...prev,
+                        turnOffGrouping: checked,
+                        groupMode: checked ? prev.groupMode : prev.groupMode === "money" ? "money" : "month",
+                      }))
+                    }
+                  />
+                  {!viewSettings.turnOffGrouping ? (
+                    <div className="mt-1 flex flex-wrap gap-1 text-xs">
+                      <button
+                        type="button"
+                        className={`rounded-sm border px-2 py-0.5 ${viewSettings.groupMode === "month" ? "border-[#1f2a44] bg-[#1f2a44] text-white" : "border-gray-300 text-gray-700"}`}
+                        onClick={() => setViewSettings((prev) => ({ ...prev, groupMode: "month" }))}
+                      >
+                        By month
+                      </button>
+                      <button
+                        type="button"
+                        className={`rounded-sm border px-2 py-0.5 ${viewSettings.groupMode === "money" ? "border-[#1f2a44] bg-[#1f2a44] text-white" : "border-gray-300 text-gray-700"}`}
+                        onClick={() => setViewSettings((prev) => ({ ...prev, groupMode: "money" }))}
+                      >
+                        Money in/out
+                      </button>
+                    </div>
+                  ) : null}
                   <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Automation review</p>
                   <ToggleLine label="Add new vendors" checked={viewSettings.addNewVendors} onChange={(checked) => setViewSettings((prev) => ({ ...prev, addNewVendors: checked }))} />
                   <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Transaction details</p>
@@ -1323,10 +1357,11 @@ export function BankingTransactionsDesignView({
               </tr>
             ) : null}
             {groupedRows.map((group) => {
-              const isGroupCollapsed = collapsedAllGroupings || collapsedMonths[group.monthKey] === true;
+              const isGroupCollapsed =
+                showGroupHeaders && (collapsedAllGroupings || collapsedMonths[group.monthKey] === true);
               return (
                 <Fragment key={group.monthKey}>
-                  {!viewSettings.turnOffGrouping ? (
+                  {showGroupHeaders ? (
                     <tr className="border-t border-gray-200 bg-[#F8F8F4]">
                       <td colSpan={16} className="px-2 py-1.5">
                         <button

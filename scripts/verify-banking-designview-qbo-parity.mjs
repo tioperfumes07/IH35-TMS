@@ -53,10 +53,11 @@ export function checksFor(src) {
     // DEFECT-9a: the Amount header cell exists and is sortable (no sortable={false}).
     amountSortable: amountHeader.length > 0 && !/sortable=\{false\}/.test(amountHeader),
     // DEFECT-9b: a visible month/all-dates toggle that drives turnOffGrouping both ways.
+    // (Audit gap #5 added Money in/out; By month may also set groupMode — still must flip turnOffGrouping.)
     groupingToggle:
       />\s*By month\s*</.test(src) &&
-      /turnOffGrouping:\s*true\s*\}\)\)/.test(src) &&
-      /turnOffGrouping:\s*false\s*\}\)\)/.test(src),
+      /turnOffGrouping:\s*true/.test(src) &&
+      /turnOffGrouping:\s*false/.test(src),
     // DEFECT-10: Customer field uses ReferenceSelect with createKind="customer".
     customerReferenceSelect: /createKind="customer"/.test(src),
   };
@@ -103,7 +104,7 @@ function selftest() {
     <button onClick={() => { setDraft(tx, { mode: "match" }); setExpandedTxId(tx.id); matchPaneRef.current?.scrollIntoView(); }}>Match</button>
     <div ref={matchPaneRef} />
     <TableHeaderCell columnKey="amount" label="Amount" sortKey={sortBy.key} onResize={setTxColWidth} />
-    <button onClick={() => setViewSettings((prev) => ({ ...prev, turnOffGrouping: false }))}>By month</button>
+    <button onClick={() => setViewSettings((prev) => ({ ...prev, turnOffGrouping: false, groupMode: "month" }))}>By month</button>
     <button onClick={() => setViewSettings((prev) => ({ ...prev, turnOffGrouping: true }))}>All dates</button>
     <ReferenceSelect createKind="customer" />
   `;
