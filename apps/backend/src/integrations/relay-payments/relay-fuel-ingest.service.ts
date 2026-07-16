@@ -8,11 +8,10 @@
  * Resolves (read-only) the driver via mdata.drivers.integration_id and the unit via the "Truck #" prompt.
  */
 import type { RelayFuelTransaction } from "./relay-client.js";
+import type { DbClient } from "./db-client.type.js";
 import { bridgeRelayFuelToCanonical } from "./relay-fuel-canonical-bridge.js";
 
-export type DbClient = {
-  query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
-};
+export type { DbClient } from "./db-client.type.js";
 
 export type RelayIngestSource = "daily_pull" | "webhook" | "csv_import";
 

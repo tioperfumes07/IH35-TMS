@@ -17,7 +17,7 @@
  *
  * @packageDocumentation
  */
-import type { DbClient } from "./relay-fuel-ingest.service.js";
+import type { DbClient } from "./db-client.type.js";
 
 export type RelayDepositIngestSource = "daily_pull" | "webhook" | "csv_import";
 

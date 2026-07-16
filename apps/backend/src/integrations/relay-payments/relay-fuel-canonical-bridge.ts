@@ -9,7 +9,7 @@
  * (HOLD / owner-applied). Identity is carried in source_row_hash + notes.
  */
 import { createHash } from "node:crypto";
-import type { DbClient } from "./relay-fuel-ingest.service.js";
+import type { DbClient } from "./db-client.type.js";
 import type { RelayFuelTransaction } from "./relay-client.js";
 
 function mapFuelType(raw: string | null | undefined): "diesel" | "def" | "gas" | "reefer_diesel" | "other" {
