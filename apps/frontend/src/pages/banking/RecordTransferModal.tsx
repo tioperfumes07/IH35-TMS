@@ -3,8 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import {
   categorizeBankTransaction,
   createTransfer,
+  getAllAccounts,
   getCoaAccounts,
-  getPlaidBankAccounts,
   type TransferAccountKind,
   type TransferType,
 } from "../../api/banking";
@@ -15,6 +15,12 @@ import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { companyToday } from "../../lib/businessDate";
+import {
+  buildBankTransferPickerOptions,
+  formatBankAccountPickerLabel,
+  type BankAccountPickerRow,
+  type TransferPickerOption,
+} from "./transferAccountPicker";
 
 type Props = {
   open: boolean;
@@ -34,14 +40,6 @@ type Props = {
   seedAccountSide?: "from" | "to";
   linkBankTransactionId?: string | null;
 };
-
-type AccountOption = { id: string; name: string; kind: TransferAccountKind };
-
-// OWNER SPEC (2026-07-06): the bank-to-bank From/To picker lists BANK + ASSET + LIABILITY accounts only —
-// EXCLUDE Expense/Income/Equity/CostOfGoodsSold. Expenses stay in the separate "Category (Chart of
-// Accounts)" categorize field, never here. catalogs.accounts.account_type values are the fixed CHECK-
-// constraint set from db/migrations/0010_catalogs_init.sql.
-const TRANSFER_ELIGIBLE_COA_TYPES = new Set(["Asset", "Liability"]);
 
 const transferTypeOptions: Array<{ value: TransferType; label: string }> = [
   { value: "bank_to_bank", label: "Bank-to-Bank" },
@@ -95,9 +93,10 @@ export function RecordTransferModal({
     setReferenceNumber("");
   }, [defaultTransferType, open, prefillAmountCents, prefillDate, prefillMemo, seedAccountId, seedAccountSide]);
 
+  // QBO parity: all active banking.bank_accounts (Plaid + manual/system e.g. Relay), not Plaid-only.
   const bankAccountsQuery = useQuery({
-    queryKey: ["banking", "plaid-accounts", operatingCompanyId],
-    queryFn: () => getPlaidBankAccounts(operatingCompanyId),
+    queryKey: ["banking", "accounts-all", operatingCompanyId, "record-transfer"],
+    queryFn: () => getAllAccounts(operatingCompanyId),
     enabled: open && Boolean(operatingCompanyId),
   });
   const coaAccountsQuery = useQuery({
@@ -106,15 +105,19 @@ export function RecordTransferModal({
     enabled: open && Boolean(operatingCompanyId),
   });
 
-  const bankAccounts = useMemo(
+  const bankAccountRows = useMemo<BankAccountPickerRow[]>(
     () =>
-      (bankAccountsQuery.data?.accounts ?? []).map((account) => ({
-        id: account.id,
-        name: `${account.institution_name || "Bank"} - ${account.account_name || "Account"}${account.account_mask ? ` ••••${account.account_mask}` : ""}`,
-        kind: "bank" as const,
-      })),
+      (bankAccountsQuery.data?.accounts ?? []).map((row) => ({
+        id: String(row.id ?? ""),
+        display_name: (row.display_name as string | null | undefined) ?? null,
+        account_name: (row.account_name as string | null | undefined) ?? null,
+        institution_name: (row.institution_name as string | null | undefined) ?? null,
+        account_mask: (row.account_mask as string | null | undefined) ?? null,
+        ledger_account_id: (row.ledger_account_id as string | null | undefined) ?? null,
+      })).filter((row) => row.id.length > 0),
     [bankAccountsQuery.data?.accounts]
   );
+
   const coaAccounts = useMemo(
     () =>
       (coaAccountsQuery.data?.accounts ?? []).map((account) => ({
@@ -122,43 +125,71 @@ export function RecordTransferModal({
         name: `${account.account_number || "COA"} - ${account.account_name}`,
         kind: "coa" as const,
         account_type: account.account_type ?? "",
+        account_number: account.account_number ?? null,
+        account_name: account.account_name,
       })),
     [coaAccountsQuery.data?.accounts]
   );
 
-  // OWNER SPEC (2026-07-06): Bank-to-Bank From/To = real bank accounts PLUS CoA Asset/Liability
-  // accounts (e.g. a loan payable, a money-market asset) — never Expense/Income/Equity.
-  const assetLiabilityCoaAccounts = useMemo(
-    () => coaAccounts.filter((account) => TRANSFER_ELIGIBLE_COA_TYPES.has(account.account_type)),
-    [coaAccounts]
+  const bankOptions = useMemo(
+    () =>
+      bankAccountRows.map((account) => ({
+        id: account.id,
+        name: formatBankAccountPickerLabel(account),
+        kind: "bank" as const,
+      })),
+    [bankAccountRows]
   );
 
-  const fromOptions = useMemo<AccountOption[]>(() => {
-    if (transferType === "bank_to_bank") return [...bankAccounts, ...assetLiabilityCoaAccounts];
-    if (transferType === "cc_payment" || transferType === "owner_distribution") return bankAccounts;
+  // OWNER SPEC (2026-07-06) + QBO: bank_to_bank = all bank accounts + Asset/Liability CoA not already
+  // linked as a bank ledger (avoids double-listing Relay wallet as bank + CoA).
+  const bankToBankOptions = useMemo(
+    () =>
+      buildBankTransferPickerOptions({
+        bankAccounts: bankAccountRows,
+        coaAccounts: coaAccounts.map((a) => ({
+          id: a.id,
+          account_number: a.account_number,
+          account_name: a.account_name,
+          account_type: a.account_type,
+        })),
+      }),
+    [bankAccountRows, coaAccounts]
+  );
+
+  const fromOptions = useMemo<TransferPickerOption[]>(() => {
+    if (transferType === "bank_to_bank") return bankToBankOptions;
+    if (transferType === "cc_payment" || transferType === "owner_distribution") return bankOptions;
     if (transferType === "cash_deposit") {
-      return coaAccounts.filter((account) => /cash|petty/i.test(account.name));
+      return coaAccounts
+        .filter((account) => /cash|petty/i.test(account.name))
+        .map((account) => ({ id: account.id, name: account.name, kind: "coa" as const }));
     }
     if (transferType === "owner_contribution") {
-      return coaAccounts.filter((account) => /owner|equity|capital/i.test(account.name));
+      return coaAccounts
+        .filter((account) => /owner|equity|capital/i.test(account.name))
+        .map((account) => ({ id: account.id, name: account.name, kind: "coa" as const }));
     }
     return [];
-  }, [assetLiabilityCoaAccounts, bankAccounts, coaAccounts, transferType]);
+  }, [bankOptions, bankToBankOptions, coaAccounts, transferType]);
 
-  const toOptions = useMemo<AccountOption[]>(() => {
+  const toOptions = useMemo<TransferPickerOption[]>(() => {
     if (transferType === "bank_to_bank") {
-      return [...bankAccounts, ...assetLiabilityCoaAccounts].filter((account) => account.id !== fromAccountId);
+      return bankToBankOptions.filter((account) => account.id !== fromAccountId);
     }
     if (transferType === "cc_payment") {
       const creditAccounts = coaAccounts.filter((account) => /credit|card|visa|mastercard|amex|liability/i.test(account.name));
-      return creditAccounts.length > 0 ? creditAccounts : coaAccounts;
+      const list = creditAccounts.length > 0 ? creditAccounts : coaAccounts;
+      return list.map((account) => ({ id: account.id, name: account.name, kind: "coa" as const }));
     }
-    if (transferType === "cash_deposit" || transferType === "owner_contribution") return bankAccounts;
+    if (transferType === "cash_deposit" || transferType === "owner_contribution") return bankOptions;
     if (transferType === "owner_distribution") {
-      return coaAccounts.filter((account) => /owner|equity|capital/i.test(account.name));
+      return coaAccounts
+        .filter((account) => /owner|equity|capital/i.test(account.name))
+        .map((account) => ({ id: account.id, name: account.name, kind: "coa" as const }));
     }
     return [];
-  }, [assetLiabilityCoaAccounts, bankAccounts, coaAccounts, transferType, fromAccountId]);
+  }, [bankOptions, bankToBankOptions, coaAccounts, transferType, fromAccountId]);
 
   const fromAccountKind: TransferAccountKind = transferType === "cc_payment" ? "bank" : (fromOptions.find((option) => option.id === fromAccountId)?.kind ?? "bank");
   const toAccountKind: TransferAccountKind = transferType === "cc_payment" ? "cc" : (toOptions.find((option) => option.id === toAccountId)?.kind ?? "bank");
