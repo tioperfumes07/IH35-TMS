@@ -90,7 +90,7 @@ describe("team split commission (CLOSURE-6)", () => {
 
   it("applies 60/40 team_split lines for shared load", async () => {
     queryMock.mockImplementation(async (sql: string) => {
-      if (sql.includes("to_regclass")) return { rows: [{ ok: false }] };
+      if (sql.includes("to_regclass")) return { rows: [{ ok: true }] };
       if (sql.includes("FROM settlements.team_split_load_overrides")) return { rows: [] };
       if (sql.includes("FROM settlements.team_split_configs")) {
         return {
@@ -105,7 +105,7 @@ describe("team split commission (CLOSURE-6)", () => {
           ],
         };
       }
-      if (sql.includes("INSERT INTO payroll.driver_settlement_line_items")) return { rows: [] };
+      if (sql.includes("INSERT INTO driver_finance.settlement_lines")) return { rows: [] };
       return { rows: [] };
     });
 

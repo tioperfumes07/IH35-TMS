@@ -142,42 +142,19 @@ export async function applyTeamSplitsForSettlement(client: DbClient, input: Appl
     description: `Team split secondary (${Math.round(split.secondary_ratio * 100)}%) — Load ${loadLabel}`,
   };
 
-  if (useSettlementLines) {
-    for (const line of [primaryLine, secondaryLine]) {
-      await client.query(
-        `
-          INSERT INTO driver_finance.settlement_lines (settlement_id, line_type, description, amount, split_partner_driver_id)
-          VALUES ($1::uuid, $2, $3, $4::numeric, $5::uuid)
-        `,
-        [input.settlementId, line.line_type, line.description, line.amount_cents / 100, line.split_partner_driver_id]
-      );
-    }
-  } else {
-    for (const line of [primaryLine, secondaryLine]) {
-      await client.query(
-        `
-          INSERT INTO payroll.driver_settlement_line_items (
-            settlement_id,
-            operating_company_id,
-            line_type,
-            load_id,
-            description,
-            amount_cents,
-            split_partner_driver_id
-          )
-          VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5, $6::bigint, $7::uuid)
-        `,
-        [
-          input.settlementId,
-          input.operatingCompanyId,
-          line.line_type,
-          input.loadId,
-          line.description,
-          line.amount_cents,
-          line.split_partner_driver_id,
-        ]
-      );
-    }
+  // STEP 3: never fall back to RETIRE payroll.driver_settlement_line_items.
+  if (!useSettlementLines) {
+    return { applied: [] as AppliedTeamSplitLine[], total_split_cents: 0 };
+  }
+
+  for (const line of [primaryLine, secondaryLine]) {
+    await client.query(
+      `
+        INSERT INTO driver_finance.settlement_lines (settlement_id, line_type, description, amount, split_partner_driver_id)
+        VALUES ($1::uuid, $2, $3, $4::numeric, $5::uuid)
+      `,
+      [input.settlementId, line.line_type, line.description, line.amount_cents / 100, line.split_partner_driver_id]
+    );
   }
 
   applied.push(primaryLine, secondaryLine);
