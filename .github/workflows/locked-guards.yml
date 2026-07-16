@@ -969,3 +969,8 @@ jobs:
         run: node scripts/verify-banking-empty-state-entity-aware.mjs --self-test
       - name: verify:banking-empty-state-entity-aware
         run: npm run verify:banking-empty-state-entity-aware
+
+      - name: verify:bank-register-account-picker --selftest
+        run: node scripts/verify-bank-register-account-picker.mjs --selftest
+      - name: verify:bank-register-account-picker
+        run: npm run verify:bank-register-account-picker
