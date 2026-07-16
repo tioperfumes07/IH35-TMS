@@ -26,6 +26,8 @@ jobs:
           NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
           NEON_PROJECT_ID: tiny-field-89581227
         run: node scripts/verify-backups-current.mjs
+      - name: CI guard — restore-drill integrity wired + selftest
+        run: node scripts/verify-restore-drill-integrity-wired.mjs
 
   monthly-drill:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
@@ -46,7 +48,17 @@ jobs:
       - name: Restore drill
         env:
           NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          RESTORED_DATABASE_URL: ${{ secrets.RESTORED_DATABASE_URL }}
+          RESTORE_DRILL_ENFORCE: "true"
         run: bash scripts/backup-restore-drill.sh
+      - name: Data-integrity assertion (restored / drill target)
+        env:
+          DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          RESTORED_DATABASE_URL: ${{ secrets.RESTORED_DATABASE_URL }}
+          RESTORE_DRILL_ENFORCE: "true"
+          BALANCED_LEDGER_ENFORCE: "true"
+        run: node scripts/restore-drill-integrity.mjs
       - name: Checksum baseline
         env:
           DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}

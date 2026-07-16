@@ -12,6 +12,8 @@ const REQUIRED = [
   "scripts/backup-restore-drill.sh",
   "scripts/backup-checksum-monthly.mjs",
   "scripts/verify-backups-current.mjs",
+  "scripts/restore-drill-integrity.mjs",
+  "scripts/verify-restore-drill-integrity-wired.mjs",
   ".github/workflows/monthly-restore-drill.yml",
   ".block-ready/CLOSURE-23-DR-BACKUP-AUDIT.json",
 ];

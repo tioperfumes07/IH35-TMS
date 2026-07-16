@@ -12,6 +12,8 @@ const REQUIRED = [
   "docs/runbooks/BACKUP-RESTORE-DRILL.md",
   "scripts/backup-verify-neon-pitr.mjs",
   "scripts/backup-restore-drill.sh",
+  "scripts/restore-drill-integrity.mjs",
+  "scripts/verify-restore-drill-integrity-wired.mjs",
   ".github/workflows/monthly-restore-drill.yml",
 ];
 async function main() {
