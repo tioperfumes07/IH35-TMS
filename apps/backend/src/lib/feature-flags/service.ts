@@ -400,7 +400,7 @@ export async function setOverride(
         flag_key, operating_company_id, user_uuid, enabled, set_by_user_uuid, expires_at
       )
       VALUES ($1, $2::uuid, NULL, $3, $4::uuid, $5::timestamptz)
-      ON CONFLICT (flag_key, operating_company_id) WHERE user_uuid IS NULL
+      ON CONFLICT (flag_key, operating_company_id) WHERE user_uuid IS NULL AND operating_company_id IS NOT NULL
       DO UPDATE SET enabled = EXCLUDED.enabled,
                     set_by_user_uuid = EXCLUDED.set_by_user_uuid,
                     set_at = now(),
