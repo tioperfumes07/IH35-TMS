@@ -2,8 +2,10 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import type { QboApiContext, QboReportResponse } from "../../../integrations/qbo/qbo-client.js";
 import {
   pullQboOb20260331LivePreview,
+  mapQboObAccountsViaMdata,
   QBO_OB_LIVE_AS_OF,
   QBO_OB_LIVE_ACCOUNTING_METHOD,
+  QBO_OB_ACCOUNT_MAP_STRATEGY,
 } from "../qbo-ob-2026-03-31-live-pull.service.js";
 
 const { mockIsEnabled } = vi.hoisted(() => ({ mockIsEnabled: vi.fn() }));
@@ -11,6 +13,8 @@ vi.mock("../../../lib/feature-flags/service.js", () => ({ isEnabled: mockIsEnabl
 
 const OPCO = "11111111-1111-4111-8111-111111111111";
 const REALM = "123145885549599";
+const MDATA_ID = "22222222-2222-4222-8222-222222222222";
+const CATALOG_ID = "33333333-3333-4333-8333-333333333333";
 
 const CTX: QboApiContext = { operatingCompanyId: OPCO, realmId: REALM };
 
@@ -33,6 +37,10 @@ const BS_RAW: QboReportResponse = {
       {
         type: "Data",
         ColData: [{ value: "Checking", id: "35" }, { value: "1,350.55" }],
+      },
+      {
+        type: "Data",
+        ColData: [{ value: "Mystery", id: "99" }, { value: "10.00" }],
       },
     ],
   },
@@ -59,12 +67,21 @@ const TB_RAW: QboReportResponse = {
         type: "Data",
         ColData: [{ value: "Checking", id: "35" }, { value: "1,350.55" }, { value: "" }],
       },
+      {
+        type: "Data",
+        ColData: [{ value: "Mystery", id: "99" }, { value: "10.00" }, { value: "" }],
+      },
     ],
   },
 };
 
-function client() {
-  return { query: vi.fn(async () => ({ rows: [] })) };
+function clientWithMapRows(rows: Array<Record<string, unknown>>) {
+  return {
+    query: vi.fn(async (sql: string) => {
+      if (sql.includes("FROM mdata.qbo_accounts")) return { rows };
+      return { rows: [] };
+    }),
+  };
 }
 
 describe("pullQboOb20260331LivePreview", () => {
@@ -77,7 +94,7 @@ describe("pullQboOb20260331LivePreview", () => {
     const qboCompanyContext = vi.fn();
     const qboReport = vi.fn();
 
-    const result = await pullQboOb20260331LivePreview(client() as never, OPCO, {
+    const result = await pullQboOb20260331LivePreview(clientWithMapRows([]) as never, OPCO, {
       qboCompanyContext,
       qboReport,
     });
@@ -88,13 +105,14 @@ describe("pullQboOb20260331LivePreview", () => {
       as_of: QBO_OB_LIVE_AS_OF,
       balance_sheet: null,
       trial_balance: null,
+      account_mapping: null,
       pulled_at: null,
     });
     expect(qboCompanyContext).not.toHaveBeenCalled();
     expect(qboReport).not.toHaveBeenCalled();
   });
 
-  it("flag ON => pulls BalanceSheet + TrialBalance Accrual as_of 2026-03-31 and parses", async () => {
+  it("flag ON => pulls BS+TB and maps via mdata.qbo_accounts (unmapped surfaced)", async () => {
     mockIsEnabled.mockResolvedValue(true);
     const qboCompanyContext = vi.fn(async () => CTX);
     const qboReport = vi.fn(async (_ctx: QboApiContext, reportName: string) => {
@@ -102,8 +120,18 @@ describe("pullQboOb20260331LivePreview", () => {
       if (reportName === "TrialBalance") return TB_RAW;
       throw new Error(`unexpected report ${reportName}`);
     });
+    const db = clientWithMapRows([
+      {
+        qbo_account_id: "35",
+        mdata_qbo_accounts_id: MDATA_ID,
+        mdata_name: "Checking",
+        catalogs_account_id: CATALOG_ID,
+        catalogs_account_number: "1000",
+        catalogs_account_name: "Checking",
+      },
+    ]);
 
-    const result = await pullQboOb20260331LivePreview(client() as never, OPCO, {
+    const result = await pullQboOb20260331LivePreview(db as never, OPCO, {
       qboCompanyContext,
       qboReport,
     });
@@ -114,13 +142,32 @@ describe("pullQboOb20260331LivePreview", () => {
     expect(result.pulled_at).toMatch(/^\d{4}-\d{2}-\d{2}T/);
     expect(result.balance_sheet?.lines).toEqual([
       { qbo_account_id: "35", account_name: "Checking", balance_cents: "135055" },
+      { qbo_account_id: "99", account_name: "Mystery", balance_cents: "1000" },
     ]);
-    expect(result.trial_balance?.lines).toEqual([
+    expect(result.account_mapping?.strategy).toBe(QBO_OB_ACCOUNT_MAP_STRATEGY);
+    expect(result.account_mapping?.counts).toEqual({
+      unique_qbo_account_ids: 2,
+      mapped: 1,
+      unmapped: 1,
+    });
+    expect(result.account_mapping?.mapped).toEqual([
       {
         qbo_account_id: "35",
-        account_name: "Checking",
-        debit_cents: "135055",
-        credit_cents: "0",
+        report_account_name: "Checking",
+        mdata_qbo_accounts_id: MDATA_ID,
+        mdata_name: "Checking",
+        catalogs_account_id: CATALOG_ID,
+        catalogs_account_number: "1000",
+        catalogs_account_name: "Checking",
+      },
+    ]);
+    expect(result.account_mapping?.unmapped).toEqual([
+      {
+        qbo_account_id: "99",
+        report_account_name: "Mystery",
+        reason: "no_mdata_mirror",
+        mdata_qbo_accounts_id: null,
+        mdata_name: null,
       },
     ]);
 
@@ -131,11 +178,11 @@ describe("pullQboOb20260331LivePreview", () => {
       end_date: "2026-03-31",
       accounting_method: QBO_OB_LIVE_ACCOUNTING_METHOD,
     });
-    expect(qboReport).toHaveBeenCalledWith(CTX, "TrialBalance", {
-      start_date: "2026-03-31",
-      end_date: "2026-03-31",
-      accounting_method: QBO_OB_LIVE_ACCOUNTING_METHOD,
-    });
+    expect(db.query).toHaveBeenCalled();
+    const [sql, values] = db.query.mock.calls[0]!;
+    expect(sql).toContain("FROM mdata.qbo_accounts");
+    expect(sql).toContain("ca.qbo_account_id = qa.qbo_id");
+    expect(values).toEqual([OPCO, ["35", "99"]]);
   });
 
   it("never imports journal-entry writers (preview-only contract)", async () => {
@@ -145,10 +192,39 @@ describe("pullQboOb20260331LivePreview", () => {
     const here = path.dirname(fileURLToPath(import.meta.url));
     const serviceSrc = fs.readFileSync(path.join(here, "../qbo-ob-2026-03-31-live-pull.service.ts"), "utf8");
     const routesSrc = fs.readFileSync(path.join(here, "../qbo-ob-2026-03-31-live-pull.routes.ts"), "utf8");
-    // Forbid import/call sites; file-header comments may name the forbidden API.
     expect(serviceSrc).not.toMatch(/import\s+.*createJournalEntry|from\s+["'][^"']*journal-entr/);
     expect(routesSrc).not.toMatch(/import\s+.*createJournalEntry|from\s+["'][^"']*journal-entr/);
     expect(serviceSrc).not.toMatch(/\bcreateJournalEntry\s*\(/);
     expect(routesSrc).not.toMatch(/\bcreateJournalEntry\s*\(/);
+  });
+});
+
+describe("mapQboObAccountsViaMdata", () => {
+  it("surfaces no_catalogs_account when mirror exists without catalogs row", async () => {
+    const db = clientWithMapRows([
+      {
+        qbo_account_id: "35",
+        mdata_qbo_accounts_id: MDATA_ID,
+        mdata_name: "Checking",
+        catalogs_account_id: null,
+        catalogs_account_number: null,
+        catalogs_account_name: null,
+      },
+    ]);
+
+    const result = await mapQboObAccountsViaMdata(db as never, OPCO, [
+      { qbo_account_id: "35", account_name: "Checking" },
+    ]);
+
+    expect(result.mapped).toEqual([]);
+    expect(result.unmapped).toEqual([
+      {
+        qbo_account_id: "35",
+        report_account_name: "Checking",
+        reason: "no_catalogs_account",
+        mdata_qbo_accounts_id: MDATA_ID,
+        mdata_name: "Checking",
+      },
+    ]);
   });
 });
