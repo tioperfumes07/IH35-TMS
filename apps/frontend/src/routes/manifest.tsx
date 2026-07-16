@@ -152,7 +152,7 @@ const NotificationCenterPage = React.lazy(() => import("../pages/notifications/N
 const EquipmentTypesPage = React.lazy(() => import("../pages/EquipmentTypesPage").then((m) => ({ default: m.EquipmentTypesPage })));
 const HomePage = React.lazy(() => import("../pages/Home").then((m) => ({ default: m.HomePage })));
 const OwnerHome = React.lazy(() => import("../pages/home/OwnerHome").then((m) => ({ default: m.OwnerHome })));
-const QboStyleHomePage = React.lazy(() => import("../pages/home/QboStyleHomePage").then((m) => ({ default: m.QboStyleHomePage })));
+// QboStyleHomePage retained on disk (never-delete). `/app/homepage` redirects to canonical `/home`.
 const LoginPage = React.lazy(() => import("../pages/Login").then((m) => ({ default: m.LoginPage })));
 const LoginResetRequestPage = React.lazy(() => import("../pages/LoginResetRequestPage").then((m) => ({ default: m.LoginResetRequestPage })));
 const LoginResetConfirmPage = React.lazy(() => import("../pages/LoginResetConfirmPage").then((m) => ({ default: m.LoginResetConfirmPage })));
@@ -554,12 +554,6 @@ function HomeRoute() {
   return <HomePage auth={auth.user} />;
 }
 
-function QboHomepageRoute() {
-  const auth = useAuth();
-  if (!auth.user) return null;
-  return <QboStyleHomePage auth={auth.user} />;
-}
-
 function MaintenanceTabRoute({ tabId }: { tabId: MaintenanceTabId }) {
   return <MaintenanceHomePage initialTab={tabId} />;
 }
@@ -759,14 +753,8 @@ export const ROUTES = React.Children.toArray(
             </OwnerOnlyRoute>
           }
         />
-        <Route
-          path="/app/homepage"
-          element={
-            <ProtectedRoute>
-              <QboHomepageRoute />
-            </ProtectedRoute>
-          }
-        />
+        {/* Additive alias: C6/bookmarks historically used /app/homepage; canonical training home is /home. */}
+        <Route path="/app/homepage" element={<Navigate to="/home" replace />} />
         <Route
           path="/settings/notifications"
           element={
