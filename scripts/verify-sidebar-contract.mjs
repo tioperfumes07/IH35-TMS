@@ -160,6 +160,16 @@ if (/\bmergeSidebarOrder\b|\bparseUserOverride\b/.test(src)) {
   errors.push("uniform-order: mergeSidebarOrder/parseUserOverride must not exist — per-user/role order merging was removed");
 }
 
+// Canonical HOME path (audit gap #12): sidebar HOME must target design `/home`, not `/app/homepage`.
+const homeToMatch = src.match(/home:\s*\{\s*id:\s*"home"[\s\S]*?to:\s*"([^"]+)"/);
+if (!homeToMatch) {
+  errors.push('canonical-home: could not find home item `to` in SIDEBAR_ITEM_META');
+} else if (homeToMatch[1] !== "/home") {
+  errors.push(
+    `canonical-home: sidebar HOME to="${homeToMatch[1]}" — expected "/home" (design MODULE 1; /app/homepage stays QBO-style home)`
+  );
+}
+
 if (errors.length > 0) {
   console.error(
     `verify-sidebar-contract FAIL — SIDEBAR_ITEM_IDS has drifted from the locked ${EXPECTED_LENGTH}-item array:`

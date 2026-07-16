@@ -152,6 +152,7 @@ const NotificationCenterPage = React.lazy(() => import("../pages/notifications/N
 const EquipmentTypesPage = React.lazy(() => import("../pages/EquipmentTypesPage").then((m) => ({ default: m.EquipmentTypesPage })));
 const HomePage = React.lazy(() => import("../pages/Home").then((m) => ({ default: m.HomePage })));
 const OwnerHome = React.lazy(() => import("../pages/home/OwnerHome").then((m) => ({ default: m.OwnerHome })));
+// QBO-style home stays mounted at /app/homepage (bookmarks + never-delete). Sidebar HOME → /home.
 const QboStyleHomePage = React.lazy(() => import("../pages/home/QboStyleHomePage").then((m) => ({ default: m.QboStyleHomePage })));
 const LoginPage = React.lazy(() => import("../pages/Login").then((m) => ({ default: m.LoginPage })));
 const LoginResetRequestPage = React.lazy(() => import("../pages/LoginResetRequestPage").then((m) => ({ default: m.LoginResetRequestPage })));
@@ -759,6 +760,7 @@ export const ROUTES = React.Children.toArray(
             </OwnerOnlyRoute>
           }
         />
+        {/* Additive QBO-style home (C6): bookmarks keep working. Canonical training HOME is /home (sidebar). */}
         <Route
           path="/app/homepage"
           element={

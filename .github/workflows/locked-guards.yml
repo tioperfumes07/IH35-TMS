@@ -172,6 +172,9 @@ jobs:
       - name: verify:sidebar-items-locked
         run: npm run verify:sidebar-items-locked
 
+      - name: verify:canonical-home-route
+        run: npm run verify:canonical-home-route
+
       - name: verify:canonical-schema-names
         run: npm run verify:canonical-schema-names
 
