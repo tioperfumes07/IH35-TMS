@@ -18,6 +18,10 @@ import cron from "node-cron";
 import { withLuciaBypass } from "../../auth/db.js";
 import { assertTenantContext } from "../../cron/_helpers/tenant-context-guard.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
+import {
+  flushFuelGlPostsAfterCommit,
+  type FuelTxnGlPostCandidate,
+} from "../../accounting/fuel-posting/maybe-post-from-fuel-transaction.service.js";
 import { listRelayFuelTransactions, parseRelayFuelTransactionRow, RelayApiError } from "./relay-client.js";
 import { upsertRelayFuelTransaction } from "./relay-fuel-ingest.service.js";
 
@@ -91,7 +95,7 @@ async function ingestForCompany(
   startDate: string,
   endDate: string,
   entityCode: string | null
-): Promise<{ pulled: number; upserted: number; skipped: number }> {
+): Promise<{ pulled: number; upserted: number; skipped: number; gl_post_candidates: FuelTxnGlPostCandidate[] }> {
   assertTenantContext(operatingCompanyId, "relay_payments.fuel_ingest_cron");
   await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
 
@@ -99,6 +103,7 @@ async function ingestForCompany(
   const rawRows = await listRelayFuelTransactions({ startDate, endDate, entityCode });
   let upserted = 0;
   let skipped = 0;
+  const gl_post_candidates: FuelTxnGlPostCandidate[] = [];
 
   for (const rawRow of rawRows) {
     const parsed = parseRelayFuelTransactionRow(rawRow);
@@ -112,6 +117,7 @@ async function ingestForCompany(
     }
     const result = await upsertRelayFuelTransaction(client, operatingCompanyId, parsed, "daily_pull");
     upserted += 1;
+    if (result.gl_post_candidate) gl_post_candidates.push(result.gl_post_candidate);
     if (!result.matched_driver_id || !result.matched_unit_id) {
       app.log.info(
         {
@@ -132,7 +138,7 @@ async function ingestForCompany(
     RELAY_FUEL_INGEST_AUDIT_SOURCE,
   ]);
 
-  return { pulled: rawRows.length, upserted, skipped };
+  return { pulled: rawRows.length, upserted, skipped, gl_post_candidates };
 }
 
 export function initializeRelayFuelIngestCron(app: FastifyInstance) {
@@ -149,6 +155,7 @@ export function initializeRelayFuelIngestCron(app: FastifyInstance) {
       const startDate = yesterdayIsoDate();
       const endDate = startDate;
       const failures: { operating_company_id: string; error: unknown }[] = [];
+      const pendingGlPosts: FuelTxnGlPostCandidate[] = [];
 
       await withLuciaBypass(async (client) => {
         const companyIds = await listActiveCompanyIds(client);
@@ -158,7 +165,17 @@ export function initializeRelayFuelIngestCron(app: FastifyInstance) {
 
           try {
             const stats = await ingestForCompany(client, app, operatingCompanyId, startDate, endDate, entityCode);
-            app.log.info({ operating_company_id: operatingCompanyId, ...stats }, "[RELAY_FUEL_INGEST_CRON] run complete");
+            pendingGlPosts.push(...stats.gl_post_candidates);
+            app.log.info(
+              {
+                operating_company_id: operatingCompanyId,
+                pulled: stats.pulled,
+                upserted: stats.upserted,
+                skipped: stats.skipped,
+                gl_post_pending: stats.gl_post_candidates.length,
+              },
+              "[RELAY_FUEL_INGEST_CRON] run complete"
+            );
           } catch (error) {
             // Log loudly, record to the shared audit stream, and keep processing the REMAINING
             // companies — but never swallow: the error is collected and re-thrown after the loop.
@@ -182,6 +199,9 @@ export function initializeRelayFuelIngestCron(app: FastifyInstance) {
           }
         }
       });
+
+      // AFTER COMMIT — TMS GL only, gated by EXPENSE_GL_POSTING_ENABLED (default OFF).
+      await flushFuelGlPostsAfterCommit(pendingGlPosts, app.log);
 
       if (failures.length > 0) {
         // Never silently swallow — surface the aggregated failure so it reaches process-level
@@ -213,6 +233,7 @@ export async function runRelayFuelBackfill(app: FastifyInstance, opts?: { months
   const windowDays = relayIngestWindowDays();
   const windows = dayWindows(isoDateMonthsAgo(months), todayIsoDate(), windowDays);
   const failures: { operating_company_id: string; error: unknown }[] = [];
+  const pendingGlPosts: FuelTxnGlPostCandidate[] = [];
 
   await withLuciaBypass(async (client) => {
     const companyIds = await listActiveCompanyIds(client);
@@ -229,6 +250,7 @@ export async function runRelayFuelBackfill(app: FastifyInstance, opts?: { months
           pulled += stats.pulled;
           upserted += stats.upserted;
           skipped += stats.skipped;
+          pendingGlPosts.push(...stats.gl_post_candidates);
           // Per-window visibility — so progress is observable and "0 rows because empty" vs "0 rows because a
           // window errored" is never ambiguous (a failing window throws out of ingestForCompany → caught below).
           app.log.info(
@@ -240,6 +262,7 @@ export async function runRelayFuelBackfill(app: FastifyInstance, opts?: { months
               pulled: stats.pulled,
               upserted: stats.upserted,
               skipped: stats.skipped,
+              gl_post_pending: stats.gl_post_candidates.length,
             },
             "[RELAY_FUEL_INGEST_BACKFILL] window complete"
           );
@@ -282,6 +305,9 @@ export async function runRelayFuelBackfill(app: FastifyInstance, opts?: { months
       }
     }
   });
+
+  // AFTER COMMIT — TMS GL only, gated by EXPENSE_GL_POSTING_ENABLED (default OFF).
+  await flushFuelGlPostsAfterCommit(pendingGlPosts, app.log);
 
   if (failures.length > 0) {
     throw new Error(

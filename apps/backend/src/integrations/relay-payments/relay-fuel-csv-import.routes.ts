@@ -3,8 +3,8 @@
  * pull / webhook cover live sync; this endpoint ingests a Relay CSV EXPORT (the owner's historical data)
  * that has no API equivalent. It maps each CSV row → the confirmed Relay API shape → parseRelayFuelTransactionRow
  * → upsertRelayFuelTransaction, so it reuses ALL the deployed ingest logic (driver match via integration_id,
- * per-fuel-type lines, idempotent upsert). Owner/Administrator only. STAGING ingest only —
- * integrations.relay_fuel_transactions(+lines), posted_to_gl stays false, NO GL / accounting / fuel write.
+ * per-fuel-type lines, idempotent upsert). Owner/Administrator only. Staging + canonical fuel bridge;
+ * TMS GL post runs AFTER commit via flushFuelGlPostsAfterCommit (EXPENSE_GL_POSTING_ENABLED, default OFF).
  *
  * POST /api/integrations/relay/fuel/import-csv?operating_company_id=<uuid>
  * body: raw CSV text (Content-Type text/csv or text/plain). Returns { imported, skipped, lines }.
@@ -15,6 +15,10 @@ import { withLuciaBypass } from "../../auth/db.js";
 import { parseRelayFuelTransactionRow } from "./relay-client.js";
 import { upsertRelayFuelTransaction } from "./relay-fuel-ingest.service.js";
 import { loadCompanyCardSet, upsertRelayDeposit } from "./relay-deposit-classifier.service.js";
+import {
+  flushFuelGlPostsAfterCommit,
+  type FuelTxnGlPostCandidate,
+} from "../../accounting/fuel-posting/maybe-post-from-fuel-transaction.service.js";
 
 // RFC-4180-ish CSV parser: quoted fields, embedded commas/quotes/newlines.
 function parseCsv(text: string): string[][] {
@@ -127,6 +131,8 @@ export async function registerRelayFuelCsvImportRoute(app: FastifyInstance) {
     const idx = new Map(header.map((h, i) => [h, i]));
 
     let imported = 0, skipped = 0, lines = 0, deposits = 0, depositCompany = 0, depositUnclassified = 0;
+    const pendingGlPosts: FuelTxnGlPostCandidate[] = [];
+    const actorUserId = String((req.user as { uuid?: string } | undefined)?.uuid ?? "");
     await withLuciaBypass(async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [opco]);
       // Owner-editable company-card set — used to classify deposit funding sources (Part B). Loaded once.
@@ -164,9 +170,18 @@ export async function registerRelayFuelCsvImportRoute(app: FastifyInstance) {
         const res = await upsertRelayFuelTransaction(client, opco, tx, "csv_import");
         imported++;
         lines += Array.isArray(tx.fuel_items) ? tx.fuel_items.length : 0;
-        void res;
+        if (res.gl_post_candidate) {
+          pendingGlPosts.push({
+            ...res.gl_post_candidate,
+            actor_user_id: actorUserId || res.gl_post_candidate.actor_user_id,
+          });
+        }
       }
     });
+
+    // AFTER COMMIT — TMS GL only (EXPENSE_GL_POSTING_ENABLED); never QBO push.
+    await flushFuelGlPostsAfterCommit(pendingGlPosts, app.log);
+
     app.log.info({ operating_company_id: opco, imported, skipped, lines, deposits, depositCompany, depositUnclassified, role }, "[RELAY_FUEL_CSV_IMPORT] complete");
     return reply.code(200).send({ status: "imported", operating_company_id: opco, imported, skipped, lines, deposits, depositCompany, depositUnclassified });
   });

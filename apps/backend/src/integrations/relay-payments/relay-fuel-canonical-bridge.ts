@@ -1,9 +1,10 @@
 /**
- * Relay → canonical fuel.fuel_transactions bridge (NO GL).
+ * Relay → canonical fuel.fuel_transactions bridge.
  *
  * PR-1 per RELAY-BOOKING-EXECUTION-SPEC-2026-07-16:
  * After Relay staging upsert, also upsert IFTA/history rows into fuel.fuel_transactions.
- * posted_to_gl stays false on the Relay staging row; this bridge does not call the fuel GL poster.
+ * This bridge does NOT call the fuel GL poster — the ingest caller flushes
+ * maybePostFuelExpenseFromCanonicalTxn AFTER commit (EXPENSE_GL_POSTING_ENABLED).
  *
  * source = 'other' until an additive migration expands the CHECK to include 'relay'
  * (HOLD / owner-applied). Identity is carried in source_row_hash + notes.

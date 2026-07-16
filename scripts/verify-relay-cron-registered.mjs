@@ -8,7 +8,7 @@
  * apps/backend/src/integrations/relay-payments/relay-fuel-ingest.cron.ts but never imported/called in
  * index.ts — so the daily pull silently never ran (both tables empty on prod). This guard fails if the
  * in-process wiring is ever severed. (The cron is a no-op until the env key + per-entity flag are set;
- * ingest is staging-only, no GL.)
+ * GL posting is a separate post-commit flush gated by EXPENSE_GL_POSTING_ENABLED, default OFF.)
  *
  * FAILS IF ANY OF:
  *   1. relay-fuel-ingest.cron.ts does not export initializeRelayFuelIngestCron.
