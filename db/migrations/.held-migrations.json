@@ -11,11 +11,18 @@
     },
     {
       "file": "202607550000_audit_log_legacy_retired_comment.sql",
-      "reason": "[HOLD-FOR-JORGE — TIER 0 cosmetic] COMMENT public.audit_log / public.audit_log_partitioned as retired legacy; real audit is audit.row_changes. Owner applies on Neon branch + ledger-backfills."
+      "reason": "[HOLD-FOR-JORGE — TIER 0 cosmetic] COMMENT public.audit_log / public.audit_log_partitioned as retired legacy; real audit is audit.row_changes. APPLIED on prod Neon + ledger-backfilled 2026-07-16.",
+      "applied_on_prod": true
+    },
+    {
+      "file": "202607530000_type_catalog_shared_write.sql",
+      "reason": "[HOLD-FOR-JORGE] insurance.type_catalog shared read+WRITE policy (owner directive 2026-07-15). APPLIED on prod Neon + ledger-backfilled; prod db:migrate skips it, CI fresh-from-0001 builds the policy.",
+      "applied_on_prod": true
     },
     {
       "file": "202607540000_customer_payment_transp_override.sql",
-      "reason": "[HOLD-FOR-JORGE — B3-AR] Seed TRANSP override enabling CUSTOMER_PAYMENT_GL_POSTING_ENABLED so customer-payment GL posting matches invoicing for the operating carrier. Owner applies on Neon branch + ledger-backfills."
+      "reason": "[HOLD-FOR-JORGE — B3-AR] Seed TRANSP override enabling CUSTOMER_PAYMENT_GL_POSTING_ENABLED so customer-payment GL posting matches invoicing for the operating carrier. APPLIED on prod Neon + ledger-backfilled 2026-07-16.",
+      "applied_on_prod": true
     },
     {
       "file": "202607430000_settlement_lines_approval_columns.sql",

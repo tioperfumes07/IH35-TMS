@@ -1,6 +1,6 @@
 # IH35-TMS QUALITY STANDARD — LOCKED (Rule #0, supersedes on conflict)
 
-Owner: Jorge Pablo Munoz. This is the first standing law of IH35-TMS. Every agent, every session, every block, every recommendation is bound by it. On any conflict with another doc, THIS wins.
+Owner: Jorge Pablo Munoz. This is the first standing law of IH35-TMS. Every agent, every session, every block, every recommendation is bound by it. On any conflict with another doc, THIS wins on the hardline. Cursor's permanent operating charter is `docs/specs/CURSOR-OPERATING-CONSTITUTION.md` (auto-loaded via `.cursor/rules/00`–`07` + `10`–`15`); when instructions conflict, the **more conservative / more protective** reading wins.
 
 ## The hardline rule
 We never take the short or easy way if it creates risk, weak architecture, confusion, future bugs, financial mistakes, or unfinished work. We do not patch over problems. We do not defer important issues just because they are complicated. We do not guess. We fix the root cause correctly.

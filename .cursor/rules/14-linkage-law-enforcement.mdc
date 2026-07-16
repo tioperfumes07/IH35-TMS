@@ -1,0 +1,9 @@
+---
+description: LINKAGE LAW §10 — canonical vs RETIRE, both-way links, hub tables, G1–G4
+alwaysApply: true
+---
+# Total connectivity (silence is a defect)
+Before any block, declare: canonical target table (`to_regclass`, NOT a RETIRE table), the cross-module linkage matrix, and deployed SHA vs origin/main.
+- **Never write/FK a RETIRE table:** `driver_finance.*` (not payroll/settlement) · `mdata.qbo_*` (not accounting.qbo_*) · `banking.*` (not bank.*) · `maintenance.*` (not maint.*) · `mdata.vendors` · `mdata.loads` · `catalogs.cancellation_reasons`. Verify the canonical exists on prod before repointing.
+- Every record links BOTH-WAY to its financial primitives AND operational modules AND the hub tables (org.companies, identity.users, mdata.drivers/units/loads/customers/vendors, catalogs.accounts, maintenance.work_orders, accounting.journal_entries). A block with no linkage declaration is a defect.
+- C1–C9 apply. Entity-scope every link (`operating_company_id` + FORCED RLS; cross-entity FK = defect). Wiring is part of the build (migration + backfill 0-NULL + route mounted + component reachable + guard wired). Additive only; guards only add. Enforced by CI guards G1–G4.

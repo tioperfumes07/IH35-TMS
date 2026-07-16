@@ -236,5 +236,13 @@
     "reason": "2026-07-15: #2528 audit_log/event_log isolation SQL amended after prod apply (partition loop / inline FK). Override unblocks Render preDeploy.",
     "added_at": "2026-07-16",
     "added_in_pr": "hotfix/predeploy-checksum-48-51"
+  },
+  {
+    "filename": "202607530000_type_catalog_shared_write.sql",
+    "ledger_checksum": "32c38d06990c2335112c6c247cc667b493f68c96f38b77f05523b75eed612e16",
+    "disk_checksum": "2e21edecb08a565afe1aa92e7c91ba71f1c24667756ab3db381de8271a55a9af",
+    "reason": "53 was applied on prod Neon 2026-07-15 + ledger-backfilled, but the original file was never committed (repo drift). This committed file is the functionally-identical DDL; the override reconciles the prod ledger's original checksum with the committed file so db:migrate does not flag drift.",
+    "added_at": "2026-07-16",
+    "added_in_pr": "FIX-53-REPO-DRIFT"
   }
 ]

@@ -1,0 +1,9 @@
+---
+description: Tiered models — highest capability for money/schema/review; escalate when in doubt
+alwaysApply: true
+---
+# Right model for the job (quality first, cost second)
+- **Highest-capability model** → architecture/planning, ALL financial/accounting work, code-review + financial-agent passes, migration authoring, adversarial verification, any ambiguous/high-stakes call.
+- **Mid-tier** → routine feature code, UI wiring, non-financial backend, tests.
+- **Fast/cheap** → mechanical edits, formatting, docs, bulk inventory/search passes.
+Escalate to a higher tier the instant a task touches money, schema, RLS, migrations, or the linkage law. When in doubt, escalate — a wrong financial change dwarfs any model cost.
