@@ -35,7 +35,7 @@ export async function fetchQboAccountsPushStatus(
   return withCurrentUser(authUserId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
 
-    const exists = await client.query(`SELECT to_regclass('accounting.qbo_accounts') IS NOT NULL AS ok`);
+    const exists = await client.query(`SELECT to_regclass('mdata.qbo_accounts') IS NOT NULL AS ok`);
     if (!exists.rows[0]?.ok) {
       return {
         total_local: 0,
@@ -89,13 +89,13 @@ export async function fetchQboAccountsPushStatus(
               AND parent_id IS NOT NULL
               AND NOT EXISTS (
                 SELECT 1
-                FROM accounting.qbo_accounts parent
-                WHERE parent.id = accounting.qbo_accounts.parent_id
-                  AND parent.operating_company_id = accounting.qbo_accounts.operating_company_id
+                FROM mdata.qbo_accounts parent
+                WHERE parent.id = mdata.qbo_accounts.parent_id
+                  AND parent.operating_company_id = mdata.qbo_accounts.operating_company_id
                   AND parent.qbo_id IS NOT NULL
               )
           )::text AS blocked_by_parent
-        FROM accounting.qbo_accounts
+        FROM mdata.qbo_accounts
         WHERE operating_company_id = $1::uuid
       `,
       [operatingCompanyId]

@@ -38,7 +38,7 @@ function baseRow(overrides: Partial<QboAccountPushRow> = {}): QboAccountPushRow 
     account_sub_type: "Checking",
     active: true,
     qbo_sync_token: null,
-    payload_json: { source: "accounting.qbo_accounts" },
+    payload_json: { source: "mdata.qbo_accounts" },
     sync_status: "pushing",
     qbo_push_attempts: 0,
     parent_id: null,
@@ -57,18 +57,18 @@ function makeClient(state: {
     query: vi.fn(async (sql: string, values?: unknown[]) => {
       if (sql.includes("set_config")) return { rows: [] };
       if (sql.includes("INSERT INTO mdata.qbo_accounts")) return { rows: [] };
-      if (sql.includes("UPDATE accounting.qbo_accounts") && sql.includes("sync_status = 'synced'")) {
+      if (sql.includes("UPDATE mdata.qbo_accounts") && sql.includes("sync_status = 'synced'")) {
         row.sync_status = "synced";
         row.qbo_id = String(values?.[2] ?? "QBO-A-999");
         row.qbo_sync_token = (values?.[3] as string | null) ?? "1";
         return { rows: [] };
       }
-      if (sql.includes("UPDATE accounting.qbo_accounts") && sql.includes("sync_status = 'failed'")) {
+      if (sql.includes("UPDATE mdata.qbo_accounts") && sql.includes("sync_status = 'failed'")) {
         row.sync_status = "failed";
         row.qbo_push_attempts = Number(values?.[2] ?? row.qbo_push_attempts + 1);
         return { rows: [] };
       }
-      if (sql.includes("UPDATE accounting.qbo_accounts") && sql.includes("sync_status = 'unsynced'")) return { rows: [] };
+      if (sql.includes("UPDATE mdata.qbo_accounts") && sql.includes("sync_status = 'unsynced'")) return { rows: [] };
       if (sql.includes("UPDATE mdata.qbo_accounts")) return { rows: [] };
       if (sql.includes("FROM mdata.qbo_accounts") && sql.includes("SELECT qbo_id")) {
         return {

@@ -903,6 +903,7 @@
     "verify:relay-backfill-route-mounted": "node scripts/verify-relay-backfill-route-mounted.mjs",
     "verify:relay-csv-import-route-mounted": "node scripts/verify-relay-csv-import-route-mounted.mjs",
     "verify:relay-csv-code-rows-only": "node scripts/verify-relay-csv-code-rows-only.mjs",
+    "verify:no-accounting-qbo-writes": "node scripts/verify-no-accounting-qbo-writes.mjs",
     "verify:relay-deposit-classifier-no-post": "node scripts/verify-relay-deposit-classifier-no-post.mjs",
     "verify:relay-routes-rate-limited": "node scripts/verify-relay-routes-rate-limited.mjs",
     "verify:relay-internal-bank-no-post": "node scripts/verify-relay-internal-bank-no-post.mjs",

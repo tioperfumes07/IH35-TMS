@@ -19,8 +19,8 @@ function officeRole(role: string) {
 export type QboVendorsPushStatus = {
   // HOME-7A: a TRUE total (COUNT(*)) so Home renders "{synced}/{total}". `total_local` was
   // COUNT FILTER (qbo_id IS NULL) = the UNSYNCED count (0 in prod), which mislabeled Home as "872/0".
-  // NOTE: source stays accounting.qbo_vendors — the canonical mdata.qbo_vendors lacks sync_status /
-  // qbo_push_attempts, so repointing would break the pushing/failed/dead_letter workflow metrics.
+  // Canonical source = mdata.qbo_vendors (QBO collapse Step-2). Sync columns
+  // (sync_status / qbo_push_attempts / …) were added by mig 202607560000.
   total: number;
   total_local: number;
   synced: number;
@@ -37,7 +37,7 @@ export async function fetchQboVendorsPushStatus(
   return withCurrentUser(authUserId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
 
-    const exists = await client.query(`SELECT to_regclass('accounting.qbo_vendors') IS NOT NULL AS ok`);
+    const exists = await client.query(`SELECT to_regclass('mdata.qbo_vendors') IS NOT NULL AS ok`);
     if (!exists.rows[0]?.ok) {
       return { total: 0, total_local: 0, synced: 0, unsynced: 0, pushing: 0, failed: 0, dead_letter: 0 };
     }
@@ -67,7 +67,7 @@ export async function fetchQboVendorsPushStatus(
             WHERE qbo_id IS NULL
               AND qbo_push_attempts >= 5
           )::text AS dead_letter
-        FROM accounting.qbo_vendors
+        FROM mdata.qbo_vendors
         WHERE operating_company_id = $1::uuid
       `,
       [operatingCompanyId]

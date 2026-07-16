@@ -155,7 +155,7 @@ async function auditQboPushAttempt(
 async function markPushSuccess(client: PoolClient, row: QboAccountPushRow, qboId: string, syncToken: string | null) {
   await client.query(
     `
-      UPDATE accounting.qbo_accounts
+      UPDATE mdata.qbo_accounts
       SET
         qbo_id = $3,
         qbo_sync_token = $4,
@@ -184,9 +184,9 @@ async function markPushSuccess(client: PoolClient, row: QboAccountPushRow, qboId
   );
   await client.query(
     `
-      UPDATE accounting.qbo_accounts child
+      UPDATE mdata.qbo_accounts child
       SET parent_synced = true
-      FROM accounting.qbo_accounts parent
+      FROM mdata.qbo_accounts parent
       WHERE child.parent_id = parent.id
         AND parent.id = $1::uuid
         AND parent.operating_company_id = $2::uuid
@@ -199,7 +199,7 @@ async function markPushFailure(client: PoolClient, row: QboAccountPushRow, error
   const nextAttempts = row.qbo_push_attempts + 1;
   await client.query(
     `
-      UPDATE accounting.qbo_accounts
+      UPDATE mdata.qbo_accounts
       SET
         sync_status = 'failed',
         qbo_push_attempts = $3,
@@ -233,11 +233,11 @@ const ACCOUNT_PUSH_RETURNING = `
 export async function claimQboAccountsRootPushBatch(client: PoolClient, batchSize: number): Promise<QboAccountPushRow[]> {
   const res = await client.query<QboAccountPushRow>(
     `
-      UPDATE accounting.qbo_accounts
+      UPDATE mdata.qbo_accounts
       SET sync_status = 'pushing', updated_at = now()
       WHERE id IN (
         SELECT id
-        FROM accounting.qbo_accounts
+        FROM mdata.qbo_accounts
         WHERE qbo_id IS NULL
           AND parent_id IS NULL
           AND sync_status IN ('unsynced', 'failed')
@@ -256,12 +256,12 @@ export async function claimQboAccountsRootPushBatch(client: PoolClient, batchSiz
 export async function claimQboAccountsChildPushBatch(client: PoolClient, batchSize: number): Promise<QboAccountPushRow[]> {
   const res = await client.query<QboAccountPushRow>(
     `
-      UPDATE accounting.qbo_accounts child
+      UPDATE mdata.qbo_accounts child
       SET sync_status = 'pushing', updated_at = now()
       WHERE child.id IN (
         SELECT child.id
-        FROM accounting.qbo_accounts child
-        INNER JOIN accounting.qbo_accounts parent
+        FROM mdata.qbo_accounts child
+        INNER JOIN mdata.qbo_accounts parent
           ON parent.id = child.parent_id
          AND parent.operating_company_id = child.operating_company_id
         WHERE child.qbo_id IS NULL
@@ -289,7 +289,7 @@ export async function claimQboAccountsChildPushBatch(client: PoolClient, batchSi
         child.parent_id::text,
         (
           SELECT parent.qbo_id
-          FROM accounting.qbo_accounts parent
+          FROM mdata.qbo_accounts parent
           WHERE parent.id = child.parent_id
             AND parent.operating_company_id = child.operating_company_id
           LIMIT 1
@@ -308,7 +308,7 @@ export async function pushSingleQboAccount(
   if (row.parent_id && !row.parent_qbo_id) {
     await client.query(
       `
-        UPDATE accounting.qbo_accounts
+        UPDATE mdata.qbo_accounts
         SET sync_status = 'unsynced', parent_synced = false, updated_at = now()
         WHERE id = $1::uuid AND operating_company_id = $2::uuid AND sync_status = 'pushing'
       `,
@@ -320,7 +320,7 @@ export async function pushSingleQboAccount(
   if (!canPushWithinMasterRateLimit(nowMs)) {
     await client.query(
       `
-        UPDATE accounting.qbo_accounts
+        UPDATE mdata.qbo_accounts
         SET sync_status = 'unsynced', updated_at = now()
         WHERE id = $1::uuid AND operating_company_id = $2::uuid AND sync_status = 'pushing'
       `,

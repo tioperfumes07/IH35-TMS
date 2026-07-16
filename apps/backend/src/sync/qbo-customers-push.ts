@@ -157,7 +157,7 @@ async function auditQboPushAttempt(
 async function markPushSuccess(client: PoolClient, row: QboCustomerPushRow, qboId: string, syncToken: string | null) {
   await client.query(
     `
-      UPDATE accounting.qbo_customers
+      UPDATE mdata.qbo_customers
       SET
         qbo_id = $3,
         qbo_sync_token = $4,
@@ -190,7 +190,7 @@ async function markPushFailure(client: PoolClient, row: QboCustomerPushRow, erro
   const nextAttempts = row.qbo_push_attempts + 1;
   await client.query(
     `
-      UPDATE accounting.qbo_customers
+      UPDATE mdata.qbo_customers
       SET
         sync_status = 'failed',
         qbo_push_attempts = $3,
@@ -207,11 +207,11 @@ async function markPushFailure(client: PoolClient, row: QboCustomerPushRow, erro
 export async function claimQboCustomersPushBatch(client: PoolClient, batchSize: number): Promise<QboCustomerPushRow[]> {
   const res = await client.query<QboCustomerPushRow>(
     `
-      UPDATE accounting.qbo_customers
+      UPDATE mdata.qbo_customers
       SET sync_status = 'pushing', updated_at = now()
       WHERE id IN (
         SELECT id
-        FROM accounting.qbo_customers
+        FROM mdata.qbo_customers
         WHERE qbo_id IS NULL
           AND sync_status IN ('unsynced', 'failed')
           AND qbo_push_attempts < $2
@@ -247,7 +247,7 @@ export async function pushSingleQboCustomer(
   if (!canPushWithinRateLimit(nowMs)) {
     await client.query(
       `
-        UPDATE accounting.qbo_customers
+        UPDATE mdata.qbo_customers
         SET sync_status = 'unsynced', updated_at = now()
         WHERE id = $1::uuid AND operating_company_id = $2::uuid AND sync_status = 'pushing'
       `,
