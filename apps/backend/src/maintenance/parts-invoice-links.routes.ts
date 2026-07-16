@@ -36,7 +36,10 @@ export async function registerMaintenancePartsInvoiceLinksRoutes(app: FastifyIns
    * SoR = maintenance.parts_invoice_links (blueprint: WO part usage + optional stock decrement).
    * ADD-ONLY — does not replace Purchases stock list or delete create/delete link routes.
    */
-  app.get("/api/v1/maintenance/parts-invoice-links", async (req, reply) => {
+  app.get(
+    "/api/v1/maintenance/parts-invoice-links",
+    { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = querySchema.safeParse(req.query ?? {});
@@ -57,7 +60,7 @@ export async function registerMaintenancePartsInvoiceLinksRoutes(app: FastifyIns
             pi.part_number,
             pil.qty_used,
             pil.vendor_id::text AS vendor_id,
-            v.display_name AS vendor_name,
+            v.vendor_name AS vendor_name,
             pil.vendor_invoice_number,
             pil.vendor_invoice_amount::float8 AS vendor_invoice_amount,
             pil.created_at,
