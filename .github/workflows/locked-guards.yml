@@ -65,6 +65,12 @@ jobs:
       - name: verify:canonical-table-writes
         run: npm run verify:canonical-table-writes
 
+      - name: verify:no-payroll-settlement-writes --selftest
+        run: node scripts/verify-no-payroll-settlement-writes.mjs --selftest
+
+      - name: verify:no-payroll-settlement-writes
+        run: npm run verify:no-payroll-settlement-writes
+
       - name: verify:no-duplicate-financial-ledger --selftest
         run: node scripts/verify-no-duplicate-financial-ledger.mjs --selftest
 
@@ -82,6 +88,12 @@ jobs:
 
       - name: verify:settlement-escrow-cap
         run: npm run verify:settlement-escrow-cap
+
+      - name: verify:settlement-engine-inventory --selftest
+        run: node scripts/verify-settlement-engine-inventory.mjs --selftest
+
+      - name: verify:settlement-engine-inventory
+        run: npm run verify:settlement-engine-inventory
 
       - name: verify:cash-advance-maker-checker --selftest
         run: node scripts/verify-cash-advance-maker-checker.mjs --selftest

@@ -30,6 +30,10 @@ const RETIRE = [
   { pat: "payroll\\.driver_settlements", canonical: "driver_finance.driver_settlements" },
   { pat: "payroll\\.\\w+", canonical: "driver_finance.*" },
   { pat: "settlement\\.\\w+", canonical: "driver_finance.*" },
+  // plural RETIRE schema (disputes + team-split config) — B-C.P4 G4 harden
+  { pat: "settlements\\.settlement_disputes", canonical: "driver_finance.driver_settlement_disputes" },
+  { pat: "settlements\\.team_split_configs", canonical: "driver_finance.team_settlement_splits" },
+  { pat: "settlements\\.team_split_load_overrides", canonical: "driver_finance.team_settlement_splits" },
   { pat: "accounting\\.qbo_accounts", canonical: "mdata.qbo_accounts" },
   { pat: "accounting\\.qbo_vendors", canonical: "mdata.qbo_vendors" },
   { pat: "accounting\\.qbo_customers", canonical: "mdata.qbo_customers" },
@@ -153,6 +157,7 @@ if (process.argv.includes("--selftest")) {
     `SELECT * FROM payroll.driver_settlements WHERE id=$1;`, // read — allowed
     `INSERT INTO driver_finance.driver_settlements (id) VALUES ($1);`, // canonical — allowed
     `INSERT INTO payroll.tax_withholding (id) VALUES ($1);`, // wildcard payroll.* must catch (finding 3)
+    `INSERT INTO settlements.settlement_disputes (id) VALUES ($1);`, // plural RETIRE — P4
   ].join("\n");
   const blanked = blankComments(injectSql, true);
   const found = [];
@@ -171,6 +176,7 @@ if (process.argv.includes("--selftest")) {
     ["a COMMENTED REFERENCES is NOT flagged (finding 1)", !found.includes("settlement.settlement")],
     ["payroll.* wildcard catches a non-enumerated payroll table (finding 3)", found.includes("payroll.tax_withholding")],
     ["INSERT INTO the CANONICAL table is NOT flagged", !found.includes("driver_finance.driver_settlements")],
+    ["settlements.* plural RETIRE INSERT is flagged (P4)", found.includes("settlements.settlement_disputes")],
     ["count-ratchet: live==baseline passes (finding 2)", !overBase(liveA)],
     ["count-ratchet: a NEW same-file write (live>baseline) FAILS (finding 2)", overBase(liveB)],
   ];

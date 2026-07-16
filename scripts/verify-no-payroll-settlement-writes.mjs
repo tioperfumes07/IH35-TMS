@@ -62,6 +62,27 @@ export function run() {
   return [...offenders].filter((k) => !baseline.has(k)).map((k) => `new payroll.* settlement write (RETIRE ledger): ${k}`);
 }
 
+if (process.argv.includes("--selftest")) {
+  // Planted failure: synthetic key against empty baseline must fail; live scan must stay green.
+  const plantedKey = "apps/backend/src/__planted__.ts::INSERT payroll.driver_settlements";
+  const emptyBaseline = new Set();
+  const plantedFails = !emptyBaseline.has(plantedKey);
+  const liveFailures = run();
+  const checks = [
+    ["planted NEW key fails vs empty baseline", plantedFails],
+    ["live tree has no NEW payroll.* settlement writes", liveFailures.length === 0],
+  ];
+  const failed = checks.filter(([, ok]) => !ok);
+  if (failed.length) {
+    console.error(`[${LABEL}] --selftest FAIL:`);
+    for (const [n] of failed) console.error(`  ✗ ${n}`);
+    if (liveFailures.length) for (const f of liveFailures) console.error(`  ${f}`);
+    process.exit(1);
+  }
+  console.log(`[${LABEL}] --selftest PASS (${checks.length} checks)`);
+  process.exit(0);
+}
+
 const isMain = process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);
 if (isMain) {
   if (process.env.UPDATE_PAYROLL_SETTLEMENT_WRITE_BASELINE === "1") {
