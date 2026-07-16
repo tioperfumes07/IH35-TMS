@@ -1,0 +1,33 @@
+{
+  "block_id": "FIX-425C-PETITION-DATE",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "AUDIT-FIX",
+  "task": "Audit gap #17 — CI lock so Form 425C create can never hardcode petition_date (court filing risk). Root-cause create path already fixed on main (#2563); this block adds scripts/verify-425c-petition-not-hardcoded.mjs + package.json + locked-guards.yml wiring.",
+  "branch": "fix/425c-petition-date",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/FIX-425C-PETITION-DATE.json",
+    "scripts/verify-425c-petition-not-hardcoded.mjs",
+    "package.json",
+    ".github/workflows/locked-guards.yml"
+  ],
+  "acceptance": [
+    {
+      "kind": "guard",
+      "script": "scripts/verify-425c-petition-not-hardcoded.mjs",
+      "wired_into": "package.json verify:425c-petition-not-hardcoded + .github/workflows/locked-guards.yml (selftest + scan)"
+    },
+    {
+      "kind": "live",
+      "assert": "node scripts/verify-425c-petition-not-hardcoded.mjs --selftest passes; planted petition_date: \"2025-02-03\" fails the scan; clean tree passes"
+    }
+  ],
+  "linkage": "N/A — enforcement infra around existing Form425CHome create path (resolveCreatePetitionDate); no schema, no GL, no operating_company_id change",
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [
+    "verify:425c-petition-not-hardcoded"
+  ]
+}
