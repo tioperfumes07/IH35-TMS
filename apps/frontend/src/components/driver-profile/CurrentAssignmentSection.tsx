@@ -2,15 +2,17 @@ import { Link } from "react-router-dom";
 
 export function CurrentAssignmentSection({
   assignment,
-  companyId,
+  companyId: _companyId,
   driverId,
   onSetDefault,
 }: {
   assignment: Record<string, unknown>;
+  /** Kept for caller API stability; unit/load links no longer need opco query params. */
   companyId: string;
   driverId: string;
   onSetDefault?: (unitId: string) => void;
 }) {
+  void _companyId;
   const def = assignment.default_truck as Record<string, unknown> | null;
   const cur = assignment.currently_driving_truck as Record<string, unknown> | null;
   const load = assignment.current_load as Record<string, unknown> | null;
