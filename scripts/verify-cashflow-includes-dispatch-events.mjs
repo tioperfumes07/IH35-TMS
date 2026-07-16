@@ -74,7 +74,7 @@ try {
 
 // ── 4. Settlement payout posts via Bill + BillPayment (bill_payment hits AP → operating) ──
 try {
-  const settle = read("apps/backend/src/payroll/driver-settlement.service.ts");
+  const settle = read("apps/backend/src/payroll/driver-settlement.service.deprecated.ts");
   if (!/export async function postSettlement/.test(settle))
     failures.push("driver-settlement.service must export postSettlement");
   if (!settle.includes("createBill"))

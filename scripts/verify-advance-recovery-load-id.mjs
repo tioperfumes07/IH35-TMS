@@ -16,7 +16,7 @@ const fail = (m) => { console.error(`FAIL verify-advance-recovery-load-id: ${m}`
 const read = (p) => { try { return readFileSync(join(root, p), "utf8"); } catch { fail(`missing file: ${p}`); } };
 
 const deductions = read("apps/backend/src/driver-finance/deductions.service.ts");
-const settlement = read("apps/backend/src/payroll/driver-settlement.service.ts");
+const settlement = read("apps/backend/src/payroll/driver-settlement.service.deprecated.ts");
 const approve = read("apps/backend/src/driver-finance/cash-advance-requests.service.ts");
 
 // 1. canonical deduction writer persists load_id

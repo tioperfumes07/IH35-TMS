@@ -462,7 +462,7 @@
       "reason": "Onboarding state — setup wizard progress, not a financial event"
     },
     {
-      "file": "apps/backend/src/payroll/driver-settlement.service.ts",
+      "file": "apps/backend/src/payroll/driver-settlement.service.deprecated.ts",
       "reason": "Payroll settlement service — spine emit handled in settlements-mvp routes"
     },
     {

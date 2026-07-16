@@ -40,15 +40,15 @@
     "count": 1,
     "reason": "baselined 2026-07-11 — pre-existing UPDATE accounting.qbo_accounts; retire to mdata.qbo_accounts"
   },
-  "apps/backend/src/payroll/driver-settlement.service.ts::payroll.driver_settlements::INSERT INTO": {
+  "apps/backend/src/payroll/driver-settlement.service.deprecated.ts::payroll.driver_settlements::INSERT INTO": {
     "count": 1,
     "reason": "baselined 2026-07-11 — pre-existing INSERT INTO payroll.driver_settlements; retire to driver_finance.driver_settlements"
   },
-  "apps/backend/src/payroll/driver-settlement.service.ts::payroll.driver_settlement_line_items::INSERT INTO": {
+  "apps/backend/src/payroll/driver-settlement.service.deprecated.ts::payroll.driver_settlement_line_items::INSERT INTO": {
     "count": 1,
     "reason": "baselined 2026-07-11 — pre-existing INSERT INTO payroll.driver_settlement_line_items; retire to driver_finance.*"
   },
-  "apps/backend/src/payroll/driver-settlement.service.ts::payroll.driver_settlements::UPDATE": {
+  "apps/backend/src/payroll/driver-settlement.service.deprecated.ts::payroll.driver_settlements::UPDATE": {
     "count": 1,
     "reason": "baselined 2026-07-11 — pre-existing UPDATE payroll.driver_settlements; retire to driver_finance.driver_settlements"
   },
