@@ -32,6 +32,8 @@
  */
 
 import process from "node:process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const ENFORCE = process.env.BALANCED_LEDGER_ENFORCE === "true";
 
@@ -105,8 +107,14 @@ async function main() {
   }
 }
 
-main().catch((e) => {
-  // Never crash the build on an infra hiccup — surface + advisory-exit (enforce path still fails).
-  console.error("[balanced-ledger] error:", e?.message ?? e);
-  process.exit(ENFORCE ? 1 : 0);
-});
+const isMain =
+  process.argv[1] &&
+  path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (isMain) {
+  main().catch((e) => {
+    // Never crash the build on an infra hiccup — surface + advisory-exit (enforce path still fails).
+    console.error("[balanced-ledger] error:", e?.message ?? e);
+    process.exit(ENFORCE ? 1 : 0);
+  });
+}
