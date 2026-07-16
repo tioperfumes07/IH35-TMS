@@ -250,11 +250,35 @@ export async function runRelayFuelBackfill(app: FastifyInstance, opts?: { months
         );
       } catch (error) {
         // Isolate per-company failure, never swallow — collected and re-thrown after the loop.
+        // Also append a durable audit row (same as daily cron). Without this, a missing
+        // RELAY_API_KEY_TRANSP leaves ZERO evidence in Neon that TRANSP never ran — which is
+        // exactly what happened on 2026-07-15 (USMCA got 128 success windows; TRANSP silent).
         app.log.error(
           { err: error, operating_company_id: operatingCompanyId },
           "[RELAY_FUEL_INGEST_BACKFILL] company backfill failed"
         );
         failures.push({ operating_company_id: operatingCompanyId, error });
+        await client
+          .query(`SELECT audit.append_event($1, $2, $3::jsonb, NULL, $4)`, [
+            "integrations.relay_fuel_ingest_backfill_failed",
+            "error",
+            JSON.stringify({
+              operating_company_id: operatingCompanyId,
+              entity_code: entityCode,
+              months,
+              error:
+                error instanceof RelayApiError
+                  ? { name: error.name, message: error.message, status: error.statusCode, retryable: error.retryable }
+                  : { message: String((error as Error)?.message ?? error) },
+            }),
+            RELAY_FUEL_INGEST_AUDIT_SOURCE,
+          ])
+          .catch((auditErr) => {
+            app.log.warn(
+              { err: auditErr, operating_company_id: operatingCompanyId },
+              "[RELAY_FUEL_INGEST_BACKFILL] failure-audit write failed"
+            );
+          });
       }
     }
   });
