@@ -1,31 +1,31 @@
 {
-  "generated_cst": "2026-07-16T21:44:19.332Z",
+  "generated_cst": "2026-07-16T21:57:11.816Z",
   "source": "reconcile:blocks 2026-07-16 + MASTER-MANIFEST-2026-07-10",
   "totals": {
-    "RESOLVED": 175,
-    "OPEN": 371,
+    "RESOLVED": 131,
+    "OPEN": 408,
     "NOISE": 135,
-    "NEEDS-OWNER": 134,
-    "UNVERIFIED": 64
+    "NEEDS-OWNER": 136,
+    "UNVERIFIED": 69
   },
   "by_module": {
     "accounting": {
-      "RESOLVED": 20,
-      "OPEN": 61,
+      "RESOLVED": 14,
+      "OPEN": 67,
       "NOISE": 5,
       "NEEDS-OWNER": 27,
       "UNVERIFIED": 6
     },
     "banking": {
-      "RESOLVED": 5,
-      "OPEN": 20,
+      "RESOLVED": 4,
+      "OPEN": 21,
       "NOISE": 1,
       "NEEDS-OWNER": 5,
       "UNVERIFIED": 8
     },
     "settlements": {
-      "RESOLVED": 21,
-      "OPEN": 43,
+      "RESOLVED": 14,
+      "OPEN": 50,
       "NOISE": 0,
       "NEEDS-OWNER": 13,
       "UNVERIFIED": 1
@@ -45,29 +45,29 @@
       "UNVERIFIED": 0
     },
     "factoring": {
-      "RESOLVED": 7,
-      "OPEN": 10,
+      "RESOLVED": 6,
+      "OPEN": 11,
       "NOISE": 1,
       "NEEDS-OWNER": 5,
       "UNVERIFIED": 0
     },
     "dispatch": {
-      "RESOLVED": 29,
-      "OPEN": 80,
+      "RESOLVED": 20,
+      "OPEN": 88,
       "NOISE": 5,
       "NEEDS-OWNER": 24,
-      "UNVERIFIED": 1
+      "UNVERIFIED": 2
     },
     "maintenance": {
-      "RESOLVED": 4,
-      "OPEN": 10,
+      "RESOLVED": 2,
+      "OPEN": 12,
       "NOISE": 0,
       "NEEDS-OWNER": 3,
       "UNVERIFIED": 4
     },
     "qbo-recon": {
-      "RESOLVED": 12,
-      "OPEN": 9,
+      "RESOLVED": 11,
+      "OPEN": 10,
       "NOISE": 0,
       "NEEDS-OWNER": 5,
       "UNVERIFIED": 4
@@ -80,15 +80,15 @@
       "UNVERIFIED": 0
     },
     "insurance": {
-      "RESOLVED": 1,
+      "RESOLVED": 0,
       "OPEN": 2,
       "NOISE": 1,
-      "NEEDS-OWNER": 0,
+      "NEEDS-OWNER": 1,
       "UNVERIFIED": 0
     },
     "drivers": {
-      "RESOLVED": 7,
-      "OPEN": 9,
+      "RESOLVED": 6,
+      "OPEN": 10,
       "NOISE": 0,
       "NEEDS-OWNER": 1,
       "UNVERIFIED": 4
@@ -101,46 +101,46 @@
       "UNVERIFIED": 0
     },
     "safety": {
-      "RESOLVED": 10,
-      "OPEN": 23,
+      "RESOLVED": 9,
+      "OPEN": 24,
       "NOISE": 4,
       "NEEDS-OWNER": 9,
       "UNVERIFIED": 8
     },
     "fleet": {
-      "RESOLVED": 3,
+      "RESOLVED": 2,
       "OPEN": 8,
       "NOISE": 3,
       "NEEDS-OWNER": 1,
-      "UNVERIFIED": 4
+      "UNVERIFIED": 5
     },
     "compliance": {
-      "RESOLVED": 6,
-      "OPEN": 12,
+      "RESOLVED": 4,
+      "OPEN": 13,
       "NOISE": 20,
-      "NEEDS-OWNER": 1,
+      "NEEDS-OWNER": 2,
       "UNVERIFIED": 7
     },
     "customers-vendors": {
-      "RESOLVED": 6,
-      "OPEN": 6,
+      "RESOLVED": 3,
+      "OPEN": 9,
       "NOISE": 16,
       "NEEDS-OWNER": 0,
       "UNVERIFIED": 1
     },
     "reports": {
-      "RESOLVED": 9,
-      "OPEN": 33,
+      "RESOLVED": 7,
+      "OPEN": 35,
       "NOISE": 2,
       "NEEDS-OWNER": 2,
       "UNVERIFIED": 4
     },
     "platform": {
-      "RESOLVED": 24,
-      "OPEN": 34,
+      "RESOLVED": 18,
+      "OPEN": 37,
       "NOISE": 65,
       "NEEDS-OWNER": 37,
-      "UNVERIFIED": 12
+      "UNVERIFIED": 15
     },
     "notifications": {
       "RESOLVED": 1,
@@ -167,9 +167,16 @@
     "noise_mechanical": 21
   },
   "open_real_financial": {
-    "count": 370,
-    "needs_guard_live": 85,
+    "count": 406,
+    "needs_guard_live": 90,
     "items": [
+      {
+        "id": "0007-pattern-8-reverse-drill-through",
+        "module": "accounting",
+        "tier": "tier-3",
+        "missing": "scripts/verify-entity-link-adoption.mjs and scripts/verify-94-live-counter-linkage.mjs exist on disk but are NOT registered as npm scripts in package.json and are NOT referenced in any .github/workflows/*.yml -- these guards are orphaned (no CI regression protection), even though the underlying fix (EntityLink, 103 adoptions) is real. || [REFUTED by adversarial pass] FALSE PROTECTION + incomplete on a SYSTEMIC-pattern block. manifest_missing has TWO parts: a shared linked-cell component AND 'confirmation of guard CI wiring'. The claim addresses only the first and is silent on the guard — and the guard is exactly the unwired class this audit exists to catch. scripts/verify-entity-link-adoption.mjs:13 states '*** THIS SCRIPT IS REPORT-ONLY AND ALWAYS EXITS 0. **",
+        "needs_live": false
+      },
       {
         "id": "0033-audit-schema-manifest-tool",
         "module": "accounting",
@@ -220,6 +227,13 @@
         "needs_live": false
       },
       {
+        "id": "0243-g8-5-no-error-state-blank-forever-spinner",
+        "module": "accounting",
+        "tier": "tier-3",
+        "missing": "No shared QueryBoundary wrapper component was built (fix is duplicated inline per-page rather than a reusable pattern), and the other ~6 pages named in the original finding were not individually re-checked in this pass. || [REFUTED by adversarial pass] The 3 named example pages (FactoringListPage.tsx:89, EscrowPage.tsx:121, InvoiceDetailPage.tsx:116) do have isError handling as claimed, but the original defect explicitly scoped ~9 pages ('FactoringListPage/EscrowPage/InvoiceDetailPage + 6 others') and asked for a shared QueryBoundary wrapper. Independent scan of apps/frontend/src/pages/accounting and /drivers for files with isLoading/isPending b",
+        "needs_live": false
+      },
+      {
         "id": "0251-gap11-commodity-gl",
         "module": "accounting",
         "tier": "tier-2",
@@ -252,6 +266,13 @@
         "module": "accounting",
         "tier": "tier-3",
         "missing": "no join/cross-check against accounting.journal_entry_postings for revenue-account postings, and no explicit 'invoice-basis not GL-basis' label on the widget",
+        "needs_live": false
+      },
+      {
+        "id": "0280-05-factoring-balance-invoice-linkage",
+        "module": "accounting",
+        "tier": "tier-1",
+        "missing": "[REFUTED by adversarial pass] FAKE-GREEN. The evidence cites a SUPERSEDED view definition and the widget still reads a never-written column. (1) Evidence misreads which definition is live: it proves views.factoring_summary is invoice-joined from db/migrations/0061_p3_t11_20_5_factoring_tracking.sql:89-107. But views.factoring_summary is redefined TWICE later — 0123_p6_pre_ledger_drift_reconciliation.sql:1664 and, last and auth",
         "needs_live": false
       },
       {
@@ -339,6 +360,13 @@
         "needs_live": false
       },
       {
+        "id": "a-03-expenses-fullpage-form-not-list-drawer",
+        "module": "accounting",
+        "tier": "tier-3",
+        "missing": "[REFUTED by adversarial pass] The accounting-subnav path is genuinely fixed as described: subnav-manifest.ts:216 href=/accounting/expenses/list, ExpensesListPage.tsx:169-183 +Create opens RecordExpenseModal (ParityDrawer, confirmed at RecordExpenseModal.tsx:18-19). BUT the evidence omitted the global 'Topbar' quick-create menu -- Topbar.tsx:241 '+ Create > Expense' still navigates to plain '/accounting/expenses', which manifes",
+        "needs_live": false
+      },
+      {
         "id": "a-05-bills-no-page-level-create-button",
         "module": "accounting",
         "tier": "tier-3",
@@ -371,6 +399,13 @@
         "module": "accounting",
         "tier": "tier-2",
         "missing": "1) The sales-tax return module (prepare/file/mark-paid) is built but never registered into the app (apps/backend/src/index.ts has no import of accounting/sales-tax/sales-tax.routes.ts) — orphaned, needs wiring or an explicit archive decision. 2) Beyond IFTA + 2290 + (unwired) sales-tax, there is no general multi-tax-type liability calc/compliance dashboard.",
+        "needs_live": false
+      },
+      {
+        "id": "audit5-fraud-anomaly-detection",
+        "module": "accounting",
+        "tier": "tier-2",
+        "missing": "Fraud case-management workflow + dashboard is a genuine gap on top of the wired detectors (matches manifest). Detector layer itself is RESOLVED/wired; the case-mgmt ask remains OPEN-scope but is a net-new UI capability, not a defect. || [REFUTED by adversarial pass] All 4 files exist, but the claim 'Both worker files confirmed imported/registered in apps/backend/src/index.ts' is FALSE for one of them. index.ts:488 imports initializeAnomalyDetectorWorker and calls it at index.ts:1266 -- confirmed live. But grep for fuel-fraud-detector-worker across the entire apps/backend/src tree shows it is referenced ONLY inside its own file (jobs/fuel-fraud-detector-worker",
         "needs_live": false
       },
       {
@@ -591,6 +626,13 @@
         "needs_live": false
       },
       {
+        "id": "s-04-no-from-to-date-range-safety-lists",
+        "module": "accounting",
+        "tier": "tier-3",
+        "missing": "[REFUTED by adversarial pass] The cited wiring (SafetyDashboardFilter.tsx:81-93, SafetyLayout.tsx:57-59/188-190, SafetyEventsPage.tsx:61/136-137) is real, but the manifest explicitly says 'Add ... to SafetyEventsPage AND OTHER Safety list views.' Checked all other Safety list pages: grep for fromDate/toDate in apps/frontend/src/pages/safety/{CargoClaimsPage,CompanyViolationsPage,ComplaintsPage,DamageReportsPage,DotInspectionsP",
+        "needs_live": false
+      },
+      {
         "id": "shared-catalog-creator-profile-debox",
         "module": "accounting",
         "tier": "tier-3",
@@ -602,6 +644,13 @@
         "module": "banking",
         "tier": "tier-3",
         "missing": "mdata.equipment_transfers -> mdata.equipment_log link: finalizeDualAckTransfer/confirmTransfer never INSERTs into mdata.equipment_log, so the UI's Equipment Log tab never gets an automatic entry on transfer completion.",
+        "needs_live": false
+      },
+      {
+        "id": "0243-h7-2-vendor-runtime-hygiene",
+        "module": "banking",
+        "tier": "tier-3",
+        "missing": "[REFUTED by adversarial pass] Plaid dead-env fix at plaid-client.ts:11-20 confirmed real. But the claim that minorversion was 'bumped from 65 -> 75 across ALL call sites' is false: apps/backend/src/integrations/qbo/sync-outbound-accounting.ts:18 defines const MINOR_VERSION = 70 and uses it live at line 160 in qboGetJson() (a real outbound-sync GET call, not dead code) — neither 65 (the stale value) nor 75 (the claimed universa",
         "needs_live": false
       },
       {
@@ -752,6 +801,20 @@
         "needs_live": false
       },
       {
+        "id": "0091-c1-1-two-settlement-engines_DISPATCH",
+        "module": "settlements",
+        "tier": "",
+        "missing": "[REFUTED by adversarial pass] The claim's grep methodology missed the actual mount path. apps/backend/src/accounting/settlement-posting/settlement-posting.routes.ts:134-136 default-exports a fastify-plugin wrapper around registerSettlementPostingRoutes. apps/backend/src/accounting/index.ts:10-17 registers @fastify/autoload with matchFilter /\\.routes\\.(ts|js)$/ over the entire accounting/ directory tree (no ignore for settlemen",
+        "needs_live": false
+      },
+      {
+        "id": "0091-e1-4",
+        "module": "settlements",
+        "tier": "tier-1",
+        "missing": "[REFUTED by adversarial pass] FAKE-GREEN. The WRITE side collapsed, but the READ side still prefers the RETIRE ledger — and the claim's evidence misreads the very lines it cites. (1) apps/backend/src/payroll/aggregated.routes.ts:14-38 is cited as a harmless 'existence-guarded history read'. It is not: `if (await relationExists(client,'payroll.driver_settlements'))` reads the RETIRE table, and canonical `driver_finance.driver_s",
+        "needs_live": false
+      },
+      {
         "id": "0091-g1-3",
         "module": "settlements",
         "tier": "tier-1",
@@ -770,6 +833,20 @@
         "module": "settlements",
         "tier": "",
         "missing": "load cancellation (status='cancelled') with a driver-fault reason_code never triggers an escrow-deduction proposal -- only abandoned/driver_walkoff/driver_no_show do; cancellation.service.ts and cancel-load.routes.ts have zero escrow linkage",
+        "needs_live": false
+      },
+      {
+        "id": "0243-c1-1-orphaned-payroll-settlement-engine",
+        "module": "settlements",
+        "tier": "tier-1",
+        "missing": "[REFUTED by adversarial pass] The claim answers a different question than the block. The block is 'the LOAD-LINKAGE/deduction-stamping work landed in an orphaned payroll.* engine' and manifest_missing is 'collapse to one engine OR formally bridge payroll.*->driver_finance.* BEFORE SETTLEMENT_GL_POSTING_ENABLED relies on load-linkage data.' Archiving the engine deletes the linkage; it does not bridge it. Proof: the retired engi",
+        "needs_live": false
+      },
+      {
+        "id": "0243-e1-4-driver-settlements-four-schemas",
+        "module": "settlements",
+        "tier": "tier-1",
+        "missing": "[REFUTED by adversarial pass] Same refutation as 0091-e1-4 (the claim itself calls them duplicates). driver_finance.* is NOT the sole live source: payroll/aggregated.routes.ts:14-38 prefers RETIRE `payroll.driver_settlements` via relationExists() and only falls back to canonical in the else-branch — the RETIRE table still exists on prod and is empty (0 rows per 202607520000_...sql:17-19), so the mounted endpoint (index.ts:466)",
         "needs_live": false
       },
       {
@@ -848,6 +925,13 @@
         "tier": "",
         "missing": "deduction-trail (line ~158) and period-close-history (line ~254) queries still lack the UNION ALL to audit.audit_events that void-reversal already has; both reports will keep returning zero/near-zero rows for real deduction-held and period-close events",
         "needs_live": false
+      },
+      {
+        "id": "0441-mod11-financial-change-log-starved",
+        "module": "settlements",
+        "tier": "tier-1",
+        "missing": "[REFUTED by adversarial pass] The claim explicitly declines to do what manifest_missing demands ('same fix as deduction-trail: UNION in audit.audit_events') and argues the defect doesn't exist — but the sibling report in the SAME FILE proves it does. audit/audit-reports.routes.ts:178-186 documents the void-reversal report's fix verbatim: 'UNIONs TWO audit sinks so the register is COMPLETE ... audit.audit_events — the immutable",
+        "needs_live": true
       },
       {
         "id": "0441-mod5-deductions-tab-wrong-content",
@@ -939,6 +1023,13 @@
         "tier": "",
         "missing": "GET /api/v1/driver-finance/escrow-separations and /driver/:driver_id are live-mounted routes that will 500 (relation does not exist) if called on prod today, because they query driver_finance.driver_escrow_separations directly with no isEnabled/table-existence guard -- only releaseDriverEscrowSeparation() checks the flag. No frontend caller currently exists for these GET routes (grep of apps/frontend/src found none), so this is a live but currently-unexercised landmine, not an active user-facing bug.",
         "needs_live": true
+      },
+      {
+        "id": "d-04-settlements-board-redirect-notice",
+        "module": "settlements",
+        "tier": "tier-3",
+        "missing": "[REFUTED by adversarial pass] Code at Dispatch.tsx:497-513 matches verbatim, but this is a mischaracterization, not a fix: the manifest's finding was literally 'shows a redirect notice instead of real data' with the suggested remedy 'show real data inline OR remove the section' -- and the code does neither today; it still renders exactly the notice-plus-link pattern described. The evidence reframes the unchanged status quo as ",
+        "needs_live": false
       },
       {
         "id": "dispatch-sweep-gap-19",
@@ -1102,6 +1193,13 @@
         "needs_live": true
       },
       {
+        "id": "0251-gap4-driver-vendor-mapping",
+        "module": "factoring",
+        "tier": "tier-2",
+        "missing": "[REFUTED by adversarial pass] EVIDENCE MISREADS CODE + REAL LATENT BUG. (1) db/migrations/0091:6-10 adds `qbo_vendor_id text` with NO FK to mdata.qbo_vendors (the FKs there are to identity.users and org.companies only) — the claim's 'linking driver->mdata.qbo_vendors' is false. (2) checkAllMappings does NOT 'read mdata.drivers JOIN mdata.qbo_vendors': driver-vendor-mapping.ts:60-63 LEFT JOINs integrations.samsara_drivers, and ",
+        "needs_live": false
+      },
+      {
         "id": "0441-mod8-factoring-virtual-hardcodes-zero",
         "module": "factoring",
         "tier": "tier-1",
@@ -1186,11 +1284,25 @@
         "needs_live": false
       },
       {
+        "id": "0091-info-b3-3",
+        "module": "dispatch",
+        "tier": "tier-1",
+        "missing": "[REFUTED by adversarial pass] REFUTED — the load-bearing premise is false. Claim: 'ih35_app has NO DELETE privilege on mdata.loads, so the runtime role physically cannot hard-delete a load.' But db/migrations/0116_p6_privilege_reconciliation.sql:17 executes `GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA mdata TO ih35_app`. mdata.loads is created in 0034 (0034 < 0116), so it EXISTS when 0116 runs and the schema-w",
+        "needs_live": false
+      },
+      {
         "id": "0091-m-lists-1",
         "module": "dispatch",
         "tier": "tier-1",
         "missing": "(1) the UPDATE policies on catalogs.load_cancellation_reasons (0035:68-90) and catalogs.dispatch_flag_colors (0038:50-64) carry NO operating_company_id predicate — role-only, cross-entity write leak; (2) neither table has FORCE ROW LEVEL SECURITY, so the table owner bypasses RLS entirely; (3) no guard covers catalogs.* write-policy scoping (verify-mdata-entity-scope does not extend here). Needs a new RLS migration = §1.4 financial cluster (catalogs.*), owner-gated.",
         "needs_live": true
+      },
+      {
+        "id": "0243-b3-3-fuel-g18-trigger-hard-delete-gap",
+        "module": "dispatch",
+        "tier": "tier-1",
+        "missing": "[REFUTED by adversarial pass] REFUTED — same false premise as 0091-info-b3-3, and the two claims 'independently re-verifying' each other is not independence: both ran the same incomplete grep and inherited the same blind spot. db/migrations/0116_p6_privilege_reconciliation.sql:17 `GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA mdata TO ih35_app` (plus DEFAULT PRIVILEGES at 0116:55-56) gives ih35_app DELETE on mda",
+        "needs_live": false
       },
       {
         "id": "0243-c1-4-dead-duplicate-components-dispatchli",
@@ -1340,6 +1452,13 @@
         "needs_live": false
       },
       {
+        "id": "0280-10-detention-approvals-linkage",
+        "module": "dispatch",
+        "tier": "tier-3",
+        "missing": "[REFUTED by adversarial pass] REFUTED on two counts. (a) The DRIVER half of the block ('no verification of load/driver linkage') is NOT addressed — it is an admitted INFERENCE. The claim's own words are 'driver is reachable transitively via l.assigned_primary_driver_id'. I read loadPendingDetentionApprovals (dispatcher.service.ts:273-300): it is `SELECT COUNT(*)::int AS c FROM dispatch.detention_requests dr LEFT JOIN mdata.loa",
+        "needs_live": false
+      },
+      {
         "id": "0280-11-booking-gap-root-cause-linkage",
         "module": "dispatch",
         "tier": "tier-3",
@@ -1358,6 +1477,13 @@
         "module": "dispatch",
         "tier": "tier-3",
         "missing": "backend internally uses load activity to COMPUTE idle days but discards the actual last load_id/load_number; frontend never renders the cooling-driver list at all (count only) — no drill-through explaining why a driver is idle.",
+        "needs_live": false
+      },
+      {
+        "id": "0394-qbo-transaction-pull-missing_DISPATCH",
+        "module": "dispatch",
+        "tier": "",
+        "missing": "[REFUTED by adversarial pass] REFUTED — this is fake-green. The block says the QBO->TMS transaction PULL (bills=A/P, invoices=A/R, bill-payments, credits) was never built. The cited code does NOT pull anything into the TMS; it is a forensic ARCHIVE snapshotter. I read processInboundSyncBatch (apps/backend/src/integrations/qbo/sync-inbound.worker.ts:41-200) line by line: its only writes are (1) status churn on integrations.qbo_",
         "needs_live": false
       },
       {
@@ -1522,6 +1648,13 @@
         "needs_live": true
       },
       {
+        "id": "acct-bills-routes-audit-trail-missing_DISPATCH",
+        "module": "dispatch",
+        "tier": "",
+        "missing": "[REFUTED by adversarial pass] REFUTED — the claim checked the four service mutation fns and stopped, missing a fifth mutation path that bypasses the service entirely. Verified true parts: bills.routes.ts has 0 appendCrudAudit; bills.service.ts:2 imports it and calls it at 673+718 (createBill, 619-737), 833 (payBill, 738-911), 1004 (voidBill, 912-1029), 1097 (voidBillPayment, 1030+) — so those four ARE audited. BUT `app.post(\"/",
+        "needs_live": false
+      },
+      {
         "id": "bf10c-driver-conduct-catalogs-scorecard",
         "module": "dispatch",
         "tier": "tier-2",
@@ -1575,6 +1708,13 @@
         "module": "dispatch",
         "tier": "tier-3",
         "missing": "no rate-confirmation PDF generation exists at Book Load wizard completion — only rate-con PDF ingestion/extraction exists.",
+        "needs_live": false
+      },
+      {
+        "id": "cascade-lane-docs-upload-company-scope",
+        "module": "dispatch",
+        "tier": "tier-3",
+        "missing": "[REFUTED by adversarial pass] REFUTED — the claim enumerated 4 of 7 callers and the 2 it omitted are exactly the broken ones. Verified true: UploadModal.tsx:30 declares `operatingCompanyId?: string` with the FIX-2 comment at :25-32, and :157 forwards `...(operatingCompanyId ? { operating_company_id: operatingCompanyId } : {})`; the 4 cited callers do pass it (CustomerContractsTab:209, trailer DocumentsSection:47, vehicle Docum",
         "needs_live": false
       },
       {
@@ -1676,6 +1816,13 @@
         "needs_live": false
       },
       {
+        "id": "ITEM-02-EXCEL-UPLOAD-RLS-REASSERT",
+        "module": "dispatch",
+        "tier": "",
+        "missing": "[REFUTED by adversarial pass] The migration file 202607270000_reassert_excel_upload_jobs_rls.sql exists, is correct SQL, and is genuinely not in .held-migrations.json — those parts of the evidence are accurate. BUT the cited guard verify-excel-upload-jobs-rls-forced.mjs does NOT validate this migration at all: `const FILE = \"db/migrations/0383_catalog_excel_upload_jobs.sql\"` (line 15) — it only re-checks the OLD 0383 file's st",
+        "needs_live": true
+      },
+      {
         "id": "linkage-walkoff-no-auto-termination",
         "module": "dispatch",
         "tier": "tier-2",
@@ -1687,6 +1834,13 @@
         "module": "dispatch",
         "tier": "tier-2",
         "missing": "Entire block unbuilt: no apps/driver-pwa/capacitor.config.ts, no android/ project, no notifications.device_push_tokens migration/table, no FCM sender wiring.",
+        "needs_live": true
+      },
+      {
+        "id": "phase14-audit-241",
+        "module": "dispatch",
+        "tier": "tier-3",
+        "missing": "Capacity-planning documentation and a scalability dashboard/analytics UI are still absent (find -iname '*scalability*dashboard*' / '*capacity-planning*' returned nothing) — this narrower gap remains, matching the manifest's 'partial'. || [REFUTED by adversarial pass] DOES NOT ADDRESS THE STATED GAP. manifest_missing is 'Capacity-planning documentation; scalability dashboard/analytics' — the evidence proves only the load-test workflow, and even concedes it covers just 'the load-test/CI-guard portion'. Neither missing artifact exists: a search for capacity-plan/CapacityPlan/ScalabilityDashboard/scalability across apps/frontend/src and docs returns ONLY tracker/m",
         "needs_live": true
       },
       {
@@ -1722,6 +1876,13 @@
         "module": "maintenance",
         "tier": "tier-2",
         "missing": "Same gap as 0091-h2-3: no in-house session layer built to replace deprecated lucia.",
+        "needs_live": false
+      },
+      {
+        "id": "0280-41-wo-to-vendor-flow",
+        "module": "maintenance",
+        "tier": "tier-3",
+        "missing": "[REFUTED by adversarial pass] Refuted on linkage (rule 4) and on a misread. (1) MISREAD: the claim says listWorkOrdersByBucket 'LEFT JOINs mdata.vendors on roadside_provider_vendor_id and returns vendor_name'. It does not return vendor_name — work-orders.service.ts:30 aliases it `v.vendor_name AS roadside_provider_name`, and the join at :33 resolves ONLY roadside_provider_vendor_id. Neither vendor_id nor external_vendor_id is ",
         "needs_live": false
       },
       {
@@ -1767,6 +1928,13 @@
         "needs_live": false
       },
       {
+        "id": "0519-dc2-maint-schema-144-rows-active-alongsid",
+        "module": "maintenance",
+        "tier": "",
+        "missing": "Not a defect per the settled ruling — the dual-schema coexistence is documented/accepted, not to be repointed. Exact live row count (the '144 rows' figure) is unverified but does not change the disposition. || [REFUTED by adversarial pass] Refuted — the claim inverts the evidence and rests on memory over prod (§10b forbids exactly this). It cites migrations proving maint.* exists (0272_maint_parts_pm.sql; 202606122215_m1_positioned_parts_picker.sql; 202606122230_m2_position_history.sql) and concludes coexistence is settled/correct. But two migrations it never opened show maint.* is a LEGACY SOURCE being actively drained into mainten",
+        "needs_live": false
+      },
+      {
         "id": "maint2-open-wos-kpi-table-consistency",
         "module": "maintenance",
         "tier": "tier-3",
@@ -1793,6 +1961,13 @@
         "tier": "tier-3",
         "missing": "home-widgets.routes.ts cash-position widget has no join/reference to banking.reconciliation_sessions or bank.reconciliation_matches to indicate whether the displayed balance is reconciled — a customer/CPA reviewing the widget cannot tell if the number is post-reconciliation.",
         "needs_live": false
+      },
+      {
+        "id": "0394-qbo-sync-one-shot-not-recurring",
+        "module": "qbo-recon",
+        "tier": "tier-1",
+        "missing": "[REFUTED by adversarial pass] FAKE-GREEN BY OMISSION — the evidence is meticulously accurate about everything EXCEPT the one line that decides the outcome. master-data-sync.cron.ts:12-15 opens with `if ((process.env.QBO_MASTERDATA_SYNC_ENABLED ?? '').trim() !== 'true') { app.log.info('QBO master-data sync cron disabled...'); return; }` — an early return BEFORE either cron.schedule call. Default is OFF (unset !== 'true'), and g",
+        "needs_live": true
       },
       {
         "id": "0441-mod11-fuel-recon-zero-and-noop-save-link",
@@ -1876,6 +2051,13 @@
         "module": "drivers",
         "tier": "tier-3",
         "missing": "wo-status-counts endpoint does not join maintenance.work_orders to mdata.units/mdata.drivers, so a WO with a NULL/orphan unit_id or driver_id is silently counted with no visibility",
+        "needs_live": false
+      },
+      {
+        "id": "0441-mod13-lists-driver-vs-drivers-parallel-tr",
+        "module": "drivers",
+        "tier": "",
+        "missing": "[REFUTED by adversarial pass] REFUTED — 'confirm shared backend' is false; the parallel-tree bug is NOT fixed, only cosmetically banner-wrapped. apps/frontend/src/pages/lists/driver/deprecated-subcatalog-pages.tsx uses createDriverCatalogClient hitting basePath `/api/v1/catalogs/driver/${urlSegment}` (api/catalogs-driver.ts:39). The canonical plural page apps/frontend/src/pages/lists/drivers/license-classes/Catalog.tsx uses a ",
         "needs_live": false
       },
       {
@@ -2061,6 +2243,13 @@
         "needs_live": false
       },
       {
+        "id": "insurance-2-breadcrumb-desync",
+        "module": "safety",
+        "tier": "tier-3",
+        "missing": "[REFUTED by adversarial pass] The underlying functional fix is real: SAFETY_TABS_CONFIG.ts:77 defines insurance inside SAFETY_GROUPS (not an orphan alias), and SafetyLayout.tsx (lines 89-108) derives activeTabId/breadcrumb generically from SAFETY_GROUPS for all tabs including insurance; route mounted at manifest.tsx:1487 ('insurance' child of /safety). BUT the claim's specific assertion that 'Guard runs via vitest run... execu",
+        "needs_live": false
+      },
+      {
         "id": "linkage-safety-event-no-driver-status-update",
         "module": "safety",
         "tier": "tier-2",
@@ -2173,6 +2362,13 @@
         "needs_live": true
       },
       {
+        "id": "0257-audit-100",
+        "module": "compliance",
+        "tier": "tier-3",
+        "missing": "no standalone 'immigration compliance dashboard' view exists, but the underlying I-9 + visa/passport tracking substance the audit asked for is built and wired || [REFUTED by adversarial pass] The cited evidence is real (OnboardingStepI9.tsx mounted at OnboardingWizardPage.tsx:290; visa/passport columns read/written in drivers.routes.ts; visa_b1 surfaced in driver-aggregate.service.ts:461, displayed via BorderCredentialsSection.tsx mounted in DriverProfilePage.tsx:334) but it does not close the actual gap the audit named: an 'Immigration Audit' system for work-authorization/visa-complia",
+        "needs_live": false
+      },
+      {
         "id": "0257-audit-76",
         "module": "compliance",
         "tier": "tier-3",
@@ -2257,6 +2453,13 @@
         "needs_live": false
       },
       {
+        "id": "0280-32-revenue-to-customer-linkage",
+        "module": "customers-vendors",
+        "tier": "tier-3",
+        "missing": "[REFUTED by adversarial pass] The claim's own evidence disproves its verdict. The item asks to 'verify today's-revenue query includes customer FK'. I read the query: apps/backend/src/home/home-widgets.routes.ts:161-171 is `SELECT COALESCE(SUM(total_cents), 0)::text AS cents FROM accounting.invoices WHERE operating_company_id = $1::uuid AND issue_date = CURRENT_DATE` — customer_id is NOT selected, NOT grouped, NOT joined. The r",
+        "needs_live": false
+      },
+      {
         "id": "0441-mod13-inventory-part-to-vendor-none",
         "module": "customers-vendors",
         "tier": "tier-3",
@@ -2285,11 +2488,25 @@
         "needs_live": true
       },
       {
+        "id": "cust1-vend1-pager-total-count-bug",
+        "module": "customers-vendors",
+        "tier": "tier-3",
+        "missing": "[REFUTED by adversarial pass] The evidence misreads the code. CustomerListSidebar.tsx:75 does compute `totalPages = Math.ceil(totalCount / pageSize)` from a prop — but the prop's VALUE is an in-memory array length: apps/frontend/src/pages/Customers.tsx:458 passes `totalCount={customersSorted.length}`, and customersSorted (Customers.tsx:283-298) is a client-side filter/sort over customersQuery.data. The API's real total is thro",
+        "needs_live": false
+      },
+      {
         "id": "custvend-par1-vendor-credits-no-ui",
         "module": "customers-vendors",
         "tier": "tier-2",
         "missing": "No UI component anywhere in apps/frontend/src imports from api/vendor-credits.ts. Backend + schema + client exist; nothing renders it (e.g. no VendorCreditsTab on the vendor detail page).",
         "needs_live": true
+      },
+      {
+        "id": "vend1-pagination-total-vs-length",
+        "module": "customers-vendors",
+        "tier": "tier-3",
+        "missing": "[REFUTED by adversarial pass] Refuted on the exact gap named in manifest_missing: 'Wire filteredCount/pager to the real server total (the received totalCount prop) instead of sortedVendors.length'. The `.length` was moved, not removed. VendorListSidebar.tsx:75 reads the totalCount prop, but apps/frontend/src/pages/Vendors.tsx:292 supplies `totalCount={vendorsSorted.length}` — an in-memory array length, identical to the origina",
+        "needs_live": false
       },
       {
         "id": "vend3-test-vendor-rows-visible",
@@ -2324,6 +2541,20 @@
         "module": "reports",
         "tier": "tier-3",
         "missing": "Replace `client: any` in relationExists/columnExists (library.routes.ts:39,44) with the real pg/Fastify pool client type.",
+        "needs_live": false
+      },
+      {
+        "id": "0280-21-home-routes-redirect-verification",
+        "module": "reports",
+        "tier": "tier-3",
+        "missing": "[REFUTED by adversarial pass] REFUTED — self-refuting evidence. The claim's own text admits 'No runtime pre-check exists before the 307', i.e. the thing the finding asks for was never built, yet it is filed RESOLVED (= built + wired + linked on main). Nothing was built. Confirmed by reading the file: home.routes.ts:3-16 redirectPreservingQuery() copies the query string and unconditionally `reply.code(307).redirect(dest)` again",
+        "needs_live": false
+      },
+      {
+        "id": "0441-mod1-dual-homepage",
+        "module": "reports",
+        "tier": "tier-3",
+        "missing": "[REFUTED by adversarial pass] REFUTED under rule 5 — the claim answers a question the manifest did not ask. manifest_missing = 'A single canonical Home component (or shared data/layout core) consumed by both entry points; currently two independently-maintained implementations diverge in data sources and layout.' The evidence never addresses the shared core; it argues the two ROUTES are intentional. Both cited comments are real",
         "needs_live": false
       },
       {
@@ -2544,6 +2775,13 @@
         "needs_live": true
       },
       {
+        "id": "0010-f3-rls-missing-force",
+        "module": "platform",
+        "tier": "tier-1",
+        "missing": "[REFUTED by adversarial pass] Refuted on three counts. (1) The 'drift-proof by construction' claim is false. db/migrations/202606290002_rls_force_tail.sql runs its DO-loop ONCE, over pg_class as it exists at that migration's position. scripts/lib/migration-filename-validation.mjs:50 sorts migration filenames lexicographically, so every 202607* migration applies AFTER the tail. Nine later migrations ENABLE ROW LEVEL SECURITY wi",
+        "needs_live": true
+      },
+      {
         "id": "0033-verify-fk-integrity-guard",
         "module": "platform",
         "tier": "tier-2",
@@ -2598,6 +2836,13 @@
         "tier": "tier-2",
         "missing": "no partition/retention/archival mechanism for outbox.events, audit.row_changes, events.event_log — these are append-only, highest-write tables with zero rolloff; needs monthly range-partition + maintenance cron or scheduled archive-to-R2-then-detach, plus a size tripwire in the checksum job (scripts/backup-checksum-monthly.mjs). audit.row_changes is financial-cluster-adjacent — any fix needs owner sign-off per §1.4/§1.3 (it's a migration).",
         "needs_live": true
+      },
+      {
+        "id": "0243-h5-3-no-r2-evidence-check-dr-drill-stub-7",
+        "module": "platform",
+        "tier": "",
+        "missing": "[REFUTED by adversarial pass] False protection — the evidence check can never execute in CI, so it is guaranteed-SKIP, i.e. fake-green. scripts/backup-restore-drill.sh run_evidence_check() returns 0 early on TWO independent guards: (1) `if [[ -z \"${R2_ACCOUNT_ID:-}\" || -z \"${R2_ACCESS_KEY_ID:-}\" || -z \"${R2_SECRET_ACCESS_KEY:-}\" ]]` -> 'evidence-check SKIP — R2 not configured'; the .github/workflows/monthly-restore-drill.yml '",
+        "needs_live": false
       },
       {
         "id": "0243-h6-2-cash-advance-display-id-no-lock-no-u",
@@ -2712,6 +2957,13 @@
         "needs_live": false
       },
       {
+        "id": "p1-logging-system",
+        "module": "platform",
+        "tier": "tier-2",
+        "missing": "[REFUTED by adversarial pass] REFUTED under rule 5 — the evidence does not address the stated gap, it confirms the gap. manifest_missing = 'confirmation of centralized log aggregation/shipping (vs just stdout)'. index.ts:496 Fastify({ logger: true }) is default pino to STDOUT with no transport. A repo-wide grep over apps/backend/src + package.json for pino-transport|pino.transport|logtail|datadog|loki|betterstack|papertrail|lo",
+        "needs_live": false
+      },
+      {
         "id": "p1-session-timeout",
         "module": "platform",
         "tier": "tier-2",
@@ -2761,5 +3013,47 @@
         "needs_live": true
       }
     ]
-  }
+  },
+  "method": {
+    "input": "npm run reconcile:blocks (fresh 2026-07-16) -> 901 non-DONE blocks; joined to docs/trackers/MASTER-MANIFEST-2026-07-10.json for real acceptance/linkage (686 join, 215 evidence-only)",
+    "passes": [
+      "pass 1: 69 batches (16 opus tier-1 / 53 sonnet) -> 879 verdicts",
+      "pass 2: ADVERSARIAL refute of all 175 RESOLVED (18 batches) -> 44 refuted (25% fake-green), corrections applied"
+    ],
+    "read_only": true,
+    "prod_db_accessed": false,
+    "code_edited": false,
+    "migrations_authored": 0,
+    "merged": false
+  },
+  "integrity": {
+    "citations_checked": 1544,
+    "cited_file_missing": 15,
+    "cited_line_past_eof": 0,
+    "note": "the 15 are almost all OPEN verdicts correctly citing a file ABSENCE as the gap",
+    "verdicts_with_empty_evidence": 0,
+    "resolved_attacked": 175,
+    "resolved_refuted": 44,
+    "resolved_upheld": 131,
+    "fake_green_rate": "25.1% of RESOLVED did not survive attack"
+  },
+  "structural_findings": {
+    "hollow_registry": {
+      "boilerplate_allowed_files": 972,
+      "non_done_blocks_with_real_allowed_files": "9 of 901",
+      "source_txt_files_present": false,
+      "detail": "_FINDINGS-STRUCTURAL.md"
+    },
+    "guard_false_protection": {
+      "guards_on_disk": 1006,
+      "ci_gated": 312,
+      "unwired": 694,
+      "currently_failing_unwired": 33,
+      "currently_failing_gated": 1,
+      "detail": "_FINDINGS-STRUCTURAL.md"
+    }
+  },
+  "unverified_no_verdict": [
+    "0091-g9-h4 — agent returned no verdict for this id; UNVERIFIED, needs a live check"
+  ]
 }
