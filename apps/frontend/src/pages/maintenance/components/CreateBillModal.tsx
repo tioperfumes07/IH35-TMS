@@ -68,7 +68,9 @@ export function CreateBillModal({
         submitLabel="Create Bill"
         submitTestId="create-bill-submit"
         onCancel={onClose}
-        onSubmit={(payload) => createMutation.mutateAsync(payload)}
+        onSubmit={async (payload) => {
+          await createMutation.mutateAsync(payload);
+        }}
       />
     </Modal>
   );
