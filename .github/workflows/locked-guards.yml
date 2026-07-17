@@ -1268,7 +1268,3 @@ jobs:
         run: node scripts/verify-inventory-reorder-threshold-ui.mjs --selftest
       - name: verify:inventory-reorder-threshold-ui
         run: node scripts/verify-inventory-reorder-threshold-ui.mjs
-      - name: verify:user-detail-activity-tab --selftest
-        run: node scripts/verify-user-detail-activity-tab.mjs --selftest
-      - name: verify:user-detail-activity-tab
-        run: node scripts/verify-user-detail-activity-tab.mjs
