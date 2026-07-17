@@ -2,8 +2,8 @@ import type { DispatchLoadRow } from "../../api/loads";
 import type { DataTableErrorState } from "../../lib/tableError";
 import type { OpenPreSettlement } from "../../api/driverFinance";
 
-type SortField = "created_at" | "load_number" | "status" | "rate_total_cents";
-type SortDirection = "asc" | "desc";
+export type SortField = "created_at" | "load_number" | "status" | "rate_total_cents";
+export type SortDirection = "asc" | "desc";
 
 /**
  * Shared props shape for the live DispatchBoard list surface.

@@ -13,7 +13,7 @@ import { HOS_COLUMNS } from "./hos/hosClocks";
 import { TableSelection, TableSelectionHeader } from "../bulk";
 import { InlineUnitPicker } from "./InlineUnitPicker";
 import { InlineDriverPicker } from "./InlineDriverPicker";
-import type { DispatchListProps } from "./dispatchListTypes";
+import type { DispatchListProps, SortField } from "./dispatchListTypes";
 
 export type { DispatchListProps } from "./dispatchListTypes";
 
