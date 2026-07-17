@@ -1008,6 +1008,13 @@ jobs:
       - name: verify:claim-crossmodule-fks
         run: npm run verify:claim-crossmodule-fks
 
+      # 0010-f1 — orphan-FK inventory ratchet (0519-ri1(a)): lock into locked-guards so new
+      # *_id/*_uuid columns without inline REFERENCES cannot land without CI fail / baseline update
+      - name: verify:orphan-fk-inventory --selftest
+        run: node scripts/verify-orphan-fk-inventory.mjs --selftest
+      - name: verify:orphan-fk-inventory
+        run: npm run verify:orphan-fk-inventory
+
       - name: verify:relay-key-no-cross-entity-fallback --selftest
         run: node scripts/verify-relay-key-no-cross-entity-fallback.mjs --selftest
       - name: verify:relay-key-no-cross-entity-fallback
