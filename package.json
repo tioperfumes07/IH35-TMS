@@ -1076,7 +1076,8 @@
     "verify:item-editor-account-addnew": "node scripts/verify-item-editor-account-addnew.mjs",
     "verify:backdated-check-wired": "node scripts/verify-backdated-check-wired.mjs",
     "verify:unit-finance-linkage-tab": "node scripts/verify-unit-finance-linkage-tab.mjs",
-    "verify:safety-log-event-dot-fields": "node scripts/verify-safety-log-event-dot-fields.mjs"
+    "verify:safety-log-event-dot-fields": "node scripts/verify-safety-log-event-dot-fields.mjs",
+    "verify:insurance-units-assets-bridge": "node scripts/verify-insurance-units-assets-bridge.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1087.0",

@@ -10,6 +10,7 @@ import {
 import { computeProRataPremiumDeltaCents, recordFleetPremiumJournalEntry } from "./policy-unit-fleet.service.js";
 import { createPolicyBillSchedule } from "./policy-bill-schedule.service.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { resolveMdataAssetId } from "./resolve-asset-id.shared.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -146,12 +147,23 @@ function policySelectColumns() {
 
 function policyUnitSelectColumns() {
   return `
-    id::text,
-    policy_id::text,
-    asset_id::text,
-    insured_value_cents::bigint,
-    created_at::text,
-    updated_at::text
+    pu.id::text,
+    pu.policy_id::text,
+    pu.asset_id::text,
+    COALESCE(a.unit_id::text, u.id::text) AS unit_id,
+    pu.insured_value_cents::bigint,
+    pu.created_at::text,
+    pu.updated_at::text
+  `;
+}
+
+function policyUnitFromClause() {
+  return `
+    FROM insurance.policy_unit pu
+    LEFT JOIN mdata.assets a ON a.id = pu.asset_id AND a.tenant_id = pu.tenant_id
+    LEFT JOIN mdata.units u
+      ON u.unit_number = a.unit_code
+     AND (u.owner_company_id = pu.tenant_id OR u.currently_leased_to_company_id = pu.tenant_id)
   `;
 }
 
@@ -214,9 +226,9 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
       const unitsRes = await client.query(
         `
           SELECT ${policyUnitSelectColumns()}
-          FROM insurance.policy_unit
-          WHERE tenant_id = $1::uuid AND policy_id = $2::uuid
-          ORDER BY created_at ASC
+          ${policyUnitFromClause()}
+          WHERE pu.tenant_id = $1::uuid AND pu.policy_id = $2::uuid
+          ORDER BY pu.created_at ASC
         `,
         [query.data.operating_company_id, params.data.id]
       );
@@ -441,15 +453,8 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
       if (!policyRes.rows[0]) return { kind: "policy_not_found" as const };
       const policy = policyRes.rows[0] as PolicyRow;
 
-      const assetRes = await client.query(
-        `
-          SELECT id::text
-          FROM mdata.assets
-          WHERE tenant_id = $1::uuid AND id = $2::uuid
-        `,
-        [body.operating_company_id, body.asset_id]
-      );
-      if (!assetRes.rows[0]) return { kind: "asset_not_found" as const };
+      const resolvedAssetId = await resolveMdataAssetId(client, body.operating_company_id, body.asset_id);
+      if (!resolvedAssetId) return { kind: "asset_not_found" as const };
 
       type ExistingUnit = { id: string; is_active: boolean };
       const existingRes = await client.query(
@@ -459,7 +464,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
           WHERE tenant_id = $1::uuid AND policy_id = $2::uuid AND asset_id = $3::uuid
           FOR UPDATE
         `,
-        [body.operating_company_id, params.data.policy_id, body.asset_id]
+        [body.operating_company_id, params.data.policy_id, resolvedAssetId]
       );
       const existing = existingRes.rows[0] as ExistingUnit | undefined;
 
@@ -487,7 +492,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
           `INSERT INTO insurance.policy_unit (tenant_id, policy_id, asset_id, insured_value_cents)
            VALUES ($1::uuid, $2::uuid, $3::uuid, $4)
            RETURNING id::text, policy_id::text, asset_id::text, insured_value_cents::bigint, removed_at::text, created_at::text, updated_at::text`,
-          [body.operating_company_id, params.data.policy_id, body.asset_id, body.insured_value_cents]
+          [body.operating_company_id, params.data.policy_id, resolvedAssetId, body.insured_value_cents]
         );
         unitRow = ins.rows[0] as Record<string, unknown>;
       }
@@ -496,7 +501,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
         resource_id: unitRow.id,
         operating_company_id: body.operating_company_id,
         policy_id: params.data.policy_id,
-        asset_id: body.asset_id,
+        asset_id: resolvedAssetId,
       });
 
       const premiumDeltaCents = computeProRataPremiumDeltaCents({
@@ -506,7 +511,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
         unitCount: activeCount + 1,
       });
 
-      return { kind: "ok" as const, unitRow, premiumDeltaCents, policy };
+      return { kind: "ok" as const, unitRow, premiumDeltaCents, policy, resolvedAssetId };
     });
 
     if (created.kind === "policy_not_found") return reply.code(404).send({ error: "policy_not_found" });
@@ -518,7 +523,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
       actorRole: user.role,
       operatingCompanyId: body.operating_company_id,
       policyId: params.data.policy_id,
-      assetId: body.asset_id,
+      assetId: created.resolvedAssetId,
       direction: "add",
       amountCents: created.premiumDeltaCents,
     });
@@ -751,22 +756,21 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
     if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
 
     const coverage = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      // Resolve the asset by EITHER an mdata.assets.id OR an mdata.units.id. The fleet/insurance UI
-      // passes unit.id, but mdata.assets has its own PK and links to units only by unit_code =
-      // units.unit_number (see migration 0262). Looking up assets.id = unit.id matched nothing -> 404
-      // for every unit. Resolve through unit_code so a unit id works, while still accepting an asset id.
+      const resolvedAssetId = await resolveMdataAssetId(
+        client,
+        query.data.operating_company_id,
+        params.data.id,
+      );
+      if (!resolvedAssetId) return null;
+
       const assetRes = await client.query(
         `
           SELECT a.id::text, a.unit_code, a.asset_type, a.status
           FROM mdata.assets a
-          WHERE a.tenant_id = $1::uuid
-            AND (
-              a.id = $2::uuid
-              OR a.unit_code IN (SELECT u.unit_number FROM mdata.units u WHERE u.id = $2::uuid)
-            )
+          WHERE a.tenant_id = $1::uuid AND a.id = $2::uuid
           LIMIT 1
         `,
-        [query.data.operating_company_id, params.data.id]
+        [query.data.operating_company_id, resolvedAssetId]
       );
       const assetRow = assetRes.rows[0] as { id: string } | undefined;
       if (!assetRow) return null;

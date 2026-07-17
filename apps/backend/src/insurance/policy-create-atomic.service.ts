@@ -17,6 +17,7 @@ import {
   type InsuranceDispersalUnit,
 } from "./dispersal.service.js";
 import type { InsuranceCoverageType, InsurancePolicyStatus } from "./policy.shared.js";
+import { resolveMdataAssetId } from "./resolve-asset-id.shared.js";
 
 export type AllocationMethod = "equal_split" | "pro_rata" | "weighted";
 
@@ -291,26 +292,35 @@ export async function createInsurancePolicyWithBills(
     const monthlyPremiumCents = Math.round(input.totalPremiumCents / input.termMonths);
     const costPerUnit = computeEqualSplitMonthly(monthlyPremiumCents, input.unitIds.length);
 
-    for (let i = 0; i < input.unitIds.length; i++) {
-      const unitId = input.unitIds[i]!;
+    const resolvedAssetIds: string[] = [];
+    for (const unitId of input.unitIds) {
+      const resolvedAssetId = await resolveMdataAssetId(client, input.operatingCompanyId, unitId);
+      if (!resolvedAssetId) {
+        throw new Error(`asset_not_found:${unitId}`);
+      }
+      resolvedAssetIds.push(resolvedAssetId);
+    }
+
+    for (let i = 0; i < resolvedAssetIds.length; i++) {
+      const resolvedAssetId = resolvedAssetIds[i]!;
       const costPerMonth = costPerUnit[i] ?? 0;
       await client.query(
         `INSERT INTO insurance.policy_unit (
            tenant_id, policy_id, asset_id, insured_value_cents, cost_per_month_cents
          )
          VALUES ($1::uuid,$2::uuid,$3::uuid,0,$4)`,
-        [input.operatingCompanyId, policyId, unitId, costPerMonth]
+        [input.operatingCompanyId, policyId, resolvedAssetId, costPerMonth]
       );
       await appendCrudAudit(client, input.userId, "insurance.policy_unit.created", {
         resource_id: policyId,
         operating_company_id: input.operatingCompanyId,
-        asset_id: unitId,
+        asset_id: resolvedAssetId,
       });
     }
 
     // dispersal.service allocateBill uses by_value weights; set equal weight = 1 for equal/equal_split
-    const dispersalUnits: InsuranceDispersalUnit[] = input.unitIds.map((id) => ({
-      asset_id: id,
+    const dispersalUnits: InsuranceDispersalUnit[] = resolvedAssetIds.map((asset_id) => ({
+      asset_id,
       insured_value_cents: 1,
     }));
 
