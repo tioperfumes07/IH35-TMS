@@ -82,10 +82,13 @@ describe("mdata loads routes", () => {
     const loadId = "22222222-2222-4222-8222-222222222222";
     queryMock.mockImplementation(async (sql: string, params?: unknown[]) => {
       if (sql.includes("FROM mdata.loads") && sql.includes("SELECT id, status")) {
-        return { rows: [{ id: loadId, status: "assigned" }] };
+        return {
+          rows: [{ id: loadId, status: "assigned", operating_company_id: "11111111-1111-4111-8111-111111111111" }],
+        };
       }
-      if (sql.includes("FROM catalogs.cancellation_reasons")) {
+      if (sql.includes("FROM catalogs.load_cancellation_reasons")) {
         expect(params?.[0]).toBe("DRIVER_WALKOFF");
+        expect(params?.[1]).toBe("11111111-1111-4111-8111-111111111111");
         return { rows: [{ reason_code: "DRIVER_WALKOFF", requires_owner_approval: true }] };
       }
       if (sql.includes("UPDATE mdata.loads")) {
@@ -113,9 +116,11 @@ describe("mdata loads routes", () => {
     const loadId = "33333333-3333-4333-8333-333333333333";
     queryMock.mockImplementation(async (sql: string) => {
       if (sql.includes("FROM mdata.loads") && sql.includes("SELECT id, status")) {
-        return { rows: [{ id: loadId, status: "assigned" }] };
+        return {
+          rows: [{ id: loadId, status: "assigned", operating_company_id: "11111111-1111-4111-8111-111111111111" }],
+        };
       }
-      if (sql.includes("FROM catalogs.cancellation_reasons")) {
+      if (sql.includes("FROM catalogs.load_cancellation_reasons")) {
         return { rows: [{ reason_code: "DRIVER_WALKOFF", requires_owner_approval: true }] };
       }
       if (sql.includes("UPDATE mdata.loads") && sql.includes("SET status")) {

@@ -533,8 +533,12 @@ export function distributeLoadInstructions(loadId: string, operatingCompanyId: s
   );
 }
 
-export function listDispatchCancellationReasons() {
-  return apiRequest<{ reasons: Array<Record<string, unknown>> }>("/api/v1/dispatch/cancellation-reasons");
+export function listDispatchCancellationReasons(operatingCompanyId: string) {
+  const u = new URLSearchParams();
+  u.set("operating_company_id", operatingCompanyId);
+  return apiRequest<{ reasons: Array<Record<string, unknown>> }>(
+    `/api/v1/dispatch/cancellation-reasons?${u.toString()}`
+  );
 }
 
 // --- P6-T11191 dispatch refinements ---

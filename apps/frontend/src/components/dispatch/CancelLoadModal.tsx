@@ -50,8 +50,8 @@ export function CancelLoadModal({ open, operatingCompanyId, onClose, onSubmit }:
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const reasonsQuery = useQuery({
-    queryKey: ["dispatch", "cancellation-reasons"],
-    queryFn: () => listDispatchCancellationReasons().then((value) => value.reasons),
+    queryKey: ["dispatch", "cancellation-reasons", operatingCompanyId],
+    queryFn: () => listDispatchCancellationReasons(operatingCompanyId).then((value) => value.reasons),
     enabled: open && Boolean(operatingCompanyId),
   });
 
@@ -79,7 +79,9 @@ export function CancelLoadModal({ open, operatingCompanyId, onClose, onSubmit }:
           try {
             await onSubmit({
               cancel_reason_code: String(selectedReason.reason_code),
-              cancel_reason: String(selectedReason.reason_label ?? selectedReason.reason_code),
+              cancel_reason: String(
+                selectedReason.reason_label ?? selectedReason.display_name ?? selectedReason.reason_code
+              ),
               reason_code: String(selectedReason.reason_code),
               cancellation_notes: notes.trim(),
               billable_to_customer: billable,
@@ -103,7 +105,7 @@ export function CancelLoadModal({ open, operatingCompanyId, onClose, onSubmit }:
           <Combobox
             options={reasons.map((reason) => ({
               value: String(reason.reason_code),
-              label: String(reason.reason_label),
+              label: String(reason.reason_label ?? reason.display_name ?? reason.reason_code),
               sublabel: `${String(reason.reason_code)}${reason.requires_owner_approval ? " · Owner approval" : ""}`,
             }))}
             value={reasonCode}
