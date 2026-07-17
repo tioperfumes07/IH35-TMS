@@ -194,7 +194,15 @@ export function LegalMatterDetailPage() {
 
           {tab === "overview" && isEditing && editForm && admin ? (
             <div className="mx-auto max-w-3xl space-y-3 rounded-sm border border-gray-200 bg-white p-4">
-              <LegalMatterFormFields form={editForm} setForm={setEditForm} mode="edit" />
+              <LegalMatterFormFields
+                form={editForm}
+                setForm={(update) =>
+                  setEditForm((prev) =>
+                    prev ? (typeof update === "function" ? update(prev) : update) : prev,
+                  )
+                }
+                mode="edit"
+              />
               <div className="flex flex-wrap gap-2">
                 <Button
                   disabled={updateMut.isPending}
