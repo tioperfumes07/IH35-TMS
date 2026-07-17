@@ -289,6 +289,9 @@ jobs:
       - name: verify:fleet-roster-create-actions
         run: npm run verify:fleet-roster-create-actions
 
+      - name: verify:fleet-insurance-summary-rendered
+        run: npm run verify:fleet-insurance-summary-rendered
+
       - name: verify:cash-forecast-firewall
         run: npm run verify:cash-forecast-firewall
 
