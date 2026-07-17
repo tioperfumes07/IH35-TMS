@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { resolveApiUrl } from "../../api/client";
+import { listMaintenanceParts } from "../../api/maintenance";
 import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { Button } from "../../components/Button";
@@ -88,10 +88,13 @@ export function InventoryPartsStockPage() {
     queryKey: ["inventory", "parts", operatingCompanyId],
     enabled: Boolean(operatingCompanyId),
     queryFn: async () => {
-      const res = await fetch(resolveApiUrl(`/api/v1/maintenance/parts?operating_company_id=${operatingCompanyId}`));
-      if (!res.ok) throw new Error("Failed to fetch parts");
-      const data = (await res.json()) as { rows?: MaintenancePartRow[] };
-      return { parts: mapMaintenancePartsToInventoryRows(data.rows ?? []) };
+      // 0441-mod13: route read through listMaintenanceParts (apiRequest) — avoids uncredentialed cross-origin fetch.
+      // api/maintenance.ts's MaintenancePartRow is a structural superset of this file's (adds
+      // vendor_default/reorder_threshold/source/voided_reason) — no cast needed, TS allows it directly.
+      const data = await listMaintenanceParts(operatingCompanyId);
+      return {
+        parts: mapMaintenancePartsToInventoryRows(data.rows ?? []),
+      };
     },
   });
 

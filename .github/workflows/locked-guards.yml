@@ -1218,3 +1218,8 @@ jobs:
         run: node scripts/verify-dispatch-oos-unit-block.mjs --selftest
       - name: verify:dispatch-oos-unit-block
         run: npm run verify:dispatch-oos-unit-block
+      # 0441-mod13 — Inventory Parts & Stock must read via listMaintenanceParts (apiRequest), never raw fetch(resolveApiUrl)
+      - name: verify:inventory-read-path-api-request --selftest
+        run: node scripts/verify-inventory-read-path-api-request.mjs --selftest
+      - name: verify:inventory-read-path-api-request
+        run: npm run verify:inventory-read-path-api-request

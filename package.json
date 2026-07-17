@@ -60,6 +60,7 @@
     "verify:banking-workflow-b-archived": "node scripts/verify-banking-workflow-b-archived.mjs",
     "verify:banking-no-orphan-pages": "node scripts/verify-banking-no-orphan-pages.mjs",
     "verify:inventory-assignments-honesty": "node scripts/verify-inventory-assignments-honesty.mjs",
+    "verify:inventory-read-path-api-request": "node scripts/verify-inventory-read-path-api-request.mjs",
     "verify:banking-register-categorize-capable": "node scripts/verify-banking-register-categorize-capable.mjs",
     "verify:no-sidebar-flyout": "node scripts/verify-no-sidebar-flyout.mjs",
     "verify:orphan-components:update": "node scripts/verify-orphan-components.mjs --update",
