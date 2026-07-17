@@ -12,7 +12,7 @@ vi.mock("react-router-dom", async () => {
   return { ...actual, useNavigate: () => navigateMock };
 });
 
-function renderBar(status = "Active") {
+function renderBar(status = "Active", onAssignTruck = vi.fn()) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={qc}>
@@ -23,6 +23,7 @@ function renderBar(status = "Active") {
           driverName="Jane Driver"
           driverStatus={status}
           onActionComplete={vi.fn()}
+          onAssignTruck={onAssignTruck}
         />
       </MemoryRouter>
     </QueryClientProvider>
@@ -73,12 +74,19 @@ describe("ActionBar", () => {
     expect(link.getAttribute("href")).toBe("/dispatch/map?driver=d-1");
   });
 
-  it("honestly disables assign truck instead of emitting an unread query link", () => {
-    renderBar();
+  it("opens assign truck flow via onAssignTruck callback", () => {
+    const onAssignTruck = vi.fn();
+    renderBar("Active", onAssignTruck);
+    const action = screen.getByTestId("dp-action-assign-truck");
+    expect(action.hasAttribute("disabled")).toBe(false);
+    fireEvent.click(action);
+    expect(onAssignTruck).toHaveBeenCalledTimes(1);
+  });
+
+  it("disables assign truck for terminated drivers", () => {
+    renderBar("Terminated");
     const action = screen.getByTestId("dp-action-assign-truck");
     expect(action.hasAttribute("disabled")).toBe(true);
-    expect(action.getAttribute("title")).toBe("Assign a driver from the Fleet unit profile.");
-    expect(action.closest("a")).toBeNull();
   });
 
   it("suspends driver via PATCH + safety event", async () => {

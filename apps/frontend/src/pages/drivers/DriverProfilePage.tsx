@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { updateDriver, deactivateDriver, reactivateDriver } from "../../api/mdata";
 import { listDriverQualificationItems } from "../../api/safety";
 import { ActionBar } from "../../components/driver-profile/ActionBar";
+import { AssignTruckModal } from "../../components/driver-profile/AssignTruckModal";
 import { BorderCredentialsSection } from "../../components/driver-profile/BorderCredentialsSection";
 import { CurrentAssignmentSection } from "../../components/driver-profile/CurrentAssignmentSection";
 import { DocumentsTab } from "../../components/documents/DocumentsTab";
@@ -130,6 +131,7 @@ type DriverProfilePageProps = {
 export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProfilePageProps = {}) {
   const { id: routeId = "" } = useParams();
   const id = driverIdProp ?? routeId;
+  const [searchParams, setSearchParams] = useSearchParams();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
@@ -222,6 +224,19 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
 
   const displayName = driverDisplayName(driver.first_name, driver.last_name, driver.id);
   const profileDriver = aggregate.driver;
+  const assignTruckOpen = searchParams.get("assign_truck") === "1";
+
+  const openAssignTruck = () => {
+    const next = new URLSearchParams(searchParams);
+    next.set("assign_truck", "1");
+    setSearchParams(next, { replace: true });
+  };
+
+  const closeAssignTruck = () => {
+    const next = new URLSearchParams(searchParams);
+    next.delete("assign_truck");
+    setSearchParams(next, { replace: true });
+  };
 
   return (
     <div className="space-y-3">
@@ -407,8 +422,18 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
           driverName={displayName}
           driverStatus={driver.status}
           onActionComplete={refreshDriver}
+          onAssignTruck={driver.status === "Terminated" ? undefined : openAssignTruck}
         />
       </div>
+
+      <AssignTruckModal
+        open={assignTruckOpen}
+        driverId={id}
+        companyId={companyId}
+        driverName={displayName}
+        onClose={closeAssignTruck}
+        onAssigned={refreshDriver}
+      />
 
       <section data-testid="dp-section-audit-history" className="rounded-sm border border-gray-200 bg-white p-3">
         <h2 className="mb-3 text-sm font-semibold text-slate-900">Audit History</h2>
