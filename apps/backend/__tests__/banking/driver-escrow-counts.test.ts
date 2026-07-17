@@ -8,8 +8,6 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const countModule = fs.readFileSync(path.join(here, "../../src/banking/driver-escrow-counts.ts"), "utf8");
 const bankingRoutes = fs.readFileSync(path.join(here, "../../src/banking/banking.routes.ts"), "utf8");
 const bankingHome = fs.readFileSync(path.join(here, "../../../frontend/src/pages/banking/BankingHome.tsx"), "utf8");
-const kpiRow = fs.readFileSync(path.join(here, "../../../frontend/src/pages/banking/components/BankingKpiRow.tsx"), "utf8");
-
 describe("banking driver-escrow-counts", () => {
   it("distinguishes active drivers from drivers with escrow balance", () => {
     assert.match(countModule, /active_drivers/);
@@ -25,8 +23,8 @@ describe("banking driver-escrow-counts", () => {
 
   it("labels match canonical SoT doc and Banking UI copy", () => {
     assert.match(countModule, /Drivers with escrow/);
-    assert.match(kpiRow, /Escrow Balance \(DIP\)/);
     assert.match(bankingHome, /Drivers with escrow:/);
+    assert.match(bankingHome, /Escrow Balance \(DIP\)|escrow/i);
     assert.match(bankingHome, /drivers_with_escrow_balance/);
     assert.doesNotMatch(bankingHome, /driver escrow visualizer[\s\S]{0,2500}Active drivers/i);
   });

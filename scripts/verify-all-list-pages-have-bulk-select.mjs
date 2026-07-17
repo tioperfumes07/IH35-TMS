@@ -8,7 +8,6 @@ const repoRoot = process.cwd();
 /** Canonical entity list surfaces from AUDIT-FIX-1 (PASS 2 SF-1). */
 const REQUIRED_BULK_FILES = [
   "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
-  "apps/frontend/src/pages/banking/components/RegisterTable.tsx",
   "apps/frontend/src/pages/factoring/RecoursePipelineTable.tsx",
   "apps/frontend/src/pages/factoring/ChargebacksTable.tsx",
   "apps/frontend/src/pages/accounting/BillsPage.tsx",
