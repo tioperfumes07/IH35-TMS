@@ -8497,7 +8497,9 @@
       "load_id",
       "operating_company_id",
       "preventable",
+      "status",
       "unit_id",
+      "updated_at",
       "vendor_id"
     ],
     "safety.anomaly_alert_rules": [
