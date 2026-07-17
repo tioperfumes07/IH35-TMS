@@ -67,13 +67,28 @@ contains("apps/frontend/src/components/safety/CertExpiryBadge.tsx", badge, [
   { pattern: /warn/, label: "warn badge state" },
 ]);
 
-// SAFETY-2: Cert Expiry now has its own route /safety/cert-expiry (was aliased onto /safety/dot-compliance,
-// which broke active-tab/breadcrumb). Its nav config now lives in SAFETY_TABS_CONFIG.ts.
+// SAFETY-2: Cert Expiry has its own route /safety/cert-expiry (distinct from /safety/dot-compliance)
+// AND mounts ExpiryDashboard — not DOTComplianceTab (which embeds ExpiryDashboard + reminders/CFR).
 const nav = read("apps/frontend/src/components/safety/SAFETY_TABS_CONFIG.ts");
 contains("apps/frontend/src/components/safety/SAFETY_TABS_CONFIG.ts", nav, [
   { pattern: /cert-expiry/, label: "cert expiry nav entry" },
   { pattern: /\/safety\/cert-expiry/, label: "cert expiry target route" },
 ]);
+
+const routeManifest = read("apps/frontend/src/routes/manifest.tsx");
+contains("apps/frontend/src/routes/manifest.tsx", routeManifest, [
+  {
+    pattern: /path=["']cert-expiry["']\s+element=\{<ExpiryDashboard\s*\/>\}/,
+    label: "cert-expiry route mounts ExpiryDashboard (not DOTComplianceTab)",
+  },
+  {
+    pattern: /path=["']dot-compliance["']\s+element=\{<DOTComplianceTab\s*\/>\}/,
+    label: "dot-compliance keeps DOTComplianceTab",
+  },
+]);
+if (/path=["']cert-expiry["']\s+element=\{<DOTComplianceTab\s*\/>\}/.test(routeManifest)) {
+  fail("apps/frontend/src/routes/manifest.tsx: cert-expiry must not mount DOTComplianceTab");
+}
 
 const dotTab = read("apps/frontend/src/pages/safety/tabs/DOTComplianceTab.tsx");
 contains("apps/frontend/src/pages/safety/tabs/DOTComplianceTab.tsx", dotTab, [

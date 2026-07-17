@@ -113,6 +113,8 @@ import {
   SettingsTab,
   TrailerInterchangesTab,
 } from "../pages/safety/tabs";
+// SAFETY-2: Cert Expiry is a distinct route — ExpiryDashboard only (not DOTComplianceTab).
+import { ExpiryDashboard } from "../pages/safety/expiry-tracking/ExpiryDashboard";
 const LiabilitiesHomePage = React.lazy(() => import("../pages/liabilities/LiabilitiesHome").then((m) => ({ default: m.LiabilitiesHomePage })));
 import { MaintenanceHomePage, MaintenanceShell } from "../pages/maintenance/MaintenanceHome";
 import type { MaintenanceTabId } from "../pages/maintenance/MaintenanceHome";
@@ -1471,7 +1473,7 @@ export const ROUTES = React.Children.toArray(
           <Route path="driver-scoring" element={<DriverScoringTab />} />
           <Route path="csa-score" element={<CSAScoreTab />} />
           <Route path="dot-compliance" element={<DOTComplianceTab />} />
-          <Route path="cert-expiry" element={<DOTComplianceTab />} />
+          <Route path="cert-expiry" element={<ExpiryDashboard />} />
           <Route path="safety-events" element={<SafetyEventsTab />} />
           <Route path="/safety/safety-events" element={<SafetyEventsTab />} />
           <Route path="accidents" element={<AccidentsIncidentsTab />} />
