@@ -1,0 +1,110 @@
+import { useMemo } from "react";
+import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { fetchEldHosViolations, type EldHosViolation } from "../../../api/eld";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+
+type Props = { operatingCompanyId: string };
+
+export function ViolationsTab({ operatingCompanyId }: Props) {
+  const query = useQuery({
+    queryKey: ["eld", "hos-violations", operatingCompanyId],
+    queryFn: () => fetchEldHosViolations(operatingCompanyId),
+    enabled: Boolean(operatingCompanyId),
+  });
+
+  const rows = useMemo(
+    () => (query.data?.hos_violations ?? []).filter((row) => !row.voided_at),
+    [query.data?.hos_violations],
+  );
+
+  const columns = useMemo<Array<ParityColumn<EldHosViolation>>>(
+    () => [
+      {
+        key: "driver_id",
+        label: "Driver",
+        sortable: true,
+        render: (row) => {
+          const id = String(row.driver_id ?? "");
+          if (!id) return "—";
+          return (
+            <Link to={`/drivers/${id}/hos`} className="font-medium text-slate-700 hover:underline">
+              {String(row.driver_display_id ?? row.driver_name ?? id.slice(0, 8))}
+            </Link>
+          );
+        },
+      },
+      {
+        key: "violation_code",
+        label: "Code",
+        sortable: true,
+        render: (row) => String(row.violation_code ?? row.violation_type ?? "—"),
+      },
+      {
+        key: "severity",
+        label: "Severity",
+        sortable: true,
+        render: (row) => String(row.severity ?? "—"),
+      },
+      {
+        key: "occurred_at",
+        label: "Occurred",
+        sortable: true,
+        render: (row) => String(row.occurred_at ?? "").slice(0, 16).replace("T", " ") || "—",
+      },
+      {
+        key: "source",
+        label: "Source",
+        sortable: true,
+        render: (row) => String(row.source ?? "—"),
+      },
+      {
+        key: "duty_status",
+        label: "Duty",
+        render: (row) => String(row.duty_status ?? "—"),
+      },
+    ],
+    [],
+  );
+
+  if (!operatingCompanyId) {
+    return <p className="text-sm text-slate-600">Select an operating company to load HOS violations.</p>;
+  }
+
+  return (
+    <div className="space-y-3" data-testid="eld-violations-tab">
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2">
+        <div>
+          <div className="text-sm font-semibold text-slate-800">HOS Violations</div>
+          <div className="text-[11px] text-slate-500">
+            Read-only from <code className="text-[10px]">GET /api/v1/safety/hos-violations</code>. Create / void on
+            Safety.
+          </div>
+        </div>
+        <Link
+          to="/safety/hos-violations"
+          className="rounded-sm bg-[#1f2a44] px-3 py-1.5 text-xs font-semibold text-white"
+        >
+          Open Safety violations
+        </Link>
+      </div>
+
+      {query.isError ? (
+        <p className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
+          Failed to load HOS violations.
+        </p>
+      ) : null}
+
+      <ParityTable<EldHosViolation>
+        columns={columns}
+        rows={rows}
+        rowKey={(row) => String(row.id ?? `${row.driver_id}-${row.occurred_at}`)}
+        loading={query.isLoading}
+        emptyText="No open HOS violations on file for this company."
+        storageKey="eld-hos-violations"
+        exportFilename="eld-hos-violations"
+        tableTestId="eld-violations-table"
+      />
+    </div>
+  );
+}

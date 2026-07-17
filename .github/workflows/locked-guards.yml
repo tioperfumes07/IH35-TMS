@@ -252,6 +252,9 @@ jobs:
       - name: verify:eld-tabs-canonical
         run: npm run verify:eld-tabs-canonical
 
+      - name: verify:eld-tabs-live-data
+        run: npm run verify:eld-tabs-live-data
+
       - name: verify:mdata-insert-arity
         run: npm run verify:mdata-insert-arity
 
