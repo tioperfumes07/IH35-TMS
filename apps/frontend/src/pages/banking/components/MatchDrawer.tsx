@@ -56,11 +56,18 @@ function kindBadge(kind: BankMatchCandidateKind) {
 export function MatchDrawer({ open, bankTransactionId, operatingCompanyId, onClose, onAccepted }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const [searchAll, setSearchAll] = useState(false);
+  const [searchQ, setSearchQ] = useState("");
+  const [draftQ, setDraftQ] = useState("");
   const { pushToast } = useToast();
 
   const candidatesQuery = useQuery({
-    queryKey: ["banking", "match-candidates", operatingCompanyId, bankTransactionId],
-    queryFn: () => getMatchCandidates(String(bankTransactionId), operatingCompanyId),
+    queryKey: ["banking", "match-candidates", operatingCompanyId, bankTransactionId, searchAll, searchQ],
+    queryFn: () =>
+      getMatchCandidates(String(bankTransactionId), operatingCompanyId, {
+        searchAll,
+        q: searchQ || undefined,
+      }),
     enabled: open && Boolean(operatingCompanyId && bankTransactionId),
   });
 
@@ -112,9 +119,54 @@ export function MatchDrawer({ open, bankTransactionId, operatingCompanyId, onClo
         </div>
 
         <p className="mb-3 text-[11px] text-slate-500">
-          Ranked matchable records (amount, date, memo). Exact-amount matches can be confirmed to link and
-          clear — no journal entry is posted. Bill payments and any amount variance stay held.
+          Recommended matches (±7 days). If none fit, use <strong>Search all</strong> like QuickBooks to widen the
+          window and search by payee / memo / ref. Exact-amount matches can be confirmed to link and clear — no
+          journal entry is posted. Bill payments and any amount variance stay held. Candidates are live production
+          ledger rows — never fixtures.
         </p>
+
+        <div className="mb-3 flex flex-wrap items-center gap-2" data-testid="match-search-all-controls">
+          <input
+            type="search"
+            value={draftQ}
+            onChange={(e) => setDraftQ(e.target.value)}
+            placeholder="Search payee, memo, ref…"
+            className="h-8 min-w-[160px] flex-1 rounded-sm border border-slate-300 px-2 text-xs"
+            data-testid="match-search-query"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                setSearchQ(draftQ.trim());
+                setSearchAll(true);
+              }
+            }}
+          />
+          <button
+            type="button"
+            data-testid="match-search-all"
+            className={`rounded-sm border px-2 py-1.5 text-[11px] ${
+              searchAll ? "border-slate-800 bg-slate-900 text-white" : "border-slate-300 bg-white text-slate-700"
+            }`}
+            onClick={() => {
+              setSearchQ(draftQ.trim());
+              setSearchAll(true);
+            }}
+          >
+            Search all
+          </button>
+          {searchAll ? (
+            <button
+              type="button"
+              className="rounded-sm border border-slate-300 px-2 py-1.5 text-[11px] text-slate-600"
+              onClick={() => {
+                setSearchAll(false);
+                setSearchQ("");
+                setDraftQ("");
+              }}
+            >
+              Reset to recommended
+            </button>
+          ) : null}
+        </div>
 
         {candidatesQuery.isError ? <ListErrorBanner onRetry={() => void candidatesQuery.refetch()} /> : null}
         {candidatesQuery.isLoading ? <p className="text-sm text-slate-600">Loading candidates…</p> : null}

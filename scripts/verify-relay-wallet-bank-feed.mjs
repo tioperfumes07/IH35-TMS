@@ -78,6 +78,46 @@ if (depositClassifier && !/upsertRelayWalletDepositFeedRow/.test(depositClassifi
   failures.push("deposit classifier must call upsertRelayWalletDepositFeedRow after upsert");
 }
 
+const csvImport = read("apps/backend/src/integrations/relay-payments/relay-fuel-csv-import.routes.ts");
+if (csvImport && !/upsertRelayDeposit/.test(csvImport)) {
+  failures.push("CSV import must call upsertRelayDeposit for type=deposit rows (Received path)");
+}
+if (csvImport && !/rowType === \"deposit\"|rowType === 'deposit'/.test(csvImport)) {
+  failures.push("CSV import must branch on type=deposit");
+}
+
+const matchService = read("apps/backend/src/accounting/bank-recon/match.service.ts");
+if (matchService && !/windowDays|window_days|searchQuery|search_query/.test(matchService)) {
+  failures.push("match.service findCandidates must support Search-all window_days + search_query");
+}
+if (matchService && !/make_interval\(days =>/.test(matchService)) {
+  failures.push("match.service must use parameterized make_interval for match date window");
+}
+
+const designView = read(
+  "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
+);
+if (designView) {
+  if (!/isRelayWalletAccount/.test(designView) || !/label=\"Driver\"/.test(designView) || !/label=\"Truck\"/.test(designView)) {
+    failures.push("BankingTransactionsDesignView must show Driver/Truck/Load columns on Relay wallet");
+  }
+  if (!/buildRelayFuelBreakdown|Fuel breakdown \(Relay\)/.test(designView)) {
+    failures.push("BankingTransactionsDesignView must surface Relay fuel line breakdown");
+  }
+  if (!/Transfer from account/.test(designView) || !/Transfer to account/.test(designView)) {
+    failures.push("Transfer categorize must expose inline From/To account pickers (QBO)");
+  }
+  if (!/PrintOrientationDialog|printDialogOpen/.test(designView)) {
+    failures.push("BankingTransactionsDesignView must ask portrait/landscape before print");
+  }
+  if (!/Search all|matchSearchAll|inline-match-search-all/.test(designView)) {
+    failures.push("BankingTransactionsDesignView match pane must expose Search all (QBO)");
+  }
+  if (!/This month|Last month|bank-date-filter-button/.test(designView)) {
+    failures.push("BankingTransactionsDesignView must expose QBO date presets + dynamic date label");
+  }
+}
+
 if (backfill && !/wallet-bank-feed\/backfill/.test(backfill)) {
   failures.push("backfill route must expose /api/integrations/relay/wallet-bank-feed/backfill");
 }
@@ -94,21 +134,6 @@ if (plaid && !/categorization_unit_id/.test(plaid)) {
 }
 if (plaid && !/relay_fuel_lines/.test(plaid)) {
   failures.push("company-transactions must return relay_fuel_lines (diesel/reefer/DEF/fee breakdown)");
-}
-
-const designView = read(
-  "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
-);
-if (designView) {
-  if (!/isRelayWalletAccount/.test(designView) || !/label=\"Driver\"/.test(designView) || !/label=\"Truck\"/.test(designView)) {
-    failures.push("BankingTransactionsDesignView must show Driver/Truck/Load columns on Relay wallet");
-  }
-  if (!/buildRelayFuelBreakdown|Fuel breakdown \(Relay\)/.test(designView)) {
-    failures.push("BankingTransactionsDesignView must surface Relay fuel line breakdown");
-  }
-  if (!/Transfer from account/.test(designView) || !/Transfer to account/.test(designView)) {
-    failures.push("Transfer categorize must expose inline From/To account pickers (QBO)");
-  }
 }
 
 const breakdownHelper = read(

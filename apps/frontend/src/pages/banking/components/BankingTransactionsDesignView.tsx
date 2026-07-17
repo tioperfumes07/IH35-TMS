@@ -23,6 +23,7 @@ import {
   buildRelayFuelBreakdown,
   formatRelayFuelBreakdownSummary,
 } from "./relayFuelLineBreakdown";
+import { PrintOrientationDialog, applyPrintOrientationStyles } from "./PrintOrientationDialog";
 import { BulkActionBar } from "../../../components/bulk/BulkActionBar";
 import { TableSelectionHeader } from "../../../components/bulk/TableSelection";
 import { ActionButton } from "../../../components/shared/ActionButton";
@@ -258,6 +259,10 @@ export function BankingTransactionsDesignView({
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [collapsedAllGroupings, setCollapsedAllGroupings] = useState(false);
+  const [matchSearchAll, setMatchSearchAll] = useState(false);
+  const [matchSearchQ, setMatchSearchQ] = useState("");
+  const [matchDraftQ, setMatchDraftQ] = useState("");
+  const [printDialogOpen, setPrintDialogOpen] = useState(false);
   const [collapsedMonths, setCollapsedMonths] = useState<Record<string, boolean>>({});
   const [viewSettingsOpen, setViewSettingsOpen] = useState(false);
   const [printExportMenuOpen, setPrintExportMenuOpen] = useState(false);
@@ -363,10 +368,20 @@ export function BankingTransactionsDesignView({
   // "similar past categorizations" suggestions endpoint below (that one was wrongly bound here before —
   // it answers a different question and always came back empty for a first-time transaction).
   const matchCandidatesQuery = useQuery({
-    queryKey: ["banking", "tx-match-candidates", companyId, expandedTxId ?? ""],
-    queryFn: () => getMatchCandidates(String(expandedTxId), companyId),
+    queryKey: ["banking", "tx-match-candidates", companyId, expandedTxId ?? "", matchSearchAll, matchSearchQ],
+    queryFn: () =>
+      getMatchCandidates(String(expandedTxId), companyId, {
+        searchAll: matchSearchAll,
+        q: matchSearchQ || undefined,
+      }),
     enabled: Boolean(companyId && expandedTxId),
   });
+
+  useEffect(() => {
+    setMatchSearchAll(false);
+    setMatchSearchQ("");
+    setMatchDraftQ("");
+  }, [expandedTxId]);
 
   // Secondary panel — "similar past categorizations" (kept, additive-only; not the primary match source).
   const suggestionsQuery = useQuery({
@@ -473,7 +488,7 @@ export function BankingTransactionsDesignView({
     action: 150,
   };
   const txColWidth = (key: string) => txColWidths[key] ?? TX_COLUMN_DEFAULTS[key] ?? 120;
-  const onToggleSortCol = (key: string) => toggleSort(key as "date" | "description" | "spent" | "received" | "amount");
+  const onToggleSortCol = (key: string) => toggleSort(key as BankTxnSort["key"]);
 
   const tableRows = useMemo(() => {
     const source = reviewTabBuckets[activeReviewTab];
@@ -522,13 +537,20 @@ export function BankingTransactionsDesignView({
       if (sortBy.key === "description") return (tx.description ?? tx.merchant_name ?? "").toLowerCase();
       if (sortBy.key === "spent") return spentReceived(tx).spent;
       if (sortBy.key === "received") return spentReceived(tx).received;
-      // DEFECT-9a — the single "Amount" column (Show amounts in 1 column) sorts by the SIGNED amount
-      // (received positive, spent negative), so ascending runs biggest-spend→biggest-receive and
-      // descending reverses it — the same numeric ordering QBO's Amount column uses.
       if (sortBy.key === "amount") {
         const { spent, received } = spentReceived(tx);
         return received - spent;
       }
+      if (sortBy.key === "driver") return String(tx.categorization_driver_id ?? "").toLowerCase();
+      if (sortBy.key === "truck") return String(tx.categorization_unit_id ?? "").toLowerCase();
+      if (sortBy.key === "load") return String(tx.matched_load_id ?? tx.categorization_load_id ?? "").toLowerCase();
+      if (sortBy.key === "fromTo" || sortBy.key === "payee") return String(tx.merchant_name ?? tx.description ?? "").toLowerCase();
+      if (sortBy.key === "customer") return String(tx.categorization_customer_id ?? "").toLowerCase();
+      if (sortBy.key === "productService") return String(tx.pse_ps_category_qbo_id ?? tx.category ?? "").toLowerCase();
+      if (sortBy.key === "checkNo") return String((tx as { check_number?: string }).check_number ?? "").toLowerCase();
+      if (sortBy.key === "className") return String(tx.plaid_category?.[0] ?? "").toLowerCase();
+      if (sortBy.key === "location") return String((tx as { location?: string }).location ?? "").toLowerCase();
+      if (sortBy.key === "balance") return 0; // balance uses runningBalanceById post-map; date order preferred
       return tx.transaction_date ?? "";
     };
     return [...filtered].sort((a, b) => {
@@ -998,11 +1020,61 @@ export function BankingTransactionsDesignView({
               type="button"
               className="h-8 rounded-sm border border-gray-300 px-2 text-xs text-gray-700"
               onClick={() => setShowDateFilterMenu((open) => !open)}
+              data-testid="bank-date-filter-button"
             >
-              All dates
+              {!dateFrom && !dateTo
+                ? "All dates"
+                : dateFrom && dateTo
+                  ? `${dateFrom} → ${dateTo}`
+                  : dateFrom
+                    ? `From ${dateFrom}`
+                    : `To ${dateTo}`}
             </button>
             {showDateFilterMenu ? (
-              <div className="absolute left-0 z-20 mt-1 w-64 rounded-sm border border-gray-200 bg-white p-2 shadow-sm">
+              <div className="absolute left-0 z-20 mt-1 w-72 rounded-sm border border-gray-200 bg-white p-2 shadow-sm">
+                <div className="mb-2 flex flex-wrap gap-1">
+                  {(
+                    [
+                      ["All", () => { setDateFrom(""); setDateTo(""); }],
+                      ["Today", () => {
+                        const d = new Date();
+                        const iso = d.toISOString().slice(0, 10);
+                        setDateFrom(iso); setDateTo(iso);
+                      }],
+                      ["This week", () => {
+                        const d = new Date();
+                        const day = d.getDay();
+                        const start = new Date(d); start.setDate(d.getDate() - ((day + 6) % 7));
+                        const end = new Date(start); end.setDate(start.getDate() + 6);
+                        setDateFrom(start.toISOString().slice(0, 10));
+                        setDateTo(end.toISOString().slice(0, 10));
+                      }],
+                      ["This month", () => {
+                        const d = new Date();
+                        const start = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1));
+                        const end = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0));
+                        setDateFrom(start.toISOString().slice(0, 10));
+                        setDateTo(end.toISOString().slice(0, 10));
+                      }],
+                      ["Last month", () => {
+                        const d = new Date();
+                        const start = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - 1, 1));
+                        const end = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 0));
+                        setDateFrom(start.toISOString().slice(0, 10));
+                        setDateTo(end.toISOString().slice(0, 10));
+                      }],
+                    ] as Array<[string, () => void]>
+                  ).map(([label, apply]) => (
+                    <button
+                      key={label}
+                      type="button"
+                      className="rounded-sm border border-gray-300 px-1.5 py-0.5 text-[10px] text-gray-700 hover:bg-gray-50"
+                      onClick={() => { apply(); setShowDateFilterMenu(false); }}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
                 <div>
                   <label htmlFor="tx-date-from" className="text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                     From
@@ -1212,7 +1284,7 @@ export function BankingTransactionsDesignView({
                     className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-xs hover:bg-gray-50"
                     onClick={() => {
                       setPrintExportMenuOpen(false);
-                      window.print();
+                      setPrintDialogOpen(true);
                     }}
                   >
                     <Printer className="h-3.5 w-3.5" />
@@ -1294,7 +1366,6 @@ export function BankingTransactionsDesignView({
                   <TableHeaderCell
                     columnKey="driver"
                     label="Driver"
-                    sortable={false}
                     sortKey={sortBy.key}
                     sortDir={sortBy.dir}
                     onToggleSort={onToggleSortCol}
@@ -1305,7 +1376,6 @@ export function BankingTransactionsDesignView({
                   <TableHeaderCell
                     columnKey="truck"
                     label="Truck"
-                    sortable={false}
                     sortKey={sortBy.key}
                     sortDir={sortBy.dir}
                     onToggleSort={onToggleSortCol}
@@ -1316,7 +1386,6 @@ export function BankingTransactionsDesignView({
                   <TableHeaderCell
                     columnKey="load"
                     label="Load"
-                    sortable={false}
                     sortKey={sortBy.key}
                     sortDir={sortBy.dir}
                     onToggleSort={onToggleSortCol}
@@ -1364,7 +1433,6 @@ export function BankingTransactionsDesignView({
               <TableHeaderCell
                 columnKey="balance"
                 label="Balance"
-                sortable={false}
                 sortKey={sortBy.key}
                 sortDir={sortBy.dir}
                 onToggleSort={onToggleSortCol}
@@ -1376,7 +1444,6 @@ export function BankingTransactionsDesignView({
               <TableHeaderCell
                 columnKey="fromTo"
                 label="From/To"
-                sortable={false}
                 sortKey={sortBy.key}
                 sortDir={sortBy.dir}
                 onToggleSort={onToggleSortCol}
@@ -1387,7 +1454,6 @@ export function BankingTransactionsDesignView({
               <TableHeaderCell
                 columnKey="customer"
                 label="Customer"
-                sortable={false}
                 sortKey={sortBy.key}
                 sortDir={sortBy.dir}
                 onToggleSort={onToggleSortCol}
@@ -1398,7 +1464,6 @@ export function BankingTransactionsDesignView({
               <TableHeaderCell
                 columnKey="productService"
                 label="Product/Service"
-                sortable={false}
                 sortKey={sortBy.key}
                 sortDir={sortBy.dir}
                 onToggleSort={onToggleSortCol}
@@ -1410,7 +1475,6 @@ export function BankingTransactionsDesignView({
                 <TableHeaderCell
                   columnKey="checkNo"
                   label="Check No."
-                  sortable={false}
                   sortKey={sortBy.key}
                   sortDir={sortBy.dir}
                   onToggleSort={onToggleSortCol}
@@ -1423,7 +1487,6 @@ export function BankingTransactionsDesignView({
                 <TableHeaderCell
                   columnKey="payee"
                   label="Payee"
-                  sortable={false}
                   sortKey={sortBy.key}
                   sortDir={sortBy.dir}
                   onToggleSort={onToggleSortCol}
@@ -1436,7 +1499,6 @@ export function BankingTransactionsDesignView({
                 <TableHeaderCell
                   columnKey="className"
                   label="Class"
-                  sortable={false}
                   sortKey={sortBy.key}
                   sortDir={sortBy.dir}
                   onToggleSort={onToggleSortCol}
@@ -1449,7 +1511,6 @@ export function BankingTransactionsDesignView({
                 <TableHeaderCell
                   columnKey="location"
                   label="Location"
-                  sortable={false}
                   sortKey={sortBy.key}
                   sortDir={sortBy.dir}
                   onToggleSort={onToggleSortCol}
@@ -1461,7 +1522,6 @@ export function BankingTransactionsDesignView({
               <TableHeaderCell
                 columnKey="matchCategorize"
                 label="Match/Categorize"
-                sortable={false}
                 sortKey={sortBy.key}
                 sortDir={sortBy.dir}
                 onToggleSort={onToggleSortCol}
@@ -1472,7 +1532,6 @@ export function BankingTransactionsDesignView({
               <TableHeaderCell
                 columnKey="action"
                 label="Action"
-                sortable={false}
                 sortKey={sortBy.key}
                 sortDir={sortBy.dir}
                 onToggleSort={onToggleSortCol}
@@ -1812,7 +1871,7 @@ export function BankingTransactionsDesignView({
                     <tr key={`${tx.id}-expanded`} className="border-t border-gray-100 bg-gray-50">
                       <td className="px-3 py-3" colSpan={16}>
                         <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
-                          <div className="rounded-sm border border-gray-200 bg-white p-2">
+                          <div className="p-1">
                             <p className="mb-2 text-xs font-semibold text-gray-900">{transactionLabel(tx)}</p>
                             {viewSettings.showBankDetails ? (
                               <div className="mb-2 grid grid-cols-1 gap-1 text-xs text-gray-600 md:grid-cols-2">
@@ -2321,12 +2380,44 @@ export function BankingTransactionsDesignView({
                             </div>
                           </div>
 
-                          <div ref={matchPaneRef} className="rounded-sm border border-gray-200 bg-white p-2">
+                          <div ref={matchPaneRef} className="border-t border-gray-200 pt-2 lg:border-t-0 lg:border-l lg:pl-3 lg:pt-0">
                             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Match candidates</p>
                             <p className="mt-0.5 text-[11px] text-gray-500">
-                              Ranked matchable ledger records (amount, date, memo) from the reconciliation match
-                              engine, best match first.
+                              Recommended matches (±7 days) from live ledger data. If none fit, Search all like QuickBooks.
                             </p>
+                            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                              <input
+                                type="search"
+                                value={matchDraftQ}
+                                onChange={(e) => setMatchDraftQ(e.target.value)}
+                                placeholder="Search payee, memo, ref…"
+                                className="h-7 min-w-[140px] flex-1 rounded-sm border border-gray-300 px-2 text-xs"
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    setMatchSearchQ(matchDraftQ.trim());
+                                    setMatchSearchAll(true);
+                                  }
+                                }}
+                              />
+                              <button
+                                type="button"
+                                data-testid="inline-match-search-all"
+                                className={`rounded-sm border px-2 py-1 text-[11px] ${matchSearchAll ? "border-slate-800 bg-slate-900 text-white" : "border-gray-300 text-gray-700"}`}
+                                onClick={() => {
+                                  setMatchSearchQ(matchDraftQ.trim());
+                                  setMatchSearchAll(true);
+                                }}
+                              >
+                                Search all
+                              </button>
+                              <button
+                                type="button"
+                                className="rounded-sm border border-gray-300 px-2 py-1 text-[11px] text-gray-700"
+                                onClick={() => setMatchDrawerTxId(tx.id)}
+                              >
+                                Open match drawer
+                              </button>
+                            </div>
                             {matchCandidatesQuery.isLoading ? <p className="mt-2 text-sm text-gray-500">Loading match candidates...</p> : null}
                             {matchCandidatesQuery.isError ? (
                               <p className="mt-2 text-sm text-red-700">Could not load match candidates.</p>
@@ -2454,6 +2545,21 @@ export function BankingTransactionsDesignView({
       />
       {/* HELD financial-actions wiring — reuses the orphaned MatchDrawer (getMatchCandidates +
       acceptBankReconMatch, already gated) instead of inventing a second match/accept flow. */}
+      <PrintOrientationDialog
+        open={printDialogOpen}
+        title="Print bank transactions"
+        onCancel={() => setPrintDialogOpen(false)}
+        onConfirm={(orientation) => {
+          setPrintDialogOpen(false);
+          const cleanup = applyPrintOrientationStyles(orientation);
+          const done = () => {
+            cleanup();
+            window.removeEventListener("afterprint", done);
+          };
+          window.addEventListener("afterprint", done);
+          window.setTimeout(() => window.print(), 50);
+        }}
+      />
       <MatchDrawer
         open={Boolean(matchDrawerTxId)}
         bankTransactionId={matchDrawerTxId}

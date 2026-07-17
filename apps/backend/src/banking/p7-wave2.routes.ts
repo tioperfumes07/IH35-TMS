@@ -146,20 +146,32 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
 
     const params = z.object({ id: z.string().uuid() }).safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
-    const parsed = companyQuerySchema.safeParse(req.query ?? {});
+    const parsed = companyQuerySchema
+      .extend({
+        window_days: z.coerce.number().int().min(1).max(730).optional(),
+        q: z.string().max(200).optional(),
+        search_all: z
+          .union([z.literal("1"), z.literal("true"), z.literal("yes")])
+          .optional()
+          .transform((v) => Boolean(v)),
+      })
+      .safeParse(req.query ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
     const operatingCompanyId = parsed.data.operating_company_id;
 
     // Membership guard: a user may only pull candidates for an entity they belong to.
     await assertCompanyMembership(user.uuid, operatingCompanyId);
 
+    const windowDays = parsed.data.search_all ? parsed.data.window_days ?? 365 : parsed.data.window_days;
     const candidates = await findCandidates({
       operating_company_id: operatingCompanyId,
       bank_transaction_id: params.data.id,
       actor_user_uuid: user.uuid,
+      window_days: windowDays,
+      search_query: parsed.data.q,
     });
 
-    return { candidates, match_candidates_count: candidates.length };
+    return { candidates, match_candidates_count: candidates.length, window_days: windowDays ?? 7, search_query: parsed.data.q ?? null };
   });
 
   app.get("/api/v1/banking/rules", async (req, reply) => {

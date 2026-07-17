@@ -1221,3 +1221,25 @@ Banking → **Relay Fuel Wallet** is the operator surface for Relay fuel drawdow
 
 Guard: `verify:relay-wallet-bank-feed`.
 
+---
+
+## 2026-07-16 — Banking QBO chrome + Relay deposits Received (LOCKED — owner)
+
+### Relay deposits → Received
+- Root cause of empty Received: `integrations.relay_deposits` was never populated on prod (CSV `type=deposit` never imported). Fuel API does **not** return deposits.
+- Path: Relay CSV import `type=deposit` → `upsertRelayDeposit` → `upsertRelayWalletDepositFeedRow` (`source_ref=relay_deposit:{id}`, `is_credit=true`) on Relay Fuel Wallet.
+- Backfill: same wallet-bank-feed backfill endpoint also runs `backfillRelayWalletDepositFeedForCompany`.
+- **Mike ask (non-blocking):** Is there a REST list for wallet **deposits/funding** (not fuel)? If yes, add API ingest; if no, CSV remains SoT.
+- Deposit **GL booking** (loan vs cash) stays HOLD per `relay-wallet-deposit-booking-design.md`.
+
+### Banking register / Reconciliation = QuickBooks-shaped UX
+- Every visible column header ASC/DESC (Banking + Reconciliation this block; remaining modules = `docs/trackers/BANK-SORT-ROLLOUT.md`).
+- Account tiles: **View** (open register) + **Inspect** (institution/mask/balance/last txn) — never delete Connect/Plaid.
+- Date filter: QBO presets (All / Today / This week / This month / Last month / Custom); button label reflects selection.
+- Groupings: By month | Money in/out | All dates (flat); Collapse all groupings.
+- Match: recommended ±7d; **Search all** widens window + memo/payee search; live ledger only (no fixtures).
+- Print: ask Portrait / Landscape; auto-fit `@page`.
+- Flatten nested boxes in categorize/match/recon panels (one surface, no boxes-in-boxes).
+
+Guards: `verify:relay-wallet-bank-feed` (extended).
+
