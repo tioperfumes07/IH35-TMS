@@ -907,6 +907,7 @@
     "verify:inline-create-writes-canonical": "node scripts/verify-inline-create-writes-canonical.mjs",
     "verify:manual-txn-date-patch": "node scripts/verify-manual-txn-date-patch.mjs",
     "verify:owner-home-linkage": "node scripts/verify-owner-home-linkage.mjs",
+    "verify:owner-todays-attention": "node scripts/verify-owner-todays-attention.mjs",
     "verify:relay-cron-registered": "node scripts/verify-relay-cron-registered.mjs",
     "verify:relay-backfill-route-mounted": "node scripts/verify-relay-backfill-route-mounted.mjs",
     "verify:relay-csv-import-route-mounted": "node scripts/verify-relay-csv-import-route-mounted.mjs",
