@@ -1019,3 +1019,8 @@ jobs:
         run: node scripts/verify-425c-petition-not-hardcoded.mjs --selftest
       - name: verify:425c-petition-not-hardcoded
         run: npm run verify:425c-petition-not-hardcoded
+
+      # PM-SCHEDULE-CREATE-FORM — package.json-only was NOT fully wired; lock into locked-guards so
+      # nil-UUID hardcoded create / formless mutate() cannot regress without CI fail
+      - name: verify:pm-schedule-create-form
+        run: npm run verify:pm-schedule-create-form
