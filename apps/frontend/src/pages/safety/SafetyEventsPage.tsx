@@ -27,6 +27,12 @@ type EventDraft = {
   subject_type: "driver" | "unit" | "company";
   subject_driver_id: string;
   subject_unit_id: string;
+  location_text: string;
+  injury_count: number;
+  fatality_count: number;
+  tow_away_required: boolean;
+  dot_reportable: boolean;
+  police_report_number: string;
   title: string;
   description: string;
   /** S-06: user-set time of occurrence (ISO); backend defaults to now() when omitted. */
@@ -60,11 +66,18 @@ function initialEventDraft(): EventDraft {
     subject_type: "company",
     subject_driver_id: "",
     subject_unit_id: "",
+    location_text: "",
+    injury_count: 0,
+    fatality_count: 0,
+    tow_away_required: false,
+    dot_reportable: false,
+    police_report_number: "",
     title: "",
     description: "",
     occurred_at: defaultOccurredAtIso(),
   };
 }
+
 
 export function SafetyEventsPage({ operatingCompanyId }: Props) {
   const queryClient = useQueryClient();
@@ -124,6 +137,12 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
         subject_type: draft.subject_type,
         subject_driver_id: draft.subject_driver_id.trim() || undefined,
         subject_unit_id: draft.subject_unit_id.trim() || undefined,
+        location_text: draft.location_text.trim() || undefined,
+        injury_count: Number(draft.injury_count) || 0,
+        fatality_count: Number(draft.fatality_count) || 0,
+        tow_away_required: draft.tow_away_required,
+        dot_reportable: draft.dot_reportable,
+        police_report_number: draft.police_report_number.trim() || undefined,
         title: draft.title.trim(),
         description: draft.description.trim() || undefined,
         occurred_at: draft.occurred_at,
@@ -213,6 +232,12 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
       draft.description.trim() !== logDraftBaseline.description.trim() ||
       draft.subject_driver_id.trim() !== logDraftBaseline.subject_driver_id.trim() ||
       draft.subject_unit_id.trim() !== logDraftBaseline.subject_unit_id.trim() ||
+      draft.location_text.trim() !== logDraftBaseline.location_text.trim() ||
+      draft.injury_count !== logDraftBaseline.injury_count ||
+      draft.fatality_count !== logDraftBaseline.fatality_count ||
+      draft.tow_away_required !== logDraftBaseline.tow_away_required ||
+      draft.dot_reportable !== logDraftBaseline.dot_reportable ||
+      draft.police_report_number.trim() !== logDraftBaseline.police_report_number.trim() ||
       draft.severity !== logDraftBaseline.severity ||
       draft.status !== logDraftBaseline.status ||
       draft.kpi_bucket !== logDraftBaseline.kpi_bucket ||
@@ -226,6 +251,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
     setLogDraftBaseline(baseline);
     setLogModalOpen(true);
   };
+
 
   const closeLogModal = () => {
     setLogModalOpen(false);
@@ -371,6 +397,12 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
             <div><span className="font-semibold">Severity:</span> {detailQuery.data?.severity ?? "—"}</div>
             <div><span className="font-semibold">Status:</span> {detailQuery.data?.status ?? "—"}</div>
             <div><span className="font-semibold">Occurred:</span> {String(detailQuery.data?.occurred_at ?? "").slice(0, 19).replace("T", " ") || "—"}</div>
+            <div><span className="font-semibold">Location:</span> {detailQuery.data?.location_text ?? "—"}</div>
+            <div><span className="font-semibold">Injuries:</span> {detailQuery.data?.injury_count ?? 0}</div>
+            <div><span className="font-semibold">Fatalities:</span> {detailQuery.data?.fatality_count ?? 0}</div>
+            <div><span className="font-semibold">Tow-away required:</span> {detailQuery.data?.tow_away_required ? "Yes" : "No"}</div>
+            <div><span className="font-semibold">DOT reportable:</span> {detailQuery.data?.dot_reportable ? "Yes" : "No"}</div>
+            <div><span className="font-semibold">Police report #:</span> {detailQuery.data?.police_report_number ?? "—"}</div>
             <div>
               <span className="font-semibold">Related load:</span>{" "}
               {detailQuery.data?.related_load_id ? (
@@ -485,6 +517,67 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
             onChange={(event) => setDraft((prev) => ({ ...prev, subject_unit_id: event.target.value }))}
             placeholder="Subject unit UUID (optional)"
             className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+          />
+          <label className="text-xs font-medium text-gray-700 sm:col-span-2">Location (DOT 390.15)</label>
+          <input
+            value={draft.location_text}
+            onChange={(event) => setDraft((prev) => ({ ...prev, location_text: event.target.value }))}
+            placeholder="Location description"
+            className="rounded-sm border border-gray-300 px-2 py-1 text-xs sm:col-span-2"
+            data-testid="safety-event-location-text"
+          />
+          <label className="text-xs font-medium text-gray-700" htmlFor="safety-event-injury-count">
+            Injuries
+          </label>
+          <label className="text-xs font-medium text-gray-700" htmlFor="safety-event-fatality-count">
+            Fatalities
+          </label>
+          <input
+            id="safety-event-injury-count"
+            type="number"
+            min={0}
+            value={draft.injury_count}
+            onChange={(event) => setDraft((prev) => ({ ...prev, injury_count: Number(event.target.value) || 0 }))}
+            className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+            data-testid="safety-event-injury-count"
+          />
+          <input
+            id="safety-event-fatality-count"
+            type="number"
+            min={0}
+            value={draft.fatality_count}
+            onChange={(event) => setDraft((prev) => ({ ...prev, fatality_count: Number(event.target.value) || 0 }))}
+            className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+            data-testid="safety-event-fatality-count"
+          />
+          <label className="flex items-center gap-2 text-xs text-gray-700">
+            <input
+              type="checkbox"
+              checked={draft.tow_away_required}
+              onChange={(event) => setDraft((prev) => ({ ...prev, tow_away_required: event.target.checked }))}
+              data-testid="safety-event-tow-away-required"
+            />
+            Tow-away required
+          </label>
+          <label className="flex items-center gap-2 text-xs text-gray-700">
+            <input
+              type="checkbox"
+              checked={draft.dot_reportable}
+              onChange={(event) => setDraft((prev) => ({ ...prev, dot_reportable: event.target.checked }))}
+              data-testid="safety-event-dot-reportable"
+            />
+            DOT reportable
+          </label>
+          <label className="text-xs font-medium text-gray-700 sm:col-span-2" htmlFor="safety-event-police-report-number">
+            Police report number
+          </label>
+          <input
+            id="safety-event-police-report-number"
+            value={draft.police_report_number}
+            onChange={(event) => setDraft((prev) => ({ ...prev, police_report_number: event.target.value }))}
+            placeholder="Police report number (if any)"
+            className="rounded-sm border border-gray-300 px-2 py-1 text-xs sm:col-span-2"
+            data-testid="safety-event-police-report-number"
           />
           <textarea
             value={draft.description}

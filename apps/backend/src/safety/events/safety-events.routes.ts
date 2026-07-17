@@ -32,6 +32,12 @@ const createEventSchema = z.object({
   subject_unit_id: z.string().uuid().optional(),
   related_load_id: z.string().uuid().optional(),
   occurred_at: z.string().datetime().optional(),
+  location_text: z.string().trim().max(500).optional(),
+  injury_count: z.coerce.number().int().min(0).max(999).default(0),
+  fatality_count: z.coerce.number().int().min(0).max(999).default(0),
+  tow_away_required: z.boolean().default(false),
+  dot_reportable: z.boolean().default(false),
+  police_report_number: z.string().trim().max(80).optional(),
   title: z.string().trim().min(1).max(160),
   description: z.string().trim().max(5000).optional(),
 });
@@ -98,6 +104,12 @@ export async function registerSafetyEventsRoutes(app: FastifyInstance) {
             e.subject_unit_id::text,
             e.related_load_id::text,
             e.occurred_at::text,
+            e.location_text,
+            e.injury_count,
+            e.fatality_count,
+            e.tow_away_required,
+            e.dot_reportable,
+            e.police_report_number,
             e.title,
             e.description,
             e.created_by::text,
@@ -106,8 +118,13 @@ export async function registerSafetyEventsRoutes(app: FastifyInstance) {
             u.unit_number AS subject_unit_number,
             l.load_number AS related_load_number
           FROM safety.safety_events e
-          LEFT JOIN mdata.drivers d ON d.id = e.subject_driver_id
-          LEFT JOIN mdata.units u ON u.id = e.subject_unit_id
+          LEFT JOIN mdata.drivers d
+            ON d.id = e.subject_driver_id
+           AND d.operating_company_id = e.operating_company_id
+          LEFT JOIN mdata.units u
+            ON u.id = e.subject_unit_id
+           AND (u.owner_company_id = e.operating_company_id
+                OR u.currently_leased_to_company_id = e.operating_company_id)
           LEFT JOIN mdata.loads l
             ON l.id = e.related_load_id
             AND l.operating_company_id = e.operating_company_id
@@ -173,6 +190,12 @@ export async function registerSafetyEventsRoutes(app: FastifyInstance) {
             e.subject_unit_id::text,
             e.related_load_id::text,
             e.occurred_at::text,
+            e.location_text,
+            e.injury_count,
+            e.fatality_count,
+            e.tow_away_required,
+            e.dot_reportable,
+            e.police_report_number,
             e.title,
             e.description,
             e.created_by::text,
@@ -181,8 +204,13 @@ export async function registerSafetyEventsRoutes(app: FastifyInstance) {
             u.unit_number AS subject_unit_number,
             l.load_number AS related_load_number
           FROM safety.safety_events e
-          LEFT JOIN mdata.drivers d ON d.id = e.subject_driver_id
-          LEFT JOIN mdata.units u ON u.id = e.subject_unit_id
+          LEFT JOIN mdata.drivers d
+            ON d.id = e.subject_driver_id
+           AND d.operating_company_id = e.operating_company_id
+          LEFT JOIN mdata.units u
+            ON u.id = e.subject_unit_id
+           AND (u.owner_company_id = e.operating_company_id
+                OR u.currently_leased_to_company_id = e.operating_company_id)
           LEFT JOIN mdata.loads l
             ON l.id = e.related_load_id
             AND l.operating_company_id = e.operating_company_id
@@ -274,6 +302,12 @@ export async function registerSafetyEventsRoutes(app: FastifyInstance) {
             subject_unit_id,
             related_load_id,
             occurred_at,
+            location_text,
+            injury_count,
+            fatality_count,
+            tow_away_required,
+            dot_reportable,
+            police_report_number,
             title,
             description,
             created_by
@@ -290,7 +324,13 @@ export async function registerSafetyEventsRoutes(app: FastifyInstance) {
             COALESCE($10::timestamptz, now()),
             $11,
             $12,
-            $13::uuid
+            $13,
+            $14,
+            $15,
+            $16,
+            $17,
+            $18,
+            $19::uuid
           )
           RETURNING id::text
         `,
@@ -305,6 +345,12 @@ export async function registerSafetyEventsRoutes(app: FastifyInstance) {
           body.data.subject_unit_id ?? null,
           body.data.related_load_id ?? null,
           body.data.occurred_at ?? null,
+          body.data.location_text?.trim() || null,
+          body.data.injury_count,
+          body.data.fatality_count,
+          body.data.tow_away_required,
+          body.data.dot_reportable,
+          body.data.police_report_number?.trim() || null,
           body.data.title,
           body.data.description ?? null,
           user.uuid,
@@ -358,6 +404,12 @@ export async function registerSafetyEventsRoutes(app: FastifyInstance) {
             e.subject_unit_id::text,
             e.related_load_id::text,
             e.occurred_at::text,
+            e.location_text,
+            e.injury_count,
+            e.fatality_count,
+            e.tow_away_required,
+            e.dot_reportable,
+            e.police_report_number,
             e.title,
             e.description,
             e.created_by::text,
@@ -365,12 +417,18 @@ export async function registerSafetyEventsRoutes(app: FastifyInstance) {
             CONCAT_WS(' ', d.first_name, d.last_name) AS subject_driver_name,
             u.unit_number AS subject_unit_number
           FROM safety.safety_events e
-          LEFT JOIN mdata.drivers d ON d.id = e.subject_driver_id
-          LEFT JOIN mdata.units u ON u.id = e.subject_unit_id
+          LEFT JOIN mdata.drivers d
+            ON d.id = e.subject_driver_id
+           AND d.operating_company_id = e.operating_company_id
+          LEFT JOIN mdata.units u
+            ON u.id = e.subject_unit_id
+           AND (u.owner_company_id = e.operating_company_id
+                OR u.currently_leased_to_company_id = e.operating_company_id)
           WHERE e.id = $1::uuid
+            AND e.operating_company_id = $2::uuid
           LIMIT 1
         `,
-        [createdId]
+        [createdId, body.data.operating_company_id]
       );
       const createdEvent = eventRow.rows[0] ?? null;
 
