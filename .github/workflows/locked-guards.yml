@@ -332,6 +332,9 @@ jobs:
       - name: verify:insurance-dashboard-routes-registered
         run: npm run verify:insurance-dashboard-routes-registered
 
+      - name: verify:cashflow-routes-mounted
+        run: npm run verify:cashflow-routes-mounted
+
       - name: verify:safety-rls-coverage
         run: npm run verify:safety-rls-coverage
 
@@ -544,6 +547,12 @@ jobs:
       - name: verify:bank-automatch-observable
         run: npm run verify:bank-automatch-observable
 
+      - name: verify:bank-automatch-button-wired --selftest
+        run: node scripts/verify-bank-automatch-button-wired.mjs --selftest
+
+      - name: verify:bank-automatch-button-wired
+        run: npm run verify:bank-automatch-button-wired
+
       - name: verify:bills-mdata-vendor-fk --selftest
         run: node scripts/verify-bills-mdata-vendor-fk.mjs --selftest
 
@@ -597,6 +606,11 @@ jobs:
         run: node scripts/verify-hos-violation-void-reason.mjs --selftest
       - name: verify:hos-violation-void-reason
         run: npm run verify:hos-violation-void-reason
+      # 0441-mod2-dvir-followup-wo-wrong-table — convert-to-WO must UPDATE dvir_defects + valid source_type
+      - name: verify:dvir-followup-wo-target --selftest
+        run: node scripts/verify-dvir-followup-wo-target.mjs --selftest
+      - name: verify:dvir-followup-wo-target
+        run: npm run verify:dvir-followup-wo-target
       - name: verify:banking-categorize-ux-honesty --selftest
         run: node scripts/verify-banking-categorize-ux-honesty.mjs --selftest
       - name: verify:banking-categorize-ux-honesty

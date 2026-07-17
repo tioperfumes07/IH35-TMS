@@ -165,6 +165,17 @@ export function ReconciliationWorkspacePage() {
   const absVariance = Math.abs(summary.varianceCents);
   const needsForceComplete = absVariance >= 1000;
 
+  // 0441-mod8: wire Auto-Match → existing bank-recon auto_matched_candidates worklist
+  // (BankReconciliationPage accept/reject). No new scoring/GL — session period + account only.
+  const session = workspaceQuery.data?.session;
+  const canOpenAutoMatchSuggestions = Boolean(
+    sessionId &&
+      companyId &&
+      session?.bank_account_id &&
+      session?.period_start &&
+      session?.period_end
+  );
+
   return (
     <div className="space-y-4">
       <PageHeader
@@ -178,11 +189,20 @@ export function ReconciliationWorkspacePage() {
             >
               Print
             </ActionButton>
-            <span title="Auto-Match stays disabled until the reconcile engine is proven safe on this workspace">
-              <ActionButton disabled>
-                Auto-Match Suggestions
-              </ActionButton>
-            </span>
+            <ActionButton
+              disabled={!canOpenAutoMatchSuggestions}
+              onClick={() => {
+                if (!session?.bank_account_id || !session.period_start || !session.period_end) return;
+                const qs = new URLSearchParams({
+                  account_id: session.bank_account_id,
+                  period_start: session.period_start,
+                  period_end: session.period_end,
+                });
+                navigate(`/banking/reconciliation?${qs.toString()}`);
+              }}
+            >
+              Auto-Match Suggestions
+            </ActionButton>
           </div>
         }
       />

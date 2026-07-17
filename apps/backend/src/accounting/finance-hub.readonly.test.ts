@@ -106,7 +106,7 @@ async function build() {
     read_only: true,
     kpis: [{ key: "cash_position", label: "Cash position", value_kind: "money_cents", value: 0, secondary: null, drill_to: "/cash-flow", drill_label: "View cash flow" }],
   });
-  await app.register(mod.default);
+  await mod.registerFinanceHubRoutes(app);
   return app;
 }
 
