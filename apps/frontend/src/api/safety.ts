@@ -44,6 +44,12 @@ export type SafetyEventLogRow = {
   subject_unit_id: string | null;
   related_load_id: string | null;
   occurred_at: string;
+  location_text: string | null;
+  injury_count: number;
+  fatality_count: number;
+  tow_away_required: boolean;
+  dot_reportable: boolean;
+  police_report_number: string | null;
   title: string;
   description: string | null;
   created_by: string;
@@ -92,6 +98,12 @@ export function createSafetyEvent(
     subject_unit_id?: string;
     related_load_id?: string;
     occurred_at?: string;
+    location_text?: string;
+    injury_count?: number;
+    fatality_count?: number;
+    tow_away_required?: boolean;
+    dot_reportable?: boolean;
+    police_report_number?: string;
     title: string;
     description?: string;
   }

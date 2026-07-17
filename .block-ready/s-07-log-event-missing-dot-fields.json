@@ -1,6 +1,6 @@
 {
   "block_id": "s-07-log-event-missing-dot-fields",
-  "status": "PENDING",
+  "status": "BRANCH-PROOF",
   "classification": "FINANCIAL",
   "phase": "tier2",
   "source": "MASTER-6 authored dispatch (05-TIER2-BLOCKS)",
@@ -13,5 +13,5 @@
       "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
     }
   ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+  "note": "Branch fix/safety-log-event-dot-fields: migration 202607582000 adds prod-matched DOT columns to safety.safety_events; UI+POST wired; guard verify:safety-log-event-dot-fields. occurred_at deferred to s-06 PR #2630. hazmat_release omitted (absent on prod safety.accidents). HOLD: owner Neon-apply migration before merge."
 }

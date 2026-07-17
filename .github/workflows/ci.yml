@@ -305,6 +305,10 @@ jobs:
         run: npm run verify:safety-hos-dashboard-wire
       - name: Verify safety incidents cluster wire-up
         run: npm run verify:safety-incidents-cluster-wire
+      - name: verify:safety-log-event-dot-fields --selftest
+        run: node scripts/verify-safety-log-event-dot-fields.mjs --selftest
+      - name: verify:safety-log-event-dot-fields
+        run: npm run verify:safety-log-event-dot-fields
       - name: Verify DVIR schema presence
         run: npm run verify:dvir-schema-presence
       - name: verify:safety-count-nav-integrity
