@@ -1034,3 +1034,10 @@ jobs:
       # SAFETY-KPI-DRILLTHROUGH — KPI tiles/alerts drill to specific driver/unit, never bare /safety
       - name: verify:safety-kpi-drillthrough
         run: npm run verify:safety-kpi-drillthrough
+
+      # 0441-mod11 — Maintenance cost per unit FE↔API field binding (blank/$NaN tiles):
+      # FE must read totals.total_*_cents, row miles_driven, by_category object map
+      - name: verify:maint-cost-per-unit-field-bind --selftest
+        run: node scripts/verify-maint-cost-per-unit-field-bind.mjs --selftest
+      - name: verify:maint-cost-per-unit-field-bind
+        run: npm run verify:maint-cost-per-unit-field-bind

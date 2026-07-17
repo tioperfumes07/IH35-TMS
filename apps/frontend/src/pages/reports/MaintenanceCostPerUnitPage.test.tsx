@@ -28,13 +28,18 @@ function wrap(ui: ReactElement) {
   );
 }
 
+// Mirrors the real API payload shape from
+// apps/backend/src/reports/maintenance-cost-per-unit.routes.ts (totals.total_*_cents,
+// row miles_driven, by_category object map). Guard: verify:maint-cost-per-unit-field-bind.
 const sample: MaintenanceCostPerUnitResponse = {
   period: { start: "2026-01-01", end: "2026-03-31" },
+  basis: "accrual",
+  include_roadservice: true,
   totals: {
     wo_count: 10,
-    parts_cents: 100_000,
-    labor_cents: 50_000,
-    outsourced_cents: 25_000,
+    total_parts_cents: 100_000,
+    total_labor_cents: 50_000,
+    total_outsourced_cents: 25_000,
     grand_total_cents: 175_000,
     truck_count: 2,
   },
@@ -47,15 +52,17 @@ const sample: MaintenanceCostPerUnitResponse = {
       labor_cents: 10_000,
       outsourced_cents: 5_000,
       total_cents: 55_000,
-      miles: 1000,
+      miles_driven: 1000,
       cost_per_mile_cents: 550,
+      avg_wo_cents: 13_750,
+      max_single_wo_cents: 30_000,
       flags: ["high_cost"],
     },
   ],
-  by_category: [
-    { category: "tire", amount_cents: 60_000 },
-    { category: "engine", amount_cents: 40_000 },
-  ],
+  by_category: {
+    tire: 60_000,
+    engine: 40_000,
+  },
 };
 
 describe("MaintenanceCostPerUnitPage", () => {
@@ -69,6 +76,16 @@ describe("MaintenanceCostPerUnitPage", () => {
     await screen.findByText("Grand total");
     expect(screen.getByTitle("high_cost")).toBeInTheDocument();
     await screen.findByText("By category");
+  });
+
+  it("binds KPI tiles to real API totals keys — dollar values, never $NaN", async () => {
+    render(wrap(<MaintenanceCostPerUnitPage />));
+    await screen.findByText("Grand total");
+    expect(screen.getByText("$1,000.00")).toBeInTheDocument(); // Parts ← totals.total_parts_cents
+    expect(screen.getByText("$500.00")).toBeInTheDocument(); // Labor ← totals.total_labor_cents
+    expect(screen.getByText("$250.00")).toBeInTheDocument(); // Outsourced ← totals.total_outsourced_cents
+    expect(screen.getByText("$1,750.00")).toBeInTheDocument(); // Grand total
+    expect(document.body.textContent).not.toContain("NaN");
   });
 
   it("table sort toggles on Unit # header", async () => {
@@ -85,22 +102,32 @@ describe("MaintenanceCostPerUnitPage", () => {
           labor_cents: 0,
           outsourced_cents: 0,
           total_cents: 1000,
-          miles: 100,
+          miles_driven: 100,
           cost_per_mile_cents: 10,
+          avg_wo_cents: 1000,
+          max_single_wo_cents: 1000,
           flags: [],
         },
       ],
     });
     render(wrap(<MaintenanceCostPerUnitPage />));
     await screen.findByText("T-B");
-    const unitHeaders = screen.getAllByText("Unit #");
-    const th = unitHeaders.find((el) => el.tagName === "TH");
-    await user.click(th!);
-    await user.click(th!);
+    // Sortable headers render a <button> inside the <th>; the toggle lives on the button.
+    const sortButton = screen.getAllByRole("button", { name: /Unit #/ }).find((el) => el.closest("th"));
+    expect(sortButton).toBeDefined();
+
+    // First click sorts ascending → T-A first.
+    await user.click(sortButton!);
     await waitFor(() => {
       const tbody = screen.getByText("T-B").closest("tbody")!;
-      const firstRow = within(tbody).getAllByRole("row")[0];
-      expect(firstRow).toHaveTextContent("T-A");
+      expect(within(tbody).getAllByRole("row")[0]).toHaveTextContent("T-A");
+    });
+
+    // Second click toggles descending → T-B first.
+    await user.click(sortButton!);
+    await waitFor(() => {
+      const tbody = screen.getByText("T-B").closest("tbody")!;
+      expect(within(tbody).getAllByRole("row")[0]).toHaveTextContent("T-B");
     });
   });
 });

@@ -1081,8 +1081,8 @@ export async function rematchFuelTxnToGps(params: { operating_company_id: string
 
 export type MaintenanceCostFlag = "high_cost" | "low_cost" | "inspection_due" | "reliable";
 
-export type MaintenanceCostCategorySlice = { category: string; amount_cents: number };
-
+// Field names below mirror apps/backend/src/reports/maintenance-cost-per-unit.routes.ts
+// exactly (MaintTruckRow + totals payload). Guard: verify:maint-cost-per-unit-field-bind.
 export type MaintenanceCostUnitRow = {
   unit_id: string;
   unit_number: string;
@@ -1091,23 +1091,28 @@ export type MaintenanceCostUnitRow = {
   labor_cents: number;
   outsourced_cents: number;
   total_cents: number;
-  miles: number;
-  cost_per_mile_cents: number;
+  miles_driven: number;
+  cost_per_mile_cents: number | null;
+  avg_wo_cents: number;
+  max_single_wo_cents: number;
   flags: MaintenanceCostFlag[];
 };
 
 export type MaintenanceCostPerUnitResponse = {
   period: { start: string; end: string };
+  basis: "cash" | "accrual";
+  include_roadservice: boolean;
   totals: {
     wo_count: number;
-    parts_cents: number;
-    labor_cents: number;
-    outsourced_cents: number;
+    total_parts_cents: number;
+    total_labor_cents: number;
+    total_outsourced_cents: number;
     grand_total_cents: number;
     truck_count: number;
   };
   by_truck: MaintenanceCostUnitRow[];
-  by_category: MaintenanceCostCategorySlice[];
+  /** Category slug → cents. The API returns an object map, not an array of slices. */
+  by_category: Record<string, number>;
 };
 
 /** Prefers Block V date-range API; falls back to legacy `period=YYYY-MM` when newer contract is not deployed. */
