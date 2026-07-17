@@ -669,6 +669,9 @@ jobs:
       - name: verify:entitylink-deep-links
         run: npm run verify:entitylink-deep-links
 
+      - name: verify:unit-finance-linkage-tab
+        run: npm run verify:unit-finance-linkage-tab
+
       - name: verify:customer-invoice-customer-id-deeplink --selftest
         run: node scripts/verify-customer-invoice-customer-id-deeplink.mjs --selftest
       - name: verify:customer-invoice-customer-id-deeplink

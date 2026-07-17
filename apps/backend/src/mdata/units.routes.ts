@@ -12,6 +12,7 @@ import { registerUnitPdfExportRoutes } from "./unit-pdf-export.routes.js";
 import { registerUnitPhotosRoutes } from "./unit-photos.routes.js";
 import { registerUnitPlatesRoutes } from "./unit-plates.routes.js";
 import { registerUnitTripCostRoutes } from "./unit-trip-cost.routes.js";
+import { registerUnitFinanceLinkageRoutes } from "./unit-finance-linkage.routes.js";
 import { getUnitFinancialYTD, type FinancialPeriod } from "./unit-financial.service.js";
 import { fleetTypeFilterSchema, truckTypeSqlFilter } from "./fleet-type-filter.js";
 import { fetchUnifiedFleetList } from "./units-unified-list.service.js";
@@ -586,4 +587,5 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
   await registerUnitDocumentsRoutes(app);
   await registerUnitTripCostRoutes(app);
   await registerUnitPdfExportRoutes(app);
+  await registerUnitFinanceLinkageRoutes(app);
 }
