@@ -1042,7 +1042,8 @@
     "verify:cashflow-routes-mounted": "node scripts/verify-cashflow-routes-mounted.mjs",
     "verify:qbo-parity-name-plus-type-option-labels": "node scripts/verify-qbo-parity-name-plus-type-option-labels.mjs",
     "verify:dispatch-cancel-approval-gate": "node scripts/verify-dispatch-cancel-approval-gate.mjs",
-    "verify:dvir-followup-wo-target": "node scripts/verify-dvir-followup-wo-target.mjs"
+    "verify:dvir-followup-wo-target": "node scripts/verify-dvir-followup-wo-target.mjs",
+    "verify:maintenance-settings-save": "node scripts/verify-maintenance-settings-save.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1087.0",

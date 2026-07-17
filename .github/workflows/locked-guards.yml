@@ -1,4 +1,8 @@
 name: locked-guards
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 on:
   pull_request:
     branches: [main]
@@ -1081,6 +1085,9 @@ jobs:
       # nil-UUID hardcoded create / formless mutate() cannot regress without CI fail
       - name: verify:pm-schedule-create-form
         run: npm run verify:pm-schedule-create-form
+      # 0441-mod2-settings-view-only — Maintenance Settings Save must PATCH persisted store
+      - name: verify:maintenance-settings-save
+        run: npm run verify:maintenance-settings-save
       # 0441-mod2-fault-drafts-rules-orphan-nav — Fault Drafts/Rules must stay in flyout + Master Data nav
       - name: verify:fault-drafts-nav --self-test
         run: node scripts/verify-fault-drafts-nav.mjs --self-test
