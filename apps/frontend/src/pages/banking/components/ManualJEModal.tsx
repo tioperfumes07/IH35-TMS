@@ -212,7 +212,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
             >
               + Create line
             </button>
-            <div className={balanced ? "rounded-sm border border-green-200 bg-green-50 px-2 py-1 text-green-700" : "rounded-sm border border-red-200 bg-red-50 px-2 py-1 text-red-700"}>
+            <div className={balanced ? "rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-slate-700" : "rounded-sm border border-red-200 bg-red-50 px-2 py-1 text-red-700"}>
               Debits ${(totalDebitCents / 100).toFixed(2)} / Credits ${(totalCreditCents / 100).toFixed(2)}{" "}
               {balanced ? "Balanced ✓" : "Not balanced"}
             </div>

@@ -62,7 +62,7 @@ function computeSummary(transactions: PlaidBankTransaction[], statementBalanceCe
 
 function varianceClass(varianceCents: number) {
   const abs = Math.abs(varianceCents);
-  if (abs === 0) return "text-green-700";
+  if (abs === 0) return "text-slate-700";
   if (abs < 1000) return "text-slate-700";
   return "text-red-700";
 }
@@ -332,7 +332,7 @@ export function ReconciliationWorkspacePage() {
                   >
                     <div className="flex items-center justify-between text-xs text-gray-600">
                       <span>{tx.transaction_date}</span>
-                      <span className={matched ? "text-green-700" : "text-gray-500"}>{matched ? "Matched" : "Unmatched"}</span>
+                      <span className={matched ? "text-slate-700" : "text-gray-500"}>{matched ? "Matched" : "Unmatched"}</span>
                     </div>
                     <div className="truncate text-sm font-medium text-gray-900">{tx.description || "Bank transaction"}</div>
                     <div className="text-sm text-gray-700">{money(Number(tx.amount_cents))}</div>
