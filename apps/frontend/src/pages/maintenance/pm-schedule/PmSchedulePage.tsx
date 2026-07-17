@@ -91,7 +91,10 @@ export function PmSchedulePage() {
   });
 
   const rows = listQ.data?.rows ?? [];
-  const units = unitsQ.data?.units ?? [];
+  const units = useMemo(
+    () => (unitsQ.data?.units ?? []) as Array<{ id: string; unit_number?: string }>,
+    [unitsQ.data?.units]
+  );
 
   const columns = useMemo<ParityColumn<PmScheduleRow>[]>(
     () => [
