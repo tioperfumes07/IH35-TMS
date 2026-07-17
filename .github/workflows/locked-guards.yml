@@ -603,6 +603,11 @@ jobs:
         run: node scripts/verify-hos-violation-void-reason.mjs --selftest
       - name: verify:hos-violation-void-reason
         run: npm run verify:hos-violation-void-reason
+      # 0441-mod2-dvir-followup-wo-wrong-table — convert-to-WO must UPDATE dvir_defects + valid source_type
+      - name: verify:dvir-followup-wo-target --selftest
+        run: node scripts/verify-dvir-followup-wo-target.mjs --selftest
+      - name: verify:dvir-followup-wo-target
+        run: npm run verify:dvir-followup-wo-target
       - name: verify:banking-categorize-ux-honesty --selftest
         run: node scripts/verify-banking-categorize-ux-honesty.mjs --selftest
       - name: verify:banking-categorize-ux-honesty

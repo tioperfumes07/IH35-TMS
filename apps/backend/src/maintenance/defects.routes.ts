@@ -217,12 +217,16 @@ export async function registerMaintenanceDefectsRoutes(app: FastifyInstance) {
         return { alreadyConverted: true as const, work_order_id: defect.follow_up_wo_id };
       }
 
+      // source_type must be in chk_maintenance_wo_source_type + next_wo_display_id allowlist
+      // (IS|ES|AC|ET|RT|IT|RS). DVIR triage creates an in-house repair → Internal Shop (IS).
+      // Do NOT invent 'DV' — it fails both the CHECK and next_wo_display_id.
+      const woSourceType = "IS";
       const displayIdRes = await client.query(
         `
           SELECT display_id, sequence
-          FROM maintenance.next_wo_display_id($1, 'DV', CURRENT_DATE, $2)
+          FROM maintenance.next_wo_display_id($1, $2, CURRENT_DATE, $3)
         `,
-        [defect.unit_id, body.data.operating_company_id]
+        [defect.unit_id, woSourceType, body.data.operating_company_id]
       );
       const display = displayIdRes.rows[0];
       const description = [
@@ -250,12 +254,13 @@ export async function registerMaintenanceDefectsRoutes(app: FastifyInstance) {
             origin,
             wo_title
           )
-          VALUES ($1,$2,'DV','open',$3,$4,now(),'in_house',$5,$6,$7,'dvir',$8)
+          VALUES ($1,$2,$3,'open',$4,$5,now(),'in_house',$6,$7,$8,'dvir',$9)
           RETURNING id, display_id
         `,
         [
           body.data.operating_company_id,
           body.data.wo_type,
+          woSourceType,
           defect.unit_id,
           defect.driver_id ?? null,
           description,
@@ -267,13 +272,16 @@ export async function registerMaintenanceDefectsRoutes(app: FastifyInstance) {
       const workOrderId = woRes.rows[0]?.id;
       if (!workOrderId) return { failed: true as const };
 
+      // Per-defect linkage (alreadyConverted gates on dd.follow_up_wo_id). Submissions-level
+      // UPDATE was the wrong table — one submission can have many defects.
       await client.query(
         `
-          UPDATE safety.dvir_submissions
+          UPDATE safety.dvir_defects
           SET follow_up_wo_id = COALESCE(follow_up_wo_id, $2)
           WHERE id = $1
+            AND operating_company_id = $3
         `,
-        [defect.dvir_submission_id, workOrderId]
+        [params.data.id, workOrderId, body.data.operating_company_id]
       );
 
       await appendCrudAudit(client, user.uuid, `${TRIAGE_EVENT_PREFIX}converted_to_wo`, {

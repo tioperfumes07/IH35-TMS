@@ -401,7 +401,7 @@ Drawer actions wired to existing endpoints: status PATCH, photo upload POST, Spa
 
 ### A23-4 — iDVIR / DVIR foundation (2026-06-03)
 
-Migration `0344_safety_dvir.sql` introduces canonical `safety.dvir_submissions` + `safety.dvir_defects` (append-only defects; submissions allow follow-up WO linkage only). Legacy `maintenance.dvir_submissions` / `maintenance.defects` remain with `@deprecated` comments (ARCHIVE-not-DELETE).
+Migration `0344_safety_dvir.sql` introduces canonical `safety.dvir_submissions` + `safety.dvir_defects` (defects append-only except set-once `follow_up_wo_id` after `202607580000`; submissions allow follow-up WO linkage). Legacy `maintenance.dvir_submissions` / `maintenance.defects` remain with `@deprecated` comments (ARCHIVE-not-DELETE).
 
 | Surface | Path | Disposition |
 |---|---|---|
@@ -411,7 +411,7 @@ Migration `0344_safety_dvir.sql` introduces canonical `safety.dvir_submissions` 
 | `registerDriverDvirRoutes` | `POST /api/v1/driver/dvir` | Driver submit delegates to `dvir-submit.service.ts` |
 | `SAFETY_TABS_CONFIG` idvr tab | `/safety/idvr` | **Live** status marker |
 
-Defects auto-spawn `maintenance.work_orders` with `origin='dvir'` and `source_type='DV'`. Major defects invoke `safety.set_unit_dispatch_block()` (WF-050).
+Defects auto-spawn `maintenance.work_orders` with `origin='dvir'`. Maintenance triage convert-to-WO uses valid `source_type='IS'` (0441-mod2). Auto-spawn paths that still emit invalid `'DV'` vs `chk_maintenance_wo_source_type` remain a separate known debt. Major defects invoke `safety.set_unit_dispatch_block()` (WF-050).
 
 **CI guard:** `verify:dvir-schema-presence`.
 
@@ -569,7 +569,7 @@ Active Loads · In Transit · At Risk · Border Decisions Pending · Ready to Se
 
 **Finance Hub nav surface (GO-LIVE, 2026-06-16):** the built-and-working Finance Hub (`/finance` — Overview/Projections/Scenarios always render; Loan Wizard/Calculator/Amortization are flag-gated tabs in `FinanceModuleTabs`) was previously orphaned with no left-rail door (`finance` was in `NAV_HIDDEN_STUB_IDS`), reachable only by typing the URL. **Additive surface:** removed `finance` from `NAV_HIDDEN_STUB_IDS` in `sidebar-config.ts` and labeled it **FINANCE HUB**, landing directly below **FACT** (`/accounting/factoring`) and above **CUSTOMERS** per `SIDEBAR_ITEM_IDS` order. Shows for all roles (`navItemsForRole` defaults for Owner/Admin/SuperAdmin; merge-append for role-first lists). No removal (locked additive rule); no migration. The flag-route fix (#1033) is what made the hub's tab flags resolve. **CI:** `verify:nav-integrity`, `verify:sidebar-contract`.
 
-**DVIR defect intake — maintenance side (B27, 2026-06-04):** `/maintenance/defects` inbox + `/maintenance/defects/:id` detail read canonical `safety.dvir_defects` / `safety.dvir_submissions` (A23-4). Triage actions (assign, escalate, close-no-action, convert-to-WO) persist via append-only `audit.audit_events` (`maintenance.dvir_defect.*`); WO conversion inserts `maintenance.work_orders` with `source_type='DV'` and links `safety.dvir_submissions.follow_up_wo_id`. Detail page pre-fills `CreateWorkOrderModal`. No migration. **CI:** `verify:maint-dvir-defect-intake`.
+**DVIR defect intake — maintenance side (B27, 2026-06-04; fix 0441-mod2 2026-07-17):** `/maintenance/defects` inbox + `/maintenance/defects/:id` detail read canonical `safety.dvir_defects` / `safety.dvir_submissions` (A23-4). Triage actions (assign, escalate, close-no-action, convert-to-WO) persist via append-only `audit.audit_events` (`maintenance.dvir_defect.*`); WO conversion inserts `maintenance.work_orders` with `source_type='IS'` (valid `chk_maintenance_wo_source_type` / `next_wo_display_id` allowlist — Internal Shop for in-house DVIR triage; never invent `'DV'`) and links **per-defect** `safety.dvir_defects.follow_up_wo_id` (set-once UPDATE unlocked by migration `202607580000_dvir_defects_follow_up_wo_update.sql`). Detail page pre-fills `CreateWorkOrderModal`. **CI:** `verify:maint-dvir-defect-intake`, `verify:dvir-followup-wo-target`.
 
 **PM auto-WO engine (B28, 2026-06-04):** Migration `0360` adds `maintenance.pm_schedule_runs`, `maintenance.pm_auto_wo_log`, and `maintenance.pm_auto_engine_settings`. Hourly cron (`ENABLE_PM_AUTO_ENGINE_CRON`, default on at :05 CST) evaluates `maintenance.pm_schedules` against Samsara odometer projections: due schedules auto-insert PM work orders (`origin='pm_schedule'`); near-due schedules reuse the telematics PM predictor for alerts. Dashboard `/maintenance/pm-auto-engine` shows recent runs, action log, pause/resume, and manual run-now. **CI:** `verify:maint-pm-auto-wo-engine`.
 
