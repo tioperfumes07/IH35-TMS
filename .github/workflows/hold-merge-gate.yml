@@ -5,6 +5,10 @@
 # blocks merge — the merge button and `gh pr merge` both fail.
 name: hold-merge-gate
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 on:
   pull_request:
     types: [opened, reopened, synchronize, edited, labeled, unlabeled]

@@ -1,5 +1,9 @@
 name: Semgrep SAST
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 # Semgrep = an independent "outside auditor" static-analysis pass over the whole codebase.
 # Runs OWASP Top-Ten + security-audit + secrets + TS rulesets (no account/token needed) and uploads
 # the findings as a build artifact. Advisory to start (does not block merges) — flip `continue-on-error`

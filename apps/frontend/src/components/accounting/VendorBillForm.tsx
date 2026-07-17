@@ -9,6 +9,7 @@ import { TotalsStack } from "../forms/shared/TotalsStack";
 import { BILL_TYPE_TABS, TypeTabBar } from "../forms/shared/TypeTabBar";
 import { QboCombobox } from "../forms/QboCombobox";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
+import { vendorReferenceOption } from "../parity/referenceOptionLabels";
 import { SelectCombobox } from "../shared/SelectCombobox";
 import { UploadZone } from "../UploadZone";
 
@@ -136,11 +137,7 @@ export function VendorBillForm({
   });
 
   const vendorOptions = useMemo(
-    () =>
-      (vendorsQuery.data?.vendors ?? []).map((vendor) => ({
-        value: vendor.id,
-        label: vendor.name,
-      })),
+    () => (vendorsQuery.data?.vendors ?? []).map(vendorReferenceOption),
     [vendorsQuery.data?.vendors]
   );
 

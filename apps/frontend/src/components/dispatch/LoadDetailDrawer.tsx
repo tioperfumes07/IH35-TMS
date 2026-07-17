@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { type LoadDetail, updateLoad, useCancelLoad, useDispatchLoad, useLoad, useLoadAudit } from "../../api/loads";
+import { type LoadDetail, updateLoad, useDispatchLoad, useLoad, useLoadAudit } from "../../api/loads";
 import { createInvoiceFromLoad, listInvoices } from "../../api/accounting";
 import { cancelDispatchLoad, distributeLoadInstructions, getDispatchAssignmentHistory, getRecentAutoStatusSwitches } from "../../api/dispatch";
 import { AutoStatusSwitchedBadge } from "./AutoStatusSwitchedBadge";
@@ -141,7 +141,6 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
   const mdataLoadQuery = useLoad(operatingCompanyId ? null : loadId);
   const loadQuery = operatingCompanyId ? dispatchLoadQuery : mdataLoadQuery;
   const auditQuery = useLoadAudit(loadId);
-  const cancelMutation = useCancelLoad();
   const updateMutation = useMutation({
     mutationFn: ({ id, body }: { id: string; body: Record<string, unknown> }) => updateLoad(id, body),
   });
@@ -796,12 +795,17 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
           operatingCompanyId={load.operating_company_id}
           onClose={() => setCancelOpen(false)}
           onSubmit={async (payload) => {
-            await cancelDispatchLoad(load.id, {
+            const result = await cancelDispatchLoad(load.id, {
               operating_company_id: load.operating_company_id,
               ...payload,
             });
-            await cancelMutation.mutateAsync({ id: load.id, reasonCode: payload.reason_code, notes: payload.cancellation_notes });
-            pushToast("Load cancellation submitted", "success");
+            const cancelStatus = String((result as { status?: string }).status ?? "");
+            pushToast(
+              cancelStatus === "pending_owner_approval"
+                ? "Cancellation submitted for Owner approval"
+                : "Load cancelled",
+              "success"
+            );
             setCancelOpen(false);
             void loadQuery.refetch();
             void auditQuery.refetch();

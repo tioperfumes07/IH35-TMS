@@ -1,0 +1,80 @@
+import type { ReferenceOption } from "./ReferenceSelect";
+
+/** QBO-style secondary label shown after the primary name in ReferenceSelect dropdowns. */
+export function formatReferenceTypeLabel(raw: string | null | undefined): string | undefined {
+  const trimmed = String(raw ?? "").trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
+/** Humanize enum-ish customer types for the Type column (e.g. direct_shipper → Direct shipper). */
+export function formatCustomerTypeLabel(customerType: string | null | undefined): string | undefined {
+  const raw = String(customerType ?? "").trim();
+  if (!raw) return undefined;
+  if (raw === "direct_shipper") return "Direct shipper";
+  if (raw === "broker") return "Broker";
+  return raw.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+export function vendorReferenceOption(vendor: {
+  id: string;
+  name: string;
+  vendor_type?: string | null;
+}): ReferenceOption {
+  const type = formatReferenceTypeLabel(vendor.vendor_type);
+  return { value: vendor.id, label: vendor.name, ...(type ? { type } : {}) };
+}
+
+export function customerReferenceOption(customer: {
+  id: string;
+  name: string;
+  customer_type?: string | null;
+}): ReferenceOption {
+  const type = formatCustomerTypeLabel(customer.customer_type);
+  return { value: customer.id, label: customer.name, ...(type ? { type } : {}) };
+}
+
+/** Chart-of-accounts row — primary label mirrors QBO account picker; type is the GL account type (Bank, Expense, …). */
+export function coaAccountReferenceOption(account: {
+  id: string;
+  account_name: string;
+  account_type?: string | null;
+  account_number?: string | null;
+}): ReferenceOption {
+  const number = String(account.account_number ?? "").trim();
+  const label = number ? `${number} · ${account.account_name}` : account.account_name;
+  const type = formatReferenceTypeLabel(account.account_type);
+  return { value: account.id, label, ...(type ? { type } : {}) };
+}
+
+export function catalogClassReferenceOption(row: { id: string; display_name: string }): ReferenceOption {
+  return { value: row.id, label: row.display_name, type: "Class" };
+}
+
+export function catalogItemReferenceOption(row: {
+  id: string;
+  display_name: string;
+  metadata?: Record<string, unknown>;
+}): ReferenceOption {
+  const metaType =
+    typeof row.metadata?.item_type === "string"
+      ? row.metadata.item_type
+      : typeof row.metadata?.type === "string"
+        ? row.metadata.type
+        : undefined;
+  const type = formatReferenceTypeLabel(metaType) ?? "Product/Service";
+  return { value: row.id, label: row.display_name, type };
+}
+
+export function vendorFilterReferenceOptions(
+  vendors: Array<{ id: string; name: string; vendor_type?: string | null }>,
+  allLabel = "All vendors"
+): ReferenceOption[] {
+  return [{ value: "", label: allLabel }, ...vendors.map(vendorReferenceOption)];
+}
+
+export function customerFilterReferenceOptions(
+  customers: Array<{ id: string; name: string; customer_type?: string | null }>,
+  allLabel = "All customers"
+): ReferenceOption[] {
+  return [{ value: "", label: allLabel }, ...customers.map(customerReferenceOption)];
+}

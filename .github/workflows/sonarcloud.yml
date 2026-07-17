@@ -1,5 +1,9 @@
 name: SonarCloud
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 # Code-auditor dashboard (bugs / logic smells / security hotspots / coverage + Quality Gate).
 # Skips cleanly until the owner adds the SONAR_TOKEN secret (see sonar-project.properties).
 on:

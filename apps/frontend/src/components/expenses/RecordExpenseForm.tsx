@@ -8,6 +8,7 @@ import { Button } from "../Button";
 import { DatePicker } from "../forms/DatePicker";
 import { MoneyInput } from "../forms/MoneyInput";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
+import { coaAccountReferenceOption, vendorReferenceOption } from "../parity/referenceOptionLabels";
 import { SelectCombobox } from "../shared/SelectCombobox";
 import { UploadZone } from "../UploadZone";
 import {
@@ -91,7 +92,7 @@ export function RecordExpenseForm({
   // Vendor options from the CANONICAL mdata.vendors roster (same table the inline "+ Add new vendor"
   // QuickCreate writes to) so a created vendor selects + survives reload (QB-STD-5).
   const vendorOptions = useMemo(
-    () => (vendorsQuery.data?.vendors ?? []).map((v) => ({ value: v.id, label: v.name })),
+    () => (vendorsQuery.data?.vendors ?? []).map(vendorReferenceOption),
     [vendorsQuery.data?.vendors]
   );
 
@@ -229,7 +230,12 @@ export function RecordExpenseForm({
                 categoryQboId: match.qboId,
               }));
             }}
-            options={categoryOptions.map((row) => ({ value: row.id, label: row.label }))}
+            options={categoryOptions.map((row) => {
+              const account = (paymentAccountsQuery.data?.accounts ?? []).find((a) => String(a.id) === row.id);
+              return account
+                ? coaAccountReferenceOption(account)
+                : { value: row.id, label: row.label };
+            })}
             createKind="category"
             operatingCompanyId={operatingCompanyId}
             placeholder="Select category…"
