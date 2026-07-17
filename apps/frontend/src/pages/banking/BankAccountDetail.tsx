@@ -17,12 +17,16 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useListState } from "../../components/list-state";
-import { BankingTransactionsDesignView } from "./components/BankingTransactionsDesignView";
+import type { PlaidBankTransaction } from "../../api/banking";
+import { formatUsdCents } from "../../lib/money";
+import { BankingTransactionsDesignView, spentReceived } from "./components/BankingTransactionsDesignView";
 
 const PAGE_SIZE = 50;
 
-function money(cents: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
+/** Signed QBO amount — direction from is_credit (same spentReceived convention as the live register). */
+export function formatBankTransactionSignedAmount(tx: Pick<PlaidBankTransaction, "amount_cents" | "is_credit">) {
+  const { spent, received } = spentReceived(tx as PlaidBankTransaction);
+  return received > 0 ? formatUsdCents(received) : formatUsdCents(-spent);
 }
 
 function syncStatusClasses(status: string) {
@@ -139,11 +143,11 @@ export function BankAccountDetailPage() {
       <div className="grid grid-cols-1 gap-3 rounded-sm border border-gray-200 bg-white p-4 md:grid-cols-3">
         <div>
           <p className="text-xs uppercase tracking-wide text-gray-500">Current balance</p>
-          <p className="text-xl font-semibold text-gray-900">{money(Number(account?.current_balance_cents ?? 0))}</p>
+          <p className="text-xl font-semibold text-gray-900">{formatUsdCents(account?.current_balance_cents ?? 0)}</p>
         </div>
         <div>
           <p className="text-xs uppercase tracking-wide text-gray-500">Available balance</p>
-          <p className="text-xl font-semibold text-gray-900">{money(Number(account?.available_balance_cents ?? 0))}</p>
+          <p className="text-xl font-semibold text-gray-900">{formatUsdCents(account?.available_balance_cents ?? 0)}</p>
         </div>
         <div>
           <p className="text-xs uppercase tracking-wide text-gray-500">Sync status</p>
@@ -261,7 +265,7 @@ export function ArchivedBankAccountDetailTable() {
                   <div className="font-medium text-gray-900">{row.description || "Bank transaction"}</div>
                   {row.merchant_name ? <div className="text-xs text-gray-500">{row.merchant_name}</div> : null}
                 </td>
-                <td className="border-b border-gray-100 px-2 py-2 text-gray-700">{money(Number(row.amount_cents))}</td>
+                <td className="border-b border-gray-100 px-2 py-2 text-gray-700">{formatBankTransactionSignedAmount(row)}</td>
                 <td className="border-b border-gray-100 px-2 py-2 text-gray-700">
                   {Array.isArray(row.plaid_category) && row.plaid_category.length > 0 ? row.plaid_category.join(" / ") : "Uncategorized"}
                 </td>
