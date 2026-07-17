@@ -35,11 +35,14 @@ function renderLoadNumberCell(load: DispatchLoadRow, className = "code-cell font
 }
 import {
   listUnitsWithoutLoad,
+  listDispatchInShopUnits,
+  isDispatchInShopUnit,
   listActiveLoadTriSignals,
   getDispatchLoadPositions,
   quickAssignDispatchLoad,
   type TriSignalRow,
   type UnitsWithoutLoad,
+  type DispatchInShopUnit,
   type DispatchLifecycleStage,
   type DispatchConfidenceClass,
 } from "../../api/dispatch";
@@ -196,12 +199,12 @@ function isAssignedLoad(load: DispatchLoadRow) {
 //   trucks — derived from unitsWithoutLoad, NOT loads.filter). One row per truck; Unit/Trailer/
 //   Driver/HOS populated, load fields "—".
 // BOOKED = loads that have a truck (one row per load).
-// IN SHOP = trucks down for maintenance/repair (placeholder; distinct from the pinned Fleet OOS
-//   strip = trucks fully out of service). A truck appears in exactly one place.
+// IN SHOP = trucks down for maintenance/repair (live fleet-table feed; distinct from the pinned
+//   Fleet OOS strip = trucks fully out of service). A truck appears in exactly one place.
 const SECTION_META: Array<{ key: string; title: string; placeholder?: string }> = [
   { key: "awaiting", title: "Awaiting assignment" },
   { key: "booked", title: "Booked" },
-  { key: "in_shop", title: "In shop", placeholder: "In-shop (maintenance) feed pending — no units flagged." },
+  { key: "in_shop", title: "In shop", placeholder: "No units in shop." },
 ];
 
 // A truck-without-a-load rendered as a board row: Unit (+Driver/Trailer when known) populated, all
@@ -217,6 +220,20 @@ function unitToBoardRow(unit: UnitsWithoutLoad): BoardLoad {
     trailer_number: unit.trailer_number ?? null,
     load_number: "",
     status: "unassigned",
+  } as unknown as BoardLoad;
+}
+
+function inShopUnitToBoardRow(unit: DispatchInShopUnit): BoardLoad {
+  return {
+    id: `unit:inshop:${unit.id}`,
+    assigned_unit_id: unit.id,
+    assigned_unit_number: unit.unit_number,
+    assigned_primary_driver_id: null,
+    assigned_primary_driver_name: null,
+    trailer_number: null,
+    load_number: "",
+    status: "unassigned",
+    customer_wo_number: (unit.open_wo_count ?? 0) > 0 ? `${unit.open_wo_count} open` : null,
   } as unknown as BoardLoad;
 }
 
@@ -395,6 +412,19 @@ export function DispatchBoard({
   });
   const unassignedUnits = unitsWithoutLoadQuery.data?.units ?? [];
 
+  const inShopUnitsQuery = useQuery({
+    queryKey: ["dispatch-board", "in-shop-units", companyId],
+    queryFn: async () => {
+      const payload = await listDispatchInShopUnits(companyId);
+      return (payload.rows ?? []).filter(isDispatchInShopUnit);
+    },
+    enabled: Boolean(companyId),
+    staleTime: 60_000,
+    refetchInterval: 60_000,
+  });
+  const inShopUnits = inShopUnitsQuery.data ?? [];
+  const inShopUnitIds = useMemo(() => new Set(inShopUnits.map((unit) => unit.id)), [inShopUnits]);
+
   const triSignalsQuery = useQuery({
     queryKey: ["dispatch-board", "tri-signals", companyId],
     queryFn: () => listActiveLoadTriSignals(companyId),
@@ -488,11 +518,14 @@ export function DispatchBoard({
   const bookedLoads = useMemo(() => sortedLoads.filter(isBookedReserved), [sortedLoads]);
   const assignedLoads = useMemo(() => sortedLoads.filter(isAssignedLoad), [sortedLoads]);
 
-  // TRUCK-CENTRIC List/Table sections. Awaiting = roster minus loaded trucks (one row per truck);
-  // Booked = active loads (one row per load); In shop = held placeholder. Every active truck lands
-  // in exactly one place: unloaded trucks in Awaiting, loaded trucks via their load in Booked.
+  // TRUCK-CENTRIC List/Table sections. Awaiting = roster minus loaded trucks minus in-shop units;
+  // Booked = active loads (one row per load); In shop = live maintenance roster (InMaintenance or
+  // open WO). Every active truck lands in exactly one place.
   const boardSections = useMemo(() => {
-    const awaitingRows = unassignedUnits.map(unitToBoardRow);
+    const awaitingRows = unassignedUnits
+      .filter((unit) => !inShopUnitIds.has(unit.id))
+      .map(unitToBoardRow);
+    const inShopRows = inShopUnits.map(inShopUnitToBoardRow);
     // Defensive dedupe by load id — a load must never render twice in Booked (two DISTINCT loads on
     // the same truck legitimately remain, since they have different ids).
     const seenBooked = new Set<string>();
@@ -503,9 +536,16 @@ export function DispatchBoard({
     });
     return SECTION_META.map((meta) => ({
       ...meta,
-      rows: meta.key === "awaiting" ? awaitingRows : meta.key === "booked" ? bookedRows : [],
+      rows:
+        meta.key === "awaiting"
+          ? awaitingRows
+          : meta.key === "booked"
+            ? bookedRows
+            : meta.key === "in_shop"
+              ? inShopRows
+              : [],
     }));
-  }, [unassignedUnits, sortedLoads]);
+  }, [unassignedUnits, inShopUnits, inShopUnitIds, sortedLoads]);
 
   const from = totalCount === 0 ? 0 : offset + 1;
   const to = Math.min(offset + limit, totalCount);
@@ -942,9 +982,8 @@ export function DispatchBoard({
                   ) : (
                     // DISPATCH-REDESIGN Part C — three labeled sections inside ONE table so the
                     // shared column sort/resize stays global across all rows. No load is dropped:
-                    // every row lands in exactly one section. "Out of service" is a fleet/unit
-                    // status (not a load status) so it renders a placeholder pending Jorge's
-                    // fleet-OOS data source — same hold pattern as the HOS columns.
+                    // every row lands in exactly one section. In shop rows come from the live
+                    // maintenance fleet-table feed (read-only).
                     boardSections.map((section) => {
                       const rows = section.rows;
                       return (

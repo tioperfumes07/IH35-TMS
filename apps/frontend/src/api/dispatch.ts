@@ -275,6 +275,29 @@ export function listUnitsWithoutLoad(operatingCompanyId: string) {
   );
 }
 
+/** Live maintenance roster row — same source as Maintenance Fleet Table (read-only). */
+export type DispatchInShopUnit = {
+  id: string;
+  unit_number: string;
+  status: string;
+  is_oos?: boolean;
+  open_wo_count?: number;
+  oos_reason?: string | null;
+};
+
+/** In-shop board section: maintenance/repair — distinct from Fleet OOS (is_oos / OutOfService). */
+export function isDispatchInShopUnit(unit: DispatchInShopUnit): boolean {
+  if (unit.is_oos || unit.status === "OutOfService") return false;
+  if (unit.status === "InMaintenance") return true;
+  return (unit.open_wo_count ?? 0) > 0;
+}
+
+export function listDispatchInShopUnits(operatingCompanyId: string) {
+  return apiRequest<{ rows: DispatchInShopUnit[] }>(
+    `/api/v1/maintenance/fleet-table/rows?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+  );
+}
+
 export function getDispatchLoadDetail(id: string, operatingCompanyId: string) {
   return apiRequest<Record<string, unknown>>(
     `/api/v1/dispatch/loads/${id}?operating_company_id=${encodeURIComponent(operatingCompanyId)}`

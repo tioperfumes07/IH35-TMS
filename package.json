@@ -800,6 +800,7 @@
     "verify:dispatch-kanban-lanes-and-density": "node scripts/verify-dispatch-kanban-lanes-and-density.mjs",
     "verify:dispatch-hos-columns-wired": "node scripts/verify-dispatch-hos-columns-wired.mjs",
     "verify:dispatch-live-gps-wired": "node scripts/verify-dispatch-live-gps-wired.mjs",
+    "verify:dispatch-in-shop-feed-wired": "node scripts/verify-dispatch-in-shop-feed-wired.mjs",
     "verify:currency-format-guarded": "node scripts/verify-currency-format-guarded.mjs",
     "verify:unit-inactivate-path": "node scripts/verify-unit-inactivate-path.mjs",
     "verify:equipment-deactivate-rls": "node scripts/verify-equipment-deactivate-rls.mjs",
