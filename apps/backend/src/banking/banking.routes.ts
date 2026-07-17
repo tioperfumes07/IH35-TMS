@@ -14,6 +14,7 @@ import {
 } from "./bank-account-visibility.js";
 import { countDriverEscrowKpis } from "./driver-escrow-counts.js";
 import { countTotalBankTransactions, countUncategorizedTransactions } from "./pending-categorization.js";
+import { sumAuthoritativeDepositoryCashCents, withInternalWalletBalances, type BankAccountBalanceFields } from "./internal-wallet-balance.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -149,24 +150,13 @@ export async function registerBankingRoutes(app: FastifyInstance) {
         drivers_with_escrow_balance: 0,
         drivers_with_active_escrow_account: 0,
       }));
-      // total_cash must read the AUTHORITATIVE depository balances (same source as
-      // /banking/accounts/all and the cash-flow opening), not the tile view — the tile-derived
-      // total_cash returned 0 while accounts/all showed real cash, a reconciliation bug. All three
-      // cash surfaces now agree on banking.bank_accounts.current_balance_cents (account_class='depository').
-      const cashRes = await client
-        .query<{ total_cash: string | number | null }>(
-          `
-          SELECT COALESCE(SUM(current_balance_cents), 0)::bigint AS total_cash
-          FROM banking.bank_accounts
-          WHERE operating_company_id = $1
-            AND account_class = 'depository'
-            AND is_active = true
-          ${bankAccountHiddenFilterSql(hideOn, "banking.bank_accounts")}
-          `,
-          [companyId]
-        )
-        .catch(() => ({ rows: [{ total_cash: 0 }] }));
-      const authoritativeTotalCash = Number(cashRes.rows[0]?.total_cash ?? 0);
+      // total_cash / cash-flow opening / accounts/all must agree via sumAuthoritativeDepositoryCashCents:
+      // Plaid depository SUM(current_balance_cents) + non-Plaid internal-wallet ledger derivation.
+      // Never re-sum bank_transactions for the Plaid-mixed population (phantom -$4.79M class).
+      const authoritativeTotalCash = await sumAuthoritativeDepositoryCashCents(client, companyId, {
+        hideFilterOnBankAccounts: bankAccountHiddenFilterSql(hideOn, "banking.bank_accounts"),
+        hideFilterOnBaAlias: bankAccountHiddenFilterSql(hideOn, "ba"),
+      }).catch(() => 0);
       // BANKING-1: the UNCATEGORIZED headline must count the SAME population the Transactions
       // "For review" queue lists — entity-scoped status IN ('pending_categorization','uncategorized')
       // across all accounts. The tile view's uncategorized_count counts only 'uncategorized', so it
@@ -246,7 +236,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
       const activeClause = includeInactive ? "" : " AND is_active = true";
       const hideOn = await isBankAccountHideEnabled(client, companyId);
       const hiddenClause = includeHidden ? "" : bankAccountHiddenFilterSql(hideOn, "banking.bank_accounts");
-      const res = await client.query(
+      const res = await client.query<BankAccountBalanceFields>(
         `
           SELECT *
           FROM banking.bank_accounts
@@ -257,7 +247,10 @@ export async function registerBankingRoutes(app: FastifyInstance) {
         `,
         [companyId]
       );
-      return res.rows;
+      // RELAY-WALLET-BALANCE-1: current_balance_cents/available_balance_cents are Plaid-sync-only
+      // columns — a non-Plaid internal wallet (Relay Fuel Wallet) never gets them updated and stays
+      // frozen at its seed value of 0 forever. Derive from the account's own ledger instead.
+      return withInternalWalletBalances(client, companyId, res.rows);
     });
     return { accounts };
   });

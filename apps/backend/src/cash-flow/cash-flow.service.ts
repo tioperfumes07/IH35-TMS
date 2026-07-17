@@ -21,6 +21,7 @@
  */
 import type pg from "pg";
 import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../banking/bank-account-visibility.js";
+import { sumAuthoritativeDepositoryCashCents } from "../banking/internal-wallet-balance.js";
 import { projectedCashDateSql } from "./projected-cash-date.js";
 
 type Queryable = pg.PoolClient;
@@ -266,36 +267,16 @@ export async function getDailyPrediction(
   const expenseTotalCents = expenseItems.reduce((s, i) => s + i.amount_cents, 0);
   const predictedNetCents = incomeTotalCents - expenseTotalCents;
 
-  // Opening cash = the AUTHORITATIVE reconciled depository balance (Plaid-reported
-  // banking.bank_accounts.current_balance_cents on account_class='depository'), the SAME source
-  // /api/v1/banking/accounts/all reports. We deliberately do NOT re-sum bank_transactions:
-  //   • the prior CASE WHEN is_credit THEN amount_cents ELSE -amount_cents formula assumed a
-  //     positive magnitude, but amount_cents is stored SIGNED (Plaid: +out / -in; is_credit mirrors
-  //     the sign), so every credit was added as +(-X) → the sum collapsed to -(gross volume) and
-  //     produced the phantom -$4,789,956 (GUARD-confirmed live);
-  //   • even the sign-correct re-sum (SUM(-amount_cents)) did NOT match the stated balances — the
-  //     imported transaction history is incomplete — so the stored balance is the only source of truth.
-  // Credit / investment / virtual (factoring/escrow/advance) accounts are excluded: they are not
-  // spendable depository cash. Defensive: null on any error so a missing banking table never crashes.
-  // BANK-ACCOUNT-HIDE: opening cash must exclude any account hidden for THIS entity (flag OFF by
-  // default — see docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
+  // Opening cash = same authoritative depository total as Banking KPI total_cash and accounts/all
+  // (sumAuthoritativeDepositoryCashCents): Plaid SUM(current_balance_cents) + non-Plaid internal-wallet
+  // ledger derivation. Never re-sum bank_transactions for the Plaid-mixed population — that produced
+  // the phantom -$4.79M opening (signed amount_cents + is_credit). Credit / investment / virtual
+  // (factoring/escrow/advance) stay excluded via account_class='depository'. BANK-ACCOUNT-HIDE respected.
   const hideOn = await isBankAccountHideEnabled(client, operatingCompanyId).catch(() => false);
-  const openingRow = await client
-    .query<{ balance_cents: number | null }>(
-      `
-      SELECT COALESCE(SUM(current_balance_cents), 0)::bigint AS balance_cents
-      FROM banking.bank_accounts
-      WHERE operating_company_id = $1
-        AND account_class = 'depository'
-        AND is_active = true
-      ${bankAccountHiddenFilterSql(hideOn, "banking.bank_accounts")}
-      `,
-      [operatingCompanyId]
-    )
-    .catch(() => ({ rows: [{ balance_cents: null }] }));
-
-  const openingCashCents =
-    openingRow.rows[0]?.balance_cents != null ? Number(openingRow.rows[0].balance_cents) : null;
+  const openingCashCents = await sumAuthoritativeDepositoryCashCents(client, operatingCompanyId, {
+    hideFilterOnBankAccounts: bankAccountHiddenFilterSql(hideOn, "banking.bank_accounts"),
+    hideFilterOnBaAlias: bankAccountHiddenFilterSql(hideOn, "ba"),
+  }).catch(() => null);
   const projectedClosingCents =
     openingCashCents !== null ? openingCashCents + predictedNetCents : null;
 

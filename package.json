@@ -1014,6 +1014,7 @@
     "verify:settlement-approval-canonical": "node scripts/verify-settlement-approval-canonical.mjs",
     "verify:shared-coa-role-tests-serialized": "node scripts/verify-shared-coa-role-tests-serialized.mjs",
     "verify:relay-wallet-bank-feed": "node scripts/verify-relay-wallet-bank-feed.mjs",
+    "verify:relay-wallet-balance-honesty": "node scripts/verify-relay-wallet-balance-honesty.mjs",
     "verify:banking-qbo-parity-chrome": "node scripts/verify-banking-qbo-parity-chrome.mjs",
     "verify:qbo-outbound-generic-catch-deadletter": "node scripts/verify-qbo-outbound-generic-catch-deadletter.mjs",
     "verify:settlement-engine-inventory": "node scripts/verify-settlement-engine-inventory.mjs",

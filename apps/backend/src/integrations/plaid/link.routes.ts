@@ -7,6 +7,11 @@ import { createLinkToken, createUpdateModeLinkToken, exchangePublicToken } from 
 import { getPlaidClient } from "./plaid-client.js";
 import { decryptPlaidAccessToken } from "./plaid-token-crypto.js";
 import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
+import {
+  deriveInternalWalletBalanceCents,
+  withInternalWalletBalances,
+  type BankAccountBalanceFields,
+} from "../../banking/internal-wallet-balance.js";
 
 const ownerAdminRoles = new Set(["Owner", "Administrator"]);
 const ownerOnlyRoles = new Set(["Owner"]);
@@ -170,7 +175,7 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
     if (!query.success) return sendValidationError(reply, query.error);
 
     const accounts = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      const res = await client.query(
+      const res = await client.query<BankAccountBalanceFields>(
         `
           SELECT
             id,
@@ -196,7 +201,11 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
         `,
         [query.data.operating_company_id]
       );
-      return res.rows;
+      // RELAY-WALLET-BALANCE-1: root-cause fix — a non-Plaid internal wallet (Relay Fuel Wallet) never
+      // gets current_balance_cents/available_balance_cents synced (that only happens via the Plaid
+      // webhook/exchange path). Derive its balance from its own bank_transactions ledger instead of
+      // trusting a column frozen at its seed value of 0. See internal-wallet-balance.ts.
+      return withInternalWalletBalances(client, query.data.operating_company_id, res.rows);
     });
 
     return { accounts };
@@ -212,7 +221,7 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
     if (!query.success) return sendValidationError(reply, query.error);
 
     const account = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      const res = await client.query(
+      const res = await client.query<BankAccountBalanceFields>(
         `
           SELECT
             id,
@@ -237,7 +246,17 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
         `,
         [params.data.id, query.data.operating_company_id]
       );
-      return res.rows[0] ?? null;
+      const row = res.rows[0];
+      if (!row) return null;
+      // RELAY-WALLET-BALANCE-1: see /banking/plaid/accounts above — same derivation for the single-
+      // account detail route BankAccountDetail.tsx reads its "Current balance"/"Available balance" from.
+      if (!row.plaid_item_id) {
+        const derivedCents = String(
+          await deriveInternalWalletBalanceCents(client, query.data.operating_company_id, row.id)
+        );
+        return { ...row, current_balance_cents: derivedCents, available_balance_cents: derivedCents };
+      }
+      return row;
     });
 
     if (!account) return reply.code(404).send({ error: "bank_account_not_found" });

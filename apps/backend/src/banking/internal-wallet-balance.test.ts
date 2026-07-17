@@ -1,0 +1,68 @@
+import { describe, expect, it } from "vitest";
+import { deriveInternalWalletBalanceCents, withInternalWalletBalances } from "./internal-wallet-balance.js";
+
+const COMPANY_ID = "91e0bf0a-133f-4ce8-a734-2586cfa66d96";
+const WALLET_ID = "112629fa-05a3-499a-bdac-91d696a21b6b";
+
+/** Mirrors the real prod shape found on the Relay Fuel Wallet: 108 credit rows (deposits) totaling
+ *  $446,896.99 and 1,472 debit rows (fuel draws) totaling $600,830.66 — net -$153,933.67. */
+function mockClient(rows: Array<{ bank_account_id: string; balance_cents: string }>) {
+  const queries: Array<{ sql: string; values?: unknown[] }> = [];
+  return {
+    client: {
+      async query(sql: string, values?: unknown[]) {
+        queries.push({ sql, values });
+        return { rows };
+      },
+    },
+    queries,
+  };
+}
+
+describe("internal-wallet-balance", () => {
+  it("derives a single non-Plaid wallet's balance from its ledger (credits - debits)", async () => {
+    const { client, queries } = mockClient([{ bank_account_id: WALLET_ID, balance_cents: "-15393367" }]);
+    const cents = await deriveInternalWalletBalanceCents(client, COMPANY_ID, WALLET_ID);
+    expect(cents).toBe(-15393367);
+    expect(queries[0]?.sql).toContain("is_credit");
+    expect(queries[0]?.sql).toContain("banking.bank_transactions");
+  });
+
+  it("returns 0 for a wallet with no transactions instead of throwing", async () => {
+    const { client } = mockClient([]);
+    const cents = await deriveInternalWalletBalanceCents(client, COMPANY_ID, WALLET_ID);
+    expect(cents).toBe(0);
+  });
+
+  it("overrides only non-Plaid accounts, leaving Plaid-linked accounts untouched", async () => {
+    const { client } = mockClient([{ bank_account_id: WALLET_ID, balance_cents: "-15393367" }]);
+    const accounts = [
+      { id: WALLET_ID, plaid_item_id: null, current_balance_cents: "0", available_balance_cents: "0" },
+      {
+        id: "40b01d57-c27c-4bf1-922a-246543fddd83",
+        plaid_item_id: "some-plaid-item",
+        current_balance_cents: "538",
+        available_balance_cents: "538",
+      },
+    ];
+    const result = await withInternalWalletBalances(client, COMPANY_ID, accounts);
+
+    const wallet = result.find((a) => a.id === WALLET_ID);
+    expect(wallet?.current_balance_cents).toBe("-15393367");
+    expect(wallet?.available_balance_cents).toBe("-15393367");
+
+    const plaidAccount = result.find((a) => a.plaid_item_id === "some-plaid-item");
+    expect(plaidAccount?.current_balance_cents).toBe("538");
+    expect(plaidAccount?.available_balance_cents).toBe("538");
+  });
+
+  it("skips the query entirely when every account is Plaid-linked (no wasted round trip)", async () => {
+    const { client, queries } = mockClient([]);
+    const accounts = [
+      { id: "a", plaid_item_id: "item-1", current_balance_cents: "100", available_balance_cents: "100" },
+    ];
+    const result = await withInternalWalletBalances(client, COMPANY_ID, accounts);
+    expect(result).toBe(accounts);
+    expect(queries.length).toBe(0);
+  });
+});
