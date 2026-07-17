@@ -118,6 +118,22 @@ describe("isPostingFlag", () => {
     expect(isPostingFlag("PAYROLL_POSTING_ENABLED")).toBe(true);
   });
 
+  // 0091-H3-3: void-class flags (VOID_ENFORCEMENT_ENABLED, WO_VOID_ENABLED) gate a real reversing-JE
+  // post (postVoidReversal) but their keys don't match `*_GL_POSTING*` / `*_POSTING_ENABLED` — they need
+  // the dedicated `_VOID_ENABLED$` branch (or explicit enrollment) or they silently fall through to the
+  // global rollout/default path, bypassing the per-entity money kill-switch.
+  it("recognizes known void-class flags as posting flags (0091-h3-3)", () => {
+    expect(isPostingFlag("VOID_ENFORCEMENT_ENABLED")).toBe(true);
+    expect(isPostingFlag("WO_VOID_ENABLED")).toBe(true);
+    expect(POSTING_FLAG_KEYS.has("VOID_ENFORCEMENT_ENABLED")).toBe(true);
+    expect(POSTING_FLAG_KEYS.has("WO_VOID_ENABLED")).toBe(true);
+  });
+
+  it("recognizes any future *_VOID_ENABLED flag by the _VOID_ENABLED$ pattern (0091-h3-3)", () => {
+    expect(isPostingFlag("EXPENSE_VOID_ENABLED")).toBe(true);
+    expect(isPostingFlag("SETTLEMENT_VOID_ENABLED")).toBe(true);
+  });
+
   it("does not treat non-posting flags as posting flags", () => {
     expect(isPostingFlag("usmca_hidden")).toBe(false);
     expect(isPostingFlag("QBO_RECONCILE_UI_ENABLED")).toBe(false);
@@ -331,6 +347,61 @@ describe("BANK_DRIVER_ADVANCE_ENABLED is under the per-entity posting kill-switc
     expect(await isEnabled(client, FLAG_KEY, { operating_company_id: "company-2" })).toBe(false);
   });
 });
+
+// 0091-H3-3 — VOID_ENFORCEMENT_ENABLED / WO_VOID_ENABLED are REAL money-posting flags (each gates a
+// balanced reversing JE via postVoidReversal) whose keys do NOT match the `*_GL_POSTING*` /
+// `*_POSTING_ENABLED` pattern. They must be recognized as posting-class (via POSTING_FLAG_KEYS +
+// the `_VOID_ENABLED$` pattern) or they silently fall through resolveFlagEnabled to the global
+// rollout/default path — a global flip would post reversing entries for EVERY entity, bypassing the
+// per-entity money kill-switch.
+describe.each(["VOID_ENFORCEMENT_ENABLED", "WO_VOID_ENABLED"])(
+  "%s is under the per-entity posting kill-switch (0091-h3-3)",
+  (FLAG_KEY) => {
+    it("is classified as a posting / per-entity-gated flag, not a (non-posting) per-entity-only flag", () => {
+      expect(isPostingFlag(FLAG_KEY)).toBe(true);
+      expect(isPerEntityGatedFlag(FLAG_KEY)).toBe(true);
+      expect(isPerEntityOnlyFlag(FLAG_KEY)).toBe(false);
+    });
+
+    const VOID_FLAG: FeatureFlagRow = {
+      flag_key: FLAG_KEY,
+      description: "void-class reversing-JE posting flag",
+      default_enabled: false,
+      rollout_pct: 0,
+    };
+    const voidOverride = (partial: Partial<FeatureFlagOverrideRow>): FeatureFlagOverrideRow => ({
+      ...override(partial),
+      flag_key: FLAG_KEY,
+    });
+
+    it("stays OFF when global default_enabled is true (global default ignored)", () => {
+      const flag: FeatureFlagRow = { ...VOID_FLAG, default_enabled: true };
+      expect(
+        resolveFlagEnabled(flag, [], { operating_company_id: "company-1", user_uuid: "user-1" })
+      ).toBe(false);
+    });
+
+    it("stays OFF when global rollout is 100% (global rollout ignored)", () => {
+      const flag: FeatureFlagRow = { ...VOID_FLAG, rollout_pct: 100 };
+      expect(resolveFlagEnabled(flag, [], { user_uuid: "user-1" })).toBe(false);
+    });
+
+    it("turns ON only via an explicit per-entity override", () => {
+      expect(
+        resolveFlagEnabled(
+          VOID_FLAG,
+          [voidOverride({ operating_company_id: "company-1", enabled: true })],
+          { operating_company_id: "company-1" }
+        )
+      ).toBe(true);
+    });
+
+    it("one entity's ON override does not leak to another entity", () => {
+      const overrides = [voidOverride({ operating_company_id: "company-1", enabled: true })];
+      expect(resolveFlagEnabled(VOID_FLAG, overrides, { operating_company_id: "company-2" })).toBe(false);
+    });
+  }
+);
 
 describe("setOverride ON CONFLICT targets match partial unique indexes", () => {
   const actor = "22222222-2222-4222-8222-222222222222";

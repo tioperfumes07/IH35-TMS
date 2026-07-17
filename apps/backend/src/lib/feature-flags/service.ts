@@ -80,13 +80,28 @@ export const POSTING_FLAG_KEYS: ReadonlySet<string> = new Set([
   // IMPORT-P0b: same, for the six entity write-back handlers (invoice/bill/customer/vendor/account/item).
   // Per-entity-only; default OFF; a global flip would start echoing every entity's masterdata + AR/AP into QBO.
   "QBO_ENTITY_PUSH_ENABLED",
+  // 0091-H3-3: void-class flags gate a REAL reversing-JE post (postVoidReversal — a balanced reversing
+  // journal entry, the same money-safe mechanics as any other posting flag) but their keys do NOT match
+  // the `*_GL_POSTING*` / `*_POSTING_ENABLED` pattern, so without enrolling them here (belt-and-suspenders
+  // alongside the `_VOID_ENABLED$` pattern fallback below) they would fall through to the global
+  // rollout/default path — a single global flip could post reversing entries for EVERY entity (incl.
+  // USMCA / TRK), bypassing the per-entity money kill-switch. VOID_ENFORCEMENT_ENABLED gates
+  // invoice/bill void reversal (void.service.ts); WO_VOID_ENABLED gates work-order void's linked
+  // bill/expense reversal (work-orders.routes.ts). Both already seeded default OFF (migrations
+  // 202606141200 / 202606300040) — NO new GL math, this is classification only.
+  "VOID_ENFORCEMENT_ENABLED",
+  "WO_VOID_ENABLED",
 ]);
 
 export function isPostingFlag(flagKey: string): boolean {
   return (
     POSTING_FLAG_KEYS.has(flagKey) ||
     /_GL_POSTING(_ENABLED)?$/.test(flagKey) ||
-    /_POSTING_ENABLED$/.test(flagKey)
+    /_POSTING_ENABLED$/.test(flagKey) ||
+    // 0091-H3-3: any future `*_VOID_ENABLED` flag (a per-surface void-reversal kill switch that posts a
+    // reversing JE via postVoidReversal) is auto-recognized as posting-class, so it can never fall
+    // through to a global default/rollout enable without an explicit enrollment above.
+    /_VOID_ENABLED$/.test(flagKey)
   );
 }
 
