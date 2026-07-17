@@ -41,7 +41,7 @@ function ChangesDiff({ changes }: { changes?: Record<string, { old: unknown; new
         <div key={field} className="grid grid-cols-3 gap-2 text-xs">
           <span className="font-medium text-gray-700">{field}</span>
           <span className="text-red-600 line-through">{String(vals.old ?? "—")}</span>
-          <span className="text-green-600">{String(vals.new ?? "—")}</span>
+          <span className="text-slate-700">{String(vals.new ?? "—")}</span>
         </div>
       ))}
     </div>
@@ -61,7 +61,7 @@ function EventRow({ event }: { event: EventWithPayload }) {
               event.severity === "error"
                 ? "bg-red-100 text-red-700"
                 : event.severity === "warn"
-                  ? "bg-yellow-100 text-yellow-700"
+                  ? "bg-slate-100 text-slate-700"
                   : "bg-gray-100 text-gray-700"
             }`}
           >
