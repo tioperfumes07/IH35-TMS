@@ -476,6 +476,7 @@
     "verify:hos-viewer-picker": "node scripts/verify-hos-viewer-picker.mjs",
     "verify:hos-driver-map-preview": "node scripts/verify-hos-driver-map-preview.mjs",
     "verify:hos-violation-void-reason": "node scripts/verify-hos-violation-void-reason.mjs",
+    "verify:safety-event-log-occurred-at": "node scripts/verify-safety-event-log-occurred-at.mjs",
     "verify:code-cell-no-hyphen": "node scripts/verify-code-cell-no-hyphen.mjs",
     "verify:driver-inactivity-preview": "node scripts/verify-driver-inactivity-preview.mjs",
     "verify:shipper-portal-tenant-isolation": "node scripts/verify-shipper-portal-tenant-isolation.mjs",

@@ -523,6 +523,9 @@ jobs:
       - name: Verify safety KPI drill-through contract
         run: npm run verify:safety-kpi-drillthrough
 
+      - name: Verify safety event log occurred-at contract
+        run: npm run verify:safety-event-log-occurred-at
+
       - name: Verify driver manager home contract
         run: npm run verify:driver-manager-home
 
