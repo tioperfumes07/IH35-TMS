@@ -46,8 +46,11 @@ export function assertGuard({ kpi, list }) {
     else if (!/openWorkOrderPredicate\s*\(/.test(body)) errs.push(`${KPI}: ${fn} does not use the shared openWorkOrderPredicate()`);
   }
 
-  // (3) list route uses the void flag, not the ILIKE demo hack
-  if (!/\bw\.voided_at IS NULL/.test(list)) errs.push(`${LIST}: WO list does not exclude voided WOs (w.voided_at IS NULL) — must share the KPI's void exclusion`);
+  // (3) list route uses the void flag via openWorkOrderPredicate or explicit w.voided_at IS NULL — not the ILIKE demo hack
+  const listHandler = list.slice(list.indexOf('app.get("/api/v1/maintenance/work-orders"'));
+  const usesSharedOpen =
+    /openWorkOrderPredicate\s*\(\s*["']w["']\s*\)/.test(listHandler) || /\bw\.voided_at IS NULL/.test(listHandler);
+  if (!usesSharedOpen) errs.push(`${LIST}: WO list does not exclude voided WOs — must use openWorkOrderPredicate("w") or w.voided_at IS NULL`);
   if (/ILIKE\s*'DEMO-%'|ILIKE\s*'TEST-%'/.test(list)) errs.push(`${LIST}: still uses the display_id ILIKE 'DEMO-%'/'TEST-%' name-pattern hack — replace with the canonical void flag`);
 
   return errs;
@@ -73,13 +76,15 @@ function selftest() {
     `export async function countOpenMaintenanceWorkOrders(c){ return c.query(\`... AND \${openWorkOrderPredicate()}\`); }\n` +
     `export async function countOpenWorkOrdersForUnit(c){ return c.query(\`... AND \${openWorkOrderPredicate()}\`); }\n` +
     `export function next(){}`;
-  const goodList = `where.push("w.voided_at IS NULL");`;
+  const goodList =
+    `app.get("/api/v1/maintenance/work-orders", async () => { where.push(openWorkOrderPredicate("w")); });\n` +
+    `where.push("w.voided_at IS NULL");`;
   const cases = [
     { n: "well-formed → 0", in: { kpi: goodKpi, list: goodList }, want: 0 },
     { n: "predicate missing void flag", in: { kpi: goodKpi.replace("voided_at IS NULL", "TRUE"), list: goodList }, min: 1 },
     { n: "a count fn not using shared", in: { kpi: goodKpi.replace("${openWorkOrderPredicate()}", "status IN ('open')"), list: goodList }, min: 1 },
     { n: "list keeps ILIKE hack", in: { kpi: goodKpi, list: goodList + `\nwhere.push("COALESCE(w.display_id,'') NOT ILIKE 'DEMO-%'");` }, min: 1 },
-    { n: "list missing void flag", in: { kpi: goodKpi, list: `where.push("w.status = $2");` }, min: 1 },
+    { n: "list missing void flag", in: { kpi: goodKpi, list: `app.get("/api/v1/maintenance/work-orders", async () => { where.push("w.status = $2"); });` }, min: 1 },
   ];
   let failed = 0;
   for (const c of cases) {

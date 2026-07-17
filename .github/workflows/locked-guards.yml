@@ -940,6 +940,10 @@ jobs:
         run: node scripts/verify-open-wo-shared-predicate.mjs --selftest
       - name: verify:open-wo-shared-predicate
         run: npm run verify:open-wo-shared-predicate
+      - name: verify:maint-open-wos-kpi-consistency --selftest
+        run: node scripts/verify-maint-open-wos-kpi-consistency.mjs --selftest
+      - name: verify:maint-open-wos-kpi-consistency
+        run: npm run verify:maint-open-wos-kpi-consistency
       - name: verify:mdata-write-entity-scope --selftest
         run: node scripts/verify-mdata-write-entity-scope.mjs --selftest
       - name: verify:mdata-write-entity-scope

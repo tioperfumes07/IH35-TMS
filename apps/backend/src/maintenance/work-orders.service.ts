@@ -1,3 +1,5 @@
+import { openWorkOrderPredicate } from "../kpi/canonical-kpis.js";
+
 export type WorkOrderBucket = "in_house" | "external" | "roadside";
 
 type QueryClient = {
@@ -36,7 +38,7 @@ export async function listWorkOrdersByBucket(client: QueryClient, operatingCompa
       FROM maintenance.work_orders w
       LEFT JOIN mdata.vendors v ON v.id = w.roadside_provider_vendor_id
       WHERE w.operating_company_id = $1
-        AND w.status NOT IN ('complete', 'cancelled')
+        AND ${openWorkOrderPredicate("w")}
       ORDER BY w.opened_at DESC NULLS LAST, w.created_at DESC
       LIMIT 80
     `,

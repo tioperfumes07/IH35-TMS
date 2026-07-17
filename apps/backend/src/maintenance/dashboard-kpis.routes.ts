@@ -6,6 +6,7 @@ import {
   countOpenMaintenanceWorkOrders,
   countPastDueMaintenanceWorkOrders,
   countPmDueAlerts,
+  openWorkOrderPredicate,
 } from "../kpi/canonical-kpis.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
@@ -141,7 +142,7 @@ export async function registerMaintenanceDashboardKpisRoutes(app: FastifyInstanc
               SELECT COALESCE(SUM(COALESCE(total_actual_cost, 0)), 0)::numeric AS open_cost
               FROM maintenance.work_orders
               WHERE operating_company_id = $1::uuid
-                AND status IN ('open', 'in_progress', 'waiting_parts')
+                AND ${openWorkOrderPredicate()}
             `,
             [companyId]
           );
@@ -171,7 +172,7 @@ export async function registerMaintenanceDashboardKpisRoutes(app: FastifyInstanc
               FROM maintenance.work_orders
               WHERE operating_company_id = $1::uuid
                 AND wo_type = 'tire'
-                AND status IN ('open', 'in_progress', 'waiting_parts')
+                AND ${openWorkOrderPredicate()}
             `,
             [companyId]
           );
@@ -193,10 +194,10 @@ export async function registerMaintenanceDashboardKpisRoutes(app: FastifyInstanc
               COUNT(*) FILTER (WHERE status = 'waiting_parts')::int AS waiting_parts,
               COUNT(*) FILTER (
                 WHERE ${(await columnExists(client, "maintenance", "work_orders", "bucket")) ? "bucket = 'roadside'" : "false"}
-                  AND status IN ('open', 'in_progress', 'waiting_parts')
               )::int AS road_service
             FROM maintenance.work_orders
             WHERE operating_company_id = $1::uuid
+              AND ${openWorkOrderPredicate()}
           `,
           [companyId]
         );

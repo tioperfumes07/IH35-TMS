@@ -958,6 +958,7 @@
     "verify:payment-methods-catalog": "node scripts/verify-payment-methods-catalog.mjs",
     "verify:driverhub-unit-source": "node scripts/verify-driverhub-unit-source.mjs",
     "verify:open-wo-shared-predicate": "node scripts/verify-open-wo-shared-predicate.mjs",
+    "verify:maint-open-wos-kpi-consistency": "node scripts/verify-maint-open-wos-kpi-consistency.mjs",
     "verify:home-attention-late-canonical": "node scripts/verify-home-attention-late-canonical.mjs",
     "verify:local-ci-parity": "node scripts/verify-local-ci-parity.mjs",
     "verify:mdata-write-entity-scope": "node scripts/verify-mdata-write-entity-scope.mjs",
