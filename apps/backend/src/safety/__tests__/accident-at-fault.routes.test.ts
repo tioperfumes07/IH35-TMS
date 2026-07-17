@@ -116,4 +116,22 @@ describe("SAFE-1 accident At-Fault + Preventable persistence", () => {
     });
     expect(res.statusCode).toBe(400);
   });
+
+  it("PATCH status persists workflow status without swallowing DB errors", async () => {
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("UPDATE safety.accident_reports") && sql.includes("SET status = $2")) {
+        return { rows: [{ id: ACCIDENT, status: "under-investigation" }], rowCount: 1 };
+      }
+      return { rows: [], rowCount: 0 };
+    });
+    const res = await app.inject({
+      method: "PATCH",
+      url: `/api/v1/safety/accidents/${ACCIDENT}/status?operating_company_id=${COMPANY}`,
+      payload: { status: "under-investigation" },
+    });
+    expect(res.statusCode).toBe(200);
+    const update = findCall("SET status = $2");
+    expect(update).toBeTruthy();
+    expect(update?.[1]).toEqual([ACCIDENT, "under-investigation", COMPANY]);
+  });
 });

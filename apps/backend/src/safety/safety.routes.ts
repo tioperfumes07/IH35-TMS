@@ -473,7 +473,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
           RETURNING *
         `,
         [params.data.id, body.data.status, query.data.operating_company_id]
-      ).catch(() => ({ rows: [] as Record<string, unknown>[] }));
+      );
       if (!res.rows[0]) return null;
       await appendCrudAudit(
         client,

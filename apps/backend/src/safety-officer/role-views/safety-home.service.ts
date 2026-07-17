@@ -127,15 +127,14 @@ async function countOpenAccidents7d(
   if (!(await tableExists(client, "safety.accident_reports"))) {
     return { open: 0, pendingInvestigations: 0, soleDriverId: null, soleUnitId: null };
   }
-  // §4 landmine: safety.accident_reports (migration 0049 + 202607031500) has NO `status` and NO
-  // `investigation_status` column — its real columns are id/operating_company_id/driver_id/unit_id/
-  // vendor_id/load_id/accident_at/description (verified on Neon prod br-fancy-credit-akjnd07a). The
-  // prior FILTER/WHERE on phantom columns 42703'd → the WHOLE safety role-home endpoint 500'd
-  // (Promise.all reject), showing false all-zero KPIs. Count by real columns only; pending-investigation
-  // state is not tracked on this table, so report 0. driver_id/unit_id ARE real → drive the deep-link.
+  // 0441-mod6: status + updated_at added on safety.accident_reports (migration 202607580000).
+  // Open = not closed; pendingInvestigations = under-investigation within the 7d window.
   const res = await client.query(
     `
-      SELECT count(*)::int AS open_count,
+      SELECT count(*) FILTER (
+               WHERE status NOT IN ('closed-no-fault', 'closed-driver-at-fault')
+             )::int AS open_count,
+             count(*) FILTER (WHERE status = 'under-investigation')::int AS pending_investigations,
              count(DISTINCT driver_id)::int AS distinct_drivers,
              (array_agg(DISTINCT driver_id) FILTER (WHERE driver_id IS NOT NULL))[1] AS sole_driver,
              count(DISTINCT unit_id)::int AS distinct_units,
@@ -149,7 +148,7 @@ async function countOpenAccidents7d(
   const row = res.rows[0] ?? {};
   return {
     open: num(row.open_count),
-    pendingInvestigations: 0,
+    pendingInvestigations: num(row.pending_investigations),
     soleDriverId: soleId(row.distinct_drivers, row.sole_driver),
     soleUnitId: soleId(row.distinct_units, row.sole_unit),
   };
