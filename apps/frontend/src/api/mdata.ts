@@ -1493,6 +1493,63 @@ export function getUnit(id: string) {
   return apiRequest<MdataUnit>(`/api/v1/mdata/units/${id}`);
 }
 
+export type CreateUnitInput = {
+  unit_number: string;
+  vin: string;
+  make?: string;
+  model?: string;
+  year?: number;
+  license_plate?: string;
+  license_state?: string;
+  status?: string;
+  assigned_driver_id?: string;
+  owner_company_id?: string;
+  currently_leased_to_company_id?: string;
+  acquired_date?: string;
+  notes?: string;
+};
+
+/** POST /api/v1/mdata/units — canonical truck/unit create (Fleet roster + Profiles). */
+export function createUnit(body: CreateUnitInput) {
+  return apiRequest<MdataUnit>("/api/v1/mdata/units", { method: "POST", body });
+}
+
+export type CreateEquipmentInput = {
+  equipment_number: string;
+  vin?: string;
+  equipment_type:
+    | "DryVan"
+    | "Reefer"
+    | "Flatbed"
+    | "Tanker"
+    | "Container"
+    | "Chassis"
+    | "StepDeck"
+    | "Lowboy"
+    | "Conestoga"
+    | "RGN"
+    | "Other";
+  make?: string;
+  model?: string;
+  year?: number;
+  status?: string;
+  current_unit_id?: string;
+  current_location_id?: string;
+  owner_company_id?: string;
+  currently_leased_to_company_id?: string;
+  notes?: string;
+};
+
+export type MdataEquipment = Record<string, unknown> & {
+  id: string;
+  equipment_number?: string;
+};
+
+/** POST /api/v1/mdata/equipment — canonical trailer create (Fleet roster + Profiles). */
+export function createEquipment(body: CreateEquipmentInput) {
+  return apiRequest<MdataEquipment>("/api/v1/mdata/equipment", { method: "POST", body });
+}
+
 export function patchUnit(id: string, body: Record<string, unknown>) {
   return apiRequest<MdataUnit>(`/api/v1/mdata/units/${id}`, { method: "PATCH", body });
 }

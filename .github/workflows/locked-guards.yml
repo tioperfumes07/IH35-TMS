@@ -282,6 +282,9 @@ jobs:
       - name: verify:fleet-edit-save-wired
         run: npm run verify:fleet-edit-save-wired
 
+      - name: verify:fleet-roster-create-actions
+        run: npm run verify:fleet-roster-create-actions
+
       - name: verify:cash-forecast-firewall
         run: npm run verify:cash-forecast-firewall
 

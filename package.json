@@ -95,6 +95,7 @@
     "verify:local-ci": "node scripts/verify-local-ci.mjs",
     "verify:unit-retire-open-wo-gate": "node scripts/verify-unit-retire-open-wo-gate.mjs",
     "verify:fleet-edit-save-wired": "node scripts/verify-fleet-edit-save-wired.mjs",
+    "verify:fleet-roster-create-actions": "node scripts/verify-fleet-roster-create-actions.mjs",
     "verify:load-profitability-card-wired": "node scripts/verify-load-profitability-card-wired.mjs",
     "verify:pm-due-live-odometer": "node scripts/verify-pm-due-live-odometer.mjs",
     "verify:cash-forecast-firewall": "node scripts/verify-cash-forecast-firewall.mjs",
