@@ -59,7 +59,22 @@ export const matterCreateSchema = z.object({
   unit_id: z.string().uuid().optional().nullable(),
 });
 
-export const matterUpdateSchema = matterCreateSchema.partial().omit({ matter_number: true });
+export const matterUpdateSchema = matterCreateSchema
+  .partial()
+  .omit({ matter_number: true })
+  .extend({
+    // Close is exclusively via closeMatter (outcome_summary + closed_at + matter_closed).
+    status: z.enum(["open", "investigating", "litigation", "settled", "dismissed", "judgment"]).optional(),
+    // Allow intentional clears on update (empty string / null).
+    opposing_party: z.string().trim().max(500).optional().nullable(),
+    case_number: z.string().trim().max(200).optional().nullable(),
+    court: z.string().trim().max(500).optional().nullable(),
+    description: z.string().trim().max(20_000).optional().nullable(),
+    internal_notes: z.string().trim().max(20_000).optional().nullable(),
+    attorney_name: z.string().trim().max(200).optional().nullable(),
+    attorney_firm: z.string().trim().max(200).optional().nullable(),
+    attorney_phone: z.string().trim().max(50).optional().nullable(),
+  });
 
 export const matterEventSchema = z.object({
   event_type: z.string().trim().min(2).max(120),

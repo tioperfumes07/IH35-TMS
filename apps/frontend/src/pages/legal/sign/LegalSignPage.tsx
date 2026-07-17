@@ -8,6 +8,7 @@ import {
   type PublicLegalSignDetails,
 } from "../../../api/legal-sign";
 import { ApiError } from "../../../api/client";
+import { PageHeader } from "../../../components/layout/PageHeader";
 
 function renderTemplate(html: string, fields: Record<string, unknown>) {
   return html.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_match, key: string) => {
@@ -198,13 +199,18 @@ export function LegalSignPage() {
   }
 
   if (isLoading) {
-    return <div className="flex min-h-screen items-center justify-center text-sm text-gray-500">Loading contract...</div>;
+    return (
+      <div className="mx-auto max-w-4xl p-4 md:p-6">
+        <PageHeader breadcrumb={["Legal", "Sign"]} title="Sign contract" />
+        <p className="text-sm text-gray-500">Loading contract...</p>
+      </div>
+    );
   }
 
   if (submitted) {
     return (
       <div className="mx-auto max-w-3xl p-6">
-        <h1 className="text-2xl font-semibold text-slate-700">Signature Recorded</h1>
+        <PageHeader breadcrumb={["Legal", "Sign"]} title="Signature recorded" />
         <p className="mt-2 text-sm text-gray-700">Your electronic signature was captured successfully. You may close this page.</p>
       </div>
     );
@@ -213,19 +219,19 @@ export function LegalSignPage() {
   if (!details) {
     return (
       <div className="mx-auto max-w-2xl p-6">
-        <h1 className="text-xl font-semibold text-red-700">Link unavailable</h1>
+        <PageHeader breadcrumb={["Legal", "Sign"]} title="Link unavailable" />
         <p className="mt-2 text-sm text-gray-700">{error ?? "This signing link is invalid or expired."}</p>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-4xl p-4 md:p-6">
-      <div className="rounded-sm border border-gray-200 bg-white p-4 md:p-6">
-        <h1 className="text-2xl font-semibold text-gray-900">{details.display_name_en}</h1>
-        <p className="mt-1 text-sm text-gray-600">Signer: {details.signer_name}</p>
-        <p className="text-xs text-gray-500">Template {details.template_code} v{details.template_version}</p>
-      </div>
+    <div className="mx-auto max-w-4xl space-y-4 p-4 md:p-6">
+      <PageHeader
+        breadcrumb={["Legal", "Sign"]}
+        title={details.display_name_en}
+        subtitle={`Signer: ${details.signer_name} · Template ${details.template_code} v${details.template_version}`}
+      />
 
       <div className="mt-4 rounded-sm border border-gray-200 bg-white p-4 md:p-6">
         <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: renderedHtml }} />

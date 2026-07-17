@@ -1,60 +1,26 @@
 import { useMutation } from "@tanstack/react-query";
-import { DatePicker } from "../../../components/forms/DatePicker";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { legalMattersApi, type LegalMatterRow } from "../../../api/legal-matters";
 import { Button } from "../../../components/Button";
 import { PageHeader } from "../../../components/layout/PageHeader";
-import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import {
+  EMPTY_LEGAL_MATTER_FORM,
+  formStateToCreatePayload,
+  LegalMatterFormFields,
+  type LegalMatterFormState,
+} from "./LegalMatterFormFields";
 
 export function LegalMatterNewPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const navigate = useNavigate();
-  const [form, setForm] = useState({
-    matter_number: "",
-    type: "lawsuit",
-    severity: "medium",
-    our_role: "defendant",
-    opposing_party: "",
-    case_number: "",
-    court: "",
-    description: "",
-    internal_notes: "",
-    amount_claimed_against_us: "",
-    amount_we_seek: "",
-    next_hearing_date: "",
-    statute_of_limitations_at: "",
-    attorney_name: "",
-    attorney_firm: "",
-    attorney_phone: "",
-    attorney_email: "",
-  });
+  const [form, setForm] = useState<LegalMatterFormState>(EMPTY_LEGAL_MATTER_FORM);
 
   const createMut = useMutation<{ matter: LegalMatterRow }, Error, void>({
-    mutationFn: () =>
-      legalMattersApi.create(companyId, {
-        matter_number: form.matter_number.trim(),
-        type: form.type,
-        severity: form.severity,
-        our_role: form.our_role,
-        opposing_party: form.opposing_party.trim() || undefined,
-        case_number: form.case_number.trim() || undefined,
-        court: form.court.trim() || undefined,
-        description: form.description.trim() || undefined,
-        internal_notes: form.internal_notes.trim() || undefined,
-        amount_claimed_against_us: form.amount_claimed_against_us ? Number(form.amount_claimed_against_us) : undefined,
-        amount_we_seek: form.amount_we_seek ? Number(form.amount_we_seek) : undefined,
-        next_hearing_date: form.next_hearing_date || undefined,
-        statute_of_limitations_at: form.statute_of_limitations_at || undefined,
-        attorney_name: form.attorney_name.trim() || undefined,
-        attorney_firm: form.attorney_firm.trim() || undefined,
-        attorney_phone: form.attorney_phone.trim() || undefined,
-        attorney_email: form.attorney_email.trim() || undefined,
-      }),
+    mutationFn: () => legalMattersApi.create(companyId, formStateToCreatePayload(form)),
     onSuccess: (data) => navigate(`/legal/matters/${String(data.matter.id ?? "")}`),
   });
 
@@ -66,149 +32,7 @@ export function LegalMatterNewPage() {
         <p className="text-sm text-gray-600">Select an operating company.</p>
       ) : (
         <div className="mx-auto max-w-3xl space-y-3 rounded-sm border border-gray-200 bg-white p-4">
-          <div className="grid gap-2 md:grid-cols-2">
-            <label className="text-xs text-gray-600">
-              Matter number
-              <input
-                className="mt-1 w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
-                value={form.matter_number}
-                onChange={(e) => setForm((f) => ({ ...f, matter_number: e.target.value }))}
-              />
-            </label>
-            <label className="text-xs text-gray-600">
-              Type
-              <SelectCombobox
-                className="mt-1 w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
-                value={form.type}
-                onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}
-              >
-                {["lawsuit", "claim", "demand_letter", "settlement", "regulatory", "other"].map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </SelectCombobox>
-            </label>
-            <label className="text-xs text-gray-600">
-              Severity
-              <SelectCombobox
-                className="mt-1 w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
-                value={form.severity}
-                onChange={(e) => setForm((f) => ({ ...f, severity: e.target.value }))}
-              >
-                {["low", "medium", "high", "critical"].map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </SelectCombobox>
-            </label>
-            <label className="text-xs text-gray-600">
-              Our role
-              <SelectCombobox
-                className="mt-1 w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
-                value={form.our_role}
-                onChange={(e) => setForm((f) => ({ ...f, our_role: e.target.value }))}
-              >
-                {["defendant", "plaintiff", "third_party", "other"].map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </SelectCombobox>
-            </label>
-            <label className="text-xs text-gray-600 md:col-span-2">
-              Opposing party
-              <input
-                className="mt-1 w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
-                value={form.opposing_party}
-                onChange={(e) => setForm((f) => ({ ...f, opposing_party: e.target.value }))}
-              />
-            </label>
-            <label className="text-xs text-gray-600">
-              Case number
-              <input
-                className="mt-1 w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
-                value={form.case_number}
-                onChange={(e) => setForm((f) => ({ ...f, case_number: e.target.value }))}
-              />
-            </label>
-            <label className="text-xs text-gray-600">
-              Court
-              <input
-                className="mt-1 w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
-                value={form.court}
-                onChange={(e) => setForm((f) => ({ ...f, court: e.target.value }))}
-              />
-            </label>
-            <label className="text-xs text-gray-600">
-              Amount claimed (against us)
-              {/* M-1: dollars-mode QBO money entry; bridges the all-strings form so submit Number(...) is byte-for-byte. */}
-              <MoneyInput
-                valueDollars={form.amount_claimed_against_us ? Number(form.amount_claimed_against_us) : null}
-                onChangeDollars={(d) => setForm((f) => ({ ...f, amount_claimed_against_us: d == null ? "" : String(d) }))}
-                ariaLabel="Amount claimed (against us)"
-                className="mt-1 w-full"
-              />
-            </label>
-            <label className="text-xs text-gray-600">
-              Amount we seek
-              <MoneyInput
-                valueDollars={form.amount_we_seek ? Number(form.amount_we_seek) : null}
-                onChangeDollars={(d) => setForm((f) => ({ ...f, amount_we_seek: d == null ? "" : String(d) }))}
-                ariaLabel="Amount we seek"
-                className="mt-1 w-full"
-              />
-            </label>
-            <label className="text-xs text-gray-600">
-              Next hearing (date)
-              <DatePicker
-                className="mt-1 w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
-                value={form.next_hearing_date}
-                onChange={(next) => setForm((f) => ({ ...f, next_hearing_date: next }))}
-              />
-            </label>
-            <label className="text-xs text-gray-600">
-              Statute of limitations (date)
-              <DatePicker
-                className="mt-1 w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
-                value={form.statute_of_limitations_at}
-                onChange={(next) => setForm((f) => ({ ...f, statute_of_limitations_at: next }))}
-              />
-            </label>
-            <label className="text-xs text-gray-600 md:col-span-2">
-              Description
-              <textarea
-                className="mt-1 min-h-[80px] w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
-                value={form.description}
-                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-              />
-            </label>
-            <label className="text-xs text-gray-600 md:col-span-2">
-              Internal notes
-              <textarea
-                className="mt-1 min-h-[60px] w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
-                value={form.internal_notes}
-                onChange={(e) => setForm((f) => ({ ...f, internal_notes: e.target.value }))}
-              />
-            </label>
-            <label className="text-xs text-gray-600">
-              Attorney name
-              <input
-                className="mt-1 w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
-                value={form.attorney_name}
-                onChange={(e) => setForm((f) => ({ ...f, attorney_name: e.target.value }))}
-              />
-            </label>
-            <label className="text-xs text-gray-600">
-              Attorney firm
-              <input
-                className="mt-1 w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
-                value={form.attorney_firm}
-                onChange={(e) => setForm((f) => ({ ...f, attorney_firm: e.target.value }))}
-              />
-            </label>
-          </div>
+          <LegalMatterFormFields form={form} setForm={setForm} mode="create" />
           <div className="flex gap-2">
             <Link to="/legal/matters">
               <Button variant="secondary">Cancel</Button>

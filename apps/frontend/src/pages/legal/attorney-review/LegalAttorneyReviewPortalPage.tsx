@@ -9,6 +9,7 @@ import {
   type AttorneyReviewTemplateDetails,
 } from "../../../api/legal-attorney-review";
 import { Button } from "../../../components/Button";
+import { PageHeader } from "../../../components/layout/PageHeader";
 
 export function LegalAttorneyReviewPortalPage() {
   const { token = "" } = useParams();
@@ -111,13 +112,18 @@ export function LegalAttorneyReviewPortalPage() {
   }
 
   if (isLoading) {
-    return <div className="flex min-h-screen items-center justify-center text-sm text-gray-600">Loading review…</div>;
+    return (
+      <div className="mx-auto max-w-4xl p-4">
+        <PageHeader breadcrumb={["Legal", "Attorney Review"]} title="Attorney review" />
+        <p className="text-sm text-gray-600">Loading review…</p>
+      </div>
+    );
   }
 
   if (error && !details) {
     return (
       <div className="mx-auto max-w-lg p-6">
-        <h1 className="text-lg font-semibold text-gray-900">Attorney review</h1>
+        <PageHeader breadcrumb={["Legal", "Attorney Review"]} title="Attorney review" />
         <p className="mt-2 text-sm text-red-700">This review link is invalid, expired, or already used ({error}).</p>
       </div>
     );
@@ -128,7 +134,7 @@ export function LegalAttorneyReviewPortalPage() {
   if (doneMessage) {
     return (
       <div className="mx-auto max-w-lg p-6">
-        <h1 className="text-lg font-semibold text-gray-900">Attorney review</h1>
+        <PageHeader breadcrumb={["Legal", "Attorney Review"]} title="Attorney review" />
         <p className="mt-3 text-sm text-gray-800">{doneMessage}</p>
       </div>
     );
@@ -136,15 +142,14 @@ export function LegalAttorneyReviewPortalPage() {
 
   return (
     <div className="mx-auto min-h-screen max-w-4xl space-y-4 p-4 pb-24">
-      <header className="border-b border-gray-200 pb-3">
-        <h1 className="text-xl font-semibold text-gray-900">Attorney review</h1>
-        <p className="text-sm text-gray-600">
-          {details.display_name_en} · {details.template_code} v{details.version}
-        </p>
-        {details.submitted_for_review_at ? (
-          <p className="text-xs text-gray-500">Submitted {new Date(details.submitted_for_review_at).toLocaleString()}</p>
-        ) : null}
-      </header>
+      <PageHeader
+        breadcrumb={["Legal", "Attorney Review"]}
+        title="Attorney review"
+        subtitle={`${details.display_name_en} · ${details.template_code} v${details.version}`}
+      />
+      {details.submitted_for_review_at ? (
+        <p className="-mt-2 text-xs text-gray-500">Submitted {new Date(details.submitted_for_review_at).toLocaleString()}</p>
+      ) : null}
 
       <section className="grid gap-4 lg:grid-cols-2">
         <div className="space-y-3">
