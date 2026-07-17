@@ -5,7 +5,10 @@
 import type { FastifyInstance } from "fastify";
 import { requireAuth } from "../../auth/session-middleware.js";
 import { withLuciaBypass } from "../../auth/db.js";
-import { backfillRelayWalletBankFeedForCompany } from "./relay-wallet-bank-feed.service.js";
+import {
+  backfillRelayWalletBankFeedForCompany,
+  backfillRelayWalletDepositFeedForCompany,
+} from "./relay-wallet-bank-feed.service.js";
 
 export async function registerRelayWalletBankFeedBackfillRoute(app: FastifyInstance) {
   app.post(
@@ -28,7 +31,9 @@ export async function registerRelayWalletBankFeedBackfillRoute(app: FastifyInsta
         try {
           const summary = await withLuciaBypass(async (client) => {
             await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [companyId]);
-            return backfillRelayWalletBankFeedForCompany(client, companyId);
+            const fuel = await backfillRelayWalletBankFeedForCompany(client, companyId);
+            const deposits = await backfillRelayWalletDepositFeedForCompany(client, companyId);
+            return { fuel, deposits };
           });
           app.log.info({ companyId, ...summary }, "[RELAY_WALLET_BANK_FEED] backfill complete");
         } catch (err) {

@@ -18,6 +18,7 @@
  * @packageDocumentation
  */
 import type { DbClient } from "./db-client.type.js";
+import { upsertRelayWalletDepositFeedRow } from "./relay-wallet-bank-feed.service.js";
 
 export type RelayDepositIngestSource = "daily_pull" | "webhook" | "csv_import";
 
@@ -144,6 +145,17 @@ export async function upsertRelayDeposit(
   if (!relayDepositId) {
     throw new Error(`relay_deposit: upsert did not return an id for deposit_id=${deposit.deposit_id}`);
   }
+
+  // Banking → Relay Fuel Wallet Received column (is_credit). Visibility only — no GL.
+  await upsertRelayWalletDepositFeedRow(client, {
+    operating_company_id: operatingCompanyId,
+    deposit_id: deposit.deposit_id,
+    relay_created_at: deposit.relay_created_at,
+    amount_cents: totalAmountCents,
+    note: deposit.note ?? null,
+    classification,
+    funding_card_last4: fundingCardLast4,
+  });
 
   return { relay_deposit_id: relayDepositId, deposit_id: deposit.deposit_id, funding_card_last4: fundingCardLast4, classification };
 }

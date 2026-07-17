@@ -59,14 +59,30 @@ if (service) {
   if (!/SAVEPOINT relay_wallet_feed_row/.test(service)) {
     failures.push("backfill must use per-row SAVEPOINT so one linkage failure cannot abort the company");
   }
+  if (!/upsertRelayWalletDepositFeedRow/.test(service) || !/RELAY_DEPOSIT_SOURCE_REF_PREFIX|relay_deposit:/.test(service)) {
+    failures.push("wallet feed must mirror deposits as Received (relay_deposit: + is_credit)");
+  }
+  if (!/is_credit\s*=\s*true/.test(service)) {
+    failures.push("deposit feed rows must set is_credit = true for Received column");
+  }
 }
 
 if (ingest && !/upsertRelayWalletBankFeedRow/.test(ingest)) {
   failures.push("relay-fuel-ingest.service must call upsertRelayWalletBankFeedRow after bridge");
 }
 
+const depositClassifier = read(
+  "apps/backend/src/integrations/relay-payments/relay-deposit-classifier.service.ts",
+);
+if (depositClassifier && !/upsertRelayWalletDepositFeedRow/.test(depositClassifier)) {
+  failures.push("deposit classifier must call upsertRelayWalletDepositFeedRow after upsert");
+}
+
 if (backfill && !/wallet-bank-feed\/backfill/.test(backfill)) {
   failures.push("backfill route must expose /api/integrations/relay/wallet-bank-feed/backfill");
+}
+if (backfill && !/backfillRelayWalletDepositFeedForCompany/.test(backfill)) {
+  failures.push("backfill route must also backfill deposit (Received) rows");
 }
 
 if (index && !/registerRelayWalletBankFeedBackfillRoute/.test(index)) {
@@ -75,6 +91,31 @@ if (index && !/registerRelayWalletBankFeedBackfillRoute/.test(index)) {
 
 if (plaid && !/categorization_unit_id/.test(plaid)) {
   failures.push("company-transactions must return categorization_unit_id for bank feed UI");
+}
+if (plaid && !/relay_fuel_lines/.test(plaid)) {
+  failures.push("company-transactions must return relay_fuel_lines (diesel/reefer/DEF/fee breakdown)");
+}
+
+const designView = read(
+  "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
+);
+if (designView) {
+  if (!/isRelayWalletAccount/.test(designView) || !/label=\"Driver\"/.test(designView) || !/label=\"Truck\"/.test(designView)) {
+    failures.push("BankingTransactionsDesignView must show Driver/Truck/Load columns on Relay wallet");
+  }
+  if (!/buildRelayFuelBreakdown|Fuel breakdown \(Relay\)/.test(designView)) {
+    failures.push("BankingTransactionsDesignView must surface Relay fuel line breakdown");
+  }
+  if (!/Transfer from account/.test(designView) || !/Transfer to account/.test(designView)) {
+    failures.push("Transfer categorize must expose inline From/To account pickers (QBO)");
+  }
+}
+
+const breakdownHelper = read(
+  "apps/frontend/src/pages/banking/components/relayFuelLineBreakdown.ts",
+);
+if (breakdownHelper && !/Diesel \(truck\)/.test(breakdownHelper)) {
+  failures.push("relayFuelLineBreakdown must distinguish Diesel (truck) vs reefer vs DEF");
 }
 
 if (pkg && !/"verify:relay-wallet-bank-feed"/.test(pkg)) {
@@ -86,5 +127,5 @@ if (failures.length) {
   for (const f of failures) console.error(`  - ${f}`);
   process.exit(1);
 }
-console.log(`${LABEL}: OK — Relay wallet bank feed + linkage wired`);
+console.log(`${LABEL}: OK — Relay wallet bank feed + linkage + QBO breakdown/columns/deposits`);
 process.exit(0);
