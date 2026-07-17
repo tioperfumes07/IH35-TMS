@@ -10,9 +10,11 @@ import {
   type MaintenanceVendorRow,
   updateMaintenanceVendor,
 } from "../../../api/maintenance";
+import { listVendors } from "../../../api/mdata";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { Combobox } from "../../../components/shared/Combobox";
 import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 
@@ -26,6 +28,7 @@ type VendorDraft = {
   address: string;
   payment_terms: string;
   notes: string;
+  mdata_vendor_id: string | null;
 };
 
 const EMPTY_DRAFT: VendorDraft = {
@@ -38,6 +41,7 @@ const EMPTY_DRAFT: VendorDraft = {
   address: "",
   payment_terms: "",
   notes: "",
+  mdata_vendor_id: null,
 };
 
 export function VendorsPage() {
@@ -57,6 +61,28 @@ export function VendorsPage() {
     enabled: Boolean(companyId),
   });
 
+  const apVendorsQ = useQuery({
+    queryKey: ["mdata", "vendors", "maint-vendor-link", companyId],
+    queryFn: () => listVendors({ operating_company_id: companyId, status: "active", limit: 200 }),
+    enabled: Boolean(companyId) && (createOpen || Boolean(editing)),
+  });
+
+  const apVendorOptions = useMemo(
+    () =>
+      (apVendorsQ.data?.vendors ?? [])
+        .map((vendor) => ({ value: vendor.id, label: vendor.name || vendor.id }))
+        .sort((a, b) => a.label.localeCompare(b.label)),
+    [apVendorsQ.data?.vendors]
+  );
+
+  const apVendorLabelById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const vendor of apVendorsQ.data?.vendors ?? []) {
+      map.set(vendor.id, vendor.name || vendor.id);
+    }
+    return map;
+  }, [apVendorsQ.data?.vendors]);
+
   const refresh = async () => {
     await queryClient.invalidateQueries({ queryKey: ["maintenance", "vendors", companyId] });
   };
@@ -74,6 +100,7 @@ export function VendorsPage() {
         address: draft.address || undefined,
         payment_terms: draft.payment_terms || undefined,
         notes: draft.notes || undefined,
+        mdata_vendor_id: draft.mdata_vendor_id,
       }),
     onSuccess: async () => {
       setCreateOpen(false);
@@ -97,6 +124,7 @@ export function VendorsPage() {
         address: editing.address ?? undefined,
         payment_terms: editing.payment_terms ?? undefined,
         notes: editing.notes ?? undefined,
+        mdata_vendor_id: editing.mdata_vendor_id,
       });
     },
     onSuccess: async () => {
@@ -136,6 +164,18 @@ export function VendorsPage() {
       ),
     },
     { key: "code", label: "Code", sortable: true, render: (row) => String(row.code ?? "—") },
+    {
+      key: "mdata_vendor_id",
+      label: "AP Vendor",
+      render: (row) =>
+        row.mdata_vendor_id ? (
+          <Link to={`/vendors/${row.mdata_vendor_id}`} className="text-slate-600 underline">
+            {apVendorLabelById.get(row.mdata_vendor_id) ?? row.mdata_vendor_id}
+          </Link>
+        ) : (
+          "—"
+        ),
+    },
     { key: "contact_email", label: "Email", render: (row) => String(row.contact_email ?? "—") },
     { key: "contact_phone", label: "Phone", render: (row) => String(row.contact_phone ?? "—") },
     { key: "is_active", label: "Status", sortable: true, render: (row) => (row.is_active ? "Active" : "Archived") },
@@ -216,6 +256,15 @@ export function VendorsPage() {
         <div className="space-y-2">
           <input className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" placeholder="Display name" value={draft.display_name} onChange={(e) => setDraft((p) => ({ ...p, display_name: e.target.value }))} />
           <input className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" placeholder="Code (optional)" value={draft.code} onChange={(e) => setDraft((p) => ({ ...p, code: e.target.value.toUpperCase() }))} />
+          <div className="space-y-1">
+            <label className="text-[11px] font-semibold text-gray-600">AP Vendor (mdata.vendors)</label>
+            <Combobox
+              options={apVendorOptions}
+              value={draft.mdata_vendor_id}
+              placeholder={apVendorsQ.isLoading ? "Loading AP vendors…" : "Link to AP vendor (optional)"}
+              onChange={(value) => setDraft((p) => ({ ...p, mdata_vendor_id: value }))}
+            />
+          </div>
           <div className="grid grid-cols-2 gap-2">
             <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" placeholder="Email" value={draft.contact_email} onChange={(e) => setDraft((p) => ({ ...p, contact_email: e.target.value }))} />
             <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" placeholder="Phone" value={draft.contact_phone} onChange={(e) => setDraft((p) => ({ ...p, contact_phone: e.target.value }))} />
@@ -232,6 +281,15 @@ export function VendorsPage() {
         {editing ? (
           <div className="space-y-2">
             <input className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" value={editing.display_name} onChange={(e) => setEditing((p) => (p ? { ...p, display_name: e.target.value } : p))} />
+            <div className="space-y-1">
+              <label className="text-[11px] font-semibold text-gray-600">AP Vendor (mdata.vendors)</label>
+              <Combobox
+                options={apVendorOptions}
+                value={editing.mdata_vendor_id}
+                placeholder={apVendorsQ.isLoading ? "Loading AP vendors…" : "Link to AP vendor (optional)"}
+                onChange={(value) => setEditing((p) => (p ? { ...p, mdata_vendor_id: value } : p))}
+              />
+            </div>
             <div className="grid grid-cols-2 gap-2">
               <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" value={editing.contact_email ?? ""} onChange={(e) => setEditing((p) => (p ? { ...p, contact_email: e.target.value || null } : p))} />
               <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" value={editing.contact_phone ?? ""} onChange={(e) => setEditing((p) => (p ? { ...p, contact_phone: e.target.value || null } : p))} />

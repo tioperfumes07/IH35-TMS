@@ -1428,6 +1428,8 @@ export type MaintenanceVendorRow = {
   address: string | null;
   payment_terms: string | null;
   notes: string | null;
+  /** Canonical AP vendor (mdata.vendors) for WO/AP correlation. */
+  mdata_vendor_id: string | null;
   is_active: boolean;
   active?: boolean;
   archived_at?: string | null;

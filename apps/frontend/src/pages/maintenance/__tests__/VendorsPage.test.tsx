@@ -18,6 +18,13 @@ vi.mock("../../../api/maintenance", () => ({
   getMaintenanceVendorsTemplateUrl: () => "/api/v1/maintenance/vendors/import-template",
 }));
 
+vi.mock("../../../api/mdata", () => ({
+  listVendors: vi.fn().mockResolvedValue({
+    vendors: [{ id: "22222222-2222-4222-8222-222222222222", name: "Ace Parts" }],
+    total: 1,
+  }),
+}));
+
 vi.mock("../../../contexts/CompanyContext", () => ({
   useCompanyContext: () => ({
     selectedCompanyId: "11111111-1111-4111-8111-111111111111",
@@ -53,6 +60,7 @@ describe("Maintenance VendorsPage (B29)", () => {
           display_name: "FleetPride",
           contact_email: "rep@fleet.com",
           contact_phone: null,
+          mdata_vendor_id: null,
           is_active: true,
         },
       ],
@@ -78,5 +86,6 @@ describe("Maintenance VendorsPage (B29)", () => {
     renderPage();
     await user.click(await screen.findByRole("button", { name: "+ Create Vendor" }));
     expect(await screen.findByText("Create Vendor")).toBeInTheDocument();
+    expect(screen.getByText("AP Vendor (mdata.vendors)")).toBeInTheDocument();
   });
 });

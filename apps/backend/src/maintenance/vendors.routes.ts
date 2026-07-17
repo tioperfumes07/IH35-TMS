@@ -28,6 +28,8 @@ const createSchema = z.object({
   address: z.string().trim().max(300).optional(),
   payment_terms: z.string().trim().max(80).optional(),
   notes: z.string().trim().max(2000).optional(),
+  /** Canonical AP vendor (mdata.vendors) for WO/AP correlation. */
+  mdata_vendor_id: z.string().uuid().nullable().optional(),
 });
 
 const patchSchema = createSchema
@@ -85,6 +87,7 @@ function buildVendorMetadata(input: {
   address?: string;
   payment_terms?: string;
   notes?: string;
+  mdata_vendor_id?: string | null;
 }) {
   const email = input.contact_email ?? (input.contact?.includes("@") ? input.contact : undefined);
   const phone = input.contact_phone ?? (input.contact && !input.contact.includes("@") ? input.contact : undefined);
@@ -95,6 +98,7 @@ function buildVendorMetadata(input: {
     ...(input.address ? { address: input.address } : {}),
     ...(input.payment_terms ? { payment_terms: input.payment_terms } : {}),
     ...(input.notes ? { notes: input.notes } : {}),
+    ...(input.mdata_vendor_id !== undefined ? { mdata_vendor_id: input.mdata_vendor_id } : {}),
   };
 }
 
@@ -113,6 +117,7 @@ function mapVendorRow(row: Record<string, unknown>) {
     address: metadata.address ?? null,
     payment_terms: metadata.payment_terms ?? null,
     notes: metadata.notes ?? null,
+    mdata_vendor_id: typeof metadata.mdata_vendor_id === "string" ? metadata.mdata_vendor_id : null,
     is_active: row.is_active,
     active: row.is_active,
     archived_at: metadata.archived_at ?? null,
@@ -168,6 +173,20 @@ async function withCompany<T>(
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [companyId]);
     return fn(client);
   });
+}
+
+async function assertMdataVendorExists(
+  client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: any[] }> },
+  companyId: string,
+  mdataVendorId: string
+) {
+  const res = await client.query(
+    `SELECT id FROM mdata.vendors WHERE id = $1 AND operating_company_id = $2 AND deactivated_at IS NULL LIMIT 1`,
+    [mdataVendorId, companyId]
+  );
+  if (!res.rows[0]) {
+    throw Object.assign(new Error("invalid_mdata_vendor_id"), { code: "invalid_mdata_vendor_id" });
+  }
 }
 
 async function fetchVendorDetail(
@@ -299,25 +318,35 @@ export async function registerMaintenanceVendorsRoutes(app: FastifyInstance) {
       return reply.code(400).send({ error: "validation_error", message: "invalid vendor code" });
     }
     const metadata = buildVendorMetadata(body);
-    const vendor = await withCompany(user.uuid, body.operating_company_id, async (client) => {
-      const res = await client.query(
-        `
+    try {
+      const vendor = await withCompany(user.uuid, body.operating_company_id, async (client) => {
+        if (body.mdata_vendor_id) {
+          await assertMdataVendorExists(client, body.operating_company_id, body.mdata_vendor_id);
+        }
+        const res = await client.query(
+          `
           INSERT INTO catalogs.maintenance_vendors (
             operating_company_id, code, display_name, description, metadata, is_active, sort_order
           )
           VALUES ($1, $2, $3, $4, $5::jsonb, true, 50)
           RETURNING id, operating_company_id, code, display_name, description, metadata, is_active, sort_order, created_at, updated_at
         `,
-        [body.operating_company_id, code, body.display_name, body.description ?? null, JSON.stringify(metadata)]
-      );
-      await appendCrudAudit(client, user.uuid, "maintenance.vendor.created", {
-        resource_id: res.rows[0]?.id,
-        operating_company_id: body.operating_company_id,
-        code,
+          [body.operating_company_id, code, body.display_name, body.description ?? null, JSON.stringify(metadata)]
+        );
+        await appendCrudAudit(client, user.uuid, "maintenance.vendor.created", {
+          resource_id: res.rows[0]?.id,
+          operating_company_id: body.operating_company_id,
+          code,
+        });
+        return mapVendorRow(res.rows[0]);
       });
-      return mapVendorRow(res.rows[0]);
-    });
-    return reply.code(201).send(vendor);
+      return reply.code(201).send(vendor);
+    } catch (error) {
+      if ((error as { code?: string }).code === "invalid_mdata_vendor_id") {
+        return reply.code(400).send({ error: "invalid_mdata_vendor_id", message: "mdata_vendor_id must reference an active AP vendor" });
+      }
+      throw error;
+    }
   });
 
   app.patch("/api/v1/maintenance/vendors/:id", async (req, reply) => {
@@ -328,20 +357,24 @@ export async function registerMaintenanceVendorsRoutes(app: FastifyInstance) {
     const parsed = patchSchema.safeParse(req.body ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
     const body = parsed.data;
-    const updated = await withCompany(user.uuid, body.operating_company_id, async (client) => {
-      const existing = await client.query(
-        `SELECT id, code, display_name, description, metadata, is_active FROM catalogs.maintenance_vendors WHERE id = $1 AND operating_company_id = $2`,
-        [params.data.id, body.operating_company_id]
-      );
-      if (!existing.rows[0]) return null;
-      const prior = existing.rows[0];
-      const priorMetadata = (prior.metadata ?? {}) as Record<string, unknown>;
-      const nextMetadata = {
-        ...priorMetadata,
-        ...buildVendorMetadata(body),
-      };
-      const res = await client.query(
-        `
+    try {
+      const updated = await withCompany(user.uuid, body.operating_company_id, async (client) => {
+        const existing = await client.query(
+          `SELECT id, code, display_name, description, metadata, is_active FROM catalogs.maintenance_vendors WHERE id = $1 AND operating_company_id = $2`,
+          [params.data.id, body.operating_company_id]
+        );
+        if (!existing.rows[0]) return null;
+        if (body.mdata_vendor_id) {
+          await assertMdataVendorExists(client, body.operating_company_id, body.mdata_vendor_id);
+        }
+        const prior = existing.rows[0];
+        const priorMetadata = (prior.metadata ?? {}) as Record<string, unknown>;
+        const nextMetadata = {
+          ...priorMetadata,
+          ...buildVendorMetadata(body),
+        };
+        const res = await client.query(
+          `
           UPDATE catalogs.maintenance_vendors
           SET
             code = COALESCE($3, code),
@@ -352,24 +385,30 @@ export async function registerMaintenanceVendorsRoutes(app: FastifyInstance) {
           WHERE id = $1 AND operating_company_id = $2
           RETURNING id, operating_company_id, code, display_name, description, metadata, is_active, sort_order, created_at, updated_at
         `,
-        [
-          params.data.id,
-          body.operating_company_id,
-          body.code ?? null,
-          body.display_name ?? null,
-          body.description ?? null,
-          JSON.stringify(nextMetadata),
-        ]
-      );
-      await appendCrudAudit(client, user.uuid, "maintenance.vendor.updated", {
-        resource_id: params.data.id,
-        operating_company_id: body.operating_company_id,
-        changes: buildPatchChanges(body as Record<string, unknown>, prior, res.rows[0]),
+          [
+            params.data.id,
+            body.operating_company_id,
+            body.code ?? null,
+            body.display_name ?? null,
+            body.description ?? null,
+            JSON.stringify(nextMetadata),
+          ]
+        );
+        await appendCrudAudit(client, user.uuid, "maintenance.vendor.updated", {
+          resource_id: params.data.id,
+          operating_company_id: body.operating_company_id,
+          changes: buildPatchChanges(body as Record<string, unknown>, prior, res.rows[0]),
+        });
+        return mapVendorRow(res.rows[0]);
       });
-      return mapVendorRow(res.rows[0]);
-    });
-    if (!updated) return reply.code(404).send({ error: "maintenance_vendor_not_found" });
-    return updated;
+      if (!updated) return reply.code(404).send({ error: "maintenance_vendor_not_found" });
+      return updated;
+    } catch (error) {
+      if ((error as { code?: string }).code === "invalid_mdata_vendor_id") {
+        return reply.code(400).send({ error: "invalid_mdata_vendor_id", message: "mdata_vendor_id must reference an active AP vendor" });
+      }
+      throw error;
+    }
   });
 
   app.patch("/api/v1/maintenance/vendors/:id/archive", async (req, reply) => {
