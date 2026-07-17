@@ -1263,3 +1263,8 @@ jobs:
         run: node scripts/verify-h02-qbo-topbar-sync-now.mjs --selftest
       - name: verify:h02-qbo-topbar-sync-now
         run: node scripts/verify-h02-qbo-topbar-sync-now.mjs
+      # drain babysit — was package.json-only (guard-wired FAIL)
+      - name: verify:inventory-reorder-threshold-ui --selftest
+        run: node scripts/verify-inventory-reorder-threshold-ui.mjs --selftest
+      - name: verify:inventory-reorder-threshold-ui
+        run: npm run verify:inventory-reorder-threshold-ui
