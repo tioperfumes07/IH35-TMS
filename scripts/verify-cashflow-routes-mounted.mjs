@@ -49,11 +49,20 @@ for (const { fn, routeFile, endpoint } of mounts) {
   }
 }
 
-if (
-  accountingIndex &&
-  !/cash-flow\\\.routes\\\.|cash-forecast\\\.routes\\\.|finance-hub\\\.routes\\\./.test(accountingIndex)
-) {
-  failures.push("accounting/index.ts: ignorePattern must exclude cash-flow, cash-forecast, and finance-hub from autoload");
+// @fastify/autoload top-level entryRelPath is basename (e.g. cash-flow.routes.ts) — no leading /.
+// Require (^|/) so ignore actually matches; \/ alone misses and double-registers with explicit mount.
+// In source the regex literal is written as (^|\/) — assert that escaped form.
+const ignoreNeedles = [
+  ["cash-flow", /\(\^\|\\\/\)cash-flow\\\.routes\\\./],
+  ["cash-forecast", /\(\^\|\\\/\)cash-forecast\\\.routes\\\./],
+  ["finance-hub", /\(\^\|\\\/\)finance-hub\\\.routes\\\./],
+];
+for (const [name, re] of ignoreNeedles) {
+  if (accountingIndex && !re.test(accountingIndex)) {
+    failures.push(
+      `accounting/index.ts: ignorePattern must use (^|/)${name}.routes. (not leading-/ only)`,
+    );
+  }
 }
 
 const reportsApi = read("apps/frontend/src/api/reports.ts");

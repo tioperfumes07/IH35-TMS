@@ -59,12 +59,15 @@ try {
     "reconciled must be derived from returned figures",
   );
 
-  const mountedExplicit =
-    serverIndex.includes("await registerCashFlowRoutes(app)") ||
-    accountingIndex.includes("registerCashFlowRoutes(");
-  if (!mountedExplicit) {
+  if (!serverIndex.includes("await registerCashFlowRoutes(app)")) {
     throw new Error("Cash Flow routes are not registered (index.ts mount required)");
   }
+  // Source regex literal writes (^|\/) — require that shape so basename entryRelPath matches.
+  assertMatches(
+    accountingIndex,
+    /\(\^\|\\\/\)cash-flow\\\.routes\\\./,
+    "accounting/index.ts ignorePattern must match (^|/)cash-flow.routes. (autoload entryRelPath has no leading /)",
+  );
 
   console.log("verify:cash-flow-contract — OK");
 } catch (error) {
