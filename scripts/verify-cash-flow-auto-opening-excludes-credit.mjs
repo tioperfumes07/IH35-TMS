@@ -24,6 +24,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify:cash-flow-auto-opening-excludes-credit";
 const CASH_FLOW = "apps/backend/src/cash-flow/cash-flow.service.ts";
 const HELPER = "apps/backend/src/banking/internal-wallet-balance.ts";
+const OPENING_CASH_HELPER_ASSIGN_RE =
+  /\b(?:const|let|var)?\s*openingCashCents\s*=\s*(?:await\s+)?sumAuthoritativeDepositoryCashCents\s*\(/;
 
 function stripComments(src) {
   const blank = (m) => m.replace(/[^\n]/g, " ");
@@ -53,9 +55,9 @@ export function assertGuard(files) {
 
   if (!cashFlow) {
     failures.push(`${CASH_FLOW}: missing or empty`);
-  } else if (!/sumAuthoritativeDepositoryCashCents\s*\(/.test(cashFlow)) {
+  } else if (!OPENING_CASH_HELPER_ASSIGN_RE.test(cashFlow)) {
     failures.push(
-      `${CASH_FLOW}: opening cash must call sumAuthoritativeDepositoryCashCents (shared with Banking KPI; keeps credit/non-depository excluded)`
+      `${CASH_FLOW}: openingCashCents must be assigned from sumAuthoritativeDepositoryCashCents (shared with Banking KPI; keeps credit/non-depository excluded)`
     );
   }
 
@@ -160,6 +162,20 @@ function selftest() {
             SELECT COALESCE(SUM(current_balance_cents), 0) FROM banking.bank_accounts
             WHERE account_class = 'depository'
           \`);
+        `,
+      },
+    ],
+    [
+      "cash-flow-dead-helper-call-only",
+      {
+        ...good,
+        cashFlow: `
+          if (false) await sumAuthoritativeDepositoryCashCents(client, operatingCompanyId, opts);
+          const openingRow = await client.query(\`
+            SELECT COALESCE(SUM(current_balance_cents), 0) FROM banking.bank_accounts
+            WHERE account_class = 'depository'
+          \`);
+          const openingCashCents = Number(openingRow.rows[0]?.balance_cents ?? 0);
         `,
       },
     ],
