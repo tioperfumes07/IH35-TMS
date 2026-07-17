@@ -3,6 +3,7 @@ import { apiRequest } from "./client";
 export type QboSyncHealthResponse = {
   status: "healthy" | "syncing" | "stale" | "error";
   last_successful_sync_at: string | null;
+  master_data_last_success_at?: string | null;
   pending_count: number;
   error_count: number;
   needs_reconnect?: boolean;
@@ -10,6 +11,14 @@ export type QboSyncHealthResponse = {
   refresh_token_expires_at?: string | null;
   token_alert_count?: number;
 };
+
+/** Owner-triggered master-data CDC sync (vendors/customers/items/accounts). */
+export function postQboMasterDataSyncTriggerFull(operatingCompanyId: string) {
+  return apiRequest<{ accepted: boolean }>("/api/v1/qbo/master-data-sync/trigger-full", {
+    method: "POST",
+    body: { operating_company_id: operatingCompanyId },
+  });
+}
 
 export function getQboSyncHealth(operatingCompanyId: string) {
   return apiRequest<QboSyncHealthResponse>(

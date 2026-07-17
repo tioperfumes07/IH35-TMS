@@ -9,6 +9,7 @@ export type QboSyncPill = {
   status: string;
   needsReconnect: boolean;
   reconnectReason: string | null;
+  lastSuccessLabel: string;
 };
 
 export type TopStatusBarProps = {
@@ -18,6 +19,8 @@ export type TopStatusBarProps = {
   qboSyncPill: QboSyncPill | null;
   onOpenQboSyncDashboard: () => void;
   onReconnectQbo: () => void;
+  onSyncNow: () => void;
+  syncNowPending: boolean;
   /** Icon-only mode at/below this viewport width. AF-15: 1366 (tablet + laptop). */
   compactMaxWidth?: number;
 };
@@ -53,6 +56,8 @@ export function TopStatusBar({
   qboSyncPill,
   onOpenQboSyncDashboard,
   onReconnectQbo,
+  onSyncNow,
+  syncNowPending,
   compactMaxWidth = 1366,
 }: TopStatusBarProps) {
   const compact = useMaxWidth(compactMaxWidth);
@@ -68,13 +73,15 @@ export function TopStatusBar({
         qboSyncPill={qboSyncPill}
         onOpenQboSyncDashboard={onOpenQboSyncDashboard}
         onReconnectQbo={onReconnectQbo}
+        onSyncNow={onSyncNow}
+        syncNowPending={syncNowPending}
       />
     );
   }
 
   return (
     <div
-      className="flex max-w-[min(640px,94vw)] flex-nowrap items-center justify-center gap-x-2 rounded-full px-2 py-1 text-[12px] leading-snug"
+      className="flex max-w-[min(760px,94vw)] flex-nowrap items-center justify-center gap-x-2 rounded-full px-2 py-1 text-[12px] leading-snug"
       style={{ backgroundColor: "#151A24", color: muted }}
       data-status-bar-desktop
     >
@@ -105,6 +112,14 @@ export function TopStatusBar({
             <span className={`inline-block h-2 w-2 rounded-full ${topbarDotClass(qboSyncPill.dot)}`} />
             {qboSyncPill.label}
           </button>
+          <span
+            className="whitespace-nowrap text-[11px]"
+            style={{ color: muted }}
+            data-testid="qbo-sync-last-success"
+            title={qboSyncPill.lastSuccessLabel}
+          >
+            {qboSyncPill.lastSuccessLabel}
+          </span>
           {qboSyncPill.needsReconnect ? (
             <button
               type="button"
@@ -113,7 +128,17 @@ export function TopStatusBar({
             >
               Reconnect QuickBooks
             </button>
-          ) : null}
+          ) : (
+            <button
+              type="button"
+              className="ml-1 rounded-full border border-sky-400/70 px-2 py-0.5 text-[11px] font-semibold text-sky-100 hover:bg-sky-400/10 disabled:cursor-not-allowed disabled:opacity-60"
+              data-testid="qbo-sync-now-button"
+              disabled={syncNowPending || qboSyncPill.status === "syncing"}
+              onClick={onSyncNow}
+            >
+              {syncNowPending || qboSyncPill.status === "syncing" ? "Syncing…" : "Sync now"}
+            </button>
+          )}
         </>
       ) : null}
     </div>
