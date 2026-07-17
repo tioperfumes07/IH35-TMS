@@ -1262,4 +1262,4 @@ jobs:
       - name: verify:h02-qbo-topbar-sync-now --selftest
         run: node scripts/verify-h02-qbo-topbar-sync-now.mjs --selftest
       - name: verify:h02-qbo-topbar-sync-now
-        run: npm run verify:h02-qbo-topbar-sync-now
+        run: node scripts/verify-h02-qbo-topbar-sync-now.mjs
