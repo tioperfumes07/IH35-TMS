@@ -1823,7 +1823,7 @@ export function BankingTransactionsDesignView({
                               </div>
                             ) : null}
                             {tx.relay_fuel_lines && tx.relay_fuel_lines.length > 0 ? (
-                              <div className="mb-2 rounded-sm border border-slate-200 bg-slate-50 p-2">
+                              <div className="mb-2">
                                 <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-700">
                                   Fuel breakdown (Relay)
                                 </p>
