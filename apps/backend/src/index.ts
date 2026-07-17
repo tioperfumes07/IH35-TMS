@@ -237,6 +237,7 @@ import { registerDriverHubRequestRoutes } from "./cash-advances/driver-hub-reque
 import { registerMaintenanceWorkOrderRoutes } from "./maintenance/work-orders.routes.js";
 import { registerWorkOrdersV1Routes } from "./work-orders/work-orders.routes.js";
 import { registerMaintenanceDashboardRoutes } from "./maintenance/dashboard.routes.js";
+import { registerMaintenanceSettingsRoutes } from "./maintenance/settings.routes.js";
 import { registerMaintenanceDashboardKpisRoutes } from "./maintenance/dashboard-kpis.routes.js";
 import { registerMaintenancePmAlertsRoutes } from "./maintenance/pm-alerts.routes.js";
 import { registerMaintenanceTriageRoutes } from "./maintenance/triage.routes.js";
@@ -969,6 +970,7 @@ async function main() {
   await registerMaintenanceDriverReportsRoutes(app);
   await registerMaintenanceDashboardKpisRoutes(app);
   await registerMaintenanceDashboardRoutes(app);
+  await registerMaintenanceSettingsRoutes(app);
   await registerMaintenancePmAlertsRoutes(app);
   await registerMaintenanceTriageRoutes(app);
   await registerMaintenanceArrivingSoonRoutes(app);

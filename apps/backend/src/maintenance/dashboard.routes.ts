@@ -425,43 +425,6 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
     return { rows };
   });
 
-  app.get("/api/v1/maintenance/settings", async (req, reply) => {
-    const user = authed(req, reply);
-    if (!user) return;
-    const parsed = companyQuerySchema.safeParse(req.query ?? {});
-    if (!parsed.success) return validationError(reply, parsed.error);
-    const companyId = parsed.data.operating_company_id;
-
-    const payload = await withCompany(user.uuid, companyId, async (client) => {
-      const pmRes = await client.query(
-        `
-          SELECT COUNT(*)::int AS pm_schedules
-          FROM maintenance.pm_schedules
-          WHERE operating_company_id = $1::uuid
-        `,
-        [companyId]
-      );
-      const vendorRes = await client.query(
-        `
-          SELECT COUNT(*)::int AS maintenance_vendors
-          FROM mdata.vendors
-          WHERE operating_company_id = $1::uuid
-            AND vendor_type = 'Repair'
-        `,
-        [companyId]
-      );
-      return {
-        pm_interval_days_default: 30,
-        notification_email_enabled: true,
-        default_shop_location: "Main yard",
-        pm_schedules: Number(pmRes.rows[0]?.pm_schedules ?? 0),
-        maintenance_vendors: Number(vendorRes.rows[0]?.maintenance_vendors ?? 0),
-      };
-    });
-
-    return payload;
-  });
-
   app.get("/api/v1/maintenance/parts-inventory/kpis", async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
