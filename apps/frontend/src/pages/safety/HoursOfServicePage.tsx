@@ -1,10 +1,11 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getDriverHosDetail } from "../../api/hos";
 import { listDrivers } from "../../api/mdata";
 import { listHosViolations } from "../../api/safetyV64";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { HosViolationCreateModal } from "./components/HosViolationCreateModal";
 
 const ON_DUTY_STATUSES = new Set(["driving", "on_duty_not_driving", "yard_moves"]);
 const NEAR_CAP_MINUTES = 30;
@@ -92,6 +93,9 @@ type Props = {
 };
 
 export function HoursOfServicePage({ operatingCompanyId }: Props) {
+  const queryClient = useQueryClient();
+  const [createOpen, setCreateOpen] = useState(false);
+
   const fleetQuery = useQuery({
     queryKey: ["safety", "hos-dashboard", operatingCompanyId],
     queryFn: () => loadFleetHosRows(operatingCompanyId),
@@ -144,13 +148,14 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
             Driver self-view remains on Driver HOS detail.
           </div>
         </div>
-        <Link
-          to="/safety/hos-violations"
+        <button
+          type="button"
           className="rounded-sm bg-[#1f2a44] px-3 py-1.5 text-xs font-semibold text-white"
-          data-testid="safety-hos-create-violation-link"
+          data-testid="safety-hos-create-violation"
+          onClick={() => setCreateOpen(true)}
         >
           + Create violation
-        </Link>
+        </button>
       </div>
 
       <div className="grid gap-2 md:grid-cols-3" data-testid="safety-hos-kpi-tiles">
@@ -228,7 +233,7 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
               <ul className="space-y-2 text-xs">
                 {violations.slice(0, 12).map((row) => (
                   <li key={String(row.id)} className="rounded-sm border border-gray-100 bg-gray-50 px-2 py-1">
-                    <div className="font-semibold">{String(row.violation_code ?? "Violation")}</div>
+                    <div className="font-semibold">{String(row.violation_type ?? "Violation")}</div>
                     <div className="text-slate-600">
                       Driver {String(row.driver_id ?? "—")} · {String(row.occurred_at ?? "—")}
                     </div>
@@ -238,7 +243,7 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
             )}
           </div>
           <div className="border-t border-gray-100 px-3 py-2 text-[11px] text-slate-500">
-            Log new violations on{" "}
+            Log new violations with <span className="font-semibold text-slate-700">+ Create violation</span> above, or manage the full list on{" "}
             <Link to="/safety/hos-violations" className="font-semibold text-slate-700 hover:underline">
               /safety/hos-violations
             </Link>
@@ -250,6 +255,15 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
           </div>
         </section>
       </div>
+
+      <HosViolationCreateModal
+        open={createOpen}
+        operatingCompanyId={operatingCompanyId}
+        onClose={() => setCreateOpen(false)}
+        onCreated={() => {
+          void queryClient.invalidateQueries({ queryKey: ["safety-v64", "hos-violations"] });
+        }}
+      />
     </div>
   );
 }
