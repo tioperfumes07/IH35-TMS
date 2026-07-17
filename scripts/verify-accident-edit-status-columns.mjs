@@ -6,7 +6,7 @@
  * the status route swallowed the DB error via .catch(() => ({ rows: [] })) → silent 404.
  *
  * Asserts:
- *  1. Migration 202607580000 adds status + updated_at + chk_accident_reports_status.
+ *  1. Migration 202607583000 adds status + updated_at + chk_accident_reports_status.
  *  2. PATCH /accidents/:id/status UPDATE is NOT wrapped in .catch that masks failures.
  *  3. PATCH /accidents/:id still sets updated_at on edit (needs the column).
  */
@@ -16,7 +16,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-accident-edit-status-columns";
-const MIGRATION = "db/migrations/202607580000_accident_reports_status_updated_at.sql";
+const MIGRATION = "db/migrations/202607583000_accident_reports_status_updated_at.sql";
 const ROUTES = "apps/backend/src/safety/safety.routes.ts";
 
 function stripComments(src) {

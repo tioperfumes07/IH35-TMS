@@ -10,7 +10,7 @@ export default {
   name: "verify-accident-edit-status-columns",
   run: async () => {
     const migration = fs.readFileSync(
-      path.join(ROOT, "db/migrations/202607580000_accident_reports_status_updated_at.sql"),
+      path.join(ROOT, "db/migrations/202607583000_accident_reports_status_updated_at.sql"),
       "utf8"
     );
     const routes = fs.readFileSync(path.join(ROOT, "apps/backend/src/safety/safety.routes.ts"), "utf8");
