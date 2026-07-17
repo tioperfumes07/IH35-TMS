@@ -436,6 +436,7 @@
     "verify:detention-invoice-fk": "node scripts/verify-detention-invoice-fk.mjs",
     "verify:bill-lines-load-id": "node scripts/verify-bill-lines-load-id.mjs",
     "verify:bank-automatch-observable": "node scripts/verify-bank-automatch-observable.mjs",
+    "verify:bank-automatch-button-wired": "node scripts/verify-bank-automatch-button-wired.mjs",
     "verify:bills-mdata-vendor-fk": "node scripts/verify-bills-mdata-vendor-fk.mjs",
     "verify:vendor-types-catalog": "node scripts/verify-vendor-types-catalog.mjs",
     "verify:nav-integrity": "node scripts/verify-nav-integrity.mjs",
