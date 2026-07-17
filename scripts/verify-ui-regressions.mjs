@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import fs from "node:fs";
+import { checkEntityBadgeSingleSource } from "./verify-entity-badge-single-source.mjs";
 
 function read(path) {
   return fs.readFileSync(path, "utf8");
@@ -99,6 +100,15 @@ try {
   assertIncludes(customerDetail, "CustomerContractsTab", "Customer contracts section missing");
   const contractsTab = read("apps/frontend/src/components/customers/CustomerContractsTab.tsx");
   assertIncludes(contractsTab, "Upload Contract", "Customer contracts upload action missing");
+
+  const entityBadgeReasons = checkEntityBadgeSingleSource({
+    topbar: read("apps/frontend/src/components/Topbar.tsx"),
+    switcher: read("apps/frontend/src/components/layout/CarrierSwitcher.tsx"),
+    helper: read("apps/frontend/src/lib/selected-company-label.ts"),
+  });
+  if (entityBadgeReasons.length) {
+    throw new Error(`Entity badge single-source guard failed:\n${entityBadgeReasons.map((r) => `  • ${r}`).join("\n")}`);
+  }
 
   console.log("✅ UI regression guards passed");
 } catch (error) {

@@ -7,6 +7,7 @@ import { switchIdentityCompany } from "../../api/identity";
 import { ApiError } from "../../api/client";
 import type { MyCompany } from "../../api/org";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { selectedCompanySwitcherLabel } from "../../lib/selected-company-label";
 
 /** Only launched (is_active) carriers appear in the office company switcher. */
 function visibleCompanies(companies: MyCompany[]): MyCompany[] {
@@ -23,7 +24,7 @@ export function CarrierSwitcher() {
 
   const activeCompanies = useMemo(() => visibleCompanies(companies), [companies]);
   const showSwitcher = activeCompanies.length > 1;
-  const selectedLabel = selectedCompany?.short_name || selectedCompany?.legal_name || "Select company";
+  const selectedLabel = selectedCompanySwitcherLabel(selectedCompany);
 
   const defaultCompanyId = useMemo(
     () => activeCompanies.find((company) => company.is_default)?.id ?? null,
