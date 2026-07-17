@@ -193,7 +193,6 @@ export function BankingHomePage({ initialTab }: Props = {}) {
     if (!bankAccountsPanelRows.some((row) => row.id === selectedAccountId)) setSelectedAccountId(null);
   }, [bankAccountsPanelRows, selectedAccountId]);
   const selectedId = selectedAccountId ?? bankAccountsPanelRows[0]?.id ?? null;
-  const selectedTile = useMemo(() => tiles.find((tile: BankingTile) => tile.id === selectedId) ?? null, [tiles, selectedId]);
   const factoringTile = useMemo(
     () => tiles.find((t) => String(t.tile_kind) === "virtual" || t.display_name.toLowerCase().includes("factoring")) ?? null,
     [tiles]
