@@ -7,7 +7,7 @@ const sample: MyCompany = {
   legal_name: "IH35 Trucking LLC",
   short_name: "TRK",
   code: "TRK",
-  company_type: "operating",
+  company_type: "operating_carrier",
   is_active: true,
   is_default: true,
 };
