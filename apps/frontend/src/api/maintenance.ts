@@ -313,6 +313,35 @@ export function getMaintenanceKpis(companyId: string) {
   return apiRequest<MaintenanceKpis>(`/api/v1/maintenance/dashboard/kpis?${query(companyId)}`);
 }
 
+export type MaintenanceSettings = {
+  operating_company_id?: string;
+  pm_interval_days_default: number;
+  notification_email_enabled: boolean;
+  default_shop_location: string;
+  bay_assignment_policy: string;
+  pm_schedules: number;
+  maintenance_vendors: number;
+};
+
+export function getMaintenanceSettings(companyId: string) {
+  return apiRequest<MaintenanceSettings>(`/api/v1/maintenance/settings?${query(companyId)}`);
+}
+
+export function updateMaintenanceSettings(
+  companyId: string,
+  body: Partial<
+    Pick<
+      MaintenanceSettings,
+      "pm_interval_days_default" | "notification_email_enabled" | "default_shop_location" | "bay_assignment_policy"
+    >
+  >
+) {
+  return apiRequest<MaintenanceSettings>(`/api/v1/maintenance/settings?${query(companyId)}`, {
+    method: "PATCH",
+    body,
+  });
+}
+
 export type MaintKpiSparkPoint = { day: string; value: number };
 
 export type MaintKpiSummary = {
