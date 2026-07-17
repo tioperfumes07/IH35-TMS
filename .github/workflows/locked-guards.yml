@@ -616,6 +616,10 @@ jobs:
         run: npm run verify:custvend-sortable-headers
       - name: verify:ap-aging-url-sort
         run: npm run verify:ap-aging-url-sort
+      - name: verify:crm-url-sort --selftest
+        run: node scripts/verify-crm-url-sort.mjs --selftest
+      - name: verify:crm-url-sort
+        run: npm run verify:crm-url-sort
       - name: verify:dispatch-factoring-queue-deeplinks --selftest
         run: node scripts/verify-dispatch-factoring-queue-deeplinks.mjs --selftest
       - name: verify:dispatch-factoring-queue-deeplinks

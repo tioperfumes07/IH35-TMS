@@ -1026,6 +1026,7 @@
     "verify:ops-sortable-headers": "node scripts/verify-ops-sortable-headers.mjs",
     "verify:custvend-sortable-headers": "node scripts/verify-custvend-sortable-headers.mjs",
     "verify:ap-aging-url-sort": "node scripts/verify-ap-aging-url-sort.mjs",
+    "verify:crm-url-sort": "node scripts/verify-crm-url-sort.mjs",
     "verify:legal-matter-edit-wired": "node scripts/verify-legal-matter-edit-wired.mjs",
     "verify:legal-breadcrumb-tail-4": "node scripts/verify-legal-breadcrumb-tail-4.mjs",
     "verify:safety-kpi-drillthrough": "node scripts/verify-safety-kpi-drillthrough.mjs",

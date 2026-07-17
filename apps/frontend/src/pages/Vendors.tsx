@@ -20,6 +20,7 @@ import { VendorListSidebar } from "./vendors/VendorListSidebar";
 import { VendorsSyncPanel } from "./vendors/VendorsSyncPanel";
 import { VendorCreateModal } from "../components/vendors/VendorCreateModal";
 import { useViewModePref } from "../hooks/useViewModePref";
+import { useUrlSort } from "../hooks/useUrlSort";
 
 type VendorTabId = "transaction_list" | "vendor_details" | "notes";
 
@@ -51,7 +52,14 @@ export function VendorsPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [search, setSearch] = useState("");
-  const [sortByName, setSortByName] = useState<"name_asc" | "name_desc">("name_asc");
+  // BANK-SORT-ROLLOUT-CRM — name sort persists in ?sort=name&dir= via shared useUrlSort
+  // (same contract as accounting VendorsListView / #2609). Default (no params) = A→Z.
+  const { sortKey, sortDirection, onSortChange: onUrlSortChange } = useUrlSort();
+  const sortByName: "name_asc" | "name_desc" =
+    sortKey === "name" && sortDirection === "desc" ? "name_desc" : "name_asc";
+  const setSortByName = (value: "name_asc" | "name_desc") => {
+    onUrlSortChange("name", value === "name_desc" ? "desc" : "asc");
+  };
   const [activeTab, setActiveTab] = useState<VendorTabId>("transaction_list");
   const [selectedVendorId, setSelectedVendorId] = useState("");
   const [typeFilter, setTypeFilter] = useState("");

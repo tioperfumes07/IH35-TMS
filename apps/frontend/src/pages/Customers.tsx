@@ -28,6 +28,7 @@ import { CustomerListSidebar } from "./customers/CustomerListSidebar";
 import { CustomersListView } from "./customers/CustomersListView";
 import { CustomersSyncPanel } from "./customers/CustomersSyncPanel";
 import { useViewModePref } from "../hooks/useViewModePref";
+import { useUrlSort } from "../hooks/useUrlSort";
 
 type CustomerTabId =
   | "transaction_list"
@@ -160,7 +161,14 @@ export function CustomersPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [search, setSearch] = useState("");
-  const [sortByName, setSortByName] = useState<"name_asc" | "name_desc">("name_asc");
+  // BANK-SORT-ROLLOUT-CRM — name sort persists in ?sort=name&dir= via shared useUrlSort
+  // (same contract as accounting CustomersListView / #2609). Default (no params) = A→Z.
+  const { sortKey, sortDirection, onSortChange: onUrlSortChange } = useUrlSort();
+  const sortByName: "name_asc" | "name_desc" =
+    sortKey === "name" && sortDirection === "desc" ? "name_desc" : "name_asc";
+  const setSortByName = (value: "name_asc" | "name_desc") => {
+    onUrlSortChange("name", value === "name_desc" ? "desc" : "asc");
+  };
   const [activeTab, setActiveTab] = useState<CustomerTabId>("transaction_list");
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
