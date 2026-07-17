@@ -24,7 +24,7 @@ describe("AddTrainingModal (A24-7)", () => {
     vi.spyOn(clientApi, "apiRequest").mockResolvedValue({ id: "tr-1", training_name: "Defensive Driving" } as never);
   });
 
-  it("renders program select, completion date, and notes when open", async () => {
+  it("renders program select, completion date, expiry date, and notes when open", async () => {
     wrap(
       <AddTrainingModal
         open
@@ -37,10 +37,11 @@ describe("AddTrainingModal (A24-7)", () => {
     expect(await screen.findByTestId("add-training-modal")).toBeInTheDocument();
     expect(screen.getByTestId("add-training-program")).toBeInTheDocument();
     expect(screen.getByTestId("add-training-completed")).toBeInTheDocument();
+    expect(screen.getByTestId("add-training-expiry")).toBeInTheDocument();
     expect(screen.getByTestId("add-training-notes")).toBeInTheDocument();
   });
 
-  it("POSTs per-driver training and calls onCreated on success", async () => {
+  it("POSTs per-driver training with expiry and calls onCreated on success", async () => {
     const user = userEvent.setup();
     const onCreated = vi.fn();
     const onClose = vi.fn();
@@ -64,6 +65,8 @@ describe("AddTrainingModal (A24-7)", () => {
     // The POST body assertion below doesn't depend on the exact date picked.
     await user.click(within(screen.getByTestId("add-training-completed")).getByRole("button"));
     await user.click(await screen.findByRole("button", { name: "1" }));
+    await user.click(within(screen.getByTestId("add-training-expiry")).getByRole("button"));
+    await user.click(await screen.findByRole("button", { name: "15" }));
     await user.type(screen.getByTestId("add-training-notes"), "Completed onsite");
     await user.click(screen.getByTestId("add-training-submit"));
 
@@ -74,6 +77,7 @@ describe("AddTrainingModal (A24-7)", () => {
           method: "POST",
           body: expect.objectContaining({
             training_name: "Defensive Driving",
+            expiry_date: expect.stringMatching(/^\d{4}-\d{2}-15$/),
             notes: "Completed onsite",
           }),
         })

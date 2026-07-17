@@ -1041,3 +1041,8 @@ jobs:
         run: node scripts/verify-maint-cost-per-unit-field-bind.mjs --selftest
       - name: verify:maint-cost-per-unit-field-bind
         run: npm run verify:maint-cost-per-unit-field-bind
+      # 0441-mod5 — Driver-profile training create must collect and send expiry_date
+      - name: verify:driver-training-expiry-field --selftest
+        run: node scripts/verify-driver-training-expiry-field.mjs --selftest
+      - name: verify:driver-training-expiry-field
+        run: npm run verify:driver-training-expiry-field
