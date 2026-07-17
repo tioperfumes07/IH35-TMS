@@ -34,7 +34,7 @@ describe("plaid item display badge", () => {
       now
     );
     expect(label).toBe("Healthy");
-    expect(derivePlaidConnectionBadgeClasses(label)).toContain("green");
+    expect(derivePlaidConnectionBadgeClasses(label)).toContain("slate");
   });
 
   it("shows Stale when last sync is between 24h and 72h", () => {
