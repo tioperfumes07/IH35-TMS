@@ -982,6 +982,7 @@
     "verify:compliance-violations-hos-wired": "node scripts/verify-compliance-violations-hos-wired.mjs",
     "verify:banking-inline-create": "node scripts/verify-banking-inline-create.mjs",
     "verify:fuel-history-import-wired": "node scripts/verify-fuel-history-import-wired.mjs",
+    "verify:fuel-expensive-states-catalog-wired": "node scripts/verify-fuel-expensive-states-catalog-wired.mjs",
     "verify:fuel-gl-poster-callers": "node scripts/verify-fuel-gl-poster-callers.mjs",
     "verify:no-dead-clicks": "node scripts/verify-no-dead-clicks.mjs",
     "verify:entitylink-deep-links": "node scripts/verify-entitylink-deep-links.mjs",

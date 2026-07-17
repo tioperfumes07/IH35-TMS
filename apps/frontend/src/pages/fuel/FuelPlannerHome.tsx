@@ -36,6 +36,7 @@ import { TripPlanSummaryBanner } from "./components/TripPlanSummaryBanner";
 import { UploadLovesPricesModal } from "./components/UploadLovesPricesModal";
 import { FuelHomePage } from "./FuelHome";
 import { FuelTransactionsTable } from "./FuelTransactionsTable";
+import { ExpensiveStatesMultiselect } from "./components/ExpensiveStatesMultiselect";
 
 const SUBNAV = [
   { id: "home", label: "Home" },
@@ -385,22 +386,19 @@ function PlannerSettingsForm({ companyId, settings }: { companyId: string; setti
   const [maxOffHighway, setMaxOffHighway] = useState(String(settings.max_off_highway_miles ?? 5));
   const [maxBackwards, setMaxBackwards] = useState(String(settings.max_backwards_miles ?? 5));
   const [overfillPct, setOverfillPct] = useState(String(settings.overfill_threshold_pct ?? 95));
-  const [expensiveStates, setExpensiveStates] = useState((settings.expensive_states ?? []).join(", "));
+  const [expensiveStates, setExpensiveStates] = useState<string[]>(
+    (settings.expensive_states ?? []).map((code) => code.trim().toUpperCase()).filter(Boolean),
+  );
 
   const mutation = useMutation({
-    mutationFn: () => {
-      const states = expensiveStates
-        .split(",")
-        .map((s) => s.trim().toUpperCase())
-        .filter((s) => s.length === 2);
-      return updateFuelPlannerSettings(companyId, {
+    mutationFn: () =>
+      updateFuelPlannerSettings(companyId, {
         max_miles_per_shift: Number(maxMilesPerShift),
         max_off_highway_miles: Number(maxOffHighway),
         max_backwards_miles: Number(maxBackwards),
         overfill_threshold_pct: Number(overfillPct),
-        ...(states.length > 0 ? { expensive_states: states } : {}),
-      });
-    },
+        ...(expensiveStates.length > 0 ? { expensive_states: expensiveStates } : {}),
+      }),
     onSuccess: () => {
       pushToast("Planner settings saved", "success");
       void queryClient.invalidateQueries({ queryKey: ["fuel", "planner", "settings", companyId] });
@@ -434,16 +432,10 @@ function PlannerSettingsForm({ companyId, settings }: { companyId: string; setti
             />
           </label>
         ))}
-        <label className="flex flex-col gap-1 md:col-span-2">
-          <span className="font-semibold text-gray-600">Expensive states (2-letter, comma-separated)</span>
-          <input
-            type="text"
-            value={expensiveStates}
-            onChange={(e) => setExpensiveStates(e.target.value)}
-            placeholder="NY, PA, NJ, CA"
-            className="rounded-sm border border-gray-300 px-2 py-1 uppercase"
-          />
-        </label>
+        <div className="flex flex-col gap-1 md:col-span-2">
+          <span className="font-semibold text-gray-600">Expensive states</span>
+          <ExpensiveStatesMultiselect companyId={companyId} value={expensiveStates} onChange={setExpensiveStates} />
+        </div>
       </div>
       <div className="mt-3 flex items-center gap-3">
         <button
