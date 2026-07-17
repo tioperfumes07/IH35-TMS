@@ -47,6 +47,18 @@ if (service) {
   if (/journal_entr|postJournal|EXPENSE_GL/.test(service)) {
     failures.push("wallet feed must NOT post GL (visibility only)");
   }
+  // Planted regression: coalesce(enum, '') is typed as the enum → 22P02 on '' → zero bank feed rows.
+  if (/coalesce\(\s*l\.status\s*,\s*['"]['"]\s*\)/.test(service)) {
+    failures.push(
+      "resolveLoadForUnitAt must cast status::text BEFORE coalesce(..., '') — bare coalesce(l.status, '') 22P02's",
+    );
+  }
+  if (!/coalesce\(\s*l\.status::text\s*,\s*['"]['"]\s*\)/.test(service)) {
+    failures.push("resolveLoadForUnitAt must use coalesce(l.status::text, '') for cancelled filter");
+  }
+  if (!/SAVEPOINT relay_wallet_feed_row/.test(service)) {
+    failures.push("backfill must use per-row SAVEPOINT so one linkage failure cannot abort the company");
+  }
 }
 
 if (ingest && !/upsertRelayWalletBankFeedRow/.test(ingest)) {

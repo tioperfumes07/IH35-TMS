@@ -153,7 +153,10 @@ async function resolveLoadForUnitAt(
       FROM mdata.loads l
       WHERE l.operating_company_id = $1::uuid
         AND l.assigned_unit_id = $2::uuid
-        AND coalesce(l.status, '') NOT IN ('cancelled', 'canceled', 'void', 'voided')
+        -- Cast to text BEFORE coalesce: coalesce(enum, '') is typed as the enum and 22P02's on ''
+        -- (empty string is not a valid mdata.load_status_enum). That aborted every wallet upsert
+        -- whenever a fuel txn had a matched unit — leaving Banking → Relay Fuel Wallet empty.
+        AND coalesce(l.status::text, '') NOT IN ('cancelled', 'canceled', 'void', 'voided')
         AND l.created_at <= ($3::timestamptz + interval '1 day')
         AND (
           l.status IN ('draft', 'booked', 'planned', 'dispatched', 'in_transit', 'at_pickup', 'at_delivery', 'delivered')
@@ -492,7 +495,7 @@ export async function upsertRelayWalletBankFeedRow(
 export async function backfillRelayWalletBankFeedForCompany(
   client: DbClient,
   operatingCompanyId: string,
-): Promise<{ inserted: number; updated: number; skipped: number }> {
+): Promise<{ inserted: number; updated: number; skipped: number; failed: number }> {
   const rows = await client.query<{
     transaction_id: string;
     relay_created_at: string;
@@ -534,29 +537,38 @@ export async function backfillRelayWalletBankFeedForCompany(
   let inserted = 0;
   let updated = 0;
   let skipped = 0;
+  let failed = 0;
 
   for (const row of rows.rows) {
     const prompts = Array.isArray(row.prompts)
       ? (row.prompts as Array<{ label: string; value: string }>)
       : null;
-    const result = await upsertRelayWalletBankFeedRow(client, {
-      operating_company_id: operatingCompanyId,
-      transaction_id: row.transaction_id,
-      relay_created_at: row.relay_created_at,
-      amount_cents: Number(row.total_amount_paid_cents),
-      merchant_name: row.merchant_name,
-      location_city: row.location_city,
-      location_state: row.location_state,
-      matched_unit_id: row.matched_unit_id,
-      matched_unit_number: row.matched_unit_number,
-      matched_driver_id: row.matched_driver_id,
-      fuel_transaction_id: row.fuel_transaction_id,
-      prompts,
-    });
-    if (result.status === "inserted") inserted += 1;
-    else if (result.status === "updated") updated += 1;
-    else skipped += 1;
+    // Per-row savepoint: one bad linkage query must not abort the remaining ~1.4k mirrors.
+    await client.query("SAVEPOINT relay_wallet_feed_row");
+    try {
+      const result = await upsertRelayWalletBankFeedRow(client, {
+        operating_company_id: operatingCompanyId,
+        transaction_id: row.transaction_id,
+        relay_created_at: row.relay_created_at,
+        amount_cents: Number(row.total_amount_paid_cents),
+        merchant_name: row.merchant_name,
+        location_city: row.location_city,
+        location_state: row.location_state,
+        matched_unit_id: row.matched_unit_id,
+        matched_unit_number: row.matched_unit_number,
+        matched_driver_id: row.matched_driver_id,
+        fuel_transaction_id: row.fuel_transaction_id,
+        prompts,
+      });
+      await client.query("RELEASE SAVEPOINT relay_wallet_feed_row");
+      if (result.status === "inserted") inserted += 1;
+      else if (result.status === "updated") updated += 1;
+      else skipped += 1;
+    } catch {
+      await client.query("ROLLBACK TO SAVEPOINT relay_wallet_feed_row");
+      failed += 1;
+    }
   }
 
-  return { inserted, updated, skipped };
+  return { inserted, updated, skipped, failed };
 }
