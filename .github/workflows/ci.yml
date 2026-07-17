@@ -362,6 +362,9 @@ jobs:
       - name: Verify maint nav count reconcile
         run: npm run verify:maint-nav-count-reconcile
 
+      - name: verify:home-quickjump-counts
+        run: node scripts/verify-home-quickjump-counts.mjs
+
       - name: verify:parts-canonical-source
         run: npm run verify:parts-canonical-source
 

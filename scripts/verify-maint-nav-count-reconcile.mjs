@@ -82,8 +82,9 @@ function main() {
   if (homePage.includes("count: 14") || homePage.includes('count: 14,')) {
     failures.push("DefaultHome must not hardcode Maintenance quick-jump count 14");
   }
-  if (!homePage.includes("MAINTENANCE_HOME_QUICK_JUMP_COUNT")) {
-    failures.push("DefaultHome must import MAINTENANCE_HOME_QUICK_JUMP_COUNT");
+  const homeQuickJumps = read(path.join(ROOT, "apps/frontend/src/pages/home/homeQuickJumps.ts"));
+  if (!homePage.includes("MAINTENANCE_HOME_QUICK_JUMP_COUNT") && !homeQuickJumps.includes("MAINTENANCE_HOME_QUICK_JUMP_COUNT")) {
+    failures.push("DefaultHome or homeQuickJumps must import MAINTENANCE_HOME_QUICK_JUMP_COUNT");
   }
 
   if (!sidebarConfig.includes("MAINTENANCE_MODULE_NAV_LINKS")) {

@@ -152,6 +152,9 @@ export const SUBNAV_ITEMS: readonly AccountingSubNavItem[] = [
   { label: "CoA roles", path: "/accounting/settings/coa-roles", section: "more" },
 ] as const;
 
+/** HOME quick-jump badge — every mounted accounting sub-nav destination. */
+export const ACCOUNTING_HOME_QUICK_JUMP_COUNT = SUBNAV_ITEMS.length;
+
 export function bySection(section: AccountingSubNavSection): AccountingSubNavItem[] {
   return SUBNAV_ITEMS.filter((item) => item.section === section);
 }

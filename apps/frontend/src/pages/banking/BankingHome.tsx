@@ -36,16 +36,11 @@ import { DriverEscrowTabContent } from "./components/DriverEscrowTabContent";
 import { BankingReportsTabContent } from "./components/BankingReportsTabContent";
 import { BankingTransactionsDesignView } from "./components/BankingTransactionsDesignView";
 import { BANKING_TAB_PATH, bankingTabFromPath } from "../../router/route-manifest";
+import { BANKING_MODULE_TABS, type BankingModuleTabId } from "./BANKING_NAV_CONFIG";
 
-const BANKING_TABS = [
-  { id: "accounts", label: "Accounts" },
-  { id: "transactions", label: "Transactions" },
-  { id: "reconciliation", label: "Reconciliation" },
-  { id: "driver_escrow", label: "Driver Escrow" },
-  { id: "reports", label: "Reports" },
-] as const;
+const BANKING_TABS = BANKING_MODULE_TABS;
 
-type BankingTabId = (typeof BANKING_TABS)[number]["id"];
+type BankingTabId = BankingModuleTabId;
 
 type Props = {
   initialTab?: BankingTabId;

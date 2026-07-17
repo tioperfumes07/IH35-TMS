@@ -66,8 +66,11 @@ function main() {
   if (driversPage.includes("const DRIVERS_SUBNAV = [")) {
     failures.push("DriversPage must not duplicate DRIVERS_SUBNAV — use DRIVERS_TABS_CONFIG");
   }
-  if (!homePage.includes("DRIVERS_CANONICAL_SUBNAV_COUNT")) {
-    failures.push("DefaultHome must import DRIVERS_CANONICAL_SUBNAV_COUNT");
+  const homeQuickJumps = fs.existsSync(path.join(ROOT, "apps/frontend/src/pages/home/homeQuickJumps.ts"))
+    ? read(path.join(ROOT, "apps/frontend/src/pages/home/homeQuickJumps.ts"))
+    : "";
+  if (!homePage.includes("DRIVERS_CANONICAL_SUBNAV_COUNT") && !homeQuickJumps.includes("DRIVERS_CANONICAL_SUBNAV_COUNT")) {
+    failures.push("DefaultHome or homeQuickJumps must import DRIVERS_CANONICAL_SUBNAV_COUNT");
   }
   if (homePage.includes('title: "Drivers"') && homePage.includes("count: 3, to: \"/drivers\"")) {
     failures.push("DefaultHome must not hardcode Drivers quick-jump count 3");
