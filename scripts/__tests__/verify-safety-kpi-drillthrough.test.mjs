@@ -19,5 +19,5 @@ function run(rootOverride) {
 test("passes when Safety Home KPI/alerts drill to specific driver/unit/record", () => {
   const runResult = run();
   assert.equal(runResult.status, 0, runResult.stderr || runResult.stdout);
-  assert.match(runResult.stdout, /verify:safety-kpi-drillthrough OK/);
+  assert.match(runResult.stdout, /verify:safety-kpi-drillthrough — OK/);
 });
