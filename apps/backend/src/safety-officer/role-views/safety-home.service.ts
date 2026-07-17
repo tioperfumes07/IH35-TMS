@@ -19,6 +19,11 @@ export interface SafetyAlert {
   count: number;
   action_url: string;
   action_label: string;
+  // SAFETY-KPI-DRILLTHROUGH: when the alert resolves to a single driver/unit, action_url deep-links
+  // straight to that record's detail route (/drivers/:id, /fleet/units/:id) instead of a generic list.
+  // These fields expose the resolved subject id for traceability + reverse linkage.
+  subject_driver_id?: string | null;
+  subject_unit_id?: string | null;
 }
 
 export interface SafetyHomeKpis {
@@ -62,11 +67,30 @@ async function tableExists(client: DbClient, qualifiedName: string): Promise<boo
   }
 }
 
-async function countOpenDvirMajorDefects(client: DbClient, ociId: string): Promise<number> {
-  if (!(await tableExists(client, "safety.dvir_defects"))) return 0;
+// SAFETY-KPI-DRILLTHROUGH: count + the sole subject id when exactly ONE distinct driver/unit is
+// behind the rows. When count(DISTINCT subject) === 1, the alert can deep-link to that record's detail
+// route; when 0 or >1, callers keep the generic list route (honest — a list spanning many subjects
+// must not masquerade as a single-record drill-through).
+interface CountWithUnit {
+  count: number;
+  soleUnitId: string | null;
+}
+interface CountWithDriver {
+  count: number;
+  soleDriverId: string | null;
+}
+
+function soleId(distinct: unknown, value: unknown): string | null {
+  return num(distinct) === 1 && value != null && value !== "" ? String(value) : null;
+}
+
+async function countOpenDvirMajorDefects(client: DbClient, ociId: string): Promise<CountWithUnit> {
+  if (!(await tableExists(client, "safety.dvir_defects"))) return { count: 0, soleUnitId: null };
   const res = await client.query(
     `
-      SELECT count(*)::int AS c
+      SELECT count(*)::int AS c,
+             count(DISTINCT d.unit_id)::int AS distinct_units,
+             (array_agg(DISTINCT d.unit_id) FILTER (WHERE d.unit_id IS NOT NULL))[1] AS sole_unit
       FROM safety.dvir_defects d
       WHERE d.operating_company_id = $1::uuid
         AND d.severity = 'major'
@@ -74,14 +98,17 @@ async function countOpenDvirMajorDefects(client: DbClient, ociId: string): Promi
     `,
     [ociId]
   );
-  return num(res.rows[0]?.c);
+  const row = res.rows[0] ?? {};
+  return { count: num(row.c), soleUnitId: soleId(row.distinct_units, row.sole_unit) };
 }
 
-async function countHosViolationsToday(client: DbClient, ociId: string): Promise<number> {
-  if (!(await tableExists(client, "safety.hos_violations"))) return 0;
+async function countHosViolationsToday(client: DbClient, ociId: string): Promise<CountWithDriver> {
+  if (!(await tableExists(client, "safety.hos_violations"))) return { count: 0, soleDriverId: null };
   const res = await client.query(
     `
-      SELECT count(*)::int AS c
+      SELECT count(*)::int AS c,
+             count(DISTINCT driver_id)::int AS distinct_drivers,
+             (array_agg(DISTINCT driver_id) FILTER (WHERE driver_id IS NOT NULL))[1] AS sole_driver
       FROM safety.hos_violations
       WHERE operating_company_id = $1::uuid
         AND occurred_at::date = CURRENT_DATE
@@ -89,49 +116,65 @@ async function countHosViolationsToday(client: DbClient, ociId: string): Promise
     `,
     [ociId]
   );
-  return num(res.rows[0]?.c);
+  const row = res.rows[0] ?? {};
+  return { count: num(row.c), soleDriverId: soleId(row.distinct_drivers, row.sole_driver) };
 }
 
-async function countOpenAccidents7d(client: DbClient, ociId: string): Promise<{ open: number; pendingInvestigations: number }> {
+async function countOpenAccidents7d(
+  client: DbClient,
+  ociId: string
+): Promise<{ open: number; pendingInvestigations: number; soleDriverId: string | null; soleUnitId: string | null }> {
   if (!(await tableExists(client, "safety.accident_reports"))) {
-    return { open: 0, pendingInvestigations: 0 };
+    return { open: 0, pendingInvestigations: 0, soleDriverId: null, soleUnitId: null };
   }
   // §4 landmine: safety.accident_reports (migration 0049 + 202607031500) has NO `status` and NO
   // `investigation_status` column — its real columns are id/operating_company_id/driver_id/unit_id/
-  // vendor_id/load_id/accident_at/description. The prior FILTER/WHERE on those phantom columns 42703'd
-  // → the WHOLE safety role-home endpoint 500'd (Promise.all reject), showing false all-zero KPIs. Count
-  // by real columns only; pending-investigation state is not tracked on this table, so report 0.
+  // vendor_id/load_id/accident_at/description (verified on Neon prod br-fancy-credit-akjnd07a). The
+  // prior FILTER/WHERE on phantom columns 42703'd → the WHOLE safety role-home endpoint 500'd
+  // (Promise.all reject), showing false all-zero KPIs. Count by real columns only; pending-investigation
+  // state is not tracked on this table, so report 0. driver_id/unit_id ARE real → drive the deep-link.
   const res = await client.query(
     `
-      SELECT count(*)::int AS open_count
+      SELECT count(*)::int AS open_count,
+             count(DISTINCT driver_id)::int AS distinct_drivers,
+             (array_agg(DISTINCT driver_id) FILTER (WHERE driver_id IS NOT NULL))[1] AS sole_driver,
+             count(DISTINCT unit_id)::int AS distinct_units,
+             (array_agg(DISTINCT unit_id) FILTER (WHERE unit_id IS NOT NULL))[1] AS sole_unit
       FROM safety.accident_reports
       WHERE operating_company_id = $1::uuid
         AND accident_at >= (CURRENT_DATE - INTERVAL '7 days')
     `,
     [ociId]
   );
+  const row = res.rows[0] ?? {};
   return {
-    open: num(res.rows[0]?.open_count),
+    open: num(row.open_count),
     pendingInvestigations: 0,
+    soleDriverId: soleId(row.distinct_drivers, row.sole_driver),
+    soleUnitId: soleId(row.distinct_units, row.sole_unit),
   };
 }
 
-async function countPendingDaDraws(client: DbClient, ociId: string): Promise<number> {
+async function countPendingDaDraws(client: DbClient, ociId: string): Promise<CountWithDriver> {
   // §4 landmine: safety.da_random_pool_draws (migration 0327) has NO `status` column (it is an audit
   // trail of completed draws). The prior `status IN (...)` 42703'd → the safety role-home endpoint 500'd.
   // Pending drug/alcohol tests are tracked on safety.da_test_records.result = 'pending' (same migration),
-  // which is exactly this KPI ("await test scheduling or completion"). Read the real table.
-  if (!(await tableExists(client, "safety.da_test_records"))) return 0;
+  // which is exactly this KPI ("await test scheduling or completion"). The subject column here is
+  // `driver_uuid` (verified on Neon prod), NOT `driver_id`.
+  if (!(await tableExists(client, "safety.da_test_records"))) return { count: 0, soleDriverId: null };
   const res = await client.query(
     `
-      SELECT count(*)::int AS c
+      SELECT count(*)::int AS c,
+             count(DISTINCT driver_uuid)::int AS distinct_drivers,
+             (array_agg(DISTINCT driver_uuid) FILTER (WHERE driver_uuid IS NOT NULL))[1] AS sole_driver
       FROM safety.da_test_records
       WHERE operating_company_id = $1::uuid
         AND result = 'pending'
     `,
     [ociId]
   );
-  return num(res.rows[0]?.c);
+  const row = res.rows[0] ?? {};
+  return { count: num(row.c), soleDriverId: soleId(row.distinct_drivers, row.sole_driver) };
 }
 
 async function countCsaUpdates30d(client: DbClient, ociId: string): Promise<number> {
@@ -196,46 +239,68 @@ async function isCertDataStale(client: DbClient, ociId: string): Promise<boolean
   return ageMs > 7 * 24 * 60 * 60 * 1000;
 }
 
+// SAFETY-KPI-DRILLTHROUGH: canonical per-entity detail routes (mirrors the CI-verified
+// EntityLink resolver in apps/frontend/src/components/shared/EntityLink.tsx — /drivers/:id and
+// /fleet/units/:id are real, mounted detail routes). When exactly one subject is behind an alert we
+// deep-link straight to it; otherwise we fall back to the scoped list surface (never a bare "/safety").
+function driverRoute(driverId: string): string {
+  return `/drivers/${driverId}`;
+}
+function unitRoute(unitId: string): string {
+  return `/fleet/units/${unitId}`;
+}
+
 function buildAlerts(input: {
-  openDvir: number;
-  hosToday: number;
-  accidents: { open: number; pendingInvestigations: number };
-  pendingDa: number;
+  dvir: CountWithUnit;
+  hos: CountWithDriver;
+  accidents: { open: number; pendingInvestigations: number; soleDriverId: string | null; soleUnitId: string | null };
+  pendingDa: CountWithDriver;
   csaUpdates: number;
   expiringCerts: number;
   workersComp: number;
 }): SafetyAlert[] {
   const alerts: SafetyAlert[] = [];
 
-  if (input.openDvir > 0) {
+  if (input.dvir.count > 0) {
     alerts.push({
       alert_id: "dvir_major_defects",
       source: "dvir_defects",
-      severity: input.openDvir >= 5 ? "critical" : "warning",
-      severity_rank: severityRank(input.openDvir >= 5 ? "critical" : "warning"),
-      title: `${input.openDvir} open DVIR major defect${input.openDvir === 1 ? "" : "s"}`,
-      body: "Major or critical DVIR defects require Safety Officer review before dispatch.",
-      count: input.openDvir,
-      action_url: "/maintenance/dvir",
-      action_label: "Review DVIR defects",
+      severity: input.dvir.count >= 5 ? "critical" : "warning",
+      severity_rank: severityRank(input.dvir.count >= 5 ? "critical" : "warning"),
+      title: `${input.dvir.count} open DVIR major defect${input.dvir.count === 1 ? "" : "s"}`,
+      body: input.dvir.soleUnitId
+        ? "All open major defects are on one unit — open the unit to review before dispatch."
+        : "Major or critical DVIR defects require Safety Officer review before dispatch.",
+      count: input.dvir.count,
+      action_url: input.dvir.soleUnitId ? unitRoute(input.dvir.soleUnitId) : "/maintenance/dvir",
+      action_label: input.dvir.soleUnitId ? "Open unit" : "Review DVIR defects",
+      subject_unit_id: input.dvir.soleUnitId,
     });
   }
 
-  if (input.hosToday > 0) {
+  if (input.hos.count > 0) {
     alerts.push({
       alert_id: "hos_violations_today",
       source: "hos_violations",
-      severity: input.hosToday >= 3 ? "error" : "warning",
-      severity_rank: severityRank(input.hosToday >= 3 ? "error" : "warning"),
-      title: `${input.hosToday} HOS violation${input.hosToday === 1 ? "" : "s"} today`,
-      body: "Drivers with HOS violations today may need coaching or reassignment.",
-      count: input.hosToday,
-      action_url: "/safety/hos",
-      action_label: "Open HOS exceptions",
+      severity: input.hos.count >= 3 ? "error" : "warning",
+      severity_rank: severityRank(input.hos.count >= 3 ? "error" : "warning"),
+      title: `${input.hos.count} HOS violation${input.hos.count === 1 ? "" : "s"} today`,
+      body: input.hos.soleDriverId
+        ? "All of today's HOS violations are on one driver — open the driver for coaching or reassignment."
+        : "Drivers with HOS violations today may need coaching or reassignment.",
+      count: input.hos.count,
+      action_url: input.hos.soleDriverId ? driverRoute(input.hos.soleDriverId) : "/safety/hos",
+      action_label: input.hos.soleDriverId ? "Open driver" : "Open HOS exceptions",
+      subject_driver_id: input.hos.soleDriverId,
     });
   }
 
   if (input.accidents.open > 0) {
+    const accidentUrl = input.accidents.soleDriverId
+      ? driverRoute(input.accidents.soleDriverId)
+      : input.accidents.soleUnitId
+        ? unitRoute(input.accidents.soleUnitId)
+        : "/safety/accidents";
     alerts.push({
       alert_id: "accidents_7d",
       source: "accident_reports",
@@ -247,22 +312,32 @@ function buildAlerts(input: {
           ? `${input.accidents.pendingInvestigations} investigation${input.accidents.pendingInvestigations === 1 ? "" : "s"} still pending.`
           : "Review accident reports filed in the last 7 days.",
       count: input.accidents.open,
-      action_url: "/safety/accidents",
-      action_label: "Review accidents",
+      action_url: accidentUrl,
+      action_label:
+        input.accidents.soleDriverId
+          ? "Open driver"
+          : input.accidents.soleUnitId
+            ? "Open unit"
+            : "Review accidents",
+      subject_driver_id: input.accidents.soleDriverId,
+      subject_unit_id: input.accidents.soleUnitId,
     });
   }
 
-  if (input.pendingDa > 0) {
+  if (input.pendingDa.count > 0) {
     alerts.push({
       alert_id: "da_random_draws",
       source: "drug_alcohol",
       severity: "warning",
       severity_rank: severityRank("warning"),
-      title: `${input.pendingDa} random pool draw${input.pendingDa === 1 ? "" : "s"} pending`,
-      body: "Drug & alcohol random pool draws await test scheduling or completion.",
-      count: input.pendingDa,
-      action_url: "/safety/drug-alcohol",
-      action_label: "Open D/A program",
+      title: `${input.pendingDa.count} random pool draw${input.pendingDa.count === 1 ? "" : "s"} pending`,
+      body: input.pendingDa.soleDriverId
+        ? "One driver has a pending D&A test — open the driver to schedule or record the result."
+        : "Drug & alcohol random pool draws await test scheduling or completion.",
+      count: input.pendingDa.count,
+      action_url: input.pendingDa.soleDriverId ? driverRoute(input.pendingDa.soleDriverId) : "/safety/drug-alcohol",
+      action_label: input.pendingDa.soleDriverId ? "Open driver" : "Open D/A program",
+      subject_driver_id: input.pendingDa.soleDriverId,
     });
   }
 
@@ -289,7 +364,7 @@ function buildAlerts(input: {
       title: `${input.expiringCerts} driver cert${input.expiringCerts === 1 ? "" : "s"} expiring within 30 days`,
       body: "CDL, medical, hazmat, or TWIC credentials need renewal tracking.",
       count: input.expiringCerts,
-      action_url: "/safety/dot-compliance",
+      action_url: "/safety/cert-expiry",
       action_label: "Open cert expiry dashboard",
     });
   }
@@ -303,7 +378,7 @@ function buildAlerts(input: {
       title: `${input.workersComp} open workers comp claim${input.workersComp === 1 ? "" : "s"}`,
       body: "Open workers compensation claims require Safety Officer follow-up.",
       count: input.workersComp,
-      action_url: "/safety",
+      action_url: "/safety/home",
       action_label: "Review workers comp",
     });
   }
@@ -313,8 +388,8 @@ function buildAlerts(input: {
 
 export async function getSafetyHomeData(client: DbClient, operatingCompanyId: string): Promise<SafetyHomeData> {
   const [
-    openDvir,
-    hosToday,
+    dvir,
+    hos,
     accidents,
     pendingDa,
     csaUpdates,
@@ -333,17 +408,17 @@ export async function getSafetyHomeData(client: DbClient, operatingCompanyId: st
   ]);
 
   const kpis: SafetyHomeKpis = {
-    open_dvir_major_defects: openDvir,
-    hos_violations_today: hosToday,
+    open_dvir_major_defects: dvir.count,
+    hos_violations_today: hos.count,
     expiring_certs_30d: expiringCerts,
     open_accidents_7d: accidents.open,
-    pending_da_draws: pendingDa,
+    pending_da_draws: pendingDa.count,
     open_workers_comp_claims: workersComp,
   };
 
   const alerts = buildAlerts({
-    openDvir,
-    hosToday,
+    dvir,
+    hos,
     accidents,
     pendingDa,
     csaUpdates,

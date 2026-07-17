@@ -1,0 +1,25 @@
+{
+  "block_id": "FIX-SAFETY-HOME-KPI-DRILLTHROUGH",
+  "branch": "fix/safety-home-kpi-drillthrough",
+  "phase": "SPEED-FIX",
+  "task": "Safety Home KPI tiles + Safety Officer alerts drill to a specific driver/unit/record instead of generic list tabs, using ids the backend already returns.",
+  "agent": "1",
+  "allowed_files": [
+    ".block-ready/FIX-SAFETY-HOME-KPI-DRILLTHROUGH.json",
+    "apps/frontend/src/pages/safety/tabs/SafetyHomeTab.tsx",
+    "apps/backend/src/safety-officer/role-views/safety-home.service.ts",
+    "apps/backend/src/safety-officer/role-views/__tests__/safety-home.test.ts",
+    "scripts/verify-safety-kpi-drillthrough.mjs",
+    "scripts/__tests__/verify-safety-kpi-drillthrough.test.mjs",
+    "docs/specs/safety-kpi-drillthrough.md",
+    "package.json",
+    ".github/workflows/ci.yml",
+    ".github/workflows/locked-guards.yml"
+  ],
+  "extra_gates": [
+    "verify:safety-kpi-drillthrough"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true
+}
