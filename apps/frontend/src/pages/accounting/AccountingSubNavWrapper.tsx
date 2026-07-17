@@ -5,7 +5,7 @@ import { ACCOUNTING_SUB_NAV_ITEMS } from "./subnav-manifest";
 
 const CREATE_MENU = [
   { label: "New Bill", to: "/accounting/bills/vendor" },
-  { label: "Expense", to: "/accounting/expenses" },
+  { label: "Expense", to: "/accounting/expenses/new" },
   { label: "Invoice", to: "/accounting/invoices" },
   { label: "Receive payment", to: "/accounting/payments" },
   { label: "Journal entry", to: "/accounting/journal-entries" },

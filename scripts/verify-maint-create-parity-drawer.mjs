@@ -55,18 +55,18 @@ assertDrawerShell(read(BILL, "CreateBillModal"), "CreateBillModal.tsx", "VendorB
 const manifest = read(MANIFEST, "subnav-manifest");
 if (manifest) {
   // Group click target must be the expenses list (QBO browse-first).
-  if (!/label:\s*GROUP_LABELS\.expenses,\s*href:\s*["']\/accounting\/expenses\/list["']/.test(manifest)) {
-    failures.push("subnav-manifest: Expenses group href must be /accounting/expenses/list");
+  if (!/label:\s*GROUP_LABELS\.expenses,\s*href:\s*["']\/accounting\/expenses["']/.test(manifest)) {
+    failures.push("subnav-manifest: Expenses group href must be /accounting/expenses");
   }
   // Create hub stays reachable (never delete the route). Label stays "Expenses" for locked-ui-surface.
-  if (!/label:\s*["']Expenses["'],\s*path:\s*["']\/accounting\/expenses["']/.test(manifest)) {
-    failures.push('subnav-manifest: /accounting/expenses must remain labeled "Expenses"');
+  if (!/label:\s*["']Expenses["'],\s*path:\s*["']\/accounting\/expenses\/new["']/.test(manifest)) {
+    failures.push('subnav-manifest: /accounting/expenses/new must remain labeled "Expenses"');
   }
   const subnavBlock = manifest.match(/export const SUBNAV_ITEMS[\s\S]*?^\];/m)?.[0] ?? manifest;
-  const listIdx = subnavBlock.search(/path:\s*["']\/accounting\/expenses\/list["']/);
-  const createIdx = subnavBlock.search(/path:\s*["']\/accounting\/expenses["'](?!\/)/);
+  const listIdx = subnavBlock.search(/path:\s*["']\/accounting\/expenses["'](?!\/)/);
+  const createIdx = subnavBlock.search(/path:\s*["']\/accounting\/expenses\/new["']/);
   if (listIdx === -1 || createIdx === -1 || listIdx > createIdx) {
-    failures.push("subnav-manifest: Expenses List must precede /accounting/expenses (browse-first)");
+    failures.push("subnav-manifest: Expenses List must precede /accounting/expenses/new (browse-first)");
   }
 }
 
