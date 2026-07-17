@@ -70,6 +70,21 @@ export type PlaidBankTransaction = {
   categorization_trailer_number?: string | null;
   categorization_load_id?: string | null;
   categorization_load_number?: string | null;
+  /**
+   * Relay Fuel Wallet: product lines from integrations.relay_fuel_transaction_lines
+   * (diesel truck / reefer / DEF / fee) when source_ref is relay_fuel:*.
+   */
+  relay_fuel_lines?: Array<{
+    line_index?: number | null;
+    fuel_type?: string | null;
+    fuel_type_description?: string | null;
+    fuel_product_code?: string | null;
+    volume?: string | number | null;
+    volume_uom?: string | null;
+    total_discounted_price_cents?: string | number | null;
+    fee_type?: string | null;
+    fee_amount_cents?: string | number | null;
+  }> | null;
 };
 
 /** Doc-18 GAP B: a transaction is date-editable only when it is manually entered (non-bank-fed). */

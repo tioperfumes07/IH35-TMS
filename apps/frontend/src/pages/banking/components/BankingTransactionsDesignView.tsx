@@ -5,6 +5,7 @@ import { ChevronDown, ChevronRight, Download, MessageSquare, Paperclip, Printer,
 import {
   categorizeBankTransaction,
   categorizeTransactionsBulk,
+  getAllAccounts,
   getBankingSuggestions,
   getCoaAccounts,
   getMatchCandidates,
@@ -18,6 +19,10 @@ import {
   type PlaidBankAccount,
   type PlaidBankTransaction,
 } from "../../../api/banking";
+import {
+  buildRelayFuelBreakdown,
+  formatRelayFuelBreakdownSummary,
+} from "./relayFuelLineBreakdown";
 import { BulkActionBar } from "../../../components/bulk/BulkActionBar";
 import { TableSelectionHeader } from "../../../components/bulk/TableSelection";
 import { ActionButton } from "../../../components/shared/ActionButton";
@@ -69,6 +74,10 @@ type RowDetailDraft = {
   mode: "match" | "categorize";
   transactionType: string;
   fromTo: string;
+  /** QBO Transfer: explicit From bank account id (inline picker). */
+  fromAccountId: string;
+  /** QBO Transfer: explicit To bank account id (inline picker). */
+  toAccountId: string;
   accountId: string;
   // Class = QBO reporting DIMENSION (catalogs.classes). classId is the real catalog FK the inline
   // "+ Add new class" writes/links; className is the label kept for the table cell + export (mirrors the
@@ -293,6 +302,31 @@ export function BankingTransactionsDesignView({
     enableSuggestedCategorization: true,
     pageSize: 50,
   });
+
+  const isRelayWalletAccount = useMemo(() => {
+    const a = accounts.find((x) => x.id === selectedAccountId);
+    const name = (a?.account_name ?? "").trim().toLowerCase();
+    return name === "relay fuel wallet";
+  }, [accounts, selectedAccountId]);
+
+  const transferAccountsQuery = useQuery({
+    queryKey: ["banking", "accounts-all", companyId, "categorize-transfer"],
+    queryFn: () => getAllAccounts(companyId),
+    enabled: Boolean(companyId),
+  });
+  const transferBankOptions = useMemo(() => {
+    const rows = transferAccountsQuery.data?.accounts ?? [];
+    return rows
+      .map((row) => {
+        const id = String(row.id ?? "");
+        const label =
+          String(row.display_name ?? row.account_name ?? "").trim() ||
+          [row.institution_name, row.account_mask].filter(Boolean).join(" · ") ||
+          id;
+        return { id, label };
+      })
+      .filter((r) => r.id.length > 0);
+  }, [transferAccountsQuery.data?.accounts]);
 
   const selectedAccount = useMemo(() => {
     if (selectedAccountId) {
@@ -595,6 +629,8 @@ export function BankingTransactionsDesignView({
       // by computeFromTo() at render/export time; this field now only holds an explicit operator-typed
       // (or transfer/CC) From/To override.
       fromTo: "",
+      fromAccountId: "",
+      toAccountId: "",
       accountId: "",
       className: "",
       classId: "",
@@ -1253,6 +1289,43 @@ export function BankingTransactionsDesignView({
                 onResize={setTxColWidth}
                 className="font-semibold normal-case text-[10px] uppercase tracking-wide"
               />
+              {isRelayWalletAccount ? (
+                <>
+                  <TableHeaderCell
+                    columnKey="driver"
+                    label="Driver"
+                    sortable={false}
+                    sortKey={sortBy.key}
+                    sortDir={sortBy.dir}
+                    onToggleSort={onToggleSortCol}
+                    width={txColWidth("driver") || 110}
+                    onResize={setTxColWidth}
+                    className="font-semibold normal-case text-[10px] uppercase tracking-wide"
+                  />
+                  <TableHeaderCell
+                    columnKey="truck"
+                    label="Truck"
+                    sortable={false}
+                    sortKey={sortBy.key}
+                    sortDir={sortBy.dir}
+                    onToggleSort={onToggleSortCol}
+                    width={txColWidth("truck") || 90}
+                    onResize={setTxColWidth}
+                    className="font-semibold normal-case text-[10px] uppercase tracking-wide"
+                  />
+                  <TableHeaderCell
+                    columnKey="load"
+                    label="Load"
+                    sortable={false}
+                    sortKey={sortBy.key}
+                    sortDir={sortBy.dir}
+                    onToggleSort={onToggleSortCol}
+                    width={txColWidth("load") || 90}
+                    onResize={setTxColWidth}
+                    className="font-semibold normal-case text-[10px] uppercase tracking-wide"
+                  />
+                </>
+              ) : null}
               {viewSettings.showAmountsInOneColumn ? (
                 <TableHeaderCell
                   columnKey="amount"
@@ -1495,12 +1568,18 @@ export function BankingTransactionsDesignView({
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <p className="truncate text-gray-900">{transactionLabel(tx)}</p>
-                          {(tx.categorization_unit_id ||
-                            tx.categorization_driver_id ||
-                            tx.categorization_load_id ||
-                            tx.matched_load_id ||
-                            tx.matched_settlement_id ||
-                            tx.categorization_trailer_id) && (
+                          {tx.relay_fuel_lines && tx.relay_fuel_lines.length > 0 ? (
+                            <p className="mt-0.5 truncate text-[11px] text-gray-500" title={formatRelayFuelBreakdownSummary(tx.relay_fuel_lines, (c) => USD.format(c / 100))}>
+                              {formatRelayFuelBreakdownSummary(tx.relay_fuel_lines, (c) => USD.format(c / 100))}
+                            </p>
+                          ) : null}
+                          {!isRelayWalletAccount &&
+                            (tx.categorization_unit_id ||
+                              tx.categorization_driver_id ||
+                              tx.categorization_load_id ||
+                              tx.matched_load_id ||
+                              tx.matched_settlement_id ||
+                              tx.categorization_trailer_id) && (
                             <div
                               className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-[11px]"
                               onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}
@@ -1566,6 +1645,52 @@ export function BankingTransactionsDesignView({
                         </div>
                       </div>
                     </td>
+                    {isRelayWalletAccount ? (
+                      <>
+                        <td
+                          className="truncate px-1 py-2 align-top text-gray-700"
+                          onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}
+                        >
+                          {tx.categorization_driver_id ? (
+                            <EntityLink
+                              kind="driver"
+                              id={tx.categorization_driver_id}
+                              label={tx.categorization_driver_name || "Driver"}
+                            />
+                          ) : (
+                            "—"
+                          )}
+                        </td>
+                        <td
+                          className="truncate px-1 py-2 align-top text-gray-700"
+                          onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}
+                        >
+                          {tx.categorization_unit_id ? (
+                            <EntityLink
+                              kind="unit"
+                              id={tx.categorization_unit_id}
+                              label={tx.categorization_unit_number || "Truck"}
+                            />
+                          ) : (
+                            "—"
+                          )}
+                        </td>
+                        <td
+                          className="truncate px-1 py-2 align-top text-gray-700"
+                          onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}
+                        >
+                          {tx.categorization_load_id || tx.matched_load_id ? (
+                            <EntityLink
+                              kind="load"
+                              id={tx.categorization_load_id || tx.matched_load_id!}
+                              label={tx.categorization_load_number || "Load"}
+                            />
+                          ) : (
+                            "—"
+                          )}
+                        </td>
+                      </>
+                    ) : null}
                     {viewSettings.showAmountsInOneColumn ? (
                       <td className={`px-1 py-2 align-top ${spent > 0 ? "text-red-700" : "text-emerald-700"}`}>
                         {spent > 0 ? `-${USD.format(spent / 100)}` : received > 0 ? USD.format(received / 100) : "—"}
@@ -1697,6 +1822,26 @@ export function BankingTransactionsDesignView({
                                 <div>Received: {received > 0 ? USD.format(received / 100) : "—"}</div>
                               </div>
                             ) : null}
+                            {tx.relay_fuel_lines && tx.relay_fuel_lines.length > 0 ? (
+                              <div className="mb-2 rounded-sm border border-slate-200 bg-slate-50 p-2">
+                                <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-700">
+                                  Fuel breakdown (Relay)
+                                </p>
+                                <ul className="space-y-0.5 text-xs text-gray-800">
+                                  {buildRelayFuelBreakdown(tx.relay_fuel_lines).map((row) => (
+                                    <li key={row.key} className="flex justify-between gap-3 tabular-nums">
+                                      <span>
+                                        {row.label}
+                                        {row.volume_label ? (
+                                          <span className="text-gray-500"> · {row.volume_label}</span>
+                                        ) : null}
+                                      </span>
+                                      <span>{USD.format(row.amount_cents / 100)}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            ) : null}
                             <div className="mb-2 flex items-center gap-2">
                               <button
                                 type="button"
@@ -1782,16 +1927,67 @@ export function BankingTransactionsDesignView({
                                   onChange={(event) => setDraft(tx, { checkNo: event.target.value })}
                                 />
                               </label>
-                              <label className="text-xs text-gray-600">
+                              <label className="text-xs text-gray-600 md:col-span-2">
                                 From/To
                                 {draft.transactionType === "Transfer" ? (
-                                  <button
-                                    type="button"
-                                    className="mt-0.5 block w-full rounded-sm border border-gray-300 px-2 py-1 text-left text-sm hover:bg-gray-50"
-                                    onClick={() => setTransferModalTx(tx)}
-                                  >
-                                    {draft.fromTo || "Select From/To accounts…"}
-                                  </button>
+                                  <div className="mt-0.5 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                    <SelectCombobox
+                                      className="w-full"
+                                      aria-label="Transfer from account"
+                                      value={draft.fromAccountId || selectedAccount?.id || ""}
+                                      onChange={(event) => {
+                                        const fromAccountId = event.target.value;
+                                        const fromLabel =
+                                          transferBankOptions.find((a) => a.id === fromAccountId)?.label ?? "From";
+                                        const toLabel =
+                                          transferBankOptions.find((a) => a.id === draft.toAccountId)?.label ?? "To";
+                                        setDraft(tx, {
+                                          fromAccountId,
+                                          fromTo: draft.toAccountId ? `${fromLabel} → ${toLabel}` : fromLabel,
+                                        });
+                                      }}
+                                    >
+                                      <option value="">From account…</option>
+                                      {transferBankOptions.map((a) => (
+                                        <option key={a.id} value={a.id}>
+                                          {a.label}
+                                        </option>
+                                      ))}
+                                    </SelectCombobox>
+                                    <SelectCombobox
+                                      className="w-full"
+                                      aria-label="Transfer to account"
+                                      value={draft.toAccountId}
+                                      onChange={(event) => {
+                                        const toAccountId = event.target.value;
+                                        const fromId = draft.fromAccountId || selectedAccount?.id || "";
+                                        const fromLabel =
+                                          transferBankOptions.find((a) => a.id === fromId)?.label ?? "From";
+                                        const toLabel =
+                                          transferBankOptions.find((a) => a.id === toAccountId)?.label ?? "To";
+                                        setDraft(tx, {
+                                          toAccountId,
+                                          fromTo: toAccountId ? `${fromLabel} → ${toLabel}` : fromLabel,
+                                        });
+                                      }}
+                                    >
+                                      <option value="">To account…</option>
+                                      {transferBankOptions
+                                        .filter((a) => a.id !== (draft.fromAccountId || selectedAccount?.id))
+                                        .map((a) => (
+                                          <option key={a.id} value={a.id}>
+                                            {a.label}
+                                          </option>
+                                        ))}
+                                    </SelectCombobox>
+                                    <button
+                                      type="button"
+                                      className="text-left text-[11px] text-slate-600 underline sm:col-span-2"
+                                      onClick={() => setTransferModalTx(tx)}
+                                    >
+                                      Open full Transfer dialog (amount / memo / post)
+                                    </button>
+                                  </div>
                                 ) : draft.transactionType === "CC Payment" ? (
                                   <button
                                     type="button"

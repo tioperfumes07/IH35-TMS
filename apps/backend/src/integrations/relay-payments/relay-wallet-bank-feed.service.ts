@@ -6,7 +6,9 @@
  * this layer mirrors each draw onto the wallet bank account with auto-links:
  *   unit (Truck #) · trailer/reefer (prompt) · driver · load/trip · settlement
  *
- * source = 'csv_import' (allowed by bank_transactions_source_chk) + source_ref = relay_fuel:{txn_id}
+ * source = 'csv_import' (allowed by bank_transactions_source_chk) + source_ref =
+ *   relay_fuel:{txn_id}   → money OUT (Spent) — fuel drawdowns
+ *   relay_deposit:{id}    → money IN (Received) — wallet funding deposits
  * for idempotent upsert. Does NOT post journal entries.
  */
 import { createHash } from "node:crypto";
@@ -15,6 +17,7 @@ import type { DbClient } from "./db-client.type.js";
 import { normalizeBankTransactionDescription } from "../../banking/transaction-ingestion.js";
 
 export const RELAY_WALLET_SOURCE_REF_PREFIX = "relay_fuel:";
+export const RELAY_DEPOSIT_SOURCE_REF_PREFIX = "relay_deposit:";
 const RELAY_WALLET_FEED_AUDIT_SOURCE = "RELAY-WALLET-BANK-FEED";
 /** System actor for cron/ingest paths (matches factoring-posting / auto-pay cron). */
 const SYSTEM_ACTOR_ID = process.env.SYSTEM_ACTOR_USER_ID ?? "00000000-0000-4000-8000-000000000001";
@@ -566,6 +569,204 @@ export async function backfillRelayWalletBankFeedForCompany(
       else skipped += 1;
     } catch {
       await client.query("ROLLBACK TO SAVEPOINT relay_wallet_feed_row");
+      failed += 1;
+    }
+  }
+
+  return { inserted, updated, skipped, failed };
+}
+
+export function relayDepositSourceRef(depositId: string): string {
+  return `${RELAY_DEPOSIT_SOURCE_REF_PREFIX}${depositId}`;
+}
+
+/**
+ * Mirror a Relay wallet funding deposit as a credit (Received) on the Relay Fuel Wallet bank feed.
+ * QBO parity: deposits show in Received, fuel draws in Spent. No GL.
+ */
+export async function upsertRelayWalletDepositFeedRow(
+  client: DbClient,
+  input: {
+    operating_company_id: string;
+    deposit_id: string;
+    relay_created_at: string;
+    amount_cents: number;
+    note: string | null;
+    classification: string | null;
+    funding_card_last4: string | null;
+  },
+): Promise<RelayWalletFeedResult> {
+  if (!Number.isFinite(input.amount_cents) || input.amount_cents <= 0) {
+    return { status: "skipped_zero_amount" };
+  }
+  // Canceled / declined deposits must not appear as Received cash on the wallet.
+  const statusish = (input.classification ?? "").toLowerCase();
+  if (statusish === "canceled" || statusish === "cancelled" || statusish === "declined") {
+    return { status: "skipped_zero_amount" };
+  }
+
+  const walletAccountId = await resolveRelayWalletBankAccountId(client, input.operating_company_id);
+  if (!walletAccountId) return { status: "skipped_no_wallet" };
+
+  const txnDate = input.relay_created_at.slice(0, 10);
+  const card = input.funding_card_last4 ? `card …${input.funding_card_last4}` : null;
+  const classLabel = input.classification ? `class=${input.classification}` : null;
+  const description = ["Relay deposit", card, input.note?.trim() || null, input.deposit_id]
+    .filter(Boolean)
+    .join(" · ");
+  const normalized = normalizeBankTransactionDescription(description);
+  const dedupHash = computeDedupHash({
+    bank_account_id: walletAccountId,
+    transaction_date: txnDate,
+    amount_cents: input.amount_cents,
+    normalized_description: normalized,
+  });
+  const sourceRef = relayDepositSourceRef(input.deposit_id);
+  const notes = [`relay_wallet_deposit=1`, `relay_deposit=${input.deposit_id}`, classLabel]
+    .filter(Boolean)
+    .join("; ");
+
+  const existing = await client.query<{ id: string }>(
+    `
+      SELECT id::text AS id
+      FROM banking.bank_transactions
+      WHERE operating_company_id = $1::uuid
+        AND source_ref = $2
+      LIMIT 1
+    `,
+    [input.operating_company_id, sourceRef],
+  );
+
+  if (existing.rows[0]?.id) {
+    const id = existing.rows[0].id;
+    await client.query(
+      `
+        UPDATE banking.bank_transactions
+        SET
+          bank_account_id = $2::uuid,
+          transaction_date = $3::date,
+          posted_date = $3::date,
+          amount_cents = $4,
+          description = $5,
+          merchant_name = 'Relay deposit',
+          normalized_description = $6,
+          dedup_hash = $7,
+          notes = $8,
+          is_credit = true,
+          updated_at = now()
+        WHERE id = $1::uuid
+      `,
+      [id, walletAccountId, txnDate, input.amount_cents, description, normalized, dedupHash, notes],
+    );
+    return { status: "updated", bank_transaction_id: id };
+  }
+
+  const inserted = await client.query<{ id: string }>(
+    `
+      INSERT INTO banking.bank_transactions (
+        bank_account_id, operating_company_id, plaid_transaction_id,
+        transaction_date, posted_date, amount_cents, description, merchant_name,
+        plaid_category, pending, is_credit, notes, normalized_description,
+        source, source_ref, dedup_hash, review_state, status, created_at, updated_at
+      )
+      VALUES (
+        $1::uuid, $2::uuid, NULL, $3::date, $3::date, $4, $5, 'Relay deposit',
+        '{}'::text[], false, true, $6, $7, 'csv_import', $8, $9, 'for_review', 'pending_categorization',
+        now(), now()
+      )
+      ON CONFLICT (bank_account_id, dedup_hash) DO UPDATE SET
+        source_ref = EXCLUDED.source_ref,
+        description = EXCLUDED.description,
+        is_credit = true,
+        notes = EXCLUDED.notes,
+        updated_at = now()
+      RETURNING id::text AS id
+    `,
+    [
+      walletAccountId,
+      input.operating_company_id,
+      txnDate,
+      input.amount_cents,
+      description,
+      notes,
+      normalized,
+      sourceRef,
+      dedupHash,
+    ],
+  );
+  const id = inserted.rows[0]?.id;
+  if (!id) throw new Error(`relay_wallet_deposit_feed: insert returned no id for ${input.deposit_id}`);
+  await emitRelayWalletFeedAudit(client, "inserted", {
+    bank_transaction_id: id,
+    operating_company_id: input.operating_company_id,
+    bank_account_id: walletAccountId,
+    source_ref: sourceRef,
+    relay_transaction_id: input.deposit_id,
+    amount_cents: input.amount_cents,
+    matched_unit_id: null,
+    matched_driver_id: null,
+    matched_load_id: null,
+    matched_settlement_id: null,
+  });
+  return { status: "inserted", bank_transaction_id: id };
+}
+
+/** Backfill Received (deposit) rows from integrations.relay_deposits for one company. */
+export async function backfillRelayWalletDepositFeedForCompany(
+  client: DbClient,
+  operatingCompanyId: string,
+): Promise<{ inserted: number; updated: number; skipped: number; failed: number }> {
+  const rows = await client.query<{
+    deposit_id: string;
+    relay_created_at: string;
+    total_amount_cents: string;
+    note_raw: string | null;
+    classification: string | null;
+    funding_card_last4: string | null;
+    status: string | null;
+  }>(
+    `
+      SELECT
+        deposit_id,
+        relay_created_at::text AS relay_created_at,
+        total_amount_cents::text AS total_amount_cents,
+        note_raw,
+        classification,
+        funding_card_last4,
+        status
+      FROM integrations.relay_deposits
+      WHERE operating_company_id = $1::uuid
+        AND COALESCE(is_active, true) = true
+        AND voided_at IS NULL
+        AND lower(COALESCE(status, '')) NOT IN ('canceled', 'cancelled', 'declined')
+      ORDER BY relay_created_at ASC
+    `,
+    [operatingCompanyId],
+  );
+
+  let inserted = 0;
+  let updated = 0;
+  let skipped = 0;
+  let failed = 0;
+
+  for (const row of rows.rows) {
+    await client.query("SAVEPOINT relay_wallet_deposit_row");
+    try {
+      const result = await upsertRelayWalletDepositFeedRow(client, {
+        operating_company_id: operatingCompanyId,
+        deposit_id: row.deposit_id,
+        relay_created_at: row.relay_created_at,
+        amount_cents: Number(row.total_amount_cents),
+        note: row.note_raw,
+        classification: row.classification,
+        funding_card_last4: row.funding_card_last4,
+      });
+      await client.query("RELEASE SAVEPOINT relay_wallet_deposit_row");
+      if (result.status === "inserted") inserted += 1;
+      else if (result.status === "updated") updated += 1;
+      else skipped += 1;
+    } catch {
+      await client.query("ROLLBACK TO SAVEPOINT relay_wallet_deposit_row");
       failed += 1;
     }
   }

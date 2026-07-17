@@ -541,7 +541,34 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
             WHEN bt.matched_settlement_id IS NOT NULL THEN 'settlement'
             WHEN bt.matched_bill_id IS NOT NULL THEN 'bill'
             ELSE NULL
-          END AS matched_kind
+          END AS matched_kind,
+          -- QBO-parity Relay register: expose diesel/reefer/DEF/fee lines already stored at ingest
+          -- (not a single total). Join only when source_ref is a Relay fuel mirror.
+          COALESCE((
+            SELECT json_agg(
+              json_build_object(
+                'line_index', rfl.line_index,
+                'fuel_type', rfl.fuel_type,
+                'fuel_type_description', rfl.fuel_type_description,
+                'fuel_product_code', rfl.fuel_product_code,
+                'volume', rfl.volume,
+                'volume_uom', rfl.volume_uom,
+                'total_discounted_price_cents', rfl.total_discounted_price_cents,
+                'fee_type', rfl.fee_type,
+                'fee_amount_cents', rfl.fee_amount_cents
+              )
+              ORDER BY rfl.line_index
+            )
+            FROM integrations.relay_fuel_transactions rft
+            JOIN integrations.relay_fuel_transaction_lines rfl
+              ON rfl.relay_fuel_transaction_id = rft.id
+             AND rfl.operating_company_id = rft.operating_company_id
+             AND COALESCE(rfl.is_active, true) = true
+             AND rfl.voided_at IS NULL
+            WHERE bt.source_ref LIKE 'relay_fuel:%'
+              AND rft.operating_company_id = bt.operating_company_id
+              AND rft.transaction_id = substring(bt.source_ref FROM length('relay_fuel:') + 1)
+          ), '[]'::json) AS relay_fuel_lines
         FROM banking.bank_transactions bt
         JOIN banking.bank_accounts ba ON ba.id = bt.bank_account_id
         LEFT JOIN mdata.drivers d
