@@ -22,7 +22,16 @@ const EXCLUDE_PATHS = [
   "archive-test-users",
 ];
 
+// Files permitted to mention TEST-VENDOR in user-facing error strings or pattern docs (the guards themselves).
+const ALLOWLIST = new Set([
+  "apps/backend/src/mdata/vendors.routes.ts",
+  "apps/backend/src/mdata/fixture-vendor-name-pattern.ts",
+  "apps/frontend/src/components/vendors/VendorCreateModal.tsx",
+  "apps/frontend/src/lib/testVendorFixtureName.ts",
+]);
+
 function shouldExclude(filePath) {
+  if (ALLOWLIST.has(filePath)) return true;
   return EXCLUDE_PATHS.some((ex) => filePath.includes(ex));
 }
 

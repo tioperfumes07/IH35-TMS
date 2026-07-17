@@ -11,6 +11,7 @@ import { SelectCombobox } from "../shared/SelectCombobox";
 import { Combobox } from "../Combobox";
 import { useToast } from "../Toast";
 import { emptyVendorProfileMeta, serializeVendorNotes, type VendorProfileMeta } from "../../lib/vendorProfileMeta";
+import { isTestVendorFixtureName } from "../../lib/testVendorFixtureName";
 
 // V4/V5 — full QuickBooks-style vendor creator (QBO parity spec §1B: Name and contact / Address / Notes),
 // extended with the trucking classification fields (vendor type / tax ID / vendor code) the profile edits.
@@ -173,6 +174,11 @@ export function VendorCreateModal({ open, onClose, operatingCompanyId }: Props) 
         (error as Error & { code?: string }).code = "name_required";
         throw error;
       }
+      if (import.meta.env.PROD && isTestVendorFixtureName(displayName)) {
+        const error = new Error("TEST-VENDOR fixture names are not allowed in production.");
+        (error as Error & { code?: string }).code = "mdata_vendor_test_fixture_rejected";
+        throw error;
+      }
       const address = composeAddress();
       const meta: VendorProfileMeta = {
         ...emptyVendorProfileMeta(),
@@ -217,6 +223,10 @@ export function VendorCreateModal({ open, onClose, operatingCompanyId }: Props) 
       setFieldErrors({});
       if ((error as Error & { code?: string }).code === "name_required") {
         setFieldErrors({ name: "Vendor name is required" });
+        return;
+      }
+      if ((error as Error & { code?: string }).code === "mdata_vendor_test_fixture_rejected") {
+        setFieldErrors({ name: "TEST-VENDOR fixture names are not allowed in production" });
         return;
       }
       if (error instanceof ApiError && error.status === 409) {
