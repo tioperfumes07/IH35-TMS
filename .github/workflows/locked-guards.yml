@@ -999,6 +999,10 @@ jobs:
       # (dead guard = false protection). Green, DB-free, static, non-financial. No --selftest support.
       - name: verify:no-test-fixture-names
         run: npm run verify:no-test-fixture-names
+      - name: verify:vendor-test-fixture-guard --selftest
+        run: node scripts/verify-vendor-test-fixture-guard.mjs --selftest
+      - name: verify:vendor-test-fixture-guard
+        run: npm run verify:vendor-test-fixture-guard
       - name: verify:border-crossing-canonical-relations --selftest
         run: node scripts/verify-border-crossing-canonical-relations.mjs --selftest
       - name: verify:border-crossing-canonical-relations

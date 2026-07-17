@@ -6,6 +6,7 @@ import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { enqueueTmsVendorPushRequested } from "../qbo/tms-vendor-push-chain.service.js";
 import { listActiveVendorClassifications } from "./classification-queries.js";
+import { isTestVendorFixtureName } from "./fixture-vendor-name-pattern.js";
 import { searchVendorsForAutocomplete } from "./vendor-autocomplete.shared.js";
 
 const vendorTypeSchema = z.enum(["Fuel", "Repair", "Tires", "Towing", "Insurance", "Permit", "Toll", "Other"]);
@@ -148,6 +149,17 @@ function isWriteRole(role: string): boolean {
   return role === "Owner" || role === "Administrator" || role === "Manager" || role === "Accountant";
 }
 
+// VEND-3: block TEST-VENDOR fixture names in production (create + rename). Non-prod keeps test harnesses working.
+const IS_PROD_ENV = process.env.NODE_ENV === "production";
+
+function sendTestVendorFixtureRejected(reply: FastifyReply) {
+  return reply.code(422).send({
+    error: "mdata_vendor_test_fixture_rejected",
+    message: "Vendor names containing TEST-VENDOR are not allowed in production",
+    fieldErrors: { name: "TEST-VENDOR fixture names are not allowed in production" },
+  });
+}
+
 // G6-2: vendor create previously had NO dedup guard (customers had one), so duplicate vendors could
 // be created freely. Mirror the customer pattern: (a) case-insensitive on name (lower(btrim(...))),
 // (b) entity-scoped by operating_company_id (mdata RLS is identity-based, NOT entity-scoped, so the
@@ -286,12 +298,8 @@ export async function registerVendorRoutes(app: FastifyInstance) {
       resolveOperatingCompanyId(client, authUser.uuid, b.operating_company_id)
     );
     if (!createOperatingCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
-    if (process.env.NODE_ENV === "production" && /^TEST[-_ ]/i.test(b.name)) {
-      return reply.code(422).send({
-        error: "mdata_vendor_test_fixture_rejected",
-        message: "Vendor names matching TEST-* patterns are not allowed in production",
-        fieldErrors: { name: "Test fixture names are not allowed in production" },
-      });
+    if (IS_PROD_ENV && isTestVendorFixtureName(b.name)) {
+      return sendTestVendorFixtureRejected(reply);
     }
     if (await vendorNameConflictExists(authUser.uuid, createOperatingCompanyId, b.name)) {
       return reply.code(409).send({
@@ -433,6 +441,9 @@ export async function registerVendorRoutes(app: FastifyInstance) {
 
     // G6-2: a rename must not collide with an existing live vendor in the same entity.
     if ("name" in b && b.name) {
+      if (IS_PROD_ENV && isTestVendorFixtureName(b.name)) {
+        return sendTestVendorFixtureRejected(reply);
+      }
       const patchScopedCompanyId = await withCurrentUser(authUser.uuid, async (client) =>
         resolveOperatingCompanyId(client, authUser.uuid)
       );

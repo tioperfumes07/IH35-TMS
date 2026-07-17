@@ -58,3 +58,23 @@ describe("vendor dedup (G6-2)", () => {
     );
   });
 });
+
+describe("vendor TEST-VENDOR fixture guard (VEND-3)", () => {
+  it("imports the shared fixture-name pattern helper", () => {
+    expect(vendorSource).toContain('from "./fixture-vendor-name-pattern.js"');
+    expect(vendorSource).toContain("isTestVendorFixtureName");
+  });
+
+  it("rejects TEST-VENDOR names on create with 422 in production", () => {
+    expect(vendorSource).toContain("IS_PROD_ENV && isTestVendorFixtureName(b.name)");
+    expect(vendorSource).toContain('error: "mdata_vendor_test_fixture_rejected"');
+    expect(vendorSource).toMatch(/reply\.code\(422\)/);
+  });
+
+  it("rejects TEST-VENDOR renames on patch in production", () => {
+    const patchIdx = vendorSource.indexOf('app.patch("/api/v1/mdata/vendors/:id"');
+    expect(patchIdx).toBeGreaterThan(-1);
+    const patchSlice = vendorSource.slice(patchIdx);
+    expect(patchSlice).toContain("IS_PROD_ENV && isTestVendorFixtureName(b.name)");
+  });
+});
