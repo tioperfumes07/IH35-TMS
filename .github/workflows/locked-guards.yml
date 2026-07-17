@@ -739,6 +739,11 @@ jobs:
       - name: verify:excel-upload-jobs-rls-forced
         run: npm run verify:excel-upload-jobs-rls-forced
 
+      - name: verify:xlsx-upload-magic-bytes --selftest
+        run: node scripts/verify-xlsx-upload-magic-bytes.mjs --selftest
+      - name: verify:xlsx-upload-magic-bytes
+        run: npm run verify:xlsx-upload-magic-bytes
+
       - name: verify:transaction-company-isolation --selftest
         run: node scripts/verify-transaction-company-isolation.mjs --selftest
       - name: verify:transaction-company-isolation

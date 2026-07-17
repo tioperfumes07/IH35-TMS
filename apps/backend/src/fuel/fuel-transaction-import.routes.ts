@@ -1,7 +1,10 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
-import * as XLSX from "xlsx";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import {
+  readUntrustedSpreadsheetRows,
+  SpreadsheetUploadRejectedError,
+} from "../lib/untrusted-spreadsheet-read.js";
 import { withCurrentUser } from "../auth/db.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { requireAuth } from "../auth/session-middleware.js";
@@ -39,15 +42,6 @@ async function withCompanyScope<T>(
   });
 }
 
-function rowsFromWorkbook(data: Buffer): Record<string, unknown>[] {
-  // XLSX.read auto-detects CSV as well as XLSX from a raw buffer.
-  const wb = XLSX.read(data, { type: "buffer", cellDates: true });
-  const firstSheetName = wb.SheetNames[0];
-  if (!firstSheetName) return [];
-  const sheet = wb.Sheets[firstSheetName];
-  return XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: null });
-}
-
 export async function registerFuelTransactionImportRoutes(app: FastifyInstance) {
   // Upload a fleet-card TRANSACTION export (Love's / WEX / EFS / Comdata) and
   // persist each purchase into fuel.fuel_transactions (FUEL-1). Idempotent.
@@ -68,8 +62,11 @@ export async function registerFuelTransactionImportRoutes(app: FastifyInstance) 
 
     let rawRows: Record<string, unknown>[];
     try {
-      rawRows = rowsFromWorkbook(bytes);
+      rawRows = await readUntrustedSpreadsheetRows(bytes, filePart.filename, { cellDates: true });
     } catch (err) {
+      if (err instanceof SpreadsheetUploadRejectedError) {
+        return reply.code(400).send({ error: err.code });
+      }
       return reply
         .code(400)
         .send({ error: "unreadable_file", detail: String((err as Error)?.message ?? err) });

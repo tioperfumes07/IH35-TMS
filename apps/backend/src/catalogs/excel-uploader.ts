@@ -1,5 +1,5 @@
-import * as XLSX from "xlsx";
 import { z, type ZodSchema } from "zod";
+import { readUntrustedSpreadsheetRows } from "../lib/untrusted-spreadsheet-read.js";
 
 export type ExcelUploadErrorRow = {
   row: number;
@@ -45,24 +45,15 @@ export function normalizeHeaderKey(value: string): string {
     .replace(/^_+|_+$/g, "");
 }
 
-export function parseSpreadsheetBuffer(buffer: Buffer, filename: string): Array<Record<string, unknown>> {
+export async function parseSpreadsheetBuffer(
+  buffer: Buffer,
+  filename: string
+): Promise<Array<Record<string, unknown>>> {
   const lower = filename.toLowerCase();
-  if (lower.endsWith(".csv")) {
-    const text = buffer.toString("utf8");
-    const wb = XLSX.read(text, { type: "string" });
-    const sheetName = wb.SheetNames[0];
-    if (!sheetName) return [];
-    return XLSX.utils.sheet_to_json<Record<string, unknown>>(wb.Sheets[sheetName], { defval: null });
+  if (!lower.endsWith(".csv") && !lower.endsWith(".xlsx") && !lower.endsWith(".xls")) {
+    throw new Error("unsupported_file_type");
   }
-
-  if (lower.endsWith(".xlsx") || lower.endsWith(".xls")) {
-    const wb = XLSX.read(buffer, { type: "buffer" });
-    const sheetName = wb.SheetNames[0];
-    if (!sheetName) return [];
-    return XLSX.utils.sheet_to_json<Record<string, unknown>>(wb.Sheets[sheetName], { defval: null });
-  }
-
-  throw new Error("unsupported_file_type");
+  return readUntrustedSpreadsheetRows(buffer, filename);
 }
 
 export function mapSpreadsheetRows(
