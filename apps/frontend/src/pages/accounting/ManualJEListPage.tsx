@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { formatDateUS } from "../../lib/formatDate";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -13,6 +14,7 @@ import { ManualJEModal } from "./ManualJEModal";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
 function humanMemo(memo: string | null | undefined): string {
@@ -21,6 +23,7 @@ function humanMemo(memo: string | null | undefined): string {
 }
 
 export function ManualJEListPage() {
+  const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const { user } = useAuth();
@@ -71,6 +74,19 @@ export function ManualJEListPage() {
 
   const columns = useMemo<ParityColumn<JournalEntry>[]>(
     () => [
+      {
+        key: "id",
+        label: "JE",
+        sortable: true,
+        render: (entry) => (
+          <EntityLink
+            kind="journal_entry"
+            id={entry.id}
+            label={entry.id.slice(0, 8)}
+            onClick={(e) => e.stopPropagation()}
+          />
+        ),
+      },
       { key: "entry_date", label: "Date", sortable: true, render: (entry) => formatDateUS(entry.entry_date) },
       { key: "memo", label: "Memo", sortable: true, render: (entry) => humanMemo(entry.memo) },
       { key: "source", label: "Source", sortable: true },
@@ -90,7 +106,10 @@ export function ManualJEListPage() {
             <Button
               size="sm"
               variant="danger"
-              onClick={() => setVoidTarget(entry)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setVoidTarget(entry);
+              }}
             >
               Void
             </Button>
@@ -138,6 +157,7 @@ export function ManualJEListPage() {
         rows={pageRows}
         rowKey={(entry) => entry.id}
         loading={entriesQuery.isPending || (entriesQuery.isFetching && pageRows.length === 0)}
+        onRowClick={(entry) => navigate(`/accounting/journal-entries/${entry.id}`)}
         filterBar={filterBar}
         storageKey="manual-je-list"
         initialPageSize={PAGE_SIZE}
