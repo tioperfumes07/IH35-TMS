@@ -70,6 +70,12 @@ export type PlaidBankTransaction = {
   categorization_trailer_number?: string | null;
   categorization_load_id?: string | null;
   categorization_load_number?: string | null;
+  categorization_customer_id?: string | null;
+  /** PSE / QBO product-service category id when categorized */
+  pse_ps_category_qbo_id?: string | null;
+  category?: string | null;
+  check_number?: string | null;
+  location?: string | null;
   /**
    * Relay Fuel Wallet: product lines from integrations.relay_fuel_transaction_lines
    * (diesel truck / reefer / DEF / fee) when source_ref is relay_fuel:*.

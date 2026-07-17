@@ -178,9 +178,11 @@ export function ReconciliationWorkspacePage() {
             >
               Print
             </ActionButton>
-            <ActionButton disabled title="Auto-Match stays disabled until the reconcile engine is proven safe on this workspace">
-              Auto-Match Suggestions
-            </ActionButton>
+            <span title="Auto-Match stays disabled until the reconcile engine is proven safe on this workspace">
+              <ActionButton disabled>
+                Auto-Match Suggestions
+              </ActionButton>
+            </span>
           </div>
         }
       />

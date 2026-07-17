@@ -547,9 +547,9 @@ export function BankingTransactionsDesignView({
       if (sortBy.key === "fromTo" || sortBy.key === "payee") return String(tx.merchant_name ?? tx.description ?? "").toLowerCase();
       if (sortBy.key === "customer") return String(tx.categorization_customer_id ?? "").toLowerCase();
       if (sortBy.key === "productService") return String(tx.pse_ps_category_qbo_id ?? tx.category ?? "").toLowerCase();
-      if (sortBy.key === "checkNo") return String((tx as { check_number?: string }).check_number ?? "").toLowerCase();
+      if (sortBy.key === "checkNo") return String(tx.check_number ?? "").toLowerCase();
       if (sortBy.key === "className") return String(tx.plaid_category?.[0] ?? "").toLowerCase();
-      if (sortBy.key === "location") return String((tx as { location?: string }).location ?? "").toLowerCase();
+      if (sortBy.key === "location") return String(tx.location ?? "").toLowerCase();
       if (sortBy.key === "balance") return 0; // balance uses runningBalanceById post-map; date order preferred
       return tx.transaction_date ?? "";
     };
