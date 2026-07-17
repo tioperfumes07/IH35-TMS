@@ -26,9 +26,9 @@ export function DriverHosDetailPage() {
   const operatingCompanyId = selectedCompanyId ?? companies[0]?.id ?? "";
 
   const driverQuery = useQuery({
-    queryKey: ["driver", id, "hos-detail-header"],
-    queryFn: () => getDriver(id),
-    enabled: Boolean(id),
+    queryKey: ["driver", id, operatingCompanyId, "hos-detail-header"],
+    queryFn: () => getDriver(id, operatingCompanyId),
+    enabled: Boolean(id && operatingCompanyId),
   });
 
   const hosQuery = useQuery({

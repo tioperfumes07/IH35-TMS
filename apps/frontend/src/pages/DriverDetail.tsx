@@ -229,8 +229,8 @@ export function DriverDetailPage() {
   // a driver under a non-default company 404s as "Driver not found."
   const driverQuery = useQuery({
     queryKey: ["driver", id, companyId],
-    queryFn: () => getDriver(id, companyId || undefined),
-    enabled: Boolean(id),
+    queryFn: () => getDriver(id, companyId),
+    enabled: Boolean(id && companyId),
   });
 
   const qualificationsQuery = useQuery({
