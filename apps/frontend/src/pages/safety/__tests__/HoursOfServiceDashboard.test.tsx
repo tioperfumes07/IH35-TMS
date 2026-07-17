@@ -82,12 +82,16 @@ describe("HoursOfServicePage", () => {
     expect(screen.getByTestId("safety-hos-row-driver-on")).toBeTruthy();
   });
 
-  it("shows violations panel and link to canonical create route", async () => {
+  it("opens a real create modal from + Create (not a dead nav Link)", async () => {
     render(wrap(<HoursOfServicePage operatingCompanyId={companyId} />));
     await waitFor(() => {
       expect(screen.getByTestId("safety-hos-violations-panel").textContent).toContain("11_HOUR");
     });
-    expect(screen.getByTestId("safety-hos-create-violation-link").getAttribute("href")).toBe("/safety/hos-violations");
+    const createBtn = screen.getByTestId("safety-hos-create-violation");
+    expect(createBtn.tagName).toBe("BUTTON");
+    expect(createBtn.textContent).toMatch(/\+\s*Create/);
+    createBtn.click();
+    expect(await screen.findByTestId("hos-violation-create-modal")).toBeTruthy();
   });
 
   it("lists near-violation alerts with drill-down to driver HOS", async () => {

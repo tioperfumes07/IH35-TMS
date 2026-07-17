@@ -23,9 +23,10 @@ export function createHosViolation(companyId: string, body: Record<string, unkno
   });
 }
 
-export function voidHosViolation(companyId: string, id: string) {
+export function voidHosViolation(companyId: string, id: string, reason: string) {
   return apiRequest<{ hos_violation: Record<string, unknown> }>(`/api/v1/safety/hos-violations/${id}/void?${companyQuery(companyId)}`, {
     method: "POST",
+    body: { reason },
   });
 }
 

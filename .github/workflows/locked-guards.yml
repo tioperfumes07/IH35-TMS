@@ -584,6 +584,10 @@ jobs:
         run: node scripts/verify-driver-profile-dead-actions.mjs --selftest
       - name: verify:driver-profile-dead-actions
         run: npm run verify:driver-profile-dead-actions
+      - name: verify:hos-violation-void-reason --selftest
+        run: node scripts/verify-hos-violation-void-reason.mjs --selftest
+      - name: verify:hos-violation-void-reason
+        run: npm run verify:hos-violation-void-reason
       - name: verify:banking-categorize-ux-honesty --selftest
         run: node scripts/verify-banking-categorize-ux-honesty.mjs --selftest
       - name: verify:banking-categorize-ux-honesty

@@ -29,6 +29,11 @@ const idParamsSchema = z.object({
   id: z.string().uuid(),
 });
 
+/** Required user-supplied void reason — never a hardcoded endpoint literal. */
+const voidHosViolationSchema = z.object({
+  reason: z.string().trim().min(3, "a reason is required").max(500),
+});
+
 function currentUser(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
   return req.user;
@@ -173,18 +178,20 @@ export async function registerSafetyHosViolationsRoutes(app: FastifyInstance) {
     if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    const body = voidHosViolationSchema.safeParse(req.body ?? {});
+    if (!body.success) return validationError(reply, body.error);
 
     const payload = await withCompany(user.uuid, user.role, query.data.operating_company_id, async (client) => {
       const res = await client.query(
         `
           UPDATE safety.hos_violations
-          SET voided_at = now(), voided_by = $2, void_reason = COALESCE(void_reason, 'voided via endpoint')
+          SET voided_at = now(), voided_by = $2, void_reason = $4
           WHERE id = $1
             AND operating_company_id = $3
             AND voided_at IS NULL
           RETURNING *
         `,
-        [params.data.id, user.uuid, query.data.operating_company_id]
+        [params.data.id, user.uuid, query.data.operating_company_id, body.data.reason]
       );
       const row = res.rows[0];
       if (!row) return null;
@@ -192,7 +199,7 @@ export async function registerSafetyHosViolationsRoutes(app: FastifyInstance) {
         client,
         user.uuid,
         "safety.hos_violation.voided",
-        { hos_violation_id: row.id },
+        { hos_violation_id: row.id, void_reason: body.data.reason },
         "info",
         "P3-T11.17.2-SAFETY-V6.4"
       );

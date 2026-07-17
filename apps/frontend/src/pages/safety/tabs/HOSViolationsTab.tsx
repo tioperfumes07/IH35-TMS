@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { createHosViolation, listHosViolations, voidHosViolation } from "../../../api/safetyV64";
+import { VoidReasonModal } from "../../../components/accounting/VoidReasonModal";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { companyNow } from "../../../lib/businessDate";
 import { useListState } from "../../../components/list-state";
@@ -13,6 +14,7 @@ export function HOSViolationsTab() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
+  const [voidTarget, setVoidTarget] = useState<HosViolationRow | null>(null);
   const [form, setForm] = useState({
     driver_id: "",
     violation_code: "",
@@ -49,8 +51,9 @@ export function HOSViolationsTab() {
   });
 
   const voidMutation = useMutation({
-    mutationFn: (id: string) => voidHosViolation(companyId, id),
+    mutationFn: ({ id, reason }: { id: string; reason: string }) => voidHosViolation(companyId, id, reason),
     onSuccess: async () => {
+      setVoidTarget(null);
       await queryClient.invalidateQueries({ queryKey: ["safety-v64", "hos-violations", companyId] });
     },
   });
@@ -88,14 +91,14 @@ export function HOSViolationsTab() {
             type="button"
             className="text-red-700 underline disabled:opacity-50"
             disabled={Boolean(row.voided_at) || voidMutation.isPending}
-            onClick={() => voidMutation.mutate(String(row.id))}
+            onClick={() => setVoidTarget(row)}
           >
             {row.voided_at ? "Voided" : "Void"}
           </button>
         ),
       },
     ],
-    [voidMutation.isPending, voidMutation.mutate],
+    [voidMutation.isPending],
   );
 
   return (
@@ -135,6 +138,23 @@ export function HOSViolationsTab() {
         emptyText="No HOS violations found."
         storageKey="safety-hos-violations"
         exportFilename="hos-violations"
+      />
+
+      <VoidReasonModal
+        open={Boolean(voidTarget)}
+        title="Void HOS Violation"
+        entityRef={
+          voidTarget
+            ? `${String(voidTarget.violation_code ?? "Violation")} · driver ${String(voidTarget.driver_id ?? "—")}`
+            : undefined
+        }
+        minLength={3}
+        postsReversingEntry={false}
+        onClose={() => setVoidTarget(null)}
+        onSubmit={async (reason) => {
+          if (!voidTarget?.id) return;
+          await voidMutation.mutateAsync({ id: String(voidTarget.id), reason });
+        }}
       />
     </div>
   );
