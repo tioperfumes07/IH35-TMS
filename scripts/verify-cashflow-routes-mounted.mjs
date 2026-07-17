@@ -41,6 +41,10 @@ for (const { fn, routeFile, endpoint } of mounts) {
   if (routeSrc && !routeSrc.includes(endpoint)) {
     failures.push(`${routeFile}: must expose ${endpoint}`);
   }
+  // Explicit index.ts mount + ignorePattern: no autoload default fp (else verify:no-duplicate-routes fails).
+  if (routeSrc && /export\s+default\s+fp\s*\(/.test(routeSrc)) {
+    failures.push(`${routeFile}: must not export default fp (manual mount only; matches items.routes.ts)`);
+  }
   if (index && !new RegExp(`import\\s*\\{\\s*${fn}\\s*\\}`).test(index)) {
     failures.push(`index.ts: missing import { ${fn} }`);
   }

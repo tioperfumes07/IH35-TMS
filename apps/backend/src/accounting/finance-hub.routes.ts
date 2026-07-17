@@ -19,7 +19,6 @@
 // scope is set before any read. No cross-entity bleed.
 
 import type { FastifyInstance } from "fastify";
-import fp from "fastify-plugin";
 import { companyQuerySchema, currentAuthUser, validationError } from "./shared.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { getFinanceHubOverview } from "./finance-hub.service.js";
@@ -69,7 +68,3 @@ export async function registerFinanceHubRoutes(app: FastifyInstance) {
     return reply.code(200).send(overview);
   });
 }
-
-export default fp(async (app) => {
-  await registerFinanceHubRoutes(app);
-}, { name: "accounting.registerFinanceHubRoutes" });
