@@ -42,8 +42,13 @@ function main() {
   if (!tabsConfig.includes(`SAFETY_CANONICAL_GROUP_COUNT = ${EXPECTED_GROUP_COUNT}`)) {
     failures.push("SAFETY_CANONICAL_GROUP_COUNT must be 9");
   }
-  if (!homePage.includes("SAFETY_CANONICAL_TAB_COUNT")) {
-    failures.push("DefaultHome must import SAFETY_CANONICAL_TAB_COUNT");
+  // HOME quick-jumps may live in homeQuickJumps.ts (single source) — either surface must
+  // reference SAFETY_CANONICAL_TAB_COUNT so the Safety count cannot silently hardcode.
+  const homeQuickJumps = fs.existsSync(path.join(ROOT, "apps/frontend/src/pages/home/homeQuickJumps.ts"))
+    ? read(path.join(ROOT, "apps/frontend/src/pages/home/homeQuickJumps.ts"))
+    : "";
+  if (!homePage.includes("SAFETY_CANONICAL_TAB_COUNT") && !homeQuickJumps.includes("SAFETY_CANONICAL_TAB_COUNT")) {
+    failures.push("DefaultHome or homeQuickJumps must import SAFETY_CANONICAL_TAB_COUNT");
   }
   if (homePage.includes("count: 6, to: \"/safety\"")) {
     failures.push("DefaultHome must not hardcode Safety quick-jump count 6");
