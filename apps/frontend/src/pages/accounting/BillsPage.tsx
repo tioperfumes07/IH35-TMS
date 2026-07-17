@@ -20,6 +20,7 @@ import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { CreateBillModal } from "../maintenance/components/CreateBillModal";
+import { companyToday, addDaysIso, monthBoundsIso } from "../../lib/businessDate";
 
 export const BILL_LIST_CATEGORIES = ["maintenance", "repair", "fuel", "driver"] as const;
 export type BillListCategory = (typeof BILL_LIST_CATEGORIES)[number];
@@ -84,9 +85,9 @@ function billDueStatus(bill: VendorBill): "overdue" | "due_soon" | null {
   if (!isOpenWithBalance) return null;
   const due = bill.due_date ?? "";
   if (!due) return null;
-  const today = new Date().toISOString().slice(0, 10);
+  const today = companyToday();
   if (due < today) return "overdue";
-  const in7 = daysAgoIso(-7);
+  const in7 = addDaysIso(today, 7);
   if (due <= in7) return "due_soon";
   return null;
 }
@@ -102,15 +103,12 @@ function BillDueBadge({ bill }: { bill: VendorBill }) {
   return null;
 }
 
-function monthStartIso(date = new Date()) {
-  const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
-  return d.toISOString().slice(0, 10);
+function monthStartIso() {
+  return monthBoundsIso(companyToday()).start;
 }
 
-function daysAgoIso(days: number, date = new Date()) {
-  const d = new Date(date);
-  d.setUTCDate(d.getUTCDate() - days);
-  return d.toISOString().slice(0, 10);
+function daysAgoIso(days: number) {
+  return addDaysIso(companyToday(), -days);
 }
 
 function billKpiCard(label: string, value: string, sublabel: string, tone: "neutral" | "warn" | "danger" = "neutral") {
@@ -250,7 +248,7 @@ export function BillsPage() {
     const past90Start = daysAgoIso(90);
     const openBills = all.filter((bill) => (bill.status === "open" || bill.status === "partial") && billBalanceCents(bill) > 0);
     const mtdBills = all.filter((bill) => (bill.bill_date ?? "") >= mtdStart);
-    const overdueBills = openBills.filter((bill) => (bill.due_date ?? "") < new Date().toISOString().slice(0, 10));
+    const overdueBills = openBills.filter((bill) => (bill.due_date ?? "") < companyToday());
     const past90Bills = all.filter((bill) => (bill.bill_date ?? "") >= past90Start);
     return {
       openAmount: openBills.reduce((sum, bill) => sum + billBalanceCents(bill), 0),

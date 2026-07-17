@@ -14,6 +14,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useToast } from "../../components/Toast";
+import { addDaysIso, companyToday } from "../../lib/businessDate";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
@@ -22,11 +23,8 @@ function money(cents: number) {
 }
 
 function defaultPeriod() {
-  const end = new Date();
-  const start = new Date(end);
-  start.setDate(start.getDate() - 30);
-  const fmt = (d: Date) => d.toISOString().slice(0, 10);
-  return { start: fmt(start), end: fmt(end) };
+  const end = companyToday();
+  return { start: addDaysIso(end, -30), end };
 }
 
 export function ReconciliationWorkspacePage() {

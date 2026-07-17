@@ -78,6 +78,7 @@ describe("G6-1 static guard — no UTC financial 'today' in accounting date defa
     "role-home/accounting-home.service.ts",
     "escrow/service.ts",
     "amortization-posting/amortization-posting.service.ts",
+    "vendor-credits.routes.ts",
   ];
 
   for (const rel of guardedFiles) {

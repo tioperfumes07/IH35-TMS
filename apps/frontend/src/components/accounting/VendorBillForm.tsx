@@ -12,6 +12,7 @@ import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { vendorReferenceOption } from "../parity/referenceOptionLabels";
 import { SelectCombobox } from "../shared/SelectCombobox";
 import { UploadZone } from "../UploadZone";
+import { companyToday } from "../../lib/businessDate";
 
 export type VendorBillFormSubmitPayload = {
   vendor_id: string;
@@ -97,7 +98,7 @@ export function VendorBillForm({
   const [taxRate, setTaxRate] = useState(8.25);
   const [billType, setBillType] = useState(resolvedInitialBillType);
   const [draftAttachmentEntityId] = useState(() => crypto.randomUUID());
-  const [billDate, setBillDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [billDate, setBillDate] = useState(() => companyToday());
   const [dueDate, setDueDate] = useState("");
   const [billNumber, setBillNumber] = useState("");
   const [terms, setTerms] = useState("net_30");

@@ -8,6 +8,7 @@ import { useListState } from "../../components/list-state";
 import { formatUsdCents } from "../../lib/money";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { DatePicker } from "../../components/forms/DatePicker";
+import { companyToday, addDaysIso } from "../../lib/businessDate";
 
 const ENTITY_TYPE_OPTIONS = [
   { value: "", label: "All types" },
@@ -92,12 +93,8 @@ export function DailyReconPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
 
-  const today = new Date().toISOString().slice(0, 10);
-  const thirtyDaysAgo = (() => {
-    const d = new Date();
-    d.setDate(d.getDate() - 30);
-    return d.toISOString().slice(0, 10);
-  })();
+  const today = companyToday();
+  const thirtyDaysAgo = addDaysIso(today, -30);
 
   const [fromDate, setFromDate] = useState(thirtyDaysAgo);
   const [toDate, setToDate] = useState(today);

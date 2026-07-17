@@ -12,6 +12,7 @@ import { ListView } from "../../../components/lists/ListView";
 import type { ActiveFilter, ListViewColumn, ListViewFilter, SortConfig } from "../../../components/lists/ListView/types";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { companyToday } from "../../../lib/businessDate";
 import { ChartOfAccountsSyncPanel } from "../../accounting/ChartOfAccountsSyncPanel";
 import { AccountDrawer } from "./AccountDrawer";
 import { CoaBatchActions } from "./CoaBatchActions";
@@ -231,7 +232,7 @@ export function ChartOfAccountsListPage() {
   // (set by qbo-sync/chart-of-accounts-reconciler.ts) are shown; all other rows are hidden.
   const [driftOnly, setDriftOnly] = useState(false);
 
-  const asOfDate = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const asOfDate = useMemo(() => companyToday(), []);
 
   const catalogQuery = useQuery({
     queryKey: ["coa-list", "catalog", companyId, statusFilter],
