@@ -996,3 +996,7 @@ jobs:
         run: node scripts/verify-bank-register-sort-group.mjs --selftest
       - name: verify:bank-register-sort-group
         run: npm run verify:bank-register-sort-group
+      - name: verify:425c-petition-not-hardcoded --selftest
+        run: node scripts/verify-425c-petition-not-hardcoded.mjs --selftest
+      - name: verify:425c-petition-not-hardcoded
+        run: npm run verify:425c-petition-not-hardcoded
