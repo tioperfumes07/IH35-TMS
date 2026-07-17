@@ -140,7 +140,7 @@ export async function listCancellations(
     }
     const rows = await client.query(
       `
-        SELECT c.*, r.reason_label
+        SELECT c.*, r.display_name AS reason_label
         FROM dispatch.load_cancellations c
         JOIN catalogs.load_cancellation_reasons r
           ON r.reason_code = c.reason_code

@@ -809,6 +809,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       );
       const current = currentRes.rows[0] ?? null;
       if (!current) return { error: "mdata_load_not_found" as const };
+      await assertCompanyMembership(authUser.uuid, current.operating_company_id);
       if (current.status === newStatus) return { ok: true as const, no_change: true, status: current.status };
 
       const allowed = allowedStatusTransitions[current.status] ?? [];
@@ -821,6 +822,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       }
 
       if (newStatus === "cancelled" && cancellationReasonCode) {
+        await resolveOperatingCompanyId(client, authUser.uuid, current.operating_company_id);
         const reasonRes = await client.query<{
           reason_code: string;
           requires_owner_approval: boolean;
