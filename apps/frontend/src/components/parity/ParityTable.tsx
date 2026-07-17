@@ -123,7 +123,7 @@ function compareSortValues(
   const aNull = a == null || a === "";
   const bNull = b == null || b === "";
   if (aNull && bNull) return 0;
-  if (aNull) return 1; // nulls/blanks sort last regardless of direction
+  if (aNull) return 1; // ASC: nulls last; ParityTable applies nulls before ASC/DESC flip
   if (bNull) return -1;
   if (typeof a === "number" && typeof b === "number") return a - b;
   return String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: "base" });
