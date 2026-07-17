@@ -1,7 +1,8 @@
+// @archived — DispatchList: superseded by DispatchBoard (pages/dispatch/DispatchBoard.tsx) via DispatchPage.
+// Do not wire into routes/manifest. Enforced by verify-dispatch-list-orphaned.mjs. (0243-c1-4)
 import { Fragment, useMemo, useState } from "react";
 import type { DispatchLoadRow } from "../../api/loads";
 import "../../design/design-tokens.css";
-import type { DataTableErrorState } from "../../lib/tableError";
 import { Button } from "../Button";
 import { ListErrorState } from "../ListErrorState";
 import { flagDotColor, flagDotLabel, flagDotTag, hasVisibleFlag, STATUS_LABEL, formatMoneyCents } from "./constants";
@@ -12,42 +13,9 @@ import { HOS_COLUMNS } from "./hos/hosClocks";
 import { TableSelection, TableSelectionHeader } from "../bulk";
 import { InlineUnitPicker } from "./InlineUnitPicker";
 import { InlineDriverPicker } from "./InlineDriverPicker";
-import type { OpenPreSettlement } from "../../api/driverFinance";
+import type { DispatchListProps, SortField } from "./dispatchListTypes";
 
-type SortField = "created_at" | "load_number" | "status" | "rate_total_cents";
-type SortDirection = "asc" | "desc";
-
-export type DispatchListProps = {
-  loads: DispatchLoadRow[];
-  activeGeofenceBreachVehicleIds?: Set<string>;
-  totalCount: number;
-  limit: number;
-  offset: number;
-  loading: boolean;
-  sortField: SortField;
-  sortDirection: SortDirection;
-  onSortChange: (field: SortField, direction: SortDirection) => void;
-  onPageChange: (nextOffset: number) => void;
-  onRowClick: (loadId: string) => void;
-  onExportCsv: () => void;
-  listError?: DataTableErrorState;
-  /** P6-T11191: poll backend ETA for in_transit rows */
-  showEtaColumn?: boolean;
-  bulkSelection?: {
-    selectedIds: Set<string>;
-    onSelectionChange: (next: Set<string>) => void;
-    pageRowIds: string[];
-    onCapExceeded: (message: string) => void;
-  };
-  onExportSelectedCsv?: () => void;
-  selectedCount?: number;
-  inlineQuicksaveEnabled?: boolean;
-  operatingCompanyId?: string;
-  /** Pre-settlement trip-linking (MUST 8a.0.5.12): drivers with open pre-settlements */
-  openPreSettlements?: Map<string, OpenPreSettlement>;
-  /** Called when dispatcher clicks "Add to it" on a row with an open pre-settlement */
-  onAddToPreSettlement?: (settlementId: string, loadId: string, operatingCompanyId: string) => void;
-};
+export type { DispatchListProps } from "./dispatchListTypes";
 
 type RowOverride = {
   unitId?: string | null;

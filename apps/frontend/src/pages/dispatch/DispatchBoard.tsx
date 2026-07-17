@@ -47,7 +47,7 @@ import {
   type DispatchConfidenceClass,
 } from "../../api/dispatch";
 import { getFleetLocationHos } from "../../api/reports";
-import type { DispatchListProps } from "../../components/dispatch/DispatchList";
+import type { DispatchListProps } from "../../components/dispatch/dispatchListTypes";
 import {
   BulkActionBar,
   BulkActionModal,

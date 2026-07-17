@@ -29,19 +29,42 @@ type EventDraft = {
   subject_unit_id: string;
   title: string;
   description: string;
+  /** S-06: user-set time of occurrence (ISO); backend defaults to now() when omitted. */
+  occurred_at: string;
 };
 
-const INITIAL_DRAFT: EventDraft = {
-  event_type: "incident",
-  severity: "medium",
-  status: "open",
-  kpi_bucket: "incidents",
-  subject_type: "company",
-  subject_driver_id: "",
-  subject_unit_id: "",
-  title: "",
-  description: "",
-};
+function defaultOccurredAtIso(): string {
+  return new Date().toISOString();
+}
+
+/** datetime-local (local wall clock) ↔ ISO with offset for z.string().datetime(). */
+function toDatetimeLocalValue(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function fromDatetimeLocalValue(local: string): string {
+  const d = new Date(local);
+  if (Number.isNaN(d.getTime())) return defaultOccurredAtIso();
+  return d.toISOString();
+}
+
+function initialEventDraft(): EventDraft {
+  return {
+    event_type: "incident",
+    severity: "medium",
+    status: "open",
+    kpi_bucket: "incidents",
+    subject_type: "company",
+    subject_driver_id: "",
+    subject_unit_id: "",
+    title: "",
+    description: "",
+    occurred_at: defaultOccurredAtIso(),
+  };
+}
 
 export function SafetyEventsPage({ operatingCompanyId }: Props) {
   const queryClient = useQueryClient();
@@ -55,7 +78,8 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
   const [typeFilter, setTypeFilter] = useState("");
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [logModalOpen, setLogModalOpen] = useState(false);
-  const [draft, setDraft] = useState<EventDraft>(INITIAL_DRAFT);
+  const [draft, setDraft] = useState<EventDraft>(initialEventDraft);
+  const [logDraftBaseline, setLogDraftBaseline] = useState<EventDraft | null>(null);
   // S-04: shared From/To date range from the Safety layout's date-range bar (additive to the existing
   // activity-window toggle), applied here against occurred_at.
   const { fromDate, toDate } = useSafetyUiContext();
@@ -102,12 +126,14 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
         subject_unit_id: draft.subject_unit_id.trim() || undefined,
         title: draft.title.trim(),
         description: draft.description.trim() || undefined,
+        occurred_at: draft.occurred_at,
       };
       return createSafetyEvent(payload);
     },
     onSuccess: () => {
       setLogModalOpen(false);
-      setDraft(INITIAL_DRAFT);
+      setDraft(initialEventDraft());
+      setLogDraftBaseline(null);
       void queryClient.invalidateQueries({ queryKey: ["safety", "events-v2", operatingCompanyId] });
     },
   });
@@ -181,20 +207,30 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
     URL.revokeObjectURL(url);
   };
   const notesListState = useListState(notesQuery, (notesQuery.data ?? []).length === 0);
-  const logModalDirty =
-    draft.title.trim() !== INITIAL_DRAFT.title.trim() ||
-    draft.event_type.trim() !== INITIAL_DRAFT.event_type.trim() ||
-    draft.description.trim() !== INITIAL_DRAFT.description.trim() ||
-    draft.subject_driver_id.trim() !== INITIAL_DRAFT.subject_driver_id.trim() ||
-    draft.subject_unit_id.trim() !== INITIAL_DRAFT.subject_unit_id.trim() ||
-    draft.severity !== INITIAL_DRAFT.severity ||
-    draft.status !== INITIAL_DRAFT.status ||
-    draft.kpi_bucket !== INITIAL_DRAFT.kpi_bucket ||
-    draft.subject_type !== INITIAL_DRAFT.subject_type;
+  const logModalDirty = logDraftBaseline
+    ? draft.title.trim() !== logDraftBaseline.title.trim() ||
+      draft.event_type.trim() !== logDraftBaseline.event_type.trim() ||
+      draft.description.trim() !== logDraftBaseline.description.trim() ||
+      draft.subject_driver_id.trim() !== logDraftBaseline.subject_driver_id.trim() ||
+      draft.subject_unit_id.trim() !== logDraftBaseline.subject_unit_id.trim() ||
+      draft.severity !== logDraftBaseline.severity ||
+      draft.status !== logDraftBaseline.status ||
+      draft.kpi_bucket !== logDraftBaseline.kpi_bucket ||
+      draft.subject_type !== logDraftBaseline.subject_type ||
+      draft.occurred_at !== logDraftBaseline.occurred_at
+    : false;
+
+  const openLogModal = () => {
+    const baseline = initialEventDraft();
+    setDraft(baseline);
+    setLogDraftBaseline(baseline);
+    setLogModalOpen(true);
+  };
 
   const closeLogModal = () => {
     setLogModalOpen(false);
-    setDraft(INITIAL_DRAFT);
+    setDraft(initialEventDraft());
+    setLogDraftBaseline(null);
   };
 
   return (
@@ -297,7 +333,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
           </button>
           <button
             type="button"
-            onClick={() => setLogModalOpen(true)}
+            onClick={openLogModal}
             className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white"
           >
             + Log Event
@@ -376,6 +412,18 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
         isDirty={logModalDirty}
       >
         <div className="grid gap-2 sm:grid-cols-2" data-testid="safety-event-log-modal">
+          <label className="flex flex-col gap-0.5 text-[10px] font-semibold uppercase text-gray-600 sm:col-span-2">
+            Time of occurrence
+            <input
+              type="datetime-local"
+              value={toDatetimeLocalValue(draft.occurred_at)}
+              onChange={(event) =>
+                setDraft((prev) => ({ ...prev, occurred_at: fromDatetimeLocalValue(event.target.value) }))
+              }
+              className="rounded-sm border border-gray-300 px-2 py-1 text-xs font-normal normal-case"
+              data-testid="safety-event-occurred-at"
+            />
+          </label>
           <input
             value={draft.title}
             onChange={(event) => setDraft((prev) => ({ ...prev, title: event.target.value }))}

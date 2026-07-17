@@ -1054,7 +1054,11 @@
     "verify:dispatch-cancel-approval-gate": "node scripts/verify-dispatch-cancel-approval-gate.mjs",
     "verify:driver-pwa-load-status-gate": "node scripts/verify-driver-pwa-load-status-gate.mjs",
     "verify:acct-utc-today-defaults": "node scripts/verify-acct-utc-today-defaults.mjs",
-    "verify:dispatch-oos-unit-block": "node scripts/verify-dispatch-oos-unit-block.mjs"
+    "verify:dispatch-oos-unit-block": "node scripts/verify-dispatch-oos-unit-block.mjs",
+    "verify:safety-event-log-occurred-at": "node scripts/verify-safety-event-log-occurred-at.mjs",
+    "verify:dispatch-list-orphaned": "node scripts/verify-dispatch-list-orphaned.mjs",
+    "verify:is-posting-flag-void": "node scripts/verify-is-posting-flag-void.mjs",
+    "verify:xlsx-upload-magic-bytes": "node scripts/verify-xlsx-upload-magic-bytes.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1087.0",
@@ -1096,7 +1100,8 @@
     "twilio": "^6.0.0",
     "web-push": "^3.6.7",
     "xlsx": "^0.18.5",
-    "zod": "^4.4.2"
+    "zod": "^4.4.2",
+    "exceljs": "4.4.0"
   },
   "devDependencies": {
     "@axe-core/cli": "^4.10.2",

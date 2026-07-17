@@ -625,6 +625,10 @@ jobs:
         run: node scripts/verify-dvir-followup-wo-target.mjs --selftest
       - name: verify:dvir-followup-wo-target
         run: npm run verify:dvir-followup-wo-target
+      - name: verify:safety-event-log-occurred-at --selftest
+        run: node scripts/verify-safety-event-log-occurred-at.mjs --selftest
+      - name: verify:safety-event-log-occurred-at
+        run: npm run verify:safety-event-log-occurred-at
       - name: verify:banking-categorize-ux-honesty --selftest
         run: node scripts/verify-banking-categorize-ux-honesty.mjs --selftest
       - name: verify:banking-categorize-ux-honesty
@@ -694,6 +698,11 @@ jobs:
       - name: verify:dead-forms-unmounted
         run: npm run verify:dead-forms-unmounted
 
+      - name: verify:dispatch-list-orphaned --selftest
+        run: node scripts/verify-dispatch-list-orphaned.mjs --selftest
+      - name: verify:dispatch-list-orphaned
+        run: npm run verify:dispatch-list-orphaned
+
       - name: verify:banking-no-orphan-pages --selftest
         run: node scripts/verify-banking-no-orphan-pages.mjs --selftest
       - name: verify:banking-no-orphan-pages
@@ -738,6 +747,11 @@ jobs:
         run: node scripts/verify-excel-upload-jobs-rls-forced.mjs --selftest
       - name: verify:excel-upload-jobs-rls-forced
         run: npm run verify:excel-upload-jobs-rls-forced
+
+      - name: verify:xlsx-upload-magic-bytes --selftest
+        run: node scripts/verify-xlsx-upload-magic-bytes.mjs --selftest
+      - name: verify:xlsx-upload-magic-bytes
+        run: npm run verify:xlsx-upload-magic-bytes
 
       - name: verify:transaction-company-isolation --selftest
         run: node scripts/verify-transaction-company-isolation.mjs --selftest
@@ -859,6 +873,10 @@ jobs:
         run: node scripts/verify-wo-void-flag-gate.mjs --selftest
       - name: verify:wo-void-flag-gate
         run: npm run verify:wo-void-flag-gate
+      - name: verify:is-posting-flag-void --selftest
+        run: node scripts/verify-is-posting-flag-void.mjs --selftest
+      - name: verify:is-posting-flag-void
+        run: npm run verify:is-posting-flag-void
       - name: verify:chain07-settlements-redirect --selftest
         run: node scripts/verify-chain07-settlements-redirect.mjs --selftest
       - name: verify:chain07-settlements-redirect
