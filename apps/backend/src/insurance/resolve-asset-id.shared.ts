@@ -17,7 +17,12 @@ export const RESOLVE_MDATA_ASSET_ID_SQL = `
     AND (
       a.id = $2::uuid
       OR a.unit_id = $2::uuid
-      OR a.unit_code IN (SELECT u.unit_number FROM mdata.units u WHERE u.id = $2::uuid)
+      OR a.unit_code IN (
+        SELECT u.unit_number
+        FROM mdata.units u
+        WHERE u.id = $2::uuid
+          AND (u.owner_company_id = $1::uuid OR u.currently_leased_to_company_id = $1::uuid)
+      )
     )
   LIMIT 1
 `;
