@@ -17,6 +17,7 @@ import { useToast } from "../../components/Toast";
 import { TasksTab } from "../../components/tasks/TasksTab";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { useUrlSort } from "../../hooks/useUrlSort";
 
 export const BILL_LIST_CATEGORIES = ["maintenance", "repair", "fuel", "driver"] as const;
 export type BillListCategory = (typeof BILL_LIST_CATEGORIES)[number];
@@ -161,6 +162,9 @@ export function BillsPage() {
   const [tableResetKey, setTableResetKey] = useState(0);
   const companyId = selectedCompanyId ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
+  // BANK-SORT-ROLLOUT-ACCT: every visible column header sorts ASC/DESC; sort persists in the URL
+  // (?sort=&dir=) so it survives reload / is shareable, same as the Banking register.
+  const { sortKey, sortDirection, onSortChange } = useUrlSort();
   const category = parseBillCategory(searchParams.get("category"));
   // Audit 14-MAINTENANCE / 99-CROSSCUTTING: WO + legacy links use ?bill_id= — honor it (highlight + select).
   // EntityLink kind="bill" still prefers /accounting/bills/:id (BillDetailPage); this covers list deep-links.
@@ -306,6 +310,8 @@ export function BillsPage() {
       {
         key: "balance",
         label: "Balance",
+        sortable: true,
+        sortValue: (bill) => billBalanceCents(bill),
         className: "text-right",
         cellClass: "text-right font-semibold",
         render: (bill) => money(bill.balance_cents ?? Math.max(0, bill.amount_cents - bill.paid_cents)),
@@ -316,7 +322,13 @@ export function BillsPage() {
         sortable: true,
         render: (bill) => <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ${statusBadgeClass(bill.status)}`}>{bill.status}</span>,
       },
-      { key: "is_reconciled", label: "Reconciled", render: (bill) => <ReconciledBadge isReconciled={bill.is_reconciled} /> },
+      {
+        key: "is_reconciled",
+        label: "Reconciled",
+        sortable: true,
+        sortValue: (bill) => (bill.is_reconciled ? 1 : 0),
+        render: (bill) => <ReconciledBadge isReconciled={bill.is_reconciled} />,
+      },
       {
         key: "due_date",
         label: "Due date",
@@ -331,6 +343,7 @@ export function BillsPage() {
       {
         key: "memo",
         label: "Memo",
+        sortable: true,
         render: (bill) => (
           <span className="single-line-name" title={bill.memo ?? undefined}>
             {bill.memo || "—"}
@@ -471,6 +484,9 @@ export function BillsPage() {
         exportFilename="bills"
         storageKey="bills-list"
         initialPageSize={50}
+        sortKey={sortKey}
+        sortDirection={sortDirection}
+        onSortChange={onSortChange}
         selectable
         maxSelectable={200}
         onSelectionCapExceeded={() => pushToast("You can select up to 200 bills at once.", "error")}

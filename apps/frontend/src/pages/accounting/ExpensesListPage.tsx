@@ -11,6 +11,7 @@ import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { formatDateUS } from "../../lib/formatDate";
+import { useUrlSort } from "../../hooks/useUrlSort";
 
 const STATUS_OPTIONS: Array<{ value: "" | ExpenseListStatus; label: string }> = [
   { value: "", label: "All statuses" },
@@ -54,6 +55,9 @@ export function ExpensesListPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [searchParams] = useSearchParams();
+  // BANK-SORT-ROLLOUT-ACCT: every visible column header sorts ASC/DESC; sort persists in the URL
+  // (?sort=&dir=) so it survives reload / is shareable, same as the Banking register.
+  const { sortKey, sortDirection, onSortChange } = useUrlSort();
   const deepLinkExpenseId = searchParams.get("expense_id");
   const [status, setStatus] = useState<"" | ExpenseListStatus>("");
   const [fromDate, setFromDate] = useState("");
@@ -210,6 +214,9 @@ export function ExpensesListPage() {
           exportFilename="expenses"
           storageKey="expenses-list"
           initialPageSize={50}
+          sortKey={sortKey}
+          sortDirection={sortDirection}
+          onSortChange={onSortChange}
           emptyText="No expenses found for the selected filters."
         />
       </div>

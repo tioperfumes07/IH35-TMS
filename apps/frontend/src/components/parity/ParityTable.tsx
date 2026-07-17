@@ -40,6 +40,11 @@ export type ParityColumn<T> = {
   defaultHidden?: boolean;
   /** Exclude from the gear column-toggle list (always shown). */
   alwaysVisible?: boolean;
+  /**
+   * Optional sort-value extractor for columns whose sort key isn't a plain `row[key]` lookup
+   * (e.g. a computed/derived display column like a running balance). Default: `row[key]`.
+   */
+  sortValue?: (row: T) => string | number | null | undefined;
 };
 
 export type ParityTableProps<T> = {
@@ -97,7 +102,32 @@ export type ParityTableProps<T> = {
    * row-level test/e2e selectors. Additive — omitting it renders no per-row testid.
    */
   rowTestId?: (row: T) => string;
+
+  /**
+   * OPTIONAL controlled-sort mode (BANK-SORT-ROLLOUT-ACCT). Omitting these three props keeps the
+   * existing uncontrolled internal-state sort (unchanged default for the ~130 existing call
+   * sites). Pass all three from a page that persists sort in the URL (see `useUrlSort`) — the
+   * page owns sortKey/sortDirection and is notified via onSortChange on every header click;
+   * ParityTable still performs the actual row sort (using each column's `sortValue` or a
+   * `row[key]` default) so pages don't have to re-implement comparison logic.
+   */
+  sortKey?: string;
+  sortDirection?: "asc" | "desc";
+  onSortChange?: (key: string, direction: "asc" | "desc") => void;
 };
+
+function compareSortValues(
+  a: string | number | null | undefined,
+  b: string | number | null | undefined,
+): number {
+  const aNull = a == null || a === "";
+  const bNull = b == null || b === "";
+  if (aNull && bNull) return 0;
+  if (aNull) return 1; // nulls/blanks sort last regardless of direction
+  if (bNull) return -1;
+  if (typeof a === "number" && typeof b === "number") return a - b;
+  return String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: "base" });
+}
 
 const DENSITY: Record<ParityDensity, { rowH: number; padY: number; font: number }> = {
   regular: { rowH: 30, padY: 6, font: 12 },
@@ -158,11 +188,17 @@ export function ParityTable<T>({
   renderExpanded,
   tableTestId,
   rowTestId,
+  sortKey: controlledSortKey,
+  sortDirection: controlledSortDirection,
+  onSortChange,
 }: ParityTableProps<T>) {
   const persisted = useMemo(() => loadPersisted(storageKey), [storageKey]);
 
-  const [sortKey, setSortKey] = useState<string>("");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const isSortControlled = onSortChange != null;
+  const [internalSortKey, setInternalSortKey] = useState<string>("");
+  const [internalSortDirection, setInternalSortDirection] = useState<"asc" | "desc">("asc");
+  const sortKey = isSortControlled ? controlledSortKey ?? "" : internalSortKey;
+  const sortDirection = isSortControlled ? controlledSortDirection ?? "asc" : internalSortDirection;
   const [page, setPage] = useState(1);
   const [pageInput, setPageInput] = useState("");
   const [density, setDensity] = useState<ParityDensity>(persisted.density ?? densityProp);
@@ -197,15 +233,18 @@ export function ParityTable<T>({
 
   const sortedRows = useMemo(() => {
     if (!sortKey) return rows;
+    const column = columns.find((c) => String(c.key) === sortKey);
+    const extract = (row: T): string | number | null | undefined =>
+      column?.sortValue
+        ? column.sortValue(row)
+        : ((row as Record<string, unknown>)[sortKey] as string | number | null | undefined);
     const copy = [...rows];
     copy.sort((a, b) => {
-      const av = String((a as Record<string, unknown>)[sortKey] ?? "");
-      const bv = String((b as Record<string, unknown>)[sortKey] ?? "");
-      const cmp = av.localeCompare(bv, undefined, { numeric: true });
+      const cmp = compareSortValues(extract(a), extract(b));
       return sortDirection === "asc" ? cmp : -cmp;
     });
     return copy;
-  }, [rows, sortKey, sortDirection]);
+  }, [rows, columns, sortKey, sortDirection]);
 
   const total = sortedRows.length;
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
@@ -331,11 +370,13 @@ export function ParityTable<T>({
   }
 
   function toggleSort(key: string) {
-    if (sortKey === key) setSortDirection((c) => (c === "asc" ? "desc" : "asc"));
-    else {
-      setSortKey(key);
-      setSortDirection("asc");
+    const nextDirection: "asc" | "desc" = sortKey === key && sortDirection === "asc" ? "desc" : "asc";
+    if (isSortControlled) {
+      onSortChange?.(key, nextDirection);
+      return;
     }
+    setInternalSortKey(key);
+    setInternalSortDirection(nextDirection);
   }
 
   function toggleRow(id: string) {

@@ -1,0 +1,39 @@
+{
+  "block_id": "BANK-SORT-ROLLOUT-ACCT",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "ACCOUNTING",
+  "task": "Every visible data column header on Accounting Bills + Expenses lists is clickable ASC/DESC; sort persists in URL query (sort/dir); guard wired.",
+  "branch": "fix/bank-sort-rollout-acct",
+  "lane": "A",
+  "details": [
+    "ParityTable gained an OPTIONAL controlled-sort contract: sortKey / sortDirection / onSortChange props + a per-column sortValue extractor. Uncontrolled call sites (the ~130 existing consumers) are unchanged.",
+    "New shared apps/frontend/src/hooks/useUrlSort.ts reads/writes ?sort=&dir= via react-router search params.",
+    "BillsPage + ExpensesListPage wired to useUrlSort + controlled ParityTable; Bills' balance/is_reconciled/memo columns (previously missing sortable: true) closed in this block.",
+    "Guard: scripts/verify-accounting-sortable-headers.mjs, wired into .github/workflows/locked-guards.yml (runs on every PR to main).",
+    "docs/trackers/BANK-SORT-ROLLOUT.md updated: ACCT Bills+Expenses done; Customers/Vendors/AP aging named as remaining next."
+  ],
+  "allowed_files": [
+    ".block-ready/BANK-SORT-ROLLOUT-ACCT.json",
+    ".github/workflows/locked-guards.yml",
+    "apps/frontend/src/components/parity/ParityTable.tsx",
+    "apps/frontend/src/hooks/useUrlSort.ts",
+    "apps/frontend/src/pages/accounting/BillsPage.tsx",
+    "apps/frontend/src/pages/accounting/ExpensesListPage.tsx",
+    "docs/trackers/BANK-SORT-ROLLOUT.md",
+    "package.json",
+    "scripts/verify-accounting-sortable-headers.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "scripts/verify-accounting-sortable-headers.mjs asserts useUrlSort exists + reads/writes ?sort=&dir=, ParityTable exposes the controlled sortKey/sortDirection/onSortChange + sortValue contract, and BillsPage + ExpensesListPage wire every visible data column to sortable:true and pass the controlled props. Wired into .github/workflows/locked-guards.yml (runs on every PR to main). Local proof: `npm run verify:accounting-sortable-headers` -> OK."
+    },
+    {
+      "check": "Frontend-only, additive change (no schema/migration/GL/money-flag touch). `npx tsc -b tsconfig.app.json` clean on apps/frontend; no new ESLint errors on touched files (pre-existing lint debt on BillsPage/ExpensesListPage confirmed unchanged vs origin/main)."
+    }
+  ]
+}
