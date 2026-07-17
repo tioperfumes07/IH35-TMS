@@ -43,7 +43,7 @@ export function UnitFinanceLinkageTab({ unitId, companyId }: UnitFinanceLinkageT
       <section className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 flex items-center justify-between gap-2">
           <h3 className="text-sm font-semibold text-slate-900">Fixed assets &amp; depreciation</h3>
-          <Link to="/accounting/fixed-assets" className="text-xs text-blue-700 hover:underline">
+          <Link to="/accounting/fixed-assets" className="text-xs text-slate-700 hover:underline">
             Open Fixed Assets register →
           </Link>
         </div>
@@ -71,7 +71,7 @@ export function UnitFinanceLinkageTab({ unitId, companyId }: UnitFinanceLinkageT
       <section className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 flex items-center justify-between gap-2">
           <h3 className="text-sm font-semibold text-slate-900">ASC 842 leases</h3>
-          <Link to="/finance/hub" className="text-xs text-blue-700 hover:underline">
+          <Link to="/finance/hub" className="text-xs text-slate-700 hover:underline">
             Open Finance Hub →
           </Link>
         </div>
@@ -101,7 +101,7 @@ export function UnitFinanceLinkageTab({ unitId, companyId }: UnitFinanceLinkageT
       <section className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 flex items-center justify-between gap-2">
           <h3 className="text-sm font-semibold text-slate-900">Equipment loans (CCG / factoring)</h3>
-          <Link to="/factoring/equipment-loans" className="text-xs text-blue-700 hover:underline">
+          <Link to="/factoring/equipment-loans" className="text-xs text-slate-700 hover:underline">
             Open Equipment Loans →
           </Link>
         </div>

@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { getUnitFinanceLinkage } from "./unit-finance-linkage.service.js";
 
 const idParamSchema = z.object({ id: z.string().uuid() });
@@ -26,10 +27,19 @@ export async function registerUnitFinanceLinkageRoutes(app: FastifyInstance) {
     }
 
     const linkage = await withCurrentUser(authUser.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [
-        parsedQuery.data.operating_company_id,
-      ]);
-      return getUnitFinanceLinkage(client, parsedQuery.data.operating_company_id, parsedParams.data.id);
+      // Entity scope (USMCA cross-entity leak fix): validate the caller is actually a member of the
+      // requested operating company BEFORE scoping any read to it. Without this, any authenticated
+      // user could read another entity's fixed-asset cost, ASC 842 lease terms, and equipment-loan
+      // principal/APR by swapping ?operating_company_id=. resolveOperatingCompanyId throws a 403
+      // (OperatingCompanyMembershipError) on a non-member — same gate as units.routes.ts.
+      const scopedCompanyId = await resolveOperatingCompanyId(
+        client,
+        authUser.uuid,
+        parsedQuery.data.operating_company_id
+      );
+      if (!scopedCompanyId) return null;
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
+      return getUnitFinanceLinkage(client, scopedCompanyId, parsedParams.data.id);
     });
 
     if (!linkage) return reply.code(404).send({ error: "mdata_unit_not_found" });
