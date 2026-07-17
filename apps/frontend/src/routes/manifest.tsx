@@ -3674,7 +3674,7 @@ export const ROUTES = React.Children.toArray(
           path="/accounting/bills/maintenance"
           element={
             <ProtectedRoute>
-              <Navigate to="/accounting/bills?category=maintenance" replace />
+              <Navigate to="/accounting/bills?category=maintenance&create=1" replace />
             </ProtectedRoute>
           }
         />
@@ -3682,7 +3682,7 @@ export const ROUTES = React.Children.toArray(
           path="/accounting/bills/repair"
           element={
             <ProtectedRoute>
-              <Navigate to="/accounting/bills?category=repair" replace />
+              <Navigate to="/accounting/bills?category=repair&create=1" replace />
             </ProtectedRoute>
           }
         />
@@ -3690,7 +3690,7 @@ export const ROUTES = React.Children.toArray(
           path="/accounting/bills/fuel"
           element={
             <ProtectedRoute>
-              <Navigate to="/accounting/bills?category=fuel" replace />
+              <Navigate to="/accounting/bills?category=fuel&create=1" replace />
             </ProtectedRoute>
           }
         />
@@ -3698,7 +3698,7 @@ export const ROUTES = React.Children.toArray(
           path="/accounting/bills/driver"
           element={
             <ProtectedRoute>
-              <Navigate to="/accounting/bills?category=driver" replace />
+              <Navigate to="/accounting/bills?category=driver&create=1" replace />
             </ProtectedRoute>
           }
         />

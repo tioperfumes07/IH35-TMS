@@ -613,6 +613,10 @@ jobs:
         run: node scripts/verify-bills-page-bill-id-deeplink.mjs --selftest
       - name: verify:bills-page-bill-id-deeplink
         run: npm run verify:bills-page-bill-id-deeplink
+      - name: verify:bill-subnav-creators --selftest
+        run: node scripts/verify-bill-subnav-creators.mjs --selftest
+      - name: verify:bill-subnav-creators
+        run: npm run verify:bill-subnav-creators
       - name: verify:accounting-sortable-headers
         run: npm run verify:accounting-sortable-headers
       - name: verify:custvend-sortable-headers

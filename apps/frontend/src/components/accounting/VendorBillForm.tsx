@@ -41,6 +41,8 @@ type Props = {
   linkedUnitId?: string;
   /** Human-readable WO id for memo + banner (maintenance linkage). */
   linkedWoDisplayId?: string;
+  /** Pre-select bill type tab (maintenance | repair | fuel | driver | vendor). */
+  initialBillType?: string;
   submitLabel?: string;
   /** Optional test id on the primary submit button (maintenance modal reuse). */
   submitTestId?: string;
@@ -82,14 +84,17 @@ export function VendorBillForm({
   linkedWoId,
   linkedUnitId,
   linkedWoDisplayId,
+  initialBillType,
   submitLabel = "Create bill",
   submitTestId,
   onCancel,
   cancelLabel = "Cancel",
 }: Props) {
+  const resolvedInitialBillType =
+    initialBillType && BILL_TYPE_TABS.some((tab) => tab.id === initialBillType) ? initialBillType : "repair";
   const [lines, setLines] = useState<TwoSectionLine[]>([]);
   const [taxRate, setTaxRate] = useState(8.25);
-  const [billType, setBillType] = useState("repair");
+  const [billType, setBillType] = useState(resolvedInitialBillType);
   const [draftAttachmentEntityId] = useState(() => crypto.randomUUID());
   const [billDate, setBillDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [dueDate, setDueDate] = useState("");
@@ -108,6 +113,11 @@ export function VendorBillForm({
     if (!linkedUnitId) return;
     setUnitId((prev) => prev || linkedUnitId);
   }, [linkedUnitId]);
+
+  useEffect(() => {
+    if (!initialBillType || !BILL_TYPE_TABS.some((tab) => tab.id === initialBillType)) return;
+    setBillType(initialBillType);
+  }, [initialBillType]);
 
   const vendorsQuery = useQuery({
     queryKey: ["vendor-bill-form", "vendors", operatingCompanyId],

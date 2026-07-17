@@ -16,6 +16,8 @@ type Props = {
   linkedWoId?: string;
   /** When present (WO context), the created bill persists a HARD FK to this unit. Falls back to the picker. */
   linkedUnitId?: string;
+  /** Pre-select bill type tab when opened from accounting subnav (maintenance | repair | fuel | driver). */
+  initialBillType?: string;
   onClose: () => void;
   /** Fired after a successful create with the new bill id (e.g. to open a task-link picker). */
   onCreated?: (billId: string | null) => void;
@@ -32,6 +34,7 @@ export function CreateBillModal({
   linkedWoDisplayId,
   linkedWoId,
   linkedUnitId,
+  initialBillType,
   onClose,
   onCreated,
 }: Props) {
@@ -65,6 +68,7 @@ export function CreateBillModal({
         linkedWoId={linkedWoId}
         linkedUnitId={linkedUnitId}
         linkedWoDisplayId={linkedWoDisplayId}
+        initialBillType={initialBillType}
         submitLabel="Create Bill"
         submitTestId="create-bill-submit"
         onCancel={onClose}
