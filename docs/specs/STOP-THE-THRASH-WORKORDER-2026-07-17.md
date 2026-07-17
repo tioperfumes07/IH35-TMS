@@ -71,3 +71,8 @@ Shipped in PR: `fix/guard-wire-via-steps-only` (this work order’s FIX 1).
 - [ ] 59-bug sweep still **HOLD** until Dependabot lands (agreed order).
 
 *Corrected by Cursor 2026-07-17 — keep Claude Agent’s diagnosis; replace naive glob with verify-steps + guard-wired rule change.*
+
+## Permanent enforcement (landed)
+
+- CI: `scripts/verify-no-guard-hotfile-thrash.mjs` via verify-steps — fails any PR that adds `verify:*` to `package.json` or new guard runs to `locked-guards.yml`/`ci.yml`.
+- Drain: `scripts/ops/serialize-drain-open-prs.py` — detox hot files to main, then merge one CLEAN at a time.
