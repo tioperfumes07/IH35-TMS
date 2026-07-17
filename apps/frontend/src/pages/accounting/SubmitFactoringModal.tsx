@@ -6,6 +6,7 @@ import { getFactoringSummary } from "../../api/factoring";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
+import { vendorReferenceOption } from "../../components/parity/referenceOptionLabels";
 import { parseVendorNotes } from "../../lib/vendorProfileMeta";
 import { EntityLink } from "../../components/shared/EntityLink";
 
@@ -119,7 +120,7 @@ export function SubmitFactoringModal({ open, operatingCompanyId, onClose, onCrea
             <ReferenceSelect
               value={vendorId || null}
               onChange={(next) => setVendorId(next ?? "")}
-              options={(vendorsQuery.data ?? []).map((vendor) => ({ value: vendor.id, label: vendor.name }))}
+              options={(vendorsQuery.data ?? []).map(vendorReferenceOption)}
               createKind="vendor"
               operatingCompanyId={operatingCompanyId}
               placeholder="Select vendor…"

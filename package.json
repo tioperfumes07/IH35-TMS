@@ -903,6 +903,7 @@
     "verify:orphan-fk-inventory": "node scripts/verify-orphan-fk-inventory.mjs",
     "verify:alerts-routes-membership": "node scripts/verify-alerts-routes-membership.mjs",
     "verify:referenceselect-coverage-ratchet": "node scripts/verify-referenceselect-coverage-ratchet.mjs",
+    "verify:qbo-parity-name-plus-type-option-labels": "node scripts/verify-qbo-parity-name-plus-type-option-labels.mjs",
     "verify:banking-designview-qbo-parity": "node scripts/verify-banking-designview-qbo-parity.mjs",
     "verify:filter-input-aria-labels": "node scripts/verify-filter-input-aria-labels.mjs",
     "verify:excel-upload-jobs-rls-forced": "node scripts/verify-excel-upload-jobs-rls-forced.mjs",

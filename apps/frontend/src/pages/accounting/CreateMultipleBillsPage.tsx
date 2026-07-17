@@ -10,6 +10,7 @@ import { useToast } from "../../components/Toast";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
+import { coaAccountReferenceOption, vendorReferenceOption } from "../../components/parity/referenceOptionLabels";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
 type SeedDraft = {
@@ -92,7 +93,7 @@ export function CreateMultipleBillsPage() {
   });
 
   const vendorOptions = useMemo(
-    () => (vendorsQuery.data?.vendors ?? []).map((vendor) => ({ value: vendor.id, label: vendor.name })),
+    () => (vendorsQuery.data?.vendors ?? []).map(vendorReferenceOption),
     [vendorsQuery.data?.vendors]
   );
 
@@ -224,11 +225,7 @@ export function CreateMultipleBillsPage() {
                   <ReferenceSelect
                     value={row.coa_account_id || null}
                     onChange={(next) => updateRow(row.id, { coa_account_id: next ?? "" })}
-                    options={(coaQuery.data?.accounts ?? []).map((account) => ({
-                      value: account.id,
-                      label: account.account_name,
-                      type: account.account_number ?? undefined,
-                    }))}
+                    options={(coaQuery.data?.accounts ?? []).map(coaAccountReferenceOption)}
                     createKind="category"
                     operatingCompanyId={companyId}
                     placeholder="Optional"

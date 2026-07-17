@@ -11,6 +11,7 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { ReferenceSelect, type ReferenceOption } from "../../components/parity/ReferenceSelect";
+import { vendorFilterReferenceOptions } from "../../components/parity/referenceOptionLabels";
 import { BulkActionModal, BulkProgressDialog } from "../../components/bulk";
 import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
 import { useToast } from "../../components/Toast";
@@ -200,7 +201,7 @@ export function BillsPage() {
   // BILLS-VENDORFILTER-01: ReferenceSelect options for the filter dropdown — "All vendors" (empty
   // value clears the server-side filter) plus the canonical vendor list ReferenceSelect reads/writes.
   const vendorFilterOptions = useMemo<ReferenceOption[]>(
-    () => [{ value: "", label: "All vendors" }, ...vendorOptions.map((v) => ({ value: v.id, label: v.name }))],
+    () => vendorFilterReferenceOptions(vendorOptions),
     [vendorOptions]
   );
 

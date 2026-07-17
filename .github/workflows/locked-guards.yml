@@ -668,6 +668,11 @@ jobs:
       - name: verify:referenceselect-coverage-ratchet
         run: npm run verify:referenceselect-coverage-ratchet
 
+      - name: verify:qbo-parity-name-plus-type-option-labels --selftest
+        run: node scripts/verify-qbo-parity-name-plus-type-option-labels.mjs --selftest
+      - name: verify:qbo-parity-name-plus-type-option-labels
+        run: npm run verify:qbo-parity-name-plus-type-option-labels
+
       - name: verify:filter-input-aria-labels --selftest
         run: node scripts/verify-filter-input-aria-labels.mjs --selftest
       - name: verify:filter-input-aria-labels

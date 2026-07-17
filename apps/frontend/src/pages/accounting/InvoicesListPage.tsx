@@ -20,6 +20,7 @@ import { InvoiceCreateModal } from "./InvoiceCreateModal";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { ReferenceSelect, type ReferenceOption } from "../../components/parity/ReferenceSelect";
+import { customerFilterReferenceOptions } from "../../components/parity/referenceOptionLabels";
 import { BulkActionModal, BulkProgressDialog } from "../../components/bulk";
 import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
 import { useToast } from "../../components/Toast";
@@ -80,7 +81,7 @@ export function InvoicesListPage() {
   // FIX-06: ReferenceSelect options for the filter dropdown — "All customers" (empty value clears
   // the server-side filter) plus the canonical customer list ReferenceSelect reads/writes.
   const customerFilterOptions = useMemo<ReferenceOption[]>(
-    () => [{ value: "", label: "All customers" }, ...customerOptions.map((c) => ({ value: c.id, label: c.name }))],
+    () => customerFilterReferenceOptions(customerOptions),
     [customerOptions]
   );
   const [createType, setCreateType] = useState<"driver_damage" | "driver_misc" | "vendor_chargeback" | "customer_adjustment" | "manual" | "from_load">("from_load");
