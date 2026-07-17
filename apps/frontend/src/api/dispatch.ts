@@ -1006,6 +1006,13 @@ export function convertOcrIntakeToBookLoad(itemId: string, body: { operating_com
   );
 }
 
+export function reprocessOcrIntakeItem(itemId: string, operatingCompanyId: string) {
+  return apiRequest<OcrIntakeQueueItem>(
+    `/api/v1/dispatch/ocr-intake/items/${itemId}/reprocess?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
+    { method: "POST" }
+  );
+}
+
 export type CustomerNotifyPreferences = {
   customer_id: string;
   opt_in: boolean;

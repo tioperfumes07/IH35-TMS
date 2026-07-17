@@ -52,7 +52,7 @@ function main() {
   if (!page.includes("dispatch-ocr-queue-page")) failures.push("OcrQueuePage must expose test id");
   if (!page.includes("Convert to load")) failures.push("OcrQueuePage must expose convert CTA");
   if (!page.includes("BookLoadModal")) failures.push("OcrQueuePage must open BookLoadModal on convert");
-  if ((pageTest.match(/\bit\(/g) ?? []).length < 4) failures.push("OcrQueuePage tests must cover at least 4 cases");
+  if ((pageTest.match(/\bit\(/g) ?? []).length < 5) failures.push("OcrQueuePage tests must cover at least 5 cases");
   if ((routeTest.match(/\bit\(/g) ?? []).length < 6) failures.push("ocr-intake.routes tests must cover at least 6 cases");
 
   if (!routes.includes("/api/v1/dispatch/ocr-intake/queue")) failures.push("ocr routes must expose queue list");
@@ -64,6 +64,13 @@ function main() {
 
   if (!dispatchApi.includes("getOcrIntakeQueue")) failures.push("dispatch API must export getOcrIntakeQueue");
   if (!dispatchApi.includes("convertOcrIntakeToBookLoad")) failures.push("dispatch API must export convertOcrIntakeToBookLoad");
+  if (!dispatchApi.includes("reprocessOcrIntakeItem")) failures.push("dispatch API must export reprocessOcrIntakeItem");
+  if (!routes.includes("/api/v1/dispatch/ocr-intake/items/:id/reprocess")) {
+    failures.push("ocr routes must expose reprocess endpoint");
+  }
+  if (!page.includes("reprocessOcrIntakeItem")) failures.push("OcrQueuePage must call reprocessOcrIntakeItem");
+  if (!page.includes("Reprocess OCR")) failures.push("OcrQueuePage must expose reprocess CTA");
+  if (!page.includes("ocr-reprocess-")) failures.push("OcrQueuePage must expose reprocess test id");
   if (!manifest.includes('path="/dispatch/ocr-queue"')) failures.push("manifest must route /dispatch/ocr-queue");
 
   const dispatchFlyout = sidebar.split('case "dispatch"')[1]?.split("case ")[0] ?? "";
