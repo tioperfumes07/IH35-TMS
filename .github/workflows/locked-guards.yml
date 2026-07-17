@@ -694,6 +694,11 @@ jobs:
       - name: verify:dead-forms-unmounted
         run: npm run verify:dead-forms-unmounted
 
+      - name: verify:dispatch-list-orphaned --selftest
+        run: node scripts/verify-dispatch-list-orphaned.mjs --selftest
+      - name: verify:dispatch-list-orphaned
+        run: npm run verify:dispatch-list-orphaned
+
       - name: verify:banking-no-orphan-pages --selftest
         run: node scripts/verify-banking-no-orphan-pages.mjs --selftest
       - name: verify:banking-no-orphan-pages
