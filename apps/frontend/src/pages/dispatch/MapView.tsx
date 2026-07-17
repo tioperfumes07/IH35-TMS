@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
+import { MapPin } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { resolveApiUrl } from "../../api/client";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { isDispatchMapProviderConfigured } from "../../lib/dispatch-map-provider";
 
 type MapPosition = {
   load_uuid: string;
@@ -20,12 +22,6 @@ async function fetchPositions(companyId: string) {
   return res.json() as Promise<{ positions?: MapPosition[] }>;
 }
 
-function pinColor(speed: number | null | undefined, stale: boolean): string {
-  if (stale) return "#dc2626";
-  if (speed != null && speed < 2) return "#ca8a04";
-  return "#16a34a";
-}
-
 export function MapView() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -33,6 +29,7 @@ export function MapView() {
   // Honor both canonical load_id and legacy ?load= (LoadLivePositionCell / older queue links).
   const focusLoadId = searchParams.get("load_id") ?? searchParams.get("load");
   const focusDriverId = searchParams.get("driver");
+  const mapConfigured = isDispatchMapProviderConfigured();
 
   const query = useQuery({
     queryKey: ["dispatch", "map-positions", companyId],
@@ -48,40 +45,46 @@ export function MapView() {
     return false;
   });
   const hasFocus = Boolean(focusLoadId || focusDriverId);
-  const ordered = hasFocus ? [...focused, ...positions.filter((p) => !focused.includes(p))] : positions;
 
   return (
     <div className="space-y-3 p-4" data-testid="dispatch-map-view">
-      <h1 className="text-lg font-semibold">Active Load Map (CAP-1)</h1>
+      <h1 className="text-lg font-semibold">Active Load Map</h1>
       {hasFocus ? (
         <p className="text-xs text-slate-600" data-testid="dispatch-map-focus">
           {focused.length > 0
-            ? `Showing ${focused.length} matching position(s) first.`
-            : "No GPS match for this driver/load yet — showing all active loads."}
+            ? `${focused.length} matching position(s) from Samsara — map plotting unavailable until a map provider is configured.`
+            : "No GPS match for this driver/load yet."}
         </p>
       ) : null}
-      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-        {ordered.map((p) => {
-          const isMatch =
-            (focusLoadId != null && p.load_uuid === focusLoadId) ||
-            (focusDriverId != null && p.driver_uuid === focusDriverId);
-          return (
-            <button
-              key={p.load_uuid}
-              type="button"
-              className={`rounded-sm border p-2 text-left text-xs ${isMatch ? "ring-2 ring-slate-700" : ""}`}
-              style={{ borderColor: pinColor(p.speed_mph, p.stale) }}
-              data-focused={isMatch ? "true" : undefined}
-            >
-              <div className="font-semibold">Load {p.load_uuid.slice(0, 8)}</div>
-              <div>
-                {p.lat.toFixed(4)}, {p.lng.toFixed(4)}
-              </div>
-            </button>
-          );
-        })}
-        {positions.length === 0 ? <p className="text-sm text-slate-500">No in-transit loads with GPS.</p> : null}
-      </div>
+      {!mapConfigured ? (
+        <section
+          className="rounded-sm border border-gray-200 bg-white p-6 text-center"
+          data-testid="dispatch-map-not-configured"
+          data-dispatch-map-honest-empty="true"
+        >
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-700">
+            <MapPin className="h-6 w-6" />
+          </div>
+          <h2 className="text-lg font-semibold text-gray-900">Map provider not configured</h2>
+          <p className="mt-1 text-sm text-gray-600">
+            Live GPS from Samsara is available for active loads, but geographic map rendering is not wired yet.
+            Contact the owner or administrator to configure a map provider (Mapbox) before this view can plot
+            vehicle positions.
+          </p>
+          {query.isError ? (
+            <p className="mt-3 text-sm text-red-700">Could not load GPS positions. Try again or check Samsara integration.</p>
+          ) : null}
+          {!query.isError && positions.length > 0 ? (
+            <p className="mt-3 text-sm text-slate-600">
+              {positions.length} active load{positions.length === 1 ? "" : "s"} with GPS — positions are not shown here
+              until map rendering is enabled (no fake map pins).
+            </p>
+          ) : null}
+          {!query.isError && !query.isLoading && positions.length === 0 ? (
+            <p className="mt-3 text-sm text-slate-500">No in-transit loads with GPS right now.</p>
+          ) : null}
+        </section>
+      ) : null}
     </div>
   );
 }
