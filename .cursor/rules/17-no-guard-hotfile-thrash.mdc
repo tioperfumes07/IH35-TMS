@@ -1,0 +1,30 @@
+---
+description: Never register new CI guards via package.json / locked-guards / ci.yml — verify-steps only
+alwaysApply: true
+---
+
+# RULE 17 — NO GUARD HOT-FILE THRASH (2026-07-17)
+
+**Root cause of the serialize treadmill:** every PR edited `package.json` and/or `.github/workflows/locked-guards.yml` / `ci.yml` to wire a new `verify:*` script. Each merge conflicted every other open PR. Hours burned; almost no product progress.
+
+## Law (non-negotiable)
+
+When adding a new guard:
+
+1. Add `scripts/verify-<name>.mjs`
+2. Add `scripts/verify-steps/<NNN>-verify-<name>.mjs` that `export default { name, run(ctx) { … } }` and runs the guard via `ctx.run("node", ["scripts/verify-<name>.mjs"])`
+3. **Do NOT** edit `package.json`, `.github/workflows/locked-guards.yml`, or `.github/workflows/ci.yml`
+
+`verify:pre-commit` auto-discovers verify-steps. `verify-guard-wired` treats CI-via-steps as fully wired; package.json is optional local convenience only.
+
+## CI enforcement
+
+`scripts/verify-no-guard-hotfile-thrash.mjs` (via verify-steps) **fails** any PR that adds a new `verify:*` key to `package.json` or adds new guard `npm run` / `node scripts/verify-*.mjs` lines to locked-guards/ci vs `origin/main`.
+
+## Drain tool
+
+`scripts/ops/serialize-drain-open-prs.py` — detox hot files to main, then merge one real-green PR at a time. Prefer this over fragile shell loops.
+
+## Spec
+
+`docs/specs/STOP-THE-THRASH-WORKORDER-2026-07-17.md`
