@@ -14,6 +14,7 @@ import {
 } from "./bank-account-visibility.js";
 import { countDriverEscrowKpis } from "./driver-escrow-counts.js";
 import { countTotalBankTransactions, countUncategorizedTransactions } from "./pending-categorization.js";
+import { withInternalWalletBalances, type BankAccountBalanceFields } from "./internal-wallet-balance.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -153,15 +154,28 @@ export async function registerBankingRoutes(app: FastifyInstance) {
       // /banking/accounts/all and the cash-flow opening), not the tile view — the tile-derived
       // total_cash returned 0 while accounts/all showed real cash, a reconciliation bug. All three
       // cash surfaces now agree on banking.bank_accounts.current_balance_cents (account_class='depository').
+      // RELAY-WALLET-BALANCE-1: a non-Plaid internal wallet's current_balance_cents is never synced
+      // (see internal-wallet-balance.ts) — derive it from its own ledger here too, same as
+      // /banking/accounts/all, so total_cash never silently drops a real wallet's balance to 0.
       const cashRes = await client
         .query<{ total_cash: string | number | null }>(
           `
-          SELECT COALESCE(SUM(current_balance_cents), 0)::bigint AS total_cash
-          FROM banking.bank_accounts
-          WHERE operating_company_id = $1
-            AND account_class = 'depository'
-            AND is_active = true
-          ${bankAccountHiddenFilterSql(hideOn, "banking.bank_accounts")}
+          SELECT COALESCE(SUM(
+            CASE
+              WHEN ba.plaid_item_id IS NULL THEN COALESCE((
+                SELECT SUM(CASE WHEN bt.is_credit THEN bt.amount_cents ELSE -bt.amount_cents END)
+                FROM banking.bank_transactions bt
+                WHERE bt.bank_account_id = ba.id
+                  AND bt.operating_company_id = ba.operating_company_id
+              ), 0)
+              ELSE ba.current_balance_cents
+            END
+          ), 0)::bigint AS total_cash
+          FROM banking.bank_accounts ba
+          WHERE ba.operating_company_id = $1
+            AND ba.account_class = 'depository'
+            AND ba.is_active = true
+          ${bankAccountHiddenFilterSql(hideOn, "ba")}
           `,
           [companyId]
         )
@@ -246,7 +260,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
       const activeClause = includeInactive ? "" : " AND is_active = true";
       const hideOn = await isBankAccountHideEnabled(client, companyId);
       const hiddenClause = includeHidden ? "" : bankAccountHiddenFilterSql(hideOn, "banking.bank_accounts");
-      const res = await client.query(
+      const res = await client.query<BankAccountBalanceFields>(
         `
           SELECT *
           FROM banking.bank_accounts
@@ -257,7 +271,10 @@ export async function registerBankingRoutes(app: FastifyInstance) {
         `,
         [companyId]
       );
-      return res.rows;
+      // RELAY-WALLET-BALANCE-1: current_balance_cents/available_balance_cents are Plaid-sync-only
+      // columns — a non-Plaid internal wallet (Relay Fuel Wallet) never gets them updated and stays
+      // frozen at its seed value of 0 forever. Derive from the account's own ledger instead.
+      return withInternalWalletBalances(client, companyId, res.rows);
     });
     return { accounts };
   });

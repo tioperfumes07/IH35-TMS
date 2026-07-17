@@ -1162,6 +1162,9 @@ jobs:
       - name: verify:banking-workflow-b-archived
         run: npm run verify:banking-workflow-b-archived
 
+      - name: verify:relay-wallet-balance-honesty
+        run: npm run verify:relay-wallet-balance-honesty
+
       - name: verify:tasks-module
         run: npm run verify:tasks-module
 

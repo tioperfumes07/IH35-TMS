@@ -5,6 +5,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "./bank-account-visibility.js";
+import { deriveInternalWalletBalanceCents } from "./internal-wallet-balance.js";
 
 const paramsSchema = z.object({
   accountId: z.string().uuid(),
@@ -99,7 +100,9 @@ export async function registerAccountBalanceRoutes(app: FastifyInstance) {
       );
 
       let balanceCents = Number(bank.current_balance_cents ?? 0);
-      let source: "plaid" | "manual_jes" | "qbo_mirror" = bank.plaid_item_id ? "plaid" : "qbo_mirror";
+      let source: "plaid" | "manual_jes" | "qbo_mirror" | "internal_ledger" = bank.plaid_item_id
+        ? "plaid"
+        : "qbo_mirror";
 
       if (bank.ledger_account_id) {
         const typeRes = await client.query<{ account_type: string | null }>(
@@ -135,6 +138,15 @@ export async function registerAccountBalanceRoutes(app: FastifyInstance) {
           balanceCents = Number(jeRes.rows[0]?.bal ?? 0);
           source = "manual_jes";
         }
+      }
+
+      // RELAY-WALLET-BALANCE-1: a non-Plaid internal wallet (e.g. Relay Fuel Wallet) with no GL posting
+      // (no JE hits above) has NOTHING keeping current_balance_cents in sync — it is frozen at its seed
+      // value (0) forever. Derive it from the account's own bank_transactions ledger instead, same as
+      // /banking/accounts/all and /banking/plaid/accounts (internal-wallet-balance.ts).
+      if (!bank.plaid_item_id && source === "qbo_mirror") {
+        balanceCents = await deriveInternalWalletBalanceCents(client, query.data.operating_company_id, bank.id);
+        source = "internal_ledger";
       }
 
       await appendCrudAudit(
