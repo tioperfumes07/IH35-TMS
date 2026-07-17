@@ -54,6 +54,9 @@ jobs:
       - name: verify:load-advance-persistence
         run: npm run verify:load-advance-persistence
 
+      - name: verify:driver-pwa-load-status-gate
+        run: npm run verify:driver-pwa-load-status-gate
+
       - name: verify:guard-wired --selftest
         run: node scripts/verify-guard-wired.mjs --selftest
 
