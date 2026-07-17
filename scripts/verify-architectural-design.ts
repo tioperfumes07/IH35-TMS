@@ -74,8 +74,8 @@ const SUB_NAV_SOURCES: SubNavSource[] = [
   },
   {
     module: "fuel",
-    file: "apps/frontend/src/pages/fuel/FuelPlannerHome.tsx",
-    startToken: "const SUBNAV = [",
+    file: "apps/frontend/src/pages/fuel/FUEL_TABS_CONFIG.ts",
+    startToken: "export const FUEL_SUBNAV = [",
     valueField: "label",
   },
   {
