@@ -1065,7 +1065,8 @@
     "verify:xlsx-upload-magic-bytes": "node scripts/verify-xlsx-upload-magic-bytes.mjs",
     "verify:dispatch-cancel-reason-catalog": "node scripts/verify-dispatch-cancel-reason-catalog.mjs",
     "verify:maint-wo-vendor-linkage": "node scripts/verify-maint-wo-vendor-linkage.mjs",
-    "verify:dispatch-mapview-honest": "node scripts/verify-dispatch-mapview-honest.mjs"
+    "verify:dispatch-mapview-honest": "node scripts/verify-dispatch-mapview-honest.mjs",
+    "verify:banking-factoring-virtual-fe-wired": "node scripts/verify-banking-factoring-virtual-fe-wired.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1087.0",

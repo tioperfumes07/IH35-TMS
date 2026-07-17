@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getAllAccounts,
   getBankingKpis,
+  getFactoringVirtual,
   getBankingTiles,
   getBankingUncategorized,
   getPlaidBankAccounts,
@@ -123,6 +124,11 @@ export function BankingHomePage({ initialTab }: Props = {}) {
     queryFn: () => getBankingUncategorized(companyId, { limit: 8 }),
     enabled: Boolean(companyId),
   });
+  const factoringVirtualQuery = useQuery({
+    queryKey: ["banking", "factoring-virtual", companyId],
+    queryFn: () => getFactoringVirtual(companyId),
+    enabled: Boolean(companyId),
+  });
 
   const money = useMemo(
     () => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 }),
@@ -132,11 +138,32 @@ export function BankingHomePage({ initialTab }: Props = {}) {
   const dipBalance = Number(kpiQuery.data?.dip_operating ?? 0) + Number(kpiQuery.data?.dip_payroll ?? 0);
   const uncategorizedCount = Number(kpiQuery.data?.total_uncategorized ?? 0);
   const reconAccounts = Number((reconciliationSessionsQuery.data?.open_sessions ?? []).length);
-  const factoringReserve = Number(kpiQuery.data?.factoring_reserve ?? 0);
+  const factoringVirtualSummary = useMemo(() => {
+    const companies = factoringVirtualQuery.data?.companies ?? [];
+    return companies.reduce(
+      (acc, row) => ({
+        reserve: acc.reserve + Number(row.reserve_balance ?? 0),
+        chargeback: acc.chargeback + Number(row.chargeback_balance ?? 0),
+        lastAdvanceAt: row.last_advance_at && (!acc.lastAdvanceAt || row.last_advance_at > acc.lastAdvanceAt) ? row.last_advance_at : acc.lastAdvanceAt,
+      }),
+      { reserve: 0, chargeback: 0, lastAdvanceAt: null as string | null },
+    );
+  }, [factoringVirtualQuery.data?.companies]);
+  const factoringReserve = factoringVirtualSummary.reserve;
+  const factoringChargebacks = factoringVirtualSummary.chargeback;
   const escrowFeed = Number(kpiQuery.data?.driver_escrow ?? 0);
   const sortedBankTiles = useMemo(
-    () => [...tiles].sort((a, b) => a.display_order - b.display_order),
-    [tiles]
+    () =>
+      [...tiles]
+        .sort((a, b) => a.display_order - b.display_order)
+        .map((tile) => {
+          const isFactoringVirtual =
+            String(tile.tile_kind) === "virtual" &&
+            (tile.tag === "Factoring" || tile.display_name.toLowerCase().includes("factoring"));
+          if (!isFactoringVirtual) return tile;
+          return { ...tile, current_balance: factoringReserve };
+        }),
+    [tiles, factoringReserve],
   );
   // SyncStatusStrip data. FIX-3: "Transactions" must be the REAL bank-transaction total (canonical
   // banking.bank_transactions, entity-scoped) — it previously read qboStats.synced, a count of
@@ -456,10 +483,12 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                 </Link>
                 <div className="flex justify-between"><span>Advances funded MTD</span><span>{money.format(Math.max(cashPosting - factoringReserve, 0))}</span></div>
                 <Link to="/factoring/chargebacks-fees" className="flex justify-between hover:underline">
-                  <span>Chargebacks open</span><span className="text-red-700">{money.format(0)}</span>
+                  <span>Chargebacks open</span><span className="text-red-700">{money.format(factoringChargebacks)}</span>
                 </Link>
                 <div className="flex justify-between"><span>+30 aging fees</span><span className="text-slate-700">{money.format(0)}</span></div>
-                <div className="pt-1 text-xs text-gray-500">Last upload: {selectedTile?.last_txn_date ? String(selectedTile.last_txn_date) : "—"}</div>
+                <div className="pt-1 text-xs text-gray-500">
+                  Last advance: {factoringVirtualSummary.lastAdvanceAt ? String(factoringVirtualSummary.lastAdvanceAt).slice(0, 10) : "—"}
+                </div>
                 {factoringTile ? <div className="text-xs text-slate-700">{factoringTile.display_name}</div> : null}
               </div>
             </div>

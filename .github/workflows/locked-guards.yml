@@ -1134,6 +1134,10 @@ jobs:
         run: node scripts/verify-banking-sync-strip-transaction-count.mjs --selftest
       - name: verify:banking-sync-strip-transaction-count
         run: npm run verify:banking-sync-strip-transaction-count
+      - name: verify:banking-factoring-virtual-fe-wired --selftest
+        run: node scripts/verify-banking-factoring-virtual-fe-wired.mjs --selftest
+      - name: verify:banking-factoring-virtual-fe-wired
+        run: npm run verify:banking-factoring-virtual-fe-wired
       # B-A4 residual — guard existed package.json-only; lock into locked-guards so From/To free-text cannot return without CI fail
       - name: verify:banking-fromto-derived --self-test
         run: node scripts/verify-banking-fromto-derived.mjs --self-test

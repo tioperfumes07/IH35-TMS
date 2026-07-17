@@ -277,6 +277,19 @@ export function getBankingKpis(companyId: string) {
   return apiRequest<Record<string, unknown>>(`/api/v1/banking/dashboard/kpis?${q(companyId)}`);
 }
 
+export type FactoringVirtualCompany = {
+  id: string;
+  display_name: string;
+  reserve_balance: number;
+  chargeback_balance: number;
+  last_advance_at?: string | null;
+};
+
+/** Canonical reserve/chargeback balances from accounting.factoring_companies (0441-mod8). */
+export function getFactoringVirtual(companyId: string) {
+  return apiRequest<{ companies: FactoringVirtualCompany[] }>(`/api/v1/banking/factoring-virtual?${q(companyId)}`);
+}
+
 export type BankMatchCandidateKind = "payment" | "bill_payment" | "transfer" | "je" | "bill" | "expense";
 
 export type BankMatchCandidate = {
