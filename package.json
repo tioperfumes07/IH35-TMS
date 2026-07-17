@@ -430,6 +430,7 @@
     "verify:load-advance-persistence": "node scripts/verify-load-advance-persistence.mjs",
     "verify:maintenance-record-cells-link": "node scripts/verify-maintenance-record-cells-link.mjs",
     "verify:maint-jump-to-tab-removed": "node scripts/verify-maint-jump-to-tab-removed.mjs",
+    "verify:fuel-jump-to-tab-removed": "node scripts/verify-fuel-jump-to-tab-removed.mjs",
     "verify:money-input-format": "node scripts/verify-money-input-format.mjs",
     "verify:guard-wired": "node scripts/verify-guard-wired.mjs",
     "verify:bill-create-posts-gl": "node scripts/verify-bill-create-posts-gl.mjs",
