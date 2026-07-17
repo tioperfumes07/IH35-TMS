@@ -37,6 +37,24 @@ function mapValidationError(error: unknown) {
   }
   const code = String((error as Error)?.message ?? "");
   if (code === "E_LOAD_NOT_FOUND") return { status: 404, payload: { error: code } };
+  if (code.startsWith("E_UNIT_OOS")) {
+    return {
+      status: 422,
+      payload: {
+        error: "E_UNIT_OOS",
+        message: code.includes(":") ? code.slice(code.indexOf(":") + 1) : "Unit is out of service (OOS) and cannot be assigned.",
+      },
+    };
+  }
+  if (code.startsWith("E_UNIT_DISPATCH_BLOCKED")) {
+    return {
+      status: 422,
+      payload: {
+        error: "E_UNIT_DISPATCH_BLOCKED",
+        message: code.includes(":") ? code.slice(code.indexOf(":") + 1) : "Unit is dispatch-blocked.",
+      },
+    };
+  }
   if (code.startsWith("E_VALIDATION_")) return { status: 422, payload: { error: code.split(":")[0], message: code.split(":")[1] ?? code } };
   return null;
 }

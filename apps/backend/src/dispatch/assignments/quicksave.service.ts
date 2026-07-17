@@ -30,20 +30,35 @@ async function fetchLoadForUpdate(client: PoolClient, loadId: string, operatingC
 }
 
 async function assertUnitAvailable(client: PoolClient, unitId: string, operatingCompanyId: string) {
-  const res = await client.query<{ id: string; is_dispatch_blocked: boolean; dispatch_block_reason: string | null }>(
+  const res = await client.query<{
+    id: string;
+    is_dispatch_blocked: boolean;
+    dispatch_block_reason: string | null;
+    is_oos: boolean;
+    display_id: string | null;
+  }>(
     `
-      SELECT id::text, COALESCE(is_dispatch_blocked, false) AS is_dispatch_blocked, dispatch_block_reason
-      FROM views.units_with_dispatch_status
-      WHERE id = $1::uuid
-        AND operating_company_id = $2::uuid
+      SELECT v.id::text,
+             COALESCE(v.is_dispatch_blocked, false) AS is_dispatch_blocked,
+             v.dispatch_block_reason,
+             COALESCE(u.is_oos, false) AS is_oos,
+             COALESCE(u.unit_number, v.display_id, v.id::text) AS display_id
+      FROM views.units_with_dispatch_status v
+      JOIN mdata.units u ON u.id = v.id
+      WHERE v.id = $1::uuid
+        AND v.operating_company_id = $2::uuid
       LIMIT 1
     `,
     [unitId, operatingCompanyId]
   );
   const row = res.rows[0];
   if (!row) throw new Error("E_VALIDATION_UNIT_UNAVAILABLE");
+  // 0441-mod2: OOS is the same severity class as WF-050 dispatch-blocked.
+  if (row.is_oos) {
+    throw new Error(`E_UNIT_OOS:Unit ${row.display_id ?? unitId} is out of service (OOS) and cannot be assigned.`);
+  }
   if (row.is_dispatch_blocked) {
-    throw new Error(`E_VALIDATION_UNIT_UNAVAILABLE:${row.dispatch_block_reason ?? "dispatch blocked"}`);
+    throw new Error(`E_UNIT_DISPATCH_BLOCKED:${row.dispatch_block_reason ?? "dispatch blocked"}`);
   }
   return row.id;
 }

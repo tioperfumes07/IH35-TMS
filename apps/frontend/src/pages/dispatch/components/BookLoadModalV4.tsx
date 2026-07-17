@@ -700,6 +700,14 @@ export function BookLoadModalV4({ open, operatingCompanyId, onClose, onCreated, 
           });
           return;
         }
+        if (code === "E_UNIT_OOS") {
+          setGateBanner({
+            type: "hard_block",
+            message,
+            warnings: (data.wf_044_maintenance_warnings as Array<Record<string, unknown>> | undefined) ?? [],
+          });
+          return;
+        }
         if (code === "E_DRIVER_HOS_VIOLATION") {
           setGateBanner({
             type: "hos_block",

@@ -80,6 +80,28 @@ export async function quickAssignLoad(userId: string, role: string, input: Quick
             message: String(row.dispatch_block_reason ?? "Unit is dispatch-blocked"),
           });
         }
+        // 0441-mod2: hard-block OOS units (same severity class as WF-050 / is_dispatch_blocked).
+        // Queried from mdata.units directly — views.units_with_dispatch_status does not expose is_oos.
+        const oosRes = await client
+          .query<{ is_oos: boolean; display_id: string }>(
+            `
+              SELECT COALESCE(is_oos, false) AS is_oos,
+                     COALESCE(unit_number, id::text) AS display_id
+              FROM mdata.units
+              WHERE id = $1::uuid
+                AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid
+              LIMIT 1
+            `,
+            [input.unit_id, input.operating_company_id]
+          )
+          .catch(() => ({ rows: [] as { is_oos: boolean; display_id: string }[] }));
+        if (oosRes.rows[0]?.is_oos) {
+          warnings.push({
+            code: "UNIT_OOS",
+            severity: "hard_block",
+            message: `Unit ${String(oosRes.rows[0].display_id ?? input.unit_id)} is out of service (OOS) and cannot be assigned.`,
+          });
+        }
       }
 
       const driver = await client
@@ -129,6 +151,10 @@ export async function quickAssignLoad(userId: string, role: string, input: Quick
       const acknowledged = new Set((input.acknowledged_warnings ?? []).map((value) => String(value)));
       const allHardBlocksAcknowledged = hardBlocks.every((warning) => acknowledged.has(warning.code));
       if (hardBlocks.length > 0 && (!isOwner(role) || !allHardBlocksAcknowledged)) {
+        const oosBlock = hardBlocks.find((w) => w.code === "UNIT_OOS" && !acknowledged.has(w.code));
+        if (oosBlock) throw new Error(`E_UNIT_OOS:${oosBlock.message}`);
+        const dvirBlock = hardBlocks.find((w) => w.code === "WF050_UNIT_BLOCK" && !acknowledged.has(w.code));
+        if (dvirBlock) throw new Error(`E_UNIT_DISPATCH_BLOCKED:${dvirBlock.message}`);
         throw new Error("E_HARD_BLOCKS_PRESENT");
       }
 
@@ -244,6 +270,24 @@ export async function completeQuicksaveDraft(
     const patch = input.fields ?? {};
     const unitId = typeof patch.assigned_unit_id === "string" ? patch.assigned_unit_id : null;
     const trailerId = typeof patch.assigned_secondary_driver_id === "string" ? patch.assigned_secondary_driver_id : null;
+    if (unitId) {
+      const oosRes = await client.query<{ is_oos: boolean; display_id: string }>(
+        `
+          SELECT COALESCE(is_oos, false) AS is_oos,
+                 COALESCE(unit_number, id::text) AS display_id
+          FROM mdata.units
+          WHERE id = $1::uuid
+            AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid
+          LIMIT 1
+        `,
+        [unitId, input.operating_company_id]
+      );
+      if (oosRes.rows[0]?.is_oos) {
+        throw new Error(
+          `E_UNIT_OOS:Unit ${oosRes.rows[0].display_id ?? unitId} is out of service (OOS) and cannot be assigned.`
+        );
+      }
+    }
     const pendingFields: string[] = [];
     if (!unitId) pendingFields.push("assigned_unit_id");
     if (!trailerId) pendingFields.push("assigned_secondary_driver_id");

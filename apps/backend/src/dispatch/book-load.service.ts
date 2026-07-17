@@ -573,6 +573,79 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
         );
       }
 
+      // 0441-mod2: hard-block OOS units (same severity class as WF-050 / is_dispatch_blocked).
+      const oosRows = await optionalQuery(
+        client,
+        `
+          SELECT id::text AS id,
+                 COALESCE(unit_number, id::text) AS display_id,
+                 COALESCE(is_oos, false) AS is_oos
+          FROM mdata.units
+          WHERE id = $1::uuid
+            AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid
+          LIMIT 1
+        `,
+        [input.assigned_unit_id, input.operating_company_id]
+      );
+      const oosUnit = oosRows[0] ?? null;
+      if (oosUnit?.is_oos) {
+        if (!input.override_token) {
+          await appendCrudAudit(
+            client,
+            input.requestingUserUuid,
+            "dispatch.book_load_blocked_by_unit_oos",
+            {
+              operating_company_id: input.operating_company_id,
+              unit_id: oosUnit.id,
+              block_code: "E_UNIT_OOS",
+            },
+            "info",
+            "0441-MOD2-DISPATCH-OOS"
+          );
+          return {
+            kind: "error",
+            status: 422,
+            payload: {
+              error: "E_UNIT_OOS",
+              message: `Unit ${String(oosUnit.display_id ?? "")} is out of service (OOS) and cannot be assigned.`,
+              details: { unit_id: oosUnit.id, unit_display_id: oosUnit.display_id },
+              wf_044_maintenance_warnings: wf044Warnings,
+              insurance_coverage_gap_warnings: insuranceCoverageWarnings,
+            },
+          };
+        }
+        if (!canOverrideUnitBlock(input.requestingUserRole)) {
+          return {
+            kind: "error",
+            status: 403,
+            payload: { error: "E_PERMISSION_DENIED", message: "Only Owner can override out-of-service (OOS) units." },
+          };
+        }
+        if (!input.override_reason || input.override_reason.trim().length < 10) {
+          return {
+            kind: "error",
+            status: 400,
+            payload: { error: "E_OVERRIDE_REASON_REQUIRED", message: "Override reason must be at least 10 characters." },
+          };
+        }
+        await appendCrudAudit(
+          client,
+          input.requestingUserUuid,
+          "dispatch.unit_oos_overridden_by_owner",
+          {
+            operating_company_id: input.operating_company_id,
+            unit_id: oosUnit.id,
+            unit_display_id: oosUnit.display_id,
+            override_token: input.override_token,
+            override_reason: input.override_reason,
+            role: input.requestingUserRole,
+            severity_label: "critical",
+          },
+          "warning",
+          "0441-MOD2-DISPATCH-OOS"
+        );
+      }
+
       const coverage = await detectAssetCoverageGap(client, {
         operatingCompanyId: input.operating_company_id,
         assetId: input.assigned_unit_id,
