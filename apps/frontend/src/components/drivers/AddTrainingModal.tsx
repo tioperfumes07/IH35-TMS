@@ -45,6 +45,7 @@ export function AddTrainingModal({ open, driverId, companyId, driverName, onClos
   const [trainingName, setTrainingName] = useState("");
   const [customName, setCustomName] = useState("");
   const [completedAt, setCompletedAt] = useState(companyToday());
+  const [expiryDate, setExpiryDate] = useState("");
   const [notes, setNotes] = useState("");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
@@ -67,6 +68,7 @@ export function AddTrainingModal({ open, driverId, companyId, driverName, onClos
     setTrainingName("");
     setCustomName("");
     setCompletedAt(companyToday());
+    setExpiryDate("");
     setNotes("");
     setError("");
   };
@@ -86,6 +88,7 @@ export function AddTrainingModal({ open, driverId, companyId, driverName, onClos
       await createDriverTrainingRecord(driverId, companyId, {
         training_name: resolvedTrainingName,
         completed_at: new Date(`${completedAt}T12:00:00`).toISOString(),
+        expiry_date: expiryDate || undefined,
         notes: notes.trim() || undefined,
       });
       resetForm();
@@ -145,6 +148,16 @@ export function AddTrainingModal({ open, driverId, companyId, driverName, onClos
             onChange={setCompletedAt}
             className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
             data-testid="add-training-completed"
+          />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-semibold text-gray-600">Expiry date (optional)</label>
+          <DatePicker
+            value={expiryDate}
+            onChange={setExpiryDate}
+            min={completedAt}
+            className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
+            data-testid="add-training-expiry"
           />
         </div>
         <div className="flex flex-col gap-1">

@@ -326,6 +326,7 @@
     "verify:drivers-comm-center": "node scripts/verify-drivers-comm-center.mjs",
     "verify:drivers-audit-history-tab": "node scripts/verify-drivers-audit-history-tab.mjs",
     "verify:drivers-training-crud-on-profile": "node scripts/verify-drivers-training-crud-on-profile.mjs",
+    "verify:driver-training-expiry-field": "node scripts/verify-driver-training-expiry-field.mjs",
     "verify:drivers-onboarding-wizard": "node scripts/verify-drivers-onboarding-wizard.mjs",
     "verify:drivers-document-expiry-alerts": "node scripts/verify-drivers-document-expiry-alerts.mjs",
     "verify:drivers-pwa-live-data": "node scripts/verify-drivers-pwa-live-data.mjs",
