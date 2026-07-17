@@ -85,6 +85,14 @@ export type Driver = {
   visa_expires_at: string | null;
   passport_number: string | null;
   passport_expires_at: string | null;
+  fast_card_number: string | null;
+  fast_card_expiration: string | null;
+  sentri_member: boolean;
+  sentri_expiration: string | null;
+  twic_card_number: string | null;
+  twic_expiration: string | null;
+  mexican_license_number: string | null;
+  mexican_license_expiration: string | null;
   ine_number: string | null;
   curp: string | null;
   mx_address_line1: string | null;
@@ -187,6 +195,14 @@ export type UpdateDriverInput = Partial<
     | "visa_expires_at"
     | "passport_number"
     | "passport_expires_at"
+    | "fast_card_number"
+    | "fast_card_expiration"
+    | "sentri_member"
+    | "sentri_expiration"
+    | "twic_card_number"
+    | "twic_expiration"
+    | "mexican_license_number"
+    | "mexican_license_expiration"
     | "ine_number"
     | "curp"
     | "mx_address_line1"

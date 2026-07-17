@@ -1242,6 +1242,11 @@ jobs:
         run: node scripts/verify-driver-training-expiry-field.mjs --selftest
       - name: verify:driver-training-expiry-field
         run: npm run verify:driver-training-expiry-field
+      # 0441-mod5 — Driver profile border credentials must be editable via PATCH
+      - name: verify:driver-border-credentials-edit --selftest
+        run: node scripts/verify-driver-border-credentials-edit.mjs --selftest
+      - name: verify:driver-border-credentials-edit
+        run: npm run verify:driver-border-credentials-edit
       # 0441-mod2 — OOS units must hard-block dispatch assignment (same class as WF-050)
       - name: verify:dispatch-oos-unit-block --selftest
         run: node scripts/verify-dispatch-oos-unit-block.mjs --selftest

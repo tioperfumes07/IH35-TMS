@@ -346,7 +346,11 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         onCreated={refreshDriver}
       />
       <div data-testid="dp-section-10-border">
-        <BorderCredentialsSection border={aggregate.border_credentials ?? {}} />
+        <BorderCredentialsSection
+          border={aggregate.border_credentials ?? {}}
+          driverId={id}
+          onSaved={refreshDriver}
+        />
       </div>
       <div data-testid="dp-section-w8ben">
         <W8BenSection w8ben={aggregate.w8ben ?? { status: "missing", on_file: false }} onCapture={() => setW8benOpen(true)} />
