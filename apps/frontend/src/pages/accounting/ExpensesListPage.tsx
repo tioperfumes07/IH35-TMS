@@ -188,8 +188,8 @@ export function ExpensesListPage() {
         </button>
       }
     >
-      {/* Create = QBO-like right ParityDrawer (owner chrome). /accounting/expenses deep-link
-          still hosts ExpenseCreatePage as a panel-over-shell route (additive). */}
+      {/* Create = QBO-like right ParityDrawer (owner chrome). /accounting/expenses/new deep-link
+          hosts ExpenseCreatePage as a panel-over-shell route (additive). */}
       <RecordExpenseModal
         open={createOpen}
         operatingCompanyId={companyId}

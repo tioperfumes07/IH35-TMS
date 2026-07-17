@@ -954,6 +954,12 @@ jobs:
       - name: verify:expense-create-modal-catalog
         run: npm run verify:expense-create-modal-catalog
 
+      - name: verify:expenses-list-route --selftest
+        run: node scripts/verify-expenses-list-route.mjs --selftest
+
+      - name: verify:expenses-list-route
+        run: npm run verify:expenses-list-route
+
       - name: verify:settlement-dispute-je-gate --selftest
         run: node scripts/verify-settlement-dispute-je-gate.mjs --selftest
       - name: verify:settlement-dispute-je-gate

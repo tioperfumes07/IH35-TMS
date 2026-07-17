@@ -75,9 +75,10 @@ export const SUBNAV_ITEMS: readonly AccountingSubNavItem[] = [
   { label: "Multiple bills", path: "/accounting/bills/multiple", section: "bills" },
   { label: "Recurring bills", path: "/accounting/bills/recurring", section: "bills" },
 
-  // Expenses ▾ — list first (QBO browse); create route keeps locked label "Expenses".
-  { label: "Expenses List", path: "/accounting/expenses/list", section: "expenses" },
-  { label: "Expenses", path: "/accounting/expenses", section: "expenses" },
+  // Expenses ▾ — list first (QBO browse); create deep-link keeps locked label "Expenses".
+  { label: "Expenses List", path: "/accounting/expenses", section: "expenses" },
+  { label: "Expenses", path: "/accounting/expenses/new", section: "expenses" },
+  { label: "Expenses List (legacy)", path: "/accounting/expenses/list", section: "expenses" },
   { label: "Receipts", path: "/accounting/receipts", section: "expenses" },
 
   // Bill payment ▾
@@ -173,8 +174,8 @@ function childrenOf(section: AccountingSubNavSection) {
 export const ACCOUNTING_CLEAN_TABS = [
   { label: "Home",             to: "/accounting" },
   { label: "Bills",            to: "/accounting/bills" },
-  { label: "Expenses",         to: "/accounting/expenses" },
-  { label: "Expenses List",    to: "/accounting/expenses/list" },
+  { label: "Expenses",         to: "/accounting/expenses/new" },
+  { label: "Expenses List",    to: "/accounting/expenses" },
   { label: "Bill Payment",     to: "/accounting/bill-payments" },
   { label: "Invoices",         to: "/accounting/invoices" },
   { label: "Receive Payment",  to: "/accounting/payments" },
@@ -213,7 +214,7 @@ export const ACCOUNTING_SUB_NAV_ITEMS: readonly NavItem[] = [
   leafOf("/accounting"), // Accounting (Home)
   // Group labels navigate to the primary list (nav-split); chevron opens the dropdown.
   { label: GROUP_LABELS.bills, href: "/accounting/bills", children: childrenOf("bills") },
-  { label: GROUP_LABELS.expenses, href: "/accounting/expenses/list", children: childrenOf("expenses") },
+  { label: GROUP_LABELS.expenses, href: "/accounting/expenses", children: childrenOf("expenses") },
   { label: GROUP_LABELS.billpay, href: "/accounting/bill-payments", children: childrenOf("billpay") },
   {
     label: GROUP_LABELS.maint_shop,
