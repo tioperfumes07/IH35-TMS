@@ -1252,4 +1252,4 @@ jobs:
       - name: verify:driver-suspend-atomic --selftest
         run: node scripts/verify-driver-suspend-atomic.mjs --selftest
       - name: verify:driver-suspend-atomic
-        run: npm run verify:driver-suspend-atomic
+        run: node scripts/verify-driver-suspend-atomic.mjs
