@@ -78,6 +78,8 @@
     "_comment_freshness: GAP-24 usage-example doc — required by verify-freshness-indicator.mjs, intentionally standalone (not routed)",
     "apps/frontend/src/components/dispatch/FreshnessIndicator.usage.example.tsx",
     "_comment_dispatchlist: @archived — superseded by DispatchBoard; enforced by verify-dispatch-list-orphaned.mjs (0243-c1-4)",
-    "apps/frontend/src/components/dispatch/DispatchList.tsx"
+    "apps/frontend/src/components/dispatch/DispatchList.tsx",
+    "_comment_driverhospill: imported only by @archived DispatchList; live DispatchBoard uses DriverHosClockValue instead",
+    "apps/frontend/src/pages/dispatch/DriverHosPill.tsx"
   ]
 }
