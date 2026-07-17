@@ -1,5 +1,9 @@
 name: Migration Rename/Edit Guard
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 # Accepts both filename formats:
 #   - Legacy 4-digit sequence: 0001_name.sql, 0001a_name.sql
 #   - New 12-digit UTC timestamp: 20260607_120000_name.sql

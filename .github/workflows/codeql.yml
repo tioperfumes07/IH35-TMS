@@ -1,5 +1,9 @@
 name: CodeQL Security Scan
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 # GitHub's native SAST (static application security testing). Scans the WHOLE TS/JS codebase for
 # security vulnerabilities (injection, auth flaws, unsafe data flow, secrets-in-code) — retroactively
 # on the existing code AND on every PR. Findings surface in the repo's Security tab.
