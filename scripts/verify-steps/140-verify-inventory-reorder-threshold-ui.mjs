@@ -1,8 +1,9 @@
 export default {
   name: "verify-inventory-reorder-threshold-ui",
-  run: async (ctx) => {
-    if (ctx.run("npm", ["run", "verify:inventory-reorder-threshold-ui"]) !== 0) {
-      process.exit(1);
+  run(ctx) {
+    if (ctx.run("node", ["scripts/verify-inventory-reorder-threshold-ui.mjs"]) !== 0) {
+      return 1;
     }
+    return 0;
   },
 };
