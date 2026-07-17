@@ -89,9 +89,11 @@ export function InventoryPartsStockPage() {
     enabled: Boolean(operatingCompanyId),
     queryFn: async () => {
       // 0441-mod13: route read through listMaintenanceParts (apiRequest) — avoids uncredentialed cross-origin fetch.
+      // api/maintenance.ts's MaintenancePartRow is a structural superset of this file's (adds
+      // vendor_default/reorder_threshold/source/voided_reason) — no cast needed, TS allows it directly.
       const data = await listMaintenanceParts(operatingCompanyId);
       return {
-        parts: mapMaintenancePartsToInventoryRows((data.rows ?? []) as MaintenancePartRow[]),
+        parts: mapMaintenancePartsToInventoryRows(data.rows ?? []),
       };
     },
   });
