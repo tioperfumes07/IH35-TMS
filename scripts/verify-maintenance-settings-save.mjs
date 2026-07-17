@@ -14,7 +14,7 @@ const paths = {
   settingsRoutes: path.join(ROOT, "apps/backend/src/maintenance/settings.routes.ts"),
   settingsRoutesTest: path.join(ROOT, "apps/backend/src/maintenance/__tests__/settings.routes.test.ts"),
   index: path.join(ROOT, "apps/backend/src/index.ts"),
-  migration: path.join(ROOT, "db/migrations/202607580000_maintenance_settings.sql"),
+  migration: path.join(ROOT, "db/migrations/202607581000_maintenance_settings.sql"),
   packageJson: path.join(ROOT, "package.json"),
   lockedGuards: path.join(ROOT, ".github/workflows/locked-guards.yml"),
 };
