@@ -69,17 +69,25 @@ function assertBankingRoutesWired(rawSrc, errors) {
     errors.push("banking.routes.ts: GET /banking/accounts/all no longer calls withInternalWalletBalances(...) — it will return the frozen current_balance_cents column again");
   }
   // total_cash KPI must not silently regress to a bare SUM(current_balance_cents) that drops internal
-  // wallets back to 0 — it must branch on plaid_item_id IS NULL and derive from bank_transactions.
-  // Anchored on `::bigint AS total_cash` (unique to the authoritative depository-cash query; the
-  // tile-derived kpiRes query above it aliases `total_cash` too but never casts to bigint).
-  const anchorIdx = src.indexOf("::bigint AS total_cash");
-  if (anchorIdx === -1) {
-    errors.push("banking.routes.ts: could not locate the authoritative total_cash query (::bigint AS total_cash) to verify it");
-  } else {
-    const cashKpiBlock = src.slice(Math.max(0, anchorIdx - 600), anchorIdx);
-    if (!/plaid_item_id IS NULL/.test(cashKpiBlock) || !/bank_transactions/.test(cashKpiBlock)) {
-      errors.push("banking.routes.ts: total_cash KPI query no longer derives non-Plaid wallet balances from bank_transactions (plaid_item_id IS NULL branch missing) — it will silently show 0 cash for internal wallets again");
-    }
+  // wallets back to 0. Two queries are required: (1) the authoritative Plaid-account depository sum
+  // (kept as a literal `SUM(current_balance_cents)` on `account_class = 'depository'` per
+  // scripts/verify-cash-surfaces-reconcile.mjs, restricted to plaid_item_id IS NOT NULL), and (2) an
+  // internal-wallet ledger derivation (plaid_item_id IS NULL, is_credit-keyed bank_transactions sum) —
+  // then authoritativeTotalCash must ADD both together, never just the first.
+  const hasDepositorySum = /SUM\(current_balance_cents\)[\s\S]*?account_class\s*=\s*'depository'/.test(src);
+  if (!hasDepositorySum) {
+    errors.push("banking.routes.ts: total_cash KPI is missing the authoritative SUM(current_balance_cents) ... account_class = 'depository' query (see verify-cash-surfaces-reconcile.mjs)");
+  }
+  const hasInternalWalletDerivation =
+    /plaid_item_id IS NULL/.test(src) &&
+    /bank_transactions/.test(src) &&
+    /WHEN\s+bt\.is_credit\s+THEN\s+bt\.amount_cents\s+ELSE\s+-bt\.amount_cents/i.test(src);
+  if (!hasInternalWalletDerivation) {
+    errors.push("banking.routes.ts: total_cash KPI no longer derives non-Plaid wallet balances from bank_transactions (plaid_item_id IS NULL branch missing) — it will silently show 0 cash for internal wallets again");
+  }
+  const combinesBothSums = /authoritativeTotalCash\s*=\s*Number\([\s\S]{0,120}\)\s*\+\s*Number\(/.test(src);
+  if (!combinesBothSums) {
+    errors.push("banking.routes.ts: authoritativeTotalCash must ADD the Plaid depository sum + the internal-wallet ledger derivation — a single Number(...) means one population is being silently dropped");
   }
 }
 
@@ -129,12 +137,15 @@ if (process.argv.includes("--selftest")) {
   const goodBankingRoutes = `
     import { withInternalWalletBalances } from "./internal-wallet-balance.js";
     return withInternalWalletBalances(client, companyId, res.rows);
-    const cashRes = await client.query(\`SELECT COALESCE(SUM(CASE WHEN ba.plaid_item_id IS NULL THEN (SELECT SUM(x) FROM banking.bank_transactions bt) ELSE ba.current_balance_cents END), 0)::bigint AS total_cash\`);
+    const cashRes = await client.query(\`SELECT COALESCE(SUM(current_balance_cents), 0)::bigint AS total_cash FROM banking.bank_accounts WHERE account_class = 'depository' AND plaid_item_id IS NOT NULL\`);
+    const internalWalletCashRes = await client.query(\`SELECT COALESCE(SUM(CASE WHEN bt.is_credit THEN bt.amount_cents ELSE -bt.amount_cents END), 0)::bigint AS internal_total FROM banking.bank_transactions bt JOIN banking.bank_accounts ba ON ba.id = bt.bank_account_id WHERE ba.plaid_item_id IS NULL\`);
+    const authoritativeTotalCash = Number(cashRes.rows[0]?.total_cash ?? 0) + Number(internalWalletCashRes.rows[0]?.internal_total ?? 0);
   `;
   const badBankingRoutes = `
     import { withInternalWalletBalances } from "./internal-wallet-balance.js";
     return withInternalWalletBalances(client, companyId, res.rows);
-    const cashRes = await client.query(\`SELECT COALESCE(SUM(current_balance_cents), 0)::bigint AS total_cash FROM banking.bank_accounts\`);
+    const cashRes = await client.query(\`SELECT COALESCE(SUM(current_balance_cents), 0)::bigint AS total_cash FROM banking.bank_accounts WHERE account_class = 'depository'\`);
+    const authoritativeTotalCash = Number(cashRes.rows[0]?.total_cash ?? 0);
   `;
   const goodLinkRoutes = `
     import { deriveInternalWalletBalanceCents, withInternalWalletBalances } from "../../banking/internal-wallet-balance.js";

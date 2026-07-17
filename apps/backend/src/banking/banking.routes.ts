@@ -153,34 +153,46 @@ export async function registerBankingRoutes(app: FastifyInstance) {
       // total_cash must read the AUTHORITATIVE depository balances (same source as
       // /banking/accounts/all and the cash-flow opening), not the tile view — the tile-derived
       // total_cash returned 0 while accounts/all showed real cash, a reconciliation bug. All three
-      // cash surfaces now agree on banking.bank_accounts.current_balance_cents (account_class='depository').
+      // cash surfaces now agree on banking.bank_accounts.current_balance_cents (account_class='depository')
+      // for every Plaid-linked account — see scripts/verify-cash-surfaces-reconcile.mjs.
       // RELAY-WALLET-BALANCE-1: a non-Plaid internal wallet's current_balance_cents is never synced
-      // (see internal-wallet-balance.ts) — derive it from its own ledger here too, same as
-      // /banking/accounts/all, so total_cash never silently drops a real wallet's balance to 0.
+      // (see internal-wallet-balance.ts) and stays frozen at 0 forever. Its contribution is derived
+      // separately from its own ledger (is_credit-keyed, NOT the signed-amount formula the reconcile
+      // guard forbids for the Plaid-mixed population) and added on top of the authoritative sum, so a
+      // real internal wallet balance is never silently dropped to 0 — and Plaid accounts are untouched.
       const cashRes = await client
         .query<{ total_cash: string | number | null }>(
           `
-          SELECT COALESCE(SUM(
-            CASE
-              WHEN ba.plaid_item_id IS NULL THEN COALESCE((
-                SELECT SUM(CASE WHEN bt.is_credit THEN bt.amount_cents ELSE -bt.amount_cents END)
-                FROM banking.bank_transactions bt
-                WHERE bt.bank_account_id = ba.id
-                  AND bt.operating_company_id = ba.operating_company_id
-              ), 0)
-              ELSE ba.current_balance_cents
-            END
-          ), 0)::bigint AS total_cash
-          FROM banking.bank_accounts ba
-          WHERE ba.operating_company_id = $1
-            AND ba.account_class = 'depository'
-            AND ba.is_active = true
-          ${bankAccountHiddenFilterSql(hideOn, "ba")}
+          SELECT COALESCE(SUM(current_balance_cents), 0)::bigint AS total_cash
+          FROM banking.bank_accounts
+          WHERE operating_company_id = $1
+            AND account_class = 'depository'
+            AND is_active = true
+            AND plaid_item_id IS NOT NULL
+          ${bankAccountHiddenFilterSql(hideOn, "banking.bank_accounts")}
           `,
           [companyId]
         )
         .catch(() => ({ rows: [{ total_cash: 0 }] }));
-      const authoritativeTotalCash = Number(cashRes.rows[0]?.total_cash ?? 0);
+      const internalWalletCashRes = await client
+        .query<{ internal_total: string | number | null }>(
+          `
+          SELECT COALESCE(SUM(CASE WHEN bt.is_credit THEN bt.amount_cents ELSE -bt.amount_cents END), 0)::bigint
+            AS internal_total
+          FROM banking.bank_transactions bt
+          JOIN banking.bank_accounts ba ON ba.id = bt.bank_account_id
+          WHERE bt.operating_company_id = $1
+            AND ba.operating_company_id = $1
+            AND ba.account_class = 'depository'
+            AND ba.is_active = true
+            AND ba.plaid_item_id IS NULL
+          ${bankAccountHiddenFilterSql(hideOn, "ba")}
+          `,
+          [companyId]
+        )
+        .catch(() => ({ rows: [{ internal_total: 0 }] }));
+      const authoritativeTotalCash =
+        Number(cashRes.rows[0]?.total_cash ?? 0) + Number(internalWalletCashRes.rows[0]?.internal_total ?? 0);
       // BANKING-1: the UNCATEGORIZED headline must count the SAME population the Transactions
       // "For review" queue lists — entity-scoped status IN ('pending_categorization','uncategorized')
       // across all accounts. The tile view's uncategorized_count counts only 'uncategorized', so it
