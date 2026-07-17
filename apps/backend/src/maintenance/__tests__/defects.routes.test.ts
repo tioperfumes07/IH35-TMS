@@ -155,17 +155,30 @@ describe("maintenance dvir defects routes (B27)", () => {
     );
   });
 
-  it("POST triage convert_to_wo creates work order", async () => {
-    mockQuery.mockImplementation(async (sql: string) => {
-      if (sql.includes("SET LOCAL")) return { rows: [], rowCount: 0 };
+  it("POST triage convert_to_wo creates work order on dvir_defects with valid source_type", async () => {
+    const WO_ID = "55555555-5555-4555-8555-555555555555";
+    const calls: string[] = [];
+    mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
+      calls.push(sql);
+      if (sql.includes("SET LOCAL") || sql.includes("set_config")) return { rows: [], rowCount: 0 };
       if (sql.includes("next_wo_display_id")) {
-        return { rows: [{ display_id: "DV-100", sequence: 100 }], rowCount: 1 };
+        expect(values?.[1]).toBe("IS");
+        return { rows: [{ display_id: "WO-T169-IS-07-17-2026-0100-PEND0", sequence: 100 }], rowCount: 1 };
       }
       if (sql.includes("INSERT INTO maintenance.work_orders")) {
-        return { rows: [{ id: "55555555-5555-4555-8555-555555555555", display_id: "DV-100" }], rowCount: 1 };
+        // VALUES: $1 company, $2 wo_type, $3 source_type=IS, ...
+        expect(values?.[2]).toBe("IS");
+        return { rows: [{ id: WO_ID, display_id: "WO-T169-IS-07-17-2026-0100-PEND0" }], rowCount: 1 };
+      }
+      if (sql.includes("UPDATE safety.dvir_defects")) {
+        expect(sql).toMatch(/SET\s+follow_up_wo_id/i);
+        expect(sql).not.toMatch(/dvir_submissions/i);
+        expect(values?.[0]).toBe(DEFECT_ID);
+        expect(values?.[1]).toBe(WO_ID);
+        return { rows: [], rowCount: 1 };
       }
       if (sql.includes("UPDATE safety.dvir_submissions")) {
-        return { rows: [], rowCount: 1 };
+        throw new Error("convert_to_wo must not UPDATE safety.dvir_submissions");
       }
       return {
         rows: [
@@ -195,13 +208,15 @@ describe("maintenance dvir defects routes (B27)", () => {
     expect(res.statusCode).toBe(200);
     expect(res.json()).toMatchObject({
       triage_status: "converted",
-      work_order_id: "55555555-5555-4555-8555-555555555555",
+      work_order_id: WO_ID,
     });
+    expect(calls.some((s) => /UPDATE\s+safety\.dvir_defects/i.test(s))).toBe(true);
+    expect(calls.some((s) => /UPDATE\s+safety\.dvir_submissions/i.test(s))).toBe(false);
     expect(mockAppendCrudAudit).toHaveBeenCalledWith(
       expect.anything(),
       expect.any(String),
       "maintenance.dvir_defect.converted_to_wo",
-      expect.objectContaining({ work_order_id: "55555555-5555-4555-8555-555555555555" })
+      expect.objectContaining({ work_order_id: WO_ID })
     );
   });
 });
