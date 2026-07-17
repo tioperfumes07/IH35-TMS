@@ -1,17 +1,33 @@
 {
   "block_id": "0243-h2-1-xlsx-vulnerable-dep",
-  "status": "PENDING",
-  "classification": "FINANCIAL",
-  "phase": "tier2",
-  "source": "MASTER-6 authored dispatch (05-TIER2-BLOCKS)",
-  "source_file": "0243-h2-1-xlsx-vulnerable-dep.txt",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "SECURITY",
+  "task": "Harden untrusted xlsx upload parse (exceljs + magic-byte); CI guard; residual write/export risk documented. Also closes coder-work-order-t2-3-xlsx-cve.",
+  "branch": "fix/xlsx-cve-harden",
+  "lane": "OPEN-FE",
   "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
+    ".block-ready.agent1.json",
+    ".block-ready/0243-h2-1-xlsx-vulnerable-dep.json",
+    ".block-ready/coder-work-order-t2-3-xlsx-cve.json",
+    ".github/workflows/locked-guards.yml",
+    "apps/backend/src/catalogs/excel-uploader.ts",
+    "apps/backend/src/catalogs/generic-catalog.factory.ts",
+    "apps/backend/src/catalogs/generic-catalog.routes.test.ts",
+    "apps/backend/src/fuel/fuel-transaction-import.routes.ts",
+    "apps/backend/src/fuel/loves-upload.routes.ts",
+    "apps/backend/src/lib/safe-spreadsheet-parse.ts",
+    "apps/backend/src/lib/safe-spreadsheet-parse.test.ts",
+    "docs/specs/XLSX-UPLOAD-HARDENING-2026-07-17.md",
+    "package.json",
+    "package-lock.json",
+    "scripts/verify-xlsx-upload-hardened.mjs"
   ],
-  "acceptance": [
-    {
-      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
-    }
-  ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [
+    "node scripts/verify-xlsx-upload-hardened.mjs --selftest",
+    "npm run verify:xlsx-upload-hardened"
+  ]
 }

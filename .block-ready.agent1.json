@@ -1,24 +1,34 @@
 {
-  "block_id": "ACCT-INTEGRITY-VERIFY-EXTEND",
-  "branch": "feat/accounting-integrity-verify-extend",
-  "phase": "Accounting",
-  "task": "Accounting integrity: verify-extend 4 items (period lock CI, bank-recon cron, accounting probes, CoA role bindings seed)",
+  "block_id": "0243-h2-1-xlsx-vulnerable-dep",
+  "branch": "fix/xlsx-cve-harden",
+  "phase": "SECURITY",
+  "task": "Harden untrusted xlsx upload parse (exceljs + magic-byte); CI guard; residual write/export risk documented.",
   "agent": "A",
   "is_read_only": false,
-  "workspace_path": "/Users/jorgemunoz/Documents/GitHub/IH35-TMS-acct-verify-extend",
+  "workspace_path": "/Users/jorgemunoz/IH35-TMS/.worktrees/fix-xlsx-cve",
   "allowed_files": [
     ".block-ready.agent1.json",
-    ".block-ready/ACCT-INTEGRITY-VERIFY-EXTEND.json",
-    "apps/backend/src/accounting/__tests__/period-lock-db-trigger.test.ts",
-    "apps/backend/src/cron/bank-recon-auto-match.cron.ts",
-    "apps/backend/src/index.ts",
-    "apps/backend/src/safety/integrity-alert-engine.service.ts",
-    "db/migrations/202606080936_accounting_integrity_probe_rules.sql",
-    "db/migrations/202606080937_coa_role_bindings_seed.sql"
+    ".block-ready/0243-h2-1-xlsx-vulnerable-dep.json",
+    ".block-ready/coder-work-order-t2-3-xlsx-cve.json",
+    ".github/workflows/locked-guards.yml",
+    "apps/backend/src/catalogs/excel-uploader.ts",
+    "apps/backend/src/catalogs/generic-catalog.factory.ts",
+    "apps/backend/src/catalogs/generic-catalog.routes.test.ts",
+    "apps/backend/src/fuel/fuel-transaction-import.routes.ts",
+    "apps/backend/src/fuel/loves-upload.routes.ts",
+    "apps/backend/src/lib/safe-spreadsheet-parse.ts",
+    "apps/backend/src/lib/safe-spreadsheet-parse.test.ts",
+    "docs/specs/XLSX-UPLOAD-HARDENING-2026-07-17.md",
+    "package.json",
+    "package-lock.json",
+    "scripts/verify-xlsx-upload-hardened.mjs"
   ],
   "preview_provided": false,
-  "extra_gates": [],
+  "extra_gates": [
+    "node scripts/verify-xlsx-upload-hardened.mjs --selftest",
+    "npm run verify:xlsx-upload-hardened"
+  ],
   "runtime_path": "src",
   "db_required": false,
-  "guard_required": false
+  "guard_required": true
 }
