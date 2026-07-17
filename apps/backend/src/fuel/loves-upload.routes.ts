@@ -1,8 +1,11 @@
 import crypto from "node:crypto";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
-import * as XLSX from "xlsx";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import {
+  readUntrustedSpreadsheetRows,
+  SpreadsheetUploadRejectedError,
+} from "../lib/untrusted-spreadsheet-read.js";
 import { withCurrentUser } from "../auth/db.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { requireAuth } from "../auth/session-middleware.js";
@@ -43,12 +46,8 @@ async function withCompanyScope<T>(
   });
 }
 
-function normalizeRowsFromWorkbook(data: Buffer): LovesRow[] {
-  const wb = XLSX.read(data, { type: "buffer" });
-  const firstSheetName = wb.SheetNames[0];
-  if (!firstSheetName) return [];
-  const sheet = wb.Sheets[firstSheetName];
-  const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: null });
+async function normalizeRowsFromWorkbook(data: Buffer, filename: string): Promise<LovesRow[]> {
+  const rows = await readUntrustedSpreadsheetRows(data, filename);
   const normalized: LovesRow[] = [];
   for (const row of rows) {
     const station_name = String(row.station_name ?? row.name ?? "").trim();
@@ -103,7 +102,15 @@ export async function registerFuelLovesUploadRoutes(app: FastifyInstance) {
       if (!filePart) return { badRequest: true as const };
       if (!filePart.filename.toLowerCase().endsWith(".xlsx")) return { invalidFile: true as const };
       const workbookBytes = await filePart.toBuffer();
-      const rows = normalizeRowsFromWorkbook(workbookBytes);
+      let rows: LovesRow[];
+      try {
+        rows = await normalizeRowsFromWorkbook(workbookBytes, filePart.filename);
+      } catch (err) {
+        if (err instanceof SpreadsheetUploadRejectedError) {
+          return { invalidFile: true as const };
+        }
+        throw err;
+      }
 
       const counts = { rows_added: 0, rows_updated: 0, rows_skipped: 0 };
       for (const row of rows) {
