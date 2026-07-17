@@ -1,17 +1,26 @@
 {
   "block_id": "s-06-log-event-no-time-field",
-  "status": "PENDING",
-  "classification": "FINANCIAL",
-  "phase": "tier2",
-  "source": "MASTER-6 authored dispatch (05-TIER2-BLOCKS)",
+  "status": "READY",
+  "classification": "FE",
+  "phase": "tier3",
+  "branch": "fix/safety-fe-next",
+  "source": "MASTER-6 authored dispatch (06-TIER3-BLOCKS)",
   "source_file": "s-06-log-event-no-time-field.txt",
   "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
+    "apps/frontend/src/pages/safety/SafetyEventsPage.tsx",
+    "scripts/verify-safety-event-log-occurred-at.mjs",
+    "package.json",
+    ".github/workflows/ci.yml",
+    ".github/workflows/locked-guards.yml",
+    ".block-ready/s-06-log-event-no-time-field.json"
+  ],
+  "extra_gates": [
+    "verify:safety-event-log-occurred-at"
   ],
   "acceptance": [
     {
-      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
+      "check": "Log Safety Event modal exposes Time of occurrence (datetime-local) and POSTs occurred_at ISO to /api/v1/safety/events-log; guard verify:safety-event-log-occurred-at wired in CI + locked-guards."
     }
   ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+  "note": "Backend already accepts optional occurred_at (COALESCE with now()). FE-only wiring for 49 CFR 390.15 after-the-fact logging."
 }
