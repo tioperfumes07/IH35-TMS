@@ -68,10 +68,13 @@ for (const title of ["Awaiting assignment", "Booked", "In shop"]) {
 if (/title:\s*"Out of service"/.test(src)) fail('in-table 3rd section must be "In shop", not "Out of service" (no duplicate label)');
 
 // 4b. TRUCK-CENTRIC partition (Jorge 2026-06-17): Awaiting = active fleet roster minus loaded
-// trucks (unitsWithoutLoad → unitToBoardRow), NOT loads.filter. Booked = active loads.
+// trucks (unitsWithoutLoad → unitToBoardRow), NOT loads.filter. In-shop units are excluded so
+// each truck appears in exactly one section (DISPATCH-IN-SHOP-FEED).
 if (!src.includes("unitToBoardRow")) fail("Awaiting must render trucks via unitToBoardRow (roster-derived)");
-if (!/awaitingRows\s*=\s*unassignedUnits\.map\(unitToBoardRow\)/.test(src)) {
-  fail("Awaiting rows must be unassignedUnits.map(unitToBoardRow) (truck roster minus loaded), not loads.filter");
+if (
+  !/awaitingRows\s*=\s*unassignedUnits[\s\S]{0,120}\.map\(unitToBoardRow\)/.test(src)
+) {
+  fail("Awaiting rows must be derived from unassignedUnits.map(unitToBoardRow) (truck roster minus loaded/in-shop), not loads.filter");
 }
 if (/key:\s*"awaiting"[\s\S]{0,80}loads\.filter\(isUnassignedLoad\)/.test(src)) {
   fail("Awaiting must NOT be derived from loads.filter — it is truck-derived now");

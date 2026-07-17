@@ -398,6 +398,9 @@ jobs:
       - name: verify:dispatch-live-gps-wired
         run: npm run verify:dispatch-live-gps-wired
 
+      - name: verify:dispatch-in-shop-feed-wired
+        run: npm run verify:dispatch-in-shop-feed-wired
+
       - name: verify:currency-format-guarded
         run: npm run verify:currency-format-guarded
 
