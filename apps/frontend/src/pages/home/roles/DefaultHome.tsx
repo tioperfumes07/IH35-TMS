@@ -32,26 +32,8 @@ import { WeeklyRevenueChart } from "../charts/WeeklyRevenueChart";
 import { WOStatusPieChart } from "../charts/WOStatusPieChart";
 import { formatShortDate, formatUsdFromCents, HomeKpiCard } from "../HomeKpiCard";
 import { QuickActionsBar } from "../QuickActionsBar";
-import { DRIVERS_CANONICAL_SUBNAV_COUNT } from "../../../components/drivers/DRIVERS_TABS_CONFIG";
-import { SAFETY_CANONICAL_TAB_COUNT } from "../../../components/safety/SAFETY_TABS_CONFIG";
-import { MAINTENANCE_HOME_QUICK_JUMP_COUNT } from "../../../components/maintenance/MAINTENANCE_NAV_CONFIG";
+import { HOME_QUICK_JUMPS } from "../homeQuickJumps";
 import "../home-print.css";
-
-const QUICK_JUMPS = [
-  {
-    title: "Maintenance",
-    subtitle: "Work orders, R&M, Severe Repair",
-    count: MAINTENANCE_HOME_QUICK_JUMP_COUNT,
-    to: "/maintenance",
-  },
-  { title: "Accounting", subtitle: "Bills, Expenses, Bill payment", count: 38, to: "/accounting/invoices" },
-  { title: "Banking", subtitle: "Categorize, Reconcile, Transfer", count: 22, to: "/banking" },
-  { title: "Fuel", subtitle: "Relay inbox, Settings, Planner", count: 19, to: "/fuel" },
-  { title: "Safety", subtitle: "HOS, Antidoping, Accidents, DOT", count: SAFETY_CANONICAL_TAB_COUNT, to: "/safety" },
-  { title: "Drivers", subtitle: "Profiles, Settlements, Permits", count: DRIVERS_CANONICAL_SUBNAV_COUNT, to: "/drivers" },
-  { title: "Dispatch", subtitle: "Loads, Settlements, Geofencing", count: 27, to: "/dispatch" },
-  { title: "Lists & Catalogs", subtitle: "Eight catalog sets grouped by domain", count: null, to: "/lists" },
-];
 
 type Props = {
   auth: AuthMeResponse["user"];
@@ -393,7 +375,7 @@ export function DefaultHome({ auth }: Props) {
       </section>
 
       <div className="order-6 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-        {QUICK_JUMPS.map((jump) => (
+        {HOME_QUICK_JUMPS.map((jump) => (
           <SectionQuickJump key={jump.title} title={jump.title} subtitle={jump.subtitle} count={jump.count} to={jump.to} />
         ))}
       </div>

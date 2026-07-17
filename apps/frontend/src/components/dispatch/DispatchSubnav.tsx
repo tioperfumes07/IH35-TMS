@@ -60,6 +60,18 @@ const DISPATCH_NAV_ITEMS: readonly NavItem[] = [
   },
 ] as const;
 
+function countDispatchNavDestinations(items: readonly NavItem[]): number {
+  let total = 0;
+  for (const item of items) {
+    if (item.href) total += 1;
+    if (item.children) total += item.children.length;
+  }
+  return total;
+}
+
+/** HOME quick-jump badge — every dispatch queue / planner / document destination. */
+export const DISPATCH_HOME_QUICK_JUMP_COUNT = countDispatchNavDestinations(DISPATCH_NAV_ITEMS);
+
 const BREADCRUMB_LABELS: Record<string, string> = {
   "/dispatch": "Overview",
   "/dispatch?view=overview": "Overview",

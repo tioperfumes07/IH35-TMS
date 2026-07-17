@@ -20,6 +20,7 @@ import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { FUEL_TAB_PATH, fuelTabFromPath } from "../../router/route-manifest";
+import { FUEL_SUBNAV, type FuelTabId } from "./FUEL_TABS_CONFIG";
 import { ActiveTripStrip } from "./components/ActiveTripStrip";
 import { AvoidStatesBanner } from "./components/AvoidStatesBanner";
 import { CompliancePanel } from "./components/CompliancePanel";
@@ -37,18 +38,9 @@ import { FuelHomePage } from "./FuelHome";
 import { FuelTransactionsTable } from "./FuelTransactionsTable";
 import { ExpensiveStatesMultiselect } from "./components/ExpensiveStatesMultiselect";
 
-const SUBNAV = [
-  { id: "home", label: "Home" },
-  { id: "planner", label: "Planner" },
-  { id: "relay_inbox", label: "Relay inbox" },
-  { id: "settings", label: "Settings" },
-  { id: "expense_mapping", label: "Expense mapping" },
-  { id: "history", label: "History & savings" },
-  { id: "loves_prices", label: "Loves prices" },
-  { id: "compliance", label: "Compliance" },
-] as const;
+export type { FuelTabId } from "./FUEL_TABS_CONFIG";
 
-export type FuelTabId = (typeof SUBNAV)[number]["id"];
+const SUBNAV = FUEL_SUBNAV;
 
 type Props = {
   initialTab?: FuelTabId;

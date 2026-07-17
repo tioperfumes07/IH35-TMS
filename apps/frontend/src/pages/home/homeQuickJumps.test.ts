@@ -1,0 +1,30 @@
+import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { HOME_QUICK_JUMPS } from "./homeQuickJumps";
+import { ACCOUNTING_HOME_QUICK_JUMP_COUNT, SUBNAV_ITEMS } from "../accounting/subnav-manifest";
+import { BANKING_HOME_QUICK_JUMP_COUNT } from "../banking/BANKING_NAV_CONFIG";
+import { FUEL_HOME_QUICK_JUMP_COUNT } from "../fuel/FUEL_TABS_CONFIG";
+import { DISPATCH_HOME_QUICK_JUMP_COUNT } from "../../components/dispatch/DispatchSubnav";
+
+describe("HOME_QUICK_JUMPS", () => {
+  it("uses canonical nav counts for Accounting/Banking/Fuel/Dispatch", () => {
+    const byTitle = Object.fromEntries(HOME_QUICK_JUMPS.map((jump) => [jump.title, jump.count]));
+    expect(byTitle.Accounting).toBe(ACCOUNTING_HOME_QUICK_JUMP_COUNT);
+    expect(byTitle.Accounting).toBe(SUBNAV_ITEMS.length);
+    expect(byTitle.Banking).toBe(BANKING_HOME_QUICK_JUMP_COUNT);
+    expect(byTitle.Fuel).toBe(FUEL_HOME_QUICK_JUMP_COUNT);
+    expect(byTitle.Dispatch).toBe(DISPATCH_HOME_QUICK_JUMP_COUNT);
+  });
+
+  it("does not ship stale hardcoded quick-jump literals in home pages", () => {
+    const root = __dirname;
+    for (const rel of ["roles/DefaultHome.tsx", "OwnerHome.tsx"]) {
+      const src = readFileSync(path.join(root, rel), "utf8");
+      expect(src).not.toMatch(/count: 38/);
+      expect(src).not.toMatch(/count: 22/);
+      expect(src).not.toMatch(/count: 19/);
+      expect(src).not.toMatch(/count: 27/);
+    }
+  });
+});
