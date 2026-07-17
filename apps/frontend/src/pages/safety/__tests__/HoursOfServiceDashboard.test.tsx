@@ -65,7 +65,7 @@ describe("HoursOfServicePage", () => {
         {
           id: "vio-1",
           driver_id: "driver-on",
-          violation_code: "11_HOUR",
+          violation_type: "11_HOUR",
           occurred_at: "2026-06-02T12:00:00Z",
         },
       ],

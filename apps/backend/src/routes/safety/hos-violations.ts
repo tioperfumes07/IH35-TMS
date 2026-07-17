@@ -15,14 +15,16 @@ const companyQuerySchema = z.object({
 
 const createHosViolationSchema = z.object({
   driver_id: z.string().uuid(),
-  unit_id: z.string().uuid().optional(),
-  occurred_at: z.string().datetime().optional(),
-  violation_code: z.string().trim().min(1),
-  violation_description: z.string().optional(),
-  duty_status: z.string().optional(),
-  severity: z.enum(["low", "medium", "high", "critical"]).default("medium"),
-  source: z.enum(["manual", "eld_import", "dot_inspection"]).default("manual"),
-  notes: z.string().optional(),
+  // Prod columns (Neon br-fancy-credit): violation_type, occurred_at, duration_minutes, source, notes, created_by.
+  // Do NOT invent unit_id / violation_code / duty_status / severity — those are not on prod.
+  violation_type: z.string().trim().min(1).max(200),
+  occurred_at: z.string().datetime({ offset: true }),
+  duration_minutes: z.number().int().nonnegative().optional().nullable(),
+  source: z.enum(["samsara_auto", "manual_office", "dot_citation"]).default("manual_office"),
+  notes: z.string().trim().max(20_000).optional().nullable(),
+  related_load_id: z.string().uuid().optional().nullable(),
+  related_dot_inspection_id: z.string().uuid().optional().nullable(),
+  csa_points: z.number().int().nonnegative().optional().nullable(),
 });
 
 const idParamsSchema = z.object({
@@ -137,22 +139,35 @@ export async function registerSafetyHosViolationsRoutes(app: FastifyInstance) {
       const res = await client.query(
         `
           INSERT INTO safety.hos_violations (
-            operating_company_id, driver_id, unit_id, occurred_at, violation_code, violation_description, duty_status, severity, source, notes
+            operating_company_id,
+            driver_id,
+            violation_type,
+            occurred_at,
+            duration_minutes,
+            source,
+            related_load_id,
+            related_dot_inspection_id,
+            notes,
+            csa_points,
+            created_by
           )
-          VALUES ($1,$2,$3,COALESCE($4::timestamptz, now()),$5,$6,$7,$8,$9,$10)
+          VALUES (
+            $1,$2,$3,$4::timestamptz,$5,$6,$7,$8,$9,COALESCE($10, 0),$11
+          )
           RETURNING *
         `,
         [
           query.data.operating_company_id,
           body.data.driver_id,
-          body.data.unit_id ?? null,
-          body.data.occurred_at ?? null,
-          body.data.violation_code,
-          body.data.violation_description ?? null,
-          body.data.duty_status ?? null,
-          body.data.severity,
+          body.data.violation_type,
+          body.data.occurred_at,
+          body.data.duration_minutes ?? null,
           body.data.source,
+          body.data.related_load_id ?? null,
+          body.data.related_dot_inspection_id ?? null,
           body.data.notes ?? null,
+          body.data.csa_points ?? null,
+          user.uuid,
         ]
       );
       const row = res.rows[0];
@@ -160,8 +175,12 @@ export async function registerSafetyHosViolationsRoutes(app: FastifyInstance) {
         client,
         user.uuid,
         "safety.hos_violation.created",
-        { hos_violation_id: row.id, severity: row.severity, source: row.source },
-        row.severity === "critical" ? "warning" : "info",
+        {
+          hos_violation_id: row.id,
+          violation_type: row.violation_type,
+          source: row.source,
+        },
+        "info",
         "P3-T11.17.2-SAFETY-V6.4"
       );
       return row;

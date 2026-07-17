@@ -4,7 +4,8 @@ import { createHosViolation } from "../../../api/safetyV64";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
-import { companyNow } from "../../../lib/businessDate";
+
+type Source = "samsara_auto" | "manual_office" | "dot_citation";
 
 type Props = {
   open: boolean;
@@ -13,15 +14,31 @@ type Props = {
   onCreated: () => void;
 };
 
+function defaultOccurredAtIso(): string {
+  return new Date().toISOString();
+}
+
+/** datetime-local value (local wall clock) ↔ ISO with offset for z.string().datetime({ offset: true }). */
+function toDatetimeLocalValue(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function fromDatetimeLocalValue(local: string): string {
+  const d = new Date(local);
+  if (Number.isNaN(d.getTime())) return defaultOccurredAtIso();
+  return d.toISOString();
+}
+
 export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onCreated }: Props) {
   const [form, setForm] = useState({
     driver_id: "",
-    violation_code: "",
-    violation_description: "",
-    occurred_at: companyNow(),
-    source: "manual" as "manual" | "eld_import" | "dot_inspection",
-    duty_status: "",
-    severity: "medium" as "low" | "medium" | "high" | "critical",
+    violation_type: "",
+    occurred_at: defaultOccurredAtIso(),
+    duration_minutes: "",
+    source: "manual_office" as Source,
     notes: "",
   });
 
@@ -29,30 +46,32 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
     mutationFn: () =>
       createHosViolation(operatingCompanyId, {
         driver_id: form.driver_id.trim(),
-        violation_code: form.violation_code.trim(),
-        violation_description: form.violation_description.trim() || undefined,
-        occurred_at: form.occurred_at,
+        violation_type: form.violation_type.trim(),
+        occurred_at: form.occurred_at.includes("T")
+          ? new Date(form.occurred_at).toISOString()
+          : form.occurred_at,
+        duration_minutes: form.duration_minutes.trim()
+          ? Number(form.duration_minutes)
+          : null,
         source: form.source,
-        duty_status: form.duty_status.trim() || undefined,
-        severity: form.severity,
-        notes: form.notes.trim() || undefined,
+        notes: form.notes.trim() || null,
       }),
     onSuccess: () => {
-      setForm((prev) => ({
-        ...prev,
+      setForm({
         driver_id: "",
-        violation_code: "",
-        violation_description: "",
+        violation_type: "",
+        occurred_at: defaultOccurredAtIso(),
+        duration_minutes: "",
+        source: "manual_office",
         notes: "",
-        duty_status: "",
-        occurred_at: companyNow(),
-      }));
+      });
       onCreated();
       onClose();
     },
   });
 
-  const canSubmit = Boolean(form.driver_id.trim() && form.violation_code.trim()) && !mutation.isPending;
+  const canSubmit =
+    Boolean(form.driver_id.trim() && form.violation_type.trim() && form.occurred_at) && !mutation.isPending;
 
   return (
     <Modal open={open} onClose={onClose} title="Create HOS Violation">
@@ -80,39 +99,29 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-gray-600" htmlFor="hos-vio-code">
+            <label className="text-xs font-semibold text-gray-600" htmlFor="hos-vio-type">
               Violation type <span className="text-red-600">*</span>
             </label>
             <input
-              id="hos-vio-code"
+              id="hos-vio-type"
               className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
               placeholder="e.g. 11_HOUR"
-              value={form.violation_code}
-              onChange={(e) => setForm((v) => ({ ...v, violation_code: e.target.value }))}
+              value={form.violation_type}
+              onChange={(e) => setForm((v) => ({ ...v, violation_type: e.target.value }))}
               required
-            />
-          </div>
-          <div className="flex flex-col gap-1 md:col-span-2">
-            <label className="text-xs font-semibold text-gray-600" htmlFor="hos-vio-desc">
-              Description
-            </label>
-            <input
-              id="hos-vio-desc"
-              className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
-              value={form.violation_description}
-              onChange={(e) => setForm((v) => ({ ...v, violation_description: e.target.value }))}
             />
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600" htmlFor="hos-vio-occurred">
-              Occurred at
+              Occurred at <span className="text-red-600">*</span>
             </label>
             <input
               id="hos-vio-occurred"
               type="datetime-local"
               className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
-              value={form.occurred_at.slice(0, 16)}
-              onChange={(e) => setForm((v) => ({ ...v, occurred_at: new Date(e.target.value).toISOString() }))}
+              value={toDatetimeLocalValue(form.occurred_at)}
+              onChange={(e) => setForm((v) => ({ ...v, occurred_at: fromDatetimeLocalValue(e.target.value) }))}
+              required
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -123,39 +132,25 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
               id="hos-vio-source"
               className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
               value={form.source}
-              onChange={(e) => setForm((v) => ({ ...v, source: e.target.value as typeof form.source }))}
+              onChange={(e) => setForm((v) => ({ ...v, source: e.target.value as Source }))}
             >
-              <option value="manual">manual_office</option>
-              <option value="eld_import">samsara_auto</option>
-              <option value="dot_inspection">dot_citation</option>
+              <option value="manual_office">manual_office</option>
+              <option value="samsara_auto">samsara_auto</option>
+              <option value="dot_citation">dot_citation</option>
             </SelectCombobox>
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-gray-600" htmlFor="hos-vio-duty">
-              Duration / duty status
+            <label className="text-xs font-semibold text-gray-600" htmlFor="hos-vio-duration">
+              Duration (minutes)
             </label>
             <input
-              id="hos-vio-duty"
+              id="hos-vio-duration"
+              type="number"
+              min={0}
               className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
-              value={form.duty_status}
-              onChange={(e) => setForm((v) => ({ ...v, duty_status: e.target.value }))}
+              value={form.duration_minutes}
+              onChange={(e) => setForm((v) => ({ ...v, duration_minutes: e.target.value }))}
             />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-gray-600" htmlFor="hos-vio-severity">
-              Severity
-            </label>
-            <SelectCombobox
-              id="hos-vio-severity"
-              className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
-              value={form.severity}
-              onChange={(e) => setForm((v) => ({ ...v, severity: e.target.value as typeof form.severity }))}
-            >
-              <option value="low">low</option>
-              <option value="medium">medium</option>
-              <option value="high">high</option>
-              <option value="critical">critical</option>
-            </SelectCombobox>
           </div>
           <div className="flex flex-col gap-1 md:col-span-2">
             <label className="text-xs font-semibold text-gray-600" htmlFor="hos-vio-notes">

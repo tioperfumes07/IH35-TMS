@@ -4,11 +4,22 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { createHosViolation, listHosViolations, voidHosViolation } from "../../../api/safetyV64";
 import { VoidReasonModal } from "../../../components/accounting/VoidReasonModal";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
-import { companyNow } from "../../../lib/businessDate";
 import { useListState } from "../../../components/list-state";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 type HosViolationRow = Record<string, unknown>;
+type Source = "samsara_auto" | "manual_office" | "dot_citation";
+
+function defaultOccurredAtIso(): string {
+  return new Date().toISOString();
+}
+
+function toDatetimeLocalValue(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 export function HOSViolationsTab() {
   const { selectedCompanyId } = useCompanyContext();
@@ -17,12 +28,10 @@ export function HOSViolationsTab() {
   const [voidTarget, setVoidTarget] = useState<HosViolationRow | null>(null);
   const [form, setForm] = useState({
     driver_id: "",
-    violation_code: "",
-    violation_description: "",
-    occurred_at: companyNow(),
-    source: "manual" as "manual" | "eld_import" | "dot_inspection",
-    duty_status: "",
-    severity: "medium" as "low" | "medium" | "high" | "critical",
+    violation_type: "",
+    occurred_at: defaultOccurredAtIso(),
+    duration_minutes: "",
+    source: "manual_office" as Source,
     notes: "",
   });
 
@@ -35,17 +44,22 @@ export function HOSViolationsTab() {
   const createMutation = useMutation({
     mutationFn: () =>
       createHosViolation(companyId, {
-        driver_id: form.driver_id,
-        violation_code: form.violation_code,
-        violation_description: form.violation_description || undefined,
-        occurred_at: form.occurred_at,
+        driver_id: form.driver_id.trim(),
+        violation_type: form.violation_type.trim(),
+        occurred_at: new Date(form.occurred_at).toISOString(),
+        duration_minutes: form.duration_minutes.trim() ? Number(form.duration_minutes) : null,
         source: form.source,
-        duty_status: form.duty_status || undefined,
-        severity: form.severity,
-        notes: form.notes || undefined,
+        notes: form.notes.trim() || null,
       }),
     onSuccess: async () => {
-      setForm((prev) => ({ ...prev, violation_code: "", violation_description: "", notes: "" }));
+      setForm({
+        driver_id: "",
+        violation_type: "",
+        occurred_at: defaultOccurredAtIso(),
+        duration_minutes: "",
+        source: "manual_office",
+        notes: "",
+      });
       await queryClient.invalidateQueries({ queryKey: ["safety-v64", "hos-violations", companyId] });
     },
   });
@@ -65,10 +79,10 @@ export function HOSViolationsTab() {
     () => [
       { key: "driver_id", label: "Driver", sortable: true, render: (row) => String(row.driver_id ?? "—") },
       {
-        key: "violation_code",
+        key: "violation_type",
         label: "Violation Type",
         sortable: true,
-        render: (row) => String(row.violation_code ?? row.violation_type ?? "—"),
+        render: (row) => String(row.violation_type ?? "—"),
       },
       {
         key: "occurred_at",
@@ -78,9 +92,9 @@ export function HOSViolationsTab() {
       },
       { key: "source", label: "Source", sortable: true, render: (row) => String(row.source ?? "—") },
       {
-        key: "duty_status",
-        label: "Duration",
-        render: (row) => String(row.duty_status ?? row.duration_minutes ?? "—"),
+        key: "duration_minutes",
+        label: "Duration (min)",
+        render: (row) => String(row.duration_minutes ?? "—"),
       },
       { key: "csa_points", label: "CSA Pts", sortable: true, render: (row) => String(row.csa_points ?? "0") },
       {
@@ -103,32 +117,62 @@ export function HOSViolationsTab() {
 
   return (
     <div className="space-y-3">
-      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-8">
-        <input className="rounded-sm border border-gray-300 px-2 py-1 text-xs" placeholder="driver_id" value={form.driver_id} onChange={(e) => setForm((v) => ({ ...v, driver_id: e.target.value }))} />
-        <input className="rounded-sm border border-gray-300 px-2 py-1 text-xs" placeholder="Violation type" value={form.violation_code} onChange={(e) => setForm((v) => ({ ...v, violation_code: e.target.value }))} />
-        <input className="rounded-sm border border-gray-300 px-2 py-1 text-xs" placeholder="Description" value={form.violation_description} onChange={(e) => setForm((v) => ({ ...v, violation_description: e.target.value }))} />
-        <input className="rounded-sm border border-gray-300 px-2 py-1 text-xs" type="datetime-local" value={form.occurred_at.slice(0, 16)} onChange={(e) => setForm((v) => ({ ...v, occurred_at: new Date(e.target.value).toISOString() }))} />
-        <SelectCombobox className="rounded-sm border border-gray-300 px-2 py-1 text-xs" value={form.source} onChange={(e) => setForm((v) => ({ ...v, source: e.target.value as typeof form.source }))}>
-          <option value="manual">manual_office</option>
-          <option value="eld_import">samsara_auto</option>
-          <option value="dot_inspection">dot_citation</option>
+      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-7">
+        <input
+          className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+          placeholder="driver_id"
+          value={form.driver_id}
+          onChange={(e) => setForm((v) => ({ ...v, driver_id: e.target.value }))}
+        />
+        <input
+          className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+          placeholder="Violation type"
+          value={form.violation_type}
+          onChange={(e) => setForm((v) => ({ ...v, violation_type: e.target.value }))}
+        />
+        <input
+          className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+          type="datetime-local"
+          value={toDatetimeLocalValue(form.occurred_at)}
+          onChange={(e) => setForm((v) => ({ ...v, occurred_at: new Date(e.target.value).toISOString() }))}
+        />
+        <SelectCombobox
+          className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+          value={form.source}
+          onChange={(e) => setForm((v) => ({ ...v, source: e.target.value as Source }))}
+        >
+          <option value="manual_office">manual_office</option>
+          <option value="samsara_auto">samsara_auto</option>
+          <option value="dot_citation">dot_citation</option>
         </SelectCombobox>
-        <input className="rounded-sm border border-gray-300 px-2 py-1 text-xs" placeholder="Duration/status" value={form.duty_status} onChange={(e) => setForm((v) => ({ ...v, duty_status: e.target.value }))} />
-        <SelectCombobox className="rounded-sm border border-gray-300 px-2 py-1 text-xs" value={form.severity} onChange={(e) => setForm((v) => ({ ...v, severity: e.target.value as typeof form.severity }))}>
-          <option value="low">low</option>
-          <option value="medium">medium</option>
-          <option value="high">high</option>
-          <option value="critical">critical</option>
-        </SelectCombobox>
+        <input
+          className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+          type="number"
+          min={0}
+          placeholder="Duration min"
+          value={form.duration_minutes}
+          onChange={(e) => setForm((v) => ({ ...v, duration_minutes: e.target.value }))}
+        />
+        <input
+          className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+          placeholder="Notes"
+          value={form.notes}
+          onChange={(e) => setForm((v) => ({ ...v, notes: e.target.value }))}
+        />
         <button
           type="button"
           className="rounded-sm bg-[#1f2a44] px-2 py-1 text-xs font-semibold text-white disabled:opacity-60"
-          disabled={!form.driver_id || !form.violation_code || createMutation.isPending}
+          disabled={!form.driver_id || !form.violation_type || createMutation.isPending}
           onClick={() => createMutation.mutate()}
         >
           + Create
         </button>
       </div>
+      {createMutation.isError ? (
+        <div className="rounded-sm border border-red-300 bg-red-50 px-2 py-1.5 text-xs text-red-900" role="alert">
+          {createMutation.error instanceof Error ? createMutation.error.message : "Create failed."}
+        </div>
+      ) : null}
 
       <ParityTable<HosViolationRow>
         columns={columns}
@@ -145,7 +189,7 @@ export function HOSViolationsTab() {
         title="Void HOS Violation"
         entityRef={
           voidTarget
-            ? `${String(voidTarget.violation_code ?? "Violation")} · driver ${String(voidTarget.driver_id ?? "—")}`
+            ? `${String(voidTarget.violation_type ?? "Violation")} · driver ${String(voidTarget.driver_id ?? "—")}`
             : undefined
         }
         minLength={3}

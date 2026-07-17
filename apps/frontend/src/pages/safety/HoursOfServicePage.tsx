@@ -233,7 +233,7 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
               <ul className="space-y-2 text-xs">
                 {violations.slice(0, 12).map((row) => (
                   <li key={String(row.id)} className="rounded-sm border border-gray-100 bg-gray-50 px-2 py-1">
-                    <div className="font-semibold">{String(row.violation_code ?? "Violation")}</div>
+                    <div className="font-semibold">{String(row.violation_type ?? "Violation")}</div>
                     <div className="text-slate-600">
                       Driver {String(row.driver_id ?? "—")} · {String(row.occurred_at ?? "—")}
                     </div>

@@ -88,6 +88,35 @@ export function assertGuard(sources) {
     errors.push(`${FILES.createModal}: submit label must be "+ Create" (repo primary-button law)`);
   }
 
+  // Create INSERT must match prod safety.hos_violations (Neon br-fancy-credit) — no phantom columns.
+  const insertBlock = backend.match(/INSERT INTO safety\.hos_violations\s*\(([\s\S]*?)\)\s*VALUES/i)?.[1] ?? "";
+  if (!insertBlock) {
+    errors.push(`${FILES.backend}: POST create must INSERT INTO safety.hos_violations`);
+  } else {
+    for (const col of ["violation_type", "occurred_at", "source", "created_by", "operating_company_id", "driver_id"]) {
+      if (!new RegExp(`\\b${col}\\b`).test(insertBlock)) {
+        errors.push(`${FILES.backend}: INSERT must include prod column ${col}`);
+      }
+    }
+    for (const phantom of ["unit_id", "violation_code", "violation_description", "duty_status", "severity"]) {
+      if (new RegExp(`\\b${phantom}\\b`).test(insertBlock)) {
+        errors.push(`${FILES.backend}: INSERT must not use phantom column ${phantom} (not on prod)`);
+      }
+    }
+  }
+  if (!/z\.enum\(\[\s*"samsara_auto"\s*,\s*"manual_office"\s*,\s*"dot_citation"\s*\]\)/.test(backend)) {
+    errors.push(`${FILES.backend}: create source enum must match prod CHECK (samsara_auto|manual_office|dot_citation)`);
+  }
+  if (!/violation_type:\s*form\.violation_type/.test(createModal) && !/violation_type:\s*form\.violation_type\.trim\(\)/.test(createModal)) {
+    errors.push(`${FILES.createModal}: must POST violation_type (prod column), not violation_code`);
+  }
+  if (/source:\s*"manual"\s*as/.test(createModal) || /value="manual"(?!_)/.test(createModal)) {
+    errors.push(`${FILES.createModal}: source values must be prod CHECK enums, not manual/eld_import`);
+  }
+  if (!/toISOString\(\)/.test(createModal)) {
+    errors.push(`${FILES.createModal}: occurred_at must be sent as ISO datetime with offset (toISOString)`);
+  }
+
   return errors;
 }
 
@@ -119,10 +148,19 @@ function selftest() {
       <HosViolationCreateModal open={createOpen} />
     `,
     createModal: `
-      createHosViolation(operatingCompanyId, { driver_id: form.driver_id });
+      createHosViolation(operatingCompanyId, { driver_id: form.driver_id, violation_type: form.violation_type.trim(), occurred_at: new Date().toISOString(), source: "manual_office" });
       <Button type="submit">+ Create</Button>
+      <option value="manual_office">manual_office</option>
     `,
   };
+  // Inject a minimal valid INSERT into good.backend for create-schema checks
+  good.backend += `
+      INSERT INTO safety.hos_violations (
+            operating_company_id, driver_id, violation_type, occurred_at, source, created_by
+          )
+          VALUES ($1,$2,$3,$4::timestamptz,$5,$6)
+      source: z.enum(["samsara_auto", "manual_office", "dot_citation"]).default("manual_office"),
+    `;
   const pass = assertGuard(good);
   if (pass.length) {
     console.error(`[${LABEL}] --selftest FAIL: good fixture produced errors`, pass);
