@@ -84,6 +84,9 @@ function todayIsoDate(): string {
 }
 
 export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
+  // CodeQL: authorized mutation routes must be rate-limited (match peer mdata handlers).
+  const RL_SUSPEND = { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } };
+
   app.get("/api/v1/catalogs/driver-termination-reasons", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
@@ -292,7 +295,7 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
     return { reason: updated };
   });
 
-  app.post("/api/v1/mdata/drivers/:driver_id/suspend", async (req, reply) => {
+  app.post("/api/v1/mdata/drivers/:driver_id/suspend", RL_SUSPEND, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isOwner(authUser.role)) return reply.code(403).send({ error: "forbidden" });
