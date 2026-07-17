@@ -58,6 +58,7 @@ LEFT JOIN maintenance.maintenance_settings s ON s.operating_company_id = c.id
 WHERE s.id IS NULL;
 
 ALTER TABLE maintenance.maintenance_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE maintenance.maintenance_settings FORCE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS maintenance_settings_company_scope ON maintenance.maintenance_settings;
 CREATE POLICY maintenance_settings_company_scope
