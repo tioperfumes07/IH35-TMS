@@ -131,7 +131,7 @@ export function MatchDrawer({ open, bankTransactionId, operatingCompanyId, onClo
             value={draftQ}
             onChange={(e) => setDraftQ(e.target.value)}
             placeholder="Search payee, memo, ref…"
-            className="h-8 min-w-[160px] flex-1 rounded-sm border border-slate-300 px-2 text-xs"
+            className="min-h-11 min-w-[160px] flex-1 rounded-sm border border-slate-300 px-2 text-xs"
             data-testid="match-search-query"
             onKeyDown={(e) => {
               if (e.key === "Enter") {

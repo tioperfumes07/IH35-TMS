@@ -24,12 +24,12 @@ export function PrintOrientationDialog({ open, title = "Print", onCancel, onConf
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/30 p-4" data-testid="print-orientation-dialog">
+    <div className="fixed inset-0 z-[80] flex items-center justify-center overflow-y-auto bg-black/30 p-4" data-testid="print-orientation-dialog">
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="w-full max-w-sm rounded-sm border border-gray-200 bg-white p-4 shadow-lg"
+        className="max-h-[90vh] w-full max-w-sm overflow-y-auto rounded-sm border border-gray-200 bg-white p-4 shadow-lg"
       >
         <h2 id={titleId} className="text-sm font-semibold text-gray-900">
           {title}
