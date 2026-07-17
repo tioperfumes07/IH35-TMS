@@ -7,6 +7,7 @@ import { TableControls, TableSearch, TableHeaderCell, useTableController, type T
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getApAgingByVendor, type ApAgingVendor, type ApAgingDisplayGroup } from "../../api/accounting";
 import { formatDateUS } from "../../lib/formatDate";
+import { useUrlSort } from "../../hooks/useUrlSort";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 
 function money(cents: number) {
@@ -99,6 +100,11 @@ export function AccountsPayableAgingPage() {
   }, [typeFiltered, search]);
   const totals = useMemo(() => filtered.reduce(addBuckets, emptyBuckets()), [filtered]);
 
+  // BANK-SORT-ROLLOUT-ACCT-AP2 — ?sort=/?dir= URL persistence via the shared useUrlSort hook
+  // (same contract as FleetTable / dispatch board). Hand-rolled <table> + TableHeaderCell stack;
+  // seeds useTableController from the URL and mirrors every header click back into it.
+  const urlSort = useUrlSort();
+
   // By Vendor — shared QBO-grade table (sort / resize / gear). Search is the page-level `search` state.
   const table = useTableController<ApAgingVendor>({
     rows: filtered,
@@ -106,6 +112,9 @@ export function AccountsPayableAgingPage() {
     tableKey: "ap-aging-by-vendor",
     searchText: (v) => v.vendor_name, // controller search stays inert; page-level `search` drives filtering
     sortValue: (v, key) => (key === "vendor" ? v.vendor_name : key === "type" ? v.display_group : amount(v, key)),
+    initialSortKey: urlSort.sortKey || null,
+    initialSortDir: urlSort.sortDirection,
+    onSortChange: (key, dir) => urlSort.onSortChange(key ?? "", dir),
     defaultPageSize: 100,
   });
 
