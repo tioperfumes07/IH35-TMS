@@ -1039,7 +1039,8 @@
     "verify:safety-kpi-drillthrough": "node scripts/verify-safety-kpi-drillthrough.mjs",
     "verify:maint-cost-per-unit-field-bind": "node scripts/verify-maint-cost-per-unit-field-bind.mjs",
     "verify:driver-training-expiry-field": "node scripts/verify-driver-training-expiry-field.mjs",
-    "verify:dvir-followup-wo-target": "node scripts/verify-dvir-followup-wo-target.mjs"
+    "verify:dvir-followup-wo-target": "node scripts/verify-dvir-followup-wo-target.mjs",
+    "verify:xlsx-upload-hardened": "node scripts/verify-xlsx-upload-hardened.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1087.0",
@@ -1081,7 +1082,8 @@
     "twilio": "^6.0.0",
     "web-push": "^3.6.7",
     "xlsx": "^0.18.5",
-    "zod": "^4.4.2"
+    "zod": "^4.4.2",
+    "exceljs": "^4.4.0"
   },
   "devDependencies": {
     "@axe-core/cli": "^4.10.2",

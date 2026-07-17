@@ -1081,3 +1081,9 @@ jobs:
         run: node scripts/verify-driver-training-expiry-field.mjs --selftest
       - name: verify:driver-training-expiry-field
         run: npm run verify:driver-training-expiry-field
+
+      # 0243-h2-1 / coder-work-order-t2-3-xlsx-cve — untrusted upload parse must not use SheetJS XLSX.read
+      - name: verify:xlsx-upload-hardened --selftest
+        run: node scripts/verify-xlsx-upload-hardened.mjs --selftest
+      - name: verify:xlsx-upload-hardened
+        run: npm run verify:xlsx-upload-hardened

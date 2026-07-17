@@ -1,6 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
-import * as XLSX from "xlsx";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
@@ -11,6 +10,7 @@ import {
   type DbClient,
 } from "./fuel-transaction-import.js";
 import { flushFuelGlPostsAfterCommit } from "../accounting/fuel-posting/maybe-post-from-fuel-transaction.service.js";
+import { parseSpreadsheetBufferSafe } from "../lib/safe-spreadsheet-parse.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -39,13 +39,8 @@ async function withCompanyScope<T>(
   });
 }
 
-function rowsFromWorkbook(data: Buffer): Record<string, unknown>[] {
-  // XLSX.read auto-detects CSV as well as XLSX from a raw buffer.
-  const wb = XLSX.read(data, { type: "buffer", cellDates: true });
-  const firstSheetName = wb.SheetNames[0];
-  if (!firstSheetName) return [];
-  const sheet = wb.Sheets[firstSheetName];
-  return XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: null });
+async function rowsFromWorkbook(data: Buffer, filename: string): Promise<Record<string, unknown>[]> {
+  return parseSpreadsheetBufferSafe(data, filename);
 }
 
 export async function registerFuelTransactionImportRoutes(app: FastifyInstance) {
@@ -68,7 +63,7 @@ export async function registerFuelTransactionImportRoutes(app: FastifyInstance) 
 
     let rawRows: Record<string, unknown>[];
     try {
-      rawRows = rowsFromWorkbook(bytes);
+      rawRows = await rowsFromWorkbook(bytes, filePart.filename);
     } catch (err) {
       return reply
         .code(400)

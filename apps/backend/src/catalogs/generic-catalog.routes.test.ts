@@ -286,9 +286,9 @@ describe.sequential("generic catalog framework", () => {
     expect(response.json()).toMatchObject({ job_id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd", status: "completed" });
   });
 
-  it("parseSpreadsheetBuffer reads csv files", () => {
+  it("parseSpreadsheetBuffer reads csv files", async () => {
     const csv = "code,display_name\nA1,Alpha\n";
-    const rows = parseSpreadsheetBuffer(Buffer.from(csv, "utf8"), "sample.csv");
+    const rows = await parseSpreadsheetBuffer(Buffer.from(csv, "utf8"), "sample.csv");
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({ code: "A1", display_name: "Alpha" });
   });

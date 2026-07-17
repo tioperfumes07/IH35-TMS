@@ -398,7 +398,7 @@ export function createCatalogRoutes(
 
       let rawRows: Array<Record<string, unknown>>;
       try {
-        rawRows = parseSpreadsheetBuffer(fileBuffer, filename);
+        rawRows = await parseSpreadsheetBuffer(fileBuffer, filename);
       } catch {
         return reply.code(400).send({ error: "unsupported_file_type" });
       }
