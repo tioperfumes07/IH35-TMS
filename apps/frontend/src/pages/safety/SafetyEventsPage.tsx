@@ -29,7 +29,26 @@ type EventDraft = {
   subject_unit_id: string;
   title: string;
   description: string;
+  occurred_at: string;
 };
+
+function defaultOccurredAtIso(): string {
+  return new Date().toISOString();
+}
+
+/** datetime-local value (local wall clock) ↔ ISO for z.string().datetime(). */
+function toDatetimeLocalValue(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function fromDatetimeLocalValue(local: string): string {
+  const d = new Date(local);
+  if (Number.isNaN(d.getTime())) return defaultOccurredAtIso();
+  return d.toISOString();
+}
 
 const INITIAL_DRAFT: EventDraft = {
   event_type: "incident",
@@ -41,6 +60,7 @@ const INITIAL_DRAFT: EventDraft = {
   subject_unit_id: "",
   title: "",
   description: "",
+  occurred_at: "",
 };
 
 export function SafetyEventsPage({ operatingCompanyId }: Props) {
@@ -56,6 +76,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [logModalOpen, setLogModalOpen] = useState(false);
   const [draft, setDraft] = useState<EventDraft>(INITIAL_DRAFT);
+  const [logModalBaseline, setLogModalBaseline] = useState<EventDraft | null>(null);
   // S-04: shared From/To date range from the Safety layout's date-range bar (additive to the existing
   // activity-window toggle), applied here against occurred_at.
   const { fromDate, toDate } = useSafetyUiContext();
@@ -102,12 +123,16 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
         subject_unit_id: draft.subject_unit_id.trim() || undefined,
         title: draft.title.trim(),
         description: draft.description.trim() || undefined,
+        occurred_at: draft.occurred_at.trim()
+          ? new Date(draft.occurred_at).toISOString()
+          : undefined,
       };
       return createSafetyEvent(payload);
     },
     onSuccess: () => {
       setLogModalOpen(false);
       setDraft(INITIAL_DRAFT);
+      setLogModalBaseline(null);
       void queryClient.invalidateQueries({ queryKey: ["safety", "events-v2", operatingCompanyId] });
     },
   });
@@ -182,19 +207,29 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
   };
   const notesListState = useListState(notesQuery, (notesQuery.data ?? []).length === 0);
   const logModalDirty =
-    draft.title.trim() !== INITIAL_DRAFT.title.trim() ||
-    draft.event_type.trim() !== INITIAL_DRAFT.event_type.trim() ||
-    draft.description.trim() !== INITIAL_DRAFT.description.trim() ||
-    draft.subject_driver_id.trim() !== INITIAL_DRAFT.subject_driver_id.trim() ||
-    draft.subject_unit_id.trim() !== INITIAL_DRAFT.subject_unit_id.trim() ||
-    draft.severity !== INITIAL_DRAFT.severity ||
-    draft.status !== INITIAL_DRAFT.status ||
-    draft.kpi_bucket !== INITIAL_DRAFT.kpi_bucket ||
-    draft.subject_type !== INITIAL_DRAFT.subject_type;
+    logModalBaseline != null &&
+    (draft.title.trim() !== logModalBaseline.title.trim() ||
+      draft.event_type.trim() !== logModalBaseline.event_type.trim() ||
+      draft.description.trim() !== logModalBaseline.description.trim() ||
+      draft.subject_driver_id.trim() !== logModalBaseline.subject_driver_id.trim() ||
+      draft.subject_unit_id.trim() !== logModalBaseline.subject_unit_id.trim() ||
+      draft.severity !== logModalBaseline.severity ||
+      draft.status !== logModalBaseline.status ||
+      draft.kpi_bucket !== logModalBaseline.kpi_bucket ||
+      draft.subject_type !== logModalBaseline.subject_type ||
+      draft.occurred_at !== logModalBaseline.occurred_at);
+
+  const openLogModal = () => {
+    const next = { ...INITIAL_DRAFT, occurred_at: defaultOccurredAtIso() };
+    setDraft(next);
+    setLogModalBaseline(next);
+    setLogModalOpen(true);
+  };
 
   const closeLogModal = () => {
     setLogModalOpen(false);
     setDraft(INITIAL_DRAFT);
+    setLogModalBaseline(null);
   };
 
   return (
@@ -297,7 +332,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
           </button>
           <button
             type="button"
-            onClick={() => setLogModalOpen(true)}
+            onClick={openLogModal}
             className="rounded-sm bg-[#1F2A44] px-3 py-1 text-xs font-semibold text-white"
           >
             + Log Event
@@ -382,6 +417,18 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
             placeholder="Title"
             className="rounded-sm border border-gray-300 px-2 py-1 text-xs sm:col-span-2"
           />
+          <label className="flex flex-col gap-1 text-xs sm:col-span-2">
+            <span className="font-semibold text-gray-700">Time of occurrence</span>
+            <input
+              type="datetime-local"
+              data-testid="safety-event-occurred-at"
+              value={toDatetimeLocalValue(draft.occurred_at)}
+              onChange={(event) =>
+                setDraft((prev) => ({ ...prev, occurred_at: fromDatetimeLocalValue(event.target.value) }))
+              }
+              className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+            />
+          </label>
           <input
             value={draft.event_type}
             onChange={(event) => setDraft((prev) => ({ ...prev, event_type: event.target.value }))}

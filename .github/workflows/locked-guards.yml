@@ -597,6 +597,10 @@ jobs:
         run: node scripts/verify-hos-violation-void-reason.mjs --selftest
       - name: verify:hos-violation-void-reason
         run: npm run verify:hos-violation-void-reason
+      - name: verify:safety-log-event-occurred-at --selftest
+        run: node scripts/verify-safety-log-event-occurred-at.mjs --selftest
+      - name: verify:safety-log-event-occurred-at
+        run: npm run verify:safety-log-event-occurred-at
       - name: verify:banking-categorize-ux-honesty --selftest
         run: node scripts/verify-banking-categorize-ux-honesty.mjs --selftest
       - name: verify:banking-categorize-ux-honesty
