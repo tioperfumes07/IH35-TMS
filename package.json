@@ -950,6 +950,7 @@
     "verify:driver-payment-method-tenant-scope": "node scripts/verify-driver-payment-method-tenant-scope.mjs",
     "verify:period-money-control-flag-gate": "node scripts/verify-period-money-control-flag-gate.mjs",
     "verify:wo-void-flag-gate": "node scripts/verify-wo-void-flag-gate.mjs",
+    "verify:is-posting-flag-void": "node scripts/verify-is-posting-flag-void.mjs",
     "verify:bill-expense-category-full-coa": "node scripts/verify-bill-expense-category-full-coa.mjs",
     "verify:no-duplicate-financial-ledger": "node scripts/verify-no-duplicate-financial-ledger.mjs",
     "verify:settlement-escrow-resolver": "node scripts/verify-settlement-escrow-resolver.mjs",
