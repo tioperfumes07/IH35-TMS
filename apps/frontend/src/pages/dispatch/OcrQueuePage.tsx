@@ -84,7 +84,7 @@ function RowActions({
       {canReprocessOcrItem(item) ? (
         <button
           type="button"
-          className="rounded-sm border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-900"
+          className="rounded-sm border border-slate-300 bg-slate-100 px-2 py-1 text-xs text-slate-700"
           disabled={reprocessM.isPending}
           onClick={() => reprocessM.mutate()}
           data-testid={`ocr-reprocess-${item.id}`}
