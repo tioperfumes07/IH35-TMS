@@ -26,23 +26,96 @@ function read(rel) {
   return { ok: true, src: fs.readFileSync(p, "utf8"), err: null };
 }
 
+function extractBalancedBlock(src, openBraceIndex) {
+  if (openBraceIndex < 0 || src[openBraceIndex] !== "{") return "";
+  let depth = 0;
+  let quote = null;
+  let escaped = false;
+  let lineComment = false;
+  let blockComment = false;
+  for (let i = openBraceIndex; i < src.length; i += 1) {
+    const char = src[i];
+    const next = src[i + 1];
+    if (lineComment) {
+      if (char === "\n") lineComment = false;
+      continue;
+    }
+    if (blockComment) {
+      if (char === "*" && next === "/") {
+        blockComment = false;
+        i += 1;
+      }
+      continue;
+    }
+    if (quote) {
+      if (escaped) escaped = false;
+      else if (char === "\\") escaped = true;
+      else if (char === quote) quote = null;
+      continue;
+    }
+    if (char === "/" && next === "/") {
+      lineComment = true;
+      i += 1;
+      continue;
+    }
+    if (char === "/" && next === "*") {
+      blockComment = true;
+      i += 1;
+      continue;
+    }
+    if (char === '"' || char === "'" || char === "`") {
+      quote = char;
+      continue;
+    }
+    if (char === "{") depth += 1;
+    if (char === "}") {
+      depth -= 1;
+      if (depth === 0) return src.slice(openBraceIndex + 1, i);
+    }
+  }
+  return "";
+}
+
+function extractStatusPatchHandler(src) {
+  const route = /app\.patch\(\s*["']\/api\/v1\/mdata\/loads\/:id\/status["'][\s\S]*?async\s*\([^)]*\)\s*=>\s*\{/m.exec(src);
+  if (!route) return "";
+  return extractBalancedBlock(src, route.index + route[0].lastIndexOf("{"));
+}
+
+function extractCancelledBlocks(handler) {
+  const blocks = [];
+  const branchPattern = /if\s*\(\s*newStatus\s*===\s*["']cancelled["'][^)]*\)\s*\{/gm;
+  for (const branch of handler.matchAll(branchPattern)) {
+    blocks.push(extractBalancedBlock(handler, branch.index + branch[0].lastIndexOf("{")));
+  }
+  return blocks.filter(Boolean);
+}
+
 /** Exported for --selftest planted fixtures. */
 export function checkMdataStatusPatchGate(src) {
   const failures = [];
-  if (!/\/api\/v1\/mdata\/loads\/:id\/status/.test(src)) {
+  const handler = extractStatusPatchHandler(src);
+  if (!handler) {
     failures.push(`${LOADS_ROUTES}: PATCH /api/v1/mdata/loads/:id/status handler missing`);
+    return failures;
   }
-  if (!/catalogs\.cancellation_reasons/.test(src)) {
-    failures.push(`${LOADS_ROUTES}: cancel status PATCH must read catalogs.cancellation_reasons`);
+  const cancelledBlocks = extractCancelledBlocks(handler);
+  if (cancelledBlocks.length === 0) {
+    failures.push(`${LOADS_ROUTES}: status PATCH must enforce cancellation inside its cancelled-status branch`);
+    return failures;
   }
-  if (!/requires_owner_approval/.test(src)) {
-    failures.push(`${LOADS_ROUTES}: cancel status PATCH must consult requires_owner_approval`);
+  const cancelGate = cancelledBlocks.find((block) => /catalogs\.cancellation_reasons/.test(block)) ?? "";
+  if (!/catalogs\.cancellation_reasons/.test(cancelGate)) {
+    failures.push(`${LOADS_ROUTES}: cancelled-status branch must read catalogs.cancellation_reasons`);
   }
-  if (!/owner_approval_required/.test(src)) {
-    failures.push(`${LOADS_ROUTES}: must return owner_approval_required when gate blocks non-Owner`);
+  if (!/reason\.requires_owner_approval\s*&&\s*!isOwnerRole\(authUser\.role\)/.test(cancelGate)) {
+    failures.push(`${LOADS_ROUTES}: cancelled-status branch must gate requires_owner_approval on Owner role`);
   }
-  if (!/isOwnerRole\(authUser\.role\)/.test(src) && !/role === "Owner"/.test(src)) {
-    failures.push(`${LOADS_ROUTES}: must gate on Owner role for approval-required reasons`);
+  if (!/return\s*\{\s*error:\s*["']owner_approval_required["']/.test(cancelGate)) {
+    failures.push(`${LOADS_ROUTES}: cancelled-status branch must return owner_approval_required`);
+  }
+  if (!/result\.error\s*===\s*["']owner_approval_required["'][\s\S]{0,300}?reply\.code\(403\)\.send\(\s*\{\s*error:\s*["']owner_approval_required["']\s*\}\s*\)/.test(handler)) {
+    failures.push(`${LOADS_ROUTES}: same status PATCH handler must map owner_approval_required to HTTP 403`);
   }
   return failures;
 }
@@ -82,15 +155,44 @@ export function run() {
 
 if (process.argv.includes("--selftest")) {
   const goodRoutes = `
+    app.patch("/api/v1/mdata/loads/:id/status", async (req, reply) => {
+      const result = await withCurrentUser(authUser.uuid, async (client) => {
+        if (newStatus === "cancelled" && cancellationReasonCode) {
+          await client.query("SELECT requires_owner_approval FROM catalogs.cancellation_reasons");
+          if (reason.requires_owner_approval && !isOwnerRole(authUser.role)) {
+            return { error: "owner_approval_required" };
+          }
+        }
+        return { ok: true };
+      });
+      if (result.error === "owner_approval_required") {
+        return reply.code(403).send({ error: "owner_approval_required" });
+      }
+    });
+  `;
+  const badRoutesNoCatalog = `app.patch("/api/v1/mdata/loads/:id/status", async () => { UPDATE mdata.loads SET status = 'cancelled'; });`;
+  const badRoutesDisconnected = `
     app.patch("/api/v1/mdata/loads/:id/status", async () => {});
-    FROM catalogs.cancellation_reasons
-    requires_owner_approval
-    if (reason.requires_owner_approval && !isOwnerRole(authUser.role)) {
-      return { error: "owner_approval_required" };
+    if (newStatus === "cancelled") {
+      FROM catalogs.cancellation_reasons;
+      if (reason.requires_owner_approval && !isOwnerRole(authUser.role)) {
+        return { error: "owner_approval_required" };
+      }
     }
     reply.code(403).send({ error: "owner_approval_required" });
   `;
-  const badRoutesNoCatalog = `app.patch("/api/v1/mdata/loads/:id/status", async () => { UPDATE mdata.loads SET status = 'cancelled'; });`;
+  const badRoutesGateOutsideCancelledBranch = `
+    app.patch("/api/v1/mdata/loads/:id/status", async (req, reply) => {
+      if (newStatus === "cancelled") UPDATE mdata.loads;
+      await client.query("SELECT requires_owner_approval FROM catalogs.cancellation_reasons");
+      if (reason.requires_owner_approval && !isOwnerRole(authUser.role)) {
+        return { error: "owner_approval_required" };
+      }
+      if (result.error === "owner_approval_required") {
+        return reply.code(403).send({ error: "owner_approval_required" });
+      }
+    });
+  `;
   const goodDrawer = `
     const result = await cancelDispatchLoad(load.id, { ...payload });
     const cancelStatus = String((result as { status?: string }).status ?? "");
@@ -104,6 +206,8 @@ if (process.argv.includes("--selftest")) {
   const checks = [
     ["good routes pass", checkMdataStatusPatchGate(goodRoutes).length === 0],
     ["routes without catalog fail", checkMdataStatusPatchGate(badRoutesNoCatalog).length > 0],
+    ["empty handler with disconnected tokens fails", checkMdataStatusPatchGate(badRoutesDisconnected).length > 0],
+    ["gate outside cancelled branch fails", checkMdataStatusPatchGate(badRoutesGateOutsideCancelledBranch).length > 0],
     ["good drawer passes", checkLoadDetailDrawerNoBypass(goodDrawer).length === 0],
     ["drawer double-call fails", checkLoadDetailDrawerNoBypass(badDrawerDoubleCall).length > 0],
   ];
