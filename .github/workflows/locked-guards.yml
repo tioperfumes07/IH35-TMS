@@ -855,6 +855,8 @@ jobs:
         run: npm run verify:legal-matters-role-gate
       - name: verify:legal-matter-edit-wired
         run: npm run verify:legal-matter-edit-wired
+      - name: verify:legal-breadcrumb-tail-4
+        run: npm run verify:legal-breadcrumb-tail-4
 
       - name: verify:expense-create-modal-catalog --selftest
         run: node scripts/verify-expense-create-modal-catalog.mjs --selftest

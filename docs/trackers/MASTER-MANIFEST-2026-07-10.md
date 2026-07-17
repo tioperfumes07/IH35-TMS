@@ -2825,9 +2825,8 @@ Money-posting GL flags ON for TRANSP+TRK is DELIBERATE: TMS posts in PARALLEL wi
     - diff: Notification center design spanning all modules, not just compliance credentials.
     - evidence: compliance.notification_rules/notification_log exist for credential expirations only (Phase-9 audit); no general-purpose notification center found.
     - spec: NONE
-- `0441-mod12-legal-8of10-pages-omit-breadcrumb` **not-built** (tier-3) — Legal 8/10 pages omit breadcrumb
-    - diff: breadcrumb prop on PageHeader/BackArrowHeader for the 12 pages listed above.
-    - evidence: grep -rln 'breadcrumb' apps/frontend/src/pages/legal returns only LegalTemplateDetailPage.tsx and LegalTemplatesListPage.tsx. Of ~14 non-modal legal page files (LegalAttorneyReview
+- `0441-mod12-legal-8of10-pages-omit-breadcrumb` **built** (tier-3) — Legal 8/10 pages omit breadcrumb
+    - evidence: CLOSED via PR #2604 (attorney-review portal + sign) + PR #2611 (Privacy Policy + Terms of Service). All 14 legal pages breadcrumbed; guard verify-legal-breadcrumb-tail-4 wired
     - spec: NONE
 - `0441-mod12-legal-emoji-section7-violations` **not-built** (tier-3) — Legal emoji §7 violations
     - diff: Replace 🔒 emoji with a Lucide icon component or plain text per §7 (no emojis rule).

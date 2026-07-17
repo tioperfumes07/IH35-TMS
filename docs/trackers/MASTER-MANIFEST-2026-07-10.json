@@ -33965,9 +33965,9 @@
    "id": "0441-mod12-legal-8of10-pages-omit-breadcrumb",
    "source_doc": "0441__CASCADE-CERTIFIED-AUDIT-REPORT.md",
    "title": "Legal 8/10 pages omit breadcrumb",
-   "verdict": "not-built",
-   "evidence": "grep -rln 'breadcrumb' apps/frontend/src/pages/legal returns only LegalTemplateDetailPage.tsx and LegalTemplatesListPage.tsx. Of ~14 non-modal legal page files (LegalAttorneyReviewPortalPage, LegalContractInstancesPage, LegalAttorneyReviewPage, LegalLandingPage, LegalPoliciesPage, LegalMatterDetailPage, LegalMatterNewPage, LegalMattersListPage, PrivacyPolicyPage, LegalReportsLandingPage, LegalSignPage, TermsOfServicePage plus the 2 with breadcrumb), 12 lack a breadcrumb.",
-   "missing": "breadcrumb prop on PageHeader/BackArrowHeader for the 12 pages listed above.",
+   "verdict": "built",
+   "evidence": "CLOSED via PR #2604 (attorney-review portal + sign, LEGAL-MATTER-EDIT) + PR #2611 (Privacy Policy + Terms of Service, LEGAL-BREADCRUMB-TAIL-4, branch fix/legal-breadcrumb-tail-4). All 14 legal pages now carry PageHeader breadcrumbs: 10 were closed by earlier module-defect sweeps (per docs/trackers/backlog-verify/legal.md 2026-07-16), the final 4 by #2604/#2611. CI guard scripts/verify-legal-breadcrumb-tail-4.mjs wired into .github/workflows/locked-guards.yml fails if any of the 4 tail surfaces regress; verified PASS on branch. backHref=\"/login\" on Privacy/Terms is intentional (public pre-auth pages, review-accepted).",
+   "missing": "",
    "spec": "NONE",
    "acceptance": [
     {
@@ -33984,7 +33984,7 @@
    "tier": "tier-3",
    "db_touch": false,
    "prod_check_needed": "n/a",
-   "contradicts_prod_or_repo": "Exact ratio is now 12/14 missing (not 8/10) - directionally the same defect, worse in absolute count since the doc was written.",
+   "contradicts_prod_or_repo": "Originally 12/14 missing (not 8/10); fully closed as of PR #2611 — 14/14 breadcrumbed, guard-enforced.",
    "status": "open",
    "superseded_by": null,
    "_src": "rows-0441-subagent.json",
