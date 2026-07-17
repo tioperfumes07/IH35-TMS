@@ -9,8 +9,15 @@ concurrency:
 on:
   push:
     branches: [main]
+  # Skip on PRs that touch no code (docs/trackers/block-ready/markdown). Push-to-main
+  # still analyzes the merged result; only redundant PR runs are trimmed.
   pull_request:
     branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - ".block-ready/**"
+      - ".cursor/**"
+      - "**/*.md"
 
 jobs:
   sonarcloud:

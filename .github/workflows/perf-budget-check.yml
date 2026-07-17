@@ -5,10 +5,22 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 on:
+  # Bundle perf only changes with frontend/build inputs — skip on backend/docs-only PRs.
+  # A daily scheduled run still covers drift regardless of path filters.
   pull_request:
     branches: [main]
+    paths:
+      - "apps/frontend/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/perf-budget-check.yml"
   push:
     branches: [main]
+    paths:
+      - "apps/frontend/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/perf-budget-check.yml"
   schedule:
     - cron: "0 7 * * *"
 
