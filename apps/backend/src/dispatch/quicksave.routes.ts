@@ -53,6 +53,24 @@ function mapQuickAssignError(error: unknown) {
   }
   const code = String((error as Error)?.message ?? "");
   if (code === "E_LOAD_NOT_FOUND") return { status: 404, payload: { error: code } };
+  if (code.startsWith("E_UNIT_OOS")) {
+    return {
+      status: 422,
+      payload: {
+        error: "E_UNIT_OOS",
+        message: code.includes(":") ? code.slice(code.indexOf(":") + 1) : "Unit is out of service (OOS) and cannot be assigned.",
+      },
+    };
+  }
+  if (code.startsWith("E_UNIT_DISPATCH_BLOCKED")) {
+    return {
+      status: 422,
+      payload: {
+        error: "E_UNIT_DISPATCH_BLOCKED",
+        message: code.includes(":") ? code.slice(code.indexOf(":") + 1) : "Unit is dispatch-blocked.",
+      },
+    };
+  }
   if (code === "E_HARD_BLOCKS_PRESENT") return { status: 422, payload: { error: code, message: "hard blocks present for quick-assign" } };
   return null;
 }
@@ -119,10 +137,12 @@ export async function registerDispatchQuicksaveRoutes(app: FastifyInstance) {
         )
       );
       return result;
-    } catch (error) {
-      if (String((error as Error)?.message ?? "") === "E_LOAD_NOT_FOUND") {
+      } catch (error) {
+              if (String((error as Error)?.message ?? "") === "E_LOAD_NOT_FOUND") {
         return reply.code(404).send({ error: "E_LOAD_NOT_FOUND" });
       }
+      const mapped = mapQuickAssignError(error);
+      if (mapped) return reply.code(mapped.status).send(mapped.payload);
       throw error;
     }
   });

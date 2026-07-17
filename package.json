@@ -1053,7 +1053,8 @@
     "verify:qbo-parity-name-plus-type-option-labels": "node scripts/verify-qbo-parity-name-plus-type-option-labels.mjs",
     "verify:dispatch-cancel-approval-gate": "node scripts/verify-dispatch-cancel-approval-gate.mjs",
     "verify:driver-pwa-load-status-gate": "node scripts/verify-driver-pwa-load-status-gate.mjs",
-    "verify:acct-utc-today-defaults": "node scripts/verify-acct-utc-today-defaults.mjs"
+    "verify:acct-utc-today-defaults": "node scripts/verify-acct-utc-today-defaults.mjs",
+    "verify:dispatch-oos-unit-block": "node scripts/verify-dispatch-oos-unit-block.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1087.0",

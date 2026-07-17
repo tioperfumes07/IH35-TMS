@@ -324,17 +324,20 @@ async function checkUnitOos(
     dispatch_block_reason: string | null;
     has_open_pm_due_wo: boolean;
     open_wo_count: number;
+    is_oos: boolean;
   }>(
     `
       SELECT
-        display_id,
-        COALESCE(is_dispatch_blocked, false) AS is_dispatch_blocked,
-        dispatch_block_reason,
-        COALESCE(has_open_pm_due_wo, false) AS has_open_pm_due_wo,
-        COALESCE(open_wo_count, 0) AS open_wo_count
-      FROM views.units_with_dispatch_status
-      WHERE id = $1::uuid
-        AND operating_company_id = $2::uuid
+        v.display_id,
+        COALESCE(v.is_dispatch_blocked, false) AS is_dispatch_blocked,
+        v.dispatch_block_reason,
+        COALESCE(v.has_open_pm_due_wo, false) AS has_open_pm_due_wo,
+        COALESCE(v.open_wo_count, 0) AS open_wo_count,
+        COALESCE(u.is_oos, false) AS is_oos
+      FROM views.units_with_dispatch_status v
+      JOIN mdata.units u ON u.id = v.id
+      WHERE v.id = $1::uuid
+        AND v.operating_company_id = $2::uuid
       LIMIT 1
     `,
     [unitUuid, operatingCompanyId]
@@ -344,6 +347,20 @@ async function checkUnitOos(
   if (!unit) return [];
 
   const items: ValidationItem[] = [];
+
+  // 0441-mod2: OOS is the same severity class as WF-050 dispatch-blocked.
+  if (unit.is_oos) {
+    items.push({
+      rule_id: "UNIT-OOS",
+      severity: "block",
+      message: `Unit ${unit.display_id ?? unitUuid} is out of service (OOS) and cannot be assigned.`,
+      evidence: {
+        unit_id: unitUuid,
+        unit_display_id: unit.display_id,
+        is_oos: true,
+      },
+    });
+  }
 
   if (unit.is_dispatch_blocked) {
     items.push({

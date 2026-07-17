@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listUnits } from "../../api/mdata";
 import { patchAssignUnit } from "../../api/dispatch";
+import { ApiError } from "../../api/client";
 import { Combobox } from "../shared/Combobox";
 import { optimisticPatch } from "../../lib/optimisticPatch";
 
@@ -27,7 +28,10 @@ export function InlineUnitPicker({ loadId, operatingCompanyId, unitId, displayLa
   const options = useMemo(() => {
     const rows = unitsQuery.data?.units ?? [];
     return rows
-      .filter((row) => !(row as { is_dispatch_blocked?: boolean }).is_dispatch_blocked)
+      .filter((row) => {
+        const u = row as { is_dispatch_blocked?: boolean; is_oos?: boolean };
+        return !u.is_dispatch_blocked && !u.is_oos;
+      })
       .map((row) => {
         const unit = row as { id: string; unit_number?: string; display_id?: string };
         return {
@@ -71,12 +75,17 @@ export function InlineUnitPicker({ loadId, operatingCompanyId, unitId, displayLa
               onRollback();
               onAssigned({ unitId: prior.unitId ?? "", label: prior.label });
             },
-            request: () =>
-              patchAssignUnit(loadId, {
-                operating_company_id: operatingCompanyId,
-                unit_uuid: next,
-              }),
-            onError: (message) => setError(message.slice(0, 40)),
+            request: async () => {
+              try {
+                return await patchAssignUnit(loadId, {
+                  operating_company_id: operatingCompanyId,
+                  unit_uuid: next,
+                });
+              } catch (err) {
+                throw new Error(assignUnitErrorMessage(err));
+              }
+            },
+            onError: (message) => setError(message.slice(0, 80)),
           });
           if (result.ok) {
             setError(null);
@@ -86,4 +95,12 @@ export function InlineUnitPicker({ loadId, operatingCompanyId, unitId, displayLa
       />
     </div>
   );
+}
+
+function assignUnitErrorMessage(error: unknown): string {
+  if (error instanceof ApiError) {
+    const data = (error.data as { error?: string; message?: string } | undefined) ?? {};
+    return String(data.message ?? data.error ?? `Assign failed (${error.status})`);
+  }
+  return error instanceof Error ? error.message : "Update failed";
 }

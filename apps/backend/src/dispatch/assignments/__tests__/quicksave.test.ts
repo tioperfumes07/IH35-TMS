@@ -145,6 +145,8 @@ describe("GAP-8 assignments quicksave", () => {
     expect(src).toContain("new_value");
     expect(src).toContain("E_VALIDATION_DRIVER_INACTIVE");
     expect(src).toContain("E_VALIDATION_UNIT_UNAVAILABLE");
+    expect(src).toContain("E_UNIT_OOS");
+    expect(src).toContain("is_oos");
     // DISP-2: reassignDriver must delegate to the shared DOT credential gate.
     expect(src).toContain("assertDriverQualifiedForLoad");
     expect(src).toContain("DriverNotQualifiedError");

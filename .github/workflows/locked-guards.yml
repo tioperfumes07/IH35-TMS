@@ -1145,3 +1145,8 @@ jobs:
         run: node scripts/verify-driver-training-expiry-field.mjs --selftest
       - name: verify:driver-training-expiry-field
         run: npm run verify:driver-training-expiry-field
+      # 0441-mod2 — OOS units must hard-block dispatch assignment (same class as WF-050)
+      - name: verify:dispatch-oos-unit-block --selftest
+        run: node scripts/verify-dispatch-oos-unit-block.mjs --selftest
+      - name: verify:dispatch-oos-unit-block
+        run: npm run verify:dispatch-oos-unit-block

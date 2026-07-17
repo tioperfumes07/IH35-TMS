@@ -78,6 +78,7 @@ import { UnitsWithoutLoadTable } from "./components/UnitsWithoutLoadTable";
 import { QuickAssignModal } from "./components/QuickAssignModal";
 import { TableHeaderCell, useTablePref } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
+import { ApiError } from "../../api/client";
 
 export type DispatchBoardProps = Omit<DispatchListProps, "showEtaColumn"> & {
   operatingCompanyId?: string;
@@ -1314,7 +1315,15 @@ export function DispatchBoard({
               await queryClient.invalidateQueries({ queryKey: ["dispatch", "loads"] });
               onBulkComplete?.();
             } catch (error) {
-              pushToast(error instanceof Error ? error.message : "Quick assign failed", "error");
+              if (error instanceof ApiError) {
+                const data = (error.data as { error?: string; message?: string } | undefined) ?? {};
+                pushToast(
+                  String(data.message ?? data.error ?? `Quick assign failed (${error.status})`),
+                  "error"
+                );
+              } else {
+                pushToast(error instanceof Error ? error.message : "Quick assign failed", "error");
+              }
             }
           }}
         />
