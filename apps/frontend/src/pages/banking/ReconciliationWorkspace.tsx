@@ -20,6 +20,8 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { DatePicker } from "../../components/forms/DatePicker";
+import { PrintOrientationDialog, applyPrintOrientationStyles } from "./components/PrintOrientationDialog";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 type CandidateEvent = { id: string; event_date: string; event_type: "load" | "bill" | "settlement" };
 
@@ -89,6 +91,11 @@ export function ReconciliationWorkspacePage() {
   const [completing, setCompleting] = useState(false);
   const [forceReason, setForceReason] = useState("");
   const [localTransactions, setLocalTransactions] = useState<PlaidBankTransaction[]>([]);
+  const [txnSort, setTxnSort] = useState<{ key: "date" | "description" | "amount"; dir: "asc" | "desc" }>({
+    key: "date",
+    dir: "desc",
+  });
+  const [printDialogOpen, setPrintDialogOpen] = useState(false);
 
   const workspaceQuery = useQuery({
     queryKey: ["banking", "reconciliation-workspace", sessionId, companyId],
@@ -116,12 +123,32 @@ export function ReconciliationWorkspacePage() {
   }, [workspaceQuery.data]);
 
   const visibleTransactions = useMemo(() => {
-    if (filterMode === "all") return localTransactions;
-    return localTransactions.filter((tx) => {
-      const matched = Boolean(tx.matched_load_id || tx.matched_bill_id || tx.matched_settlement_id);
-      return filterMode === "matched" ? matched : !matched;
+    const filtered =
+      filterMode === "all"
+        ? localTransactions
+        : localTransactions.filter((tx) => {
+            const matched = Boolean(tx.matched_load_id || tx.matched_bill_id || tx.matched_settlement_id);
+            return filterMode === "matched" ? matched : !matched;
+          });
+    const dir = txnSort.dir === "asc" ? 1 : -1;
+    return [...filtered].sort((a, b) => {
+      let va: string | number = a.transaction_date ?? "";
+      let vb: string | number = b.transaction_date ?? "";
+      if (txnSort.key === "description") {
+        va = (a.description ?? "").toLowerCase();
+        vb = (b.description ?? "").toLowerCase();
+      } else if (txnSort.key === "amount") {
+        va = Math.abs(Number(a.amount_cents ?? 0));
+        vb = Math.abs(Number(b.amount_cents ?? 0));
+      }
+      if (va < vb) return -1 * dir;
+      if (va > vb) return 1 * dir;
+      return 0;
     });
-  }, [filterMode, localTransactions]);
+  }, [filterMode, localTransactions, txnSort]);
+
+  const toggleTxnSort = (key: "date" | "description" | "amount") =>
+    setTxnSort((prev) => (prev.key === key ? { key, dir: prev.dir === "asc" ? "desc" : "asc" } : { key, dir: key === "date" ? "desc" : "asc" }));
 
   const visibleCandidates = useMemo(() => {
     const byType = eventFilter === "all" ? allCandidates : allCandidates.filter((event) => event.event_type === eventFilter);
@@ -145,15 +172,69 @@ export function ReconciliationWorkspacePage() {
         title="Reconciliation Workspace"
         subtitle={effectiveBankAccountId ? `Account ${effectiveBankAccountId.slice(0, 8)}...` : ""}
         actions={
-          <ActionButton disabled>
-            Auto-Match Suggestions
-          </ActionButton>
+          <div className="flex items-center gap-2">
+            <ActionButton
+              onClick={() => setPrintDialogOpen(true)}
+            >
+              Print
+            </ActionButton>
+            <span title="Auto-Match stays disabled until the reconcile engine is proven safe on this workspace">
+              <ActionButton disabled>
+                Auto-Match Suggestions
+              </ActionButton>
+            </span>
+          </div>
         }
       />
 
+      <PrintOrientationDialog
+        open={printDialogOpen}
+        title="Print reconciliation"
+        onCancel={() => setPrintDialogOpen(false)}
+        onConfirm={(orientation) => {
+          setPrintDialogOpen(false);
+          const cleanup = applyPrintOrientationStyles(orientation);
+          const done = () => {
+            cleanup();
+            window.removeEventListener("afterprint", done);
+          };
+          window.addEventListener("afterprint", done);
+          window.setTimeout(() => window.print(), 50);
+        }}
+      />
+
       {!sessionId ? (
-        <div className="rounded-sm border border-gray-200 bg-white p-4">
+        <div className="bg-white p-4">
           <p className="mb-2 text-sm font-semibold text-gray-900">Start reconciliation</p>
+          <div className="mb-2 flex flex-wrap gap-1">
+            {(
+              [
+                ["This month", () => {
+                  const d = new Date();
+                  const start = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1));
+                  const end = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0));
+                  setPeriodStart(start.toISOString().slice(0, 10));
+                  setPeriodEnd(end.toISOString().slice(0, 10));
+                }],
+                ["Last month", () => {
+                  const d = new Date();
+                  const start = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - 1, 1));
+                  const end = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 0));
+                  setPeriodStart(start.toISOString().slice(0, 10));
+                  setPeriodEnd(end.toISOString().slice(0, 10));
+                }],
+              ] as Array<[string, () => void]>
+            ).map(([label, apply]) => (
+              <button
+                key={label}
+                type="button"
+                className="rounded-sm border border-gray-300 px-2 py-0.5 text-[11px] text-gray-700 hover:bg-gray-50"
+                onClick={apply}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
             <DatePicker
               value={periodStart}
@@ -203,18 +284,39 @@ export function ReconciliationWorkspacePage() {
 
       {sessionId && workspaceQuery.data ? (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-10">
-          <div className="rounded-sm border border-gray-200 bg-white p-3 lg:col-span-4">
-            <div className="mb-2 flex items-center justify-between">
+          <div className="bg-white p-3 lg:col-span-4">
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
               <p className="text-sm font-semibold text-gray-900">Bank transactions</p>
-              <SelectCombobox
-                value={filterMode}
-                onChange={(event) => setFilterMode(event.target.value as "all" | "matched" | "unmatched")}
-                className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
-              >
-                <option value="all">All</option>
-                <option value="matched">Matched</option>
-                <option value="unmatched">Unmatched</option>
-              </SelectCombobox>
+              <div className="flex items-center gap-2">
+                <div className="inline-flex overflow-hidden rounded-sm border border-gray-300 text-[10px]">
+                  {(
+                    [
+                      ["date", "Date"],
+                      ["description", "Desc"],
+                      ["amount", "Amt"],
+                    ] as const
+                  ).map(([key, label]) => (
+                    <button
+                      key={key}
+                      type="button"
+                      className={`inline-flex items-center gap-0.5 px-2 py-1 ${txnSort.key === key ? "bg-[#1f2a44] text-white" : "text-gray-700"} ${key !== "date" ? "border-l border-gray-300" : ""}`}
+                      onClick={() => toggleTxnSort(key)}
+                    >
+                      {label}
+                      {txnSort.key === key ? (txnSort.dir === "asc" ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />) : null}
+                    </button>
+                  ))}
+                </div>
+                <SelectCombobox
+                  value={filterMode}
+                  onChange={(event) => setFilterMode(event.target.value as "all" | "matched" | "unmatched")}
+                  className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+                >
+                  <option value="all">All</option>
+                  <option value="matched">Matched</option>
+                  <option value="unmatched">Unmatched</option>
+                </SelectCombobox>
+              </div>
             </div>
             <div className="max-h-[560px] space-y-1 overflow-auto">
               {visibleTransactions.map((tx) => {
@@ -224,9 +326,9 @@ export function ReconciliationWorkspacePage() {
                     key={tx.id}
                     type="button"
                     onClick={() => setSelectedTransactionId(tx.id)}
-                    className={`w-full rounded border px-2 py-2 text-left ${
-                      selectedTransactionId === tx.id ? "border-slate-300 bg-slate-100" : "border-gray-100 bg-white"
-                    }`}
+                    className={`w-full px-2 py-2 text-left ${
+                      selectedTransactionId === tx.id ? "bg-slate-100" : "bg-white hover:bg-gray-50"
+                    } border-b border-gray-100`}
                   >
                     <div className="flex items-center justify-between text-xs text-gray-600">
                       <span>{tx.transaction_date}</span>
@@ -257,7 +359,7 @@ export function ReconciliationWorkspacePage() {
             </div>
           </div>
 
-          <div className="rounded-sm border border-gray-200 bg-white p-3 lg:col-span-4">
+          <div className="border-l border-gray-200 bg-white p-3 lg:col-span-4">
             <div className="mb-2 flex items-center justify-between">
               <p className="text-sm font-semibold text-gray-900">TMS candidate events</p>
               <SelectCombobox
@@ -277,8 +379,8 @@ export function ReconciliationWorkspacePage() {
                   key={`${event.event_type}-${event.id}`}
                   type="button"
                   onClick={() => setSelectedCandidateId(`${event.event_type}:${event.id}`)}
-                  className={`w-full rounded border px-2 py-2 text-left ${
-                    selectedCandidateId === `${event.event_type}:${event.id}` ? "border-slate-300 bg-slate-100" : "border-gray-100 bg-white"
+                  className={`w-full border-b border-gray-100 px-2 py-2 text-left ${
+                    selectedCandidateId === `${event.event_type}:${event.id}` ? "bg-slate-100" : "bg-white hover:bg-gray-50"
                   }`}
                 >
                   <div className="text-xs uppercase tracking-wide text-gray-500">{event.event_type}</div>

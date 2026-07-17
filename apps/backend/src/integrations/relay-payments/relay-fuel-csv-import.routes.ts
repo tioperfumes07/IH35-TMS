@@ -143,8 +143,10 @@ export async function registerRelayFuelCsvImportRoute(app: FastifyInstance) {
         const g = (name: string) => (idx.has(name) ? r[idx.get(name)!] : undefined);
         const rowType = String(g("type") ?? "").trim().toLowerCase();
 
-        // type=deposit → Relay-wallet FUNDING (money put INTO Relay), NOT fuel. Classify + store only;
-        // never posts. External/unknown-card deposits land in the owner-review queue (classification).
+        // type=deposit → Relay-wallet FUNDING (money put INTO Relay), NOT fuel.
+        // upsertRelayDeposit classifies + stores AND mirrors to banking.bank_transactions
+        // as Received (is_credit) via upsertRelayWalletDepositFeedRow — visibility only, no GL.
+        // External/unknown-card deposits land in the owner-review queue (classification).
         if (rowType === "deposit") {
           const depId = String(g("id") ?? "").trim();
           const created = toIso(g("processing time"), g("work_date"));

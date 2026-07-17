@@ -70,6 +70,12 @@ export type PlaidBankTransaction = {
   categorization_trailer_number?: string | null;
   categorization_load_id?: string | null;
   categorization_load_number?: string | null;
+  categorization_customer_id?: string | null;
+  /** PSE / QBO product-service category id when categorized */
+  pse_ps_category_qbo_id?: string | null;
+  category?: string | null;
+  check_number?: string | null;
+  location?: string | null;
   /**
    * Relay Fuel Wallet: product lines from integrations.relay_fuel_transaction_lines
    * (diesel truck / reefer / DEF / fee) when source_ref is relay_fuel:*.
@@ -288,10 +294,23 @@ export type BankMatchCandidate = {
 
 // Ranked match candidates for one bank transaction (Match drawer). Read-only.
 // companyId is the active entity from useCompanyContext; the server re-scopes + membership-guards it.
-export function getMatchCandidates(bankTxnId: string, companyId: string) {
-  return apiRequest<{ candidates: BankMatchCandidate[]; match_candidates_count: number }>(
-    `/api/v1/banking/transactions/${bankTxnId}/match-candidates?${q(companyId)}`
-  );
+// QBO parity: searchAll widens ±365d; q filters memo/payee/ref contains.
+export function getMatchCandidates(
+  bankTxnId: string,
+  companyId: string,
+  opts?: { searchAll?: boolean; q?: string; windowDays?: number }
+) {
+  const params = new URLSearchParams();
+  params.set("operating_company_id", companyId);
+  if (opts?.searchAll) params.set("search_all", "1");
+  if (opts?.q?.trim()) params.set("q", opts.q.trim());
+  if (opts?.windowDays != null) params.set("window_days", String(opts.windowDays));
+  return apiRequest<{
+    candidates: BankMatchCandidate[];
+    match_candidates_count: number;
+    window_days?: number;
+    search_query?: string | null;
+  }>(`/api/v1/banking/transactions/${bankTxnId}/match-candidates?${params.toString()}`);
 }
 
 export function getBankingTiles(companyId: string) {

@@ -196,9 +196,13 @@ async function fetchLedgerCandidates(
   operatingCompanyId: string,
   txnDate: string,
   isCredit: boolean,
-  bankAccountId: string
+  bankAccountId: string,
+  options: { windowDays?: number; searchQuery?: string } = {}
 ): Promise<RawLedgerCandidate[]> {
   const results: RawLedgerCandidate[] = [];
+  // QBO Match: default ±7d recommendations; Search all widens (up to 2y) + optional memo/payee filter.
+  const windowDays = Math.min(Math.max(Number(options.windowDays ?? 7) || 7, 1), 730);
+  const searchNeedle = (options.searchQuery ?? "").trim().toLowerCase();
 
   // --- MONEY IN (deposit) sources ------------------------------------------------
   if (isCredit) {
@@ -207,11 +211,11 @@ async function fetchLedgerCandidates(
         SELECT id::text, amount_cents::int, payment_date::text AS event_date, display_id::text AS memo
         FROM accounting.payments
         WHERE operating_company_id = $1::uuid
-          AND payment_date BETWEEN ($2::date - INTERVAL '7 days') AND ($2::date + INTERVAL '7 days')
+          AND payment_date BETWEEN ($2::date - make_interval(days => $3)) AND ($2::date + make_interval(days => $3))
           AND voided_at IS NULL
-        LIMIT 200
+        LIMIT 500
       `,
-      [operatingCompanyId, txnDate]
+      [operatingCompanyId, txnDate, windowDays]
     );
     for (const row of payments.rows) {
       results.push({
@@ -231,11 +235,11 @@ async function fetchLedgerCandidates(
         SELECT id::text, amount_cents::int, payment_date::text AS event_date, COALESCE(reference_number, memo)::text AS memo
         FROM accounting.bill_payments
         WHERE operating_company_id = $1::uuid
-          AND payment_date BETWEEN ($2::date - INTERVAL '7 days') AND ($2::date + INTERVAL '7 days')
+          AND payment_date BETWEEN ($2::date - make_interval(days => $3)) AND ($2::date + make_interval(days => $3))
           AND revoked_at IS NULL
-        LIMIT 200
+        LIMIT 500
       `,
-      [operatingCompanyId, txnDate]
+      [operatingCompanyId, txnDate, windowDays]
     );
     for (const row of billPayments.rows) {
       results.push({
@@ -258,7 +262,7 @@ async function fetchLedgerCandidates(
           COALESCE(b.display_id, b.bill_number, b.memo)::text AS memo
         FROM accounting.bills b
         WHERE b.operating_company_id = $1::uuid
-          AND b.bill_date BETWEEN ($2::date - INTERVAL '7 days') AND ($2::date + INTERVAL '7 days')
+          AND b.bill_date BETWEEN ($2::date - make_interval(days => $4)) AND ($2::date + make_interval(days => $4))
           AND b.revoked_at IS NULL
           AND b.status = ANY($3::text[])
           AND (COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0)) > 0
@@ -268,9 +272,9 @@ async function fetchLedgerCandidates(
               AND m.ledger_entry_id = b.id
               AND m.match_state IN ('auto_matched', 'user_matched')
           )
-        LIMIT 200
+        LIMIT 500
       `,
-      [operatingCompanyId, txnDate, OPEN_BILL_STATUSES as unknown as string[]]
+      [operatingCompanyId, txnDate, OPEN_BILL_STATUSES as unknown as string[], windowDays]
     );
     for (const row of bills.rows) {
       results.push({
@@ -294,7 +298,7 @@ async function fetchLedgerCandidates(
           COALESCE(e.expense_number, e.memo)::text AS memo
         FROM accounting.expenses e
         WHERE e.operating_company_id = $1::uuid
-          AND e.transaction_date BETWEEN ($2::date - INTERVAL '7 days') AND ($2::date + INTERVAL '7 days')
+          AND e.transaction_date BETWEEN ($2::date - make_interval(days => $3)) AND ($2::date + make_interval(days => $3))
           AND e.is_active = true
           AND e.voided_at IS NULL
           AND NOT EXISTS (
@@ -303,9 +307,9 @@ async function fetchLedgerCandidates(
               AND m.ledger_entry_id = e.id
               AND m.match_state IN ('auto_matched', 'user_matched')
           )
-        LIMIT 200
+        LIMIT 500
       `,
-      [operatingCompanyId, txnDate]
+      [operatingCompanyId, txnDate, windowDays]
     );
     for (const row of expenses.rows) {
       results.push({
@@ -328,12 +332,12 @@ async function fetchLedgerCandidates(
       SELECT t.id::text, t.amount_cents::int, t.transfer_date::text AS event_date, COALESCE(t.memo, t.reference_number)::text AS memo
       FROM banking.transfers t
       WHERE t.operating_company_id = $1::uuid
-        AND t.transfer_date BETWEEN ($2::date - INTERVAL '7 days') AND ($2::date + INTERVAL '7 days')
+        AND t.transfer_date BETWEEN ($2::date - make_interval(days => $4)) AND ($2::date + make_interval(days => $4))
         AND t.revoked_at IS NULL
         AND (${transferDirectionClause})
-      LIMIT 200
+      LIMIT 500
     `,
-    [operatingCompanyId, txnDate, bankAccountId]
+    [operatingCompanyId, txnDate, bankAccountId, windowDays]
   );
   for (const row of transfers.rows) {
     results.push({
@@ -356,11 +360,11 @@ async function fetchLedgerCandidates(
       FROM accounting.journal_entries je
       LEFT JOIN accounting.journal_entry_postings jep ON jep.journal_entry_uuid = je.id
       WHERE je.operating_company_id = $1::uuid
-        AND je.entry_date BETWEEN ($2::date - INTERVAL '7 days') AND ($2::date + INTERVAL '7 days')
+        AND je.entry_date BETWEEN ($2::date - make_interval(days => $3)) AND ($2::date + make_interval(days => $3))
       GROUP BY je.id, je.entry_date, je.memo
-      LIMIT 200
+      LIMIT 500
     `,
-    [operatingCompanyId, txnDate]
+    [operatingCompanyId, txnDate, windowDays]
   );
   for (const row of journalEntries.rows) {
     results.push({
@@ -372,6 +376,9 @@ async function fetchLedgerCandidates(
     });
   }
 
+  if (searchNeedle) {
+    return results.filter((row) => (row.memo ?? "").toLowerCase().includes(searchNeedle));
+  }
   return results;
 }
 
@@ -622,7 +629,15 @@ async function postDifferenceJournalEntry(
   return journalEntryId;
 }
 
-export async function findCandidates(input: { operating_company_id: string; bank_transaction_id: string; actor_user_uuid?: string }): Promise<MatchCandidate[]> {
+export async function findCandidates(input: {
+  operating_company_id: string;
+  bank_transaction_id: string;
+  actor_user_uuid?: string;
+  /** QBO "Search all" — widen date window (default 7). Cap 730. */
+  window_days?: number;
+  /** Optional memo/payee/ref text filter (case-insensitive contains). */
+  search_query?: string;
+}): Promise<MatchCandidate[]> {
   return withLuciaBypass(async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
     const txn = await loadTransaction(client, input.operating_company_id, input.bank_transaction_id);
@@ -636,7 +651,8 @@ export async function findCandidates(input: { operating_company_id: string; bank
       input.operating_company_id,
       txn.transaction_date,
       txn.is_credit,
-      txn.bank_account_id
+      txn.bank_account_id,
+      { windowDays: input.window_days, searchQuery: input.search_query }
     );
 
     const ranked = rawCandidates

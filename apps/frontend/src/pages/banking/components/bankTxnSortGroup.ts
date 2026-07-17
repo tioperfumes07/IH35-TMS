@@ -10,7 +10,23 @@
 
 export type BankTxnGroupMode = "month" | "money" | "none";
 
-export type BankTxnSortKey = "date" | "description" | "spent" | "received" | "amount";
+export type BankTxnSortKey =
+  | "date"
+  | "description"
+  | "spent"
+  | "received"
+  | "amount"
+  | "driver"
+  | "truck"
+  | "load"
+  | "balance"
+  | "fromTo"
+  | "customer"
+  | "payee"
+  | "productService"
+  | "checkNo"
+  | "className"
+  | "location";
 
 export type BankTxnSort = { key: BankTxnSortKey; dir: "asc" | "desc" };
 

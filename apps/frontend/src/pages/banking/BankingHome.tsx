@@ -73,6 +73,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
   const [startingRecon, setStartingRecon] = useState(false);
   const [showDisconnectedBankAccounts, setShowDisconnectedBankAccounts] = useState(false);
   const [activeTab, setActiveTab] = useState<BankingTabId>(initialTab ?? bankingTabFromPath(location.pathname) as BankingTabId);
+  const [inspectTileId, setInspectTileId] = useState<string | null>(null);
   // Uncategorized KPI tile → Transactions tab pre-filtered. Reset to "all" whenever the Transactions tab
   // is reached any other way (top tab bar) so the filter only sticks when it came from the tile.
   const [transactionsInitialFilter, setTransactionsInitialFilter] = useState<string>("all");
@@ -312,8 +313,55 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               setSelectedAccountId(id);
               navigate(`/banking/accounts/${id}`);
             }}
+            onView={(id) => {
+              setSelectedAccountId(id);
+              setTransactionsInitialFilter("all");
+              setActiveTab("transactions");
+              navigate(BANKING_TAB_PATH.transactions);
+            }}
+            onInspect={(id) => setInspectTileId(id)}
             onManageAccounts={() => setManageOpen(true)}
           />
+          {inspectTileId ? (
+            <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="bank-account-inspect-panel">
+              {(() => {
+                const tile = sortedBankTiles.find((t) => t.id === inspectTileId);
+                const plaid = (plaidAccountsQuery.data?.accounts ?? []).find((a) => a.id === inspectTileId);
+                return (
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="space-y-1 text-sm text-gray-800">
+                      <p className="font-semibold text-gray-900">{tile?.display_name ?? "Account"}</p>
+                      <p className="text-xs text-gray-600">Type: {tile?.account_type ?? plaid?.account_type ?? "—"}</p>
+                      <p className="text-xs text-gray-600">Institution: {plaid?.institution_name ?? "—"}</p>
+                      <p className="text-xs text-gray-600">Mask: {plaid?.account_mask ? `••••${plaid.account_mask}` : "—"}</p>
+                      <p className="text-xs text-gray-600">
+                        Balance: ${Number(tile?.current_balance ?? (plaid?.current_balance_cents ?? 0) / 100).toFixed(2)}
+                      </p>
+                      <p className="text-xs text-gray-600">Last txn: {tile?.last_txn_date ? String(tile.last_txn_date).slice(0, 10) : "—"}</p>
+                      <p className="text-xs text-gray-600">Uncategorized: {Number(tile?.uncategorized_count ?? 0)}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
+                        onClick={() => {
+                          setSelectedAccountId(inspectTileId);
+                          setActiveTab("transactions");
+                          navigate(BANKING_TAB_PATH.transactions);
+                          setInspectTileId(null);
+                        }}
+                      >
+                        View register
+                      </button>
+                      <button type="button" className="rounded-sm border border-gray-300 px-2 py-1 text-xs" onClick={() => setInspectTileId(null)}>
+                        Close
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          ) : null}
           <div className="grid auto-rows-fr grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-6">
             <button
               type="button"
