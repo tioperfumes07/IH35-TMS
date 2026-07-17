@@ -263,13 +263,14 @@ export function LegalMatterFormFields({ form, setForm, mode }: Props) {
       </label>
       {mode === "edit" ? (
         <label className="text-xs text-gray-600">
-          Financial reserve (cents)
-          <input
-            type="number"
-            min={0}
-            className="mt-1 w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
-            value={form.financial_reserve_cents}
-            onChange={(e) => setForm((f) => ({ ...f, financial_reserve_cents: e.target.value }))}
+          Financial reserve
+          <MoneyInput
+            valueCents={form.financial_reserve_cents ? Number(form.financial_reserve_cents) : null}
+            onChangeCents={(c) =>
+              setForm((f) => ({ ...f, financial_reserve_cents: c == null ? "" : String(c) }))
+            }
+            ariaLabel="Financial reserve"
+            className="mt-1 w-full"
           />
         </label>
       ) : null}
