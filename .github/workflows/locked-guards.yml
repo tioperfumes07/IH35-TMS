@@ -354,6 +354,9 @@ jobs:
       - name: verify:insurance-policy-unit-columns
         run: npm run verify:insurance-policy-unit-columns
 
+      - name: verify:insurance-units-assets-bridge
+        run: npm run verify:insurance-units-assets-bridge -- --selftest && npm run verify:insurance-units-assets-bridge
+
       - name: verify:insurance-dashboard-routes-registered
         run: npm run verify:insurance-dashboard-routes-registered
 

@@ -11,6 +11,7 @@ import {
   updateClaimBodySchema,
 } from "./claim.shared.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { resolveMdataAssetId } from "./resolve-asset-id.shared.js";
 
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
@@ -286,17 +287,10 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
       );
       if (!policy.rows[0]) return { kind: "policy_not_found" as const };
 
+      let resolvedAssetId: string | null = null;
       if (body.asset_id) {
-        const asset = await client.query(
-          `
-            SELECT id::text
-            FROM mdata.assets
-            WHERE tenant_id = $1::uuid AND id = $2::uuid
-            LIMIT 1
-          `,
-          [body.operating_company_id, body.asset_id]
-        );
-        if (!asset.rows[0]) return { kind: "asset_not_found" as const };
+        resolvedAssetId = await resolveMdataAssetId(client, body.operating_company_id, body.asset_id);
+        if (!resolvedAssetId) return { kind: "asset_not_found" as const };
       }
 
       for (const [kind, id] of [
@@ -338,7 +332,7 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
           body.operating_company_id,
           body.claim_number,
           body.policy_id,
-          body.asset_id ?? null,
+          body.asset_id ? resolvedAssetId : null,
           body.accident_date,
           body.reported_date,
           body.status ?? "open",
@@ -402,17 +396,16 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
         if (!policy.rows[0]) return { kind: "policy_not_found" as const };
       }
 
+      let resolvedPatchAssetId: string | null | undefined;
       if (body.asset_id !== undefined && body.asset_id !== null) {
-        const asset = await client.query(
-          `
-            SELECT id::text
-            FROM mdata.assets
-            WHERE tenant_id = $1::uuid AND id = $2::uuid
-            LIMIT 1
-          `,
-          [query.data.operating_company_id, body.asset_id]
+        resolvedPatchAssetId = await resolveMdataAssetId(
+          client,
+          query.data.operating_company_id,
+          body.asset_id,
         );
-        if (!asset.rows[0]) return { kind: "asset_not_found" as const };
+        if (!resolvedPatchAssetId) return { kind: "asset_not_found" as const };
+      } else if (body.asset_id === null) {
+        resolvedPatchAssetId = null;
       }
 
       for (const [kind, id] of [
@@ -452,7 +445,7 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
 
       if (body.claim_number !== undefined) setField("claim_number", body.claim_number);
       if (body.policy_id !== undefined) setField("policy_id", body.policy_id, "::uuid");
-      if (body.asset_id !== undefined) setField("asset_id", body.asset_id, "::uuid");
+      if (body.asset_id !== undefined) setField("asset_id", resolvedPatchAssetId ?? null, "::uuid");
       if (body.accident_date !== undefined) setField("accident_date", body.accident_date, "::date");
       if (body.reported_date !== undefined) setField("reported_date", body.reported_date, "::date");
       if (body.status !== undefined) setField("status", body.status);

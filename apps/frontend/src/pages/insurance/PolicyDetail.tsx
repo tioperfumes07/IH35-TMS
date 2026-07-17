@@ -22,6 +22,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatUsdCents } from "../../lib/money";
 import { PaymentScheduleTab } from "./PaymentScheduleTab";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 function formatMoney(cents: number) {
   return formatUsdCents(cents);
@@ -97,13 +98,18 @@ export function PolicyDetail() {
   const unitColumns = useMemo<ParityColumn<InsurancePolicyUnit>[]>(
     () => [
       {
-        key: "asset_id",
+        key: "unit_id",
         label: "Unit",
-        render: (unit) => (
-          <Link className="text-slate-700 underline" to={`/fleet/units/${unit.asset_id}`}>
-            {unit.asset_id.slice(0, 8)}
-          </Link>
-        ),
+        render: (unit) => {
+          const unitId = unit.unit_id ?? unit.asset_id;
+          return (
+            <EntityLink
+              kind="unit"
+              id={unitId}
+              label={unitId.slice(0, 8)}
+            />
+          );
+        },
       },
       { key: "insured_value_cents", label: "Insured Value", sortable: true, render: (unit) => formatMoney(unit.insured_value_cents) },
       { key: "created_at", label: "Assigned", sortable: true, render: (unit) => formatDateUS(unit.created_at) },
