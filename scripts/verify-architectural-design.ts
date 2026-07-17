@@ -86,8 +86,8 @@ const SUB_NAV_SOURCES: SubNavSource[] = [
   },
   {
     module: "banking",
-    file: "apps/frontend/src/pages/banking/BankingHome.tsx",
-    startToken: "const BANKING_TABS = [",
+    file: "apps/frontend/src/pages/banking/BANKING_NAV_CONFIG.ts",
+    startToken: "export const BANKING_MODULE_TABS = [",
     valueField: "label",
   },
   {
