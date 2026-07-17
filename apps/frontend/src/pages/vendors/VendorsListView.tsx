@@ -10,6 +10,7 @@ import { useToast } from "../../components/Toast";
 import { useListState, type ListQueryStatus } from "../../components/list-state";
 import { formatUsdCents } from "../../lib/money";
 import { TableSearch } from "../../components/table";
+import { useUrlSort } from "../../hooks/useUrlSort";
 
 function fmtMoney(cents: number) {
   return formatUsdCents(cents);
@@ -83,6 +84,10 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, on
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const bulkPermission = useBulkPermission();
+  // BANK-SORT-ROLLOUT-ACCT (Customers/Vendors follow-up): every visible column header sorts
+  // ASC/DESC; sort persists in the URL (?sort=&dir=) so it survives reload / is shareable, same
+  // contract as Bills/Expenses.
+  const { sortKey, sortDirection, onSortChange } = useUrlSort();
   const [search, setSearch] = useState("");
   // QBO-PARITY-VENDORS — additive client-side filter chips over data already loaded on the row
   // (deactivated_at, eligible_1099, open balance). Independent toggles, all default OFF so the
@@ -146,6 +151,9 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, on
         rowKey={(row) => row.id}
         storageKey="vendors-list"
         initialPageSize={50}
+        sortKey={sortKey}
+        sortDirection={sortDirection}
+        onSortChange={onSortChange}
         loading={listState.isLoading}
         emptyText={listState.isEmpty ? "No vendors found." : undefined}
         onRowClick={(row) => onSelectVendor?.(row.id)}
