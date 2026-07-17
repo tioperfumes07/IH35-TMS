@@ -9,6 +9,7 @@ import { useToast } from "../../../components/Toast";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
+import { vendorReferenceOption } from "../../../components/parity/referenceOptionLabels";
 
 const FREQUENCIES: { value: RecurringBillFrequency; label: string }[] = [
   { value: "weekly", label: "Weekly" },
@@ -136,7 +137,7 @@ export function RecurringBillCreate() {
             <ReferenceSelect
               value={vendorUuid || null}
               onChange={(next) => setVendorUuid(next ?? "")}
-              options={vendors.map((v) => ({ value: v.id, label: v.name }))}
+              options={vendors.map(vendorReferenceOption)}
               createKind="vendor"
               operatingCompanyId={companyId}
               placeholder="Select vendor..."
