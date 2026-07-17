@@ -818,6 +818,11 @@ jobs:
       - name: verify:banking-designview-qbo-parity
         run: npm run verify:banking-designview-qbo-parity
 
+      - name: verify:item-editor-account-addnew --selftest
+        run: node scripts/verify-item-editor-account-addnew.mjs --selftest
+      - name: verify:item-editor-account-addnew
+        run: npm run verify:item-editor-account-addnew
+
       - name: verify:banking-register-categorize-capable --selftest
         run: node scripts/verify-banking-register-categorize-capable.mjs --selftest
       - name: verify:banking-register-categorize-capable
