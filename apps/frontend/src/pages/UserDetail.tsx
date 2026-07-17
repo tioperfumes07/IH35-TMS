@@ -27,6 +27,7 @@ import { StatusBadge } from "../components/StatusBadge";
 import { useToast } from "../components/Toast";
 import { useAuth } from "../auth/useAuth";
 import { useCompanyContext } from "../contexts/CompanyContext";
+import { UserActivityTab } from "../components/users/UserActivityTab";
 
 type Tab = "profile" | "companies" | "safety" | "activity";
 
@@ -401,7 +402,11 @@ export function UserDetailPage() {
         </div>
       ) : null}
 
-      {tab === "activity" ? <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm text-gray-500">User activity history will appear here once audit exports are enabled.</div> : null}
+      {tab === "activity" && selectedCompanyId ? (
+        <UserActivityTab operatingCompanyId={selectedCompanyId} userId={userId} />
+      ) : tab === "activity" ? (
+        <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm text-gray-500">Select an operating company to view activity.</div>
+      ) : null}
 
       <Modal open={addEventOpen} onClose={() => setAddEventOpen(false)} title="Create Dispatcher Safety Event">
         <form
