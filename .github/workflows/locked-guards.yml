@@ -1271,4 +1271,4 @@ jobs:
       - name: verify:sql-column-existence --selftest
         run: node scripts/verify-sql-column-existence.mjs --selftest
       - name: verify:sql-column-existence
-        run: npm run verify:sql-column-existence
+        run: node scripts/verify-sql-column-existence.mjs
