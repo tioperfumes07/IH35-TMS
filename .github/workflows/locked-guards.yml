@@ -1268,3 +1268,8 @@ jobs:
         run: node scripts/verify-inventory-reorder-threshold-ui.mjs --selftest
       - name: verify:inventory-reorder-threshold-ui
         run: node scripts/verify-inventory-reorder-threshold-ui.mjs
+      # drain babysit — h-01 entity badge
+      - name: verify:entity-badge-single-source --selftest
+        run: node scripts/verify-entity-badge-single-source.mjs --selftest
+      - name: verify:entity-badge-single-source
+        run: npm run verify:entity-badge-single-source
