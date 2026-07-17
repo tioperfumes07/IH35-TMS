@@ -13,20 +13,16 @@ function assertMatches(source, regex, message) {
   if (!regex.test(source)) throw new Error(message);
 }
 
-function assertRoutesLoaded(indexSource, legacyNeedle, message) {
-  if (indexSource.includes(legacyNeedle)) return;
-  if (indexSource.includes("app.register(autoload")) return;
-  throw new Error(message);
-}
-
 try {
   const routesPath = "apps/backend/src/accounting/cash-flow.routes.ts";
   const servicePath = "apps/backend/src/accounting/cash-flow.service.ts";
-  const indexPath = "apps/backend/src/accounting/index.ts";
+  const accountingIndexPath = "apps/backend/src/accounting/index.ts";
+  const serverIndexPath = "apps/backend/src/index.ts";
 
   const routes = read(routesPath);
   const service = read(servicePath);
-  const index = read(indexPath);
+  const accountingIndex = read(accountingIndexPath);
+  const serverIndex = read(serverIndexPath);
 
   assertIncludes(
     routes,
@@ -63,11 +59,12 @@ try {
     "reconciled must be derived from returned figures",
   );
 
-  assertRoutesLoaded(
-    index,
-    "registerCashFlowRoutes",
-    "Cash Flow routes are not registered in accounting index",
-  );
+  const mountedExplicit =
+    serverIndex.includes("await registerCashFlowRoutes(app)") ||
+    accountingIndex.includes("registerCashFlowRoutes(");
+  if (!mountedExplicit) {
+    throw new Error("Cash Flow routes are not registered (index.ts mount required)");
+  }
 
   console.log("verify:cash-flow-contract — OK");
 } catch (error) {

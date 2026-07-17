@@ -332,6 +332,9 @@ jobs:
       - name: verify:insurance-dashboard-routes-registered
         run: npm run verify:insurance-dashboard-routes-registered
 
+      - name: verify:cashflow-routes-mounted
+        run: npm run verify:cashflow-routes-mounted
+
       - name: verify:safety-rls-coverage
         run: npm run verify:safety-rls-coverage
 

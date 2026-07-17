@@ -326,6 +326,9 @@ import { registerUnitTollTagsRoutes } from "./master-data/units/toll-tags/routes
 import { registerDriverOperationsDepthRoutes } from "./master-data/drivers/operations-depth/routes.js";
 import { registerCustomerFreeTimeDetentionRoutes } from "./master-data/customers/free-time-detention.routes.js";
 import { initializeAccountingCrons, registerAccountingRoutes } from "./accounting/index.js";
+import { registerCashFlowRoutes } from "./accounting/cash-flow.routes.js";
+import { registerCashForecastRoutes } from "./accounting/cash-forecast.routes.js";
+import { registerFinanceHubRoutes } from "./accounting/finance-hub.routes.js";
 import { registerApPaymentApplicationRoutes } from "./ap/payment-application.routes.js";
 import { registerDataInfrastructureRoutes } from "./data-infra/data-infra.routes.js";
 import { registerOcrRoutes } from "./ocr/ocr.routes.js";
@@ -1026,6 +1029,10 @@ async function main() {
   await registerOemPartsRoutes(app);
   await registerNamesMasterRoutes(app);
   await registerAccountingRoutes(app);
+  // 0441-mod10: explicit mount — accounting autoload alone left these as silent orphans in route audits.
+  await registerCashFlowRoutes(app);
+  await registerCashForecastRoutes(app);
+  await registerFinanceHubRoutes(app);
   await registerApPaymentApplicationRoutes(app);
   await registerCompanyRoutes(app);
   await registerLegalTemplateRoutes(app);
