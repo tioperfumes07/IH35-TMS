@@ -1043,7 +1043,8 @@
     "verify:dvir-followup-wo-target": "node scripts/verify-dvir-followup-wo-target.mjs",
     "verify:maintenance-settings-save": "node scripts/verify-maintenance-settings-save.mjs",
     "verify:qbo-parity-name-plus-type-option-labels": "node scripts/verify-qbo-parity-name-plus-type-option-labels.mjs",
-    "verify:dispatch-cancel-approval-gate": "node scripts/verify-dispatch-cancel-approval-gate.mjs"
+    "verify:dispatch-cancel-approval-gate": "node scripts/verify-dispatch-cancel-approval-gate.mjs",
+    "verify:driver-pwa-load-status-gate": "node scripts/verify-driver-pwa-load-status-gate.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1087.0",
