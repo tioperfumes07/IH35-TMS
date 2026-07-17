@@ -154,7 +154,7 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
           data-testid="safety-hos-create-violation"
           onClick={() => setCreateOpen(true)}
         >
-          + Create
+          + Create violation
         </button>
       </div>
 
@@ -243,7 +243,7 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
             )}
           </div>
           <div className="border-t border-gray-100 px-3 py-2 text-[11px] text-slate-500">
-            Log new violations with <span className="font-semibold text-slate-700">+ Create</span> above, or manage the full list on{" "}
+            Log new violations with <span className="font-semibold text-slate-700">+ Create violation</span> above, or manage the full list on{" "}
             <Link to="/safety/hos-violations" className="font-semibold text-slate-700 hover:underline">
               /safety/hos-violations
             </Link>
