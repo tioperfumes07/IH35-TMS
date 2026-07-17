@@ -678,6 +678,11 @@ jobs:
       - name: verify:dispatch-cancel-approval-gate
         run: npm run verify:dispatch-cancel-approval-gate
 
+      - name: verify:dispatch-cancel-reason-catalog --selftest
+        run: node scripts/verify-dispatch-cancel-reason-catalog.mjs --selftest
+      - name: verify:dispatch-cancel-reason-catalog
+        run: npm run verify:dispatch-cancel-reason-catalog
+
       - name: verify:fact-chargebacks-entitylinks --selftest
         run: node scripts/verify-fact-chargebacks-entitylinks.mjs --selftest
       - name: verify:fact-chargebacks-entitylinks

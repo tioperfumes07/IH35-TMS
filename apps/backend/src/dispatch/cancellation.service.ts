@@ -45,12 +45,13 @@ export async function cancelLoad(
       }>(
         `
           SELECT reason_code, billable_to_customer_default, requires_owner_approval
-          FROM catalogs.cancellation_reasons
+          FROM catalogs.load_cancellation_reasons
           WHERE reason_code = $1
+            AND operating_company_id = $2
             AND is_active = true
           LIMIT 1
         `,
-        [input.reason_code]
+        [input.reason_code, input.operating_company_id]
       );
       const reason = reasonRes.rows[0];
       if (!reason) throw new Error("E_REASON_NOT_FOUND");
@@ -141,7 +142,9 @@ export async function listCancellations(
       `
         SELECT c.*, r.reason_label
         FROM dispatch.load_cancellations c
-        JOIN catalogs.cancellation_reasons r ON r.reason_code = c.reason_code
+        JOIN catalogs.load_cancellation_reasons r
+          ON r.reason_code = c.reason_code
+         AND r.operating_company_id = c.operating_company_id
         WHERE ${filters.join(" AND ")}
         ORDER BY c.cancelled_at DESC
       `,
@@ -151,15 +154,23 @@ export async function listCancellations(
   });
 }
 
-export async function listCancellationReasons(userId: string) {
+export async function listCancellationReasons(userId: string, operatingCompanyId: string) {
   return withCurrentUser(userId, async (client) => {
+    await client.query("SELECT set_config('app.operating_company_id', $1, true)", [operatingCompanyId]);
     const rows = await client.query(
       `
-        SELECT reason_code, reason_label, billable_to_customer_default, requires_owner_approval, sort_order
-        FROM catalogs.cancellation_reasons
-        WHERE is_active = true
-        ORDER BY sort_order ASC, reason_label ASC
-      `
+        SELECT
+          reason_code,
+          display_name AS reason_label,
+          billable_to_customer_default,
+          requires_owner_approval,
+          sort_order
+        FROM catalogs.load_cancellation_reasons
+        WHERE operating_company_id = $1
+          AND is_active = true
+        ORDER BY sort_order ASC, display_name ASC
+      `,
+      [operatingCompanyId]
     );
     return { reasons: rows.rows };
   });

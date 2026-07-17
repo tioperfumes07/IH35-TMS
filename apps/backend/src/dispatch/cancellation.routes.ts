@@ -18,6 +18,9 @@ const listQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
   since: z.string().datetime({ offset: true }).optional(),
 });
+const cancellationReasonsQuerySchema = z.object({
+  operating_company_id: z.string().uuid(),
+});
 const approveBodySchema = z.object({
   operating_company_id: z.string().uuid(),
 });
@@ -40,7 +43,9 @@ export async function registerDispatchCancellationRoutes(app: FastifyInstance) {
   app.get("/api/v1/dispatch/cancellation-reasons", async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
-    return listCancellationReasons(user.uuid);
+    const query = cancellationReasonsQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
+    return listCancellationReasons(user.uuid, query.data.operating_company_id);
   });
 
   app.post("/api/v1/dispatch/loads/:id/cancel", async (req, reply) => {

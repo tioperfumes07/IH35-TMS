@@ -796,8 +796,12 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       // entity's load (reassign customer/rate, emit escrow events). This route is office-role
       // gated (isOfficeWriteRole), so membership-scope is the correct guard: Owner = all companies,
       // others = only their accessible companies.
-      const currentRes = await client.query<{ id: string; status: z.infer<typeof loadStatusSchema> }>(
-        `SELECT id, status FROM mdata.loads
+      const currentRes = await client.query<{
+        id: string;
+        status: z.infer<typeof loadStatusSchema>;
+        operating_company_id: string;
+      }>(
+        `SELECT id, status, operating_company_id FROM mdata.loads
          WHERE id = $1 AND soft_deleted_at IS NULL
            AND operating_company_id IN (SELECT org.user_accessible_company_ids())
          LIMIT 1`,
@@ -823,12 +827,13 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         }>(
           `
             SELECT reason_code, requires_owner_approval
-            FROM catalogs.cancellation_reasons
+            FROM catalogs.load_cancellation_reasons
             WHERE reason_code = $1
+              AND operating_company_id = $2
               AND is_active = true
             LIMIT 1
           `,
-          [cancellationReasonCode]
+          [cancellationReasonCode, current.operating_company_id]
         );
         const reason = reasonRes.rows[0];
         if (!reason) return { error: "cancellation_reason_invalid" as const };

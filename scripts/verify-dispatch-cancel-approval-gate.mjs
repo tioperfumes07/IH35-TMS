@@ -3,7 +3,7 @@
  * verify-dispatch-cancel-approval-gate.mjs  (0441-mod4)
  *
  * Root cause: PATCH /api/v1/mdata/loads/:id/status could flip a load to cancelled
- * without consulting catalogs.cancellation_reasons.requires_owner_approval, and
+ * without consulting catalogs.load_cancellation_reasons.requires_owner_approval, and
  * LoadDetailDrawer called cancelDispatchLoad (gated) then cancelMutation (ungated PATCH),
  * overwriting pending_owner_approval with cancelled.
  *
@@ -104,9 +104,12 @@ export function checkMdataStatusPatchGate(src) {
     failures.push(`${LOADS_ROUTES}: status PATCH must enforce cancellation inside its cancelled-status branch`);
     return failures;
   }
-  const cancelGate = cancelledBlocks.find((block) => /catalogs\.cancellation_reasons/.test(block)) ?? "";
-  if (!/catalogs\.cancellation_reasons/.test(cancelGate)) {
-    failures.push(`${LOADS_ROUTES}: cancelled-status branch must read catalogs.cancellation_reasons`);
+  const cancelGate = cancelledBlocks.find((block) => /catalogs\.load_cancellation_reasons/.test(block)) ?? "";
+  if (!/catalogs\.load_cancellation_reasons/.test(cancelGate)) {
+    failures.push(`${LOADS_ROUTES}: cancelled-status branch must read catalogs.load_cancellation_reasons`);
+  }
+  if (!/operating_company_id/.test(cancelGate)) {
+    failures.push(`${LOADS_ROUTES}: cancelled-status branch must scope reason lookup by operating_company_id`);
   }
   if (!/reason\.requires_owner_approval\s*&&\s*!isOwnerRole\(authUser\.role\)/.test(cancelGate)) {
     failures.push(`${LOADS_ROUTES}: cancelled-status branch must gate requires_owner_approval on Owner role`);
@@ -158,7 +161,7 @@ if (process.argv.includes("--selftest")) {
     app.patch("/api/v1/mdata/loads/:id/status", async (req, reply) => {
       const result = await withCurrentUser(authUser.uuid, async (client) => {
         if (newStatus === "cancelled" && cancellationReasonCode) {
-          await client.query("SELECT requires_owner_approval FROM catalogs.cancellation_reasons");
+          await client.query("SELECT requires_owner_approval FROM catalogs.load_cancellation_reasons WHERE operating_company_id = $2");
           if (reason.requires_owner_approval && !isOwnerRole(authUser.role)) {
             return { error: "owner_approval_required" };
           }
@@ -176,7 +179,7 @@ if (process.argv.includes("--selftest")) {
   const badRoutesDisconnected = `
     app.patch("/api/v1/mdata/loads/:id/status", async () => {});
     if (newStatus === "cancelled") {
-      FROM catalogs.cancellation_reasons;
+      FROM catalogs.load_cancellation_reasons;
       if (reason.requires_owner_approval && !isOwnerRole(authUser.role)) {
         return { error: "owner_approval_required" };
       }
@@ -186,7 +189,7 @@ if (process.argv.includes("--selftest")) {
   const badRoutesGateOutsideCancelledBranch = `
     app.patch("/api/v1/mdata/loads/:id/status", async (req, reply) => {
       if (newStatus === "cancelled") applyCancelledStatus();
-      await client.query("SELECT requires_owner_approval FROM catalogs.cancellation_reasons");
+      await client.query("SELECT requires_owner_approval FROM catalogs.load_cancellation_reasons");
       if (reason.requires_owner_approval && !isOwnerRole(authUser.role)) {
         return { error: "owner_approval_required" };
       }
