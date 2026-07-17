@@ -2,8 +2,8 @@
   "generated_cst": "2026-07-16T21:57:11.816Z",
   "source": "reconcile:blocks 2026-07-16 + MASTER-MANIFEST-2026-07-10",
   "totals": {
-    "RESOLVED": 131,
-    "OPEN": 408,
+    "RESOLVED": 132,
+    "OPEN": 407,
     "NOISE": 135,
     "NEEDS-OWNER": 136,
     "UNVERIFIED": 69
@@ -94,8 +94,8 @@
       "UNVERIFIED": 4
     },
     "legal": {
-      "RESOLVED": 4,
-      "OPEN": 3,
+      "RESOLVED": 5,
+      "OPEN": 2,
       "NOISE": 0,
       "NEEDS-OWNER": 0,
       "UNVERIFIED": 0
@@ -2114,13 +2114,6 @@
         "module": "drivers",
         "tier": "tier-3",
         "missing": "apps/driver-pwa/android project, @capacitor/* deps, device_push_tokens migration, firebase-admin integration — none exist",
-        "needs_live": false
-      },
-      {
-        "id": "0441-mod12-legal-8of10-pages-omit-breadcrumb",
-        "module": "legal",
-        "tier": "tier-3",
-        "missing": "4 real app pages still lack a breadcrumb: attorney-review/LegalAttorneyReviewPortalPage.tsx, sign/LegalSignPage.tsx, PrivacyPolicyPage.tsx, TermsOfServicePage.tsx (verified 0 breadcrumb matches each via individual grep). Note PrivacyPolicy/TermsOfService are public static-legal-text pages so a breadcrumb may not be the right pattern there; AttorneyReviewPortalPage and LegalSignPage are internal app pages that should get one.",
         "needs_live": false
       },
       {

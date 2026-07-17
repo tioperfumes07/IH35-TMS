@@ -1,17 +1,29 @@
 {
   "block_id": "0441-mod12-legal-8of10-pages-omit-breadcrumb",
-  "status": "PENDING",
+  "status": "DONE",
   "classification": "FINANCIAL",
   "phase": "tier3",
   "source": "MASTER-6 authored dispatch (06-TIER3-BLOCKS)",
   "source_file": "0441-mod12-legal-8of10-pages-omit-breadcrumb.txt",
+  "branch": "fix/legal-breadcrumb-tail-4",
+  "pr": 2611,
   "allowed_files": [
     "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
   ],
   "acceptance": [
     {
       "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
+    },
+    {
+      "kind": "guard",
+      "script": "scripts/verify-legal-breadcrumb-tail-4.mjs",
+      "wired_into": ".github/workflows/locked-guards.yml",
+      "check": "Fails if attorney-review portal, sign, Privacy Policy, or Terms of Service omit the Legal PageHeader breadcrumb."
+    },
+    {
+      "kind": "file",
+      "check": "All 14 legal pages carry PageHeader breadcrumbs. Original 12 gaps closed across module-defect sweeps + LEGAL-MATTER-EDIT (#2604: attorney-review portal + sign) + LEGAL-BREADCRUMB-TAIL-4 (#2611: PrivacyPolicyPage.tsx:18, TermsOfServicePage.tsx:18). backHref=\"/login\" on the two public pages is intentional (review-accepted: public static-legal-text pages reachable pre-auth)."
     }
   ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+  "note": "CLOSED via PR #2611 (fix/legal-breadcrumb-tail-4). Verified on branch: node scripts/verify-legal-breadcrumb-tail-4.mjs PASS; guard wired in locked-guards.yml + package.json verify:legal-breadcrumb-tail-4. Attorney-review + sign breadcrumbs landed in #2604; privacy + terms in #2611. Originally registered by faithful extraction from the authored MASTER-6 dispatch spec."
 }
