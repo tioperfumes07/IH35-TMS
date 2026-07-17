@@ -26,6 +26,12 @@ type Options<T> = {
   sortValue?: (row: T, key: string) => string | number | null | undefined;
   /** SERVER-SIDE sort: fired with the new sort state on every header click; refetch sorted data. */
   onSortChange?: (sortKey: string | null, sortDir: SortDir) => void;
+  /**
+   * BANK-SORT-ROLLOUT-OPS — optional initial sort state (e.g. seeded from useUrlSort on mount) so a
+   * page can restore a URL-persisted `?sort=`/`?dir=` on load. Omit for the prior default (unsorted).
+   */
+  initialSortKey?: string | null;
+  initialSortDir?: SortDir;
   defaultPageSize?: number;
   defaultHidden?: string[];
 };
@@ -47,6 +53,8 @@ export function useTableController<T>({
   searchText,
   sortValue,
   onSortChange,
+  initialSortKey = null,
+  initialSortDir = "asc",
   defaultPageSize = 50,
   defaultHidden = [],
 }: Options<T>) {
@@ -56,8 +64,8 @@ export function useTableController<T>({
   });
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [sortKey, setSortKey] = useState<string | null>(null);
-  const [sortDir, setSortDir] = useState<SortDir>("asc");
+  const [sortKey, setSortKey] = useState<string | null>(initialSortKey);
+  const [sortDir, setSortDir] = useState<SortDir>(initialSortDir);
 
   // Click a header: asc → desc → unsorted, cycling. Compute the next state explicitly so we can notify
   // a server-side consumer (onSortChange) with the new key/dir on the same action (no mount-time fire).

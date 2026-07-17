@@ -1019,7 +1019,8 @@
     "verify:accounting-sortable-headers": "node scripts/verify-accounting-sortable-headers.mjs",
     "verify:banking-categorize-ux-honesty": "node scripts/verify-banking-categorize-ux-honesty.mjs",
     "verify:dispatch-factoring-queue-deeplinks": "node scripts/verify-dispatch-factoring-queue-deeplinks.mjs",
-    "verify:425c-petition-not-hardcoded": "node scripts/verify-425c-petition-not-hardcoded.mjs"
+    "verify:425c-petition-not-hardcoded": "node scripts/verify-425c-petition-not-hardcoded.mjs",
+    "verify:ops-sortable-headers": "node scripts/verify-ops-sortable-headers.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1087.0",

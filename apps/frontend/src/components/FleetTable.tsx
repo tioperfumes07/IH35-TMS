@@ -9,6 +9,7 @@ import { EditVehicleModal } from "./fleet/EditVehicleModal";
 import { TableControls, Paginator, TableHeaderCell, useTableController, type TableColumn } from "./table";
 import { patchUnit } from "../api/mdata";
 import { patchTrailer } from "../api/fleet-trailers";
+import { useUrlSort } from "../hooks/useUrlSort";
 
 export type FleetRow = {
   id: string;
@@ -164,6 +165,12 @@ export function FleetTable({
     [rows, statusFilter, typeListFilter]
   );
 
+  // BANK-SORT-ROLLOUT-OPS — ?sort=/?dir= URL persistence (shareable/bookmarkable sort) via the shared
+  // useUrlSort hook (BANK-SORT-ROLLOUT-ACCT). Client-side sort logic is unchanged (useTableController +
+  // fleetSortValue); this only seeds the initial state from the URL and mirrors every header click back
+  // into it. useTableController's toggleSort is 3-state (asc\u2192desc\u2192unsorted); an empty-string key
+  // clears the URL param (see useUrlSort.onSortChange).
+  const urlSort = useUrlSort();
   const table = useTableController<FleetRow>({
     rows: listFiltered,
     columns,
@@ -171,6 +178,9 @@ export function FleetTable({
     tableKey: showMaintenanceColumns ? "fleet-maint" : "fleet",
     searchText: fleetSearchText,
     sortValue: fleetSortValue,
+    initialSortKey: urlSort.sortKey || null,
+    initialSortDir: urlSort.sortDirection,
+    onSortChange: (key, dir) => urlSort.onSortChange(key ?? "", dir),
     defaultPageSize: 50,
   });
 
