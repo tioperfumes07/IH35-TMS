@@ -11,7 +11,6 @@ import {
   getQboSyncQueueStats,
   getReconciliationSessions,
   startReconciliationSession,
-  type BankingTile,
 } from "../../api/banking";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { MoneyInput } from "../../components/forms/MoneyInput";
