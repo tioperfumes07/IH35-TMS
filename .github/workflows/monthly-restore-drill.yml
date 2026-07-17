@@ -1,10 +1,21 @@
 name: monthly-restore-drill
 
 on:
+  # backup-ci-guard only needs to run when backup/restore tooling changes — not on every PR.
   pull_request:
     branches: [main]
+    paths:
+      - "scripts/verify-backups-current.mjs"
+      - "scripts/verify-restore-drill-integrity-wired.mjs"
+      - "scripts/backup-*.mjs"
+      - ".github/workflows/monthly-restore-drill.yml"
   push:
     branches: [main]
+    paths:
+      - "scripts/verify-backups-current.mjs"
+      - "scripts/verify-restore-drill-integrity-wired.mjs"
+      - "scripts/backup-*.mjs"
+      - ".github/workflows/monthly-restore-drill.yml"
   schedule:
     - cron: "0 8 1 * *"
   workflow_dispatch:

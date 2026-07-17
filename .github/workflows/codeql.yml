@@ -10,8 +10,15 @@ concurrency:
 on:
   push:
     branches: [main]
+  # Skip on PRs that touch no code (docs/trackers/block-ready/markdown). Push-to-main
+  # and the weekly full scan still cover everything; only redundant PR runs are trimmed.
   pull_request:
     branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - ".block-ready/**"
+      - ".cursor/**"
+      - "**/*.md"
   schedule:
     - cron: '0 7 * * 1' # weekly full scan, Mondays 07:00 UTC
 

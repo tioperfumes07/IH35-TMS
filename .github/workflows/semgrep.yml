@@ -9,8 +9,15 @@ concurrency:
 # the findings as a build artifact. Advisory to start (does not block merges) — flip `continue-on-error`
 # to false to make it a hard gate once the existing backlog of findings is triaged.
 on:
+  # Skip on PRs that touch no code (docs/trackers/block-ready/markdown). Push-to-main
+  # and the weekly full audit still cover everything; only redundant PR runs are trimmed.
   pull_request:
     branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - ".block-ready/**"
+      - ".cursor/**"
+      - "**/*.md"
   push:
     branches: [main]
   schedule:
