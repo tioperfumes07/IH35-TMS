@@ -4,11 +4,12 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { UnitPermitsTab } from "./UnitPermitsTab";
 import { UnitTollTagsTab } from "./UnitTollTagsTab";
+import { UnitFinanceLinkageTab } from "./UnitFinanceLinkageTab";
 import { TasksTab } from "../../components/tasks/TasksTab";
 import { UnitBrakesTab } from "../maintenance/units/UnitBrakesTab";
 import { UnitTiresTab } from "../maintenance/units/UnitTiresTab";
 
-type UnitDetailTab = "permits" | "toll-tags" | "tasks" | "brakes" | "tires";
+type UnitDetailTab = "permits" | "toll-tags" | "tasks" | "brakes" | "tires" | "finance";
 
 export function UnitDetail() {
   const { id = "" } = useParams();
@@ -19,17 +20,24 @@ export function UnitDetail() {
 
   useEffect(() => {
     const tab = searchParams.get("tab");
-    if (tab === "toll-tags" || tab === "permits" || tab === "tasks" || tab === "brakes" || tab === "tires") {
+    if (
+      tab === "toll-tags" ||
+      tab === "permits" ||
+      tab === "tasks" ||
+      tab === "brakes" ||
+      tab === "tires" ||
+      tab === "finance"
+    ) {
       setActiveTab(tab);
     }
   }, [searchParams]);
 
   return (
     <div className="space-y-3 p-4" data-testid="unit-detail-page">
-      <PageHeader title={`Unit ${id.slice(0, 8)}`} subtitle="Permits and toll tags" />
+      <PageHeader title={`Unit ${id.slice(0, 8)}`} subtitle="Permits, toll tags, and finance linkage" />
       {!companyId ? <p className="text-sm text-red-600">Select operating company.</p> : null}
       <div className="flex flex-wrap gap-1 rounded-sm border border-gray-200 bg-white p-1">
-        {(["permits", "toll-tags", "tasks", "brakes", "tires"] as const).map((tab) => (
+        {(["permits", "toll-tags", "tasks", "brakes", "tires", "finance"] as const).map((tab) => (
           <button
             key={tab}
             type="button"
@@ -38,7 +46,17 @@ export function UnitDetail() {
               activeTab === tab ? "bg-slate-100 text-slate-700" : "text-gray-700 hover:bg-gray-100"
             }`}
           >
-            {tab === "toll-tags" ? "Toll Tags" : tab === "tasks" ? "Tasks" : tab === "brakes" ? "Brakes" : tab === "tires" ? "Tires" : "Permits"}
+            {tab === "toll-tags"
+              ? "Toll Tags"
+              : tab === "tasks"
+                ? "Tasks"
+                : tab === "brakes"
+                  ? "Brakes"
+                  : tab === "tires"
+                    ? "Tires"
+                    : tab === "finance"
+                      ? "Loan / Lease / Depr."
+                      : "Permits"}
           </button>
         ))}
       </div>
@@ -49,6 +67,7 @@ export function UnitDetail() {
       ) : null}
       {activeTab === "brakes" ? <UnitBrakesTab unitId={id} companyId={companyId} /> : null}
       {activeTab === "tires" ? <UnitTiresTab unitId={id} companyId={companyId} /> : null}
+      {activeTab === "finance" ? <UnitFinanceLinkageTab unitId={id} companyId={companyId} /> : null}
     </div>
   );
 }

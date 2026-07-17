@@ -306,8 +306,8 @@ export function VehicleProfilePage() {
               onArchive={handleArchive}
             />
             <div className="mt-3">
-              <Link to={`/fleet/units/${id}/detail`} className="inline-block rounded-sm border px-3 py-1.5 text-sm">
-                View Permits, Toll Tags, Tasks, Brakes, Tires
+              <Link to={`/fleet/units/${id}/detail?tab=finance`} className="inline-block rounded-sm border px-3 py-1.5 text-sm">
+                View Permits, Toll Tags, Tasks, Brakes, Tires, Finance Linkage
               </Link>
             </div>
           </div>
