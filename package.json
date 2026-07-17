@@ -1040,6 +1040,7 @@
     "verify:ap-aging-url-sort": "node scripts/verify-ap-aging-url-sort.mjs",
     "verify:crm-url-sort": "node scripts/verify-crm-url-sort.mjs",
     "verify:legal-matter-edit-wired": "node scripts/verify-legal-matter-edit-wired.mjs",
+    "verify:legal-matter-patch-wired": "node scripts/verify-legal-matter-patch-wired.mjs",
     "verify:legal-breadcrumb-tail-4": "node scripts/verify-legal-breadcrumb-tail-4.mjs",
     "verify:safety-kpi-drillthrough": "node scripts/verify-safety-kpi-drillthrough.mjs",
     "verify:maint-cost-per-unit-field-bind": "node scripts/verify-maint-cost-per-unit-field-bind.mjs",

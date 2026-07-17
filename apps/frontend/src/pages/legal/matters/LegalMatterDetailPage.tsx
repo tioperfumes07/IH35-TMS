@@ -12,6 +12,7 @@ import { useAuth } from "../../../auth/useAuth";
 import { Button } from "../../../components/Button";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
@@ -36,6 +37,7 @@ export function LegalMatterDetailPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const { user } = useAuth();
+  const { pushToast } = useToast();
   const qc = useQueryClient();
   const admin = user?.role === "Owner" || user?.role === "Administrator";
   const [tab, setTab] = useState<Tab>("overview");
@@ -122,6 +124,10 @@ export function LegalMatterDetailPage() {
       invalidate();
       setIsEditing(false);
       setEditForm(null);
+      pushToast("Matter updated", "success");
+    },
+    onError: (error) => {
+      pushToast(String((error as Error).message || "Could not update matter"), "error");
     },
   });
 
