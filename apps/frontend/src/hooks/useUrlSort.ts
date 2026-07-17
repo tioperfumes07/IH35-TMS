@@ -45,8 +45,27 @@ export function useUrlSort(paramNames: UrlSortParamNames = DEFAULT_PARAM_NAMES) 
     [setSearchParams, keyParam, dirParam],
   );
 
-  return useMemo(
-    () => ({ sortKey, sortDirection, onSortChange }),
+  // BANK-SORT-ROLLOUT-OPS — convenience 3-state click-cycle (asc \u2192 desc \u2192 unsorted) for pages that
+  // render their own <th> markup via TableHeaderCell (dispatch board, settlements list) instead of
+  // ParityTable. ParityTable manages its own internal 2-state toggle (asc/desc, never fully unsorted)
+  // and never calls this — purely additive, no behavior change for existing ACCT call sites.
+  const toggleSort = useCallback(
+    (key: string) => {
+      if (sortKey !== key) {
+        onSortChange(key, "asc");
+        return;
+      }
+      if (sortDirection === "asc") {
+        onSortChange(key, "desc");
+        return;
+      }
+      onSortChange("", "asc");
+    },
     [sortKey, sortDirection, onSortChange],
+  );
+
+  return useMemo(
+    () => ({ sortKey, sortDirection, onSortChange, toggleSort }),
+    [sortKey, sortDirection, onSortChange, toggleSort],
   );
 }

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { listWorkOrdersConsole } from "../../api/workOrdersConsole";
 import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -11,6 +11,13 @@ import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useListState } from "../../components/list-state";
 
 type SegmentId = "all" | "open" | "in_progress" | "completed" | "cancelled";
+type WoSort = "created_desc" | "cost_desc" | "wo_number_asc" | "labor_cost_desc";
+
+const WO_SORT_VALUES = new Set<WoSort>(["created_desc", "cost_desc", "wo_number_asc", "labor_cost_desc"]);
+
+function parseWoSort(raw: string | null): WoSort {
+  return raw && WO_SORT_VALUES.has(raw as WoSort) ? (raw as WoSort) : "created_desc";
+}
 
 export function WorkOrdersConsoleListPage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -21,7 +28,22 @@ export function WorkOrdersConsoleListPage() {
     "all" | "pm" | "corrective" | "accident" | "inspection_dot" | "inspection_state" | "warranty" | "other"
   >("all");
   const [search, setSearch] = useState("");
-  const [sort, setSort] = useState<"created_desc" | "cost_desc" | "wo_number_asc" | "labor_cost_desc">("created_desc");
+  // BANK-SORT-ROLLOUT-OPS — ?sort= URL persistence so a shared/bookmarked work-orders link keeps the
+  // chosen sort. The backend column set here is a fixed enum (not per-column asc/desc — see the
+  // header-click contract on the fleet table / dispatch board), so only the sort VALUE round-trips.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const sort = parseWoSort(searchParams.get("sort"));
+  const setSort = (next: WoSort) => {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (next === "created_desc") params.delete("sort");
+        else params.set("sort", next);
+        return params;
+      },
+      { replace: true },
+    );
+  };
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 100;
 

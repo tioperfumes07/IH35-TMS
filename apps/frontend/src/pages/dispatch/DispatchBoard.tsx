@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useMemo, useState, type ReactNode } from "react";
+import { Fragment, useMemo, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { DispatchLoadRow } from "../../api/loads";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -73,7 +73,8 @@ import { TriSignalPill } from "../../components/dispatch/TriSignalPill";
 import { DriverStatusCell } from "./components/DriverStatusCell";
 import { UnitsWithoutLoadTable } from "./components/UnitsWithoutLoadTable";
 import { QuickAssignModal } from "./components/QuickAssignModal";
-import { TableHeaderCell, useTablePref, type SortDir } from "../../components/table";
+import { TableHeaderCell, useTablePref } from "../../components/table";
+import { useUrlSort } from "../../hooks/useUrlSort";
 
 export type DispatchBoardProps = Omit<DispatchListProps, "showEtaColumn"> & {
   operatingCompanyId?: string;
@@ -228,8 +229,12 @@ function sortUnassignedFirst(loads: DispatchLoadRow[]) {
   });
 }
 
-// Columns the dispatcher can click-sort; badge/HOS/GPS columns are not sortable.
-const DISPATCH_SORTABLE_COLS = new Set(["load", "unit", "driver", "customer", "pickup", "delivery", "linehaul", "status"]);
+// Columns the dispatcher can click-sort; every plain-data column is sortable — only computed/live
+// widget cells (HOS clocks, cargo temp, live GPS, status signal, risk, driver status) are excluded,
+// same exemption class as the GLOBAL-SORT-RULE action-column carve-out (docs/specs/GLOBAL-SORT-RULE.md).
+const DISPATCH_SORTABLE_COLS = new Set([
+  "load", "unit", "trailer", "driver", "customer", "commodity", "pickup", "delivery", "wo", "linehaul", "status",
+]);
 
 function compareDispatch(a: string | number | null | undefined, b: string | number | null | undefined): number {
   if (a == null && b == null) return 0;
@@ -239,14 +244,17 @@ function compareDispatch(a: string | number | null | undefined, b: string | numb
   return String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: "base" });
 }
 
-function dispatchSortValue(load: DispatchLoadRow, key: string): string | number | null {
+function dispatchSortValue(load: BoardLoad, key: string): string | number | null {
   switch (key) {
     case "load": return load.load_number ?? null;
     case "unit": return load.assigned_unit_number ?? null;
+    case "trailer": return load.trailer_number ?? null;
     case "driver": return load.assigned_primary_driver_name ?? null;
     case "customer": return load.customer_name ?? null;
+    case "commodity": return load.commodity ?? null;
     case "pickup": return load.first_pickup_city ?? null;
     case "delivery": return load.first_delivery_city ?? null;
+    case "wo": return load.customer_wo_number ?? null;
     case "linehaul": return load.rate_total_cents ?? null;
     case "status": return load.status ?? null;
     default: return null;
@@ -429,18 +437,12 @@ export function DispatchBoard({
   );
 
   const { widths: dispatchColWidths, setColumnWidth: setDispatchColWidth } = useTablePref("dispatch-board", { pageSize: 200 });
-  const [dispatchSortKey, setDispatchSortKey] = useState<string | null>(null);
-  const [dispatchSortDir, setDispatchSortDir] = useState<SortDir>("asc");
-  const toggleDispatchSort = useCallback((key: string) => {
-    setDispatchSortKey((prev) => {
-      if (prev === key) {
-        setDispatchSortDir((d) => (d === "asc" ? "desc" : "asc"));
-        return key;
-      }
-      setDispatchSortDir("asc");
-      return key;
-    });
-  }, []);
+  // BANK-SORT-ROLLOUT-OPS — ?sort=/?dir= URL persistence so a dispatcher's chosen column sort
+  // survives a refresh or a shared/bookmarked board link (same contract as ?board= board-mode above).
+  // Uses the shared useUrlSort hook (BANK-SORT-ROLLOUT-ACCT); TableHeaderCell wants sortKey as
+  // string|null (useUrlSort returns "" when unset), so coerce below.
+  const { sortKey: rawDispatchSortKey, sortDirection: dispatchSortDir, toggleSort: toggleDispatchSort } = useUrlSort();
+  const dispatchSortKey = rawDispatchSortKey || null;
 
   const sortedLoads = useMemo(() => {
     const base = sortUnassignedFirst(effectiveLoads);
