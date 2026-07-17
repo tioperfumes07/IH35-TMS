@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   legalMattersApi,
@@ -17,6 +17,12 @@ import { LegalModuleTabs } from "../LegalModuleTabs";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { formatDateUS, formatDateTimeUS } from "../../../lib/formatDate";
 import { formatUsd, formatUsdCents } from "../../../lib/money";
+import {
+  formStateToUpdatePayload,
+  LegalMatterFormFields,
+  matterRowToFormState,
+  type LegalMatterFormState,
+} from "./LegalMatterFormFields";
 
 type Tab = "overview" | "timeline" | "documents" | "deadlines" | "notes";
 
@@ -43,6 +49,8 @@ export function LegalMatterDetailPage() {
   const [docTitle, setDocTitle] = useState("");
   const [docPriv, setDocPriv] = useState(false);
   const [docFile, setDocFile] = useState<File | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState<LegalMatterFormState | null>(null);
 
   const detailQuery = useQuery({
     queryKey: ["legal", "matter", companyId, id],
@@ -102,7 +110,25 @@ export function LegalMatterDetailPage() {
     },
   });
 
+  const updateMut = useMutation({
+    mutationFn: () => {
+      if (!editForm) throw new Error("edit_form_missing");
+      return legalMattersApi.update(companyId, id, formStateToUpdatePayload(editForm));
+    },
+    onSuccess: () => {
+      invalidate();
+      setIsEditing(false);
+      setEditForm(null);
+    },
+  });
+
   const matter = detailQuery.data?.matter;
+
+  useEffect(() => {
+    if (!isEditing && matter) {
+      setEditForm(null);
+    }
+  }, [isEditing, matter]);
 
   async function downloadDoc(documentId: string) {
     const path = legalMattersApi.documentDownloadUrl(companyId, id, documentId);
@@ -121,9 +147,24 @@ export function LegalMatterDetailPage() {
         title={matter ? String(matter.matter_number ?? "Matter") : "Matter"}
         subtitle={matter ? String(matter.type ?? "") : ""}
         actions={
-          <Link to="/legal/matters">
-            <Button variant="secondary">Back to list</Button>
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            {admin && matter && !isEditing ? (
+              <Button
+                variant="secondary"
+                type="button"
+                onClick={() => {
+                  setEditForm(matterRowToFormState(matter));
+                  setIsEditing(true);
+                  setTab("overview");
+                }}
+              >
+                Edit matter
+              </Button>
+            ) : null}
+            <Link to="/legal/matters">
+              <Button variant="secondary">Back to list</Button>
+            </Link>
+          </div>
         }
       />
       <LegalModuleTabs activeTabId="matters" />
@@ -148,7 +189,37 @@ export function LegalMatterDetailPage() {
             ))}
           </div>
 
-          {tab === "overview" ? (
+          {tab === "overview" && isEditing && editForm && admin ? (
+            <div className="mx-auto max-w-3xl space-y-3 rounded-sm border border-gray-200 bg-white p-4">
+              <LegalMatterFormFields form={editForm} setForm={setEditForm} mode="edit" />
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  disabled={updateMut.isPending}
+                  onClick={() => void updateMut.mutate()}
+                >
+                  Save changes
+                </Button>
+                <Button
+                  variant="secondary"
+                  type="button"
+                  disabled={updateMut.isPending}
+                  onClick={() => {
+                    setIsEditing(false);
+                    setEditForm(null);
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+              {updateMut.isError ? (
+                <p className="text-sm text-red-600">
+                  Could not update matter. Check your entries and try again.
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+
+          {tab === "overview" && !isEditing ? (
             <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-800">
               <p>
                 <strong>Status:</strong> {String(matter?.status ?? "")} · <strong>Severity:</strong>{" "}

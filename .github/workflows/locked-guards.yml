@@ -848,6 +848,8 @@ jobs:
         run: npm run verify:legal-entity-scope
       - name: verify:legal-matters-role-gate
         run: npm run verify:legal-matters-role-gate
+      - name: verify:legal-matter-edit-wired
+        run: npm run verify:legal-matter-edit-wired
 
       - name: verify:expense-create-modal-catalog --selftest
         run: node scripts/verify-expense-create-modal-catalog.mjs --selftest
