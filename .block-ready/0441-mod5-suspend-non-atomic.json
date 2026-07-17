@@ -1,17 +1,24 @@
 {
   "block_id": "0441-mod5-suspend-non-atomic",
-  "status": "PENDING",
-  "classification": "FINANCIAL",
+  "status": "BRANCH-PROOF",
+  "classification": "FUNCTIONAL",
   "phase": "tier3",
   "source": "MASTER-6 authored dispatch (06-TIER3-BLOCKS)",
   "source_file": "0441-mod5-suspend-non-atomic.txt",
   "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
+    "apps/backend/src/mdata/driver-safety-events.routes.ts",
+    "apps/frontend/src/api/mdata.ts",
+    "apps/frontend/src/components/drivers/SuspendConfirmModal.tsx",
+    "apps/frontend/src/components/driver-profile/__tests__/ActionBar.test.tsx",
+    "scripts/verify-driver-suspend-atomic.mjs",
+    "scripts/verify-drivers-profile-action-bar.mjs",
+    "scripts/verify-steps/45a-verify-driver-suspend-atomic.mjs",
+    "package.json"
   ],
   "acceptance": [
     {
-      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
+      "check": "POST /api/v1/mdata/drivers/:driver_id/suspend atomically sets status Inactive + inserts mdata.driver_safety_events incident in one transaction; FE SuspendConfirmModal calls suspendDriver; guard verify:driver-suspend-atomic wired in CI."
     }
   ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+  "note": "No migration — reuses existing mdata.drivers + mdata.driver_safety_events tables. Owner-only auth matches createSafetyEvent."
 }

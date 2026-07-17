@@ -58,6 +58,10 @@ const voidSafetyEventBodySchema = z.object({
   void_reason: z.string().trim().min(10).max(1000),
 });
 
+const suspendDriverBodySchema = z.object({
+  reason: z.string().trim().min(1).max(5000),
+});
+
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
   return req.user;
@@ -80,6 +84,9 @@ function todayIsoDate(): string {
 }
 
 export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
+  // CodeQL: authorized mutation routes must be rate-limited (match peer mdata handlers).
+  const RL_SUSPEND = { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } };
+
   app.get("/api/v1/catalogs/driver-termination-reasons", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
@@ -286,6 +293,120 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
     });
     if (!updated) return reply.code(404).send({ error: "not_found" });
     return { reason: updated };
+  });
+
+  app.post("/api/v1/mdata/drivers/:driver_id/suspend", RL_SUSPEND, async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return;
+    if (!isOwner(authUser.role)) return reply.code(403).send({ error: "forbidden" });
+
+    const parsedParams = routeParamsSchema.safeParse(req.params ?? {});
+    if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const parsedBody = suspendDriverBodySchema.safeParse(req.body ?? {});
+    if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
+    const reason = parsedBody.data.reason.trim();
+    const eventDate = todayIsoDate();
+    const summary = `Driver suspended: ${reason}`;
+
+    const result = await withCurrentUser(authUser.uuid, async (client) => {
+      const driverRes = await client.query<{
+        id: string;
+        status: string;
+        curp: string | null;
+        cdl_number: string | null;
+        cdl_state: string | null;
+      }>(
+        `
+          SELECT id, status, curp, cdl_number, cdl_state
+          FROM mdata.drivers
+          WHERE id = $1
+            AND operating_company_id IN (SELECT org.user_accessible_company_ids())
+          LIMIT 1
+        `,
+        [parsedParams.data.driver_id]
+      );
+      const driver = driverRes.rows[0];
+      if (!driver) return { error: "mdata_driver_not_found" as const };
+      if (driver.status === "Terminated") return { error: "driver_already_terminated" as const };
+
+      const updateRes = await client.query(
+        `
+          UPDATE mdata.drivers
+          SET status = 'Inactive', updated_by_user_id = $2
+          WHERE id = $1
+            AND operating_company_id IN (SELECT org.user_accessible_company_ids())
+          RETURNING id, status
+        `,
+        [parsedParams.data.driver_id, authUser.uuid]
+      );
+      const updatedDriver = updateRes.rows[0];
+      if (!updatedDriver) return { error: "mdata_driver_not_found" as const };
+
+      const insertRes = await client.query(
+        `
+          INSERT INTO mdata.driver_safety_events (
+            driver_id,
+            event_type,
+            event_date,
+            severity,
+            summary,
+            details,
+            curp_snapshot,
+            cdl_number_snapshot,
+            cdl_state_snapshot,
+            created_by_user_id,
+            updated_by_user_id
+          ) VALUES (
+            $1, 'incident', $2, 'warning', $3, $4, $5, $6, $7, $8, $8
+          )
+          RETURNING *
+        `,
+        [
+          parsedParams.data.driver_id,
+          eventDate,
+          summary,
+          reason,
+          driver.curp ?? null,
+          driver.cdl_number ?? null,
+          driver.cdl_state ?? null,
+          authUser.uuid,
+        ]
+      );
+      const event = insertRes.rows[0];
+
+      await appendCrudAudit(client, authUser.uuid, "mdata.drivers.suspended", {
+        resource_id: updatedDriver.id,
+        resource_type: "mdata.drivers",
+        driver_id: updatedDriver.id,
+        status: updatedDriver.status,
+        safety_event_id: event.id,
+      });
+
+      await appendCrudAudit(
+        client,
+        authUser.uuid,
+        "mdata.driver_safety_events.created",
+        {
+          resource_id: event.id,
+          resource_type: "mdata.driver_safety_events",
+          driver_id: event.driver_id,
+          event_type: event.event_type,
+          severity: event.severity,
+          suspend_flow: true,
+        },
+        "warning",
+        "BT-1-DRIVER-SAFETY-FILE"
+      );
+
+      return { driver: updatedDriver, event };
+    });
+
+    if ("error" in result) {
+      if (result.error === "driver_already_terminated") return reply.code(400).send({ error: result.error });
+      return reply.code(404).send({ error: result.error });
+    }
+
+    return reply.code(200).send({ driver: result.driver, event: result.event });
   });
 
   app.get("/api/v1/mdata/drivers/:driver_id/safety-events", async (req, reply) => {

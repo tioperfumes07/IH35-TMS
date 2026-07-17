@@ -1,11 +1,7 @@
 import { useState } from "react";
-import { createSafetyEvent, updateDriver } from "../../api/mdata";
+import { suspendDriver } from "../../api/mdata";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
-
-function todayIso() {
-  return new Date().toISOString().slice(0, 10);
-}
 
 type Props = {
   open: boolean;
@@ -28,14 +24,7 @@ export function SuspendConfirmModal({ open, driverId, driverName, onClose, onSus
     }
     setPending(true);
     try {
-      await updateDriver(driverId, { status: "Inactive" });
-      await createSafetyEvent(driverId, {
-        event_type: "incident",
-        event_date: todayIso(),
-        severity: "warning",
-        summary: `Driver suspended: ${reason.trim()}`,
-        details: reason.trim(),
-      });
+      await suspendDriver(driverId, reason.trim());
       setReason("");
       onSuspended?.();
       onClose();

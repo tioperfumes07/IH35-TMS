@@ -41,7 +41,10 @@ describe("ActionBar", () => {
       urgency: null,
       created_at: "2026-06-03T12:00:00Z",
     });
-    vi.spyOn(mdataApi, "updateDriver").mockResolvedValue({ id: "d-1", status: "Inactive" } as never);
+    vi.spyOn(mdataApi, "suspendDriver").mockResolvedValue({
+      driver: { id: "d-1", status: "Inactive" },
+      event: { id: "e1" },
+    } as never);
     vi.spyOn(mdataApi, "createSafetyEvent").mockResolvedValue({ event: { id: "e1" } } as never);
     vi.spyOn(mdataApi, "listTerminationReasons").mockResolvedValue({
       reasons: [{ id: "r1", code: "voluntary", label: "Voluntary", description: null, severity: "info", is_active: true, deactivated_at: null }],
@@ -89,14 +92,13 @@ describe("ActionBar", () => {
     expect(action.hasAttribute("disabled")).toBe(true);
   });
 
-  it("suspends driver via PATCH + safety event", async () => {
+  it("suspends driver via atomic suspend endpoint", async () => {
     renderBar();
     fireEvent.click(screen.getByTestId("dp-action-suspend"));
     fireEvent.change(screen.getByTestId("suspend-reason"), { target: { value: "Policy violation" } });
     fireEvent.click(screen.getByTestId("suspend-confirm"));
     await waitFor(() => {
-      expect(mdataApi.updateDriver).toHaveBeenCalledWith("d-1", { status: "Inactive" });
-      expect(mdataApi.createSafetyEvent).toHaveBeenCalled();
+      expect(mdataApi.suspendDriver).toHaveBeenCalledWith("d-1", "Policy violation");
     });
   });
 

@@ -47,11 +47,14 @@ function main() {
   if (!actionBar.includes("dp-export-pdf")) failures.push("Export PDF link must remain present");
 
   if (!sendModal.includes("sendDriverProfileMessage")) failures.push("SendMessageModal must call sendDriverProfileMessage");
-  if (!suspendModal.includes('updateDriver(driverId, { status: "Inactive" })')) failures.push("Suspend must PATCH Inactive");
-  if (!suspendModal.includes("createSafetyEvent")) failures.push("Suspend must emit safety incident audit");
+  if (!suspendModal.includes("suspendDriver(driverId")) failures.push("Suspend must call atomic suspendDriver endpoint");
+  if (suspendModal.includes("updateDriver(driverId") || suspendModal.includes("createSafetyEvent(driverId")) {
+    failures.push("Suspend must not use sequential updateDriver + createSafetyEvent");
+  }
   if (!terminateModal.includes('event_type: "termination"')) failures.push("Terminate must create termination safety event");
 
   if (!mdataApi.includes("sendDriverProfileMessage")) failures.push("mdata API must export sendDriverProfileMessage");
+  if (!mdataApi.includes("suspendDriver")) failures.push("mdata API must export suspendDriver");
   if (!profilePage.includes("onActionComplete={refreshDriver}")) failures.push("DriverProfilePage must refresh after actions");
   if (!actionBarTest.includes("dp-action-edit")) failures.push("ActionBar vitest must cover Edit wiring");
 
