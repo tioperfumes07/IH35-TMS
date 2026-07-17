@@ -128,14 +128,15 @@ export const TABS = [
 ];
 
 /**
- * Alias tabs are secondary entry points that reuse an existing screen but live under a DIFFERENT
- * group in the nav, so the active-tab + breadcrumb must reflect the group the user clicked from.
+ * Alias tabs are secondary entry points that live under a DIFFERENT group in the nav, so the
+ * active-tab + breadcrumb must reflect the group the user clicked from.
  *
- * "Cert Expiry" (under Compliance Docs & Monitoring) reuses the Certificate Expiry Dashboard that also
- * renders at /safety/dot-compliance (DOTComplianceTab). It gets its OWN route (/safety/cert-expiry) so
- * selecting it produces a consistent state (URL + breadcrumb + active-tab all agree) instead of falling
- * back to "Inspections & FMCSA / DOT Compliance". It is intentionally NOT part of the canonical 28
- * (SAFETY_GROUPS) — do not add it there or the count/coverage guards break.
+ * "Cert Expiry" (under Compliance Docs & Monitoring) mounts ExpiryDashboard at /safety/cert-expiry —
+ * a distinct route AND distinct element from /safety/dot-compliance (DOTComplianceTab, which also
+ * embeds ExpiryDashboard plus reminders/CFR cards). Selecting Cert Expiry must produce a consistent
+ * state (URL + breadcrumb + active-tab all agree) and must NOT collide with DOT Compliance.
+ * Intentionally NOT part of the canonical 28 (SAFETY_GROUPS) — do not add it there or the
+ * count/coverage guards break.
  */
 export const SAFETY_ALIAS_TABS: { groupId: string; tab: SafetyTab }[] = [
   {
