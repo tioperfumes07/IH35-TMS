@@ -683,6 +683,7 @@
     "verify:internal-fines-creator": "node scripts/verify-internal-fines-creator.mjs",
     "verify:cargo-claim-intake": "node scripts/verify-cargo-claim-intake.mjs",
     "verify:driver-detail-company-scope": "node scripts/verify-driver-detail-company-scope.mjs",
+    "verify:driver-profile-scope": "node scripts/verify-driver-profile-scope.mjs",
     "verify:audit-coverage": "node scripts/verify-audit-coverage.mjs",
     "verify:operational-tuning-catalog": "node scripts/verify-operational-tuning-catalog.mjs",
     "verify:operational-tuning-catalog:test": "node --test scripts/__tests__/verify-operational-tuning-catalog.test.mjs",

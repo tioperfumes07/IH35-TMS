@@ -15,9 +15,9 @@ export function DriverLayoverHistoryPage() {
   const operatingCompanyId = selectedCompanyId ?? companies[0]?.id ?? "";
 
   const driverQuery = useQuery({
-    queryKey: ["driver", driverId, "layover-history-header"],
-    queryFn: () => getDriver(driverId),
-    enabled: Boolean(driverId),
+    queryKey: ["driver", driverId, operatingCompanyId, "layover-history-header"],
+    queryFn: () => getDriver(driverId, operatingCompanyId),
+    enabled: Boolean(driverId && operatingCompanyId),
   });
 
   return (

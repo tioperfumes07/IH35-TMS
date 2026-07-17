@@ -658,6 +658,10 @@ jobs:
         run: node scripts/verify-bill-subnav-creators.mjs --selftest
       - name: verify:bill-subnav-creators
         run: npm run verify:bill-subnav-creators
+      - name: verify:driver-profile-scope --selftest
+        run: node scripts/verify-driver-profile-scope.mjs --selftest
+      - name: verify:driver-profile-scope
+        run: npm run verify:driver-profile-scope
       - name: verify:accounting-sortable-headers
         run: npm run verify:accounting-sortable-headers
       - name: verify:custvend-sortable-headers

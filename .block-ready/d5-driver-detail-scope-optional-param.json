@@ -1,17 +1,31 @@
 {
   "block_id": "d5-driver-detail-scope-optional-param",
-  "status": "PENDING",
-  "classification": "FINANCIAL",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
   "phase": "tier2",
-  "source": "MASTER-6 authored dispatch (05-TIER2-BLOCKS)",
-  "source_file": "d5-driver-detail-scope-optional-param.txt",
+  "task": "d5 / DRIVER-D cluster: getDriver(id, operatingCompanyId?) allowed bare getDriver(id) on DriverHosDetailPage and DriverLayoverHistoryPage — false 404 under non-default selected company (same root cause as #1882 DriverDetail fix). Made operatingCompanyId required on getDriver(); all three call sites pass selected company + gate queries on company id. Guard: scripts/verify-driver-profile-scope.mjs wired into locked-guards.yml.",
+  "branch": "fix/driver-profile-scope-d5",
   "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
+    "apps/frontend/src/api/mdata.ts",
+    "apps/frontend/src/pages/DriverDetail.tsx",
+    "apps/frontend/src/pages/drivers/DriverHosDetailPage.tsx",
+    "apps/frontend/src/pages/drivers/DriverLayoverHistoryPage.tsx",
+    "scripts/verify-driver-profile-scope.mjs",
+    "package.json",
+    ".github/workflows/locked-guards.yml",
+    ".block-ready/d5-driver-detail-scope-optional-param.json"
   ],
   "acceptance": [
     {
-      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
+      "kind": "mounted",
+      "check": "getDriver requires operatingCompanyId; DriverDetail + HOS detail + layover history pass selected company"
+    },
+    {
+      "kind": "guard",
+      "check": "npm run verify:driver-profile-scope + --selftest in locked-guards.yml"
     }
   ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+  "linkage": "N/A — entity-scope query param only; no schema/GL change",
+  "db_required": false,
+  "guard_required": true
 }

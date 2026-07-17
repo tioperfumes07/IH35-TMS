@@ -155,15 +155,12 @@ export function previewTeamSettlementSplit(loadId: string, operatingCompanyId: s
   );
 }
 
-export function getDriver(id: string, operatingCompanyId?: string) {
-  // Passing operating_company_id scopes the lookup to the SELECTED company +
+export function getDriver(id: string, operatingCompanyId: string) {
+  // operating_company_id is required — scopes the lookup to the SELECTED company +
   // its driver_company_authorizations (matching the DQF list + aggregate fetch).
-  // Omitting it falls back to the server-resolved default company. Without the
-  // param, opening a driver under a non-default selected company 404s even though
-  // the driver is reachable — the DriverDetailPage "Driver not found" bug.
-  const qs = operatingCompanyId
-    ? `?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
-    : "";
+  // Without the param, opening a driver under a non-default selected company 404s
+  // even though the driver is reachable — the DriverDetailPage "Driver not found" bug.
+  const qs = `?operating_company_id=${encodeURIComponent(operatingCompanyId)}`;
   return apiRequest<Driver>(`/api/v1/mdata/drivers/${id}${qs}`);
 }
 
