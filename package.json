@@ -524,6 +524,7 @@
     "verify:driver-pwa-i18n-coverage": "node scripts/verify-driver-pwa-i18n-coverage.mjs",
     "verify:single-i18n-source": "node scripts/verify-single-i18n-source.mjs",
     "verify:driver-pwa-incident-full": "node scripts/verify-driver-pwa-incident-full.mjs",
+    "verify:driver-pwa-load-status-gate": "node scripts/verify-driver-pwa-load-status-gate.mjs",
     "verify:web-push-vapid-keys-present": "node scripts/verify-web-push-vapid-keys-present.mjs",
     "verify:no-stub-catalog-pages": "node scripts/verify-no-stub-catalog-pages.mjs",
     "verify:header-counts-match-actual": "node scripts/verify-header-counts-match-actual.mjs",

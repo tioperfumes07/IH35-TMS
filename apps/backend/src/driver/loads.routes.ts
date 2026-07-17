@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
+import { validateLoadStopStatusWrite } from "../dispatch/load-state-machine.js";
 import { requireDriverSession } from "./auth.js";
 
 type LoadLifecycleStage =
@@ -451,9 +452,9 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
     if (!driver) return;
 
     const updated = await withCurrentUser(req.user!.uuid, async (client) => {
-      const stopRes = await client.query<{ id: string; stop_type: string; status: string; latitude: number | null; longitude: number | null }>(
+      const stopRes = await client.query<{ id: string; stop_type: string; status: string; load_status: string; latitude: number | null; longitude: number | null }>(
         `
-          SELECT s.id, s.stop_type::text, s.status::text, loc.latitude, loc.longitude
+          SELECT s.id, s.stop_type::text, s.status::text, l.status::text AS load_status, loc.latitude, loc.longitude
           FROM mdata.load_stops s
           JOIN mdata.loads l ON l.id = s.load_id
           LEFT JOIN mdata.locations loc ON loc.id = s.location_id
@@ -467,6 +468,10 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
       );
       const stop = stopRes.rows[0] ?? null;
       if (!stop) return { error: "forbidden" as const };
+
+      const nextLoadStatus = stop.stop_type === "pickup" ? "at_pickup" : "at_delivery";
+      const transition = validateLoadStopStatusWrite(stop.load_status, nextLoadStatus);
+      if (!transition.ok) return { error: "invalid_load_state" as const, from: transition.from, to: transition.to };
 
       if (stop.latitude != null && stop.longitude != null) {
         const distance = haversineMiles(body.data.geo_lat, body.data.geo_lng, Number(stop.latitude), Number(stop.longitude));
@@ -483,13 +488,14 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
         [params.data.stopId]
       );
 
-      const nextLoadStatus = stop.stop_type === "pickup" ? "at_pickup" : "at_delivery";
       await client.query(`UPDATE mdata.loads SET status = $2 WHERE id = $1`, [params.data.id, nextLoadStatus]);
       return { lifecycle_stage: lifecycleFromLoadStatus(nextLoadStatus) };
     });
 
     if ("error" in updated) {
       if (updated.error === "outside_geofence") return reply.code(400).send({ error: "outside_geofence", distance_miles: updated.distance });
+      if (updated.error === "invalid_load_state")
+        return reply.code(409).send({ error: "invalid_load_state", from: updated.from, to: updated.to });
       return reply.code(403).send({ error: "forbidden" });
     }
     return updated;
@@ -505,9 +511,9 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
     if (!driver) return;
 
     const updated = await withCurrentUser(req.user!.uuid, async (client) => {
-      const stopRes = await client.query<{ id: string; stop_type: string; status: string; latitude: number | null; longitude: number | null; sequence_number: number }>(
+      const stopRes = await client.query<{ id: string; stop_type: string; status: string; load_status: string; latitude: number | null; longitude: number | null; sequence_number: number }>(
         `
-          SELECT s.id, s.stop_type::text, s.status::text, loc.latitude, loc.longitude, s.sequence_number
+          SELECT s.id, s.stop_type::text, s.status::text, l.status::text AS load_status, loc.latitude, loc.longitude, s.sequence_number
           FROM mdata.load_stops s
           JOIN mdata.loads l ON l.id = s.load_id
           LEFT JOIN mdata.locations loc ON loc.id = s.location_id
@@ -522,6 +528,10 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
       const stop = stopRes.rows[0] ?? null;
       if (!stop) return { error: "forbidden" as const };
       if (!["arrived", "loaded", "unloaded"].includes(stop.status)) return { error: "invalid_stop_state" as const };
+
+      const nextLoadStatus = stop.stop_type === "delivery" ? "delivered_pending_docs" : "in_transit";
+      const transition = validateLoadStopStatusWrite(stop.load_status, nextLoadStatus);
+      if (!transition.ok) return { error: "invalid_load_state" as const, from: transition.from, to: transition.to };
 
       if (stop.latitude != null && stop.longitude != null) {
         const distance = haversineMiles(body.data.geo_lat, body.data.geo_lng, Number(stop.latitude), Number(stop.longitude));
@@ -538,8 +548,6 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
         [params.data.stopId]
       );
 
-      const isDelivery = stop.stop_type === "delivery";
-      const nextLoadStatus = isDelivery ? "delivered_pending_docs" : "in_transit";
       await client.query(`UPDATE mdata.loads SET status = $2 WHERE id = $1`, [params.data.id, nextLoadStatus]);
       return { lifecycle_stage: lifecycleFromLoadStatus(nextLoadStatus) };
     });
@@ -547,6 +555,8 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
     if ("error" in updated) {
       if (updated.error === "outside_geofence") return reply.code(400).send({ error: "outside_geofence", distance_miles: updated.distance });
       if (updated.error === "invalid_stop_state") return reply.code(400).send({ error: "invalid_stop_state" });
+      if (updated.error === "invalid_load_state")
+        return reply.code(409).send({ error: "invalid_load_state", from: updated.from, to: updated.to });
       return reply.code(403).send({ error: "forbidden" });
     }
     return updated;
