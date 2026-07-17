@@ -203,6 +203,10 @@ async function fetchLedgerCandidates(
   // QBO Match: default ±7d recommendations; Search all widens (up to 2y) + optional memo/payee filter.
   const windowDays = Math.min(Math.max(Number(options.windowDays ?? 7) || 7, 1), 730);
   const searchNeedle = (options.searchQuery ?? "").trim().toLowerCase();
+  // When searching, push the filter into SQL BEFORE LIMIT so we don't silently drop matches
+  // that fall outside the first 500 rows of the date window.
+  const rowLimit = searchNeedle ? 2000 : 500;
+  const likeParam = searchNeedle ? `%${searchNeedle}%` : null;
 
   // --- MONEY IN (deposit) sources ------------------------------------------------
   if (isCredit) {
@@ -213,9 +217,10 @@ async function fetchLedgerCandidates(
         WHERE operating_company_id = $1::uuid
           AND payment_date BETWEEN ($2::date - make_interval(days => $3)) AND ($2::date + make_interval(days => $3))
           AND voided_at IS NULL
-        LIMIT 500
+          AND ($4::text IS NULL OR lower(COALESCE(display_id, '')) LIKE $4)
+        LIMIT $5
       `,
-      [operatingCompanyId, txnDate, windowDays]
+      [operatingCompanyId, txnDate, windowDays, likeParam, rowLimit]
     );
     for (const row of payments.rows) {
       results.push({
@@ -237,9 +242,10 @@ async function fetchLedgerCandidates(
         WHERE operating_company_id = $1::uuid
           AND payment_date BETWEEN ($2::date - make_interval(days => $3)) AND ($2::date + make_interval(days => $3))
           AND revoked_at IS NULL
-        LIMIT 500
+          AND ($4::text IS NULL OR lower(COALESCE(reference_number, memo, '')) LIKE $4)
+        LIMIT $5
       `,
-      [operatingCompanyId, txnDate, windowDays]
+      [operatingCompanyId, txnDate, windowDays, likeParam, rowLimit]
     );
     for (const row of billPayments.rows) {
       results.push({
@@ -266,15 +272,16 @@ async function fetchLedgerCandidates(
           AND b.revoked_at IS NULL
           AND b.status = ANY($3::text[])
           AND (COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0)) > 0
+          AND ($5::text IS NULL OR lower(COALESCE(b.display_id, b.bill_number, b.memo, '')) LIKE $5)
           AND NOT EXISTS (
             SELECT 1 FROM bank.reconciliation_matches m
             WHERE m.ledger_entry_kind = 'bill'
               AND m.ledger_entry_id = b.id
               AND m.match_state IN ('auto_matched', 'user_matched')
           )
-        LIMIT 500
+        LIMIT $6
       `,
-      [operatingCompanyId, txnDate, OPEN_BILL_STATUSES as unknown as string[], windowDays]
+      [operatingCompanyId, txnDate, OPEN_BILL_STATUSES as unknown as string[], windowDays, likeParam, rowLimit]
     );
     for (const row of bills.rows) {
       results.push({
@@ -301,15 +308,16 @@ async function fetchLedgerCandidates(
           AND e.transaction_date BETWEEN ($2::date - make_interval(days => $3)) AND ($2::date + make_interval(days => $3))
           AND e.is_active = true
           AND e.voided_at IS NULL
+          AND ($4::text IS NULL OR lower(COALESCE(e.expense_number, e.memo, '')) LIKE $4)
           AND NOT EXISTS (
             SELECT 1 FROM bank.reconciliation_matches m
             WHERE m.ledger_entry_kind = 'expense'
               AND m.ledger_entry_id = e.id
               AND m.match_state IN ('auto_matched', 'user_matched')
           )
-        LIMIT 500
+        LIMIT $5
       `,
-      [operatingCompanyId, txnDate, windowDays]
+      [operatingCompanyId, txnDate, windowDays, likeParam, rowLimit]
     );
     for (const row of expenses.rows) {
       results.push({
@@ -335,9 +343,10 @@ async function fetchLedgerCandidates(
         AND t.transfer_date BETWEEN ($2::date - make_interval(days => $4)) AND ($2::date + make_interval(days => $4))
         AND t.revoked_at IS NULL
         AND (${transferDirectionClause})
-      LIMIT 500
+        AND ($5::text IS NULL OR lower(COALESCE(t.memo, t.reference_number, '')) LIKE $5)
+      LIMIT $6
     `,
-    [operatingCompanyId, txnDate, bankAccountId, windowDays]
+    [operatingCompanyId, txnDate, bankAccountId, windowDays, likeParam, rowLimit]
   );
   for (const row of transfers.rows) {
     results.push({
@@ -361,10 +370,11 @@ async function fetchLedgerCandidates(
       LEFT JOIN accounting.journal_entry_postings jep ON jep.journal_entry_uuid = je.id
       WHERE je.operating_company_id = $1::uuid
         AND je.entry_date BETWEEN ($2::date - make_interval(days => $3)) AND ($2::date + make_interval(days => $3))
+        AND ($4::text IS NULL OR lower(COALESCE(je.memo, '')) LIKE $4)
       GROUP BY je.id, je.entry_date, je.memo
-      LIMIT 500
+      LIMIT $5
     `,
-    [operatingCompanyId, txnDate, windowDays]
+    [operatingCompanyId, txnDate, windowDays, likeParam, rowLimit]
   );
   for (const row of journalEntries.rows) {
     results.push({
@@ -376,6 +386,7 @@ async function fetchLedgerCandidates(
     });
   }
 
+  // SQL already filtered when searchNeedle set; keep a defensive in-memory pass.
   if (searchNeedle) {
     return results.filter((row) => (row.memo ?? "").toLowerCase().includes(searchNeedle));
   }

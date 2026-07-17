@@ -152,5 +152,12 @@ if (failures.length) {
   for (const f of failures) console.error(`  - ${f}`);
   process.exit(1);
 }
+
+// Search-all: memo filter must be in SQL before LIMIT (not only post-filter of 500).
+const matchSvcFull = read("apps/backend/src/accounting/bank-recon/match.service.ts");
+if (!/LIKE \$\d/.test(matchSvcFull) || !/rowLimit|likeParam/.test(matchSvcFull)) {
+  fail("match.service must push search LIKE into SQL before LIMIT (likeParam/rowLimit)");
+}
+
 console.log(`${LABEL}: OK — Relay wallet bank feed + linkage + QBO breakdown/columns/deposits`);
 process.exit(0);
