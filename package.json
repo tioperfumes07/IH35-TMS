@@ -985,6 +985,7 @@
     "verify:fact-chargebacks-entitylinks": "node scripts/verify-fact-chargebacks-entitylinks.mjs",
     "verify:qbo-parity-vendors": "node scripts/verify-qbo-parity-vendors.mjs",
     "verify:road-service-route-mounted": "node scripts/verify-road-service-route-mounted.mjs",
+    "verify:road-service-source-type-rs": "node scripts/verify-road-service-source-type-rs.mjs",
     "verify:qbo-parity-customers": "node scripts/verify-qbo-parity-customers.mjs",
     "verify:fleet-table-owner-leased-scope": "node scripts/verify-fleet-table-owner-leased-scope.mjs",
     "verify:no-emoji-in-dispatch-chrome": "node scripts/verify-no-emoji-in-dispatch-chrome.mjs",
