@@ -615,6 +615,11 @@ jobs:
         run: node scripts/verify-banking-categorize-ux-honesty.mjs --selftest
       - name: verify:banking-categorize-ux-honesty
         run: npm run verify:banking-categorize-ux-honesty
+      # 0441-mod8 — recon workspace must refetch after match/unmatch (variance summary sync)
+      - name: verify:banking-recon-workspace-refetch --selftest
+        run: node scripts/verify-banking-recon-workspace-refetch.mjs --selftest
+      - name: verify:banking-recon-workspace-refetch
+        run: npm run verify:banking-recon-workspace-refetch
 
       - name: verify:entitylink-deep-links
         run: npm run verify:entitylink-deep-links
