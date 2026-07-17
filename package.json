@@ -1033,6 +1033,7 @@
     "verify:bill-subnav-creators": "node scripts/verify-bill-subnav-creators.mjs",
     "verify:accounting-sortable-headers": "node scripts/verify-accounting-sortable-headers.mjs",
     "verify:banking-categorize-ux-honesty": "node scripts/verify-banking-categorize-ux-honesty.mjs",
+    "verify:banking-recon-workspace-refetch": "node scripts/verify-banking-recon-workspace-refetch.mjs",
     "verify:dispatch-factoring-queue-deeplinks": "node scripts/verify-dispatch-factoring-queue-deeplinks.mjs",
     "verify:425c-petition-not-hardcoded": "node scripts/verify-425c-petition-not-hardcoded.mjs",
     "verify:ops-sortable-headers": "node scripts/verify-ops-sortable-headers.mjs",

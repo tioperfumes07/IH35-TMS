@@ -439,6 +439,9 @@ export function ReconciliationWorkspacePage() {
                             : tx
                         )
                       );
+                      // Refetch workspace so variance summary / candidates stay server-synced
+                      // (local patch alone drifts when server-side matched sets differ).
+                      void workspaceQuery.refetch();
                       pushToast("Transaction matched", "success");
                     })
                     .catch((error) => pushToast(String((error as Error).message || "Match failed"), "error"));
@@ -459,6 +462,7 @@ export function ReconciliationWorkspacePage() {
                             : tx
                         )
                       );
+                      void workspaceQuery.refetch();
                       pushToast("Transaction unmatched", "success");
                     })
                     .catch((error) => pushToast(String((error as Error).message || "Unmatch failed"), "error"));
