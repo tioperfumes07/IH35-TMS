@@ -97,7 +97,7 @@ function defaultSettingsPayload(companyId: string, counts: { pm_schedules: numbe
 }
 
 export async function registerMaintenanceSettingsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/maintenance/settings", async (req, reply) => {
+  app.get("/api/v1/maintenance/settings", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -140,7 +140,7 @@ export async function registerMaintenanceSettingsRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.patch("/api/v1/maintenance/settings", async (req, reply) => {
+  app.patch("/api/v1/maintenance/settings", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
