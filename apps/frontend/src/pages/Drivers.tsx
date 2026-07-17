@@ -125,7 +125,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
   const { selectedCompanyId } = useCompanyContext();
   const [search, setSearch] = useState("");
   const driverListStatus = useMemo(() => parseDriverListStatus(searchParams), [searchParams]);
-  const [activeTab] = useState<"drivers" | "teams">("drivers");
+  const [activeTab, setActiveTab] = useState<"drivers" | "teams">("drivers");
   const subnavTab = useMemo(
     () => (initialSubnav ?? driversSubtabFromPath(location.pathname)) as DriversSubnavId,
     [initialSubnav, location.pathname]
@@ -460,6 +460,18 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
         </div>
         <DriversCashAdvanceRequestsLink />
       </div>
+
+      <SecondaryNavTabs
+        className="-mx-2"
+        activeId={activeTab}
+        onChange={(id) => {
+          if (id === "drivers" || id === "teams") setActiveTab(id);
+        }}
+        tabs={[
+          { id: "drivers", label: "Drivers" },
+          { id: "teams", label: "Teams" },
+        ]}
+      />
 
       {activeTab === "teams" ? (
         <div className="space-y-3">
