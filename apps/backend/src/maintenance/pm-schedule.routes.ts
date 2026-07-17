@@ -5,6 +5,13 @@ import { withCurrentUser } from "../auth/db.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
+/** Nil UUID is never a real unit / company — reject create payloads that still hardcode it. */
+const NIL_UUID = "00000000-0000-0000-0000-000000000000";
+const realUuid = z
+  .string()
+  .uuid()
+  .refine((id) => id !== NIL_UUID, { message: "nil_uuid_not_allowed" });
+
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
   unit_id: z.string().uuid().optional(),
@@ -13,8 +20,8 @@ const companyQuerySchema = z.object({
 });
 
 const createSchema = z.object({
-  operating_company_id: z.string().uuid(),
-  unit_id: z.string().uuid(),
+  operating_company_id: realUuid,
+  unit_id: realUuid,
   pm_type: z.string().trim().min(2).max(120),
   interval_kind: z.enum(["miles", "hours", "days"]),
   interval_value: z.number().int().positive(),
