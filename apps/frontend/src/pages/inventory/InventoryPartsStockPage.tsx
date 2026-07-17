@@ -8,6 +8,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { InventoryModuleTabs } from "./InventoryModuleTabs";
 import { PartCreateDrawer } from "./PartCreateDrawer";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { partNeedsReorder } from "../maintenance/parts-low-stock";
 
 // ParityColumn only honors key/label/render/className/sortable — the earlier align/format/badge keys
 // were silently ignored (columns is a variable, so no excess-property check), so unit-cost formatting
@@ -18,6 +19,25 @@ const columns: ParityColumn<InventoryPartRow>[] = [
   // INV-1: category is now a persisted column — surface it so the saved value is visible.
   { key: "category", label: "Category", sortable: true },
   { key: "on_hand_qty", label: "On Hand Qty", className: "text-right", sortable: true },
+  {
+    key: "reorder_threshold",
+    label: "Reorder Threshold",
+    className: "text-right",
+    sortable: true,
+    render: (row) => row.reorder_threshold,
+  },
+  {
+    key: "low_stock",
+    label: "Low Stock",
+    render: (row) =>
+      row.voided_at ? (
+        <span className="rounded-sm bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-600">—</span>
+      ) : partNeedsReorder(row.on_hand_qty, row.reorder_threshold) ? (
+        <span className="rounded-sm bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-700">REORDER</span>
+      ) : (
+        <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700">OK</span>
+      ),
+  },
   {
     key: "unit_cost",
     label: "Unit Cost",
@@ -47,6 +67,7 @@ export type MaintenancePartRow = {
   notes: string | null;
   unit_cost: number | null;
   qty_on_hand: number | null;
+  reorder_threshold?: number | null;
   location: string | null;
   voided_at: string | null;
 };
@@ -57,13 +78,16 @@ export type InventoryPartRow = {
   category: string | null;
   notes: string | null;
   on_hand_qty: number;
+  reorder_threshold: number;
   unit_cost: number | null;
   location: string | null;
   status: string;
+  voided_at: string | null;
 };
 export function mapMaintenancePartsToInventoryRows(rows: MaintenancePartRow[]): InventoryPartRow[] {
   return (rows ?? []).map((r) => {
     const qty = Number(r.qty_on_hand ?? 0);
+    const reorderThreshold = Number(r.reorder_threshold ?? 0);
     return {
       id: r.id,
       name: r.name,
@@ -72,9 +96,11 @@ export function mapMaintenancePartsToInventoryRows(rows: MaintenancePartRow[]): 
       category: r.category ?? null,
       notes: r.notes ?? null,
       on_hand_qty: qty,
+      reorder_threshold: reorderThreshold,
       unit_cost: r.unit_cost,
       location: r.location,
       status: r.voided_at ? "Voided" : qty <= 0 ? "Out of stock" : "In stock",
+      voided_at: r.voided_at,
     };
   });
 }

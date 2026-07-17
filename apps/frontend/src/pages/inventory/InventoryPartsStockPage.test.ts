@@ -13,6 +13,7 @@ const base: MaintenancePartRow = {
   notes: "OEM only",
   unit_cost: 42.5,
   qty_on_hand: 7,
+  reorder_threshold: 4,
   location: "A-12",
   voided_at: null,
 };
@@ -34,9 +35,11 @@ describe("mapMaintenancePartsToInventoryRows", () => {
       category: "Brakes", // INV-1: persisted category round-trips
       notes: "OEM only", // INV-1: persisted notes round-trips
       on_hand_qty: 7, // qty_on_hand -> on_hand_qty
+      reorder_threshold: 4,
       unit_cost: 42.5,
       location: "A-12",
       status: "In stock",
+      voided_at: null,
     });
   });
 
@@ -50,6 +53,11 @@ describe("mapMaintenancePartsToInventoryRows", () => {
   it("derives 'Out of stock' at zero qty and 'Voided' when voided_at is set", () => {
     expect(mapMaintenancePartsToInventoryRows([{ ...base, qty_on_hand: 0 }])[0].status).toBe("Out of stock");
     expect(mapMaintenancePartsToInventoryRows([{ ...base, voided_at: "2026-06-13T00:00:00Z" }])[0].status).toBe("Voided");
+  });
+
+  it("defaults missing reorder_threshold to 0", () => {
+    const [row] = mapMaintenancePartsToInventoryRows([{ ...base, reorder_threshold: undefined }]);
+    expect(row.reorder_threshold).toBe(0);
   });
 
   it("treats null qty as 0 and tolerates an empty list", () => {
