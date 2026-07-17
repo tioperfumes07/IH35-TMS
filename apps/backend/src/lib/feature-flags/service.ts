@@ -177,6 +177,13 @@ export const PER_ENTITY_ONLY_FLAG_KEYS: ReadonlySet<string> = new Set([
   // (incl. USMCA / TRK) at once; enable is an explicit per-entity owner flip. Default OFF. Staging ingest
   // only (no GL) but per-entity protection matters (each entity's fuel data must stay scoped).
   "RELAY_FUEL_INGEST_ENABLED",
+  // 0441-mod7-myaccountant-flag-no-seed: My Accountant read-only accountant workspace (period status,
+  // report links, CPA export downloads only — never posts/writes, see MyAccountantPage.guard.test.ts).
+  // Same class as FINANCE_HUB_UI_ENABLED / QBO_RECONCILE_UI_ENABLED: a per-entity surface
+  // (operating_company_id required; no cross-entity totals) whose enable is an explicit per-entity
+  // owner (Jorge) sign-off — a global default/rollout enable would light it up for EVERY entity (incl.
+  // USMCA / TRK) at once. Default OFF.
+  "MY_ACCOUNTANT_ENABLED",
 ]);
 
 export function isPerEntityOnlyFlag(flagKey: string): boolean {
