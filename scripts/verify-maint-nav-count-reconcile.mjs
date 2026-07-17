@@ -47,8 +47,8 @@ function main() {
   const archDesign = read(paths.archDesign);
 
   const expected = {
-    moduleNav: 11,
-    masterData: 9,
+    moduleNav: 13,
+    masterData: 11,
     dashboardTabs: 10,
     operationLinks: 11,
     listsCatalogs: 10,
