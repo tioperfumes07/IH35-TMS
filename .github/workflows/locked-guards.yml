@@ -600,6 +600,8 @@ jobs:
         run: node scripts/verify-bills-page-bill-id-deeplink.mjs --selftest
       - name: verify:bills-page-bill-id-deeplink
         run: npm run verify:bills-page-bill-id-deeplink
+      - name: verify:accounting-sortable-headers
+        run: npm run verify:accounting-sortable-headers
       - name: verify:dispatch-factoring-queue-deeplinks --selftest
         run: node scripts/verify-dispatch-factoring-queue-deeplinks.mjs --selftest
       - name: verify:dispatch-factoring-queue-deeplinks
