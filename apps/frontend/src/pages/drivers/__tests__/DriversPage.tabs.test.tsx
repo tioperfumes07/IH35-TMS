@@ -178,4 +178,24 @@ describe("DriversPage list status tabs", () => {
     expect(addDriverButton).toHaveTextContent("+ Create Driver");
     expect(addDriverButton.className).toContain("bg-[#1f2a44]");
   });
+
+  it("Teams tab switches to the teams roster and + Create Team", async () => {
+    const user = userEvent.setup();
+    renderDriversAt("/drivers");
+    await screen.findByRole("button", { name: "+ Create Driver" });
+    await user.click(screen.getByRole("button", { name: /^teams$/i }));
+    expect(await screen.findByRole("button", { name: "+ Create Team" })).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText("Search by name")).toBeNull();
+  });
+
+  it("Drivers tab returns to the roster from Teams view", async () => {
+    const user = userEvent.setup();
+    renderDriversAt("/drivers");
+    await screen.findByRole("button", { name: "+ Create Driver" });
+    await user.click(screen.getByRole("button", { name: /^teams$/i }));
+    await screen.findByRole("button", { name: "+ Create Team" });
+    await user.click(screen.getByRole("button", { name: /^drivers$/i }));
+    expect(await screen.findByPlaceholderText("Search by name")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "+ Create Team" })).toBeNull();
+  });
 });
