@@ -1048,6 +1048,7 @@
     "verify:banking-palette-section7": "node scripts/verify-banking-palette-section7.mjs",
     "verify:cashflow-routes-mounted": "node scripts/verify-cashflow-routes-mounted.mjs",
     "verify:bank-automatch-button-wired": "node scripts/verify-bank-automatch-button-wired.mjs",
+    "verify:record-transfer-mark-transfer-wired": "node scripts/verify-record-transfer-mark-transfer-wired.mjs",
     "verify:dvir-followup-wo-target": "node scripts/verify-dvir-followup-wo-target.mjs",
     "verify:maintenance-settings-save": "node scripts/verify-maintenance-settings-save.mjs",
     "verify:qbo-parity-name-plus-type-option-labels": "node scripts/verify-qbo-parity-name-plus-type-option-labels.mjs",

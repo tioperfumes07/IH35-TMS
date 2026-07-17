@@ -567,6 +567,12 @@ jobs:
       - name: verify:bank-automatch-button-wired
         run: npm run verify:bank-automatch-button-wired
 
+      - name: verify:record-transfer-mark-transfer-wired --selftest
+        run: node scripts/verify-record-transfer-mark-transfer-wired.mjs --selftest
+
+      - name: verify:record-transfer-mark-transfer-wired
+        run: npm run verify:record-transfer-mark-transfer-wired
+
       - name: verify:bills-mdata-vendor-fk --selftest
         run: node scripts/verify-bills-mdata-vendor-fk.mjs --selftest
 

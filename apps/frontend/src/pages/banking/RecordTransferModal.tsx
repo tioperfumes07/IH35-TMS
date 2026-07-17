@@ -5,6 +5,7 @@ import {
   createTransfer,
   getAllAccounts,
   getCoaAccounts,
+  markBankTransactionTransfer,
   type TransferAccountKind,
   type TransferType,
 } from "../../api/banking";
@@ -213,14 +214,9 @@ export function RecordTransferModal({
         reference_number: referenceNumber.trim() || undefined,
       });
       pushToast(`Transfer recorded (${response.transfer.id})`, "success");
-      // Best-effort: mark the originating bank-feed row categorized so it clears "for review". Reuses
-      // the EXISTING /categorize poster (no new GL math — categorize is a status/tag update, the JE
-      // already posted via createTransfer above). Only wired for a Bank<->CoA leg: the CoA side IS a
-      // catalogs.accounts id, exactly what gl_account_id expects. A bank<->bank leg (destination is
-      // another Plaid account, not a catalogs.accounts row) is intentionally left for manual
-      // categorization — the only endpoint built for that (mark-transfer) has a known-broken/mismatched
-      // contract (see api/banking.ts markBankTransactionTransfer comment); wiring around a broken
-      // contract here would be a guess, not a verified fix.
+      // Best-effort: link the originating bank-feed row so it clears "for review".
+      // Bank<->CoA legs use /categorize (gl_account_id = catalogs.accounts id).
+      // Bank<->Bank legs use markBankTransactionTransfer → POST …/transfer (TransferModal parity).
       if (linkBankTransactionId) {
         const coaSideId = fromAccountKind === "coa" ? fromAccountId : toAccountKind === "coa" ? toAccountId : null;
         if (coaSideId) {
@@ -232,6 +228,17 @@ export function RecordTransferModal({
             });
           } catch {
             // Best-effort only — the transfer itself already posted; leave the row for manual review.
+          }
+        } else if (transferType === "bank_to_bank" && fromAccountKind === "bank" && toAccountKind === "bank") {
+          try {
+            const destinationBankAccountId = seedAccountSide === "to" ? fromAccountId : toAccountId;
+            const transferKind = seedAccountSide === "to" ? "in" : "out";
+            await markBankTransactionTransfer(linkBankTransactionId, operatingCompanyId, {
+              destination_bank_account_id: destinationBankAccountId,
+              transfer_kind: transferKind,
+            });
+          } catch {
+            // Best-effort only — createTransfer ledger entry above is source of truth.
           }
         }
       }
