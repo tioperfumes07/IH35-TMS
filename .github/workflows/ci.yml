@@ -320,6 +320,9 @@ jobs:
       - name: verify:drivers-profile-action-bar
         run: npm run verify:drivers-profile-action-bar
 
+      - name: verify:driver-suspend-atomic
+        run: npm run verify:driver-suspend-atomic
+
       - name: verify:drivers-comm-center
         run: npm run verify:drivers-comm-center
 

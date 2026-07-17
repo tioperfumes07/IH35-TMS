@@ -920,6 +920,16 @@ export function createSafetyEvent(
   });
 }
 
+export function suspendDriver(driverId: string, reason: string) {
+  return apiRequest<{ driver: { id: string; status: string }; event: SafetyEvent }>(
+    `/api/v1/mdata/drivers/${driverId}/suspend`,
+    {
+      method: "POST",
+      body: { reason },
+    }
+  );
+}
+
 export function updateSafetyEvent(
   driverId: string,
   eventId: string,
