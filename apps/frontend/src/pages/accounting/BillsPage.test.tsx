@@ -21,9 +21,9 @@ vi.mock("../../api/accounting", async (importOriginal) => {
   };
 });
 
-function wrap(ui: ReactElement) {
+function wrap(ui: ReactElement, initialEntries: string[] = ["/accounting/bills"]) {
   return (
-    <MemoryRouter>
+    <MemoryRouter initialEntries={initialEntries}>
       <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
         <ToastProvider>{ui}</ToastProvider>
       </QueryClientProvider>
@@ -85,13 +85,26 @@ describe("BillsPage", () => {
     await waitFor(() => expect(accountingApi.listBills).toHaveBeenCalled());
 
     expect(await screen.findByText("Vendor One")).toBeInTheDocument();
-    expect(screen.getByText("$100.00")).toBeInTheDocument();
-    expect(screen.getByText("$40.00")).toBeInTheDocument();
-    expect(screen.getByText("$60.00")).toBeInTheDocument();
+    // Amounts also appear in KPI strip — assert at least one of each money cell.
+    expect(screen.getAllByText("$100.00").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("$40.00").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("$60.00").length).toBeGreaterThanOrEqual(1);
 
-    await user.click(screen.getByRole("button", { name: /Expand details/i }));
+    await user.click(screen.getByRole("button", { name: /Expand row/i }));
 
     await waitFor(() => expect(accountingApi.listPaymentsForBill).toHaveBeenCalledWith("bill-partial-1", "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071"));
     expect(await screen.findByText("REF-9")).toBeInTheDocument();
+  });
+
+  it("honors ?bill_id= deep link (banner + allocation select)", async () => {
+    render(wrap(<BillsPage />, ["/accounting/bills?bill_id=bill-partial-1"]));
+
+    await waitFor(() => expect(accountingApi.listBills).toHaveBeenCalled());
+
+    const banner = await screen.findByTestId("bills-deeplink-banner");
+    expect(banner).toHaveTextContent("bill-par");
+    expect(banner).toHaveTextContent(/highlighted and selected/i);
+    // Allocate button for the deep-linked row flips to Selected
+    expect(await screen.findByRole("button", { name: /^Selected$/i })).toBeInTheDocument();
   });
 });
