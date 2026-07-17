@@ -98,7 +98,7 @@ export async function createWorkOrderFromRoadServiceTicket(
   const header: TwoSectionHeader = {
     operating_company_id: input.operatingCompanyId,
     wo_type: "repair",
-    source_type: "ES",
+    source_type: "RS",
     status: "complete",
     unit_id: ticket.unit_id,
     driver_id: ticket.driver_id,

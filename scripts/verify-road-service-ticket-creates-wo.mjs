@@ -66,8 +66,8 @@ function main() {
   if (!integration.includes("createWorkOrderFromRoadServiceTicket")) {
     fail("wo-integration must export createWorkOrderFromRoadServiceTicket");
   }
-  if (!integration.includes('source_type: "ES"')) {
-    fail("wo-integration must create ES source_type work orders");
+  if (!integration.includes('source_type: "RS"')) {
+    fail("wo-integration must create RS source_type work orders");
   }
   if (!integration.includes("autoCreateBillFromWO")) {
     fail("wo-integration must auto-create vendor bill from WO");
