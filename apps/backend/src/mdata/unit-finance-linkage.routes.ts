@@ -12,8 +12,11 @@ function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
   return req.user;
 }
 
+const RL_READ = { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } };
+
 export async function registerUnitFinanceLinkageRoutes(app: FastifyInstance) {
-  app.get("/api/v1/mdata/units/:id/finance-linkage", async (req, reply) => {
+  // CodeQL: authorized routes must be rate-limited (match peer mdata GET handlers).
+  app.get("/api/v1/mdata/units/:id/finance-linkage", RL_READ, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
