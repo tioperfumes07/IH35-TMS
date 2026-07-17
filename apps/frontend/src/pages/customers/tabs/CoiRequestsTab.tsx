@@ -78,7 +78,7 @@ export function CoiRequestsTab({ customerId, customerName, operatingCompanyId }:
       <div className="mb-3 flex items-center justify-between">
         <div className="text-xs text-gray-600">Track COI requests and responses per customer.</div>
         <Button size="sm" onClick={() => setModalOpen(true)}>
-          Request New COI
+          + Create COI
         </Button>
       </div>
 
@@ -128,7 +128,7 @@ export function CoiRequestsTab({ customerId, customerName, operatingCompanyId }:
       />
 
       <Modal
-        title="Request New COI"
+        title="Create COI Request"
         open={modalOpen}
         onClose={() => setModalOpen(false)}
       >
@@ -170,7 +170,7 @@ export function CoiRequestsTab({ customerId, customerName, operatingCompanyId }:
             Cancel
           </Button>
           <Button onClick={() => createMutation.mutate()} loading={createMutation.isPending}>
-            Submit Request
+            + Create
           </Button>
         </div>
       </Modal>
