@@ -544,6 +544,12 @@ jobs:
       - name: verify:bank-automatch-observable
         run: npm run verify:bank-automatch-observable
 
+      - name: verify:bank-automatch-button-wired --selftest
+        run: node scripts/verify-bank-automatch-button-wired.mjs --selftest
+
+      - name: verify:bank-automatch-button-wired
+        run: npm run verify:bank-automatch-button-wired
+
       - name: verify:bills-mdata-vendor-fk --selftest
         run: node scripts/verify-bills-mdata-vendor-fk.mjs --selftest
 

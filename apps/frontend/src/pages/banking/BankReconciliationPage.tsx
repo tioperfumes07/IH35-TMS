@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import {
   acceptBankReconMatch,
   type BankReconWorklistPayload,
@@ -33,10 +34,13 @@ export function BankReconciliationPage() {
   const { selectedCompanyId } = useCompanyContext();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
+  const [searchParams] = useSearchParams();
 
-  const [accountId, setAccountId] = useState("");
-  const [periodStart, setPeriodStart] = useState("");
-  const [periodEnd, setPeriodEnd] = useState("");
+  // 0441-mod8: honor deep link from ReconciliationWorkspace Auto-Match Suggestions
+  // (?account_id=&period_start=&period_end=) so the auto_matched_candidates worklist loads.
+  const [accountId, setAccountId] = useState(() => searchParams.get("account_id") ?? "");
+  const [periodStart, setPeriodStart] = useState(() => searchParams.get("period_start") ?? "");
+  const [periodEnd, setPeriodEnd] = useState(() => searchParams.get("period_end") ?? "");
   const [selectedTxId, setSelectedTxId] = useState("");
   const [manualLedgerKind, setManualLedgerKind] = useState<"payment" | "bill_payment" | "transfer" | "je">("payment");
   const [manualLedgerId, setManualLedgerId] = useState("");
