@@ -182,6 +182,9 @@ jobs:
       - name: verify:maint-jump-to-tab-removed
         run: npm run verify:maint-jump-to-tab-removed
 
+      - name: verify:fuel-jump-to-tab-removed
+        run: npm run verify:fuel-jump-to-tab-removed
+
       - name: verify:startup-migration-drift-guard
         run: npm run verify:startup-migration-drift-guard
 

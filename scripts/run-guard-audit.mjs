@@ -16,6 +16,7 @@ const CANDIDATES = [
   "verify:no-bare-health-references",
   "verify:no-internal-language-in-prod-ui",
   "verify:maint-jump-to-tab-removed",
+  "verify:fuel-jump-to-tab-removed",
   "verify:startup-migration-drift-guard",
   "verify:canonical-schema-names",
   "verify:arch-design",
