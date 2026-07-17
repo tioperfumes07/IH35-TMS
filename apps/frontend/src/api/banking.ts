@@ -537,6 +537,24 @@ export function bulkCategorizeBankTransactions(
   });
 }
 
+/**
+ * Multi-select "categorize to account" for the for-review grid (QBO Banking bulk-categorize parity).
+ * Repointed to the REAL backend route `POST /api/v1/banking/transactions/categorize-bulk`
+ * (categorization.routes.ts) whose contract is `{ operating_company_id, transaction_ids, category_kind,
+ * gl_account_id? }` — the SAME categorize action the single-row Post uses (the chosen COA account IS the
+ * category; GL posting stays behind the OFF-by-default flags on the backend). Per-row result so partial
+ * failures (a row that is no longer pending) are surfaced honestly, never swallowed.
+ */
+export function categorizeTransactionsBulk(
+  companyId: string,
+  body: { transaction_ids: string[]; category_kind: string; gl_account_id?: string }
+) {
+  return apiRequest<{ categorized_count: number; errors: Array<{ transaction_id: string; error: string }> }>(
+    `/api/v1/banking/transactions/categorize-bulk`,
+    { method: "POST", body: { operating_company_id: companyId, ...body } }
+  );
+}
+
 /** Marks a bank transaction as an inter-account transfer (excludes it from cash-flow / bank-feed GL
  *  posting — see bank-feed-gl-posting.service.ts's own-transfer skip). Repointed to the REAL backend
  *  route `POST /api/v1/banking/transactions/:id/transfer` (categorization.routes.ts) whose body
