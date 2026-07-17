@@ -1072,7 +1072,8 @@
     "verify:dispatch-cancel-reason-catalog": "node scripts/verify-dispatch-cancel-reason-catalog.mjs",
     "verify:maint-wo-vendor-linkage": "node scripts/verify-maint-wo-vendor-linkage.mjs",
     "verify:dispatch-mapview-honest": "node scripts/verify-dispatch-mapview-honest.mjs",
-    "verify:banking-factoring-virtual-fe-wired": "node scripts/verify-banking-factoring-virtual-fe-wired.mjs"
+    "verify:banking-factoring-virtual-fe-wired": "node scripts/verify-banking-factoring-virtual-fe-wired.mjs",
+    "verify:item-editor-account-addnew": "node scripts/verify-item-editor-account-addnew.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1087.0",

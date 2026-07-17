@@ -27,6 +27,7 @@ import { listVendors } from "../../../api/mdata";
 import type { AccountingCatalogClient } from "./AccountingCatalogModal";
 import { Button } from "../../../components/Button";
 import { Combobox, type ComboboxOption } from "../../../components/Combobox";
+import { QuickCreateEntityModal } from "../../../components/forms/shared/QuickCreateEntityModal";
 import { Modal } from "../../../components/Modal";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 
@@ -100,6 +101,8 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
   const [submitError, setSubmitError] = useState("");
   const [saving, setSaving] = useState(false);
   const [creatingCategory, setCreatingCategory] = useState(false);
+  // PS-A: which account picker opened the nested "+ Add new account" create chrome (QBO parity).
+  const [accountCreateSide, setAccountCreateSide] = useState<"income" | "expense" | null>(null);
 
   const accountsQuery = useQuery({
     queryKey: ["catalogs", "accounts", "for-items", operatingCompanyId],
@@ -168,6 +171,13 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function handleAccountCreated(rec: { id: string; label: string }) {
+    void queryClient.invalidateQueries({ queryKey: ["catalogs", "accounts", "for-items", operatingCompanyId] });
+    if (accountCreateSide === "income") set("incomeAccountId", rec.id);
+    else if (accountCreateSide === "expense") set("expenseAccountId", rec.id);
+    setAccountCreateSide(null);
   }
 
   async function handleAddCategory(name: string) {
@@ -365,6 +375,7 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
                     placeholder="Select income account"
                     loading={accountsQuery.isLoading}
                     allowClear
+                    allowAddNew={{ label: "+ Add new account", onAdd: () => setAccountCreateSide("income") }}
                   />
                 </div>
                 {errors.incomeAccountId ? <p className="mt-1 text-[11px] text-red-700">{errors.incomeAccountId}</p> : null}
@@ -428,6 +439,7 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
                     placeholder="Select expense account"
                     loading={accountsQuery.isLoading}
                     allowClear
+                    allowAddNew={{ label: "+ Add new account", onAdd: () => setAccountCreateSide("expense") }}
                   />
                 </div>
                 {errors.expenseAccountId ? <p className="mt-1 text-[11px] text-red-700">{errors.expenseAccountId}</p> : null}
@@ -492,6 +504,15 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
           </div>
         </div>
       </div>
+
+      {/* PS-A: nested account create — same QuickCreateEntityModal "category" chrome as Bills / Expense / Banking categorize (catalogs.accounts). */}
+      <QuickCreateEntityModal
+        open={accountCreateSide !== null}
+        kind="category"
+        operatingCompanyId={operatingCompanyId}
+        onClose={() => setAccountCreateSide(null)}
+        onCreated={handleAccountCreated}
+      />
     </Modal>
   );
 }

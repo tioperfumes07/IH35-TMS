@@ -29,7 +29,14 @@ describe("ItemEditorModal — real account/category pickers (PS-A)", () => {
   it("offers a repeatable inline category create against the categories catalog", () => {
     expect(SRC).toContain("qboCategoriesCatalogClient.create");
     expect(SRC).toContain("invalidateQueries");
-    expect(SRC).toMatch(/\+ New category/);
+    expect(SRC).toMatch(/\+ Add new category/);
+  });
+
+  it("offers nested + Add new account on income and expense pickers (PS-A)", () => {
+    expect(SRC).toMatch(/incomeAccountId[\s\S]{0,900}allowAddNew=\{\{\s*label:\s*"\+ Add new account"/);
+    expect(SRC).toMatch(/expenseAccountId[\s\S]{0,900}allowAddNew=\{\{\s*label:\s*"\+ Add new account"/);
+    expect(SRC).toContain('kind="category"');
+    expect(SRC).toContain("QuickCreateEntityModal");
   });
 
   it("persists the QBO two-sided purchasing side incl. a real preferred-vendor reference (AF-2c.2)", () => {
