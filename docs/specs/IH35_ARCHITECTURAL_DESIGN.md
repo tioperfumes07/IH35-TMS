@@ -589,6 +589,8 @@ Active Loads · In Transit · At Risk · Border Decisions Pending · Ready to Se
 
 **Maintenance KPI dashboard (B35, 2026-06-04):** `/maintenance/kpi-dashboard` aggregates downtime hours, MTBF (repair WO spacing), CPM, cost-per-truck, and PM compliance % with per-KPI sparklines, date/unit filters, drill-down tables, and PM compliance hub links (`/maintenance/pm-auto-engine`, `/maintenance/pm-schedule`). Canonical routes in `kpi.routes.ts`; cross-link only to `/reports/maintenance-cost-per-unit` (reports module untouched). **Migration:** none — **0364** reserved; live SQL aggregation sufficient. **CI:** `verify:maint-kpi-dashboard`.
 
+**PM Schedule create form (0441-mod2 / PM-SCHEDULE-CREATE-FORM, 2026-07-17):** `/maintenance/pm-schedule` **+ Create** opens a modal that collects real `unit_id` (from `listUnits`), `pm_type`, `interval_kind`, and `interval_value` before `POST /api/v1/maintenance/pm-schedule`. Never posts the all-zero UUID. Backend create schema rejects nil UUID (`nil_uuid_not_allowed`). **Migration:** none. **CI:** `verify:pm-schedule-create-form`.
+
 ### UI chips on Dispatch home
 - ⚡ icon on unit IDs with open PM-due WOs
 - 🔒 icon on units with `is_dispatch_blocked = true`
