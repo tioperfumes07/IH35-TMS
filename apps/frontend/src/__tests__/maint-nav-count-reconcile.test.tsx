@@ -9,12 +9,12 @@ import {
 
 describe("maintenance nav count reconcile (B24)", () => {
   it("defines canonical module nav count matching sidebar flyout", () => {
-    expect(MAINTENANCE_MODULE_NAV_COUNT).toBe(10);
+    expect(MAINTENANCE_MODULE_NAV_COUNT).toBe(13);
     expect(MAINTENANCE_HOME_QUICK_JUMP_COUNT).toBe(MAINTENANCE_MODULE_NAV_COUNT);
   });
 
-  it("includes Drivers in master data hover count", () => {
-    expect(MAINTENANCE_MASTER_DATA_NAV_COUNT).toBe(8);
+  it("includes Drivers + Fault Drafts/Rules in master data hover count", () => {
+    expect(MAINTENANCE_MASTER_DATA_NAV_COUNT).toBe(11);
   });
 
   it("keeps dashboard operational tab count at 10", () => {

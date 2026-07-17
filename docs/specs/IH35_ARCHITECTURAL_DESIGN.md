@@ -535,7 +535,7 @@ Active Customers · Open Loads · MTD Revenue · AR Total · Disputes Open
 
 **Route aliases (B21-D1):** Legacy `/dispatch/loads` → `/dispatch?view=loads`; `/dispatch/loads/{uuid}` → `/dispatch?load_id={uuid}`; `/dispatch/incidents` → `/dispatch/alerts`; `/dispatch/factoring-packets` → `/accounting/factoring`. DISPATCH sidebar flyout includes At-Risk Queue, In-Transit Issues, Assignment History (B21-D2), Planner Calendar (B21-D4), Detention Board (B21-D5), OCR Queue (B21-D7), Customer ETA Notify (B21-D9), POD Review + BOL (B21-D10), Dispatch Settings (B21-D11), Border Crossing + Border History + Factoring Packets per triage. **CI:** `verify:dispatch-arch-tab-parity`, `verify:dispatch-planner-calendar`, `verify:dispatch-detention-board`, `verify:dispatch-ocr-queue`, `verify:dispatch-assignment-optimizer`, `verify:dispatch-customer-eta-notify`, `verify:dispatch-pod-bol-workflow`, `verify:dispatch-settings-tab`, `verify:dispatch-secondary-nav-depth`.
 
-**Maintenance module nav counts (B24):** Canonical surfaces in `MAINTENANCE_NAV_CONFIG.ts` — 10 sidebar flyout links, 10 dashboard operational tabs, 8 Master Data hover links (includes `/maintenance/drivers`), 9 Lists maintenance catalogs. HOME quick-jump uses `MAINTENANCE_HOME_QUICK_JUMP_COUNT` (10). Dead stub CTAs removed from parts-inventory dashboard band, fleet-table empty state, service-location empty state, and vendors CSV Import.
+**Maintenance module nav counts (B24 + Block 22 orphan-nav close):** Canonical surfaces in `MAINTENANCE_NAV_CONFIG.ts` — **13 sidebar flyout links**, 10 dashboard operational tabs, **11 Master Data hover links** (includes `/maintenance/drivers`, `/maintenance/fault-drafts`, `/maintenance/fault-rules`), 10 Lists maintenance catalogs. HOME quick-jump uses `MAINTENANCE_HOME_QUICK_JUMP_COUNT` (13). **Fault Drafts** + **Fault Rules** are first-class flyout/Master Data destinations (never URL-only). Dead stub CTAs removed from parts-inventory dashboard band, fleet-table empty state, service-location empty state, and vendors CSV Import. **CI:** `verify:maint-nav-count-reconcile`, `verify:fault-drafts-nav`.
 
 ### KPI row — 6 cards
 Active Loads · In Transit · At Risk · Border Decisions Pending · Ready to Settle · MTD Revenue
@@ -1207,6 +1207,8 @@ Route: `/dispatch/border-crossing` renders `BorderCrossingWizardPage` (6-step wi
 ## Predictive Auto-WO from Faults (Maintenance module) — Block 22 (locked 2026-06-02)
 
 High-severity Samsara fault codes can auto-create **draft** work orders when `maintenance.fault_code_severity_rules.auto_create_wo = true` and severity is `high` or `critical`. Fleet managers review drafts at `/maintenance/fault-drafts`; rules CRUD at `/maintenance/fault-rules`.
+
+**Nav (0441 orphan-nav close, never-delete):** Both routes are registered in `MAINTENANCE_MODULE_NAV_LINKS` (sidebar flyout) and `MAINTENANCE_MASTER_DATA_LINKS` (in-module Master Data hover) as **Fault Drafts** and **Fault Rules** — reachable without typing the URL. Dashboard operational sub-nav tab count stays 10 (unchanged). **CI:** `verify:fault-drafts-nav`.
 
 **Webhook path:** `vehicle-projector.ts` → `fault-code-processor.service.ts` parses `faultCodes` / `dtc_codes` from Samsara payload, writes `maintenance.samsara_fault_code_history` (idempotent on `raw_event_id`), creates `maintenance.work_orders` with `origin = fault_auto`, `status = draft`. 24h dedupe prevents duplicate WOs for the same unresolved code on the same unit.
 

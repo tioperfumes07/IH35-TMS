@@ -1004,6 +1004,8 @@ Relevant block: BLOCK-22-PREDICTIVE-AUTO-WO-FROM-FAULTS
 
 Samsara fault webhook → draft WO automation with configurable severity rules, fault history audit, 24h dedupe, and Block 17 notification wiring. Routes bootstrapped via `form-425c.routes.ts` (no `index.ts` edit). Initial rule set empty — users configure via `/maintenance/fault-rules`.
 
+**Nav close (0441-mod2-fault-drafts-rules-orphan-nav, 2026-07-17):** `/maintenance/fault-drafts` and `/maintenance/fault-rules` added to `MAINTENANCE_MODULE_NAV_LINKS` + `MAINTENANCE_MASTER_DATA_LINKS` (never-delete; dashboard tab count unchanged). **CI:** `verify:fault-drafts-nav`.
+
 ---
 
 ## 2026-06-02 · Block A5 · Fleet bulk-select checkbox

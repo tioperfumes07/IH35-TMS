@@ -1035,6 +1035,11 @@ jobs:
       # nil-UUID hardcoded create / formless mutate() cannot regress without CI fail
       - name: verify:pm-schedule-create-form
         run: npm run verify:pm-schedule-create-form
+      # 0441-mod2-fault-drafts-rules-orphan-nav — Fault Drafts/Rules must stay in flyout + Master Data nav
+      - name: verify:fault-drafts-nav --self-test
+        run: node scripts/verify-fault-drafts-nav.mjs --self-test
+      - name: verify:fault-drafts-nav
+        run: npm run verify:fault-drafts-nav
       # SAFETY-KPI-DRILLTHROUGH — KPI tiles/alerts drill to specific driver/unit, never bare /safety
       - name: verify:safety-kpi-drillthrough
         run: npm run verify:safety-kpi-drillthrough

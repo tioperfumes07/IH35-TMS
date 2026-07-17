@@ -1,6 +1,6 @@
 export type MaintenanceNavLink = { label: string; path: string };
 
-/** Sidebar flyout destinations — module-level nav (10). */
+/** Sidebar flyout destinations — module-level nav (13). */
 export const MAINTENANCE_MODULE_NAV_LINKS: MaintenanceNavLink[] = [
   { label: "Dashboard", path: "/maintenance" },
   { label: "Vehicles", path: "/maintenance/vehicles" },
@@ -13,9 +13,11 @@ export const MAINTENANCE_MODULE_NAV_LINKS: MaintenanceNavLink[] = [
   { label: "Reports", path: "/maintenance/reports" },
   { label: "Compliance", path: "/maintenance/compliance" },
   { label: "Position History", path: "/maintenance/position-history" },
+  { label: "Fault Drafts", path: "/maintenance/fault-drafts" },
+  { label: "Fault Rules", path: "/maintenance/fault-rules" },
 ];
 
-/** Master Data hover dropdown — excludes Dashboard + operational-only tabs (8). */
+/** Master Data hover dropdown — excludes Dashboard + operational-only tabs (11). */
 export const MAINTENANCE_MASTER_DATA_LINKS: MaintenanceNavLink[] = [
   { label: "Vehicles", path: "/maintenance/vehicles" },
   { label: "Drivers", path: "/maintenance/drivers" },
@@ -26,6 +28,8 @@ export const MAINTENANCE_MASTER_DATA_LINKS: MaintenanceNavLink[] = [
   { label: "Reports", path: "/maintenance/reports" },
   { label: "Compliance", path: "/maintenance/compliance" },
   { label: "Position History", path: "/maintenance/position-history" },
+  { label: "Fault Drafts", path: "/maintenance/fault-drafts" },
+  { label: "Fault Rules", path: "/maintenance/fault-rules" },
 ];
 
 /** Dashboard operational sub-tabs — guarded by verify:maintenance-tab-coverage (10). */
