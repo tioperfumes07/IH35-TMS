@@ -11,6 +11,7 @@ import {
   autoCreateExpenseFromWO,
   createWorkOrderWithLines,
 } from "./two-section-service.js";
+import { openWorkOrderPredicate } from "../kpi/canonical-kpis.js";
 import { assertRoadsideFields, listWorkOrdersByBucket } from "./work-orders.service.js";
 import { emitMaintenanceSpineEvent } from "./maintenance-spine-emit.js";
 import { isWoInvoiceMismatch, validateWoVendorInvoiceTotals } from "./wo-cost-validation.js";
@@ -419,15 +420,16 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       if (!(await maintenanceReady(client))) return { rows: [], total: 0 };
       const values: unknown[] = [q.operating_company_id];
       const where: string[] = ["w.operating_company_id = $1"];
-      // MAINT-2: exclude VOIDED work orders via the canonical void flag (void-not-delete), the SAME
-      // exclusion the KPI countOpenMaintenanceWorkOrders now uses (openWorkOrderPredicate) — so the KPI
-      // open-count and this list's open rows can't diverge. GUARD voided DEMO-WO-001/002 on prod, so this
-      // replaces the old display_id ILIKE 'DEMO-%'/'TEST-%' name-pattern hack (maintenance.work_orders has
-      // no is_sample_data column; the demo WOs are excluded by being voided).
-      where.push("w.voided_at IS NULL");
+      // MAINT-2: Active WOs list + KPI share openWorkOrderPredicate (open status set + voided_at IS NULL).
+      // Explicit status or equipment_id drill-through keeps caller-controlled scope; default list = open WOs only.
       if (q.status) {
         values.push(q.status);
         where.push(`w.status = $${values.length}`);
+        where.push("w.voided_at IS NULL");
+      } else if (q.equipment_id) {
+        where.push("w.voided_at IS NULL");
+      } else {
+        where.push(openWorkOrderPredicate("w"));
       }
       if (q.wo_type) {
         values.push(q.wo_type);

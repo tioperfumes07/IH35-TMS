@@ -12,6 +12,7 @@ import {
   DISPATCH_IN_TRANSIT_STATUSES,
   OPEN_MAINTENANCE_WO_STATUSES,
   PENDING_BILL_STATUSES,
+  openWorkOrderPredicate,
 } from "../canonical-kpis.js";
 
 describe("canonical-kpis (P8-AUDIT-KPI-DRIFTS)", () => {
@@ -27,6 +28,15 @@ describe("canonical-kpis (P8-AUDIT-KPI-DRIFTS)", () => {
 
   it("open WO statuses align maintenance home and wos-open-count", () => {
     expect(OPEN_MAINTENANCE_WO_STATUSES).toEqual(["open", "in_progress", "waiting_parts"]);
+  });
+
+  it("openWorkOrderPredicate encodes open statuses + void exclusion for aliased and bare use", () => {
+    expect(openWorkOrderPredicate()).toMatch(/voided_at IS NULL/);
+    expect(openWorkOrderPredicate("w")).toMatch(/w\.status IN/);
+    expect(openWorkOrderPredicate("w")).toMatch(/w\.voided_at IS NULL/);
+    for (const status of OPEN_MAINTENANCE_WO_STATUSES) {
+      expect(openWorkOrderPredicate()).toContain(`'${status}'`);
+    }
   });
 
   it("pm due and past due use distinct definitions", async () => {
