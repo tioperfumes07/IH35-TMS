@@ -139,6 +139,9 @@ for (const { file, label } of PAGES) {
   if (!/sortKey=\{sortKey\}/.test(src)) {
     failures.push(`${file} (${label}) — must wire sortKey={sortKey} onto <ParityTable>`);
   }
+  if (!/sortDirection=\{sortDirection\}/.test(src)) {
+    failures.push(`${file} (${label}) — must wire sortDirection={sortDirection} onto <ParityTable>`);
+  }
   if (!/onSortChange=\{onSortChange\}/.test(src)) {
     failures.push(`${file} (${label}) — must wire onSortChange={onSortChange} onto <ParityTable>`);
   }
@@ -147,6 +150,12 @@ for (const { file, label } of PAGES) {
     failures.push(
       `${file} (${label}) — data column(s) missing sortable: true: ${nonSortable.join(", ")}`,
     );
+  }
+  // Derived columns (key not a plain row field) must supply sortValue or the header is a no-op.
+  if (file.includes("ExpensesListPage") && /key:\s*["']payee["']/.test(src)) {
+    if (!/key:\s*["']payee["'][\s\S]*?sortValue\s*:/.test(src)) {
+      failures.push(`${file} (${label}) — payee column must set sortValue (derived from vendor/driver)`);
+    }
   }
 }
 

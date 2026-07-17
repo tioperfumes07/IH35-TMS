@@ -493,7 +493,9 @@ export function BillsPage() {
         onRowClick={(bill) => {
           setHighlightedBillId(bill.id);
           setAllocationBillId(bill.id);
-          void navigate(`/accounting/bills?bill_id=${encodeURIComponent(bill.id)}`, { replace: true });
+          const next = new URLSearchParams(searchParams);
+          next.set("bill_id", bill.id);
+          void navigate(`/accounting/bills?${next.toString()}`, { replace: true });
         }}
         rowClassName={(bill) => (highlightedBillId === bill.id ? "bg-slate-100" : "")}
         batchActions={(selected) => (

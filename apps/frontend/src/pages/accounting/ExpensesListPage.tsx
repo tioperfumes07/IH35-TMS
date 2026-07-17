@@ -102,11 +102,19 @@ export function ExpensesListPage() {
       render: (r) => <EntityLink kind="expense" id={r.id} label={r.expense_number || r.id.slice(0, 8)} />,
     },
     { key: "transaction_date", label: "Date", sortable: true, render: (r) => <span className="text-gray-700">{formatDateUS(r.transaction_date)}</span> },
-    { key: "payee", label: "Payee", sortable: true, render: (r) => <span className="font-medium text-gray-900">{payeeOf(r)}</span> },
+    {
+      key: "payee",
+      label: "Payee",
+      sortable: true,
+      // Derived display (vendor_name / driver name) — must supply sortValue or header is a no-op.
+      sortValue: (r) => payeeOf(r),
+      render: (r) => <span className="font-medium text-gray-900">{payeeOf(r)}</span>,
+    },
     {
       key: "line_description",
       label: "Category / Memo",
       sortable: true,
+      sortValue: (r) => r.line_description || r.memo || "",
       render: (r) => <span className="text-gray-600">{r.line_description || r.memo || "—"}</span>,
     },
     {
@@ -207,7 +215,9 @@ export function ExpensesListPage() {
           loading={query.isLoading}
           onRowClick={(r) => {
             setHighlightedExpenseId(r.id);
-            void navigate(`/accounting/expenses/list?expense_id=${r.id}`, { replace: true });
+            const next = new URLSearchParams(searchParams);
+            next.set("expense_id", r.id);
+            void navigate(`/accounting/expenses/list?${next.toString()}`, { replace: true });
           }}
           rowClassName={(r) => (highlightedExpenseId === r.id ? "bg-slate-100" : "")}
           filterBar={filterBar}

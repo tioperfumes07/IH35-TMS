@@ -240,7 +240,15 @@ export function ParityTable<T>({
         : ((row as Record<string, unknown>)[sortKey] as string | number | null | undefined);
     const copy = [...rows];
     copy.sort((a, b) => {
-      const cmp = compareSortValues(extract(a), extract(b));
+      const av = extract(a);
+      const bv = extract(b);
+      const aNull = av == null || av === "";
+      const bNull = bv == null || bv === "";
+      // Nulls/blanks always last — do not flip with DESC (negating compareSortValues would).
+      if (aNull && bNull) return 0;
+      if (aNull) return 1;
+      if (bNull) return -1;
+      const cmp = compareSortValues(av, bv);
       return sortDirection === "asc" ? cmp : -cmp;
     });
     return copy;
