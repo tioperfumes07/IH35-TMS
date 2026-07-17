@@ -59,8 +59,10 @@ export function MaintenanceCostPerUnitPage() {
   });
 
   const pieData = useMemo(() => {
-    const raw = query.data?.by_category ?? [];
-    return raw.map((c) => ({ name: c.category, value: c.amount_cents })).filter((r) => r.value > 0);
+    const raw = query.data?.by_category ?? {};
+    return Object.entries(raw)
+      .map(([category, cents]) => ({ name: category, value: Number(cents) || 0 }))
+      .filter((r) => r.value > 0);
   }, [query.data?.by_category]);
 
   const rows = query.data?.by_truck ?? [];
@@ -73,8 +75,8 @@ export function MaintenanceCostPerUnitPage() {
       { key: "labor_cents", label: "Labor", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.labor_cents) },
       { key: "outsourced_cents", label: "Outsourced", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.outsourced_cents) },
       { key: "total_cents", label: "Total", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.total_cents) },
-      { key: "miles", label: "Miles", sortable: true, className: "text-right", cellClass: "text-right" },
-      { key: "cost_per_mile_cents", label: "$/Mile", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.cost_per_mile_cents) },
+      { key: "miles_driven", label: "Miles", sortable: true, className: "text-right", cellClass: "text-right" },
+      { key: "cost_per_mile_cents", label: "$/Mile", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => (r.cost_per_mile_cents === null ? "—" : money(r.cost_per_mile_cents)) },
       {
         key: "flags",
         label: "Flags",
@@ -95,7 +97,7 @@ export function MaintenanceCostPerUnitPage() {
   function exportCsv(data: MaintenanceCostPerUnitResponse) {
     const h = ["Unit", "WOs", "Parts", "Labor", "Outsourced", "Total", "Miles", "PerMile", "Flags"];
     const lines = (data.by_truck ?? []).map((r) =>
-      [r.unit_number, r.wo_count, r.parts_cents, r.labor_cents, r.outsourced_cents, r.total_cents, r.miles, r.cost_per_mile_cents, r.flags.join("|")].join(","),
+      [r.unit_number, r.wo_count, r.parts_cents, r.labor_cents, r.outsourced_cents, r.total_cents, r.miles_driven, r.cost_per_mile_cents ?? "", r.flags.join("|")].join(","),
     );
     const blob = new Blob([[h.join(","), ...lines].join("\n")], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -152,9 +154,9 @@ export function MaintenanceCostPerUnitPage() {
           {(
             [
               ["WO count", String(t.wo_count)],
-              ["Parts", money(t.parts_cents)],
-              ["Labor", money(t.labor_cents)],
-              ["Outsourced", money(t.outsourced_cents)],
+              ["Parts", money(t.total_parts_cents)],
+              ["Labor", money(t.total_labor_cents)],
+              ["Outsourced", money(t.total_outsourced_cents)],
               ["Grand total", money(t.grand_total_cents)],
               ["Truck count", String(t.truck_count)],
             ] as const
