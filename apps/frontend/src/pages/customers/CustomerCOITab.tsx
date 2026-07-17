@@ -123,7 +123,7 @@ export function CustomerCOITab({ customerId, customerName, operatingCompanyId }:
     <DataPanel title={`COI Requests · ${customerName}`}>
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <Button size="sm" variant="secondary" onClick={() => setRequestOpen((open) => !open)}>
-          {requestOpen ? "Close Request Form" : "Request COI"}
+          {requestOpen ? "Cancel" : "+ Create COI"}
         </Button>
       </div>
 
@@ -158,7 +158,7 @@ export function CustomerCOITab({ customerId, customerName, operatingCompanyId }:
           </label>
           <div className="md:col-span-2">
             <Button size="sm" onClick={() => createMutation.mutate()} loading={createMutation.isPending}>
-              Create Request
+              + Create
             </Button>
           </div>
         </div>

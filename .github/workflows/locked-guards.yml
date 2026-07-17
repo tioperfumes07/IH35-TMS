@@ -296,6 +296,9 @@ jobs:
       - name: verify:fleet-roster-create-actions
         run: npm run verify:fleet-roster-create-actions
 
+      - name: verify:coi-create-vocab
+        run: npm run verify:coi-create-vocab
+
       - name: verify:fleet-insurance-summary-rendered
         run: npm run verify:fleet-insurance-summary-rendered
 
