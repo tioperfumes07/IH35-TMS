@@ -118,8 +118,13 @@ export async function registerSafetyEventsRoutes(app: FastifyInstance) {
             u.unit_number AS subject_unit_number,
             l.load_number AS related_load_number
           FROM safety.safety_events e
-          LEFT JOIN mdata.drivers d ON d.id = e.subject_driver_id
-          LEFT JOIN mdata.units u ON u.id = e.subject_unit_id
+          LEFT JOIN mdata.drivers d
+            ON d.id = e.subject_driver_id
+           AND d.operating_company_id = e.operating_company_id
+          LEFT JOIN mdata.units u
+            ON u.id = e.subject_unit_id
+           AND (u.owner_company_id = e.operating_company_id
+                OR u.currently_leased_to_company_id = e.operating_company_id)
           LEFT JOIN mdata.loads l
             ON l.id = e.related_load_id
             AND l.operating_company_id = e.operating_company_id
@@ -199,8 +204,13 @@ export async function registerSafetyEventsRoutes(app: FastifyInstance) {
             u.unit_number AS subject_unit_number,
             l.load_number AS related_load_number
           FROM safety.safety_events e
-          LEFT JOIN mdata.drivers d ON d.id = e.subject_driver_id
-          LEFT JOIN mdata.units u ON u.id = e.subject_unit_id
+          LEFT JOIN mdata.drivers d
+            ON d.id = e.subject_driver_id
+           AND d.operating_company_id = e.operating_company_id
+          LEFT JOIN mdata.units u
+            ON u.id = e.subject_unit_id
+           AND (u.owner_company_id = e.operating_company_id
+                OR u.currently_leased_to_company_id = e.operating_company_id)
           LEFT JOIN mdata.loads l
             ON l.id = e.related_load_id
             AND l.operating_company_id = e.operating_company_id
@@ -407,12 +417,18 @@ export async function registerSafetyEventsRoutes(app: FastifyInstance) {
             CONCAT_WS(' ', d.first_name, d.last_name) AS subject_driver_name,
             u.unit_number AS subject_unit_number
           FROM safety.safety_events e
-          LEFT JOIN mdata.drivers d ON d.id = e.subject_driver_id
-          LEFT JOIN mdata.units u ON u.id = e.subject_unit_id
+          LEFT JOIN mdata.drivers d
+            ON d.id = e.subject_driver_id
+           AND d.operating_company_id = e.operating_company_id
+          LEFT JOIN mdata.units u
+            ON u.id = e.subject_unit_id
+           AND (u.owner_company_id = e.operating_company_id
+                OR u.currently_leased_to_company_id = e.operating_company_id)
           WHERE e.id = $1::uuid
+            AND e.operating_company_id = $2::uuid
           LIMIT 1
         `,
-        [createdId]
+        [createdId, body.data.operating_company_id]
       );
       const createdEvent = eventRow.rows[0] ?? null;
 
