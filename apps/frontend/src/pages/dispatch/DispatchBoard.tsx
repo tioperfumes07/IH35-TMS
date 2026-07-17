@@ -555,7 +555,7 @@ export function DispatchBoard({
   // global sort). A bare "Showing X of Y" therefore read as if it described every visible row
   // (e.g. "Showing 1-5 of 5" with 44 rows on screen = 5 loads + 39 awaiting trucks). Scope the
   // pagination count to loads and surface the roster total separately so the numbers reconcile.
-  const awaitingTruckCount = unassignedUnits.length;
+  const awaitingTruckCount = boardSections.find((section) => section.key === "awaiting")?.rows.length ?? 0;
   const loadCountSummary =
     `Showing ${from}-${to} of ${totalCount} ${totalCount === 1 ? "load" : "loads"}` +
     (awaitingTruckCount > 0
@@ -994,7 +994,24 @@ export function DispatchBoard({
                               <span className="ml-2 rounded-full bg-white px-1.5 text-[10px] font-bold text-gray-500">{rows.length}</span>
                             </td>
                           </tr>
-                          {section.placeholder && rows.length === 0 ? (
+                          {section.key === "in_shop" && inShopUnitsQuery.isError ? (
+                            <tr className="border-b border-gray-100">
+                              <td colSpan={columns.length + 1} className="px-3 py-2">
+                                <ListErrorState
+                                  title="Couldn't load in-shop units"
+                                  status={(inShopUnitsQuery.error as { status?: number } | null)?.status ?? 0}
+                                  message={
+                                    inShopUnitsQuery.error instanceof Error
+                                      ? inShopUnitsQuery.error.message
+                                      : "In-shop unit feed failed"
+                                  }
+                                  onRetry={() => void inShopUnitsQuery.refetch()}
+                                  className="py-4"
+                                />
+                              </td>
+                            </tr>
+                          ) : null}
+                          {section.placeholder && rows.length === 0 && !(section.key === "in_shop" && inShopUnitsQuery.isError) ? (
                             <tr className="border-b border-gray-100">
                               <td colSpan={columns.length + 1} className="px-3 py-2 text-[11px] italic text-gray-400">
                                 {section.placeholder}

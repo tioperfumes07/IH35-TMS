@@ -32,5 +32,20 @@ if (!/meta\.key === "in_shop"[\s\S]{0,120}\? inShopRows/.test(board)) {
 if (/key:\s*"in_shop"[\s\S]{0,200}rows:\s*\[\]/.test(board)) {
   fail("in_shop section must not hardcode rows: [] in SECTION_META / boardSections");
 }
+if (!/const awaitingTruckCount\s*=\s*boardSections\.find\(\(section\) => section\.key === "awaiting"\)\?\.rows\.length \?\? 0;/.test(board)) {
+  fail("awaitingTruckCount must use the same filtered rows rendered in the Awaiting section");
+}
+if (/const awaitingTruckCount\s*=\s*unassignedUnits\.length/.test(board)) {
+  fail("awaitingTruckCount must not count raw unassignedUnits because in-shop units are filtered from visible awaiting rows");
+}
+if (!board.includes("inShopUnitsQuery.isError")) {
+  fail("DispatchBoard must branch on inShopUnitsQuery.isError for failed in-shop feed loads");
+}
+if (!board.includes("Couldn't load in-shop units")) {
+  fail("in-shop feed failure must render an explicit error surface, not an empty placeholder");
+}
+if (!/section\.placeholder && rows\.length === 0 && !\(section\.key === "in_shop" && inShopUnitsQuery\.isError\)/.test(board)) {
+  fail("No units in shop placeholder must only render after a successful in-shop query with empty rows");
+}
 
 console.log("PASS verify-dispatch-in-shop-feed-wired");
