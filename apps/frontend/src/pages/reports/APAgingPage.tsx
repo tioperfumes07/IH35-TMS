@@ -12,6 +12,7 @@ import { useToast } from "../../components/Toast";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { useUrlSort } from "../../hooks/useUrlSort";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -28,6 +29,9 @@ export function APAgingPage() {
   const { pushToast } = useToast();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  // BANK-SORT-ROLLOUT-ACCT (A/P Aging follow-up): every visible column header sorts ASC/DESC;
+  // sort persists in the URL (?sort=&dir=) so it survives reload / is shareable.
+  const { sortKey, sortDirection, onSortChange } = useUrlSort();
   const [asOf, setAsOf] = useState(() => new Date().toISOString().slice(0, 10));
   const [search, setSearch] = useState("");
   const [minBal, setMinBal] = useState("");
@@ -209,6 +213,9 @@ export function APAgingPage() {
         rowKey={(r) => r.vendor_id}
         loading={query.isPending || (query.isFetching && filtered.length === 0)}
         storageKey="ap-aging"
+        sortKey={sortKey}
+        sortDirection={sortDirection}
+        onSortChange={onSortChange}
         emptyText="No rows"
         onRowClick={(r) => {
           if (!isVendorUuid(r.vendor_id)) {

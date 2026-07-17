@@ -11,6 +11,7 @@ import { useListState, type ListQueryStatus } from "../../components/list-state"
 import { formatUsdCents } from "../../lib/money";
 import { TableSearch } from "../../components/table";
 import { CustomerDrillModal } from "../../components/customers/CustomerDrillModal";
+import { useUrlSort } from "../../hooks/useUrlSort";
 
 function fmtMoney(cents: number) {
   return formatUsdCents(cents);
@@ -61,6 +62,10 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
   // Same BULK_WRITE_ROLES gate the old BulkActionBar enforced internally (useBulkPermission) —
   // preserved explicitly here since ParityTable's batch toolbar has no built-in permission check.
   const bulkPermission = useBulkPermission();
+  // BANK-SORT-ROLLOUT-ACCT (Customers/Vendors follow-up): every visible column header sorts
+  // ASC/DESC; sort persists in the URL (?sort=&dir=) so it survives reload / is shareable, same
+  // contract as Bills/Expenses.
+  const { sortKey, sortDirection, onSortChange } = useUrlSort();
   const [filter, setFilter] = useState<FilterChip>("all");
   const [search, setSearch] = useState("");
   // Remount key: bumping this after a successful bulk mutation resets ParityTable's internal
@@ -198,6 +203,9 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
         rowKey={(row) => row.id}
         storageKey="customers-list"
         initialPageSize={50}
+        sortKey={sortKey}
+        sortDirection={sortDirection}
+        onSortChange={onSortChange}
         loading={listState.isLoading}
         emptyText={listState.isEmpty ? "No customers match this filter." : undefined}
         onRowClick={(row) => onSelectCustomer?.(row.id)}

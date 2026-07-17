@@ -1,0 +1,39 @@
+{
+  "block_id": "BANK-SORT-ROLLOUT-ACCT-CUSTVEND",
+  "status": "BUILD",
+  "classification": "ADDITIVE",
+  "phase": "ACCOUNTING",
+  "task": "Every visible data column header on Accounting Customers + Vendors lists, and the Reports A/P Aging list, is clickable ASC/DESC; sort persists in URL query (sort/dir); guard wired. Continuation of BANK-SORT-ROLLOUT-ACCT's remaining scope.",
+  "branch": "fix/bank-sort-custvend",
+  "lane": "A",
+  "details": [
+    "Reused the useUrlSort hook + ParityTable controlled-sort props shipped by fix/bank-rollout-acct (BillsPage/ExpensesListPage block) — no duplicate edits to apps/frontend/src/hooks/useUrlSort.ts or ParityTable.tsx.",
+    "CustomersListView (storageKey=customers-list) and VendorsListView (storageKey=vendors-list) wired to useUrlSort + controlled ParityTable; every visible data column was already sortable:true.",
+    "Reports APAgingPage (/reports/ap-aging, ParityTable-based) wired the same way (storageKey=ap-aging).",
+    "AccountsPayableAgingPage (/accounting/accounts-payable) uses a hand-rolled <table> + useTableController/TableHeaderCell stack, NOT ParityTable — out of scope here (already has clickable per-column ASC/DESC via TableHeaderCell, just not URL-persisted); named as BANK-SORT-ROLLOUT-ACCT-AP2 follow-up in the tracker, not silently dropped.",
+    "Guard: scripts/verify-custvend-sortable-headers.mjs, wired into .github/workflows/locked-guards.yml (runs on every PR to main).",
+    "docs/trackers/BANK-SORT-ROLLOUT.md updated: ACCT Customers+Vendors+AP-Aging(reports) done; AccountsPayableAgingPage named as remaining next."
+  ],
+  "allowed_files": [
+    ".block-ready/BANK-SORT-ROLLOUT-ACCT-CUSTVEND.json",
+    ".github/workflows/locked-guards.yml",
+    "apps/frontend/src/pages/customers/CustomersListView.tsx",
+    "apps/frontend/src/pages/vendors/VendorsListView.tsx",
+    "apps/frontend/src/pages/reports/APAgingPage.tsx",
+    "docs/trackers/BANK-SORT-ROLLOUT.md",
+    "package.json",
+    "scripts/verify-custvend-sortable-headers.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "scripts/verify-custvend-sortable-headers.mjs asserts the shared useUrlSort hook exists and CustomersListView, VendorsListView, and APAgingPage each call it, wire the controlled sortKey/sortDirection/onSortChange props onto <ParityTable>, and every visible DATA column is sortable:true. Wired into .github/workflows/locked-guards.yml (runs on every PR to main). Local proof: `npm run verify:custvend-sortable-headers` -> OK."
+    },
+    {
+      "check": "Frontend-only, additive change (no schema/migration/GL/money-flag touch, no ParityTable/useUrlSort edits — reused as-is). `npm run typecheck` clean on apps/frontend; no new ESLint errors on touched files."
+    }
+  ]
+}
