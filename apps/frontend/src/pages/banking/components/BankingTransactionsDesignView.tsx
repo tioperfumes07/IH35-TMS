@@ -544,12 +544,33 @@ export function BankingTransactionsDesignView({
       if (sortBy.key === "driver") return String(tx.categorization_driver_id ?? "").toLowerCase();
       if (sortBy.key === "truck") return String(tx.categorization_unit_id ?? "").toLowerCase();
       if (sortBy.key === "load") return String(tx.matched_load_id ?? tx.categorization_load_id ?? "").toLowerCase();
-      if (sortBy.key === "fromTo" || sortBy.key === "payee") return String(tx.merchant_name ?? tx.description ?? "").toLowerCase();
-      if (sortBy.key === "customer") return String(tx.categorization_customer_id ?? "").toLowerCase();
-      if (sortBy.key === "productService") return String(tx.pse_ps_category_qbo_id ?? tx.category ?? "").toLowerCase();
-      if (sortBy.key === "checkNo") return String(tx.check_number ?? "").toLowerCase();
-      if (sortBy.key === "className") return String(tx.plaid_category?.[0] ?? "").toLowerCase();
-      if (sortBy.key === "location") return String(tx.location ?? "").toLowerCase();
+      if (sortBy.key === "fromTo" || sortBy.key === "payee") {
+        const d = drafts[tx.id];
+        return String(d?.payee || tx.merchant_name || tx.description || "").toLowerCase();
+      }
+      // Categorize drafts are the live operator fields for these columns (API does not yet
+      // persist customer/product/check/location on bank_transactions — sort the draft overlay
+      // honestly rather than pretending API fields exist).
+      if (sortBy.key === "customer") {
+        const d = drafts[tx.id];
+        return String(d?.customerProject || d?.customerId || "").toLowerCase();
+      }
+      if (sortBy.key === "productService") {
+        const d = drafts[tx.id];
+        return String(d?.productService || "").toLowerCase();
+      }
+      if (sortBy.key === "checkNo") {
+        const d = drafts[tx.id];
+        return String(d?.checkNo || "").toLowerCase();
+      }
+      if (sortBy.key === "className") {
+        const d = drafts[tx.id];
+        return String(d?.className || tx.plaid_category?.[0] || "").toLowerCase();
+      }
+      if (sortBy.key === "location") {
+        const d = drafts[tx.id];
+        return String(d?.location || "").toLowerCase();
+      }
       if (sortBy.key === "balance") return 0; // balance uses runningBalanceById post-map; date order preferred
       return tx.transaction_date ?? "";
     };
@@ -560,7 +581,7 @@ export function BankingTransactionsDesignView({
       if (va > vb) return 1 * sortDir;
       return 0;
     });
-  }, [activeReviewTab, amountFilter, dateFrom, dateTo, reviewTabBuckets, selectedTransactionType, sortBy]);
+  }, [activeReviewTab, amountFilter, dateFrom, dateTo, drafts, reviewTabBuckets, selectedTransactionType, sortBy]);
 
   useEffect(() => {
     setCurrentPage(1);
