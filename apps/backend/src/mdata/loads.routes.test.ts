@@ -77,4 +77,87 @@ describe("mdata loads routes", () => {
       expect(response.statusCode).not.toBe(400);
     }
   });
+
+  it("PATCH /api/v1/mdata/loads/:id/status blocks non-Owner cancel when reason requires owner approval", async () => {
+    const loadId = "22222222-2222-4222-8222-222222222222";
+    queryMock.mockImplementation(async (sql: string, params?: unknown[]) => {
+      if (sql.includes("FROM mdata.loads") && sql.includes("SELECT id, status")) {
+        return { rows: [{ id: loadId, status: "assigned" }] };
+      }
+      if (sql.includes("FROM catalogs.cancellation_reasons")) {
+        expect(params?.[0]).toBe("DRIVER_WALKOFF");
+        return { rows: [{ reason_code: "DRIVER_WALKOFF", requires_owner_approval: true }] };
+      }
+      if (sql.includes("UPDATE mdata.loads")) {
+        throw new Error("UPDATE must not run when owner approval is required for non-Owner");
+      }
+      return { rows: [] };
+    });
+
+    const app = await buildApp("Dispatcher");
+    const response = await app.inject({
+      method: "PATCH",
+      url: `/api/v1/mdata/loads/${loadId}/status`,
+      payload: {
+        new_status: "cancelled",
+        cancellation_reason_code: "DRIVER_WALKOFF",
+        cancellation_notes: "Driver walked off at the shipper yard this morning.",
+      },
+    });
+
+    expect(response.statusCode).toBe(403);
+    expect(response.json()).toEqual({ error: "owner_approval_required" });
+  });
+
+  it("PATCH /api/v1/mdata/loads/:id/status allows Owner cancel for approval-required reason", async () => {
+    const loadId = "33333333-3333-4333-8333-333333333333";
+    queryMock.mockImplementation(async (sql: string) => {
+      if (sql.includes("FROM mdata.loads") && sql.includes("SELECT id, status")) {
+        return { rows: [{ id: loadId, status: "assigned" }] };
+      }
+      if (sql.includes("FROM catalogs.cancellation_reasons")) {
+        return { rows: [{ reason_code: "DRIVER_WALKOFF", requires_owner_approval: true }] };
+      }
+      if (sql.includes("UPDATE mdata.loads") && sql.includes("SET status")) {
+        return {
+          rows: [
+            {
+              id: loadId,
+              operating_company_id: "11111111-1111-4111-8111-111111111111",
+              load_number: "L-100",
+              customer_id: "44444444-4444-4444-8444-444444444444",
+              status: "cancelled",
+              rate_total_cents: 0,
+              currency_code: "USD",
+              assigned_unit_id: null,
+              assigned_primary_driver_id: null,
+              assigned_secondary_driver_id: null,
+              team_id: null,
+              dispatcher_user_id: null,
+              notes: null,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              soft_deleted_at: null,
+              deleted_by_user_id: null,
+            },
+          ],
+        };
+      }
+      return { rows: [] };
+    });
+
+    const app = await buildApp("Owner");
+    const response = await app.inject({
+      method: "PATCH",
+      url: `/api/v1/mdata/loads/${loadId}/status`,
+      payload: {
+        new_status: "cancelled",
+        cancellation_reason_code: "DRIVER_WALKOFF",
+        cancellation_notes: "Owner approved driver walk-off after review.",
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({ status: "cancelled" });
+  });
 });

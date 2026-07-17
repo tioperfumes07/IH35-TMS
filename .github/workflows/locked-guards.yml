@@ -335,6 +335,9 @@ jobs:
       - name: verify:insurance-dashboard-routes-registered
         run: npm run verify:insurance-dashboard-routes-registered
 
+      - name: verify:cashflow-routes-mounted
+        run: npm run verify:cashflow-routes-mounted
+
       - name: verify:safety-rls-coverage
         run: npm run verify:safety-rls-coverage
 
@@ -606,6 +609,11 @@ jobs:
         run: node scripts/verify-hos-violation-void-reason.mjs --selftest
       - name: verify:hos-violation-void-reason
         run: npm run verify:hos-violation-void-reason
+      # 0441-mod2-dvir-followup-wo-wrong-table — convert-to-WO must UPDATE dvir_defects + valid source_type
+      - name: verify:dvir-followup-wo-target --selftest
+        run: node scripts/verify-dvir-followup-wo-target.mjs --selftest
+      - name: verify:dvir-followup-wo-target
+        run: npm run verify:dvir-followup-wo-target
       - name: verify:banking-categorize-ux-honesty --selftest
         run: node scripts/verify-banking-categorize-ux-honesty.mjs --selftest
       - name: verify:banking-categorize-ux-honesty
@@ -640,6 +648,11 @@ jobs:
         run: node scripts/verify-dispatch-factoring-queue-deeplinks.mjs --selftest
       - name: verify:dispatch-factoring-queue-deeplinks
         run: npm run verify:dispatch-factoring-queue-deeplinks
+
+      - name: verify:dispatch-cancel-approval-gate --selftest
+        run: node scripts/verify-dispatch-cancel-approval-gate.mjs --selftest
+      - name: verify:dispatch-cancel-approval-gate
+        run: npm run verify:dispatch-cancel-approval-gate
 
       - name: verify:fact-chargebacks-entitylinks --selftest
         run: node scripts/verify-fact-chargebacks-entitylinks.mjs --selftest
@@ -685,6 +698,11 @@ jobs:
         run: node scripts/verify-referenceselect-coverage-ratchet.mjs --selftest
       - name: verify:referenceselect-coverage-ratchet
         run: npm run verify:referenceselect-coverage-ratchet
+
+      - name: verify:qbo-parity-name-plus-type-option-labels --selftest
+        run: node scripts/verify-qbo-parity-name-plus-type-option-labels.mjs --selftest
+      - name: verify:qbo-parity-name-plus-type-option-labels
+        run: npm run verify:qbo-parity-name-plus-type-option-labels
 
       - name: verify:filter-input-aria-labels --selftest
         run: node scripts/verify-filter-input-aria-labels.mjs --selftest
@@ -1010,6 +1028,13 @@ jobs:
         run: node scripts/verify-claim-crossmodule-fks.mjs --selftest
       - name: verify:claim-crossmodule-fks
         run: npm run verify:claim-crossmodule-fks
+
+      # 0010-f1 — orphan-FK inventory ratchet (0519-ri1(a)): lock into locked-guards so new
+      # *_id/*_uuid columns without inline REFERENCES cannot land without CI fail / baseline update
+      - name: verify:orphan-fk-inventory --selftest
+        run: node scripts/verify-orphan-fk-inventory.mjs --selftest
+      - name: verify:orphan-fk-inventory
+        run: npm run verify:orphan-fk-inventory
 
       - name: verify:relay-key-no-cross-entity-fallback --selftest
         run: node scripts/verify-relay-key-no-cross-entity-fallback.mjs --selftest
