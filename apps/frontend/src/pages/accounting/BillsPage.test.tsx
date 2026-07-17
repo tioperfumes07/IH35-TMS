@@ -21,6 +21,11 @@ vi.mock("../../api/accounting", async (importOriginal) => {
   };
 });
 
+vi.mock("../maintenance/components/CreateBillModal", () => ({
+  CreateBillModal: ({ open, initialBillType }: { open: boolean; initialBillType?: string }) =>
+    open ? <div data-testid="bill-create-drawer">Create bill ({initialBillType})</div> : null,
+}));
+
 function wrap(ui: ReactElement, initialEntries: string[] = ["/accounting/bills"]) {
   return (
     <MemoryRouter initialEntries={initialEntries}>
@@ -106,5 +111,23 @@ describe("BillsPage", () => {
     expect(banner).toHaveTextContent(/highlighted and selected/i);
     // Allocate button for the deep-linked row flips to Selected
     expect(await screen.findByRole("button", { name: /^Selected$/i })).toBeInTheDocument();
+  });
+
+  it("opens typed bill creator from ?category=&create=1 subnav deep link", async () => {
+    render(wrap(<BillsPage />, ["/accounting/bills?category=fuel&create=1"]));
+
+    await waitFor(() => expect(accountingApi.listBills).toHaveBeenCalled());
+    expect(await screen.findByTestId("bill-create-drawer")).toHaveTextContent("Create bill (fuel)");
+  });
+
+  it("exposes + Create CTA that opens the bill creator drawer", async () => {
+    const user = userEvent.setup();
+    render(wrap(<BillsPage />, ["/accounting/bills?category=maintenance"]));
+
+    await waitFor(() => expect(accountingApi.listBills).toHaveBeenCalled());
+    expect(screen.queryByTestId("bill-create-drawer")).not.toBeInTheDocument();
+
+    await user.click(screen.getByTestId("bills-create-cta"));
+    expect(await screen.findByTestId("bill-create-drawer")).toHaveTextContent("Create bill (maintenance)");
   });
 });

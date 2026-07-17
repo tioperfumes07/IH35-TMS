@@ -18,6 +18,7 @@ import { TasksTab } from "../../components/tasks/TasksTab";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useUrlSort } from "../../hooks/useUrlSort";
+import { CreateBillModal } from "../maintenance/components/CreateBillModal";
 
 export const BILL_LIST_CATEGORIES = ["maintenance", "repair", "fuel", "driver"] as const;
 export type BillListCategory = (typeof BILL_LIST_CATEGORIES)[number];
@@ -53,6 +54,12 @@ function ReconciledBadge({ isReconciled }: { isReconciled?: boolean }) {
 function parseBillCategory(raw: string | null): BillListCategory | "" {
   if (!raw) return "";
   return (BILL_LIST_CATEGORIES as readonly string[]).includes(raw) ? (raw as BillListCategory) : "";
+}
+
+/** Bill type tab id for VendorBillForm when a category filter is active. */
+export function billTypeForCategory(category: BillListCategory | ""): BillListCategory | "vendor" {
+  if (category) return category;
+  return "vendor";
 }
 
 function billMatchesCategory(bill: VendorBill, category: BillListCategory): boolean {
@@ -166,6 +173,8 @@ export function BillsPage() {
   // (?sort=&dir=) so it survives reload / is shareable, same as the Banking register.
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
   const category = parseBillCategory(searchParams.get("category"));
+  const createOpen = searchParams.get("create") === "1";
+  const createBillType = billTypeForCategory(category);
   // Audit 14-MAINTENANCE / 99-CROSSCUTTING: WO + legacy links use ?bill_id= — honor it (highlight + select).
   // EntityLink kind="bill" still prefers /accounting/bills/:id (BillDetailPage); this covers list deep-links.
   const deepLinkBillId = searchParams.get("bill_id");
@@ -297,6 +306,18 @@ export function BillsPage() {
         return params;
       },
       { replace: false }
+    );
+  }
+
+  function setCreateOpen(next: boolean) {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (next) params.set("create", "1");
+        else params.delete("create");
+        return params;
+      },
+      { replace: true }
     );
   }
 
@@ -450,6 +471,17 @@ export function BillsPage() {
     <AccountingSubNavWrapper
       title="Bills"
       subtitle="Vendor bills with paid balance and partial payment history"
+      actions={
+        <button
+          type="button"
+          data-testid="bills-create-cta"
+          onClick={() => setCreateOpen(true)}
+          disabled={!companyId}
+          className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-60"
+        >
+          + Create
+        </button>
+      }
       kpiStrip={
         <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
           {billKpiCard("Open Bills", money(billKpis.openAmount), `${billKpis.openCount} open`, billKpis.openCount ? "danger" : "neutral")}
@@ -459,6 +491,15 @@ export function BillsPage() {
         </div>
       }
     >
+    <CreateBillModal
+      open={createOpen}
+      operatingCompanyId={companyId}
+      initialBillType={createBillType}
+      onClose={() => setCreateOpen(false)}
+      onCreated={() => {
+        void queryClient.invalidateQueries({ queryKey: ["accounting", "bills"] });
+      }}
+    />
     <div className="space-y-3">
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
       {billsQuery.isError ? <ListErrorBanner onRetry={() => void billsQuery.refetch()} /> : null}
