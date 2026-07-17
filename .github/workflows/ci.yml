@@ -321,7 +321,7 @@ jobs:
         run: npm run verify:drivers-profile-action-bar
 
       - name: verify:driver-suspend-atomic
-        run: npm run verify:driver-suspend-atomic
+        run: node scripts/verify-driver-suspend-atomic.mjs
 
       - name: verify:drivers-comm-center
         run: npm run verify:drivers-comm-center
