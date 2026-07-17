@@ -665,6 +665,7 @@
     "verify:cash-forecast-company-tz": "node scripts/verify-cash-forecast-company-tz.mjs",
     "verify:no-swallow-on-money-paths": "node scripts/verify-no-swallow-on-money-paths.mjs",
     "verify:da-pool-compliance": "node scripts/verify-da-pool-compliance.mjs",
+    "verify:damage-continuity-worker-mounted": "node scripts/verify-damage-continuity-worker-mounted.mjs",
     "verify:no-fixture-users-prod-guard": "node scripts/verify-no-fixture-users-prod-guard.mjs",
     "verify:hold-migrations-registered": "node scripts/verify-hold-migrations-registered.mjs",
     "verify:held-migrations-not-runnable": "node scripts/verify-held-migrations-not-runnable.mjs",

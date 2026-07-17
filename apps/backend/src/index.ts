@@ -491,6 +491,7 @@ import { initializeCap14CargoSensorWorker, stopCap14CargoSensorWorker } from "./
 import { registerDispatchAuthGateRoutes } from "./dispatch/auth-gates/routes.js";
 import { registerAnomalyDetectionRoutes } from "./safety/anomaly/routes.js";
 import { initializeAnomalyDetectorWorker } from "./jobs/anomaly-detector-worker.js";
+import { initializeDamageContinuityWorker } from "./jobs/damage-continuity-worker.js";
 import { registerDispatchDetentionApprovalRoutes } from "./dispatch/detention-approval.routes.js";
 import { registerChatRoutes } from "./chat/chat.routes.js";
 
@@ -1367,6 +1368,9 @@ async function main() {
 
     initializeDaRandomPoolDrawWorker(app);
     app.log.info("[STARTUP] da-random-pool-draw-worker initialized");
+
+    initializeDamageContinuityWorker(app);
+    app.log.info("[STARTUP] damage-continuity-worker initialized");
 
     initializeCertExpiryMonitor(app);
     initializeSamsaraCacheWarmer(app);
