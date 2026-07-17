@@ -69,6 +69,16 @@ function KpiTile({
   return <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">{inner}</div>;
 }
 
+/** Accidents have no `status` column on prod — triage by recent accident_at instead. */
+const RECENT_ACCIDENT_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
+
+function isRecentAccident(accidentAt: unknown): boolean {
+  if (accidentAt == null || accidentAt === "") return false;
+  const ts = new Date(String(accidentAt)).getTime();
+  if (Number.isNaN(ts)) return false;
+  return Date.now() - ts <= RECENT_ACCIDENT_WINDOW_MS;
+}
+
 type DrillRecord = {
   key: string;
   when: string;
@@ -141,12 +151,10 @@ export function SafetyHomeTab() {
 
   const drillRecords = useMemo<DrillRecord[]>(() => {
     const accidents = (accidentsQuery.data?.accidents ?? []) as Array<Record<string, unknown>>;
-    // Only open accidents belong under "Records needing attention" — closed/stale rows stay on the Accidents tile.
+    // safety.accident_reports has no status column (Neon prod verified). Filter by accident_at
+    // recent window so the panel shows recent accidents, not a phantom open-status triage.
     const accidentRecords: DrillRecord[] = accidents
-      .filter((row) => {
-        const status = String(row.status ?? "open").toLowerCase();
-        return status === "open" && (row.driver_id || row.unit_id);
-      })
+      .filter((row) => isRecentAccident(row.accident_at) && (row.driver_id || row.unit_id))
       .slice(0, 5)
       .map((row) => {
         const id = String(row.id ?? "");
@@ -259,9 +267,12 @@ export function SafetyHomeTab() {
       </div>
 
       <div className="rounded-sm border border-gray-200 bg-white p-4" data-testid="safety-home-drilldown">
-        <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-          Records needing attention
+        <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Open events & recent accidents (30d)
         </h4>
+        <p className="mb-2 text-[11px] text-slate-400">
+          Open safety events plus driver-/unit-linked accidents from the last 30 days (by accident date).
+        </p>
         {drillError ? (
           <div className="text-sm font-semibold text-red-600" data-testid="safety-home-drill-error">
             Unavailable
@@ -270,7 +281,7 @@ export function SafetyHomeTab() {
           <div className="text-sm text-slate-400">Loading…</div>
         ) : drillRecords.length === 0 ? (
           <div className="text-xs text-slate-500">
-            No open driver- or unit-linked safety records right now.
+            No open events or recent driver-/unit-linked accidents right now.
           </div>
         ) : (
           <div>

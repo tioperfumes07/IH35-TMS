@@ -10,6 +10,8 @@
  *   - it deep-links specific records with EntityLink kind="driver" AND kind="unit" (ids in the route)
  *   - the drill records are built from the ids the API returns (accidents driver_id/unit_id,
  *     events-log subject_driver_id/subject_unit_id)
+ *   - accidents are filtered by accident_at recent window (30d) — NOT a phantom status column
+ *   - events-log keeps its real status=open filter (API supports it)
  *   - NO link target is a bare `/safety` (must be a scoped surface or a specific-record deep-link)
  *
  * Layer 2 — Safety Officer alerts (apps/backend/src/safety-officer/role-views/safety-home.service.ts):
@@ -79,15 +81,33 @@ requireAll(tabPath, tab, [
     pattern: /label="Open Company Violations"[\s\S]*?to="\/safety\/external-fines"/,
     label: "Open Company Violations KPI links to /safety/external-fines",
   },
-  // Drill panel honesty: accidents under "needing attention" must be open-only (not stale closed).
+  // Events-log DOES support status — open filter must remain.
   {
-    pattern: /status === ["']open["']/,
-    label: "drill panel filters accidents to status === open",
+    pattern: /listSafetyEventLog\([^)]*status:\s*["']open["']/,
+    label: "events-log drill query filters status open (API supports it)",
+  },
+  // Accidents have NO status column on prod — filter by real accident_at recent window.
+  {
+    pattern: /isRecentAccident\s*\(\s*row\.accident_at\s*\)/,
+    label: "accidents filtered via isRecentAccident(row.accident_at)",
+  },
+  {
+    pattern: /RECENT_ACCIDENT_WINDOW_MS\s*=\s*30\s*\*\s*24\s*\*\s*60\s*\*\s*60\s*\*\s*1000/,
+    label: "30-day recent-accident window constant",
+  },
+  {
+    pattern: /[Rr]ecent accidents \(30d\)/,
+    label: "panel title/subtitle discloses recent accidents (30d)",
   },
 ]);
 // A KPI/drill link must never be a bare `/safety` (no trailing segment).
+// Accidents must never read a phantom row.status (defaults to "open" = no-op fake filter).
 forbid(tabPath, tab, [
   { pattern: /to="\/safety"/, label: 'bare `to="/safety"` link (must be a scoped surface)' },
+  {
+    pattern: /row\.status/,
+    label: "phantom row.status read on accidents (column does not exist on prod)",
+  },
 ]);
 
 // ── Layer 2 — Safety Officer alerts service ─────────────────────────────────
