@@ -13,7 +13,8 @@
     "scripts/__tests__/verify-safety-kpi-drillthrough.test.mjs",
     "docs/specs/safety-kpi-drillthrough.md",
     "package.json",
-    ".github/workflows/ci.yml"
+    ".github/workflows/ci.yml",
+    ".github/workflows/locked-guards.yml"
   ],
   "extra_gates": [
     "verify:safety-kpi-drillthrough"
