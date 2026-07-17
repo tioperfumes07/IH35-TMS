@@ -9,12 +9,13 @@ import { getApAgingByVendor, type ApAgingVendor, type ApAgingDisplayGroup } from
 import { formatDateUS } from "../../lib/formatDate";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { companyToday } from "../../lib/businessDate";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
 }
 function today() {
-  return new Date().toISOString().slice(0, 10);
+  return companyToday();
 }
 
 // Aging columns; 61-90 and 91+ are flagged red per the QBO-grade spec.

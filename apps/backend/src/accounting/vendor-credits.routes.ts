@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 // CUSTVEND-PAR-1: Vendor credit CRUD + apply-to-bill + void.
 // NO GL posting — marks QBO-parity data only. GL rides the existing bill-GL chain when flags turn ON.
@@ -109,7 +110,7 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
       );
       if (!vendorRes.rows[0]) return { code: 404 as const, error: "vendor_not_found" };
 
-      const issueDate = body.data.issue_date ?? new Date().toISOString().slice(0, 10);
+      const issueDate = body.data.issue_date ?? companyBusinessDate();
 
       const seqRes = await client.query(
         `SELECT COUNT(*)::int + 1 AS seq

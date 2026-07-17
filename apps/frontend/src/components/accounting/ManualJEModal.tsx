@@ -8,6 +8,7 @@ import { useToast } from "../Toast";
 import { DatePicker } from "../forms/DatePicker";
 import { SelectCombobox } from "../shared/SelectCombobox";
 import { InlineCreateDrawer } from "../parity/InlineCreateDrawer";
+import { companyToday } from "../../lib/businessDate";
 
 type Props = {
   open: boolean;
@@ -36,7 +37,7 @@ const emptyLine = (): LineRow => ({
 export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, prefill = null }: Props) {
   const { pushToast } = useToast();
   const [step, setStep] = useState<1 | 2>(1);
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(companyToday());
   const [memo, setMemo] = useState("");
   const [referenceNumber, setReferenceNumber] = useState("");
   const [lines, setLines] = useState<LineRow[]>([emptyLine(), emptyLine()]);
@@ -72,7 +73,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
 
   const reset = () => {
     setStep(1);
-    setDate(new Date().toISOString().slice(0, 10));
+    setDate(companyToday());
     setMemo("");
     setReferenceNumber("");
     setLines([emptyLine(), emptyLine()]);

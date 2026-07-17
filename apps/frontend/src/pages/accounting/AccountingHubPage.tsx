@@ -13,6 +13,7 @@ import { getQboSyncQueue, getQboSyncQueueStats } from "../../api/banking";
 import { listSettlements } from "../../api/driverFinance";
 import { getProfitLossReport, getTrialBalanceReport } from "../../api/reports";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { companyToday, monthBoundsIso } from "../../lib/businessDate";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 
@@ -86,17 +87,21 @@ export function accountingTabSubtitle(
   }
 }
 
-function monthStartIso(date = new Date()) {
-  const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
-  return d.toISOString().slice(0, 10);
+function monthStartIso() {
+  return monthBoundsIso(companyToday()).start;
 }
 
-function currentQuarterRange(date = new Date()) {
-  const q = Math.floor(date.getUTCMonth() / 3);
-  const startMonth = q * 3;
-  const start = new Date(Date.UTC(date.getUTCFullYear(), startMonth, 1));
-  const end = new Date(Date.UTC(date.getUTCFullYear(), startMonth + 3, 0));
-  return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) };
+function currentQuarterRange() {
+  const today = companyToday();
+  const [y, m] = today.split("-").map(Number);
+  const q = Math.floor((m - 1) / 3);
+  const startMonth = q * 3 + 1;
+  const endMonth = startMonth + 2;
+  const endDay = new Date(Date.UTC(y, endMonth, 0)).getUTCDate();
+  return {
+    start: `${y}-${String(startMonth).padStart(2, "0")}-01`,
+    end: `${y}-${String(endMonth).padStart(2, "0")}-${String(endDay).padStart(2, "0")}`,
+  };
 }
 
 function isIsoOnOrAfter(left: string | null | undefined, right: string) {
@@ -167,12 +172,7 @@ export function AccountingHubPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const mtdStart = monthStartIso();
-  const monthRange = useMemo(() => {
-    const now = new Date();
-    const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-    const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0));
-    return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) };
-  }, []);
+  const monthRange = useMemo(() => monthBoundsIso(companyToday()), []);
   const quarterRange = useMemo(() => currentQuarterRange(), []);
 
   const [billsQ, billPaymentsQ, paymentsQ, settlementsQ, invoicesQ, qboStatsQ, qboQueueQ, trialBalanceQ, profitLossQ] = useQueries({
@@ -259,7 +259,7 @@ export function AccountingHubPage() {
   const expensesMtdCents = billsMtd.reduce((sum, row) => sum + Number(row.amount_cents ?? 0), 0);
   const openInvoices = invoices.filter((invoice) => Number(invoice.amount_open_cents ?? 0) > 0);
   const openInvoicesCents = openInvoices.reduce((sum, invoice) => sum + Number(invoice.amount_open_cents ?? 0), 0);
-  const overdueInvoices = openInvoices.filter((invoice) => invoice.due_date < new Date().toISOString().slice(0, 10));
+  const overdueInvoices = openInvoices.filter((invoice) => invoice.due_date < companyToday());
   const overdueInvoiceCents = overdueInvoices.reduce((sum, invoice) => sum + Number(invoice.amount_open_cents ?? 0), 0);
   const unmatchedItems = qboItems.filter((item) => item.sync_status === "failed" || item.sync_status === "blocked");
   const qboPending = Number(qboStatsQ.data?.pending ?? 0);

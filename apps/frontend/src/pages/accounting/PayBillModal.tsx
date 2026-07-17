@@ -7,6 +7,7 @@ import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { MoneyInput } from "../../components/forms/MoneyInput";
+import { companyToday } from "../../lib/businessDate";
 
 type Props = {
   open: boolean;
@@ -30,7 +31,7 @@ function money(cents: number) {
 }
 
 export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClose, onSaved }: Props) {
-  const [paymentDate, setPaymentDate] = useState(new Date().toISOString().slice(0, 10));
+  const [paymentDate, setPaymentDate] = useState(companyToday());
   const [paymentMethod, setPaymentMethod] = useState<BillPaymentMethod>("check");
   const [amountCents, setAmountCents] = useState<number | null>(0);
   const [fromBankAccountId, setFromBankAccountId] = useState("");
@@ -53,7 +54,7 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
 
   useEffect(() => {
     if (!open || !bill) return;
-    setPaymentDate(new Date().toISOString().slice(0, 10));
+    setPaymentDate(companyToday());
     setPaymentMethod("check");
     setAmountCents(remainingCents);
     setFromBankAccountId(String(accountsQuery.data?.accounts?.[0]?.id ?? ""));

@@ -12,6 +12,7 @@ import { useFormValidation } from "../../../components/forms/useFormValidation";
 import { QboCombobox } from "../../../components/forms/QboCombobox";
 import { ApiError } from "../../../api/client";
 import { useAuth } from "../../../auth/useAuth";
+import { companyToday } from "../../../lib/businessDate";
 
 type CreditLimitBlock = {
   exposure_cents: number;
@@ -54,7 +55,7 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
   const [customerQboId, setCustomerQboId] = useState<string | null>(null);
   const [customerName, setCustomerName] = useState("");
   const [notes, setNotes] = useState("");
-  const [issueDate, setIssueDate] = useState(new Date().toISOString().slice(0, 10));
+  const [issueDate, setIssueDate] = useState(companyToday());
   const [dueDate, setDueDate] = useState("");
   const [draftAttachmentEntityId, setDraftAttachmentEntityId] = useState(() => crypto.randomUUID());
   const [creditLimitBlock, setCreditLimitBlock] = useState<CreditLimitBlock | null>(null);
@@ -120,7 +121,7 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
     setCustomerQboId(null);
     setCustomerName("");
     setNotes("");
-    setIssueDate(new Date().toISOString().slice(0, 10));
+    setIssueDate(companyToday());
     setDueDate("");
     setCreditLimitBlock(null);
     setOverrideCreditLimit(false);

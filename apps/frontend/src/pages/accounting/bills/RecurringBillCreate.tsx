@@ -10,6 +10,7 @@ import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { vendorReferenceOption } from "../../../components/parity/referenceOptionLabels";
+import { companyToday } from "../../../lib/businessDate";
 
 const FREQUENCIES: { value: RecurringBillFrequency; label: string }[] = [
   { value: "weekly", label: "Weekly" },
@@ -20,13 +21,14 @@ const FREQUENCIES: { value: RecurringBillFrequency; label: string }[] = [
 ];
 
 function today() {
-  return new Date().toISOString().slice(0, 10);
+  return companyToday();
 }
 
 function nextMonth() {
-  const d = new Date();
-  d.setMonth(d.getMonth() + 1);
-  return d.toISOString().slice(0, 10);
+  // Same calendar day next month in company-local business date (not UTC / browser-local).
+  const [y, m, d] = companyToday().split("-").map(Number);
+  const next = new Date(Date.UTC(y, m, d)); // month index m = next month (1-based m → 0-based m)
+  return next.toISOString().slice(0, 10);
 }
 
 export function RecurringBillCreate() {

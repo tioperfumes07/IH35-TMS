@@ -6,18 +6,18 @@ import { listMyCompanies } from "../../api/org";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { companyToday, monthBoundsIso } from "../../lib/businessDate";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
 }
 
 function firstDayOfCurrentMonthIso() {
-  const now = new Date();
-  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString().slice(0, 10);
+  return monthBoundsIso(companyToday()).start;
 }
 
 function todayIso() {
-  return new Date().toISOString().slice(0, 10);
+  return companyToday();
 }
 
 export function MultiEntityAccountingPage() {
