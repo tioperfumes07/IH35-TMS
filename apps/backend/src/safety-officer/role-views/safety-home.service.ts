@@ -364,7 +364,7 @@ function buildAlerts(input: {
       title: `${input.expiringCerts} driver cert${input.expiringCerts === 1 ? "" : "s"} expiring within 30 days`,
       body: "CDL, medical, hazmat, or TWIC credentials need renewal tracking.",
       count: input.expiringCerts,
-      action_url: "/safety/dot-compliance",
+      action_url: "/safety/cert-expiry",
       action_label: "Open cert expiry dashboard",
     });
   }

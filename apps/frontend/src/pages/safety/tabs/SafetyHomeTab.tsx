@@ -141,8 +141,12 @@ export function SafetyHomeTab() {
 
   const drillRecords = useMemo<DrillRecord[]>(() => {
     const accidents = (accidentsQuery.data?.accidents ?? []) as Array<Record<string, unknown>>;
+    // Only open accidents belong under "Records needing attention" — closed/stale rows stay on the Accidents tile.
     const accidentRecords: DrillRecord[] = accidents
-      .filter((row) => row.driver_id || row.unit_id)
+      .filter((row) => {
+        const status = String(row.status ?? "open").toLowerCase();
+        return status === "open" && (row.driver_id || row.unit_id);
+      })
       .slice(0, 5)
       .map((row) => {
         const id = String(row.id ?? "");
@@ -229,6 +233,7 @@ export function SafetyHomeTab() {
           value={Number((kpisQuery.data as Record<string, unknown> | undefined)?.open_company_violations ?? 0)}
           isError={kpisQuery.isError}
           isLoading={kpisQuery.isPending}
+          to="/safety/external-fines"
         />
         <KpiTile
           label="Drivers with Open Fines"

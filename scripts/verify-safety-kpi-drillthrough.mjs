@@ -74,6 +74,16 @@ requireAll(tabPath, tab, [
   { pattern: /driver_id/, label: "uses accidents driver_id (existing id)" },
   { pattern: /unit_id/, label: "uses accidents unit_id (existing id)" },
   { pattern: /to="\/safety\/[a-z-]+"/, label: "KPI tile deep-links to a scoped safety surface" },
+  // Company Violations KPI must drill to External Fines (company-violation filter lives there).
+  {
+    pattern: /label="Open Company Violations"[\s\S]*?to="\/safety\/external-fines"/,
+    label: "Open Company Violations KPI links to /safety/external-fines",
+  },
+  // Drill panel honesty: accidents under "needing attention" must be open-only (not stale closed).
+  {
+    pattern: /status === ["']open["']/,
+    label: "drill panel filters accidents to status === open",
+  },
 ]);
 // A KPI/drill link must never be a bare `/safety` (no trailing segment).
 forbid(tabPath, tab, [
@@ -89,6 +99,11 @@ requireAll(servicePath, service, [
   { pattern: /subject_driver_id/, label: "alert carries subject_driver_id" },
   { pattern: /subject_unit_id/, label: "alert carries subject_unit_id" },
   { pattern: /count\(DISTINCT/, label: "sole-subject resolution (count DISTINCT)" },
+  // #2614: cert-expiry alert must land on ExpiryDashboard, not DOT Compliance.
+  {
+    pattern: /alert_id:\s*"expiring_certs_30d"[\s\S]*?action_url:\s*"\/safety\/cert-expiry"/,
+    label: "expiring_certs_30d action_url is /safety/cert-expiry",
+  },
 ]);
 // No alert may point at a bare `/safety` (the old workers-comp defect).
 forbid(servicePath, service, [
