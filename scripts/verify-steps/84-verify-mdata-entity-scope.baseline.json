@@ -426,14 +426,19 @@
       "preview": "` SELECT operating_company_id FROM mdata.drivers WHERE id = $1::uuid LIMIT 1 `"
     },
     {
+      "key": "apps/backend/src/driver/loads.routes.ts#213f50bfb5d83b4dc194577b21fbc191f1b1c65d",
+      "file": "apps/backend/src/driver/loads.routes.ts",
+      "preview": "` SELECT s.id, s.stop_type::text, s.status::text, l.status::text AS load_status, loc.latitude, loc.longitude FROM mdata."
+    },
+    {
+      "key": "apps/backend/src/driver/loads.routes.ts#4464e5331e3ef6434bdbd658f3d65a35848649d1",
+      "file": "apps/backend/src/driver/loads.routes.ts",
+      "preview": "` SELECT s.id, s.stop_type::text, s.status::text, l.status::text AS load_status, loc.latitude, loc.longitude, s.sequence"
+    },
+    {
       "key": "apps/backend/src/driver/loads.routes.ts#56d18cceb9e4772bd072d6bceb2c923b5f33a2b4",
       "file": "apps/backend/src/driver/loads.routes.ts",
       "preview": "` SELECT l.id, l.load_number, l.status::text, l.rate_total_cents, l.assigned_unit_id, l.updated_at, l.accepted_at, c.cus"
-    },
-    {
-      "key": "apps/backend/src/driver/loads.routes.ts#80b74a335b89215100e155b52ebfe8ec475ff4a7",
-      "file": "apps/backend/src/driver/loads.routes.ts",
-      "preview": "` SELECT s.id, s.stop_type::text, s.status::text, loc.latitude, loc.longitude FROM mdata.load_stops s JOIN mdata.loads l"
     },
     {
       "key": "apps/backend/src/driver/loads.routes.ts#85b3d63ec2ba86864932a59a8614c7604c031830",
@@ -444,11 +449,6 @@
       "key": "apps/backend/src/driver/loads.routes.ts#96233fecc249e51f99c247b9a26d4e3603971413",
       "file": "apps/backend/src/driver/loads.routes.ts",
       "preview": "` INSERT INTO driver_finance.signed_acknowledgments ( operating_company_id, driver_id, load_id, acknowledged_at, signatu"
-    },
-    {
-      "key": "apps/backend/src/driver/loads.routes.ts#c183864921f6348dd27b6af006d77b1295798aa5",
-      "file": "apps/backend/src/driver/loads.routes.ts",
-      "preview": "` SELECT s.id, s.stop_type::text, s.status::text, loc.latitude, loc.longitude, s.sequence_number FROM mdata.load_stops s"
     },
     {
       "key": "apps/backend/src/driver/push-subscriptions.routes.ts#c2c50fc4d6b5d87f9055d9d61c4dabf79d1cdae6",
