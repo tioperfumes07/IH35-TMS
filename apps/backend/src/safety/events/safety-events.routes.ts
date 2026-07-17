@@ -4,6 +4,7 @@ import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser } from "../../auth/db.js";
 import { requireAuth } from "../../auth/session-middleware.js";
 import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
+import { isSevereSafetyEventSeverity, notifySevereSafetyEvent } from "./notification.service.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -371,7 +372,22 @@ export async function registerSafetyEventsRoutes(app: FastifyInstance) {
         `,
         [createdId]
       );
-      return eventRow.rows[0] ?? null;
+      const createdEvent = eventRow.rows[0] ?? null;
+
+      if (createdEvent && isSevereSafetyEventSeverity(body.data.severity)) {
+        await notifySevereSafetyEvent(client, {
+          operating_company_id: body.data.operating_company_id,
+          event_id: createdId,
+          event_type: body.data.event_type,
+          severity: body.data.severity,
+          title: body.data.title,
+          description: body.data.description ?? null,
+          subject_driver_name: createdEvent.subject_driver_name ?? null,
+          subject_unit_number: createdEvent.subject_unit_number ?? null,
+        });
+      }
+
+      return createdEvent;
     });
 
     if (!event) return reply.code(500).send({ error: "safety_event_create_failed" });

@@ -1056,6 +1056,7 @@
     "verify:acct-utc-today-defaults": "node scripts/verify-acct-utc-today-defaults.mjs",
     "verify:dispatch-oos-unit-block": "node scripts/verify-dispatch-oos-unit-block.mjs",
     "verify:safety-event-log-occurred-at": "node scripts/verify-safety-event-log-occurred-at.mjs",
+    "verify:safety-event-severe-notifications": "node scripts/verify-safety-event-severe-notifications.mjs",
     "verify:dispatch-list-orphaned": "node scripts/verify-dispatch-list-orphaned.mjs",
     "verify:is-posting-flag-void": "node scripts/verify-is-posting-flag-void.mjs",
     "verify:xlsx-upload-magic-bytes": "node scripts/verify-xlsx-upload-magic-bytes.mjs"
