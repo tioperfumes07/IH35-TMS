@@ -58,7 +58,10 @@ export function LegalMatterDetailPage() {
     enabled: Boolean(companyId && id),
   });
 
-  const invalidate = () => void qc.invalidateQueries({ queryKey: ["legal", "matter", companyId, id] });
+  const invalidate = () => {
+    void qc.invalidateQueries({ queryKey: ["legal", "matter", companyId, id] });
+    void qc.invalidateQueries({ queryKey: ["legal", "matters", companyId] });
+  };
 
   const addEventMut = useMutation({
     mutationFn: () =>

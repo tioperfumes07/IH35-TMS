@@ -79,34 +79,58 @@ export function matterRowToFormState(matter: Record<string, unknown>): LegalMatt
   };
 }
 
+/** Edit may move between workflow statuses; `closed` is only via closeMatter (+ outcome). */
+export const LEGAL_MATTER_EDIT_STATUSES = [
+  "open",
+  "investigating",
+  "litigation",
+  "settled",
+  "dismissed",
+  "judgment",
+] as const;
+
 export function formStateToUpdatePayload(form: LegalMatterFormState): Record<string, unknown> {
+  // Never PATCH status=closed — that bypasses closeMatter (closed_at / outcome / matter_closed).
+  const status =
+    form.status === "closed" || !(LEGAL_MATTER_EDIT_STATUSES as readonly string[]).includes(form.status)
+      ? undefined
+      : form.status;
   return {
     type: form.type,
-    status: form.status,
+    ...(status !== undefined ? { status } : {}),
     severity: form.severity,
     our_role: form.our_role,
-    opposing_party: form.opposing_party.trim() || undefined,
-    case_number: form.case_number.trim() || undefined,
-    court: form.court.trim() || undefined,
-    description: form.description.trim() || undefined,
-    internal_notes: form.internal_notes.trim() || undefined,
-    amount_claimed_against_us: form.amount_claimed_against_us ? Number(form.amount_claimed_against_us) : undefined,
-    amount_we_seek: form.amount_we_seek ? Number(form.amount_we_seek) : undefined,
-    financial_reserve_cents: form.financial_reserve_cents ? Number(form.financial_reserve_cents) : undefined,
-    next_hearing_date: form.next_hearing_date || undefined,
-    statute_of_limitations_at: form.statute_of_limitations_at || undefined,
-    attorney_name: form.attorney_name.trim() || undefined,
-    attorney_firm: form.attorney_firm.trim() || undefined,
-    attorney_phone: form.attorney_phone.trim() || undefined,
-    attorney_email: form.attorney_email.trim() || undefined,
+    // Empty → null/"" so intentional clears persist (omit would leave stale DB values).
+    opposing_party: form.opposing_party.trim(),
+    case_number: form.case_number.trim(),
+    court: form.court.trim(),
+    description: form.description.trim(),
+    internal_notes: form.internal_notes.trim(),
+    amount_claimed_against_us: form.amount_claimed_against_us
+      ? Number(form.amount_claimed_against_us)
+      : null,
+    amount_we_seek: form.amount_we_seek ? Number(form.amount_we_seek) : null,
+    financial_reserve_cents: form.financial_reserve_cents
+      ? Number(form.financial_reserve_cents)
+      : null,
+    next_hearing_date: form.next_hearing_date || null,
+    statute_of_limitations_at: form.statute_of_limitations_at || null,
+    attorney_name: form.attorney_name.trim(),
+    attorney_firm: form.attorney_firm.trim(),
+    attorney_phone: form.attorney_phone.trim(),
+    attorney_email: form.attorney_email.trim() || null,
   };
 }
 
 export function formStateToCreatePayload(form: LegalMatterFormState): Record<string, unknown> {
-  return {
-    matter_number: form.matter_number.trim(),
-    ...formStateToUpdatePayload(form),
-  };
+  const update = formStateToUpdatePayload(form);
+  // Create: omit empties/nulls so DB defaults apply; never send status=closed.
+  const body: Record<string, unknown> = { matter_number: form.matter_number.trim() };
+  for (const [k, v] of Object.entries(update)) {
+    if (v === null || v === undefined || v === "") continue;
+    body[k] = v;
+  }
+  return body;
 }
 
 type Props = {
@@ -143,20 +167,29 @@ export function LegalMatterFormFields({ form, setForm, mode }: Props) {
         </SelectCombobox>
       </label>
       {mode === "edit" ? (
-        <label className="text-xs text-gray-600">
-          Status
-          <SelectCombobox
-            className="mt-1 w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
-            value={form.status}
-            onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))}
-          >
-            {["open", "investigating", "litigation", "settled", "dismissed", "judgment", "closed"].map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </SelectCombobox>
-        </label>
+        form.status === "closed" ? (
+          <div className="text-xs text-gray-600">
+            Status
+            <div className="mt-1 rounded-sm border border-gray-200 bg-gray-50 px-2 py-1 text-sm text-gray-700">
+              closed — use Close matter (with outcome) only; reopen not supported via edit
+            </div>
+          </div>
+        ) : (
+          <label className="text-xs text-gray-600">
+            Status
+            <SelectCombobox
+              className="mt-1 w-full rounded-sm border border-gray-200 px-2 py-1 text-sm"
+              value={form.status}
+              onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))}
+            >
+              {LEGAL_MATTER_EDIT_STATUSES.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </SelectCombobox>
+          </label>
+        )
       ) : null}
       <label className="text-xs text-gray-600">
         Severity
