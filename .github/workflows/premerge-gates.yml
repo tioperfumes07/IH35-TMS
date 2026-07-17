@@ -1,5 +1,9 @@
 name: premerge-gates
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 # Three focused gates promoted from post-merge feedback to required pre-merge CI.
 # Catches the GAP-81 failure class (missing RLS, missing role, strict-null errors)
 # before any PR can merge to main.
