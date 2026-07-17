@@ -10,8 +10,6 @@ on:
       - ".github/workflows/load-test-nightly.yml"
       - "docs/audits/LOAD-TEST-BASELINE-2026-06-08.md"
       - ".block-ready/BLOCK-08-TIER2-LOAD-TEST.json"
-      - "package.json"
-      - ".github/workflows/ci.yml"
   schedule:
     - cron: "30 5 * * *"
   workflow_dispatch:

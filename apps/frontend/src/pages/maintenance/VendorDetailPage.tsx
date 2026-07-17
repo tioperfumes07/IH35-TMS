@@ -70,6 +70,18 @@ export function VendorDetailPage() {
               <div><dt className="inline font-medium">Phone:</dt> <dd className="inline">{vendor.contact_phone ?? "—"}</dd></div>
               <div><dt className="inline font-medium">Address:</dt> <dd className="inline">{vendor.address ?? "—"}</dd></div>
               <div><dt className="inline font-medium">Payment terms:</dt> <dd className="inline">{vendor.payment_terms ?? "—"}</dd></div>
+              <div>
+                <dt className="inline font-medium">AP Vendor:</dt>{" "}
+                <dd className="inline">
+                  {vendor.mdata_vendor_id ? (
+                    <Link className="text-slate-600 underline" to={`/vendors/${vendor.mdata_vendor_id}`}>
+                      {vendor.mdata_vendor_id}
+                    </Link>
+                  ) : (
+                    "—"
+                  )}
+                </dd>
+              </div>
               <div><dt className="inline font-medium">Status:</dt> <dd className="inline">{vendor.is_active ? "Active" : "Archived"}</dd></div>
             </dl>
             <p className="mt-2 text-[11px] text-gray-500">
