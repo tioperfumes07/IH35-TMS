@@ -1772,13 +1772,13 @@ export function BankingTransactionsDesignView({
                       </>
                     ) : null}
                     {viewSettings.showAmountsInOneColumn ? (
-                      <td className={`px-1 py-2 align-top ${spent > 0 ? "text-red-700" : "text-emerald-700"}`}>
+                      <td className={`px-1 py-2 align-top ${spent > 0 ? "text-red-700" : "text-slate-700"}`}>
                         {spent > 0 ? `-${USD.format(spent / 100)}` : received > 0 ? USD.format(received / 100) : "—"}
                       </td>
                     ) : (
                       <>
                         <td className="px-1 py-2 align-top text-red-700">{spent > 0 ? USD.format(spent / 100) : "—"}</td>
-                        <td className="px-1 py-2 align-top text-emerald-700">{received > 0 ? USD.format(received / 100) : "—"}</td>
+                        <td className="px-1 py-2 align-top text-slate-700">{received > 0 ? USD.format(received / 100) : "—"}</td>
                       </>
                     )}
                     {(() => {

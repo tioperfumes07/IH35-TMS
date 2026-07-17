@@ -70,7 +70,7 @@ export function derivePlaidConnectionBadgeLabel(
 }
 
 export function derivePlaidConnectionBadgeClasses(label: PlaidConnectionBadgeLabel): string {
-  if (label === "Healthy") return "bg-green-100 text-green-800";
+  if (label === "Healthy") return "bg-slate-100 text-slate-700";
   if (label === "Stale") return "bg-slate-100 text-slate-700";
   if (label === "Out of sync" || label === "Never synced") return "bg-red-100 text-red-800";
   if (label === "Login Required") return "bg-slate-100 text-slate-700";

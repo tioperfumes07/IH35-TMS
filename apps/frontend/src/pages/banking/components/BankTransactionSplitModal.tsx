@@ -248,7 +248,7 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
               <div className="font-semibold text-gray-900">{transaction.description || "Bank transaction"}</div>
               <div className="text-gray-600">{transaction.is_credit ? "Money in" : "Money out"} · Total {formatUsdCents(totalCents)}</div>
             </div>
-            <div className={`rounded-sm px-2 py-1 text-xs font-semibold ${remainingCents === 0 ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>
+            <div className={`rounded-sm px-2 py-1 text-xs font-semibold ${remainingCents === 0 ? "bg-slate-100 text-slate-700" : "bg-red-50 text-red-700"}`}>
               Remaining: {formatUsdCents(remainingCents)}
             </div>
           </div>
@@ -399,7 +399,7 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
                   </div>
 
                   {result ? (
-                    <div className={`mt-1 text-[10px] ${result.posted ? "text-emerald-700" : "text-gray-500"}`}>
+                    <div className={`mt-1 text-[10px] ${result.posted ? "text-slate-700" : "text-gray-500"}`}>
                       {result.posted ? (
                         <>
                           Posted

@@ -178,7 +178,7 @@ export function DriverEscrowTabContent({ operatingCompanyId, driverEscrowBalance
                   >
                     <td className="px-2 py-1">{formatDateUS(row.txn_date)}</td>
                     <td className="px-2 py-1">{String(row.description ?? "")}</td>
-                    <td className="px-2 py-1 text-green-700">
+                    <td className="px-2 py-1 text-slate-700">
                       {Number(row.deposits ?? 0) > 0 ? `$${Number(row.deposits ?? 0).toFixed(2)}` : "—"}
                     </td>
                     <td className="px-2 py-1 text-red-700">

@@ -1081,6 +1081,10 @@ jobs:
         run: node scripts/verify-banking-fromto-derived.mjs --self-test
       - name: verify:banking-fromto-derived
         run: npm run verify:banking-fromto-derived
+      - name: verify:banking-palette-section7 --selftest
+        run: node scripts/verify-banking-palette-section7.mjs --selftest
+      - name: verify:banking-palette-section7
+        run: npm run verify:banking-palette-section7
       - name: verify:docs-upload-viewed-entity --selftest
         run: node scripts/verify-docs-upload-viewed-entity.mjs --selftest
       - name: verify:docs-upload-viewed-entity
