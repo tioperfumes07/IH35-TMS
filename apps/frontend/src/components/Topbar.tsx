@@ -6,9 +6,10 @@ import { getQboConnectionStatus, getQboAuthorizeStartUrl } from "../api/forensic
 import { getQboSyncHealth, postQboMasterDataSyncTriggerFull } from "../api/qbo-integration";
 import { getRelayHealth } from "../api/relay";
 import { getSamsaraHealth } from "../api/samsara";
-import { getIdentityCurrentCompany, signOut } from "../api/identity";
+import { signOut } from "../api/identity";
 import { colors, spacing, typography } from "../design/tokens";
 import { companyOperatingChipClasses } from "../lib/company-branding";
+import { selectedCompanyLegalBadgeLabel } from "../lib/selected-company-label";
 import type { AuthMeResponse } from "../types/api";
 import { CarrierSwitcher } from "./layout/CarrierSwitcher";
 import { TopStatusBar } from "./layout/TopStatusBar";
@@ -83,13 +84,6 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
     enabled: Boolean(companyId) && office,
     staleTime: 30_000,
     refetchInterval: 60_000,
-  });
-
-  const identityCompanyQuery = useQuery({
-    queryKey: ["identity", "me", "current-company"],
-    queryFn: getIdentityCurrentCompany,
-    enabled: office,
-    staleTime: 60_000,
   });
 
   const qboSyncHealthQuery = useQuery({
@@ -182,16 +176,9 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
 
   const dateLabel = useMemo(() => formatNow(now), [now]);
 
-  const legalNameChip =
-    identityCompanyQuery.data?.company_legal_name?.trim() ||
-    selectedCompany?.legal_name?.trim() ||
-    companyLabel ||
-    "";
+  const legalNameChip = selectedCompanyLegalBadgeLabel(selectedCompany);
 
-  const chipClass = companyOperatingChipClasses(
-    identityCompanyQuery.data?.company_legal_name ?? selectedCompany?.legal_name ?? null,
-    selectedCompany?.code ?? null
-  );
+  const chipClass = companyOperatingChipClasses(selectedCompany?.legal_name ?? null, selectedCompany?.code ?? null);
 
   return (
     <div className="border-b" style={{ borderBottomColor: colors.sidebarBorder, backgroundColor: colors.topbarBg }}>
