@@ -33,5 +33,6 @@ test("driver login submits fuel receipt and dispatcher can see update", async ({
 
   await goTo(page, "/dispatch/map");
   await expect(page.getByTestId("dispatch-map-view")).toBeVisible();
-  await expect(page.getByRole("button", { name: /load/i })).toBeVisible();
+  await expect(page.getByTestId("dispatch-map-not-configured")).toBeVisible();
+  await expect(page.getByText(/map provider not configured/i)).toBeVisible();
 });
