@@ -58,6 +58,58 @@ async function sumLedgerBalanceCents(
   return map;
 }
 
+/**
+ * Single authoritative depository cash total for KPI + cash-flow opening + accounts/all agreement.
+ *
+ *   Plaid-linked depository: SUM(current_balance_cents) — external sync is source of truth
+ *     (never re-sum bank_transactions for this population — that caused the -$4.79M phantom).
+ *   Non-Plaid internal wallets: is_credit-keyed ledger sum (stored columns stay frozen at 0).
+ *
+ * hideFilterOnBankAccounts / hideFilterOnBaAlias must be the fragments from
+ * bankAccountHiddenFilterSql(hideOn, "banking.bank_accounts") and (... ,"ba") respectively
+ * (empty string when hide is OFF).
+ */
+export async function sumAuthoritativeDepositoryCashCents(
+  client: QueryClient,
+  operatingCompanyId: string,
+  opts: { hideFilterOnBankAccounts: string; hideFilterOnBaAlias: string }
+): Promise<number> {
+  const plaidRes = await client
+    .query<{ total_cash: string | number | null }>(
+      `
+      SELECT COALESCE(SUM(current_balance_cents), 0)::bigint AS total_cash
+      FROM banking.bank_accounts
+      WHERE operating_company_id = $1
+        AND account_class = 'depository'
+        AND is_active = true
+        AND plaid_item_id IS NOT NULL
+      ${opts.hideFilterOnBankAccounts}
+      `,
+      [operatingCompanyId]
+    )
+    .catch(() => ({ rows: [{ total_cash: 0 }] }));
+
+  const internalRes = await client
+    .query<{ internal_total: string | number | null }>(
+      `
+      SELECT COALESCE(SUM(CASE WHEN bt.is_credit THEN bt.amount_cents ELSE -bt.amount_cents END), 0)::bigint
+        AS internal_total
+      FROM banking.bank_transactions bt
+      JOIN banking.bank_accounts ba ON ba.id = bt.bank_account_id
+      WHERE bt.operating_company_id = $1
+        AND ba.operating_company_id = $1
+        AND ba.account_class = 'depository'
+        AND ba.is_active = true
+        AND ba.plaid_item_id IS NULL
+      ${opts.hideFilterOnBaAlias}
+      `,
+      [operatingCompanyId]
+    )
+    .catch(() => ({ rows: [{ internal_total: 0 }] }));
+
+  return Number(plaidRes.rows[0]?.total_cash ?? 0) + Number(internalRes.rows[0]?.internal_total ?? 0);
+}
+
 /** List-endpoint variant — one batched query for every non-Plaid account in the result set, applied
  *  as a pass-through override (Plaid-linked rows are returned unchanged, by identity). */
 export async function withInternalWalletBalances<T extends BankAccountBalanceFields>(

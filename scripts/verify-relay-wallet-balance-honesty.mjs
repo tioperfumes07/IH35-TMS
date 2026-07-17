@@ -49,9 +49,13 @@ function assertHelper(rawSrc, errors) {
   if (!/export\s+(async\s+)?function\s+deriveInternalWalletBalanceCents/.test(src)) {
     errors.push("internal-wallet-balance.ts: missing export deriveInternalWalletBalanceCents (single-account derivation)");
   }
+  if (!/export\s+(async\s+)?function\s+sumAuthoritativeDepositoryCashCents/.test(src)) {
+    errors.push("internal-wallet-balance.ts: missing export sumAuthoritativeDepositoryCashCents (KPI + cash-flow shared total)");
+  }
   // Sign convention: the ledger sum MUST branch on is_credit, not just amount_cents sign — the Relay
   // wallet feed stores amount_cents as a positive magnitude for both money-in and money-out rows.
-  if (!/WHEN\s+is_credit\s+THEN\s+amount_cents\s+ELSE\s+-amount_cents/i.test(src)) {
+  if (!/WHEN\s+is_credit\s+THEN\s+amount_cents\s+ELSE\s+-amount_cents/i.test(src) &&
+      !/WHEN\s+bt\.is_credit\s+THEN\s+bt\.amount_cents\s+ELSE\s+-bt\.amount_cents/i.test(src)) {
     errors.push("internal-wallet-balance.ts: ledger sum must be `CASE WHEN is_credit THEN amount_cents ELSE -amount_cents END` (is_credit-keyed, not a bare amount_cents sign assumption)");
   }
   // Must only ever touch non-Plaid accounts — never override a Plaid-synced account's real balance.
@@ -68,26 +72,21 @@ function assertBankingRoutesWired(rawSrc, errors) {
   if (!/withInternalWalletBalances\s*\(/.test(src)) {
     errors.push("banking.routes.ts: GET /banking/accounts/all no longer calls withInternalWalletBalances(...) — it will return the frozen current_balance_cents column again");
   }
-  // total_cash KPI must not silently regress to a bare SUM(current_balance_cents) that drops internal
-  // wallets back to 0. Two queries are required: (1) the authoritative Plaid-account depository sum
-  // (kept as a literal `SUM(current_balance_cents)` on `account_class = 'depository'` per
-  // scripts/verify-cash-surfaces-reconcile.mjs, restricted to plaid_item_id IS NOT NULL), and (2) an
-  // internal-wallet ledger derivation (plaid_item_id IS NULL, is_credit-keyed bank_transactions sum) —
-  // then authoritativeTotalCash must ADD both together, never just the first.
-  const hasDepositorySum = /SUM\(current_balance_cents\)[\s\S]*?account_class\s*=\s*'depository'/.test(src);
-  if (!hasDepositorySum) {
-    errors.push("banking.routes.ts: total_cash KPI is missing the authoritative SUM(current_balance_cents) ... account_class = 'depository' query (see verify-cash-surfaces-reconcile.mjs)");
+  if (!/sumAuthoritativeDepositoryCashCents\s*\(/.test(src)) {
+    errors.push("banking.routes.ts: total_cash KPI must call sumAuthoritativeDepositoryCashCents (shared with cash-flow opening)");
   }
-  const hasInternalWalletDerivation =
-    /plaid_item_id IS NULL/.test(src) &&
-    /bank_transactions/.test(src) &&
-    /WHEN\s+bt\.is_credit\s+THEN\s+bt\.amount_cents\s+ELSE\s+-bt\.amount_cents/i.test(src);
-  if (!hasInternalWalletDerivation) {
-    errors.push("banking.routes.ts: total_cash KPI no longer derives non-Plaid wallet balances from bank_transactions (plaid_item_id IS NULL branch missing) — it will silently show 0 cash for internal wallets again");
+  if (!/total_cash:\s*authoritativeTotalCash/.test(src)) {
+    errors.push("banking.routes.ts: KPI payload must override total_cash with authoritativeTotalCash");
   }
-  const combinesBothSums = /authoritativeTotalCash\s*=\s*Number\([\s\S]{0,120}\)\s*\+\s*Number\(/.test(src);
-  if (!combinesBothSums) {
-    errors.push("banking.routes.ts: authoritativeTotalCash must ADD the Plaid depository sum + the internal-wallet ledger derivation — a single Number(...) means one population is being silently dropped");
+}
+
+function assertCashFlowWired(rawSrc, errors) {
+  const src = stripComments(rawSrc);
+  if (!/from\s+["']\.\.\/banking\/internal-wallet-balance\.js["']/.test(src)) {
+    errors.push("cash-flow.service.ts: does not import ../banking/internal-wallet-balance.js");
+  }
+  if (!/sumAuthoritativeDepositoryCashCents\s*\(/.test(src)) {
+    errors.push("cash-flow.service.ts: opening_cash_cents must call sumAuthoritativeDepositoryCashCents (same total as Banking KPI)");
   }
 }
 
@@ -118,6 +117,7 @@ function assertAll(files) {
   const errors = [];
   assertHelper(files.helper, errors);
   assertBankingRoutesWired(files.bankingRoutes, errors);
+  assertCashFlowWired(files.cashFlowService, errors);
   assertLinkRoutesWired(files.linkRoutes, errors);
   assertAccountBalanceRoutesWired(files.accountBalanceRoutes, errors);
   return errors;
@@ -127,25 +127,33 @@ if (process.argv.includes("--selftest")) {
   const goodHelper = `
     export async function withInternalWalletBalances() {}
     export async function deriveInternalWalletBalanceCents() {}
+    export async function sumAuthoritativeDepositoryCashCents() {}
     const sql = "SELECT bank_account_id, SUM(CASE WHEN is_credit THEN amount_cents ELSE -amount_cents END) FROM banking.bank_transactions WHERE plaid_item_id IS NULL";
   `;
   const badHelperNoSign = `
     export async function withInternalWalletBalances() {}
     export async function deriveInternalWalletBalanceCents() {}
+    export async function sumAuthoritativeDepositoryCashCents() {}
     const sql = "SELECT SUM(amount_cents) FROM banking.bank_transactions WHERE plaid_item_id IS NULL";
   `;
   const goodBankingRoutes = `
-    import { withInternalWalletBalances } from "./internal-wallet-balance.js";
+    import { withInternalWalletBalances, sumAuthoritativeDepositoryCashCents } from "./internal-wallet-balance.js";
     return withInternalWalletBalances(client, companyId, res.rows);
-    const cashRes = await client.query(\`SELECT COALESCE(SUM(current_balance_cents), 0)::bigint AS total_cash FROM banking.bank_accounts WHERE account_class = 'depository' AND plaid_item_id IS NOT NULL\`);
-    const internalWalletCashRes = await client.query(\`SELECT COALESCE(SUM(CASE WHEN bt.is_credit THEN bt.amount_cents ELSE -bt.amount_cents END), 0)::bigint AS internal_total FROM banking.bank_transactions bt JOIN banking.bank_accounts ba ON ba.id = bt.bank_account_id WHERE ba.plaid_item_id IS NULL\`);
-    const authoritativeTotalCash = Number(cashRes.rows[0]?.total_cash ?? 0) + Number(internalWalletCashRes.rows[0]?.internal_total ?? 0);
+    const authoritativeTotalCash = await sumAuthoritativeDepositoryCashCents(client, companyId, opts);
+    return { total_cash: authoritativeTotalCash };
   `;
   const badBankingRoutes = `
     import { withInternalWalletBalances } from "./internal-wallet-balance.js";
     return withInternalWalletBalances(client, companyId, res.rows);
     const cashRes = await client.query(\`SELECT COALESCE(SUM(current_balance_cents), 0)::bigint AS total_cash FROM banking.bank_accounts WHERE account_class = 'depository'\`);
     const authoritativeTotalCash = Number(cashRes.rows[0]?.total_cash ?? 0);
+  `;
+  const goodCashFlow = `
+    import { sumAuthoritativeDepositoryCashCents } from "../banking/internal-wallet-balance.js";
+    const openingCashCents = await sumAuthoritativeDepositoryCashCents(client, operatingCompanyId, opts);
+  `;
+  const badCashFlow = `
+    SELECT COALESCE(SUM(current_balance_cents), 0)::bigint AS balance_cents FROM banking.bank_accounts WHERE account_class = 'depository'
   `;
   const goodLinkRoutes = `
     import { deriveInternalWalletBalanceCents, withInternalWalletBalances } from "../../banking/internal-wallet-balance.js";
@@ -159,7 +167,13 @@ if (process.argv.includes("--selftest")) {
   `;
   const badAccountBalance = `let balanceCents = Number(bank.current_balance_cents ?? 0);`;
 
-  const goodFiles = { helper: goodHelper, bankingRoutes: goodBankingRoutes, linkRoutes: goodLinkRoutes, accountBalanceRoutes: goodAccountBalance };
+  const goodFiles = {
+    helper: goodHelper,
+    bankingRoutes: goodBankingRoutes,
+    cashFlowService: goodCashFlow,
+    linkRoutes: goodLinkRoutes,
+    accountBalanceRoutes: goodAccountBalance,
+  };
   if (assertAll(goodFiles).length !== 0) {
     console.error("SELFTEST FAIL: good fixtures flagged", assertAll(goodFiles));
     process.exit(1);
@@ -167,6 +181,7 @@ if (process.argv.includes("--selftest")) {
   const cases = [
     ["helper-no-sign", { ...goodFiles, helper: badHelperNoSign }],
     ["banking-routes-regressed", { ...goodFiles, bankingRoutes: badBankingRoutes }],
+    ["cash-flow-regressed", { ...goodFiles, cashFlowService: badCashFlow }],
     ["link-routes-regressed", { ...goodFiles, linkRoutes: badLinkRoutes }],
     ["account-balance-regressed", { ...goodFiles, accountBalanceRoutes: badAccountBalance }],
   ];
@@ -180,7 +195,9 @@ if (process.argv.includes("--selftest")) {
   process.exit(0);
 }
 
-for (const f of [HELPER, BANKING_ROUTES, LINK_ROUTES, ACCOUNT_BALANCE_ROUTES]) {
+const CASH_FLOW_SERVICE = path.join(root, "apps/backend/src/cash-flow/cash-flow.service.ts");
+
+for (const f of [HELPER, BANKING_ROUTES, CASH_FLOW_SERVICE, LINK_ROUTES, ACCOUNT_BALANCE_ROUTES]) {
   if (!fs.existsSync(f)) {
     console.error(`GUARD FAIL: missing expected file ${f}`);
     process.exit(1);
@@ -190,13 +207,14 @@ for (const f of [HELPER, BANKING_ROUTES, LINK_ROUTES, ACCOUNT_BALANCE_ROUTES]) {
 const errors = assertAll({
   helper: fs.readFileSync(HELPER, "utf8"),
   bankingRoutes: fs.readFileSync(BANKING_ROUTES, "utf8"),
+  cashFlowService: fs.readFileSync(CASH_FLOW_SERVICE, "utf8"),
   linkRoutes: fs.readFileSync(LINK_ROUTES, "utf8"),
   accountBalanceRoutes: fs.readFileSync(ACCOUNT_BALANCE_ROUTES, "utf8"),
 });
 
 if (errors.length) {
-  console.error("GUARD FAIL — Relay Fuel Wallet balance must be derived from its bank_transactions ledger (QBO parity), not a frozen Plaid-only column:");
-  for (const e of errors) console.error("  - " + e);
+  console.error("FAIL verify-relay-wallet-balance-honesty:");
+  for (const e of errors) console.error(`  - ${e}`);
   process.exit(1);
 }
-console.log("verify-relay-wallet-balance-honesty OK — non-Plaid wallet balance derivation wired at every read surface, is_credit-keyed, Plaid accounts untouched");
+console.log("PASS verify-relay-wallet-balance-honesty — shared depository cash helper wired at KPI + cash-flow + account reads");

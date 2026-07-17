@@ -14,7 +14,7 @@ import {
 } from "./bank-account-visibility.js";
 import { countDriverEscrowKpis } from "./driver-escrow-counts.js";
 import { countTotalBankTransactions, countUncategorizedTransactions } from "./pending-categorization.js";
-import { withInternalWalletBalances, type BankAccountBalanceFields } from "./internal-wallet-balance.js";
+import { sumAuthoritativeDepositoryCashCents, withInternalWalletBalances, type BankAccountBalanceFields } from "./internal-wallet-balance.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -150,49 +150,13 @@ export async function registerBankingRoutes(app: FastifyInstance) {
         drivers_with_escrow_balance: 0,
         drivers_with_active_escrow_account: 0,
       }));
-      // total_cash must read the AUTHORITATIVE depository balances (same source as
-      // /banking/accounts/all and the cash-flow opening), not the tile view — the tile-derived
-      // total_cash returned 0 while accounts/all showed real cash, a reconciliation bug. All three
-      // cash surfaces now agree on banking.bank_accounts.current_balance_cents (account_class='depository')
-      // for every Plaid-linked account — see scripts/verify-cash-surfaces-reconcile.mjs.
-      // RELAY-WALLET-BALANCE-1: a non-Plaid internal wallet's current_balance_cents is never synced
-      // (see internal-wallet-balance.ts) and stays frozen at 0 forever. Its contribution is derived
-      // separately from its own ledger (is_credit-keyed, NOT the signed-amount formula the reconcile
-      // guard forbids for the Plaid-mixed population) and added on top of the authoritative sum, so a
-      // real internal wallet balance is never silently dropped to 0 — and Plaid accounts are untouched.
-      const cashRes = await client
-        .query<{ total_cash: string | number | null }>(
-          `
-          SELECT COALESCE(SUM(current_balance_cents), 0)::bigint AS total_cash
-          FROM banking.bank_accounts
-          WHERE operating_company_id = $1
-            AND account_class = 'depository'
-            AND is_active = true
-            AND plaid_item_id IS NOT NULL
-          ${bankAccountHiddenFilterSql(hideOn, "banking.bank_accounts")}
-          `,
-          [companyId]
-        )
-        .catch(() => ({ rows: [{ total_cash: 0 }] }));
-      const internalWalletCashRes = await client
-        .query<{ internal_total: string | number | null }>(
-          `
-          SELECT COALESCE(SUM(CASE WHEN bt.is_credit THEN bt.amount_cents ELSE -bt.amount_cents END), 0)::bigint
-            AS internal_total
-          FROM banking.bank_transactions bt
-          JOIN banking.bank_accounts ba ON ba.id = bt.bank_account_id
-          WHERE bt.operating_company_id = $1
-            AND ba.operating_company_id = $1
-            AND ba.account_class = 'depository'
-            AND ba.is_active = true
-            AND ba.plaid_item_id IS NULL
-          ${bankAccountHiddenFilterSql(hideOn, "ba")}
-          `,
-          [companyId]
-        )
-        .catch(() => ({ rows: [{ internal_total: 0 }] }));
-      const authoritativeTotalCash =
-        Number(cashRes.rows[0]?.total_cash ?? 0) + Number(internalWalletCashRes.rows[0]?.internal_total ?? 0);
+      // total_cash / cash-flow opening / accounts/all must agree via sumAuthoritativeDepositoryCashCents:
+      // Plaid depository SUM(current_balance_cents) + non-Plaid internal-wallet ledger derivation.
+      // Never re-sum bank_transactions for the Plaid-mixed population (phantom -$4.79M class).
+      const authoritativeTotalCash = await sumAuthoritativeDepositoryCashCents(client, companyId, {
+        hideFilterOnBankAccounts: bankAccountHiddenFilterSql(hideOn, "banking.bank_accounts"),
+        hideFilterOnBaAlias: bankAccountHiddenFilterSql(hideOn, "ba"),
+      }).catch(() => 0);
       // BANKING-1: the UNCATEGORIZED headline must count the SAME population the Transactions
       // "For review" queue lists — entity-scoped status IN ('pending_categorization','uncategorized')
       // across all accounts. The tile view's uncategorized_count counts only 'uncategorized', so it
