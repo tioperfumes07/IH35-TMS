@@ -58,6 +58,7 @@
     "verify:create-drawer-and-datepicker": "node scripts/verify-create-drawer-and-datepicker.mjs",
     "verify:orphan-components": "node scripts/verify-orphan-components.mjs",
     "verify:banking-workflow-b-archived": "node scripts/verify-banking-workflow-b-archived.mjs",
+    "verify:banking-no-orphan-pages": "node scripts/verify-banking-no-orphan-pages.mjs",
     "verify:inventory-assignments-honesty": "node scripts/verify-inventory-assignments-honesty.mjs",
     "verify:banking-register-categorize-capable": "node scripts/verify-banking-register-categorize-capable.mjs",
     "verify:no-sidebar-flyout": "node scripts/verify-no-sidebar-flyout.mjs",

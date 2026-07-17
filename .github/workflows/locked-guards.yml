@@ -652,6 +652,11 @@ jobs:
       - name: verify:dead-forms-unmounted
         run: npm run verify:dead-forms-unmounted
 
+      - name: verify:banking-no-orphan-pages --selftest
+        run: node scripts/verify-banking-no-orphan-pages.mjs --selftest
+      - name: verify:banking-no-orphan-pages
+        run: npm run verify:banking-no-orphan-pages
+
       - name: verify:reference-dropdown-inline-create --selftest
         run: node scripts/verify-reference-dropdown-inline-create.mjs --selftest
       - name: verify:reference-dropdown-inline-create

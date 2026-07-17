@@ -6,7 +6,7 @@ import source from "./BankingTransactionsDesignView.tsx?raw";
  * scroll (overflow-x: auto), NOT clip wide content (overflow-hidden). Regression #3b: with
  * optional columns (Check No / Payee / Class / Location) toggled on, the table-fixed layout
  * exceeds the container and overflow-hidden clipped the trailing columns. The fix mirrors the
- * already-correct sibling RegisterTable.tsx (overflow-x-auto wrapper + min-w-[1150px] table).
+ * already-correct pattern (overflow-x-auto wrapper + min-w-[1150px] table).
  * Static source-contract (?raw) so it can't regress regardless of render-time mocking.
  */
 describe("BankingTransactionsDesignView — table overflow contract (#3b)", () => {
