@@ -181,7 +181,7 @@ async function assertMdataVendorExists(
   mdataVendorId: string
 ) {
   const res = await client.query(
-    `SELECT id FROM mdata.vendors WHERE id = $1 AND operating_company_id = $2 AND voided_at IS NULL LIMIT 1`,
+    `SELECT id FROM mdata.vendors WHERE id = $1 AND operating_company_id = $2 AND deactivated_at IS NULL LIMIT 1`,
     [mdataVendorId, companyId]
   );
   if (!res.rows[0]) {
