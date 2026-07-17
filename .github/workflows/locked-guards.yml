@@ -695,6 +695,11 @@ jobs:
       - name: verify:finance-hub-off-honest-state
         run: npm run verify:finance-hub-off-honest-state
 
+      - name: verify:myaccountant-flag-seeded --selftest
+        run: node scripts/verify-myaccountant-flag-seeded.mjs --selftest
+      - name: verify:myaccountant-flag-seeded
+        run: npm run verify:myaccountant-flag-seeded
+
       - name: verify:referenceselect-coverage-ratchet --selftest
         run: node scripts/verify-referenceselect-coverage-ratchet.mjs --selftest
       - name: verify:referenceselect-coverage-ratchet
