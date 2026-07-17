@@ -14,7 +14,7 @@ type Props = {
   onCreated?: (unitId: string) => void;
 };
 
-const inputClass = "h-8 w-full rounded-sm border border-gray-300 px-2 text-xs";
+const inputClass = "min-h-12 w-full rounded-sm border border-gray-300 px-2 text-xs";
 
 const EMPTY = {
   unit_number: "",
