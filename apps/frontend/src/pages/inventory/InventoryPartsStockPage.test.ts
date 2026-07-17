@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import partsStockPage from "./InventoryPartsStockPage.tsx?raw";
 import { mapMaintenancePartsToInventoryRows, type MaintenancePartRow } from "./InventoryPartsStockPage";
 
 // B1: the inventory Parts & Stock page reads /api/v1/maintenance/parts (the real backend) and maps
@@ -15,6 +16,13 @@ const base: MaintenancePartRow = {
   location: "A-12",
   voided_at: null,
 };
+
+describe("InventoryPartsStockPage read path", () => {
+  it("loads parts via listMaintenanceParts (apiRequest), not raw fetch(resolveApiUrl)", () => {
+    expect(partsStockPage).not.toMatch(/fetch\s*\(\s*resolveApiUrl/);
+    expect(partsStockPage).toMatch(/listMaintenanceParts/);
+  });
+});
 
 describe("mapMaintenancePartsToInventoryRows", () => {
   it("maps maintenance fields onto the inventory row shape", () => {
