@@ -847,7 +847,7 @@ jobs:
       - name: verify:banking-bankaccountdetail-is-credit-amounts --selftest
         run: node scripts/verify-banking-bankaccountdetail-is-credit-amounts.mjs --selftest
       - name: verify:banking-bankaccountdetail-is-credit-amounts
-        run: npm run verify:banking-bankaccountdetail-is-credit-amounts
+        run: node scripts/verify-banking-bankaccountdetail-is-credit-amounts.mjs
 
       - name: verify:tracker-artifacts-fresh --selftest
         run: node scripts/verify-tracker-artifacts-fresh.mjs --selftest
