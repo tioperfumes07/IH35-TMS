@@ -271,6 +271,7 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
   }
 
   return (
+    <>
     <Modal
       open={open}
       onClose={onClose}
@@ -504,8 +505,9 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
           </div>
         </div>
       </div>
+    </Modal>
 
-      {/* PS-A: nested account create — same QuickCreateEntityModal "category" chrome as Bills / Expense / Banking categorize (catalogs.accounts). */}
+      {/* PS-A: account create stacks as sibling overlay (not inside Modal — verify:no-nested-modal-frames). */}
       <QuickCreateEntityModal
         open={accountCreateSide !== null}
         kind="category"
@@ -513,6 +515,6 @@ export function ItemEditorModal({ open, mode, row, operatingCompanyId, client, o
         onClose={() => setAccountCreateSide(null)}
         onCreated={handleAccountCreated}
       />
-    </Modal>
+    </>
   );
 }
