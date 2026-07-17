@@ -13,7 +13,9 @@ export async function registerAccountingRoutes(app: FastifyInstance) {
     matchFilter: /\.routes\.(ts|js)$/,
     // Prevent autoload from treating this module as a folder index plugin.
     indexPattern: /^autoload-index-disabled$/,
-    ignorePattern: /\.test\./,
+    // cash-flow / cash-forecast / finance-hub are mounted explicitly in apps/backend/src/index.ts (0441-mod10).
+    // @fastify/autoload entryRelPath is basename (no leading /) — match (^|/) so ignore actually fires.
+    ignorePattern: /(\.test\.|(^|\/)cash-flow\.routes\.|(^|\/)cash-forecast\.routes\.|(^|\/)finance-hub\.routes\.)/,
   });
 }
 
