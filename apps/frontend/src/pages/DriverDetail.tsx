@@ -173,6 +173,11 @@ export function DriverDetailPage() {
       setActiveTab("Earnings & Debt");
     }
   }, [searchParams]);
+  useEffect(() => {
+    if (searchParams.get("assign_truck") === "1" && id) {
+      navigate(`/drivers/${id}/profile?assign_truck=1`, { replace: true });
+    }
+  }, [searchParams, id, navigate]);
   const [enableModalOpen, setEnableModalOpen] = useState(false);
   const [addQualificationOpen, setAddQualificationOpen] = useState(false);
   const [rateModalOpen, setRateModalOpen] = useState(false);

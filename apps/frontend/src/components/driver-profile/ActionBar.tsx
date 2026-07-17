@@ -14,12 +14,14 @@ export function ActionBar({
   driverName,
   driverStatus,
   onActionComplete,
+  onAssignTruck,
 }: {
   driverId: string;
   companyId: string;
   driverName: string;
   driverStatus?: string;
   onActionComplete?: () => void;
+  onAssignTruck?: () => void;
 }) {
   const navigate = useNavigate();
   const [messageOpen, setMessageOpen] = useState(false);
@@ -41,8 +43,9 @@ export function ActionBar({
         <Button
           size="sm"
           variant="secondary"
-          disabled
-          title="Assign a driver from the Fleet unit profile."
+          disabled={isTerminated || !onAssignTruck}
+          title={isTerminated ? "Cannot assign truck to a terminated driver." : "Set this driver's default truck"}
+          onClick={onAssignTruck}
           data-testid="dp-action-assign-truck"
         >
           Assign Truck

@@ -88,6 +88,18 @@ export function quicksaveEquipmentAssignment(payload: {
   );
 }
 
+export type DriverTruckAssignments = {
+  default_truck: Record<string, unknown> | null;
+  currently_driving_truck: Record<string, unknown> | null;
+};
+
+export function setDriverDefaultTruck(driverId: string, operatingCompanyId: string, unitId: string) {
+  return apiRequest<DriverTruckAssignments>(
+    `/api/v1/mdata/drivers/${driverId}/default-truck?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
+    { method: "POST", body: { unit_id: unitId } }
+  );
+}
+
 export type DriverTeamSplitMethod = "50_50" | "60_40" | "70_30" | "mileage_prorated" | "hours_prorated" | "custom";
 
 export type DriverTeam = {

@@ -3,7 +3,7 @@
  * Audit gap #16 (UI-only): Driver Profile map, load, and assign-truck surfaces.
  *
  * Map and load actions must target routes whose destination consumes the focus query.
- * Assign Truck must not emit the ignored `?assign_truck=1` query until a real workflow exists.
+ * Assign Truck must open AssignTruckModal via ?assign_truck=1 (ActionBar + DriverProfilePage).
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -14,10 +14,13 @@ const LABEL = "verify-driver-profile-dead-actions";
 
 const FILES = {
   actionBar: "apps/frontend/src/components/driver-profile/ActionBar.tsx",
+  assignModal: "apps/frontend/src/components/driver-profile/AssignTruckModal.tsx",
+  profilePage: "apps/frontend/src/pages/drivers/DriverProfilePage.tsx",
   assignment: "apps/frontend/src/components/driver-profile/CurrentAssignmentSection.tsx",
   mapView: "apps/frontend/src/pages/dispatch/MapView.tsx",
   dispatch: "apps/frontend/src/pages/Dispatch.tsx",
   manifest: "apps/frontend/src/routes/manifest.tsx",
+  mdataApi: "apps/frontend/src/api/mdata.ts",
 };
 
 function stripComments(text) {
@@ -29,23 +32,25 @@ function stripComments(text) {
 export function assertGuard(sources) {
   const errors = [];
   const actionBar = stripComments(sources.actionBar);
+  const assignModal = stripComments(sources.assignModal);
+  const profilePage = stripComments(sources.profilePage);
   const assignment = stripComments(sources.assignment);
   const mapView = stripComments(sources.mapView);
   const dispatch = stripComments(sources.dispatch);
   const manifest = stripComments(sources.manifest);
+  const mdataApi = stripComments(sources.mdataApi);
 
-  if (/assign_truck/.test(actionBar)) {
-    errors.push(`${FILES.actionBar}: ignored ?assign_truck query link returned`);
+  if (/assign_truck=1/.test(actionBar) && !/onAssignTruck/.test(actionBar)) {
+    errors.push(`${FILES.actionBar}: raw ?assign_truck=1 href without onAssignTruck handler`);
   }
-  if (
-    !/(?:\bdisabled\b[\s\S]{0,200}data-testid="dp-action-assign-truck"|data-testid="dp-action-assign-truck"[\s\S]{0,200}\bdisabled\b)/.test(
-      actionBar
-    )
-  ) {
-    errors.push(`${FILES.actionBar}: Assign Truck must remain visible and honestly disabled`);
+  if (!/onAssignTruck/.test(actionBar) || !/data-testid="dp-action-assign-truck"/.test(actionBar)) {
+    errors.push(`${FILES.actionBar}: Assign Truck must wire onAssignTruck on dp-action-assign-truck`);
   }
-  if (!/title="Assign a driver from the Fleet unit profile\."/.test(actionBar)) {
-    errors.push(`${FILES.actionBar}: disabled Assign Truck must explain the working assignment location`);
+  if (!/searchParams\.get\("assign_truck"\)/.test(profilePage) || !/AssignTruckModal/.test(profilePage)) {
+    errors.push(`${FILES.profilePage}: must consume assign_truck query and render AssignTruckModal`);
+  }
+  if (!/setDriverDefaultTruck/.test(assignModal) || !/default-truck/.test(mdataApi)) {
+    errors.push(`${FILES.assignModal}: must call setDriverDefaultTruck backed by POST /default-truck`);
   }
 
   if (!/href=\{`\/dispatch\/map\?driver=\$\{encodeURIComponent\(driverId\)\}`\}/.test(actionBar)) {
@@ -75,14 +80,19 @@ function read(relativePath) {
 function selftest() {
   const good = {
     actionBar: `
-      <Button data-testid="dp-action-assign-truck" disabled
-        title="Assign a driver from the Fleet unit profile.">Assign Truck</Button>
+      <Button data-testid="dp-action-assign-truck" onClick={onAssignTruck}>Assign Truck</Button>
       <a href={\`/dispatch/map?driver=\${encodeURIComponent(driverId)}\`}>Map</a>
+    `,
+    assignModal: "await setDriverDefaultTruck(driverId, companyId, unitId);",
+    profilePage: `
+      const assignTruckOpen = searchParams.get("assign_truck") === "1";
+      <AssignTruckModal open={assignTruckOpen} />
     `,
     assignment: "<Link to={`/dispatch?load_id=${encodeURIComponent(String(load.load_id))}`}>Load</Link>",
     mapView: 'const focusDriverId = searchParams.get("driver"); positions.filter((p) => p.driver_uuid === focusDriverId);',
     dispatch: 'const loadId = searchParams.get("load_id"); <Drawer isOpen={Boolean(loadId)} />;',
     manifest: '<Route path="/dispatch/map" element={<MapView />} />',
+    mdataApi: "export function setDriverDefaultTruck() { return apiRequest(`/default-truck`",
   };
   const pass = assertGuard(good);
   if (pass.length) {
@@ -93,10 +103,12 @@ function selftest() {
   const legacy = {
     ...good,
     actionBar: '<a href={`/drivers/${driverId}?assign_truck=1`}>Assign Truck</a><a href="/fleet/map">Map</a>',
+    profilePage: "export function DriverProfilePage() { return null; }",
+    assignModal: "export function AssignTruckModal() { return null; }",
     assignment: '<Link to={`/dispatch/loads/${load.load_id}`}>Load</Link>',
   };
   const fail = assertGuard(legacy);
-  if (!fail.some((error) => error.includes("assign_truck")) || !fail.some((error) => error.includes("load_id"))) {
+  if (!fail.some((error) => error.includes("onAssignTruck")) || !fail.some((error) => error.includes("assign_truck"))) {
     console.error(`[${LABEL}] --selftest FAIL: legacy dead actions were not rejected`, fail);
     process.exit(1);
   }
@@ -116,7 +128,7 @@ function main() {
     for (const error of errors) console.error(`  - ${error}`);
     process.exit(1);
   }
-  console.log(`[${LABEL}] OK — map/load routes are consumed and Assign Truck is honestly disabled`);
+  console.log(`[${LABEL}] OK — map/load routes consumed and Assign Truck opens default-truck modal`);
 }
 
 main();
