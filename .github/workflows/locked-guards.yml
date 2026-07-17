@@ -600,6 +600,10 @@ jobs:
         run: node scripts/verify-bills-page-bill-id-deeplink.mjs --selftest
       - name: verify:bills-page-bill-id-deeplink
         run: npm run verify:bills-page-bill-id-deeplink
+      - name: verify:dispatch-factoring-queue-deeplinks --selftest
+        run: node scripts/verify-dispatch-factoring-queue-deeplinks.mjs --selftest
+      - name: verify:dispatch-factoring-queue-deeplinks
+        run: npm run verify:dispatch-factoring-queue-deeplinks
 
       - name: verify:fact-chargebacks-entitylinks --selftest
         run: node scripts/verify-fact-chargebacks-entitylinks.mjs --selftest

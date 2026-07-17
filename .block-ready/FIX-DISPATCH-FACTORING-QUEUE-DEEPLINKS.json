@@ -1,0 +1,34 @@
+{
+  "block_id": "FIX-DISPATCH-FACTORING-QUEUE-DEEPLINKS",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "AUDIT-FIX",
+  "task": "Audit gap #9 — CI lock so Dispatch Factoring Queue load deep-links and Reserve-a-Load book_load=1 cannot regress. Root-cause UI wiring already on main (#2537); this block adds scripts/verify-dispatch-factoring-queue-deeplinks.mjs + package.json + locked-guards.yml wiring.",
+  "branch": "fix/dispatch-factoring-queue-deeplink-guard",
+  "lane": "A",
+  "allowed_files": [
+    ".block-ready/FIX-DISPATCH-FACTORING-QUEUE-DEEPLINKS.json",
+    "scripts/verify-dispatch-factoring-queue-deeplinks.mjs",
+    "package.json",
+    ".github/workflows/locked-guards.yml"
+  ],
+  "acceptance": [
+    {
+      "kind": "guard",
+      "script": "scripts/verify-dispatch-factoring-queue-deeplinks.mjs",
+      "wired_into": "package.json verify:dispatch-factoring-queue-deeplinks + .github/workflows/locked-guards.yml (selftest + scan)"
+    },
+    {
+      "kind": "live",
+      "assert": "node scripts/verify-dispatch-factoring-queue-deeplinks.mjs --selftest passes; planted legacy ?load= producer fails the scan; clean tree (main #2537 wiring) passes"
+    }
+  ],
+  "linkage": "N/A — static CI lock around existing Dispatch Factoring Queue / Reserve-a-Load deep-link wiring; no schema, no GL, no operating_company_id change",
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [
+    "node scripts/verify-dispatch-factoring-queue-deeplinks.mjs --selftest",
+    "npm run verify:dispatch-factoring-queue-deeplinks"
+  ]
+}
