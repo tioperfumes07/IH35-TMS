@@ -103,4 +103,43 @@ describe("getSafetyHomeData", () => {
     expect(data.kpis.hos_violations_today).toBe(4);
     expect(data.kpis.open_dvir_major_defects).toBe(0);
   });
+
+  it("deep-links alerts to the sole driver/unit when count(DISTINCT) === 1", async () => {
+    const DRIVER = "11111111-1111-1111-1111-111111111111";
+    const UNIT = "22222222-2222-2222-2222-222222222222";
+    const client = mockClient({
+      "safety.dvir_defects": [{ c: "2", distinct_units: "1", sole_unit: UNIT }],
+      "safety.hos_violations": [{ c: "1", distinct_drivers: "1", sole_driver: DRIVER }],
+      "safety.accident_reports": [
+        {
+          open_count: "1",
+          distinct_drivers: "1",
+          sole_driver: DRIVER,
+          distinct_units: "1",
+          sole_unit: UNIT,
+        },
+      ],
+      "safety.da_test_records": [{ c: "1", distinct_drivers: "1", sole_driver: DRIVER }],
+    });
+
+    const data = await getSafetyHomeData(client, OCI);
+    const byId = Object.fromEntries(data.alerts.map((a) => [a.alert_id, a]));
+
+    expect(byId.dvir_major_defects?.action_url).toBe(`/fleet/units/${UNIT}`);
+    expect(byId.dvir_major_defects?.subject_unit_id).toBe(UNIT);
+
+    expect(byId.hos_violations_today?.action_url).toBe(`/drivers/${DRIVER}`);
+    expect(byId.hos_violations_today?.subject_driver_id).toBe(DRIVER);
+
+    expect(byId.accidents_7d?.action_url).toBe(`/drivers/${DRIVER}`);
+    expect(byId.accidents_7d?.subject_driver_id).toBe(DRIVER);
+
+    expect(byId.da_random_draws?.action_url).toBe(`/drivers/${DRIVER}`);
+    expect(byId.da_random_draws?.subject_driver_id).toBe(DRIVER);
+
+    // Never a bare /safety.
+    for (const alert of data.alerts) {
+      expect(alert.action_url).not.toBe("/safety");
+    }
+  });
 });

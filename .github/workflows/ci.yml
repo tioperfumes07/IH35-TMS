@@ -516,6 +516,9 @@ jobs:
       - name: Verify safety officer home contract
         run: npm run verify:safety-officer-home
 
+      - name: Verify safety KPI drill-through contract
+        run: npm run verify:safety-kpi-drillthrough
+
       - name: Verify driver manager home contract
         run: npm run verify:driver-manager-home
 
