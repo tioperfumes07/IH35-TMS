@@ -81,6 +81,25 @@ describe("maintenance vendor helpers (B29)", () => {
       payment_terms: "Net 30",
     });
   });
+
+  it("persists mdata_vendor_id in metadata for AP linkage", () => {
+    const vendorId = "22222222-2222-4222-8222-222222222222";
+    expect(buildVendorMetadata({ mdata_vendor_id: vendorId })).toEqual({ mdata_vendor_id: vendorId });
+    expect(buildVendorMetadata({ mdata_vendor_id: null })).toEqual({ mdata_vendor_id: null });
+    const mapped = mapVendorRow({
+      id: "v-1",
+      operating_company_id: COMPANY,
+      code: "GOODYEAR",
+      display_name: "Goodyear",
+      description: null,
+      metadata: { mdata_vendor_id: vendorId },
+      is_active: true,
+      sort_order: 10,
+      created_at: "2026-06-04",
+      updated_at: "2026-06-04",
+    });
+    expect(mapped.mdata_vendor_id).toBe(vendorId);
+  });
 });
 
 describe("maintenance vendor routes (B29)", () => {
