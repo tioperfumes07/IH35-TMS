@@ -35,7 +35,7 @@ type Props = {
     // Canonical backend cancel contract (cancel-load.routes preValidation hook requires BOTH):
     cancel_reason_code: string; // the enum code from the reasons dropdown
     cancel_reason: string; // human text reason (the reason label)
-    reason_code: string; // kept for the legacy cancelMutation status flip
+    reason_code: string;
     cancellation_notes: string;
     billable_to_customer: boolean;
     cancellation_charge_cents?: number;

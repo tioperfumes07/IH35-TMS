@@ -646,6 +646,11 @@ jobs:
       - name: verify:dispatch-factoring-queue-deeplinks
         run: npm run verify:dispatch-factoring-queue-deeplinks
 
+      - name: verify:dispatch-cancel-approval-gate --selftest
+        run: node scripts/verify-dispatch-cancel-approval-gate.mjs --selftest
+      - name: verify:dispatch-cancel-approval-gate
+        run: npm run verify:dispatch-cancel-approval-gate
+
       - name: verify:fact-chargebacks-entitylinks --selftest
         run: node scripts/verify-fact-chargebacks-entitylinks.mjs --selftest
       - name: verify:fact-chargebacks-entitylinks

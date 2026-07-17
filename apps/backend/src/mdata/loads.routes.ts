@@ -189,6 +189,10 @@ function isOfficeWriteRole(role: string): boolean {
   return role === "Owner" || role === "Administrator" || role === "Manager" || role === "Dispatcher";
 }
 
+function isOwnerRole(role: string): boolean {
+  return role === "Owner";
+}
+
 function toCompanyLoadToken(input: string | null | undefined): string {
   const cleaned = String(input ?? "")
     .toUpperCase()
@@ -812,6 +816,27 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         return { error: "cancellation_reason_required" as const };
       }
 
+      if (newStatus === "cancelled" && cancellationReasonCode) {
+        const reasonRes = await client.query<{
+          reason_code: string;
+          requires_owner_approval: boolean;
+        }>(
+          `
+            SELECT reason_code, requires_owner_approval
+            FROM catalogs.cancellation_reasons
+            WHERE reason_code = $1
+              AND is_active = true
+            LIMIT 1
+          `,
+          [cancellationReasonCode]
+        );
+        const reason = reasonRes.rows[0];
+        if (!reason) return { error: "cancellation_reason_invalid" as const };
+        if (reason.requires_owner_approval && !isOwnerRole(authUser.role)) {
+          return { error: "owner_approval_required" as const };
+        }
+      }
+
       const updateRes = await client.query(
         `
           UPDATE mdata.loads
@@ -888,6 +913,12 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       }
       if (result.error === "cancellation_reason_required") {
         return reply.code(400).send({ error: "cancellation_reason_required" });
+      }
+      if (result.error === "cancellation_reason_invalid") {
+        return reply.code(400).send({ error: "cancellation_reason_invalid" });
+      }
+      if (result.error === "owner_approval_required") {
+        return reply.code(403).send({ error: "owner_approval_required" });
       }
     }
 
