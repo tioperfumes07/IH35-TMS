@@ -28,7 +28,10 @@ function nextMonth() {
   // Same calendar day next month in company-local business date (not UTC / browser-local).
   const [y, m, d] = companyToday().split("-").map(Number);
   const next = new Date(Date.UTC(y, m, d)); // month index m = next month (1-based m → 0-based m)
-  return next.toISOString().slice(0, 10);
+  const yy = next.getUTCFullYear();
+  const mm = String(next.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(next.getUTCDate()).padStart(2, "0");
+  return `${yy}-${mm}-${dd}`;
 }
 
 export function RecurringBillCreate() {

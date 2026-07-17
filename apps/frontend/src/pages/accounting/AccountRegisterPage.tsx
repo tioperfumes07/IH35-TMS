@@ -13,6 +13,7 @@ import { getAllAccounts } from "../../api/banking";
 import { getAccountRegister, type AccountRegisterReport, type AccountRegisterRow } from "../../api/account-register";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { companyToday, monthBoundsIso } from "../../lib/businessDate";
 
 const fmtCents = (cents: number) => formatUsdCents(cents);
 
@@ -74,32 +75,32 @@ const TYPE_TO_SOURCE: Record<string, string> = {
   Transfer: "transfer",
 };
 
-function monthBounds(d: Date): { from: string; to: string } {
-  const y = d.getFullYear();
-  const m = d.getMonth();
-  const from = new Date(y, m, 1).toISOString().slice(0, 10);
-  const to = new Date(y, m + 1, 0).toISOString().slice(0, 10);
-  return { from, to };
-}
-
 function applyPreset(preset: string): { from: string; to: string } | null {
-  const now = new Date();
+  // Company-TZ calendar (America/Chicago) — never UTC toISOString().slice(0,10).
+  const today = companyToday();
+  const [y, m] = today.split("-").map(Number); // m is 1-based
   switch (preset) {
-    case "this_month":
-      return monthBounds(now);
-    case "last_month":
-      return monthBounds(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+    case "this_month": {
+      const b = monthBoundsIso(today);
+      return { from: b.start, to: b.end };
+    }
+    case "last_month": {
+      const ly = m === 1 ? y - 1 : y;
+      const lm = m === 1 ? 12 : m - 1;
+      const b = monthBoundsIso(`${ly}-${String(lm).padStart(2, "0")}-01`);
+      return { from: b.start, to: b.end };
+    }
     case "this_quarter": {
-      const q = Math.floor(now.getMonth() / 3);
-      return {
-        from: new Date(now.getFullYear(), q * 3, 1).toISOString().slice(0, 10),
-        to: new Date(now.getFullYear(), q * 3 + 3, 0).toISOString().slice(0, 10),
-      };
+      const qStartMonth = Math.floor((m - 1) / 3) * 3 + 1;
+      const qEndMonth = qStartMonth + 2;
+      const from = `${y}-${String(qStartMonth).padStart(2, "0")}-01`;
+      const end = monthBoundsIso(`${y}-${String(qEndMonth).padStart(2, "0")}-01`).end;
+      return { from, to: end };
     }
     case "this_year":
-      return { from: `${now.getFullYear()}-01-01`, to: `${now.getFullYear()}-12-31` };
+      return { from: `${y}-01-01`, to: `${y}-12-31` };
     case "ytd":
-      return { from: `${now.getFullYear()}-01-01`, to: now.toISOString().slice(0, 10) };
+      return { from: `${y}-01-01`, to: today };
     default:
       return null;
   }
@@ -130,12 +131,12 @@ export function AccountRegisterPage() {
   const queryAccountId = searchParams.get("accountId");
   const deepLinkAccountId = (routeAccountId ?? queryAccountId ?? "").trim();
 
-  const initial = monthBounds(new Date());
+  const initial = monthBoundsIso(companyToday());
   const paramFrom = searchParams.get("from_date");
   const paramTo = searchParams.get("to_date");
   const [accountId, setAccountId] = useState(deepLinkAccountId);
-  const [fromDate, setFromDate] = useState(paramFrom ?? initial.from);
-  const [toDate, setToDate] = useState(paramTo ?? initial.to);
+  const [fromDate, setFromDate] = useState(paramFrom ?? initial.start);
+  const [toDate, setToDate] = useState(paramTo ?? initial.end);
   const [preset, setPreset] = useState(paramFrom ? "custom" : "this_month");
   const [view, setView] = useState<"register" | "audit">("register");
 
