@@ -40,7 +40,7 @@ const FINANCIAL_SEGMENTS = [
 const OFF_PALETTE = /\b(bg|text|border|ring|from|to|via|divide|ring-offset|outline|decoration|placeholder|accent|fill|stroke)-(amber|emerald|green|yellow)-\d{2,3}\b/g;
 
 // Frozen count of pre-existing (grandfathered) off-palette status classes in the non-financial tree.
-const BASELINE = 497; // lowered 2026-07-14 (module-home defect fixes: OwnerHome + DefaultHome revenue-delta pill + QboStyleHomePage delta arrow off emerald/green) — ratchet only downward; previously 502 (module-reports)
+const BASELINE = 495; // lowered 2026-07-17 (dispatch OCR queue Reprocess OCR button: amber -> slate §7 tokens) — ratchet only downward; previously 497 (module-home)
 
 function walk(dir) {
   let out = [];

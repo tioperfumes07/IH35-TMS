@@ -88,4 +88,25 @@ describe("OcrQueuePage (B21-D7)", () => {
     wrap(<OcrQueuePage />);
     expect(await screen.findByText("OCR processing…")).toBeTruthy();
   });
+
+  it("reprocess calls backend and refreshes failed items", async () => {
+    const failedItem: dispatchApi.OcrIntakeQueueItem = {
+      ...readyItem,
+      id: "q-failed",
+      status: "failed",
+      extracted_fields: {},
+      confidence_score: null,
+      error_message: "extraction_failed",
+    };
+    vi.spyOn(dispatchApi, "getOcrIntakeQueue").mockResolvedValue({ items: [failedItem] });
+    const reprocessSpy = vi.spyOn(dispatchApi, "reprocessOcrIntakeItem").mockResolvedValue({
+      ...failedItem,
+      status: "processing",
+      error_message: null,
+    });
+
+    wrap(<OcrQueuePage />);
+    await userEvent.click(await screen.findByTestId("ocr-reprocess-q-failed"));
+    expect(reprocessSpy).toHaveBeenCalledWith("q-failed", "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071");
+  });
 });

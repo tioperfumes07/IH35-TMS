@@ -1,7 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { convertOcrIntakeToBookLoad, getOcrIntakeQueue, type OcrIntakeQueueItem } from "../../api/dispatch";
+import {
+  convertOcrIntakeToBookLoad,
+  getOcrIntakeQueue,
+  reprocessOcrIntakeItem,
+  type OcrIntakeQueueItem,
+} from "../../api/dispatch";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { StatusBadge } from "../../components/StatusBadge";
@@ -39,32 +44,55 @@ function ExtractedSummary({ item }: { item: OcrIntakeQueueItem }) {
 
 // Per-row action button — kept as its own component (not a plain column render) so the convert
 // mutation's hooks are scoped to a stable per-row instance, same as the original QueueRow.
-function ConvertAction({
+function canReprocessOcrItem(item: OcrIntakeQueueItem): boolean {
+  return item.status === "failed" || Boolean(item.error_message);
+}
+
+function RowActions({
   item,
   companyId,
   onConvert,
+  onReprocessed,
 }: {
   item: OcrIntakeQueueItem;
   companyId: string;
   onConvert: (prefill: Record<string, unknown>) => void;
+  onReprocessed: () => void;
 }) {
   const convertM = useMutation({
     mutationFn: () => convertOcrIntakeToBookLoad(item.id, { operating_company_id: companyId }),
     onSuccess: (res) => onConvert(res.book_load_prefill),
   });
-
-  if (item.status !== "ready_review") return null;
+  const reprocessM = useMutation({
+    mutationFn: () => reprocessOcrIntakeItem(item.id, companyId),
+    onSuccess: () => onReprocessed(),
+  });
 
   return (
-    <button
-      type="button"
-      className="rounded-sm border border-slate-300 px-2 py-1 text-xs text-slate-700"
-      disabled={convertM.isPending}
-      onClick={() => convertM.mutate()}
-      data-testid={`ocr-convert-${item.id}`}
-    >
-      Convert to load
-    </button>
+    <div className="flex flex-wrap gap-2">
+      {item.status === "ready_review" ? (
+        <button
+          type="button"
+          className="rounded-sm border border-slate-300 px-2 py-1 text-xs text-slate-700"
+          disabled={convertM.isPending}
+          onClick={() => convertM.mutate()}
+          data-testid={`ocr-convert-${item.id}`}
+        >
+          Convert to load
+        </button>
+      ) : null}
+      {canReprocessOcrItem(item) ? (
+        <button
+          type="button"
+          className="rounded-sm border border-slate-300 bg-slate-100 px-2 py-1 text-xs text-slate-700"
+          disabled={reprocessM.isPending}
+          onClick={() => reprocessM.mutate()}
+          data-testid={`ocr-reprocess-${item.id}`}
+        >
+          {reprocessM.isPending ? "Reprocessing…" : "Reprocess OCR"}
+        </button>
+      ) : null}
+    </div>
   );
 }
 
@@ -136,7 +164,16 @@ export function OcrQueuePage() {
       key: "actions",
       label: "Actions",
       alwaysVisible: true,
-      render: (item) => <ConvertAction item={item} companyId={companyId} onConvert={handleConvert} />,
+      render: (item) => (
+        <RowActions
+          item={item}
+          companyId={companyId}
+          onConvert={handleConvert}
+          onReprocessed={() => {
+            void queryClient.invalidateQueries({ queryKey: ["dispatch", "ocr-intake-queue", companyId] });
+          }}
+        />
+      ),
     },
   ];
 
@@ -154,8 +191,9 @@ export function OcrQueuePage() {
 
       <p className="text-xs text-slate-600">
         Forward rate confirmations to your company intake address. Items appear here after OCR; use{" "}
-        <strong>Convert to load</strong> to open Book Load with extracted fields. ARCHIVE-not-DELETE: Book Load dropzone
-        remains for ad-hoc uploads — this page is the dedicated inbox (B21-D7).
+        <strong>Convert to load</strong> to open Book Load with extracted fields, or{" "}
+        <strong>Reprocess OCR</strong> when extraction failed. ARCHIVE-not-DELETE: Book Load dropzone remains for ad-hoc
+        uploads — this page is the dedicated inbox (B21-D7).
       </p>
 
       <ParityTable<OcrRow>
