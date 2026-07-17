@@ -1023,6 +1023,7 @@
     "verify:425c-petition-not-hardcoded": "node scripts/verify-425c-petition-not-hardcoded.mjs",
     "verify:ops-sortable-headers": "node scripts/verify-ops-sortable-headers.mjs",
     "verify:custvend-sortable-headers": "node scripts/verify-custvend-sortable-headers.mjs",
+    "verify:ap-aging-url-sort": "node scripts/verify-ap-aging-url-sort.mjs",
     "verify:legal-matter-edit-wired": "node scripts/verify-legal-matter-edit-wired.mjs"
   },
   "dependencies": {

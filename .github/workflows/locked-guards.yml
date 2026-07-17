@@ -611,6 +611,8 @@ jobs:
         run: npm run verify:accounting-sortable-headers
       - name: verify:custvend-sortable-headers
         run: npm run verify:custvend-sortable-headers
+      - name: verify:ap-aging-url-sort
+        run: npm run verify:ap-aging-url-sort
       - name: verify:dispatch-factoring-queue-deeplinks --selftest
         run: node scripts/verify-dispatch-factoring-queue-deeplinks.mjs --selftest
       - name: verify:dispatch-factoring-queue-deeplinks

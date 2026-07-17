@@ -21,16 +21,25 @@ infra edits — same `apps/frontend/src/hooks/useUrlSort.ts` and `ParityTable.ts
 visible DATA column on all three was already `sortable: true`, so this block only added
 `sortKey`/`sortDirection`/`onSortChange` wiring + the URL persistence. `AccountsPayableAgingPage`
 (`/accounting/accounts-payable`, the OTHER A/P aging surface) uses a hand-rolled `<table>` +
-`useTableController`/`TableHeaderCell` stack, not `ParityTable` — out of scope here per the "if
-quick" instruction; named as a follow-up below. Guard:
+`useTableController`/`TableHeaderCell` stack, not `ParityTable` — named as follow-up
+`BANK-SORT-ROLLOUT-ACCT-AP2` below (now shipped). Guard:
 `scripts/verify-custvend-sortable-headers.mjs` (`npm run verify:custvend-sortable-headers`), wired
 into `.github/workflows/locked-guards.yml`.
+
+**BANK-SORT-ROLLOUT-ACCT-AP2 (2026-07-17) — DONE for Accounting A/P Aging:** wired the shared
+`useUrlSort` hook into `AccountsPayableAgingPage` (`/accounting/accounts-payable`) via
+`useTableController`'s `initialSortKey`/`initialSortDir`/`onSortChange` seams — same URL bridge
+FleetTable shipped under BANK-SORT-ROLLOUT-OPS. Every visible data column on the By Vendor view
+(Vendor, Vendor type, Current, 1-30, 31-60, 61-90, 91+, Total) was already ASC/DESC sortable via
+`TableHeaderCell`; this block only added `?sort=`/`?dir=` persistence. Guard:
+`scripts/verify-ap-aging-url-sort.mjs` (`npm run verify:ap-aging-url-sort`), wired into
+`.github/workflows/locked-guards.yml`.
 
 ## Remaining modules (next blocks)
 
 | Block id | Scope | Notes |
 |---|---|---|
-| `BANK-SORT-ROLLOUT-ACCT-AP2` | `AccountsPayableAgingPage` (`/accounting/accounts-payable`) | Hand-rolled `<table>` + `useTableController`/`TableHeaderCell`, not `ParityTable` — needs its own URL-sort wiring (or a ParityTable migration) separate from the `useUrlSort`+`ParityTable` contract |
+| ~~`BANK-SORT-ROLLOUT-ACCT-AP2`~~ | ~~`AccountsPayableAgingPage`~~ | **DONE (2026-07-17)** — see above |
 | `BANK-SORT-ROLLOUT-OPS` | Dispatch board columns, Settlements, Maintenance WO lists | **DONE (2026-07-16)** — see below |
 | `BANK-SORT-ROLLOUT-WO-BACKEND` | Work-orders console per-column ASC/DESC | Needs backend `sort_key`+`sort_dir` contract change on `/api/v1/work-orders` — owner approval required before backend work per Rule 16 |
 | `BANK-SORT-ROLLOUT-SHARED` | Extract `SortableDataTable` contract if duplication exceeds 3 call sites | Additive only |
