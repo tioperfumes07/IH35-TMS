@@ -712,6 +712,9 @@ jobs:
       - name: verify:owner-home-linkage
         run: npm run verify:owner-home-linkage
 
+      - name: verify:owner-todays-attention
+        run: npm run verify:owner-todays-attention
+
       - name: verify:relay-cron-registered --selftest
         run: node scripts/verify-relay-cron-registered.mjs --selftest
       - name: verify:relay-cron-registered
