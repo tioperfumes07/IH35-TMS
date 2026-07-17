@@ -1080,7 +1080,8 @@
     "verify:insurance-units-assets-bridge": "node scripts/verify-insurance-units-assets-bridge.mjs",
     "verify:driver-suspend-atomic": "node scripts/verify-driver-suspend-atomic.mjs",
     "verify:home-quickjump-counts": "node scripts/verify-home-quickjump-counts.mjs",
-    "verify:banking-bankaccountdetail-is-credit-amounts": "node scripts/verify-banking-bankaccountdetail-is-credit-amounts.mjs"
+    "verify:banking-bankaccountdetail-is-credit-amounts": "node scripts/verify-banking-bankaccountdetail-is-credit-amounts.mjs",
+    "verify:h02-qbo-topbar-sync-now": "node scripts/verify-h02-qbo-topbar-sync-now.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1087.0",

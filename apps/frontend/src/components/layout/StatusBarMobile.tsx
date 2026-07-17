@@ -11,6 +11,8 @@ type Props = {
   qboSyncPill: QboSyncPill | null;
   onOpenQboSyncDashboard: () => void;
   onReconnectQbo: () => void;
+  onSyncNow: () => void;
+  syncNowPending: boolean;
 };
 
 function dotClass(dot: "gray" | "green" | "yellow" | "red"): string {
@@ -29,6 +31,8 @@ export function StatusBarMobile({
   qboSyncPill,
   onOpenQboSyncDashboard,
   onReconnectQbo,
+  onSyncNow,
+  syncNowPending,
 }: Props) {
   const [openKey, setOpenKey] = useState<IntegrationKey | null>(null);
   const anchorRefs = {
@@ -65,10 +69,12 @@ export function StatusBarMobile({
       key: "sync",
       label: "QBO Sync",
       dot: qboSyncPill.dot,
-      detail: qboSyncPill.label,
+      detail: `${qboSyncPill.label} · ${qboSyncPill.lastSuccessLabel}`,
       action: qboSyncPill.needsReconnect
         ? { label: "Reconnect QuickBooks", onClick: onReconnectQbo }
-        : { label: "View sync log →", onClick: onOpenQboSyncDashboard },
+        : syncNowPending || qboSyncPill.status === "syncing"
+          ? { label: "Syncing…", onClick: () => {} }
+          : { label: "Sync now", onClick: onSyncNow },
     });
   }
 
@@ -101,6 +107,18 @@ export function StatusBarMobile({
           title={active.label}
         >
           <p style={{ color: colors.sidebarTextActive }}>{active.detail}</p>
+          {active.key === "sync" ? (
+            <button
+              type="button"
+              className="mt-2 rounded-sm border border-slate-500 px-2 py-1 text-[11px] font-semibold hover:bg-white/10"
+              onClick={() => {
+                onOpenQboSyncDashboard();
+                setOpenKey(null);
+              }}
+            >
+              View sync dashboard →
+            </button>
+          ) : null}
           {active.action ? (
             <button
               type="button"

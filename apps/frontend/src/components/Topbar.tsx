@@ -1,9 +1,9 @@
 import { ChevronDown, Menu, Plus, ClipboardList, LayoutGrid } from "lucide-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getQboConnectionStatus, getQboAuthorizeStartUrl } from "../api/forensic";
-import { getQboSyncHealth } from "../api/qbo-integration";
+import { getQboSyncHealth, postQboMasterDataSyncTriggerFull } from "../api/qbo-integration";
 import { getRelayHealth } from "../api/relay";
 import { getSamsaraHealth } from "../api/samsara";
 import { getIdentityCurrentCompany, signOut } from "../api/identity";
@@ -17,6 +17,7 @@ import { PageHelpLink } from "./PageHelpLink";
 import { useToast } from "./Toast";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { qboConnectionLabel, resolveRelayVisualStatus, resolveSamsaraVisualStatus } from "../lib/integration-telematics-status";
+import { effectiveQboLastSuccessAt, formatQboLastSuccessLabel } from "../lib/qbo-sync-last-success-label";
 import { LocaleSwitcher } from "../i18n/locale-switcher";
 import { useTranslation } from "../hooks/useTranslation";
 
@@ -100,6 +101,22 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
     retry: false,
   });
 
+  const qboSyncNowMutation = useMutation({
+    mutationFn: () => postQboMasterDataSyncTriggerFull(companyId),
+    onSuccess: () => {
+      pushToast(t("topbar.qbo_sync_now_started", "QBO sync started — refresh in a minute"), "success");
+      void queryClient.invalidateQueries({ queryKey: ["qbo", "sync-health", companyId] });
+    },
+    onError: (err: unknown) => {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes("403") || msg.toLowerCase().includes("forbidden")) {
+        pushToast(t("topbar.qbo_sync_now_owner_only", "Sync now requires Owner role"), "error");
+        return;
+      }
+      pushToast(t("topbar.qbo_sync_now_failed", "Could not start QBO sync"), "error");
+    },
+  });
+
   useEffect(() => {
     const next = qboSyncHealthQuery.data?.status;
     if (next === undefined) return;
@@ -135,7 +152,16 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
       dot = "red";
       label = `QBO sync · Error${companySuffix}${row.error_count ? ` (${row.error_count})` : ""}`;
     }
-    return { dot, label, status, needsReconnect: Boolean(row.needs_reconnect), reconnectReason: row.reconnect_reason ?? null };
+    return {
+      dot,
+      label,
+      status,
+      needsReconnect: Boolean(row.needs_reconnect),
+      reconnectReason: row.reconnect_reason ?? null,
+      lastSuccessLabel: formatQboLastSuccessLabel(
+        effectiveQboLastSuccessAt(row.last_successful_sync_at, row.master_data_last_success_at)
+      ),
+    };
   }, [qboSyncHealthQuery.data, qboSyncHealthQuery.isError, companyLabel]);
 
   const qboErrorBannerMessage = useMemo(() => {
@@ -213,6 +239,11 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
           onReconnectQbo={() => {
             if (companyId) window.location.href = getQboAuthorizeStartUrl(companyId);
           }}
+          onSyncNow={() => {
+            if (!companyId || qboSyncNowMutation.isPending) return;
+            qboSyncNowMutation.mutate();
+          }}
+          syncNowPending={qboSyncNowMutation.isPending}
         />
         <CarrierSwitcher />
       </div>
