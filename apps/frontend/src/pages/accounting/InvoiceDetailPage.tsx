@@ -251,6 +251,12 @@ export function InvoiceDetailPage() {
       <div className="grid gap-3 md:grid-cols-3">
         <DataPanel title="Header">
           <DataPanelRow>
+            <span className="text-xs text-gray-600">Customer</span>
+            <span className="text-sm text-gray-900">
+              <EntityLink kind="customer" id={invoice.customer_id} label={invoice.customer_name ?? invoice.customer_id} />
+            </span>
+          </DataPanelRow>
+          <DataPanelRow>
             <span className="text-xs text-gray-600">Status</span>
             <span className="text-sm font-semibold text-gray-900">{invoice.status}</span>
           </DataPanelRow>

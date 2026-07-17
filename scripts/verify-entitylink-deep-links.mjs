@@ -7,12 +7,13 @@
  * the id silently.
  *
  * Static invariants (no DB, no network):
- *  1. InvoiceDetailPage "View audit log" → /accounting/audit-trail?source_type=invoice&source_id=
- *  2. PaymentDetailPage "View audit log" → /accounting/audit-trail?source_type=customer_payment&source_id=
- *  3. AccountingAuditTrailPage seeds filters from ?source_type=&source_id=
- *  4. FaultDraftsPage reads ?unit_id= (MaintenanceSnapshotSection emits it)
- *  5. No regression to /reports?invoice_id= or /reports?payment_id=
- *  6. EntityLink expense ≠ null → /accounting/expenses/list?expense_id= (Desktop audit
+ *  1. InvoiceDetailPage customer header → EntityLink kind="customer" id={invoice.customer_id}
+ *  2. InvoiceDetailPage "View audit log" → /accounting/audit-trail?source_type=invoice&source_id=
+ *  3. PaymentDetailPage "View audit log" → /accounting/audit-trail?source_type=customer_payment&source_id=
+ *  4. AccountingAuditTrailPage seeds filters from ?source_type=&source_id=
+ *  5. FaultDraftsPage reads ?unit_id= (MaintenanceSnapshotSection emits it)
+ *  6. No regression to /reports?invoice_id= or /reports?payment_id=
+ *  7. EntityLink expense ≠ null → /accounting/expenses/list?expense_id= (Desktop audit
  *     99-CROSSCUTTING-ENTITYLINK WILL FAIL); ExpensesListPage honors ?expense_id=; WO detail
  *     producer uses EntityLink kind="expense". No ExpenseDetailPage invent — list deep-link only.
  */
@@ -44,6 +45,9 @@ const woDetail = read("apps/frontend/src/pages/maintenance/WorkOrderDetailPage.t
 const manifest = read("apps/frontend/src/routes/manifest.tsx");
 
 if (invoice) {
+  if (!/EntityLink kind="customer" id=\{invoice\.customer_id\}/.test(invoice)) {
+    failures.push("InvoiceDetailPage: customer header must use EntityLink kind=customer id=invoice.customer_id");
+  }
   if (/\/reports\?invoice_id=/.test(invoice)) {
     failures.push("InvoiceDetailPage: must not navigate to /reports?invoice_id= (dead param)");
   }
@@ -132,6 +136,6 @@ if (failures.length) {
   process.exit(1);
 }
 console.log(
-  `${LABEL}: OK — invoice/payment audit log + fault drafts unit_id + expense EntityLink deep-links honored`,
+  `${LABEL}: OK — invoice customer + audit log + fault drafts unit_id + expense EntityLink deep-links honored`,
 );
 process.exit(0);
