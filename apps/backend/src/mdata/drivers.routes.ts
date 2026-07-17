@@ -164,6 +164,14 @@ const updateDriverBodySchema = z
     qbo_class_id: z.string().trim().max(120).nullable().optional(),
     operating_company_id: z.string().uuid().nullable().optional(),
     settlement_auto_pay_enabled: z.boolean().optional(),
+    fast_card_number: z.string().trim().max(100).nullable().optional(),
+    fast_card_expiration: isoDateSchema.nullable().optional(),
+    sentri_member: z.boolean().optional(),
+    sentri_expiration: isoDateSchema.nullable().optional(),
+    twic_card_number: z.string().trim().max(100).nullable().optional(),
+    twic_expiration: isoDateSchema.nullable().optional(),
+    mexican_license_number: z.string().trim().max(100).nullable().optional(),
+    mexican_license_expiration: isoDateSchema.nullable().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, { message: "at least one field is required" });
 
@@ -1275,6 +1283,14 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     if ("qbo_class_id" in b) add("qbo_class_id", b.qbo_class_id ?? null);
     if ("operating_company_id" in b) add("operating_company_id", b.operating_company_id ?? null);
     if ("settlement_auto_pay_enabled" in b) add("settlement_auto_pay_enabled", b.settlement_auto_pay_enabled);
+    if ("fast_card_number" in b) add("fast_card_number", b.fast_card_number ?? null);
+    if ("fast_card_expiration" in b) add("fast_card_expiration", b.fast_card_expiration ?? null);
+    if ("sentri_member" in b) add("sentri_member", b.sentri_member);
+    if ("sentri_expiration" in b) add("sentri_expiration", b.sentri_expiration ?? null);
+    if ("twic_card_number" in b) add("twic_card_number", b.twic_card_number ?? null);
+    if ("twic_expiration" in b) add("twic_expiration", b.twic_expiration ?? null);
+    if ("mexican_license_number" in b) add("mexican_license_number", b.mexican_license_number ?? null);
+    if ("mexican_license_expiration" in b) add("mexican_license_expiration", b.mexican_license_expiration ?? null);
     add("updated_by_user_id", authUser.uuid);
 
     values.push(parsedParams.data.id);
