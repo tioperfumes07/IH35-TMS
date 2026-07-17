@@ -799,6 +799,22 @@ export function BankingTransactionsDesignView({
     }
   }
 
+  /** 0441-mod8 — QBO parity: ▾ Create backdated check opens the inline categorize panel with check
+   * fields + editable date (manual rows only) instead of a toast-only stub. */
+  function openBackdatedCheckFlow(tx: PlaidBankTransaction) {
+    setActionMenuTxId(null);
+    setViewSettings((prev) => ({
+      ...prev,
+      editableDateField: true,
+      showCheckNo: true,
+    }));
+    setDraft(tx, {
+      mode: "categorize",
+      transactionType: "Expense",
+    });
+    setExpandedTxId(tx.id);
+  }
+
   // Shared Excel/CSV export (used by the Print/Export menu and the bulk bar). Called at click time,
   // so the memoized tableRows / runningBalanceById are already initialized.
   function exportTransactionsToExcel(rows: PlaidBankTransaction[], filename: string) {
@@ -1857,11 +1873,9 @@ export function BankingTransactionsDesignView({
                             </button>
                             <button
                               type="button"
+                              data-testid="action-create-backdated-check"
                               className="block w-full border-b border-gray-100 px-3 py-2 text-left text-xs hover:bg-gray-50"
-                              onClick={() => {
-                                setActionMenuTxId(null);
-                                pushToast("backdated check is available via detailed categorization flow", "info");
-                              }}
+                              onClick={() => openBackdatedCheckFlow(tx)}
                             >
                               Create backdated check
                             </button>

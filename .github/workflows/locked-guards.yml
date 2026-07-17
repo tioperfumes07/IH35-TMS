@@ -584,6 +584,11 @@ jobs:
 
       - name: verify:record-transfer-mark-transfer-wired
         run: npm run verify:record-transfer-mark-transfer-wired
+      - name: verify:backdated-check-wired --selftest
+        run: node scripts/verify-backdated-check-wired.mjs --selftest
+
+      - name: verify:backdated-check-wired
+        run: npm run verify:backdated-check-wired
 
       - name: verify:bills-mdata-vendor-fk --selftest
         run: node scripts/verify-bills-mdata-vendor-fk.mjs --selftest
