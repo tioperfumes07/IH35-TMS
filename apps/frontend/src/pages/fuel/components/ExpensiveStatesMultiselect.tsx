@@ -70,7 +70,7 @@ export function ExpensiveStatesMultiselect({ companyId, value, onChange }: Props
       </div>
       {rows.length === 0 ? <p className="text-xs text-gray-500">No active expensive states in catalog.</p> : null}
       {orphanCodes.length > 0 ? (
-        <p className="text-xs text-amber-700">
+        <p className="text-xs text-slate-600">
           Saved codes not in catalog (kept until removed): {orphanCodes.join(", ")}
         </p>
       ) : null}
