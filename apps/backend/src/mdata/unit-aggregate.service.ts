@@ -60,6 +60,43 @@ function complianceColor(days: number | null): "green" | "yellow" | "red" | "gra
   return "green";
 }
 
+/** Read-only: sum active policy_unit cost_per_month_cents for a unit policy number (insurance.policy). */
+async function lookupPolicyMonthlyPremiumCents(
+  client: DbClient,
+  operatingCompanyId: string,
+  unitNumber: string | null | undefined,
+  policyNumber: string | null | undefined
+): Promise<number | null> {
+  if (!policyNumber || !unitNumber) return null;
+  const res = await withSavepoint(
+    client,
+    "unit_aggregate_insurance_premium",
+    () =>
+      client.query<{ cents: string | null }>(
+        `
+          SELECT COALESCE(SUM(pu.cost_per_month_cents), 0)::bigint AS cents
+          FROM mdata.assets a
+          JOIN insurance.policy_unit pu
+            ON pu.asset_id = a.id AND pu.removed_at IS NULL
+          JOIN insurance.policy p
+            ON p.id = pu.policy_id AND p.tenant_id = pu.tenant_id
+          WHERE a.tenant_id = $1::uuid
+            AND a.unit_code = $2
+            AND p.policy_number = $3
+            AND p.status = 'active'
+            AND p.effective_date <= CURRENT_DATE
+            AND p.expiry_date >= CURRENT_DATE
+        `,
+        [operatingCompanyId, unitNumber, policyNumber]
+      ),
+    { rows: [{ cents: null }] }
+  );
+  const cents = res.rows[0]?.cents;
+  if (cents == null) return null;
+  const n = Number(cents);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
 async function mapDriverRow(row: Record<string, unknown> | undefined, extra?: Record<string, unknown>) {
   if (!row) return null;
   return {
@@ -619,6 +656,12 @@ export async function buildUnitAggregate(
   const total_cost_to_date_cents =
     (purchase_price_cents ?? 0) + lifetime_maintenance_cents + lifetime_fuel_cents;
 
+  const unitNumber = unit.unit_number != null ? String(unit.unit_number) : null;
+  const [usMonthlyPremiumCents, mxMonthlyPremiumCents] = await Promise.all([
+    lookupPolicyMonthlyPremiumCents(client, operatingCompanyId, unitNumber, unit.us_insurance_policy_number as string | null),
+    lookupPolicyMonthlyPremiumCents(client, operatingCompanyId, unitNumber, unit.mx_insurance_policy_number as string | null),
+  ]);
+
   return {
     unit,
     plates: platesRes.rows,
@@ -647,7 +690,7 @@ export async function buildUnitAggregate(
             number: unit.us_insurance_policy_number,
             carrier: unit.us_insurance_carrier,
             expiration: unit.us_insurance_expiration,
-            monthly_premium: null,
+            monthly_premium: usMonthlyPremiumCents,
           }
         : null,
       mx_policy: unit.mx_insurance_policy_number
@@ -655,7 +698,7 @@ export async function buildUnitAggregate(
             number: unit.mx_insurance_policy_number,
             carrier: unit.mx_insurance_carrier,
             expiration: unit.mx_insurance_expiration,
-            monthly_premium: null,
+            monthly_premium: mxMonthlyPremiumCents,
           }
         : null,
     },

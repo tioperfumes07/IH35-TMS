@@ -21,6 +21,10 @@ import { CurrentLoadSection } from "../../components/vehicle-profile/CurrentLoad
 import { TripCostCalculator } from "../../components/vehicle-profile/TripCostCalculator";
 import { MaintenanceSnapshotSection } from "../../components/vehicle-profile/MaintenanceSnapshotSection";
 import { ComplianceSection } from "../../components/vehicle-profile/ComplianceSection";
+import {
+  InsuranceSummarySection,
+  type UnitInsuranceSummary,
+} from "../../components/vehicle-profile/InsuranceSummarySection";
 import { ReeferSection } from "../../components/vehicle-profile/ReeferSection";
 import { FinancialUnitPLSection } from "../../components/vehicle-profile/FinancialUnitPLSection";
 import { ServiceTimeline } from "../../components/maintenance/ServiceTimeline";
@@ -54,7 +58,7 @@ export type UnitProfileAggregate = {
   };
   photos?: Array<Record<string, unknown>>;
   documents?: Array<Record<string, unknown>>;
-  insurance_summary?: Record<string, unknown>;
+  insurance_summary?: UnitInsuranceSummary;
   total_ownership_cost?: Record<string, unknown>;
   comparable_metrics?: Record<string, unknown>;
 };
@@ -245,6 +249,9 @@ export function VehicleProfilePage() {
           </div>
           <div data-testid="vp-section-6-compliance">
             <ComplianceSection compliance={profile.compliance} />
+          </div>
+          <div data-testid="vp-section-6b-insurance-summary">
+            <InsuranceSummarySection insuranceSummary={profile.insurance_summary} />
           </div>
           <div data-testid="vp-section-7-reefer">
             {profile.reefer ? (
