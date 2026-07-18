@@ -36,8 +36,8 @@ async function withCompanyScope<T>(
   operatingCompanyId: string,
   fn: (client: Queryable) => Promise<T>
 ) {
-  await assertCompanyMembership(userId, operatingCompanyId);
   return withCurrentUser(userId, async (client) => {
+    await assertCompanyMembership(client, userId, operatingCompanyId);
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
     return fn(client as Queryable);
   });
@@ -109,6 +109,7 @@ export async function registerDriversMessagesRoutes(app: FastifyInstance) {
       );
       const operatingCompanyId = companyRes.rows[0]?.operating_company_id;
       if (operatingCompanyId) {
+        // membership-scope-exempt: principal-derived
         await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
       }
       return listDriverPwaMessages(client as Queryable, driver.id);
@@ -129,6 +130,7 @@ export async function registerDriversMessagesRoutes(app: FastifyInstance) {
       );
       const operatingCompanyId = companyRes.rows[0]?.operating_company_id;
       if (!operatingCompanyId) throw new Error("driver_company_missing");
+      // membership-scope-exempt: principal-derived
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
       const created = await insertDriverReply(client as Queryable, {
         operatingCompanyId,
@@ -160,6 +162,7 @@ export async function registerDriversMessagesRoutes(app: FastifyInstance) {
       );
       const operatingCompanyId = companyRes.rows[0]?.operating_company_id;
       if (!operatingCompanyId) return null;
+      // membership-scope-exempt: principal-derived
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
       return markMessageRead(client as Queryable, params.data.messageId, operatingCompanyId, userId);
     });

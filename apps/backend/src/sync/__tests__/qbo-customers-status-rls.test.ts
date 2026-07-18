@@ -7,7 +7,10 @@ const TRK_USER_ID = "11111111-1111-4111-8111-111111111111";
 const TRANSP_USER_ID = "22222222-2222-4222-8222-222222222222";
 
 const requireAuthState = { allowed: true };
-const assertCompanyMembershipMock = vi.fn(async (userId: string, operatingCompanyId: string) => {
+// The route asserts membership on the same transaction client:
+//   assertCompanyMembership(client, userId, operatingCompanyId)
+// (client-first 3-arg overload). Mock must read the userId/opco from that shape.
+const assertCompanyMembershipMock = vi.fn(async (_client: unknown, userId: string, operatingCompanyId: string) => {
   if (userId === TRK_USER_ID && operatingCompanyId === TRANSP_COMPANY_ID) {
     const err = new Error("forbidden_company_membership");
     (err as Error & { statusCode?: number }).statusCode = 403;

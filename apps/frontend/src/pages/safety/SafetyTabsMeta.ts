@@ -23,6 +23,7 @@ export const TABS = [
   { id: "insurance" },
   { id: "permits" },
   { id: "integrity-reports" },
+  { id: "position-history" },
   { id: "driver-scheduler" },
   { id: "leave-requests" },
   { id: "leave-balances" },
