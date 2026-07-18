@@ -18,7 +18,7 @@
     "apps/frontend/src/pages/accounting/SalesTaxPage.tsx",
     "apps/frontend/src/pages/accounting/__tests__/AccountingQueryErrorStates.test.tsx",
     "scripts/verify-accounting-query-error-states.mjs",
-    "scripts/verify-steps/906-verify-accounting-query-error-states.mjs",
+    "scripts/verify-steps/907-verify-accounting-query-error-states.mjs",
     ".block-ready/0243-g8-5-no-error-state-blank-forever-spinner.json"
   ],
   "acceptance": [
@@ -28,7 +28,7 @@
     { "kind": "mounted", "component": "apps/frontend/src/pages/accounting/CoaRolesPage.tsx", "note": "validateQuery failure replaces the misleading validation summary and retries validateQuery.refetch; rowsQuery handling is unchanged" },
     { "kind": "mounted", "component": "apps/frontend/src/pages/accounting/FactorReconciliationPage.tsx", "note": "itemsQuery failure renders in the selected-run detail and retries itemsQuery.refetch; candidates/runs handling is unchanged" },
     { "kind": "mounted", "component": "apps/frontend/src/pages/accounting/SalesTaxPage.tsx", "note": "agenciesQuery failure renders in Prepare return and retries agenciesQuery.refetch; returnsQuery handling is unchanged" },
-    { "kind": "guard", "path": "scripts/verify-accounting-query-error-states.mjs", "step": "scripts/verify-steps/906-verify-accounting-query-error-states.mjs", "note": "auto-discovered guard includes seven independent planted-removal selftests" },
+    { "kind": "guard", "path": "scripts/verify-accounting-query-error-states.mjs", "step": "scripts/verify-steps/907-verify-accounting-query-error-states.mjs", "note": "auto-discovered guard includes seven independent planted-removal selftests" },
     { "kind": "test", "path": "apps/frontend/src/pages/accounting/__tests__/AccountingQueryErrorStates.test.tsx", "note": "focused rendering tests prove every failed query is visible and its exact refetch is invoked" },
     { "kind": "design", "spec": "docs/specs/IH35_MASTER_BLUEPRINT_v3_FULL.md", "sections": ["MUST 6.4.1.6 — visible error with retry"] }
   ],
