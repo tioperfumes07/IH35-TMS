@@ -9,6 +9,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FILES = Object.freeze({
   precheck: "scripts/branch-precheck-push.mjs",
   manifest: "scripts/block-ready-agent-manifest.mjs",
+  precommit: "scripts/verify-pre-commit.mjs",
+  capabilityPolicy: "scripts/push-gate-capability-policy.mjs",
   freshness: "scripts/verify-branch-fresh.mjs",
   staticRunner: "scripts/verify-static.mjs",
   verifyMeta: "scripts/verify-meta.json",
@@ -57,10 +59,18 @@ export function checkPushGateClassification(fixture) {
   requireMatch("manifest", /BLOCK_ID=.*requires exact manifest/, "explicit BLOCK_ID is not fail-closed");
   requireMatch("manifest", /manifest\.branch === branch/, "manifest resolution is not exact-branch based");
   requireMatch("manifest", /ambiguous exact branch/, "ambiguous branch manifests are not rejected");
+  requireMatch("manifest", /GITHUB_HEAD_REF/, "detached CI head branch context is not resolved");
+  requireMatch("manifest", /allowAggregate/, "detached aggregate manifest mode is missing");
   forbidMatch("manifest", /AGENT_MANIFEST_REGISTRY|legacyManifest/, "stale legacy manifest fallback remains");
+  requireMatch(
+    "precommit",
+    /allowAggregate:\s*true/,
+    "verify-pre-commit does not opt into detached aggregate mode"
+  );
 
   requireMatch("freshness", /DEFAULT_MAX_COMMITS_BEHIND = 0/, "freshness threshold is not zero");
-  requireMatch("freshness", /rev-list --count \$\{baseSha\}\.\.\$\{mainRef\}/, "freshness is not full-tree");
+  requireMatch("freshness", /"rev-list", "--count"/, "freshness does not use rev-list count");
+  requireMatch("freshness", /\$\{baseSha\}\.\.\$\{mainRef\}/, "freshness is not full-tree");
   forbidMatch("freshness", /ALLOWLIST_PATHS/, "freshness still uses a path allowlist");
 
   requireMatch("staticRunner", /capabilityPreflight/, "static gate lacks capability preflight");
@@ -72,6 +82,17 @@ export function checkPushGateClassification(fixture) {
     /"server_required_ci_equivalents"/,
     "capability skips lack named server-required CI equivalents"
   );
+  for (const marker of [
+    "serverRequiredContexts",
+    "requiredContexts",
+    "wiredContexts",
+  ]) {
+    requireMatch(
+      "capabilityPolicy",
+      new RegExp(marker),
+      `capability policy does not prove ${marker}`
+    );
+  }
 
   const protection = (() => {
     try {
@@ -99,6 +120,21 @@ export function checkPushGateClassification(fixture) {
     "policy verifier does not fail live strictness drift"
   );
   requireMatch(
+    "policyVerifier",
+    /\["GH_ADMIN_TOKEN", "GITHUB_TOKEN", "GH_TOKEN"\]/,
+    "policy verifier does not use available read-token fallback order"
+  );
+  requireMatch(
+    "policyVerifier",
+    /BLOCKED-UNVERIFIED/,
+    "policy verifier does not block unverifiable CI enforcement"
+  );
+  forbidMatch(
+    "policyVerifier",
+    /PASS \(baseline\)/,
+    "policy verifier still reports success without live verification"
+  );
+  requireMatch(
     "requiredChecks",
     /'ci \/ verify-branch-fresh'/,
     "required-checks safety net omits freshness context"
@@ -119,7 +155,13 @@ export function checkPushGateClassification(fixture) {
   requireMatch("staticTests", /missing dependencies/, "missing-deps classification test missing");
   requireMatch("staticTests", /DATABASE_URL text/, "DATABASE_URL false-classification test missing");
   requireMatch("freshnessTests", /one behind commit anywhere/, "stale-branch planted test missing");
+  requireMatch("freshnessTests", /shell-like refs/, "unsafe-ref planted test missing");
   requireMatch("policyTests", /live ruleset drift/, "live-ruleset-drift planted test missing");
+  requireMatch("policyTests", /blocking unverified/, "missing-token planted test missing");
+  requireMatch("manifestTests", /detached GitHub Actions/, "detached-head CI fixture missing");
+  requireMatch("staticTests", /not wired/, "capability wiring drift fixture missing");
+  requireMatch("freshness", /spawnSync\("git", args/, "freshness does not use git argument arrays");
+  forbidMatch("freshness", /execSync|shell:\s*true/, "freshness still uses shell command execution");
 
   return violations;
 }
@@ -128,13 +170,15 @@ const goodFixture = {
   precheck:
     'DIRTY: "dirty", CONFLICT: "conflict", FRESHNESS: "freshness", CAPABILITY: "capability", TEST: "test"; ["status", "--porcelain"]; ["diff", "--name-only", "--diff-filter=U"]; preflightStep(); serverRequiredCiEquivalent: "ci / build-typecheck";',
   manifest:
-    'throw new Error(`BLOCK_ID=${blockId} requires exact manifest`); manifest.branch === branch; "ambiguous exact branch";',
+    'throw new Error(`BLOCK_ID=${blockId} requires exact manifest`); manifest.branch === branch; "ambiguous exact branch"; GITHUB_HEAD_REF; allowAggregate;',
+  precommit: "allowAggregate: true",
+  capabilityPolicy: "serverRequiredContexts requiredContexts wiredContexts",
   freshness:
-    "const DEFAULT_MAX_COMMITS_BEHIND = 0; run(`git rev-list --count ${baseSha}..${mainRef}`);",
+    'const DEFAULT_MAX_COMMITS_BEHIND = 0; spawnSync("git", args); ["rev-list", "--count", `${baseSha}..${mainRef}`];',
   staticRunner: 'capabilityPreflight(); "SKIP-capability"; "FAIL-test";',
   verifyMeta: '{"server_required_ci_equivalents":{}}',
   policyVerifier:
-    'const STRICT_FRESHNESS_CONTEXT = "ci / verify-branch-fresh"; "strict freshness is disabled";',
+    'const STRICT_FRESHNESS_CONTEXT = "ci / verify-branch-fresh"; "strict freshness is disabled"; ["GH_ADMIN_TOKEN", "GITHUB_TOKEN", "GH_TOKEN"]; "BLOCKED-UNVERIFIED";',
   protection: JSON.stringify({
     protection: {
       required_status_checks: { strict: true, contexts: ["ci / verify-branch-fresh"] },
@@ -144,12 +188,17 @@ const goodFixture = {
   standards: "push gates fail closed",
   verificationSkill: "push gates fail closed",
   precheckTests: "hard dirty failure; hard conflict failure",
-  manifestTests: "ambiguous exact branch; wrong explicit BLOCK_ID",
-  staticTests: "missing database; missing dependencies; DATABASE_URL text",
-  freshnessTests: "one behind commit anywhere",
-  policyTests: "live ruleset drift",
+  manifestTests: "ambiguous exact branch; wrong explicit BLOCK_ID; detached GitHub Actions",
+  staticTests: "missing database; missing dependencies; DATABASE_URL text; not wired",
+  freshnessTests: "one behind commit anywhere; shell-like refs",
+  policyTests: "live ruleset drift; blocking unverified",
 };
-const badFixture = { ...goodFixture, manifest: "legacyManifest AGENT_MANIFEST_REGISTRY", protection: "{}" };
+const badFixture = {
+  ...goodFixture,
+  manifest: "legacyManifest AGENT_MANIFEST_REGISTRY",
+  protection: "{}",
+  freshness: 'execSync("git rev-list")',
+};
 
 runExecutableGuard({
   label: "verify-push-gate-classification",

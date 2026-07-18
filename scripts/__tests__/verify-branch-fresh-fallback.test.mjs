@@ -6,7 +6,11 @@ import { spawnSync } from "node:child_process";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 
-import { resolveBaseSha } from "../verify-branch-fresh.mjs";
+import {
+  resolveBaseSha,
+  validateCommitSha,
+  validateGitRef,
+} from "../verify-branch-fresh.mjs";
 import {
   attachBareOrigin,
   initFixtureRepo,
@@ -58,4 +62,18 @@ test("strict freshness fails on one behind commit anywhere in the tree", () => {
   assert.equal(run.status, 1);
   assert.match(run.stderr, /1 full-tree commit\(s\) behind/);
   assert.match(run.stderr, /maximum allowed is 0/);
+});
+
+test("rejects shell-like refs and malformed SHAs before git execution", () => {
+  for (const ref of [
+    "origin/main;touch /tmp/pwned",
+    "origin/main..evil",
+    "origin/main@{1}",
+    "--not-a-ref",
+  ]) {
+    assert.throws(() => validateGitRef(ref), /invalid git ref/);
+  }
+  for (const sha of ["abc123;echo pwned", "not-a-sha", "123"]) {
+    assert.throws(() => validateCommitSha(sha), /invalid commit SHA/);
+  }
 });

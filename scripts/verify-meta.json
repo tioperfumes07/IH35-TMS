@@ -5,6 +5,20 @@
     "dependencies": "ci / build-typecheck",
     "pass8-artifact": "pass-8-smoke-verify / pass-8"
   },
+  "server_required_ci_contexts": [
+    "ci / build-typecheck",
+    "pass-8-smoke-verify / pass-8"
+  ],
+  "server_required_ci_wiring": {
+    "ci / build-typecheck": {
+      "workflow": ".github/workflows/ci.yml",
+      "job": "build-typecheck"
+    },
+    "pass-8-smoke-verify / pass-8": {
+      "workflow": ".github/workflows/pass-8-smoke-verify.yml",
+      "job": "pass-8"
+    }
+  },
   "server_required_guard_capabilities": {
     "verify:pass-8-clean-baseline": [
       "pass8-artifact"

@@ -19,6 +19,12 @@ const minimalSteps = JSON.stringify([
   { label: "verify:fixture-pass", command: "npm run verify:fixture-pass" },
   { label: "block-ready", command: "npm run block-ready" },
 ]);
+const validCapabilityPolicy = {
+  equivalents: { database: "ci / build-typecheck" },
+  serverRequiredContexts: new Set(["ci / build-typecheck"]),
+  requiredContexts: new Set(["ci / build-typecheck"]),
+  wiredContexts: new Set(["ci / build-typecheck"]),
+};
 
 function runScript(args, env) {
   return spawnSync("node", [scriptPath, ...args], {
@@ -143,7 +149,8 @@ test("skips a missing database only with a named server-required CI equivalent",
       requiredCapabilities: ["database"],
       serverRequiredCiEquivalent: "ci / build-typecheck",
     },
-    { database: false }
+    { database: false },
+    validCapabilityPolicy
   );
   assert.equal(result.action, "skip-capability");
   assert.equal(result.ciEquivalent, "ci / build-typecheck");
@@ -152,8 +159,23 @@ test("skips a missing database only with a named server-required CI equivalent",
 test("missing capability without a named CI equivalent is a hard capability failure", () => {
   const result = preflightStep(
     { label: "unsafe-step", requiredCapabilities: ["database"] },
-    { database: false }
+    { database: false },
+    validCapabilityPolicy
   );
   assert.equal(result.action, "fail");
   assert.match(result.reason, /without a named server-required CI equivalent/);
+});
+
+test("unknown or unwired capability equivalent is a hard capability failure", () => {
+  const result = preflightStep(
+    {
+      label: "block-ready",
+      requiredCapabilities: ["database"],
+      serverRequiredCiEquivalent: "unknown / check",
+    },
+    { database: false },
+    validCapabilityPolicy
+  );
+  assert.equal(result.action, "fail");
+  assert.match(result.reason, /declares "ci \/ build-typecheck", not requested "unknown \/ check"/);
 });

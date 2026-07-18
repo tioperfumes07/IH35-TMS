@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 
@@ -19,7 +20,10 @@ import {
   shouldSkipC5VerifyScript,
   validateManifest,
 } from "../block-ready.mjs";
-import { resolveBlockReadyManifest } from "../block-ready-agent-manifest.mjs";
+import {
+  resolveBlockReadyManifest,
+  resolveTrustedBranch,
+} from "../block-ready-agent-manifest.mjs";
 
 test("valid manifest passes validation", () => {
   const manifest = {
@@ -614,6 +618,17 @@ function makeManifestRepo(entries) {
   return root;
 }
 
+function detachManifestRepo(root) {
+  const git = (args) =>
+    execFileSync("git", args, { cwd: root, encoding: "utf8", stdio: "pipe" });
+  git(["init", "-b", "main"]);
+  git(["config", "user.email", "fixture@ih35.test"]);
+  git(["config", "user.name", "IH35 Fixture"]);
+  git(["add", ".block-ready"]);
+  git(["commit", "-m", "fixture"]);
+  git(["checkout", "--detach"]);
+}
+
 test("resolveBlockReadyManifest gives explicit BLOCK_ID deterministic priority", () => {
   const root = makeManifestRepo({
     "RIGHT.json": { block_id: "RIGHT", branch: "fix/shared" },
@@ -661,6 +676,75 @@ test("resolveBlockReadyManifest rejects absent exact branch without legacy fallb
   assert.throws(
     () => resolveBlockReadyManifest({ worktreePath: root, branch: "fix/new" }),
     /no \.block-ready manifest has exact branch/
+  );
+});
+
+test("detached GitHub Actions checkout resolves trusted GITHUB_HEAD_REF", () => {
+  const root = makeManifestRepo({
+    "ACTIONS.json": { block_id: "ACTIONS", branch: "fix/actions-head" },
+  });
+  detachManifestRepo(root);
+  const resolved = resolveBlockReadyManifest({
+    worktreePath: root,
+    env: {
+      GITHUB_ACTIONS: "true",
+      GITHUB_EVENT_NAME: "pull_request",
+      GITHUB_HEAD_REF: "fix/actions-head",
+      GITHUB_REF: "refs/pull/2689/merge",
+      GITHUB_REF_NAME: "2689/merge",
+    },
+  });
+  assert.equal(resolved.manifest, ".block-ready/ACTIONS.json");
+  assert.equal(resolved.resolution, "exact-branch");
+});
+
+test("detached aggregate mode ignores untrusted pull merge ref and does not crash", () => {
+  const root = makeManifestRepo({
+    "ACTIONS.json": { block_id: "ACTIONS", branch: "fix/actions-head" },
+  });
+  detachManifestRepo(root);
+  const env = {
+    GITHUB_ACTIONS: "true",
+    GITHUB_EVENT_NAME: "pull_request",
+    GITHUB_REF: "refs/pull/2689/merge",
+    GITHUB_REF_NAME: "2689/merge",
+  };
+  assert.equal(resolveTrustedBranch({ worktreePath: root, env }), "");
+  const resolved = resolveBlockReadyManifest({
+    worktreePath: root,
+    env,
+    allowAggregate: true,
+  });
+  assert.equal(resolved.manifest, null);
+  assert.equal(resolved.resolution, "aggregate");
+});
+
+test("trusted branch GITHUB_REF_NAME resolves for branch refs", () => {
+  assert.equal(
+    resolveTrustedBranch({
+      env: {
+        GITHUB_ACTIONS: "true",
+        GITHUB_REF: "refs/heads/fix/direct",
+        GITHUB_REF_NAME: "fix/direct",
+        GITHUB_REF_TYPE: "branch",
+      },
+      worktreePath: "/not-used",
+    }),
+    "fix/direct"
+  );
+});
+
+test("GitHub branch environment is ignored outside GitHub Actions", () => {
+  assert.equal(
+    resolveTrustedBranch({
+      env: {
+        GITHUB_HEAD_REF: "fix/spoofed",
+        GITHUB_REF: "refs/heads/fix/spoofed",
+        GITHUB_REF_NAME: "fix/spoofed",
+      },
+      worktreePath: "/not-a-repository",
+    }),
+    ""
   );
 });
 

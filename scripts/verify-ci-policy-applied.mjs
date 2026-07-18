@@ -98,18 +98,43 @@ async function fetchProtection(token, owner, repo, branch) {
   return res.json();
 }
 
+export function selectProtectionReadToken(env = process.env) {
+  for (const name of ["GH_ADMIN_TOKEN", "GITHUB_TOKEN", "GH_TOKEN"]) {
+    const value = env[name]?.trim();
+    if (value) return { name, value };
+  }
+  return null;
+}
+
+export function missingProtectionTokenOutcome(ci = process.env.CI === "true") {
+  return ci
+    ? {
+        blocking: true,
+        message:
+          "BLOCKED-UNVERIFIED — CI has no GH_ADMIN_TOKEN, GITHUB_TOKEN, or GH_TOKEN to read live branch protection",
+      }
+    : {
+        blocking: false,
+        message:
+          "UNVERIFIED (local) — no GitHub token available; committed baseline passed but live enforcement was not checked",
+      };
+}
+
 async function main() {
   const cfg = assertConfigBaseline();
-  const adminToken = process.env.GH_ADMIN_TOKEN?.trim();
+  const selectedToken = selectProtectionReadToken();
 
-  if (!adminToken || process.env.CI !== "true") {
-    console.log(`[${LABEL}] PASS (baseline) — config + workflows committed; live API check skipped without admin token in CI`);
-    process.exit(0);
+  if (!selectedToken) {
+    const outcome = missingProtectionTokenOutcome();
+    const message = `[${LABEL}] ${outcome.message}`;
+    if (outcome.blocking) throw new Error(message);
+    console.warn(message);
+    return;
   }
 
   const [owner, repo] = cfg.repository.split("/");
   const branch = cfg.branch || "main";
-  const protection = await fetchProtection(adminToken, owner, repo, branch);
+  const protection = await fetchProtection(selectedToken.value, owner, repo, branch);
 
   if (!protection) {
     // Branch protection not applied at all — hard-fail so no PR can slip through.
@@ -127,7 +152,9 @@ async function main() {
   }
 
   const liveContexts = protection.required_status_checks?.contexts ?? [];
-  console.log(`[${LABEL}] PASS — branch protection active with ${liveContexts.length} required contexts`);
+  console.log(
+    `[${LABEL}] PASS — live branch protection verified via ${selectedToken.name} with ${liveContexts.length} required contexts`
+  );
 }
 
 const isDirectRun =

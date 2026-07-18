@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 
 function readManifestCandidate(worktreePath, filename) {
   const blockReadyDir = path.join(worktreePath, ".block-ready");
@@ -29,14 +29,13 @@ function listPerBlockManifests(worktreePath) {
 
 export function resolveBlockReadyManifest(options = {}) {
   const worktreePath = path.resolve(options.worktreePath ?? process.cwd());
-  const blockId = String(options.blockId ?? process.env.BLOCK_ID ?? "").trim();
-  const branch =
-    options.branch ??
-    execSync("git branch --show-current", {
-      cwd: worktreePath,
-      encoding: "utf8",
-      stdio: ["ignore", "pipe", "ignore"],
-    }).trim();
+  const env = options.env ?? process.env;
+  const blockId = String(options.blockId ?? env.BLOCK_ID ?? "").trim();
+  const branch = resolveTrustedBranch({
+    explicitBranch: options.branch,
+    env,
+    worktreePath,
+  });
   const candidates = listPerBlockManifests(worktreePath);
 
   if (blockId) {
@@ -54,9 +53,29 @@ export function resolveBlockReadyManifest(options = {}) {
     return { agent: null, manifest: candidate.relativePath, worktreePath, resolution: "block-id" };
   }
 
-  if (!branch) throw new Error("cannot resolve block manifest without BLOCK_ID or current branch");
+  if (!branch) {
+    if (options.allowAggregate === true) {
+      return {
+        agent: null,
+        manifest: null,
+        worktreePath,
+        resolution: "aggregate",
+        reason: "detached checkout has no trusted head branch context",
+      };
+    }
+    throw new Error("cannot resolve block manifest without BLOCK_ID or trusted branch context");
+  }
   const branchMatches = candidates.filter(({ manifest }) => manifest.branch === branch);
   if (branchMatches.length === 0) {
+    if (options.allowAggregate === true) {
+      return {
+        agent: null,
+        manifest: null,
+        worktreePath,
+        resolution: "aggregate",
+        reason: `no exact manifest for trusted branch "${branch}"`,
+      };
+    }
     throw new Error(
       `no .block-ready manifest has exact branch "${branch}"; set BLOCK_ID to an exact manifest id`
     );
@@ -74,6 +93,43 @@ export function resolveBlockReadyManifest(options = {}) {
     worktreePath,
     resolution: "exact-branch",
   };
+}
+
+export function resolveTrustedBranch({
+  explicitBranch,
+  env = process.env,
+  worktreePath = process.cwd(),
+} = {}) {
+  if (typeof explicitBranch === "string" && explicitBranch.trim()) {
+    return explicitBranch.trim();
+  }
+  const isGitHubActions = env.GITHUB_ACTIONS === "true";
+  if (
+    isGitHubActions &&
+    typeof env.GITHUB_HEAD_REF === "string" &&
+    env.GITHUB_HEAD_REF.trim()
+  ) {
+    return env.GITHUB_HEAD_REF.trim();
+  }
+  const githubRefName =
+    typeof env.GITHUB_REF_NAME === "string" ? env.GITHUB_REF_NAME.trim() : "";
+  const githubRef = typeof env.GITHUB_REF === "string" ? env.GITHUB_REF.trim() : "";
+  const isTrustedBranchRef =
+    isGitHubActions &&
+    (env.GITHUB_REF_TYPE === "branch" || githubRef.startsWith("refs/heads/"));
+  if (githubRefName && isTrustedBranchRef) return githubRefName;
+  if (isGitHubActions && githubRef.startsWith("refs/heads/")) {
+    return githubRef.slice("refs/heads/".length);
+  }
+  try {
+    return execFileSync("git", ["branch", "--show-current"], {
+      cwd: worktreePath,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
+  } catch {
+    return "";
+  }
 }
 
 /**

@@ -14,6 +14,7 @@
     "docs/specs/BRANCH-TOOLING.md",
     "scripts/block-ready-agent-manifest.mjs",
     "scripts/branch-precheck-push.mjs",
+    "scripts/push-gate-capability-policy.mjs",
     "scripts/verify-branch-fresh.mjs",
     "scripts/verify-ci-policy-applied.mjs",
     "scripts/verify-meta.json",

@@ -4,6 +4,10 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { currentBranch, repoRoot, runGitOrThrow } from "./branch-rebuild-linear.mjs";
+import {
+  loadCapabilityPolicy,
+  validateCapabilitySkip,
+} from "./push-gate-capability-policy.mjs";
 
 export const GATE_RESULT_CATEGORIES = Object.freeze({
   PASS: "pass",
@@ -80,7 +84,7 @@ export function detectLocalCapabilities(env = process.env) {
   };
 }
 
-export function preflightStep(step, capabilities) {
+export function preflightStep(step, capabilities, policy) {
   const missing = (step.requiredCapabilities ?? []).filter(
     (capability) => capabilities[capability] !== true
   );
@@ -90,6 +94,18 @@ export function preflightStep(step, capabilities) {
       action: "fail",
       missing,
       reason: `missing ${missing.join(", ")} without a named server-required CI equivalent`,
+    };
+  }
+  const policyViolations = validateCapabilitySkip(
+    missing,
+    step.serverRequiredCiEquivalent,
+    policy
+  );
+  if (policyViolations.length > 0) {
+    return {
+      action: "fail",
+      missing,
+      reason: policyViolations.join("; "),
     };
   }
   return {
@@ -168,9 +184,15 @@ export function runPrecheckPush(options = {}) {
       ? JSON.parse(process.env.BRANCH_PRECHECK_STEPS_JSON)
       : buildPrecheckSteps(root));
   const capabilities = options.capabilities ?? detectLocalCapabilities();
+  const needsCapabilityPolicy = steps.some(
+    (step) => (step.requiredCapabilities ?? []).length > 0
+  );
+  const capabilityPolicy = needsCapabilityPolicy
+    ? options.capabilityPolicy ?? loadCapabilityPolicy(root)
+    : null;
   const skippedCapabilities = [];
   for (const step of steps) {
-    const preflight = preflightStep(step, capabilities);
+    const preflight = preflightStep(step, capabilities, capabilityPolicy);
     if (preflight.action === "fail") {
       return {
         ok: false,

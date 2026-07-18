@@ -29,6 +29,9 @@ function makeFixture({ source, verifyName = "verify:fixture", dbGated = [] }) {
       database: "ci / build-typecheck",
       dependencies: "ci / build-typecheck",
     },
+    serverRequiredContexts: new Set(["ci / build-typecheck"]),
+    requiredContexts: new Set(["ci / build-typecheck"]),
+    wiredContexts: new Set(["ci / build-typecheck"]),
   };
   return { root, file, policy };
 }
@@ -68,12 +71,50 @@ test("missing capability without named CI equivalent is a hard test failure", ()
     root: fixture.root,
     dependenciesAvailable: false,
     databaseAvailable: true,
-    policy: { dbGated: new Set(), equivalents: {} },
+    policy: {
+      dbGated: new Set(),
+      equivalents: {},
+      serverRequiredContexts: new Set(),
+      requiredContexts: new Set(),
+      wiredContexts: new Set(),
+    },
   });
   const result = classify(fixture.file, { preflight });
   assert.equal(result.kind, STATIC_RESULT_CATEGORIES.FAIL_TEST);
-  assert.match(result.detail, /lacks named server-required CI equivalent/);
+  assert.match(result.detail, /no declared CI equivalent/);
 });
+
+for (const [label, policyPatch, expected] of [
+  [
+    "not server-required",
+    { serverRequiredContexts: new Set() },
+    /not declared server-required/,
+  ],
+  [
+    "not required by protection",
+    { requiredContexts: new Set() },
+    /not a required protection context/,
+  ],
+  [
+    "not wired",
+    { wiredContexts: new Set() },
+    /not wired to its declared workflow job/,
+  ],
+]) {
+  test(`capability skip fails when CI equivalent is ${label}`, () => {
+    const fixture = makeFixture({ source: 'console.log("unused");' });
+    const policy = { ...fixture.policy, ...policyPatch };
+    const preflight = capabilityPreflight(fixture.file, {
+      root: fixture.root,
+      dependenciesAvailable: false,
+      databaseAvailable: true,
+      policy,
+    });
+    const result = classify(fixture.file, { preflight });
+    assert.equal(result.kind, STATIC_RESULT_CATEGORIES.FAIL_TEST);
+    assert.match(result.detail, expected);
+  });
+}
 
 test("DATABASE_URL text in a real assertion failure is never reclassified as a skip", () => {
   const fixture = makeFixture({

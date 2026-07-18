@@ -28,6 +28,10 @@ import path from "node:path";
 import os from "node:os";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import {
+  loadCapabilityPolicy,
+  validateCapabilityEquivalent,
+} from "./push-gate-capability-policy.mjs";
 
 const SELF_PATH = fileURLToPath(import.meta.url);
 const SELF_NAME = path.basename(SELF_PATH);
@@ -43,15 +47,6 @@ export const STATIC_RESULT_CATEGORIES = Object.freeze({
   SKIP_CAPABILITY: "SKIP-capability",
   FAIL_TEST: "FAIL-test",
 });
-
-function loadCapabilityPolicy(root = ROOT) {
-  const metaPath = path.join(root, "scripts/verify-meta.json");
-  const meta = JSON.parse(fs.readFileSync(metaPath, "utf8"));
-  const equivalents = meta.server_required_ci_equivalents ?? {};
-  const dbGated = new Set(meta.db_gated_verify_scripts ?? []);
-  const guardCapabilities = meta.server_required_guard_capabilities ?? {};
-  return { equivalents, dbGated, guardCapabilities };
-}
 
 function guardVerifyName(file, root = ROOT) {
   const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
@@ -89,15 +84,21 @@ export function capabilityPreflight(
   }
   if (missing.length === 0) return { ok: true, missing: [], ciEquivalents: [] };
 
-  const ciEquivalents = missing.map((capability) => policy.equivalents[capability]).filter(Boolean);
-  if (ciEquivalents.length !== missing.length) {
+  const ciEquivalents = missing
+    .map((capability) => policy.equivalents[capability])
+    .filter(Boolean);
+  const policyViolations = missing.flatMap((capability) => {
+    const context = policy.equivalents[capability];
+    return context
+      ? validateCapabilityEquivalent(capability, context, policy)
+      : [`capability "${capability}" has no declared CI equivalent`];
+  });
+  if (policyViolations.length > 0) {
     return {
       ok: false,
       missing,
       ciEquivalents,
-      reason: `missing capability lacks named server-required CI equivalent: ${missing
-        .filter((capability) => !policy.equivalents[capability])
-        .join(", ")}`,
+      reason: policyViolations.join("; "),
     };
   }
   return { ok: false, missing, ciEquivalents };
@@ -143,7 +144,11 @@ export function classify(file, options = {}) {
   const src = (() => { try { return fs.readFileSync(file, "utf8"); } catch { return ""; } })();
   const preflight = options.preflight ?? capabilityPreflight(file, options);
   if (!preflight.ok) {
-    if (!preflight.ciEquivalents || preflight.ciEquivalents.length !== preflight.missing.length) {
+    if (
+      preflight.reason ||
+      !preflight.ciEquivalents ||
+      preflight.ciEquivalents.length !== preflight.missing.length
+    ) {
       return {
         file,
         name: path.basename(file),
