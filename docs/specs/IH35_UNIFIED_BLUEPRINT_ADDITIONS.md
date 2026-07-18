@@ -1294,20 +1294,31 @@ Official basis: FMCSA CSA “Measure” and SMS Help Center — Hazmat Complianc
 **Do not modify** `docs/specs/IH35_MASTER_BLUEPRINT_v3_FULL.md` for this phase.
 **Sanitization:** never commit names, signatures, addresses, emails, personal-guaranty text, or executed-agreement text.
 
-### Locked recognition + billing
-- Revenue is recognized at **canonical load delivery**.
+### Locked recognition + dual-basis crosswalk
+- **TMS ACCRUAL recognition event** = **canonical load delivery**.
+- Operational definition (no guessing): **final active delivery stop completion / actual departure** is the source evidence.
+- A load-level `delivered_at` may be used **only** when the implementation proves it is derived from that same event.
 - Revenue is **not** recognized at invoice creation (stale "invoice-create recognition" wording in canonical decision docs is a defect).
-- POD / invoice timing = **billing readiness** only.
+- POD approval and invoice creation = **billing/factoring readiness** only.
+- **Dual-basis crosswalk:** QBO **cash-basis** reporting/mirroring remains unchanged during the QBO-SoR window; delivery recognition does **not** redefine cash recognition.
+
+### Locked Ch.11 operating cutover line
+- **ASC 470-60 debt restructuring — NOT ASC 852 fresh-start accounting.**
+- Opening balances as-of **03/31/2026**; TMS live parallel posting from **04/01/2026** (per entity after opening tie-out).
 
 ### Locked factoring (Faro) — secured borrowing
 - Treatment: **secured borrowing / recourse** (not a sale).
+- Substance-over-form: even when a factoring contract is styled as a “sale,” GAAP treatment is secured borrowing with A/R retained and financing recognized as a liability — never as a sale of receivables.
 - Sanitized commercial terms (actual factor statements remain authoritative):
   - Revolving limit **$1,000,000**
-  - Tier 1 fee **1.5%**; Tier 2 fee **2%**
+  - Tier 1 fee **1.5% of Net at funding**; Tier 2 fee **2% of Net at funding**
   - Reserve **1.5%**
+  - **Purchase Price = Net − Fee − Reserve**
+  - **Proceeds = Purchase Price − transaction/wire fees**
   - Term **30 days** + grace **5 days**
   - Repurchase deadline **95 days**
-  - Default interest **0.067% per day, compounded daily**
+  - Default interest **0.067% per day, compounded daily, beginning after day 35**
+  - **A/R remains on IH35 books as pledged collateral**; funding credits **Factoring Advance** — **no A/R derecognition**
 
 ### Locked CoA structure (additive — never delete/rename)
 **Sales of Service** children:
@@ -1345,10 +1356,11 @@ Official basis: FMCSA CSA “Measure” and SMS Help Center — Hazmat Complianc
 - `docs/specs/ACCOUNTING-ARCHITECTURE.md`
 - `.claude/skills/ih35-cpa-accounting-decisions/SKILL.md`
 - `.claude/skills/ih35-cpa-accounting-decisions/resources/locked-decisions-reference.md`
+- `docs/trackers/FINANCIAL-OWNER-UNBLOCK-PACKET.md` (stale invoice-create recognition line corrected)
 
 ### Guard (Rule 17 — auto-discovered)
 - `scripts/verify-cpa-answers-phase1-decisions.mjs`
 - `scripts/verify-steps/910-verify-cpa-answers-phase1-decisions.mjs`
-- Fails on stale invoice-create recognition wording in the canonical decision docs above.
-- Protects the sanitized Phase-1 decision anchors (delivery recognition, Faro terms, CoA children, entity books, CoA export facts) without `package.json` / CI workflow hot-file edits.
+- Fails on stale invoice-create recognition wording in the canonical decision docs above (including the financial unblock packet).
+- Protects the sanitized Phase-1 decision anchors (delivery definition, dual-basis crosswalk, ASC 470-60 wording, full Faro mechanics, CoA children, entity books, CoA export facts) without `package.json` / CI workflow hot-file edits.
 

@@ -93,8 +93,9 @@ has already passed — we remain in the parallel window until the ceremony compl
 the date as permission to flip a flag. At cutover: TMS becomes authoritative; period-lock + a final
 court/CPA-grade tieout snapshot. Nothing locks/closes during the reconciliation window.
 
-> **⚑ Ch.11 FRESH-START (OWNER-FINAL 2026-07-16; supersedes the prior 07/01/2026 cutover / 06/30/2026 opening lock).**
-> Ch.11 was approved end of March 2026 → the books change in April, so **03/31/2026 is the fresh-start line**:
+> **⚑ Ch.11 operating cutover line (ASC 470-60 debt restructuring — NOT ASC 852 fresh-start accounting)
+> (OWNER-FINAL 2026-07-16; supersedes the prior 07/01/2026 cutover / 06/30/2026 opening lock).**
+> Ch.11 was approved end of March 2026 → the books change in April, so **03/31/2026 is the operating cutover line**:
 > **opening balances = QBO Balance Sheet as of 03/31/2026 per entity** (re-syncable until the owner locks them),
 > and **TMS posts live in parallel + reconciles daily from 04/01/2026** (per entity, after opening tie-out). This
 > is the **internal GL-posting** go-live — it does **not** change the rule above: the **QBO-PUSH authority cutover
@@ -162,23 +163,35 @@ court/CPA-grade tieout snapshot. Nothing locks/closes during the reconciliation 
 **Scope of this section:** governance / decision lock only. No executable GL math, no migration, no money-flag flip.
 Companion surfaces: `docs/specs/TMS-QBO-PARALLEL-BOOKS.md`,
 `docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md` (same-dated section),
-`.claude/skills/ih35-cpa-accounting-decisions/` (+ reference card).
+`.claude/skills/ih35-cpa-accounting-decisions/` (+ reference card),
+`docs/trackers/FINANCIAL-OWNER-UNBLOCK-PACKET.md` (stale invoice-create line corrected).
 Guard: `scripts/verify-cpa-answers-phase1-decisions.mjs` (Rule-17 auto-discovered verify-step).
 
-### Revenue recognition (LOCKED)
-- Recognize revenue at **canonical load delivery**.
+### Revenue recognition + dual-basis crosswalk (LOCKED)
+- **TMS ACCRUAL recognition event** = **canonical load delivery**.
+- Operational definition (no guessing): **final active delivery stop completion / actual departure** is the
+  source evidence. A load-level `delivered_at` may be used **only** when the implementation proves it is
+  derived from that same event.
 - Do **not** recognize at invoice creation.
-- POD issuance and invoice creation are **billing readiness** signals only.
+- POD approval and invoice creation are **billing/factoring readiness** only.
+- **Dual-basis crosswalk:** QBO **cash-basis** reporting/mirroring remains unchanged during the QBO-SoR window;
+  delivery recognition does **not** redefine cash recognition.
 
 ### Factoring — Faro secured borrowing (sanitized terms)
 - Treatment remains **secured borrowing / recourse** (not a sale); ASC 860 control-test nuance applies.
+- Substance-over-form: even when a factoring contract is styled as a “sale,” GAAP treatment is secured borrowing
+  with A/R retained and financing recognized as a liability — never as a sale of receivables.
 - Sanitized commercial terms (actual factor statements remain authoritative when they differ):
   - Revolving limit **$1,000,000**
-  - Tier 1 fee **1.5%**; Tier 2 fee **2%**
+  - Tier 1 fee **1.5% of Net at funding**; Tier 2 fee **2% of Net at funding**
   - Reserve **1.5%**
+  - **Purchase Price = Net − Fee − Reserve**
+  - **Proceeds = Purchase Price − transaction/wire fees**
   - Term **30 days** + grace **5 days**
   - Repurchase deadline **95 days**
-  - Default interest **0.067% per day, compounded daily**
+  - Default interest **0.067% per day, compounded daily, beginning after day 35**
+  - **A/R remains on IH35 books as pledged collateral**; funding credits **Factoring Advance** —
+    **no A/R derecognition**
 - Decision docs must **not** include names, signatures, addresses, emails, personal-guaranty text, or
   executed-agreement text.
 

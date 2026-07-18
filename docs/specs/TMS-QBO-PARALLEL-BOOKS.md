@@ -62,28 +62,40 @@ Governance-only lock (no executable posting/migration in this phase). Full narra
 `docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md` (2026-07-18 CPA Answers section) and
 `.claude/skills/ih35-cpa-accounting-decisions/`.
 
-1. **Revenue recognition** = at **canonical load delivery**. Invoice creation and POD timing are
-   **billing readiness** only — they do **not** move recognition. Stale invoice-create recognition
-   wording in canonical decision docs is a defect (guarded).
+1. **Revenue recognition (TMS ACCRUAL)** = **canonical load delivery**, defined operationally as **final
+   active delivery stop completion / actual departure** (source evidence). A load-level `delivered_at` may
+   be used only when the implementation proves it is derived from that same event. POD approval and invoice
+   creation are **billing/factoring readiness** only — they do **not** move recognition. Stale invoice-create
+   recognition wording in canonical decision docs is a defect (guarded).
 
-2. **Factoring (Faro)** = secured borrowing / recourse. Sanitized commercial terms: revolving limit
-   **$1,000,000**; Tier 1 fee **1.5%**; Tier 2 fee **2%**; reserve **1.5%**; term **30 days** + grace
-   **5 days**; repurchase deadline **95 days**; default interest **0.067% per day, compounded daily**.
+2. **Dual-basis crosswalk:** QBO **cash-basis** reporting/mirroring remains unchanged during the QBO-SoR
+   window; delivery recognition does **not** redefine cash recognition.
+
+3. **Ch.11 operating cutover line (ASC 470-60 debt restructuring — NOT ASC 852 fresh-start accounting):**
+   opening balances as-of **03/31/2026**; TMS live parallel posting from **04/01/2026** (per entity after
+   opening tie-out). Dates preserved; ASC 852 fresh-start accounting is rejected.
+
+4. **Factoring (Faro)** = secured borrowing / recourse (substance-over-form — not a sale of receivables).
+   Sanitized commercial terms: revolving limit **$1,000,000**; Tier 1 fee **1.5% of Net at funding**; Tier 2
+   fee **2% of Net at funding**; reserve **1.5%**; **Purchase Price = Net − Fee − Reserve**; **proceeds =
+   Purchase Price − transaction/wire fees**; term **30 days** + grace **5 days**; repurchase deadline
+   **95 days**; default interest **0.067% per day, compounded daily, beginning after day 35**. **A/R remains
+   on IH35 books as pledged collateral**; funding credits **Factoring Advance** — **no A/R derecognition**.
    Actual factor statements remain authoritative. Decision docs must not include names, signatures,
    addresses, emails, personal-guaranty text, or executed-agreement text.
 
-3. **CoA structure (additive only — never delete/rename existing accounts):**
+5. **CoA structure (additive only — never delete/rename existing accounts):**
    - **Sales of Service** children: Line Haul; Fuel Surcharge; Accessorial Revenue (Detention, Layover,
      Lumper, TONU, Other).
    - **Interest & Financing Expense** children: Factoring Fees; Factoring Default Interest; Factoring
      Transaction/Wire Fees.
    - Add **Driver Damage Loss**.
 
-4. **Entity books:** each legal entity keeps **separate entity books** with **reciprocal intercompany
+6. **Entity books:** each legal entity keeps **separate entity books** with **reciprocal intercompany
    monitoring**. Existing **read-only consolidated reporting** is retained **additively** for future
    reporting needs — not as a substitute for entity books.
 
-5. **Verified CoA export facts** (owner-local verification snapshot for governance): **1,368** rows
+7. **Verified CoA export facts** (owner-local verification snapshot for governance): **1,368** rows
    (TRANSP **387**, TRK **947**, USMCA **34**); **1,294** QBO-connected; **1,198** active; no duplicate
    entity/account-number pairs; **zero** opening balances in the export.
 

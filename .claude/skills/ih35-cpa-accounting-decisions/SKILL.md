@@ -26,7 +26,7 @@ sign-off. Money-posting env flags stay **OFF** until CPA + Neon tie-out.
 
 ## 1. Architecture — PARALLEL double-books (not a sync)
 - TMS and QBO run **independently**. **Clone-once + reconcile-only. NO write-back to QBO.**
-- Reconciliation is the daily correctness test (see §7), not a data pipeline.
+- Reconciliation is the daily correctness test (see §8), not a data pipeline.
 - Canonical parallel-books entry: `docs/specs/TMS-QBO-PARALLEL-BOOKS.md`.
 
 ## 2. Opening balance
@@ -39,8 +39,9 @@ sign-off. Money-posting env flags stay **OFF** until CPA + Neon tie-out.
   Approach = **clone-as-is-then-adjust**: clone the 12/31/2024 balances faithfully (so TMS ties to QBO), then
   book reclasses as **post-opening adjusting entries** (or let Martin fix them at source) so tie-out never breaks.
 - Multicurrency: **USD home currency**; MXN via FX gain/loss + home-currency adjustment (ASC 830).
-- Ch.11 fresh-start line (owner-final 2026-07-16): opening balances as-of **03/31/2026**; TMS live parallel posting
-  from **04/01/2026** per entity after opening tie-out — see `docs/lockdown/00_LOCKED_DECISIONS.md` §8.9.
+- **Ch.11 operating cutover line (ASC 470-60 debt restructuring — NOT ASC 852 fresh-start accounting)**
+  (owner-final 2026-07-16): opening balances as-of **03/31/2026**; TMS live parallel posting from **04/01/2026**
+  per entity after opening tie-out — see `docs/lockdown/00_LOCKED_DECISIONS.md` §8.9.
 
 ## 3. Factoring = secured borrowing / recourse (NOT a sale)
 Faro (current) → RTS (planned). Book as: **Factoring Advance** (liability) / **Factoring Reserves** (short-term
@@ -48,11 +49,16 @@ asset) / **Factoring Recoursed Invoices**. ASC 860 control-test nuance applies; 
 
 **Sanitized Faro commercial terms (owner/CPA verified; actual factor statements remain authoritative):**
 - Revolving limit **$1,000,000**
-- Tier 1 fee **1.5%**; Tier 2 fee **2%**
+- Tier 1 fee **1.5% of Net at funding**; Tier 2 fee **2% of Net at funding**
 - Reserve **1.5%**
+- **Purchase Price = Net − Fee − Reserve**
+- **Proceeds = Purchase Price − transaction/wire fees**
 - Term **30 days** + grace **5 days**
 - Repurchase deadline **95 days**
-- Default interest **0.067% per day, compounded daily**
+- Default interest **0.067% per day, compounded daily, beginning after day 35**
+- **A/R remains on IH35 books as pledged collateral**; funding credits **Factoring Advance** — **no A/R derecognition**
+- Substance-over-form: even when a factoring contract is styled as a “sale,” GAAP treatment is secured borrowing
+  with A/R retained and financing recognized as a liability — never as a sale of receivables.
 - Do **not** store or echo names, signatures, addresses, emails, personal-guaranty text, or executed-agreement text
   in decision docs. Statement figures win when they differ from summary terms.
 
@@ -63,11 +69,18 @@ asset) / **Factoring Recoursed Invoices**. ASC 860 control-test nuance applies; 
   net of damage/late-fee/fine deductions). Additive CoA account **Driver Damage Loss** for write-offs (do not
   rename/delete any existing damage-loss account). Net-pay clearing account.
 
-## 5. Revenue & basis
+## 5. Revenue & basis (dual-basis crosswalk)
 - **Cash-basis** mirrored from QBO for TRANSP (books + MOR by the 20th, excl. own-transfers). AP is the rare
   accrual exception.
-- Revenue is recognized at **canonical load delivery**, **not** at invoice creation.
-- POD / invoice timing is **billing readiness** only — it does not move the recognition event.
+- **TMS ACCRUAL recognition event** = **canonical load delivery**.
+  - Operational definition (no guessing): **final active delivery stop completion / actual departure** is the
+    source evidence.
+  - A load-level `delivered_at` may be used **only** when the implementation proves it is derived from that
+    same final-active-delivery-stop event.
+- **Dual-basis crosswalk:** QBO **cash-basis** reporting/mirroring remains unchanged during the QBO-SoR window;
+  delivery recognition does **not** redefine cash recognition.
+- POD approval and invoice creation are **billing/factoring readiness** only — they do **not** move the
+  accrual recognition event (stale “invoice-create recognition” wording is a defect).
 - Uncategorized + daily cleanup remains the hygiene rule.
 
 ## 6. Chart of Accounts (additive structure — never delete/rename existing)

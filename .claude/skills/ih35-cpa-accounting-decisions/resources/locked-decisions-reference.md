@@ -9,15 +9,15 @@ Sanitized card only — no names, signatures, addresses, emails, personal-guaran
 | Opening | Cutover | TMS opens **01-01-2025**; opening = QBO **BS 12/31/2024**, **signed-actual** | BS-only; TRK full equity |
 | Opening | OBE | OBE → **Retained Earnings** temp clearing; permanent OBE = **defect** (≈0) | |
 | Opening | Timing | **DEFERRED until Martin finalizes 2024 close** (moving target) | clone-as-is-then-adjust; ✗ agent posts |
-| Opening | Ch.11 line | OB as-of **03/31/2026**; live parallel from **04/01/2026** | §8.9 owner-final |
+| Opening | Ch.11 line | **ASC 470-60 debt restructuring — NOT ASC 852 fresh-start accounting**; OB **03/31/2026**; live parallel **04/01/2026** | §8.9 owner-final |
 | Opening | Currency | **USD home**; MXN via FX gain/loss (ASC 830) | |
-| Factoring | Treatment | **Secured borrowing / recourse** (NOT a sale) | Advance=liab, Reserves=asset, Recoursed Invoices; ASC 860 |
-| Factoring | Faro terms | **$1,000,000** revolving; fees **1.5% / 2%**; reserve **1.5%**; **30d+5d**; repurchase **95d**; default **0.067%/day compounded** | Factor statements authoritative |
+| Factoring | Treatment | **Secured borrowing / recourse** (NOT a sale); Substance-over-form | A/R remains pledged collateral; funding credits Factoring Advance; **no A/R derecognition** |
+| Factoring | Faro terms | **$1,000,000** revolving; fees **1.5% / 2% of Net at funding**; reserve **1.5%**; Purchase Price = Net − Fee − Reserve; proceeds = Purchase Price − transaction/wire fees; **30d+5d**; repurchase **95d**; default **0.067%/day compounded beginning after day 35** | Factor statements authoritative |
 | Drivers | Class | Mexican **B1** (not W-2/owner-op); **W-8BEN yearly** | "Cost of Labor–Mexico Drivers" |
 | Drivers | Pay | **5% net floor** + per-event override; deductions bucketed, no auto-cap | net-pay clearing acct |
 | Drivers | Balances | Cash Advance = **asset**; **Escrow = liability** (held-in-trust, 60–90d) | Additive **Driver Damage Loss** |
-| Basis | Method | **Cash-basis** mirrored from QBO (TRANSP); AP rare accrual exception | MOR by 20th, excl own-transfers |
-| Revenue | Recognition | At **canonical load delivery** — **not** invoice creation | POD/invoice = **billing readiness** only |
+| Basis | Dual-basis | **TMS ACCRUAL** at canonical load delivery; QBO **cash-basis** mirroring unchanged in QBO-SoR window | Delivery does **not** redefine cash recognition |
+| Revenue | Recognition | **Canonical load delivery** = final active delivery stop completion/actual departure | `delivered_at` only if proven derived from that event; POD/invoice = **billing/factoring readiness** only |
 | CoA | Sales of Service | Children: **Line Haul**, **Fuel Surcharge**, **Accessorial Revenue** (Detention, Layover, Lumper, TONU, Other) | Additive; no deletes/renames |
 | CoA | Interest & Financing | Children: **Factoring Fees**, **Factoring Default Interest**, **Factoring Transaction/Wire Fees** | Additive |
 | CoA | Export facts | **1,368** rows (TRANSP 387 / TRK 947 / USMCA 34); **1,294** QBO-connected; **1,198** active; no dup entity/acct#; **0** OB in export | Owner-local verification snapshot |
