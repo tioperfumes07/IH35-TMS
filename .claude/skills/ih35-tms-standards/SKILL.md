@@ -133,6 +133,9 @@ financial, or money-moving — and any prod DB access — STOP and get explicit 
    manifest resolution could also select another branch's block. These are P0 defects, not authorized noise.
    Until their repairs land, classify every failure from its exact output and obtain explicit branch-specific
    owner authorization before any bypass. CI is an independent backstop, never a justification for stale push.
+   **Push gates fail closed:** run the normal hooks and fix dirty/conflict/freshness/test failures. A
+   capability may skip locally only when the gate's explicit preflight names both the missing capability and
+   its server-required CI equivalent. Error-text matching is never authorization to bypass a hook.
 5. **PR:** `gh pr create` with root-cause + scope + verification in the body.
 6. **Merge:** only per §1. Squash: `gh pr merge <n> --squash --delete-branch`.
 7. **Verify deploy:** poll `/api/v1/healthz/shallow` until `version` == your merge short-sha; confirm deep

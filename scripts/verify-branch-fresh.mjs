@@ -3,16 +3,7 @@ import path from "node:path";
 import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-const DEFAULT_MAX_COMMITS_BEHIND = 5;
-const ALLOWLIST_PATHS = [
-  "scripts/verify-pre-commit.mjs",
-  "scripts/verify-architectural-design.ts",
-  "scripts/lib/known-prod-table-grants.mjs",
-  "scripts/lib/known-prod-grants",
-  "apps/backend/src/accounting/index.ts",
-  "apps/frontend/src/App.tsx",
-  "apps/frontend/src/pages/accounting/AccountingSubNav.tsx",
-];
+const DEFAULT_MAX_COMMITS_BEHIND = 0;
 
 function run(command) {
   return execSync(command, { stdio: ["ignore", "pipe", "pipe"] }).toString("utf8").trim();
@@ -69,8 +60,7 @@ export function verifyBranchFresh(cliArgs = process.argv.slice(2)) {
 
   let behindCount = 0;
   try {
-    const pathArgs = ALLOWLIST_PATHS.map((p) => `"${p}"`).join(" ");
-    const output = run(`git rev-list --count ${baseSha}..${mainRef} -- ${pathArgs}`);
+    const output = run(`git rev-list --count ${baseSha}..${mainRef}`);
     behindCount = Number(output || "0");
     if (!Number.isFinite(behindCount)) {
       fail(`could not parse behind count from: ${output}`);
@@ -81,7 +71,7 @@ export function verifyBranchFresh(cliArgs = process.argv.slice(2)) {
 
   if (behindCount > maxBehind) {
     fail(
-      `base ${baseSha} is ${behindCount} allowlist commits behind ${mainRef}; maximum allowed is ${maxBehind}`
+      `base ${baseSha} is ${behindCount} full-tree commit(s) behind ${mainRef}; maximum allowed is ${maxBehind}`
     );
   }
 

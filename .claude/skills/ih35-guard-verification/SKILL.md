@@ -73,10 +73,11 @@ the PROD endpoint if the branch isn't positional); verify `current_database()`/`
 hold-merge-gate → write diagnostics as `scripts/*.mjs`.
 
 ## 8. Durable tool mechanics (stable) vs volatile (may change — re-verify)
-**Durable:** never bypass branch freshness or a real red guard; classify exact output and require explicit
-branch-specific owner authorization for any genuine environment-only bypass. CI is an independent backstop,
+**Durable:** never bypass branch freshness or a real red guard — pre-push failures are classified and fail
+closed; a genuine environment-only bypass requires either explicit branch-specific owner authorization or an
+explicit capability preflight that names the server-required CI equivalent. CI is an independent backstop,
 not permission to push stale or unverified code. Use `gh` for GitHub operations, API/JSON responses over
-screenshots as truth, and the health endpoint for deploy state.
+screenshots as the source of truth, and the health endpoint for deploy state.
 **Volatile — treat as hints, re-verify before relying:** attach-to-real-Chrome for authed UI audits (Google
 blocks Playwright/Chromium OAuth); `form.requestSubmit()` for some GitHub modals; reload-before-retry on a
 frozen tab; specific Render/Neon MCP quirks. These rot — confirm they still hold, don't cite them as law.

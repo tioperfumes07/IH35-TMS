@@ -33,6 +33,7 @@ Command:
 Behavior:
 
 - Refuses outside feature-style branches.
+- Refuses dirty trees and unresolved merge/rebase/cherry-pick conflicts.
 - Refuses when branch is behind `origin/main`.
 - Runs required chain in order:
   - backend build
@@ -45,11 +46,13 @@ Behavior:
 
 CI's `build-typecheck` runs ~250 `scripts/verify-*.mjs` guards; a single stale string-anchored guard
 tripping on a refactor reads as a "typecheck failure" and costs a full CI round-trip. **Before every push,
-run `npm run verify:static` and fix any `FAIL(gated)` locally — never push into a red static guard.**
+run `npm run verify:static` and fix any `FAIL-test(gated)` locally — never push into a red static guard.**
 
-- It runs every static guard with NO reachable database (a dead-port sentinel — it can never touch prod),
-  classifying each `PASS` / `SKIP-needs-db` / `SKIP-needs-env` / `FAIL`.
-- It exits non-zero **only** on a `FAIL(gated)` — a guard CI actually runs. `SKIP-*` and `FAIL(unwired)`
+- It runs static guards with NO reachable database (a dead-port sentinel — it can never touch prod),
+  classifying each `PASS` / `SKIP-capability` / `FAIL-test`.
+- A local skip is permitted only by explicit capability preflight with a named server-required CI equivalent.
+  Failure output text (including `DATABASE_URL`) never changes a real test failure into a skip.
+- It exits non-zero **only** on a `FAIL-test(gated)` — a guard CI actually runs. `SKIP-capability` and `FAIL-test(unwired)`
   (orphan guards CI does not run) never fail the run; unwired FAILs are surfaced as informational.
 - `node scripts/verify-static.mjs --selftest` self-checks the runner (incl. the sentinel-isolation lock).
 

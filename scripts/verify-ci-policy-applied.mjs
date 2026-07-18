@@ -11,10 +11,13 @@
  */
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const MANDATORY_CHECKS = [
+export const STRICT_FRESHNESS_CONTEXT = "ci / verify-branch-fresh";
+export const MANDATORY_CHECKS = [
   "required-checks / required-checks-gate",
   "ci / build-typecheck",
+  STRICT_FRESHNESS_CONTEXT,
   "perf-budget-check / perf-audit",
   "security-checks / security-audit",
   "premerge-gates / rls-migration-scan",
@@ -25,13 +28,40 @@ const MANDATORY_CHECKS = [
 const LABEL = "verify-ci-policy-applied";
 const CONFIG_PATH = path.join(process.cwd(), ".github/branch-protection-config.json");
 
-function assertConfigBaseline() {
+export function evaluateProtectionDrift(expectedProtection, liveProtection) {
+  const violations = [];
+  if (expectedProtection.required_status_checks?.strict !== true) {
+    violations.push("committed config must set required_status_checks.strict=true");
+  }
+  if (!liveProtection) {
+    violations.push("live branch protection is not applied");
+    return violations;
+  }
+  if (liveProtection.required_status_checks?.strict !== true) {
+    violations.push("live branch protection strict freshness is disabled");
+  }
+  const expectedContexts = expectedProtection.required_status_checks?.contexts ?? [];
+  const liveContexts = liveProtection.required_status_checks?.contexts ?? [];
+  for (const context of expectedContexts) {
+    if (!liveContexts.includes(context)) violations.push(`live ruleset missing required context: ${context}`);
+  }
+  for (const context of MANDATORY_CHECKS) {
+    if (!liveContexts.includes(context)) violations.push(`live ruleset missing mandatory context: ${context}`);
+  }
+  return violations;
+}
+
+export function assertConfigBaseline() {
   if (!fs.existsSync(CONFIG_PATH)) {
     console.error(`[${LABEL}] FAIL — missing ${CONFIG_PATH}`);
     process.exit(1);
   }
   const cfg = JSON.parse(fs.readFileSync(CONFIG_PATH, "utf8"));
   const contexts = cfg.protection?.required_status_checks?.contexts ?? [];
+  if (cfg.protection?.required_status_checks?.strict !== true) {
+    console.error(`[${LABEL}] FAIL — required_status_checks.strict must be true`);
+    process.exit(1);
+  }
   if (contexts.length < 3) {
     console.error(`[${LABEL}] FAIL — required_status_checks.contexts too short`);
     process.exit(1);
@@ -89,27 +119,22 @@ async function main() {
     process.exit(1);
   }
 
+  const drift = evaluateProtectionDrift(cfg.protection, protection);
+  if (drift.length > 0) {
+    console.error(`[${LABEL}] FAIL — live branch protection drift: ${drift.join("; ")}`);
+    console.error(`[${LABEL}] OWNER HANDOFF: review then run node scripts/ci-apply-branch-protection.mjs`);
+    process.exit(1);
+  }
+
   const liveContexts = protection.required_status_checks?.contexts ?? [];
-  const expected = cfg.protection.required_status_checks.contexts;
-  const missing = expected.filter((c) => !liveContexts.includes(c));
-  if (missing.length > 0) {
-    // Previously exited 0 here — that was the bug that let #729 merge with red checks.
-    console.error(`[${LABEL}] FAIL — live branch protection missing required contexts: ${missing.join(", ")}`);
-    console.error(`[${LABEL}] Run: node scripts/ci-apply-branch-protection.mjs`);
-    process.exit(1);
-  }
-
-  // Also verify all mandatory checks are enforced live.
-  const missingMandatory = MANDATORY_CHECKS.filter((c) => !liveContexts.includes(c));
-  if (missingMandatory.length > 0) {
-    console.error(`[${LABEL}] FAIL — live branch protection missing MANDATORY checks: ${missingMandatory.join(", ")}`);
-    process.exit(1);
-  }
-
   console.log(`[${LABEL}] PASS — branch protection active with ${liveContexts.length} required contexts`);
 }
 
-main().catch((err) => {
-  console.error(`[${LABEL}] FAIL —`, err.message || err);
-  process.exit(1);
-});
+const isDirectRun =
+  process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isDirectRun) {
+  main().catch((err) => {
+    console.error(`[${LABEL}] FAIL —`, err.message || err);
+    process.exit(1);
+  });
+}

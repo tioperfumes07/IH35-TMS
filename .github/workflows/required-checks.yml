@@ -53,6 +53,7 @@ jobs:
             const mandatory = [
               'required-checks / required-checks-gate',
               'ci / build-typecheck',
+              'ci / verify-branch-fresh',
               'perf-budget-check / perf-audit',
               'security-checks / security-audit',
               'premerge-gates / rls-migration-scan',

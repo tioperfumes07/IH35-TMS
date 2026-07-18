@@ -1,0 +1,31 @@
+{
+  "block_id": "PUSH-GATE-CLASSIFICATION-FRESHNESS",
+  "branch": "fix/push-gate-classification-freshness",
+  "phase": "Infrastructure",
+  "task": "Push gate classification and freshness",
+  "allowed_files": [
+    ".block-ready/PUSH-GATE-CLASSIFICATION-FRESHNESS.json",
+    ".claude/skills/ih35-guard-verification/SKILL.md",
+    ".claude/skills/ih35-tms-standards/SKILL.md",
+    ".github/branch-protection-config.json",
+    ".github/workflows/required-checks.yml",
+    "docs/specs/BRANCH-TOOLING.md",
+    "scripts/block-ready-agent-manifest.mjs",
+    "scripts/branch-precheck-push.mjs",
+    "scripts/verify-branch-fresh.mjs",
+    "scripts/verify-ci-policy-applied.mjs",
+    "scripts/verify-meta.json",
+    "scripts/verify-push-gate-classification.mjs",
+    "scripts/verify-static.mjs",
+    "scripts/verify-steps/902-verify-push-gate-classification.mjs",
+    "scripts/__tests__/block-ready.test.mjs",
+    "scripts/__tests__/branch-precheck-push.test.mjs",
+    "scripts/__tests__/verify-branch-fresh-fallback.test.mjs",
+    "scripts/__tests__/verify-ci-policy-applied.test.mjs",
+    "scripts/__tests__/verify-static-classification.test.mjs"
+  ],
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true
+}

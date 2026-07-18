@@ -34,6 +34,7 @@
     "build-frontend": "ci / build-typecheck",
     "build-driver-pwa": "ci / build-typecheck",
     "unit-tests": "ci / build-typecheck (vitest coverage)",
+    "strict-freshness": "ci / verify-branch-fresh (zero commits behind origin/main across the full tree)",
     "verify-pre-commit": "ci / build-typecheck",
     "verify-architectural-design": "ci / build-typecheck (verify:arch-design chain)",
     "verify-migration-application-consistency": "ci / build-typecheck",

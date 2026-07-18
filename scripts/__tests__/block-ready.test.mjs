@@ -12,7 +12,6 @@ import {
   evaluateGuardRequirement,
   executeGuardContract,
   matchesAnyAllowedFile,
-  parseArgs,
   parseManifest,
   readUtf8FileFromStableHandle,
   readVerifyMeta,
@@ -605,26 +604,64 @@ test("parseManifest reads existing JSON file", () => {
   assert.equal(parsed.manifest.block_id, "MAGNET-4-FINAL");
 });
 
-test("resolveBlockReadyManifest uses AGENT env override", () => {
-  const resolved = resolveBlockReadyManifest({
-    agentEnv: "agent2",
-    worktreePath: "/tmp/IH35-TMS-agent1",
+function makeManifestRepo(entries) {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "block-ready-manifest-"));
+  const dir = path.join(root, ".block-ready");
+  fs.mkdirSync(dir);
+  for (const [filename, manifest] of Object.entries(entries)) {
+    fs.writeFileSync(path.join(dir, filename), JSON.stringify(manifest), "utf8");
+  }
+  return root;
+}
+
+test("resolveBlockReadyManifest gives explicit BLOCK_ID deterministic priority", () => {
+  const root = makeManifestRepo({
+    "RIGHT.json": { block_id: "RIGHT", branch: "fix/shared" },
+    "OTHER.json": { block_id: "OTHER", branch: "fix/shared" },
   });
-  assert.equal(resolved.agent, "2");
-  assert.equal(resolved.manifest, ".block-ready.agent2.json");
+  const resolved = resolveBlockReadyManifest({
+    worktreePath: root,
+    blockId: "RIGHT",
+    branch: "fix/shared",
+  });
+  assert.equal(resolved.manifest, ".block-ready/RIGHT.json");
+  assert.equal(resolved.resolution, "block-id");
 });
 
-test("resolveBlockReadyManifest infers AGENT from worktree path", () => {
-  const resolved = resolveBlockReadyManifest({
-    worktreePath: "/tmp/IH35-TMS-agent2-acct",
+test("resolveBlockReadyManifest rejects wrong explicit BLOCK_ID without fallback", () => {
+  const root = makeManifestRepo({
+    "RIGHT.json": { block_id: "WRONG-IN-FILE", branch: "fix/right" },
   });
-  assert.equal(resolved.agent, "2");
-  assert.equal(resolved.manifest, ".block-ready.agent2.json");
+  assert.throws(
+    () =>
+      resolveBlockReadyManifest({
+        worktreePath: root,
+        blockId: "RIGHT",
+        branch: "fix/right",
+      }),
+    /does not match manifest block id/
+  );
 });
 
-test("parseArgs defaults to resolved manifest", () => {
-  const args = parseArgs([], { agentEnv: "agent1", worktreePath: "/tmp/IH35-TMS-agent1" });
-  assert.equal(args.manifest, ".block-ready.agent1.json");
+test("resolveBlockReadyManifest rejects ambiguous exact branch matches", () => {
+  const root = makeManifestRepo({
+    "ONE.json": { block_id: "ONE", branch: "fix/shared" },
+    "TWO.json": { block_id: "TWO", branch: "fix/shared" },
+  });
+  assert.throws(
+    () => resolveBlockReadyManifest({ worktreePath: root, branch: "fix/shared" }),
+    /ambiguous exact branch/
+  );
+});
+
+test("resolveBlockReadyManifest rejects absent exact branch without legacy fallback", () => {
+  const root = makeManifestRepo({
+    "OLD.json": { block_id: "OLD", branch: "fix/old" },
+  });
+  assert.throws(
+    () => resolveBlockReadyManifest({ worktreePath: root, branch: "fix/new" }),
+    /no \.block-ready manifest has exact branch/
+  );
 });
 
 test("readVerifyMeta returns db_gated and c5_skip_after_c4 lists", () => {
