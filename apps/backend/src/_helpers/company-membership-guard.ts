@@ -18,7 +18,11 @@ async function hasActiveCompanyMembership(
       FROM org.user_company_access uca
       JOIN org.companies c
         ON c.id = uca.company_id
-       AND c.is_active = true
+       -- NOTE: do NOT gate on c.is_active here. is_active is a UI-visibility flag
+       -- ("not selectable in UI even if user has access" — 0013_org_companies.sql),
+       -- NOT an authorization signal. Pre-launch entities (USMCA, is_active=false
+       -- until July 2026) are TMS-authoritative and must remain reachable via the API
+       -- for setup/sync. Only true deactivation (deactivated_at) revokes access.
        AND c.deactivated_at IS NULL
       WHERE uca.user_id = $1::uuid
         AND uca.company_id = $2::uuid

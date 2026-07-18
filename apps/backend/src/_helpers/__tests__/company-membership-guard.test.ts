@@ -26,8 +26,10 @@ describe("company-membership-guard", () => {
     const sql = String(vi.mocked(activeClient.query).mock.calls[0]?.[0]);
     expect(sql).toContain("JOIN org.companies c");
     expect(sql).toContain("uca.deactivated_at IS NULL");
-    expect(sql).toContain("c.is_active = true");
     expect(sql).toContain("c.deactivated_at IS NULL");
+    // is_active is a UI-visibility flag, NOT an authz signal — must NOT gate membership
+    // (else pre-launch entities like USMCA, is_active=false, become API-unreachable).
+    expect(sql).not.toMatch(/c\.is_active\s*=\s*true/i);
   });
 
   it("uses the caller transaction client when provided", async () => {
@@ -61,9 +63,8 @@ describe("company-membership-guard", () => {
     ).rejects.toMatchObject({ message: "forbidden_company_membership", statusCode: 403 });
   });
 
-  it("throws 403 when the company is inactive or deactivated", async () => {
+  it("throws 403 when the company is deactivated", async () => {
     activeClient.query = vi.fn(async (sql) => {
-      expect(sql).toContain("c.is_active = true");
       expect(sql).toContain("c.deactivated_at IS NULL");
       return { rows: [], rowCount: 0 };
     });

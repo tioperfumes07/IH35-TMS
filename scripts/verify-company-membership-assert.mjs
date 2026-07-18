@@ -269,9 +269,17 @@ if (!existsSync(MEMBERSHIP_HELPER)) {
   const requiredHelperClauses = [
     ["active access row", /\buca\.deactivated_at\s+IS\s+NULL\b/i],
     ["company join", /\bJOIN\s+org\.companies\s+c\b/i],
-    ["active company flag", /\bc\.is_active\s*=\s*true\b/i],
+    // NOTE: c.is_active is intentionally NOT required. is_active is a UI-visibility
+    // flag ("not selectable in UI even if user has access"), not an authorization
+    // signal — gating membership on it makes pre-launch entities (USMCA, is_active=false
+    // until July 2026) API-unreachable. Only real deactivation (deactivated_at) revokes.
     ["non-deactivated company", /\bc\.deactivated_at\s+IS\s+NULL\b/i],
   ];
+  if (/\bc\.is_active\s*=\s*true\b/i.test(helper)) {
+    failures.push(
+      "_helpers/company-membership-guard.ts: must NOT gate membership on c.is_active (UI-visibility flag, not authz — would lock out pre-launch entities like USMCA)"
+    );
+  }
   for (const [label, pattern] of requiredHelperClauses) {
     if (!pattern.test(helper)) {
       failures.push(
