@@ -283,9 +283,54 @@ export async function reverseJournalEntryNoFlip(
   const existing = existingRes.rows[0];
   if (!existing) throw new Error("journal_entry_not_found");
   if (existing.status !== "posted") throw new Error("journal_entry_not_postable");
-  // Double-reversal guard: an original can be reversed at most once (enforceable when the linkage columns
-  // exist; the postVoidReversal idempotency key blocks a second reversal in the pre-migration window).
-  if (hasLinkage && existing.reversed_by_je_id) throw new Error("journal_entry_already_reversed");
+
+  // Deterministic retry/recovery lookup. Header linkage is preferred when the additive columns exist;
+  // transaction_source_links is the canonical pre-migration fallback written by postVoidReversal.
+  // Returning the existing reversal makes retries/crash recovery idempotent; >1 distinct reversal is a
+  // fail-loud integrity defect, never a reason to post another JE.
+  const existingReversalRes = await client.query<{
+    reversal_journal_entry_id: string;
+    reversal_date: string;
+    reversed_line_count: number;
+  }>(
+    hasLinkage && existing.reversed_by_je_id
+      ? `SELECT je.id::text AS reversal_journal_entry_id, je.entry_date::text AS reversal_date,
+                COUNT(jep.id)::int AS reversed_line_count
+           FROM accounting.journal_entries je
+           JOIN accounting.journal_entry_postings jep ON jep.journal_entry_uuid = je.id
+          WHERE je.id = $1::uuid AND je.operating_company_id = $2::uuid
+          GROUP BY je.id, je.entry_date`
+      : `SELECT jep.journal_entry_uuid::text AS reversal_journal_entry_id,
+                je.entry_date::text AS reversal_date,
+                COUNT(DISTINCT jep.id)::int AS reversed_line_count
+           FROM accounting.transaction_source_links tsl
+           JOIN accounting.journal_entry_postings jep ON jep.id = tsl.journal_entry_posting_id
+           JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
+          WHERE tsl.operating_company_id = $2::uuid
+            AND tsl.linked_object_type = 'journal_entry'
+            AND tsl.linked_object_id = $1
+            AND tsl.relationship_role = 'reversal_of'
+          GROUP BY jep.journal_entry_uuid, je.entry_date
+          ORDER BY jep.journal_entry_uuid
+          LIMIT 2`,
+    [existing.reversed_by_je_id ?? journalEntryId, operatingCompanyId]
+  );
+  if (existingReversalRes.rows.length > 1) throw new Error("journal_entry_multiple_reversals");
+  const existingReversal = existingReversalRes.rows[0];
+  if (hasLinkage && existing.reversed_by_je_id && !existingReversal) {
+    throw new Error("journal_entry_reversal_link_corrupt");
+  }
+  if (existingReversal) {
+    return {
+      reversal: {
+        reversal_journal_entry_id: existingReversal.reversal_journal_entry_id,
+        reversal_date: existingReversal.reversal_date,
+        closed_period_reversal: existingReversal.reversal_date !== existing.entry_date,
+        reversed_line_count: Number(existingReversal.reversed_line_count),
+      },
+      linkage_written: hasLinkage,
+    };
+  }
 
   const reversal = await postVoidReversal(
     client,

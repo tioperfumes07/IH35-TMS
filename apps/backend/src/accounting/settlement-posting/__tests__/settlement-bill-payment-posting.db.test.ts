@@ -19,8 +19,9 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../../lib/pg-connection-options.js";
 import { ensureIntegrationPrerequisites } from "../../../../test-helpers/db-fixture.js";
 import { TEST_ENCRYPTION_KEY } from "../../../../test-helpers/constants.js";
-import { postSettlementBillPayment, type SettlementBillPaymentResult } from "../settlement-bill-payment-posting.service.js";
+import { postSettlementBillPayment, reverseSettlementBillPayment, type SettlementBillPaymentResult } from "../settlement-bill-payment-posting.service.js";
 import { upsertDriverEscrowAccountLink, upsertDriverAdvanceAccountLink } from "../../driver-subaccount-provision.service.js";
+import { companyBusinessDate } from "../../../lib/company-business-date.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 
@@ -120,6 +121,25 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
       [settlementId]
     );
     return rows.map((r) => r.je_id).filter((id): id is string => Boolean(id));
+  }
+  async function resolveReversalJournalEntryIds(originalJeIds: string[]): Promise<string[]> {
+    if (originalJeIds.length === 0) return [];
+    const rows = await read<{ je_id: string }>(
+      `SELECT DISTINCT rev.journal_entry_uuid::text AS je_id
+         FROM accounting.journal_entry_postings orig
+         JOIN accounting.journal_entry_postings rev ON rev.reversal_of_line_id = orig.id
+        WHERE orig.journal_entry_uuid = ANY($1::uuid[])
+       UNION
+       SELECT DISTINCT rev.journal_entry_uuid::text AS je_id
+         FROM accounting.transaction_source_links tsl
+         JOIN accounting.journal_entry_postings rev ON rev.id = tsl.journal_entry_posting_id
+        WHERE tsl.operating_company_id=$2::uuid
+          AND tsl.linked_object_type='journal_entry'
+          AND tsl.linked_object_id = ANY($3::text[])
+          AND tsl.relationship_role='reversal_of'`,
+      [originalJeIds, companyId, originalJeIds]
+    );
+    return rows.map((r) => r.je_id);
   }
   // FLAKE FIX: USER-scoped override (user_uuid = this file's UNIQUE actor), NOT tenant-scoped. The shared
   // TRANSP company (ensureIntegrationPrerequisites) is handed to every integration test, so a tenant-scoped
@@ -282,6 +302,8 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
       // Resolve BEFORE the cleanup transaction (resolveGlBillIds/read run their own BEGIN/COMMIT — must
       // not nest inside the bypass() transaction below).
       const glBillIds = settlementId ? await resolveGlBillIds() : [];
+      const originalJeIds = settlementId ? await resolveOwnJournalEntryIds() : [];
+      const reversalJeIds = settlementId ? await resolveReversalJournalEntryIds(originalJeIds) : [];
       await db.query("SELECT pg_advisory_lock(4200000001)");
       await bypass(async () => {
         await db.query(`DELETE FROM driver_finance.driver_settlement_gl_bills WHERE settlement_id = $1::uuid`, [settlementId]);
@@ -296,6 +318,8 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
         await db.query(`DELETE FROM accounting.bill_lines WHERE bill_id = ANY($1::uuid[])`, [glBillIds]);
         // the deduction JE has no source_transaction_type='bill*'; delete via memo match
         await db.query(`DELETE FROM accounting.journal_entry_postings jep USING accounting.journal_entries je WHERE je.id=jep.journal_entry_uuid AND je.operating_company_id=$1::uuid AND je.memo LIKE $2`, [companyId, `Settlement S-${suffix}%`]);
+        await db.query(`DELETE FROM accounting.journal_entry_postings WHERE journal_entry_uuid = ANY($1::uuid[])`, [reversalJeIds]);
+        await db.query(`DELETE FROM accounting.journal_entries WHERE id = ANY($1::uuid[])`, [reversalJeIds]);
         await db.query(`DELETE FROM accounting.journal_entries WHERE operating_company_id=$1::uuid AND (memo LIKE $2 OR memo LIKE $3)`, [companyId, `%S-${suffix}%`, `%Bill %`]);
         await db.query(`DELETE FROM accounting.bills WHERE operating_company_id=$1::uuid AND id = ANY($2::uuid[])`, [companyId, glBillIds]);
         await db.query(`DELETE FROM driver_finance.driver_settlement_deductions WHERE applied_to_settlement_id = $1::uuid`, [settlementId]);
@@ -465,5 +489,75 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
     const glBillIds = await resolveGlBillIds();
     const billCount = await read<{ c: string }>(`SELECT count(*)::text AS c FROM accounting.bills WHERE id = ANY($1::uuid[])`, [glBillIds]);
     expect(Number(billCount[0]!.c)).toBe(3);
+  });
+
+  it("(d) CPA veto: concurrent/retried reversal is atomic, idempotent, linked, and whole-settlement net-zero", async () => {
+    const originalJeIds = await resolveOwnJournalEntryIds();
+    expect(originalJeIds).toHaveLength(7); // 3 bills + 3 cash payments + 1 deduction JE
+
+    // Two concurrent attempts serialize on driver_settlement_gl_runs FOR UPDATE. Exactly one performs
+    // the reversal; the other observes status='reversed'. No duplicate source or deduction reversal JEs.
+    const [revA, revB] = await Promise.all([
+      reverseSettlementBillPayment(
+        { operatingCompanyId: companyId, settlementId, reason: "test concurrent reversal A" },
+        { userId }
+      ),
+      reverseSettlementBillPayment(
+        { operatingCompanyId: companyId, settlementId, reason: "test concurrent reversal B" },
+        { userId }
+      ),
+    ]);
+    expect([revA.result, revB.result].sort()).toEqual(["nothing_to_reverse", "reversed"]);
+
+    const run = await read<{ status: string }>(
+      `SELECT status FROM driver_finance.driver_settlement_gl_runs WHERE settlement_id=$1::uuid LIMIT 1`,
+      [settlementId]
+    );
+    expect(run[0]!.status).toBe("reversed");
+
+    const reversalJeIds = await resolveReversalJournalEntryIds(originalJeIds);
+    expect(reversalJeIds).toHaveLength(7);
+    expect(new Set(reversalJeIds).size).toBe(7);
+
+    // All seven legs use the coherent canonical policy. This fixture's original period is open, so
+    // every reversal stays on the original date (closed-period behavior is covered deterministically
+    // in posting-engine.service.test.ts and void.service tests).
+    const dates = await read<{ original_date: string; reversal_date: string }>(
+      `SELECT orig.entry_date::text AS original_date, rev.entry_date::text AS reversal_date
+         FROM accounting.journal_entries orig
+         JOIN accounting.journal_entry_postings op ON op.journal_entry_uuid=orig.id
+         JOIN accounting.journal_entry_postings rp ON rp.reversal_of_line_id=op.id
+         JOIN accounting.journal_entries rev ON rev.id=rp.journal_entry_uuid
+        WHERE orig.id = ANY($1::uuid[])
+        GROUP BY orig.id, orig.entry_date, rev.id, rev.entry_date`,
+      [originalJeIds]
+    );
+    expect(dates.every((row) => row.reversal_date === row.original_date)).toBe(true);
+
+    // Whole-settlement equal-and-opposite at account+class+entity grain — not merely standalone JE balance.
+    const allJeIds = [...originalJeIds, ...reversalJeIds];
+    const residual = await read<{ nonzero_dimensions: string; absolute_residual_cents: string }>(
+      `WITH dimensional AS (
+         SELECT account_id, class_id, entity_uuid,
+                SUM(CASE WHEN debit_or_credit='debit' THEN amount_cents ELSE -amount_cents END)::bigint AS residual_cents
+           FROM accounting.journal_entry_postings
+          WHERE operating_company_id=$1::uuid AND journal_entry_uuid = ANY($2::uuid[])
+          GROUP BY account_id, class_id, entity_uuid
+       )
+       SELECT COUNT(*) FILTER (WHERE residual_cents<>0)::text AS nonzero_dimensions,
+              COALESCE(SUM(ABS(residual_cents)),0)::text AS absolute_residual_cents
+         FROM dimensional`,
+      [companyId, allJeIds]
+    );
+    expect(Number(residual[0]!.nonzero_dimensions)).toBe(0);
+    expect(Number(residual[0]!.absolute_residual_cents)).toBe(0);
+
+    // A later retry is a no-op and cannot add another JE.
+    const retry = await reverseSettlementBillPayment(
+      { operatingCompanyId: companyId, settlementId, reason: "retry after commit" },
+      { userId }
+    );
+    expect(retry.result).toBe("nothing_to_reverse");
+    expect(await resolveReversalJournalEntryIds(originalJeIds)).toHaveLength(7);
   });
 });

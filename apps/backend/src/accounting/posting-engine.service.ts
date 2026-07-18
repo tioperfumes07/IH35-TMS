@@ -3,6 +3,7 @@ import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../banking
 import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
 import { resolveAccountForCategory } from "./expense-category-map/resolver.service.js";
 import { resolveBillLineDebitAccount, BillLineAccountError } from "./bill-account-resolver.js";
+import { resolveReversalDate, todayIso } from "./void.service.js";
 
 // CHAIN-05 (BLOCK-03) adds "bank_categorization" (a categorized bank-feed line → direction-aware balanced
 // JE; built by buildBankCategorizationLines). NOTE: kept on ONE line — verify-posting-engine-mvp-contract
@@ -306,7 +307,10 @@ async function getPostingBySource(
   sourceId: string,
   postingPurpose: PostingPurpose
 ): Promise<PostingResult | null> {
-  const lineId = postingPurpose === "initial_post" ? null : sourceId;
+  // Source-level posting/reversal batches always use a NULL line component. posting_purpose already
+  // distinguishes initial vs reversal. Using sourceId here only for reversal made the pre-check key
+  // differ from the key inserted below (which uses NULL), defeating retry/concurrency idempotency.
+  const lineId = null;
   const key = buildPostingMvpIdempotencyKey({
     operating_company_id: operatingCompanyId,
     source_transaction_type: sourceType,
@@ -1749,170 +1753,209 @@ export async function postSourceTransaction(input: PostSourceInput, actor: Actor
   }
 }
 
-export async function reversePostedSourceTransaction(input: ReverseBatchInput, actor: Actor): Promise<PostingResult> {
+async function executeSourceReversalOnClient(
+  client: DbClient,
+  input: ReverseBatchInput,
+  actor: Actor
+): Promise<PostingResult> {
   const sourceType = normalizeSourceType(input.source_transaction_type);
   const sourceId = normalizeSourceId(input.source_transaction_id);
 
-  return withCurrentUser(actor.userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
+  const original = await getPostingBySource(client, input.operating_company_id, sourceType, sourceId, "initial_post");
+  if (!original) throw new PostingEngineError("SOURCE_NOT_FOUND", "No posted batch found to reverse");
 
-    const original = await getPostingBySource(client, input.operating_company_id, sourceType, sourceId, "initial_post");
-    if (!original) throw new PostingEngineError("SOURCE_NOT_FOUND", "No posted batch found to reverse");
+  const existingReversal = await getPostingBySource(client, input.operating_company_id, sourceType, sourceId, "reversal");
+  if (existingReversal) return existingReversal;
 
-    const existingReversal = await getPostingBySource(client, input.operating_company_id, sourceType, sourceId, "reversal");
-    if (existingReversal) return existingReversal;
+  const originalLines = await client.query<{
+    id: string;
+    account_id: string;
+    class_id: string | null;
+    entity_uuid: string | null;
+    debit_or_credit: "debit" | "credit";
+    amount_cents: number;
+    description: string | null;
+  }>(
+    `
+      SELECT id::text, account_id::text, class_id::text, entity_uuid::text,
+             debit_or_credit, amount_cents::bigint, description
+      FROM accounting.journal_entry_postings
+      WHERE operating_company_id = $1::uuid
+        AND posting_batch_id = $2::uuid
+      ORDER BY line_sequence ASC, created_at ASC
+    `,
+    [input.operating_company_id, original.posting_batch_id]
+  );
+  if (!originalLines.rows.length) throw new PostingEngineError("SOURCE_NOT_FOUND", "No posted lines found to reverse");
 
-    const originalLines = await client.query<{
-      id: string;
-      account_id: string;
-      debit_or_credit: "debit" | "credit";
-      amount_cents: number;
-      description: string | null;
-    }>(
+  const headerDate = await client.query<{ entry_date: string }>(
+    `
+      SELECT je.entry_date::text
+      FROM accounting.journal_entries je
+      WHERE je.id = $1::uuid
+      LIMIT 1
+    `,
+    [original.journal_entry_id]
+  );
+  const originalDate = headerDate.rows[0]?.entry_date;
+  if (!originalDate) throw new PostingEngineError("SOURCE_NOT_FOUND", "Original journal entry missing");
+
+  // Canonical closed-period reversal policy (shared with postVoidReversal):
+  // open original period -> original date; closed original period -> current company-business date.
+  // This prevents a settlement's bill/payment legs from failing PERIOD_LOCKED while its deduction leg
+  // posts in the current period. The final ensureOpenPeriod is the fail-closed backstop if even the
+  // current company date is closed.
+  const cutoff = await client.query<{ cutoff: string | null }>(
+    `SELECT accounting.closed_period_cutoff($1::uuid)::text AS cutoff`,
+    [input.operating_company_id]
+  );
+  const reversalDate = resolveReversalDate(originalDate, cutoff.rows[0]?.cutoff ?? null, todayIso());
+  await ensureOpenPeriod(client, input.operating_company_id, reversalDate);
+
+  const idempotencyKey = buildPostingMvpIdempotencyKey({
+    operating_company_id: input.operating_company_id,
+    source_transaction_type: sourceType,
+    source_transaction_id: sourceId,
+    source_transaction_line_id: null,
+    posting_purpose: "reversal",
+  });
+
+  const reversalBatch = await client.query<{ id: string }>(
+    `
+      INSERT INTO accounting.posting_batches (
+        operating_company_id,
+        batch_status,
+        source_transaction_type,
+        source_transaction_id,
+        idempotency_key,
+        created_by_user_id,
+        created_at,
+        updated_at
+      )
+      VALUES ($1::uuid, 'in_progress', $2, $3, $4, $5::uuid, now(), now())
+      RETURNING id::text
+    `,
+    [input.operating_company_id, sourceType, sourceId, idempotencyKey, actor.userId]
+  );
+  const reversalBatchId = reversalBatch.rows[0]?.id;
+  if (!reversalBatchId) throw new Error("reversal_batch_create_failed");
+
+  const reversalJeId = await createJournalEntryHeader(
+    client,
+    input.operating_company_id,
+    reversalDate,
+    `Reversal of ${original.journal_entry_id}`,
+    actor.userId
+  );
+
+  const reversalPostingIds: string[] = [];
+  let lineSequence = 1;
+  for (const row of originalLines.rows) {
+    const opposite = row.debit_or_credit === "debit" ? "credit" : "debit";
+    const ins = await client.query<{ id: string }>(
       `
-        SELECT id::text, account_id::text, debit_or_credit, amount_cents::bigint, description
-        FROM accounting.journal_entry_postings
-        WHERE operating_company_id = $1::uuid
-          AND posting_batch_id = $2::uuid
-        ORDER BY line_sequence ASC, created_at ASC
-      `,
-      [input.operating_company_id, original.posting_batch_id]
-    );
-    if (!originalLines.rows.length) throw new PostingEngineError("SOURCE_NOT_FOUND", "No posted lines found to reverse");
-
-    const headerDate = await client.query<{ entry_date: string }>(
-      `
-        SELECT je.entry_date::text
-        FROM accounting.journal_entries je
-        WHERE je.id = $1::uuid
-        LIMIT 1
-      `,
-      [original.journal_entry_id]
-    );
-    const reversalDate = headerDate.rows[0]?.entry_date;
-    if (!reversalDate) throw new PostingEngineError("SOURCE_NOT_FOUND", "Original journal entry missing");
-    await ensureOpenPeriod(client, input.operating_company_id, reversalDate);
-
-    const idempotencyKey = buildPostingMvpIdempotencyKey({
-      operating_company_id: input.operating_company_id,
-      source_transaction_type: sourceType,
-      source_transaction_id: sourceId,
-      source_transaction_line_id: null,
-      posting_purpose: "reversal",
-    });
-
-    const reversalBatch = await client.query<{ id: string }>(
-      `
-        INSERT INTO accounting.posting_batches (
+        INSERT INTO accounting.journal_entry_postings (
           operating_company_id,
-          batch_status,
+          journal_entry_uuid,
+          line_sequence,
+          account_id,
+          class_id,
+          entity_uuid,
+          debit_or_credit,
+          amount_cents,
+          description,
           source_transaction_type,
           source_transaction_id,
+          source_transaction_line_id,
+          posting_batch_id,
           idempotency_key,
-          created_by_user_id,
+          reversal_of_line_id,
           created_at,
           updated_at
         )
-        VALUES ($1::uuid, 'in_progress', $2, $3, $4, $5::uuid, now(), now())
+        VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5::uuid, $6::uuid, $7, $8, $9, $10, $11, NULL, $12::uuid, $13, $14::uuid, now(), now())
         RETURNING id::text
       `,
-      [input.operating_company_id, sourceType, sourceId, idempotencyKey, actor.userId]
+      [
+        input.operating_company_id,
+        reversalJeId,
+        lineSequence,
+        row.account_id,
+        row.class_id,
+        row.entity_uuid,
+        opposite,
+        row.amount_cents,
+        row.description ? `REVERSAL: ${row.description}` : "REVERSAL",
+        sourceType,
+        sourceId,
+        reversalBatchId,
+        idempotencyKey,
+        row.id,
+      ]
     );
-    const reversalBatchId = reversalBatch.rows[0]?.id;
-    if (!reversalBatchId) throw new Error("reversal_batch_create_failed");
-
-    const reversalJeId = await createJournalEntryHeader(
-      client,
-      input.operating_company_id,
-      reversalDate,
-      `Reversal of ${original.journal_entry_id}`,
-      actor.userId
+    const reversalLineId = ins.rows[0]?.id;
+    if (!reversalLineId) throw new Error("reversal_line_insert_failed");
+    reversalPostingIds.push(reversalLineId);
+    await client.query(
+      `
+        UPDATE accounting.journal_entry_postings
+        SET reversed_by_line_id = $2::uuid,
+            updated_at = now()
+        WHERE id = $1::uuid
+      `,
+      [row.id, reversalLineId]
     );
-
-    const reversalPostingIds: string[] = [];
-    let lineSequence = 1;
-    for (const row of originalLines.rows) {
-      const opposite = row.debit_or_credit === "debit" ? "credit" : "debit";
-      const ins = await client.query<{ id: string }>(
-        `
-          INSERT INTO accounting.journal_entry_postings (
-            operating_company_id,
-            journal_entry_uuid,
-            line_sequence,
-            account_id,
-            debit_or_credit,
-            amount_cents,
-            description,
-            source_transaction_type,
-            source_transaction_id,
-            source_transaction_line_id,
-            posting_batch_id,
-            idempotency_key,
-            reversal_of_line_id,
-            created_at,
-            updated_at
-          )
-          VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5, $6, $7, $8, $9, NULL, $10::uuid, $11, $12::uuid, now(), now())
-          RETURNING id::text
-        `,
-        [
-          input.operating_company_id,
-          reversalJeId,
-          lineSequence,
-          row.account_id,
-          opposite,
-          row.amount_cents,
-          row.description ? `REVERSAL: ${row.description}` : "REVERSAL",
-          sourceType,
-          sourceId,
-          reversalBatchId,
-          idempotencyKey,
-          row.id,
-        ]
-      );
-      const reversalLineId = ins.rows[0]?.id;
-      if (!reversalLineId) throw new Error("reversal_line_insert_failed");
-      reversalPostingIds.push(reversalLineId);
-      await client.query(
-        `
-          UPDATE accounting.journal_entry_postings
-          SET reversed_by_line_id = $2::uuid,
-              updated_at = now()
-          WHERE id = $1::uuid
-        `,
-        [row.id, reversalLineId]
-      );
-      await client.query(
-        `
-          INSERT INTO accounting.transaction_source_links (
-            operating_company_id,
-            journal_entry_posting_id,
-            linked_object_type,
-            linked_object_id,
-            relationship_role
-          )
-          VALUES ($1::uuid, $2::uuid, $3, $4, 'reversal')
-        `,
-        [input.operating_company_id, reversalLineId, sourceType, sourceId]
-      );
-      lineSequence += 1;
-    }
-    await client.query(`UPDATE accounting.posting_batches SET batch_status = 'reversed', updated_at = now() WHERE id = $1::uuid`, [
+    await client.query(
+      `
+        INSERT INTO accounting.transaction_source_links (
+          operating_company_id,
+          journal_entry_posting_id,
+          linked_object_type,
+          linked_object_id,
+          relationship_role
+        )
+        VALUES ($1::uuid, $2::uuid, $3, $4, 'reversal')
+      `,
+      [input.operating_company_id, reversalLineId, sourceType, sourceId]
+    );
+    lineSequence += 1;
+  }
+  await client.query(`UPDATE accounting.posting_batches SET batch_status = 'reversed', updated_at = now() WHERE id = $1::uuid`, [
       original.posting_batch_id,
-    ]);
-    await client.query(`UPDATE accounting.posting_batches SET batch_status = 'posted', updated_at = now() WHERE id = $1::uuid`, [
-      reversalBatchId,
-    ]);
-    return {
-      result: "reversed",
-      posting_batch_id: reversalBatchId,
-      journal_entry_id: reversalJeId,
-      journal_entry_posting_ids: reversalPostingIds,
-      idempotency_key: idempotencyKey,
-      posting_purpose: "reversal",
-      source_transaction_type: sourceType,
-      source_transaction_id: sourceId,
-    };
+  ]);
+  await client.query(`UPDATE accounting.posting_batches SET batch_status = 'posted', updated_at = now() WHERE id = $1::uuid`, [
+    reversalBatchId,
+  ]);
+  return {
+    result: "reversed",
+    posting_batch_id: reversalBatchId,
+    journal_entry_id: reversalJeId,
+    journal_entry_posting_ids: reversalPostingIds,
+    idempotency_key: idempotencyKey,
+    posting_purpose: "reversal",
+    source_transaction_type: sourceType,
+    source_transaction_id: sourceId,
+  };
+}
+
+/**
+ * Reverse a posted source inside the caller's existing transaction. This is the reversal counterpart
+ * to postSourceTransactionInClientTx and carries the same deterministic posting-batch idempotency,
+ * source links, line-level reversal links, and closed-period policy. A caller can therefore reverse a
+ * multi-leg workflow atomically: any failed leg rolls every preceding leg back.
+ */
+export async function reversePostedSourceTransactionInClientTx(
+  client: DbClient,
+  input: ReverseBatchInput,
+  actor: Actor
+): Promise<PostingResult> {
+  return executeSourceReversalOnClient(client, input, actor);
+}
+
+export async function reversePostedSourceTransaction(input: ReverseBatchInput, actor: Actor): Promise<PostingResult> {
+  return withCurrentUser(actor.userId, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
+    return executeSourceReversalOnClient(client, input, actor);
   });
 }
 
