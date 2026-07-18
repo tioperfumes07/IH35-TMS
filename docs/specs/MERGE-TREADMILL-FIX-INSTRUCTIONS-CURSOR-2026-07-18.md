@@ -45,11 +45,29 @@ Make the pre-push gate un-disableable by a developer `.env`. In `branch-precheck
   all must fail the suite.
 - `_context.mjs`: keep numeric returns, but the runner must act on them (above). Optionally make `run()`
   variants explicit (`runOrThrow` vs `runStatus`) so intent is unambiguous.
-- **Plant the proof guard:** `scripts/verify-runner-fails-closed.mjs` — a synthetic `return 7` step MUST
-  make `verify:pre-commit` exit non-zero (the `RUNNER_FALSE_GREEN` reproduction, inverted). Wire via
-  verify-steps. This is the §2 regression guard; it can never regress to fail-open.
-- **Then triage the wave** per the ACCEPTANCE RULE: every newly-red guard classified + fixed with evidence.
-  Do NOT de-dup, weaken, or revert to regain green.
+
+- **2a — PRE-ENUMERATE THE WAVE BEFORE touching the runner (do this FIRST, read-only).** Run each
+  return-based verify-step in isolation on current `main` and record which already return non-zero. That
+  precomputed list IS the exact set of reds step 2 will expose — nothing more should appear. Publish it as
+  `docs/trackers/RUNNER-EXPOSED-REDS-2026-07-18.md` with an owner + classification per red. Now step 2 is a
+  KNOWN quantity, not a surprise: after the fix, the reds must match this list exactly; any red NOT on it
+  means the fix broke something and gets investigated, any listed red still green means the fix missed a path.
+
+- **2b — Plant the proof guard, testing BEHAVIOR not implementation:** `scripts/verify-runner-fails-closed.mjs`
+  + `verify-steps/NNN-*.mjs`. It must assert `verify:pre-commit` exits non-zero for a synthetic step that
+  fails via EACH of the three signals — `return 7`, `throw`, and `process.exit(1)` — so a future refactor
+  can't fix one path and silently re-break another. This is the §2 regression guard; the runner can never
+  slip back to fail-open.
+
+- **2c — KEEP `main` GREEN: triage the whole wave on ONE branch/stack; merge only when green.** Because
+  merge = prod deploy AND a red `main` blocks every other lane's merges, do NOT merge a runner fix that reds
+  `main`. Fix the runner + fix (or explicitly, evidence-backed, defer via tracker) every red on the 2a list
+  in the same branch/stack, and merge only once the suite is honestly green. A red `main` while triaging
+  would halt the whole team.
+
+- **Triage per the ACCEPTANCE RULE:** every newly-red guard is a DEFECT classified + fixed with evidence.
+  Do NOT de-dup, weaken, allowlist, or revert to regain green. **A wave of reds after step 2 is SUCCESS —
+  the fake-green surfacing — not a regression.** The board looks worse for a moment before it is true.
 
 ### 3 — Inventory every `ci.yml` duplicate + prove propagation  *(non-financial)*
 For each `run: npm run verify:X` after the `verify:pre-commit` step: confirm a `verify-steps/*` runs it
