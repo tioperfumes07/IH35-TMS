@@ -177,6 +177,28 @@ function objectLabelDestinationPairs(src) {
   return pairs;
 }
 
+function textOutsideMarkup(raw) {
+  let text = "";
+  let inTag = false;
+  let quote = null;
+  for (const char of raw) {
+    if (inTag) {
+      if (quote) {
+        if (char === quote) quote = null;
+      } else if (char === "\"" || char === "'") {
+        quote = char;
+      } else if (char === ">") {
+        inTag = false;
+      }
+    } else if (char === "<") {
+      inTag = true;
+    } else {
+      text += char;
+    }
+  }
+  return text.replace(/\s+/g, " ").trim();
+}
+
 function wrongDestinationErrors(sources) {
   const errors = [];
   for (const [name, raw] of Object.entries(sources)) {
@@ -185,7 +207,7 @@ function wrongDestinationErrors(sources) {
     const pairs = objectLabelDestinationPairs(src);
     for (const match of src.matchAll(/<Link\b([^>]*)>([\s\S]*?)<\/Link>/g)) {
       const route = match[1].match(/\bto=["'](\/accounting\/expenses(?:\/list|\/new)?)["']/)?.[1];
-      if (route) pairs.push({ label: match[2].replace(/<[^>]+>/g, "").trim(), route });
+      if (route) pairs.push({ label: textOutsideMarkup(match[2]), route });
     }
     for (const { label, route } of pairs) {
       const isBrowse = /\b(?:view|browse|list)\b/i.test(label);
