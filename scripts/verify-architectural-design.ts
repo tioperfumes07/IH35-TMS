@@ -22,6 +22,12 @@ import { pathToFileURL } from "node:url";
 
 const APP_PATH = "apps/frontend/src/App.tsx";
 const ROUTES_MANIFEST_PATH = "apps/frontend/src/routes/manifest.tsx";
+const FINANCE_ROUTES_PATH = "apps/frontend/src/routes/finance-landing.routes.tsx";
+const ROUTE_SOURCE_PATHS = [
+  APP_PATH,
+  ROUTES_MANIFEST_PATH,
+  FINANCE_ROUTES_PATH,
+] as const;
 const SIDEBAR_PATH = "apps/frontend/src/components/layout/sidebar-config.ts";
 const LOCK_FILE_PATH = "docs/locked-ui-surface.json";
 const EXTRA_GUARDS = [] as const;
@@ -270,10 +276,7 @@ function extractArrayBlock(content: string, startToken: string): string {
   throw new Error(`Unclosed array for token: ${startToken}`);
 }
 
-function extractRoutesFromApp(): string[] {
-  const appContent = readRequired(APP_PATH);
-  const manifestContent = fs.existsSync(ROUTES_MANIFEST_PATH) ? readRequired(ROUTES_MANIFEST_PATH) : "";
-  const content = `${appContent}\n${manifestContent}`;
+function extractRoutesFromContent(content: string): string[] {
   const out: string[] = [];
 
   const directRouteRegex = /<Route\b[^>]*\bpath=(?:"([^"]+)"|'([^']+)')/g;
@@ -308,6 +311,13 @@ function extractRoutesFromApp(): string[] {
   }
 
   return unique(out).sort();
+}
+
+function extractRoutesFromApp(): string[] {
+  const content = ROUTE_SOURCE_PATHS.map((sourcePath) =>
+    readRequired(sourcePath)
+  ).join("\n");
+  return extractRoutesFromContent(content);
 }
 
 function extractSidebarItemIds(): string[] {
@@ -472,12 +482,66 @@ function verifyAgainstBaseline(current: LockedUiSurface, baseline: LockedUiSurfa
   return failures;
 }
 
+function selftestRouteSources() {
+  if (!ROUTE_SOURCE_PATHS.includes(FINANCE_ROUTES_PATH)) {
+    throw new Error(
+      `route-source selftest requires explicit scanner input ${FINANCE_ROUTES_PATH}`
+    );
+  }
+  const financeFixture = `
+    <Route path="/finance" element={<FinanceHubPage />} />
+    <Route path="/finance/overview" element={<FinanceOverviewPage />} />
+    <Route path="/finance/unknown" element={<UnknownFinancePage />} />
+  `;
+  const discovered = extractRoutesFromContent(financeFixture);
+  for (const expected of ["/finance", "/finance/overview", "/finance/unknown"]) {
+    if (!discovered.includes(expected)) {
+      throw new Error(`route-source selftest did not discover ${expected}`);
+    }
+  }
+
+  const baseline = {
+    schemaVersion: 1,
+    generatedAt: "selftest",
+    source: { branch: "selftest", commit: "selftest" },
+    routes: ["/finance", "/finance/overview"],
+    sidebarItemIds: [],
+    subNavTabs: {},
+    namedSections: {},
+  } satisfies LockedUiSurface;
+  for (const plantedRoute of ["/finance", "/finance/overview"]) {
+    const plantedRemoval = {
+      ...baseline,
+      routes: extractRoutesFromContent(
+        financeFixture.replace(
+          `path="${plantedRoute}"`,
+          `path="${plantedRoute}-removed"`
+        )
+      ),
+    };
+    const failures = verifyAgainstBaseline(plantedRemoval, baseline);
+    if (!failures.some((failure) => failure.includes(plantedRoute))) {
+      throw new Error(
+        `route-source selftest did not fail closed on planted ${plantedRoute} removal`
+      );
+    }
+  }
+
+  console.log(
+    "✅ Architectural route-source selftest passed — explicit Finance source scanned, unknown literals discovered, planted removals rejected"
+  );
+}
+
 function writeBaseline(surface: LockedUiSurface) {
   fs.writeFileSync(LOCK_FILE_PATH, `${JSON.stringify(surface, null, 2)}\n`, "utf8");
 }
 
 async function main() {
   const args = new Set(process.argv.slice(2));
+  if (args.has("--selftest-route-sources")) {
+    selftestRouteSources();
+    return;
+  }
   const writeMode = args.has("--write-baseline");
   const current = buildCurrentSurface();
 

@@ -13,9 +13,13 @@ import path from "node:path";
 const ROOT = process.cwd();
 const sidebarPath = path.join(ROOT, "apps/frontend/src/components/layout/sidebar-config.ts");
 const routesPath = path.join(ROOT, "apps/frontend/src/routes/manifest.tsx");
+const financeRoutesPath = path.join(ROOT, "apps/frontend/src/routes/finance-landing.routes.tsx");
 
 const sidebar = fs.readFileSync(sidebarPath, "utf8");
-const routes = fs.readFileSync(routesPath, "utf8");
+const routes = [
+  fs.readFileSync(routesPath, "utf8"),
+  fs.readFileSync(financeRoutesPath, "utf8"),
+].join("\n");
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 /** Slice of manifest for one `path="..."` Route (until the next sibling `<Route`). */

@@ -22,6 +22,23 @@ export const FINANCE_LANDING_CORE_CHECKS = [
       "src/routes/__tests__/finance-landing-route.test.tsx",
     ],
   },
+  {
+    label: "architectural route-source selftest",
+    command: "npx",
+    args: [
+      "tsx",
+      "scripts/verify-architectural-design.ts",
+      "--selftest-route-sources",
+    ],
+  },
+  {
+    label: "navigation route-source selftest",
+    command: "node",
+    args: [
+      "scripts/verify-nav-integrity.mjs",
+      "--selftest-finance-routes",
+    ],
+  },
 ];
 
 export function runFinanceLandingCoreChecks(ctx) {
