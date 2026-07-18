@@ -93,7 +93,7 @@ export function BreakEvenPage() {
 
   const header = (
     <PageHeader
-      backHref="/finance"
+      backHref="/finance/overview"
       title="Break-Even Analysis"
       subtitle="Finance · Break-Even — read-only estimate, nothing is posted"
     />

@@ -7,6 +7,10 @@ import path from "node:path";
 import process from "node:process";
 
 const ROOT = process.cwd();
+const ROUTE_SOURCE_PATHS = [
+  "apps/frontend/src/App.tsx",
+  "apps/frontend/src/routes/manifest.tsx",
+];
 
 function read(rel) {
   const abs = path.join(ROOT, rel);
@@ -91,6 +95,46 @@ function hasResolvableRoute(subnavPath, routes, routeSource) {
   return false;
 }
 
+function selftestFinanceRouteSources() {
+  const fixture = `
+    <Route path="/finance" element={<FinanceHubPage />} />
+    <Route path="/finance/overview" element={<FinanceOverviewPage />} />
+    <Route path="/finance/unknown" element={<UnknownFinancePage />} />
+  `;
+  const routes = extractRoutePaths(fixture);
+  for (const expected of ["/finance", "/finance/overview", "/finance/unknown"]) {
+    if (!routes.has(expected)) {
+      throw new Error(`nav route-source selftest did not discover ${expected}`);
+    }
+  }
+
+  for (const plantedRoute of ["/finance", "/finance/overview"]) {
+    const plantedRemoval = fixture.replace(
+      `path="${plantedRoute}"`,
+      `path="${plantedRoute}-removed"`,
+    );
+    const routesAfterRemoval = extractRoutePaths(plantedRemoval);
+    if (hasResolvableRoute(plantedRoute, routesAfterRemoval, plantedRemoval)) {
+      throw new Error(
+        `nav route-source selftest accepted planted ${plantedRoute} removal`,
+      );
+    }
+  }
+  const knownFinanceNav = new Set(["/finance", "/finance/overview"]);
+  if (isRouteReachable("/finance/unknown", knownFinanceNav, routes, [])) {
+    throw new Error("nav route-source selftest accepted planted unknown Finance route");
+  }
+
+  console.log(
+    "[verify-nav-integrity] route SELFTEST OK — planted Finance removals and unknown route rejected",
+  );
+}
+
+if (process.argv.includes("--selftest-finance-routes")) {
+  selftestFinanceRouteSources();
+  process.exit(0);
+}
+
 function normalizeAllowPath(p) {
   return p.split("?")[0];
 }
@@ -129,7 +173,7 @@ const allowAll = [
   ...allowlist.URL_SYNC_DEFERRED,
 ];
 
-const routeSource = `${read("apps/frontend/src/App.tsx")}\n${read("apps/frontend/src/routes/manifest.tsx")}`;
+const routeSource = ROUTE_SOURCE_PATHS.map(read).join("\n");
 const routes = extractRoutePaths(routeSource);
 
 const subnavPaths = new Set([
@@ -185,17 +229,25 @@ function modulePrefixReachable(routePath, navReachable) {
   return false;
 }
 
+function isRouteReachable(routePath, navReachable, routes, allowEntries) {
+  if (routePath === "*" || routePath === "/") return true;
+  if (isAllowlisted(routePath, allowEntries)) return true;
+  if (navReachable.has(routePath)) return true;
+  if (modulePrefixReachable(routePath, navReachable)) return true;
+  if (isDynamicDetail(routePath) && parentListRoute(routePath, navReachable, routes)) return true;
+  if (routePath.startsWith("/pwa/") || routePath.startsWith("/driver/")) return true;
+  if (routePath.startsWith("/safety/")) return true;
+  return routePath === "/login"
+    || routePath === "/coming-soon"
+    || routePath === "/legal/privacy"
+    || routePath === "/legal/terms";
+}
+
 const routeViolations = [];
 for (const routePath of routes) {
-  if (routePath === "*" || routePath === "/") continue;
-  if (isAllowlisted(routePath, allowAll)) continue;
-  if (navReachable.has(routePath)) continue;
-  if (modulePrefixReachable(routePath, navReachable)) continue;
-  if (isDynamicDetail(routePath) && parentListRoute(routePath, navReachable, routes)) continue;
-  if (routePath.startsWith("/pwa/") || routePath.startsWith("/driver/")) continue;
-  if (routePath.startsWith("/safety/")) continue;
-  if (routePath === "/login" || routePath === "/coming-soon" || routePath === "/legal/privacy" || routePath === "/legal/terms") continue;
-  routeViolations.push(routePath);
+  if (!isRouteReachable(routePath, navReachable, routes, allowAll)) {
+    routeViolations.push(routePath);
+  }
 }
 
 if (routeViolations.length) {
