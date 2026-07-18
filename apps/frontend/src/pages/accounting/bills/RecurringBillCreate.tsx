@@ -11,6 +11,7 @@ import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { vendorReferenceOption } from "../../../components/parity/referenceOptionLabels";
 import { companyToday } from "../../../lib/businessDate";
+import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 
 const FREQUENCIES: { value: RecurringBillFrequency; label: string }[] = [
   { value: "weekly", label: "Weekly" },
@@ -136,6 +137,14 @@ export function RecurringBillCreate() {
           {/* Vendor */}
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">Vendor *</label>
+            {vendorsQuery.isError ? (
+              <div className="mb-2">
+                <ListErrorBanner
+                  message={`Failed to load recurring-bill vendors: ${(vendorsQuery.error as Error)?.message ?? "Request failed"}`}
+                  onRetry={() => void vendorsQuery.refetch()}
+                />
+              </div>
+            ) : null}
             {/* D-CREATE-INLINE: shared ReferenceSelect gives the vendor picker the inline "+ Add new
                 vendor" row (writes to canonical mdata.vendors — the same table this list reads, so a
                 newly created vendor is immediately selectable, QB-STD-5). */}

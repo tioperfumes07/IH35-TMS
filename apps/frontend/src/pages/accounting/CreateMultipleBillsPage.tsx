@@ -12,6 +12,7 @@ import { MoneyInput } from "../../components/forms/MoneyInput";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { coaAccountReferenceOption, vendorReferenceOption } from "../../components/parity/referenceOptionLabels";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 
 type SeedDraft = {
   bank_transaction_id?: string;
@@ -152,6 +153,18 @@ export function CreateMultipleBillsPage() {
     <div className="space-y-3">
       <PageHeader title="Create multiple bills" subtitle="Bulk vendor bill drafting from selected bank transactions." />
       {!companyId ? <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800">Select an operating company.</p> : null}
+      {vendorsQuery.isError ? (
+        <ListErrorBanner
+          message={`Failed to load vendors for bill rows: ${(vendorsQuery.error as Error)?.message ?? "Request failed"}`}
+          onRetry={() => void vendorsQuery.refetch()}
+        />
+      ) : null}
+      {coaQuery.isError ? (
+        <ListErrorBanner
+          message={`Failed to load A/P accounts for bill rows: ${(coaQuery.error as Error)?.message ?? "Request failed"}`}
+          onRetry={() => void coaQuery.refetch()}
+        />
+      ) : null}
 
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
         <span className="font-medium text-gray-800">Rows: {rows.length}</span>

@@ -9,6 +9,7 @@ import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { vendorReferenceOption } from "../../components/parity/referenceOptionLabels";
 import { parseVendorNotes } from "../../lib/vendorProfileMeta";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -111,9 +112,21 @@ export function SubmitFactoringModal({ open, operatingCompanyId, onClose, onCrea
       }}
     >
       <div className="space-y-3 text-sm">
+        {factoringSummaryQuery.isError ? (
+          <ListErrorBanner
+            message={`Failed to load factoring defaults: ${(factoringSummaryQuery.error as Error)?.message ?? "Request failed"}`}
+            onRetry={() => void factoringSummaryQuery.refetch()}
+          />
+        ) : null}
         <div className="grid gap-2 md:grid-cols-2">
           <label className="flex flex-col gap-1">
             <span className="text-xs font-semibold text-gray-600">Factoring company</span>
+            {vendorsQuery.isError ? (
+              <ListErrorBanner
+                message={`Failed to load factoring companies: ${(vendorsQuery.error as Error)?.message ?? "Request failed"}`}
+                onRetry={() => void vendorsQuery.refetch()}
+              />
+            ) : null}
             {/* FIX-06: shared ReferenceSelect gives the factoring-company (vendor) picker the inline
                 "+ Add new vendor" row (writes to canonical mdata.vendors — the same table this list
                 reads, so a newly created factor is immediately selectable, QB-STD-5). */}
@@ -156,6 +169,14 @@ export function SubmitFactoringModal({ open, operatingCompanyId, onClose, onCrea
 
         <div>
           <div className="mb-1 text-xs font-semibold text-gray-600">Invoices to factor</div>
+          {invoicesQuery.isError ? (
+            <div className="mb-2">
+              <ListErrorBanner
+                message={`Failed to load eligible invoices: ${(invoicesQuery.error as Error)?.message ?? "Request failed"}`}
+                onRetry={() => void invoicesQuery.refetch()}
+              />
+            </div>
+          ) : null}
           <div className="max-h-64 overflow-y-auto rounded-sm border border-gray-200">
             <table className="min-w-full text-left text-xs">
               <thead className="bg-gray-50 text-gray-600">
@@ -179,7 +200,7 @@ export function SubmitFactoringModal({ open, operatingCompanyId, onClose, onCrea
                     <td className="px-2 py-1.5 text-gray-700">{row.customer_recourse_type}</td>
                   </tr>
                 ))}
-                {!invoicesQuery.isLoading && (invoicesQuery.data ?? []).length === 0 ? (
+                {!invoicesQuery.isLoading && !invoicesQuery.isError && (invoicesQuery.data ?? []).length === 0 ? (
                   <tr>
                     <td className="px-2 py-2 text-gray-500" colSpan={5}>
                       No sent, eligible invoices available.

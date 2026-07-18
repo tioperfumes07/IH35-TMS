@@ -213,6 +213,14 @@ export function InvoicesListPage() {
 
   const filterBar = (
     <DataPanel title="Filters">
+      {customersQuery.isError ? (
+        <div className="mb-2">
+          <ListErrorBanner
+            message={`Failed to load customer filters: ${(customersQuery.error as Error)?.message ?? "Request failed"}`}
+            onRetry={() => void customersQuery.refetch()}
+          />
+        </div>
+      ) : null}
       <div className="grid gap-2 md:grid-cols-6">
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Status

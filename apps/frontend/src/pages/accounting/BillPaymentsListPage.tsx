@@ -153,6 +153,14 @@ export function BillPaymentsListPage() {
 
   const filterBar = (
     <div className="grid gap-2 w-full md:grid-cols-5">
+      {unpaidBillsQuery.isError ? (
+        <div className="md:col-span-5">
+          <ListErrorBanner
+            message={`Failed to load unpaid bills: ${(unpaidBillsQuery.error as Error)?.message ?? "Request failed"}`}
+            onRetry={() => void unpaidBillsQuery.refetch()}
+          />
+        </div>
+      ) : null}
       <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600 md:col-span-2">
         Unpaid bill selector
         <SelectCombobox
