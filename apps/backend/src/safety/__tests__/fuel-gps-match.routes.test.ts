@@ -13,7 +13,9 @@ const { mockQuery, mockWithCurrentUser } = vi.hoisted(() => {
     if (sql.includes("org.user_company_access")) {
       expect(sql).toContain("uca.deactivated_at IS NULL");
       expect(sql).toContain("JOIN org.companies c");
-      expect(sql).toContain("c.is_active = true");
+      // is_active is a UI-visibility flag, NOT an authz signal — the guard must NOT
+      // gate on it (else pre-launch entities like USMCA become API-unreachable).
+      expect(sql).not.toMatch(/c\.is_active\s*=\s*true/i);
       expect(sql).toContain("c.deactivated_at IS NULL");
       // REVOKED_COMPANY has an existing access row, but deactivated_at is set;
       // the canonical helper query therefore returns no authorized membership.
