@@ -8,6 +8,7 @@ import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { companyToday } from "../../lib/businessDate";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 
 type Props = {
   open: boolean;
@@ -113,6 +114,12 @@ export function PayBillModal({ open, operatingCompanyId, vendorName, bill, onClo
           }}
         >
           {error ? <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</div> : null}
+          {accountsQuery.isError ? (
+            <ListErrorBanner
+              message={`Failed to load payment accounts: ${(accountsQuery.error as Error)?.message ?? "Request failed"}`}
+              onRetry={() => void accountsQuery.refetch()}
+            />
+          ) : null}
 
           <div className="rounded-sm border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">
             Bill Payment Details

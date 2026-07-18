@@ -131,6 +131,14 @@ function BillPaymentsSubTable({ billId, companyId }: { billId: string; companyId
   });
   const payments = paymentsQuery.data?.payments ?? [];
   if (paymentsQuery.isLoading) return <div className="text-xs text-gray-500">Loading payments…</div>;
+  if (paymentsQuery.isError) {
+    return (
+      <ListErrorBanner
+        message={`Failed to load bill payments: ${(paymentsQuery.error as Error)?.message ?? "Request failed"}`}
+        onRetry={() => void paymentsQuery.refetch()}
+      />
+    );
+  }
   if (payments.length === 0) return null;
   return (
     <table className="w-full text-[11px]">
@@ -397,6 +405,12 @@ export function BillsPage() {
 
   const filterBar = (
     <div className="flex flex-col gap-2 w-full">
+      {vendorsQuery.isError ? (
+        <ListErrorBanner
+          message={`Failed to load vendor filters: ${(vendorsQuery.error as Error)?.message ?? "Request failed"}`}
+          onRetry={() => void vendorsQuery.refetch()}
+        />
+      ) : null}
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <span className="text-gray-600">Category:</span>
         <button

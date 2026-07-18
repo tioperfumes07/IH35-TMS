@@ -1,0 +1,40 @@
+{
+  "block_id": "0243-g8-5-accounting-query-errors-wave-c",
+  "root_block": "0243-g8-5-no-error-state-blank-forever-spinner",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "TIER-3",
+  "wave": "C of Accounting Core Block 6/67",
+  "branch": "fix/accounting-query-errors-wave-c",
+  "task": "Close the nine explicitly inventoried Wave C Accounting query-error gaps without changing routes, tabs, mutations, posting, or money behavior.",
+  "allowed_files": [
+    "apps/frontend/src/pages/accounting/BillsPage.tsx",
+    "apps/frontend/src/pages/accounting/PayBillModal.tsx",
+    "apps/frontend/src/pages/accounting/bill-payments/CCPaymentModal.tsx",
+    "apps/frontend/src/pages/accounting/PaymentDetailPage.tsx",
+    "apps/frontend/src/pages/accounting/PaymentMethodsCatalogPage.tsx",
+    "apps/frontend/src/pages/accounting/ExpenseCategoryMapPage.tsx",
+    "apps/frontend/src/pages/accounting/ReconciliationWorkspacePage.tsx",
+    "apps/frontend/src/pages/accounting/CashForecastPage.tsx",
+    "apps/frontend/src/pages/accounting/__tests__/AccountingQueryErrorStatesWaveC.test.ts",
+    "scripts/verify-accounting-query-error-states-wave-c.mjs",
+    "scripts/verify-steps/908-verify-accounting-query-error-states-wave-c.mjs",
+    ".block-ready/0243-g8-5-accounting-query-errors-wave-c.json"
+  ],
+  "acceptance": [
+    { "kind": "mounted", "component": "apps/frontend/src/pages/accounting/BillsPage.tsx", "note": "paymentsQuery and vendorsQuery each render a visible error and retry their exact query" },
+    { "kind": "mounted", "component": "apps/frontend/src/pages/accounting/PayBillModal.tsx", "note": "accountsQuery error renders in the drawer and retries accountsQuery" },
+    { "kind": "mounted", "component": "apps/frontend/src/pages/accounting/bill-payments/CCPaymentModal.tsx", "note": "accountsQuery error renders in the modal and retries accountsQuery" },
+    { "kind": "mounted", "component": "apps/frontend/src/pages/accounting/PaymentDetailPage.tsx", "note": "openInvoicesQuery error renders beside the apply workflow and retries openInvoicesQuery" },
+    { "kind": "mounted", "component": "apps/frontend/src/pages/accounting/PaymentMethodsCatalogPage.tsx", "note": "accountsQuery error renders in either account-editing modal and retries accountsQuery" },
+    { "kind": "mounted", "component": "apps/frontend/src/pages/accounting/ExpenseCategoryMapPage.tsx", "note": "accountsQuery error renders in the mapping creator and retries accountsQuery" },
+    { "kind": "mounted", "component": "apps/frontend/src/pages/accounting/ReconciliationWorkspacePage.tsx", "note": "accountsQuery error renders separately from workspaceQuery and retries accountsQuery" },
+    { "kind": "mounted", "component": "apps/frontend/src/pages/accounting/CashForecastPage.tsx", "note": "settingsQuery error renders in Configuration and retries settingsQuery" },
+    { "kind": "test", "path": "apps/frontend/src/pages/accounting/__tests__/AccountingQueryErrorStatesWaveC.test.ts", "note": "parameterized contracts cover all nine error and exact-refetch pairs" },
+    { "kind": "guard", "path": "scripts/verify-accounting-query-error-states-wave-c.mjs", "step": "scripts/verify-steps/908-verify-accounting-query-error-states-wave-c.mjs", "note": "auto-discovered guard catches nine independent planted removals" }
+  ],
+  "linkage": "N/A — presentational query-error UI only; no data/entity/FK/write change.",
+  "db_required": false,
+  "guard_required": true,
+  "remaining_explicit_inventory": []
+}

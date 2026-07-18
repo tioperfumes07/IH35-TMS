@@ -108,6 +108,12 @@ export function ReconciliationWorkspacePage() {
         title="Bank reconciliation workspace"
         subtitle="Match unreconciled bank transactions to ledger entries (±3 day / amount scoring)."
       />
+      {accountsQuery.isError ? (
+        <ListErrorBanner
+          message={`Failed to load reconciliation accounts: ${(accountsQuery.error as Error)?.message ?? "Request failed"}`}
+          onRetry={() => void accountsQuery.refetch()}
+        />
+      ) : null}
       {workspaceQuery.isError ? <ListErrorBanner onRetry={() => void workspaceQuery.refetch()} /> : null}
       <div className="filter-row" style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 16 }}>
         <label>
@@ -148,7 +154,9 @@ export function ReconciliationWorkspacePage() {
                 </button>
               </li>
             ))}
-            {!bankRows.length && !workspaceQuery.isLoading ? <li>No unreconciled transactions</li> : null}
+            {!bankRows.length && !accountsQuery.isError && !workspaceQuery.isLoading && !workspaceQuery.isError ? (
+              <li>No unreconciled transactions</li>
+            ) : null}
           </ul>
         </section>
         <section aria-label="Candidate ledger entries">
@@ -188,7 +196,9 @@ export function ReconciliationWorkspacePage() {
                 </div>
               </li>
             ))}
-            {!candidates.length && !workspaceQuery.isLoading ? <li>No candidates for period</li> : null}
+            {!candidates.length && !accountsQuery.isError && !workspaceQuery.isLoading && !workspaceQuery.isError ? (
+              <li>No candidates for period</li>
+            ) : null}
           </ul>
         </section>
       </div>

@@ -9,6 +9,7 @@ import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useCCPayment } from "../../../hooks/useCCPayment";
 import { companyToday } from "../../../lib/businessDate";
+import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 
 // FINANCIAL GATE (orphan-triage F1): /api/v1/bill-payments/cc posts directly to
 // accounting.bill_payments + accounting.bills (money-moving) and had zero prior UI consumer
@@ -41,6 +42,12 @@ export function CCPaymentModal({ open, operatingCompanyId, bill, onClose, onSave
         await ccPayment.mutateAsync({ bill_id: bill.id, cc_account_id: ccAccountId, payment_amount_cents: Math.round(Number(amountDollars) * 100), payment_date: paymentDate });
         onSaved(); onClose();
       }}>
+        {accountsQuery.isError ? (
+          <ListErrorBanner
+            message={`Failed to load credit-card accounts: ${(accountsQuery.error as Error)?.message ?? "Request failed"}`}
+            onRetry={() => void accountsQuery.refetch()}
+          />
+        ) : null}
         <SelectCombobox value={ccAccountId} onChange={(e) => setCcAccountId(e.target.value)} className="h-9 w-full rounded-sm border px-2 text-[13px]">
           <option value="">CC account</option>
           {ccAccounts.map((a) => <option key={String(a.id)} value={String(a.id)}>{String(a.display_name ?? a.id)}</option>)}

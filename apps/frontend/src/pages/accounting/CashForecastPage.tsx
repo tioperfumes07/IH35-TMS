@@ -9,6 +9,7 @@ import { useToast } from "../../components/Toast";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -91,6 +92,14 @@ export function CashForecastPage() {
       <div className="grid gap-3 lg:grid-cols-3">
         <div className="rounded-sm border border-gray-200 bg-white p-3">
           <h2 className="mb-2 text-sm font-semibold">Configuration</h2>
+          {settingsQuery.isError ? (
+            <div className="mb-2">
+              <ListErrorBanner
+                message={`Failed to load forecast settings: ${(settingsQuery.error as Error)?.message ?? "Request failed"}`}
+                onRetry={() => void settingsQuery.refetch()}
+              />
+            </div>
+          ) : null}
           <div className="space-y-2">
             {(
               [
@@ -106,6 +115,7 @@ export function CashForecastPage() {
                     type "50000" for $500). cents-mode MoneyInput → operator types dollars, *_cents stored. */}
                 <MoneyInput
                   valueCents={effectiveSettings[key]}
+                  disabled={settingsQuery.isError}
                   onChangeCents={(cents) => {
                     const next = { ...(settingsFromServer ?? draft), [key]: Math.max(0, cents ?? 0) };
                     if (settingsFromServer) {
@@ -124,7 +134,7 @@ export function CashForecastPage() {
             <Button
               size="sm"
               onClick={() => saveSettings.mutate(effectiveSettings)}
-              disabled={!companyId || saveSettings.isPending}
+              disabled={!companyId || settingsQuery.isError || saveSettings.isPending}
             >
               Save settings
             </Button>
