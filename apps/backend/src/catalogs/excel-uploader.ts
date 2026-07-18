@@ -50,7 +50,7 @@ export async function parseSpreadsheetBuffer(
   filename: string
 ): Promise<Array<Record<string, unknown>>> {
   const lower = filename.toLowerCase();
-  if (!lower.endsWith(".csv") && !lower.endsWith(".xlsx") && !lower.endsWith(".xls")) {
+  if (!lower.endsWith(".csv") && !lower.endsWith(".xlsx")) {
     throw new Error("unsupported_file_type");
   }
   return readUntrustedSpreadsheetRows(buffer, filename);

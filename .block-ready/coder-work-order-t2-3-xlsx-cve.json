@@ -3,15 +3,73 @@
   "status": "PENDING",
   "classification": "FINANCIAL",
   "phase": "tier3",
+  "task": "Remove vulnerable SheetJS runtime paths, preserve spreadsheet semantics with ExcelJS, and add regression coverage.",
+  "branch": "fix/xlsx-cve-closeout",
+  "lane": "A",
   "source": "MASTER-6 authored dispatch (06-TIER3-BLOCKS)",
   "source_file": "coder-work-order-t2-3-xlsx-cve.txt",
   "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
+    ".block-ready/coder-work-order-t2-3-xlsx-cve.json",
+    "apps/backend/src/accounting/statement-export-xlsx.service.ts",
+    "apps/backend/src/accounting/statement-export.service.ts",
+    "apps/backend/src/catalogs/excel-uploader.ts",
+    "apps/backend/src/catalogs/generic-catalog.routes.test.ts",
+    "apps/backend/src/fuel/fuel-transaction-import.ts",
+    "apps/backend/src/integrations/qbo/__tests__/forensic-report.service.test.ts",
+    "apps/backend/src/integrations/qbo/forensic-report.service.ts",
+    "apps/backend/src/lib/__tests__/exceljs-spreadsheet.test.ts",
+    "apps/backend/src/lib/__tests__/spreadsheet-upload-bytes.test.ts",
+    "apps/backend/src/lib/__tests__/xlsx-export-openability.test.ts",
+    "apps/backend/src/lib/exceljs-workbook.ts",
+    "apps/backend/src/lib/spreadsheet-upload-bytes.ts",
+    "apps/backend/src/lib/untrusted-spreadsheet-read.ts",
+    "apps/backend/src/maintenance/reports.routes.ts",
+    "apps/backend/src/safety/reports/safety-reports.routes.ts",
+    "apps/backend/src/scheduled-reports/report-file-builder.ts",
+    "apps/backend/src/telematics/fleet-location-hos.routes.ts",
+    "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
+    "apps/frontend/src/pages/banking/components/banking-transactions-xlsx.test.ts",
+    "apps/frontend/src/pages/banking/components/banking-transactions-xlsx.ts",
+    "apps/frontend/src/types/raw-markdown.d.ts",
+    "package-lock.json",
+    "package.json",
+    "scripts/__tests__/exceljs-cell-value.test.mjs",
+    "scripts/__tests__/block-ready.test.mjs",
+    "scripts/block-ready.mjs",
+    "scripts/exceljs-cell-value.mjs",
+    "scripts/guard-executable-contract.mjs",
+    "scripts/sync-program-board.mjs",
+    "scripts/verify-banking-palette-section7.mjs",
+    "scripts/verify-static.mjs",
+    "scripts/verify-steps/144-verify-xlsx-cve-closeout.mjs",
+    "scripts/verify-xlsx-cve-closeout.mjs",
+    "scripts/verify-xlsx-upload-magic-bytes.mjs"
   ],
+  "runtime_path": "both",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
   "acceptance": [
     {
-      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
+      "check": "Root package and lockfile contain no SheetJS xlsx dependency/subtree and exactly one root ExcelJS runtime declaration.",
+      "evidence": "Regenerated lockfile has root ExcelJS only in dependencies; npm ci and npm ls pass. Guard scans every workspace manifest/lock and plants root, workspace, and nested lockfile xlsx regressions in --selftest."
+    },
+    {
+      "check": "Parsed .xlsx uses ExcelJS, parsed .csv avoids SheetJS, and parsed legacy .xls is rejected while inert document upload acceptance remains unchanged.",
+      "evidence": "Disposable xlsx@0.18.5 controlled fixtures established the prior CSV and XLSX-date contracts; exceljs-spreadsheet tests cover numeric/boolean/date/ISO/blank/leading-zero/quoted/delimiter/escaped-quote/CRLF/formula parity, shared collision-safe CSV/XLSX duplicate and empty header suffixes, whitespace-only strings, sep directives, and cellDates false serials versus true timezone-stable Central instants. No document upload policy files changed."
+    },
+    {
+      "check": "Accounting, scheduled, maintenance, telematics, QBO forensic, safety, and banking exports no longer use SheetJS; mislabeled safety/banking outputs are genuine XLSX.",
+      "evidence": "Workbook-openability tests plus static closeout guard inventory. Banking money cells are numeric with exact-cent formatting. QBO forensic tests prove truthful QBO created/updated metadata (never inferred identity), canonical populated reconciliation exceptions or fail-closed before upload, collision-safe content-addressed R2 keys, exact-byte SHA-256/length/content-type audit, and ETag/version only when returned by R2. Parser/tooling tests prove formula, hyperlink, rich-text, error, date, scalar, and unknown-object normalization."
+    },
+    {
+      "check": "Regression guard is auto-discovered under scripts/verify-steps without package.json/workflow guard registration.",
+      "evidence": "scripts/verify-steps/144-verify-xlsx-cve-closeout.mjs runs both the guard and --selftest; guard_required=true. block-ready requires structural Rule 17 wiring plus executable shared-checker good/pass and planted-bad/fail evidence, and rejects inert, malformed, ignored-input, and unsafe-path guards; package.json/workflow hot files remain untouched."
+    },
+    {
+      "check": "Corrective review commit may be pushed to the existing PR branch, but the financial PR remains build-and-HOLD with no merge, production DB access, deployment, or live proof.",
+      "evidence": "Owner explicitly requested normal commit/push for PR review and prohibited merge. UNVERIFIED live; owner approval remains required."
     }
   ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+  "note": "Owner-approved runtime dependency removal and corrective review push. Financial/accounting export paths remain on owner HOLD and must not merge without approval."
 }

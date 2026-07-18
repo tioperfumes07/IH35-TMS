@@ -1245,3 +1245,20 @@ Guard: `verify:relay-wallet-bank-feed`.
 
 Guards: `verify:relay-wallet-bank-feed` (extended).
 
+---
+
+## 2026-07-17 — ExcelJS-only spreadsheet security closeout (LOCKED — owner)
+
+- All parsed spreadsheet imports and generated workbook exports use maintained **ExcelJS**; the vulnerable SheetJS `xlsx@0.18.5` runtime dependency is prohibited.
+- Parsed `.xlsx` remains supported behind ZIP magic-byte validation. Parsed `.csv` uses the central text/CSV reader without SheetJS.
+- CSV replacement preserves the measured legacy SheetJS coercion contract (`defval:null`, numeric/date serial/boolean/formula behavior) so fuel dates, hashes, and load-matching inputs do not drift during the security replacement.
+- Parsed legacy `.xls` is explicitly rejected with `legacy_xls_unsupported`; users must convert it to `.xlsx` or `.csv`.
+- This parser restriction does **not** alter inert document storage: `.xls` files may remain accepted as non-executed evidence/document uploads where the existing document policy allows them.
+- XLSX response contracts must contain genuine openable XLSX workbook bytes. CSV bytes must never be labeled as XLSX or `.xls`.
+- Workbook money cells are numeric dollar values with explicit display formatting; empty money cells remain empty rather than becoming zero or text.
+- ExcelJS structured cells are normalized before business use: formulas use cached results or null, hyperlinks use display text, rich text is concatenated, errors are explicit, dates are deterministic ISO strings in trusted tooling, and unknown objects never stringify as `[object Object]`.
+- Worksheet names are sanitized and deterministically limited to Excel's 31-character maximum.
+- QBO forensic reports use six explicit stable semantic worksheet names at or below 31 characters; duplicate sanitized names receive deterministic numeric suffixes rather than colliding.
+
+Guard: `scripts/verify-xlsx-cve-closeout.mjs`, auto-discovered through `scripts/verify-steps/144-verify-xlsx-cve-closeout.mjs`.
+

@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  hasOleSpreadsheetMagic,
   hasZipSpreadsheetMagic,
   looksLikeCsvText,
   SpreadsheetUploadRejectedError,
@@ -24,10 +23,14 @@ describe("spreadsheet-upload-bytes", () => {
     }
   });
 
-  it("accepts OLE magic for .xls", () => {
+  it("rejects parsed legacy .xls even when OLE magic is present", () => {
     const buf = Buffer.from([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1, 0x00]);
-    expect(hasOleSpreadsheetMagic(buf)).toBe(true);
-    expect(validateSpreadsheetUploadBytes(buf, "legacy.xls")).toBe("xls");
+    expect(() => validateSpreadsheetUploadBytes(buf, "legacy.xls")).toThrow(SpreadsheetUploadRejectedError);
+    try {
+      validateSpreadsheetUploadBytes(buf, "legacy.xls");
+    } catch (err) {
+      expect((err as SpreadsheetUploadRejectedError).code).toBe("legacy_xls_unsupported");
+    }
   });
 
   it("accepts CSV text with delimiters", () => {

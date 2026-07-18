@@ -1,10 +1,8 @@
 #!/usr/bin/env node
 /**
  * 0091-h2-1 / 0243-h2-1 — untrusted spreadsheet uploads must pass magic-byte validation
- * before any xlsx parse, and must route through lib/untrusted-spreadsheet-read.ts.
- *
- * Residual: xlsx@0.18.5 remains for .csv/.xls gated paths only (no patched SheetJS on npm).
- * .xlsx uploads use exceljs.
+ * before parsing, route through lib/untrusted-spreadsheet-read.ts, use ExcelJS for
+ * .xlsx, use the local CSV parser for .csv, and reject parsed legacy .xls.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -20,12 +18,6 @@ const UPLOAD_ROUTE_FILES = [
 
 const GATE_FILE = "apps/backend/src/lib/untrusted-spreadsheet-read.ts";
 const BYTES_FILE = "apps/backend/src/lib/spreadsheet-upload-bytes.ts";
-
-/** Trusted local tooling / export-only — not user upload ingress. */
-const XLSX_READ_ALLOWLIST = [
-  "apps/backend/src/lib/untrusted-spreadsheet-read.ts",
-  "scripts/sync-program-board.mjs",
-];
 
 function read(rel) {
   const full = path.join(ROOT, rel);
@@ -53,9 +45,6 @@ export function checkUploadWiring() {
   const failures = [];
   for (const rel of UPLOAD_ROUTE_FILES) {
     const src = read(rel);
-    if (/\bXLSX\.read\b/.test(src)) {
-      failures.push(`${rel} must not call XLSX.read directly — use readUntrustedSpreadsheetRows`);
-    }
     if (!src.includes("readUntrustedSpreadsheetRows") && !src.includes("parseSpreadsheetBuffer")) {
       failures.push(`${rel} must route uploads through the gated reader`);
     }
@@ -71,11 +60,17 @@ export function checkGateModuleFromSrc(gate, bytes) {
   if (!gate.includes("exceljs")) {
     failures.push(`${GATE_FILE} must use exceljs for .xlsx untrusted uploads`);
   }
+  if (!gate.includes("readGatedCsvText")) {
+    failures.push(`${GATE_FILE} must centralize CSV parsing without SheetJS`);
+  }
   if (!bytes.includes("hasZipSpreadsheetMagic")) {
     failures.push(`${BYTES_FILE} must define ZIP magic-byte check for .xlsx`);
   }
-  if (!/\bXLSX\.read\b/.test(gate)) {
-    failures.push(`${GATE_FILE} must centralize residual xlsx reads for csv/xls behind the gate`);
+  if (!bytes.includes("legacy_xls_unsupported")) {
+    failures.push(`${BYTES_FILE} must reject parsed legacy .xls`);
+  }
+  if (/from\s+["']xlsx["']|import\(["']xlsx["']\)|\bXLSX\./.test(gate)) {
+    failures.push(`${GATE_FILE} must not use the SheetJS xlsx package`);
   }
   return failures;
 }
@@ -84,21 +79,20 @@ export function checkGateModule() {
   return checkGateModuleFromSrc(read(GATE_FILE), read(BYTES_FILE));
 }
 
-export function checkNoUngatedXlsxRead() {
+export function checkNoSheetJsRead() {
   const failures = [];
   const backendSrc = path.join(ROOT, "apps/backend/src");
   for (const file of walkTsFiles(backendSrc)) {
     const rel = path.relative(ROOT, file).replaceAll("\\", "/");
     const src = fs.readFileSync(file, "utf8");
-    if (!/\bXLSX\.read\b/.test(src)) continue;
-    if (XLSX_READ_ALLOWLIST.includes(rel)) continue;
-    failures.push(`${rel} calls XLSX.read outside the upload gate allowlist`);
+    if (!/from\s+["']xlsx["']|import\(["']xlsx["']\)|\bXLSX\./.test(src)) continue;
+    failures.push(`${rel} still uses the SheetJS xlsx package`);
   }
   return failures;
 }
 
 export function runChecks() {
-  return [...checkUploadWiring(), ...checkGateModule(), ...checkNoUngatedXlsxRead()];
+  return [...checkUploadWiring(), ...checkGateModule(), ...checkNoSheetJsRead()];
 }
 
 function selftest() {

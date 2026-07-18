@@ -33,6 +33,9 @@ const SELF_PATH = fileURLToPath(import.meta.url);
 const SELF_NAME = path.basename(SELF_PATH);
 const SCRIPTS_DIR = path.dirname(SELF_PATH);
 const LABEL = "verify-static";
+// This is an orchestration runner, not a static guard. It starts its own
+// PostgreSQL server and block-ready executes it separately after verify:static.
+const NON_STATIC_ORCHESTRATORS = new Set(["verify-local-ci.mjs"]);
 
 // A DB-connection failure signature (block-specified) plus the sentinel's refusal codes.
 const DB_NEEDED_RE = /ECONNREFUSED|does not exist|DATABASE_URL|ENOTFOUND|password authentication|ECONNRESET|EADDRNOTAVAIL/i;
@@ -149,7 +152,7 @@ export function runStatic({ dir = SCRIPTS_DIR, self = SELF_NAME, ciSet } = {}) {
   const set = ciSet || ciRunGuardSet();
   const files = fs
     .readdirSync(dir)
-    .filter((f) => /^verify-.*\.mjs$/.test(f) && f !== self)
+    .filter((f) => /^verify-.*\.mjs$/.test(f) && f !== self && !NON_STATIC_ORCHESTRATORS.has(f))
     .sort()
     .map((f) => path.join(dir, f));
   return files.map((f) => {
@@ -196,6 +199,7 @@ function selftest() {
     fs.writeFileSync(path.join(tmp, "verify-pass-fixture.mjs"), `console.log("fixture OK"); process.exit(0);\n`);
     fs.writeFileSync(path.join(tmp, "verify-fail-fixture.mjs"), `console.error("  ✗ deliberate stale-anchor assertion"); process.exit(1);\n`);
     fs.writeFileSync(path.join(tmp, "verify-db-fixture.mjs"), `console.error("connect ECONNREFUSED 127.0.0.1:59999"); process.exit(1);\n`);
+    fs.writeFileSync(path.join(tmp, "verify-local-ci.mjs"), `console.error("orchestrator must not run in static sweep"); process.exit(1);\n`);
     // a guard whose live run passes but whose --selftest is broken → must classify FAIL
     fs.writeFileSync(
       path.join(tmp, "verify-selftest-broken-fixture.mjs"),
@@ -223,6 +227,7 @@ function selftest() {
       ["fail fixture → FAIL", kindOf("verify-fail-fixture.mjs") === "FAIL"],
       ["db fixture → SKIP-needs-db", kindOf("verify-db-fixture.mjs") === "SKIP-needs-db"],
       ["broken-selftest fixture → FAIL", kindOf("verify-selftest-broken-fixture.mjs") === "FAIL"],
+      ["local-CI orchestrator excluded from static sweep", get("verify-local-ci.mjs") === undefined],
       // sentinel safety property: a real DB-connect attempt is isolated → SKIP, never PASS, never real FAIL
       ["sentinel-connect fixture → SKIP-needs-db (isolated, not PASS/FAIL)", kindOf("verify-sentinel-connect-fixture.mjs") === "SKIP-needs-db"],
       ["exactly 2 FAIL", results.filter((r) => r.kind === "FAIL").length === 2],

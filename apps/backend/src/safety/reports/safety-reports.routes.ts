@@ -1,8 +1,10 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import ExcelJS from "exceljs";
 import { z } from "zod";
 import { withCurrentUser } from "../../auth/db.js";
 import { requireAuth } from "../../auth/session-middleware.js";
 import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
+import { addArrayWorksheet, writeWorkbookBuffer } from "../../lib/exceljs-workbook.js";
 
 const companyQuerySchema = z.object({ operating_company_id: z.string().uuid() });
 const reportParamsSchema = z.object({ report_id: z.string().trim().min(1) });
@@ -22,6 +24,15 @@ async function withCompanyScope<T>(userId: string, companyId: string, fn: (clien
     await client.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
     return fn(client as Queryable);
   });
+}
+
+export async function renderSafetyReportXlsx(): Promise<Buffer> {
+  const workbook = new ExcelJS.Workbook();
+  addArrayWorksheet(workbook, "Safety Report", [
+    ["event_class", "total"],
+    ["safety.sample", 0],
+  ]);
+  return writeWorkbookBuffer(workbook);
 }
 
 export async function registerSafetyReportsRoutes(app: FastifyInstance) {
@@ -55,10 +66,10 @@ export async function registerSafetyReportsRoutes(app: FastifyInstance) {
     if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
     const params = reportParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return reply.code(400).send({ error: "validation_error", details: params.error.flatten() });
-    const csv = "event_class,total\nsafety.sample,0\n";
+    const buffer = await renderSafetyReportXlsx();
     return reply
       .header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
       .header("Content-Disposition", `attachment; filename="safety-${params.data.report_id}.xlsx"`)
-      .send(Buffer.from(csv, "utf8"));
+      .send(buffer);
   });
 }

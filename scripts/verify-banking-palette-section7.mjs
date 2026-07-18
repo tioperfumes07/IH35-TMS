@@ -83,13 +83,13 @@ function runSelftest() {
     writeFileSync(tmpFile, dirtySrc);
     const dirty = scanBankingPalette(tmpRoot);
     if (dirty.count < 2) {
-      fail("--selftest: injected violations not detected");
+      throw new Error("--selftest: injected violations not detected");
     }
     if (clean.count !== BASELINE) {
-      fail(`--selftest: live banking tree expected ${BASELINE} violations, got ${clean.count}`);
+      throw new Error(`--selftest: live banking tree expected ${BASELINE} violations, got ${clean.count}`);
     }
     console.log(`OK ${LABEL}: --selftest passed (detects injected drift; live count=${clean.count})`);
-    process.exit(0);
+    return;
   } finally {
     try {
       rmSync(tmpRoot, { recursive: true, force: true });

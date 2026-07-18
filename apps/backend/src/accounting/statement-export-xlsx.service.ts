@@ -1,11 +1,11 @@
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
+import { addArrayWorksheet, writeWorkbookBuffer } from "../lib/exceljs-workbook.js";
 
-export function renderStatementXlsx(input: {
+export async function renderStatementXlsx(input: {
   sheetName: string;
   rows: Array<Array<string | number>>;
-}): Buffer {
-  const workbook = XLSX.utils.book_new();
-  const sheet = XLSX.utils.aoa_to_sheet(input.rows);
-  XLSX.utils.book_append_sheet(workbook, sheet, input.sheetName);
-  return Buffer.from(XLSX.write(workbook, { type: "buffer", bookType: "xlsx" }) as ArrayBuffer);
+}): Promise<Buffer> {
+  const workbook = new ExcelJS.Workbook();
+  addArrayWorksheet(workbook, input.sheetName, input.rows);
+  return writeWorkbookBuffer(workbook);
 }

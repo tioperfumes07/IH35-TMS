@@ -1,6 +1,6 @@
 import Fastify from "fastify";
 import multipart from "@fastify/multipart";
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import { z } from "zod";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { mapSpreadsheetRows, normalizeHeaderKey, parseSpreadsheetBuffer } from "./excel-uploader.js";
@@ -256,13 +256,13 @@ describe.sequential("generic catalog framework", () => {
 
   it("POST import accepts xlsx and returns job id", async () => {
     const app = await buildApp();
-    const wb = XLSX.utils.book_new();
-    const sheet = XLSX.utils.aoa_to_sheet([
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("Sheet1");
+    sheet.addRows([
       ["code", "display_name"],
       ["IMPORT_ONE", "Import One"],
     ]);
-    XLSX.utils.book_append_sheet(wb, sheet, "Sheet1");
-    const buffer = XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as Buffer;
+    const buffer = Buffer.from(await workbook.xlsx.writeBuffer());
 
     const boundary = "----catalog-import-boundary";
     const body = Buffer.concat([
@@ -287,9 +287,14 @@ describe.sequential("generic catalog framework", () => {
   });
 
   it("parseSpreadsheetBuffer reads csv files", async () => {
-    const csv = "code,display_name\nA1,Alpha\n";
+    const csv = 'code,display_name\nA1,"Alpha, Inc."\n';
     const rows = await parseSpreadsheetBuffer(Buffer.from(csv, "utf8"), "sample.csv");
     expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({ code: "A1", display_name: "Alpha" });
+    expect(rows[0]).toMatchObject({ code: "A1", display_name: "Alpha, Inc." });
+  });
+
+  it("parseSpreadsheetBuffer rejects parsed legacy xls files", async () => {
+    const ole = Buffer.from([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]);
+    await expect(parseSpreadsheetBuffer(ole, "legacy.xls")).rejects.toThrow("unsupported_file_type");
   });
 });

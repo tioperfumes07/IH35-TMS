@@ -41,6 +41,7 @@ import { listVendors, listCustomers } from "../../../api/mdata";
 import { classesCatalogClient, itemsCatalogClient, type AccountingCatalogRow } from "../../../api/catalogs-accounting";
 import { BankTransactionSplitModal } from "./BankTransactionSplitModal";
 import { MatchDrawer } from "./MatchDrawer";
+import { buildBankingTransactionsXlsx } from "./banking-transactions-xlsx";
 import { RecordTransferModal } from "../RecordTransferModal";
 import { RecordCCPaymentModal } from "../RecordCCPaymentModal";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
@@ -228,10 +229,6 @@ export function spentReceived(tx: PlaidBankTransaction) {
 
 function transactionLabel(tx: PlaidBankTransaction) {
   return tx.description || tx.merchant_name || "—";
-}
-
-function toExcelValue(value: string) {
-  return value.includes(",") || value.includes('"') || value.includes("\n") ? `"${value.replace(/"/g, '""')}"` : value;
 }
 
 export function BankingTransactionsDesignView({
@@ -817,7 +814,7 @@ export function BankingTransactionsDesignView({
 
   // Shared Excel/CSV export (used by the Print/Export menu and the bulk bar). Called at click time,
   // so the memoized tableRows / runningBalanceById are already initialized.
-  function exportTransactionsToExcel(rows: PlaidBankTransaction[], filename: string) {
+  async function exportTransactionsToExcel(rows: PlaidBankTransaction[], filename: string) {
     const header = ["Date", "Description", "Spent", "Received", "Balance", "From/To", "Customer", "Product/Service"];
     const lines = rows.map((tx) => {
       const { spent, received } = spentReceived(tx);
@@ -826,16 +823,18 @@ export function BankingTransactionsDesignView({
       return [
         formatBankTransactionDate(tx.transaction_date),
         transactionLabel(tx),
-        spent > 0 ? (spent / 100).toFixed(2) : "",
-        received > 0 ? (received / 100).toFixed(2) : "",
-        bal == null ? "" : (bal / 100).toFixed(2),
+        spent > 0 ? spent / 100 : "",
+        received > 0 ? received / 100 : "",
+        bal == null ? "" : bal / 100,
         computeFromTo(tx, draft),
         draft.customerProject,
         draft.productService,
       ];
     });
-    const csv = [header, ...lines].map((row) => row.map((cell) => toExcelValue(String(cell ?? ""))).join(",")).join("\n");
-    const blob = new Blob([csv], { type: "application/vnd.ms-excel;charset=utf-8;" });
+    const buffer = await buildBankingTransactionsXlsx([header, ...lines]);
+    const blob = new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
     const href = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = href;
@@ -923,7 +922,7 @@ export function BankingTransactionsDesignView({
       pushToast("Select transactions to export.", "error");
       return;
     }
-    exportTransactionsToExcel(rows, "banking-transactions-selected.xls");
+    void exportTransactionsToExcel(rows, "banking-transactions-selected.xlsx");
   }
 
   return (
@@ -1332,7 +1331,7 @@ export function BankingTransactionsDesignView({
                     className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-xs hover:bg-gray-50"
                     onClick={() => {
                       setPrintExportMenuOpen(false);
-                      exportTransactionsToExcel(tableRows, "banking-transactions.xls");
+                      void exportTransactionsToExcel(tableRows, "banking-transactions.xlsx");
                     }}
                   >
                     <Download className="h-3.5 w-3.5" />

@@ -1,9 +1,12 @@
 #!/usr/bin/env node
 import fs from "node:fs";
 import path from "node:path";
+import { randomUUID } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import ts from "typescript";
 import { resolveBlockReadyManifest, aggregateBlockReadyManifests } from "./block-ready-agent-manifest.mjs";
+import { GUARD_CONTRACT_REPORT_PREFIX } from "./guard-executable-contract.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -105,6 +108,22 @@ export function matchesAnyAllowedFile(filePath, patterns) {
   return patterns.some((pattern) => globToRegExp(pattern).test(normalized));
 }
 
+export function resolvePathInsideRoot(candidate, rootDir = ROOT) {
+  if (typeof candidate !== "string" || candidate.length === 0) {
+    throw new Error("repository path must be a non-empty string");
+  }
+  if (path.isAbsolute(candidate)) {
+    throw new Error(`repository path must be relative: ${candidate}`);
+  }
+  const resolvedRoot = path.resolve(rootDir);
+  const resolved = path.resolve(resolvedRoot, candidate);
+  const relative = path.relative(resolvedRoot, resolved);
+  if (relative === ".." || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
+    throw new Error(`repository path escapes root: ${candidate}`);
+  }
+  return resolved;
+}
+
 export function validateManifest(manifest) {
   const errors = [];
   const required = {
@@ -135,6 +154,14 @@ export function validateManifest(manifest) {
         errors.push(`${key} must be array`);
       } else if (!value.every((item) => typeof item === "string")) {
         errors.push(`${key} must contain only strings`);
+      } else if (key === "allowed_files") {
+        for (const item of value) {
+          try {
+            resolvePathInsideRoot(item);
+          } catch (error) {
+            errors.push(`allowed_files contains unsafe path: ${error.message}`);
+          }
+        }
       }
     }
     if (kind === "enum" && !["src", "dist", "both", "docs"].includes(value)) {
@@ -145,14 +172,41 @@ export function validateManifest(manifest) {
   return errors;
 }
 
+export function readUtf8FileFromStableHandle(filePath) {
+  let fileDescriptor;
+  try {
+    const noFollow = fs.constants.O_NOFOLLOW ?? 0;
+    fileDescriptor = fs.openSync(filePath, fs.constants.O_RDONLY | noFollow);
+    const stat = fs.fstatSync(fileDescriptor);
+    if (!stat.isFile()) {
+      return { ok: false, code: "NOT_REGULAR_FILE", reason: `${filePath} is not a regular file` };
+    }
+    return { ok: true, source: fs.readFileSync(fileDescriptor, "utf8") };
+  } catch (error) {
+    const code = typeof error === "object" && error && "code" in error ? String(error.code) : "READ_ERROR";
+    return {
+      ok: false,
+      code,
+      reason:
+        code === "ENOENT"
+          ? `${filePath} does not exist`
+          : `cannot read ${filePath}: ${error instanceof Error ? error.message : String(error)}`,
+    };
+  } finally {
+    if (fileDescriptor !== undefined) fs.closeSync(fileDescriptor);
+  }
+}
+
 export function parseManifest(manifestPath) {
-  const absolutePath = path.resolve(ROOT, manifestPath);
-  if (!fs.existsSync(absolutePath)) {
+  const absolutePath = resolvePathInsideRoot(manifestPath);
+  const manifestRead = readUtf8FileFromStableHandle(absolutePath);
+  if (!manifestRead.ok && manifestRead.code === "ENOENT") {
     throw new Error(`manifest file not found: ${manifestPath}`);
   }
+  if (!manifestRead.ok) throw new Error(`manifest cannot be read: ${manifestRead.reason}`);
   let parsed;
   try {
-    parsed = JSON.parse(fs.readFileSync(absolutePath, "utf8"));
+    parsed = JSON.parse(manifestRead.source);
   } catch (error) {
     throw new Error(`manifest is not valid JSON: ${error.message}`);
   }
@@ -165,10 +219,12 @@ export function parseManifest(manifestPath) {
 
 export function readVerifyMeta(rootDir = ROOT) {
   const verifyMetaPath = path.resolve(rootDir, "scripts/verify-meta.json");
-  if (!fs.existsSync(verifyMetaPath)) {
+  const metaRead = readUtf8FileFromStableHandle(verifyMetaPath);
+  if (!metaRead.ok && metaRead.code === "ENOENT") {
     return { db_gated_verify_scripts: [], block_ready_c5_skip_after_c4: [] };
   }
-  const data = JSON.parse(fs.readFileSync(verifyMetaPath, "utf8"));
+  if (!metaRead.ok) throw new Error(`verify-meta cannot be read: ${metaRead.reason}`);
+  const data = JSON.parse(metaRead.source);
   const list = Array.isArray(data.db_gated_verify_scripts) ? data.db_gated_verify_scripts : [];
   const skipAfterC4 = Array.isArray(data.block_ready_c5_skip_after_c4) ? data.block_ready_c5_skip_after_c4 : [];
   return { db_gated_verify_scripts: list, block_ready_c5_skip_after_c4: skipAfterC4 };
@@ -224,44 +280,382 @@ function getNewestMtimeMs(targetPath) {
   return max;
 }
 
-export function evaluateGuardRequirement({ guardRequired, changedNameStatus, ciDiffText }) {
+function parseJavaScriptSource(filename, source) {
+  if (typeof source !== "string" || source.trim() === "") {
+    return { ok: false, sourceFile: null, reason: "source is empty" };
+  }
+  const sourceFile = ts.createSourceFile(
+    filename,
+    source,
+    ts.ScriptTarget.ESNext,
+    true,
+    ts.ScriptKind.JS
+  );
+  if (sourceFile.parseDiagnostics.length > 0) {
+    return {
+      ok: false,
+      sourceFile,
+      reason: `parse diagnostics: ${sourceFile.parseDiagnostics
+        .map((diagnostic) => ts.flattenDiagnosticMessageText(diagnostic.messageText, " "))
+        .join("; ")}`,
+    };
+  }
+  return { ok: true, sourceFile, reason: null };
+}
+
+function walkAst(node, visitor, { skipNestedFunctions = false } = {}) {
+  if (visitor(node) === false) return;
+  if (
+    skipNestedFunctions &&
+    node.parent &&
+    (ts.isFunctionDeclaration(node) ||
+      ts.isFunctionExpression(node) ||
+      ts.isArrowFunction(node) ||
+      ts.isMethodDeclaration(node))
+  ) {
+    return;
+  }
+  ts.forEachChild(node, (child) => walkAst(child, visitor, { skipNestedFunctions }));
+}
+
+export function analyzeNewGuardSource(source) {
+  const parsed = parseJavaScriptSource("verify-guard.mjs", source);
+  if (!parsed.ok) return parsed;
+  const { sourceFile } = parsed;
+  const declarations = new Set();
+  let importsContractHelper = false;
+  for (const statement of sourceFile.statements) {
+    if (ts.isFunctionDeclaration(statement) && statement.name && statement.body) {
+      declarations.add(statement.name.text);
+    }
+    if (
+      ts.isImportDeclaration(statement) &&
+      ts.isStringLiteral(statement.moduleSpecifier) &&
+      statement.moduleSpecifier.text === "./guard-executable-contract.mjs"
+    ) {
+      const elements = statement.importClause?.namedBindings;
+      importsContractHelper =
+        ts.isNamedImports(elements) &&
+        elements.elements.some(
+          (element) =>
+            element.name.text === "runExecutableGuard" &&
+            (!element.propertyName || element.propertyName.text === "runExecutableGuard")
+        );
+    }
+  }
+  if (!importsContractHelper) {
+    return { ok: false, reason: "guard must import the executable contract helper without aliasing" };
+  }
+
+  const contractObjects = [];
+  for (const statement of sourceFile.statements) {
+    if (
+      ts.isExpressionStatement(statement) &&
+      ts.isCallExpression(statement.expression) &&
+      ts.isIdentifier(statement.expression.expression) &&
+      statement.expression.expression.text === "runExecutableGuard" &&
+      statement.expression.arguments.length === 1 &&
+      ts.isObjectLiteralExpression(statement.expression.arguments[0])
+    ) {
+      contractObjects.push(statement.expression.arguments[0]);
+    }
+  }
+  if (contractObjects.length !== 1) {
+    return { ok: false, reason: "guard must make one top-level runExecutableGuard({...}) call" };
+  }
+  const [contractObject] = contractObjects;
+
+  const properties = new Map();
+  for (const property of contractObject.properties) {
+    if (
+      ts.isPropertyAssignment(property) &&
+      (ts.isIdentifier(property.name) || ts.isStringLiteral(property.name))
+    ) {
+      properties.set(property.name.text, property.initializer);
+    } else if (ts.isShorthandPropertyAssignment(property)) {
+      properties.set(property.name.text, property.name);
+    }
+  }
+  for (const required of [
+    "label",
+    "checker",
+    "loadRepositoryFixture",
+    "goodFixture",
+    "badFixture",
+  ]) {
+    if (!properties.has(required)) {
+      return { ok: false, reason: `guard executable contract is missing ${required}` };
+    }
+  }
+  for (const functionProperty of ["checker", "loadRepositoryFixture"]) {
+    const value = properties.get(functionProperty);
+    if (!ts.isIdentifier(value) || !declarations.has(value.text)) {
+      return {
+        ok: false,
+        reason: `guard executable contract ${functionProperty} must name a local function declaration`,
+      };
+    }
+  }
+  return { ok: true, reason: null };
+}
+
+export function analyzeVerifyStepSource(source) {
+  const parsed = parseJavaScriptSource("verify-step.mjs", source);
+  if (!parsed.ok) return { ...parsed, invocations: new Map() };
+  const invocations = new Map();
+  walkAst(parsed.sourceFile, (node) => {
+    if (
+      ts.isCallExpression(node) &&
+      ts.isPropertyAccessExpression(node.expression) &&
+      ts.isIdentifier(node.expression.expression) &&
+      node.expression.expression.text === "ctx" &&
+      node.expression.name.text === "run" &&
+      node.arguments.length >= 2 &&
+      ts.isStringLiteralLike(node.arguments[0]) &&
+      node.arguments[0].text === "node" &&
+      ts.isArrayLiteralExpression(node.arguments[1])
+    ) {
+      const [guardArgument, flagArgument, ...extraArguments] = node.arguments[1].elements;
+      if (
+        guardArgument &&
+        ts.isStringLiteralLike(guardArgument) &&
+        /^scripts\/verify-[^/]+\.mjs$/.test(guardArgument.text) &&
+        extraArguments.length === 0
+      ) {
+        const current = invocations.get(guardArgument.text) ?? {
+          normal: false,
+          selftest: false,
+        };
+        if (!flagArgument) current.normal = true;
+        if (
+          flagArgument &&
+          ts.isStringLiteralLike(flagArgument) &&
+          flagArgument.text === "--selftest"
+        ) {
+          current.selftest = true;
+        }
+        invocations.set(guardArgument.text, current);
+      }
+    }
+  });
+  return { ok: true, reason: null, invocations };
+}
+
+export function invokedGuardsFromVerifyStep(source) {
+  return new Set(analyzeVerifyStepSource(source).invocations.keys());
+}
+
+export function validateGuardContractEvidence(evidence, expectedNonce) {
+  if (!evidence || typeof evidence !== "object") {
+    return { ok: false, reason: "executable guard contract evidence is missing" };
+  }
+  if (
+    evidence.version !== 1 ||
+    evidence.execution !== "same-checker-real-good-bad" ||
+    evidence.nonce !== expectedNonce ||
+    evidence.goodViolationCount !== 0 ||
+    !Number.isInteger(evidence.badViolationCount) ||
+    evidence.badViolationCount < 1
+  ) {
+    return {
+      ok: false,
+      reason:
+        "executable guard contract did not provide stable good/pass and planted-bad/fail evidence from the shared checker",
+    };
+  }
+  return { ok: true, reason: null };
+}
+
+export function executeGuardContract(guardPath, rootDir = ROOT) {
+  let absolutePath;
+  try {
+    absolutePath = resolvePathInsideRoot(guardPath, rootDir);
+  } catch (error) {
+    return { ok: false, reason: error.message, evidence: null };
+  }
+  const nonce = randomUUID();
+  const result = spawnSync(
+    process.execPath,
+    [absolutePath, "--selftest", "--guard-contract-report"],
+    {
+      cwd: path.resolve(rootDir),
+      encoding: "utf8",
+      shell: false,
+      env: { ...process.env, IH35_GUARD_CONTRACT_NONCE: nonce },
+    }
+  );
+  if (result.status !== 0) {
+    const output = `${result.stdout ?? ""}\n${result.stderr ?? ""}`.trim();
+    return {
+      ok: false,
+      reason: `guard executable selftest exited with code ${result.status}: ${output}`,
+      evidence: null,
+    };
+  }
+  const reportLine = (result.stdout ?? "")
+    .split(/\r?\n/)
+    .find((line) => line.startsWith(GUARD_CONTRACT_REPORT_PREFIX));
+  if (!reportLine) {
+    return { ok: false, reason: "guard executable selftest emitted no contract report", evidence: null };
+  }
+  let evidence;
+  try {
+    evidence = JSON.parse(reportLine.slice(GUARD_CONTRACT_REPORT_PREFIX.length));
+  } catch (error) {
+    return { ok: false, reason: `guard contract report is invalid JSON: ${error.message}`, evidence: null };
+  }
+  const validation = validateGuardContractEvidence(evidence, nonce);
+  return { ...validation, evidence };
+}
+
+export function evaluateGuardRequirement({
+  guardRequired,
+  changedNameStatus,
+  changedFileSources = new Map(),
+  guardContractResults = new Map(),
+}) {
   if (!guardRequired) {
-    return { ok: true, matchedGuardFiles: [], hasCiWiring: true };
+    return { ok: true, matchedGuardFiles: [], matchedStepFiles: [], wiredGuardFiles: [], hasCiWiring: true };
   }
   const addedFiles = changedNameStatus
     .filter((item) => item.status.startsWith("A"))
     .map((item) => item.path);
+  const unsafeAddedPaths = [];
+  for (const filePath of addedFiles) {
+    try {
+      resolvePathInsideRoot(filePath);
+    } catch (error) {
+      unsafeAddedPaths.push(`${filePath} (${error.message})`);
+    }
+  }
+  if (unsafeAddedPaths.length > 0) {
+    return {
+      ok: false,
+      reason: `guard_required=true but added paths are unsafe: ${unsafeAddedPaths.join(", ")}`,
+      matchedGuardFiles: [],
+      matchedStepFiles: [],
+      invalidGuardFiles: [],
+      invalidStepFiles: [],
+      wiredGuardFiles: [],
+      hasCiWiring: false,
+    };
+  }
 
-  const guardFilePatterns = [
-    "scripts/verify-*.mjs",
-    "scripts/__tests__/verify-*.test.mjs",
-    "scripts/verify-steps/*.mjs",
-  ];
-
-  const matchedGuardFiles = addedFiles.filter((filePath) =>
-    guardFilePatterns.some((pattern) => globToRegExp(pattern).test(filePath))
+  const sourceFor = (filePath) =>
+    changedFileSources instanceof Map
+      ? changedFileSources.get(filePath)
+      : changedFileSources?.[filePath];
+  const guardCandidates = addedFiles.filter((filePath) =>
+    /^scripts\/verify-[^/]+\.mjs$/.test(filePath)
   );
+  const guardAnalyses = new Map(
+    guardCandidates.map((filePath) => [
+      filePath,
+      analyzeNewGuardSource(sourceFor(filePath)),
+    ])
+  );
+  const invalidGuardFiles = guardCandidates.filter((filePath) => {
+    if (!guardAnalyses.get(filePath)?.ok) return true;
+    const execution =
+      guardContractResults instanceof Map
+        ? guardContractResults.get(filePath)
+        : guardContractResults?.[filePath];
+    return !execution?.ok;
+  });
+  const matchedGuardFiles = guardCandidates.filter(
+    (filePath) => guardAnalyses.get(filePath)?.ok
+  );
+  const matchedStepFiles = addedFiles.filter((filePath) =>
+    /^scripts\/verify-steps\/[^/]+\.mjs$/.test(filePath)
+  );
+  const stepAnalyses = new Map(
+    matchedStepFiles.map((filePath) => [
+      filePath,
+      analyzeVerifyStepSource(sourceFor(filePath)),
+    ])
+  );
+  const invalidStepFiles = matchedStepFiles.filter(
+    (filePath) => !stepAnalyses.get(filePath)?.ok
+  );
+  const wiredGuardFiles = matchedGuardFiles.filter((guardFile) =>
+    matchedStepFiles.some((stepFile) => {
+      const invocation = stepAnalyses.get(stepFile)?.invocations.get(guardFile);
+      return invocation?.normal === true && invocation?.selftest === true;
+    })
+  );
+  const hasCiWiring = wiredGuardFiles.length > 0;
 
-  const hasCiWiring = /^\+.*verify:/m.test(ciDiffText);
+  if (invalidGuardFiles.length > 0) {
+    return {
+      ok: false,
+      reason: `guard_required=true but added guard contract failed: ${invalidGuardFiles
+        .map((filePath) => {
+          const analysis = guardAnalyses.get(filePath);
+          const execution =
+            guardContractResults instanceof Map
+              ? guardContractResults.get(filePath)
+              : guardContractResults?.[filePath];
+          return `${filePath} (${analysis?.ok ? execution?.reason : analysis?.reason})`;
+        })
+        .join(", ")}`,
+      matchedGuardFiles,
+      matchedStepFiles,
+      invalidGuardFiles,
+      invalidStepFiles,
+      wiredGuardFiles,
+      hasCiWiring,
+    };
+  }
+  if (invalidStepFiles.length > 0) {
+    return {
+      ok: false,
+      reason: `guard_required=true but added verify-step parse failed: ${invalidStepFiles
+        .map((filePath) => `${filePath} (${stepAnalyses.get(filePath)?.reason})`)
+        .join(", ")}`,
+      matchedGuardFiles,
+      matchedStepFiles,
+      invalidGuardFiles,
+      invalidStepFiles,
+      wiredGuardFiles,
+      hasCiWiring,
+    };
+  }
 
   if (matchedGuardFiles.length === 0) {
     return {
       ok: false,
-      reason: "guard_required=true but no new verify guard/test/step file was added",
+      reason: "guard_required=true but no real scripts/verify-*.mjs guard implementation was added",
       matchedGuardFiles,
+      matchedStepFiles,
+      invalidGuardFiles,
+      invalidStepFiles,
+      wiredGuardFiles,
       hasCiWiring,
     };
   }
   if (!hasCiWiring) {
     return {
       ok: false,
-      reason: "guard_required=true but ci.yml has no added verify: step",
+      reason:
+        "guard_required=true but no added auto-discovered verify-step directly invokes both the added guard and its --selftest with ctx.run",
       matchedGuardFiles,
+      matchedStepFiles,
+      invalidGuardFiles,
+      invalidStepFiles,
+      wiredGuardFiles,
       hasCiWiring,
     };
   }
 
-  return { ok: true, matchedGuardFiles, hasCiWiring };
+  return {
+    ok: true,
+    matchedGuardFiles,
+    matchedStepFiles,
+    invalidGuardFiles,
+    invalidStepFiles,
+    wiredGuardFiles,
+    hasCiWiring,
+  };
 }
 
 export function computeDbGatePlan(manifest) {
@@ -458,14 +852,36 @@ function runCheckC7(manifest) {
 
 function runCheckC8(manifest, range) {
   const changedNameStatus = getChangedNameStatus(range);
-  const ciDiffRes = runCommand(`git diff ${range} -- .github/workflows/ci.yml`, "C8");
-  if (!ciDiffRes.ok) {
-    fail("C8", ciDiffRes.reason, ciDiffRes.tail);
+  const changedFileSources = new Map();
+  const guardContractResults = new Map();
+  for (const item of changedNameStatus) {
+    if (!item.status.startsWith("A")) continue;
+    if (
+      !/^scripts\/verify-[^/]+\.mjs$/.test(item.path) &&
+      !/^scripts\/verify-steps\/[^/]+\.mjs$/.test(item.path)
+    ) {
+      continue;
+    }
+    let absolutePath;
+    try {
+      absolutePath = resolvePathInsideRoot(item.path);
+    } catch (error) {
+      fail("C8", `unsafe added guard path ${item.path}: ${error.message}`);
+    }
+    const sourceRead = readUtf8FileFromStableHandle(absolutePath);
+    if (!sourceRead.ok) {
+      fail("C8", `cannot safely read added guard source ${item.path}: ${sourceRead.reason}`);
+    }
+    changedFileSources.set(item.path, sourceRead.source);
+    if (/^scripts\/verify-[^/]+\.mjs$/.test(item.path)) {
+      guardContractResults.set(item.path, executeGuardContract(item.path));
+    }
   }
   const result = evaluateGuardRequirement({
     guardRequired: manifest.guard_required,
     changedNameStatus,
-    ciDiffText: ciDiffRes.stdout,
+    changedFileSources,
+    guardContractResults,
   });
 
   if (!result.ok) {
@@ -473,7 +889,10 @@ function runCheckC8(manifest, range) {
   }
 
   if (manifest.guard_required) {
-    pass("C8", `matched guard files: ${result.matchedGuardFiles.join(", ")}`);
+    pass(
+      "C8",
+      `structurally wired guards with executable planted-failure evidence: ${result.wiredGuardFiles.join(", ")}`
+    );
   } else {
     pass("C8", "guard not required");
   }

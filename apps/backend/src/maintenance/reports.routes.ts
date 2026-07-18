@@ -1,9 +1,10 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
-import XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { addObjectWorksheet, writeWorkbookBuffer } from "../lib/exceljs-workbook.js";
 
 const querySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -140,6 +141,12 @@ async function buildRows(client: any, companyId: string, report: ReportId): Prom
   }
 }
 
+export async function renderMaintenanceReportXlsx(rows: Array<Record<string, unknown>>): Promise<Buffer> {
+  const workbook = new ExcelJS.Workbook();
+  addObjectWorksheet(workbook, "report", rows);
+  return writeWorkbookBuffer(workbook);
+}
+
 export async function registerMaintenanceReportsRoutes(app: FastifyInstance) {
   app.get("/api/v1/maintenance/reports/:report", async (req, reply) => {
     const user = authed(req, reply);
@@ -164,10 +171,7 @@ export async function registerMaintenanceReportsRoutes(app: FastifyInstance) {
     const rows = await withCompany(user.uuid, query.data.operating_company_id, (client) =>
       buildRows(client, query.data.operating_company_id, params.data.report)
     );
-    const wb = XLSX.utils.book_new();
-    const sheet = XLSX.utils.json_to_sheet(rows);
-    XLSX.utils.book_append_sheet(wb, sheet, "report");
-    const buffer = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
+    const buffer = await renderMaintenanceReportXlsx(rows);
     reply.header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
     reply.header("Content-Disposition", `attachment; filename="${params.data.report}.xlsx"`);
     return reply.send(buffer);

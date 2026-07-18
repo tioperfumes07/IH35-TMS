@@ -14,7 +14,7 @@
 //   requested_ct -> written_ct -> merged_ct -> deployed_ct  (4-stage lifecycle)
 //
 // Two modes:
-//   --import-xlsx : reads Desktop xlsx (root `xlsx` pkg), matches rows to board
+//   --import-xlsx : reads Desktop xlsx with ExcelJS, matches rows to board
 //                   findings by (id + fuzzy Title), writes descriptive fields.
 //                   NEEDS Desktop files -> run locally, never in CI.
 //   (default)     : reads git/GitHub via `gh` + prod health endpoint; derives
@@ -29,6 +29,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
+import ExcelJS from "exceljs";
+import { normalizeExcelJsCellValue } from "./exceljs-cell-value.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -171,10 +173,26 @@ function titleScore(boardName, xlsxTitle) {
 async function loadXlsxRowsAsync() {
   const desktop = DESKTOP_XLSX_CANDIDATES.find((p) => p && fs.existsSync(p));
   if (desktop) {
-    const XLSX = (await import("xlsx")).default || (await import("xlsx"));
-    const wb = XLSX.readFile(desktop);
-    const ws = wb.Sheets[wb.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json(ws, { defval: "" });
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.readFile(desktop);
+    const worksheet = workbook.worksheets[0];
+    if (!worksheet) return { rows: [], source: desktop };
+    const headers = [];
+    worksheet.getRow(1).eachCell({ includeEmpty: true }, (cell, column) => {
+      const value = normalizeExcelJsCellValue(cell.value);
+      headers[column - 1] = value == null ? "" : String(value);
+    });
+    const rows = [];
+    worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+      if (rowNumber === 1) return;
+      const record = {};
+      headers.forEach((header, index) => {
+        if (!header) return;
+        const cellValue = row.getCell(index + 1).value;
+        record[header] = cellValue == null ? "" : normalizeExcelJsCellValue(cellValue);
+      });
+      rows.push(record);
+    });
     return { rows, source: desktop };
   }
   if (XLSX_AUDIT_JSON_FALLBACK && fs.existsSync(XLSX_AUDIT_JSON_FALLBACK)) {

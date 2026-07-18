@@ -1,8 +1,9 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { addArrayWorksheet, writeWorkbookBuffer } from "../lib/exceljs-workbook.js";
 import { getFleetLocationHosRows, minutesToHMM, type FleetLocationHosRow } from "./fleet-location-hos.service.js";
 
 const querySchema = z.object({
@@ -47,6 +48,13 @@ function rowToSheetArray(r: FleetLocationHosRow): (string | number)[] {
   ];
 }
 
+export async function renderFleetLocationHosXlsx(rows: FleetLocationHosRow[]): Promise<Buffer> {
+  const aoa: (string | number)[][] = [SHEET_HEADERS as unknown as string[], ...rows.map(rowToSheetArray)];
+  const workbook = new ExcelJS.Workbook();
+  addArrayWorksheet(workbook, "Fleet Location HOS", aoa);
+  return writeWorkbookBuffer(workbook);
+}
+
 export async function registerFleetLocationHosRoutes(app: FastifyInstance) {
   // Read-only fleet location + assigned driver + HOS aggregation (Samsara-fed). No 50-cap — covers ALL
   // reporting vehicles. ?format=xlsx returns a .xlsx download. Entity-scoped.
@@ -62,11 +70,7 @@ export async function registerFleetLocationHosRoutes(app: FastifyInstance) {
     );
 
     if (query.data.format === "xlsx") {
-      const aoa: (string | number)[][] = [SHEET_HEADERS as unknown as string[], ...rows.map(rowToSheetArray)];
-      const ws = XLSX.utils.aoa_to_sheet(aoa);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Fleet Location HOS");
-      const buffer = Buffer.from(XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as ArrayBuffer);
+      const buffer = await renderFleetLocationHosXlsx(rows);
       const stamp = asOf.toISOString().slice(0, 10);
       reply.header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
       reply.header("Content-Disposition", `attachment; filename="fleet-location-hos-${stamp}.xlsx"`);
