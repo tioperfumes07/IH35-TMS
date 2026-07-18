@@ -6,7 +6,11 @@ import { spawnSync } from "node:child_process";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { attachBareOrigin, initFixtureRepo, runGitOrThrow, writeAndCommit } from "./fixtures/branch-tooling/git-fixture.mjs";
-import { GATE_RESULT_CATEGORIES, runPrecheckPush } from "../branch-precheck-push.mjs";
+import {
+  GATE_RESULT_CATEGORIES,
+  preflightStep,
+  runPrecheckPush,
+} from "../branch-precheck-push.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const scriptPath = path.resolve(root, "scripts/branch-precheck-push.mjs");
@@ -130,4 +134,26 @@ test("classifies unresolved merge conflicts as a hard conflict failure", () => {
   const result = runPrecheckPush({ root: dir, skipFetch: true, steps: [] });
   assert.equal(result.ok, false);
   assert.equal(result.category, GATE_RESULT_CATEGORIES.CONFLICT);
+});
+
+test("skips a missing database only with a named server-required CI equivalent", () => {
+  const result = preflightStep(
+    {
+      label: "block-ready",
+      requiredCapabilities: ["database"],
+      serverRequiredCiEquivalent: "ci / build-typecheck",
+    },
+    { database: false }
+  );
+  assert.equal(result.action, "skip-capability");
+  assert.equal(result.ciEquivalent, "ci / build-typecheck");
+});
+
+test("missing capability without a named CI equivalent is a hard capability failure", () => {
+  const result = preflightStep(
+    { label: "unsafe-step", requiredCapabilities: ["database"] },
+    { database: false }
+  );
+  assert.equal(result.action, "fail");
+  assert.match(result.reason, /without a named server-required CI equivalent/);
 });

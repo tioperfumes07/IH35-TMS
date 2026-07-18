@@ -47,6 +47,12 @@ export function checkPushGateClassification(fixture) {
   }
   requireMatch("precheck", /status", "--porcelain"/, "precheck does not hard-fail dirty trees");
   requireMatch("precheck", /diff", "--name-only", "--diff-filter=U"/, "precheck does not detect conflicts");
+  requireMatch("precheck", /preflightStep/, "precheck lacks explicit capability preflight");
+  requireMatch(
+    "precheck",
+    /serverRequiredCiEquivalent: "ci \/ build-typecheck"/,
+    "precheck capability skip lacks named server-required CI equivalent"
+  );
 
   requireMatch("manifest", /BLOCK_ID=.*requires exact manifest/, "explicit BLOCK_ID is not fail-closed");
   requireMatch("manifest", /manifest\.branch === branch/, "manifest resolution is not exact-branch based");
@@ -120,7 +126,7 @@ export function checkPushGateClassification(fixture) {
 
 const goodFixture = {
   precheck:
-    'DIRTY: "dirty", CONFLICT: "conflict", FRESHNESS: "freshness", CAPABILITY: "capability", TEST: "test"; ["status", "--porcelain"]; ["diff", "--name-only", "--diff-filter=U"];',
+    'DIRTY: "dirty", CONFLICT: "conflict", FRESHNESS: "freshness", CAPABILITY: "capability", TEST: "test"; ["status", "--porcelain"]; ["diff", "--name-only", "--diff-filter=U"]; preflightStep(); serverRequiredCiEquivalent: "ci / build-typecheck";',
   manifest:
     'throw new Error(`BLOCK_ID=${blockId} requires exact manifest`); manifest.branch === branch; "ambiguous exact branch";',
   freshness:

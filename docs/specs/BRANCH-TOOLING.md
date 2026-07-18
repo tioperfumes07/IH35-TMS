@@ -38,7 +38,10 @@ Behavior:
 - Runs required chain in order:
   - backend build
   - frontend TypeScript build
+  - static guard classification
   - `npm run block-ready` (includes C4/C5 verify chain; see C5 Dedupe section below)
+- When no database capability is present, `block-ready` is skipped only with the named server-required
+  equivalent `ci / build-typecheck`; all preceding local gates still run and fail closed.
 - Halts on first failure and prints failing step plus output tail.
 - Prints `READY TO PUSH: <branch> at <sha>` on success.
 

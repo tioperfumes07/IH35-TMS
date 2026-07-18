@@ -64,8 +64,39 @@ export function buildPrecheckSteps(root) {
   return [
     { label: "build-backend", command: "npm run build:backend" },
     { label: "frontend-tsc", command: "cd apps/frontend && npx tsc -b && cd ../.." },
-    { label: "block-ready", command: "npm run block-ready" },
+    { label: "verify-static", command: "node scripts/verify-static.mjs" },
+    {
+      label: "block-ready",
+      command: "npm run block-ready",
+      requiredCapabilities: ["database"],
+      serverRequiredCiEquivalent: "ci / build-typecheck",
+    },
   ];
+}
+
+export function detectLocalCapabilities(env = process.env) {
+  return {
+    database: Boolean(env.DATABASE_URL?.trim() || env.DATABASE_DIRECT_URL?.trim()),
+  };
+}
+
+export function preflightStep(step, capabilities) {
+  const missing = (step.requiredCapabilities ?? []).filter(
+    (capability) => capabilities[capability] !== true
+  );
+  if (missing.length === 0) return { action: "run", missing: [] };
+  if (!step.serverRequiredCiEquivalent) {
+    return {
+      action: "fail",
+      missing,
+      reason: `missing ${missing.join(", ")} without a named server-required CI equivalent`,
+    };
+  }
+  return {
+    action: "skip-capability",
+    missing,
+    ciEquivalent: step.serverRequiredCiEquivalent,
+  };
 }
 
 export function runPrecheckPush(options = {}) {
@@ -136,7 +167,24 @@ export function runPrecheckPush(options = {}) {
     (process.env.BRANCH_PRECHECK_STEPS_JSON
       ? JSON.parse(process.env.BRANCH_PRECHECK_STEPS_JSON)
       : buildPrecheckSteps(root));
+  const capabilities = options.capabilities ?? detectLocalCapabilities();
+  const skippedCapabilities = [];
   for (const step of steps) {
+    const preflight = preflightStep(step, capabilities);
+    if (preflight.action === "fail") {
+      return {
+        ok: false,
+        category: GATE_RESULT_CATEGORIES.CAPABILITY,
+        reason: preflight.reason,
+        step: step.label,
+      };
+    }
+    if (preflight.action === "skip-capability") {
+      const detail = `${preflight.missing.join("+")} → ${preflight.ciEquivalent}`;
+      console.log(`[branch:precheck-push] SKIP-CAPABILITY ${step.label}: ${detail}`);
+      skippedCapabilities.push({ step: step.label, ...preflight });
+      continue;
+    }
     const result = runStep(step.command, step.label, root);
     if (!result.ok) {
       console.error(
@@ -155,7 +203,14 @@ export function runPrecheckPush(options = {}) {
   const sha = runGitOrThrow(["rev-parse", "HEAD"], { cwd: root });
   const message = `READY TO PUSH: ${branch} at ${sha}`;
   console.log(message);
-  return { ok: true, category: GATE_RESULT_CATEGORIES.PASS, branch, sha, message };
+  return {
+    ok: true,
+    category: GATE_RESULT_CATEGORIES.PASS,
+    branch,
+    sha,
+    message,
+    skippedCapabilities,
+  };
 }
 
 function main() {
