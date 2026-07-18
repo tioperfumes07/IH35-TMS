@@ -12,10 +12,10 @@ import { FINANCE_BREAK_EVEN_UI_FLAG } from "../../api/financeBreakEven";
 // in place (additive-only, no reorder); the new tabs are appended. Each destination page self-gates behind
 // its own feature flag and shows an honest disabled state when off.
 const baseTabs = [
-  { id: "overview", label: "Overview", to: "/finance" },
+  { id: "overview", label: "Overview", to: "/finance/overview" },
   { id: "projections", label: "Projections", to: "/finance/projections" },
   { id: "scenarios", label: "Scenarios", to: "/finance/scenarios" },
-  { id: "hub", label: "Hub", to: "/finance/hub" },
+  { id: "hub", label: "Hub", to: "/finance" },
   { id: "statements", label: "Statements", to: "/finance/statements" },
   { id: "ar-ap-aging", label: "AR/AP Aging", to: "/finance/ar-ap-aging" },
 ];
@@ -43,7 +43,9 @@ export function FinanceModuleTabs() {
     <div className="border-b border-gray-200">
       <nav className="-mb-px flex space-x-6" aria-label="Finance">
         {tabs.map((tab) => {
-          const isActive = currentPath === tab.to;
+          const isActive =
+            currentPath === tab.to
+            || (tab.id === "hub" && currentPath === "/finance/hub");
           return (
             <button
               key={tab.id}
