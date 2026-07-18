@@ -1,38 +1,19 @@
 import { withCurrentUser } from "../auth/db.js";
-import {
-  bankAccountHiddenFilterSql,
-  isBankAccountHideEnabled,
-} from "../banking/bank-account-visibility.js";
+import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../banking/bank-account-visibility.js";
 import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
 import { resolveAccountForCategory } from "./expense-category-map/resolver.service.js";
-import {
-  resolveBillLineDebitAccount,
-  BillLineAccountError,
-} from "./bill-account-resolver.js";
+import { resolveBillLineDebitAccount, BillLineAccountError } from "./bill-account-resolver.js";
 import { resolveReversalDate, todayIso } from "./void.service.js";
 
 // CHAIN-05 (BLOCK-03) adds "bank_categorization" (a categorized bank-feed line → direction-aware balanced
 // JE; built by buildBankCategorizationLines). NOTE: kept on ONE line — verify-posting-engine-mvp-contract
 // prefix-matches the leading four MVP types on a single line.
-export type PostingSourceType =
-  | "invoice"
-  | "bill"
-  | "customer_payment"
-  | "bill_payment"
-  | "cash_advance"
-  | "driver_advance"
-  | "expense"
-  | "bank_categorization"
-  | "driver_reimbursement"
-  | "transfer";
+export type PostingSourceType = "invoice" | "bill" | "customer_payment" | "bill_payment" | "cash_advance" | "driver_advance" | "expense" | "bank_categorization" | "driver_reimbursement" | "transfer";
 export type PostingPurpose = "initial_post" | "reversal";
 type BatchStatus = "queued" | "in_progress" | "posted" | "reversed" | "failed";
 
 type DbClient = {
-  query: <T = Record<string, unknown>>(
-    sql: string,
-    values?: unknown[],
-  ) => Promise<{ rows: T[]; rowCount?: number }>;
+  query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
 };
 
 type PostingLineDraft = {
@@ -123,7 +104,7 @@ export class InvoiceRevenueAccountError extends PostingEngineError {
     invoiceLineId: string | null,
     displayOrder: number | null,
     qboItemId: string | null,
-    detail?: string,
+    detail?: string
   ) {
     super(
       "INVOICE_LINE_REVENUE_UNRESOLVED",
@@ -132,7 +113,7 @@ export class InvoiceRevenueAccountError extends PostingEngineError {
           `(display_order=${displayOrder ?? "?"}, qbo_item_id=${qboItemId ?? "none"}) has no mapped, ` +
           `active income account for operating_company_id=${operatingCompanyId}. Map the line's ` +
           `Product/Service item to an income account (catalogs.items.default_income_account_id) or set ` +
-          `the line's account_id — refusing to post revenue to a default account.`,
+          `the line's account_id — refusing to post revenue to a default account.`
     );
     this.invoice_line_id = invoiceLineId;
     this.display_order = displayOrder;
@@ -152,17 +133,10 @@ type PostingResult = {
   account_resolution_trace?: Array<Record<string, unknown>>;
 };
 
-const INVOICE_ELIGIBLE_STATUSES = new Set([
-  "sent",
-  "partial",
-  "paid",
-  "factored",
-]);
+const INVOICE_ELIGIBLE_STATUSES = new Set(["sent", "partial", "paid", "factored"]);
 const PERIOD_LOCKED_TOKEN = "IH35_CLOSED_PERIOD";
 
-function assertKnownSourceType(
-  value: string,
-): asserts value is PostingSourceType {
+function assertKnownSourceType(value: string): asserts value is PostingSourceType {
   if (
     ![
       "invoice",
@@ -177,10 +151,7 @@ function assertKnownSourceType(
       "transfer",
     ].includes(value)
   ) {
-    throw new PostingEngineError(
-      "UNKNOWN_SOURCE_TYPE",
-      `Unknown source_transaction_type: ${value}`,
-    );
+    throw new PostingEngineError("UNKNOWN_SOURCE_TYPE", `Unknown source_transaction_type: ${value}`);
   }
 }
 
@@ -192,19 +163,11 @@ function normalizeSourceType(value: string): PostingSourceType {
 
 function normalizeSourceId(raw: string): string {
   const trimmed = raw.trim();
-  if (!trimmed)
-    throw new PostingEngineError(
-      "SOURCE_NOT_FOUND",
-      "source_transaction_id must not be empty",
-    );
+  if (!trimmed) throw new PostingEngineError("SOURCE_NOT_FOUND", "source_transaction_id must not be empty");
   if (/[^\x20-\x7E]/.test(trimmed)) {
-    throw new PostingEngineError(
-      "SOURCE_NOT_FOUND",
-      "source_transaction_id contains unsupported control characters",
-    );
+    throw new PostingEngineError("SOURCE_NOT_FOUND", "source_transaction_id contains unsupported control characters");
   }
-  const uuidLike =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  const uuidLike = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   return uuidLike.test(trimmed) ? trimmed.toLowerCase() : trimmed;
 }
 
@@ -231,35 +194,18 @@ export function buildPostingMvpIdempotencyKey(input: {
   ].join(":");
 }
 
-async function resolveArAccountForCompany(
-  client: DbClient,
-  operatingCompanyId: string,
-): Promise<string | null> {
+async function resolveArAccountForCompany(client: DbClient, operatingCompanyId: string): Promise<string | null> {
   return resolveRoleAccountOptional(client, operatingCompanyId, "ar_control");
 }
 
-async function resolveApAccountForCompany(
-  client: DbClient,
-  operatingCompanyId: string,
-): Promise<string | null> {
+async function resolveApAccountForCompany(client: DbClient, operatingCompanyId: string): Promise<string | null> {
   return resolveRoleAccountOptional(client, operatingCompanyId, "ap_control");
 }
 
-async function resolveCashLikeAccountForCompany(
-  client: DbClient,
-  operatingCompanyId: string,
-): Promise<string | null> {
+async function resolveCashLikeAccountForCompany(client: DbClient, operatingCompanyId: string): Promise<string | null> {
   return (
-    (await resolveRoleAccountOptional(
-      client,
-      operatingCompanyId,
-      "undeposited_funds",
-    )) ??
-    (await resolveRoleAccountOptional(
-      client,
-      operatingCompanyId,
-      "cash_clearing",
-    ))
+    (await resolveRoleAccountOptional(client, operatingCompanyId, "undeposited_funds")) ??
+    (await resolveRoleAccountOptional(client, operatingCompanyId, "cash_clearing"))
   );
 }
 
@@ -272,7 +218,7 @@ async function resolveCashLikeAccountForCompany(
 async function resolveBankLedgerAccountId(
   client: DbClient,
   operatingCompanyId: string,
-  bankAccountId: string,
+  bankAccountId: string
 ): Promise<string | null> {
   // BANK-ACCOUNT-HIDE: an account hidden for THIS entity resolves to no bridge, so the caller fails
   // closed rather than post to it (flag OFF by default — see docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
@@ -286,27 +232,23 @@ async function resolveBankLedgerAccountId(
         ${bankAccountHiddenFilterSql(hideOn, "banking.bank_accounts")}
       LIMIT 1
     `,
-    [bankAccountId, operatingCompanyId],
+    [bankAccountId, operatingCompanyId]
   );
   return res.rows[0]?.ledger_account_id ?? null;
 }
 
 // Exported for reuse by sibling posters (e.g. FIN-22 lease ASC 842) so the closed-period gate is
 // enforced identically everywhere (no duplicated period-lock logic). Additive — no behavior change.
-export async function ensureOpenPeriod(
-  client: DbClient,
-  operatingCompanyId: string,
-  postingDate: string,
-) {
+export async function ensureOpenPeriod(client: DbClient, operatingCompanyId: string, postingDate: string) {
   const cutoff = await client.query<{ cutoff: string | null }>(
     `SELECT accounting.closed_period_cutoff($1::uuid)::text AS cutoff`,
-    [operatingCompanyId],
+    [operatingCompanyId]
   );
   const closedThrough = cutoff.rows[0]?.cutoff;
   if (closedThrough && postingDate <= closedThrough) {
     throw new PostingEngineError(
       "PERIOD_LOCKED",
-      `${PERIOD_LOCKED_TOKEN} closed_through=${closedThrough} txn_date=${postingDate}`,
+      `${PERIOD_LOCKED_TOKEN} closed_through=${closedThrough} txn_date=${postingDate}`
     );
   }
 }
@@ -317,12 +259,9 @@ async function getExistingPostingResultByIdempotencyKey(
   idempotencyKey: string,
   postingPurpose: PostingPurpose,
   sourceType: PostingSourceType,
-  sourceId: string,
+  sourceId: string
 ): Promise<PostingResult | null> {
-  const batchRes = await client.query<{
-    id: string;
-    batch_status: BatchStatus;
-  }>(
+  const batchRes = await client.query<{ id: string; batch_status: BatchStatus }>(
     `
       SELECT id::text, batch_status
       FROM accounting.posting_batches
@@ -330,19 +269,12 @@ async function getExistingPostingResultByIdempotencyKey(
         AND idempotency_key = $2
       LIMIT 1
     `,
-    [operatingCompanyId, idempotencyKey],
+    [operatingCompanyId, idempotencyKey]
   );
   const batch = batchRes.rows[0];
-  if (
-    !batch ||
-    (batch.batch_status !== "posted" && batch.batch_status !== "reversed")
-  )
-    return null;
+  if (!batch || (batch.batch_status !== "posted" && batch.batch_status !== "reversed")) return null;
 
-  const rows = await client.query<{
-    posting_id: string;
-    journal_entry_uuid: string;
-  }>(
+  const rows = await client.query<{ posting_id: string; journal_entry_uuid: string }>(
     `
       SELECT id::text AS posting_id, journal_entry_uuid::text
       FROM accounting.journal_entry_postings
@@ -350,7 +282,7 @@ async function getExistingPostingResultByIdempotencyKey(
         AND posting_batch_id = $2::uuid
       ORDER BY line_sequence ASC, created_at ASC
     `,
-    [operatingCompanyId, batch.id],
+    [operatingCompanyId, batch.id]
   );
   const postingIds = rows.rows.map((r) => r.posting_id);
   const journalEntryId = rows.rows[0]?.journal_entry_uuid ?? "";
@@ -373,7 +305,7 @@ async function getPostingBySource(
   operatingCompanyId: string,
   sourceType: PostingSourceType,
   sourceId: string,
-  postingPurpose: PostingPurpose,
+  postingPurpose: PostingPurpose
 ): Promise<PostingResult | null> {
   // Source-level posting/reversal batches always use a NULL line component. posting_purpose already
   // distinguishes initial vs reversal. Using sourceId here only for reversal made the pre-check key
@@ -386,14 +318,7 @@ async function getPostingBySource(
     source_transaction_line_id: lineId,
     posting_purpose: postingPurpose,
   });
-  return getExistingPostingResultByIdempotencyKey(
-    client,
-    operatingCompanyId,
-    key,
-    postingPurpose,
-    sourceType,
-    sourceId,
-  );
+  return getExistingPostingResultByIdempotencyKey(client, operatingCompanyId, key, postingPurpose, sourceType, sourceId);
 }
 
 async function createJournalEntryHeader(
@@ -401,7 +326,7 @@ async function createJournalEntryHeader(
   operatingCompanyId: string,
   entryDate: string,
   memo: string,
-  createdByUserId: string,
+  createdByUserId: string
 ) {
   const created = await client.query<{ id: string }>(
     `
@@ -419,7 +344,7 @@ async function createJournalEntryHeader(
       VALUES ($1::uuid, $2::date, $3, 'posted', 'auto', $4::uuid, true, now(), now())
       RETURNING id::text
     `,
-    [operatingCompanyId, entryDate, memo, createdByUserId],
+    [operatingCompanyId, entryDate, memo, createdByUserId]
   );
   const journalEntryId = created.rows[0]?.id;
   if (!journalEntryId) throw new Error("posting_journal_entry_create_failed");
@@ -473,7 +398,7 @@ async function insertPostingLines(input: {
         line.source_transaction_line_id,
         input.postingBatchId,
         input.idempotencyKey,
-      ],
+      ]
     );
     const postingId = ins.rows[0]?.id;
     if (!postingId) throw new Error("posting_line_insert_failed");
@@ -489,13 +414,7 @@ async function insertPostingLines(input: {
         )
         VALUES ($1::uuid, $2::uuid, $3, $4, $5)
       `,
-      [
-        input.operatingCompanyId,
-        postingId,
-        input.sourceType,
-        input.sourceId,
-        line.relationship_role ?? "source_transaction",
-      ],
+      [input.operatingCompanyId, postingId, input.sourceType, input.sourceId, line.relationship_role ?? "source_transaction"]
     );
     sequence += 1;
   }
@@ -503,25 +422,17 @@ async function insertPostingLines(input: {
 }
 
 function assertBalanced(lines: PostingLineDraft[]) {
-  const debitTotal = lines
-    .filter((l) => l.debit_or_credit === "debit")
-    .reduce((sum, l) => sum + l.amount_cents, 0);
-  const creditTotal = lines
-    .filter((l) => l.debit_or_credit === "credit")
-    .reduce((sum, l) => sum + l.amount_cents, 0);
+  const debitTotal = lines.filter((l) => l.debit_or_credit === "debit").reduce((sum, l) => sum + l.amount_cents, 0);
+  const creditTotal = lines.filter((l) => l.debit_or_credit === "credit").reduce((sum, l) => sum + l.amount_cents, 0);
   if (debitTotal <= 0 || creditTotal <= 0 || debitTotal !== creditTotal) {
     throw new PostingEngineError(
       "UNBALANCED_ENTRY",
-      `Posting must be balanced (debits=${debitTotal}, credits=${creditTotal})`,
+      `Posting must be balanced (debits=${debitTotal}, credits=${creditTotal})`
     );
   }
 }
 
-async function buildInvoiceLines(
-  client: DbClient,
-  operatingCompanyId: string,
-  sourceId: string,
-): Promise<PostingDraft> {
+async function buildInvoiceLines(client: DbClient, operatingCompanyId: string, sourceId: string): Promise<PostingDraft> {
   const invoiceRes = await client.query<{
     id: string;
     status: string;
@@ -546,26 +457,18 @@ async function buildInvoiceLines(
       LIMIT 1
       FOR UPDATE
     `,
-    [operatingCompanyId, sourceId],
+    [operatingCompanyId, sourceId]
   );
   const invoice = invoiceRes.rows[0];
-  if (!invoice)
-    throw new PostingEngineError("SOURCE_NOT_FOUND", "Invoice not found");
+  if (!invoice) throw new PostingEngineError("SOURCE_NOT_FOUND", "Invoice not found");
   if (!INVOICE_ELIGIBLE_STATUSES.has(invoice.status)) {
     throw new PostingEngineError(
       "INVOICE_NOT_POSTING_ELIGIBLE",
-      `Invoice status ${invoice.status} is not posting-eligible`,
+      `Invoice status ${invoice.status} is not posting-eligible`
     );
   }
-  const arAccountId = await resolveArAccountForCompany(
-    client,
-    operatingCompanyId,
-  );
-  if (!arAccountId)
-    throw new PostingEngineError(
-      "ACCOUNT_MAPPING_MISSING",
-      "AR account mapping is missing",
-    );
+  const arAccountId = await resolveArAccountForCompany(client, operatingCompanyId);
+  if (!arAccountId) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "AR account mapping is missing");
 
   // PER-LINE revenue resolution (owner decision ACCOUNTING-1, 2026-06-30): each revenue-bearing invoice
   // line credits the income account mapped to THAT line — its explicit account_id (Block 33, migration
@@ -608,12 +511,10 @@ async function buildInvoiceLines(
       WHERE il.invoice_id = $1::uuid
       ORDER BY il.display_order ASC, il.id ASC
     `,
-    [sourceId, operatingCompanyId],
+    [sourceId, operatingCompanyId]
   );
 
-  const descriptionBase = invoice.display_id
-    ? `Invoice ${invoice.display_id}`
-    : `Invoice ${sourceId}`;
+  const descriptionBase = invoice.display_id ? `Invoice ${invoice.display_id}` : `Invoice ${sourceId}`;
   const accountResolutionTrace: Array<Record<string, unknown>> = [];
   const revenueCredits: PostingLineDraft[] = [];
   let revenueTotal = 0;
@@ -622,25 +523,17 @@ async function buildInvoiceLines(
     // Tax is posted from the invoice header (tax_cents) to sales_tax_payable below — a 'tax' line
     // is not a revenue line and is intentionally not resolved to an income account.
     if ((row.line_type ?? "").toLowerCase() === "tax") continue;
-    const lineCents =
-      row.line_total_cents != null ? Number(row.line_total_cents) : 0;
+    const lineCents = row.line_total_cents != null ? Number(row.line_total_cents) : 0;
     if (lineCents <= 0) continue; // non-revenue-bearing line (zero/credit) — nothing to post.
     if (!row.income_account_id) {
       // HARD FAIL — no default. Refuse to post revenue to a generic account.
-      throw new InvoiceRevenueAccountError(
-        operatingCompanyId,
-        row.id,
-        row.display_order,
-        row.qbo_item_id,
-      );
+      throw new InvoiceRevenueAccountError(operatingCompanyId, row.id, row.display_order, row.qbo_item_id);
     }
     revenueCredits.push({
       account_id: row.income_account_id,
       debit_or_credit: "credit",
       amount_cents: lineCents,
-      description: row.description
-        ? `${descriptionBase} Revenue — ${row.description}`
-        : `${descriptionBase} Revenue`,
+      description: row.description ? `${descriptionBase} Revenue — ${row.description}` : `${descriptionBase} Revenue`,
       source_transaction_line_id: row.id ?? null,
     });
     revenueTotal += lineCents;
@@ -656,29 +549,16 @@ async function buildInvoiceLines(
   const taxAmount = Math.max(0, Number(invoice.tax_cents ?? 0));
   let salesTaxPayableAccountId: string | null = null;
   if (taxAmount > 0) {
-    salesTaxPayableAccountId = await resolveRoleAccountOptional(
-      client,
-      operatingCompanyId,
-      "sales_tax_payable",
-    );
+    salesTaxPayableAccountId = await resolveRoleAccountOptional(client, operatingCompanyId, "sales_tax_payable");
     if (!salesTaxPayableAccountId) {
-      throw new PostingEngineError(
-        "ACCOUNT_MAPPING_MISSING",
-        "Sales tax payable account mapping is missing",
-      );
+      throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Sales tax payable account mapping is missing");
     }
   }
 
   if (revenueCredits.length === 0 && taxAmount <= 0) {
     // No revenue-bearing lines and no header tax — nothing resolvable. Fail loud (mirror the bill path's
     // empty/unresolved fail-closed) rather than emitting a zero/AR-only entry.
-    throw new InvoiceRevenueAccountError(
-      operatingCompanyId,
-      null,
-      null,
-      null,
-      "Invoice has no revenue-bearing lines to resolve",
-    );
+    throw new InvoiceRevenueAccountError(operatingCompanyId, null, null, null, "Invoice has no revenue-bearing lines to resolve");
   }
 
   const creditLines: PostingLineDraft[] = [...revenueCredits];
@@ -712,10 +592,7 @@ async function buildInvoiceLines(
   };
 }
 
-async function resolveBillCategoryAccount(
-  client: DbClient,
-  categoryId: string,
-): Promise<string | null> {
+async function resolveBillCategoryAccount(client: DbClient, categoryId: string): Promise<string | null> {
   const fromMetadata = await client.query<{ account_id: string | null }>(
     `
       SELECT
@@ -728,17 +605,13 @@ async function resolveBillCategoryAccount(
       WHERE id = $1::uuid
       LIMIT 1
     `,
-    [categoryId],
+    [categoryId]
   );
   const maybe = fromMetadata.rows[0]?.account_id?.trim() ?? "";
   return maybe || null;
 }
 
-async function buildBillLines(
-  client: DbClient,
-  operatingCompanyId: string,
-  sourceId: string,
-): Promise<PostingDraft> {
+async function buildBillLines(client: DbClient, operatingCompanyId: string, sourceId: string): Promise<PostingDraft> {
   const billRes = await client.query<{
     id: string;
     status: string;
@@ -767,26 +640,16 @@ async function buildBillLines(
       LIMIT 1
       FOR UPDATE
     `,
-    [operatingCompanyId, sourceId],
+    [operatingCompanyId, sourceId]
   );
   const bill = billRes.rows[0];
   if (!bill) throw new PostingEngineError("SOURCE_NOT_FOUND", "Bill not found");
   if (bill.revoked_at || bill.status === "void" || bill.status === "voided") {
-    throw new PostingEngineError(
-      "BILL_NOT_POSTING_ELIGIBLE",
-      "Voided bill is not posting-eligible",
-    );
+    throw new PostingEngineError("BILL_NOT_POSTING_ELIGIBLE", "Voided bill is not posting-eligible");
   }
 
-  const apAccountId = await resolveApAccountForCompany(
-    client,
-    operatingCompanyId,
-  );
-  if (!apAccountId)
-    throw new PostingEngineError(
-      "ACCOUNT_MAPPING_MISSING",
-      "AP account mapping is missing",
-    );
+  const apAccountId = await resolveApAccountForCompany(client, operatingCompanyId);
+  if (!apAccountId) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "AP account mapping is missing");
 
   // Each line carries account_id (explicit override), category_kind, category_code (migration 0220).
   const lineRows = await client.query<{
@@ -811,7 +674,7 @@ async function buildBillLines(
       WHERE bl.bill_id::uuid = $1::uuid
       ORDER BY bl.line_sequence ASC
     `,
-    [sourceId],
+    [sourceId]
   );
 
   const debitLines: PostingLineDraft[] = [];
@@ -820,10 +683,7 @@ async function buildBillLines(
   // A bill with no lines cannot be resolved under the canonical order (no silent header/expense_default
   // fallback any longer) — FAIL LOUD, same as the draft preview's EMPTY_BILL.
   if (lineRows.rows.length === 0) {
-    throw new PostingEngineError(
-      "BILL_LINE_ACCOUNT_UNRESOLVED",
-      "Bill has no lines to resolve",
-    );
+    throw new PostingEngineError("BILL_LINE_ACCOUNT_UNRESOLVED", "Bill has no lines to resolve");
   }
 
   for (const row of lineRows.rows) {
@@ -841,7 +701,7 @@ async function buildBillLines(
       if (err instanceof BillLineAccountError) {
         throw new PostingEngineError(
           "BILL_LINE_ACCOUNT_UNRESOLVED",
-          `Bill line ${row.id ?? row.line_sequence ?? "unknown"}: [${err.code}] ${err.message}`,
+          `Bill line ${row.id ?? row.line_sequence ?? "unknown"}: [${err.code}] ${err.message}`
         );
       }
       throw err;
@@ -856,20 +716,14 @@ async function buildBillLines(
       account_id: resolved.account_id,
       debit_or_credit: "debit",
       amount_cents: amountCents,
-      description:
-        row.description ?? `Bill line ${row.line_sequence ?? ""}`.trim(),
+      description: row.description ?? `Bill line ${row.line_sequence ?? ""}`.trim(),
       source_transaction_line_id: row.id ?? null,
       relationship_role: null,
     });
   }
 
-  const totalDebit = debitLines.reduce(
-    (sum, line) => sum + line.amount_cents,
-    0,
-  );
-  const billLabel = bill.bill_number
-    ? `Bill ${bill.bill_number}`
-    : `Bill ${sourceId}`;
+  const totalDebit = debitLines.reduce((sum, line) => sum + line.amount_cents, 0);
+  const billLabel = bill.bill_number ? `Bill ${bill.bill_number}` : `Bill ${sourceId}`;
   return {
     postingDate: bill.bill_date,
     memo: `${billLabel} posting`,
@@ -892,11 +746,7 @@ async function buildBillLines(
 // a direct line-less expense's single uncategorized expense_lines row is synthesized by the post action
 // BEFORE this runs (so total = SUM(lines) holds). CR cash (payment_account_uuid) else AP-with-vendor;
 // orphan guard (no payment account AND no vendor) fails loud. amounts are integer cents already.
-async function buildExpenseLines(
-  client: DbClient,
-  operatingCompanyId: string,
-  sourceId: string,
-): Promise<PostingDraft> {
+async function buildExpenseLines(client: DbClient, operatingCompanyId: string, sourceId: string): Promise<PostingDraft> {
   const expRes = await client.query<{
     id: string;
     status: string;
@@ -916,16 +766,12 @@ async function buildExpenseLines(
       LIMIT 1
       FOR UPDATE
     `,
-    [operatingCompanyId, sourceId],
+    [operatingCompanyId, sourceId]
   );
   const exp = expRes.rows[0];
-  if (!exp)
-    throw new PostingEngineError("SOURCE_NOT_FOUND", "Expense not found");
+  if (!exp) throw new PostingEngineError("SOURCE_NOT_FOUND", "Expense not found");
   if (exp.status === "void" || exp.posting_status === "reversed") {
-    throw new PostingEngineError(
-      "EXPENSE_NOT_POSTING_ELIGIBLE",
-      "Voided/reversed expense is not posting-eligible",
-    );
+    throw new PostingEngineError("EXPENSE_NOT_POSTING_ELIGIBLE", "Voided/reversed expense is not posting-eligible");
   }
 
   const lineRows = await client.query<{
@@ -943,27 +789,18 @@ async function buildExpenseLines(
       WHERE expense_id = $1::uuid
       ORDER BY line_sequence ASC
     `,
-    [sourceId],
+    [sourceId]
   );
 
-  const uncategorizedAccount = await resolveRoleAccountOptional(
-    client,
-    operatingCompanyId,
-    "uncategorized_expense",
-  );
+  const uncategorizedAccount = await resolveRoleAccountOptional(client, operatingCompanyId, "uncategorized_expense");
   const debitLines: PostingLineDraft[] = [];
   const accountResolutionTrace: Array<Record<string, unknown>> = [];
 
   if (lineRows.rows.length === 0) {
     // Safety net: a direct expense should have had its uncategorized line synthesized by the post
     // action. If it reached here line-less, DR the uncategorized account for the header total.
-    const totalCents =
-      exp.total_amount_cents != null ? Number(exp.total_amount_cents) : 0;
-    if (!uncategorizedAccount)
-      throw new PostingEngineError(
-        "ACCOUNT_MAPPING_MISSING",
-        "uncategorized_expense role account is unresolved",
-      );
+    const totalCents = exp.total_amount_cents != null ? Number(exp.total_amount_cents) : 0;
+    if (!uncategorizedAccount) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "uncategorized_expense role account is unresolved");
     debitLines.push({
       account_id: uncategorizedAccount,
       debit_or_credit: "debit",
@@ -972,15 +809,10 @@ async function buildExpenseLines(
       source_transaction_line_id: null,
       relationship_role: "expense_uncategorized_synthesized",
     });
-    accountResolutionTrace.push({
-      expense_line_id: null,
-      method: "synthesized_uncategorized",
-      account_id: uncategorizedAccount,
-    });
+    accountResolutionTrace.push({ expense_line_id: null, method: "synthesized_uncategorized", account_id: uncategorizedAccount });
   } else {
     for (const row of lineRows.rows) {
-      const amountCents =
-        row.amount_cents != null ? Number(row.amount_cents) : 0;
+      const amountCents = row.amount_cents != null ? Number(row.amount_cents) : 0;
       let accountId: string | null = null;
       let method: string | null = null;
       // Prefer a DIRECT GL account on the line (e.g. driverless Record-Expense, where the form's QBO
@@ -991,10 +823,7 @@ async function buildExpenseLines(
         method = "line_direct_account";
       }
       if (!accountId && row.expense_category_uuid) {
-        accountId = await resolveBillCategoryAccount(
-          client,
-          row.expense_category_uuid,
-        );
+        accountId = await resolveBillCategoryAccount(client, row.expense_category_uuid);
         if (accountId) method = "expense_category_mapping";
       }
       if (!accountId && uncategorizedAccount) {
@@ -1004,32 +833,22 @@ async function buildExpenseLines(
       if (!accountId) {
         throw new PostingEngineError(
           "ACCOUNT_MAPPING_MISSING",
-          `Expense line ${row.id ?? row.line_sequence ?? "unknown"} has no resolvable debit account`,
+          `Expense line ${row.id ?? row.line_sequence ?? "unknown"} has no resolvable debit account`
         );
       }
-      accountResolutionTrace.push({
-        expense_line_id: row.id,
-        line_sequence: row.line_sequence,
-        method,
-        account_id: accountId,
-      });
+      accountResolutionTrace.push({ expense_line_id: row.id, line_sequence: row.line_sequence, method, account_id: accountId });
       debitLines.push({
         account_id: accountId,
         debit_or_credit: "debit",
         amount_cents: amountCents,
-        description:
-          row.description ?? `Expense line ${row.line_sequence ?? ""}`.trim(),
+        description: row.description ?? `Expense line ${row.line_sequence ?? ""}`.trim(),
         source_transaction_line_id: row.id ?? null,
-        relationship_role:
-          method === "uncategorized_role" ? "expense_uncategorized" : null,
+        relationship_role: method === "uncategorized_role" ? "expense_uncategorized" : null,
       });
     }
   }
 
-  const totalDebit = debitLines.reduce(
-    (sum, line) => sum + line.amount_cents,
-    0,
-  );
+  const totalDebit = debitLines.reduce((sum, line) => sum + line.amount_cents, 0);
 
   // CREDIT side — CASH-BASIS PRIMARY: bank/cash when a payment account is set; else AP-with-vendor (accrual exception).
   let creditAccount: string | null;
@@ -1038,27 +857,15 @@ async function buildExpenseLines(
     creditAccount = exp.payment_account_uuid; // a catalogs.accounts id (the bank/cash account)
     creditRole = "expense_cash_payment";
   } else if (exp.vendor_uuid) {
-    creditAccount = await resolveApAccountForCompany(
-      client,
-      operatingCompanyId,
-    );
+    creditAccount = await resolveApAccountForCompany(client, operatingCompanyId);
     creditRole = "expense_ap";
-    if (!creditAccount)
-      throw new PostingEngineError(
-        "ACCOUNT_MAPPING_MISSING",
-        "AP account (ap_control) is unresolved for the accrual expense path",
-      );
+    if (!creditAccount) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "AP account (ap_control) is unresolved for the accrual expense path");
   } else {
     // ORPHAN GUARD: no payment account AND no vendor → fail loud (no orphan payable).
-    throw new PostingEngineError(
-      "ACCOUNT_MAPPING_MISSING",
-      "Expense has neither a payment account nor a vendor — cannot post (no orphan payable)",
-    );
+    throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Expense has neither a payment account nor a vendor — cannot post (no orphan payable)");
   }
 
-  const label = exp.expense_number
-    ? `Expense ${exp.expense_number}`
-    : `Expense ${sourceId}`;
+  const label = exp.expense_number ? `Expense ${exp.expense_number}` : `Expense ${sourceId}`;
   return {
     postingDate: exp.transaction_date,
     memo: `${label} posting`,
@@ -1077,11 +884,7 @@ async function buildExpenseLines(
   };
 }
 
-async function buildCustomerPaymentLines(
-  client: DbClient,
-  operatingCompanyId: string,
-  sourceId: string,
-): Promise<PostingDraft> {
+async function buildCustomerPaymentLines(client: DbClient, operatingCompanyId: string, sourceId: string): Promise<PostingDraft> {
   const paymentRes = await client.query<{
     id: string;
     payment_date: string;
@@ -1098,46 +901,22 @@ async function buildCustomerPaymentLines(
       LIMIT 1
       FOR UPDATE
     `,
-    [operatingCompanyId, sourceId],
+    [operatingCompanyId, sourceId]
   );
   const payment = paymentRes.rows[0];
-  if (!payment)
-    throw new PostingEngineError(
-      "SOURCE_NOT_FOUND",
-      "Customer payment not found",
-    );
-  if (payment.voided_at)
-    throw new PostingEngineError(
-      "PAYMENT_NOT_POSTING_ELIGIBLE",
-      "Voided customer payment is not posting-eligible",
-    );
+  if (!payment) throw new PostingEngineError("SOURCE_NOT_FOUND", "Customer payment not found");
+  if (payment.voided_at) throw new PostingEngineError("PAYMENT_NOT_POSTING_ELIGIBLE", "Voided customer payment is not posting-eligible");
 
-  const arAccountId = await resolveArAccountForCompany(
-    client,
-    operatingCompanyId,
-  );
-  if (!arAccountId)
-    throw new PostingEngineError(
-      "ACCOUNT_MAPPING_MISSING",
-      "AR account mapping is missing",
-    );
+  const arAccountId = await resolveArAccountForCompany(client, operatingCompanyId);
+  if (!arAccountId) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "AR account mapping is missing");
 
   let debitCashAccount = payment.deposited_to_account_id?.trim() || null;
   if (!debitCashAccount) {
-    debitCashAccount = await resolveCashLikeAccountForCompany(
-      client,
-      operatingCompanyId,
-    );
+    debitCashAccount = await resolveCashLikeAccountForCompany(client, operatingCompanyId);
   }
-  if (!debitCashAccount)
-    throw new PostingEngineError(
-      "ACCOUNT_MAPPING_MISSING",
-      "Cash account mapping is missing",
-    );
+  if (!debitCashAccount) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Cash account mapping is missing");
 
-  const label = payment.display_id
-    ? `Customer payment ${payment.display_id}`
-    : `Customer payment ${sourceId}`;
+  const label = payment.display_id ? `Customer payment ${payment.display_id}` : `Customer payment ${sourceId}`;
   const amount = Number(payment.amount_cents ?? 0);
   return {
     postingDate: payment.payment_date,
@@ -1161,11 +940,7 @@ async function buildCustomerPaymentLines(
   };
 }
 
-async function buildBillPaymentLines(
-  client: DbClient,
-  operatingCompanyId: string,
-  sourceId: string,
-): Promise<PostingDraft> {
+async function buildBillPaymentLines(client: DbClient, operatingCompanyId: string, sourceId: string): Promise<PostingDraft> {
   const paymentRes = await client.query<{
     id: string;
     bill_id: string | null;
@@ -1196,16 +971,12 @@ async function buildBillPaymentLines(
       LIMIT 1
       FOR UPDATE
     `,
-    [operatingCompanyId, sourceId],
+    [operatingCompanyId, sourceId]
   );
   const payment = paymentRes.rows[0];
-  if (!payment)
-    throw new PostingEngineError("SOURCE_NOT_FOUND", "Bill payment not found");
+  if (!payment) throw new PostingEngineError("SOURCE_NOT_FOUND", "Bill payment not found");
   if (payment.revoked_at || payment.status === "void") {
-    throw new PostingEngineError(
-      "PAYMENT_NOT_POSTING_ELIGIBLE",
-      "Voided bill payment is not posting-eligible",
-    );
+    throw new PostingEngineError("PAYMENT_NOT_POSTING_ELIGIBLE", "Voided bill payment is not posting-eligible");
   }
   // SETTLEMENT-BILL-PAYMENT: a non-cash settlement DEDUCTION bill_payment (advance repaid / escrow
   // withheld — from_bank_account_id NULL) exists ONLY to close its bill's A/P in the subledger. Its GL
@@ -1214,7 +985,7 @@ async function buildBillPaymentLines(
   if (payment.settlement_deduction_noncash === true) {
     throw new PostingEngineError(
       "PAYMENT_NOT_POSTING_ELIGIBLE",
-      "Non-cash settlement-deduction bill payment — GL is owned by the settlement deduction JE; not independently posting-eligible",
+      "Non-cash settlement-deduction bill payment — GL is owned by the settlement deduction JE; not independently posting-eligible"
     );
   }
 
@@ -1224,34 +995,18 @@ async function buildBillPaymentLines(
   // credit -> A/P goes NEGATIVE and the QBO A/P tie-out breaks. Refuse to post; NEVER post an A/P
   // leg from the payment path (design doc §10-A open decision #2 = enforce bill-posted-first).
   if (!payment.bill_id) {
-    throw new PostingEngineError(
-      "BILL_AP_NOT_POSTED",
-      "Bill payment has no bill_id; cannot verify the bill's A/P leg is posted",
-    );
+    throw new PostingEngineError("BILL_AP_NOT_POSTED", "Bill payment has no bill_id; cannot verify the bill's A/P leg is posted");
   }
-  const billPosting = await getPostingBySource(
-    client,
-    operatingCompanyId,
-    "bill",
-    payment.bill_id,
-    "initial_post",
-  );
+  const billPosting = await getPostingBySource(client, operatingCompanyId, "bill", payment.bill_id, "initial_post");
   if (!billPosting || billPosting.result !== "already_posted") {
     throw new PostingEngineError(
       "BILL_AP_NOT_POSTED",
-      `Bill ${payment.bill_id} A/P leg is not posted (CHAIN-03) — refusing to post the bill payment to avoid a negative A/P`,
+      `Bill ${payment.bill_id} A/P leg is not posted (CHAIN-03) — refusing to post the bill payment to avoid a negative A/P`
     );
   }
 
-  const apAccountId = await resolveApAccountForCompany(
-    client,
-    operatingCompanyId,
-  );
-  if (!apAccountId)
-    throw new PostingEngineError(
-      "ACCOUNT_MAPPING_MISSING",
-      "AP account mapping is missing",
-    );
+  const apAccountId = await resolveApAccountForCompany(client, operatingCompanyId);
+  if (!apAccountId) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "AP account mapping is missing");
 
   // CHAIN-04 GAP #2 — bank leg fix. The engine used to CR resolveCashLikeAccountForCompany
   // (undeposited_funds / cash_clearing) and IGNORE the payment's own from_bank_account_id. Fix:
@@ -1269,15 +1024,11 @@ async function buildBillPaymentLines(
   let cashAccountId: string | null;
   let creditRole: "bank" | "cc" | "cash_like";
   if (payment.from_bank_account_id) {
-    cashAccountId = await resolveBankLedgerAccountId(
-      client,
-      operatingCompanyId,
-      payment.from_bank_account_id,
-    );
+    cashAccountId = await resolveBankLedgerAccountId(client, operatingCompanyId, payment.from_bank_account_id);
     if (!cashAccountId) {
       throw new PostingEngineError(
         "ACCOUNT_MAPPING_MISSING",
-        `Bank ledger account mapping is missing (banking.bank_accounts.ledger_account_id) for from_bank_account_id ${payment.from_bank_account_id}`,
+        `Bank ledger account mapping is missing (banking.bank_accounts.ledger_account_id) for from_bank_account_id ${payment.from_bank_account_id}`
       );
     }
     creditRole = "bank";
@@ -1285,21 +1036,12 @@ async function buildBillPaymentLines(
     cashAccountId = payment.cc_account_id;
     creditRole = "cc";
   } else {
-    cashAccountId = await resolveCashLikeAccountForCompany(
-      client,
-      operatingCompanyId,
-    );
-    if (!cashAccountId)
-      throw new PostingEngineError(
-        "ACCOUNT_MAPPING_MISSING",
-        "Cash account mapping is missing",
-      );
+    cashAccountId = await resolveCashLikeAccountForCompany(client, operatingCompanyId);
+    if (!cashAccountId) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Cash account mapping is missing");
     creditRole = "cash_like";
   }
 
-  const amount = Number(
-    payment.amount_cents ?? Math.round(Number(payment.amount ?? "0") * 100),
-  );
+  const amount = Number(payment.amount_cents ?? Math.round(Number(payment.amount ?? "0") * 100));
   const label = `Bill payment ${sourceId}`;
   return {
     postingDate: payment.payment_date,
@@ -1334,7 +1076,7 @@ async function buildCashAdvanceLines(
   client: DbClient,
   operatingCompanyId: string,
   sourceId: string,
-  creditAccountId: string | null,
+  creditAccountId: string | null
 ): Promise<PostingDraft> {
   const requestRes = await client.query<{
     id: string;
@@ -1354,36 +1096,23 @@ async function buildCashAdvanceLines(
       LIMIT 1
       FOR UPDATE
     `,
-    [operatingCompanyId, sourceId],
+    [operatingCompanyId, sourceId]
   );
   const request = requestRes.rows[0];
-  if (!request)
-    throw new PostingEngineError(
-      "SOURCE_NOT_FOUND",
-      "Cash advance request not found",
-    );
+  if (!request) throw new PostingEngineError("SOURCE_NOT_FOUND", "Cash advance request not found");
   if (request.status !== "approved") {
     throw new PostingEngineError(
       "ADVANCE_NOT_POSTING_ELIGIBLE",
-      `Cash advance request is not posting-eligible (status=${request.status})`,
+      `Cash advance request is not posting-eligible (status=${request.status})`
     );
   }
 
-  const mapped = await resolveAccountForCategory(
-    operatingCompanyId,
-    "cash_advance",
-    "cash_advance",
-  );
+  const mapped = await resolveAccountForCategory(operatingCompanyId, "cash_advance", "cash_advance");
   const debitAccountId = mapped.account_id;
 
-  const creditAccount =
-    creditAccountId ??
-    (await resolveCashLikeAccountForCompany(client, operatingCompanyId));
+  const creditAccount = creditAccountId ?? (await resolveCashLikeAccountForCompany(client, operatingCompanyId));
   if (!creditAccount) {
-    throw new PostingEngineError(
-      "ACCOUNT_MAPPING_MISSING",
-      "Cash account mapping for cash advance is missing",
-    );
+    throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Cash account mapping for cash advance is missing");
   }
 
   const amount = Number(request.requested_amount_cents);
@@ -1425,7 +1154,7 @@ async function buildDriverAdvanceLines(
   client: DbClient,
   operatingCompanyId: string,
   sourceId: string,
-  creditAccountId: string | null,
+  creditAccountId: string | null
 ): Promise<PostingDraft> {
   const advanceRes = await client.query<{
     id: string;
@@ -1449,44 +1178,29 @@ async function buildDriverAdvanceLines(
       LIMIT 1
       FOR UPDATE
     `,
-    [operatingCompanyId, sourceId],
+    [operatingCompanyId, sourceId]
   );
   const advance = advanceRes.rows[0];
-  if (!advance)
-    throw new PostingEngineError(
-      "SOURCE_NOT_FOUND",
-      "Driver advance not found",
-    );
+  if (!advance) throw new PostingEngineError("SOURCE_NOT_FOUND", "Driver advance not found");
   if (advance.disbursement_status !== "disbursed") {
     throw new PostingEngineError(
       "ADVANCE_NOT_POSTING_ELIGIBLE",
-      `Driver advance is not posting-eligible (disbursement_status=${advance.disbursement_status})`,
+      `Driver advance is not posting-eligible (disbursement_status=${advance.disbursement_status})`
     );
   }
 
-  const mapped = await resolveAccountForCategory(
-    operatingCompanyId,
-    "cash_advance",
-    "cash_advance",
-  );
+  const mapped = await resolveAccountForCategory(operatingCompanyId, "cash_advance", "cash_advance");
   const debitAccountId = mapped.account_id;
 
-  const creditAccount =
-    creditAccountId ??
-    (await resolveCashLikeAccountForCompany(client, operatingCompanyId));
+  const creditAccount = creditAccountId ?? (await resolveCashLikeAccountForCompany(client, operatingCompanyId));
   if (!creditAccount) {
-    throw new PostingEngineError(
-      "ACCOUNT_MAPPING_MISSING",
-      "Cash account mapping for driver advance is missing",
-    );
+    throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Cash account mapping for driver advance is missing");
   }
 
   // posting_date is the user-settable book date; fall back to disbursed_at / created_at.
   const postingDate =
     advance.posting_date ??
-    (advance.disbursed_at
-      ? advance.disbursed_at.slice(0, 10)
-      : advance.created_at.slice(0, 10));
+    (advance.disbursed_at ? advance.disbursed_at.slice(0, 10) : advance.created_at.slice(0, 10));
   // amount is numeric(10,2) dollars → cents for the ledger.
   const amountCents = Math.round(Number(advance.amount) * 100);
   const label = `Driver advance ${sourceId}`;
@@ -1523,7 +1237,7 @@ async function buildDriverReimbursementLines(
   client: DbClient,
   operatingCompanyId: string,
   sourceId: string,
-  creditAccountId: string | null,
+  creditAccountId: string | null
 ): Promise<PostingDraft> {
   const reimbRes = await client.query<{
     id: string;
@@ -1542,18 +1256,14 @@ async function buildDriverReimbursementLines(
       LIMIT 1
       FOR UPDATE
     `,
-    [operatingCompanyId, sourceId],
+    [operatingCompanyId, sourceId]
   );
   const reimb = reimbRes.rows[0];
-  if (!reimb)
-    throw new PostingEngineError(
-      "SOURCE_NOT_FOUND",
-      "Driver reimbursement not found",
-    );
+  if (!reimb) throw new PostingEngineError("SOURCE_NOT_FOUND", "Driver reimbursement not found");
   if (reimb.status !== "paid") {
     throw new PostingEngineError(
       "ADVANCE_NOT_POSTING_ELIGIBLE",
-      `Driver reimbursement is not posting-eligible (status=${reimb.status}; must be 'paid')`,
+      `Driver reimbursement is not posting-eligible (status=${reimb.status}; must be 'paid')`
     );
   }
 
@@ -1574,30 +1284,19 @@ async function buildDriverReimbursementLines(
       ORDER BY (arb.operating_company_id IS NOT NULL) DESC
       LIMIT 1
     `,
-    [operatingCompanyId],
+    [operatingCompanyId]
   );
   const debitAccountId = debitRes.rows[0]?.account_id ?? null;
   if (!debitAccountId) {
-    throw new PostingEngineError(
-      "ACCOUNT_MAPPING_MISSING",
-      "No 'reimbursement_expense' role binding for driver reimbursement",
-    );
+    throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "No 'reimbursement_expense' role binding for driver reimbursement");
   }
-  const creditAccount =
-    creditAccountId ??
-    (await resolveCashLikeAccountForCompany(client, operatingCompanyId));
+  const creditAccount = creditAccountId ?? (await resolveCashLikeAccountForCompany(client, operatingCompanyId));
   if (!creditAccount) {
-    throw new PostingEngineError(
-      "ACCOUNT_MAPPING_MISSING",
-      "Cash account mapping for driver reimbursement is missing",
-    );
+    throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Cash account mapping for driver reimbursement is missing");
   }
 
   const postingDate =
-    reimb.posting_date ??
-    (reimb.paid_at
-      ? reimb.paid_at.slice(0, 10)
-      : reimb.created_at.slice(0, 10));
+    reimb.posting_date ?? (reimb.paid_at ? reimb.paid_at.slice(0, 10) : reimb.created_at.slice(0, 10));
   const amountCents = Math.round(Number(reimb.amount_cents));
   const label = `Driver reimbursement ${sourceId}`;
   return {
@@ -1636,11 +1335,7 @@ async function buildDriverReimbursementLines(
 //   is_credit=true  (money IN):  DR BANK / CR CAT   (deposited revenue / borrowed / received held funds)
 // Both legs equal by construction → balanced. Fails CLOSED on any unresolved input (the higher-level
 // interlocks — flag, transfer, matched-to-bill, driver-advance cede — live in bank-feed-gl-posting.service).
-async function buildBankCategorizationLines(
-  client: DbClient,
-  operatingCompanyId: string,
-  sourceId: string,
-): Promise<PostingDraft> {
+async function buildBankCategorizationLines(client: DbClient, operatingCompanyId: string, sourceId: string): Promise<PostingDraft> {
   const txnRes = await client.query<{
     id: string;
     status: string | null;
@@ -1668,43 +1363,33 @@ async function buildBankCategorizationLines(
       LIMIT 1
       FOR UPDATE OF bt
     `,
-    [operatingCompanyId, sourceId],
+    [operatingCompanyId, sourceId]
   );
   const txn = txnRes.rows[0];
-  if (!txn)
-    throw new PostingEngineError(
-      "SOURCE_NOT_FOUND",
-      "Bank transaction not found",
-    );
+  if (!txn) throw new PostingEngineError("SOURCE_NOT_FOUND", "Bank transaction not found");
   if (txn.status !== "categorized") {
     throw new PostingEngineError(
       "BANK_CATEGORIZATION_NOT_POSTING_ELIGIBLE",
-      `Bank transaction is not posting-eligible (status=${txn.status ?? "null"}; must be 'categorized')`,
+      `Bank transaction is not posting-eligible (status=${txn.status ?? "null"}; must be 'categorized')`
     );
   }
 
   const catAccountId = txn.categorization_gl_account_id;
   if (!catAccountId) {
-    throw new PostingEngineError(
-      "ACCOUNT_MAPPING_MISSING",
-      "Bank transaction has no categorization_gl_account_id to post against",
-    );
+    throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Bank transaction has no categorization_gl_account_id to post against");
   }
   const bankAccountId = txn.bank_ledger_account_id;
   if (!bankAccountId) {
     throw new PostingEngineError(
       "ACCOUNT_MAPPING_MISSING",
-      "Source bank account has no linked ledger_account_id (cash-GL bridge) — cannot post the bank leg",
+      "Source bank account has no linked ledger_account_id (cash-GL bridge) — cannot post the bank leg"
     );
   }
 
   // Sign landmine: money-out is stored NEGATIVE. Post the magnitude; take direction from is_credit only.
   const amountCents = Math.abs(Number(txn.amount_cents ?? 0));
   if (!Number.isFinite(amountCents) || amountCents <= 0) {
-    throw new PostingEngineError(
-      "BANK_CATEGORIZATION_NOT_POSTING_ELIGIBLE",
-      "Bank transaction has a zero/non-finite amount",
-    );
+    throw new PostingEngineError("BANK_CATEGORIZATION_NOT_POSTING_ELIGIBLE", "Bank transaction has a zero/non-finite amount");
   }
 
   const label = `Bank categorization ${sourceId}`;
@@ -1741,7 +1426,7 @@ async function resolveTransferLegAccountId(
   client: DbClient,
   operatingCompanyId: string,
   accountId: string,
-  accountKind: "bank" | "cc" | "coa",
+  accountKind: "bank" | "cc" | "coa"
 ): Promise<string | null> {
   if (accountKind === "bank") {
     return resolveBankLedgerAccountId(client, operatingCompanyId, accountId);
@@ -1755,7 +1440,7 @@ async function resolveTransferLegAccountId(
         AND deactivated_at IS NULL
       LIMIT 1
     `,
-    [accountId, operatingCompanyId],
+    [accountId, operatingCompanyId]
   );
   return res.rows[0]?.id ?? null;
 }
@@ -1768,11 +1453,7 @@ async function resolveTransferLegAccountId(
 // resolve through the SAME account-bridge helper every other banking poster already uses
 // (resolveTransferLegAccountId above). Reversal (a revoked transfer) is handled by the generic
 // reversePostedSourceTransaction — no transfer-specific reversal logic needed.
-async function buildTransferLines(
-  client: DbClient,
-  operatingCompanyId: string,
-  sourceId: string,
-): Promise<PostingDraft> {
+async function buildTransferLines(client: DbClient, operatingCompanyId: string, sourceId: string): Promise<PostingDraft> {
   const transferRes = await client.query<{
     id: string;
     transfer_type: string;
@@ -1803,48 +1484,31 @@ async function buildTransferLines(
       LIMIT 1
       FOR UPDATE
     `,
-    [operatingCompanyId, sourceId],
+    [operatingCompanyId, sourceId]
   );
   const transfer = transferRes.rows[0];
-  if (!transfer)
-    throw new PostingEngineError("SOURCE_NOT_FOUND", "Transfer not found");
+  if (!transfer) throw new PostingEngineError("SOURCE_NOT_FOUND", "Transfer not found");
   if (transfer.revoked_at) {
-    throw new PostingEngineError(
-      "TRANSFER_NOT_POSTING_ELIGIBLE",
-      "Revoked transfer is not posting-eligible",
-    );
+    throw new PostingEngineError("TRANSFER_NOT_POSTING_ELIGIBLE", "Revoked transfer is not posting-eligible");
   }
 
   const amountCents = Math.abs(Number(transfer.amount_cents ?? 0));
   if (!Number.isFinite(amountCents) || amountCents <= 0) {
-    throw new PostingEngineError(
-      "TRANSFER_NOT_POSTING_ELIGIBLE",
-      "Transfer has a zero/non-finite amount",
-    );
+    throw new PostingEngineError("TRANSFER_NOT_POSTING_ELIGIBLE", "Transfer has a zero/non-finite amount");
   }
 
-  const debitAccountId = await resolveTransferLegAccountId(
-    client,
-    operatingCompanyId,
-    transfer.to_account_id,
-    transfer.to_account_kind,
-  );
+  const debitAccountId = await resolveTransferLegAccountId(client, operatingCompanyId, transfer.to_account_id, transfer.to_account_kind);
   if (!debitAccountId) {
     throw new PostingEngineError(
       "ACCOUNT_MAPPING_MISSING",
-      `Transfer destination account has no resolvable GL account (${transfer.to_account_kind} account ${transfer.to_account_id})`,
+      `Transfer destination account has no resolvable GL account (${transfer.to_account_kind} account ${transfer.to_account_id})`
     );
   }
-  const creditAccountId = await resolveTransferLegAccountId(
-    client,
-    operatingCompanyId,
-    transfer.from_account_id,
-    transfer.from_account_kind,
-  );
+  const creditAccountId = await resolveTransferLegAccountId(client, operatingCompanyId, transfer.from_account_id, transfer.from_account_kind);
   if (!creditAccountId) {
     throw new PostingEngineError(
       "ACCOUNT_MAPPING_MISSING",
-      `Transfer source account has no resolvable GL account (${transfer.from_account_kind} account ${transfer.from_account_id})`,
+      `Transfer source account has no resolvable GL account (${transfer.from_account_kind} account ${transfer.from_account_id})`
     );
   }
 
@@ -1876,47 +1540,19 @@ async function buildPostingDraft(
   sourceType: PostingSourceType,
   operatingCompanyId: string,
   sourceId: string,
-  creditAccountId: string | null = null,
+  creditAccountId: string | null = null
 ): Promise<PostingDraft> {
-  if (sourceType === "invoice")
-    return buildInvoiceLines(client, operatingCompanyId, sourceId);
-  if (sourceType === "bill")
-    return buildBillLines(client, operatingCompanyId, sourceId);
-  if (sourceType === "expense")
-    return buildExpenseLines(client, operatingCompanyId, sourceId);
-  if (sourceType === "customer_payment")
-    return buildCustomerPaymentLines(client, operatingCompanyId, sourceId);
-  if (sourceType === "bill_payment")
-    return buildBillPaymentLines(client, operatingCompanyId, sourceId);
-  if (sourceType === "cash_advance")
-    return buildCashAdvanceLines(
-      client,
-      operatingCompanyId,
-      sourceId,
-      creditAccountId,
-    );
-  if (sourceType === "driver_advance")
-    return buildDriverAdvanceLines(
-      client,
-      operatingCompanyId,
-      sourceId,
-      creditAccountId,
-    );
-  if (sourceType === "bank_categorization")
-    return buildBankCategorizationLines(client, operatingCompanyId, sourceId);
-  if (sourceType === "driver_reimbursement")
-    return buildDriverReimbursementLines(
-      client,
-      operatingCompanyId,
-      sourceId,
-      creditAccountId,
-    );
-  if (sourceType === "transfer")
-    return buildTransferLines(client, operatingCompanyId, sourceId);
-  throw new PostingEngineError(
-    "UNKNOWN_SOURCE_TYPE",
-    `Unknown source type: ${sourceType}`,
-  );
+  if (sourceType === "invoice") return buildInvoiceLines(client, operatingCompanyId, sourceId);
+  if (sourceType === "bill") return buildBillLines(client, operatingCompanyId, sourceId);
+  if (sourceType === "expense") return buildExpenseLines(client, operatingCompanyId, sourceId);
+  if (sourceType === "customer_payment") return buildCustomerPaymentLines(client, operatingCompanyId, sourceId);
+  if (sourceType === "bill_payment") return buildBillPaymentLines(client, operatingCompanyId, sourceId);
+  if (sourceType === "cash_advance") return buildCashAdvanceLines(client, operatingCompanyId, sourceId, creditAccountId);
+  if (sourceType === "driver_advance") return buildDriverAdvanceLines(client, operatingCompanyId, sourceId, creditAccountId);
+  if (sourceType === "bank_categorization") return buildBankCategorizationLines(client, operatingCompanyId, sourceId);
+  if (sourceType === "driver_reimbursement") return buildDriverReimbursementLines(client, operatingCompanyId, sourceId, creditAccountId);
+  if (sourceType === "transfer") return buildTransferLines(client, operatingCompanyId, sourceId);
+  throw new PostingEngineError("UNKNOWN_SOURCE_TYPE", `Unknown source type: ${sourceType}`);
 }
 
 async function markBatchFailed(
@@ -1924,13 +1560,10 @@ async function markBatchFailed(
   operatingCompanyId: string,
   sourceType: PostingSourceType,
   sourceId: string,
-  idempotencyKey: string,
+  idempotencyKey: string
 ) {
   await withCurrentUser(actor.userId, async (client) => {
-    await client.query(
-      `SELECT set_config('app.operating_company_id', $1::text, true)`,
-      [operatingCompanyId],
-    );
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     await client.query(
       `
         INSERT INTO accounting.posting_batches (
@@ -1947,7 +1580,7 @@ async function markBatchFailed(
         ON CONFLICT (operating_company_id, idempotency_key) WHERE idempotency_key IS NOT NULL
         DO UPDATE SET batch_status = 'failed', updated_at = now()
       `,
-      [operatingCompanyId, sourceType, sourceId, idempotencyKey, actor.userId],
+      [operatingCompanyId, sourceType, sourceId, idempotencyKey, actor.userId]
     );
   });
 }
@@ -1961,19 +1594,12 @@ type PostingExecCtx = {
   idempotencyKey: string;
 };
 
-function buildPostingExecCtx(
-  input: PostSourceInput,
-  actor: Actor,
-): PostingExecCtx {
+function buildPostingExecCtx(input: PostSourceInput, actor: Actor): PostingExecCtx {
   const sourceType = normalizeSourceType(input.source_transaction_type);
   const sourceId = normalizeSourceId(input.source_transaction_id);
-  const postingPurpose: PostingPurpose =
-    input.posting_purpose ?? "initial_post";
-  const normalizedLineId = normalizeSourceLineId(
-    input.source_transaction_line_id ?? null,
-  );
-  const idempotencyLinePart =
-    postingPurpose === "initial_post" ? null : normalizedLineId;
+  const postingPurpose: PostingPurpose = input.posting_purpose ?? "initial_post";
+  const normalizedLineId = normalizeSourceLineId(input.source_transaction_line_id ?? null);
+  const idempotencyLinePart = postingPurpose === "initial_post" ? null : normalizedLineId;
   const idempotencyKey = buildPostingMvpIdempotencyKey({
     operating_company_id: input.operating_company_id,
     source_transaction_type: sourceType,
@@ -1988,16 +1614,9 @@ function buildPostingExecCtx(
 // transaction. Extracted verbatim from the former postSourceTransaction body (no behavior change) so
 // P1-BILLPAY-GL can post a bill_payment JE ATOMICALLY with payBill's bank-cache decrement (both commit
 // or both roll back — never diverge). Idempotent, balanced, and closed-period-gated exactly as before.
-async function executePostingOnClient(
-  client: DbClient,
-  ctx: PostingExecCtx,
-): Promise<PostingResult> {
-  const { input, actor, sourceType, sourceId, postingPurpose, idempotencyKey } =
-    ctx;
-  await client.query(
-    `SELECT set_config('app.operating_company_id', $1::text, true)`,
-    [input.operating_company_id],
-  );
+async function executePostingOnClient(client: DbClient, ctx: PostingExecCtx): Promise<PostingResult> {
+  const { input, actor, sourceType, sourceId, postingPurpose, idempotencyKey } = ctx;
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
 
   const existing = await getExistingPostingResultByIdempotencyKey(
     client,
@@ -2005,7 +1624,7 @@ async function executePostingOnClient(
     idempotencyKey,
     postingPurpose,
     sourceType,
-    sourceId,
+    sourceId
   );
   if (existing) return existing;
 
@@ -2014,7 +1633,7 @@ async function executePostingOnClient(
     sourceType,
     input.operating_company_id,
     sourceId,
-    input.credit_account_id ?? null,
+    input.credit_account_id ?? null
   );
   await ensureOpenPeriod(client, input.operating_company_id, draft.postingDate);
   assertBalanced(draft.lines);
@@ -2034,13 +1653,7 @@ async function executePostingOnClient(
       VALUES ($1::uuid, 'queued', $2, $3, $4, $5::uuid, now(), now())
       RETURNING id::text
     `,
-    [
-      input.operating_company_id,
-      sourceType,
-      sourceId,
-      idempotencyKey,
-      actor.userId,
-    ],
+    [input.operating_company_id, sourceType, sourceId, idempotencyKey, actor.userId]
   );
   const postingBatchId = batch.rows[0]?.id;
   if (!postingBatchId) throw new Error("posting_batch_create_failed");
@@ -2052,7 +1665,7 @@ async function executePostingOnClient(
           updated_at = now()
       WHERE id = $1::uuid
     `,
-    [postingBatchId],
+    [postingBatchId]
   );
 
   const journalEntryId = await createJournalEntryHeader(
@@ -2060,7 +1673,7 @@ async function executePostingOnClient(
     input.operating_company_id,
     draft.postingDate,
     draft.memo,
-    actor.userId,
+    actor.userId
   );
 
   const postingIds = await insertPostingLines({
@@ -2081,7 +1694,7 @@ async function executePostingOnClient(
           updated_at = now()
       WHERE id = $1::uuid
     `,
-    [postingBatchId],
+    [postingBatchId]
   );
 
   return {
@@ -2107,33 +1720,22 @@ async function executePostingOnClient(
 export async function postSourceTransactionInClientTx(
   client: DbClient,
   input: PostSourceInput,
-  actor: Actor,
+  actor: Actor
 ): Promise<PostingResult> {
   return executePostingOnClient(client, buildPostingExecCtx(input, actor));
 }
 
-export async function postSourceTransaction(
-  input: PostSourceInput,
-  actor: Actor,
-): Promise<PostingResult> {
+export async function postSourceTransaction(input: PostSourceInput, actor: Actor): Promise<PostingResult> {
   const ctx = buildPostingExecCtx(input, actor);
   const { sourceType, sourceId, idempotencyKey } = ctx;
   try {
-    return await withCurrentUser(actor.userId, (client) =>
-      executePostingOnClient(client, ctx),
-    );
+    return await withCurrentUser(actor.userId, (client) => executePostingOnClient(client, ctx));
   } catch (error) {
     // Failure-recording must NEVER mask the original posting error. If markBatchFailed
     // itself throws (e.g. its own SQL/RLS issue), preserve and rethrow the original.
     try {
       if (!(error instanceof PostingEngineError)) {
-        await markBatchFailed(
-          actor,
-          input.operating_company_id,
-          sourceType,
-          sourceId,
-          idempotencyKey,
-        );
+        await markBatchFailed(actor, input.operating_company_id, sourceType, sourceId, idempotencyKey);
       } else if (
         error.code !== "INVOICE_NOT_POSTING_ELIGIBLE" &&
         error.code !== "BILL_NOT_POSTING_ELIGIBLE" &&
@@ -2142,19 +1744,10 @@ export async function postSourceTransaction(
         error.code !== "BANK_CATEGORIZATION_NOT_POSTING_ELIGIBLE" &&
         error.code !== "TRANSFER_NOT_POSTING_ELIGIBLE"
       ) {
-        await markBatchFailed(
-          actor,
-          input.operating_company_id,
-          sourceType,
-          sourceId,
-          idempotencyKey,
-        );
+        await markBatchFailed(actor, input.operating_company_id, sourceType, sourceId, idempotencyKey);
       }
     } catch (recordError) {
-      console.error(
-        "[posting-engine] markBatchFailed failed; preserving original error",
-        recordError,
-      );
+      console.error("[posting-engine] markBatchFailed failed; preserving original error", recordError);
     }
     throw error;
   }
@@ -2163,32 +1756,15 @@ export async function postSourceTransaction(
 async function executeSourceReversalOnClient(
   client: DbClient,
   input: ReverseBatchInput,
-  actor: Actor,
-  currentBusinessDate: string,
+  actor: Actor
 ): Promise<PostingResult> {
   const sourceType = normalizeSourceType(input.source_transaction_type);
   const sourceId = normalizeSourceId(input.source_transaction_id);
 
-  const original = await getPostingBySource(
-    client,
-    input.operating_company_id,
-    sourceType,
-    sourceId,
-    "initial_post",
-  );
-  if (!original)
-    throw new PostingEngineError(
-      "SOURCE_NOT_FOUND",
-      "No posted batch found to reverse",
-    );
+  const original = await getPostingBySource(client, input.operating_company_id, sourceType, sourceId, "initial_post");
+  if (!original) throw new PostingEngineError("SOURCE_NOT_FOUND", "No posted batch found to reverse");
 
-  const existingReversal = await getPostingBySource(
-    client,
-    input.operating_company_id,
-    sourceType,
-    sourceId,
-    "reversal",
-  );
+  const existingReversal = await getPostingBySource(client, input.operating_company_id, sourceType, sourceId, "reversal");
   if (existingReversal) return existingReversal;
 
   const originalLines = await client.query<{
@@ -2208,13 +1784,9 @@ async function executeSourceReversalOnClient(
         AND posting_batch_id = $2::uuid
       ORDER BY line_sequence ASC, created_at ASC
     `,
-    [input.operating_company_id, original.posting_batch_id],
+    [input.operating_company_id, original.posting_batch_id]
   );
-  if (!originalLines.rows.length)
-    throw new PostingEngineError(
-      "SOURCE_NOT_FOUND",
-      "No posted lines found to reverse",
-    );
+  if (!originalLines.rows.length) throw new PostingEngineError("SOURCE_NOT_FOUND", "No posted lines found to reverse");
 
   const headerDate = await client.query<{ entry_date: string }>(
     `
@@ -2223,14 +1795,10 @@ async function executeSourceReversalOnClient(
       WHERE je.id = $1::uuid
       LIMIT 1
     `,
-    [original.journal_entry_id],
+    [original.journal_entry_id]
   );
   const originalDate = headerDate.rows[0]?.entry_date;
-  if (!originalDate)
-    throw new PostingEngineError(
-      "SOURCE_NOT_FOUND",
-      "Original journal entry missing",
-    );
+  if (!originalDate) throw new PostingEngineError("SOURCE_NOT_FOUND", "Original journal entry missing");
 
   // Canonical closed-period reversal policy (shared with postVoidReversal):
   // open original period -> original date; closed original period -> current company-business date.
@@ -2239,13 +1807,9 @@ async function executeSourceReversalOnClient(
   // current company date is closed.
   const cutoff = await client.query<{ cutoff: string | null }>(
     `SELECT accounting.closed_period_cutoff($1::uuid)::text AS cutoff`,
-    [input.operating_company_id],
+    [input.operating_company_id]
   );
-  const reversalDate = resolveReversalDate(
-    originalDate,
-    cutoff.rows[0]?.cutoff ?? null,
-    currentBusinessDate,
-  );
+  const reversalDate = resolveReversalDate(originalDate, cutoff.rows[0]?.cutoff ?? null, todayIso());
   await ensureOpenPeriod(client, input.operating_company_id, reversalDate);
 
   const idempotencyKey = buildPostingMvpIdempotencyKey({
@@ -2271,13 +1835,7 @@ async function executeSourceReversalOnClient(
       VALUES ($1::uuid, 'in_progress', $2, $3, $4, $5::uuid, now(), now())
       RETURNING id::text
     `,
-    [
-      input.operating_company_id,
-      sourceType,
-      sourceId,
-      idempotencyKey,
-      actor.userId,
-    ],
+    [input.operating_company_id, sourceType, sourceId, idempotencyKey, actor.userId]
   );
   const reversalBatchId = reversalBatch.rows[0]?.id;
   if (!reversalBatchId) throw new Error("reversal_batch_create_failed");
@@ -2287,7 +1845,7 @@ async function executeSourceReversalOnClient(
     input.operating_company_id,
     reversalDate,
     `Reversal of ${original.journal_entry_id}`,
-    actor.userId,
+    actor.userId
   );
 
   const reversalPostingIds: string[] = [];
@@ -2333,7 +1891,7 @@ async function executeSourceReversalOnClient(
         reversalBatchId,
         idempotencyKey,
         row.id,
-      ],
+      ]
     );
     const reversalLineId = ins.rows[0]?.id;
     if (!reversalLineId) throw new Error("reversal_line_insert_failed");
@@ -2345,7 +1903,7 @@ async function executeSourceReversalOnClient(
             updated_at = now()
         WHERE id = $1::uuid
       `,
-      [row.id, reversalLineId],
+      [row.id, reversalLineId]
     );
     await client.query(
       `
@@ -2358,18 +1916,16 @@ async function executeSourceReversalOnClient(
         )
         VALUES ($1::uuid, $2::uuid, $3, $4, 'reversal')
       `,
-      [input.operating_company_id, reversalLineId, sourceType, sourceId],
+      [input.operating_company_id, reversalLineId, sourceType, sourceId]
     );
     lineSequence += 1;
   }
-  await client.query(
-    `UPDATE accounting.posting_batches SET batch_status = 'reversed', updated_at = now() WHERE id = $1::uuid`,
-    [original.posting_batch_id],
-  );
-  await client.query(
-    `UPDATE accounting.posting_batches SET batch_status = 'posted', updated_at = now() WHERE id = $1::uuid`,
-    [reversalBatchId],
-  );
+  await client.query(`UPDATE accounting.posting_batches SET batch_status = 'reversed', updated_at = now() WHERE id = $1::uuid`, [
+      original.posting_batch_id,
+  ]);
+  await client.query(`UPDATE accounting.posting_batches SET batch_status = 'posted', updated_at = now() WHERE id = $1::uuid`, [
+    reversalBatchId,
+  ]);
   return {
     result: "reversed",
     posting_batch_id: reversalBatchId,
@@ -2391,40 +1947,19 @@ async function executeSourceReversalOnClient(
 export async function reversePostedSourceTransactionInClientTx(
   client: DbClient,
   input: ReverseBatchInput,
-  actor: Actor,
-  currentBusinessDate: string,
+  actor: Actor
 ): Promise<PostingResult> {
-  return executeSourceReversalOnClient(
-    client,
-    input,
-    actor,
-    currentBusinessDate,
-  );
+  return executeSourceReversalOnClient(client, input, actor);
 }
 
-export async function reversePostedSourceTransaction(
-  input: ReverseBatchInput,
-  actor: Actor,
-): Promise<PostingResult> {
-  const currentBusinessDate = todayIso();
+export async function reversePostedSourceTransaction(input: ReverseBatchInput, actor: Actor): Promise<PostingResult> {
   return withCurrentUser(actor.userId, async (client) => {
-    await client.query(
-      `SELECT set_config('app.operating_company_id', $1::text, true)`,
-      [input.operating_company_id],
-    );
-    return executeSourceReversalOnClient(
-      client,
-      input,
-      actor,
-      currentBusinessDate,
-    );
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
+    return executeSourceReversalOnClient(client, input, actor);
   });
 }
 
-export async function runPostingEngineMvpBackfill(
-  input: BackfillInput,
-  actor: Actor,
-) {
+export async function runPostingEngineMvpBackfill(input: BackfillInput, actor: Actor) {
   const totals = {
     posted: 0,
     already_posted: 0,
@@ -2438,18 +1973,11 @@ export async function runPostingEngineMvpBackfill(
       customer_payment: 0,
       bill_payment: 0,
     } as Record<PostingSourceType, number>,
-    errors: [] as Array<{
-      source_transaction_type: PostingSourceType;
-      source_transaction_id: string;
-      error: string;
-    }>,
+    errors: [] as Array<{ source_transaction_type: PostingSourceType; source_transaction_id: string; error: string }>,
   };
 
   const ids = await withCurrentUser(actor.userId, async (client) => {
-    await client.query(
-      `SELECT set_config('app.operating_company_id', $1::text, true)`,
-      [input.operating_company_id],
-    );
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
     const invoices = await client.query<{ id: string }>(
       `
         SELECT id::text
@@ -2457,7 +1985,7 @@ export async function runPostingEngineMvpBackfill(
         WHERE operating_company_id = $1::uuid
           AND status IN ('sent', 'partial', 'paid', 'factored')
       `,
-      [input.operating_company_id],
+      [input.operating_company_id]
     );
     const bills = await client.query<{ id: string }>(
       `
@@ -2467,7 +1995,7 @@ export async function runPostingEngineMvpBackfill(
           AND COALESCE(revoked_at::text, '') = ''
           AND status NOT IN ('void', 'voided')
       `,
-      [input.operating_company_id],
+      [input.operating_company_id]
     );
     const customerPayments = await client.query<{ id: string }>(
       `
@@ -2476,7 +2004,7 @@ export async function runPostingEngineMvpBackfill(
         WHERE operating_company_id = $1::uuid
           AND voided_at IS NULL
       `,
-      [input.operating_company_id],
+      [input.operating_company_id]
     );
     const billPayments = await client.query<{ id: string }>(
       `
@@ -2489,7 +2017,7 @@ export async function runPostingEngineMvpBackfill(
           -- settlement deduction JE; posting them here would double-reduce A/P + credit phantom cash).
           AND COALESCE(settlement_deduction_noncash, false) = false
       `,
-      [input.operating_company_id],
+      [input.operating_company_id]
     );
     return {
       invoice: invoices.rows.map((r) => r.id),
@@ -2501,12 +2029,7 @@ export async function runPostingEngineMvpBackfill(
 
   // cash_advance is intentionally excluded from batch backfill — it posts via B5's explicit
   // approve path (which supplies the credit account), not this unposted-source sweep.
-  const sourceOrder = [
-    "invoice",
-    "bill",
-    "customer_payment",
-    "bill_payment",
-  ] as const;
+  const sourceOrder = ["invoice", "bill", "customer_payment", "bill_payment"] as const;
   for (const sourceType of sourceOrder) {
     // CHAIN-06 GAP #1 — invoice A/R stays behind the per-entity kill switch. When it is not explicitly
     // enabled for this entity, do NOT post any invoices (no-op) — same behavior as the MVP post route's OFF path.
@@ -2523,7 +2046,7 @@ export async function runPostingEngineMvpBackfill(
             source_transaction_id: sourceId,
             posting_purpose: "initial_post",
           },
-          actor,
+          actor
         );
         if (result.result === "posted") totals.posted += 1;
         if (result.result === "already_posted") totals.already_posted += 1;

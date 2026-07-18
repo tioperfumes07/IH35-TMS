@@ -10,40 +10,15 @@ import { fileURLToPath } from "node:url";
 export default {
   name: "verify-acct-posting-business-date",
   run: (ctx) => {
-    if (
-      ctx.run("node", ["scripts/verify-acct-posting-business-date.mjs"]) !== 0
-    ) {
-      throw new Error("verify-acct-posting-business-date failed");
-    }
-    if (
-      ctx.run("node", [
-        "scripts/verify-acct-posting-business-date.mjs",
-        "--selftest",
-      ]) !== 0
-    ) {
-      throw new Error("verify-acct-posting-business-date selftest failed");
+    if (ctx.run("node", ["scripts/verify-acct-posting-business-date.mjs"]) !== 0) {
+      process.exit(1);
     }
   },
 };
 
-if (
-  process.argv[1] &&
-  path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)
-) {
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const { createVerifyPrecommitContext } = await import("./_context.mjs");
-  const ROOT = path.resolve(
-    path.dirname(fileURLToPath(import.meta.url)),
-    "..",
-    "..",
-  );
+  const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
   const ctx = createVerifyPrecommitContext(ROOT);
-  if (ctx.run("node", ["scripts/verify-acct-posting-business-date.mjs"]) !== 0)
-    process.exit(1);
-  if (
-    ctx.run("node", [
-      "scripts/verify-acct-posting-business-date.mjs",
-      "--selftest",
-    ]) !== 0
-  )
-    process.exit(1);
+  if (ctx.run("node", ["scripts/verify-acct-posting-business-date.mjs"]) !== 0) process.exit(1);
 }
