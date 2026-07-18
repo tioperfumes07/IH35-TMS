@@ -61,9 +61,11 @@ test("live ruleset drift fails when freshness context is absent", () => {
 });
 
 test("live ruleset drift rejects conditional checks as required contexts", () => {
+  // NOTE: security-checks / security-audit is intentionally NOT in this list —
+  // owner decision 2026-07-18 keeps it a REQUIRED gate (it lives in
+  // REQUIRED_GATE_CONTEXTS). Only perf/pass-8/pr-preview are conditional.
   for (const context of [
     "perf-budget-check / perf-audit",
-    "security-checks / security-audit",
     "pass-8-smoke-verify / pass-8",
     "pr-preview-smoke / PR Preview Smoke",
   ]) {
@@ -143,7 +145,10 @@ test("valid live policy passes only through explicit admin verification", async 
   );
   assert.equal(outcome.baselinePassed, true);
   assert.equal(outcome.liveVerified, true);
-  assert.match(outcome.message, /LIVE PASS — 8 owner-approved contexts verified/);
+  assert.match(
+    outcome.message,
+    new RegExp(`LIVE PASS — ${REQUIRED_GATE_CONTEXTS.length} owner-approved contexts verified`)
+  );
 });
 
 test("branch-protection apply requires exact owner authorization", () => {

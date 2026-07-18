@@ -21,6 +21,10 @@ export const REQUIRED_GATE_CONTEXTS = [
   STRICT_FRESHNESS_CONTEXT,
   "hold-merge-gate / hold-merge-gate",
   "locked-guards / locked-guards",
+  // Owner decision 2026-07-18: security-audit is KEPT as a required merge gate
+  // (security must never be advisory). Only perf-audit / pass-8 / pr-preview-smoke
+  // are dropped from the required set.
+  "security-checks / security-audit",
   "premerge-gates / rls-migration-scan",
   "premerge-gates / typescript-strict-null",
   "premerge-gates / migration-role-validation",
@@ -98,7 +102,7 @@ export function assertConfigBaseline() {
     contexts.some((context, index) => context !== REQUIRED_GATE_CONTEXTS[index])
   ) {
     console.error(
-      `[${LABEL}] FAIL — required_status_checks.contexts must equal the eight owner-approved universal gates`
+      `[${LABEL}] FAIL — required_status_checks.contexts must equal the ${REQUIRED_GATE_CONTEXTS.length} owner-approved universal gates`
     );
     process.exit(1);
   }

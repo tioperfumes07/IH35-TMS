@@ -23,6 +23,7 @@ gh api --method PUT repos/tioperfumes07/IH35-TMS/branches/main/protection --inpu
       "ci / verify-branch-fresh",
       "hold-merge-gate / hold-merge-gate",
       "locked-guards / locked-guards",
+      "security-checks / security-audit",
       "premerge-gates / rls-migration-scan",
       "premerge-gates / typescript-strict-null",
       "premerge-gates / migration-role-validation"
@@ -48,7 +49,7 @@ token:
 GH_ADMIN_TOKEN="$(gh auth token)" node scripts/verify-ci-policy-applied.mjs
 ```
 
-The verifier must print `LIVE PASS — 8 owner-approved contexts verified via GH_ADMIN_TOKEN`. A 403, 404,
+The verifier must print `LIVE PASS — 9 owner-approved contexts verified via GH_ADMIN_TOKEN`. A 403, 404,
 or policy drift is a hard failure. Standard CI intentionally supplies no token to this verifier; it validates
 the committed baseline only and prints
 `BASELINE PASS — LIVE UNVERIFIED, owner handoff required`.
@@ -63,25 +64,26 @@ the committed baseline only and prints
 6. Enable **Require review from Code Owners**.
 7. Enable **Require status checks to pass before merging**.
 8. Enable **Require branches to be up to date before merging**.
-9. Select only these eight required checks, using the exact names shown:
+9. Select only these nine required checks, using the exact names shown:
    - `required-checks / required-checks-gate`
    - `ci / build-typecheck`
    - `ci / verify-branch-fresh`
    - `hold-merge-gate / hold-merge-gate`
    - `locked-guards / locked-guards`
+   - `security-checks / security-audit`
    - `premerge-gates / rls-migration-scan`
    - `premerge-gates / typescript-strict-null`
    - `premerge-gates / migration-role-validation`
-10. Remove performance, security, PASS-8, and PR-preview checks from the required-check list; those workflows
-    are not universal merge gates.
+10. Remove performance, PASS-8, and PR-preview checks from the required-check list; those workflows
+    are not universal merge gates. Security (`security-audit`) IS required — owner decision 2026-07-18.
 11. Enable **Require conversation resolution before merging**.
 12. Enable the control labeled **Do not allow bypassing the above settings** (or **Include administrators**
     in the classic UI) so administrators are also enforced.
 13. Leave **Allow force pushes** disabled.
 14. Leave **Allow deletions** disabled.
-15. Save changes, then inspect the saved `main` rule to confirm the eight names and every control above.
+15. Save changes, then inspect the saved `main` rule to confirm the nine names and every control above.
 
 If the repository uses **Settings** → **Rules** → **Rulesets** instead of the classic Branches screen, edit
 the active `main` branch ruleset with the same target, bypass prohibition, pull-request settings, strict
-required-status-check setting, exact eight checks, conversation-resolution requirement, and force-push /
+required-status-check setting, exact nine checks, conversation-resolution requirement, and force-push /
 deletion prohibitions.
