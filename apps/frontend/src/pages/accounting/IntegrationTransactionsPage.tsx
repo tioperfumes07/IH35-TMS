@@ -7,6 +7,7 @@ import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getIntegrationTransactions, type IntegrationTxnItem } from "../../api/integration-transactions";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 
 const fmtCents = (c: number | null) => (c == null ? "—" : formatUsdCents(c));
 const fmtDate = (s: string | null) => formatDateUS(s) || "—";
@@ -173,6 +174,12 @@ export function IntegrationTransactionsPage() {
 
   return (
     <AccountingSubNavWrapper title="Integration Transactions" subtitle="QBO sync queue — all entity sync statuses">
+      {txnQuery.isError ? (
+        <ListErrorBanner
+          message={`Failed to load integration transactions: ${(txnQuery.error as Error)?.message ?? "Request failed"}`}
+          onRetry={() => void txnQuery.refetch()}
+        />
+      ) : null}
       <ParityTable
         columns={columns}
         rows={items}

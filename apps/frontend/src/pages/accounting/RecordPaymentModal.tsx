@@ -10,6 +10,7 @@ import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { companyToday } from "../../lib/businessDate";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 
 type Props = {
   open: boolean;
@@ -192,6 +193,12 @@ export function RecordPaymentModal({
         <div className="grid gap-2 md:grid-cols-2">
           <div className="space-y-1">
             <label className="text-xs font-semibold text-gray-600">Customer</label>
+            {customersQuery.isError ? (
+              <ListErrorBanner
+                message={`Failed to load customers: ${(customersQuery.error as Error)?.message ?? "Request failed"}`}
+                onRetry={() => void customersQuery.refetch()}
+              />
+            ) : null}
             <Combobox
               options={customerOptions}
               value={customerId}
@@ -249,7 +256,13 @@ export function RecordPaymentModal({
 
           {!customerId ? <div className="text-xs text-gray-600">Select a customer to view open invoices.</div> : null}
           {customerId && openInvoicesQuery.isLoading ? <div className="text-xs text-gray-600">Loading open invoices...</div> : null}
-          {customerId && !openInvoicesQuery.isLoading && openInvoices.length === 0 ? (
+          {customerId && openInvoicesQuery.isError ? (
+            <ListErrorBanner
+              message={`Failed to load open invoices: ${(openInvoicesQuery.error as Error)?.message ?? "Request failed"}`}
+              onRetry={() => void openInvoicesQuery.refetch()}
+            />
+          ) : null}
+          {customerId && !openInvoicesQuery.isLoading && !openInvoicesQuery.isError && openInvoices.length === 0 ? (
             <div className="text-xs text-gray-600">No open invoices for this customer.</div>
           ) : null}
 

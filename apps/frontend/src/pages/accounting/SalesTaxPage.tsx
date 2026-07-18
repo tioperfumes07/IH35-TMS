@@ -14,6 +14,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -132,6 +133,14 @@ export function SalesTaxPage() {
 
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 text-sm font-semibold text-gray-900">Prepare return</div>
+        {agenciesQuery.isError ? (
+          <div className="mb-2">
+            <ListErrorBanner
+              message={`Failed to load sales tax agencies: ${(agenciesQuery.error as Error)?.message ?? "Request failed"}`}
+              onRetry={() => void agenciesQuery.refetch()}
+            />
+          </div>
+        ) : null}
         <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
           <select
             className="rounded-sm border border-gray-300 px-2 py-1 text-sm"

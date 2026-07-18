@@ -13,6 +13,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -143,7 +144,13 @@ export function FactorReconciliationPage() {
                 <span className="font-semibold">Run:</span> {selectedRun.statement_date} | <span className="font-semibold">Status:</span> {selectedRun.status} |{" "}
                 <span className="font-semibold">Mismatches:</span> {mismatchCount}
               </div>
-              <div className="max-h-[320px] overflow-auto rounded-sm border border-gray-200">
+              {itemsQuery.isError ? (
+                <ListErrorBanner
+                  message={`Failed to load reconciliation items: ${(itemsQuery.error as Error)?.message ?? "Request failed"}`}
+                  onRetry={() => void itemsQuery.refetch()}
+                />
+              ) : null}
+              {!itemsQuery.isError ? <div className="max-h-[320px] overflow-auto rounded-sm border border-gray-200">
                 <table className="min-w-full text-left text-xs">
                   <thead className="bg-gray-50">
                     <tr className="text-gray-600">
@@ -166,7 +173,7 @@ export function FactorReconciliationPage() {
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </div> : null}
             </div>
           ) : null}
         </DataPanel>

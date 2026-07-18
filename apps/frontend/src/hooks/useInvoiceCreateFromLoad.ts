@@ -43,7 +43,9 @@ export function useInvoiceCreateFromLoad(operatingCompanyId: string, options: { 
     page,
     pageSize,
     isLoading: loadsQuery.isLoading,
+    isError: loadsQuery.isError,
     error: loadsQuery.error,
+    refetchLoads: loadsQuery.refetch,
     createFromLoad: createMutation.mutateAsync,
     isCreating: createMutation.isPending,
   };

@@ -5,6 +5,7 @@ import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { useInvoiceCreateFromLoad, type LoadStatusFilter } from "../../hooks/useInvoiceCreateFromLoad";
 import { InvoiceCreateBlankPage } from "./InvoiceCreateBlankPage";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 
 type Step = "choose" | "from_load" | "blank";
 
@@ -23,7 +24,7 @@ export function InvoiceCreateModal({ open, operatingCompanyId, onClose }: Props)
   const [loadPage, setLoadPage] = useState(1);
   const pageSize = 25;
 
-  const { loads, totalCount, isLoading, createFromLoad, isCreating } = useInvoiceCreateFromLoad(operatingCompanyId, {
+  const { loads, totalCount, isLoading, isError, error, refetchLoads, createFromLoad, isCreating } = useInvoiceCreateFromLoad(operatingCompanyId, {
     search: loadSearch,
     statusFilter,
     page: loadPage,
@@ -82,6 +83,12 @@ export function InvoiceCreateModal({ open, operatingCompanyId, onClose }: Props)
 
         {step === "from_load" ? (
           <div className="space-y-3">
+            {isError ? (
+              <ListErrorBanner
+                message={`Failed to load invoiceable loads: ${(error as Error)?.message ?? "Request failed"}`}
+                onRetry={() => void refetchLoads()}
+              />
+            ) : null}
             <div className="flex flex-wrap gap-2">
               <input
                 value={loadSearch}
@@ -143,7 +150,7 @@ export function InvoiceCreateModal({ open, operatingCompanyId, onClose }: Props)
                       </td>
                     </tr>
                   ))}
-                  {!isLoading && loads.length === 0 ? (
+                  {!isLoading && !isError && loads.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="px-2 py-4 text-center text-sm text-gray-500">
                         No loads match the current filters.
