@@ -10,6 +10,14 @@ export default {
     if (selftestStatus !== 0) {
       throw new Error(`verify-schema-parity-determinism --selftest failed with status ${selftestStatus}`);
     }
+
+    const wrapperTestStatus = ctx.run("node", [
+      "--test",
+      "scripts/__tests__/verify-schema-parity-determinism-step.test.mjs",
+    ]);
+    if (wrapperTestStatus !== 0) {
+      throw new Error(`verify-schema-parity-determinism step test failed with status ${wrapperTestStatus}`);
+    }
     return 0;
   },
 };

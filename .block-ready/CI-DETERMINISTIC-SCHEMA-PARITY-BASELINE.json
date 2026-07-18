@@ -35,12 +35,12 @@
       "evidence": "Guard --selftest requires one planted old writer containing all three volatile patterns to produce all three expected violations."
     },
     {
-      "check": "The verify-step throws immediately on a nonzero normal guard status and runs selftest only after normal success.",
-      "evidence": "The actual step wrapper test plants status 1, requires rejection, and proves selftest was not invoked; its success case proves normal-then-selftest ordering."
+      "check": "The verify-step fail-closed runs the normal guard, guard selftest, and actual wrapper test in order.",
+      "evidence": "Wrapper tests plant status 1 at each child boundary, require immediate rejection, prove later commands are not invoked, and verify the complete success order."
     },
     {
       "check": "The new guard is auto-discovered without editing package.json or CI workflows.",
-      "evidence": "scripts/verify-steps/145-verify-schema-parity-determinism.mjs checks both child statuses and throws on either failure."
+      "evidence": "scripts/verify-steps/145-verify-schema-parity-determinism.mjs checks all three child statuses and throws on any failure."
     }
   ],
   "note": "CI-only. This removes qualifying timestamp churn and timestamp-only baseline conflicts; it does not claim to prevent unrelated PR failures or all GitHub conflicts."

@@ -20,9 +20,50 @@ test("verify step rejects immediately when the normal guard returns status 1", (
   ]);
 });
 
-test("verify step runs selftest only after the normal guard succeeds", () => {
+test("verify step stops before the wrapper test when selftest fails", () => {
   const calls = [];
-  const statuses = [0, 0];
+  const statuses = [0, 1];
+  const ctx = {
+    run(command, args) {
+      calls.push([command, args]);
+      return statuses.shift();
+    },
+  };
+
+  assert.throws(
+    () => step.run(ctx),
+    /verify-schema-parity-determinism --selftest failed with status 1/,
+  );
+  assert.deepEqual(calls, [
+    ["node", ["scripts/verify-schema-parity-determinism.mjs"]],
+    ["node", ["scripts/verify-schema-parity-determinism.mjs", "--selftest"]],
+  ]);
+});
+
+test("verify step rejects when the actual wrapper test returns status 1", () => {
+  const calls = [];
+  const statuses = [0, 0, 1];
+  const ctx = {
+    run(command, args) {
+      calls.push([command, args]);
+      return statuses.shift();
+    },
+  };
+
+  assert.throws(
+    () => step.run(ctx),
+    /verify-schema-parity-determinism step test failed with status 1/,
+  );
+  assert.deepEqual(calls, [
+    ["node", ["scripts/verify-schema-parity-determinism.mjs"]],
+    ["node", ["scripts/verify-schema-parity-determinism.mjs", "--selftest"]],
+    ["node", ["--test", "scripts/__tests__/verify-schema-parity-determinism-step.test.mjs"]],
+  ]);
+});
+
+test("verify step runs normal, selftest, then the actual wrapper test", () => {
+  const calls = [];
+  const statuses = [0, 0, 0];
   const ctx = {
     run(command, args) {
       calls.push([command, args]);
@@ -34,5 +75,6 @@ test("verify step runs selftest only after the normal guard succeeds", () => {
   assert.deepEqual(calls, [
     ["node", ["scripts/verify-schema-parity-determinism.mjs"]],
     ["node", ["scripts/verify-schema-parity-determinism.mjs", "--selftest"]],
+    ["node", ["--test", "scripts/__tests__/verify-schema-parity-determinism-step.test.mjs"]],
   ]);
 });
