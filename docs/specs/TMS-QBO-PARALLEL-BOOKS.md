@@ -56,6 +56,37 @@ rest of `ACCOUNTING-ARCHITECTURE.md` (clone-once, reconcile-only, no write-back,
 secured borrowing, escrow = liability, integrity invariants) remains the detailed source of truth and is
 consistent with this doc.
 
+## CPA Answers Integration — Phase 1 (owner/CPA verified, 2026-07-18)
+
+Governance-only lock (no executable posting/migration in this phase). Full narrative:
+`docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md` (2026-07-18 CPA Answers section) and
+`.claude/skills/ih35-cpa-accounting-decisions/`.
+
+1. **Revenue recognition** = at **canonical load delivery**. Invoice creation and POD timing are
+   **billing readiness** only — they do **not** move recognition. Stale invoice-create recognition
+   wording in canonical decision docs is a defect (guarded).
+
+2. **Factoring (Faro)** = secured borrowing / recourse. Sanitized commercial terms: revolving limit
+   **$1,000,000**; Tier 1 fee **1.5%**; Tier 2 fee **2%**; reserve **1.5%**; term **30 days** + grace
+   **5 days**; repurchase deadline **95 days**; default interest **0.067% per day, compounded daily**.
+   Actual factor statements remain authoritative. Decision docs must not include names, signatures,
+   addresses, emails, personal-guaranty text, or executed-agreement text.
+
+3. **CoA structure (additive only — never delete/rename existing accounts):**
+   - **Sales of Service** children: Line Haul; Fuel Surcharge; Accessorial Revenue (Detention, Layover,
+     Lumper, TONU, Other).
+   - **Interest & Financing Expense** children: Factoring Fees; Factoring Default Interest; Factoring
+     Transaction/Wire Fees.
+   - Add **Driver Damage Loss**.
+
+4. **Entity books:** each legal entity keeps **separate entity books** with **reciprocal intercompany
+   monitoring**. Existing **read-only consolidated reporting** is retained **additively** for future
+   reporting needs — not as a substitute for entity books.
+
+5. **Verified CoA export facts** (owner-local verification snapshot for governance): **1,368** rows
+   (TRANSP **387**, TRK **947**, USMCA **34**); **1,294** QBO-connected; **1,198** active; no duplicate
+   entity/account-number pairs; **zero** opening balances in the export.
+
 ## Deeper references
 
 - `docs/specs/ACCOUNTING-ARCHITECTURE.md` — detailed accounting source of truth (clone/reconcile rules,
@@ -65,3 +96,4 @@ consistent with this doc.
 - `docs/OWNER-RULING-flag-flips-sole-owner-decision-2026-07-11.md` — the controlling owner ruling on
   parallel-indefinitely + flag-flips as the owner's sole decision.
 - `docs/lockdown/00_LOCKED_DECISIONS.md` §8 — the registered locked decision.
+- `.claude/skills/ih35-cpa-accounting-decisions/SKILL.md` — locked CPA decision skill + reference card.

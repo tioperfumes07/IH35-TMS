@@ -1286,3 +1286,69 @@ Guards: `scripts/verify-push-gate-classification.mjs` and `scripts/verify-xlsx-c
 
 Official basis: FMCSA CSA “Measure” and SMS Help Center — Hazmat Compliance and Crash Indicator BASICs are available only to logged-in carriers and enforcement personnel.
 
+---
+
+## 2026-07-18 — CPA Answers Integration Phase 1 (LOCKED — owner/CPA)
+
+**Block type:** docs / governance only. **No** executable financial code, **no** migration, **no** money-flag flip.
+**Do not modify** `docs/specs/IH35_MASTER_BLUEPRINT_v3_FULL.md` for this phase.
+**Sanitization:** never commit names, signatures, addresses, emails, personal-guaranty text, or executed-agreement text.
+
+### Locked recognition + billing
+- Revenue is recognized at **canonical load delivery**.
+- Revenue is **not** recognized at invoice creation (stale "invoice-create recognition" wording in canonical decision docs is a defect).
+- POD / invoice timing = **billing readiness** only.
+
+### Locked factoring (Faro) — secured borrowing
+- Treatment: **secured borrowing / recourse** (not a sale).
+- Sanitized commercial terms (actual factor statements remain authoritative):
+  - Revolving limit **$1,000,000**
+  - Tier 1 fee **1.5%**; Tier 2 fee **2%**
+  - Reserve **1.5%**
+  - Term **30 days** + grace **5 days**
+  - Repurchase deadline **95 days**
+  - Default interest **0.067% per day, compounded daily**
+
+### Locked CoA structure (additive — never delete/rename)
+**Sales of Service** children:
+- Line Haul
+- Fuel Surcharge
+- Accessorial Revenue (Detention, Layover, Lumper, TONU, Other)
+
+**Interest & Financing Expense** children:
+- Factoring Fees
+- Factoring Default Interest
+- Factoring Transaction/Wire Fees
+
+**Also additive:** Driver Damage Loss.
+
+### Locked entity-books model
+- Separate **entity books** per legal entity.
+- **Reciprocal intercompany monitoring** between entities.
+- Retain existing **read-only consolidated reporting** additively for future reporting needs (never delete that surface).
+
+### Verified CoA export facts (owner-local verification)
+| Fact | Value |
+|------|------:|
+| Total rows | 1,368 |
+| TRANSP | 387 |
+| TRK | 947 |
+| USMCA | 34 |
+| QBO-connected | 1,294 |
+| Active | 1,198 |
+| Duplicate entity/account-number pairs | 0 |
+| Opening balances in export | 0 |
+
+### Canonical surfaces updated in this phase
+- `docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md` (this section)
+- `docs/specs/TMS-QBO-PARALLEL-BOOKS.md`
+- `docs/specs/ACCOUNTING-ARCHITECTURE.md`
+- `.claude/skills/ih35-cpa-accounting-decisions/SKILL.md`
+- `.claude/skills/ih35-cpa-accounting-decisions/resources/locked-decisions-reference.md`
+
+### Guard (Rule 17 — auto-discovered)
+- `scripts/verify-cpa-answers-phase1-decisions.mjs`
+- `scripts/verify-steps/910-verify-cpa-answers-phase1-decisions.mjs`
+- Fails on stale invoice-create recognition wording in the canonical decision docs above.
+- Protects the sanitized Phase-1 decision anchors (delivery recognition, Faro terms, CoA children, entity books, CoA export facts) without `package.json` / CI workflow hot-file edits.
+

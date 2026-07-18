@@ -154,3 +154,64 @@ court/CPA-grade tieout snapshot. Nothing locks/closes during the reconciliation 
 **Deduction authorization** = the signed **hire contract** (no separate driver e-sign); the `driver_deduction_auth` consent gate is satisfied by it. Hire-contract template later built in the Legal module for new drivers.
 
 **Everything links to the load** — bills gain line items + `load_id`; diesel/expenses/repairs/maintenance/truck/trailer/driver all connect to the load. Never delete — archive only.
+
+---
+
+## CPA Answers Integration — Phase 1 (owner/CPA verified, 2026-07-18)
+
+**Scope of this section:** governance / decision lock only. No executable GL math, no migration, no money-flag flip.
+Companion surfaces: `docs/specs/TMS-QBO-PARALLEL-BOOKS.md`,
+`docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md` (same-dated section),
+`.claude/skills/ih35-cpa-accounting-decisions/` (+ reference card).
+Guard: `scripts/verify-cpa-answers-phase1-decisions.mjs` (Rule-17 auto-discovered verify-step).
+
+### Revenue recognition (LOCKED)
+- Recognize revenue at **canonical load delivery**.
+- Do **not** recognize at invoice creation.
+- POD issuance and invoice creation are **billing readiness** signals only.
+
+### Factoring — Faro secured borrowing (sanitized terms)
+- Treatment remains **secured borrowing / recourse** (not a sale); ASC 860 control-test nuance applies.
+- Sanitized commercial terms (actual factor statements remain authoritative when they differ):
+  - Revolving limit **$1,000,000**
+  - Tier 1 fee **1.5%**; Tier 2 fee **2%**
+  - Reserve **1.5%**
+  - Term **30 days** + grace **5 days**
+  - Repurchase deadline **95 days**
+  - Default interest **0.067% per day, compounded daily**
+- Decision docs must **not** include names, signatures, addresses, emails, personal-guaranty text, or
+  executed-agreement text.
+
+### Chart of Accounts structure (ADDITIVE ONLY)
+Never delete or rename existing modules/accounts. Add missing structure:
+
+**Sales of Service** children:
+- Line Haul
+- Fuel Surcharge
+- Accessorial Revenue → Detention, Layover, Lumper, TONU, Other
+
+**Interest & Financing Expense** children:
+- Factoring Fees
+- Factoring Default Interest
+- Factoring Transaction/Wire Fees
+
+**Also add:** Driver Damage Loss.
+
+### Entity books + consolidated reporting
+- Entities keep **separate entity books** with **reciprocal intercompany monitoring**.
+- Retain existing **read-only consolidated reporting** additively for future reporting needs — do not remove
+  it; do not treat consolidated output as a legal-entity book of record.
+
+### Verified CoA export facts (owner-local verification snapshot)
+These are governance facts from the owner-verified CoA export — **not** a live Neon row-count claim in this PR:
+
+| Fact | Value |
+|------|------:|
+| Total rows | 1,368 |
+| TRANSP | 387 |
+| TRK | 947 |
+| USMCA | 34 |
+| QBO-connected | 1,294 |
+| Active | 1,198 |
+| Duplicate entity/account-number pairs | 0 |
+| Opening balances in export | 0 |
