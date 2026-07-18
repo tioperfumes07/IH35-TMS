@@ -5,6 +5,7 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 import { requireAuth } from "../auth/session-middleware.js";
 import { createTtlCache } from "../lib/ttl-cache.js";
 import { getRunnerState } from "../admin/runner-status.store.js";
+import { computeQboSyncFreshness, QBO_SYNC_STALE_AFTER_MS } from "./sync-freshness.js";
 
 const querySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -61,6 +62,21 @@ export async function registerQboSyncHealthRoutes(app: FastifyInstance) {
           )
         : { rows: [] };
 
+      const latestSuccessfulPushRun = runsExist.rows[0]?.ok
+        ? await client.query<{ completed_at: string | null }>(
+            `
+              SELECT completed_at::text
+              FROM qbo.sync_runs
+              WHERE operating_company_id = $1::uuid
+                AND status = 'success'
+                AND completed_at IS NOT NULL
+              ORDER BY completed_at DESC
+              LIMIT 1
+            `,
+            [parsed.data.operating_company_id]
+          )
+        : { rows: [] };
+
       // HOME-7: the recurring master-data (CDC) sync writes to mdata.qbo_sync_runs, NOT qbo.sync_runs.
       // Reading only qbo.sync_runs made "Last run" show "never/No runs" on a page that already showed the
       // per-domain "synced HH:MM" badge (fed by the master-data run). Consider BOTH sources and surface
@@ -86,6 +102,21 @@ export async function registerQboSyncHealthRoutes(app: FastifyInstance) {
               FROM mdata.qbo_sync_runs
               WHERE operating_company_id = $1::uuid
               ORDER BY COALESCE(finished_at, started_at) DESC, started_at DESC
+              LIMIT 1
+            `,
+            [parsed.data.operating_company_id]
+          )
+        : { rows: [] };
+
+      const latestSuccessfulMasterDataRun = mdataRunsExist.rows[0]?.ok
+        ? await client.query<{ completed_at: string | null }>(
+            `
+              SELECT finished_at::text AS completed_at
+              FROM mdata.qbo_sync_runs
+              WHERE operating_company_id = $1::uuid
+                AND finished_at IS NOT NULL
+                AND error_message IS NULL
+              ORDER BY finished_at DESC
               LIMIT 1
             `,
             [parsed.data.operating_company_id]
@@ -143,6 +174,16 @@ export async function registerQboSyncHealthRoutes(app: FastifyInstance) {
       const pushRun = latestRun.rows[0];
       const cdcRun = latestMasterDataRun.rows[0];
       const row = runEffectiveMs(cdcRun) > runEffectiveMs(pushRun) ? cdcRun : pushRun;
+      const freshness = computeQboSyncFreshness([
+        {
+          source: "qbo_sync_runs",
+          completedAt: latestSuccessfulPushRun.rows[0]?.completed_at,
+        },
+        {
+          source: "master_data_cdc",
+          completedAt: latestSuccessfulMasterDataRun.rows[0]?.completed_at,
+        },
+      ]);
       return {
         latest_run: row
           ? {
@@ -155,6 +196,7 @@ export async function registerQboSyncHealthRoutes(app: FastifyInstance) {
         open_alerts_count: Number(openAlertsCount.rows[0]?.c ?? 0),
         failed_outbox_count: Number(failedOutboxCount.rows[0]?.c ?? 0),
         high_severity_alerts_count: Number(highSeverityAlertsCount.rows[0]?.c ?? 0),
+        ...freshness,
         last_updated: new Date().toISOString(),
       };
     });
@@ -335,7 +377,6 @@ export async function registerQboSyncHealthRoutes(app: FastifyInstance) {
       else if (refreshExpired) reconnectReason = "quickbooks_refresh_token_expired";
       else if (tokenAlertCount > 0) reconnectReason = "quickbooks_token_alert";
 
-      const STALE_AFTER_MS = 24 * 60 * 60 * 1000;
       const neverSucceededWithFailures =
         !lastSuccessfulSyncAt && Boolean(lastFailedSyncAt) && !Number.isNaN(new Date(String(lastFailedSyncAt)).getTime());
 
@@ -350,7 +391,7 @@ export async function registerQboSyncHealthRoutes(app: FastifyInstance) {
         // A connected opco with NO recorded successful sync is stale (the misleading-green case),
         // not healthy. With no connection there is nothing to sync, so leave it healthy.
         status = hasActiveConnection ? "stale" : "healthy";
-      } else if (lastOkMs > STALE_AFTER_MS) {
+      } else if (lastOkMs > QBO_SYNC_STALE_AFTER_MS) {
         status = "stale";
       } else if (pendingCount > 0 && lastOkMs < 5 * 60 * 1000) {
         status = "syncing";

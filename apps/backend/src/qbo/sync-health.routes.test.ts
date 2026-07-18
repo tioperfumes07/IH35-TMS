@@ -101,5 +101,20 @@ describeIntegration("qbo sync-health latest_run reflects the master-data (CDC) s
     expect(Number.isNaN(completedMs)).toBe(false);
     // Completed within the last 10 minutes (the run we just seeded).
     expect(Date.now() - completedMs).toBeLessThan(10 * 60 * 1000);
+
+    const freshness = res.json() as {
+      last_success_at: string | null;
+      last_success_source: string | null;
+      last_success_age_seconds: number | null;
+      stale_after_seconds: number;
+      freshness_status: string;
+      is_stale: boolean;
+    };
+    expect(freshness.last_success_at).toBeTruthy();
+    expect(freshness.last_success_source).toBe("master_data_cdc");
+    expect(freshness.last_success_age_seconds).toBeGreaterThanOrEqual(0);
+    expect(freshness.stale_after_seconds).toBe(24 * 60 * 60);
+    expect(freshness.freshness_status).toBe("fresh");
+    expect(freshness.is_stale).toBe(false);
   });
 });
