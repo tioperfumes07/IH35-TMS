@@ -51,7 +51,7 @@ describe("legacy driver scoring routes", () => {
     });
 
     expect(res.statusCode).toBe(200);
-    expect(mockAssertMembership).toHaveBeenCalledWith(USER, COMPANY);
+    expect(mockAssertMembership).toHaveBeenCalledWith(expect.objectContaining({ query: mockQuery }), USER, COMPANY);
     const sql = mockQuery.mock.calls.map((call) => String(call[0])).find((value) => value.includes("WITH current_window"));
     expect(sql).toContain("event_driver.operating_company_id = e.operating_company_id");
     expect(sql).toContain("BTRIM(CONCAT_WS(' ', d.first_name, d.last_name)) AS driver_name");
@@ -61,7 +61,7 @@ describe("legacy driver scoring routes", () => {
     expect(sql).not.toContain("d.active");
   });
 
-  it("tenant-binds the event-detail driver join", async () => {
+  it("tenant-binds event history without erasing inactive drivers", async () => {
     const driver = "22222222-2222-4222-8222-222222222222";
     const res = await app.inject({
       method: "GET",
@@ -72,8 +72,8 @@ describe("legacy driver scoring routes", () => {
     const sql = mockQuery.mock.calls.map((call) => String(call[0])).find((value) => value.includes("FROM safety.harsh_events e"));
     expect(sql).toContain("d.operating_company_id = e.operating_company_id");
     expect(sql).toContain("e.operating_company_id = $1::uuid");
-    expect(sql).toContain("d.status = 'Active'::mdata.driver_status");
-    expect(sql).toContain("d.deactivated_at IS NULL");
-    expect(sql).toContain("d.archived_at IS NULL");
+    expect(sql).not.toContain("d.status = 'Active'::mdata.driver_status");
+    expect(sql).not.toContain("d.deactivated_at IS NULL");
+    expect(sql).not.toContain("d.archived_at IS NULL");
   });
 });

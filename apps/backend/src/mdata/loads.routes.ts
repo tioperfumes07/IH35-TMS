@@ -525,6 +525,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       } else {
         const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
         if (!scopedCompanyId) return { rows: [], totalCount: 0 };
+        // membership-scope-exempt: transaction-resolved-user-company
         await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
         values.push(scopedCompanyId);
         filters.push(`l.operating_company_id = $${values.length}::uuid`);
@@ -1404,8 +1405,9 @@ export async function registerLoadRoutes(app: FastifyInstance) {
     const result = await withCurrentUser(authUser.uuid, async (client) => {
       // Resolve operating company upfront so the predicate is a static literal in every query
       // (the verify-mdata-entity-scope guard does static template-literal scanning).
-      const scopedId = operating_company_id ?? await resolveOperatingCompanyId(client, authUser.uuid);
+      const scopedId = await resolveOperatingCompanyId(client, authUser.uuid, operating_company_id);
       if (!scopedId) return { rows: [], totalCount: 0 };
+      // membership-scope-exempt: transaction-resolved-user-company
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedId]);
 
       // $1 = driver uuid, $2 = operating_company_id uuid (always present)

@@ -66,8 +66,8 @@ async function withScopedCompany<T>(
   operatingCompanyId: string,
   fn: (client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> }) => Promise<T>,
 ) {
-  await assertCompanyMembership(userId, operatingCompanyId);
   return withCurrentUser(userId, async (client) => {
+    await assertCompanyMembership(client, userId, operatingCompanyId);
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     return fn(client);
   });
@@ -146,6 +146,7 @@ export async function registerClassRoutes(app: FastifyInstance) {
         // operating_company_id — otherwise classes_entity_write's WITH CHECK rejects the insert.
         const operatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, b.operating_company_id);
         if (!operatingCompanyId) return { __no_company: true } as const;
+        await assertCompanyMembership(client, authUser.uuid, operatingCompanyId);
         await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
         const res = await client.query(
           `
@@ -250,6 +251,7 @@ export async function registerClassRoutes(app: FastifyInstance) {
         // Scope to the active entity so AF-3 RLS lets us read + update this per-entity class.
         const operatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, b.operating_company_id);
         if (operatingCompanyId) {
+          await assertCompanyMembership(client, authUser.uuid, operatingCompanyId);
           await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
         }
         const oldRes = await client.query(
@@ -317,6 +319,7 @@ export async function registerClassRoutes(app: FastifyInstance) {
         // Scope to the active entity so AF-3 RLS confines the bulk UPDATE to this entity's classes.
         const operatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, parsed.data.operating_company_id);
         if (operatingCompanyId) {
+          await assertCompanyMembership(client, authUser.uuid, operatingCompanyId);
           await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
         }
         let count = 0;
@@ -376,6 +379,7 @@ export async function registerClassRoutes(app: FastifyInstance) {
       // Scope to the entity so AF-3 RLS lets us read + soft-delete this per-entity class.
       const operatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, requestedOc);
       if (operatingCompanyId) {
+        await assertCompanyMembership(client, authUser.uuid, operatingCompanyId);
         await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
       }
       const oldRes = await client.query(

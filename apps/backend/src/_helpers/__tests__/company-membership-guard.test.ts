@@ -30,6 +30,20 @@ describe("company-membership-guard", () => {
     expect(sql).toContain("c.deactivated_at IS NULL");
   });
 
+  it("uses the caller transaction client when provided", async () => {
+    activeClient.query = vi.fn(async () => ({ rows: [{ ok: 1 }], rowCount: 1 }));
+
+    await expect(
+      assertCompanyMembership(
+        activeClient,
+        "11111111-1111-1111-1111-111111111111",
+        "22222222-2222-2222-2222-222222222222"
+      )
+    ).resolves.toBeUndefined();
+
+    expect(activeClient.query).toHaveBeenCalledTimes(1);
+  });
+
   it("throws 403 when user does not belong to company", async () => {
     await expect(
       assertCompanyMembership("11111111-1111-1111-1111-111111111111", "33333333-3333-3333-3333-333333333333")

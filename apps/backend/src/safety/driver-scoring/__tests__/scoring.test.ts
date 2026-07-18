@@ -88,7 +88,7 @@ describe("leaderboard query shape", () => {
     expect(typeof service.aggregateForPeriod).toBe("function");
   });
 
-  it("uses same-company driver joins and a trimmed canonical name", async () => {
+  it("retains inactive drivers in saved historical leaderboards", async () => {
     const query = vi
       .fn()
       .mockResolvedValueOnce({ rows: [{ "?column?": 1 }], rowCount: 1 })
@@ -104,12 +104,12 @@ describe("leaderboard query shape", () => {
     const sql = String(query.mock.calls[1]?.[0] ?? "");
     expect(sql).toContain("BTRIM(CONCAT_WS(' ', d.first_name, d.last_name)) AS driver_name");
     expect(sql).toContain("d.operating_company_id = s.operating_company_id");
-    expect(sql).toContain("d.status = 'Active'::mdata.driver_status");
-    expect(sql).toContain("d.deactivated_at IS NULL");
-    expect(sql).toContain("d.archived_at IS NULL");
+    expect(sql).not.toContain("d.status = 'Active'::mdata.driver_status");
+    expect(sql).not.toContain("d.deactivated_at IS NULL");
+    expect(sql).not.toContain("d.archived_at IS NULL");
   });
 
-  it("keeps trend driver joins tenant-bound", async () => {
+  it("retains inactive drivers in saved historical trends", async () => {
     const query = vi
       .fn()
       .mockResolvedValueOnce({ rows: [{ "?column?": 1 }], rowCount: 1 })
@@ -125,14 +125,14 @@ describe("leaderboard query shape", () => {
     const sql = String(query.mock.calls[1]?.[0] ?? "");
     expect(sql).toContain("d.operating_company_id = s.operating_company_id");
     expect(sql).toContain("s.operating_company_id = $1::uuid");
-    expect(sql).toContain("d.status = 'Active'::mdata.driver_status");
-    expect(sql).toContain("d.deactivated_at IS NULL");
-    expect(sql).toContain("d.archived_at IS NULL");
+    expect(sql).not.toContain("d.status = 'Active'::mdata.driver_status");
+    expect(sql).not.toContain("d.deactivated_at IS NULL");
+    expect(sql).not.toContain("d.archived_at IS NULL");
   });
 });
 
 describe("driver aggregation query shape", () => {
-  it("uses the canonical active predicate and same-company event join", async () => {
+  it("retains inactive drivers in historical event recomputation but keeps current roster active-only", async () => {
     const query = vi
       .fn()
       .mockResolvedValueOnce({ rows: [{ "?column?": 1 }], rowCount: 1 })
@@ -151,12 +151,36 @@ describe("driver aggregation query shape", () => {
     const eventSql = String(query.mock.calls[3]?.[0] ?? "");
     const activeSql = String(query.mock.calls[4]?.[0] ?? "");
     expect(eventSql).toContain("d.operating_company_id = e.operating_company_id");
-    expect(eventSql).toContain("d.status = 'Active'::mdata.driver_status");
-    expect(eventSql).toContain("d.deactivated_at IS NULL");
-    expect(eventSql).toContain("d.archived_at IS NULL");
+    expect(eventSql).not.toContain("d.status = 'Active'::mdata.driver_status");
+    expect(eventSql).not.toContain("d.deactivated_at IS NULL");
+    expect(eventSql).not.toContain("d.archived_at IS NULL");
     expect(activeSql).toContain("d.status = 'Active'::mdata.driver_status");
     expect(activeSql).toContain("d.deactivated_at IS NULL");
     expect(activeSql).toContain("d.archived_at IS NULL");
     expect(activeSql).not.toContain("d.active");
+  });
+
+  it("retains inactive drivers in historical mileage attribution", async () => {
+    const query = vi
+      .fn()
+      .mockResolvedValueOnce({ rows: [{ "?column?": 1 }], rowCount: 1 })
+      .mockResolvedValueOnce({ rows: [{ "?column?": 1 }], rowCount: 1 })
+      .mockResolvedValueOnce({ rows: [{ "?column?": 1 }], rowCount: 1 })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] });
+
+    await aggregateDriverCountsForPeriod(
+      { query } as never,
+      "11111111-1111-4111-8111-111111111111",
+      "2026-06-01",
+      "2026-06-07"
+    );
+
+    const mileageSql = String(query.mock.calls[4]?.[0] ?? "");
+    expect(mileageSql).toContain("d.operating_company_id = a.operating_company_id");
+    expect(mileageSql).not.toContain("d.status = 'Active'::mdata.driver_status");
+    expect(mileageSql).not.toContain("d.deactivated_at IS NULL");
+    expect(mileageSql).not.toContain("d.archived_at IS NULL");
   });
 });

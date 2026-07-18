@@ -26,8 +26,8 @@ export async function registerFuelGpsMatchRoutes(app: FastifyInstance) {
     const query = querySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
 
-    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     const ok = await withCurrentUser(user.uuid, async (client) => {
+      await assertCompanyMembership(client, user.uuid, query.data.operating_company_id);
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
       return runFuelGpsRematchForTransaction(client, query.data.operating_company_id, params.data.transaction_id);
     });

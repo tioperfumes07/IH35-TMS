@@ -26,8 +26,12 @@ export type QboCustomersPushStatus = {
   dead_letter: number;
 };
 
-export async function fetchQboCustomersPushStatus(operatingCompanyId: string): Promise<QboCustomersPushStatus> {
+export async function fetchQboCustomersPushStatus(
+  userId: string,
+  operatingCompanyId: string
+): Promise<QboCustomersPushStatus> {
   return withLuciaBypass(async (client) => {
+    await assertCompanyMembership(client, userId, operatingCompanyId);
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
 
     const exists = await client.query(`SELECT to_regclass('mdata.qbo_customers') IS NOT NULL AS ok`);
@@ -84,9 +88,7 @@ export async function registerQboCustomersPushStatusRoutes(app: FastifyInstance)
 
     const parsed = querySchema.safeParse(req.query ?? {});
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
-    await assertCompanyMembership(user.uuid, parsed.data.operating_company_id);
-
-    const status = await fetchQboCustomersPushStatus(parsed.data.operating_company_id);
+    const status = await fetchQboCustomersPushStatus(user.uuid, parsed.data.operating_company_id);
     return reply.send(status);
   });
 }

@@ -118,6 +118,7 @@ export async function registerAssetsRoutes(app: FastifyInstance) {
     if (!resolvedCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
 
     const assets = await withCurrentUser(authUser.uuid, async (client) => {
+      await assertCompanyMembership(client, authUser.uuid, resolvedCompanyId);
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [resolvedCompanyId]);
 
       const values: unknown[] = [resolvedCompanyId];
@@ -183,6 +184,7 @@ export async function registerAssetsRoutes(app: FastifyInstance) {
     if (!resolvedCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
 
     const asset = await withCurrentUser(authUser.uuid, async (client) => {
+      await assertCompanyMembership(client, authUser.uuid, resolvedCompanyId);
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [resolvedCompanyId]);
       const res = await client.query(
         `
@@ -228,6 +230,7 @@ export async function registerAssetsRoutes(app: FastifyInstance) {
     if (!resolvedCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
 
     const history = await withCurrentUser(authUser.uuid, async (client) => {
+      await assertCompanyMembership(client, authUser.uuid, resolvedCompanyId);
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [resolvedCompanyId]);
       const res = await client.query(
         `
@@ -266,6 +269,7 @@ export async function registerAssetsRoutes(app: FastifyInstance) {
 
     try {
       const created = await withCurrentUser(authUser.uuid, async (client) => {
+        await assertCompanyMembership(client, authUser.uuid, resolvedCompanyId);
         await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [resolvedCompanyId]);
         const res = await client.query(
           `
@@ -350,6 +354,7 @@ export async function registerAssetsRoutes(app: FastifyInstance) {
     const companyIdx = values.length;
 
     const updated = await withCurrentUser(authUser.uuid, async (client) => {
+      await assertCompanyMembership(client, authUser.uuid, resolvedCompanyId);
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [resolvedCompanyId]);
       const res = await client.query(
         `
@@ -382,6 +387,7 @@ export async function registerAssetsRoutes(app: FastifyInstance) {
     if (!resolvedCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
 
     const updated = await withCurrentUser(authUser.uuid, async (client) => {
+      await assertCompanyMembership(client, authUser.uuid, resolvedCompanyId);
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [resolvedCompanyId]);
       const currentRes = await client.query(
         `
@@ -455,6 +461,7 @@ export async function registerAssetsRoutes(app: FastifyInstance) {
     if (!resolvedCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
 
     const summary = await withCurrentUser(authUser.uuid, async (client) => {
+      await assertCompanyMembership(client, authUser.uuid, resolvedCompanyId);
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [resolvedCompanyId]);
       const countsRes = await client.query(
         `

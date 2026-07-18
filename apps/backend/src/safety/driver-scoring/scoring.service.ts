@@ -72,9 +72,6 @@ export async function aggregateDriverCountsForPeriod(
        AND d.operating_company_id = e.operating_company_id
       WHERE e.operating_company_id = $1::uuid
         AND e.driver_id IS NOT NULL
-        AND d.status = 'Active'::mdata.driver_status
-        AND d.deactivated_at IS NULL
-        AND d.archived_at IS NULL
         AND e.event_at >= $2::date
         AND e.event_at < ($3::date + interval '1 day')
       GROUP BY e.driver_id
@@ -141,9 +138,6 @@ export async function aggregateDriverCountsForPeriod(
           JOIN mdata.drivers d
             ON d.id = a.driver_id
            AND d.operating_company_id = a.operating_company_id
-           AND d.status = 'Active'::mdata.driver_status
-           AND d.deactivated_at IS NULL
-           AND d.archived_at IS NULL
           GROUP BY a.driver_id
         )
         SELECT driver_uuid, miles, driving_seconds FROM mileage
@@ -321,9 +315,6 @@ export async function listPeriodLeaderboard(
       WHERE s.operating_company_id = $1::uuid
         AND s.period_start = $2::date
         AND s.period_end = $3::date
-        AND d.status = 'Active'::mdata.driver_status
-        AND d.deactivated_at IS NULL
-        AND d.archived_at IS NULL
       ORDER BY s.rank_in_fleet NULLS LAST, driver_name ASC
     `,
     [operatingCompanyId, periodStart, periodEnd]
@@ -373,9 +364,6 @@ export async function listDriverTrend(
        AND d.operating_company_id = s.operating_company_id
       WHERE s.operating_company_id = $1::uuid
         AND s.driver_uuid = $2::uuid
-        AND d.status = 'Active'::mdata.driver_status
-        AND d.deactivated_at IS NULL
-        AND d.archived_at IS NULL
       ORDER BY s.period_end DESC
       LIMIT $3::int
     `,

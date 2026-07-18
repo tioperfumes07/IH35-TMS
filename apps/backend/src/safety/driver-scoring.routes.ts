@@ -24,8 +24,8 @@ function validationError(reply: FastifyReply, err: z.ZodError) {
 }
 
 async function withCompany<T>(userId: string, companyId: string, fn: (client: any) => Promise<T>) {
-  await assertCompanyMembership(userId, companyId);
   return withCurrentUser(userId, async (client) => {
+    await assertCompanyMembership(client, userId, companyId);
     await client.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
     return fn(client);
   });
@@ -166,9 +166,6 @@ export async function registerDriverScoringRoutes(app: FastifyInstance) {
           LEFT JOIN mdata.units u ON u.id = e.unit_id
           WHERE e.operating_company_id = $1::uuid
             AND e.driver_id = $2::uuid
-            AND d.status = 'Active'::mdata.driver_status
-            AND d.deactivated_at IS NULL
-            AND d.archived_at IS NULL
             AND e.event_at >= (now() - make_interval(days => $3::int))
             AND e.event_at < now()
           ORDER BY e.event_at DESC

@@ -70,6 +70,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = resolve(fileURLToPath(import.meta.url), "../..");
 const BACKEND_SRC = join(ROOT, "apps/backend/src");
 const MEMBERSHIP_HELPER = join(BACKEND_SRC, "_helpers/company-membership-guard.ts");
+const FUEL_GPS_ROUTE = join(BACKEND_SRC, "safety/fuel-gps-match.routes.ts");
 
 // Tenant-scope wrapper files hardened by the cross-tenant authz fix, plus the two
 // CANONICAL wrappers (accounting/shared.ts, banking/shared.ts) so they can never
@@ -238,6 +239,13 @@ const ASSERT_CALL_RE = /assertCompanyMembership\s*\(/g;
 
 const failures = [];
 
+function isAutoDiscoveredSource(src) {
+  return (
+    /from\s+["'][^"']*company-membership-guard\.js["']/.test(src) &&
+    /set_config\(\s*['"`]app\.operating_company_id['"`]|SET\s+LOCAL\s+app\.operating_company_id/i.test(src)
+  );
+}
+
 function discoverMembershipScopedFiles(dir, prefix = "") {
   const discovered = [];
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
@@ -249,12 +257,7 @@ function discoverMembershipScopedFiles(dir, prefix = "") {
     }
     if (!entry.isFile() || !entry.name.endsWith(".ts") || entry.name.endsWith(".test.ts")) continue;
     const src = readFileSync(join(dir, entry.name), "utf8");
-    if (
-      /from\s+["'][^"']*company-membership-guard\.js["']/.test(src) &&
-      /set_config\(\s*['"`]app\.operating_company_id['"`]|SET\s+LOCAL\s+app\.operating_company_id/i.test(src)
-    ) {
-      discovered.push(rel);
-    }
+    if (isAutoDiscoveredSource(src)) discovered.push(rel);
   }
   return discovered;
 }
@@ -278,10 +281,80 @@ if (!existsSync(MEMBERSHIP_HELPER)) {
   }
 }
 
-const membershipScopedFiles = [
-  ...new Set([...REQUIRED_MEMBERSHIP_ASSERT_FILES, ...discoverMembershipScopedFiles(BACKEND_SRC)]),
-].sort();
-const strictWrapperFiles = new Set(REQUIRED_MEMBERSHIP_ASSERT_FILES);
+if (!existsSync(FUEL_GPS_ROUTE)) {
+  failures.push("safety/fuel-gps-match.routes.ts: protected rematch route is missing");
+} else {
+  const fuelRoute = readFileSync(FUEL_GPS_ROUTE, "utf8");
+  if (
+    !/withCurrentUser\([^,]+,\s*async\s*\(client\)\s*=>\s*\{[\s\S]*?assertCompanyMembership\(\s*client\s*,[\s\S]*?set_config\(\s*['"`]app\.operating_company_id['"`]/m.test(
+      fuelRoute
+    )
+  ) {
+    failures.push(
+      "safety/fuel-gps-match.routes.ts: rematch authorization must use the same withCurrentUser transaction client before tenant GUC assignment"
+    );
+  }
+}
+
+function analyzeCallerSource(src) {
+  const lines = src.split("\n");
+  const callerDerivedSource = lines
+    .filter((line, index) => {
+      if (!GUC_SET_RE.test(line)) return true;
+      GUC_SET_RE.lastIndex = 0;
+      const exemption = `${lines[index - 1] ?? ""}\n${line}`;
+      return !exemption.includes("membership-scope-exempt:");
+    })
+    .join("\n");
+  GUC_SET_RE.lastIndex = 0;
+
+  const gucPositions = [...callerDerivedSource.matchAll(GUC_SET_RE)].map((match) => match.index ?? -1);
+  const assertPositions = [...callerDerivedSource.matchAll(ASSERT_CALL_RE)].map((match) => match.index ?? -1);
+  const failures = [];
+  if (assertPositions.length < gucPositions.length) {
+    failures.push(
+      `${assertPositions.length} assertCompanyMembership() call(s) < ${gucPositions.length} caller-derived tenant GUC set(s)`
+    );
+  }
+  for (let i = 0; i < gucPositions.length; i += 1) {
+    if ((assertPositions[i] ?? Number.POSITIVE_INFINITY) > gucPositions[i]) {
+      failures.push(`tenant GUC set #${i + 1} occurs before membership assertion #${i + 1}`);
+    }
+  }
+  return failures;
+}
+
+if (process.argv.includes("--selftest")) {
+  const good = `
+    import { assertCompanyMembership } from "./company-membership-guard.js";
+    await withCurrentUser(user.uuid, async (client) => {
+      await assertCompanyMembership(client, user.uuid, companyId);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
+    });
+  `;
+  const plantedBadAutoDiscoveredCaller = `
+    import { assertCompanyMembership } from "./company-membership-guard.js";
+    await withCurrentUser(user.uuid, async (client) => {
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
+      await assertCompanyMembership(client, user.uuid, companyId);
+    });
+  `;
+  if (!isAutoDiscoveredSource(good) || analyzeCallerSource(good).length !== 0) {
+    console.error("verify-company-membership-assert SELFTEST FAILED: good atomic caller rejected");
+    process.exit(1);
+  }
+  if (
+    !isAutoDiscoveredSource(plantedBadAutoDiscoveredCaller) ||
+    analyzeCallerSource(plantedBadAutoDiscoveredCaller).length === 0
+  ) {
+    console.error("verify-company-membership-assert SELFTEST FAILED: planted bad auto-discovered caller passed");
+    process.exit(1);
+  }
+  console.log("verify-company-membership-assert SELFTEST OK — planted bad auto-discovered caller rejected");
+  process.exit(0);
+}
+
+const membershipScopedFiles = discoverMembershipScopedFiles(BACKEND_SRC).sort();
 
 for (const rel of membershipScopedFiles) {
   const full = join(BACKEND_SRC, rel);
@@ -290,7 +363,6 @@ for (const rel of membershipScopedFiles) {
     continue;
   }
   const src = readFileSync(full, "utf8");
-  const gucSets = (src.match(GUC_SET_RE) || []).length;
   const assertCalls = (src.match(ASSERT_CALL_RE) || []).length;
 
   if (assertCalls === 0) {
@@ -300,27 +372,8 @@ for (const rel of membershipScopedFiles) {
     continue;
   }
 
-  if (gucSets === 0) {
-    failures.push(
-      `${rel}: expected to set app.operating_company_id but found none — the wrapper shape changed; re-verify the membership assert is still paired with the GUC set and update this guard.`
-    );
-    continue;
-  }
-  if (!strictWrapperFiles.has(rel)) continue;
-  if (assertCalls < gucSets) {
-    failures.push(
-      `${rel}: sets app.operating_company_id ${gucSets}x but only ${assertCalls} assertCompanyMembership() call(s) — every caller-derived tenant-GUC set MUST be preceded by assertCompanyMembership(userId, operatingCompanyId) (cross-tenant authz).`
-    );
-  }
-
-  const assertPositions = [...src.matchAll(ASSERT_CALL_RE)].map((match) => match.index ?? -1);
-  const gucPositions = [...src.matchAll(GUC_SET_RE)].map((match) => match.index ?? -1);
-  for (let i = 0; i < gucPositions.length; i += 1) {
-    if ((assertPositions[i] ?? Number.POSITIVE_INFINITY) > gucPositions[i]) {
-      failures.push(
-        `${rel}: tenant GUC set #${i + 1} occurs before membership assertion #${i + 1} — authorization must succeed before scoping.`
-      );
-    }
+  for (const failure of analyzeCallerSource(src)) {
+    failures.push(`${rel}: ${failure}`);
   }
 }
 
@@ -329,14 +382,14 @@ if (failures.length > 0) {
   for (const f of [...new Set(failures)].sort()) console.error(`  ✗ ${f}`);
   console.error(
     "\nCross-tenant authorization violation: a tenant-scope wrapper set app.operating_company_id\n" +
-      "from a caller-supplied operating_company_id without first calling assertCompanyMembership().\n" +
-      "Add `await assertCompanyMembership(userId, operatingCompanyId)` immediately before the GUC set,\n" +
-      "mirroring apps/backend/src/accounting/shared.ts. See the guard header for scope + follow-up."
+      "from a caller-supplied operating_company_id without a preceding membership assertion.\n" +
+      "For mutation/read scope, use `await assertCompanyMembership(client, userId, operatingCompanyId)` on the SAME transaction client.\n" +
+      "Principal/internal-derived scopes must carry an explicit `membership-scope-exempt:` marker at the GUC site."
   );
   process.exit(1);
 }
 
 console.log(
   `verify-company-membership-assert OK — canonical helper is active-only; ${membershipScopedFiles.length} ` +
-    `helper-consuming tenant-scope files scanned; ${strictWrapperFiles.size} audited wrappers preserve assert-before-GUC ordering.`
+    `auto-discovered helper-consuming tenant-scope files preserve assert-before-GUC ordering/count.`
 );

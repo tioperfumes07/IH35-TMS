@@ -84,13 +84,14 @@ describe("fuel GPS rematch tenant guard", () => {
     expect(sqlCalls.some((sql) => sql.includes("FROM banking.bank_transactions bt"))).toBe(false);
   });
 
-  it("rejects a deactivated membership before scope, banking read, or Safety write", async () => {
+  it("closes the revocation race inside the work transaction before scope, banking read, or Safety write", async () => {
     const res = await app.inject({
       method: "POST",
       url: `/api/v1/safety/fuel-gps-match/rematch/${TRANSACTION}?operating_company_id=${REVOKED_COMPANY}`,
     });
 
     expect(res.statusCode).toBe(403);
+    expect(mockWithCurrentUser).toHaveBeenCalledTimes(1);
     const sqlCalls = mockQuery.mock.calls.map((call) => String(call[0]));
     expect(sqlCalls.some((sql) => sql.includes("org.user_company_access"))).toBe(true);
     expect(sqlCalls.some((sql) => sql.includes("set_config('app.operating_company_id'"))).toBe(false);
