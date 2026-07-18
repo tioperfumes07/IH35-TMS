@@ -6,6 +6,11 @@ import { spawnSync } from "node:child_process";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { attachBareOrigin, initFixtureRepo, runGitOrThrow, writeAndCommit } from "./fixtures/branch-tooling/git-fixture.mjs";
+import {
+  GATE_RESULT_CATEGORIES,
+  preflightStep,
+  runPrecheckPush,
+} from "../branch-precheck-push.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const scriptPath = path.resolve(root, "scripts/branch-precheck-push.mjs");
@@ -14,6 +19,12 @@ const minimalSteps = JSON.stringify([
   { label: "verify:fixture-pass", command: "npm run verify:fixture-pass" },
   { label: "block-ready", command: "npm run block-ready" },
 ]);
+const validCapabilityPolicy = {
+  equivalents: { database: "ci / build-typecheck" },
+  serverRequiredContexts: new Set(["ci / build-typecheck"]),
+  requiredContexts: new Set(["ci / build-typecheck"]),
+  wiredContexts: new Set(["ci / build-typecheck"]),
+};
 
 function runScript(args, env) {
   return spawnSync("node", [scriptPath, ...args], {
@@ -57,7 +68,9 @@ function makeFeatureRepo() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ih35-precheck-"));
   initFixtureRepo(dir);
   writeMinimalPackage(dir);
-  writeAndCommit(dir, "README.md", "main\n", "main");
+  fs.writeFileSync(path.join(dir, "README.md"), "main\n", "utf8");
+  runGitOrThrow(["add", "README.md", "package.json", "apps/frontend/tsconfig.json"], { cwd: dir });
+  runGitOrThrow(["commit", "-m", "main"], { cwd: dir });
   runGitOrThrow(["branch", "-M", "main"], { cwd: dir });
   attachBareOrigin(dir);
   runGitOrThrow(["checkout", "-b", "feat/precheck"], { cwd: dir });
@@ -97,10 +110,72 @@ test("surfaces failing verify step", () => {
   const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
   pkg.scripts["verify:fixture-fail"] = "node -e \"process.exit(1)\"";
   fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2), "utf8");
+  runGitOrThrow(["add", "package.json"], { cwd: dir });
+  runGitOrThrow(["commit", "-m", "add failing fixture"], { cwd: dir });
   const failSteps = JSON.stringify([
     { label: "verify:fixture-fail", command: "npm run verify:fixture-fail" },
   ]);
   const run = runScript([], { IH35_BRANCH_TOOLING_ROOT: dir, BRANCH_PRECHECK_STEPS_JSON: failSteps });
   assert.equal(run.status, 1);
+  assert.match(run.stderr, /category=test/);
   assert.match(run.stderr, /verify:fixture-fail/);
+});
+
+test("classifies dirty trees as a hard dirty failure", () => {
+  const dir = makeFeatureRepo();
+  fs.writeFileSync(path.join(dir, "dirty.txt"), "dirty\n", "utf8");
+  const result = runPrecheckPush({ root: dir, skipFetch: true, steps: [] });
+  assert.equal(result.ok, false);
+  assert.equal(result.category, GATE_RESULT_CATEGORIES.DIRTY);
+});
+
+test("classifies unresolved merge conflicts as a hard conflict failure", () => {
+  const dir = makeFeatureRepo();
+  runGitOrThrow(["checkout", "main"], { cwd: dir });
+  writeAndCommit(dir, "conflict.txt", "main\n", "main conflict");
+  runGitOrThrow(["checkout", "feat/precheck"], { cwd: dir });
+  writeAndCommit(dir, "conflict.txt", "feature\n", "feature conflict");
+  const merge = spawnSync("git", ["merge", "main"], { cwd: dir, encoding: "utf8" });
+  assert.notEqual(merge.status, 0);
+  const result = runPrecheckPush({ root: dir, skipFetch: true, steps: [] });
+  assert.equal(result.ok, false);
+  assert.equal(result.category, GATE_RESULT_CATEGORIES.CONFLICT);
+});
+
+test("skips a missing database only with a named server-required CI equivalent", () => {
+  const result = preflightStep(
+    {
+      label: "block-ready",
+      requiredCapabilities: ["database"],
+      serverRequiredCiEquivalent: "ci / build-typecheck",
+    },
+    { database: false },
+    validCapabilityPolicy
+  );
+  assert.equal(result.action, "skip-capability");
+  assert.equal(result.ciEquivalent, "ci / build-typecheck");
+});
+
+test("missing capability without a named CI equivalent is a hard capability failure", () => {
+  const result = preflightStep(
+    { label: "unsafe-step", requiredCapabilities: ["database"] },
+    { database: false },
+    validCapabilityPolicy
+  );
+  assert.equal(result.action, "fail");
+  assert.match(result.reason, /without a named server-required CI equivalent/);
+});
+
+test("unknown or unwired capability equivalent is a hard capability failure", () => {
+  const result = preflightStep(
+    {
+      label: "block-ready",
+      requiredCapabilities: ["database"],
+      serverRequiredCiEquivalent: "unknown / check",
+    },
+    { database: false },
+    validCapabilityPolicy
+  );
+  assert.equal(result.action, "fail");
+  assert.match(result.reason, /declares "ci \/ build-typecheck", not requested "unknown \/ check"/);
 });

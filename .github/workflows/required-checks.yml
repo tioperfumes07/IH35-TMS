@@ -53,23 +53,25 @@ jobs:
             const mandatory = [
               'required-checks / required-checks-gate',
               'ci / build-typecheck',
-              'perf-budget-check / perf-audit',
+              'ci / verify-branch-fresh',
+              'hold-merge-gate / hold-merge-gate',
+              'locked-guards / locked-guards',
               'security-checks / security-audit',
               'premerge-gates / rls-migration-scan',
               'premerge-gates / typescript-strict-null',
-              'pass-8-smoke-verify / pass-8',
-              'pr-preview-smoke / PR Preview Smoke',
+              'premerge-gates / migration-role-validation',
             ];
             const missing = mandatory.filter(c => !contexts.has(c));
-            if (missing.length > 0) {
-              console.error('FAIL (#729 post-mortem): mandatory checks missing from config:', missing.join(', '));
+            const unexpected = [...contexts].filter(c => !mandatory.includes(c));
+            if (missing.length > 0 || unexpected.length > 0) {
+              console.error('FAIL: owner-approved universal gate contexts drifted', {
+                missing,
+                unexpected,
+              });
               process.exit(1);
             }
             console.log('All', mandatory.length, 'mandatory checks present in branch-protection-config.json');
           "
 
-      - name: CI guard — verify CI policy applied (or config baseline)
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_ADMIN_TOKEN: ${{ secrets.GH_ADMIN_TOKEN }}
+      - name: Validate exact committed protection baseline (live owner verification separate)
         run: node scripts/verify-ci-policy-applied.mjs

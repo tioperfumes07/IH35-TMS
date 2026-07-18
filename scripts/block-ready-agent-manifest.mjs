@@ -1,115 +1,135 @@
 import fs from "node:fs";
 import path from "node:path";
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 
-export const AGENT_MANIFEST_REGISTRY = Object.freeze({
-  "1": ".block-ready.agent1.json",
-  "2": ".block-ready.agent2.json",
-});
-
-function normalizeAgent(raw) {
-  const value = String(raw ?? "").trim().toLowerCase();
-  if (!value) return null;
-  if (value === "1" || value === "agent1" || value === "agent-1") return "1";
-  if (value === "2" || value === "agent2" || value === "agent-2") return "2";
-  return null;
-}
-
-function inferAgentFromWorktreePath(worktreePath) {
-  const normalized = String(worktreePath ?? "").replace(/\\/g, "/").toLowerCase();
-  if (!normalized) return null;
-  if (/agent[-_]?2\b/.test(normalized)) return "2";
-  if (/agent[-_]?1\b/.test(normalized)) return "1";
-  return null;
-}
-
-/**
- * Scan .block-ready/ for a per-block manifest JSON file.
- *
- * Priority order:
- *   1. BLOCK_ID env var  → .block-ready/<BLOCK_ID>.json
- *   2. block_id field from the legacy agentN file (if it exists)
- *      → .block-ready/<block_id>.json
- *   3. Single non-gitkeep .json in .block-ready/ (unambiguous case)
- *
- * Returns the relative manifest path if found, null otherwise.
- */
-function resolvePerBlockManifest(worktreePath, legacyManifestPath) {
+function readManifestCandidate(worktreePath, filename) {
   const blockReadyDir = path.join(worktreePath, ".block-ready");
-  if (!fs.existsSync(blockReadyDir)) return null;
-
-  // Priority 1: explicit BLOCK_ID env var
-  const envBlockId = (process.env.BLOCK_ID ?? "").trim();
-  if (envBlockId) {
-    const candidate = path.join(blockReadyDir, `${envBlockId}.json`);
-    if (fs.existsSync(candidate)) {
-      return path.relative(worktreePath, candidate);
-    }
-  }
-
-  // Priority 1b: derive block ID from the current git branch name
-  // Supports gap-N, gap-NAMED, and general branch→block-id mappings like
-  // acct-qbopar-01-catalog-backend → ACCT-QBOPAR-01-CATALOG-BACKEND
+  const absolutePath = path.join(blockReadyDir, filename);
   try {
-    const branch = execSync("git branch --show-current", {
-      cwd: worktreePath, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"],
-    }).trim();
-    if (branch) {
-      const branchBlockId = branch.replace(/[^a-zA-Z0-9-]/g, "-").toUpperCase();
-      const candidate = path.join(blockReadyDir, `${branchBlockId}.json`);
-      if (fs.existsSync(candidate)) {
-        return path.relative(worktreePath, candidate);
-      }
-    }
-  } catch {
-    // not a git repo or no branch; fall through
+    return {
+      filename,
+      manifest: JSON.parse(fs.readFileSync(absolutePath, "utf8")),
+      relativePath: path.relative(worktreePath, absolutePath),
+    };
+  } catch (error) {
+    throw new Error(`cannot read block manifest ${filename}: ${error.message}`);
   }
+}
 
-  // Priority 2: derive block_id from legacy manifest file
-  const legacyAbs = path.resolve(worktreePath, legacyManifestPath);
-  if (fs.existsSync(legacyAbs)) {
-    try {
-      const parsed = JSON.parse(fs.readFileSync(legacyAbs, "utf8"));
-      const blockId = parsed?.block_id;
-      if (blockId) {
-        const candidate = path.join(blockReadyDir, `${blockId}.json`);
-        if (fs.existsSync(candidate)) {
-          return path.relative(worktreePath, candidate);
-        }
-      }
-    } catch {
-      // malformed legacy file; fall through
-    }
+function listPerBlockManifests(worktreePath) {
+  const blockReadyDir = path.join(worktreePath, ".block-ready");
+  if (!fs.existsSync(blockReadyDir)) {
+    throw new Error(`missing block manifest directory: ${blockReadyDir}`);
   }
-
-  // Priority 3: only one non-.gitkeep JSON file in .block-ready/
-  let jsonFiles;
-  try {
-    jsonFiles = fs
-      .readdirSync(blockReadyDir)
-      .filter((f) => f.endsWith(".json") && f !== ".gitkeep");
-  } catch {
-    return null;
-  }
-  if (jsonFiles.length === 1) {
-    return path.relative(worktreePath, path.join(blockReadyDir, jsonFiles[0]));
-  }
-
-  return null;
+  return fs
+    .readdirSync(blockReadyDir)
+    .filter((filename) => filename.endsWith(".json") && filename !== ".gitkeep")
+    .map((filename) => readManifestCandidate(worktreePath, filename));
 }
 
 export function resolveBlockReadyManifest(options = {}) {
   const worktreePath = path.resolve(options.worktreePath ?? process.cwd());
-  const envAgent = normalizeAgent(options.agentEnv ?? process.env.AGENT);
-  const inferredAgent = inferAgentFromWorktreePath(worktreePath);
-  const agent = envAgent ?? inferredAgent ?? "1";
-  const legacyManifest = AGENT_MANIFEST_REGISTRY[agent] ?? AGENT_MANIFEST_REGISTRY["1"];
+  const env = options.env ?? process.env;
+  const blockId = String(options.blockId ?? env.BLOCK_ID ?? "").trim();
+  const branch = resolveTrustedBranch({
+    explicitBranch: options.branch,
+    env,
+    worktreePath,
+  });
+  const candidates = listPerBlockManifests(worktreePath);
 
-  // Prefer the new per-block pattern when available
-  const perBlockManifest = resolvePerBlockManifest(worktreePath, legacyManifest);
-  const manifest = perBlockManifest ?? legacyManifest;
+  if (blockId) {
+    const exactFilename = `${blockId}.json`;
+    const candidate = candidates.find(({ filename }) => filename === exactFilename);
+    if (!candidate) {
+      throw new Error(`BLOCK_ID=${blockId} requires exact manifest .block-ready/${exactFilename}`);
+    }
+    const manifestBlockId = candidate.manifest.block_id ?? candidate.manifest.block;
+    if (manifestBlockId !== blockId) {
+      throw new Error(
+        `BLOCK_ID=${blockId} does not match manifest block id ${String(manifestBlockId)}`
+      );
+    }
+    return { agent: null, manifest: candidate.relativePath, worktreePath, resolution: "block-id" };
+  }
 
-  return { agent, manifest, worktreePath };
+  if (!branch) {
+    if (options.allowAggregate === true) {
+      return {
+        agent: null,
+        manifest: null,
+        worktreePath,
+        resolution: "aggregate",
+        reason: "detached checkout has no trusted head branch context",
+      };
+    }
+    throw new Error("cannot resolve block manifest without BLOCK_ID or trusted branch context");
+  }
+  const branchMatches = candidates.filter(({ manifest }) => manifest.branch === branch);
+  if (branchMatches.length === 0) {
+    if (options.allowAggregate === true) {
+      return {
+        agent: null,
+        manifest: null,
+        worktreePath,
+        resolution: "aggregate",
+        reason: `no exact manifest for trusted branch "${branch}"`,
+      };
+    }
+    throw new Error(
+      `no .block-ready manifest has exact branch "${branch}"; set BLOCK_ID to an exact manifest id`
+    );
+  }
+  if (branchMatches.length > 1) {
+    throw new Error(
+      `ambiguous exact branch "${branch}" matches: ${branchMatches
+        .map(({ relativePath }) => relativePath)
+        .join(", ")}`
+    );
+  }
+  return {
+    agent: null,
+    manifest: branchMatches[0].relativePath,
+    worktreePath,
+    resolution: "exact-branch",
+  };
+}
+
+export function resolveTrustedBranch({
+  explicitBranch,
+  env = process.env,
+  worktreePath = process.cwd(),
+} = {}) {
+  if (typeof explicitBranch === "string" && explicitBranch.trim()) {
+    return explicitBranch.trim();
+  }
+  const isGitHubActions = env.GITHUB_ACTIONS === "true";
+  if (
+    isGitHubActions &&
+    typeof env.GITHUB_HEAD_REF === "string" &&
+    env.GITHUB_HEAD_REF.trim()
+  ) {
+    return env.GITHUB_HEAD_REF.trim();
+  }
+  const githubRefName =
+    typeof env.GITHUB_REF_NAME === "string" ? env.GITHUB_REF_NAME.trim() : "";
+  const githubRef = typeof env.GITHUB_REF === "string" ? env.GITHUB_REF.trim() : "";
+  const isTrustedBranchRef =
+    isGitHubActions &&
+    (env.GITHUB_REF_TYPE === "branch" || githubRef.startsWith("refs/heads/"));
+  if (githubRefName && isTrustedBranchRef) return githubRefName;
+  if (isGitHubActions && githubRef.startsWith("refs/heads/")) {
+    return githubRef.slice("refs/heads/".length);
+  }
+  try {
+    return execFileSync("git", ["branch", "--show-current"], {
+      cwd: worktreePath,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
+  } catch {
+    return "";
+  }
 }
 
 /**

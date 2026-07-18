@@ -6,12 +6,12 @@
  * What it does:
  *   - globs scripts/verify-*.mjs (EXCLUDING this runner),
  *   - runs each in a child process with NO reachable database, capturing stdout/stderr/exit,
- *   - classifies each: PASS (exit 0) | SKIP-needs-db (exit≠0 + a DB-connection signature) | FAIL (any
- *     other exit≠0 — a real assertion failure),
+ *   - classifies each through an explicit capability preflight, never by matching failure text:
+ *     PASS | SKIP-capability (only with a named server-required CI equivalent) | FAIL-test,
  *   - additionally runs each guard's `--selftest` when the file contains that flag; a real selftest
  *     failure folds into FAIL,
  *   - does NOT fail-fast: runs ALL guards, prints a summary (counts + names of every FAIL and SKIP),
- *   - exits 1 iff any real FAIL; SKIP-needs-db NEVER fails the run.
+ *   - exits 1 iff any real test fails; dirty/conflict/freshness are enforced by branch:precheck-push.
  *
  * ★ Prod-safety deviation from the block's literal "UNSET DATABASE_URL": simply unsetting is UNSAFE here.
  * The repo has a root .env and several guards `import 'dotenv/config'`; with the vars unset, dotenv would
@@ -28,22 +28,81 @@ import path from "node:path";
 import os from "node:os";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import {
+  loadCapabilityPolicy,
+  validateCapabilityEquivalent,
+} from "./push-gate-capability-policy.mjs";
 
 const SELF_PATH = fileURLToPath(import.meta.url);
 const SELF_NAME = path.basename(SELF_PATH);
 const SCRIPTS_DIR = path.dirname(SELF_PATH);
 const LABEL = "verify-static";
+const ROOT = path.resolve(SCRIPTS_DIR, "..");
 // This is an orchestration runner, not a static guard. It starts its own
 // PostgreSQL server and block-ready executes it separately after verify:static.
 const NON_STATIC_ORCHESTRATORS = new Set(["verify-local-ci.mjs"]);
 
-// A DB-connection failure signature (block-specified) plus the sentinel's refusal codes.
-const DB_NEEDED_RE = /ECONNREFUSED|does not exist|DATABASE_URL|ENOTFOUND|password authentication|ECONNRESET|EADDRNOTAVAIL/i;
-// A "needs the CI build/deps environment" signature: a missing compiled dist, an uninstalled optional
-// dependency, or a hang waiting on a live service. These are NOT stale-anchor failures — CI has the DB,
-// the built dist, and every dep — so they SKIP locally rather than FAIL. A true stale-anchor failure emits
-// NEITHER signature (it prints its own assertion text), so it still classifies FAIL and can't hide here.
-const ENV_NEEDED_RE = /ERR_MODULE_NOT_FOUND|Cannot find package|Cannot find module|ERR_REQUIRE_ESM|ERR_UNKNOWN_FILE_EXTENSION|[/\\]dist[/\\]|ETIMEDOUT|ERR_DLOPEN|listen EADDRINUSE/i;
+export const STATIC_RESULT_CATEGORIES = Object.freeze({
+  PASS: "PASS",
+  SKIP_CAPABILITY: "SKIP-capability",
+  FAIL_TEST: "FAIL-test",
+});
+
+function guardVerifyName(file, root = ROOT) {
+  const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
+  const relative = path.relative(root, file).replace(/\\/g, "/");
+  for (const [name, command] of Object.entries(pkg.scripts ?? {})) {
+    if (name.startsWith("verify:") && String(command).includes(relative)) return name;
+  }
+  return null;
+}
+
+export function capabilityPreflight(
+  file,
+  {
+    root = ROOT,
+    dependenciesAvailable = fs.existsSync(path.join(root, "node_modules")),
+    databaseAvailable = false,
+    policy = loadCapabilityPolicy(root),
+    capabilityAvailability = {
+      "pass8-artifact": fs.existsSync(
+        path.join(root, "docs/audits/PASS-8-PRE-PROD-SMOKE-RESULTS.json")
+      ),
+    },
+  } = {}
+) {
+  const verifyName = guardVerifyName(file, root);
+  const missing = [];
+  if (!dependenciesAvailable) missing.push("dependencies");
+  if (verifyName && policy.dbGated.has(verifyName) && !databaseAvailable) missing.push("database");
+  if (verifyName) {
+    missing.push(
+      ...(policy.guardCapabilities?.[verifyName] ?? []).filter(
+        (capability) => capabilityAvailability[capability] !== true
+      )
+    );
+  }
+  if (missing.length === 0) return { ok: true, missing: [], ciEquivalents: [] };
+
+  const ciEquivalents = missing
+    .map((capability) => policy.equivalents[capability])
+    .filter(Boolean);
+  const policyViolations = missing.flatMap((capability) => {
+    const context = policy.equivalents[capability];
+    return context
+      ? validateCapabilityEquivalent(capability, context, policy)
+      : [`capability "${capability}" has no declared CI equivalent`];
+  });
+  if (policyViolations.length > 0) {
+    return {
+      ok: false,
+      missing,
+      ciEquivalents,
+      reason: policyViolations.join("; "),
+    };
+  }
+  return { ok: false, missing, ciEquivalents };
+}
 
 /** Child env with NO reachable database (dead-port sentinel; see the prod-safety note above). */
 function noDbEnv() {
@@ -81,31 +140,46 @@ function firstSignalLine(out) {
 }
 
 /** Classify a single guard file. Pure w.r.t. the filesystem read of the guard's own source. */
-export function classify(file) {
+export function classify(file, options = {}) {
   const src = (() => { try { return fs.readFileSync(file, "utf8"); } catch { return ""; } })();
+  const preflight = options.preflight ?? capabilityPreflight(file, options);
+  if (!preflight.ok) {
+    if (
+      preflight.reason ||
+      !preflight.ciEquivalents ||
+      preflight.ciEquivalents.length !== preflight.missing.length
+    ) {
+      return {
+        file,
+        name: path.basename(file),
+        kind: STATIC_RESULT_CATEGORIES.FAIL_TEST,
+        detail: preflight.reason,
+      };
+    }
+    return {
+      file,
+      name: path.basename(file),
+      kind: STATIC_RESULT_CATEGORIES.SKIP_CAPABILITY,
+      detail: `${preflight.missing.join("+")} → ${[...new Set(preflight.ciEquivalents)].join(", ")}`,
+    };
+  }
   const main = runGuard(file);
 
   let kind, detail;
   if (main.status === 0) {
-    kind = "PASS"; detail = "";
-  } else if (DB_NEEDED_RE.test(main.out)) {
-    kind = "SKIP-needs-db"; detail = "";
-  } else if (ENV_NEEDED_RE.test(main.out)) {
-    kind = "SKIP-needs-env"; detail = firstSignalLine(main.out);
+    kind = STATIC_RESULT_CATEGORIES.PASS; detail = "";
   } else if (main.spawnError && main.status == null) {
-    // could not launch the child and it isn't a recognized DB/env skip → real failure
-    kind = "FAIL"; detail = `spawn: ${main.spawnError.message}`;
+    kind = STATIC_RESULT_CATEGORIES.FAIL_TEST; detail = `spawn: ${main.spawnError.message}`;
   } else {
-    kind = "FAIL"; detail = firstSignalLine(main.out);
+    kind = STATIC_RESULT_CATEGORIES.FAIL_TEST; detail = firstSignalLine(main.out);
   }
 
   // Fold a REAL selftest failure into FAIL regardless of the main-run classification (a guard whose
   // selftest breaks is broken even if its live run happened to pass or skip).
   if (src.includes("--selftest")) {
     const st = runGuard(file, ["--selftest"]);
-    const stRealFail = st.status !== 0 && !DB_NEEDED_RE.test(st.out);
-    if (stRealFail) {
-      kind = "FAIL";
+    if (st.status !== 0) {
+      kind = STATIC_RESULT_CATEGORIES.FAIL_TEST;
       detail = detail ? `${detail}; --selftest failed` : `--selftest failed: ${firstSignalLine(st.out)}`;
     }
   }
@@ -148,7 +222,7 @@ export function ciRunGuardSet(root = path.resolve(SCRIPTS_DIR, "..")) {
 
 /** Run all static guards in a directory. Returns the results array (no process.exit — testable). Each
  *  result is annotated `gated` = is this guard part of the CI-run set (a local FAIL of it should fail us). */
-export function runStatic({ dir = SCRIPTS_DIR, self = SELF_NAME, ciSet } = {}) {
+export function runStatic({ dir = SCRIPTS_DIR, self = SELF_NAME, ciSet, classifyOptions } = {}) {
   const set = ciSet || ciRunGuardSet();
   const files = fs
     .readdirSync(dir)
@@ -156,7 +230,7 @@ export function runStatic({ dir = SCRIPTS_DIR, self = SELF_NAME, ciSet } = {}) {
     .sort()
     .map((f) => path.join(dir, f));
   return files.map((f) => {
-    const r = classify(f);
+    const r = classify(f, classifyOptions);
     r.gated = set.has(r.name);
     return r;
   });
@@ -164,24 +238,19 @@ export function runStatic({ dir = SCRIPTS_DIR, self = SELF_NAME, ciSet } = {}) {
 
 function printSummary(results) {
   const by = (k) => results.filter((r) => r.kind === k);
-  const pass = by("PASS");
-  const skipDb = by("SKIP-needs-db");
-  const skipEnv = by("SKIP-needs-env");
-  const gatedFail = results.filter((r) => r.kind === "FAIL" && r.gated);
-  const unwiredFail = results.filter((r) => r.kind === "FAIL" && !r.gated);
+  const pass = by(STATIC_RESULT_CATEGORIES.PASS);
+  const skipped = by(STATIC_RESULT_CATEGORIES.SKIP_CAPABILITY);
+  const gatedFail = results.filter((r) => r.kind === STATIC_RESULT_CATEGORIES.FAIL_TEST && r.gated);
+  const unwiredFail = results.filter((r) => r.kind === STATIC_RESULT_CATEGORIES.FAIL_TEST && !r.gated);
   console.log(`\n=== ${LABEL} summary ===`);
   console.log(
     `total ${results.length}  |  PASS ${pass.length}  ` +
-    `FAIL(gated) ${gatedFail.length}  FAIL(unwired) ${unwiredFail.length}  ` +
-    `SKIP-needs-db ${skipDb.length}  SKIP-needs-env ${skipEnv.length}`,
+    `FAIL-test(gated) ${gatedFail.length}  FAIL-test(unwired) ${unwiredFail.length}  ` +
+    `SKIP-capability ${skipped.length}`,
   );
-  if (skipDb.length) {
-    console.log(`\nSKIP-needs-db (${skipDb.length}) — need a real Postgres, not run here:`);
-    for (const r of skipDb) console.log(`  · ${r.name}`);
-  }
-  if (skipEnv.length) {
-    console.log(`\nSKIP-needs-env (${skipEnv.length}) — need the built dist / an optional dep / a live service:`);
-    for (const r of skipEnv) console.log(`  · ${r.name} — ${r.detail}`);
+  if (skipped.length) {
+    console.log(`\nSKIP-capability (${skipped.length}) — explicit preflight + server-required equivalent:`);
+    for (const r of skipped) console.log(`  · ${r.name} — ${r.detail}`);
   }
   if (unwiredFail.length) {
     console.log(`\nUNWIRED FAIL (${unwiredFail.length}) — INFORMATIONAL ONLY, does NOT fail this run (CI does not run these; pre-existing orphan/stale guards):`);
@@ -219,21 +288,25 @@ function selftest() {
     // Mock CI-run set: only the fail fixture is "wired" → its FAIL must gate; the broken-selftest FAIL is
     // unwired → informational (proves the gate keys off CI membership, not raw FAIL count).
     const ciSet = new Set(["verify-fail-fixture.mjs"]);
-    const results = runStatic({ dir: tmp, self: SELF_NAME, ciSet });
+    const results = runStatic({
+      dir: tmp,
+      self: SELF_NAME,
+      ciSet,
+      classifyOptions: { preflight: { ok: true, missing: [], ciEquivalents: [] } },
+    });
     const get = (n) => results.find((r) => r.name === n);
     const kindOf = (n) => get(n)?.kind;
     const checks = [
-      ["pass fixture → PASS", kindOf("verify-pass-fixture.mjs") === "PASS"],
-      ["fail fixture → FAIL", kindOf("verify-fail-fixture.mjs") === "FAIL"],
-      ["db fixture → SKIP-needs-db", kindOf("verify-db-fixture.mjs") === "SKIP-needs-db"],
-      ["broken-selftest fixture → FAIL", kindOf("verify-selftest-broken-fixture.mjs") === "FAIL"],
+      ["pass fixture → PASS", kindOf("verify-pass-fixture.mjs") === STATIC_RESULT_CATEGORIES.PASS],
+      ["fail fixture → FAIL-test", kindOf("verify-fail-fixture.mjs") === STATIC_RESULT_CATEGORIES.FAIL_TEST],
+      ["DATABASE_URL text fixture → FAIL-test", kindOf("verify-db-fixture.mjs") === STATIC_RESULT_CATEGORIES.FAIL_TEST],
+      ["broken-selftest fixture → FAIL-test", kindOf("verify-selftest-broken-fixture.mjs") === STATIC_RESULT_CATEGORIES.FAIL_TEST],
       ["local-CI orchestrator excluded from static sweep", get("verify-local-ci.mjs") === undefined],
       // sentinel safety property: a real DB-connect attempt is isolated → SKIP, never PASS, never real FAIL
-      ["sentinel-connect fixture → SKIP-needs-db (isolated, not PASS/FAIL)", kindOf("verify-sentinel-connect-fixture.mjs") === "SKIP-needs-db"],
-      ["exactly 2 FAIL", results.filter((r) => r.kind === "FAIL").length === 2],
-      ["exactly 2 SKIP", results.filter((r) => r.kind === "SKIP-needs-db").length === 2],
+      ["sentinel-connect fixture → FAIL-test without explicit preflight", kindOf("verify-sentinel-connect-fixture.mjs") === STATIC_RESULT_CATEGORIES.FAIL_TEST],
+      ["exactly 4 FAIL-test", results.filter((r) => r.kind === STATIC_RESULT_CATEGORIES.FAIL_TEST).length === 4],
       // gating: the wired fail gates (gated FAIL = 1); the unwired broken-selftest fail does not
-      ["gated FAIL count == 1 (only the CI-run guard gates)", results.filter((r) => r.kind === "FAIL" && r.gated).length === 1],
+      ["gated FAIL count == 1 (only the CI-run guard gates)", results.filter((r) => r.kind === STATIC_RESULT_CATEGORIES.FAIL_TEST && r.gated).length === 1],
       ["wired fail is gated", get("verify-fail-fixture.mjs")?.gated === true],
       ["unwired fail not gated", get("verify-selftest-broken-fixture.mjs")?.gated === false],
     ];
@@ -246,14 +319,20 @@ function selftest() {
   }
 }
 
-if (process.argv.includes("--selftest")) { selftest(); process.exit(0); }
-
-const results = runStatic();
-printSummary(results);
-const gatedFailCount = results.filter((r) => r.kind === "FAIL" && r.gated).length;
-if (gatedFailCount) {
-  console.error(`\n[${LABEL}] FAILED — ${gatedFailCount} CI-run static-guard failure(s) above. Fix locally before pushing.`);
-  process.exit(1);
+const isDirectRun = process.argv[1] && path.resolve(process.argv[1]) === SELF_PATH;
+if (isDirectRun) {
+  if (process.argv.includes("--selftest")) {
+    selftest();
+    process.exit(0);
+  }
+  const results = runStatic();
+  printSummary(results);
+  const gatedFailCount = results.filter(
+    (r) => r.kind === STATIC_RESULT_CATEGORIES.FAIL_TEST && r.gated
+  ).length;
+  if (gatedFailCount) {
+    console.error(`\n[${LABEL}] FAILED — ${gatedFailCount} CI-run static-guard failure(s) above. Fix locally before pushing.`);
+    process.exit(1);
+  }
+  console.log(`\n[${LABEL}] OK — no CI-run static-guard failures (capability skips are explicit; unwired FAIL-test results are informational only).`);
 }
-console.log(`\n[${LABEL}] OK — no CI-run static-guard failures (DB/env-needed guards skipped; unwired FAILs are informational only).`);
-process.exit(0);

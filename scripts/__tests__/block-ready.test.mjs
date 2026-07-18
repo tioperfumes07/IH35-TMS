@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 
@@ -12,7 +13,6 @@ import {
   evaluateGuardRequirement,
   executeGuardContract,
   matchesAnyAllowedFile,
-  parseArgs,
   parseManifest,
   readUtf8FileFromStableHandle,
   readVerifyMeta,
@@ -20,7 +20,10 @@ import {
   shouldSkipC5VerifyScript,
   validateManifest,
 } from "../block-ready.mjs";
-import { resolveBlockReadyManifest } from "../block-ready-agent-manifest.mjs";
+import {
+  resolveBlockReadyManifest,
+  resolveTrustedBranch,
+} from "../block-ready-agent-manifest.mjs";
 
 test("valid manifest passes validation", () => {
   const manifest = {
@@ -605,26 +608,144 @@ test("parseManifest reads existing JSON file", () => {
   assert.equal(parsed.manifest.block_id, "MAGNET-4-FINAL");
 });
 
-test("resolveBlockReadyManifest uses AGENT env override", () => {
-  const resolved = resolveBlockReadyManifest({
-    agentEnv: "agent2",
-    worktreePath: "/tmp/IH35-TMS-agent1",
+function makeManifestRepo(entries) {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "block-ready-manifest-"));
+  const dir = path.join(root, ".block-ready");
+  fs.mkdirSync(dir);
+  for (const [filename, manifest] of Object.entries(entries)) {
+    fs.writeFileSync(path.join(dir, filename), JSON.stringify(manifest), "utf8");
+  }
+  return root;
+}
+
+function detachManifestRepo(root) {
+  const git = (args) =>
+    execFileSync("git", args, { cwd: root, encoding: "utf8", stdio: "pipe" });
+  git(["init", "-b", "main"]);
+  git(["config", "user.email", "fixture@ih35.test"]);
+  git(["config", "user.name", "IH35 Fixture"]);
+  git(["add", ".block-ready"]);
+  git(["commit", "-m", "fixture"]);
+  git(["checkout", "--detach"]);
+}
+
+test("resolveBlockReadyManifest gives explicit BLOCK_ID deterministic priority", () => {
+  const root = makeManifestRepo({
+    "RIGHT.json": { block_id: "RIGHT", branch: "fix/shared" },
+    "OTHER.json": { block_id: "OTHER", branch: "fix/shared" },
   });
-  assert.equal(resolved.agent, "2");
-  assert.equal(resolved.manifest, ".block-ready.agent2.json");
+  const resolved = resolveBlockReadyManifest({
+    worktreePath: root,
+    blockId: "RIGHT",
+    branch: "fix/shared",
+  });
+  assert.equal(resolved.manifest, ".block-ready/RIGHT.json");
+  assert.equal(resolved.resolution, "block-id");
 });
 
-test("resolveBlockReadyManifest infers AGENT from worktree path", () => {
-  const resolved = resolveBlockReadyManifest({
-    worktreePath: "/tmp/IH35-TMS-agent2-acct",
+test("resolveBlockReadyManifest rejects wrong explicit BLOCK_ID without fallback", () => {
+  const root = makeManifestRepo({
+    "RIGHT.json": { block_id: "WRONG-IN-FILE", branch: "fix/right" },
   });
-  assert.equal(resolved.agent, "2");
-  assert.equal(resolved.manifest, ".block-ready.agent2.json");
+  assert.throws(
+    () =>
+      resolveBlockReadyManifest({
+        worktreePath: root,
+        blockId: "RIGHT",
+        branch: "fix/right",
+      }),
+    /does not match manifest block id/
+  );
 });
 
-test("parseArgs defaults to resolved manifest", () => {
-  const args = parseArgs([], { agentEnv: "agent1", worktreePath: "/tmp/IH35-TMS-agent1" });
-  assert.equal(args.manifest, ".block-ready.agent1.json");
+test("resolveBlockReadyManifest rejects ambiguous exact branch matches", () => {
+  const root = makeManifestRepo({
+    "ONE.json": { block_id: "ONE", branch: "fix/shared" },
+    "TWO.json": { block_id: "TWO", branch: "fix/shared" },
+  });
+  assert.throws(
+    () => resolveBlockReadyManifest({ worktreePath: root, branch: "fix/shared" }),
+    /ambiguous exact branch/
+  );
+});
+
+test("resolveBlockReadyManifest rejects absent exact branch without legacy fallback", () => {
+  const root = makeManifestRepo({
+    "OLD.json": { block_id: "OLD", branch: "fix/old" },
+  });
+  assert.throws(
+    () => resolveBlockReadyManifest({ worktreePath: root, branch: "fix/new" }),
+    /no \.block-ready manifest has exact branch/
+  );
+});
+
+test("detached GitHub Actions checkout resolves trusted GITHUB_HEAD_REF", () => {
+  const root = makeManifestRepo({
+    "ACTIONS.json": { block_id: "ACTIONS", branch: "fix/actions-head" },
+  });
+  detachManifestRepo(root);
+  const resolved = resolveBlockReadyManifest({
+    worktreePath: root,
+    env: {
+      GITHUB_ACTIONS: "true",
+      GITHUB_EVENT_NAME: "pull_request",
+      GITHUB_HEAD_REF: "fix/actions-head",
+      GITHUB_REF: "refs/pull/2689/merge",
+      GITHUB_REF_NAME: "2689/merge",
+    },
+  });
+  assert.equal(resolved.manifest, ".block-ready/ACTIONS.json");
+  assert.equal(resolved.resolution, "exact-branch");
+});
+
+test("detached aggregate mode ignores untrusted pull merge ref and does not crash", () => {
+  const root = makeManifestRepo({
+    "ACTIONS.json": { block_id: "ACTIONS", branch: "fix/actions-head" },
+  });
+  detachManifestRepo(root);
+  const env = {
+    GITHUB_ACTIONS: "true",
+    GITHUB_EVENT_NAME: "pull_request",
+    GITHUB_REF: "refs/pull/2689/merge",
+    GITHUB_REF_NAME: "2689/merge",
+  };
+  assert.equal(resolveTrustedBranch({ worktreePath: root, env }), "");
+  const resolved = resolveBlockReadyManifest({
+    worktreePath: root,
+    env,
+    allowAggregate: true,
+  });
+  assert.equal(resolved.manifest, null);
+  assert.equal(resolved.resolution, "aggregate");
+});
+
+test("trusted branch GITHUB_REF_NAME resolves for branch refs", () => {
+  assert.equal(
+    resolveTrustedBranch({
+      env: {
+        GITHUB_ACTIONS: "true",
+        GITHUB_REF: "refs/heads/fix/direct",
+        GITHUB_REF_NAME: "fix/direct",
+        GITHUB_REF_TYPE: "branch",
+      },
+      worktreePath: "/not-used",
+    }),
+    "fix/direct"
+  );
+});
+
+test("GitHub branch environment is ignored outside GitHub Actions", () => {
+  assert.equal(
+    resolveTrustedBranch({
+      env: {
+        GITHUB_HEAD_REF: "fix/spoofed",
+        GITHUB_REF: "refs/heads/fix/spoofed",
+        GITHUB_REF_NAME: "fix/spoofed",
+      },
+      worktreePath: "/not-a-repository",
+    }),
+    ""
+  );
 });
 
 test("readVerifyMeta returns db_gated and c5_skip_after_c4 lists", () => {

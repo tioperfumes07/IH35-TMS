@@ -1,5 +1,32 @@
 {
   "_comment": "DB-gated verify:* scripts: require DATABASE_URL; skipped in local block-ready C5, still enforced in CI",
+  "server_required_ci_equivalents": {
+    "database": "ci / build-typecheck",
+    "dependencies": "ci / build-typecheck",
+    "pass8-artifact": "pass-8-smoke-verify / pass-8"
+  },
+  "server_required_ci_contexts": [
+    "ci / build-typecheck",
+    "pass-8-smoke-verify / pass-8"
+  ],
+  "non_protection_ci_contexts": [
+    "pass-8-smoke-verify / pass-8"
+  ],
+  "server_required_ci_wiring": {
+    "ci / build-typecheck": {
+      "workflow": ".github/workflows/ci.yml",
+      "job": "build-typecheck"
+    },
+    "pass-8-smoke-verify / pass-8": {
+      "workflow": ".github/workflows/pass-8-smoke-verify.yml",
+      "job": "pass-8"
+    }
+  },
+  "server_required_guard_capabilities": {
+    "verify:pass-8-clean-baseline": [
+      "pass8-artifact"
+    ]
+  },
   "db_gated_verify_scripts": [
     "verify:a17-deprecation-comments",
     "verify:aggregate-schema-grants",
@@ -10,6 +37,7 @@
     "verify:db:start",
     "verify:db:stop",
     "verify:driver-repair-guard",
+    "verify:entity-isolation",
     "verify:equipment-types-no-collision",
     "verify:launch-toggle-audit-trail",
     "verify:live-db-schema-script-wiring",

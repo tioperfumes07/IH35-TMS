@@ -1,21 +1,46 @@
 #!/usr/bin/env node
 import path from "node:path";
-import { execSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-const DEFAULT_MAX_COMMITS_BEHIND = 5;
-const ALLOWLIST_PATHS = [
-  "scripts/verify-pre-commit.mjs",
-  "scripts/verify-architectural-design.ts",
-  "scripts/lib/known-prod-table-grants.mjs",
-  "scripts/lib/known-prod-grants",
-  "apps/backend/src/accounting/index.ts",
-  "apps/frontend/src/App.tsx",
-  "apps/frontend/src/pages/accounting/AccountingSubNav.tsx",
-];
+const DEFAULT_MAX_COMMITS_BEHIND = 0;
 
-function run(command) {
-  return execSync(command, { stdio: ["ignore", "pipe", "pipe"] }).toString("utf8").trim();
+export function runGit(args, cwd = process.cwd()) {
+  const result = spawnSync("git", args, {
+    cwd,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  if (result.status !== 0) {
+    throw new Error(
+      `${result.stderr ?? result.stdout ?? `git ${args.join(" ")} failed`}`.trim()
+    );
+  }
+  return `${result.stdout ?? ""}`.trim();
+}
+
+export function validateCommitSha(value) {
+  if (!/^[0-9a-f]{7,40}$/i.test(value ?? "")) {
+    throw new Error(`invalid commit SHA: ${String(value)}`);
+  }
+  return value;
+}
+
+export function validateGitRef(value) {
+  const ref = String(value ?? "");
+  if (
+    !ref ||
+    ref.startsWith("-") ||
+    ref.includes("..") ||
+    ref.includes("@{") ||
+    ref.includes("//") ||
+    /[~^:?*[\]\\\s]/.test(ref) ||
+    ref.endsWith("/") ||
+    ref.endsWith(".lock")
+  ) {
+    throw new Error(`invalid git ref: ${ref}`);
+  }
+  return ref;
 }
 
 function fail(message) {
@@ -32,7 +57,7 @@ export function resolveBaseSha(cliArgs = process.argv.slice(2)) {
     process.env.PR_BASE_SHA;
   if (resolved) return resolved;
   try {
-    const inferred = run("git rev-parse origin/main");
+    const inferred = runGit(["rev-parse", "origin/main"]);
     process.env.GITHUB_BASE_SHA = inferred;
     console.warn(
       "[verify:branch-fresh] GITHUB_BASE_SHA inferred from origin/main (no CI env detected)"
@@ -61,16 +86,14 @@ export function verifyBranchFresh(cliArgs = process.argv.slice(2)) {
     fail(`invalid max commits threshold: ${String(maxBehind)}`);
   }
 
-  try {
-    run("git fetch origin main");
-  } catch {
-    // Fall through and let rev-list command surface the failure.
-  }
-
   let behindCount = 0;
   try {
-    const pathArgs = ALLOWLIST_PATHS.map((p) => `"${p}"`).join(" ");
-    const output = run(`git rev-list --count ${baseSha}..${mainRef} -- ${pathArgs}`);
+    validateCommitSha(baseSha);
+    validateGitRef(mainRef);
+    runGit(["rev-parse", "--verify", `${baseSha}^{commit}`]);
+    runGit(["fetch", "origin", "main"]);
+    runGit(["rev-parse", "--verify", `${mainRef}^{commit}`]);
+    const output = runGit(["rev-list", "--count", `${baseSha}..${mainRef}`]);
     behindCount = Number(output || "0");
     if (!Number.isFinite(behindCount)) {
       fail(`could not parse behind count from: ${output}`);
@@ -81,7 +104,7 @@ export function verifyBranchFresh(cliArgs = process.argv.slice(2)) {
 
   if (behindCount > maxBehind) {
     fail(
-      `base ${baseSha} is ${behindCount} allowlist commits behind ${mainRef}; maximum allowed is ${maxBehind}`
+      `base ${baseSha} is ${behindCount} full-tree commit(s) behind ${mainRef}; maximum allowed is ${maxBehind}`
     );
   }
 
