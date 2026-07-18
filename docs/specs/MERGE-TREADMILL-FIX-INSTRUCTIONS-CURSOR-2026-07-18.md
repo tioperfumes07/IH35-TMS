@@ -1,136 +1,99 @@
-# Cursor Coder — Merge Treadmill FIX Instructions (2026-07-18)
+# Merge Treadmill — LOCKED Fix Sequence (2026-07-18)
 
-> Owner (Jorge) authorized these fixes. Goal: **stop the forced-rebase-on-every-push, cut CI to
-> ~6–8 min, get branches green-and-mergeable fast with the fewest conflicts/failures possible.**
-> All items below are **non-financial CI/tooling** (no `accounting.*`/`catalogs.*`/`mdata.*`, no
-> `db/migrations/*`, no money) → buildable and self-mergeable on green per §1.2. Do NOT touch
-> financial/migration paths in these PRs. Full root cause: `MERGE-TREADMILL-PLAN-2026-07-18.md`.
-> Verify the plan branch first: `git show fda607e1e`.
+> **Status: evidence-backed and LOCKED (Jorge, 2026-07-18).** Reconciles GUARD (Claude Coder),
+> Claude Agent, and Cursor after a 3-lane adversarial round. Every fact below was verified live on
+> disk this session. Owner (Jorge) authorized the fixes; Cursor Coder implements. All items are
+> **non-financial CI/tooling** (no `accounting.*`/`catalogs.*`/`mdata.*`, no `db/migrations/*`, no
+> money) → buildable and self-mergeable on green per §1.2, EXCEPT where marked owner-gated.
+> Root-cause detail: `MERGE-TREADMILL-PLAN-2026-07-18.md`.
 
-**Ground rules for these PRs (so they don't re-create the treadmill):**
-- One fix = one small, single-lane PR. Do NOT bundle these together.
-- Do NOT edit `package.json` verify keys, `locked-guards.yml`, `ci.yml` guard-runs (except FIX 1
-  which edits `ci.yml` to REMOVE duplicates), `SKILL.md`, or the blueprint in these PRs.
-- Every fix ships with a `scripts/verify-*.mjs` guard wired via `scripts/verify-steps/NNN-*.mjs`
-  ONLY (no `package.json`/workflow edits), per STOP-THE-THRASH FIX-1.
+## ★ ACCEPTANCE RULE (Jorge, non-negotiable)
+**Newly exposed red guards are defects to TRIAGE and FIX with evidence — never a reason to weaken,
+skip, or revert the runner.** When step 2 makes the runner honest, guards that were silently failing
+will turn red. Each red is classified (real defect vs. a guard that was itself wrong) and **fixed with
+live proof**. Reverting the runner to restore green is a §10 fake-green violation and is forbidden.
 
----
-
-## ★ FIX 0 — Make the pre-push freshness gate conflict/risk-aware (THE root cause)
-
-**File:** `scripts/branch-precheck-push.mjs` (currently FAILs on `behind > 0` — any file, no conflict).
-
-**Problem:** lines ~66-70 do `if (behind > 0) FAIL "run npm run branch:rebuild-linear"`. Because
-`main` merges ~13×/day, every branch is behind within minutes → **every push forced to rebase even
-with zero conflict.** Live-reproduced on a 2-cold-file docs branch.
-
-**Change:** keep the safety intent (don't merge stale against high-risk surfaces) but only block when
-there is REAL risk. Replace the blanket `behind > 0` block with:
-
-```js
-const behind = behindOriginMainCount(root);
-if (behind > 0) {
-  const mergeBase = runGitOrThrow(["merge-base", "HEAD", "origin/main"], { cwd: root });
-  const branchFiles = new Set(
-    runGitOrThrow(["diff", "--name-only", `${mergeBase}..HEAD`], { cwd: root }).split("\n").filter(Boolean)
-  );
-  const mainFiles = runGitOrThrow(["diff", "--name-only", `${mergeBase}..origin/main`], { cwd: root })
-    .split("\n").filter(Boolean);
-
-  // (a) real text-conflict risk: main advanced a file THIS branch also changed
-  const overlap = mainFiles.filter((f) => branchFiles.has(f));
-  // (b) high-blast-radius integration files (reuse the SAME list as verify-branch-fresh.mjs)
-  const touchesHighBlast = mainFiles.some((f) => HIGH_BLAST_PATHS.includes(f));
-
-  if (overlap.length > 0 || touchesHighBlast) {
-    return { ok: false, reason:
-      `behind ${behind} and origin/main advanced files this branch depends on ` +
-      `(${[...overlap, ...mainFiles.filter(f=>HIGH_BLAST_PATHS.includes(f))].slice(0,5).join(", ")}) — ` +
-      `run npm run branch:rebuild-linear` };
-  }
-  console.warn(`[branch:precheck-push] WARN: ${behind} behind origin/main but no overlap/high-blast — allowing push.`);
-}
-```
-
-- **`HIGH_BLAST_PATHS` must be the SINGLE shared list** — export `ALLOWLIST_PATHS` from
-  `verify-branch-fresh.mjs` (or move to `scripts/lib/`) and import it in BOTH files. Do not copy-paste.
-- Keep `GITHUB_BASE_SHA = merge-base` line intact.
-- **Escape hatch env:** honor `BRANCH_PRECHECK_STRICT=1` to restore old `behind>0` behavior if ever needed.
-
-**Guard (required):** `scripts/verify-precheck-push-conflict-aware.mjs` + `verify-steps/NNN-*.mjs`
-self-test asserting: (1) behind-with-no-overlap-and-no-highblast → PASS/warn, (2) behind-with-overlap
-→ FAIL, (3) behind-with-highblast-file → FAIL. Use temp git fixtures or mock `runGitOrThrow`.
-
-**Acceptance:** a branch 1+ commits behind `origin/main` that changed only non-overlapping,
-non-high-blast files **pushes without rebasing**. A branch whose changed files were advanced on main,
-or where main touched a high-blast file, still blocks.
+## Verified facts (all lanes agree)
+- **Zero-behind pre-push gate = the rebase mandate.** `branch-precheck-push.mjs` FAILs on `behind > 0`
+  vs `origin/main`, any file, no conflict → every push forced to rebase. Live-reproduced.
+- **The gate is also bypassable.** `.husky/pre-push` shell-sources `.env`; `BRANCH_PRECHECK_STEPS_JSON=[]`
+  (empties the step list) and `IH35_BRANCH_TOOLING_SKIP_FETCH=1` (skips the fetch) silently disable it.
+- **The CI runner is FALSE-GREEN for return-based steps.** `_runner.mjs` does `await run()` and ignores
+  the resolved value; `_context.mjs:16` `run()` returns `result.status ?? 1` (numeric, no throw). Steps
+  that `return 1` (e.g. `143`, `144`) are **swallowed** — suite exits 0. Steps that `process.exit(1)`
+  fail-closed. Contract is inconsistent (~103/194 steps are return-based candidates).
+- **`main` IS protected** (Ruleset 17935054, 4 checks, `strict:false`) — server does not force rebases;
+  the local hook does. Merge-queue check contexts must be **real job names** (`verify:sql-column-existence`
+  is not a check context).
 
 ---
 
-## FIX 1 — De-duplicate CI (cut build-typecheck ~11 → ~6 min)
+## LOCKED SEQUENCE
 
-**File:** `.github/workflows/ci.yml`. It runs `verify:pre-commit` (the full ~156 `verify-steps/*`
-suite) at ~line 71/75, THEN re-runs dozens of individual `run: npm run verify:*` steps that are
-ALREADY inside that suite.
+### 1 — Close the `.env` / skip-variable bypass  *(non-financial)*
+Make the pre-push gate un-disableable by a developer `.env`. In `branch-precheck-push.mjs`:
+- **Ignore `BRANCH_PRECHECK_STEPS_JSON` and `IH35_BRANCH_TOOLING_SKIP_FETCH` unless a trusted CI context**
+  is present (e.g. `process.env.CI === "true"` AND a signed/known context) — never from `.env`.
+- Prefer: stop `.husky/pre-push` from `set -a`-sourcing arbitrary `.env` keys into the gate's env; load
+  only the specific vars the checks need (e.g. `DATABASE_URL`), not the whole file.
+- **Guard:** `scripts/verify-precheck-not-bypassable.mjs` + `verify-steps/NNN-*.mjs` — asserts a planted
+  `.env` with those vars does NOT reduce the executed step set. Report the executed-steps proof.
 
-**Change (per-line, NO blanket delete):** for each `run: npm run verify:X` AFTER the `verify:pre-commit`
-step, check whether a `scripts/verify-steps/*.mjs` already invokes `verify:X` (or `scripts/verify-X.mjs`):
-```bash
-# X = the verify name after "verify:"
-grep -rl "verify-X\|verify:X" scripts/verify-steps/
-```
-- **Covered** (a verify-steps file runs it) → **remove that redundant `ci.yml` step.**
-- **NOT covered** → leave it, OR (preferred, matches FIX-1) add `scripts/verify-steps/NNN-verify-X.mjs`
-  and then remove the `ci.yml` line, so the suite owns it.
-- Do not remove `verify:pre-commit`, `verify:branch-fresh`, build, tsc, or db steps.
+### 2 — ★ KEYSTONE: make the runner honest  *(non-financial, high-blast — expect exposed reds)*
+- `_runner.mjs`: capture and honor the result — `const rc = await run(); if (rc !== 0 && rc !== undefined)
+  { throw / process.exit(1) }`. Normalize: a step signals failure by non-zero return OR throw OR exit —
+  all must fail the suite.
+- `_context.mjs`: keep numeric returns, but the runner must act on them (above). Optionally make `run()`
+  variants explicit (`runOrThrow` vs `runStatus`) so intent is unambiguous.
+- **Plant the proof guard:** `scripts/verify-runner-fails-closed.mjs` — a synthetic `return 7` step MUST
+  make `verify:pre-commit` exit non-zero (the `RUNNER_FALSE_GREEN` reproduction, inverted). Wire via
+  verify-steps. This is the §2 regression guard; it can never regress to fail-open.
+- **Then triage the wave** per the ACCEPTANCE RULE: every newly-red guard classified + fixed with evidence.
+  Do NOT de-dup, weaken, or revert to regain green.
 
-**Guard (required):** `scripts/verify-no-ci-guard-duplication.mjs` — fails if `ci.yml` contains a
-`run: npm run verify:X` whose `X` is already executed by a `verify-steps/*` file. Wire via verify-steps.
+### 3 — Inventory every `ci.yml` duplicate + prove propagation  *(non-financial)*
+For each `run: npm run verify:X` after the `verify:pre-commit` step: confirm a `verify-steps/*` runs it
+AND (post-step-2) that its step propagates failure. Produce the inventory table (X → covering step →
+propagates? y/n). No removal yet.
 
-**Acceptance:** `build-typecheck` wall-clock drops to the target band; no guard stops running (compare
-the guard-name set executed before vs after — must be a superset-or-equal).
+### 4 — De-duplicate CI  *(non-financial)*
+Remove only the `ci.yml` `verify:X` lines proven covered AND fail-closed in the suite (from step 3).
+Uncovered/unproven → leave, or add a proper verify-step first. **Guard:**
+`scripts/verify-no-ci-guard-duplication.mjs`. Acceptance: `build-typecheck` drops to the ~6–8 min band;
+executed guard-name set is superset-or-equal to before.
+
+### 5 — Small single-domain PRs + governance gate  *(gate is owner-reviewed)*
+- Rebuild #2688/#2689/#2690 as small, one-module-lane, frozen-scope PRs. Infra merges alone.
+- **Governance gate:** `apps/**` + `SKILL.md`/constitution/rules in one PR = hard fail. Architecture-design
+  docs MAY ride with the feature requiring the same-commit update. Law edits → tiny owner-reviewed PR.
+- **PR-scope gate:** by module-lane spread + frozen scope + reviewed exception — NOT a raw file-count cap.
+
+### 6 — Merge Queue  *(owner applies the Ruleset)*
+Add `merge_group` workflow triggers; Jorge enables a one-item Merge Queue and the revised Ruleset using
+**real job-name check contexts only**. The queue rebases+tests the combined result against latest `main`
+— the correct freshness validation.
+
+### 7 — Retire the blanket zero-behind gate  *(after step 6 proves combined-main validation)*
+Only once the queue validates combined-main: remove/relax `branch-precheck-push.mjs`'s `behind > 0` block.
+Do NOT relax it before the queue exists — file-overlap detection cannot catch semantic staleness
+(changed import signatures, schemas, generated artifacts in other files), so an early relax can merge a
+green-but-broken branch.
+
+### 8 — Registry sharding + DB-fixture isolation  *(infra lane; schema-parity is owner-gated)*
+- `sql-write-targets-known-debt.json` / `schema-parity-baseline.json`: generate from the ratchet or shard
+  into per-finding/per-migration fragments. **Never json-union** (union resurrects removed debt).
+  `schema-parity-baseline.json` is migration-adjacent → **owner OK before merge.**
+- Flaky financial `*.db.test.ts`: per-test company/user fixture; remove rerun-until-green (fake-green).
 
 ---
 
-## FIX 2 — Rebuild #2688 / #2689 / #2690 as single-lane PRs (do NOT patch)
+## Rules for these PRs (so they don't re-create the treadmill)
+- One fix = one small, single-lane PR. Do NOT bundle.
+- Register guards via `scripts/verify-steps/NNN-*.mjs` ONLY — never edit `package.json` verify keys /
+  `locked-guards.yml` / `ci.yml` guard-runs (except step 4, which REMOVES duplicates from `ci.yml`).
+- Do not touch financial/migration paths in any of these PRs.
 
-These are 25–32 files across 3 module lanes each (and #2689 edits `SKILL.md` + branch-protection
-config). Close/replace with **small, one-domain, frozen-scope** PRs:
-- Split by top-level module lane (`apps/backend/<domain>`, `apps/frontend/<domain>`, `scripts/*` infra).
-- **Infra (pipeline/verify-orchestration/branch-protection) merges ALONE**, never beside a feature.
-- Any `SKILL.md`/rules edit → its own tiny **owner-reviewed** PR (governance lane). Architecture-design
-  docs MAY stay with the feature that requires the same-commit update.
-
----
-
-## FIX 3 — Shared registries: generate/shard, never hand-edit, NEVER json-union
-
-- `scripts/sql-write-targets-known-debt.json` and `docs/schema-parity-baseline.json` conflict because
-  many PRs hand-edit one shared file. Generate them from the ratchet, or shard into per-finding /
-  per-migration fragments. **Do not add them to the json-union driver** — union resurrects removed debt
-  and hides cleanup regressions. `schema-parity-baseline.json` is migration-adjacent → **owner OK before
-  merge.**
-
----
-
-## FIX 4 — Flaky shared-DB tests (fake-green breach)
-
-Financial `*.db.test.ts` sharing one company/user → rerun-until-green. Give each test its own
-company/user fixture; remove any "rerun on flake" affordance. Verify no financial fixture *logic*
-changes (data-isolation only).
-
----
-
-## Sequence & expected result
-1. **FIX 0 + FIX 1 first** (today) — these two remove the forced rebase and halve CI.
-2. FIX 2 (rebuild the fat PRs), FIX 3, FIX 4 in an isolated infra lane.
-3. Merge Queue LAST (owner applies `strict:true` ruleset), then retire the local pre-push gate entirely.
-
-**Honest expectation after FIX 0+1:** pushes stop mandating a rebase when there's no real overlap →
-most branches go straight to green in the ~6–8 min CI band and merge. **"Zero conflicts ever" is not
-literally achievable** — two PRs editing the SAME lines is a genuine conflict — but that's rare once
-PRs are small/single-lane (FIX 2). The *forced-every-time* rebase is what FIX 0 kills.
-
-## Report back with EVIDENCE (per §0 — no "done" without proof)
-For each fix: the PR #, the guard name added, and a live measurement (FIX 0: a behind-but-clean branch
-that pushed without rebase; FIX 1: before/after `build-typecheck` minutes + the guard-set diff).
+## Report back with EVIDENCE (§0 — no "done" without live proof)
+Per step: PR#, guard added, and a live measurement — step 1: planted `.env` did not shrink the step set;
+step 2: the `return 7` step now fails the suite + the list of newly-red guards triaged; step 4:
+before/after `build-typecheck` minutes + guard-set diff. CI-green is the floor, not "done."
