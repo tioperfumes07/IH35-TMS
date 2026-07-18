@@ -34,7 +34,7 @@ describe("AccountRegisterPage CA-05 guard", () => {
       "/accounting/payments/",
       "/accounting/bills",
       "/accounting/bill-payments",
-      "/accounting/expenses",
+      "/accounting/expenses/list",
       "/driver-finance/settlements",
       "/accounting/journal-entries",
     ];

@@ -8,9 +8,9 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 
 /**
- * Deep-link create route for expenses (`/accounting/expenses/new`).
+ * Canonical create route for expenses (`/accounting/expenses`).
  * Owner chrome lock: form opens in a QBO-like right-side ParityDrawer over the accounting shell.
- * Route stays mounted; close returns to the expenses list (never remove this path).
+ * The additive `/accounting/expenses/new` alias renders this same page; close returns to the list.
  */
 export function ExpenseCreatePage() {
   const navigate = useNavigate();
@@ -27,7 +27,7 @@ export function ExpenseCreatePage() {
         <button
           type="button"
           className="text-slate-700 underline"
-          onClick={() => navigate("/accounting/expenses")}
+          onClick={() => navigate("/accounting/expenses/list")}
         >
           Open expenses list
         </button>
@@ -37,7 +37,7 @@ export function ExpenseCreatePage() {
         title="Record expense"
         subtitle="Expense capture"
         size="wide"
-        onClose={() => navigate("/accounting/expenses")}
+        onClose={() => navigate("/accounting/expenses/list")}
       >
         {companyId ? (
           <div className="space-y-4">
