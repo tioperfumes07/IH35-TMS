@@ -6,6 +6,7 @@ import { useToast } from "../../components/Toast";
 import { listCoaAccountsForJe, listCoaRoles, type CoaRole, COA_ROLE_VALUES, upsertCoaRole, validateCoaRoles } from "../../api/accounting";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 
 const ROLE_LABELS: Record<CoaRole, string> = {
   ar_control: "AR control",
@@ -80,7 +81,14 @@ export function CoaRolesPage() {
       }
     >
 
-      {!validateQuery.isLoading ? (
+      {validateQuery.isError ? (
+        <ListErrorBanner
+          message={`Failed to validate CoA role mappings: ${(validateQuery.error as Error)?.message ?? "Request failed"}`}
+          onRetry={() => void validateQuery.refetch()}
+        />
+      ) : null}
+
+      {!validateQuery.isLoading && !validateQuery.isError ? (
         <div className={`rounded-sm border px-3 py-2 text-xs ${validateQuery.data?.valid ? "border-slate-200 bg-slate-100 text-slate-700" : "border-slate-200 bg-slate-50 text-slate-800"}`}>
           {validateQuery.data?.valid
             ? "All required roles have active mappings."

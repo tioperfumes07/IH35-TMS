@@ -1,17 +1,50 @@
 {
   "block_id": "0243-g8-5-no-error-state-blank-forever-spinner",
-  "status": "PENDING",
-  "classification": "FINANCIAL",
-  "phase": "tier3",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "TIER-3",
   "source": "MASTER-6 authored dispatch (06-TIER3-BLOCKS)",
   "source_file": "0243-g8-5-no-error-state-blank-forever-spinner.txt",
+  "wave": "A of Accounting Core Block 6/67",
+  "task": "Close the seven confirmed Wave A accounting query gaps with scoped visible errors and query-specific manual retry. Frontend reliability only; no backend, schema, posting, or money behavior changes.",
+  "branch": "fix/accounting-list-error-boundary",
   "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
+    "apps/frontend/src/hooks/useInvoiceCreateFromLoad.ts",
+    "apps/frontend/src/pages/accounting/IntegrationTransactionsPage.tsx",
+    "apps/frontend/src/pages/accounting/InvoiceCreateModal.tsx",
+    "apps/frontend/src/pages/accounting/RecordPaymentModal.tsx",
+    "apps/frontend/src/pages/accounting/CoaRolesPage.tsx",
+    "apps/frontend/src/pages/accounting/FactorReconciliationPage.tsx",
+    "apps/frontend/src/pages/accounting/SalesTaxPage.tsx",
+    "apps/frontend/src/pages/accounting/__tests__/AccountingQueryErrorStates.test.tsx",
+    "scripts/verify-accounting-query-error-states.mjs",
+    "scripts/verify-steps/907-verify-accounting-query-error-states.mjs",
+    ".block-ready/0243-g8-5-no-error-state-blank-forever-spinner.json"
   ],
   "acceptance": [
-    {
-      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
-    }
+    { "kind": "mounted", "component": "apps/frontend/src/pages/accounting/IntegrationTransactionsPage.tsx", "note": "txnQuery failure renders ListErrorBanner before ParityTable and retries txnQuery.refetch" },
+    { "kind": "mounted", "component": "apps/frontend/src/pages/accounting/InvoiceCreateModal.tsx", "note": "from-load step renders the loadsQuery failure and retries the exposed loadsQuery.refetch" },
+    { "kind": "mounted", "component": "apps/frontend/src/pages/accounting/RecordPaymentModal.tsx", "note": "customersQuery and openInvoicesQuery each render in their own scope and retry only their own query" },
+    { "kind": "mounted", "component": "apps/frontend/src/pages/accounting/CoaRolesPage.tsx", "note": "validateQuery failure replaces the misleading validation summary and retries validateQuery.refetch; rowsQuery handling is unchanged" },
+    { "kind": "mounted", "component": "apps/frontend/src/pages/accounting/FactorReconciliationPage.tsx", "note": "itemsQuery failure renders in the selected-run detail and retries itemsQuery.refetch; candidates/runs handling is unchanged" },
+    { "kind": "mounted", "component": "apps/frontend/src/pages/accounting/SalesTaxPage.tsx", "note": "agenciesQuery failure renders in Prepare return and retries agenciesQuery.refetch; returnsQuery handling is unchanged" },
+    { "kind": "guard", "path": "scripts/verify-accounting-query-error-states.mjs", "step": "scripts/verify-steps/907-verify-accounting-query-error-states.mjs", "note": "auto-discovered guard includes seven independent planted-removal selftests" },
+    { "kind": "test", "path": "apps/frontend/src/pages/accounting/__tests__/AccountingQueryErrorStates.test.tsx", "note": "focused rendering tests prove every failed query is visible and its exact refetch is invoked" },
+    { "kind": "design", "spec": "docs/specs/IH35_MASTER_BLUEPRINT_v3_FULL.md", "sections": ["MUST 6.4.1.6 — visible error with retry"] }
   ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+  "linkage": "N/A — presentational query-error UI only; no data/entity/FK/write change.",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [
+    "focused vitest",
+    "verify-accounting-query-error-states",
+    "verify-accounting-query-error-states --selftest",
+    "frontend tsc",
+    "diff-check"
+  ],
+  "remaining_confirmed_offenders": {
+    "root_block": "0243-g8-5-no-error-state-blank-forever-spinner",
+    "plan": "Continue the already-confirmed accounting offenders in Wave B/C under this same root block.",
+    "status": "EXPLICITLY OUTSIDE WAVE A — not silently deferred and not represented as closed by this registry update."
+  }
 }

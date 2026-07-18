@@ -7,6 +7,7 @@ import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getIntegrationTransactions, type IntegrationTxnItem } from "../../api/integration-transactions";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 
 const fmtCents = (c: number | null) => (c == null ? "—" : formatUsdCents(c));
 const fmtDate = (s: string | null) => formatDateUS(s) || "—";
@@ -173,19 +174,27 @@ export function IntegrationTransactionsPage() {
 
   return (
     <AccountingSubNavWrapper title="Integration Transactions" subtitle="QBO sync queue — all entity sync statuses">
-      <ParityTable
-        columns={columns}
-        rows={items}
-        rowKey={(row) => row.id}
-        // LIST-EMPTY-1 settled gate: loading stays true while pending, and while a refetch is in
-        // flight with zero current rows — never renders emptyText mid-fetch.
-        loading={isPending || (isFetching && items.length === 0)}
-        filterBar={filterBar}
-        storageKey="integration-transactions"
-        exportFilename="integration-transactions"
-        initialPageSize={50}
-        emptyText="No integration transactions found."
-      />
+      {txnQuery.isError ? (
+        <ListErrorBanner
+          message={`Failed to load integration transactions: ${(txnQuery.error as Error)?.message ?? "Request failed"}`}
+          onRetry={() => void txnQuery.refetch()}
+        />
+      ) : null}
+      {!txnQuery.isError ? (
+        <ParityTable
+          columns={columns}
+          rows={items}
+          rowKey={(row) => row.id}
+          // LIST-EMPTY-1 settled gate: loading stays true while pending, and while a refetch is in
+          // flight with zero current rows — never renders emptyText mid-fetch.
+          loading={isPending || (isFetching && items.length === 0)}
+          filterBar={filterBar}
+          storageKey="integration-transactions"
+          exportFilename="integration-transactions"
+          initialPageSize={50}
+          emptyText="No integration transactions found."
+        />
+      ) : null}
     </AccountingSubNavWrapper>
   );
 }

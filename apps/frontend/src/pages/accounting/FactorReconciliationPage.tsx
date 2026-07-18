@@ -13,6 +13,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -139,34 +140,44 @@ export function FactorReconciliationPage() {
           {!selectedRun ? <div className="text-xs text-gray-500">Select a reconciliation run.</div> : null}
           {selectedRun ? (
             <div className="space-y-2">
-              <div className="text-xs text-gray-700">
-                <span className="font-semibold">Run:</span> {selectedRun.statement_date} | <span className="font-semibold">Status:</span> {selectedRun.status} |{" "}
-                <span className="font-semibold">Mismatches:</span> {mismatchCount}
-              </div>
-              <div className="max-h-[320px] overflow-auto rounded-sm border border-gray-200">
-                <table className="min-w-full text-left text-xs">
-                  <thead className="bg-gray-50">
-                    <tr className="text-gray-600">
-                      <th className="px-2 py-1.5 font-semibold">Statement invoice</th>
-                      <th className="px-2 py-1.5 font-semibold">State</th>
-                      <th className="px-2 py-1.5 font-semibold">Factor</th>
-                      <th className="px-2 py-1.5 font-semibold">Ledger</th>
-                      <th className="px-2 py-1.5 font-semibold">Variance</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(itemsQuery.data ?? []).map((item) => (
-                      <tr key={item.id} className="border-t border-gray-100">
-                        <td className="px-2 py-1.5 text-gray-900">{item.statement_invoice_number ?? "-"}</td>
-                        <td className="px-2 py-1.5 text-gray-700">{item.ledger_match_state}</td>
-                        <td className="px-2 py-1.5 text-gray-700">{money(item.factor_amount_cents)}</td>
-                        <td className="px-2 py-1.5 text-gray-700">{money(item.ledger_amount_cents)}</td>
-                        <td className="px-2 py-1.5 text-gray-700">{money(item.variance_cents)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              {itemsQuery.isError ? (
+                <ListErrorBanner
+                  message={`Failed to load reconciliation items: ${(itemsQuery.error as Error)?.message ?? "Request failed"}`}
+                  onRetry={() => void itemsQuery.refetch()}
+                />
+              ) : null}
+              {!itemsQuery.isError ? (
+                <>
+                  <div className="text-xs text-gray-700">
+                    <span className="font-semibold">Run:</span> {selectedRun.statement_date} | <span className="font-semibold">Status:</span> {selectedRun.status} |{" "}
+                    <span className="font-semibold">Mismatches:</span> {mismatchCount}
+                  </div>
+                  <div className="max-h-[320px] overflow-auto rounded-sm border border-gray-200">
+                    <table className="min-w-full text-left text-xs">
+                      <thead className="bg-gray-50">
+                        <tr className="text-gray-600">
+                          <th className="px-2 py-1.5 font-semibold">Statement invoice</th>
+                          <th className="px-2 py-1.5 font-semibold">State</th>
+                          <th className="px-2 py-1.5 font-semibold">Factor</th>
+                          <th className="px-2 py-1.5 font-semibold">Ledger</th>
+                          <th className="px-2 py-1.5 font-semibold">Variance</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(itemsQuery.data ?? []).map((item) => (
+                          <tr key={item.id} className="border-t border-gray-100">
+                            <td className="px-2 py-1.5 text-gray-900">{item.statement_invoice_number ?? "-"}</td>
+                            <td className="px-2 py-1.5 text-gray-700">{item.ledger_match_state}</td>
+                            <td className="px-2 py-1.5 text-gray-700">{money(item.factor_amount_cents)}</td>
+                            <td className="px-2 py-1.5 text-gray-700">{money(item.ledger_amount_cents)}</td>
+                            <td className="px-2 py-1.5 text-gray-700">{money(item.variance_cents)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              ) : null}
             </div>
           ) : null}
         </DataPanel>
