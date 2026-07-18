@@ -1,110 +1,86 @@
-# Runner-Exposed Reds — Pre-Enumeration (2026-07-18)
+# Runner-Exposed Reds — Pre-Enumeration (2026-07-18, CORRECTED v2)
 
-> **Step 2a deliverable** for `docs/specs/MERGE-TREADMILL-FIX-INSTRUCTIONS-CURSOR-2026-07-18.md`.
-> Draws the map BEFORE the keystone runner fix so step 2 is a known quantity, not a scramble.
-> Evidence: static classification of `scripts/verify-steps/*` + `npm run verify:static` (dead-port
-> DB sentinel — **prod-safe, never touched prod**), run this session on branch
-> `docs/merge-treadmill-plan-2026-07-18`. Method caveats at the bottom.
+> **Step 2a deliverable** for `MERGE-TREADMILL-FIX-INSTRUCTIONS-CURSOR-2026-07-18.md`.
+> **v2 corrects v1 after Cursor's review** (v1 overclaimed — see "Corrections" below).
+> Re-run this session on **current `origin/main` `1eda1c4d1`** in a **genuinely clean `git archive`
+> checkout** (no `.claude/worktrees`). `verify:static` uses a dead-port DB sentinel → **prod-safe.**
 
-## Headline: the feared "wave" is essentially empty. The real problem is elsewhere.
-- **Fail-open surface = exactly 26 of 192 verify-steps** (return-based; the runner swallows their
-  failure). This is the COMPLETE universe step 2 can newly enforce — nothing outside it can turn red.
-- **Currently red among those 26, in a CI-equivalent clean checkout: ~0.** 25/26 pass clean; the lone
-  static red (`xlsx-cve-closeout`) is a **local-only artifact** (see below), not a CI defect.
-- **None of the 26 are DB-dependent** (none appear in SKIP-needs-db) → high confidence the wave is ~0.
-- **So step 2 (fixing the runner) will likely expose 0–1 reds, not dozens.** The risk was theoretical.
-- **The actual fake-green mass is a SEPARATE bucket: 32 UNWIRED failing guards** (§B) — guards that fail
-  and that **nothing in CI runs at all.** That is the bigger "make CI honest" finding.
+## Corrections applied from Cursor's review (owned — v1 was wrong)
+1. v1 ran from stale base `6c2c3a7` → **re-run on current `origin/main 1eda1c4d1`.**
+2. v1 called 32 guards "unwired / dark / fake-green vector." **WRONG.** Authoritative
+   `verify:guard-wired` on current main: **751 wired, 341 exempt, 0 unaccounted (orphan=0).** Nothing is
+   unaccounted. See §B — reframed, no "dark guard" claim.
+3. v1 dismissed the XLSX guard as "local-only noise." **Proven passes clean (exit 0), but it has a real
+   latent traversal defect** to fix — see §A note.
+4. v1 recommended "archive/defer aspirational guards." **REMOVED** — dispositioning a guard is an owner
+   decision requiring a Jorge-approved tracker ID (§7 additive-only). No dispositions here.
+
+## Headline (verified on current main, clean checkout)
+- **Fail-open surface = 26 of 193 verify-steps** (return-based; runner swallows their failure). Stable
+  vs v1. This is the COMPLETE universe step 2 can newly enforce.
+- **Reds among the 26 in a clean checkout: 0.** All 26 pass; **none are DB-dependent.**
+- **⇒ Fixing the runner (step 2) is safe — it will not red the board.** Definitive confirmation still
+  comes from running the honest-runner harness under `verify:local-ci` at step-2 time.
 
 ---
 
 ## §A — The 26 fail-open steps (step 2's entire scope)
-Runner swallows a `return N`; step 2 makes these honest. Static status from `verify:static`:
+All 26 currently PASS. The runner fix makes their return value honest so a FUTURE failure can't be
+swallowed. Underlying guards: `sql-column-existence, no-guard-hotfile-thrash, xlsx-cve-closeout,
+banking-bankaccountdetail-is-credit-amounts, driver-border-credentials-edit, entity-badge-single-source,
+h02-qbo-topbar-sync-now, user-detail-activity-tab, relay-status-not-hardcoded,
+inventory-reorder-threshold-ui, drivers-count-nav-integrity, dispatch-arch-tab-parity,
+drivers-profile-action-bar, driver-suspend-atomic, drivers-create-vocab, book-load-accessorial,
+dvir-schema-presence, maint-create-vocab, safety-meetings-training-wire, drivers-earnings-debt-tab,
+safety-hos-dashboard-wire, trailer-wo-equipment-id, dispatch-late-arrivals-alerts,
+safety-incidents-cluster-wire, home-quickjump-counts` (+ `01-ensure-database-url` = infra, not a guard).
 
-| Step | Underlying guard | Static status |
-|---|---|---|
-| 144-verify-xlsx-cve-closeout | verify-xlsx-cve-closeout | **RED — local-only (see note)** ; also has a *double* bug: discards its 1st `ctx.run` status too |
-| 142-verify-sql-column-existence | verify-sql-column-existence | PASS |
-| 143-verify-no-guard-hotfile-thrash | verify-no-guard-hotfile-thrash | PASS |
-| 142-verify-banking-bankaccountdetail-is-credit-amounts | " | PASS |
-| 142-verify-driver-border-credentials-edit | " | PASS |
-| 142-verify-entity-badge-single-source | " | PASS |
-| 142-verify-h02-qbo-topbar-sync-now | " | PASS |
-| 142-verify-user-detail-activity-tab | " | PASS |
-| 136-verify-relay-status-not-hardcoded | " | PASS |
-| 140-verify-inventory-reorder-threshold-ui | " | PASS |
-| 39-verify-drivers-count-nav-integrity | " | PASS |
-| 45-verify-dispatch-arch-tab-parity | " | PASS |
-| 45-verify-drivers-profile-action-bar | " | PASS |
-| 45a-verify-driver-suspend-atomic | " | PASS |
-| 46-verify-drivers-create-vocab | " | PASS |
-| 47-verify-book-load-accessorial | " | PASS |
-| 47-verify-dvir-schema-presence | " | PASS |
-| 48-verify-maint-create-vocab | " | PASS |
-| 48-verify-safety-meetings-training-wire | " | PASS |
-| 49-verify-drivers-earnings-debt-tab | " | PASS |
-| 49-verify-safety-hos-dashboard-wire | " | PASS |
-| 49-verify-trailer-wo-equipment-id | " | PASS |
-| 50-verify-dispatch-late-arrivals-alerts | " | PASS |
-| 51-verify-safety-incidents-cluster-wire | " | PASS |
-| 901-verify-home-quickjump-counts | " | PASS |
-| 01-ensure-database-url | (infra step, not a guard) | n/a |
+**Also fix in step 2:** `144-verify-xlsx-cve-closeout` has a **double bug** — its first `ctx.run(...)`
+discards status (line 4) AND the runner swallows its return.
 
-**xlsx-cve-closeout note:** run bare it `walk()`s the tree and **OOMs (4 GB heap)** because it recurses
-into `.claude/worktrees/` (~125 local repo copies). That directory does not exist in CI, so **it passes
-in a clean checkout.** Minor guard hardening: skip `.claude` in the walk (defensive). NOT a CI red.
+**XLSX guard defect (real, to fix — Cursor's point):** proven to **pass in a clean checkout (exit 0 bare
++ `--selftest`)**, so it is NOT a CI red. BUT its `walk()` has no worktree exclusion, so locally it
+recurses into `.claude/worktrees/` (~125 repo copies) and **OOMs (4 GB heap)**. Harden it: **traverse
+git-tracked files, or exclude nested `.git`/worktree roots.** Real robustness defect, separate from the
+runner fix.
 
 ---
 
-## §B — 32 UNWIRED failing guards (the bigger fake-green vector — SEPARATE from step 2)
-`verify:static` ran these, got a real (non-DB) failure, and classifies them **not wired into CI's
-executed set**. Guards that detect real problems that nothing runs. **Triage each: (1) is it actually
-unwired? (2) real invariant failing → investigate + wire, or aspirational guard for an unbuilt feature
-→ archive/defer?** Several are financial → owner-gated. NOT part of step 2; needs its own lane.
+## §B — 32 guards that FAIL in the static (no-DB) run — wiring status NOT dark
+`verify:static` flagged these as failing and "not in its executed set." **Authoritative `verify:guard-wired`
+says 0 unaccounted (751 wired / 341 exempt)** — so these are **wired-or-baseline-exempt, NOT orphaned.**
+The two tools' wiring heuristics differ; **per-guard reconciliation of `verify:static`'s list against
+`verify-guard-wired`'s wired/exempt classification is still owed — I have NOT done it, so I do not label
+their individual wiring status here.** What is certain: each is currently failing in a no-DB run. **No
+disposition recommended — owner + tracker ID decides whether each is a stale/WIP guard or a parked real
+defect.** ★ = financial-adjacent (owner-gated regardless).
 
-**Likely-real invariants (investigate first; ★=financial → owner-gated):**
-- ★ verify-coa-canonical · ★ verify-inv2-no-hard-delete-accounting (void-never-delete, §2) ·
-  ★ verify-p0-settlement-schema-grants · ★ verify-recurring-bills · ★ verify-pre-settlements ·
-  verify-migration-schema-grants · verify-samsara-hos-pull-real-clocks (savepoint isolation) ·
-  verify-hos-tracker-endpoints · verify-ifta-tax-rates-current (missing Q3-2026 rates) ·
-  verify-book-load-modal-x-dismissible · verify-dispatch-eta-columns (missing CI step)
-
-**Likely aspirational / unbuilt-feature guards (archive or defer, don't chase as defects):**
-- verify-cap-11-fuel-fraud · verify-cap-12-tire-tread · verify-cap-13-brake-wear · verify-edi-foundation ·
-  verify-form-425c-exhibits · verify-photo-comparison-ai · verify-geofence-state-machine ·
-  verify-exif-chain-preservation · verify-layover-detection · verify-late-arrival-analytics ·
-  verify-load-cancellations-report · verify-reports-hub-9-categories · verify-drug-alcohol-program ·
-  verify-dvir-severity-tagging · verify-damage-insurance-continuity · verify-insurance-module ·
-  verify-driver-pwa-dispatch-view · verify-pre-dispatch-validation · verify-active-driver-set ·
-  verify-i18n-coverage · verify-reference-before-introduction
-
-(Bucket split is a first-pass guess from the failure text — confirm per guard.)
+★ coa-canonical · ★ inv2-no-hard-delete-accounting (void-never-delete) · ★ p0-settlement-schema-grants ·
+★ recurring-bills · ★ pre-settlements · migration-schema-grants · samsara-hos-pull-real-clocks ·
+hos-tracker-endpoints · ifta-tax-rates-current (missing Q3-2026 rates) · book-load-modal-x-dismissible ·
+dispatch-eta-columns · cap-11-fuel-fraud · cap-12-tire-tread · cap-13-brake-wear · edi-foundation ·
+form-425c-exhibits · photo-comparison-ai · geofence-state-machine · exif-chain-preservation ·
+layover-detection · late-arrival-analytics · load-cancellations-report · reports-hub-9-categories ·
+drug-alcohol-program · dvir-severity-tagging · damage-insurance-continuity · insurance-module ·
+driver-pwa-dispatch-view · pre-dispatch-validation · active-driver-set · i18n-coverage ·
+reference-before-introduction.
 
 ---
 
-## §C — Could NOT be judged statically (need a real DB → run at step 2 under verify:local-ci)
-- **SKIP-needs-db (21):** a17-deprecation-comments, bank-feed-live-tieout, coa-roles, content-drift-check,
-  csa-score-pull-recency, db-reset, entity-isolation, equipment-types-no-collision,
-  fmcsa-safer-customer-coverage, launch-toggle-audit-trail, m1-positioned-parts,
-  m2-integrity-position-history, migration-application-consistency, no-cross-carrier-data-leak,
-  no-orphan-migration-ledger-entries, no-test-seed-in-prod-listings, pre-commit, rls-operating-company-scope,
-  sql-read-targets, sql-write-targets, usmca-seed-completeness. **None of these are in the fail-open 26**,
-  so they don't widen step 2's wave — but their true pass/fail needs the CI DB.
-- **SKIP-needs-env (2):** event-log-spine (missing `@supabase/supabase-js`), users-add-user-submits (timeout).
+## §C — Not judgeable statically (need a real DB → verify:local-ci at step 2)
+**SKIP-needs-db (21)** incl. rls-operating-company-scope, entity-isolation, no-cross-carrier-data-leak,
+bank-feed-live-tieout, migration-application-consistency, sql-read/write-targets, coa-roles,
+usmca-seed-completeness, … **None are in the fail-open 26**, so they don't widen step 2's wave; their
+true verdict needs the CI DB. **SKIP-needs-env (2):** event-log-spine (`@supabase/supabase-js`),
+users-add-user-submits.
 
----
+## Method & caveats (§0)
+- `verify:static` = dead-port sentinel, prod-safe; runs each guard standalone (PASS/FAIL = its true
+  verdict). Faithful for the 26 (all static/no-DB). **Not** definitive for DB/dist behavior → the
+  definitive step-2 check is the honest-runner harness under `verify:local-ci`.
+- Numbers verified on `origin/main 1eda1c4d1` in a clean `git archive` checkout this session.
 
-## Method & caveats (§0 honesty)
-- `verify:static` points DB env at a dead-port sentinel (`scripts/verify-static.mjs`) → **prod-safe.**
-- It runs each `scripts/verify-*.mjs` standalone; a standalone guard sets its own exit code, so PASS/FAIL
-  here = the guard's TRUE verdict = what an honest runner WOULD surface. Faithful proxy for the 26.
-- **Not definitive for DB/dist-dependent behavior:** the 26 are all static (grep) guards (none in
-  SKIP-needs-db), so confidence is high — but the **definitive** wave check is to run the honest-runner
-  harness under `verify:local-ci` (ephemeral Postgres + built dist) as the FIRST action of step 2, and
-  confirm the exposed reds match this list (expected: ~0 from §A).
-- Run on branch base `6c2c3a7` (local, behind `origin/main`); re-run `verify:static` on latest `main`
-  at step-2 time to refresh.
-
-## Bottom line for step 2
-Fixing the runner is **safe** — it will not red the board. Budget the real "honest CI" effort for §B
-(32 dark guards), which is a separate, owner-partitioned triage lane, not the runner fix.
+## Bottom line
+Step 2 (runner fix) is **safe — 0 exposed reds** on current main. The §B set is a **separate,
+owner-partitioned triage** (per-guard: reconcile wiring + real-vs-stale), not the runner fix, and carries
+**no disposition** until Jorge assigns tracker IDs.
