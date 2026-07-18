@@ -15,9 +15,12 @@ type Props = {
 type HealthTone = "green" | "yellow" | "red" | "slate";
 
 function statusPill(health?: HomeQboSyncHealth): { label: string; tone: HealthTone } {
-  if (!health || !health.latest_run) return { label: "No runs", tone: "slate" };
+  if (!health) return { label: "No runs", tone: "slate" };
+  if (health.high_severity_alerts_count > 0) return { label: "Critical", tone: "red" };
+  if (!health.latest_run) return { label: "No runs", tone: "slate" };
   const latest = health.latest_run.status.toLowerCase();
-  if (latest === "failed" || health.high_severity_alerts_count > 0) return { label: "Critical", tone: "red" };
+  if (latest === "failed") return { label: "Critical", tone: "red" };
+  if (health.is_stale || health.freshness_status === "never") return { label: "Stale", tone: "yellow" };
   if (latest === "success" && health.open_alerts_count === 0 && health.failed_outbox_count === 0) {
     return { label: "Healthy", tone: "green" };
   }
@@ -42,6 +45,22 @@ function formatRelative(iso: string | null | undefined): string {
   if (hr < 24) return `${hr}h ago`;
   const d = Math.floor(hr / 24);
   return `${d}d ago`;
+}
+
+function formatAgeSeconds(seconds: number | null | undefined): string {
+  if (seconds == null || !Number.isFinite(seconds) || seconds < 0) return "never";
+  if (seconds < 60) return "under 1m ago";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
+}
+
+function sourceLabel(source: HomeQboSyncHealth["last_success_source"]): string {
+  if (source === "master_data_cdc") return "Master-data CDC";
+  if (source === "qbo_sync_runs") return "QBO sync run";
+  return "No successful source";
 }
 
 export function QboSyncHealthCard({ data, pushStatus, vendorsPushStatus, accountsPushStatus, isLoading, isError, onRetry }: Props) {
@@ -84,6 +103,22 @@ export function QboSyncHealthCard({ data, pushStatus, vendorsPushStatus, account
         <div className="flex items-center justify-between rounded-sm bg-slate-50 px-2 py-1.5 text-xs">
           <span className="text-slate-600">Last run</span>
           <span className="font-semibold text-slate-800">{formatRelative(latestRunTime)}</span>
+        </div>
+        <div className={`flex items-center justify-between rounded-sm px-2 py-1.5 text-xs ${data?.is_stale ? "bg-amber-50" : "bg-slate-50"}`}>
+          <span className={data?.is_stale ? "text-amber-700" : "text-slate-600"}>Last successful sync</span>
+          <span className={`font-semibold ${data?.is_stale ? "text-amber-800" : "text-slate-800"}`}>
+            {formatAgeSeconds(data?.last_success_age_seconds)}
+          </span>
+        </div>
+        <div className="flex items-center justify-between rounded-sm bg-slate-50 px-2 py-1.5 text-xs">
+          <span className="text-slate-600">Success source</span>
+          <span className="font-semibold text-slate-800">{sourceLabel(data?.last_success_source ?? null)}</span>
+        </div>
+        <div className="flex items-center justify-between rounded-sm bg-slate-50 px-2 py-1.5 text-xs">
+          <span className="text-slate-600">Freshness limit</span>
+          <span className="font-semibold text-slate-800">
+            {data?.stale_after_seconds ? `${Math.floor(data.stale_after_seconds / 3600)}h` : "Unavailable"}
+          </span>
         </div>
         <div className="flex items-center justify-between rounded-sm bg-slate-50 px-2 py-1.5 text-xs">
           <span className="text-slate-600">Open alerts</span>

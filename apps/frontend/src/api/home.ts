@@ -134,6 +134,12 @@ export type HomeQboSyncHealth = {
     completed_at: string | null;
     run_kind: string | null;
   } | null;
+  last_success_at: string | null;
+  last_success_source: "qbo_sync_runs" | "master_data_cdc" | null;
+  last_success_age_seconds: number | null;
+  stale_after_seconds: number;
+  freshness_status: "fresh" | "stale" | "never";
+  is_stale: boolean;
   open_alerts_count: number;
   failed_outbox_count: number;
   high_severity_alerts_count: number;
@@ -225,6 +231,18 @@ export async function fetchHomeQboSyncHealth(companyId: string): Promise<HomeQbo
           run_kind: typeof latestRunRaw.run_kind === "string" ? latestRunRaw.run_kind : null,
         }
       : null,
+    last_success_at: typeof raw.last_success_at === "string" ? raw.last_success_at : null,
+    last_success_source:
+      raw.last_success_source === "qbo_sync_runs" || raw.last_success_source === "master_data_cdc"
+        ? raw.last_success_source
+        : null,
+    last_success_age_seconds: raw.last_success_age_seconds == null ? null : num(raw.last_success_age_seconds),
+    stale_after_seconds: num(raw.stale_after_seconds),
+    freshness_status:
+      raw.freshness_status === "fresh" || raw.freshness_status === "stale" || raw.freshness_status === "never"
+        ? raw.freshness_status
+        : "never",
+    is_stale: raw.is_stale === true,
     open_alerts_count: num(raw.open_alerts_count),
     failed_outbox_count: num(raw.failed_outbox_count),
     high_severity_alerts_count: num(raw.high_severity_alerts_count),
