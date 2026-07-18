@@ -5,11 +5,19 @@ import { registerFuelGpsMatchRoutes } from "../fuel-gps-match.routes.js";
 const USER = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const MEMBER_COMPANY = "11111111-1111-4111-8111-111111111111";
 const OTHER_COMPANY = "22222222-2222-4222-8222-222222222222";
+const REVOKED_COMPANY = "44444444-4444-4444-8444-444444444444";
 const TRANSACTION = "33333333-3333-4333-8333-333333333333";
 
 const { mockQuery, mockWithCurrentUser } = vi.hoisted(() => {
   const query = vi.fn(async (sql: string, values?: unknown[]) => {
     if (sql.includes("org.user_company_access")) {
+      expect(sql).toContain("uca.deactivated_at IS NULL");
+      expect(sql).toContain("JOIN org.companies c");
+      expect(sql).toContain("c.is_active = true");
+      expect(sql).toContain("c.deactivated_at IS NULL");
+      // REVOKED_COMPANY has an existing access row, but deactivated_at is set;
+      // the canonical helper query therefore returns no authorized membership.
+      if (String(values?.[1] ?? "") === REVOKED_COMPANY) return { rows: [], rowCount: 0 };
       return String(values?.[1] ?? "") === MEMBER_COMPANY
         ? { rows: [{ ok: 1 }], rowCount: 1 }
         : { rows: [], rowCount: 0 };
@@ -74,5 +82,19 @@ describe("fuel GPS rematch tenant guard", () => {
     expect(sqlCalls.some((sql) => sql.includes("org.user_company_access"))).toBe(true);
     expect(sqlCalls.some((sql) => sql.includes("set_config('app.operating_company_id'"))).toBe(false);
     expect(sqlCalls.some((sql) => sql.includes("FROM banking.bank_transactions bt"))).toBe(false);
+  });
+
+  it("rejects a deactivated membership before scope, banking read, or Safety write", async () => {
+    const res = await app.inject({
+      method: "POST",
+      url: `/api/v1/safety/fuel-gps-match/rematch/${TRANSACTION}?operating_company_id=${REVOKED_COMPANY}`,
+    });
+
+    expect(res.statusCode).toBe(403);
+    const sqlCalls = mockQuery.mock.calls.map((call) => String(call[0]));
+    expect(sqlCalls.some((sql) => sql.includes("org.user_company_access"))).toBe(true);
+    expect(sqlCalls.some((sql) => sql.includes("set_config('app.operating_company_id'"))).toBe(false);
+    expect(sqlCalls.some((sql) => sql.includes("FROM banking.bank_transactions bt"))).toBe(false);
+    expect(sqlCalls.some((sql) => sql.includes("INSERT INTO safety.fuel_gps_matches"))).toBe(false);
   });
 });

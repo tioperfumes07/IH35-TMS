@@ -5,9 +5,14 @@ export async function assertCompanyMembership(userId: string, operatingCompanyId
     const access = await client.query(
       `
         SELECT 1
-        FROM org.user_company_access
-        WHERE user_id = $1::uuid
-          AND company_id = $2::uuid
+        FROM org.user_company_access uca
+        JOIN org.companies c
+          ON c.id = uca.company_id
+         AND c.is_active = true
+         AND c.deactivated_at IS NULL
+        WHERE uca.user_id = $1::uuid
+          AND uca.company_id = $2::uuid
+          AND uca.deactivated_at IS NULL
         LIMIT 1
       `,
       [userId, operatingCompanyId]
