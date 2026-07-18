@@ -11,8 +11,9 @@
  *   FAIL if two NON-retired `.block-ready/*.json` files share the same `block_id`.
  *
  * A file is RETIRED (exempt — it is allowed to share a block_id with its canonical twin) when it is marked
- * DUP / DUPLICATE / STALE / LIKELY-STALE / SUPERSEDED, by EITHER:
- *   • its filename suffix  (e.g. `..._SUPERSEDED.json`, `..._DUP.json`), OR
+ * by an EXPLICIT unambiguous marker (shared helper scripts/lib/block-ready-retirement.mjs):
+ *   • underscore filename suffix  (e.g. `..._SUPERSEDED.json`, `..._DUP.json`) — NOT hyphen descriptive
+ *     tails like `…-stale` / `…-duplicate` on live defect IDs, OR
  *   • a `status` field of superseded/duplicate/dup/stale, OR
  *   • an explicit `superseded_by` / `duplicate_of` field.
  * Retirement is ADDITIVE (§7) — duplicates are ARCHIVED (status:"superseded"), never deleted. The tracker +
@@ -23,24 +24,16 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { isRetiredBlockFile } from "./lib/block-ready-retirement.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-tracker-no-duplicate-block-ids";
 const DIR = ".block-ready";
 
-const RETIRE_FILENAME = /[_-](DUP|DUPLICATE|STALE|LIKELY-STALE|SUPERSEDED)$/i;
-const RETIRE_STATUS = /^(superseded|duplicate|dup|stale)$/i;
-
-/** A registry file is RETIRED (exempt from the unique-block_id invariant) when its filename suffix OR a
- *  status/superseded_by/duplicate_of field marks it DUP/STALE/SUPERSEDED. Mirrors the exclusion the tracker
- *  service + reconciler apply, so guard, header, and report can never disagree. */
+/** A registry file is RETIRED (exempt from the unique-block_id invariant) when explicit retirement markers
+ *  apply. Mirrors reconcile + program-tracker via the shared helper so they can never disagree. */
 export function isRetired(name, json) {
-  const base = String(name).replace(/\.json$/i, "");
-  if (RETIRE_FILENAME.test(base)) return true;
-  const j = json ?? {};
-  if (typeof j.status === "string" && RETIRE_STATUS.test(j.status.trim())) return true;
-  if (j.superseded_by != null || j.duplicate_of != null) return true;
-  return false;
+  return isRetiredBlockFile(name, json);
 }
 
 /** The block_id a registry file registers under (upper-cased), falling back to the filename when absent. */
@@ -145,6 +138,14 @@ function selftest() {
       ],
       want: 0,
     },
+    {
+      n: "live hyphen …-stale / …-duplicate filenames are NOT retired → collision still fails",
+      files: [
+        { name: "mirror-workers-stale.json", json: { block_id: "MIRROR", status: "PARTIAL" } },
+        { name: "mirror-workers.json", json: { block_id: "MIRROR", status: "PARTIAL" } },
+      ],
+      min: 1,
+    },
   ];
   let failed = 0;
   for (const c of cases) {
@@ -165,15 +166,23 @@ if (process.argv.includes("--selftest")) {
   process.exit(0);
 }
 
-const files = readRegistryFiles();
-const errors = assertGuard({ files });
-if (errors.length) {
-  console.error(`[${LABEL}] FAILED — ${errors.length} duplicate block_id(s) among active .block-ready files:`);
-  for (const e of errors) console.error(`  ✗ ${e}`);
-  process.exit(1);
+function main() {
+  const files = readRegistryFiles();
+  const errors = assertGuard({ files });
+  if (errors.length) {
+    console.error(`[${LABEL}] FAILED — ${errors.length} duplicate block_id(s) among active .block-ready files:`);
+    for (const e of errors) console.error(`  ✗ ${e}`);
+    process.exit(1);
+  }
+  const active = files.filter((f) => !isRetired(f.name, f.json)).length;
+  console.log(
+    `[${LABEL}] OK — ${files.length} .block-ready files, ${active} active, ` +
+      `${files.length - active} retired (dup/stale/superseded); every active block_id is unique.`
+  );
 }
-const active = files.filter((f) => !isRetired(f.name, f.json)).length;
-console.log(
-  `[${LABEL}] OK — ${files.length} .block-ready files, ${active} active, ` +
-    `${files.length - active} retired (dup/stale/superseded); every active block_id is unique.`
-);
+
+const isMain = process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);
+if (isMain) {
+  // existing --selftest path is handled above; fall through to main for normal runs
+  if (!process.argv.includes("--selftest")) main();
+}

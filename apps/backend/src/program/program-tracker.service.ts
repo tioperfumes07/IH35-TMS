@@ -30,13 +30,15 @@ function normId(s: string): string {
 // Registry entry text per block (allowed_files + acceptance + classification + linkage), keyed by normId, so
 // the endpoint can AUTO-DERIVE layers/kind/cross-module/wired from the block's declared scope — never hand-entered.
 const NEEDS_DESIGN_RE = /needs[_-]design|design[_-]pending/i;
-// A registry file is RETIRED (excluded from the headline "Registered" count) when a DUP/DUPLICATE/STALE/
-// LIKELY-STALE/SUPERSEDED marker is present — via the filename suffix, a status field, or an explicit
-// superseded_by/duplicate_of. Mirrors scripts/verify-tracker-no-duplicate-block-ids.mjs + reconcile-block-
-// status.mjs so the tracker headline, the reconcile report, and the CI guard can never disagree. Retirement
-// is ADDITIVE (§7): duplicates are ARCHIVED (status:"superseded"), never deleted — so registered_total is
+// A registry file is RETIRED (excluded from the headline "Registered" count) when an EXPLICIT unambiguous
+// marker is present — underscore filename suffix (_DUP/_DUPLICATE/_STALE/_LIKELY-STALE/_SUPERSEDED), a
+// status field of superseded/duplicate/dup/stale, or superseded_by/duplicate_of. Hyphen descriptive tails
+// on live defect IDs (…-stale / …-duplicate) are NEVER retirement markers by themselves. Mirrors
+// scripts/lib/block-ready-retirement.mjs + reconcile-block-status.mjs + verify-tracker-no-duplicate-block-ids
+// so the tracker headline, the reconcile report, and the CI guard can never disagree. Retirement is
+// ADDITIVE (§7): duplicates are ARCHIVED (status:"superseded"), never deleted — so registered_total is
 // UNIQUE registered blocks, not the raw .block-ready file count.
-const RETIRE_FILENAME_RE = /[_-](DUP|DUPLICATE|STALE|LIKELY-STALE|SUPERSEDED)\.json$/i;
+const RETIRE_FILENAME_RE = /_(DUP|DUPLICATE|LIKELY-STALE|STALE|SUPERSEDED)\.json$/i;
 const RETIRE_STATUS_RE = /^(superseded|duplicate|dup|stale)$/i;
 function isRetiredBlockFile(filename: string, j: Record<string, unknown>): boolean {
   if (RETIRE_FILENAME_RE.test(filename)) return true;

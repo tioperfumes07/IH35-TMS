@@ -28,6 +28,7 @@
 
 import fs from "node:fs";
 import os from "node:os";
+import { isRetiredBlockFile } from "./lib/block-ready-retirement.mjs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
@@ -128,19 +129,8 @@ function classifyByEvidence(body, { fin, tokPrId } = {}) {
 
 const all = [];
 
-// A registry file is RETIRED (excluded from every count) when a DUP/DUPLICATE/STALE/LIKELY-STALE/SUPERSEDED
-// marker is present — via the filename suffix, a status field, or an explicit superseded_by/duplicate_of.
-// Mirrors scripts/verify-tracker-no-duplicate-block-ids.mjs + the program-tracker service so the reconcile
-// header, the tracker headline, and the guard can never disagree. Retirement is ADDITIVE (§7): duplicates
-// are ARCHIVED (status:"superseded"), never deleted.
-const RETIRE_FILENAME = /[_-](DUP|DUPLICATE|STALE|LIKELY-STALE|SUPERSEDED)\.json$/i;
-const RETIRE_STATUS = /^(superseded|duplicate|dup|stale)$/i;
-function isRetiredBlockFile(filename, j) {
-  if (RETIRE_FILENAME.test(filename)) return true;
-  if (typeof j?.status === "string" && RETIRE_STATUS.test(j.status.trim())) return true;
-  if (j?.superseded_by != null || j?.duplicate_of != null) return true;
-  return false;
-}
+// Retirement detection: scripts/lib/block-ready-retirement.mjs (shared with tracker guard + program-tracker).
+// Underscore markers / explicit status / superseded_by|duplicate_of only — never hyphen descriptive -stale/-duplicate.
 
 // (A) .block-ready/*.json
 const brDir = path.join(ROOT, ".block-ready");
@@ -293,7 +283,7 @@ const universe = {
   total_blocks_after_dedup: blocks.length,
   by_source_after_dedup: bySource,
   raw_file_counts: rawCounts,
-  note: "Total = union of 5 sources (.block-ready, docs/blocks program, docs/accounting, docs/dispatch enterprise-29, docs/specs gap), de-duped by UNIQUE block_id, EXCLUDING files marked DUP/STALE/SUPERSEDED (filename suffix or status field). So the block count is neither the raw .block-ready file count nor inflated by duplicate/retired registrations.",
+  note: "Total = union of 5 sources (.block-ready, docs/blocks program, docs/accounting, docs/dispatch enterprise-29, docs/specs gap), de-duped by UNIQUE block_id, EXCLUDING files with EXPLICIT retirement markers (_DUP/_STALE/_SUPERSEDED underscore suffixes, status superseded/duplicate/dup/stale, or superseded_by/duplicate_of). Hyphen descriptive …-stale/…-duplicate live defect IDs are NOT retired by filename alone. So the block count is neither the raw .block-ready file count nor inflated by duplicate/retired registrations.",
 };
 const blocksOut = blocks.map((b) => ({ ...b, pr: prOf(b) }));
 console.log(`[reconcile:blocks] delta (blocks added since ${DELTA_SINCE}): ${delta.length} → ${delta.map((d) => d.id).join(", ") || "none"}`);
