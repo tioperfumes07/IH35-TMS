@@ -516,6 +516,19 @@ export async function registerLoadRoutes(app: FastifyInstance) {
 
     const listResult = await withCurrentUser(authUser.uuid, async (client) => {
       const values: unknown[] = [];
+      let scopedCompanyIds: string[];
+      if (operating_company_id && operating_company_id.length > 0) {
+        scopedCompanyIds = operating_company_id;
+      } else {
+        const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
+        if (!scopedCompanyId) return { rows: [], totalCount: 0 };
+        // membership-scope-exempt: transaction-resolved-user-company
+        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
+        scopedCompanyIds = [scopedCompanyId];
+      }
+      // Keep the company scope as parameter 1 so both SQL literals carry a visible, fail-closed
+      // entity predicate while preserving the requested-company-set and resolved-company behavior.
+      values.push(scopedCompanyIds);
       const filters: string[] = ["l.soft_deleted_at IS NULL"];
 
       if (status && status.length > 0) {
@@ -529,21 +542,6 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       if (driver_id) {
         values.push(driver_id);
         filters.push(`(l.assigned_primary_driver_id = $${values.length} OR l.assigned_secondary_driver_id = $${values.length})`);
-      }
-      // Entity scope (USMCA cross-entity leak fix): mdata.loads RLS is role-scoped, not
-      // entity-scoped, so the operating_company_id predicate must ALWAYS be bound. Use the
-      // requested company set when provided, else resolve the user's current company so a caller
-      // that omits the param is scoped (never leaked across TRANSP/TRK/USMCA) and never hard-400ed.
-      if (operating_company_id && operating_company_id.length > 0) {
-        values.push(operating_company_id);
-        filters.push(`l.operating_company_id = ANY($${values.length}::uuid[])`);
-      } else {
-        const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
-        if (!scopedCompanyId) return { rows: [], totalCount: 0 };
-        // membership-scope-exempt: transaction-resolved-user-company
-        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
-        values.push(scopedCompanyId);
-        filters.push(`l.operating_company_id = $${values.length}::uuid`);
       }
       const pickupFrom = pickup_date_from ?? from_date;
       const pickupTo = pickup_date_to ?? to_date;
@@ -571,7 +569,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         );
       }
 
-      const whereClause = `WHERE ${filters.join(" AND ")}`;
+      const whereClause = `AND ${filters.join(" AND ")}`;
       const countRes = await client.query<{ total_count: number }>(
         `
           SELECT COUNT(*)::int AS total_count
@@ -591,10 +589,13 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           LEFT JOIN LATERAL (
             SELECT city, scheduled_arrival_at
             FROM mdata.load_stops
-            WHERE load_id = l.id AND stop_type = 'delivery'
+            WHERE load_id = l.id
+              AND stop_type = 'delivery'
+              AND soft_deleted_at IS NULL
             ORDER BY sequence_number DESC
             LIMIT 1
           ) sd ON true
+          WHERE l.operating_company_id = ANY($1::uuid[])
           ${whereClause}
         `,
         values
@@ -644,10 +645,13 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           LEFT JOIN LATERAL (
             SELECT city, scheduled_arrival_at
             FROM mdata.load_stops
-            WHERE load_id = l.id AND stop_type = 'delivery'
+            WHERE load_id = l.id
+              AND stop_type = 'delivery'
+              AND soft_deleted_at IS NULL
             ORDER BY sequence_number DESC
             LIMIT 1
           ) sd ON true
+          WHERE l.operating_company_id = ANY($1::uuid[])
           ${whereClause}
           ORDER BY ${sortOrderSql}
           LIMIT $${limitIdx}

@@ -121,6 +121,69 @@ describe("mdata loads routes", () => {
     expect(listCall?.[1]?.[0]).toEqual([companyId]);
   });
 
+  it("GET /api/v1/mdata/loads ignores an archived delivery candidate in count and paginated list", async () => {
+    const companyId = "11111111-1111-4111-8111-111111111111";
+    const deliveryStops = [
+      {
+        city: "Archived Delivery",
+        sequence_number: 3,
+        scheduled_arrival_at: "2026-07-17T08:00:00.000Z",
+        soft_deleted_at: "2026-07-18T09:00:00.000Z",
+      },
+      {
+        city: "First Active Delivery",
+        sequence_number: 2,
+        scheduled_arrival_at: "2026-07-19T08:00:00.000Z",
+        soft_deleted_at: null,
+      },
+    ];
+    const deliveryLateralExcludesArchived = (sql: string) =>
+      /stop_type = 'delivery'[\s\S]{0,100}soft_deleted_at IS NULL[\s\S]{0,100}ORDER BY sequence_number DESC/.test(sql);
+
+    queryMock.mockImplementation(async (sql: string, params?: unknown[]) => {
+      if (sql.includes("COUNT(*)::int AS total_count")) {
+        expect(params).toEqual([[companyId]]);
+        return { rows: [{ total_count: deliveryLateralExcludesArchived(sql) ? 2 : 3 }] };
+      }
+      if (sql.includes("l.id, l.operating_company_id")) {
+        expect(params).toEqual([[companyId], 1, 1]);
+        const selectedDelivery = deliveryLateralExcludesArchived(sql)
+          ? deliveryStops.find((stop) => stop.soft_deleted_at === null)
+          : deliveryStops[0];
+        return {
+          rows: [
+            {
+              id: "second-page-load",
+              operating_company_id: companyId,
+              status: "booked",
+              first_delivery_city: selectedDelivery?.city,
+            },
+          ],
+        };
+      }
+      return { rows: [] };
+    });
+
+    const app = await buildApp();
+    const response = await app.inject({
+      method: "GET",
+      url: `/api/v1/mdata/loads?operating_company_id=${companyId}&limit=1&offset=1`,
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({
+      total_count: 2,
+      has_more: false,
+      loads: [{ id: "second-page-load", first_delivery_city: "First Active Delivery" }],
+    });
+
+    const relevantCalls = queryMock.mock.calls.filter(([sql]) =>
+      String(sql).includes("FROM mdata.loads l") && String(sql).includes("stop_type = 'delivery'")
+    );
+    expect(relevantCalls).toHaveLength(2);
+    expect(relevantCalls.every(([sql]) => deliveryLateralExcludesArchived(String(sql)))).toBe(true);
+  });
+
   it("GET /api/v1/mdata/loads documents invalid sort fallback without claiming pickup order", async () => {
     const app = await buildApp();
     const response = await app.inject({

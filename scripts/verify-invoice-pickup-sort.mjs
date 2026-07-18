@@ -16,6 +16,10 @@ function read(relativePath) {
 
 export function contractErrors(routeSource, testSource) {
   const errors = [];
+  const listEndpointSource =
+    routeSource.match(
+      /app\.get\("\/api\/v1\/mdata\/loads",[\s\S]*?(?=\n\s*app\.get\("\/api\/v1\/mdata\/loads\/:id")/
+    )?.[0] ?? "";
   const requireRoute = (pattern, message) => {
     if (!pattern.test(routeSource)) errors.push(`route: ${message}`);
   };
@@ -43,9 +47,24 @@ export function contractErrors(routeSource, testSource) {
     /stop_type = 'pickup'[\s\S]{0,100}soft_deleted_at IS NULL[\s\S]{0,100}ORDER BY sequence_number ASC/,
     "canonical pickup lateral must ignore archived stops and choose the first sequence"
   );
+  const deliveryLaterals = [...listEndpointSource.matchAll(/LEFT JOIN LATERAL \(([\s\S]*?)\) sd ON true/g)]
+    .map((match) => match[1])
+    .filter((lateral) => /stop_type = 'delivery'/.test(lateral));
+  if (deliveryLaterals.length !== 2) {
+    errors.push("route: count and list must each use the canonical delivery lateral");
+  } else if (
+    deliveryLaterals.some(
+      (lateral) =>
+        !/stop_type = 'delivery'[\s\S]{0,100}soft_deleted_at IS NULL[\s\S]{0,100}ORDER BY sequence_number DESC/.test(
+          lateral
+        )
+    )
+  ) {
+    errors.push("route: count and list delivery laterals must both ignore archived stops");
+  }
   requireRoute(
-    /l\.operating_company_id = ANY\(\$\$\{values\.length\}::uuid\[\]\)/,
-    "requested-company entity predicate must remain bound"
+    /WHERE l\.operating_company_id = ANY\(\$1::uuid\[\]\)[\s\S]{0,100}\$\{whereClause\}/,
+    "requested or resolved company scope must remain visibly bound in SQL"
   );
 
   requireTest(/sort:\s*"pickup_date"/, "ascending pickup behavior must be exercised");
@@ -53,6 +72,10 @@ export function contractErrors(routeSource, testSource) {
   requireTest(/NULLS LAST/, "null pickup timestamps must be asserted last");
   requireTest(/l\.operating_company_id = ANY\(\$1::uuid\[\]\)/, "entity isolation SQL must be asserted");
   requireTest(/totally_bogus[\s\S]{0,1200}ORDER BY l\.created_at DESC, l\.id ASC/, "invalid-sort fallback must be explicit");
+  requireTest(
+    /Archived Delivery[\s\S]{0,3000}First Active Delivery[\s\S]{0,3000}total_count:\s*2[\s\S]{0,500}has_more:\s*false/,
+    "Fastify behavior must prove archived delivery exclusion preserves canonical city and pagination totals"
+  );
 
   return errors;
 }
@@ -71,6 +94,11 @@ function selftest() {
     ["remove descending alias", routeSource.replace('if (normalized === "-pickup_date")', 'if (normalized === "-removed")'), testSource],
     ["repoint canonical source", routeSource.replace('pickup_date: "sp.scheduled_arrival_at"', 'pickup_date: "l.created_at"'), testSource],
     ["remove null policy", routeSource.replace(" NULLS LAST, l.created_at DESC, l.id ASC", ", l.created_at DESC, l.id ASC"), testSource],
+    [
+      "remove delivery soft-delete filter",
+      routeSource.replace(/(stop_type = 'delivery'\s+)AND soft_deleted_at IS NULL/, "$1"),
+      testSource,
+    ],
     ["remove entity assertion", routeSource, testSource.replace("l.operating_company_id = ANY($1::uuid[])", "scope removed")],
     ["remove invalid fallback assertion", routeSource, testSource.replace("totally_bogus", "valid_sort")],
   ];
