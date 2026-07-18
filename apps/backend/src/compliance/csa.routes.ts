@@ -29,6 +29,7 @@ const ACTION_TYPES = [
   "other",
 ] as const;
 const ACTION_STATUSES = ["open", "in_progress", "blocked", "completed", "cancelled"] as const;
+const AUTHENTICATED_SMS_ONLY = new Set<CsaBasicCategory>(["hazmat_compliance", "crash_indicator"]);
 
 const basicCategorySchema = z.enum(CSA_BASIC_CATEGORIES);
 const actionTypeSchema = z.enum(ACTION_TYPES);
@@ -120,15 +121,17 @@ function toFiniteNumber(value: unknown): number | null {
 }
 
 function normalizeSnapshotRow(row: RawSnapshotRow): CsaSnapshotRow {
+  const category = basicCategorySchema.parse(row.basic_category);
   return {
-    basic_category: basicCategorySchema.parse(row.basic_category),
+    basic_category: category,
     snapshot_date: String(row.snapshot_date),
-    score: toFiniteNumber(row.score),
-    pct_percentile: toFiniteNumber(row.pct_percentile),
+    // Existing rows do not carry verifiable authenticated-SMS provenance.
+    // Fail closed until an explicitly authorized structured integration can
+    // establish that provenance; legacy SAFER-derived values are not exposed.
+    score: null,
+    pct_percentile: null,
     threshold: Number(toFiniteNumber(row.threshold) ?? 0),
-    alert_status: (["yes", "no", "inconclusive"].includes(row.alert_status)
-      ? row.alert_status
-      : "inconclusive") as CsaAlertStatus,
+    alert_status: "inconclusive",
     pulled_at: String(row.pulled_at),
   };
 }
@@ -269,10 +272,12 @@ export async function registerCsaRoutes(app: FastifyInstance) {
       const recent = await listRecentSnapshots(client, companyId, 6);
       const projections = buildProjectionSet(recent);
       const latestSnapshotDate = latest
+        .filter((row) => row.score != null || row.pct_percentile != null)
         .map((row) => Date.parse(row.snapshot_date))
         .filter((value) => Number.isFinite(value))
         .sort((a, b) => b - a)[0];
       const latestPulledAt = latest
+        .filter((row) => row.score != null || row.pct_percentile != null)
         .map((row) => Date.parse(row.pulled_at))
         .filter((value) => Number.isFinite(value))
         .sort((a, b) => b - a)[0];
@@ -293,7 +298,29 @@ export async function registerCsaRoutes(app: FastifyInstance) {
         basics: projections.map((projection) => ({
           ...projection,
           label: CSA_LABELS[projection.basic_category],
+          availability: AUTHENTICATED_SMS_ONLY.has(projection.basic_category)
+            ? "requires_authenticated_carrier_sms"
+            : "not_available_from_verified_structured_source",
+          source: AUTHENTICATED_SMS_ONLY.has(projection.basic_category)
+            ? {
+                system: "fmcsa_sms",
+                access: "authenticated_carrier_only",
+                authoritative_for_percentile: true,
+              }
+            : {
+                system: "fmcsa_sms",
+                access: "public",
+                authoritative_for_percentile: false,
+                structured_source_available: false,
+              },
         })),
+        source: {
+          system: "fmcsa_sms",
+          access: "public",
+          availability: "unavailable",
+          successful_metric_count: 0,
+          authenticated_scraping_performed: false,
+        },
       };
     });
 
@@ -590,11 +617,28 @@ export async function registerCsaRoutes(app: FastifyInstance) {
       if (error.message === "missing_company_usdot_number") {
         return null;
       }
+      if (error.message === "public_csa_basic_source_unavailable") {
+        return "public_csa_basic_source_unavailable" as const;
+      }
       throw error;
     });
 
     if (!result) {
       return reply.code(409).send({ error: "missing_company_usdot_number" });
+    }
+    if (result === "public_csa_basic_source_unavailable") {
+      return reply.code(409).send({
+        error: "public_csa_basic_source_unavailable",
+        message:
+          "FMCSA does not provide a verified structured public SMS BASIC source. No request was made to SAFER and no fresh snapshot was recorded.",
+        source: {
+          system: "fmcsa_sms",
+          access: "public",
+          availability: "unavailable",
+          complete_results_access: "authenticated_carrier_sms_profile",
+          authenticated_scraping_performed: false,
+        },
+      });
     }
     return reply.send(result);
   });

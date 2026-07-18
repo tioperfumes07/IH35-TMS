@@ -707,7 +707,7 @@ export async function runCsaFleetScore(companyId: string) {
   await postRunLog({
     operating_company_id: companyId,
     report_id: "csa-fleet",
-    report_name: "CSA fleet score",
+    report_name: "Internal inspection-point rollup",
     duration_ms: Date.now() - startedAt,
     rows_returned: 1,
   });

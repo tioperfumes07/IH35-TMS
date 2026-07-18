@@ -5,6 +5,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { listSafetyEvents } from "./safety.service.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { INTERNAL_CSA_SOURCE_METADATA } from "../routes/safety/csa-scores.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -131,16 +132,26 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
         )
         .catch(() => ({ rows: [{ count: 0 }] }));
       const csaRes = await client
-        .query<{ score: number }>(
+        .query<{ score: number | null }>(
           `
-            SELECT (
-              COALESCE(basic_unsafe_driving, 0)
-              + COALESCE(basic_hos_compliance, 0)
-              + COALESCE(basic_driver_fitness, 0)
-              + COALESCE(basic_controlled_substances, 0)
-              + COALESCE(basic_vehicle_maintenance, 0)
-              + COALESCE(basic_crash_indicator, 0)
-            )::numeric AS score
+            SELECT CASE
+              WHEN num_nonnulls(
+                basic_unsafe_driving,
+                basic_hos_compliance,
+                basic_driver_fitness,
+                basic_controlled_substances,
+                basic_vehicle_maintenance,
+                basic_crash_indicator
+              ) = 0 THEN NULL
+              ELSE (
+                COALESCE(basic_unsafe_driving, 0)
+                + COALESCE(basic_hos_compliance, 0)
+                + COALESCE(basic_driver_fitness, 0)
+                + COALESCE(basic_controlled_substances, 0)
+                + COALESCE(basic_vehicle_maintenance, 0)
+                + COALESCE(basic_crash_indicator, 0)
+              )::numeric
+            END AS score
             FROM safety.csa_scores
             WHERE operating_company_id = $1
             ORDER BY computed_at DESC
@@ -148,7 +159,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
           `,
           [companyId]
         )
-        .catch(() => ({ rows: [{ score: 0 }] }));
+        .catch(() => ({ rows: [{ score: null }] }));
       return {
         ...(kpiRes.rows[0] ?? {
           operating_company_id: companyId,
@@ -158,7 +169,9 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
         }),
         pending_acks: Number(pendingAckRes.rows[0]?.count ?? 0),
         da_tests_ytd: Number(testsRes.rows[0]?.count ?? 0),
-        csa_score_latest: Number(csaRes.rows[0]?.score ?? 0),
+        csa_score_latest:
+          csaRes.rows[0]?.score == null ? null : Number(csaRes.rows[0].score),
+        csa_source: INTERNAL_CSA_SOURCE_METADATA,
       };
     });
     return payload;
@@ -680,8 +693,9 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
           [query.data.operating_company_id]
         )
         .catch(() => ({ rows: [] as Record<string, unknown>[] }));
-      return res.rows[0] ?? null;
+      const latest = res.rows[0] ?? null;
+      return latest ? { ...latest, basic_hazmat: null } : null;
     });
-    return { latest: row };
+    return { latest: row, source: INTERNAL_CSA_SOURCE_METADATA };
   });
 }

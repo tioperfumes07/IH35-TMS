@@ -44,7 +44,11 @@ try {
   const pg = await import("pg");
   const client = new pg.Client({ connectionString: databaseUrl });
   await client.connect();
-  const result = await client.query(`SELECT MAX(pulled_at) AS latest_pulled_at FROM compliance.csa_basic_scores`);
+  const result = await client.query(`
+    SELECT MAX(pulled_at) AS latest_pulled_at
+    FROM compliance.csa_basic_scores
+    WHERE score IS NOT NULL OR pct_percentile IS NOT NULL
+  `);
   await client.end();
   const latest = result.rows[0]?.latest_pulled_at;
   if (!latest) {

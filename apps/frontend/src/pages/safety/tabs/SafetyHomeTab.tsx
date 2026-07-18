@@ -258,8 +258,12 @@ export function SafetyHomeTab() {
           to="/safety/integrity-alerts"
         />
         <KpiTile
-          label="CSA Score (cached)"
-          value={Number(csaQuery.data?.latest?.score_total ?? csaQuery.data?.latest?.score ?? 0)}
+          label="Internal inspection points"
+          value={
+            csaQuery.data?.latest?.total_violations == null
+              ? "Unavailable"
+              : Number(csaQuery.data.latest.total_violations)
+          }
           isError={csaQuery.isError}
           isLoading={csaQuery.isPending}
           to="/safety/csa-score"

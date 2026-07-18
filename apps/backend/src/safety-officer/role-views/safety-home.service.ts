@@ -346,11 +346,11 @@ function buildAlerts(input: {
       source: "csa_scores",
       severity: "info",
       severity_rank: severityRank("info"),
-      title: `${input.csaUpdates} CSA BASIC score update${input.csaUpdates === 1 ? "" : "s"} (30d)`,
-      body: "CSA BASIC scores were recomputed in the last 30 days — review trend shifts.",
+      title: `${input.csaUpdates} internal inspection-point update${input.csaUpdates === 1 ? "" : "s"} (30d)`,
+      body: "IH35 inspection-point rollups were recomputed in the last 30 days; these are not FMCSA BASIC percentiles.",
       count: input.csaUpdates,
       action_url: "/safety/dot-compliance",
-      action_label: "View CSA scores",
+      action_label: "View inspection points",
     });
   }
 

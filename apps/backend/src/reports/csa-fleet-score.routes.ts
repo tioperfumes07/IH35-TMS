@@ -2,6 +2,12 @@ import type { FastifyInstance } from "fastify";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { computeAndUpsertScore } from "../routes/safety/csa-scores.js";
 
+function nullableNumber(value: unknown): number | null {
+  if (value == null) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 export async function registerCsaFleetScoreRoutes(app: FastifyInstance) {
   app.get("/api/v1/reports/csa-fleet-score", async (req, reply) => {
     const user = currentAuthUser(req, reply);
@@ -13,23 +19,28 @@ export async function registerCsaFleetScoreRoutes(app: FastifyInstance) {
       computeAndUpsertScore(client, query.data.operating_company_id, user.uuid)
     );
 
-    const totalInspections = Number(score.total_inspections ?? 0);
-    const totalViolations = Number(score.total_violations ?? 0);
-    const ratio = totalInspections <= 0 ? 0 : totalViolations / totalInspections;
-    const thresholdStatus = ratio >= 3 ? "red" : ratio >= 1.5 ? "yellow" : "green";
+    const totalInspections = nullableNumber(score.total_inspections);
+    const totalViolations = nullableNumber(score.total_violations);
 
     return {
-      total_points: Number(score.total_violations ?? 0),
+      total_points: totalViolations,
       total_inspections: totalInspections,
-      total_oos: Number(score.total_oos ?? 0),
-      basic_unsafe_driving: Number(score.basic_unsafe_driving ?? 0),
-      basic_hos_compliance: Number(score.basic_hos_compliance ?? 0),
-      basic_drug_alcohol: Number(score.basic_controlled_substances ?? 0),
-      basic_vehicle_maintenance: Number(score.basic_vehicle_maintenance ?? 0),
-      basic_hazmat: Number(score.basic_hazmat ?? 0),
-      basic_crash_indicator: Number(score.basic_crash_indicator ?? 0),
-      basic_driver_fitness: Number(score.basic_driver_fitness ?? 0),
-      threshold_status: thresholdStatus,
+      total_oos: nullableNumber(score.total_oos),
+      basic_unsafe_driving: nullableNumber(score.basic_unsafe_driving),
+      basic_hos_compliance: nullableNumber(score.basic_hos_compliance),
+      basic_drug_alcohol: nullableNumber(score.basic_controlled_substances),
+      basic_vehicle_maintenance: nullableNumber(score.basic_vehicle_maintenance),
+      basic_hazmat: null,
+      basic_crash_indicator: nullableNumber(score.basic_crash_indicator),
+      basic_driver_fitness: nullableNumber(score.basic_driver_fitness),
+      threshold_status: "not_applicable",
+      source: {
+        system: "ih35_safety",
+        dataset: "safety.csa_scores",
+        metric_kind: "internal_inspection_point_rollup",
+        is_fmcsa_percentile: false,
+        hazmat_availability: "requires_authenticated_carrier_sms",
+      },
       computed_at: score.computed_at,
     };
   });

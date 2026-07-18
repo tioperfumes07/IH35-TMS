@@ -42,7 +42,13 @@ export const REPORT_CATEGORIES: ReportCategoryDef[] = [
     id: "safety",
     label: "Safety & Compliance",
     reports: [
-      { id: "csa-fleet", label: "CSA fleet score", route: "/reports/run/csa-fleet", icon: "shield", description: "CSA BASIC trends" },
+      {
+        id: "csa-fleet",
+        label: "Internal inspection-point rollup",
+        route: "/reports/run/csa-fleet",
+        icon: "shield",
+        description: "IH35 DOT inspection-point trends; not an FMCSA percentile",
+      },
       { id: "hos-violations", label: "HOS violations", route: "/reports/run/hos-violations", icon: "clock", description: "Violation trend" },
     ],
   },

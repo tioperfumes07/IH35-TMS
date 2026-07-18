@@ -1262,3 +1262,15 @@ Guards: `verify:relay-wallet-bank-feed` (extended).
 
 Guard: `scripts/verify-xlsx-cve-closeout.mjs`, auto-discovered through `scripts/verify-steps/144-verify-xlsx-cve-closeout.mjs`.
 
+---
+
+## 2026-07-17 — CSA / Hazmat source-honesty rule (LOCKED — owner)
+
+- FMCSA Hazardous Materials Compliance BASIC measures and percentiles are **not public**. They remain unavailable (`null`) unless received from the carrier's explicitly authorized, authenticated SMS profile.
+- The system must never calculate, infer, or label a Hazmat BASIC measure/percentile from local inspection `csa_points`, public SAFER pages, public SMS pages, thresholds, or any other proxy.
+- `safety.csa_scores` contains **IH35 internal inspection-point rollups**, not FMCSA BASIC measures or percentiles. Every API, screen, export, and report using this table must label that source and preserve missing values as unavailable rather than zero.
+- Public SAFER retrieval is unauthenticated and must not scrape authenticated carrier pages. A public pull that yields no authoritative metrics is unsuccessful: it must not persist all-null rows, advance freshness, or report a successful pull.
+- API responses expose explicit source, access, metric-kind, authority, and availability metadata so downstream surfaces cannot silently relabel internal or unavailable data.
+
+Official basis: FMCSA CSA “Measure” and SMS Help Center — Hazmat Compliance and Crash Indicator BASICs are available only to logged-in carriers and enforcement personnel.
+

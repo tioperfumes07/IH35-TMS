@@ -126,9 +126,9 @@ export const REPORT_LIBRARY: ReportLibraryRow[] = [
   },
   {
     id: "csa-fleet",
-    name: "CSA fleet score",
+    name: "Internal inspection-point rollup",
     category: "safety",
-    description: "CSA BASIC score rollup from DOT inspections.",
+    description: "IH35 internal inspection-point rollup from DOT inspections; not an FMCSA BASIC percentile.",
     status: "real",
   },
 ];

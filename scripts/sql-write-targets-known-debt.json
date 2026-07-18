@@ -13,9 +13,6 @@
     "apps/backend/src/fuel/loves-upload.routes.ts: UPDATE fuel.loves_prices_daily \u2014 TABLE not in migrated schema",
     "apps/backend/src/maintenance/two-section-service.ts: INSERT INTO accounting.expenses \u2014 column \"total_amount\" does not exist",
     "apps/backend/src/maintenance/vehicles.routes.ts: INSERT INTO mdata.units \u2014 column \"mileage\" does not exist",
-    "apps/backend/src/routes/safety/dot-inspections.ts: INSERT INTO safety.csa_scores \u2014 column \"score_date\" does not exist",
-    "apps/backend/src/routes/safety/dot-inspections.ts: INSERT INTO safety.csa_scores \u2014 column \"source_dot_inspection_count\" does not exist",
-    "apps/backend/src/routes/safety/dot-inspections.ts: INSERT INTO safety.csa_scores \u2014 column \"total_points\" does not exist",
     "apps/backend/src/sync/loves-card-import.ts: INSERT INTO fuel.loves_prices_daily \u2014 TABLE not in migrated schema",
     "apps/backend/src/sync/loves-card-import.ts: UPDATE fuel.loves_prices_daily \u2014 TABLE not in migrated schema"
   ]
