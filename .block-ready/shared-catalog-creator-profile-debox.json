@@ -1,17 +1,47 @@
 {
   "block_id": "shared-catalog-creator-profile-debox",
-  "status": "PARTIAL",
-  "classification": "FINANCIAL",
+  "status": "BUILD",
+  "classification": "NON_FINANCIAL",
   "phase": "tier3",
-  "source": "MASTER-6 authored dispatch (06-TIER3-BLOCKS)",
-  "source_file": "shared-catalog-creator-profile-debox.txt",
+  "task": "Accounting Core Block 5/67 — add a shared read-only accounting catalog profile drawer. Row clicks open profiles; writable catalogs expose an explicit Edit transition to the existing modal; read-only catalogs, including Journal Entry Types, remain GET-only with no Edit or Create. Pure frontend presentation and tests only: no backend, schema, route, tab, or financial mutation.",
+  "branch": "fix/accounting-catalog-profile-debox",
+  "lane": "accounting",
   "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
+    ".block-ready/shared-catalog-creator-profile-debox.json",
+    "apps/frontend/src/pages/lists/accounting/AccountingCatalogListPage.tsx",
+    "apps/frontend/src/pages/lists/accounting/AccountingCatalogProfileDrawer.tsx",
+    "apps/frontend/src/pages/lists/accounting/__tests__/AccountingCatalogListPage.test.tsx",
+    "scripts/verify-accounting-catalog-profile.mjs",
+    "scripts/verify-steps/906-verify-accounting-catalog-profile.mjs"
   ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
   "acceptance": [
     {
-      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
+      "kind": "mounted",
+      "check": "AccountingCatalogListPage mounts AccountingCatalogProfileDrawer and row clicks open the read-only profile instead of edit mode."
+    },
+    {
+      "kind": "design",
+      "check": "Profiles render code, name, description, metadata, status, sort order, and safe created/updated timestamps using the existing ParityDrawer."
+    },
+    {
+      "kind": "effective",
+      "check": "Writable profile Edit closes the profile and opens the existing AccountingCatalogModal in edit mode; + Create remains unchanged."
+    },
+    {
+      "kind": "effective",
+      "check": "readOnly catalogs expose neither Edit nor + Create. Journal Entry Types remains canonical GET-only by existing readOnly configuration; this is completed behavior, not deferred work."
+    },
+    {
+      "kind": "guard",
+      "check": "verify-accounting-catalog-profile is auto-discovered through its verify-step and passes planted regression selftests."
     }
   ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+  "extra_gates": [
+    "focused AccountingCatalogListPage vitest",
+    "frontend tsc",
+    "diff-check"
+  ]
 }
