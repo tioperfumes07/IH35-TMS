@@ -56,7 +56,7 @@ export function FinanceHubPage() {
 
   const header = (
     <PageHeader
-      backHref="/finance"
+      backHref="/finance/overview"
       title="Finance Hub"
       subtitle="Finance · Hub — read-only overview, nothing is posted"
     />
@@ -93,7 +93,7 @@ export function FinanceHubPage() {
             enable the Finance Hub for this company, or switch to a company where it’s already enabled.
           </p>
           <p className="mt-3">
-            <Link to="/finance" className="font-medium text-[#1f2a44] underline underline-offset-2">
+            <Link to="/finance/overview" className="font-medium text-[#1f2a44] underline underline-offset-2">
               Back to Finance overview
             </Link>
           </p>
