@@ -3,11 +3,13 @@
   "server_required_ci_equivalents": {
     "database": "ci / build-typecheck",
     "dependencies": "ci / build-typecheck",
-    "pass8-artifact": "pass-8-smoke-verify / pass-8"
+    "pass8-artifact": "pass-8-smoke-verify / pass-8",
+    "pull-request-metadata": "hold-merge-gate / hold-merge-gate"
   },
   "server_required_ci_contexts": [
     "ci / build-typecheck",
-    "pass-8-smoke-verify / pass-8"
+    "pass-8-smoke-verify / pass-8",
+    "hold-merge-gate / hold-merge-gate"
   ],
   "non_protection_ci_contexts": [
     "pass-8-smoke-verify / pass-8"
@@ -20,11 +22,18 @@
     "pass-8-smoke-verify / pass-8": {
       "workflow": ".github/workflows/pass-8-smoke-verify.yml",
       "job": "pass-8"
+    },
+    "hold-merge-gate / hold-merge-gate": {
+      "workflow": ".github/workflows/hold-merge-gate.yml",
+      "job": "hold-merge-gate"
     }
   },
   "server_required_guard_capabilities": {
     "verify:pass-8-clean-baseline": [
       "pass8-artifact"
+    ],
+    "verify:hold-merge-gate": [
+      "pull-request-metadata"
     ]
   },
   "db_gated_verify_scripts": [

@@ -1264,6 +1264,17 @@ Guard: `scripts/verify-xlsx-cve-closeout.mjs`, auto-discovered through `scripts/
 
 ---
 
+## 2026-07-18 — HOLD pre-push and bounded XLSX guard execution (LOCKED — owner)
+
+- Protected financial/HOLD classification remains authoritative and fail-closed in the required GitHub context `hold-merge-gate / hold-merge-gate`, where the pull request title, labels, base SHA, and head SHA are available.
+- Local pre-push must not interpret absent pull-request metadata as absent owner approval. `verify:static` classifies `verify:hold-merge-gate` as an explicit `pull-request-metadata` capability skip only when that capability maps to the exact required, wired GitHub HOLD context.
+- Removing the required status context, workflow wiring, or capability declaration converts the local skip into a hard failure. The CI gate itself is unchanged: protected PRs without `JORGE-APPROVED` remain red and unmergeable.
+- Repository-wide static guards must inventory tracked source deterministically. They must not recursively scan environment-created dependency trash, caches, worktrees, or other untracked directories, and external inventory commands require explicit timeouts.
+
+Guards: `scripts/verify-push-gate-classification.mjs` and `scripts/verify-xlsx-cve-closeout.mjs`.
+
+---
+
 ## 2026-07-17 — CSA / Hazmat source-honesty rule (LOCKED — owner)
 
 - FMCSA Hazardous Materials Compliance BASIC measures and percentiles are **not public**. They remain unavailable (`null`) unless received from the carrier's explicitly authorized, authenticated SMS profile.

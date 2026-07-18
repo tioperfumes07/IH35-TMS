@@ -65,6 +65,67 @@ test("missing dependencies are classified by explicit capability preflight", () 
   assert.match(result.detail, /dependencies → ci \/ build-typecheck/);
 });
 
+test("missing PR metadata skips HOLD approval only to the required hold-merge CI gate", () => {
+  const context = "hold-merge-gate / hold-merge-gate";
+  const fixture = makeFixture({
+    source: 'console.error("local execution must not decide approval"); process.exit(1);',
+    verifyName: "verify:hold-merge-gate",
+  });
+  const policy = {
+    ...fixture.policy,
+    equivalents: {
+      ...fixture.policy.equivalents,
+      "pull-request-metadata": context,
+    },
+    serverRequiredContexts: new Set([
+      ...fixture.policy.serverRequiredContexts,
+      context,
+    ]),
+    requiredContexts: new Set([...fixture.policy.requiredContexts, context]),
+    wiredContexts: new Set([...fixture.policy.wiredContexts, context]),
+    guardCapabilities: {
+      "verify:hold-merge-gate": ["pull-request-metadata"],
+    },
+  };
+  const preflight = capabilityPreflight(fixture.file, {
+    root: fixture.root,
+    dependenciesAvailable: true,
+    databaseAvailable: true,
+    capabilityAvailability: { "pull-request-metadata": false },
+    policy,
+  });
+  const result = classify(fixture.file, { preflight });
+  assert.equal(result.kind, STATIC_RESULT_CATEGORIES.SKIP_CAPABILITY);
+  assert.equal(result.detail, `pull-request-metadata → ${context}`);
+});
+
+test("missing PR metadata hard-fails when the hold-merge CI gate is not required", () => {
+  const context = "hold-merge-gate / hold-merge-gate";
+  const fixture = makeFixture({
+    source: 'console.error("local execution must not decide approval"); process.exit(1);',
+    verifyName: "verify:hold-merge-gate",
+  });
+  const preflight = capabilityPreflight(fixture.file, {
+    root: fixture.root,
+    dependenciesAvailable: true,
+    databaseAvailable: true,
+    capabilityAvailability: { "pull-request-metadata": false },
+    policy: {
+      ...fixture.policy,
+      equivalents: { "pull-request-metadata": context },
+      serverRequiredContexts: new Set([context]),
+      requiredContexts: new Set(),
+      wiredContexts: new Set([context]),
+      guardCapabilities: {
+        "verify:hold-merge-gate": ["pull-request-metadata"],
+      },
+    },
+  });
+  const result = classify(fixture.file, { preflight });
+  assert.equal(result.kind, STATIC_RESULT_CATEGORIES.FAIL_TEST);
+  assert.match(result.detail, /not a required protection context/);
+});
+
 test("missing capability without named CI equivalent is a hard test failure", () => {
   const fixture = makeFixture({ source: 'console.log("unused");' });
   const preflight = capabilityPreflight(fixture.file, {
