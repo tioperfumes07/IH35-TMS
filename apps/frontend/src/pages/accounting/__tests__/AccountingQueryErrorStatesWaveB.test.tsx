@@ -129,73 +129,79 @@ function expectVisibleRetry(message: RegExp, query: QueryResult) {
 }
 
 describe("Accounting Wave B query error states", () => {
-  it.each([
-    {
-      name: "vendorsQuery",
-      failedKey: ["multi-bills", "vendors", "company-1"],
-      otherKey: ["multi-bills", "coa", "company-1"],
-      message: /Failed to load vendors for bill rows: vendors unavailable/,
-    },
-    {
-      name: "coaQuery",
-      failedKey: ["multi-bills", "coa", "company-1"],
-      otherKey: ["multi-bills", "vendors", "company-1"],
-      message: /Failed to load A\/P accounts for bill rows: accounts unavailable/,
-    },
-  ])("renders and retries CreateMultipleBillsPage $name", ({ failedKey, otherKey, message }) => {
-    const failed = failure(message.source.includes("vendors") ? "vendors unavailable" : "accounts unavailable");
-    results.set(keyOf(failedKey), failed);
-    results.set(keyOf(otherKey), success(message.source.includes("vendors") ? { accounts: [] } : { vendors: [] }));
+  it("renders and retries CreateMultipleBillsPage vendorsQuery without a coaQuery error", () => {
+    const failed = failure("vendors unavailable");
+    results.set(keyOf(["multi-bills", "vendors", "company-1"]), failed);
+    results.set(keyOf(["multi-bills", "coa", "company-1"]), success({ accounts: [] }));
 
     render(<CreateMultipleBillsPage />);
-    expectVisibleRetry(message, failed);
+    expect(screen.queryByText(/Failed to load A\/P accounts for bill rows:/)).not.toBeInTheDocument();
+    expectVisibleRetry(/Failed to load vendors for bill rows: vendors unavailable/, failed);
   });
 
-  it.each([
-    {
-      name: "vendorsQuery",
-      failedKey: ["factoring-vendors", "company-1"],
-      message: /Failed to load factoring companies: vendors unavailable/,
-    },
-    {
-      name: "invoicesQuery",
-      failedKey: ["factoring-candidates", "company-1"],
-      message: /Failed to load eligible invoices: invoices unavailable/,
-    },
-    {
-      name: "factoringSummaryQuery",
-      failedKey: ["factoring", "summary", "company-1"],
-      message: /Failed to load factoring defaults: summary unavailable/,
-    },
-  ])("renders and retries SubmitFactoringModal $name", ({ name, failedKey, message }) => {
-    const fixtures = [
-      ["factoring-vendors", "company-1"],
-      ["factoring-candidates", "company-1"],
-      ["factoring", "summary", "company-1"],
-    ];
-    for (const key of fixtures) results.set(keyOf(key), success(key[0] === "factoring" ? {} : []));
-    const failed = failure(name === "vendorsQuery" ? "vendors unavailable" : name === "invoicesQuery" ? "invoices unavailable" : "summary unavailable");
-    results.set(keyOf(failedKey), failed);
+  it("renders and retries CreateMultipleBillsPage coaQuery without a vendorsQuery error", () => {
+    const failed = failure("accounts unavailable");
+    results.set(keyOf(["multi-bills", "vendors", "company-1"]), success({ vendors: [] }));
+    results.set(keyOf(["multi-bills", "coa", "company-1"]), failed);
+
+    render(<CreateMultipleBillsPage />);
+    expect(screen.queryByText(/Failed to load vendors for bill rows:/)).not.toBeInTheDocument();
+    expectVisibleRetry(/Failed to load A\/P accounts for bill rows: accounts unavailable/, failed);
+  });
+
+  it("renders and retries SubmitFactoringModal vendorsQuery without co-query errors", () => {
+    const failed = failure("vendors unavailable");
+    results.set(keyOf(["factoring-vendors", "company-1"]), failed);
+    results.set(keyOf(["factoring-candidates", "company-1"]), success([]));
+    results.set(keyOf(["factoring", "summary", "company-1"]), success({}));
 
     render(<SubmitFactoringModal open operatingCompanyId="company-1" onClose={vi.fn()} onCreated={vi.fn()} />);
-    expectVisibleRetry(message, failed);
+    expect(screen.queryByText(/Failed to load eligible invoices:/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Failed to load factoring defaults:/)).not.toBeInTheDocument();
+    expectVisibleRetry(/Failed to load factoring companies: vendors unavailable/, failed);
   });
 
-  it("renders and retries InvoicesListPage customersQuery", () => {
+  it("renders and retries SubmitFactoringModal invoicesQuery without co-query errors", () => {
+    const failed = failure("invoices unavailable");
+    results.set(keyOf(["factoring-vendors", "company-1"]), success([]));
+    results.set(keyOf(["factoring-candidates", "company-1"]), failed);
+    results.set(keyOf(["factoring", "summary", "company-1"]), success({}));
+
+    render(<SubmitFactoringModal open operatingCompanyId="company-1" onClose={vi.fn()} onCreated={vi.fn()} />);
+    expect(screen.queryByText(/Failed to load factoring companies:/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Failed to load factoring defaults:/)).not.toBeInTheDocument();
+    expectVisibleRetry(/Failed to load eligible invoices: invoices unavailable/, failed);
+  });
+
+  it("renders and retries SubmitFactoringModal factoringSummaryQuery without co-query errors", () => {
+    const failed = failure("summary unavailable");
+    results.set(keyOf(["factoring-vendors", "company-1"]), success([]));
+    results.set(keyOf(["factoring-candidates", "company-1"]), success([]));
+    results.set(keyOf(["factoring", "summary", "company-1"]), failed);
+
+    render(<SubmitFactoringModal open operatingCompanyId="company-1" onClose={vi.fn()} onCreated={vi.fn()} />);
+    expect(screen.queryByText(/Failed to load factoring companies:/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Failed to load eligible invoices:/)).not.toBeInTheDocument();
+    expectVisibleRetry(/Failed to load factoring defaults: summary unavailable/, failed);
+  });
+
+  it("renders and retries InvoicesListPage customersQuery without an invoices query error", () => {
     const failed = failure("customers unavailable");
     results.set(keyOf(["mdata", "customers", "invoice-filter", "company-1"]), failed);
     results.set(keyOf(["accounting", "invoices", "company-1", "", "", "", "", ""]), success([]));
 
     render(<InvoicesListPage />);
+    expect(screen.queryByText("Failed to load. Try refreshing.")).not.toBeInTheDocument();
     expectVisibleRetry(/Failed to load customer filters: customers unavailable/, failed);
   });
 
-  it("renders and retries BillPaymentsListPage unpaidBillsQuery", () => {
+  it("renders and retries BillPaymentsListPage unpaidBillsQuery without a payments query error", () => {
     results.set(keyOf(["accounting", "bill-payments-list", "company-1", "", "", ""]), success({ rows: [] }));
     const failed = failure("unpaid bills unavailable");
     results.set(keyOf(["accounting", "bills-unpaid", "company-1"]), failed);
 
     render(<BillPaymentsListPage />);
+    expect(screen.queryByText("Failed to load. Try refreshing.")).not.toBeInTheDocument();
     expectVisibleRetry(/Failed to load unpaid bills: unpaid bills unavailable/, failed);
   });
 
