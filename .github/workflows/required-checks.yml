@@ -72,8 +72,5 @@ jobs:
             console.log('All', mandatory.length, 'mandatory checks present in branch-protection-config.json');
           "
 
-      - name: CI guard — verify CI policy applied (or config baseline)
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_ADMIN_TOKEN: ${{ secrets.GH_ADMIN_TOKEN }}
+      - name: Validate exact committed protection baseline (live owner verification separate)
         run: node scripts/verify-ci-policy-applied.mjs

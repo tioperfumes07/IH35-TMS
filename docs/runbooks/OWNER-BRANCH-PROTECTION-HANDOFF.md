@@ -41,6 +41,18 @@ The repository helper is also owner-gated. It refuses CI/build automation and ex
 `JORGE_AUTHORIZED_BRANCH_PROTECTION_APPLY=YES` and an admin-capable `GH_ADMIN_TOKEN` are explicitly supplied
 by the owner.
 
+After applying through either option, verify live protection separately with the owner's admin-capable
+token:
+
+```bash
+GH_ADMIN_TOKEN="$(gh auth token)" node scripts/verify-ci-policy-applied.mjs
+```
+
+The verifier must print `LIVE PASS — 8 owner-approved contexts verified via GH_ADMIN_TOKEN`. A 403, 404,
+or policy drift is a hard failure. Standard CI intentionally supplies no token to this verifier; it validates
+the committed baseline only and prints
+`BASELINE PASS — LIVE UNVERIFIED, owner handoff required`.
+
 ## Option 2 — GitHub Settings
 
 1. Open `tioperfumes07/IH35-TMS` → **Settings** → **Branches**.

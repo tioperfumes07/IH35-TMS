@@ -55,6 +55,10 @@
     {
       "check": "Only the eight owner-approved universal contexts are required, and protection apply remains owner-only.",
       "evidence": "Exact-context drift tests, owner-authorization tests, and docs/runbooks/OWNER-BRANCH-PROTECTION-HANDOFF.md."
+    },
+    {
+      "check": "Standard CI validates the exact committed baseline without attempting an admin API read; only explicit GH_ADMIN_TOKEN live verification fails closed on 403, 404, or drift.",
+      "evidence": "Two-stage verifier tests cover ordinary token rejection, explicit baseline-only output, 403, 404, drift, and valid live policy."
     }
   ]
 }

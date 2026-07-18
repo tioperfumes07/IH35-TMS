@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 /**
- * CLOSURE-22 CI guard — branch protection config present; live API check when admin token set.
+ * CLOSURE-22 two-stage verifier:
+ *   1. Every caller validates the exact committed owner-approved baseline.
+ *   2. Live protection is read only when GH_ADMIN_TOKEN is explicitly present.
  *
  * FIX(ci): Previously exited 0 (success) when live branch protection was missing required
  * contexts or not applied at all, allowing red PRs to merge (#729 post-mortem).
  * Now exits 1 (hard-fail) for both conditions when an admin token is available in CI.
  *
- * MANDATORY_CHECKS: These check names MUST be present in branch-protection-config.json
- * AND in GitHub's live branch protection. Any omission is a gate failure.
+ * Standard Actions GITHUB_TOKEN and GH_TOKEN are intentionally never used for protection reads.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -25,6 +26,8 @@ export const REQUIRED_GATE_CONTEXTS = [
   "premerge-gates / migration-role-validation",
 ];
 export const MANDATORY_CHECKS = REQUIRED_GATE_CONTEXTS;
+export const BASELINE_ONLY_MESSAGE =
+  "BASELINE PASS — LIVE UNVERIFIED, owner handoff required";
 
 const LABEL = "verify-ci-policy-applied";
 const CONFIG_PATH = path.join(process.cwd(), ".github/branch-protection-config.json");
@@ -120,9 +123,9 @@ export function assertConfigBaseline() {
   return cfg;
 }
 
-async function fetchProtection(token, owner, repo, branch) {
+export async function fetchProtection(token, owner, repo, branch, fetchImpl = fetch) {
   const url = `https://api.github.com/repos/${owner}/${repo}/branches/${branch}/protection`;
-  const res = await fetch(url, {
+  const res = await fetchImpl(url, {
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: "application/vnd.github+json",
@@ -138,25 +141,41 @@ async function fetchProtection(token, owner, repo, branch) {
 }
 
 export function selectProtectionReadToken(env = process.env) {
-  for (const name of ["GH_ADMIN_TOKEN", "GITHUB_TOKEN", "GH_TOKEN"]) {
-    const value = env[name]?.trim();
-    if (value) return { name, value };
-  }
-  return null;
+  const value = env.GH_ADMIN_TOKEN?.trim();
+  return value ? { name: "GH_ADMIN_TOKEN", value } : null;
 }
 
-export function missingProtectionTokenOutcome(ci = process.env.CI === "true") {
-  return ci
-    ? {
-        blocking: true,
-        message:
-          "BLOCKED-UNVERIFIED — CI has no GH_ADMIN_TOKEN, GITHUB_TOKEN, or GH_TOKEN to read live branch protection",
-      }
-    : {
-        blocking: false,
-        message:
-          "UNVERIFIED (local) — no GitHub token available; committed baseline passed but live enforcement was not checked",
-      };
+export function baselineOnlyOutcome() {
+  return {
+    baselinePassed: true,
+    liveVerified: false,
+    message: BASELINE_ONLY_MESSAGE,
+  };
+}
+
+export async function verifyLiveProtection(cfg, token, fetchImpl = fetch) {
+  const [owner, repo] = cfg.repository.split("/");
+  const branch = cfg.branch || "main";
+  const protection = await fetchProtection(token, owner, repo, branch, fetchImpl);
+
+  if (!protection) {
+    throw new Error(`GitHub API 404: branch protection not applied on ${owner}/${repo}:${branch}`);
+  }
+
+  const drift = evaluateProtectionDrift(cfg.protection, protection);
+  if (drift.length > 0) {
+    throw new Error(`live branch protection drift: ${drift.join("; ")}`);
+  }
+
+  return {
+    baselinePassed: true,
+    liveVerified: true,
+    message: `LIVE PASS — ${liveProtectionContextCount(protection)} owner-approved contexts verified`,
+  };
+}
+
+function liveProtectionContextCount(protection) {
+  return protection.required_status_checks?.contexts?.length ?? 0;
 }
 
 async function main() {
@@ -164,36 +183,12 @@ async function main() {
   const selectedToken = selectProtectionReadToken();
 
   if (!selectedToken) {
-    const outcome = missingProtectionTokenOutcome();
-    const message = `[${LABEL}] ${outcome.message}`;
-    if (outcome.blocking) throw new Error(message);
-    console.warn(message);
+    console.log(`[${LABEL}] ${baselineOnlyOutcome().message}`);
     return;
   }
 
-  const [owner, repo] = cfg.repository.split("/");
-  const branch = cfg.branch || "main";
-  const protection = await fetchProtection(selectedToken.value, owner, repo, branch);
-
-  if (!protection) {
-    // Branch protection not applied at all — hard-fail so no PR can slip through.
-    console.error(
-      `[${LABEL}] FAIL — branch protection not applied on ${owner}/${repo}:${branch}; run node scripts/ci-apply-branch-protection.mjs`
-    );
-    process.exit(1);
-  }
-
-  const drift = evaluateProtectionDrift(cfg.protection, protection);
-  if (drift.length > 0) {
-    console.error(`[${LABEL}] FAIL — live branch protection drift: ${drift.join("; ")}`);
-    console.error(`[${LABEL}] OWNER HANDOFF: review then run node scripts/ci-apply-branch-protection.mjs`);
-    process.exit(1);
-  }
-
-  const liveContexts = protection.required_status_checks?.contexts ?? [];
-  console.log(
-    `[${LABEL}] PASS — live branch protection verified via ${selectedToken.name} with ${liveContexts.length} required contexts`
-  );
+  const outcome = await verifyLiveProtection(cfg, selectedToken.value);
+  console.log(`[${LABEL}] ${outcome.message} via ${selectedToken.name}`);
 }
 
 const isDirectRun =

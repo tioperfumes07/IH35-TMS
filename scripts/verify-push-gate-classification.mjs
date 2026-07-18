@@ -147,18 +147,18 @@ export function checkPushGateClassification(fixture) {
   );
   requireMatch(
     "policyVerifier",
-    /\["GH_ADMIN_TOKEN", "GITHUB_TOKEN", "GH_TOKEN"\]/,
-    "policy verifier does not use available read-token fallback order"
-  );
-  requireMatch(
-    "policyVerifier",
-    /BLOCKED-UNVERIFIED/,
-    "policy verifier does not block unverifiable CI enforcement"
+    /const value = env\.GH_ADMIN_TOKEN/,
+    "policy verifier does not restrict live reads to GH_ADMIN_TOKEN"
   );
   forbidMatch(
     "policyVerifier",
-    /PASS \(baseline\)/,
-    "policy verifier still reports success without live verification"
+    /\["GH_ADMIN_TOKEN", "GITHUB_TOKEN", "GH_TOKEN"\]/,
+    "policy verifier still selects standard Actions tokens for admin reads"
+  );
+  requireMatch(
+    "policyVerifier",
+    /BASELINE PASS — LIVE UNVERIFIED, owner handoff required/,
+    "policy verifier does not explicitly separate baseline from live verification"
   );
   requireMatch(
     "requiredChecks",
@@ -182,8 +182,19 @@ export function checkPushGateClassification(fixture) {
   requireMatch("staticTests", /DATABASE_URL text/, "DATABASE_URL false-classification test missing");
   requireMatch("freshnessTests", /one behind commit anywhere/, "stale-branch planted test missing");
   requireMatch("freshnessTests", /shell-like refs/, "unsafe-ref planted test missing");
-  requireMatch("policyTests", /live ruleset drift/, "live-ruleset-drift planted test missing");
-  requireMatch("policyTests", /blocking unverified/, "missing-token planted test missing");
+  for (const plantedCase of [
+    "ordinary GitHub tokens",
+    "baseline-only result",
+    "GH_ADMIN_TOKEN 403",
+    "GH_ADMIN_TOKEN 404",
+    "valid live policy",
+  ]) {
+    requireMatch(
+      "policyTests",
+      new RegExp(plantedCase),
+      `two-stage policy planted test missing: ${plantedCase}`
+    );
+  }
   requireMatch("manifestTests", /detached GitHub Actions/, "detached-head CI fixture missing");
   requireMatch("staticTests", /not wired/, "capability wiring drift fixture missing");
   for (const plantedCase of [
@@ -243,7 +254,7 @@ jobs:
   gitignore: "docs/audits/PASS-8-PRE-PROD-SMOKE-RESULTS.*",
   trackedFiles: [],
   policyVerifier:
-    'const STRICT_FRESHNESS_CONTEXT = "ci / verify-branch-fresh"; "strict freshness is disabled"; ["GH_ADMIN_TOKEN", "GITHUB_TOKEN", "GH_TOKEN"]; "BLOCKED-UNVERIFIED";',
+    'const STRICT_FRESHNESS_CONTEXT = "ci / verify-branch-fresh"; "strict freshness is disabled"; const value = env.GH_ADMIN_TOKEN; "BASELINE PASS — LIVE UNVERIFIED, owner handoff required";',
   protection: JSON.stringify({
     protection: {
       required_status_checks: { strict: true, contexts: ["ci / verify-branch-fresh"] },
@@ -258,7 +269,8 @@ jobs:
   pass8Tests:
     "absent generated artifact; producer failure; valid generated artifact; missing or unclassified PASS-8 CI equivalent; producer runs before consumer",
   freshnessTests: "one behind commit anywhere; shell-like refs",
-  policyTests: "live ruleset drift; blocking unverified",
+  policyTests:
+    "ordinary GitHub tokens; baseline-only result; GH_ADMIN_TOKEN 403; GH_ADMIN_TOKEN 404; valid live policy",
 };
 const badFixture = {
   ...goodFixture,

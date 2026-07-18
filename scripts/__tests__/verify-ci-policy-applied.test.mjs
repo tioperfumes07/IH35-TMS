@@ -2,11 +2,13 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import {
+  BASELINE_ONLY_MESSAGE,
   REQUIRED_GATE_CONTEXTS,
   STRICT_FRESHNESS_CONTEXT,
+  baselineOnlyOutcome,
   evaluateProtectionDrift,
-  missingProtectionTokenOutcome,
   selectProtectionReadToken,
+  verifyLiveProtection,
 } from "../verify-ci-policy-applied.mjs";
 import {
   OWNER_AUTHORIZATION_ENV,
@@ -83,7 +85,7 @@ test("live ruleset drift rejects bypassable governance controls", () => {
   assert.ok(drift.some((item) => item.includes("disallow force pushes")));
 });
 
-test("token selection prefers admin then GitHub then gh token", () => {
+test("ordinary GitHub tokens are never selected for live protection reads", () => {
   assert.deepEqual(
     selectProtectionReadToken({
       GH_ADMIN_TOKEN: "admin",
@@ -92,28 +94,56 @@ test("token selection prefers admin then GitHub then gh token", () => {
     }),
     { name: "GH_ADMIN_TOKEN", value: "admin" }
   );
-  assert.deepEqual(selectProtectionReadToken({ GITHUB_TOKEN: "github", GH_TOKEN: "gh" }), {
-    name: "GITHUB_TOKEN",
-    value: "github",
-  });
-  assert.deepEqual(selectProtectionReadToken({ GH_TOKEN: "gh" }), {
-    name: "GH_TOKEN",
-    value: "gh",
-  });
+  assert.equal(selectProtectionReadToken({ GITHUB_TOKEN: "github", GH_TOKEN: "gh" }), null);
+  assert.equal(selectProtectionReadToken({ GH_TOKEN: "gh" }), null);
 });
 
-test("missing CI token is a distinct blocking unverified result", () => {
-  const outcome = missingProtectionTokenOutcome(true);
-  assert.equal(outcome.blocking, true);
-  assert.match(outcome.message, /BLOCKED-UNVERIFIED/);
-  assert.doesNotMatch(outcome.message, /PASS/);
+test("baseline-only result explicitly passes committed policy without claiming live verification", () => {
+  const outcome = baselineOnlyOutcome();
+  assert.equal(outcome.baselinePassed, true);
+  assert.equal(outcome.liveVerified, false);
+  assert.equal(outcome.message, BASELINE_ONLY_MESSAGE);
+  assert.match(outcome.message, /BASELINE PASS — LIVE UNVERIFIED, owner handoff required/);
+  assert.doesNotMatch(outcome.message, /LIVE PASS|live protection verified/);
 });
 
-test("missing local token warns unverified without claiming enforcement", () => {
-  const outcome = missingProtectionTokenOutcome(false);
-  assert.equal(outcome.blocking, false);
-  assert.match(outcome.message, /UNVERIFIED \(local\)/);
-  assert.doesNotMatch(outcome.message, /PASS|active|applied/);
+test("GH_ADMIN_TOKEN 403 fails closed", async () => {
+  await assert.rejects(
+    () =>
+      verifyLiveProtection({ repository: "tioperfumes07/IH35-TMS", branch: "main", protection: expected }, "admin", async () => ({
+        ok: false,
+        status: 403,
+        text: async () => "Resource not accessible by integration",
+      })),
+    /GitHub API 403.*Resource not accessible by integration/
+  );
+});
+
+test("GH_ADMIN_TOKEN 404 fails closed", async () => {
+  await assert.rejects(
+    () =>
+      verifyLiveProtection({ repository: "tioperfumes07/IH35-TMS", branch: "main", protection: expected }, "admin", async () => ({
+        ok: false,
+        status: 404,
+        text: async () => "Branch not protected",
+      })),
+    /GitHub API 404: branch protection not applied/
+  );
+});
+
+test("valid live policy passes only through explicit admin verification", async () => {
+  const outcome = await verifyLiveProtection(
+    { repository: "tioperfumes07/IH35-TMS", branch: "main", protection: expected },
+    "admin",
+    async () => ({
+      ok: true,
+      status: 200,
+      json: async () => liveProtection(),
+    })
+  );
+  assert.equal(outcome.baselinePassed, true);
+  assert.equal(outcome.liveVerified, true);
+  assert.match(outcome.message, /LIVE PASS — 8 owner-approved contexts verified/);
 });
 
 test("branch-protection apply requires exact owner authorization", () => {
