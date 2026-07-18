@@ -1,5 +1,6 @@
 import puppeteer from "puppeteer";
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
+import { addArrayWorksheet, writeWorkbookBuffer } from "../lib/exceljs-workbook.js";
 import type { ReportDataEnvelope } from "../reports/queries/shared.js";
 import type { ScheduledReportId } from "../reports/scheduled-report-runner.js";
 import { renderLegacyScheduledReportForDelivery } from "../reports/scheduled-report-runner.js";
@@ -92,10 +93,9 @@ export async function buildScheduledReportFile(
     };
   }
 
-  const sheet = XLSX.utils.aoa_to_sheet(rows);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, sheet, "Report");
-  const buffer = Buffer.from(XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as ArrayBuffer);
+  const workbook = new ExcelJS.Workbook();
+  addArrayWorksheet(workbook, "Report", rows);
+  const buffer = await writeWorkbookBuffer(workbook);
   return {
     buffer,
     contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

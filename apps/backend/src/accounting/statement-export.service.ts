@@ -139,7 +139,7 @@ export async function exportTrialBalanceStatement(input: {
   return {
     filename,
     contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    buffer: renderStatementXlsx({ sheetName: "Trial Balance", rows }),
+    buffer: await renderStatementXlsx({ sheetName: "Trial Balance", rows }),
   };
 }
 
@@ -242,7 +242,7 @@ export async function exportProfitLossStatement(input: {
   return {
     filename,
     contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    buffer: renderStatementXlsx({ sheetName: "Profit Loss", rows }),
+    buffer: await renderStatementXlsx({ sheetName: "Profit Loss", rows }),
   };
 }
 
@@ -334,7 +334,7 @@ export async function exportBalanceSheetStatement(input: {
   return {
     filename,
     contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    buffer: renderStatementXlsx({ sheetName: "Balance Sheet", rows }),
+    buffer: await renderStatementXlsx({ sheetName: "Balance Sheet", rows }),
   };
 }
 
@@ -446,7 +446,7 @@ export async function exportCashFlowStatement(input: {
   return {
     filename,
     contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    buffer: renderStatementXlsx({ sheetName: "Cash Flow", rows }),
+    buffer: await renderStatementXlsx({ sheetName: "Cash Flow", rows }),
   };
 }
 
@@ -545,7 +545,7 @@ export async function exportArAgingStatement(input: {
   return {
     filename,
     contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    buffer: renderStatementXlsx({ sheetName: "AR Aging", rows }),
+    buffer: await renderStatementXlsx({ sheetName: "AR Aging", rows }),
   };
 }
 
@@ -644,6 +644,6 @@ export async function exportApAgingStatement(input: {
   return {
     filename,
     contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    buffer: renderStatementXlsx({ sheetName: "AP Aging", rows }),
+    buffer: await renderStatementXlsx({ sheetName: "AP Aging", rows }),
   };
 }

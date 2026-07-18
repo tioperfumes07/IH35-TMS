@@ -140,8 +140,8 @@ export function computeFuelRowHash(fields: {
 }
 
 /**
- * Pure mapper: fleet-card export rows (already parsed to objects, e.g. by
- * XLSX.utils.sheet_to_json) → typed import rows. No I/O, fully unit-testable.
+ * Pure mapper: fleet-card export rows (already parsed to objects by the
+ * central untrusted spreadsheet reader) → typed import rows. No I/O, fully unit-testable.
  */
 export function mapFuelCardRows(rawRows: Record<string, unknown>[]): FuelCardParseResult {
   const rows: FuelCardImportRow[] = [];

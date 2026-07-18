@@ -16,17 +16,11 @@ export class SpreadsheetUploadRejectedError extends Error {
 const ZIP_MAGIC_PK34 = Buffer.from([0x50, 0x4b, 0x03, 0x04]);
 const ZIP_MAGIC_PK56 = Buffer.from([0x50, 0x4b, 0x05, 0x06]);
 const ZIP_MAGIC_PK78 = Buffer.from([0x50, 0x4b, 0x07, 0x08]);
-const OLE_MAGIC = Buffer.from([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]);
 
 export function hasZipSpreadsheetMagic(buffer: Buffer): boolean {
   if (buffer.length < 4) return false;
   const head = buffer.subarray(0, 4);
   return head.equals(ZIP_MAGIC_PK34) || head.equals(ZIP_MAGIC_PK56) || head.equals(ZIP_MAGIC_PK78);
-}
-
-export function hasOleSpreadsheetMagic(buffer: Buffer): boolean {
-  if (buffer.length < 8) return false;
-  return buffer.subarray(0, 8).equals(OLE_MAGIC);
 }
 
 /** CSV uploads must be text (no NUL bytes) with row/delimiter structure. */
@@ -41,7 +35,7 @@ export function looksLikeCsvText(buffer: Buffer): boolean {
   return /[,;\t]/.test(firstLine) || firstLine.trim().length > 0;
 }
 
-export type SpreadsheetUploadKind = "xlsx" | "xls" | "csv";
+export type SpreadsheetUploadKind = "xlsx" | "csv";
 
 export function validateSpreadsheetUploadBytes(buffer: Buffer, filename: string): SpreadsheetUploadKind {
   const lower = filename.toLowerCase();
@@ -64,13 +58,10 @@ export function validateSpreadsheetUploadBytes(buffer: Buffer, filename: string)
   }
 
   if (lower.endsWith(".xls")) {
-    if (!hasOleSpreadsheetMagic(buffer)) {
-      throw new SpreadsheetUploadRejectedError(
-        "xls_magic_mismatch",
-        "File content is not a valid XLS (OLE) document"
-      );
-    }
-    return "xls";
+    throw new SpreadsheetUploadRejectedError(
+      "legacy_xls_unsupported",
+      "Legacy .xls parsing is not supported; convert the workbook to .xlsx or .csv"
+    );
   }
 
   throw new SpreadsheetUploadRejectedError("unsupported_extension", "Unsupported spreadsheet extension");

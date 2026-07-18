@@ -6,12 +6,29 @@
   "source": "MASTER-6 authored dispatch (06-TIER3-BLOCKS)",
   "source_file": "coder-work-order-t2-3-xlsx-cve.txt",
   "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
+    "Spreadsheet parser/export implementations, focused tests, root dependency manifests, verify scripts/steps, and IH35_UNIFIED_BLUEPRINT_ADDITIONS.md only. No migrations, schema/data writes, GL math, routes, navigation, or product surfaces removed."
   ],
   "acceptance": [
     {
-      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
+      "check": "Root package and lockfile contain no SheetJS xlsx dependency/subtree and exactly one root ExcelJS runtime declaration.",
+      "evidence": "Regenerated lockfile has root ExcelJS only in dependencies; npm ci and npm ls pass. Guard scans every workspace manifest/lock and plants root, workspace, and nested lockfile xlsx regressions in --selftest."
+    },
+    {
+      "check": "Parsed .xlsx uses ExcelJS, parsed .csv avoids SheetJS, and parsed legacy .xls is rejected while inert document upload acceptance remains unchanged.",
+      "evidence": "Disposable xlsx@0.18.5 controlled fixtures established the prior CSV and XLSX-date contracts; exceljs-spreadsheet tests cover numeric/boolean/date/ISO/blank/leading-zero/quoted/delimiter/escaped-quote/CRLF/formula parity, shared collision-safe CSV/XLSX duplicate and empty header suffixes, whitespace-only strings, sep directives, and cellDates false serials versus true timezone-stable Central instants. No document upload policy files changed."
+    },
+    {
+      "check": "Accounting, scheduled, maintenance, telematics, QBO forensic, safety, and banking exports no longer use SheetJS; mislabeled safety/banking outputs are genuine XLSX.",
+      "evidence": "Workbook-openability tests plus static closeout guard inventory. Banking money cells are numeric with exact-cent formatting. QBO forensic test asserts six exact <=31-character sheets, headers, order, amount signs, dates, links, R2 destination/content type, append-only audit metadata, and read-only SQL boundary. Parser/tooling tests prove formula, hyperlink, rich-text, error, date, scalar, and unknown-object normalization."
+    },
+    {
+      "check": "Regression guard is auto-discovered under scripts/verify-steps without package.json/workflow guard registration.",
+      "evidence": "scripts/verify-steps/144-verify-xlsx-cve-closeout.mjs; Rule 17 hot files untouched."
+    },
+    {
+      "check": "Builder stops at branch proof. No commit, push, merge, production DB access, deployment, or live proof.",
+      "evidence": "UNVERIFIED live by explicit owner-gated prepare-only constraint."
     }
   ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+  "note": "Owner-approved runtime dependency removal. Financial/accounting export paths are prepare-only and remain on owner HOLD."
 }

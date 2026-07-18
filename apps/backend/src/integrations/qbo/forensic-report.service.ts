@@ -1,13 +1,36 @@
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser, withLuciaBypass } from "../../auth/db.js";
+import { addObjectWorksheet, writeWorkbookBuffer } from "../../lib/exceljs-workbook.js";
 
 type BatchContext = {
   id: string;
   operating_company_id: string;
   qbo_realm_id: string;
 };
+
+type ForensicRow = Record<string, unknown>;
+
+export type ForensicWorkbookData = {
+  entitySummary: ForensicRow[];
+  transactionSummary: ForensicRow[];
+  categorizationIssues: ForensicRow[];
+  windowRows: ForensicRow[];
+  pre2023Rows: ForensicRow[];
+  inactiveEntities: ForensicRow[];
+};
+
+// SheetJS rejected the former >31-character names before upload/audit, making this
+// report path unreachable. These stable semantic names satisfy Excel's hard limit.
+export const FORENSIC_WORKSHEET_NAMES = [
+  "Pre-Migration Summary",
+  "Categorization Issues",
+  "Embezzlement Review 2023-24",
+  "Pre-2023 Anomalies",
+  "Bank Reconciliation Variances",
+  "Inactive Entity Candidates",
+] as const;
 
 function r2Client() {
   const accountId = process.env.R2_ACCOUNT_ID;
@@ -43,11 +66,94 @@ function companyCodeFromRealmId(realmId: string) {
   return "COMPANY";
 }
 
+export async function buildForensicWorkbookBuffer(input: {
+  batchId: string;
+  companyCode: string;
+  data: ForensicWorkbookData;
+}): Promise<Buffer> {
+  const workbook = new ExcelJS.Workbook();
+  const { batchId, companyCode, data } = input;
+
+  addObjectWorksheet(workbook, FORENSIC_WORKSHEET_NAMES[0], [
+    { section: "Batch", key: "batch_id", value: batchId },
+    { section: "Batch", key: "company", value: companyCode },
+    ...data.entitySummary.map((row) => ({
+      section: "Entities",
+      key: `${row.qbo_entity_type} (${row.qbo_active_at_snapshot ? "active" : "inactive"})`,
+      value: row.count,
+    })),
+    ...data.transactionSummary.map((row) => ({
+      section: "Transactions",
+      key: `${row.year} ${row.qbo_txn_type}`,
+      value: `${row.count} rows / ${(Number(row.total_cents) / 100).toFixed(2)} USD`,
+    })),
+  ]);
+
+  addObjectWorksheet(
+    workbook,
+    FORENSIC_WORKSHEET_NAMES[1],
+    data.categorizationIssues.map((row) => ({
+      Date: row.txn_date,
+      Type: row.qbo_txn_type,
+      Vendor: row.vendor_name ?? "",
+      Amount_USD: Number(row.total_cents ?? 0) / 100,
+      QBO_Class: row.class_name ?? "",
+      Anomaly_Tags: Array.isArray(row.forensic_flags) ? row.forensic_flags.join(", ") : "",
+      QBO_Link: `https://qbo.intuit.com/app/txn?txnId=${row.qbo_txn_id}`,
+    }))
+  );
+
+  addObjectWorksheet(
+    workbook,
+    FORENSIC_WORKSHEET_NAMES[2],
+    data.windowRows.map((row) => ({
+      Date: row.txn_date,
+      Type: row.qbo_txn_type,
+      Entered_By: row.entered_by ?? "",
+      Vendor: row.vendor_name ?? "",
+      Amount_USD: Number(row.total_cents ?? 0) / 100,
+      Class: row.class_name ?? "",
+      Has_Receipt: Number(row.attachments_count ?? 0) > 0 ? "Yes" : "No",
+      Flags: Array.isArray(row.forensic_flags) ? row.forensic_flags.join(", ") : "",
+      Review_Notes: "",
+    }))
+  );
+
+  addObjectWorksheet(
+    workbook,
+    FORENSIC_WORKSHEET_NAMES[3],
+    data.pre2023Rows.map((row) => ({
+      Date: row.txn_date,
+      Type: row.qbo_txn_type,
+      Vendor: row.vendor_name ?? "",
+      Amount_USD: Number(row.total_cents ?? 0) / 100,
+      Has_Receipt: Number(row.attachments_count ?? 0) > 0 ? "Yes" : "No",
+      Flags: Array.isArray(row.forensic_flags) ? row.forensic_flags.join(", ") : "",
+    }))
+  );
+
+  addObjectWorksheet(workbook, FORENSIC_WORKSHEET_NAMES[4], [
+    { Note: "Variance sheet placeholder. Year-end comparisons populate as balances are archived." },
+  ]);
+
+  addObjectWorksheet(
+    workbook,
+    FORENSIC_WORKSHEET_NAMES[5],
+    data.inactiveEntities.map((row) => ({
+      Type: row.qbo_entity_type,
+      Name: row.name ?? "",
+      Last_Active_Date: row.last_active_date,
+      Notes: "",
+    }))
+  );
+
+  return writeWorkbookBuffer(workbook);
+}
+
 export async function generateExcelReport(actorUserId: string, batchId: string) {
   const batch = await loadBatch(batchId);
   if (!batch) throw new Error("batch_not_found");
   const companyCode = companyCodeFromRealmId(batch.qbo_realm_id);
-  const workbook = XLSX.utils.book_new();
 
   const data = await withCurrentUser(actorUserId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [batch.operating_company_id]);
@@ -150,78 +256,11 @@ export async function generateExcelReport(actorUserId: string, batchId: string) 
     };
   });
 
-  const sheet1 = XLSX.utils.json_to_sheet([
-    { section: "Batch", key: "batch_id", value: batch.id },
-    { section: "Batch", key: "company", value: companyCode },
-    ...data.entitySummary.map((row) => ({
-      section: "Entities",
-      key: `${row.qbo_entity_type} (${row.qbo_active_at_snapshot ? "active" : "inactive"})`,
-      value: row.count,
-    })),
-    ...data.transactionSummary.map((row) => ({
-      section: "Transactions",
-      key: `${row.year} ${row.qbo_txn_type}`,
-      value: `${row.count} rows / ${(Number(row.total_cents) / 100).toFixed(2)} USD`,
-    })),
-  ]);
-  XLSX.utils.book_append_sheet(workbook, sheet1, "Pre-Migration Snapshot Summary");
-
-  const sheet2 = XLSX.utils.json_to_sheet(
-    data.categorizationIssues.map((row) => ({
-      Date: row.txn_date,
-      Type: row.qbo_txn_type,
-      Vendor: row.vendor_name ?? "",
-      Amount_USD: Number(row.total_cents ?? 0) / 100,
-      QBO_Class: row.class_name ?? "",
-      Anomaly_Tags: Array.isArray(row.forensic_flags) ? row.forensic_flags.join(", ") : "",
-      QBO_Link: `https://qbo.intuit.com/app/txn?txnId=${row.qbo_txn_id}`,
-    }))
-  );
-  XLSX.utils.book_append_sheet(workbook, sheet2, "Categorization Issues");
-
-  const sheet3 = XLSX.utils.json_to_sheet(
-    data.windowRows.map((row) => ({
-      Date: row.txn_date,
-      Type: row.qbo_txn_type,
-      Entered_By: row.entered_by ?? "",
-      Vendor: row.vendor_name ?? "",
-      Amount_USD: Number(row.total_cents ?? 0) / 100,
-      Class: row.class_name ?? "",
-      Has_Receipt: Number(row.attachments_count ?? 0) > 0 ? "Yes" : "No",
-      Flags: Array.isArray(row.forensic_flags) ? row.forensic_flags.join(", ") : "",
-      Review_Notes: "",
-    }))
-  );
-  XLSX.utils.book_append_sheet(workbook, sheet3, "Embezzlement Window Review (2023-2024)");
-
-  const sheet4 = XLSX.utils.json_to_sheet(
-    data.pre2023Rows.map((row) => ({
-      Date: row.txn_date,
-      Type: row.qbo_txn_type,
-      Vendor: row.vendor_name ?? "",
-      Amount_USD: Number(row.total_cents ?? 0) / 100,
-      Has_Receipt: Number(row.attachments_count ?? 0) > 0 ? "Yes" : "No",
-      Flags: Array.isArray(row.forensic_flags) ? row.forensic_flags.join(", ") : "",
-    }))
-  );
-  XLSX.utils.book_append_sheet(workbook, sheet4, "Pre-2023 Anomalies");
-
-  const sheet5 = XLSX.utils.json_to_sheet([
-    { Note: "Variance sheet placeholder. Year-end comparisons populate as balances are archived." },
-  ]);
-  XLSX.utils.book_append_sheet(workbook, sheet5, "Bank Account Reconciliation Variances");
-
-  const sheet6 = XLSX.utils.json_to_sheet(
-    data.inactiveEntities.map((row) => ({
-      Type: row.qbo_entity_type,
-      Name: row.name ?? "",
-      Last_Active_Date: row.last_active_date,
-      Notes: "",
-    }))
-  );
-  XLSX.utils.book_append_sheet(workbook, sheet6, "Inactive Entities Reactivation Candidates");
-
-  const reportBuffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" }) as Buffer;
+  const reportBuffer = await buildForensicWorkbookBuffer({
+    batchId: batch.id,
+    companyCode,
+    data,
+  });
   const date = new Date().toISOString().slice(0, 10);
   const filename = `${companyCode}_FORENSIC_REPORT_${date}.xlsx`;
   const objectKey = `forensic-reports/${companyCode.toLowerCase()}/${batch.id}/${filename}`;
