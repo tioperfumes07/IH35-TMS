@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import ts from "typescript";
 import { resolveBlockReadyManifest, aggregateBlockReadyManifests } from "./block-ready-agent-manifest.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -224,50 +225,119 @@ function getNewestMtimeMs(targetPath) {
   return max;
 }
 
-export function evaluateGuardRequirement({ guardRequired, changedNameStatus, ciDiffText }) {
+export function invokedGuardsFromVerifyStep(source) {
+  const invoked = new Set();
+  const sourceFile = ts.createSourceFile(
+    "verify-step.mjs",
+    source,
+    ts.ScriptTarget.ESNext,
+    true,
+    ts.ScriptKind.JS
+  );
+
+  function visit(node) {
+    if (
+      ts.isCallExpression(node) &&
+      ts.isPropertyAccessExpression(node.expression) &&
+      ts.isIdentifier(node.expression.expression) &&
+      node.expression.expression.text === "ctx" &&
+      node.expression.name.text === "run" &&
+      node.arguments.length >= 2 &&
+      ts.isStringLiteralLike(node.arguments[0]) &&
+      node.arguments[0].text === "node" &&
+      ts.isArrayLiteralExpression(node.arguments[1])
+    ) {
+      const [guardArgument] = node.arguments[1].elements;
+      if (
+        guardArgument &&
+        ts.isStringLiteralLike(guardArgument) &&
+        /^scripts\/verify-[^/]+\.mjs$/.test(guardArgument.text)
+      ) {
+        invoked.add(guardArgument.text);
+      }
+    }
+    ts.forEachChild(node, visit);
+  }
+
+  visit(sourceFile);
+  return invoked;
+}
+
+function hasGuardImplementation(source) {
+  if (typeof source !== "string" || source.trim() === "") return false;
+  const sourceFile = ts.createSourceFile(
+    "verify-guard.mjs",
+    source,
+    ts.ScriptTarget.ESNext,
+    true,
+    ts.ScriptKind.JS
+  );
+  if (sourceFile.parseDiagnostics.length > 0) return false;
+  return sourceFile.statements.some(
+    (statement) =>
+      !ts.isImportDeclaration(statement) &&
+      !ts.isExportDeclaration(statement) &&
+      !ts.isEmptyStatement(statement)
+  );
+}
+
+export function evaluateGuardRequirement({
+  guardRequired,
+  changedNameStatus,
+  changedFileSources = new Map(),
+}) {
   if (!guardRequired) {
-    return { ok: true, matchedGuardFiles: [], hasCiWiring: true };
+    return { ok: true, matchedGuardFiles: [], matchedStepFiles: [], wiredGuardFiles: [], hasCiWiring: true };
   }
   const addedFiles = changedNameStatus
     .filter((item) => item.status.startsWith("A"))
     .map((item) => item.path);
 
-  const guardFilePatterns = [
-    "scripts/verify-*.mjs",
-    "scripts/__tests__/verify-*.test.mjs",
-    "scripts/verify-steps/*.mjs",
-  ];
-
   const matchedGuardFiles = addedFiles.filter((filePath) =>
-    guardFilePatterns.some((pattern) => globToRegExp(pattern).test(filePath))
+    /^scripts\/verify-[^/]+\.mjs$/.test(filePath) &&
+    hasGuardImplementation(
+      changedFileSources instanceof Map
+        ? changedFileSources.get(filePath)
+        : changedFileSources?.[filePath]
+    )
   );
-
-  // Rule 17 guards are CI-wired by auto-discovered verify-steps. Requiring a
-  // package.json/ci.yml registration here forced manifests to lie or hot-file
-  // thrash even though verify:pre-commit already executes every added step.
-  const hasAutoDiscoveredStep = addedFiles.some((filePath) =>
-    globToRegExp("scripts/verify-steps/*.mjs").test(filePath)
+  const matchedStepFiles = addedFiles.filter((filePath) =>
+    /^scripts\/verify-steps\/[^/]+\.mjs$/.test(filePath)
   );
-  const hasCiWiring = hasAutoDiscoveredStep || /^\+.*verify:/m.test(ciDiffText);
+  const wiredGuardFiles = matchedGuardFiles.filter((guardFile) =>
+    matchedStepFiles.some((stepFile) => {
+      const source =
+        changedFileSources instanceof Map
+          ? changedFileSources.get(stepFile)
+          : changedFileSources?.[stepFile];
+      return typeof source === "string" && invokedGuardsFromVerifyStep(source).has(guardFile);
+    })
+  );
+  const hasCiWiring = wiredGuardFiles.length > 0;
 
   if (matchedGuardFiles.length === 0) {
     return {
       ok: false,
-      reason: "guard_required=true but no new verify guard/test/step file was added",
+      reason: "guard_required=true but no real scripts/verify-*.mjs guard implementation was added",
       matchedGuardFiles,
+      matchedStepFiles,
+      wiredGuardFiles,
       hasCiWiring,
     };
   }
   if (!hasCiWiring) {
     return {
       ok: false,
-      reason: "guard_required=true but no auto-discovered verify-step or CI verify wiring was added",
+      reason:
+        "guard_required=true but no added auto-discovered verify-step directly invokes an added guard with ctx.run(\"node\", [\"scripts/verify-*.mjs\"])",
       matchedGuardFiles,
+      matchedStepFiles,
+      wiredGuardFiles,
       hasCiWiring,
     };
   }
 
-  return { ok: true, matchedGuardFiles, hasCiWiring };
+  return { ok: true, matchedGuardFiles, matchedStepFiles, wiredGuardFiles, hasCiWiring };
 }
 
 export function computeDbGatePlan(manifest) {
@@ -464,14 +534,17 @@ function runCheckC7(manifest) {
 
 function runCheckC8(manifest, range) {
   const changedNameStatus = getChangedNameStatus(range);
-  const ciDiffRes = runCommand(`git diff ${range} -- .github/workflows/ci.yml`, "C8");
-  if (!ciDiffRes.ok) {
-    fail("C8", ciDiffRes.reason, ciDiffRes.tail);
+  const changedFileSources = new Map();
+  for (const item of changedNameStatus) {
+    if (!item.status.startsWith("A")) continue;
+    const absolutePath = path.resolve(ROOT, item.path);
+    if (!fs.existsSync(absolutePath) || !fs.statSync(absolutePath).isFile()) continue;
+    changedFileSources.set(item.path, fs.readFileSync(absolutePath, "utf8"));
   }
   const result = evaluateGuardRequirement({
     guardRequired: manifest.guard_required,
     changedNameStatus,
-    ciDiffText: ciDiffRes.stdout,
+    changedFileSources,
   });
 
   if (!result.ok) {
@@ -479,7 +552,10 @@ function runCheckC8(manifest, range) {
   }
 
   if (manifest.guard_required) {
-    pass("C8", `matched guard files: ${result.matchedGuardFiles.join(", ")}`);
+    pass(
+      "C8",
+      `matched guards: ${result.matchedGuardFiles.join(", ")}; wired guards: ${result.wiredGuardFiles.join(", ")}`
+    );
   } else {
     pass("C8", "guard not required");
   }

@@ -70,33 +70,129 @@ test("guard_required=true with no guard file in changeset fails", () => {
   const result = evaluateGuardRequirement({
     guardRequired: true,
     changedNameStatus: [{ status: "M", path: "package.json" }],
-    ciDiffText: "+      - name: verify something",
   });
   assert.equal(result.ok, false);
-  assert.match(result.reason, /no new verify guard/i);
+  assert.match(result.reason, /no real scripts\/verify-\*\.mjs guard/i);
 });
 
-test("guard_required=true accepts Rule 17 auto-discovered guard and verify-step wiring", () => {
+test("guard_required=true rejects a no-op verify-step without a real guard", () => {
+  const step = "scripts/verify-steps/999-verify-example.mjs";
   const result = evaluateGuardRequirement({
     guardRequired: true,
-    changedNameStatus: [
-      { status: "A", path: "scripts/verify-xlsx-cve-closeout.mjs" },
-      { status: "A", path: "scripts/verify-steps/144-verify-xlsx-cve-closeout.mjs" },
-    ],
-    ciDiffText: "",
+    changedNameStatus: [{ status: "A", path: step }],
+    changedFileSources: new Map([[step, 'export default { name: "noop", run() {} };']]),
   });
-  assert.equal(result.ok, true);
-  assert.equal(result.hasCiWiring, true);
+  assert.equal(result.ok, false);
+  assert.match(result.reason, /no real scripts\/verify-\*\.mjs guard/i);
 });
 
 test("guard_required=true rejects an unwired standalone guard", () => {
+  const guard = "scripts/verify-example.mjs";
   const result = evaluateGuardRequirement({
     guardRequired: true,
-    changedNameStatus: [{ status: "A", path: "scripts/verify-xlsx-cve-closeout.mjs" }],
-    ciDiffText: "",
+    changedNameStatus: [{ status: "A", path: guard }],
+    changedFileSources: new Map([[guard, 'console.log("real guard");']]),
   });
   assert.equal(result.ok, false);
-  assert.match(result.reason, /no auto-discovered verify-step/i);
+  assert.match(result.reason, /no added auto-discovered verify-step directly invokes/i);
+});
+
+test("guard_required=true rejects an empty guard even when a step invokes its path", () => {
+  const guard = "scripts/verify-example.mjs";
+  const step = "scripts/verify-steps/999-verify-example.mjs";
+  const result = evaluateGuardRequirement({
+    guardRequired: true,
+    changedNameStatus: [
+      { status: "A", path: guard },
+      { status: "A", path: step },
+    ],
+    changedFileSources: new Map([
+      [guard, "// no guard implementation"],
+      [
+        step,
+        'export default { run(ctx) { return ctx.run("node", ["scripts/verify-example.mjs"]); } };',
+      ],
+    ]),
+  });
+  assert.equal(result.ok, false);
+  assert.match(result.reason, /no real scripts\/verify-\*\.mjs guard/i);
+});
+
+test("guard_required=true rejects a real guard paired with an unrelated step", () => {
+  const guard = "scripts/verify-example.mjs";
+  const step = "scripts/verify-steps/999-verify-other.mjs";
+  const result = evaluateGuardRequirement({
+    guardRequired: true,
+    changedNameStatus: [
+      { status: "A", path: guard },
+      { status: "A", path: step },
+    ],
+    changedFileSources: new Map([
+      [guard, 'console.log("real guard");'],
+      [
+        step,
+        'export default { name: "other", run(ctx) { return ctx.run("node", ["scripts/verify-other.mjs"]); } };',
+      ],
+    ]),
+  });
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.wiredGuardFiles, []);
+});
+
+test("guard_required=true accepts a real guard plus a directly invoking formatted step", () => {
+  const guard = "scripts/verify-example.mjs";
+  const step = "scripts/verify-steps/999-verify-example.mjs";
+  const result = evaluateGuardRequirement({
+    guardRequired: true,
+    changedNameStatus: [
+      { status: "A", path: guard },
+      { status: "A", path: step },
+    ],
+    changedFileSources: new Map([
+      [guard, 'console.log("real guard");'],
+      [
+        step,
+        `export default {
+          name: "example",
+          run ( ctx ) {
+            return ctx
+              .run(
+                'node',
+                [ 'scripts/verify-example.mjs', '--selftest' ]
+              );
+          }
+        };`,
+      ],
+    ]),
+  });
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.wiredGuardFiles, [guard]);
+});
+
+test("guard_required=true rejects aliases, comments, and near-match guard paths", () => {
+  const guard = "scripts/verify-example.mjs";
+  const cases = [
+    'const target = "scripts/verify-example.mjs"; export default { run(ctx) { return ctx.run("node", [target]); } };',
+    'export default { run(ctx) { const run = ctx.run; return run("node", ["scripts/verify-example.mjs"]); } };',
+    '// ctx.run("node", ["scripts/verify-example.mjs"])\nexport default { run() {} };',
+    'export default { run(ctx) { return ctx.run("node", ["scripts/verify-example.mjs.backup"]); } };',
+  ];
+
+  for (const [index, source] of cases.entries()) {
+    const step = `scripts/verify-steps/99${index}-verify-example.mjs`;
+    const result = evaluateGuardRequirement({
+      guardRequired: true,
+      changedNameStatus: [
+        { status: "A", path: guard },
+        { status: "A", path: step },
+      ],
+      changedFileSources: new Map([
+        [guard, 'console.log("real guard");'],
+        [step, source],
+      ]),
+    });
+    assert.equal(result.ok, false, `case ${index} must not count as wiring`);
+  }
 });
 
 test("db_required=true skips ci:boot-api-smoke", () => {
