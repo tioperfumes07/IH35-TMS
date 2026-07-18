@@ -17,54 +17,40 @@ Banking Transactions UI captures Check #, Class, Location, Customer/Billable, an
 
 ---
 
+## Canonical Directives — Decided, Not Questions
+
+The prior five-question framing is **superseded**. These four directives are already canonical and MUST NOT be re-opened in this block:
+
+1. **Class is unit-derived** — resolve the accounting class from the linked unit through the unit-number / unit-linked `catalogs.classes` contract. Do not offer an independent bank-transaction class override.
+2. **Location is canonical** — link by same-entity `mdata.locations` UUID FK; do not store free-text location as the canonical value.
+3. **Billable is customer-linked workflow** — billable expense lines use customer linkage (`billable_customer_uuid`) and an auditable reimbursable-expense workflow; a metadata-only boolean is insufficient.
+4. **Retain IH35 trucking custom fields** — preserve the existing trucking custom fields required by the QBO-parity specs; do not replace or delete them in favor of a generic tag-only model.
+
+---
+
 ## Owner Decisions Required
 
-Reply on the PR with copy/paste format: `1-B, 2-B, 3-B, 4-B, 5-B` (or your chosen letters).
+Reply on the PR with copy/paste format: `1-C, 2-B` (or your chosen letters).
 
-### 1. Tags
+### 1. Persistence / Source of Truth
 
-| Option | Model |
-|--------|--------|
-| **A** | Normalized TMS tags (shared tag vocabulary across modules) |
-| **B** | QuickBooks-style normalized Custom Fields (typed definitions + per-txn values) |
+| Option | Contract |
+|--------|----------|
+| **A** | Bank transaction only — metadata persists only on `banking.bank_transactions`. |
+| **B** | Resulting accounting record only — metadata persists only on the accepted `accounting.expenses` / `accounting.expense_lines` record. |
+| **C** | Bank transaction as source evidence plus an immutable snapshot/copy on the resulting accepted expense / expense line. |
 
-**Recommendation: B** — Custom Fields align with QBO parity, support typed validation, and avoid a parallel tag taxonomy that drifts from accounting exports.
+**Recommendation: C** — preserve imported source evidence while freezing the accepted accounting interpretation for audit, read-back, and forward/reverse drill-through.
 
-### 2. Billable
+### 2. Imported Check / Reference Semantics
 
-| Option | Model |
-|--------|--------|
-| **A** | Metadata-only (`is_billable` boolean + optional customer hint; no downstream workflow) |
-| **B** | Customer-required auditable reimbursable expense workflow (billable flag gates customer linkage; spawns traceable reimbursable path with audit) |
+| Option | Contract |
+|--------|----------|
+| **A** | Verbatim nullable text with no duplicate signal. |
+| **B** | Normalized nullable reference with an account-scoped, fiscal-year duplicate **warning**, but no hard uniqueness constraint. |
+| **C** | Hard unique per bank account and fiscal year. |
 
-**Recommendation: B** — Billable without workflow is a patch; trucking reimbursables need customer linkage, audit, and forward/reverse drill-through to invoices/expenses.
-
-### 3. Class
-
-| Option | Model |
-|--------|--------|
-| **A** | Independent user selection (manual class picker on each transaction) |
-| **B** | Locked unit-derived class (class resolved from tagged `unit_id` → unit's default class; user cannot override on bank txn) |
-
-**Recommendation: B** — Class should follow the unit for P&L segmentation consistency; manual override invites class/unit mismatch and report drift.
-
-### 4. Location
-
-| Option | Model |
-|--------|--------|
-| **A** | Free text (`location` text column) |
-| **B** | Canonical `mdata.locations` UUID FK (`location_id` → `mdata.locations.id`) |
-
-**Recommendation: B** — Free text breaks linkage law; canonical location enables cross-module drill-through (dispatch, fuel, maintenance).
-
-### 5. Check Number
-
-| Option | Model |
-|--------|--------|
-| **A** | Blanket unique constraint (global or per-company uniqueness on `check_number`) |
-| **B** | Nullable bank-document reference without blanket uniqueness (store when present; no UNIQUE index) |
-
-**Recommendation: B** — Check numbers repeat across accounts/vendors and are not stable natural keys; uniqueness would block legitimate entries.
+**Recommendation: B** — imported references are useful duplicate-risk signals but are not reliable natural keys. The blueprint's hard uniqueness rule applies to posted `accounting.bill_payments`, not automatically to imported `banking.bank_transactions`.
 
 ---
 
@@ -72,10 +58,11 @@ Reply on the PR with copy/paste format: `1-B, 2-B, 3-B, 4-B, 5-B` (or your chose
 
 Regardless of chosen options, implementation **must** satisfy:
 
-1. **Same-entity validation** — every FK (`customer_id`, `unit_id`, `location_id`, class source, etc.) must match `operating_company_id` on the bank transaction; cross-entity links rejected at API + DB.
+1. **Entity-scoped links** — every FK (`customer_id`, `unit_id`, `location_id`, class source, expense linkage, etc.) must match `operating_company_id`; cross-entity links are rejected at API + DB.
 2. **Explicit set/clear semantics** — PATCH/categorize accepts `null` or dedicated clear flags to remove optional metadata; omitted fields do not silently preserve stale values.
-3. **Complete read-back** — GET/list/detail returns all persisted metadata fields; UI draft overlay hydrates from server state after save/reload.
-4. **Old/new append-only audit** — every metadata mutation emits `audit.audit_events` with `{ field, old_value, new_value }` (or equivalent structured diff); no silent UPDATE without audit.
+3. **Full read-back** — GET/list/detail returns all persisted metadata fields; UI state hydrates from server state after save/reload.
+4. **Append-only old/new audit** — every metadata mutation emits an append-only audit record with `{ field, old_value, new_value }` (or equivalent structured diff); no silent UPDATE without audit.
+5. **No QBO write-back** — TMS and QBO remain parallel books; this workflow must not enqueue or perform TMS→QBO writes.
 
 ---
 
@@ -83,14 +70,11 @@ Regardless of chosen options, implementation **must** satisfy:
 
 | # | Decision | Recommended |
 |---|----------|-------------|
-| 1 | Tags | **B** — Custom Fields |
-| 2 | Billable | **B** — Reimbursable workflow |
-| 3 | Class | **B** — Unit-derived |
-| 4 | Location | **B** — `mdata.locations` UUID |
-| 5 | Check number | **B** — Nullable reference, no blanket UNIQUE |
+| 1 | Persistence / source of truth | **C** — source evidence + immutable accepted snapshot |
+| 2 | Imported check/reference | **B** — normalized nullable reference + warning, no hard UNIQUE |
 
 **Next step after owner sign-off:** unblock `.block-ready/0441-mod8-tx-fields-captured-not-sent.json` for builder dispatch (schema migration + API payload + read-back + guard + live proof).
 
 ## Sign-Off
 
-Decision record drafted 2026-07-18. **Awaiting Jorge owner reply on PR before any code dispatch.**
+Decision record corrected 2026-07-18. The prior five-question framing is visibly superseded above. **Awaiting Jorge owner reply on PR before any code dispatch.**
