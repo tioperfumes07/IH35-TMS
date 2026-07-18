@@ -11,16 +11,14 @@
 // no-op — it returns a clear "entity not yet wired" instead.
 //
 // Most work runs on the caller's transaction client (the approve route's withCompanyScope txn) so the
-// reversal + the status flip + the request decision are atomic (all-or-nothing) — true for work_order,
-// bill, invoice, expense, journal_entry, bill_payment (GL leg), payment. 'driver_settlement' and the
-// bill_payment status-flip call an existing multi-transaction financial function verbatim (see their
-// executor comments below) rather than duplicate money math inline.
+// reversal + every subledger/status flip + the request decision are atomic (all-or-nothing).
 
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { settleWorkOrderFinancialLinkage } from "../work-orders/work-orders.routes.js";
 import { auditVoid, isVoidEnforcementEnabled, postVoidReversal } from "../accounting/void.service.js";
 import { reverseJournalEntryNoFlip } from "../accounting/journal-entries.service.js";
-import { reverseSettlementBillPayment } from "../accounting/settlement-posting/settlement-bill-payment-posting.service.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
+import { reverseSettlementBillPaymentInClientTx } from "../accounting/settlement-posting/settlement-bill-payment-posting.service.js";
 
 export type VoidCancelAction = "void" | "cancel";
 
@@ -613,9 +611,12 @@ const executeDriverSettlement: EntityExecutor = async (ctx) => {
   if (status === "cancelled") return { kind: "already_done" };
   if (status === "paid") return { kind: "not_completable" }; // already paid out to the driver — cannot reverse via this path
 
-  const reversal = await reverseSettlementBillPayment(
+  const currentBusinessDate = companyBusinessDate();
+  const reversal = await reverseSettlementBillPaymentInClientTx(
+    client,
     { operatingCompanyId, settlementId: entityId, reason },
-    { userId }
+    { userId },
+    currentBusinessDate
   );
 
   const flipped = await client.query<{ id: string }>(

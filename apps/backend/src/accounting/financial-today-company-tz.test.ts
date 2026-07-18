@@ -89,10 +89,11 @@ describe("G6-1 static guard — no UTC financial 'today' in accounting date defa
       const src = readFileSync(resolve(here, rel), "utf8");
       expect(src).not.toContain(UTC_TODAY);
       if (rel === "settlement-posting/settlement-bill-payment-posting.service.ts") {
-        // The settlement orchestrator delegates date selection to the two canonical reversal services;
-        // both enforce resolveReversalDate(..., todayIso()/companyBusinessDate()).
-        expect(src).toContain("reversePostedSourceTransactionInClientTx");
+          // The settlement orchestrator passes one transaction-scoped date through canonical helpers.
+          expect(src).toContain("voidBillPaymentInClientTx");
+          expect(src).toContain("voidBillInClientTx");
         expect(src).toContain("reverseJournalEntryNoFlip");
+          expect(src).toContain("currentBusinessDate");
       } else {
         expect(src).toContain("companyBusinessDate");
       }

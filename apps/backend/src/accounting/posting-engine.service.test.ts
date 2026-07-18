@@ -369,7 +369,8 @@ describe("posting engine service", () => {
         source_transaction_type: "bill",
         source_transaction_id: "9f943015-e3d2-4f1f-8732-c0ef4bbd25fc",
       },
-      { userId: "cd9d01fe-a90d-4cd2-a96d-f6a443f7debc" }
+      { userId: "cd9d01fe-a90d-4cd2-a96d-f6a443f7debc" },
+      "2026-07-18"
     );
 
     expect(result.result).toBe("reversed");
@@ -402,7 +403,8 @@ describe("posting engine service", () => {
         source_transaction_type: "bill",
         source_transaction_id: "9f943015-e3d2-4f1f-8732-c0ef4bbd25fc",
       },
-      { userId: "cd9d01fe-a90d-4cd2-a96d-f6a443f7debc" }
+      { userId: "cd9d01fe-a90d-4cd2-a96d-f6a443f7debc" },
+      "2026-07-18"
     );
 
     expect(result.journal_entry_id).toBe("44444444-4444-4444-8444-444444444444");

@@ -267,7 +267,13 @@ export type ReverseJournalEntryNoFlipResult = {
  */
 export async function reverseJournalEntryNoFlip(
   client: QueryableClient,
-  params: { operatingCompanyId: string; journalEntryId: string; reason: string; actorUserId: string }
+  params: {
+    operatingCompanyId: string;
+    journalEntryId: string;
+    reason: string;
+    actorUserId: string;
+    currentBusinessDate?: string;
+  }
 ): Promise<ReverseJournalEntryNoFlipResult> {
   const { operatingCompanyId, journalEntryId } = params;
   const reason = params.reason.trim();
@@ -340,6 +346,7 @@ export async function reverseJournalEntryNoFlip(
       entityId: journalEntryId,
       originalDate: existing.entry_date,
       memo: `Reversal of journal entry ${journalEntryId}: ${reason}`,
+      currentDate: params.currentBusinessDate,
     },
     { userId: params.actorUserId }
   );

@@ -4,10 +4,13 @@ const mocks = vi.hoisted(() => ({
   withCurrentUser: vi.fn(),
   reverseSource: vi.fn(),
   reverseJournal: vi.fn(),
+  voidPayment: vi.fn(),
+  voidBill: vi.fn(),
   appendAudit: vi.fn(),
 }));
 
 vi.mock("../../../auth/db.js", () => ({ withCurrentUser: mocks.withCurrentUser }));
+vi.mock("../../../lib/company-business-date.js", () => ({ companyBusinessDate: () => "2026-07-18" }));
 vi.mock("../../posting-engine.service.js", () => ({
   postSourceTransaction: vi.fn(),
   reversePostedSourceTransactionInClientTx: mocks.reverseSource,
@@ -16,13 +19,21 @@ vi.mock("../../journal-entries.service.js", () => ({
   createJournalEntry: vi.fn(),
   reverseJournalEntryNoFlip: mocks.reverseJournal,
 }));
+vi.mock("../../bills.service.js", () => ({
+  createBill: vi.fn(),
+  payBill: vi.fn(),
+  voidBillPaymentInClientTx: mocks.voidPayment,
+  voidBillInClientTx: mocks.voidBill,
+}));
 vi.mock("../../../audit/crud-audit.js", () => ({ appendCrudAudit: mocks.appendAudit }));
 
 const COMPANY = "11111111-1111-4111-8111-111111111111";
 const SETTLEMENT = "22222222-2222-4222-8222-222222222222";
 const RUN = "33333333-3333-4333-8333-333333333333";
 const BILL = "44444444-4444-4444-8444-444444444444";
+const DRIVER_BILL = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
 const PAYMENT = "55555555-5555-4555-8555-555555555555";
+const DEDUCTION_PAYMENT = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
 const BILL_JE = "66666666-6666-4666-8666-666666666666";
 const PAYMENT_JE = "77777777-7777-4777-8777-777777777777";
 const DEDUCTION_JE = "88888888-8888-4888-8888-888888888888";
@@ -39,14 +50,15 @@ function makeClient(options?: { residualCents?: number }) {
       if (sql.includes("FROM driver_finance.driver_settlement_gl_runs")) {
         return { rows: [{ id: RUN, status: "posted", deduction_journal_entry_id: DEDUCTION_JE }] };
       }
-      if (sql.includes("FROM driver_finance.driver_settlement_gl_bills")) {
+      if (sql.includes("SELECT driver_bill_id::text, accounting_bill_id::text")) {
         return {
           rows: [{
+            driver_bill_id: DRIVER_BILL,
             accounting_bill_id: BILL,
             bill_journal_entry_id: BILL_JE,
             cash_bill_payment_id: PAYMENT,
             cash_journal_entry_id: PAYMENT_JE,
-            deduction_bill_payment_id: null,
+            deduction_bill_payment_id: DEDUCTION_PAYMENT,
           }],
         };
       }
@@ -59,6 +71,15 @@ function makeClient(options?: { residualCents?: number }) {
             absolute_residual_cents: residual,
           }],
         };
+      }
+      if (sql.includes("UPDATE driver_finance.driver_bills")) return { rows: [{ id: DRIVER_BILL }], rowCount: 1 };
+      if (sql.includes("WITH linked AS")) {
+        return { rows: [{
+          active_payment_count: 0,
+          nonvoid_bill_count: 0,
+          nonzero_paid_bill_count: 0,
+          unrestored_driver_bill_count: 0,
+        }] };
       }
       if (sql.includes("UPDATE driver_finance.driver_settlement_gl_runs")) {
         return { rows: [{ id: RUN }], rowCount: 1 };
@@ -76,6 +97,12 @@ describe("settlement Bill+BillPayment reversal orchestration", () => {
       result: "reversed",
       journal_entry_id: input.source_transaction_type === "bill" ? BILL_REV : PAYMENT_REV,
     }));
+    mocks.voidPayment.mockImplementation(async (_client, input) => ({
+      ok: true,
+      bill_id: BILL,
+      reversal_journal_entry_id: input.reversePostedGl ? PAYMENT_REV : null,
+    }));
+    mocks.voidBill.mockResolvedValue({ ok: true, reversal_journal_entry_id: BILL_REV });
     mocks.reverseJournal.mockResolvedValue({
       reversal: {
         reversal_journal_entry_id: DEDUCTION_REV,
@@ -91,7 +118,7 @@ describe("settlement Bill+BillPayment reversal orchestration", () => {
     const { client, calls } = makeClient();
     mocks.withCurrentUser.mockImplementation(async (_userId, fn) => fn(client));
     const periodLocked = Object.assign(new Error("IH35_CLOSED_PERIOD"), { code: "PERIOD_LOCKED" });
-    mocks.reverseSource.mockRejectedValueOnce(periodLocked);
+    mocks.voidPayment.mockRejectedValueOnce(periodLocked);
 
     const { reverseSettlementBillPayment } = await import("../settlement-bill-payment-posting.service.js");
     await expect(
@@ -133,16 +160,36 @@ describe("settlement Bill+BillPayment reversal orchestration", () => {
     );
 
     expect(result).toEqual({ result: "reversed", settlement_id: SETTLEMENT, run_id: RUN });
-    expect(mocks.reverseSource).toHaveBeenCalledTimes(2);
-    expect(mocks.reverseSource.mock.calls.every((call) => call[0] === client)).toBe(true);
+    expect(mocks.voidPayment).toHaveBeenCalledTimes(2);
+    expect(mocks.voidPayment.mock.calls.every((call) => call[0] === client)).toBe(true);
+    expect(mocks.voidPayment).toHaveBeenNthCalledWith(
+      1,
+      client,
+      expect.objectContaining({ paymentId: PAYMENT, reversePostedGl: true, currentBusinessDate: "2026-07-18" })
+    );
+    expect(mocks.voidPayment).toHaveBeenNthCalledWith(
+      2,
+      client,
+      expect.objectContaining({ paymentId: DEDUCTION_PAYMENT, reversePostedGl: false, currentBusinessDate: "2026-07-18" })
+    );
+    expect(mocks.voidBill).toHaveBeenCalledWith(
+      client,
+      expect.objectContaining({ billId: BILL, currentBusinessDate: "2026-07-18" })
+    );
     expect(mocks.reverseJournal).toHaveBeenCalledWith(
       client,
-      expect.objectContaining({ journalEntryId: DEDUCTION_JE, operatingCompanyId: COMPANY })
+      expect.objectContaining({
+        journalEntryId: DEDUCTION_JE,
+        operatingCompanyId: COMPANY,
+        currentBusinessDate: "2026-07-18",
+      })
     );
     const proofIndex = calls.findIndex((c) => c.sql.includes("WITH selected AS"));
     const statusIndex = calls.findIndex((c) => c.sql.includes("SET status = 'reversed'"));
     expect(proofIndex).toBeGreaterThan(-1);
     expect(statusIndex).toBeGreaterThan(proofIndex);
+    expect(calls.some((c) => c.sql.includes("SET status = 'open'"))).toBe(true);
+    expect(calls.some((c) => c.sql.includes("WITH linked AS"))).toBe(true);
     expect(mocks.appendAudit).toHaveBeenCalledTimes(1);
   });
 });

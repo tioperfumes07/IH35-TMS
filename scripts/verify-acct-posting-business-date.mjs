@@ -35,13 +35,16 @@ function isTestFile(rel) {
 }
 
 function findViolationsInText(text, fileLabel = "fixture") {
+  const masked = text
+    .replace(/\/\*[\s\S]*?\*\//g, (comment) => comment.replace(/[^\n]/g, " "))
+    .replace(/(^|[^:])\/\/[^\n]*/gm, (comment) => comment.replace(/[^\n]/g, " "));
   const violations = [];
-  text.split("\n").forEach((line, i) => {
-    const trimmed = line.trim();
-    // Ignore comment lines that document the anti-pattern.
-    if (trimmed.startsWith("//") || trimmed.startsWith("*") || trimmed.startsWith("/*")) return;
-    if (UTC_TODAY_RE.test(line)) violations.push(`${fileLabel}:${i + 1}: ${trimmed}`);
-  });
+  const matcher = new RegExp(UTC_TODAY_RE.source, "g");
+  for (const match of masked.matchAll(matcher)) {
+    const line = masked.slice(0, match.index).split("\n").length;
+    const snippet = text.slice(match.index, match.index + match[0].length).replace(/\s+/g, " ").trim();
+    violations.push(`${fileLabel}:${line}: ${snippet}`);
+  }
   return violations;
 }
 
@@ -61,6 +64,12 @@ function selftest() {
   const planted = [
     `const entryDate = new Date().toISOString().slice(0, 10);`,
     `entry_date: new Date().toISOString().slice(0,10),`,
+    `const multiline = new Date()
+      .toISOString()
+      .slice(
+        0,
+        10
+      );`,
   ].join("\n");
   const good = [
     `import { companyBusinessDate } from "../../lib/company-business-date.js";`,
@@ -71,7 +80,7 @@ function selftest() {
   ].join("\n");
 
   const plantedHits = findViolationsInText(planted, "planted.ts");
-  if (plantedHits.length < 2) {
+  if (plantedHits.length !== 3) {
     console.error(`[${LABEL}] --selftest FAILED: planted UTC-today defaults must all be caught`);
     console.error(`  got ${plantedHits.length}:`, plantedHits);
     process.exit(1);

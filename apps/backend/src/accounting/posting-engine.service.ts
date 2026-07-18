@@ -1756,7 +1756,8 @@ export async function postSourceTransaction(input: PostSourceInput, actor: Actor
 async function executeSourceReversalOnClient(
   client: DbClient,
   input: ReverseBatchInput,
-  actor: Actor
+  actor: Actor,
+  currentBusinessDate: string
 ): Promise<PostingResult> {
   const sourceType = normalizeSourceType(input.source_transaction_type);
   const sourceId = normalizeSourceId(input.source_transaction_id);
@@ -1809,7 +1810,7 @@ async function executeSourceReversalOnClient(
     `SELECT accounting.closed_period_cutoff($1::uuid)::text AS cutoff`,
     [input.operating_company_id]
   );
-  const reversalDate = resolveReversalDate(originalDate, cutoff.rows[0]?.cutoff ?? null, todayIso());
+  const reversalDate = resolveReversalDate(originalDate, cutoff.rows[0]?.cutoff ?? null, currentBusinessDate);
   await ensureOpenPeriod(client, input.operating_company_id, reversalDate);
 
   const idempotencyKey = buildPostingMvpIdempotencyKey({
@@ -1947,15 +1948,17 @@ async function executeSourceReversalOnClient(
 export async function reversePostedSourceTransactionInClientTx(
   client: DbClient,
   input: ReverseBatchInput,
-  actor: Actor
+  actor: Actor,
+  currentBusinessDate: string
 ): Promise<PostingResult> {
-  return executeSourceReversalOnClient(client, input, actor);
+  return executeSourceReversalOnClient(client, input, actor, currentBusinessDate);
 }
 
 export async function reversePostedSourceTransaction(input: ReverseBatchInput, actor: Actor): Promise<PostingResult> {
+  const currentBusinessDate = todayIso();
   return withCurrentUser(actor.userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
-    return executeSourceReversalOnClient(client, input, actor);
+    return executeSourceReversalOnClient(client, input, actor, currentBusinessDate);
   });
 }
 

@@ -4,8 +4,12 @@ import { reassignDraftAttachments } from "../documents/attachments.service.js";
 import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
 import { enqueueTmsBillPushRequested } from "../qbo/tms-bill-push-chain.service.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 import { postBillGlIfEnabled } from "./bill-gl.service.js";
-import { postSourceTransactionInClientTx } from "./posting-engine.service.js";
+import {
+  postSourceTransactionInClientTx,
+  reversePostedSourceTransactionInClientTx,
+} from "./posting-engine.service.js";
 import { isBillPaymentGlPostingEnabled } from "./bill-payment-gl.service.js";
 import {
   auditVoid,
@@ -122,6 +126,13 @@ type BillPaymentRow = {
   // BANKREC-LISTSTATUS-01 (read-only, additive): true iff this bill_payment has an ACTIVE
   // (auto_matched|user_matched) bank.reconciliation_matches row.
   is_reconciled: boolean;
+};
+
+type BillMutationClient = {
+  query: <T = Record<string, unknown>>(
+    sql: string,
+    values?: unknown[]
+  ) => Promise<{ rows: T[]; rowCount?: number }>;
 };
 
 // BANKREC-LISTSTATUS-01: shared correlated-subquery fragments. 'rejected' is the only non-active
@@ -1027,9 +1038,17 @@ export async function voidBill(
   return result;
 }
 
-export async function voidBillPayment(operatingCompanyId: string, paymentId: string, reason: string, userId: string) {
-  const voided = await withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+export async function voidBillPaymentInClientTx(
+  client: BillMutationClient,
+  input: {
+    operatingCompanyId: string;
+    paymentId: string;
+    reason: string;
+    userId: string;
+    reversePostedGl: boolean;
+    currentBusinessDate: string;
+  }
+) {
     const paymentRes = await client.query<BillPaymentRow>(
       `
         SELECT *
@@ -1039,7 +1058,7 @@ export async function voidBillPayment(operatingCompanyId: string, paymentId: str
         LIMIT 1
         FOR UPDATE
       `,
-      [paymentId, operatingCompanyId]
+      [input.paymentId, input.operatingCompanyId]
     );
     const payment = paymentRes.rows[0];
     if (!payment) throw new Error("bill_payment_not_found");
@@ -1054,7 +1073,7 @@ export async function voidBillPayment(operatingCompanyId: string, paymentId: str
         LIMIT 1
         FOR UPDATE
       `,
-      [payment.bill_id, operatingCompanyId]
+      [payment.bill_id, input.operatingCompanyId]
     );
     const billRaw = billRes.rows[0];
     if (!billRaw) throw new Error("bill_not_found");
@@ -1063,6 +1082,19 @@ export async function voidBillPayment(operatingCompanyId: string, paymentId: str
     const paymentAmountCents = Number(payment.amount_cents ?? Math.round(Number(payment.amount ?? 0) * 100));
     const newPaidCents = Math.max(0, Number(bill.paid_cents) - paymentAmountCents);
     const storageStatus = storageStatusForPaid(Number(bill.amount_cents), newPaidCents);
+
+    const reversal = input.reversePostedGl
+      ? await reversePostedSourceTransactionInClientTx(
+          client,
+          {
+            operating_company_id: input.operatingCompanyId,
+            source_transaction_type: "bill_payment",
+            source_transaction_id: input.paymentId,
+          },
+          { userId: input.userId },
+          input.currentBusinessDate
+        )
+      : null;
 
     await client.query(
       `
@@ -1075,7 +1107,7 @@ export async function voidBillPayment(operatingCompanyId: string, paymentId: str
         WHERE id = $1
           AND operating_company_id = $2
       `,
-      [paymentId, operatingCompanyId, userId, reason]
+      [input.paymentId, input.operatingCompanyId, input.userId, input.reason]
     );
 
     await client.query(
@@ -1091,24 +1123,114 @@ export async function voidBillPayment(operatingCompanyId: string, paymentId: str
     );
 
     if (payment.from_bank_account_id) {
-      await updateBankBalance(client, operatingCompanyId, payment.from_bank_account_id, Math.abs(paymentAmountCents));
+      await updateBankBalance(client, input.operatingCompanyId, payment.from_bank_account_id, Math.abs(paymentAmountCents));
     }
 
     await appendCrudAudit(
       client,
-      userId,
+      input.userId,
       "accounting.bill_payment.voided",
       {
         resource_type: "accounting.bill_payments",
-        resource_id: paymentId,
-        operating_company_id: operatingCompanyId,
+        resource_id: input.paymentId,
+        operating_company_id: input.operatingCompanyId,
         bill_id: payment.bill_id,
-        reason,
+        reason: input.reason,
+        reversal_journal_entry_id: reversal?.journal_entry_id ?? null,
       },
       "warning",
       "P5-D2-BILL-PAYMENT"
     );
-    return { ok: true, bill_id: payment.bill_id };
+    return {
+      ok: true,
+      bill_id: payment.bill_id,
+      reversal_journal_entry_id: reversal?.journal_entry_id ?? null,
+    };
+}
+
+export async function voidBillInClientTx(
+  client: BillMutationClient,
+  input: {
+    operatingCompanyId: string;
+    billId: string;
+    reason: string;
+    userId: string;
+    currentBusinessDate: string;
+  }
+) {
+  const billRes = await client.query<BillRow>(
+    `SELECT *
+       FROM accounting.bills
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid
+      LIMIT 1 FOR UPDATE`,
+    [input.billId, input.operatingCompanyId]
+  );
+  const billRaw = billRes.rows[0];
+  if (!billRaw) throw new Error("bill_not_found");
+  const bill = normalizeBill(billRaw);
+  if (bill.status === "voided") throw new Error("bill_already_void");
+
+  const paymentsRes = await client.query<{ count: number }>(
+    `SELECT COUNT(*)::int AS count
+       FROM accounting.bill_payments
+      WHERE bill_id = $1::uuid
+        AND operating_company_id = $2::uuid
+        AND revoked_at IS NULL`,
+    [input.billId, input.operatingCompanyId]
+  );
+  if (Number(paymentsRes.rows[0]?.count ?? 0) !== 0) throw new Error("bill_has_payments_cannot_void");
+
+  const reversal = await reversePostedSourceTransactionInClientTx(
+    client,
+    {
+      operating_company_id: input.operatingCompanyId,
+      source_transaction_type: "bill",
+      source_transaction_id: input.billId,
+    },
+    { userId: input.userId },
+    input.currentBusinessDate
+  );
+
+  const updated = await client.query<{ id: string }>(
+    `UPDATE accounting.bills
+        SET paid_cents = 0, paid_amount = 0, status = 'void',
+            revoked_at = now(), revoked_by_user_id = $3::uuid,
+            revoked_reason = $4, updated_at = now()
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid AND revoked_at IS NULL
+      RETURNING id::text`,
+    [input.billId, input.operatingCompanyId, input.userId, input.reason]
+  );
+  if (!updated.rows[0]?.id) throw new Error("bill_void_state_transition_failed");
+
+  await appendCrudAudit(
+    client,
+    input.userId,
+    "accounting.bill.voided",
+    {
+      resource_type: "accounting.bills",
+      resource_id: input.billId,
+      operating_company_id: input.operatingCompanyId,
+      reason: input.reason,
+      reversal_journal_entry_id: reversal.journal_entry_id,
+    },
+    "warning",
+    "SETTLEMENT-BILL-PAYMENT"
+  );
+  return { ok: true, reversal_journal_entry_id: reversal.journal_entry_id };
+}
+
+export async function voidBillPayment(operatingCompanyId: string, paymentId: string, reason: string, userId: string) {
+  const currentBusinessDate = companyBusinessDate();
+  const voided = await withCurrentUser(userId, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    return voidBillPaymentInClientTx(client, {
+      operatingCompanyId,
+      paymentId,
+      reason,
+      userId,
+      reversePostedGl: false,
+      currentBusinessDate,
+    });
   });
 
   return voided;

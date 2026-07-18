@@ -515,6 +515,43 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
     );
     expect(run[0]!.status).toBe("reversed");
 
+    const glBillIds = await resolveGlBillIds();
+    const restoredPayments = await read<{ total: string; active: string }>(
+      `SELECT COUNT(*)::text AS total, COUNT(*) FILTER (WHERE revoked_at IS NULL)::text AS active
+         FROM accounting.bill_payments
+        WHERE operating_company_id=$1::uuid AND bill_id = ANY($2::uuid[])`,
+      [companyId, glBillIds]
+    );
+    expect(Number(restoredPayments[0]!.total)).toBe(6);
+    expect(Number(restoredPayments[0]!.active)).toBe(0);
+
+    const restoredBills = await read<{ total: string; nonvoid: string; paid_cents: string }>(
+      `SELECT COUNT(*)::text AS total, COUNT(*) FILTER (WHERE revoked_at IS NULL)::text AS nonvoid,
+              COALESCE(SUM(paid_cents),0)::text AS paid_cents
+         FROM accounting.bills
+        WHERE operating_company_id=$1::uuid AND id = ANY($2::uuid[])`,
+      [companyId, glBillIds]
+    );
+    expect(Number(restoredBills[0]!.total)).toBe(3);
+    expect(Number(restoredBills[0]!.nonvoid)).toBe(0);
+    expect(Number(restoredBills[0]!.paid_cents)).toBe(0);
+
+    const restoredDriverBills = await read<{ status: string; settled_in_settlement_id: string | null }>(
+      `SELECT status, settled_in_settlement_id::text
+         FROM driver_finance.driver_bills
+        WHERE operating_company_id=$1::uuid AND id = ANY($2::uuid[]) ORDER BY id`,
+      [companyId, billIds]
+    );
+    expect(restoredDriverBills).toHaveLength(3);
+    expect(restoredDriverBills.every((row) => row.status === "open" && row.settled_in_settlement_id === null)).toBe(true);
+
+    const bank = await read<{ current_balance_cents: string }>(
+      `SELECT current_balance_cents::text FROM banking.bank_accounts
+        WHERE id=$1::uuid AND operating_company_id=$2::uuid`,
+      [dipBankId, companyId]
+    );
+    expect(Number(bank[0]!.current_balance_cents)).toBe(10_000_000);
+
     const reversalJeIds = await resolveReversalJournalEntryIds(originalJeIds);
     expect(reversalJeIds).toHaveLength(7);
     expect(new Set(reversalJeIds).size).toBe(7);
