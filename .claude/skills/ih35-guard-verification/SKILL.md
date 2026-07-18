@@ -54,17 +54,29 @@ has produced false "the work is gone" conclusions.)
 Every bug fix gets a **static CI guard** (`scripts/verify-*.mjs`) wired into `verify:arch-design`. The guard IS
 the proof the fix holds. When you build a guard, prove it FAILS on the bug and PASSES on the fix.
 
-## 6. Live-DB verification (gated — ask every time, §1.5)
+## 6. Verify the verifier (owner-locked 2026-07-18)
+
+- A guard file or textual wiring reference is not execution proof. Prove its failure reaches the required job.
+- `ctx.run()` failures, nonzero step returns, throws, rejected promises, signals, and spawn failures all turn
+  the suite red. Intentional probes use an explicit non-throwing API with focused tests.
+- Before changing runner semantics, enumerate return-based steps and their existing reds. Afterward, the
+  exposed-red set must match; every red is fixed with evidence, never allowlisted or hidden.
+- CI de-duplication waits until wrapper execution and failure propagation are proven per control.
+- Local-only edits and status lines are not shared evidence. Commit + push + independent verification are
+  required before reporting a repository fix as shipped.
+
+## 7. Live-DB verification (gated — ask every time, §1.5)
 Prefer schema truth from `db/migrations/` + public health endpoints. If a live read is truly needed: ask
 first; `assert-neon-branch --expect-branch` before ANY connection (neonctl connection-string silently returns
 the PROD endpoint if the branch isn't positional); verify `current_database()`/`inet_server_addr()`; use
 `BEGIN; SET TRANSACTION READ ONLY; … ROLLBACK` for zero-write proof. A bare read-only `.sql` trips the
 hold-merge-gate → write diagnostics as `scripts/*.mjs`.
 
-## 7. Durable tool mechanics (stable) vs volatile (may change — re-verify)
-**Durable:** CI is the authoritative gate (husky pre-push fails on uninstalled backend deps → commit/push
-`--no-verify`); `gh` for all GitHub ops; API/JSON responses over screenshots as the source of truth; the
-health endpoint for deploy state.
+## 8. Durable tool mechanics (stable) vs volatile (may change — re-verify)
+**Durable:** never bypass branch freshness or a real red guard; classify exact output and require explicit
+branch-specific owner authorization for any genuine environment-only bypass. CI is an independent backstop,
+not permission to push stale or unverified code. Use `gh` for GitHub operations, API/JSON responses over
+screenshots as truth, and the health endpoint for deploy state.
 **Volatile — treat as hints, re-verify before relying:** attach-to-real-Chrome for authed UI audits (Google
 blocks Playwright/Chromium OAuth); `form.requestSubmit()` for some GitHub modals; reload-before-retry on a
 frozen tab; specific Render/Neon MCP quirks. These rot — confirm they still hold, don't cite them as law.

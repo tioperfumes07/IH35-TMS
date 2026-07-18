@@ -1,0 +1,33 @@
+---
+description: Fail-closed pipeline truth, conflict control, and merge-throughput law
+alwaysApply: true
+---
+
+# RULE 18 — PIPELINE TRUTH + THROUGHPUT
+
+Verified 2026-07-18. Applies to every block and agent.
+
+## Confirmed defects
+
+- `verify-steps/_context.mjs` returned numeric child status while `_runner.mjs` ignored resolved values. A returned nonzero could produce `verify:pre-commit PASS`.
+- `.husky/pre-push` shell-sourced `.env`; `BRANCH_PRECHECK_STEPS_JSON=[]` plus `IH35_BRANCH_TOOLING_SKIP_FETCH=1` could suppress all substantive checks.
+- Block-ready manifest resolution could select a stale manifest for another branch.
+- Blanket zero-behind pre-push enforcement forced repeated rebases as `main` advanced.
+
+## Non-negotiable controls
+
+1. `ctx.run()` throws on every command failure. Intentional probes use an explicit non-throwing API.
+2. The step runner rejects nonzero returns, throws, rejected promises, spawn failures, and signals.
+3. Plant behavior tests for numeric return, bare command failure, throw, and process-exit paths.
+4. Newly exposed reds are truth surfacing. Fix each with evidence; never weaken, skip, allowlist, or revert the runner to regain green.
+5. Pre-enumerate return-based step outcomes before landing the runner; merge only when the runner and every exposed red are honestly green.
+6. Feature branches require one exact branch-bound manifest. Missing, duplicate, stale, ambiguous, or out-of-scope state fails closed.
+7. Never source repository `.env` in Git hooks or permit production environment variables to replace gate steps.
+8. Do not de-duplicate CI until failure propagation and guard-set parity are proven.
+9. Keep PRs single-domain with frozen scope. Law files use a governance-only, owner-reviewed PR; architecture docs may accompany the exact feature when same-commit design law requires it.
+10. Rerere is optional, owner-enabled, record-only (`autoupdate=false`), and never installed by `npm prepare` or relied on for correctness.
+11. Use one-item GitHub Merge Queue for combined-main freshness after required `merge_group` workflows are proven; only Jorge applies the live Ruleset.
+
+## Done means shared evidence
+
+Local-only work and status lines are not shipped. A fix counts only after commit + push + independent review + required CI + merge/deploy proof appropriate to its risk class.

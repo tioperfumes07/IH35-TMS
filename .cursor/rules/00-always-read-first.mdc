@@ -14,7 +14,7 @@ These are standing law. They load via always-apply Cursor rules AND must be trea
 1. **`docs/specs/CURSOR-OPERATING-CONSTITUTION.md`** — Cursor's permanent operating charter (hardline, permissions, verification, linkage, multi-agent, research). Applies to every task/session/agent. Does not expire. When instructions conflict, the **more conservative / more protective** reading wins.
 2. **`docs/specs/QUALITY-STANDARD-LOCKED.md`** — Rule #0 quality hardline (same intent as constitution §0). Trust over speed. Correct over easy. Verify over assume. Protect the company.
 3. **`docs/specs/ARCHITECTURE-BLUEPRINT-2026-07-05.md`** — Law of the Land (total connectivity / linkage checklist). Every build block — especially financial — conforms.
-4. **`.cursor/rules/06` + `10`–`16`** — always-apply companions (quality, Neon/RLS verification, multi-agent, model tiering, financial law, linkage, research mandate, **fix-not-patch evidence law**).
+4. **`.cursor/rules/06` + `10`–`18`** — always-apply companions (quality, Neon/RLS verification, multi-agent, model tiering, financial law, linkage, research mandate, **fix-not-patch evidence law**, guard hot-file control, and pipeline truth/throughput).
 5. **`.cursor/rules/05-architectural-design-is-law.mdc`** + **`docs/specs/IH35_ARCHITECTURAL_DESIGN.md`** — tab count / tab name law.
 6. **`.cursor/rules/07-never-delete-only-add.mdc`** — never delete modules/surfaces; only add.
 

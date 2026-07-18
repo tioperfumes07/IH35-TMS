@@ -13,7 +13,7 @@ description: >-
 > **Rule #0 (LOCKED, every session):** `docs/specs/QUALITY-STANDARD-LOCKED.md` — hardline quality law.
 > **Cursor charter (every session):** `docs/specs/CURSOR-OPERATING-CONSTITUTION.md` — permanent operating constitution; more conservative reading wins on conflict.
 > **Law of the Land:** `docs/specs/ARCHITECTURE-BLUEPRINT-2026-07-05.md` — total connectivity / linkage checklist.
-> **Cursor auto-load:** `.cursor/rules/00`–`07` + `10`–`16` + `dual-lane-never-idle.mdc` (`alwaysApply: true`).
+> **Cursor auto-load:** `.cursor/rules/00`–`07` + `10`–`18` + `dual-lane-never-idle.mdc` (`alwaysApply: true`).
 > **Evidence before done:** `.claude/skills/ih35-evidence-before-done/SKILL.md` + Rule 16 `.cursor/rules/16-fix-not-patch-evidence-law.mdc`.
 
 
@@ -128,10 +128,11 @@ financial, or money-moving — and any prod DB access — STOP and get explicit 
    pre-existing `@sentry/react` env error) + `npx vitest run <files>`. UI responsiveness:
    `node scripts/verify-mobile-responsive-audit.mjs` (must be `new_vs_baseline=0`). Run the `verify-*`
    scripts relevant to your change.
-4. **Known env breakage:** husky pre-commit/pre-push runs a root `tsc` that fails on backend deps not installed
-   here, and a `block-ready` pre-push check. For otherwise-verified changes, commit/push with `--no-verify`
-   and let **CI** be the authoritative gate (`build-typecheck` is the real backend compile check;
-   `required-checks-gate` matters most; `hold-merge-gate` red-lines financial/migration paths until approved).
+4. **Pipeline truth (owner-locked 2026-07-18):** never bypass branch freshness or a real red guard. The
+   pre-push hook previously shell-sourced `.env`, allowing test override variables to suppress all checks;
+   manifest resolution could also select another branch's block. These are P0 defects, not authorized noise.
+   Until their repairs land, classify every failure from its exact output and obtain explicit branch-specific
+   owner authorization before any bypass. CI is an independent backstop, never a justification for stale push.
 5. **PR:** `gh pr create` with root-cause + scope + verification in the body.
 6. **Merge:** only per §1. Squash: `gh pr merge <n> --squash --delete-branch`.
 7. **Verify deploy:** poll `/api/v1/healthz/shallow` until `version` == your merge short-sha; confirm deep
@@ -139,6 +140,19 @@ financial, or money-moving — and any prod DB access — STOP and get explicit 
 8. **Never `git add -A` blindly** — the repo has untracked `.claude/worktrees/` that must never be committed.
    Stage explicit paths.
 9. End commit messages with a `Co-Authored-By:` line when pairing.
+
+---
+
+### 3.1 Truthful runner + throughput law
+
+- `verify:pre-commit` is untrusted until command failures throw and the step runner rejects nonzero returns.
+- Before landing that repair, enumerate return-based steps and their current reds. Newly exposed reds are
+  defects to fix with evidence—never weaken, skip, allowlist, or revert the runner to regain green.
+- De-duplicate CI only after proving each discovered wrapper executes the same control and propagates failure.
+- Keep PRs one-domain/frozen-scope; law files use a governance-only owner-reviewed PR.
+- Required workflows gain `merge_group`; Jorge alone applies the one-item Merge Queue Ruleset. Retire blanket
+  local zero-behind enforcement only after the queue proves combined-main freshness.
+- Canonical work order: `docs/specs/CURSOR-PIPELINE-REPAIR-WORKORDER-2026-07-18.md`.
 
 ---
 
