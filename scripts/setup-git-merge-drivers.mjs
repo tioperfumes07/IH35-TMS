@@ -28,6 +28,10 @@ try {
   git(`config merge.json-union.name "deep JSON union of derived/registry files (see scripts/git-merge-driver.mjs)"`);
   git(`config merge.json-union.driver "node scripts/git-merge-driver.mjs %O %A %B %P"`);
   // (recursive unset → git reuses this same driver for internal ancestor merges)
+  // NOTE: rerere is intentionally NOT configured here. Auto-mutating a developer's shared git config
+  // via `npm prepare` is a surprise even when benign. rerere is an OPT-IN, record-only operator aid:
+  //   git config rerere.enabled true && git config rerere.autoupdate false
+  // It is a convenience, never relied on for correctness. (Cursor governance ruling, 2026-07-18.)
   process.stdout.write("git-merge-driver: registered merge.json-union for derived/registry JSON files.\n");
 } catch (err) {
   // never fail an install over this
