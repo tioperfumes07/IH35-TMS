@@ -57,9 +57,12 @@ run `npm run verify:static` and fix any `FAIL-test(gated)` locally — never pus
   Failure output text (including `DATABASE_URL`) never changes a real test failure into a skip.
 - HOLD approval classification requires pull-request title and label metadata that does not exist before a
   branch's first push. Local `verify:static` therefore classifies `verify:hold-merge-gate` as
-  `SKIP-capability pull-request-metadata` only while it maps to the exact required, wired
-  `hold-merge-gate / hold-merge-gate` context. GitHub runs that context with authoritative PR metadata and
-  remains fail-closed: a protected PR without `JORGE-APPROVED` is red and cannot merge.
+  `SKIP-capability pull-request-metadata` only after an authenticated live effective-rules query proves
+  `main` requires `hold-merge-gate` from GitHub Actions integration `15368`, and the capability maps to the
+  exact wired `hold-merge-gate / hold-merge-gate` context. Missing `gh`, missing authentication, offline/API
+  failure, malformed output, timeout, wrong integration, or absent live rule hard-fails. GitHub runs the
+  context with authoritative PR metadata and remains fail-closed: a protected PR without
+  `JORGE-APPROVED` is red and cannot merge.
 - PASS-8 is producer→consumer orchestration: local `verify:static` does not generate the ignored
   `PASS-8-PRE-PROD-SMOKE-RESULTS.*` report, so an absent report may skip only as the explicit
   `pass8-artifact` capability backed by the wired conditional CI context

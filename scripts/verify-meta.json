@@ -36,6 +36,13 @@
       "pull-request-metadata"
     ]
   },
+  "server_required_live_status_checks": {
+    "pull-request-metadata": {
+      "context": "hold-merge-gate / hold-merge-gate",
+      "check_context": "hold-merge-gate",
+      "integration_id": 15368
+    }
+  },
   "db_gated_verify_scripts": [
     "verify:a17-deprecation-comments",
     "verify:aggregate-schema-grants",

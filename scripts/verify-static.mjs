@@ -222,15 +222,29 @@ export function ciRunGuardSet(root = path.resolve(SCRIPTS_DIR, "..")) {
 
 /** Run all static guards in a directory. Returns the results array (no process.exit — testable). Each
  *  result is annotated `gated` = is this guard part of the CI-run set (a local FAIL of it should fail us). */
-export function runStatic({ dir = SCRIPTS_DIR, self = SELF_NAME, ciSet, classifyOptions } = {}) {
+export function runStatic({
+  dir = SCRIPTS_DIR,
+  self = SELF_NAME,
+  ciSet,
+  classifyOptions,
+  policyLoader = loadCapabilityPolicy,
+} = {}) {
   const set = ciSet || ciRunGuardSet();
+  const sharedClassifyOptions = { ...(classifyOptions ?? {}) };
+  // Live capability verification is intentionally authoritative but must run once per sweep, not once
+  // per ~1,100 guard files. A repeated network lookup is both unbounded and vulnerable to mid-run drift.
+  if (!sharedClassifyOptions.preflight && !sharedClassifyOptions.policy) {
+    sharedClassifyOptions.policy = policyLoader(
+      sharedClassifyOptions.root ?? ROOT
+    );
+  }
   const files = fs
     .readdirSync(dir)
     .filter((f) => /^verify-.*\.mjs$/.test(f) && f !== self && !NON_STATIC_ORCHESTRATORS.has(f))
     .sort()
     .map((f) => path.join(dir, f));
   return files.map((f) => {
-    const r = classify(f, classifyOptions);
+    const r = classify(f, sharedClassifyOptions);
     r.gated = set.has(r.name);
     return r;
   });

@@ -18,6 +18,7 @@ const FILES = Object.freeze({
   verifyMeta: "scripts/verify-meta.json",
   pass8Workflow: ".github/workflows/pass-8-smoke-verify.yml",
   holdWorkflow: ".github/workflows/hold-merge-gate.yml",
+  codeowners: ".github/CODEOWNERS",
   gitignore: ".gitignore",
   policyVerifier: "scripts/verify-ci-policy-applied.mjs",
   protection: ".github/branch-protection-config.json",
@@ -27,6 +28,7 @@ const FILES = Object.freeze({
   precheckTests: "scripts/__tests__/branch-precheck-push.test.mjs",
   manifestTests: "scripts/__tests__/block-ready.test.mjs",
   staticTests: "scripts/__tests__/verify-static-classification.test.mjs",
+  liveRulesetTests: "scripts/__tests__/push-gate-live-ruleset.test.mjs",
   pass8Tests: "scripts/__tests__/pass-8-orchestration.test.mjs",
   freshnessTests: "scripts/__tests__/verify-branch-fresh-fallback.test.mjs",
   policyTests: "scripts/__tests__/verify-ci-policy-applied.test.mjs",
@@ -130,6 +132,15 @@ export function checkPushGateClassification(fixture) {
   ) {
     violations.push("local HOLD guard is not classified as PR-metadata dependent");
   }
+  const liveDeclaration =
+    verifyMeta?.server_required_live_status_checks?.["pull-request-metadata"];
+  if (
+    liveDeclaration?.context !== holdContext ||
+    liveDeclaration?.check_context !== "hold-merge-gate" ||
+    Number(liveDeclaration?.integration_id) !== 15368
+  ) {
+    violations.push("HOLD capability lacks exact live GitHub Actions ruleset declaration");
+  }
   requireMatch(
     "holdWorkflow",
     /GATE_PR_TITLE:\s*\$\{\{\s*github\.event\.pull_request\.title\s*\}\}/,
@@ -140,11 +151,28 @@ export function checkPushGateClassification(fixture) {
     /GATE_PR_LABELS:\s*\$\{\{\s*toJson\(github\.event\.pull_request\.labels\.\*\.name\)\s*\}\}/,
     "hold-merge CI no longer supplies authoritative PR labels"
   );
+  for (const protectedPath of [
+    "/.github/",
+    "/scripts/verify-hold-merge-gate.mjs",
+    "/scripts/push-gate-capability-policy.mjs",
+    "/scripts/verify-meta.json",
+  ]) {
+    requireMatch(
+      "codeowners",
+      new RegExp(
+        `^${protectedPath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s+@tioperfumes07\\s*$`,
+        "m"
+      ),
+      `HOLD control path lacks owner coverage: ${protectedPath}`
+    );
+  }
   for (const marker of [
     "serverRequiredContexts",
     "nonProtectionContexts",
     "requiredContexts",
     "wiredContexts",
+    "liveRequiredContexts",
+    "liveVerificationErrors",
   ]) {
     requireMatch(
       "capabilityPolicy",
@@ -231,9 +259,29 @@ export function checkPushGateClassification(fixture) {
   );
   requireMatch(
     "staticTests",
-    /hard-fails when the hold-merge CI gate is not required/,
-    "HOLD CI requirement planted-failure test missing"
+    /hard-fails when live rules do not require the hold gate/,
+    "live HOLD requirement planted-failure test missing"
   );
+  requireMatch(
+    "staticTests",
+    /loads live capability policy exactly once/,
+    "single live-ruleset lookup regression test missing"
+  );
+  for (const plantedCase of [
+    "authenticated live effective rule",
+    "wrong integration",
+    "missing gh executable",
+    "unauthenticated GitHub CLI",
+    "offline GitHub API",
+    "ruleset lookup timeout",
+    "malformed live ruleset JSON",
+  ]) {
+    requireMatch(
+      "liveRulesetTests",
+      new RegExp(plantedCase),
+      `live-ruleset planted test missing: ${plantedCase}`
+    );
+  }
   requireMatch("staticTests", /DATABASE_URL text/, "DATABASE_URL false-classification test missing");
   requireMatch("freshnessTests", /one behind commit anywhere/, "stale-branch planted test missing");
   requireMatch("freshnessTests", /shell-like refs/, "unsafe-ref planted test missing");
@@ -277,7 +325,8 @@ const goodFixture = {
   manifest:
     'throw new Error(`BLOCK_ID=${blockId} requires exact manifest`); manifest.branch === branch; "ambiguous exact branch"; GITHUB_HEAD_REF; allowAggregate;',
   precommit: "allowAggregate: true",
-  capabilityPolicy: "serverRequiredContexts nonProtectionContexts requiredContexts wiredContexts",
+  capabilityPolicy:
+    "serverRequiredContexts nonProtectionContexts requiredContexts wiredContexts liveRequiredContexts liveVerificationErrors",
   freshness:
     'const DEFAULT_MAX_COMMITS_BEHIND = 0; spawnSync("git", args); ["rev-list", "--count", `${baseSha}..${mainRef}`];',
   staticRunner: 'capabilityPreflight(); "SKIP-capability"; "FAIL-test";',
@@ -305,6 +354,13 @@ const goodFixture = {
       "verify:pass-8-clean-baseline": ["pass8-artifact"],
       "verify:hold-merge-gate": ["pull-request-metadata"],
     },
+    server_required_live_status_checks: {
+      "pull-request-metadata": {
+        context: "hold-merge-gate / hold-merge-gate",
+        check_context: "hold-merge-gate",
+        integration_id: 15368,
+      },
+    },
   }),
   pass8Workflow: `
 jobs:
@@ -325,6 +381,12 @@ jobs:
           GATE_PR_LABELS: \${{ toJson(github.event.pull_request.labels.*.name) }}
         run: node scripts/verify-hold-merge-gate.mjs
 `,
+  codeowners: `
+/.github/ @tioperfumes07
+/scripts/verify-hold-merge-gate.mjs @tioperfumes07
+/scripts/push-gate-capability-policy.mjs @tioperfumes07
+/scripts/verify-meta.json @tioperfumes07
+`,
   gitignore: "docs/audits/PASS-8-PRE-PROD-SMOKE-RESULTS.*",
   trackedFiles: [],
   policyVerifier:
@@ -340,7 +402,9 @@ jobs:
   precheckTests: "hard dirty failure; hard conflict failure",
   manifestTests: "ambiguous exact branch; wrong explicit BLOCK_ID; detached GitHub Actions",
   staticTests:
-    "missing database; missing dependencies; missing PR metadata skips HOLD approval; hard-fails when the hold-merge CI gate is not required; DATABASE_URL text; not wired",
+    "missing database; missing dependencies; missing PR metadata skips HOLD approval; hard-fails when live rules do not require the hold gate; loads live capability policy exactly once; DATABASE_URL text; not wired",
+  liveRulesetTests:
+    "authenticated live effective rule; wrong integration; missing gh executable; unauthenticated GitHub CLI; offline GitHub API; ruleset lookup timeout; malformed live ruleset JSON",
   pass8Tests:
     "absent generated artifact; producer failure; valid generated artifact; missing or unclassified PASS-8 CI equivalent; producer runs before consumer",
   freshnessTests: "one behind commit anywhere; shell-like refs",
@@ -351,6 +415,7 @@ const badFixture = {
   ...goodFixture,
   manifest: "legacyManifest AGENT_MANIFEST_REGISTRY",
   protection: "{}",
+  codeowners: "/.github/ @untrusted",
   verifyMeta: JSON.stringify({
     server_required_ci_equivalents: {},
     server_required_ci_contexts: [],

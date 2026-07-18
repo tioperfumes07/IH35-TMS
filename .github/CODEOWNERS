@@ -6,3 +6,6 @@
 /apps/backend/src/usmca/ @tioperfumes07
 /render.yaml @tioperfumes07
 /.github/ @tioperfumes07
+/scripts/verify-hold-merge-gate.mjs @tioperfumes07
+/scripts/push-gate-capability-policy.mjs @tioperfumes07
+/scripts/verify-meta.json @tioperfumes07
