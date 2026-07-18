@@ -87,7 +87,7 @@ function collectFailures(source) {
   if (/BASIC_LABEL_HINTS|extractBasicMetrics|pickScoreAndPercentile|extractNumbers|fetchSaferSnapshotText/.test(source.pull)) {
     failures.push("safer_basic_derivation_logic_present");
   }
-  if (/safer\.fmcsa\.dot\.gov/i.test(source.pull) || /\bfetch\s*\(/.test(source.pull)) {
+  if (source.pull.toLowerCase().includes("safer.fmcsa.dot.gov") || /\bfetch\s*\(/.test(source.pull)) {
     failures.push("public_safer_network_path_present");
   }
   if (/fmcsa_safer_public|toFiniteNumber\s*\(\s*row\.score\s*\)/.test(source.complianceRoutes)) {
