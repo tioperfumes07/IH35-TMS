@@ -36,6 +36,9 @@ export function evaluatePass8Orchestration({
   if (!(meta.server_required_ci_contexts ?? []).includes(PASS8_CONTEXT)) {
     violations.push(`${PASS8_CONTEXT} must be declared server-required`);
   }
+  if (!(meta.non_protection_ci_contexts ?? []).includes(PASS8_CONTEXT)) {
+    violations.push(`${PASS8_CONTEXT} must be declared conditional, not protection-required`);
+  }
   const wiring = meta.server_required_ci_wiring?.[PASS8_CONTEXT];
   if (
     wiring?.workflow !== ".github/workflows/pass-8-smoke-verify.yml" ||

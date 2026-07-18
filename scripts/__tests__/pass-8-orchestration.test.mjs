@@ -39,7 +39,8 @@ function makeCapabilityFixture() {
       dbGated: new Set(),
       equivalents: { "pass8-artifact": CONTEXT },
       serverRequiredContexts: new Set([CONTEXT]),
-      requiredContexts: new Set([CONTEXT]),
+      nonProtectionContexts: new Set([CONTEXT]),
+      requiredContexts: new Set(),
       wiredContexts: new Set([CONTEXT]),
       guardCapabilities: {
         "verify:pass-8-clean-baseline": ["pass8-artifact"],
@@ -52,6 +53,7 @@ function validMeta() {
   return {
     server_required_ci_equivalents: { "pass8-artifact": CONTEXT },
     server_required_ci_contexts: [CONTEXT],
+    non_protection_ci_contexts: [CONTEXT],
     server_required_ci_wiring: {
       [CONTEXT]: {
         workflow: ".github/workflows/pass-8-smoke-verify.yml",
@@ -128,11 +130,11 @@ test("valid generated artifact is consumed successfully without committing it", 
   assert.match(result.stdout, /PASS/);
 });
 
-test("missing or unrequired PASS-8 CI equivalent hard-fails capability classification", () => {
+test("missing or unclassified PASS-8 CI equivalent hard-fails capability classification", () => {
   const fixture = makeCapabilityFixture();
   for (const policy of [
     { ...fixture.policy, equivalents: {} },
-    { ...fixture.policy, requiredContexts: new Set() },
+    { ...fixture.policy, nonProtectionContexts: new Set() },
   ]) {
     const preflight = capabilityPreflight(fixture.file, {
       root: fixture.root,

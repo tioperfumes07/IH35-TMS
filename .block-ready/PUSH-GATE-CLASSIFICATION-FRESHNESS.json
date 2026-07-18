@@ -11,9 +11,11 @@
     ".claude/skills/ih35-tms-standards/SKILL.md",
     ".github/branch-protection-config.json",
     ".github/workflows/required-checks.yml",
+    "docs/runbooks/OWNER-BRANCH-PROTECTION-HANDOFF.md",
     "docs/specs/BRANCH-TOOLING.md",
     "scripts/block-ready-agent-manifest.mjs",
     "scripts/branch-precheck-push.mjs",
+    "scripts/ci-apply-branch-protection.mjs",
     "scripts/pass-8-orchestration-policy.mjs",
     "scripts/push-gate-capability-policy.mjs",
     "scripts/verify-branch-fresh.mjs",
@@ -49,6 +51,10 @@
     {
       "check": "Strict zero-behind full-tree freshness is committed and live ruleset drift fails verification.",
       "evidence": "Freshness and policy-verifier planted tests pass; live ruleset remains owner handoff only and was not applied."
+    },
+    {
+      "check": "Only the eight owner-approved universal contexts are required, and protection apply remains owner-only.",
+      "evidence": "Exact-context drift tests, owner-authorization tests, and docs/runbooks/OWNER-BRANCH-PROTECTION-HANDOFF.md."
     }
   ]
 }

@@ -14,16 +14,17 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 export const STRICT_FRESHNESS_CONTEXT = "ci / verify-branch-fresh";
-export const MANDATORY_CHECKS = [
+export const REQUIRED_GATE_CONTEXTS = [
   "required-checks / required-checks-gate",
   "ci / build-typecheck",
   STRICT_FRESHNESS_CONTEXT,
-  "perf-budget-check / perf-audit",
-  "security-checks / security-audit",
+  "hold-merge-gate / hold-merge-gate",
+  "locked-guards / locked-guards",
   "premerge-gates / rls-migration-scan",
   "premerge-gates / typescript-strict-null",
-  "pass-8-smoke-verify / pass-8",
+  "premerge-gates / migration-role-validation",
 ];
+export const MANDATORY_CHECKS = REQUIRED_GATE_CONTEXTS;
 
 const LABEL = "verify-ci-policy-applied";
 const CONFIG_PATH = path.join(process.cwd(), ".github/branch-protection-config.json");
@@ -42,11 +43,37 @@ export function evaluateProtectionDrift(expectedProtection, liveProtection) {
   }
   const expectedContexts = expectedProtection.required_status_checks?.contexts ?? [];
   const liveContexts = liveProtection.required_status_checks?.contexts ?? [];
-  for (const context of expectedContexts) {
-    if (!liveContexts.includes(context)) violations.push(`live ruleset missing required context: ${context}`);
-  }
-  for (const context of MANDATORY_CHECKS) {
+  for (const context of REQUIRED_GATE_CONTEXTS) {
     if (!liveContexts.includes(context)) violations.push(`live ruleset missing mandatory context: ${context}`);
+  }
+  for (const context of liveContexts) {
+    if (!expectedContexts.includes(context)) {
+      violations.push(`live ruleset has non-approved required context: ${context}`);
+    }
+  }
+
+  const liveReviews = liveProtection.required_pull_request_reviews;
+  if (liveReviews?.required_approving_review_count !== 1) {
+    violations.push("live branch protection must require exactly one approval");
+  }
+  if (liveReviews?.require_code_owner_reviews !== true) {
+    violations.push("live branch protection must require code-owner review");
+  }
+  if (liveReviews?.dismiss_stale_reviews !== true) {
+    violations.push("live branch protection must dismiss stale reviews");
+  }
+  const enabled = (value) => (typeof value === "boolean" ? value : value?.enabled);
+  if (enabled(liveProtection.enforce_admins) !== true) {
+    violations.push("live branch protection must enforce administrators");
+  }
+  if (enabled(liveProtection.required_conversation_resolution) !== true) {
+    violations.push("live branch protection must require conversation resolution");
+  }
+  if (enabled(liveProtection.allow_force_pushes) !== false) {
+    violations.push("live branch protection must disallow force pushes");
+  }
+  if (enabled(liveProtection.allow_deletions) !== false) {
+    violations.push("live branch protection must disallow deletions");
   }
   return violations;
 }
@@ -58,18 +85,30 @@ export function assertConfigBaseline() {
   }
   const cfg = JSON.parse(fs.readFileSync(CONFIG_PATH, "utf8"));
   const contexts = cfg.protection?.required_status_checks?.contexts ?? [];
+  const reviews = cfg.protection?.required_pull_request_reviews;
   if (cfg.protection?.required_status_checks?.strict !== true) {
     console.error(`[${LABEL}] FAIL — required_status_checks.strict must be true`);
     process.exit(1);
   }
-  if (contexts.length < 3) {
-    console.error(`[${LABEL}] FAIL — required_status_checks.contexts too short`);
+  if (
+    contexts.length !== REQUIRED_GATE_CONTEXTS.length ||
+    contexts.some((context, index) => context !== REQUIRED_GATE_CONTEXTS[index])
+  ) {
+    console.error(
+      `[${LABEL}] FAIL — required_status_checks.contexts must equal the eight owner-approved universal gates`
+    );
     process.exit(1);
   }
-  // Hard-fail if any mandatory check is absent from the committed config.
-  const missingFromConfig = MANDATORY_CHECKS.filter((c) => !contexts.includes(c));
-  if (missingFromConfig.length > 0) {
-    console.error(`[${LABEL}] FAIL — branch-protection-config.json missing mandatory checks: ${missingFromConfig.join(", ")}`);
+  if (
+    reviews?.required_approving_review_count !== 1 ||
+    reviews?.dismiss_stale_reviews !== true ||
+    reviews?.require_code_owner_reviews !== true ||
+    cfg.protection?.enforce_admins !== true ||
+    cfg.protection?.required_conversation_resolution !== true ||
+    cfg.protection?.allow_force_pushes !== false ||
+    cfg.protection?.allow_deletions !== false
+  ) {
+    console.error(`[${LABEL}] FAIL — committed branch-protection controls drift from owner policy`);
     process.exit(1);
   }
   for (const file of [".github/CODEOWNERS", ".github/workflows/required-checks.yml", ".github/workflows/deploy-approval.yml"]) {

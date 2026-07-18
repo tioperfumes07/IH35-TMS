@@ -23,6 +23,7 @@ export function loadCapabilityPolicy(root) {
   return {
     equivalents: meta.server_required_ci_equivalents ?? {},
     serverRequiredContexts: new Set(meta.server_required_ci_contexts ?? []),
+    nonProtectionContexts: new Set(meta.non_protection_ci_contexts ?? []),
     requiredContexts: new Set(
       protection.protection?.required_status_checks?.contexts ?? []
     ),
@@ -51,8 +52,12 @@ export function validateCapabilityEquivalent(capability, context, policy) {
   if (!policy.serverRequiredContexts?.has(context)) {
     violations.push(`CI equivalent "${context}" is not declared server-required`);
   }
-  if (!policy.requiredContexts?.has(context)) {
+  const intentionallyConditional = policy.nonProtectionContexts?.has(context);
+  if (!intentionallyConditional && !policy.requiredContexts?.has(context)) {
     violations.push(`CI equivalent "${context}" is not a required protection context`);
+  }
+  if (intentionallyConditional && policy.requiredContexts?.has(context)) {
+    violations.push(`conditional CI equivalent "${context}" must not be a required protection context`);
   }
   if (!policy.wiredContexts?.has(context)) {
     violations.push(`CI equivalent "${context}" is not wired to its declared workflow job`);

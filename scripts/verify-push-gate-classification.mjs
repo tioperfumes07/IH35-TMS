@@ -97,6 +97,7 @@ export function checkPushGateClassification(fixture) {
   );
   for (const marker of [
     "serverRequiredContexts",
+    "nonProtectionContexts",
     "requiredContexts",
     "wiredContexts",
   ]) {
@@ -189,7 +190,7 @@ export function checkPushGateClassification(fixture) {
     "absent generated artifact",
     "producer failure",
     "valid generated artifact",
-    "missing or unrequired PASS-8 CI equivalent",
+    "missing or unclassified PASS-8 CI equivalent",
     "producer runs before consumer",
   ]) {
     requireMatch(
@@ -210,7 +211,7 @@ const goodFixture = {
   manifest:
     'throw new Error(`BLOCK_ID=${blockId} requires exact manifest`); manifest.branch === branch; "ambiguous exact branch"; GITHUB_HEAD_REF; allowAggregate;',
   precommit: "allowAggregate: true",
-  capabilityPolicy: "serverRequiredContexts requiredContexts wiredContexts",
+  capabilityPolicy: "serverRequiredContexts nonProtectionContexts requiredContexts wiredContexts",
   freshness:
     'const DEFAULT_MAX_COMMITS_BEHIND = 0; spawnSync("git", args); ["rev-list", "--count", `${baseSha}..${mainRef}`];',
   staticRunner: 'capabilityPreflight(); "SKIP-capability"; "FAIL-test";',
@@ -219,6 +220,7 @@ const goodFixture = {
       "pass8-artifact": "pass-8-smoke-verify / pass-8",
     },
     server_required_ci_contexts: ["pass-8-smoke-verify / pass-8"],
+    non_protection_ci_contexts: ["pass-8-smoke-verify / pass-8"],
     server_required_ci_wiring: {
       "pass-8-smoke-verify / pass-8": {
         workflow: ".github/workflows/pass-8-smoke-verify.yml",
@@ -254,7 +256,7 @@ jobs:
   manifestTests: "ambiguous exact branch; wrong explicit BLOCK_ID; detached GitHub Actions",
   staticTests: "missing database; missing dependencies; DATABASE_URL text; not wired",
   pass8Tests:
-    "absent generated artifact; producer failure; valid generated artifact; missing or unrequired PASS-8 CI equivalent; producer runs before consumer",
+    "absent generated artifact; producer failure; valid generated artifact; missing or unclassified PASS-8 CI equivalent; producer runs before consumer",
   freshnessTests: "one behind commit anywhere; shell-like refs",
   policyTests: "live ruleset drift; blocking unverified",
 };

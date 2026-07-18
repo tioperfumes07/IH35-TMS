@@ -9,6 +9,9 @@
     "ci / build-typecheck",
     "pass-8-smoke-verify / pass-8"
   ],
+  "non_protection_ci_contexts": [
+    "pass-8-smoke-verify / pass-8"
+  ],
   "server_required_ci_wiring": {
     "ci / build-typecheck": {
       "workflow": ".github/workflows/ci.yml",
