@@ -154,7 +154,9 @@ export function ReconciliationWorkspacePage() {
                 </button>
               </li>
             ))}
-            {!bankRows.length && !workspaceQuery.isLoading ? <li>No unreconciled transactions</li> : null}
+            {!bankRows.length && !accountsQuery.isError && !workspaceQuery.isLoading && !workspaceQuery.isError ? (
+              <li>No unreconciled transactions</li>
+            ) : null}
           </ul>
         </section>
         <section aria-label="Candidate ledger entries">
@@ -194,7 +196,9 @@ export function ReconciliationWorkspacePage() {
                 </div>
               </li>
             ))}
-            {!candidates.length && !workspaceQuery.isLoading ? <li>No candidates for period</li> : null}
+            {!candidates.length && !accountsQuery.isError && !workspaceQuery.isLoading && !workspaceQuery.isError ? (
+              <li>No candidates for period</li>
+            ) : null}
           </ul>
         </section>
       </div>

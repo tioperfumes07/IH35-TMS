@@ -2,6 +2,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import verifyStep from "./verify-steps/908-verify-accounting-query-error-states-wave-c.mjs";
+import { runStep } from "./verify-steps/_runner.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FILES = {
@@ -14,6 +16,7 @@ const FILES = {
   reconciliation: "apps/frontend/src/pages/accounting/ReconciliationWorkspacePage.tsx",
   cashForecast: "apps/frontend/src/pages/accounting/CashForecastPage.tsx",
   tests: "apps/frontend/src/pages/accounting/__tests__/AccountingQueryErrorStatesWaveC.test.ts",
+  step: "scripts/verify-steps/908-verify-accounting-query-error-states-wave-c.mjs",
 };
 
 const OFFENDERS = [
@@ -41,9 +44,22 @@ export function check(sources) {
     }
   }
   const tests = sources.tests ?? "";
-  for (const [name] of OFFENDERS) {
-    const query = name.split(" ").at(-1);
-    if (!tests.includes(query)) failures.push(`focused tests must cover ${name}`);
+  if (tests.includes("?raw")) {
+    failures.push("focused tests must behaviorally render components, not inspect raw source substrings");
+  }
+  if (!tests.includes("renderSurface(") || !tests.includes("clickScopedRefresh(")) {
+    failures.push("focused tests must render real surfaces and click their scoped Refresh controls");
+  }
+
+  const step = sources.step ?? "";
+  const wiring = [
+    "scripts/verify-accounting-query-error-states-wave-c.mjs",
+    '"--selftest"',
+    "src/pages/accounting/__tests__/AccountingQueryErrorStatesWaveC.test.ts",
+    "throw new Error",
+  ];
+  for (const marker of wiring) {
+    if (!step.includes(marker)) failures.push(`verify-step 908 must fail-closed wire ${marker}`);
   }
   return failures;
 }
@@ -57,12 +73,51 @@ if (process.argv.includes("--selftest")) {
     const planted = { ...sources, [file]: sources[file].replaceAll(marker, "removedQueryError") };
     if (!check(planted).some((failure) => failure.startsWith(name))) failures.push(`planted removal was not caught for ${name}`);
   }
+
+  const plantedWiring = {
+    ...sources,
+    step: sources.step.replace(
+      "src/pages/accounting/__tests__/AccountingQueryErrorStatesWaveC.test.ts",
+      "removed-focused-test.ts",
+    ),
+  };
+  if (!check(plantedWiring).some((failure) => failure.includes("AccountingQueryErrorStatesWaveC.test.ts"))) {
+    failures.push("planted focused-test wiring removal was not caught");
+  }
+
+  for (let failingCommand = 0; failingCommand < 3; failingCommand += 1) {
+    let commandIndex = 0;
+    let rejected = false;
+    try {
+      await runStep({
+        index: 1,
+        total: 1,
+        name: verifyStep.name,
+        run: () =>
+          verifyStep.run({
+            run: () => {
+              const status = commandIndex === failingCommand ? 37 : 0;
+              commandIndex += 1;
+              return status;
+            },
+          }),
+      });
+    } catch {
+      rejected = true;
+    }
+    if (!rejected) {
+      failures.push(`aggregate runner swallowed planted non-zero from verify-step command ${failingCommand + 1}`);
+    }
+  }
+
   if (failures.length) {
     console.error("verify:accounting-query-error-states-wave-c --selftest FAIL:");
     for (const failure of failures) console.error(`  ✗ ${failure}`);
     process.exit(1);
   }
-  console.log(`verify:accounting-query-error-states-wave-c --selftest PASS (${OFFENDERS.length} independent planted removals caught)`);
+  console.log(
+    `verify:accounting-query-error-states-wave-c --selftest PASS (${OFFENDERS.length} independent removals, focused-test wiring, and 3 aggregate-runner failures caught)`,
+  );
   process.exit(0);
 }
 

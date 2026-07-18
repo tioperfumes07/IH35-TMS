@@ -115,6 +115,7 @@ export function CashForecastPage() {
                     type "50000" for $500). cents-mode MoneyInput → operator types dollars, *_cents stored. */}
                 <MoneyInput
                   valueCents={effectiveSettings[key]}
+                  disabled={settingsQuery.isError}
                   onChangeCents={(cents) => {
                     const next = { ...(settingsFromServer ?? draft), [key]: Math.max(0, cents ?? 0) };
                     if (settingsFromServer) {
@@ -133,7 +134,7 @@ export function CashForecastPage() {
             <Button
               size="sm"
               onClick={() => saveSettings.mutate(effectiveSettings)}
-              disabled={!companyId || saveSettings.isPending}
+              disabled={!companyId || settingsQuery.isError || saveSettings.isPending}
             >
               Save settings
             </Button>
