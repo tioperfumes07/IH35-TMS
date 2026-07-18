@@ -7,6 +7,7 @@ import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { AccountingCatalogModal, type AccountingCatalogClient, type AccountingMetadataField } from "./AccountingCatalogModal";
+import { AccountingCatalogProfileDrawer } from "./AccountingCatalogProfileDrawer";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 
 type Props = {
@@ -57,6 +58,7 @@ export function AccountingCatalogListPage({
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
   const [selectedRow, setSelectedRow] = useState<AccountingCatalogRow | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const bulkEnabled = enableBulkSelect && Boolean(bulkBar);
   const toggleId = (id: string) =>
@@ -164,11 +166,10 @@ export function AccountingCatalogListPage({
             {rows.map((row) => (
               <tr
                 key={row.id}
-                className={`border-t border-gray-100 ${readOnly ? "" : "cursor-pointer hover:bg-gray-50"}`}
+                className="cursor-pointer border-t border-gray-100 hover:bg-gray-50"
                 onClick={() => {
-                  setModalMode("edit");
                   setSelectedRow(row);
-                  setModalOpen(true);
+                  setProfileOpen(true);
                 }}
               >
                 {bulkEnabled ? (
@@ -188,6 +189,20 @@ export function AccountingCatalogListPage({
         </table>
         {emptyText ? <div className="px-3 py-6 text-sm text-gray-500">{emptyText}</div> : null}
       </div>
+
+      <AccountingCatalogProfileDrawer
+        open={profileOpen}
+        displayName={displayName}
+        codeLabel={codeLabel}
+        row={selectedRow}
+        canEdit={!readOnly}
+        onClose={() => setProfileOpen(false)}
+        onEdit={() => {
+          setProfileOpen(false);
+          setModalMode("edit");
+          setModalOpen(true);
+        }}
+      />
 
       <AccountingCatalogModal
         open={modalOpen}
