@@ -76,6 +76,29 @@ test("guard_required=true with no guard file in changeset fails", () => {
   assert.match(result.reason, /no new verify guard/i);
 });
 
+test("guard_required=true accepts Rule 17 auto-discovered guard and verify-step wiring", () => {
+  const result = evaluateGuardRequirement({
+    guardRequired: true,
+    changedNameStatus: [
+      { status: "A", path: "scripts/verify-xlsx-cve-closeout.mjs" },
+      { status: "A", path: "scripts/verify-steps/144-verify-xlsx-cve-closeout.mjs" },
+    ],
+    ciDiffText: "",
+  });
+  assert.equal(result.ok, true);
+  assert.equal(result.hasCiWiring, true);
+});
+
+test("guard_required=true rejects an unwired standalone guard", () => {
+  const result = evaluateGuardRequirement({
+    guardRequired: true,
+    changedNameStatus: [{ status: "A", path: "scripts/verify-xlsx-cve-closeout.mjs" }],
+    ciDiffText: "",
+  });
+  assert.equal(result.ok, false);
+  assert.match(result.reason, /no auto-discovered verify-step/i);
+});
+
 test("db_required=true skips ci:boot-api-smoke", () => {
   const plan = computeDbGatePlan({
     runtime_path: "both",

@@ -1,10 +1,12 @@
 import ExcelJS from "exceljs";
+import { createHash } from "node:crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   appendCrudAudit: vi.fn(),
   s3Send: vi.fn(async () => ({})),
   sql: [] as string[],
+  reconciliationRows: [] as Array<Record<string, unknown>>,
 }));
 
 vi.mock("@aws-sdk/client-s3", () => {
@@ -61,7 +63,8 @@ vi.mock("../../../auth/db.js", () => {
           {
             txn_date: "2024-02-02",
             qbo_txn_type: "Check",
-            entered_by: "owner",
+            qbo_created_at: "2024-02-02T14:30:00-06:00",
+            qbo_updated_at: "2024-02-03T09:15:00-06:00",
             vendor_name: "Window Vendor",
             total_cents: -250,
             class_name: "T169",
@@ -70,6 +73,9 @@ vi.mock("../../../auth/db.js", () => {
           },
         ],
       };
+    }
+    if (sql.includes("FROM accounting.recon_exceptions e")) {
+      return { rows: mocks.reconciliationRows };
     }
     if (sql.includes("txn_date < DATE '2023-01-01'")) {
       return {
@@ -120,8 +126,29 @@ function issue(txn_date: string, total_cents: number, id: string) {
 
 beforeEach(() => {
   mocks.appendCrudAudit.mockReset();
-  mocks.s3Send.mockClear();
+  mocks.s3Send.mockReset();
+  mocks.s3Send.mockResolvedValue({});
   mocks.sql.length = 0;
+  mocks.reconciliationRows = [
+    {
+      run_id: "run-1",
+      run_type: "pm_categorization_diff",
+      window_start: "2024-02-01T00:00:00.000Z",
+      window_end: "2024-02-29T23:59:59.000Z",
+      exception_id: "exception-1",
+      exception_class: "CATEGORIZATION_DIVERGENCE",
+      field: "account_mapping",
+      tms_value: "Diesel",
+      qbo_value: "Repairs",
+      severity: "medium",
+      status: "open",
+      source_ref: { kind: "bank_txn", id: "bank-1" },
+      qbo_ref: { account_ref: "Repairs" },
+      created_at: "2024-03-01T06:00:00.000Z",
+      resolved_at: null,
+      resolution_note: null,
+    },
+  ];
   process.env.R2_ACCOUNT_ID = "test-account";
   process.env.R2_ACCESS_KEY_ID = "test-key";
   process.env.R2_SECRET_ACCESS_KEY = "test-secret";
@@ -196,7 +223,8 @@ describe("QBO forensic ExcelJS report", () => {
       ,
       "Date",
       "Type",
-      "Entered_By",
+      "QBO_Created_At",
+      "QBO_Updated_At",
       "Vendor",
       "Amount_USD",
       "Class",
@@ -208,7 +236,8 @@ describe("QBO forensic ExcelJS report", () => {
       ,
       "2024-02-02",
       "Check",
-      "owner",
+      "2024-02-02T14:30:00-06:00",
+      "2024-02-03T09:15:00-06:00",
       "Window Vendor",
       -2.5,
       "T169",
@@ -238,11 +267,44 @@ describe("QBO forensic ExcelJS report", () => {
     ]);
 
     const variances = workbook.getWorksheet(FORENSIC_WORKSHEET_NAMES[4])!;
-    expect(variances.getRow(1).values).toEqual([, "Note"]);
+    expect(variances.getRow(1).values).toEqual([
+      ,
+      "Run_ID",
+      "Run_Type",
+      "Window_Start",
+      "Window_End",
+      "Exception_ID",
+      "Exception_Class",
+      "Field",
+      "TMS_Value",
+      "QBO_Value",
+      "Severity",
+      "Status",
+      "Source_Ref",
+      "QBO_Ref",
+      "Created_At",
+      "Resolved_At",
+      "Resolution_Note",
+    ]);
     expect(variances.getRow(2).values).toEqual([
       ,
-      "Variance sheet placeholder. Year-end comparisons populate as balances are archived.",
+      "run-1",
+      "pm_categorization_diff",
+      "2024-02-01T00:00:00.000Z",
+      "2024-02-29T23:59:59.000Z",
+      "exception-1",
+      "CATEGORIZATION_DIVERGENCE",
+      "account_mapping",
+      "Diesel",
+      "Repairs",
+      "medium",
+      "open",
+      '{"kind":"bank_txn","id":"bank-1"}',
+      '{"account_ref":"Repairs"}',
+      "2024-03-01T06:00:00.000Z",
     ]);
+    expect(variances.getCell("O2").value).toBeNull();
+    expect(variances.getCell("P2").value).toBeNull();
 
     const inactive = workbook.getWorksheet(FORENSIC_WORKSHEET_NAMES[5])!;
     expect(inactive.getRow(1).values).toEqual([, "Type", "Name", "Last_Active_Date", "Notes"]);
@@ -260,12 +322,24 @@ describe("QBO forensic ExcelJS report", () => {
     );
     expect(command.input.Key).toBe(result.r2_key);
     expect(result.r2_key).toMatch(
-      /^forensic-reports\/trk\/batch-1\/TRK_FORENSIC_REPORT_\d{4}-\d{2}-\d{2}\.xlsx$/
+      /^forensic-reports\/trk\/batch-1\/\d{4}-\d{2}-\d{2}\/[0-9a-f-]{36}\/[0-9a-f]{64}\/TRK_FORENSIC_REPORT_\d{4}-\d{2}-\d{2}\.xlsx$/
     );
+    expect(result.sha256).toBe(createHash("sha256").update(body).digest("hex"));
+    expect(result.byte_length).toBe(body.byteLength);
+    expect(result.content_type).toBe(command.input.ContentType);
+    expect(result.r2_key).toContain(`/${result.sha256}/`);
+    expect(mocks.sql.join("\n")).not.toContain("AS entered_by");
+    expect(window.getRow(1).values).not.toContain("Entered_By");
   });
 
-  it("keeps R2, append-only audit metadata, and QBO reads unchanged", async () => {
+  it("audits exact uploaded bytes and only records storage identity returned by R2", async () => {
+    mocks.s3Send.mockResolvedValueOnce({
+      ETag: '"trusted-r2-etag"',
+      VersionId: "trusted-r2-version",
+    });
     const result = await generateExcelReport("actor-1", "batch-1");
+    const command = mocks.s3Send.mock.calls[0]?.[0] as { input: Record<string, unknown> };
+    const body = command.input.Body as Buffer;
 
     expect(mocks.appendCrudAudit).toHaveBeenCalledWith(
       expect.anything(),
@@ -275,6 +349,11 @@ describe("QBO forensic ExcelJS report", () => {
         batch_id: "batch-1",
         company_code: "TRK",
         r2_object_key: result.r2_key,
+        sha256: createHash("sha256").update(body).digest("hex"),
+        byte_length: body.byteLength,
+        content_type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        r2_etag: '"trusted-r2-etag"',
+        r2_version_id: "trusted-r2-version",
       },
       "info",
       "P5-T6-QBO-FORENSIC"
@@ -282,6 +361,37 @@ describe("QBO forensic ExcelJS report", () => {
     const financialSql = mocks.sql.filter((sql) => !sql.includes("set_config")).join("\n");
     expect(financialSql).not.toMatch(/\b(?:INSERT|UPDATE|DELETE)\b/i);
     expect(financialSql).toContain("FROM qbo_archive.transactions_snapshot");
-    expect(financialSql).toContain("ORDER BY txn_date DESC");
+    expect(financialSql).toContain("FROM accounting.recon_exceptions e");
+    expect(financialSql).toContain("r.operating_company_id = e.operating_company_id");
+  });
+
+  it("makes same-day generations collision-safe and never invents an ETag or version", async () => {
+    const first = await generateExcelReport("actor-1", "batch-1");
+    const second = await generateExcelReport("actor-1", "batch-1");
+
+    expect(first.r2_key).not.toBe(second.r2_key);
+    expect(mocks.s3Send).toHaveBeenCalledTimes(2);
+    for (const [index, result] of [first, second].entries()) {
+      const command = mocks.s3Send.mock.calls[index]?.[0] as { input: Record<string, unknown> };
+      const body = command.input.Body as Buffer;
+      expect(result.sha256).toBe(createHash("sha256").update(body).digest("hex"));
+      expect(result.r2_key).toContain(`/${result.sha256}/`);
+    }
+    for (const call of mocks.appendCrudAudit.mock.calls) {
+      const payload = call[3] as Record<string, unknown>;
+      expect(payload).not.toHaveProperty("r2_etag");
+      expect(payload).not.toHaveProperty("r2_version_id");
+    }
+  });
+
+  it("fails closed before upload and audit when canonical variance rows are unavailable", async () => {
+    mocks.reconciliationRows = [];
+
+    await expect(generateExcelReport("actor-1", "batch-1")).rejects.toMatchObject({
+      name: "ForensicReportDomainError",
+      code: "reconciliation_variance_data_unavailable",
+    });
+    expect(mocks.s3Send).not.toHaveBeenCalled();
+    expect(mocks.appendCrudAudit).not.toHaveBeenCalled();
   });
 });

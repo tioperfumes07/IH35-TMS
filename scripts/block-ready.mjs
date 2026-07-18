@@ -242,7 +242,13 @@ export function evaluateGuardRequirement({ guardRequired, changedNameStatus, ciD
     guardFilePatterns.some((pattern) => globToRegExp(pattern).test(filePath))
   );
 
-  const hasCiWiring = /^\+.*verify:/m.test(ciDiffText);
+  // Rule 17 guards are CI-wired by auto-discovered verify-steps. Requiring a
+  // package.json/ci.yml registration here forced manifests to lie or hot-file
+  // thrash even though verify:pre-commit already executes every added step.
+  const hasAutoDiscoveredStep = addedFiles.some((filePath) =>
+    globToRegExp("scripts/verify-steps/*.mjs").test(filePath)
+  );
+  const hasCiWiring = hasAutoDiscoveredStep || /^\+.*verify:/m.test(ciDiffText);
 
   if (matchedGuardFiles.length === 0) {
     return {
@@ -255,7 +261,7 @@ export function evaluateGuardRequirement({ guardRequired, changedNameStatus, ciD
   if (!hasCiWiring) {
     return {
       ok: false,
-      reason: "guard_required=true but ci.yml has no added verify: step",
+      reason: "guard_required=true but no auto-discovered verify-step or CI verify wiring was added",
       matchedGuardFiles,
       hasCiWiring,
     };

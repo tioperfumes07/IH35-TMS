@@ -131,6 +131,34 @@ describe("ExcelJS spreadsheet closeout", () => {
     ]);
   });
 
+  it("preserves CSV fields beyond the header with SheetJS-compatible empty keys", async () => {
+    await expect(
+      readUntrustedSpreadsheetRows(
+        Buffer.from("id,name\r\n1,Alpha,extra-one,extra-two\r\n2,Beta,extra-three\r\n"),
+        "extra-fields.csv"
+      )
+    ).resolves.toEqual([
+      { id: 1, name: "Alpha", __EMPTY: "extra-one", __EMPTY_1: "extra-two" },
+      { id: 2, name: "Beta", __EMPTY: "extra-three", __EMPTY_1: null },
+    ]);
+  });
+
+  it("suffixes extra CSV fields without colliding with explicit empty-key headers", async () => {
+    await expect(
+      readUntrustedSpreadsheetRows(
+        Buffer.from("__EMPTY_1,__EMPTY\r\nexplicit-one,explicit-zero,extra-a,extra-b\r\n"),
+        "extra-field-collisions.csv"
+      )
+    ).resolves.toEqual([
+      {
+        __EMPTY_1: "explicit-one",
+        __EMPTY: "explicit-zero",
+        __EMPTY_2: "extra-a",
+        __EMPTY_3: "extra-b",
+      },
+    ]);
+  });
+
   it("preserves measured SheetJS whitespace-only CSV values as strings", async () => {
     // Differential result from xlsx@0.18.5:
     // [{"a":" ","b":"  ","c":"\t","d":null}]

@@ -34,6 +34,8 @@
     "package-lock.json",
     "package.json",
     "scripts/__tests__/exceljs-cell-value.test.mjs",
+    "scripts/__tests__/block-ready.test.mjs",
+    "scripts/block-ready.mjs",
     "scripts/exceljs-cell-value.mjs",
     "scripts/sync-program-board.mjs",
     "scripts/verify-banking-palette-section7.mjs",
@@ -44,7 +46,7 @@
   ],
   "runtime_path": "both",
   "db_required": false,
-  "guard_required": false,
+  "guard_required": true,
   "extra_gates": [],
   "acceptance": [
     {
@@ -57,16 +59,16 @@
     },
     {
       "check": "Accounting, scheduled, maintenance, telematics, QBO forensic, safety, and banking exports no longer use SheetJS; mislabeled safety/banking outputs are genuine XLSX.",
-      "evidence": "Workbook-openability tests plus static closeout guard inventory. Banking money cells are numeric with exact-cent formatting. QBO forensic test asserts six exact <=31-character sheets, headers, order, amount signs, dates, links, R2 destination/content type, append-only audit metadata, and read-only SQL boundary. Parser/tooling tests prove formula, hyperlink, rich-text, error, date, scalar, and unknown-object normalization."
+      "evidence": "Workbook-openability tests plus static closeout guard inventory. Banking money cells are numeric with exact-cent formatting. QBO forensic tests prove truthful QBO created/updated metadata (never inferred identity), canonical populated reconciliation exceptions or fail-closed before upload, collision-safe content-addressed R2 keys, exact-byte SHA-256/length/content-type audit, and ETag/version only when returned by R2. Parser/tooling tests prove formula, hyperlink, rich-text, error, date, scalar, and unknown-object normalization."
     },
     {
       "check": "Regression guard is auto-discovered under scripts/verify-steps without package.json/workflow guard registration.",
-      "evidence": "scripts/verify-steps/144-verify-xlsx-cve-closeout.mjs; Rule 17 hot files untouched."
+      "evidence": "scripts/verify-steps/144-verify-xlsx-cve-closeout.mjs; guard_required=true. block-ready recognizes Rule 17 auto-discovered verify-step wiring and rejects an unwired standalone guard; package.json/workflow hot files remain untouched."
     },
     {
-      "check": "Builder stops at branch proof. No commit, push, merge, production DB access, deployment, or live proof.",
-      "evidence": "UNVERIFIED live by explicit owner-gated prepare-only constraint."
+      "check": "Corrective review commit may be pushed to the existing PR branch, but the financial PR remains build-and-HOLD with no merge, production DB access, deployment, or live proof.",
+      "evidence": "Owner explicitly requested normal commit/push for PR review and prohibited merge. UNVERIFIED live; owner approval remains required."
     }
   ],
-  "note": "Owner-approved runtime dependency removal. Financial/accounting export paths are prepare-only and remain on owner HOLD."
+  "note": "Owner-approved runtime dependency removal and corrective review push. Financial/accounting export paths remain on owner HOLD and must not merge without approval."
 }

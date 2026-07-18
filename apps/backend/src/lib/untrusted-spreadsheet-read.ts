@@ -148,7 +148,13 @@ function readGatedCsvText(buffer: Buffer): Record<string, unknown>[] {
   row.push(field);
   if (row.some((value) => value.length > 0)) parsedRows.push(row);
 
-  const headers = normalizeHeaders((parsedRows.shift() ?? []).map(coerceLegacyCsvValue));
+  const rawHeaders = (parsedRows.shift() ?? []).map(coerceLegacyCsvValue);
+  const columnCount = parsedRows.reduce(
+    (maximum, values) => Math.max(maximum, values.length),
+    rawHeaders.length
+  );
+  while (rawHeaders.length < columnCount) rawHeaders.push(null);
+  const headers = normalizeHeaders(rawHeaders);
   return parsedRows.map((values) => {
     const mapped: Record<string, unknown> = {};
     headers.forEach((header, index) => {

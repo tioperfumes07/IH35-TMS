@@ -51,7 +51,16 @@ describe("XLSX exporter openability", () => {
     );
     const workbook = await open(result.buffer);
     expect(result.extension).toBe("xlsx");
-    expect(workbook.getWorksheet("Report")?.getCell("A1").value).toBe("generatedAt");
-    expect(workbook.getWorksheet("Report")?.getCell("B2").value).toBe("1");
+    expect(result.contentType).toBe(
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    expect(result.summary).toBe("ready");
+    const sheet = workbook.getWorksheet("Report")!;
+    expect([1, 2, 3, 4].map((row) => sheet.getRow(row).values)).toEqual([
+      [, "generatedAt", "2026-07-17T00:00:00.000Z"],
+      [, "rowCount", "1"],
+      [, "summary", "ready"],
+      [, "data_json", '{"total":1}'],
+    ]);
   });
 });
