@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { runFuelGpsRematchForTransaction } from "./fuel-gps-match.service.js";
 
 const paramsSchema = z.object({ transaction_id: z.string().uuid() });
@@ -25,6 +26,7 @@ export async function registerFuelGpsMatchRoutes(app: FastifyInstance) {
     const query = querySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
 
+    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
     const ok = await withCurrentUser(user.uuid, async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [query.data.operating_company_id]);
       return runFuelGpsRematchForTransaction(client, query.data.operating_company_id, params.data.transaction_id);

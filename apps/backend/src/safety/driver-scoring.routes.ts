@@ -50,6 +50,9 @@ export async function registerDriverScoringRoutes(app: FastifyInstance) {
               COUNT(*) FILTER (WHERE e.severity = 'major')::int AS major_count,
               COUNT(*) FILTER (WHERE e.severity = 'minor')::int AS minor_count
             FROM safety.harsh_events e
+            JOIN mdata.drivers event_driver
+              ON event_driver.id = e.driver_id
+             AND event_driver.operating_company_id = e.operating_company_id
             WHERE e.operating_company_id = $1::uuid
               AND e.driver_id IS NOT NULL
               AND e.event_at >= (now() - make_interval(days => $2::int))
@@ -63,6 +66,9 @@ export async function registerDriverScoringRoutes(app: FastifyInstance) {
               COUNT(*) FILTER (WHERE e.severity = 'major')::int AS prior_major_count,
               COUNT(*) FILTER (WHERE e.severity = 'minor')::int AS prior_minor_count
             FROM safety.harsh_events e
+            JOIN mdata.drivers event_driver
+              ON event_driver.id = e.driver_id
+             AND event_driver.operating_company_id = e.operating_company_id
             WHERE e.operating_company_id = $1::uuid
               AND e.driver_id IS NOT NULL
               AND e.event_at >= (now() - make_interval(days => ($2::int * 2)))
@@ -71,7 +77,7 @@ export async function registerDriverScoringRoutes(app: FastifyInstance) {
           )
           SELECT
             d.id::text AS driver_id,
-            CONCAT_WS(' ', d.first_name, d.last_name) AS driver_name,
+            BTRIM(CONCAT_WS(' ', d.first_name, d.last_name)) AS driver_name,
             COALESCE(c.incidents, 0)::int AS incidents,
             COALESCE(c.critical_count, 0)::int AS critical_count,
             COALESCE(c.major_count, 0)::int AS major_count,
@@ -83,7 +89,9 @@ export async function registerDriverScoringRoutes(app: FastifyInstance) {
           LEFT JOIN current_window c ON c.driver_id = d.id
           LEFT JOIN prior_window p ON p.driver_id = d.id
           WHERE d.operating_company_id = $1::uuid
-            AND d.active = true
+            AND d.status = 'Active'::mdata.driver_status
+            AND d.deactivated_at IS NULL
+            AND d.archived_at IS NULL
           ORDER BY incidents DESC, driver_name ASC
           LIMIT 500
         `,
@@ -152,9 +160,15 @@ export async function registerDriverScoringRoutes(app: FastifyInstance) {
             e.latitude,
             e.longitude
           FROM safety.harsh_events e
+          JOIN mdata.drivers d
+            ON d.id = e.driver_id
+           AND d.operating_company_id = e.operating_company_id
           LEFT JOIN mdata.units u ON u.id = e.unit_id
           WHERE e.operating_company_id = $1::uuid
             AND e.driver_id = $2::uuid
+            AND d.status = 'Active'::mdata.driver_status
+            AND d.deactivated_at IS NULL
+            AND d.archived_at IS NULL
             AND e.event_at >= (now() - make_interval(days => $3::int))
             AND e.event_at < now()
           ORDER BY e.event_at DESC

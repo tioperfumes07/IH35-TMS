@@ -67,8 +67,14 @@ export async function aggregateDriverCountsForPeriod(
         (COUNT(*) FILTER (WHERE e.event_kind = 'speeding') * $4::int)::int AS speeding_seconds,
         COUNT(*) FILTER (WHERE e.event_kind IN ('harsh_turn'))::int AS lane_departure_count
       FROM safety.harsh_events e
+      JOIN mdata.drivers d
+        ON d.id = e.driver_id
+       AND d.operating_company_id = e.operating_company_id
       WHERE e.operating_company_id = $1::uuid
         AND e.driver_id IS NOT NULL
+        AND d.status = 'Active'::mdata.driver_status
+        AND d.deactivated_at IS NULL
+        AND d.archived_at IS NULL
         AND e.event_at >= $2::date
         AND e.event_at < ($3::date + interval '1 day')
       GROUP BY e.driver_id
@@ -132,6 +138,12 @@ export async function aggregateDriverCountsForPeriod(
            AND a.started_at <= p.captured_at
            AND (a.ended_at IS NULL OR a.ended_at > p.captured_at)
            AND a.driver_id IS NOT NULL
+          JOIN mdata.drivers d
+            ON d.id = a.driver_id
+           AND d.operating_company_id = a.operating_company_id
+           AND d.status = 'Active'::mdata.driver_status
+           AND d.deactivated_at IS NULL
+           AND d.archived_at IS NULL
           GROUP BY a.driver_id
         )
         SELECT driver_uuid, miles, driving_seconds FROM mileage
@@ -150,9 +162,11 @@ export async function aggregateDriverCountsForPeriod(
   const activeDrivers = await client.query<{ id: string }>(
     `
       SELECT id::text AS id
-      FROM mdata.drivers
-      WHERE operating_company_id = $1::uuid
-        AND active = true
+      FROM mdata.drivers d
+      WHERE d.operating_company_id = $1::uuid
+        AND d.status = 'Active'::mdata.driver_status
+        AND d.deactivated_at IS NULL
+        AND d.archived_at IS NULL
     `,
     [operatingCompanyId]
   );
@@ -289,7 +303,7 @@ export async function listPeriodLeaderboard(
         s.uuid::text,
         s.operating_company_id::text,
         s.driver_uuid::text,
-        CONCAT_WS(' ', d.first_name, d.last_name) AS driver_name,
+        BTRIM(CONCAT_WS(' ', d.first_name, d.last_name)) AS driver_name,
         s.period_start::text,
         s.period_end::text,
         s.harsh_brake_count::int,
@@ -301,10 +315,15 @@ export async function listPeriodLeaderboard(
         s.rank_in_fleet::int AS rank_in_fleet,
         s.computed_at::text
       FROM safety.driver_safety_scores s
-      JOIN mdata.drivers d ON d.id = s.driver_uuid
+      JOIN mdata.drivers d
+        ON d.id = s.driver_uuid
+       AND d.operating_company_id = s.operating_company_id
       WHERE s.operating_company_id = $1::uuid
         AND s.period_start = $2::date
         AND s.period_end = $3::date
+        AND d.status = 'Active'::mdata.driver_status
+        AND d.deactivated_at IS NULL
+        AND d.archived_at IS NULL
       ORDER BY s.rank_in_fleet NULLS LAST, driver_name ASC
     `,
     [operatingCompanyId, periodStart, periodEnd]
@@ -337,7 +356,7 @@ export async function listDriverTrend(
         s.uuid::text,
         s.operating_company_id::text,
         s.driver_uuid::text,
-        CONCAT_WS(' ', d.first_name, d.last_name) AS driver_name,
+        BTRIM(CONCAT_WS(' ', d.first_name, d.last_name)) AS driver_name,
         s.period_start::text,
         s.period_end::text,
         s.harsh_brake_count::int,
@@ -349,9 +368,14 @@ export async function listDriverTrend(
         s.rank_in_fleet::int AS rank_in_fleet,
         s.computed_at::text
       FROM safety.driver_safety_scores s
-      JOIN mdata.drivers d ON d.id = s.driver_uuid
+      JOIN mdata.drivers d
+        ON d.id = s.driver_uuid
+       AND d.operating_company_id = s.operating_company_id
       WHERE s.operating_company_id = $1::uuid
         AND s.driver_uuid = $2::uuid
+        AND d.status = 'Active'::mdata.driver_status
+        AND d.deactivated_at IS NULL
+        AND d.archived_at IS NULL
       ORDER BY s.period_end DESC
       LIMIT $3::int
     `,

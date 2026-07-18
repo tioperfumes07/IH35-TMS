@@ -209,6 +209,7 @@ const REQUIRED_MEMBERSHIP_ASSERT_FILES = [
   "safety/expiry-tracking/routes.ts",
   "safety/fines.routes.ts",
   "safety/foundation-kpis.routes.ts",
+  "safety/fuel-gps-match.routes.ts",
   "safety/geofence-breach.routes.ts",
   "safety/hos.routes.ts",
   "safety/incidents.routes.ts",
