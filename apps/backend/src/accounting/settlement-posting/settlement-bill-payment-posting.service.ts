@@ -37,17 +37,31 @@
 import { withCurrentUser } from "../../auth/db.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
 import { companyBusinessDate } from "../../lib/company-business-date.js";
-import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../../banking/bank-account-visibility.js";
+import {
+  bankAccountHiddenFilterSql,
+  isBankAccountHideEnabled,
+} from "../../banking/bank-account-visibility.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
-import { createBill, payBill } from "../bills.service.js";
-import { createJournalEntry, reverseJournalEntryNoFlip } from "../journal-entries.service.js";
-import { postSourceTransaction, reversePostedSourceTransactionInClientTx } from "../posting-engine.service.js";
+import {
+  createBill,
+  payBill,
+  voidBillInClientTx,
+  voidBillPaymentInClientTx,
+} from "../bills.service.js";
+import {
+  createJournalEntry,
+  reverseJournalEntryNoFlip,
+} from "../journal-entries.service.js";
+import { postSourceTransaction } from "../posting-engine.service.js";
 import { resolveRoleAccountOptional } from "../coa-roles/resolver.service.js";
 import {
   driverEscrowSubAccountName,
   planDriverEscrowSubAccount,
 } from "../driver-subaccount-provision.service.js";
-import { EscrowResolverError, resolveDriverEscrowLiabilityAccount } from "../../driver-finance/escrow-resolver.service.js";
+import {
+  EscrowResolverError,
+  resolveDriverEscrowLiabilityAccount,
+} from "../../driver-finance/escrow-resolver.service.js";
 import {
   SETTLEMENT_GL_POSTING_FLAG_KEY,
   SettlementBillPaymentError,
@@ -61,12 +75,22 @@ import {
 } from "./settlement-bill-payment.math.js";
 
 type DbClient = {
-  query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
+  query: <T = Record<string, unknown>>(
+    sql: string,
+    values?: unknown[],
+  ) => Promise<{ rows: T[]; rowCount?: number }>;
 };
 
 type Actor = { userId: string };
 
-const POSTABLE_STATUSES = new Set(["locked", "final", "closed", "paid", "approved", "ready"]);
+const POSTABLE_STATUSES = new Set([
+  "locked",
+  "final",
+  "closed",
+  "paid",
+  "approved",
+  "ready",
+]);
 
 export type SettlementBillPaymentResult =
   | { result: "skipped_flag_off"; settlement_id: string; run_id: null }
@@ -108,15 +132,26 @@ type DeductionRow = {
   source_expense_id: string | null;
 };
 
-function scoped<T>(actor: Actor, operatingCompanyId: string, fn: (client: DbClient) => Promise<T>): Promise<T> {
+function scoped<T>(
+  actor: Actor,
+  operatingCompanyId: string,
+  fn: (client: DbClient) => Promise<T>,
+): Promise<T> {
   return withCurrentUser(actor.userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+    await client.query(
+      `SELECT set_config('app.operating_company_id', $1::text, true)`,
+      [operatingCompanyId],
+    );
     return fn(client as DbClient);
   });
 }
 
 /** Resolve an account bound to role_key in catalogs.account_role_bindings, pinned to this entity. */
-async function resolveRoleBindingAccount(client: DbClient, operatingCompanyId: string, roleKey: string): Promise<string | null> {
+async function resolveRoleBindingAccount(
+  client: DbClient,
+  operatingCompanyId: string,
+  roleKey: string,
+): Promise<string | null> {
   const res = await client.query<{ account_id: string }>(
     `
       SELECT arb.account_id::text AS account_id
@@ -131,7 +166,7 @@ async function resolveRoleBindingAccount(client: DbClient, operatingCompanyId: s
       ORDER BY (arb.operating_company_id IS NOT NULL) DESC
       LIMIT 1
     `,
-    [roleKey, operatingCompanyId]
+    [roleKey, operatingCompanyId],
   );
   return res.rows[0]?.account_id ?? null;
 }
@@ -141,7 +176,10 @@ async function resolveRoleBindingAccount(client: DbClient, operatingCompanyId: s
  * account bound to the cash_dip role — so payBill(from that bank) + the bill-payment poster credit the
  * Wells Fargo — DIP cash account (never a hardcoded id). NULL when unmapped (caller fails loud).
  */
-async function resolveDipBankAccountId(client: DbClient, operatingCompanyId: string): Promise<string | null> {
+async function resolveDipBankAccountId(
+  client: DbClient,
+  operatingCompanyId: string,
+): Promise<string | null> {
   // BANK-ACCOUNT-HIDE: an account hidden for THIS entity is never eligible as the resolved DIP bank
   // (flag OFF by default — see docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
   const hideOn = await isBankAccountHideEnabled(client, operatingCompanyId);
@@ -160,7 +198,7 @@ async function resolveDipBankAccountId(client: DbClient, operatingCompanyId: str
       ORDER BY (arb.operating_company_id IS NOT NULL) DESC
       LIMIT 1
     `,
-    [operatingCompanyId]
+    [operatingCompanyId],
   );
   return res.rows[0]?.bank_account_id ?? null;
 }
@@ -179,27 +217,43 @@ async function resolveDriverOwnAccount(
   driverId: string,
   driverName: string,
   kind: "advance" | "escrow",
-  hireDate?: string | Date | null
+  hireDate?: string | Date | null,
 ): Promise<string | null> {
   // Foundation link (guarded so it is safe before that PR merges).
   if (kind === "escrow") {
-    const reg = await client.query<{ ok: boolean }>(`SELECT to_regclass('accounting.escrow_accounts') IS NOT NULL AS ok`);
+    const reg = await client.query<{ ok: boolean }>(
+      `SELECT to_regclass('accounting.escrow_accounts') IS NOT NULL AS ok`,
+    );
     if (reg.rows[0]?.ok) {
       // Reuse the SHARED escrow resolver (I3): the driver-keyed bridge → the per-driver escrow LIABILITY
       // sub-account, fail-loud asserting Liability + NOT the Faro factoring-reserve asset (QBO-1150040084).
       // UNBOUND falls through to the canonical-name fallback (pre-bridge charts); WRONG_TYPE / IS_FARO
       // rethrow so a mis-provisioned escrow bridge can never credit the wrong account.
       try {
-        const resolved = await resolveDriverEscrowLiabilityAccount(client, operatingCompanyId, driverId);
+        const resolved = await resolveDriverEscrowLiabilityAccount(
+          client,
+          operatingCompanyId,
+          driverId,
+        );
         return resolved.accountId;
       } catch (e) {
-        if (!(e instanceof EscrowResolverError) || e.code !== "DRIVER_ESCROW_ACCOUNT_UNBOUND") throw e;
+        if (
+          !(e instanceof EscrowResolverError) ||
+          e.code !== "DRIVER_ESCROW_ACCOUNT_UNBOUND"
+        )
+          throw e;
       }
     }
     // Canonical provisioned per-driver escrow leaf: two-level nesting under the year-agnostic
     // "Driver Escrow" sub-parent, itself under top-level "Damage Claim Escrow" (STOP-DECISION #1).
-    const subAccountName = driverEscrowSubAccountName(driverName, hireDate ?? null);
-    const plan = await planDriverEscrowSubAccount(client, { subAccountName, operatingCompanyId });
+    const subAccountName = driverEscrowSubAccountName(
+      driverName,
+      hireDate ?? null,
+    );
+    const plan = await planDriverEscrowSubAccount(client, {
+      subAccountName,
+      operatingCompanyId,
+    });
     if (plan.action === "skip_exists") return plan.existingId;
     return null;
   }
@@ -213,7 +267,7 @@ async function resolveDriverOwnAccount(
   // DRIVER_ADVANCE_ACCOUNT_MISSING) when the bridge row is absent — NEVER fall back to name resolution,
   // NEVER silently pick an account.
   const reg = await client.query<{ ok: boolean }>(
-    `SELECT to_regclass('driver_finance.driver_advance_accounts') IS NOT NULL AS ok`
+    `SELECT to_regclass('driver_finance.driver_advance_accounts') IS NOT NULL AS ok`,
   );
   if (reg.rows[0]?.ok) {
     const found = await client.query<{ account_id: string }>(
@@ -230,14 +284,18 @@ async function resolveDriverOwnAccount(
           AND a.operating_company_id = $1::uuid
         LIMIT 1
       `,
-      [operatingCompanyId, driverId]
+      [operatingCompanyId, driverId],
     );
     if (found.rows[0]?.account_id) return found.rows[0].account_id;
   }
   return null;
 }
 
-async function loadSettlement(client: DbClient, operatingCompanyId: string, settlementId: string): Promise<SettlementRow> {
+async function loadSettlement(
+  client: DbClient,
+  operatingCompanyId: string,
+  settlementId: string,
+): Promise<SettlementRow> {
   const res = await client.query<SettlementRow>(
     `
       SELECT id::text, driver_id::text, display_id, status, locked_at::text, period_end::text
@@ -246,14 +304,23 @@ async function loadSettlement(client: DbClient, operatingCompanyId: string, sett
       LIMIT 1
       FOR UPDATE
     `,
-    [operatingCompanyId, settlementId]
+    [operatingCompanyId, settlementId],
   );
   const row = res.rows[0];
-  if (!row) throw new SettlementBillPaymentError("SETTLEMENT_NOT_FOUND", `Settlement ${settlementId} not found`);
+  if (!row)
+    throw new SettlementBillPaymentError(
+      "SETTLEMENT_NOT_FOUND",
+      `Settlement ${settlementId} not found`,
+    );
   return row;
 }
 
-async function loadDriverBills(client: DbClient, operatingCompanyId: string, settlementId: string, driverId: string): Promise<DriverBillRow[]> {
+async function loadDriverBills(
+  client: DbClient,
+  operatingCompanyId: string,
+  settlementId: string,
+  driverId: string,
+): Promise<DriverBillRow[]> {
   // Primary link: settlement_lines.source_driver_bill_id (the load-bookended close's bill->line link);
   // secondary: driver_bills.settled_in_settlement_id (stamped by this engine). Union both, dedup, order
   // by creation so the load# numbering + deduction allocation are deterministic.
@@ -274,12 +341,22 @@ async function loadDriverBills(client: DbClient, operatingCompanyId: string, set
         )
       ORDER BY db.created_at ASC, db.id ASC
     `,
-    [operatingCompanyId, settlementId, driverId]
+    [operatingCompanyId, settlementId, driverId],
   );
-  return res.rows.map((r) => ({ ...r, gross_amount_cents: Math.max(0, Math.round(Number(r.gross_amount_cents ?? 0))) }));
+  return res.rows.map((r) => ({
+    ...r,
+    gross_amount_cents: Math.max(
+      0,
+      Math.round(Number(r.gross_amount_cents ?? 0)),
+    ),
+  }));
 }
 
-async function loadDeductions(client: DbClient, operatingCompanyId: string, settlementId: string): Promise<DeductionRow[]> {
+async function loadDeductions(
+  client: DbClient,
+  operatingCompanyId: string,
+  settlementId: string,
+): Promise<DeductionRow[]> {
   const res = await client.query<DeductionRow>(
     `
       SELECT dsd.id::text, dsd.deduction_type, dsd.amount_cents::bigint AS amount_cents,
@@ -290,10 +367,13 @@ async function loadDeductions(client: DbClient, operatingCompanyId: string, sett
         AND dsd.applied_to_settlement_id = $2::uuid
       ORDER BY dsd.created_at ASC, dsd.id ASC
     `,
-    [operatingCompanyId, settlementId]
+    [operatingCompanyId, settlementId],
   );
   return res.rows
-    .map((r) => ({ ...r, amount_cents: Math.max(0, Math.round(Number(r.amount_cents ?? 0))) }))
+    .map((r) => ({
+      ...r,
+      amount_cents: Math.max(0, Math.round(Number(r.amount_cents ?? 0))),
+    }))
     .filter((r) => r.amount_cents > 0);
 }
 
@@ -304,24 +384,35 @@ async function loadDeductions(client: DbClient, operatingCompanyId: string, sett
  */
 export async function postSettlementBillPayment(
   input: { operatingCompanyId: string; settlementId: string },
-  actor: Actor
+  actor: Actor,
 ): Promise<SettlementBillPaymentResult> {
   const opco = input.operatingCompanyId;
   const settlementId = input.settlementId;
 
   // ── FLAG GATE — OFF => ZERO writes, checked before any read/lock/insert. ──────────────────────────
   const flagOn = await scoped(actor, opco, (client) =>
-    isEnabled(client as never, SETTLEMENT_GL_POSTING_FLAG_KEY, { operating_company_id: opco, user_uuid: actor.userId })
+    isEnabled(client as never, SETTLEMENT_GL_POSTING_FLAG_KEY, {
+      operating_company_id: opco,
+      user_uuid: actor.userId,
+    }),
   );
-  if (!flagOn) return { result: "skipped_flag_off", settlement_id: settlementId, run_id: null };
+  if (!flagOn)
+    return {
+      result: "skipped_flag_off",
+      settlement_id: settlementId,
+      run_id: null,
+    };
 
   // ── Resolve everything + claim the run row (idempotency anchor) in ONE scoped transaction. ────────
   const prep = await scoped(actor, opco, async (client) => {
     const settlement = await loadSettlement(client, opco, settlementId);
-    if (settlement.locked_at == null && !POSTABLE_STATUSES.has(settlement.status)) {
+    if (
+      settlement.locked_at == null &&
+      !POSTABLE_STATUSES.has(settlement.status)
+    ) {
       throw new SettlementBillPaymentError(
         "SETTLEMENT_NOT_POSTABLE",
-        `Settlement ${settlement.display_id ?? settlement.id} is not finalized/locked (status=${settlement.status})`
+        `Settlement ${settlement.display_id ?? settlement.id} is not finalized/locked (status=${settlement.status})`,
       );
     }
 
@@ -329,7 +420,7 @@ export async function postSettlementBillPayment(
     const existingRun = await client.query<{ id: string; status: string }>(
       `SELECT id::text, status FROM driver_finance.driver_settlement_gl_runs
         WHERE operating_company_id = $1::uuid AND settlement_id = $2::uuid LIMIT 1 FOR UPDATE`,
-      [opco, settlementId]
+      [opco, settlementId],
     );
     const runRow = existingRun.rows[0] ?? null;
     if (runRow && runRow.status === "posted") {
@@ -337,36 +428,71 @@ export async function postSettlementBillPayment(
     }
 
     // Driver vendor + name (+ hire_date, needed for the escrow leaf's stable name-with-hire-date).
-    const driverRes = await client.query<{ qbo_vendor_id: string | null; driver_name: string; hire_date: string | null }>(
+    const driverRes = await client.query<{
+      qbo_vendor_id: string | null;
+      driver_name: string;
+      hire_date: string | null;
+    }>(
       `SELECT qbo_vendor_id, concat_ws(' ', first_name, last_name) AS driver_name, hire_date::text AS hire_date
          FROM mdata.drivers WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
-      [settlement.driver_id, opco]
+      [settlement.driver_id, opco],
     );
     const driverName = String(driverRes.rows[0]?.driver_name ?? "").trim();
     const driverHireDate = driverRes.rows[0]?.hire_date ?? null;
-    const driverVendorId = String(driverRes.rows[0]?.qbo_vendor_id ?? settlement.driver_id).trim();
+    const driverVendorId = String(
+      driverRes.rows[0]?.qbo_vendor_id ?? settlement.driver_id,
+    ).trim();
     if (!driverVendorId) {
-      throw new SettlementBillPaymentError("DRIVER_VENDOR_MISSING", `No vendor linkage for driver ${settlement.driver_id}`);
+      throw new SettlementBillPaymentError(
+        "DRIVER_VENDOR_MISSING",
+        `No vendor linkage for driver ${settlement.driver_id}`,
+      );
     }
 
     // Per-load bills + deductions.
-    const bills = await loadDriverBills(client, opco, settlementId, settlement.driver_id);
+    const bills = await loadDriverBills(
+      client,
+      opco,
+      settlementId,
+      settlement.driver_id,
+    );
     if (bills.length === 0) {
-      throw new SettlementBillPaymentError("NO_LOAD_BILLS", `Settlement ${settlement.display_id ?? settlementId} has no per-load driver bills to post`);
+      throw new SettlementBillPaymentError(
+        "NO_LOAD_BILLS",
+        `Settlement ${settlement.display_id ?? settlementId} has no per-load driver bills to post`,
+      );
     }
     const deductions = await loadDeductions(client, opco, settlementId);
 
     // Role accounts — missing => STOP, never guess.
-    const driverPayAccount = await resolveRoleBindingAccount(client, opco, "driver_pay_expense");
+    const driverPayAccount = await resolveRoleBindingAccount(
+      client,
+      opco,
+      "driver_pay_expense",
+    );
     if (!driverPayAccount) {
-      throw new SettlementBillPaymentError("DRIVER_PAY_ACCOUNT_MISSING", "No active 'driver_pay_expense' role binding (Cost of Labor–Mexico Drivers)");
+      throw new SettlementBillPaymentError(
+        "DRIVER_PAY_ACCOUNT_MISSING",
+        "No active 'driver_pay_expense' role binding (Cost of Labor–Mexico Drivers)",
+      );
     }
-    const apAccount = await resolveRoleAccountOptional(client, opco, "ap_control");
-    if (!apAccount) throw new SettlementBillPaymentError("AP_ACCOUNT_MISSING", "No A/P control account (ap_control) designated");
+    const apAccount = await resolveRoleAccountOptional(
+      client,
+      opco,
+      "ap_control",
+    );
+    if (!apAccount)
+      throw new SettlementBillPaymentError(
+        "AP_ACCOUNT_MISSING",
+        "No A/P control account (ap_control) designated",
+      );
 
     const dipBankAccountId = await resolveDipBankAccountId(client, opco);
     if (!dipBankAccountId) {
-      throw new SettlementBillPaymentError("DIP_BANK_MISSING", "No DIP bank account (cash_dip role -> banking.bank_accounts.ledger_account_id) resolved");
+      throw new SettlementBillPaymentError(
+        "DIP_BANK_MISSING",
+        "No DIP bank account (cash_dip role -> banking.bank_accounts.ledger_account_id) resolved",
+      );
     }
 
     // Resolve each deduction's credit target account (pay-first-then-escrow order).
@@ -376,31 +502,47 @@ export async function postSettlementBillPayment(
       throw new SettlementBillPaymentError(
         "SETTLEMENT_TOTALS_INCONSISTENT",
         `Applied deductions (${totalDeductions}c) exceed gross of per-load bills (${gross}c) — the 5% net floor should prevent this`,
-        { gross_cents: gross, deductions_cents: totalDeductions }
+        { gross_cents: gross, deductions_cents: totalDeductions },
       );
     }
 
-    type ResolvedDeduction = DeductionRow & { target: DeductionTarget; accountId: string };
+    type ResolvedDeduction = DeductionRow & {
+      target: DeductionTarget;
+      accountId: string;
+    };
     const resolvedDeductions: ResolvedDeduction[] = [];
     for (const d of deductions) {
       const target = classifyDeductionTarget(d.deduction_type, d.bucket_type);
       let accountId: string | null;
       if (target === "advance") {
-        accountId = await resolveDriverOwnAccount(client, opco, settlement.driver_id, driverName, "advance");
+        accountId = await resolveDriverOwnAccount(
+          client,
+          opco,
+          settlement.driver_id,
+          driverName,
+          "advance",
+        );
         if (!accountId) {
           throw new SettlementBillPaymentError(
             "DRIVER_ADVANCE_ACCOUNT_MISSING",
             `Driver ${settlement.driver_id} has no provisioned Cash-Advance ASSET sub-account for advance recovery`,
-            { deduction_id: d.id, deduction_type: d.deduction_type }
+            { deduction_id: d.id, deduction_type: d.deduction_type },
           );
         }
       } else if (target === "escrow") {
-        accountId = await resolveDriverOwnAccount(client, opco, settlement.driver_id, driverName, "escrow", driverHireDate);
+        accountId = await resolveDriverOwnAccount(
+          client,
+          opco,
+          settlement.driver_id,
+          driverName,
+          "escrow",
+          driverHireDate,
+        );
         if (!accountId) {
           throw new SettlementBillPaymentError(
             "DRIVER_ESCROW_ACCOUNT_MISSING",
             `Driver ${settlement.driver_id} has no provisioned Driver-Escrow LIABILITY sub-account for escrow withholding`,
-            { deduction_id: d.id, deduction_type: d.deduction_type }
+            { deduction_id: d.id, deduction_type: d.deduction_type },
           );
         }
       } else {
@@ -410,13 +552,15 @@ export async function postSettlementBillPayment(
           throw new SettlementBillPaymentError(
             "DEDUCTION_RECOVERY_ACCOUNT_MISSING",
             `No active '${roleKey}' role binding for deduction bucket '${d.deduction_type}'`,
-            { deduction_id: d.id, role_key: roleKey }
+            { deduction_id: d.id, role_key: roleKey },
           );
         }
       }
       resolvedDeductions.push({ ...d, target, accountId });
     }
-    resolvedDeductions.sort((a, b) => deductionOrderRank(a.target) - deductionOrderRank(b.target));
+    resolvedDeductions.sort(
+      (a, b) => deductionOrderRank(a.target) - deductionOrderRank(b.target),
+    );
 
     // Claim / upsert the run row.
     const runKey = buildSettlementRunKey(opco, settlementId);
@@ -431,13 +575,23 @@ export async function postSettlementBillPayment(
           ON CONFLICT (operating_company_id, settlement_id) DO NOTHING
           RETURNING id::text
         `,
-        [opco, settlementId, settlement.driver_id, driverVendorId, runKey, gross, totalDeductions, gross - totalDeductions, actor.userId]
+        [
+          opco,
+          settlementId,
+          settlement.driver_id,
+          driverVendorId,
+          runKey,
+          gross,
+          totalDeductions,
+          gross - totalDeductions,
+          actor.userId,
+        ],
       );
       runId = ins.rows[0]?.id ?? "";
       if (!runId) {
         const again = await client.query<{ id: string }>(
           `SELECT id::text FROM driver_finance.driver_settlement_gl_runs WHERE operating_company_id=$1::uuid AND settlement_id=$2::uuid LIMIT 1`,
-          [opco, settlementId]
+          [opco, settlementId],
         );
         runId = again.rows[0]?.id ?? "";
       }
@@ -455,13 +609,17 @@ export async function postSettlementBillPayment(
       `SELECT driver_bill_id::text, accounting_bill_id::text, bill_journal_entry_id::text,
               cash_bill_payment_id::text, deduction_bill_payment_id::text
          FROM driver_finance.driver_settlement_gl_bills WHERE run_id = $1::uuid`,
-      [runId]
+      [runId],
     );
-    const doneByBill = new Map(existingBills.rows.map((r) => [r.driver_bill_id, r]));
+    const doneByBill = new Map(
+      existingBills.rows.map((r) => [r.driver_bill_id, r]),
+    );
 
-    const runDedJe = await client.query<{ deduction_journal_entry_id: string | null }>(
+    const runDedJe = await client.query<{
+      deduction_journal_entry_id: string | null;
+    }>(
       `SELECT deduction_journal_entry_id::text FROM driver_finance.driver_settlement_gl_runs WHERE id = $1::uuid`,
-      [runId]
+      [runId],
     );
 
     return {
@@ -478,11 +636,17 @@ export async function postSettlementBillPayment(
       totalDeductions,
       runId,
       doneByBill,
-      deductionJournalEntryId: runDedJe.rows[0]?.deduction_journal_entry_id ?? null,
+      deductionJournalEntryId:
+        runDedJe.rows[0]?.deduction_journal_entry_id ?? null,
     };
   });
 
-  if (prep.alreadyPosted) return { result: "already_posted", settlement_id: settlementId, run_id: prep.runId };
+  if (prep.alreadyPosted)
+    return {
+      result: "already_posted",
+      settlement_id: settlementId,
+      run_id: prep.runId,
+    };
 
   const {
     settlement,
@@ -503,7 +667,10 @@ export async function postSettlementBillPayment(
   const label = `Settlement ${settlement.display_id ?? settlement.id}`;
 
   // Allocate the total deduction across the per-load bills (oldest first) so each Bill closes.
-  const allocation = allocateDeductionsAcrossBills(bills.map((b) => b.gross_amount_cents), totalDeductions);
+  const allocation = allocateDeductionsAcrossBills(
+    bills.map((b) => b.gross_amount_cents),
+    totalDeductions,
+  );
 
   // ── Per-load Bills + non-cash deduction closure + net cash BillPayment (each self-scoping). ───────
   for (let i = 0; i < bills.length; i += 1) {
@@ -528,7 +695,7 @@ export async function postSettlementBillPayment(
           memo: `${label} — driver pay, load ${b.load_number ?? b.load_id}`,
           coaAccountId: driverPayAccount,
         },
-        actor.userId
+        actor.userId,
       );
       accountingBillId = bill.id;
       // The GL poster reads accounting.bill_lines (not coa_account_id) — add the single driver-pay line.
@@ -537,14 +704,24 @@ export async function postSettlementBillPayment(
           `INSERT INTO accounting.bill_lines (bill_id, line_sequence, amount, description, account_id)
            VALUES ($1::uuid, 1, $2, $3, $4::uuid)
            ON CONFLICT (bill_id, line_sequence) DO NOTHING`,
-          [accountingBillId, b.gross_amount_cents / 100, `Load ${b.load_number ?? b.load_id} — Cost of Labor–Mexico Drivers`, driverPayAccount]
-        )
+          [
+            accountingBillId,
+            b.gross_amount_cents / 100,
+            `Load ${b.load_number ?? b.load_id} — Cost of Labor–Mexico Drivers`,
+            driverPayAccount,
+          ],
+        ),
       );
     }
     if (!billJeId) {
       const billPost = await postSourceTransaction(
-        { operating_company_id: opco, source_transaction_type: "bill", source_transaction_id: accountingBillId, posting_purpose: "initial_post" },
-        { userId: actor.userId }
+        {
+          operating_company_id: opco,
+          source_transaction_type: "bill",
+          source_transaction_id: accountingBillId,
+          posting_purpose: "initial_post",
+        },
+        { userId: actor.userId },
       );
       billJeId = billPost.journal_entry_id;
     }
@@ -560,15 +737,15 @@ export async function postSettlementBillPayment(
           paymentMethod: "other",
           memo: `${label} — deduction recovery (non-cash), load ${b.load_number ?? b.load_id}`,
         },
-        actor.userId
+        actor.userId,
       );
       deductionBpId = dedPayment.id;
       await scoped(actor, opco, (client) =>
         client.query(
           `UPDATE accounting.bill_payments SET settlement_deduction_noncash = true, updated_at = now()
             WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
-          [deductionBpId, opco]
-        )
+          [deductionBpId, opco],
+        ),
       );
     }
 
@@ -585,12 +762,17 @@ export async function postSettlementBillPayment(
           fromBankAccountId: dipBankAccountId,
           memo: `${label} — net driver pay, load ${b.load_number ?? b.load_id}`,
         },
-        actor.userId
+        actor.userId,
       );
       cashBpId = cashPayment.id;
       const cashPost = await postSourceTransaction(
-        { operating_company_id: opco, source_transaction_type: "bill_payment", source_transaction_id: cashBpId, posting_purpose: "initial_post" },
-        { userId: actor.userId }
+        {
+          operating_company_id: opco,
+          source_transaction_type: "bill_payment",
+          source_transaction_id: cashBpId,
+          posting_purpose: "initial_post",
+        },
+        { userId: actor.userId },
       );
       cashJeId = cashPost.journal_entry_id;
     }
@@ -601,7 +783,7 @@ export async function postSettlementBillPayment(
         `UPDATE driver_finance.driver_bills
             SET settled_in_settlement_id = $2::uuid, status = 'paid', updated_at = now()
           WHERE id = $1::uuid AND operating_company_id = $3::uuid AND status <> 'void'`,
-        [b.id, settlementId, opco]
+        [b.id, settlementId, opco],
       );
       await client.query(
         `
@@ -617,7 +799,22 @@ export async function postSettlementBillPayment(
             cash_journal_entry_id = COALESCE(EXCLUDED.cash_journal_entry_id, driver_settlement_gl_bills.cash_journal_entry_id),
             deduction_bill_payment_id = COALESCE(EXCLUDED.deduction_bill_payment_id, driver_settlement_gl_bills.deduction_bill_payment_id)
         `,
-        [opco, runId, settlementId, b.id, b.load_id, b.load_number, accountingBillId, billJeId, cashBpId, cashJeId, deductionBpId, b.gross_amount_cents, alloc.deductionCents, alloc.cashCents]
+        [
+          opco,
+          runId,
+          settlementId,
+          b.id,
+          b.load_id,
+          b.load_number,
+          accountingBillId,
+          billJeId,
+          cashBpId,
+          cashJeId,
+          deductionBpId,
+          b.gross_amount_cents,
+          alloc.deductionCents,
+          alloc.cashCents,
+        ],
       );
     });
   }
@@ -625,7 +822,12 @@ export async function postSettlementBillPayment(
   // ── Deduction JE (ONE balanced entry): Dr A/P (total) / Cr each driver-own-or-recovery target. ───
   if (totalDeductions > 0 && !deductionJournalEntryId) {
     const postings = [
-      { account_id: apAccount, debit_or_credit: "debit" as const, amount_cents: totalDeductions, description: `${label} — A/P reduced by deductions` },
+      {
+        account_id: apAccount,
+        debit_or_credit: "debit" as const,
+        amount_cents: totalDeductions,
+        description: `${label} — A/P reduced by deductions`,
+      },
       ...resolvedDeductions.map((d) => ({
         account_id: d.accountId,
         debit_or_credit: "credit" as const,
@@ -640,15 +842,21 @@ export async function postSettlementBillPayment(
     ];
     assertBalanced(postings);
     const je = await createJournalEntry(
-      { operating_company_id: opco, entry_date: billDate, memo: `${label} — settlement deductions (Dr A/P / Cr driver accounts)`, source: "auto", postings },
-      { userId: actor.userId, role: "system" }
+      {
+        operating_company_id: opco,
+        entry_date: billDate,
+        memo: `${label} — settlement deductions (Dr A/P / Cr driver accounts)`,
+        source: "auto",
+        postings,
+      },
+      { userId: actor.userId, role: "system" },
     );
     deductionJournalEntryId = je.id;
     await scoped(actor, opco, (client) =>
       client.query(
         `UPDATE driver_finance.driver_settlement_gl_runs SET deduction_journal_entry_id = $2::uuid, updated_at = now() WHERE id = $1::uuid`,
-        [runId, deductionJournalEntryId]
-      )
+        [runId, deductionJournalEntryId],
+      ),
     );
   }
 
@@ -658,7 +866,7 @@ export async function postSettlementBillPayment(
       `UPDATE driver_finance.driver_settlement_gl_runs
           SET gross_cents = $2, deductions_cents = $3, net_cents = $4, status = 'posted', updated_at = now()
         WHERE id = $1::uuid`,
-      [runId, gross, totalDeductions, gross - totalDeductions]
+      [runId, gross, totalDeductions, gross - totalDeductions],
     );
     await appendCrudAudit(
       client as never,
@@ -678,7 +886,7 @@ export async function postSettlementBillPayment(
         deduction_journal_entry_id: deductionJournalEntryId,
       },
       "info",
-      "SETTLEMENT-BILL-PAYMENT"
+      "SETTLEMENT-BILL-PAYMENT",
     );
   });
 
@@ -709,114 +917,163 @@ export type SettlementBillPaymentReversalResult = {
  */
 export async function reverseSettlementBillPayment(
   input: { operatingCompanyId: string; settlementId: string; reason: string },
-  actor: Actor
+  actor: Actor,
+): Promise<SettlementBillPaymentReversalResult> {
+  const opco = input.operatingCompanyId;
+  const currentBusinessDate = companyBusinessDate();
+  return scoped(actor, opco, (client) =>
+    reverseSettlementBillPaymentInClientTx(
+      client,
+      input,
+      actor,
+      currentBusinessDate,
+    ),
+  );
+}
+
+export async function reverseSettlementBillPaymentInClientTx(
+  client: DbClient,
+  input: { operatingCompanyId: string; settlementId: string; reason: string },
+  actor: Actor,
+  currentBusinessDate: string,
 ): Promise<SettlementBillPaymentReversalResult> {
   const opco = input.operatingCompanyId;
   const settlementId = input.settlementId;
-
-  // One caller-owned transaction covers EVERY reversal leg, the whole-settlement reconciliation proof,
-  // the run-state transition, and the audit event. The run row lock serializes concurrent requests.
-  // Any bill/payment/deduction/period/linkage/reconciliation failure rolls the entire attempt back and
-  // leaves status='posted' — never partial-success state.
-  return scoped(actor, opco, async (client) => {
-    const runRes = await client.query<{ id: string; status: string; deduction_journal_entry_id: string | null }>(
-      `SELECT id::text, status, deduction_journal_entry_id::text
+  const runRes = await client.query<{
+    id: string;
+    status: string;
+    deduction_journal_entry_id: string | null;
+  }>(
+    `SELECT id::text, status, deduction_journal_entry_id::text
          FROM driver_finance.driver_settlement_gl_runs
         WHERE operating_company_id = $1::uuid AND settlement_id = $2::uuid LIMIT 1 FOR UPDATE`,
-      [opco, settlementId]
-    );
-    const run = runRes.rows[0] ?? null;
-    if (!run || run.status !== "posted") {
-      return { result: "nothing_to_reverse", settlement_id: settlementId, run_id: run?.id ?? null };
-    }
+    [opco, settlementId],
+  );
+  const run = runRes.rows[0] ?? null;
+  if (!run || run.status !== "posted") {
+    return {
+      result: "nothing_to_reverse",
+      settlement_id: settlementId,
+      run_id: run?.id ?? null,
+    };
+  }
 
-    const r = await client.query<{
-      accounting_bill_id: string;
-      bill_journal_entry_id: string | null;
-      cash_bill_payment_id: string | null;
-      cash_journal_entry_id: string | null;
-      deduction_bill_payment_id: string | null;
-    }>(
-      `SELECT accounting_bill_id::text, bill_journal_entry_id::text,
+  const r = await client.query<{
+    driver_bill_id: string;
+    accounting_bill_id: string;
+    bill_journal_entry_id: string | null;
+    cash_bill_payment_id: string | null;
+    cash_journal_entry_id: string | null;
+    deduction_bill_payment_id: string | null;
+  }>(
+    `SELECT driver_bill_id::text, accounting_bill_id::text, bill_journal_entry_id::text,
               cash_bill_payment_id::text, cash_journal_entry_id::text,
               deduction_bill_payment_id::text
          FROM driver_finance.driver_settlement_gl_bills WHERE run_id = $1::uuid`,
-      [run.id]
+    [run.id],
+  );
+  const glBills = r.rows;
+  if (glBills.length === 0) {
+    throw new SettlementBillPaymentError(
+      "NO_LOAD_BILLS",
+      `Settlement ${settlementId} has no linked GL bills to reverse`,
     );
-    const glBills = r.rows;
-    if (glBills.length === 0) {
+  }
+
+  const originalJeIds: string[] = [];
+  const reversalJeIds: string[] = [];
+
+  // Reverse cash payments + bill A/P legs through the canonical posting engine, on THIS transaction.
+  // No catch-and-ignore: PERIOD_LOCKED, missing source, linkage, or SQL failures abort and roll back all legs.
+  for (const gb of glBills) {
+    if (!gb.bill_journal_entry_id) {
       throw new SettlementBillPaymentError(
-        "NO_LOAD_BILLS",
-        `Settlement ${settlementId} has no linked GL bills to reverse`
+        "SOURCE_POSTING_LINK_MISSING",
+        `Settlement ${settlementId} bill ${gb.accounting_bill_id} is missing its original journal-entry linkage`,
       );
     }
+    originalJeIds.push(gb.bill_journal_entry_id);
 
-    const originalJeIds: string[] = [];
-    const reversalJeIds: string[] = [];
-
-    // Reverse cash payments + bill A/P legs through the canonical posting engine, on THIS transaction.
-    // No catch-and-ignore: PERIOD_LOCKED, missing source, linkage, or SQL failures abort and roll back all legs.
-    for (const gb of glBills) {
-      if (!gb.bill_journal_entry_id) {
+    if (gb.cash_bill_payment_id) {
+      if (!gb.cash_journal_entry_id) {
         throw new SettlementBillPaymentError(
           "SOURCE_POSTING_LINK_MISSING",
-          `Settlement ${settlementId} bill ${gb.accounting_bill_id} is missing its original journal-entry linkage`
+          `Settlement ${settlementId} cash payment ${gb.cash_bill_payment_id} is missing its original journal-entry linkage`,
         );
       }
-      originalJeIds.push(gb.bill_journal_entry_id);
-
-      if (gb.cash_bill_payment_id) {
-        if (!gb.cash_journal_entry_id) {
-          throw new SettlementBillPaymentError(
-            "SOURCE_POSTING_LINK_MISSING",
-            `Settlement ${settlementId} cash payment ${gb.cash_bill_payment_id} is missing its original journal-entry linkage`
-          );
-        }
-        originalJeIds.push(gb.cash_journal_entry_id);
-        const paymentReversal = await reversePostedSourceTransactionInClientTx(
-          client,
-        { operating_company_id: opco, source_transaction_type: "bill_payment", source_transaction_id: gb.cash_bill_payment_id },
-        { userId: actor.userId }
-        );
-        reversalJeIds.push(paymentReversal.journal_entry_id);
-      }
-
-      const billReversal = await reversePostedSourceTransactionInClientTx(
-        client,
-        { operating_company_id: opco, source_transaction_type: "bill", source_transaction_id: gb.accounting_bill_id },
-        { userId: actor.userId }
-      );
-      reversalJeIds.push(billReversal.journal_entry_id);
-    }
-
-    // Deduction JE uses the canonical linked JE reversal service. It enforces the SAME date policy as
-    // bill/payment reversals (open original period -> original date; closed -> current company date),
-    // writes deterministic void:journal_entry:<original-id> line idempotency + source links, and
-    // serializes on the original JE row. No bespoke GL math.
-    if (run.deduction_journal_entry_id) {
-      originalJeIds.push(run.deduction_journal_entry_id);
-      const deductionReversal = await reverseJournalEntryNoFlip(client, {
+      originalJeIds.push(gb.cash_journal_entry_id);
+      const paymentReversal = await voidBillPaymentInClientTx(client, {
         operatingCompanyId: opco,
-        journalEntryId: run.deduction_journal_entry_id,
-        reason: `Settlement ${settlementId}: ${input.reason}`,
-        actorUserId: actor.userId,
+        paymentId: gb.cash_bill_payment_id,
+        reason: input.reason,
+        userId: actor.userId,
+        reversePostedGl: true,
+        currentBusinessDate,
       });
-      const deductionReversalJeId = deductionReversal.reversal.reversal_journal_entry_id;
-      if (!deductionReversalJeId) {
-        throw new Error("settlement_deduction_reversal_missing");
+      if (!paymentReversal.reversal_journal_entry_id) {
+        throw new Error("settlement_cash_payment_reversal_missing");
       }
-      reversalJeIds.push(deductionReversalJeId);
+      reversalJeIds.push(paymentReversal.reversal_journal_entry_id);
     }
 
-    // Whole-settlement equal-and-opposite proof at the full accounting dimension grain. Every original
-    // bill/payment/deduction JE and every reversal JE must be present exactly once, and their signed
-    // amounts must net to zero by account + class + entity. A standalone-balanced reversal is insufficient.
-    const allJeIds = [...originalJeIds, ...reversalJeIds];
-    if (new Set(originalJeIds).size !== originalJeIds.length || new Set(reversalJeIds).size !== reversalJeIds.length) {
-      throw new Error("settlement_reversal_duplicate_journal_link");
+    if (gb.deduction_bill_payment_id) {
+      await voidBillPaymentInClientTx(client, {
+        operatingCompanyId: opco,
+        paymentId: gb.deduction_bill_payment_id,
+        reason: input.reason,
+        userId: actor.userId,
+        reversePostedGl: false,
+        currentBusinessDate,
+      });
     }
-    const proof = await client.query<{ journal_count: number; nonzero_dimensions: number; absolute_residual_cents: number }>(
-      `
+
+    const billReversal = await voidBillInClientTx(client, {
+      operatingCompanyId: opco,
+      billId: gb.accounting_bill_id,
+      reason: input.reason,
+      userId: actor.userId,
+      currentBusinessDate,
+    });
+    reversalJeIds.push(billReversal.reversal_journal_entry_id);
+  }
+
+  // Deduction JE uses the canonical linked JE reversal service. It enforces the SAME date policy as
+  // bill/payment reversals (open original period -> original date; closed -> current company date),
+  // writes deterministic void:journal_entry:<original-id> line idempotency + source links, and
+  // serializes on the original JE row. No bespoke GL math.
+  if (run.deduction_journal_entry_id) {
+    originalJeIds.push(run.deduction_journal_entry_id);
+    const deductionReversal = await reverseJournalEntryNoFlip(client, {
+      operatingCompanyId: opco,
+      journalEntryId: run.deduction_journal_entry_id,
+      reason: `Settlement ${settlementId}: ${input.reason}`,
+      actorUserId: actor.userId,
+      currentBusinessDate,
+    });
+    const deductionReversalJeId =
+      deductionReversal.reversal.reversal_journal_entry_id;
+    if (!deductionReversalJeId) {
+      throw new Error("settlement_deduction_reversal_missing");
+    }
+    reversalJeIds.push(deductionReversalJeId);
+  }
+
+  // Whole-settlement equal-and-opposite proof at the full accounting dimension grain. Every original
+  // bill/payment/deduction JE and every reversal JE must be present exactly once, and their signed
+  // amounts must net to zero by account + class + entity. A standalone-balanced reversal is insufficient.
+  const allJeIds = [...originalJeIds, ...reversalJeIds];
+  if (
+    new Set(originalJeIds).size !== originalJeIds.length ||
+    new Set(reversalJeIds).size !== reversalJeIds.length
+  ) {
+    throw new Error("settlement_reversal_duplicate_journal_link");
+  }
+  const proof = await client.query<{
+    journal_count: number;
+    nonzero_dimensions: number;
+    absolute_residual_cents: number;
+  }>(
+    `
         WITH selected AS (
           SELECT journal_entry_uuid, account_id, class_id, entity_uuid,
                  CASE WHEN debit_or_credit = 'debit' THEN amount_cents ELSE -amount_cents END AS signed_cents
@@ -835,52 +1092,131 @@ export async function reverseSettlementBillPayment(
           COALESCE(SUM(ABS(residual_cents)), 0)::bigint AS absolute_residual_cents
         FROM dimensional
       `,
-      [opco, allJeIds]
+    [opco, allJeIds],
+  );
+  const reconciliation = proof.rows[0];
+  if (
+    Number(reconciliation?.journal_count ?? 0) !== allJeIds.length ||
+    Number(reconciliation?.nonzero_dimensions ?? 0) !== 0 ||
+    Number(reconciliation?.absolute_residual_cents ?? 0) !== 0
+  ) {
+    throw new Error(
+      `settlement_reversal_not_equal_and_opposite expected_journals=${allJeIds.length} ` +
+        `actual_journals=${Number(reconciliation?.journal_count ?? 0)} ` +
+        `nonzero_dimensions=${Number(reconciliation?.nonzero_dimensions ?? 0)} ` +
+        `absolute_residual_cents=${Number(reconciliation?.absolute_residual_cents ?? 0)}`,
     );
-    const reconciliation = proof.rows[0];
-    if (
-      Number(reconciliation?.journal_count ?? 0) !== allJeIds.length ||
-      Number(reconciliation?.nonzero_dimensions ?? 0) !== 0 ||
-      Number(reconciliation?.absolute_residual_cents ?? 0) !== 0
-    ) {
-      throw new Error(
-        `settlement_reversal_not_equal_and_opposite expected_journals=${allJeIds.length} ` +
-          `actual_journals=${Number(reconciliation?.journal_count ?? 0)} ` +
-          `nonzero_dimensions=${Number(reconciliation?.nonzero_dimensions ?? 0)} ` +
-          `absolute_residual_cents=${Number(reconciliation?.absolute_residual_cents ?? 0)}`
-      );
-    }
+  }
 
-    const transitioned = await client.query<{ id: string }>(
-      `UPDATE driver_finance.driver_settlement_gl_runs
+  const driverBillIds = glBills.map((row) => row.driver_bill_id);
+  if (new Set(driverBillIds).size !== driverBillIds.length) {
+    throw new Error("settlement_reversal_duplicate_driver_bill_link");
+  }
+  const restoredDriverBills = await client.query<{ id: string }>(
+    `UPDATE driver_finance.driver_bills
+          SET status = 'open',
+              settled_in_settlement_id = NULL,
+              updated_at = now()
+        WHERE operating_company_id = $1::uuid
+          AND id = ANY($2::uuid[])
+          AND settled_in_settlement_id = $3::uuid
+          AND status = 'paid'
+        RETURNING id::text`,
+    [opco, driverBillIds, settlementId],
+  );
+  if (restoredDriverBills.rows.length !== driverBillIds.length) {
+    throw new Error(
+      `settlement_driver_bill_restore_incomplete expected=${driverBillIds.length} actual=${restoredDriverBills.rows.length}`,
+    );
+  }
+
+  const subledgerProof = await client.query<{
+    active_payment_count: number;
+    nonvoid_bill_count: number;
+    nonzero_paid_bill_count: number;
+    unrestored_driver_bill_count: number;
+  }>(
+    `WITH linked AS (
+         SELECT accounting_bill_id, driver_bill_id, cash_bill_payment_id, deduction_bill_payment_id
+           FROM driver_finance.driver_settlement_gl_bills
+          WHERE run_id = $1::uuid
+       ),
+       payment_ids AS (
+         SELECT cash_bill_payment_id AS id FROM linked WHERE cash_bill_payment_id IS NOT NULL
+         UNION ALL
+         SELECT deduction_bill_payment_id AS id FROM linked WHERE deduction_bill_payment_id IS NOT NULL
+       )
+       SELECT
+         (SELECT COUNT(*)::int
+            FROM accounting.bill_payments bp
+            JOIN payment_ids p ON p.id = bp.id
+           WHERE bp.operating_company_id = $2::uuid AND bp.revoked_at IS NULL) AS active_payment_count,
+         (SELECT COUNT(*)::int
+            FROM accounting.bills b
+            JOIN linked l ON l.accounting_bill_id = b.id
+           WHERE b.operating_company_id = $2::uuid
+             AND b.revoked_at IS NULL) AS nonvoid_bill_count,
+         (SELECT COUNT(*)::int
+            FROM accounting.bills b
+            JOIN linked l ON l.accounting_bill_id = b.id
+           WHERE b.operating_company_id = $2::uuid
+             AND COALESCE(b.paid_cents, 0) <> 0) AS nonzero_paid_bill_count,
+         (SELECT COUNT(*)::int
+            FROM driver_finance.driver_bills db
+            JOIN linked l ON l.driver_bill_id = db.id
+           WHERE db.operating_company_id = $2::uuid
+             AND (db.status <> 'open' OR db.settled_in_settlement_id IS NOT NULL)) AS unrestored_driver_bill_count`,
+    [run.id, opco],
+  );
+  const subledger = subledgerProof.rows[0];
+  if (
+    Number(subledger?.active_payment_count ?? -1) !== 0 ||
+    Number(subledger?.nonvoid_bill_count ?? -1) !== 0 ||
+    Number(subledger?.nonzero_paid_bill_count ?? -1) !== 0 ||
+    Number(subledger?.unrestored_driver_bill_count ?? -1) !== 0
+  ) {
+    throw new Error(
+      `settlement_subledger_reconciliation_failed active_payments=${Number(subledger?.active_payment_count ?? -1)} ` +
+        `nonvoid_bills=${Number(subledger?.nonvoid_bill_count ?? -1)} ` +
+        `nonzero_paid_bills=${Number(subledger?.nonzero_paid_bill_count ?? -1)} ` +
+        `unrestored_driver_bills=${Number(subledger?.unrestored_driver_bill_count ?? -1)}`,
+    );
+  }
+
+  const transitioned = await client.query<{ id: string }>(
+    `UPDATE driver_finance.driver_settlement_gl_runs
           SET status = 'reversed', reversed_at = now(), reversed_by_user_id = $2::uuid, reversal_reason = $3, updated_at = now()
         WHERE id = $1::uuid AND status = 'posted'
         RETURNING id::text`,
-      [run.id, actor.userId, input.reason]
-    );
-    if (!transitioned.rows[0]?.id) throw new Error("settlement_reversal_state_transition_failed");
-    await appendCrudAudit(
-      client as never,
-      actor.userId,
-      "accounting.settlement.bill_payment_reversed",
-      {
-        resource_type: "driver_finance.driver_settlements",
-        resource_id: settlementId,
-        operating_company_id: opco,
-        run_id: run.id,
-        reason: input.reason,
-        original_journal_entry_ids: originalJeIds,
-        reversal_journal_entry_ids: reversalJeIds,
-        reconciliation: {
-          journal_count: allJeIds.length,
-          nonzero_dimensions: 0,
-          absolute_residual_cents: 0,
-        },
+    [run.id, actor.userId, input.reason],
+  );
+  if (!transitioned.rows[0]?.id)
+    throw new Error("settlement_reversal_state_transition_failed");
+  await appendCrudAudit(
+    client as never,
+    actor.userId,
+    "accounting.settlement.bill_payment_reversed",
+    {
+      resource_type: "driver_finance.driver_settlements",
+      resource_id: settlementId,
+      operating_company_id: opco,
+      run_id: run.id,
+      reason: input.reason,
+      original_journal_entry_ids: originalJeIds,
+      reversal_journal_entry_ids: reversalJeIds,
+      reconciliation: {
+        journal_count: allJeIds.length,
+        nonzero_dimensions: 0,
+        absolute_residual_cents: 0,
+        active_payment_count: 0,
+        nonvoid_bill_count: 0,
+        nonzero_paid_bill_count: 0,
+        unrestored_driver_bill_count: 0,
       },
-      "warning",
-      "SETTLEMENT-BILL-PAYMENT"
-    );
+    },
+    "warning",
+    "SETTLEMENT-BILL-PAYMENT",
+  );
 
-    return { result: "reversed", settlement_id: settlementId, run_id: run.id };
-  });
+  return { result: "reversed", settlement_id: settlementId, run_id: run.id };
 }

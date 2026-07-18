@@ -10,10 +10,10 @@
  * every backend financial "today" default through companyBusinessDate() (lib/company-business-date,
  * America/Chicago), which THROWS rather than silently using UTC if the company zone cannot resolve.
  *
- * This guard scans apps/backend/src/accounting/** (excluding tests) and FAILS if the bare-now UTC-today
- * anti-pattern reappears. It is deliberately PRECISE — only literal `new Date().toISOString().slice(0,10)`
- * (empty parens = "now") is flagged; date ARITHMETIC (`new Date(anchor + days)...`) and normalization of
- * an existing value (`someDate.toISOString().slice(0,10)`) are legitimate and pass.
+ * This guard scans apps/backend/src/accounting/** (excluding tests) as WHOLE source files and FAILS if
+ * the bare-now UTC-today anti-pattern reappears, including formatting-equivalent multiline chains.
+ * It is deliberately PRECISE — only `new Date()` (empty parens = "now") chained to UTC date slicing
+ * is flagged; date arithmetic and normalization of an existing anchored value remain legitimate.
  *
  * Self-test (fail-closed proof): node scripts/verify-acct-posting-business-date.mjs --selftest
  */
@@ -31,17 +31,29 @@ const UTC_TODAY_RE =
   /new\s+Date\s*\(\s*\)\s*\.\s*toISOString\s*\(\s*\)\s*\.\s*slice\s*\(\s*0\s*,\s*10\s*\)/;
 
 function isTestFile(rel) {
-  return /\.test\.ts$/.test(rel) || /\.spec\.ts$/.test(rel) || rel.includes(`${path.sep}__tests__${path.sep}`);
+  return (
+    /\.test\.ts$/.test(rel) ||
+    /\.spec\.ts$/.test(rel) ||
+    rel.includes(`${path.sep}__tests__${path.sep}`)
+  );
 }
 
 function findViolationsInText(text, fileLabel = "fixture") {
+  const masked = text
+    .replace(/\/\*[\s\S]*?\*\//g, (comment) => comment.replace(/[^\n]/g, " "))
+    .replace(/(^|[^:])\/\/[^\n]*/gm, (comment) =>
+      comment.replace(/[^\n]/g, " "),
+    );
   const violations = [];
-  text.split("\n").forEach((line, i) => {
-    const trimmed = line.trim();
-    // Ignore comment lines that document the anti-pattern.
-    if (trimmed.startsWith("//") || trimmed.startsWith("*") || trimmed.startsWith("/*")) return;
-    if (UTC_TODAY_RE.test(line)) violations.push(`${fileLabel}:${i + 1}: ${trimmed}`);
-  });
+  const matcher = new RegExp(UTC_TODAY_RE.source, "g");
+  for (const match of masked.matchAll(matcher)) {
+    const line = masked.slice(0, match.index).split("\n").length;
+    const snippet = text
+      .slice(match.index, match.index + match[0].length)
+      .replace(/\s+/g, " ")
+      .trim();
+    violations.push(`${fileLabel}:${line}: ${snippet}`);
+  }
   return violations;
 }
 
@@ -61,6 +73,12 @@ function selftest() {
   const planted = [
     `const entryDate = new Date().toISOString().slice(0, 10);`,
     `entry_date: new Date().toISOString().slice(0,10),`,
+    `const multiline = new Date()
+      .toISOString()
+      .slice(
+        0,
+        10
+      );`,
   ].join("\n");
   const good = [
     `import { companyBusinessDate } from "../../lib/company-business-date.js";`,
@@ -71,18 +89,24 @@ function selftest() {
   ].join("\n");
 
   const plantedHits = findViolationsInText(planted, "planted.ts");
-  if (plantedHits.length < 2) {
-    console.error(`[${LABEL}] --selftest FAILED: planted UTC-today defaults must all be caught`);
+  if (plantedHits.length !== 3) {
+    console.error(
+      `[${LABEL}] --selftest FAILED: planted UTC-today defaults must all be caught`,
+    );
     console.error(`  got ${plantedHits.length}:`, plantedHits);
     process.exit(1);
   }
   const goodHits = findViolationsInText(good, "good.ts");
   if (goodHits.length !== 0) {
-    console.error(`[${LABEL}] --selftest FAILED: legitimate arithmetic/normalization must pass`);
+    console.error(
+      `[${LABEL}] --selftest FAILED: legitimate arithmetic/normalization must pass`,
+    );
     console.error(goodHits);
     process.exit(1);
   }
-  console.log(`[${LABEL}] --selftest PASS (planted=${plantedHits.length} hits; good=0)`);
+  console.log(
+    `[${LABEL}] --selftest PASS (planted=${plantedHits.length} hits; good=0)`,
+  );
 }
 
 if (process.argv.includes("--selftest")) {
@@ -92,15 +116,25 @@ if (process.argv.includes("--selftest")) {
 
 const violations = [];
 for (const rel of walk(SCAN_DIR)) {
-  violations.push(...findViolationsInText(fs.readFileSync(path.join(ROOT, rel), "utf8"), rel));
+  violations.push(
+    ...findViolationsInText(fs.readFileSync(path.join(ROOT, rel), "utf8"), rel),
+  );
 }
 
 if (violations.length > 0) {
-  console.error(`[${LABEL}] FAILED — accounting-backend 'today' posting/as-of defaults must use`);
-  console.error("companyBusinessDate() from lib/company-business-date (America/Chicago), not UTC new Date().toISOString():");
+  console.error(
+    `[${LABEL}] FAILED — accounting-backend 'today' posting/as-of defaults must use`,
+  );
+  console.error(
+    "companyBusinessDate() from lib/company-business-date (America/Chicago), not UTC new Date().toISOString():",
+  );
   for (const v of violations) console.error(`  - ${v}`);
-  console.error("Fix: replace `new Date().toISOString().slice(0, 10)` today-defaults with companyBusinessDate().");
+  console.error(
+    "Fix: replace `new Date().toISOString().slice(0, 10)` today-defaults with companyBusinessDate().",
+  );
   process.exit(1);
 }
 
-console.log(`[${LABEL}] OK — no UTC-derived accounting-backend 'today' posting defaults.`);
+console.log(
+  `[${LABEL}] OK — no UTC-derived accounting-backend 'today' posting defaults.`,
+);

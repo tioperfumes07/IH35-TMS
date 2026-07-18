@@ -8,7 +8,12 @@ vi.mock("../auth/db.js", () => ({
   withCurrentUser: (...args: unknown[]) => withCurrentUserMock(...args),
 }));
 
-function createMockClient(handler: (sql: string, values?: unknown[]) => { rows: unknown[]; rowCount?: number }) {
+function createMockClient(
+  handler: (
+    sql: string,
+    values?: unknown[],
+  ) => { rows: unknown[]; rowCount?: number },
+) {
   const calls: QueryCall[] = [];
   return {
     calls,
@@ -50,7 +55,10 @@ describe("posting engine service", () => {
       return { rows: [] };
     });
 
-    withCurrentUserMock.mockImplementation(async (_userId: string, fn: (c: typeof client) => Promise<unknown>) => fn(client));
+    withCurrentUserMock.mockImplementation(
+      async (_userId: string, fn: (c: typeof client) => Promise<unknown>) =>
+        fn(client),
+    );
 
     const mod = await import("./posting-engine.service.js");
 
@@ -62,20 +70,29 @@ describe("posting engine service", () => {
           source_transaction_id: "9f943015-e3d2-4f1f-8732-c0ef4bbd25fc",
           posting_purpose: "initial_post",
         },
-        { userId: "cd9d01fe-a90d-4cd2-a96d-f6a443f7debc" }
-      )
+        { userId: "cd9d01fe-a90d-4cd2-a96d-f6a443f7debc" },
+      ),
     ).rejects.toMatchObject({
       code: "INVOICE_NOT_POSTING_ELIGIBLE",
     });
 
-    expect(calls.some((c) => c.sql.includes("INSERT INTO accounting.journal_entry_postings"))).toBe(false);
+    expect(
+      calls.some((c) =>
+        c.sql.includes("INSERT INTO accounting.journal_entry_postings"),
+      ),
+    ).toBe(false);
   });
 
   it("returns already_posted from idempotency pre-check before any insert", async () => {
     const { client, calls } = createMockClient((sql) => {
       if (sql.includes("FROM accounting.posting_batches")) {
         return {
-          rows: [{ id: "3d4a26c2-a6e6-43bf-93f2-0863f37f36a3", batch_status: "posted" }],
+          rows: [
+            {
+              id: "3d4a26c2-a6e6-43bf-93f2-0863f37f36a3",
+              batch_status: "posted",
+            },
+          ],
         };
       }
       if (sql.includes("FROM accounting.journal_entry_postings")) {
@@ -91,7 +108,10 @@ describe("posting engine service", () => {
       return { rows: [] };
     });
 
-    withCurrentUserMock.mockImplementation(async (_userId: string, fn: (c: typeof client) => Promise<unknown>) => fn(client));
+    withCurrentUserMock.mockImplementation(
+      async (_userId: string, fn: (c: typeof client) => Promise<unknown>) =>
+        fn(client),
+    );
 
     const mod = await import("./posting-engine.service.js");
     const result = await mod.postSourceTransaction(
@@ -101,12 +121,20 @@ describe("posting engine service", () => {
         source_transaction_id: "9f943015-e3d2-4f1f-8732-c0ef4bbd25fc",
         posting_purpose: "initial_post",
       },
-      { userId: "cd9d01fe-a90d-4cd2-a96d-f6a443f7debc" }
+      { userId: "cd9d01fe-a90d-4cd2-a96d-f6a443f7debc" },
     );
 
     expect(result.result).toBe("already_posted");
-    expect(calls.some((c) => c.sql.includes("INSERT INTO accounting.posting_batches"))).toBe(false);
-    expect(calls.some((c) => c.sql.includes("INSERT INTO accounting.journal_entry_postings"))).toBe(false);
+    expect(
+      calls.some((c) =>
+        c.sql.includes("INSERT INTO accounting.posting_batches"),
+      ),
+    ).toBe(false);
+    expect(
+      calls.some((c) =>
+        c.sql.includes("INSERT INTO accounting.journal_entry_postings"),
+      ),
+    ).toBe(false);
   });
 
   it("splits invoice tax to sales_tax_payable role instead of revenue", async () => {
@@ -144,27 +172,52 @@ describe("posting engine service", () => {
           ],
         };
       }
-      if (sql.includes("FROM accounting.chart_of_accounts_roles car") && Array.isArray(values) && values[1] === "ar_control") {
-        return { rows: [{ account_id: "11111111-1111-4111-8111-111111111111" }] };
+      if (
+        sql.includes("FROM accounting.chart_of_accounts_roles car") &&
+        Array.isArray(values) &&
+        values[1] === "ar_control"
+      ) {
+        return {
+          rows: [{ account_id: "11111111-1111-4111-8111-111111111111" }],
+        };
       }
-      if (sql.includes("FROM accounting.chart_of_accounts_roles car") && Array.isArray(values) && values[1] === "sales_tax_payable") {
-        return { rows: [{ account_id: "33333333-3333-4333-8333-333333333333" }] };
+      if (
+        sql.includes("FROM accounting.chart_of_accounts_roles car") &&
+        Array.isArray(values) &&
+        values[1] === "sales_tax_payable"
+      ) {
+        return {
+          rows: [{ account_id: "33333333-3333-4333-8333-333333333333" }],
+        };
       }
-      if (sql.includes("FROM catalogs.account_role_bindings")) return { rows: [] };
-      if (sql.includes("FROM catalogs.accounts") && sql.includes("account_type")) return { rows: [] };
-      if (sql.includes("SELECT accounting.closed_period_cutoff")) return { rows: [{ cutoff: null }] };
-      if (sql.includes("INSERT INTO accounting.posting_batches")) return { rows: [{ id: "44444444-4444-4444-8444-444444444444" }] };
-      if (sql.includes("UPDATE accounting.posting_batches")) return { rows: [] };
-      if (sql.includes("INSERT INTO accounting.journal_entries")) return { rows: [{ id: "55555555-5555-4555-8555-555555555555" }] };
+      if (sql.includes("FROM catalogs.account_role_bindings"))
+        return { rows: [] };
+      if (
+        sql.includes("FROM catalogs.accounts") &&
+        sql.includes("account_type")
+      )
+        return { rows: [] };
+      if (sql.includes("SELECT accounting.closed_period_cutoff"))
+        return { rows: [{ cutoff: null }] };
+      if (sql.includes("INSERT INTO accounting.posting_batches"))
+        return { rows: [{ id: "44444444-4444-4444-8444-444444444444" }] };
+      if (sql.includes("UPDATE accounting.posting_batches"))
+        return { rows: [] };
+      if (sql.includes("INSERT INTO accounting.journal_entries"))
+        return { rows: [{ id: "55555555-5555-4555-8555-555555555555" }] };
       if (sql.includes("INSERT INTO accounting.journal_entry_postings")) {
         if (values) postingInsertValues.push(values);
         return { rows: [{ id: "66666666-6666-4666-8666-666666666666" }] };
       }
-      if (sql.includes("INSERT INTO accounting.transaction_source_links")) return { rows: [] };
+      if (sql.includes("INSERT INTO accounting.transaction_source_links"))
+        return { rows: [] };
       return { rows: [] };
     });
 
-    withCurrentUserMock.mockImplementation(async (_userId: string, fn: (c: typeof client) => Promise<unknown>) => fn(client));
+    withCurrentUserMock.mockImplementation(
+      async (_userId: string, fn: (c: typeof client) => Promise<unknown>) =>
+        fn(client),
+    );
 
     const mod = await import("./posting-engine.service.js");
     await mod.postSourceTransaction(
@@ -174,13 +227,27 @@ describe("posting engine service", () => {
         source_transaction_id: "9f943015-e3d2-4f1f-8732-c0ef4bbd25fc",
         posting_purpose: "initial_post",
       },
-      { userId: "cd9d01fe-a90d-4cd2-a96d-f6a443f7debc" }
+      { userId: "cd9d01fe-a90d-4cd2-a96d-f6a443f7debc" },
     );
 
-    const creditLines = postingInsertValues.filter((values) => values[4] === "credit");
+    const creditLines = postingInsertValues.filter(
+      (values) => values[4] === "credit",
+    );
     expect(creditLines).toHaveLength(2);
-    expect(creditLines.some((values) => values[3] === "22222222-2222-4222-8222-222222222222" && values[5] === 8800)).toBe(true);
-    expect(creditLines.some((values) => values[3] === "33333333-3333-4333-8333-333333333333" && values[5] === 1200)).toBe(true);
+    expect(
+      creditLines.some(
+        (values) =>
+          values[3] === "22222222-2222-4222-8222-222222222222" &&
+          values[5] === 8800,
+      ),
+    ).toBe(true);
+    expect(
+      creditLines.some(
+        (values) =>
+          values[3] === "33333333-3333-4333-8333-333333333333" &&
+          values[5] === 1200,
+      ),
+    ).toBe(true);
   });
 
   it("credits EACH invoice line to its OWN mapped income account (per-item revenue)", async () => {
@@ -208,29 +275,62 @@ describe("posting engine service", () => {
       if (sql.includes("FROM accounting.invoice_lines il")) {
         return {
           rows: [
-            { id: "11110000-0000-4000-8000-000000000001", line_type: "linehaul", line_total_cents: 20000, display_order: 0, description: "Linehaul", qbo_item_id: "item-A", income_account_id: INCOME_A },
-            { id: "11110000-0000-4000-8000-000000000002", line_type: "accessorial", line_total_cents: 10000, display_order: 1, description: "Detention", qbo_item_id: "item-B", income_account_id: INCOME_B },
+            {
+              id: "11110000-0000-4000-8000-000000000001",
+              line_type: "linehaul",
+              line_total_cents: 20000,
+              display_order: 0,
+              description: "Linehaul",
+              qbo_item_id: "item-A",
+              income_account_id: INCOME_A,
+            },
+            {
+              id: "11110000-0000-4000-8000-000000000002",
+              line_type: "accessorial",
+              line_total_cents: 10000,
+              display_order: 1,
+              description: "Detention",
+              qbo_item_id: "item-B",
+              income_account_id: INCOME_B,
+            },
           ],
         };
       }
-      if (sql.includes("FROM accounting.chart_of_accounts_roles car") && Array.isArray(values) && values[1] === "ar_control") {
+      if (
+        sql.includes("FROM accounting.chart_of_accounts_roles car") &&
+        Array.isArray(values) &&
+        values[1] === "ar_control"
+      ) {
         return { rows: [{ account_id: AR }] };
       }
-      if (sql.includes("FROM catalogs.account_role_bindings")) return { rows: [] };
-      if (sql.includes("FROM catalogs.accounts") && sql.includes("account_type")) return { rows: [] };
-      if (sql.includes("SELECT accounting.closed_period_cutoff")) return { rows: [{ cutoff: null }] };
-      if (sql.includes("INSERT INTO accounting.posting_batches")) return { rows: [{ id: "44444444-4444-4444-8444-444444444444" }] };
-      if (sql.includes("UPDATE accounting.posting_batches")) return { rows: [] };
-      if (sql.includes("INSERT INTO accounting.journal_entries")) return { rows: [{ id: "55555555-5555-4555-8555-555555555555" }] };
+      if (sql.includes("FROM catalogs.account_role_bindings"))
+        return { rows: [] };
+      if (
+        sql.includes("FROM catalogs.accounts") &&
+        sql.includes("account_type")
+      )
+        return { rows: [] };
+      if (sql.includes("SELECT accounting.closed_period_cutoff"))
+        return { rows: [{ cutoff: null }] };
+      if (sql.includes("INSERT INTO accounting.posting_batches"))
+        return { rows: [{ id: "44444444-4444-4444-8444-444444444444" }] };
+      if (sql.includes("UPDATE accounting.posting_batches"))
+        return { rows: [] };
+      if (sql.includes("INSERT INTO accounting.journal_entries"))
+        return { rows: [{ id: "55555555-5555-4555-8555-555555555555" }] };
       if (sql.includes("INSERT INTO accounting.journal_entry_postings")) {
         if (values) postingInsertValues.push(values);
         return { rows: [{ id: "66666666-6666-4666-8666-666666666666" }] };
       }
-      if (sql.includes("INSERT INTO accounting.transaction_source_links")) return { rows: [] };
+      if (sql.includes("INSERT INTO accounting.transaction_source_links"))
+        return { rows: [] };
       return { rows: [] };
     });
 
-    withCurrentUserMock.mockImplementation(async (_userId: string, fn: (c: typeof client) => Promise<unknown>) => fn(client));
+    withCurrentUserMock.mockImplementation(
+      async (_userId: string, fn: (c: typeof client) => Promise<unknown>) =>
+        fn(client),
+    );
 
     const mod = await import("./posting-engine.service.js");
     await mod.postSourceTransaction(
@@ -240,15 +340,27 @@ describe("posting engine service", () => {
         source_transaction_id: "9f943015-e3d2-4f1f-8732-c0ef4bbd25fc",
         posting_purpose: "initial_post",
       },
-      { userId: "cd9d01fe-a90d-4cd2-a96d-f6a443f7debc" }
+      { userId: "cd9d01fe-a90d-4cd2-a96d-f6a443f7debc" },
     );
 
-    const creditLines = postingInsertValues.filter((values) => values[4] === "credit");
-    const debitLines = postingInsertValues.filter((values) => values[4] === "debit");
+    const creditLines = postingInsertValues.filter(
+      (values) => values[4] === "credit",
+    );
+    const debitLines = postingInsertValues.filter(
+      (values) => values[4] === "debit",
+    );
     // Two DISTINCT income accounts credited, each its own line amount — NOT lumped into one revenue account.
     expect(creditLines).toHaveLength(2);
-    expect(creditLines.some((values) => values[3] === INCOME_A && values[5] === 20000)).toBe(true);
-    expect(creditLines.some((values) => values[3] === INCOME_B && values[5] === 10000)).toBe(true);
+    expect(
+      creditLines.some(
+        (values) => values[3] === INCOME_A && values[5] === 20000,
+      ),
+    ).toBe(true);
+    expect(
+      creditLines.some(
+        (values) => values[3] === INCOME_B && values[5] === 10000,
+      ),
+    ).toBe(true);
     // AR debit = sum of the per-line revenue (balanced by construction).
     expect(debitLines).toHaveLength(1);
     expect(debitLines[0]?.[3]).toBe(AR);
@@ -277,18 +389,34 @@ describe("posting engine service", () => {
       if (sql.includes("FROM accounting.invoice_lines il")) {
         return {
           rows: [
-            { id: "22220000-0000-4000-8000-000000000001", line_type: "linehaul", line_total_cents: 10000, display_order: 0, description: "Linehaul", qbo_item_id: "unmapped-item", income_account_id: null },
+            {
+              id: "22220000-0000-4000-8000-000000000001",
+              line_type: "linehaul",
+              line_total_cents: 10000,
+              display_order: 0,
+              description: "Linehaul",
+              qbo_item_id: "unmapped-item",
+              income_account_id: null,
+            },
           ],
         };
       }
-      if (sql.includes("FROM accounting.chart_of_accounts_roles car")) return { rows: [{ account_id: "11111111-1111-4111-8111-111111111111" }] };
-      if (sql.includes("FROM catalogs.account_role_bindings")) return { rows: [] };
+      if (sql.includes("FROM accounting.chart_of_accounts_roles car"))
+        return {
+          rows: [{ account_id: "11111111-1111-4111-8111-111111111111" }],
+        };
+      if (sql.includes("FROM catalogs.account_role_bindings"))
+        return { rows: [] };
       if (sql.includes("FROM catalogs.accounts")) return { rows: [] };
-      if (sql.includes("INSERT INTO accounting.posting_batches")) return { rows: [{ id: "44444444-4444-4444-8444-444444444444" }] };
+      if (sql.includes("INSERT INTO accounting.posting_batches"))
+        return { rows: [{ id: "44444444-4444-4444-8444-444444444444" }] };
       return { rows: [] };
     });
 
-    withCurrentUserMock.mockImplementation(async (_userId: string, fn: (c: typeof client) => Promise<unknown>) => fn(client));
+    withCurrentUserMock.mockImplementation(
+      async (_userId: string, fn: (c: typeof client) => Promise<unknown>) =>
+        fn(client),
+    );
 
     const mod = await import("./posting-engine.service.js");
     const promise = mod.postSourceTransaction(
@@ -298,12 +426,21 @@ describe("posting engine service", () => {
         source_transaction_id: "9f943015-e3d2-4f1f-8732-c0ef4bbd25fc",
         posting_purpose: "initial_post",
       },
-      { userId: "cd9d01fe-a90d-4cd2-a96d-f6a443f7debc" }
+      { userId: "cd9d01fe-a90d-4cd2-a96d-f6a443f7debc" },
     );
-    await expect(promise).rejects.toBeInstanceOf(mod.InvoiceRevenueAccountError);
-    await expect(promise).rejects.toMatchObject({ code: "INVOICE_LINE_REVENUE_UNRESOLVED", qbo_item_id: "unmapped-item" });
+    await expect(promise).rejects.toBeInstanceOf(
+      mod.InvoiceRevenueAccountError,
+    );
+    await expect(promise).rejects.toMatchObject({
+      code: "INVOICE_LINE_REVENUE_UNRESOLVED",
+      qbo_item_id: "unmapped-item",
+    });
     // No revenue/AR posting lines were written — refused to post.
-    expect(calls.some((c) => c.sql.includes("INSERT INTO accounting.journal_entry_postings"))).toBe(false);
+    expect(
+      calls.some((c) =>
+        c.sql.includes("INSERT INTO accounting.journal_entry_postings"),
+      ),
+    ).toBe(false);
   });
 
   it("reverses a closed-period source on the current company business date and preserves dimensions", async () => {
@@ -316,12 +453,26 @@ describe("posting engine service", () => {
       if (sql.includes("FROM accounting.posting_batches") && values?.[1]) {
         const key = String(values[1]);
         if (key.endsWith(":-:initial_post")) {
-          return { rows: [{ id: "11111111-1111-4111-8111-111111111111", batch_status: "posted" }] };
+          return {
+            rows: [
+              {
+                id: "11111111-1111-4111-8111-111111111111",
+                batch_status: "posted",
+              },
+            ],
+          };
         }
         return { rows: [] };
       }
       if (sql.includes("SELECT id::text AS posting_id")) {
-        return { rows: [{ posting_id: "22222222-2222-4222-8222-222222222222", journal_entry_uuid: "33333333-3333-4333-8333-333333333333" }] };
+        return {
+          rows: [
+            {
+              posting_id: "22222222-2222-4222-8222-222222222222",
+              journal_entry_uuid: "33333333-3333-4333-8333-333333333333",
+            },
+          ],
+        };
       }
       if (sql.includes("SELECT id::text, account_id::text")) {
         return {
@@ -347,16 +498,25 @@ describe("posting engine service", () => {
           ],
         };
       }
-      if (sql.includes("SELECT je.entry_date::text")) return { rows: [{ entry_date: "2026-06-15" }] };
-      if (sql.includes("closed_period_cutoff")) return { rows: [{ cutoff: "2026-06-30" }] };
-      if (sql.includes("INSERT INTO accounting.posting_batches")) return { rows: [{ id: "99999999-9999-4999-8999-999999999999" }] };
+      if (sql.includes("SELECT je.entry_date::text"))
+        return { rows: [{ entry_date: "2026-06-15" }] };
+      if (sql.includes("closed_period_cutoff"))
+        return { rows: [{ cutoff: "2026-06-30" }] };
+      if (sql.includes("INSERT INTO accounting.posting_batches"))
+        return { rows: [{ id: "99999999-9999-4999-8999-999999999999" }] };
       if (sql.includes("INSERT INTO accounting.journal_entries")) {
         reversalEntryDate = values?.[1];
         return { rows: [{ id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa" }] };
       }
       if (sql.includes("INSERT INTO accounting.journal_entry_postings")) {
         if (values) insertedLines.push(values);
-        return { rows: [{ id: `bbbbbbbb-bbbb-4bbb-8bbb-${String(insertedLines.length).padStart(12, "0")}` }] };
+        return {
+          rows: [
+            {
+              id: `bbbbbbbb-bbbb-4bbb-8bbb-${String(insertedLines.length).padStart(12, "0")}`,
+            },
+          ],
+        };
       }
       return { rows: [] };
     });
@@ -369,7 +529,8 @@ describe("posting engine service", () => {
         source_transaction_type: "bill",
         source_transaction_id: "9f943015-e3d2-4f1f-8732-c0ef4bbd25fc",
       },
-      { userId: "cd9d01fe-a90d-4cd2-a96d-f6a443f7debc" }
+      { userId: "cd9d01fe-a90d-4cd2-a96d-f6a443f7debc" },
+      "2026-07-18",
     );
 
     expect(result.result).toBe("reversed");
@@ -382,14 +543,41 @@ describe("posting engine service", () => {
 
   it("uses the same deterministic reversal key for lookup and insert, so retry returns the existing reversal", async () => {
     const { client, calls } = createMockClient((sql, values) => {
-      if (sql.includes("FROM accounting.posting_batches") && String(values?.[1]).endsWith(":-:initial_post")) {
-        return { rows: [{ id: "11111111-1111-4111-8111-111111111111", batch_status: "reversed" }] };
+      if (
+        sql.includes("FROM accounting.posting_batches") &&
+        String(values?.[1]).endsWith(":-:initial_post")
+      ) {
+        return {
+          rows: [
+            {
+              id: "11111111-1111-4111-8111-111111111111",
+              batch_status: "reversed",
+            },
+          ],
+        };
       }
-      if (sql.includes("FROM accounting.posting_batches") && String(values?.[1]).endsWith(":-:reversal")) {
-        return { rows: [{ id: "22222222-2222-4222-8222-222222222222", batch_status: "posted" }] };
+      if (
+        sql.includes("FROM accounting.posting_batches") &&
+        String(values?.[1]).endsWith(":-:reversal")
+      ) {
+        return {
+          rows: [
+            {
+              id: "22222222-2222-4222-8222-222222222222",
+              batch_status: "posted",
+            },
+          ],
+        };
       }
       if (sql.includes("SELECT id::text AS posting_id")) {
-        return { rows: [{ posting_id: "33333333-3333-4333-8333-333333333333", journal_entry_uuid: "44444444-4444-4444-8444-444444444444" }] };
+        return {
+          rows: [
+            {
+              posting_id: "33333333-3333-4333-8333-333333333333",
+              journal_entry_uuid: "44444444-4444-4444-8444-444444444444",
+            },
+          ],
+        };
       }
       return { rows: [] };
     });
@@ -402,14 +590,23 @@ describe("posting engine service", () => {
         source_transaction_type: "bill",
         source_transaction_id: "9f943015-e3d2-4f1f-8732-c0ef4bbd25fc",
       },
-      { userId: "cd9d01fe-a90d-4cd2-a96d-f6a443f7debc" }
+      { userId: "cd9d01fe-a90d-4cd2-a96d-f6a443f7debc" },
+      "2026-07-18",
     );
 
-    expect(result.journal_entry_id).toBe("44444444-4444-4444-8444-444444444444");
-    expect(calls.some((c) => c.sql.includes("INSERT INTO accounting.posting_batches"))).toBe(false);
+    expect(result.journal_entry_id).toBe(
+      "44444444-4444-4444-8444-444444444444",
+    );
+    expect(
+      calls.some((c) =>
+        c.sql.includes("INSERT INTO accounting.posting_batches"),
+      ),
+    ).toBe(false);
     const lookupKeys = calls
       .filter((c) => c.sql.includes("FROM accounting.posting_batches"))
       .map((c) => String(c.values?.[1]));
-    expect(lookupKeys).toContain("ih35:posting-mvp:v1:2cf17ad1-c728-4f54-a930-d6beed95eb37:bill:9f943015-e3d2-4f1f-8732-c0ef4bbd25fc:-:reversal");
+    expect(lookupKeys).toContain(
+      "ih35:posting-mvp:v1:2cf17ad1-c728-4f54-a930-d6beed95eb37:bill:9f943015-e3d2-4f1f-8732-c0ef4bbd25fc:-:reversal",
+    );
   });
 });

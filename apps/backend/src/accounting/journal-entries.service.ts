@@ -11,7 +11,10 @@ type JournalEntrySource = "manual" | "auto";
 type JournalEntryStatus = "posted" | "voided";
 
 type QueryableClient = {
-  query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
+  query: <T = Record<string, unknown>>(
+    sql: string,
+    values?: unknown[],
+  ) => Promise<{ rows: T[] }>;
 };
 
 // Expand/contract (parallel-change) schema compat for the JE reversal-linkage columns.
@@ -21,14 +24,16 @@ type QueryableClient = {
 // dropped, so once we observe them present we cache it for the process lifetime (zero steady-state cost);
 // while absent we re-probe cheaply on each call so the code SELF-HEALS the instant the migration is applied.
 let reversalLinkageColumnsPresent = false;
-async function hasReversalLinkageColumns(client: QueryableClient): Promise<boolean> {
+async function hasReversalLinkageColumns(
+  client: QueryableClient,
+): Promise<boolean> {
   if (reversalLinkageColumnsPresent) return true;
   const res = await client.query<{ n: number }>(
     `SELECT count(*)::int AS n
        FROM information_schema.columns
       WHERE table_schema = 'accounting'
         AND table_name = 'journal_entries'
-        AND column_name IN ('reversed_by_je_id', 'reverses_je_id')`
+        AND column_name IN ('reversed_by_je_id', 'reverses_je_id')`,
   );
   const present = Number(res.rows[0]?.n ?? 0) === 2;
   if (present) reversalLinkageColumnsPresent = true;
@@ -53,14 +58,21 @@ export type CreateJournalEntryInput = {
 };
 
 function hashPayload(payload: unknown) {
-  return crypto.createHash("sha256").update(JSON.stringify(payload)).digest("hex");
+  return crypto
+    .createHash("sha256")
+    .update(JSON.stringify(payload))
+    .digest("hex");
 }
 
 async function triggerWf064OwnerNotification(
   client: { query: (sql: string, values?: unknown[]) => Promise<unknown> },
   actorUserId: string,
   actorRole: string,
-  payload: { journal_entry_id: string; operating_company_id: string; source: JournalEntrySource }
+  payload: {
+    journal_entry_id: string;
+    operating_company_id: string;
+    source: JournalEntrySource;
+  },
 ) {
   if (payload.source !== "manual" || actorRole === "Owner") return;
   await appendCrudAudit(
@@ -76,11 +88,14 @@ async function triggerWf064OwnerNotification(
       operating_company_id: payload.operating_company_id,
     },
     "warning",
-    "P5-D4-JE-WF064"
+    "P5-D4-JE-WF064",
   );
 }
 
-export async function createJournalEntry(input: CreateJournalEntryInput, actor: { userId: string; role: string }) {
+export async function createJournalEntry(
+  input: CreateJournalEntryInput,
+  actor: { userId: string; role: string },
+) {
   if (!input.postings?.length || input.postings.length < 2) {
     throw new Error("journal_entry_min_two_lines_required");
   }
@@ -90,13 +105,17 @@ export async function createJournalEntry(input: CreateJournalEntryInput, actor: 
   const credits = input.postings
     .filter((line) => line.debit_or_credit === "credit")
     .reduce((sum, line) => sum + Number(line.amount_cents || 0), 0);
-  if (debits <= 0 || credits <= 0) throw new Error("journal_entry_requires_debit_and_credit");
+  if (debits <= 0 || credits <= 0)
+    throw new Error("journal_entry_requires_debit_and_credit");
   if (debits !== credits) {
     throw new Error("journal_entry_not_balanced");
   }
 
   const created = await withCurrentUser(actor.userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
+    await client.query(
+      `SELECT set_config('app.operating_company_id', $1, true)`,
+      [input.operating_company_id],
+    );
     const headerRes = await client.query<{
       id: string;
       operating_company_id: string;
@@ -122,7 +141,13 @@ export async function createJournalEntry(input: CreateJournalEntryInput, actor: 
         VALUES ($1,$2::date,$3,'posted',$4,$5,true,now(),now())
         RETURNING id, operating_company_id::text, entry_date::text, memo, status, source, qbo_sync_pending, created_at::text
       `,
-      [input.operating_company_id, input.entry_date, input.memo ?? null, input.source ?? "manual", actor.userId]
+      [
+        input.operating_company_id,
+        input.entry_date,
+        input.memo ?? null,
+        input.source ?? "manual",
+        actor.userId,
+      ],
     );
     const header = headerRes.rows[0];
     if (!header?.id) throw new Error("journal_entry_insert_failed");
@@ -164,7 +189,7 @@ export async function createJournalEntry(input: CreateJournalEntryInput, actor: 
           // so the key is keyed to its freshly-generated header id (unique per entry) — this populates
           // the column + satisfies the unique-index backstop without changing manual-JE behavior.
           `manual_je:${header.id}`,
-        ]
+        ],
       );
       // CODER-12 audit-spine: one source link per inserted posting line, same transaction. On a
       // BLOCK-2 ON CONFLICT no-op (no row returned) the original line already carries its link → skip.
@@ -200,7 +225,7 @@ export async function createJournalEntry(input: CreateJournalEntryInput, actor: 
         postings_count: input.postings.length,
       },
       "info",
-      "P5-D4-MANUAL-JE"
+      "P5-D4-MANUAL-JE",
     );
 
     await triggerWf064OwnerNotification(client, actor.userId, actor.role, {
@@ -227,7 +252,7 @@ export async function createJournalEntry(input: CreateJournalEntryInput, actor: 
       debit_total_cents: debits,
       credit_total_cents: credits,
     }),
-    actor.userId
+    actor.userId,
   );
 
   void pushJournalEntryToQuickBooksImmediateBestEffort({
@@ -243,7 +268,8 @@ export async function createJournalEntry(input: CreateJournalEntryInput, actor: 
 // a reversing JE posts on void. Enabling is per-entity-only (an explicit tenant override) — see
 // db/migrations/202607110320_af7_money_control_flags.sql. When OFF/absent the void action is refused with
 // a policy error (no silent no-op); nothing new posts, and the existing void path is otherwise unchanged.
-const MONEY_CONTROL_VOID_REVERSAL_FLAG_KEY = "MONEY_CONTROL_VOID_REVERSAL_ENABLED";
+const MONEY_CONTROL_VOID_REVERSAL_FLAG_KEY =
+  "MONEY_CONTROL_VOID_REVERSAL_ENABLED";
 
 export type ReverseJournalEntryNoFlipResult = {
   reversal: Awaited<ReturnType<typeof postVoidReversal>>;
@@ -267,22 +293,33 @@ export type ReverseJournalEntryNoFlipResult = {
  */
 export async function reverseJournalEntryNoFlip(
   client: QueryableClient,
-  params: { operatingCompanyId: string; journalEntryId: string; reason: string; actorUserId: string }
+  params: {
+    operatingCompanyId: string;
+    journalEntryId: string;
+    reason: string;
+    actorUserId: string;
+    currentBusinessDate?: string;
+  },
 ): Promise<ReverseJournalEntryNoFlipResult> {
   const { operatingCompanyId, journalEntryId } = params;
   const reason = params.reason.trim();
   const hasLinkage = await hasReversalLinkageColumns(client);
 
-  const existingRes = await client.query<{ status: JournalEntryStatus; entry_date: string; reversed_by_je_id: string | null }>(
+  const existingRes = await client.query<{
+    status: JournalEntryStatus;
+    entry_date: string;
+    reversed_by_je_id: string | null;
+  }>(
     `SELECT status, entry_date::text AS entry_date, ${hasLinkage ? "reversed_by_je_id::text" : "NULL::text"} AS reversed_by_je_id
        FROM accounting.journal_entries
       WHERE id = $1 AND operating_company_id = $2
       LIMIT 1 FOR UPDATE`,
-    [journalEntryId, operatingCompanyId]
+    [journalEntryId, operatingCompanyId],
   );
   const existing = existingRes.rows[0];
   if (!existing) throw new Error("journal_entry_not_found");
-  if (existing.status !== "posted") throw new Error("journal_entry_not_postable");
+  if (existing.status !== "posted")
+    throw new Error("journal_entry_not_postable");
 
   // Deterministic retry/recovery lookup. Header linkage is preferred when the additive columns exist;
   // transaction_source_links is the canonical pre-migration fallback written by postVoidReversal.
@@ -313,9 +350,10 @@ export async function reverseJournalEntryNoFlip(
           GROUP BY jep.journal_entry_uuid, je.entry_date
           ORDER BY jep.journal_entry_uuid
           LIMIT 2`,
-    [existing.reversed_by_je_id ?? journalEntryId, operatingCompanyId]
+    [existing.reversed_by_je_id ?? journalEntryId, operatingCompanyId],
   );
-  if (existingReversalRes.rows.length > 1) throw new Error("journal_entry_multiple_reversals");
+  if (existingReversalRes.rows.length > 1)
+    throw new Error("journal_entry_multiple_reversals");
   const existingReversal = existingReversalRes.rows[0];
   if (hasLinkage && existing.reversed_by_je_id && !existingReversal) {
     throw new Error("journal_entry_reversal_link_corrupt");
@@ -325,7 +363,8 @@ export async function reverseJournalEntryNoFlip(
       reversal: {
         reversal_journal_entry_id: existingReversal.reversal_journal_entry_id,
         reversal_date: existingReversal.reversal_date,
-        closed_period_reversal: existingReversal.reversal_date !== existing.entry_date,
+        closed_period_reversal:
+          existingReversal.reversal_date !== existing.entry_date,
         reversed_line_count: Number(existingReversal.reversed_line_count),
       },
       linkage_written: hasLinkage,
@@ -340,10 +379,12 @@ export async function reverseJournalEntryNoFlip(
       entityId: journalEntryId,
       originalDate: existing.entry_date,
       memo: `Reversal of journal entry ${journalEntryId}: ${reason}`,
+      currentDate: params.currentBusinessDate,
     },
-    { userId: params.actorUserId }
+    { userId: params.actorUserId },
   );
-  if (!reversal.reversal_journal_entry_id) throw new Error("journal_entry_nothing_to_reverse");
+  if (!reversal.reversal_journal_entry_id)
+    throw new Error("journal_entry_nothing_to_reverse");
 
   // Bidirectional header linkage (Linkage-Law). The original is NEVER flipped — status stays 'posted'.
   let linkageWritten = false;
@@ -351,12 +392,17 @@ export async function reverseJournalEntryNoFlip(
     await client.query(
       `UPDATE accounting.journal_entries SET reversed_by_je_id = $2::uuid, updated_at = now()
          WHERE id = $1 AND operating_company_id = $3`,
-      [journalEntryId, reversal.reversal_journal_entry_id, operatingCompanyId]
+      [journalEntryId, reversal.reversal_journal_entry_id, operatingCompanyId],
     );
     await client.query(
       `UPDATE accounting.journal_entries SET reverses_je_id = $2::uuid, void_reason = $3, updated_at = now()
          WHERE id = $1 AND operating_company_id = $4`,
-      [reversal.reversal_journal_entry_id, journalEntryId, reason, operatingCompanyId]
+      [
+        reversal.reversal_journal_entry_id,
+        journalEntryId,
+        reason,
+        operatingCompanyId,
+      ],
     );
     linkageWritten = true;
   }
@@ -367,17 +413,24 @@ export async function voidJournalEntry(
   operatingCompanyId: string,
   journalEntryId: string,
   voidReason: string,
-  actor: { userId: string; role: string }
+  actor: { userId: string; role: string },
 ) {
   const result = await withCurrentUser(actor.userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(
+      `SELECT set_config('app.operating_company_id', $1, true)`,
+      [operatingCompanyId],
+    );
 
     // AF-7 money-control gate (per-entity, default OFF): refuse the void action unless the owner has
     // enabled it for THIS entity. Resolved before any read/write so an OFF entity can never mutate a JE.
-    const voidActionEnabled = await isEnabled(client, MONEY_CONTROL_VOID_REVERSAL_FLAG_KEY, {
-      operating_company_id: operatingCompanyId,
-      user_uuid: actor.userId,
-    });
+    const voidActionEnabled = await isEnabled(
+      client,
+      MONEY_CONTROL_VOID_REVERSAL_FLAG_KEY,
+      {
+        operating_company_id: operatingCompanyId,
+        user_uuid: actor.userId,
+      },
+    );
     if (!voidActionEnabled) throw new Error("void_reversal_disabled");
 
     // Option 1 (NetSuite/QBO reversing-entry model): voiding a posted JE NEVER mutates/flips the original.
@@ -385,14 +438,17 @@ export async function voidJournalEntry(
     // link; the original stays status='posted'. The GL reports exclude 'voided' (trial-balance /
     // balance-sheet / cash-flow / account-register all filter `je.status <> 'voided'`), so a status flip
     // would SILENTLY DROP the entry from the GL — which is why the flip model is unsafe and this reverses.
-    if (!canVoid(actor.role)) throw new Error("forbidden_void_owner_or_accountant_only");
+    if (!canVoid(actor.role))
+      throw new Error("forbidden_void_owner_or_accountant_only");
     // Mandatory non-empty reason (audit/GAAP requirement) — enforced server-side, not just in the UI.
-    if (!voidReason || !voidReason.trim()) throw new Error("void_reason_required");
+    if (!voidReason || !voidReason.trim())
+      throw new Error("void_reason_required");
 
     // Option-1 void REQUIRES the reversal-linkage columns. The per-entity money-control flag above already
     // gates this path (verify-then-flip means the HELD migration is applied before an entity is flipped ON),
     // but if it were ever reached pre-migration, fail cleanly (503) instead of a raw missing-column SQL error.
-    if (!(await hasReversalLinkageColumns(client))) throw new Error("journal_entry_reversal_columns_unavailable");
+    if (!(await hasReversalLinkageColumns(client)))
+      throw new Error("journal_entry_reversal_columns_unavailable");
 
     // Reverse-not-flip via the SHARED helper (the SAME mechanics the governance JE-void path uses now).
     // The original is NEVER flipped to 'voided' — postVoidReversal posts the equal/opposite JE and the
@@ -428,7 +484,7 @@ export async function voidJournalEntry(
     "journal_entry",
     journalEntryId,
     hashPayload({ journal_entry_id: journalEntryId, action: "void" }),
-    actor.userId
+    actor.userId,
   );
   return result;
 }
@@ -445,7 +501,10 @@ export async function listJournalEntries(input: {
   offset: number;
 }) {
   return withCurrentUser(input.userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
+    await client.query(
+      `SELECT set_config('app.operating_company_id', $1, true)`,
+      [input.operating_company_id],
+    );
     const values: unknown[] = [input.operating_company_id];
     const filters: string[] = ["je.operating_company_id = $1"];
     if (input.source) {
@@ -506,7 +565,7 @@ export async function listJournalEntries(input: {
         LIMIT $${values.length - 1}
         OFFSET $${values.length}
       `,
-      values
+      values,
     );
     return res.rows;
   });
@@ -524,12 +583,19 @@ export async function listJournalEntries(input: {
  *      amortization/lease/settlement posting, etc.).
  * LEFT JOINed so a posting line with only mechanism (1) still returns a row.
  */
-export async function getJournalEntrySourceLinks(userId: string, operatingCompanyId: string, journalEntryId: string) {
+export async function getJournalEntrySourceLinks(
+  userId: string,
+  operatingCompanyId: string,
+  journalEntryId: string,
+) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(
+      `SELECT set_config('app.operating_company_id', $1, true)`,
+      [operatingCompanyId],
+    );
     const headerRes = await client.query(
       `SELECT id FROM accounting.journal_entries WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
-      [journalEntryId, operatingCompanyId]
+      [journalEntryId, operatingCompanyId],
     );
     if (!headerRes.rows[0]) throw new Error("journal_entry_not_found");
 
@@ -553,15 +619,22 @@ export async function getJournalEntrySourceLinks(userId: string, operatingCompan
           AND jep.operating_company_id = $2
         ORDER BY jep.line_sequence ASC, tsl.created_at ASC NULLS LAST
       `,
-      [journalEntryId, operatingCompanyId]
+      [journalEntryId, operatingCompanyId],
     );
     return res.rows;
   });
 }
 
-export async function getJournalEntryDetail(userId: string, operatingCompanyId: string, journalEntryId: string) {
+export async function getJournalEntryDetail(
+  userId: string,
+  operatingCompanyId: string,
+  journalEntryId: string,
+) {
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    await client.query(
+      `SELECT set_config('app.operating_company_id', $1, true)`,
+      [operatingCompanyId],
+    );
     const headerRes = await client.query(
       `
         SELECT
@@ -584,7 +657,7 @@ export async function getJournalEntryDetail(userId: string, operatingCompanyId: 
           AND operating_company_id = $2
         LIMIT 1
       `,
-      [journalEntryId, operatingCompanyId]
+      [journalEntryId, operatingCompanyId],
     );
     const header = headerRes.rows[0];
     if (!header) throw new Error("journal_entry_not_found");
@@ -610,7 +683,7 @@ export async function getJournalEntryDetail(userId: string, operatingCompanyId: 
           AND p.operating_company_id = $2
         ORDER BY p.line_sequence ASC, p.created_at ASC
       `,
-      [journalEntryId, operatingCompanyId]
+      [journalEntryId, operatingCompanyId],
     );
     return { ...header, postings: postingsRes.rows };
   });
