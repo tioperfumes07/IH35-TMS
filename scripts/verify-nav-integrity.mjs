@@ -129,7 +129,11 @@ const allowAll = [
   ...allowlist.URL_SYNC_DEFERRED,
 ];
 
-const routeSource = `${read("apps/frontend/src/App.tsx")}\n${read("apps/frontend/src/routes/manifest.tsx")}`;
+const routeSource = [
+  read("apps/frontend/src/App.tsx"),
+  read("apps/frontend/src/routes/manifest.tsx"),
+  read("apps/frontend/src/routes/finance-landing.routes.tsx"),
+].join("\n");
 const routes = extractRoutePaths(routeSource);
 
 const subnavPaths = new Set([

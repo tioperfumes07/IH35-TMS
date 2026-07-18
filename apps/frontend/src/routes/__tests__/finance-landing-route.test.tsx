@@ -80,6 +80,16 @@ function renderFinanceRoute(path: string, includeBreakEven = false) {
   );
 }
 
+function expectFinanceTabState(activeName: "Hub" | "Overview", inactiveName: "Hub" | "Overview") {
+  const activeTab = screen.getByRole("button", { name: activeName });
+  const inactiveTab = screen.getByRole("button", { name: inactiveName });
+
+  expect(activeTab).toHaveClass("border-[#1f2a44]", "text-[#1f2a44]");
+  expect(activeTab).not.toHaveClass("border-transparent", "text-gray-500");
+  expect(inactiveTab).toHaveClass("border-transparent", "text-gray-500");
+  expect(inactiveTab).not.toHaveClass("border-[#1f2a44]", "text-[#1f2a44]");
+}
+
 afterEach(() => {
   vi.clearAllMocks();
 });
@@ -90,6 +100,7 @@ describe("FIN-2 Finance landing", () => {
 
     expect(await screen.findByRole("heading", { name: "Finance Hub" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Finance Overview" })).not.toBeInTheDocument();
+    expectFinanceTabState("Hub", "Overview");
     expect(screen.getByTestId("location")).toHaveTextContent("/finance");
     expect(apiMocks.getFinanceHubOverview).not.toHaveBeenCalled();
   });
@@ -99,6 +110,7 @@ describe("FIN-2 Finance landing", () => {
 
     expect(await screen.findByRole("heading", { name: "Finance Overview", level: 1 })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Finance Hub" })).not.toBeInTheDocument();
+    expectFinanceTabState("Overview", "Hub");
     expect(screen.getByTestId("location")).toHaveTextContent("/finance/overview");
   });
 
@@ -106,10 +118,7 @@ describe("FIN-2 Finance landing", () => {
     renderFinanceRoute("/finance/hub");
 
     expect(await screen.findByRole("heading", { name: "Finance Hub" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Hub" })).toHaveClass(
-      "border-[#1f2a44]",
-      "text-[#1f2a44]",
-    );
+    expectFinanceTabState("Hub", "Overview");
     expect(screen.getByTestId("location")).toHaveTextContent("/finance/hub");
     expect(apiMocks.getFinanceHubOverview).not.toHaveBeenCalled();
   });
