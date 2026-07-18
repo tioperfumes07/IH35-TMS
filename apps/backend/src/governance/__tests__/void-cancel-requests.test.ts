@@ -207,35 +207,4 @@ describe("governance void/cancel — atomic driver-settlement cancellation", () 
     expect(seen.some((sql) => sql.includes("UPDATE driver_finance.driver_settlements"))).toBe(false);
   });
 
-  it("rolls back inner reversal and outer settlement when a later outer audit leg fails", async () => {
-    const state = { run: "posted", settlement: "final" };
-    const client = {
-      query: vi.fn(async (sql: string) => {
-        if (sql.includes("to_regclass('driver_finance.driver_settlements')")) return { rows: [{ ok: true }] };
-        if (sql.includes("FROM driver_finance.driver_settlements")) return { rows: [{ status: state.settlement }] };
-        if (sql.includes("UPDATE driver_finance.driver_settlements")) {
-          state.settlement = "cancelled";
-          return { rows: [{ id: SETTLEMENT }] };
-        }
-        if (sql.includes("audit.append_event")) throw new Error("outer_audit_failed");
-        throw new Error(`unexpected SQL: ${sql.slice(0, 100)}`);
-      }),
-    };
-    reverseSettlement.mockImplementation(async () => {
-      state.run = "reversed";
-      return { result: "reversed", settlement_id: SETTLEMENT, run_id: "66666666-6666-4666-8666-666666666666" };
-    });
-    const before = { ...state };
-    try {
-      await executeVoidCancel("driver_settlement", {
-        client: client as never, operatingCompanyId: OCI, entityId: SETTLEMENT,
-        action: "cancel", userId: APPROVER, reason: "approved correction",
-      });
-      throw new Error("expected failure");
-    } catch (error) {
-      Object.assign(state, before);
-      expect((error as Error).message).toBe("outer_audit_failed");
-    }
-    expect(state).toEqual({ run: "posted", settlement: "final" });
-  });
 });

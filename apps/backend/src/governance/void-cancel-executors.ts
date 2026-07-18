@@ -586,15 +586,9 @@ const executeCustomerPayment: EntityExecutor = async (ctx) => {
   return { kind: "ok", reversing_entry_ref: reversingEntryRef, closed_period_reversal: closedPeriod };
 };
 
-// VOID-EVERYWHERE PR-3 — driver_settlement executor. Reuses the EXISTING, already-live
-// settlement-bill-payment-posting.service.ts::reverseSettlementBillPayment (per-load bill + cash
-// bill_payment reversal via the shared posting engine, plus a mirrored deduction JE) — that function
-// was previously built but had ZERO route wiring anywhere (a true orphan). This executor is its first
-// live caller. It is inherently multi-transaction already (each leg its own posting-engine reversal),
-// so — like expense's reversePostedSourceTransaction — it cannot run atomically on ctx.client without a
-// deeper posting-engine refactor; left as-is (matches its own existing non-atomic design). The row-level
-// audit trail (reversed_at/reversed_by_user_id/reversal_reason) is written by the HELD migration
-// 202607091600_driver_settlements_reversal_columns.sql (BUILD-AND-HOLD; not yet run on prod).
+// Driver-settlement cancellation runs every GL, payment, bill, bank, deduction, driver-bill, settlement,
+// and audit leg on the caller's transaction client. One company business date is captured here and passed
+// through every reversal leg; any failure aborts the complete user-visible cancellation.
 const executeDriverSettlement: EntityExecutor = async (ctx) => {
   const { client, operatingCompanyId, entityId, userId, reason } = ctx;
 

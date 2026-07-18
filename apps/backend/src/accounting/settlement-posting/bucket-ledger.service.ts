@@ -188,9 +188,11 @@ export async function reverseDeductionFromBucket(
             status = 'active',
             updated_at = now()
       WHERE id = $1::uuid
+        AND operating_company_id = $3::uuid
       RETURNING remaining_balance_cents::bigint`,
-    [args.bucketId, args.amountCents]
+    [args.bucketId, args.amountCents, args.operatingCompanyId]
   );
+  if (!upd.rows[0]) throw new Error("deduction_bucket_not_found_for_reversal");
   const remainingAfter = Number(upd.rows[0]?.remaining_balance_cents ?? 0);
   await appendBucketEvent(client, {
     operatingCompanyId: args.operatingCompanyId,

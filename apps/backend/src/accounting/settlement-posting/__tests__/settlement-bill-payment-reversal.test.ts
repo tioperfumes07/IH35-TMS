@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   reverseJournal: vi.fn(),
   voidPayment: vi.fn(),
   voidBill: vi.fn(),
+  restoreDeductions: vi.fn(),
   appendAudit: vi.fn(),
 }));
 
@@ -25,6 +26,9 @@ vi.mock("../../bills.service.js", () => ({
   voidBillPaymentInClientTx: mocks.voidPayment,
   voidBillInClientTx: mocks.voidBill,
 }));
+vi.mock("../settlement-posting.service.js", () => ({
+  restoreSettlementDeductionsInClientTx: mocks.restoreDeductions,
+}));
 vi.mock("../../../audit/crud-audit.js", () => ({ appendCrudAudit: mocks.appendAudit }));
 
 const COMPANY = "11111111-1111-4111-8111-111111111111";
@@ -42,7 +46,7 @@ const PAYMENT_REV = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const DEDUCTION_REV = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
 const USER = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
 
-function makeClient(options?: { residualCents?: number }) {
+function makeClient(options?: { residualCents?: number; deductionMismatch?: boolean }) {
   const calls: Array<{ sql: string; values?: unknown[] }> = [];
   const client = {
     query: vi.fn(async (sql: string, values?: unknown[]) => {
@@ -71,6 +75,17 @@ function makeClient(options?: { residualCents?: number }) {
             absolute_residual_cents: residual,
           }],
         };
+      }
+      if (sql.includes("WITH restored AS")) {
+        return { rows: [{
+          restored_count: 2,
+          restored_amount_cents: 27500,
+          invalid_state_count: 0,
+          bucket_reversal_count: 0,
+          bucket_reversal_amount_cents: 0,
+          original_gl_cents: options?.deductionMismatch ? 27499 : 27500,
+          reversal_gl_cents: 27500,
+        }] };
       }
       if (sql.includes("UPDATE driver_finance.driver_bills")) return { rows: [{ id: DRIVER_BILL }], rowCount: 1 };
       if (sql.includes("WITH linked AS")) {
@@ -103,6 +118,16 @@ describe("settlement Bill+BillPayment reversal orchestration", () => {
       reversal_journal_entry_id: input.reversePostedGl ? PAYMENT_REV : null,
     }));
     mocks.voidBill.mockResolvedValue({ ok: true, reversal_journal_entry_id: BILL_REV });
+    mocks.restoreDeductions.mockResolvedValue({
+      deduction_ids: [
+        "12121212-1212-4212-8212-121212121212",
+        "13131313-1313-4313-8313-131313131313",
+      ],
+      deduction_count: 2,
+      total_amount_cents: 27500,
+      bucketed_count: 0,
+      bucketed_amount_cents: 0,
+    });
     mocks.reverseJournal.mockResolvedValue({
       reversal: {
         reversal_journal_entry_id: DEDUCTION_REV,
@@ -149,6 +174,22 @@ describe("settlement Bill+BillPayment reversal orchestration", () => {
     expect(mocks.appendAudit).not.toHaveBeenCalled();
   });
 
+  it("refuses the state transition when restored deductions do not agree to the deduction GL", async () => {
+    const { client, calls } = makeClient({ deductionMismatch: true });
+    mocks.withCurrentUser.mockImplementation(async (_userId, fn) => fn(client));
+
+    const { reverseSettlementBillPayment } = await import("../settlement-bill-payment-posting.service.js");
+    await expect(
+      reverseSettlementBillPayment(
+        { operatingCompanyId: COMPANY, settlementId: SETTLEMENT, reason: "deduction tie-out test" },
+        { userId: USER }
+      )
+    ).rejects.toThrow("settlement_deduction_reconciliation_failed");
+
+    expect(calls.some((c) => c.sql.includes("SET status = 'reversed'"))).toBe(false);
+    expect(mocks.appendAudit).not.toHaveBeenCalled();
+  });
+
   it("uses one transaction client for every canonical reversal, proves full net-zero, then transitions state", async () => {
     const { client, calls } = makeClient();
     mocks.withCurrentUser.mockImplementation(async (_userId, fn) => fn(client));
@@ -183,6 +224,11 @@ describe("settlement Bill+BillPayment reversal orchestration", () => {
         operatingCompanyId: COMPANY,
         currentBusinessDate: "2026-07-18",
       })
+    );
+    expect(mocks.restoreDeductions).toHaveBeenCalledWith(
+      client,
+      { operatingCompanyId: COMPANY, settlementId: SETTLEMENT, reason: "complete reversal" },
+      { userId: USER }
     );
     const proofIndex = calls.findIndex((c) => c.sql.includes("WITH selected AS"));
     const statusIndex = calls.findIndex((c) => c.sql.includes("SET status = 'reversed'"));

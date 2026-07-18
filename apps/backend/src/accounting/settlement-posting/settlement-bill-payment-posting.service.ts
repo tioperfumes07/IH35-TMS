@@ -42,6 +42,7 @@ import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { createBill, payBill, voidBillInClientTx, voidBillPaymentInClientTx } from "../bills.service.js";
 import { createJournalEntry, reverseJournalEntryNoFlip } from "../journal-entries.service.js";
 import { postSourceTransaction } from "../posting-engine.service.js";
+import { restoreSettlementDeductionsInClientTx } from "./settlement-posting.service.js";
 import { resolveRoleAccountOptional } from "../coa-roles/resolver.service.js";
 import {
   driverEscrowSubAccountName,
@@ -827,6 +828,7 @@ export async function reverseSettlementBillPaymentInClientTx(
     // bill/payment reversals (open original period -> original date; closed -> current company date),
     // writes deterministic void:journal_entry:<original-id> line idempotency + source links, and
     // serializes on the original JE row. No bespoke GL math.
+    let deductionReversalJeId: string | null = null;
     if (run.deduction_journal_entry_id) {
       originalJeIds.push(run.deduction_journal_entry_id);
       const deductionReversal = await reverseJournalEntryNoFlip(client, {
@@ -836,11 +838,79 @@ export async function reverseSettlementBillPaymentInClientTx(
         actorUserId: actor.userId,
         currentBusinessDate,
       });
-      const deductionReversalJeId = deductionReversal.reversal.reversal_journal_entry_id;
+      deductionReversalJeId = deductionReversal.reversal.reversal_journal_entry_id;
       if (!deductionReversalJeId) {
         throw new Error("settlement_deduction_reversal_missing");
       }
       reversalJeIds.push(deductionReversalJeId);
+    }
+
+    const restoredDeductions = await restoreSettlementDeductionsInClientTx(
+      client,
+      { operatingCompanyId: opco, settlementId, reason: input.reason },
+      actor
+    );
+
+    const deductionProof = await client.query<{
+      restored_count: number;
+      restored_amount_cents: number;
+      invalid_state_count: number;
+      bucket_reversal_count: number;
+      bucket_reversal_amount_cents: number;
+      original_gl_cents: number;
+      reversal_gl_cents: number;
+    }>(
+      `WITH restored AS (
+         SELECT amount_cents,
+                (applied_to_settlement_id IS NOT NULL OR status <> 'pending'
+                  OR remaining_balance_cents <> amount_cents) AS invalid_state
+           FROM driver_finance.driver_settlement_deductions
+          WHERE operating_company_id = $1::uuid
+            AND id = ANY($2::uuid[])
+       ), bucket_reversals AS (
+         SELECT amount_cents
+           FROM driver_finance.driver_deduction_bucket_events
+          WHERE operating_company_id = $1::uuid
+            AND settlement_id = $3::uuid
+            AND deduction_id = ANY($2::uuid[])
+            AND event_type = 'reversal'
+       )
+       SELECT
+         (SELECT COUNT(*)::int FROM restored) AS restored_count,
+         (SELECT COALESCE(SUM(amount_cents),0)::bigint FROM restored) AS restored_amount_cents,
+         (SELECT COUNT(*) FILTER (WHERE invalid_state)::int FROM restored) AS invalid_state_count,
+         (SELECT COUNT(*)::int FROM bucket_reversals) AS bucket_reversal_count,
+         (SELECT COALESCE(SUM(amount_cents),0)::bigint FROM bucket_reversals) AS bucket_reversal_amount_cents,
+         (SELECT COALESCE(SUM(amount_cents),0)::bigint
+            FROM accounting.journal_entry_postings
+           WHERE operating_company_id = $1::uuid
+             AND journal_entry_uuid = $4::uuid
+             AND debit_or_credit = 'credit') AS original_gl_cents,
+         (SELECT COALESCE(SUM(amount_cents),0)::bigint
+            FROM accounting.journal_entry_postings
+           WHERE operating_company_id = $1::uuid
+             AND journal_entry_uuid = $5::uuid
+             AND debit_or_credit = 'debit') AS reversal_gl_cents`,
+      [
+        opco,
+        restoredDeductions.deduction_ids,
+        settlementId,
+        run.deduction_journal_entry_id,
+        deductionReversalJeId,
+      ]
+    );
+    const deductionReconciliation = deductionProof.rows[0];
+    if (
+      Number(deductionReconciliation?.restored_count ?? -1) !== restoredDeductions.deduction_count ||
+      Number(deductionReconciliation?.restored_amount_cents ?? -1) !== restoredDeductions.total_amount_cents ||
+      Number(deductionReconciliation?.invalid_state_count ?? -1) !== 0 ||
+      Number(deductionReconciliation?.bucket_reversal_count ?? -1) !== restoredDeductions.bucketed_count ||
+      Number(deductionReconciliation?.bucket_reversal_amount_cents ?? -1) !==
+        restoredDeductions.bucketed_amount_cents ||
+      Number(deductionReconciliation?.original_gl_cents ?? -1) !== restoredDeductions.total_amount_cents ||
+      Number(deductionReconciliation?.reversal_gl_cents ?? -1) !== restoredDeductions.total_amount_cents
+    ) {
+      throw new Error("settlement_deduction_reconciliation_failed");
     }
 
     // Whole-settlement equal-and-opposite proof at the full accounting dimension grain. Every original
@@ -971,6 +1041,8 @@ export async function reverseSettlementBillPaymentInClientTx(
           nonvoid_bill_count: 0,
           nonzero_paid_bill_count: 0,
           unrestored_driver_bill_count: 0,
+          restored_deduction_count: restoredDeductions.deduction_count,
+          restored_deduction_amount_cents: restoredDeductions.total_amount_cents,
         },
       },
       "warning",

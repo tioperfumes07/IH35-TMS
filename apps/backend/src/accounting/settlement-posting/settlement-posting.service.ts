@@ -526,6 +526,67 @@ export type SettlementReversalResult = {
   settlement_id: string;
 };
 
+export type RestoredSettlementDeductions = {
+  deduction_ids: string[];
+  deduction_count: number;
+  total_amount_cents: number;
+  bucketed_count: number;
+  bucketed_amount_cents: number;
+};
+
+/**
+ * Canonical operational deduction unwind. The applied rows are locked before any bucket mutation,
+ * then detached from the cancelled settlement in the same transaction. A retry sees no attached rows,
+ * so it cannot restore a bucket twice or make the deduction eligible more than once.
+ */
+export async function restoreSettlementDeductionsInClientTx(
+  client: DbClient,
+  input: { operatingCompanyId: string; settlementId: string; reason: string },
+  actor: Actor
+): Promise<RestoredSettlementDeductions> {
+  const deductions = await loadDeductions(client, input.operatingCompanyId, input.settlementId);
+  let totalAmountCents = 0;
+  let bucketedCount = 0;
+  let bucketedAmountCents = 0;
+  for (const deduction of deductions) {
+    const amountCents = Number(deduction.amount_cents);
+    totalAmountCents += amountCents;
+    if (deduction.bucket_id) {
+      bucketedCount += 1;
+      bucketedAmountCents += amountCents;
+      await reverseDeductionFromBucket(client, {
+        operatingCompanyId: input.operatingCompanyId,
+        bucketId: deduction.bucket_id,
+        amountCents,
+        settlementId: input.settlementId,
+        deductionId: deduction.id,
+        actorUserId: actor.userId,
+        reason: input.reason,
+      });
+    }
+    const restored = await client.query<{ id: string }>(
+      `UPDATE driver_finance.driver_settlement_deductions
+          SET applied_to_settlement_id = NULL,
+              status = 'pending',
+              remaining_balance_cents = amount_cents,
+              updated_at = now()
+        WHERE id = $1::uuid
+          AND operating_company_id = $2::uuid
+          AND applied_to_settlement_id = $3::uuid
+        RETURNING id::text`,
+      [deduction.id, input.operatingCompanyId, input.settlementId]
+    );
+    if (!restored.rows[0]?.id) throw new Error("settlement_deduction_restore_state_transition_failed");
+  }
+  return {
+    deduction_ids: deductions.map((deduction) => deduction.id),
+    deduction_count: deductions.length,
+    total_amount_cents: totalAmountCents,
+    bucketed_count: bucketedCount,
+    bucketed_amount_cents: bucketedAmountCents,
+  };
+}
+
 /**
  * Reverse a posted settlement GL entry: post an equal-and-opposite reversing JE (NEVER delete), flip the
  * original JE to 'voided', and RESTORE each applied deduction's bucket balance. Reuses the void path.
@@ -569,27 +630,7 @@ export async function reverseSettlementGlPosting(
       [jeId, input.operatingCompanyId, actor.userId, input.reason]
     );
 
-    // Restore each applied deduction's bucket balance.
-    const deductions = await loadDeductions(client, input.operatingCompanyId, input.settlementId);
-    for (const d of deductions) {
-      if (d.bucket_id) {
-        await reverseDeductionFromBucket(client, {
-          operatingCompanyId: input.operatingCompanyId,
-          bucketId: d.bucket_id,
-          amountCents: Number(d.amount_cents),
-          settlementId: input.settlementId,
-          deductionId: d.id,
-          actorUserId: actor.userId,
-          reason: input.reason,
-        });
-      }
-      await client.query(
-        `UPDATE driver_finance.driver_settlement_deductions
-            SET status = 'pending', remaining_balance_cents = amount_cents, updated_at = now()
-          WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
-        [d.id, input.operatingCompanyId]
-      );
-    }
+    await restoreSettlementDeductionsInClientTx(client, input, actor);
 
     await appendCrudAudit(
       client as never,
