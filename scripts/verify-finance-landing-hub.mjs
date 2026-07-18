@@ -24,7 +24,6 @@ function routeMounts(source, route, component) {
 
 export function assertFinanceLanding({
   manifest,
-  financeRoutes,
   sidebar,
   tabs,
   hubPage,
@@ -32,26 +31,22 @@ export function assertFinanceLanding({
 }) {
   const errors = [];
   if (!manifest) errors.push("manifest.tsx missing");
-  if (!financeRoutes) errors.push("finance-landing.routes.tsx missing");
   if (!sidebar) errors.push("sidebar-config.ts missing");
   if (!tabs) errors.push("FinanceModuleTabs.tsx missing");
   if (!hubPage) errors.push("FinanceHubPage.tsx missing");
   if (!breakEvenPage) errors.push("BreakEvenPage.tsx missing");
   if (errors.length) return errors;
 
-  if (!/createFinanceLandingRoutes\(\s*\(page\)\s*=>\s*<ProtectedRoute>\{page\}<\/ProtectedRoute>\s*\)/.test(manifest)) {
-    errors.push("manifest must mount the shared Finance landing route factory through ProtectedRoute");
-  }
-  if (!routeMounts(financeRoutes, "/finance", "FinanceHubPage")) {
+  if (!routeMounts(manifest, "/finance", "FinanceHubPage")) {
     errors.push("/finance must mount FinanceHubPage");
   }
-  if (routeMounts(financeRoutes, "/finance", "FinanceOverviewPage")) {
+  if (routeMounts(manifest, "/finance", "FinanceOverviewPage")) {
     errors.push("/finance must not mount the placeholder FinanceOverviewPage");
   }
-  if (!routeMounts(financeRoutes, "/finance/overview", "FinanceOverviewPage")) {
+  if (!routeMounts(manifest, "/finance/overview", "FinanceOverviewPage")) {
     errors.push("/finance/overview must keep FinanceOverviewPage reachable");
   }
-  if (!routeMounts(financeRoutes, "/finance/hub", "FinanceHubPage")) {
+  if (!routeMounts(manifest, "/finance/hub", "FinanceHubPage")) {
     errors.push("legacy /finance/hub must remain mounted to FinanceHubPage");
   }
 
@@ -90,9 +85,6 @@ export function assertFinanceLanding({
 function selftest() {
   const good = {
     manifest: `
-      {createFinanceLandingRoutes((page) => <ProtectedRoute>{page}</ProtectedRoute>)}
-    `,
-    financeRoutes: `
       <Route path="/finance" element={<ProtectedRoute><FinanceHubPage /></ProtectedRoute>} />
       <Route path="/finance/overview" element={<ProtectedRoute><FinanceOverviewPage /></ProtectedRoute>} />
       <Route path="/finance/hub" element={<ProtectedRoute><FinanceHubPage /></ProtectedRoute>} />
@@ -118,13 +110,12 @@ function selftest() {
   };
 
   const cases = [
-    ["manifest factory unwired", { ...good, manifest: good.manifest.replace("ProtectedRoute", "UnprotectedRoute") }, "manifest must mount"],
-    ["root mounts stub", { ...good, financeRoutes: good.financeRoutes.replace(
+    ["root mounts stub", { ...good, manifest: good.manifest.replace(
       '<Route path="/finance" element={<ProtectedRoute><FinanceHubPage /></ProtectedRoute>} />',
       '<Route path="/finance" element={<ProtectedRoute><FinanceOverviewPage /></ProtectedRoute>} />',
     ) }, "/finance must mount"],
-    ["overview removed", { ...good, financeRoutes: good.financeRoutes.replace("/finance/overview", "/finance/old-overview") }, "/finance/overview"],
-    ["legacy alias removed", { ...good, financeRoutes: good.financeRoutes.replace("/finance/hub", "/finance/old-hub") }, "legacy /finance/hub"],
+    ["overview removed", { ...good, manifest: good.manifest.replace("/finance/overview", "/finance/old-overview") }, "/finance/overview"],
+    ["legacy alias removed", { ...good, manifest: good.manifest.replace("/finance/hub", "/finance/old-hub") }, "legacy /finance/hub"],
     ["sidebar root stale", { ...good, sidebar: good.sidebar.replace('to: "/finance" },', 'to: "/finance/hub" },') }, "sidebar FINANCE HUB"],
     ["flyout overview stale", { ...good, sidebar: good.sidebar.replace('Overview", to: "/finance/overview"', 'Overview", to: "/finance"') }, "flyout Overview"],
     ["hub tab stale", { ...good, tabs: good.tabs.replace('id: "hub", label: "Hub", to: "/finance"', 'id: "hub", label: "Hub", to: "/finance/hub"') }, "Hub tab"],
@@ -153,7 +144,6 @@ if (process.argv.includes("--selftest")) {
 
 const errors = assertFinanceLanding({
   manifest: read("apps/frontend/src/routes/manifest.tsx"),
-  financeRoutes: read("apps/frontend/src/routes/finance-landing.routes.tsx"),
   sidebar: read("apps/frontend/src/components/layout/sidebar-config.ts"),
   tabs: read("apps/frontend/src/pages/finance/FinanceModuleTabs.tsx"),
   hubPage: read("apps/frontend/src/pages/finance/FinanceHubPage.tsx"),

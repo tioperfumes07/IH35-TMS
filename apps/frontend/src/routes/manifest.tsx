@@ -291,7 +291,6 @@ import { COLLECTIONS_ROUTE } from "./collections.routes";
 import { TRIP_PAIRING_BOARD_ROUTE } from "./trip-pairing-board.routes";
 import { AP_AGING_ROUTE } from "./ap-aging.routes";
 import { resolveUnderscoreRedirectPath } from "./url-canonicalize";
-import { createFinanceLandingRoutes } from "./finance-landing.routes";
 const ForensicReviewPage = React.lazy(() => import("../pages/forensic/ForensicReviewPage").then((m) => ({ default: m.ForensicReviewPage })));
 const AdminPage = React.lazy(() => import("../pages/admin/AdminPage").then((m) => ({ default: m.AdminPage })));
 const USMCAActivationPanel = React.lazy(() => import("../pages/admin/USMCAActivationPanel").then((m) => ({ default: m.USMCAActivationPanel })));
@@ -438,6 +437,7 @@ const DispatchChatPage = React.lazy(() => import("../pages/chat/DispatchChatPage
 const TasksReportPage = React.lazy(() => import("../pages/tasks/TasksReportPage").then((m) => ({ default: m.TasksReportPage })));
 
 // Finance module (SIDEBAR-V2-REORG-25)
+const FinanceOverviewPage = React.lazy(() => import("../pages/finance/FinanceOverviewPage").then((m) => ({ default: m.FinanceOverviewPage })));
 const FinanceProjectionsPage = React.lazy(() => import("../pages/finance/FinanceProjectionsPage").then((m) => ({ default: m.FinanceProjectionsPage })));
 const LoanWizardPage = React.lazy(() => import("../pages/finance/LoanWizardPage").then((m) => ({ default: m.LoanWizardPage })));
 const CalculatorPage = React.lazy(() => import("../pages/finance/CalculatorPage").then((m) => ({ default: m.CalculatorPage })));
@@ -445,6 +445,7 @@ const AmortizationPage = React.lazy(() => import("../pages/finance/AmortizationP
 const FinanceScenariosPage = React.lazy(() => import("../pages/finance/FinanceScenariosPage").then((m) => ({ default: m.FinanceScenariosPage })));
 import { ArApAgingPage } from "../pages/finance/ArApAgingPage"; // FIN-20 (read-only, flag-gated)
 const FinancialStatementsPage = React.lazy(() => import("../pages/finance/FinancialStatementsPage").then((m) => ({ default: m.FinancialStatementsPage })));
+import { FinanceHubPage } from "../pages/finance/FinanceHubPage"; // AF-6 (read-only, flag-gated)
 import { BreakEvenPage } from "../pages/finance/BreakEvenPage"; // F1 (read-only analytics, flag-gated)
 
 // Inventory module (SIDEBAR-V2-REORG-25)
@@ -4108,7 +4109,8 @@ export const ROUTES = React.Children.toArray(
         {/* Finance module (SIDEBAR-V2-REORG-25) */}
         {/* FIN-2 — canonical Finance entry mounts the real read-only Hub. The placeholder Overview remains
             reachable at /finance/overview, and /finance/hub remains mounted as an additive legacy alias. */}
-        {createFinanceLandingRoutes((page) => <ProtectedRoute>{page}</ProtectedRoute>)}
+        <Route path="/finance" element={<ProtectedRoute><FinanceHubPage /></ProtectedRoute>} />
+        <Route path="/finance/overview" element={<ProtectedRoute><FinanceOverviewPage /></ProtectedRoute>} />
         <Route path="/finance/projections" element={<ProtectedRoute><FinanceProjectionsPage /></ProtectedRoute>} />
         <Route path="/finance/scenarios" element={<ProtectedRoute><FinanceScenariosPage /></ProtectedRoute>} />
         <Route path="/finance/loan-wizard" element={<ProtectedRoute><LoanWizardPage /></ProtectedRoute>} />
@@ -4118,6 +4120,7 @@ export const ROUTES = React.Children.toArray(
         {/* FIN-19 — Financial statements (P&L / BS / TB). flag FINANCE_STATEMENTS_UI_ENABLED — default_enabled=true in lib.feature_flags (resolves ON unless a per-entity/user override disables it); read-only, no money posting. */}
         <Route path="/finance/statements" element={<ProtectedRoute><FinancialStatementsPage /></ProtectedRoute>} />
         {/* AF-6 — Finance Hub landing dashboard. flag FINANCE_HUB_UI_ENABLED in lib.feature_flags — default OFF, per-entity-only (owner enables per operating company via override); same DB flag gates the backend via isEnabled; read-only, no money posting. */}
+        <Route path="/finance/hub" element={<ProtectedRoute><FinanceHubPage /></ProtectedRoute>} />
         {/* F1 — Break-Even Analysis. flag FINANCE_BREAK_EVEN_UI_ENABLED (OFF by default — owner sign-off gate); read-only analytics/estimate, no money posting. */}
         <Route path="/finance/break-even" element={<ProtectedRoute><BreakEvenPage /></ProtectedRoute>} />
         {/* Inventory module (SIDEBAR-V2-REORG-25) */}

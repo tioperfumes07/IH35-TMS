@@ -14,8 +14,9 @@ import {
   SIDEBAR_ITEM_META,
 } from "../../components/layout/sidebar-config";
 import { BreakEvenPage } from "../../pages/finance/BreakEvenPage";
+import { FinanceHubPage } from "../../pages/finance/FinanceHubPage";
+import { FinanceOverviewPage } from "../../pages/finance/FinanceOverviewPage";
 import financeTabsSource from "../../pages/finance/FinanceModuleTabs.tsx?raw";
-import { createFinanceLandingRoutes } from "../finance-landing.routes";
 
 const apiMocks = vi.hoisted(() => ({
   getBreakEvenInputs: vi.fn(),
@@ -64,11 +65,31 @@ function testBoundary(page: ReactNode) {
   );
 }
 
+function createFinanceLandingTestRoutes() {
+  return [
+    <Route
+      key="finance-hub-canonical"
+      path="/finance"
+      element={testBoundary(<FinanceHubPage />)}
+    />,
+    <Route
+      key="finance-overview"
+      path="/finance/overview"
+      element={testBoundary(<FinanceOverviewPage />)}
+    />,
+    <Route
+      key="finance-hub-legacy"
+      path="/finance/hub"
+      element={testBoundary(<FinanceHubPage />)}
+    />,
+  ];
+}
+
 function renderFinanceRoute(path: string, includeBreakEven = false) {
   render(
     <MemoryRouter initialEntries={[path]}>
       <Routes>
-        {createFinanceLandingRoutes(testBoundary)}
+        {createFinanceLandingTestRoutes()}
         {includeBreakEven ? (
           <Route
             path="/finance/break-even"

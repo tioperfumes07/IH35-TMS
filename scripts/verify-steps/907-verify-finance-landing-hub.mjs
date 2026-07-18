@@ -23,7 +23,7 @@ export const FINANCE_LANDING_CORE_CHECKS = [
     ],
   },
   {
-    label: "architectural route-source selftest",
+    label: "architectural route-literal selftest",
     command: "npx",
     args: [
       "tsx",
@@ -32,7 +32,7 @@ export const FINANCE_LANDING_CORE_CHECKS = [
     ],
   },
   {
-    label: "navigation route-source selftest",
+    label: "navigation route-literal selftest",
     command: "node",
     args: [
       "scripts/verify-nav-integrity.mjs",

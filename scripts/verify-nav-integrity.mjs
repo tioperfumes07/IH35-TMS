@@ -7,11 +7,9 @@ import path from "node:path";
 import process from "node:process";
 
 const ROOT = process.cwd();
-const FINANCE_ROUTES_PATH = "apps/frontend/src/routes/finance-landing.routes.tsx";
 const ROUTE_SOURCE_PATHS = [
   "apps/frontend/src/App.tsx",
   "apps/frontend/src/routes/manifest.tsx",
-  FINANCE_ROUTES_PATH,
 ];
 
 function read(rel) {
@@ -98,11 +96,6 @@ function hasResolvableRoute(subnavPath, routes, routeSource) {
 }
 
 function selftestFinanceRouteSources() {
-  if (!ROUTE_SOURCE_PATHS.includes(FINANCE_ROUTES_PATH)) {
-    throw new Error(
-      `nav route-source selftest requires explicit scanner input ${FINANCE_ROUTES_PATH}`,
-    );
-  }
   const fixture = `
     <Route path="/finance" element={<FinanceHubPage />} />
     <Route path="/finance/overview" element={<FinanceOverviewPage />} />
@@ -133,7 +126,7 @@ function selftestFinanceRouteSources() {
   }
 
   console.log(
-    "[verify-nav-integrity] route-source SELFTEST OK — explicit Finance source scanned, planted removals and unknown route rejected",
+    "[verify-nav-integrity] route SELFTEST OK — planted Finance removals and unknown route rejected",
   );
 }
 
