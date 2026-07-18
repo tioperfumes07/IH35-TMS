@@ -36,6 +36,14 @@ const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
 const optionalUuidQueryFilter = z.preprocess((value) => (value === "" ? undefined : value), z.string().uuid().optional());
 
+function normalizeLoadSort(value: unknown) {
+  if (typeof value !== "string") return value;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "pickup_date") return "pickup_date:asc";
+  if (normalized === "-pickup_date") return "pickup_date:desc";
+  return normalized;
+}
+
 const listLoadsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
@@ -72,17 +80,17 @@ const listLoadsQuerySchema = z.object({
   from_date: isoDateSchema.optional(),
   to_date: isoDateSchema.optional(),
   search: z.string().trim().min(1).max(120).optional(),
-  // CODER-17 hardening: a sort value the endpoint doesn't recognize (e.g. the invoices page's
-  // "-pickup_date" dash-prefix convention) must NOT 400 the whole list — degrade to the default.
-  // SQL injection is impossible regardless: the actual ORDER BY column comes from the fixed
-  // sortColumnMap whitelist below, never raw input. `.catch` makes an unrecognized/ill-formatted
-  // sort fall back to created_at:desc instead of failing validation.
-  sort: z
-    .string()
-    .trim()
-    .regex(/^(created_at|load_number|status|rate_total_cents):(asc|desc)$/i)
-    .default("created_at:desc")
-    .catch("created_at:desc"),
+  // BUG3: invoice-from-load uses the established dash-prefix convention. Normalize its canonical
+  // pickup aliases before applying the fixed allowlist; never masquerade pickup sorting as created_at.
+  // Truly invalid sorts retain the documented fail-soft contract and use created_at:desc.
+  sort: z.preprocess(
+    normalizeLoadSort,
+    z
+      .string()
+      .regex(/^(created_at|load_number|status|rate_total_cents|pickup_date):(asc|desc)$/)
+      .default("created_at:desc")
+      .catch("created_at:desc")
+  ),
   include_progress: z.coerce.boolean().default(false),
 });
 
@@ -495,12 +503,32 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       load_number: "l.load_number",
       status: "l.status",
       rate_total_cents: "l.rate_total_cents",
+      // Canonical pickup date is the first active pickup stop's scheduled timestamp. There is no
+      // mdata.loads.pickup_date column; the lateral `sp` relation is already the list/filter source.
+      pickup_date: "sp.scheduled_arrival_at",
     };
     const sortColumn = sortColumnMap[sortField] ?? "l.created_at";
     const sortDirection = sortDir === "asc" ? "ASC" : "DESC";
+    const sortOrderSql =
+      sortField === "created_at"
+        ? `${sortColumn} ${sortDirection}, l.id ASC`
+        : `${sortColumn} ${sortDirection} NULLS LAST, l.created_at DESC, l.id ASC`;
 
     const listResult = await withCurrentUser(authUser.uuid, async (client) => {
       const values: unknown[] = [];
+      let scopedCompanyIds: string[];
+      if (operating_company_id && operating_company_id.length > 0) {
+        scopedCompanyIds = operating_company_id;
+      } else {
+        const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
+        if (!scopedCompanyId) return { rows: [], totalCount: 0 };
+        // membership-scope-exempt: transaction-resolved-user-company
+        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
+        scopedCompanyIds = [scopedCompanyId];
+      }
+      // Keep the company scope as parameter 1 so both SQL literals carry a visible, fail-closed
+      // entity predicate while preserving the requested-company-set and resolved-company behavior.
+      values.push(scopedCompanyIds);
       const filters: string[] = ["l.soft_deleted_at IS NULL"];
 
       if (status && status.length > 0) {
@@ -514,21 +542,6 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       if (driver_id) {
         values.push(driver_id);
         filters.push(`(l.assigned_primary_driver_id = $${values.length} OR l.assigned_secondary_driver_id = $${values.length})`);
-      }
-      // Entity scope (USMCA cross-entity leak fix): mdata.loads RLS is role-scoped, not
-      // entity-scoped, so the operating_company_id predicate must ALWAYS be bound. Use the
-      // requested company set when provided, else resolve the user's current company so a caller
-      // that omits the param is scoped (never leaked across TRANSP/TRK/USMCA) and never hard-400ed.
-      if (operating_company_id && operating_company_id.length > 0) {
-        values.push(operating_company_id);
-        filters.push(`l.operating_company_id = ANY($${values.length}::uuid[])`);
-      } else {
-        const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid);
-        if (!scopedCompanyId) return { rows: [], totalCount: 0 };
-        // membership-scope-exempt: transaction-resolved-user-company
-        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
-        values.push(scopedCompanyId);
-        filters.push(`l.operating_company_id = $${values.length}::uuid`);
       }
       const pickupFrom = pickup_date_from ?? from_date;
       const pickupTo = pickup_date_to ?? to_date;
@@ -556,7 +569,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         );
       }
 
-      const whereClause = `WHERE ${filters.join(" AND ")}`;
+      const whereClause = `AND ${filters.join(" AND ")}`;
       const countRes = await client.query<{ total_count: number }>(
         `
           SELECT COUNT(*)::int AS total_count
@@ -567,17 +580,22 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           LEFT JOIN LATERAL (
             SELECT city, scheduled_arrival_at
             FROM mdata.load_stops
-            WHERE load_id = l.id AND stop_type = 'pickup'
+            WHERE load_id = l.id
+              AND stop_type = 'pickup'
+              AND soft_deleted_at IS NULL
             ORDER BY sequence_number ASC
             LIMIT 1
           ) sp ON true
           LEFT JOIN LATERAL (
             SELECT city, scheduled_arrival_at
             FROM mdata.load_stops
-            WHERE load_id = l.id AND stop_type = 'delivery'
+            WHERE load_id = l.id
+              AND stop_type = 'delivery'
+              AND soft_deleted_at IS NULL
             ORDER BY sequence_number DESC
             LIMIT 1
           ) sd ON true
+          WHERE l.operating_company_id = ANY($1::uuid[])
           ${whereClause}
         `,
         values
@@ -618,19 +636,24 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           LEFT JOIN LATERAL (
             SELECT city, scheduled_arrival_at
             FROM mdata.load_stops
-            WHERE load_id = l.id AND stop_type = 'pickup'
+            WHERE load_id = l.id
+              AND stop_type = 'pickup'
+              AND soft_deleted_at IS NULL
             ORDER BY sequence_number ASC
             LIMIT 1
           ) sp ON true
           LEFT JOIN LATERAL (
             SELECT city, scheduled_arrival_at
             FROM mdata.load_stops
-            WHERE load_id = l.id AND stop_type = 'delivery'
+            WHERE load_id = l.id
+              AND stop_type = 'delivery'
+              AND soft_deleted_at IS NULL
             ORDER BY sequence_number DESC
             LIMIT 1
           ) sd ON true
+          WHERE l.operating_company_id = ANY($1::uuid[])
           ${whereClause}
-          ORDER BY ${sortColumn} ${sortDirection}
+          ORDER BY ${sortOrderSql}
           LIMIT $${limitIdx}
           OFFSET $${offsetIdx}
         `,
