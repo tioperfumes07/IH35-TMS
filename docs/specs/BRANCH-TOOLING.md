@@ -55,6 +55,11 @@ run `npm run verify:static` and fix any `FAIL-test(gated)` locally — never pus
   classifying each `PASS` / `SKIP-capability` / `FAIL-test`.
 - A local skip is permitted only by explicit capability preflight with a named server-required CI equivalent.
   Failure output text (including `DATABASE_URL`) never changes a real test failure into a skip.
+- PASS-8 is producer→consumer orchestration: local `verify:static` does not generate the ignored
+  `PASS-8-PRE-PROD-SMOKE-RESULTS.*` report, so an absent report may skip only as the explicit
+  `pass8-artifact` capability backed by required context `pass-8-smoke-verify / pass-8`. That CI job must
+  run `verify:pass-8-smoke` before `verify:pass-8-clean-baseline`; producer failure blocks the consumer.
+  Generated PASS-8 reports remain ignored and must never be committed.
 - It exits non-zero **only** on a `FAIL-test(gated)` — a guard CI actually runs. `SKIP-capability` and `FAIL-test(unwired)`
   (orphan guards CI does not run) never fail the run; unwired FAILs are surfaced as informational.
 - `node scripts/verify-static.mjs --selftest` self-checks the runner (incl. the sentinel-isolation lock).

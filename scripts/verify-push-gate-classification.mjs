@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 import fs from "node:fs";
 import path from "node:path";
+import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 import { runExecutableGuard } from "./guard-executable-contract.mjs";
+import { evaluatePass8Orchestration } from "./pass-8-orchestration-policy.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FILES = Object.freeze({
@@ -14,6 +16,8 @@ const FILES = Object.freeze({
   freshness: "scripts/verify-branch-fresh.mjs",
   staticRunner: "scripts/verify-static.mjs",
   verifyMeta: "scripts/verify-meta.json",
+  pass8Workflow: ".github/workflows/pass-8-smoke-verify.yml",
+  gitignore: ".gitignore",
   policyVerifier: "scripts/verify-ci-policy-applied.mjs",
   protection: ".github/branch-protection-config.json",
   requiredChecks: ".github/workflows/required-checks.yml",
@@ -22,17 +26,26 @@ const FILES = Object.freeze({
   precheckTests: "scripts/__tests__/branch-precheck-push.test.mjs",
   manifestTests: "scripts/__tests__/block-ready.test.mjs",
   staticTests: "scripts/__tests__/verify-static-classification.test.mjs",
+  pass8Tests: "scripts/__tests__/pass-8-orchestration.test.mjs",
   freshnessTests: "scripts/__tests__/verify-branch-fresh-fallback.test.mjs",
   policyTests: "scripts/__tests__/verify-ci-policy-applied.test.mjs",
 });
 
 function loadRepositoryFixture() {
-  return Object.fromEntries(
+  const fixture = Object.fromEntries(
     Object.entries(FILES).map(([key, relativePath]) => [
       key,
       fs.readFileSync(path.join(ROOT, relativePath), "utf8"),
     ])
   );
+  fixture.trackedFiles = execFileSync("git", ["ls-files"], {
+    cwd: ROOT,
+    encoding: "utf8",
+  })
+    .trim()
+    .split(/\r?\n/)
+    .filter(Boolean);
+  return fixture;
 }
 
 export function checkPushGateClassification(fixture) {
@@ -92,6 +105,18 @@ export function checkPushGateClassification(fixture) {
       new RegExp(marker),
       `capability policy does not prove ${marker}`
     );
+  }
+  try {
+    violations.push(
+      ...evaluatePass8Orchestration({
+        workflow: fixture.pass8Workflow ?? "",
+        meta: JSON.parse(fixture.verifyMeta ?? "{}"),
+        gitignore: fixture.gitignore ?? "",
+        trackedFiles: fixture.trackedFiles ?? [],
+      })
+    );
+  } catch (error) {
+    violations.push(`PASS-8 orchestration policy unreadable: ${error.message}`);
   }
 
   const protection = (() => {
@@ -160,6 +185,19 @@ export function checkPushGateClassification(fixture) {
   requireMatch("policyTests", /blocking unverified/, "missing-token planted test missing");
   requireMatch("manifestTests", /detached GitHub Actions/, "detached-head CI fixture missing");
   requireMatch("staticTests", /not wired/, "capability wiring drift fixture missing");
+  for (const plantedCase of [
+    "absent generated artifact",
+    "producer failure",
+    "valid generated artifact",
+    "missing or unrequired PASS-8 CI equivalent",
+    "producer runs before consumer",
+  ]) {
+    requireMatch(
+      "pass8Tests",
+      new RegExp(plantedCase),
+      `PASS-8 planted test missing: ${plantedCase}`
+    );
+  }
   requireMatch("freshness", /spawnSync\("git", args/, "freshness does not use git argument arrays");
   forbidMatch("freshness", /execSync|shell:\s*true/, "freshness still uses shell command execution");
 
@@ -176,7 +214,32 @@ const goodFixture = {
   freshness:
     'const DEFAULT_MAX_COMMITS_BEHIND = 0; spawnSync("git", args); ["rev-list", "--count", `${baseSha}..${mainRef}`];',
   staticRunner: 'capabilityPreflight(); "SKIP-capability"; "FAIL-test";',
-  verifyMeta: '{"server_required_ci_equivalents":{}}',
+  verifyMeta: JSON.stringify({
+    server_required_ci_equivalents: {
+      "pass8-artifact": "pass-8-smoke-verify / pass-8",
+    },
+    server_required_ci_contexts: ["pass-8-smoke-verify / pass-8"],
+    server_required_ci_wiring: {
+      "pass-8-smoke-verify / pass-8": {
+        workflow: ".github/workflows/pass-8-smoke-verify.yml",
+        job: "pass-8",
+      },
+    },
+    server_required_guard_capabilities: {
+      "verify:pass-8-clean-baseline": ["pass8-artifact"],
+    },
+  }),
+  pass8Workflow: `
+jobs:
+  pass-8:
+    steps:
+      - name: Run PASS-8 orchestrator
+        run: npm run verify:pass-8-smoke
+      - name: Verify PASS-8 clean baseline
+        run: npm run verify:pass-8-clean-baseline
+`,
+  gitignore: "docs/audits/PASS-8-PRE-PROD-SMOKE-RESULTS.*",
+  trackedFiles: [],
   policyVerifier:
     'const STRICT_FRESHNESS_CONTEXT = "ci / verify-branch-fresh"; "strict freshness is disabled"; ["GH_ADMIN_TOKEN", "GITHUB_TOKEN", "GH_TOKEN"]; "BLOCKED-UNVERIFIED";',
   protection: JSON.stringify({
@@ -190,6 +253,8 @@ const goodFixture = {
   precheckTests: "hard dirty failure; hard conflict failure",
   manifestTests: "ambiguous exact branch; wrong explicit BLOCK_ID; detached GitHub Actions",
   staticTests: "missing database; missing dependencies; DATABASE_URL text; not wired",
+  pass8Tests:
+    "absent generated artifact; producer failure; valid generated artifact; missing or unrequired PASS-8 CI equivalent; producer runs before consumer",
   freshnessTests: "one behind commit anywhere; shell-like refs",
   policyTests: "live ruleset drift; blocking unverified",
 };
@@ -198,6 +263,13 @@ const badFixture = {
   manifest: "legacyManifest AGENT_MANIFEST_REGISTRY",
   protection: "{}",
   freshness: 'execSync("git rev-list")',
+  pass8Workflow: `
+      - name: Run PASS-8 orchestrator
+        continue-on-error: true
+        run: npm run verify:pass-8-smoke
+      - name: Verify PASS-8 clean baseline
+        run: npm run verify:pass-8-clean-baseline
+`,
 };
 
 runExecutableGuard({
@@ -206,5 +278,9 @@ runExecutableGuard({
   loadRepositoryFixture,
   goodFixture,
   badFixture,
-  expectedBadViolationSubstrings: ["legacy manifest fallback", "strict freshness"],
+  expectedBadViolationSubstrings: [
+    "legacy manifest fallback",
+    "strict freshness",
+    "producer failure",
+  ],
 });

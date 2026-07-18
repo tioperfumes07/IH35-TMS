@@ -14,6 +14,7 @@
     "docs/specs/BRANCH-TOOLING.md",
     "scripts/block-ready-agent-manifest.mjs",
     "scripts/branch-precheck-push.mjs",
+    "scripts/pass-8-orchestration-policy.mjs",
     "scripts/push-gate-capability-policy.mjs",
     "scripts/verify-branch-fresh.mjs",
     "scripts/verify-ci-policy-applied.mjs",
@@ -23,6 +24,7 @@
     "scripts/verify-steps/902-verify-push-gate-classification.mjs",
     "scripts/__tests__/block-ready.test.mjs",
     "scripts/__tests__/branch-precheck-push.test.mjs",
+    "scripts/__tests__/pass-8-orchestration.test.mjs",
     "scripts/__tests__/verify-branch-fresh-fallback.test.mjs",
     "scripts/__tests__/verify-ci-policy-applied.test.mjs",
     "scripts/__tests__/verify-static-classification.test.mjs"
