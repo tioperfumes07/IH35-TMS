@@ -1,5 +1,7 @@
 {
   "block_id": "PUSH-GATE-CLASSIFICATION-FRESHNESS",
+  "status": "PENDING",
+  "classification": "NON-FINANCIAL",
   "branch": "fix/push-gate-classification-freshness",
   "phase": "Infrastructure",
   "task": "Push gate classification and freshness",
@@ -27,5 +29,23 @@
   "extra_gates": [],
   "runtime_path": "src",
   "db_required": false,
-  "guard_required": true
+  "guard_required": true,
+  "acceptance": [
+    {
+      "check": "Push-gate outcomes are structurally classified and dirty, conflict, freshness, and real test failures always hard-fail.",
+      "evidence": "Focused branch-tooling tests and scripts/verify-push-gate-classification.mjs planted-failure contract."
+    },
+    {
+      "check": "Manifest selection resolves explicit BLOCK_ID first, otherwise one exact branch match, with no legacy fallback.",
+      "evidence": "block-ready resolver tests cover correct, wrong, absent, and ambiguous manifests."
+    },
+    {
+      "check": "Local capability skips require explicit preflight and a named server-required CI equivalent.",
+      "evidence": "Static-runner and pre-push tests cover missing database/dependencies and reject unclassified capability skips."
+    },
+    {
+      "check": "Strict zero-behind full-tree freshness is committed and live ruleset drift fails verification.",
+      "evidence": "Freshness and policy-verifier planted tests pass; live ruleset remains owner handoff only and was not applied."
+    }
+  ]
 }
