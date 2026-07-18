@@ -10,7 +10,9 @@
  *   2. Is missing required Phase-1 sanitized decision anchors (Faro mechanics, dual-basis, ASC,
  *      operational delivery definition), OR
  *   3. Affirmatively frames Ch.11 as ASC 852 "fresh-start" accounting, OR
- *   4. (sanitized surfaces only) Contains forbidden private-source / PII patterns.
+ *   4. Skill/reference lose historical SoR dates (12/31/2025 / 2026-01-01) or either default-OFF
+ *      kill-switch (IMPORT-P0/P0b or QBO_JE_PUSH_ENABLED / QBO_ENTITY_PUSH_ENABLED), OR
+ *   5. (sanitized surfaces only) Contains forbidden private-source / PII patterns.
  *
  * Pure filesystem checks — no DB, no network. Uses runExecutableGuard planted fixtures.
  */
@@ -167,6 +169,36 @@ function checker(docs) {
     if (/recognized at\s+\*{0,2}invoice-create\*{0,2}/i.test(source)) {
       failures.push(`${rel}: must not claim recognition at invoice-create`);
     }
+
+    // Primary agent-loaded SoR / kill-switch controls (must not regress out of skill + reference).
+    if (!source.includes("12/31/2025")) {
+      failures.push(`${rel}: must preserve historical QBO SoR date 12/31/2025`);
+    }
+    if (!source.includes("2026-01-01")) {
+      failures.push(`${rel}: must preserve TMS ledger authority date 2026-01-01`);
+    }
+    const hasImportP0 = /IMPORT-P0\b/.test(source) && /IMPORT-P0b\b/.test(source);
+    const hasJeKill = source.includes("QBO_JE_PUSH_ENABLED");
+    const hasEntityKill = source.includes("QBO_ENTITY_PUSH_ENABLED");
+    if (!hasImportP0 && !(hasJeKill && hasEntityKill)) {
+      failures.push(
+        `${rel}: must preserve default-OFF kill-switches (IMPORT-P0/IMPORT-P0b or QBO_JE_PUSH_ENABLED + QBO_ENTITY_PUSH_ENABLED)`
+      );
+    }
+    if (hasJeKill && !hasEntityKill) {
+      failures.push(`${rel}: missing QBO_ENTITY_PUSH_ENABLED kill-switch (both JE + entity required)`);
+    }
+    if (hasEntityKill && !hasJeKill) {
+      failures.push(`${rel}: missing QBO_JE_PUSH_ENABLED kill-switch (both JE + entity required)`);
+    }
+    if (hasImportP0) {
+      // When IMPORT-P0 labels are present, also require the mapped env keys so agents see both forms.
+      if (!hasJeKill || !hasEntityKill) {
+        failures.push(
+          `${rel}: IMPORT-P0/P0b present but mapped QBO_JE_PUSH_ENABLED / QBO_ENTITY_PUSH_ENABLED missing`
+        );
+      }
+    }
   }
 
   const unblock = docs.find(([rel]) => rel === "docs/trackers/FINANCIAL-OWNER-UNBLOCK-PACKET.md")?.[1] ?? "";
@@ -206,7 +238,13 @@ function createBadFixture(goodFixture) {
       .replaceAll("pledged collateral", "PLEDGE_REMOVED")
       .replaceAll("no A/R derecognition", "DEREC_REMOVED")
       .replaceAll("billing/factoring readiness", "READY_REMOVED")
-      .replaceAll("does **not** redefine cash recognition", "CASH_CROSSWALK_REMOVED");
+      .replaceAll("does **not** redefine cash recognition", "CASH_CROSSWALK_REMOVED")
+      .replaceAll("12/31/2025", "SOR_QBO_DATE_REMOVED")
+      .replaceAll("2026-01-01", "SOR_TMS_DATE_REMOVED")
+      .replaceAll("IMPORT-P0b", "IMPORT_P0B_REMOVED")
+      .replaceAll("IMPORT-P0", "IMPORT_P0_REMOVED")
+      .replaceAll("QBO_JE_PUSH_ENABLED", "JE_KILL_REMOVED")
+      .replaceAll("QBO_ENTITY_PUSH_ENABLED", "ENTITY_KILL_REMOVED");
 
   return goodFixture.map(([rel, source]) => {
     if (FULL_LOCK_DOCS.includes(rel)) {
@@ -252,5 +290,8 @@ runExecutableGuard({
     "TMS ACCRUAL",
     "affirmative fresh-start",
     "FINANCIAL-OWNER-UNBLOCK-PACKET.md",
+    "12/31/2025",
+    "2026-01-01",
+    "kill-switch",
   ],
 });

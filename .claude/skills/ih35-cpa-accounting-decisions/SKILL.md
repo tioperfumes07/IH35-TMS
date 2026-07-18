@@ -25,13 +25,35 @@ design docs, draft JE/SQL proofs, and flag-OFF scaffolding — the actual postin
 sign-off. Money-posting env flags stay **OFF** until CPA + Neon tie-out.
 
 ## 1. Architecture — PARALLEL double-books (not a sync)
-- TMS and QBO run **independently**. **Clone-once + reconcile-only. NO write-back to QBO.**
+- **Historical authority boundary (locked):** **QBO is system-of-record through 12/31/2025.** **TMS ledger
+  authority from 2026-01-01.** These dates are the primary agent-loaded SoR control; they are **not** deleted
+  by later operational clarifications.
+- **Current owner-approved operational mode (dual-run validation):** QBO remains **actively maintained** as
+  the parallel comparison / filing book during validation; TMS runs **independently**; the connection is
+  **clone-once + reconcile-only**. This mode does **not** authorize TMS→QBO write-back.
+- **CLONE-ONCE + RECONCILE-ONLY. NO write-back to QBO.** JE/entity push sit behind **default-OFF** kill-switches
+  (**IMPORT-P0** / **IMPORT-P0b** → `QBO_JE_PUSH_ENABLED` / `QBO_ENTITY_PUSH_ENABLED`, default OFF, per-entity).
+  The blueprint's old "QBO AUTO-SYNC" is retired.
 - Reconciliation is the daily correctness test (see §8), not a data pipeline.
-- Canonical parallel-books entry: `docs/specs/TMS-QBO-PARALLEL-BOOKS.md`.
+- Canonical parallel-books entry: `docs/specs/TMS-QBO-PARALLEL-BOOKS.md` (reconcile with the three date layers in §2).
 
-## 2. Opening balance
+## 2. Opening balance + date layers (no contradiction with parallel-books)
+Distinguish three locked layers — do not collapse them into one “cutover”:
+
+1. **Historical authority dates:** QBO SoR through **12/31/2025**; TMS ledger authority from **2026-01-01** (§1).
+2. **Ch.11 operating cutover line (ASC 470-60 debt restructuring — NOT ASC 852 fresh-start accounting)**
+   (owner-final 2026-07-16): opening balances as-of **03/31/2026**; TMS live parallel posting from **04/01/2026**
+   per entity after opening tie-out — see `docs/lockdown/00_LOCKED_DECISIONS.md` §8.9. This is the **internal
+   GL-posting / operating** line — it does **not** erase §1’s historical SoR dates and does **not** authorize
+   TMS→QBO write-back.
+3. **Ongoing dual-run validation:** per `TMS-QBO-PARALLEL-BOOKS.md`, both books continue independently with
+   twice-daily reconciliation; QBO stays actively maintained as the comparison/filing book during validation
+   (parallel indefinitely / no write-back).
+
+Opening-balance mechanics:
 - TMS parallel books **open 01-01-2025** → opening balance = QBO **Balance Sheet as of 12/31/2024**, **signed-actual**
-  (not natural-side). TMS clones 2025-01-01 forward and runs 2025 in parallel while QBO stays SoR through 12/31/2025.
+  (not natural-side). TMS clones 2025-01-01 forward and runs in parallel while the §1 historical SoR boundary
+  (QBO through 12/31/2025) remains the agent-loaded authority control.
 - **BS-only opening.** TRK gets **full equity**. **OBE → Retained Earnings** as a temporary clearing account —
   a permanent Opening Balance Equity balance is a **defect** (must net ≈ 0).
 - **The QBO source is a MOVING TARGET:** the internal accountant (Martin) is still cleaning/reconciling. The
@@ -39,9 +61,6 @@ sign-off. Money-posting env flags stay **OFF** until CPA + Neon tie-out.
   Approach = **clone-as-is-then-adjust**: clone the 12/31/2024 balances faithfully (so TMS ties to QBO), then
   book reclasses as **post-opening adjusting entries** (or let Martin fix them at source) so tie-out never breaks.
 - Multicurrency: **USD home currency**; MXN via FX gain/loss + home-currency adjustment (ASC 830).
-- **Ch.11 operating cutover line (ASC 470-60 debt restructuring — NOT ASC 852 fresh-start accounting)**
-  (owner-final 2026-07-16): opening balances as-of **03/31/2026**; TMS live parallel posting from **04/01/2026**
-  per entity after opening tie-out — see `docs/lockdown/00_LOCKED_DECISIONS.md` §8.9.
 
 ## 3. Factoring = secured borrowing / recourse (NOT a sale)
 Faro (current) → RTS (planned). Book as: **Factoring Advance** (liability) / **Factoring Reserves** (short-term
