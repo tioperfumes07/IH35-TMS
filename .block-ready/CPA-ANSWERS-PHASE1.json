@@ -1,0 +1,40 @@
+{
+  "block_id": "CPA-ANSWERS-PHASE1",
+  "status": "BUILD",
+  "classification": "DOCS",
+  "phase": "CPA-ANSWERS-INTEGRATION",
+  "task": "Phase 1 of owner-approved CPA Answers Integration: governance-only lock of revenue recognition at canonical load delivery (not invoice-create), sanitized Faro secured-borrowing terms, additive CoA structure (Sales of Service + Interest & Financing children + Driver Damage Loss), separate entity books with reciprocal intercompany monitoring, retain read-only consolidated reporting additively, and verified CoA export facts. Updates UNIFIED_BLUEPRINT_ADDITIONS, ACCOUNTING-ARCHITECTURE, TMS-QBO-PARALLEL-BOOKS, CPA skill + reference card. Adds Rule-17 auto-discovered guard verify-cpa-answers-phase1-decisions (no package.json/CI hot-file edits). No executable financial code, no migration, no money-flag flip. Never includes private-source names/signatures/addresses/emails/personal-guaranty/executed-agreement text. Does not modify IH35_MASTER_BLUEPRINT_v3_FULL.md.",
+  "branch": "cursor/cpa-answers-integration-phase-1-3aab",
+  "lane": "GOVERNANCE",
+  "allowed_files": [
+    ".block-ready/CPA-ANSWERS-PHASE1.json",
+    "docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md",
+    "docs/specs/ACCOUNTING-ARCHITECTURE.md",
+    "docs/specs/TMS-QBO-PARALLEL-BOOKS.md",
+    ".claude/skills/ih35-cpa-accounting-decisions/SKILL.md",
+    ".claude/skills/ih35-cpa-accounting-decisions/resources/locked-decisions-reference.md",
+    "scripts/verify-cpa-answers-phase1-decisions.mjs",
+    "scripts/verify-steps/910-verify-cpa-answers-phase1-decisions.mjs"
+  ],
+  "runtime_path": "docs",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "Canonical decision docs state revenue recognition at canonical load delivery; POD/invoice = billing readiness only"
+    },
+    {
+      "check": "Sanitized Faro terms present ($1,000,000 / 1.5% / 2% / 1.5% reserve / 30d+5d / 95d / 0.067% daily compounded); no private-source PII in sanitized surfaces"
+    },
+    {
+      "check": "Additive CoA children locked (Sales of Service + Interest & Financing + Driver Damage Loss); entity books + reciprocal intercompany + retain consolidated reporting"
+    },
+    {
+      "check": "CoA export facts recorded (1368 / 387 / 947 / 34 / 1294 / 1198 / 0 dups / 0 OB)"
+    },
+    {
+      "check": "scripts/verify-cpa-answers-phase1-decisions.mjs PASS + --selftest PASS; verify-step 910 present; no package.json / locked-guards / ci.yml edits"
+    }
+  ]
+}
