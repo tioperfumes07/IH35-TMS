@@ -1,6 +1,15 @@
 import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
+import { sanitizeTrustedProcessEnvironment } from "./trusted-git-environment.mjs";
+
+export const TRUSTED_GITHUB_AUTHORITY = Object.freeze({
+  host: "github.com",
+  repository: "tioperfumes07/IH35-TMS",
+  branch: "main",
+  rulesetId: 17935054,
+  rulesetName: "hold-merge-gate",
+});
 
 function workflowDeclaresJob(root, wiring) {
   if (!wiring || typeof wiring.workflow !== "string" || typeof wiring.job !== "string") {
@@ -11,14 +20,6 @@ function workflowDeclaresJob(root, wiring) {
   const source = fs.readFileSync(workflowPath, "utf8");
   const escaped = wiring.job.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   return new RegExp(`^  ${escaped}:\\s*$`, "m").test(source);
-}
-
-export function repositorySlugFromRemote(remoteUrl) {
-  const value = String(remoteUrl ?? "").trim().replace(/\.git$/, "");
-  const match =
-    /github\.com[/:]([^/\s]+\/[^/\s]+)$/.exec(value) ??
-    /^([^/\s]+\/[^/\s]+)$/.exec(value);
-  return match?.[1] ?? null;
 }
 
 function commandFailure(result, label) {
@@ -34,6 +35,7 @@ export function loadLiveRequiredStatusChecks(
   declarations,
   {
     run = (command, args, options) => spawnSync(command, args, options),
+    sourceEnv = process.env,
   } = {}
 ) {
   const capabilities = Object.keys(declarations ?? {});
@@ -41,26 +43,23 @@ export function loadLiveRequiredStatusChecks(
   const errors = {};
   if (capabilities.length === 0) return { requiredContexts, errors };
 
-  const remote = run("git", ["remote", "get-url", "origin"], {
-    cwd: root,
-    encoding: "utf8",
-    timeout: 5_000,
-    maxBuffer: 1024 * 1024,
-  });
-  if (remote.status !== 0 || remote.error) {
-    const message = commandFailure(remote, "git remote lookup");
-    for (const capability of capabilities) errors[capability] = message;
-    return { requiredContexts, errors };
-  }
-  const repository = repositorySlugFromRemote(remote.stdout);
-  if (!repository) {
-    const message = "git remote lookup did not resolve a GitHub owner/repository";
+  let trustedEnv;
+  try {
+    trustedEnv = sanitizeTrustedProcessEnvironment(root, { run, sourceEnv }).env;
+  } catch (error) {
+    const message = error.message;
     for (const capability of capabilities) errors[capability] = message;
     return { requiredContexts, errors };
   }
 
-  const rules = run("gh", ["api", `repos/${repository}/rules/branches/main`], {
+  const rules = run("gh", [
+    "api",
+    "--hostname",
+    TRUSTED_GITHUB_AUTHORITY.host,
+    `repos/${TRUSTED_GITHUB_AUTHORITY.repository}/rules/branches/${TRUSTED_GITHUB_AUTHORITY.branch}`,
+  ], {
     cwd: root,
+    env: trustedEnv,
     encoding: "utf8",
     timeout: 10_000,
     maxBuffer: 4 * 1024 * 1024,
@@ -71,18 +70,62 @@ export function loadLiveRequiredStatusChecks(
     return { requiredContexts, errors };
   }
 
+  const ruleset = run("gh", [
+    "api",
+    "--hostname",
+    TRUSTED_GITHUB_AUTHORITY.host,
+    `repos/${TRUSTED_GITHUB_AUTHORITY.repository}/rulesets/${TRUSTED_GITHUB_AUTHORITY.rulesetId}`,
+  ], {
+    cwd: root,
+    env: trustedEnv,
+    encoding: "utf8",
+    timeout: 10_000,
+    maxBuffer: 4 * 1024 * 1024,
+  });
+  if (ruleset.status !== 0 || ruleset.error) {
+    const message = commandFailure(ruleset, "live GitHub ruleset identity lookup");
+    for (const capability of capabilities) errors[capability] = message;
+    return { requiredContexts, errors };
+  }
+
   let effectiveRules;
+  let rulesetIdentity;
   try {
     effectiveRules = JSON.parse(rules.stdout);
     if (!Array.isArray(effectiveRules)) throw new TypeError("response is not an array");
+    rulesetIdentity = JSON.parse(ruleset.stdout);
+    if (!rulesetIdentity || Array.isArray(rulesetIdentity)) {
+      throw new TypeError("ruleset identity response is not an object");
+    }
   } catch (error) {
     const message = `live GitHub ruleset lookup returned invalid JSON: ${error.message}`;
     for (const capability of capabilities) errors[capability] = message;
     return { requiredContexts, errors };
   }
 
+  const identityMatches =
+    Number(rulesetIdentity.id) === TRUSTED_GITHUB_AUTHORITY.rulesetId &&
+    rulesetIdentity.name === TRUSTED_GITHUB_AUTHORITY.rulesetName &&
+    rulesetIdentity.source_type === "Repository" &&
+    rulesetIdentity.source === TRUSTED_GITHUB_AUTHORITY.repository &&
+    rulesetIdentity.target === "branch" &&
+    rulesetIdentity.enforcement === "active";
+  if (!identityMatches) {
+    const message =
+      `live GitHub ruleset identity does not match active repository ruleset ` +
+      `${TRUSTED_GITHUB_AUTHORITY.repository}#${TRUSTED_GITHUB_AUTHORITY.rulesetId}`;
+    for (const capability of capabilities) errors[capability] = message;
+    return { requiredContexts, errors };
+  }
+
   const requiredChecks = effectiveRules
-    .filter((rule) => rule?.type === "required_status_checks")
+    .filter(
+      (rule) =>
+        rule?.type === "required_status_checks" &&
+        rule?.ruleset_source_type === "Repository" &&
+        rule?.ruleset_source === TRUSTED_GITHUB_AUTHORITY.repository &&
+        Number(rule?.ruleset_id) === TRUSTED_GITHUB_AUTHORITY.rulesetId
+    )
     .flatMap((rule) => rule?.parameters?.required_status_checks ?? []);
   for (const [capability, declaration] of Object.entries(declarations)) {
     const exact = requiredChecks.some(
