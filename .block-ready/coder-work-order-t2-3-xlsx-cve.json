@@ -37,6 +37,7 @@
     "scripts/__tests__/block-ready.test.mjs",
     "scripts/block-ready.mjs",
     "scripts/exceljs-cell-value.mjs",
+    "scripts/guard-executable-contract.mjs",
     "scripts/sync-program-board.mjs",
     "scripts/verify-banking-palette-section7.mjs",
     "scripts/verify-static.mjs",
@@ -63,7 +64,7 @@
     },
     {
       "check": "Regression guard is auto-discovered under scripts/verify-steps without package.json/workflow guard registration.",
-      "evidence": "scripts/verify-steps/144-verify-xlsx-cve-closeout.mjs; guard_required=true. block-ready recognizes Rule 17 auto-discovered verify-step wiring and rejects an unwired standalone guard; package.json/workflow hot files remain untouched."
+      "evidence": "scripts/verify-steps/144-verify-xlsx-cve-closeout.mjs runs both the guard and --selftest; guard_required=true. block-ready requires structural Rule 17 wiring plus executable shared-checker good/pass and planted-bad/fail evidence, and rejects inert, malformed, ignored-input, and unsafe-path guards; package.json/workflow hot files remain untouched."
     },
     {
       "check": "Corrective review commit may be pushed to the existing PR branch, but the financial PR remains build-and-HOLD with no merge, production DB access, deployment, or live proof.",

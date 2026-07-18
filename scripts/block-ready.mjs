@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 import fs from "node:fs";
 import path from "node:path";
+import { randomUUID } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import ts from "typescript";
 import { resolveBlockReadyManifest, aggregateBlockReadyManifests } from "./block-ready-agent-manifest.mjs";
+import { GUARD_CONTRACT_REPORT_PREFIX } from "./guard-executable-contract.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -106,6 +108,22 @@ export function matchesAnyAllowedFile(filePath, patterns) {
   return patterns.some((pattern) => globToRegExp(pattern).test(normalized));
 }
 
+export function resolvePathInsideRoot(candidate, rootDir = ROOT) {
+  if (typeof candidate !== "string" || candidate.length === 0) {
+    throw new Error("repository path must be a non-empty string");
+  }
+  if (path.isAbsolute(candidate)) {
+    throw new Error(`repository path must be relative: ${candidate}`);
+  }
+  const resolvedRoot = path.resolve(rootDir);
+  const resolved = path.resolve(resolvedRoot, candidate);
+  const relative = path.relative(resolvedRoot, resolved);
+  if (relative === ".." || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
+    throw new Error(`repository path escapes root: ${candidate}`);
+  }
+  return resolved;
+}
+
 export function validateManifest(manifest) {
   const errors = [];
   const required = {
@@ -136,6 +154,14 @@ export function validateManifest(manifest) {
         errors.push(`${key} must be array`);
       } else if (!value.every((item) => typeof item === "string")) {
         errors.push(`${key} must contain only strings`);
+      } else if (key === "allowed_files") {
+        for (const item of value) {
+          try {
+            resolvePathInsideRoot(item);
+          } catch (error) {
+            errors.push(`allowed_files contains unsafe path: ${error.message}`);
+          }
+        }
       }
     }
     if (kind === "enum" && !["src", "dist", "both", "docs"].includes(value)) {
@@ -172,7 +198,7 @@ export function readUtf8FileFromStableHandle(filePath) {
 }
 
 export function parseManifest(manifestPath) {
-  const absolutePath = path.resolve(ROOT, manifestPath);
+  const absolutePath = resolvePathInsideRoot(manifestPath);
   const manifestRead = readUtf8FileFromStableHandle(absolutePath);
   if (!manifestRead.ok && manifestRead.code === "ENOENT") {
     throw new Error(`manifest file not found: ${manifestPath}`);
@@ -277,16 +303,6 @@ function parseJavaScriptSource(filename, source) {
   return { ok: true, sourceFile, reason: null };
 }
 
-function functionDeclarations(sourceFile) {
-  const declarations = new Map();
-  for (const statement of sourceFile.statements) {
-    if (ts.isFunctionDeclaration(statement) && statement.name && statement.body) {
-      declarations.set(statement.name.text, statement);
-    }
-  }
-  return declarations;
-}
-
 function walkAst(node, visitor, { skipNestedFunctions = false } = {}) {
   if (visitor(node) === false) return;
   if (
@@ -302,327 +318,91 @@ function walkAst(node, visitor, { skipNestedFunctions = false } = {}) {
   ts.forEachChild(node, (child) => walkAst(child, visitor, { skipNestedFunctions }));
 }
 
-function isRepositoryInputCall(call, declarations, seenFunctions = new Set()) {
-  const expression = call.expression;
-  if (
-    ts.isPropertyAccessExpression(expression) &&
-    ts.isIdentifier(expression.expression) &&
-    expression.expression.text === "fs" &&
-    [
-      "readFileSync",
-      "readdirSync",
-      "existsSync",
-      "statSync",
-      "lstatSync",
-      "realpathSync",
-      "readlinkSync",
-    ].includes(expression.name.text)
-  ) {
-    return true;
-  }
-  if (
-    ts.isIdentifier(expression) &&
-    ["readFileSync", "readdirSync", "existsSync", "statSync", "execSync", "spawnSync"].includes(
-      expression.text
-    )
-  ) {
-    return true;
-  }
-  if (ts.isIdentifier(expression) && declarations.has(expression.text)) {
-    return functionInspectsRepository(expression.text, declarations, seenFunctions);
-  }
-  return false;
-}
-
-function functionInspectsRepository(name, declarations, seenFunctions = new Set()) {
-  if (seenFunctions.has(name)) return false;
-  const declaration = declarations.get(name);
-  if (!declaration?.body) return false;
-  const nextSeen = new Set(seenFunctions).add(name);
-  let inspects = false;
-  walkAst(declaration.body, (node) => {
-    if (ts.isCallExpression(node) && isRepositoryInputCall(node, declarations, nextSeen)) {
-      inspects = true;
-      return false;
-    }
-  });
-  return inspects;
-}
-
-function expressionDependsOn(expression, taintedNames, declarations, mode) {
-  let depends = false;
-  walkAst(expression, (node) => {
-    if (ts.isIdentifier(node) && taintedNames.has(node.text)) {
-      depends = true;
-      return false;
-    }
-    if (ts.isCallExpression(node)) {
-      if (mode === "repository" && isRepositoryInputCall(node, declarations)) {
-        depends = true;
-        return false;
-      }
-      if (
-        mode === "check" &&
-        ts.isIdentifier(node.expression) &&
-        declarations.has(node.expression.text)
-      ) {
-        depends = true;
-        return false;
-      }
-    }
-  });
-  return depends;
-}
-
-function staticallyFalse(expression) {
-  return expression.kind === ts.SyntaxKind.FalseKeyword ||
-    (ts.isNumericLiteral(expression) && Number(expression.text) === 0);
-}
-
-function isNonZeroExitCall(node) {
-  return (
-    Boolean(node) &&
-    ts.isCallExpression(node) &&
-    ts.isPropertyAccessExpression(node.expression) &&
-    ts.isIdentifier(node.expression.expression) &&
-    node.expression.expression.text === "process" &&
-    node.expression.name.text === "exit" &&
-    node.arguments.length > 0 &&
-    ts.isNumericLiteral(node.arguments[0]) &&
-    Number(node.arguments[0].text) !== 0
-  );
-}
-
-function statementContainsFailure(statement, declarations, seenFunctions = new Set()) {
-  if (ts.isThrowStatement(statement) || isNonZeroExitCall(statement.expression)) return true;
-  if (ts.isBlock(statement)) {
-    for (const child of statement.statements) {
-      if (statementContainsFailure(child, declarations, seenFunctions)) return true;
-      if (
-        ts.isReturnStatement(child) ||
-        ts.isThrowStatement(child) ||
-        isNonZeroExitCall(child.expression)
-      ) {
-        break;
-      }
-    }
-    return false;
-  }
-  if (ts.isIfStatement(statement)) {
-    if (!staticallyFalse(statement.expression) &&
-        statementContainsFailure(statement.thenStatement, declarations, seenFunctions)) {
-      return true;
-    }
-    return Boolean(
-      statement.elseStatement &&
-      statementContainsFailure(statement.elseStatement, declarations, seenFunctions)
-    );
-  }
-  if (
-    ts.isExpressionStatement(statement) &&
-    ts.isCallExpression(statement.expression) &&
-    ts.isIdentifier(statement.expression.expression)
-  ) {
-    const name = statement.expression.expression.text;
-    if (seenFunctions.has(name)) return false;
-    const declaration = declarations.get(name);
-    return Boolean(
-      declaration?.body &&
-      statementContainsFailure(
-        declaration.body,
-        declarations,
-        new Set(seenFunctions).add(name)
-      )
-    );
-  }
-  return false;
-}
-
-function statementsHaveDataDependentFailure(statements, declarations, mode) {
-  const taintedNames = new Set();
-  for (const statement of statements) {
-    if (ts.isVariableStatement(statement)) {
-      for (const declaration of statement.declarationList.declarations) {
-        if (
-          ts.isIdentifier(declaration.name) &&
-          declaration.initializer &&
-          expressionDependsOn(declaration.initializer, taintedNames, declarations, mode)
-        ) {
-          taintedNames.add(declaration.name.text);
-        }
-      }
-    }
-    if (
-      ts.isIfStatement(statement) &&
-      !staticallyFalse(statement.expression) &&
-      expressionDependsOn(statement.expression, taintedNames, declarations, mode) &&
-      statementContainsFailure(statement.thenStatement, declarations)
-    ) {
-      return true;
-    }
-    if (
-      ts.isExpressionStatement(statement) &&
-      ts.isCallExpression(statement.expression) &&
-      ts.isIdentifier(statement.expression.expression)
-    ) {
-      const called = declarations.get(statement.expression.expression.text);
-      if (called?.body && statementsHaveDataDependentFailure(called.body.statements, declarations, mode)) {
-        return true;
-      }
-    }
-    if (ts.isBlock(statement) &&
-        statementsHaveDataDependentFailure(statement.statements, declarations, mode)) {
-      return true;
-    }
-    if (ts.isIfStatement(statement) && !staticallyFalse(statement.expression)) {
-      const thenStatements = ts.isBlock(statement.thenStatement)
-        ? statement.thenStatement.statements
-        : [statement.thenStatement];
-      if (statementsHaveDataDependentFailure(thenStatements, declarations, mode)) return true;
-      if (statement.elseStatement) {
-        const elseStatements = ts.isBlock(statement.elseStatement)
-          ? statement.elseStatement.statements
-          : [statement.elseStatement];
-        if (statementsHaveDataDependentFailure(elseStatements, declarations, mode)) return true;
-      }
-    }
-    if (ts.isReturnStatement(statement) || ts.isThrowStatement(statement)) break;
-  }
-  return false;
-}
-
-function isSelftestCondition(expression) {
-  if (
-    !ts.isCallExpression(expression) ||
-    !ts.isPropertyAccessExpression(expression.expression) ||
-    expression.expression.name.text !== "includes" ||
-    expression.arguments.length !== 1 ||
-    !ts.isStringLiteralLike(expression.arguments[0]) ||
-    expression.arguments[0].text !== "--selftest"
-  ) {
-    return false;
-  }
-  const target = expression.expression.expression;
-  return (
-    ts.isPropertyAccessExpression(target) &&
-    ts.isIdentifier(target.expression) &&
-    target.expression.text === "process" &&
-    target.name.text === "argv"
-  );
-}
-
-function calledLocalFunctions(node, declarations) {
-  const names = new Set();
-  walkAst(
-    node,
-    (child) => {
-      if (
-        ts.isCallExpression(child) &&
-        ts.isIdentifier(child.expression) &&
-        declarations.has(child.expression.text)
-      ) {
-        names.add(child.expression.text);
-      }
-    },
-    { skipNestedFunctions: true }
-  );
-  return names;
-}
-
-function reachableLocalFunctions(statements, declarations) {
-  const reachable = new Set();
-  const queue = [];
-  for (const statement of statements) {
-    queue.push(...calledLocalFunctions(statement, declarations));
-  }
-  while (queue.length > 0) {
-    const name = queue.shift();
-    if (reachable.has(name)) continue;
-    reachable.add(name);
-    const declaration = declarations.get(name);
-    if (declaration?.body) {
-      queue.push(...calledLocalFunctions(declaration.body, declarations));
-    }
-  }
-  return reachable;
-}
-
-function selftestPlantsViolation(declaration, declarations, actualFunctions) {
-  if (!declaration?.body) return false;
-  let plantsInput = false;
-  walkAst(declaration.body, (node) => {
-    if (
-      (ts.isCallExpression(node) &&
-        ts.isPropertyAccessExpression(node.expression) &&
-        ["replace", "replaceAll", "push", "splice"].includes(node.expression.name.text)) ||
-      (ts.isBinaryExpression(node) &&
-        node.operatorToken.kind >= ts.SyntaxKind.FirstAssignment &&
-        node.operatorToken.kind <= ts.SyntaxKind.LastAssignment &&
-        (ts.isPropertyAccessExpression(node.left) || ts.isElementAccessExpression(node.left)))
-    ) {
-      plantsInput = true;
-    }
-  });
-  const selftestChecks = reachableLocalFunctions(declaration.body.statements, declarations);
-  return (
-    plantsInput &&
-    [...selftestChecks].some((name) => actualFunctions.has(name)) &&
-    statementsHaveDataDependentFailure(declaration.body.statements, declarations, "check")
-  );
-}
-
 export function analyzeNewGuardSource(source) {
   const parsed = parseJavaScriptSource("verify-guard.mjs", source);
   if (!parsed.ok) return parsed;
   const { sourceFile } = parsed;
-  const declarations = functionDeclarations(sourceFile);
-  const selftestGate = sourceFile.statements.find(
-    (statement) => ts.isIfStatement(statement) && isSelftestCondition(statement.expression)
-  );
-  if (!selftestGate || !ts.isIfStatement(selftestGate)) {
-    return { ok: false, reason: "guard must expose a process.argv --selftest branch" };
+  const declarations = new Set();
+  let importsContractHelper = false;
+  for (const statement of sourceFile.statements) {
+    if (ts.isFunctionDeclaration(statement) && statement.name && statement.body) {
+      declarations.add(statement.name.text);
+    }
+    if (
+      ts.isImportDeclaration(statement) &&
+      ts.isStringLiteral(statement.moduleSpecifier) &&
+      statement.moduleSpecifier.text === "./guard-executable-contract.mjs"
+    ) {
+      const elements = statement.importClause?.namedBindings;
+      importsContractHelper =
+        ts.isNamedImports(elements) &&
+        elements.elements.some(
+          (element) =>
+            element.name.text === "runExecutableGuard" &&
+            (!element.propertyName || element.propertyName.text === "runExecutableGuard")
+        );
+    }
+  }
+  if (!importsContractHelper) {
+    return { ok: false, reason: "guard must import the executable contract helper without aliasing" };
   }
 
-  const actualStatements = sourceFile.statements.flatMap((statement) => {
-    if (statement !== selftestGate) return [statement];
-    return selftestGate.elseStatement
-      ? ts.isBlock(selftestGate.elseStatement)
-        ? [...selftestGate.elseStatement.statements]
-        : [selftestGate.elseStatement]
-      : [];
-  });
-  const actualFunctions = reachableLocalFunctions(actualStatements, declarations);
-  const selftestFunctions = calledLocalFunctions(selftestGate.thenStatement, declarations);
-  if (
-    selftestFunctions.size === 0 ||
-    ![...selftestFunctions].some((name) =>
-      selftestPlantsViolation(declarations.get(name), declarations, actualFunctions)
-    )
-  ) {
-    return {
-      ok: false,
-      reason: "guard selftest must plant a violation into an actual guard check and fail if it is not detected",
-    };
+  const contractObjects = [];
+  for (const statement of sourceFile.statements) {
+    if (
+      ts.isExpressionStatement(statement) &&
+      ts.isCallExpression(statement.expression) &&
+      ts.isIdentifier(statement.expression.expression) &&
+      statement.expression.expression.text === "runExecutableGuard" &&
+      statement.expression.arguments.length === 1 &&
+      ts.isObjectLiteralExpression(statement.expression.arguments[0])
+    ) {
+      contractObjects.push(statement.expression.arguments[0]);
+    }
   }
-  const inspectsRepository = [...declarations.keys()].some((name) =>
-    functionInspectsRepository(name, declarations)
-  );
-  if (!inspectsRepository) {
-    return { ok: false, reason: "guard must inspect repository or target input" };
+  if (contractObjects.length !== 1) {
+    return { ok: false, reason: "guard must make one top-level runExecutableGuard({...}) call" };
   }
-  if (!statementsHaveDataDependentFailure(actualStatements, declarations, "repository")) {
-    return {
-      ok: false,
-      reason: "guard must have a reachable repository-data-dependent throw or non-zero process.exit path",
-    };
+  const [contractObject] = contractObjects;
+
+  const properties = new Map();
+  for (const property of contractObject.properties) {
+    if (
+      ts.isPropertyAssignment(property) &&
+      (ts.isIdentifier(property.name) || ts.isStringLiteral(property.name))
+    ) {
+      properties.set(property.name.text, property.initializer);
+    } else if (ts.isShorthandPropertyAssignment(property)) {
+      properties.set(property.name.text, property.name);
+    }
+  }
+  for (const required of [
+    "label",
+    "checker",
+    "loadRepositoryFixture",
+    "goodFixture",
+    "badFixture",
+  ]) {
+    if (!properties.has(required)) {
+      return { ok: false, reason: `guard executable contract is missing ${required}` };
+    }
+  }
+  for (const functionProperty of ["checker", "loadRepositoryFixture"]) {
+    const value = properties.get(functionProperty);
+    if (!ts.isIdentifier(value) || !declarations.has(value.text)) {
+      return {
+        ok: false,
+        reason: `guard executable contract ${functionProperty} must name a local function declaration`,
+      };
+    }
   }
   return { ok: true, reason: null };
 }
 
 export function analyzeVerifyStepSource(source) {
   const parsed = parseJavaScriptSource("verify-step.mjs", source);
-  if (!parsed.ok) return { ...parsed, invoked: new Set() };
-  const invoked = new Set();
+  if (!parsed.ok) return { ...parsed, invocations: new Map() };
+  const invocations = new Map();
   walkAst(parsed.sourceFile, (node) => {
     if (
       ts.isCallExpression(node) &&
@@ -635,27 +415,104 @@ export function analyzeVerifyStepSource(source) {
       node.arguments[0].text === "node" &&
       ts.isArrayLiteralExpression(node.arguments[1])
     ) {
-      const [guardArgument] = node.arguments[1].elements;
+      const [guardArgument, flagArgument, ...extraArguments] = node.arguments[1].elements;
       if (
         guardArgument &&
         ts.isStringLiteralLike(guardArgument) &&
-        /^scripts\/verify-[^/]+\.mjs$/.test(guardArgument.text)
+        /^scripts\/verify-[^/]+\.mjs$/.test(guardArgument.text) &&
+        extraArguments.length === 0
       ) {
-        invoked.add(guardArgument.text);
+        const current = invocations.get(guardArgument.text) ?? {
+          normal: false,
+          selftest: false,
+        };
+        if (!flagArgument) current.normal = true;
+        if (
+          flagArgument &&
+          ts.isStringLiteralLike(flagArgument) &&
+          flagArgument.text === "--selftest"
+        ) {
+          current.selftest = true;
+        }
+        invocations.set(guardArgument.text, current);
       }
     }
   });
-  return { ok: true, reason: null, invoked };
+  return { ok: true, reason: null, invocations };
 }
 
 export function invokedGuardsFromVerifyStep(source) {
-  return analyzeVerifyStepSource(source).invoked;
+  return new Set(analyzeVerifyStepSource(source).invocations.keys());
+}
+
+export function validateGuardContractEvidence(evidence, expectedNonce) {
+  if (!evidence || typeof evidence !== "object") {
+    return { ok: false, reason: "executable guard contract evidence is missing" };
+  }
+  if (
+    evidence.version !== 1 ||
+    evidence.execution !== "same-checker-real-good-bad" ||
+    evidence.nonce !== expectedNonce ||
+    evidence.goodViolationCount !== 0 ||
+    !Number.isInteger(evidence.badViolationCount) ||
+    evidence.badViolationCount < 1
+  ) {
+    return {
+      ok: false,
+      reason:
+        "executable guard contract did not provide stable good/pass and planted-bad/fail evidence from the shared checker",
+    };
+  }
+  return { ok: true, reason: null };
+}
+
+export function executeGuardContract(guardPath, rootDir = ROOT) {
+  let absolutePath;
+  try {
+    absolutePath = resolvePathInsideRoot(guardPath, rootDir);
+  } catch (error) {
+    return { ok: false, reason: error.message, evidence: null };
+  }
+  const nonce = randomUUID();
+  const result = spawnSync(
+    process.execPath,
+    [absolutePath, "--selftest", "--guard-contract-report"],
+    {
+      cwd: path.resolve(rootDir),
+      encoding: "utf8",
+      shell: false,
+      env: { ...process.env, IH35_GUARD_CONTRACT_NONCE: nonce },
+    }
+  );
+  if (result.status !== 0) {
+    const output = `${result.stdout ?? ""}\n${result.stderr ?? ""}`.trim();
+    return {
+      ok: false,
+      reason: `guard executable selftest exited with code ${result.status}: ${output}`,
+      evidence: null,
+    };
+  }
+  const reportLine = (result.stdout ?? "")
+    .split(/\r?\n/)
+    .find((line) => line.startsWith(GUARD_CONTRACT_REPORT_PREFIX));
+  if (!reportLine) {
+    return { ok: false, reason: "guard executable selftest emitted no contract report", evidence: null };
+  }
+  let evidence;
+  try {
+    evidence = JSON.parse(reportLine.slice(GUARD_CONTRACT_REPORT_PREFIX.length));
+  } catch (error) {
+    return { ok: false, reason: `guard contract report is invalid JSON: ${error.message}`, evidence: null };
+  }
+  const validation = validateGuardContractEvidence(evidence, nonce);
+  return { ...validation, evidence };
 }
 
 export function evaluateGuardRequirement({
   guardRequired,
   changedNameStatus,
   changedFileSources = new Map(),
+  guardContractResults = new Map(),
 }) {
   if (!guardRequired) {
     return { ok: true, matchedGuardFiles: [], matchedStepFiles: [], wiredGuardFiles: [], hasCiWiring: true };
@@ -663,6 +520,26 @@ export function evaluateGuardRequirement({
   const addedFiles = changedNameStatus
     .filter((item) => item.status.startsWith("A"))
     .map((item) => item.path);
+  const unsafeAddedPaths = [];
+  for (const filePath of addedFiles) {
+    try {
+      resolvePathInsideRoot(filePath);
+    } catch (error) {
+      unsafeAddedPaths.push(`${filePath} (${error.message})`);
+    }
+  }
+  if (unsafeAddedPaths.length > 0) {
+    return {
+      ok: false,
+      reason: `guard_required=true but added paths are unsafe: ${unsafeAddedPaths.join(", ")}`,
+      matchedGuardFiles: [],
+      matchedStepFiles: [],
+      invalidGuardFiles: [],
+      invalidStepFiles: [],
+      wiredGuardFiles: [],
+      hasCiWiring: false,
+    };
+  }
 
   const sourceFor = (filePath) =>
     changedFileSources instanceof Map
@@ -677,9 +554,14 @@ export function evaluateGuardRequirement({
       analyzeNewGuardSource(sourceFor(filePath)),
     ])
   );
-  const invalidGuardFiles = guardCandidates.filter(
-    (filePath) => !guardAnalyses.get(filePath)?.ok
-  );
+  const invalidGuardFiles = guardCandidates.filter((filePath) => {
+    if (!guardAnalyses.get(filePath)?.ok) return true;
+    const execution =
+      guardContractResults instanceof Map
+        ? guardContractResults.get(filePath)
+        : guardContractResults?.[filePath];
+    return !execution?.ok;
+  });
   const matchedGuardFiles = guardCandidates.filter(
     (filePath) => guardAnalyses.get(filePath)?.ok
   );
@@ -696,9 +578,10 @@ export function evaluateGuardRequirement({
     (filePath) => !stepAnalyses.get(filePath)?.ok
   );
   const wiredGuardFiles = matchedGuardFiles.filter((guardFile) =>
-    matchedStepFiles.some((stepFile) =>
-      stepAnalyses.get(stepFile)?.invoked.has(guardFile)
-    )
+    matchedStepFiles.some((stepFile) => {
+      const invocation = stepAnalyses.get(stepFile)?.invocations.get(guardFile);
+      return invocation?.normal === true && invocation?.selftest === true;
+    })
   );
   const hasCiWiring = wiredGuardFiles.length > 0;
 
@@ -706,7 +589,14 @@ export function evaluateGuardRequirement({
     return {
       ok: false,
       reason: `guard_required=true but added guard contract failed: ${invalidGuardFiles
-        .map((filePath) => `${filePath} (${guardAnalyses.get(filePath)?.reason})`)
+        .map((filePath) => {
+          const analysis = guardAnalyses.get(filePath);
+          const execution =
+            guardContractResults instanceof Map
+              ? guardContractResults.get(filePath)
+              : guardContractResults?.[filePath];
+          return `${filePath} (${analysis?.ok ? execution?.reason : analysis?.reason})`;
+        })
         .join(", ")}`,
       matchedGuardFiles,
       matchedStepFiles,
@@ -747,7 +637,7 @@ export function evaluateGuardRequirement({
     return {
       ok: false,
       reason:
-        "guard_required=true but no added auto-discovered verify-step directly invokes an added guard with ctx.run(\"node\", [\"scripts/verify-*.mjs\"])",
+        "guard_required=true but no added auto-discovered verify-step directly invokes both the added guard and its --selftest with ctx.run",
       matchedGuardFiles,
       matchedStepFiles,
       invalidGuardFiles,
@@ -963,6 +853,7 @@ function runCheckC7(manifest) {
 function runCheckC8(manifest, range) {
   const changedNameStatus = getChangedNameStatus(range);
   const changedFileSources = new Map();
+  const guardContractResults = new Map();
   for (const item of changedNameStatus) {
     if (!item.status.startsWith("A")) continue;
     if (
@@ -971,17 +862,26 @@ function runCheckC8(manifest, range) {
     ) {
       continue;
     }
-    const absolutePath = path.resolve(ROOT, item.path);
+    let absolutePath;
+    try {
+      absolutePath = resolvePathInsideRoot(item.path);
+    } catch (error) {
+      fail("C8", `unsafe added guard path ${item.path}: ${error.message}`);
+    }
     const sourceRead = readUtf8FileFromStableHandle(absolutePath);
     if (!sourceRead.ok) {
       fail("C8", `cannot safely read added guard source ${item.path}: ${sourceRead.reason}`);
     }
     changedFileSources.set(item.path, sourceRead.source);
+    if (/^scripts\/verify-[^/]+\.mjs$/.test(item.path)) {
+      guardContractResults.set(item.path, executeGuardContract(item.path));
+    }
   }
   const result = evaluateGuardRequirement({
     guardRequired: manifest.guard_required,
     changedNameStatus,
     changedFileSources,
+    guardContractResults,
   });
 
   if (!result.ok) {
@@ -991,7 +891,7 @@ function runCheckC8(manifest, range) {
   if (manifest.guard_required) {
     pass(
       "C8",
-      `matched guards: ${result.matchedGuardFiles.join(", ")}; wired guards: ${result.wiredGuardFiles.join(", ")}`
+      `structurally wired guards with executable planted-failure evidence: ${result.wiredGuardFiles.join(", ")}`
     );
   } else {
     pass("C8", "guard not required");

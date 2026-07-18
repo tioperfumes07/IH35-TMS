@@ -10,11 +10,13 @@ const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..
 import {
   computeDbGatePlan,
   evaluateGuardRequirement,
+  executeGuardContract,
   matchesAnyAllowedFile,
   parseArgs,
   parseManifest,
   readUtf8FileFromStableHandle,
   readVerifyMeta,
+  resolvePathInsideRoot,
   shouldSkipC5VerifyScript,
   validateManifest,
 } from "../block-ready.mjs";
@@ -108,8 +110,7 @@ test("block-ready guard reads contain no exists/access-then-read TOCTOU pattern"
 
 function realGuardSource() {
   return `
-    import fs from "node:fs";
-    import path from "node:path";
+    import { runExecutableGuard } from "./guard-executable-contract.mjs";
 
     function checkTarget(source) {
       const failures = [];
@@ -117,21 +118,19 @@ function realGuardSource() {
       return failures;
     }
 
-    function runChecks() {
-      return checkTarget(fs.readFileSync(path.join(process.cwd(), "target.txt"), "utf8"));
+    function loadRepositoryFixture() {
+      return "allowed repository input";
     }
 
-    function selftest() {
-      const planted = "allowed".replace("allowed", "FORBIDDEN");
-      if (checkTarget(planted).length === 0) process.exit(1);
-    }
-
-    if (process.argv.includes("--selftest")) {
-      selftest();
-    } else {
-      const failures = runChecks();
-      if (failures.length > 0) process.exit(1);
-    }
+    const goodFixture = "allowed";
+    const badFixture = "FORBIDDEN";
+    runExecutableGuard({
+      label: "fixture-guard",
+      checker: checkTarget,
+      loadRepositoryFixture,
+      goodFixture,
+      badFixture,
+    });
   `;
 }
 
@@ -139,9 +138,30 @@ function invokingStep(guard = "scripts/verify-example.mjs") {
   return `export default {
     name: "example",
     run(ctx) {
-      return ctx.run("node", ["${guard}"]);
+      ctx.run("node", ["${guard}"]);
+      return ctx.run("node", ["${guard}", "--selftest"]);
     }
   };`;
+}
+
+function validContractResults(guard) {
+  return new Map([[guard, { ok: true, reason: null }]]);
+}
+
+function executeFixtureGuard(source) {
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "block-ready-contract-"));
+  try {
+    const scriptsDir = path.join(tempRoot, "scripts");
+    fs.mkdirSync(scriptsDir);
+    fs.copyFileSync(
+      path.join(REPO_ROOT, "scripts/guard-executable-contract.mjs"),
+      path.join(scriptsDir, "guard-executable-contract.mjs")
+    );
+    fs.writeFileSync(path.join(scriptsDir, "verify-example.mjs"), source, "utf8");
+    return executeGuardContract("scripts/verify-example.mjs", tempRoot);
+  } finally {
+    fs.rmSync(tempRoot, { recursive: true, force: true });
+  }
 }
 
 test("guard_required=true with no guard file in changeset fails", () => {
@@ -170,6 +190,7 @@ test("guard_required=true rejects an unwired standalone guard", () => {
     guardRequired: true,
     changedNameStatus: [{ status: "A", path: guard }],
     changedFileSources: new Map([[guard, realGuardSource()]]),
+    guardContractResults: validContractResults(guard),
   });
   assert.equal(result.ok, false);
   assert.match(result.reason, /no added auto-discovered verify-step directly invokes/i);
@@ -209,6 +230,7 @@ test("guard_required=true rejects a real guard paired with an unrelated step", (
         'export default { name: "other", run(ctx) { return ctx.run("node", ["scripts/verify-other.mjs"]); } };',
       ],
     ]),
+    guardContractResults: validContractResults(guard),
   });
   assert.equal(result.ok, false);
   assert.deepEqual(result.wiredGuardFiles, []);
@@ -230,6 +252,11 @@ test("guard_required=true accepts a real guard plus a directly invoking formatte
         `export default {
           name: "example",
           run ( ctx ) {
+            ctx
+              .run(
+                'node',
+                [ 'scripts/verify-example.mjs' ]
+              );
             return ctx
               .run(
                 'node',
@@ -239,6 +266,7 @@ test("guard_required=true accepts a real guard plus a directly invoking formatte
         };`,
       ],
     ]),
+    guardContractResults: validContractResults(guard),
   });
   assert.equal(result.ok, true);
   assert.deepEqual(result.wiredGuardFiles, [guard]);
@@ -265,6 +293,7 @@ test("guard_required=true rejects aliases, comments, and near-match guard paths"
         [guard, realGuardSource()],
         [step, source],
       ]),
+      guardContractResults: validContractResults(guard),
     });
     assert.equal(result.ok, false, `case ${index} must not count as wiring`);
   }
@@ -325,6 +354,7 @@ test("guard_required=true rejects malformed guard and malformed verify-step synt
       [guard, realGuardSource()],
       [step, 'export default { run(ctx) { ctx.run("node", ["scripts/verify-example.mjs"] }'],
     ]),
+    guardContractResults: validContractResults(guard),
   });
   assert.equal(malformedStep.ok, false);
   assert.match(malformedStep.reason, /verify-step parse failed/i);
@@ -382,6 +412,146 @@ test("guard_required=true rejects dead failure paths and fake selftest strings",
   }
 });
 
+test("guard_required=true rejects discarded repository reads and ignored checker input", () => {
+  const guard = "scripts/verify-example.mjs";
+  const step = "scripts/verify-steps/999-verify-example.mjs";
+  const reproducers = [
+    `
+      import fs from "node:fs";
+      import { runExecutableGuard } from "./guard-executable-contract.mjs";
+      function checkTarget(_input) { return []; }
+      function loadRepositoryFixture() {
+        fs.readFileSync("target.txt", "utf8");
+        return "constant";
+      }
+      const goodFixture = "GOOD";
+      const badFixture = "BAD";
+      runExecutableGuard({
+        label: "discarded-read",
+        checker: checkTarget,
+        loadRepositoryFixture,
+        goodFixture,
+        badFixture,
+      });
+    `,
+    `
+      import { runExecutableGuard } from "./guard-executable-contract.mjs";
+      function checkTarget(_input) { return false; }
+      function loadRepositoryFixture() { return "repository"; }
+      const goodFixture = "GOOD";
+      const badFixture = "BAD";
+      runExecutableGuard({
+        label: "always-false",
+        checker: checkTarget,
+        loadRepositoryFixture,
+        goodFixture,
+        badFixture,
+      });
+    `,
+    `
+      import { runExecutableGuard } from "./guard-executable-contract.mjs";
+      function checkTarget(input) {
+        void input;
+        return [];
+      }
+      function loadRepositoryFixture() { return "repository"; }
+      const goodFixture = { marker: "GOOD" };
+      const badFixture = { marker: "BAD" };
+      runExecutableGuard({
+        label: "ignored-selftest-input",
+        checker: checkTarget,
+        loadRepositoryFixture,
+        goodFixture,
+        badFixture,
+      });
+    `,
+  ];
+
+  for (const source of reproducers) {
+    const execution = executeFixtureGuard(source);
+    assert.equal(execution.ok, false);
+    const result = evaluateGuardRequirement({
+      guardRequired: true,
+      changedNameStatus: [
+        { status: "A", path: guard },
+        { status: "A", path: step },
+      ],
+      changedFileSources: new Map([
+        [guard, source],
+        [step, invokingStep(guard)],
+      ]),
+      guardContractResults: new Map([[guard, execution]]),
+    });
+    assert.equal(result.ok, false);
+    assert.match(result.reason, /executable|selftest|checker/i);
+  }
+});
+
+test("executable guard contract rejects colluding no-op fixtures and hidden state", () => {
+  const sameFixtures = `
+    import { runExecutableGuard } from "./guard-executable-contract.mjs";
+    function checkTarget(input) { return input.bad ? ["bad"] : []; }
+    function loadRepositoryFixture() { return {}; }
+    const goodFixture = {};
+    const badFixture = {};
+    runExecutableGuard({
+      label: "same-fixtures",
+      checker: checkTarget,
+      loadRepositoryFixture,
+      goodFixture,
+      badFixture,
+    });
+  `;
+  const callOrder = `
+    import { runExecutableGuard } from "./guard-executable-contract.mjs";
+    let calls = 0;
+    function checkTarget(_input) {
+      calls += 1;
+      return calls % 2 === 1 ? ["manufactured"] : [];
+    }
+    function loadRepositoryFixture() { return {}; }
+    const goodFixture = { kind: "good" };
+    const badFixture = { kind: "bad" };
+    runExecutableGuard({
+      label: "hidden-state",
+      checker: checkTarget,
+      loadRepositoryFixture,
+      goodFixture,
+      badFixture,
+    });
+  `;
+  assert.equal(executeFixtureGuard(sameFixtures).ok, false);
+  assert.equal(executeFixtureGuard(callOrder).ok, false);
+});
+
+test("manifest, guard, and step paths reject absolute and parent escapes", () => {
+  assert.throws(() => resolvePathInsideRoot("../escape.mjs"), /escapes root/);
+  assert.throws(() => resolvePathInsideRoot("/tmp/escape.mjs"), /must be relative/);
+  assert.throws(() => parseManifest("../escape.json"), /escapes root/);
+
+  const unsafeManifest = {
+    block_id: "unsafe",
+    phase: "test",
+    task: "test",
+    allowed_files: ["../escape.mjs", "/tmp/absolute.mjs"],
+    extra_gates: [],
+    runtime_path: "src",
+    db_required: false,
+    guard_required: true,
+  };
+  assert.match(validateManifest(unsafeManifest).join("; "), /unsafe path/);
+
+  const result = evaluateGuardRequirement({
+    guardRequired: true,
+    changedNameStatus: [
+      { status: "A", path: "../scripts/verify-escape.mjs" },
+      { status: "A", path: "/tmp/scripts/verify-steps/999-escape.mjs" },
+    ],
+  });
+  assert.equal(result.ok, false);
+  assert.match(result.reason, /paths are unsafe/);
+});
+
 test("guard_required=true accepts a real planted-target guard fixture", () => {
   const guard = "scripts/verify-example.mjs";
   const step = "scripts/verify-steps/999-verify-example.mjs";
@@ -395,6 +565,7 @@ test("guard_required=true accepts a real planted-target guard fixture", () => {
       [guard, realGuardSource()],
       [step, invokingStep(guard)],
     ]),
+    guardContractResults: validContractResults(guard),
   });
   assert.equal(result.ok, true);
   assert.deepEqual(result.wiredGuardFiles, [guard]);
@@ -413,6 +584,7 @@ test("guard_required=true accepts the repository XLSX guard and verify-step", ()
       [guard, fs.readFileSync(path.join(REPO_ROOT, guard), "utf8")],
       [step, fs.readFileSync(path.join(REPO_ROOT, step), "utf8")],
     ]),
+    guardContractResults: new Map([[guard, executeGuardContract(guard, REPO_ROOT)]]),
   });
   assert.equal(result.ok, true, result.reason);
 });
