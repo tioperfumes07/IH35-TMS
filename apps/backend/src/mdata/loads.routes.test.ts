@@ -4,12 +4,14 @@ import { registerLoadRoutes } from "./loads.routes.js";
 
 const requireAuthState = { allowed: true };
 
-const queryMock = vi.fn(async (sql: string) => {
+const defaultQueryMock = async (sql: string, _params?: unknown[]) => {
   if (sql.includes("COUNT(*)::int AS total_count")) {
     return { rows: [{ total_count: 0 }] };
   }
   return { rows: [] };
-});
+};
+
+const queryMock = vi.fn(defaultQueryMock);
 
 vi.mock("../auth/session-middleware.js", () => ({
   requireAuth: (_req: unknown, reply: { code: (statusCode: number) => { send: (body: unknown) => void } }) => {
@@ -29,7 +31,8 @@ describe("mdata loads routes", () => {
 
   beforeEach(() => {
     requireAuthState.allowed = true;
-    queryMock.mockClear();
+    queryMock.mockReset();
+    queryMock.mockImplementation(defaultQueryMock);
   });
 
   afterEach(async () => {
@@ -63,19 +66,73 @@ describe("mdata loads routes", () => {
     });
   });
 
-  // CODER-17 hardening regression: an unrecognized sort (the invoices page's "-pickup_date"
-  // dash-prefix convention, or any junk) must degrade to the default sort with 200 — never 400.
-  // The ORDER BY column stays whitelisted via sortColumnMap, so this is safe.
-  it("GET /api/v1/mdata/loads degrades an unknown sort to default (no 400)", async () => {
+  it.each([
+    {
+      sort: "pickup_date",
+      direction: "ASC",
+      expectedIds: ["early", "late", "null"],
+    },
+    {
+      sort: "-pickup_date",
+      direction: "DESC",
+      expectedIds: ["late", "early", "null"],
+    },
+  ])("GET /api/v1/mdata/loads truthfully orders canonical pickup timestamps for $sort", async ({
+    sort,
+    direction,
+    expectedIds,
+  }) => {
+    const companyId = "11111111-1111-4111-8111-111111111111";
+    const rowsByDirection: Record<string, Array<Record<string, unknown>>> = {
+      ASC: [
+        { id: "early", operating_company_id: companyId, status: "booked", pickup_scheduled_at: "2026-07-18T08:00:00.000Z" },
+        { id: "late", operating_company_id: companyId, status: "booked", pickup_scheduled_at: "2026-07-19T08:00:00.000Z" },
+        { id: "null", operating_company_id: companyId, status: "booked", pickup_scheduled_at: null },
+      ],
+      DESC: [
+        { id: "late", operating_company_id: companyId, status: "booked", pickup_scheduled_at: "2026-07-19T08:00:00.000Z" },
+        { id: "early", operating_company_id: companyId, status: "booked", pickup_scheduled_at: "2026-07-18T08:00:00.000Z" },
+        { id: "null", operating_company_id: companyId, status: "booked", pickup_scheduled_at: null },
+      ],
+    };
+    queryMock.mockImplementation(async (sql: string) => {
+      if (sql.includes("COUNT(*)::int AS total_count")) return { rows: [{ total_count: 3 }] };
+      if (sql.includes("l.id, l.operating_company_id")) return { rows: rowsByDirection[direction] };
+      return { rows: [] };
+    });
+
     const app = await buildApp();
-    for (const sort of ["-pickup_date", "totally_bogus:asc", "load_number"]) {
-      const response = await app.inject({
-        method: "GET",
-        url: `/api/v1/mdata/loads?operating_company_id=11111111-1111-4111-8111-111111111111&sort=${encodeURIComponent(sort)}`,
-      });
-      expect(response.statusCode, `sort=${sort}`).toBe(200);
-      expect(response.statusCode).not.toBe(400);
-    }
+    const response = await app.inject({
+      method: "GET",
+      url: `/api/v1/mdata/loads?operating_company_id=${companyId}&sort=${encodeURIComponent(sort)}&limit=3&offset=0`,
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json().loads.map((row: { id: string }) => row.id)).toEqual(expectedIds);
+
+    const listCall = queryMock.mock.calls.find(([sql]) => String(sql).includes("l.id, l.operating_company_id"));
+    expect(listCall).toBeDefined();
+    expect(listCall?.[0]).toContain(
+      `ORDER BY sp.scheduled_arrival_at ${direction} NULLS LAST, l.created_at DESC, l.id ASC`
+    );
+    expect(listCall?.[0]).toContain("l.operating_company_id = ANY($1::uuid[])");
+    expect(listCall?.[0]).toContain("stop_type = 'pickup'");
+    expect(listCall?.[0]).toContain("soft_deleted_at IS NULL");
+    expect(listCall?.[1]?.[0]).toEqual([companyId]);
+  });
+
+  it("GET /api/v1/mdata/loads documents invalid sort fallback without claiming pickup order", async () => {
+    const app = await buildApp();
+    const response = await app.inject({
+      method: "GET",
+      url: "/api/v1/mdata/loads?operating_company_id=11111111-1111-4111-8111-111111111111&sort=totally_bogus",
+    });
+
+    expect(response.statusCode).toBe(200);
+    const listCall = queryMock.mock.calls.find(([sql]) => String(sql).includes("l.id, l.operating_company_id"));
+    expect(listCall).toBeDefined();
+    expect(listCall?.[0]).toContain("ORDER BY l.created_at DESC, l.id ASC");
+    expect(listCall?.[0]).not.toContain("ORDER BY sp.scheduled_arrival_at");
   });
 
   it("PATCH /api/v1/mdata/loads/:id/status blocks non-Owner cancel when reason requires owner approval", async () => {
