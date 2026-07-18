@@ -1,0 +1,44 @@
+{
+  "block_id": "0243-g8-5-accounting-query-errors-wave-b",
+  "root_block": "0243-g8-5-no-error-state-blank-forever-spinner",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "TIER-3",
+  "wave": "B of Accounting Core Block 6/67",
+  "branch": "fix/accounting-query-errors-wave-b",
+  "task": "Make eight disjoint supplemental/reference queries fail visibly with query-specific manual retry. Frontend reliability only; no backend, schema, posting, or money behavior changes.",
+  "allowed_files": [
+    "apps/frontend/src/pages/accounting/CreateMultipleBillsPage.tsx",
+    "apps/frontend/src/pages/accounting/SubmitFactoringModal.tsx",
+    "apps/frontend/src/pages/accounting/InvoicesListPage.tsx",
+    "apps/frontend/src/pages/accounting/BillPaymentsListPage.tsx",
+    "apps/frontend/src/pages/accounting/bills/RecurringBillCreate.tsx",
+    "apps/frontend/src/pages/accounting/__tests__/AccountingQueryErrorStatesWaveB.test.tsx",
+    "scripts/verify-accounting-query-error-states-wave-b.mjs",
+    "scripts/verify-steps/907-verify-accounting-query-error-states-wave-b.mjs",
+    ".block-ready/0243-g8-5-accounting-query-errors-wave-b.json"
+  ],
+  "acceptance": [
+    { "kind": "mounted", "component": "apps/frontend/src/pages/accounting/CreateMultipleBillsPage.tsx", "note": "vendorsQuery and coaQuery failures render separately and retry only the failed query" },
+    { "kind": "mounted", "component": "apps/frontend/src/pages/accounting/SubmitFactoringModal.tsx", "note": "vendorsQuery, invoicesQuery, and factoringSummaryQuery failures render in their own modal sections and retry independently" },
+    { "kind": "mounted", "component": "apps/frontend/src/pages/accounting/InvoicesListPage.tsx", "note": "customersQuery failure renders in Filters and retries customersQuery.refetch; invoice-list query handling is unchanged" },
+    { "kind": "mounted", "component": "apps/frontend/src/pages/accounting/BillPaymentsListPage.tsx", "note": "unpaidBillsQuery failure renders in the unpaid-bill selector and retries unpaidBillsQuery.refetch; paymentsQuery handling is unchanged" },
+    { "kind": "mounted", "component": "apps/frontend/src/pages/accounting/bills/RecurringBillCreate.tsx", "note": "vendorsQuery failure renders at the vendor picker and retries vendorsQuery.refetch" },
+    { "kind": "test", "path": "apps/frontend/src/pages/accounting/__tests__/AccountingQueryErrorStatesWaveB.test.tsx", "note": "eight focused failure cases prove visible errors and exact refetch invocation" },
+    { "kind": "guard", "path": "scripts/verify-accounting-query-error-states-wave-b.mjs", "step": "scripts/verify-steps/907-verify-accounting-query-error-states-wave-b.mjs", "note": "auto-discovered guard catches eight independent planted removals" },
+    { "kind": "design", "spec": "docs/specs/IH35_MASTER_BLUEPRINT_v3_FULL.md", "sections": ["MUST 6.4.1.6 — visible error with retry"] }
+  ],
+  "linkage": "N/A — presentational query-error UI only; no data/entity/FK/write change.",
+  "db_required": false,
+  "guard_required": true,
+  "remaining_wave_c": [
+    "BillsPage paymentsQuery and vendorsQuery",
+    "PayBillModal accountsQuery",
+    "CCPaymentModal accountsQuery",
+    "PaymentDetailPage openInvoicesQuery",
+    "PaymentMethodsCatalogPage accountsQuery",
+    "ExpenseCategoryMapPage accountsQuery",
+    "ReconciliationWorkspacePage accountsQuery",
+    "CashForecastPage settingsQuery"
+  ]
+}
