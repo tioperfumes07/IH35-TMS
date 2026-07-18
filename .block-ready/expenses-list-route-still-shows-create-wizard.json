@@ -11,17 +11,20 @@
     "apps/frontend/src/pages/accounting/ExpensesListPage.tsx",
     "apps/frontend/src/pages/accounting/subnav-manifest.ts",
     "apps/frontend/src/pages/accounting/AccountingSubNavWrapper.tsx",
+    "apps/frontend/src/pages/accounting/AccountingHubPage.tsx",
+    "apps/frontend/src/pages/accounting/AccountRegisterPage.tsx",
+    "apps/frontend/src/pages/accounting/__tests__/AccountRegisterPage.guard.test.ts",
     "apps/frontend/src/components/Topbar.tsx",
+    "apps/frontend/src/components/expenses/RecordExpenseModal.tsx",
     "apps/frontend/src/pages/home/QboStyleHomePage.tsx",
     "scripts/verify-expenses-list-route.mjs",
     "scripts/verify-maint-create-parity-drawer.mjs",
-    "package.json",
-    ".github/workflows/locked-guards.yml"
+    "scripts/verify-steps/905-verify-expenses-list-route.mjs"
   ],
   "acceptance": [
     {
-      "check": "/accounting/expenses renders ExpensesListPage; create on /accounting/expenses/new; /list kept; guard wired"
+      "check": "/accounting/expenses/list renders ExpensesListPage and is every ID-less browse/view target; /accounting/expenses renders ExpenseCreatePage and is every canonical create target; /accounting/expenses/new remains a mounted route-only legacy alias absent from rendered and retained UI metadata; grouped subnav top-node count remains unchanged; verify-expenses-list-route normal + isolated planted regression selftests pass through auto-discovered verify-step 905; verify-maint-create-parity-drawer preserves maintenance drawer enforcement and validates the same route contract."
     }
   ],
-  "note": "FE routing fix — browse-first list at canonical URL; create entry points repointed to /new."
+  "note": "Pure frontend/nonfinancial route correction — browse-first group navigation uses /list; creator hub stays at bare /accounting/expenses with QBO ParityDrawer chrome; /new is retained only as an additive legacy deep-link alias."
 }

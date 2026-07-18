@@ -35,7 +35,7 @@ type TabId =
 export const TABS: Array<{ id: TabId; label: string; to?: string }> = [
   { id: "home", label: "Home" },
   { id: "bills", label: "Bills", to: "/accounting/bills" },
-  { id: "expenses", label: "Expenses", to: "/accounting/expenses" },
+  { id: "expenses", label: "Expenses", to: "/accounting/expenses/list" },
   { id: "bill-payment", label: "Bill Payment", to: "/accounting/bill-payments" },
   { id: "invoices", label: "Invoices", to: "/accounting/invoices" },
   { id: "receive-payment", label: "Receive Payment", to: "/accounting/payments" },

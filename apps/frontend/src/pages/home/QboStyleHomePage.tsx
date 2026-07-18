@@ -55,7 +55,7 @@ const BUSINESS_FEED_CARDS: BusinessFeedCard[] = [
 
 const CREATE_ACTIONS = [
   { label: "Create invoice", to: "/accounting/invoices" },
-  { label: "Record expense", to: "/accounting/expenses/new" },
+  { label: "Record expense", to: "/accounting/expenses" },
   { label: "Receive payment", to: "/accounting/payments" },
   { label: "Create bill", to: "/accounting/bills/vendor" },
   { label: "Add bank deposit", to: "/banking/transactions" },
@@ -274,7 +274,7 @@ export function QboStyleHomePage({ auth }: Props) {
           <div className="rounded-sm border border-gray-200 bg-white p-4 shadow-xs">
             <div className="mb-3 flex items-center justify-between">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Expenses</p>
-              <Link to="/accounting/expenses" className="text-xs text-slate-700 hover:underline">View →</Link>
+              <Link to="/accounting/expenses/list" className="text-xs text-slate-700 hover:underline">View →</Link>
             </div>
             {accountingQuery.isLoading ? (
               <div className="h-20 animate-pulse rounded-sm bg-gray-100" />
