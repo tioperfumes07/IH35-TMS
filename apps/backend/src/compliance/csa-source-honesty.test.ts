@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   parseSaferCsaSnapshot,
@@ -5,34 +7,41 @@ import {
 } from "./csa-basic-pull.js";
 
 const COMPANY = "11111111-1111-4111-8111-111111111111";
+const SAFER_COMPANY_SNAPSHOT = readFileSync(
+  fileURLToPath(new URL("./__fixtures__/safer-company-snapshot.html", import.meta.url)),
+  "utf8"
+);
 
 afterEach(() => {
   vi.unstubAllGlobals();
 });
 
 describe("CSA public-source honesty", () => {
-  it("never derives private Hazmat or Crash Indicator BASICs from public text", () => {
-    const rows = parseSaferCsaSnapshot(
-      "Unsafe Driving 12 34% Hazardous Materials Compliance 98 99% Crash Indicator 88 97%"
-    );
+  it("returns every BASIC unavailable for a real-source-shaped SAFER Company Snapshot", () => {
+    const rows = parseSaferCsaSnapshot(SAFER_COMPANY_SNAPSHOT);
 
-    expect(rows.find((row) => row.basic_category === "hazmat_compliance")).toMatchObject({
-      score: null,
-      pct_percentile: null,
-      alert_status: "inconclusive",
-    });
-    expect(rows.find((row) => row.basic_category === "crash_indicator")).toMatchObject({
-      score: null,
-      pct_percentile: null,
-      alert_status: "inconclusive",
-    });
+    expect(rows).toHaveLength(7);
+    expect(rows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ basic_category: "unsafe_driving" }),
+        expect.objectContaining({ basic_category: "hos_compliance" }),
+        expect.objectContaining({ basic_category: "vehicle_maintenance" }),
+        expect.objectContaining({ basic_category: "hazmat_compliance" }),
+        expect.objectContaining({ basic_category: "crash_indicator" }),
+      ])
+    );
+    for (const row of rows) {
+      expect(row).toMatchObject({
+        score: null,
+        pct_percentile: null,
+        alert_status: "inconclusive",
+      });
+    }
   });
 
-  it("does not persist or mark an all-null SAFER pull successful", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => new Response("<html><body>Carrier snapshot without BASIC metrics</body></html>", { status: 200 }))
-    );
+  it("does not fetch, persist, or mark a public SAFER pull successful", async () => {
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
     const query = vi.fn(async () => ({ rows: [], rowCount: 0 }));
 
     await expect(
@@ -40,33 +49,13 @@ describe("CSA public-source honesty", () => {
         { query },
         { operatingCompanyId: COMPANY, usdotNumber: "1234567" }
       )
-    ).rejects.toThrow("safer_csa_metrics_unavailable");
+    ).rejects.toThrow("public_csa_basic_source_unavailable");
+    expect(fetchSpy).not.toHaveBeenCalled();
     expect(query).not.toHaveBeenCalled();
   });
 
-  it("persists only metrics actually available from the public response", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(
-        async () =>
-          new Response(
-            "<html><body>Unsafe Driving 12 34% Hazardous Materials Compliance 98 99%</body></html>",
-            { status: 200 }
-          )
-      )
-    );
-    const query = vi.fn(async () => ({ rows: [], rowCount: 1 }));
-
-    const result = await pullAndPersistCsaBasicsForCompany(
-      { query },
-      { operatingCompanyId: COMPANY, usdotNumber: "1234567" }
-    );
-
-    expect(result.available_metric_count).toBeGreaterThan(0);
-    expect(query).toHaveBeenCalled();
-    for (const call of query.mock.calls) {
-      expect(call[1]?.[2]).not.toBe("hazmat_compliance");
-      expect(call[1]?.[2]).not.toBe("crash_indicator");
-    }
+  it("never treats nearby SAFER OOS percentages as SMS measures or percentiles", () => {
+    const rows = parseSaferCsaSnapshot(SAFER_COMPANY_SNAPSHOT);
+    expect(rows.some((row) => row.score != null || row.pct_percentile != null)).toBe(false);
   });
 });

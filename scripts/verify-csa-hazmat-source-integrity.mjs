@@ -44,16 +44,23 @@ function collectFailures(source) {
   };
 
   requireText("pull", "AUTHENTICATED_SMS_ONLY_CATEGORIES", "private_category_allowlist_missing");
-  requireText("pull", "AUTHENTICATED_SMS_ONLY_CATEGORIES.has(basicCategory)", "private_category_null_gate_missing");
-  requireText("pull", 'throw new Error("safer_csa_metrics_unavailable")', "all_null_pull_success_not_blocked");
+  requireText("pull", "FMCSA_SMS_MEASURE_URL", "official_sms_documentation_source_missing");
+  requireText("pull", "input text is intentionally", "safer_input_ignore_contract_missing");
+  requireText("pull", 'throw new Error("public_csa_basic_source_unavailable")', "public_pull_unavailable_gate_missing");
   requireText("pull", "availableBasics", "null_rows_not_filtered_before_persist");
+  requireText("complianceRoutes", 'error: "public_csa_basic_source_unavailable"', "public_unavailable_response_missing");
+  requireText("complianceRoutes", "No request was made to SAFER", "public_unavailable_response_misleading");
+  requireText("complianceRoutes", "legacy SAFER-derived values are not exposed", "legacy_safer_values_not_suppressed");
+  requireText("complianceRoutes", 'structured_source_available: false', "structured_source_unavailability_missing");
   requireText("complianceRoutes", "requires_authenticated_carrier_sms", "availability_metadata_missing");
   requireText("complianceRoutes", "authenticated_scraping_performed: false", "no_scraping_metadata_missing");
   requireText("safetyRoutes", 'metric_kind: "internal_inspection_point_rollup"', "internal_rollup_label_missing");
   requireText("safetyRoutes", "is_fmcsa_percentile: false", "percentile_disclaimer_missing");
   requireText("safetyRoutes", "basic_hazmat: null", "safety_hazmat_not_forced_null");
+  requireText("safetyRoutes", "violations_jsonb -> 'csa_point_breakdown'", "category_rollup_not_using_structured_breakdown");
   requireText("dotInspectionRoutes", "computeAndUpsertScore", "dot_inspection_does_not_reuse_canonical_rollup");
   requireText("dotInspectionRoutes", "pointValues.length > 0", "dot_inspection_missing_points_become_zero");
+  requireText("dotInspectionRoutes", "csa_point_breakdown: csaPointBreakdown", "category_breakdown_not_persisted");
   requireText("dotInspectionRoutes", "csa_source: INTERNAL_CSA_SOURCE_METADATA", "dot_inspection_source_metadata_missing");
   requireText("safetyLegacyRoutes", "basic_hazmat: null", "legacy_safety_hazmat_not_forced_null");
   requireText("safetyLegacyRoutes", "csaRes.rows[0]?.score == null ? null", "legacy_kpi_null_coerced_to_zero");
@@ -77,8 +84,20 @@ function collectFailures(source) {
   requireText("recencyGuard", "WHERE score IS NOT NULL OR pct_percentile IS NOT NULL", "null_rows_advance_recency_guard");
   requireText("blueprint", "CSA / Hazmat source-honesty rule", "blueprint_honesty_rule_missing");
 
+  if (/BASIC_LABEL_HINTS|extractBasicMetrics|pickScoreAndPercentile|extractNumbers|fetchSaferSnapshotText/.test(source.pull)) {
+    failures.push("safer_basic_derivation_logic_present");
+  }
+  if (/safer\.fmcsa\.dot\.gov/i.test(source.pull) || /\bfetch\s*\(/.test(source.pull)) {
+    failures.push("public_safer_network_path_present");
+  }
+  if (/fmcsa_safer_public|toFiniteNumber\s*\(\s*row\.score\s*\)/.test(source.complianceRoutes)) {
+    failures.push("legacy_safer_metrics_exposed");
+  }
   if (/COALESCE\s*\(\s*SUM\s*\(\s*CASE[\s\S]*csa_points/i.test(source.safetyRoutes)) {
     failures.push("missing_internal_category_still_becomes_zero");
+  }
+  if (/SUM\s*\(\s*csa_points\s*\)\s*FILTER/i.test(source.safetyRoutes)) {
+    failures.push("multi_category_points_double_counted");
   }
   if (/basic_hazmat\s*:\s*Number\s*\(/.test(source.reportRoutes + source.reportUi)) {
     failures.push("hazmat_null_coerced_to_number");
@@ -99,12 +118,19 @@ function collectFailures(source) {
 function runSelfTest(source) {
   const planted = {
     ...source,
+    pull: `${source.pull}\nconst BASIC_LABEL_HINTS = { unsafe_driving: ["unsafe driving"] };`,
     safetyRoutes: source.safetyRoutes.replaceAll("basic_hazmat: null", "basic_hazmat: Number(row.basic_hazmat ?? 0)"),
     reportRoutes: source.reportRoutes.replaceAll("basic_hazmat: null", "basic_hazmat: Number(score.basic_hazmat ?? 0)"),
   };
+  planted.safetyRoutes += "\nSELECT SUM(csa_points) FILTER (WHERE 'unsafe_driving' = ANY(csa_basic_categories));";
   const failures = collectFailures(planted);
-  if (!failures.includes("safety_hazmat_not_forced_null") || !failures.includes("hazmat_null_coerced_to_number")) {
-    console.error("verify:csa-hazmat-source-integrity SELFTEST FAIL: planted null-to-zero regression escaped");
+  if (
+    !failures.includes("safety_hazmat_not_forced_null")
+    || !failures.includes("hazmat_null_coerced_to_number")
+    || !failures.includes("safer_basic_derivation_logic_present")
+    || !failures.includes("multi_category_points_double_counted")
+  ) {
+    console.error("verify:csa-hazmat-source-integrity SELFTEST FAIL: planted source/counting regression escaped");
     process.exit(1);
   }
   console.log("verify:csa-hazmat-source-integrity SELFTEST PASS (planted regression rejected)");

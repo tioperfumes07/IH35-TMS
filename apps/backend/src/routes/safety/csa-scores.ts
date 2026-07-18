@@ -46,20 +46,50 @@ async function withCompany<T>(userId: string, role: string, companyId: string, f
 export async function computeAndUpsertScore(client: any, companyId: string, actorId: string) {
   const res = await client.query(
     `
+      WITH inspection_points AS (
+        SELECT
+          outcome,
+          csa_points,
+          CASE
+            WHEN jsonb_typeof(violations_jsonb -> 'csa_point_breakdown' -> 'unsafe_driving') = 'number'
+            THEN (violations_jsonb -> 'csa_point_breakdown' ->> 'unsafe_driving')::numeric
+          END AS unsafe_driving_points,
+          CASE
+            WHEN jsonb_typeof(violations_jsonb -> 'csa_point_breakdown' -> 'hos_compliance') = 'number'
+            THEN (violations_jsonb -> 'csa_point_breakdown' ->> 'hos_compliance')::numeric
+          END AS hos_compliance_points,
+          CASE
+            WHEN jsonb_typeof(violations_jsonb -> 'csa_point_breakdown' -> 'driver_fitness') = 'number'
+            THEN (violations_jsonb -> 'csa_point_breakdown' ->> 'driver_fitness')::numeric
+          END AS driver_fitness_points,
+          CASE
+            WHEN jsonb_typeof(violations_jsonb -> 'csa_point_breakdown' -> 'controlled_substances') = 'number'
+            THEN (violations_jsonb -> 'csa_point_breakdown' ->> 'controlled_substances')::numeric
+          END AS controlled_substances_points,
+          CASE
+            WHEN jsonb_typeof(violations_jsonb -> 'csa_point_breakdown' -> 'vehicle_maintenance') = 'number'
+            THEN (violations_jsonb -> 'csa_point_breakdown' ->> 'vehicle_maintenance')::numeric
+          END AS vehicle_maintenance_points,
+          CASE
+            WHEN jsonb_typeof(violations_jsonb -> 'csa_point_breakdown' -> 'crash_indicator') = 'number'
+            THEN (violations_jsonb -> 'csa_point_breakdown' ->> 'crash_indicator')::numeric
+          END AS crash_indicator_points
+        FROM safety.dot_inspections
+        WHERE operating_company_id = $1
+          AND voided_at IS NULL
+          AND inspection_date >= (CURRENT_DATE - INTERVAL '180 days')
+      )
       SELECT
         SUM(csa_points)::int AS total_points,
         COUNT(*)::int AS total_inspections,
         COUNT(*) FILTER (WHERE outcome = 'OOS')::int AS total_oos,
-        SUM(csa_points) FILTER (WHERE 'unsafe_driving' = ANY(csa_basic_categories))::numeric(5,2) AS basic_unsafe_driving,
-        SUM(csa_points) FILTER (WHERE 'hos_compliance' = ANY(csa_basic_categories))::numeric(5,2) AS basic_hos_compliance,
-        SUM(csa_points) FILTER (WHERE 'driver_fitness' = ANY(csa_basic_categories))::numeric(5,2) AS basic_driver_fitness,
-        SUM(csa_points) FILTER (WHERE 'controlled_substances' = ANY(csa_basic_categories))::numeric(5,2) AS basic_controlled_substances,
-        SUM(csa_points) FILTER (WHERE 'vehicle_maintenance' = ANY(csa_basic_categories))::numeric(5,2) AS basic_vehicle_maintenance,
-        SUM(csa_points) FILTER (WHERE 'crash_indicator' = ANY(csa_basic_categories))::numeric(5,2) AS basic_crash_indicator
-      FROM safety.dot_inspections
-      WHERE operating_company_id = $1
-        AND voided_at IS NULL
-        AND inspection_date >= (CURRENT_DATE - INTERVAL '180 days')
+        SUM(unsafe_driving_points)::numeric(5,2) AS basic_unsafe_driving,
+        SUM(hos_compliance_points)::numeric(5,2) AS basic_hos_compliance,
+        SUM(driver_fitness_points)::numeric(5,2) AS basic_driver_fitness,
+        SUM(controlled_substances_points)::numeric(5,2) AS basic_controlled_substances,
+        SUM(vehicle_maintenance_points)::numeric(5,2) AS basic_vehicle_maintenance,
+        SUM(crash_indicator_points)::numeric(5,2) AS basic_crash_indicator
+      FROM inspection_points
     `,
     [companyId]
   );

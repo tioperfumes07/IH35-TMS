@@ -10,8 +10,7 @@ import {
   type CsaBasicCategory,
 } from "./csa-basic-projection.js";
 
-const SAFER_SNAPSHOT_BASE = "https://safer.fmcsa.dot.gov/query.asp";
-const FETCH_TIMEOUT_MS = 30_000;
+const FMCSA_SMS_MEASURE_URL = "https://csa.fmcsa.dot.gov/about/Measure";
 let cronInitialized = false;
 
 // FMCSA does not expose these BASICs to the public. They are available only to
@@ -39,125 +38,18 @@ export type CsaPulledBasicRow = {
   alert_status: CsaAlertStatus;
 };
 
-const BASIC_LABEL_HINTS: Record<CsaBasicCategory, string[]> = {
-  unsafe_driving: ["unsafe driving"],
-  hos_compliance: ["hos compliance", "hours-of-service compliance", "hours of service compliance"],
-  driver_fitness: ["driver fitness"],
-  controlled_substances_alcohol: ["controlled substances/alcohol", "controlled substances / alcohol", "controlled substances"],
-  vehicle_maintenance: ["vehicle maintenance"],
-  hazmat_compliance: ["hazmat compliance", "hazardous materials compliance"],
-  crash_indicator: ["crash indicator"],
-};
-
-function resolveAlertStatus(score: number | null, threshold: number): CsaAlertStatus {
-  if (score == null) return "inconclusive";
-  return score >= threshold ? "yes" : "no";
-}
-
-function clampScore(value: number): number {
-  if (!Number.isFinite(value)) return value;
-  if (value < 0) return 0;
-  if (value > 100) return 100;
-  return Number(value.toFixed(2));
-}
-
-function normalizeHtmlToText(html: string): string {
-  return html
-    .replace(/<script[\s\S]*?<\/script>/gi, " ")
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/gi, " ")
-    .replace(/&amp;/gi, "&")
-    .replace(/&#39;/g, "'")
-    .replace(/&quot;/g, '"')
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function extractNumbers(segment: string): number[] {
-  const matches = segment.match(/\d{1,3}(?:\.\d+)?/g) ?? [];
-  return matches
-    .map((raw) => Number(raw))
-    .filter((num) => Number.isFinite(num) && num >= 0 && num <= 1000);
-}
-
-function pickScoreAndPercentile(segment: string): { score: number | null; pctPercentile: number | null } {
-  const percentMatches = [...segment.matchAll(/(\d{1,3}(?:\.\d+)?)\s*%/g)]
-    .map((match) => Number(match[1]))
-    .filter((value) => Number.isFinite(value) && value >= 0 && value <= 100);
-  const allNumbers = extractNumbers(segment).filter((value) => value <= 100);
-  const score = allNumbers.length > 0 ? clampScore(allNumbers[0]) : null;
-  const pctPercentile =
-    percentMatches.length > 0
-      ? clampScore(percentMatches[0])
-      : allNumbers.length > 1
-        ? clampScore(allNumbers[1])
-        : null;
-  return { score, pctPercentile };
-}
-
-function extractBasicMetrics(normalizedText: string, hints: string[]): { score: number | null; pctPercentile: number | null } {
-  const lower = normalizedText.toLowerCase();
-  for (const hint of hints) {
-    const at = lower.indexOf(hint);
-    if (at < 0) continue;
-    const segment = normalizedText.slice(Math.max(0, at - 20), at + 280);
-    const metrics = pickScoreAndPercentile(segment);
-    if (metrics.score != null || metrics.pctPercentile != null) {
-      return metrics;
-    }
-  }
-  return { score: null, pctPercentile: null };
-}
-
-async function fetchSaferSnapshotText(usdotNumber: string): Promise<{ sourceUrl: string; text: string }> {
-  const normalized = usdotNumber.trim();
-  if (!normalized) throw new Error("usdot_number_required");
-  const sourceUrl = `${SAFER_SNAPSHOT_BASE}?searchtype=ANY&query_type=queryCarrierSnapshot&query_param=USDOT&query_string=${encodeURIComponent(
-    normalized
-  )}`;
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-  try {
-    const response = await fetch(sourceUrl, {
-      method: "GET",
-      headers: { Accept: "text/html" },
-      signal: controller.signal,
-    });
-    if (!response.ok) {
-      throw new Error(`safer_http_${response.status}`);
-    }
-    const html = await response.text();
-    if (/no records found|unable to locate|record inactive/i.test(html)) {
-      throw new Error("safer_record_not_found");
-    }
-    return { sourceUrl, text: normalizeHtmlToText(html) };
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-export function parseSaferCsaSnapshot(rawText: string): CsaPulledBasicRow[] {
+// SAFER Company Snapshot contains inspection/OOS summaries, crash counts, and
+// safety-rating data, not authoritative SMS BASIC measures or percentiles.
+// Keep this compatibility entry point fail-closed: input text is intentionally
+// ignored and every BASIC remains unavailable.
+export function parseSaferCsaSnapshot(_rawText: string): CsaPulledBasicRow[] {
   return CSA_BASIC_CATEGORIES.map((basicCategory) => {
-    if (AUTHENTICATED_SMS_ONLY_CATEGORIES.has(basicCategory)) {
-      return {
-        basic_category: basicCategory,
-        score: null,
-        pct_percentile: null,
-        threshold: CSA_THRESHOLDS[basicCategory],
-        alert_status: "inconclusive",
-      };
-    }
-    const metrics = extractBasicMetrics(rawText, BASIC_LABEL_HINTS[basicCategory]);
-    const threshold = CSA_THRESHOLDS[basicCategory];
-    const score = metrics.score != null ? clampScore(metrics.score) : null;
-    const percentile = metrics.pctPercentile != null ? clampScore(metrics.pctPercentile) : null;
     return {
       basic_category: basicCategory,
-      score,
-      pct_percentile: percentile,
-      threshold,
-      alert_status: resolveAlertStatus(score, threshold),
+      score: null,
+      pct_percentile: null,
+      threshold: CSA_THRESHOLDS[basicCategory],
+      alert_status: "inconclusive",
     };
   });
 }
@@ -167,11 +59,11 @@ export async function pullCsaBasicsFromSafer(usdotNumber: string): Promise<{
   raw_text: string;
   basics: CsaPulledBasicRow[];
 }> {
-  const payload = await fetchSaferSnapshotText(usdotNumber);
+  if (!usdotNumber.trim()) throw new Error("usdot_number_required");
   return {
-    source_url: payload.sourceUrl,
-    raw_text: payload.text,
-    basics: parseSaferCsaSnapshot(payload.text),
+    source_url: FMCSA_SMS_MEASURE_URL,
+    raw_text: "",
+    basics: parseSaferCsaSnapshot(""),
   };
 }
 
@@ -240,7 +132,7 @@ export async function pullAndPersistCsaBasicsForCompany(
     (basic) => basic.score != null || basic.pct_percentile != null
   );
   if (availableBasics.length === 0) {
-    throw new Error("safer_csa_metrics_unavailable");
+    throw new Error("public_csa_basic_source_unavailable");
   }
   const persisted = await persistCsaBasicSnapshot(client, {
     operatingCompanyId: params.operatingCompanyId,

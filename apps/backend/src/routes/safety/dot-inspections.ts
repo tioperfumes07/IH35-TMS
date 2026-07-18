@@ -157,25 +157,21 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
     const payload = await withCompany(user.uuid, user.role, query.data.operating_company_id, async (client) => {
       await client.query("BEGIN");
       try {
-        const categoryList = [
-          body.data.csa_points_unsafe_driving != null ? "unsafe_driving" : null,
-          body.data.csa_points_crash_indicator != null ? "crash_indicator" : null,
-          body.data.csa_points_hos != null ? "hos_compliance" : null,
-          body.data.csa_points_vehicle_maintenance != null ? "vehicle_maintenance" : null,
-          body.data.csa_points_controlled_substances != null ? "controlled_substances" : null,
-          body.data.csa_points_driver_fitness != null ? "driver_fitness" : null,
-        ].filter(Boolean);
-
-        const pointValues = [
-          body.data.csa_points_unsafe_driving,
-          body.data.csa_points_crash_indicator,
-          body.data.csa_points_hos,
-          body.data.csa_points_vehicle_maintenance,
-          body.data.csa_points_controlled_substances,
-          body.data.csa_points_driver_fitness,
-        ].filter((value): value is number => value != null);
+        const csaPointBreakdown = Object.fromEntries(
+          Object.entries({
+            unsafe_driving: body.data.csa_points_unsafe_driving,
+            crash_indicator: body.data.csa_points_crash_indicator,
+            hos_compliance: body.data.csa_points_hos,
+            vehicle_maintenance: body.data.csa_points_vehicle_maintenance,
+            controlled_substances: body.data.csa_points_controlled_substances,
+            driver_fitness: body.data.csa_points_driver_fitness,
+          }).filter((entry): entry is [string, number] => entry[1] != null)
+        );
+        const categoryList = Object.keys(csaPointBreakdown);
+        const pointValues = Object.values(csaPointBreakdown);
         const totalPoints =
           pointValues.length > 0 ? pointValues.reduce((sum, value) => sum + value, 0) : null;
+        const violationsJson = JSON.stringify({ csa_point_breakdown: csaPointBreakdown });
 
         const createdRes = await client.query(
           `
@@ -197,7 +193,7 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
             body.data.outcome,
             categoryList,
             totalPoints,
-            "{}",
+            violationsJson,
             user.uuid,
             body.data.notes ?? null,
           ]

@@ -122,16 +122,16 @@ function toFiniteNumber(value: unknown): number | null {
 
 function normalizeSnapshotRow(row: RawSnapshotRow): CsaSnapshotRow {
   const category = basicCategorySchema.parse(row.basic_category);
-  const authenticatedOnly = AUTHENTICATED_SMS_ONLY.has(category);
   return {
     basic_category: category,
     snapshot_date: String(row.snapshot_date),
-    score: authenticatedOnly ? null : toFiniteNumber(row.score),
-    pct_percentile: authenticatedOnly ? null : toFiniteNumber(row.pct_percentile),
+    // Existing rows do not carry verifiable authenticated-SMS provenance.
+    // Fail closed until an explicitly authorized structured integration can
+    // establish that provenance; legacy SAFER-derived values are not exposed.
+    score: null,
+    pct_percentile: null,
     threshold: Number(toFiniteNumber(row.threshold) ?? 0),
-    alert_status: (["yes", "no", "inconclusive"].includes(row.alert_status)
-      ? row.alert_status
-      : "inconclusive") as CsaAlertStatus,
+    alert_status: "inconclusive",
     pulled_at: String(row.pulled_at),
   };
 }
@@ -300,9 +300,7 @@ export async function registerCsaRoutes(app: FastifyInstance) {
           label: CSA_LABELS[projection.basic_category],
           availability: AUTHENTICATED_SMS_ONLY.has(projection.basic_category)
             ? "requires_authenticated_carrier_sms"
-            : projection.latest_score != null || projection.latest_percentile != null
-              ? "available"
-              : "not_available_from_public_source",
+            : "not_available_from_verified_structured_source",
           source: AUTHENTICATED_SMS_ONLY.has(projection.basic_category)
             ? {
                 system: "fmcsa_sms",
@@ -310,15 +308,17 @@ export async function registerCsaRoutes(app: FastifyInstance) {
                 authoritative_for_percentile: true,
               }
             : {
-                system: "fmcsa_safer_public",
+                system: "fmcsa_sms",
                 access: "public",
                 authoritative_for_percentile: false,
+                structured_source_available: false,
               },
         })),
         source: {
-          system: "fmcsa_safer_public",
+          system: "fmcsa_sms",
           access: "public",
-          successful_metric_count: latest.filter((row) => row.score != null || row.pct_percentile != null).length,
+          availability: "unavailable",
+          successful_metric_count: 0,
           authenticated_scraping_performed: false,
         },
       };
@@ -617,8 +617,8 @@ export async function registerCsaRoutes(app: FastifyInstance) {
       if (error.message === "missing_company_usdot_number") {
         return null;
       }
-      if (error.message === "safer_csa_metrics_unavailable") {
-        return "safer_csa_metrics_unavailable" as const;
+      if (error.message === "public_csa_basic_source_unavailable") {
+        return "public_csa_basic_source_unavailable" as const;
       }
       throw error;
     });
@@ -626,13 +626,16 @@ export async function registerCsaRoutes(app: FastifyInstance) {
     if (!result) {
       return reply.code(409).send({ error: "missing_company_usdot_number" });
     }
-    if (result === "safer_csa_metrics_unavailable") {
+    if (result === "public_csa_basic_source_unavailable") {
       return reply.code(409).send({
-        error: "safer_csa_metrics_unavailable",
-        message: "Public SAFER returned no CSA BASIC measures; no fresh snapshot was recorded.",
+        error: "public_csa_basic_source_unavailable",
+        message:
+          "FMCSA does not provide a verified structured public SMS BASIC source. No request was made to SAFER and no fresh snapshot was recorded.",
         source: {
-          system: "fmcsa_safer_public",
+          system: "fmcsa_sms",
           access: "public",
+          availability: "unavailable",
+          complete_results_access: "authenticated_carrier_sms_profile",
           authenticated_scraping_performed: false,
         },
       });

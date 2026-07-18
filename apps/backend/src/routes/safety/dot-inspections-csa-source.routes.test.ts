@@ -96,4 +96,32 @@ describe("DOT inspection CSA canonical rollup", () => {
     const sqlText = mockQuery.mock.calls.map((call) => String(call[0])).join("\n");
     expect(sqlText).not.toMatch(/score_date|source_dot_inspection_count/);
   });
+
+  it("persists an exact per-category breakdown for multi-category inspections", async () => {
+    const response = await app.inject({
+      method: "POST",
+      url: `/api/v1/safety/dot-inspections?operating_company_id=${COMPANY}`,
+      payload: {
+        inspection_date: "2026-07-17T12:00:00Z",
+        inspector_name: "Officer Test",
+        inspection_level: 1,
+        outcome: "PASS",
+        csa_points_unsafe_driving: 5,
+        csa_points_hos: 3,
+      },
+    });
+
+    expect(response.statusCode).toBe(201);
+    const insertCall = mockQuery.mock.calls.find((call) =>
+      String(call[0]).includes("INSERT INTO safety.dot_inspections")
+    );
+    expect(insertCall?.[1]?.[8]).toEqual(["unsafe_driving", "hos_compliance"]);
+    expect(insertCall?.[1]?.[9]).toBe(8);
+    expect(JSON.parse(String(insertCall?.[1]?.[10]))).toEqual({
+      csa_point_breakdown: {
+        unsafe_driving: 5,
+        hos_compliance: 3,
+      },
+    });
+  });
 });
