@@ -1264,6 +1264,18 @@ Guard: `scripts/verify-xlsx-cve-closeout.mjs`, auto-discovered through `scripts/
 
 ---
 
+## 2026-07-18 — HOLD pre-push and bounded XLSX guard execution (LOCKED — owner)
+
+- Protected financial/HOLD classification remains authoritative and fail-closed in the required GitHub context `hold-merge-gate / hold-merge-gate`, where the pull request title, labels, base SHA, and head SHA are available.
+- Local pre-push must not interpret absent pull-request metadata as absent owner approval. `verify:static` classifies `verify:hold-merge-gate` as an explicit `pull-request-metadata` capability skip only after an authenticated live GitHub effective-rules query proves `main` requires check `hold-merge-gate` from GitHub Actions integration `15368`.
+- Missing `gh`, missing authentication, offline/API errors, malformed responses, timeouts, wrong integration, or an absent effective rule convert the local skip into a hard failure. Committed branch-protection JSON is documentation, not authority. The CI gate itself is unchanged: protected PRs without `JORGE-APPROVED` remain red and unmergeable.
+- Repository-wide static guards must inventory tracked source deterministically. They must not recursively scan environment-created dependency trash, caches, worktrees, or other untracked directories, and external inventory commands require explicit timeout/max-buffer bounds whose failures propagate fail-closed.
+- Required status-check app pinning does not prevent a PR-authored GitHub Actions workflow from self-attesting. HOLD workflow/classifier/policy paths are CODEOWNED by `@tioperfumes07`; the live ruleset must require code-owner review, or an organization required workflow from a separately protected repository must supply the attestation.
+
+Guards: `scripts/verify-push-gate-classification.mjs` and `scripts/verify-xlsx-cve-closeout.mjs`.
+
+---
+
 ## 2026-07-17 — CSA / Hazmat source-honesty rule (LOCKED — owner)
 
 - FMCSA Hazardous Materials Compliance BASIC measures and percentiles are **not public**. They remain unavailable (`null`) unless received from the carrier's explicitly authorized, authenticated SMS profile.

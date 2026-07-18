@@ -8,6 +8,7 @@ import {
   STATIC_RESULT_CATEGORIES,
   capabilityPreflight,
   classify,
+  runStatic,
 } from "../verify-static.mjs";
 
 function makeFixture({ source, verifyName = "verify:fixture", dbGated = [] }) {
@@ -63,6 +64,76 @@ test("missing dependencies are classified by explicit capability preflight", () 
   const result = classify(fixture.file, { preflight });
   assert.equal(result.kind, STATIC_RESULT_CATEGORIES.SKIP_CAPABILITY);
   assert.match(result.detail, /dependencies → ci \/ build-typecheck/);
+});
+
+test("missing PR metadata skips HOLD approval only to the required hold-merge CI gate", () => {
+  const context = "hold-merge-gate / hold-merge-gate";
+  const fixture = makeFixture({
+    source: 'console.error("local execution must not decide approval"); process.exit(1);',
+    verifyName: "verify:hold-merge-gate",
+  });
+  const policy = {
+    ...fixture.policy,
+    equivalents: {
+      ...fixture.policy.equivalents,
+      "pull-request-metadata": context,
+    },
+    serverRequiredContexts: new Set([
+      ...fixture.policy.serverRequiredContexts,
+      context,
+    ]),
+    requiredContexts: new Set([...fixture.policy.requiredContexts, context]),
+    wiredContexts: new Set([...fixture.policy.wiredContexts, context]),
+    liveRequiredCapabilities: new Set(["pull-request-metadata"]),
+    liveRequiredContexts: new Set([context]),
+    liveVerificationErrors: {},
+    guardCapabilities: {
+      "verify:hold-merge-gate": ["pull-request-metadata"],
+    },
+  };
+  const preflight = capabilityPreflight(fixture.file, {
+    root: fixture.root,
+    dependenciesAvailable: true,
+    databaseAvailable: true,
+    capabilityAvailability: { "pull-request-metadata": false },
+    policy,
+  });
+  const result = classify(fixture.file, { preflight });
+  assert.equal(result.kind, STATIC_RESULT_CATEGORIES.SKIP_CAPABILITY);
+  assert.equal(result.detail, `pull-request-metadata → ${context}`);
+});
+
+test("missing PR metadata hard-fails when live rules do not require the hold gate", () => {
+  const context = "hold-merge-gate / hold-merge-gate";
+  const fixture = makeFixture({
+    source: 'console.error("local execution must not decide approval"); process.exit(1);',
+    verifyName: "verify:hold-merge-gate",
+  });
+  const preflight = capabilityPreflight(fixture.file, {
+    root: fixture.root,
+    dependenciesAvailable: true,
+    databaseAvailable: true,
+    capabilityAvailability: { "pull-request-metadata": false },
+    policy: {
+      ...fixture.policy,
+      equivalents: { "pull-request-metadata": context },
+      serverRequiredContexts: new Set([context]),
+      requiredContexts: new Set([context]),
+      wiredContexts: new Set([context]),
+      liveRequiredCapabilities: new Set(["pull-request-metadata"]),
+      liveRequiredContexts: new Set(),
+      liveVerificationErrors: {
+        "pull-request-metadata":
+          "live GitHub rules for main do not require hold-merge-gate from integration 15368",
+      },
+      guardCapabilities: {
+        "verify:hold-merge-gate": ["pull-request-metadata"],
+      },
+    },
+  });
+  const result = classify(fixture.file, { preflight });
+  assert.equal(result.kind, STATIC_RESULT_CATEGORIES.FAIL_TEST);
+  assert.match(result.detail, /live GitHub rules.*do not require hold-merge-gate/);
 });
 
 test("missing capability without named CI equivalent is a hard test failure", () => {
@@ -125,4 +196,53 @@ test("DATABASE_URL text in a real assertion failure is never reclassified as a s
   });
   assert.equal(result.kind, STATIC_RESULT_CATEGORIES.FAIL_TEST);
   assert.match(result.detail, /DATABASE_URL text changed/);
+});
+
+test("static sweep loads live capability policy exactly once", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "verify-static-live-once-"));
+  const scriptsDir = path.join(root, "scripts");
+  fs.mkdirSync(scriptsDir);
+  for (const name of ["verify-a.mjs", "verify-b.mjs"]) {
+    fs.writeFileSync(path.join(scriptsDir, name), 'console.log("pass");\n');
+  }
+  fs.writeFileSync(
+    path.join(root, "package.json"),
+    JSON.stringify({
+      scripts: {
+        "verify:a": "node scripts/verify-a.mjs",
+        "verify:b": "node scripts/verify-b.mjs",
+      },
+    })
+  );
+  let policyLoads = 0;
+  const results = runStatic({
+    dir: scriptsDir,
+    ciSet: new Set(["verify-a.mjs", "verify-b.mjs"]),
+    classifyOptions: {
+      root,
+      dependenciesAvailable: true,
+      databaseAvailable: true,
+      capabilityAvailability: {},
+    },
+    policyLoader: () => {
+      policyLoads += 1;
+      return {
+        dbGated: new Set(),
+        equivalents: {},
+        serverRequiredContexts: new Set(),
+        nonProtectionContexts: new Set(),
+        requiredContexts: new Set(),
+        wiredContexts: new Set(),
+        liveRequiredCapabilities: new Set(),
+        liveRequiredContexts: new Set(),
+        liveVerificationErrors: {},
+        guardCapabilities: {},
+      };
+    },
+  });
+  assert.equal(policyLoads, 1);
+  assert.equal(
+    results.filter((entry) => entry.kind === STATIC_RESULT_CATEGORIES.PASS).length,
+    2
+  );
 });

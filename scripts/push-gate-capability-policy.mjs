@@ -1,5 +1,15 @@
 import fs from "node:fs";
 import path from "node:path";
+import { spawnSync } from "node:child_process";
+import { sanitizeTrustedProcessEnvironment } from "./trusted-git-environment.mjs";
+
+export const TRUSTED_GITHUB_AUTHORITY = Object.freeze({
+  host: "github.com",
+  repository: "tioperfumes07/IH35-TMS",
+  branch: "main",
+  rulesetId: 17935054,
+  rulesetName: "hold-merge-gate",
+});
 
 function workflowDeclaresJob(root, wiring) {
   if (!wiring || typeof wiring.workflow !== "string" || typeof wiring.job !== "string") {
@@ -12,7 +22,128 @@ function workflowDeclaresJob(root, wiring) {
   return new RegExp(`^  ${escaped}:\\s*$`, "m").test(source);
 }
 
-export function loadCapabilityPolicy(root) {
+function commandFailure(result, label) {
+  if (result.error) {
+    return `${label} failed: ${result.error.code ?? result.error.name}: ${result.error.message}`;
+  }
+  const detail = String(result.stderr || result.stdout || "").trim();
+  return `${label} failed with exit ${result.status}${detail ? `: ${detail}` : ""}`;
+}
+
+export function loadLiveRequiredStatusChecks(
+  root,
+  declarations,
+  {
+    run = (command, args, options) => spawnSync(command, args, options),
+    sourceEnv = process.env,
+  } = {}
+) {
+  const capabilities = Object.keys(declarations ?? {});
+  const requiredContexts = new Set();
+  const errors = {};
+  if (capabilities.length === 0) return { requiredContexts, errors };
+
+  let trustedEnv;
+  try {
+    trustedEnv = sanitizeTrustedProcessEnvironment(root, { run, sourceEnv }).env;
+  } catch (error) {
+    const message = error.message;
+    for (const capability of capabilities) errors[capability] = message;
+    return { requiredContexts, errors };
+  }
+
+  const rules = run("gh", [
+    "api",
+    "--hostname",
+    TRUSTED_GITHUB_AUTHORITY.host,
+    `repos/${TRUSTED_GITHUB_AUTHORITY.repository}/rules/branches/${TRUSTED_GITHUB_AUTHORITY.branch}`,
+  ], {
+    cwd: root,
+    env: trustedEnv,
+    encoding: "utf8",
+    timeout: 10_000,
+    maxBuffer: 4 * 1024 * 1024,
+  });
+  if (rules.status !== 0 || rules.error) {
+    const message = commandFailure(rules, "live GitHub ruleset lookup");
+    for (const capability of capabilities) errors[capability] = message;
+    return { requiredContexts, errors };
+  }
+
+  const ruleset = run("gh", [
+    "api",
+    "--hostname",
+    TRUSTED_GITHUB_AUTHORITY.host,
+    `repos/${TRUSTED_GITHUB_AUTHORITY.repository}/rulesets/${TRUSTED_GITHUB_AUTHORITY.rulesetId}`,
+  ], {
+    cwd: root,
+    env: trustedEnv,
+    encoding: "utf8",
+    timeout: 10_000,
+    maxBuffer: 4 * 1024 * 1024,
+  });
+  if (ruleset.status !== 0 || ruleset.error) {
+    const message = commandFailure(ruleset, "live GitHub ruleset identity lookup");
+    for (const capability of capabilities) errors[capability] = message;
+    return { requiredContexts, errors };
+  }
+
+  let effectiveRules;
+  let rulesetIdentity;
+  try {
+    effectiveRules = JSON.parse(rules.stdout);
+    if (!Array.isArray(effectiveRules)) throw new TypeError("response is not an array");
+    rulesetIdentity = JSON.parse(ruleset.stdout);
+    if (!rulesetIdentity || Array.isArray(rulesetIdentity)) {
+      throw new TypeError("ruleset identity response is not an object");
+    }
+  } catch (error) {
+    const message = `live GitHub ruleset lookup returned invalid JSON: ${error.message}`;
+    for (const capability of capabilities) errors[capability] = message;
+    return { requiredContexts, errors };
+  }
+
+  const identityMatches =
+    Number(rulesetIdentity.id) === TRUSTED_GITHUB_AUTHORITY.rulesetId &&
+    rulesetIdentity.name === TRUSTED_GITHUB_AUTHORITY.rulesetName &&
+    rulesetIdentity.source_type === "Repository" &&
+    rulesetIdentity.source === TRUSTED_GITHUB_AUTHORITY.repository &&
+    rulesetIdentity.target === "branch" &&
+    rulesetIdentity.enforcement === "active";
+  if (!identityMatches) {
+    const message =
+      `live GitHub ruleset identity does not match active repository ruleset ` +
+      `${TRUSTED_GITHUB_AUTHORITY.repository}#${TRUSTED_GITHUB_AUTHORITY.rulesetId}`;
+    for (const capability of capabilities) errors[capability] = message;
+    return { requiredContexts, errors };
+  }
+
+  const requiredChecks = effectiveRules
+    .filter(
+      (rule) =>
+        rule?.type === "required_status_checks" &&
+        rule?.ruleset_source_type === "Repository" &&
+        rule?.ruleset_source === TRUSTED_GITHUB_AUTHORITY.repository &&
+        Number(rule?.ruleset_id) === TRUSTED_GITHUB_AUTHORITY.rulesetId
+    )
+    .flatMap((rule) => rule?.parameters?.required_status_checks ?? []);
+  for (const [capability, declaration] of Object.entries(declarations)) {
+    const exact = requiredChecks.some(
+      (check) =>
+        check?.context === declaration.check_context &&
+        Number(check?.integration_id) === Number(declaration.integration_id)
+    );
+    if (exact) requiredContexts.add(declaration.context);
+    else {
+      errors[capability] =
+        `live GitHub rules for main do not require ${declaration.check_context} ` +
+        `from integration ${declaration.integration_id}`;
+    }
+  }
+  return { requiredContexts, errors };
+}
+
+export function loadCapabilityPolicy(root, options = {}) {
   const meta = JSON.parse(
     fs.readFileSync(path.resolve(root, "scripts/verify-meta.json"), "utf8")
   );
@@ -20,6 +151,8 @@ export function loadCapabilityPolicy(root) {
     fs.readFileSync(path.resolve(root, ".github/branch-protection-config.json"), "utf8")
   );
   const wiring = meta.server_required_ci_wiring ?? {};
+  const liveDeclarations = meta.server_required_live_status_checks ?? {};
+  const live = loadLiveRequiredStatusChecks(root, liveDeclarations, options);
   return {
     equivalents: meta.server_required_ci_equivalents ?? {},
     serverRequiredContexts: new Set(meta.server_required_ci_contexts ?? []),
@@ -32,6 +165,9 @@ export function loadCapabilityPolicy(root) {
         .filter(([, declaration]) => workflowDeclaresJob(root, declaration))
         .map(([context]) => context)
     ),
+    liveRequiredCapabilities: new Set(Object.keys(liveDeclarations)),
+    liveRequiredContexts: live.requiredContexts,
+    liveVerificationErrors: live.errors,
     dbGated: new Set(meta.db_gated_verify_scripts ?? []),
     guardCapabilities: meta.server_required_guard_capabilities ?? {},
   };
@@ -53,7 +189,21 @@ export function validateCapabilityEquivalent(capability, context, policy) {
     violations.push(`CI equivalent "${context}" is not declared server-required`);
   }
   const intentionallyConditional = policy.nonProtectionContexts?.has(context);
-  if (!intentionallyConditional && !policy.requiredContexts?.has(context)) {
+  const requiresLiveProof = policy.liveRequiredCapabilities?.has(capability);
+  if (
+    !intentionallyConditional &&
+    requiresLiveProof &&
+    !policy.liveRequiredContexts?.has(context)
+  ) {
+    violations.push(
+      policy.liveVerificationErrors?.[capability] ??
+        `CI equivalent "${context}" is not required by live GitHub rules`
+    );
+  } else if (
+    !intentionallyConditional &&
+    !requiresLiveProof &&
+    !policy.requiredContexts?.has(context)
+  ) {
     violations.push(`CI equivalent "${context}" is not a required protection context`);
   }
   if (intentionallyConditional && policy.requiredContexts?.has(context)) {
