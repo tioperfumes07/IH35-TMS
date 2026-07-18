@@ -124,6 +124,7 @@ describe("Accounting Wave A query error states", () => {
     render(<IntegrationTransactionsPage />);
 
     expect(screen.getByText(/Failed to load integration transactions: sync queue unavailable/)).toBeInTheDocument();
+    expect(screen.queryByTestId("parity-table")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Refresh" }));
     expect(failure.refetch).toHaveBeenCalledOnce();
   });
@@ -221,6 +222,8 @@ describe("Accounting Wave A query error states", () => {
     fireEvent.click(screen.getByRole("button", { name: /07\/18\/2026/i }));
 
     expect(screen.getByText(/Failed to load reconciliation items: items unavailable/)).toBeInTheDocument();
+    expect(screen.queryByText("Mismatches:")).not.toBeInTheDocument();
+    expect(screen.queryByRole("columnheader", { name: "Statement invoice" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Refresh" }));
     expect(failure.refetch).toHaveBeenCalledOnce();
   });

@@ -180,19 +180,21 @@ export function IntegrationTransactionsPage() {
           onRetry={() => void txnQuery.refetch()}
         />
       ) : null}
-      <ParityTable
-        columns={columns}
-        rows={items}
-        rowKey={(row) => row.id}
-        // LIST-EMPTY-1 settled gate: loading stays true while pending, and while a refetch is in
-        // flight with zero current rows — never renders emptyText mid-fetch.
-        loading={isPending || (isFetching && items.length === 0)}
-        filterBar={filterBar}
-        storageKey="integration-transactions"
-        exportFilename="integration-transactions"
-        initialPageSize={50}
-        emptyText="No integration transactions found."
-      />
+      {!txnQuery.isError ? (
+        <ParityTable
+          columns={columns}
+          rows={items}
+          rowKey={(row) => row.id}
+          // LIST-EMPTY-1 settled gate: loading stays true while pending, and while a refetch is in
+          // flight with zero current rows — never renders emptyText mid-fetch.
+          loading={isPending || (isFetching && items.length === 0)}
+          filterBar={filterBar}
+          storageKey="integration-transactions"
+          exportFilename="integration-transactions"
+          initialPageSize={50}
+          emptyText="No integration transactions found."
+        />
+      ) : null}
     </AccountingSubNavWrapper>
   );
 }
