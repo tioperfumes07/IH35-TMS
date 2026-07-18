@@ -4107,7 +4107,10 @@ export const ROUTES = React.Children.toArray(
         <Route path="/dispatch/chat" element={<ProtectedRoute><DispatchChatPage /></ProtectedRoute>} />
         <Route path="/tasks/report" element={<ProtectedRoute><TasksReportPage /></ProtectedRoute>} />
         {/* Finance module (SIDEBAR-V2-REORG-25) */}
-        <Route path="/finance" element={<ProtectedRoute><FinanceOverviewPage /></ProtectedRoute>} />
+        {/* FIN-2 — canonical Finance entry mounts the real read-only Hub. The placeholder Overview remains
+            reachable at /finance/overview, and /finance/hub remains mounted as an additive legacy alias. */}
+        <Route path="/finance" element={<ProtectedRoute><FinanceHubPage /></ProtectedRoute>} />
+        <Route path="/finance/overview" element={<ProtectedRoute><FinanceOverviewPage /></ProtectedRoute>} />
         <Route path="/finance/projections" element={<ProtectedRoute><FinanceProjectionsPage /></ProtectedRoute>} />
         <Route path="/finance/scenarios" element={<ProtectedRoute><FinanceScenariosPage /></ProtectedRoute>} />
         <Route path="/finance/loan-wizard" element={<ProtectedRoute><LoanWizardPage /></ProtectedRoute>} />

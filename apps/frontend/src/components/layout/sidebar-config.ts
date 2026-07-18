@@ -125,9 +125,9 @@ export const SIDEBAR_ITEM_META: Record<SidebarItemId, SidebarItemMeta> = {
   tasks: { id: "tasks", label: "TASKS", Icon: CheckSquare, to: "/tasks" },
   "cash-flow": { id: "cash-flow", label: "CASH FLOW", Icon: LineChart, to: "/cash-flow" },
   settlements: { id: "settlements", label: "SETTLEMENTS", Icon: Receipt, to: "/driver-finance/settlements" },
-  // FIN-2: "FINANCE HUB" lands on the real Hub dashboard (/finance/hub), not the placeholder Overview stub.
+  // FIN-2: "FINANCE HUB" lands on the real Hub dashboard at the canonical module root (/finance).
   // Overview stays reachable as a tab (FinanceModuleTabs) and in the sidebar flyout; no route removed.
-  finance: { id: "finance", label: "FINANCE HUB", Icon: TrendingUp, to: "/finance/hub" },
+  finance: { id: "finance", label: "FINANCE HUB", Icon: TrendingUp, to: "/finance" },
   inventory: { id: "inventory", label: "INVENTORY", Icon: Package, to: "/inventory" },
   users: {
     id: "users",
@@ -278,8 +278,8 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
       ];
     case "finance":
       return [
-        { label: "Overview", to: "/finance" },
-        { label: "Hub", to: "/finance/hub" },
+        { label: "Overview", to: "/finance/overview" },
+        { label: "Hub", to: "/finance" },
         { label: "Projections", to: "/finance/projections" },
         { label: "Scenarios", to: "/finance/scenarios" },
         { label: "Statements", to: "/finance/statements" },
