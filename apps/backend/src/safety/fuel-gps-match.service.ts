@@ -23,9 +23,16 @@ async function findClosestLoadStopLocation(client: DbClient, operatingCompanyId:
     `
       SELECT loc.latitude::float8 AS lat, loc.longitude::float8 AS lng
       FROM mdata.load_stops s
-      JOIN mdata.locations loc ON loc.id = s.location_id
-      WHERE s.operating_company_id = $1::uuid
-        AND s.load_id = $2::uuid
+      JOIN mdata.loads l
+        ON l.id = s.load_id
+       AND l.operating_company_id = $1::uuid
+      JOIN mdata.locations loc
+        ON loc.id = s.location_id
+       AND loc.operating_company_id = l.operating_company_id
+      WHERE s.load_id = $2::uuid
+        AND l.soft_deleted_at IS NULL
+        AND s.soft_deleted_at IS NULL
+        AND loc.deactivated_at IS NULL
         AND loc.latitude IS NOT NULL
         AND loc.longitude IS NOT NULL
       ORDER BY s.sequence_number

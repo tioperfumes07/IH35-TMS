@@ -119,13 +119,13 @@
 - [ ] `accounting.invoices.soft_deleted_at`
 
 ## apps/backend/src/safety/driver-scoring/scoring.service.ts
-- [ ] `mdata.drivers.active`
+- [x] `mdata.drivers.active` — PHANTOM-SAFETY-1: canonical Active status + non-archived/non-deactivated predicate
 
 ## apps/backend/src/safety/eld-audit-trail/viewer.service.ts
-- [ ] `mdata.drivers.display_name`
+- [x] `mdata.drivers.display_name` — PHANTOM-SAFETY-1: trimmed first_name/last_name with same-company join
 
 ## apps/backend/src/safety/fuel-gps-match.service.ts
-- [ ] `mdata.load_stops.operating_company_id`
+- [x] `mdata.load_stops.operating_company_id` — PHANTOM-SAFETY-1: company scope inherited through live parent load
 
 ## apps/backend/src/search/universal/indexer.service.ts
 - [ ] `mdata.drivers.driver_code`

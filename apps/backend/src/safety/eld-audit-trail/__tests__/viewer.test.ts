@@ -109,6 +109,9 @@ describe("ELD audit trail viewer", () => {
     const sql = String(query.mock.calls[1]?.[0] ?? "");
     expect(sql).toContain("samsara.hos_log_edits");
     expect(sql).toContain("operating_company_id = $1::uuid");
+    expect(sql).toContain("d.operating_company_id = e.operating_company_id");
+    expect(sql).toContain("NULLIF(BTRIM(CONCAT_WS(' ', d.first_name, d.last_name)), '') AS driver_name");
+    expect(sql).not.toContain("d.display_name");
     expect(query.mock.calls[1]?.[1]).toEqual(["22222222-2222-2222-2222-222222222222", "d9", 10]);
   });
 });

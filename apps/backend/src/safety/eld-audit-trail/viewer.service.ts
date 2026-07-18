@@ -112,7 +112,7 @@ export async function getEditHistory(
       SELECT
         e.id::text AS id,
         e.driver_uuid::text AS driver_uuid,
-        d.display_name AS driver_name,
+        NULLIF(BTRIM(CONCAT_WS(' ', d.first_name, d.last_name)), '') AS driver_name,
         e.edited_at,
         e.edited_by,
         e.reason,
@@ -166,7 +166,7 @@ export async function getRecentEditHistory(
       SELECT
         e.id::text AS id,
         e.driver_uuid::text AS driver_uuid,
-        d.display_name AS driver_name,
+        NULLIF(BTRIM(CONCAT_WS(' ', d.first_name, d.last_name)), '') AS driver_name,
         e.edited_at,
         e.edited_by,
         e.reason,

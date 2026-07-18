@@ -22,11 +22,55 @@ describe("company-membership-guard", () => {
     await expect(
       assertCompanyMembership("11111111-1111-1111-1111-111111111111", "22222222-2222-2222-2222-222222222222")
     ).resolves.toBeUndefined();
+
+    const sql = String(vi.mocked(activeClient.query).mock.calls[0]?.[0]);
+    expect(sql).toContain("JOIN org.companies c");
+    expect(sql).toContain("uca.deactivated_at IS NULL");
+    expect(sql).toContain("c.deactivated_at IS NULL");
+    // is_active is a UI-visibility flag, NOT an authz signal — must NOT gate membership
+    // (else pre-launch entities like USMCA, is_active=false, become API-unreachable).
+    expect(sql).not.toMatch(/c\.is_active\s*=\s*true/i);
+  });
+
+  it("uses the caller transaction client when provided", async () => {
+    activeClient.query = vi.fn(async () => ({ rows: [{ ok: 1 }], rowCount: 1 }));
+
+    await expect(
+      assertCompanyMembership(
+        activeClient,
+        "11111111-1111-1111-1111-111111111111",
+        "22222222-2222-2222-2222-222222222222"
+      )
+    ).resolves.toBeUndefined();
+
+    expect(activeClient.query).toHaveBeenCalledTimes(1);
   });
 
   it("throws 403 when user does not belong to company", async () => {
     await expect(
       assertCompanyMembership("11111111-1111-1111-1111-111111111111", "33333333-3333-3333-3333-333333333333")
+    ).rejects.toMatchObject({ message: "forbidden_company_membership", statusCode: 403 });
+  });
+
+  it("throws 403 when the matching access row is deactivated", async () => {
+    activeClient.query = vi.fn(async (sql) => {
+      expect(sql).toContain("uca.deactivated_at IS NULL");
+      return { rows: [], rowCount: 0 };
+    });
+
+    await expect(
+      assertCompanyMembership("11111111-1111-1111-1111-111111111111", "22222222-2222-2222-2222-222222222222")
+    ).rejects.toMatchObject({ message: "forbidden_company_membership", statusCode: 403 });
+  });
+
+  it("throws 403 when the company is deactivated", async () => {
+    activeClient.query = vi.fn(async (sql) => {
+      expect(sql).toContain("c.deactivated_at IS NULL");
+      return { rows: [], rowCount: 0 };
+    });
+
+    await expect(
+      assertCompanyMembership("11111111-1111-1111-1111-111111111111", "22222222-2222-2222-2222-222222222222")
     ).rejects.toMatchObject({ message: "forbidden_company_membership", statusCode: 403 });
   });
 });

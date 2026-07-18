@@ -95,8 +95,8 @@ async function withScopedCompany<T>(
   operatingCompanyId: string,
   fn: (client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> }) => Promise<T>,
 ) {
-  await assertCompanyMembership(userId, operatingCompanyId);
   return withCurrentUser(userId, async (client) => {
+    await assertCompanyMembership(client, userId, operatingCompanyId);
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     return fn(client);
   });
@@ -194,6 +194,7 @@ export async function registerAccountRoutes(app: FastifyInstance) {
         // operating_company_id — otherwise accounts_entity_write's WITH CHECK rejects the insert (was a 500).
         const operatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, b.operating_company_id);
         if (!operatingCompanyId) return { __no_company: true } as const;
+        await assertCompanyMembership(client, authUser.uuid, operatingCompanyId);
         await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
         const res = await client.query(
           `
@@ -329,6 +330,7 @@ export async function registerAccountRoutes(app: FastifyInstance) {
         // Scope to the active entity so af1 RLS lets us read + update this per-entity account.
         const operatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, b.operating_company_id);
         if (operatingCompanyId) {
+          await assertCompanyMembership(client, authUser.uuid, operatingCompanyId);
           await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
         }
         const oldRes = await client.query(
@@ -403,6 +405,7 @@ export async function registerAccountRoutes(app: FastifyInstance) {
       // Scope to the entity so af1 RLS lets us read + soft-delete this per-entity account.
       const operatingCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, requestedOc);
       if (operatingCompanyId) {
+        await assertCompanyMembership(client, authUser.uuid, operatingCompanyId);
         await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
       }
       const oldRes = await client.query(

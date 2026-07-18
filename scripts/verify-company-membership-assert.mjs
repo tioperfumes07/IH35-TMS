@@ -31,11 +31,11 @@
  *
  * WHAT THIS GUARD CHECKS
  * ----------------------
- * For each file in REQUIRED_MEMBERSHIP_ASSERT_FILES (the audited high-risk
- * tenant-scope wrappers + the two canonical wrappers), the number of
- * `assertCompanyMembership(` CALLS must be >= the number of places that set
- * `app.operating_company_id` from a caller-derived value. Removing any single
- * assert makes calls < GUC-sets and turns this red.
+ * The canonical membership helper must reject deactivated access rows and inactive
+ * or deactivated companies. For each file in REQUIRED_MEMBERSHIP_ASSERT_FILES (the
+ * audited high-risk tenant-scope wrappers + the two canonical wrappers), every
+ * caller-derived `app.operating_company_id` GUC set must also have a preceding
+ * `assertCompanyMembership(` call. Removing or reordering either control turns red.
  *
  * SCOPE / KNOWN FOLLOW-UP (intentionally NOT a blanket scan)
  * ----------------------------------------------------------
@@ -63,12 +63,14 @@
  *
  * Static guard — no DB required. Runs in CI on every push.
  */
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { resolve, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(fileURLToPath(import.meta.url), "../..");
 const BACKEND_SRC = join(ROOT, "apps/backend/src");
+const MEMBERSHIP_HELPER = join(BACKEND_SRC, "_helpers/company-membership-guard.ts");
+const FUEL_GPS_ROUTE = join(BACKEND_SRC, "safety/fuel-gps-match.routes.ts");
 
 // Tenant-scope wrapper files hardened by the cross-tenant authz fix, plus the two
 // CANONICAL wrappers (accounting/shared.ts, banking/shared.ts) so they can never
@@ -209,6 +211,7 @@ const REQUIRED_MEMBERSHIP_ASSERT_FILES = [
   "safety/expiry-tracking/routes.ts",
   "safety/fines.routes.ts",
   "safety/foundation-kpis.routes.ts",
+  "safety/fuel-gps-match.routes.ts",
   "safety/geofence-breach.routes.ts",
   "safety/hos.routes.ts",
   "safety/incidents.routes.ts",
@@ -236,26 +239,149 @@ const ASSERT_CALL_RE = /assertCompanyMembership\s*\(/g;
 
 const failures = [];
 
-for (const rel of REQUIRED_MEMBERSHIP_ASSERT_FILES) {
+function isAutoDiscoveredSource(src) {
+  return (
+    /from\s+["'][^"']*company-membership-guard\.js["']/.test(src) &&
+    /set_config\(\s*['"`]app\.operating_company_id['"`]|SET\s+LOCAL\s+app\.operating_company_id/i.test(src)
+  );
+}
+
+function discoverMembershipScopedFiles(dir, prefix = "") {
+  const discovered = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
+    if (entry.isDirectory()) {
+      if (entry.name === "__tests__") continue;
+      discovered.push(...discoverMembershipScopedFiles(join(dir, entry.name), rel));
+      continue;
+    }
+    if (!entry.isFile() || !entry.name.endsWith(".ts") || entry.name.endsWith(".test.ts")) continue;
+    const src = readFileSync(join(dir, entry.name), "utf8");
+    if (isAutoDiscoveredSource(src)) discovered.push(rel);
+  }
+  return discovered;
+}
+
+if (!existsSync(MEMBERSHIP_HELPER)) {
+  failures.push("_helpers/company-membership-guard.ts: canonical membership helper is missing");
+} else {
+  const helper = readFileSync(MEMBERSHIP_HELPER, "utf8");
+  const requiredHelperClauses = [
+    ["active access row", /\buca\.deactivated_at\s+IS\s+NULL\b/i],
+    ["company join", /\bJOIN\s+org\.companies\s+c\b/i],
+    // NOTE: c.is_active is intentionally NOT required. is_active is a UI-visibility
+    // flag ("not selectable in UI even if user has access"), not an authorization
+    // signal — gating membership on it makes pre-launch entities (USMCA, is_active=false
+    // until July 2026) API-unreachable. Only real deactivation (deactivated_at) revokes.
+    ["non-deactivated company", /\bc\.deactivated_at\s+IS\s+NULL\b/i],
+  ];
+  if (/\bc\.is_active\s*=\s*true\b/i.test(helper)) {
+    failures.push(
+      "_helpers/company-membership-guard.ts: must NOT gate membership on c.is_active (UI-visibility flag, not authz — would lock out pre-launch entities like USMCA)"
+    );
+  }
+  for (const [label, pattern] of requiredHelperClauses) {
+    if (!pattern.test(helper)) {
+      failures.push(
+        `_helpers/company-membership-guard.ts: missing ${label}; revoked or inactive tenant access could authorize`
+      );
+    }
+  }
+}
+
+if (!existsSync(FUEL_GPS_ROUTE)) {
+  failures.push("safety/fuel-gps-match.routes.ts: protected rematch route is missing");
+} else {
+  const fuelRoute = readFileSync(FUEL_GPS_ROUTE, "utf8");
+  if (
+    !/withCurrentUser\([^,]+,\s*async\s*\(client\)\s*=>\s*\{[\s\S]*?assertCompanyMembership\(\s*client\s*,[\s\S]*?set_config\(\s*['"`]app\.operating_company_id['"`]/m.test(
+      fuelRoute
+    )
+  ) {
+    failures.push(
+      "safety/fuel-gps-match.routes.ts: rematch authorization must use the same withCurrentUser transaction client before tenant GUC assignment"
+    );
+  }
+}
+
+function analyzeCallerSource(src) {
+  const lines = src.split("\n");
+  const callerDerivedSource = lines
+    .filter((line, index) => {
+      if (!GUC_SET_RE.test(line)) return true;
+      GUC_SET_RE.lastIndex = 0;
+      const exemption = `${lines[index - 1] ?? ""}\n${line}`;
+      return !exemption.includes("membership-scope-exempt:");
+    })
+    .join("\n");
+  GUC_SET_RE.lastIndex = 0;
+
+  const gucPositions = [...callerDerivedSource.matchAll(GUC_SET_RE)].map((match) => match.index ?? -1);
+  const assertPositions = [...callerDerivedSource.matchAll(ASSERT_CALL_RE)].map((match) => match.index ?? -1);
+  const failures = [];
+  if (assertPositions.length < gucPositions.length) {
+    failures.push(
+      `${assertPositions.length} assertCompanyMembership() call(s) < ${gucPositions.length} caller-derived tenant GUC set(s)`
+    );
+  }
+  for (let i = 0; i < gucPositions.length; i += 1) {
+    if ((assertPositions[i] ?? Number.POSITIVE_INFINITY) > gucPositions[i]) {
+      failures.push(`tenant GUC set #${i + 1} occurs before membership assertion #${i + 1}`);
+    }
+  }
+  return failures;
+}
+
+if (process.argv.includes("--selftest")) {
+  const good = `
+    import { assertCompanyMembership } from "./company-membership-guard.js";
+    await withCurrentUser(user.uuid, async (client) => {
+      await assertCompanyMembership(client, user.uuid, companyId);
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
+    });
+  `;
+  const plantedBadAutoDiscoveredCaller = `
+    import { assertCompanyMembership } from "./company-membership-guard.js";
+    await withCurrentUser(user.uuid, async (client) => {
+      await client.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
+      await assertCompanyMembership(client, user.uuid, companyId);
+    });
+  `;
+  if (!isAutoDiscoveredSource(good) || analyzeCallerSource(good).length !== 0) {
+    console.error("verify-company-membership-assert SELFTEST FAILED: good atomic caller rejected");
+    process.exit(1);
+  }
+  if (
+    !isAutoDiscoveredSource(plantedBadAutoDiscoveredCaller) ||
+    analyzeCallerSource(plantedBadAutoDiscoveredCaller).length === 0
+  ) {
+    console.error("verify-company-membership-assert SELFTEST FAILED: planted bad auto-discovered caller passed");
+    process.exit(1);
+  }
+  console.log("verify-company-membership-assert SELFTEST OK — planted bad auto-discovered caller rejected");
+  process.exit(0);
+}
+
+const membershipScopedFiles = discoverMembershipScopedFiles(BACKEND_SRC).sort();
+
+for (const rel of membershipScopedFiles) {
   const full = join(BACKEND_SRC, rel);
   if (!existsSync(full)) {
     failures.push(`${rel}: REQUIRED tenant-scope wrapper file is missing (was it moved/renamed? update this guard's list)`);
     continue;
   }
   const src = readFileSync(full, "utf8");
-  const gucSets = (src.match(GUC_SET_RE) || []).length;
   const assertCalls = (src.match(ASSERT_CALL_RE) || []).length;
 
-  if (gucSets === 0) {
+  if (assertCalls === 0) {
     failures.push(
-      `${rel}: expected to set app.operating_company_id but found none — the wrapper shape changed; re-verify the membership assert is still paired with the GUC set and update this guard.`
+      `${rel}: imports the canonical membership helper and sets app.operating_company_id but never calls assertCompanyMembership().`
     );
     continue;
   }
-  if (assertCalls < gucSets) {
-    failures.push(
-      `${rel}: sets app.operating_company_id ${gucSets}x but only ${assertCalls} assertCompanyMembership() call(s) — every caller-derived tenant-GUC set MUST be preceded by assertCompanyMembership(userId, operatingCompanyId) (cross-tenant authz).`
-    );
+
+  for (const failure of analyzeCallerSource(src)) {
+    failures.push(`${rel}: ${failure}`);
   }
 }
 
@@ -264,14 +390,14 @@ if (failures.length > 0) {
   for (const f of [...new Set(failures)].sort()) console.error(`  ✗ ${f}`);
   console.error(
     "\nCross-tenant authorization violation: a tenant-scope wrapper set app.operating_company_id\n" +
-      "from a caller-supplied operating_company_id without first calling assertCompanyMembership().\n" +
-      "Add `await assertCompanyMembership(userId, operatingCompanyId)` immediately before the GUC set,\n" +
-      "mirroring apps/backend/src/accounting/shared.ts. See the guard header for scope + follow-up."
+      "from a caller-supplied operating_company_id without a preceding membership assertion.\n" +
+      "For mutation/read scope, use `await assertCompanyMembership(client, userId, operatingCompanyId)` on the SAME transaction client.\n" +
+      "Principal/internal-derived scopes must carry an explicit `membership-scope-exempt:` marker at the GUC site."
   );
   process.exit(1);
 }
 
 console.log(
-  `verify-company-membership-assert OK — ${REQUIRED_MEMBERSHIP_ASSERT_FILES.length} tenant-scope wrapper files scanned, ` +
-    `every caller-derived app.operating_company_id GUC set is paired with assertCompanyMembership().`
+  `verify-company-membership-assert OK — canonical helper is active-only; ${membershipScopedFiles.length} ` +
+    `auto-discovered helper-consuming tenant-scope files preserve assert-before-GUC ordering/count.`
 );

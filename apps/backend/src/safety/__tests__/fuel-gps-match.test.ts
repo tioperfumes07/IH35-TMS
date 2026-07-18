@@ -36,4 +36,55 @@ describe("fuel gps match", () => {
       ])
     );
   });
+
+  it("scopes load stops through a live same-company load and location", async () => {
+    const sqlSeen: string[] = [];
+    const query = vi.fn(async (sql: string) => {
+      sqlSeen.push(sql);
+      if (sql.includes("FROM banking.bank_transactions bt")) {
+        return {
+          rows: [
+            {
+              id: "t1",
+              operating_company_id: "11111111-1111-4111-8111-111111111111",
+              matched_load_id: "22222222-2222-4222-8222-222222222222",
+              reference_ts: "2026-05-23T10:00:00.000Z",
+            },
+          ],
+        };
+      }
+      if (sql.includes("FROM telematics.vehicle_locations v")) {
+        return {
+          rows: [
+            {
+              unit_id: "33333333-3333-4333-8333-333333333333",
+              lat: 27.5,
+              lng: -99.5,
+              captured_at: "2026-05-23T10:00:00.000Z",
+              seconds_diff: 10,
+            },
+          ],
+        };
+      }
+      if (sql.includes("FROM mdata.load_stops s")) {
+        return { rows: [{ lat: 27.5, lng: -99.5 }] };
+      }
+      return { rows: [], rowCount: 1 };
+    });
+
+    await runFuelGpsMatchBatch(
+      { query } as never,
+      "11111111-1111-4111-8111-111111111111",
+      1
+    );
+
+    const stopSql = sqlSeen.find((sql) => sql.includes("FROM mdata.load_stops s"));
+    expect(stopSql).toContain("JOIN mdata.loads l");
+    expect(stopSql).toContain("l.operating_company_id = $1::uuid");
+    expect(stopSql).toContain("loc.operating_company_id = l.operating_company_id");
+    expect(stopSql).toContain("l.soft_deleted_at IS NULL");
+    expect(stopSql).toContain("s.soft_deleted_at IS NULL");
+    expect(stopSql).toContain("loc.deactivated_at IS NULL");
+    expect(stopSql).not.toContain("s.operating_company_id");
+  });
 });

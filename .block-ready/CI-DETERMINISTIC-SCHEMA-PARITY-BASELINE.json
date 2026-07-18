@@ -1,0 +1,47 @@
+{
+  "block_id": "CI-DETERMINISTIC-SCHEMA-PARITY-BASELINE",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "CI",
+  "task": "Make no-op schema-parity baseline regeneration deterministic and guard against volatile metadata regressions.",
+  "branch": "ci/deterministic-schema-parity-baseline",
+  "allowed_files": [
+    ".block-ready/CI-DETERMINISTIC-SCHEMA-PARITY-BASELINE.json",
+    "docs/schema-parity-baseline.json",
+    "scripts/__tests__/verify-schema-parity-determinism-step.test.mjs",
+    "scripts/verify-schema-parity.mjs",
+    "scripts/verify-schema-parity-determinism.mjs",
+    "scripts/verify-steps/145-verify-schema-parity-determinism.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "Two consecutive no-op verify-schema-parity --update regenerations are byte-identical in an isolated temporary workspace.",
+      "evidence": "verify-schema-parity-determinism runs the real CLI twice with --root pointed at a disposable fixture and compares exact bytes."
+    },
+    {
+      "check": "Regenerated top-level output contains no volatile generated_at field and retains sorted deterministic tables.",
+      "evidence": "The guard parses fixture output, rejects generated_at, and checks the exact sorted tables payload."
+    },
+    {
+      "check": "Schema-parity verification still consumes the deterministic tables payload.",
+      "evidence": "The guard verifies the clean fixture, then removes a committed column and requires COLUMN_NOT_IN_BASELINE failure."
+    },
+    {
+      "check": "A planted old writer using Date, toISOString, or generated_at fails.",
+      "evidence": "Guard --selftest requires one planted old writer containing all three volatile patterns to produce all three expected violations."
+    },
+    {
+      "check": "The verify-step fail-closed runs the normal guard, guard selftest, and actual wrapper test in order.",
+      "evidence": "Wrapper tests plant status 1 at each child boundary, require immediate rejection, prove later commands are not invoked, and verify the complete success order."
+    },
+    {
+      "check": "The new guard is auto-discovered without editing package.json or CI workflows.",
+      "evidence": "scripts/verify-steps/145-verify-schema-parity-determinism.mjs checks all three child statuses and throws on any failure."
+    }
+  ],
+  "note": "CI-only. This removes qualifying timestamp churn and timestamp-only baseline conflicts; it does not claim to prevent unrelated PR failures or all GitHub conflicts."
+}
