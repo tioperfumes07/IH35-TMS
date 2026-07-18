@@ -14,7 +14,11 @@
     ".claude/skills/ih35-cpa-accounting-decisions/SKILL.md",
     ".claude/skills/ih35-cpa-accounting-decisions/resources/locked-decisions-reference.md",
     "scripts/verify-cpa-answers-phase1-decisions.mjs",
-    "scripts/verify-steps/910-verify-cpa-answers-phase1-decisions.mjs"
+    "scripts/verify-steps/910-verify-cpa-answers-phase1-decisions.mjs",
+    "docs/trackers/block-reconciliation-data.json",
+    "docs/trackers/program-phase-manifest.json",
+    "docs/trackers/BLOCK-RECONCILIATION-2026-07-18.md",
+    "docs/trackers/exports/IH35-TMS-BLOCK-RECONCILIATION-2026-07-18.xlsx"
   ],
   "runtime_path": "docs",
   "db_required": false,
