@@ -29,6 +29,7 @@ const ACTION_TYPES = [
   "other",
 ] as const;
 const ACTION_STATUSES = ["open", "in_progress", "blocked", "completed", "cancelled"] as const;
+const AUTHENTICATED_SMS_ONLY = new Set<CsaBasicCategory>(["hazmat_compliance", "crash_indicator"]);
 
 const basicCategorySchema = z.enum(CSA_BASIC_CATEGORIES);
 const actionTypeSchema = z.enum(ACTION_TYPES);
@@ -120,11 +121,13 @@ function toFiniteNumber(value: unknown): number | null {
 }
 
 function normalizeSnapshotRow(row: RawSnapshotRow): CsaSnapshotRow {
+  const category = basicCategorySchema.parse(row.basic_category);
+  const authenticatedOnly = AUTHENTICATED_SMS_ONLY.has(category);
   return {
-    basic_category: basicCategorySchema.parse(row.basic_category),
+    basic_category: category,
     snapshot_date: String(row.snapshot_date),
-    score: toFiniteNumber(row.score),
-    pct_percentile: toFiniteNumber(row.pct_percentile),
+    score: authenticatedOnly ? null : toFiniteNumber(row.score),
+    pct_percentile: authenticatedOnly ? null : toFiniteNumber(row.pct_percentile),
     threshold: Number(toFiniteNumber(row.threshold) ?? 0),
     alert_status: (["yes", "no", "inconclusive"].includes(row.alert_status)
       ? row.alert_status
@@ -269,10 +272,12 @@ export async function registerCsaRoutes(app: FastifyInstance) {
       const recent = await listRecentSnapshots(client, companyId, 6);
       const projections = buildProjectionSet(recent);
       const latestSnapshotDate = latest
+        .filter((row) => row.score != null || row.pct_percentile != null)
         .map((row) => Date.parse(row.snapshot_date))
         .filter((value) => Number.isFinite(value))
         .sort((a, b) => b - a)[0];
       const latestPulledAt = latest
+        .filter((row) => row.score != null || row.pct_percentile != null)
         .map((row) => Date.parse(row.pulled_at))
         .filter((value) => Number.isFinite(value))
         .sort((a, b) => b - a)[0];
@@ -293,7 +298,29 @@ export async function registerCsaRoutes(app: FastifyInstance) {
         basics: projections.map((projection) => ({
           ...projection,
           label: CSA_LABELS[projection.basic_category],
+          availability: AUTHENTICATED_SMS_ONLY.has(projection.basic_category)
+            ? "requires_authenticated_carrier_sms"
+            : projection.latest_score != null || projection.latest_percentile != null
+              ? "available"
+              : "not_available_from_public_source",
+          source: AUTHENTICATED_SMS_ONLY.has(projection.basic_category)
+            ? {
+                system: "fmcsa_sms",
+                access: "authenticated_carrier_only",
+                authoritative_for_percentile: true,
+              }
+            : {
+                system: "fmcsa_safer_public",
+                access: "public",
+                authoritative_for_percentile: false,
+              },
         })),
+        source: {
+          system: "fmcsa_safer_public",
+          access: "public",
+          successful_metric_count: latest.filter((row) => row.score != null || row.pct_percentile != null).length,
+          authenticated_scraping_performed: false,
+        },
       };
     });
 
@@ -590,11 +617,25 @@ export async function registerCsaRoutes(app: FastifyInstance) {
       if (error.message === "missing_company_usdot_number") {
         return null;
       }
+      if (error.message === "safer_csa_metrics_unavailable") {
+        return "safer_csa_metrics_unavailable" as const;
+      }
       throw error;
     });
 
     if (!result) {
       return reply.code(409).send({ error: "missing_company_usdot_number" });
+    }
+    if (result === "safer_csa_metrics_unavailable") {
+      return reply.code(409).send({
+        error: "safer_csa_metrics_unavailable",
+        message: "Public SAFER returned no CSA BASIC measures; no fresh snapshot was recorded.",
+        source: {
+          system: "fmcsa_safer_public",
+          access: "public",
+          authenticated_scraping_performed: false,
+        },
+      });
     }
     return reply.send(result);
   });

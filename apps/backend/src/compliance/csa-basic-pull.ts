@@ -14,6 +14,14 @@ const SAFER_SNAPSHOT_BASE = "https://safer.fmcsa.dot.gov/query.asp";
 const FETCH_TIMEOUT_MS = 30_000;
 let cronInitialized = false;
 
+// FMCSA does not expose these BASICs to the public. They are available only to
+// the carrier in its authenticated SMS profile (or to enforcement personnel).
+// Public SAFER/SMS text must never be interpreted as their measure/percentile.
+export const AUTHENTICATED_SMS_ONLY_CATEGORIES = new Set<CsaBasicCategory>([
+  "hazmat_compliance",
+  "crash_indicator",
+]);
+
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
 };
@@ -131,6 +139,15 @@ async function fetchSaferSnapshotText(usdotNumber: string): Promise<{ sourceUrl:
 
 export function parseSaferCsaSnapshot(rawText: string): CsaPulledBasicRow[] {
   return CSA_BASIC_CATEGORIES.map((basicCategory) => {
+    if (AUTHENTICATED_SMS_ONLY_CATEGORIES.has(basicCategory)) {
+      return {
+        basic_category: basicCategory,
+        score: null,
+        pct_percentile: null,
+        threshold: CSA_THRESHOLDS[basicCategory],
+        alert_status: "inconclusive",
+      };
+    }
     const metrics = extractBasicMetrics(rawText, BASIC_LABEL_HINTS[basicCategory]);
     const threshold = CSA_THRESHOLDS[basicCategory];
     const score = metrics.score != null ? clampScore(metrics.score) : null;
@@ -219,17 +236,24 @@ export async function pullAndPersistCsaBasicsForCompany(
   params: { operatingCompanyId: string; usdotNumber: string }
 ) {
   const pulled = await pullCsaBasicsFromSafer(params.usdotNumber);
+  const availableBasics = pulled.basics.filter(
+    (basic) => basic.score != null || basic.pct_percentile != null
+  );
+  if (availableBasics.length === 0) {
+    throw new Error("safer_csa_metrics_unavailable");
+  }
   const persisted = await persistCsaBasicSnapshot(client, {
     operatingCompanyId: params.operatingCompanyId,
     sourceDotNumber: params.usdotNumber,
     sourceUrl: pulled.source_url,
-    basics: pulled.basics,
+    basics: availableBasics,
   });
   return {
     ...persisted,
     source_url: pulled.source_url,
     basics: pulled.basics,
-    inconclusive_count: pulled.basics.filter((row) => row.score == null).length,
+    available_metric_count: availableBasics.length,
+    unavailable_metric_count: pulled.basics.length - availableBasics.length,
   };
 }
 

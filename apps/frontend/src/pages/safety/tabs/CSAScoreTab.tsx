@@ -11,16 +11,15 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 type BasicRow = {
   label: string;
   value: number | null;
-  threshold: number;
+  availability: "internal_rollup" | "authenticated_sms_required";
 };
 
 type CsaScoreRow = Record<string, unknown>;
 
-function severityColor(value: number | null) {
-  if (value == null) return "text-slate-400";
-  if (value < 65) return "text-slate-700";
-  if (value < 80) return "text-slate-700";
-  return "text-red-700";
+function toNullableNumber(value: unknown) {
+  if (value == null || value === "") return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
 export function CSAScoreTab() {
@@ -58,13 +57,13 @@ export function CSAScoreTab() {
   const current = currentQuery.data?.current ?? null;
   const basics = useMemo<BasicRow[]>(
     () => [
-      { label: "Unsafe Driving", value: Number(current?.basic_unsafe_driving ?? 0), threshold: 65 },
-      { label: "HOS Compliance", value: Number(current?.basic_hos_compliance ?? 0), threshold: 65 },
-      { label: "Driver Fitness", value: Number(current?.basic_driver_fitness ?? 0), threshold: 80 },
-      { label: "Controlled Substances", value: Number(current?.basic_controlled_substances ?? 0), threshold: 80 },
-      { label: "Vehicle Maintenance", value: Number(current?.basic_vehicle_maintenance ?? 0), threshold: 80 },
-      { label: "Crash Indicator", value: Number(current?.basic_crash_indicator ?? 0), threshold: 65 },
-      { label: "Hazmat", value: null, threshold: 0 },
+      { label: "Unsafe Driving", value: toNullableNumber(current?.basic_unsafe_driving), availability: "internal_rollup" },
+      { label: "HOS Compliance", value: toNullableNumber(current?.basic_hos_compliance), availability: "internal_rollup" },
+      { label: "Driver Fitness", value: toNullableNumber(current?.basic_driver_fitness), availability: "internal_rollup" },
+      { label: "Controlled Substances", value: toNullableNumber(current?.basic_controlled_substances), availability: "internal_rollup" },
+      { label: "Vehicle Maintenance", value: toNullableNumber(current?.basic_vehicle_maintenance), availability: "internal_rollup" },
+      { label: "Crash Indicator", value: toNullableNumber(current?.basic_crash_indicator), availability: "internal_rollup" },
+      { label: "Hazmat", value: null, availability: "authenticated_sms_required" },
     ],
     [current]
   );
@@ -73,8 +72,13 @@ export function CSAScoreTab() {
     () => [
       { key: "period_start", label: "Period Start", sortable: true, render: (row) => formatDateUS(row.period_start) },
       { key: "period_end", label: "Period End", sortable: true, render: (row) => formatDateUS(row.period_end) },
-      { key: "total_violations", label: "Total Violations", sortable: true, render: (row) => String(row.total_violations ?? "0") },
-      { key: "total_oos", label: "Total OOS", sortable: true, render: (row) => String(row.total_oos ?? "0") },
+      {
+        key: "total_violations",
+        label: "Internal Inspection Points",
+        sortable: true,
+        render: (row) => String(row.total_violations ?? "Unavailable"),
+      },
+      { key: "total_oos", label: "Total OOS", sortable: true, render: (row) => String(row.total_oos ?? "Unavailable") },
       { key: "computed_by", label: "Computed By", sortable: true, render: (row) => String(row.computed_by ?? "-") },
     ],
     [],
@@ -91,12 +95,21 @@ export function CSAScoreTab() {
           Manual recompute
         </button>
         <button type="button" className="rounded-sm border border-gray-300 px-3 py-1 text-xs font-semibold text-slate-700 disabled:opacity-60" disabled={saferMutation.isPending} onClick={() => saferMutation.mutate()}>
-          Pull from FMCSA SAFER
+          Check public SAFER availability
         </button>
-        {saferMutation.isError ? <span className="text-xs text-slate-700">FMCSA SAFER lookup is not available yet (service returned an error).</span> : null}
+        {saferMutation.isError ? (
+          <span className="text-xs text-slate-700">
+            Public SAFER is not authoritative for Hazmat BASIC. Authenticated carrier SMS access is required.
+          </span>
+        ) : null}
         <Link to="/safety/csa-fmcsa-trend" className="ml-auto text-xs font-semibold text-slate-700 underline">
           View FMCSA live trend &amp; projections &rarr;
         </Link>
+      </div>
+
+      <div className="rounded-sm border border-gray-200 bg-slate-50 p-3 text-xs text-slate-700">
+        Values below are IH35 internal inspection-point rollups from <code>safety.csa_scores</code>. They are not
+        FMCSA BASIC measures or percentiles. Missing values remain unavailable and are never displayed as zero.
       </div>
 
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-2">
@@ -104,15 +117,14 @@ export function CSAScoreTab() {
           <div key={basic.label} className="rounded-sm border border-gray-100 bg-gray-50 p-2">
             <div className="flex items-center justify-between text-xs">
               <span className="font-semibold text-slate-700">{basic.label}</span>
-              <span className={`font-semibold ${severityColor(basic.value)}`}>
+              <span className="font-semibold text-slate-700">
                 {basic.value == null ? "-" : Number(basic.value).toFixed(2)}
               </span>
             </div>
             <div className="mt-1 text-[11px] text-slate-500">
-              Threshold {basic.value == null ? "-" : basic.threshold} · Severity{" "}
-              <span className={severityColor(basic.value)}>
-                {basic.value == null ? "N/A" : basic.value < 65 ? "green" : basic.value < 80 ? "yellow" : "red"}
-              </span>
+              {basic.availability === "authenticated_sms_required"
+                ? "Unavailable from public SAFER; authenticated carrier SMS required"
+                : "Internal inspection points · not an FMCSA percentile"}
             </div>
           </div>
         ))}

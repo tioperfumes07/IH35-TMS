@@ -24,6 +24,12 @@ type BasicTile = {
   slope_per_day: number;
   trending_toward_alert: boolean;
   risk_band: "ok" | "watch" | "alert" | "unknown";
+  availability: "available" | "not_available_from_public_source" | "requires_authenticated_carrier_sms";
+  source: {
+    system: "fmcsa_safer_public" | "fmcsa_sms";
+    access: "public" | "authenticated_carrier_only";
+    authoritative_for_percentile: boolean;
+  };
 };
 
 type TrendPoint = {
@@ -37,6 +43,12 @@ type CurrentResponse = {
   pull_age_days: number | null;
   is_stale: boolean;
   basics: BasicTile[];
+  source: {
+    system: "fmcsa_safer_public";
+    access: "public";
+    successful_metric_count: number;
+    authenticated_scraping_performed: false;
+  };
 };
 
 type TrendResponse = {
@@ -147,10 +159,14 @@ export function CSAScorePage() {
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white p-3 text-xs">
         <div className="space-y-1">
-          <div className="text-sm font-semibold text-slate-800">CSA BASIC Score</div>
+          <div className="text-sm font-semibold text-slate-800">FMCSA CSA source status</div>
           <div className="text-slate-600">
-            Last pull {currentQuery.data?.pulled_at ? new Date(currentQuery.data.pulled_at).toLocaleString() : "not available"}
+            Last successful public-source metric pull{" "}
+            {currentQuery.data?.pulled_at ? new Date(currentQuery.data.pulled_at).toLocaleString() : "not available"}
             {typeof currentQuery.data?.pull_age_days === "number" ? ` (${currentQuery.data.pull_age_days} days ago)` : ""}
+          </div>
+          <div className="text-slate-500">
+            Public SAFER is not authoritative for Hazmat or Crash Indicator BASIC percentiles. No authenticated scraping is performed.
           </div>
           {currentQuery.data?.is_stale ? (
             <div className="font-semibold text-slate-700">CSA pull is stale (&gt;7 days). Run pull now and check cron.</div>
@@ -162,8 +178,13 @@ export function CSAScorePage() {
           onClick={() => pullMutation.mutate()}
           disabled={!companyId || pullMutation.isPending || !canPull}
         >
-          Pull from FMCSA SAFER
+          Check public FMCSA source
         </button>
+        {pullMutation.isError ? (
+          <div className="w-full text-right text-slate-700">
+            No authoritative BASIC metrics were returned; freshness was not advanced.
+          </div>
+        ) : null}
       </div>
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -180,7 +201,7 @@ export function CSAScorePage() {
               </div>
               <div className="mt-2 grid grid-cols-2 gap-2 text-[11px] text-slate-600">
                 <div>
-                  <div>Score</div>
+                  <div>{tile.source.authoritative_for_percentile ? "SMS measure" : "Public-source measure"}</div>
                   <div className="text-sm font-semibold text-slate-800">{formatScore(tile.latest_score)}</div>
                 </div>
                 <div>
@@ -189,15 +210,23 @@ export function CSAScorePage() {
                 </div>
                 <div>
                   <div>Threshold</div>
-                  <div className="font-semibold text-slate-800">{tile.threshold.toFixed(0)}</div>
+                  <div className="font-semibold text-slate-800">
+                    {tile.availability === "available" ? tile.threshold.toFixed(0) : "-"}
+                  </div>
                 </div>
                 <div>
                   <div>Projected 30d</div>
-                  <div className={`font-semibold ${bandClassName(tile.risk_band)}`}>{formatScore(tile.projected_score_30d)}</div>
+                  <div className={`font-semibold ${bandClassName(tile.risk_band)}`}>
+                    {tile.availability === "available" ? formatScore(tile.projected_score_30d) : "-"}
+                  </div>
                 </div>
               </div>
               <div className="mt-2 text-[10px] text-slate-500">
-                Alert status: {tile.latest_alert_status} · Trending toward alert: {tile.trending_toward_alert ? "yes" : "no"}
+                {tile.availability === "requires_authenticated_carrier_sms"
+                  ? "Unavailable from public sources · authenticated carrier SMS required"
+                  : tile.availability === "not_available_from_public_source"
+                    ? "No metric available from the public source"
+                    : `Alert status: ${tile.latest_alert_status} · Trending toward alert: ${tile.trending_toward_alert ? "yes" : "no"}`}
               </div>
               <div className="mt-2 rounded-sm bg-slate-50 p-1 text-slate-600">
                 <Sparkline points={sparklinePoints} />

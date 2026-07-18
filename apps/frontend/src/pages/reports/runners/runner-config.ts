@@ -133,11 +133,11 @@ export const RUNNER_CONFIGS: Record<string, ReportRunnerConfig> = {
   },
   "csa-fleet": {
     id: "csa-fleet",
-    name: "CSA fleet score",
+    name: "Internal inspection-point rollup",
     apiPath: "/api/v1/reports/csa-fleet-score",
     filters: [],
     columns: [
-      { key: "total_points", label: "Total Points", align: "right", format: "number" },
+      { key: "total_points", label: "Internal Points", align: "right", format: "number" },
       { key: "total_inspections", label: "Inspections", align: "right", format: "number" },
       { key: "total_oos", label: "OOS", align: "right", format: "number" },
       { key: "threshold_status", label: "Status", align: "left", format: "text" },

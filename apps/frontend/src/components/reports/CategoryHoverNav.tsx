@@ -71,7 +71,7 @@ const FLYOUT_ITEMS: Record<ReportCategory, Array<{ id: string; label: string; hi
     { id: "fuel-price-variance", label: "Fuel price variance" },
   ],
   safety: [
-    { id: "csa-fleet", label: "CSA fleet score" },
+    { id: "csa-fleet", label: "Internal inspection-point rollup" },
     { id: "hos-violations", label: "HOS violations trend" },
   ],
   compliance: [

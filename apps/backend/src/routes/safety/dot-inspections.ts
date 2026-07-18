@@ -6,6 +6,7 @@ import { requireAuth } from "../../auth/session-middleware.js";
 import { createWorkOrderWithLines } from "../../maintenance/two-section-service.js";
 import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
 import { putObjectBytes, isR2Configured } from "../../storage/r2-client.js";
+import { computeAndUpsertScore, INTERNAL_CSA_SOURCE_METADATA } from "./csa-scores.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -57,86 +58,6 @@ async function withCompany<T>(userId: string, role: string, companyId: string, f
     await client.query(`SELECT set_config('app.user_role', $1, true)`, [role]);
     return fn(client);
   });
-}
-
-async function recomputeCsa(client: any, companyId: string, actorId: string) {
-  const res = await client.query(
-    `
-      SELECT
-        COALESCE(SUM(csa_points_unsafe_driving), 0)::numeric(8,2) AS basic_unsafe_driving,
-        COALESCE(SUM(csa_points_crash_indicator), 0)::numeric(8,2) AS basic_crash_indicator,
-        COALESCE(SUM(csa_points_hos), 0)::numeric(8,2) AS basic_hos_compliance,
-        COALESCE(SUM(csa_points_vehicle_maintenance), 0)::numeric(8,2) AS basic_vehicle_maintenance,
-        COALESCE(SUM(csa_points_controlled_substances), 0)::numeric(8,2) AS basic_controlled_substances,
-        COALESCE(SUM(csa_points_driver_fitness), 0)::numeric(8,2) AS basic_driver_fitness,
-        COUNT(*)::int AS source_dot_inspection_count
-      FROM safety.dot_inspections
-      WHERE operating_company_id = $1
-        AND inspection_date >= (CURRENT_DATE - INTERVAL '365 days')
-    `,
-    [companyId]
-  );
-  const row = res.rows[0];
-  const total =
-    Number(row.basic_unsafe_driving || 0) +
-    Number(row.basic_crash_indicator || 0) +
-    Number(row.basic_hos_compliance || 0) +
-    Number(row.basic_vehicle_maintenance || 0) +
-    Number(row.basic_controlled_substances || 0) +
-    Number(row.basic_driver_fitness || 0);
-
-  const upsert = await client.query(
-    `
-      INSERT INTO safety.csa_scores (
-        operating_company_id,
-        score_date,
-        basic_unsafe_driving,
-        basic_crash_indicator,
-        basic_hos_compliance,
-        basic_vehicle_maintenance,
-        basic_controlled_substances,
-        basic_driver_fitness,
-        basic_hazmat,
-        total_points,
-        source_dot_inspection_count
-      )
-      VALUES ($1, CURRENT_DATE, $2, $3, $4, $5, $6, $7, NULL, $8, $9)
-      ON CONFLICT (operating_company_id, score_date)
-      DO UPDATE SET
-        basic_unsafe_driving = EXCLUDED.basic_unsafe_driving,
-        basic_crash_indicator = EXCLUDED.basic_crash_indicator,
-        basic_hos_compliance = EXCLUDED.basic_hos_compliance,
-        basic_vehicle_maintenance = EXCLUDED.basic_vehicle_maintenance,
-        basic_controlled_substances = EXCLUDED.basic_controlled_substances,
-        basic_driver_fitness = EXCLUDED.basic_driver_fitness,
-        basic_hazmat = NULL,
-        total_points = EXCLUDED.total_points,
-        source_dot_inspection_count = EXCLUDED.source_dot_inspection_count
-      RETURNING *
-    `,
-    [
-      companyId,
-      row.basic_unsafe_driving,
-      row.basic_crash_indicator,
-      row.basic_hos_compliance,
-      row.basic_vehicle_maintenance,
-      row.basic_controlled_substances,
-      row.basic_driver_fitness,
-      total,
-      row.source_dot_inspection_count,
-    ]
-  );
-
-  await appendCrudAudit(
-    client,
-    actorId,
-    "safety.csa_score.recomputed",
-    { csa_score_id: upsert.rows[0].id, score_date: upsert.rows[0].score_date, total_points: upsert.rows[0].total_points },
-    "info",
-    "P3-T11.17.2-SAFETY-V6.4"
-  );
-
-  return upsert.rows[0];
 }
 
 export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
@@ -245,13 +166,16 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
           body.data.csa_points_driver_fitness != null ? "driver_fitness" : null,
         ].filter(Boolean);
 
+        const pointValues = [
+          body.data.csa_points_unsafe_driving,
+          body.data.csa_points_crash_indicator,
+          body.data.csa_points_hos,
+          body.data.csa_points_vehicle_maintenance,
+          body.data.csa_points_controlled_substances,
+          body.data.csa_points_driver_fitness,
+        ].filter((value): value is number => value != null);
         const totalPoints =
-          Number(body.data.csa_points_unsafe_driving ?? 0) +
-          Number(body.data.csa_points_crash_indicator ?? 0) +
-          Number(body.data.csa_points_hos ?? 0) +
-          Number(body.data.csa_points_vehicle_maintenance ?? 0) +
-          Number(body.data.csa_points_controlled_substances ?? 0) +
-          Number(body.data.csa_points_driver_fitness ?? 0);
+          pointValues.length > 0 ? pointValues.reduce((sum, value) => sum + value, 0) : null;
 
         const createdRes = await client.query(
           `
@@ -330,7 +254,7 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
           );
         }
 
-        const csaScore = await recomputeCsa(client, query.data.operating_company_id, user.uuid);
+        const csaScore = await computeAndUpsertScore(client, query.data.operating_company_id, user.uuid);
 
         await appendCrudAudit(
           client,
@@ -341,7 +265,12 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
           "P3-T11.17.2-SAFETY-V6.4"
         );
         await client.query("COMMIT");
-        return { dot_inspection: inspection, spawned_wo: spawnedWo, csa_score: csaScore };
+        return {
+          dot_inspection: inspection,
+          spawned_wo: spawnedWo,
+          csa_score: { ...csaScore, basic_hazmat: null },
+          csa_source: INTERNAL_CSA_SOURCE_METADATA,
+        };
       } catch (error) {
         await client.query("ROLLBACK");
         throw error;
