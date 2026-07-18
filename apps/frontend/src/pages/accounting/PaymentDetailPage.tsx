@@ -14,6 +14,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { PaymentApplyModal } from "./PaymentApplyModal";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -238,6 +239,12 @@ export function PaymentDetailPage() {
         </button>
       </div>
 
+      {openInvoicesQuery.isError ? (
+        <ListErrorBanner
+          message={`Failed to load open invoices for payment application: ${(openInvoicesQuery.error as Error)?.message ?? "Request failed"}`}
+          onRetry={() => void openInvoicesQuery.refetch()}
+        />
+      ) : null}
       <PaymentApplyModal
         open={applyOpen}
         loading={applyMutation.isPending}

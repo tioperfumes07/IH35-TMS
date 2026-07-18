@@ -16,6 +16,7 @@ import { useToast } from "../../components/Toast";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { useListState } from "../../components/list-state";
 import { ListErrorState } from "../../components/ListErrorState";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 
 const KIND_OPTIONS: ExpenseCategoryMapKind[] = [
   "fuel",
@@ -208,6 +209,14 @@ export function ExpenseCategoryMapPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-xl rounded-sm border border-gray-200 bg-white p-4 shadow-lg">
             <h2 className="text-base font-semibold text-gray-900">Add Expense Category Mapping</h2>
+            {accountsQuery.isError ? (
+              <div className="mt-3">
+                <ListErrorBanner
+                  message={`Failed to load mapping accounts: ${(accountsQuery.error as Error)?.message ?? "Request failed"}`}
+                  onRetry={() => void accountsQuery.refetch()}
+                />
+              </div>
+            ) : null}
             <div className="mt-3 grid gap-3">
               <label className="text-xs font-semibold text-gray-600">
                 Category kind

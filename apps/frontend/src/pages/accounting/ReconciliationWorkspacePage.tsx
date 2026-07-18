@@ -108,6 +108,12 @@ export function ReconciliationWorkspacePage() {
         title="Bank reconciliation workspace"
         subtitle="Match unreconciled bank transactions to ledger entries (±3 day / amount scoring)."
       />
+      {accountsQuery.isError ? (
+        <ListErrorBanner
+          message={`Failed to load reconciliation accounts: ${(accountsQuery.error as Error)?.message ?? "Request failed"}`}
+          onRetry={() => void accountsQuery.refetch()}
+        />
+      ) : null}
       {workspaceQuery.isError ? <ListErrorBanner onRetry={() => void workspaceQuery.refetch()} /> : null}
       <div className="filter-row" style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 16 }}>
         <label>

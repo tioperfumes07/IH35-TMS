@@ -206,6 +206,12 @@ export function PaymentMethodsCatalogPage() {
 
       <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Add new payment method">
         <div className="space-y-3 text-sm">
+          {accountsQuery.isError ? (
+            <ListErrorBanner
+              message={`Failed to load GL accounts: ${(accountsQuery.error as Error)?.message ?? "Request failed"}`}
+              onRetry={() => void accountsQuery.refetch()}
+            />
+          ) : null}
           <label className="block">
             <span className="text-xs font-medium text-gray-600">Name *</span>
             <input
@@ -257,6 +263,12 @@ export function PaymentMethodsCatalogPage() {
 
       <Modal open={Boolean(editId)} onClose={() => setEditId(null)} title="Edit payment method">
         <div className="space-y-3 text-sm">
+          {accountsQuery.isError ? (
+            <ListErrorBanner
+              message={`Failed to load GL accounts: ${(accountsQuery.error as Error)?.message ?? "Request failed"}`}
+              onRetry={() => void accountsQuery.refetch()}
+            />
+          ) : null}
           <label className="block">
             <span className="text-xs font-medium text-gray-600">Name *</span>
             <input
