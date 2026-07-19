@@ -26,6 +26,8 @@ const PAGES = [
   { file: "apps/frontend/src/pages/accounting/ExpensesListPage.tsx", label: "Expenses" },
   { file: "apps/frontend/src/pages/accounting/PaymentsListPage.tsx", label: "Payments" },
   { file: "apps/frontend/src/pages/accounting/BillPaymentsListPage.tsx", label: "Bill Payments" },
+  { file: "apps/frontend/src/pages/accounting/InvoicesListPage.tsx", label: "Invoices" },
+  { file: "apps/frontend/src/pages/accounting/ManualJEListPage.tsx", label: "Manual JE" },
 ];
 
 /** Pure action / non-data columns are exempt from the sortable-header rule (GLOBAL-SORT-RULE.md). */
@@ -171,20 +173,19 @@ function selftest() {
   const good = {
     hookSrc: goodHook,
     parityTableSrc: goodParity,
-    pages: [
-      { file: PAGES[0].file, label: PAGES[0].label, src: goodPage },
-      { file: PAGES[1].file, label: PAGES[1].label, src: goodExpenses },
-      { file: PAGES[2].file, label: PAGES[2].label, src: goodPage },
-      { file: PAGES[3].file, label: PAGES[3].label, src: goodPage },
-    ],
+    pages: PAGES.map(({ file, label }) => ({
+      file,
+      label,
+      src: file.includes("ExpensesListPage") ? goodExpenses : goodPage,
+    })),
   };
 
   const planted = [
     ["missing useUrlSort export", { ...good, hookSrc: goodHook.replace("export function useUrlSort", "function useUrlSort") }, "must export function useUrlSort"],
     ["ParityTable missing controlled sort", { ...good, parityTableSrc: goodParity.replace("sortKey?: string", "") }, "sortKey?: string"],
-    ["Bills missing sortKey wiring", { ...good, pages: [{ ...good.pages[0], src: goodPage.replace("sortKey={sortKey}", "") }, good.pages[1]] }, "sortKey={sortKey}"],
-    ["Expenses missing sortable column", { ...good, pages: [good.pages[0], { ...good.pages[1], src: goodExpenses.replace("sortable: true, sortValue", "sortValue") }] }, "missing sortable: true"],
-    ["Expenses payee missing sortValue", { ...good, pages: [good.pages[0], { ...good.pages[1], src: goodExpenses.replace(", sortValue: (row) => row.payee", "") }] }, "payee column must set sortValue"],
+    ["Bills missing sortKey wiring", { ...good, pages: good.pages.map((p, i) => (i === 0 ? { ...p, src: goodPage.replace("sortKey={sortKey}", "") } : p)) }, "sortKey={sortKey}"],
+    ["Expenses missing sortable column", { ...good, pages: good.pages.map((p) => (p.file.includes("ExpensesListPage") ? { ...p, src: goodExpenses.replace("sortable: true, sortValue", "sortValue") } : p)) }, "missing sortable: true"],
+    ["Expenses payee missing sortValue", { ...good, pages: good.pages.map((p) => (p.file.includes("ExpensesListPage") ? { ...p, src: goodExpenses.replace(", sortValue: (row) => row.payee", "") } : p)) }, "payee column must set sortValue"],
   ];
 
   const goodErrors = sortableHeaderErrors(good);
@@ -216,6 +217,6 @@ if (failures.length) {
 }
 
 console.log(
-  `${LABEL} — OK (useUrlSort hook, ParityTable controlled-sort contract, Bills + Expenses every ` +
-    `data column sortable + URL-persisted — Bills + Expenses + Payments + Bill Payments)`,
+  `${LABEL} — OK (useUrlSort hook, ParityTable controlled-sort contract, ` +
+    `${PAGES.length} accounting list pages — every data column sortable + URL-persisted)`,
 );
