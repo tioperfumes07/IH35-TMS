@@ -480,22 +480,23 @@ function coerceWeeklyRevenue(raw: unknown): HomeWeeklyRevenueResult {
         : raw && typeof raw === "object" && Array.isArray((raw as { points?: unknown }).points)
           ? ((raw as { points: unknown[] }).points ?? [])
           : [];
-  const days = list
-    .map((row) => {
-      if (!row || typeof row !== "object") return null;
-      const o = row as Record<string, unknown>;
-      const date = typeof o.date === "string" ? o.date : "";
-      // backend sends `cents` (invoice basis); accept `revenue_cents` too.
-      const revenue_cents = o.revenue_cents !== undefined ? num(o.revenue_cents) : num(o.cents);
-      if (!date) return null;
-      return {
-        date,
-        revenue_cents,
-        invoice_basis_cents: o.invoice_basis_cents !== undefined ? num(o.invoice_basis_cents) : revenue_cents,
-        gl_posted_revenue_cents: o.gl_posted_revenue_cents !== undefined ? num(o.gl_posted_revenue_cents) : undefined,
-      };
-    })
-    .filter((x): x is HomeWeeklyRevenuePoint => x !== null);
+  const days: HomeWeeklyRevenuePoint[] = list.flatMap((row) => {
+    if (!row || typeof row !== "object") return [];
+    const o = row as Record<string, unknown>;
+    const date = typeof o.date === "string" ? o.date : "";
+    // backend sends `cents` (invoice basis); accept `revenue_cents` too.
+    const revenue_cents = o.revenue_cents !== undefined ? num(o.revenue_cents) : num(o.cents);
+    if (!date) return [];
+    const point: HomeWeeklyRevenuePoint = {
+      date,
+      revenue_cents,
+      invoice_basis_cents: o.invoice_basis_cents !== undefined ? num(o.invoice_basis_cents) : revenue_cents,
+    };
+    if (o.gl_posted_revenue_cents !== undefined) {
+      point.gl_posted_revenue_cents = num(o.gl_posted_revenue_cents);
+    }
+    return [point];
+  });
 
   const obj = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : null;
   const status =
