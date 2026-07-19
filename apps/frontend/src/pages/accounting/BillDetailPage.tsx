@@ -11,6 +11,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { useUrlSort } from "../../hooks/useUrlSort";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -26,6 +27,8 @@ function statusVariant(status: string): "positive" | "neutral" | "crit" | "warn"
 export function BillDetailPage() {
   const { id = "" } = useParams();
   const { selectedCompanyId } = useCompanyContext();
+  // BANK-SORT-ROLLOUT-ACCT: payments grid sort persists in URL (?sort=&dir=).
+  const { sortKey, sortDirection, onSortChange } = useUrlSort();
 
   const detailQuery = useQuery({
     queryKey: ["accounting", "bill", selectedCompanyId, id],
@@ -146,6 +149,9 @@ export function BillDetailPage() {
           emptyText="No payments recorded."
           density="compact"
           storageKey="bill-detail-payments"
+          sortKey={sortKey}
+          sortDirection={sortDirection}
+          onSortChange={onSortChange}
         />
       </DataPanel>
     </AccountingSubNavWrapper>
