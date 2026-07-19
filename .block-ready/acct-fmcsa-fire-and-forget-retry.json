@@ -9,6 +9,9 @@
     "apps/backend/src/mdata/customers.routes.ts",
     "apps/backend/src/mdata/__tests__/customers-fmcsa-outbox-enqueue.test.ts",
     "apps/backend/src/integrations/fmcsa/**",
+    "apps/backend/src/lib/fmcsa-client.ts",
+    "apps/backend/src/lib/fmcsa-http-errors.ts",
+    "apps/backend/src/lib/__tests__/fmcsa-*.test.ts",
     "apps/backend/src/outbox/**",
     "scripts/verify-fmcsa-fire-and-forget-retry.mjs",
     "scripts/verify-steps/913-verify-fmcsa-fire-and-forget-retry.mjs",
@@ -19,14 +22,14 @@
   ],
   "acceptance": [
     {
-      "check": "customers.routes create/update enqueue fmcsa.customer.verify_requested into outbox.events (same txn); no void verifyCustomerWithSafer"
+      "check": "ON CONFLICT (dedupe_key) WHERE dedupe_key IS NOT NULL; terminal release enables lifetime re-enqueue; no probe-only TOCTOU"
     },
     {
-      "check": "OutboxProcessor handler registered; retryable vs permanent; backoff+jitter; attempts/last_error/next_retry; audit; tenant isolation; manual /verify-fmcsa remains"
+      "check": "fmcsa-client typed 429/5xx/network + Retry-After; no last_checked on non-authoritative; manual 503 retryable"
     },
     {
-      "check": "Rule-17 verify-fmcsa-fire-and-forget-retry.mjs + verify-step + --selftest PASS; behavioral vitest PASS; no migration; no GL/QBO posting"
+      "check": "global claim documented; handler payload company scope; audit enqueue/dedupe/retry/fail; Rule-17 selftest plants; db concurrent dedupe"
     }
   ],
-  "note": "Reuses existing outbox.events + OutboxProcessor — no schema migration (migration lane busy). FINANCIAL classification retained for owner gate; no money posting in this PR."
+  "note": "No additive migration — lifetime uniqueness reconciled by clearing dedupe_key on terminal for FMCSA events only (0212 index retained). FINANCIAL HOLD; no GL/QBO."
 }

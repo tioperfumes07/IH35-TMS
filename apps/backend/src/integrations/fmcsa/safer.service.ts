@@ -1,7 +1,13 @@
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser } from "../../auth/db.js";
 import { lookupCarrierByMC, lookupCarrierByUSDOT, type CarrierResult } from "../../lib/fmcsa-client.js";
-import { classifyFmcsaLookupFailure, RetryableFmcsaError } from "./errors.js";
+import {
+  classifyFmcsaLookupFailure,
+  FmcsaPermanentError,
+  isFmcsaPermanentError,
+  isFmcsaRetryableError,
+  RetryableFmcsaError,
+} from "./errors.js";
 
 type LookupType = "mc" | "usdot";
 
@@ -124,13 +130,14 @@ export async function verifyCustomerWithSafer(options: VerifyOptions) {
   try {
     carrier = lookup.type === "mc" ? await lookupCarrierByMC(lookup.value) : await lookupCarrierByUSDOT(lookup.value);
   } catch (error) {
-    // Transient FMCSA/network failures must NOT stamp fmcsa_last_checked_at (that poisoned the
-    // 24h cache and silently dropped retries). Re-throw so the durable outbox can backoff.
-    if (classifyFmcsaLookupFailure(error) === "retryable") {
+    // Non-authoritative / rate-limited / network failures must NOT stamp fmcsa_last_checked_at.
+    if (isFmcsaRetryableError(error) || classifyFmcsaLookupFailure(error) === "retryable") {
+      if (isFmcsaRetryableError(error)) throw error;
       throw new RetryableFmcsaError(String((error as Error)?.message ?? error));
     }
-    // Permanent unexpected errors still surface as a completed verification attempt below.
-    carrier = null;
+    // Permanent client errors (non-404 4xx) fail closed without poisoning the 24h cache.
+    if (isFmcsaPermanentError(error)) throw error;
+    throw new FmcsaPermanentError(String((error as Error)?.message ?? error));
   }
 
   const fetchError = carrier ? null : "not_found";

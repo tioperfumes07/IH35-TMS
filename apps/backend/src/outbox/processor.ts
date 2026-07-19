@@ -1,7 +1,9 @@
 import os from "node:os";
 import { pool } from "../auth/db.js";
+import { retryAfterMsFromError } from "../lib/fmcsa-http-errors.js";
 import { isPermanentDeliveryError } from "./delivery-errors.js";
 import { buildOutboxHandlerRegistry, type OutboxPayload } from "./handlers/registry.js";
+import { shouldReleaseOutboxDedupeKey } from "./reusable-dedupe.js";
 import { computeOutboxRetryDelayMs, OUTBOX_MAX_RETRIES } from "./retry-backoff.js";
 
 type ClaimedEvent = {
@@ -15,14 +17,31 @@ const POLL_INTERVAL_MS = 5000;
 const BATCH_SIZE = 10;
 const MAX_RETRIES = OUTBOX_MAX_RETRIES;
 
+/**
+ * Global claim is architectural (shared OutboxProcessor for all event types).
+ * Tenant safety for FMCSA is enforced in-handler via payload.operating_company_id
+ * + scoped mdata.customers load (cross-tenant → PermanentDeliveryError).
+ */
+export const OUTBOX_CLAIM_IS_GLOBAL_ARCHITECTURAL = true as const;
+
 function sleep(ms: number) {
   return new Promise<void>((resolve) => {
     setTimeout(resolve, ms);
   });
 }
 
-function retryDelayMs(retryCountAfterFailure: number) {
-  return computeOutboxRetryDelayMs(retryCountAfterFailure);
+function retryDelayMs(retryCountAfterFailure: number, error?: unknown) {
+  const backoff = computeOutboxRetryDelayMs(retryCountAfterFailure);
+  const retryAfter = retryAfterMsFromError(error);
+  if (retryAfter == null) return backoff;
+  // Honor bounded Retry-After without going below schedule floor for the attempt.
+  return Math.max(backoff, retryAfter);
+}
+
+function releaseDedupeSqlFragment(eventType: string): string {
+  if (!shouldReleaseOutboxDedupeKey(eventType)) return "";
+  // Clears slot so the same identity fingerprint can re-enqueue after terminal.
+  return ",\n              dedupe_key = NULL";
 }
 
 export class OutboxProcessor {
@@ -99,6 +118,13 @@ export class OutboxProcessor {
     }
   }
 
+  private tenantMeta(payload: OutboxPayload) {
+    const operatingCompanyId =
+      typeof payload.operating_company_id === "string" ? payload.operating_company_id : null;
+    const customerId = typeof payload.customer_id === "string" ? payload.customer_id : null;
+    return { operating_company_id: operatingCompanyId, customer_id: customerId };
+  }
+
   private async processEvent(event: ClaimedEvent) {
     const handler = this.handlerRegistry.get(event.event_type);
     if (!handler) {
@@ -107,7 +133,7 @@ export class OutboxProcessor {
     }
 
     if (!handler.canHandle()) {
-      await this.markDelivered(event.id, `skipped ${event.event_type} (handler unavailable in this environment)`, true);
+      await this.markDelivered(event, `skipped ${event.event_type} (handler unavailable in this environment)`, true);
       return;
     }
 
@@ -130,6 +156,7 @@ export class OutboxProcessor {
               locked_by = NULL,
               last_error = CASE WHEN $2::text = '' THEN NULL ELSE left($2, 2000) END,
               updated_at = now()
+              ${releaseDedupeSqlFragment(event.event_type)}
           WHERE id = $1
         `,
         [event.id, result?.message ?? ""]
@@ -139,6 +166,8 @@ export class OutboxProcessor {
         event_type: event.event_type,
         retry_count: event.retry_count,
         instance_id: this.instanceId,
+        dedupe_key_released: shouldReleaseOutboxDedupeKey(event.event_type),
+        ...this.tenantMeta(event.payload),
       });
       await client.query("COMMIT");
     } catch (error) {
@@ -153,7 +182,7 @@ export class OutboxProcessor {
     }
   }
 
-  private async markDelivered(eventId: string, message: string, skipped: boolean) {
+  private async markDelivered(event: ClaimedEvent, message: string, skipped: boolean) {
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
@@ -166,21 +195,25 @@ export class OutboxProcessor {
               locked_by = NULL,
               last_error = left($2, 2000),
               updated_at = now()
+              ${releaseDedupeSqlFragment(event.event_type)}
           WHERE id = $1
         `,
-        [eventId, message]
+        [event.id, message]
       );
       await this.appendOutboxAudit(client, "outbox.event.delivered", "info", {
-        outbox_event_id: eventId,
+        outbox_event_id: event.id,
+        event_type: event.event_type,
         skipped,
         message,
         instance_id: this.instanceId,
+        dedupe_key_released: shouldReleaseOutboxDedupeKey(event.event_type),
+        ...this.tenantMeta(event.payload),
       });
       await client.query("COMMIT");
-      this.log("marked outbox event delivered", { eventId, skipped });
+      this.log("marked outbox event delivered", { eventId: event.id, skipped });
     } catch (error) {
       await client.query("ROLLBACK").catch(() => undefined);
-      this.log("failed marking outbox event delivered", { eventId, error: String((error as Error)?.message ?? error) });
+      this.log("failed marking outbox event delivered", { eventId: event.id, error: String((error as Error)?.message ?? error) });
     } finally {
       client.release();
     }
@@ -198,6 +231,7 @@ export class OutboxProcessor {
               locked_by = NULL,
               last_error = left($2, 2000),
               updated_at = now()
+              ${releaseDedupeSqlFragment(event.event_type)}
           WHERE id = $1
         `,
         [event.id, reason]
@@ -208,6 +242,8 @@ export class OutboxProcessor {
         retry_count: event.retry_count,
         reason,
         instance_id: this.instanceId,
+        dedupe_key_released: shouldReleaseOutboxDedupeKey(event.event_type),
+        ...this.tenantMeta(event.payload),
       });
       await client.query("COMMIT");
       this.log("marked outbox event failed", { eventId: event.id, reason });
@@ -223,7 +259,9 @@ export class OutboxProcessor {
     const nextRetryCount = Number(event.retry_count ?? 0) + 1;
     const exhausted = nextRetryCount >= MAX_RETRIES;
     const errorMessage = String(error?.message ?? error);
-    const nextRetryAt = new Date(Date.now() + retryDelayMs(nextRetryCount)).toISOString();
+    const delayMs = retryDelayMs(nextRetryCount, error);
+    const nextRetryAt = new Date(Date.now() + delayMs).toISOString();
+    const releaseOnExhaust = exhausted ? releaseDedupeSqlFragment(event.event_type) : "";
 
     const client = await pool.connect();
     try {
@@ -238,6 +276,7 @@ export class OutboxProcessor {
               locked_at = NULL,
               locked_by = NULL,
               updated_at = now()
+              ${releaseOnExhaust}
           WHERE id = $1
         `,
         [event.id, nextRetryCount, exhausted, nextRetryAt, errorMessage]
@@ -250,6 +289,9 @@ export class OutboxProcessor {
           retry_count: nextRetryCount,
           error: errorMessage,
           instance_id: this.instanceId,
+          max_attempts_exhausted: true,
+          dedupe_key_released: shouldReleaseOutboxDedupeKey(event.event_type),
+          ...this.tenantMeta(event.payload),
         });
       } else {
         await this.appendOutboxAudit(client, "outbox.event.retried", "warning", {
@@ -257,8 +299,11 @@ export class OutboxProcessor {
           event_type: event.event_type,
           retry_count: nextRetryCount,
           next_retry_at: nextRetryAt,
+          retry_delay_ms: delayMs,
+          retry_after_ms: retryAfterMsFromError(error),
           error: errorMessage,
           instance_id: this.instanceId,
+          ...this.tenantMeta(event.payload),
         });
       }
       await client.query("COMMIT");

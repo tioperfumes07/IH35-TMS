@@ -29,13 +29,15 @@ describe("enqueueFmcsaCustomerVerifyRequested", () => {
     ).toBe(`fmcsa.customer.verify:${OPCO}:${CUSTOMER}:mc=12345|dot=1234567`);
   });
 
-  it("enqueues a new outbox event when none pending", async () => {
+  it("uses ON CONFLICT WHERE dedupe_key IS NOT NULL (matches partial unique index)", async () => {
     const { enqueueFmcsaCustomerVerifyRequested, FMCSA_CUSTOMER_VERIFY_EVENT_TYPE } = await import(
       "../fmcsa-customer-verify-chain.service.js"
     );
     const query = vi.fn(async (sql: string) => {
-      if (sql.includes("SELECT id::text AS id")) return { rows: [] };
-      if (sql.includes("INSERT INTO outbox.events")) return { rows: [{ id: "evt-new" }] };
+      if (sql.includes("INSERT INTO outbox.events")) {
+        expect(sql).toMatch(/ON CONFLICT\s*\(\s*dedupe_key\s*\)\s*WHERE\s+dedupe_key\s+IS\s+NOT\s+NULL\s+DO\s+NOTHING/i);
+        return { rows: [{ id: "evt-new" }] };
+      }
       return { rows: [] };
     });
     const result = await enqueueFmcsaCustomerVerifyRequested({ query } as never, {
@@ -45,42 +47,28 @@ describe("enqueueFmcsaCustomerVerifyRequested", () => {
       trigger: "create",
       lookup_fingerprint: "mc=1|dot=",
     });
-    expect(result).toEqual({ enqueued: true, outbox_event_id: "evt-new" });
-    const insertCall = query.mock.calls.find((c) => String(c[0]).includes("INSERT INTO outbox.events"));
-    expect(insertCall?.[1]?.[0]).toBe(FMCSA_CUSTOMER_VERIFY_EVENT_TYPE);
+    expect(result).toEqual({
+      enqueued: true,
+      deduped: false,
+      outbox_event_id: "evt-new",
+      dedupe_key: `fmcsa.customer.verify:${OPCO}:${CUSTOMER}:mc=1|dot=`,
+    });
+    expect(query.mock.calls[0]?.[1]?.[0]).toBe(FMCSA_CUSTOMER_VERIFY_EVENT_TYPE);
     expect(appendCrudAudit).toHaveBeenCalledWith(
       expect.anything(),
       ACTOR,
       "mdata.customer.fmcsa_verify_enqueued",
-      expect.objectContaining({ outbox_event_id: "evt-new", customer_id: CUSTOMER }),
+      expect.objectContaining({ outbox_event_id: "evt-new" }),
       "info",
       "ACCT-FMCSA-FIRE-AND-FORGET-RETRY"
     );
   });
 
-  it("is idempotent when a pending sibling already exists (duplicate enqueue)", async () => {
+  it("audits dedupe when conflict suppresses insert (no probe-only race path)", async () => {
     const { enqueueFmcsaCustomerVerifyRequested } = await import("../fmcsa-customer-verify-chain.service.js");
     const query = vi.fn(async (sql: string) => {
-      if (sql.includes("SELECT id::text AS id")) return { rows: [{ id: "evt-pending" }] };
-      return { rows: [] };
-    });
-    const result = await enqueueFmcsaCustomerVerifyRequested({ query } as never, {
-      operating_company_id: OPCO,
-      customer_id: CUSTOMER,
-      actor_user_id: ACTOR,
-      trigger: "create",
-      lookup_fingerprint: "mc=1|dot=",
-    });
-    expect(result).toEqual({ enqueued: false, outbox_event_id: "evt-pending" });
-    expect(query.mock.calls.some((c) => String(c[0]).includes("INSERT INTO outbox.events"))).toBe(false);
-    expect(appendCrudAudit).not.toHaveBeenCalled();
-  });
-
-  it("treats ON CONFLICT DO NOTHING as non-enqueue (race idempotency)", async () => {
-    const { enqueueFmcsaCustomerVerifyRequested } = await import("../fmcsa-customer-verify-chain.service.js");
-    const query = vi.fn(async (sql: string) => {
-      if (sql.includes("SELECT id::text AS id")) return { rows: [] };
       if (sql.includes("INSERT INTO outbox.events")) return { rows: [] };
+      if (sql.includes("SELECT id::text AS id")) return { rows: [{ id: "evt-pending" }] };
       return { rows: [] };
     });
     const result = await enqueueFmcsaCustomerVerifyRequested({ query } as never, {
@@ -90,7 +78,16 @@ describe("enqueueFmcsaCustomerVerifyRequested", () => {
       trigger: "update",
       lookup_fingerprint: "mc=9|dot=9",
     });
-    expect(result).toEqual({ enqueued: false, outbox_event_id: null });
-    expect(appendCrudAudit).not.toHaveBeenCalled();
+    expect(result.enqueued).toBe(false);
+    expect(result.deduped).toBe(true);
+    expect(result.outbox_event_id).toBe("evt-pending");
+    expect(appendCrudAudit).toHaveBeenCalledWith(
+      expect.anything(),
+      ACTOR,
+      "mdata.customer.fmcsa_verify_deduped",
+      expect.objectContaining({ outbox_event_id: "evt-pending" }),
+      "info",
+      "ACCT-FMCSA-FIRE-AND-FORGET-RETRY"
+    );
   });
 });

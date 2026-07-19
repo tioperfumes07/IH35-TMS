@@ -8,6 +8,11 @@ import {
   buildFmcsaLookupFingerprint,
   enqueueFmcsaCustomerVerifyRequested,
 } from "../integrations/fmcsa/fmcsa-customer-verify-chain.service.js";
+import {
+  isFmcsaPermanentError,
+  isRetryableFmcsaError,
+  retryAfterMsFromError,
+} from "../integrations/fmcsa/errors.js";
 import { verifyCustomerWithSafer } from "../integrations/fmcsa/safer.service.js";
 import { decrypt, encrypt } from "../lib/encryption.js";
 import { sendZodValidation } from "../lib/zod-http-error.js";
@@ -1155,14 +1160,46 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     if (!canForceFmcsaVerify(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const parsedQuery = detailQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
-    const result = await verifyCustomerWithSafer({
-      customerId: parsedParams.data.id,
-      actorUserId: authUser.uuid,
-      force: true,
-    });
-    if (!result.customer) return reply.code(404).send({ error: "mdata_customer_not_found" });
-    return reply.send({ customer: mapCustomerRow(result.customer as Record<string, unknown>, canReadTaxId(authUser.role)) });
+    const operatingCompanyId = await withCurrentUser(authUser.uuid, async (client) =>
+      resolveOperatingCompanyId(client, authUser.uuid, parsedQuery.data.operating_company_id)
+    );
+
+    try {
+      const result = await verifyCustomerWithSafer({
+        customerId: parsedParams.data.id,
+        actorUserId: authUser.uuid,
+        force: true,
+        operatingCompanyId: operatingCompanyId ?? undefined,
+      });
+      if (!result.customer) return reply.code(404).send({ error: "mdata_customer_not_found" });
+      return reply.send({
+        customer: mapCustomerRow(result.customer as Record<string, unknown>, canReadTaxId(authUser.role)),
+        verify_status: result.reason,
+      });
+    } catch (error) {
+      if (isRetryableFmcsaError(error)) {
+        const retryAfterMs = retryAfterMsFromError(error);
+        // Truthful operator-visible retryable failure — do NOT pretend verification completed.
+        return reply.code(503).send({
+          error: "fmcsa_verify_retryable",
+          retryable: true,
+          message: String((error as Error).message ?? error),
+          retry_after_ms: retryAfterMs,
+          ...(retryAfterMs != null ? { "retry-after": Math.ceil(retryAfterMs / 1000) } : {}),
+        });
+      }
+      if (isFmcsaPermanentError(error)) {
+        return reply.code(422).send({
+          error: "fmcsa_verify_permanent",
+          retryable: false,
+          message: String((error as Error).message ?? error),
+        });
+      }
+      throw error;
+    }
   });
 
   app.get("/api/v1/mdata/customers/:id/classifications", async (req, reply) => {

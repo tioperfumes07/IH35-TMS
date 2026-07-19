@@ -1,7 +1,8 @@
 import type { OutboxEventHandler, OutboxHandlerContext, OutboxPayload } from "./registry.js";
 import { PermanentDeliveryError } from "../delivery-errors.js";
 import { verifyCustomerWithSafer } from "../../integrations/fmcsa/safer.service.js";
-import { isRetryableFmcsaError } from "../../integrations/fmcsa/errors.js";
+import { isFmcsaPermanentError, isRetryableFmcsaError } from "../../integrations/fmcsa/errors.js";
+
 function requireUuid(value: unknown, field: string): string {
   const trimmed = String(value ?? "").trim();
   if (!/^[0-9a-fA-F-]{36}$/.test(trimmed)) {
@@ -67,6 +68,9 @@ export class FmcsaCustomerVerifyHandler implements OutboxEventHandler {
       }
       if (error instanceof PermanentDeliveryError) {
         throw error;
+      }
+      if (isFmcsaPermanentError(error)) {
+        throw new PermanentDeliveryError(String((error as Error)?.message ?? error));
       }
       // Unexpected non-retryable — fail closed visibly (no silent drop).
       throw new PermanentDeliveryError(String((error as Error)?.message ?? error));

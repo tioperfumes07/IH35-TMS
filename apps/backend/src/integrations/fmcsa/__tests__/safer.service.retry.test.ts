@@ -75,26 +75,35 @@ describe("verifyCustomerWithSafer retry taxonomy", () => {
     expect(appendCrudAudit).toHaveBeenCalled();
   });
 
-  it("rethrows RetryableFmcsaError on transient timeout (no last_checked stamp)", async () => {
-    lookupCarrierByMC.mockRejectedValue(new Error("FMCSA timeout"));
+  it("rethrows retryable without stamping last_checked (no cache poison)", async () => {
+    const { FmcsaRetryableError } = await import("../../../lib/fmcsa-http-errors.js");
+    lookupCarrierByMC.mockRejectedValue(new FmcsaRetryableError("FMCSA timeout"));
     const { verifyCustomerWithSafer } = await import("../safer.service.js");
-    const { RetryableFmcsaError } = await import("../errors.js");
     await expect(
       verifyCustomerWithSafer({
         customerId: CUSTOMER.id,
         actorUserId: "00000000-0000-4000-8000-0000000000d1",
         force: true,
       })
-    ).rejects.toBeInstanceOf(RetryableFmcsaError);
-
-    // No UPDATE should have run after the failed lookup (only SELECT load).
-    const updateCalls = withCurrentUser.mock.calls.length;
-    // loadCustomer + would-be update — on throw we must not enter the update withCurrentUser.
-    // First call is load; second would be update — ensure second never happened.
-    expect(updateCalls).toBe(1);
+    ).rejects.toBeInstanceOf(FmcsaRetryableError);
+    expect(withCurrentUser.mock.calls.length).toBe(1);
   });
 
-  it("completes permanently when carrier is not found (no retry throw)", async () => {
+  it("rethrows permanent 4xx without stamping last_checked", async () => {
+    const { FmcsaPermanentError } = await import("../../../lib/fmcsa-http-errors.js");
+    lookupCarrierByMC.mockRejectedValue(new FmcsaPermanentError("FMCSA mobile client error 403", { status: 403 }));
+    const { verifyCustomerWithSafer } = await import("../safer.service.js");
+    await expect(
+      verifyCustomerWithSafer({
+        customerId: CUSTOMER.id,
+        actorUserId: "00000000-0000-4000-8000-0000000000d1",
+        force: true,
+      })
+    ).rejects.toBeInstanceOf(FmcsaPermanentError);
+    expect(withCurrentUser.mock.calls.length).toBe(1);
+  });
+
+  it("completes when carrier is not found (authoritative null)", async () => {
     lookupCarrierByMC.mockResolvedValue(null);
     const { verifyCustomerWithSafer } = await import("../safer.service.js");
     const result = await verifyCustomerWithSafer({

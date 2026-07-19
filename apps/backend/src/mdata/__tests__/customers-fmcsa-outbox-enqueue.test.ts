@@ -19,8 +19,11 @@ describe("customers.routes FMCSA durable enqueue (no fire-and-forget)", () => {
     expect(src).toMatch(/buildFmcsaLookupFingerprint/);
   });
 
-  it("keeps manual force verify endpoint (direct, not only outbox)", () => {
+  it("manual force verify maps retryable to 503 without fake completion", () => {
     expect(src).toMatch(/\/api\/v1\/mdata\/customers\/:id\/verify-fmcsa/);
-    expect(src).toMatch(/verifyCustomerWithSafer\(\{\s*[\s\S]*force:\s*true/);
+    expect(src).toMatch(/fmcsa_verify_retryable/);
+    expect(src).toMatch(/reply\.code\(503\)/);
+    expect(src).toMatch(/retryable:\s*true/);
+    expect(src).not.toMatch(/catch\s*\([^)]*\)\s*\{\s*return reply\.send\(\{\s*customer/);
   });
 });

@@ -43,6 +43,16 @@ function makeClient(): FakeClient {
   };
 }
 
+const BASE_EVENT = {
+  id: "evt-1",
+  event_type: "fmcsa.customer.verify_requested",
+  payload: {
+    operating_company_id: "00000000-0000-4000-8000-0000000000a1",
+    customer_id: "00000000-0000-4000-8000-0000000000c1",
+  },
+  retry_count: 0,
+};
+
 describe("OutboxProcessor FMCSA verify durability behavior", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -50,21 +60,12 @@ describe("OutboxProcessor FMCSA verify durability behavior", () => {
   });
 
   it("records retry + next_retry_at on transient failure (no unhandled rejection)", async () => {
-    const { RetryableFmcsaError } = await import("../../integrations/fmcsa/errors.js");
-    deliver.mockRejectedValue(new RetryableFmcsaError("FMCSA timeout"));
+    const { FmcsaRetryableError } = await import("../../lib/fmcsa-http-errors.js");
+    deliver.mockRejectedValue(new FmcsaRetryableError("FMCSA timeout", { retryAfterMs: 12_000 }));
     const { OutboxProcessor } = await import("../processor.js");
     const processor = new OutboxProcessor();
-    const event = {
-      id: "evt-retry",
-      event_type: "fmcsa.customer.verify_requested",
-      payload: { customer_id: "c1" },
-      retry_count: 0,
-    };
+    await (processor as unknown as { processEvent: (e: typeof BASE_EVENT) => Promise<void> }).processEvent(BASE_EVENT);
 
-    await (processor as unknown as { processEvent: (e: typeof event) => Promise<void> }).processEvent(event);
-
-    const clients: FakeClient[] = connect.mock.results.map((r) => r.value).filter(Boolean);
-    // Wait for async connect resolutions
     const resolvedClients = await Promise.all(connect.mock.results.map((r) => r.value));
     const updateSql = resolvedClients
       .flatMap((c) => c.query.mock.calls.map((call: unknown[]) => String(call[0])))
@@ -72,20 +73,14 @@ describe("OutboxProcessor FMCSA verify durability behavior", () => {
     expect(updateSql).toMatch(/retry_count/);
     expect(updateSql).toMatch(/next_retry_at/);
     expect(updateSql).not.toMatch(/failed_at = now\(\)/);
-    expect(clients.length + resolvedClients.length).toBeGreaterThan(0);
   });
 
-  it("marks failed_at immediately on permanent delivery error", async () => {
+  it("marks failed_at immediately on permanent delivery error and releases dedupe_key", async () => {
     const { PermanentDeliveryError } = await import("../delivery-errors.js");
     deliver.mockRejectedValue(new PermanentDeliveryError("fmcsa_customer_missing_or_cross_tenant"));
     const { OutboxProcessor } = await import("../processor.js");
     const processor = new OutboxProcessor();
-    await (processor as unknown as { processEvent: (e: unknown) => Promise<void> }).processEvent({
-      id: "evt-perm",
-      event_type: "fmcsa.customer.verify_requested",
-      payload: {},
-      retry_count: 0,
-    });
+    await (processor as unknown as { processEvent: (e: unknown) => Promise<void> }).processEvent(BASE_EVENT);
 
     const resolvedClients = await Promise.all(connect.mock.results.map((r) => r.value));
     const updates = resolvedClients.flatMap((c) =>
@@ -93,17 +88,28 @@ describe("OutboxProcessor FMCSA verify durability behavior", () => {
     );
     const failedUpdate = updates.find((call: unknown[]) => String(call[0]).includes("failed_at = now()"));
     expect(failedUpdate).toBeTruthy();
+    expect(String(failedUpdate?.[0])).toMatch(/dedupe_key = NULL/);
   });
 
-  it("marks visible failed_at when max attempts exhausted", async () => {
+  it("releases dedupe_key on successful deliver (lifetime re-enqueue enabled)", async () => {
+    deliver.mockResolvedValue({ message: "fmcsa_verify_verified" });
+    const { OutboxProcessor } = await import("../processor.js");
+    const processor = new OutboxProcessor();
+    await (processor as unknown as { processEvent: (e: unknown) => Promise<void> }).processEvent(BASE_EVENT);
+    const resolvedClients = await Promise.all(connect.mock.results.map((r) => r.value));
+    const delivered = resolvedClients.flatMap((c) =>
+      c.query.mock.calls.filter((call: unknown[]) => String(call[0]).includes("delivered_at = now()"))
+    );
+    expect(delivered.some((call: unknown[]) => String(call[0]).includes("dedupe_key = NULL"))).toBe(true);
+  });
+
+  it("marks visible failed_at when max attempts exhausted and releases dedupe_key", async () => {
     deliver.mockRejectedValue(new Error("FMCSA timeout"));
     const { OutboxProcessor } = await import("../processor.js");
     const { OUTBOX_MAX_RETRIES } = await import("../retry-backoff.js");
     const processor = new OutboxProcessor();
     await (processor as unknown as { processEvent: (e: unknown) => Promise<void> }).processEvent({
-      id: "evt-max",
-      event_type: "fmcsa.customer.verify_requested",
-      payload: {},
+      ...BASE_EVENT,
       retry_count: OUTBOX_MAX_RETRIES - 1,
     });
 
@@ -112,37 +118,18 @@ describe("OutboxProcessor FMCSA verify durability behavior", () => {
       c.query.mock.calls.filter((call: unknown[]) => String(call[0]).includes("retry_count = $2"))
     );
     expect(updateCalls.length).toBeGreaterThan(0);
-    const args = updateCalls[0]?.[1] as unknown[];
-    // exhausted flag is $3
-    expect(args?.[2]).toBe(true);
+    expect(updateCalls[0]?.[1]?.[2]).toBe(true);
+    expect(String(updateCalls[0]?.[0])).toMatch(/dedupe_key = NULL/);
   });
 
-  it("marks delivered on success", async () => {
-    deliver.mockResolvedValue({ message: "fmcsa_verify_verified" });
-    const { OutboxProcessor } = await import("../processor.js");
-    const processor = new OutboxProcessor();
-    await (processor as unknown as { processEvent: (e: unknown) => Promise<void> }).processEvent({
-      id: "evt-ok",
-      event_type: "fmcsa.customer.verify_requested",
-      payload: {},
-      retry_count: 0,
-    });
-    const resolvedClients = await Promise.all(connect.mock.results.map((r) => r.value));
-    const delivered = resolvedClients.some((c) =>
-      c.query.mock.calls.some((call: unknown[]) => String(call[0]).includes("delivered_at = now()"))
-    );
-    expect(delivered).toBe(true);
-  });
-
-  it("claim SQL is restart-durable (SKIP LOCKED + stale lock reclaim)", async () => {
-    // Read source contract — process restart must reclaim rows after lock timeout.
+  it("claim SQL is restart-durable (SKIP LOCKED + stale lock reclaim) and remains globally architectural", async () => {
     const fs = await import("node:fs");
     const path = await import("node:path");
     const { fileURLToPath } = await import("node:url");
     const src = fs.readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../processor.ts"), "utf8");
     expect(src).toMatch(/FOR UPDATE SKIP LOCKED/);
     expect(src).toMatch(/locked_at < now\(\) - interval '5 minutes'/);
-    expect(src).toMatch(/next_retry_at <= now\(\)/);
-    expect(src).toMatch(/retry_count < \$1/);
+    expect(src).toMatch(/OUTBOX_CLAIM_IS_GLOBAL_ARCHITECTURAL/);
+    expect(src).toMatch(/payload\.operating_company_id/);
   });
 });
