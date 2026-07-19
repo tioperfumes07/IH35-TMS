@@ -43,6 +43,7 @@ const PATHS = {
   lifecycleRepairTest: "apps/backend/src/accounting/factoring-posting/__tests__/lifecycle-repair.test.ts",
   cpaVetoTest: "apps/backend/src/accounting/factoring-posting/__tests__/cpa-veto-eb06028d-remediation.test.ts",
   day95Test: "apps/backend/src/accounting/factoring-posting/__tests__/default-interest-day95-recourse.test.ts",
+  chain06DbTest: "apps/backend/src/accounting/factoring-posting/__tests__/chain-06-factoring-ar-tieout.db.test.ts",
   companyDateTest: "apps/backend/src/lib/__tests__/company-business-date.test.ts",
   journalEntries: "apps/backend/src/accounting/journal-entries.service.ts",
   migration: "db/migrations/202607600000_factoring_balance_invoice_linkage.sql",
@@ -210,6 +211,12 @@ export function checker(sources) {
   requireExec("poster", "policy_over_release", "poster_over_release_policy_missing");
   requireExec("poster", "policy_invalid_entry_date", "poster_invalid_date_policy_missing");
   requireExec("poster", "FOR UPDATE", "poster_settlement_lock_missing");
+  // In-flight settlement JE must be excluded from outstanding re-check after insert (else self-debit → 0).
+  requireExec("poster", "excludeJournalEntryId", "poster_outstanding_must_exclude_inflight_je");
+  requireExec("poster", "je.id IS DISTINCT FROM $3::uuid", "poster_outstanding_exclude_sql_missing");
+  // Authoritative DB timestamptz::text (space separator) must parse — not only ISO-with-T.
+  requireExec("poster", ")[ T](", "poster_must_accept_pg_timestamptz_text");
+  requireExec("cpaVetoTest", "Postgres timestamptz::text", "cpa_veto_test_pg_timestamptz_missing");
   requireIdent("poster", "validateLifecycleJeExactShape", "poster_exact_shape_validator_missing");
   requireIdent("poster", "liveJournalEntryNotReversedSql", "poster_reversal_exclusion_missing");
   requireExec("lifecycleRepair", "reversed_by_je_id", "lifecycle_repair_reversal_cols_missing");
@@ -217,6 +224,8 @@ export function checker(sources) {
   requireExec("poster", "SAVEPOINT factoring_lifecycle_je_create", "poster_je_savepoint_missing");
   forbidExec("poster", /Math\.min\s*\(\s*inv\.total_cents/, "poster_must_not_mathmin_clamp_payment");
   forbidExec("poster", /return companyBusinessDate\(\)\s*;/, "poster_must_not_fallback_entry_date_to_today");
+  requireExec("chain06DbTest", "requireEffectiveFaroFullRecourseAgreement", "chain06_db_must_seed_faro_agreement");
+  requireExec("chain06DbTest", "canonical_factor_agreements", "chain06_db_must_insert_faro_agreement");
   requireIdent("defaultInterest", "companyBusinessDate", "default_interest_company_business_date_missing");
   requireIdent("defaultInterest", "loadExactLinkedChargebackAmounts", "default_interest_exact_linked_amounts_missing");
   requireIdent("defaultInterest", "requireEffectiveFaroFullRecourseAgreement", "default_interest_faro_gate_missing");

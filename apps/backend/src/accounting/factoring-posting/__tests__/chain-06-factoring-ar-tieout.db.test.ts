@@ -41,6 +41,10 @@ import {
   postFactoringChargebackEvent,
   postFactoringCustomerPaymentEvent,
 } from "../poster.service.js";
+import {
+  FARO_FULL_RECOURSE_AGREEMENT_CODE,
+  requireEffectiveFaroFullRecourseAgreement,
+} from "../faro-agreement-gate.js";
 import { createJournalEntry } from "../../journal-entries.service.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
@@ -57,6 +61,13 @@ function encryptTestToken(plain: string): string {
   const encrypted = Buffer.concat([cipher.update(plain, "utf8"), cipher.final()]);
   const tag = cipher.getAuthTag();
   return `${iv.toString("base64")}.${tag.toString("base64")}.${encrypted.toString("base64")}`;
+}
+
+function expectPosted(
+  outcome: { posted: boolean; reason?: string; journal_entry_id?: string | null },
+  label: string
+): asserts outcome is { posted: true; journal_entry_id?: string | null } {
+  expect(outcome.posted, `${label}: posted=false reason=${outcome.reason ?? "undefined"}`).toBe(true);
 }
 
 // Kept in lockstep with scripts/verify-chain-06-factoring-ar-tieout.mjs's ASSERTIONS object, scoped here
@@ -102,7 +113,11 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
   let db: pg.Client;
   let companyId: string;
   const suffix = randomUUID().slice(0, 6);
-  const vendorId = randomUUID();
+  /** Faro factor vendor — reused when TRANSP already has an effective FARO_FULL_RECOURSE_V1 binding. */
+  let vendorId = randomUUID();
+  let seededFaroVendor = false;
+  let seededFaroAgreementId: string | null = null;
+  let seededFaroProfileId: string | null = null;
   const customerId = randomUUID();
   const invoiceIds: string[] = [];
   const advanceIds: string[] = [];
@@ -227,10 +242,61 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
     await ensureRoleMapped("cash_clearing");
     await ensureRoleMapped("ar_control");
     await bypass(async () => {
-      await db.query(
-        `INSERT INTO mdata.vendors (id, operating_company_id, vendor_name, vendor_type) VALUES ($1::uuid,$2::uuid,$3,'Other')`,
-        [vendorId, companyId, `Chain-06 Test Factor ${suffix}`]
-      );
+      // Poster Faro gate (CPA VETO): every funding/payment/chargeback path requires the authoritative
+      // effective TRANSP/Faro full-recourse agreement + advance bound to that Faro vendor. Fresh CI has
+      // an empty owner-seed table — seed locked terms. If a binding already exists (prod-copy / prior run),
+      // reuse that vendor so we never create an ambiguous second Faro agreement on the shared TRANSP opco.
+      const existingFaro = await requireEffectiveFaroFullRecourseAgreement(db, companyId);
+      if (existingFaro.ok) {
+        vendorId = existingFaro.vendorId;
+      } else if (
+        existingFaro.reason !== "missing_faro_agreement_binding" &&
+        existingFaro.reason !== "faro_agreement_not_effective"
+      ) {
+        // Ambiguous / wrong-terms / entity mismatch — fail closed (never invent a second Faro binding).
+        throw new Error(`chain-06 Faro gate blocked: ${existingFaro.reason}`);
+      } else {
+        seededFaroVendor = true;
+        seededFaroAgreementId = randomUUID();
+        seededFaroProfileId = randomUUID();
+        await db.query(
+          `INSERT INTO mdata.vendors (id, operating_company_id, vendor_name, vendor_type)
+           VALUES ($1::uuid,$2::uuid,$3,'Other')`,
+          [vendorId, companyId, `Chain-06 Faro Factor ${suffix}`]
+        );
+        await db.query(
+          `INSERT INTO factoring.factor (
+             id, tenant_id, name, advance_rate, fee_rate, reserve_rate, recourse_days, active
+           ) VALUES ($1::uuid,$2::uuid,$3,0.9700,0.0150,0.0150,95,true)`,
+          [seededFaroProfileId, companyId, `Chain-06 Faro Full Recourse ${suffix}`]
+        );
+        await db.query(
+          `INSERT INTO factoring.canonical_factor_agreements (
+             id, tenant_id, factor_profile_id, factor_vendor_id, agreement_code,
+             effective_from, effective_to, is_full_recourse,
+             fee_rate_tier1, fee_rate_tier2, reserve_rate,
+             repurchase_term_days, grace_days, repurchase_deadline_days, default_interest_daily_rate
+           ) VALUES (
+             $1::uuid,$2::uuid,$3::uuid,$4::uuid,$5,
+             '2024-12-02'::date,NULL,true,
+             0.0150,0.0200,0.0150,
+             30,5,95,0.00067000
+           )`,
+          [
+            seededFaroAgreementId,
+            companyId,
+            seededFaroProfileId,
+            vendorId,
+            FARO_FULL_RECOURSE_AGREEMENT_CODE,
+          ]
+        );
+        const seededOk = await requireEffectiveFaroFullRecourseAgreement(db, companyId);
+        if (!seededOk.ok || seededOk.vendorId !== vendorId) {
+          throw new Error(
+            `chain-06 Faro seed failed: reason=${"reason" in seededOk ? seededOk.reason : "unknown"} vendor=${"vendorId" in seededOk ? seededOk.vendorId : null}`
+          );
+        }
+      }
       await db.query(
         `INSERT INTO mdata.customers (id, operating_company_id, customer_name, factoring_company_vendor_id)
          VALUES ($1::uuid,$2::uuid,$3,$4::uuid)`,
@@ -289,7 +355,29 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
         }
         await db.query(`DELETE FROM accounting.factoring_advances WHERE id = ANY($1::uuid[])`, [advanceIds]);
         await db.query(`DELETE FROM mdata.customers WHERE id = $1::uuid`, [customerId]);
-        await db.query(`DELETE FROM mdata.vendors WHERE id = $1::uuid`, [vendorId]);
+        // ih35_app has no DELETE on canonical_factor_agreements — expire + deactivate so shared TRANSP
+        // does not keep an ambiguous/extra Faro binding for later suites.
+        if (seededFaroAgreementId) {
+          await db.query(
+            `UPDATE factoring.canonical_factor_agreements
+                SET effective_to = '2024-12-01'::date
+              WHERE id = $1::uuid AND tenant_id = $2::uuid`,
+            [seededFaroAgreementId, companyId]
+          );
+        }
+        if (seededFaroProfileId) {
+          await db.query(`UPDATE factoring.factor SET active = false WHERE id = $1::uuid AND tenant_id = $2::uuid`, [
+            seededFaroProfileId,
+            companyId,
+          ]);
+        }
+        if (seededFaroVendor) {
+          // Vendor may remain referenced by the expired agreement row (REVOKE DELETE on agreements).
+          await db.query(
+            `UPDATE mdata.vendors SET deactivated_at = COALESCE(deactivated_at, now()) WHERE id = $1::uuid`,
+            [vendorId]
+          );
+        }
         await db.query(`DELETE FROM integrations.qbo_sync_queue WHERE operating_company_id=$1::uuid AND entity_type='journal_entry' AND entity_id = ANY($2::uuid[])`, [companyId, journalEntryIds]);
         await db.query(`DELETE FROM integrations.qbo_connections WHERE operating_company_id=$1::uuid AND realm_id=$2`, [companyId, `TEST-REALM-T06-${suffix}`]);
       });
@@ -302,7 +390,7 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
   it("Leg B — a clean FUNDING-only advance never posts a line to ar_control (AR untouched at funding)", async () => {
     const { id: advanceId } = await seedAdvance({ invoiceTotalCents: 100_000, advanceCents: 90_000, reserveCents: 8_000, feeCents: 2_000 });
     const outcome = await postFactoringAdvanceEvent({ operating_company_id: companyId, factoring_advance_id: advanceId, actor_user_id: TEST_OWNER_USER_ID });
-    expect(outcome.posted).toBe(true);
+    expectPosted(outcome, "Leg B funding");
     expect(outcome.journal_entry_id).toBeTruthy();
     if (outcome.journal_entry_id) journalEntryIds.push(outcome.journal_entry_id);
 
@@ -338,14 +426,14 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
   it("Leg C — funding -> customer-payment lifecycle round-trips the liability to zero on a terminal advance", async () => {
     const { id: advanceId, displayId } = await seedAdvance({ invoiceTotalCents: 75_000, advanceCents: 67_000, reserveCents: 6_000, feeCents: 2_000 });
     const funded = await postFactoringAdvanceEvent({ operating_company_id: companyId, factoring_advance_id: advanceId, actor_user_id: TEST_OWNER_USER_ID });
-    expect(funded.posted).toBe(true);
+    expectPosted(funded, "Leg C funding→payment funding");
     const paid = await postFactoringCustomerPaymentEvent({
       operating_company_id: companyId,
       factoring_advance_id: advanceId,
       actor_user_id: TEST_OWNER_USER_ID,
       amount_cents: 75_000, // customer pays the factor the full invoice face — AR closes here
     });
-    expect(paid.posted).toBe(true);
+    expectPosted(paid, "Leg C funding→payment payment");
     await markTerminal(advanceId, "collected");
 
     const rows = await scopedRead(ASSERTIONS.legC_liabilityRoundTrip([displayId]), [[displayId]]);
@@ -365,7 +453,7 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
       factoring_advance_id: advanceId,
       actor_user_id: TEST_OWNER_USER_ID,
     });
-    expect(funded.posted).toBe(true);
+    expectPosted(funded, "Leg C funding→chargeback funding");
     // Full recourse only — amounts must equal exact linked outstanding liability + invoice A/R.
     const exact = await loadExactLinkedChargebackAmounts(companyId, advanceId);
     expect(exact.liability_cents).toBeGreaterThan(0);
@@ -378,7 +466,7 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
       default_interest_cents: 0,
       recoursed_ar_cents: exact.recoursed_ar_cents,
     });
-    expect(chargedBack).toMatchObject({ posted: true });
+    expectPosted(chargedBack, "Leg C funding→chargeback chargeback");
     await markTerminal(advanceId, "recourse_returned");
 
     const rows = await scopedRead(ASSERTIONS.legC_liabilityRoundTrip([displayId]), [[displayId]]);
@@ -388,7 +476,7 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
   it("Leg C — CATCHES a terminal advance with NO relief event (liability left dangling — proves the guard is not a no-op)", async () => {
     const { id: advanceId, displayId } = await seedAdvance({ invoiceTotalCents: 20_000, advanceCents: 18_000, reserveCents: 1_500, feeCents: 500 });
     const funded = await postFactoringAdvanceEvent({ operating_company_id: companyId, factoring_advance_id: advanceId, actor_user_id: TEST_OWNER_USER_ID });
-    expect(funded.posted).toBe(true);
+    expectPosted(funded, "Leg C dangling-liability funding");
     // Deliberately mark it terminal WITHOUT ever posting a customer-payment or chargeback event.
     await markTerminal(advanceId, "collected");
 

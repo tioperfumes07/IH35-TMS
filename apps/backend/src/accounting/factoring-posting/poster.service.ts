@@ -146,6 +146,12 @@ function isStrictYmd(v: string): boolean {
 /**
  * Convert timestamptz / ISO / YYYY-MM-DD into company-local business date (never UTC slice).
  * Malformed / ambiguous inputs return null (caller fails closed — never salvage to today).
+ *
+ * Accepts:
+ *   - strict YYYY-MM-DD
+ *   - ISO-8601 datetime with `T` separator
+ *   - Postgres `timestamptz::text` (`YYYY-MM-DD HH:MM:SS.fff+00`) from loadAdvance casts
+ * Rejects slash/US forms and non-zero-padded calendar dates (ambiguous caller input).
  */
 function toCompanyBusinessDate(isoOrDate: string | Date | null | undefined): string | null {
   if (isoOrDate == null) return null;
@@ -157,9 +163,15 @@ function toCompanyBusinessDate(isoOrDate: string | Date | null | undefined): str
     if (/^\d{4}-\d{1,2}-\d{1,2}$/.test(trimmed) && !isStrictYmd(trimmed)) return null;
     if (/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}$/.test(trimmed)) return null;
     if (/^\d{4}\/\d{1,2}\/\d{1,2}$/.test(trimmed)) return null;
-    // Only accept full ISO datetime (with time) beyond strict YYYY-MM-DD.
-    if (!/^\d{4}-\d{2}-\d{2}T/.test(trimmed)) return null;
-    const d = new Date(trimmed);
+    // ISO datetime OR Postgres timestamptz::text (space separator, optional fractional seconds + offset).
+    const tsMatch = trimmed.match(
+      /^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}:\d{2}(?:\.\d+)?)(Z|[+-]\d{2}(?::?\d{2})?)?$/
+    );
+    if (!tsMatch) return null;
+    let iso = `${tsMatch[1]}T${tsMatch[2]}${tsMatch[3] ?? "Z"}`;
+    // Normalize bare ±HH offsets (`+00`) to ±HH:MM for ECMAScript Date.
+    iso = iso.replace(/([+-]\d{2})$/, "$1:00");
+    const d = new Date(iso);
     if (Number.isNaN(d.getTime())) return null;
     return companyBusinessDate(d);
   }
@@ -1208,13 +1220,15 @@ export async function postFactoringCustomerPaymentEvent(input: PostFactoringCust
     source_transaction_type: "factoring_customer_payment",
     event_key: paymentEventKey,
     expected_legs: expectedLegs,
-    afterLifecycleBeforeCommit: async (client) => {
+    afterLifecycleBeforeCommit: async (client, journalEntryId) => {
       // Re-lock + re-validate outstanding inside the posting txn (concurrent settlement safety).
+      // Exclude this JE — its debit legs are already inserted and must not zero outstanding.
       await lockFactoringAdvanceForSettlement(client, input.operating_company_id, input.factoring_advance_id);
       const outstanding = await linkedOutstandingLiabilityCents(
         client,
         input.operating_company_id,
-        input.factoring_advance_id
+        input.factoring_advance_id,
+        journalEntryId
       );
       if (amount > outstanding) {
         throw new Error(`factoring_customer_payment_overpayment: amount=${amount} outstanding=${outstanding}`);
@@ -1407,10 +1421,12 @@ export async function postFactoringReleaseEvent(input: PostFactoringReleaseInput
     expected_legs: expectedLegs,
     afterLifecycleBeforeCommit: async (client, journalEntryId) => {
       await lockFactoringAdvanceForSettlement(client, input.operating_company_id, input.factoring_advance_id);
+      // Exclude this JE — its credit legs are already inserted and must not zero reserve outstanding.
       const outstandingReserve = await linkedOutstandingReserveCents(
         client,
         input.operating_company_id,
-        input.factoring_advance_id
+        input.factoring_advance_id,
+        journalEntryId
       );
       if (releaseAmount > outstandingReserve) {
         throw new Error(
@@ -1438,11 +1454,16 @@ export async function postFactoringReleaseEvent(input: PostFactoringReleaseInput
 }
 
 
-/** Exact linked outstanding Faro liability (role legs) — never guessed from mutable status. */
+/**
+ * Exact linked outstanding Faro liability (role legs) — never guessed from mutable status.
+ * @param excludeJournalEntryId — when re-validating inside afterInsertBeforeCommit, exclude the
+ *   in-flight settlement JE so its own debit legs do not zero out outstanding before the check.
+ */
 async function linkedOutstandingLiabilityCents(
   client: DbClient,
   operatingCompanyId: string,
-  factoringAdvanceId: string
+  factoringAdvanceId: string,
+  excludeJournalEntryId?: string | null
 ): Promise<number> {
   const notReversed = await liveJournalEntryNotReversedSql(client);
   const res = await client.query<{ outstanding: string }>(
@@ -1472,6 +1493,7 @@ async function linkedOutstandingLiabilityCents(
          AND jep.source_transaction_id = $2::text
          AND je.status = 'posted'
          AND je.voided_at IS NULL
+         AND ($3::uuid IS NULL OR je.id IS DISTINCT FROM $3::uuid)
          ${notReversed}
          AND NOT EXISTS (
                SELECT 1
@@ -1489,16 +1511,20 @@ async function linkedOutstandingLiabilityCents(
                   )
              )
     `,
-    [operatingCompanyId, factoringAdvanceId]
+    [operatingCompanyId, factoringAdvanceId, excludeJournalEntryId ?? null]
   );
   return Number(res.rows[0]?.outstanding ?? 0);
 }
 
-/** Exact linked outstanding Faro reserve asset (held − released); excludes reversed JEs. */
+/**
+ * Exact linked outstanding Faro reserve asset (held − released); excludes reversed JEs.
+ * @param excludeJournalEntryId — exclude in-flight release JE when re-validating before commit.
+ */
 async function linkedOutstandingReserveCents(
   client: DbClient,
   operatingCompanyId: string,
-  factoringAdvanceId: string
+  factoringAdvanceId: string,
+  excludeJournalEntryId?: string | null
 ): Promise<number> {
   const notReversed = await liveJournalEntryNotReversedSql(client);
   const res = await client.query<{ outstanding: string }>(
@@ -1528,9 +1554,10 @@ async function linkedOutstandingReserveCents(
          AND jep.source_transaction_id = $2::text
          AND je.status = 'posted'
          AND je.voided_at IS NULL
+         AND ($3::uuid IS NULL OR je.id IS DISTINCT FROM $3::uuid)
          ${notReversed}
     `,
-    [operatingCompanyId, factoringAdvanceId]
+    [operatingCompanyId, factoringAdvanceId, excludeJournalEntryId ?? null]
   );
   return Number(res.rows[0]?.outstanding ?? 0);
 }

@@ -92,6 +92,12 @@ describe("resolveCanonicalEntryDate — invalid dates fail closed (no today fall
     expect(resolveCanonicalEntryDate("2026-01-20")).toBe("2026-01-20");
     expect(resolveCanonicalEntryDate("2026-01-20T18:00:00.000Z")).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
+
+  it("accepts Postgres timestamptz::text from loadAdvance (authoritative DB, not caller salvage)", () => {
+    // loadAdvance selects advanced_at::text → "YYYY-MM-DD HH:MM:SS.fff+00"
+    expect(resolveCanonicalEntryDate("2026-01-20 18:00:00.000000+00")).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(resolveCanonicalEntryDate("2026-01-20 18:00:00+00")).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
 });
 
 describe("strict repair exact shape — balanced wrong account/amount plants", () => {
