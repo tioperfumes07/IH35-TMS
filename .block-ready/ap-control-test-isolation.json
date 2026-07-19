@@ -1,0 +1,36 @@
+{
+  "block_id": "ap-control-test-isolation",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "test-hygiene",
+  "task": "Root-cause fix for nondeterministic bill-payment-gl-posting CC/ap_control race: each ap_control-seeding db.test owns a unique org.companies + chart_of_accounts_roles namespace via createIsolatedOperatingCompany(); guard requires isolation; concurrent cash/CC stress regression. No product GL or migration changes.",
+  "branch": "cursor/ap-control-test-isolation-b21d",
+  "lane": "cloud",
+  "allowed_files": [
+    ".block-ready/ap-control-test-isolation.json",
+    "apps/backend/test-helpers/isolated-company.ts",
+    "apps/backend/test-helpers/db-fixture.ts",
+    "apps/backend/vitest.config.ts",
+    "apps/backend/src/accounting/__tests__/bill-payment-gl-posting.db.test.ts",
+    "apps/backend/src/accounting/__tests__/bill-gl-posting.db.test.ts",
+    "apps/backend/src/accounting/__tests__/bill-payment-gl-ap-control-isolation.stress.db.test.ts",
+    "apps/backend/src/accounting/settlement-posting/__tests__/settlement-bill-payment-posting.db.test.ts",
+    "apps/backend/src/accounting/settlement-posting/__tests__/settlement-gl-posting.db.test.ts",
+    "apps/backend/src/banking/__tests__/bank-transaction-splits-vendor-bill.db.test.ts",
+    "apps/frontend/src/components/home/__tests__/QboSyncHealthCard.test.tsx",
+    "scripts/verify-shared-coa-role-tests-serialized.mjs",
+    "scripts/verify-steps/131-verify-shared-coa-role-tests-serialized.mjs"
+  ],
+  "runtime_path": "src",
+  "db_required": true,
+  "guard_required": true,
+  "extra_gates": [
+    "node scripts/verify-shared-coa-role-tests-serialized.mjs --selftest"
+  ],
+  "acceptance": [
+    {
+      "check": "ap_control-seeding db.tests use createIsolatedOperatingCompany; verify-shared-coa-role-tests-serialized selftest PASS; focused concurrent bill-payment + stress suite deterministic; no product GL/migration change"
+    }
+  ],
+  "note": "Test hygiene only. QboSyncHealthCard assertion fix unblocks wall-clock flake in verify:qbo-sync-staleness (pre-existing on main)."
+}
