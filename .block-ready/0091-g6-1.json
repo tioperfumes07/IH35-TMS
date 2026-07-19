@@ -3,7 +3,7 @@
   "status": "HOLD",
   "classification": "FINANCIAL",
   "phase": "tier1",
-  "task": "PR #2705 replaces host-UTC accounting date defaults with one transaction-scoped company business date and makes driver-settlement cancellation atomic across canonical posting reversals, bills, bill payments, bank balance, driver bills, operational deductions, deduction buckets, GL reconciliation, settlement state, and audit. It reuses existing posting, journal-entry reversal, bill void, and deduction bucket reversal services; adds no GL math, schema, migration, QBO write-back, or flag change. Full block-ready exposed two pipeline defects: the bulk limiter test depended on external Redis state, and C5 reran the HOLD guard locally after verify:static had correctly delegated PR-label authority to required CI. The test now selects its in-memory contract, while C5 consumes verify-meta's server-required capability classification.",
+  "task": "PR #2705 replaces host-UTC accounting date defaults with one transaction-scoped company business date and makes driver-settlement cancellation atomic across canonical posting reversals, bills, bill payments, bank balance, driver bills, operational deductions, deduction buckets, GL reconciliation, settlement state, and audit. It reuses existing posting, journal-entry reversal, bill void, and deduction bucket reversal services; adds no GL math, schema, migration, QBO write-back, or flag change. Full block-ready exposed three deterministic gate defects: the bulk limiter test depended on external Redis state, C5 reran the HOLD guard locally after verify:static delegated PR-label authority to required CI, and the QBO freshness test depended on the host wall clock. The tests now use explicit isolated state/clocks, while C5 consumes verify-meta's server-required capability classification.",
   "branch": "hold/0091-g6-1-business-date-20260718",
   "lane": "B",
   "source": "MASTER-6 authored dispatch (03-TIER1-BLOCKS)",
@@ -11,6 +11,7 @@
   "allowed_files": [
     ".block-ready/0091-g6-1.json",
     "apps/backend/src/bulk/bulk-update.factory.test.ts",
+    "apps/frontend/src/components/home/__tests__/QboSyncHealthCard.test.tsx",
     "apps/backend/src/accounting/__tests__/bills-void-in-client.test.ts",
     "apps/backend/src/accounting/bills.service.ts",
     "apps/backend/src/accounting/financial-today-company-tz.test.ts",
@@ -77,6 +78,10 @@
     {
       "kind": "pipeline",
       "check": "block-ready C5 reads server_required_guard_capabilities from verify-meta and does not locally re-decide PR-label/PASS-8 authority after verify:static; authoritative required GitHub contexts remain fail-closed."
+    },
+    {
+      "kind": "test-clock",
+      "check": "QboSyncHealthCard stale-age behavior uses a fixed 2026-07-18 clock and restores real timers after each test, eliminating host-date dependence."
     },
     {
       "kind": "live",
