@@ -25,30 +25,36 @@ design docs, draft JE/SQL proofs, and flag-OFF scaffolding — the actual postin
 sign-off. Money-posting env flags stay **OFF** until CPA + Neon tie-out.
 
 ## 1. Architecture — PARALLEL double-books (not a sync)
-- **Historical authority boundary (locked):** **QBO is system-of-record through 12/31/2025.** **TMS ledger
-  authority from 2026-01-01.** These dates are the primary agent-loaded SoR control; they are **not** deleted
-  by later operational clarifications.
-- **Current owner-approved operational mode (dual-run validation):** QBO remains **actively maintained** as
-  the parallel comparison / filing book during validation; TMS runs **independently**; the connection is
-  **clone-once + reconcile-only**. This mode does **not** authorize TMS→QBO write-back.
+Canonical **three-layer model** (must stay aligned with `TMS-QBO-PARALLEL-BOOKS.md`,
+`ACCOUNTING-ARCHITECTURE.md`, and the reference card — do not collapse layers):
+
+- **Layer 1 — Historical transaction authority (locked):** **QBO is system-of-record through 12/31/2025.**
+  **TMS ledger authority from 2026-01-01.** These dates are the primary agent-loaded SoR control; they are
+  **not** retired by Layer 3 dual-run wording or by QBO-PUSH ceremony language.
+- **Layer 2 — Ch.11 operating / GL cutover:** opening balances as-of **03/31/2026**; live operating line from
+  **04/01/2026** under **ASC 470-60 debt restructuring — NOT ASC 852 fresh-start accounting** (detail in §2).
+- **Layer 3 — Ongoing validation mode:** QBO remains **actively maintained** as the parallel comparison /
+  filing book; TMS runs **independently**; the connection is **clone-once + reconcile-only**. This mode does
+  **not** authorize TMS→QBO write-back and does **not** retire Layer 1.
 - **CLONE-ONCE + RECONCILE-ONLY. NO write-back to QBO.** JE/entity push sit behind **default-OFF** kill-switches
   (**IMPORT-P0** / **IMPORT-P0b** → `QBO_JE_PUSH_ENABLED` / `QBO_ENTITY_PUSH_ENABLED`, default OFF, per-entity).
-  The blueprint's old "QBO AUTO-SYNC" is retired.
+  The blueprint's old "QBO AUTO-SYNC" is retired (auto-sync only — not Layer 1 SoR dates).
 - Reconciliation is the daily correctness test (see §8), not a data pipeline.
-- Canonical parallel-books entry: `docs/specs/TMS-QBO-PARALLEL-BOOKS.md` (reconcile with the three date layers in §2).
+- Canonical parallel-books entry: `docs/specs/TMS-QBO-PARALLEL-BOOKS.md`.
 
 ## 2. Opening balance + date layers (no contradiction with parallel-books)
-Distinguish three locked layers — do not collapse them into one “cutover”:
+Distinguish the same three locked layers — do not collapse them into one “cutover”:
 
-1. **Historical authority dates:** QBO SoR through **12/31/2025**; TMS ledger authority from **2026-01-01** (§1).
-2. **Ch.11 operating cutover line (ASC 470-60 debt restructuring — NOT ASC 852 fresh-start accounting)**
-   (owner-final 2026-07-16): opening balances as-of **03/31/2026**; TMS live parallel posting from **04/01/2026**
-   per entity after opening tie-out — see `docs/lockdown/00_LOCKED_DECISIONS.md` §8.9. This is the **internal
-   GL-posting / operating** line — it does **not** erase §1’s historical SoR dates and does **not** authorize
-   TMS→QBO write-back.
-3. **Ongoing dual-run validation:** per `TMS-QBO-PARALLEL-BOOKS.md`, both books continue independently with
-   twice-daily reconciliation; QBO stays actively maintained as the comparison/filing book during validation
-   (parallel indefinitely / no write-back).
+1. **Layer 1 — Historical authority dates:** QBO SoR through **12/31/2025**; TMS ledger authority from
+   **2026-01-01** (§1).
+2. **Layer 2 — Ch.11 operating cutover line (ASC 470-60 debt restructuring — NOT ASC 852 fresh-start
+   accounting)** (owner-final 2026-07-16): opening balances as-of **03/31/2026**; TMS live parallel posting
+   from **04/01/2026** per entity after opening tie-out — see `docs/lockdown/00_LOCKED_DECISIONS.md` §8.9.
+   This is the **internal GL-posting / operating** line — it does **not** erase Layer 1’s historical SoR
+   dates and does **not** authorize TMS→QBO write-back.
+3. **Layer 3 — Ongoing dual-run validation:** per `TMS-QBO-PARALLEL-BOOKS.md`, both books continue
+   independently with twice-daily reconciliation; QBO stays **actively maintained** as the comparison/filing
+   book (reconcile-only / no write-back).
 
 Opening-balance mechanics:
 - TMS parallel books **open 01-01-2025** → opening balance = QBO **Balance Sheet as of 12/31/2024**, **signed-actual**

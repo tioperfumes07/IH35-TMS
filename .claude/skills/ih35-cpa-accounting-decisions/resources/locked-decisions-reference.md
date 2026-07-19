@@ -5,13 +5,14 @@ Sanitized card only — no names, signatures, addresses, emails, personal-guaran
 
 | # | Decision | Locked value | Notes |
 |---|----------|--------------|-------|
-| Architecture | Books model | **Parallel double-books**, clone-once + reconcile-only, **no write-back** | Historical SoR: **QBO through 12/31/2025**; **TMS ledger authority from 2026-01-01** |
-| Architecture | Operational mode | Dual-run validation: QBO actively maintained as comparison/filing book; TMS independent; reconcile-only | Does **not** authorize TMS→QBO write-back; see `TMS-QBO-PARALLEL-BOOKS.md` |
+| Architecture | Layer 1 — Historical SoR | **QBO through 12/31/2025**; **TMS ledger authority from 2026-01-01** | Not retired by Layer 3 or QBO-PUSH ceremony |
+| Architecture | Layer 2 — Ch.11 cutover | **ASC 470-60 debt restructuring — NOT ASC 852 fresh-start accounting**; OB **03/31/2026**; live **04/01/2026** | Operating/GL line — does not erase Layer 1 |
+| Architecture | Layer 3 — Dual-run validation | QBO **actively maintained** as comparison/filing book; TMS independent; **reconcile-only**; never TMS→QBO write-back | See `TMS-QBO-PARALLEL-BOOKS.md` three-layer model |
+| Architecture | Books model | **Parallel double-books**, clone-once + reconcile-only, **no write-back** | Layers 1–3 concurrent |
 | Architecture | Kill-switches | **IMPORT-P0** / **IMPORT-P0b** → `QBO_JE_PUSH_ENABLED` / `QBO_ENTITY_PUSH_ENABLED` **default OFF** | Per-entity; ✗ agent flips |
 | Opening | Cutover | TMS opens **01-01-2025**; opening = QBO **BS 12/31/2024**, **signed-actual** | BS-only; TRK full equity |
 | Opening | OBE | OBE → **Retained Earnings** temp clearing; permanent OBE = **defect** (≈0) | |
 | Opening | Timing | **DEFERRED until Martin finalizes 2024 close** (moving target) | clone-as-is-then-adjust; ✗ agent posts |
-| Opening | Ch.11 line | **ASC 470-60 debt restructuring — NOT ASC 852 fresh-start accounting**; OB **03/31/2026**; live parallel **04/01/2026** | Operating/GL line — does not erase §1 SoR dates |
 | Opening | Currency | **USD home**; MXN via FX gain/loss (ASC 830) | |
 | Factoring | Treatment | **Secured borrowing / recourse** (NOT a sale); Substance-over-form | A/R remains pledged collateral; funding credits Factoring Advance; **no A/R derecognition** |
 | Factoring | Faro terms | **$1,000,000** revolving; fees **1.5% / 2% of Net at funding**; reserve **1.5%**; Purchase Price = Net − Fee − Reserve; proceeds = Purchase Price − transaction/wire fees; **30d+5d**; repurchase **95d**; default **0.067%/day compounded beginning after day 35** | Factor statements authoritative |

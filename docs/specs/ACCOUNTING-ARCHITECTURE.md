@@ -11,23 +11,38 @@
 > §3.12 "QBO AUTO-SYNC + REPLAY") disagrees, THIS wins.** Aligned with
 > `docs/lockdown/00_LOCKED_DECISIONS.md` §8. Purpose: stop agents from rebuilding a two-way QBO sync.
 
+## Three-layer SoR / cutover / validation model (LOCKED — additive)
+
+Same three layers as `docs/specs/TMS-QBO-PARALLEL-BOOKS.md` and the CPA skill — do not collapse:
+
+1. **Historical transaction authority:** QBO authoritative through **12/31/2025**; **TMS ledger authority
+   begins 2026-01-01.** These dates are **not** retired by dual-run validation wording.
+2. **Ch.11 operating / GL cutover:** opening balances as-of **03/31/2026**; live operating line from
+   **04/01/2026** under **ASC 470-60 debt restructuring — NOT ASC 852 fresh-start accounting.**
+3. **Ongoing validation mode:** QBO remains **actively maintained** as the comparison / filing book; TMS
+   runs independently; **reconcile-only**; **never** TMS→QBO write-back; **IMPORT-P0** / **IMPORT-P0b**
+   (`QBO_JE_PUSH_ENABLED` / `QBO_ENTITY_PUSH_ENABLED`) **default OFF**.
+
 ## The one-paragraph version
-TMS and QuickBooks Online run as **two independent systems in parallel (double books)**. **QBO is the
-system of record through 12/31/2025; TMS runs in parallel and is reconciled against it — TMS is NOT a
-mirror of QBO.** We **clone QBO once** — all master data, AR, AP, and GL — into the TMS database, and after
+TMS and QuickBooks Online run as **two independent systems in parallel (double books)** under the
+three-layer model above. **QBO is the system of record through 12/31/2025; TMS ledger authority begins
+2026-01-01.** We **clone QBO once** — all master data, AR, AP, and GL — into the TMS database, and after
 that the QBO connection exists **only to reconcile and compare** (twice daily — the two Jorge-locked
 scheduled passes in `TMS-QBO-RECONCILIATION.md` §2): flag anything added, voided, or changed in either
-system. **There is NO write-back from TMS to QBO and NO two-way sync.** TMS becomes authoritative at the
-**cutover ceremony** (final clone + to-the-cent tieout + book-lock) — an event, not a date; 12/31/2025 was
-the target and has passed, so we remain parallel until the ceremony (see Cutover below).
+system. **There is NO write-back from TMS to QBO and NO two-way sync.** During ongoing validation, QBO
+remains actively maintained as the comparison/filing book while TMS runs independently. **QBO-PUSH**
+kill-switch flips remain **event-gated** (final clone + to-the-cent tieout + book-lock) — that ceremony
+governs write-back/push authority only; it does **not** retire Layer 1’s historical SoR dates (see Cutover
+below).
 
 ## Why (the decision)
 Owner + CPA locked this to avoid the fragility and double-entry risk of a bidirectional sync. The deeper
 purpose: **run TMS in parallel to QuickBooks as a live validation harness.** Both books register the same
 bank feeds, expenses, bills, and payments independently; the daily reconcile proves TMS booked every event
-the same way QBO did. QuickBooks stays the CPA's system of record while TMS earns trust, and the cutover
-(TMS becomes authoritative) is a deliberate event only after the reconcile shows the two books agree — not
-a silent drift.
+the same way QBO did. Under Layer 3, QuickBooks stays the actively maintained comparison/filing book while
+TMS earns trust under Layer 1’s TMS ledger authority start; QBO-PUSH enablement remains a deliberate
+event-gated ceremony after reconcile proves agreement — not a silent drift, and not a retirement of the
+12/31/2025 / 2026-01-01 historical authority boundary.
 
 ## The rules (enforcement status noted per rule — do not assume "enforced" without the citation)
 
@@ -86,21 +101,26 @@ The master blueprint §3.12 "QBO AUTO-SYNC + OFFLINE QUEUE / REPLAY" (WF-031 aut
 local-write-first-then-push, lockstep, replay-on-reconnect) is **superseded** and kept only for history.
 Do not rebuild a two-way sync.
 
-## Cutover — EVENT-gated, not date-gated
-Authority flips to TMS at the **cutover ceremony**, not on a calendar date: the ceremony = a final clone +
-a **to-the-cent tieout** proving both books agree + a **book-lock**. **12/31/2025 was the target date and
-has already passed — we remain in the parallel window until the ceremony completes.** No agent may treat
-the date as permission to flip a flag. At cutover: TMS becomes authoritative; period-lock + a final
-court/CPA-grade tieout snapshot. Nothing locks/closes during the reconciliation window.
+## Cutover — three layers (QBO-PUSH ceremony ≠ retirement of historical SoR)
+
+**Layer 1 (historical transaction authority)** remains locked: QBO through **12/31/2025**; TMS ledger
+authority from **2026-01-01**. Dual-run validation does **not** retire these dates.
+
+**QBO-PUSH / write-back enablement** stays **EVENT-gated**, not calendar-gated: the ceremony = a final clone +
+a **to-the-cent tieout** proving both books agree + a **book-lock** before any kill-switch flip. No agent may
+treat a calendar date as permission to flip `QBO_JE_PUSH_ENABLED` / `QBO_ENTITY_PUSH_ENABLED`. That ceremony
+governs **push/write-back authority only** — it is not a statement that QBO is the indefinite sole SoT, and it
+does not erase Layer 1.
 
 > **⚑ Ch.11 operating cutover line (ASC 470-60 debt restructuring — NOT ASC 852 fresh-start accounting)
 > (OWNER-FINAL 2026-07-16; supersedes the prior 07/01/2026 cutover / 06/30/2026 opening lock).**
 > Ch.11 was approved end of March 2026 → the books change in April, so **03/31/2026 is the operating cutover line**:
 > **opening balances = QBO Balance Sheet as of 03/31/2026 per entity** (re-syncable until the owner locks them),
 > and **TMS posts live in parallel + reconciles daily from 04/01/2026** (per entity, after opening tie-out). This
-> is the **internal GL-posting** go-live — it does **not** change the rule above: the **QBO-PUSH authority cutover
-> stays EVENT-gated** and the historical clone conversion (`01/01/2024`) is unchanged. Apr/May/Jun 2026 move from
-> "mirror QBO" to LIVE TMS posting (3 more live months than the old 07/01 line) — expected. Canonical spec:
+> is the **internal GL-posting / operating** go-live (Layer 2) — it does **not** erase Layer 1’s historical SoR
+> dates, does **not** authorize TMS→QBO write-back, and leaves **QBO-PUSH** flips **EVENT-gated**. The historical
+> clone conversion (`01/01/2024`) is unchanged. Apr/May/Jun 2026 move from "mirror QBO" to LIVE TMS posting
+> (3 more live months than the old 07/01 line) — expected. Canonical spec:
 > `docs/specs/OPENING-BALANCE-IMPORT-AND-CUTOVER-2026-07-16.md`.
 
 ## Locked owner decisions (2026-07-02 — resolved; reconciled with GUARD)

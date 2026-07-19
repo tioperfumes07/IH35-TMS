@@ -43,6 +43,9 @@
       "check": "Ch.11 operating cutover line stated as ASC 470-60 — NOT ASC 852 fresh-start accounting; OB 03/31 and live parallel 04/01 preserved"
     },
     {
+      "check": "Three-layer SoR model locked consistently (skill, reference, PARALLEL-BOOKS, ACCOUNTING-ARCHITECTURE): Layer 1 QBO through 12/31/2025 + TMS from 2026-01-01 (not retired); Layer 2 Ch.11 OB 03/31/2026 + live 04/01/2026 ASC 470-60 NOT ASC 852; Layer 3 QBO actively maintained comparison/filing book, reconcile-only, never write-back, IMPORT-P0/P0b default OFF"
+    },
+    {
       "check": "FINANCIAL-OWNER-UNBLOCK-PACKET stale invoice-create line corrected and in guard stale-wording scope"
     },
     {

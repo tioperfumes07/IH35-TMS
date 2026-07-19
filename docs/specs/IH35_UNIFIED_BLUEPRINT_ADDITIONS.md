@@ -1294,6 +1294,13 @@ Official basis: FMCSA CSA “Measure” and SMS Help Center — Hazmat Complianc
 **Do not modify** `docs/specs/IH35_MASTER_BLUEPRINT_v3_FULL.md` for this phase.
 **Sanitization:** never commit names, signatures, addresses, emails, personal-guaranty text, or executed-agreement text.
 
+### Three-layer SoR / cutover / validation model (do not collapse)
+Canonical detail: `docs/specs/TMS-QBO-PARALLEL-BOOKS.md` + CPA skill. Layers are additive and concurrent:
+
+1. **Historical transaction authority:** QBO authoritative through **12/31/2025**; **TMS ledger authority begins 2026-01-01.** Dual-run wording does **not** retire these dates.
+2. **Ch.11 operating / GL cutover:** OB as-of **03/31/2026**; live operating line **04/01/2026**; **ASC 470-60 debt restructuring — NOT ASC 852 fresh-start accounting.**
+3. **Ongoing validation mode:** QBO remains **actively maintained** as comparison/filing book; TMS independent; **reconcile-only**; **never** TMS→QBO write-back; **IMPORT-P0** / **IMPORT-P0b** (`QBO_JE_PUSH_ENABLED` / `QBO_ENTITY_PUSH_ENABLED`) **default OFF**.
+
 ### Locked recognition + dual-basis crosswalk
 - **TMS ACCRUAL recognition event** = **canonical load delivery**.
 - Operational definition (no guessing): **final active delivery stop completion / actual departure** is the source evidence.

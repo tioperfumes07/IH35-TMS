@@ -10,8 +10,10 @@
  *   2. Is missing required Phase-1 sanitized decision anchors (Faro mechanics, dual-basis, ASC,
  *      operational delivery definition), OR
  *   3. Affirmatively frames Ch.11 as ASC 852 "fresh-start" accounting, OR
- *   4. Skill/reference lose historical SoR dates (12/31/2025 / 2026-01-01) or either default-OFF
- *      kill-switch (IMPORT-P0/P0b or QBO_JE_PUSH_ENABLED / QBO_ENTITY_PUSH_ENABLED), OR
+ *   4. Three-layer SoR surfaces (skill, reference, PARALLEL-BOOKS, ACCOUNTING-ARCHITECTURE) lose any
+ *      layer: (1) historical SoR 12/31/2025 + 2026-01-01, (2) Ch.11 OB 03/31/2026 + live 04/01/2026 +
+ *      ASC 470-60 / NOT ASC 852, (3) actively maintained + reconcile-only/no write-back + IMPORT-P0/P0b
+ *      kill-switches — OR affirmatively claim the 12/31 boundary is retired / QBO is indefinite sole SoT, OR
  *   5. (sanitized surfaces only) Contains forbidden private-source / PII patterns.
  *
  * Pure filesystem checks — no DB, no network. Uses runExecutableGuard planted fixtures.
@@ -47,6 +49,30 @@ const FULL_LOCK_DOCS = [
   "docs/specs/TMS-QBO-PARALLEL-BOOKS.md",
   "docs/specs/ACCOUNTING-ARCHITECTURE.md",
   "docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md",
+];
+
+/**
+ * Surfaces that must state the same three-layer SoR model (CPA release correction).
+ * Layer 1 historical · Layer 2 Ch.11 cutover · Layer 3 dual-run validation.
+ */
+const THREE_LAYER_DOCS = [
+  ".claude/skills/ih35-cpa-accounting-decisions/SKILL.md",
+  ".claude/skills/ih35-cpa-accounting-decisions/resources/locked-decisions-reference.md",
+  "docs/specs/TMS-QBO-PARALLEL-BOOKS.md",
+  "docs/specs/ACCOUNTING-ARCHITECTURE.md",
+];
+
+/** Affirmative defect: treats Layer 1 12/31 boundary as currently retired (correction prose allowed). */
+const AFFIRMATIVE_LAYER1_RETIRED_PATTERNS = [
+  /\b(?:the\s+)?12\/31\/2025\s+(?:SoR\s+)?(?:framing|boundary|authority)[^.!?\n*]{0,40}\bis\s+retired\b/i,
+  /\bhistorical\s+(?:12\/31\/2025\s+)?(?:SoR\s+)?(?:framing|boundary|authority)[^.!?\n*]{0,40}\bis\s+retired\b/i,
+  /\bSoR\s+framing\s+is\s+retired\b/i,
+];
+
+/** Affirmative defect: QBO as indefinite sole SoT (negated “is not …” prose allowed). */
+const AFFIRMATIVE_INDEFINITE_SOLE_PATTERNS = [
+  /\bQBO\s+is\s+(?:the\s+)?indefinite\s+sole\s+(?:source|system)\s+of\s+truth\b/i,
+  /\bQBO\s+(?:remains|stays)\s+(?:the\s+)?(?:indefinite\s+)?sole\s+(?:source|system)\s+of\s+truth\b/i,
 ];
 
 const STALE_RECOGNITION_PATTERNS = [
@@ -169,36 +195,93 @@ function checker(docs) {
     if (/recognized at\s+\*{0,2}invoice-create\*{0,2}/i.test(source)) {
       failures.push(`${rel}: must not claim recognition at invoice-create`);
     }
+  }
 
-    // Primary agent-loaded SoR / kill-switch controls (must not regress out of skill + reference).
+  // Three-layer SoR model — required consistently across skill, reference, PARALLEL-BOOKS, ACCOUNTING-ARCHITECTURE.
+  for (const rel of THREE_LAYER_DOCS) {
+    const source = docs.find(([pathRel]) => pathRel === rel)?.[1] ?? "";
+    if (!source) {
+      failures.push(`${rel}: missing three-layer SoR surface`);
+      continue;
+    }
+
+    // Layer 1 — historical transaction authority
     if (!source.includes("12/31/2025")) {
-      failures.push(`${rel}: must preserve historical QBO SoR date 12/31/2025`);
+      failures.push(`${rel}: Layer 1 missing historical QBO SoR date 12/31/2025`);
     }
     if (!source.includes("2026-01-01")) {
-      failures.push(`${rel}: must preserve TMS ledger authority date 2026-01-01`);
+      failures.push(`${rel}: Layer 1 missing TMS ledger authority date 2026-01-01`);
+    }
+
+    // Layer 2 — Ch.11 operating / GL cutover
+    if (!source.includes("03/31/2026")) {
+      failures.push(`${rel}: Layer 2 missing opening-balance date 03/31/2026`);
+    }
+    if (!source.includes("04/01/2026")) {
+      failures.push(`${rel}: Layer 2 missing live operating line date 04/01/2026`);
+    }
+    if (!source.includes("ASC 470-60")) {
+      failures.push(`${rel}: Layer 2 missing ASC 470-60`);
+    }
+    if (!/NOT ASC 852|not ASC 852/i.test(source)) {
+      failures.push(`${rel}: Layer 2 must reject ASC 852 (NOT ASC 852)`);
+    }
+
+    // Layer 3 — ongoing validation mode
+    if (!/actively maintained/i.test(source)) {
+      failures.push(`${rel}: Layer 3 missing QBO actively maintained comparison/filing book`);
+    }
+    if (!/reconcile-only|never\s+TMS→QBO\s+write-back|no write-back/i.test(source)) {
+      failures.push(`${rel}: Layer 3 missing reconcile-only / never write-back control`);
     }
     const hasImportP0 = /IMPORT-P0\b/.test(source) && /IMPORT-P0b\b/.test(source);
     const hasJeKill = source.includes("QBO_JE_PUSH_ENABLED");
     const hasEntityKill = source.includes("QBO_ENTITY_PUSH_ENABLED");
-    if (!hasImportP0 && !(hasJeKill && hasEntityKill)) {
+    if (!hasImportP0) {
+      failures.push(`${rel}: Layer 3 missing IMPORT-P0 / IMPORT-P0b kill-switch labels`);
+    }
+    if (!hasJeKill || !hasEntityKill) {
       failures.push(
-        `${rel}: must preserve default-OFF kill-switches (IMPORT-P0/IMPORT-P0b or QBO_JE_PUSH_ENABLED + QBO_ENTITY_PUSH_ENABLED)`
+        `${rel}: Layer 3 missing mapped QBO_JE_PUSH_ENABLED / QBO_ENTITY_PUSH_ENABLED kill-switches`
       );
     }
-    if (hasJeKill && !hasEntityKill) {
-      failures.push(`${rel}: missing QBO_ENTITY_PUSH_ENABLED kill-switch (both JE + entity required)`);
+
+    if (!/three-layer|Layer 1|Historical transaction authority/i.test(source)) {
+      failures.push(`${rel}: must name the three-layer / Layer 1 historical authority model`);
     }
-    if (hasEntityKill && !hasJeKill) {
-      failures.push(`${rel}: missing QBO_JE_PUSH_ENABLED kill-switch (both JE + entity required)`);
-    }
-    if (hasImportP0) {
-      // When IMPORT-P0 labels are present, also require the mapped env keys so agents see both forms.
-      if (!hasJeKill || !hasEntityKill) {
+
+    // Defect wording — affirmative retirement of Layer 1 or indefinite sole SoT (negated prose OK).
+    for (const pattern of AFFIRMATIVE_LAYER1_RETIRED_PATTERNS) {
+      for (const line of source.split("\n")) {
+        if (!pattern.test(line)) continue;
+        if (/\b(?:not|never)\s+retired\b/i.test(line)) continue;
+        if (/\b(?:does\s+not|do\s+not|don't)\s+retire\b/i.test(line)) continue;
+        if (/\b(?:superseded|older|earlier|declared|Controls over)\b/i.test(line)) continue;
         failures.push(
-          `${rel}: IMPORT-P0/P0b present but mapped QBO_JE_PUSH_ENABLED / QBO_ENTITY_PUSH_ENABLED missing`
+          `${rel}: affirmative Layer-1 retirement wording matched /${pattern.source}/ — 12/31/2025 boundary is NOT retired`
         );
       }
     }
+    for (const pattern of AFFIRMATIVE_INDEFINITE_SOLE_PATTERNS) {
+      for (const line of source.split("\n")) {
+        if (!pattern.test(line)) continue;
+        if (/\bis\s+not\b|\bnot\s+[“"]?the\s+sole\b|\bnot\s+sole\b|\bsuperseded\b/i.test(line)) continue;
+        failures.push(
+          `${rel}: affirmative indefinite-sole-SoT wording matched /${pattern.source}/ — QBO is comparison/filing book under Layer 3, not indefinite sole SoT`
+        );
+      }
+    }
+  }
+
+  const parallelBooks =
+    docs.find(([rel]) => rel === "docs/specs/TMS-QBO-PARALLEL-BOOKS.md")?.[1] ?? "";
+  if (
+    /12\/31\/2025 SoR framing is retired/i.test(parallelBooks) &&
+    !/superseded by this three-layer/i.test(parallelBooks)
+  ) {
+    failures.push(
+      "docs/specs/TMS-QBO-PARALLEL-BOOKS.md: must not claim 12/31/2025 SoR framing is retired without three-layer supersession"
+    );
   }
 
   const unblock = docs.find(([rel]) => rel === "docs/trackers/FINANCIAL-OWNER-UNBLOCK-PACKET.md")?.[1] ?? "";
@@ -241,6 +324,9 @@ function createBadFixture(goodFixture) {
       .replaceAll("does **not** redefine cash recognition", "CASH_CROSSWALK_REMOVED")
       .replaceAll("12/31/2025", "SOR_QBO_DATE_REMOVED")
       .replaceAll("2026-01-01", "SOR_TMS_DATE_REMOVED")
+      .replaceAll("03/31/2026", "OB_DATE_REMOVED")
+      .replaceAll("04/01/2026", "LIVE_DATE_REMOVED")
+      .replaceAll("actively maintained", "ACTIVE_MAINT_REMOVED")
       .replaceAll("IMPORT-P0b", "IMPORT_P0B_REMOVED")
       .replaceAll("IMPORT-P0", "IMPORT_P0_REMOVED")
       .replaceAll("QBO_JE_PUSH_ENABLED", "JE_KILL_REMOVED")
@@ -254,6 +340,13 @@ function createBadFixture(goodFixture) {
           "\nRevenue recognized at **invoice-create** (pickup → delivery).\n" +
           "Ch.11 fresh-start line (owner-final)\n" +
           "personal guaranty of the obligor\n";
+      }
+      if (rel === "docs/specs/TMS-QBO-PARALLEL-BOOKS.md") {
+        // Plant Layer-1 retirement / indefinite-sole SoT as current claims (no supersession clause).
+        planted =
+          planted.replace(/superseded by this three-layer model/gi, "SUPERSESSION_REMOVED") +
+          "\nThe 12/31/2025 SoR framing is retired.\n" +
+          "QBO is the indefinite sole source of truth.\n";
       }
       return [rel, planted];
     }
@@ -292,6 +385,11 @@ runExecutableGuard({
     "FINANCIAL-OWNER-UNBLOCK-PACKET.md",
     "12/31/2025",
     "2026-01-01",
+    "03/31/2026",
+    "04/01/2026",
     "kill-switch",
+    "actively maintained",
+    "affirmative Layer-1 retirement",
+    "affirmative indefinite-sole",
   ],
 });
