@@ -1444,15 +1444,18 @@ Status: LOCKED (non-financial guard/spec wiring plus behavior tests; relation-fa
   `withCompanyScope` callback, company GUC, relation check, scoped DISTINCT query, captured result, and
   returned `samsara_live` property. `samsaraLive` has exactly one assignment from that query result; absence
   of the Samsara relation leaves the initialized zero unchanged. Nested helpers, fallback counters, extra or
-  conditional assignments, dead route wrappers, and dead proof functions do not count.
+  conditional assignments (including object/array/computed destructuring, compound writes, and increments),
+  dead route wrappers, and dead proof functions do not count.
 - The company GUC statement is parsed as executable SQL after SQL-comment removal and must execute
   `SELECT set_config('app.operating_company_id', $1, true)` with the immutable current `companyId`.
 - The Samsara SQL contract strips SQL comments, parses the executable SELECT/FROM/JOIN/WHERE clauses, and
   requires the count expression, canonical table, no JOIN, company-GUC predicate, non-null local unit, and
   six-hour freshness predicate. Tokens present only in SQL or JavaScript comments never satisfy the contract.
 - Behavior-level tests against production modules are the primary proof: Fastify injection proves counter
-  response/scoping/arbitrary-company/zero behavior; React/router tests mount all four guarded paths through
-  the real `ROUTES`, resolve their real lazy imports, click producers, and exercise consumers.
+  response/scoping/fifth-arbitrary-company behavior and proves that an existing `mdata.units` relation cannot
+  reintroduce a fallback when Samsara is absent; React/router tests mount all four guarded paths through the
+  real `ROUTES`, assert exactly one protected registration per path, resolve real lazy imports, click producers,
+  and exercise consumers.
 - Every guard includes table-driven `--selftest` plants covering every historical VETO and canonical controls.
 - CI wiring is additive through unique auto-discovered `scripts/verify-steps/<NNN>-*.mjs` entries. Each step
   runs the production guard, its selftest, and the relevant focused behavior test, and its own planted-failure
@@ -1461,7 +1464,8 @@ Status: LOCKED (non-financial guard/spec wiring plus behavior tests; relation-fa
 
 ### Guards (Rule 17)
 - `scripts/verify-entity-link-adoption.mjs` — narrow direct-ID plus lexically scoped/version-ordered
-  declaration, later-assignment, and helper detection; exact SHA-256 per-file/scope/structural-location/rule/
+  declaration, ordinary/destructured later-assignment, computed-key, multi-hop alias, and helper detection;
+  exact SHA-256 per-file/scope/structural-location/rule/
   expression finding-key/count equality rejects additions, removals, same-function moves, inflated counts,
   unknown hashes, and cancellation. Structural paths use AST ancestry and ordinals, not raw line numbers.
 - `scripts/entity-link-adoption-baseline.json` — versioned exact structural finding-key/count baseline.

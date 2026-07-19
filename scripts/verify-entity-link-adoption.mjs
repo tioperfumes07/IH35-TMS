@@ -100,6 +100,15 @@ function isDirectIdProperty(node) {
   return Boolean(name && ID_NAME_RE.test(name));
 }
 
+function isResolvedIdProperty(node, sf) {
+  if (isDirectIdProperty(node)) return true;
+  if (ts.isElementAccessExpression(node) && node.argumentExpression) {
+    const key = resolvedStaticString(node.argumentExpression, sf);
+    return Boolean(key && ID_NAME_RE.test(key));
+  }
+  return false;
+}
+
 function enclosingFunction(node) {
   for (let current = node.parent; current; current = current.parent) {
     if (ts.isFunctionLike(current)) return current;
@@ -121,14 +130,19 @@ function isInside(node, container) {
   return false;
 }
 
+function bindingName(node) {
+  if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name)) return node.name.text;
+  if (ts.isBindingElement(node) && ts.isIdentifier(node.name)) return node.name.text;
+  return null;
+}
+
 function lexicalDeclarations(sf, identifier) {
   const useFunction = enclosingFunction(identifier);
   const candidates = [];
   walk(sf, (node) => {
     if (
-      ts.isVariableDeclaration(node) &&
-      ts.isIdentifier(node.name) &&
-      node.name.text === identifier.text &&
+      (ts.isVariableDeclaration(node) || ts.isBindingElement(node)) &&
+      bindingName(node) === identifier.text &&
       node.pos < identifier.pos &&
       enclosingFunction(node) === useFunction
     ) {
@@ -139,28 +153,97 @@ function lexicalDeclarations(sf, identifier) {
   return candidates.sort((a, b) => b.pos - a.pos);
 }
 
+function unwrapParentheses(node) {
+  let current = node;
+  while (ts.isParenthesizedExpression(current)) current = current.expression;
+  return current;
+}
+
+function resolvedStaticString(expr, sf, seen = new Set()) {
+  if (ts.isStringLiteralLike(expr)) return expr.text;
+  if (!ts.isIdentifier(expr)) return null;
+  const token = `${expr.text}:${expr.pos}`;
+  if (seen.has(token)) return null;
+  seen.add(token);
+  const value = lexicalValueBeforeUse(sf, expr);
+  return value?.expression ? resolvedStaticString(value.expression, sf, seen) : null;
+}
+
+function propertyKeyIsId(name, sf) {
+  if (!name) return false;
+  if (ts.isIdentifier(name) || ts.isStringLiteralLike(name)) return ID_NAME_RE.test(name.text);
+  if (ts.isComputedPropertyName(name)) {
+    const value = resolvedStaticString(name.expression, sf);
+    return Boolean(value && ID_NAME_RE.test(value));
+  }
+  return false;
+}
+
+function bindingWrite(declaration, sf) {
+  if (ts.isVariableDeclaration(declaration)) {
+    return declaration.initializer ? { expression: declaration.initializer, directId: false } : null;
+  }
+  if (!ts.isBindingElement(declaration)) return null;
+  const variableDeclaration = declaration.parent.parent;
+  if (!ts.isVariableDeclaration(variableDeclaration) || !variableDeclaration.initializer) return null;
+  return {
+    expression: variableDeclaration.initializer,
+    directId: propertyKeyIsId(declaration.propertyName ?? declaration.name, sf),
+  };
+}
+
+function destructuredAssignmentWrite(left, identifier, sf) {
+  const target = unwrapParentheses(left);
+  if (!ts.isObjectLiteralExpression(target)) return null;
+  for (const property of target.properties) {
+    if (
+      ts.isPropertyAssignment(property) &&
+      ts.isIdentifier(property.initializer) &&
+      property.initializer.text === identifier.text
+    ) {
+      return { expression: null, directId: propertyKeyIsId(property.name, sf), target: property.initializer };
+    }
+    if (ts.isShorthandPropertyAssignment(property) && property.name.text === identifier.text) {
+      return { expression: null, directId: propertyKeyIsId(property.name, sf), target: property.name };
+    }
+  }
+  return null;
+}
+
 function lexicalValueBeforeUse(sf, identifier) {
   const declaration = lexicalDeclarations(sf, identifier)[0];
   if (!declaration) return null;
-  const writes = declaration.initializer
-    ? [{ position: declaration.getStart(sf), expression: declaration.initializer }]
+  const initialWrite = bindingWrite(declaration, sf);
+  const writes = initialWrite
+    ? [{ position: declaration.getStart(sf), ...initialWrite }]
     : [];
   const bindingScope = enclosingLexicalScope(declaration);
-  if (!bindingScope) return declaration.initializer;
+  if (!bindingScope) return initialWrite;
   walk(bindingScope, (node) => {
     if (
       ts.isBinaryExpression(node) &&
       node.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
-      ts.isIdentifier(node.left) &&
-      node.left.text === identifier.text &&
       node.getStart(sf) < identifier.getStart(sf) &&
-      lexicalDeclarations(sf, node.left)[0] === declaration
+      (
+        (ts.isIdentifier(node.left) &&
+          node.left.text === identifier.text &&
+          lexicalDeclarations(sf, node.left)[0] === declaration) ||
+        (() => {
+          const destructured = destructuredAssignmentWrite(node.left, identifier, sf);
+          return Boolean(destructured?.target && lexicalDeclarations(sf, destructured.target)[0] === declaration);
+        })()
+      )
     ) {
-      writes.push({ position: node.getStart(sf), expression: node.right });
+      const destructured = destructuredAssignmentWrite(node.left, identifier, sf);
+      writes.push({
+        position: node.getStart(sf),
+        expression: destructured ? destructured.expression : node.right,
+        directId: destructured?.directId ?? false,
+      });
     }
   });
   writes.sort((a, b) => b.position - a.position);
-  return writes[0]?.expression ?? null;
+  return writes[0] ?? null;
 }
 
 function lexicalFunctions(sf, identifier) {
@@ -188,7 +271,7 @@ function directReturnExpression(fn) {
 
 function resolvedIdReason(expr, sf, seen = new Set()) {
   if (isCanonicalLinkExpression(expr, sf)) return null;
-  if (isDirectIdProperty(expr)) return "direct-id";
+  if (isResolvedIdProperty(expr, sf)) return "direct-id";
   if (
     ts.isParenthesizedExpression(expr) ||
     ts.isAsExpression(expr) ||
@@ -204,7 +287,7 @@ function resolvedIdReason(expr, sf, seen = new Set()) {
     if (seen.has(token)) return null;
     seen.add(token);
     const value = lexicalValueBeforeUse(sf, expr);
-    return value && resolvedIdReason(value, sf, seen)
+    return value && (value.directId || (value.expression && resolvedIdReason(value.expression, sf, seen)))
       ? "alias-id"
       : null;
   }
@@ -376,6 +459,12 @@ function runSelftest() {
     ["later-assigned-id", `const T=({row})=>{let value="safe";value=row.vendor_id;return <td>{value}</td>}`, 1],
     ["uninitialized-later-assigned-id", `const T=({row})=>{let value;value=row.vendor_id;return <td>{value}</td>}`, 1],
     ["later-safe-overwrite", `const T=({row})=>{let value=row.vendor_id;value="safe";return <td>{value}</td>}`, 0],
+    ["destructured-alias", `const T=({row})=>{const {vendor_id:value}=row;return <td>{value}</td>}`, 1],
+    ["computed-key-alias", `const T=({row})=>{const key="vendor_id";const value=row[key];return <td>{value}</td>}`, 1],
+    ["later-destructured-assignment", `const T=({row})=>{let value="safe";({vendor_id:value}=row);return <td>{value}</td>}`, 1],
+    ["multi-hop-destructured-alias", `const T=({row})=>{const {vendor_id:first}=row;const value=first;return <td>{value}</td>}`, 1],
+    ["multi-hop-computed-key-alias", `const T=({row})=>{const first="vendor_id";const key=first;const value=row[key];return <td>{value}</td>}`, 1],
+    ["multi-hop-later-destructured", `const T=({row})=>{let first;({vendor_id:first}=row);const value=first;return <td>{value}</td>}`, 1],
     ["helper-returned-id", `function pick(row){return row.vendor_id}const T=({row})=><td>{pick(row)}</td>`, 1],
     ["helper-with-id-argument", `const T=({row})=><td>{show(row.vendor_id)}</td>`, 1],
     ["direct-entity-link", `const T=({row})=><td><EntityLink kind="vendor" id={row.vendor_id}/></td>`, 0],

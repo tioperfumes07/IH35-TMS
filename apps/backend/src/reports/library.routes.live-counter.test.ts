@@ -6,6 +6,7 @@ const COMPANY_A = "11111111-1111-4111-8111-111111111111";
 const COMPANY_B = "22222222-2222-4222-8222-222222222222";
 const COMPANY_C = "33333333-3333-4333-8333-333333333333";
 const COMPANY_D = "44444444-4444-4444-8444-444444444444";
+const COMPANY_E = "55555555-5555-4555-8555-555555555555";
 
 function stripSqlComments(sql: string) {
   let output = "";
@@ -85,6 +86,7 @@ const mocks = vi.hoisted(() => {
   let activeCompany = "";
   let gucCompany = "";
   let samsaraRelationExists = true;
+  let mdataUnitsRelationExists = true;
   const countByCompany = new Map<string, string>();
   const query = vi.fn(async (sqlValue: unknown, params: unknown[] = []) => {
     const sql = String(sqlValue);
@@ -100,9 +102,11 @@ const mocks = vi.hoisted(() => {
       const relation = String(params[0] ?? "");
       return {
         rows: [{
-          rel: relation === "integrations.samsara_vehicles" && samsaraRelationExists
-            ? relation
-            : null,
+          rel:
+            (relation === "integrations.samsara_vehicles" && samsaraRelationExists) ||
+            (relation === "mdata.units" && mdataUnitsRelationExists)
+              ? relation
+              : null,
         }],
       };
     }
@@ -121,6 +125,9 @@ const mocks = vi.hoisted(() => {
     },
     setRelationExists(value: boolean) {
       samsaraRelationExists = value;
+    },
+    setMdataUnitsRelationExists(value: boolean) {
+      mdataUnitsRelationExists = value;
     },
   };
 });
@@ -151,6 +158,7 @@ describe("reports home fleet Samsara live counter", () => {
     mocks.query.mockClear();
     mocks.countByCompany.clear();
     mocks.setRelationExists(true);
+    mocks.setMdataUnitsRelationExists(true);
   });
 
   afterEach(async () => {
@@ -182,8 +190,10 @@ describe("reports home fleet Samsara live counter", () => {
     ).toBe(true);
   });
 
-  it("returns zero when the Samsara relation and fallback relation are absent", async () => {
+  it("returns zero when Samsara is absent even while mdata.units exists", async () => {
     mocks.setRelationExists(false);
+    mocks.setMdataUnitsRelationExists(true);
+    mocks.countByCompany.set(COMPANY_C, "812");
 
     const response = await request(COMPANY_C);
 
@@ -192,6 +202,21 @@ describe("reports home fleet Samsara live counter", () => {
     expect(
       mocks.query.mock.calls.some(([sql]) =>
         String(sql).includes("FROM integrations.samsara_vehicles"),
+      ),
+    ).toBe(false);
+    expect(
+      mocks.query.mock.calls.some(
+        ([sql, params]) =>
+          String(sql).includes("to_regclass") &&
+          Array.isArray(params) &&
+          params[0] === "mdata.units",
+      ),
+    ).toBe(true);
+    expect(
+      mocks.query.mock.calls.some(([sql]) =>
+        /SELECT\s+count\(\*\)::text\s+AS\s+samsara_live\s+FROM\s+mdata\.units/is.test(
+          stripSqlComments(String(sql)),
+        ),
       ),
     ).toBe(false);
   });
@@ -223,6 +248,19 @@ describe("reports home fleet Samsara live counter", () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.json()).toMatchObject({ samsara_live: 47 });
+    expect(response.json()).not.toMatchObject({ samsara_live: 991 });
+  });
+
+  it("returns a fifth arbitrary company's result without any company-conditional value", async () => {
+    mocks.countByCompany.set(COMPANY_A, "991");
+    mocks.countByCompany.set(COMPANY_D, "47");
+    mocks.countByCompany.set(COMPANY_E, "63");
+
+    const response = await request(COMPANY_E);
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({ samsara_live: 63 });
+    expect(response.json()).not.toMatchObject({ samsara_live: 47 });
     expect(response.json()).not.toMatchObject({ samsara_live: 991 });
   });
 

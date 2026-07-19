@@ -325,6 +325,64 @@ function assignmentCount(root, identifier) {
   return count;
 }
 
+function destructuringTargetContains(node, identifier) {
+  let target = node;
+  while (ts.isParenthesizedExpression(target)) target = target.expression;
+  if (ts.isObjectLiteralExpression(target)) {
+    return target.properties.some(
+      (property) =>
+        (ts.isPropertyAssignment(property) &&
+          ts.isIdentifier(property.initializer) &&
+          property.initializer.text === identifier) ||
+        (ts.isShorthandPropertyAssignment(property) && property.name.text === identifier),
+    );
+  }
+  if (ts.isArrayLiteralExpression(target)) {
+    return target.elements.some((element) => ts.isIdentifier(element) && element.text === identifier);
+  }
+  return false;
+}
+
+function collectIdentifierWrites(root, identifier) {
+  const writes = [];
+  walk(root, (node) => {
+    if (
+      ts.isVariableDeclaration(node) &&
+      (
+        (ts.isIdentifier(node.name) && node.name.text === identifier) ||
+        (
+          (ts.isObjectBindingPattern(node.name) || ts.isArrayBindingPattern(node.name)) &&
+          node.name.elements.some((element) => ts.isIdentifier(element.name) && element.name.text === identifier)
+        )
+      )
+    ) {
+      writes.push(node);
+      return;
+    }
+    if (
+      ts.isBinaryExpression(node) &&
+      node.operatorToken.kind >= ts.SyntaxKind.FirstAssignment &&
+      node.operatorToken.kind <= ts.SyntaxKind.LastAssignment &&
+      (
+        (ts.isIdentifier(node.left) && node.left.text === identifier) ||
+        destructuringTargetContains(node.left, identifier)
+      )
+    ) {
+      writes.push(node);
+      return;
+    }
+    if (
+      (ts.isPrefixUnaryExpression(node) || ts.isPostfixUnaryExpression(node)) &&
+      [ts.SyntaxKind.PlusPlusToken, ts.SyntaxKind.MinusMinusToken].includes(node.operator) &&
+      ts.isIdentifier(node.operand) &&
+      node.operand.text === identifier
+    ) {
+      writes.push(node);
+    }
+  });
+  return writes;
+}
+
 function isInside(node, container) {
   for (let current = node; current; current = current.parent) {
     if (current === container) return true;
@@ -505,24 +563,16 @@ export function assertLiveCounterSource(file, source) {
   if (assignmentCount(scoped.body, "client") !== 0 || assignmentCount(scoped.body, "samsaraRes") !== 0) {
     failures.push(`${file}: client and samsaraRes reassignment are forbidden by the canonical contract`);
   }
-  const counterAssignments = [];
-  walk(scoped.body, (node) => {
-    if (
-      ts.isBinaryExpression(node) &&
-      node.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
-      ts.isIdentifier(node.left) &&
-      node.left.text === "samsaraLive"
-    ) {
-      counterAssignments.push(node);
-    }
-  });
+  const counterWrites = collectIdentifierWrites(scoped.body, "samsaraLive");
   if (
     !relationIf ||
-    counterAssignments.length !== 1 ||
+    counterWrites.length !== 2 ||
+    counterDeclarations.length !== 1 ||
+    counterWrites[0] !== counterDeclarations[0] ||
     primaryCounterAssignments.length !== 1 ||
-    counterAssignments[0] !== primaryCounterAssignments[0].expression
+    counterWrites[1] !== primaryCounterAssignments[0].expression
   ) {
-    failures.push(`${file}: samsaraLive must have exactly one causal assignment from samsaraRes inside the relation-true branch; all extra/conditional assignments are forbidden`);
+    failures.push(`${file}: samsaraLive must have only the canonical zero declaration and one causal samsaraRes assignment; direct, compound, increment, or destructuring writes are forbidden`);
   }
   if (!finalReturn) {
     failures.push(`${file}: canonical scoped callback must directly return samsara_live: samsaraLive`);
@@ -611,6 +661,11 @@ function runSelftest() {
     )],
     ["same-branch-extra-counter", good.replace("samsaraLive = Number", "samsaraLive = 77;\n            samsaraLive = Number")],
     ["conditional-extra-counter", good.replace("samsaraLive = Number", "if (flag) samsaraLive = 88;\n            samsaraLive = Number")],
+    ["object-destructured-counter", good.replace("samsaraLive = Number", "({ value: samsaraLive } = payload);\n            samsaraLive = Number")],
+    ["computed-destructured-counter", good.replace("samsaraLive = Number", "({ [counterKey]: samsaraLive } = payload);\n            samsaraLive = Number")],
+    ["later-destructured-counter", good.replace("return { samsara_live", "({ value: samsaraLive } = payload);\n          return { samsara_live")],
+    ["conditional-destructured-counter", good.replace("return { samsara_live", "if (companyId === fifthCompany) ({ value: samsaraLive } = payload);\n          return { samsara_live")],
+    ["destructured-counter-declaration", good.replace("let samsaraLive = 0;", "let samsaraLive = 0;\n          const { value: samsaraLive } = payload;")],
     ["dead-proof-actual-999", good.replace(
       "return { samsara_live: samsaraLive };",
       "function deadProof() { return { samsara_live: samsaraLive }; } return { samsara_live: 999 };",

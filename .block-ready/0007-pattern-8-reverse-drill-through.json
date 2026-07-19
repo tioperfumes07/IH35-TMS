@@ -25,6 +25,9 @@
     "scripts/verify-entity-link-adoption.mjs",
     "scripts/verify-entitylink-deep-links.mjs",
     "scripts/verify-94-live-counter-linkage.mjs",
+    "scripts/verify-steps/915-verify-entity-link-adoption.mjs",
+    "scripts/verify-steps/916-verify-entitylink-deep-links.mjs",
+    "scripts/verify-steps/917-verify-94-live-counter-linkage.mjs",
     "scripts/verify-steps/930-verify-entity-link-adoption.mjs",
     "scripts/verify-steps/931-verify-entitylink-deep-links.mjs",
     "scripts/verify-steps/932-verify-94-live-counter-linkage.mjs"
@@ -34,16 +37,19 @@
       "check": "all three guards pass normally and with table-driven --selftest corpora covering valid controls, every VETO plant, and fresh metamorphic variants"
     },
     {
-      "check": "EntityLink adoption traces lexically scoped declaration and later-assignment versions, and requires exact equality with a structural-location SHA-256 finding-key/count baseline; extras, inflation, removals, same-function moves, and cancellation all fail"
+      "check": "EntityLink adoption traces lexically scoped/version-ordered ordinary, destructured, computed-key, and multi-hop aliases, and requires exact structural-location baseline equality; extras, inflation, removals, same-function moves, and cancellation all fail"
     },
     {
-      "check": "deep-link guard requires exactly one protected invoice/payment/expense/audit route bound to the exact React.lazy module/export and rendered query-param consumption; conflicting duplicates and wrong imports fail; real ROUTES behavior covers all four paths"
+      "check": "deep-link guard and real ROUTES test require exactly one protected invoice/payment/expense/audit route bound to the exact React.lazy module/export; conflicting/canonical duplicates and wrong imports fail"
     },
     {
-      "check": "94-live guard and Fastify mock parse executable GUC and counter SQL after stripping comments; samsaraLive has one causal query-result assignment, relation-false remains zero, and arbitrary fourth-company isolation is behavior-tested"
+      "check": "94-live guard rejects every direct/compound/increment/destructuring samsaraLive write beyond its canonical declaration/query assignment; Fastify proves fifth-company isolation and zero when mdata.units exists but Samsara does not"
     },
     {
       "check": "unique verify-steps 930/931/932 auto-discover all guard selftests and focused backend/frontend behavior tests; direct step plants prove nonzero test failures propagate through runStep; manifest extra_gates contains only valid npm script name verify:pre-commit"
+    },
+    {
+      "check": "allowed_files covers both deleted historical verify-step paths 915-917 and replacement paths 930-932 so exact origin/main diff scope is auditable"
     },
     {
       "check": "package.json and workflow hot files unchanged; no tab, schema, migration, or financial changes; obsolete mdata.units live-counter fallback is removed so relation-false deterministically returns zero"

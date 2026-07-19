@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { ReactNode } from "react";
+import { Children, isValidElement, type ReactElement, type ReactNode } from "react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ToastProvider } from "../../../components/Toast";
@@ -99,6 +99,14 @@ function renderManifestAt(initialEntry: string) {
   );
 }
 
+function manifestRouteElements(nodes: ReactNode): ReactElement<{ path?: string; element?: ReactNode }>[] {
+  return Children.toArray(nodes).flatMap((node) => {
+    if (!isValidElement<{ path?: string; element?: ReactNode; children?: ReactNode }>(node)) return [];
+    if (typeof node.props.path === "string") return [node];
+    return manifestRouteElements(node.props.children);
+  });
+}
+
 function invoiceFixture() {
   return {
     id: "inv-100",
@@ -149,6 +157,26 @@ describe("reverse drill-through production behavior", () => {
     apiMocks.listAccountingAuditTrail.mockResolvedValue({ events: [], next_cursor: null });
     apiMocks.listExpenses.mockResolvedValue({ rows: [], total: 0 });
     apiMocks.apiRequest.mockResolvedValue({ drafts: [] });
+  });
+
+  it("registers exactly one ProtectedRoute for every guarded accounting path", () => {
+    for (const path of [
+      "/accounting/invoices/:id",
+      "/accounting/payments/:id",
+      "/accounting/expenses/list",
+      "/accounting/audit-trail",
+    ]) {
+      const matches = manifestRouteElements(ROUTES).filter((route) => route.props.path === path);
+      expect(matches, path).toHaveLength(1);
+      const protectedElement = matches[0].props.element;
+      expect(isValidElement(protectedElement), `${path} element`).toBe(true);
+      if (isValidElement(protectedElement)) {
+        expect(
+          typeof protectedElement.type === "function" ? protectedElement.type.name : "",
+          `${path} wrapper`,
+        ).toBe("ProtectedRoute");
+      }
+    }
   });
 
   it("renders the exact invoice customer link and navigates to the exact invoice audit URL", async () => {
