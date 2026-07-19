@@ -194,8 +194,8 @@ describe("0280-05 factoring-balance-invoice-linkage service", () => {
       AGREEMENT_TABLE_OK,
       (sql) => {
         if (sql.includes("FROM factoring.canonical_factor_agreements a")) return { rows: [] };
-        if (sql.includes("COUNT(*)::text AS n") && sql.includes("canonical_factor_agreements")) {
-          return { rows: [{ n: "0", future_n: "0", expired_n: "0" }] };
+        if (sql.includes("voided_current_n") && sql.includes("canonical_factor_agreements")) {
+          return { rows: [{ live_future_n: "0", live_expired_n: "0", voided_current_n: "0" }] };
         }
         return null;
       },
@@ -241,8 +241,9 @@ describe("0280-05 factoring-balance-invoice-linkage service", () => {
       AGREEMENT_TABLE_OK,
       (sql) => {
         if (sql.includes("FROM factoring.canonical_factor_agreements a")) return { rows: [] };
-        if (sql.includes("COUNT(*)::text AS n") && sql.includes("canonical_factor_agreements")) {
-          return { rows: [{ n: "1", future_n: "0", expired_n: "1" }] };
+        if (sql.includes("voided_current_n") && sql.includes("canonical_factor_agreements")) {
+          // Non-voided expired sibling, no voided-current binding → not_effective (new classifier shape).
+          return { rows: [{ live_future_n: "0", live_expired_n: "1", voided_current_n: "0" }] };
         }
         return null;
       },
