@@ -40,6 +40,7 @@ import {
   postFactoringAdvanceEvent,
   postFactoringChargebackEvent,
   postFactoringCustomerPaymentEvent,
+  postFactoringDefaultInterestAccrualEvent,
 } from "../poster.service.js";
 import {
   FARO_FULL_RECOURSE_AGREEMENT_CODE,
@@ -160,6 +161,9 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
     feeCents: number;
     /** When true, seed a linked unpaid invoice so exact recoursed A/R is defined (full-recourse gate). */
     withLinkedInvoice?: boolean;
+    /** Fixed Purchase Date (advanced_at). Defaults to now(). Used by the default-interest day-index tests
+     *  so the accrual day math is deterministic and lands in the past. */
+    advancedAtIso?: string;
   }): Promise<{ id: string; displayId: string }> {
     const id = randomUUID();
     const displayId = `T06-ADV-${suffix}-${advanceIds.length + 1}`;
@@ -169,8 +173,8 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
            (id, operating_company_id, factoring_company_vendor_id, display_id, status,
             invoice_total_cents, advance_rate_pct, advance_amount_cents, reserve_pct, reserve_amount_cents,
             factor_fee_pct, factor_fee_cents, advanced_at)
-         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,'advanced',$5,90,$6,8,$7,2,$8,now())`,
-        [id, companyId, vendorId, displayId, opts.invoiceTotalCents, opts.advanceCents, opts.reserveCents, opts.feeCents]
+         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,'advanced',$5,90,$6,8,$7,2,$8,COALESCE($9::timestamptz, now()))`,
+        [id, companyId, vendorId, displayId, opts.invoiceTotalCents, opts.advanceCents, opts.reserveCents, opts.feeCents, opts.advancedAtIso ?? null]
       );
       if (opts.withLinkedInvoice) {
         const invId = randomUUID();
@@ -196,6 +200,46 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
     await bypass(async () => {
       await db.query(`UPDATE accounting.factoring_advances SET status = $2 WHERE id = $1::uuid`, [advanceId, status]);
     });
+  }
+
+  /** The single invoice linked to an advance (F1 uses withLinkedInvoice ⇒ exactly one). */
+  async function readAdvanceInvoicePaid(advanceId: string): Promise<{ paid: number; status: string }> {
+    const rows = await scopedRead<{ amount_paid_cents: string | null; status: string }>(
+      `SELECT amount_paid_cents, status FROM accounting.invoices
+        WHERE factoring_advance_id = $1::uuid AND operating_company_id = $2::uuid
+        ORDER BY created_at ASC LIMIT 1`,
+      [advanceId, companyId]
+    );
+    const row = rows[0];
+    if (!row) throw new Error(`no linked invoice for advance ${advanceId}`);
+    return { paid: Number(row.amount_paid_cents ?? 0), status: row.status };
+  }
+
+  /** The (advance, accrual_date) default-interest accrual ledger row. */
+  async function readAccrualRow(
+    advanceId: string,
+    accrualDate: string
+  ): Promise<{ opening: number; interest: number; closing: number; dayIndex: number } | null> {
+    const rows = await scopedRead<{
+      opening_balance_cents: string;
+      interest_cents: string;
+      closing_balance_cents: string;
+      day_index: number;
+    }>(
+      `SELECT opening_balance_cents, interest_cents, closing_balance_cents, day_index
+         FROM accounting.factoring_default_interest_accruals
+        WHERE factoring_advance_id = $1::uuid AND operating_company_id = $2::uuid AND accrual_date = $3::date
+        LIMIT 1`,
+      [advanceId, companyId, accrualDate]
+    );
+    const row = rows[0];
+    if (!row) return null;
+    return {
+      opening: Number(row.opening_balance_cents),
+      interest: Number(row.interest_cents),
+      closing: Number(row.closing_balance_cents),
+      dayIndex: Number(row.day_index),
+    };
   }
 
   // Self-heal cash_clearing/ar_control role mappings for the TRANSP prerequisite company on a FRESH CI
@@ -353,7 +397,24 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
         if (invoiceIds.length) {
           await db.query(`DELETE FROM accounting.invoices WHERE id = ANY($1::uuid[])`, [invoiceIds]);
         }
-        await db.query(`DELETE FROM accounting.factoring_advances WHERE id = ANY($1::uuid[])`, [advanceIds]);
+        // Default-interest accruals are append-only (REVOKE DELETE) and FK-reference the advance, so an
+        // accrual-bearing advance (the F2 default-interest test) cannot be hard-deleted — deactivate its
+        // ledger rows and leave the advance in place (scoped by a unique run id, never asserted elsewhere).
+        // Deleting it unconditionally would raise a FK violation that rolls back this whole cleanup txn.
+        await db.query(
+          `UPDATE accounting.factoring_default_interest_accruals SET is_active = false, updated_at = now()
+            WHERE factoring_advance_id = ANY($1::uuid[]) AND operating_company_id = $2::uuid`,
+          [advanceIds, companyId]
+        );
+        await db.query(
+          `DELETE FROM accounting.factoring_advances fa
+            WHERE fa.id = ANY($1::uuid[])
+              AND NOT EXISTS (
+                SELECT 1 FROM accounting.factoring_default_interest_accruals a
+                 WHERE a.factoring_advance_id = fa.id
+              )`,
+          [advanceIds]
+        );
         await db.query(`DELETE FROM mdata.customers WHERE id = $1::uuid`, [customerId]);
         // ih35_app has no DELETE on canonical_factor_agreements — expire + deactivate so shared TRANSP
         // does not keep an ambiguous/extra Faro binding for later suites.
@@ -483,5 +544,133 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
     const rows = await scopedRead<{ factoring_advance_id: string }>(ASSERTIONS.legC_liabilityRoundTrip([displayId]), [[displayId]]);
     expect(rows).toHaveLength(1);
     expect(rows[0].factoring_advance_id).toBe(advanceId);
+  });
+
+  // ── F1 (CPA VETO 36946df7) — partial customer payments must ACCUMULATE amount_paid_cents ────────────
+  // Independent code review found the subledger relief was SETTING amount_paid_cents to the latest single
+  // allocation, so a second partial payment OVERWROTE the first ($40k then $30k left the invoice showing
+  // $30k paid, not $70k). The fix reads the CUMULATIVE ledger-backed customer-payment liability debits
+  // (linkedCumulativeCustomerPaymentsCents) and allocates that running total. This proves it end-to-end
+  // against the real poster + a live invoice row: $40k ⇒ 40k, then $30k ⇒ 70k (cumulative), still 'partial'.
+  it("F1 — two partial customer payments accumulate amount_paid_cents ($40k then $30k ⇒ $70k), never overwrite", async () => {
+    const { id: advanceId } = await seedAdvance({
+      invoiceTotalCents: 100_000,
+      advanceCents: 90_000,
+      reserveCents: 8_000,
+      feeCents: 2_000,
+      withLinkedInvoice: true,
+    });
+    const funded = await postFactoringAdvanceEvent({
+      operating_company_id: companyId,
+      factoring_advance_id: advanceId,
+      actor_user_id: TEST_OWNER_USER_ID,
+    });
+    expectPosted(funded, "F1 funding");
+
+    const first = await postFactoringCustomerPaymentEvent({
+      operating_company_id: companyId,
+      factoring_advance_id: advanceId,
+      actor_user_id: TEST_OWNER_USER_ID,
+      amount_cents: 40_000,
+    });
+    expectPosted(first, "F1 first partial $40k");
+    const afterFirst = await readAdvanceInvoicePaid(advanceId);
+    expect(afterFirst.paid).toBe(40_000);
+    expect(afterFirst.status).toBe("partial");
+
+    const second = await postFactoringCustomerPaymentEvent({
+      operating_company_id: companyId,
+      factoring_advance_id: advanceId,
+      actor_user_id: TEST_OWNER_USER_ID,
+      amount_cents: 30_000,
+    });
+    expectPosted(second, "F1 second partial $30k");
+    const afterSecond = await readAdvanceInvoicePaid(advanceId);
+    // Cumulative ledger-backed paid total — NOT the latest $30k allocation overwriting the first $40k.
+    expect(afterSecond.paid).toBe(70_000);
+    expect(afterSecond.status).toBe("partial");
+  });
+
+  // ── F2 (CPA VETO 36946df7) — default interest compounds on the OUTSTANDING liability after payments ──
+  // Independent code review found the daily default-interest base chained a stale prior-closing (or the
+  // original invoice face) and ignored intervening customer-payment liability DEBITS, so interest kept
+  // compounding on money the customer had already paid back. The fix recomputes each day's base as
+  // Net + prior active accrued interest − customer-payment liability debits on/before the accrual date
+  // (computeDefaultInterestDayBasis / customerPaymentLiabilityDebitsThroughDate). This proves it:
+  //   • advance $100,000, Purchase Date 2026-01-01.
+  //   • day 36 (2026-02-06): base 100,000 ⇒ interest round(100000×0.00067)=67, closing 100,067.
+  //   • a $40,000 customer payment lands 2026-02-06 (liability debit).
+  //   • day 37 (2026-02-07): base = 100,000 + 67 − 40,000 = 60,067 ⇒ interest round(60067×0.00067)=40.
+  // The STALE/buggy behavior would compound off closing 100,067 ⇒ interest 67 (ignoring the pay-down);
+  // the test asserts the day-37 opening is 60,067 and interest is 40, and explicitly that it is NOT 67.
+  it("F2 — default interest base excludes intervening customer payments (day-37 interest 40, not the stale 67)", async () => {
+    const advancedAtIso = "2026-01-01T12:00:00Z";
+    const dayDate = (n: number): string => {
+      const d = new Date(advancedAtIso);
+      d.setUTCDate(d.getUTCDate() + n);
+      return d.toISOString().slice(0, 10);
+    };
+    const day36 = dayDate(36); // 2026-02-06
+    const day37 = dayDate(37); // 2026-02-07
+
+    const { id: advanceId } = await seedAdvance({
+      invoiceTotalCents: 100_000,
+      advanceCents: 90_000,
+      reserveCents: 8_000,
+      feeCents: 2_000,
+      advancedAtIso,
+    });
+    const funded = await postFactoringAdvanceEvent({
+      operating_company_id: companyId,
+      factoring_advance_id: advanceId,
+      actor_user_id: TEST_OWNER_USER_ID,
+    });
+    expectPosted(funded, "F2 funding");
+
+    // Day 36 — first charged day (30 term + 5 grace). No payments yet ⇒ base is the full pledged Net.
+    const accr36 = await postFactoringDefaultInterestAccrualEvent({
+      operating_company_id: companyId,
+      factoring_advance_id: advanceId,
+      actor_user_id: TEST_OWNER_USER_ID,
+      accrual_date_iso: day36,
+    });
+    expectPosted(accr36, "F2 day-36 accrual");
+    if (accr36.journal_entry_id) journalEntryIds.push(accr36.journal_entry_id);
+    const row36 = await readAccrualRow(advanceId, day36);
+    expect(row36, "F2 day-36 accrual row").not.toBeNull();
+    expect(row36!.dayIndex).toBe(36);
+    expect(row36!.opening).toBe(100_000);
+    expect(row36!.interest).toBe(67); // round(100000 × 0.00067)
+    expect(row36!.closing).toBe(100_067);
+
+    // Customer pays $40,000 on day 36 — a liability DEBIT the next day's interest base must exclude.
+    const paid = await postFactoringCustomerPaymentEvent({
+      operating_company_id: companyId,
+      factoring_advance_id: advanceId,
+      actor_user_id: TEST_OWNER_USER_ID,
+      amount_cents: 40_000,
+      paid_at_iso: day36,
+    });
+    expectPosted(paid, "F2 $40k customer payment");
+    if (paid.journal_entry_id) journalEntryIds.push(paid.journal_entry_id);
+
+    // Day 37 — base = Net(100,000) + prior interest(67) − payments through day 37(40,000) = 60,067.
+    const accr37 = await postFactoringDefaultInterestAccrualEvent({
+      operating_company_id: companyId,
+      factoring_advance_id: advanceId,
+      actor_user_id: TEST_OWNER_USER_ID,
+      accrual_date_iso: day37,
+    });
+    expectPosted(accr37, "F2 day-37 accrual");
+    if (accr37.journal_entry_id) journalEntryIds.push(accr37.journal_entry_id);
+    const row37 = await readAccrualRow(advanceId, day37);
+    expect(row37, "F2 day-37 accrual row").not.toBeNull();
+    expect(row37!.dayIndex).toBe(37);
+    // The payment-adjusted base — proof interest no longer compounds on money already repaid.
+    expect(row37!.opening).toBe(60_067);
+    expect(row37!.interest).toBe(40); // round(60067 × 0.00067)
+    expect(row37!.closing).toBe(60_107);
+    // Guard against the stale-closing regression: compounding off day-36 closing (100,067) would be 67.
+    expect(row37!.interest).not.toBe(67);
   });
 });
