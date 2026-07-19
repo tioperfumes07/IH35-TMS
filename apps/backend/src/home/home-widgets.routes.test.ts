@@ -9,6 +9,27 @@ import { registerHomeWidgetRoutes } from "./home-widgets.routes.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 
+// 0280-02 static guard: today/weekly revenue must call dual-basis linkage (not raw invoice SUM).
+describe("home-widgets revenue GL linkage (0280-02)", () => {
+  const routesSrc = readFileSync(
+    fileURLToPath(new URL("./home-widgets.routes.ts", import.meta.url)),
+    "utf8"
+  );
+
+  it("delegates today/weekly revenue to computeRevenueGlLinkage", () => {
+    expect(routesSrc).toContain("computeRevenueGlLinkage");
+    expect(routesSrc).toContain("todayRevenueWindow");
+    expect(routesSrc).toContain("weeklyRevenueWindow");
+    expect(routesSrc).toContain("invoice_basis_cents");
+    expect(routesSrc).toContain("gl_posted_revenue_cents");
+  });
+
+  it("does not silently fabricate revenue_cents: 0 on catch", () => {
+    expect(routesSrc).not.toMatch(/today-revenue[\s\S]{0,800}catch\s*\{\s*return\s*\{\s*revenue_cents:\s*0\s*\}/);
+    expect(routesSrc).toContain("revenue_gl_linkage_unverifiable");
+  });
+});
+
 // FACTOR-1 static guard: the factoring-balance widget must read its reserve/advanced
 // figures from the real populated source (views.factoring_summary), never from the
 // never-created / never-written factoring.company_balances table.

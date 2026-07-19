@@ -34,18 +34,23 @@ describe("home-widgets FE↔BE response contract", () => {
     expect(byStatus).toMatchObject({ open: 2, in_progress: 3, awaiting_parts: 4, completed: 5, cancelled: 6, draft: 1 });
   });
 
-  it("weekly-revenue: reads { days: [{ date, cents }] }", async () => {
+  it("weekly-revenue: reads { days: [{ date, cents, invoice_basis, gl_posted }] }", async () => {
     vi.spyOn(client, "apiRequest").mockResolvedValue({
       days: [
-        { date: "2026-06-28", cents: 12_345 },
-        { date: "2026-06-29", cents: 0 },
+        { date: "2026-06-28", cents: 12_345, invoice_basis_cents: 12_345, gl_posted_revenue_cents: 12_000 },
+        { date: "2026-06-29", cents: 0, invoice_basis_cents: 0, gl_posted_revenue_cents: 0 },
       ],
       totalCents: 12_345,
+      status: "ok",
+      basis: {
+        invoice: { label: "invoice_basis", source: "accounting.invoices", recognition: "delivery" },
+        gl: { label: "gl_posted", source: "accounting.journal_entry_postings", recognition: "entry_date" },
+      },
     } as never);
     const points = await fetchHomeWeeklyRevenue("c1", 7);
     expect(points).toEqual([
-      { date: "2026-06-28", revenue_cents: 12_345 },
-      { date: "2026-06-29", revenue_cents: 0 },
+      { date: "2026-06-28", revenue_cents: 12_345, invoice_basis_cents: 12_345, gl_posted_revenue_cents: 12_000 },
+      { date: "2026-06-29", revenue_cents: 0, invoice_basis_cents: 0, gl_posted_revenue_cents: 0 },
     ]);
   });
 
@@ -69,10 +74,35 @@ describe("home-widgets FE↔BE response contract", () => {
     expect(await fetchHomeFleetUtilization("c1")).toEqual({ active_units: 8, total_units: 10, percentage: 80 });
   });
 
-  it("today-revenue: reads { revenue_cents }", async () => {
-    vi.spyOn(client, "apiRequest").mockResolvedValue({ revenue_cents: 4_900 } as never);
+  it("today-revenue: reads dual-basis invoice + GL fields (0280-02)", async () => {
+    vi.spyOn(client, "apiRequest").mockResolvedValue({
+      revenue_cents: 4_900,
+      invoice_basis_cents: 4_900,
+      gl_posted_revenue_cents: 4_900,
+      status: "ok",
+      basis: {
+        invoice: { label: "invoice_basis", source: "accounting.invoices", recognition: "delivery" },
+        gl: { label: "gl_posted", source: "accounting.journal_entry_postings", recognition: "entry_date" },
+      },
+      discrepancy_count: 0,
+      discrepancy_cents: 0,
+    } as never);
     const tr = await fetchHomeTodayRevenue("c1");
     expect(tr.revenue_cents).toBe(4_900);
+    expect(tr.invoice_basis_cents).toBe(4_900);
+    expect(tr.gl_posted_revenue_cents).toBe(4_900);
+    expect(tr.basis?.invoice.label).toBe("invoice_basis");
+  });
+
+  it("today-revenue: unverifiable keeps revenue_cents null (never fabricates $0)", async () => {
+    vi.spyOn(client, "apiRequest").mockResolvedValue({
+      revenue_cents: null,
+      status: "unverifiable",
+      unverifiable_reason: "missing_table:accounting.transaction_source_links",
+    } as never);
+    const tr = await fetchHomeTodayRevenue("c1");
+    expect(tr.revenue_cents).toBeNull();
+    expect(tr.status).toBe("unverifiable");
   });
 
   it("cash-position: reads backend { totalCents } into balance_cents (not balance_cents)", async () => {

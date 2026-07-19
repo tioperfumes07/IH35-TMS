@@ -269,8 +269,23 @@ export async function fetchHomeVendorMappingIntegrity(companyId: string): Promis
 
 /* —— T11.19 KPI + chart payloads (backend routes may ship incrementally). */
 
+export type HomeRevenueBasisMeta = {
+  label: "invoice_basis" | "gl_posted" | string;
+  source: string;
+  recognition: string;
+  governed_accounts?: string;
+};
+
 export type HomeTodayRevenue = {
-  revenue_cents: number;
+  /** Null when linkage is unverifiable — never treat as $0. */
+  revenue_cents: number | null;
+  invoice_basis_cents?: number;
+  gl_posted_revenue_cents?: number;
+  status?: "ok" | "empty" | "unverifiable";
+  unverifiable_reason?: string | null;
+  basis?: { invoice: HomeRevenueBasisMeta; gl: HomeRevenueBasisMeta };
+  discrepancy_count?: number;
+  discrepancy_cents?: number;
   yesterday_revenue_cents?: number;
   delta_pct_vs_yesterday?: number | null;
 };
@@ -303,7 +318,22 @@ export type HomeFactoringBalance = {
   invoices_factored: number;
 };
 
-export type HomeWeeklyRevenuePoint = { date: string; revenue_cents: number };
+export type HomeWeeklyRevenuePoint = {
+  date: string;
+  revenue_cents: number;
+  invoice_basis_cents?: number;
+  gl_posted_revenue_cents?: number;
+};
+
+export type HomeWeeklyRevenueResult = {
+  days: HomeWeeklyRevenuePoint[];
+  status?: "ok" | "empty" | "unverifiable";
+  basis?: { invoice: HomeRevenueBasisMeta; gl: HomeRevenueBasisMeta };
+  invoice_basis_cents?: number;
+  gl_posted_revenue_cents?: number;
+  discrepancy_count?: number;
+  discrepancy_cents?: number;
+};
 
 export type HomeWoStatusCount = {
   status: "draft" | "open" | "in_progress" | "awaiting_parts" | "completed" | "cancelled";
@@ -362,8 +392,27 @@ export async function fetchHomeTodayRevenue(companyId: string): Promise<HomeToda
     const d = Number(raw.delta_pct_vs_yesterday);
     delta = Number.isFinite(d) ? d : undefined;
   }
+  // 0280-02: unverifiable → revenue_cents null (never coerce to fabricated $0).
+  const revenueRaw = raw.revenue_cents;
+  const revenue_cents =
+    revenueRaw === null || revenueRaw === undefined
+      ? null
+      : Number.isFinite(Number(revenueRaw))
+        ? Number(revenueRaw)
+        : null;
+  const status =
+    raw.status === "ok" || raw.status === "empty" || raw.status === "unverifiable"
+      ? raw.status
+      : undefined;
   return {
-    revenue_cents: num(raw.revenue_cents),
+    revenue_cents,
+    invoice_basis_cents: raw.invoice_basis_cents !== undefined ? num(raw.invoice_basis_cents) : undefined,
+    gl_posted_revenue_cents: raw.gl_posted_revenue_cents !== undefined ? num(raw.gl_posted_revenue_cents) : undefined,
+    status,
+    unverifiable_reason: typeof raw.unverifiable_reason === "string" ? raw.unverifiable_reason : raw.unverifiable_reason === null ? null : undefined,
+    basis: raw.basis && typeof raw.basis === "object" ? (raw.basis as HomeTodayRevenue["basis"]) : undefined,
+    discrepancy_count: raw.discrepancy_count !== undefined ? num(raw.discrepancy_count) : undefined,
+    discrepancy_cents: raw.discrepancy_cents !== undefined ? num(raw.discrepancy_cents) : undefined,
     yesterday_revenue_cents: raw.yesterday_revenue_cents !== undefined ? num(raw.yesterday_revenue_cents) : undefined,
     delta_pct_vs_yesterday: delta,
   };
@@ -419,9 +468,9 @@ export async function fetchHomeFactoringBalance(companyId: string): Promise<Home
   };
 }
 
-function coerceWeeklyRevenue(raw: unknown): HomeWeeklyRevenuePoint[] {
-  // Backend (home-widgets) returns { days: [{ date, cents }], totalCents }. Also accept a bare
-  // array / { rows } / { points } with revenue_cents for forward-compat.
+function coerceWeeklyRevenue(raw: unknown): HomeWeeklyRevenueResult {
+  // Backend (home-widgets) returns { days: [{ date, cents, invoice_basis_cents, gl_posted_revenue_cents }], … }.
+  // Also accept a bare array / { rows } / { points } with revenue_cents for forward-compat.
   const list: unknown[] = Array.isArray(raw)
     ? raw
     : raw && typeof raw === "object" && Array.isArray((raw as { days?: unknown }).days)
@@ -431,20 +480,45 @@ function coerceWeeklyRevenue(raw: unknown): HomeWeeklyRevenuePoint[] {
         : raw && typeof raw === "object" && Array.isArray((raw as { points?: unknown }).points)
           ? ((raw as { points: unknown[] }).points ?? [])
           : [];
-  return list
+  const days = list
     .map((row) => {
       if (!row || typeof row !== "object") return null;
       const o = row as Record<string, unknown>;
       const date = typeof o.date === "string" ? o.date : "";
-      // backend sends `cents`; accept `revenue_cents` too.
+      // backend sends `cents` (invoice basis); accept `revenue_cents` too.
       const revenue_cents = o.revenue_cents !== undefined ? num(o.revenue_cents) : num(o.cents);
       if (!date) return null;
-      return { date, revenue_cents };
+      return {
+        date,
+        revenue_cents,
+        invoice_basis_cents: o.invoice_basis_cents !== undefined ? num(o.invoice_basis_cents) : revenue_cents,
+        gl_posted_revenue_cents: o.gl_posted_revenue_cents !== undefined ? num(o.gl_posted_revenue_cents) : undefined,
+      };
     })
     .filter((x): x is HomeWeeklyRevenuePoint => x !== null);
+
+  const obj = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : null;
+  const status =
+    obj?.status === "ok" || obj?.status === "empty" || obj?.status === "unverifiable" ? obj.status : undefined;
+  return {
+    days,
+    status,
+    basis: obj?.basis && typeof obj.basis === "object" ? (obj.basis as HomeWeeklyRevenueResult["basis"]) : undefined,
+    invoice_basis_cents: obj?.invoice_basis_cents !== undefined ? num(obj.invoice_basis_cents) : undefined,
+    gl_posted_revenue_cents: obj?.gl_posted_revenue_cents !== undefined ? num(obj.gl_posted_revenue_cents) : undefined,
+    discrepancy_count: obj?.discrepancy_count !== undefined ? num(obj.discrepancy_count) : undefined,
+    discrepancy_cents: obj?.discrepancy_cents !== undefined ? num(obj.discrepancy_cents) : undefined,
+  };
 }
 
 export async function fetchHomeWeeklyRevenue(companyId: string, days = 7): Promise<HomeWeeklyRevenuePoint[]> {
+  const path = withCompany(`/api/v1/home/weekly-revenue?days=${encodeURIComponent(String(days))}`, companyId);
+  const raw = await apiRequest<unknown>(path);
+  return coerceWeeklyRevenue(raw).days;
+}
+
+/** Full weekly payload including dual-basis / discrepancy metadata (0280-02). */
+export async function fetchHomeWeeklyRevenueDetailed(companyId: string, days = 7): Promise<HomeWeeklyRevenueResult> {
   const path = withCompany(`/api/v1/home/weekly-revenue?days=${encodeURIComponent(String(days))}`, companyId);
   const raw = await apiRequest<unknown>(path);
   return coerceWeeklyRevenue(raw);

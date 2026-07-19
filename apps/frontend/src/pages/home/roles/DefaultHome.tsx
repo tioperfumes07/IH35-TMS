@@ -249,11 +249,32 @@ export function DefaultHome({ auth }: Props) {
         <HomeKpiCard
           label="Today's Revenue"
           to="/reports"
-          number={tr ? formatUsdFromCents(tr.revenue_cents) : "—"}
+          number={
+            tr == null
+              ? "—"
+              : tr.revenue_cents == null
+                ? "Unverifiable"
+                : formatUsdFromCents(tr.revenue_cents)
+          }
           isLoading={todayRevenueQuery.isLoading}
           isError={todayRevenueQuery.isError}
           error={todayRevenueQuery.error}
           onRetry={() => void todayRevenueQuery.refetch()}
+          subtext={
+            tr == null ? null : tr.revenue_cents == null ? (
+              <span>Invoice↔GL linkage unverifiable{tr.unverifiable_reason ? `: ${tr.unverifiable_reason}` : ""}</span>
+            ) : (
+              <span>
+                Invoice basis
+                {typeof tr.gl_posted_revenue_cents === "number"
+                  ? ` · GL posted ${formatUsdFromCents(tr.gl_posted_revenue_cents)}`
+                  : ""}
+                {typeof tr.discrepancy_count === "number" && tr.discrepancy_count > 0
+                  ? ` · ${tr.discrepancy_count} ${tr.discrepancy_count === 1 ? "discrepancy" : "discrepancies"}`
+                  : ""}
+              </span>
+            )
+          }
           delta={
             tr != null && tr.delta_pct_vs_yesterday != null && Number.isFinite(tr.delta_pct_vs_yesterday) ? (
               <span

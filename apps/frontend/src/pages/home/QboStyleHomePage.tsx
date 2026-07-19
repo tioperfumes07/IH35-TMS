@@ -29,7 +29,8 @@ import { fetchHomeCashPosition, fetchHomeTodayRevenue } from "../../api/home";
 import { fetchAccountingRoleHome } from "../../api/accountingHome";
 import { getBankingTiles } from "../../api/banking";
 
-function fmt$(cents: number): string {
+function fmt$(cents: number | null): string {
+  if (cents == null) return "Unverifiable";
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(cents / 100);
 }
 
@@ -112,7 +113,8 @@ export function QboStyleHomePage({ auth }: Props) {
   const qboOutbox = acct?.qbo.outbox_depth ?? 0;
   const qboFailed = acct?.qbo.failed_outbox_count ?? 0;
 
-  const revenueCents = revenueQuery.data?.revenue_cents ?? 0;
+  // 0280-02: null = unverifiable — do not fabricate $0.
+  const revenueCents = revenueQuery.data?.revenue_cents ?? null;
   const deltaVsYesterday = revenueQuery.data?.delta_pct_vs_yesterday;
 
   const visibleFeed = BUSINESS_FEED_CARDS.filter((c) => !dismissedCards.has(c.id));
