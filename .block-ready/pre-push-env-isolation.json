@@ -1,6 +1,6 @@
 {
   "block_id": "pre-push-env-isolation",
-  "branch": "cursor/pipeline-corrective-pre-push-926",
+  "branch": "cursor/pre-push-verification-safeguards-955a",
   "status": "BUILD",
   "classification": "NON-FINANCIAL (CI tooling / pre-push env isolation)",
   "phase": "PIPELINE-TRUTH",
