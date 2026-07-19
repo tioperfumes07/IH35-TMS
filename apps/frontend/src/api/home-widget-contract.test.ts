@@ -163,15 +163,24 @@ describe("home-widgets FE↔BE response contract", () => {
     expect(cp.balance_cents).toBe(10_000_000);
   });
 
-  it("factoring-balance: reads backend { reserveCents } into outstanding_cents (not outstanding_cents)", async () => {
-    // Backend returns { reserveCents, advancedCents, totalCents } — reading `outstanding_cents`
-    // zeroed the tile (HOME-2).
+  it("factoring-balance: headlines outstanding Faro LIABILITY, never reserveCents", async () => {
+    // 0280-05: outstanding_liability_cents is the tile; reserve is separate and never netted.
     vi.spyOn(client, "apiRequest").mockResolvedValue({
+      status: "ok",
+      outstanding_liability_cents: 7_500_000,
+      reserve_receivable_cents: 2_500_000,
       reserveCents: 2_500_000,
       advancedCents: 7_500_000,
-      totalCents: 10_000_000,
+      totalCents: 7_500_000,
+      invoice_count: 4,
+      invoices_factored: 4,
     } as never);
     const fb = await fetchHomeFactoringBalance("c1");
-    expect(fb.outstanding_cents).toBe(2_500_000);
+    expect(fb.outstanding_cents).toBe(7_500_000);
+    expect(fb.reserve_receivable_cents).toBe(2_500_000);
+    expect(fb.invoices_factored).toBe(4);
+    expect(fb.outstanding_cents).not.toBe(fb.reserve_receivable_cents);
+    // Must not prefer reserve as the headline when liability fields are present.
+    expect(fb.outstanding_cents).not.toBe(2_500_000);
   });
 });

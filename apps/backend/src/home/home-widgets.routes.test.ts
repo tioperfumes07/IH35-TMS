@@ -63,6 +63,13 @@ describe("home-widgets factoring-balance invoice linkage (0280-05)", () => {
       /factoring-balance[\s\S]{0,800}catch\s*\{\s*return\s*\{\s*reserveCents:\s*0/
     );
   });
+
+  it("headlines outstanding Faro liability (never reserve+liability net)", () => {
+    expect(routesSrc).toContain("outstanding_liability_cents");
+    expect(routesSrc).toContain("reserve_receivable_cents");
+    expect(routesSrc).toContain("totalCents: result.outstanding_liability_cents");
+    expect(routesSrc).not.toMatch(/totalCents:\s*.*reserve.*\+.*outstanding|totalCents:\s*.*reserve.*\+.*advanced/);
+  });
 });
 
 describe("home-widgets.routes (auth gates)", () => {

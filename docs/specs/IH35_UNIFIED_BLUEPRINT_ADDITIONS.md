@@ -1399,17 +1399,37 @@ Standards: QuickBooks/NetSuite liability-vs-asset honesty; McLeod/Alvys factorin
 
 ### Locked read model
 - **Route:** `GET /api/v1/home/factoring-balance?operating_company_id=`
-- **Canonical sources:** `accounting.factoring_advances` + `accounting.invoices` +
+- **Canonical sources:** live `accounting.journal_entry_postings` + `accounting.journal_entries`
+  (voided/reversed excluded) on CoA roles `factoring_advance_liability` / `factor_reserve_held` /
+  `factoring_recoursed_ar`; `accounting.factoring_reserve_movements` (held→JE) for funding completeness;
+  `accounting.factoring_advances` + `accounting.invoices` for Faro-scoped invoice count;
   `views.factoring_balance_invoice_linkage` (migration `202607600000`, HOLD).
-- **Grain:** money aggregated at **advance** grain; `invoice_count = COUNT(DISTINCT invoices.id)`
-  with entity scope on both sides — never JOIN-sum advance money (fanout ban).
-- **Statuses:** funded = `advanced_at IS NOT NULL AND status <> 'voided'`;
-  settled = `reserve_held|collected|released`; recourse = `recourse_returned`.
-- **Contract fields (integer cents):** `outstanding_liability_cents`, `reserve_receivable_cents`,
-  `invoice_count`, plus `status` ∈ `ok|empty|unverifiable` (empty ≠ unverifiable ≠ 500).
+- **Grain:** money from JE role legs (not mutable status); `invoice_count = COUNT(DISTINCT invoices.id)`
+  with entity + Faro-vendor scope — never JOIN-sum advance money (fanout ban).
+- **Statuses must NOT clear balances:** `reserve_held|collected|released|recourse_returned` alone
+  never reduce liability or zero reserve. Only structural posted JE / reserve-movement artifacts do.
+  A Faro advance without funding JE artifact → `unverifiable` (`incomplete_funding_je_artifacts`),
+  never fabricated $0.
+- **Reserve:** reduces only via structural credits to `factor_reserve_held` (release JE) or equivalent
+  reserve-movement release evidence. `recourse_returned` alone must not zero reserve.
+- **TRANSP/Faro identity (no hard-coded UUIDs):** `org.companies` TRANSP-class + majority
+  `mdata.customers.factoring_company_vendor_id` → `mdata.vendors` with Faro name. Other entities /
+  non-Faro factors → fail closed (`faro_contract_entity_mismatch` / `active_factor_is_not_faro`),
+  never labeled Faro liability.
+- **Contract fields (integer cents):** `outstanding_liability_cents` (headline),
+  `reserve_receivable_cents` (separate), `invoice_count`, plus `status` ∈ `ok|empty|unverifiable`.
+  Frontend `fetchHomeFactoringBalance` must headline liability fields — never `reserveCents`.
 - **Errors:** typed `factoring_balance_invoice_linkage_unverifiable` (200) /
   `factoring_balance_invoice_linkage_failed` (500). Never silent zero.
-- **Out of scope this block:** Home/Factoring UI chrome (tab drift unresolved); posting; QBO write-back.
+- **Out of scope this block:** Home/Factoring UI chrome tabs/nav (tab drift unresolved); posting;
+  QBO write-back. API consumer `apps/frontend/src/api/home.ts` is in scope (no tab changes).
+
+### Independent VETO amendments (append-only 2026-07-19 restart)
+Owner directed Cursor to fix PR #2724 for: (1) canonical `INV-YYYY-NNNNN` fixtures +
+`invoices_display_id_check` contract; (2) FE/API liability headline; (3–4) JE-artifact liability /
+reserve (not status); (5) TRANSP/Faro identity fail-closed; (6) FORCE RLS Owner/Admin write;
+(7) semantic executable guard plants; (8) flags OFF / no QBO / no destructive DDL;
+(9) HOLD draft PR only — never merge / Neon / live claim.
 
 ### Guard (Rule 17 — auto-discovered)
 - `scripts/verify-factoring-balance-invoice-linkage.mjs`

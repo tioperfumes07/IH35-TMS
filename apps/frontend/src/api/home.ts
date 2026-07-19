@@ -339,8 +339,13 @@ export type HomeCashPosition = {
 };
 
 export type HomeFactoringBalance = {
+  /** Outstanding Faro secured-borrowing LIABILITY (integer cents). Never reserve. */
   outstanding_cents: number;
+  /** Separate 1.5% reserve receivable asset (integer cents). Never netted into outstanding. */
+  reserve_receivable_cents?: number | null;
   invoices_factored: number;
+  status?: "ok" | "empty" | "unverifiable";
+  unverifiable_reason?: string | null;
 };
 
 export type HomeWeeklyRevenuePoint = {
@@ -568,13 +573,26 @@ export async function fetchHomeCashPosition(companyId: string): Promise<HomeCash
 
 export async function fetchHomeFactoringBalance(companyId: string): Promise<HomeFactoringBalance> {
   const raw = await apiRequest<Record<string, unknown>>(withCompany("/api/v1/home/factoring-balance", companyId));
-  // Backend (home-widgets.routes.ts /factoring-balance) returns { reserveCents, advancedCents,
-  // totalCents }. It does NOT send `outstanding_cents`, so reading that key rendered a permanent $0
-  // (HOME-2). The tile shows the factoring reserve balance held by the factor → read `reserveCents`,
-  // keeping `outstanding_cents` as a fallback for forward-compat.
+  // 0280-05 / owner VETO: Factoring Balance headline = outstanding Faro LIABILITY, never reserve.
+  // Prefer outstanding_liability_cents / outstanding_cents / advancedCents / totalCents (all liability).
+  // reserve_receivable_cents / reserveCents are returned separately and MUST NOT headline.
+  const liability = num(
+    raw.outstanding_liability_cents ?? raw.outstanding_cents ?? raw.advancedCents ?? raw.totalCents
+  );
+  const reserveRaw = raw.reserve_receivable_cents ?? raw.reserveCents;
+  const reserve =
+    reserveRaw === null || reserveRaw === undefined ? null : num(reserveRaw);
+  const status =
+    raw.status === "ok" || raw.status === "empty" || raw.status === "unverifiable"
+      ? raw.status
+      : undefined;
   return {
-    outstanding_cents: num(raw.reserveCents ?? raw.outstanding_cents),
-    invoices_factored: num(raw.invoices_factored),
+    outstanding_cents: liability,
+    reserve_receivable_cents: reserve,
+    invoices_factored: num(raw.invoice_count ?? raw.invoices_factored),
+    status,
+    unverifiable_reason:
+      typeof raw.unverifiable_reason === "string" ? raw.unverifiable_reason : null,
   };
 }
 
