@@ -13,6 +13,7 @@ import { getAllAccounts } from "../../api/banking";
 import { getAccountRegister, type AccountRegisterReport, type AccountRegisterRow } from "../../api/account-register";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { useUrlSort } from "../../hooks/useUrlSort";
 import { companyToday, monthBoundsIso } from "../../lib/businessDate";
 
 const fmtCents = (cents: number) => formatUsdCents(cents);
@@ -123,6 +124,8 @@ export function AccountRegisterPage() {
   const companyId = selectedCompanyId ?? "";
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  // BANK-SORT-ROLLOUT-ACCT: register column sort persists in URL (?sort=&dir=).
+  const { sortKey, sortDirection, onSortChange } = useUrlSort();
   // Deep-link (QBO parity):
   // - CoA "View register" → /accounting/chart-of-accounts/register/:accountId (GL id)
   // - Banking → /accounting/account-register?accountId=<bankAccountId> (resolved via banking API → ledger_account_id)
@@ -270,8 +273,7 @@ export function AccountRegisterPage() {
   const normal: "debit" | "credit" = report?.account.normal_balance ?? "debit";
 
   // QBO register column grammar (approved design: docs/approved-screens/preview-register-qbo.html).
-  // Payment/Deposit are derived per-account from normal_balance, so they aren't sortable by a raw
-  // field on the row (sorting on the real debit/credit fields would silently swap meaning per account).
+  // Payment/Deposit derive from normal_balance; sort via sortValue on the account-correct side.
   const columns: Array<ParityColumn<AccountRegisterRow>> = [
     {
       key: "entry_date",
@@ -287,9 +289,10 @@ export function AccountRegisterPage() {
     {
       key: "payment",
       label: "Payment",
-      sortable: false,
+      sortable: true,
       className: "text-right",
       cellClass: "text-right tabular-nums",
+      sortValue: (r) => (normal === "debit" ? r.debit_cents : r.credit_cents),
       render: (r) => {
         const increase = normal === "debit" ? r.debit_cents : r.credit_cents;
         return increase ? fmtCents(increase) : "";
@@ -298,9 +301,10 @@ export function AccountRegisterPage() {
     {
       key: "deposit",
       label: "Deposit",
-      sortable: false,
+      sortable: true,
       className: "text-right",
       cellClass: "text-right tabular-nums",
+      sortValue: (r) => (normal === "debit" ? r.credit_cents : r.debit_cents),
       render: (r) => {
         const decrease = normal === "debit" ? r.credit_cents : r.debit_cents;
         return decrease ? fmtCents(decrease) : "";
@@ -318,8 +322,8 @@ export function AccountRegisterPage() {
     { key: "split_account", label: "Account", sortable: true, render: (r) => r.split_account ?? "—" },
     // Location + C/R are bank-register concepts; the GL posting model carries neither (verified) →
     // honest "—", never fabricated. Kept as columns (hideable via the gear) to match the QBO grammar.
-    { key: "location", label: "Location", sortable: false, render: () => "—" },
-    { key: "cr", label: "C/R", sortable: false, render: () => "—" },
+    { key: "location", label: "Location", sortable: true, sortValue: () => "", render: () => "—" },
+    { key: "cr", label: "C/R", sortable: true, sortValue: () => "", render: () => "—" },
   ];
 
   const printList = () => window.print();
@@ -483,6 +487,9 @@ export function AccountRegisterPage() {
           storageKey="account-register"
           pageSizeOptions={[50, 75, 100, 200, 300]}
           initialPageSize={50}
+          sortKey={sortKey}
+          sortDirection={sortDirection}
+          onSortChange={onSortChange}
           toolbar={
             <>
               <button
