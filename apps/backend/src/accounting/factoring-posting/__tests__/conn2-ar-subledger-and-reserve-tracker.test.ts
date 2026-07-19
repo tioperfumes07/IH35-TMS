@@ -10,21 +10,25 @@ import {
 // update accounting.invoices.amount_paid_cents/status) and the Faro Reserve Tracker's write side
 // (accounting.factoring_reserve_movements rows recorded alongside the funding/release JE). No real DB —
 // same mocked-infra pattern as poster-open-items-and-gates.test.ts.
-const { mockQuery, mockWithLuciaBypass, mockIsEnabled, mockCreateJournalEntry, mockResolveRoleAccount } = vi.hoisted(() => {
+const { mockQuery, mockWithLuciaBypass, mockWithCurrentUser, mockIsEnabled, mockCreateJournalEntry, mockResolveRoleAccount } = vi.hoisted(() => {
   const query = vi.fn();
   const withLuciaBypass = vi.fn(async (fn: (client: { query: typeof query }) => unknown) => fn({ query }));
+  const withCurrentUser = vi.fn(async (_userId: string, fn: (client: { query: typeof query }) => unknown) => fn({ query }));
   return {
     mockQuery: query,
     mockWithLuciaBypass: withLuciaBypass,
+    mockWithCurrentUser: withCurrentUser,
     mockIsEnabled: vi.fn(),
     mockCreateJournalEntry: vi.fn(),
     mockResolveRoleAccount: vi.fn(),
   };
 });
 
-vi.mock("../../../auth/db.js", () => ({ withLuciaBypass: mockWithLuciaBypass }));
+vi.mock("../../../auth/db.js", () => ({ withLuciaBypass: mockWithLuciaBypass, withCurrentUser: mockWithCurrentUser }));
 vi.mock("../../../lib/feature-flags/service.js", () => ({ isEnabled: mockIsEnabled }));
-vi.mock("../../journal-entries.service.js", () => ({ createJournalEntry: mockCreateJournalEntry }));
+vi.mock("../../journal-entries.service.js", () => ({ createJournalEntryOnClient: mockCreateJournalEntry, enqueueJournalEntrySideEffects: vi.fn(async () => undefined) }));
+vi.mock("../../posting-engine.service.js", () => ({ ensureOpenPeriod: vi.fn(async () => undefined) }));
+vi.mock("../../accounting-spine-emit.js", () => ({ writeTransactionSourceLink: vi.fn(async () => undefined) }));
 vi.mock("../../coa-roles/resolver.service.js", () => ({ resolveRoleAccount: mockResolveRoleAccount }));
 
 const OPCO = "11111111-1111-4111-8111-111111111111";

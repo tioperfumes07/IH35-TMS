@@ -3,7 +3,12 @@
   "held": [
     {
       "file": "202607600000_factoring_balance_invoice_linkage.sql",
-      "reason": "[HOLD-FOR-JORGE — TIER 1 FINANCIAL] 0280-05 — FORCE RLS on accounting.factoring_advances (SELECT entity-scoped; INSERT/UPDATE Owner/Administrator; REVOKE DELETE) + security_invoker views.factoring_balance_invoice_linkage (outstanding Faro LIABILITY from live JE legs on factoring_advance_liability; reserve from factor_reserve_held; statuses never clear; COUNT(DISTINCT invoice.id); Faro vendor scope). NOT YET applied on prod — throwaway PG apply-twice; owner Neon + ledger-backfill. Posting flags OFF; no QBO write-back."
+      "requires_held": ["202607340000_je_reversal_linkage.sql"],
+      "held_apply_order": [
+        "202607340000_je_reversal_linkage.sql",
+        "202607600000_factoring_balance_invoice_linkage.sql"
+      ],
+      "reason": "[HOLD-FOR-JORGE — TIER 1 FINANCIAL] 0280-05 — FORCE RLS on accounting.factoring_advances (SELECT entity-scoped; INSERT/UPDATE Owner/Administrator; REVOKE DELETE) + security_invoker views.factoring_balance_invoice_linkage (outstanding Faro LIABILITY from live JE legs on factoring_advance_liability; reserve from factor_reserve_held; statuses never clear; COUNT(DISTINCT invoice.id); Faro vendor scope via owner-seeded factoring.canonical_factor_agreements FARO_FULL_RECOURSE_V1 effective-dated binding — never sole-factor inference). PREREQ fail-closed: held 202607340000_je_reversal_linkage (reverses_je_id/reversed_by_je_id) MUST apply first. NOT YET applied on prod — throwaway PG apply-twice in declared order; owner Neon + ledger-backfill. Posting flags OFF; no QBO write-back."
     },
     {
       "file": "202607560000_mdata_qbo_sync_columns_for_collapse.sql",

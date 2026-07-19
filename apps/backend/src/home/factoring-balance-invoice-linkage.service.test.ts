@@ -6,6 +6,7 @@ import {
   isCanonicalInvoiceDisplayId,
   wouldFanoutMultiply,
   __test__,
+  FARO_FULL_RECOURSE_AGREEMENT_CODE,
 } from "./factoring-balance-invoice-linkage.service.js";
 
 function mockClient(handlers: Array<(sql: string, values?: unknown[]) => { rows: unknown[] } | null>) {
@@ -21,7 +22,7 @@ function mockClient(handlers: Array<(sql: string, values?: unknown[]) => { rows:
 }
 
 const PROBE_OK = (sql: string) =>
-  sql.includes("to_regclass")
+  sql.includes("to_regclass") && sql.includes("advances_ok")
     ? {
         rows: [
           {
@@ -31,6 +32,8 @@ const PROBE_OK = (sql: string) =>
             je_ok: true,
             roles_ok: true,
             view_ok: true,
+            agreements_ok: true,
+            factor_ok: true,
           },
         ],
       }
@@ -41,12 +44,42 @@ const TRANSP_CO = (sql: string) =>
     ? { rows: [{ code: "TRANSP", legal_name: "IH 35 TRANSPORTATION LLC" }] }
     : null;
 
-const ACTIVE_FACTOR = (sql: string) =>
-  sql.includes("WITH candidates") || (sql.includes("FROM mdata.vendors") && sql.includes("candidates"))
-    ? { rows: [{ vendor_id: "v1", vendor_name: "Active Factor Vendor" }] }
-    : sql.includes("FROM mdata.vendors")
-      ? { rows: [{ vendor_id: "v1", vendor_name: "Active Factor Vendor" }] }
-      : null;
+const AGREEMENT_TABLE_OK = (sql: string) =>
+  sql.includes("to_regclass('factoring.canonical_factor_agreements')")
+    ? { rows: [{ ok: true }] }
+    : null;
+
+function faroBindingRow(overrides: Record<string, unknown> = {}) {
+  return {
+    agreement_id: "a1",
+    factor_profile_id: "p1",
+    factor_vendor_id: "v-faro",
+    vendor_name: "Bound Faro Vendor",
+    is_full_recourse: true,
+    fee_rate_tier1: "0.015",
+    fee_rate_tier2: "0.02",
+    reserve_rate: "0.015",
+    repurchase_term_days: 30,
+    grace_days: 5,
+    repurchase_deadline_days: 95,
+    default_interest_daily_rate: "0.00067",
+    profile_fee_rate: "0.015",
+    profile_reserve_rate: "0.015",
+    profile_recourse_days: 95,
+    profile_active: true,
+    ...overrides,
+  };
+}
+
+const VALID_FARO = (sql: string) => {
+  if (sql.includes("FROM factoring.canonical_factor_agreements a")) {
+    return { rows: [faroBindingRow()] };
+  }
+  if (sql.includes("to_regclass('factoring.canonical_factor_agreements')")) {
+    return { rows: [{ ok: true }] };
+  }
+  return null;
+};
 
 const ROLES_OK = (sql: string) =>
   sql.includes("chart_of_accounts_roles")
@@ -105,6 +138,24 @@ describe("0280-05 factoring-balance-invoice-linkage service", () => {
     expect(__test__.BASE_META.never_clamp_anomaly_to_zero).toBe(true);
   });
 
+  it("locked Faro terms helpers reject wrong rates", () => {
+    expect(
+      __test__.profileMatchesLockedFaroTerms({
+        fee_rate: 0.015,
+        reserve_rate: 0.015,
+        recourse_days: 95,
+      })
+    ).toBe(true);
+    expect(
+      __test__.profileMatchesLockedFaroTerms({
+        fee_rate: 0.03,
+        reserve_rate: 0.015,
+        recourse_days: 95,
+      })
+    ).toBe(false);
+    expect(FARO_FULL_RECOURSE_AGREEMENT_CODE).toBe("FARO_FULL_RECOURSE_V1");
+  });
+
   it("unverifiable when Faro/TRANSP contract entity mismatch", async () => {
     const client = mockClient([
       PROBE_OK,
@@ -121,50 +172,123 @@ describe("0280-05 factoring-balance-invoice-linkage service", () => {
     expect(result.outstanding_liability_cents).toBeNull();
   });
 
-  it("mixed_factor_assignment fail closed", async () => {
+  it("RTS-only sole factor is NEVER labeled Faro without owner-seeded agreement", async () => {
     const client = mockClient([
       PROBE_OK,
       TRANSP_CO,
+      AGREEMENT_TABLE_OK,
+      (sql) => {
+        if (sql.includes("FROM factoring.canonical_factor_agreements a")) return { rows: [] };
+        if (sql.includes("COUNT(*)::text AS n") && sql.includes("canonical_factor_agreements")) {
+          return { rows: [{ n: "0", future_n: "0", expired_n: "0" }] };
+        }
+        return null;
+      },
+    ]);
+    const result = await computeFactoringBalanceInvoiceLinkage(client, {
+      operatingCompanyId: "00000000-0000-4000-8000-000000000001",
+      asOfBusinessDate: "2026-07-19",
+    });
+    expect(result.status).toBe("unverifiable");
+    expect(result.unverifiable_reason).toBe("missing_faro_agreement_binding");
+    expect(result.meta.active_factor_vendor_id).toBeNull();
+    expect(result.outstanding_liability_cents).toBeNull();
+  });
+
+  it("ambiguous/mixed overlapping Faro agreement bindings fail closed", async () => {
+    const client = mockClient([
+      PROBE_OK,
+      TRANSP_CO,
+      AGREEMENT_TABLE_OK,
       (sql) =>
-        sql.includes("WITH candidates") || sql.includes("FROM mdata.vendors")
+        sql.includes("FROM factoring.canonical_factor_agreements a")
           ? {
               rows: [
-                { vendor_id: "v1", vendor_name: "Factor A" },
-                { vendor_id: "v2", vendor_name: "Factor B" },
+                faroBindingRow({ agreement_id: "a1", factor_vendor_id: "v1" }),
+                faroBindingRow({ agreement_id: "a2", factor_vendor_id: "v2", vendor_name: "Other" }),
               ],
             }
           : null,
     ]);
     const result = await computeFactoringBalanceInvoiceLinkage(client, {
       operatingCompanyId: "00000000-0000-4000-8000-000000000001",
+      asOfBusinessDate: "2026-07-19",
     });
     expect(result.status).toBe("unverifiable");
-    expect(result.unverifiable_reason).toBe("mixed_factor_assignment");
+    expect(result.unverifiable_reason).toBe("ambiguous_faro_agreement_binding");
     expect(result.outstanding_liability_cents).toBeNull();
   });
 
-  it("empty when active factor ok and view returns no row", async () => {
+  it("expired / not-yet-effective Faro agreement → faro_agreement_not_effective", async () => {
     const client = mockClient([
       PROBE_OK,
       TRANSP_CO,
-      ACTIVE_FACTOR,
+      AGREEMENT_TABLE_OK,
+      (sql) => {
+        if (sql.includes("FROM factoring.canonical_factor_agreements a")) return { rows: [] };
+        if (sql.includes("COUNT(*)::text AS n") && sql.includes("canonical_factor_agreements")) {
+          return { rows: [{ n: "1", future_n: "0", expired_n: "1" }] };
+        }
+        return null;
+      },
+    ]);
+    const result = await computeFactoringBalanceInvoiceLinkage(client, {
+      operatingCompanyId: "00000000-0000-4000-8000-000000000001",
+      asOfBusinessDate: "2026-07-19",
+    });
+    expect(result.status).toBe("unverifiable");
+    expect(result.unverifiable_reason).toBe("faro_agreement_not_effective");
+  });
+
+  it("wrong Faro terms on profile → faro_agreement_terms_mismatch", async () => {
+    const client = mockClient([
+      PROBE_OK,
+      TRANSP_CO,
+      AGREEMENT_TABLE_OK,
+      (sql) =>
+        sql.includes("FROM factoring.canonical_factor_agreements a")
+          ? {
+              rows: [
+                faroBindingRow({
+                  profile_reserve_rate: "0.03",
+                  profile_fee_rate: "0.015",
+                }),
+              ],
+            }
+          : null,
+    ]);
+    const result = await computeFactoringBalanceInvoiceLinkage(client, {
+      operatingCompanyId: "00000000-0000-4000-8000-000000000001",
+      asOfBusinessDate: "2026-07-19",
+    });
+    expect(result.status).toBe("unverifiable");
+    expect(result.unverifiable_reason).toBe("faro_agreement_terms_mismatch");
+  });
+
+  it("empty when valid Faro agreement and view returns no row", async () => {
+    const client = mockClient([
+      PROBE_OK,
+      TRANSP_CO,
+      VALID_FARO,
       ROLES_OK,
       AS_OF,
       (sql) => (sql.includes("FROM views.factoring_balance_invoice_linkage") ? { rows: [] } : null),
     ]);
     const result = await computeFactoringBalanceInvoiceLinkage(client, {
       operatingCompanyId: "00000000-0000-4000-8000-000000000001",
+      asOfBusinessDate: "2026-07-19",
     });
     expect(result.status).toBe("empty");
     expect(result.outstanding_liability_cents).toBe(0);
     expect(result.reserve_receivable_cents).toBe(0);
+    expect(result.meta.active_factor_vendor_id).toBe("v-faro");
   });
 
   it("ok path maps artifact rollup; incomplete funding → unverifiable", async () => {
     const okClient = mockClient([
       PROBE_OK,
       TRANSP_CO,
-      ACTIVE_FACTOR,
+      VALID_FARO,
       ROLES_OK,
       AS_OF,
       (sql) =>
@@ -193,6 +317,7 @@ describe("0280-05 factoring-balance-invoice-linkage service", () => {
     ]);
     const ok = await computeFactoringBalanceInvoiceLinkage(okClient, {
       operatingCompanyId: "00000000-0000-4000-8000-000000000001",
+      asOfBusinessDate: "2026-07-19",
     });
     expect(ok.status).toBe("ok");
     expect(ok.outstanding_liability_cents).toBe(1_000_000);
@@ -202,7 +327,7 @@ describe("0280-05 factoring-balance-invoice-linkage service", () => {
     const incomplete = mockClient([
       PROBE_OK,
       TRANSP_CO,
-      ACTIVE_FACTOR,
+      VALID_FARO,
       ROLES_OK,
       AS_OF,
       (sql) =>
@@ -231,6 +356,7 @@ describe("0280-05 factoring-balance-invoice-linkage service", () => {
     ]);
     const bad = await computeFactoringBalanceInvoiceLinkage(incomplete, {
       operatingCompanyId: "00000000-0000-4000-8000-000000000001",
+      asOfBusinessDate: "2026-07-19",
     });
     expect(bad.status).toBe("unverifiable");
     expect(bad.unverifiable_reason).toBe("incomplete_funding_je_artifacts");
@@ -240,7 +366,7 @@ describe("0280-05 factoring-balance-invoice-linkage service", () => {
     const client = mockClient([
       PROBE_OK,
       TRANSP_CO,
-      ACTIVE_FACTOR,
+      VALID_FARO,
       ROLES_OK,
       AS_OF,
       (sql) =>
@@ -269,6 +395,7 @@ describe("0280-05 factoring-balance-invoice-linkage service", () => {
     ]);
     const result = await computeFactoringBalanceInvoiceLinkage(client, {
       operatingCompanyId: "00000000-0000-4000-8000-000000000001",
+      asOfBusinessDate: "2026-07-19",
     });
     expect(result.status).toBe("accounting_exception");
     expect(result.unverifiable_reason).toBe("accounting_exception:debit_liability_anomaly");

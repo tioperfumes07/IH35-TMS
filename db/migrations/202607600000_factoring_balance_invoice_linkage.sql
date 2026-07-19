@@ -3,7 +3,12 @@
 -- *** DO NOT RUN ON PROD without Jorge's explicit "OK to merge" — runs on a Neon branch first, then
 -- ledger-backfilled (§1.4). FACTORING_GL_POSTING_ENABLED / QBO write-back stay OFF. ***
 --
--- CPA VETO (exact head bb8b80f9f → this revision):
+-- HELD PREREQUISITE (fail-closed — do NOT silently skip reverse-exclusion semantics):
+--   MUST apply held migration 202607340000_je_reversal_linkage.sql FIRST.
+--   This migration references accounting.journal_entries.reverses_je_id / reversed_by_je_id.
+--   Declared in db/migrations/.held-migrations.json via requires_held.
+--
+-- CPA VETO (exact head bb8b80f9f → ee7ba85ee → this revision):
 --   1) Liability/reserve ONLY from per-advance/per-factor JE + source-link artifacts.
 --      Unrelated/orphan role-account JEs are NEVER attributed to the active factor.
 --      No majority-customer inference; no vendor-name ILIKE match.
@@ -14,16 +19,152 @@
 --   4) Lifecycle classification from authoritative source_transaction_type /
 --      transaction_source_links.relationship_role / factoring_reserve_movements — NOT account
 --      co-occurrence on the same JE.
+--   5) Faro identity = owner-seeded entity-scoped factoring.canonical_factor_agreements
+--      (FARO_FULL_RECOURSE_V1 + effective dates + locked full-recourse terms). NEVER label a
+--      generic sole factor as Faro. No invented UUIDs in this migration (owner seeds mapping).
 --
 -- FIX (additive, read-only + FORCE RLS hardening):
 --   1) FORCE RLS on accounting.factoring_advances; SELECT entity-scoped; INSERT/UPDATE entity-scoped
 --      AND Owner/Administrator role-gated; least-privilege grants (no DELETE).
 --   2) views.factoring_balance_invoice_linkage (security_invoker) — factor-scoped advance grain.
+--   3) factoring.canonical_factor_agreements — empty owner-seed table (no seed rows).
 --      No new GL math. No QBO write-back. No destructive DDL.
 --
 -- Idempotent / apply-twice safe. Fresh-DB-from-0001 safe (to_regclass guards).
 
 BEGIN;
+
+-- ── 0. Fail-closed prerequisite: held 202607340000 reversal linkage columns ─────────────────────
+DO $prereq$
+DECLARE
+  missing text[];
+BEGIN
+  SELECT COALESCE(array_agg(req.col ORDER BY req.col), ARRAY[]::text[])
+    INTO missing
+  FROM (
+    VALUES ('reverses_je_id'), ('reversed_by_je_id')
+  ) AS req(col)
+  WHERE NOT EXISTS (
+    SELECT 1
+      FROM information_schema.columns c
+     WHERE c.table_schema = 'accounting'
+       AND c.table_name = 'journal_entries'
+       AND c.column_name = req.col
+  );
+
+  IF cardinality(missing) > 0 THEN
+    RAISE EXCEPTION
+      'HELD_MIGRATION_PREREQUISITE_MISSING: 202607600000_factoring_balance_invoice_linkage requires held 202607340000_je_reversal_linkage (missing accounting.journal_entries.%). Apply 202607340000 first. Fail-closed — refusing to create a view that would silently NULL-filter reversal semantics.',
+      array_to_string(missing, ', ');
+  END IF;
+END
+$prereq$;
+
+-- ── 0b. Owner-seeded Faro agreement binding (NO seed rows — never invent UUIDs) ──────────────────
+CREATE SCHEMA IF NOT EXISTS factoring;
+
+DO $faro_agreement$
+BEGIN
+  IF to_regclass('factoring.factor') IS NULL OR to_regclass('mdata.vendors') IS NULL THEN
+    RAISE NOTICE '202607600000: factoring.factor or mdata.vendors absent — skipping canonical_factor_agreements';
+    RETURN;
+  END IF;
+
+  CREATE TABLE IF NOT EXISTS factoring.canonical_factor_agreements (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id uuid NOT NULL REFERENCES org.companies(id),
+    factor_profile_id uuid NOT NULL REFERENCES factoring.factor(id),
+    factor_vendor_id uuid NOT NULL REFERENCES mdata.vendors(id),
+    agreement_code text NOT NULL
+      CHECK (agreement_code = 'FARO_FULL_RECOURSE_V1'),
+    effective_from date NOT NULL,
+    effective_to date,
+    is_full_recourse boolean NOT NULL DEFAULT true
+      CHECK (is_full_recourse = true),
+    fee_rate_tier1 numeric(5,4) NOT NULL
+      CHECK (fee_rate_tier1 = 0.0150),
+    fee_rate_tier2 numeric(5,4) NOT NULL
+      CHECK (fee_rate_tier2 = 0.0200),
+    reserve_rate numeric(5,4) NOT NULL
+      CHECK (reserve_rate = 0.0150),
+    repurchase_term_days integer NOT NULL
+      CHECK (repurchase_term_days = 30),
+    grace_days integer NOT NULL
+      CHECK (grace_days = 5),
+    repurchase_deadline_days integer NOT NULL
+      CHECK (repurchase_deadline_days = 95),
+    default_interest_daily_rate numeric(10,8) NOT NULL
+      CHECK (default_interest_daily_rate = 0.00067000),
+    created_at timestamptz NOT NULL DEFAULT now(),
+    created_by_user_id uuid,
+    CHECK (effective_to IS NULL OR effective_to >= effective_from),
+    UNIQUE (tenant_id, factor_vendor_id, agreement_code, effective_from)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_canonical_factor_agreements_tenant_asof
+    ON factoring.canonical_factor_agreements (tenant_id, agreement_code, effective_from DESC);
+
+  COMMENT ON TABLE factoring.canonical_factor_agreements IS
+    'Owner-seeded entity-scoped Faro full-recourse agreement binding (0280-05). Empty by default — never invent vendor/profile UUIDs. Service resolves Factoring Balance Faro identity only through an effective-dated FARO_FULL_RECOURSE_V1 row whose locked terms match contract-config; sole-factor inference is forbidden.';
+
+  ALTER TABLE factoring.canonical_factor_agreements ENABLE ROW LEVEL SECURITY;
+  ALTER TABLE factoring.canonical_factor_agreements FORCE ROW LEVEL SECURITY;
+
+  DROP POLICY IF EXISTS canonical_factor_agreements_entity_select ON factoring.canonical_factor_agreements;
+  DROP POLICY IF EXISTS canonical_factor_agreements_entity_insert ON factoring.canonical_factor_agreements;
+  DROP POLICY IF EXISTS canonical_factor_agreements_entity_update ON factoring.canonical_factor_agreements;
+
+  CREATE POLICY canonical_factor_agreements_entity_select
+    ON factoring.canonical_factor_agreements
+    FOR SELECT
+    TO ih35_app
+    USING (
+      identity.is_lucia_bypass()
+      OR tenant_id::text = current_setting('app.operating_company_id', true)
+    );
+
+  CREATE POLICY canonical_factor_agreements_entity_insert
+    ON factoring.canonical_factor_agreements
+    FOR INSERT
+    TO ih35_app
+    WITH CHECK (
+      identity.is_lucia_bypass()
+      OR (
+        tenant_id::text = current_setting('app.operating_company_id', true)
+        AND identity.current_user_role() = ANY (
+          ARRAY['Owner'::identity.role_enum, 'Administrator'::identity.role_enum]
+        )
+      )
+    );
+
+  CREATE POLICY canonical_factor_agreements_entity_update
+    ON factoring.canonical_factor_agreements
+    FOR UPDATE
+    TO ih35_app
+    USING (
+      identity.is_lucia_bypass()
+      OR (
+        tenant_id::text = current_setting('app.operating_company_id', true)
+        AND identity.current_user_role() = ANY (
+          ARRAY['Owner'::identity.role_enum, 'Administrator'::identity.role_enum]
+        )
+      )
+    )
+    WITH CHECK (
+      identity.is_lucia_bypass()
+      OR (
+        tenant_id::text = current_setting('app.operating_company_id', true)
+        AND identity.current_user_role() = ANY (
+          ARRAY['Owner'::identity.role_enum, 'Administrator'::identity.role_enum]
+        )
+      )
+    );
+
+  GRANT USAGE ON SCHEMA factoring TO ih35_app;
+  GRANT SELECT, INSERT, UPDATE ON factoring.canonical_factor_agreements TO ih35_app;
+  REVOKE DELETE ON factoring.canonical_factor_agreements FROM ih35_app;
+END
+$faro_agreement$;
 
 -- ── 1. FORCE RLS + entity SELECT + Owner/Admin write on accounting.factoring_advances ───────────────
 DO $rls$

@@ -25,6 +25,7 @@ import {
 const {
   mockQuery,
   mockWithLuciaBypass,
+  mockWithCurrentUser,
   mockIsEnabled,
   mockCreateJournalEntry,
   mockResolveRoleAccount,
@@ -33,18 +34,24 @@ const {
   const withLuciaBypass = vi.fn(async (fn: (client: { query: typeof query }) => unknown) =>
     fn({ query })
   );
+  const withCurrentUser = vi.fn(async (_userId: string, fn: (client: { query: typeof query }) => unknown) =>
+    fn({ query })
+  );
   return {
     mockQuery: query,
     mockWithLuciaBypass: withLuciaBypass,
+    mockWithCurrentUser: withCurrentUser,
     mockIsEnabled: vi.fn(),
     mockCreateJournalEntry: vi.fn(),
     mockResolveRoleAccount: vi.fn(),
   };
 });
 
-vi.mock("../../../auth/db.js", () => ({ withLuciaBypass: mockWithLuciaBypass }));
+vi.mock("../../../auth/db.js", () => ({ withLuciaBypass: mockWithLuciaBypass, withCurrentUser: mockWithCurrentUser }));
 vi.mock("../../../lib/feature-flags/service.js", () => ({ isEnabled: mockIsEnabled }));
-vi.mock("../../journal-entries.service.js", () => ({ createJournalEntry: mockCreateJournalEntry }));
+vi.mock("../../journal-entries.service.js", () => ({ createJournalEntryOnClient: mockCreateJournalEntry, enqueueJournalEntrySideEffects: vi.fn(async () => undefined) }));
+vi.mock("../../posting-engine.service.js", () => ({ ensureOpenPeriod: vi.fn(async () => undefined) }));
+vi.mock("../../accounting-spine-emit.js", () => ({ writeTransactionSourceLink: vi.fn(async () => undefined) }));
 vi.mock("../../coa-roles/resolver.service.js", () => ({ resolveRoleAccount: mockResolveRoleAccount }));
 
 const OPCO = "11111111-1111-4111-8111-111111111111";
@@ -80,7 +87,7 @@ function advanceRow(overrides: Record<string, unknown> = {}) {
 
 function postingsFromCall(callIndex: number): Posting[] {
   const call = mockCreateJournalEntry.mock.calls[callIndex];
-  return (call?.[0]?.postings ?? []) as Posting[];
+  return (call?.[1]?.postings ?? call?.[0]?.postings ?? []) as Posting[];
 }
 function leg(postings: Posting[], accountId: string) {
   return postings.find((p) => p.account_id === accountId);
@@ -166,7 +173,7 @@ describe("CHAIN-06 invoice→A/R→Faro chain-proof behavioral matrix (mocked se
     );
     expect(advanceLoadSql.some((sql) => sql.includes("operating_company_id = $2::uuid"))).toBe(true);
 
-    const fundingJe = mockCreateJournalEntry.mock.calls[0]?.[0];
+    const fundingJe = mockCreateJournalEntry.mock.calls[0]?.[1];
     expect(fundingJe?.operating_company_id).toBe(OPCO);
     expect(fundingJe?.source).toBe("auto");
     const fundingPostings = postingsFromCall(0);

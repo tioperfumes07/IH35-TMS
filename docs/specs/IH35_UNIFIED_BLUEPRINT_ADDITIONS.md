@@ -1412,10 +1412,12 @@ Standards: QuickBooks/NetSuite liability-vs-asset honesty; McLeod/Alvys factorin
   never fabricated $0.
 - **Reserve:** reduces only via structural credits to `factor_reserve_held` (release JE) or equivalent
   reserve-movement release evidence. `recourse_returned` alone must not zero reserve.
-- **TRANSP/Faro identity (no hard-coded UUIDs):** `org.companies` TRANSP-class + canonical
-  single active factor (exactly one distinct `factoring_company_vendor_id` across customers ∪
-  non-void funded advances). No majority inference; no vendor-name match. Mixed/transition →
-  `mixed_factor_assignment`. Other entities → `faro_contract_entity_mismatch`.
+- **TRANSP/Faro identity (no hard-coded UUIDs):** `org.companies` TRANSP-class +
+  owner-seeded `factoring.canonical_factor_agreements` (`FARO_FULL_RECOURSE_V1`)
+  effective as-of `companyBusinessDate` with locked full-recourse terms on the bound
+  `factoring.factor` profile. No majority inference; no vendor-name match; never label a
+  generic sole factor as Faro. Absent/expired/ambiguous/wrong-terms → typed
+  `unverifiable`. Other entities → `faro_contract_entity_mismatch`.
 - **Contract fields (integer cents):** `outstanding_liability_cents` (headline),
   `reserve_receivable_cents` (separate), `invoice_count`, plus
   `status` ∈ `ok|empty|unverifiable|accounting_exception` and signed `diagnostics`.
@@ -1466,6 +1468,39 @@ reserve (not status); (5) TRANSP/Faro identity fail-closed; (6) FORCE RLS Owner/
 ### Guard (Rule 17 — auto-discovered)
 - `scripts/verify-factoring-balance-invoice-linkage.mjs`
 - `scripts/verify-steps/929-verify-factoring-balance-invoice-linkage.mjs`
+
+### CPA re-review VETO amendments (append-only 2026-07-19 — exact head `ee7ba85ee`)
+1. **Faro identity = owner-seeded agreement, never sole-factor inference.**
+   Resolve through entity-scoped `factoring.canonical_factor_agreements`
+   (`agreement_code = FARO_FULL_RECOURSE_V1`) + effective-date window
+   (`effective_from` / `effective_to`) + bound `factoring.factor` profile whose
+   flat terms match locked full-recourse Faro contract-config constants
+   (tier fees 1.5%/2.0%, reserve 1.5%, term 30 + grace 5, repurchase deadline 95,
+   default interest 0.067%/day, `is_full_recourse = true`).
+   **Forbidden:** display-name match, majority-customer inference, inventing
+   vendor/profile UUIDs, labeling a generic sole `factoring_company_vendor_id`
+   as Faro (RTS-only sole factor must remain `unverifiable`).
+   Absent / expired / not-yet-effective / overlapping-ambiguous / wrong-terms →
+   typed `unverifiable` reasons:
+   `missing_faro_agreement_binding` |
+   `faro_agreement_not_effective` |
+   `ambiguous_faro_agreement_binding` |
+   `faro_agreement_terms_mismatch`.
+   Migration creates the empty table only — owner seeds the mapping explicitly.
+2. **Atomic / self-healing lifecycle source links.**
+   Poster creates JE + `attachFactoringLifecycleSourceLinks` (+ reserve movement /
+   subledger sync where applicable) inside the same caller-owned `withCurrentUser`
+   transaction via `createJournalEntryOnClient`. Injected failure between JE and
+   links rolls back with no duplicate financial artifacts. Every `already_posted`
+   path validates/repairs missing source links idempotently before returning.
+3. **Held migration prerequisite (fail-closed).**
+   `202607600000_factoring_balance_invoice_linkage` requires held
+   `202607340000_je_reversal_linkage` (`reverses_je_id` / `reversed_by_je_id`).
+   Declared in `.held-migrations.json` (`requires_held` + `held_apply_order`).
+   Missing columns → `RAISE EXCEPTION HELD_MIGRATION_PREREQUISITE_MISSING`
+   (never silently skip reverse-exclusion semantics).
+4. **Closed-period negative.** Factoring JE creation gates via shared
+   `ensureOpenPeriod` (`PERIOD_LOCKED` when `entry_date <= closed_period_cutoff`).
 
 
 ## 16. Accounting Home — Pending approvals ↔ GL linkage (0280-15)

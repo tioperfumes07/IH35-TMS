@@ -1,11 +1,12 @@
 /**
  * 0280-05-factoring-balance-invoice-linkage — read-only Factoring Balance contract.
  *
- * CPA VETO (2026-07-19, head bb8b80f9f):
+ * CPA VETO (2026-07-19, heads bb8b80f9f → ee7ba85ee → this revision):
  *   - Per-factor / per-advance JE + source-link artifacts only (never company-wide role rollup).
- *   - Canonical active factor = EXACTLY one distinct factoring_company_vendor_id across
- *     customers ∪ non-void funded advances. Mixed/transition → fail closed.
- *   - No majority-customer inference; no vendor-name match; no hard-coded UUIDs.
+ *   - Faro identity = owner-seeded factoring.canonical_factor_agreements (FARO_FULL_RECOURSE_V1)
+ *     effective as-of companyBusinessDate + locked full-recourse terms on the bound factoring.factor
+ *     profile. NEVER label a generic sole factor as Faro. No display-name match, no majority
+ *     inference, no invented UUIDs. Absent/ambiguous/expired/wrong-terms → typed unverifiable.
  *   - Never clamp debit-liability / over-released-reserve to $0 — accounting_exception + signed diagnostics.
  *   - As-of = companyBusinessDate (America/Chicago); future-dated JEs excluded.
  *   - Lifecycle from source_transaction_type / TSL / reserve_movements — not account co-occurrence.
@@ -14,6 +15,18 @@
  */
 
 import { companyBusinessDate } from "../lib/company-business-date.js";
+import {
+  FACTORING_DEFAULT_INTEREST_DAILY_RATE,
+  FACTORING_GRACE_DAYS,
+  FACTORING_REPURCHASE_DEADLINE_DAYS,
+  FACTORING_REPURCHASE_TERM_DAYS,
+  FACTORING_SECURITY_RESERVE_RATIO,
+  FACTORING_TIER1_RATIO,
+  FACTORING_TIER2_RATIO,
+} from "../accounting/factoring-posting/contract-config.js";
+
+/** Owner-seeded agreement_code for the locked Faro full-recourse contract (TRANSP). */
+export const FARO_FULL_RECOURSE_AGREEMENT_CODE = "FARO_FULL_RECOURSE_V1";
 
 export type DbClient = {
   query: <T = Record<string, unknown>>(
@@ -96,8 +109,9 @@ const BASE_META: Omit<
     "accounting.chart_of_accounts_roles",
     "accounting.factoring_advances",
     "accounting.invoices",
+    "factoring.canonical_factor_agreements",
+    "factoring.factor",
     "mdata.vendors",
-    "mdata.customers",
     "org.companies",
     "views.factoring_balance_invoice_linkage",
   ],
@@ -132,25 +146,69 @@ export type ActiveFactorIdentity = {
   companyCode: string | null;
   vendorId: string | null;
   vendorName: string | null;
+  agreementId?: string | null;
+  factorProfileId?: string | null;
 };
 
+function ratesMatch(a: number, b: number): boolean {
+  return Math.abs(a - b) < 1e-9;
+}
+
+function profileMatchesLockedFaroTerms(profile: {
+  fee_rate: number;
+  reserve_rate: number;
+  recourse_days: number;
+}): boolean {
+  const feeOk =
+    ratesMatch(profile.fee_rate, FACTORING_TIER1_RATIO) ||
+    ratesMatch(profile.fee_rate, FACTORING_TIER2_RATIO);
+  return (
+    feeOk &&
+    ratesMatch(profile.reserve_rate, FACTORING_SECURITY_RESERVE_RATIO) &&
+    profile.recourse_days === FACTORING_REPURCHASE_DEADLINE_DAYS
+  );
+}
+
+function agreementTermsMatchLockedFaro(row: {
+  is_full_recourse: boolean;
+  fee_rate_tier1: number;
+  fee_rate_tier2: number;
+  reserve_rate: number;
+  repurchase_term_days: number;
+  grace_days: number;
+  repurchase_deadline_days: number;
+  default_interest_daily_rate: number;
+}): boolean {
+  return (
+    row.is_full_recourse === true &&
+    ratesMatch(row.fee_rate_tier1, FACTORING_TIER1_RATIO) &&
+    ratesMatch(row.fee_rate_tier2, FACTORING_TIER2_RATIO) &&
+    ratesMatch(row.reserve_rate, FACTORING_SECURITY_RESERVE_RATIO) &&
+    row.repurchase_term_days === FACTORING_REPURCHASE_TERM_DAYS &&
+    row.grace_days === FACTORING_GRACE_DAYS &&
+    row.repurchase_deadline_days === FACTORING_REPURCHASE_DEADLINE_DAYS &&
+    ratesMatch(row.default_interest_daily_rate, FACTORING_DEFAULT_INTEREST_DAILY_RATE)
+  );
+}
+
 /**
- * TRANSP contract entity + canonical single active factor.
- * Active factor = EXACTLY one distinct factoring_company_vendor_id across
- * (customers with assignment) ∪ (non-void funded advances). Mixed/transition → fail closed.
- * No majority inference. No vendor-name match. No hard-coded UUIDs.
+ * TRANSP contract entity + owner-seeded Faro agreement (effective-dated).
+ * Never labels a generic sole factor as Faro. No majority / display-name / invented UUIDs.
  */
 export async function resolveFaroFactorIdentity(
   client: DbClient,
-  operatingCompanyId: string
+  operatingCompanyId: string,
+  asOfBusinessDate?: string
 ): Promise<ActiveFactorIdentity> {
-  return resolveCanonicalActiveFactor(client, operatingCompanyId);
+  return resolveCanonicalActiveFactor(client, operatingCompanyId, asOfBusinessDate);
 }
 
 export async function resolveCanonicalActiveFactor(
   client: DbClient,
-  operatingCompanyId: string
+  operatingCompanyId: string,
+  asOfBusinessDate?: string
 ): Promise<ActiveFactorIdentity> {
+  const asOf = asOfBusinessDate ?? companyBusinessDate();
   const company = await client.query<{ code: string; legal_name: string }>(
     `
       SELECT code, legal_name
@@ -170,6 +228,8 @@ export async function resolveCanonicalActiveFactor(
       companyCode: null,
       vendorId: null,
       vendorName: null,
+      agreementId: null,
+      factorProfileId: null,
     };
   }
   const code = String(row.code ?? "");
@@ -185,65 +245,171 @@ export async function resolveCanonicalActiveFactor(
       companyCode: code,
       vendorId: null,
       vendorName: null,
+      agreementId: null,
+      factorProfileId: null,
     };
   }
 
-  const factors = await client.query<{ vendor_id: string; vendor_name: string }>(
-    `
-      WITH candidates AS (
-        SELECT c.factoring_company_vendor_id AS vendor_id
-        FROM mdata.customers c
-        WHERE c.operating_company_id = $1::uuid
-          AND c.factoring_company_vendor_id IS NOT NULL
-        UNION
-        SELECT fa.factoring_company_vendor_id AS vendor_id
-        FROM accounting.factoring_advances fa
-        WHERE fa.operating_company_id = $1::uuid
-          AND fa.factoring_company_vendor_id IS NOT NULL
-          AND fa.advanced_at IS NOT NULL
-          AND fa.status <> 'voided'
-      )
-      SELECT v.id::text AS vendor_id, v.vendor_name
-      FROM candidates c
-      JOIN mdata.vendors v
-        ON v.id = c.vendor_id
-       AND v.operating_company_id = $1::uuid
-       AND v.deactivated_at IS NULL
-      GROUP BY v.id, v.vendor_name
-      ORDER BY v.id::text ASC
-    `,
-    [operatingCompanyId]
+  const agreementTable = await client.query<{ ok: boolean }>(
+    `SELECT to_regclass('factoring.canonical_factor_agreements') IS NOT NULL AS ok`
   );
-
-  if (factors.rows.length === 0) {
+  if (!agreementTable.rows[0]?.ok) {
     return {
       ok: false,
-      reason: "active_factor_identity_unavailable",
+      reason: "missing_faro_agreement_binding",
       operatingCompanyId,
       companyCode: code,
       vendorId: null,
       vendorName: null,
-    };
-  }
-  if (factors.rows.length > 1) {
-    return {
-      ok: false,
-      reason: "mixed_factor_assignment",
-      operatingCompanyId,
-      companyCode: code,
-      vendorId: factors.rows[0]?.vendor_id ?? null,
-      vendorName: factors.rows[0]?.vendor_name ?? null,
+      agreementId: null,
+      factorProfileId: null,
     };
   }
 
-  const vendor = factors.rows[0]!;
+  // Effective window: as_of ∈ [effective_from, effective_to] (NULL effective_to = open-ended).
+  // Overlapping/ambiguous bindings → fail closed (never pick by majority or name).
+  const bindings = await client.query<{
+    agreement_id: string;
+    factor_profile_id: string;
+    factor_vendor_id: string;
+    vendor_name: string;
+    is_full_recourse: boolean;
+    fee_rate_tier1: string;
+    fee_rate_tier2: string;
+    reserve_rate: string;
+    repurchase_term_days: number;
+    grace_days: number;
+    repurchase_deadline_days: number;
+    default_interest_daily_rate: string;
+    profile_fee_rate: string;
+    profile_reserve_rate: string;
+    profile_recourse_days: number;
+    profile_active: boolean;
+  }>(
+    `
+      SELECT
+        a.id::text AS agreement_id,
+        a.factor_profile_id::text AS factor_profile_id,
+        a.factor_vendor_id::text AS factor_vendor_id,
+        v.vendor_name,
+        a.is_full_recourse,
+        a.fee_rate_tier1::text,
+        a.fee_rate_tier2::text,
+        a.reserve_rate::text,
+        a.repurchase_term_days,
+        a.grace_days,
+        a.repurchase_deadline_days,
+        a.default_interest_daily_rate::text,
+        f.fee_rate::text AS profile_fee_rate,
+        f.reserve_rate::text AS profile_reserve_rate,
+        f.recourse_days AS profile_recourse_days,
+        f.active AS profile_active
+      FROM factoring.canonical_factor_agreements a
+      JOIN factoring.factor f
+        ON f.id = a.factor_profile_id
+       AND f.tenant_id = a.tenant_id
+      JOIN mdata.vendors v
+        ON v.id = a.factor_vendor_id
+       AND v.operating_company_id = a.tenant_id
+       AND v.deactivated_at IS NULL
+      WHERE a.tenant_id = $1::uuid
+        AND a.agreement_code = $2
+        AND a.effective_from <= $3::date
+        AND (a.effective_to IS NULL OR a.effective_to >= $3::date)
+      ORDER BY a.effective_from DESC, a.id::text ASC
+    `,
+    [operatingCompanyId, FARO_FULL_RECOURSE_AGREEMENT_CODE, asOf]
+  );
+
+  if (bindings.rows.length === 0) {
+    // Distinguish never-seeded vs seeded-but-outside-effective-window (still never sole-factor Faro).
+    const anyBinding = await client.query<{ n: string; future_n: string; expired_n: string }>(
+      `
+        SELECT
+          COUNT(*)::text AS n,
+          COUNT(*) FILTER (WHERE effective_from > $2::date)::text AS future_n,
+          COUNT(*) FILTER (
+            WHERE effective_to IS NOT NULL AND effective_to < $2::date
+          )::text AS expired_n
+        FROM factoring.canonical_factor_agreements
+        WHERE tenant_id = $1::uuid
+          AND agreement_code = $3
+      `,
+      [operatingCompanyId, asOf, FARO_FULL_RECOURSE_AGREEMENT_CODE]
+    );
+    const n = Number(anyBinding.rows[0]?.n ?? 0);
+    const futureN = Number(anyBinding.rows[0]?.future_n ?? 0);
+    const expiredN = Number(anyBinding.rows[0]?.expired_n ?? 0);
+    let reason = "missing_faro_agreement_binding";
+    if (n > 0 && (futureN > 0 || expiredN > 0)) {
+      reason = "faro_agreement_not_effective";
+    }
+    return {
+      ok: false,
+      reason,
+      operatingCompanyId,
+      companyCode: code,
+      vendorId: null,
+      vendorName: null,
+      agreementId: null,
+      factorProfileId: null,
+    };
+  }
+
+  const distinctVendors = new Set(bindings.rows.map((b) => b.factor_vendor_id));
+  if (bindings.rows.length > 1 || distinctVendors.size > 1) {
+    return {
+      ok: false,
+      reason: "ambiguous_faro_agreement_binding",
+      operatingCompanyId,
+      companyCode: code,
+      vendorId: bindings.rows[0]?.factor_vendor_id ?? null,
+      vendorName: bindings.rows[0]?.vendor_name ?? null,
+      agreementId: bindings.rows[0]?.agreement_id ?? null,
+      factorProfileId: bindings.rows[0]?.factor_profile_id ?? null,
+    };
+  }
+
+  const binding = bindings.rows[0]!;
+  const agreementOk = agreementTermsMatchLockedFaro({
+    is_full_recourse: binding.is_full_recourse,
+    fee_rate_tier1: Number(binding.fee_rate_tier1),
+    fee_rate_tier2: Number(binding.fee_rate_tier2),
+    reserve_rate: Number(binding.reserve_rate),
+    repurchase_term_days: Number(binding.repurchase_term_days),
+    grace_days: Number(binding.grace_days),
+    repurchase_deadline_days: Number(binding.repurchase_deadline_days),
+    default_interest_daily_rate: Number(binding.default_interest_daily_rate),
+  });
+  const profileOk =
+    binding.profile_active === true &&
+    profileMatchesLockedFaroTerms({
+      fee_rate: Number(binding.profile_fee_rate),
+      reserve_rate: Number(binding.profile_reserve_rate),
+      recourse_days: Number(binding.profile_recourse_days),
+    });
+  if (!agreementOk || !profileOk) {
+    return {
+      ok: false,
+      reason: "faro_agreement_terms_mismatch",
+      operatingCompanyId,
+      companyCode: code,
+      vendorId: binding.factor_vendor_id,
+      vendorName: binding.vendor_name,
+      agreementId: binding.agreement_id,
+      factorProfileId: binding.factor_profile_id,
+    };
+  }
+
   return {
     ok: true,
     reason: null,
     operatingCompanyId,
     companyCode: code,
-    vendorId: vendor.vendor_id,
-    vendorName: vendor.vendor_name,
+    vendorId: binding.factor_vendor_id,
+    vendorName: binding.vendor_name,
+    agreementId: binding.agreement_id,
+    factorProfileId: binding.factor_profile_id,
   };
 }
 
@@ -255,6 +421,8 @@ async function probeCanonicalSurface(client: DbClient): Promise<{ ok: boolean; r
     je_ok: boolean;
     roles_ok: boolean;
     view_ok: boolean;
+    agreements_ok: boolean;
+    factor_ok: boolean;
   }>(
     `
       SELECT
@@ -263,7 +431,9 @@ async function probeCanonicalSurface(client: DbClient): Promise<{ ok: boolean; r
         to_regclass('accounting.journal_entry_postings') IS NOT NULL AS jep_ok,
         to_regclass('accounting.journal_entries') IS NOT NULL AS je_ok,
         to_regclass('accounting.chart_of_accounts_roles') IS NOT NULL AS roles_ok,
-        to_regclass('views.factoring_balance_invoice_linkage') IS NOT NULL AS view_ok
+        to_regclass('views.factoring_balance_invoice_linkage') IS NOT NULL AS view_ok,
+        to_regclass('factoring.canonical_factor_agreements') IS NOT NULL AS agreements_ok,
+        to_regclass('factoring.factor') IS NOT NULL AS factor_ok
     `
   );
   const row = rel.rows[0];
@@ -273,6 +443,8 @@ async function probeCanonicalSurface(client: DbClient): Promise<{ ok: boolean; r
   if (!row.je_ok) return { ok: false, reason: "missing_table:accounting.journal_entries" };
   if (!row.roles_ok) return { ok: false, reason: "missing_table:accounting.chart_of_accounts_roles" };
   if (!row.view_ok) return { ok: false, reason: "missing_view:views.factoring_balance_invoice_linkage" };
+  if (!row.factor_ok) return { ok: false, reason: "missing_table:factoring.factor" };
+  if (!row.agreements_ok) return { ok: false, reason: "missing_faro_agreement_binding" };
   return { ok: true, reason: null };
 }
 
@@ -368,7 +540,7 @@ export async function computeFactoringBalanceInvoiceLinkage(
     });
   }
 
-  const identity = await resolveCanonicalActiveFactor(client, operatingCompanyId);
+  const identity = await resolveCanonicalActiveFactor(client, operatingCompanyId, asOf);
   const idMeta = {
     vendorId: identity.vendorId,
     vendorName: identity.vendorName,
@@ -376,7 +548,7 @@ export async function computeFactoringBalanceInvoiceLinkage(
     asOf,
   };
   if (!identity.ok) {
-    return nullHeadline("unverifiable", identity.reason ?? "active_factor_identity_unavailable", idMeta);
+    return nullHeadline("unverifiable", identity.reason ?? "missing_faro_agreement_binding", idMeta);
   }
 
   const roles = await client.query<{ role: string; account_id: string }>(
@@ -555,4 +727,7 @@ export const __test__ = {
   BASE_META,
   metaWith,
   resolveCanonicalActiveFactor,
+  profileMatchesLockedFaroTerms,
+  agreementTermsMatchLockedFaro,
+  FARO_FULL_RECOURSE_AGREEMENT_CODE,
 };

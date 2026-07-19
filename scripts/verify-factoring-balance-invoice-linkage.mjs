@@ -35,6 +35,8 @@ const PATHS = {
   feDefaultHome: "apps/frontend/src/pages/home/roles/DefaultHome.tsx",
   feOwnerHome: "apps/frontend/src/pages/home/OwnerHome.tsx",
   poster: "apps/backend/src/accounting/factoring-posting/poster.service.ts",
+  posterAtomicityTest: "apps/backend/src/accounting/factoring-posting/__tests__/poster-lifecycle-atomicity.test.ts",
+  journalEntries: "apps/backend/src/accounting/journal-entries.service.ts",
   migration: "db/migrations/202607600000_factoring_balance_invoice_linkage.sql",
   held: "db/migrations/.held-migrations.json",
   additions: "docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md",
@@ -88,7 +90,12 @@ export function checker(sources) {
   requireExec("service", "factoring_advance_liability", "service_liability_role_missing");
   requireExec("service", "factor_reserve_held", "service_reserve_role_missing");
   requireExec("service", "resolveCanonicalActiveFactor", "service_active_factor_identity_missing");
-  requireExec("service", "mixed_factor_assignment", "service_mixed_factor_gate_missing");
+  requireExec("service", "canonical_factor_agreements", "service_faro_agreement_table_missing");
+  requireExec("service", "FARO_FULL_RECOURSE_V1", "service_faro_agreement_code_missing");
+  requireExec("service", "missing_faro_agreement_binding", "service_missing_agreement_gate_missing");
+  requireExec("service", "faro_agreement_not_effective", "service_agreement_effective_gate_missing");
+  requireExec("service", "ambiguous_faro_agreement_binding", "service_ambiguous_agreement_gate_missing");
+  requireExec("service", "faro_agreement_terms_mismatch", "service_terms_mismatch_gate_missing");
   requireExec("service", "incomplete_funding_je_artifacts", "service_incomplete_funding_gate_missing");
   requireExec("service", "accounting_exception:debit_liability_anomaly", "service_debit_anomaly_missing");
   requireExec("service", "accounting_exception:reserve_over_release", "service_reserve_over_release_missing");
@@ -103,6 +110,8 @@ export function checker(sources) {
   forbidExec("service", /ILIKE\s*'%faro%'/i, "service_must_not_vendor_name_match");
   forbidExec("service", /ORDER BY COUNT\(\*\) DESC/, "service_must_not_majority_customer_inference");
   forbidExec("service", /Math\.max\(\s*0\s*,/, "service_must_not_clamp_with_math_max");
+  // Never label a generic sole factor as Faro (old WITH candidates sole-vendor path).
+  forbidExec("service", /WITH candidates AS/, "service_must_not_sole_factor_candidates_cte");
 
   // Routes — liability headline, no silent zero, no net
   requireExec("routes", "computeFactoringBalanceInvoiceLinkage", "routes_must_call_linkage_service");
@@ -141,12 +150,21 @@ export function checker(sources) {
   requireExec("feDefaultHome", 'fb.status === "unverifiable"', "fe_default_must_branch_unverifiable_status");
   requireExec("feOwnerHome", 'fb.status === "unverifiable"', "fe_owner_must_branch_unverifiable_status");
 
-  // Poster — additive lifecycle source links (flags OFF, no new GL math)
+  // Poster — atomic lifecycle source links in caller-owned txn + already_posted repair
   requireExec("poster", "attachFactoringLifecycleSourceLinks", "poster_lifecycle_attach_missing");
+  requireExec("poster", "createFactoringJournalEntryAtomically", "poster_atomic_je_helper_missing");
+  requireExec("poster", "createJournalEntryOnClient", "poster_must_use_on_client_je");
+  requireExec("poster", "repairFactoringLifecycleSourceLinks", "poster_already_posted_repair_missing");
+  requireExec("poster", "ensureOpenPeriod", "poster_closed_period_gate_missing");
+  requireExec("poster", "failAfterJeBeforeLifecycleLinks", "poster_inject_failure_hook_missing");
   requireExec("poster", "factoring_customer_payment", "poster_customer_payment_source_missing");
   requireExec("poster", "factoring_reserve_release", "poster_reserve_release_source_missing");
   requireExec("poster", "factoring_chargeback", "poster_chargeback_source_missing");
   requireExec("poster", "FACTORING_GL_POSTING", "poster_flag_gate_present");
+  requireExec("journalEntries", "createJournalEntryOnClient", "journal_entries_on_client_missing");
+  requireExec("journalEntries", "enqueueJournalEntrySideEffects", "journal_entries_deferred_side_effects_missing");
+  requireExec("posterAtomicityTest", "injected_failure_between_je_and_lifecycle_links", "atomicity_test_inject_missing");
+  requireExec("posterAtomicityTest", "already_posted path repairs", "atomicity_test_repair_missing");
 
   // Migration — FORCE RLS, security_invoker, per-advance source linkage, signed (no GREATEST clamp)
   requireText("migration", "DO NOT RUN ON PROD", "migration_missing_hold_marker");
@@ -168,6 +186,11 @@ export function checker(sources) {
   requireText("migration", "app.factoring_balance_as_of", "migration_missing_as_of_guc");
   requireText("migration", "outstanding_liability_signed_cents", "migration_missing_signed_liability");
   requireText("migration", "orphan_liability_role_cents", "migration_missing_orphan_counter");
+  requireText("migration", "HELD_MIGRATION_PREREQUISITE_MISSING", "migration_missing_prereq_fail_closed");
+  requireText("migration", "202607340000_je_reversal_linkage", "migration_missing_prereq_reference");
+  requireText("migration", "canonical_factor_agreements", "migration_missing_faro_agreement_table");
+  requireText("migration", "FARO_FULL_RECOURSE_V1", "migration_missing_faro_agreement_code");
+  requireText("migration", "never invent", "migration_must_declare_no_invented_uuids");
   forbidExec("migration", /DROP\s+TABLE/i, "migration_must_be_additive");
   forbidExec("migration", /DROP\s+COLUMN/i, "migration_must_not_drop_column");
   // Only allowed destructive DDL: DROP VIEW IF EXISTS views.factoring_balance_invoice_linkage (reshape).
@@ -205,12 +228,21 @@ export function checker(sources) {
   if (!sources.held.includes("202607600000_factoring_balance_invoice_linkage.sql")) {
     failures.push("held_registry_missing_migration");
   }
+  if (!sources.held.includes("requires_held") || !sources.held.includes("202607340000_je_reversal_linkage.sql")) {
+    failures.push("held_registry_missing_prereq_ordering");
+  }
+  if (!sources.held.includes("held_apply_order")) {
+    failures.push("held_registry_missing_apply_order");
+  }
 
   requireText("additions", "0280-05-factoring-balance-invoice-linkage", "additions_missing_owner_decision");
   requireText("additions", "outstanding Faro secured-borrowing LIABILITY", "additions_missing_liability_decision");
   requireText("additions", "never netted", "additions_missing_reserve_decision");
   requireText("additions", "Statuses must NOT clear balances", "additions_missing_status_veto");
-  requireText("additions", "mixed_factor_assignment", "additions_missing_mixed_factor");
+  requireText("additions", "canonical_factor_agreements", "additions_missing_faro_agreement");
+  requireText("additions", "missing_faro_agreement_binding", "additions_missing_agreement_reasons");
+  requireText("additions", "createJournalEntryOnClient", "additions_missing_atomic_links");
+  requireText("additions", "HELD_MIGRATION_PREREQUISITE_MISSING", "additions_missing_prereq");
   requireText("additions", "accounting_exception", "additions_missing_accounting_exception");
 
   // Tests — fixture IDs, plants, isolation, CPA negatives
@@ -221,7 +253,13 @@ export function checker(sources) {
   requireExec("dbTest", "relforcerowsecurity", "db_test_force_rls");
   requireExec("dbTest", "factoring_advances_entity_insert", "db_test_rls_write_roles");
   requireExec("dbTest", "source_transaction_type", "db_test_artifact_source_keys");
-  requireExec("dbTest", "mixed_factor_assignment", "db_test_second_factor");
+  requireExec("dbTest", "ambiguous_faro_agreement_binding", "db_test_ambiguous_agreement");
+  requireExec("dbTest", "missing_faro_agreement_binding", "db_test_rts_only_missing_agreement");
+  requireExec("dbTest", "faro_agreement_not_effective", "db_test_expired_agreement");
+  requireExec("dbTest", "faro_agreement_terms_mismatch", "db_test_wrong_terms");
+  requireExec("dbTest", "PERIOD_LOCKED", "db_test_closed_period");
+  requireExec("dbTest", "HELD_MIGRATION_PREREQUISITE_MISSING", "db_test_prereq_failure");
+  requireExec("dbTest", "apply-twice is idempotent", "db_test_apply_twice");
   requireExec("dbTest", "orphan", "db_test_orphan_je");
   requireExec("dbTest", "2099-12-31", "db_test_future_je");
   requireExec("dbTest", "debit_liability_anomaly", "db_test_debit_anomaly");
@@ -233,7 +271,9 @@ export function checker(sources) {
   requireExec("serviceTest", "connection_reset", "service_test_planted_failure");
   requireExec("serviceTest", "incomplete_funding_je_artifacts", "service_test_incomplete");
   requireExec("serviceTest", "faro_contract_entity_mismatch", "service_test_faro_identity");
-  requireExec("serviceTest", "mixed_factor_assignment", "service_test_mixed_factor");
+  requireExec("serviceTest", "missing_faro_agreement_binding", "service_test_rts_only");
+  requireExec("serviceTest", "ambiguous_faro_agreement_binding", "service_test_ambiguous_agreement");
+  requireExec("serviceTest", "faro_agreement_terms_mismatch", "service_test_wrong_terms");
   requireExec("serviceTest", "debit_liability_anomaly", "service_test_debit_anomaly");
 
   requireText("step", "verify-factoring-balance-invoice-linkage", "verify_step_name_missing");
@@ -241,6 +281,7 @@ export function checker(sources) {
   requireText("manifest", "apps/frontend/src/api/home.ts", "manifest_fe_api_not_listed");
   requireText("manifest", "apps/frontend/src/pages/home/roles/DefaultHome.tsx", "manifest_fe_default_home_not_listed");
   requireText("manifest", "apps/backend/src/accounting/factoring-posting/poster.service.ts", "manifest_poster_not_listed");
+  requireText("manifest", "apps/backend/src/accounting/journal-entries.service.ts", "manifest_journal_entries_not_listed");
   requireText("manifest", "db/migrations/202607600000_factoring_balance_invoice_linkage.sql", "manifest_migration_not_listed");
   requireText("manifest", "scripts/verify-factoring-balance-invoice-linkage.mjs", "manifest_guard_not_listed");
 
@@ -265,10 +306,12 @@ function createBadFixture(good) {
   bad.service = String(good.service)
     .replace(/computeFactoringBalanceInvoiceLinkage/g, "computeSomethingElse")
     .replace(/factoring_advance_liability/g, "some_other_role")
-    .replace(/never_clamp_anomaly_to_zero: true/g, "never_clamp_anomaly_to_zero: false") +
+    .replace(/never_clamp_anomaly_to_zero: true/g, "never_clamp_anomaly_to_zero: false")
+    .replace(/canonical_factor_agreements/g, "some_other_table") +
     "\nMath.max(0, funded - settled)\n" +
     "\nORDER BY COUNT(*) DESC\n" +
-    "\nILIKE '%faro%'\n";
+    "\nILIKE '%faro%'\n" +
+    "\nWITH candidates AS (\n";
   bad.feApi =
     String(good.feApi) +
     "\noutstanding_cents: num(raw.reserveCents ?? raw.outstanding_cents),\n";
@@ -280,6 +323,7 @@ function createBadFixture(good) {
     "\nGREATEST(0, liability_credits_cents - liability_debits)\n" +
     "\nILIKE '%faro%'\n" +
     "\nORDER BY COUNT(*) DESC\n";
+  bad.poster = String(good.poster).replace(/createFactoringJournalEntryAtomically/g, "createSomethingElse");
   return bad;
 }
 

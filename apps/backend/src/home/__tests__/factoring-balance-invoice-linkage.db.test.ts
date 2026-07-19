@@ -22,6 +22,7 @@ import {
   computeFactoringBalanceInvoiceLinkage,
   isCanonicalInvoiceDisplayId,
   INVOICE_DISPLAY_ID_RE,
+  FARO_FULL_RECOURSE_AGREEMENT_CODE,
 } from "../factoring-balance-invoice-linkage.service.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
@@ -34,6 +35,8 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
   let otherCompanyId: string | null = null;
   const suffix = randomUUID().slice(0, 8);
   const vendorId = randomUUID();
+  const factorProfileId = randomUUID();
+  const faroAgreementId = randomUUID();
   const otherVendorId = randomUUID();
   const customerId = randomUUID();
   const otherCustomerId = randomUUID();
@@ -112,6 +115,60 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
     await db.query(`SELECT set_config('app.operating_company_id', $1::text, false)`, [opco]);
     await db.query(`SELECT set_config('app.current_user_id', $1::text, false)`, [TEST_OWNER_USER_ID]);
     return db;
+  }
+
+  async function seedOwnerFaroAgreement(opts: {
+    opco: string;
+    vendorId: string;
+    profileId?: string;
+    agreementId?: string;
+    effectiveFrom?: string;
+    effectiveTo?: string | null;
+    profileReserveRate?: number;
+    profileFeeRate?: number;
+    profileRecourseDays?: number;
+  }) {
+    const profileId = opts.profileId ?? randomUUID();
+    const agreementId = opts.agreementId ?? randomUUID();
+    await db.query(
+      `INSERT INTO factoring.factor (
+         id, tenant_id, name, advance_rate, fee_rate, reserve_rate, recourse_days, active
+       ) VALUES ($1::uuid,$2::uuid,$3,$4,$5,$6,$7,true)
+       ON CONFLICT (id) DO NOTHING`,
+      [
+        profileId,
+        opts.opco,
+        `Faro Full Recourse ${suffix}-${profileId.slice(0, 6)}`,
+        0.97,
+        opts.profileFeeRate ?? 0.015,
+        opts.profileReserveRate ?? 0.015,
+        opts.profileRecourseDays ?? 95,
+      ]
+    );
+    await db.query(
+      `INSERT INTO factoring.canonical_factor_agreements (
+         id, tenant_id, factor_profile_id, factor_vendor_id, agreement_code,
+         effective_from, effective_to, is_full_recourse,
+         fee_rate_tier1, fee_rate_tier2, reserve_rate,
+         repurchase_term_days, grace_days, repurchase_deadline_days, default_interest_daily_rate
+       ) VALUES (
+         $1::uuid,$2::uuid,$3::uuid,$4::uuid,$5,
+         $6::date,$7::date,true,
+         0.0150,0.0200,0.0150,
+         30,5,95,0.00067000
+       )
+       ON CONFLICT (tenant_id, factor_vendor_id, agreement_code, effective_from) DO NOTHING`,
+      [
+        agreementId,
+        opts.opco,
+        profileId,
+        opts.vendorId,
+        FARO_FULL_RECOURSE_AGREEMENT_CODE,
+        opts.effectiveFrom ?? "2024-12-02",
+        opts.effectiveTo ?? null,
+      ]
+    );
+    return { profileId, agreementId };
   }
 
   async function seedRoles(opco: string) {
@@ -235,6 +292,12 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
          VALUES ($1::uuid,$2::uuid,$3,'Other')`,
         [vendorId, companyId, `Faro Factoring LLC ${suffix}`]
       );
+      await seedOwnerFaroAgreement({
+        opco: companyId,
+        vendorId,
+        profileId: factorProfileId,
+        agreementId: faroAgreementId,
+      });
       await db.query(
         `INSERT INTO mdata.customers (id, operating_company_id, customer_name, factoring_company_vendor_id)
          VALUES ($1::uuid,$2::uuid,$3,$4::uuid)`,
@@ -609,7 +672,7 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
     });
     expect(other.status).toBe("unverifiable");
     expect(other.unverifiable_reason).toMatch(
-      /faro_contract_entity_mismatch|active_factor_identity_unavailable|mixed_factor/
+      /faro_contract_entity_mismatch|missing_faro_agreement_binding|faro_agreement_not_effective/
     );
     expect(other.outstanding_liability_cents).toBeNull();
   });
@@ -714,7 +777,7 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
     });
   });
 
-  it("second factor within TRANSP → mixed_factor_assignment fail closed", async () => {
+  it("RTS customer alongside Faro agreement still scopes Faro vendor (never sole-factor Faro label)", async () => {
     const rtsVendor = randomUUID();
     const rtsCustomer = randomUUID();
     await bypass(companyId, async () => {
@@ -731,14 +794,49 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
     });
     const client = await scopedClient();
     const result = await computeFactoringBalanceInvoiceLinkage(client, { operatingCompanyId: companyId });
-    expect(result.status).toBe("unverifiable");
-    expect(result.unverifiable_reason).toBe("mixed_factor_assignment");
-    expect(result.outstanding_liability_cents).toBeNull();
-    // Restore single-factor for subsequent tests.
+    // Owner-seeded Faro agreement is authoritative — RTS presence must NOT flip identity to mixed sole-factor.
+    expect(result.status).toBe("ok");
+    expect(result.meta.active_factor_vendor_id).toBe(vendorId);
+    expect(result.meta.active_factor_vendor_id).not.toBe(rtsVendor);
     await bypass(companyId, async () => {
       await db.query(`DELETE FROM mdata.customers WHERE id = $1::uuid`, [rtsCustomer]);
       await db.query(`UPDATE mdata.vendors SET deactivated_at = now() WHERE id = $1::uuid`, [rtsVendor]);
     });
+  });
+
+  it("overlapping Faro agreement bindings → ambiguous_faro_agreement_binding", async () => {
+    const secondAgreement = randomUUID();
+    const secondProfile = randomUUID();
+    try {
+      await bypass(companyId, async () => {
+        await seedOwnerFaroAgreement({
+          opco: companyId,
+          vendorId,
+          profileId: secondProfile,
+          agreementId: secondAgreement,
+          effectiveFrom: "2025-01-01",
+        });
+      });
+      const client = await scopedClient();
+      const result = await computeFactoringBalanceInvoiceLinkage(client, {
+        operatingCompanyId: companyId,
+        asOfBusinessDate: "2026-07-19",
+      });
+      expect(result.status).toBe("unverifiable");
+      expect(result.unverifiable_reason).toBe("ambiguous_faro_agreement_binding");
+      expect(result.outstanding_liability_cents).toBeNull();
+    } finally {
+      // Void-not-delete: expire the second binding (DELETE revoked on agreement table).
+      await bypass(companyId, async () => {
+        await db.query(
+          `UPDATE factoring.canonical_factor_agreements
+              SET effective_to = '2025-01-01'
+            WHERE id = $1::uuid`,
+          [secondAgreement]
+        );
+        await db.query(`UPDATE factoring.factor SET active = false WHERE id = $1::uuid`, [secondProfile]);
+      });
+    }
   });
 
   it("debit liability anomaly → accounting_exception with signed diagnostics (never clamp to $0)", async () => {
@@ -897,6 +995,10 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
            VALUES ($1::uuid,$2::uuid,'Faro Factoring Empty','Other')`,
           [emptyVendor, emptyIsolated.companyId]
         );
+        await seedOwnerFaroAgreement({
+          opco: emptyIsolated.companyId,
+          vendorId: emptyVendor,
+        });
         await db.query(
           `INSERT INTO mdata.customers (id, operating_company_id, customer_name, factoring_company_vendor_id)
            VALUES ($1::uuid,$2::uuid,'Empty Cust',$3::uuid)`,
@@ -946,7 +1048,7 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
   it("planted query failure: view SELECT error propagates (no silent zero)", async () => {
     const client = {
       query: async (sql: string, values?: unknown[]) => {
-        if (sql.includes("to_regclass")) {
+        if (sql.includes("to_regclass") && sql.includes("advances_ok")) {
           return {
             rows: [
               {
@@ -956,6 +1058,8 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
                 je_ok: true,
                 roles_ok: true,
                 view_ok: true,
+                agreements_ok: true,
+                factor_ok: true,
               },
             ],
           };
@@ -963,8 +1067,32 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
         if (sql.includes("FROM org.companies")) {
           return { rows: [{ code: "TRANSP-X", legal_name: "IH 35 TRANSPORTATION LLC" }] };
         }
-        if (sql.includes("FROM mdata.vendors") || sql.includes("WITH candidates")) {
-          return { rows: [{ vendor_id: vendorId, vendor_name: "Faro Factoring LLC" }] };
+        if (sql.includes("FROM factoring.canonical_factor_agreements a")) {
+          return {
+            rows: [
+              {
+                agreement_id: faroAgreementId,
+                factor_profile_id: factorProfileId,
+                factor_vendor_id: vendorId,
+                vendor_name: "Faro Factoring LLC",
+                is_full_recourse: true,
+                fee_rate_tier1: "0.015",
+                fee_rate_tier2: "0.02",
+                reserve_rate: "0.015",
+                repurchase_term_days: 30,
+                grace_days: 5,
+                repurchase_deadline_days: 95,
+                default_interest_daily_rate: "0.00067",
+                profile_fee_rate: "0.015",
+                profile_reserve_rate: "0.015",
+                profile_recourse_days: 95,
+                profile_active: true,
+              },
+            ],
+          };
+        }
+        if (sql.includes("to_regclass('factoring.canonical_factor_agreements')")) {
+          return { rows: [{ ok: true }] };
         }
         if (sql.includes("set_config('app.factoring_balance_as_of'")) {
           return { rows: [{ set_config: "2026-07-19" }] };
@@ -1022,5 +1150,195 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
       `SELECT has_table_privilege('ih35_app', 'accounting.factoring_advances', 'DELETE') AS has_delete`
     );
     expect(del.rows[0]?.has_delete).toBe(false);
+  });
+
+  it("RTS-only TRANSP company without owner-seeded Faro agreement → missing_faro_agreement_binding", async () => {
+    const rtsOnly = await createIsolatedOperatingCompany({
+      codePrefix: "TRANSP",
+      legalNamePrefix: "IH 35 TRANSPORTATION RTS Only",
+      label: "factbal-rts-only",
+    });
+    const rtsVendor = randomUUID();
+    try {
+      await bypass(rtsOnly.companyId, async () => {
+        await db.query(
+          `INSERT INTO mdata.vendors (id, operating_company_id, vendor_name, vendor_type)
+           VALUES ($1::uuid,$2::uuid,'RTS Financial Only','Other')`,
+          [rtsVendor, rtsOnly.companyId]
+        );
+        await db.query(
+          `INSERT INTO mdata.customers (id, operating_company_id, customer_name, factoring_company_vendor_id)
+           VALUES ($1::uuid,$2::uuid,'RTS Cust',$3::uuid)`,
+          [randomUUID(), rtsOnly.companyId, rtsVendor]
+        );
+      });
+      await scopedClient(rtsOnly.companyId);
+      const result = await computeFactoringBalanceInvoiceLinkage(db, {
+        operatingCompanyId: rtsOnly.companyId,
+        asOfBusinessDate: "2026-07-19",
+      });
+      expect(result.status).toBe("unverifiable");
+      expect(result.unverifiable_reason).toBe("missing_faro_agreement_binding");
+      expect(result.meta.active_factor_vendor_id).toBeNull();
+      expect(result.outstanding_liability_cents).toBeNull();
+    } finally {
+      await deactivateIsolatedOperatingCompany(rtsOnly).catch(() => {});
+    }
+  });
+
+  it("expired Faro agreement → faro_agreement_not_effective", async () => {
+    await bypass(companyId, async () => {
+      await db.query(
+        `UPDATE factoring.canonical_factor_agreements
+            SET effective_to = '2025-12-31'
+          WHERE id = $1::uuid`,
+        [faroAgreementId]
+      );
+    });
+    const client = await scopedClient();
+    const result = await computeFactoringBalanceInvoiceLinkage(client, {
+      operatingCompanyId: companyId,
+      asOfBusinessDate: "2026-07-19",
+    });
+    expect(result.status).toBe("unverifiable");
+    expect(result.unverifiable_reason).toBe("faro_agreement_not_effective");
+    await bypass(companyId, async () => {
+      await db.query(
+        `UPDATE factoring.canonical_factor_agreements SET effective_to = NULL WHERE id = $1::uuid`,
+        [faroAgreementId]
+      );
+    });
+  });
+
+  it("wrong Faro profile terms → faro_agreement_terms_mismatch", async () => {
+    await bypass(companyId, async () => {
+      await db.query(`UPDATE factoring.factor SET reserve_rate = 0.0300 WHERE id = $1::uuid`, [
+        factorProfileId,
+      ]);
+    });
+    const client = await scopedClient();
+    const result = await computeFactoringBalanceInvoiceLinkage(client, {
+      operatingCompanyId: companyId,
+      asOfBusinessDate: "2026-07-19",
+    });
+    expect(result.status).toBe("unverifiable");
+    expect(result.unverifiable_reason).toBe("faro_agreement_terms_mismatch");
+    await bypass(companyId, async () => {
+      await db.query(`UPDATE factoring.factor SET reserve_rate = 0.0150 WHERE id = $1::uuid`, [
+        factorProfileId,
+      ]);
+    });
+  });
+
+  it("closed-period negative: posting date on/before closed_period_cutoff fails PERIOD_LOCKED", async () => {
+    const { ensureOpenPeriod } = await import("../../accounting/posting-engine.service.js");
+    const { PostingEngineError } = await import("../../accounting/posting-engine.service.js");
+    // Plant a closed cutoff via set_config override if the helper exists; otherwise exercise the
+    // ensureOpenPeriod gate with a mocked cutoff by inserting a closed period when the table exists.
+    const periodTable = await db.query<{ ok: boolean }>(
+      `SELECT to_regclass('accounting.accounting_periods') IS NOT NULL AS ok`
+    );
+    if (!periodTable.rows[0]?.ok) {
+      // Fallback: ensureOpenPeriod with a client that reports a cutoff must still throw.
+      const fakeClient = {
+        query: async (sql: string) => {
+          if (sql.includes("closed_period_cutoff")) {
+            return { rows: [{ cutoff: "2026-06-30" }] };
+          }
+          return { rows: [] };
+        },
+      };
+      await expect(ensureOpenPeriod(fakeClient, companyId, "2026-06-15")).rejects.toBeInstanceOf(
+        PostingEngineError
+      );
+      await expect(ensureOpenPeriod(fakeClient, companyId, "2026-06-15")).rejects.toMatchObject({
+        code: "PERIOD_LOCKED",
+      });
+      return;
+    }
+    await bypass(companyId, async () => {
+      await db.query(
+        `
+          INSERT INTO accounting.accounting_periods (
+            operating_company_id, period_start, period_end, status
+          )
+          SELECT $1::uuid, '2026-01-01'::date, '2026-06-30'::date, 'closed'
+          WHERE NOT EXISTS (
+            SELECT 1 FROM accounting.accounting_periods
+             WHERE operating_company_id = $1::uuid
+               AND period_end = '2026-06-30'::date
+          )
+        `,
+        [companyId]
+      );
+    });
+    await scopedClient();
+    await expect(ensureOpenPeriod(db, companyId, "2026-06-15")).rejects.toMatchObject({
+      code: "PERIOD_LOCKED",
+    });
+  });
+
+  it("held migration 202607600000 fails closed without 202607340000 reversal columns", async () => {
+    const fs = await import("node:fs");
+    const path = await import("node:path");
+    const sqlPath = path.join(
+      process.cwd(),
+      "db/migrations/202607600000_factoring_balance_invoice_linkage.sql"
+    );
+    const sql = fs.readFileSync(sqlPath, "utf8");
+    expect(sql).toMatch(/HELD_MIGRATION_PREREQUISITE_MISSING/);
+    expect(sql).toMatch(/202607340000_je_reversal_linkage/);
+    const prereqMatch = sql.match(/DO \$prereq\$[\s\S]*?END\s*\$prereq\$;/i);
+    expect(prereqMatch).toBeTruthy();
+    // DDL requires table owner — temporarily drop app role for this rolled-back probe.
+    await db.query("RESET ROLE");
+    await db.query("BEGIN");
+    try {
+      await db.query(
+        `ALTER TABLE accounting.journal_entries RENAME COLUMN reverses_je_id TO reverses_je_id__prereq_test`
+      );
+      await db.query(
+        `ALTER TABLE accounting.journal_entries RENAME COLUMN reversed_by_je_id TO reversed_by_je_id__prereq_test`
+      );
+      let failed = false;
+      try {
+        await db.query(prereqMatch![0]);
+      } catch (e) {
+        failed = true;
+        expect(String((e as Error).message ?? e)).toMatch(/HELD_MIGRATION_PREREQUISITE_MISSING/);
+      }
+      expect(failed).toBe(true);
+    } finally {
+      await db.query("ROLLBACK");
+      await db.query("SET ROLE ih35_app");
+    }
+  });
+
+  it("held migration 202607600000 apply-twice is idempotent when prerequisite columns present", async () => {
+    const fs = await import("node:fs");
+    const path = await import("node:path");
+    const sqlPath = path.join(
+      process.cwd(),
+      "db/migrations/202607600000_factoring_balance_invoice_linkage.sql"
+    );
+    const sql = fs.readFileSync(sqlPath, "utf8");
+    const body = sql.replace(/^\s*BEGIN\s*;/i, "").replace(/COMMIT\s*;\s*$/i, "");
+    await db.query("RESET ROLE");
+    await db.query("BEGIN");
+    try {
+      await db.query(body);
+      await db.query(body);
+      const agreements = await db.query<{ ok: boolean }>(
+        `SELECT to_regclass('factoring.canonical_factor_agreements') IS NOT NULL AS ok`
+      );
+      expect(agreements.rows[0]?.ok).toBe(true);
+      const view = await db.query<{ ok: boolean }>(
+        `SELECT to_regclass('views.factoring_balance_invoice_linkage') IS NOT NULL AS ok`
+      );
+      expect(view.rows[0]?.ok).toBe(true);
+    } finally {
+      await db.query("ROLLBACK");
+      await db.query("SET ROLE ih35_app");
+    }
   });
 });
