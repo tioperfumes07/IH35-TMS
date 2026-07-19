@@ -1,0 +1,36 @@
+{
+  "block_id": "revert-pr2720-tracker-artifacts",
+  "branch": "chore/revert-pr2720-tracker-artifacts",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (tracker artifact corrective revert)",
+  "phase": "PIPELINE-TRUTH",
+  "task": "Revert ONLY the unrelated tracker artifact changes introduced by merged PR #2720 (squash 1a6453b7): restore block-reconciliation-data.json and program-phase-manifest.json to pre-#2720 state (parent 5a38dd04); remove BLOCK-RECONCILIATION-2026-07-19.md and exports/IH35-TMS-BLOCK-RECONCILIATION-2026-07-19.xlsx that did not exist before #2720. No product/pipeline code changes; do not regenerate trackers.",
+  "priority": "P0",
+  "module": "ci-tooling",
+  "db_required": false,
+  "guard_required": false,
+  "runtime_path": "docs",
+  "extra_gates": [],
+  "allowed_files": [
+    ".block-ready/revert-pr2720-tracker-artifacts.json",
+    "docs/trackers/block-reconciliation-data.json",
+    "docs/trackers/program-phase-manifest.json",
+    "docs/trackers/BLOCK-RECONCILIATION-2026-07-19.md",
+    "docs/trackers/exports/IH35-TMS-BLOCK-RECONCILIATION-2026-07-19.xlsx"
+  ],
+  "acceptance": [
+    {
+      "check": "block-reconciliation-data.json byte-identical to 5a38dd04 (pre-#2720)"
+    },
+    {
+      "check": "program-phase-manifest.json byte-identical to 5a38dd04 (pre-#2720)"
+    },
+    {
+      "check": "BLOCK-RECONCILIATION-2026-07-19.md and xlsx export removed (did not exist before #2720)"
+    },
+    {
+      "check": "PR diff contains ONLY tracker artifact reversions + block-ready manifest; no product/pipeline code"
+    }
+  ],
+  "note": "Mechanical corrective revert of tracker churn accidentally bundled into #2720 pre-push env isolation fix."
+}
