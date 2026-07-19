@@ -40,8 +40,11 @@ Behavior:
   - frontend TypeScript build
   - static guard classification
   - `npm run block-ready` (includes C4/C5 verify chain; see C5 Dedupe section below)
+- Database capability is **not** “`DATABASE_URL` is a non-empty string.” It is true only for an
+  owned ephemeral VLCI lifecycle or a validated local-CI verify connection (see Pre-push protection).
 - When no database capability is present, `block-ready` is skipped only with the named server-required
   equivalent `ci / build-typecheck`; all preceding local gates still run and fail closed.
+- Pre-push must not shell-source `.env`; hook and direct precheck share parent-process env only.
 - Halts on first failure and prints failing step plus output tail.
 - Prints `READY TO PUSH: <branch> at <sha>` on success.
 
@@ -172,6 +175,17 @@ git push --force-with-lease origin <feature-branch>
 - Hook file: `.husky/pre-push`
 - Installer: `npm run prepare` (husky) or `node scripts/install-git-hooks.mjs`
 - On `git push`, `branch:precheck-push` runs automatically and blocks unsafe pushes.
+- **Do NOT source repository `.env` in the husky pre-push hook.** The hook and a direct
+  `npm run branch:precheck-push` must see the same process environment (Rule 18 /
+  `CURSOR-PIPELINE-REPAIR-WORKORDER` P0-1). A stale `DATABASE_URL` string in `.env`
+  (e.g. bad Neon password) is not a database capability and must not override the parent shell.
+- **Database capability law:** capability is true only when supplied by an **owned ephemeral
+  VLCI / local-CI lifecycle** (lock + token + bindings) **or** a **validated** local-verify
+  connection (CI `:54329/ih35_verify` with a live TCP probe). Mere URL-string presence never
+  authorizes. When capability is absent, `block-ready` skips only via the named server-required
+  equivalent `ci / build-typecheck` (fail-closed policy). No `HUSKY=0` / `--no-verify` bypass.
+- Regression lock: `scripts/verify-pre-push-env-isolation.mjs` (+ verify-steps/912) and
+  behavioral tests in `scripts/__tests__/branch-precheck-push.test.mjs`.
 
 ## Safety rules enforced
 

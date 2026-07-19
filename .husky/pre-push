@@ -1,9 +1,6 @@
 #!/usr/bin/env sh
-# Load .env so verify:arch-design and other env-dependent checks can see DATABASE_URL.
-# Husky spawns a fresh subshell on push that does NOT inherit the parent shell's env.
-if [ -f "$(git rev-parse --show-toplevel)/.env" ]; then
-  set -a
-  . "$(git rev-parse --show-toplevel)/.env"
-  set +a
-fi
+# Pre-push runs branch:precheck-push with the SAME process environment as a direct
+# `npm run branch:precheck-push`. Do NOT source repository `.env` here — a stale
+# DATABASE_URL string is not a database capability and must not override the parent
+# shell (Rule 18 / CURSOR-PIPELINE-REPAIR P0-1).
 npm run branch:precheck-push
