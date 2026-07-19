@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// verify:posting-lineage-onerror
+// verify:source-lineage-page-onerror
 // Guard: PostingLineagePage lineageQuery mutation must surface failures via pushToast.
 //
 // Without onError, a failed lineage lookup is silent aside from isError banner state — the user
@@ -38,14 +38,14 @@ if (process.argv.includes("--selftest")) {
   const good = `useMutation({ mutationFn: x, onError: (err) => pushToast(err instanceof Error ? err.message : "Failed", "error") })`;
   const bad = `useMutation({ mutationFn: x })`;
   if (collectFailures(good).length > 0) {
-    console.error("verify:posting-lineage-onerror --selftest FAIL: good fixture rejected");
+    console.error("verify:source-lineage-page-onerror --selftest FAIL: good fixture rejected");
     process.exit(1);
   }
   if (collectFailures(bad).length === 0) {
-    console.error("verify:posting-lineage-onerror --selftest FAIL: bad fixture accepted");
+    console.error("verify:source-lineage-page-onerror --selftest FAIL: bad fixture accepted");
     process.exit(1);
   }
-  console.log("verify:posting-lineage-onerror --selftest PASS");
+  console.log("verify:source-lineage-page-onerror --selftest PASS");
   process.exit(0);
 }
 
@@ -53,7 +53,7 @@ const src = fs.readFileSync(path.join(ROOT, file), "utf8");
 const failures = collectFailures(src);
 
 if (failures.length > 0) {
-  console.error("verify:posting-lineage-onerror FAIL:");
+  console.error("verify:source-lineage-page-onerror FAIL:");
   for (const f of failures) console.error("  ✗ " + f);
   process.exit(1);
 }
@@ -61,5 +61,5 @@ if (failures.length > 0) {
 const mutationCount = (src.match(/useMutation\(/g) || []).length;
 const onErrorCount = (src.match(/onError\s*:/g) || []).length;
 console.log(
-  `verify:posting-lineage-onerror PASS (${onErrorCount} onError handlers for ${mutationCount} mutations)`
+  `verify:source-lineage-page-onerror PASS (${onErrorCount} onError handlers for ${mutationCount} mutations)`
 );
