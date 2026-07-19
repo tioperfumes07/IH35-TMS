@@ -198,12 +198,24 @@ Block 9 measured full `block-ready` at **702s**. Block 10 removes the duplicate 
 
 Today the list is only `verify:arch-design` (C4 runs it explicitly).
 
+### Orchestrators must never run inside C5 (locked 2026-07-19)
+
+`block_ready_c5_skip_orchestrators` lists gate **orchestrators** that must not be treated as C5 unit guards:
+
+- `verify:local-ci` — owns an ephemeral Postgres + full `verify:pre-commit` (single-owner; dynamic port; nested ACTIVE fails closed)
+- `verify:static` — already run by `branch:precheck-push` before `block-ready`
+
+C5 logs: `[C5] SKIP <name> (orchestrator — single-owner outside C5)`.
+
+Regression lock: `scripts/verify-local-ci-gate-acyclic.mjs` (+ verify-steps/910) + `scripts/__tests__/verify-local-ci-lifecycle.test.mjs`.
+
 ### How to add a script to the skip list
 
 1. Ensure the script runs in C4 (or another check before C5) so skipping C5 does not drop coverage.
 2. Add the `verify:*` name to `block_ready_c5_skip_after_c4` in `scripts/verify-meta.json`.
 3. Extend `scripts/verify-block-ready-c5-no-duplicate-arch-design.mjs` if the guard should assert the new name.
 4. Add a test in `scripts/__tests__/block-ready.test.mjs` for `shouldSkipC5VerifyScript`.
+5. Orchestrators go in `block_ready_c5_skip_orchestrators`, never in the C5 unit-guard loop.
 
 ### Pre-push hook (slim)
 
@@ -211,9 +223,10 @@ Today the list is only `verify:arch-design` (C4 runs it explicitly).
 
 1. `npm run build:backend`
 2. `cd apps/frontend && npx tsc -b`
-3. `npm run block-ready`
+3. `node scripts/verify-static.mjs`
+4. `npm run block-ready`
 
-No per-script `verify:*` loop before `block-ready`. After Block 10 merges, feature pushes can use normal `git push` (no `--no-verify`) when local `block-ready` completes within the IDE window.
+No per-script `verify:*` loop before `block-ready`, and C5 must not nest `verify:local-ci` / re-run `verify:static`. After Block 10 merges, feature pushes can use normal `git push` (no `--no-verify`) when local `block-ready` completes within the IDE window.
 
 ### Measured baseline
 

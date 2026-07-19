@@ -9,10 +9,16 @@
  * mdata-entity-scope, …) was invisible to the subset — so PRs kept going red on CI despite a "green" local
  * run. This version runs the SAME command CI runs, so it can never miss a guard.
  *
- * HOW (prod-safe by construction): verify:pre-commit's db-reset only accepts a `localhost:54329 + ih35_verify`
- * target (its anti-prod guard). This script spins up an EPHEMERAL, throwaway local Postgres on 54329 with a
- * fresh `ih35_verify` db, runs `npm run verify:pre-commit` against it, then tears the instance down. It never
- * touches an existing database or prod — the cluster is created in a tmp dir and destroyed on exit.
+ * HOW (prod-safe by construction): verify:pre-commit's db-reset only accepts a local `ih35_verify`
+ * target (CI port 54329, or a VLCI-owned dynamic port). This script spins up an EPHEMERAL, throwaway
+ * local Postgres on a free port with a fresh `ih35_verify` db, runs `npm run verify:pre-commit` against
+ * it, then tears the instance down. It never touches an existing database or prod — the cluster is
+ * created in a tmp dir and destroyed on exit.
+ *
+ * SINGLE-OWNER / ACYCLIC GATE LAW:
+ *   - Exclusive lock + IH35_VLCI_ACTIVE fail-closed nested invocation (C5 must not nest this).
+ *   - Dynamic port allocation avoids fixed-port 54329 collisions with docker-compose.verify / siblings.
+ *   - IH35_VLCI_INHERIT=1 reuses an explicit parent-provided local verify URL (no second lifecycle).
  *
  * Requires a local Postgres SERVER binary (Postgres.app, or `postgresql@16` via brew). Usage:
  *   node scripts/verify-local-ci.mjs            # full build-typecheck parity (the pre-push gate)
@@ -23,11 +29,19 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  VLCI_ENV,
+  VLCI_DB_NAME,
+  acquireExclusiveLock,
+  allocateEphemeralPortSync,
+  defaultLockPath,
+  releaseExclusiveLock,
+  resolveVlciLifecycle,
+} from "./vlci-lifecycle.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-local-ci";
-const PORT = 54329; // the exact port CI's postgres service uses (db-reset's local-safe target).
-const DBNAME = "ih35_verify"; // the exact db name CI uses.
+const DBNAME = VLCI_DB_NAME;
 const PGUSER = process.env.USER || "postgres";
 
 /** Locate a local Postgres server toolchain (needs postgres + initdb + pg_ctl + createdb). */
@@ -42,7 +56,7 @@ export function findPgBin() {
   for (const v of ["17", "16", "15"]) {
     cands.push(`/opt/homebrew/opt/postgresql@${v}/bin`, `/usr/local/opt/postgresql@${v}/bin`);
   }
-  cands.push("/opt/homebrew/bin", "/usr/local/bin");
+  cands.push("/opt/homebrew/bin", "/usr/local/bin", "/usr/lib/postgresql/16/bin", "/usr/lib/postgresql/15/bin");
   const needed = ["postgres", "initdb", "pg_ctl", "createdb"];
   for (const dir of cands) {
     if (needed.every((b) => fs.existsSync(path.join(dir, b)))) return dir;
@@ -59,8 +73,8 @@ function run(bin, cmd, args, opts = {}) {
   return spawnSync(path.join(bin, cmd), args, { encoding: "utf8", ...opts });
 }
 
-/** Create → return { dataDir, stop() }. Throws on failure. */
-function startEphemeralPg(pgBin) {
+/** Create → return { dataDir, port, stop() }. Throws on failure. */
+export function startEphemeralPg(pgBin, port = allocateEphemeralPortSync()) {
   const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "vlci-pgdata-"));
   const logFile = path.join(dataDir, "server.log");
   const init = run(pgBin, "initdb", ["-D", dataDir, "-U", PGUSER, "-A", "trust", "--no-sync", "-E", "UTF8"]);
@@ -68,22 +82,19 @@ function startEphemeralPg(pgBin) {
     fs.rmSync(dataDir, { recursive: true, force: true });
     throw new Error(`initdb failed:\n${init.stderr || init.stdout}`);
   }
-  // listen on localhost only, on the CI port; socket in the data dir. Throwaway cluster → run it in
-  // FAST/DURABILITY-OFF mode (fsync/synchronous_commit/full_page_writes off, bigger buffers, more
-  // connections) so the full backend db.test suite doesn't hit 5s test timeouts on an underpowered
-  // local box the way it did on default settings — CI's Postgres service is more resourced. Safe: the
-  // data dir is destroyed on exit, so losing durability guarantees is irrelevant.
+  // listen on localhost only; socket in the data dir. Throwaway cluster → FAST/DURABILITY-OFF mode
+  // (fsync/synchronous_commit/full_page_writes off). Safe: data dir destroyed on exit.
   const start = run(pgBin, "pg_ctl", [
     "-D", dataDir,
-    "-o", `-p ${PORT} -c listen_addresses=localhost -k ${dataDir} -c fsync=off -c synchronous_commit=off -c full_page_writes=off -c shared_buffers=256MB -c work_mem=32MB -c max_connections=200`,
+    "-o", `-p ${port} -c listen_addresses=localhost -k ${dataDir} -c fsync=off -c synchronous_commit=off -c full_page_writes=off -c shared_buffers=256MB -c work_mem=32MB -c max_connections=200`,
     "-l", logFile, "-w", "-t", "30", "start",
   ]);
   if (start.status !== 0) {
     const log = fs.existsSync(logFile) ? fs.readFileSync(logFile, "utf8").slice(-600) : "";
     fs.rmSync(dataDir, { recursive: true, force: true });
-    throw new Error(`pg_ctl start failed (is port ${PORT} already in use?):\n${start.stderr}\n${log}`);
+    throw new Error(`pg_ctl start failed (port ${port}):\n${start.stderr}\n${log}`);
   }
-  const createdb = run(pgBin, "createdb", ["-h", "localhost", "-p", String(PORT), "-U", PGUSER, DBNAME]);
+  const createdb = run(pgBin, "createdb", ["-h", "localhost", "-p", String(port), "-U", PGUSER, DBNAME]);
   if (createdb.status !== 0) {
     run(pgBin, "pg_ctl", ["-D", dataDir, "-w", "-m", "immediate", "stop"]);
     fs.rmSync(dataDir, { recursive: true, force: true });
@@ -91,6 +102,7 @@ function startEphemeralPg(pgBin) {
   }
   return {
     dataDir,
+    port,
     stop() {
       run(pgBin, "pg_ctl", ["-D", dataDir, "-w", "-m", "immediate", "stop"]);
       fs.rmSync(dataDir, { recursive: true, force: true });
@@ -99,22 +111,90 @@ function startEphemeralPg(pgBin) {
 }
 
 function selftest(pgBin) {
-  process.stdout.write(`──▶ selftest: init → start → createdb → query → stop an ephemeral ${PORT} cluster\n`);
-  const pg = startEphemeralPg(pgBin);
+  process.stdout.write(`──▶ selftest: lock → dynamic port → init → start → createdb → query → stop\n`);
+  const lockPath = defaultLockPath(path.join(os.tmpdir(), `vlci-selftest-${process.pid}`));
+  const lock = acquireExclusiveLock(lockPath);
+  if (!lock.ok) {
+    console.error(`FAIL  could not acquire selftest lock: ${lock.reason}`);
+    process.exit(1);
+  }
   let ok = false;
+  let port = 0;
   try {
-    const q = run(pgBin, "psql", ["-h", "localhost", "-p", String(PORT), "-U", PGUSER, "-d", DBNAME, "-tAc",
-      "select current_database()||'@'||inet_server_port()"]);
-    ok = q.status === 0 && q.stdout.trim() === `${DBNAME}@${PORT}`;
-    console.log(`${ok ? "ok  " : "FAIL"}  ephemeral cluster reachable at localhost:${PORT}/${DBNAME}  (${(q.stdout || q.stderr).trim()})`);
+    const nested = resolveVlciLifecycle({ [VLCI_ENV.ACTIVE]: "1" });
+    if (nested.mode !== "reject") {
+      console.error("FAIL  nested ACTIVE must reject");
+      process.exit(1);
+    }
+    console.log("ok    nested ACTIVE rejected");
+    port = allocateEphemeralPortSync();
+    const pg = startEphemeralPg(pgBin, port);
+    try {
+      const q = run(pgBin, "psql", ["-h", "localhost", "-p", String(port), "-U", PGUSER, "-d", DBNAME, "-tAc",
+        "select current_database()||'@'||inet_server_port()"]);
+      ok = q.status === 0 && q.stdout.trim() === `${DBNAME}@${port}`;
+      console.log(`${ok ? "ok  " : "FAIL"}  ephemeral cluster reachable at localhost:${port}/${DBNAME}  (${(q.stdout || q.stderr).trim()})`);
+    } finally {
+      pg.stop();
+    }
   } finally {
-    pg.stop();
+    releaseExclusiveLock(lockPath);
   }
   if (!ok) { console.error(`\n${LABEL} SELFTEST FAILED`); process.exit(1); }
-  console.log(`\n${LABEL} SELFTEST PASS — ephemeral-cluster orchestration works.`);
+  console.log(`\n${LABEL} SELFTEST PASS — ephemeral-cluster orchestration + single-owner lock works.`);
+}
+
+function runPrecommit(url, port, pgBin) {
+  console.log(`[${LABEL}] running the exact CI command — npm run verify:pre-commit`);
+  console.log(`[${LABEL}] (full build-typecheck: db-reset → migrate → build → tsc → ~250 guards → db.tests; ~6-10 min)\n`);
+  const res = spawnSync("npm", ["run", "verify:pre-commit"], {
+    cwd: ROOT,
+    stdio: "inherit",
+    // Pin BOTH connection vars to the ephemeral/inherited local cluster, and set GITHUB_ACTIONS=true so the
+    // backend `.db.test.ts` suite actually RUNS (it is gated `describe.skipIf(GITHUB_ACTIONS!=="true")`).
+    //
+    // PROD-SAFE by construction: DATABASE_DIRECT_URL is a truthy local url, so dotenv.config() can NEVER
+    // reload the prod Neon DIRECT_URL over it. verify:pre-commit's db-reset anti-prod guard still pins
+    // the same local ih35_verify target (CI port or VLCI-owned dynamic port).
+    env: {
+      ...process.env,
+      PATH: pgBin ? `${pgBin}:${process.env.PATH}` : process.env.PATH,
+      DATABASE_URL: url,
+      DATABASE_DIRECT_URL: url,
+      PGHOST: "localhost",
+      PGPORT: String(port || new URL(url).port || ""),
+      PGUSER,
+      CI_MIGRATION_TEST: "1",
+      GITHUB_ACTIONS: "true",
+      VLCI_SERIAL: "1",
+      [VLCI_ENV.ACTIVE]: "1",
+      [VLCI_ENV.OWNED]: "1",
+      [VLCI_ENV.DATABASE_URL]: url,
+      [VLCI_ENV.PORT]: String(port || new URL(url).port || ""),
+    },
+  });
+  return res.status ?? 1;
 }
 
 function main() {
+  const lifecycle = resolveVlciLifecycle(process.env);
+  if (lifecycle.mode === "reject") {
+    console.error(`[${LABEL}] FAILED — ${lifecycle.reason}`);
+    process.exit(1);
+  }
+
+  if (lifecycle.mode === "inherit") {
+    console.log(`[${LABEL}] inherit mode — reusing single test DB context (no nested Postgres lifecycle)`);
+    console.log(`[${LABEL}] url=${lifecycle.url.replace(/:[^:@/]+@/, ":****@")}`);
+    const status = runPrecommit(lifecycle.url, Number(new URL(lifecycle.url).port || 0), findPgBin());
+    if (status !== 0) {
+      console.error(`\n[${LABEL}] FAILED — inherited-context verify:pre-commit RED (exit ${status}).`);
+      process.exit(status);
+    }
+    console.log(`\n[${LABEL}] OK — inherited-context verify:pre-commit GREEN.`);
+    process.exit(0);
+  }
+
   const pgBin = findPgBin();
   if (!pgBin) {
     console.error(`[${LABEL}] FAILED — no local Postgres server binary found.`);
@@ -124,42 +204,35 @@ function main() {
   }
   if (process.argv.includes("--selftest")) { selftest(pgBin); return; }
 
+  const lockPath = process.env[VLCI_ENV.LOCK_PATH] || defaultLockPath(ROOT);
+  const lock = acquireExclusiveLock(lockPath);
+  if (!lock.ok) {
+    console.error(`[${LABEL}] FAILED — another verify:local-ci owns the lifecycle (fail closed).`);
+    console.error(`  reason=${lock.reason}${lock.holderPid ? ` holderPid=${lock.holderPid}` : ""}`);
+    console.error(`  lock=${lockPath}`);
+    process.exit(1);
+  }
+
   console.log(`[${LABEL}] postgres toolchain: ${pgBin}`);
-  const pg = startEphemeralPg(pgBin);
-  const url = `postgresql://${PGUSER}@localhost:${PORT}/${DBNAME}?sslmode=disable`;
-  console.log(`[${LABEL}] ephemeral CI-shaped DB up at ${url}`);
-  console.log(`[${LABEL}] running the exact CI command — npm run verify:pre-commit`);
-  console.log(`[${LABEL}] (full build-typecheck: db-reset → migrate → build → tsc → ~250 guards → db.tests; ~6-10 min)\n`);
+  console.log(`[${LABEL}] single-owner lock: ${lockPath}`);
   let status = 1;
+  let pg = null;
   try {
-    const res = spawnSync("npm", ["run", "verify:pre-commit"], {
-      cwd: ROOT,
-      stdio: "inherit",
-      // Pin BOTH connection vars to the ephemeral local cluster, and set GITHUB_ACTIONS=true so the
-      // backend `.db.test.ts` suite actually RUNS (it is gated `describe.skipIf(GITHUB_ACTIONS!=="true")`;
-      // without this the db.tests silently skip locally and a broken one — e.g. a flag-gated projection —
-      // only fails in CI *after* push. This is exactly the leak that kept PRs going red post-push).
-      //
-      // PROD-SAFE by construction, and safer than the old blank DIRECT_URL: DATABASE_DIRECT_URL is set to
-      // the ephemeral LOCAL url (a truthy value), so dotenv.config() — which only fills vars it sees as
-      // UNSET, and treats "" as unset — can NEVER reload the prod Neon DIRECT_URL over it. The db.tests
-      // therefore connect to the throwaway localhost:PORT/ih35_verify cluster (created above, torn down on
-      // exit), never prod. verify:pre-commit's db-reset anti-prod guard still pins the same target.
-      env: {
-        ...process.env,
-        // pg toolchain on PATH so any psql/pg_dump inside the guard suite resolves.
-        PATH: `${pgBin}:${process.env.PATH}`,
-        DATABASE_URL: url, DATABASE_DIRECT_URL: url, PGHOST: "localhost", PGPORT: String(PORT), PGUSER,
-        CI_MIGRATION_TEST: "1", GITHUB_ACTIONS: "true",
-        // Run the db.test suite serially against the single ephemeral DB so concurrent forks can't race
-        // on shared company-scope rows (the contamination that fails settlement/sync-health locally but
-        // not on CI). Makes a green local run a faithful CI mirror. See apps/backend/vitest.config.ts.
-        VLCI_SERIAL: "1",
-      },
-    });
-    status = res.status ?? 1;
+    const port = allocateEphemeralPortSync();
+    pg = startEphemeralPg(pgBin, port);
+    const url = `postgresql://${PGUSER}@localhost:${port}/${DBNAME}?sslmode=disable`;
+    console.log(`[${LABEL}] ephemeral CI-shaped DB up at postgresql://${PGUSER}@localhost:${port}/${DBNAME}`);
+    status = runPrecommit(url, port, pgBin);
+  } catch (err) {
+    console.error(`[${LABEL}] FAILED — ${err instanceof Error ? err.message : String(err)}`);
+    status = 1;
   } finally {
-    pg.stop();
+    try {
+      pg?.stop();
+    } catch (stopErr) {
+      console.error(`[${LABEL}] cleanup warning: ${stopErr instanceof Error ? stopErr.message : String(stopErr)}`);
+    }
+    releaseExclusiveLock(lockPath);
   }
   if (status !== 0) {
     console.error(`\n[${LABEL}] FAILED — build-typecheck reproduced RED locally (exit ${status}). Fix it here; this is exactly what CI would report. Do NOT push.`);
@@ -169,4 +242,5 @@ function main() {
   process.exit(0);
 }
 
-main();
+const isDirectRun = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isDirectRun) main();

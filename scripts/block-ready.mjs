@@ -221,19 +221,42 @@ export function readVerifyMeta(rootDir = ROOT) {
   const verifyMetaPath = path.resolve(rootDir, "scripts/verify-meta.json");
   const metaRead = readUtf8FileFromStableHandle(verifyMetaPath);
   if (!metaRead.ok && metaRead.code === "ENOENT") {
-    return { db_gated_verify_scripts: [], block_ready_c5_skip_after_c4: [] };
+    return {
+      db_gated_verify_scripts: [],
+      block_ready_c5_skip_after_c4: [],
+      block_ready_c5_skip_orchestrators: [],
+    };
   }
   if (!metaRead.ok) throw new Error(`verify-meta cannot be read: ${metaRead.reason}`);
   const data = JSON.parse(metaRead.source);
   const list = Array.isArray(data.db_gated_verify_scripts) ? data.db_gated_verify_scripts : [];
   const skipAfterC4 = Array.isArray(data.block_ready_c5_skip_after_c4) ? data.block_ready_c5_skip_after_c4 : [];
-  return { db_gated_verify_scripts: list, block_ready_c5_skip_after_c4: skipAfterC4 };
+  const skipOrchestrators = Array.isArray(data.block_ready_c5_skip_orchestrators)
+    ? data.block_ready_c5_skip_orchestrators
+    : [];
+  return {
+    db_gated_verify_scripts: list,
+    block_ready_c5_skip_after_c4: skipAfterC4,
+    block_ready_c5_skip_orchestrators: skipOrchestrators,
+  };
+}
+
+/**
+ * Why C5 skips a verify:* script (or null to run it).
+ * - already run in C4
+ * - orchestrator (verify:local-ci / verify:static) — single-owner outside the C5 unit-guard loop
+ */
+export function getC5SkipReason(name, verifyMeta) {
+  const skipAfterC4 = new Set(verifyMeta.block_ready_c5_skip_after_c4 ?? []);
+  if (skipAfterC4.has(name)) return "already run in C4";
+  const skipOrchestrators = new Set(verifyMeta.block_ready_c5_skip_orchestrators ?? []);
+  if (skipOrchestrators.has(name)) return "orchestrator — single-owner outside C5";
+  return null;
 }
 
 /** C4 already runs verify:arch-design (full meta-chain). Skip those scripts in C5. */
 export function shouldSkipC5VerifyScript(name, verifyMeta) {
-  const skipAfterC4 = new Set(verifyMeta.block_ready_c5_skip_after_c4 ?? []);
-  return skipAfterC4.has(name);
+  return getC5SkipReason(name, verifyMeta) != null;
 }
 
 function getChangedFiles(range) {
@@ -787,8 +810,9 @@ function runCheckC5(verifyMeta) {
       console.log(`[C5] SKIP ${name} (db-gated)`);
       continue;
     }
-    if (shouldSkipC5VerifyScript(name, verifyMeta)) {
-      console.log(`[C5] SKIP ${name} (already run in C4)`);
+    const skipReason = getC5SkipReason(name, verifyMeta);
+    if (skipReason) {
+      console.log(`[C5] SKIP ${name} (${skipReason})`);
       continue;
     }
     const res = runCommand(`npm run ${name}`, "C5");
