@@ -159,7 +159,9 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
       );
       if (opts.withLinkedInvoice) {
         const invId = randomUUID();
-        const invDisplay = `INV-${String(9000 + advanceIds.length).padStart(4, "0")}-${String(advanceIds.length + 1).padStart(5, "0")}`;
+        // invoices_display_id_check: ^INV-[0-9]{4}-[0-9]{5}$ — must be unique per opco (shared CI company).
+        const invKey = parseInt(invId.replace(/\D/g, "").slice(0, 9) || "1", 10);
+        const invDisplay = `INV-${String(1000 + (invKey % 8000)).padStart(4, "0")}-${String(invKey % 100000).padStart(5, "0")}`;
         await db.query(
           `INSERT INTO accounting.invoices
              (id, operating_company_id, customer_id, display_id, issue_date, due_date,
