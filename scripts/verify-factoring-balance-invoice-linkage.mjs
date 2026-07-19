@@ -580,6 +580,12 @@ if (isDirectRun) {
       "poster_must_not_pass_latest_allocation_as_paid",
       "migration_agreement_term_immutability_missing",
       "service_agreement_void_filter_missing",
+      // Dead-string regression (CR eb06028d finding 5): the bad fixture removes the real
+      // `validateLifecycleJeExactShape` identifier from poster.service but re-introduces it ONLY as an
+      // inert string literal (`_dead_decoy_shape`). This violation MUST still fire — it locks the poster
+      // exact-shape check to requireIdent (executable/identifier semantics, string literals masked) so it
+      // can never be weakened back to a string-permitting requireExec that a dead decoy would satisfy.
+      "poster_exact_shape_validator_missing",
     ],
   });
 }
