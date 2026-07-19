@@ -17,6 +17,7 @@ describe("QboSyncHealthCard freshness", () => {
     // Pin wall clock so formatRelative(last run) matches the fixture age (62d), independent of CI date.
     vi.useFakeTimers({ now: new Date("2026-07-18T20:00:00.000Z") });
   });
+
   afterEach(() => {
     vi.useRealTimers();
   });

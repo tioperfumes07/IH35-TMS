@@ -1,17 +1,40 @@
 {
   "block_id": "0091-g9-h6",
-  "status": "NEEDS-VERIFY",
-  "classification": "FINANCIAL",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
   "phase": "tier3",
-  "source": "MASTER-6 authored dispatch (06-TIER3-BLOCKS)",
+  "source": "MASTER-6 authored dispatch (06-TIER3-BLOCKS) — trailer follow-up of CoA half already on main",
   "source_file": "0091-g9-h6.txt",
+  "task": "0091-g9-h6 remaining half: GET /api/v1/mdata/equipment list lacked truthful total/has_more/limit/offset (returned only { equipment } while paging LIMIT/OFFSET). Root fix: count(*) over the same filtered owner/leased-scoped dataset, deterministic ORDER BY created_at DESC, id ASC, additive response shape mirroring CoA. Schema landmine: mdata.equipment has NO operating_company_id — keep owner_company_id/currently_leased_to_company_id scope. Behavioral route tests + Rule-17 auto-discovered guard/selftest. Also freezes QboSyncHealthCard wall-clock so verify:static is not day-drift red on main (pre-push unblocker).",
+  "branch": "cursor/equipment-trailer-pagination-contract-8c91",
+  "lane": "TIER-3",
   "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
+    ".block-ready/0091-g9-h6.json",
+    "apps/backend/src/mdata/equipment.routes.ts",
+    "apps/backend/src/mdata/equipment.routes.list-pagination.test.ts",
+    "scripts/verify-equipment-list-total-pagination.mjs",
+    "scripts/verify-steps/117-verify-equipment-list-total-pagination.mjs",
+    "scripts/verify-mdata-list-pagination.mjs",
+    "apps/frontend/src/components/home/__tests__/QboSyncHealthCard.test.tsx"
   ],
   "acceptance": [
     {
-      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
+      "check": "GET /api/v1/mdata/equipment returns { equipment, total, limit, offset, has_more }; total counts same filtered/scoped set as items; has_more = offset + rows.length < total"
+    },
+    {
+      "check": "Entity scope preserved via owner_company_id / currently_leased_to_company_id (no invented equipment.operating_company_id); deterministic ORDER BY created_at DESC, id ASC"
+    },
+    {
+      "check": "Behavioral route tests cover filters, offset/limit, final page, empty page, unauthorized/company scope, deterministic tie-breaker"
+    },
+    {
+      "check": "Rule-17 guard scripts/verify-equipment-list-total-pagination.mjs + verify-steps/117 auto-discovered; --selftest PASS; no package.json/CI hot-file edits"
     }
   ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+  "linkage": "mdata.equipment list ↔ org.companies via owner_company_id/currently_leased_to_company_id (same entity-scope pattern as mdata.units). Additive API only; no migration; no UI/tab changes.",
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "note": "CoA half already shipped on main (accounts.routes.ts + verify-coa-list-total-pagination). This PR closes the trailer/equipment list follow-up named in docs/specs/0091-CLUSTER-DISPOSITION-AND-FINANCIAL-DESIGN-2026-07-11.md."
 }

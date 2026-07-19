@@ -17,6 +17,8 @@ const REQUIRED = [
   "apps/backend/src/mdata/units.routes.ts",
   "apps/backend/src/mdata/customers.routes.ts",
   "apps/backend/src/mdata/vendors.routes.ts",
+  // 0091-g9-h6 trailer follow-up: equipment/trailer list must not silently truncate past limit=50.
+  "apps/backend/src/mdata/equipment.routes.ts",
 ];
 
 const failures = [];
@@ -28,7 +30,7 @@ for (const file of REQUIRED) {
     failures.push(`${file}: file missing`);
     continue;
   }
-  const hasCount = /count\(\*\)::int AS total/.test(src);
+  const hasCount = /count\(\*\)::int AS total/i.test(src);
   const returnsTotal = /total:\s*result\.total/.test(src);
   if (!hasCount) failures.push(`${file}: no \`count(*)::int AS total\` (list endpoint must return a real total)`);
   if (!returnsTotal) failures.push(`${file}: list response does not return \`total: result.total\``);
