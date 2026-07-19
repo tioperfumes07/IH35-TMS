@@ -1,0 +1,36 @@
+{
+  "block_id": "CHAIN-06-invoice-ar-chain-proof",
+  "status": "READY",
+  "classification": "FINANCIAL",
+  "phase": "tier1",
+  "task": "Accounting Core Block 25/67 — CHAIN-06 invoice→A/R→Faro fail-closed static chain proof + mocked service gates (Rule-17 verify-steps 920–923; no new GL math/migration; flags default OFF)",
+  "branch": "cursor/chain-06-invoice-a-r-proof-78ba",
+  "source": "Jorge cloud GO — Accounting Core uninterrupted sequence block 25/67 + independent review VETO remediation",
+  "source_file": "docs/blocks/ACCOUNTING-FINANCE-CONNECTIONS/CHAIN-06-invoice-ar-chain-proof.txt",
+  "allowed_files": [
+    ".block-ready/CHAIN-06-invoice-ar-chain-proof.json",
+    "scripts/verify-chain-06-invoice-ar-chain-proof.mjs",
+    "scripts/verify-steps/920-verify-chain-06-invoice-ar-chain-proof.mjs",
+    "scripts/verify-steps/921-verify-chain-06-ar-subledger-fix.mjs",
+    "scripts/verify-steps/922-verify-chain-06-factoring-ar-tieout.mjs",
+    "scripts/verify-steps/923-verify-factoring-poster-secured-borrowing.mjs",
+    "scripts/.guard-exempt.json",
+    "apps/backend/src/accounting/factoring-posting/__tests__/chain-06-invoice-ar-chain-proof.test.ts"
+  ],
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "acceptance": [
+    {
+      "check": "STATIC FAIL-CLOSED: verify-chain-06-invoice-ar-chain-proof (+ --selftest) parses money-flag default_enabled only from INSERT INTO lib.feature_flags (...) VALUES (...) tuples (explicit column order + multi-row; rejects true; comments/SELECT decoys/unrelated-table INSERTs cannot mask), proves poster lifecycle/entity GUC/subledger/reserve/JE audit+source-link/load-customer-factor surface markers, and plants every CRITICAL_PLANTED_VIOLATIONS code independently (SELECT decoy false before INSERT true for both money flags)."
+    },
+    {
+      "check": "Rule-17 verify-steps 920–923 auto-discover the new chain proof plus existing ar-subledger, factoring-ar-tieout, and secured-borrowing guards (IDs globally free vs main + open PRs #2714/#2716/#2717). No package.json/CI hotfile thrash. Guard-exempt removals only after valid wiring."
+    },
+    {
+      "check": "MOCKED SERVICE GATES (not live Neon): unit tests assert funding/payment/release/chargeback JE debit=credit + role/direction, entity scope, invoice FK, voided/missing/duplicate/wrong-entity/unbalanced/flag-off paths, and executable guard --selftest. Complementary CI Postgres Leg B/C + invoice kill-switch remain in existing .db.test.ts files. No new GL math/migration/flag flip. FINANCIAL HOLD — do not merge."
+    }
+  ],
+  "note": "Financial HOLD. Claims narrowed to static + mocked service gates; live DB proofs cited as existing complementary CI tests only."
+}
