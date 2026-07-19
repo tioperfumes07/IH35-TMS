@@ -5,6 +5,10 @@
  * ISOLATION: owns UNIQUE org.companies rows via createIsolatedOperatingCompany().
  * ROOT CAUSE of flake expected 28500 / received 368500: shared TRANSP company let
  * parallel CI forks' Income credits inflate gl_posted_revenue_cents for "today".
+ *
+ * FORCED-RLS session law: accounting.invoices WITH CHECK requires
+ * operating_company_id = current_setting('app.operating_company_id') (no broad bypass escape).
+ * Each company's seed/cleanup runs under THAT company's scoped GUC (canonical bypass(scope, fn)).
  */
 import { randomUUID } from "node:crypto";
 import pg from "pg";
@@ -62,10 +66,29 @@ describeIntegration("0280-02 revenue-gl-linkage (real Postgres)", () => {
     tsl: `INV-2026-${n()}`,
   };
 
-  async function bypass<T>(fn: () => Promise<T>): Promise<T> {
+  /**
+   * Canonical scoped seed/cleanup: SET LOCAL company GUC (+ lucia where catalogs/org helpers need it).
+   * Never insert company-B rows while GUC is company-A — invoices WITH CHECK rejects that.
+   */
+  async function bypass<T>(scopeCompanyId: string, fn: () => Promise<T>): Promise<T> {
     await db.query("BEGIN");
     await db.query("SET LOCAL app.bypass_rls = 'lucia'");
-    await db.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
+    await db.query("SELECT set_config('app.operating_company_id', $1, true)", [scopeCompanyId]);
+    try {
+      const result = await fn();
+      await db.query("COMMIT");
+      return result;
+    } catch (e) {
+      await db.query("ROLLBACK").catch(() => {});
+      throw e;
+    }
+  }
+
+  /** Enforced RLS (bypass cleared) — mirrors withCompanyRls / production withCompanyScope. */
+  async function withEnforcedCompanyRls<T>(scopeCompanyId: string, fn: () => Promise<T>): Promise<T> {
+    await db.query("BEGIN");
+    await db.query(`SELECT set_config('app.bypass_rls', '', true)`);
+    await db.query("SELECT set_config('app.operating_company_id', $1, true)", [scopeCompanyId]);
     try {
       const result = await fn();
       await db.query("COMMIT");
@@ -77,7 +100,8 @@ describeIntegration("0280-02 revenue-gl-linkage (real Postgres)", () => {
   }
 
   async function scopedClient(): Promise<pg.Client> {
-    // Reuse connection with company GUC set (mirrors withCompanyScope).
+    // Restore target (primary) company scope before service assertions.
+    await db.query(`SELECT set_config('app.bypass_rls', '', false)`);
     await db.query(`SELECT set_config('app.operating_company_id', $1::text, false)`, [companyId]);
     return db;
   }
@@ -103,7 +127,7 @@ describeIntegration("0280-02 revenue-gl-linkage (real Postgres)", () => {
     await db.connect();
     await db.query("SET ROLE ih35_app");
 
-    await bypass(async () => {
+    await bypass(companyId, async () => {
       await db.query(
         `INSERT INTO catalogs.accounts (id, operating_company_id, account_number, account_name, account_type, is_postable)
          VALUES ($1::uuid,$2::uuid,$3,'REVGL Income','Income',true)`,
@@ -269,31 +293,38 @@ describeIntegration("0280-02 revenue-gl-linkage (real Postgres)", () => {
            ($1::uuid,$6::uuid,2,$3::uuid,'credit',4000,$7::uuid)`,
         [companyId, reversedJeId, arAccountId, reversedBatchId, incomeAccountId, compensatingJeId, compensatingBatchId]
       );
+    });
 
-      if (otherCompanyId) {
-        await db.query(
-          `INSERT INTO mdata.customers (id, operating_company_id, customer_name) VALUES ($1::uuid,$2::uuid,$3)`,
-          [otherCustomerId, otherCompanyId, `REVGL Other ${suffix}`]
-        );
-        await db.query(
-          `INSERT INTO accounting.invoices (id, operating_company_id, customer_id, display_id, issue_date, due_date, subtotal_cents, tax_cents, total_cents, status)
-           VALUES ($1::uuid,$2::uuid,$3::uuid,$4,$5::date,$5::date,999999,0,999999,'sent')`,
-          [otherCompanyInvoiceId, otherCompanyId, otherCustomerId, displayIds.other, today]
-        );
-      }
+    // Other-company plant MUST run under otherCompanyId GUC — invoices WITH CHECK is company-scoped.
+    await bypass(otherCompanyId!, async () => {
+      await db.query(
+        `INSERT INTO mdata.customers (id, operating_company_id, customer_name) VALUES ($1::uuid,$2::uuid,$3)`,
+        [otherCustomerId, otherCompanyId, `REVGL Other ${suffix}`]
+      );
+      await db.query(
+        `INSERT INTO accounting.invoices (id, operating_company_id, customer_id, display_id, issue_date, due_date, subtotal_cents, tax_cents, total_cents, status)
+         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,$5::date,$5::date,999999,0,999999,'sent')`,
+        [otherCompanyInvoiceId, otherCompanyId, otherCustomerId, displayIds.other, today]
+      );
     });
   });
 
   afterAll(async () => {
     if (!db) return;
     try {
-      await bypass(async () => {
+      if (otherCompanyId) {
+        await bypass(otherCompanyId, async () => {
+          await db.query(`DELETE FROM accounting.invoices WHERE id = $1::uuid`, [otherCompanyInvoiceId]);
+          await db.query(`DELETE FROM mdata.customers WHERE id = $1::uuid`, [otherCustomerId]);
+          if (otherIsolated) await deactivateIsolatedOperatingCompany(db, otherIsolated);
+        });
+      }
+      await bypass(companyId, async () => {
         const invoiceIds = [
           matchedInvoiceId,
           missingJeInvoiceId,
           wrongAcctInvoiceId,
           voidedInvoiceId,
-          otherCompanyInvoiceId,
           draftInvoiceId,
           tslOnlyInvoiceId,
         ];
@@ -307,11 +338,10 @@ describeIntegration("0280-02 revenue-gl-linkage (real Postgres)", () => {
           [reversedBatchId, compensatingBatchId],
         ]);
         await db.query(`DELETE FROM accounting.invoices WHERE id = ANY($1::uuid[])`, [invoiceIds]);
-        await db.query(`DELETE FROM mdata.customers WHERE id = ANY($1::uuid[])`, [[customerId, otherCustomerId]]);
+        await db.query(`DELETE FROM mdata.customers WHERE id = ANY($1::uuid[])`, [[customerId]]);
         await db.query(`DELETE FROM catalogs.accounts WHERE id = ANY($1::uuid[])`, [
           [incomeAccountId, expenseAccountId, arAccountId],
         ]);
-        if (otherIsolated) await deactivateIsolatedOperatingCompany(db, otherIsolated);
         if (isolated) await deactivateIsolatedOperatingCompany(db, isolated);
       });
     } catch {
@@ -340,6 +370,41 @@ describeIntegration("0280-02 revenue-gl-linkage (real Postgres)", () => {
 
     expect(result.drill.mismatched_invoices.every((d) => d.href.includes(d.invoice_id))).toBe(true);
     expect(result.gl_posted_revenue_cents).toBeGreaterThanOrEqual(revenueCents);
+  });
+
+  it("two-company FORCED-RLS setup: other-company invoice visible under its scope, hidden under primary", async () => {
+    expect(otherCompanyId).toBeTruthy();
+    await withEnforcedCompanyRls(otherCompanyId!, async () => {
+      const seen = await db.query<{ id: string }>(
+        `SELECT id::text AS id FROM accounting.invoices WHERE id = $1::uuid`,
+        [otherCompanyInvoiceId]
+      );
+      expect(seen.rows).toHaveLength(1);
+    });
+    await withEnforcedCompanyRls(companyId, async () => {
+      const hidden = await db.query<{ id: string }>(
+        `SELECT id::text AS id FROM accounting.invoices WHERE id = $1::uuid`,
+        [otherCompanyInvoiceId]
+      );
+      expect(hidden.rows).toHaveLength(0);
+    });
+    await scopedClient();
+  });
+
+  it("FORCED RLS: cross-company invoice insert without matching GUC still fails", async () => {
+    expect(otherCompanyId).toBeTruthy();
+    const probeId = randomUUID();
+    const probeDisplay = `INV-2026-${n()}`;
+    await expect(
+      bypass(companyId, async () => {
+        await db.query(
+          `INSERT INTO accounting.invoices (id, operating_company_id, customer_id, display_id, issue_date, due_date, subtotal_cents, tax_cents, total_cents, status)
+           VALUES ($1::uuid,$2::uuid,$3::uuid,$4,$5::date,$5::date,1,0,1,'sent')`,
+          [probeId, otherCompanyId, otherCustomerId, probeDisplay, today]
+        );
+      })
+    ).rejects.toMatchObject({ code: "42501" });
+    await scopedClient();
   });
 
   it("cross-entity isolation: other company invoice does not inflate this company's invoice basis", async () => {
@@ -400,7 +465,7 @@ describeIntegration("0280-02 revenue-gl-linkage (real Postgres)", () => {
       dt.setUTCDate(dt.getUTCDate() + 1);
       return companyBusinessDate(dt);
     })();
-    await bypass(async () => {
+    await bypass(companyId, async () => {
       await db.query(
         `INSERT INTO accounting.invoices (id, operating_company_id, customer_id, display_id, issue_date, due_date, subtotal_cents, tax_cents, total_cents, status)
          VALUES ($1::uuid,$2::uuid,$3::uuid,$4,$5::date,$5::date,1111,0,1111,'sent')`,
@@ -416,7 +481,7 @@ describeIntegration("0280-02 revenue-gl-linkage (real Postgres)", () => {
       });
       expect(result.drill.mismatched_invoices.some((d) => d.invoice_id === tomorrowInv)).toBe(false);
     } finally {
-      await bypass(async () => {
+      await bypass(companyId, async () => {
         await db.query(`DELETE FROM accounting.invoices WHERE id=$1::uuid`, [tomorrowInv]);
       });
     }
