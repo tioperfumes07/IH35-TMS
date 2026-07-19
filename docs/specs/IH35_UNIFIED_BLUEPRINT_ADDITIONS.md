@@ -1431,6 +1431,9 @@ Status: LOCKED (non-financial guard/spec wiring plus behavior tests; no runtime 
   resolver-return, and registered `Route` forms in the exact exported top-level production component,
   exact column/map renderer, or direct exported `ROUTES` mount. Nested/dead functions, lexical shadows,
   aliases, wrappers, reassignment, and dynamic renderer/route expressions cannot satisfy the contract.
+- Each guarded `ROUTES` component binding must resolve to the exact canonical `React.lazy` module path and
+  export. The audit consumer must initialize rendered state from the direct query-param bindings and pass
+  that state to `listAccountingAuditTrail`; a dead declaration or ignored/overwritten parameter does not count.
 - Static guards enforce only these narrow source structures and fail closed on missing files, parse errors,
   obsolete expense routes, or a regression above the locked syntactic-adoption baselines. They do not claim
   to prove arbitrary JavaScript aliasing, callback execution, or control/data flow.
@@ -1439,22 +1442,27 @@ Status: LOCKED (non-financial guard/spec wiring plus behavior tests; no runtime 
   `registerReportsLibraryRoutes` function and its exact executable handler/try path: direct
   `withCompanyScope` callback, company GUC, relation check, scoped DISTINCT query, captured result, and
   returned `samsara_live` property. Nested helpers, dead route wrappers, and dead proof functions do not count.
+- The Samsara SQL contract strips SQL comments, parses the executable SELECT/FROM/JOIN/WHERE clauses, and
+  requires the count expression, canonical table, no JOIN, company-GUC predicate, non-null local unit, and
+  six-hour freshness predicate. Tokens present only in SQL or JavaScript comments never satisfy the contract.
 - Behavior-level tests against production modules are the primary proof: Fastify injection proves counter
   response/scoping/zero behavior; React/router tests render and click producers and exercise consumers.
 - Every guard includes table-driven `--selftest` plants covering every historical VETO and canonical controls.
-- CI wiring is additive through unique auto-discovered `scripts/verify-steps/<NNN>-*.mjs` entries. Do not edit
+- CI wiring is additive through unique auto-discovered `scripts/verify-steps/<NNN>-*.mjs` entries. Each step
+  runs the production guard, its selftest, and the relevant focused behavior test, and its own planted-failure
+  probe proves nonzero results propagate through `_runner.mjs`. Do not edit
   `package.json`, `.github/workflows/locked-guards.yml`, or `.github/workflows/ci.yml`.
 
 ### Guards (Rule 17)
 - `scripts/verify-entity-link-adoption.mjs` — narrow direct-ID plus lexically scoped alias/helper detection;
-  stable SHA-256 per-file/scope/rule/expression finding keys make each addition fail independently, so removing
-  one finding cannot offset a different addition. Generic uncertain expressions are not baseline findings.
+  exact SHA-256 per-file/scope/rule/expression finding-key/count equality rejects additions, removals, inflated
+  counts, unknown hashes, and cancellation. Generic uncertain expressions are not baseline findings.
 - `scripts/entity-link-adoption-baseline.json` — versioned stable finding-key/count baseline.
 - `scripts/verify-entitylink-deep-links.mjs` — strict direct producer/resolver/route/consumer source contract.
 - `scripts/verify-94-live-counter-linkage.mjs` — strict canonical Samsara counter route source contract.
 - `apps/backend/src/reports/library.routes.live-counter.test.ts` — production Fastify route behavior.
 - `apps/frontend/src/pages/accounting/__tests__/reverse-drill-through.behavior.test.tsx` — production component/router behavior.
-- `scripts/verify-steps/915-verify-entity-link-adoption.mjs`
-- `scripts/verify-steps/916-verify-entitylink-deep-links.mjs`
-- `scripts/verify-steps/917-verify-94-live-counter-linkage.mjs`
+- `scripts/verify-steps/930-verify-entity-link-adoption.mjs`
+- `scripts/verify-steps/931-verify-entitylink-deep-links.mjs`
+- `scripts/verify-steps/932-verify-94-live-counter-linkage.mjs`
 

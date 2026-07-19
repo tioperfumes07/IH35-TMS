@@ -6,6 +6,68 @@ const COMPANY_A = "11111111-1111-4111-8111-111111111111";
 const COMPANY_B = "22222222-2222-4222-8222-222222222222";
 const COMPANY_C = "33333333-3333-4333-8333-333333333333";
 
+function stripSqlComments(sql: string) {
+  let output = "";
+  let index = 0;
+  let inString = false;
+  while (index < sql.length) {
+    if (inString) {
+      output += sql[index];
+      if (sql[index] === "'" && sql[index + 1] === "'") {
+        output += sql[index + 1];
+        index += 2;
+        continue;
+      }
+      if (sql[index] === "'") inString = false;
+      index += 1;
+      continue;
+    }
+    if (sql[index] === "'") {
+      inString = true;
+      output += sql[index];
+      index += 1;
+      continue;
+    }
+    if (sql[index] === "-" && sql[index + 1] === "-") {
+      index += 2;
+      while (index < sql.length && sql[index] !== "\n") index += 1;
+      continue;
+    }
+    if (sql[index] === "/" && sql[index + 1] === "*") {
+      const end = sql.indexOf("*/", index + 2);
+      if (end < 0) throw new Error("unterminated SQL block comment");
+      index = end + 2;
+      continue;
+    }
+    output += sql[index];
+    index += 1;
+  }
+  if (inString) throw new Error("unterminated SQL string");
+  return output;
+}
+
+function parseExecutableCounterSql(sql: string) {
+  const executable = stripSqlComments(sql).replace(/\s+/g, " ").trim();
+  const select = executable.match(/^SELECT\s+(.+?)\s+FROM\s+/i)?.[1] ?? "";
+  const from = executable.match(/\sFROM\s+([A-Za-z0-9_.]+)\s+WHERE\s+/i)?.[1] ?? "";
+  const where = executable.match(/\sWHERE\s+(.+)$/i)?.[1] ?? "";
+  if (!/^count\s*\(\s*DISTINCT\s+local_unit_id\s*\)::text\s+AS\s+samsara_live$/i.test(select)) {
+    throw new Error("counter SQL SELECT must derive samsara_live from count(DISTINCT local_unit_id)");
+  }
+  if (from !== "integrations.samsara_vehicles") {
+    throw new Error("counter SQL FROM target is not integrations.samsara_vehicles");
+  }
+  if (/\bJOIN\b/i.test(executable)) throw new Error("counter SQL must not add JOIN semantics");
+  for (const predicate of [
+    /operating_company_id\s*=\s*current_setting\('app\.operating_company_id',\s*true\)::uuid/i,
+    /local_unit_id\s+IS\s+NOT\s+NULL/i,
+    /last_seen_at\s*>=\s*now\(\)\s*-\s*interval\s*'6 hours'/i,
+  ]) {
+    if (!predicate.test(where)) throw new Error(`counter SQL WHERE missing ${predicate}`);
+  }
+  return executable;
+}
+
 const mocks = vi.hoisted(() => {
   let activeCompany = "";
   let samsaraRelationExists = true;
@@ -27,9 +89,7 @@ const mocks = vi.hoisted(() => {
       };
     }
     if (sql.includes("FROM integrations.samsara_vehicles")) {
-      expect(sql).toContain(
-        "operating_company_id = current_setting('app.operating_company_id', true)::uuid",
-      );
+      parseExecutableCounterSql(sql);
       return { rows: [{ samsara_live: countByCompany.get(activeCompany) ?? "0" }] };
     }
     return { rows: [] };
@@ -134,5 +194,20 @@ describe("reports home fleet Samsara live counter", () => {
           params[0] === COMPANY_B,
       ),
     ).toBe(true);
+  });
+
+  it("rejects a hardcoded SELECT whose required semantics exist only in comments", async () => {
+    const decoySql = `
+      SELECT '999' AS samsara_live
+      /* SELECT count(DISTINCT local_unit_id)::text AS samsara_live
+         FROM integrations.samsara_vehicles
+         WHERE operating_company_id = current_setting('app.operating_company_id', true)::uuid
+           AND local_unit_id IS NOT NULL
+           AND last_seen_at >= now() - interval '6 hours' */
+    `;
+
+    await expect(mocks.query(decoySql)).rejects.toThrow(
+      "counter SQL SELECT must derive samsara_live",
+    );
   });
 });

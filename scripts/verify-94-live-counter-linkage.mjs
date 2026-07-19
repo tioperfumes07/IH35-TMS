@@ -121,6 +121,176 @@ function directQueryCall(node, receiver, sqlFragment) {
   return typeof sql === "string" && sql.includes(sqlFragment);
 }
 
+function stripSqlComments(sql) {
+  let output = "";
+  let index = 0;
+  let quote = null;
+  while (index < sql.length) {
+    const current = sql[index];
+    const next = sql[index + 1];
+    if (quote) {
+      output += current;
+      if (current === quote) {
+        if (next === quote) {
+          output += next;
+          index += 2;
+          continue;
+        }
+        quote = null;
+      }
+      index += 1;
+      continue;
+    }
+    if (current === "'" || current === '"') {
+      quote = current;
+      output += current;
+      index += 1;
+      continue;
+    }
+    if (current === "-" && next === "-") {
+      index += 2;
+      while (index < sql.length && sql[index] !== "\n") index += 1;
+      output += "\n";
+      continue;
+    }
+    if (current === "/" && next === "*") {
+      const end = sql.indexOf("*/", index + 2);
+      if (end < 0) throw new Error("unterminated SQL block comment");
+      output += " ";
+      index = end + 2;
+      continue;
+    }
+    output += current;
+    index += 1;
+  }
+  if (quote) throw new Error("unterminated SQL quote");
+  return output;
+}
+
+function tokenizeSql(sql) {
+  const source = stripSqlComments(sql);
+  const tokens = [];
+  let index = 0;
+  while (index < source.length) {
+    const current = source[index];
+    if (/\s/.test(current)) {
+      index += 1;
+      continue;
+    }
+    if (current === "'") {
+      let value = "";
+      index += 1;
+      let closed = false;
+      while (index < source.length) {
+        if (source[index] === "'" && source[index + 1] === "'") {
+          value += "'";
+          index += 2;
+          continue;
+        }
+        if (source[index] === "'") {
+          closed = true;
+          index += 1;
+          break;
+        }
+        value += source[index];
+        index += 1;
+      }
+      if (!closed) throw new Error("unterminated SQL string");
+      tokens.push(`'${value}'`);
+      continue;
+    }
+    const pair = source.slice(index, index + 2);
+    if (["::", ">=", "<=", "<>", "!="].includes(pair)) {
+      tokens.push(pair);
+      index += 2;
+      continue;
+    }
+    if (/[A-Za-z_]/.test(current)) {
+      let end = index + 1;
+      while (end < source.length && /[A-Za-z0-9_$]/.test(source[end])) end += 1;
+      tokens.push(source.slice(index, end).toLowerCase());
+      index = end;
+      continue;
+    }
+    if (/[0-9]/.test(current)) {
+      let end = index + 1;
+      while (end < source.length && /[0-9.]/.test(source[end])) end += 1;
+      tokens.push(source.slice(index, end));
+      index = end;
+      continue;
+    }
+    if ("(),.;=*+-/<>".includes(current)) {
+      tokens.push(current);
+      index += 1;
+      continue;
+    }
+    throw new Error(`unsupported SQL token ${JSON.stringify(current)}`);
+  }
+  return tokens;
+}
+
+function topLevelIndex(tokens, value, start = 0) {
+  let depth = 0;
+  for (let index = start; index < tokens.length; index += 1) {
+    if (tokens[index] === "(") depth += 1;
+    if (tokens[index] === ")") depth -= 1;
+    if (depth === 0 && tokens[index] === value) return index;
+  }
+  return -1;
+}
+
+function splitTopLevel(tokens, separator) {
+  const groups = [];
+  let start = 0;
+  let depth = 0;
+  for (let index = 0; index < tokens.length; index += 1) {
+    if (tokens[index] === "(") depth += 1;
+    if (tokens[index] === ")") depth -= 1;
+    if (depth === 0 && tokens[index] === separator) {
+      groups.push(tokens.slice(start, index));
+      start = index + 1;
+    }
+  }
+  groups.push(tokens.slice(start));
+  return groups;
+}
+
+export function assertSamsaraSelectSql(sql) {
+  let tokens;
+  try {
+    tokens = tokenizeSql(sql);
+  } catch (error) {
+    return [`SQL parse failed: ${error instanceof Error ? error.message : String(error)}`];
+  }
+  const failures = [];
+  const fromIndex = topLevelIndex(tokens, "from", 1);
+  const whereIndex = topLevelIndex(tokens, "where", fromIndex + 1);
+  const joinIndexes = tokens
+    .map((token, index) => token === "join" && topLevelIndex(tokens, "join", index) === index ? index : -1)
+    .filter((index) => index >= 0);
+  if (tokens[0] !== "select" || fromIndex < 0 || whereIndex < 0) {
+    return ["SQL must parse as one SELECT ... FROM ... WHERE statement"];
+  }
+  if (tokens.includes(";") || tokens.includes("union")) failures.push("SQL must be one SELECT without UNION or extra statements");
+  const signature = (parts) => parts.join(" ");
+  if (signature(tokens.slice(1, fromIndex)) !== "count ( distinct local_unit_id ) :: text as samsara_live") {
+    failures.push("SELECT must derive samsara_live from count(DISTINCT local_unit_id)");
+  }
+  if (signature(tokens.slice(fromIndex + 1, whereIndex)) !== "integrations . samsara_vehicles") {
+    failures.push("FROM must directly target integrations.samsara_vehicles");
+  }
+  if (joinIndexes.length !== 0) failures.push("Samsara counter query must not add JOIN semantics");
+  const predicates = splitTopLevel(tokens.slice(whereIndex + 1), "and").map(signature);
+  for (const predicate of [
+    "operating_company_id = current_setting ( 'app.operating_company_id' , true ) :: uuid",
+    "local_unit_id is not null",
+    "last_seen_at >= now ( ) - interval '6 hours'",
+  ]) {
+    if (!predicates.includes(predicate)) failures.push(`WHERE must directly include: ${predicate}`);
+  }
+  return failures;
+}
+
 function assignmentCount(root, identifier) {
   let count = 0;
   walk(root, (node) => {
@@ -280,13 +450,7 @@ export function assertLiveCounterSource(file, source) {
     const sql = stringLiteral(
       (liveQueryDeclaration.initializer).expression.arguments[0],
     ) ?? "";
-    for (const requirement of [
-      [/\bcount\s*\(\s*DISTINCT\s+local_unit_id\s*\)/i, "count DISTINCT local_unit_id"],
-      [/\blocal_unit_id\s+IS\s+NOT\s+NULL\b/i, "exclude NULL local_unit_id"],
-      [/operating_company_id\s*=\s*current_setting\(\s*'app\.operating_company_id'\s*,\s*true\s*\)::uuid/i, "scope by the company GUC"],
-    ]) {
-      if (!requirement[0].test(sql)) failures.push(`${file}: canonical Samsara SQL must ${requirement[1]}`);
-    }
+    for (const failure of assertSamsaraSelectSql(sql)) failures.push(`${file}: ${failure}`);
   }
   const counterDeclarations = directVariable("samsaraLive");
   if (
@@ -356,7 +520,8 @@ function canonicalFixture() {
             const samsaraRes = await client.query(\`SELECT count(DISTINCT local_unit_id)::text AS samsara_live
               FROM integrations.samsara_vehicles
               WHERE operating_company_id = current_setting('app.operating_company_id', true)::uuid
-                AND local_unit_id IS NOT NULL\`);
+                AND local_unit_id IS NOT NULL
+                AND last_seen_at >= now() - interval '6 hours'\`);
             samsaraLive = Number((samsaraRes.rows[0] as { samsara_live?: string } | undefined)?.samsara_live ?? 0);
           }
           return { samsara_live: samsaraLive };
@@ -388,6 +553,31 @@ function runSelftest() {
     ["wrong-relation", good.replace(RELATION, "integrations.other")],
     ["query-outside-branch", good.replace(`if (await relationExists(client, "${RELATION}")) {`, `if (await relationExists(client, "${RELATION}")) {}\n{`)],
     ["unknown-query-wrapper", good.replace("await client.query(`SELECT count", "await runQuery(client, `SELECT count")],
+    ["comment-decoy-hardcoded-select", good.replace(
+      `\`SELECT count(DISTINCT local_unit_id)::text AS samsara_live
+              FROM integrations.samsara_vehicles
+              WHERE operating_company_id = current_setting('app.operating_company_id', true)::uuid
+                AND local_unit_id IS NOT NULL
+                AND last_seen_at >= now() - interval '6 hours'\``,
+      `\`SELECT '999' AS samsara_live
+              /* SELECT count(DISTINCT local_unit_id)::text AS samsara_live
+                 FROM integrations.samsara_vehicles
+                 WHERE operating_company_id = current_setting('app.operating_company_id', true)::uuid
+                   AND local_unit_id IS NOT NULL
+                   AND last_seen_at >= now() - interval '6 hours' */\``,
+    )],
+    ["javascript-comment-decoy-hardcoded-select", good.replace(
+      `\`SELECT count(DISTINCT local_unit_id)::text AS samsara_live
+              FROM integrations.samsara_vehicles
+              WHERE operating_company_id = current_setting('app.operating_company_id', true)::uuid
+                AND local_unit_id IS NOT NULL
+                AND last_seen_at >= now() - interval '6 hours'\``,
+      `\`SELECT '999' AS samsara_live\` /* SELECT count(DISTINCT local_unit_id)
+        FROM integrations.samsara_vehicles
+        WHERE operating_company_id = current_setting('app.operating_company_id', true)::uuid
+          AND local_unit_id IS NOT NULL
+          AND last_seen_at >= now() - interval '6 hours' */`,
+    )],
     ["nested-counter-proof", good.replace(
       "samsaraLive = Number((samsaraRes.rows[0] as { samsara_live?: string } | undefined)?.samsara_live ?? 0);",
       "function deadCounterProof() { samsaraLive = Number((samsaraRes.rows[0] as { samsara_live?: string } | undefined)?.samsara_live ?? 0); } samsaraLive = 999;",
@@ -408,7 +598,7 @@ function runSelftest() {
     console.error(`verify:94-live-counter-linkage --selftest FAIL\n${problems.join("\n")}`);
     process.exit(1);
   }
-  console.log(`verify:94-live-counter-linkage --selftest PASS canonical control + ${invalid.length} historical/metamorphic rejects`);
+  console.log(`verify:94-live-counter-linkage --selftest PASS canonical control; rejects=${invalid.map(([name]) => name).join(",")}`);
 }
 
 function main() {

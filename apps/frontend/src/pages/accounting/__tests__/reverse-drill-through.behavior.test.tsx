@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ToastProvider } from "../../../components/Toast";
+import { ROUTES } from "../../../routes/manifest";
 import { AccountingAuditTrailPage } from "../AccountingAuditTrailPage";
 import { ExpensesListPage } from "../ExpensesListPage";
 import { InvoiceDetailPage } from "../InvoiceDetailPage";
@@ -24,6 +25,18 @@ const apiMocks = vi.hoisted(() => ({
 
 vi.mock("../../../contexts/CompanyContext", () => ({
   useCompanyContext: () => ({ selectedCompanyId: COMPANY_ID }),
+}));
+
+vi.mock("../../../auth/useAuth", () => ({
+  useAuth: () => ({
+    isLoading: false,
+    isUnauthenticated: false,
+    user: { id: "owner-1", role: "Owner", email: "owner@example.com" },
+  }),
+}));
+
+vi.mock("../../../components/Shell", () => ({
+  Shell: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
 
 vi.mock("../AccountingSubNavWrapper", () => ({
@@ -64,6 +77,21 @@ function renderAt(ui: ReactNode, initialEntry: string, routePath = "*") {
           <Routes>
             <Route path={routePath} element={ui} />
           </Routes>
+        </MemoryRouter>
+      </ToastProvider>
+    </QueryClientProvider>,
+  );
+}
+
+function renderManifestAt(initialEntry: string) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <ToastProvider>
+        <MemoryRouter initialEntries={[initialEntry]}>
+          <Routes>{ROUTES}</Routes>
         </MemoryRouter>
       </ToastProvider>
     </QueryClientProvider>,
@@ -130,7 +158,10 @@ describe("reverse drill-through production behavior", () => {
       "href",
       "/customers/customer-44",
     );
-    await user.click(screen.getByRole("button", { name: "View audit log" }));
+    const auditButton = screen.getByRole("button", { name: "View audit log" });
+    expect(auditButton).toBeVisible();
+    expect(auditButton).toBeEnabled();
+    await user.click(auditButton);
     expect(screen.getByTestId("location")).toHaveTextContent(
       "/accounting/audit-trail?source_type=invoice&source_id=inv-100",
     );
@@ -158,6 +189,22 @@ describe("reverse drill-through production behavior", () => {
         expect.objectContaining({
           source_transaction_type: "invoice",
           source_transaction_id: "inv-100",
+        }),
+      );
+    });
+  });
+
+  it("mounts the real audit module through ROUTES and consumes the exact query parameters", async () => {
+    renderManifestAt(
+      "/accounting/audit-trail?source_type=customer_payment&source_id=pay-route-901",
+    );
+
+    await waitFor(() => {
+      expect(apiMocks.listAccountingAuditTrail).toHaveBeenCalledWith(
+        COMPANY_ID,
+        expect.objectContaining({
+          source_transaction_type: "customer_payment",
+          source_transaction_id: "pay-route-901",
         }),
       );
     });

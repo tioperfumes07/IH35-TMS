@@ -179,6 +179,7 @@ function hasDirectNavigation(sf, root, sourceType, idExpression) {
         ts.isJsxAttribute(attribute) &&
         attribute.name.text === "onClick" &&
         !hasNestedFunctionBoundary(arrow, root) &&
+        !hasDynamicBranchAncestor(attribute, root) &&
         !hasLiteralDeadAncestor(node, root)
       ) {
         found = true;
@@ -250,6 +251,83 @@ function directSearchParamsHook(root) {
     }
   }
   return count === 1;
+}
+
+function directStateInitialization(sf, root, stateName, setterName, parameterName) {
+  if (!root.body || !ts.isBlock(root.body)) return false;
+  const matches = [];
+  for (const statement of root.body.statements) {
+    if (!ts.isVariableStatement(statement)) continue;
+    for (const declaration of statement.declarationList.declarations) {
+      if (
+        ts.isArrayBindingPattern(declaration.name) &&
+        declaration.name.elements.length === 2 &&
+        declaration.name.elements[0].name.getText(sf) === stateName &&
+        declaration.name.elements[1].name.getText(sf) === setterName &&
+        declaration.initializer &&
+        ts.isCallExpression(declaration.initializer) &&
+        ts.isIdentifier(declaration.initializer.expression) &&
+        declaration.initializer.expression.text === "useState" &&
+        declaration.initializer.arguments.length === 1 &&
+        ts.isArrowFunction(declaration.initializer.arguments[0]) &&
+        declaration.initializer.arguments[0].body.getText(sf) === `${parameterName} ?? ""`
+      ) {
+        matches.push(declaration);
+      }
+    }
+  }
+  return matches.length === 1;
+}
+
+function directAuditQueryConsumption(sf, root) {
+  if (!root.body || !ts.isBlock(root.body)) return false;
+  const eventDeclarations = root.body.statements.flatMap((statement) =>
+    ts.isVariableStatement(statement)
+      ? statement.declarationList.declarations.filter(
+        (declaration) => ts.isIdentifier(declaration.name) && declaration.name.text === "eventQuery",
+      )
+      : [],
+  );
+  if (eventDeclarations.length !== 1) return false;
+  const initializer = eventDeclarations[0].initializer;
+  if (
+    !initializer ||
+    !ts.isCallExpression(initializer) ||
+    !ts.isIdentifier(initializer.expression) ||
+    initializer.expression.text !== "useInfiniteQuery" ||
+    initializer.arguments.length !== 1 ||
+    !ts.isObjectLiteralExpression(initializer.arguments[0])
+  ) {
+    return false;
+  }
+  const queryFn = initializer.arguments[0].properties.find(
+    (property) => ts.isPropertyAssignment(property) && property.name.getText(sf) === "queryFn",
+  );
+  if (!queryFn || !ts.isPropertyAssignment(queryFn) || !ts.isArrowFunction(queryFn.initializer)) return false;
+  const call = queryFn.initializer.body;
+  if (
+    !ts.isCallExpression(call) ||
+    !ts.isIdentifier(call.expression) ||
+    call.expression.text !== "listAccountingAuditTrail" ||
+    call.arguments.length !== 2 ||
+    call.arguments[0].getText(sf) !== "companyId" ||
+    !ts.isObjectLiteralExpression(call.arguments[1])
+  ) {
+    return false;
+  }
+  const expected = new Map([
+    ["source_transaction_type", "sourceType.trim() || undefined"],
+    ["source_transaction_id", "sourceId.trim() || undefined"],
+  ]);
+  for (const [propertyName, expression] of expected) {
+    const property = call.arguments[1].properties.find(
+      (candidate) => ts.isPropertyAssignment(candidate) && candidate.name.getText(sf) === propertyName,
+    );
+    if (!property || !ts.isPropertyAssignment(property) || property.initializer.getText(sf) !== expression) {
+      return false;
+    }
+  }
+  return true;
 }
 
 function directResolverCase(sf) {
@@ -333,6 +411,52 @@ function directRoute(sf, routePath, component) {
     return false;
   });
   return matches.length === 1;
+}
+
+function directLazyImportBinding(sf, localName, modulePath, exportName) {
+  const declarations = sf.statements.flatMap((statement) =>
+    ts.isVariableStatement(statement)
+      ? statement.declarationList.declarations.filter(
+        (declaration) => ts.isIdentifier(declaration.name) && declaration.name.text === localName,
+      )
+      : [],
+  );
+  if (declarations.length !== 1) return false;
+  const initializer = declarations[0].initializer;
+  if (
+    !initializer ||
+    !ts.isCallExpression(initializer) ||
+    !ts.isPropertyAccessExpression(initializer.expression) ||
+    initializer.expression.getText(sf) !== "React.lazy" ||
+    initializer.arguments.length !== 1 ||
+    !ts.isArrowFunction(initializer.arguments[0])
+  ) {
+    return false;
+  }
+  const thenCall = initializer.arguments[0].body;
+  if (
+    !ts.isCallExpression(thenCall) ||
+    !ts.isPropertyAccessExpression(thenCall.expression) ||
+    thenCall.expression.name.text !== "then" ||
+    !ts.isCallExpression(thenCall.expression.expression) ||
+    thenCall.expression.expression.expression.kind !== ts.SyntaxKind.ImportKeyword ||
+    stringLiteral(thenCall.expression.expression.arguments[0]) !== modulePath ||
+    thenCall.arguments.length !== 1 ||
+    !ts.isArrowFunction(thenCall.arguments[0])
+  ) {
+    return false;
+  }
+  const mapper = thenCall.arguments[0];
+  if (mapper.parameters.length !== 1 || mapper.parameters[0].name.getText(sf) !== "m") return false;
+  let body = mapper.body;
+  if (ts.isParenthesizedExpression(body)) body = body.expression;
+  if (!ts.isObjectLiteralExpression(body) || body.properties.length !== 1) return false;
+  const property = body.properties[0];
+  return (
+    ts.isPropertyAssignment(property) &&
+    property.name.getText(sf) === "default" &&
+    property.initializer.getText(sf) === `m.${exportName}`
+  );
 }
 
 function directExpenseColumnRenderer(sf, component) {
@@ -462,6 +586,14 @@ export function assertContracts(sources) {
   if (!audit || !directSearchParamBinding(parsed.audit, audit, "sourceIdParam", "source_id")) {
     failures.push("AccountingAuditTrailPage: bind immutable sourceIdParam directly from searchParams.get(\"source_id\")");
   }
+  if (
+    !audit ||
+    !directStateInitialization(parsed.audit, audit, "sourceType", "setSourceType", "sourceTypeParam") ||
+    !directStateInitialization(parsed.audit, audit, "sourceId", "setSourceId", "sourceIdParam") ||
+    !directAuditQueryConsumption(parsed.audit, audit)
+  ) {
+    failures.push("AccountingAuditTrailPage: directly initialize rendered sourceType/sourceId state from canonical params and consume both in listAccountingAuditTrail");
+  }
 
   const faults = parsed.faults && topLevelExportedFunction(parsed.faults, "FaultDraftsPage");
   if (!faults || !directSearchParamsHook(faults) || !directSearchParamBinding(parsed.faults, faults, "deepLinkUnitId", "unit_id")) {
@@ -485,14 +617,17 @@ export function assertContracts(sources) {
   }
 
   if (parsed.manifest) {
-    for (const [routePath, component] of [
-      ["/accounting/invoices/:id", "InvoiceDetailPage"],
-      ["/accounting/payments/:id", "PaymentDetailPage"],
-      ["/accounting/audit-trail", "AccountingAuditTrailPage"],
-      ["/accounting/expenses/list", "ExpensesListPage"],
+    for (const [routePath, component, modulePath] of [
+      ["/accounting/invoices/:id", "InvoiceDetailPage", "../pages/accounting/InvoiceDetailPage"],
+      ["/accounting/payments/:id", "PaymentDetailPage", "../pages/accounting/PaymentDetailPage"],
+      ["/accounting/audit-trail", "AccountingAuditTrailPage", "../pages/accounting/AccountingAuditTrailPage"],
+      ["/accounting/expenses/list", "ExpensesListPage", "../pages/accounting/ExpensesListPage"],
     ]) {
       if (!directRoute(parsed.manifest, routePath, component)) {
         failures.push(`manifest: ROUTES must directly mount <Route path="${routePath}" element={<ProtectedRoute><${component} /></ProtectedRoute>} />`);
+      }
+      if (!directLazyImportBinding(parsed.manifest, component, modulePath, component)) {
+        failures.push(`manifest: ${component} must be the direct React.lazy binding for import("${modulePath}") export ${component}`);
       }
     }
   }
@@ -507,12 +642,12 @@ function canonicalSources() {
   return {
     invoice: `export function InvoiceDetailPage(){return <><EntityLink kind="customer" id={invoice.customer_id}/><button onClick={()=>navigate(\`/accounting/audit-trail?source_type=invoice&source_id=\${encodeURIComponent(invoice.id)}\`)}/></>}`,
     payment: `export function PaymentDetailPage(){return <button onClick={()=>navigate(\`/accounting/audit-trail?source_type=customer_payment&source_id=\${encodeURIComponent(payment.id)}\`)}/>}`,
-    audit: `export function AccountingAuditTrailPage(){const [searchParams]=useSearchParams();const sourceTypeParam=searchParams.get("source_type");const sourceIdParam=searchParams.get("source_id");return <span>{sourceTypeParam}{sourceIdParam}</span>}`,
+    audit: `export function AccountingAuditTrailPage(){const [searchParams]=useSearchParams();const sourceTypeParam=searchParams.get("source_type");const sourceIdParam=searchParams.get("source_id");const [sourceType,setSourceType]=useState(()=>sourceTypeParam ?? "");const [sourceId,setSourceId]=useState(()=>sourceIdParam ?? "");const eventQuery=useInfiniteQuery({queryFn:({pageParam})=>listAccountingAuditTrail(companyId,{source_transaction_type:sourceType.trim() || undefined,source_transaction_id:sourceId.trim() || undefined})});return <span>{sourceType}{sourceId}{eventQuery.data}</span>}`,
     faults: `export function FaultDraftsPage(){const [searchParams]=useSearchParams();const deepLinkUnitId=searchParams.get("unit_id");return <span>{deepLinkUnitId}</span>}`,
     entityLink: `export function resolveEntityRoute(kind,id){switch(kind){case "expense":return \`/accounting/expenses/list?expense_id=\${id}\`;}}`,
     expensesList: `export function ExpensesListPage(){const [searchParams]=useSearchParams();const deepLinkExpenseId=searchParams.get("expense_id");const columns=[{key:"expense_number",render:(r)=><EntityLink kind="expense" id={r.id}/>}];return <span>{deepLinkExpenseId}{columns.length}</span>}`,
     woDetail: `export function WorkOrderDetailPage(){return <>{linkedFinancialsQ.data.expenses.map((expense)=><EntityLink kind="expense" id={expense.id}/>)}</>}`,
-    manifest: `export const ROUTES=React.Children.toArray(<><Route path="/accounting/invoices/:id" element={<ProtectedRoute><InvoiceDetailPage /></ProtectedRoute>}/><Route path="/accounting/payments/:id" element={<ProtectedRoute><PaymentDetailPage /></ProtectedRoute>}/><Route path="/accounting/audit-trail" element={<ProtectedRoute><AccountingAuditTrailPage /></ProtectedRoute>}/><Route path="/accounting/expenses/list" element={<ProtectedRoute><ExpensesListPage /></ProtectedRoute>}/></>)`,
+    manifest: `const InvoiceDetailPage=React.lazy(()=>import("../pages/accounting/InvoiceDetailPage").then((m)=>({default:m.InvoiceDetailPage})));const PaymentDetailPage=React.lazy(()=>import("../pages/accounting/PaymentDetailPage").then((m)=>({default:m.PaymentDetailPage})));const AccountingAuditTrailPage=React.lazy(()=>import("../pages/accounting/AccountingAuditTrailPage").then((m)=>({default:m.AccountingAuditTrailPage})));const ExpensesListPage=React.lazy(()=>import("../pages/accounting/ExpensesListPage").then((m)=>({default:m.ExpensesListPage})));export const ROUTES=React.Children.toArray(<><Route path="/accounting/invoices/:id" element={<ProtectedRoute><InvoiceDetailPage /></ProtectedRoute>}/><Route path="/accounting/payments/:id" element={<ProtectedRoute><PaymentDetailPage /></ProtectedRoute>}/><Route path="/accounting/audit-trail" element={<ProtectedRoute><AccountingAuditTrailPage /></ProtectedRoute>}/><Route path="/accounting/expenses/list" element={<ProtectedRoute><ExpensesListPage /></ProtectedRoute>}/></>)`,
   };
 }
 
@@ -522,11 +657,16 @@ function runSelftest() {
     ["dead-renderer", { ...good, invoice: good.invoice.replace("<EntityLink", "{false && <EntityLink").replace("/><button", "/>}<button") }, "InvoiceDetailPage"],
     ["nested-renderer", { ...good, invoice: good.invoice.replace("return <>", `function Decoy(){return <EntityLink kind="customer" id={invoice.customer_id}/>};return <>`).replace("<EntityLink kind=\"customer\" id={invoice.customer_id}/><button", "<span/><button") }, "InvoiceDetailPage"],
     ["dynamic-renderer", { ...good, invoice: good.invoice.replace("<EntityLink kind=\"customer\" id={invoice.customer_id}/>", "{flag ? <EntityLink kind=\"customer\" id={invoice.customer_id}/> : <span/>}") }, "InvoiceDetailPage"],
-    ["overwritten-param", { ...good, audit: good.audit.replace("const sourceIdParam=", "let sourceIdParam=").replace(";return", ";sourceIdParam=\"wrong\";return") }, "sourceIdParam"],
+    ["dead-navigation-button", { ...good, invoice: good.invoice.replace("<button onClick", "{false && <button onClick").replace("`)}/></>}", "`)}/>}</>}") }, "audit URL"],
+    ["dynamic-navigation-button", { ...good, invoice: good.invoice.replace("<button onClick", "{flag ? <button onClick").replace("`)}/></>}", "`)} /> : <span />}</>}") }, "audit URL"],
+    ["overwritten-param", { ...good, audit: good.audit.replace("const sourceIdParam=", "let sourceIdParam=").replace(";const [sourceType", ";sourceIdParam=\"wrong\";const [sourceType") }, "sourceIdParam"],
     ["lexical-shadow-param", { ...good, audit: good.audit.replace("const sourceIdParam=searchParams.get(\"source_id\");", "function Decoy(){const sourceIdParam=searchParams.get(\"source_id\");return sourceIdParam}") }, "sourceIdParam"],
+    ["wrong-initialized-state-dead-param", { ...good, audit: good.audit.replace("useState(()=>sourceIdParam ?? \"\")", "useState(()=>\"wrong\")").replace("return <span>", "function deadProof(){const [sourceId]=useState(()=>sourceIdParam ?? \"\");return sourceId}return <span>") }, "directly initialize"],
+    ["ignored-search-param", { ...good, audit: good.audit.replace("source_transaction_id:sourceId.trim() || undefined", "source_transaction_id:\"wrong\"") }, "directly initialize"],
     ["route-alias", { ...good, manifest: good.manifest.replace("<Route path=\"/accounting/expenses/list\" element={<ProtectedRoute><ExpensesListPage /></ProtectedRoute>}/>", "{expenseRoute}") }, "/accounting/expenses/list"],
     ["dead-route", { ...good, manifest: good.manifest.replace("<Route path=\"/accounting/expenses/list\" element={<ProtectedRoute><ExpensesListPage /></ProtectedRoute>}/>", "{false && <Route path=\"/accounting/expenses/list\" element={<ProtectedRoute><ExpensesListPage /></ProtectedRoute>}/>}") }, "/accounting/expenses/list"],
     ["dynamic-route", { ...good, manifest: good.manifest.replace("<ExpensesListPage />", "{flag ? <ExpensesListPage /> : <InvoiceDetailPage />}") }, "/accounting/expenses/list"],
+    ["wrong-import-binding", { ...good, manifest: good.manifest.replace('import("../pages/accounting/AccountingAuditTrailPage").then((m)=>({default:m.AccountingAuditTrailPage}))', 'import("../pages/accounting/PaymentDetailPage").then((m)=>({default:m.PaymentDetailPage}))') }, "AccountingAuditTrailPage must be"],
     ["id-alias", { ...good, invoice: good.invoice.replace("id={invoice.customer_id}", "id={customerId}") }, "EntityLink"],
     ["navigate-alias", { ...good, invoice: good.invoice.replace("navigate(`", "go(`") }, "audit URL"],
     ["wrong-invoice-id", { ...good, invoice: good.invoice.replace("invoice.id", "invoice.customer_id") }, "audit URL"],
@@ -548,7 +688,7 @@ function runSelftest() {
     console.error(`${LABEL} --selftest FAIL\n${problems.join("\n")}`);
     process.exit(1);
   }
-  console.log(`${LABEL} --selftest PASS canonical control + ${cases.length} historical/metamorphic rejects`);
+  console.log(`${LABEL} --selftest PASS canonical control; rejects=${cases.map(([name]) => name).join(",")}`);
 }
 
 function main() {

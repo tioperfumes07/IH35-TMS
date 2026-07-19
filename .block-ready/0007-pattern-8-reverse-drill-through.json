@@ -11,15 +11,7 @@
   "db_required": false,
   "guard_required": true,
   "extra_gates": [
-    "node scripts/verify-entity-link-adoption.mjs --selftest",
-    "node scripts/verify-entity-link-adoption.mjs",
-    "node scripts/verify-entitylink-deep-links.mjs --selftest",
-    "node scripts/verify-entitylink-deep-links.mjs",
-    "node scripts/verify-94-live-counter-linkage.mjs --selftest",
-    "node scripts/verify-94-live-counter-linkage.mjs",
-    "cd apps/backend && npx vitest run src/reports/library.routes.live-counter.test.ts",
-    "cd apps/frontend && npx vitest run src/pages/accounting/__tests__/reverse-drill-through.behavior.test.tsx",
-    "node scripts/verify-guard-wired.mjs"
+    "verify:pre-commit"
   ],
   "allowed_files": [
     ".block-ready/0007-pattern-8-reverse-drill-through.json",
@@ -32,25 +24,25 @@
     "scripts/verify-entity-link-adoption.mjs",
     "scripts/verify-entitylink-deep-links.mjs",
     "scripts/verify-94-live-counter-linkage.mjs",
-    "scripts/verify-steps/915-verify-entity-link-adoption.mjs",
-    "scripts/verify-steps/916-verify-entitylink-deep-links.mjs",
-    "scripts/verify-steps/917-verify-94-live-counter-linkage.mjs"
+    "scripts/verify-steps/930-verify-entity-link-adoption.mjs",
+    "scripts/verify-steps/931-verify-entitylink-deep-links.mjs",
+    "scripts/verify-steps/932-verify-94-live-counter-linkage.mjs"
   ],
   "acceptance": [
     {
       "check": "all three guards pass normally and with table-driven --selftest corpora covering valid controls, every VETO plant, and fresh metamorphic variants"
     },
     {
-      "check": "EntityLink adoption uses a stable SHA-256 finding-key baseline for narrow direct IDs plus lexically scoped aliases/helpers; every new key/count fails independently, so removing one finding cannot offset adding another"
+      "check": "EntityLink adoption requires exact equality with its stable SHA-256 finding-key/count baseline for narrow direct IDs plus lexically scoped aliases/helpers; extras, inflation, removals, and cancellation all fail"
     },
     {
-      "check": "deep-link guard binds to each exact exported top-level component, exact renderer path, and direct ROUTES mount; nested/dead/dynamic renderers or routes and lexical-shadow bindings fail; React/router tests prove exact IDs and paths"
+      "check": "deep-link guard binds each direct ROUTES mount to the exact React.lazy module/export and requires reachable rendered/query-param consumption; wrong imports, hidden/dynamic buttons, dead declarations, ignored/overwritten params, and wrong paths fail; real manifest/router behavior proves reachability"
     },
     {
-      "check": "94-live guard binds to the exported top-level register function and direct home-fleet app.get executable handler path; nested/dead GUC/query/return proofs cannot satisfy it; Fastify injection proves query-result response, zero fallback, and company isolation"
+      "check": "94-live guard and Fastify mock strip comments and parse executable SELECT/FROM/JOIN/WHERE semantics; hardcoded SELECT values with required tokens only in comments fail; injection still proves query-result response, zero fallback, and company isolation"
     },
     {
-      "check": "unique verify-steps 915/916/917 auto-discover all three guards; guard-wired reports them fully wired"
+      "check": "unique verify-steps 930/931/932 auto-discover all guard selftests and focused backend/frontend behavior tests; direct step plants prove nonzero test failures propagate through runStep; manifest extra_gates contains only valid npm script name verify:pre-commit"
     },
     {
       "check": "package.json and workflow hot files unchanged; audit-trail search-param bindings are canonicalized without behavior change; no tab, schema, migration, financial logic, or route behavior changes"

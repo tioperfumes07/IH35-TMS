@@ -290,10 +290,12 @@ function findingCounts(findings) {
   return Object.fromEntries(Object.entries(counts).sort(([a], [b]) => a.localeCompare(b)));
 }
 
-function newFindingKeys(current, baseline) {
-  return Object.entries(current)
-    .filter(([key, count]) => count > (baseline[key] ?? 0))
-    .map(([key, count]) => ({ key, count, baseline: baseline[key] ?? 0 }));
+function baselineDifferences(current, baseline) {
+  const keys = new Set([...Object.keys(current), ...Object.keys(baseline)]);
+  return [...keys]
+    .filter((key) => current[key] !== baseline[key])
+    .sort()
+    .map((key) => ({ key, current: current[key] ?? 0, baseline: baseline[key] ?? 0 }));
 }
 
 function runSelftest() {
@@ -324,14 +326,21 @@ function runSelftest() {
   }
   const baseline = findingCounts(scanSource("baseline.tsx", `const A=({row})=><td>{row.vendor_id}</td>`));
   const offsetCurrent = findingCounts(scanSource("baseline.tsx", `const A=({row})=><td>{row.driver_id}</td>`));
-  if (Object.keys(baseline).length !== 1 || Object.keys(offsetCurrent).length !== 1 || newFindingKeys(offsetCurrent, baseline).length !== 1) {
+  if (Object.keys(baseline).length !== 1 || Object.keys(offsetCurrent).length !== 1 || baselineDifferences(offsetCurrent, baseline).length !== 2) {
     problems.push("offset-cancellation: remove-one/add-different must fail even when total count is unchanged");
+  }
+  const [knownFingerprint] = Object.keys(baseline);
+  if (baselineDifferences(baseline, { ...baseline, [knownFingerprint]: baseline[knownFingerprint] + 1000 }).length !== 1) {
+    problems.push("baseline-inflation: an arbitrary count increase must fail");
+  }
+  if (baselineDifferences(baseline, { ...baseline, ["9".repeat(64)]: 1 }).length !== 1) {
+    problems.push("baseline-extra: an unknown fingerprint must fail");
   }
   if (problems.length) {
     console.error(`verify:entity-link-adoption --selftest FAIL\n${problems.join("\n")}`);
     process.exit(1);
   }
-  console.log(`verify:entity-link-adoption --selftest PASS ${cases.length} canonical syntax cases + offset-cancellation reject`);
+  console.log(`verify:entity-link-adoption --selftest PASS cases=${cases.map(([name]) => name).join(",")}; baseline-rejects=offset-cancellation,inflated-count,unknown-hash`);
 }
 
 function main() {
@@ -363,17 +372,24 @@ function main() {
     console.error("verify:entity-link-adoption FAIL — baseline must have version 1 and a findings object");
     process.exit(1);
   }
-  const additions = newFindingKeys(current, baselineDocument.findings);
-  console.log(`verify:entity-link-adoption scanned ${findings.length} narrow ID findings across ${Object.keys(current).length} stable keys`);
-  if (additions.length) {
-    for (const addition of additions) {
-      const finding = findings.find((candidate) => findingFingerprint(candidate) === addition.key);
-      console.error(`  NEW ${addition.key} count=${addition.count} baseline=${addition.baseline} ${finding ? findingKey(finding) : ""}`);
-    }
-    console.error("verify:entity-link-adoption FAIL — new per-file/per-rule finding key detected");
+  const malformedBaseline = Object.entries(baselineDocument.findings).filter(
+    ([fingerprint, count]) => !/^[a-f0-9]{64}$/.test(fingerprint) || !Number.isInteger(count) || count < 1,
+  );
+  if (malformedBaseline.length) {
+    console.error("verify:entity-link-adoption FAIL — baseline fingerprints must be SHA-256 hex with positive integer counts");
     process.exit(1);
   }
-  console.log("verify:entity-link-adoption PASS — no new stable finding keys (removals cannot offset additions)");
+  const differences = baselineDifferences(current, baselineDocument.findings);
+  console.log(`verify:entity-link-adoption scanned ${findings.length} narrow ID findings across ${Object.keys(current).length} stable keys`);
+  if (differences.length) {
+    for (const difference of differences) {
+      const finding = findings.find((candidate) => findingFingerprint(candidate) === difference.key);
+      console.error(`  DRIFT ${difference.key} current=${difference.current} baseline=${difference.baseline} ${finding ? findingKey(finding) : ""}`);
+    }
+    console.error("verify:entity-link-adoption FAIL — baseline must exactly equal current per-finding fingerprints/counts; regenerate intentionally after removals");
+    process.exit(1);
+  }
+  console.log("verify:entity-link-adoption PASS — exact stable finding-key baseline (no extras, inflation, removal, or cancellation)");
 }
 
 main();
