@@ -14,12 +14,16 @@
  *       that touches ar_control directly, and a terminal advance with no relief event) — the guard is
  *       not a no-op.
  *
- * Uses the live TRANSP-prerequisite company's already-seeded chart_of_accounts_roles where present
- * (factoring_advance_liability/factor_reserve_held/factor_fee_expense/factoring_recoursed_ar/
- * default_interest_expense from 202607013000/CODER-34) — no migration/schema change. ar_control/
- * cash_clearing are FRESH-DB self-healed below (202607011000 seeds ar_control only by joining prod's
- * real QBO-synced account UUID, which doesn't exist on a fresh CI DB; cash_clearing has never had a
- * seeding migration at all) — a no-op on a prod-copy branch where the real mappings already exist.
+ * Owns a UNIQUE operating company via createIsolatedOperatingCompany (codePrefix TRANSP for Faro
+ * entity gate) — never the shared ensureIntegrationPrerequisites() TRANSP singleton. Parallel CI
+ * forks previously deadlocked on accounting.factoring_lifecycle_posting_keys composite FKs /
+ * (opco,id) unique parents when this suite posted against the shared company while siblings mutated
+ * the same JE/advance namespace. Isolation is the root-cause fix (advisory locks only serialized
+ * COA-role seeds; they did not cover the poster's separate withCurrentUser connection).
+ *
+ * Seeds the full poster COA role set on that company (factoring_advance_liability /
+ * factor_reserve_held / factor_fee_expense / factoring_recoursed_ar / default_interest_expense /
+ * ar_control / cash_clearing) plus an owner Faro FARO_FULL_RECOURSE_V1 binding — no migration change.
  *
  * Also seeds a long-lived fake integrations.qbo_connections row (same pattern as
  * settlement-bill-payment-posting.db.test.ts): createJournalEntry unconditionally calls
@@ -31,9 +35,13 @@
  */
 import crypto, { randomUUID } from "node:crypto";
 import pg from "pg";
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../../lib/pg-connection-options.js";
-import { ensureIntegrationPrerequisites } from "../../../../test-helpers/db-fixture.js";
+import {
+  createIsolatedOperatingCompany,
+  deactivateIsolatedOperatingCompany,
+  type IsolatedOperatingCompany,
+} from "../../../../test-helpers/isolated-company.js";
 import { TEST_OWNER_USER_ID, TEST_ENCRYPTION_KEY } from "../../../../test-helpers/constants.js";
 import {
   loadExactLinkedChargebackAmounts,
@@ -72,8 +80,7 @@ function expectPosted(
 }
 
 // Kept in lockstep with scripts/verify-chain-06-factoring-ar-tieout.mjs's ASSERTIONS object, scoped here
-// to just the advance ids this test creates (memory shared-company-db-test-contamination: the TRANSP
-// prerequisite company is shared across parallel test files — never assert on an un-scoped aggregate).
+// to just the advance ids / JE ids this suite creates on its isolated company.
 const ASSERTIONS = {
   legB_fundingTouchesAr: `
     SELECT je.id AS journal_entry_id
@@ -112,11 +119,11 @@ const ASSERTIONS = {
 
 describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Postgres)", () => {
   let db: pg.Client;
+  let isolated: IsolatedOperatingCompany;
   let companyId: string;
   const suffix = randomUUID().slice(0, 6);
-  /** Faro factor vendor — reused when TRANSP already has an effective FARO_FULL_RECOURSE_V1 binding. */
-  let vendorId = randomUUID();
-  let seededFaroVendor = false;
+  /** Faro factor vendor bound to this suite's isolated TRANSP-prefixed company. */
+  const vendorId = randomUUID();
   let seededFaroAgreementId: string | null = null;
   let seededFaroProfileId: string | null = null;
   const customerId = randomUUID();
@@ -242,104 +249,98 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
     };
   }
 
-  // Self-heal cash_clearing/ar_control role mappings for the TRANSP prerequisite company on a FRESH CI
-  // Postgres (migration-must-refresh-schema-parity / branch-copy-vs-fresh-DB landmine): 202607011000
-  // seeds ap_control/ar_control ONLY by joining prod's real QBO-synced account UUIDs — those rows don't
-  // exist on a fresh migrated-from-0001 DB, so the join yields 0 rows and the role stays unmapped there.
-  // cash_clearing has never been seeded by any migration at all (0223 only defines the CHECK value). The
-  // real poster (poster.service.ts) fails closed via resolveRoleAccount when a role is unmapped — exactly
-  // what CHAIN-06 exists to exercise, so the test must guarantee both roles resolve. Idempotent + additive:
-  // a no-op on a prod-copy branch where the real mappings already exist (ON CONFLICT ... DO NOTHING), and
-  // provisions a minimal Asset account otherwise. No migration touched.
-  async function ensureRoleMapped(role: "cash_clearing" | "ar_control"): Promise<void> {
+  /** Seed the full poster COA role set on this suite's isolated company (never shared TRANSP). */
+  async function seedPosterRoles(): Promise<void> {
+    const roles: Array<{ role: string; number: string; name: string; type: string; subtype: string | null }> = [
+      { role: "cash_clearing", number: `T06-CASH-${suffix}`, name: `Chain-06 Cash ${suffix}`, type: "Asset", subtype: "CashAndCashEquivalents" },
+      { role: "ar_control", number: `T06-AR-${suffix}`, name: `Chain-06 A/R ${suffix}`, type: "Asset", subtype: "AccountsReceivable" },
+      { role: "factor_reserve_held", number: `T06-RSV-${suffix}`, name: `Chain-06 Reserve ${suffix}`, type: "Asset", subtype: null },
+      { role: "factor_fee_expense", number: `T06-FEE-${suffix}`, name: `Chain-06 Fee Exp ${suffix}`, type: "Expense", subtype: null },
+      { role: "factoring_advance_liability", number: `T06-LIAB-${suffix}`, name: `Chain-06 Advance Liab ${suffix}`, type: "Liability", subtype: null },
+      { role: "factoring_recoursed_ar", number: `T06-REC-${suffix}`, name: `Chain-06 Recoursed AR ${suffix}`, type: "Asset", subtype: null },
+      { role: "default_interest_expense", number: `T06-DI-${suffix}`, name: `Chain-06 Default Interest ${suffix}`, type: "Expense", subtype: null },
+    ];
     await bypass(async () => {
-      const existing = await db.query(
-        `SELECT 1 FROM accounting.chart_of_accounts_roles WHERE operating_company_id=$1::uuid AND role=$2 AND is_active=true LIMIT 1`,
-        [companyId, role]
-      );
-      if ((existing.rowCount ?? 0) > 0) return;
-      const acctId = randomUUID();
-      const acctNumber = `T06-${role.toUpperCase()}-${suffix}`;
-      const acctName = role === "cash_clearing" ? `Chain-06 Test Cash Clearing ${suffix}` : `Chain-06 Test A/R Control ${suffix}`;
-      const acctSubtype = role === "cash_clearing" ? "CashAndCashEquivalents" : "AccountsReceivable";
-      await db.query(
-        `INSERT INTO catalogs.accounts (id, operating_company_id, account_number, account_name, account_type, account_subtype, is_postable)
-         VALUES ($1::uuid,$2::uuid,$3,$4,'Asset',$5,true)`,
-        [acctId, companyId, acctNumber, acctName, acctSubtype]
-      );
-      await db.query(
-        `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active, created_at, updated_at)
-         VALUES ($1::uuid,$2,$3::uuid,true,now(),now())
-         ON CONFLICT (operating_company_id, role) WHERE is_active DO NOTHING`,
-        [companyId, role, acctId]
-      );
+      for (const r of roles) {
+        const existing = await db.query(
+          `SELECT 1 FROM accounting.chart_of_accounts_roles
+            WHERE operating_company_id=$1::uuid AND role=$2 AND is_active=true LIMIT 1`,
+          [companyId, r.role]
+        );
+        if ((existing.rowCount ?? 0) > 0) continue;
+        const acctId = randomUUID();
+        await db.query(
+          `INSERT INTO catalogs.accounts
+             (id, operating_company_id, account_number, account_name, account_type, account_subtype, is_postable)
+           VALUES ($1::uuid,$2::uuid,$3,$4,$5,$6,true)`,
+          [acctId, companyId, r.number, r.name, r.type, r.subtype]
+        );
+        await db.query(
+          `INSERT INTO accounting.chart_of_accounts_roles
+             (operating_company_id, role, account_id, is_active, created_at, updated_at)
+           VALUES ($1::uuid,$2,$3::uuid,true,now(),now())
+           ON CONFLICT (operating_company_id, role) WHERE is_active DO NOTHING`,
+          [companyId, r.role, acctId]
+        );
+      }
     });
   }
 
   beforeAll(async () => {
-    companyId = await ensureIntegrationPrerequisites();
+    // TRANSP prefix satisfies Faro contract entity gate (no hard-coded UUID). Unique suffix keeps
+    // this suite off the shared ensureIntegrationPrerequisites() TRANSP singleton — root cause of the
+    // CI deadlock on factoring_lifecycle_posting_keys under vitest pool:"forks".
+    isolated = await createIsolatedOperatingCompany({
+      codePrefix: "TRANSP",
+      legalNamePrefix: "IH 35 TRANSPORTATION Chain06",
+      label: "chain06-tieout",
+    });
+    companyId = isolated.companyId;
     const cs = process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL;
     if (!cs) throw new Error("DATABASE_URL required");
     db = new pg.Client(buildPgClientConfig(cs));
     await db.connect();
     await db.query("SET ROLE ih35_app");
-    await ensureRoleMapped("cash_clearing");
-    await ensureRoleMapped("ar_control");
+    await seedPosterRoles();
     await bypass(async () => {
-      // Poster Faro gate (CPA VETO): every funding/payment/chargeback path requires the authoritative
-      // effective TRANSP/Faro full-recourse agreement + advance bound to that Faro vendor. Fresh CI has
-      // an empty owner-seed table — seed locked terms. If a binding already exists (prod-copy / prior run),
-      // reuse that vendor so we never create an ambiguous second Faro agreement on the shared TRANSP opco.
-      const existingFaro = await requireEffectiveFaroFullRecourseAgreement(db, companyId);
-      if (existingFaro.ok) {
-        vendorId = existingFaro.vendorId;
-      } else if (
-        existingFaro.reason !== "missing_faro_agreement_binding" &&
-        existingFaro.reason !== "faro_agreement_not_effective"
-      ) {
-        // Ambiguous / wrong-terms / entity mismatch — fail closed (never invent a second Faro binding).
-        throw new Error(`chain-06 Faro gate blocked: ${existingFaro.reason}`);
-      } else {
-        seededFaroVendor = true;
-        seededFaroAgreementId = randomUUID();
-        seededFaroProfileId = randomUUID();
-        await db.query(
-          `INSERT INTO mdata.vendors (id, operating_company_id, vendor_name, vendor_type)
-           VALUES ($1::uuid,$2::uuid,$3,'Other')`,
-          [vendorId, companyId, `Chain-06 Faro Factor ${suffix}`]
+      seededFaroAgreementId = randomUUID();
+      seededFaroProfileId = randomUUID();
+      await db.query(
+        `INSERT INTO mdata.vendors (id, operating_company_id, vendor_name, vendor_type)
+         VALUES ($1::uuid,$2::uuid,$3,'Other')`,
+        [vendorId, companyId, `Chain-06 Faro Factor ${suffix}`]
+      );
+      await db.query(
+        `INSERT INTO factoring.factor (
+           id, tenant_id, name, advance_rate, fee_rate, reserve_rate, recourse_days, active
+         ) VALUES ($1::uuid,$2::uuid,$3,0.9700,0.0150,0.0150,95,true)`,
+        [seededFaroProfileId, companyId, `Chain-06 Faro Full Recourse ${suffix}`]
+      );
+      await db.query(
+        `INSERT INTO factoring.canonical_factor_agreements (
+           id, tenant_id, factor_profile_id, factor_vendor_id, agreement_code,
+           effective_from, effective_to, is_full_recourse,
+           fee_rate_tier1, fee_rate_tier2, reserve_rate,
+           repurchase_term_days, grace_days, repurchase_deadline_days, default_interest_daily_rate
+         ) VALUES (
+           $1::uuid,$2::uuid,$3::uuid,$4::uuid,$5,
+           '2024-12-02'::date,NULL,true,
+           0.0150,0.0200,0.0150,
+           30,5,95,0.00067000
+         )`,
+        [
+          seededFaroAgreementId,
+          companyId,
+          seededFaroProfileId,
+          vendorId,
+          FARO_FULL_RECOURSE_AGREEMENT_CODE,
+        ]
+      );
+      const seededOk = await requireEffectiveFaroFullRecourseAgreement(db, companyId);
+      if (!seededOk.ok || seededOk.vendorId !== vendorId) {
+        throw new Error(
+          `chain-06 Faro seed failed: reason=${"reason" in seededOk ? seededOk.reason : "unknown"} vendor=${"vendorId" in seededOk ? seededOk.vendorId : null}`
         );
-        await db.query(
-          `INSERT INTO factoring.factor (
-             id, tenant_id, name, advance_rate, fee_rate, reserve_rate, recourse_days, active
-           ) VALUES ($1::uuid,$2::uuid,$3,0.9700,0.0150,0.0150,95,true)`,
-          [seededFaroProfileId, companyId, `Chain-06 Faro Full Recourse ${suffix}`]
-        );
-        await db.query(
-          `INSERT INTO factoring.canonical_factor_agreements (
-             id, tenant_id, factor_profile_id, factor_vendor_id, agreement_code,
-             effective_from, effective_to, is_full_recourse,
-             fee_rate_tier1, fee_rate_tier2, reserve_rate,
-             repurchase_term_days, grace_days, repurchase_deadline_days, default_interest_daily_rate
-           ) VALUES (
-             $1::uuid,$2::uuid,$3::uuid,$4::uuid,$5,
-             '2024-12-02'::date,NULL,true,
-             0.0150,0.0200,0.0150,
-             30,5,95,0.00067000
-           )`,
-          [
-            seededFaroAgreementId,
-            companyId,
-            seededFaroProfileId,
-            vendorId,
-            FARO_FULL_RECOURSE_AGREEMENT_CODE,
-          ]
-        );
-        const seededOk = await requireEffectiveFaroFullRecourseAgreement(db, companyId);
-        if (!seededOk.ok || seededOk.vendorId !== vendorId) {
-          throw new Error(
-            `chain-06 Faro seed failed: reason=${"reason" in seededOk ? seededOk.reason : "unknown"} vendor=${"vendorId" in seededOk ? seededOk.vendorId : null}`
-          );
-        }
       }
       await db.query(
         `INSERT INTO mdata.customers (id, operating_company_id, customer_name, factoring_company_vendor_id)
@@ -367,57 +368,18 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
     });
   });
 
-  // ── Shared-singleton COA-role serialization (TEST HYGIENE — poster.service.ts is UNCHANGED) ──────────
-  // ar_control (also seeded by invoice-ar-killswitch.db.test.ts) and cash_clearing are per-(company, role)
-  // SINGLETONs on the shared TRANSP prerequisite company — ensureIntegrationPrerequisites() hands every
-  // db.test the SAME company. Under vitest pool:"forks" a parallel sibling's afterAll can DELETE the active
-  // role row between this file's seed and its liveRole()/poster reads, so liveRole() throws "no mapped
-  // ar_control role" (the flake). Serialize on the SAME advisory lock the ap_control writers already use
-  // (bill-payment-gl-posting / bank-transaction-splits / settlement-bill-payment) and RE-ENSURE the roles
-  // inside the lock before each test, so every test window observes a valid, stable mapping. This does NOT
-  // touch the poster's entity-scoped FACTORING_GL_POSTING_ENABLED resolution or its role resolution.
-  // Enforced by scripts/verify-shared-coa-role-tests-serialized.mjs.
-  const COA_ROLE_TEST_LOCK = 4200000001;
-  beforeEach(async () => {
-    await db.query("SELECT pg_advisory_lock($1::bigint)", [COA_ROLE_TEST_LOCK]);
-    await ensureRoleMapped("cash_clearing");
-    await ensureRoleMapped("ar_control");
-  });
-  afterEach(async () => {
-    await db.query("SELECT pg_advisory_unlock($1::bigint)", [COA_ROLE_TEST_LOCK]).catch(() => {});
-  });
-
   afterAll(async () => {
     if (!db) return;
     try {
       await bypass(async () => {
         await db.query(`DELETE FROM lib.feature_flag_overrides WHERE flag_key='FACTORING_GL_POSTING_ENABLED' AND operating_company_id=$1::uuid`, [companyId]);
-        await db.query(`DELETE FROM accounting.journal_entry_postings WHERE journal_entry_uuid IN (SELECT id FROM accounting.journal_entries WHERE memo LIKE $1)`, [`%${suffix}%`]);
-        await db.query(`DELETE FROM accounting.journal_entries WHERE memo LIKE $1`, [`%${suffix}%`]);
-        if (invoiceIds.length) {
-          await db.query(`DELETE FROM accounting.invoices WHERE id = ANY($1::uuid[])`, [invoiceIds]);
-        }
-        // Default-interest accruals are append-only (REVOKE DELETE) and FK-reference the advance, so an
-        // accrual-bearing advance (the F2 default-interest test) cannot be hard-deleted — deactivate its
-        // ledger rows and leave the advance in place (scoped by a unique run id, never asserted elsewhere).
-        // Deleting it unconditionally would raise a FK violation that rolls back this whole cleanup txn.
+        // Append-only posting_keys / DI accruals REVOKE DELETE — leave JE/advance residue on this
+        // isolated company; deactivate the company namespace so it cannot poison later suites.
         await db.query(
           `UPDATE accounting.factoring_default_interest_accruals SET is_active = false, updated_at = now()
             WHERE factoring_advance_id = ANY($1::uuid[]) AND operating_company_id = $2::uuid`,
           [advanceIds, companyId]
         );
-        await db.query(
-          `DELETE FROM accounting.factoring_advances fa
-            WHERE fa.id = ANY($1::uuid[])
-              AND NOT EXISTS (
-                SELECT 1 FROM accounting.factoring_default_interest_accruals a
-                 WHERE a.factoring_advance_id = fa.id
-              )`,
-          [advanceIds]
-        );
-        await db.query(`DELETE FROM mdata.customers WHERE id = $1::uuid`, [customerId]);
-        // ih35_app has no DELETE on canonical_factor_agreements — expire + deactivate so shared TRANSP
-        // does not keep an ambiguous/extra Faro binding for later suites.
         if (seededFaroAgreementId) {
           await db.query(
             `UPDATE factoring.canonical_factor_agreements
@@ -432,15 +394,14 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
             companyId,
           ]);
         }
-        if (seededFaroVendor) {
-          // Vendor may remain referenced by the expired agreement row (REVOKE DELETE on agreements).
-          await db.query(
-            `UPDATE mdata.vendors SET deactivated_at = COALESCE(deactivated_at, now()) WHERE id = $1::uuid`,
-            [vendorId]
-          );
-        }
-        await db.query(`DELETE FROM integrations.qbo_sync_queue WHERE operating_company_id=$1::uuid AND entity_type='journal_entry' AND entity_id = ANY($2::uuid[])`, [companyId, journalEntryIds]);
+        await db.query(
+          `UPDATE mdata.vendors SET deactivated_at = COALESCE(deactivated_at, now()) WHERE id = $1::uuid`,
+          [vendorId]
+        );
         await db.query(`DELETE FROM integrations.qbo_connections WHERE operating_company_id=$1::uuid AND realm_id=$2`, [companyId, `TEST-REALM-T06-${suffix}`]);
+        if (isolated) {
+          await deactivateIsolatedOperatingCompany(db, isolated);
+        }
       });
     } catch {
       /* best-effort cleanup */

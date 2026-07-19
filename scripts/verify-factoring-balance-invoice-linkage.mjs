@@ -236,6 +236,16 @@ export function checker(sources) {
   forbidExec("poster", /return companyBusinessDate\(\)\s*;/, "poster_must_not_fallback_entry_date_to_today");
   requireExec("chain06DbTest", "requireEffectiveFaroFullRecourseAgreement", "chain06_db_must_seed_faro_agreement");
   requireExec("chain06DbTest", "canonical_factor_agreements", "chain06_db_must_insert_faro_agreement");
+  // ROOT CAUSE (build-typecheck flake): shared TRANSP + parallel forks deadlocked on
+  // factoring_lifecycle_posting_keys composite FKs. Isolation is mandatory — advisory lock alone
+  // does not cover the poster's withCurrentUser connection.
+  requireExec("chain06DbTest", "createIsolatedOperatingCompany", "chain06_db_must_use_isolated_company");
+  requireExec("chain06DbTest", "deactivateIsolatedOperatingCompany", "chain06_db_must_teardown_isolated_company");
+  forbidExec(
+    "chain06DbTest",
+    /companyId\s*=\s*await\s+ensureIntegrationPrerequisites\s*\(/,
+    "chain06_db_must_not_use_shared_transp_company"
+  );
   requireIdent("defaultInterest", "companyBusinessDate", "default_interest_company_business_date_missing");
   requireIdent("defaultInterest", "loadExactLinkedChargebackAmounts", "default_interest_exact_linked_amounts_missing");
   requireIdent("defaultInterest", "requireEffectiveFaroFullRecourseAgreement", "default_interest_faro_gate_missing");
@@ -547,6 +557,11 @@ function createBadFixture(good) {
     String(bad.service) +
     "\nconst legal = row.legal_name; /TRANSPORTATION/i.test(legal);\n";
   bad.service = String(bad.service).replace(/a\.voided_at IS NULL/g, "a.something_else IS NULL");
+  bad.chain06DbTest =
+    String(good.chain06DbTest ?? "")
+      .replace(/createIsolatedOperatingCompany/g, "createSomethingElse")
+      .replace(/deactivateIsolatedOperatingCompany/g, "deactivateSomethingElse") +
+    "\ncompanyId = await ensureIntegrationPrerequisites();\n";
   return bad;
 }
 
@@ -586,6 +601,8 @@ if (isDirectRun) {
       // exact-shape check to requireIdent (executable/identifier semantics, string literals masked) so it
       // can never be weakened back to a string-permitting requireExec that a dead decoy would satisfy.
       "poster_exact_shape_validator_missing",
+      "chain06_db_must_use_isolated_company",
+      "chain06_db_must_not_use_shared_transp_company",
     ],
   });
 }
