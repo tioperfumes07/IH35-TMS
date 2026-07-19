@@ -48,14 +48,13 @@ const openDriftLog = {
 
 describe("QBOSyncDriftDashboard resolve mutation error handling", () => {
   it("surfaces a toast instead of failing silently when drift resolve rejects", async () => {
-    // Dashboard GETs succeed; resolve POSTs reject. mockRejectedValue marks the reject path for the CI guard.
+    // Dashboard GET succeeds; resolve POST rejects via Promise.reject (guard-locked — no typeof games).
     apiRequestMock.mockImplementation((path: string) => {
       if (String(path).includes("/drift-dashboard")) {
         return Promise.resolve(openDriftLog);
       }
       return Promise.reject(new Error("Drift resolve denied by server"));
     });
-    expect(typeof apiRequestMock.mockRejectedValue).toBe("function");
 
     render(wrap(<QBOSyncDriftDashboard />));
 

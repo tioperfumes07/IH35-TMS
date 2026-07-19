@@ -62,13 +62,22 @@ export function check({ pageSrc, testSrc }) {
     failures.push(`${TEST_FILE} — MISSING (regression test for the silent-failure fix)`);
   } else {
     const requiredMarkers = [
-      "apiRequestMock.mockRejectedValue",
+      "Promise.reject",
       'screen.getByTestId("toast-message")',
     ];
     for (const marker of requiredMarkers) {
       if (!testSrc.includes(marker)) {
         failures.push(`${TEST_FILE} — must include ${marker}`);
       }
+    }
+    // Reject gaming: a typeof mockRejectedValue check alone must not satisfy the reject proof.
+    if (
+      /typeof\s+apiRequestMock\.mockRejectedValue/.test(testSrc) &&
+      !/Promise\.reject\s*\(/.test(testSrc)
+    ) {
+      failures.push(
+        `${TEST_FILE} — reject path must use Promise.reject(...), not a typeof mockRejectedValue guard-game`
+      );
     }
   }
 
