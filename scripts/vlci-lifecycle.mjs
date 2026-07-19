@@ -1,35 +1,60 @@
 /**
  * Shared lifecycle controls for verify:local-ci (VLCI).
  *
- * Single-owner law:
- *   - At most one owning local-ci Postgres lifecycle at a time (exclusive lock).
- *   - Nested `npm run verify:local-ci` while IH35_VLCI_ACTIVE=1 fails closed.
- *   - Ephemeral clusters bind a dynamically allocated free port (no fixed 54329 clash).
- *   - Explicit inherit mode reuses a parent-provided local ih35_verify URL without starting PG.
+ * Ownership law (fail closed — env flags alone NEVER authorize):
+ *   - Canonical lock path only (tmpdir + repo digest). IH35_VLCI_LOCK_PATH overrides are rejected.
+ *   - Per-run token minted at lock acquire; written into the lock; passed only to child env.
+ *   - OWNED / INHERIT / ACTIVE env flags are signals at most — proof = token + live lock +
+ *     matching pid/start identity + exact dataDir/port/database/url bindings.
+ *   - Nested owners fail via exclusive lock (not via forgeable ACTIVE=1).
+ *   - Dynamic ports require a validated ownership proof; CI docker :54329 remains the no-proof path.
  */
 import { spawnSync } from "node:child_process";
+import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import fs from "node:fs";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
-import { createHash } from "node:crypto";
 
 export const VLCI_ENV = Object.freeze({
+  /** Soft nested/child signal only — never authorizes. */
   ACTIVE: "IH35_VLCI_ACTIVE",
+  /** Soft signal only — never authorizes. */
   OWNED: "IH35_VLCI_OWNED",
+  /** Soft signal only — never authorizes. */
   INHERIT: "IH35_VLCI_INHERIT",
+  /** Per-run secret; authorizes only when it matches the live canonical lock. */
+  TOKEN: "IH35_VLCI_TOKEN",
   DATABASE_URL: "IH35_VLCI_DATABASE_URL",
   PORT: "IH35_VLCI_PORT",
+  DATADIR: "IH35_VLCI_DATADIR",
+  STARTED_AT: "IH35_VLCI_STARTED_AT",
+  OWNER_PID: "IH35_VLCI_OWNER_PID",
+  /** Rejected when set to anything other than the canonical path. */
   LOCK_PATH: "IH35_VLCI_LOCK_PATH",
 });
 
 export const VLCI_DB_NAME = "ih35_verify";
-/** CI / docker-compose.verify.yml published port — still accepted as a local-safe target. */
+/** CI / docker-compose.verify.yml published port — accepted without VLCI proof. */
 export const VLCI_CI_PORT = 54329;
 
-export function defaultLockPath(repoRoot) {
+export const C5_ORCHESTRATOR_SCRIPTS = Object.freeze(["verify:local-ci", "verify:static"]);
+
+function safeEqualStr(a, b) {
+  const left = Buffer.from(String(a ?? ""), "utf8");
+  const right = Buffer.from(String(b ?? ""), "utf8");
+  if (left.length !== right.length) return false;
+  return timingSafeEqual(left, right);
+}
+
+export function canonicalLockPath(repoRoot) {
   const digest = createHash("sha256").update(path.resolve(repoRoot)).digest("hex").slice(0, 16);
   return path.join(os.tmpdir(), `ih35-vlci-${digest}.lock`);
+}
+
+/** @deprecated use canonicalLockPath */
+export function defaultLockPath(repoRoot) {
+  return canonicalLockPath(repoRoot);
 }
 
 export function isPidAlive(pid) {
@@ -42,38 +67,86 @@ export function isPidAlive(pid) {
   }
 }
 
+export function mintVlciToken() {
+  return randomBytes(32).toString("hex");
+}
+
+export function readLockFile(lockPath) {
+  if (!lockPath || !fs.existsSync(lockPath)) return null;
+  try {
+    return JSON.parse(fs.readFileSync(lockPath, "utf8"));
+  } catch {
+    return null;
+  }
+}
+
+function writeLockFile(lockPath, record) {
+  fs.writeFileSync(lockPath, `${JSON.stringify(record, null, 0)}\n`, "utf8");
+}
+
 /**
- * Exclusive create-or-stale-reclaim lock. Fail closed if another live owner holds it.
- * Returns { ok:true, lockPath, created:true } or { ok:false, reason, holderPid? }.
+ * Resolve lock path. Rejects arbitrary IH35_VLCI_LOCK_PATH (must be unset or == canonical).
+ */
+export function resolveCanonicalLockPath(repoRoot, env = process.env) {
+  const canonical = canonicalLockPath(repoRoot);
+  const override = env[VLCI_ENV.LOCK_PATH];
+  if (override != null && String(override).trim() !== "" && path.resolve(String(override)) !== path.resolve(canonical)) {
+    return {
+      ok: false,
+      reason: "IH35_VLCI_LOCK_PATH override rejected — only the canonical temp lock path is allowed",
+      canonical,
+      override: String(override),
+    };
+  }
+  return { ok: true, lockPath: canonical };
+}
+
+/**
+ * Exclusive create-or-stale-reclaim lock with full ownership record.
+ * Returns { ok:true, lockPath, record } or { ok:false, reason, holderPid? }.
  */
 export function acquireExclusiveLock(
   lockPath,
-  { pid = process.pid, now = Date.now(), isAlive = isPidAlive, retries = 1 } = {}
+  {
+    pid = process.pid,
+    now = Date.now(),
+    token = mintVlciToken(),
+    repoRoot = null,
+    isAlive = isPidAlive,
+    retries = 1,
+  } = {}
 ) {
-  const payload = `${JSON.stringify({ pid, startedAt: now })}\n`;
+  const record = {
+    pid,
+    startedAt: now,
+    token,
+    repoRoot: repoRoot ? path.resolve(repoRoot) : null,
+    dataDir: null,
+    port: null,
+    database: VLCI_DB_NAME,
+    url: null,
+  };
   try {
     const fd = fs.openSync(lockPath, "wx");
     try {
-      fs.writeFileSync(fd, payload, "utf8");
+      fs.writeFileSync(fd, `${JSON.stringify(record)}\n`, "utf8");
     } finally {
       fs.closeSync(fd);
     }
-    return { ok: true, lockPath, created: true };
+    return { ok: true, lockPath, record, created: true };
   } catch (err) {
     if (err?.code !== "EEXIST") {
       return { ok: false, reason: `lock-open-failed:${err?.code || err?.message || "unknown"}` };
     }
-    let existing = null;
-    try {
-      existing = JSON.parse(fs.readFileSync(lockPath, "utf8"));
-    } catch {
+    const existing = readLockFile(lockPath);
+    if (!existing) {
       if (retries <= 0) return { ok: false, reason: "lock-held-unreadable" };
       try {
         fs.rmSync(lockPath, { force: true });
       } catch {
         return { ok: false, reason: "lock-held-unreadable" };
       }
-      return acquireExclusiveLock(lockPath, { pid, now, isAlive, retries: retries - 1 });
+      return acquireExclusiveLock(lockPath, { pid, now, token, repoRoot, isAlive, retries: retries - 1 });
     }
     const holderPid = Number(existing?.pid);
     if (isAlive(holderPid)) {
@@ -85,25 +158,41 @@ export function acquireExclusiveLock(
     } catch {
       return { ok: false, reason: "lock-held-stale-race" };
     }
-    return acquireExclusiveLock(lockPath, { pid, now, isAlive, retries: retries - 1 });
+    return acquireExclusiveLock(lockPath, { pid, now, token, repoRoot, isAlive, retries: retries - 1 });
   }
 }
 
-export function releaseExclusiveLock(lockPath, { pid = process.pid } = {}) {
+export function updateLockBindings(lockPath, { token, pid, dataDir, port, database, url }) {
+  const existing = readLockFile(lockPath);
+  if (!existing) return { ok: false, reason: "lock-missing" };
+  if (!safeEqualStr(existing.token, token)) return { ok: false, reason: "token-mismatch" };
+  if (Number(existing.pid) !== Number(pid)) return { ok: false, reason: "pid-mismatch" };
+  const next = {
+    ...existing,
+    dataDir: dataDir ?? existing.dataDir,
+    port: port != null ? Number(port) : existing.port,
+    database: database ?? existing.database ?? VLCI_DB_NAME,
+    url: url ?? existing.url,
+  };
+  writeLockFile(lockPath, next);
+  return { ok: true, record: next };
+}
+
+export function releaseExclusiveLock(lockPath, { pid = process.pid, token = null } = {}) {
   if (!lockPath || !fs.existsSync(lockPath)) return { ok: true, released: false };
-  try {
-    const existing = JSON.parse(fs.readFileSync(lockPath, "utf8"));
-    if (Number(existing?.pid) !== pid) {
-      return { ok: false, reason: "lock-owned-by-other", holderPid: Number(existing?.pid) };
+  const existing = readLockFile(lockPath);
+  if (existing) {
+    if (Number(existing.pid) !== Number(pid)) {
+      return { ok: false, reason: "lock-owned-by-other", holderPid: Number(existing.pid) };
     }
-  } catch {
-    // Unreadable lock we still attempt to remove if we created the path in this process.
+    if (token != null && !safeEqualStr(existing.token, token)) {
+      return { ok: false, reason: "token-mismatch" };
+    }
   }
   fs.rmSync(lockPath, { force: true });
   return { ok: true, released: true };
 }
 
-/** Allocate an ephemeral free TCP port on 127.0.0.1. */
 export function allocateEphemeralPort() {
   return new Promise((resolve, reject) => {
     const server = net.createServer();
@@ -122,7 +211,6 @@ export function allocateEphemeralPort() {
 }
 
 export function allocateEphemeralPortSync() {
-  // listen(0) is async in Node; use a short-lived child so callers can stay spawnSync-shaped.
   const res = spawnSync(
     process.execPath,
     [
@@ -141,13 +229,114 @@ export function allocateEphemeralPortSync() {
   return port;
 }
 
+export function isAddressInUseError(err) {
+  const text = `${err?.message || err || ""} ${err?.stderr || ""}`.toLowerCase();
+  return (
+    err?.code === "EADDRINUSE" ||
+    text.includes("eaddrinuse") ||
+    text.includes("address already in use") ||
+    text.includes("address-in-use")
+  );
+}
+
+/**
+ * Validate ownership proof against the live canonical lock.
+ * Env OWNED/INHERIT/ACTIVE are ignored for authorization.
+ */
+export function validateOwnershipProof(
+  env = process.env,
+  {
+    repoRoot,
+    requireBindings = true,
+    expectedUrl = null,
+    isAlive = isPidAlive,
+  } = {}
+) {
+  if (!repoRoot) return { ok: false, reason: "repoRoot-required" };
+  const lockRes = resolveCanonicalLockPath(repoRoot, env);
+  if (!lockRes.ok) return { ok: false, reason: lockRes.reason };
+
+  const token = env[VLCI_ENV.TOKEN];
+  if (!token || typeof token !== "string" || token.length < 32) {
+    return { ok: false, reason: "missing-or-short-token" };
+  }
+
+  const record = readLockFile(lockRes.lockPath);
+  if (!record) return { ok: false, reason: "lock-missing" };
+  if (!safeEqualStr(record.token, token)) return { ok: false, reason: "token-mismatch" };
+
+  const ownerPid = Number(record.pid);
+  if (!isAlive(ownerPid)) return { ok: false, reason: "owner-pid-dead" };
+
+  const envOwnerPid = env[VLCI_ENV.OWNER_PID];
+  if (envOwnerPid != null && String(envOwnerPid).trim() !== "" && Number(envOwnerPid) !== ownerPid) {
+    return { ok: false, reason: "owner-pid-env-mismatch" };
+  }
+  const envStarted = env[VLCI_ENV.STARTED_AT];
+  if (envStarted != null && String(envStarted).trim() !== "" && Number(envStarted) !== Number(record.startedAt)) {
+    return { ok: false, reason: "startedAt-mismatch" };
+  }
+
+  if (requireBindings) {
+    if (!record.dataDir || record.port == null || !record.url || !record.database) {
+      return { ok: false, reason: "lock-bindings-incomplete" };
+    }
+    const envDataDir = env[VLCI_ENV.DATADIR];
+    if (envDataDir != null && String(envDataDir).trim() !== "" && path.resolve(String(envDataDir)) !== path.resolve(record.dataDir)) {
+      return { ok: false, reason: "dataDir-mismatch" };
+    }
+    const envPort = env[VLCI_ENV.PORT];
+    if (envPort != null && String(envPort).trim() !== "" && Number(envPort) !== Number(record.port)) {
+      return { ok: false, reason: "port-mismatch" };
+    }
+    // Every provided URL source must match the lock (DATABASE_URL alone cannot diverge from VLCI URL).
+    const urlCandidates = [expectedUrl, env[VLCI_ENV.DATABASE_URL], env.DATABASE_URL].filter(
+      (u) => typeof u === "string" && u.trim() !== ""
+    );
+    if (urlCandidates.length === 0) {
+      return { ok: false, reason: "url-mismatch" };
+    }
+    for (const claimedUrl of urlCandidates) {
+      if (!urlsMatchOwned(claimedUrl, record)) {
+        return { ok: false, reason: "url-mismatch" };
+      }
+    }
+  }
+
+  return { ok: true, lockPath: lockRes.lockPath, record };
+}
+
+function urlsMatchOwned(claimedUrl, record) {
+  let parsed;
+  try {
+    parsed = new URL(claimedUrl);
+  } catch {
+    return false;
+  }
+  const hostOk = parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1";
+  if (!hostOk) return false;
+  const db = parsed.pathname.replace(/^\//, "").split("?")[0];
+  if (db !== (record.database || VLCI_DB_NAME)) return false;
+  if (Number(parsed.port || "5432") !== Number(record.port)) return false;
+  if (record.url) {
+    try {
+      const owned = new URL(record.url);
+      if (Number(owned.port) !== Number(parsed.port)) return false;
+      if (owned.pathname.replace(/^\//, "").split("?")[0] !== db) return false;
+    } catch {
+      return false;
+    }
+  }
+  return true;
+}
+
 /**
  * Local-safe verify DB target (anti-prod).
- * Accepts:
- *   - localhost/127.0.0.1 + ih35_verify + port 54329 (CI / docker-compose.verify)
- *   - localhost/127.0.0.1 + ih35_verify + any port when IH35_VLCI_OWNED=1 (ephemeral VLCI)
+ * - CI/docker :54329 + ih35_verify → allowed without VLCI proof
+ * - Any other localhost ih35_verify port → ONLY with validateOwnershipProof (token+lock+bindings)
+ * - OWNED=1 / INHERIT=1 alone → NEVER enough
  */
-export function isLocalVerifyDatabaseUrl(verifyUrl, env = process.env) {
+export function isLocalVerifyDatabaseUrl(verifyUrl, env = process.env, opts = {}) {
   if (typeof verifyUrl !== "string" || !verifyUrl.includes(VLCI_DB_NAME)) return false;
   let parsed;
   try {
@@ -159,34 +348,160 @@ export function isLocalVerifyDatabaseUrl(verifyUrl, env = process.env) {
   if (host !== "localhost" && host !== "127.0.0.1") return false;
   const port = parsed.port || "5432";
   if (port === String(VLCI_CI_PORT)) return true;
-  return env[VLCI_ENV.OWNED] === "1";
+
+  const repoRoot = opts.repoRoot;
+  if (!repoRoot) return false;
+  const proof = validateOwnershipProof(env, {
+    repoRoot,
+    requireBindings: true,
+    expectedUrl: verifyUrl,
+    isAlive: opts.isAlive ?? isPidAlive,
+  });
+  return proof.ok === true;
 }
 
 /**
  * Resolve how this process should obtain a verify DB.
- * @returns {{ mode: "own" } | { mode: "inherit", url: string } | { mode: "reject", reason: string }}
+ * Soft INHERIT/OWNED/ACTIVE flags never authorize — only a validated ownership proof does.
  */
-export function resolveVlciLifecycle(env = process.env) {
-  if (env[VLCI_ENV.ACTIVE] === "1") {
+export function resolveVlciLifecycle(env = process.env, { repoRoot, isAlive = isPidAlive } = {}) {
+  if (!repoRoot) {
+    return { mode: "reject", reason: "repoRoot-required" };
+  }
+
+  const lockRes = resolveCanonicalLockPath(repoRoot, env);
+  if (!lockRes.ok) return { mode: "reject", reason: lockRes.reason };
+
+  const token = env[VLCI_ENV.TOKEN];
+  if (token) {
+    const proof = validateOwnershipProof(env, { repoRoot, requireBindings: true, isAlive });
+    if (!proof.ok) {
+      return { mode: "reject", reason: `ownership-proof-failed:${proof.reason}` };
+    }
+    return { mode: "inherit", url: proof.record.url, record: proof.record, lockPath: proof.lockPath };
+  }
+
+  // Soft flags without token → reject (free-env ownership eliminated).
+  if (env[VLCI_ENV.INHERIT] === "1" || env[VLCI_ENV.OWNED] === "1") {
     return {
       mode: "reject",
       reason:
-        "nested verify:local-ci refused (IH35_VLCI_ACTIVE=1). Gate graph must stay acyclic — one local-ci owner per push.",
+        "IH35_VLCI_OWNED/INHERIT without IH35_VLCI_TOKEN cannot authorize — ownership is lock+token bound",
     };
   }
-  if (env[VLCI_ENV.INHERIT] === "1") {
-    const url = env[VLCI_ENV.DATABASE_URL] || env.DATABASE_URL || "";
-    if (!isLocalVerifyDatabaseUrl(url, { ...env, [VLCI_ENV.OWNED]: "1" })) {
-      return {
-        mode: "reject",
-        reason:
-          "IH35_VLCI_INHERIT=1 requires IH35_VLCI_DATABASE_URL/DATABASE_URL pointing at local ih35_verify",
-      };
-    }
-    return { mode: "inherit", url };
-  }
-  return { mode: "own" };
+
+  return { mode: "own", lockPath: lockRes.lockPath };
 }
 
-/** C5 must never execute these — they are orchestrators, not unit guards. */
-export const C5_ORCHESTRATOR_SCRIPTS = Object.freeze(["verify:local-ci", "verify:static"]);
+export function buildChildEnv(baseEnv, session) {
+  const { record, lockPath, token } = session;
+  return {
+    ...baseEnv,
+    [VLCI_ENV.ACTIVE]: "1",
+    [VLCI_ENV.OWNED]: "1",
+    [VLCI_ENV.TOKEN]: token,
+    [VLCI_ENV.OWNER_PID]: String(record.pid),
+    [VLCI_ENV.STARTED_AT]: String(record.startedAt),
+    [VLCI_ENV.PORT]: String(record.port),
+    [VLCI_ENV.DATADIR]: record.dataDir,
+    [VLCI_ENV.DATABASE_URL]: record.url,
+    [VLCI_ENV.LOCK_PATH]: lockPath,
+  };
+}
+
+/**
+ * Create an owning VLCI session (canonical lock + token). Caller binds PG then updateBindings.
+ */
+export function createOwnerSession(repoRoot, { pid = process.pid, now = Date.now(), isAlive = isPidAlive } = {}) {
+  const lockRes = resolveCanonicalLockPath(repoRoot, {});
+  if (!lockRes.ok) throw new Error(lockRes.reason);
+  const token = mintVlciToken();
+  const acquired = acquireExclusiveLock(lockRes.lockPath, {
+    pid,
+    now,
+    token,
+    repoRoot,
+    isAlive,
+  });
+  if (!acquired.ok) {
+    const err = new Error(`vlci-lock-failed:${acquired.reason}`);
+    err.detail = acquired;
+    throw err;
+  }
+  const session = {
+    repoRoot: path.resolve(repoRoot),
+    lockPath: acquired.lockPath,
+    token,
+    record: acquired.record,
+    updateBindings({ dataDir, port, database = VLCI_DB_NAME, url }) {
+      const updated = updateLockBindings(session.lockPath, {
+        token: session.token,
+        pid: session.record.pid,
+        dataDir,
+        port,
+        database,
+        url,
+      });
+      if (!updated.ok) throw new Error(`vlci-bind-failed:${updated.reason}`);
+      session.record = updated.record;
+      return session.record;
+    },
+    childEnv(baseEnv = process.env) {
+      return buildChildEnv(baseEnv, session);
+    },
+    release() {
+      return releaseExclusiveLock(session.lockPath, { pid: session.record.pid, token: session.token });
+    },
+  };
+  return session;
+}
+
+/**
+ * Install SIGINT/SIGTERM/uncaught handlers that invoke cleanup once, then re-raise/exit.
+ * Returns dispose() to remove handlers.
+ */
+export function installLifecycleCleanupHandlers(cleanup, { exit = true } = {}) {
+  let ran = false;
+  const runCleanup = (why) => {
+    if (ran) return;
+    ran = true;
+    try {
+      cleanup(why);
+    } catch {
+      /* swallow cleanup errors; exit path still proceeds */
+    }
+  };
+
+  const onSignal = (signal) => {
+    runCleanup(signal);
+    if (exit) {
+      const code = signal === "SIGINT" ? 130 : 143;
+      process.exit(code);
+    }
+  };
+  const onUncaught = (err) => {
+    runCleanup("uncaughtException");
+    console.error(err);
+    if (exit) process.exit(1);
+  };
+  const onRejection = (reason) => {
+    runCleanup("unhandledRejection");
+    console.error(reason);
+    if (exit) process.exit(1);
+  };
+
+  process.on("SIGINT", onSignal);
+  process.on("SIGTERM", onSignal);
+  process.on("uncaughtException", onUncaught);
+  process.on("unhandledRejection", onRejection);
+
+  return {
+    dispose() {
+      process.off("SIGINT", onSignal);
+      process.off("SIGTERM", onSignal);
+      process.off("uncaughtException", onUncaught);
+      process.off("unhandledRejection", onRejection);
+    },
+    runCleanup,
+  };
+}

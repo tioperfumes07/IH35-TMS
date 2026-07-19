@@ -13,24 +13,30 @@
   "extra_gates": [],
   "allowed_files": [
     "scripts/vlci-lifecycle.mjs",
+    "scripts/static-sweep-proof.mjs",
     "scripts/verify-local-ci.mjs",
     "scripts/verify-local-ci-gate-acyclic.mjs",
     "scripts/verify-steps/910-verify-local-ci-gate-acyclic.mjs",
     "scripts/verify-db-reset.mjs",
     "scripts/block-ready.mjs",
+    "scripts/branch-precheck-push.mjs",
     "scripts/verify-meta.json",
     "scripts/verify-block-ready-c5-no-duplicate-arch-design.mjs",
+    "scripts/dev/vlci-lifecycle-harness.mjs",
     "scripts/__tests__/verify-local-ci-lifecycle.test.mjs",
     "scripts/__tests__/block-ready.test.mjs",
+    "apps/frontend/src/components/home/__tests__/QboSyncHealthCard.test.tsx",
     "docs/specs/BRANCH-TOOLING.md",
     ".block-ready/pre-push-pipeline-deadlock-3b0b.json"
   ],
   "acceptance": [
-    { "check": "C5 skips verify:local-ci and verify:static (orchestrators)" },
-    { "check": "nested IH35_VLCI_ACTIVE verify:local-ci exits non-zero (fail closed)" },
-    { "check": "concurrent VLCI lock: second owner fails; lock cleaned on success/failure" },
-    { "check": "dynamic port allocation — no sole fixed 54329 lifecycle" },
-    { "check": "verify-local-ci-gate-acyclic + --selftest PASS; wired via verify-steps/910 only (Rule 17)" }
+    { "check": "C5 skips verify:local-ci and verify:static (orchestrators) — unchanged" },
+    { "check": "OWNED/INHERIT/ACTIVE alone cannot authorize; planted attacks fail closed" },
+    { "check": "ownership = canonical lock + token + live pid + dataDir/port/database/url bindings" },
+    { "check": "SIGINT/SIGTERM harness cleans dataDir + releases lock" },
+    { "check": "port TOCTOU: stolen first port retries; second succeeds and cleans" },
+    { "check": "block-ready ensureVerifyStaticOnce; pre-push does not duplicate verify:static" },
+    { "check": "verify-local-ci-gate-acyclic + lifecycle tests PASS (Rule 17 wiring)" }
   ],
   "note": "Root-cause fix for pre-push deadlock: C5 was nesting verify:local-ci (full Postgres + verify:pre-commit) via blind verify:* enumeration; fixed port 54329 contended under nested/sibling runs."
 }

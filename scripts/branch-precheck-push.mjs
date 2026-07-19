@@ -65,10 +65,10 @@ function runStep(command, label, root) {
 
 export function buildPrecheckSteps(root) {
   void root;
+  // verify:static is owned once by block-ready (in-process proof). Do not duplicate here.
   return [
     { label: "build-backend", command: "npm run build:backend" },
     { label: "frontend-tsc", command: "cd apps/frontend && npx tsc -b && cd ../.." },
-    { label: "verify-static", command: "node scripts/verify-static.mjs" },
     {
       label: "block-ready",
       command: "npm run block-ready",
@@ -191,6 +191,7 @@ export function runPrecheckPush(options = {}) {
     ? options.capabilityPolicy ?? loadCapabilityPolicy(root)
     : null;
   const skippedCapabilities = [];
+  let blockReadyRan = false;
   for (const step of steps) {
     const preflight = preflightStep(step, capabilities, capabilityPolicy);
     if (preflight.action === "fail") {
@@ -219,6 +220,25 @@ export function runPrecheckPush(options = {}) {
         reason: `${step.label} failed`,
         step: step.label,
         tail: result.tail,
+      };
+    }
+    if (step.label === "block-ready") blockReadyRan = true;
+  }
+  // block-ready owns verify:static in-process. If it was capability-skipped, run static once here
+  // so push still has static coverage — never duplicate when block-ready already ran.
+  if (!blockReadyRan && steps.some((s) => s.label === "block-ready")) {
+    const staticResult = runStep("node scripts/verify-static.mjs", "verify-static-fallback", root);
+    if (!staticResult.ok) {
+      console.error(
+        `branch:precheck-push FAIL category=${staticResult.category} at step: verify-static-fallback`
+      );
+      if (staticResult.tail) console.error(staticResult.tail);
+      return {
+        ok: false,
+        category: staticResult.category,
+        reason: "verify-static-fallback failed (block-ready was capability-skipped)",
+        step: "verify-static-fallback",
+        tail: staticResult.tail,
       };
     }
   }

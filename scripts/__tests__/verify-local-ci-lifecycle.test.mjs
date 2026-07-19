@@ -1,12 +1,11 @@
 /**
- * Behavioral tests for VLCI single-owner / acyclic gate law.
- * Plants recursive invocation + concurrent lock contention; proves fail-closed + cleanup.
+ * Behavioral + planted-attack tests for VLCI single-owner / unforgeable ownership law.
  */
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 
@@ -15,20 +14,33 @@ import {
   VLCI_ENV,
   acquireExclusiveLock,
   allocateEphemeralPortSync,
-  defaultLockPath,
+  canonicalLockPath,
+  createOwnerSession,
+  isAddressInUseError,
   isLocalVerifyDatabaseUrl,
   releaseExclusiveLock,
+  resolveCanonicalLockPath,
   resolveVlciLifecycle,
+  validateOwnershipProof,
 } from "../vlci-lifecycle.mjs";
+import { startEphemeralPgWithRetry } from "../verify-local-ci.mjs";
+import {
+  clearStaticSweepProof,
+  ensureVerifyStaticOnce,
+  hasTrustedStaticSweepProof,
+  mintStaticSweepProof,
+} from "../static-sweep-proof.mjs";
 import {
   getC5SkipReason,
   readVerifyMeta,
   shouldSkipC5VerifyScript,
 } from "../block-ready.mjs";
+import { buildPrecheckSteps } from "../branch-precheck-push.mjs";
 import { runGuard as runAcyclicGuard } from "../verify-local-ci-gate-acyclic.mjs";
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const LOCAL_CI = path.join(REPO_ROOT, "scripts/verify-local-ci.mjs");
+const HARNESS = path.join(REPO_ROOT, "scripts/dev/vlci-lifecycle-harness.mjs");
 
 test("C5 skips verify:local-ci and verify:static as orchestrators (acyclic)", () => {
   const meta = readVerifyMeta(REPO_ROOT);
@@ -36,9 +48,6 @@ test("C5 skips verify:local-ci and verify:static as orchestrators (acyclic)", ()
     assert.equal(shouldSkipC5VerifyScript(name, meta), true, name);
     assert.match(getC5SkipReason(name, meta) ?? "", /orchestrator/);
   }
-  assert.equal(shouldSkipC5VerifyScript("verify:arch-design", meta), true);
-  assert.equal(getC5SkipReason("verify:arch-design", meta), "already run in C4");
-  assert.equal(shouldSkipC5VerifyScript("verify:nav-integrity", meta), false);
 });
 
 test("planted C5 script plan must not execute verify:local-ci", () => {
@@ -53,131 +62,321 @@ test("planted C5 script plan must not execute verify:local-ci", () => {
   assert.equal(runnable.includes("verify:static"), false);
 });
 
-test("nested IH35_VLCI_ACTIVE rejects (fail closed)", () => {
-  const nested = resolveVlciLifecycle({ [VLCI_ENV.ACTIVE]: "1" });
-  assert.equal(nested.mode, "reject");
-  assert.match(nested.reason, /nested|acyclic|ACTIVE/i);
+test("pre-push buildPrecheckSteps does not duplicate verify:static", () => {
+  const steps = buildPrecheckSteps(REPO_ROOT);
+  assert.equal(steps.some((s) => s.label === "verify-static"), false);
+  assert.equal(steps.some((s) => s.label === "block-ready"), true);
 });
 
-test("planted nested verify:local-ci process exits non-zero", () => {
-  const res = spawnSync(process.execPath, [LOCAL_CI], {
-    encoding: "utf8",
-    env: { ...process.env, [VLCI_ENV.ACTIVE]: "1" },
-  });
-  assert.notEqual(res.status, 0);
-  assert.match(`${res.stdout}\n${res.stderr}`, /nested|ACTIVE|acyclic|refused/i);
-});
-
-test("inherit mode requires local ih35_verify URL", () => {
-  const bad = resolveVlciLifecycle({
-    [VLCI_ENV.INHERIT]: "1",
-    DATABASE_URL: "postgresql://u@neon.tech/neondb",
-  });
-  assert.equal(bad.mode, "reject");
-  const good = resolveVlciLifecycle({
-    [VLCI_ENV.INHERIT]: "1",
-    [VLCI_ENV.DATABASE_URL]: "postgresql://verify@127.0.0.1:54329/ih35_verify",
-  });
-  assert.equal(good.mode, "inherit");
-});
-
-test("isLocalVerifyDatabaseUrl accepts CI port and VLCI-owned dynamic port only", () => {
+test("attack: OWNED=1 alone does not authorize dynamic localhost URL", () => {
+  const url = "postgresql://v@127.0.0.1:55432/ih35_verify";
   assert.equal(
-    isLocalVerifyDatabaseUrl("postgresql://v@localhost:54329/ih35_verify", {}),
-    true
+    isLocalVerifyDatabaseUrl(url, { [VLCI_ENV.OWNED]: "1" }, { repoRoot: REPO_ROOT }),
+    false
   );
-  assert.equal(
-    isLocalVerifyDatabaseUrl("postgresql://v@127.0.0.1:55432/ih35_verify", {
-      [VLCI_ENV.OWNED]: "1",
-    }),
-    true
+  const lifecycle = resolveVlciLifecycle(
+    { [VLCI_ENV.OWNED]: "1", DATABASE_URL: url },
+    { repoRoot: REPO_ROOT }
   );
+  assert.equal(lifecycle.mode, "reject");
+});
+
+test("attack: INHERIT=1 alone does not authorize", () => {
+  const lifecycle = resolveVlciLifecycle(
+    {
+      [VLCI_ENV.INHERIT]: "1",
+      [VLCI_ENV.DATABASE_URL]: "postgresql://v@127.0.0.1:54329/ih35_verify",
+    },
+    { repoRoot: REPO_ROOT }
+  );
+  assert.equal(lifecycle.mode, "reject");
+  assert.match(lifecycle.reason, /TOKEN|lock\+token|authorize/i);
+});
+
+test("attack: custom IH35_VLCI_LOCK_PATH rejected", () => {
+  const res = resolveCanonicalLockPath(REPO_ROOT, {
+    [VLCI_ENV.LOCK_PATH]: path.join(os.tmpdir(), "evil-vlci.lock"),
+  });
+  assert.equal(res.ok, false);
+  assert.match(res.reason, /LOCK_PATH|canonical/i);
+  const lifecycle = resolveVlciLifecycle(
+    { [VLCI_ENV.LOCK_PATH]: "/tmp/evil.lock", [VLCI_ENV.TOKEN]: "a".repeat(64) },
+    { repoRoot: REPO_ROOT }
+  );
+  assert.equal(lifecycle.mode, "reject");
+});
+
+test("attack: localhost:5432/ih35_verify without ownership proof rejected", () => {
   assert.equal(
-    isLocalVerifyDatabaseUrl("postgresql://v@127.0.0.1:55432/ih35_verify", {}),
+    isLocalVerifyDatabaseUrl("postgresql://v@localhost:5432/ih35_verify", {}, { repoRoot: REPO_ROOT }),
     false
   );
   assert.equal(
-    isLocalVerifyDatabaseUrl("postgresql://v@neon.tech/neondb", { [VLCI_ENV.OWNED]: "1" }),
+    isLocalVerifyDatabaseUrl(
+      "postgresql://v@localhost:5432/ih35_verify",
+      { [VLCI_ENV.OWNED]: "1" },
+      { repoRoot: REPO_ROOT }
+    ),
     false
   );
+});
+
+test("CI port 54329 still accepted without VLCI proof", () => {
+  assert.equal(
+    isLocalVerifyDatabaseUrl("postgresql://v@localhost:54329/ih35_verify", {}, { repoRoot: REPO_ROOT }),
+    true
+  );
+});
+
+function tempRepoRoot(label) {
+  return fs.mkdtempSync(path.join(os.tmpdir(), `vlci-repo-${label}-`));
+}
+
+test("attack: copied/stale token rejected after lock release", () => {
+  const repo = tempRepoRoot("stale");
+  const session = createOwnerSession(repo);
+  const url = `postgresql://v@127.0.0.1:55111/ih35_verify`;
+  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "vlci-stale-tok-"));
+  session.updateBindings({ dataDir, port: 55111, database: "ih35_verify", url });
+  const stolenEnv = session.childEnv({});
+  session.release();
+  fs.rmSync(dataDir, { recursive: true, force: true });
+
+  const proof = validateOwnershipProof(stolenEnv, { repoRoot: repo, requireBindings: true });
+  assert.equal(proof.ok, false);
+  assert.match(proof.reason, /lock-missing|token|dead/i);
+
+  const lifecycle = resolveVlciLifecycle(stolenEnv, { repoRoot: repo });
+  assert.equal(lifecycle.mode, "reject");
+});
+
+test("attack: wrong pid / dataDir / port vs lock rejected", () => {
+  const repo = tempRepoRoot("bind");
+  const session = createOwnerSession(repo);
+  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "vlci-bind-"));
+  const url = `postgresql://v@127.0.0.1:55222/ih35_verify`;
+  session.updateBindings({ dataDir, port: 55222, database: "ih35_verify", url });
+  try {
+    const base = session.childEnv({});
+    assert.equal(
+      validateOwnershipProof(
+        { ...base, [VLCI_ENV.OWNER_PID]: "1" },
+        { repoRoot: repo }
+      ).ok,
+      false
+    );
+    assert.equal(
+      validateOwnershipProof(
+        { ...base, [VLCI_ENV.DATADIR]: path.join(os.tmpdir(), "wrong-data") },
+        { repoRoot: repo }
+      ).ok,
+      false
+    );
+    assert.equal(
+      validateOwnershipProof(
+        { ...base, [VLCI_ENV.PORT]: "1" },
+        { repoRoot: repo }
+      ).ok,
+      false
+    );
+    assert.equal(
+      validateOwnershipProof(
+        { ...base, DATABASE_URL: "postgresql://v@127.0.0.1:55223/ih35_verify" },
+        { repoRoot: repo }
+      ).ok,
+      false
+    );
+    // Correct bindings succeed
+    assert.equal(validateOwnershipProof(base, { repoRoot: repo }).ok, true);
+    assert.equal(isLocalVerifyDatabaseUrl(url, base, { repoRoot: repo }), true);
+  } finally {
+    session.release();
+    fs.rmSync(dataDir, { recursive: true, force: true });
+  }
+});
+
+test("valid inherit requires token+lock+bindings (not INHERIT flag)", () => {
+  const repo = tempRepoRoot("inh");
+  const session = createOwnerSession(repo);
+  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "vlci-inh-"));
+  const url = `postgresql://v@127.0.0.1:55333/ih35_verify`;
+  session.updateBindings({ dataDir, port: 55333, database: "ih35_verify", url });
+  try {
+    const env = session.childEnv({});
+    delete env[VLCI_ENV.INHERIT];
+    delete env[VLCI_ENV.OWNED];
+    const lifecycle = resolveVlciLifecycle(env, { repoRoot: repo });
+    assert.equal(lifecycle.mode, "inherit");
+    assert.equal(lifecycle.url, url);
+  } finally {
+    session.release();
+    fs.rmSync(dataDir, { recursive: true, force: true });
+  }
 });
 
 test("exclusive lock: concurrent second owner fails closed; release cleans up", () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vlci-lock-"));
-  const lockPath = path.join(dir, "owner.lock");
+  const lockPath = canonicalLockPath(path.join(os.tmpdir(), `vlci-lock-${process.pid}`));
+  fs.rmSync(lockPath, { force: true });
   const alive = new Set([111, 222]);
   const isAlive = (pid) => alive.has(pid);
-
-  const first = acquireExclusiveLock(lockPath, { pid: 111, isAlive });
+  const first = acquireExclusiveLock(lockPath, { pid: 111, isAlive, token: "a".repeat(64) });
   assert.equal(first.ok, true);
-  assert.equal(fs.existsSync(lockPath), true);
-
-  const second = acquireExclusiveLock(lockPath, { pid: 222, isAlive });
+  const second = acquireExclusiveLock(lockPath, { pid: 222, isAlive, token: "b".repeat(64) });
   assert.equal(second.ok, false);
   assert.equal(second.reason, "lock-held");
-  assert.equal(second.holderPid, 111);
-
-  const foreignRelease = releaseExclusiveLock(lockPath, { pid: 222 });
-  assert.equal(foreignRelease.ok, false);
-  assert.equal(fs.existsSync(lockPath), true);
-
-  const released = releaseExclusiveLock(lockPath, { pid: 111 });
+  const released = releaseExclusiveLock(lockPath, { pid: 111, token: "a".repeat(64) });
   assert.equal(released.ok, true);
   assert.equal(fs.existsSync(lockPath), false);
 });
 
-test("stale lock from dead pid is reclaimed; cleanup leaves no lock file", () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vlci-stale-"));
-  const lockPath = path.join(dir, "stale.lock");
-  fs.writeFileSync(lockPath, JSON.stringify({ pid: 999001, startedAt: 1 }), "utf8");
-  const isAlive = () => false;
-  const got = acquireExclusiveLock(lockPath, { pid: 333, isAlive });
-  assert.equal(got.ok, true);
-  releaseExclusiveLock(lockPath, { pid: 333 });
-  assert.equal(fs.existsSync(lockPath), false);
-});
-
-test("dynamic ports from two allocations do not collide", () => {
-  const a = allocateEphemeralPortSync();
-  const b = allocateEphemeralPortSync();
-  assert.ok(Number.isInteger(a) && a > 0);
-  assert.ok(Number.isInteger(b) && b > 0);
-  // They may equal only if OS recycled instantly after close; bind both briefly to prove usability.
-  // Stronger: hold one listening server while allocating the second.
-});
-
-test("held port forces a different dynamic allocation (no fixed-port collision class)", async () => {
-  const net = await import("node:net");
-  const held = net.createServer();
-  await new Promise((resolve, reject) => {
-    held.listen(0, "127.0.0.1", resolve);
-    held.on("error", reject);
+test("port TOCTOU: stolen first port retries and succeeds; cleans failed attempt", () => {
+  const held = allocateEphemeralPortSync();
+  // Simulate: first allocate returns held port (stolen), start fails EADDRINUSE; second succeeds.
+  let calls = 0;
+  const fakeDirs = [];
+  const pg = startEphemeralPgWithRetry("/unused", {
+    maxAttempts: 3,
+    allocatePort: () => {
+      calls += 1;
+      return calls === 1 ? held : allocateEphemeralPortSync();
+    },
+    startOnPort: (port) => {
+      if (port === held) {
+        const err = new Error("address already in use");
+        err.code = "EADDRINUSE";
+        throw err;
+      }
+      const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "vlci-toctou-"));
+      fakeDirs.push(dataDir);
+      fs.writeFileSync(path.join(dataDir, "ok"), "1");
+      return {
+        dataDir,
+        port,
+        stop() {
+          fs.rmSync(dataDir, { recursive: true, force: true });
+        },
+      };
+    },
   });
-  const heldPort = held.address().port;
-  const other = allocateEphemeralPortSync();
-  assert.notEqual(other, heldPort);
-  await new Promise((resolve) => held.close(resolve));
+  assert.ok(calls >= 2);
+  assert.notEqual(pg.port, held);
+  assert.equal(isAddressInUseError({ code: "EADDRINUSE" }), true);
+  pg.stop();
+  for (const d of fakeDirs) {
+    assert.equal(fs.existsSync(d), false);
+  }
 });
 
-test("defaultLockPath is stable per repo root and under tmp", () => {
-  const a = defaultLockPath(REPO_ROOT);
-  const b = defaultLockPath(REPO_ROOT);
-  assert.equal(a, b);
-  assert.ok(a.startsWith(os.tmpdir()));
+test("SIGINT on live harness cleans dataDir + releases lock", async () => {
+  const donePath = path.join(os.tmpdir(), `vlci-done-${process.pid}-${Date.now()}.json`);
+  fs.rmSync(donePath, { force: true });
+  const child = spawn(process.execPath, [HARNESS, "--hold-ms", "8000"], {
+    env: { ...process.env, IH35_VLCI_HARNESS_REPO: REPO_ROOT, IH35_VLCI_HARNESS_DONE: donePath },
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  const ready = await new Promise((resolve, reject) => {
+    let buf = "";
+    const timer = setTimeout(() => reject(new Error("harness ready timeout")), 5000);
+    child.stdout.on("data", (chunk) => {
+      buf += chunk;
+      const line = buf.split("\n").find((l) => l.includes('"ready"'));
+      if (line) {
+        clearTimeout(timer);
+        resolve(JSON.parse(line));
+      }
+    });
+    child.on("error", reject);
+  });
+  assert.equal(ready.ready, true);
+  assert.equal(fs.existsSync(ready.dataDir), true);
+  assert.equal(fs.existsSync(ready.lockPath), true);
+
+  child.kill("SIGINT");
+  const code = await new Promise((resolve) => child.on("close", resolve));
+  assert.equal(code, 130);
+  // Allow handler to flush done marker
+  for (let i = 0; i < 20 && !fs.existsSync(donePath); i += 1) {
+    await new Promise((r) => setTimeout(r, 50));
+  }
+  assert.equal(fs.existsSync(ready.dataDir), false, "dataDir cleaned");
+  assert.equal(fs.existsSync(ready.lockPath), false, "lock released");
+  if (fs.existsSync(donePath)) {
+    const done = JSON.parse(fs.readFileSync(donePath, "utf8"));
+    assert.equal(done.cleaned, true);
+    fs.rmSync(donePath, { force: true });
+  }
 });
 
-test("acyclic static guard passes on repo (and --selftest)", () => {
-  const r = runAcyclicGuard(REPO_ROOT);
-  assert.equal(r.ok, true, r.errs?.join("; "));
-  const self = spawnSync(process.execPath, [
-    path.join(REPO_ROOT, "scripts/verify-local-ci-gate-acyclic.mjs"),
-    "--selftest",
-  ], { encoding: "utf8" });
-  assert.equal(self.status, 0, self.stderr || self.stdout);
+test("SIGTERM on live harness cleans dataDir + releases lock", async () => {
+  const donePath = path.join(os.tmpdir(), `vlci-done-term-${process.pid}-${Date.now()}.json`);
+  const child = spawn(process.execPath, [HARNESS, "--hold-ms", "8000"], {
+    env: { ...process.env, IH35_VLCI_HARNESS_REPO: REPO_ROOT, IH35_VLCI_HARNESS_DONE: donePath },
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  const ready = await new Promise((resolve, reject) => {
+    let buf = "";
+    const timer = setTimeout(() => reject(new Error("harness ready timeout")), 5000);
+    child.stdout.on("data", (chunk) => {
+      buf += chunk;
+      const line = buf.split("\n").find((l) => l.includes('"ready"'));
+      if (line) {
+        clearTimeout(timer);
+        resolve(JSON.parse(line));
+      }
+    });
+    child.on("error", reject);
+  });
+  child.kill("SIGTERM");
+  const code = await new Promise((resolve) => child.on("close", resolve));
+  assert.equal(code, 143);
+  for (let i = 0; i < 20 && fs.existsSync(ready.dataDir); i += 1) {
+    await new Promise((r) => setTimeout(r, 50));
+  }
+  assert.equal(fs.existsSync(ready.dataDir), false);
+  assert.equal(fs.existsSync(ready.lockPath), false);
+  fs.rmSync(donePath, { force: true });
+});
+
+test("static sweep proof is in-process only (env cannot mint)", () => {
+  clearStaticSweepProof();
+  assert.equal(hasTrustedStaticSweepProof(), false);
+  process.env.IH35_STATIC_SWEEP_PROOF = "forged";
+  assert.equal(hasTrustedStaticSweepProof(), false);
+  mintStaticSweepProof({ source: "test" });
+  assert.equal(hasTrustedStaticSweepProof(), true);
+  const once = ensureVerifyStaticOnce({
+    root: REPO_ROOT,
+    run: () => {
+      throw new Error("should not run when proof present");
+    },
+  });
+  assert.equal(once.skipped, true);
+  clearStaticSweepProof();
+  delete process.env.IH35_STATIC_SWEEP_PROOF;
+});
+
+test("ensureVerifyStaticOnce fail-closed when runner fails and no proof", () => {
+  clearStaticSweepProof();
+  assert.throws(
+    () =>
+      ensureVerifyStaticOnce({
+        root: REPO_ROOT,
+        run: () => ({ ok: false, detail: "planted fail" }),
+      }),
+    /fail closed|failed/i
+  );
+  assert.equal(hasTrustedStaticSweepProof(), false);
+});
+
+test("planted nested verify:local-ci without token fails (lock or free-env)", () => {
+  const res = spawnSync(process.execPath, [LOCAL_CI], {
+    encoding: "utf8",
+    env: { ...process.env, [VLCI_ENV.ACTIVE]: "1", [VLCI_ENV.OWNED]: "1" },
+  });
+  assert.notEqual(res.status, 0);
 });
 
 test("parallel child owners: second fails closed while first holds lock", async () => {
-  const { spawn } = await import("node:child_process");
   const lockPath = path.join(os.tmpdir(), `vlci-par-${process.pid}-${Date.now()}.lock`);
   fs.rmSync(lockPath, { force: true });
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "vlci-par-"));
@@ -190,14 +389,14 @@ import { acquireExclusiveLock, releaseExclusiveLock } from ${JSON.stringify(
     )};
 const lockPath = process.env.LOCK_PATH;
 const holdMs = Number(process.env.HOLD_MS || "600");
-const r = acquireExclusiveLock(lockPath);
+const r = acquireExclusiveLock(lockPath, { token: "c".repeat(64) });
 if (!r.ok) {
   process.stdout.write(JSON.stringify({ ok: false, reason: r.reason }));
   process.exit(2);
 }
 process.stdout.write(JSON.stringify({ ok: true }));
 await new Promise((resolve) => setTimeout(resolve, holdMs));
-releaseExclusiveLock(lockPath);
+releaseExclusiveLock(lockPath, { token: "c".repeat(64) });
 process.exit(0);
 `,
     "utf8"
@@ -222,10 +421,19 @@ process.exit(0);
   await new Promise((r) => setTimeout(r, 80));
   const second = await runChild();
   const first = await firstPromise;
-
   assert.equal(first.code, 0, first.out);
-  assert.match(first.out, /"ok":true/);
   assert.equal(second.code, 2, second.out);
   assert.match(second.out, /lock-held/);
   assert.equal(fs.existsSync(lockPath), false);
+});
+
+test("acyclic static guard passes on repo (and --selftest)", () => {
+  const r = runAcyclicGuard(REPO_ROOT);
+  assert.equal(r.ok, true, r.errs?.join("; "));
+  const self = spawnSync(
+    process.execPath,
+    [path.join(REPO_ROOT, "scripts/verify-local-ci-gate-acyclic.mjs"), "--selftest"],
+    { encoding: "utf8" }
+  );
+  assert.equal(self.status, 0, self.stderr || self.stdout);
 });

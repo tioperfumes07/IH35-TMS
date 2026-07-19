@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 import ts from "typescript";
 import { resolveBlockReadyManifest, aggregateBlockReadyManifests } from "./block-ready-agent-manifest.mjs";
 import { GUARD_CONTRACT_REPORT_PREFIX } from "./guard-executable-contract.mjs";
+import { ensureVerifyStaticOnce, hasTrustedStaticSweepProof } from "./static-sweep-proof.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -993,6 +994,22 @@ function main() {
   runCheckC1();
   const manifest = runCheckC2(args.manifest);
   const verifyMeta = readVerifyMeta();
+
+  // verify:static once per process — unforgeable in-process proof (not env).
+  // Direct `npm run block-ready` runs it here; pre-push must not duplicate (no separate step).
+  try {
+    const staticOnce = ensureVerifyStaticOnce({ root: ROOT });
+    if (staticOnce.skipped) {
+      console.log("[C2b] SKIP verify:static (trusted in-process proof already present)");
+    } else {
+      console.log("[C2b] PASS verify:static (minted in-process proof)");
+    }
+  } catch (err) {
+    fail("C2b", err instanceof Error ? err.message : String(err));
+  }
+  if (!hasTrustedStaticSweepProof()) {
+    fail("C2b", "verify:static proof missing after ensureVerifyStaticOnce (fail closed)");
+  }
 
   runCheckC3();
   runCheckC4();

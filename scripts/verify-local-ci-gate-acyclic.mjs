@@ -1,17 +1,7 @@
 #!/usr/bin/env node
 /**
- * verify-local-ci-gate-acyclic — locks the pre-push → C5 → local-ci graph as acyclic/single-owner.
- *
- * Plants the 2026-07-19 deadlock class:
- *   branch:precheck-push → verify:static → block-ready C5 → npm run verify:local-ci
- *   (nested full verify:pre-commit + fixed port 54329 contention).
- *
- * Asserts:
- *   (1) verify-meta lists verify:local-ci + verify:static as C5 orchestrator skips
- *   (2) block-ready uses getC5SkipReason / block_ready_c5_skip_orchestrators
- *   (3) verify-local-ci fails closed on nested IH35_VLCI_ACTIVE
- *   (4) verify-local-ci uses dynamic port allocation (not sole fixed 54329 lifecycle)
- *   (5) db-reset accepts VLCI-owned dynamic local ih35_verify URLs via isLocalVerifyDatabaseUrl
+ * verify-local-ci-gate-acyclic — locks the pre-push → C5 → local-ci graph as acyclic/single-owner
+ * and the unforgeable VLCI ownership / static-sweep proof invariants.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -26,7 +16,7 @@ export function check(files) {
   const meta = JSON.parse(files.meta);
   const orch = meta.block_ready_c5_skip_orchestrators;
   if (!Array.isArray(orch)) {
-    errs.push('verify-meta.json missing block_ready_c5_skip_orchestrators array');
+    errs.push("verify-meta.json missing block_ready_c5_skip_orchestrators array");
   } else {
     for (const name of C5_ORCHESTRATOR_SCRIPTS) {
       if (!orch.includes(name)) {
@@ -39,34 +29,72 @@ export function check(files) {
     errs.push("block-ready.mjs must read block_ready_c5_skip_orchestrators from verify-meta");
   }
   if (!files.blockReady.includes("getC5SkipReason")) {
-    errs.push("block-ready.mjs must expose getC5SkipReason for orchestrator vs C4 skip reasons");
+    errs.push("block-ready.mjs must expose getC5SkipReason");
   }
   if (!files.blockReady.includes("orchestrator — single-owner outside C5")) {
-    errs.push("block-ready C5 must log orchestrator skip reason (single-owner outside C5)");
+    errs.push("block-ready C5 must log orchestrator skip reason");
+  }
+  if (!files.blockReady.includes("ensureVerifyStaticOnce")) {
+    errs.push("block-ready.mjs must call ensureVerifyStaticOnce (static once / fail closed)");
+  }
+  if (!files.staticProof.includes("Symbol.for") && !files.staticProof.includes("Symbol.for(")) {
+    errs.push("static-sweep-proof.mjs must use Symbol.for in-process proof (not env)");
+  }
+  if (!files.staticProof.includes("export function ensureVerifyStaticOnce")) {
+    errs.push("static-sweep-proof.mjs must export ensureVerifyStaticOnce");
   }
 
-  if (!files.localCi.includes("resolveVlciLifecycle") && !files.localCi.includes("IH35_VLCI_ACTIVE")) {
-    errs.push("verify-local-ci.mjs must fail closed on nested IH35_VLCI_ACTIVE");
+  if (!files.precheck.includes("verify:static is owned once by block-ready") &&
+      !files.precheck.includes("Do not duplicate")) {
+    errs.push("branch-precheck-push must document that verify:static is not duplicated");
   }
-  if (!files.localCi.includes("allocateEphemeralPortSync") && !files.localCi.includes("allocateEphemeralPort")) {
-    errs.push("verify-local-ci.mjs must allocate an ephemeral port (no sole fixed-port lifecycle)");
+  if (/label:\s*["']verify-static["']/.test(files.precheck) && files.precheck.includes("buildPrecheckSteps")) {
+    // buildPrecheckSteps must not list verify-static as a primary step
+    const buildMatch = files.precheck.match(/export function buildPrecheckSteps[\s\S]*?^}/m);
+    if (buildMatch && buildMatch[0].includes("verify-static")) {
+      errs.push("buildPrecheckSteps must not include verify-static (block-ready owns it)");
+    }
   }
-  // Forbid the old fixed-only lifecycle signature as the only port binding path.
+
+  if (!files.lifecycle.includes("export function validateOwnershipProof")) {
+    errs.push("vlci-lifecycle.mjs must export validateOwnershipProof");
+  }
+  if (!files.lifecycle.includes("export function createOwnerSession")) {
+    errs.push("vlci-lifecycle.mjs must export createOwnerSession");
+  }
+  if (!files.lifecycle.includes("IH35_VLCI_TOKEN") && !files.lifecycle.includes('TOKEN: "IH35_VLCI_TOKEN"')) {
+    errs.push("vlci-lifecycle.mjs must define IH35_VLCI_TOKEN");
+  }
+  if (!files.lifecycle.includes("LOCK_PATH override rejected") && !files.lifecycle.includes("override rejected")) {
+    errs.push("vlci-lifecycle.mjs must reject IH35_VLCI_LOCK_PATH overrides");
+  }
+  if (!files.lifecycle.includes("installLifecycleCleanupHandlers")) {
+    errs.push("vlci-lifecycle.mjs must export installLifecycleCleanupHandlers");
+  }
+  // Free-env ownership must not authorize via OWNED===\"1\" alone in isLocalVerifyDatabaseUrl
+  if (/env\[VLCI_ENV\.OWNED\]\s*===\s*["']1["']/.test(files.lifecycle) &&
+      files.lifecycle.includes("return env[VLCI_ENV.OWNED]")) {
+    errs.push("isLocalVerifyDatabaseUrl must not authorize via OWNED=1 alone");
+  }
+
+  if (!files.localCi.includes("startEphemeralPgWithRetry")) {
+    errs.push("verify-local-ci.mjs must use startEphemeralPgWithRetry (port TOCTOU)");
+  }
+  if (!files.localCi.includes("installLifecycleCleanupHandlers")) {
+    errs.push("verify-local-ci.mjs must install SIGINT/SIGTERM cleanup handlers");
+  }
+  if (!files.localCi.includes("createOwnerSession")) {
+    errs.push("verify-local-ci.mjs must createOwnerSession (token+lock bound)");
+  }
   if (/const\s+PORT\s*=\s*54329/.test(files.localCi) && !files.localCi.includes("allocateEphemeralPort")) {
     errs.push("verify-local-ci.mjs still hardcodes PORT=54329 as the sole ephemeral bind port");
   }
 
   if (!files.dbReset.includes("isLocalVerifyDatabaseUrl")) {
-    errs.push("verify-db-reset.mjs must use isLocalVerifyDatabaseUrl (VLCI-owned dynamic ports)");
+    errs.push("verify-db-reset.mjs must use isLocalVerifyDatabaseUrl");
   }
-  if (!files.lifecycle.includes("export function isLocalVerifyDatabaseUrl")) {
-    errs.push("vlci-lifecycle.mjs must export isLocalVerifyDatabaseUrl");
-  }
-  if (!files.lifecycle.includes("export function acquireExclusiveLock")) {
-    errs.push("vlci-lifecycle.mjs must export acquireExclusiveLock (single-owner)");
-  }
-  if (!files.lifecycle.includes("mode: \"reject\"") && !files.lifecycle.includes("mode: 'reject'")) {
-    errs.push("vlci-lifecycle.mjs must reject nested ACTIVE invocations");
+  if (!files.dbReset.includes("repoRoot")) {
+    errs.push("verify-db-reset.mjs must pass repoRoot into isLocalVerifyDatabaseUrl for proof");
   }
 
   return errs;
@@ -79,6 +107,8 @@ function loadRepoFiles(root = ROOT) {
     localCi: fs.readFileSync(path.join(root, "scripts/verify-local-ci.mjs"), "utf8"),
     dbReset: fs.readFileSync(path.join(root, "scripts/verify-db-reset.mjs"), "utf8"),
     lifecycle: fs.readFileSync(path.join(root, "scripts/vlci-lifecycle.mjs"), "utf8"),
+    staticProof: fs.readFileSync(path.join(root, "scripts/static-sweep-proof.mjs"), "utf8"),
+    precheck: fs.readFileSync(path.join(root, "scripts/branch-precheck-push.mjs"), "utf8"),
   };
 }
 
@@ -93,31 +123,47 @@ function selftest() {
       block_ready_c5_skip_orchestrators: ["verify:local-ci", "verify:static"],
     }),
     blockReady:
-      'block_ready_c5_skip_orchestrators\nexport function getC5SkipReason(){}\nconsole.log("orchestrator — single-owner outside C5")',
-    localCi: 'resolveVlciLifecycle\nallocateEphemeralPortSync\nIH35_VLCI_ACTIVE',
-    dbReset: "isLocalVerifyDatabaseUrl(verifyUrl, process.env)",
+      'block_ready_c5_skip_orchestrators\nexport function getC5SkipReason(){}\nconsole.log("orchestrator — single-owner outside C5")\nensureVerifyStaticOnce',
+    localCi: "createOwnerSession\nstartEphemeralPgWithRetry\ninstallLifecycleCleanupHandlers\nallocateEphemeralPort",
+    dbReset: "isLocalVerifyDatabaseUrl(verifyUrl, process.env, { repoRoot: REPO_ROOT })",
     lifecycle:
-      'export function isLocalVerifyDatabaseUrl(){}\nexport function acquireExclusiveLock(){}\nreturn { mode: "reject", reason: "nested" };',
+      'TOKEN: "IH35_VLCI_TOKEN"\nexport function validateOwnershipProof(){}\nexport function createOwnerSession(){}\noverride rejected\ninstallLifecycleCleanupHandlers\nreturn { mode: "reject" };',
+    staticProof: 'Symbol.for("ih35.verifyStatic.sweepProof")\nexport function ensureVerifyStaticOnce(){}',
+    precheck:
+      "export function buildPrecheckSteps() {\n  // verify:static is owned once by block-ready. Do not duplicate here.\n  return [{ label: \"block-ready\" }];\n}",
   };
+  const badOwned = {
+    ...good,
+    lifecycle: good.lifecycle + '\nreturn env[VLCI_ENV.OWNED] === "1";',
+  };
+  // Force the anti-pattern into isLocalVerifyDatabaseUrl-shaped code
+  badOwned.lifecycle = `
+export function isLocalVerifyDatabaseUrl(verifyUrl, env) {
+  if (port === "54329") return true;
+  return env[VLCI_ENV.OWNED] === "1";
+}
+export function validateOwnershipProof(){}
+export function createOwnerSession(){}
+override rejected
+installLifecycleCleanupHandlers
+TOKEN: "IH35_VLCI_TOKEN"
+return { mode: "reject" };
+`;
   const badMeta = {
     ...good,
     meta: JSON.stringify({ block_ready_c5_skip_orchestrators: ["verify:static"] }),
   };
-  const badFixedPort = {
-    ...good,
-    localCi: "const PORT = 54329;\nstartEphemeralPg(pgBin);",
-  };
   const g = check(good);
   const b1 = check(badMeta);
-  const b2 = check(badFixedPort);
+  const b2 = check(badOwned);
   let bad = 0;
   const say = (ok, n) => {
     if (!ok) bad += 1;
     console.log(`${ok ? "ok  " : "FAIL"}  ${n}`);
   };
-  say(g.length === 0, "good fixture passes");
+  say(g.length === 0, `good fixture passes (${g.join("; ")})`);
   say(b1.some((e) => e.includes("verify:local-ci")), "missing orchestrator skip flagged");
-  say(b2.some((e) => e.includes("54329") || e.includes("ephemeral")), "fixed-only PORT=54329 flagged");
+  say(b2.some((e) => e.includes("OWNED=1")), "OWNED=1 free-env authorize flagged");
   if (bad) {
     console.error(`\n${LABEL} SELFTEST FAILED: ${bad}`);
     process.exit(1);
@@ -136,5 +182,5 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     console.error(`[${LABEL}] FAIL:\n         ${errs.join("\n         ")}`);
     process.exit(1);
   }
-  console.log(`[${LABEL}] OK — C5 orchestrator skip + VLCI single-owner/dynamic-port invariants hold.`);
+  console.log(`[${LABEL}] OK — acyclic C5 + unforgeable VLCI ownership + static-once proof invariants hold.`);
 }

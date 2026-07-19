@@ -223,10 +223,13 @@ Regression lock: `scripts/verify-local-ci-gate-acyclic.mjs` (+ verify-steps/910)
 
 1. `npm run build:backend`
 2. `cd apps/frontend && npx tsc -b`
-3. `node scripts/verify-static.mjs`
-4. `npm run block-ready`
+3. `npm run block-ready` (runs `verify:static` **once** via unforgeable in-process proof — `scripts/static-sweep-proof.mjs`)
 
-No per-script `verify:*` loop before `block-ready`, and C5 must not nest `verify:local-ci` / re-run `verify:static`. After Block 10 merges, feature pushes can use normal `git push` (no `--no-verify`) when local `block-ready` completes within the IDE window.
+No per-script `verify:*` loop before `block-ready`, and C5 must not nest `verify:local-ci` / re-run `verify:static`. Pre-push must **not** duplicate `verify:static` when `block-ready` runs; if `block-ready` is capability-skipped, precheck runs a one-shot `verify-static-fallback`. Direct `npm run block-ready` always ensures static once (or fail closed). After Block 10 merges, feature pushes can use normal `git push` (no `--no-verify`) when local `block-ready` completes within the IDE window.
+
+### VLCI ownership (locked 2026-07-19 adversarial)
+
+`IH35_VLCI_OWNED` / `INHERIT` / `ACTIVE` **never authorize alone**. Ownership is the canonical temp lock + per-run token + live owner pid/start + exact `dataDir`/`port`/`database`/`url` bindings. Arbitrary `IH35_VLCI_LOCK_PATH` and unbound `localhost` `ih35_verify` URLs are rejected. `verify:db:reset` requires that proof for non-`:54329` targets.
 
 ### Measured baseline
 
