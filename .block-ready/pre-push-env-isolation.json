@@ -4,7 +4,7 @@
   "status": "BUILD",
   "classification": "NON-FINANCIAL (CI tooling / pre-push env isolation)",
   "phase": "PIPELINE-TRUTH",
-  "task": "Root-cause fix: husky pre-push must not shell-source repository .env; database capability requires owned VLCI lifecycle or validated local-CI connection — never a bare DATABASE_URL string. Hook and direct branch:precheck-push must share the same capability detection.",
+  "task": "Root-cause fix: husky pre-push must not shell-source repository .env; database capability requires owned VLCI lifecycle or validated local-CI connection \u2014 never a bare DATABASE_URL string. Hook and direct branch:precheck-push must share the same capability detection.",
   "priority": "P0",
   "module": "ci-tooling",
   "db_required": false,
@@ -19,15 +19,30 @@
     "scripts/verify-pre-push-env-isolation.mjs",
     "scripts/verify-steps/912-verify-pre-push-env-isolation.mjs",
     "docs/specs/BRANCH-TOOLING.md",
-    ".block-ready/pre-push-env-isolation.json"
+    ".block-ready/pre-push-env-isolation.json",
+    "docs/trackers/block-reconciliation-data.json",
+    "docs/trackers/BLOCK-RECONCILIATION-2026-07-19.md",
+    "docs/trackers/exports/IH35-TMS-BLOCK-RECONCILIATION-2026-07-19.xlsx"
   ],
   "acceptance": [
-    { "check": ".husky/pre-push does not source repository .env; install-git-hooks regenerates the same" },
-    { "check": "detectLocalCapabilities is false for stale Neon URL string even when probe mocked true" },
-    { "check": "owned VLCI lifecycle env marks database capability; block-ready runs" },
-    { "check": "stale Neon env skips block-ready only via named server-required ci / build-typecheck" },
-    { "check": "spawned actual pre-push hook ignores hostile .env and matches direct precheck parent env" },
-    { "check": "verify-pre-push-env-isolation + verify-steps/912 (Rule 17; no package/CI hotfiles)" }
+    {
+      "check": ".husky/pre-push does not source repository .env; install-git-hooks regenerates the same"
+    },
+    {
+      "check": "detectLocalCapabilities is false for stale Neon URL string even when probe mocked true"
+    },
+    {
+      "check": "owned VLCI lifecycle env marks database capability; block-ready runs"
+    },
+    {
+      "check": "stale Neon env skips block-ready only via named server-required ci / build-typecheck"
+    },
+    {
+      "check": "spawned actual pre-push hook ignores hostile .env and matches direct precheck parent env"
+    },
+    {
+      "check": "verify-pre-push-env-isolation + verify-steps/912 (Rule 17; no package/CI hotfiles)"
+    }
   ],
-  "note": "Discovered after #2709 merge: git push hook sourced stale .env DATABASE_URL (neondb_owner bad password), falsely marked DB available, ran block-ready C4 and failed — while direct npm run branch:precheck-push correctly reported no capability and READY."
+  "note": "Discovered after #2709 merge: git push hook sourced stale .env DATABASE_URL (neondb_owner bad password), falsely marked DB available, ran block-ready C4 and failed \u2014 while direct npm run branch:precheck-push correctly reported no capability and READY."
 }
