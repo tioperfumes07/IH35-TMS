@@ -15,6 +15,7 @@
   ],
   "allowed_files": [
     ".block-ready/0007-pattern-8-reverse-drill-through.json",
+    "apps/backend/src/reports/library.routes.ts",
     "apps/backend/src/reports/library.routes.live-counter.test.ts",
     "apps/frontend/src/pages/accounting/AccountingAuditTrailPage.tsx",
     "apps/frontend/src/pages/accounting/__tests__/reverse-drill-through.behavior.test.tsx",
@@ -33,19 +34,19 @@
       "check": "all three guards pass normally and with table-driven --selftest corpora covering valid controls, every VETO plant, and fresh metamorphic variants"
     },
     {
-      "check": "EntityLink adoption requires exact equality with its stable SHA-256 finding-key/count baseline for narrow direct IDs plus lexically scoped aliases/helpers; extras, inflation, removals, and cancellation all fail"
+      "check": "EntityLink adoption traces lexically scoped declaration and later-assignment versions, and requires exact equality with a structural-location SHA-256 finding-key/count baseline; extras, inflation, removals, same-function moves, and cancellation all fail"
     },
     {
-      "check": "deep-link guard binds each direct ROUTES mount to the exact React.lazy module/export and requires reachable rendered/query-param consumption; wrong imports, hidden/dynamic buttons, dead declarations, ignored/overwritten params, and wrong paths fail; real manifest/router behavior proves reachability"
+      "check": "deep-link guard requires exactly one protected invoice/payment/expense/audit route bound to the exact React.lazy module/export and rendered query-param consumption; conflicting duplicates and wrong imports fail; real ROUTES behavior covers all four paths"
     },
     {
-      "check": "94-live guard and Fastify mock strip comments and parse executable SELECT/FROM/JOIN/WHERE semantics; hardcoded SELECT values with required tokens only in comments fail; injection still proves query-result response, zero fallback, and company isolation"
+      "check": "94-live guard and Fastify mock parse executable GUC and counter SQL after stripping comments; samsaraLive has one causal query-result assignment, relation-false remains zero, and arbitrary fourth-company isolation is behavior-tested"
     },
     {
       "check": "unique verify-steps 930/931/932 auto-discover all guard selftests and focused backend/frontend behavior tests; direct step plants prove nonzero test failures propagate through runStep; manifest extra_gates contains only valid npm script name verify:pre-commit"
     },
     {
-      "check": "package.json and workflow hot files unchanged; audit-trail search-param bindings are canonicalized without behavior change; no tab, schema, migration, financial logic, or route behavior changes"
+      "check": "package.json and workflow hot files unchanged; no tab, schema, migration, or financial changes; obsolete mdata.units live-counter fallback is removed so relation-false deterministically returns zero"
     }
   ],
   "note": "Owner explicitly approved the existing EntityLink adoption/deep-link guard contract and draft-PR handoff. Builder stops at local/PR proof for independent review; do not merge."

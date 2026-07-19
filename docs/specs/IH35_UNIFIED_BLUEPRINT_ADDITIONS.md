@@ -1424,7 +1424,7 @@ operator nothing about which governed GL accounts were affected.
 ## 17. EntityLink adoption + reverse drill-through guard contract (0007 Pattern 8)
 
 Source: Owner approval 2026-07-19 (`0007-pattern-8-reverse-drill-through`)
-Status: LOCKED (non-financial guard/spec wiring plus behavior tests; no runtime behavior or tab change)
+Status: LOCKED (non-financial guard/spec wiring plus behavior tests; relation-false counter is canonical zero; no tab change)
 
 - Existing entity references must use the shared `EntityLink` producer where a real target route exists.
 - Named deep-link surfaces must use canonical direct `EntityLink`, `navigate`, `searchParams.get`,
@@ -1432,7 +1432,8 @@ Status: LOCKED (non-financial guard/spec wiring plus behavior tests; no runtime 
   exact column/map renderer, or direct exported `ROUTES` mount. Nested/dead functions, lexical shadows,
   aliases, wrappers, reassignment, and dynamic renderer/route expressions cannot satisfy the contract.
 - Each guarded `ROUTES` component binding must resolve to the exact canonical `React.lazy` module path and
-  export. The audit consumer must initialize rendered state from the direct query-param bindings and pass
+  export, and each invoice/payment/expense/audit path must occur exactly once under `ProtectedRoute`.
+  Conflicting duplicate paths fail even when one route is canonical. The audit consumer must initialize rendered state from the direct query-param bindings and pass
   that state to `listAccountingAuditTrail`; a dead declaration or ignored/overwritten parameter does not count.
 - Static guards enforce only these narrow source structures and fail closed on missing files, parse errors,
   obsolete expense routes, or a regression above the locked syntactic-adoption baselines. They do not claim
@@ -1441,12 +1442,17 @@ Status: LOCKED (non-financial guard/spec wiring plus behavior tests; no runtime 
 - The home-fleet route must retain its direct `app.get` statement inside the exported top-level
   `registerReportsLibraryRoutes` function and its exact executable handler/try path: direct
   `withCompanyScope` callback, company GUC, relation check, scoped DISTINCT query, captured result, and
-  returned `samsara_live` property. Nested helpers, dead route wrappers, and dead proof functions do not count.
+  returned `samsara_live` property. `samsaraLive` has exactly one assignment from that query result; absence
+  of the Samsara relation leaves the initialized zero unchanged. Nested helpers, fallback counters, extra or
+  conditional assignments, dead route wrappers, and dead proof functions do not count.
+- The company GUC statement is parsed as executable SQL after SQL-comment removal and must execute
+  `SELECT set_config('app.operating_company_id', $1, true)` with the immutable current `companyId`.
 - The Samsara SQL contract strips SQL comments, parses the executable SELECT/FROM/JOIN/WHERE clauses, and
   requires the count expression, canonical table, no JOIN, company-GUC predicate, non-null local unit, and
   six-hour freshness predicate. Tokens present only in SQL or JavaScript comments never satisfy the contract.
 - Behavior-level tests against production modules are the primary proof: Fastify injection proves counter
-  response/scoping/zero behavior; React/router tests render and click producers and exercise consumers.
+  response/scoping/arbitrary-company/zero behavior; React/router tests mount all four guarded paths through
+  the real `ROUTES`, resolve their real lazy imports, click producers, and exercise consumers.
 - Every guard includes table-driven `--selftest` plants covering every historical VETO and canonical controls.
 - CI wiring is additive through unique auto-discovered `scripts/verify-steps/<NNN>-*.mjs` entries. Each step
   runs the production guard, its selftest, and the relevant focused behavior test, and its own planted-failure
@@ -1454,10 +1460,11 @@ Status: LOCKED (non-financial guard/spec wiring plus behavior tests; no runtime 
   `package.json`, `.github/workflows/locked-guards.yml`, or `.github/workflows/ci.yml`.
 
 ### Guards (Rule 17)
-- `scripts/verify-entity-link-adoption.mjs` — narrow direct-ID plus lexically scoped alias/helper detection;
-  exact SHA-256 per-file/scope/rule/expression finding-key/count equality rejects additions, removals, inflated
-  counts, unknown hashes, and cancellation. Generic uncertain expressions are not baseline findings.
-- `scripts/entity-link-adoption-baseline.json` — versioned stable finding-key/count baseline.
+- `scripts/verify-entity-link-adoption.mjs` — narrow direct-ID plus lexically scoped/version-ordered
+  declaration, later-assignment, and helper detection; exact SHA-256 per-file/scope/structural-location/rule/
+  expression finding-key/count equality rejects additions, removals, same-function moves, inflated counts,
+  unknown hashes, and cancellation. Structural paths use AST ancestry and ordinals, not raw line numbers.
+- `scripts/entity-link-adoption-baseline.json` — versioned exact structural finding-key/count baseline.
 - `scripts/verify-entitylink-deep-links.mjs` — strict direct producer/resolver/route/consumer source contract.
 - `scripts/verify-94-live-counter-linkage.mjs` — strict canonical Samsara counter route source contract.
 - `apps/backend/src/reports/library.routes.live-counter.test.ts` — production Fastify route behavior.

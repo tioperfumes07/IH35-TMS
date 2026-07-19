@@ -381,36 +381,35 @@ function directRoute(sf, routePath, component) {
     return false;
   }
   const fragment = initializer.arguments[0];
-  const matches = fragment.children.filter((node) => {
-    if (
+  const pathMatches = fragment.children.filter(
+    (node) =>
       (ts.isJsxSelfClosingElement(node) || ts.isJsxOpeningElement(node)) &&
       node.tagName.getText(sf) === "Route" &&
-      jsxAttribute(node, "path", sf) === routePath
-    ) {
-      const element = node.attributes.properties.find(
-        (candidate) => ts.isJsxAttribute(candidate) && candidate.name.text === "element",
-      );
-      if (
-        element &&
-        ts.isJsxAttribute(element) &&
-        ts.isJsxExpression(element.initializer) &&
-        element.initializer.expression &&
-        ts.isJsxElement(element.initializer.expression) &&
-        element.initializer.expression.openingElement.tagName.getText(sf) === "ProtectedRoute"
-      ) {
-        const children = element.initializer.expression.children.filter(
-          (child) => !ts.isJsxText(child) || child.text.trim() !== "",
-        );
-        return (
-          children.length === 1 &&
-          ts.isJsxSelfClosingElement(children[0]) &&
-          children[0].tagName.getText(sf) === component
-        );
-      }
-    }
+      jsxAttribute(node, "path", sf) === routePath,
+  );
+  if (pathMatches.length !== 1) return false;
+  const route = pathMatches[0];
+  const element = route.attributes.properties.find(
+    (candidate) => ts.isJsxAttribute(candidate) && candidate.name.text === "element",
+  );
+  if (
+    !element ||
+    !ts.isJsxAttribute(element) ||
+    !ts.isJsxExpression(element.initializer) ||
+    !element.initializer.expression ||
+    !ts.isJsxElement(element.initializer.expression) ||
+    element.initializer.expression.openingElement.tagName.getText(sf) !== "ProtectedRoute"
+  ) {
     return false;
-  });
-  return matches.length === 1;
+  }
+  const children = element.initializer.expression.children.filter(
+    (child) => !ts.isJsxText(child) || child.text.trim() !== "",
+  );
+  return (
+    children.length === 1 &&
+    ts.isJsxSelfClosingElement(children[0]) &&
+    children[0].tagName.getText(sf) === component
+  );
 }
 
 function directLazyImportBinding(sf, localName, modulePath, exportName) {
@@ -667,6 +666,10 @@ function runSelftest() {
     ["dead-route", { ...good, manifest: good.manifest.replace("<Route path=\"/accounting/expenses/list\" element={<ProtectedRoute><ExpensesListPage /></ProtectedRoute>}/>", "{false && <Route path=\"/accounting/expenses/list\" element={<ProtectedRoute><ExpensesListPage /></ProtectedRoute>}/>}") }, "/accounting/expenses/list"],
     ["dynamic-route", { ...good, manifest: good.manifest.replace("<ExpensesListPage />", "{flag ? <ExpensesListPage /> : <InvoiceDetailPage />}") }, "/accounting/expenses/list"],
     ["wrong-import-binding", { ...good, manifest: good.manifest.replace('import("../pages/accounting/AccountingAuditTrailPage").then((m)=>({default:m.AccountingAuditTrailPage}))', 'import("../pages/accounting/PaymentDetailPage").then((m)=>({default:m.PaymentDetailPage}))') }, "AccountingAuditTrailPage must be"],
+    ["duplicate-invoice-route", { ...good, manifest: good.manifest.replace("</>)", '<Route path="/accounting/invoices/:id" element={<ProtectedRoute><PaymentDetailPage /></ProtectedRoute>}/></>)') }, "/accounting/invoices/:id"],
+    ["duplicate-payment-route", { ...good, manifest: good.manifest.replace("</>)", '<Route path="/accounting/payments/:id" element={<ProtectedRoute><InvoiceDetailPage /></ProtectedRoute>}/></>)') }, "/accounting/payments/:id"],
+    ["duplicate-expense-route", { ...good, manifest: good.manifest.replace("</>)", '<Route path="/accounting/expenses/list" element={<ProtectedRoute><InvoiceDetailPage /></ProtectedRoute>}/></>)') }, "/accounting/expenses/list"],
+    ["duplicate-audit-route", { ...good, manifest: good.manifest.replace("</>)", '<Route path="/accounting/audit-trail" element={<ProtectedRoute><PaymentDetailPage /></ProtectedRoute>}/></>)') }, "/accounting/audit-trail"],
     ["id-alias", { ...good, invoice: good.invoice.replace("id={invoice.customer_id}", "id={customerId}") }, "EntityLink"],
     ["navigate-alias", { ...good, invoice: good.invoice.replace("navigate(`", "go(`") }, "audit URL"],
     ["wrong-invoice-id", { ...good, invoice: good.invoice.replace("invoice.id", "invoice.customer_id") }, "audit URL"],

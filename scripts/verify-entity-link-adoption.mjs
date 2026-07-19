@@ -129,7 +129,6 @@ function lexicalDeclarations(sf, identifier) {
       ts.isVariableDeclaration(node) &&
       ts.isIdentifier(node.name) &&
       node.name.text === identifier.text &&
-      node.initializer &&
       node.pos < identifier.pos &&
       enclosingFunction(node) === useFunction
     ) {
@@ -138,6 +137,30 @@ function lexicalDeclarations(sf, identifier) {
     }
   });
   return candidates.sort((a, b) => b.pos - a.pos);
+}
+
+function lexicalValueBeforeUse(sf, identifier) {
+  const declaration = lexicalDeclarations(sf, identifier)[0];
+  if (!declaration) return null;
+  const writes = declaration.initializer
+    ? [{ position: declaration.getStart(sf), expression: declaration.initializer }]
+    : [];
+  const bindingScope = enclosingLexicalScope(declaration);
+  if (!bindingScope) return declaration.initializer;
+  walk(bindingScope, (node) => {
+    if (
+      ts.isBinaryExpression(node) &&
+      node.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
+      ts.isIdentifier(node.left) &&
+      node.left.text === identifier.text &&
+      node.getStart(sf) < identifier.getStart(sf) &&
+      lexicalDeclarations(sf, node.left)[0] === declaration
+    ) {
+      writes.push({ position: node.getStart(sf), expression: node.right });
+    }
+  });
+  writes.sort((a, b) => b.position - a.position);
+  return writes[0]?.expression ?? null;
 }
 
 function lexicalFunctions(sf, identifier) {
@@ -180,8 +203,8 @@ function resolvedIdReason(expr, sf, seen = new Set()) {
     const token = `variable:${expr.text}:${expr.pos}`;
     if (seen.has(token)) return null;
     seen.add(token);
-    const declaration = lexicalDeclarations(sf, expr)[0];
-    return declaration?.initializer && resolvedIdReason(declaration.initializer, sf, seen)
+    const value = lexicalValueBeforeUse(sf, expr);
+    return value && resolvedIdReason(value, sf, seen)
       ? "alias-id"
       : null;
   }
@@ -233,6 +256,52 @@ function enclosingFunctionName(node) {
   return "(anonymous)";
 }
 
+function structuralLocation(node, sf) {
+  const segments = [];
+  for (let current = node; current.parent; current = current.parent) {
+    const parent = current.parent;
+    if (ts.isFunctionLike(parent)) {
+      segments.push("function-body");
+      break;
+    }
+    if (ts.isSourceFile(parent) || ts.isBlock(parent)) {
+      const statements = parent.statements;
+      const index = statements.indexOf(current);
+      if (index >= 0) segments.push(`statement:${index}`);
+    } else if (ts.isJsxElement(parent) || ts.isJsxFragment(parent)) {
+      const index = parent.children.indexOf(current);
+      if (index >= 0) segments.push(`jsx-child:${index}`);
+    } else if (ts.isCallExpression(parent)) {
+      const index = parent.arguments.indexOf(current);
+      segments.push(index >= 0 ? `call-argument:${index}` : "call-target");
+    } else if (ts.isPropertyAssignment(parent)) {
+      segments.push(`property:${parent.name.getText(sf)}`);
+    } else if (ts.isVariableDeclaration(parent) && ts.isIdentifier(parent.name)) {
+      segments.push(`variable:${parent.name.text}`);
+    } else if (ts.isReturnStatement(parent)) {
+      segments.push("return-expression");
+    } else if (ts.isConditionalExpression(parent)) {
+      segments.push(
+        current === parent.condition
+          ? "conditional:condition"
+          : current === parent.whenTrue
+            ? "conditional:true"
+            : "conditional:false",
+      );
+    } else if (ts.isBinaryExpression(parent)) {
+      segments.push(current === parent.left ? "binary:left" : "binary:right");
+    } else if (ts.isArrayLiteralExpression(parent)) {
+      segments.push(`array-element:${parent.elements.indexOf(current)}`);
+    } else if (ts.isJsxAttribute(parent)) {
+      segments.push(`jsx-attribute:${parent.name.text}`);
+    } else {
+      const siblings = parent.getChildren(sf).filter((child) => child.kind === current.kind);
+      segments.push(`${ts.SyntaxKind[parent.kind]}:${siblings.indexOf(current)}`);
+    }
+  }
+  return segments.reverse().join("/");
+}
+
 export function scanSource(file, source) {
   const sf = parse(file, source);
   const findings = [];
@@ -249,6 +318,7 @@ export function scanSource(file, source) {
             tag: tag ?? "(fragment/expression)",
             reason,
             scope: enclosingFunctionName(node),
+            location: structuralLocation(node, sf),
             expression: normalizeExpression(node.expression, sf),
             text: node.getText(sf).replace(/\s+/g, " ").trim().slice(0, 100),
           });
@@ -268,7 +338,7 @@ function scanTree() {
 }
 
 function findingKey(finding) {
-  return [finding.file, finding.scope, finding.tag, finding.reason, finding.expression].join("|");
+  return [finding.file, finding.scope, finding.location, finding.tag, finding.reason, finding.expression].join("|");
 }
 
 function findingFingerprint(finding) {
@@ -303,6 +373,9 @@ function runSelftest() {
     ["direct-id", `const T=({row})=><td>{row.vendor_id}</td>`, 1],
     ["computed-id", `const T=({row})=><td>{row["vendor_id"]}</td>`, 1],
     ["alias-naked-id", `const T=({row})=>{const value=row.vendor_id;return <td>{value}</td>}`, 1],
+    ["later-assigned-id", `const T=({row})=>{let value="safe";value=row.vendor_id;return <td>{value}</td>}`, 1],
+    ["uninitialized-later-assigned-id", `const T=({row})=>{let value;value=row.vendor_id;return <td>{value}</td>}`, 1],
+    ["later-safe-overwrite", `const T=({row})=>{let value=row.vendor_id;value="safe";return <td>{value}</td>}`, 0],
     ["helper-returned-id", `function pick(row){return row.vendor_id}const T=({row})=><td>{pick(row)}</td>`, 1],
     ["helper-with-id-argument", `const T=({row})=><td>{show(row.vendor_id)}</td>`, 1],
     ["direct-entity-link", `const T=({row})=><td><EntityLink kind="vendor" id={row.vendor_id}/></td>`, 0],
@@ -336,11 +409,20 @@ function runSelftest() {
   if (baselineDifferences(baseline, { ...baseline, ["9".repeat(64)]: 1 }).length !== 1) {
     problems.push("baseline-extra: an unknown fingerprint must fail");
   }
+  const originalLocation = findingCounts(
+    scanSource("move.tsx", `const T=({row})=><section><div>{row.vendor_id}</div><div /></section>`),
+  );
+  const movedLocation = findingCounts(
+    scanSource("move.tsx", `const T=({row})=><section><div /><div>{row.vendor_id}</div></section>`),
+  );
+  if (baselineDifferences(movedLocation, originalLocation).length !== 2) {
+    problems.push("move-one-location-cancellation: moving an identical naked ID must create distinct structural fingerprints");
+  }
   if (problems.length) {
     console.error(`verify:entity-link-adoption --selftest FAIL\n${problems.join("\n")}`);
     process.exit(1);
   }
-  console.log(`verify:entity-link-adoption --selftest PASS cases=${cases.map(([name]) => name).join(",")}; baseline-rejects=offset-cancellation,inflated-count,unknown-hash`);
+  console.log(`verify:entity-link-adoption --selftest PASS cases=${cases.map(([name]) => name).join(",")}; baseline-rejects=offset-cancellation,move-one-location-cancellation,inflated-count,unknown-hash`);
 }
 
 function main() {
@@ -354,7 +436,16 @@ function main() {
   }
   const current = findingCounts(findings);
   if (process.argv.includes("--print-baseline")) {
-    process.stdout.write(`${JSON.stringify({ version: 1, findings: current }, null, 2)}\n`);
+    process.stdout.write(`${JSON.stringify({ version: 2, findings: current }, null, 2)}\n`);
+    return;
+  }
+  if (process.argv.includes("--update-baseline")) {
+    if (process.env.UPDATE_ENTITY_LINK_ADOPTION_BASELINE !== "1") {
+      console.error("verify:entity-link-adoption FAIL — --update-baseline requires UPDATE_ENTITY_LINK_ADOPTION_BASELINE=1");
+      process.exit(1);
+    }
+    fs.writeFileSync(BASELINE_FILE, `${JSON.stringify({ version: 2, findings: current }, null, 2)}\n`);
+    console.log(`verify:entity-link-adoption updated exact structural baseline at ${path.relative(ROOT, BASELINE_FILE)}`);
     return;
   }
   if (!fs.existsSync(BASELINE_FILE)) {
@@ -368,8 +459,8 @@ function main() {
     console.error(`verify:entity-link-adoption FAIL — baseline parse failed: ${error instanceof Error ? error.message : String(error)}`);
     process.exit(1);
   }
-  if (baselineDocument?.version !== 1 || !baselineDocument.findings || typeof baselineDocument.findings !== "object") {
-    console.error("verify:entity-link-adoption FAIL — baseline must have version 1 and a findings object");
+  if (baselineDocument?.version !== 2 || !baselineDocument.findings || typeof baselineDocument.findings !== "object") {
+    console.error("verify:entity-link-adoption FAIL — baseline must have version 2 and a findings object");
     process.exit(1);
   }
   const malformedBaseline = Object.entries(baselineDocument.findings).filter(

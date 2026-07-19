@@ -91,6 +91,7 @@ function renderManifestAt(initialEntry: string) {
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
         <MemoryRouter initialEntries={[initialEntry]}>
+          <LocationProbe />
           <Routes>{ROUTES}</Routes>
         </MemoryRouter>
       </ToastProvider>
@@ -177,6 +178,30 @@ describe("reverse drill-through production behavior", () => {
     );
   });
 
+  it("mounts the invoice module through real ROUTES and preserves exact click navigation", async () => {
+    const user = userEvent.setup();
+    renderManifestAt("/accounting/invoices/inv-100");
+
+    expect(await screen.findByRole("link", { name: "Acme Freight" })).toHaveAttribute(
+      "href",
+      "/customers/customer-44",
+    );
+    await user.click(screen.getByRole("button", { name: "View audit log" }));
+    expect(screen.getByTestId("location")).toHaveTextContent(
+      "/accounting/audit-trail?source_type=invoice&source_id=inv-100",
+    );
+  });
+
+  it("mounts the payment module through real ROUTES and preserves exact click navigation", async () => {
+    const user = userEvent.setup();
+    renderManifestAt("/accounting/payments/pay-200");
+
+    await user.click(await screen.findByRole("button", { name: "View audit log" }));
+    expect(screen.getByTestId("location")).toHaveTextContent(
+      "/accounting/audit-trail?source_type=customer_payment&source_id=pay-200",
+    );
+  });
+
   it("passes both audit search parameters into the production audit query", async () => {
     renderAt(
       <AccountingAuditTrailPage />,
@@ -230,6 +255,27 @@ describe("reverse drill-through production behavior", () => {
     expect(await screen.findByRole("link", { name: "EXP-300" })).toHaveAttribute(
       "href",
       "/accounting/expenses/list?expense_id=expense-300",
+    );
+    expect(screen.getByText(/Deep-link expense/)).toHaveTextContent("highlighted in the list below");
+  });
+
+  it("mounts the expense module through real ROUTES and consumes the exact expense ID", async () => {
+    apiMocks.listExpenses.mockResolvedValue({
+      rows: [{
+        id: "expense-route-301",
+        expense_number: "EXP-301",
+        transaction_date: "2026-07-04",
+        status: "posted",
+        total_amount_cents: 6100,
+        is_reconciled: false,
+      }],
+      total: 1,
+    });
+    renderManifestAt("/accounting/expenses/list?expense_id=expense-route-301");
+
+    expect(await screen.findByRole("link", { name: "EXP-301" })).toHaveAttribute(
+      "href",
+      "/accounting/expenses/list?expense_id=expense-route-301",
     );
     expect(screen.getByText(/Deep-link expense/)).toHaveTextContent("highlighted in the list below");
   });

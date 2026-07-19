@@ -219,6 +219,13 @@ function tokenizeSql(sql) {
       index = end;
       continue;
     }
+    if (current === "$" && /[0-9]/.test(source[index + 1] ?? "")) {
+      let end = index + 2;
+      while (end < source.length && /[0-9]/.test(source[end])) end += 1;
+      tokens.push(source.slice(index, end));
+      index = end;
+      continue;
+    }
     if ("(),.;=*+-/<>".includes(current)) {
       tokens.push(current);
       index += 1;
@@ -237,6 +244,18 @@ function topLevelIndex(tokens, value, start = 0) {
     if (depth === 0 && tokens[index] === value) return index;
   }
   return -1;
+}
+
+export function assertCompanyGucSql(sql) {
+  let tokens;
+  try {
+    tokens = tokenizeSql(sql);
+  } catch (error) {
+    return [`GUC SQL parse failed: ${error instanceof Error ? error.message : String(error)}`];
+  }
+  return tokens.join(" ") === "select set_config ( 'app.operating_company_id' , $1 , true )"
+    ? []
+    : ["GUC SQL must execute SELECT set_config('app.operating_company_id', $1, true)"];
 }
 
 function splitTopLevel(tokens, separator) {
@@ -375,12 +394,18 @@ export function assertLiveCounterSource(file, source) {
     if (
       !ts.isExpressionStatement(statement) ||
       !ts.isAwaitExpression(statement.expression) ||
-      !directQueryCall(statement.expression.expression, "client", "set_config('app.operating_company_id', $1, true)")
+      !ts.isCallExpression(statement.expression.expression) ||
+      !ts.isPropertyAccessExpression(statement.expression.expression.expression) ||
+      statement.expression.expression.expression.expression.getText(sf) !== "client" ||
+      statement.expression.expression.expression.name.text !== "query"
     ) {
       return false;
     }
-    const args = statement.expression.expression.arguments[1];
+    const queryCall = statement.expression.expression;
+    const sql = stringLiteral(queryCall.arguments[0]) ?? "";
+    const args = queryCall.arguments[1];
     return (
+      assertCompanyGucSql(sql).length === 0 &&
       Boolean(args) &&
       ts.isArrayLiteralExpression(args) &&
       args.elements.length === 1 &&
@@ -439,7 +464,7 @@ export function assertLiveCounterSource(file, source) {
   }
 
   if (!gucCall) {
-    failures.push(`${file}: canonical scoped client must directly set app.operating_company_id from companyId`);
+    failures.push(`${file}: canonical scoped client must directly execute set_config SQL with the current immutable companyId`);
   }
   if (!relationIf) {
     failures.push(`${file}: canonical direct await relationExists(client, "${RELATION}") branch is required`);
@@ -493,13 +518,11 @@ export function assertLiveCounterSource(file, source) {
   });
   if (
     !relationIf ||
-    counterAssignments.some(
-      (assignment) =>
-        !isInside(assignment, relationIf.thenStatement) &&
-        !(relationIf.elseStatement && isInside(assignment, relationIf.elseStatement)),
-    )
+    counterAssignments.length !== 1 ||
+    primaryCounterAssignments.length !== 1 ||
+    counterAssignments[0] !== primaryCounterAssignments[0].expression
   ) {
-    failures.push(`${file}: samsaraLive may only be assigned inside the canonical relation branch/fallback; later overwrites are forbidden`);
+    failures.push(`${file}: samsaraLive must have exactly one causal assignment from samsaraRes inside the relation-true branch; all extra/conditional assignments are forbidden`);
   }
   if (!finalReturn) {
     failures.push(`${file}: canonical scoped callback must directly return samsara_live: samsaraLive`);
@@ -545,6 +568,10 @@ function runSelftest() {
     ["hardcoded-return", good.replace("samsara_live: samsaraLive", "samsara_live: 999")],
     ["overwritten-counter", good.replace("return { samsara_live", "samsaraLive = 999; return { samsara_live")],
     ["wrong-company-guc", good.replace("[companyId]", "[otherCompanyId]")],
+    ["comment-decoy-guc", good.replace(
+      `"SELECT set_config('app.operating_company_id', $1, true)"`,
+      `"SELECT 1 /* set_config('app.operating_company_id', $1, true) */"`,
+    )],
     ["dead-guc-helper", good.replace(
       `await client.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);`,
       `async function deadProof() { await client.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]); }`,
@@ -582,6 +609,8 @@ function runSelftest() {
       "samsaraLive = Number((samsaraRes.rows[0] as { samsara_live?: string } | undefined)?.samsara_live ?? 0);",
       "function deadCounterProof() { samsaraLive = Number((samsaraRes.rows[0] as { samsara_live?: string } | undefined)?.samsara_live ?? 0); } samsaraLive = 999;",
     )],
+    ["same-branch-extra-counter", good.replace("samsaraLive = Number", "samsaraLive = 77;\n            samsaraLive = Number")],
+    ["conditional-extra-counter", good.replace("samsaraLive = Number", "if (flag) samsaraLive = 88;\n            samsaraLive = Number")],
     ["dead-proof-actual-999", good.replace(
       "return { samsara_live: samsaraLive };",
       "function deadProof() { return { samsara_live: samsaraLive }; } return { samsara_live: 999 };",

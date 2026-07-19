@@ -5,6 +5,7 @@ import { registerReportsLibraryRoutes } from "./library.routes.js";
 const COMPANY_A = "11111111-1111-4111-8111-111111111111";
 const COMPANY_B = "22222222-2222-4222-8222-222222222222";
 const COMPANY_C = "33333333-3333-4333-8333-333333333333";
+const COMPANY_D = "44444444-4444-4444-8444-444444444444";
 
 function stripSqlComments(sql: string) {
   let output = "";
@@ -68,17 +69,34 @@ function parseExecutableCounterSql(sql: string) {
   return executable;
 }
 
+function parseExecutableGucSql(sql: string) {
+  const executable = stripSqlComments(sql).replace(/\s+/g, " ").trim();
+  if (
+    !/^SELECT\s+set_config\(\s*'app\.operating_company_id'\s*,\s*\$1\s*,\s*true\s*\)$/i.test(
+      executable,
+    )
+  ) {
+    throw new Error("GUC SQL must execute set_config for app.operating_company_id using $1");
+  }
+  return executable;
+}
+
 const mocks = vi.hoisted(() => {
   let activeCompany = "";
+  let gucCompany = "";
   let samsaraRelationExists = true;
   const countByCompany = new Map<string, string>();
   const query = vi.fn(async (sqlValue: unknown, params: unknown[] = []) => {
     const sql = String(sqlValue);
-    if (sql.includes("set_config('app.operating_company_id'")) {
+    const executableSql = stripSqlComments(sql).replace(/\s+/g, " ").trim();
+    if (/\bset_config\b/i.test(sql) || /^SELECT\s+set_config\b/i.test(executableSql)) {
+      parseExecutableGucSql(sql);
       expect(params).toEqual([activeCompany]);
+      gucCompany = String(params[0] ?? "");
       return { rows: [{ set_config: activeCompany }] };
     }
     if (sql.includes("to_regclass")) {
+      if (gucCompany !== activeCompany) throw new Error("company GUC was not established before relation query");
       const relation = String(params[0] ?? "");
       return {
         rows: [{
@@ -99,6 +117,7 @@ const mocks = vi.hoisted(() => {
     countByCompany,
     setCompany(company: string) {
       activeCompany = company;
+      gucCompany = "";
     },
     setRelationExists(value: boolean) {
       samsaraRelationExists = value;
@@ -196,6 +215,17 @@ describe("reports home fleet Samsara live counter", () => {
     ).toBe(true);
   });
 
+  it("returns an arbitrary fourth company's exact query result without cross-company substitution", async () => {
+    mocks.countByCompany.set(COMPANY_A, "991");
+    mocks.countByCompany.set(COMPANY_D, "47");
+
+    const response = await request(COMPANY_D);
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({ samsara_live: 47 });
+    expect(response.json()).not.toMatchObject({ samsara_live: 991 });
+  });
+
   it("rejects a hardcoded SELECT whose required semantics exist only in comments", async () => {
     const decoySql = `
       SELECT '999' AS samsara_live
@@ -209,5 +239,14 @@ describe("reports home fleet Samsara live counter", () => {
     await expect(mocks.query(decoySql)).rejects.toThrow(
       "counter SQL SELECT must derive samsara_live",
     );
+  });
+
+  it("rejects a no-op GUC query whose set_config call exists only in a comment", async () => {
+    await expect(
+      mocks.query(
+        "SELECT 1 /* set_config('app.operating_company_id', $1, true) */",
+        [COMPANY_D],
+      ),
+    ).rejects.toThrow("GUC SQL must execute set_config");
   });
 });
