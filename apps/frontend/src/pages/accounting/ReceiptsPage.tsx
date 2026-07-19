@@ -9,6 +9,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getReceipts, getReceiptDetail, type ReceiptItem } from "../../api/receipts";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { useUrlSort } from "../../hooks/useUrlSort";
 
 const fmtCents = (c: number | null) => (c == null ? "—" : formatUsdCents(c));
 const fmtDate = (s: string | null) => formatDateUS(s) || "—";
@@ -81,6 +82,8 @@ export function ReceiptsPage() {
   const [offset, setOffset] = useState(0);
   const [detailId, setDetailId] = useState<string | null>(null);
   const limit = 50;
+  // BANK-SORT-ROLLOUT-ACCT: sort persists in URL (?sort=&dir=) via useUrlSort + ParityTable controlled sort.
+  const { sortKey, sortDirection, onSortChange } = useUrlSort();
 
   const listQuery = useQuery({
     queryKey: ["receipts", operatingCompanyId, entityType, search, offset],
@@ -122,17 +125,22 @@ export function ReceiptsPage() {
       {
         key: "ref",
         label: "Ref #",
+        sortable: true,
+        sortValue: (row) =>
+          row.source.type === "expense" ? (row.source.expense_number ?? "") : (row.source.bill_number ?? ""),
         render: (row) => (
           <Link to={row.source.detail_path} className="text-slate-700 hover:underline text-xs">
             {row.source.type === "expense" ? (row.source.expense_number ?? "—") : (row.source.bill_number ?? "—")}
           </Link>
         ),
       },
-      { key: "source_date", label: "Date", render: (row) => fmtDate(row.source.date) },
-      { key: "amount_cents", label: "Amount", className: "text-right", cellClass: "text-right tabular-nums", render: (row) => fmtCents(row.source.amount_cents) },
+      { key: "source_date", label: "Date", sortable: true, sortValue: (row) => row.source.date ?? "", render: (row) => fmtDate(row.source.date) },
+      { key: "amount_cents", label: "Amount", sortable: true, sortValue: (row) => row.source.amount_cents ?? 0, className: "text-right", cellClass: "text-right tabular-nums", render: (row) => fmtCents(row.source.amount_cents) },
       {
         key: "status",
         label: "Status",
+        sortable: true,
+        sortValue: (row) => row.source.status ?? "",
         render: (row) =>
           row.source.status ? (
             <span className={`inline-block rounded-sm px-2 py-0.5 text-xs font-semibold ${STATUS_COLOR[row.source.status] ?? "bg-gray-100 text-gray-600"}`}>
@@ -187,6 +195,9 @@ export function ReceiptsPage() {
           filterBar={filterBar}
           storageKey="receipts-list"
           initialPageSize={limit}
+          sortKey={sortKey}
+          sortDirection={sortDirection}
+          onSortChange={onSortChange}
           emptyText="No receipts found."
         />
       ) : null}
