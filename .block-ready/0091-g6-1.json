@@ -3,7 +3,7 @@
   "status": "HOLD",
   "classification": "FINANCIAL",
   "phase": "tier1",
-  "task": "PR #2705 replaces host-UTC accounting date defaults with one transaction-scoped company business date and makes driver-settlement cancellation atomic across canonical posting reversals, bills, bill payments, bank balance, driver bills, operational deductions, deduction buckets, GL reconciliation, settlement state, and audit. It reuses existing posting, journal-entry reversal, bill void, and deduction bucket reversal services; adds no GL math, schema, migration, QBO write-back, or flag change. Full block-ready exposed a Redis test-isolation defect in the bulk rate-limit test; that unit test now explicitly selects the in-memory fallback and uses a unique valid user key, so its first consume cannot depend on external or prior-process Redis state.",
+  "task": "PR #2705 replaces host-UTC accounting date defaults with one transaction-scoped company business date and makes driver-settlement cancellation atomic across canonical posting reversals, bills, bill payments, bank balance, driver bills, operational deductions, deduction buckets, GL reconciliation, settlement state, and audit. It reuses existing posting, journal-entry reversal, bill void, and deduction bucket reversal services; adds no GL math, schema, migration, QBO write-back, or flag change. Full block-ready exposed two pipeline defects: the bulk limiter test depended on external Redis state, and C5 reran the HOLD guard locally after verify:static had correctly delegated PR-label authority to required CI. The test now selects its in-memory contract, while C5 consumes verify-meta's server-required capability classification.",
   "branch": "hold/0091-g6-1-business-date-20260718",
   "lane": "B",
   "source": "MASTER-6 authored dispatch (03-TIER1-BLOCKS)",
@@ -27,6 +27,8 @@
     "apps/backend/src/governance/void-cancel-executors.ts",
     "apps/backend/src/lib/__tests__/company-business-date.test.ts",
     "scripts/__tests__/verify-step-fail-closed-907-909.test.mjs",
+    "scripts/__tests__/block-ready.test.mjs",
+    "scripts/block-ready.mjs",
     "scripts/verify-acct-posting-business-date.mjs",
     "scripts/verify-je-void-reverses-not-voids.mjs",
     "scripts/verify-settlement-reversal-atomicity.mjs",
@@ -71,6 +73,10 @@
     {
       "kind": "test-isolation",
       "check": "bulk-update.factory rate-limit test explicitly mocks Redis unavailable and uses a unique valid user key; it deterministically verifies the in-memory fallback without external or persistent Redis state."
+    },
+    {
+      "kind": "pipeline",
+      "check": "block-ready C5 reads server_required_guard_capabilities from verify-meta and does not locally re-decide PR-label/PASS-8 authority after verify:static; authoritative required GitHub contexts remain fail-closed."
     },
     {
       "kind": "live",
