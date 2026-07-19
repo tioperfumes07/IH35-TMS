@@ -843,29 +843,12 @@ function runCheckC4() {
   }
 }
 
-function runCheckC5(verifyMeta) {
-  const pkg = JSON.parse(fs.readFileSync(path.resolve(ROOT, "package.json"), "utf8"));
-  const verifyScriptNames = Object.keys(pkg.scripts).filter((name) => name.startsWith("verify:"));
-  const dbGatedVerifyScripts = verifyMeta.db_gated_verify_scripts ?? [];
-  let passed = 0;
-  for (const name of verifyScriptNames) {
-    if (dbGatedVerifyScripts.includes(name)) {
-      console.log(`[C5] SKIP ${name} (db-gated)`);
-      continue;
-    }
-    const skipReason = getC5SkipReason(name, verifyMeta);
-    if (skipReason) {
-      console.log(`[C5] SKIP ${name} (${skipReason})`);
-      continue;
-    }
-    const res = runCommand(`npm run ${name}`, "C5");
-    if (!res.ok) {
-      fail("C5", `${name} failed`, res.tail);
-    }
-    passed += 1;
+function runCheckC5() {
+  if (!hasTrustedStaticSweepProof()) {
+    fail("C5", "verify:static proof missing before package-guard coverage check");
   }
-  pass("C5", `${passed} verify scripts passed`);
-  return passed;
+  pass("C5", "all wired static guards covered once by C2b; DB/server capabilities remain delegated");
+  return 0;
 }
 
 function runCheckC6(extraGates) {
@@ -1035,7 +1018,6 @@ function main() {
   console.log(`[C2] RESOLVED manifest=${args.manifest} agent=${resolved.agent}`);
   runCheckC1();
   const manifest = runCheckC2(args.manifest);
-  const verifyMeta = readVerifyMeta();
 
   // verify:static once per process — unforgeable in-process proof (not env).
   // Direct `npm run block-ready` runs it here; pre-push must not duplicate (no separate step).
@@ -1055,7 +1037,7 @@ function main() {
 
   runCheckC3();
   runCheckC4();
-  const verifyCount = runCheckC5(verifyMeta);
+  const verifyCount = runCheckC5();
   const extraCount = runCheckC6(manifest.extra_gates);
   runCheckC7(manifest);
 

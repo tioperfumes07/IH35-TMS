@@ -29,11 +29,18 @@ const blockReadySrc = fs.readFileSync(blockReadyPath, "utf8");
 if (!blockReadySrc.includes("block_ready_c5_skip_after_c4")) {
   fail("block-ready.mjs must read block_ready_c5_skip_after_c4 from verify-meta");
 }
-if (!blockReadySrc.includes("already run in C4")) {
-  fail("block-ready.mjs runCheckC5 must skip C4-overlap scripts with (already run in C4) log");
+if (!blockReadySrc.includes("ensureVerifyStaticOnce")) {
+  fail("block-ready.mjs must mint one trusted verify:static proof before C5");
 }
-if (!blockReadySrc.includes("shouldSkipC5VerifyScript") && !blockReadySrc.includes("getC5SkipReason")) {
-  fail("block-ready.mjs must apply C5 skip via getC5SkipReason/shouldSkipC5VerifyScript in runCheckC5");
+const c5Match = blockReadySrc.match(/function runCheckC5[\s\S]*?^}/m);
+if (!c5Match) {
+  fail("runCheckC5 not found in block-ready.mjs");
+}
+if (!c5Match[0].includes("hasTrustedStaticSweepProof")) {
+  fail("block-ready.mjs C5 must fail closed without the in-process static proof");
+}
+if (c5Match[0].includes("Object.keys(pkg.scripts)") || c5Match[0].includes('startsWith("verify:")')) {
+  fail("block-ready.mjs C5 must not rerun every package verify alias after C2b");
 }
 if (!blockReadySrc.includes("block_ready_c5_skip_orchestrators")) {
   fail("block-ready.mjs must read block_ready_c5_skip_orchestrators from verify-meta");

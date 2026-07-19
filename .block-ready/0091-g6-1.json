@@ -3,7 +3,7 @@
   "status": "HOLD",
   "classification": "FINANCIAL",
   "phase": "tier1",
-  "task": "PR #2705 replaces host-UTC accounting date defaults with one transaction-scoped company business date and makes driver-settlement cancellation atomic across canonical posting reversals, bills, bill payments, bank balance, driver bills, operational deductions, deduction buckets, GL reconciliation, settlement state, and audit. It reuses existing posting, journal-entry reversal, bill void, and deduction bucket reversal services; adds no GL math, schema, migration, QBO write-back, or flag change. Full block-ready also exposed external Redis state in a bulk test, an IFTA guard that demanded non-final Q3 rates before the official 2026-09-04 posting date, and C5 locally re-running server-only approval guards after verify:static. Those changes isolate the test, follow the official IFTA 2026-2028 final-rate calendar, and delegate PR-label/PASS-8 authority to required CI while retaining #2709's acyclic C5 ownership.",
+  "task": "PR #2705 replaces host-UTC accounting date defaults with one transaction-scoped company business date and makes driver-settlement cancellation atomic across canonical posting reversals, bills, bill payments, bank balance, driver bills, operational deductions, deduction buckets, GL reconciliation, settlement state, and audit. It reuses existing posting, journal-entry reversal, bill void, and deduction bucket reversal services; adds no GL math, schema, migration, QBO write-back, or flag change. Full block-ready also exposed external Redis state in a bulk test, an IFTA guard that demanded non-final Q3 rates before the official 2026-09-04 posting date, and C5 re-running stale/unwired and server-only package aliases after the authoritative static sweep. Those changes isolate the test, follow the official IFTA 2026-2028 final-rate calendar, and make C5 consume #2709's in-process static proof without duplicate local adjudication.",
   "branch": "hold/0091-g6-1-business-date-20260718",
   "lane": "B",
   "source": "MASTER-6 authored dispatch (03-TIER1-BLOCKS)",
@@ -30,6 +30,7 @@
     "scripts/__tests__/verify-step-fail-closed-907-909.test.mjs",
     "scripts/block-ready.mjs",
     "scripts/verify-acct-posting-business-date.mjs",
+    "scripts/verify-block-ready-c5-no-duplicate-arch-design.mjs",
     "scripts/verify-je-void-reverses-not-voids.mjs",
     "scripts/verify-ifta-tax-rates-current.mjs",
     "scripts/verify-settlement-reversal-atomicity.mjs",
@@ -77,7 +78,7 @@
     },
     {
       "kind": "pipeline",
-      "check": "block-ready C5 preserves #2709's acyclic orchestrator ownership and skips server-required PR-metadata/PASS-8 guards only after verify:static validates their authoritative required-CI capability mapping."
+      "check": "block-ready C2b runs the authoritative static sweep once and mints an in-process proof; C5 requires that proof and does not rerun stale/unwired, DB-gated, or server-only package aliases. Required GitHub contexts remain authoritative."
     },
     {
       "kind": "compliance-guard",
