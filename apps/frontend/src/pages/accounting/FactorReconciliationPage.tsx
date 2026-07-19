@@ -12,6 +12,7 @@ import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { useToast } from "../../components/Toast";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 
@@ -22,6 +23,7 @@ function money(cents: number) {
 export function FactorReconciliationPage() {
   const { selectedCompanyId } = useCompanyContext();
   const queryClient = useQueryClient();
+  const { pushToast } = useToast();
   const [selectedRunId, setSelectedRunId] = useState<string>("");
 
   const runsQuery = useQuery({
@@ -52,6 +54,7 @@ export function FactorReconciliationPage() {
       await queryClient.invalidateQueries({ queryKey: ["accounting", "factor-reconciliation-runs", selectedCompanyId] });
       await queryClient.invalidateQueries({ queryKey: ["accounting", "factor-reconciliation-import-candidates", selectedCompanyId] });
     },
+    onError: (error) => pushToast(String((error as Error)?.message ?? "Failed to import reconciliation run"), "error"),
   });
 
   const selectedRun = useMemo(
