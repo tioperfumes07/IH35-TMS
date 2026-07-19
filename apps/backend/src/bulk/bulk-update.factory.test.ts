@@ -4,6 +4,10 @@ import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
+
+vi.mock("../middleware/rate-limit.js", () => ({
+  getRateLimiterRedis: () => null,
+}));
 import {
   assertBulkActionAllowed,
   DEFAULT_BULK_MAX_IDS,

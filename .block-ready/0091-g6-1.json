@@ -3,7 +3,7 @@
   "status": "HOLD",
   "classification": "FINANCIAL",
   "phase": "tier1",
-  "task": "PR #2705 replaces host-UTC accounting date defaults with one transaction-scoped company business date and makes driver-settlement cancellation atomic across canonical posting reversals, bills, bill payments, bank balance, driver bills, operational deductions, deduction buckets, GL reconciliation, settlement state, and audit. It reuses existing posting, journal-entry reversal, bill void, and deduction bucket reversal services; adds no GL math, schema, migration, QBO write-back, or flag change. Full block-ready exposed a persistent-Redis test-isolation defect in the bulk rate-limit test; that test now uses a unique valid user key so its first consume cannot inherit another run's fixed-key state.",
+  "task": "PR #2705 replaces host-UTC accounting date defaults with one transaction-scoped company business date and makes driver-settlement cancellation atomic across canonical posting reversals, bills, bill payments, bank balance, driver bills, operational deductions, deduction buckets, GL reconciliation, settlement state, and audit. It reuses existing posting, journal-entry reversal, bill void, and deduction bucket reversal services; adds no GL math, schema, migration, QBO write-back, or flag change. Full block-ready exposed a Redis test-isolation defect in the bulk rate-limit test; that unit test now explicitly selects the in-memory fallback and uses a unique valid user key, so its first consume cannot depend on external or prior-process Redis state.",
   "branch": "hold/0091-g6-1-business-date-20260718",
   "lane": "B",
   "source": "MASTER-6 authored dispatch (03-TIER1-BLOCKS)",
@@ -70,7 +70,7 @@
     },
     {
       "kind": "test-isolation",
-      "check": "bulk-update.factory rate-limit test uses a unique valid user key; its first Redis consume no longer depends on persistent fixed-key state from a prior local-CI run."
+      "check": "bulk-update.factory rate-limit test explicitly mocks Redis unavailable and uses a unique valid user key; it deterministically verifies the in-memory fallback without external or persistent Redis state."
     },
     {
       "kind": "live",
