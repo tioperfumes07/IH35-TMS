@@ -1,6 +1,8 @@
 import os from "node:os";
 import { pool } from "../auth/db.js";
+import { isPermanentDeliveryError } from "./delivery-errors.js";
 import { buildOutboxHandlerRegistry, type OutboxPayload } from "./handlers/registry.js";
+import { computeOutboxRetryDelayMs, OUTBOX_MAX_RETRIES } from "./retry-backoff.js";
 
 type ClaimedEvent = {
   id: string;
@@ -11,8 +13,7 @@ type ClaimedEvent = {
 
 const POLL_INTERVAL_MS = 5000;
 const BATCH_SIZE = 10;
-const MAX_RETRIES = 6;
-const RETRY_BACKOFF_MS = [30_000, 120_000, 600_000, 3_600_000, 21_600_000, 86_400_000];
+const MAX_RETRIES = OUTBOX_MAX_RETRIES;
 
 function sleep(ms: number) {
   return new Promise<void>((resolve) => {
@@ -21,8 +22,7 @@ function sleep(ms: number) {
 }
 
 function retryDelayMs(retryCountAfterFailure: number) {
-  const idx = Math.min(Math.max(retryCountAfterFailure - 1, 0), RETRY_BACKOFF_MS.length - 1);
-  return RETRY_BACKOFF_MS[idx] ?? RETRY_BACKOFF_MS[RETRY_BACKOFF_MS.length - 1];
+  return computeOutboxRetryDelayMs(retryCountAfterFailure);
 }
 
 export class OutboxProcessor {
@@ -143,6 +143,10 @@ export class OutboxProcessor {
       await client.query("COMMIT");
     } catch (error) {
       await client.query("ROLLBACK").catch(() => undefined);
+      if (isPermanentDeliveryError(error)) {
+        await this.markFailedNow(event, String((error as Error)?.message ?? error));
+        return;
+      }
       await this.markRetryOrFailure(event, error as Error);
     } finally {
       client.release();

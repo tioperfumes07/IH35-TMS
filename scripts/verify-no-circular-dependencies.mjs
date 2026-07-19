@@ -38,6 +38,7 @@ const ALLOWLIST = new Set([
   "outbox/handlers/dispatch-load-dispatched.handler.ts",
   "outbox/handlers/twilio-whatsapp.ts",
   "outbox/handlers/twilio-sms.ts",
+  "outbox/handlers/fmcsa-customer-verify.handler.ts",
   "outbox/handlers/registry.ts",
   "qbo/push.service.ts",
 ]);

@@ -4,6 +4,10 @@ import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import {
+  buildFmcsaLookupFingerprint,
+  enqueueFmcsaCustomerVerifyRequested,
+} from "../integrations/fmcsa/fmcsa-customer-verify-chain.service.js";
 import { verifyCustomerWithSafer } from "../integrations/fmcsa/safer.service.js";
 import { decrypt, encrypt } from "../lib/encryption.js";
 import { sendZodValidation } from "../lib/zod-http-error.js";
@@ -721,13 +725,22 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
           customer_id: String(row.id),
           operation: "create",
         });
+        // Durable outbox enqueue (same txn): create stays responsive; SAFER retries via OutboxProcessor.
+        await enqueueFmcsaCustomerVerifyRequested(client, {
+          operating_company_id: String(row.operating_company_id),
+          customer_id: String(row.id),
+          actor_user_id: authUser.uuid,
+          trigger: "create",
+          lookup_fingerprint: buildFmcsaLookupFingerprint(
+            (row.mc_number as string | null | undefined) ?? null,
+            (row.dot_number as string | null | undefined) ?? null
+          ),
+        });
         return {
           customerId: row.id as string,
           customer: mapCustomerRow(row, canReadTaxId(authUser.role)),
         };
       });
-      // Fire-and-forget: creation must not block on FMCSA transient failures.
-      void verifyCustomerWithSafer({ customerId: created.customerId, actorUserId: authUser.uuid });
       return reply.code(201).send(created.customer);
     } catch (err) {
       if ((err as { code?: string }).code === "23505") {
@@ -1109,16 +1122,26 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
           operation: "update",
         });
 
+        const shouldReverify =
+          ("mc_number" in b && (existingRow.mc_number ?? null) !== (b.mc_number ?? null)) ||
+          ("dot_number" in b && (existingRow.dot_number ?? null) !== (b.dot_number ?? null));
+        if (shouldReverify) {
+          // Durable outbox enqueue (same txn): update stays responsive; SAFER retries via OutboxProcessor.
+          await enqueueFmcsaCustomerVerifyRequested(client, {
+            operating_company_id: String(updatedRow.operating_company_id),
+            customer_id: String(updatedRow.id),
+            actor_user_id: authUser.uuid,
+            trigger: "update",
+            lookup_fingerprint: buildFmcsaLookupFingerprint(
+              (updatedRow.mc_number as string | null | undefined) ?? null,
+              (updatedRow.dot_number as string | null | undefined) ?? null
+            ),
+          });
+        }
+
         return updatedRow;
       });
       if (!updated) return reply.code(404).send({ error: "mdata_customer_not_found" });
-      const shouldReverify =
-        ("mc_number" in b && (existingRow.mc_number ?? null) !== (b.mc_number ?? null)) ||
-        ("dot_number" in b && (existingRow.dot_number ?? null) !== (b.dot_number ?? null));
-      if (shouldReverify) {
-        // Fire-and-forget: update path remains available even if FMCSA is down.
-        void verifyCustomerWithSafer({ customerId: updated.id as string, actorUserId: authUser.uuid });
-      }
       return mapCustomerRow(updated, canReadTaxId(authUser.role));
     } catch (err) {
       if ((err as { code?: string }).code === "23505") return reply.code(409).send({ error: "mdata_customer_conflict" });

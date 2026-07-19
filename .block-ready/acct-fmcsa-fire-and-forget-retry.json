@@ -6,12 +6,27 @@
   "source": "MASTER-6 authored dispatch (05-TIER2-BLOCKS)",
   "source_file": "acct-fmcsa-fire-and-forget-retry.txt",
   "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
+    "apps/backend/src/mdata/customers.routes.ts",
+    "apps/backend/src/mdata/__tests__/customers-fmcsa-outbox-enqueue.test.ts",
+    "apps/backend/src/integrations/fmcsa/**",
+    "apps/backend/src/outbox/**",
+    "scripts/verify-fmcsa-fire-and-forget-retry.mjs",
+    "scripts/verify-steps/913-verify-fmcsa-fire-and-forget-retry.mjs",
+    "scripts/__tests__/verify-fmcsa-fire-and-forget-retry.test.mjs",
+    "scripts/verify-no-circular-dependencies.mjs",
+    "apps/frontend/src/components/home/__tests__/QboSyncHealthCard.test.tsx",
+    ".block-ready/acct-fmcsa-fire-and-forget-retry.json"
   ],
   "acceptance": [
     {
-      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
+      "check": "customers.routes create/update enqueue fmcsa.customer.verify_requested into outbox.events (same txn); no void verifyCustomerWithSafer"
+    },
+    {
+      "check": "OutboxProcessor handler registered; retryable vs permanent; backoff+jitter; attempts/last_error/next_retry; audit; tenant isolation; manual /verify-fmcsa remains"
+    },
+    {
+      "check": "Rule-17 verify-fmcsa-fire-and-forget-retry.mjs + verify-step + --selftest PASS; behavioral vitest PASS; no migration; no GL/QBO posting"
     }
   ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+  "note": "Reuses existing outbox.events + OutboxProcessor — no schema migration (migration lane busy). FINANCIAL classification retained for owner gate; no money posting in this PR."
 }

@@ -1,6 +1,7 @@
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser } from "../../auth/db.js";
 import { lookupCarrierByMC, lookupCarrierByUSDOT, type CarrierResult } from "../../lib/fmcsa-client.js";
+import { classifyFmcsaLookupFailure, RetryableFmcsaError } from "./errors.js";
 
 type LookupType = "mc" | "usdot";
 
@@ -36,8 +37,15 @@ function hasFreshCustomerCache(customer: CustomerForCheck) {
   return Date.now() - lastCheckedMs < 24 * 60 * 60 * 1000;
 }
 
-async function loadCustomer(actorUserId: string, customerId: string): Promise<CustomerForCheck | null> {
+async function loadCustomer(
+  actorUserId: string,
+  customerId: string,
+  operatingCompanyId?: string
+): Promise<CustomerForCheck | null> {
   return withCurrentUser(actorUserId, async (client) => {
+    if (operatingCompanyId) {
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    }
     const res = await client.query(
       `
         SELECT
@@ -51,9 +59,10 @@ async function loadCustomer(actorUserId: string, customerId: string): Promise<Cu
           fmcsa_check_response
         FROM mdata.customers
         WHERE id = $1
+          AND ($2::uuid IS NULL OR operating_company_id = $2::uuid)
         LIMIT 1
       `,
-      [customerId]
+      [customerId, operatingCompanyId ?? null]
     );
     return (res.rows[0] as CustomerForCheck | undefined) ?? null;
   });
@@ -63,12 +72,18 @@ type VerifyOptions = {
   customerId: string;
   actorUserId: string;
   force?: boolean;
+  /** When set, enforces tenant isolation on the customer load. */
+  operatingCompanyId?: string;
 };
 
 export async function verifyCustomerWithSafer(options: VerifyOptions) {
-  const { customerId, actorUserId, force = false } = options;
-  const customer = await loadCustomer(actorUserId, customerId);
+  const { customerId, actorUserId, force = false, operatingCompanyId } = options;
+  const customer = await loadCustomer(actorUserId, customerId, operatingCompanyId);
   if (!customer) return { customer: null, reason: "not_found" as const };
+
+  if (operatingCompanyId && customer.operating_company_id !== operatingCompanyId) {
+    return { customer: null, reason: "not_found" as const };
+  }
 
   if (!force && hasFreshCustomerCache(customer)) {
     return { customer, reason: "cached_24h" as const };
@@ -77,6 +92,9 @@ export async function verifyCustomerWithSafer(options: VerifyOptions) {
   const lookup = pickLookup(customer);
   if (!lookup) {
     const updated = await withCurrentUser(actorUserId, async (client) => {
+      if (operatingCompanyId) {
+        await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      }
       const res = await client.query(
         `
           UPDATE mdata.customers
@@ -92,9 +110,10 @@ export async function verifyCustomerWithSafer(options: VerifyOptions) {
             ),
             updated_by_user_id = $2
           WHERE id = $1
+            AND ($3::uuid IS NULL OR operating_company_id = $3::uuid)
           RETURNING *
         `,
-        [customerId, actorUserId]
+        [customerId, actorUserId, operatingCompanyId ?? null]
       );
       return res.rows[0] ?? null;
     });
@@ -102,14 +121,24 @@ export async function verifyCustomerWithSafer(options: VerifyOptions) {
   }
 
   let carrier: CarrierResult | null = null;
-  let fetchError: string | null = null;
   try {
     carrier = lookup.type === "mc" ? await lookupCarrierByMC(lookup.value) : await lookupCarrierByUSDOT(lookup.value);
-  } catch {
-    fetchError = "lookup_failed";
+  } catch (error) {
+    // Transient FMCSA/network failures must NOT stamp fmcsa_last_checked_at (that poisoned the
+    // 24h cache and silently dropped retries). Re-throw so the durable outbox can backoff.
+    if (classifyFmcsaLookupFailure(error) === "retryable") {
+      throw new RetryableFmcsaError(String((error as Error)?.message ?? error));
+    }
+    // Permanent unexpected errors still surface as a completed verification attempt below.
+    carrier = null;
   }
 
+  const fetchError = carrier ? null : "not_found";
+
   const updated = await withCurrentUser(actorUserId, async (client) => {
+    if (operatingCompanyId) {
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    }
     let lookupId: string | null = null;
     if (carrier) {
       const insertedLookup = await client.query(
@@ -178,6 +207,7 @@ export async function verifyCustomerWithSafer(options: VerifyOptions) {
           fmcsa_check_response = $4::jsonb,
           updated_by_user_id = $5
         WHERE id = $1
+          AND ($6::uuid IS NULL OR operating_company_id = $6::uuid)
         RETURNING *
       `,
       [
@@ -203,6 +233,7 @@ export async function verifyCustomerWithSafer(options: VerifyOptions) {
               }
         ),
         actorUserId,
+        operatingCompanyId ?? null,
       ]
     );
 
@@ -218,6 +249,7 @@ export async function verifyCustomerWithSafer(options: VerifyOptions) {
           customer_id: updatedCustomer.id,
           authority_status: authorityStatus,
           automated: true,
+          operating_company_id: customer.operating_company_id,
         },
         authorityStatus === "ACTIVE" ? "info" : "warning",
         "P3-T11.21-FMCSA-VERIFICATION"
@@ -227,5 +259,5 @@ export async function verifyCustomerWithSafer(options: VerifyOptions) {
     return updatedCustomer;
   });
 
-  return { customer: updated, reason: carrier ? "verified" as const : "lookup_failed_or_not_found" as const };
+  return { customer: updated, reason: carrier ? ("verified" as const) : ("lookup_failed_or_not_found" as const) };
 }

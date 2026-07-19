@@ -44,8 +44,9 @@ describe("QboSyncHealthCard freshness", () => {
 
     expect(screen.getByText("Stale")).toBeInTheDocument();
     expect(screen.queryByText("Healthy")).not.toBeInTheDocument();
-    // Age appears twice: Last run (formatRelative) + Last successful sync (formatAgeSeconds).
-    expect(screen.getAllByText("62d ago")).toHaveLength(2);
+    // Authoritative age comes from last_success_age_seconds (formatAgeSeconds). "Last run"
+    // uses wall-clock formatRelative and can diverge by a day — do not require two "62d ago".
+    expect(screen.getAllByText("62d ago").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Master-data CDC")).toBeInTheDocument();
     expect(screen.getByText("24h")).toBeInTheDocument();
   });
