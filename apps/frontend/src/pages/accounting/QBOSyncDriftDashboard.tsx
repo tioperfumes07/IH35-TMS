@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
+import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 
@@ -72,6 +73,7 @@ export function QBOSyncDriftDashboard() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
+  const { pushToast } = useToast();
 
   const dashboardQuery = useQuery({
     queryKey: ["qbo-sync-drift-dashboard", companyId],
@@ -84,6 +86,7 @@ export function QBOSyncDriftDashboard() {
     mutationFn: (input: { id: string; action: "accept_local" | "accept_qbo" | "manual_merge_recorded" }) =>
       resolveDrift(input.id, companyId, input.action),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["qbo-sync-drift-dashboard", companyId] }),
+    onError: (error) => pushToast(String((error as Error)?.message ?? "Failed to resolve drift"), "error"),
   });
 
   const data = dashboardQuery.data;
