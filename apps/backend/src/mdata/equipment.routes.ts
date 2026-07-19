@@ -156,34 +156,42 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
     // Schema note: mdata.equipment has NO operating_company_id column — entity scope is the
     // owner_company_id / currently_leased_to_company_id pair (same as units; never invent a
     // phantom operating_company_id filter on this table).
+    //
+    // Entity-scope static enforcement (verify-mdata-entity-scope): BOTH the count and item SQL
+    // template literals MUST contain the owner/leased predicates as source text. Optional
+    // status/search predicates stay in a shared dynamic fragment only — never bury the entity
+    // scope inside a joined `filters[]` that the ratchet cannot see.
     const result = await withCurrentUser(authUser.uuid, async (client) => {
-      const values: unknown[] = [];
-      const filters: string[] = [];
+      // Entity scope (USMCA cross-entity leak fix): resolve first so $1 is always the company bind
+      // shared by count + item queries (identical filter indices on both).
+      const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, operating_company_id);
+      if (!scopedCompanyId) return { rows: [], total: 0 };
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
+
+      // $1 = scoped company. Optional status/search bind at $2+. Limit/offset append after count.
+      const values: unknown[] = [scopedCompanyId];
+      const optionalFilters: string[] = [];
       if (status) {
         values.push(status);
-        filters.push(`status = $${values.length}`);
+        optionalFilters.push(`status = $${values.length}`);
       }
       if (search) {
         values.push(`%${search}%`);
         const idx = values.length;
-        filters.push(`(equipment_number ILIKE $${idx} OR vin ILIKE $${idx} OR make ILIKE $${idx} OR model ILIKE $${idx})`);
+        optionalFilters.push(
+          `(equipment_number ILIKE $${idx} OR vin ILIKE $${idx} OR make ILIKE $${idx} OR model ILIKE $${idx})`
+        );
       }
-      // Entity scope (USMCA cross-entity leak fix): mdata.equipment has no operating_company_id and
-      // its RLS is identity/role-scoped, so scope by the owner/leased pair. ALWAYS bind it — resolve
-      // the company from the param or user context so equipment from another entity never leaks.
-      const scopedCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, operating_company_id);
-      if (!scopedCompanyId) return { rows: [], total: 0 };
-      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [scopedCompanyId]);
-      values.push(scopedCompanyId);
-      const ownerLeasedIdx = values.length;
-      filters.push(`(owner_company_id = $${ownerLeasedIdx} OR currently_leased_to_company_id = $${ownerLeasedIdx})`);
-      const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
+      const optionalAnd =
+        optionalFilters.length > 0 ? ` AND ${optionalFilters.join(" AND ")}` : "";
 
       // Snapshot filter params for the count so LIMIT/OFFSET never ride on the total query
       // (same filtered/scoped dataset as items; distinct from the paged SELECT binding).
       const filterValues = values.slice();
       const countRes = await client.query<{ total: number }>(
-        `SELECT count(*)::int AS total FROM mdata.equipment ${whereClause}`,
+        `SELECT count(*)::int AS total
+         FROM mdata.equipment
+         WHERE (owner_company_id = $1 OR currently_leased_to_company_id = $1)${optionalAnd}`,
         filterValues
       );
       const total = Number(countRes.rows[0]?.total ?? 0);
@@ -214,7 +222,7 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
             created_by_user_id,
             updated_by_user_id
           FROM mdata.equipment
-          ${whereClause}
+          WHERE (owner_company_id = $1 OR currently_leased_to_company_id = $1)${optionalAnd}
           ORDER BY created_at DESC, id ASC
           LIMIT $${values.length - 1}
           OFFSET $${values.length}

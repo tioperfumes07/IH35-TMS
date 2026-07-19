@@ -50,6 +50,24 @@ const ALL_ROWS: EquipmentRow[] = [
     currently_leased_to_company_id: COMPANY_B,
     created_at: "2026-07-19T13:00:00.000Z",
   },
+  // Leased-only into COMPANY_A: owner is COMPANY_B, lessee is COMPANY_A — must appear for A.
+  {
+    id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+    equipment_number: "TR-LEASED-IN",
+    status: "InService",
+    owner_company_id: COMPANY_B,
+    currently_leased_to_company_id: COMPANY_A,
+    created_at: "2026-07-17T12:00:00.000Z",
+  },
+  // Foreign owner, unleased to COMPANY_A — must NOT appear for A.
+  {
+    id: "ffffffff-ffff-4fff-8fff-ffffffffffff",
+    equipment_number: "TR-FOREIGN-UNLEASED",
+    status: "InService",
+    owner_company_id: COMPANY_B,
+    currently_leased_to_company_id: null,
+    created_at: "2026-07-19T14:00:00.000Z",
+  },
 ];
 
 function scopedRows(companyId: string, status?: string, search?: string): EquipmentRow[] {
@@ -68,6 +86,23 @@ function scopedRows(companyId: string, status?: string, search?: string): Equipm
     if (byCreated !== 0) return byCreated;
     return a.id.localeCompare(b.id);
   });
+}
+
+/** Param layout after entity-scope refactor: [companyId, status?, search?, limit?, offset?] */
+function parseListParams(sql: string, params: unknown[] | undefined) {
+  const text = String(sql);
+  const companyId = String(params?.[0] ?? "");
+  let status: string | undefined;
+  let search: string | undefined;
+  if (text.includes("status = $") && text.includes("ILIKE")) {
+    status = String(params?.[1]);
+    search = String(params?.[2]);
+  } else if (text.includes("status = $")) {
+    status = String(params?.[1]);
+  } else if (text.includes("ILIKE")) {
+    search = String(params?.[1]);
+  }
+  return { companyId, status, search };
 }
 
 const queryMock = vi.fn(async (sql: string, params?: unknown[]) => {
@@ -92,34 +127,17 @@ const queryMock = vi.fn(async (sql: string, params?: unknown[]) => {
   }
 
   if (/count\(\*\)\s*::int\s+AS\s+total\s+FROM\s+mdata\.equipment/i.test(text)) {
-    const companyId = String(params?.[params.length - 1] ?? "");
-    let status: string | undefined;
-    let search: string | undefined;
-    if (text.includes("status = $")) {
-      status = String(params?.[0]);
-      if (text.includes("ILIKE")) search = String(params?.[1]);
-    } else if (text.includes("ILIKE")) {
-      search = String(params?.[0]);
-    }
+    expect(text).toContain("owner_company_id = $1 OR currently_leased_to_company_id = $1");
+    const { companyId, status, search } = parseListParams(text, params);
     const rows = scopedRows(companyId, status, search);
     return { rows: [{ total: rows.length }] };
   }
 
   if (text.includes("FROM mdata.equipment") && text.includes("ORDER BY")) {
+    expect(text).toContain("owner_company_id = $1 OR currently_leased_to_company_id = $1");
     const limit = Number(params?.[params.length - 2] ?? 50);
     const offset = Number(params?.[params.length - 1] ?? 0);
-    const companyId = String(params?.[params.length - 3] ?? "");
-    let status: string | undefined;
-    let search: string | undefined;
-    // Param layout: [status?][search?][companyId][limit][offset]
-    if (text.includes("status = $") && text.includes("ILIKE")) {
-      status = String(params?.[0]);
-      search = String(params?.[1]);
-    } else if (text.includes("status = $")) {
-      status = String(params?.[0]);
-    } else if (text.includes("ILIKE")) {
-      search = String(params?.[0]);
-    }
+    const { companyId, status, search } = parseListParams(text, params);
     const rows = scopedRows(companyId, status, search).slice(offset, offset + limit);
     return { rows };
   }
@@ -173,7 +191,7 @@ describe("GET /api/v1/mdata/equipment list pagination contract (0091-g9-h6)", ()
     apps.push(app);
     app.addHook("preHandler", async (req) => {
       (req as { user?: { uuid: string; role: string } }).user = {
-        uuid: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+        uuid: "99999999-9999-4999-8999-999999999999",
         role,
       };
     });
@@ -208,8 +226,9 @@ describe("GET /api/v1/mdata/equipment list pagination contract (0091-g9-h6)", ()
     });
 
     expect(response.statusCode).toBe(200);
+    // COMPANY_A InService: TR-100, TR-101, TR-LEASED-IN → total 3
     expect(response.json()).toMatchObject({
-      total: 2,
+      total: 3,
       limit: 1,
       offset: 0,
       has_more: true,
@@ -222,19 +241,63 @@ describe("GET /api/v1/mdata/equipment list pagination contract (0091-g9-h6)", ()
     expect(countCall).toBeDefined();
     expect(String(countCall?.[0])).toContain("status = $");
     expect(String(countCall?.[0])).toContain(
-      "owner_company_id = $2 OR currently_leased_to_company_id = $2"
+      "owner_company_id = $1 OR currently_leased_to_company_id = $1"
     );
-    // Count must not page — LIMIT/OFFSET belong only on the item SELECT. Filter params are
-    // snapshotted before limit/offset are appended for the paged SELECT.
+    // Count must not page — LIMIT/OFFSET belong only on the item SELECT.
     expect(String(countCall?.[0])).not.toMatch(/\bLIMIT\b/i);
     expect(String(countCall?.[0])).not.toMatch(/\bOFFSET\b/i);
-    expect(countCall?.[1]).toEqual(["InService", COMPANY_A]);
+    // Bind layout: [$1=company, $2=status]
+    expect(countCall?.[1]).toEqual([COMPANY_A, "InService"]);
     expect(String(countCall?.[0])).not.toMatch(/mdata\.equipment\.operating_company_id/);
 
     const listCall = queryMock.mock.calls.find(
       ([sql]) => String(sql).includes("FROM mdata.equipment") && String(sql).includes("ORDER BY")
     );
-    expect(listCall?.[1]).toEqual(["InService", COMPANY_A, 1, 0]);
+    expect(String(listCall?.[0])).toContain(
+      "owner_company_id = $1 OR currently_leased_to_company_id = $1"
+    );
+    expect(listCall?.[1]).toEqual([COMPANY_A, "InService", 1, 0]);
+  });
+
+  it("includes leased-only trailers (owner different, currently_leased_to selected company)", async () => {
+    const app = await buildApp();
+    const response = await app.inject({
+      method: "GET",
+      url: `/api/v1/mdata/equipment?operating_company_id=${COMPANY_A}&search=LEASED-IN&limit=50&offset=0`,
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({
+      total: 1,
+      has_more: false,
+      equipment: [
+        {
+          equipment_number: "TR-LEASED-IN",
+          owner_company_id: COMPANY_B,
+          currently_leased_to_company_id: COMPANY_A,
+        },
+      ],
+    });
+  });
+
+  it("excludes foreign-owned unleased trailers from the selected company scope", async () => {
+    const app = await buildApp();
+    const response = await app.inject({
+      method: "GET",
+      url: `/api/v1/mdata/equipment?operating_company_id=${COMPANY_A}&limit=50&offset=0`,
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = response.json() as {
+      total: number;
+      equipment: Array<{ equipment_number: string; id: string }>;
+    };
+    // Owned by A (3) + leased-in (1) = 4; foreign unleased + foreign owned/leased-to-B excluded.
+    expect(body.total).toBe(4);
+    const numbers = body.equipment.map((r) => r.equipment_number);
+    expect(numbers).toContain("TR-LEASED-IN");
+    expect(numbers).not.toContain("TR-FOREIGN");
+    expect(numbers).not.toContain("TR-FOREIGN-UNLEASED");
   });
 
   it("honors offset/limit for the middle page", async () => {
@@ -252,7 +315,7 @@ describe("GET /api/v1/mdata/equipment list pagination contract (0091-g9-h6)", ()
       has_more: boolean;
       equipment: Array<{ id: string }>;
     };
-    expect(body).toMatchObject({ total: 3, limit: 1, offset: 1, has_more: true });
+    expect(body).toMatchObject({ total: 4, limit: 1, offset: 1, has_more: true });
     expect(body.equipment).toHaveLength(1);
     expect(body.equipment[0]?.id).toBe("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb");
   });
@@ -266,12 +329,16 @@ describe("GET /api/v1/mdata/equipment list pagination contract (0091-g9-h6)", ()
 
     expect(response.statusCode).toBe(200);
     expect(response.json()).toMatchObject({
-      total: 3,
+      total: 4,
       limit: 2,
       offset: 2,
       has_more: false,
-      equipment: [{ equipment_number: "TR-200" }],
     });
+    const ids = (response.json() as { equipment: Array<{ id: string }> }).equipment.map((r) => r.id);
+    expect(ids).toEqual([
+      "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+      "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+    ]);
   });
 
   it("returns an empty page with truthful total/has_more when offset is past the end", async () => {
@@ -284,7 +351,7 @@ describe("GET /api/v1/mdata/equipment list pagination contract (0091-g9-h6)", ()
     expect(response.statusCode).toBe(200);
     expect(response.json()).toEqual({
       equipment: [],
-      total: 3,
+      total: 4,
       limit: 10,
       offset: 100,
       has_more: false,
@@ -307,6 +374,11 @@ describe("GET /api/v1/mdata/equipment list pagination contract (0091-g9-h6)", ()
     expect(body.total).toBe(2);
     expect(body.has_more).toBe(false);
     expect(body.equipment.map((r) => r.equipment_number).sort()).toEqual(["TR-100", "TR-101"]);
+
+    const countCall = queryMock.mock.calls.find(([sql]) =>
+      /count\(\*\)\s*::int\s+AS\s+total\s+FROM\s+mdata\.equipment/i.test(String(sql))
+    );
+    expect(countCall?.[1]).toEqual([COMPANY_A, "%TR-10%"]);
   });
 
   it("uses a deterministic created_at DESC, id ASC tie-breaker", async () => {
@@ -343,8 +415,8 @@ describe("GET /api/v1/mdata/equipment list pagination contract (0091-g9-h6)", ()
     expect(equipmentSql.length).toBeGreaterThan(0);
     for (const sql of equipmentSql) {
       expect(sql).not.toMatch(/equipment\.operating_company_id|FROM mdata\.equipment[\s\S]*operating_company_id\s*=/);
-      expect(sql).toContain("owner_company_id");
-      expect(sql).toContain("currently_leased_to_company_id");
+      expect(sql).toContain("owner_company_id = $1");
+      expect(sql).toContain("currently_leased_to_company_id = $1");
     }
   });
 });

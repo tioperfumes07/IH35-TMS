@@ -54,9 +54,26 @@ export function check(src) {
       "GET /mdata/equipment must ORDER BY created_at DESC, id ASC (deterministic tie-breaker)",
     );
   }
-  if (!/owner_company_id\s*=/.test(listSrc) || !/currently_leased_to_company_id\s*=/.test(listSrc)) {
+  // Both count + item SQL template literals must carry the entity scope as SOURCE TEXT so
+  // verify-mdata-entity-scope can see it (dynamic filters.push of the predicate is not enough).
+  const countLit =
+    listSrc.match(
+      /`[\s\S]*?count\(\*\)\s*::int\s+AS\s+total[\s\S]*?FROM\s+mdata\.equipment[\s\S]*?`/i
+    )?.[0] ?? "";
+  const itemLit =
+    listSrc.match(
+      /`[\s\S]*?FROM\s+mdata\.equipment[\s\S]*?ORDER BY\s+created_at\s+DESC\s*,\s*id\s+ASC[\s\S]*?`/i
+    )?.[0] ?? "";
+  const scopePred =
+    /owner_company_id\s*=\s*\$1\s+OR\s+currently_leased_to_company_id\s*=\s*\$1/i;
+  if (!countLit || !scopePred.test(countLit)) {
     failures.push(
-      "GET /mdata/equipment must keep owner_company_id / currently_leased_to_company_id entity scope",
+      "GET /mdata/equipment COUNT SQL literal must contain static (owner_company_id = $1 OR currently_leased_to_company_id = $1)",
+    );
+  }
+  if (!itemLit || !scopePred.test(itemLit)) {
+    failures.push(
+      "GET /mdata/equipment item SQL literal must contain static (owner_company_id = $1 OR currently_leased_to_company_id = $1)",
     );
   }
   // Fail closed on inventing a phantom column on this table.
@@ -77,29 +94,46 @@ export function run() {
 if (process.argv.includes("--selftest")) {
   const good = `
     app.get("/api/v1/mdata/equipment", async (req, reply) => {
-      const countRes = await client.query("SELECT count(*)::int AS total FROM mdata.equipment WHERE owner_company_id = $1 OR currently_leased_to_company_id = $1");
-      const res = await client.query("SELECT id FROM mdata.equipment WHERE owner_company_id = $1 OR currently_leased_to_company_id = $1 ORDER BY created_at DESC, id ASC LIMIT $2 OFFSET $3");
+      const countRes = await client.query(\`SELECT count(*)::int AS total
+         FROM mdata.equipment
+         WHERE (owner_company_id = $1 OR currently_leased_to_company_id = $1)\${optionalAnd}\`);
+      const res = await client.query(\`SELECT id
+          FROM mdata.equipment
+          WHERE (owner_company_id = $1 OR currently_leased_to_company_id = $1)\${optionalAnd}
+          ORDER BY created_at DESC, id ASC
+          LIMIT $\${values.length - 1}
+          OFFSET $\${values.length}\`);
       return { equipment: result.rows, total: result.total, limit, offset, has_more: offset + result.rows.length < result.total };
     });
     app.post("/api/v1/mdata/equipment", async () => {});
   `;
   const badBare = `
     app.get("/api/v1/mdata/equipment", async () => {
-      const res = await client.query("SELECT * FROM mdata.equipment ORDER BY created_at DESC LIMIT $1 OFFSET $2");
+      const res = await client.query(\`SELECT * FROM mdata.equipment ORDER BY created_at DESC LIMIT $1 OFFSET $2\`);
       return { equipment: res.rows };
+    });
+    app.post("/api/v1/mdata/equipment", async () => {});
+  `;
+  const badDynamicOnly = `
+    app.get("/api/v1/mdata/equipment", async () => {
+      filters.push("(owner_company_id = $1 OR currently_leased_to_company_id = $1)");
+      const countRes = await client.query(\`SELECT count(*)::int AS total FROM mdata.equipment \${whereClause}\`);
+      const res = await client.query(\`SELECT id FROM mdata.equipment \${whereClause} ORDER BY created_at DESC, id ASC\`);
+      return { equipment: [], total: 0, limit, offset, has_more: false };
     });
     app.post("/api/v1/mdata/equipment", async () => {});
   `;
   const badPhantomCol = `
     app.get("/api/v1/mdata/equipment", async () => {
-      const countRes = await client.query("SELECT count(*)::int AS total FROM mdata.equipment WHERE operating_company_id = $1");
+      const countRes = await client.query(\`SELECT count(*)::int AS total FROM mdata.equipment WHERE operating_company_id = $1\`);
       return { equipment: [], total: 0, limit, offset, has_more: false };
     });
     app.post("/api/v1/mdata/equipment", async () => {});
   `;
   const checks = [
-    ["total+has_more+scope shape passes", check(good).length === 0],
+    ["total+has_more+static-scope shape passes", check(good).length === 0],
     ["bare { equipment } is caught", check(badBare).length > 0],
+    ["dynamic-only scope (filters.push) is caught", check(badDynamicOnly).length > 0],
     ["phantom operating_company_id is caught", check(badPhantomCol).length > 0],
   ];
   const failed = checks.filter(([, ok]) => !ok);
