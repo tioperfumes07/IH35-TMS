@@ -2,11 +2,17 @@
 /**
  * CLOSURE-11 — maintenance services catalog + ETA calculator gap-close guard.
  * Core catalogs.maintenance_service_tasks shipped via P3-T11.21.5a; ETA module is CLOSURE delta.
+ *
+ * Loads the .ts calculator via tsx/esm/api register — plain `node` cannot import TypeScript
+ * (ERR_UNKNOWN_FILE_EXTENSION). Avoids package.json thrash (Rule 17).
  */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { calculateServiceEta } from "../apps/backend/src/catalogs/maintenance/eta-calculator.ts";
+import { register } from "tsx/esm/api";
+
+register();
+const { calculateServiceEta } = await import("../apps/backend/src/catalogs/maintenance/eta-calculator.ts");
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const catalogIndex = path.join(ROOT, "apps/backend/src/catalogs/maintenance/index.ts");
