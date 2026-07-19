@@ -8,6 +8,8 @@
  * FORCE RLS + Owner/Admin write policies, canonical invoice display_id contract.
  */
 import { randomUUID } from "node:crypto";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
@@ -24,6 +26,12 @@ import {
   INVOICE_DISPLAY_ID_RE,
   FARO_FULL_RECOURSE_AGREEMENT_CODE,
 } from "../factoring-balance-invoice-linkage.service.js";
+
+const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../../..");
+const FACTORING_BALANCE_MIGRATION = path.join(
+  REPO_ROOT,
+  "db/migrations/202607600000_factoring_balance_invoice_linkage.sql"
+);
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 
@@ -1280,12 +1288,7 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
 
   it("held migration 202607600000 fails closed without 202607340000 reversal columns", async () => {
     const fs = await import("node:fs");
-    const path = await import("node:path");
-    const sqlPath = path.join(
-      process.cwd(),
-      "db/migrations/202607600000_factoring_balance_invoice_linkage.sql"
-    );
-    const sql = fs.readFileSync(sqlPath, "utf8");
+    const sql = fs.readFileSync(FACTORING_BALANCE_MIGRATION, "utf8");
     expect(sql).toMatch(/HELD_MIGRATION_PREREQUISITE_MISSING/);
     expect(sql).toMatch(/202607340000_je_reversal_linkage/);
     const prereqMatch = sql.match(/DO \$prereq\$[\s\S]*?END\s*\$prereq\$;/i);
@@ -1316,12 +1319,7 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
 
   it("held migration 202607600000 apply-twice is idempotent when prerequisite columns present", async () => {
     const fs = await import("node:fs");
-    const path = await import("node:path");
-    const sqlPath = path.join(
-      process.cwd(),
-      "db/migrations/202607600000_factoring_balance_invoice_linkage.sql"
-    );
-    const sql = fs.readFileSync(sqlPath, "utf8");
+    const sql = fs.readFileSync(FACTORING_BALANCE_MIGRATION, "utf8");
     const body = sql.replace(/^\s*BEGIN\s*;/i, "").replace(/COMMIT\s*;\s*$/i, "");
     await db.query("RESET ROLE");
     await db.query("BEGIN");
