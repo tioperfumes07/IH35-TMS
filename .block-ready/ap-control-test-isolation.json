@@ -21,7 +21,8 @@
     "apps/backend/src/driver-finance/__tests__/settlement-payrun-close.db.test.ts",
     "apps/backend/src/banking/__tests__/bank-transaction-splits-vendor-bill.db.test.ts",
     "scripts/verify-shared-coa-role-tests-serialized.mjs",
-    "scripts/verify-steps/131-verify-shared-coa-role-tests-serialized.mjs"
+    "scripts/verify-steps/131-verify-shared-coa-role-tests-serialized.mjs",
+    "scripts/verify-hold-merge-gate.mjs"
   ],
   "runtime_path": "src",
   "db_required": true,
