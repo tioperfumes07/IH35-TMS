@@ -1,17 +1,54 @@
 {
   "block_id": "0007-pattern-8-reverse-drill-through",
-  "status": "PARTIAL",
-  "classification": "FINANCIAL",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (guard/spec wiring only)",
   "phase": "tier3",
+  "branch": "chore/0007-pattern-8-reverse-drill-through",
+  "task": "Enforce and auto-discover existing EntityLink reverse-drill guards",
   "source": "MASTER-6 authored dispatch (06-TIER3-BLOCKS)",
   "source_file": "0007-pattern-8-reverse-drill-through.txt",
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [
+    "node scripts/verify-entity-link-adoption.mjs --selftest",
+    "node scripts/verify-entity-link-adoption.mjs",
+    "node scripts/verify-entitylink-deep-links.mjs --selftest",
+    "node scripts/verify-entitylink-deep-links.mjs",
+    "node scripts/verify-94-live-counter-linkage.mjs --selftest",
+    "node scripts/verify-94-live-counter-linkage.mjs",
+    "node scripts/verify-guard-wired.mjs"
+  ],
   "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
+    ".block-ready/0007-pattern-8-reverse-drill-through.json",
+    "docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md",
+    "scripts/.guard-exempt.json",
+    "scripts/verify-entity-link-adoption.mjs",
+    "scripts/verify-entitylink-deep-links.mjs",
+    "scripts/verify-94-live-counter-linkage.mjs",
+    "scripts/verify-steps/915-verify-entity-link-adoption.mjs",
+    "scripts/verify-steps/916-verify-entitylink-deep-links.mjs",
+    "scripts/verify-steps/917-verify-94-live-counter-linkage.mjs"
   ],
   "acceptance": [
     {
-      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
+      "check": "all three guards pass normally and with planted --selftest fixtures that reject comment/string decoys"
+    },
+    {
+      "check": "EntityLink adoption is fail-closed with a 76-finding origin/main baseline ratchet; parse errors or any increase fail"
+    },
+    {
+      "check": "deep-link guard proves executable producer → resolver → registered route → consumer semantics"
+    },
+    {
+      "check": "94-live guard proves executable relation check and company-scoped DISTINCT local_unit_id SQL"
+    },
+    {
+      "check": "unique verify-steps 915/916/917 auto-discover all three guards; guard-wired reports them fully wired"
+    },
+    {
+      "check": "package.json and workflow hot files unchanged; no UI, route, tab, schema, migration, or runtime behavior changes"
     }
   ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+  "note": "Owner explicitly approved the existing EntityLink adoption/deep-link guard contract and draft-PR handoff. Builder stops at local/PR proof for independent review; do not merge."
 }

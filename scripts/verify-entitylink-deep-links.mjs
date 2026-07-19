@@ -1,141 +1,255 @@
 #!/usr/bin/env node
 /**
- * verify-entitylink-deep-links.mjs
+ * Fail-closed EntityLink producer → resolver → consumer guard.
  *
- * GUARD 2026-07-16 (audit gap #6): query-param drill-throughs must land on a page that
- * honors the param. Dead "View audit log" / fault-history links looked wired but dropped
- * the id silently.
- *
- * Static invariants (no DB, no network):
- *  1. InvoiceDetailPage customer header → EntityLink kind="customer" id={invoice.customer_id}
- *  2. InvoiceDetailPage "View audit log" → /accounting/audit-trail?source_type=invoice&source_id=
- *  3. PaymentDetailPage "View audit log" → /accounting/audit-trail?source_type=customer_payment&source_id=
- *  4. AccountingAuditTrailPage seeds filters from ?source_type=&source_id=
- *  5. FaultDraftsPage reads ?unit_id= (MaintenanceSnapshotSection emits it)
- *  6. No regression to /reports?invoice_id= or /reports?payment_id=
- *  7. EntityLink expense ≠ null → /accounting/expenses/list?expense_id= (Desktop audit
- *     99-CROSSCUTTING-ENTITYLINK WILL FAIL); ExpensesListPage honors ?expense_id=; WO detail
- *     producer uses EntityLink kind="expense". No ExpenseDetailPage invent — list deep-link only.
+ * Assertions inspect executable TypeScript/JSX nodes. Comments and inert string constants cannot
+ * satisfy the contract. --selftest plants both decoys and a wrong EntityLink binding.
  */
 import fs from "node:fs";
 import path from "node:path";
+import ts from "typescript";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-entitylink-deep-links";
 
-const failures = [];
+const FILES = {
+  invoice: "apps/frontend/src/pages/accounting/InvoiceDetailPage.tsx",
+  payment: "apps/frontend/src/pages/accounting/PaymentDetailPage.tsx",
+  audit: "apps/frontend/src/pages/accounting/AccountingAuditTrailPage.tsx",
+  faults: "apps/frontend/src/pages/maintenance/FaultDraftsPage.tsx",
+  entityLink: "apps/frontend/src/components/shared/EntityLink.tsx",
+  expensesList: "apps/frontend/src/pages/accounting/ExpensesListPage.tsx",
+  woDetail: "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx",
+  manifest: "apps/frontend/src/routes/manifest.tsx",
+};
 
-function read(rel) {
-  const p = path.join(ROOT, rel);
-  if (!fs.existsSync(p)) {
-    failures.push(`MISSING ${rel}`);
-    return "";
-  }
-  return fs.readFileSync(p, "utf8");
-}
-
-const invoice = read("apps/frontend/src/pages/accounting/InvoiceDetailPage.tsx");
-const payment = read("apps/frontend/src/pages/accounting/PaymentDetailPage.tsx");
-const audit = read("apps/frontend/src/pages/accounting/AccountingAuditTrailPage.tsx");
-const faults = read("apps/frontend/src/pages/maintenance/FaultDraftsPage.tsx");
-const entityLink = read("apps/frontend/src/components/shared/EntityLink.tsx");
-const expensesList = read("apps/frontend/src/pages/accounting/ExpensesListPage.tsx");
-const woDetail = read("apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx");
-const manifest = read("apps/frontend/src/routes/manifest.tsx");
-
-if (invoice) {
-  if (!/EntityLink kind="customer" id=\{invoice\.customer_id\}/.test(invoice)) {
-    failures.push("InvoiceDetailPage: customer header must use EntityLink kind=customer id=invoice.customer_id");
-  }
-  if (/\/reports\?invoice_id=/.test(invoice)) {
-    failures.push("InvoiceDetailPage: must not navigate to /reports?invoice_id= (dead param)");
-  }
-  if (!/\/accounting\/audit-trail\?source_type=invoice&source_id=/.test(invoice)) {
-    failures.push("InvoiceDetailPage: View audit log must go to /accounting/audit-trail?source_type=invoice&source_id=");
-  }
-}
-
-if (payment) {
-  if (/\/reports\?payment_id=/.test(payment)) {
-    failures.push("PaymentDetailPage: must not navigate to /reports?payment_id= (dead param)");
-  }
-  if (!/\/accounting\/audit-trail\?source_type=customer_payment&source_id=/.test(payment)) {
-    failures.push(
-      "PaymentDetailPage: View audit log must go to /accounting/audit-trail?source_type=customer_payment&source_id=",
+function parse(rel, source) {
+  const sf = ts.createSourceFile(rel, source, ts.ScriptTarget.ESNext, true, ts.ScriptKind.TSX);
+  if (sf.parseDiagnostics.length > 0) {
+    throw new Error(
+      `${rel}: TypeScript parse failed: ${sf.parseDiagnostics
+        .map((d) => ts.flattenDiagnosticMessageText(d.messageText, " "))
+        .join("; ")}`,
     );
   }
+  return sf;
 }
 
-if (audit) {
-  if (!/useSearchParams/.test(audit)) {
-    failures.push("AccountingAuditTrailPage: must use useSearchParams for deep-link filters");
+function walk(sf, predicate) {
+  let matched = false;
+  function visit(node) {
+    if (predicate(node, sf)) matched = true;
+    ts.forEachChild(node, visit);
   }
-  if (!/searchParams\.get\(["']source_type["']\)/.test(audit)) {
-    failures.push("AccountingAuditTrailPage: must seed sourceType from ?source_type=");
-  }
-  if (!/searchParams\.get\(["']source_id["']\)/.test(audit)) {
-    failures.push("AccountingAuditTrailPage: must seed sourceId from ?source_id=");
-  }
+  visit(sf);
+  return matched;
 }
 
-if (faults) {
-  if (!/useSearchParams/.test(faults)) {
-    failures.push("FaultDraftsPage: must use useSearchParams");
-  }
-  if (!/searchParams\.get\(["']unit_id["']\)/.test(faults)) {
-    failures.push("FaultDraftsPage: must honor ?unit_id= from vehicle profile fault history");
-  }
+function jsxName(node) {
+  return node.tagName.getText();
 }
 
-// Desktop audit 99-CROSSCUTTING-ENTITYLINK: expense must never resolve to null.
-if (entityLink) {
-  if (/case\s+["']expense["']\s*:\s*return\s+null/.test(entityLink)) {
-    failures.push('EntityLink: case "expense" must not return null (WILL FAIL drill-through)');
+function jsxAttribute(node, name, sf) {
+  const attr = node.attributes.properties.find(
+    (property) => ts.isJsxAttribute(property) && property.name.text === name,
+  );
+  if (!attr || !ts.isJsxAttribute(attr) || !attr.initializer) return null;
+  if (ts.isStringLiteral(attr.initializer)) return attr.initializer.text;
+  if (ts.isJsxExpression(attr.initializer) && attr.initializer.expression) {
+    return attr.initializer.expression.getText(sf);
   }
-  if (!/case\s+["']expense["']\s*:\s*return\s+`\/accounting\/expenses\/list\?expense_id=\$\{id\}`/.test(entityLink)) {
-    failures.push(
-      'EntityLink: case "expense" must resolve to `/accounting/expenses/list?expense_id=${id}` (no fake detail page)',
+  return null;
+}
+
+function hasEntityLink(sf, kind, idExpression) {
+  return walk(sf, (node, sourceFile) => {
+    if (!ts.isJsxSelfClosingElement(node) && !ts.isJsxOpeningElement(node)) return false;
+    return (
+      jsxName(node) === "EntityLink" &&
+      jsxAttribute(node, "kind", sourceFile) === kind &&
+      jsxAttribute(node, "id", sourceFile) === idExpression
     );
-  }
+  });
 }
 
-if (expensesList) {
-  if (!/useSearchParams/.test(expensesList)) {
-    failures.push("ExpensesListPage: must use useSearchParams to honor EntityLink expense deep-links");
-  }
-  if (!/searchParams\.get\(["']expense_id["']\)/.test(expensesList)) {
-    failures.push("ExpensesListPage: must honor ?expense_id= (EntityLink consumer)");
-  }
-  if (!/kind=["']expense["']/.test(expensesList)) {
-    failures.push("ExpensesListPage: expense # column must render EntityLink kind=\"expense\"");
-  }
+function hasCall(sf, callee, argument) {
+  return walk(sf, (node) => {
+    if (!ts.isCallExpression(node) || node.expression.getText(sf) !== callee) return false;
+    return argument === undefined || node.arguments.some((arg) => {
+      return ts.isStringLiteralLike(arg) && arg.text === argument;
+    });
+  });
 }
 
-if (woDetail) {
-  if (!/EntityLink\s+kind=["']expense["']/.test(woDetail)) {
-    failures.push('WorkOrderDetailPage: expense producer must use <EntityLink kind="expense" …>');
-  }
-  // Forbid the pre-fix dead producer that landed on the create page and ignored the id.
-  if (/to=\{`?\/accounting\/expenses\?expense_id=/.test(woDetail) || /to=["']\/accounting\/expenses\?expense_id=/.test(woDetail)) {
-    failures.push(
-      "WorkOrderDetailPage: must not link /accounting/expenses?expense_id= (create page ignores param)",
+function executableArguments(sf, callee) {
+  const args = [];
+  walk(sf, (node) => {
+    if (ts.isCallExpression(node) && node.expression.getText(sf) === callee && node.arguments[0]) {
+      args.push(node.arguments[0].getText(sf));
+    }
+    return false;
+  });
+  return args;
+}
+
+function hasRoutePath(sf, routePath) {
+  return walk(sf, (node, sourceFile) => {
+    if (!ts.isJsxSelfClosingElement(node) && !ts.isJsxOpeningElement(node)) return false;
+    return jsxName(node) === "Route" && jsxAttribute(node, "path", sourceFile) === routePath;
+  });
+}
+
+function hasResolverCase(sf, kind, expectedReturn) {
+  return walk(sf, (node) => {
+    if (!ts.isCaseClause(node) || !ts.isStringLiteralLike(node.expression) || node.expression.text !== kind) {
+      return false;
+    }
+    return node.statements.some(
+      (statement) =>
+        ts.isReturnStatement(statement) &&
+        statement.expression?.getText(sf) === expectedReturn,
     );
-  }
+  });
 }
 
-if (manifest) {
-  if (!/path=["']\/accounting\/expenses\/list["']/.test(manifest)) {
-    failures.push("manifest: /accounting/expenses/list route must exist for expense EntityLink target");
+export function assertContracts(sources) {
+  const failures = [];
+  const parsed = {};
+  for (const [key, rel] of Object.entries(FILES)) {
+    if (typeof sources[key] !== "string") {
+      failures.push(`MISSING ${rel}`);
+      continue;
+    }
+    try {
+      parsed[key] = parse(rel, sources[key]);
+    } catch (error) {
+      failures.push(error instanceof Error ? error.message : String(error));
+    }
   }
+
+  if (parsed.invoice) {
+    if (!hasEntityLink(parsed.invoice, "customer", "invoice.customer_id")) {
+      failures.push("InvoiceDetailPage: customer header must execute EntityLink customer/invoice.customer_id");
+    }
+    const nav = executableArguments(parsed.invoice, "navigate");
+    if (!nav.some((arg) => arg.includes("/accounting/audit-trail?source_type=invoice&source_id="))) {
+      failures.push("InvoiceDetailPage: View audit log must execute the invoice audit-trail deep-link");
+    }
+    if (nav.some((arg) => arg.includes("/reports?invoice_id="))) {
+      failures.push("InvoiceDetailPage: must not execute dead /reports?invoice_id= navigation");
+    }
+  }
+
+  if (parsed.payment) {
+    const nav = executableArguments(parsed.payment, "navigate");
+    if (!nav.some((arg) => arg.includes("/accounting/audit-trail?source_type=customer_payment&source_id="))) {
+      failures.push("PaymentDetailPage: View audit log must execute the customer-payment audit deep-link");
+    }
+    if (nav.some((arg) => arg.includes("/reports?payment_id="))) {
+      failures.push("PaymentDetailPage: must not execute dead /reports?payment_id= navigation");
+    }
+  }
+
+  if (parsed.audit) {
+    if (!hasCall(parsed.audit, "useSearchParams")) {
+      failures.push("AccountingAuditTrailPage: must execute useSearchParams()");
+    }
+    for (const parameter of ["source_type", "source_id"]) {
+      if (!hasCall(parsed.audit, "searchParams.get", parameter)) {
+        failures.push(`AccountingAuditTrailPage: must consume ?${parameter}=`);
+      }
+    }
+  }
+
+  if (parsed.faults) {
+    if (!hasCall(parsed.faults, "useSearchParams") || !hasCall(parsed.faults, "searchParams.get", "unit_id")) {
+      failures.push("FaultDraftsPage: must execute useSearchParams() and consume ?unit_id=");
+    }
+  }
+
+  if (parsed.entityLink && !hasResolverCase(
+    parsed.entityLink,
+    "expense",
+    "`/accounting/expenses/list?expense_id=${id}`",
+  )) {
+    failures.push("EntityLink: expense resolver must execute the registered list deep-link");
+  }
+
+  if (parsed.expensesList) {
+    if (
+      !hasCall(parsed.expensesList, "useSearchParams") ||
+      !hasCall(parsed.expensesList, "searchParams.get", "expense_id")
+    ) {
+      failures.push("ExpensesListPage: must execute useSearchParams() and consume ?expense_id=");
+    }
+    if (!hasEntityLink(parsed.expensesList, "expense", "r.id")) {
+      failures.push("ExpensesListPage: expense number must execute EntityLink expense/r.id");
+    }
+  }
+
+  if (parsed.woDetail && !hasEntityLink(parsed.woDetail, "expense", "expense.id")) {
+    failures.push("WorkOrderDetailPage: expense producer must execute EntityLink expense/expense.id");
+  }
+
+  if (parsed.manifest && !hasRoutePath(parsed.manifest, "/accounting/expenses/list")) {
+    failures.push("manifest: must register /accounting/expenses/list");
+  }
+
+  return failures;
 }
 
-if (failures.length) {
-  console.error(`${LABEL}: FAIL`);
-  for (const f of failures) console.error(`  - ${f}`);
-  process.exit(1);
+function readSources() {
+  return Object.fromEntries(
+    Object.entries(FILES).map(([key, rel]) => {
+      const absolute = path.join(ROOT, rel);
+      return [key, fs.existsSync(absolute) ? fs.readFileSync(absolute, "utf8") : null];
+    }),
+  );
 }
-console.log(
-  `${LABEL}: OK — invoice customer + audit log + fault drafts unit_id + expense EntityLink deep-links honored`,
-);
-process.exit(0);
+
+function runSelftest() {
+  const good = {
+    invoice: `const x = <EntityLink kind="customer" id={invoice.customer_id}/>; navigate(\`/accounting/audit-trail?source_type=invoice&source_id=\${invoice.id}\`);`,
+    payment: `navigate(\`/accounting/audit-trail?source_type=customer_payment&source_id=\${payment.id}\`);`,
+    audit: `const [searchParams] = useSearchParams(); searchParams.get("source_type"); searchParams.get("source_id");`,
+    faults: `const [searchParams] = useSearchParams(); searchParams.get("unit_id");`,
+    entityLink: `switch (kind) { case "expense": return \`/accounting/expenses/list?expense_id=\${id}\`; }`,
+    expensesList: `const [searchParams] = useSearchParams(); searchParams.get("expense_id"); const x = <EntityLink kind="expense" id={r.id}/>;`,
+    woDetail: `const x = <EntityLink kind="expense" id={expense.id}/>;`,
+    manifest: `const x = <Route path="/accounting/expenses/list" element={<Page/>}/>;`,
+  };
+  const decoyText = `// EntityLink kind="expense" id={expense.id}; useSearchParams(); searchParams.get("expense_id")\nconst decoy = "/accounting/expenses/list /accounting/audit-trail?source_type=invoice&source_id=";`;
+  const decoys = Object.fromEntries(Object.keys(FILES).map((key) => [key, decoyText]));
+  const goodFailures = assertContracts(good);
+  const decoyFailures = assertContracts(decoys);
+  const wrongBindingFailures = assertContracts({
+    ...good,
+    invoice: good.invoice.replace("invoice.customer_id", "invoice.id"),
+  });
+  if (
+    goodFailures.length > 0 ||
+    decoyFailures.length < 8 ||
+    !wrongBindingFailures.some((failure) => failure.includes("customer header"))
+  ) {
+    console.error(`${LABEL} --selftest FAIL`, { goodFailures, decoyFailures, wrongBindingFailures });
+    process.exit(1);
+  }
+  console.log(`${LABEL} --selftest PASS (executable AST semantics reject comments/string decoys)`);
+}
+
+function main() {
+  if (process.argv.includes("--selftest")) {
+    runSelftest();
+    return;
+  }
+  const failures = assertContracts(readSources());
+  if (failures.length > 0) {
+    console.error(`${LABEL}: FAIL`);
+    for (const failure of failures) console.error(`  - ${failure}`);
+    process.exit(1);
+  }
+  console.log(`${LABEL}: PASS — EntityLink producers, resolver, routes, and consumers execute end-to-end`);
+}
+
+main();

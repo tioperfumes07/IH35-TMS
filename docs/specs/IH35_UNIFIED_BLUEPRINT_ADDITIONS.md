@@ -1421,3 +1421,27 @@ operator nothing about which governed GL accounts were affected.
 - `scripts/verify-pending-approvals-gl-linkage.mjs`
 - `scripts/verify-steps/914-verify-pending-approvals-gl-linkage.mjs`
 
+## 17. EntityLink adoption + reverse drill-through guard contract (0007 Pattern 8)
+
+Source: Owner approval 2026-07-19 (`0007-pattern-8-reverse-drill-through`)
+Status: LOCKED (non-financial guard/spec wiring; no runtime UI or tab change)
+
+- Existing entity references must use the shared `EntityLink` producer where a real target route exists.
+- A deep link is complete only when its producer, `resolveEntityRoute` mapping, registered route, and target
+  consumer of path/query parameters are all executable. A route-shaped string by itself is not wiring.
+- Static guards must inspect executable TypeScript/JSX semantics and fail closed on missing files, parse
+  errors, broken producer/resolver/consumer bindings, or a regression above the locked adoption baseline.
+- Comments, documentation text, and inert string constants must never satisfy a guard assertion.
+- Every guard in this contract must include a planted `--selftest` proving a valid executable fixture passes
+  and comment/string decoys fail.
+- CI wiring is additive through unique auto-discovered `scripts/verify-steps/<NNN>-*.mjs` entries. Do not edit
+  `package.json`, `.github/workflows/locked-guards.yml`, or `.github/workflows/ci.yml`.
+
+### Guards (Rule 17)
+- `scripts/verify-entity-link-adoption.mjs` — fail-closed non-regression ratchet for direct id rendering.
+- `scripts/verify-entitylink-deep-links.mjs` — producer → resolver → route → consumer executable contract.
+- `scripts/verify-94-live-counter-linkage.mjs` — executable company-scoped Samsara live-counter linkage.
+- `scripts/verify-steps/915-verify-entity-link-adoption.mjs`
+- `scripts/verify-steps/916-verify-entitylink-deep-links.mjs`
+- `scripts/verify-steps/917-verify-94-live-counter-linkage.mjs`
+

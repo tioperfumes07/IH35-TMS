@@ -1,6 +1,5 @@
 {
  "_README": "Guards that are not FULLY WIRED (package.json script AND CI execution via workflow or verify-steps/pre-commit). Baselined initially 2026-07-10 (G3 orphans). Extended 2026-07-16 (B-D2) for package.json-only and workflow-only partials. Each should be WIRED (both sides) or given an individual reason; do not add NEW guards here without justification. New fully-unwired or package.json-only / workflow-only guards fail CI via verify:guard-wired.",
- "verify-94-live-counter-linkage.mjs": "baselined 2026-07-10 — pre-existing standalone guard; wire into verify:pre-commit/workflow or justify individually",
  "verify-a8-audit-reports-section.mjs": "baselined 2026-07-16 B-D2 — package.json script exists but no CI workflow/verify-steps execution; wire into locked-guards.yml or ci.yml, or justify individually",
  "verify-accident-wizard-catalogs.mjs": "baselined 2026-07-16 B-D2 — package.json script exists but no CI workflow/verify-steps execution; wire into locked-guards.yml or ci.yml, or justify individually",
  "verify-accounting-audit-trail-lineage.mjs": "baselined 2026-07-10 — pre-existing standalone guard; wire into verify:pre-commit/workflow or justify individually",
@@ -133,7 +132,6 @@
  "verify-dvir-severity-tagging.mjs": "baselined 2026-07-10 — pre-existing standalone guard; wire into verify:pre-commit/workflow or justify individually",
  "verify-edi-foundation.mjs": "baselined 2026-07-10 — pre-existing standalone guard; wire into verify:pre-commit/workflow or justify individually",
  "verify-entity-isolation.mjs": "baselined 2026-07-16 B-D2 — package.json script exists but no CI workflow/verify-steps execution; wire into locked-guards.yml or ci.yml, or justify individually",
- "verify-entity-link-adoption.mjs": "baselined 2026-07-10 — pre-existing standalone guard; wire into verify:pre-commit/workflow or justify individually",
  "verify-escrow-amount-conservation.mjs": "baselined 2026-07-10 — pre-existing standalone guard; wire into verify:pre-commit/workflow or justify individually",
  "verify-escrow-emits-audit.mjs": "baselined 2026-07-10 — pre-existing standalone guard; wire into verify:pre-commit/workflow or justify individually",
  "verify-escrow-ledger-fk-canonical.mjs": "baselined 2026-07-16 B-D2 — package.json script exists but no CI workflow/verify-steps execution; wire into locked-guards.yml or ci.yml, or justify individually",

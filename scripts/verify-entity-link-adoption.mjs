@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // verify-entity-link-adoption.mjs
 //
-// REPORT-ONLY linkage-adoption guard, built alongside the shared <EntityLink> drill-through primitive
+// Fail-closed linkage-adoption ratchet, built alongside the shared <EntityLink> drill-through primitive
 // (apps/frontend/src/components/shared/EntityLink.tsx) in service of the LAW OF THE LAND / total-
 // connectivity mandate (root CLAUDE.md §10a — every id a screen shows should be a forward drill-through
 // to its entity).
@@ -10,19 +10,12 @@
 // `{row.vendor_id}`, `{tx.driver_id || "-"}`, bare `{id}`) directly as text — i.e. NOT wrapped in
 // <EntityLink>, <Link>, <NavLink>, or a plain <a> — and prints them as a findings report.
 //
-// *** THIS SCRIPT IS REPORT-ONLY AND ALWAYS EXITS 0. *** Adoption of <EntityLink> is intentionally
-// phased across many concurrently in-flight PRs (Cascade's accounting/dispatch/fleet lanes + Claude's
-// banking lane) — hard-failing CI on every existing plain-text id cell would break in-flight, unrelated
-// work. It is a standalone script, NOT wired into `verify:pre-commit` or any CI gate yet.
+// Existing debt is baselined at 76 AST findings (origin/main 9a984941a). The guard fails when the count
+// rises, so adoption can proceed additively without allowing a new plain-text id regression. Parsing is
+// AST-based and parse errors fail closed; comments and string literals cannot satisfy or suppress it.
 //
-// TODO(flip-to-enforce): once EntityLink adoption is complete (or an explicit allowlist of accepted
-// legacy plain-text cells is authored), change the tail of this script to
-// `process.exit(findings.length > 0 ? 1 : 0)` and add it to the CI verify chain.
-//
-// Heuristic, not exhaustive: it is a static-text-shape scan, not a type-aware analysis, so it will have
-// both false positives (e.g. a bare `{id}` used for a non-entity purpose) and false negatives (ids
-// rendered via more complex expressions). That's acceptable for a report-only adoption tracker — triage
-// findings manually.
+// Heuristic, not exhaustive: it is a static AST shape scan, not a type-aware analysis. The baseline is a
+// ratchet, not a claim that every current candidate is a real entity reference.
 
 import fs from "node:fs";
 import path from "node:path";
@@ -31,6 +24,7 @@ import ts from "typescript";
 const ROOT = process.cwd();
 const FRONTEND_ROOT = path.join(ROOT, "apps/frontend/src");
 const SKIP_RE = /(\/__tests__\/|\.test\.(tsx|ts)$|\.deprecated\.|test-setup\.ts$)/;
+const MAX_BASELINE_FINDINGS = 76;
 
 // Matches property/identifier names shaped like an entity id: vendor_id, matched_bill_id, driverId,
 // unitId, or a bare `id`. Case-sensitive on the "Id" suffix so words like "valid"/"paid" don't match.
@@ -57,7 +51,7 @@ function walk(dir) {
 //   {(row.vendor_id)}              -> "vendor_id"  (unwraps parens)
 // Deliberately does NOT unwrap ternaries/conditionals — a conditional whose branches already contain
 // <EntityLink>/<Link> (the adopted pattern used in this PR) would otherwise be flagged as unadopted.
-function identifierName(expr) {
+export function identifierName(expr) {
   if (!expr) return null;
   if (ts.isIdentifier(expr)) return expr.text;
   if (ts.isPropertyAccessExpression(expr)) return expr.name.text;
@@ -72,12 +66,13 @@ function identifierName(expr) {
   return null;
 }
 
-const findings = [];
-
-for (const file of walk(FRONTEND_ROOT)) {
-  const source = fs.readFileSync(file, "utf8");
+export function scanSource(file, source) {
   const sf = ts.createSourceFile(file, source, ts.ScriptTarget.ESNext, true, ts.ScriptKind.TSX);
-
+  if (sf.parseDiagnostics.length > 0) {
+    const details = sf.parseDiagnostics.map((d) => ts.flattenDiagnosticMessageText(d.messageText, " ")).join("; ");
+    throw new Error(`${file}: TypeScript parse failed: ${details}`);
+  }
+  const findings = [];
   function visit(node) {
     if (ts.isJsxExpression(node) && node.expression && !ts.isJsxAttribute(node.parent)) {
       const name = identifierName(node.expression);
@@ -99,17 +94,60 @@ for (const file of walk(FRONTEND_ROOT)) {
     ts.forEachChild(node, visit);
   }
   visit(sf);
+  return findings;
 }
 
-console.log("verify:entity-link-adoption (REPORT-ONLY — always exits 0)");
-console.log(`Scanned apps/frontend/src for id-shaped values rendered without <EntityLink>/<Link>.`);
-console.log(`Found ${findings.length} candidate cell(s) for EntityLink adoption:\n`);
-
-for (const f of findings) {
-  console.log(`  ${f.file}:${f.line}  <${f.tag}>  ${f.text}`);
+export function scanTree(frontendRoot = FRONTEND_ROOT) {
+  const findings = [];
+  for (const file of walk(frontendRoot)) {
+    findings.push(...scanSource(file, fs.readFileSync(file, "utf8")));
+  }
+  return findings;
 }
 
-console.log(
-  "\nNo action required — this is a phased-adoption tracker, not a CI gate. See header comment for the flip-to-enforce plan.",
-);
-process.exit(0);
+function runSelftest() {
+  const plain = scanSource("plain.tsx", `export const T = ({ row }) => <td>{row.vendor_id}</td>;`);
+  const linked = scanSource(
+    "linked.tsx",
+    `export const T = ({ row }) => <td><EntityLink kind="vendor" id={row.vendor_id} /></td>;`,
+  );
+  const decoy = scanSource(
+    "decoy.tsx",
+    `// <EntityLink kind="vendor" id={row.vendor_id} />\nconst fake = "{row.vendor_id}";\nexport const T = ({ row }) => <td>{row.vendor_id}</td>;`,
+  );
+  if (plain.length !== 1 || linked.length !== 0 || decoy.length !== 1) {
+    console.error(
+      `verify:entity-link-adoption --selftest FAIL (plain=${plain.length}, linked=${linked.length}, decoy=${decoy.length})`,
+    );
+    process.exit(1);
+  }
+  console.log("verify:entity-link-adoption --selftest PASS (AST semantics reject comments/string decoys)");
+}
+
+function main() {
+  if (process.argv.includes("--selftest")) {
+    runSelftest();
+    return;
+  }
+
+  const findings = scanTree();
+  console.log("verify:entity-link-adoption (fail-closed ratchet)");
+  console.log("Scanned apps/frontend/src for id-shaped values rendered without <EntityLink>/<Link>.");
+  console.log(`Found ${findings.length} candidate cell(s); baseline maximum is ${MAX_BASELINE_FINDINGS}.`);
+
+  if (findings.length > MAX_BASELINE_FINDINGS) {
+    for (const f of findings) {
+      console.error(`  ${f.file}:${f.line}  <${f.tag}>  ${f.text}`);
+    }
+    console.error(
+      `verify:entity-link-adoption FAIL — ${findings.length - MAX_BASELINE_FINDINGS} new candidate(s) exceed the locked baseline`,
+    );
+    process.exit(1);
+  }
+
+  console.log(
+    `verify:entity-link-adoption PASS — no regression (${MAX_BASELINE_FINDINGS - findings.length} finding(s) below baseline)`,
+  );
+}
+
+main();
