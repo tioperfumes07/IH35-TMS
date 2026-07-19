@@ -16,6 +16,7 @@
     "scripts/install-git-hooks.mjs",
     "scripts/branch-precheck-push.mjs",
     "scripts/__tests__/branch-precheck-push.test.mjs",
+    "scripts/__tests__/fixtures/branch-tooling/mock-pg-server.mjs",
     "scripts/verify-pre-push-env-isolation.mjs",
     "scripts/verify-steps/912-verify-pre-push-env-isolation.mjs",
     "scripts/verify-steps/926-verify-pre-push-env-isolation.mjs",
