@@ -4367,7 +4367,9 @@
       "repurchase_deadline_days",
       "repurchase_term_days",
       "reserve_rate",
-      "tenant_id"
+      "tenant_id",
+      "voided_at",
+      "voided_by_user_id"
     ],
     "factoring.customer_factor_assignment": [
       "created_at",
