@@ -30,7 +30,7 @@
   "db_required": true,
   "guard_required": true,
   "extra_gates": [
-    "node scripts/verify-shared-coa-role-tests-serialized.mjs --selftest"
+    "verify:shared-coa-role-tests-serialized"
   ],
   "acceptance": [
     {
