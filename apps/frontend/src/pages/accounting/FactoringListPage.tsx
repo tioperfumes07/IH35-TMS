@@ -13,6 +13,7 @@ import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { useUrlSort } from "../../hooks/useUrlSort";
 
 const STATUS_OPTIONS: Array<{ value: "all" | FactoringAdvance["status"]; label: string }> = [
   { value: "all", label: "All" },
@@ -42,6 +43,8 @@ function statusPill(status: FactoringAdvance["status"]) {
 export function FactoringListPage() {
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
+  // BANK-SORT-ROLLOUT-ACCT: ?sort=&dir= URL persistence (same as Bills/Expenses).
+  const { sortKey, sortDirection, onSortChange } = useUrlSort();
   const [status, setStatus] = useState<"all" | FactoringAdvance["status"]>("all");
   const [search, setSearch] = useState("");
   const [fromDate, setFromDate] = useState("");
@@ -141,6 +144,9 @@ export function FactoringListPage() {
         storageKey="factoring-list"
         initialPageSize={50}
         pageSizeOptions={[50, 75, 100, 200, 300]}
+        sortKey={sortKey}
+        sortDirection={sortDirection}
+        onSortChange={onSortChange}
         emptyText="No factoring batches for selected filters."
       />
 
