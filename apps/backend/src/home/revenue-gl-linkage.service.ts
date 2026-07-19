@@ -111,7 +111,7 @@ const INVOICE_BASIS_META: RevenueBasisMeta = {
   label: "invoice_basis",
   source: "accounting.invoices",
   recognition:
-    "COALESCE((MAX final active delivery-stop actual_departure_at AT TIME ZONE company_tz)::date, invoices.issue_date); stops.status<>cancelled",
+    "COALESCE((final active delivery stop by MAX sequence_number: stop_type=delivery, status<>cancelled, soft_deleted_at IS NULL → that stop's actual_departure_at AT company_tz)::date, invoices.issue_date)",
   amount_basis: "GREATEST(0, total_cents - COALESCE(tax_cents,0)) pre-tax; status IN (sent,partial,paid,factored)",
 };
 
@@ -269,20 +269,23 @@ function unverifiableResult(from: string, to: string, reason: string): RevenueGl
 }
 
 /**
- * Final active delivery evidence: MAX(actual_departure_at) among delivery stops that are not
- * cancelled and not soft-deleted. Historical cancelled stops must not move recognition.
+ * Final active delivery evidence (canonical):
+ * among stop_type=delivery AND status<>'cancelled' AND soft_deleted_at IS NULL,
+ * pick the row with the highest sequence_number, then use THAT stop's actual_departure_at.
+ * Do NOT MAX(timestamp) across stops — an earlier redelivery can have a later clock stamp.
  * $4 = company timezone name.
  */
 const FINAL_ACTIVE_DELIVERY_RECOGNITION_SQL = `
     COALESCE(
       (
-        SELECT (MAX(ls.actual_departure_at) AT TIME ZONE $4)::date
+        SELECT (ls.actual_departure_at AT TIME ZONE $4)::date
         FROM mdata.load_stops ls
         WHERE ls.load_id = i.source_load_id
           AND ls.stop_type = 'delivery'
-          AND ls.actual_departure_at IS NOT NULL
           AND ls.soft_deleted_at IS NULL
           AND ls.status <> 'cancelled'
+        ORDER BY ls.sequence_number DESC
+        LIMIT 1
       ),
       i.issue_date
     )
@@ -292,17 +295,40 @@ const FINAL_ACTIVE_DELIVERY_RECOGNITION_SQL = `
 const FINAL_ACTIVE_DELIVERY_RECOGNITION_SQL_TZ5 = `
     COALESCE(
       (
-        SELECT (MAX(ls.actual_departure_at) AT TIME ZONE $5)::date
+        SELECT (ls.actual_departure_at AT TIME ZONE $5)::date
         FROM mdata.load_stops ls
         WHERE ls.load_id = i.source_load_id
           AND ls.stop_type = 'delivery'
-          AND ls.actual_departure_at IS NOT NULL
           AND ls.soft_deleted_at IS NULL
           AND ls.status <> 'cancelled'
+        ORDER BY ls.sequence_number DESC
+        LIMIT 1
       ),
       i.issue_date
     )
 `;
+
+/** Pure stop-selection mirror of FINAL_ACTIVE_DELIVERY_RECOGNITION_SQL (unit-testable). */
+export type DeliveryStopEvidence = {
+  sequence_number: number;
+  status: string;
+  soft_deleted_at: string | null;
+  actual_departure_at: string | null;
+};
+
+export function selectFinalActiveDeliveryStop(
+  stops: DeliveryStopEvidence[]
+): DeliveryStopEvidence | null {
+  let best: DeliveryStopEvidence | null = null;
+  for (const s of stops) {
+    if (s.status === "cancelled") continue;
+    if (s.soft_deleted_at != null) continue;
+    if (best == null || s.sequence_number > best.sequence_number) {
+      best = s;
+    }
+  }
+  return best;
+}
 
 type InvoiceRow = {
   invoice_id: string;
@@ -819,4 +845,5 @@ export const __test__ = {
   INVOICE_BASIS_ELIGIBLE_STATUSES,
   POSTED_BATCH_STATUSES,
   FINAL_ACTIVE_DELIVERY_RECOGNITION_SQL,
+  selectFinalActiveDeliveryStop,
 };

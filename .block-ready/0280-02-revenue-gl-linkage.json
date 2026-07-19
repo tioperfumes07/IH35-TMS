@@ -19,6 +19,7 @@
     "apps/frontend/src/pages/home/OwnerHome.tsx",
     "apps/frontend/src/pages/home/roles/DefaultHome.tsx",
     "apps/frontend/src/pages/home/QboStyleHomePage.tsx",
+    "apps/frontend/src/pages/home/__tests__/QboStyleHomePage.revenue.test.tsx",
     "apps/frontend/src/pages/home/charts/WeeklyRevenueChart.tsx",
     "apps/frontend/src/components/home/__tests__/QboSyncHealthCard.test.tsx",
     "apps/frontend/src/components/home/RevenueDiscrepancyDrill.tsx",

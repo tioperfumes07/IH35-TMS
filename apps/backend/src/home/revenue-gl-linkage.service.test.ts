@@ -104,18 +104,62 @@ describe("revenue-gl-linkage.service helpers", () => {
     expect(__test__.pretaxCents(11000, 1000)).toBe(10000);
     expect(__test__.pretaxCents(500, 900)).toBe(0);
   });
+
+  it("final active delivery stop = highest sequence_number (not MAX timestamp)", () => {
+    // Earlier sequence has a LATER clock stamp — must still lose to higher sequence.
+    const earlierLaterClock = {
+      sequence_number: 1,
+      status: "departed",
+      soft_deleted_at: null,
+      actual_departure_at: "2026-07-20T18:00:00.000Z",
+    };
+    const trueFinal = {
+      sequence_number: 3,
+      status: "departed",
+      soft_deleted_at: null,
+      actual_departure_at: "2026-07-18T12:00:00.000Z",
+    };
+    const cancelledHighSeq = {
+      sequence_number: 9,
+      status: "cancelled",
+      soft_deleted_at: null,
+      actual_departure_at: "2026-07-21T12:00:00.000Z",
+    };
+    const picked = __test__.selectFinalActiveDeliveryStop([earlierLaterClock, trueFinal, cancelledHighSeq]);
+    expect(picked?.sequence_number).toBe(3);
+    expect(picked?.actual_departure_at).toBe("2026-07-18T12:00:00.000Z");
+  });
+
+  it("cancelled high-sequence stop does not win recognition", () => {
+    const active = {
+      sequence_number: 2,
+      status: "departed",
+      soft_deleted_at: null,
+      actual_departure_at: "2026-07-18T08:00:00.000Z",
+    };
+    const cancelled = {
+      sequence_number: 5,
+      status: "cancelled",
+      soft_deleted_at: null,
+      actual_departure_at: "2026-07-19T08:00:00.000Z",
+    };
+    expect(__test__.selectFinalActiveDeliveryStop([active, cancelled])?.sequence_number).toBe(2);
+  });
 });
 
 describe("computeRevenueGlLinkage SQL contracts (planted)", () => {
   const OC = "00000000-0000-4000-8000-000000000001";
 
-  it("every delivery-stop recognition query excludes status='cancelled'", async () => {
+  it("every delivery-stop recognition query uses sequence_number DESC LIMIT 1 (not MAX timestamp)", async () => {
     const { client, sqls } = capturingClient();
     await computeRevenueGlLinkage(client, { operatingCompanyId: OC, fromDate: "2026-07-18", toDate: "2026-07-18" });
     const deliverySql = sqls.filter((s) => s.includes("load_stops"));
     expect(deliverySql.length).toBeGreaterThan(0);
     for (const s of deliverySql) {
       expect(s).toMatch(/ls\.status\s*<>\s*'cancelled'/);
+      expect(s).toMatch(/ORDER BY ls\.sequence_number DESC/);
+      expect(s).toMatch(/LIMIT 1/);
+      expect(s).not.toMatch(/MAX\s*\(\s*ls\.actual_departure_at\s*\)/);
     }
   });
 
@@ -553,5 +597,99 @@ describe("computeRevenueGlLinkage (mocked)", () => {
         toDate: "2026-07-18",
       })
     ).rejects.toThrow("connection_reset");
+  });
+
+  it("draft exclusion plant: eligible bind never includes draft; SQL uses status = ANY", async () => {
+    const { client, valuesLog, sqls } = capturingClient();
+    await computeRevenueGlLinkage(client, {
+      operatingCompanyId: OC,
+      fromDate: "2026-07-18",
+      toDate: "2026-07-18",
+    });
+    expect(sqls.some((s) => s.includes("i.status = ANY"))).toBe(true);
+    const eligibleArrays = valuesLog.flatMap((v) => v.filter((x) => Array.isArray(x) && x.includes("sent")));
+    expect(eligibleArrays.length).toBeGreaterThan(0);
+    for (const arr of eligibleArrays) {
+      expect(arr).not.toContain("draft");
+      expect(arr).not.toContain("void");
+    }
+  });
+
+  it("TSL-only link plant: invoice matches via TSL path without false unlinked", async () => {
+    const invId = "11111111-1111-4111-8111-111111111118";
+    const jeId = "22222222-2222-4222-8222-222222222228";
+    const client = mockClient([
+      probeOk(),
+      (sql) => {
+        // UNION result after TSL join (no denormalized source cols needed in mock output).
+        if (sql.includes("WITH invoice_ids")) {
+          return {
+            rows: [
+              {
+                invoice_id: invId,
+                journal_entry_id: jeId,
+                entry_date: "2026-07-18",
+                je_status: "posted",
+                gl_revenue_cents: 4500,
+                non_revenue_credit_cents: 0,
+                account_ids: ["aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"],
+              },
+            ],
+          };
+        }
+        if (sql.includes("NOT EXISTS") && sql.includes("transaction_source_links")) return { rows: [] };
+        if (sql.includes("GROUP BY je.entry_date")) {
+          return { rows: [{ d: "2026-07-18", cents: 4500 }] };
+        }
+        if (sql.includes("FROM accounting.invoices i") && sql.includes("recognition_date")) {
+          return {
+            rows: [
+              {
+                invoice_id: invId,
+                display_id: "INV-2026-TSL",
+                recognition_date: "2026-07-18",
+                total_cents: 4500,
+                tax_cents: 0,
+                pretax_revenue_cents: 4500,
+                status: "sent",
+              },
+            ],
+          };
+        }
+        return null;
+      },
+    ]);
+    const result = await computeRevenueGlLinkage(client, {
+      operatingCompanyId: OC,
+      fromDate: "2026-07-18",
+      toDate: "2026-07-18",
+    });
+    expect(result.discrepancy_count).toBe(0);
+    expect(result.drill.mismatched_journal_entries.filter((d) => d.reason === "unlinked_gl_revenue")).toHaveLength(0);
+  });
+
+  it("reversed batch + posted compensating batch same-day net zero (posted|reversed|NULL gate)", async () => {
+    // Day totals include both reversed original and posted compensating → net 0.
+    const client = mockClient([
+      probeOk(),
+      (sql, values) => {
+        if (sql.includes("WITH invoice_ids")) return { rows: [] };
+        if (sql.includes("NOT EXISTS") && sql.includes("transaction_source_links")) return { rows: [] };
+        if (sql.includes("GROUP BY je.entry_date")) {
+          // Assert gate binds posted+reversed
+          expect(values?.some((v) => Array.isArray(v) && v.includes("posted") && v.includes("reversed"))).toBe(true);
+          return { rows: [{ d: "2026-07-18", cents: 0 }] };
+        }
+        if (sql.includes("FROM accounting.invoices i") && sql.includes("recognition_date")) return { rows: [] };
+        return null;
+      },
+    ]);
+    const result = await computeRevenueGlLinkage(client, {
+      operatingCompanyId: OC,
+      fromDate: "2026-07-18",
+      toDate: "2026-07-18",
+    });
+    expect(result.gl_posted_revenue_cents).toBe(0);
+    expect(result.status).toBe("empty");
   });
 });

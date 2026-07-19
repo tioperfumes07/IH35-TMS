@@ -29,6 +29,8 @@ const PATHS = {
   feDrill: "apps/frontend/src/components/home/RevenueDiscrepancyDrill.tsx",
   feDrillTest: "apps/frontend/src/components/home/__tests__/RevenueDiscrepancyDrill.test.tsx",
   feContract: "apps/frontend/src/api/home-widget-contract.test.ts",
+  qboHome: "apps/frontend/src/pages/home/QboStyleHomePage.tsx",
+  qboHomeTest: "apps/frontend/src/pages/home/__tests__/QboStyleHomePage.revenue.test.tsx",
 };
 
 function readRel(rel) {
@@ -61,6 +63,10 @@ export function collectFailures(sources) {
   require("service", "actual_departure_at", "delivery_recognition_missing");
   require("service", "load_stops", "delivery_stop_join_missing");
   require("service", "status <> 'cancelled'", "cancelled_stops_not_excluded");
+  require("service", "ORDER BY ls.sequence_number DESC", "sequence_number_final_stop_missing");
+  require("service", "LIMIT 1", "sequence_limit_missing");
+  forbid("service", /MAX\s*\(\s*ls\.actual_departure_at\s*\)/, "must_not_max_departure_timestamp");
+  require("service", "selectFinalActiveDeliveryStop", "pure_stop_selector_missing");
   require("service", "INVOICE_BASIS_ELIGIBLE_STATUSES", "eligible_invoice_statuses_missing");
   require("service", "sent", "eligible_sent_missing");
   require("service", "factored", "eligible_factored_missing");
@@ -103,12 +109,18 @@ export function collectFailures(sources) {
   require("serviceTest", "unverifiable", "service_test_unverifiable");
   require("serviceTest", "connection_reset", "service_test_no_silent_swallow");
   require("serviceTest", "cancelled", "service_test_cancelled_stop");
+  require("serviceTest", "sequence_number", "service_test_sequence_number");
   require("serviceTest", "pre-tax", "service_test_pretax");
   require("serviceTest", "double-count", "service_test_wrong_account_single_count");
   require("serviceTest", "pending", "service_test_pending_batch");
   require("serviceTest", "TSL", "service_test_tsl_unlinked");
+  require("serviceTest", "draft exclusion", "service_test_draft_exclusion");
+  require("serviceTest", "net zero", "service_test_reversed_posted_net_zero");
   require("dbTest", "cross-entity", "db_test_cross_entity");
   require("dbTest", "date boundary", "db_test_date_boundary");
+  require("dbTest", "draft exclusion", "db_test_draft_exclusion");
+  require("dbTest", "TSL-only", "db_test_tsl_only");
+  require("dbTest", "compensating", "db_test_reversed_compensating");
 
   require("feApi", "invoice_basis_cents", "fe_invoice_basis_field");
   require("feApi", "gl_posted_revenue_cents", "fe_gl_posted_field");
@@ -124,6 +136,14 @@ export function collectFailures(sources) {
   require("feDrill", "focus-visible", "fe_drill_focus_visible");
   require("feDrillTest", "toHaveFocus", "fe_drill_keyboard_test");
   require("feDrillTest", "/accounting/journal-entries/", "fe_drill_je_href_test");
+
+  require("qboHome", "formatTodayRevenueDisplay", "qbo_revenue_display_helper");
+  require("qboHome", "qbo-revenue-error", "qbo_error_testid");
+  require("qboHome", "qbo-revenue-unverifiable", "qbo_unverifiable_testid");
+  require("qboHome", "qbo-revenue-retry", "qbo_retry_testid");
+  forbid("qboHome", /function fmt\$\(cents: number \| null\)/, "qbo_fmt_must_not_null_unverifiable");
+  require("qboHomeTest", "typed 200 unverifiable", "qbo_test_typed_unverifiable");
+  require("qboHomeTest", "real 500", "qbo_test_real_500");
 
   return failures;
 }
@@ -165,6 +185,9 @@ function selftest() {
       mismatched_invoices mismatched_journal_entries
       COMPANY_TIME_ZONE actual_departure_at load_stops
       status <> 'cancelled'
+      ORDER BY ls.sequence_number DESC
+      LIMIT 1
+      selectFinalActiveDeliveryStop
       INVOICE_BASIS_ELIGIBLE_STATUSES sent factored
       pretaxCents GREATEST(0, i.total_cents - COALESCE(tax_cents, 0))
       POSTED_BATCH_STATUSES batch_status = ANY
@@ -178,8 +201,8 @@ function selftest() {
       app.get("/api/v1/home/weekly-revenue"
       if (result.status === "unverifiable") { return { error: "revenue_gl_linkage_unverifiable" }; }
     `,
-    serviceTest: `missing_je wrong_account voided_je unverifiable connection_reset cancelled pre-tax double-count pending TSL`,
-    dbTest: `cross-entity date boundary`,
+    serviceTest: `missing_je wrong_account voided_je unverifiable connection_reset cancelled sequence_number pre-tax double-count pending TSL draft exclusion net zero`,
+    dbTest: `cross-entity date boundary draft exclusion TSL-only compensating`,
     feApi: `
       invoice_basis_cents gl_posted_revenue_cents
       const revenue_cents = revenueRaw === null || revenueRaw === undefined ? null : Number(revenueRaw);
@@ -192,6 +215,14 @@ function selftest() {
     `,
     feDrillTest: `toHaveFocus /accounting/journal-entries/`,
     feContract: `real 500 maps 422`,
+    qboHome: `
+      formatTodayRevenueDisplay
+      data-testid="qbo-revenue-error"
+      data-testid="qbo-revenue-unverifiable"
+      data-testid="qbo-revenue-retry"
+      function fmt$(cents: number): string
+    `,
+    qboHomeTest: `typed 200 unverifiable real 500`,
   };
   for (const [key, rel] of Object.entries(PATHS)) {
     const abs = path.join(tmp, rel);
