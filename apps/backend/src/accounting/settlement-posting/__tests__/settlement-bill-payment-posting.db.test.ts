@@ -394,17 +394,14 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
     // Resolve BEFORE cleanup txns (resolveGlBillIds/read run their own BEGIN/COMMIT).
     const glBillIds = settlementId ? await resolveGlBillIds().catch(() => [] as string[]) : [];
 
+    // Reversal JEs (#2705) — resolve before cleanup txn so FK deletes can target them.
+    const originalJeIds = settlementId ? await resolveOwnJournalEntryIds().catch(() => [] as string[]) : [];
+    const reversalJeIds = settlementId
+      ? await resolveReversalJournalEntryIds(originalJeIds).catch(() => [] as string[])
+      : [];
+
     // Fixture cleanup in its own txn — a failed DELETE must not abort GLOBAL restore.
     try {
-<<<<<<< HEAD
-      // Resolve BEFORE the cleanup transaction (resolveGlBillIds/read run their own BEGIN/COMMIT — must
-      // not nest inside the bypass() transaction below).
-      const glBillIds = settlementId ? await resolveGlBillIds() : [];
-      // Reversal JEs (#2705) — resolve before cleanup txn so FK deletes can target them.
-      const originalJeIds = settlementId ? await resolveOwnJournalEntryIds() : [];
-      const reversalJeIds = settlementId ? await resolveReversalJournalEntryIds(originalJeIds) : [];
-=======
->>>>>>> ac8a8a173 (fix(tests): canonical isolation helper + GLOBAL bindings lock)
       await bypass(async () => {
         await db.query(`DELETE FROM driver_finance.driver_settlement_gl_bills WHERE settlement_id = $1::uuid`, [settlementId]);
         await db.query(`DELETE FROM driver_finance.driver_settlement_gl_runs WHERE settlement_id = $1::uuid`, [settlementId]);

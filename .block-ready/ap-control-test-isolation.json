@@ -3,7 +3,7 @@
   "status": "BUILD",
   "classification": "NON-FINANCIAL",
   "phase": "test-hygiene",
-  "task": "Root-cause fix for nondeterministic bill-payment-gl-posting CC/ap_control race: each ap_control-seeding db.test owns a unique org.companies + chart_of_accounts_roles namespace via canonical createIsolatedOperatingCompany() (apps/backend/test-helpers/isolated-company.ts; #2717-ready opts). Settlement suites share GLOBAL account_role_bindings session lock (save→bind→tests→fail-loud restore). Guard requires isolation + lock. Concurrent cash/CC stress regression. No product GL or migration changes.",
+  "task": "Root-cause fix for nondeterministic bill-payment-gl-posting CC/ap_control race: each ap_control-seeding db.test owns a unique org.companies + chart_of_accounts_roles namespace via canonical createIsolatedOperatingCompany() (apps/backend/test-helpers/isolated-company.ts; #2717-ready opts). Settlement suites share GLOBAL account_role_bindings session lock (save\u2192bind\u2192tests\u2192fail-loud restore). Guard requires isolation + lock. Concurrent cash/CC stress regression. No product GL or migration changes.",
   "branch": "cursor/ap-control-test-isolation-b21d",
   "lane": "cloud",
   "allowed_files": [
@@ -23,7 +23,8 @@
     "scripts/verify-shared-coa-role-tests-serialized.mjs",
     "scripts/verify-steps/131-verify-shared-coa-role-tests-serialized.mjs",
     "scripts/verify-hold-merge-gate.mjs",
-    "scripts/verify-services-catalog-eta-calculator.mjs"
+    "scripts/verify-services-catalog-eta-calculator.mjs",
+    "scripts/verify-form-2290-deadlines-current.mjs"
   ],
   "runtime_path": "src",
   "db_required": true,
