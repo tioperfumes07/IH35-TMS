@@ -9,6 +9,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { runExecutableGuard } from "./guard-executable-contract.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-settlement-reversal-atomicity";
@@ -110,8 +111,39 @@ function inspect(service, poster, bills, settlementPoster, governance, dbTest, u
   return violations;
 }
 
-function selftest() {
-  const goodService = `
+function checkSettlementReversalFixture(fixture) {
+  return inspect(
+    fixture.service,
+    fixture.poster,
+    fixture.bills,
+    fixture.settlementPoster,
+    fixture.governance,
+    fixture.dbTest,
+    fixture.unitTest,
+    fixture.governanceTest
+  );
+}
+
+function loadRepositoryFixture() {
+  const files = {};
+  for (const [key, rel] of Object.entries({
+    service: SERVICE,
+    poster: POSTER,
+    bills: BILLS,
+    settlementPoster: SETTLEMENT_POSTER,
+    governance: GOVERNANCE,
+    dbTest: DB_TEST,
+    unitTest: UNIT_TEST,
+    governanceTest: GOVERNANCE_TEST,
+  })) {
+    const absolute = path.join(ROOT, rel);
+    files[key] = fs.existsSync(absolute) ? fs.readFileSync(absolute, "utf8") : "";
+  }
+  return files;
+}
+
+const goodFixture = {
+  service: `
     reverseSettlementBillPaymentInClientTx {
       LIMIT 1 FOR UPDATE
       voidBillPaymentInClientTx
@@ -126,58 +158,48 @@ function selftest() {
       SET status = 'open'
       SET status = 'reversed'
       WHERE id = $1::uuid AND status = 'posted'
-    }`;
-  const goodPoster = `
+    }`,
+  poster: `
     const lineId = null;
     class_id::text, entity_uuid::text
     resolveReversalDate(originalDate
     await ensureOpenPeriod(client
-    export async function reversePostedSourceTransactionInClientTx`;
-  const goodBills = `export async function voidBillPaymentInClientTx export async function voidBillInClientTx reversePostedSourceTransactionInClientTx UPDATE banking.bank_accounts SET paid_cents = $2 revoked_at = now()`;
-  const goodSettlementPoster = `export async function restoreSettlementDeductionsInClientTx applied_to_settlement_id = NULL remaining_balance_cents = amount_cents reverseDeductionFromBucket settlement_deduction_restore_state_transition_failed`;
-  const goodGovernance = `companyBusinessDate() reverseSettlementBillPaymentInClientTx UPDATE driver_finance.driver_settlements`;
-  const goodDb = `Promise.all([ "nothing_to_reverse", "reversed" absolute_residual_cents resolveReversalJournalEntryIds linked_payment_count cancellationSnapshot injected_outer_audit_failure driver_deduction_bucket_events revoked_at IS NULL current_balance_cents row.status === "open"`;
-  const goodUnit = `PERIOD_LOCKED SET status = 'reversed' settlement_reversal_not_equal_and_opposite one transaction client currentBusinessDate WITH linked AS`;
-  if (inspect(goodService, goodPoster, goodBills, goodSettlementPoster, goodGovernance, goodDb, goodUnit, "").length !== 0) {
-    console.error(`[${LABEL}] --selftest FAILED: good fixture must pass`);
-    process.exit(1);
-  }
-  const plantedService = `
+    export async function reversePostedSourceTransactionInClientTx`,
+  bills:
+    "export async function voidBillPaymentInClientTx export async function voidBillInClientTx reversePostedSourceTransactionInClientTx UPDATE banking.bank_accounts SET paid_cents = $2 revoked_at = now()",
+  settlementPoster:
+    "export async function restoreSettlementDeductionsInClientTx applied_to_settlement_id = NULL remaining_balance_cents = amount_cents reverseDeductionFromBucket settlement_deduction_restore_state_transition_failed",
+  governance:
+    "companyBusinessDate() reverseSettlementBillPaymentInClientTx UPDATE driver_finance.driver_settlements",
+  dbTest:
+    'Promise.all([ "nothing_to_reverse", "reversed" absolute_residual_cents resolveReversalJournalEntryIds linked_payment_count cancellationSnapshot injected_outer_audit_failure driver_deduction_bucket_events revoked_at IS NULL current_balance_cents row.status === "open"',
+  unitTest:
+    "PERIOD_LOCKED SET status = 'reversed' settlement_reversal_not_equal_and_opposite one transaction client currentBusinessDate WITH linked AS",
+  governanceTest: "",
+};
+const badFixture = {
+  service: `
     reversePostedSourceTransaction(x).catch(() => undefined);
     SET status = 'reversed';
-  `;
-  const planted = inspect(plantedService, "const lineId = sourceId", "", "", "inherently multi-transaction", "", "", "Object.assign(state)");
-  if (planted.length < 10) {
-    console.error(`[${LABEL}] --selftest FAILED: planted partial-success workflow was not fully rejected`, planted);
-    process.exit(1);
-  }
-  console.log(`[${LABEL}] --selftest PASS (planted violations=${planted.length}; good=0)`);
-}
+  `,
+  poster: "const lineId = sourceId",
+  bills: "",
+  settlementPoster: "",
+  governance: "inherently multi-transaction",
+  dbTest: "",
+  unitTest: "",
+  governanceTest: "Object.assign(state)",
+};
 
-if (process.argv.includes("--selftest")) {
-  selftest();
-  process.exit(0);
-}
-
-for (const rel of [SERVICE, POSTER, BILLS, SETTLEMENT_POSTER, GOVERNANCE, DB_TEST, UNIT_TEST, GOVERNANCE_TEST]) {
-  if (!fs.existsSync(path.join(ROOT, rel))) {
-    console.error(`[${LABEL}] FAILED — required file missing: ${rel}`);
-    process.exit(1);
-  }
-}
-const violations = inspect(
-  fs.readFileSync(path.join(ROOT, SERVICE), "utf8"),
-  fs.readFileSync(path.join(ROOT, POSTER), "utf8"),
-  fs.readFileSync(path.join(ROOT, BILLS), "utf8"),
-  fs.readFileSync(path.join(ROOT, SETTLEMENT_POSTER), "utf8"),
-  fs.readFileSync(path.join(ROOT, GOVERNANCE), "utf8"),
-  fs.readFileSync(path.join(ROOT, DB_TEST), "utf8"),
-  fs.readFileSync(path.join(ROOT, UNIT_TEST), "utf8"),
-  fs.readFileSync(path.join(ROOT, GOVERNANCE_TEST), "utf8")
-);
-if (violations.length > 0) {
-  console.error(`[${LABEL}] FAILED:`);
-  for (const violation of violations) console.error(`  - ${violation}`);
-  process.exit(1);
-}
-console.log(`[${LABEL}] OK — settlement reversal is atomic, fail-loud, idempotent, date-coherent, and reconciled.`);
+runExecutableGuard({
+  label: LABEL,
+  checker: checkSettlementReversalFixture,
+  loadRepositoryFixture,
+  goodFixture,
+  badFixture,
+  expectedBadViolationSubstrings: [
+    "source reversal failures are swallowed",
+    "run state can transition before whole-settlement reconciliation",
+    "fake Object.assign rollback proof remains",
+  ],
+});

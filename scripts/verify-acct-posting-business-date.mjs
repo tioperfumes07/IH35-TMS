@@ -20,6 +20,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { runExecutableGuard } from "./guard-executable-contract.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-acct-posting-business-date";
@@ -60,56 +61,50 @@ function walk(dir) {
   return out;
 }
 
-function selftest() {
-  const planted = [
-    `const entryDate = new Date().toISOString().slice(0, 10);`,
-    `entry_date: new Date().toISOString().slice(0,10),`,
-    `const multiline = new Date()
+function checkAccountingBusinessDates(files) {
+  return files.flatMap(({ rel, source }) => findViolationsInText(source, rel));
+}
+
+function loadRepositoryFixture() {
+  return walk(SCAN_DIR).map((rel) => ({
+    rel,
+    source: fs.readFileSync(path.join(ROOT, rel), "utf8"),
+  }));
+}
+
+const goodFixture = [
+  {
+    rel: "good.ts",
+    source: [
+      `import { companyBusinessDate } from "../../lib/company-business-date.js";`,
+      `entry_date: companyBusinessDate(),`,
+      `const due = new Date(new Date(issueDate).getTime() + termsDays * 86400000).toISOString().slice(0, 10);`,
+      `const period_end = end.toISOString().slice(0, 10);`,
+      `// documented anti-pattern: new Date().toISOString().slice(0,10) — do not use`,
+    ].join("\n"),
+  },
+];
+const badFixture = [
+  {
+    rel: "planted.ts",
+    source: [
+      `const entryDate = new Date().toISOString().slice(0, 10);`,
+      `entry_date: new Date().toISOString().slice(0,10),`,
+      `const multiline = new Date()
       .toISOString()
       .slice(
         0,
         10
       );`,
-  ].join("\n");
-  const good = [
-    `import { companyBusinessDate } from "../../lib/company-business-date.js";`,
-    `entry_date: companyBusinessDate(),`,
-    `const due = new Date(new Date(issueDate).getTime() + termsDays * 86400000).toISOString().slice(0, 10);`,
-    `const period_end = end.toISOString().slice(0, 10);`,
-    `// documented anti-pattern: new Date().toISOString().slice(0,10) — do not use`,
-  ].join("\n");
+    ].join("\n"),
+  },
+];
 
-  const plantedHits = findViolationsInText(planted, "planted.ts");
-  if (plantedHits.length !== 3) {
-    console.error(`[${LABEL}] --selftest FAILED: planted UTC-today defaults must all be caught`);
-    console.error(`  got ${plantedHits.length}:`, plantedHits);
-    process.exit(1);
-  }
-  const goodHits = findViolationsInText(good, "good.ts");
-  if (goodHits.length !== 0) {
-    console.error(`[${LABEL}] --selftest FAILED: legitimate arithmetic/normalization must pass`);
-    console.error(goodHits);
-    process.exit(1);
-  }
-  console.log(`[${LABEL}] --selftest PASS (planted=${plantedHits.length} hits; good=0)`);
-}
-
-if (process.argv.includes("--selftest")) {
-  selftest();
-  process.exit(0);
-}
-
-const violations = [];
-for (const rel of walk(SCAN_DIR)) {
-  violations.push(...findViolationsInText(fs.readFileSync(path.join(ROOT, rel), "utf8"), rel));
-}
-
-if (violations.length > 0) {
-  console.error(`[${LABEL}] FAILED — accounting-backend 'today' posting/as-of defaults must use`);
-  console.error("companyBusinessDate() from lib/company-business-date (America/Chicago), not UTC new Date().toISOString():");
-  for (const v of violations) console.error(`  - ${v}`);
-  console.error("Fix: replace `new Date().toISOString().slice(0, 10)` today-defaults with companyBusinessDate().");
-  process.exit(1);
-}
-
-console.log(`[${LABEL}] OK — no UTC-derived accounting-backend 'today' posting defaults.`);
+runExecutableGuard({
+  label: LABEL,
+  checker: checkAccountingBusinessDates,
+  loadRepositoryFixture,
+  goodFixture,
+  badFixture,
+  expectedBadViolationSubstrings: ["planted.ts"],
+});
