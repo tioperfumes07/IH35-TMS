@@ -25,6 +25,9 @@ const ROOT = process.cwd();
 const FRONTEND_ROOT = path.join(ROOT, "apps/frontend/src");
 const SKIP_RE = /(\/__tests__\/|\.test\.(tsx|ts)$|\.deprecated\.|test-setup\.ts$)/;
 const MAX_BASELINE_FINDINGS = 76;
+// Newly visible debt from String(...) and conditional wrappers at exact-head review.
+// Kept as a separate ratchet so the original 76-finding contract remains intact.
+const MAX_EXTENDED_FINDINGS = 24;
 
 // Matches property/identifier names shaped like an entity id: vendor_id, matched_bill_id, driverId,
 // unitId, or a bare `id`. Case-sensitive on the "Id" suffix so words like "valid"/"paid" don't match.
@@ -44,13 +47,48 @@ function walk(dir) {
   return out;
 }
 
-// Resolves the "innermost identifier name" of common id-rendering shapes:
+// Resolves every directly rendered identifier name from common id-rendering shapes:
 //   {row.vendor_id}                -> "vendor_id"
 //   {row.vendor_id || "-"}         -> "vendor_id"  (unwraps || / ?? fallback)
 //   {row.vendor_id ?? "-"}         -> "vendor_id"
 //   {(row.vendor_id)}              -> "vendor_id"  (unwraps parens)
-// Deliberately does NOT unwrap ternaries/conditionals — a conditional whose branches already contain
-// <EntityLink>/<Link> (the adopted pattern used in this PR) would otherwise be flagged as unadopted.
+//   {String(row.vendor_id)}         -> "vendor_id"
+//   {ok ? row.vendor_id : alt.id}  -> "vendor_id", "id"
+// JSX link branches produce no direct identifier candidate, so adopted ternaries remain clean.
+export function identifierNames(expr) {
+  if (!expr) return [];
+  if (ts.isIdentifier(expr)) return [expr.text];
+  if (ts.isPropertyAccessExpression(expr)) return [expr.name.text];
+  if (
+    ts.isParenthesizedExpression(expr) ||
+    ts.isAsExpression(expr) ||
+    ts.isTypeAssertionExpression(expr) ||
+    ts.isNonNullExpression(expr) ||
+    ts.isSatisfiesExpression(expr)
+  ) {
+    return identifierNames(expr.expression);
+  }
+  if (
+    ts.isBinaryExpression(expr) &&
+    (expr.operatorToken.kind === ts.SyntaxKind.QuestionQuestionToken ||
+      expr.operatorToken.kind === ts.SyntaxKind.BarBarToken)
+  ) {
+    return identifierNames(expr.left);
+  }
+  if (ts.isConditionalExpression(expr)) {
+    return [...identifierNames(expr.whenTrue), ...identifierNames(expr.whenFalse)];
+  }
+  if (
+    ts.isCallExpression(expr) &&
+    ts.isIdentifier(expr.expression) &&
+    expr.expression.text === "String" &&
+    expr.arguments.length === 1
+  ) {
+    return identifierNames(expr.arguments[0]);
+  }
+  return [];
+}
+
 export function identifierName(expr) {
   if (!expr) return null;
   if (ts.isIdentifier(expr)) return expr.text;
@@ -66,7 +104,7 @@ export function identifierName(expr) {
   return null;
 }
 
-export function scanSource(file, source) {
+export function scanSource(file, source, extended = true) {
   const sf = ts.createSourceFile(file, source, ts.ScriptTarget.ESNext, true, ts.ScriptKind.TSX);
   if (sf.parseDiagnostics.length > 0) {
     const details = sf.parseDiagnostics.map((d) => ts.flattenDiagnosticMessageText(d.messageText, " ")).join("; ");
@@ -75,8 +113,8 @@ export function scanSource(file, source) {
   const findings = [];
   function visit(node) {
     if (ts.isJsxExpression(node) && node.expression && !ts.isJsxAttribute(node.parent)) {
-      const name = identifierName(node.expression);
-      if (name && ID_NAME_RE.test(name)) {
+      const names = extended ? identifierNames(node.expression) : [identifierName(node.expression)].filter(Boolean);
+      if (names.some((name) => ID_NAME_RE.test(name))) {
         const enclosingTag = ts.isJsxElement(node.parent)
           ? node.parent.openingElement.tagName.getText()
           : null;
@@ -97,10 +135,10 @@ export function scanSource(file, source) {
   return findings;
 }
 
-export function scanTree(frontendRoot = FRONTEND_ROOT) {
+export function scanTree(frontendRoot = FRONTEND_ROOT, extended = true) {
   const findings = [];
   for (const file of walk(frontendRoot)) {
-    findings.push(...scanSource(file, fs.readFileSync(file, "utf8")));
+    findings.push(...scanSource(file, fs.readFileSync(file, "utf8"), extended));
   }
   return findings;
 }
@@ -115,13 +153,42 @@ function runSelftest() {
     "decoy.tsx",
     `// <EntityLink kind="vendor" id={row.vendor_id} />\nconst fake = "{row.vendor_id}";\nexport const T = ({ row }) => <td>{row.vendor_id}</td>;`,
   );
-  if (plain.length !== 1 || linked.length !== 0 || decoy.length !== 1) {
+  const stringWrapped = scanSource(
+    "string-wrapped.tsx",
+    `export const T = ({ row }) => <td>{String(row.vendor_id)}</td>;`,
+  );
+  const ternaryPlain = scanSource(
+    "ternary-plain.tsx",
+    `export const T = ({ row, ok }) => <td>{ok ? row.vendor_id : row.driverId}</td>;`,
+  );
+  const ternaryLinked = scanSource(
+    "ternary-linked.tsx",
+    `export const T = ({ row, ok }) => <td>{ok ? <EntityLink kind="vendor" id={row.vendor_id}/> : <EntityLink kind="driver" id={row.driverId}/>}</td>;`,
+  );
+  if (
+    plain.length !== 1 ||
+    linked.length !== 0 ||
+    decoy.length !== 1 ||
+    stringWrapped.length !== 1 ||
+    ternaryPlain.length !== 1 ||
+    ternaryLinked.length !== 0
+  ) {
     console.error(
-      `verify:entity-link-adoption --selftest FAIL (plain=${plain.length}, linked=${linked.length}, decoy=${decoy.length})`,
+      "verify:entity-link-adoption --selftest FAIL",
+      {
+        plain: plain.length,
+        linked: linked.length,
+        decoy: decoy.length,
+        stringWrapped: stringWrapped.length,
+        ternaryPlain: ternaryPlain.length,
+        ternaryLinked: ternaryLinked.length,
+      },
     );
     process.exit(1);
   }
-  console.log("verify:entity-link-adoption --selftest PASS (AST semantics reject comments/string decoys)");
+  console.log("verify:entity-link-adoption --selftest PASS String(row.vendor_id) rejected");
+  console.log("verify:entity-link-adoption --selftest PASS plain ternary IDs rejected");
+  console.log("verify:entity-link-adoption --selftest PASS EntityLink ternary branches accepted");
 }
 
 function main() {
@@ -130,23 +197,36 @@ function main() {
     return;
   }
 
-  const findings = scanTree();
+  const legacyFindings = scanTree(FRONTEND_ROOT, false);
+  const allFindings = scanTree(FRONTEND_ROOT, true);
+  const legacyKeys = new Set(legacyFindings.map((finding) => `${finding.file}:${finding.line}:${finding.text}`));
+  const extendedFindings = allFindings.filter(
+    (finding) => !legacyKeys.has(`${finding.file}:${finding.line}:${finding.text}`),
+  );
   console.log("verify:entity-link-adoption (fail-closed ratchet)");
   console.log("Scanned apps/frontend/src for id-shaped values rendered without <EntityLink>/<Link>.");
-  console.log(`Found ${findings.length} candidate cell(s); baseline maximum is ${MAX_BASELINE_FINDINGS}.`);
+  console.log(
+    `Found ${legacyFindings.length} legacy candidate(s) (max ${MAX_BASELINE_FINDINGS}) and ` +
+      `${extendedFindings.length} String/ternary candidate(s) (max ${MAX_EXTENDED_FINDINGS}).`,
+  );
 
-  if (findings.length > MAX_BASELINE_FINDINGS) {
-    for (const f of findings) {
+  if (
+    legacyFindings.length > MAX_BASELINE_FINDINGS ||
+    extendedFindings.length > MAX_EXTENDED_FINDINGS
+  ) {
+    for (const f of [...legacyFindings, ...extendedFindings]) {
       console.error(`  ${f.file}:${f.line}  <${f.tag}>  ${f.text}`);
     }
-    console.error(
-      `verify:entity-link-adoption FAIL — ${findings.length - MAX_BASELINE_FINDINGS} new candidate(s) exceed the locked baseline`,
-    );
+    const legacyIncrease = Math.max(0, legacyFindings.length - MAX_BASELINE_FINDINGS);
+    const extendedIncrease = Math.max(0, extendedFindings.length - MAX_EXTENDED_FINDINGS);
+    console.error(`verify:entity-link-adoption FAIL — ${legacyIncrease + extendedIncrease} new candidate(s) exceed locked baselines`);
     process.exit(1);
   }
 
   console.log(
-    `verify:entity-link-adoption PASS — no regression (${MAX_BASELINE_FINDINGS - findings.length} finding(s) below baseline)`,
+    `verify:entity-link-adoption PASS — no regression (` +
+      `${MAX_BASELINE_FINDINGS - legacyFindings.length} legacy and ` +
+      `${MAX_EXTENDED_FINDINGS - extendedFindings.length} extended finding(s) below baseline)`,
   );
 }
 

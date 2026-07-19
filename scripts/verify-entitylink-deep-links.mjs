@@ -46,6 +46,42 @@ function walk(sf, predicate) {
   return matched;
 }
 
+function findFunction(sf, name) {
+  let result = null;
+  walk(sf, (node) => {
+    if (
+      (ts.isFunctionDeclaration(node) || ts.isFunctionExpression(node) || ts.isArrowFunction(node)) &&
+      node.name?.getText(sf) === name
+    ) {
+      result = node;
+    }
+    return false;
+  });
+  return result;
+}
+
+function isExecutedCallback(node) {
+  const parent = node.parent;
+  return (
+    (ts.isCallExpression(parent) && parent.arguments.includes(node)) ||
+    (ts.isJsxExpression(parent) && ts.isJsxAttribute(parent.parent)) ||
+    ts.isPropertyAssignment(parent)
+  );
+}
+
+// Walk only code reached when `root` executes. Named/local helper bodies are not executable
+// merely because they occur textually inside a component; callbacks passed to calls/JSX are.
+function walkExecutable(root, predicate, sf) {
+  let matched = false;
+  function visit(node) {
+    if (node !== root && ts.isFunctionLike(node) && !isExecutedCallback(node)) return;
+    if (predicate(node, sf)) matched = true;
+    ts.forEachChild(node, visit);
+  }
+  visit(root);
+  return matched;
+}
+
 function jsxName(node) {
   return node.tagName.getText();
 }
@@ -62,46 +98,56 @@ function jsxAttribute(node, name, sf) {
   return null;
 }
 
-function hasEntityLink(sf, kind, idExpression) {
-  return walk(sf, (node, sourceFile) => {
+function hasEntityLink(sf, root, kind, idExpression) {
+  return walkExecutable(root, (node, sourceFile) => {
     if (!ts.isJsxSelfClosingElement(node) && !ts.isJsxOpeningElement(node)) return false;
     return (
       jsxName(node) === "EntityLink" &&
       jsxAttribute(node, "kind", sourceFile) === kind &&
       jsxAttribute(node, "id", sourceFile) === idExpression
     );
-  });
+  }, sf);
 }
 
-function hasCall(sf, callee, argument) {
-  return walk(sf, (node) => {
+function hasCall(sf, root, callee, argument) {
+  return walkExecutable(root, (node) => {
     if (!ts.isCallExpression(node) || node.expression.getText(sf) !== callee) return false;
     return argument === undefined || node.arguments.some((arg) => {
       return ts.isStringLiteralLike(arg) && arg.text === argument;
     });
-  });
+  }, sf);
 }
 
-function executableArguments(sf, callee) {
+function executableArguments(sf, root, callee) {
   const args = [];
-  walk(sf, (node) => {
+  walkExecutable(root, (node) => {
     if (ts.isCallExpression(node) && node.expression.getText(sf) === callee && node.arguments[0]) {
-      args.push(node.arguments[0].getText(sf));
+      args.push(node.arguments[0]);
     }
     return false;
-  });
+  }, sf);
   return args;
 }
 
-function hasRoutePath(sf, routePath) {
+function routeUsesComponent(sf, routePath, componentName) {
   return walk(sf, (node, sourceFile) => {
     if (!ts.isJsxSelfClosingElement(node) && !ts.isJsxOpeningElement(node)) return false;
-    return jsxName(node) === "Route" && jsxAttribute(node, "path", sourceFile) === routePath;
+    if (jsxName(node) !== "Route" || jsxAttribute(node, "path", sourceFile) !== routePath) return false;
+    const element = node.attributes.properties.find(
+      (property) => ts.isJsxAttribute(property) && property.name.text === "element",
+    );
+    if (!element || !ts.isJsxAttribute(element) || !ts.isJsxExpression(element.initializer)) return false;
+    return walk(element.initializer, (child) => (
+      (ts.isJsxSelfClosingElement(child) || ts.isJsxOpeningElement(child)) &&
+      jsxName(child) === componentName
+    ));
   });
 }
 
 function hasResolverCase(sf, kind, expectedReturn) {
-  return walk(sf, (node) => {
+  const resolver = findFunction(sf, "resolveEntityRoute");
+  if (!resolver) return false;
+  return walkExecutable(resolver, (node) => {
     if (!ts.isCaseClause(node) || !ts.isStringLiteralLike(node.expression) || node.expression.text !== kind) {
       return false;
     }
@@ -110,7 +156,28 @@ function hasResolverCase(sf, kind, expectedReturn) {
         ts.isReturnStatement(statement) &&
         statement.expression?.getText(sf) === expectedReturn,
     );
-  });
+  }, sf);
+}
+
+function isAuditNavigation(node, sf, sourceType, idExpression) {
+  if (!ts.isCallExpression(node) || node.expression.getText(sf) !== "navigate" || node.arguments.length !== 1) {
+    return false;
+  }
+  const route = node.arguments[0];
+  if (!ts.isTemplateExpression(route) || route.templateSpans.length !== 1) return false;
+  return (
+    route.head.text === `/accounting/audit-trail?source_type=${sourceType}&source_id=` &&
+    route.templateSpans[0].expression.getText(sf) === `encodeURIComponent(${idExpression})` &&
+    route.templateSpans[0].literal.text === ""
+  );
+}
+
+function hasForbiddenExpenseRoute(sf, root) {
+  return walkExecutable(root, (node) => {
+    if (!ts.isStringLiteralLike(node) && !ts.isTemplateExpression(node)) return false;
+    const text = node.getText(sf);
+    return /\/accounting\/expenses\?expense_id=/.test(text);
+  }, sf);
 }
 
 export function assertContracts(sources) {
@@ -129,41 +196,53 @@ export function assertContracts(sources) {
   }
 
   if (parsed.invoice) {
-    if (!hasEntityLink(parsed.invoice, "customer", "invoice.customer_id")) {
+    const component = findFunction(parsed.invoice, "InvoiceDetailPage");
+    if (!component) {
+      failures.push("InvoiceDetailPage: exported component function is missing");
+    } else if (!hasEntityLink(parsed.invoice, component, "customer", "invoice.customer_id")) {
       failures.push("InvoiceDetailPage: customer header must execute EntityLink customer/invoice.customer_id");
     }
-    const nav = executableArguments(parsed.invoice, "navigate");
-    if (!nav.some((arg) => arg.includes("/accounting/audit-trail?source_type=invoice&source_id="))) {
+    const nav = component ? executableArguments(parsed.invoice, component, "navigate") : [];
+    if (!nav.some((arg) => isAuditNavigation(arg.parent, parsed.invoice, "invoice", "invoice.id"))) {
       failures.push("InvoiceDetailPage: View audit log must execute the invoice audit-trail deep-link");
     }
-    if (nav.some((arg) => arg.includes("/reports?invoice_id="))) {
+    if (nav.some((arg) => arg.getText(parsed.invoice).includes("/reports?invoice_id="))) {
       failures.push("InvoiceDetailPage: must not execute dead /reports?invoice_id= navigation");
     }
   }
 
   if (parsed.payment) {
-    const nav = executableArguments(parsed.payment, "navigate");
-    if (!nav.some((arg) => arg.includes("/accounting/audit-trail?source_type=customer_payment&source_id="))) {
+    const component = findFunction(parsed.payment, "PaymentDetailPage");
+    if (!component) failures.push("PaymentDetailPage: exported component function is missing");
+    const nav = component ? executableArguments(parsed.payment, component, "navigate") : [];
+    if (!nav.some((arg) => isAuditNavigation(arg.parent, parsed.payment, "customer_payment", "payment.id"))) {
       failures.push("PaymentDetailPage: View audit log must execute the customer-payment audit deep-link");
     }
-    if (nav.some((arg) => arg.includes("/reports?payment_id="))) {
+    if (nav.some((arg) => arg.getText(parsed.payment).includes("/reports?payment_id="))) {
       failures.push("PaymentDetailPage: must not execute dead /reports?payment_id= navigation");
     }
   }
 
   if (parsed.audit) {
-    if (!hasCall(parsed.audit, "useSearchParams")) {
+    const component = findFunction(parsed.audit, "AccountingAuditTrailPage");
+    if (!component) failures.push("AccountingAuditTrailPage: exported component function is missing");
+    if (!component || !hasCall(parsed.audit, component, "useSearchParams")) {
       failures.push("AccountingAuditTrailPage: must execute useSearchParams()");
     }
     for (const parameter of ["source_type", "source_id"]) {
-      if (!hasCall(parsed.audit, "searchParams.get", parameter)) {
+      if (!component || !hasCall(parsed.audit, component, "searchParams.get", parameter)) {
         failures.push(`AccountingAuditTrailPage: must consume ?${parameter}=`);
       }
     }
   }
 
   if (parsed.faults) {
-    if (!hasCall(parsed.faults, "useSearchParams") || !hasCall(parsed.faults, "searchParams.get", "unit_id")) {
+    const component = findFunction(parsed.faults, "FaultDraftsPage");
+    if (
+      !component ||
+      !hasCall(parsed.faults, component, "useSearchParams") ||
+      !hasCall(parsed.faults, component, "searchParams.get", "unit_id")
+    ) {
       failures.push("FaultDraftsPage: must execute useSearchParams() and consume ?unit_id=");
     }
   }
@@ -177,23 +256,43 @@ export function assertContracts(sources) {
   }
 
   if (parsed.expensesList) {
+    const component = findFunction(parsed.expensesList, "ExpensesListPage");
     if (
-      !hasCall(parsed.expensesList, "useSearchParams") ||
-      !hasCall(parsed.expensesList, "searchParams.get", "expense_id")
+      !component ||
+      !hasCall(parsed.expensesList, component, "useSearchParams") ||
+      !hasCall(parsed.expensesList, component, "searchParams.get", "expense_id")
     ) {
       failures.push("ExpensesListPage: must execute useSearchParams() and consume ?expense_id=");
     }
-    if (!hasEntityLink(parsed.expensesList, "expense", "r.id")) {
+    if (!component || !hasEntityLink(parsed.expensesList, component, "expense", "r.id")) {
       failures.push("ExpensesListPage: expense number must execute EntityLink expense/r.id");
+    }
+    if (component && hasForbiddenExpenseRoute(parsed.expensesList, component)) {
+      failures.push("ExpensesListPage: must not execute obsolete /accounting/expenses?expense_id= deep-link");
     }
   }
 
-  if (parsed.woDetail && !hasEntityLink(parsed.woDetail, "expense", "expense.id")) {
-    failures.push("WorkOrderDetailPage: expense producer must execute EntityLink expense/expense.id");
+  if (parsed.woDetail) {
+    const component = findFunction(parsed.woDetail, "WorkOrderDetailPage");
+    if (!component || !hasEntityLink(parsed.woDetail, component, "expense", "expense.id")) {
+      failures.push("WorkOrderDetailPage: expense producer must execute EntityLink expense/expense.id");
+    }
+    if (component && hasForbiddenExpenseRoute(parsed.woDetail, component)) {
+      failures.push("WorkOrderDetailPage: must not execute obsolete /accounting/expenses?expense_id= deep-link");
+    }
   }
 
-  if (parsed.manifest && !hasRoutePath(parsed.manifest, "/accounting/expenses/list")) {
-    failures.push("manifest: must register /accounting/expenses/list");
+  if (parsed.manifest) {
+    for (const [routePath, component] of [
+      ["/accounting/invoices/:id", "InvoiceDetailPage"],
+      ["/accounting/payments/:id", "PaymentDetailPage"],
+      ["/accounting/audit-trail", "AccountingAuditTrailPage"],
+      ["/accounting/expenses/list", "ExpensesListPage"],
+    ]) {
+      if (!routeUsesComponent(parsed.manifest, routePath, component)) {
+        failures.push(`manifest: ${routePath} must render ${component}`);
+      }
+    }
   }
 
   return failures;
@@ -210,14 +309,14 @@ function readSources() {
 
 function runSelftest() {
   const good = {
-    invoice: `const x = <EntityLink kind="customer" id={invoice.customer_id}/>; navigate(\`/accounting/audit-trail?source_type=invoice&source_id=\${invoice.id}\`);`,
-    payment: `navigate(\`/accounting/audit-trail?source_type=customer_payment&source_id=\${payment.id}\`);`,
-    audit: `const [searchParams] = useSearchParams(); searchParams.get("source_type"); searchParams.get("source_id");`,
-    faults: `const [searchParams] = useSearchParams(); searchParams.get("unit_id");`,
-    entityLink: `switch (kind) { case "expense": return \`/accounting/expenses/list?expense_id=\${id}\`; }`,
-    expensesList: `const [searchParams] = useSearchParams(); searchParams.get("expense_id"); const x = <EntityLink kind="expense" id={r.id}/>;`,
-    woDetail: `const x = <EntityLink kind="expense" id={expense.id}/>;`,
-    manifest: `const x = <Route path="/accounting/expenses/list" element={<Page/>}/>;`,
+    invoice: `function InvoiceDetailPage(){ return <><EntityLink kind="customer" id={invoice.customer_id}/><button onClick={() => navigate(\`/accounting/audit-trail?source_type=invoice&source_id=\${encodeURIComponent(invoice.id)}\`)}/></>; }`,
+    payment: `function PaymentDetailPage(){ return <button onClick={() => navigate(\`/accounting/audit-trail?source_type=customer_payment&source_id=\${encodeURIComponent(payment.id)}\`)}/>; }`,
+    audit: `function AccountingAuditTrailPage(){ const [searchParams] = useSearchParams(); useState(searchParams.get("source_type")); useState(searchParams.get("source_id")); return null; }`,
+    faults: `function FaultDraftsPage(){ const [searchParams] = useSearchParams(); useState(searchParams.get("unit_id")); return null; }`,
+    entityLink: `function resolveEntityRoute(kind,id){ switch (kind) { case "expense": return \`/accounting/expenses/list?expense_id=\${id}\`; } }`,
+    expensesList: `function ExpensesListPage(){ const [searchParams] = useSearchParams(); useState(searchParams.get("expense_id")); return <EntityLink kind="expense" id={r.id}/>; }`,
+    woDetail: `function WorkOrderDetailPage(){ return <EntityLink kind="expense" id={expense.id}/>; }`,
+    manifest: `<><Route path="/accounting/invoices/:id" element={<InvoiceDetailPage/>}/><Route path="/accounting/payments/:id" element={<PaymentDetailPage/>}/><Route path="/accounting/audit-trail" element={<AccountingAuditTrailPage/>}/><Route path="/accounting/expenses/list" element={<ExpensesListPage/>}/></>`,
   };
   const decoyText = `// EntityLink kind="expense" id={expense.id}; useSearchParams(); searchParams.get("expense_id")\nconst decoy = "/accounting/expenses/list /accounting/audit-trail?source_type=invoice&source_id=";`;
   const decoys = Object.fromEntries(Object.keys(FILES).map((key) => [key, decoyText]));
@@ -227,15 +326,55 @@ function runSelftest() {
     ...good,
     invoice: good.invoice.replace("invoice.customer_id", "invoice.id"),
   });
+  const wrongInvoiceAuditIdFailures = assertContracts({
+    ...good,
+    invoice: good.invoice.replace("encodeURIComponent(invoice.id)", "encodeURIComponent(invoice.customer_id)"),
+  });
+  const wrongPaymentAuditIdFailures = assertContracts({
+    ...good,
+    payment: good.payment.replace("encodeURIComponent(payment.id)", "encodeURIComponent(payment.customer_id)"),
+  });
+  const deadConsumerFailures = assertContracts({
+    ...good,
+    audit: `function AccountingAuditTrailPage(){ const [searchParams] = useSearchParams(); function neverCalled(){ searchParams.get("source_type"); searchParams.get("source_id"); } return null; }`,
+  });
+  const wrongRouteComponentFailures = assertContracts({
+    ...good,
+    manifest: good.manifest.replace("<ExpensesListPage/>", "<WrongExpensesPage/>"),
+  });
+  const obsoleteExpenseRouteFailures = assertContracts({
+    ...good,
+    woDetail: `function WorkOrderDetailPage(){ navigate(\`/accounting/expenses?expense_id=\${expense.id}\`); return <EntityLink kind="expense" id={expense.id}/>; }`,
+  });
   if (
     goodFailures.length > 0 ||
     decoyFailures.length < 8 ||
-    !wrongBindingFailures.some((failure) => failure.includes("customer header"))
+    !wrongBindingFailures.some((failure) => failure.includes("customer header")) ||
+    !wrongInvoiceAuditIdFailures.some((failure) => failure.includes("invoice audit-trail")) ||
+    !wrongPaymentAuditIdFailures.some((failure) => failure.includes("customer-payment audit")) ||
+    !deadConsumerFailures.some((failure) => failure.includes("consume ?source_type=")) ||
+    !deadConsumerFailures.some((failure) => failure.includes("consume ?source_id=")) ||
+    !wrongRouteComponentFailures.some((failure) => failure.includes("must render ExpensesListPage")) ||
+    !obsoleteExpenseRouteFailures.some((failure) => failure.includes("obsolete /accounting/expenses"))
   ) {
-    console.error(`${LABEL} --selftest FAIL`, { goodFailures, decoyFailures, wrongBindingFailures });
+    console.error(`${LABEL} --selftest FAIL`, {
+      goodFailures,
+      decoyFailures,
+      wrongBindingFailures,
+      wrongInvoiceAuditIdFailures,
+      wrongPaymentAuditIdFailures,
+      deadConsumerFailures,
+      wrongRouteComponentFailures,
+      obsoleteExpenseRouteFailures,
+    });
     process.exit(1);
   }
-  console.log(`${LABEL} --selftest PASS (executable AST semantics reject comments/string decoys)`);
+  console.log(`${LABEL} --selftest PASS wrong EntityLink binding rejected`);
+  console.log(`${LABEL} --selftest PASS wrong invoice audit ID rejected`);
+  console.log(`${LABEL} --selftest PASS wrong payment audit ID rejected`);
+  console.log(`${LABEL} --selftest PASS never-called search-param consumers rejected`);
+  console.log(`${LABEL} --selftest PASS wrong registered route component rejected`);
+  console.log(`${LABEL} --selftest PASS obsolete /accounting/expenses?expense_id= rejected`);
 }
 
 function main() {
