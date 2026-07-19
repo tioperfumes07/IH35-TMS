@@ -2,8 +2,8 @@
  "schema": "program-phase-manifest/v1",
  "source": "MASTER-6 authored build sequence + live .block-ready registration flags",
  "authored_total": 935,
- "registered_total": 931,
- "not_registered_total": 4,
+ "registered_total": 930,
+ "not_registered_total": 5,
  "phases": [
   {
    "n": 1,
@@ -1565,7 +1565,7 @@
    "key": "tier2",
    "label": "Tier-2",
    "authored_total": 206,
-   "registered_count": 206,
+   "registered_count": 205,
    "blocks": [
     {
      "id": "0007-pattern-5-split-brain-engines",
@@ -1659,8 +1659,7 @@
     },
     {
      "id": "0243-c2-3-samsara-position-poll-no-entity-scop",
-     "registered": true,
-     "block_ready_key": "0243-c2-3-samsara-position-poll-no-entity-scop"
+     "registered": false
     },
     {
      "id": "0243-c2-4-bypass-driver-reads-pk-only",
