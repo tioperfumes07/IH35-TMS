@@ -3,6 +3,13 @@ import pg from "pg";
 import { buildPgClientConfig } from "../src/lib/pg-connection-options.js";
 import { TEST_OWNER_EMAIL, TEST_OWNER_GOOGLE_ID, TEST_OWNER_USER_ID } from "./constants.js";
 
+// Re-export so suites can `import { createIsolatedOperatingCompany } from ".../db-fixture.js"`.
+export {
+  createIsolatedOperatingCompany,
+  deactivateIsolatedOperatingCompany,
+  type IsolatedOperatingCompany,
+} from "./isolated-company.js";
+
 let cachedOperatingCompanyId: string | null = null;
 let cachedWorkOrderUnitId: string | null = null;
 let cachedWorkOrderDriverId: string | null = null;

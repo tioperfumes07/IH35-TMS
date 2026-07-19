@@ -20,16 +20,11 @@ export default defineConfig({
     include: ["apps/backend/src/**/*.test.ts", "tests/integration/**/*.test.ts"],
     environment: "node",
     pool: "forks",
-    // Real-Postgres db.tests share ONE database, so concurrent forks can race on the same company-scope
-    // rows (the documented shared-company contamination — settlement "expected +0 to be 3", sync-health
-    // 403). Retry doesn't help (the interfering state persists), so verify:local-ci runs the suite
-    // SERIALLY (VLCI_SERIAL=1) — one file at a time against the shared DB — which removes the race and
-    // makes a green local run a faithful CI mirror. CI keeps parallel (it passes today); this only
-    // changes the local pre-push gate. The proper fix (per-test company isolation) is tracked separately.
-    // Serial ONLY for verify:local-ci (VLCI_SERIAL). CI stays PARALLEL/fast: making the whole 743-file
-    // suite serial in CI pushed build-typecheck past the 15-min job timeout (every PR then failed on
-    // TIMEOUT). The shared-company flaky (settlement/sync-health) is instead handled by re-running the
-    // failed job (it passes on rerun); the durable fix is per-test company isolation (tracked follow-up).
+    // Real-Postgres db.tests share ONE database. Suites that mutate control COA roles (ap_control etc.)
+    // MUST own a unique company via createIsolatedOperatingCompany() — see test-helpers/isolated-company.ts
+    // and verify-shared-coa-role-tests-serialized.mjs — so parallel forks cannot DO UPDATE each other's
+    // role rows (bill-payment cash/CC race). Other shared-company contamination may still exist; VLCI_SERIAL=1
+    // keeps verify:local-ci serial as a local safety net. CI stays PARALLEL/fast.
     ...(process.env.VLCI_SERIAL === "1" ? { fileParallelism: false } : {}),
     setupFiles: [path.join(repoRoot, "apps/backend/test-helpers/setup-env.ts")],
     coverage: {

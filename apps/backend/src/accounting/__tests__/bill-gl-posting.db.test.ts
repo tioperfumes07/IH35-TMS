@@ -10,9 +10,14 @@
  */
 import { randomUUID } from "node:crypto";
 import pg from "pg";
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
-import { ensureIntegrationPrerequisites } from "../../../test-helpers/db-fixture.js";
+import {
+  createIsolatedOperatingCompany,
+  deactivateIsolatedOperatingCompany,
+  ensureIntegrationPrerequisites,
+  type IsolatedOperatingCompany,
+} from "../../../test-helpers/db-fixture.js";
 import { postSourceTransaction, PostingEngineError } from "../posting-engine.service.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
@@ -20,6 +25,7 @@ const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true
 describeIntegration("bill → GL posting end-to-end (real Postgres)", () => {
   let db: pg.Client;
   let companyId: string;
+  let isolated: IsolatedOperatingCompany;
   const suffix = randomUUID().slice(0, 6);
   const fuelAccountId = randomUUID();
   const uncatAccountId = randomUUID();
@@ -47,39 +53,11 @@ describeIntegration("bill → GL posting end-to-end (real Postgres)", () => {
     catch (e) { await db.query("ROLLBACK").catch(() => {}); throw e; }
   }
 
-  // ── Shared-singleton COA-role serialization (TEST HYGIENE) ───────────────────────────────────────────
-  // ap_control is a per-(company, role) SINGLETON on the shared TRANSP company and is ALSO seeded by
-  // bill-payment-gl-posting / bank-transaction-splits / settlement-bill-payment (which already hold this
-  // lock). Under vitest pool:"forks" a parallel sibling can delete/repoint the active ap_control row between
-  // this file's seed and its liveRole()/posting reads. Serialize on the SAME advisory lock and re-ensure
-  // the roles inside the lock before each test. Enforced by scripts/verify-shared-coa-role-tests-serialized.mjs.
-  const COA_ROLE_TEST_LOCK = 4200000001;
-  async function ensureRolesMapped() {
-    await bypass(async () => {
-      await db.query(
-        `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
-         VALUES ($1::uuid,'ap_control',$2::uuid,true)
-         ON CONFLICT (operating_company_id, role) WHERE is_active = true DO NOTHING`,
-        [companyId, apAccountId]
-      );
-      await db.query(
-        `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
-         VALUES ($1::uuid,'uncategorized_expense',$2::uuid,true)
-         ON CONFLICT (operating_company_id, role) WHERE is_active = true DO NOTHING`,
-        [companyId, uncatAccountId]
-      );
-    });
-  }
-  beforeEach(async () => {
-    await db.query("SELECT pg_advisory_lock($1::bigint)", [COA_ROLE_TEST_LOCK]);
-    await ensureRolesMapped();
-  });
-  afterEach(async () => {
-    await db.query("SELECT pg_advisory_unlock($1::bigint)", [COA_ROLE_TEST_LOCK]).catch(() => {});
-  });
-
   beforeAll(async () => {
-    companyId = await ensureIntegrationPrerequisites();
+    await ensureIntegrationPrerequisites();
+    // Own company + own ap_control / uncategorized_expense — no shared-TRANSP advisory lock.
+    isolated = await createIsolatedOperatingCompany({ label: "bill-gl", actorUserId: userId });
+    companyId = isolated.companyId;
     const cs = process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL;
     if (!cs) throw new Error("DATABASE_URL required");
     db = new pg.Client(buildPgClientConfig(cs));
@@ -95,17 +73,15 @@ describeIntegration("bill → GL posting end-to-end (real Postgres)", () => {
       await db.query(`INSERT INTO catalogs.accounts (id, operating_company_id, account_number, account_name, account_type, is_postable) VALUES ($1::uuid,$3::uuid,$2,'Fuel Test','Expense',true)`, [fuelAccountId, `F${suffix}`, companyId]);
       await db.query(`INSERT INTO catalogs.accounts (id, operating_company_id, account_number, account_name, account_type, is_postable) VALUES ($1::uuid,$3::uuid,$2,'Uncat Test','Expense',true)`, [uncatAccountId, `U${suffix}`, companyId]);
       await db.query(`INSERT INTO catalogs.accounts (id, operating_company_id, account_number, account_name, account_type, is_postable) VALUES ($1::uuid,$3::uuid,$2,'AP Test','Liability',true)`, [apAccountId, `P${suffix}`, companyId]);
-      // roles: ap_control (CR side) + uncategorized_expense (no-category DR fallback).
+      // roles: ap_control (CR side) + uncategorized_expense (no-category DR fallback) — suite-owned company.
       await db.query(
         `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
-         VALUES ($1::uuid,'ap_control',$2::uuid,true)
-         ON CONFLICT (operating_company_id, role) WHERE is_active = true DO NOTHING`,
+         VALUES ($1::uuid,'ap_control',$2::uuid,true)`,
         [companyId, apAccountId]
       );
       await db.query(
         `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
-         VALUES ($1::uuid,'uncategorized_expense',$2::uuid,true)
-         ON CONFLICT (operating_company_id, role) WHERE is_active = true DO NOTHING`,
+         VALUES ($1::uuid,'uncategorized_expense',$2::uuid,true)`,
         [companyId, uncatAccountId]
       );
       // expense_category_account_map: (fuel, <unique code>) → fuel account.
@@ -120,19 +96,17 @@ describeIntegration("bill → GL posting end-to-end (real Postgres)", () => {
   afterAll(async () => {
     if (!db) return;
     try {
-      // Serialize the shared ap_control / uncategorized_expense role deletes on the lock the per-test hooks
-      // use, so they can't run while a parallel sibling holds a role window.
-      await db.query("SELECT pg_advisory_lock($1::bigint)", [COA_ROLE_TEST_LOCK]);
       await bypass(async () => {
         await db.query(`DELETE FROM accounting.journal_entry_postings WHERE source_transaction_id = ANY($1) AND source_transaction_type='bill'`, [createdBillIds]);
         await db.query(`DELETE FROM accounting.posting_batches WHERE source_transaction_id = ANY($1) AND source_transaction_type='bill'`, [createdBillIds]);
         await db.query(`DELETE FROM accounting.bill_lines WHERE bill_id = ANY($1::uuid[])`, [createdBillIds]);
         await db.query(`DELETE FROM accounting.bills WHERE id = ANY($1::uuid[])`, [createdBillIds]);
         await db.query(`DELETE FROM accounting.expense_category_account_map WHERE operating_company_id=$1::uuid AND account_id=$2::uuid`, [companyId, fuelAccountId]);
-        await db.query(`DELETE FROM accounting.chart_of_accounts_roles WHERE operating_company_id=$1::uuid AND account_id = ANY($2::uuid[])`, [companyId, [apAccountId, uncatAccountId]]);
+        await db.query(`DELETE FROM accounting.chart_of_accounts_roles WHERE operating_company_id=$1::uuid`, [companyId]);
+        await db.query(`DELETE FROM catalogs.accounts WHERE id = ANY($1::uuid[])`, [[fuelAccountId, uncatAccountId, apAccountId]]);
+        if (isolated) await deactivateIsolatedOperatingCompany(db, isolated);
       });
     } catch { /* best-effort cleanup */ }
-    finally { await db.query("SELECT pg_advisory_unlock($1::bigint)", [COA_ROLE_TEST_LOCK]).catch(() => {}); }
     await db.end();
   });
 
@@ -182,31 +156,16 @@ describeIntegration("bill → GL posting end-to-end (real Postgres)", () => {
     // eslint-disable-next-line no-console
     console.log("CHAIN-03 STEP-2 posted JE:\n" + rows.map((r) => `  ${r.debit_or_credit.toUpperCase().padEnd(6)} ${r.account_number} ${r.account_name}  $${(Number(r.amount_cents) / 100).toFixed(2)}`).join("\n"));
 
-    // Resolve the LIVE role accounts (the verify-DB company may already have uncategorized_expense /
-    // ap_control mapped from the seed migrations — assert against what the roles actually point to, not
-    // the ids we tried to seed). Fuel is asserted by our own map row (no pre-existing fuel/FUEL).
-    const liveRole = async (role: string): Promise<string> => {
-      const r = await scopedRead<{ account_id: string }>(
-        `SELECT account_id::text AS account_id FROM accounting.chart_of_accounts_roles
-          WHERE operating_company_id=$1::uuid AND role=$2 AND is_active=true ORDER BY updated_at DESC LIMIT 1`,
-        [companyId, role]
-      );
-      const id = r[0]?.account_id;
-      if (!id) throw new Error(`no mapped ${role} role for company ${companyId}`);
-      return id;
-    };
-    const liveUncat = await liveRole("uncategorized_expense");
-    const liveAp = await liveRole("ap_control");
-
+    // Isolated company: role rows are suite-owned — assert exact seeded account ids (not liveRole soft-match).
     const debits = rows.filter((r) => r.debit_or_credit === "debit");
     const credits = rows.filter((r) => r.debit_or_credit === "credit");
     const drBy = (id: string) => debits.filter((r) => r.account_id === id).reduce((s, r) => s + Number(r.amount_cents), 0);
 
     expect(drBy(fuelAccountId)).toBe(50_000);   // DR fuel (our expense_category_account_map row)
-    expect(drBy(liveUncat)).toBe(13_000);       // DR uncategorized (QBO-25), via the live role
+    expect(drBy(uncatAccountId)).toBe(13_000);  // DR uncategorized via suite-owned role
     expect(credits).toHaveLength(1);            // single summed CR to A/P
     expect(Number(credits[0].amount_cents)).toBe(63_000);
-    expect(credits[0].account_id).toBe(liveAp); // CR to the live ap_control account
+    expect(credits[0].account_id).toBe(apAccountId); // CR to suite-owned ap_control
     const totalDr = debits.reduce((s, r) => s + Number(r.amount_cents), 0);
     const totalCr = credits.reduce((s, r) => s + Number(r.amount_cents), 0);
     expect(totalDr).toBe(totalCr); // balanced

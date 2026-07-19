@@ -169,10 +169,15 @@ describeIntegration("FIN-18 settlement GL posting (real Postgres)", () => {
       await mk(acct.reimb, "RMB", "Expense");
       const bind = async (roleKey: string, accountId: string) =>
         db.query(
-          `INSERT INTO catalogs.account_role_bindings (role_key, account_id)
-           VALUES ($1,$2::uuid)
-           ON CONFLICT (role_key) DO UPDATE SET account_id = EXCLUDED.account_id, deactivated_at = NULL`,
-          [roleKey, accountId]
+          // Must set operating_company_id — resolveRoleAccountByKey requires entity match (or NULL).
+          // Leaving a sibling suite's ISO-company id on the row makes TRANSP resolution fail closed.
+          `INSERT INTO catalogs.account_role_bindings (role_key, account_id, operating_company_id)
+           VALUES ($1,$2::uuid,$3::uuid)
+           ON CONFLICT (role_key) DO UPDATE
+             SET account_id = EXCLUDED.account_id,
+                 operating_company_id = EXCLUDED.operating_company_id,
+                 deactivated_at = NULL`,
+          [roleKey, accountId, companyId]
         );
       await bind("driver_pay_expense", acct.driverPay);
       await bind("driver_payroll_clearing", acct.netClearing);
