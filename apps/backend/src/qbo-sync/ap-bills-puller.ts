@@ -13,13 +13,16 @@
 //            A/P. void-not-delete: rows are only ever upserted, never deleted. NO GL/journal posting
 //            is performed here — this only populates the A/P subledger; GL stays QBO's job.
 //
-// Both flags default OFF (financial cluster — HOLD for owner approval). Reuses the existing puller
-// pattern (qboCompanyContext + qboPaginateEntity + withLuciaBypass), inventing no new sync framework.
+// Both flags default OFF (financial cluster — HOLD for owner approval). Stage 1 follows the G5-2
+// customers-puller pattern: HTTP pagination OUTSIDE any DB transaction; upsert in a short txn;
+// qbo.sync_runs audit rows commit in their OWN transactions so a data-txn failure cannot roll back
+// the failed audit. Never invents mirror rows from TMS bills. Never writes TMS→QBO.
 
 import type { PoolClient } from "pg";
 import { qboCompanyContext, qboPaginateEntity } from "../integrations/qbo/qbo-client.js";
 import { withLuciaBypass } from "../auth/db.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
+import { AP_BILLS_MIRROR_SYNC_KIND } from "./ap-bills-sync-kind.js";
 
 // Default-OFF financial flags (financial cluster — HOLD for owner approval). SINGLE SOURCE OF TRUTH
 // is the DB feature flag resolved PER-ENTITY via isEnabled() (lib.feature_flag_overrides keyed on
@@ -28,6 +31,8 @@ import { isEnabled } from "../lib/feature-flags/service.js";
 // when the flag row/override is absent, so an unregistered flag stays SAFE-OFF.
 const AP_MIRROR_PULL_FLAG = "QBO_AP_MIRROR_PULL_ENABLED";
 const AP_BILLS_PROJECTION_FLAG = "QBO_AP_BILLS_PROJECTION_ENABLED";
+
+export { AP_BILLS_MIRROR_SYNC_KIND };
 
 export type ApBillsPullResult = {
   enabled: boolean;
@@ -149,34 +154,139 @@ async function upsertApBillMirror(
   );
 }
 
+/** Durable audit begin — own COMMIT via withLuciaBypass. Survives later data-txn rollback. */
+export async function beginApMirrorSyncRun(operatingCompanyId: string): Promise<string | null> {
+  return withLuciaBypass(async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    const exists = await client.query<{ ok: boolean }>(`SELECT to_regclass('qbo.sync_runs') IS NOT NULL AS ok`);
+    if (!exists.rows[0]?.ok) return null;
+    // Schema (0162+0163): id, operating_company_id, kind, status∈(pending|running|success|failed|…),
+    // started_at, completed_at, error_message, records_processed, payload jsonb, retry_count, …
+    const res = await client.query<{ id: string }>(
+      `
+        INSERT INTO qbo.sync_runs (
+          operating_company_id,
+          kind,
+          status,
+          started_at,
+          records_processed,
+          payload
+        )
+        VALUES ($1, $2, 'running', now(), 0, $3::jsonb)
+        RETURNING id::text
+      `,
+      [
+        operatingCompanyId,
+        AP_BILLS_MIRROR_SYNC_KIND,
+        JSON.stringify({
+          direction: "qbo_to_tms",
+          mirror_table: "mdata.qbo_ap_bills",
+          source_id_key: "qbo_id",
+        }),
+      ]
+    );
+    return res.rows[0]?.id ?? null;
+  });
+}
+
+/** Durable audit finish — own COMMIT. Must run even when the upsert txn failed (no failed-audit rollback). */
+export async function finishApMirrorSyncRun(input: {
+  runId: string | null;
+  operatingCompanyId: string;
+  success: boolean;
+  recordsProcessed: number;
+  errorMessage?: string | null;
+}): Promise<void> {
+  if (!input.runId) return;
+  await withLuciaBypass(async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operatingCompanyId]);
+    await client.query(
+      `
+        UPDATE qbo.sync_runs
+        SET status = $3,
+            completed_at = now(),
+            records_processed = $4,
+            error_message = $5
+        WHERE id = $1::uuid
+          AND operating_company_id = $2::uuid
+          AND status = 'running'
+      `,
+      [
+        input.runId,
+        input.operatingCompanyId,
+        input.success ? "success" : "failed",
+        input.recordsProcessed,
+        input.errorMessage ?? null,
+      ]
+    );
+  });
+}
+
 /**
  * Stage 1 — clone QBO Bills into the read-only mirror mdata.qbo_ap_bills. Idempotent (upsert by
- * qbo_id) so a one-time backfill and the recurring tick both converge. No-op unless the QBO_AP_MIRROR_PULL_ENABLED feature flag is ON for this entity.
+ * qbo_id). No-op unless QBO_AP_MIRROR_PULL_ENABLED is ON for this entity.
+ *
+ * Transaction boundaries (G5-2):
+ *   1) flag check — short txn
+ *   2) sync_runs running — short txn (COMMIT)
+ *   3) QBO HTTP pagination — NO DB connection held
+ *   4) mirror upserts — short txn
+ *   5) sync_runs success/failed — short txn (COMMIT even if step 4 failed)
  */
 export async function pullApBillsFromQbo(operatingCompanyId: string): Promise<ApBillsPullResult> {
   const pulledAt = new Date().toISOString();
 
-  let enabled = false;
+  const enabled = await withLuciaBypass(async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+    return isEnabled(client, AP_MIRROR_PULL_FLAG, { operating_company_id: operatingCompanyId });
+  });
+  if (!enabled) {
+    return { enabled: false, rowsPulled: 0, rowsUpserted: 0, pulledAt };
+  }
+
+  const runId = await beginApMirrorSyncRun(operatingCompanyId);
   let rowsPulled = 0;
   let rowsUpserted = 0;
 
-  await withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
-    enabled = await isEnabled(client, AP_MIRROR_PULL_FLAG, {
-      operating_company_id: operatingCompanyId,
-    });
-    if (!enabled) return;
+  try {
+    // HTTP outside any pooled write transaction (same as customers-puller G5-2).
     const ctx = await qboCompanyContext(operatingCompanyId);
+    const pulledRows: Record<string, unknown>[] = [];
     for await (const page of qboPaginateEntity<Record<string, unknown>>(ctx, "Bill", "", { pageSize: 1000 })) {
       for (const row of page) {
         rowsPulled += 1;
+        pulledRows.push(row);
+      }
+    }
+
+    await withLuciaBypass(async (client) => {
+      await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [operatingCompanyId]);
+      for (const row of pulledRows) {
         await upsertApBillMirror(client, operatingCompanyId, row);
         rowsUpserted += 1;
       }
-    }
-  });
+    });
 
-  return { enabled, rowsPulled, rowsUpserted, pulledAt };
+    await finishApMirrorSyncRun({
+      runId,
+      operatingCompanyId,
+      success: true,
+      recordsProcessed: rowsUpserted,
+    });
+    return { enabled: true, rowsPulled, rowsUpserted, pulledAt };
+  } catch (error) {
+    // Failed audit must COMMIT independently — never share a txn with the rolled-back upsert.
+    await finishApMirrorSyncRun({
+      runId,
+      operatingCompanyId,
+      success: false,
+      recordsProcessed: rowsUpserted,
+      errorMessage: String((error as Error)?.message ?? error),
+    }).catch(() => {
+      /* audit best-effort; rethrow original */
+    });
+    throw error;
+  }
 }
 
 /**

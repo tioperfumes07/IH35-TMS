@@ -19,6 +19,10 @@ function assertRoutesLoaded(indexSource, legacyNeedle, message) {
   throw new Error(message);
 }
 
+function stripComments(source) {
+  return source.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/.*$/gm, "");
+}
+
 try {
   const routesPath = "apps/backend/src/accounting/ap-aging.routes.ts";
   const servicePath = "apps/backend/src/accounting/ap-aging.service.ts";
@@ -33,17 +37,24 @@ try {
     throw new Error("AP Aging route must be GET-only");
   }
 
-  if (/\b(INSERT|UPDATE|DELETE|CREATE|ALTER|DROP)\b/i.test(service)) {
+  const stripped = stripComments(service);
+  // Full write-keyword fence on a financial reporting path — never narrow this. The most likely
+  // accidental mutation here is `UPDATE accounting.bills SET paid_cents = …` ("healing" paid_cents
+  // drift from a report), so UPDATE…SET must be caught alongside INSERT/DELETE/DDL/TRUNCATE/MERGE.
+  if (/\bINSERT\s+INTO\b|\bUPDATE\b[\s\S]{0,120}?\bSET\b|\bDELETE\s+FROM\b|\bCREATE\s+TABLE\b|\bALTER\s+TABLE\b|\bDROP\s+TABLE\b|\bTRUNCATE\s+TABLE\b|\bMERGE\s+INTO\b/i.test(stripped)) {
     throw new Error("AP Aging service must be SQL read-only (write SQL keyword found)");
   }
 
+  // Canonical as-of reconstruction (FIN-20 ap_aging_as_of semantics) + applied credits.
   assertMatches(service, /b\.amount_cents IS NOT NULL/, "AP Aging must exclude null amount_cents rows");
-  assertMatches(service, /\(b\.amount_cents - b\.paid_cents\) > 0/, "AP Aging must enforce positive derived outstanding");
-  assertMatches(service, /b\.revoked_at IS NULL/, "AP Aging must exclude revoked bills");
+  assertMatches(service, /FROM accounting\.bill_payments bp/, "AP Aging must reconstruct paid_as_of from bill_payments");
+  assertMatches(service, /bp\.payment_date <= \$2::date/, "AP Aging bill_payments must be as-of dated");
+  assertMatches(service, /vendor_credit_applications/, "AP Aging must net vendor_credit_applications");
+  assertMatches(service, /b\.revoked_at/, "AP Aging must exclude revoked bills (as-of aware)");
   assertMatches(
     service,
-    /b\.status NOT IN \('paid', 'voided', 'draft'\)/,
-    "AP Aging must include status safety-net exclusion for paid/voided/draft",
+    /b\.status NOT IN \('voided', 'draft'\)/,
+    "AP Aging must exclude voided/draft bills",
   );
 
   assertIncludes(

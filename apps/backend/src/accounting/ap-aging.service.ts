@@ -1,4 +1,14 @@
 import { withCurrentUser } from "../auth/db.js";
+import { isEnabled } from "../lib/feature-flags/service.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
+import {
+  computeQboSyncFreshness,
+  QBO_SYNC_STALE_AFTER_MS,
+  type QboSyncFreshness,
+} from "../qbo/sync-freshness.js";
+import { AP_BILLS_MIRROR_SYNC_KIND } from "../qbo-sync/ap-bills-sync-kind.js";
+
+export { AP_BILLS_MIRROR_SYNC_KIND };
 
 type ApAgingBillRowDb = {
   vendor_id: string | null;
@@ -10,10 +20,11 @@ type ApAgingBillRowDb = {
   is_driver: boolean;
 };
 
-// Display grouping for the "By Vendor Type" A/P view. This is a READ-LAYER map only — it does NOT change
-// mdata.vendors.vendor_type (which must stay reconcilable against QBO). Intercompany + Driver are resolved
-// by vendor IDENTITY, not by the vendor_type enum (see resolveDisplayGroup).
+// Display grouping for the "By Vendor Type" A/P view. READ-LAYER only — does NOT change
+// mdata.vendors.vendor_type (must stay QBO-reconcilable).
 export type VendorDisplayGroup = "Driver" | "Repair" | "Diesel" | "Insurance" | "Intercompany" | "Other";
+
+export type AgingBucket = "current" | "d1_30" | "d31_60" | "d61_90" | "d90_plus";
 
 export type ApAgingVendorRow = {
   vendor_id: string | null;
@@ -36,24 +47,178 @@ export type ApAgingTotals = {
   total_outstanding: number;
 };
 
+export type QboMirrorFreshness = "never" | "fresh" | "stale";
+/** reconcile.status — never "matched" when as_of is historical or mirror N/A. */
+export type QboMirrorReconcileStatus =
+  | "unavailable"
+  | "uncompared"
+  | "incomparable"
+  | "matched"
+  | "divergent";
+
+export type ApAgingQboMirrorStatus = {
+  available: boolean;
+  table_present: boolean;
+  pull_enabled: boolean;
+  projection_enabled: boolean;
+  /** True only when as_of equals company business today — only then is mirror vs TMS comparable. */
+  reconcile_applicable: boolean;
+  last_synced_at: string | null;
+  freshness: QboMirrorFreshness;
+  stale_after_seconds: number;
+  row_count: number;
+  open_balance_cents: number;
+  reconcile: {
+    status: QboMirrorReconcileStatus;
+    tms_open_cents: number;
+    mirror_open_cents: number;
+    /** Signed: tms_open - mirror_open. */
+    delta_cents: number;
+  };
+};
+
+export type ApAgingEmptyState =
+  | "has_rows"
+  | "no_unpaid_bills"
+  | "no_unpaid_bills_mirror_absent"
+  | "no_unpaid_bills_mirror_stale"
+  | "no_unpaid_bills_mirror_disabled";
+
 export type ApAgingReport = {
   vendors: ApAgingVendorRow[];
   totals: ApAgingTotals;
-  // ACCT-2: the last time the QBO A/P mirror (mdata.qbo_ap_bills) was synced for this entity — NULL when the
-  // read-only mirror pull has never run (flags QBO_AP_MIRROR_PULL_ENABLED/QBO_AP_BILLS_PROJECTION_ENABLED
-  // still OFF). The page keys its subtitle on this so it only claims a QBO tie when one actually exists.
+  internal_basis: "accounting.bills";
+  as_of_date: string;
+  as_of_is_historical: boolean;
+  empty_state: ApAgingEmptyState;
+  /** Back-compat; prefer qbo_mirror.last_synced_at. */
   qbo_synced_at: string | null;
+  qbo_mirror: ApAgingQboMirrorStatus;
 };
 
-function parseIsoDateOnly(value: string): number {
+const AP_MIRROR_PULL_FLAG = "QBO_AP_MIRROR_PULL_ENABLED";
+const AP_BILLS_PROJECTION_FLAG = "QBO_AP_BILLS_PROJECTION_ENABLED";
+
+export function parseIsoDateOnly(value: string): number {
   return new Date(`${value}T00:00:00.000Z`).getTime();
 }
 
-// Read-layer mapping (F-c). Priority: vendor IDENTITY (Intercompany, Driver) wins over the vendor_type
-// enum. vendor_type relabels: Fuel→Diesel; Repair/Insurance pass through; everything else rolls up to Other.
-function resolveDisplayGroup(row: { is_intercompany: boolean; is_driver: boolean; vendor_type: string | null }): VendorDisplayGroup {
-  if (row.is_intercompany) return "Intercompany"; // another IH35 entity (entity-independence: its own group)
-  if (row.is_driver) return "Driver"; // driver-settlement vendor (resolved by qbo_vendor_id identity)
+export function assignAgingBucket(asOfDate: string, dueDate: string | null): AgingBucket {
+  if (!dueDate) return "current";
+  const daysOverdue = Math.floor((parseIsoDateOnly(asOfDate) - parseIsoDateOnly(dueDate)) / 86_400_000);
+  if (daysOverdue <= 0) return "current";
+  if (daysOverdue <= 30) return "d1_30";
+  if (daysOverdue <= 60) return "d31_60";
+  if (daysOverdue <= 90) return "d61_90";
+  return "d90_plus";
+}
+
+/** Historical = strictly before company business today (same rule as FIN-20). */
+export function isHistoricalAsOf(asOfDate: string, today: string = companyBusinessDate()): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(asOfDate) && asOfDate < today;
+}
+
+/**
+ * QBO-STALENESS-B: freshness from the AP-mirror source ONLY (ap_bills_inbound_mirror / mirror
+ * updated_at). Never mask with CDC/push aggregate success.
+ */
+export function resolveApMirrorFreshness(
+  lastSyncedAt: string | null,
+  nowMs: number = Date.now()
+): Pick<QboSyncFreshness, "freshness_status" | "is_stale" | "stale_after_seconds" | "last_success_age_seconds"> & {
+  freshness: QboMirrorFreshness;
+} {
+  const f = computeQboSyncFreshness([{ source: "qbo_sync_runs", completedAt: lastSyncedAt }], nowMs);
+  return {
+    freshness: f.freshness_status,
+    freshness_status: f.freshness_status,
+    is_stale: f.is_stale,
+    stale_after_seconds: f.stale_after_seconds,
+    last_success_age_seconds: f.last_success_age_seconds,
+  };
+}
+
+export function resolveQboMirrorReconcileStatus(input: {
+  tablePresent: boolean;
+  lastSyncedAt: string | null;
+  rowCount: number;
+  tmsOpenCents: number;
+  mirrorOpenCents: number;
+  reconcileApplicable: boolean;
+}): { status: QboMirrorReconcileStatus; delta_cents: number } {
+  const delta = input.tmsOpenCents - input.mirrorOpenCents;
+  if (!input.reconcileApplicable) {
+    return { status: "incomparable", delta_cents: delta };
+  }
+  if (!input.tablePresent || (input.lastSyncedAt == null && input.rowCount === 0)) {
+    return { status: "unavailable", delta_cents: delta };
+  }
+  if (input.lastSyncedAt == null) {
+    return { status: "uncompared", delta_cents: delta };
+  }
+  return { status: delta === 0 ? "matched" : "divergent", delta_cents: delta };
+}
+
+export function resolveApAgingEmptyState(input: {
+  vendorCount: number;
+  freshness: QboMirrorFreshness;
+  pullEnabled: boolean;
+}): ApAgingEmptyState {
+  if (input.vendorCount > 0) return "has_rows";
+  if (!input.pullEnabled && input.freshness === "never") return "no_unpaid_bills_mirror_disabled";
+  if (input.freshness === "never") return "no_unpaid_bills_mirror_absent";
+  if (input.freshness === "stale") return "no_unpaid_bills_mirror_stale";
+  return "no_unpaid_bills";
+}
+
+export function buildQboMirrorStatus(input: {
+  tablePresent: boolean;
+  pullEnabled: boolean;
+  projectionEnabled: boolean;
+  lastSyncedAt: string | null;
+  rowCount: number;
+  mirrorOpenCents: number;
+  tmsOpenCents: number;
+  reconcileApplicable: boolean;
+  nowMs?: number;
+}): ApAgingQboMirrorStatus {
+  const freshness = resolveApMirrorFreshness(input.lastSyncedAt, input.nowMs);
+  const available = input.tablePresent && (input.lastSyncedAt != null || input.rowCount > 0);
+  const reconcile = resolveQboMirrorReconcileStatus({
+    tablePresent: input.tablePresent,
+    lastSyncedAt: input.lastSyncedAt,
+    rowCount: input.rowCount,
+    tmsOpenCents: input.tmsOpenCents,
+    mirrorOpenCents: input.mirrorOpenCents,
+    reconcileApplicable: input.reconcileApplicable,
+  });
+  return {
+    available,
+    table_present: input.tablePresent,
+    pull_enabled: input.pullEnabled,
+    projection_enabled: input.projectionEnabled,
+    reconcile_applicable: input.reconcileApplicable,
+    last_synced_at: input.lastSyncedAt,
+    freshness: freshness.freshness,
+    stale_after_seconds: freshness.stale_after_seconds,
+    row_count: input.rowCount,
+    open_balance_cents: input.mirrorOpenCents,
+    reconcile: {
+      status: reconcile.status,
+      tms_open_cents: input.tmsOpenCents,
+      mirror_open_cents: input.mirrorOpenCents,
+      delta_cents: reconcile.delta_cents,
+    },
+  };
+}
+
+export function resolveDisplayGroup(row: {
+  is_intercompany: boolean;
+  is_driver: boolean;
+  vendor_type: string | null;
+}): VendorDisplayGroup {
+  if (row.is_intercompany) return "Intercompany";
+  if (row.is_driver) return "Driver";
   switch (row.vendor_type) {
     case "Fuel":
       return "Diesel";
@@ -61,29 +226,40 @@ function resolveDisplayGroup(row: { is_intercompany: boolean; is_driver: boolean
       return "Repair";
     case "Insurance":
       return "Insurance";
-    default: // Tires, Towing, Permit, Toll, Other, null
+    default:
       return "Other";
   }
 }
 
-export async function getApAgingReport(input: {
-  userId: string;
-  operating_company_id: string;
-  as_of_date: string;
-}): Promise<ApAgingReport> {
-  return withCurrentUser(input.userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
-
-    const res = await client.query<ApAgingBillRowDb>(
-      `
+/**
+ * Canonical open-A/P reconstruction (FIN-20 `accounting.ap_aging_as_of` semantics) plus applied
+ * vendor credits from `accounting.vendor_credit_applications` (entity-scoped, as-of, non-voided).
+ * $1 = operating_company_id, $2 = as_of_date.
+ */
+export const AP_AGING_OPEN_BILLS_SQL = `
         SELECT
           v.id::text AS vendor_id,
           COALESCE(v.vendor_name, 'Unknown Vendor') AS vendor_name,
-          b.due_date::text AS due_date,
-          (b.amount_cents - b.paid_cents)::bigint AS outstanding_cents,
+          COALESCE(b.due_date, b.bill_date)::text AS due_date,
+          GREATEST(
+            COALESCE(b.amount_cents, 0)
+              - COALESCE((
+                  SELECT SUM(COALESCE(bp.amount_cents, 0))
+                  FROM accounting.bill_payments bp
+                  WHERE bp.bill_id = b.id
+                    AND bp.payment_date <= $2::date
+                    AND (bp.revoked_at IS NULL OR bp.revoked_at::date > $2::date)
+                ), 0)
+              - COALESCE((
+                  SELECT SUM(vca.applied_cents)
+                  FROM accounting.vendor_credit_applications vca
+                  WHERE vca.bill_id = b.id
+                    AND vca.operating_company_id = $1::uuid
+                    AND vca.voided_at IS NULL
+                    AND (vca.applied_at AT TIME ZONE 'UTC')::date <= $2::date
+                ), 0)
+          , 0)::bigint AS outstanding_cents,
           v.vendor_type AS vendor_type,
-          -- Intercompany: vendor identity matches ANOTHER active IH35 entity (not the current one).
-          -- Entity independence: the TRK↔TRANSP intercompany line must surface as its own group.
           COALESCE((
             SELECT true FROM org.companies c
             WHERE c.id <> $1::uuid AND c.is_active = true AND v.vendor_name IS NOT NULL
@@ -93,7 +269,6 @@ export async function getApAgingReport(input: {
               )
             LIMIT 1
           ), false) AS is_intercompany,
-          -- Driver: vendor's qbo_vendor_id matches a driver's qbo_vendor_id, same entity.
           COALESCE((
             v.qbo_vendor_id IS NOT NULL AND EXISTS (
               SELECT 1 FROM mdata.drivers d
@@ -108,16 +283,49 @@ export async function getApAgingReport(input: {
             ELSE NULL
           END
         WHERE b.operating_company_id = $1::uuid
+          AND b.bill_date <= $2::date
           AND b.amount_cents IS NOT NULL
-          AND (b.amount_cents - b.paid_cents) > 0
-          AND b.revoked_at IS NULL
-          AND b.status NOT IN ('paid', 'voided', 'draft')
-        ORDER BY COALESCE(v.vendor_name, 'Unknown Vendor') ASC, b.due_date ASC NULLS LAST
-      `,
-      [input.operating_company_id]
-    );
+          AND (b.revoked_at IS NULL OR b.revoked_at::date > $2::date)
+          AND b.status NOT IN ('voided', 'draft')
+          AND GREATEST(
+            COALESCE(b.amount_cents, 0)
+              - COALESCE((
+                  SELECT SUM(COALESCE(bp.amount_cents, 0))
+                  FROM accounting.bill_payments bp
+                  WHERE bp.bill_id = b.id
+                    AND bp.payment_date <= $2::date
+                    AND (bp.revoked_at IS NULL OR bp.revoked_at::date > $2::date)
+                ), 0)
+              - COALESCE((
+                  SELECT SUM(vca.applied_cents)
+                  FROM accounting.vendor_credit_applications vca
+                  WHERE vca.bill_id = b.id
+                    AND vca.operating_company_id = $1::uuid
+                    AND vca.voided_at IS NULL
+                    AND (vca.applied_at AT TIME ZONE 'UTC')::date <= $2::date
+                ), 0)
+          , 0) > 0
+        ORDER BY COALESCE(v.vendor_name, 'Unknown Vendor') ASC, COALESCE(b.due_date, b.bill_date) ASC NULLS LAST
+`;
 
-    const asOfTime = parseIsoDateOnly(input.as_of_date);
+export async function getApAgingReport(input: {
+  userId: string;
+  operating_company_id: string;
+  as_of_date: string;
+}): Promise<ApAgingReport> {
+  return withCurrentUser(input.userId, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
+
+    const today = companyBusinessDate();
+    const historical = isHistoricalAsOf(input.as_of_date, today);
+    // Future as_of: treat as today for open reconstruction (never invent future openness).
+    const effectiveAsOf = input.as_of_date > today ? today : input.as_of_date;
+
+    const res = await client.query<ApAgingBillRowDb>(AP_AGING_OPEN_BILLS_SQL, [
+      input.operating_company_id,
+      effectiveAsOf,
+    ]);
+
     const byVendor = new Map<string, ApAgingVendorRow>();
 
     for (const row of res.rows) {
@@ -137,25 +345,8 @@ export async function getApAgingReport(input: {
         total_outstanding: 0,
       };
 
-      if (!row.due_date) {
-        vendor.current += amount;
-      } else {
-        const dueTime = parseIsoDateOnly(row.due_date);
-        const daysOverdue = Math.floor((asOfTime - dueTime) / 86_400_000);
-
-        if (daysOverdue <= 0) {
-          vendor.current += amount;
-        } else if (daysOverdue <= 30) {
-          vendor.d1_30 += amount;
-        } else if (daysOverdue <= 60) {
-          vendor.d31_60 += amount;
-        } else if (daysOverdue <= 90) {
-          vendor.d61_90 += amount;
-        } else {
-          vendor.d90_plus += amount;
-        }
-      }
-
+      const bucket = assignAgingBucket(effectiveAsOf, row.due_date);
+      vendor[bucket] += amount;
       vendor.total_outstanding = vendor.current + vendor.d1_30 + vendor.d31_60 + vendor.d61_90 + vendor.d90_plus;
       byVendor.set(key, vendor);
     }
@@ -184,17 +375,103 @@ export async function getApAgingReport(input: {
       }
     );
 
-    // ACCT-2: the QBO A/P mirror's last sync for this entity (NULL when the read-only pull has never run).
-    // to_regclass-guarded so a DB without the mirror table (pre-migration) degrades to NULL, not a 500.
-    let qboSyncedAt: string | null = null;
-    const mirror = await client.query<{ synced_at: string | null }>(
-      `SELECT CASE WHEN to_regclass('mdata.qbo_ap_bills') IS NULL THEN NULL
-                   ELSE (SELECT MAX(updated_at)::text FROM mdata.qbo_ap_bills WHERE operating_company_id = $1::uuid)
-              END AS synced_at`,
-      [input.operating_company_id]
-    );
-    qboSyncedAt = mirror.rows[0]?.synced_at ?? null;
+    const pullEnabled = await isEnabled(client, AP_MIRROR_PULL_FLAG, {
+      operating_company_id: input.operating_company_id,
+    });
+    const projectionEnabled = await isEnabled(client, AP_BILLS_PROJECTION_FLAG, {
+      operating_company_id: input.operating_company_id,
+    });
 
-    return { vendors, totals, qbo_synced_at: qboSyncedAt };
+    // Per-source AP mirror freshness (QBO-STALENESS-B): prefer durable sync_runs success for this kind;
+    // fall back to mirror row MAX(updated_at). Never blend CDC/push.
+    const mirrorMeta = await client.query<{
+      table_present: boolean;
+      last_synced_at: string | null;
+      row_count: string | number;
+      open_balance_cents: string | number;
+    }>(
+      `
+        SELECT
+          (to_regclass('mdata.qbo_ap_bills') IS NOT NULL) AS table_present,
+          CASE
+            WHEN to_regclass('qbo.sync_runs') IS NOT NULL THEN (
+              SELECT MAX(completed_at)::text
+              FROM qbo.sync_runs
+              WHERE operating_company_id = $1::uuid
+                AND kind = $2
+                AND status = 'success'
+                AND completed_at IS NOT NULL
+            )
+            ELSE NULL
+          END AS last_synced_at,
+          CASE
+            WHEN to_regclass('mdata.qbo_ap_bills') IS NULL THEN 0
+            ELSE (
+              SELECT COUNT(*)::bigint
+              FROM mdata.qbo_ap_bills
+              WHERE operating_company_id = $1::uuid
+            )
+          END AS row_count,
+          CASE
+            WHEN to_regclass('mdata.qbo_ap_bills') IS NULL THEN 0
+            ELSE (
+              SELECT COALESCE(SUM(balance_cents), 0)::bigint
+              FROM mdata.qbo_ap_bills
+              WHERE operating_company_id = $1::uuid
+                AND balance_cents > 0
+                AND active = true
+            )
+          END AS open_balance_cents
+      `,
+      [input.operating_company_id, AP_BILLS_MIRROR_SYNC_KIND]
+    );
+
+    const meta = mirrorMeta.rows[0];
+    let lastSyncedAt = meta?.last_synced_at ?? null;
+    if (!lastSyncedAt && meta?.table_present && Number(meta?.row_count ?? 0) > 0) {
+      const fallback = await client.query<{ synced_at: string | null }>(
+        `
+          SELECT MAX(updated_at)::text AS synced_at
+          FROM mdata.qbo_ap_bills
+          WHERE operating_company_id = $1::uuid
+        `,
+        [input.operating_company_id]
+      );
+      lastSyncedAt = fallback.rows[0]?.synced_at ?? null;
+    }
+
+    // Mirror open balance is a CURRENT snapshot — only comparable to TMS open when as_of is today.
+    const reconcileApplicable = !historical && effectiveAsOf === today;
+
+    const qboMirror = buildQboMirrorStatus({
+      tablePresent: Boolean(meta?.table_present),
+      pullEnabled,
+      projectionEnabled,
+      lastSyncedAt,
+      rowCount: Number(meta?.row_count ?? 0),
+      mirrorOpenCents: Number(meta?.open_balance_cents ?? 0),
+      tmsOpenCents: totals.total_outstanding,
+      reconcileApplicable,
+    });
+
+    // Prove the canonical 24h constant is the one we use (guard/import linkage).
+    void QBO_SYNC_STALE_AFTER_MS;
+
+    const emptyState = resolveApAgingEmptyState({
+      vendorCount: vendors.length,
+      freshness: qboMirror.freshness,
+      pullEnabled,
+    });
+
+    return {
+      vendors,
+      totals,
+      internal_basis: "accounting.bills",
+      as_of_date: effectiveAsOf,
+      as_of_is_historical: historical,
+      empty_state: emptyState,
+      qbo_synced_at: qboMirror.last_synced_at,
+      qbo_mirror: qboMirror,
+    };
   });
 }
