@@ -5,7 +5,7 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const LABEL = "verify-posting-lineage-url-sort";
+const LABEL = "verify-source-lineage-list-url-sort";
 const PAGE = "apps/frontend/src/pages/accounting/PostingLineagePage.tsx";
 const HOOK = "apps/frontend/src/hooks/useUrlSort.ts";
 const EXEMPT = new Set(["actions", "action", "delete", "allocate", "expand", "controls"]);
