@@ -702,3 +702,8 @@ _Verified by the GUARD agent with authorized prod access; not independently re-v
 - Merged owner-gated (not me): #2724, #2733/#2735 (rev-rec lock), #2725-#2732.
 - OPEN frontend URL-sort (safe on green): #2754,#2756,#2757,#2759,#2760,#2761,#2763.
 - OPEN this session: #2752 (recon regen, superseded), **#2762 (purge + refreshed counts + this handoff)**.
+
+
+---
+
+**Cursor adversarial overlay (required reading before acting on §7 Neon or Group B CLOSE):** [`CODER-FINAL-HANDOFF-CURSOR-VERIFY-2026-07-19.md`](./CODER-FINAL-HANDOFF-CURSOR-VERIFY-2026-07-19.md)
