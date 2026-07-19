@@ -1,0 +1,36 @@
+{
+  "block_id": "CHAIN-06-invoice-ar-chain-proof",
+  "status": "READY",
+  "classification": "FINANCIAL",
+  "phase": "tier1",
+  "task": "Accounting Core Block 25/67 — CHAIN-06 invoice→A/R→Faro secured-borrowing fail-closed chain proof (Rule-17 verify-steps; no new GL math/migration; flags default OFF)",
+  "branch": "cursor/chain-06-invoice-a-r-proof-78ba",
+  "source": "Jorge cloud GO — Accounting Core uninterrupted sequence block 25/67",
+  "source_file": "docs/blocks/ACCOUNTING-FINANCE-CONNECTIONS/CHAIN-06-invoice-ar-chain-proof.txt",
+  "allowed_files": [
+    ".block-ready/CHAIN-06-invoice-ar-chain-proof.json",
+    "scripts/verify-chain-06-invoice-ar-chain-proof.mjs",
+    "scripts/verify-steps/912-verify-chain-06-invoice-ar-chain-proof.mjs",
+    "scripts/verify-steps/913-verify-chain-06-ar-subledger-fix.mjs",
+    "scripts/verify-steps/914-verify-chain-06-factoring-ar-tieout.mjs",
+    "scripts/verify-steps/915-verify-factoring-poster-secured-borrowing.mjs",
+    "scripts/.guard-exempt.json",
+    "apps/backend/src/accounting/factoring-posting/__tests__/chain-06-invoice-ar-chain-proof.test.ts"
+  ],
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "acceptance": [
+    {
+      "check": "Fail-closed Rule-17 guard verify-chain-06-invoice-ar-chain-proof (+ --selftest) proves invoice→A/R kill-switch, Faro advance/reserve/customer-payment/release/chargeback poster wiring, entity scope, flags default OFF, subledger+reserve movements, createJournalEntry audit/source-link spine, and behavioral matrix markers."
+    },
+    {
+      "check": "Existing verify-chain-06-ar-subledger-fix, verify-chain-06-factoring-ar-tieout, and verify-factoring-poster-secured-borrowing are auto-discovered via verify-steps (no package.json/CI hotfile thrash) and removed from .guard-exempt orphans."
+    },
+    {
+      "check": "Behavioral unit tests cover normal lifecycle, missing link, duplicate link, wrong entity, unbalanced/wrong-account, chargeback, voided, planted guard failure contract pin. No new GL math, writes, migration, or flag flip. FINANCIAL HOLD — do not merge."
+    }
+  ],
+  "note": "Financial HOLD. Reuses existing poster; wires orphaned chain-06 guards into Rule-17 path; adds fail-closed static chain proof + behavioral matrix."
+}
