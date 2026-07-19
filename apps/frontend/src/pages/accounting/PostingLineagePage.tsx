@@ -7,6 +7,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ReportBlockVPendingBanner } from "../reports/ReportBlockVPendingBanner";
 import { formatUsdCents } from "../../lib/money";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 function formatMoney(cents: number) {
   return formatUsdCents(cents);
@@ -110,6 +111,75 @@ export function PostingLineagePage() {
     return { debit, credit, balanced: debit === credit };
   }, [lineageQuery.data?.rows]);
 
+  const rows = (lineageQuery.data?.rows ?? []) as AccountingSourceLineageRow[];
+
+  const columns = useMemo<ParityColumn<AccountingSourceLineageRow>[]>(
+    () => [
+      {
+        key: "occurred_at",
+        label: "Occurred",
+        sortable: true,
+        className: "whitespace-nowrap",
+        render: (row) => formatWhen(row.occurred_at),
+      },
+      {
+        key: "journal_entry_id",
+        label: "JE",
+        render: (row) => (
+          <EntityLink kind="journal_entry" id={row.journal_entry_id} label={row.journal_entry_id?.slice(0, 8)} />
+        ),
+      },
+      {
+        key: "posting_batch_id",
+        label: "Posting batch",
+        render: (row) => row.posting_batch_id ?? "—",
+      },
+      {
+        key: "account_number",
+        label: "Account",
+        sortable: true,
+        render: (row) => (
+          <>
+            {row.account_number ?? "—"} {row.account_name ? `- ${row.account_name}` : ""}
+          </>
+        ),
+      },
+      {
+        key: "debit_or_credit",
+        label: "Side",
+        sortable: true,
+        render: (row) => row.debit_or_credit.toUpperCase(),
+      },
+      {
+        key: "amount_cents",
+        label: "Amount",
+        sortable: true,
+        render: (row) => formatMoney(row.amount_cents),
+      },
+      {
+        key: "linked_object_type",
+        label: "Linked object",
+        render: (row) => (
+          <>
+            {row.linked_object_type ?? "—"}
+            {row.linked_object_id ? (
+              <>
+                {" / "}
+                <PostingEntityLink
+                  type={row.linked_object_type}
+                  id={row.linked_object_id}
+                  label={row.linked_object_id.slice(0, 8)}
+                />
+              </>
+            ) : null}
+            {row.relationship_role ? ` (${row.relationship_role})` : ""}
+          </>
+        ),
+      },
+    ],
+    [],
+  );
+
   return (
     <AccountingSubNavWrapper title="Posting Lineage" subtitle="Trace source transaction → posting rows → linked objects">
 
@@ -185,56 +255,16 @@ export function PostingLineagePage() {
         </div>
       ) : null}
 
-      {lineageQuery.data?.rows && lineageQuery.data.rows.length > 0 ? (
-        <div className="overflow-auto rounded-sm border border-slate-200 bg-white">
-          <table className="min-w-full text-left text-xs">
-            <thead className="bg-slate-50 text-[11px] font-semibold uppercase text-slate-600">
-              <tr>
-                <th className="px-2 py-2">Occurred</th>
-                <th className="px-2 py-2">JE</th>
-                <th className="px-2 py-2">Posting batch</th>
-                <th className="px-2 py-2">Account</th>
-                <th className="px-2 py-2">Side</th>
-                <th className="px-2 py-2">Amount</th>
-                <th className="px-2 py-2">Linked object</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(lineageQuery.data.rows as AccountingSourceLineageRow[]).map((row) => (
-                <tr key={`${row.posting_id}:${row.linked_object_id ?? "none"}`} className="border-b border-slate-100">
-                  <td className="whitespace-nowrap px-2 py-2">{formatWhen(row.occurred_at)}</td>
-                  <td className="px-2 py-2 font-mono"><EntityLink kind="journal_entry" id={row.journal_entry_id} label={row.journal_entry_id?.slice(0, 8)} /></td>
-                  <td className="px-2 py-2 font-mono">{row.posting_batch_id ?? "—"}</td>
-                  <td className="px-2 py-2">
-                    {row.account_number ?? "—"} {row.account_name ? `- ${row.account_name}` : ""}
-                  </td>
-                  <td className="px-2 py-2">{row.debit_or_credit.toUpperCase()}</td>
-                  <td className="px-2 py-2">{formatMoney(row.amount_cents)}</td>
-                  <td className="px-2 py-2">
-                    {row.linked_object_type ?? "—"}
-                    {row.linked_object_id ? (
-                      <>
-                        {" / "}
-                        <PostingEntityLink
-                          type={row.linked_object_type}
-                          id={row.linked_object_id}
-                          label={row.linked_object_id.slice(0, 8)}
-                        />
-                      </>
-                    ) : null}
-                    {row.relationship_role ? ` (${row.relationship_role})` : ""}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : null}
-
-      {lineageQuery.data?.rows && lineageQuery.data.rows.length === 0 ? (
-        <div className="rounded-sm border border-slate-200 bg-white p-3 text-sm text-slate-500">
-          No posting lineage rows found for this source transaction.
-        </div>
+      {submitted ? (
+        <ParityTable
+          columns={columns}
+          rows={rows}
+          rowKey={(row) => `${row.posting_id}:${row.linked_object_id ?? "none"}`}
+          loading={lineageQuery.isPending}
+          storageKey="accounting-posting-lineage"
+          exportFilename="posting-lineage"
+          emptyText="No posting lineage rows found for this source transaction."
+        />
       ) : null}
     </AccountingSubNavWrapper>
   );

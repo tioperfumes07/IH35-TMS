@@ -21,8 +21,8 @@ sort, and the lock-account control — never drop or reorder.
 ## Rollup
 | Status | Count |
 | --- | --- |
-| migrated (batch 1) | 8 |
-| financial-hold (Jorge-gated) | 100 |
+| migrated (batch 1 + GLOBAL-COLS-01) | 9 |
+| financial-hold (Jorge-gated) | 99 |
 | pending (non-financial, future batches) | 192 |
 | **hand-rolled total (original)** | **300** |
 
@@ -41,6 +41,17 @@ Added two **additive** props to `ParityTable` — `tableTestId` and `rowTestId` 
 | `apps/frontend/src/pages/safety/SafetyMeetingsPage.tsx` | pages/safety |
 | `apps/frontend/src/pages/safety/TrainingProgramsPage.tsx` | pages/safety |
 | `apps/frontend/src/pages/safety/TrainingRecordsPage.tsx` | pages/safety |
+
+## GLOBAL-COLS-01 — migrated (this PR)
+Read-only accounting audit-trail surface (no schema/migration/posting changed — traces an existing
+source transaction to its already-posted GL rows). Columns preserved 1:1 from the pre-migration
+hand-rolled table (Occurred, JE, Posting batch, Account, Side, Amount, Linked object); the page now
+inherits sort + drag/keyboard/touch column resize + gear column-picker + CSV export via the same
+shared `ParityTable` grammar `AccountingAuditTrailPage.tsx`'s lineage lookup already uses.
+
+| File | Module |
+| --- | --- |
+| `apps/frontend/src/pages/accounting/PostingLineagePage.tsx` | pages/accounting |
 
 ## Remaining hand-rolled inventory (by module)
 
@@ -225,7 +236,7 @@ Added two **additive** props to `ParityTable` — `tableTestId` and `rowTestId` 
 | --- | --- |
 | `apps/frontend/src/pages/Vendors.tsx` | pending |
 
-### pages/accounting (43) — financial-hold
+### pages/accounting (42) — financial-hold
 
 | File | Status |
 | --- | --- |
@@ -260,7 +271,6 @@ Added two **additive** props to `ParityTable` — `tableTestId` and `rowTestId` 
 | `apps/frontend/src/pages/accounting/PaymentsListPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/PayrollAggregatedPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/PeriodComparisonPage.tsx` | financial-hold |
-| `apps/frontend/src/pages/accounting/PostingLineagePage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/PrepaidExpensesPage.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/QBOSyncDriftDashboard.tsx` | financial-hold |
 | `apps/frontend/src/pages/accounting/QboReconcileCapturesPage.tsx` | financial-hold |
