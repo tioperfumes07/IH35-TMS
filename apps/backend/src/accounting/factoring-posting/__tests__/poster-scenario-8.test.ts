@@ -32,7 +32,7 @@ const {
 
 vi.mock("../../../auth/db.js", () => ({ withLuciaBypass: mockWithLuciaBypass, withCurrentUser: mockWithCurrentUser }));
 vi.mock("../../../lib/feature-flags/service.js", () => ({ isEnabled: mockIsEnabled }));
-vi.mock("../../journal-entries.service.js", () => ({ createJournalEntryOnClient: mockCreateJournalEntry, enqueueJournalEntrySideEffects: vi.fn(async () => undefined) }));
+vi.mock("../../journal-entries.service.js", () => ({ createJournalEntry: mockCreateJournalEntry, enqueueJournalEntrySideEffects: vi.fn(async () => undefined) }));
 vi.mock("../../posting-engine.service.js", () => ({ ensureOpenPeriod: vi.fn(async () => undefined) }));
 vi.mock("../../accounting-spine-emit.js", () => ({ writeTransactionSourceLink: vi.fn(async () => undefined) }));
 vi.mock("../../coa-roles/resolver.service.js", () => ({ resolveRoleAccount: mockResolveRoleAccount }));
@@ -50,7 +50,13 @@ function installDefaults(existingMemos: Set<string> = new Set()) {
   mockIsEnabled.mockResolvedValue(true);
   // Resolve each role to an id equal to the role name, so legs can be asserted by account.
   mockResolveRoleAccount.mockImplementation(async (_c: unknown, _opco: string, role: string) => role);
-  mockCreateJournalEntry.mockResolvedValue({ id: "je-1" });
+  mockCreateJournalEntry.mockImplementation(async (_input: unknown, _actor: unknown, options?: { afterInsertBeforeCommit?: (client: { query: typeof mockQuery }, header: { id: string }) => Promise<void> }) => {
+    const header = { id: "je-1" };
+    if (options?.afterInsertBeforeCommit) {
+      await options.afterInsertBeforeCommit({ query: mockQuery }, header);
+    }
+    return header;
+  });
 
   mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
     if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
@@ -120,7 +126,7 @@ describe("CODER-34 secured-borrowing lifecycle ($5,000 · fee 75 · reserve 75 �
     expect(sum(p, "debit")).toBe(500000);
     expect(sum(p, "credit")).toBe(500000);
     // source is auto (never a customer_payment)
-    expect(mockCreateJournalEntry.mock.calls[0]?.[1]?.source).toBe("auto");
+    expect(mockCreateJournalEntry.mock.calls[0]?.[0]?.source).toBe("auto");
   });
 
   it("CUSTOMER PAYMENT: Dr Factoring Advance 5000 / Cr A/R 5000 (the ONLY A/R decrease)", async () => {

@@ -39,7 +39,7 @@ const {
 
 vi.mock("../../../auth/db.js", () => ({ withLuciaBypass: mockWithLuciaBypass, withCurrentUser: mockWithCurrentUser }));
 vi.mock("../../../lib/feature-flags/service.js", () => ({ isEnabled: mockIsEnabled }));
-vi.mock("../../journal-entries.service.js", () => ({ createJournalEntryOnClient: mockCreateJournalEntry, enqueueJournalEntrySideEffects: vi.fn(async () => undefined) }));
+vi.mock("../../journal-entries.service.js", () => ({ createJournalEntry: mockCreateJournalEntry, enqueueJournalEntrySideEffects: vi.fn(async () => undefined) }));
 vi.mock("../../posting-engine.service.js", () => ({ ensureOpenPeriod: vi.fn(async () => undefined) }));
 vi.mock("../../accounting-spine-emit.js", () => ({ writeTransactionSourceLink: vi.fn(async () => undefined) }));
 vi.mock("../../coa-roles/resolver.service.js", () => ({ resolveRoleAccount: mockResolveRoleAccount }));
@@ -61,7 +61,13 @@ function installDefaults(opts: { flagOn?: boolean; accrual?: AccrualState } = {}
 
   mockIsEnabled.mockResolvedValue(flagOn);
   mockResolveRoleAccount.mockImplementation(async (_c: unknown, _o: string, role: string) => role);
-  mockCreateJournalEntry.mockResolvedValue({ id: "je-1" });
+  mockCreateJournalEntry.mockImplementation(async (_input: unknown, _actor: unknown, options?: { afterInsertBeforeCommit?: (client: { query: typeof mockQuery }, header: { id: string }) => Promise<void> }) => {
+    const header = { id: "je-1" };
+    if (options?.afterInsertBeforeCommit) {
+      await options.afterInsertBeforeCommit({ query: mockQuery }, header);
+    }
+    return header;
+  });
   mockAppendCrudAudit.mockResolvedValue(undefined);
 
   mockQuery.mockImplementation(async (sql: string) => {

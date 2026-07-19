@@ -27,7 +27,7 @@ const {
 
 vi.mock("../../../auth/db.js", () => ({ withLuciaBypass: mockWithLuciaBypass, withCurrentUser: mockWithCurrentUser }));
 vi.mock("../../../lib/feature-flags/service.js", () => ({ isEnabled: mockIsEnabled }));
-vi.mock("../../journal-entries.service.js", () => ({ createJournalEntryOnClient: mockCreateJournalEntry, enqueueJournalEntrySideEffects: vi.fn(async () => undefined) }));
+vi.mock("../../journal-entries.service.js", () => ({ createJournalEntry: mockCreateJournalEntry, enqueueJournalEntrySideEffects: vi.fn(async () => undefined) }));
 vi.mock("../../posting-engine.service.js", () => ({ ensureOpenPeriod: vi.fn(async () => undefined) }));
 vi.mock("../../accounting-spine-emit.js", () => ({ writeTransactionSourceLink: vi.fn(async () => undefined) }));
 vi.mock("../../coa-roles/resolver.service.js", () => ({ resolveRoleAccount: mockResolveRoleAccount }));
@@ -43,7 +43,13 @@ describe("factoring posting tenant isolation (secured borrowing)", () => {
 
     mockIsEnabled.mockResolvedValue(true);
     mockResolveRoleAccount.mockImplementation(async (_c: unknown, _opco: string, role: string) => role);
-    mockCreateJournalEntry.mockResolvedValue({ id: "je-1" });
+    mockCreateJournalEntry.mockImplementation(async (_input: unknown, _actor: unknown, options?: { afterInsertBeforeCommit?: (client: { query: typeof mockQuery }, header: { id: string }) => Promise<void> }) => {
+    const header = { id: "je-1" };
+    if (options?.afterInsertBeforeCommit) {
+      await options.afterInsertBeforeCommit({ query: mockQuery }, header);
+    }
+    return header;
+  });
 
     mockQuery.mockImplementation(async (sql: string) => {
       if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
@@ -90,7 +96,7 @@ describe("factoring posting tenant isolation (secured borrowing)", () => {
     expect(mockResolveRoleAccount).toHaveBeenCalledWith(expect.anything(), OPCO, "factoring_advance_liability");
     expect(mockResolveRoleAccount).toHaveBeenCalledWith(expect.anything(), OPCO, "factor_reserve_held");
     // liability credit present; no ar_control resolved at funding
-    const postings = mockCreateJournalEntry.mock.calls[0]?.[1]?.postings ?? [];
+    const postings = mockCreateJournalEntry.mock.calls[0]?.[0]?.postings ?? [];
     expect(postings.find((p: { account_id: string }) => p.account_id === "factoring_advance_liability")).toMatchObject({
       debit_or_credit: "credit",
     });

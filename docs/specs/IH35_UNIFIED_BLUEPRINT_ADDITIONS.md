@@ -1490,9 +1490,12 @@ reserve (not status); (5) TRANSP/Faro identity fail-closed; (6) FORCE RLS Owner/
 2. **Atomic / self-healing lifecycle source links.**
    Poster creates JE + `attachFactoringLifecycleSourceLinks` (+ reserve movement /
    subledger sync where applicable) inside the same caller-owned `withCurrentUser`
-   transaction via `createJournalEntryOnClient`. Injected failure between JE and
-   links rolls back with no duplicate financial artifacts. Every `already_posted`
-   path validates/repairs missing source links idempotently before returning.
+   transaction via `createJournalEntry(` with `client` + `suppressSideEffects: true`
+   + `afterInsertBeforeCommit` (in-client primitive `createJournalEntryOnClient`).
+   Injected failure between JE and links rolls back with no duplicate financial
+   artifacts. Side-effect enqueue (`enqueueJournalEntrySideEffects`) runs only after
+   COMMIT. Every `already_posted` path validates/repairs missing source links
+   idempotently before returning.
 3. **Held migration prerequisite (fail-closed).**
    `202607600000_factoring_balance_invoice_linkage` requires held
    `202607340000_je_reversal_linkage` (`reverses_je_id` / `reversed_by_je_id`).

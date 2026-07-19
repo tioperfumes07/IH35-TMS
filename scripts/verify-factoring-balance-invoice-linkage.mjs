@@ -153,7 +153,9 @@ export function checker(sources) {
   // Poster — atomic lifecycle source links in caller-owned txn + already_posted repair
   requireExec("poster", "attachFactoringLifecycleSourceLinks", "poster_lifecycle_attach_missing");
   requireExec("poster", "createFactoringJournalEntryAtomically", "poster_atomic_je_helper_missing");
-  requireExec("poster", "createJournalEntryOnClient", "poster_must_use_on_client_je");
+  requireExec("poster", "createJournalEntry(", "poster_must_post_via_createJournalEntry");
+  requireExec("poster", "suppressSideEffects: true", "poster_must_suppress_side_effects_until_commit");
+  requireExec("poster", "afterInsertBeforeCommit", "poster_must_attach_links_before_commit");
   requireExec("poster", "repairFactoringLifecycleSourceLinks", "poster_already_posted_repair_missing");
   requireExec("poster", "ensureOpenPeriod", "poster_closed_period_gate_missing");
   requireExec("poster", "failAfterJeBeforeLifecycleLinks", "poster_inject_failure_hook_missing");
@@ -162,6 +164,8 @@ export function checker(sources) {
   requireExec("poster", "factoring_chargeback", "poster_chargeback_source_missing");
   requireExec("poster", "FACTORING_GL_POSTING", "poster_flag_gate_present");
   requireExec("journalEntries", "createJournalEntryOnClient", "journal_entries_on_client_missing");
+  requireExec("journalEntries", "afterInsertBeforeCommit", "journal_entries_after_insert_hook_missing");
+  requireExec("journalEntries", "suppressSideEffects", "journal_entries_suppress_side_effects_missing");
   requireExec("journalEntries", "enqueueJournalEntrySideEffects", "journal_entries_deferred_side_effects_missing");
   requireExec("posterAtomicityTest", "injected_failure_between_je_and_lifecycle_links", "atomicity_test_inject_missing");
   requireExec("posterAtomicityTest", "already_posted path repairs", "atomicity_test_repair_missing");
@@ -241,7 +245,7 @@ export function checker(sources) {
   requireText("additions", "Statuses must NOT clear balances", "additions_missing_status_veto");
   requireText("additions", "canonical_factor_agreements", "additions_missing_faro_agreement");
   requireText("additions", "missing_faro_agreement_binding", "additions_missing_agreement_reasons");
-  requireText("additions", "createJournalEntryOnClient", "additions_missing_atomic_links");
+  requireText("additions", "afterInsertBeforeCommit", "additions_missing_atomic_links");
   requireText("additions", "HELD_MIGRATION_PREREQUISITE_MISSING", "additions_missing_prereq");
   requireText("additions", "accounting_exception", "additions_missing_accounting_exception");
 

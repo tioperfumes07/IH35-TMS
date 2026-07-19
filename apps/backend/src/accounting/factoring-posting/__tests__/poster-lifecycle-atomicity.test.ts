@@ -16,7 +16,7 @@ const {
   mockWithLuciaBypass,
   mockWithCurrentUser,
   mockIsEnabled,
-  mockCreateJournalEntryOnClient,
+  mockCreateJournalEntry,
   mockEnqueueSideEffects,
   mockResolveRoleAccount,
   mockEnsureOpenPeriod,
@@ -30,7 +30,7 @@ const {
     mockWithLuciaBypass: withLuciaBypass,
     mockWithCurrentUser: withCurrentUser,
     mockIsEnabled: vi.fn(),
-    mockCreateJournalEntryOnClient: vi.fn(),
+    mockCreateJournalEntry: vi.fn(),
     mockEnqueueSideEffects: vi.fn(async () => undefined),
     mockResolveRoleAccount: vi.fn(),
     mockEnsureOpenPeriod: vi.fn(async () => undefined),
@@ -44,7 +44,7 @@ vi.mock("../../../auth/db.js", () => ({
 }));
 vi.mock("../../../lib/feature-flags/service.js", () => ({ isEnabled: mockIsEnabled }));
 vi.mock("../../journal-entries.service.js", () => ({
-  createJournalEntryOnClient: mockCreateJournalEntryOnClient,
+  createJournalEntry: mockCreateJournalEntry,
   enqueueJournalEntrySideEffects: mockEnqueueSideEffects,
 }));
 vi.mock("../../posting-engine.service.js", () => ({ ensureOpenPeriod: mockEnsureOpenPeriod }));
@@ -59,7 +59,7 @@ describe("factoring poster — atomic lifecycle source links", () => {
   beforeEach(() => {
     mockQuery.mockReset();
     mockIsEnabled.mockReset();
-    mockCreateJournalEntryOnClient.mockReset();
+    mockCreateJournalEntry.mockReset();
     mockEnqueueSideEffects.mockReset();
     mockResolveRoleAccount.mockReset();
     mockEnsureOpenPeriod.mockReset();
@@ -69,7 +69,24 @@ describe("factoring poster — atomic lifecycle source links", () => {
     mockIsEnabled.mockResolvedValue(true);
     mockResolveRoleAccount.mockImplementation(async (_c: unknown, _o: string, role: string) => role);
     mockEnsureOpenPeriod.mockResolvedValue(undefined);
-    mockCreateJournalEntryOnClient.mockResolvedValue({ id: "je-atomic-1" });
+    mockCreateJournalEntry.mockImplementation(
+      async (
+        _input: unknown,
+        _actor: unknown,
+        options?: {
+          afterInsertBeforeCommit?: (
+            client: { query: typeof mockQuery },
+            header: { id: string }
+          ) => Promise<void>;
+        }
+      ) => {
+        const header = { id: "je-atomic-1" };
+        if (options?.afterInsertBeforeCommit) {
+          await options.afterInsertBeforeCommit({ query: mockQuery }, header);
+        }
+        return header;
+      }
+    );
     mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
       if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
       if (sql.includes("FROM accounting.factoring_advances") && sql.includes("invoice_total_cents")) {
@@ -117,7 +134,7 @@ describe("factoring poster — atomic lifecycle source links", () => {
     expect(res).toMatchObject({ posted: true, journal_entry_id: "je-atomic-1" });
     expect(mockWithCurrentUser).toHaveBeenCalled();
     expect(mockEnsureOpenPeriod).toHaveBeenCalled();
-    expect(mockCreateJournalEntryOnClient).toHaveBeenCalledTimes(1);
+    expect(mockCreateJournalEntry).toHaveBeenCalledTimes(1);
     expect(mockWriteTsl).toHaveBeenCalled();
     expect(mockEnqueueSideEffects).toHaveBeenCalledTimes(1);
     // Side effects only after the atomic txn callback completes.
@@ -135,7 +152,7 @@ describe("factoring poster — atomic lifecycle source links", () => {
         actor_user_id: ACTOR,
       })
     ).rejects.toThrow(/injected_failure_between_je_and_lifecycle_links/);
-    expect(mockCreateJournalEntryOnClient).toHaveBeenCalledTimes(1);
+    expect(mockCreateJournalEntry).toHaveBeenCalledTimes(1);
     expect(mockEnqueueSideEffects).not.toHaveBeenCalled();
     expect(mockWriteTsl).not.toHaveBeenCalled();
   });
@@ -179,7 +196,7 @@ describe("factoring poster — atomic lifecycle source links", () => {
       actor_user_id: ACTOR,
     });
     expect(res).toMatchObject({ posted: false, reason: "already_posted" });
-    expect(mockCreateJournalEntryOnClient).not.toHaveBeenCalled();
+    expect(mockCreateJournalEntry).not.toHaveBeenCalled();
     expect(mockWriteTsl).toHaveBeenCalled();
   });
 

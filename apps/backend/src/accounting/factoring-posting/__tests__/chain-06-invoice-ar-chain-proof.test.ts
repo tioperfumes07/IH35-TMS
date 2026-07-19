@@ -49,7 +49,7 @@ const {
 
 vi.mock("../../../auth/db.js", () => ({ withLuciaBypass: mockWithLuciaBypass, withCurrentUser: mockWithCurrentUser }));
 vi.mock("../../../lib/feature-flags/service.js", () => ({ isEnabled: mockIsEnabled }));
-vi.mock("../../journal-entries.service.js", () => ({ createJournalEntryOnClient: mockCreateJournalEntry, enqueueJournalEntrySideEffects: vi.fn(async () => undefined) }));
+vi.mock("../../journal-entries.service.js", () => ({ createJournalEntry: mockCreateJournalEntry, enqueueJournalEntrySideEffects: vi.fn(async () => undefined) }));
 vi.mock("../../posting-engine.service.js", () => ({ ensureOpenPeriod: vi.fn(async () => undefined) }));
 vi.mock("../../accounting-spine-emit.js", () => ({ writeTransactionSourceLink: vi.fn(async () => undefined) }));
 vi.mock("../../coa-roles/resolver.service.js", () => ({ resolveRoleAccount: mockResolveRoleAccount }));
@@ -119,7 +119,24 @@ function installDefaults() {
 
   mockIsEnabled.mockResolvedValue(true);
   mockResolveRoleAccount.mockImplementation(async (_c: unknown, _o: string, role: string) => `acct-${role}`);
-  mockCreateJournalEntry.mockResolvedValue({ id: "je-chain-06" });
+  mockCreateJournalEntry.mockImplementation(
+    async (
+      _input: unknown,
+      _actor: unknown,
+      options?: {
+        afterInsertBeforeCommit?: (
+          client: { query: typeof mockQuery },
+          header: { id: string }
+        ) => Promise<void>;
+      }
+    ) => {
+      const header = { id: "je-chain-06" };
+      if (options?.afterInsertBeforeCommit) {
+        await options.afterInsertBeforeCommit({ query: mockQuery }, header);
+      }
+      return header;
+    }
+  );
 
   mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
     if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
@@ -173,7 +190,7 @@ describe("CHAIN-06 invoice→A/R→Faro chain-proof behavioral matrix (mocked se
     );
     expect(advanceLoadSql.some((sql) => sql.includes("operating_company_id = $2::uuid"))).toBe(true);
 
-    const fundingJe = mockCreateJournalEntry.mock.calls[0]?.[1];
+    const fundingJe = mockCreateJournalEntry.mock.calls[0]?.[0];
     expect(fundingJe?.operating_company_id).toBe(OPCO);
     expect(fundingJe?.source).toBe("auto");
     const fundingPostings = postingsFromCall(0);

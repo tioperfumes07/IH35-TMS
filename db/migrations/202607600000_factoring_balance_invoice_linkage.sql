@@ -61,6 +61,14 @@ END
 $prereq$;
 
 -- ── 0b. Owner-seeded Faro agreement binding (NO seed rows — never invent UUIDs) ──────────────────
+-- CANONICAL-CHECK: faro_agreement_binding. factoring.canonical_factor_agreements is NOT a money
+--   ledger and NOT a second factoring.* advance/reserve/batch ledger. It is an owner-seeded
+--   entity-scoped AGREEMENT/PROFILE BINDING (effective-dated FARO_FULL_RECOURSE_V1 contract terms
+--   + factoring.factor profile + mdata.vendors factor vendor). Distinct from factoring.batch,
+--   factoring.reserve_movement, accounting.factoring_advances, and factor.* Faro import staging —
+--   those remain the operational/money surfaces. This table only answers "which vendor is Faro
+--   for this entity as-of date under locked full-recourse terms?" with typed unverifiable when
+--   unseeded/ambiguous. Empty by default; never invent UUIDs.
 CREATE SCHEMA IF NOT EXISTS factoring;
 
 DO $faro_agreement$
@@ -96,7 +104,7 @@ BEGIN
     default_interest_daily_rate numeric(10,8) NOT NULL
       CHECK (default_interest_daily_rate = 0.00067000),
     created_at timestamptz NOT NULL DEFAULT now(),
-    created_by_user_id uuid,
+    created_by_user_id uuid REFERENCES identity.users(id),
     CHECK (effective_to IS NULL OR effective_to >= effective_from),
     UNIQUE (tenant_id, factor_vendor_id, agreement_code, effective_from)
   );

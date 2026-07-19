@@ -313,6 +313,8 @@ export async function enqueueJournalEntrySideEffects(
   const credits = input.postings
     .filter((line) => line.debit_or_credit === "credit")
     .reduce((sum, line) => sum + Number(line.amount_cents || 0), 0);
+  // [IMPORT-P0 qbo-import-exclusion] Post-COMMIT enqueue for caller-owned JE txns (same gate as create).
+  // Queue drain + immediate push refuse non-'tms' source_system and require QBO_JE_PUSH_ENABLED ON.
   await enqueueSyncJob(
     input.operating_company_id,
     "journal_entry",

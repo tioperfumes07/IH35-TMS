@@ -54,7 +54,7 @@ import { withCurrentUser, withLuciaBypass } from "../../auth/db.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import {
-  createJournalEntryOnClient,
+  createJournalEntry,
   enqueueJournalEntrySideEffects,
   type CreateJournalEntryInput,
 } from "../journal-entries.service.js";
@@ -420,28 +420,35 @@ async function createFactoringJournalEntryAtomically(opts: {
   source_transaction_type: FactoringLifecycleSourceType;
   afterLifecycleBeforeCommit?: (client: DbClient, journalEntryId: string) => Promise<void>;
 }): Promise<{ id: string }> {
+  // Balanced JE via createJournalEntry( on the caller-owned client; lifecycle links in afterInsertBeforeCommit
+  // so JE + source links share one txn (inject-failure rolls back — no orphan JE).
   const created = await withCurrentUser(opts.actor_user_id, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
       opts.je.operating_company_id,
     ]);
     await ensureOpenPeriod(client, opts.je.operating_company_id, opts.je.entry_date);
-    const header = await createJournalEntryOnClient(client, opts.je, {
-      userId: opts.actor_user_id,
-      role: "system",
-    });
-    if (__posterAtomicityTestHooks.failAfterJeBeforeLifecycleLinks) {
-      throw new Error("injected_failure_between_je_and_lifecycle_links");
-    }
-    await attachFactoringLifecycleSourceLinks(client, {
-      operating_company_id: opts.je.operating_company_id,
-      journal_entry_id: header.id,
-      factoring_advance_id: opts.factoring_advance_id,
-      source_transaction_type: opts.source_transaction_type,
-    });
-    if (opts.afterLifecycleBeforeCommit) {
-      await opts.afterLifecycleBeforeCommit(client, header.id);
-    }
-    return header;
+    return createJournalEntry(
+      opts.je,
+      { userId: opts.actor_user_id, role: "system" },
+      {
+        client,
+        suppressSideEffects: true,
+        afterInsertBeforeCommit: async (c, header) => {
+          if (__posterAtomicityTestHooks.failAfterJeBeforeLifecycleLinks) {
+            throw new Error("injected_failure_between_je_and_lifecycle_links");
+          }
+          await attachFactoringLifecycleSourceLinks(c, {
+            operating_company_id: opts.je.operating_company_id,
+            journal_entry_id: header.id,
+            factoring_advance_id: opts.factoring_advance_id,
+            source_transaction_type: opts.source_transaction_type,
+          });
+          if (opts.afterLifecycleBeforeCommit) {
+            await opts.afterLifecycleBeforeCommit(c, header.id);
+          }
+        },
+      }
+    );
   });
   await enqueueJournalEntrySideEffects(opts.je, created.id, opts.actor_user_id);
   return { id: created.id };
@@ -538,26 +545,45 @@ export async function postFactoringAdvanceEvent(input: PostFactoringAdvanceInput
     source: "auto",
     postings: prepared.postings,
   };
-  const created = await createFactoringJournalEntryAtomically({
-    actor_user_id: input.actor_user_id,
-    je: jeInput,
-    factoring_advance_id: input.factoring_advance_id,
-    source_transaction_type: "factoring_advance",
-    afterLifecycleBeforeCommit:
-      prepared.reserve > 0
-        ? async (client, journalEntryId) => {
+  // Funding must post via createJournalEntry( (chain-06 / secured-borrowing guards). Lifecycle source
+  // links + reserve_held share the same caller-owned txn via afterInsertBeforeCommit.
+  const created = await withCurrentUser(input.actor_user_id, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
+      input.operating_company_id,
+    ]);
+    await ensureOpenPeriod(client, input.operating_company_id, prepared.entryDate);
+    return createJournalEntry(
+      jeInput,
+      { userId: input.actor_user_id, role: "system" },
+      {
+        client,
+        suppressSideEffects: true,
+        afterInsertBeforeCommit: async (c, header) => {
+          if (__posterAtomicityTestHooks.failAfterJeBeforeLifecycleLinks) {
+            throw new Error("injected_failure_between_je_and_lifecycle_links");
+          }
+          await attachFactoringLifecycleSourceLinks(c, {
+            operating_company_id: input.operating_company_id,
+            journal_entry_id: header.id,
+            factoring_advance_id: input.factoring_advance_id,
+            source_transaction_type: "factoring_advance",
+          });
+          if (prepared.reserve > 0) {
             await recordReserveMovement(
-              client,
+              c,
               input.operating_company_id,
               input.factoring_advance_id,
               "held",
               prepared.reserve,
               prepared.entryDate,
-              journalEntryId
+              header.id
             );
           }
-        : undefined,
+        },
+      }
+    );
   });
+  await enqueueJournalEntrySideEffects(jeInput, created.id, input.actor_user_id);
 
   return { posted: true, journal_entry_id: created.id, memo: prepared.memo };
 }
