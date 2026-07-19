@@ -19,6 +19,7 @@ import { DataPanel } from "../../components/layout/DataPanel";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { useToast } from "../../components/Toast";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { FactorReserveCard } from "./FactorReserveCard";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -45,6 +46,7 @@ export function FactoringDetailPage() {
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const queryClient = useQueryClient();
+  const { pushToast } = useToast();
 
   const [action, setAction] = useState<ActionKind | null>(null);
   const [notes, setNotes] = useState("");
@@ -90,6 +92,7 @@ export function FactoringDetailPage() {
       void queryClient.invalidateQueries({ queryKey: ["accounting", "factoring-advance", selectedCompanyId, id] });
       void queryClient.invalidateQueries({ queryKey: ["accounting", "factoring-advances"] });
     },
+    onError: (error) => pushToast(String((error as Error)?.message ?? "Failed to update factoring batch"), "error"),
   });
 
   const detail = query.data;
