@@ -1,8 +1,11 @@
 #!/usr/bin/env node
 import { createRequire } from "node:module";
 import { spawnSync } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import dotenv from "dotenv";
 import pg from "pg";
+import { isLocalVerifyDatabaseUrl } from "./vlci-lifecycle.mjs";
 
 dotenv.config();
 
@@ -10,6 +13,7 @@ const require = createRequire(import.meta.url);
 const { buildPgClientConfig } = require("./lib/pg-connection-options.cjs");
 const { Client } = pg;
 
+const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const verifyUrl = process.env.DATABASE_URL ?? "";
 
 function redact(url) {
@@ -24,7 +28,9 @@ function redact(url) {
 }
 
 const isCiMigrationTest = process.env.CI_MIGRATION_TEST === "1";
-const isLocalVerifyDb = verifyUrl.includes("localhost:54329") && verifyUrl.includes("ih35_verify");
+// Local-safe: CI/docker :54329+ih35_verify, OR dynamic port with unforgeable VLCI lock+token proof.
+// IH35_VLCI_OWNED=1 alone is NEVER enough.
+const isLocalVerifyDb = isLocalVerifyDatabaseUrl(verifyUrl, process.env, { repoRoot: REPO_ROOT });
 const isNeonHost = verifyUrl.includes("neon.tech");
 const isNeonBranch = isNeonHost && verifyUrl.includes("neondb");
 // Strict: must be the specific ci-migration-test branch
@@ -36,7 +42,8 @@ const isCiMigrationTestBranch = verifyUrl.includes("ci-migration-test") ||
 if (!isLocalVerifyDb && !(isCiMigrationTest && isNeonBranch && isCiMigrationTestBranch)) {
   console.error("verify:db:reset refusing to run. DATABASE_URL");
   console.error(" must point to either:");
-  console.error("  - localhost:54329 + ih35_verify (local), OR");
+  console.error("  - localhost/127.0.0.1 + ih35_verify on port 54329 (CI/docker), OR");
+  console.error("  - localhost/127.0.0.1 + ih35_verify on a VLCI-owned dynamic port with lock+token proof, OR");
   console.error("  - Neon ci-migration-test branch (CI_MIGRATION_TEST=1 + NEON_BRANCH_NAME=ci-migration-test)");
   if (isCiMigrationTest && !isCiMigrationTestBranch) {
     console.error("");

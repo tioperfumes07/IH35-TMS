@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { HomeQboSyncHealth } from "../../../api/home";
 import { QboSyncHealthCard } from "../QboSyncHealthCard";
 
@@ -13,6 +13,14 @@ function renderCard(data: HomeQboSyncHealth) {
 }
 
 describe("QboSyncHealthCard freshness", () => {
+  beforeEach(() => {
+    // Pin wall clock so formatRelative(last run) matches the fixture age (62d), independent of CI date.
+    vi.useFakeTimers({ now: new Date("2026-07-18T20:00:00.000Z") });
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("never displays Healthy when the backend marks the last successful sync stale", () => {
     renderCard({
       latest_run: {

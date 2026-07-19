@@ -198,12 +198,24 @@ Block 9 measured full `block-ready` at **702s**. Block 10 removes the duplicate 
 
 Today the list is only `verify:arch-design` (C4 runs it explicitly).
 
+### Orchestrators must never run inside C5 (locked 2026-07-19)
+
+`block_ready_c5_skip_orchestrators` lists gate **orchestrators** that must not be treated as C5 unit guards:
+
+- `verify:local-ci` — owns an ephemeral Postgres + full `verify:pre-commit` (single-owner; dynamic port; nested ACTIVE fails closed)
+- `verify:static` — already run by `branch:precheck-push` before `block-ready`
+
+C5 logs: `[C5] SKIP <name> (orchestrator — single-owner outside C5)`.
+
+Regression lock: `scripts/verify-local-ci-gate-acyclic.mjs` (+ verify-steps/910) + `scripts/__tests__/verify-local-ci-lifecycle.test.mjs`.
+
 ### How to add a script to the skip list
 
 1. Ensure the script runs in C4 (or another check before C5) so skipping C5 does not drop coverage.
 2. Add the `verify:*` name to `block_ready_c5_skip_after_c4` in `scripts/verify-meta.json`.
 3. Extend `scripts/verify-block-ready-c5-no-duplicate-arch-design.mjs` if the guard should assert the new name.
 4. Add a test in `scripts/__tests__/block-ready.test.mjs` for `shouldSkipC5VerifyScript`.
+5. Orchestrators go in `block_ready_c5_skip_orchestrators`, never in the C5 unit-guard loop.
 
 ### Pre-push hook (slim)
 
@@ -211,9 +223,13 @@ Today the list is only `verify:arch-design` (C4 runs it explicitly).
 
 1. `npm run build:backend`
 2. `cd apps/frontend && npx tsc -b`
-3. `npm run block-ready`
+3. `npm run block-ready` (runs `verify:static` **once** via unforgeable in-process proof — `scripts/static-sweep-proof.mjs`)
 
-No per-script `verify:*` loop before `block-ready`. After Block 10 merges, feature pushes can use normal `git push` (no `--no-verify`) when local `block-ready` completes within the IDE window.
+No per-script `verify:*` loop before `block-ready`, and C5 must not nest `verify:local-ci` / re-run `verify:static`. Pre-push must **not** duplicate `verify:static` when `block-ready` runs; if `block-ready` is capability-skipped, precheck runs a one-shot `verify-static-fallback`. Direct `npm run block-ready` always ensures static once (or fail closed). After Block 10 merges, feature pushes can use normal `git push` (no `--no-verify`) when local `block-ready` completes within the IDE window.
+
+### VLCI ownership (locked 2026-07-19 adversarial)
+
+`IH35_VLCI_OWNED` / `INHERIT` / `ACTIVE` **never authorize alone**. Ownership is the canonical temp lock + per-run token + live owner pid/start + exact `dataDir`/`port`/`database`/`url` bindings. Arbitrary `IH35_VLCI_LOCK_PATH` and unbound `localhost` `ih35_verify` URLs are rejected. `verify:db:reset` requires that proof for non-`:54329` targets.
 
 ### Measured baseline
 
