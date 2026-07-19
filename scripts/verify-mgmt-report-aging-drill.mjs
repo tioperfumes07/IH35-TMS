@@ -156,6 +156,19 @@ export function check(sources) {
   if (!/has_balance/.test(invoicesHasBalanceTest) || !/amount_open_cents/.test(invoicesHasBalanceTest)) {
     f.push(`${PATHS.invoicesHasBalanceTest}: route/service has_balance coverage missing`);
   }
+  // Entity-scope (verify-mdata-entity-scope): predicates must live in SQL template literals.
+  if (!/c\.operating_company_id = i\.operating_company_id/.test(invoicesRoutes)) {
+    f.push(`${PATHS.invoicesRoutes}: COUNT/LIST must join customers with c.operating_company_id = i.operating_company_id`);
+  }
+  if (!/c\.operating_company_id = \$1/.test(invoicesRoutes)) {
+    f.push(`${PATHS.invoicesRoutes}: COUNT/LIST must also bind c.operating_company_id = $1`);
+  }
+  if (!/i\.operating_company_id = \$1/.test(invoicesRoutes)) {
+    f.push(`${PATHS.invoicesRoutes}: COUNT/LIST must keep i.operating_company_id = $1 in SQL literals`);
+  }
+  if (!/l\.operating_company_id = i\.operating_company_id/.test(invoicesRoutes)) {
+    f.push(`${PATHS.invoicesRoutes}: LIST LEFT JOIN mdata.loads must scope l.operating_company_id in ON`);
+  }
 
   // ── A/R aging page ───────────────────────────────────────────────────────
   if (!/arAgingInvoiceListHref/.test(ar)) {
@@ -314,6 +327,14 @@ function selftest() {
       i.status NOT IN ('draft', 'void', 'voided', 'paid')
     }
     SELECT COUNT(*)::int AS total
+    JOIN mdata.customers c
+      ON c.id = i.customer_id
+     AND c.operating_company_id = i.operating_company_id
+     AND c.operating_company_id = $1
+    LEFT JOIN mdata.loads l
+      ON l.id = i.source_load_id
+     AND l.operating_company_id = i.operating_company_id
+    WHERE i.operating_company_id = $1
     LIMIT $\${limitIdx}
     has_more
   `;

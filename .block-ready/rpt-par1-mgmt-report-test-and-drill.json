@@ -21,6 +21,7 @@
     "apps/frontend/src/api/accounting.ts",
     "apps/backend/src/accounting/invoices.routes.ts",
     "apps/backend/src/accounting/__tests__/invoices-has-balance-filter.test.ts",
+    "apps/backend/src/accounting/__tests__/invoices-list-entity-scope.test.ts",
     "apps/frontend/src/routes/manifest.tsx",
     "apps/frontend/src/components/home/__tests__/QboSyncHealthCard.test.tsx",
     "scripts/verify-mgmt-report-aging-drill.mjs",

@@ -138,42 +138,49 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
     if (!query.success) return validationError(reply, query.error);
     const q = query.data;
     const listed = await withCompanyScope(user.uuid, q.operating_company_id, async (client) => {
-      const where: string[] = ["i.operating_company_id = $1"];
+      // Extra filters only — entity predicates are SQL literals in BOTH count + list templates
+      // (verify-mdata-entity-scope scans template text; interpolated JS where-clauses alone are insufficient).
+      const extraWhere: string[] = [];
       const values: unknown[] = [q.operating_company_id];
       if (q.status) {
         values.push(q.status);
-        where.push(`i.status = $${values.length}`);
+        extraWhere.push(`i.status = $${values.length}`);
       }
       if (q.customer_id) {
         values.push(q.customer_id);
-        where.push(`i.customer_id = $${values.length}`);
+        extraWhere.push(`i.customer_id = $${values.length}`);
       }
       if (q.search) {
         values.push(`%${q.search}%`);
         const idx = values.length;
-        where.push(`(i.display_id ILIKE $${idx} OR c.customer_name ILIKE $${idx})`);
+        extraWhere.push(`(i.display_id ILIKE $${idx} OR c.customer_name ILIKE $${idx})`);
       }
       if (q.from_date) {
         values.push(q.from_date);
-        where.push(`i.issue_date >= $${values.length}::date`);
+        extraWhere.push(`i.issue_date >= $${values.length}::date`);
       }
       if (q.to_date) {
         values.push(q.to_date);
-        where.push(`i.issue_date <= $${values.length}::date`);
+        extraWhere.push(`i.issue_date <= $${values.length}::date`);
       }
       // has_balance: aging-compatible open AR — apply BEFORE LIMIT/OFFSET so pagination is truthful.
       if (q.has_balance) {
-        where.push("COALESCE(i.amount_open_cents, 0) > 0");
-        where.push("i.voided_at IS NULL");
-        where.push("i.status NOT IN ('draft', 'void', 'voided', 'paid')");
+        extraWhere.push("COALESCE(i.amount_open_cents, 0) > 0");
+        extraWhere.push("i.voided_at IS NULL");
+        extraWhere.push("i.status NOT IN ('draft', 'void', 'voided', 'paid')");
       }
-      const whereSql = where.join(" AND ");
+      // Same extra filters for COUNT and LIST (bind indices identical until LIMIT/OFFSET appended).
+      const extraSql = extraWhere.length ? `AND ${extraWhere.join(" AND ")}` : "";
       const countRes = await client.query(
         `
           SELECT COUNT(*)::int AS total
           FROM accounting.invoices i
-          JOIN mdata.customers c ON c.id = i.customer_id
-          WHERE ${whereSql}
+          JOIN mdata.customers c
+            ON c.id = i.customer_id
+           AND c.operating_company_id = i.operating_company_id
+           AND c.operating_company_id = $1
+          WHERE i.operating_company_id = $1
+            ${extraSql}
         `,
         values
       );
@@ -192,14 +199,20 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
             l.customer_chargeback_reason AS source_load_chargeback_reason,
             (
               SELECT COUNT(*)
-              FROM accounting.invoice_lines l
-              WHERE l.invoice_id = i.id
+              FROM accounting.invoice_lines il
+              WHERE il.invoice_id = i.id
             )::int AS line_count
           FROM accounting.invoices i
-          JOIN mdata.customers c ON c.id = i.customer_id
+          JOIN mdata.customers c
+            ON c.id = i.customer_id
+           AND c.operating_company_id = i.operating_company_id
+           AND c.operating_company_id = $1
           LEFT JOIN accounting.factoring_advances fa ON fa.id = i.factoring_advance_id
-          LEFT JOIN mdata.loads l ON l.id = i.source_load_id
-          WHERE ${whereSql}
+          LEFT JOIN mdata.loads l
+            ON l.id = i.source_load_id
+           AND l.operating_company_id = i.operating_company_id
+          WHERE i.operating_company_id = $1
+            ${extraSql}
           ORDER BY i.issue_date DESC, i.created_at DESC
           LIMIT $${limitIdx}
           OFFSET $${offsetIdx}

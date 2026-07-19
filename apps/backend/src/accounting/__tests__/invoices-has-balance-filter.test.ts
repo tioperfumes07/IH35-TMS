@@ -23,4 +23,20 @@ describe("invoices has_balance filter", () => {
     expect(hasBalanceIdx).toBeGreaterThan(-1);
     expect(limitIdx).toBeGreaterThan(hasBalanceIdx);
   });
+
+  it("COUNT and LIST SQL literals retain explicit mdata entity predicates (no baseline widen)", () => {
+    const listStart = routes.indexOf('app.get("/api/v1/accounting/invoices"');
+    const listEnd = routes.indexOf('app.get("/api/v1/accounting/invoices/:id"');
+    const handler = routes.slice(listStart, listEnd);
+    for (const needle of [
+      "c.operating_company_id = i.operating_company_id",
+      "c.operating_company_id = $1",
+      "i.operating_company_id = $1",
+      "l.operating_company_id = i.operating_company_id",
+    ]) {
+      expect(handler).toContain(needle);
+    }
+    // COUNT (customers) + LIST (customers + loads) — both must keep i.operating_company_id=$1 in-literal.
+    expect(handler.match(/i\.operating_company_id = \$1/g)?.length ?? 0).toBeGreaterThanOrEqual(2);
+  });
 });
