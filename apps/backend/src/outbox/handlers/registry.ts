@@ -1,4 +1,3 @@
-import type { PoolClient } from "pg";
 import { TwilioSmsHandler } from "./twilio-sms.js";
 import { TwilioWhatsappHandler } from "./twilio-whatsapp.js";
 import { DispatchLoadDispatchedHandler } from "./dispatch-load-dispatched.handler.js";
@@ -12,25 +11,16 @@ import { TmsBillPushHandler } from "./tms-bill-push.handler.js";
 import { buildTrailEventHandlers } from "./trail-events.handler.js";
 import { SamsaraMasterDataPushHandler } from "./samsara-master-data-push.handler.js";
 import { FmcsaCustomerVerifyHandler } from "./fmcsa-customer-verify.handler.js";
+import type { OutboxEventHandler, OutboxHandlerContext, OutboxPayload } from "./outbox-handler.types.js";
 
-export type OutboxPayload = Record<string, unknown>;
-
-export type OutboxHandlerContext = {
-  client: PoolClient;
-  eventId: string;
-  instanceId: string;
-  log: (message: string, meta?: Record<string, unknown>) => void;
-};
-
-export type OutboxHandlerResult = {
-  message?: string;
-};
-
-export interface OutboxEventHandler {
-  eventType: string;
-  canHandle: () => boolean;
-  deliver: (payload: OutboxPayload, ctx: OutboxHandlerContext) => Promise<OutboxHandlerResult | void>;
-}
+// Re-export leaf types so existing handler imports from ./registry.js keep working
+// without pulling new handlers into the FMCSA acyclic edge.
+export type {
+  OutboxPayload,
+  OutboxHandlerContext,
+  OutboxHandlerResult,
+  OutboxEventHandler,
+} from "./outbox-handler.types.js";
 
 class TestNoopHandler implements OutboxEventHandler {
   eventType = "test.noop" as const;

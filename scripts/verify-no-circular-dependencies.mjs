@@ -38,10 +38,13 @@ const ALLOWLIST = new Set([
   "outbox/handlers/dispatch-load-dispatched.handler.ts",
   "outbox/handlers/twilio-whatsapp.ts",
   "outbox/handlers/twilio-sms.ts",
-  "outbox/handlers/fmcsa-customer-verify.handler.ts",
   "outbox/handlers/registry.ts",
   "qbo/push.service.ts",
 ]);
+
+/** Must stay acyclic — shared types/constants live in leaf modules, not via registry import. */
+const FMCSA_HANDLER_REL = "outbox/handlers/fmcsa-customer-verify.handler.ts";
+const REGISTRY_REL = "outbox/handlers/registry.ts";
 
 const IMPORT_RE =
   /(?:import|export)\s+(?:type\s+)?(?:[^'"]*?\sfrom\s+)?["']([^"']+)["']|require\(\s*["']([^"']+)["']\s*\)|import\(\s*["']([^"']+)["']\s*\)/g;
@@ -152,12 +155,35 @@ if (process.argv.includes("--selftest")) {
     const didFail = offenders.length > 0;
     if (didFail !== s.expectFail) failed.push(s.name);
   }
+
+  // Planted regression: FMCSA handler must NOT be allowlisted — if registry↔handler
+  // cycle returns, run() must fail closed (break via leaf modules, never re-allowlist).
+  if (ALLOWLIST.has(FMCSA_HANDLER_REL)) {
+    failed.push("fmcsa-customer-verify.handler.ts must not be on ALLOWLIST (break cycle, do not allowlist)");
+  }
+  {
+    const plantCycle = [REGISTRY_REL, FMCSA_HANDLER_REL];
+    const offenders = plantCycle.filter((f) => !ALLOWLIST.has(f));
+    if (!offenders.includes(FMCSA_HANDLER_REL)) {
+      failed.push("plant: registry↔fmcsa-handler cycle must fail when handler is not allowlisted");
+    }
+  }
+  // Live graph: FMCSA handler must not participate in any SCC after the leaf extract.
+  const liveCycles = computeCycles();
+  for (const cycle of liveCycles) {
+    if (cycle.includes(FMCSA_HANDLER_REL)) {
+      failed.push(`live: ${FMCSA_HANDLER_REL} still in import cycle: ${cycle.join(" -> ")}`);
+    }
+  }
+
   if (failed.length) {
     console.error("verify:no-circular-dependencies --selftest FAIL:");
     for (const n of failed) console.error("  ✗ " + n);
     process.exit(1);
   }
-  console.log(`verify:no-circular-dependencies --selftest PASS (${scenarios.length} checks)`);
+  console.log(
+    `verify:no-circular-dependencies --selftest PASS (${scenarios.length} synthetic + FMCSA acyclic plant + live SCC check)`
+  );
   process.exit(0);
 }
 

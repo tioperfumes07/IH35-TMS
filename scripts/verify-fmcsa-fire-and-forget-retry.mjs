@@ -496,6 +496,37 @@ export function collectFailures(sources) {
   if (!handlerLit.includes("fmcsa_customer_missing_or_cross_tenant")) {
     failures.push("handler must permanently fail cross-tenant / missing customer");
   }
+  // Canonical PostgreSQL UUID (8-4-4-4-12) — reject permissive 36-char hex/hyphen.
+  {
+    const handlerSrc = sources.handler;
+    const permissive36 =
+      /\[\s*0-9a-fA-F-\s*\]\s*\{\s*36\s*\}/.test(handlerSrc) ||
+      /\[\s*0-9a-f-\s*\]\s*\{\s*36\s*\}/i.test(handlerSrc);
+    if (permissive36) {
+      failures.push("handler must not use permissive /^[0-9a-fA-F-]{36}$/ UUID check");
+    }
+    const canonical =
+      /\[0-9a-f\]\{8\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{12\}/i.test(handlerSrc);
+    if (!canonical) {
+      failures.push("handler must validate PostgreSQL UUID shape 8-4-4-4-12 (case-insensitive)");
+    }
+    if (!handlerLit.includes("invalid_uuid") && !/_invalid_uuid/.test(handler)) {
+      failures.push("handler must throw PermanentDeliveryError (*_invalid_uuid) on malformed payload IDs");
+    }
+    // Fail-fast: UUID validation call-sites must precede any set_config / customer SELECT.
+    const uuidIdx = sources.handler.search(/=\s*requireUuid\s*\(/);
+    const dbIdx = sources.handler.search(/set_config|FROM\s+mdata\.customers/);
+    if (uuidIdx < 0 || dbIdx < 0 || uuidIdx > dbIdx) {
+      failures.push("handler must validate UUIDs before any DB query (PermanentDeliveryError, zero retry/query)");
+    }
+  }
+  if (!/from\s+["']\.\/outbox-handler\.types\.js["']/.test(sources.handler) &&
+      !/from\s+["']\.\/outbox-handler\.types["']/.test(sources.handler)) {
+    failures.push("handler must import Outbox* types from outbox-handler.types leaf (not registry — breaks cycle)");
+  }
+  if (/from\s+["']\.\/registry\.js["']/.test(sources.handler) || /from\s+["']\.\/registry["']/.test(sources.handler)) {
+    failures.push("handler must not import registry.js (registry↔handler cycle)");
+  }
 
   if (!/parseRetryAfterMs/.test(httpErrors) || !/FmcsaRetryableError/.test(httpErrors)) {
     failures.push("fmcsa-http-errors must export typed retryable + parseRetryAfterMs");
@@ -806,6 +837,40 @@ function selftest() {
         ),
       }),
       expect: (f) => f.some((x) => /mobileRetryable|429→null/i.test(x)),
+    },
+    {
+      name: "permissive 36-char UUID regex",
+      mutate: (s) => ({
+        ...s,
+        handler: s.handler.replace(
+          /\[0-9a-f\]\{8\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{12\}/gi,
+          "[0-9a-fA-F-]{36}"
+        ),
+      }),
+      expect: (f) => f.some((x) => /8-4-4-4-12|permissive|UUID/i.test(x)),
+    },
+    {
+      name: "UUID validation after DB query (ordering regression)",
+      mutate: (s) => ({
+        ...s,
+        // Remove fail-fast requireUuid calls so the first DB touch precedes any UUID check use-site.
+        handler: s.handler
+          .replace(/const operatingCompanyId = requireUuid\([^;]+;/g, 'const operatingCompanyId = String(payload.operating_company_id ?? "");')
+          .replace(/const customerId = requireUuid\([^;]+;/g, 'const customerId = String(payload.customer_id ?? "");')
+          .replace(/const actorUserId = requireUuid\([^;]+;/g, 'const actorUserId = String(payload.actor_user_id ?? "");'),
+      }),
+      expect: (f) => f.some((x) => /before any DB query|validate UUIDs/i.test(x)),
+    },
+    {
+      name: "handler imports registry (cycle regression)",
+      mutate: (s) => ({
+        ...s,
+        handler: s.handler.replace(
+          /from\s+["']\.\/outbox-handler\.types\.js["']/,
+          'from "./registry.js"'
+        ),
+      }),
+      expect: (f) => f.some((x) => /registry|cycle|outbox-handler\.types/i.test(x)),
     },
   ];
 
