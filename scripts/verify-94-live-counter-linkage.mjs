@@ -1,61 +1,369 @@
 #!/usr/bin/env node
+/**
+ * Branch-aware proof for the Reports 94 Samsara live counter.
+ *
+ * This is a small abstract interpreter, not a source-shape search. It follows lexical bindings,
+ * assignments, destructuring, constant-folded control flow, and value taint from the scoped query
+ * into the returned `samsara_live` property. Query proof is created only inside the true branch of
+ * the matching relationExists condition after the company GUC is set on the same scoped client.
+ */
 import fs from "node:fs";
 import path from "node:path";
 import ts from "typescript";
 
 const ROOT = process.cwd();
-const TARGET_FILES = ["apps/backend/src/reports/library.routes.ts"];
+const TARGET = "apps/backend/src/reports/library.routes.ts";
+const ROUTE = "/api/v1/reports/home-fleet-snapshot";
+const RELATION = "integrations.samsara_vehicles";
+const TAINT = {
+  CLIENT: "client",
+  COMPANY: "company",
+  RELATION: "relation-condition",
+  QUERY: "samsara-query",
+  COUNT: "samsara-count",
+};
 
 function fail(messages) {
   console.error("verify:94-live-counter-linkage — FAILED");
-  for (const message of messages) {
-    console.error(`- ${message}`);
-  }
+  for (const message of messages) console.error(`- ${message}`);
   process.exit(1);
+}
+
+function parse(file, source) {
+  const sf = ts.createSourceFile(file, source, ts.ScriptTarget.ESNext, true, ts.ScriptKind.TS);
+  if (sf.parseDiagnostics.length) {
+    throw new Error(
+      `${file}: TypeScript parse failed: ${sf.parseDiagnostics
+        .map((diagnostic) => ts.flattenDiagnosticMessageText(diagnostic.messageText, " "))
+        .join("; ")}`,
+    );
+  }
+  return sf;
 }
 
 function stringValue(node) {
   if (ts.isStringLiteralLike(node) || ts.isNoSubstitutionTemplateLiteral(node)) return node.text;
-  if (ts.isTemplateExpression(node)) {
-    return [node.head.text, ...node.templateSpans.map((span) => span.literal.text)].join("${}");
+  if (ts.isTemplateExpression(node) && node.templateSpans.length === 0) return node.head.text;
+  return null;
+}
+
+function propertyName(node) {
+  if (ts.isPropertyAccessExpression(node)) return node.name.text;
+  if (ts.isElementAccessExpression(node) && node.argumentExpression && ts.isStringLiteralLike(node.argumentExpression)) {
+    return node.argumentExpression.text;
   }
   return null;
 }
 
-function isPropertyCall(node, objectName, methodName) {
-  return (
-    ts.isCallExpression(node) &&
-    ts.isPropertyAccessExpression(node.expression) &&
-    node.expression.expression.getText() === objectName &&
-    node.expression.name.text === methodName
-  );
+function constantBoolean(node) {
+  if (!node) return null;
+  if (node.kind === ts.SyntaxKind.TrueKeyword) return true;
+  if (node.kind === ts.SyntaxKind.FalseKeyword) return false;
+  if (ts.isParenthesizedExpression(node)) return constantBoolean(node.expression);
+  if (ts.isPrefixUnaryExpression(node) && node.operator === ts.SyntaxKind.ExclamationToken) {
+    const value = constantBoolean(node.operand);
+    return value == null ? null : !value;
+  }
+  if (ts.isConditionalExpression(node)) {
+    const condition = constantBoolean(node.condition);
+    if (condition === true) return constantBoolean(node.whenTrue);
+    if (condition === false) return constantBoolean(node.whenFalse);
+    const left = constantBoolean(node.whenTrue);
+    const right = constantBoolean(node.whenFalse);
+    return left === right ? left : null;
+  }
+  if (ts.isBinaryExpression(node)) {
+    const left = constantBoolean(node.left);
+    if (node.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken) {
+      if (left === false) return false;
+      const right = constantBoolean(node.right);
+      return left === true ? right : right === false ? false : null;
+    }
+    if (node.operatorToken.kind === ts.SyntaxKind.BarBarToken) {
+      if (left === true) return true;
+      const right = constantBoolean(node.right);
+      return left === false ? right : right === true ? true : null;
+    }
+  }
+  return null;
 }
 
-function isConstFalse(node) {
-  return node.kind === ts.SyntaxKind.FalseKeyword;
+function emptyValue() {
+  return { taint: new Set(), object: null, functionName: null, literal: null };
 }
 
-// The selected callback is known to execute. Nested function bodies are declarations/values,
-// not proof of execution. Constant-false branches are unreachable and must not satisfy a guard.
+function value({ taint = [], object = null, functionName = null, literal = null } = {}) {
+  return { taint: new Set(taint), object, functionName, literal };
+}
+
+function mergeValues(...values) {
+  return value({ taint: values.flatMap((entry) => [...entry.taint]) });
+}
+
+function cloneState(state) {
+  return {
+    env: new Map(state.env),
+    guc: state.guc,
+    relation: state.relation,
+    proofs: [...state.proofs],
+    failures: [...state.failures],
+    returns: [...state.returns],
+    terminated: state.terminated,
+  };
+}
+
+function initialState() {
+  return {
+    env: new Map(),
+    guc: false,
+    relation: false,
+    proofs: [],
+    failures: [],
+    returns: [],
+    terminated: false,
+  };
+}
+
+function evalExpression(node, state, sf) {
+  if (!node) return emptyValue();
+  if (ts.isIdentifier(node)) {
+    if (node.text === "relationExists" || node.text === "withCompanyScope") {
+      return value({ functionName: node.text });
+    }
+    return state.env.get(node.text) ?? emptyValue();
+  }
+  if (ts.isStringLiteralLike(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
+    return value({ literal: node.text });
+  }
+  if (ts.isNumericLiteral(node)) return value({ literal: Number(node.text) });
+  if (node.kind === ts.SyntaxKind.TrueKeyword) return value({ literal: true });
+  if (node.kind === ts.SyntaxKind.FalseKeyword) return value({ literal: false });
+  if (
+    ts.isParenthesizedExpression(node) ||
+    ts.isAsExpression(node) ||
+    ts.isTypeAssertionExpression(node) ||
+    ts.isNonNullExpression(node) ||
+    ts.isSatisfiesExpression(node) ||
+    ts.isAwaitExpression(node)
+  ) {
+    return evalExpression(node.expression, state, sf);
+  }
+  if (ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node)) {
+    if (node.getText(sf).endsWith(".operating_company_id")) {
+      return value({ taint: [TAINT.COMPANY] });
+    }
+    const base = evalExpression(node.expression, state, sf);
+    const name = propertyName(node);
+    if (base.object && name && base.object.has(name)) return base.object.get(name);
+    if (base.taint.has(TAINT.QUERY)) {
+      return value({ taint: name === "samsara_live" ? [TAINT.QUERY, TAINT.COUNT] : [TAINT.QUERY] });
+    }
+    return base;
+  }
+  if (ts.isObjectLiteralExpression(node)) {
+    const object = new Map();
+    for (const property of node.properties) {
+      if (ts.isPropertyAssignment(property)) {
+        const name = propertyName(property.name) ?? property.name.getText(sf).replace(/^["']|["']$/g, "");
+        object.set(name, evalExpression(property.initializer, state, sf));
+      } else if (ts.isShorthandPropertyAssignment(property)) {
+        object.set(property.name.text, evalExpression(property.name, state, sf));
+      }
+    }
+    return value({ object });
+  }
+  if (ts.isConditionalExpression(node)) {
+    const condition = constantBoolean(node.condition);
+    if (condition === true) return evalExpression(node.whenTrue, state, sf);
+    if (condition === false) return evalExpression(node.whenFalse, state, sf);
+    return mergeValues(
+      evalExpression(node.whenTrue, cloneState(state), sf),
+      evalExpression(node.whenFalse, cloneState(state), sf),
+    );
+  }
+  if (ts.isBinaryExpression(node)) {
+    if (node.operatorToken.kind === ts.SyntaxKind.QuestionQuestionToken) {
+      return mergeValues(evalExpression(node.left, state, sf), evalExpression(node.right, state, sf));
+    }
+    if (node.operatorToken.kind === ts.SyntaxKind.BarBarToken || node.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken) {
+      const folded = constantBoolean(node);
+      if (folded != null) return value({ literal: folded });
+      return mergeValues(evalExpression(node.left, state, sf), evalExpression(node.right, state, sf));
+    }
+  }
+  if (ts.isCallExpression(node)) {
+    const callee = evalExpression(node.expression, state, sf);
+    if (callee.functionName === "relationExists") {
+      const client = evalExpression(node.arguments[0], state, sf);
+      const relation = stringValue(node.arguments[1]);
+      if (client.taint.has(TAINT.CLIENT) && relation === RELATION) {
+        return value({ taint: [TAINT.RELATION] });
+      }
+      return emptyValue();
+    }
+    const method = propertyName(node.expression);
+    if (method === "query" && (ts.isPropertyAccessExpression(node.expression) || ts.isElementAccessExpression(node.expression))) {
+      const receiver = evalExpression(node.expression.expression, state, sf);
+      if (!receiver.taint.has(TAINT.CLIENT)) return emptyValue();
+      const sql = stringValue(node.arguments[0]);
+      if (!sql) {
+        return emptyValue();
+      }
+      const normalized = sql.replace(/--.*$/gm, "");
+      if (normalized.includes("set_config('app.operating_company_id', $1, true)")) {
+        const args = node.arguments[1];
+        const company = args && ts.isArrayLiteralExpression(args)
+          ? evalExpression(args.elements[0], state, sf)
+          : emptyValue();
+        if (company.taint.has(TAINT.COMPANY)) state.guc = true;
+        return emptyValue();
+      }
+      if (/\bFROM\s+integrations\.samsara_vehicles\b/i.test(normalized)) {
+        const sqlValid =
+          /\bcount\s*\(\s*DISTINCT\s+local_unit_id\s*\)/i.test(normalized) &&
+          /\blocal_unit_id\s+IS\s+NOT\s+NULL\b/i.test(normalized) &&
+          /\boperating_company_id\s*=\s*current_setting\(\s*'app\.operating_company_id'\s*,\s*true\s*\)::uuid/i.test(normalized);
+        if (!state.guc) state.failures.push("Samsara query is not causally after the company GUC");
+        if (!state.relation) state.failures.push("Samsara query is not inside the matching relationExists true branch");
+        if (!sqlValid) state.failures.push("Samsara query SQL does not enforce DISTINCT linked units and company GUC scope");
+        if (state.guc && state.relation && sqlValid) return value({ taint: [TAINT.QUERY] });
+        return emptyValue();
+      }
+      return emptyValue();
+    }
+    // Number(), optional chaining helpers, and other pure wrappers preserve evidence but cannot create it.
+    return mergeValues(...node.arguments.map((argument) => evalExpression(argument, state, sf)));
+  }
+  if (ts.isArrayLiteralExpression(node)) {
+    return mergeValues(...node.elements.map((element) => evalExpression(element, state, sf)));
+  }
+  return emptyValue();
+}
+
+function bindPattern(pattern, sourceValue, state, sf) {
+  if (ts.isIdentifier(pattern)) {
+    state.env.set(pattern.text, sourceValue);
+    return;
+  }
+  if (ts.isObjectBindingPattern(pattern)) {
+    for (const element of pattern.elements) {
+      const nameNode = element.propertyName ?? element.name;
+      const key = ts.isIdentifier(nameNode) || ts.isStringLiteralLike(nameNode)
+        ? nameNode.text
+        : ts.isComputedPropertyName(nameNode) && ts.isStringLiteralLike(nameNode.expression)
+          ? nameNode.expression.text
+          : null;
+      const selected = key && sourceValue.object?.get(key)
+        ? sourceValue.object.get(key)
+        : sourceValue.taint.has(TAINT.QUERY)
+          ? value({ taint: [TAINT.QUERY] })
+          : emptyValue();
+      bindPattern(element.name, selected, state, sf);
+    }
+  }
+}
+
+function relationCondition(node, state, sf) {
+  const evaluated = evalExpression(node, state, sf);
+  return evaluated.taint.has(TAINT.RELATION);
+}
+
+function executeStatement(statement, state, sf) {
+  if (state.terminated) return [state];
+  if (ts.isBlock(statement)) return executeStatements(statement.statements, [state], sf);
+  if (ts.isVariableStatement(statement)) {
+    for (const declaration of statement.declarationList.declarations) {
+      bindPattern(declaration.name, evalExpression(declaration.initializer, state, sf), state, sf);
+    }
+    return [state];
+  }
+  if (ts.isExpressionStatement(statement)) {
+    const expression = statement.expression;
+    if (ts.isBinaryExpression(expression) && expression.operatorToken.kind === ts.SyntaxKind.EqualsToken) {
+      const assigned = evalExpression(expression.right, state, sf);
+      if (ts.isIdentifier(expression.left)) state.env.set(expression.left.text, assigned);
+      else if (ts.isObjectLiteralExpression(expression.left)) {
+        // Object assignment patterns are represented as object literals by the parser.
+        for (const property of expression.left.properties) {
+          if (ts.isShorthandPropertyAssignment(property)) {
+            const selected = assigned.object?.get(property.name.text) ?? assigned;
+            state.env.set(property.name.text, selected);
+          }
+        }
+      }
+    } else {
+      evalExpression(expression, state, sf);
+    }
+    return [state];
+  }
+  if (ts.isIfStatement(statement)) {
+    const folded = constantBoolean(statement.expression);
+    if (folded === true) return executeStatement(statement.thenStatement, state, sf);
+    if (folded === false) {
+      return statement.elseStatement ? executeStatement(statement.elseStatement, state, sf) : [state];
+    }
+    const isRelation = relationCondition(statement.expression, cloneState(state), sf);
+    const trueState = cloneState(state);
+    const falseState = cloneState(state);
+    if (isRelation) {
+      trueState.relation = true;
+      falseState.relation = false;
+    }
+    return [
+      ...executeStatement(statement.thenStatement, trueState, sf),
+      ...(statement.elseStatement ? executeStatement(statement.elseStatement, falseState, sf) : [falseState]),
+    ];
+  }
+  if (ts.isTryStatement(statement)) {
+    const paths = executeStatement(statement.tryBlock, state, sf);
+    if (!statement.finallyBlock) return paths;
+    return paths.flatMap((pathState) => executeStatement(statement.finallyBlock, pathState, sf));
+  }
+  if (ts.isReturnStatement(statement)) {
+    const returned = evalExpression(statement.expression, state, sf);
+    state.returns.push(returned);
+    if (returned.object?.get("samsara_live")?.taint.has(TAINT.COUNT)) {
+      state.proofs.push("returned-query-count");
+    }
+    state.terminated = true;
+    return [state];
+  }
+  if (ts.isForOfStatement(statement) || ts.isForStatement(statement) || ts.isWhileStatement(statement)) {
+    // Loops are irrelevant to the canonical counter proof; evaluate at most one reachable body pass.
+    return executeStatement(statement.statement, state, sf);
+  }
+  return [state];
+}
+
+function executeStatements(statements, states, sf) {
+  let paths = states;
+  for (const statement of statements) {
+    paths = paths.flatMap((state) => executeStatement(statement, state, sf));
+  }
+  return paths;
+}
+
 function walkReachable(root, visitor) {
   function visit(node) {
     if (node !== root && ts.isFunctionLike(node)) return;
     visitor(node);
-    if (ts.isIfStatement(node) && isConstFalse(node.expression)) {
-      if (node.elseStatement) visit(node.elseStatement);
+    if (ts.isIfStatement(node)) {
+      visit(node.expression);
+      const folded = constantBoolean(node.expression);
+      if (folded !== false) visit(node.thenStatement);
+      if (folded !== true && node.elseStatement) visit(node.elseStatement);
       return;
     }
-    if (
-      ts.isBinaryExpression(node) &&
-      node.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken &&
-      isConstFalse(node.left)
-    ) {
-      visit(node.left);
-      return;
-    }
-    if (ts.isConditionalExpression(node) && isConstFalse(node.condition)) {
+    if (ts.isConditionalExpression(node)) {
       visit(node.condition);
-      visit(node.whenFalse);
+      const folded = constantBoolean(node.condition);
+      if (folded !== false) visit(node.whenTrue);
+      if (folded !== true) visit(node.whenFalse);
+      return;
+    }
+    if (ts.isBinaryExpression(node) && node.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken) {
+      visit(node.left);
+      if (constantBoolean(node.left) !== false) visit(node.right);
       return;
     }
     ts.forEachChild(node, visit);
@@ -63,387 +371,214 @@ function walkReachable(root, visitor) {
   visit(root);
 }
 
-function findRouteCallback(sf) {
-  let routeCallback = null;
+function findNamedFunction(sf, name) {
+  let found = null;
   function visit(node) {
-    if (
-      isPropertyCall(node, "app", "get") &&
-      stringValue(node.arguments[0]) === "/api/v1/reports/home-fleet-snapshot"
-    ) {
-      const callback = node.arguments[1];
-      if (callback && (ts.isArrowFunction(callback) || ts.isFunctionExpression(callback))) {
-        routeCallback = callback;
-      }
-    }
+    if (ts.isFunctionDeclaration(node) && node.name?.text === name) found = node;
     ts.forEachChild(node, visit);
   }
   visit(sf);
-  return routeCallback;
+  return found;
 }
 
-function findScopedSnapshot(routeCallback, sf) {
-  let result = null;
-  walkReachable(routeCallback, (node) => {
+function findRouteCallback(sf) {
+  const register = findNamedFunction(sf, "registerReportsLibraryRoutes");
+  if (!register) return null;
+  let found = null;
+  walkReachable(register, (node) => {
+    if (
+      ts.isCallExpression(node) &&
+      ts.isPropertyAccessExpression(node.expression) &&
+      node.expression.expression.getText(sf) === "app" &&
+      node.expression.name.text === "get" &&
+      stringValue(node.arguments[0]) === ROUTE
+    ) {
+      const callback = node.arguments[1];
+      if (callback && (ts.isArrowFunction(callback) || ts.isFunctionExpression(callback))) found = callback;
+    }
+  });
+  return found;
+}
+
+function findScopedCallback(route, sf) {
+  const aliases = new Map([["withCompanyScope", "withCompanyScope"]]);
+  let callback = null;
+  let resultName = null;
+  walkReachable(route, (node) => {
+    if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer) {
+      if (ts.isIdentifier(node.initializer)) {
+        const target = aliases.get(node.initializer.text);
+        if (target) aliases.set(node.name.text, target);
+      }
+      const awaited = ts.isAwaitExpression(node.initializer) ? node.initializer.expression : node.initializer;
+      if (ts.isCallExpression(awaited) && ts.isIdentifier(awaited.expression)) {
+        if (aliases.get(awaited.expression.text) === "withCompanyScope") {
+          const candidate = awaited.arguments[2];
+          if (candidate && (ts.isArrowFunction(candidate) || ts.isFunctionExpression(candidate))) {
+            callback = candidate;
+            resultName = node.name.text;
+          }
+        }
+      }
+    }
+  });
+  if (!callback || !resultName) return null;
+  const resultAliases = new Set([resultName]);
+  walkReachable(route, (node) => {
     if (
       ts.isVariableDeclaration(node) &&
       ts.isIdentifier(node.name) &&
-      node.name.text === "snapshot" &&
       node.initializer &&
-      ts.isAwaitExpression(node.initializer) &&
-      ts.isCallExpression(node.initializer.expression) &&
-      node.initializer.expression.expression.getText(sf) === "withCompanyScope"
+      ts.isIdentifier(node.initializer) &&
+      resultAliases.has(node.initializer.text)
     ) {
-      const callback = node.initializer.expression.arguments[2];
-      if (callback && (ts.isArrowFunction(callback) || ts.isFunctionExpression(callback))) {
-        result = { declaration: node, callback };
-      }
+      resultAliases.add(node.name.text);
     }
-  });
-  return result;
-}
-
-function hasReturnedSnapshot(routeCallback, sf) {
-  let found = false;
-  walkReachable(routeCallback, (node) => {
-    if (ts.isReturnStatement(node) && node.expression?.getText(sf) === "snapshot") found = true;
-  });
-  return found;
-}
-
-function hasSamsaraLiveResult(scopeCallback, sf) {
-  let found = false;
-  walkReachable(scopeCallback, (node) => {
-    if (
-      ts.isPropertyAssignment(node) &&
-      node.name.getText(sf) === "samsara_live" &&
-      node.initializer.getText(sf) === "samsaraLive"
-    ) {
-      found = true;
-    }
-    if (ts.isShorthandPropertyAssignment(node) && node.name.text === "samsara_live") {
-      found = true;
-    }
-  });
-  return found;
-}
-
-export function assertLiveCounterSource(relativePath, text) {
-  const failures = [];
-  const sf = ts.createSourceFile(relativePath, text, ts.ScriptTarget.ESNext, true, ts.ScriptKind.TS);
-  if (sf.parseDiagnostics.length > 0) {
-    return [
-      `${relativePath}:1 TypeScript parse failed: ${sf.parseDiagnostics
-        .map((d) => ts.flattenDiagnosticMessageText(d.messageText, " "))
-        .join("; ")}`,
-    ];
-  }
-
-  const routeCallback = findRouteCallback(sf);
-  if (!routeCallback) {
-    failures.push(`${relativePath}:1 could not locate /api/v1/reports/home-fleet-snapshot route`);
-    return failures;
-  }
-
-  const scopedSnapshot = findScopedSnapshot(routeCallback, sf);
-  if (!scopedSnapshot) {
-    failures.push(`${relativePath}: home fleet snapshot must execute through withCompanyScope`);
-    return failures;
-  }
-  if (!hasReturnedSnapshot(routeCallback, sf)) {
-    failures.push(`${relativePath}: route must return the scoped snapshot result`);
-  }
-
-  let relationCheck = false;
-  let companyGuc = false;
-  let clientReassigned = false;
-  let samsaraLiveStartsAtZero = false;
-  let samsaraLiveDeclarations = 0;
-  const samsaraQueries = [];
-  walkReachable(scopedSnapshot.callback, (node) => {
     if (
       ts.isBinaryExpression(node) &&
       node.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
-      node.left.getText(sf) === "client"
+      ts.isIdentifier(node.left) &&
+      ts.isIdentifier(node.right) &&
+      resultAliases.has(node.right.text)
     ) {
-      clientReassigned = true;
-    }
-    if (
-      ts.isVariableDeclaration(node) &&
-      node.name.getText(sf) === "samsaraLive"
-    ) {
-      samsaraLiveDeclarations += 1;
-      if (node.initializer?.getText(sf) === "0") samsaraLiveStartsAtZero = true;
-    }
-    if (
-      ts.isCallExpression(node) &&
-      ts.isIdentifier(node.expression) &&
-      node.expression.text === "relationExists" &&
-      node.arguments[0]?.getText(sf) === "client" &&
-      stringValue(node.arguments[1]) === "integrations.samsara_vehicles"
-    ) {
-      relationCheck = true;
-    }
-    if (
-      isPropertyCall(node, "client", "query") &&
-      stringValue(node.arguments[0])?.includes("set_config('app.operating_company_id', $1, true)") &&
-      node.arguments[1]?.getText(sf) === "[companyId]"
-    ) {
-      companyGuc = true;
-    }
-    if (isPropertyCall(node, "client", "query")) {
-      const sql = stringValue(node.arguments[0]);
-      if (sql && /\bFROM\s+integrations\.samsara_vehicles\b/i.test(sql.replace(/--.*$/gm, ""))) {
-        const awaitExpression = ts.isAwaitExpression(node.parent) ? node.parent : null;
-        const declaration = awaitExpression && ts.isVariableDeclaration(awaitExpression.parent)
-          ? awaitExpression.parent
-          : null;
-        samsaraQueries.push({
-          sql: sql.replace(/--.*$/gm, ""),
-          resultName: declaration && ts.isIdentifier(declaration.name) ? declaration.name.text : null,
-          position: node.getStart(sf),
-          node,
-        });
-      }
+      resultAliases.add(node.left.text);
     }
   });
+  let returned = false;
+  walkReachable(route, (node) => {
+    if (
+      ts.isReturnStatement(node) &&
+      node.expression &&
+      ts.isIdentifier(node.expression) &&
+      resultAliases.has(node.expression.text)
+    ) {
+      returned = true;
+    }
+  });
+  return { callback, returned };
+}
 
-  if (!relationCheck) {
-    failures.push(`${relativePath}: missing reachable relationExists(client, integrations.samsara_vehicles) check`);
+export function assertLiveCounterSource(file, source) {
+  let sf;
+  try {
+    sf = parse(file, source);
+  } catch (error) {
+    return [error instanceof Error ? error.message : String(error)];
   }
-  if (!companyGuc) {
-    failures.push(`${relativePath}: missing reachable client.query set_config for app.operating_company_id`);
+  const route = findRouteCallback(sf);
+  if (!route) return [`${file}: reachable inline ${ROUTE} route callback is missing`];
+  const scoped = findScopedCallback(route, sf);
+  if (!scoped) return [`${file}: route must capture an invoked inline withCompanyScope callback`];
+  if (!scoped.returned) return [`${file}: route must return the captured withCompanyScope result`];
+
+  const state = initialState();
+  const clientParameter = scoped.callback.parameters[0];
+  if (!clientParameter || !ts.isIdentifier(clientParameter.name)) {
+    return [`${file}: withCompanyScope callback must declare a lexical client parameter`];
   }
-  if (clientReassigned) {
-    failures.push(`${relativePath}: scoped client must not be reassigned`);
-  }
-  if (!samsaraLiveStartsAtZero) {
-    failures.push(`${relativePath}: samsaraLive must initialize to zero before the live query`);
-  }
-  if (samsaraLiveDeclarations !== 1) {
-    failures.push(`${relativePath}: expected exactly one reachable samsaraLive declaration`);
-  }
-  if (samsaraQueries.length !== 1) {
-    failures.push(`${relativePath}: expected exactly one reachable client samsara counter query, found ${samsaraQueries.length}`);
-    return failures;
-  }
-  const { sql, resultName, position: queryPosition, node: queryNode } = samsaraQueries[0];
-  if (!resultName) {
-    failures.push(`${relativePath}: samsara counter query result must be captured`);
-  } else {
-    let queryBranch = null;
-    let queryControl = null;
-    for (let ancestor = queryNode.parent; ancestor && ancestor !== scopedSnapshot.callback; ancestor = ancestor.parent) {
-      if (ts.isIfStatement(ancestor) && ancestor.thenStatement.pos <= queryNode.pos && ancestor.thenStatement.end >= queryNode.end) {
-        queryBranch = ancestor.thenStatement;
-        queryControl = ancestor;
-        break;
-      }
-    }
-    const resultReassignments = [];
-    const counterAssignments = [];
-    walkReachable(queryBranch ?? scopedSnapshot.callback, (node) => {
-      if (
-        ts.isBinaryExpression(node) &&
-        node.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
-        node.getStart(sf) > queryPosition
-      ) {
-        if (node.left.getText(sf) === resultName) resultReassignments.push(node);
-        if (node.left.getText(sf) === "samsaraLive") counterAssignments.push(node);
-      }
-    });
-    if (resultReassignments.length > 0) {
-      failures.push(`${relativePath}: captured samsara query result must not be reassigned`);
-    }
-    const correctAssignments = counterAssignments.filter((node) => {
-      const value = node.right.getText(sf);
-      return value.includes(resultName) && value.includes("samsara_live");
-    });
-    if (counterAssignments.length !== 1 || correctAssignments.length !== 1) {
-      failures.push(`${relativePath}: samsaraLive must derive from the captured query result's samsara_live field`);
-    }
-    if (queryBranch) {
-      let overwrittenAfterBranch = false;
-      walkReachable(scopedSnapshot.callback, (node) => {
-        let insideQueryControl = false;
-        for (let ancestor = node.parent; ancestor && ancestor !== scopedSnapshot.callback; ancestor = ancestor.parent) {
-          if (ancestor === queryControl) {
-            insideQueryControl = true;
-            break;
-          }
-        }
-        if (
-          !insideQueryControl &&
-          ts.isBinaryExpression(node) &&
-          node.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
-          node.left.getText(sf) === "samsaraLive" &&
-          node.getStart(sf) > queryBranch.end
-        ) {
-          overwrittenAfterBranch = true;
-        }
-      });
-      if (overwrittenAfterBranch) {
-        failures.push(`${relativePath}: samsaraLive must not be overwritten after the scoped live-query branch`);
-      }
-    }
-  }
-  if (
-    !/\bWHERE\s+operating_company_id\s*=\s*current_setting\(\s*'app\.operating_company_id'\s*,\s*true\s*\)::uuid/i.test(sql)
-  ) {
-    failures.push(`${relativePath}: samsara counter query must use the app.operating_company_id GUC`);
-  }
-  if (!/\bcount\s*\(\s*DISTINCT\s+local_unit_id\s*\)/i.test(sql)) {
-    failures.push(`${relativePath}: samsara counter query must count DISTINCT local_unit_id`);
-  }
-  if (!/\blocal_unit_id\s+IS\s+NOT\s+NULL\b/i.test(sql)) {
-    failures.push(`${relativePath}: samsara counter query must exclude NULL local_unit_id`);
-  }
-  if (!hasSamsaraLiveResult(scopedSnapshot.callback, sf)) {
-    failures.push(`${relativePath}: scoped snapshot must return samsara_live from samsaraLive`);
+  state.env.set(clientParameter.name.text, value({ taint: [TAINT.CLIENT] }));
+  // The canonical company id may be introduced inside the callback; seed its source expression.
+  state.env.set("companyId", value({ taint: [TAINT.COMPANY] }));
+  const body = scoped.callback.body;
+  if (!ts.isBlock(body)) return [`${file}: withCompanyScope callback must use a block body`];
+  const paths = executeStatements(body.statements, [state], sf);
+  const failures = [...new Set(paths.flatMap((pathState) => pathState.failures))];
+  if (!paths.some((pathState) => pathState.proofs.includes("returned-query-count"))) {
+    failures.push(`${file}: no reachable relation/GUC/query path flows into returned samsara_live`);
   }
   return failures;
 }
 
+function canonicalFixture() {
+  return `
+    export async function registerReportsLibraryRoutes(app) {
+      app.get("${ROUTE}", async () => {
+        const snapshot = await withCompanyScope(user.uuid, companyId, async (client) => {
+          await client.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
+          let samsaraLive = 0;
+          if (await relationExists(client, "${RELATION}")) {
+            const result = await client.query(\`SELECT count(DISTINCT local_unit_id)::text AS samsara_live
+              FROM integrations.samsara_vehicles
+              WHERE operating_company_id = current_setting('app.operating_company_id', true)::uuid
+                AND local_unit_id IS NOT NULL\`);
+            samsaraLive = Number(result.rows[0]?.samsara_live ?? 0);
+          }
+          return { samsara_live: samsaraLive };
+        });
+        return snapshot;
+      });
+    }
+  `;
+}
+
 function runSelftest() {
-  const good = `
-    app.get("/api/v1/reports/home-fleet-snapshot", async () => {
-      const snapshot = await withCompanyScope(user.uuid, companyId, async (client) => {
-        await client.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
-        let samsaraLive = 0;
-        if (await relationExists(client, "integrations.samsara_vehicles")) {
-          const samsaraRes = await client.query(\`SELECT count(DISTINCT local_unit_id)
-            FROM integrations.samsara_vehicles
-            WHERE operating_company_id = current_setting('app.operating_company_id', true)::uuid
-            AND local_unit_id IS NOT NULL\`);
-          samsaraLive = Number(samsaraRes.rows[0]?.samsara_live ?? 0);
-        }
-        return { samsara_live: samsaraLive };
-      });
-      return snapshot;
-    });
-  `;
-  const decoy = `
-    app.get("/api/v1/reports/home-fleet-snapshot", async () => {
-      const snapshot = await withCompanyScope(user.uuid, companyId, async (client) => {
-        await client.query("SELECT set_config('wrong.guc', $1, true)", [companyId]);
-      // relationExists(client, "integrations.samsara_vehicles")
-      const fake = "FROM integrations.samsara_vehicles WHERE operating_company_id local_unit_id";
-      await client.query("SELECT count(*) FROM mdata.units");
-        return { samsara_live: 999 };
-      });
-      return snapshot;
-    });
-  `;
-  const deadFunction = `
-    app.get("/api/v1/reports/home-fleet-snapshot", async () => {
-      const snapshot = await withCompanyScope(user.uuid, companyId, async (client) => {
-        await client.query("SELECT set_config('app.operating_company_id', $1, true)", [companyId]);
-        let samsaraLive = 0;
-        function neverCalled() {
-          relationExists(client, "integrations.samsara_vehicles");
-          client.query(\`SELECT count(DISTINCT local_unit_id)
-            FROM integrations.samsara_vehicles
-            WHERE operating_company_id = current_setting('app.operating_company_id', true)::uuid
-            AND local_unit_id IS NOT NULL\`);
-        }
-        return { samsara_live: samsaraLive };
-      });
-      return snapshot;
-    });
-  `;
-  const wrongClient = good
-    .replace(`relationExists(client, "integrations.samsara_vehicles")`, `relationExists(wrongClient, "integrations.samsara_vehicles")`)
-    .replace("await client.query(`SELECT count(DISTINCT local_unit_id)", "await wrongClient.query(`SELECT count(DISTINCT local_unit_id)");
-  const wrongGuc = good.replaceAll("app.operating_company_id", "wrong.guc");
-  const hardcodedResult = good.replace("samsara_live: samsaraLive", "samsara_live: 999");
-  const constantFalse = good.replace(
-    `if (await relationExists(client, "integrations.samsara_vehicles")) {`,
-    `if (false) { relationExists(client, "integrations.samsara_vehicles");`,
-  );
-  const inertCallback = good.replace(
-    `if (await relationExists(client, "integrations.samsara_vehicles")) {`,
-    `const inert = () => { relationExists(client, "integrations.samsara_vehicles");`,
-  ).replace(
-    `        }\n        return { samsara_live: samsaraLive };`,
-    `        };\n        return { samsara_live: samsaraLive };`,
-  );
-  const reassignedClient = good.replace(
-    "let samsaraLive = 0;",
-    "let samsaraLive = 0; client = wrongClient;",
-  );
-  const ignoredResult = good
-    .replace("const samsaraRes = await client.query", "await client.query")
-    .replace("samsaraLive = Number(samsaraRes.rows[0]?.samsara_live ?? 0);", "samsaraLive = 0;");
-  const poisonedInitialValue = good.replace("let samsaraLive = 0;", "let samsaraLive = 999;");
-  const reassignedQueryResult = good
-    .replace("const samsaraRes = await client.query", "let samsaraRes = await client.query")
-    .replace(
-      "samsaraLive = Number(samsaraRes.rows[0]?.samsara_live ?? 0);",
-      "samsaraRes = fakeResult; samsaraLive = Number(samsaraRes.rows[0]?.samsara_live ?? 0);",
-    );
-  const overwrittenCounter = good.replace(
-    "return { samsara_live: samsaraLive };",
-    "samsaraLive = 999; return { samsara_live: samsaraLive };",
-  );
-  const goodFailures = assertLiveCounterSource("good.ts", good);
-  const decoyFailures = assertLiveCounterSource("decoy.ts", decoy);
-  const deadFunctionFailures = assertLiveCounterSource("dead-function.ts", deadFunction);
-  const wrongClientFailures = assertLiveCounterSource("wrong-client.ts", wrongClient);
-  const wrongGucFailures = assertLiveCounterSource("wrong-guc.ts", wrongGuc);
-  const hardcodedResultFailures = assertLiveCounterSource("hardcoded-result.ts", hardcodedResult);
-  const constantFalseFailures = assertLiveCounterSource("constant-false.ts", constantFalse);
-  const inertCallbackFailures = assertLiveCounterSource("inert-callback.ts", inertCallback);
-  const reassignedClientFailures = assertLiveCounterSource("reassigned-client.ts", reassignedClient);
-  const ignoredResultFailures = assertLiveCounterSource("ignored-result.ts", ignoredResult);
-  const poisonedInitialValueFailures = assertLiveCounterSource("poisoned-initial-value.ts", poisonedInitialValue);
-  const reassignedQueryResultFailures = assertLiveCounterSource("reassigned-query-result.ts", reassignedQueryResult);
-  const overwrittenCounterFailures = assertLiveCounterSource("overwritten-counter.ts", overwrittenCounter);
-  if (
-    goodFailures.length > 0 ||
-    decoyFailures.length < 3 ||
-    !deadFunctionFailures.some((failure) => failure.includes("relationExists")) ||
-    !deadFunctionFailures.some((failure) => failure.includes("counter query")) ||
-    !wrongClientFailures.some((failure) => failure.includes("relationExists")) ||
-    !wrongClientFailures.some((failure) => failure.includes("counter query")) ||
-    !wrongGucFailures.some((failure) => failure.includes("app.operating_company_id")) ||
-    !hardcodedResultFailures.some((failure) => failure.includes("return samsara_live")) ||
-    !constantFalseFailures.some((failure) => failure.includes("relationExists")) ||
-    !constantFalseFailures.some((failure) => failure.includes("counter query")) ||
-    !inertCallbackFailures.some((failure) => failure.includes("relationExists")) ||
-    !inertCallbackFailures.some((failure) => failure.includes("counter query")) ||
-    !reassignedClientFailures.some((failure) => failure.includes("must not be reassigned")) ||
-    !ignoredResultFailures.some((failure) => failure.includes("result must be captured")) ||
-    !poisonedInitialValueFailures.some((failure) => failure.includes("initialize to zero")) ||
-    !reassignedQueryResultFailures.some((failure) => failure.includes("result must not be reassigned")) ||
-    !overwrittenCounterFailures.some((failure) => failure.includes("must not be overwritten"))
-  ) {
-    console.error("verify:94-live-counter-linkage --selftest FAIL", {
-      goodFailures,
-      decoyFailures,
-      deadFunctionFailures,
-      wrongClientFailures,
-      wrongGucFailures,
-      hardcodedResultFailures,
-      constantFalseFailures,
-      inertCallbackFailures,
-      reassignedClientFailures,
-      ignoredResultFailures,
-      poisonedInitialValueFailures,
-      reassignedQueryResultFailures,
-      overwrittenCounterFailures,
-    });
+  const good = canonicalFixture();
+  const valid = [
+    ["canonical", good],
+    ["function-and-result-aliases", good
+      .replace("const snapshot = await withCompanyScope", "const scoped = withCompanyScope; const snapshot = await scoped")
+      .replace("if (await relationExists", "const exists = relationExists; if (await exists")
+      .replace("const result = await client.query", "const db = client; const result = await db.query")
+      .replace("return snapshot;", "const response = snapshot; return response;")],
+    ["later-assignment-alias", good
+      .replace("const result = await client.query", "let result; result = await client.query")],
+    ["destructured-result", good
+      .replace("const result = await client.query", "const result = await client.query")
+      .replace(
+        "samsaraLive = Number(result.rows[0]?.samsara_live ?? 0);",
+        "const { rows } = result; samsaraLive = Number(rows[0]?.[\"samsara_live\"] ?? 0);",
+      )],
+  ];
+  const invalid = [
+    ["false-and-flag", good.replace(`if (await relationExists(client, "${RELATION}"))`, `if (false && flag)`)],
+    ["false-conditional", good.replace(`if (await relationExists(client, "${RELATION}"))`, `if (false ? true : false)`)],
+    ["unreachable-else", good.replace(
+      `if (await relationExists(client, "${RELATION}")) {`,
+      `if (true) { samsaraLive = 0; } else { if (await relationExists(client, "${RELATION}")) {`,
+    ).replace(
+      `          }\n          return { samsara_live: samsaraLive };`,
+      `          } }\n          return { samsara_live: samsaraLive };`,
+    )],
+    ["unrelated-relation", good.replace(
+      `if (await relationExists(client, "${RELATION}")) {`,
+      `if (await relationExists(client, "${RELATION}")) { void 0; }\n          {`,
+    )],
+    ["discarded-correct-object", good.replace(
+      "return { samsara_live: samsaraLive };",
+      "({ samsara_live: samsaraLive }); return { samsara_live: 999 };",
+    )],
+    ["hardcoded-return", good.replace("return { samsara_live: samsaraLive };", "return { samsara_live: 999 };")],
+    ["ignored-query-result", good
+      .replace("const result = await client.query", "await client.query")
+      .replace("samsaraLive = Number(result.rows[0]?.samsara_live ?? 0);", "samsaraLive = 0;")],
+    ["wrong-client", good.replace("const result = await client.query", "const result = await wrongClient.query")],
+    ["wrong-guc", good.replaceAll("app.operating_company_id", "wrong.guc")],
+    ["dead-helper", good.replace(
+      `if (await relationExists(client, "${RELATION}")) {`,
+      `function dead(){ if (relationExists(client, "${RELATION}")) {`,
+    ).replace(
+      `          }\n          return { samsara_live: samsaraLive };`,
+      `          } }\n          return { samsara_live: samsaraLive };`,
+    )],
+    ["unknown-wrapper", good.replace(
+      "const snapshot = await withCompanyScope",
+      "const snapshot = await unknownWrapper(withCompanyScope)",
+    )],
+  ];
+  const problems = [];
+  for (const [name, source] of valid) {
+    const failures = assertLiveCounterSource(`${name}.ts`, source);
+    if (failures.length) problems.push(`${name} unexpectedly failed: ${failures.join(" | ")}`);
+  }
+  for (const [name, source] of invalid) {
+    const failures = assertLiveCounterSource(`${name}.ts`, source);
+    if (!failures.length) problems.push(`${name} unexpectedly passed`);
+  }
+  if (problems.length) {
+    console.error(`verify:94-live-counter-linkage --selftest FAIL\n${problems.join("\n")}`);
     process.exit(1);
   }
-  console.log("verify:94-live-counter-linkage --selftest PASS never-called query/relation helper rejected");
-  console.log("verify:94-live-counter-linkage --selftest PASS wrong relation/query client rejected");
-  console.log("verify:94-live-counter-linkage --selftest PASS wrong set_config/current_setting GUC rejected");
-  console.log("verify:94-live-counter-linkage --selftest PASS hardcoded samsara_live result rejected");
-  console.log("verify:94-live-counter-linkage --selftest PASS constant-false query branch rejected");
-  console.log("verify:94-live-counter-linkage --selftest PASS inert callback query wrapper rejected");
-  console.log("verify:94-live-counter-linkage --selftest PASS reassigned scoped client rejected");
-  console.log("verify:94-live-counter-linkage --selftest PASS ignored query result rejected");
-  console.log("verify:94-live-counter-linkage --selftest PASS poisoned samsaraLive initializer rejected");
-  console.log("verify:94-live-counter-linkage --selftest PASS reassigned query result rejected");
-  console.log("verify:94-live-counter-linkage --selftest PASS overwritten returned counter rejected");
+  console.log(`verify:94-live-counter-linkage --selftest PASS ${valid.length} valid and ${invalid.length} VETO/metamorphic cases`);
 }
 
 function main() {
@@ -451,18 +586,11 @@ function main() {
     runSelftest();
     return;
   }
-
-  const failures = [];
-  for (const relativePath of TARGET_FILES) {
-    const absolutePath = path.join(ROOT, relativePath);
-    if (!fs.existsSync(absolutePath)) {
-      failures.push(`${relativePath}:1 target file missing`);
-      continue;
-    }
-    failures.push(...assertLiveCounterSource(relativePath, fs.readFileSync(absolutePath, "utf8")));
-  }
-  if (failures.length > 0) fail(failures);
-  console.log("verify:94-live-counter-linkage — OK");
+  const absolute = path.join(ROOT, TARGET);
+  if (!fs.existsSync(absolute)) fail([`${TARGET}: target file missing`]);
+  const failures = assertLiveCounterSource(TARGET, fs.readFileSync(absolute, "utf8"));
+  if (failures.length) fail(failures);
+  console.log("verify:94-live-counter-linkage — OK branch-aware query-to-response proof");
 }
 
 main();

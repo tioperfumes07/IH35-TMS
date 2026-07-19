@@ -1432,8 +1432,12 @@ Status: LOCKED (non-financial guard/spec wiring; no runtime UI or tab change)
 - Static guards must inspect executable TypeScript/JSX semantics and fail closed on missing files, parse
   errors, broken producer/resolver/consumer bindings, or a regression above the locked adoption baseline.
 - Comments, documentation text, and inert string constants must never satisfy a guard assertion.
-- Every guard in this contract must include a planted `--selftest` proving a valid executable fixture passes
-  and comment/string decoys fail.
+- Analysis must use lexical scopes and branch-aware control/data flow: fold constant conditions, reject
+  unreachable branches and uninvoked callbacks, and require query evidence to flow into the returned field.
+- Alias proof covers declarations, later assignments, destructuring, computed properties, multi-hop aliases,
+  and invoked helper returns without leaking bindings between lexical scopes.
+- Every guard in this contract must include a table-driven `--selftest` corpus covering valid controls, every
+  known VETO plant, and fresh metamorphic variants. Unknown wrappers fail closed unless invocation is proven.
 - CI wiring is additive through unique auto-discovered `scripts/verify-steps/<NNN>-*.mjs` entries. Do not edit
   `package.json`, `.github/workflows/locked-guards.yml`, or `.github/workflows/ci.yml`.
 
