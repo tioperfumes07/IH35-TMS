@@ -1559,6 +1559,41 @@ reserve (not status); (5) TRANSP/Faro identity fail-closed; (6) FORCE RLS Owner/
     Contradictory source vs TSL detected via `NOT EXISTS` bad TSL (never treated
     as “no TSL”).
 
+### CPA / code-review VETO amendments (append-only 2026-07-19 — exact head `eb06028d`)
+16. **Authoritative Faro agreement on every posting path.** Funding, customer
+    payment, reserve release, chargeback, default-interest accrual, day-95
+    cron selection, and Faro CSV all resolve the same effective
+    `FARO_FULL_RECOURSE_V1` binding via `requireEffectiveFaroFullRecourseAgreement`
+    + advance bound to that vendor. **Forbidden:** customer-majority
+    (`ORDER BY COUNT(*) DESC`), sole-factor, name match, entity-wide advance
+    selection. RTS / partial / missing / expired / ambiguous → fail closed
+    (`policy_faro_agreement` / CSV `policy_faro_agreement`).
+17. **Reversed JEs excluded from chargeback/repayment eligibility.** Outstanding
+    liability/reserve sums require `reverses_je_id IS NULL AND reversed_by_je_id IS NULL`
+    (when columns exist) plus authoritative source/TSL consistency. Reversed
+    funding ⇒ outstanding 0 ⇒ chargeback fail closed.
+18. **Lock + exact outstanding before payment/reserve-release.** `FOR UPDATE` on
+    the advance, compute exact linked outstanding, reject overpayment /
+    over-release **before** JE/subledger writes (`policy_overpayment` /
+    `policy_over_release`). **Forbidden:** `Math.min` clamping as validation
+    substitute. Concurrent settlements re-validate inside the posting txn.
+19. **Strict repair exact expected shape (no posting-key bypass).** Role accounts,
+    debit/credit, amounts, source identity, agreement/advance, status, absence
+    of reversals validated by `validateLifecycleJeExactShape` before any
+    invoice/reserve side effect. Posting-key repair uses the same validator.
+    Foreign/non-null `source_transaction_type` with null id = conflict.
+20. **Invalid supplied dates fail closed.** `resolveCanonicalEntryDate` never
+    salvages malformed/ambiguous/missing dates to today
+    (`policy_invalid_entry_date` / `policy_missing_entry_date`). Callers that
+    intentionally mean today pass `companyBusinessDate()` explicitly.
+21. **Posting-key same-entity composite FKs + race-safe claim.**
+    `factoring_lifecycle_posting_keys_advance_same_entity_fkey` +
+    `…_je_same_entity_fkey`; claim via `ON CONFLICT DO NOTHING RETURNING`;
+    concurrent loser rolls JE savepoint and resolves to validated
+    `already_posted` (never query inside aborted txn). Chargeback retries check
+    posting keys **before** status rejection and fully repair invoice
+    `factoring_status` / subledger / audit.
+
 
 ## 16. Accounting Home — Pending approvals ↔ GL linkage (0280-15)
 

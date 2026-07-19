@@ -29,6 +29,7 @@ import {
   FACTORING_INTEREST_ACCRUAL_AFTER_DAY,
   FACTORING_REPURCHASE_DEADLINE_DAYS,
 } from "./contract-config.js";
+import { requireEffectiveFaroFullRecourseAgreement } from "./faro-agreement-gate.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -66,12 +67,14 @@ async function companyPostingEnabled(client: DbClient, operatingCompanyId: strin
   return isEnabled(client as never, FACTORING_GL_POSTING_FLAG, { operating_company_id: operatingCompanyId });
 }
 
-// Advances that are funded, customer-unpaid (status 'advanced'), and past the 30+5 grace as of `asOf`.
+// Advances that are funded, customer-unpaid (status 'advanced'), past the 30+5 grace as of `asOf`,
+// AND bound to the authoritative Faro full-recourse vendor (never entity-wide / other-factor).
 async function selectOutstandingPastGrace(
   client: DbClient,
   operatingCompanyId: string,
   asOf: string,
-  minDayIndex: number
+  minDayIndex: number,
+  faroVendorId: string
 ): Promise<OutstandingAdvance[]> {
   const res = await client.query<{
     id: string;
@@ -99,10 +102,11 @@ async function selectOutstandingPastGrace(
       WHERE fa.operating_company_id = $1::uuid
         AND fa.status = 'advanced'
         AND fa.advanced_at IS NOT NULL
+        AND fa.factoring_company_vendor_id = $4::uuid
         AND (($2::date) - ((fa.advanced_at AT TIME ZONE 'America/Chicago')::date)) >= $3::int
       ORDER BY fa.advanced_at ASC
     `,
-    [operatingCompanyId, asOf, minDayIndex]
+    [operatingCompanyId, asOf, minDayIndex, faroVendorId]
   );
   return res.rows.map((r) => ({
     id: r.id,
@@ -154,7 +158,15 @@ export async function accrueDefaultInterestForCompany(input: {
   const advances = await withLuciaBypass(async (client: DbClient) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
     if (!(await companyPostingEnabled(client, input.operating_company_id))) return null;
-    return selectOutstandingPastGrace(client, input.operating_company_id, asOf, FACTORING_INTEREST_ACCRUAL_AFTER_DAY + 1);
+    const faro = await requireEffectiveFaroFullRecourseAgreement(client, input.operating_company_id, asOf);
+    if (!faro.ok) return []; // Fail closed — no entity-wide scan without authoritative Faro agreement.
+    return selectOutstandingPastGrace(
+      client,
+      input.operating_company_id,
+      asOf,
+      FACTORING_INTEREST_ACCRUAL_AFTER_DAY + 1,
+      faro.vendorId
+    );
   });
 
   if (advances === null) return { flag_off: true, advances_scanned: 0, accruals_posted: 0 };
@@ -179,7 +191,15 @@ export async function triggerDay95RecourseForCompany(input: {
   const candidates = await withLuciaBypass(async (client: DbClient) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
     if (!(await companyPostingEnabled(client, input.operating_company_id))) return null;
-    return selectOutstandingPastGrace(client, input.operating_company_id, asOf, FACTORING_REPURCHASE_DEADLINE_DAYS);
+    const faro = await requireEffectiveFaroFullRecourseAgreement(client, input.operating_company_id, asOf);
+    if (!faro.ok) return []; // Fail closed — RTS/partial/missing/expired/ambiguous agreement.
+    return selectOutstandingPastGrace(
+      client,
+      input.operating_company_id,
+      asOf,
+      FACTORING_REPURCHASE_DEADLINE_DAYS,
+      faro.vendorId
+    );
   });
 
   if (candidates === null) return { flag_off: true, advances_scanned: 0, recoursed: 0 };

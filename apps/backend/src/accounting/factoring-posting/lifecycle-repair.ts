@@ -27,6 +27,35 @@ export type LifecycleRepairCandidate = {
   reason?: string;
 };
 
+/** Exact expected role leg for strict repair / posting-key validation (CPA VETO eb06028d). */
+export type ExpectedLifecycleLeg = {
+  role: string;
+  debit_or_credit: "debit" | "credit";
+  amount_cents: number;
+};
+
+let reversalColsCached: boolean | null = null;
+async function hasReversalLinkageColumns(client: DbClient): Promise<boolean> {
+  if (reversalColsCached != null) return reversalColsCached;
+  const res = await client.query<{ n: string }>(
+    `
+      SELECT COUNT(*)::text AS n
+        FROM information_schema.columns
+       WHERE table_schema = 'accounting'
+         AND table_name = 'journal_entries'
+         AND column_name IN ('reverses_je_id', 'reversed_by_je_id')
+    `
+  );
+  reversalColsCached = Number(res.rows[0]?.n ?? 0) === 2;
+  return reversalColsCached;
+}
+
+/** SQL AND-fragment excluding reversed / reversing JEs when linkage columns exist. */
+async function liveJeNotReversedSql(client: DbClient): Promise<string> {
+  if (!(await hasReversalLinkageColumns(client))) return "";
+  return ` AND je.reverses_je_id IS NULL AND je.reversed_by_je_id IS NULL `;
+}
+
 /** Calendar-day gap between two YYYY-MM-DD company business dates (no UTC wall-clock). */
 export function calendarDayIndexBetween(purchaseYmd: string, accrualYmd: string): number {
   const [py, pm, pd] = purchaseYmd.slice(0, 10).split("-").map(Number);
@@ -42,10 +71,153 @@ function isLifecycleType(v: string): v is FactoringLifecycleSourceType {
 }
 
 /**
- * Find a unique already-posted JE for (entity, lifecycle source type, advance)
- * that is posted, balanced, and free of contradictory source/TSL provenance.
- * Memo is an optional hint only when postings are still unattributed.
+ * Validate an existing JE against exact expected role accounts, D/C, amounts,
+ * source identity, advance, status, and absence of reversals. Used by both
+ * strict candidate repair AND posting-key repair (no bypass).
+ *
+ * Foreign/non-null source_transaction_type with a null source id is a conflict
+ * (never treat as unattributed). Unattributed = BOTH type and id null.
  */
+export async function validateLifecycleJeExactShape(
+  client: DbClient,
+  opts: {
+    operating_company_id: string;
+    journal_entry_id: string;
+    factoring_advance_id: string;
+    source_transaction_type: FactoringLifecycleSourceType;
+    expected_legs: ExpectedLifecycleLeg[];
+    expected_status?: string;
+  }
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+  const expectedStatus = opts.expected_status ?? "posted";
+  if (!isLifecycleType(opts.source_transaction_type)) {
+    return { ok: false, reason: "invalid_lifecycle_source_type" };
+  }
+  if (!opts.expected_legs.length) {
+    return { ok: false, reason: "repair_expected_legs_required" };
+  }
+
+  const hasRev = await hasReversalLinkageColumns(client);
+  const header = await client.query<{
+    id: string;
+    status: string;
+    reverses_je_id: string | null;
+    reversed_by_je_id: string | null;
+  }>(
+    hasRev
+      ? `
+      SELECT
+        je.id::text AS id,
+        je.status::text AS status,
+        je.reverses_je_id::text AS reverses_je_id,
+        je.reversed_by_je_id::text AS reversed_by_je_id
+        FROM accounting.journal_entries je
+       WHERE je.id = $1::uuid
+         AND je.operating_company_id = $2::uuid
+       LIMIT 1
+    `
+      : `
+      SELECT
+        je.id::text AS id,
+        je.status::text AS status,
+        NULL::text AS reverses_je_id,
+        NULL::text AS reversed_by_je_id
+        FROM accounting.journal_entries je
+       WHERE je.id = $1::uuid
+         AND je.operating_company_id = $2::uuid
+       LIMIT 1
+    `,
+    [opts.journal_entry_id, opts.operating_company_id]
+  );
+  const je = header.rows[0];
+  if (!je) return { ok: false, reason: "repair_candidate_invalid" };
+  if (je.status !== expectedStatus) return { ok: false, reason: "repair_candidate_invalid_status" };
+  if (je.reverses_je_id || je.reversed_by_je_id) {
+    return { ok: false, reason: "repair_candidate_reversed" };
+  }
+
+  const legs = await client.query<{
+    role: string;
+    debit_or_credit: string;
+    amount_cents: string;
+    source_transaction_type: string | null;
+    source_transaction_id: string | null;
+  }>(
+    `
+      SELECT
+        r.role::text AS role,
+        jep.debit_or_credit::text AS debit_or_credit,
+        jep.amount_cents::text AS amount_cents,
+        jep.source_transaction_type,
+        jep.source_transaction_id
+        FROM accounting.journal_entry_postings jep
+        JOIN accounting.chart_of_accounts_roles r
+          ON r.account_id = jep.account_id
+         AND r.operating_company_id = jep.operating_company_id
+         AND r.is_active = true
+       WHERE jep.journal_entry_uuid = $1::uuid
+         AND jep.operating_company_id = $2::uuid
+    `,
+    [opts.journal_entry_id, opts.operating_company_id]
+  );
+
+  if (legs.rows.length !== opts.expected_legs.length) {
+    return { ok: false, reason: "repair_candidate_wrong_leg_count" };
+  }
+
+  const remaining = [...opts.expected_legs];
+  for (const row of legs.rows) {
+    const typeSet = row.source_transaction_type != null && row.source_transaction_type !== "";
+    const idSet = row.source_transaction_id != null && row.source_transaction_id !== "";
+    if (typeSet || idSet) {
+      // Any partial or foreign attribution is a conflict — never overwrite.
+      if (
+        row.source_transaction_type !== opts.source_transaction_type ||
+        row.source_transaction_id !== opts.factoring_advance_id
+      ) {
+        return { ok: false, reason: "repair_candidate_wrong_source_identity" };
+      }
+    }
+    const amt = Number(row.amount_cents ?? 0);
+    const idx = remaining.findIndex(
+      (e) =>
+        e.role === row.role &&
+        e.debit_or_credit === row.debit_or_credit &&
+        e.amount_cents === amt
+    );
+    if (idx < 0) {
+      return { ok: false, reason: "repair_candidate_wrong_account_or_amount" };
+    }
+    remaining.splice(idx, 1);
+  }
+  if (remaining.length > 0) {
+    return { ok: false, reason: "repair_candidate_wrong_account_or_amount" };
+  }
+
+  // Balanced (debits == credits) — structural, not inferred from remaining.
+  const bal = await client.query<{ ok: boolean }>(
+    `
+      SELECT (
+        COALESCE(SUM(CASE WHEN debit_or_credit = 'debit' THEN amount_cents ELSE 0 END), 0)
+        = COALESCE(SUM(CASE WHEN debit_or_credit = 'credit' THEN amount_cents ELSE 0 END), 0)
+        AND COALESCE(SUM(CASE WHEN debit_or_credit = 'debit' THEN amount_cents ELSE 0 END), 0) > 0
+      ) AS ok
+        FROM accounting.journal_entry_postings
+       WHERE journal_entry_uuid = $1::uuid
+         AND operating_company_id = $2::uuid
+    `,
+    [opts.journal_entry_id, opts.operating_company_id]
+  );
+  if (!bal.rows[0]?.ok) return { ok: false, reason: "repair_candidate_unbalanced" };
+
+  return { ok: true };
+}
+
+/** SQL fragment excluding reversed / reversing JEs (empty when columns absent). */
+export async function liveJournalEntryNotReversedSql(client: DbClient): Promise<string> {
+  return liveJeNotReversedSql(client);
+}
+
 export async function findStrictLifecycleRepairCandidate(
   client: DbClient,
   opts: {
@@ -56,6 +228,8 @@ export async function findStrictLifecycleRepairCandidate(
     memo?: string | null;
     /** Expected JE status — default posted. */
     expected_status?: string;
+    /** When provided, candidate must match exact role/D/C/amount legs. */
+    expected_legs?: ExpectedLifecycleLeg[];
   }
 ): Promise<LifecycleRepairCandidate> {
   const expectedStatus = opts.expected_status ?? "posted";
@@ -63,6 +237,7 @@ export async function findStrictLifecycleRepairCandidate(
     return { kind: "invalid", journal_entry_id: null, reason: "invalid_lifecycle_source_type" };
   }
 
+  const notReversed = await liveJeNotReversedSql(client);
   const authoritative = await client.query<{ id: string }>(
     `
       SELECT je.id::text AS id
@@ -70,6 +245,7 @@ export async function findStrictLifecycleRepairCandidate(
        WHERE je.operating_company_id = $1::uuid
          AND je.status = $4
          AND je.source = 'auto'
+         ${notReversed}
          AND EXISTS (
                SELECT 1
                  FROM accounting.journal_entry_postings jep
@@ -133,7 +309,21 @@ export async function findStrictLifecycleRepairCandidate(
     };
   }
   if (authoritative.rows.length === 1) {
-    return { kind: "unique", journal_entry_id: authoritative.rows[0]!.id };
+    const jeId = authoritative.rows[0]!.id;
+    if (opts.expected_legs?.length) {
+      const shape = await validateLifecycleJeExactShape(client, {
+        operating_company_id: opts.operating_company_id,
+        journal_entry_id: jeId,
+        factoring_advance_id: opts.factoring_advance_id,
+        source_transaction_type: opts.source_transaction_type,
+        expected_legs: opts.expected_legs,
+        expected_status: expectedStatus,
+      });
+      if (!shape.ok) {
+        return { kind: "invalid", journal_entry_id: null, reason: shape.reason };
+      }
+    }
+    return { kind: "unique", journal_entry_id: jeId };
   }
 
   // Unattributed memo candidate — only when EVERY posting line has null source attribution
@@ -147,12 +337,19 @@ export async function findStrictLifecycleRepairCandidate(
            AND je.status = $3
            AND je.source = 'auto'
            AND je.memo = $2
+           ${notReversed}
            AND NOT EXISTS (
                  SELECT 1
                    FROM accounting.journal_entry_postings jep
                   WHERE jep.journal_entry_uuid = je.id
                     AND jep.operating_company_id = je.operating_company_id
-                    AND jep.source_transaction_id IS NOT NULL
+                    AND (
+                      jep.source_transaction_id IS NOT NULL
+                      OR (
+                        jep.source_transaction_type IS NOT NULL
+                        AND jep.source_transaction_type <> ''
+                      )
+                    )
                )
            AND NOT EXISTS (
                  SELECT 1
@@ -185,7 +382,21 @@ export async function findStrictLifecycleRepairCandidate(
       };
     }
     if (unlinked.rows.length === 1) {
-      return { kind: "unique", journal_entry_id: unlinked.rows[0]!.id };
+      const jeId = unlinked.rows[0]!.id;
+      if (opts.expected_legs?.length) {
+        const shape = await validateLifecycleJeExactShape(client, {
+          operating_company_id: opts.operating_company_id,
+          journal_entry_id: jeId,
+          factoring_advance_id: opts.factoring_advance_id,
+          source_transaction_type: opts.source_transaction_type,
+          expected_legs: opts.expected_legs,
+          expected_status: expectedStatus,
+        });
+        if (!shape.ok) {
+          return { kind: "invalid", journal_entry_id: null, reason: shape.reason };
+        }
+      }
+      return { kind: "unique", journal_entry_id: jeId };
     }
 
     // Memo exists but provenance is foreign / partial — fail closed (do not repair, do not re-post).
@@ -196,6 +407,7 @@ export async function findStrictLifecycleRepairCandidate(
          WHERE je.operating_company_id = $1::uuid
            AND je.memo = $2
            AND je.status <> 'voided'
+           ${notReversed}
          LIMIT 2
       `,
       [opts.operating_company_id, opts.memo]
@@ -232,8 +444,15 @@ export async function attachFactoringLifecycleSourceLinksStrict(
        WHERE jep.journal_entry_uuid = $1::uuid
          AND jep.operating_company_id = $2::uuid
          AND (
+               -- Any foreign/partial source attribution (incl. type set + null id) is conflict.
                (
-                 jep.source_transaction_id IS NOT NULL
+                 (
+                   (
+                     jep.source_transaction_type IS NOT NULL
+                     AND jep.source_transaction_type <> ''
+                   )
+                   OR jep.source_transaction_id IS NOT NULL
+                 )
                  AND NOT (
                    jep.source_transaction_type = $3
                    AND jep.source_transaction_id = $4::text
@@ -272,6 +491,10 @@ export async function attachFactoringLifecycleSourceLinksStrict(
        WHERE journal_entry_uuid = $1::uuid
          AND operating_company_id = $2::uuid
          AND source_transaction_id IS NULL
+         AND (
+               source_transaction_type IS NULL
+               OR source_transaction_type = ''
+             )
     `,
     [
       opts.journal_entry_id,
@@ -308,7 +531,10 @@ export async function attachFactoringLifecycleSourceLinksStrict(
   }
 }
 
-/** Claim a unique lifecycle posting key in the caller-owned txn (concurrency backstop). */
+/**
+ * Claim a unique lifecycle posting key in the caller-owned txn (concurrency backstop).
+ * Uses ON CONFLICT DO NOTHING so the loser never leaves the txn aborted (25P02).
+ */
 export async function claimFactoringLifecyclePostingKey(
   client: DbClient,
   opts: {
@@ -319,27 +545,33 @@ export async function claimFactoringLifecyclePostingKey(
     journal_entry_id: string;
   }
 ): Promise<"claimed" | "already_claimed"> {
-  try {
-    await client.query(
-      `
-        INSERT INTO accounting.factoring_lifecycle_posting_keys (
-          operating_company_id, factoring_advance_id, source_transaction_type, event_key, journal_entry_id
-        )
-        VALUES ($1::uuid, $2::uuid, $3, $4, $5::uuid)
-      `,
-      [
-        opts.operating_company_id,
-        opts.factoring_advance_id,
-        opts.source_transaction_type,
-        opts.event_key,
-        opts.journal_entry_id,
-      ]
-    );
-    return "claimed";
-  } catch (e) {
-    const code = (e as { code?: string }).code;
-    if (code === "23505") return "already_claimed";
-    throw e;
+  const res = await client.query<{ journal_entry_id: string }>(
+    `
+      INSERT INTO accounting.factoring_lifecycle_posting_keys (
+        operating_company_id, factoring_advance_id, source_transaction_type, event_key, journal_entry_id
+      )
+      VALUES ($1::uuid, $2::uuid, $3, $4, $5::uuid)
+      ON CONFLICT (operating_company_id, factoring_advance_id, source_transaction_type, event_key)
+      DO NOTHING
+      RETURNING journal_entry_id::text AS journal_entry_id
+    `,
+    [
+      opts.operating_company_id,
+      opts.factoring_advance_id,
+      opts.source_transaction_type,
+      opts.event_key,
+      opts.journal_entry_id,
+    ]
+  );
+  if (res.rows[0]?.journal_entry_id) return "claimed";
+  return "already_claimed";
+}
+
+/** Thrown inside afterInsert when a concurrent claimer won — outer savepoint rolls JE back. */
+export class FactoringLifecyclePostingKeyRaceError extends Error {
+  constructor() {
+    super("factoring_lifecycle_posting_key_race");
+    this.name = "FactoringLifecyclePostingKeyRaceError";
   }
 }
 

@@ -55,6 +55,19 @@ vi.mock("../../posting-engine.service.js", () => ({ ensureOpenPeriod: mockEnsure
 vi.mock("../../accounting-spine-emit.js", () => ({ writeTransactionSourceLink: mockWriteTsl }));
 vi.mock("../../coa-roles/resolver.service.js", () => ({ resolveRoleAccount: mockResolveRoleAccount }));
 vi.mock("../../../audit/crud-audit.js", () => ({ appendCrudAudit: vi.fn(async () => undefined) }));
+vi.mock("../faro-agreement-gate.js", () => ({
+  requireEffectiveFaroFullRecourseAgreement: vi.fn(async () => ({
+    ok: true,
+    vendorId: "faro-vendor",
+    vendorName: "Faro",
+    agreementId: "agr-1",
+    factorProfileId: "fp-1",
+    companyCode: "TRANSP",
+    asOf: "2026-01-20",
+  })),
+  advanceBoundToFaroVendor: vi.fn(async () => true),
+  FARO_FULL_RECOURSE_AGREEMENT_CODE: "FARO_FULL_RECOURSE_V1",
+}));
 
 const OPCO = "11111111-1111-4111-8111-111111111111";
 const ADVANCE = "22222222-2222-4222-8222-222222222222";
@@ -92,8 +105,13 @@ describe("factoring poster — atomic lifecycle source links", () => {
   );
     mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
       if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
+    if (sql.includes("SAVEPOINT") || sql.includes("RELEASE SAVEPOINT") || sql.includes("ROLLBACK TO SAVEPOINT")) {
+      return { rows: [] };
+    }
+    if (sql.includes("FOR UPDATE")) return { rows: [{ id: ADVANCE }] };
+    if (sql.includes("information_schema.columns")) return { rows: [{ n: "0" }] };
     if (sql.includes("factoring_lifecycle_posting_keys")) {
-      if (sql.trim().startsWith("INSERT")) return { rows: [] };
+      if (sql.includes("INSERT")) return { rows: [{ journal_entry_id: "je-atomic-1" }] };
       return { rows: [] };
     }
     if (sql.includes("AS outstanding")) {
@@ -180,8 +198,13 @@ describe("factoring poster — atomic lifecycle source links", () => {
     let reserveInserts = 0;
     mockQuery.mockImplementation(async (sql: string) => {
       if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
+      if (sql.includes("SAVEPOINT") || sql.includes("RELEASE SAVEPOINT") || sql.includes("ROLLBACK TO SAVEPOINT")) {
+        return { rows: [] };
+      }
+      if (sql.includes("FOR UPDATE")) return { rows: [{ id: ADVANCE }] };
+      if (sql.includes("information_schema.columns")) return { rows: [{ n: "0" }] };
       if (sql.includes("factoring_lifecycle_posting_keys")) {
-        if (sql.trim().startsWith("INSERT")) return { rows: [] };
+        if (sql.includes("INSERT")) return { rows: [] };
         return { rows: [{ journal_entry_id: "existing-je" }] };
       }
       if (sql.includes("FROM accounting.factoring_advances") && sql.includes("invoice_total_cents")) {
@@ -204,12 +227,53 @@ describe("factoring poster — atomic lifecycle source links", () => {
           ],
         };
       }
+      if (sql.includes("FROM accounting.journal_entries") && sql.includes("status::text AS status")) {
+        return {
+          rows: [{ id: "existing-je", status: "posted", reverses_je_id: null, reversed_by_je_id: null }],
+        };
+      }
+      if (sql.includes("chart_of_accounts_roles") && sql.includes("AS role")) {
+        return {
+          rows: [
+            {
+              role: "cash_clearing",
+              debit_or_credit: "debit",
+              amount_cents: "97000",
+              source_transaction_type: null,
+              source_transaction_id: null,
+            },
+            {
+              role: "factor_reserve_held",
+              debit_or_credit: "debit",
+              amount_cents: "1500",
+              source_transaction_type: null,
+              source_transaction_id: null,
+            },
+            {
+              role: "factor_fee_expense",
+              debit_or_credit: "debit",
+              amount_cents: "1500",
+              source_transaction_type: null,
+              source_transaction_id: null,
+            },
+            {
+              role: "factoring_advance_liability",
+              debit_or_credit: "credit",
+              amount_cents: "100000",
+              source_transaction_type: null,
+              source_transaction_id: null,
+            },
+          ],
+        };
+      }
+      if (sql.includes("AS ok") && sql.includes("journal_entry_uuid") && sql.includes("= COALESCE")) {
+        return { rows: [{ ok: true }] };
+      }
       if (sql.includes("UPDATE accounting.journal_entry_postings")) return { rows: [] };
-          if (sql.includes("FROM accounting.journal_entries")) {
-      // Authoritative repair candidate query — empty unless already_posted fixtures override.
-      return { rows: [] };
-    }
-    if (sql.includes("FROM accounting.journal_entry_postings")) {
+      if (sql.includes("FROM accounting.journal_entries")) {
+        return { rows: [] };
+      }
+      if (sql.includes("FROM accounting.journal_entry_postings")) {
         if (sql.includes("source_transaction_id IS NOT NULL") || sql.includes("NOT (")) {
           return { rows: [] };
         }
@@ -291,12 +355,38 @@ describe("factoring poster — atomic lifecycle source links", () => {
     };
   }
 
-  function alreadyPostedAdvanceMocks() {
-    mockQuery.mockImplementation(async (sql: string) => {
+  type ShapeLeg = {
+    role: string;
+    debit_or_credit: string;
+    amount_cents: string;
+    source_transaction_type: string | null;
+    source_transaction_id: string | null;
+  };
+
+  function alreadyPostedAdvanceMocks(opts: {
+    shapeLegs: ShapeLeg[];
+    shapeLegsAlt?: ShapeLeg[];
+    keyJeIds?: { repay?: string; return?: string; single?: string };
+  }) {
+    let shapeCalls = 0;
+    const singleKey = opts.keyJeIds?.single ?? "existing-je";
+    mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
       if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
+      if (sql.includes("SAVEPOINT") || sql.includes("RELEASE SAVEPOINT") || sql.includes("ROLLBACK TO SAVEPOINT")) {
+        return { rows: [] };
+      }
+      if (sql.includes("FOR UPDATE")) return { rows: [{ id: ADVANCE }] };
+      if (sql.includes("information_schema.columns")) return { rows: [{ n: "0" }] };
       if (sql.includes("factoring_lifecycle_posting_keys")) {
-        if (sql.trim().startsWith("INSERT")) return { rows: [] };
-        return { rows: [{ journal_entry_id: "existing-je" }] };
+        if (sql.includes("INSERT")) return { rows: [] };
+        const eventKey = String(values?.[3] ?? "");
+        if (eventKey.includes("chargeback_repay")) {
+          return { rows: [{ journal_entry_id: opts.keyJeIds?.repay ?? "je-repay" }] };
+        }
+        if (eventKey.includes("chargeback_return")) {
+          return { rows: [{ journal_entry_id: opts.keyJeIds?.return ?? "je-return" }] };
+        }
+        return { rows: [{ journal_entry_id: singleKey }] };
       }
       if (sql.includes("AS outstanding")) {
         return { rows: [{ outstanding: "100000" }] };
@@ -304,20 +394,37 @@ describe("factoring poster — atomic lifecycle source links", () => {
       if (sql.includes("FROM accounting.factoring_advances") && sql.includes("invoice_total_cents")) {
         return { rows: [advanceRow()] };
       }
+      if (sql.includes("FROM accounting.journal_entries") && sql.includes("status::text AS status")) {
+        return {
+          rows: [{ id: "existing-je", status: "posted", reverses_je_id: null, reversed_by_je_id: null }],
+        };
+      }
+      if (sql.includes("chart_of_accounts_roles") && sql.includes("AS role")) {
+        shapeCalls += 1;
+        const legs = shapeCalls === 1 ? opts.shapeLegs : (opts.shapeLegsAlt ?? opts.shapeLegs);
+        return { rows: legs };
+      }
+      if (sql.includes("AS ok") && sql.includes("journal_entry_uuid") && sql.includes("= COALESCE")) {
+        return { rows: [{ ok: true }] };
+      }
       if (sql.includes("FROM accounting.journal_entries") && sql.includes("memo = $2")) {
-        return { rows: [{ id: "existing-je" }] };
+        return { rows: [{ id: singleKey }] };
       }
       if (sql.includes("UPDATE accounting.journal_entry_postings")) return { rows: [] };
-          if (sql.includes("FROM accounting.journal_entries")) {
-      // Authoritative repair candidate query — empty unless already_posted fixtures override.
-      return { rows: [] };
-    }
-    if (sql.includes("FROM accounting.journal_entry_postings")) {
-        // conflict check empty; line select returns attachable lines
+      if (sql.includes("FROM accounting.journal_entries")) {
+        return { rows: [] };
+      }
+      if (sql.includes("FROM accounting.journal_entry_postings")) {
         if (sql.includes("source_transaction_id IS NOT NULL") || sql.includes("NOT (")) {
           return { rows: [] };
         }
         return { rows: [{ id: "line-1" }] };
+      }
+      if (sql.includes("FROM accounting.invoices") && !sql.includes("UPDATE")) {
+        return { rows: [{ id: "inv-1", total_cents: "100000", voided_at: null }] };
+      }
+      if (sql.includes("INSERT INTO accounting.factoring_reserve_movements")) {
+        return { rows: [] };
       }
       if (sql.includes("UPDATE accounting.invoices")) return { rows: [] };
       if (sql.includes("UPDATE accounting.factoring_advances")) return { rows: [] };
@@ -326,7 +433,24 @@ describe("factoring poster — atomic lifecycle source links", () => {
   }
 
   it("customer payment already_posted repairs links + subledger in one withLuciaBypass txn", async () => {
-    alreadyPostedAdvanceMocks();
+    alreadyPostedAdvanceMocks({
+      shapeLegs: [
+        {
+          role: "factoring_advance_liability",
+          debit_or_credit: "debit",
+          amount_cents: "50000",
+          source_transaction_type: null,
+          source_transaction_id: null,
+        },
+        {
+          role: "ar_control",
+          debit_or_credit: "credit",
+          amount_cents: "50000",
+          source_transaction_type: null,
+          source_transaction_id: null,
+        },
+      ],
+    });
     const luciaCallsBefore = mockWithLuciaBypass.mock.calls.length;
     const res = await postFactoringCustomerPaymentEvent({
       operating_company_id: OPCO,
@@ -344,31 +468,31 @@ describe("factoring poster — atomic lifecycle source links", () => {
 
   it("reserve release already_posted repairs lifecycle links + reserve_released without new JE", async () => {
     let reserveInserts = 0;
-    mockQuery.mockImplementation(async (sql: string) => {
-      if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
-      if (sql.includes("factoring_lifecycle_posting_keys")) {
-        if (sql.trim().startsWith("INSERT")) return { rows: [] };
-        return { rows: [{ journal_entry_id: "existing-je" }] };
-      }
-      if (sql.includes("FROM accounting.factoring_advances") && sql.includes("invoice_total_cents")) {
-        return { rows: [advanceRow()] };
-      }
-      if (sql.includes("UPDATE accounting.journal_entry_postings")) return { rows: [] };
-          if (sql.includes("FROM accounting.journal_entries")) {
-      // Authoritative repair candidate query — empty unless already_posted fixtures override.
-      return { rows: [] };
-    }
-    if (sql.includes("FROM accounting.journal_entry_postings")) {
-        if (sql.includes("source_transaction_id IS NOT NULL") || sql.includes("NOT (")) {
-          return { rows: [] };
-        }
-        return { rows: [{ id: "line-1" }] };
-      }
+    alreadyPostedAdvanceMocks({
+      shapeLegs: [
+        {
+          role: "cash_clearing",
+          debit_or_credit: "debit",
+          amount_cents: "1500",
+          source_transaction_type: null,
+          source_transaction_id: null,
+        },
+        {
+          role: "factor_reserve_held",
+          debit_or_credit: "credit",
+          amount_cents: "1500",
+          source_transaction_type: null,
+          source_transaction_id: null,
+        },
+      ],
+    });
+    const prev = mockQuery.getMockImplementation();
+    mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
       if (sql.includes("INSERT INTO accounting.factoring_reserve_movements")) {
         reserveInserts += 1;
         return { rows: [] };
       }
-      return { rows: [] };
+      return prev ? prev(sql, values) : { rows: [] };
     });
     const res = await postFactoringReleaseEvent({
       operating_company_id: OPCO,
@@ -384,7 +508,41 @@ describe("factoring poster — atomic lifecycle source links", () => {
   });
 
   it("chargeback already_posted repairs repay+return links; return afterRepair is same txn", async () => {
-    alreadyPostedAdvanceMocks();
+    alreadyPostedAdvanceMocks({
+      keyJeIds: { repay: "je-repay", return: "je-return" },
+      shapeLegs: [
+        {
+          role: "factoring_advance_liability",
+          debit_or_credit: "debit",
+          amount_cents: "100000",
+          source_transaction_type: null,
+          source_transaction_id: null,
+        },
+        {
+          role: "cash_clearing",
+          debit_or_credit: "credit",
+          amount_cents: "100000",
+          source_transaction_type: null,
+          source_transaction_id: null,
+        },
+      ],
+      shapeLegsAlt: [
+        {
+          role: "factoring_recoursed_ar",
+          debit_or_credit: "debit",
+          amount_cents: "100000",
+          source_transaction_type: null,
+          source_transaction_id: null,
+        },
+        {
+          role: "ar_control",
+          debit_or_credit: "credit",
+          amount_cents: "100000",
+          source_transaction_type: null,
+          source_transaction_id: null,
+        },
+      ],
+    });
     const res = await postFactoringChargebackEvent({
       operating_company_id: OPCO,
       factoring_advance_id: ADVANCE,
@@ -402,8 +560,13 @@ describe("factoring poster — atomic lifecycle source links", () => {
   it("chargeback mid-flow inject after repay rolls back — no side-effect enqueue", async () => {
     mockQuery.mockImplementation(async (sql: string) => {
       if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
+      if (sql.includes("SAVEPOINT") || sql.includes("RELEASE SAVEPOINT") || sql.includes("ROLLBACK TO SAVEPOINT")) {
+        return { rows: [] };
+      }
+      if (sql.includes("FOR UPDATE")) return { rows: [{ id: ADVANCE }] };
+      if (sql.includes("information_schema.columns")) return { rows: [{ n: "0" }] };
       if (sql.includes("factoring_lifecycle_posting_keys")) {
-        if (sql.trim().startsWith("INSERT")) return { rows: [] };
+        if (sql.includes("INSERT")) return { rows: [{ journal_entry_id: "je-atomic-1" }] };
         return { rows: [] };
       }
       if (sql.includes("AS outstanding")) return { rows: [{ outstanding: "100000" }] };

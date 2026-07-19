@@ -32,6 +32,20 @@ vi.mock("../../posting-engine.service.js", () => ({ ensureOpenPeriod: vi.fn(asyn
 vi.mock("../../accounting-spine-emit.js", () => ({ writeTransactionSourceLink: vi.fn(async () => undefined) }));
 vi.mock("../../coa-roles/resolver.service.js", () => ({ resolveRoleAccount: mockResolveRoleAccount }));
 vi.mock("../../../audit/crud-audit.js", () => ({ appendCrudAudit: vi.fn(async () => undefined) }));
+vi.mock("../faro-agreement-gate.js", () => ({
+  requireEffectiveFaroFullRecourseAgreement: vi.fn(async () => ({
+    ok: true,
+    vendorId: "faro-vendor",
+    vendorName: "Faro",
+    agreementId: "agr-1",
+    factorProfileId: "fp-1",
+    companyCode: "TRANSP",
+    asOf: "2026-01-20",
+  })),
+  advanceBoundToFaroVendor: vi.fn(async () => true),
+  FARO_FULL_RECOURSE_AGREEMENT_CODE: "FARO_FULL_RECOURSE_V1",
+}));
+
 
 const OPCO = "11111111-1111-4111-8111-111111111111";
 const ADVANCE = "22222222-2222-4222-8222-222222222222";
@@ -58,12 +72,50 @@ function installDefaults(flagOn: boolean, alreadyPosted = false) {
   });
   mockQuery.mockImplementation(async (sql: string) => {
     if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
+    if (sql.includes("SAVEPOINT") || sql.includes("RELEASE SAVEPOINT") || sql.includes("ROLLBACK TO SAVEPOINT")) {
+      return { rows: [] };
+    }
+    if (sql.includes("FOR UPDATE")) return { rows: [{ id: ADVANCE }] };
+    if (sql.includes("information_schema.columns")) return { rows: [{ n: "0" }] };
     if (sql.includes("factoring_lifecycle_posting_keys")) {
-      if (sql.trim().startsWith("INSERT")) return { rows: [] };
+      if (sql.includes("INSERT")) return { rows: alreadyPosted ? [] : [{ journal_entry_id: "je-1" }] };
       return { rows: alreadyPosted ? [{ journal_entry_id: "existing-je" }] : [] };
     }
     if (sql.includes("AS outstanding")) {
       return { rows: [{ outstanding: "500000" }] };
+    }
+    if (alreadyPosted && sql.includes("status::text AS status") && sql.includes("journal_entries")) {
+      return { rows: [{ id: "existing-je", status: "posted", reverses_je_id: null, reversed_by_je_id: null }] };
+    }
+    if (alreadyPosted && sql.includes("chart_of_accounts_roles") && sql.includes("AS role")) {
+      return {
+        rows: [
+          {
+            role: "factoring_advance_liability",
+            debit_or_credit: "credit",
+            amount_cents: "500000",
+            source_transaction_type: null,
+            source_transaction_id: null,
+          },
+          {
+            role: "cash_clearing",
+            debit_or_credit: "debit",
+            amount_cents: "492500",
+            source_transaction_type: null,
+            source_transaction_id: null,
+          },
+          {
+            role: "factor_reserve_held",
+            debit_or_credit: "debit",
+            amount_cents: "7500",
+            source_transaction_type: null,
+            source_transaction_id: null,
+          },
+        ],
+      };
+    }
+    if (sql.includes("AS ok") && sql.includes("journal_entry_uuid") && sql.includes("= COALESCE")) {
+      return { rows: [{ ok: true }] };
     }
     if (sql.includes("FROM accounting.factoring_advances") && sql.includes("invoice_total_cents")) {
       return {

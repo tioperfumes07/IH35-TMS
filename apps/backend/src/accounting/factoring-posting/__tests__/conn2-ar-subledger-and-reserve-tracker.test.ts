@@ -31,6 +31,20 @@ vi.mock("../../posting-engine.service.js", () => ({ ensureOpenPeriod: vi.fn(asyn
 vi.mock("../../accounting-spine-emit.js", () => ({ writeTransactionSourceLink: vi.fn(async () => undefined) }));
 vi.mock("../../coa-roles/resolver.service.js", () => ({ resolveRoleAccount: mockResolveRoleAccount }));
 vi.mock("../../../audit/crud-audit.js", () => ({ appendCrudAudit: vi.fn(async () => undefined) }));
+vi.mock("../faro-agreement-gate.js", () => ({
+  requireEffectiveFaroFullRecourseAgreement: vi.fn(async () => ({
+    ok: true,
+    vendorId: "faro-vendor",
+    vendorName: "Faro",
+    agreementId: "agr-1",
+    factorProfileId: "fp-1",
+    companyCode: "TRANSP",
+    asOf: "2026-01-20",
+  })),
+  advanceBoundToFaroVendor: vi.fn(async () => true),
+  FARO_FULL_RECOURSE_AGREEMENT_CODE: "FARO_FULL_RECOURSE_V1",
+}));
+
 
 const OPCO = "11111111-1111-4111-8111-111111111111";
 const ADVANCE = "22222222-2222-4222-8222-222222222222";
@@ -71,12 +85,18 @@ function installDefaults() {
 
   mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
     if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
-    if (sql.includes("factoring_lifecycle_posting_keys")) {
-      if (sql.trim().startsWith("INSERT")) return { rows: [] };
-      return { rows: [] };
-    }
+    if (sql.includes("SAVEPOINT") || sql.includes("RELEASE SAVEPOINT") || sql.includes("ROLLBACK TO SAVEPOINT")) return { rows: [] };
+    if (sql.includes("FOR UPDATE")) return { rows: [{ id: "locked" }] };
+    if (sql.includes("information_schema.columns")) return { rows: [{ n: "0" }] };
     if (sql.includes("AS outstanding")) {
       return { rows: [{ outstanding: "500000" }] };
+    }
+    if (sql.includes("factoring_lifecycle_posting_keys")) {
+      if (sql.includes("INSERT")) return { rows: [{ journal_entry_id: "je-1" }] };
+      return { rows: [] };
+    }
+    if (sql.includes("AS ok") && sql.includes("journal_entry_uuid") && sql.includes("= COALESCE")) {
+      return { rows: [{ ok: true }] };
     }
     if (sql.includes("FROM accounting.factoring_advances") && sql.includes("invoice_total_cents")) {
       return {
@@ -98,13 +118,6 @@ function installDefaults() {
         ],
       };
     }
-    if (sql.includes("factoring_lifecycle_posting_keys")) {
-      if (sql.trim().startsWith("INSERT")) return { rows: [] };
-      return { rows: [] };
-    }
-    if (sql.includes("AS outstanding")) {
-      return { rows: [{ outstanding: "500000" }] };
-    }
     if (sql.includes("FROM accounting.journal_entries")) {
       return { rows: [] };
     }
@@ -115,8 +128,12 @@ function installDefaults() {
       }
       return { rows: [{ id: "line-1" }] };
     }
-    if (sql.includes("SELECT id::text, total_cents::text, voided_at::text") && sql.includes("FROM accounting.invoices")) {
+    // Subledger allocation invoice list — must precede any generic invoices fallback.
+    if (sql.includes("total_cents::text") && sql.includes("FROM accounting.invoices")) {
       return { rows: [INVOICE_A, INVOICE_B] };
+    }
+    if (sql.includes("FROM accounting.invoices") && !sql.includes("UPDATE") && !sql.includes("AS outstanding")) {
+      return { rows: [{ id: "inv-1", total_cents: "500000", voided_at: null }] };
     }
     if (sql.trim().startsWith("UPDATE accounting.invoices")) {
       updateCalls.push({ sql, values: values ?? [] });
@@ -229,8 +246,11 @@ describe("CONN-2 — Faro Reserve Tracker (write side)", () => {
   it("funding with zero reserve records no movement row", async () => {
     mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
       if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
+    if (sql.includes("SAVEPOINT") || sql.includes("RELEASE SAVEPOINT") || sql.includes("ROLLBACK TO SAVEPOINT")) return { rows: [] };
+    if (sql.includes("FOR UPDATE")) return { rows: [{ id: "locked" }] };
+    if (sql.includes("information_schema.columns")) return { rows: [{ n: "0" }] };
     if (sql.includes("factoring_lifecycle_posting_keys")) {
-      if (sql.trim().startsWith("INSERT")) return { rows: [] };
+      if (sql.includes("INSERT")) return { rows: [{ journal_entry_id: "je-1" }] };
       return { rows: [] };
     }
     if (sql.includes("AS outstanding")) {

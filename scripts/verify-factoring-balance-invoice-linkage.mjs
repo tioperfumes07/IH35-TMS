@@ -36,9 +36,12 @@ const PATHS = {
   feOwnerHome: "apps/frontend/src/pages/home/OwnerHome.tsx",
   poster: "apps/backend/src/accounting/factoring-posting/poster.service.ts",
   lifecycleRepair: "apps/backend/src/accounting/factoring-posting/lifecycle-repair.ts",
+  faroGate: "apps/backend/src/accounting/factoring-posting/faro-agreement-gate.ts",
   defaultInterest: "apps/backend/src/accounting/factoring-posting/default-interest.service.ts",
+  faroCsv: "apps/backend/src/factoring/faro-csv-import.ts",
   posterAtomicityTest: "apps/backend/src/accounting/factoring-posting/__tests__/poster-lifecycle-atomicity.test.ts",
   lifecycleRepairTest: "apps/backend/src/accounting/factoring-posting/__tests__/lifecycle-repair.test.ts",
+  cpaVetoTest: "apps/backend/src/accounting/factoring-posting/__tests__/cpa-veto-eb06028d-remediation.test.ts",
   day95Test: "apps/backend/src/accounting/factoring-posting/__tests__/default-interest-day95-recourse.test.ts",
   companyDateTest: "apps/backend/src/lib/__tests__/company-business-date.test.ts",
   journalEntries: "apps/backend/src/accounting/journal-entries.service.ts",
@@ -73,16 +76,21 @@ export function checker(sources) {
   const requireText = (key, text, code) => {
     if (!sources[key] || !sources[key].includes(text)) failures.push(code);
   };
-  // Executable-only evidence = comment-stripped source (string literals kept).
-  // Rejects `-- decoy: factoring_advance_liability` / `// decoy` while accepting real code + strings.
-  // Never fall back to raw full-source includes (comment decoys).
+  // Executable-only evidence = comment-stripped source (string literals kept for policy/SQL).
+  // Rejects `-- decoy` / `// decoy` comment plants. Dead unused string-literal decoys are
+  // additionally rejected by identifier-presence plants below (requireIdent) + badFixture.
+  // Never fall back to raw full-source includes.
   const requireExec = (key, text, code) => {
     const stripped = stripCommentsKeepStrings(sources[key], { sql: key === "migration" });
     if (!stripped.includes(text)) failures.push(code);
   };
+  /** Identifier must appear in executable code body (ignores dead string-literal-only decoys). */
+  const requireIdent = (key, ident, code) => {
+    const codeBody = toExecutableSemantics(sources[key] ?? "").code;
+    if (!codeBody.includes(ident)) failures.push(code);
+  };
   const forbidExec = (key, re, code) => {
     const stripped = stripCommentsKeepStrings(sources[key], { sql: key === "migration" || key === "dbTest" });
-    // Also forbid when present in executable-semantics code (defense in depth).
     const codeBody = toExecutableSemantics(sources[key] ?? "").code;
     if (re.test(stripped) || re.test(codeBody)) failures.push(code);
   };
@@ -189,12 +197,36 @@ export function checker(sources) {
   requireExec("poster", "postFactoringChargebackEvent", "poster_chargeback_fn_missing");
   requireExec("lifecycleRepair", "findStrictLifecycleRepairCandidate", "lifecycle_repair_strict_candidate_missing");
   requireExec("lifecycleRepair", "attachFactoringLifecycleSourceLinksStrict", "lifecycle_repair_strict_attach_missing");
+  requireIdent("lifecycleRepair", "validateLifecycleJeExactShape", "lifecycle_repair_exact_shape_missing");
   requireExec("lifecycleRepair", "factoring_lifecycle_posting_keys", "lifecycle_repair_posting_keys_missing");
+  requireExec("lifecycleRepair", "ON CONFLICT", "lifecycle_repair_on_conflict_claim_missing");
   requireExec("lifecycleRepair", "AND source_transaction_id IS NULL", "lifecycle_repair_must_only_fill_null_source");
   requireExec("lifecycleRepair", "factoring_lifecycle_source_link_conflict", "lifecycle_repair_conflict_throw_missing");
-  requireExec("defaultInterest", "companyBusinessDate", "default_interest_company_business_date_missing");
-  requireExec("defaultInterest", "loadExactLinkedChargebackAmounts", "default_interest_exact_linked_amounts_missing");
+  requireIdent("faroGate", "requireEffectiveFaroFullRecourseAgreement", "faro_gate_require_missing");
+  requireExec("faroGate", "FARO_FULL_RECOURSE_V1", "faro_gate_code_missing");
+  requireIdent("faroGate", "advanceBoundToFaroVendor", "faro_gate_advance_bound_missing");
+  requireIdent("poster", "requireEffectiveFaroFullRecourseAgreement", "poster_faro_gate_missing");
+  requireExec("poster", "policy_overpayment", "poster_overpayment_policy_missing");
+  requireExec("poster", "policy_over_release", "poster_over_release_policy_missing");
+  requireExec("poster", "policy_invalid_entry_date", "poster_invalid_date_policy_missing");
+  requireExec("poster", "FOR UPDATE", "poster_settlement_lock_missing");
+  requireIdent("poster", "validateLifecycleJeExactShape", "poster_exact_shape_validator_missing");
+  requireIdent("poster", "liveJournalEntryNotReversedSql", "poster_reversal_exclusion_missing");
+  requireExec("lifecycleRepair", "reversed_by_je_id", "lifecycle_repair_reversal_cols_missing");
+  requireIdent("poster", "FactoringLifecyclePostingKeyRaceError", "poster_posting_key_race_missing");
+  requireExec("poster", "SAVEPOINT factoring_lifecycle_je_create", "poster_je_savepoint_missing");
+  forbidExec("poster", /Math\.min\s*\(\s*inv\.total_cents/, "poster_must_not_mathmin_clamp_payment");
+  forbidExec("poster", /return companyBusinessDate\(\)\s*;/, "poster_must_not_fallback_entry_date_to_today");
+  requireIdent("defaultInterest", "companyBusinessDate", "default_interest_company_business_date_missing");
+  requireIdent("defaultInterest", "loadExactLinkedChargebackAmounts", "default_interest_exact_linked_amounts_missing");
+  requireIdent("defaultInterest", "requireEffectiveFaroFullRecourseAgreement", "default_interest_faro_gate_missing");
+  requireExec("defaultInterest", "factoring_company_vendor_id", "default_interest_faro_vendor_filter_missing");
   forbidExec("defaultInterest", /toISOString\(\)\.slice\(0,\s*10\)/, "default_interest_must_not_utc_slice");
+  requireIdent("faroCsv", "requireEffectiveFaroFullRecourseAgreement", "faro_csv_must_use_agreement_gate");
+  forbidExec("faroCsv", /ORDER BY COUNT\(\*\) DESC/, "faro_csv_must_not_customer_majority");
+  requireExec("faroCsv", "policy_faro_agreement", "faro_csv_fail_closed_missing");
+  // Dead string-literal decoy must not satisfy identifier plants (CR eb06028d).
+  requireIdent("poster", "resolveCanonicalEntryDate", "poster_date_resolver_ident_missing");
   requireExec("journalEntries", "createJournalEntryOnClient", "journal_entries_on_client_missing");
   requireExec("journalEntries", "afterInsertBeforeCommit", "journal_entries_after_insert_hook_missing");
   requireExec("journalEntries", "suppressSideEffects", "journal_entries_suppress_side_effects_missing");
@@ -235,6 +267,10 @@ export function checker(sources) {
   requireExec("migration", "orphan_liability_role_cents", "migration_missing_orphan_counter");
   requireExec("migration", "factoring_lifecycle_posting_keys", "migration_missing_lifecycle_posting_keys");
   requireExec("migration", "UNIQUE (operating_company_id, factoring_advance_id, source_transaction_type, event_key)", "migration_missing_posting_key_unique");
+  requireExec("migration", "factoring_lifecycle_posting_keys_advance_same_entity_fkey", "migration_missing_posting_key_advance_same_entity_fk");
+  requireExec("migration", "factoring_lifecycle_posting_keys_je_same_entity_fkey", "migration_missing_posting_key_je_same_entity_fk");
+  requireExec("migration", "uq_factoring_advances_company_id", "migration_missing_advance_company_id_unique");
+  requireExec("migration", "uq_journal_entries_company_id", "migration_missing_je_company_id_unique");
   requireExec("migration", "America/Chicago", "migration_missing_chicago_as_of");
   requireExec("migration", "advanced_at AT TIME ZONE 'America/Chicago'", "migration_missing_advanced_at_as_of");
   requireExec("migration", "HELD_MIGRATION_PREREQUISITE_MISSING", "migration_missing_prereq_fail_closed");
@@ -295,8 +331,20 @@ export function checker(sources) {
   requireText("additions", "policy_partial_or_ambiguous_recourse", "additions_missing_partial_recourse_policy");
   requireText("additions", "orphan_unattributed_liability_role_legs", "additions_missing_orphan_fail_closed");
   requireText("additions", "voided_advance_without_reversing_je", "additions_missing_voided_fail_closed");
+  requireText("additions", "eb06028d", "additions_missing_eb06028d_veto");
+  requireText("additions", "policy_overpayment", "additions_missing_overpayment");
+  requireText("additions", "validateLifecycleJeExactShape", "additions_missing_exact_shape");
+  requireText("additions", "policy_invalid_entry_date", "additions_missing_invalid_date");
+  requireText("additions", "requireEffectiveFaroFullRecourseAgreement", "additions_missing_faro_gate_posting");
 
   // Tests — fixture IDs, plants, isolation, CPA negatives
+  requireExec("cpaVetoTest", "policy_overpayment", "cpa_veto_test_overpayment_missing");
+  requireExec("cpaVetoTest", "policy_over_release", "cpa_veto_test_over_release_missing");
+  requireExec("cpaVetoTest", "policy_invalid_entry_date", "cpa_veto_test_invalid_date_missing");
+  requireExec("cpaVetoTest", "repair_candidate_wrong_account_or_amount", "cpa_veto_test_wrong_account_missing");
+  requireExec("cpaVetoTest", "reversed-funding", "cpa_veto_test_reversed_funding_missing");
+  requireExec("cpaVetoTest", "missing_faro_agreement_binding", "cpa_veto_test_faro_fail_closed_missing");
+  requireExec("cpaVetoTest", "factoring_customer_payment_overpayment", "cpa_veto_test_race_overpayment_missing");
   requireExec("dbTest", "canonicalInvoiceDisplayId", "db_test_canonical_invoice_display_helper");
   requireExec("dbTest", "invoices_display_id_check", "db_test_display_id_check_coverage");
   requireExec("dbTest", "INV-2026-", "db_test_canonical_invoice_display_seed");
@@ -383,7 +431,23 @@ function createBadFixture(good) {
     "\nILIKE '%faro%'\n" +
     "\nORDER BY COUNT(*) DESC\n" +
     "\nDROP VIEW IF EXISTS views.factoring_balance_invoice_linkage;\n";
-  bad.poster = String(good.poster).replace(/createFactoringJournalEntryAtomically/g, "createSomethingElse");
+  bad.poster =
+    String(good.poster).replace(/createFactoringJournalEntryAtomically/g, "createSomethingElse")
+      .replace(/validateLifecycleJeExactShape/g, "validateSomethingElse")
+      .replace(/liveJournalEntryNotReversedSql/g, "liveSomethingElse")
+      .replace(/requireEffectiveFaroFullRecourseAgreement/g, "requireSomethingElse")
+      .replace(/FactoringLifecyclePostingKeyRaceError/g, "SomeOtherRaceError")
+      .replace(/resolveCanonicalEntryDate/g, "resolveSomethingElse") +
+    '\nconst _dead_decoy_policy = "policy_overpayment";\n' +
+    '\nconst _dead_decoy_shape = "validateLifecycleJeExactShape";\n' +
+    "\nconst allocated = Math.min(inv.total_cents, allocations.get(inv.id) ?? 0);\n" +
+    "\nfunction resolveCanonicalEntryDate(){ return companyBusinessDate(); }\n";
+  bad.faroCsv =
+    String(good.faroCsv ?? "") +
+    "\nORDER BY COUNT(*) DESC\n";
+  bad.defaultInterest =
+    String(good.defaultInterest ?? "")
+      .replace(/requireEffectiveFaroFullRecourseAgreement/g, "requireSomethingElse");
   bad.service =
     String(bad.service) +
     "\nconst legal = row.legal_name; /TRANSPORTATION/i.test(legal);\n";

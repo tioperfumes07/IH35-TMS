@@ -1,6 +1,8 @@
 import { upsertFaroDailyImport } from "../data-infra/data-infra.service.js";
 import { postReserveMovement } from "./reserve.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
+import { requireEffectiveFaroFullRecourseAgreement } from "../accounting/factoring-posting/faro-agreement-gate.js";
 import {
   FACTORING_GL_POSTING_FLAG,
   loadExactLinkedChargebackAmounts,
@@ -39,7 +41,12 @@ export type FaroCsvParseResult = {
 
 export class FaroCsvImportError extends Error {
   constructor(
-    readonly code: "invalid_csv" | "missing_headers" | "empty_csv" | "commit_failed",
+    readonly code:
+      | "invalid_csv"
+      | "missing_headers"
+      | "empty_csv"
+      | "commit_failed"
+      | "policy_faro_agreement",
     message: string
   ) {
     super(message);
@@ -177,26 +184,15 @@ type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
 };
 
+/** Authoritative Faro full-recourse vendor — never customer-majority / sole-factor inference. */
 async function resolveActiveFactorId(client: Queryable, companyId: string): Promise<string | null> {
-  const res = await client.query<{ id: string }>(
-    `
-      SELECT v.id::text
-      FROM mdata.vendors v
-      JOIN (
-        SELECT factoring_company_vendor_id AS vendor_id
-        FROM mdata.customers
-        WHERE operating_company_id = $1::uuid
-          AND factoring_company_vendor_id IS NOT NULL
-        GROUP BY factoring_company_vendor_id
-        ORDER BY COUNT(*) DESC
-        LIMIT 1
-      ) c ON c.vendor_id = v.id
-      WHERE v.operating_company_id = $1::uuid
-      LIMIT 1
-    `,
-    [companyId]
+  const gate = await requireEffectiveFaroFullRecourseAgreement(
+    client as never,
+    companyId,
+    companyBusinessDate()
   );
-  return res.rows[0]?.id ?? null;
+  if (!gate.ok) return null;
+  return gate.vendorId;
 }
 
 async function applyInvoiceAndReserveUpdates(
@@ -401,6 +397,12 @@ export async function commitFaroCsvImport(input: {
   const { sideEffects, advanceActuals, postingEnabled } = await withCurrentUser(input.userId, async (client) => {
     await client.query("SELECT set_config('app.operating_company_id', $1, true)", [input.operatingCompanyId]);
     const factorId = await resolveActiveFactorId(client, input.operatingCompanyId);
+    if (!factorId) {
+      throw new FaroCsvImportError(
+        "policy_faro_agreement",
+        "No effective TRANSP/Faro full-recourse agreement — refuse Faro CSV import (RTS/partial/missing/expired/ambiguous fail closed)"
+      );
+    }
     const effects = await applyInvoiceAndReserveUpdates(client, input.operatingCompanyId, parsed.lines, factorId);
     // Reconciliation point 2 (at funding): aggregate FARO's actuals per advance for variance flagging + the
     // funding-post trigger. Read-only here (posting happens after this tx, via the flag-gated poster).

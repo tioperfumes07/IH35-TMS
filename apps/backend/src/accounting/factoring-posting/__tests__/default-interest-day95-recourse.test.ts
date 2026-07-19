@@ -28,6 +28,20 @@ const {
 vi.mock("../../../auth/db.js", () => ({ withLuciaBypass: mockWithLuciaBypass }));
 vi.mock("../../../lib/feature-flags/service.js", () => ({ isEnabled: mockIsEnabled }));
 vi.mock("../../../audit/crud-audit.js", () => ({ appendCrudAudit: mockAppendCrudAudit }));
+vi.mock("../faro-agreement-gate.js", () => ({
+  requireEffectiveFaroFullRecourseAgreement: vi.fn(async () => ({
+    ok: true,
+    vendorId: "faro-vendor",
+    vendorName: "Faro",
+    agreementId: "agr-1",
+    factorProfileId: "fp-1",
+    companyCode: "TRANSP",
+    asOf: "2026-01-20",
+  })),
+  advanceBoundToFaroVendor: vi.fn(async () => true),
+  FARO_FULL_RECOURSE_AGREEMENT_CODE: "FARO_FULL_RECOURSE_V1",
+}));
+
 vi.mock("../poster.service.js", () => ({
   FACTORING_GL_POSTING_FLAG: "FACTORING_GL_POSTING_ENABLED",
   postFactoringChargebackEvent: mockChargeback,

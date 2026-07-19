@@ -322,9 +322,31 @@ BEGIN
     RETURN;
   END IF;
 
+  -- Same-entity composite FK parents (idempotent unique on (opco, id)).
+  IF to_regclass('accounting.factoring_advances') IS NOT NULL
+     AND NOT EXISTS (
+       SELECT 1 FROM pg_constraint
+        WHERE conname = 'uq_factoring_advances_company_id'
+          AND conrelid = 'accounting.factoring_advances'::regclass
+     ) THEN
+    ALTER TABLE accounting.factoring_advances
+      ADD CONSTRAINT uq_factoring_advances_company_id UNIQUE (operating_company_id, id);
+  END IF;
+
+  IF to_regclass('accounting.journal_entries') IS NOT NULL
+     AND NOT EXISTS (
+       SELECT 1 FROM pg_constraint
+        WHERE conname = 'uq_journal_entries_company_id'
+          AND conrelid = 'accounting.journal_entries'::regclass
+     ) THEN
+    ALTER TABLE accounting.journal_entries
+      ADD CONSTRAINT uq_journal_entries_company_id UNIQUE (operating_company_id, id);
+  END IF;
+
   CREATE TABLE IF NOT EXISTS accounting.factoring_lifecycle_posting_keys (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     operating_company_id uuid NOT NULL REFERENCES org.companies(id),
+    -- Inline REFERENCES satisfy orphan-FK inventory; same-entity composites below are authoritative.
     factoring_advance_id uuid NOT NULL REFERENCES accounting.factoring_advances(id),
     source_transaction_type text NOT NULL
       CHECK (source_transaction_type IN (
@@ -343,13 +365,45 @@ BEGIN
   CREATE INDEX IF NOT EXISTS idx_factoring_lifecycle_posting_keys_je
     ON accounting.factoring_lifecycle_posting_keys (operating_company_id, journal_entry_id);
 
-  -- Idempotent FK backfill when table was created before the inline REFERENCES landed.
+  -- Same-entity composite FKs (independent UUID FKs + company RLS are insufficient).
+  IF to_regclass('accounting.factoring_advances') IS NOT NULL
+     AND NOT EXISTS (
+       SELECT 1 FROM pg_constraint
+       WHERE conrelid = 'accounting.factoring_lifecycle_posting_keys'::regclass
+         AND contype = 'f'
+         AND conname = 'factoring_lifecycle_posting_keys_advance_same_entity_fkey'
+     ) THEN
+    ALTER TABLE accounting.factoring_lifecycle_posting_keys
+      ADD CONSTRAINT factoring_lifecycle_posting_keys_advance_same_entity_fkey
+      FOREIGN KEY (operating_company_id, factoring_advance_id)
+      REFERENCES accounting.factoring_advances (operating_company_id, id);
+  END IF;
+
+  IF NOT EXISTS (
+       SELECT 1 FROM pg_constraint
+       WHERE conrelid = 'accounting.factoring_lifecycle_posting_keys'::regclass
+         AND contype = 'f'
+         AND conname = 'factoring_lifecycle_posting_keys_je_same_entity_fkey'
+     ) THEN
+    ALTER TABLE accounting.factoring_lifecycle_posting_keys
+      ADD CONSTRAINT factoring_lifecycle_posting_keys_je_same_entity_fkey
+      FOREIGN KEY (operating_company_id, journal_entry_id)
+      REFERENCES accounting.journal_entries (operating_company_id, id);
+  END IF;
+
+  -- Legacy single-column FK (kept if already present; new envs rely on composite above).
   IF to_regclass('accounting.factoring_advances') IS NOT NULL
      AND NOT EXISTS (
        SELECT 1 FROM pg_constraint
        WHERE conrelid = 'accounting.factoring_lifecycle_posting_keys'::regclass
          AND contype = 'f'
          AND conname = 'factoring_lifecycle_posting_keys_factoring_advance_id_fkey'
+     )
+     AND NOT EXISTS (
+       SELECT 1 FROM pg_constraint
+       WHERE conrelid = 'accounting.factoring_lifecycle_posting_keys'::regclass
+         AND contype = 'f'
+         AND conname = 'factoring_lifecycle_posting_keys_advance_same_entity_fkey'
      ) THEN
     ALTER TABLE accounting.factoring_lifecycle_posting_keys
       ADD CONSTRAINT factoring_lifecycle_posting_keys_factoring_advance_id_fkey

@@ -15,6 +15,7 @@ const ADVANCE_B = "33333333-3333-4333-8333-333333333333";
 describe("findStrictLifecycleRepairCandidate", () => {
   it("returns unique authoritative candidate (entity + lifecycle source + advance + balanced)", async () => {
     const query = vi.fn(async (sql: string) => {
+      if (sql.includes("information_schema.columns")) return { rows: [{ n: "0" }] };
       if (sql.includes("source_transaction_type = $2") && sql.includes("SELECT je.id")) {
         return { rows: [{ id: "je-auth" }] };
       }
@@ -34,6 +35,7 @@ describe("findStrictLifecycleRepairCandidate", () => {
 
   it("ambiguous: two authoritative JEs ⇒ fail closed", async () => {
     const query = vi.fn(async (sql: string) => {
+      if (sql.includes("information_schema.columns")) return { rows: [{ n: "0" }] };
       if (sql.includes("source_transaction_type = $2") && sql.includes("SELECT je.id")) {
         return { rows: [{ id: "je-1" }, { id: "je-2" }] };
       }
@@ -53,6 +55,7 @@ describe("findStrictLifecycleRepairCandidate", () => {
 
   it("same memo + different advance provenance ⇒ invalid (never overwrite)", async () => {
     const query = vi.fn(async (sql: string) => {
+      if (sql.includes("information_schema.columns")) return { rows: [{ n: "0" }] };
       if (sql.includes("source_transaction_type = $2") && sql.includes("SELECT je.id")) {
         return { rows: [] };
       }
@@ -79,6 +82,7 @@ describe("findStrictLifecycleRepairCandidate", () => {
 
   it("manual JE same memo with foreign source id ⇒ invalid", async () => {
     const query = vi.fn(async (sql: string) => {
+      if (sql.includes("information_schema.columns")) return { rows: [{ n: "0" }] };
       if (sql.includes("source_transaction_type = $2")) return { rows: [] };
       if (sql.includes("source_transaction_id IS NOT NULL")) return { rows: [] };
       if (sql.includes("je.memo = $2")) return { rows: [{ id: "je-manual" }] };

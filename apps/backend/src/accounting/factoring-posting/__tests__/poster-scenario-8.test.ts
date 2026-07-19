@@ -37,12 +37,26 @@ vi.mock("../../posting-engine.service.js", () => ({ ensureOpenPeriod: vi.fn(asyn
 vi.mock("../../accounting-spine-emit.js", () => ({ writeTransactionSourceLink: vi.fn(async () => undefined) }));
 vi.mock("../../coa-roles/resolver.service.js", () => ({ resolveRoleAccount: mockResolveRoleAccount }));
 vi.mock("../../../audit/crud-audit.js", () => ({ appendCrudAudit: vi.fn(async () => undefined) }));
+vi.mock("../faro-agreement-gate.js", () => ({
+  requireEffectiveFaroFullRecourseAgreement: vi.fn(async () => ({
+    ok: true,
+    vendorId: "faro-vendor",
+    vendorName: "Faro",
+    agreementId: "agr-1",
+    factorProfileId: "fp-1",
+    companyCode: "TRANSP",
+    asOf: "2026-01-20",
+  })),
+  advanceBoundToFaroVendor: vi.fn(async () => true),
+  FARO_FULL_RECOURSE_AGREEMENT_CODE: "FARO_FULL_RECOURSE_V1",
+}));
 
 const OPCO = "11111111-1111-4111-8111-111111111111";
 const ADVANCE = "22222222-2222-4222-8222-222222222222";
 const ACTOR = "33333333-3333-4333-8333-333333333333";
 
 function installDefaults(opts: { alreadyPosted?: boolean } = {}) {
+  const alreadyPosted = !!opts.alreadyPosted;
   mockQuery.mockReset();
   mockIsEnabled.mockReset();
   mockCreateJournalEntry.mockReset();
@@ -70,18 +84,72 @@ function installDefaults(opts: { alreadyPosted?: boolean } = {}) {
 
   mockQuery.mockImplementation(async (sql: string) => {
     if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
+    if (sql.includes("SAVEPOINT") || sql.includes("RELEASE SAVEPOINT") || sql.includes("ROLLBACK TO SAVEPOINT")) {
+      return { rows: [] };
+    }
+    if (sql.includes("FOR UPDATE")) return { rows: [{ id: ADVANCE }] };
+    if (sql.includes("information_schema.columns")) return { rows: [{ n: "0" }] };
     if (sql.includes("factoring_lifecycle_posting_keys")) {
-      if (sql.trim().startsWith("INSERT")) return { rows: [] };
-      return { rows: opts.alreadyPosted ? [{ journal_entry_id: "existing-je" }] : [] };
+      if (sql.includes("INSERT")) return { rows: alreadyPosted ? [] : [{ journal_entry_id: "je-1" }] };
+      return { rows: alreadyPosted ? [{ journal_entry_id: "existing-je" }] : [] };
     }
     if (sql.includes("AS outstanding")) {
       return { rows: [{ outstanding: "500000" }] };
+    }
+    // Shape fixtures ONLY for already_posted repair — never poison fresh-post candidate search.
+    if (alreadyPosted && sql.includes("status::text AS status") && sql.includes("journal_entries")) {
+      return { rows: [{ id: "existing-je", status: "posted", reverses_je_id: null, reversed_by_je_id: null }] };
+    }
+    if (alreadyPosted && sql.includes("chart_of_accounts_roles") && sql.includes("AS role")) {
+      // Exact funding legs for scenario-8 figures (incl. ACH on factor_fee_expense).
+      return {
+        rows: [
+          {
+            role: "cash_clearing",
+            debit_or_credit: "debit",
+            amount_cents: "484000",
+            source_transaction_type: null,
+            source_transaction_id: null,
+          },
+          {
+            role: "factor_reserve_held",
+            debit_or_credit: "debit",
+            amount_cents: "7500",
+            source_transaction_type: null,
+            source_transaction_id: null,
+          },
+          {
+            role: "factor_fee_expense",
+            debit_or_credit: "debit",
+            amount_cents: "7500",
+            source_transaction_type: null,
+            source_transaction_id: null,
+          },
+          {
+            role: "factor_fee_expense",
+            debit_or_credit: "debit",
+            amount_cents: "1000",
+            source_transaction_type: null,
+            source_transaction_id: null,
+          },
+          {
+            role: "factoring_advance_liability",
+            debit_or_credit: "credit",
+            amount_cents: "500000",
+            source_transaction_type: null,
+            source_transaction_id: null,
+          },
+        ],
+      };
+    }
+    if (sql.includes("AS ok") && sql.includes("journal_entry_uuid") && sql.includes("= COALESCE")) {
+      return { rows: [{ ok: true }] };
     }
     if (sql.includes("FROM accounting.factoring_advances") && sql.includes("invoice_total_cents")) {
       return {
         rows: [
           {
-            id: "fac-1",
+            id: ADVANCE,
             display_id: "FAC-0001",
             status: "advanced",
             invoice_total_cents: 500000,
@@ -98,18 +166,21 @@ function installDefaults(opts: { alreadyPosted?: boolean } = {}) {
       };
     }
     if (sql.includes("UPDATE accounting.journal_entry_postings")) return { rows: [] };
-        if (sql.includes("FROM accounting.journal_entries")) {
-      // Authoritative repair candidate query — empty unless already_posted fixtures override.
+    if (sql.includes("FROM accounting.journal_entries")) {
       return { rows: [] };
     }
     if (sql.includes("FROM accounting.journal_entry_postings")) {
-      // Conflict probe (LIMIT 1 + foreign provenance predicates) must be empty.
-      if (sql.includes("LIMIT 1") && (sql.includes("NOT (") || sql.includes("IS DISTINCT FROM") || sql.includes("source_transaction_id IS NOT NULL"))) {
+      if (
+        sql.includes("LIMIT 1") &&
+        (sql.includes("NOT (") || sql.includes("IS DISTINCT FROM") || sql.includes("source_transaction_id IS NOT NULL"))
+      ) {
         return { rows: [] };
       }
       return { rows: [{ id: "line-1" }] };
     }
-
+    if (sql.includes("FROM accounting.invoices") && !sql.includes("UPDATE")) {
+      return { rows: [{ id: "inv-1", total_cents: "500000", amount_paid_cents: "0", voided_at: null }] };
+    }
     if (sql.includes("UPDATE accounting.invoices")) return { rows: [] };
     if (sql.includes("UPDATE accounting.factoring_advances")) return { rows: [] };
     if (sql.includes("INSERT INTO accounting.factoring_reserve_movements")) return { rows: [] };

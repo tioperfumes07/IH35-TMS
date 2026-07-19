@@ -5,6 +5,21 @@ const SAMPLE_CSV = `Invoice Number,Customer Name,Gross,Advance,Reserve,Fee,Charg
 INV-2026-00001,Acme Freight,1000.00,950.00,50.00,25.00,0.00,925.00,2026-06-15
 INV-2026-00002,Beta Logistics,500.00,475.00,25.00,12.50,0.00,462.50,2026-06-16`;
 
+
+vi.mock("../accounting/factoring-posting/faro-agreement-gate.js", () => ({
+  requireEffectiveFaroFullRecourseAgreement: vi.fn(async () => ({
+    ok: true,
+    vendorId: "faro-vendor-id",
+    vendorName: "Faro",
+    agreementId: "agr-1",
+    factorProfileId: "fp-1",
+    companyCode: "TRANSP",
+    asOf: "2026-01-20",
+  })),
+  advanceBoundToFaroVendor: vi.fn(async () => true),
+  FARO_FULL_RECOURSE_AGREEMENT_CODE: "FARO_FULL_RECOURSE_V1",
+  FARO_FULL_RECOURSE_V1: "FARO_FULL_RECOURSE_V1",
+}));
 vi.mock("../data-infra/data-infra.service.js", () => ({
   upsertFaroDailyImport: vi.fn(async () => ({ id: "import-1" })),
 }));
