@@ -105,6 +105,54 @@ describe("home-widgets FE↔BE response contract", () => {
     expect(tr.status).toBe("unverifiable");
   });
 
+  it("today-revenue: maps 422 revenue_gl_linkage_unverifiable to typed unverifiable", async () => {
+    vi.spyOn(client, "apiRequest").mockRejectedValue(
+      new client.ApiError(422, {
+        error: "revenue_gl_linkage_unverifiable",
+        unverifiable_reason: "missing_table:accounting.posting_batches",
+        revenue_cents: null,
+      })
+    );
+    const tr = await fetchHomeTodayRevenue("c1");
+    expect(tr.status).toBe("unverifiable");
+    expect(tr.revenue_cents).toBeNull();
+    expect(tr.unverifiable_reason).toContain("posting_batches");
+  });
+
+  it("today-revenue: real 500 is thrown (not labeled schema unverifiable)", async () => {
+    const err = new client.ApiError(500, { error: "revenue_gl_linkage_failed", message: "connection_reset" });
+    vi.spyOn(client, "apiRequest").mockRejectedValue(err);
+    await expect(fetchHomeTodayRevenue("c1")).rejects.toBe(err);
+    expect(err.status).toBe(500);
+  });
+
+  it("today-revenue: exposes drill hrefs for forward navigation", async () => {
+    const invId = "11111111-1111-4111-8111-111111111112";
+    vi.spyOn(client, "apiRequest").mockResolvedValue({
+      revenue_cents: 5000,
+      status: "ok",
+      discrepancy_count: 1,
+      discrepancy_cents: 5000,
+      drill: {
+        mismatched_invoices: [
+          {
+            invoice_id: invId,
+            display_id: "INV-X",
+            recognition_date: "2026-07-18",
+            invoice_revenue_cents: 5000,
+            gl_revenue_cents: 0,
+            journal_entry_ids: [],
+            reason: "missing_je",
+            href: `/accounting/invoices/${invId}`,
+          },
+        ],
+        mismatched_journal_entries: [],
+      },
+    } as never);
+    const tr = await fetchHomeTodayRevenue("c1");
+    expect(tr.drill?.mismatched_invoices[0]?.href).toBe(`/accounting/invoices/${invId}`);
+  });
+
   it("cash-position: reads backend { totalCents } into balance_cents (not balance_cents)", async () => {
     // Backend returns { totalCents, byAccount } — reading `balance_cents` zeroed the tile (HOME-2).
     vi.spyOn(client, "apiRequest").mockResolvedValue({

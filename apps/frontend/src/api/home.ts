@@ -276,6 +276,27 @@ export type HomeRevenueBasisMeta = {
   governed_accounts?: string;
 };
 
+export type HomeRevenueInvoiceDrill = {
+  invoice_id: string;
+  display_id: string | null;
+  recognition_date: string;
+  invoice_revenue_cents: number;
+  gl_revenue_cents: number;
+  journal_entry_ids: string[];
+  reason: string;
+  href: string;
+};
+
+export type HomeRevenueJournalDrill = {
+  journal_entry_id: string;
+  entry_date: string;
+  gl_revenue_cents: number;
+  invoice_id: string | null;
+  account_ids: string[];
+  reason: string;
+  href: string;
+};
+
 export type HomeTodayRevenue = {
   /** Null when linkage is unverifiable — never treat as $0. */
   revenue_cents: number | null;
@@ -286,6 +307,10 @@ export type HomeTodayRevenue = {
   basis?: { invoice: HomeRevenueBasisMeta; gl: HomeRevenueBasisMeta };
   discrepancy_count?: number;
   discrepancy_cents?: number;
+  drill?: {
+    mismatched_invoices: HomeRevenueInvoiceDrill[];
+    mismatched_journal_entries: HomeRevenueJournalDrill[];
+  };
   yesterday_revenue_cents?: number;
   delta_pct_vs_yesterday?: number | null;
 };
@@ -383,8 +408,58 @@ function num(raw: unknown, fallback = 0): number {
   return Number.isFinite(n) ? n : fallback;
 }
 
-export async function fetchHomeTodayRevenue(companyId: string): Promise<HomeTodayRevenue> {
-  const raw = await apiRequest<Record<string, unknown>>(withCompany("/api/v1/home/today-revenue", companyId));
+function coerceRevenueDrill(raw: Record<string, unknown>): HomeTodayRevenue["drill"] {
+  const drill = raw.drill;
+  if (!drill || typeof drill !== "object") return undefined;
+  const d = drill as {
+    mismatched_invoices?: unknown;
+    mismatched_journal_entries?: unknown;
+  };
+  const invoices = Array.isArray(d.mismatched_invoices)
+    ? d.mismatched_invoices.flatMap((row): HomeRevenueInvoiceDrill[] => {
+        if (!row || typeof row !== "object") return [];
+        const o = row as Record<string, unknown>;
+        if (typeof o.invoice_id !== "string" || typeof o.href !== "string") return [];
+        return [
+          {
+            invoice_id: o.invoice_id,
+            display_id: typeof o.display_id === "string" ? o.display_id : null,
+            recognition_date: typeof o.recognition_date === "string" ? o.recognition_date : "",
+            invoice_revenue_cents: num(o.invoice_revenue_cents),
+            gl_revenue_cents: num(o.gl_revenue_cents),
+            journal_entry_ids: Array.isArray(o.journal_entry_ids)
+              ? o.journal_entry_ids.filter((x): x is string => typeof x === "string")
+              : [],
+            reason: typeof o.reason === "string" ? o.reason : "missing_je",
+            href: o.href,
+          },
+        ];
+      })
+    : [];
+  const journals = Array.isArray(d.mismatched_journal_entries)
+    ? d.mismatched_journal_entries.flatMap((row): HomeRevenueJournalDrill[] => {
+        if (!row || typeof row !== "object") return [];
+        const o = row as Record<string, unknown>;
+        if (typeof o.journal_entry_id !== "string" || typeof o.href !== "string") return [];
+        return [
+          {
+            journal_entry_id: o.journal_entry_id,
+            entry_date: typeof o.entry_date === "string" ? o.entry_date : "",
+            gl_revenue_cents: num(o.gl_revenue_cents),
+            invoice_id: typeof o.invoice_id === "string" ? o.invoice_id : null,
+            account_ids: Array.isArray(o.account_ids)
+              ? o.account_ids.filter((x): x is string => typeof x === "string")
+              : [],
+            reason: typeof o.reason === "string" ? o.reason : "unlinked_gl_revenue",
+            href: o.href,
+          },
+        ];
+      })
+    : [];
+  return { mismatched_invoices: invoices, mismatched_journal_entries: journals };
+}
+
+function coerceTodayRevenuePayload(raw: Record<string, unknown>): HomeTodayRevenue {
   let delta: number | null | undefined;
   if (raw.delta_pct_vs_yesterday === null) delta = null;
   else if (raw.delta_pct_vs_yesterday === undefined) delta = undefined;
@@ -409,13 +484,48 @@ export async function fetchHomeTodayRevenue(companyId: string): Promise<HomeToda
     invoice_basis_cents: raw.invoice_basis_cents !== undefined ? num(raw.invoice_basis_cents) : undefined,
     gl_posted_revenue_cents: raw.gl_posted_revenue_cents !== undefined ? num(raw.gl_posted_revenue_cents) : undefined,
     status,
-    unverifiable_reason: typeof raw.unverifiable_reason === "string" ? raw.unverifiable_reason : raw.unverifiable_reason === null ? null : undefined,
+    unverifiable_reason:
+      typeof raw.unverifiable_reason === "string"
+        ? raw.unverifiable_reason
+        : raw.unverifiable_reason === null
+          ? null
+          : undefined,
     basis: raw.basis && typeof raw.basis === "object" ? (raw.basis as HomeTodayRevenue["basis"]) : undefined,
     discrepancy_count: raw.discrepancy_count !== undefined ? num(raw.discrepancy_count) : undefined,
     discrepancy_cents: raw.discrepancy_cents !== undefined ? num(raw.discrepancy_cents) : undefined,
+    drill: coerceRevenueDrill(raw),
     yesterday_revenue_cents: raw.yesterday_revenue_cents !== undefined ? num(raw.yesterday_revenue_cents) : undefined,
     delta_pct_vs_yesterday: delta,
   };
+}
+
+/**
+ * Today revenue — prefers typed 200 `{ status: "unverifiable" }`.
+ * Also maps legacy/alternate 422 with `error=revenue_gl_linkage_unverifiable` to the same shape.
+ * Transport/auth/5xx stay as thrown ApiError (never labeled schema-unverifiable).
+ */
+export async function fetchHomeTodayRevenue(companyId: string): Promise<HomeTodayRevenue> {
+  const path = withCompany("/api/v1/home/today-revenue", companyId);
+  try {
+    const raw = await apiRequest<Record<string, unknown>>(path);
+    return coerceTodayRevenuePayload(raw);
+  } catch (err) {
+    if (
+      err instanceof ApiError &&
+      err.status === 422 &&
+      err.data &&
+      typeof err.data === "object" &&
+      (err.data as { error?: string }).error === "revenue_gl_linkage_unverifiable"
+    ) {
+      return coerceTodayRevenuePayload({
+        ...(err.data as Record<string, unknown>),
+        status: "unverifiable",
+        revenue_cents: null,
+      });
+    }
+    // Real non-2xx (401/403/500/…) — do not fabricate unverifiable.
+    throw err;
+  }
 }
 
 export async function fetchHomeOpenLoadsCount(companyId: string): Promise<HomeOpenLoadsCount> {
@@ -512,17 +622,36 @@ function coerceWeeklyRevenue(raw: unknown): HomeWeeklyRevenueResult {
   };
 }
 
-export async function fetchHomeWeeklyRevenue(companyId: string, days = 7): Promise<HomeWeeklyRevenuePoint[]> {
+async function fetchWeeklyRevenueRaw(companyId: string, days: number): Promise<unknown> {
   const path = withCompany(`/api/v1/home/weekly-revenue?days=${encodeURIComponent(String(days))}`, companyId);
-  const raw = await apiRequest<unknown>(path);
-  return coerceWeeklyRevenue(raw).days;
+  try {
+    return await apiRequest<unknown>(path);
+  } catch (err) {
+    if (
+      err instanceof ApiError &&
+      err.status === 422 &&
+      err.data &&
+      typeof err.data === "object" &&
+      (err.data as { error?: string }).error === "revenue_gl_linkage_unverifiable"
+    ) {
+      return {
+        ...(err.data as Record<string, unknown>),
+        status: "unverifiable",
+        days: [],
+        revenue_cents: null,
+      };
+    }
+    throw err;
+  }
+}
+
+export async function fetchHomeWeeklyRevenue(companyId: string, days = 7): Promise<HomeWeeklyRevenuePoint[]> {
+  return coerceWeeklyRevenue(await fetchWeeklyRevenueRaw(companyId, days)).days;
 }
 
 /** Full weekly payload including dual-basis / discrepancy metadata (0280-02). */
 export async function fetchHomeWeeklyRevenueDetailed(companyId: string, days = 7): Promise<HomeWeeklyRevenueResult> {
-  const path = withCompany(`/api/v1/home/weekly-revenue?days=${encodeURIComponent(String(days))}`, companyId);
-  const raw = await apiRequest<unknown>(path);
-  return coerceWeeklyRevenue(raw);
+  return coerceWeeklyRevenue(await fetchWeeklyRevenueRaw(companyId, days));
 }
 
 const WO_STATUSES = ["draft", "open", "in_progress", "awaiting_parts", "completed", "cancelled"] as const;

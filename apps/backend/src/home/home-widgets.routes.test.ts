@@ -28,6 +28,12 @@ describe("home-widgets revenue GL linkage (0280-02)", () => {
     expect(routesSrc).not.toMatch(/today-revenue[\s\S]{0,800}catch\s*\{\s*return\s*\{\s*revenue_cents:\s*0\s*\}/);
     expect(routesSrc).toContain("revenue_gl_linkage_unverifiable");
   });
+
+  it("surfaces unverifiable as typed 200 body (not 422 conflated with transport)", () => {
+    // Must not reply.code(422) for schema unverifiable — that conflates with client/transport errors.
+    expect(routesSrc).not.toMatch(/unverifiable[\s\S]{0,120}reply\.code\(422\)/);
+    expect(routesSrc).toContain("revenue_gl_linkage_failed");
+  });
 });
 
 // FACTOR-1 static guard: the factoring-balance widget must read its reserve/advanced

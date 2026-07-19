@@ -5,15 +5,15 @@
  * only (UTC CURRENT_DATE), with no journal_entry_postings cross-check and no invoice-basis label.
  * Silent catch → fabricated $0.
  *
- * FIX: entity-scoped read that exposes invoice-basis revenue alongside GL-posted revenue for the
- * same delivery-recognition period (company TZ; COALESCE(final delivery-stop actual_departure_at CT date, issue_date)),
- * governed Income/OtherIncome accounts, explicit basis/source metadata, discrepancy count/amount,
- * and forward drill ids. Reuses existing source_transaction_* + transaction_source_links spine from
- * the invoice poster — NO new GL math/writes. Missing canonical linkage surface → status=unverifiable
- * (never fabricate zero).
+ * FIX: entity-scoped read that exposes invoice-basis (pre-tax) revenue alongside GL-posted revenue
+ * for the same delivery-recognition period (company TZ; final active delivery stop actual_departure_at,
+ * excluding cancelled stops; issue_date fallback), governed Income/OtherIncome accounts, explicit
+ * basis/source metadata, mutually exclusive discrepancy categories, and forward drill ids.
+ * Reuses source_transaction_* + transaction_source_links + posting_batches (P&L-aligned posted|reversed).
+ * Missing canonical linkage surface → status=unverifiable (never fabricate zero).
  *
  * Standards: QuickBooks P&L dual-view honesty + McLeod/Alvys ops revenue tiles that label basis;
- * CPA locked accrual recognition = load delivery (invoice = billing readiness).
+ * CPA locked accrual recognition = load delivery; invoice posting-eligible = sent|partial|paid|factored.
  */
 import { COMPANY_TIME_ZONE, companyBusinessDate } from "../lib/company-business-date.js";
 
@@ -29,6 +29,7 @@ export type RevenueBasisMeta = {
   source: string;
   recognition: string;
   governed_accounts?: string;
+  amount_basis?: string;
 };
 
 export type RevenueDiscrepancyReason =
@@ -80,13 +81,13 @@ export type RevenueGlLinkageResult = {
     invoice: RevenueBasisMeta;
     gl: RevenueBasisMeta;
   };
-  /** Invoice total_cents (non-void) attributed to the recognition period — widget headline. */
+  /** Pre-tax invoice revenue (total − tax) for eligible invoices in the recognition period. */
   invoice_basis_cents: number;
-  /** Net credits to Income/OtherIncome in the same period (P&L-aligned). */
+  /** Net credits to Income/OtherIncome in the same period (P&L-aligned posted|reversed batches). */
   gl_posted_revenue_cents: number;
   /**
    * Backward-compat headline. Null when unverifiable so clients cannot treat a fabricated 0 as revenue.
-   * When ok/empty, equals invoice_basis_cents.
+   * When ok/empty, equals invoice_basis_cents (pre-tax).
    */
   revenue_cents: number | null;
   discrepancy_count: number;
@@ -98,24 +99,31 @@ export type RevenueGlLinkageResult = {
   };
 };
 
+/** Canonical posting-eligible invoice statuses (posting-engine INVOICE_ELIGIBLE_STATUSES). */
+export const INVOICE_BASIS_ELIGIBLE_STATUSES = ["sent", "partial", "paid", "factored"] as const;
+
 const REVENUE_ACCOUNT_TYPES = ["Income", "OtherIncome"] as const;
+
+/** Align with profit-loss.service / trial-balance: posted + reversed; never pending. */
+const POSTED_BATCH_STATUSES = ["posted", "reversed"] as const;
 
 const INVOICE_BASIS_META: RevenueBasisMeta = {
   label: "invoice_basis",
   source: "accounting.invoices",
   recognition:
-    "COALESCE((final delivery stop actual_departure_at AT TIME ZONE company_tz)::date, invoices.issue_date)",
+    "COALESCE((MAX final active delivery-stop actual_departure_at AT TIME ZONE company_tz)::date, invoices.issue_date); stops.status<>cancelled",
+  amount_basis: "GREATEST(0, total_cents - COALESCE(tax_cents,0)) pre-tax; status IN (sent,partial,paid,factored)",
 };
 
 const GL_BASIS_META: RevenueBasisMeta = {
   label: "gl_posted",
   source: "accounting.journal_entry_postings",
-  recognition: "journal_entries.entry_date (non-voided)",
+  recognition: "journal_entries.entry_date (non-voided); posting_batches.batch_status IN (posted,reversed) or NULL batch",
   governed_accounts: "catalogs.accounts.account_type IN (Income, OtherIncome)",
+  amount_basis: "net credit − debit on governed revenue accounts (P&L-aligned)",
 };
 
 function addDaysIso(ymd: string, delta: number): string {
-  // Interpret YMD as a calendar date in company TZ by anchoring at noon UTC (safe for ±14h zones).
   const [y, m, d] = ymd.split("-").map(Number);
   const dt = new Date(Date.UTC(y!, m! - 1, d!, 12, 0, 0));
   dt.setUTCDate(dt.getUTCDate() + delta);
@@ -128,6 +136,10 @@ function invoiceHref(invoiceId: string): string {
 
 function journalHref(journalEntryId: string): string {
   return `/accounting/journal-entries/${journalEntryId}`;
+}
+
+function pretaxCents(total: string | number | null | undefined, tax: string | number | null | undefined): number {
+  return Math.max(0, Number(total ?? 0) - Number(tax ?? 0));
 }
 
 type SchemaProbe = {
@@ -143,6 +155,7 @@ async function probeCanonicalLinkageSurface(client: DbClient): Promise<SchemaPro
     tsl_ok: boolean;
     accounts_ok: boolean;
     load_stops_ok: boolean;
+    batches_ok: boolean;
   }>(
     `
       SELECT
@@ -151,7 +164,8 @@ async function probeCanonicalLinkageSurface(client: DbClient): Promise<SchemaPro
         to_regclass('accounting.journal_entry_postings') IS NOT NULL AS jep_ok,
         to_regclass('accounting.transaction_source_links') IS NOT NULL AS tsl_ok,
         to_regclass('catalogs.accounts') IS NOT NULL AS accounts_ok,
-        to_regclass('mdata.load_stops') IS NOT NULL AS load_stops_ok
+        to_regclass('mdata.load_stops') IS NOT NULL AS load_stops_ok,
+        to_regclass('accounting.posting_batches') IS NOT NULL AS batches_ok
     `
   );
   const row = rel.rows[0];
@@ -170,6 +184,9 @@ async function probeCanonicalLinkageSurface(client: DbClient): Promise<SchemaPro
   if (!row.load_stops_ok) {
     return { ok: false, reason: "missing_table:mdata.load_stops" };
   }
+  if (!row.batches_ok) {
+    return { ok: false, reason: "missing_table:accounting.posting_batches" };
+  }
 
   const cols = await client.query<{ column_name: string }>(
     `
@@ -179,7 +196,17 @@ async function probeCanonicalLinkageSurface(client: DbClient): Promise<SchemaPro
         AND table_name = 'journal_entry_postings'
         AND column_name = ANY($1::text[])
     `,
-    [["source_transaction_type", "source_transaction_id", "journal_entry_uuid", "debit_or_credit", "amount_cents", "account_id"]]
+    [
+      [
+        "source_transaction_type",
+        "source_transaction_id",
+        "journal_entry_uuid",
+        "debit_or_credit",
+        "amount_cents",
+        "account_id",
+        "posting_batch_id",
+      ],
+    ]
   );
   const have = new Set(cols.rows.map((r) => r.column_name));
   for (const required of [
@@ -189,14 +216,13 @@ async function probeCanonicalLinkageSurface(client: DbClient): Promise<SchemaPro
     "debit_or_credit",
     "amount_cents",
     "account_id",
+    "posting_batch_id",
   ]) {
     if (!have.has(required)) {
       return { ok: false, reason: `missing_column:accounting.journal_entry_postings.${required}` };
     }
   }
 
-  // Final-delivery-stop actual_departure_at is preferred for recognition; missing stops table
-  // forces issue_date-only (still verifiable — CPA fallback, not unverifiable).
   return { ok: true, reason: null };
 }
 
@@ -242,12 +268,49 @@ function unverifiableResult(from: string, to: string, reason: string): RevenueGl
   };
 }
 
+/**
+ * Final active delivery evidence: MAX(actual_departure_at) among delivery stops that are not
+ * cancelled and not soft-deleted. Historical cancelled stops must not move recognition.
+ * $4 = company timezone name.
+ */
+const FINAL_ACTIVE_DELIVERY_RECOGNITION_SQL = `
+    COALESCE(
+      (
+        SELECT (MAX(ls.actual_departure_at) AT TIME ZONE $4)::date
+        FROM mdata.load_stops ls
+        WHERE ls.load_id = i.source_load_id
+          AND ls.stop_type = 'delivery'
+          AND ls.actual_departure_at IS NOT NULL
+          AND ls.soft_deleted_at IS NULL
+          AND ls.status <> 'cancelled'
+      ),
+      i.issue_date
+    )
+`;
+
+/** Same recognition with timezone param position $5 (for unlinked-GL query). */
+const FINAL_ACTIVE_DELIVERY_RECOGNITION_SQL_TZ5 = `
+    COALESCE(
+      (
+        SELECT (MAX(ls.actual_departure_at) AT TIME ZONE $5)::date
+        FROM mdata.load_stops ls
+        WHERE ls.load_id = i.source_load_id
+          AND ls.stop_type = 'delivery'
+          AND ls.actual_departure_at IS NOT NULL
+          AND ls.soft_deleted_at IS NULL
+          AND ls.status <> 'cancelled'
+      ),
+      i.issue_date
+    )
+`;
+
 type InvoiceRow = {
   invoice_id: string;
   display_id: string | null;
   recognition_date: string;
   total_cents: string | number;
   tax_cents: string | number;
+  pretax_revenue_cents: string | number;
   status: string;
 };
 
@@ -292,39 +355,28 @@ export async function computeRevenueGlLinkage(
     return unverifiableResult(fromDate, toDate, probe.reason ?? "canonical_linkage_unverifiable");
   }
 
-  // CPA locked accrual recognition = final active delivery stop actual_departure_at
-  // (booking-gap / McLeod-style delivery evidence). Fall back to issue_date when unlinked.
-  const recognitionExpr = `
-    COALESCE(
-      (
-        SELECT (MAX(ls.actual_departure_at) AT TIME ZONE $4)::date
-        FROM mdata.load_stops ls
-        WHERE ls.load_id = i.source_load_id
-          AND ls.stop_type = 'delivery'
-          AND ls.actual_departure_at IS NOT NULL
-          AND ls.soft_deleted_at IS NULL
-      ),
-      i.issue_date
-    )
-  `;
+  const eligible = [...INVOICE_BASIS_ELIGIBLE_STATUSES];
+  const revenueTypes = [...REVENUE_ACCOUNT_TYPES];
+  const postedBatch = [...POSTED_BATCH_STATUSES];
 
   const invoiceRes = await client.query<InvoiceRow>(
     `
       SELECT
         i.id::text AS invoice_id,
         i.display_id,
-        (${recognitionExpr})::text AS recognition_date,
+        (${FINAL_ACTIVE_DELIVERY_RECOGNITION_SQL})::text AS recognition_date,
         i.total_cents::bigint AS total_cents,
         COALESCE(i.tax_cents, 0)::bigint AS tax_cents,
+        GREATEST(0, i.total_cents - COALESCE(i.tax_cents, 0))::bigint AS pretax_revenue_cents,
         i.status::text AS status
       FROM accounting.invoices i
       WHERE i.operating_company_id = $1::uuid
         AND i.voided_at IS NULL
-        AND i.status <> 'void'
-        AND (${recognitionExpr}) BETWEEN $2::date AND $3::date
+        AND i.status = ANY($5::text[])
+        AND (${FINAL_ACTIVE_DELIVERY_RECOGNITION_SQL}) BETWEEN $2::date AND $3::date
       ORDER BY recognition_date ASC, i.display_id ASC NULLS LAST
     `,
-    [operatingCompanyId, fromDate, toDate, COMPANY_TIME_ZONE]
+    [operatingCompanyId, fromDate, toDate, COMPANY_TIME_ZONE, eligible]
   );
 
   const glDayRes = await client.query<GlDayRow>(
@@ -356,14 +408,14 @@ export async function computeRevenueGlLinkage(
         AND je.voided_at IS NULL
         AND je.entry_date BETWEEN $2::date AND $3::date
         AND a.account_type = ANY($4::text[])
-        AND (p.posting_batch_id IS NULL OR pb.batch_status IN ('posted', 'reversed'))
+        AND (p.posting_batch_id IS NULL OR pb.batch_status = ANY($5::text[]))
       GROUP BY je.entry_date
       ORDER BY je.entry_date ASC
     `,
-    [operatingCompanyId, fromDate, toDate, REVENUE_ACCOUNT_TYPES as unknown as string[]]
+    [operatingCompanyId, fromDate, toDate, revenueTypes, postedBatch]
   );
 
-  // Per-invoice linked GL revenue credits on governed revenue accounts (and non-revenue credits for wrong_account).
+  // Per-invoice linked GL — only P&L-admitted batches (posted|reversed), matching day totals.
   const linkRes = await client.query<InvoiceGlLinkRow>(
     `
       WITH invoice_ids AS (
@@ -371,18 +423,8 @@ export async function computeRevenueGlLinkage(
         FROM accounting.invoices i
         WHERE i.operating_company_id = $1::uuid
           AND i.voided_at IS NULL
-          AND i.status <> 'void'
-          AND COALESCE(
-            (
-              SELECT (MAX(ls.actual_departure_at) AT TIME ZONE $4)::date
-              FROM mdata.load_stops ls
-              WHERE ls.load_id = i.source_load_id
-                AND ls.stop_type = 'delivery'
-                AND ls.actual_departure_at IS NOT NULL
-                AND ls.soft_deleted_at IS NULL
-            ),
-            i.issue_date
-          ) BETWEEN $2::date AND $3::date
+          AND i.status = ANY($5::text[])
+          AND (${FINAL_ACTIVE_DELIVERY_RECOGNITION_SQL}) BETWEEN $2::date AND $3::date
       ),
       linked_postings AS (
         SELECT DISTINCT
@@ -402,9 +444,13 @@ export async function computeRevenueGlLinkage(
         JOIN catalogs.accounts a
           ON a.id = p.account_id
          AND a.operating_company_id = p.operating_company_id
+        LEFT JOIN accounting.posting_batches pb
+          ON pb.id = p.posting_batch_id
+         AND pb.operating_company_id = p.operating_company_id
         WHERE p.operating_company_id = $1::uuid
           AND p.source_transaction_type = 'invoice'
           AND p.source_transaction_id IN (SELECT id::text FROM invoice_ids)
+          AND (p.posting_batch_id IS NULL OR pb.batch_status = ANY($6::text[]))
 
         UNION
 
@@ -428,9 +474,13 @@ export async function computeRevenueGlLinkage(
         JOIN catalogs.accounts a
           ON a.id = p.account_id
          AND a.operating_company_id = p.operating_company_id
+        LEFT JOIN accounting.posting_batches pb
+          ON pb.id = p.posting_batch_id
+         AND pb.operating_company_id = p.operating_company_id
         WHERE tsl.operating_company_id = $1::uuid
           AND tsl.linked_object_type = 'invoice'
           AND tsl.linked_object_id IN (SELECT id::text FROM invoice_ids)
+          AND (p.posting_batch_id IS NULL OR pb.batch_status = ANY($6::text[]))
       )
       SELECT
         lp.invoice_id::text AS invoice_id,
@@ -440,15 +490,13 @@ export async function computeRevenueGlLinkage(
         COALESCE(
           SUM(
             CASE
-              WHEN lp.account_type = ANY($5::text[]) AND lp.debit_or_credit = 'credit' THEN lp.amount_cents
-              WHEN lp.account_type = ANY($5::text[]) AND lp.debit_or_credit = 'debit' THEN -lp.amount_cents
+              WHEN lp.account_type = ANY($7::text[]) AND lp.debit_or_credit = 'credit' THEN lp.amount_cents
+              WHEN lp.account_type = ANY($7::text[]) AND lp.debit_or_credit = 'debit' THEN -lp.amount_cents
               ELSE 0
             END
           ),
           0
         )::bigint AS gl_revenue_cents,
-        -- "Wrong account" = revenue-shaped credit landed on an expense/COGS/equity account
-        -- (not A/R debit, not sales-tax payable liability). Tax credits must not false-positive.
         COALESCE(
           SUM(
             CASE
@@ -460,14 +508,14 @@ export async function computeRevenueGlLinkage(
           ),
           0
         )::bigint AS non_revenue_credit_cents,
-        array_agg(DISTINCT lp.account_id::text) FILTER (WHERE lp.account_type = ANY($5::text[])) AS account_ids
+        array_agg(DISTINCT lp.account_id::text) FILTER (WHERE lp.account_type = ANY($7::text[])) AS account_ids
       FROM linked_postings lp
       GROUP BY lp.invoice_id, lp.journal_entry_id, lp.entry_date, lp.je_status
     `,
-    [operatingCompanyId, fromDate, toDate, COMPANY_TIME_ZONE, REVENUE_ACCOUNT_TYPES as unknown as string[]]
+    [operatingCompanyId, fromDate, toDate, COMPANY_TIME_ZONE, eligible, postedBatch, revenueTypes]
   );
 
-  // GL revenue in period tagged to an invoice that is outside the recognition window / unknown / wrong.
+  // Unlinked GL revenue: not tied to an eligible in-window invoice via DIRECT source cols OR TSL.
   const unlinkedGlRes = await client.query<UnlinkedGlRow>(
     `
       SELECT
@@ -500,29 +548,31 @@ export async function computeRevenueGlLinkage(
         AND je.voided_at IS NULL
         AND je.entry_date BETWEEN $2::date AND $3::date
         AND a.account_type = ANY($4::text[])
-        AND (p.posting_batch_id IS NULL OR pb.batch_status IN ('posted', 'reversed'))
-        AND (
-          p.source_transaction_type IS DISTINCT FROM 'invoice'
-          OR p.source_transaction_id IS NULL
-          OR NOT EXISTS (
-            SELECT 1
-            FROM accounting.invoices i
-            WHERE i.operating_company_id = $1::uuid
-              AND i.id::text = p.source_transaction_id
-              AND i.voided_at IS NULL
-              AND i.status <> 'void'
-              AND COALESCE(
-                (
-                  SELECT (MAX(ls.actual_departure_at) AT TIME ZONE $5)::date
-                  FROM mdata.load_stops ls
-                  WHERE ls.load_id = i.source_load_id
-                    AND ls.stop_type = 'delivery'
-                    AND ls.actual_departure_at IS NOT NULL
-                    AND ls.soft_deleted_at IS NULL
-                ),
-                i.issue_date
-              ) BETWEEN $2::date AND $3::date
-          )
+        AND (p.posting_batch_id IS NULL OR pb.batch_status = ANY($6::text[]))
+        AND NOT EXISTS (
+          -- Direct source_transaction_* link to eligible invoice in recognition window
+          SELECT 1
+          FROM accounting.invoices i
+          WHERE i.operating_company_id = $1::uuid
+            AND p.source_transaction_type = 'invoice'
+            AND i.id::text = p.source_transaction_id
+            AND i.voided_at IS NULL
+            AND i.status = ANY($7::text[])
+            AND (${FINAL_ACTIVE_DELIVERY_RECOGNITION_SQL_TZ5}) BETWEEN $2::date AND $3::date
+        )
+        AND NOT EXISTS (
+          -- TSL-only link (no false unlinked when poster wrote links without denormalized source cols)
+          SELECT 1
+          FROM accounting.transaction_source_links tsl
+          JOIN accounting.invoices i
+            ON i.id::text = tsl.linked_object_id
+           AND i.operating_company_id = tsl.operating_company_id
+          WHERE tsl.operating_company_id = $1::uuid
+            AND tsl.journal_entry_posting_id = p.id
+            AND tsl.linked_object_type = 'invoice'
+            AND i.voided_at IS NULL
+            AND i.status = ANY($7::text[])
+            AND (${FINAL_ACTIVE_DELIVERY_RECOGNITION_SQL_TZ5}) BETWEEN $2::date AND $3::date
         )
       GROUP BY je.id, je.entry_date
       HAVING COALESCE(
@@ -536,10 +586,13 @@ export async function computeRevenueGlLinkage(
         0
       ) <> 0
     `,
-    [operatingCompanyId, fromDate, toDate, REVENUE_ACCOUNT_TYPES as unknown as string[], COMPANY_TIME_ZONE]
+    [operatingCompanyId, fromDate, toDate, revenueTypes, COMPANY_TIME_ZONE, postedBatch, eligible]
   );
 
-  const invoiceBasisCents = invoiceRes.rows.reduce((sum, r) => sum + Number(r.total_cents ?? 0), 0);
+  const invoiceBasisCents = invoiceRes.rows.reduce(
+    (sum, r) => sum + pretaxCents(r.total_cents, r.tax_cents),
+    0
+  );
   const glPostedCents = glDayRes.rows.reduce((sum, r) => sum + Number(r.cents ?? 0), 0);
 
   const linksByInvoice = new Map<string, InvoiceGlLinkRow[]>();
@@ -554,8 +607,10 @@ export async function computeRevenueGlLinkage(
   let discrepancyCents = 0;
 
   for (const inv of invoiceRes.rows) {
-    const invoiceRevenue = Math.max(0, Number(inv.total_cents ?? 0) - Number(inv.tax_cents ?? 0));
+    const invoiceRevenue = pretaxCents(inv.total_cents, inv.tax_cents);
     const links = linksByInvoice.get(inv.invoice_id) ?? [];
+
+    // Mutually exclusive categories — first match wins; cents counted once.
     if (links.length === 0) {
       mismatchedInvoices.push({
         invoice_id: inv.invoice_id,
@@ -604,13 +659,15 @@ export async function computeRevenueGlLinkage(
     const wrongAccountCents = activeLinks.reduce((sum, l) => sum + Number(l.non_revenue_credit_cents ?? 0), 0);
     const jeIds = [...new Set(activeLinks.map((l) => l.journal_entry_id))];
 
+    // wrong_account: revenue-shaped credit landed off Income/OtherIncome; gl_revenue is 0.
+    // Count invoice pretax once — do NOT also add wrongAccountCents (double-count veto).
     if (wrongAccountCents > 0 && glRevenue === 0) {
       mismatchedInvoices.push({
         invoice_id: inv.invoice_id,
         display_id: inv.display_id,
         recognition_date: inv.recognition_date,
         invoice_revenue_cents: invoiceRevenue,
-        gl_revenue_cents: glRevenue,
+        gl_revenue_cents: 0,
         journal_entry_ids: jeIds,
         reason: "wrong_account",
         href: invoiceHref(inv.invoice_id),
@@ -628,7 +685,7 @@ export async function computeRevenueGlLinkage(
           });
         }
       }
-      discrepancyCents += Math.abs(invoiceRevenue - glRevenue) + wrongAccountCents;
+      discrepancyCents += invoiceRevenue;
       continue;
     }
 
@@ -674,7 +731,6 @@ export async function computeRevenueGlLinkage(
     discrepancyCents += Math.abs(cents);
   }
 
-  // Deduplicate journal drills by (je, reason)
   const jeSeen = new Set<string>();
   const uniqueJeDrills: RevenueJournalDrill[] = [];
   for (const d of mismatchedJournals) {
@@ -686,14 +742,16 @@ export async function computeRevenueGlLinkage(
 
   const invoiceByDay = new Map<string, number>();
   for (const inv of invoiceRes.rows) {
-    invoiceByDay.set(inv.recognition_date, (invoiceByDay.get(inv.recognition_date) ?? 0) + Number(inv.total_cents ?? 0));
+    invoiceByDay.set(
+      inv.recognition_date,
+      (invoiceByDay.get(inv.recognition_date) ?? 0) + pretaxCents(inv.total_cents, inv.tax_cents)
+    );
   }
   const glByDay = new Map<string, number>();
   for (const row of glDayRes.rows) {
     glByDay.set(row.d, Number(row.cents ?? 0));
   }
   const allDates = new Set<string>([...invoiceByDay.keys(), ...glByDay.keys()]);
-  // Fill calendar span so weekly chart has continuous days when either side has activity.
   for (let cursor = fromDate; cursor <= toDate; cursor = addDaysIso(cursor, 1)) {
     allDates.add(cursor);
   }
@@ -711,7 +769,8 @@ export async function computeRevenueGlLinkage(
       };
     });
 
-  const discrepancyCount = mismatchedInvoices.length + uniqueJeDrills.filter((d) => d.reason === "unlinked_gl_revenue").length;
+  const discrepancyCount =
+    mismatchedInvoices.length + uniqueJeDrills.filter((d) => d.reason === "unlinked_gl_revenue").length;
   const status: RevenueGlLinkageResult["status"] =
     invoiceBasisCents === 0 && glPostedCents === 0 && discrepancyCount === 0 ? "empty" : "ok";
 
@@ -738,25 +797,26 @@ export async function computeRevenueGlLinkage(
   };
 }
 
-/** Today window in company business timezone. */
 export function todayRevenueWindow(now: Date = new Date()): { fromDate: string; toDate: string } {
   const today = companyBusinessDate(now);
   return { fromDate: today, toDate: today };
 }
 
-/** Weekly window matching prior widget behavior: [today - days, today] inclusive. */
 export function weeklyRevenueWindow(days: number, now: Date = new Date()): { fromDate: string; toDate: string } {
   const today = companyBusinessDate(now);
   const fromDate = addDaysIso(today, -Math.max(1, days));
   return { fromDate, toDate: today };
 }
 
-/** Pure helpers exported for unit tests (no DB). */
 export const __test__ = {
   addDaysIso,
   emptyResult,
   unverifiableResult,
+  pretaxCents,
   INVOICE_BASIS_META,
   GL_BASIS_META,
   REVENUE_ACCOUNT_TYPES,
+  INVOICE_BASIS_ELIGIBLE_STATUSES,
+  POSTED_BATCH_STATUSES,
+  FINAL_ACTIVE_DELIVERY_RECOGNITION_SQL,
 };

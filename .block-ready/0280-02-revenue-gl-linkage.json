@@ -21,6 +21,8 @@
     "apps/frontend/src/pages/home/QboStyleHomePage.tsx",
     "apps/frontend/src/pages/home/charts/WeeklyRevenueChart.tsx",
     "apps/frontend/src/components/home/__tests__/QboSyncHealthCard.test.tsx",
+    "apps/frontend/src/components/home/RevenueDiscrepancyDrill.tsx",
+    "apps/frontend/src/components/home/__tests__/RevenueDiscrepancyDrill.test.tsx",
     "scripts/verify-revenue-gl-linkage.mjs",
     "scripts/verify-steps/912-verify-revenue-gl-linkage.mjs"
   ],

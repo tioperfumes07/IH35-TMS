@@ -61,13 +61,14 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
           toDate,
         })
       );
+      // Typed 200 unverifiable — never conflate schema linkage gaps with transport/auth/5xx.
       if (result.status === "unverifiable") {
-        return reply.code(422).send({
+        return {
           ...revenuePayload(result),
           days: [],
           totalCents: null,
           error: "revenue_gl_linkage_unverifiable",
-        });
+        };
       }
       return {
         ...revenuePayload(result),
@@ -193,11 +194,12 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
           toDate,
         })
       );
+      // Typed 200 unverifiable — never conflate schema linkage gaps with transport/auth/5xx.
       if (result.status === "unverifiable") {
-        return reply.code(422).send({
+        return {
           ...revenuePayload(result),
           error: "revenue_gl_linkage_unverifiable",
-        });
+        };
       }
       return revenuePayload(result);
     } catch (err) {
