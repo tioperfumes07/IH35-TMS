@@ -16,6 +16,7 @@ import {
   allocateEphemeralPortSync,
   canonicalLockPath,
   createOwnerSession,
+  createPrivateTempRoot,
   isAddressInUseError,
   isLocalVerifyDatabaseUrl,
   releaseExclusiveLock,
@@ -132,11 +133,17 @@ function tempRepoRoot(label) {
   return fs.mkdtempSync(path.join(os.tmpdir(), `vlci-repo-${label}-`));
 }
 
+function sessionDataDir(session, label) {
+  const dataDir = fs.mkdtempSync(path.join(session.tempRoot, `${label}-`));
+  fs.chmodSync(dataDir, 0o700);
+  return dataDir;
+}
+
 test("attack: copied/stale token rejected after lock release", () => {
   const repo = tempRepoRoot("stale");
   const session = createOwnerSession(repo);
   const url = `postgresql://v@127.0.0.1:55111/ih35_verify`;
-  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "vlci-stale-tok-"));
+  const dataDir = sessionDataDir(session, "stale-token-data");
   session.updateBindings({ dataDir, port: 55111, database: "ih35_verify", url });
   const stolenEnv = session.childEnv({});
   session.release();
@@ -153,7 +160,7 @@ test("attack: copied/stale token rejected after lock release", () => {
 test("attack: wrong pid / dataDir / port vs lock rejected", () => {
   const repo = tempRepoRoot("bind");
   const session = createOwnerSession(repo);
-  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "vlci-bind-"));
+  const dataDir = sessionDataDir(session, "binding-data");
   const url = `postgresql://v@127.0.0.1:55222/ih35_verify`;
   session.updateBindings({ dataDir, port: 55222, database: "ih35_verify", url });
   try {
@@ -198,7 +205,7 @@ test("attack: wrong pid / dataDir / port vs lock rejected", () => {
 test("valid inherit requires token+lock+bindings (not INHERIT flag)", () => {
   const repo = tempRepoRoot("inh");
   const session = createOwnerSession(repo);
-  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "vlci-inh-"));
+  const dataDir = sessionDataDir(session, "inherit-data");
   const url = `postgresql://v@127.0.0.1:55333/ih35_verify`;
   session.updateBindings({ dataDir, port: 55333, database: "ih35_verify", url });
   try {
@@ -227,6 +234,64 @@ test("exclusive lock: concurrent second owner fails closed; release cleans up", 
   const released = releaseExclusiveLock(lockPath, { pid: 111, token: "a".repeat(64) });
   assert.equal(released.ok, true);
   assert.equal(fs.existsSync(lockPath), false);
+});
+
+test("private owner session uses 0700 roots and 0600 lock with current ownership", () => {
+  const repo = tempRepoRoot("private-mode");
+  const session = createOwnerSession(repo);
+  const dataDir = sessionDataDir(session, "mode-data");
+  const url = "postgresql://v@127.0.0.1:55444/ih35_verify";
+  session.updateBindings({ dataDir, port: 55444, database: "ih35_verify", url });
+  const tempRoot = session.tempRoot;
+  try {
+    const tempStat = fs.lstatSync(tempRoot);
+    const dataStat = fs.lstatSync(dataDir);
+    const lockStat = fs.lstatSync(session.lockPath);
+    assert.equal(tempStat.isDirectory(), true);
+    assert.equal(dataStat.isDirectory(), true);
+    assert.equal(lockStat.isFile(), true);
+    assert.equal(tempStat.isSymbolicLink(), false);
+    assert.equal(lockStat.isSymbolicLink(), false);
+    if (process.platform !== "win32") {
+      assert.equal(tempStat.mode & 0o777, 0o700);
+      assert.equal(dataStat.mode & 0o777, 0o700);
+      assert.equal(lockStat.mode & 0o777, 0o600);
+    }
+    if (typeof process.getuid === "function") {
+      assert.equal(tempStat.uid, process.getuid());
+      assert.equal(dataStat.uid, process.getuid());
+      assert.equal(lockStat.uid, process.getuid());
+    }
+    assert.equal(validateOwnershipProof(session.childEnv({}), { repoRoot: repo }).ok, true);
+  } finally {
+    session.release();
+    fs.rmSync(repo, { recursive: true, force: true });
+  }
+  assert.equal(fs.existsSync(tempRoot), false, "release removes private run root");
+});
+
+test("attack: symlink and pre-created collision are rejected without touching targets", () => {
+  const root = createPrivateTempRoot();
+  const victim = path.join(root, "victim");
+  const symlinkLock = path.join(root, "symlink.lock");
+  const collisionLock = path.join(root, "collision.lock");
+  fs.writeFileSync(victim, "preserve\n", { encoding: "utf8", mode: 0o600 });
+  fs.symlinkSync(victim, symlinkLock);
+  fs.writeFileSync(collisionLock, "attacker-controlled\n", { encoding: "utf8", mode: 0o600 });
+  try {
+    const symlinkAttempt = acquireExclusiveLock(symlinkLock, { token: "d".repeat(64) });
+    assert.equal(symlinkAttempt.ok, false);
+    assert.match(symlinkAttempt.reason, /unsafe-private-file|lock-held-unreadable/);
+    assert.equal(fs.readFileSync(victim, "utf8"), "preserve\n");
+    assert.equal(fs.lstatSync(symlinkLock).isSymbolicLink(), true);
+
+    const collisionAttempt = acquireExclusiveLock(collisionLock, { token: "e".repeat(64) });
+    assert.equal(collisionAttempt.ok, false);
+    assert.equal(collisionAttempt.reason, "lock-held-unreadable");
+    assert.equal(fs.readFileSync(collisionLock, "utf8"), "attacker-controlled\n");
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
 });
 
 test("port TOCTOU: stolen first port retries and succeeds; cleans failed attempt", () => {
@@ -268,8 +333,8 @@ test("port TOCTOU: stolen first port retries and succeeds; cleans failed attempt
 });
 
 test("SIGINT on live harness cleans dataDir + releases lock", async () => {
-  const donePath = path.join(os.tmpdir(), `vlci-done-${process.pid}-${Date.now()}.json`);
-  fs.rmSync(donePath, { force: true });
+  const markerRoot = createPrivateTempRoot();
+  const donePath = path.join(markerRoot, "done.json");
   const child = spawn(process.execPath, [HARNESS, "--hold-ms", "8000"], {
     env: { ...process.env, IH35_VLCI_HARNESS_REPO: REPO_ROOT, IH35_VLCI_HARNESS_DONE: donePath },
     stdio: ["ignore", "pipe", "pipe"],
@@ -305,10 +370,12 @@ test("SIGINT on live harness cleans dataDir + releases lock", async () => {
     assert.equal(done.cleaned, true);
     fs.rmSync(donePath, { force: true });
   }
+  fs.rmSync(markerRoot, { recursive: true, force: true });
 });
 
 test("SIGTERM on live harness cleans dataDir + releases lock", async () => {
-  const donePath = path.join(os.tmpdir(), `vlci-done-term-${process.pid}-${Date.now()}.json`);
+  const markerRoot = createPrivateTempRoot();
+  const donePath = path.join(markerRoot, "done.json");
   const child = spawn(process.execPath, [HARNESS, "--hold-ms", "8000"], {
     env: { ...process.env, IH35_VLCI_HARNESS_REPO: REPO_ROOT, IH35_VLCI_HARNESS_DONE: donePath },
     stdio: ["ignore", "pipe", "pipe"],
@@ -335,6 +402,7 @@ test("SIGTERM on live harness cleans dataDir + releases lock", async () => {
   assert.equal(fs.existsSync(ready.dataDir), false);
   assert.equal(fs.existsSync(ready.lockPath), false);
   fs.rmSync(donePath, { force: true });
+  fs.rmSync(markerRoot, { recursive: true, force: true });
 });
 
 test("static sweep proof is in-process only (env cannot mint)", () => {
@@ -377,9 +445,8 @@ test("planted nested verify:local-ci without token fails (lock or free-env)", ()
 });
 
 test("parallel child owners: second fails closed while first holds lock", async () => {
-  const lockPath = path.join(os.tmpdir(), `vlci-par-${process.pid}-${Date.now()}.lock`);
-  fs.rmSync(lockPath, { force: true });
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "vlci-par-"));
+  const tmp = createPrivateTempRoot();
+  const lockPath = path.join(tmp, "parallel.lock");
   const script = path.join(tmp, "hold.mjs");
   fs.writeFileSync(
     script,
@@ -425,6 +492,7 @@ process.exit(0);
   assert.equal(second.code, 2, second.out);
   assert.match(second.out, /lock-held/);
   assert.equal(fs.existsSync(lockPath), false);
+  fs.rmSync(tmp, { recursive: true, force: true });
 });
 
 test("acyclic static guard passes on repo (and --selftest)", () => {

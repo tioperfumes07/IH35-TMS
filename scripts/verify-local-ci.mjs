@@ -13,7 +13,6 @@
  */
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -63,8 +62,10 @@ function run(bin, cmd, args, opts = {}) {
 }
 
 /** Start ephemeral PG on an exact port. Throws (with address-in-use detectable) on failure. */
-export function startEphemeralPgOnPort(pgBin, port) {
-  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "vlci-pgdata-"));
+export function startEphemeralPgOnPort(pgBin, port, { tempRoot } = {}) {
+  if (!tempRoot) throw new Error("startEphemeralPgOnPort: private tempRoot required");
+  const dataDir = fs.mkdtempSync(path.join(tempRoot, "pgdata-"));
+  fs.chmodSync(dataDir, 0o700);
   const logFile = path.join(dataDir, "server.log");
   const init = run(pgBin, "initdb", ["-D", dataDir, "-U", PGUSER, "-A", "trust", "--no-sync", "-E", "UTF8"]);
   if (init.status !== 0) {
@@ -108,7 +109,8 @@ export function startEphemeralPgWithRetry(
   {
     maxAttempts = MAX_PORT_ATTEMPTS,
     allocatePort = allocateEphemeralPortSync,
-    startOnPort = (port) => startEphemeralPgOnPort(pgBin, port),
+    tempRoot = null,
+    startOnPort = (port) => startEphemeralPgOnPort(pgBin, port, { tempRoot }),
   } = {}
 ) {
   let lastErr = null;
@@ -129,8 +131,8 @@ export function startEphemeralPgWithRetry(
 }
 
 /** @deprecated — prefer startEphemeralPgWithRetry */
-export function startEphemeralPg(pgBin, port = allocateEphemeralPortSync()) {
-  return startEphemeralPgOnPort(pgBin, port);
+export function startEphemeralPg(pgBin, port = allocateEphemeralPortSync(), { tempRoot } = {}) {
+  return startEphemeralPgOnPort(pgBin, port, { tempRoot });
 }
 
 function stopOwnedPg(pg) {
@@ -169,7 +171,7 @@ function runPrecommit(session, pgBin) {
 
 function selftest(pgBin) {
   process.stdout.write(`──▶ selftest: owner session → port-retry → query → signal-safe cleanup\n`);
-  const session = createOwnerSession(path.join(os.tmpdir(), `vlci-selftest-${process.pid}`));
+  const session = createOwnerSession(path.join(ROOT, `.vlci-selftest-${process.pid}`));
   let ok = false;
   let pg = null;
   const handlers = installLifecycleCleanupHandlers(() => {
@@ -186,7 +188,7 @@ function selftest(pgBin) {
     if (forged.mode !== "reject") throw new Error("OWNED=1 without token must reject");
     console.log("ok    free-env OWNED rejected");
 
-    pg = startEphemeralPgWithRetry(pgBin);
+    pg = startEphemeralPgWithRetry(pgBin, { tempRoot: session.tempRoot });
     const url = `postgresql://${PGUSER}@localhost:${pg.port}/${DBNAME}?sslmode=disable`;
     session.updateBindings({ dataDir: pg.dataDir, port: pg.port, database: DBNAME, url });
     const q = run(pgBin, "psql", [
@@ -282,7 +284,7 @@ function main() {
   }, { exit: true });
 
   try {
-    pg = startEphemeralPgWithRetry(pgBin);
+    pg = startEphemeralPgWithRetry(pgBin, { tempRoot: session.tempRoot });
     const url = `postgresql://${PGUSER}@localhost:${pg.port}/${DBNAME}?sslmode=disable`;
     session.updateBindings({ dataDir: pg.dataDir, port: pg.port, database: DBNAME, url });
     console.log(`[${LABEL}] ephemeral CI-shaped DB up at postgresql://${PGUSER}@localhost:${pg.port}/${DBNAME}`);

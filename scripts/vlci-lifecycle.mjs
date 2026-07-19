@@ -30,6 +30,8 @@ export const VLCI_ENV = Object.freeze({
   DATADIR: "IH35_VLCI_DATADIR",
   STARTED_AT: "IH35_VLCI_STARTED_AT",
   OWNER_PID: "IH35_VLCI_OWNER_PID",
+  /** Atomically-created private run root; must match the live lock record. */
+  TEMP_ROOT: "IH35_VLCI_TEMP_ROOT",
   /** Rejected when set to anything other than the canonical path. */
   LOCK_PATH: "IH35_VLCI_LOCK_PATH",
 });
@@ -40,6 +42,90 @@ export const VLCI_CI_PORT = 54329;
 
 export const C5_ORCHESTRATOR_SCRIPTS = Object.freeze(["verify:local-ci", "verify:static"]);
 
+const PRIVATE_DIR_MODE = 0o700;
+const PRIVATE_FILE_MODE = 0o600;
+
+function currentUid() {
+  return typeof process.getuid === "function" ? process.getuid() : null;
+}
+
+function modeBits(stat) {
+  return stat.mode & 0o777;
+}
+
+function assertPrivateDirectory(dirPath) {
+  const stat = fs.lstatSync(dirPath);
+  if (!stat.isDirectory() || stat.isSymbolicLink()) {
+    throw new Error(`unsafe-private-directory:${dirPath}`);
+  }
+  const uid = currentUid();
+  if (uid != null && stat.uid !== uid) {
+    throw new Error(`private-directory-owner-mismatch:${dirPath}`);
+  }
+  if (process.platform !== "win32" && modeBits(stat) !== PRIVATE_DIR_MODE) {
+    throw new Error(`private-directory-mode-mismatch:${dirPath}`);
+  }
+  return stat;
+}
+
+function ensurePrivateDirectory(dirPath) {
+  try {
+    fs.mkdirSync(dirPath, { mode: PRIVATE_DIR_MODE });
+  } catch (err) {
+    if (err?.code !== "EEXIST") throw err;
+  }
+  assertPrivateDirectory(dirPath);
+  return dirPath;
+}
+
+export function vlciStateRoot() {
+  return ensurePrivateDirectory(path.join(os.homedir(), ".ih35-vlci"));
+}
+
+function vlciLockRoot() {
+  return ensurePrivateDirectory(path.join(vlciStateRoot(), "locks"));
+}
+
+export function createPrivateTempRoot() {
+  const tempParent = ensurePrivateDirectory(path.join(vlciStateRoot(), "tmp"));
+  const tempRoot = fs.mkdtempSync(path.join(tempParent, "run-"));
+  fs.chmodSync(tempRoot, PRIVATE_DIR_MODE);
+  assertPrivateDirectory(tempRoot);
+  return tempRoot;
+}
+
+function assertPrivateFileStat(stat, filePath) {
+  if (!stat.isFile() || stat.isSymbolicLink() || stat.nlink !== 1) {
+    throw new Error(`unsafe-private-file:${filePath}`);
+  }
+  const uid = currentUid();
+  if (uid != null && stat.uid !== uid) {
+    throw new Error(`private-file-owner-mismatch:${filePath}`);
+  }
+  if (process.platform !== "win32" && modeBits(stat) !== PRIVATE_FILE_MODE) {
+    throw new Error(`private-file-mode-mismatch:${filePath}`);
+  }
+}
+
+function openPrivateFile(filePath, flags, mode = PRIVATE_FILE_MODE) {
+  try {
+    const pathStat = fs.lstatSync(filePath);
+    if (pathStat.isSymbolicLink()) throw new Error(`unsafe-private-file:${filePath}`);
+  } catch (err) {
+    if (err?.code !== "ENOENT") throw err;
+  }
+  const noFollow = fs.constants.O_NOFOLLOW ?? 0;
+  const fd = fs.openSync(filePath, flags | noFollow, mode);
+  try {
+    if (process.platform !== "win32") fs.fchmodSync(fd, PRIVATE_FILE_MODE);
+    assertPrivateFileStat(fs.fstatSync(fd), filePath);
+    return fd;
+  } catch (err) {
+    fs.closeSync(fd);
+    throw err;
+  }
+}
+
 function safeEqualStr(a, b) {
   const left = Buffer.from(String(a ?? ""), "utf8");
   const right = Buffer.from(String(b ?? ""), "utf8");
@@ -49,7 +135,7 @@ function safeEqualStr(a, b) {
 
 export function canonicalLockPath(repoRoot) {
   const digest = createHash("sha256").update(path.resolve(repoRoot)).digest("hex").slice(0, 16);
-  return path.join(os.tmpdir(), `ih35-vlci-${digest}.lock`);
+  return path.join(vlciLockRoot(), `${digest}.lock`);
 }
 
 /** @deprecated use canonicalLockPath */
@@ -72,16 +158,43 @@ export function mintVlciToken() {
 }
 
 export function readLockFile(lockPath) {
-  if (!lockPath || !fs.existsSync(lockPath)) return null;
+  if (!lockPath) return null;
+  let fd;
   try {
-    return JSON.parse(fs.readFileSync(lockPath, "utf8"));
+    fd = openPrivateFile(lockPath, fs.constants.O_RDONLY);
+    return JSON.parse(fs.readFileSync(fd, "utf8"));
   } catch {
     return null;
+  } finally {
+    if (fd != null) fs.closeSync(fd);
   }
 }
 
 function writeLockFile(lockPath, record) {
-  fs.writeFileSync(lockPath, `${JSON.stringify(record, null, 0)}\n`, "utf8");
+  const tempPath = path.join(
+    path.dirname(lockPath),
+    `.${path.basename(lockPath)}.${process.pid}.${randomBytes(12).toString("hex")}.tmp`
+  );
+  let fd;
+  try {
+    fd = openPrivateFile(
+      tempPath,
+      fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constants.O_EXCL,
+      PRIVATE_FILE_MODE
+    );
+    fs.writeFileSync(fd, `${JSON.stringify(record, null, 0)}\n`, "utf8");
+    fs.fsyncSync(fd);
+    fs.closeSync(fd);
+    fd = null;
+    fs.renameSync(tempPath, lockPath);
+  } finally {
+    if (fd != null) fs.closeSync(fd);
+    try {
+      fs.rmSync(tempPath, { force: true });
+    } catch {
+      // Best-effort cleanup of an owner-created private temporary file.
+    }
+  }
 }
 
 /**
@@ -112,6 +225,7 @@ export function acquireExclusiveLock(
     now = Date.now(),
     token = mintVlciToken(),
     repoRoot = null,
+    tempRoot = null,
     isAlive = isPidAlive,
     retries = 1,
   } = {}
@@ -125,13 +239,21 @@ export function acquireExclusiveLock(
     port: null,
     database: VLCI_DB_NAME,
     url: null,
+    tempRoot,
   };
+  let fd;
   try {
-    const fd = fs.openSync(lockPath, "wx");
+    fd = openPrivateFile(
+      lockPath,
+      fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constants.O_EXCL,
+      PRIVATE_FILE_MODE
+    );
     try {
       fs.writeFileSync(fd, `${JSON.stringify(record)}\n`, "utf8");
+      fs.fsyncSync(fd);
     } finally {
       fs.closeSync(fd);
+      fd = null;
     }
     return { ok: true, lockPath, record, created: true };
   } catch (err) {
@@ -140,25 +262,45 @@ export function acquireExclusiveLock(
     }
     const existing = readLockFile(lockPath);
     if (!existing) {
-      if (retries <= 0) return { ok: false, reason: "lock-held-unreadable" };
-      try {
-        fs.rmSync(lockPath, { force: true });
-      } catch {
-        return { ok: false, reason: "lock-held-unreadable" };
-      }
-      return acquireExclusiveLock(lockPath, { pid, now, token, repoRoot, isAlive, retries: retries - 1 });
+      return { ok: false, reason: "lock-held-unreadable" };
     }
     const holderPid = Number(existing?.pid);
     if (isAlive(holderPid)) {
       return { ok: false, reason: "lock-held", holderPid };
     }
     if (retries <= 0) return { ok: false, reason: "lock-held-stale-race" };
+    const stalePath = `${lockPath}.stale.${process.pid}.${randomBytes(12).toString("hex")}`;
     try {
-      fs.rmSync(lockPath, { force: true });
+      fs.renameSync(lockPath, stalePath);
+      const moved = readLockFile(stalePath);
+      if (
+        !moved ||
+        !safeEqualStr(moved.token, existing.token) ||
+        Number(moved.pid) !== Number(existing.pid) ||
+        Number(moved.startedAt) !== Number(existing.startedAt)
+      ) {
+        try {
+          fs.renameSync(stalePath, lockPath);
+        } catch {
+          // Another owner won the race; fail closed and leave its record untouched.
+        }
+        return { ok: false, reason: "lock-held-stale-race" };
+      }
+      fs.rmSync(stalePath, { force: true });
     } catch {
       return { ok: false, reason: "lock-held-stale-race" };
     }
-    return acquireExclusiveLock(lockPath, { pid, now, token, repoRoot, isAlive, retries: retries - 1 });
+    return acquireExclusiveLock(lockPath, {
+      pid,
+      now,
+      token,
+      repoRoot,
+      tempRoot,
+      isAlive,
+      retries: retries - 1,
+    });
+  } finally {
+    if (fd != null) fs.closeSync(fd);
   }
 }
 
@@ -167,6 +309,17 @@ export function updateLockBindings(lockPath, { token, pid, dataDir, port, databa
   if (!existing) return { ok: false, reason: "lock-missing" };
   if (!safeEqualStr(existing.token, token)) return { ok: false, reason: "token-mismatch" };
   if (Number(existing.pid) !== Number(pid)) return { ok: false, reason: "pid-mismatch" };
+  if (!existing.tempRoot) return { ok: false, reason: "temp-root-missing" };
+  try {
+    assertPrivateDirectory(existing.tempRoot);
+    assertPrivateDirectory(dataDir);
+    const relativeDataDir = path.relative(existing.tempRoot, dataDir);
+    if (relativeDataDir.startsWith("..") || path.isAbsolute(relativeDataDir)) {
+      return { ok: false, reason: "dataDir-outside-temp-root" };
+    }
+  } catch {
+    return { ok: false, reason: "dataDir-not-private" };
+  }
   const next = {
     ...existing,
     dataDir: dataDir ?? existing.dataDir,
@@ -179,17 +332,26 @@ export function updateLockBindings(lockPath, { token, pid, dataDir, port, databa
 }
 
 export function releaseExclusiveLock(lockPath, { pid = process.pid, token = null } = {}) {
-  if (!lockPath || !fs.existsSync(lockPath)) return { ok: true, released: false };
+  if (!lockPath) return { ok: true, released: false };
   const existing = readLockFile(lockPath);
-  if (existing) {
-    if (Number(existing.pid) !== Number(pid)) {
-      return { ok: false, reason: "lock-owned-by-other", holderPid: Number(existing.pid) };
-    }
-    if (token != null && !safeEqualStr(existing.token, token)) {
-      return { ok: false, reason: "token-mismatch" };
+  if (!existing) {
+    try {
+      fs.lstatSync(lockPath);
+      return { ok: false, reason: "lock-held-unreadable" };
+    } catch (err) {
+      if (err?.code === "ENOENT") return { ok: true, released: false };
+      return { ok: false, reason: "lock-stat-failed" };
     }
   }
-  fs.rmSync(lockPath, { force: true });
+  if (Number(existing.pid) !== Number(pid)) {
+    return { ok: false, reason: "lock-owned-by-other", holderPid: Number(existing.pid) };
+  }
+  if (token != null && !safeEqualStr(existing.token, token)) {
+    return { ok: false, reason: "token-mismatch" };
+  }
+  const releasedPath = `${lockPath}.released.${process.pid}.${randomBytes(12).toString("hex")}`;
+  fs.renameSync(lockPath, releasedPath);
+  fs.rmSync(releasedPath, { force: true });
   return { ok: true, released: true };
 }
 
@@ -280,6 +442,20 @@ export function validateOwnershipProof(
   if (requireBindings) {
     if (!record.dataDir || record.port == null || !record.url || !record.database) {
       return { ok: false, reason: "lock-bindings-incomplete" };
+    }
+    const envTempRoot = env[VLCI_ENV.TEMP_ROOT];
+    if (!record.tempRoot || !envTempRoot || path.resolve(envTempRoot) !== path.resolve(record.tempRoot)) {
+      return { ok: false, reason: "temp-root-mismatch" };
+    }
+    try {
+      assertPrivateDirectory(record.tempRoot);
+      assertPrivateDirectory(record.dataDir);
+      const relativeDataDir = path.relative(record.tempRoot, record.dataDir);
+      if (relativeDataDir.startsWith("..") || path.isAbsolute(relativeDataDir)) {
+        return { ok: false, reason: "dataDir-outside-temp-root" };
+      }
+    } catch {
+      return { ok: false, reason: "private-path-validation-failed" };
     }
     const envDataDir = env[VLCI_ENV.DATADIR];
     if (envDataDir != null && String(envDataDir).trim() !== "" && path.resolve(String(envDataDir)) !== path.resolve(record.dataDir)) {
@@ -404,6 +580,7 @@ export function buildChildEnv(baseEnv, session) {
     [VLCI_ENV.STARTED_AT]: String(record.startedAt),
     [VLCI_ENV.PORT]: String(record.port),
     [VLCI_ENV.DATADIR]: record.dataDir,
+    [VLCI_ENV.TEMP_ROOT]: record.tempRoot,
     [VLCI_ENV.DATABASE_URL]: record.url,
     [VLCI_ENV.LOCK_PATH]: lockPath,
   };
@@ -416,14 +593,17 @@ export function createOwnerSession(repoRoot, { pid = process.pid, now = Date.now
   const lockRes = resolveCanonicalLockPath(repoRoot, {});
   if (!lockRes.ok) throw new Error(lockRes.reason);
   const token = mintVlciToken();
+  const tempRoot = createPrivateTempRoot();
   const acquired = acquireExclusiveLock(lockRes.lockPath, {
     pid,
     now,
     token,
     repoRoot,
+    tempRoot,
     isAlive,
   });
   if (!acquired.ok) {
+    fs.rmSync(tempRoot, { recursive: true, force: true });
     const err = new Error(`vlci-lock-failed:${acquired.reason}`);
     err.detail = acquired;
     throw err;
@@ -431,6 +611,7 @@ export function createOwnerSession(repoRoot, { pid = process.pid, now = Date.now
   const session = {
     repoRoot: path.resolve(repoRoot),
     lockPath: acquired.lockPath,
+    tempRoot,
     token,
     record: acquired.record,
     updateBindings({ dataDir, port, database = VLCI_DB_NAME, url }) {
@@ -450,7 +631,14 @@ export function createOwnerSession(repoRoot, { pid = process.pid, now = Date.now
       return buildChildEnv(baseEnv, session);
     },
     release() {
-      return releaseExclusiveLock(session.lockPath, { pid: session.record.pid, token: session.token });
+      const released = releaseExclusiveLock(session.lockPath, {
+        pid: session.record.pid,
+        token: session.token,
+      });
+      if (released.ok) {
+        fs.rmSync(session.tempRoot, { recursive: true, force: true });
+      }
+      return released;
     },
   };
   return session;

@@ -71,6 +71,23 @@ export function check(files) {
   if (!files.lifecycle.includes("installLifecycleCleanupHandlers")) {
     errs.push("vlci-lifecycle.mjs must export installLifecycleCleanupHandlers");
   }
+  if (
+    !files.lifecycle.includes("export function createPrivateTempRoot") ||
+    !files.lifecycle.includes("fs.mkdtempSync") ||
+    !files.lifecycle.includes("PRIVATE_DIR_MODE = 0o700")
+  ) {
+    errs.push("vlci-lifecycle.mjs must atomically create a private 0700 run root");
+  }
+  if (
+    !files.lifecycle.includes("PRIVATE_FILE_MODE = 0o600") ||
+    !files.lifecycle.includes("O_NOFOLLOW") ||
+    !files.lifecycle.includes("O_EXCL")
+  ) {
+    errs.push("vlci lock files must use 0600 exclusive no-follow creation");
+  }
+  if (/path\.join\(\s*os\.tmpdir\(\)[\s\S]{0,100}\.lock/.test(files.lifecycle)) {
+    errs.push("vlci lock must not be created directly in the shared OS temp directory");
+  }
   // Free-env ownership must not authorize via OWNED===\"1\" alone in isLocalVerifyDatabaseUrl
   if (/env\[VLCI_ENV\.OWNED\]\s*===\s*["']1["']/.test(files.lifecycle) &&
       files.lifecycle.includes("return env[VLCI_ENV.OWNED]")) {
@@ -85,6 +102,12 @@ export function check(files) {
   }
   if (!files.localCi.includes("createOwnerSession")) {
     errs.push("verify-local-ci.mjs must createOwnerSession (token+lock bound)");
+  }
+  if (!files.localCi.includes("tempRoot: session.tempRoot")) {
+    errs.push("verify-local-ci.mjs must create PostgreSQL data under the private owner temp root");
+  }
+  if (/mkdtempSync\(\s*path\.join\(\s*os\.tmpdir\(\)\s*,\s*["']vlci-pgdata-/.test(files.localCi)) {
+    errs.push("verify-local-ci.mjs must not create PostgreSQL data directly in shared OS temp");
   }
   if (/const\s+PORT\s*=\s*54329/.test(files.localCi) && !files.localCi.includes("allocateEphemeralPort")) {
     errs.push("verify-local-ci.mjs still hardcodes PORT=54329 as the sole ephemeral bind port");
@@ -124,10 +147,11 @@ function selftest() {
     }),
     blockReady:
       'block_ready_c5_skip_orchestrators\nexport function getC5SkipReason(){}\nconsole.log("orchestrator — single-owner outside C5")\nensureVerifyStaticOnce',
-    localCi: "createOwnerSession\nstartEphemeralPgWithRetry\ninstallLifecycleCleanupHandlers\nallocateEphemeralPort",
+    localCi:
+      "createOwnerSession\nstartEphemeralPgWithRetry(pgBin, { tempRoot: session.tempRoot })\ninstallLifecycleCleanupHandlers\nallocateEphemeralPort",
     dbReset: "isLocalVerifyDatabaseUrl(verifyUrl, process.env, { repoRoot: REPO_ROOT })",
     lifecycle:
-      'TOKEN: "IH35_VLCI_TOKEN"\nexport function validateOwnershipProof(){}\nexport function createOwnerSession(){}\noverride rejected\ninstallLifecycleCleanupHandlers\nreturn { mode: "reject" };',
+      'TOKEN: "IH35_VLCI_TOKEN"\nconst PRIVATE_DIR_MODE = 0o700;\nconst PRIVATE_FILE_MODE = 0o600;\nconst O_NOFOLLOW = 1;\nconst O_EXCL = 2;\nfs.mkdtempSync();\nexport function createPrivateTempRoot(){}\nexport function validateOwnershipProof(){}\nexport function createOwnerSession(){}\noverride rejected\ninstallLifecycleCleanupHandlers\nreturn { mode: "reject" };',
     staticProof: 'Symbol.for("ih35.verifyStatic.sweepProof")\nexport function ensureVerifyStaticOnce(){}',
     precheck:
       "export function buildPrecheckSteps() {\n  // verify:static is owned once by block-ready. Do not duplicate here.\n  return [{ label: \"block-ready\" }];\n}",
@@ -153,9 +177,14 @@ return { mode: "reject" };
     ...good,
     meta: JSON.stringify({ block_ready_c5_skip_orchestrators: ["verify:static"] }),
   };
+  const badTemp = {
+    ...good,
+    lifecycle: good.lifecycle.replace("export function createPrivateTempRoot(){}", ""),
+  };
   const g = check(good);
   const b1 = check(badMeta);
   const b2 = check(badOwned);
+  const b3 = check(badTemp);
   let bad = 0;
   const say = (ok, n) => {
     if (!ok) bad += 1;
@@ -164,6 +193,7 @@ return { mode: "reject" };
   say(g.length === 0, `good fixture passes (${g.join("; ")})`);
   say(b1.some((e) => e.includes("verify:local-ci")), "missing orchestrator skip flagged");
   say(b2.some((e) => e.includes("OWNED=1")), "OWNED=1 free-env authorize flagged");
+  say(b3.some((e) => e.includes("private 0700")), "insecure temp-root fixture flagged");
   if (bad) {
     console.error(`\n${LABEL} SELFTEST FAILED: ${bad}`);
     process.exit(1);
