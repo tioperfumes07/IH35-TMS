@@ -681,4 +681,26 @@ describe("CHAIN-06 funding-path uniform lock order (deadlock regression guard)",
       "funding write txn must call lockFactoringAdvanceForSettlement before claiming the funding posting-key"
     ).toBeGreaterThan(writeTxnIdx);
   });
+
+  it("every exported factoring poster delegates through retryOnFactoringDeadlock (transient 40P01/40001 resiliency)", () => {
+    const posterPath = fileURLToPath(new URL("../poster.service.ts", import.meta.url));
+    const src = readFileSync(posterPath, "utf8");
+
+    // The retry helper must only swallow the two transient serialization SQLSTATEs — never a real error.
+    expect(src, "retryOnFactoringDeadlock helper missing").toMatch(/async function retryOnFactoringDeadlock/);
+    expect(src).toMatch(/code !== "40P01" && code !== "40001"/);
+
+    for (const evt of [
+      "postFactoringAdvanceEvent",
+      "postFactoringCustomerPaymentEvent",
+      "postFactoringReleaseEvent",
+      "postFactoringChargebackEvent",
+      "postFactoringDefaultInterestAccrualEvent",
+    ]) {
+      expect(
+        src.includes(`retryOnFactoringDeadlock(() => ${evt}Impl(`),
+        `${evt} must delegate to its *Impl via retryOnFactoringDeadlock`
+      ).toBe(true);
+    }
+  });
 });

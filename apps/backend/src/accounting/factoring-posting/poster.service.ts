@@ -841,7 +841,41 @@ function fundingExpectedLegs(opts: {
   return legs;
 }
 
+/**
+ * Bounded retry for transient Postgres deadlocks (SQLSTATE 40P01) and serialization failures (40001).
+ *
+ * A 40P01/40001 aborts the whole transaction — Postgres guarantees a full rollback with NO partial
+ * writes — so re-running the poster from the top is safe: the posting-key claim (ON CONFLICT) plus the
+ * deterministic findLifecyclePostingKeyJe lookup resolve any concurrently-committed work to
+ * `already_posted` rather than double-posting. Funding opens two short-lived transactions (a lucia-bypass
+ * read to prepare, then a caller-owned JE write); under heavy concurrency either can lose a rare lock
+ * cycle against sibling lifecycle/read transactions. Surfacing that transient conflict as a hard posting
+ * failure is wrong; retrying with jittered backoff (so the winner commits and releases) is the
+ * production-correct behavior — the same transient-conflict handling NetSuite/QBO-grade posters use.
+ * This is a resiliency wrapper only: it never suppresses a real error (any non-40P01/40001 rethrows
+ * immediately) and never weakens a validation result.
+ */
+async function retryOnFactoringDeadlock<T>(fn: () => Promise<T>, attempts = 4): Promise<T> {
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    try {
+      return await fn();
+    } catch (e) {
+      const code = (e as { code?: string } | null)?.code;
+      if (code !== "40P01" && code !== "40001") throw e;
+      lastErr = e;
+      const backoffMs = 25 * (attempt + 1) + Math.floor(Math.random() * 25);
+      await new Promise((resolve) => setTimeout(resolve, backoffMs));
+    }
+  }
+  throw lastErr;
+}
+
 export async function postFactoringAdvanceEvent(input: PostFactoringAdvanceInput): Promise<PostResult> {
+  return retryOnFactoringDeadlock(() => postFactoringAdvanceEventImpl(input));
+}
+
+async function postFactoringAdvanceEventImpl(input: PostFactoringAdvanceInput): Promise<PostResult> {
   const prepared = await withLuciaBypass(async (client: DbClient) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
     if (!(await factoringPostingEnabled(client, input.operating_company_id))) return { gate: "flag_off" as const };
@@ -1122,6 +1156,10 @@ export type PostFactoringCustomerPaymentInput = {
 };
 
 export async function postFactoringCustomerPaymentEvent(input: PostFactoringCustomerPaymentInput): Promise<PostResult> {
+  return retryOnFactoringDeadlock(() => postFactoringCustomerPaymentEventImpl(input));
+}
+
+async function postFactoringCustomerPaymentEventImpl(input: PostFactoringCustomerPaymentInput): Promise<PostResult> {
   const amount = Number(input.amount_cents ?? 0);
   if (amount <= 0) return { posted: false, reason: "zero_amount" };
 
@@ -1316,6 +1354,10 @@ export type PostFactoringReleaseInput = {
 };
 
 export async function postFactoringReleaseEvent(input: PostFactoringReleaseInput): Promise<PostResult> {
+  return retryOnFactoringDeadlock(() => postFactoringReleaseEventImpl(input));
+}
+
+async function postFactoringReleaseEventImpl(input: PostFactoringReleaseInput): Promise<PostResult> {
   const releaseAmount = Number(input.release_amount_cents ?? 0);
   if (releaseAmount <= 0) return { posted: false, reason: "zero_amount" };
 
@@ -1709,6 +1751,10 @@ export type PostFactoringChargebackInput = {
  * Partial / ambiguous amounts fail closed with policy_partial_or_ambiguous_recourse.
  */
 export async function postFactoringChargebackEvent(input: PostFactoringChargebackInput): Promise<PostResult> {
+  return retryOnFactoringDeadlock(() => postFactoringChargebackEventImpl(input));
+}
+
+async function postFactoringChargebackEventImpl(input: PostFactoringChargebackInput): Promise<PostResult> {
   if (
     input.recoursed_ar_cents == null ||
     input.default_interest_cents == null ||
@@ -2264,6 +2310,12 @@ export async function sumAccruedDefaultInterest(
 }
 
 export async function postFactoringDefaultInterestAccrualEvent(
+  input: PostFactoringDefaultInterestAccrualInput
+): Promise<PostResult> {
+  return retryOnFactoringDeadlock(() => postFactoringDefaultInterestAccrualEventImpl(input));
+}
+
+async function postFactoringDefaultInterestAccrualEventImpl(
   input: PostFactoringDefaultInterestAccrualInput
 ): Promise<PostResult> {
   const prepared = await withLuciaBypass(async (client: DbClient) => {
