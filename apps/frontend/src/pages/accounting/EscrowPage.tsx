@@ -4,6 +4,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { listEscrowAccounts, listEscrowPostings, type EscrowAccount, type EscrowPosting } from "../../api/accounting";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
+import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EscrowDeductionsPendingTab } from "../driver-finance/EscrowDeductionsPendingTab";
@@ -20,6 +21,7 @@ function dt(value: string) {
 }
 
 export function EscrowPage() {
+  const { pushToast } = useToast();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [selectedAccountId, setSelectedAccountId] = useState<string>("");
@@ -36,6 +38,8 @@ export function EscrowPage() {
 
   const postingsQuery = useMutation({
     mutationFn: (escrowAccountId: string) => listEscrowPostings(companyId, escrowAccountId, 300),
+    onError: (error) =>
+      pushToast(String((error as Error)?.message ?? "Failed to load escrow postings"), "error"),
   });
 
   const accountRows = (accountsQuery.data?.rows ?? []) as EscrowAccount[];
