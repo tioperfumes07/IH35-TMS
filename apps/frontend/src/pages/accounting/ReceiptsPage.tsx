@@ -7,6 +7,7 @@ import { Link } from "react-router-dom";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getReceipts, getReceiptDetail, type ReceiptItem } from "../../api/receipts";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 const fmtCents = (c: number | null) => (c == null ? "—" : formatUsdCents(c));
@@ -21,11 +22,12 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 function ReceiptDetailPanel({ id, companyId, onClose }: { id: string; companyId: string; onClose: () => void }) {
-  const { data, isLoading } = useQuery({
+  const detailQuery = useQuery({
     queryKey: ["receipt-detail", id, companyId],
     queryFn: () => getReceiptDetail(id, companyId),
     enabled: Boolean(id && companyId),
   });
+  const { data, isLoading, isError } = detailQuery;
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40" onClick={onClose}>
@@ -36,6 +38,11 @@ function ReceiptDetailPanel({ id, companyId, onClose }: { id: string; companyId:
         </div>
         {isLoading ? (
           <p className="text-sm text-gray-500">Loading…</p>
+        ) : isError ? (
+          <ListErrorBanner
+            message="Failed to load receipt."
+            onRetry={() => void detailQuery.refetch()}
+          />
         ) : !data ? (
           <p className="text-sm text-red-600">Failed to load receipt.</p>
         ) : (
@@ -164,20 +171,27 @@ export function ReceiptsPage() {
     <AccountingSubNavWrapper title="Receipts" subtitle="Uploaded receipts linked to expenses and bills">
       {detailId && <ReceiptDetailPanel id={detailId} companyId={operatingCompanyId} onClose={() => setDetailId(null)} />}
 
-      {isError ? <p className="text-sm text-red-600 py-2 text-center">Failed to load receipts.</p> : null}
+      {isError ? (
+        <ListErrorBanner
+          message="Failed to load receipts."
+          onRetry={() => void listQuery.refetch()}
+        />
+      ) : null}
 
-      <ParityTable
-        columns={columns}
-        rows={items}
-        rowKey={(row) => row.id}
-        loading={isPending || (isFetching && items.length === 0)}
-        filterBar={filterBar}
-        storageKey="receipts-list"
-        initialPageSize={limit}
-        emptyText="No receipts found."
-      />
+      {!isError ? (
+        <ParityTable
+          columns={columns}
+          rows={items}
+          rowKey={(row) => row.id}
+          loading={isPending || (isFetching && items.length === 0)}
+          filterBar={filterBar}
+          storageKey="receipts-list"
+          initialPageSize={limit}
+          emptyText="No receipts found."
+        />
+      ) : null}
 
-      {total > limit && (
+      {!isError && total > limit && (
         <div className="flex items-center justify-between mt-3 text-sm text-gray-600">
           <button onClick={() => setOffset(Math.max(0, offset - limit))} disabled={offset === 0}
             className="rounded-sm border border-gray-300 px-3 py-1 disabled:opacity-40 hover:bg-gray-50">← Prev</button>
