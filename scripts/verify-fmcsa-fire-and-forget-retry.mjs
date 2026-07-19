@@ -577,25 +577,30 @@ function loadLive() {
 }
 
 function selftestLexer() {
-  // Must not strip comment-like text inside strings / templates (preserve via stringLiterals).
+  // Non-URL sentinel that still contains `//` so we prove line-comment lexing
+  // does not fire inside double-quoted strings (CodeQL: no URL substring checks).
+  const slashDecoy = ["keep", "inside-dq-string"].join("//");
+  const blockDecoy = "/* not a block comment */";
   const sample = `
-    const url = "http://example.com/path"; // real comment
-    const decoy = "/* not a block comment */";
+    const decoySlashes = "${slashDecoy}"; // real comment
+    const decoy = "${blockDecoy}";
     const tpl = \`SELECT 1 -- sql comment stays in sqlTemplates\`;
     const live = 1; /* block */
     if (mobileRetryable) throw mobileRetryable;
   `;
   const { code, sqlTemplates, stringLiterals } = toExecutableSemantics(sample);
+  const literalSet = new Set(stringLiterals);
   if (/real comment/.test(code)) {
     throw new Error("lexer failed to strip real line comment");
   }
-  if (!stringLiterals.some((s) => s.includes("http://example.com/path"))) {
+  if (!literalSet.has(slashDecoy)) {
     throw new Error("lexer must preserve // inside double-quoted strings via stringLiterals");
   }
-  if (!stringLiterals.some((s) => s.includes("/* not a block comment */"))) {
+  if (!literalSet.has(blockDecoy)) {
     throw new Error("lexer must preserve block-comment-like text inside strings via stringLiterals");
   }
-  if (/http:\/\/example\.com/.test(code)) {
+  // Exact absence from skeleton (no URL-shaped regex / substring sanitization).
+  if (code.includes(slashDecoy)) {
     throw new Error("executable skeleton must mask string bodies (decoy immunity)");
   }
   if (!/const\s+live\s*=\s*1/.test(code)) {
