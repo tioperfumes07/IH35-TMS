@@ -2,6 +2,10 @@
   "note": "HELD MIGRATIONS — each carries a 'DO NOT RUN ON PROD' marker and must run ONLY on a Neon branch by Jorge's hand, then be ledger-backfilled so prod db:migrate skips it. verify:hold-migrations-registered enforces bidirectional parity: every migration whose header says DO-NOT-RUN must be listed here, and every entry here must still carry the marker — so a held migration can never silently lose its marker (which would let db:migrate fire it on prod).",
   "held": [
     {
+      "file": "202607600000_factoring_balance_invoice_linkage.sql",
+      "reason": "[HOLD-FOR-JORGE — TIER 1 FINANCIAL] 0280-05 — FORCE RLS + canonical lucia-bypass policy on accounting.factoring_advances + additive security_invoker views.factoring_balance_invoice_linkage (outstanding Faro secured-borrowing LIABILITY = funded − settled − recourse; separate reserve receivable; COUNT(DISTINCT invoice.id); no JOIN fanout). NOT YET applied on prod — GUARD validates on throwaway Postgres, owner applies on Neon then ledger-backfills; CI fresh-from-0001 builds the view. Posting flags stay OFF; no QBO write-back."
+    },
+    {
       "file": "202607560000_mdata_qbo_sync_columns_for_collapse.sql",
       "reason": "[HOLD-FOR-JORGE — FINANCIAL] QBO dual-write collapse STEP 1 — additive QBO push-status sync columns on canonical mdata.qbo_accounts/customers/vendors (sync_status, qbo_push_attempts, qbo_last_push_at, qbo_last_error + accounts parent_id/parent_synced + vendors default_ap_account_qbo_id/eligible_1099/payment_terms_qbo_id) mirroring accounting.qbo_* exactly, so the Step-2 writer repoint (accounting.qbo_* -> mdata.qbo_*) has them. ADDITIVE + IDEMPOTENT; NOT-NULL-with-default backfills existing rows instantly (both mirrors carry live data). NOT YET applied on prod — GUARD validates on throwaway Postgres, owner applies on Neon then ledger-backfills; CI fresh-from-0001 builds the columns."
     },

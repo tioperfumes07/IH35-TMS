@@ -1372,6 +1372,50 @@ Canonical detail: `docs/specs/TMS-QBO-PARALLEL-BOOKS.md` + CPA skill. Layers are
 - Protects the sanitized Phase-1 decision anchors (delivery definition, dual-basis crosswalk, ASC 470-60 wording, full Faro mechanics, CoA children, entity books, CoA export facts) without `package.json` / CI workflow hot-file edits.
 
 
+## 16a. Factoring Balance — invoice-grain Faro liability + separate reserve (0280-05)
+
+Source: Owner cloud dispatch 2026-07-19 (`0280-05-factoring-balance-invoice-linkage`)  
+Status: LOCKED (read-only contract; financial HOLD — no self-merge; owner Neon ceremony)  
+Standards: QuickBooks/NetSuite liability-vs-asset honesty; McLeod/Alvys factoring tiles; CPA Faro ASC 860 secured borrowing (CHAIN-06).
+
+### Owner decisions (append-only — do not re-litigate)
+1. **Factoring Balance = outstanding Faro secured-borrowing LIABILITY**, never reserve.
+   Formula: `advances funded − advances settled by collections/reserve releases − recourse buybacks`
+   (= credit balance owed Faro). Face amount = `accounting.factoring_advances.invoice_total_cents`
+   (full Net liability credited at funding per CHAIN-06 / CODER-34 poster).
+2. **Factoring Reserves = separate 1.5% short-term asset/receivable**, never netted into the
+   liability balance. Factored A/R remains on IH35 books as pledged collateral (no sale/derecognition).
+3. **Migration is additive FORCE-RLS + security_invoker view**, build-and-HOLD; owner applies on Neon
+   + ledger-backfill. Never self-merge.
+4. **Posting flags remain OFF**; **no TMS→QBO write-back**. Reuse existing poster/read models —
+   no new GL math.
+
+### Root cause fixed
+- Live `views.factoring_summary` was **superseded** by migration 0124 to read
+  `accounting.factoring_companies.current_reserve_balance` / jsonb `advance_amount` (never written).
+- The earlier 0061 invoice-joined definition was dead for the Home tile.
+- Missing `COUNT(DISTINCT invoice.id)`.
+- Silent `catch → { reserveCents: 0, … }` fabricated a trustworthy-looking $0.
+
+### Locked read model
+- **Route:** `GET /api/v1/home/factoring-balance?operating_company_id=`
+- **Canonical sources:** `accounting.factoring_advances` + `accounting.invoices` +
+  `views.factoring_balance_invoice_linkage` (migration `202607600000`, HOLD).
+- **Grain:** money aggregated at **advance** grain; `invoice_count = COUNT(DISTINCT invoices.id)`
+  with entity scope on both sides — never JOIN-sum advance money (fanout ban).
+- **Statuses:** funded = `advanced_at IS NOT NULL AND status <> 'voided'`;
+  settled = `reserve_held|collected|released`; recourse = `recourse_returned`.
+- **Contract fields (integer cents):** `outstanding_liability_cents`, `reserve_receivable_cents`,
+  `invoice_count`, plus `status` ∈ `ok|empty|unverifiable` (empty ≠ unverifiable ≠ 500).
+- **Errors:** typed `factoring_balance_invoice_linkage_unverifiable` (200) /
+  `factoring_balance_invoice_linkage_failed` (500). Never silent zero.
+- **Out of scope this block:** Home/Factoring UI chrome (tab drift unresolved); posting; QBO write-back.
+
+### Guard (Rule 17 — auto-discovered)
+- `scripts/verify-factoring-balance-invoice-linkage.mjs`
+- `scripts/verify-steps/929-verify-factoring-balance-invoice-linkage.mjs`
+
+
 ## 16. Accounting Home — Pending approvals ↔ GL linkage (0280-15)
 
 Source: Owner cloud dispatch 2026-07-19 (`0280-15-pending-approvals-gl-linkage`)  

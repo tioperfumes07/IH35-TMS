@@ -1,17 +1,47 @@
 {
   "block_id": "0280-05-factoring-balance-invoice-linkage",
-  "status": "NEEDS-VERIFY",
+  "branch": "cursor/factoring-balance-invoice-linkage-7ff5",
+  "status": "BUILD",
   "classification": "FINANCIAL",
   "phase": "tier1",
-  "source": "MASTER-6 authored dispatch (03-TIER1-BLOCKS)",
+  "task": "Root-cause fix for Factoring Balance: supersede dead views.factoring_summary (0124 never-written companies.current_reserve_balance), add invoice-grain outstanding Faro LIABILITY + separate reserve receivable + COUNT(DISTINCT invoice.id), kill fake-zero catch. HOLD additive FORCE-RLS migration. Backend-only (no Home/Factoring UI — tab drift unresolved). Posting flags OFF; no QBO write-back; no new GL math.",
+  "priority": "P0",
+  "module": "home-factoring-balance",
+  "db_required": true,
+  "guard_required": true,
+  "runtime_path": "src",
+  "extra_gates": [],
+  "source": "MASTER-6 authored dispatch (03-TIER1-BLOCKS) + owner cloud decisions 2026-07-19",
   "source_file": "0280-05-factoring-balance-invoice-linkage.txt",
   "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
+    "apps/backend/src/home/factoring-balance-invoice-linkage.service.ts",
+    "apps/backend/src/home/factoring-balance-invoice-linkage.service.test.ts",
+    "apps/backend/src/home/__tests__/factoring-balance-invoice-linkage.db.test.ts",
+    "apps/backend/src/home/home-widgets.routes.ts",
+    "apps/backend/src/home/home-widgets.routes.test.ts",
+    "db/migrations/202607600000_factoring_balance_invoice_linkage.sql",
+    "db/migrations/.held-migrations.json",
+    "docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md",
+    "scripts/verify-factoring-balance-invoice-linkage.mjs",
+    "scripts/verify-steps/929-verify-factoring-balance-invoice-linkage.mjs",
+    ".block-ready/0280-05-factoring-balance-invoice-linkage.json"
   ],
   "acceptance": [
     {
-      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
+      "check": "GET /api/v1/home/factoring-balance returns outstanding_liability_cents + reserve_receivable_cents + invoice_count (integer cents); status ok|empty|unverifiable; no silent $0 catch"
+    },
+    {
+      "check": "views.factoring_balance_invoice_linkage security_invoker; FORCE RLS on accounting.factoring_advances; held migration registered; apply-twice throwaway PG proof"
+    },
+    {
+      "check": "DB tests: multi-invoice no fanout, voided excluded, collections/reserve/recourse, cross-company isolation, empty, planted query failure"
+    },
+    {
+      "check": "verify-factoring-balance-invoice-linkage + --selftest PASS via verify-steps/929; no package.json / workflow hot-file edits"
+    },
+    {
+      "check": "DRAFT HOLD PR only — NEVER self-merge; owner Neon ceremony"
     }
   ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+  "note": "FINANCIAL HOLD. Frontend Home/Factoring UI intentionally out of scope (tab drift). FE may still map reserveCents→outstanding_cents until a follow-up UI block — backend contract is authoritative."
 }

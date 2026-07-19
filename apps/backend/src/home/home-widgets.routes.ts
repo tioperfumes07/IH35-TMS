@@ -13,6 +13,10 @@ import {
   weeklyRevenueWindow,
   type RevenueGlLinkageResult,
 } from "./revenue-gl-linkage.service.js";
+import {
+  computeFactoringBalanceInvoiceLinkage,
+  type FactoringBalanceInvoiceLinkageResult,
+} from "./factoring-balance-invoice-linkage.service.js";
 
 function revenuePayload(result: RevenueGlLinkageResult) {
   return {
@@ -27,6 +31,29 @@ function revenuePayload(result: RevenueGlLinkageResult) {
     discrepancy_count: result.discrepancy_count,
     discrepancy_cents: result.discrepancy_cents,
     drill: result.drill,
+  };
+}
+
+function factoringBalancePayload(result: FactoringBalanceInvoiceLinkageResult) {
+  return {
+    status: result.status,
+    unverifiable_reason: result.unverifiable_reason,
+    outstanding_liability_cents: result.outstanding_liability_cents,
+    reserve_receivable_cents: result.reserve_receivable_cents,
+    invoice_count: result.invoice_count,
+    invoices_factored: result.invoice_count,
+    funded_cents: result.funded_cents,
+    settled_cents: result.settled_cents,
+    recourse_buyback_cents: result.recourse_buyback_cents,
+    funded_advance_count: result.funded_advance_count,
+    meta: result.meta,
+    // Backward-compat aliases — null when unverifiable (never fabricate $0).
+    // outstanding_cents = LIABILITY (owner 2026-07-19); reserveCents stays reserve asset.
+    outstanding_cents: result.outstanding_liability_cents,
+    reserveCents: result.reserve_receivable_cents,
+    advancedCents: result.outstanding_liability_cents,
+    // NEVER reserve + liability (owner: never net). Headline = outstanding liability only.
+    totalCents: result.outstanding_liability_cents,
   };
 }
 
@@ -344,35 +371,29 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
     const parsed = companyQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
 
-    return await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
-      try {
-        // FACTOR-1: read the reserve balance from the real, populated source.
-        // The old read hit a factoring balances table/columns that no migration ever
-        // creates or writes, so the tile was always $0.
-        // views.factoring_summary is the canonical, security_invoker rollup over
-        // accounting.factoring_advances (the invoice-linked factoring workflow, written by
-        // accounting/factoring-advances.routes.ts). reserve_balance is the reserve still held
-        // by the factor (money the carrier is owed — ASC 860 short-term asset); both columns are
-        // in CENTS (SUM of *_cents source columns). Same source used by /factoring/summary and
-        // reports/cash-flow-overview.
-        const res = await client.query(
-          `
-            SELECT
-              COALESCE(reserve_balance, 0)::text AS reserve,
-              COALESCE(mtd_advanced_total, 0)::text AS advanced
-            FROM views.factoring_summary
-            WHERE operating_company_id = $1::uuid
-            LIMIT 1
-          `,
-          [parsed.data.operating_company_id]
-        );
-        const reserveCents = Number(res.rows[0]?.reserve ?? 0);
-        const advancedCents = Number(res.rows[0]?.advanced ?? 0);
-        return { reserveCents, advancedCents, totalCents: reserveCents + advancedCents };
-      } catch {
-        return { reserveCents: 0, advancedCents: 0, totalCents: 0 };
+    // 0280-05: invoice-grain Faro liability + separate reserve receivable.
+    // Never read superseded views.factoring_summary (0124 dead companies.current_reserve_balance).
+    // Never silent catch → fabricated $0.
+    try {
+      const result = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) =>
+        computeFactoringBalanceInvoiceLinkage(client, {
+          operatingCompanyId: parsed.data.operating_company_id,
+        })
+      );
+      if (result.status === "unverifiable") {
+        return {
+          ...factoringBalancePayload(result),
+          error: "factoring_balance_invoice_linkage_unverifiable",
+        };
       }
-    });
+      return factoringBalancePayload(result);
+    } catch (err) {
+      req.log.error({ err }, "home.factoring-balance invoice linkage failed");
+      return reply.code(500).send({
+        error: "factoring_balance_invoice_linkage_failed",
+        message: err instanceof Error ? err.message : "unknown_error",
+      });
+    }
   });
 
   // Auth probe for tests
