@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "../../api/client";
 import { useState } from "react";
+import { apiRequest } from "../../api/client";
+import { useToast } from "../../components/Toast";
 
 type CoaSyncStatus = {
   total_local: number;
@@ -43,6 +44,7 @@ type Props = {
 
 export function ChartOfAccountsSyncPanel({ operatingCompanyId, showDriftFilter, onDriftFilterToggle }: Props) {
   const queryClient = useQueryClient();
+  const { pushToast } = useToast();
   const [driftOnly, setDriftOnly] = useState(false);
 
   const statusQuery = useQuery({
@@ -54,11 +56,17 @@ export function ChartOfAccountsSyncPanel({ operatingCompanyId, showDriftFilter, 
   const pullMutation = useMutation({
     mutationFn: () => postCoaAction("/api/v1/qbo-sync/chart-of-accounts/pull-now", operatingCompanyId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["coa-sync-status", operatingCompanyId] }),
+    onError: (error) => {
+      pushToast(error instanceof Error ? error.message : "Failed to refresh chart of accounts from QBO", "error");
+    },
   });
 
   const reconcileMutation = useMutation({
     mutationFn: () => postCoaAction("/api/v1/qbo-sync/chart-of-accounts/reconcile-now", operatingCompanyId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["coa-sync-status", operatingCompanyId] }),
+    onError: (error) => {
+      pushToast(error instanceof Error ? error.message : "Chart of accounts reconcile failed", "error");
+    },
   });
 
   const status = statusQuery.data;
