@@ -12,6 +12,7 @@ import {
   computeDbGatePlan,
   evaluateGuardRequirement,
   executeGuardContract,
+  getC5SkipReason,
   matchesAnyAllowedFile,
   parseManifest,
   readUtf8FileFromStableHandle,
@@ -748,12 +749,15 @@ test("GitHub branch environment is ignored outside GitHub Actions", () => {
   );
 });
 
-test("readVerifyMeta returns db_gated and c5_skip_after_c4 lists", () => {
+test("readVerifyMeta returns db_gated, c5_skip_after_c4, and orchestrator skip lists", () => {
   const meta = readVerifyMeta(REPO_ROOT);
   assert.ok(Array.isArray(meta.db_gated_verify_scripts));
   assert.ok(meta.db_gated_verify_scripts.includes("verify:pre-commit"));
   assert.ok(Array.isArray(meta.block_ready_c5_skip_after_c4));
   assert.ok(meta.block_ready_c5_skip_after_c4.includes("verify:arch-design"));
+  assert.ok(Array.isArray(meta.block_ready_c5_skip_orchestrators));
+  assert.ok(meta.block_ready_c5_skip_orchestrators.includes("verify:local-ci"));
+  assert.ok(meta.block_ready_c5_skip_orchestrators.includes("verify:static"));
 });
 
 test("C5 honors block_ready_c5_skip_after_c4 for verify:arch-design", () => {
@@ -761,7 +765,15 @@ test("C5 honors block_ready_c5_skip_after_c4 for verify:arch-design", () => {
   assert.equal(shouldSkipC5VerifyScript("verify:arch-design", meta), true);
 });
 
-test("C5 still runs verify scripts not in skip-after-c4 set", () => {
+test("C5 skips verify:local-ci / verify:static orchestrators (single-owner)", () => {
+  const meta = readVerifyMeta(REPO_ROOT);
+  assert.equal(shouldSkipC5VerifyScript("verify:local-ci", meta), true);
+  assert.equal(shouldSkipC5VerifyScript("verify:static", meta), true);
+  assert.match(getC5SkipReason("verify:local-ci", meta) ?? "", /orchestrator/);
+  assert.match(getC5SkipReason("verify:static", meta) ?? "", /orchestrator/);
+});
+
+test("C5 still runs verify scripts not in skip-after-c4 or orchestrator sets", () => {
   const meta = readVerifyMeta(REPO_ROOT);
   assert.equal(shouldSkipC5VerifyScript("verify:nav-integrity", meta), false);
   assert.equal(shouldSkipC5VerifyScript("verify:fixture-other", meta), false);

@@ -19,6 +19,10 @@ const skipList = verifyMeta.block_ready_c5_skip_after_c4;
 if (!Array.isArray(skipList) || !skipList.includes("verify:arch-design")) {
   fail('verify-meta.json must list "verify:arch-design" in block_ready_c5_skip_after_c4');
 }
+const orchList = verifyMeta.block_ready_c5_skip_orchestrators;
+if (!Array.isArray(orchList) || !orchList.includes("verify:local-ci") || !orchList.includes("verify:static")) {
+  fail('verify-meta.json must list "verify:local-ci" and "verify:static" in block_ready_c5_skip_orchestrators');
+}
 
 const blockReadyPath = path.resolve(ROOT, "scripts/block-ready.mjs");
 const blockReadySrc = fs.readFileSync(blockReadyPath, "utf8");
@@ -28,8 +32,11 @@ if (!blockReadySrc.includes("block_ready_c5_skip_after_c4")) {
 if (!blockReadySrc.includes("already run in C4")) {
   fail("block-ready.mjs runCheckC5 must skip C4-overlap scripts with (already run in C4) log");
 }
-if (!blockReadySrc.includes("shouldSkipC5VerifyScript")) {
-  fail("block-ready.mjs must apply C5 skip via shouldSkipC5VerifyScript in runCheckC5");
+if (!blockReadySrc.includes("shouldSkipC5VerifyScript") && !blockReadySrc.includes("getC5SkipReason")) {
+  fail("block-ready.mjs must apply C5 skip via getC5SkipReason/shouldSkipC5VerifyScript in runCheckC5");
+}
+if (!blockReadySrc.includes("block_ready_c5_skip_orchestrators")) {
+  fail("block-ready.mjs must read block_ready_c5_skip_orchestrators from verify-meta");
 }
 
 const precheckPath = path.resolve(ROOT, "scripts/branch-precheck-push.mjs");

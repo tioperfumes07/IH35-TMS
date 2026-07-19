@@ -1,0 +1,42 @@
+{
+  "block_id": "pre-push-pipeline-deadlock-3b0b",
+  "branch": "cursor/pre-push-pipeline-deadlock-3b0b",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL (CI tooling / pre-push gate graph)",
+  "phase": "PIPELINE-TRUTH",
+  "task": "Root-cause fix: pre-push C5 nested verify:local-ci (fixed port 54329 contention). Make gate graph acyclic/single-owner; dynamic VLCI port; fail-closed nested/concurrent owners.",
+  "priority": "P0",
+  "module": "ci-tooling",
+  "db_required": false,
+  "guard_required": true,
+  "runtime_path": "src",
+  "extra_gates": [],
+  "allowed_files": [
+    "scripts/vlci-lifecycle.mjs",
+    "scripts/static-sweep-proof.mjs",
+    "scripts/verify-local-ci.mjs",
+    "scripts/verify-local-ci-gate-acyclic.mjs",
+    "scripts/verify-steps/910-verify-local-ci-gate-acyclic.mjs",
+    "scripts/verify-db-reset.mjs",
+    "scripts/block-ready.mjs",
+    "scripts/branch-precheck-push.mjs",
+    "scripts/verify-meta.json",
+    "scripts/verify-block-ready-c5-no-duplicate-arch-design.mjs",
+    "scripts/dev/vlci-lifecycle-harness.mjs",
+    "scripts/__tests__/verify-local-ci-lifecycle.test.mjs",
+    "scripts/__tests__/block-ready.test.mjs",
+    "apps/frontend/src/components/home/__tests__/QboSyncHealthCard.test.tsx",
+    "docs/specs/BRANCH-TOOLING.md",
+    ".block-ready/pre-push-pipeline-deadlock-3b0b.json"
+  ],
+  "acceptance": [
+    { "check": "C5 skips verify:local-ci and verify:static (orchestrators) — unchanged" },
+    { "check": "OWNED/INHERIT/ACTIVE alone cannot authorize; planted attacks fail closed" },
+    { "check": "ownership = canonical lock + token + live pid + dataDir/port/database/url bindings" },
+    { "check": "SIGINT/SIGTERM harness cleans dataDir + releases lock" },
+    { "check": "port TOCTOU: stolen first port retries; second succeeds and cleans" },
+    { "check": "block-ready ensureVerifyStaticOnce; pre-push does not duplicate verify:static" },
+    { "check": "verify-local-ci-gate-acyclic + lifecycle tests PASS (Rule 17 wiring)" }
+  ],
+  "note": "Root-cause fix for pre-push deadlock: C5 was nesting verify:local-ci (full Postgres + verify:pre-commit) via blind verify:* enumeration; fixed port 54329 contended under nested/sibling runs."
+}
