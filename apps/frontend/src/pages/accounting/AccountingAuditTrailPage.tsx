@@ -10,6 +10,7 @@ import {
   type AccountingSourceLineageRow,
 } from "../../api/accounting";
 import { Button } from "../../components/Button";
+import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ReportBlockVPendingBanner } from "../reports/ReportBlockVPendingBanner";
@@ -93,6 +94,7 @@ function PostingEntityLink({
 
 export function AccountingAuditTrailPage() {
   const { selectedCompanyId } = useCompanyContext();
+  const { pushToast } = useToast();
   const companyId = selectedCompanyId ?? "";
   const [searchParams] = useSearchParams();
   // Deep-link from invoice/payment "View audit log" (?source_type=&source_id=).
@@ -136,6 +138,7 @@ export function AccountingAuditTrailPage() {
       setLineageRows(payload.rows ?? []);
       setLineageKey(vars);
     },
+    onError: (err) => pushToast(err instanceof Error ? err.message : "Source lineage lookup failed", "error"),
   });
 
   const events = useMemo(
