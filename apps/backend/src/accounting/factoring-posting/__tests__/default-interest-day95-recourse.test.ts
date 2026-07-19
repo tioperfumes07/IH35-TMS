@@ -1,33 +1,52 @@
 import { describe, expect, it, vi } from "vitest";
-import { triggerDay95RecourseForCompany, accrueDefaultInterestForCompany } from "../default-interest.service.js";
+import { triggerDay95RecourseForCompany } from "../default-interest.service.js";
 
-// Day-95 auto-recourse orchestration proof (mocked). At the 95-day Repurchase Deadline, an unpaid advance
-// auto-fires the SHIPPED chargeback poster with chargeback = the FULL outstanding liability (Net + all
-// compounded interest) and default_interest = 0 (interest is already expensed + already compounded into the
-// liability by the daily accrual — re-debiting it would double-count), and flips the advance + its invoices
-// to recourse_returned. Flag OFF ⇒ pure no-op.
-const { mockWithLuciaBypass, mockQuery, mockIsEnabled, mockAppendCrudAudit, mockChargeback, mockAccrual, mockSumAccrued } =
-  vi.hoisted(() => {
-    const query = vi.fn();
-    return {
-      mockQuery: query,
-      mockWithLuciaBypass: vi.fn(async (fn: (client: { query: typeof query }) => unknown) => fn({ query })),
-      mockIsEnabled: vi.fn(),
-      mockAppendCrudAudit: vi.fn(),
-      mockChargeback: vi.fn(),
-      mockAccrual: vi.fn(),
-      mockSumAccrued: vi.fn(),
-    };
-  });
+// Day-95 auto-recourse orchestration: catch interest, then fire chargeback with EXACT linked amounts
+// (no guessed Net / accrual-ledger amounts). Status flip lives inside chargeback txn; orchestration
+// only appends day-95 audit. Flag OFF ⇒ pure no-op.
+const {
+  mockWithLuciaBypass,
+  mockQuery,
+  mockIsEnabled,
+  mockAppendCrudAudit,
+  mockChargeback,
+  mockAccrual,
+  mockLoadExact,
+} = vi.hoisted(() => {
+  const query = vi.fn();
+  return {
+    mockQuery: query,
+    mockWithLuciaBypass: vi.fn(async (fn: (client: { query: typeof query }) => unknown) => fn({ query })),
+    mockIsEnabled: vi.fn(),
+    mockAppendCrudAudit: vi.fn(),
+    mockChargeback: vi.fn(),
+    mockAccrual: vi.fn(),
+    mockLoadExact: vi.fn(),
+  };
+});
 
 vi.mock("../../../auth/db.js", () => ({ withLuciaBypass: mockWithLuciaBypass }));
 vi.mock("../../../lib/feature-flags/service.js", () => ({ isEnabled: mockIsEnabled }));
 vi.mock("../../../audit/crud-audit.js", () => ({ appendCrudAudit: mockAppendCrudAudit }));
+vi.mock("../faro-agreement-gate.js", () => ({
+  requireEffectiveFaroFullRecourseAgreement: vi.fn(async () => ({
+    ok: true,
+    vendorId: "faro-vendor",
+    vendorName: "Faro",
+    agreementId: "agr-1",
+    factorProfileId: "fp-1",
+    companyCode: "TRANSP",
+    asOf: "2026-01-20",
+  })),
+  advanceBoundToFaroVendor: vi.fn(async () => true),
+  FARO_FULL_RECOURSE_AGREEMENT_CODE: "FARO_FULL_RECOURSE_V1",
+}));
+
 vi.mock("../poster.service.js", () => ({
   FACTORING_GL_POSTING_FLAG: "FACTORING_GL_POSTING_ENABLED",
   postFactoringChargebackEvent: mockChargeback,
   postFactoringDefaultInterestAccrualEvent: mockAccrual,
-  sumAccruedDefaultInterest: mockSumAccrued,
+  loadExactLinkedChargebackAmounts: mockLoadExact,
 }));
 
 const OPCO = "11111111-1111-4111-8111-111111111111";
@@ -40,13 +59,12 @@ function installDefaults(opts: { flagOn?: boolean; candidate?: boolean } = {}) {
   mockAppendCrudAudit.mockReset();
   mockChargeback.mockReset();
   mockAccrual.mockReset();
-  mockSumAccrued.mockReset();
+  mockLoadExact.mockReset();
 
   mockIsEnabled.mockResolvedValue(flagOn);
   mockAppendCrudAudit.mockResolvedValue(undefined);
   mockAccrual.mockResolvedValue({ posted: false, reason: "already_posted" });
-  // Net 500,000 + 20,000 accrued default interest = 520,000 outstanding liability at day 95.
-  mockSumAccrued.mockResolvedValue({ total_interest_cents: 20000, last_closing_cents: 520000 });
+  mockLoadExact.mockResolvedValue({ liability_cents: 520000, recoursed_ar_cents: 500000 });
   mockChargeback.mockResolvedValue({ posted: true, journal_entry_id: "je-cb" });
 
   mockQuery.mockImplementation(async (sql: string) => {
@@ -72,32 +90,32 @@ function installDefaults(opts: { flagOn?: boolean; candidate?: boolean } = {}) {
 }
 
 describe("Faro factoring — day-95 auto-recourse", () => {
-  it("fires the chargeback poster with FULL outstanding liability + 0 separate interest, and flips status", async () => {
+  it("fires chargeback with exact linked liability + A/R; audit only (no outer status flip)", async () => {
     installDefaults();
     const res = await triggerDay95RecourseForCompany({
       operating_company_id: OPCO,
-      as_of_date_iso: "2026-04-06T00:00:00.000Z",
+      as_of_date_iso: "2026-04-06",
     });
 
     expect(res).toMatchObject({ flag_off: false, recoursed: 1 });
+    expect(mockLoadExact).toHaveBeenCalledWith(OPCO, "fac-1");
     expect(mockChargeback).toHaveBeenCalledTimes(1);
     expect(mockChargeback.mock.calls[0][0]).toMatchObject({
       operating_company_id: OPCO,
       factoring_advance_id: "fac-1",
-      chargeback_amount_cents: 520000, // Net + accrued interest (the whole liability)
-      default_interest_cents: 0, // already expensed by the daily accrual — no double-count
-      recoursed_ar_cents: 500000, // A/R was only ever the invoice Net
+      chargeback_amount_cents: 520000,
+      default_interest_cents: 0,
+      recoursed_ar_cents: 500000,
+      charged_back_at_iso: "2026-04-06",
     });
 
-    // status flip to recourse_returned + invoices flip + audit
     const statusFlip = mockQuery.mock.calls.find(
-      (c) => typeof c[0] === "string" && c[0].includes("UPDATE accounting.factoring_advances") && c[0].includes("recourse_returned")
+      (c) =>
+        typeof c[0] === "string" &&
+        c[0].includes("UPDATE accounting.factoring_advances") &&
+        c[0].includes("recourse_returned")
     );
-    expect(statusFlip).toBeTruthy();
-    const invoiceFlip = mockQuery.mock.calls.find(
-      (c) => typeof c[0] === "string" && c[0].includes("UPDATE accounting.invoices") && c[0].includes("recourse_returned")
-    );
-    expect(invoiceFlip).toBeTruthy();
+    expect(statusFlip).toBeFalsy();
     expect(mockAppendCrudAudit).toHaveBeenCalledWith(
       expect.anything(),
       expect.anything(),
@@ -108,33 +126,24 @@ describe("Faro factoring — day-95 auto-recourse", () => {
     );
   });
 
-  it("falls back to Net when nothing accrued (last_closing null → chargeback = Net)", async () => {
+  it("skips when exact linked amounts are zero/missing (fail closed — no guessed Net)", async () => {
     installDefaults();
-    mockSumAccrued.mockResolvedValue({ total_interest_cents: 0, last_closing_cents: null });
+    mockLoadExact.mockResolvedValue({ liability_cents: 0, recoursed_ar_cents: 500000 });
     const res = await triggerDay95RecourseForCompany({
       operating_company_id: OPCO,
-      as_of_date_iso: "2026-04-06T00:00:00.000Z",
+      as_of_date_iso: "2026-04-06",
     });
-    expect(res.recoursed).toBe(1);
-    expect(mockChargeback.mock.calls[0][0]).toMatchObject({ chargeback_amount_cents: 500000, default_interest_cents: 0 });
-  });
-
-  it("FLAG OFF: no candidates scanned, no chargeback, no status flip", async () => {
-    installDefaults({ flagOn: false });
-    const res = await triggerDay95RecourseForCompany({
-      operating_company_id: OPCO,
-      as_of_date_iso: "2026-04-06T00:00:00.000Z",
-    });
-    expect(res).toMatchObject({ flag_off: true, recoursed: 0 });
+    expect(res.recoursed).toBe(0);
     expect(mockChargeback).not.toHaveBeenCalled();
   });
 
-  it("accrual engine FLAG OFF: pure no-op", async () => {
+  it("FLAG OFF ⇒ no selection / no chargeback", async () => {
     installDefaults({ flagOn: false });
-    const res = await accrueDefaultInterestForCompany({
+    const res = await triggerDay95RecourseForCompany({
       operating_company_id: OPCO,
-      as_of_date_iso: "2026-04-06T00:00:00.000Z",
+      as_of_date_iso: "2026-04-06",
     });
-    expect(res).toMatchObject({ flag_off: true, accruals_posted: 0 });
+    expect(res).toMatchObject({ flag_off: true, advances_scanned: 0, recoursed: 0 });
+    expect(mockChargeback).not.toHaveBeenCalled();
   });
 });

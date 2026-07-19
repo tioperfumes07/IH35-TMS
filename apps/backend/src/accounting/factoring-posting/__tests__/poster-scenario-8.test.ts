@@ -12,31 +12,51 @@ import {
 const {
   mockQuery,
   mockWithLuciaBypass,
+  mockWithCurrentUser,
   mockIsEnabled,
   mockCreateJournalEntry,
   mockResolveRoleAccount,
 } = vi.hoisted(() => {
   const query = vi.fn();
   const withLuciaBypass = vi.fn(async (fn: (client: { query: typeof query }) => unknown) => fn({ query }));
+  const withCurrentUser = vi.fn(async (_userId: string, fn: (client: { query: typeof query }) => unknown) => fn({ query }));
   return {
     mockQuery: query,
     mockWithLuciaBypass: withLuciaBypass,
+    mockWithCurrentUser: withCurrentUser,
     mockIsEnabled: vi.fn(),
     mockCreateJournalEntry: vi.fn(),
     mockResolveRoleAccount: vi.fn(),
   };
 });
 
-vi.mock("../../../auth/db.js", () => ({ withLuciaBypass: mockWithLuciaBypass }));
+vi.mock("../../../auth/db.js", () => ({ withLuciaBypass: mockWithLuciaBypass, withCurrentUser: mockWithCurrentUser }));
 vi.mock("../../../lib/feature-flags/service.js", () => ({ isEnabled: mockIsEnabled }));
-vi.mock("../../journal-entries.service.js", () => ({ createJournalEntry: mockCreateJournalEntry }));
+vi.mock("../../journal-entries.service.js", () => ({ createJournalEntry: mockCreateJournalEntry, createJournalEntryOnClient: mockCreateJournalEntry, enqueueJournalEntrySideEffects: vi.fn(async () => undefined) }));
+vi.mock("../../posting-engine.service.js", () => ({ ensureOpenPeriod: vi.fn(async () => undefined) }));
+vi.mock("../../accounting-spine-emit.js", () => ({ writeTransactionSourceLink: vi.fn(async () => undefined) }));
 vi.mock("../../coa-roles/resolver.service.js", () => ({ resolveRoleAccount: mockResolveRoleAccount }));
+vi.mock("../../../audit/crud-audit.js", () => ({ appendCrudAudit: vi.fn(async () => undefined) }));
+vi.mock("../faro-agreement-gate.js", () => ({
+  requireEffectiveFaroFullRecourseAgreement: vi.fn(async () => ({
+    ok: true,
+    vendorId: "faro-vendor",
+    vendorName: "Faro",
+    agreementId: "agr-1",
+    factorProfileId: "fp-1",
+    companyCode: "TRANSP",
+    asOf: "2026-01-20",
+  })),
+  advanceBoundToFaroVendor: vi.fn(async () => true),
+  FARO_FULL_RECOURSE_AGREEMENT_CODE: "FARO_FULL_RECOURSE_V1",
+}));
 
 const OPCO = "11111111-1111-4111-8111-111111111111";
 const ADVANCE = "22222222-2222-4222-8222-222222222222";
 const ACTOR = "33333333-3333-4333-8333-333333333333";
 
-function installDefaults(existingMemos: Set<string> = new Set()) {
+function installDefaults(opts: { alreadyPosted?: boolean } = {}) {
+  const alreadyPosted = !!opts.alreadyPosted;
   mockQuery.mockReset();
   mockIsEnabled.mockReset();
   mockCreateJournalEntry.mockReset();
@@ -45,16 +65,93 @@ function installDefaults(existingMemos: Set<string> = new Set()) {
   mockIsEnabled.mockResolvedValue(true);
   // Resolve each role to an id equal to the role name, so legs can be asserted by account.
   mockResolveRoleAccount.mockImplementation(async (_c: unknown, _opco: string, role: string) => role);
-  mockCreateJournalEntry.mockResolvedValue({ id: "je-1" });
+  mockCreateJournalEntry.mockImplementation(
+    async (...args: unknown[]) => {
+      const options = (args.length >= 4 ? args[3] : args[2]) as
+        | { afterInsertBeforeCommit?: (client: { query: typeof mockQuery }, header: { id: string }) => Promise<void> }
+        | undefined;
+      const client =
+        args.length >= 4
+          ? (args[0] as { query: typeof mockQuery })
+          : { query: mockQuery };
+      const header = { id: "je-1" };
+      if (options?.afterInsertBeforeCommit) {
+        await options.afterInsertBeforeCommit(client, header);
+      }
+      return header;
+    }
+  );
 
-  mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
+  mockQuery.mockImplementation(async (sql: string) => {
     if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
+    if (sql.includes("SAVEPOINT") || sql.includes("RELEASE SAVEPOINT") || sql.includes("ROLLBACK TO SAVEPOINT")) {
+      return { rows: [] };
+    }
+    if (sql.includes("FOR UPDATE")) return { rows: [{ id: ADVANCE }] };
+    if (sql.includes("information_schema.columns")) return { rows: [{ n: "0" }] };
+    if (sql.includes("factoring_lifecycle_posting_keys")) {
+      if (sql.includes("INSERT")) return { rows: alreadyPosted ? [] : [{ journal_entry_id: "je-1" }] };
+      return { rows: alreadyPosted ? [{ journal_entry_id: "existing-je" }] : [] };
+    }
+    if (sql.includes("AS outstanding")) {
+      return { rows: [{ outstanding: "500000" }] };
+    }
+    // Shape fixtures ONLY for already_posted repair — never poison fresh-post candidate search.
+    if (alreadyPosted && sql.includes("status::text AS status") && sql.includes("journal_entries")) {
+      return { rows: [{ id: "existing-je", status: "posted", reverses_je_id: null, reversed_by_je_id: null }] };
+    }
+    if (alreadyPosted && sql.includes("chart_of_accounts_roles") && sql.includes("AS role")) {
+      // Exact funding legs for scenario-8 figures (incl. ACH on factor_fee_expense).
+      return {
+        rows: [
+          {
+            role: "cash_clearing",
+            debit_or_credit: "debit",
+            amount_cents: "484000",
+            source_transaction_type: null,
+            source_transaction_id: null,
+          },
+          {
+            role: "factor_reserve_held",
+            debit_or_credit: "debit",
+            amount_cents: "7500",
+            source_transaction_type: null,
+            source_transaction_id: null,
+          },
+          {
+            role: "factor_fee_expense",
+            debit_or_credit: "debit",
+            amount_cents: "7500",
+            source_transaction_type: null,
+            source_transaction_id: null,
+          },
+          {
+            role: "factor_fee_expense",
+            debit_or_credit: "debit",
+            amount_cents: "1000",
+            source_transaction_type: null,
+            source_transaction_id: null,
+          },
+          {
+            role: "factoring_advance_liability",
+            debit_or_credit: "credit",
+            amount_cents: "500000",
+            source_transaction_type: null,
+            source_transaction_id: null,
+          },
+        ],
+      };
+    }
+    if (sql.includes("AS ok") && sql.includes("journal_entry_uuid") && sql.includes("= COALESCE")) {
+      return { rows: [{ ok: true }] };
+    }
     if (sql.includes("FROM accounting.factoring_advances") && sql.includes("invoice_total_cents")) {
       return {
         rows: [
           {
-            id: "fac-1",
+            id: ADVANCE,
             display_id: "FAC-0001",
+            status: "advanced",
             invoice_total_cents: 500000,
             advance_amount_cents: 492500,
             reserve_amount_cents: 7500,
@@ -68,17 +165,35 @@ function installDefaults(existingMemos: Set<string> = new Set()) {
         ],
       };
     }
-    if (sql.includes("FROM accounting.journal_entries") && sql.includes("memo = $2")) {
-      const memo = String(values?.[1] ?? "");
-      return { rows: existingMemos.has(memo) ? [{ id: "existing-je" }] : [] };
+    if (sql.includes("UPDATE accounting.journal_entry_postings")) return { rows: [] };
+    if (sql.includes("FROM accounting.journal_entries")) {
+      return { rows: [] };
     }
+    if (sql.includes("FROM accounting.journal_entry_postings")) {
+      if (
+        sql.includes("LIMIT 1") &&
+        (sql.includes("NOT (") || sql.includes("IS DISTINCT FROM") || sql.includes("source_transaction_id IS NOT NULL"))
+      ) {
+        return { rows: [] };
+      }
+      return { rows: [{ id: "line-1" }] };
+    }
+    if (sql.includes("AS paid") && sql.includes("factoring_customer_payment")) {
+      return { rows: [{ paid: "500000" }] };
+    }
+    if (sql.includes("FROM accounting.invoices") && !sql.includes("UPDATE")) {
+      return { rows: [{ id: "inv-1", total_cents: "500000", amount_paid_cents: "0", voided_at: null }] };
+    }
+    if (sql.includes("UPDATE accounting.invoices")) return { rows: [] };
+    if (sql.includes("UPDATE accounting.factoring_advances")) return { rows: [] };
+    if (sql.includes("INSERT INTO accounting.factoring_reserve_movements")) return { rows: [] };
     return { rows: [] };
   });
 }
 
 function postingsFromCall(callIndex: number) {
   const call = mockCreateJournalEntry.mock.calls[callIndex];
-  return (call?.[0]?.postings ?? []) as Array<{ account_id: string; debit_or_credit: "debit" | "credit"; amount_cents: number }>;
+  return (call?.[1]?.postings ?? call?.[0]?.postings ?? []) as Array<{ account_id: string; debit_or_credit: "debit" | "credit"; amount_cents: number }>;
 }
 function leg(postings: ReturnType<typeof postingsFromCall>, accountId: string) {
   return postings.find((p) => p.account_id === accountId);
@@ -163,8 +278,8 @@ describe("CODER-34 secured-borrowing lifecycle ($5,000 · fee 75 · reserve 75 �
     expect(mockCreateJournalEntry).not.toHaveBeenCalled();
   });
 
-  it("IDEMPOTENT: a re-run whose funding memo already exists does not double-post", async () => {
-    installDefaults(new Set(["Factoring funding FAC-0001"]));
+  it("IDEMPOTENT: a re-run whose lifecycle posting key already exists does not double-post", async () => {
+    installDefaults({ alreadyPosted: true });
     const res = await postFactoringAdvanceEvent({
       operating_company_id: OPCO,
       factoring_advance_id: ADVANCE,

@@ -7,25 +7,45 @@ import { postFactoringAdvanceEvent } from "../poster.service.js";
 const {
   mockQuery,
   mockWithLuciaBypass,
+  mockWithCurrentUser,
   mockIsEnabled,
   mockCreateJournalEntry,
   mockResolveRoleAccount,
 } = vi.hoisted(() => {
   const query = vi.fn();
   const withLuciaBypass = vi.fn(async (fn: (client: { query: typeof query }) => unknown) => fn({ query }));
+  const withCurrentUser = vi.fn(async (_userId: string, fn: (client: { query: typeof query }) => unknown) => fn({ query }));
   return {
     mockQuery: query,
     mockWithLuciaBypass: withLuciaBypass,
+    mockWithCurrentUser: withCurrentUser,
     mockIsEnabled: vi.fn(),
     mockCreateJournalEntry: vi.fn(),
     mockResolveRoleAccount: vi.fn(),
   };
 });
 
-vi.mock("../../../auth/db.js", () => ({ withLuciaBypass: mockWithLuciaBypass }));
+vi.mock("../../../auth/db.js", () => ({ withLuciaBypass: mockWithLuciaBypass, withCurrentUser: mockWithCurrentUser }));
 vi.mock("../../../lib/feature-flags/service.js", () => ({ isEnabled: mockIsEnabled }));
-vi.mock("../../journal-entries.service.js", () => ({ createJournalEntry: mockCreateJournalEntry }));
+vi.mock("../../journal-entries.service.js", () => ({ createJournalEntry: mockCreateJournalEntry, createJournalEntryOnClient: mockCreateJournalEntry, enqueueJournalEntrySideEffects: vi.fn(async () => undefined) }));
+vi.mock("../../posting-engine.service.js", () => ({ ensureOpenPeriod: vi.fn(async () => undefined) }));
+vi.mock("../../accounting-spine-emit.js", () => ({ writeTransactionSourceLink: vi.fn(async () => undefined) }));
 vi.mock("../../coa-roles/resolver.service.js", () => ({ resolveRoleAccount: mockResolveRoleAccount }));
+vi.mock("../../../audit/crud-audit.js", () => ({ appendCrudAudit: vi.fn(async () => undefined) }));
+vi.mock("../faro-agreement-gate.js", () => ({
+  requireEffectiveFaroFullRecourseAgreement: vi.fn(async () => ({
+    ok: true,
+    vendorId: "faro-vendor",
+    vendorName: "Faro",
+    agreementId: "agr-1",
+    factorProfileId: "fp-1",
+    companyCode: "TRANSP",
+    asOf: "2026-01-20",
+  })),
+  advanceBoundToFaroVendor: vi.fn(async () => true),
+  FARO_FULL_RECOURSE_AGREEMENT_CODE: "FARO_FULL_RECOURSE_V1",
+}));
+
 
 const OPCO = "11111111-1111-4111-8111-111111111111";
 
@@ -38,10 +58,35 @@ describe("factoring posting tenant isolation (secured borrowing)", () => {
 
     mockIsEnabled.mockResolvedValue(true);
     mockResolveRoleAccount.mockImplementation(async (_c: unknown, _opco: string, role: string) => role);
-    mockCreateJournalEntry.mockResolvedValue({ id: "je-1" });
+    mockCreateJournalEntry.mockImplementation(
+    async (...args: unknown[]) => {
+      const options = (args.length >= 4 ? args[3] : args[2]) as
+        | { afterInsertBeforeCommit?: (client: { query: typeof mockQuery }, header: { id: string }) => Promise<void> }
+        | undefined;
+      const client =
+        args.length >= 4
+          ? (args[0] as { query: typeof mockQuery })
+          : { query: mockQuery };
+      const header = { id: "je-1" };
+      if (options?.afterInsertBeforeCommit) {
+        await options.afterInsertBeforeCommit(client, header);
+      }
+      return header;
+    }
+  );
 
     mockQuery.mockImplementation(async (sql: string) => {
       if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
+    if (sql.includes("SAVEPOINT") || sql.includes("RELEASE SAVEPOINT") || sql.includes("ROLLBACK TO SAVEPOINT")) return { rows: [] };
+    if (sql.includes("FOR UPDATE")) return { rows: [{ id: "locked" }] };
+    if (sql.includes("information_schema.columns")) return { rows: [{ n: "0" }] };
+    if (sql.includes("factoring_lifecycle_posting_keys")) {
+      if (sql.includes("INSERT")) return { rows: [{ journal_entry_id: "je-1" }] };
+      return { rows: [] };
+    }
+    if (sql.includes("AS outstanding")) {
+      return { rows: [{ outstanding: "500000" }] };
+    }
       if (sql.includes("FROM accounting.factoring_advances") && sql.includes("invoice_total_cents")) {
         return {
           rows: [
@@ -61,7 +106,10 @@ describe("factoring posting tenant isolation (secured borrowing)", () => {
           ],
         };
       }
-      if (sql.includes("FROM accounting.journal_entries") && sql.includes("memo = $2")) return { rows: [] };
+      if (sql.includes("FROM accounting.journal_entries")) {
+      return { rows: [] };
+    }
+    if (false && sql.includes("FROM accounting.journal_entries") && sql.includes("memo = $2")) return { rows: [] };
       return { rows: [] };
     });
 

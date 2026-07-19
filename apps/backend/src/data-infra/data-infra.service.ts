@@ -138,148 +138,158 @@ export async function listDriverVendorMerges(userId: string, operatingCompanyId:
   });
 }
 
-export async function upsertFaroDailyImport(
+export type FaroDailyImportUpsertInput = {
+  operatingCompanyId: string;
+  statementDate: string;
+  statementReference: string;
+  sourceFilename?: string | null;
+  notes?: string | null;
+  lines: Array<{
+    invoice_number: string;
+    customer_name?: string | null;
+    load_id?: string | null;
+    gross_amount_cents?: number;
+    advance_amount_cents?: number;
+    reserve_amount_cents?: number;
+    fee_amount_cents?: number;
+    chargeback_amount_cents?: number;
+    net_amount_cents?: number;
+    due_on?: string | null;
+  }>;
+};
+
+/**
+ * Caller-owned-txn upsert (0280-05 CPA VETO): Faro CSV commit validates the authoritative
+ * agreement as-of statement date in the SAME transaction before this write — rejected imports
+ * leave zero durable rows.
+ */
+export async function upsertFaroDailyImportOnClient(
+  client: SqlClient,
   userId: string,
-  input: {
-    operatingCompanyId: string;
-    statementDate: string;
-    statementReference: string;
-    sourceFilename?: string | null;
-    notes?: string | null;
-    lines: Array<{
-      invoice_number: string;
-      customer_name?: string | null;
-      load_id?: string | null;
-      gross_amount_cents?: number;
-      advance_amount_cents?: number;
-      reserve_amount_cents?: number;
-      fee_amount_cents?: number;
-      chargeback_amount_cents?: number;
-      net_amount_cents?: number;
-      due_on?: string | null;
-    }>;
-  }
-) {
-  return withCurrentUser(userId, async (client) => {
-    await setCompanyScope(client, input.operatingCompanyId);
+  input: FaroDailyImportUpsertInput
+): Promise<{ id: string }> {
+  await setCompanyScope(client, input.operatingCompanyId);
 
-    const totals = input.lines.reduce(
-      (acc, row) => {
-        acc.gross += Number(row.gross_amount_cents ?? 0);
-        acc.advance += Number(row.advance_amount_cents ?? 0);
-        acc.reserve += Number(row.reserve_amount_cents ?? 0);
-        acc.fee += Number(row.fee_amount_cents ?? 0);
-        acc.chargeback += Number(row.chargeback_amount_cents ?? 0);
-        return acc;
-      },
-      { gross: 0, advance: 0, reserve: 0, fee: 0, chargeback: 0 }
-    );
+  const totals = input.lines.reduce(
+    (acc, row) => {
+      acc.gross += Number(row.gross_amount_cents ?? 0);
+      acc.advance += Number(row.advance_amount_cents ?? 0);
+      acc.reserve += Number(row.reserve_amount_cents ?? 0);
+      acc.fee += Number(row.fee_amount_cents ?? 0);
+      acc.chargeback += Number(row.chargeback_amount_cents ?? 0);
+      return acc;
+    },
+    { gross: 0, advance: 0, reserve: 0, fee: 0, chargeback: 0 }
+  );
 
-    const importRes = await client.query<{ id: string }>(
+  const importRes = await client.query<{ id: string }>(
+    `
+      INSERT INTO factor.faro_daily_imports (
+        operating_company_id,
+        statement_date,
+        statement_reference,
+        source_filename,
+        imported_by_user_id,
+        gross_total_cents,
+        advance_total_cents,
+        reserve_total_cents,
+        fee_total_cents,
+        chargeback_total_cents,
+        notes,
+        raw_payload
+      )
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12::jsonb)
+      ON CONFLICT (operating_company_id, statement_date, statement_reference)
+      DO UPDATE
+        SET source_filename = EXCLUDED.source_filename,
+            imported_by_user_id = EXCLUDED.imported_by_user_id,
+            gross_total_cents = EXCLUDED.gross_total_cents,
+            advance_total_cents = EXCLUDED.advance_total_cents,
+            reserve_total_cents = EXCLUDED.reserve_total_cents,
+            fee_total_cents = EXCLUDED.fee_total_cents,
+            chargeback_total_cents = EXCLUDED.chargeback_total_cents,
+            notes = EXCLUDED.notes,
+            raw_payload = EXCLUDED.raw_payload,
+            imported_at = now(),
+            updated_at = now()
+      RETURNING id
+    `,
+    [
+      input.operatingCompanyId,
+      input.statementDate,
+      input.statementReference,
+      input.sourceFilename ?? null,
+      userId,
+      totals.gross,
+      totals.advance,
+      totals.reserve,
+      totals.fee,
+      totals.chargeback,
+      input.notes ?? null,
+      JSON.stringify({ lines: input.lines }),
+    ]
+  );
+  const importId = String(importRes.rows[0]?.id ?? "");
+  if (!importId) throw new Error("faro_daily_import_upsert_failed");
+
+  await client.query(`DELETE FROM factor.faro_invoice_lines WHERE daily_import_id = $1`, [importId]);
+  for (const row of input.lines) {
+    await client.query(
       `
-        INSERT INTO factor.faro_daily_imports (
+        INSERT INTO factor.faro_invoice_lines (
           operating_company_id,
-          statement_date,
-          statement_reference,
-          source_filename,
-          imported_by_user_id,
-          gross_total_cents,
-          advance_total_cents,
-          reserve_total_cents,
-          fee_total_cents,
-          chargeback_total_cents,
-          notes,
-          raw_payload
+          daily_import_id,
+          invoice_number,
+          customer_name,
+          load_id,
+          gross_amount_cents,
+          advance_amount_cents,
+          reserve_amount_cents,
+          fee_amount_cents,
+          chargeback_amount_cents,
+          net_amount_cents,
+          due_on
         )
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12::jsonb)
-        ON CONFLICT (operating_company_id, statement_date, statement_reference)
-        DO UPDATE
-          SET source_filename = EXCLUDED.source_filename,
-              imported_by_user_id = EXCLUDED.imported_by_user_id,
-              gross_total_cents = EXCLUDED.gross_total_cents,
-              advance_total_cents = EXCLUDED.advance_total_cents,
-              reserve_total_cents = EXCLUDED.reserve_total_cents,
-              fee_total_cents = EXCLUDED.fee_total_cents,
-              chargeback_total_cents = EXCLUDED.chargeback_total_cents,
-              notes = EXCLUDED.notes,
-              raw_payload = EXCLUDED.raw_payload,
-              imported_at = now(),
-              updated_at = now()
-        RETURNING id
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
       `,
       [
         input.operatingCompanyId,
-        input.statementDate,
-        input.statementReference,
-        input.sourceFilename ?? null,
-        userId,
-        totals.gross,
-        totals.advance,
-        totals.reserve,
-        totals.fee,
-        totals.chargeback,
-        input.notes ?? null,
-        JSON.stringify({ lines: input.lines }),
+        importId,
+        row.invoice_number,
+        row.customer_name ?? null,
+        row.load_id ?? null,
+        Number(row.gross_amount_cents ?? 0),
+        Number(row.advance_amount_cents ?? 0),
+        Number(row.reserve_amount_cents ?? 0),
+        Number(row.fee_amount_cents ?? 0),
+        Number(row.chargeback_amount_cents ?? 0),
+        Number(row.net_amount_cents ?? 0),
+        row.due_on ?? null,
       ]
     );
-    const importId = String(importRes.rows[0]?.id ?? "");
-    if (!importId) throw new Error("faro_daily_import_upsert_failed");
+  }
 
-    await client.query(`DELETE FROM factor.faro_invoice_lines WHERE daily_import_id = $1`, [importId]);
-    for (const row of input.lines) {
-      await client.query(
-        `
-          INSERT INTO factor.faro_invoice_lines (
-            operating_company_id,
-            daily_import_id,
-            invoice_number,
-            customer_name,
-            load_id,
-            gross_amount_cents,
-            advance_amount_cents,
-            reserve_amount_cents,
-            fee_amount_cents,
-            chargeback_amount_cents,
-            net_amount_cents,
-            due_on
-          )
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
-        `,
-        [
-          input.operatingCompanyId,
-          importId,
-          row.invoice_number,
-          row.customer_name ?? null,
-          row.load_id ?? null,
-          Number(row.gross_amount_cents ?? 0),
-          Number(row.advance_amount_cents ?? 0),
-          Number(row.reserve_amount_cents ?? 0),
-          Number(row.fee_amount_cents ?? 0),
-          Number(row.chargeback_amount_cents ?? 0),
-          Number(row.net_amount_cents ?? 0),
-          row.due_on ?? null,
-        ]
-      );
-    }
+  await appendCrudAudit(
+    client,
+    userId,
+    "factoring.faro_import.batch_upserted",
+    {
+      resource_type: "factor.faro_daily_imports",
+      resource_id: importId,
+      operating_company_id: input.operatingCompanyId,
+      statement_date: input.statementDate,
+      statement_reference: input.statementReference,
+      line_count: input.lines.length,
+    },
+    "info",
+    "P5-G-COMBINED"
+  );
 
-    await appendCrudAudit(
-      client,
-      userId,
-      "factoring.faro_import.batch_upserted",
-      {
-        resource_type: "factor.faro_daily_imports",
-        resource_id: importId,
-        operating_company_id: input.operatingCompanyId,
-        statement_date: input.statementDate,
-        statement_reference: input.statementReference,
-        line_count: input.lines.length,
-      },
-      "info",
-      "P5-G-COMBINED"
-    );
+  return { id: importId };
+}
 
-    return { id: importId };
-  });
+export async function upsertFaroDailyImport(userId: string, input: FaroDailyImportUpsertInput) {
+  return withCurrentUser(userId, async (client) => upsertFaroDailyImportOnClient(client, userId, input));
 }
 
 export async function listFaroDailyImports(userId: string, operatingCompanyId: string, limit = 90) {

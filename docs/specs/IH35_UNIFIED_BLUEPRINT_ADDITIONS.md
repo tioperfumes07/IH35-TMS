@@ -1372,6 +1372,284 @@ Canonical detail: `docs/specs/TMS-QBO-PARALLEL-BOOKS.md` + CPA skill. Layers are
 - Protects the sanitized Phase-1 decision anchors (delivery definition, dual-basis crosswalk, ASC 470-60 wording, full Faro mechanics, CoA children, entity books, CoA export facts) without `package.json` / CI workflow hot-file edits.
 
 
+## 16a. Factoring Balance — invoice-grain Faro liability + separate reserve (0280-05)
+
+Source: Owner cloud dispatch 2026-07-19 (`0280-05-factoring-balance-invoice-linkage`)  
+Status: LOCKED (read-only contract; financial HOLD — no self-merge; owner Neon ceremony)  
+Standards: QuickBooks/NetSuite liability-vs-asset honesty; McLeod/Alvys factoring tiles; CPA Faro ASC 860 secured borrowing (CHAIN-06).
+
+### Owner decisions (append-only — do not re-litigate)
+1. **Factoring Balance = outstanding Faro secured-borrowing LIABILITY**, never reserve.
+   Formula: `advances funded − advances settled by collections/reserve releases − recourse buybacks`
+   (= credit balance owed Faro). Face amount = `accounting.factoring_advances.invoice_total_cents`
+   (full Net liability credited at funding per CHAIN-06 / CODER-34 poster).
+2. **Factoring Reserves = separate 1.5% short-term asset/receivable**, never netted into the
+   liability balance. Factored A/R remains on IH35 books as pledged collateral (no sale/derecognition).
+3. **Migration is additive FORCE-RLS + security_invoker view**, build-and-HOLD; owner applies on Neon
+   + ledger-backfill. Never self-merge.
+4. **Posting flags remain OFF**; **no TMS→QBO write-back**. Reuse existing poster/read models —
+   no new GL math.
+
+### Root cause fixed
+- Live `views.factoring_summary` was **superseded** by migration 0124 to read
+  `accounting.factoring_companies.current_reserve_balance` / jsonb `advance_amount` (never written).
+- The earlier 0061 invoice-joined definition was dead for the Home tile.
+- Missing `COUNT(DISTINCT invoice.id)`.
+- Silent `catch → { reserveCents: 0, … }` fabricated a trustworthy-looking $0.
+
+### Locked read model
+- **Route:** `GET /api/v1/home/factoring-balance?operating_company_id=`
+- **Canonical sources:** live `accounting.journal_entry_postings` + `accounting.journal_entries`
+  (voided/reversed excluded) on CoA roles `factoring_advance_liability` / `factor_reserve_held` /
+  `factoring_recoursed_ar`; `accounting.factoring_reserve_movements` (held→JE) for funding completeness;
+  `accounting.factoring_advances` + `accounting.invoices` for Faro-scoped invoice count;
+  `views.factoring_balance_invoice_linkage` (migration `202607600000`, HOLD).
+- **Grain:** money from JE role legs (not mutable status); `invoice_count = COUNT(DISTINCT invoices.id)`
+  with entity + Faro-vendor scope — never JOIN-sum advance money (fanout ban).
+- **Statuses must NOT clear balances:** `reserve_held|collected|released|recourse_returned` alone
+  never reduce liability or zero reserve. Only structural posted JE / reserve-movement artifacts do.
+  A Faro advance without funding JE artifact → `unverifiable` (`incomplete_funding_je_artifacts`),
+  never fabricated $0.
+- **Reserve:** reduces only via structural credits to `factor_reserve_held` (release JE) or equivalent
+  reserve-movement release evidence. `recourse_returned` alone must not zero reserve.
+- **TRANSP/Faro identity (no hard-coded UUIDs):** `org.companies` TRANSP-class +
+  owner-seeded `factoring.canonical_factor_agreements` (`FARO_FULL_RECOURSE_V1`)
+  effective as-of `companyBusinessDate` with locked full-recourse terms on the bound
+  `factoring.factor` profile. No majority inference; no vendor-name match; never label a
+  generic sole factor as Faro. Absent/expired/ambiguous/wrong-terms → typed
+  `unverifiable`. Other entities → `faro_contract_entity_mismatch`.
+- **Contract fields (integer cents):** `outstanding_liability_cents` (headline),
+  `reserve_receivable_cents` (separate), `invoice_count`, plus
+  `status` ∈ `ok|empty|unverifiable|accounting_exception` and signed `diagnostics`.
+  Frontend `fetchHomeFactoringBalance` must headline liability fields — never `reserveCents`;
+  never coerce null → 0 when unverifiable/exception.
+- **Errors:** typed `factoring_balance_invoice_linkage_unverifiable` (200) /
+  `factoring_balance_invoice_linkage_failed` (500). Never silent zero.
+- **Out of scope this block:** Home/Factoring UI chrome tabs/nav (tab drift unresolved); posting;
+  QBO write-back. API consumer `apps/frontend/src/api/home.ts` is in scope (no tab changes).
+
+### Independent VETO amendments (append-only 2026-07-19 restart)
+Owner directed Cursor to fix PR #2724 for: (1) canonical `INV-YYYY-NNNNN` fixtures +
+`invoices_display_id_check` contract; (2) FE/API liability headline; (3–4) JE-artifact liability /
+reserve (not status); (5) TRANSP/Faro identity fail-closed; (6) FORCE RLS Owner/Admin write;
+(7) semantic executable guard plants; (8) flags OFF / no QBO / no destructive DDL;
+(9) HOLD draft PR only — never merge / Neon / live claim.
+
+### CPA VETO amendments (append-only 2026-07-19 — exact head `bb8b80f9f`)
+1. **Per-factor / per-advance source linkage only.** Company-wide role-account rollups that
+   then label totals “Faro” are forbidden. Unrelated/orphan/manual/RTS JEs on
+   `factoring_advance_liability` / `factor_reserve_held` must not be attributed. Linkage =
+   `journal_entry_postings.source_transaction_type` ∈
+   `{factoring_advance, factoring_customer_payment, factoring_reserve_release,
+   factoring_chargeback, factoring_default_interest}` + `source_transaction_id = advance.id`,
+   OR `transaction_source_links` (`linked_object_type='factoring_advance'`), OR
+   `factoring_reserve_movements.journal_entry_id`. Lifecycle classification is from those
+   source keys — **not** account co-occurrence on the same JE.
+2. **Canonical active factor identity (no majority, no vendor-name match, no hard-coded UUIDs).**
+   Active factor = EXACTLY one distinct `factoring_company_vendor_id` across
+   `(customers with assignment) ∪ (non-void funded advances)`. Count ≠ 1 →
+   `mixed_factor_assignment` / `active_factor_identity_unavailable` fail closed. TRANSP-class
+   entity required (`faro_contract_entity_mismatch` otherwise).
+3. **Never clamp anomalies to $0.** Debit-liability or reserve over-release → status
+   `accounting_exception` with signed diagnostic cents; headline amounts stay `null`.
+4. **As-of boundary.** View/service filter `je.entry_date <= companyBusinessDate`
+   (GUC `app.factoring_balance_as_of`); future-dated posted JEs excluded.
+5. **Poster additive linkage (flags OFF).** `attachFactoringLifecycleSourceLinks` stamps
+   source keys + TSL after each factoring JE — no new GL math; `FACTORING_GL_POSTING_ENABLED`
+   remains default OFF.
+6. **FE/Home.** `fetchHomeFactoringBalance` + DefaultHome/OwnerHome preserve
+   null/unverifiable/accounting_exception — never coerce to `$0`.
+7. **Independent code-review VETO (same day, head `bb8b80f9f`):** bare
+   `factoring_reserve_movements` → empty/unrelated JE must NOT satisfy funding
+   completeness; require live liability/reserve role legs + lifecycle source/
+   TSL.
+
+### Guard (Rule 17 — auto-discovered)
+- `scripts/verify-factoring-balance-invoice-linkage.mjs`
+- `scripts/verify-steps/929-verify-factoring-balance-invoice-linkage.mjs`
+
+### CPA re-review VETO amendments (append-only 2026-07-19 — exact head `ee7ba85ee`)
+1. **Faro identity = owner-seeded agreement, never sole-factor inference.**
+   Resolve through entity-scoped `factoring.canonical_factor_agreements`
+   (`agreement_code = FARO_FULL_RECOURSE_V1`) + effective-date window
+   (`effective_from` / `effective_to`) + bound `factoring.factor` profile whose
+   flat terms match locked full-recourse Faro contract-config constants
+   (tier fees 1.5%/2.0%, reserve 1.5%, term 30 + grace 5, repurchase deadline 95,
+   default interest 0.067%/day, `is_full_recourse = true`).
+   **Forbidden:** display-name match, majority-customer inference, inventing
+   vendor/profile UUIDs, labeling a generic sole `factoring_company_vendor_id`
+   as Faro (RTS-only sole factor must remain `unverifiable`).
+   Absent / expired / not-yet-effective / overlapping-ambiguous / wrong-terms →
+   typed `unverifiable` reasons:
+   `missing_faro_agreement_binding` |
+   `faro_agreement_not_effective` |
+   `ambiguous_faro_agreement_binding` |
+   `faro_agreement_terms_mismatch`.
+   Migration creates the empty table only — owner seeds the mapping explicitly.
+2. **Atomic / self-healing lifecycle source links.**
+   Poster creates JE + `attachFactoringLifecycleSourceLinks` (+ reserve movement /
+   subledger sync where applicable) inside the same caller-owned `withCurrentUser`
+   transaction via `createJournalEntry(` with `client` + `suppressSideEffects: true`
+   + `afterInsertBeforeCommit` (in-client primitive `createJournalEntryOnClient`).
+   Injected failure between JE and links rolls back with no duplicate financial
+   artifacts. Side-effect enqueue (`enqueueJournalEntrySideEffects`) runs only after
+   COMMIT. Every `already_posted` path validates/repairs missing source links
+   idempotently before returning.
+3. **Held migration prerequisite (fail-closed).**
+   `202607600000_factoring_balance_invoice_linkage` requires held
+   `202607340000_je_reversal_linkage` (`reverses_je_id` / `reversed_by_je_id`).
+   Declared in `.held-migrations.json` (`requires_held` + `held_apply_order`).
+   Missing columns → `RAISE EXCEPTION HELD_MIGRATION_PREREQUISITE_MISSING`
+   (never silently skip reverse-exclusion semantics).
+4. **Closed-period negative.** Factoring JE creation gates via shared
+   `ensureOpenPeriod` (`PERIOD_LOCKED` when `entry_date <= closed_period_cutoff`).
+
+### CPA / code-review VETO amendments (append-only 2026-07-19 — head `964b4ca4b`+)
+5. **Canonical entity code only.** Faro contract entity gate =
+   `isTranspContractEntityCode(company.code)` (`/^TRANSP\b/i`). **Forbidden:**
+   `legal_name` / TRANSPORTATION / IH35 string inference.
+6. **Same-entity composite factor enforcement.**
+   `factoring_advances_factor_vendor_same_entity_fkey` +
+   `canonical_factor_agreements_vendor_same_entity_fkey` +
+   `canonical_factor_agreements_profile_same_entity_fkey` + Owner/Admin write
+   policies with EXISTS same-entity checks. Cross-opco vendor/profile writes fail closed.
+7. **Join dedup + source/TSL consistency.** View uses `DISTINCT ON (jep.id)` and
+   excludes postings where `source_transaction_*` disagrees with TSL
+   (`linked_object_id` / `relationship_role`).
+8. **Dependency-safe view DDL.** `CREATE OR REPLACE VIEW` only — never `DROP VIEW`.
+9. **Atomic already_posted.** Funding / customer payment / reserve release /
+   chargeback / default-interest already_posted paths repair via
+   `repairFactoringLifecycleSourceLinks` / `OnClient` with `afterRepair` sibling
+   side effects in the **same** transaction (customer-payment/chargeback
+   subledger relief; funding `reserve_held` / release `reserve_released`
+   movements).
+10. **Guard executable evidence only.** No raw comment/string marker acceptance;
+    planted FORCE-RLS / GREATEST / DROP VIEW / legal_name decoys must fail.
+
+### CPA / code-review VETO amendments (append-only 2026-07-19 — exact head `e37d16eef`)
+11. **Strict already_posted repair (never memo-only).** Candidate must match same
+    entity + exact lifecycle `source_transaction_type` / `source_transaction_id` +
+    advance + expected JE status + balanced JE + authoritative source/TSL links.
+    Unlinked same-memo repair is allowed only when every posting line is
+    unattributed and free of contradictory TSL. Memo collision with foreign
+    provenance → `repair_candidate_invalid` (fail closed). Never overwrite
+    attributed `source_transaction_*` or append TSL over contradictory links.
+12. **Deterministic lifecycle posting keys.** Table
+    `accounting.factoring_lifecycle_posting_keys` UNIQUE
+    `(operating_company_id, factoring_advance_id, source_transaction_type, event_key)`
+    claimed in the caller-owned JE txn — concurrency backstop replacing
+    memo check-then-insert races.
+13. **Chargeback / recourse atomic end-to-end.** One `withCurrentUser` txn:
+    repay JE + A/R reclass JE + recourse status + subledger + source links +
+    append-only audit. Mid-flow inject hooks prove rollback. Partial /
+    omitted / zero `recoursed_ar_cents` / mismatched amounts →
+    `policy_partial_or_ambiguous_recourse` (no PENDING defaults; no guessed
+    economics). Full recourse amounts must equal exact linked outstanding
+    liability + invoice A/R (`loadExactLinkedChargebackAmounts`).
+14. **companyBusinessDate for posting / day-95.** No UTC `toISOString().slice`
+    fallbacks for entry dates or day-95 as-of. `ensureOpenPeriod` enforced.
+    Central midnight winter (CST) / summer (CDT) tests required.
+15. **Orphan / voided fail-closed on read model.** Any
+    `orphan_liability_role_cents` / `orphan_reserve_role_cents` → status
+    `unverifiable` (`orphan_unattributed_liability_role_legs` /
+    `orphan_unattributed_reserve_role_legs`); headline null; orphan cents only
+    in diagnostics. Mutable `status='voided'` must not drop live unreverted JE
+    liability; voided-with-live-JE → `voided_advance_without_reversing_je`.
+    Advances scoped by `(advanced_at AT TIME ZONE 'America/Chicago')::date <= as_of`.
+    Contradictory source vs TSL detected via `NOT EXISTS` bad TSL (never treated
+    as “no TSL”).
+
+### CPA / code-review VETO amendments (append-only 2026-07-19 — exact head `eb06028d`)
+16. **Authoritative Faro agreement on every posting path.** Funding, customer
+    payment, reserve release, chargeback, default-interest accrual, day-95
+    cron selection, and Faro CSV all resolve the same effective
+    `FARO_FULL_RECOURSE_V1` binding via `requireEffectiveFaroFullRecourseAgreement`
+    + advance bound to that vendor. **Forbidden:** customer-majority
+    (`ORDER BY COUNT(*) DESC`), sole-factor, name match, entity-wide advance
+    selection. RTS / partial / missing / expired / ambiguous → fail closed
+    (`policy_faro_agreement` / CSV `policy_faro_agreement`).
+17. **Reversed JEs excluded from chargeback/repayment eligibility.** Outstanding
+    liability/reserve sums require `reverses_je_id IS NULL AND reversed_by_je_id IS NULL`
+    (when columns exist) plus authoritative source/TSL consistency. Reversed
+    funding ⇒ outstanding 0 ⇒ chargeback fail closed.
+18. **Lock + exact outstanding before payment/reserve-release.** `FOR UPDATE` on
+    the advance, compute exact linked outstanding, reject overpayment /
+    over-release **before** JE/subledger writes (`policy_overpayment` /
+    `policy_over_release`). **Forbidden:** `Math.min` clamping as validation
+    substitute. Concurrent settlements re-validate inside the posting txn.
+19. **Strict repair exact expected shape (no posting-key bypass).** Role accounts,
+    debit/credit, amounts, source identity, agreement/advance, status, absence
+    of reversals validated by `validateLifecycleJeExactShape` before any
+    invoice/reserve side effect. Posting-key repair uses the same validator.
+    Foreign/non-null `source_transaction_type` with null id = conflict.
+20. **Invalid supplied dates fail closed.** `resolveCanonicalEntryDate` never
+    salvages malformed/ambiguous/missing dates to today
+    (`policy_invalid_entry_date` / `policy_missing_entry_date`). Callers that
+    intentionally mean today pass `companyBusinessDate()` explicitly.
+21. **Posting-key same-entity composite FKs + race-safe claim.**
+    `factoring_lifecycle_posting_keys_advance_same_entity_fkey` +
+    `…_je_same_entity_fkey`; claim via `ON CONFLICT DO NOTHING RETURNING`;
+    concurrent loser rolls JE savepoint and resolves to validated
+    `already_posted` (never query inside aborted txn). Chargeback retries check
+    posting keys **before** status rejection and fully repair invoice
+    `factoring_status` / subledger / audit.
+
+### CPA VETO amendments (append-only 2026-07-19 — exact head `4f44dfbc`)
+22. **Faro CSV persistence + authoritative agreement are atomic.**
+    `commitFaroCsvImport` resolves `resolveFaroCsvStatementDate` (no today/UTC
+    salvage; future → `policy_future_statement_date`) then, in one
+    `withCurrentUser` txn, validates `requireEffectiveFaroFullRecourseAgreement`
+    **as-of the statement/economic date** and only then calls
+    `upsertFaroDailyImportOnClient`. RTS / partial / missing / expired /
+    ambiguous / future agreement rejects **before** any durable import row
+    (txn rollback → zero rows).
+23. **Default-interest `already_posted` is exact-shape repair.** Recompute
+    contractual opening/interest/closing; require matching accrual row amounts;
+    validate JE legs, amount, source identity, entity, and
+    `expected_entry_date` via `validateLifecycleJeExactShape`. Missing /
+    wrong-amount / wrong-date / reversed candidates →
+    `repair_candidate_invalid` (never soft-success).
+24. **Accrue contractual default interest through statement date before CSV
+    chargeback.** `ensureDefaultInterestAccruedThroughDate` reuses the
+    canonical poster/math (`accrueThroughDateForAdvance` /
+    `postFactoringDefaultInterestAccrualEvent`) so missed cron cannot understate
+    liability. Chargeback then posts with `default_interest_cents: 0` against
+    exact linked liability (interest already compounded). **Forbidden:**
+    duplicate GL interest math in the CSV importer.
+25. **Chargeback idempotency under row lock.** `FOR UPDATE` on the advance
+    **before** posting-key / status / outstanding checks;
+    `repairChargebackAlreadyPosted` + `SAVEPOINT factoring_chargeback_je_create`.
+    Concurrent duplicate retries serialize and return validated
+    `already_posted` — never race into zero-outstanding
+    `policy_partial_or_ambiguous_recourse`.
+
+### CPA VETO amendments (append-only 2026-07-19 — exact head `36946df7`)
+26. **Cumulative ledger-backed `amount_paid_cents`.** Partial customer payments
+    must SET `accounting.invoices.amount_paid_cents` from
+    `linkedCustomerPaymentPaidCents` (SUM of AR-credit legs with
+    `source_transaction_type = 'factoring_customer_payment'`, live JE only) —
+    never overwrite with the latest allocation alone. Prove: $40 then $30 →
+    $70 paid (`conn2` multi-payment cumulative test).
+27. **Default-interest opening = outstanding liability after payments.**
+    `defaultInterestOpeningFromOutstandingLiability` →
+    `linkedOutstandingLiabilityCents` (exclude today’s interest JE on repair).
+    Forbidden: prior-accrual closing / invoice face as the compounding base
+    while intervening customer-payment liability debits exist. Prove:
+    post-payment interest base ($100 payment → opening 400000 → interest 268).
+28. **Faro CSV agreement as-of statement date remains atomic with persist**
+    (retained from `36946df7` / amendment 22): reject before
+    `upsertFaroDailyImportOnClient`; zero durable rows on failure.
+29. **`canonical_factor_agreements` terms are historically immutable.**
+    Additive migration controls: `voided_at` / `voided_by_user_id` +
+    `prevent_canonical_factor_agreement_term_mutation` trigger
+    (`trg_canonical_factor_agreements_terms_immutable`). Allowed: `effective_to`
+    window close + void/archive. Forbidden: retroactive rewrite of fee/rate/
+    term/identity columns used by posters. New versions = INSERT. Resolvers
+    exclude `voided_at IS NOT NULL`. Guard:
+    `verify-factoring-balance-invoice-linkage` uses `requireIdent` / SQL-template
+    semantics and planted dead-string decoys.
+
+
 ## 16. Accounting Home — Pending approvals ↔ GL linkage (0280-15)
 
 Source: Owner cloud dispatch 2026-07-19 (`0280-15-pending-approvals-gl-linkage`)  

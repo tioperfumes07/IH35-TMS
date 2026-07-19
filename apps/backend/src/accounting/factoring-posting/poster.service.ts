@@ -50,15 +50,50 @@
 //     funding/release JE this file already posts — no new GL entry, just a structural (non-memo-parsed)
 //     record for the reserve-balance view (`views.factoring_reserve_balances`) and the advance packet.
 
-import { withLuciaBypass } from "../../auth/db.js";
+import { withCurrentUser, withLuciaBypass } from "../../auth/db.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
-import { createJournalEntry } from "../journal-entries.service.js";
+import {
+  createJournalEntry,
+  createJournalEntryOnClient,
+  enqueueJournalEntrySideEffects,
+  type CreateJournalEntryInput,
+} from "../journal-entries.service.js";
 import { resolveRoleAccount } from "../coa-roles/resolver.service.js";
+import { ensureOpenPeriod } from "../posting-engine.service.js";
+import { companyBusinessDate } from "../../lib/company-business-date.js";
 import {
   FACTORING_DEFAULT_INTEREST_DAILY_RATE,
   FACTORING_INTEREST_ACCRUAL_AFTER_DAY,
 } from "./contract-config.js";
+import {
+  FACTORING_LIFECYCLE_SOURCE_TYPES,
+  type ExpectedLifecycleLeg,
+  type FactoringLifecycleSourceType,
+  FactoringLifecyclePostingKeyRaceError,
+  attachFactoringLifecycleSourceLinksStrict,
+  calendarDayIndexBetween,
+  claimFactoringLifecyclePostingKey,
+  findLifecyclePostingKeyJe,
+  findStrictLifecycleRepairCandidate,
+  liveJournalEntryNotReversedSql,
+  validateLifecycleJeExactShape,
+} from "./lifecycle-repair.js";
+import {
+  advanceBoundToFaroVendor,
+  requireEffectiveFaroFullRecourseAgreement,
+} from "./faro-agreement-gate.js";
+
+export { FACTORING_LIFECYCLE_SOURCE_TYPES, type FactoringLifecycleSourceType };
+export { findStrictLifecycleRepairCandidate, validateLifecycleJeExactShape };
+export type { ExpectedLifecycleLeg };
+
+/** Test-only inject hooks — prove outer txn rollback (unit + DB). */
+export const __posterAtomicityTestHooks = {
+  failAfterJeBeforeLifecycleLinks: false as boolean,
+  failAfterChargebackRepayBeforeReturn: false as boolean,
+  failAfterChargebackReturnBeforeStatus: false as boolean,
+};
 
 export const FACTORING_GL_POSTING_FLAG = "FACTORING_GL_POSTING_ENABLED";
 
@@ -75,19 +110,121 @@ type PostResult = {
     | "advance_not_found"
     | "no_invoices"
     | "not_outstanding"
-    | "before_grace";
+    | "before_grace"
+    | "policy_partial_or_ambiguous_recourse"
+    | "policy_invalid_entry_date"
+    | "policy_missing_entry_date"
+    | "policy_overpayment"
+    | "policy_over_release"
+    | "policy_faro_agreement"
+    | "policy_advance_not_bound_to_faro"
+    | "repair_ambiguous"
+    | "repair_candidate_invalid";
   journal_entry_id?: string;
   memo?: string;
   closing_balance_cents?: number;
 };
 
-// Whole-day gap between two ISO dates (accrual date − purchase date), computed on the calendar-date parts
-// only (no partial-day / TZ drift). Purchase Date = the advance's advanced_at (funding date).
+export class FactoringEntryDateError extends Error {
+  readonly reason: "policy_invalid_entry_date" | "policy_missing_entry_date";
+  constructor(reason: "policy_invalid_entry_date" | "policy_missing_entry_date", message: string) {
+    super(message);
+    this.name = "FactoringEntryDateError";
+    this.reason = reason;
+  }
+}
+
+/** Strict calendar YYYY-MM-DD (zero-padded) — rejects ambiguous / malformed dates. */
+function isStrictYmd(v: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return false;
+  const [y, m, d] = v.split("-").map(Number);
+  if (!y || !m || !d) return false;
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
+}
+
+/**
+ * Convert timestamptz / ISO / YYYY-MM-DD into company-local business date (never UTC slice).
+ * Malformed / ambiguous inputs return null (caller fails closed — never salvage to today).
+ *
+ * Accepts:
+ *   - strict YYYY-MM-DD
+ *   - ISO-8601 datetime with `T` separator
+ *   - Postgres `timestamptz::text` (`YYYY-MM-DD HH:MM:SS.fff+00`) from loadAdvance casts
+ * Rejects slash/US forms and non-zero-padded calendar dates (ambiguous caller input).
+ */
+function toCompanyBusinessDate(isoOrDate: string | Date | null | undefined): string | null {
+  if (isoOrDate == null) return null;
+  if (typeof isoOrDate === "string") {
+    const trimmed = isoOrDate.trim();
+    if (!trimmed) return null;
+    if (isStrictYmd(trimmed)) return trimmed;
+    // Ambiguous / non-ISO calendar forms fail closed (never Date.parse salvage).
+    if (/^\d{4}-\d{1,2}-\d{1,2}$/.test(trimmed) && !isStrictYmd(trimmed)) return null;
+    if (/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}$/.test(trimmed)) return null;
+    if (/^\d{4}\/\d{1,2}\/\d{1,2}$/.test(trimmed)) return null;
+    // ISO datetime OR Postgres timestamptz::text (space separator, optional fractional seconds + offset).
+    const tsMatch = trimmed.match(
+      /^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}:\d{2}(?:\.\d+)?)(Z|[+-]\d{2}(?::?\d{2})?)?$/
+    );
+    if (!tsMatch) return null;
+    let iso = `${tsMatch[1]}T${tsMatch[2]}${tsMatch[3] ?? "Z"}`;
+    // Normalize bare ±HH offsets (`+00`) to ±HH:MM for ECMAScript Date.
+    iso = iso.replace(/([+-]\d{2})$/, "$1:00");
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return null;
+    return companyBusinessDate(d);
+  }
+  if (Number.isNaN(isoOrDate.getTime())) return null;
+  return companyBusinessDate(isoOrDate);
+}
+
+/**
+ * Resolve entry date from supplied candidates. Invalid supplied values fail closed —
+ * NEVER fall back to today to salvage bad input. Callers that intentionally mean "today"
+ * must pass `companyBusinessDate()` as an explicit candidate.
+ */
+export function resolveCanonicalEntryDate(
+  ...candidates: Array<string | Date | null | undefined>
+): string {
+  let sawSupplied = false;
+  for (const c of candidates) {
+    if (c == null) continue;
+    if (typeof c === "string" && c.trim() === "") continue;
+    sawSupplied = true;
+    const ymd = toCompanyBusinessDate(c);
+    if (ymd) return ymd;
+    throw new FactoringEntryDateError(
+      "policy_invalid_entry_date",
+      `Invalid or ambiguous factoring entry date: ${String(c)}`
+    );
+  }
+  throw new FactoringEntryDateError(
+    "policy_missing_entry_date",
+    sawSupplied
+      ? "Factoring entry date could not be resolved"
+      : "Factoring entry date required — no today fallback"
+  );
+}
+
+async function requireFaroBoundAdvance(
+  client: DbClient,
+  operatingCompanyId: string,
+  factoringAdvanceId: string,
+  asOfBusinessDate: string
+): Promise<{ ok: true; vendorId: string; agreementId: string } | { ok: false; reason: PostResult["reason"] }> {
+  const gate = await requireEffectiveFaroFullRecourseAgreement(client, operatingCompanyId, asOfBusinessDate);
+  if (!gate.ok) return { ok: false, reason: "policy_faro_agreement" };
+  const bound = await advanceBoundToFaroVendor(client, operatingCompanyId, factoringAdvanceId, gate.vendorId);
+  if (!bound) return { ok: false, reason: "policy_advance_not_bound_to_faro" };
+  return { ok: true, vendorId: gate.vendorId, agreementId: gate.agreementId };
+}
+
+// Whole-day gap on company business dates (no UTC wall-clock). Purchase = funding business date.
 function dayIndexBetween(purchaseIso: string, accrualIso: string): number {
-  const purchase = Date.parse(`${purchaseIso.slice(0, 10)}T00:00:00.000Z`);
-  const accrual = Date.parse(`${accrualIso.slice(0, 10)}T00:00:00.000Z`);
-  if (Number.isNaN(purchase) || Number.isNaN(accrual)) return 0;
-  return Math.round((accrual - purchase) / 86_400_000);
+  const purchase = toCompanyBusinessDate(purchaseIso) ?? purchaseIso.slice(0, 10);
+  const accrual = toCompanyBusinessDate(accrualIso) ?? accrualIso.slice(0, 10);
+  return calendarDayIndexBetween(purchase, accrual);
 }
 
 const FLAG_OFF: PostResult = { posted: false, reason: "flag_off" };
@@ -207,28 +344,76 @@ async function loadAdvanceInvoices(
   return res.rows.map((r) => ({ id: r.id, total_cents: Number(r.total_cents ?? 0), voided_at: r.voided_at }));
 }
 
-// Deterministic SET (never an increment) — re-running with the same amountCents produces the identical
-// final state, so this is safe to call both after a fresh JE post AND as a self-heal on an
-// `already_posted` re-entry. Allocates proportionally across the advance's (non-voided) invoices with the
-// SAME allocateByProportion used elsewhere in this file (no new math) so a multi-invoice advance splits
-// correctly instead of double/under-crediting any one invoice.
+/**
+ * Cumulative ledger-backed customer payments against an advance (AR-credit legs).
+ * Authoritative for amount_paid_cents — never the latest allocation alone.
+ */
+async function linkedCustomerPaymentPaidCents(
+  client: DbClient,
+  operatingCompanyId: string,
+  factoringAdvanceId: string
+): Promise<number> {
+  const notReversed = await liveJournalEntryNotReversedSql(client);
+  const res = await client.query<{ paid: string }>(
+    `
+      SELECT COALESCE(SUM(jep.amount_cents), 0)::text AS paid
+        FROM accounting.journal_entry_postings jep
+        JOIN accounting.journal_entries je
+          ON je.id = jep.journal_entry_uuid
+         AND je.operating_company_id = jep.operating_company_id
+        JOIN accounting.chart_of_accounts_roles r
+          ON r.account_id = jep.account_id
+         AND r.operating_company_id = jep.operating_company_id
+         AND r.is_active = true
+         AND r.role = 'ar_control'
+       WHERE jep.operating_company_id = $1::uuid
+         AND jep.source_transaction_id = $2::text
+         AND jep.source_transaction_type = 'factoring_customer_payment'
+         AND jep.debit_or_credit = 'credit'
+         AND je.status = 'posted'
+         AND je.voided_at IS NULL
+         ${notReversed}
+    `,
+    [operatingCompanyId, factoringAdvanceId]
+  );
+  return Number(res.rows[0]?.paid ?? 0);
+}
+
+// Deterministic SET from CUMULATIVE ledger-backed payments (never latest-allocation overwrite).
+// Safe on fresh post AND already_posted repair: re-reading the JE sum yields the same paid total.
 async function applyCustomerPaymentSubledgerRelief(
   client: DbClient,
   operatingCompanyId: string,
-  factoringAdvanceId: string,
-  amountCents: number
+  factoringAdvanceId: string
 ): Promise<void> {
-  if (amountCents <= 0) return;
-  const invoices = (await loadAdvanceInvoices(client, operatingCompanyId, factoringAdvanceId)).filter((inv) => !inv.voided_at);
+  const invoices = (await loadAdvanceInvoices(client, operatingCompanyId, factoringAdvanceId)).filter(
+    (inv) => !inv.voided_at
+  );
+  // No linked invoices: nothing to sync on the subledger (GL already posted).
   if (invoices.length === 0) return;
 
+  const paidTotal = await linkedCustomerPaymentPaidCents(client, operatingCompanyId, factoringAdvanceId);
+  if (paidTotal <= 0) return;
+
+  const invoiceFace = invoices.reduce((acc, inv) => acc + inv.total_cents, 0);
+  if (paidTotal > invoiceFace) {
+    throw new Error(
+      `factoring_customer_payment_over_invoice_face: paid=${paidTotal} face=${invoiceFace}`
+    );
+  }
+
   const allocations = allocateByProportion(
-    amountCents,
+    paidTotal,
     invoices.map((inv) => ({ invoice_id: inv.id, total_cents: inv.total_cents }))
   );
 
   for (const inv of invoices) {
-    const allocated = Math.min(inv.total_cents, allocations.get(inv.id) ?? 0);
+    const allocated = allocations.get(inv.id) ?? 0;
+    if (allocated > inv.total_cents) {
+      throw new Error(
+        `factoring_customer_payment_allocation_exceeds_invoice: inv=${inv.id} alloc=${allocated} total=${inv.total_cents}`
+      );
+    }
     await client.query(
       `
         UPDATE accounting.invoices
@@ -295,6 +480,328 @@ async function recordReserveMovement(
   );
 }
 
+/**
+ * Additive lifecycle linkage (CPA VETO 0280-05) — no new GL math.
+ * Strict attach: never overwrites foreign provenance (see lifecycle-repair.ts).
+ * Must run in the SAME caller-owned txn as JE creation; already_posted uses deterministic repair.
+ */
+export async function attachFactoringLifecycleSourceLinks(
+  client: DbClient,
+  opts: {
+    operating_company_id: string;
+    journal_entry_id: string;
+    factoring_advance_id: string;
+    source_transaction_type: FactoringLifecycleSourceType;
+  }
+): Promise<void> {
+  await attachFactoringLifecycleSourceLinksStrict(client, opts);
+}
+
+/** In-client strict repair — caller owns the transaction. */
+export async function repairFactoringLifecycleSourceLinksOnClient(
+  client: DbClient,
+  opts: {
+    operating_company_id: string;
+    memo?: string | null;
+    factoring_advance_id: string;
+    source_transaction_type: FactoringLifecycleSourceType;
+  }
+): Promise<{ journal_entry_id: string | null; repaired: boolean; reason?: string }> {
+  const candidate = await findStrictLifecycleRepairCandidate(client, {
+    operating_company_id: opts.operating_company_id,
+    factoring_advance_id: opts.factoring_advance_id,
+    source_transaction_type: opts.source_transaction_type,
+    memo: opts.memo,
+  });
+  if (candidate.kind === "ambiguous") {
+    return { journal_entry_id: null, repaired: false, reason: "repair_ambiguous" };
+  }
+  if (candidate.kind === "invalid") {
+    return {
+      journal_entry_id: null,
+      repaired: false,
+      reason: candidate.reason ?? "repair_candidate_invalid",
+    };
+  }
+  if (candidate.kind !== "unique" || !candidate.journal_entry_id) {
+    return { journal_entry_id: null, repaired: false };
+  }
+  await attachFactoringLifecycleSourceLinksStrict(client, {
+    operating_company_id: opts.operating_company_id,
+    journal_entry_id: candidate.journal_entry_id,
+    factoring_advance_id: opts.factoring_advance_id,
+    source_transaction_type: opts.source_transaction_type,
+  });
+  return { journal_entry_id: candidate.journal_entry_id, repaired: true };
+}
+
+/** Validate + idempotently repair missing lifecycle source links for an already-posted factoring JE. */
+export async function repairFactoringLifecycleSourceLinks(opts: {
+  operating_company_id: string;
+  memo?: string | null;
+  factoring_advance_id: string;
+  source_transaction_type: FactoringLifecycleSourceType;
+  /** Optional same-txn side effects after repair (subledger sync, etc.). */
+  afterRepair?: (client: DbClient, journalEntryId: string | null) => Promise<void>;
+}): Promise<{ journal_entry_id: string | null; repaired: boolean; reason?: string }> {
+  return withLuciaBypass(async (client: DbClient) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
+      opts.operating_company_id,
+    ]);
+    const result = await repairFactoringLifecycleSourceLinksOnClient(client, opts);
+    if (result.reason === "repair_ambiguous" || result.reason === "repair_candidate_invalid" || result.reason?.startsWith("memo_collision")) {
+      // Fail closed — do not run sibling side effects on invalid provenance.
+      return result;
+    }
+    if (opts.afterRepair) {
+      await opts.afterRepair(client, result.journal_entry_id);
+    }
+    return result;
+  });
+}
+
+/**
+ * Prefer deterministic posting-key JE id; otherwise strict candidate repair.
+ * Posting-key path uses the SAME exact-shape validator — no bypass.
+ * Never memo-only overwrite of foreign provenance.
+ */
+async function repairAlreadyPostedLifecycle(opts: {
+  operating_company_id: string;
+  factoring_advance_id: string;
+  source_transaction_type: FactoringLifecycleSourceType;
+  memo?: string | null;
+  journal_entry_id?: string | null;
+  expected_legs?: ExpectedLifecycleLeg[];
+  expected_entry_date?: string | null;
+  afterRepair?: (client: DbClient, journalEntryId: string | null) => Promise<void>;
+}): Promise<{ journal_entry_id: string | null; repaired: boolean; reason?: string }> {
+  if (opts.journal_entry_id) {
+    return withLuciaBypass(async (client: DbClient) => {
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
+        opts.operating_company_id,
+      ]);
+      if (!opts.expected_legs?.length) {
+        return {
+          journal_entry_id: null,
+          repaired: false,
+          reason: "repair_candidate_invalid",
+        };
+      }
+      const shape = await validateLifecycleJeExactShape(client, {
+        operating_company_id: opts.operating_company_id,
+        journal_entry_id: opts.journal_entry_id!,
+        factoring_advance_id: opts.factoring_advance_id,
+        source_transaction_type: opts.source_transaction_type,
+        expected_legs: opts.expected_legs,
+        expected_entry_date: opts.expected_entry_date,
+      });
+      if (!shape.ok) {
+        return {
+          journal_entry_id: null,
+          repaired: false,
+          reason: shape.reason,
+        };
+      }
+      try {
+        await attachFactoringLifecycleSourceLinksStrict(client, {
+          operating_company_id: opts.operating_company_id,
+          journal_entry_id: opts.journal_entry_id!,
+          factoring_advance_id: opts.factoring_advance_id,
+          source_transaction_type: opts.source_transaction_type,
+        });
+      } catch {
+        return {
+          journal_entry_id: null,
+          repaired: false,
+          reason: "repair_candidate_invalid",
+        };
+      }
+      if (opts.afterRepair) {
+        await opts.afterRepair(client, opts.journal_entry_id!);
+      }
+      return { journal_entry_id: opts.journal_entry_id!, repaired: true };
+    });
+  }
+  return withLuciaBypass(async (client: DbClient) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
+      opts.operating_company_id,
+    ]);
+    const candidate = await findStrictLifecycleRepairCandidate(client, {
+      operating_company_id: opts.operating_company_id,
+      factoring_advance_id: opts.factoring_advance_id,
+      source_transaction_type: opts.source_transaction_type,
+      memo: opts.memo,
+      expected_legs: opts.expected_legs,
+      expected_entry_date: opts.expected_entry_date,
+    });
+    if (candidate.kind === "ambiguous") {
+      return { journal_entry_id: null, repaired: false, reason: "repair_ambiguous" };
+    }
+    if (candidate.kind === "invalid") {
+      return {
+        journal_entry_id: null,
+        repaired: false,
+        reason: candidate.reason ?? "repair_candidate_invalid",
+      };
+    }
+    if (candidate.kind !== "unique" || !candidate.journal_entry_id) {
+      return { journal_entry_id: null, repaired: false };
+    }
+    if (opts.expected_legs?.length) {
+      const shape = await validateLifecycleJeExactShape(client, {
+        operating_company_id: opts.operating_company_id,
+        journal_entry_id: candidate.journal_entry_id,
+        factoring_advance_id: opts.factoring_advance_id,
+        source_transaction_type: opts.source_transaction_type,
+        expected_legs: opts.expected_legs,
+        expected_entry_date: opts.expected_entry_date,
+      });
+      if (!shape.ok) {
+        return {
+          journal_entry_id: null,
+          repaired: false,
+          reason: shape.reason,
+        };
+      }
+    }
+    try {
+      await attachFactoringLifecycleSourceLinksStrict(client, {
+        operating_company_id: opts.operating_company_id,
+        journal_entry_id: candidate.journal_entry_id,
+        factoring_advance_id: opts.factoring_advance_id,
+        source_transaction_type: opts.source_transaction_type,
+      });
+    } catch {
+      return { journal_entry_id: null, repaired: false, reason: "repair_candidate_invalid" };
+    }
+    if (opts.afterRepair) {
+      await opts.afterRepair(client, candidate.journal_entry_id);
+    }
+    return { journal_entry_id: candidate.journal_entry_id, repaired: true };
+  });
+}
+
+/**
+ * Create JE + lifecycle source links (+ optional same-txn side effects) in ONE withCurrentUser txn.
+ * Injected failure between JE and links rolls back — no orphan JE / duplicate financial artifacts.
+ */
+async function createFactoringJournalEntryAtomically(opts: {
+  actor_user_id: string;
+  je: CreateJournalEntryInput;
+  factoring_advance_id: string;
+  source_transaction_type: FactoringLifecycleSourceType;
+  /** Deterministic unique event key — unique DB constraint prevents concurrent double-post. */
+  event_key: string;
+  expected_legs?: ExpectedLifecycleLeg[];
+  afterLifecycleBeforeCommit?: (client: DbClient, journalEntryId: string) => Promise<void>;
+  /** When provided, JE is created on this client (caller owns the outer txn — no nested withCurrentUser). */
+  client?: DbClient;
+}): Promise<{ id: string; already_claimed?: boolean }> {
+  const resolveExisting = async (client: DbClient, journalEntryId: string) => {
+    if (opts.expected_legs?.length) {
+      const shape = await validateLifecycleJeExactShape(client, {
+        operating_company_id: opts.je.operating_company_id,
+        journal_entry_id: journalEntryId,
+        factoring_advance_id: opts.factoring_advance_id,
+        source_transaction_type: opts.source_transaction_type,
+        expected_legs: opts.expected_legs,
+      });
+      if (!shape.ok) {
+        throw new Error(`factoring_lifecycle_posting_key_invalid_shape:${shape.reason}`);
+      }
+    }
+    await attachFactoringLifecycleSourceLinksStrict(client, {
+      operating_company_id: opts.je.operating_company_id,
+      journal_entry_id: journalEntryId,
+      factoring_advance_id: opts.factoring_advance_id,
+      source_transaction_type: opts.source_transaction_type,
+    });
+    if (opts.afterLifecycleBeforeCommit) {
+      await opts.afterLifecycleBeforeCommit(client, journalEntryId);
+    }
+    return { id: journalEntryId, already_claimed: true as const };
+  };
+
+  const run = async (client: DbClient) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
+      opts.je.operating_company_id,
+    ]);
+    await ensureOpenPeriod(client, opts.je.operating_company_id, opts.je.entry_date);
+
+    const existingKey = await findLifecyclePostingKeyJe(client, {
+      operating_company_id: opts.je.operating_company_id,
+      factoring_advance_id: opts.factoring_advance_id,
+      source_transaction_type: opts.source_transaction_type,
+      event_key: opts.event_key,
+    });
+    if (existingKey) {
+      return resolveExisting(client, existingKey);
+    }
+
+    // Savepoint so a concurrent posting-key loser can roll back the JE insert and
+    // deterministically resolve to the winner's validated already_posted JE (no 25P02).
+    await client.query(`SAVEPOINT factoring_lifecycle_je_create`);
+    try {
+      const header = await createJournalEntry(
+        opts.je,
+        { userId: opts.actor_user_id, role: "system" },
+        {
+          client,
+          suppressSideEffects: true,
+          afterInsertBeforeCommit: async (c, hdr) => {
+            if (__posterAtomicityTestHooks.failAfterJeBeforeLifecycleLinks) {
+              throw new Error("injected_failure_between_je_and_lifecycle_links");
+            }
+            const claim = await claimFactoringLifecyclePostingKey(c, {
+              operating_company_id: opts.je.operating_company_id,
+              factoring_advance_id: opts.factoring_advance_id,
+              source_transaction_type: opts.source_transaction_type,
+              event_key: opts.event_key,
+              journal_entry_id: hdr.id,
+            });
+            if (claim === "already_claimed") {
+              throw new FactoringLifecyclePostingKeyRaceError();
+            }
+            await attachFactoringLifecycleSourceLinksStrict(c, {
+              operating_company_id: opts.je.operating_company_id,
+              journal_entry_id: hdr.id,
+              factoring_advance_id: opts.factoring_advance_id,
+              source_transaction_type: opts.source_transaction_type,
+            });
+            if (opts.afterLifecycleBeforeCommit) {
+              await opts.afterLifecycleBeforeCommit(c, hdr.id);
+            }
+          },
+        }
+      );
+      await client.query(`RELEASE SAVEPOINT factoring_lifecycle_je_create`);
+      return { id: header.id, already_claimed: false as const };
+    } catch (e) {
+      await client.query(`ROLLBACK TO SAVEPOINT factoring_lifecycle_je_create`);
+      if (e instanceof FactoringLifecyclePostingKeyRaceError || (e as Error)?.message === "factoring_lifecycle_posting_key_race") {
+        const winner = await findLifecyclePostingKeyJe(client, {
+          operating_company_id: opts.je.operating_company_id,
+          factoring_advance_id: opts.factoring_advance_id,
+          source_transaction_type: opts.source_transaction_type,
+          event_key: opts.event_key,
+        });
+        if (!winner) throw e;
+        return resolveExisting(client, winner);
+      }
+      throw e;
+    }
+  };
+
+  const created = opts.client
+    ? await run(opts.client)
+    : await withCurrentUser(opts.actor_user_id, (client) => run(client));
+
+  if (!created.already_claimed && !opts.client) {
+    await enqueueJournalEntrySideEffects(opts.je, created.id, opts.actor_user_id);
+  }
+  return created;
+}
+
 // ---------------------------------------------------------------------------------------------------
 // STEP 2 — FUNDING (posts at funding, using FARO's actual funded figures; A/R is UNTOUCHED).
 //   Dr Cash + Dr Factoring Reserves + Dr Factoring Fees (+ Dr Bank/ACH) / Cr Factoring Advance (liability).
@@ -318,13 +825,84 @@ export type PostFactoringAdvanceInput = {
   } | null;
 };
 
+function fundingExpectedLegs(opts: {
+  cash: number;
+  reserve: number;
+  fee: number;
+  ach: number;
+  liability: number;
+}): ExpectedLifecycleLeg[] {
+  const legs: ExpectedLifecycleLeg[] = [];
+  if (opts.cash > 0) legs.push({ role: "cash_clearing", debit_or_credit: "debit", amount_cents: opts.cash });
+  if (opts.reserve > 0) legs.push({ role: "factor_reserve_held", debit_or_credit: "debit", amount_cents: opts.reserve });
+  if (opts.fee > 0) legs.push({ role: "factor_fee_expense", debit_or_credit: "debit", amount_cents: opts.fee });
+  if (opts.ach > 0) legs.push({ role: "factor_fee_expense", debit_or_credit: "debit", amount_cents: opts.ach });
+  legs.push({ role: "factoring_advance_liability", debit_or_credit: "credit", amount_cents: opts.liability });
+  return legs;
+}
+
+/**
+ * Bounded retry for transient Postgres deadlocks (SQLSTATE 40P01) and serialization failures (40001).
+ *
+ * A 40P01/40001 aborts the whole transaction — Postgres guarantees a full rollback with NO partial
+ * writes — so re-running the poster from the top is safe: the posting-key claim (ON CONFLICT) plus the
+ * deterministic findLifecyclePostingKeyJe lookup resolve any concurrently-committed work to
+ * `already_posted` rather than double-posting. Funding opens two short-lived transactions (a lucia-bypass
+ * read to prepare, then a caller-owned JE write); under heavy concurrency either can lose a rare lock
+ * cycle against sibling lifecycle/read transactions. Surfacing that transient conflict as a hard posting
+ * failure is wrong; retrying with jittered backoff (so the winner commits and releases) is the
+ * production-correct behavior — the same transient-conflict handling NetSuite/QBO-grade posters use.
+ * This is a resiliency wrapper only: it never suppresses a real error (any non-40P01/40001 rethrows
+ * immediately) and never weakens a validation result.
+ */
+async function retryOnFactoringDeadlock<T>(fn: () => Promise<T>, attempts = 4): Promise<T> {
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    try {
+      return await fn();
+    } catch (e) {
+      const code = (e as { code?: string } | null)?.code;
+      if (code !== "40P01" && code !== "40001") throw e;
+      lastErr = e;
+      const backoffMs = 25 * (attempt + 1) + Math.floor(Math.random() * 25);
+      await new Promise((resolve) => setTimeout(resolve, backoffMs));
+    }
+  }
+  throw lastErr;
+}
+
 export async function postFactoringAdvanceEvent(input: PostFactoringAdvanceInput): Promise<PostResult> {
+  return retryOnFactoringDeadlock(() => postFactoringAdvanceEventImpl(input));
+}
+
+async function postFactoringAdvanceEventImpl(input: PostFactoringAdvanceInput): Promise<PostResult> {
   const prepared = await withLuciaBypass(async (client: DbClient) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
     if (!(await factoringPostingEnabled(client, input.operating_company_id))) return { gate: "flag_off" as const };
 
     const advance = await loadAdvance(client, input.operating_company_id, input.factoring_advance_id);
     if (!advance) return { gate: "advance_not_found" as const };
+
+    let entryDate: string;
+    try {
+      entryDate = resolveCanonicalEntryDate(
+        input.advanced_at_iso,
+        advance.advanced_at,
+        advance.submitted_at,
+        companyBusinessDate()
+      );
+    } catch (e) {
+      if (e instanceof FactoringEntryDateError) return { gate: e.reason };
+      throw e;
+    }
+
+    const faro = await requireFaroBoundAdvance(
+      client,
+      input.operating_company_id,
+      input.factoring_advance_id,
+      entryDate
+    );
+    if (!faro.ok) return { gate: faro.reason! };
 
     const liability = Number(input.funding_figures?.invoice_total_cents ?? advance.invoice_total_cents ?? 0);
     const reserve = Number(input.funding_figures?.reserve_cents ?? advance.reserve_amount_cents ?? 0);
@@ -341,15 +919,40 @@ export async function postFactoringAdvanceEvent(input: PostFactoringAdvanceInput
     }
 
     const memo = `Factoring funding ${advance.display_id}`;
-    if (await journalEntryExistsByMemo(client, input.operating_company_id, memo)) return { gate: "already_posted" as const };
+    const expectedLegs = fundingExpectedLegs({ cash, reserve, fee, ach, liability });
+    const eventKey = "funding";
+    const keyJe = await findLifecyclePostingKeyJe(client, {
+      operating_company_id: input.operating_company_id,
+      factoring_advance_id: input.factoring_advance_id,
+      source_transaction_type: "factoring_advance",
+      event_key: eventKey,
+    });
+    const candidate = await findStrictLifecycleRepairCandidate(client, {
+      operating_company_id: input.operating_company_id,
+      factoring_advance_id: input.factoring_advance_id,
+      source_transaction_type: "factoring_advance",
+      memo,
+      expected_legs: expectedLegs,
+    });
+    if (candidate.kind === "ambiguous") return { gate: "repair_ambiguous" as const };
+    if (candidate.kind === "invalid") return { gate: "repair_candidate_invalid" as const, reason: candidate.reason };
+    if (keyJe || candidate.kind === "unique") {
+      return {
+        gate: "already_posted" as const,
+        memo,
+        reserve,
+        entryDate,
+        eventKey,
+        expected_legs: expectedLegs,
+        journal_entry_id: keyJe ?? candidate.journal_entry_id ?? null,
+      };
+    }
 
     // Resolve every account per-entity, fail-closed. NO ar_control at funding (borrowing keeps A/R).
     const cashAccountId = await resolveRoleAccount(client, input.operating_company_id, "cash_clearing");
     const reserveAccountId = await resolveRoleAccount(client, input.operating_company_id, "factor_reserve_held");
     const feeAccountId = await resolveRoleAccount(client, input.operating_company_id, "factor_fee_expense");
     const liabilityAccountId = await resolveRoleAccount(client, input.operating_company_id, "factoring_advance_liability");
-
-    const entryDate = (input.advanced_at_iso ?? advance.advanced_at ?? advance.submitted_at ?? new Date().toISOString()).slice(0, 10);
 
     const postings: Array<{ account_id: string; debit_or_credit: "debit" | "credit"; amount_cents: number; description: string }> = [];
     if (cash > 0) postings.push({ account_id: cashAccountId, debit_or_credit: "debit", amount_cents: cash, description: `${memo} — cash advanced` });
@@ -361,34 +964,183 @@ export async function postFactoringAdvanceEvent(input: PostFactoringAdvanceInput
     if (ach > 0) postings.push({ account_id: feeAccountId, debit_or_credit: "debit", amount_cents: ach, description: `${memo} — bank/ACH fee` });
     postings.push({ account_id: liabilityAccountId, debit_or_credit: "credit", amount_cents: liability, description: `${memo} — factoring advance (liability)` });
 
-    return { gate: "post" as const, memo, entryDate, postings, reserve };
+    return { gate: "post" as const, memo, entryDate, postings, reserve, expected_legs: expectedLegs, eventKey };
   });
 
   if (prepared.gate === "flag_off") return FLAG_OFF;
   if (prepared.gate === "advance_not_found") return { posted: false, reason: "advance_not_found" };
   if (prepared.gate === "zero_amount") return { posted: false, reason: "zero_amount" };
-  if (prepared.gate === "already_posted") return { posted: false, reason: "already_posted" };
-
-  const created = await createJournalEntry(
-    {
+  if (prepared.gate === "policy_invalid_entry_date") return { posted: false, reason: "policy_invalid_entry_date" };
+  if (prepared.gate === "policy_missing_entry_date") return { posted: false, reason: "policy_missing_entry_date" };
+  if (prepared.gate === "policy_faro_agreement") return { posted: false, reason: "policy_faro_agreement" };
+  if (prepared.gate === "policy_advance_not_bound_to_faro") {
+    return { posted: false, reason: "policy_advance_not_bound_to_faro" };
+  }
+  if (prepared.gate === "repair_ambiguous") return { posted: false, reason: "repair_ambiguous" };
+  if (prepared.gate === "repair_candidate_invalid") {
+    return { posted: false, reason: "repair_candidate_invalid" };
+  }
+  if (prepared.gate === "already_posted") {
+    const reserveHeldCents = Number(prepared.reserve ?? 0);
+    const repairEntryDate = prepared.entryDate;
+    if (!repairEntryDate) {
+      return { posted: false, reason: "repair_candidate_invalid" };
+    }
+    const repaired = await repairAlreadyPostedLifecycle({
       operating_company_id: input.operating_company_id,
-      entry_date: prepared.entryDate,
+      factoring_advance_id: input.factoring_advance_id,
+      source_transaction_type: "factoring_advance",
       memo: prepared.memo,
-      source: "auto",
-      postings: prepared.postings,
-    },
-    { userId: input.actor_user_id, role: "system" }
-  );
-
-  // Faro Reserve Tracker: record the reserve HELD at funding (storage-only, same JE, no new GL math).
-  if (prepared.reserve > 0) {
-    await withLuciaBypass(async (client: DbClient) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
-      await recordReserveMovement(client, input.operating_company_id, input.factoring_advance_id, "held", prepared.reserve, prepared.entryDate, created.id);
+      journal_entry_id: prepared.journal_entry_id ?? null,
+      expected_legs: prepared.expected_legs,
+      afterRepair: async (client, journalEntryId) => {
+        if (!journalEntryId || reserveHeldCents <= 0) return;
+        await recordReserveMovement(
+          client,
+          input.operating_company_id,
+          input.factoring_advance_id,
+          "held",
+          reserveHeldCents,
+          repairEntryDate,
+          journalEntryId
+        );
+      },
     });
+    if (repaired.reason === "repair_ambiguous") return { posted: false, reason: "repair_ambiguous" };
+    if (repaired.reason === "repair_candidate_invalid" || repaired.reason?.startsWith("repair_candidate_")) {
+      return { posted: false, reason: "repair_candidate_invalid" };
+    }
+    return { posted: false, reason: "already_posted", journal_entry_id: repaired.journal_entry_id ?? undefined };
   }
 
-  return { posted: true, journal_entry_id: created.id, memo: prepared.memo };
+  if (prepared.gate !== "post") {
+    return { posted: false, reason: "advance_not_found" };
+  }
+
+  const jeInput: CreateJournalEntryInput = {
+    operating_company_id: input.operating_company_id,
+    entry_date: prepared.entryDate,
+    memo: prepared.memo,
+    source: "auto",
+    postings: prepared.postings,
+  };
+  // Funding must post via createJournalEntry( (chain-06 / secured-borrowing guards). Lifecycle source
+  // links + reserve_held share the same caller-owned txn via afterInsertBeforeCommit.
+  const created = await withCurrentUser(input.actor_user_id, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
+      input.operating_company_id,
+    ]);
+    // Uniform lock order: take FOR UPDATE on the advance BEFORE the JE write claims its posting-key
+    // (which takes an FK KEY-SHARE on this same advance row). Every other lifecycle path
+    // (payment/chargeback/default-interest) already locks the advance first; funding was the lone
+    // exception, and that KEY-SHARE-vs-FOR-UPDATE inversion on accounting.factoring_advances was the
+    // cross-transaction deadlock cycle. Locking here also correctly serializes a funding post against
+    // any concurrent lifecycle mutation on the same advance.
+    await lockFactoringAdvanceForSettlement(
+      client,
+      input.operating_company_id,
+      input.factoring_advance_id
+    );
+    await ensureOpenPeriod(client, input.operating_company_id, prepared.entryDate);
+    await client.query(`SAVEPOINT factoring_lifecycle_je_create`);
+    try {
+      const header = await createJournalEntry(
+        jeInput,
+        { userId: input.actor_user_id, role: "system" },
+        {
+          client,
+          suppressSideEffects: true,
+          afterInsertBeforeCommit: async (c, hdr) => {
+            if (__posterAtomicityTestHooks.failAfterJeBeforeLifecycleLinks) {
+              throw new Error("injected_failure_between_je_and_lifecycle_links");
+            }
+            const claim = await claimFactoringLifecyclePostingKey(c, {
+              operating_company_id: input.operating_company_id,
+              factoring_advance_id: input.factoring_advance_id,
+              source_transaction_type: "factoring_advance",
+              event_key: "funding",
+              journal_entry_id: hdr.id,
+            });
+            if (claim === "already_claimed") {
+              throw new FactoringLifecyclePostingKeyRaceError();
+            }
+            await attachFactoringLifecycleSourceLinksStrict(c, {
+              operating_company_id: input.operating_company_id,
+              journal_entry_id: hdr.id,
+              factoring_advance_id: input.factoring_advance_id,
+              source_transaction_type: "factoring_advance",
+            });
+            if (prepared.reserve > 0) {
+              await recordReserveMovement(
+                c,
+                input.operating_company_id,
+                input.factoring_advance_id,
+                "held",
+                prepared.reserve,
+                prepared.entryDate,
+                hdr.id
+              );
+            }
+          },
+        }
+      );
+      await client.query(`RELEASE SAVEPOINT factoring_lifecycle_je_create`);
+      return { id: header.id, already_claimed: false as const };
+    } catch (e) {
+      await client.query(`ROLLBACK TO SAVEPOINT factoring_lifecycle_je_create`);
+      if (
+        e instanceof FactoringLifecyclePostingKeyRaceError ||
+        (e as Error)?.message === "factoring_lifecycle_posting_key_race"
+      ) {
+        const winner = await findLifecyclePostingKeyJe(client, {
+          operating_company_id: input.operating_company_id,
+          factoring_advance_id: input.factoring_advance_id,
+          source_transaction_type: "factoring_advance",
+          event_key: "funding",
+        });
+        if (!winner) throw e;
+        if (prepared.expected_legs?.length) {
+          const shape = await validateLifecycleJeExactShape(client, {
+            operating_company_id: input.operating_company_id,
+            journal_entry_id: winner,
+            factoring_advance_id: input.factoring_advance_id,
+            source_transaction_type: "factoring_advance",
+            expected_legs: prepared.expected_legs,
+          });
+          if (!shape.ok) throw new Error(`factoring_lifecycle_posting_key_invalid_shape:${shape.reason}`);
+        }
+        await attachFactoringLifecycleSourceLinksStrict(client, {
+          operating_company_id: input.operating_company_id,
+          journal_entry_id: winner,
+          factoring_advance_id: input.factoring_advance_id,
+          source_transaction_type: "factoring_advance",
+        });
+        if (prepared.reserve > 0) {
+          await recordReserveMovement(
+            client,
+            input.operating_company_id,
+            input.factoring_advance_id,
+            "held",
+            prepared.reserve,
+            prepared.entryDate,
+            winner
+          );
+        }
+        return { id: winner, already_claimed: true as const };
+      }
+      throw e;
+    }
+  });
+  if (!created.already_claimed) {
+    await enqueueJournalEntrySideEffects(jeInput, created.id, input.actor_user_id);
+  }
+
+  return {
+    posted: !created.already_claimed,
+    reason: created.already_claimed ? "already_posted" : undefined,
+    journal_entry_id: created.id,
+    memo: prepared.memo,
+  };
 }
 
 // ---------------------------------------------------------------------------------------------------
@@ -404,8 +1156,17 @@ export type PostFactoringCustomerPaymentInput = {
 };
 
 export async function postFactoringCustomerPaymentEvent(input: PostFactoringCustomerPaymentInput): Promise<PostResult> {
+  return retryOnFactoringDeadlock(() => postFactoringCustomerPaymentEventImpl(input));
+}
+
+async function postFactoringCustomerPaymentEventImpl(input: PostFactoringCustomerPaymentInput): Promise<PostResult> {
   const amount = Number(input.amount_cents ?? 0);
   if (amount <= 0) return { posted: false, reason: "zero_amount" };
+
+  const expectedLegs: ExpectedLifecycleLeg[] = [
+    { role: "factoring_advance_liability", debit_or_credit: "debit", amount_cents: amount },
+    { role: "ar_control", debit_or_credit: "credit", amount_cents: amount },
+  ];
 
   const prepared = await withLuciaBypass(async (client: DbClient) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
@@ -414,9 +1175,66 @@ export async function postFactoringCustomerPaymentEvent(input: PostFactoringCust
     const advance = await loadAdvance(client, input.operating_company_id, input.factoring_advance_id);
     if (!advance) return { gate: "advance_not_found" as const };
 
-    const entryDate = (input.paid_at_iso ?? advance.collected_at ?? new Date().toISOString()).slice(0, 10);
+    let entryDate: string;
+    try {
+      entryDate = resolveCanonicalEntryDate(
+        input.paid_at_iso,
+        advance.collected_at,
+        companyBusinessDate()
+      );
+    } catch (e) {
+      if (e instanceof FactoringEntryDateError) return { gate: e.reason };
+      throw e;
+    }
+
+    const faro = await requireFaroBoundAdvance(
+      client,
+      input.operating_company_id,
+      input.factoring_advance_id,
+      entryDate
+    );
+    if (!faro.ok) return { gate: faro.reason! };
+
+    // Lock + exact outstanding BEFORE any payment JE / subledger write. Reject overpayment — no Math.min.
+    await lockFactoringAdvanceForSettlement(client, input.operating_company_id, input.factoring_advance_id);
+    const outstanding = await linkedOutstandingLiabilityCents(
+      client,
+      input.operating_company_id,
+      input.factoring_advance_id
+    );
+    if (amount > outstanding) {
+      return { gate: "policy_overpayment" as const, outstanding };
+    }
+
     const memo = `Factoring customer payment ${advance.display_id} (${amount}@${entryDate})`;
-    if (await journalEntryExistsByMemo(client, input.operating_company_id, memo)) return { gate: "already_posted" as const };
+    const eventKey = `customer_payment:${amount}@${entryDate}`;
+    const keyJe = await findLifecyclePostingKeyJe(client, {
+      operating_company_id: input.operating_company_id,
+      factoring_advance_id: input.factoring_advance_id,
+      source_transaction_type: "factoring_customer_payment",
+      event_key: eventKey,
+    });
+    const candidate = await findStrictLifecycleRepairCandidate(client, {
+      operating_company_id: input.operating_company_id,
+      factoring_advance_id: input.factoring_advance_id,
+      source_transaction_type: "factoring_customer_payment",
+      memo,
+      expected_legs: expectedLegs,
+      // Event-scope: a prior partial payment's JE (different amount@date) is a SIBLING event, never this
+      // payment's repair candidate — so a second distinct partial posts instead of failing exact-shape.
+      event_key: eventKey,
+    });
+    if (candidate.kind === "ambiguous") return { gate: "repair_ambiguous" as const };
+    if (candidate.kind === "invalid") return { gate: "repair_candidate_invalid" as const };
+    if (keyJe || candidate.kind === "unique") {
+      return {
+        gate: "already_posted" as const,
+        memo,
+        entryDate,
+        eventKey,
+        journal_entry_id: keyJe ?? candidate.journal_entry_id ?? null,
+      };
+    }
 
     const liabilityAccountId = await resolveRoleAccount(client, input.operating_company_id, "factoring_advance_liability");
     const arAccountId = await resolveRoleAccount(client, input.operating_company_id, "ar_control");
@@ -425,6 +1243,7 @@ export async function postFactoringCustomerPaymentEvent(input: PostFactoringCust
       gate: "post" as const,
       memo,
       entryDate,
+      eventKey,
       postings: [
         { account_id: liabilityAccountId, debit_or_credit: "debit" as const, amount_cents: amount, description: `${memo} — settle factoring advance` },
         { account_id: arAccountId, debit_or_credit: "credit" as const, amount_cents: amount, description: `${memo} — clear A/R (customer paid FARO)` },
@@ -434,36 +1253,90 @@ export async function postFactoringCustomerPaymentEvent(input: PostFactoringCust
 
   if (prepared.gate === "flag_off") return FLAG_OFF;
   if (prepared.gate === "advance_not_found") return { posted: false, reason: "advance_not_found" };
+  if (prepared.gate === "policy_invalid_entry_date") return { posted: false, reason: "policy_invalid_entry_date" };
+  if (prepared.gate === "policy_missing_entry_date") return { posted: false, reason: "policy_missing_entry_date" };
+  if (prepared.gate === "policy_faro_agreement") return { posted: false, reason: "policy_faro_agreement" };
+  if (prepared.gate === "policy_advance_not_bound_to_faro") {
+    return { posted: false, reason: "policy_advance_not_bound_to_faro" };
+  }
+  if (prepared.gate === "policy_overpayment") return { posted: false, reason: "policy_overpayment" };
+  if (prepared.gate === "repair_ambiguous") return { posted: false, reason: "repair_ambiguous" };
+  if (prepared.gate === "repair_candidate_invalid") {
+    return { posted: false, reason: "repair_candidate_invalid" };
+  }
   if (prepared.gate === "already_posted") {
-    // CHAIN-06 §5/§7-A self-heal: the JE already exists (this exact event was posted before) but a prior
-    // run may have crashed AFTER the JE committed and BEFORE the subledger sync below ran. The sync is a
-    // deterministic SET, so re-applying it here is always safe (no double-count) and closes that gap.
-    await withLuciaBypass(async (client: DbClient) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
-      await applyCustomerPaymentSubledgerRelief(client, input.operating_company_id, input.factoring_advance_id, amount);
+    const repaired = await repairAlreadyPostedLifecycle({
+      operating_company_id: input.operating_company_id,
+      factoring_advance_id: input.factoring_advance_id,
+      source_transaction_type: "factoring_customer_payment",
+      memo: prepared.memo,
+      journal_entry_id: prepared.journal_entry_id ?? null,
+      expected_legs: expectedLegs,
+      afterRepair: async (client) => {
+        await applyCustomerPaymentSubledgerRelief(
+          client,
+          input.operating_company_id,
+          input.factoring_advance_id
+        );
+      },
     });
-    return { posted: false, reason: "already_posted" };
+    if (repaired.reason === "repair_ambiguous") return { posted: false, reason: "repair_ambiguous" };
+    if (repaired.reason === "repair_candidate_invalid" || repaired.reason?.startsWith("repair_candidate_")) {
+      return { posted: false, reason: "repair_candidate_invalid" };
+    }
+    return { posted: false, reason: "already_posted", journal_entry_id: repaired.journal_entry_id ?? undefined };
   }
 
-  const created = await createJournalEntry(
-    {
-      operating_company_id: input.operating_company_id,
-      entry_date: prepared.entryDate,
-      memo: prepared.memo,
-      source: "auto",
-      postings: prepared.postings,
-    },
-    { userId: input.actor_user_id, role: "system" }
-  );
+  if (prepared.gate !== "post") {
+    return { posted: false, reason: "advance_not_found" };
+  }
+  const paymentEntryDate = prepared.entryDate;
+  const paymentMemo = prepared.memo;
+  const paymentPostings = prepared.postings;
+  const paymentEventKey = prepared.eventKey ?? `customer_payment:${amount}@${paymentEntryDate}`;
 
-  // CHAIN-06 §5/§7-A fix: relieve the A/R SUBLEDGER (accounting.invoices) in lockstep with the GL — see
-  // the file-header note + applyCustomerPaymentSubledgerRelief's own comment for the reasoning.
-  await withLuciaBypass(async (client: DbClient) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
-    await applyCustomerPaymentSubledgerRelief(client, input.operating_company_id, input.factoring_advance_id, amount);
+  const jeInput: CreateJournalEntryInput = {
+    operating_company_id: input.operating_company_id,
+    entry_date: paymentEntryDate,
+    memo: paymentMemo,
+    source: "auto",
+    postings: paymentPostings,
+  };
+  const created = await createFactoringJournalEntryAtomically({
+    actor_user_id: input.actor_user_id,
+    je: jeInput,
+    factoring_advance_id: input.factoring_advance_id,
+    source_transaction_type: "factoring_customer_payment",
+    event_key: paymentEventKey,
+    expected_legs: expectedLegs,
+    afterLifecycleBeforeCommit: async (client, journalEntryId) => {
+      // Re-lock + re-validate outstanding inside the posting txn (concurrent settlement safety).
+      // Exclude this JE — its debit legs are already inserted and must not zero outstanding.
+      await lockFactoringAdvanceForSettlement(client, input.operating_company_id, input.factoring_advance_id);
+      const outstanding = await linkedOutstandingLiabilityCents(
+        client,
+        input.operating_company_id,
+        input.factoring_advance_id,
+        journalEntryId
+      );
+      if (amount > outstanding) {
+        throw new Error(`factoring_customer_payment_overpayment: amount=${amount} outstanding=${outstanding}`);
+      }
+      // amount_paid_cents = cumulative ledger-backed paid (includes this JE), not latest allocation.
+      await applyCustomerPaymentSubledgerRelief(
+        client,
+        input.operating_company_id,
+        input.factoring_advance_id
+      );
+    },
   });
 
-  return { posted: true, journal_entry_id: created.id, memo: prepared.memo };
+  return {
+    posted: !created.already_claimed,
+    reason: created.already_claimed ? "already_posted" : undefined,
+    journal_entry_id: created.id,
+    memo: paymentMemo,
+  };
 }
 
 // ---------------------------------------------------------------------------------------------------
@@ -481,8 +1354,17 @@ export type PostFactoringReleaseInput = {
 };
 
 export async function postFactoringReleaseEvent(input: PostFactoringReleaseInput): Promise<PostResult> {
+  return retryOnFactoringDeadlock(() => postFactoringReleaseEventImpl(input));
+}
+
+async function postFactoringReleaseEventImpl(input: PostFactoringReleaseInput): Promise<PostResult> {
   const releaseAmount = Number(input.release_amount_cents ?? 0);
   if (releaseAmount <= 0) return { posted: false, reason: "zero_amount" };
+
+  const expectedLegs: ExpectedLifecycleLeg[] = [
+    { role: "cash_clearing", debit_or_credit: "debit", amount_cents: releaseAmount },
+    { role: "factor_reserve_held", debit_or_credit: "credit", amount_cents: releaseAmount },
+  ];
 
   const prepared = await withLuciaBypass(async (client: DbClient) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
@@ -491,9 +1373,62 @@ export async function postFactoringReleaseEvent(input: PostFactoringReleaseInput
     const advance = await loadAdvance(client, input.operating_company_id, input.factoring_advance_id);
     if (!advance) return { gate: "advance_not_found" as const };
 
-    const entryDate = (input.released_at_iso ?? advance.released_at ?? new Date().toISOString()).slice(0, 10);
+    let entryDate: string;
+    try {
+      entryDate = resolveCanonicalEntryDate(
+        input.released_at_iso,
+        advance.released_at,
+        companyBusinessDate()
+      );
+    } catch (e) {
+      if (e instanceof FactoringEntryDateError) return { gate: e.reason };
+      throw e;
+    }
+
+    const faro = await requireFaroBoundAdvance(
+      client,
+      input.operating_company_id,
+      input.factoring_advance_id,
+      entryDate
+    );
+    if (!faro.ok) return { gate: faro.reason! };
+
+    await lockFactoringAdvanceForSettlement(client, input.operating_company_id, input.factoring_advance_id);
+    const outstandingReserve = await linkedOutstandingReserveCents(
+      client,
+      input.operating_company_id,
+      input.factoring_advance_id
+    );
+    if (releaseAmount > outstandingReserve) {
+      return { gate: "policy_over_release" as const, outstanding: outstandingReserve };
+    }
+
     const memo = `Factoring reserve release ${advance.display_id} (${releaseAmount}@${entryDate})`;
-    if (await journalEntryExistsByMemo(client, input.operating_company_id, memo)) return { gate: "already_posted" as const };
+    const eventKey = `reserve_release:${releaseAmount}@${entryDate}`;
+    const keyJe = await findLifecyclePostingKeyJe(client, {
+      operating_company_id: input.operating_company_id,
+      factoring_advance_id: input.factoring_advance_id,
+      source_transaction_type: "factoring_reserve_release",
+      event_key: eventKey,
+    });
+    const candidate = await findStrictLifecycleRepairCandidate(client, {
+      operating_company_id: input.operating_company_id,
+      factoring_advance_id: input.factoring_advance_id,
+      source_transaction_type: "factoring_reserve_release",
+      memo,
+      expected_legs: expectedLegs,
+    });
+    if (candidate.kind === "ambiguous") return { gate: "repair_ambiguous" as const };
+    if (candidate.kind === "invalid") return { gate: "repair_candidate_invalid" as const };
+    if (keyJe || candidate.kind === "unique") {
+      return {
+        gate: "already_posted" as const,
+        memo,
+        entryDate,
+        eventKey,
+        journal_entry_id: keyJe ?? candidate.journal_entry_id ?? null,
+      };
+    }
 
     const cashAccountId = await resolveRoleAccount(client, input.operating_company_id, "cash_clearing");
     const reserveAccountId = await resolveRoleAccount(client, input.operating_company_id, "factor_reserve_held");
@@ -502,6 +1437,7 @@ export async function postFactoringReleaseEvent(input: PostFactoringReleaseInput
       gate: "post" as const,
       memo,
       entryDate,
+      eventKey,
       postings: [
         { account_id: cashAccountId, debit_or_credit: "debit" as const, amount_cents: releaseAmount, description: `${memo} — reserve returned to cash` },
         { account_id: reserveAccountId, debit_or_credit: "credit" as const, amount_cents: releaseAmount, description: `${memo} — release factoring reserve (asset)` },
@@ -511,26 +1447,282 @@ export async function postFactoringReleaseEvent(input: PostFactoringReleaseInput
 
   if (prepared.gate === "flag_off") return FLAG_OFF;
   if (prepared.gate === "advance_not_found") return { posted: false, reason: "advance_not_found" };
-  if (prepared.gate === "already_posted") return { posted: false, reason: "already_posted" };
-
-  const created = await createJournalEntry(
-    {
+  if (prepared.gate === "policy_invalid_entry_date") return { posted: false, reason: "policy_invalid_entry_date" };
+  if (prepared.gate === "policy_missing_entry_date") return { posted: false, reason: "policy_missing_entry_date" };
+  if (prepared.gate === "policy_faro_agreement") return { posted: false, reason: "policy_faro_agreement" };
+  if (prepared.gate === "policy_advance_not_bound_to_faro") {
+    return { posted: false, reason: "policy_advance_not_bound_to_faro" };
+  }
+  if (prepared.gate === "policy_over_release") return { posted: false, reason: "policy_over_release" };
+  if (prepared.gate === "repair_ambiguous") return { posted: false, reason: "repair_ambiguous" };
+  if (prepared.gate === "repair_candidate_invalid") {
+    return { posted: false, reason: "repair_candidate_invalid" };
+  }
+  if (prepared.gate === "already_posted") {
+    const repairEntryDate = prepared.entryDate;
+    if (!repairEntryDate) {
+      return { posted: false, reason: "repair_candidate_invalid" };
+    }
+    const repaired = await repairAlreadyPostedLifecycle({
       operating_company_id: input.operating_company_id,
-      entry_date: prepared.entryDate,
+      factoring_advance_id: input.factoring_advance_id,
+      source_transaction_type: "factoring_reserve_release",
       memo: prepared.memo,
-      source: "auto",
-      postings: prepared.postings,
-    },
-    { userId: input.actor_user_id, role: "system" }
-  );
+      journal_entry_id: prepared.journal_entry_id ?? null,
+      expected_legs: expectedLegs,
+      afterRepair: async (client, journalEntryId) => {
+        if (!journalEntryId) return;
+        await recordReserveMovement(
+          client,
+          input.operating_company_id,
+          input.factoring_advance_id,
+          "released",
+          releaseAmount,
+          repairEntryDate,
+          journalEntryId
+        );
+      },
+    });
+    if (repaired.reason === "repair_ambiguous") return { posted: false, reason: "repair_ambiguous" };
+    if (repaired.reason === "repair_candidate_invalid" || repaired.reason?.startsWith("repair_candidate_")) {
+      return { posted: false, reason: "repair_candidate_invalid" };
+    }
+    return { posted: false, reason: "already_posted", journal_entry_id: repaired.journal_entry_id ?? undefined };
+  }
 
-  // Faro Reserve Tracker: record the reserve RELEASED (storage-only, same JE, no new GL math).
-  await withLuciaBypass(async (client: DbClient) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
-    await recordReserveMovement(client, input.operating_company_id, input.factoring_advance_id, "released", releaseAmount, prepared.entryDate, created.id);
+  if (prepared.gate !== "post") {
+    return { posted: false, reason: "advance_not_found" };
+  }
+  const releaseEntryDate = prepared.entryDate;
+  const releaseMemo = prepared.memo;
+  const releasePostings = prepared.postings;
+  const releaseEventKey = prepared.eventKey ?? `reserve_release:${releaseAmount}@${releaseEntryDate}`;
+
+  const jeInput: CreateJournalEntryInput = {
+    operating_company_id: input.operating_company_id,
+    entry_date: releaseEntryDate,
+    memo: releaseMemo,
+    source: "auto",
+    postings: releasePostings,
+  };
+  const created = await createFactoringJournalEntryAtomically({
+    actor_user_id: input.actor_user_id,
+    je: jeInput,
+    factoring_advance_id: input.factoring_advance_id,
+    source_transaction_type: "factoring_reserve_release",
+    event_key: releaseEventKey,
+    expected_legs: expectedLegs,
+    afterLifecycleBeforeCommit: async (client, journalEntryId) => {
+      await lockFactoringAdvanceForSettlement(client, input.operating_company_id, input.factoring_advance_id);
+      // Exclude this JE — its credit legs are already inserted and must not zero reserve outstanding.
+      const outstandingReserve = await linkedOutstandingReserveCents(
+        client,
+        input.operating_company_id,
+        input.factoring_advance_id,
+        journalEntryId
+      );
+      if (releaseAmount > outstandingReserve) {
+        throw new Error(
+          `factoring_reserve_over_release: amount=${releaseAmount} outstanding=${outstandingReserve}`
+        );
+      }
+      await recordReserveMovement(
+        client,
+        input.operating_company_id,
+        input.factoring_advance_id,
+        "released",
+        releaseAmount,
+        releaseEntryDate,
+        journalEntryId
+      );
+    },
   });
 
-  return { posted: true, journal_entry_id: created.id, memo: prepared.memo };
+  return {
+    posted: !created.already_claimed,
+    reason: created.already_claimed ? "already_posted" : undefined,
+    journal_entry_id: created.id,
+    memo: releaseMemo,
+  };
+}
+
+
+/**
+ * Exact linked outstanding Faro liability (role legs) — never guessed from mutable status.
+ * @param excludeJournalEntryId — when re-validating inside afterInsertBeforeCommit, exclude the
+ *   in-flight settlement JE so its own debit legs do not zero out outstanding before the check.
+ * @param beforeDateExclusive — when computing a HISTORICAL balance (e.g. the default-interest opening
+ *   for a given accrual day), bound to postings whose entry_date is strictly BEFORE this date. This makes
+ *   the opening the balance at the START of the accrual day: same-day and later customer payments do NOT
+ *   reduce that day's interest base (contract), and a historical accrual's opening is reproducible under
+ *   repair even after later payments land — so validateLifecycleJeExactShape no longer spuriously fails
+ *   with an opening mismatch. Omit (NULL) for the live, as-of-now outstanding balance.
+ */
+async function linkedOutstandingLiabilityCents(
+  client: DbClient,
+  operatingCompanyId: string,
+  factoringAdvanceId: string,
+  excludeJournalEntryId?: string | null,
+  beforeDateExclusive?: string | null
+): Promise<number> {
+  const notReversed = await liveJournalEntryNotReversedSql(client);
+  const res = await client.query<{ outstanding: string }>(
+    `
+      SELECT COALESCE(
+               SUM(CASE
+                     WHEN jep.debit_or_credit = 'credit'
+                      AND jep.source_transaction_type IN ('factoring_advance', 'factoring_default_interest')
+                     THEN jep.amount_cents
+                     WHEN jep.debit_or_credit = 'debit'
+                      AND jep.source_transaction_type IN ('factoring_customer_payment', 'factoring_chargeback')
+                     THEN -jep.amount_cents
+                     ELSE 0
+                   END),
+               0
+             )::text AS outstanding
+        FROM accounting.journal_entry_postings jep
+        JOIN accounting.journal_entries je
+          ON je.id = jep.journal_entry_uuid
+         AND je.operating_company_id = jep.operating_company_id
+        JOIN accounting.chart_of_accounts_roles r
+          ON r.account_id = jep.account_id
+         AND r.operating_company_id = jep.operating_company_id
+         AND r.is_active = true
+         AND r.role = 'factoring_advance_liability'
+       WHERE jep.operating_company_id = $1::uuid
+         AND jep.source_transaction_id = $2::text
+         AND je.status = 'posted'
+         AND je.voided_at IS NULL
+         AND ($3::uuid IS NULL OR je.id IS DISTINCT FROM $3::uuid)
+         AND ($4::date IS NULL OR je.entry_date < $4::date)
+         ${notReversed}
+         AND NOT EXISTS (
+               SELECT 1
+                 FROM accounting.transaction_source_links tsl
+                WHERE tsl.journal_entry_posting_id = jep.id
+                  AND tsl.operating_company_id = jep.operating_company_id
+                  AND tsl.linked_object_type = 'factoring_advance'
+                  AND (
+                    tsl.linked_object_id <> $2::text
+                    OR (
+                      jep.source_transaction_type IS NOT NULL
+                      AND jep.source_transaction_type <> ''
+                      AND tsl.relationship_role IS DISTINCT FROM (jep.source_transaction_type)
+                    )
+                  )
+             )
+    `,
+    [operatingCompanyId, factoringAdvanceId, excludeJournalEntryId ?? null, beforeDateExclusive ?? null]
+  );
+  return Number(res.rows[0]?.outstanding ?? 0);
+}
+
+/**
+ * Exact linked outstanding Faro reserve asset (held − released); excludes reversed JEs.
+ * @param excludeJournalEntryId — exclude in-flight release JE when re-validating before commit.
+ */
+async function linkedOutstandingReserveCents(
+  client: DbClient,
+  operatingCompanyId: string,
+  factoringAdvanceId: string,
+  excludeJournalEntryId?: string | null
+): Promise<number> {
+  const notReversed = await liveJournalEntryNotReversedSql(client);
+  const res = await client.query<{ outstanding: string }>(
+    `
+      SELECT COALESCE(
+               SUM(CASE
+                     WHEN jep.debit_or_credit = 'debit'
+                      AND jep.source_transaction_type = 'factoring_advance'
+                     THEN jep.amount_cents
+                     WHEN jep.debit_or_credit = 'credit'
+                      AND jep.source_transaction_type = 'factoring_reserve_release'
+                     THEN -jep.amount_cents
+                     ELSE 0
+                   END),
+               0
+             )::text AS outstanding
+        FROM accounting.journal_entry_postings jep
+        JOIN accounting.journal_entries je
+          ON je.id = jep.journal_entry_uuid
+         AND je.operating_company_id = jep.operating_company_id
+        JOIN accounting.chart_of_accounts_roles r
+          ON r.account_id = jep.account_id
+         AND r.operating_company_id = jep.operating_company_id
+         AND r.is_active = true
+         AND r.role = 'factor_reserve_held'
+       WHERE jep.operating_company_id = $1::uuid
+         AND jep.source_transaction_id = $2::text
+         AND je.status = 'posted'
+         AND je.voided_at IS NULL
+         AND ($3::uuid IS NULL OR je.id IS DISTINCT FROM $3::uuid)
+         ${notReversed}
+    `,
+    [operatingCompanyId, factoringAdvanceId, excludeJournalEntryId ?? null]
+  );
+  return Number(res.rows[0]?.outstanding ?? 0);
+}
+
+/** Lock advance row before outstanding calc / settlement writes (concurrent settlement safety). */
+async function lockFactoringAdvanceForSettlement(
+  client: DbClient,
+  operatingCompanyId: string,
+  factoringAdvanceId: string
+): Promise<void> {
+  await client.query(
+    `
+      SELECT id
+        FROM accounting.factoring_advances
+       WHERE id = $1::uuid
+         AND operating_company_id = $2::uuid
+       FOR UPDATE
+    `,
+    [factoringAdvanceId, operatingCompanyId]
+  );
+}
+
+/** Exact linked outstanding trade A/R on advance invoices (non-void, unpaid remainder). */
+async function linkedOutstandingRecoursedArCents(
+  client: DbClient,
+  operatingCompanyId: string,
+  factoringAdvanceId: string
+): Promise<number> {
+  const res = await client.query<{ outstanding: string }>(
+    `
+      SELECT COALESCE(
+               SUM(
+                 GREATEST(
+                   COALESCE(i.total_cents, 0) - COALESCE(i.amount_paid_cents, 0),
+                   0
+                 )
+               ),
+               0
+             )::text AS outstanding
+        FROM accounting.invoices i
+       WHERE i.operating_company_id = $1::uuid
+         AND i.factoring_advance_id = $2::uuid
+         AND i.voided_at IS NULL
+         AND i.status <> 'void'
+    `,
+    [operatingCompanyId, factoringAdvanceId]
+  );
+  return Number(res.rows[0]?.outstanding ?? 0);
+}
+
+/** Exported for day-95 orchestration — same exact-linked amounts the chargeback poster validates. */
+export async function loadExactLinkedChargebackAmounts(
+  operatingCompanyId: string,
+  factoringAdvanceId: string
+): Promise<{ liability_cents: number; recoursed_ar_cents: number }> {
+  return withLuciaBypass(async (client: DbClient) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
+      operatingCompanyId,
+    ]);
+    return {
+      liability_cents: await linkedOutstandingLiabilityCents(client, operatingCompanyId, factoringAdvanceId),
+      recoursed_ar_cents: await linkedOutstandingRecoursedArCents(client, operatingCompanyId, factoringAdvanceId),
+    };
+  });
 }
 
 // ---------------------------------------------------------------------------------------------------
@@ -545,89 +1737,440 @@ export type PostFactoringChargebackInput = {
   factoring_advance_id: string;
   actor_user_id: string;
   charged_back_at_iso?: string | null;
-  chargeback_amount_cents: number; // the advance repaid to FARO
-  default_interest_cents?: number; // 0.067%/day past term + grace
-  recoursed_ar_cents?: number; // the receivable returned to us (defaults to chargeback_amount_cents)
+  /** Must equal exact linked outstanding liability — no partial / guessed amounts. */
+  chargeback_amount_cents: number;
+  /** Explicit interest on the repay leg (usually 0 when already accrued into liability). */
+  default_interest_cents: number;
+  /** Must equal exact linked outstanding invoice A/R — required; no default. */
+  recoursed_ar_cents: number;
 };
 
+/**
+ * Full-recourse chargeback/recourse — ONE caller-owned transaction:
+ * repay JE + A/R reclass JE + advance/invoice status + subledger + source links + audit.
+ * Partial / ambiguous amounts fail closed with policy_partial_or_ambiguous_recourse.
+ */
 export async function postFactoringChargebackEvent(input: PostFactoringChargebackInput): Promise<PostResult> {
-  const chargeback = Number(input.chargeback_amount_cents ?? 0);
-  const interest = Number(input.default_interest_cents ?? 0);
-  const recoursed = Number(input.recoursed_ar_cents ?? input.chargeback_amount_cents ?? 0);
-  if (chargeback <= 0) return { posted: false, reason: "zero_amount" };
+  return retryOnFactoringDeadlock(() => postFactoringChargebackEventImpl(input));
+}
 
-  const prepared = await withLuciaBypass(async (client: DbClient) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
-    if (!(await factoringPostingEnabled(client, input.operating_company_id))) return { gate: "flag_off" as const };
+async function postFactoringChargebackEventImpl(input: PostFactoringChargebackInput): Promise<PostResult> {
+  if (
+    input.recoursed_ar_cents == null ||
+    input.default_interest_cents == null ||
+    input.chargeback_amount_cents == null
+  ) {
+    return { posted: false, reason: "policy_partial_or_ambiguous_recourse" };
+  }
+  const chargeback = Number(input.chargeback_amount_cents);
+  const interest = Number(input.default_interest_cents);
+  const recoursed = Number(input.recoursed_ar_cents);
+  if (!Number.isInteger(chargeback) || !Number.isInteger(interest) || !Number.isInteger(recoursed)) {
+    return { posted: false, reason: "policy_partial_or_ambiguous_recourse" };
+  }
+  if (chargeback <= 0 || interest < 0 || recoursed <= 0) {
+    return { posted: false, reason: "policy_partial_or_ambiguous_recourse" };
+  }
+
+  const sideEffectJes: Array<{ je: CreateJournalEntryInput; id: string }> = [];
+
+  const outcome = await withCurrentUser(input.actor_user_id, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
+      input.operating_company_id,
+    ]);
+    if (!(await factoringPostingEnabled(client, input.operating_company_id))) {
+      return { kind: "flag_off" as const };
+    }
 
     const advance = await loadAdvance(client, input.operating_company_id, input.factoring_advance_id);
-    if (!advance) return { gate: "advance_not_found" as const };
+    if (!advance) return { kind: "advance_not_found" as const };
 
-    const entryDate = (input.charged_back_at_iso ?? new Date().toISOString()).slice(0, 10);
-    const repayMemo = `Factoring chargeback repay ${advance.display_id} (${chargeback}+${interest}@${entryDate})`;
-    const returnMemo = `Factoring chargeback receivable ${advance.display_id} (${recoursed}@${entryDate})`;
+    let entryDate: string;
+    try {
+      entryDate = resolveCanonicalEntryDate(input.charged_back_at_iso, companyBusinessDate());
+    } catch (e) {
+      if (e instanceof FactoringEntryDateError) {
+        return { kind: e.reason };
+      }
+      throw e;
+    }
+
+    const faro = await requireFaroBoundAdvance(
+      client,
+      input.operating_company_id,
+      input.factoring_advance_id,
+      entryDate
+    );
+    if (!faro.ok) return { kind: faro.reason! };
+
+    await ensureOpenPeriod(client, input.operating_company_id, entryDate);
+
+    // Deterministic idempotency under row lock: concurrent duplicate retries serialize here and
+    // resolve to validated already_posted — never race into zero-outstanding policy failure.
+    await lockFactoringAdvanceForSettlement(client, input.operating_company_id, input.factoring_advance_id);
+    const lockedAdvance = await loadAdvance(client, input.operating_company_id, input.factoring_advance_id);
+    if (!lockedAdvance) return { kind: "advance_not_found" as const };
+
+    const repayEventKey = `chargeback_repay:${chargeback}+${interest}@${entryDate}`;
+    const returnEventKey = `chargeback_return:${recoursed}@${entryDate}`;
+    const repayMemo = `Factoring chargeback repay ${lockedAdvance.display_id} (${chargeback}+${interest}@${entryDate})`;
+    const returnMemo = `Factoring chargeback receivable ${lockedAdvance.display_id} (${recoursed}@${entryDate})`;
+
+    const repayExpectedLegs: ExpectedLifecycleLeg[] = [
+      { role: "factoring_advance_liability", debit_or_credit: "debit", amount_cents: chargeback },
+      ...(interest > 0
+        ? [{ role: "default_interest_expense" as const, debit_or_credit: "debit" as const, amount_cents: interest }]
+        : []),
+      { role: "cash_clearing", debit_or_credit: "credit", amount_cents: chargeback + interest },
+    ];
+    const returnExpectedLegs: ExpectedLifecycleLeg[] = [
+      { role: "factoring_recoursed_ar", debit_or_credit: "debit", amount_cents: recoursed },
+      { role: "ar_control", debit_or_credit: "credit", amount_cents: recoursed },
+    ];
+
+    const repairChargebackAlreadyPosted = async (
+      existingRepay: string,
+      existingReturn: string
+    ): Promise<
+      | { kind: "already_posted"; journal_entry_id: string }
+      | { kind: "repair_candidate_invalid" }
+    > => {
+      const repayShape = await validateLifecycleJeExactShape(client, {
+        operating_company_id: input.operating_company_id,
+        journal_entry_id: existingRepay,
+        factoring_advance_id: input.factoring_advance_id,
+        source_transaction_type: "factoring_chargeback",
+        expected_legs: repayExpectedLegs,
+        expected_entry_date: entryDate,
+      });
+      const returnShape = await validateLifecycleJeExactShape(client, {
+        operating_company_id: input.operating_company_id,
+        journal_entry_id: existingReturn,
+        factoring_advance_id: input.factoring_advance_id,
+        source_transaction_type: "factoring_chargeback",
+        expected_legs: returnExpectedLegs,
+        expected_entry_date: entryDate,
+      });
+      if (!repayShape.ok || !returnShape.ok) {
+        return { kind: "repair_candidate_invalid" as const };
+      }
+      await attachFactoringLifecycleSourceLinksStrict(client, {
+        operating_company_id: input.operating_company_id,
+        journal_entry_id: existingRepay,
+        factoring_advance_id: input.factoring_advance_id,
+        source_transaction_type: "factoring_chargeback",
+      });
+      await attachFactoringLifecycleSourceLinksStrict(client, {
+        operating_company_id: input.operating_company_id,
+        journal_entry_id: existingReturn,
+        factoring_advance_id: input.factoring_advance_id,
+        source_transaction_type: "factoring_chargeback",
+      });
+      await applyChargebackSubledgerRelief(client, input.operating_company_id, input.factoring_advance_id);
+      await client.query(
+        `
+          UPDATE accounting.factoring_advances
+             SET status = 'recourse_returned',
+                 recourse_returned_at = COALESCE(recourse_returned_at, $2::timestamptz)
+           WHERE id = $1::uuid
+             AND operating_company_id = $3::uuid
+             AND status IN ('advanced', 'recourse_returned')
+        `,
+        [input.factoring_advance_id, `${entryDate}T12:00:00.000Z`, input.operating_company_id]
+      );
+      await client.query(
+        `
+          UPDATE accounting.invoices
+             SET factoring_status = 'recourse_returned',
+                 updated_at = now()
+           WHERE factoring_advance_id = $1::uuid
+             AND operating_company_id = $2::uuid
+        `,
+        [input.factoring_advance_id, input.operating_company_id]
+      );
+      await appendCrudAudit(
+        client,
+        input.actor_user_id,
+        "accounting.factoring_chargeback_posted",
+        {
+          resource_type: "accounting.factoring_advances",
+          resource_id: input.factoring_advance_id,
+          operating_company_id: input.operating_company_id,
+          display_id: lockedAdvance.display_id,
+          chargeback_amount_cents: chargeback,
+          default_interest_cents: interest,
+          recoursed_ar_cents: recoursed,
+          repay_journal_entry_id: existingRepay,
+          return_journal_entry_id: existingReturn,
+          repair: true,
+        },
+        "info",
+        "0280-05-FACTORING-CHARGEBACK"
+      );
+      return { kind: "already_posted" as const, journal_entry_id: existingReturn };
+    };
+
+    // Posting-key check UNDER lock — before status/outstanding rejection.
+    const existingRepay = await findLifecyclePostingKeyJe(client, {
+      operating_company_id: input.operating_company_id,
+      factoring_advance_id: input.factoring_advance_id,
+      source_transaction_type: "factoring_chargeback",
+      event_key: repayEventKey,
+    });
+    const existingReturn = await findLifecyclePostingKeyJe(client, {
+      operating_company_id: input.operating_company_id,
+      factoring_advance_id: input.factoring_advance_id,
+      source_transaction_type: "factoring_chargeback",
+      event_key: returnEventKey,
+    });
+    if ((existingRepay && !existingReturn) || (!existingRepay && existingReturn)) {
+      return { kind: "repair_ambiguous" as const };
+    }
+    if (existingRepay && existingReturn) {
+      return repairChargebackAlreadyPosted(existingRepay, existingReturn);
+    }
+
+    if (lockedAdvance.status !== "advanced") {
+      return { kind: "policy" as const };
+    }
+
+    const exactLiability = await linkedOutstandingLiabilityCents(
+      client,
+      input.operating_company_id,
+      input.factoring_advance_id
+    );
+    const exactAr = await linkedOutstandingRecoursedArCents(
+      client,
+      input.operating_company_id,
+      input.factoring_advance_id
+    );
+    // Full recourse only — amounts must match exact linked outstanding (no guess / partial).
+    // Reversed funding JEs are excluded from liability — reversed-funding cannot chargeback.
+    if (exactLiability <= 0 || exactAr <= 0 || chargeback !== exactLiability || recoursed !== exactAr) {
+      return { kind: "policy" as const };
+    }
 
     const liabilityAccountId = await resolveRoleAccount(client, input.operating_company_id, "factoring_advance_liability");
-    const defaultInterestAccountId = await resolveRoleAccount(client, input.operating_company_id, "default_interest_expense");
+    const defaultInterestAccountId = await resolveRoleAccount(
+      client,
+      input.operating_company_id,
+      "default_interest_expense"
+    );
     const cashAccountId = await resolveRoleAccount(client, input.operating_company_id, "cash_clearing");
     const recoursedAccountId = await resolveRoleAccount(client, input.operating_company_id, "factoring_recoursed_ar");
     const arAccountId = await resolveRoleAccount(client, input.operating_company_id, "ar_control");
 
-    const repayPostings = [
-      { account_id: liabilityAccountId, debit_or_credit: "debit" as const, amount_cents: chargeback, description: `${repayMemo} — repay factoring advance` },
-      ...(interest > 0
-        ? [{ account_id: defaultInterestAccountId, debit_or_credit: "debit" as const, amount_cents: interest, description: `${repayMemo} — default interest` }]
-        : []),
-      { account_id: cashAccountId, debit_or_credit: "credit" as const, amount_cents: chargeback + interest, description: `${repayMemo} — cash to FARO` },
-    ];
-    const returnPostings =
-      recoursed > 0
-        ? [
-            { account_id: recoursedAccountId, debit_or_credit: "debit" as const, amount_cents: recoursed, description: `${returnMemo} — receivable returned to us` },
-            { account_id: arAccountId, debit_or_credit: "credit" as const, amount_cents: recoursed, description: `${returnMemo} — remove from trade A/R` },
-          ]
-        : [];
+    const repayJe: CreateJournalEntryInput = {
+      operating_company_id: input.operating_company_id,
+      entry_date: entryDate,
+      memo: repayMemo,
+      source: "auto",
+      postings: [
+        {
+          account_id: liabilityAccountId,
+          debit_or_credit: "debit",
+          amount_cents: chargeback,
+          description: `${repayMemo} — repay factoring advance`,
+        },
+        ...(interest > 0
+          ? [
+              {
+                account_id: defaultInterestAccountId,
+                debit_or_credit: "debit" as const,
+                amount_cents: interest,
+                description: `${repayMemo} — default interest`,
+              },
+            ]
+          : []),
+        {
+          account_id: cashAccountId,
+          debit_or_credit: "credit",
+          amount_cents: chargeback + interest,
+          description: `${repayMemo} — cash to FARO`,
+        },
+      ],
+    };
+    const returnJe: CreateJournalEntryInput = {
+      operating_company_id: input.operating_company_id,
+      entry_date: entryDate,
+      memo: returnMemo,
+      source: "auto",
+      postings: [
+        {
+          account_id: recoursedAccountId,
+          debit_or_credit: "debit",
+          amount_cents: recoursed,
+          description: `${returnMemo} — receivable returned to us`,
+        },
+        {
+          account_id: arAccountId,
+          debit_or_credit: "credit",
+          amount_cents: recoursed,
+          description: `${returnMemo} — remove from trade A/R`,
+        },
+      ],
+    };
 
-    const repayExists = await journalEntryExistsByMemo(client, input.operating_company_id, repayMemo);
-    const returnExists = returnPostings.length > 0 ? await journalEntryExistsByMemo(client, input.operating_company_id, returnMemo) : true;
+    await client.query(`SAVEPOINT factoring_chargeback_je_create`);
+    let repayCreated: { id: string };
+    let returnCreated: { id: string };
+    try {
+      repayCreated = await createJournalEntryOnClient(
+        client,
+        repayJe,
+        { userId: input.actor_user_id, role: "system" },
+        {
+          afterInsertBeforeCommit: async (c, header) => {
+            if (__posterAtomicityTestHooks.failAfterJeBeforeLifecycleLinks) {
+              throw new Error("injected_failure_between_je_and_lifecycle_links");
+            }
+            const claim = await claimFactoringLifecyclePostingKey(c, {
+              operating_company_id: input.operating_company_id,
+              factoring_advance_id: input.factoring_advance_id,
+              source_transaction_type: "factoring_chargeback",
+              event_key: repayEventKey,
+              journal_entry_id: header.id,
+            });
+            if (claim === "already_claimed") throw new FactoringLifecyclePostingKeyRaceError();
+            await attachFactoringLifecycleSourceLinksStrict(c, {
+              operating_company_id: input.operating_company_id,
+              journal_entry_id: header.id,
+              factoring_advance_id: input.factoring_advance_id,
+              source_transaction_type: "factoring_chargeback",
+            });
+          },
+        }
+      );
 
-    return { gate: "post" as const, entryDate, repayMemo, returnMemo, repayPostings, returnPostings, repayExists, returnExists };
+      if (__posterAtomicityTestHooks.failAfterChargebackRepayBeforeReturn) {
+        throw new Error("injected_failure_after_chargeback_repay_before_return");
+      }
+
+      returnCreated = await createJournalEntryOnClient(
+        client,
+        returnJe,
+        { userId: input.actor_user_id, role: "system" },
+        {
+          afterInsertBeforeCommit: async (c, header) => {
+            const claim = await claimFactoringLifecyclePostingKey(c, {
+              operating_company_id: input.operating_company_id,
+              factoring_advance_id: input.factoring_advance_id,
+              source_transaction_type: "factoring_chargeback",
+              event_key: returnEventKey,
+              journal_entry_id: header.id,
+            });
+            if (claim === "already_claimed") throw new FactoringLifecyclePostingKeyRaceError();
+            await attachFactoringLifecycleSourceLinksStrict(c, {
+              operating_company_id: input.operating_company_id,
+              journal_entry_id: header.id,
+              factoring_advance_id: input.factoring_advance_id,
+              source_transaction_type: "factoring_chargeback",
+            });
+            await applyChargebackSubledgerRelief(c, input.operating_company_id, input.factoring_advance_id);
+          },
+        }
+      );
+      await client.query(`RELEASE SAVEPOINT factoring_chargeback_je_create`);
+    } catch (e) {
+      await client.query(`ROLLBACK TO SAVEPOINT factoring_chargeback_je_create`);
+      if (
+        e instanceof FactoringLifecyclePostingKeyRaceError ||
+        (e as Error)?.message === "factoring_lifecycle_posting_key_race"
+      ) {
+        const winRepay = await findLifecyclePostingKeyJe(client, {
+          operating_company_id: input.operating_company_id,
+          factoring_advance_id: input.factoring_advance_id,
+          source_transaction_type: "factoring_chargeback",
+          event_key: repayEventKey,
+        });
+        const winReturn = await findLifecyclePostingKeyJe(client, {
+          operating_company_id: input.operating_company_id,
+          factoring_advance_id: input.factoring_advance_id,
+          source_transaction_type: "factoring_chargeback",
+          event_key: returnEventKey,
+        });
+        if (winRepay && winReturn) {
+          return repairChargebackAlreadyPosted(winRepay, winReturn);
+        }
+        return { kind: "repair_ambiguous" as const };
+      }
+      throw e;
+    }
+    sideEffectJes.push({ je: repayJe, id: repayCreated.id });
+    sideEffectJes.push({ je: returnJe, id: returnCreated.id });
+
+    if (__posterAtomicityTestHooks.failAfterChargebackReturnBeforeStatus) {
+      throw new Error("injected_failure_after_chargeback_return_before_status");
+    }
+
+    await client.query(
+      `
+        UPDATE accounting.factoring_advances
+           SET status = 'recourse_returned',
+               recourse_returned_at = $2::timestamptz,
+               recourse_reason = COALESCE(
+                 recourse_reason,
+                 'Full recourse chargeback — linked outstanding liability extinguished'
+               )
+         WHERE id = $1::uuid
+           AND operating_company_id = $3::uuid
+           AND status = 'advanced'
+      `,
+      [input.factoring_advance_id, `${entryDate}T12:00:00.000Z`, input.operating_company_id]
+    );
+    await client.query(
+      `
+        UPDATE accounting.invoices
+           SET factoring_status = 'recourse_returned',
+               updated_at = now()
+         WHERE factoring_advance_id = $1::uuid
+           AND operating_company_id = $2::uuid
+      `,
+      [input.factoring_advance_id, input.operating_company_id]
+    );
+    await appendCrudAudit(
+      client,
+      input.actor_user_id,
+      "accounting.factoring_chargeback_posted",
+      {
+        resource_type: "accounting.factoring_advances",
+        resource_id: input.factoring_advance_id,
+        operating_company_id: input.operating_company_id,
+        display_id: lockedAdvance.display_id,
+        chargeback_amount_cents: chargeback,
+        default_interest_cents: interest,
+        recoursed_ar_cents: recoursed,
+        repay_journal_entry_id: repayCreated.id,
+        return_journal_entry_id: returnCreated.id,
+      },
+      "info",
+      "0280-05-FACTORING-CHARGEBACK"
+    );
+
+    return { kind: "posted" as const, journal_entry_id: returnCreated.id };
   });
 
-  if (prepared.gate === "flag_off") return FLAG_OFF;
-  if (prepared.gate === "advance_not_found") return { posted: false, reason: "advance_not_found" };
-
-  let anyPosted = false;
-  let lastJeId: string | undefined;
-  if (!prepared.repayExists) {
-    const created = await createJournalEntry(
-      { operating_company_id: input.operating_company_id, entry_date: prepared.entryDate, memo: prepared.repayMemo, source: "auto", postings: prepared.repayPostings },
-      { userId: input.actor_user_id, role: "system" }
-    );
-    anyPosted = true;
-    lastJeId = created.id;
+  if (outcome.kind === "flag_off") return FLAG_OFF;
+  if (outcome.kind === "advance_not_found") return { posted: false, reason: "advance_not_found" };
+  if (outcome.kind === "policy") return { posted: false, reason: "policy_partial_or_ambiguous_recourse" };
+  if (outcome.kind === "policy_invalid_entry_date") return { posted: false, reason: "policy_invalid_entry_date" };
+  if (outcome.kind === "policy_missing_entry_date") return { posted: false, reason: "policy_missing_entry_date" };
+  if (outcome.kind === "policy_faro_agreement") return { posted: false, reason: "policy_faro_agreement" };
+  if (outcome.kind === "policy_advance_not_bound_to_faro") {
+    return { posted: false, reason: "policy_advance_not_bound_to_faro" };
   }
-  if (prepared.returnPostings.length > 0 && !prepared.returnExists) {
-    const created = await createJournalEntry(
-      { operating_company_id: input.operating_company_id, entry_date: prepared.entryDate, memo: prepared.returnMemo, source: "auto", postings: prepared.returnPostings },
-      { userId: input.actor_user_id, role: "system" }
-    );
-    anyPosted = true;
-    lastJeId = created.id;
+  if (outcome.kind === "repair_ambiguous") return { posted: false, reason: "repair_ambiguous" };
+  if (outcome.kind === "repair_candidate_invalid") {
+    return { posted: false, reason: "repair_candidate_invalid" };
+  }
+  if (outcome.kind === "already_posted") {
+    return { posted: false, reason: "already_posted", journal_entry_id: outcome.journal_entry_id };
   }
 
-  // CHAIN-06 §5/§7-A fix: the (B) leg above removes the receivable from trade A/R (ar_control) — sync the
-  // subledger accordingly. Runs whenever this advance HAS a recoursed-AR leg (returnPostings non-empty),
-  // whether the JE was just created OR already existed (returnExists) — idempotent status flip, so this
-  // also self-heals a prior run that posted the JE but crashed before this sync.
-  if (prepared.returnPostings.length > 0) {
-    await withLuciaBypass(async (client: DbClient) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
-      await applyChargebackSubledgerRelief(client, input.operating_company_id, input.factoring_advance_id);
-    });
+  for (const item of sideEffectJes) {
+    await enqueueJournalEntrySideEffects(item.je, item.id, input.actor_user_id);
   }
-
-  return anyPosted ? { posted: true, journal_entry_id: lastJeId } : { posted: false, reason: "already_posted" };
+  return { posted: true, journal_entry_id: outcome.journal_entry_id };
 }
 
 // ---------------------------------------------------------------------------------------------------
@@ -638,11 +2181,10 @@ export async function postFactoringChargebackEvent(input: PostFactoringChargebac
 //
 //   Compounding is deterministic + idempotent via accounting.factoring_default_interest_accruals: exactly
 //   ONE row per (advance, accrual_date), carrying opening → interest → closing. The opening balance for a
-//   given day = the PRIOR accrual's closing balance (compounded), or the pledged Net (invoice_total_cents)
-//   for the first charged day. A re-run for a day already accrued no-ops (already_posted). The accrual cron
-//   drives one call per (outstanding advance, missing day) in ascending date order, so each day compounds
-//   off the committed prior row. Interest only accrues while the advance is still funded-and-unpaid
-//   (status 'advanced'); once the customer pays the factor (reserve_held) or it recourses, accrual stops.
+//   given day = exact linked outstanding factoring_advance_liability BEFORE that day's interest credit
+//   (funding + prior interest − customer payments − chargebacks). NEVER prior-accrual closing / invoice
+//   face alone — intervening customer-payment liability debits must reduce the interest base. A re-run
+//   for a day already accrued no-ops (already_posted). Interest only accrues while status is 'advanced'.
 // ---------------------------------------------------------------------------------------------------
 export type PostFactoringDefaultInterestAccrualInput = {
   operating_company_id: string;
@@ -651,25 +2193,69 @@ export type PostFactoringDefaultInterestAccrualInput = {
   accrual_date_iso: string; // the calendar day interest is charged for (America/Chicago)
 };
 
-async function lastAccrualClosingBalance(
+/**
+ * Contractual default-interest opening = unpaid Faro liability at the START of the accrual day, i.e. the
+ * balance from postings dated strictly BEFORE the accrual date (funding + prior-day interest − prior
+ * payments/chargebacks). Same-day and later customer payments do NOT reduce that day's interest base
+ * (they reduce the next day), so the opening is stable and reproducible under repair even after later
+ * payments land. Optionally also exclude an in-flight / already-posted interest JE so its own credit is
+ * not in the base (belt-and-suspenders with the date bound, which already excludes the same-dated JE).
+ */
+async function defaultInterestOpeningFromOutstandingLiability(
   client: DbClient,
   operatingCompanyId: string,
-  factoringAdvanceId: string
-): Promise<number | null> {
-  const res = await client.query<{ closing_balance_cents: string }>(
+  factoringAdvanceId: string,
+  excludeJournalEntryId?: string | null,
+  beforeDateExclusive?: string | null
+): Promise<number> {
+  return linkedOutstandingLiabilityCents(
+    client,
+    operatingCompanyId,
+    factoringAdvanceId,
+    excludeJournalEntryId,
+    beforeDateExclusive
+  );
+}
+
+async function loadDefaultInterestAccrualRow(
+  client: DbClient,
+  operatingCompanyId: string,
+  factoringAdvanceId: string,
+  accrualDate: string
+): Promise<{
+  interest_cents: number;
+  opening_balance_cents: number;
+  closing_balance_cents: number;
+  journal_entry_id: string | null;
+} | null> {
+  const res = await client.query<{
+    interest_cents: string;
+    opening_balance_cents: string;
+    closing_balance_cents: string;
+    journal_entry_id: string | null;
+  }>(
     `
-      SELECT closing_balance_cents::text AS closing_balance_cents
+      SELECT
+        interest_cents::text AS interest_cents,
+        opening_balance_cents::text AS opening_balance_cents,
+        closing_balance_cents::text AS closing_balance_cents,
+        journal_entry_id::text AS journal_entry_id
       FROM accounting.factoring_default_interest_accruals
       WHERE operating_company_id = $1::uuid
         AND factoring_advance_id = $2::uuid
-        AND is_active = true
-      ORDER BY accrual_date DESC
+        AND accrual_date = $3::date
       LIMIT 1
     `,
-    [operatingCompanyId, factoringAdvanceId]
+    [operatingCompanyId, factoringAdvanceId, accrualDate]
   );
-  const raw = res.rows[0]?.closing_balance_cents;
-  return raw == null ? null : Number(raw);
+  const row = res.rows[0];
+  if (!row) return null;
+  return {
+    interest_cents: Number(row.interest_cents ?? 0),
+    opening_balance_cents: Number(row.opening_balance_cents ?? 0),
+    closing_balance_cents: Number(row.closing_balance_cents ?? 0),
+    journal_entry_id: row.journal_entry_id,
+  };
 }
 
 async function accrualExistsForDay(
@@ -726,6 +2312,12 @@ export async function sumAccruedDefaultInterest(
 export async function postFactoringDefaultInterestAccrualEvent(
   input: PostFactoringDefaultInterestAccrualInput
 ): Promise<PostResult> {
+  return retryOnFactoringDeadlock(() => postFactoringDefaultInterestAccrualEventImpl(input));
+}
+
+async function postFactoringDefaultInterestAccrualEventImpl(
+  input: PostFactoringDefaultInterestAccrualInput
+): Promise<PostResult> {
   const prepared = await withLuciaBypass(async (client: DbClient) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
     if (!(await factoringPostingEnabled(client, input.operating_company_id))) return { gate: "flag_off" as const };
@@ -738,7 +2330,22 @@ export async function postFactoringDefaultInterestAccrualEvent(
     // liability is being settled — no further interest. Defense-in-depth beyond the cron's own selection.
     if (advance.status !== "advanced" || !advance.advanced_at) return { gate: "not_outstanding" as const };
 
-    const accrualDate = input.accrual_date_iso.slice(0, 10);
+    let accrualDate: string;
+    try {
+      accrualDate = resolveCanonicalEntryDate(input.accrual_date_iso);
+    } catch (e) {
+      if (e instanceof FactoringEntryDateError) return { gate: e.reason };
+      throw e;
+    }
+
+    const faro = await requireFaroBoundAdvance(
+      client,
+      input.operating_company_id,
+      input.factoring_advance_id,
+      accrualDate
+    );
+    if (!faro.ok) return { gate: faro.reason! };
+
     const dayIndex = dayIndexBetween(advance.advanced_at, accrualDate);
     // Contract: no interest through the 30-day term + 5-day grace (day 35). First charged day is day 36.
     if (dayIndex <= FACTORING_INTEREST_ACCRUAL_AFTER_DAY) return { gate: "before_grace" as const };
@@ -747,9 +2354,18 @@ export async function postFactoringDefaultInterestAccrualEvent(
       return { gate: "already_posted" as const };
     }
 
-    // Compounding: opening = prior accrual's closing, else the pledged Net (the outstanding liability).
-    const priorClosing = await lastAccrualClosingBalance(client, input.operating_company_id, input.factoring_advance_id);
-    const opening = priorClosing ?? Number(advance.invoice_total_cents ?? 0);
+    // Prepare-phase lock (this short txn only) — the authoritative lock is re-taken and held THROUGH the
+    // JE write in afterLifecycleBeforeCommit below, so a concurrent payment cannot leave a stale credit.
+    await lockFactoringAdvanceForSettlement(client, input.operating_company_id, input.factoring_advance_id);
+    // Opening = liability at the START of the accrual day (postings dated strictly before accrualDate):
+    // funding + prior-day interest − prior payments/chargebacks. Same-day/later payments do not reduce it.
+    const opening = await defaultInterestOpeningFromOutstandingLiability(
+      client,
+      input.operating_company_id,
+      input.factoring_advance_id,
+      null,
+      accrualDate
+    );
     if (opening <= 0) return { gate: "zero_amount" as const };
 
     const interest = Math.round(opening * FACTORING_DEFAULT_INTEREST_DAILY_RATE);
@@ -781,64 +2397,233 @@ export async function postFactoringDefaultInterestAccrualEvent(
   if (prepared.gate === "advance_not_found") return { posted: false, reason: "advance_not_found" };
   if (prepared.gate === "not_outstanding") return { posted: false, reason: "not_outstanding" };
   if (prepared.gate === "before_grace") return { posted: false, reason: "before_grace" };
-  if (prepared.gate === "already_posted") return { posted: false, reason: "already_posted" };
-  if (prepared.gate === "zero_amount") return { posted: false, reason: "zero_amount" };
+  if (prepared.gate === "policy_invalid_entry_date") return { posted: false, reason: "policy_invalid_entry_date" };
+  if (prepared.gate === "policy_missing_entry_date") return { posted: false, reason: "policy_missing_entry_date" };
+  if (prepared.gate === "policy_faro_agreement") return { posted: false, reason: "policy_faro_agreement" };
+  if (prepared.gate === "policy_advance_not_bound_to_faro") {
+    return { posted: false, reason: "policy_advance_not_bound_to_faro" };
+  }
+  if (prepared.gate === "already_posted") {
+    // Exact-shape repair: recompute contractual interest, validate JE legs/amount/source/entity/date.
+    let accrualDate: string;
+    try {
+      accrualDate = resolveCanonicalEntryDate(input.accrual_date_iso);
+    } catch (e) {
+      if (e instanceof FactoringEntryDateError) return { posted: false, reason: e.reason };
+      throw e;
+    }
+    const repairOutcome = await withLuciaBypass(async (client: DbClient) => {
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
+        input.operating_company_id,
+      ]);
+      const advance = await loadAdvance(client, input.operating_company_id, input.factoring_advance_id);
+      if (!advance?.advanced_at) {
+        return { kind: "advance_not_found" as const };
+      }
+      const dayIndex = dayIndexBetween(advance.advanced_at, accrualDate);
+      await lockFactoringAdvanceForSettlement(client, input.operating_company_id, input.factoring_advance_id);
 
-  const created = await createJournalEntry(
-    {
+      const accrualRow = await loadDefaultInterestAccrualRow(
+        client,
+        input.operating_company_id,
+        input.factoring_advance_id,
+        accrualDate
+      );
+      if (!accrualRow) {
+        return { kind: "repair_candidate_invalid" as const, reason: "missing_accrual_row" };
+      }
+
+      const keyJe = await findLifecyclePostingKeyJe(client, {
+        operating_company_id: input.operating_company_id,
+        factoring_advance_id: input.factoring_advance_id,
+        source_transaction_type: "factoring_default_interest",
+        event_key: `default_interest:${accrualDate}`,
+      });
+      let journalEntryId = keyJe ?? accrualRow.journal_entry_id;
+      const memo = `Factoring default interest ${advance.display_id} day ${dayIndex} (${accrualDate})`;
+      // Resolve JE first (posting key / accrual / strict candidate) so we can exclude it from liability.
+      if (!journalEntryId) {
+        const provisionalLegs: ExpectedLifecycleLeg[] = [
+          {
+            role: "default_interest_expense",
+            debit_or_credit: "debit",
+            amount_cents: accrualRow.interest_cents,
+          },
+          {
+            role: "factoring_advance_liability",
+            debit_or_credit: "credit",
+            amount_cents: accrualRow.interest_cents,
+          },
+        ];
+        const candidate = await findStrictLifecycleRepairCandidate(client, {
+          operating_company_id: input.operating_company_id,
+          factoring_advance_id: input.factoring_advance_id,
+          source_transaction_type: "factoring_default_interest",
+          memo,
+          expected_legs: provisionalLegs,
+          expected_entry_date: accrualDate,
+        });
+        if (candidate.kind === "ambiguous") return { kind: "repair_ambiguous" as const };
+        if (candidate.kind !== "unique" || !candidate.journal_entry_id) {
+          return {
+            kind: "repair_candidate_invalid" as const,
+            reason: candidate.reason ?? "missing_repair_candidate",
+          };
+        }
+        journalEntryId = candidate.journal_entry_id;
+      }
+
+      // Opening = liability at the START of the accrual day (postings dated strictly before accrualDate),
+      // excluding today's own interest credit. Date-bounding is what makes this REPAIR reproduce the
+      // historical opening even after later customer payments landed — no spurious opening mismatch, and
+      // same-day idempotent re-entry still validates (same-day payments never reduce that day's base).
+      const opening = await defaultInterestOpeningFromOutstandingLiability(
+        client,
+        input.operating_company_id,
+        input.factoring_advance_id,
+        journalEntryId,
+        accrualDate
+      );
+      const expectedInterest = Math.round(opening * FACTORING_DEFAULT_INTEREST_DAILY_RATE);
+      const expectedClosing = opening + expectedInterest;
+      if (expectedInterest <= 0) {
+        return { kind: "repair_candidate_invalid" as const, reason: "zero_amount" };
+      }
+      if (
+        accrualRow.interest_cents !== expectedInterest ||
+        accrualRow.opening_balance_cents !== opening ||
+        accrualRow.closing_balance_cents !== expectedClosing
+      ) {
+        return { kind: "repair_candidate_invalid" as const, reason: "repair_candidate_wrong_amount" };
+      }
+
+      const expectedLegs: ExpectedLifecycleLeg[] = [
+        { role: "default_interest_expense", debit_or_credit: "debit", amount_cents: expectedInterest },
+        {
+          role: "factoring_advance_liability",
+          debit_or_credit: "credit",
+          amount_cents: expectedInterest,
+        },
+      ];
+
+      const shape = await validateLifecycleJeExactShape(client, {
+        operating_company_id: input.operating_company_id,
+        journal_entry_id: journalEntryId,
+        factoring_advance_id: input.factoring_advance_id,
+        source_transaction_type: "factoring_default_interest",
+        expected_legs: expectedLegs,
+        expected_entry_date: accrualDate,
+      });
+      if (!shape.ok) {
+        return { kind: "repair_candidate_invalid" as const, reason: shape.reason };
+      }
+      await attachFactoringLifecycleSourceLinksStrict(client, {
+        operating_company_id: input.operating_company_id,
+        journal_entry_id: journalEntryId,
+        factoring_advance_id: input.factoring_advance_id,
+        source_transaction_type: "factoring_default_interest",
+      });
+      return { kind: "already_posted" as const, journal_entry_id: journalEntryId };
+    });
+
+    if (repairOutcome.kind === "advance_not_found") {
+      return { posted: false, reason: "advance_not_found" };
+    }
+    if (repairOutcome.kind === "repair_ambiguous") {
+      return { posted: false, reason: "repair_ambiguous" };
+    }
+    if (repairOutcome.kind === "repair_candidate_invalid") {
+      return { posted: false, reason: "repair_candidate_invalid" };
+    }
+    return {
+      posted: false,
+      reason: "already_posted",
+      journal_entry_id: repairOutcome.journal_entry_id,
+    };
+  }
+  if (prepared.gate === "zero_amount") return { posted: false, reason: "zero_amount" };
+  if (prepared.gate !== "post") return { posted: false, reason: "advance_not_found" };
+
+  const interestExpectedLegs: ExpectedLifecycleLeg[] = [
+    { role: "default_interest_expense", debit_or_credit: "debit", amount_cents: prepared.interest },
+    { role: "factoring_advance_liability", debit_or_credit: "credit", amount_cents: prepared.interest },
+  ];
+
+  const created = await createFactoringJournalEntryAtomically({
+    actor_user_id: input.actor_user_id,
+    je: {
       operating_company_id: input.operating_company_id,
       entry_date: prepared.accrualDate,
       memo: prepared.memo,
       source: "auto",
       postings: prepared.postings,
     },
-    { userId: input.actor_user_id, role: "system" }
-  );
-
-  // Record the accrual (ledger + connectivity: accrual → JE → advance). ON CONFLICT no-ops so a retry after
-  // the JE posted but before this insert committed will not double-insert (and the memo-less JE stays keyed
-  // by its own memo idempotency for any future guard).
-  await withLuciaBypass(async (client: DbClient) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
-    await client.query(
-      `
-        INSERT INTO accounting.factoring_default_interest_accruals (
-          operating_company_id, factoring_advance_id, accrual_date, day_index, daily_rate,
-          opening_balance_cents, interest_cents, closing_balance_cents, journal_entry_id
-        )
-        VALUES ($1::uuid, $2::uuid, $3::date, $4, $5, $6, $7, $8, $9::uuid)
-        ON CONFLICT (operating_company_id, factoring_advance_id, accrual_date) DO NOTHING
-      `,
-      [
+    factoring_advance_id: input.factoring_advance_id,
+    source_transaction_type: "factoring_default_interest",
+    event_key: `default_interest:${prepared.accrualDate}`,
+    expected_legs: interestExpectedLegs,
+    afterLifecycleBeforeCommit: async (client, journalEntryId) => {
+      // Lock THROUGH the JE write (the prepare-phase lock was released at that short txn's commit) and
+      // re-validate the interest base inside THIS posting txn — same concurrent-settlement contract the
+      // customer-payment path enforces. A back-dated payment/chargeback (entry_date < accrualDate) landing
+      // between prepare and post would change the day's opening; if so we fail closed and roll back rather
+      // than commit a stale interest credit. Same-day/later payments correctly do not affect this base.
+      await lockFactoringAdvanceForSettlement(client, input.operating_company_id, input.factoring_advance_id);
+      const revalidatedOpening = await defaultInterestOpeningFromOutstandingLiability(
+        client,
         input.operating_company_id,
         input.factoring_advance_id,
-        prepared.accrualDate,
-        prepared.dayIndex,
-        FACTORING_DEFAULT_INTEREST_DAILY_RATE,
-        prepared.opening,
-        prepared.interest,
-        prepared.closing,
-        created.id,
-      ]
-    );
-    await appendCrudAudit(
-      client,
-      input.actor_user_id,
-      "accounting.factoring_default_interest_accrued",
-      {
-        resource_type: "accounting.factoring_advances",
-        resource_id: input.factoring_advance_id,
-        operating_company_id: input.operating_company_id,
-        display_id: prepared.displayId,
-        accrual_date: prepared.accrualDate,
-        day_index: prepared.dayIndex,
-        interest_cents: prepared.interest,
-        closing_balance_cents: prepared.closing,
-        journal_entry_id: created.id,
-      },
-      "info",
-      "FACTORING-DEFAULT-INTEREST"
-    );
+        journalEntryId,
+        prepared.accrualDate
+      );
+      const revalidatedInterest = Math.round(revalidatedOpening * FACTORING_DEFAULT_INTEREST_DAILY_RATE);
+      if (revalidatedOpening !== prepared.opening || revalidatedInterest !== prepared.interest) {
+        throw new Error(
+          `factoring_default_interest_base_changed_under_lock: opening ${prepared.opening}->${revalidatedOpening} interest ${prepared.interest}->${revalidatedInterest}`
+        );
+      }
+      // Record the accrual (ledger + connectivity: accrual → JE → advance). ON CONFLICT no-ops so a retry
+      // after the JE posted but before this insert committed will not double-insert.
+      await client.query(
+        `
+          INSERT INTO accounting.factoring_default_interest_accruals (
+            operating_company_id, factoring_advance_id, accrual_date, day_index, daily_rate,
+            opening_balance_cents, interest_cents, closing_balance_cents, journal_entry_id
+          )
+          VALUES ($1::uuid, $2::uuid, $3::date, $4, $5, $6, $7, $8, $9::uuid)
+          ON CONFLICT (operating_company_id, factoring_advance_id, accrual_date) DO NOTHING
+        `,
+        [
+          input.operating_company_id,
+          input.factoring_advance_id,
+          prepared.accrualDate,
+          prepared.dayIndex,
+          FACTORING_DEFAULT_INTEREST_DAILY_RATE,
+          prepared.opening,
+          prepared.interest,
+          prepared.closing,
+          journalEntryId,
+        ]
+      );
+      await appendCrudAudit(
+        client,
+        input.actor_user_id,
+        "accounting.factoring_default_interest_accrued",
+        {
+          resource_type: "accounting.factoring_advances",
+          resource_id: input.factoring_advance_id,
+          operating_company_id: input.operating_company_id,
+          display_id: prepared.displayId,
+          accrual_date: prepared.accrualDate,
+          day_index: prepared.dayIndex,
+          interest_cents: prepared.interest,
+          closing_balance_cents: prepared.closing,
+          journal_entry_id: journalEntryId,
+        },
+        "info",
+        "FACTORING-DEFAULT-INTEREST"
+      );
+    },
   });
 
   return { posted: true, journal_entry_id: created.id, memo: prepared.memo, closing_balance_cents: prepared.closing };

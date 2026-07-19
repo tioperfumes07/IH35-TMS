@@ -6,31 +6,52 @@ import {
   postFactoringChargebackEvent,
 } from "../poster.service.js";
 
-// Block 1-v3 — flag-gate + idempotency no-ops, plus the two chargeback @cpa-open-item DOCUMENTING tests
-// (they assert CURRENT behavior and cite the doc §6 open items; they do NOT "fix" it). Same mocked infra
-// as poster-scenario-8 (no DB): the per-leg balance/legs are proven there; here we prove the gates + open items.
-const { mockQuery, mockWithLuciaBypass, mockIsEnabled, mockCreateJournalEntry, mockResolveRoleAccount } = vi.hoisted(() => {
+// Flag-gate + idempotency + CPA fail-closed policy for partial/ambiguous recourse (no defaults).
+const { mockQuery, mockWithLuciaBypass, mockWithCurrentUser, mockIsEnabled, mockCreateJournalEntry, mockResolveRoleAccount } = vi.hoisted(() => {
   const query = vi.fn();
   const withLuciaBypass = vi.fn(async (fn: (client: { query: typeof query }) => unknown) => fn({ query }));
+  const withCurrentUser = vi.fn(async (_userId: string, fn: (client: { query: typeof query }) => unknown) => fn({ query }));
   return {
     mockQuery: query,
     mockWithLuciaBypass: withLuciaBypass,
+    mockWithCurrentUser: withCurrentUser,
     mockIsEnabled: vi.fn(),
     mockCreateJournalEntry: vi.fn(),
     mockResolveRoleAccount: vi.fn(),
   };
 });
 
-vi.mock("../../../auth/db.js", () => ({ withLuciaBypass: mockWithLuciaBypass }));
+vi.mock("../../../auth/db.js", () => ({ withLuciaBypass: mockWithLuciaBypass, withCurrentUser: mockWithCurrentUser }));
 vi.mock("../../../lib/feature-flags/service.js", () => ({ isEnabled: mockIsEnabled }));
-vi.mock("../../journal-entries.service.js", () => ({ createJournalEntry: mockCreateJournalEntry }));
+vi.mock("../../journal-entries.service.js", () => ({
+  createJournalEntry: mockCreateJournalEntry,
+  createJournalEntryOnClient: mockCreateJournalEntry,
+  enqueueJournalEntrySideEffects: vi.fn(async () => undefined),
+}));
+vi.mock("../../posting-engine.service.js", () => ({ ensureOpenPeriod: vi.fn(async () => undefined) }));
+vi.mock("../../accounting-spine-emit.js", () => ({ writeTransactionSourceLink: vi.fn(async () => undefined) }));
 vi.mock("../../coa-roles/resolver.service.js", () => ({ resolveRoleAccount: mockResolveRoleAccount }));
+vi.mock("../../../audit/crud-audit.js", () => ({ appendCrudAudit: vi.fn(async () => undefined) }));
+vi.mock("../faro-agreement-gate.js", () => ({
+  requireEffectiveFaroFullRecourseAgreement: vi.fn(async () => ({
+    ok: true,
+    vendorId: "faro-vendor",
+    vendorName: "Faro",
+    agreementId: "agr-1",
+    factorProfileId: "fp-1",
+    companyCode: "TRANSP",
+    asOf: "2026-01-20",
+  })),
+  advanceBoundToFaroVendor: vi.fn(async () => true),
+  FARO_FULL_RECOURSE_AGREEMENT_CODE: "FARO_FULL_RECOURSE_V1",
+}));
+
 
 const OPCO = "11111111-1111-4111-8111-111111111111";
 const ADVANCE = "22222222-2222-4222-8222-222222222222";
 const ACTOR = "33333333-3333-4333-8333-333333333333";
 
-function installDefaults(flagOn: boolean, existingMemos: Set<string> = new Set()) {
+function installDefaults(flagOn: boolean, alreadyPosted = false) {
   mockQuery.mockReset();
   mockIsEnabled.mockReset();
   mockCreateJournalEntry.mockReset();
@@ -38,15 +59,71 @@ function installDefaults(flagOn: boolean, existingMemos: Set<string> = new Set()
 
   mockIsEnabled.mockResolvedValue(flagOn);
   mockResolveRoleAccount.mockImplementation(async (_c: unknown, _o: string, role: string) => role);
-  mockCreateJournalEntry.mockResolvedValue({ id: "je-1" });
-  mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
+  mockCreateJournalEntry.mockImplementation(async (...args: unknown[]) => {
+    const options = (args.length >= 4 ? args[3] : args[2]) as
+      | { afterInsertBeforeCommit?: (client: { query: typeof mockQuery }, header: { id: string }) => Promise<void> }
+      | undefined;
+    const client = args.length >= 4 ? (args[0] as { query: typeof mockQuery }) : { query: mockQuery };
+    const header = { id: "je-1" };
+    if (options?.afterInsertBeforeCommit) {
+      await options.afterInsertBeforeCommit(client, header);
+    }
+    return header;
+  });
+  mockQuery.mockImplementation(async (sql: string) => {
     if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
+    if (sql.includes("SAVEPOINT") || sql.includes("RELEASE SAVEPOINT") || sql.includes("ROLLBACK TO SAVEPOINT")) {
+      return { rows: [] };
+    }
+    if (sql.includes("FOR UPDATE")) return { rows: [{ id: ADVANCE }] };
+    if (sql.includes("information_schema.columns")) return { rows: [{ n: "0" }] };
+    if (sql.includes("factoring_lifecycle_posting_keys")) {
+      if (sql.includes("INSERT")) return { rows: alreadyPosted ? [] : [{ journal_entry_id: "je-1" }] };
+      return { rows: alreadyPosted ? [{ journal_entry_id: "existing-je" }] : [] };
+    }
+    if (sql.includes("AS outstanding")) {
+      return { rows: [{ outstanding: "500000" }] };
+    }
+    if (alreadyPosted && sql.includes("status::text AS status") && sql.includes("journal_entries")) {
+      return { rows: [{ id: "existing-je", status: "posted", reverses_je_id: null, reversed_by_je_id: null }] };
+    }
+    if (alreadyPosted && sql.includes("chart_of_accounts_roles") && sql.includes("AS role")) {
+      return {
+        rows: [
+          {
+            role: "factoring_advance_liability",
+            debit_or_credit: "credit",
+            amount_cents: "500000",
+            source_transaction_type: null,
+            source_transaction_id: null,
+          },
+          {
+            role: "cash_clearing",
+            debit_or_credit: "debit",
+            amount_cents: "492500",
+            source_transaction_type: null,
+            source_transaction_id: null,
+          },
+          {
+            role: "factor_reserve_held",
+            debit_or_credit: "debit",
+            amount_cents: "7500",
+            source_transaction_type: null,
+            source_transaction_id: null,
+          },
+        ],
+      };
+    }
+    if (sql.includes("AS ok") && sql.includes("journal_entry_uuid") && sql.includes("= COALESCE")) {
+      return { rows: [{ ok: true }] };
+    }
     if (sql.includes("FROM accounting.factoring_advances") && sql.includes("invoice_total_cents")) {
       return {
         rows: [
           {
-            id: "fac-1",
+            id: ADVANCE,
             display_id: "FAC-0001",
+            status: "advanced",
             invoice_total_cents: 500000,
             advance_amount_cents: 492500,
             reserve_amount_cents: 7500,
@@ -60,31 +137,59 @@ function installDefaults(flagOn: boolean, existingMemos: Set<string> = new Set()
         ],
       };
     }
-    if (sql.includes("FROM accounting.journal_entries") && sql.includes("memo = $2")) {
-      const memo = String(values?.[1] ?? "");
-      return { rows: existingMemos.has(memo) ? [{ id: "existing-je" }] : [] };
+    if (sql.includes("UPDATE accounting.journal_entry_postings")) return { rows: [] };
+        if (sql.includes("FROM accounting.journal_entries")) {
+      // Authoritative repair candidate query — empty unless already_posted fixtures override.
+      return { rows: [] };
     }
+    if (sql.includes("FROM accounting.journal_entry_postings")) {
+      // Conflict probe (LIMIT 1 + foreign provenance predicates) must be empty.
+      if (sql.includes("LIMIT 1") && (sql.includes("NOT (") || sql.includes("IS DISTINCT FROM") || sql.includes("source_transaction_id IS NOT NULL"))) {
+        return { rows: [] };
+      }
+      return { rows: [{ id: "line-1" }] };
+    }
+
+    if (sql.includes("INSERT INTO accounting.factoring_reserve_movements")) return { rows: [] };
+    if (sql.includes("UPDATE accounting.invoices")) return { rows: [] };
+    if (sql.includes("UPDATE accounting.factoring_advances")) return { rows: [] };
     return { rows: [] };
   });
 }
-
-function legs(callIndex: number) {
-  const call = mockCreateJournalEntry.mock.calls[callIndex];
-  return (call?.[0]?.postings ?? []) as Array<{ account_id: string; debit_or_credit: "debit" | "credit"; amount_cents: number }>;
-}
-const leg = (p: ReturnType<typeof legs>, id: string) => p.find((x) => x.account_id === id);
 
 describe("factoring poster — flag gate (OFF ⇒ zero posts)", () => {
   const call = (fn: string) => {
     switch (fn) {
       case "funding":
-        return postFactoringAdvanceEvent({ operating_company_id: OPCO, factoring_advance_id: ADVANCE, actor_user_id: ACTOR, funding_figures: { invoice_total_cents: 500000, reserve_cents: 7500, fee_cents: 0, ach_cents: 0 } });
+        return postFactoringAdvanceEvent({
+          operating_company_id: OPCO,
+          factoring_advance_id: ADVANCE,
+          actor_user_id: ACTOR,
+          funding_figures: { invoice_total_cents: 500000, reserve_cents: 7500, fee_cents: 0, ach_cents: 0 },
+        });
       case "payment":
-        return postFactoringCustomerPaymentEvent({ operating_company_id: OPCO, factoring_advance_id: ADVANCE, actor_user_id: ACTOR, amount_cents: 500000 });
+        return postFactoringCustomerPaymentEvent({
+          operating_company_id: OPCO,
+          factoring_advance_id: ADVANCE,
+          actor_user_id: ACTOR,
+          amount_cents: 500000,
+        });
       case "release":
-        return postFactoringReleaseEvent({ operating_company_id: OPCO, factoring_advance_id: ADVANCE, actor_user_id: ACTOR, release_amount_cents: 7500 });
+        return postFactoringReleaseEvent({
+          operating_company_id: OPCO,
+          factoring_advance_id: ADVANCE,
+          actor_user_id: ACTOR,
+          release_amount_cents: 7500,
+        });
       default:
-        return postFactoringChargebackEvent({ operating_company_id: OPCO, factoring_advance_id: ADVANCE, actor_user_id: ACTOR, chargeback_amount_cents: 500000 });
+        return postFactoringChargebackEvent({
+          operating_company_id: OPCO,
+          factoring_advance_id: ADVANCE,
+          actor_user_id: ACTOR,
+          chargeback_amount_cents: 500000,
+          default_interest_cents: 0,
+          recoursed_ar_cents: 500000,
+        });
     }
   };
 
@@ -98,36 +203,62 @@ describe("factoring poster — flag gate (OFF ⇒ zero posts)", () => {
   }
 });
 
-describe("factoring poster — idempotency (deterministic memo dedupe)", () => {
-  it("funding: a re-run with the same memo already present ⇒ already_posted, no double-post", async () => {
-    installDefaults(true, new Set(["Factoring funding FAC-0001"]));
-    const res = await postFactoringAdvanceEvent({ operating_company_id: OPCO, factoring_advance_id: ADVANCE, actor_user_id: ACTOR, funding_figures: { invoice_total_cents: 500000, reserve_cents: 7500, fee_cents: 0, ach_cents: 0 } });
+describe("factoring poster — idempotency (deterministic posting key)", () => {
+  it("funding: posting key already claimed ⇒ already_posted, no double-post", async () => {
+    installDefaults(true, true);
+    const res = await postFactoringAdvanceEvent({
+      operating_company_id: OPCO,
+      factoring_advance_id: ADVANCE,
+      actor_user_id: ACTOR,
+      funding_figures: { invoice_total_cents: 500000, reserve_cents: 7500, fee_cents: 0, ach_cents: 0 },
+    });
     expect(res).toMatchObject({ posted: false, reason: "already_posted" });
     expect(mockCreateJournalEntry).not.toHaveBeenCalled();
   });
 });
 
-describe("factoring poster — @cpa-open-item DOCUMENTING tests (assert current behavior; see design doc §6.1)", () => {
-  // §6.1 open item: chargeback liability extinguishment. Funding credits the liability at FULL face (500000);
-  // a PARTIAL chargeback debits it at only chargeback_amount_cents, leaving a residual liability. This test
-  // DOCUMENTS that residual — it is not a fix. CPA must confirm chargebacks are always full-face.
-  it("partial chargeback repays only chargeback_amount ⇒ residual liability persists (documented open item)", async () => {
+describe("factoring poster — partial/ambiguous recourse fail-closed (no defaults)", () => {
+  it("partial chargeback amount ≠ exact linked liability ⇒ policy_partial_or_ambiguous_recourse", async () => {
     installDefaults(true);
-    await postFactoringChargebackEvent({ operating_company_id: OPCO, factoring_advance_id: ADVANCE, actor_user_id: ACTOR, chargeback_amount_cents: 300000 });
-    const repay = legs(0);
-    // liability is debited at the (partial) chargeback amount only — NOT the 500000 face booked at funding.
-    expect(leg(repay, "factoring_advance_liability")).toMatchObject({ debit_or_credit: "debit", amount_cents: 300000 });
-    // → residual liability of 500000 − 300000 = 200000 remains. Flagged PENDING_OWNER_CONFIRMATION in doc §6.1.
+    const res = await postFactoringChargebackEvent({
+      operating_company_id: OPCO,
+      factoring_advance_id: ADVANCE,
+      actor_user_id: ACTOR,
+      chargeback_amount_cents: 300000,
+      default_interest_cents: 0,
+      recoursed_ar_cents: 500000,
+    });
+    expect(res).toMatchObject({ posted: false, reason: "policy_partial_or_ambiguous_recourse" });
+    expect(mockCreateJournalEntry).not.toHaveBeenCalled();
   });
 
-  // §6.1 open item: recoursed-AR default amount. When recoursed_ar_cents is omitted it defaults to the
-  // advance repaid (chargeback_amount), NOT the invoice face. This DOCUMENTS that default.
-  it("recoursed_ar defaults to chargeback_amount (advance), not invoice face (documented open item)", async () => {
+  it("omitted recoursed_ar_cents / default_interest_cents ⇒ policy fail-closed (no PENDING default)", async () => {
     installDefaults(true);
-    await postFactoringChargebackEvent({ operating_company_id: OPCO, factoring_advance_id: ADVANCE, actor_user_id: ACTOR, chargeback_amount_cents: 480000 });
-    // repay JE is call 0, receivable-return JE is call 1
-    const ret = legs(1);
-    expect(leg(ret, "factoring_recoursed_ar")).toMatchObject({ debit_or_credit: "debit", amount_cents: 480000 });
-    expect(leg(ret, "ar_control")).toMatchObject({ debit_or_credit: "credit", amount_cents: 480000 });
+    const res = await postFactoringChargebackEvent({
+      operating_company_id: OPCO,
+      factoring_advance_id: ADVANCE,
+      actor_user_id: ACTOR,
+      chargeback_amount_cents: 500000,
+      // @ts-expect-error — intentional omit to prove no default
+      default_interest_cents: undefined,
+      // @ts-expect-error
+      recoursed_ar_cents: undefined,
+    });
+    expect(res).toMatchObject({ posted: false, reason: "policy_partial_or_ambiguous_recourse" });
+    expect(mockCreateJournalEntry).not.toHaveBeenCalled();
+  });
+
+  it("recoursed_ar_cents=0 ⇒ policy fail-closed (no silent skip of A/R return)", async () => {
+    installDefaults(true);
+    const res = await postFactoringChargebackEvent({
+      operating_company_id: OPCO,
+      factoring_advance_id: ADVANCE,
+      actor_user_id: ACTOR,
+      chargeback_amount_cents: 500000,
+      default_interest_cents: 0,
+      recoursed_ar_cents: 0,
+    });
+    expect(res).toMatchObject({ posted: false, reason: "policy_partial_or_ambiguous_recourse" });
+    expect(mockCreateJournalEntry).not.toHaveBeenCalled();
   });
 });

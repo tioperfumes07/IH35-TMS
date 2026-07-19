@@ -36,24 +36,41 @@ describe("home-widgets revenue GL linkage (0280-02)", () => {
   });
 });
 
-// FACTOR-1 static guard: the factoring-balance widget must read its reserve/advanced
-// figures from the real populated source (views.factoring_summary), never from the
-// never-created / never-written factoring.company_balances table.
-describe("home-widgets factoring-balance reserve source (FACTOR-1)", () => {
+// 0280-05 / FACTOR-1: factoring-balance must use invoice-grain linkage service — never
+// superseded views.factoring_summary (0124 dead companies.current_reserve_balance) and never
+// silent catch → fabricated $0.
+describe("home-widgets factoring-balance invoice linkage (0280-05)", () => {
   const routesSrc = readFileSync(
     fileURLToPath(new URL("./home-widgets.routes.ts", import.meta.url)),
     "utf8"
   );
 
-  it("reads the reserve figure from the populated views.factoring_summary source", () => {
-    expect(routesSrc).toContain("FROM views.factoring_summary");
-    expect(routesSrc).toMatch(/COALESCE\(reserve_balance, 0\)/);
+  it("calls computeFactoringBalanceInvoiceLinkage (not views.factoring_summary)", () => {
+    expect(routesSrc).toContain("computeFactoringBalanceInvoiceLinkage");
+    expect(routesSrc).not.toContain("FROM views.factoring_summary");
   });
 
   it("does not read the dead factoring.company_balances table / columns", () => {
     expect(routesSrc).not.toContain("factoring.company_balances");
     expect(routesSrc).not.toMatch(/SUM\(reserve_cents\)/);
     expect(routesSrc).not.toMatch(/SUM\(advanced_cents\)/);
+  });
+
+  it("surfaces unverifiable + accounting_exception + failed errors (no silent zero catch)", () => {
+    expect(routesSrc).toContain("factoring_balance_invoice_linkage_unverifiable");
+    expect(routesSrc).toContain("factoring_balance_invoice_linkage_accounting_exception");
+    expect(routesSrc).toContain("factoring_balance_invoice_linkage_failed");
+    expect(routesSrc).toContain("accounting_exception");
+    expect(routesSrc).not.toMatch(
+      /factoring-balance[\s\S]{0,800}catch\s*\{\s*return\s*\{\s*reserveCents:\s*0/
+    );
+  });
+
+  it("headlines outstanding Faro liability (never reserve+liability net)", () => {
+    expect(routesSrc).toContain("outstanding_liability_cents");
+    expect(routesSrc).toContain("reserve_receivable_cents");
+    expect(routesSrc).toContain("totalCents: result.outstanding_liability_cents");
+    expect(routesSrc).not.toMatch(/totalCents:\s*.*reserve.*\+.*outstanding|totalCents:\s*.*reserve.*\+.*advanced/);
   });
 });
 

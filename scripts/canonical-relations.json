@@ -1,6 +1,6 @@
 {
   "generated_note": "Prod relation snapshot (read-only) \u2014 canonical set for the phantom-relation CI guard. Regenerate via scripts/gen-canonical-relations.mjs after schema changes. GATED prod access (CLAUDE.md \u00a71.5).",
-  "count": 717,
+  "count": 720,
   "relations": [
     "_system._schema_migrations",
     "_system.admin_jobs",
@@ -29,6 +29,7 @@
     "accounting.expenses",
     "accounting.factoring_advances",
     "accounting.factoring_default_interest_accruals",
+    "accounting.factoring_lifecycle_posting_keys",
     "accounting.fixed_asset_classes",
     "accounting.fixed_asset_disposals",
     "accounting.fixed_assets",
@@ -303,6 +304,7 @@
     "factor.reconciliation_runs",
     "factoring.bank_match_suggestion",
     "factoring.batch",
+    "factoring.canonical_factor_agreements",
     "factoring.customer_factor_assignment",
     "factoring.factor",
     "factoring.reserve_movement",
@@ -694,6 +696,7 @@
     "views.driver_request_timeline",
     "views.driver_settlement_with_debt",
     "views.drivers_with_hos_status",
+    "views.factoring_balance_invoice_linkage",
     "views.factoring_chargebacks_fees",
     "views.factoring_recourse_at_risk",
     "views.factoring_statements_settings",

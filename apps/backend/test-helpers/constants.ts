@@ -24,6 +24,19 @@ export const CASH_ADVANCE_MAP_TEST_LOCK_KEY = "922337203685477001";
 export const GLOBAL_ACCOUNT_ROLE_BINDINGS_TEST_LOCK_KEY = "922337203685477002";
 
 /**
+ * Session-level pg_advisory_lock key shared by db.tests that seed/mutate/read
+ * `factoring.canonical_factor_agreements` under vitest pool:"forks":
+ *   chain-06-factoring-ar-tieout.db.test.ts
+ *   factoring-balance-invoice-linkage.db.test.ts
+ * Even with per-suite createIsolatedOperatingCompany, parallel forks concurrently INSERT/UPDATE
+ * agreement + factor.factor + mdata.vendors rows while the poster’s Faro SELECT (JOIN of those
+ * three) runs — Postgres can deadlock (observed on resolveCanonicalActiveFactor during Leg B
+ * funding prepare). Hold for the full suite lifespan (beforeAll→afterAll); release on db.end().
+ * Isolation only — no financial/GL behavior is affected.
+ */
+export const FARO_CANONICAL_AGREEMENT_TEST_LOCK_KEY = "922337203685477003";
+
+/**
  * Shared ENCRYPTION_KEY default for every `.db.test.ts` that seeds a fake integrations.qbo_connections
  * row so createJournalEntry's unconditional enqueueSyncJob->getValidAccessToken can resolve a connection
  * (the JE push flag itself stays OFF — push is gated separately, at drain/immediate-push time). MUST be

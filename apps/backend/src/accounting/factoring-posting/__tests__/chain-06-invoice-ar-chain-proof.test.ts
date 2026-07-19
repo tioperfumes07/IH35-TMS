@@ -25,6 +25,7 @@ import {
 const {
   mockQuery,
   mockWithLuciaBypass,
+  mockWithCurrentUser,
   mockIsEnabled,
   mockCreateJournalEntry,
   mockResolveRoleAccount,
@@ -33,19 +34,40 @@ const {
   const withLuciaBypass = vi.fn(async (fn: (client: { query: typeof query }) => unknown) =>
     fn({ query })
   );
+  const withCurrentUser = vi.fn(async (_userId: string, fn: (client: { query: typeof query }) => unknown) =>
+    fn({ query })
+  );
   return {
     mockQuery: query,
     mockWithLuciaBypass: withLuciaBypass,
+    mockWithCurrentUser: withCurrentUser,
     mockIsEnabled: vi.fn(),
     mockCreateJournalEntry: vi.fn(),
     mockResolveRoleAccount: vi.fn(),
   };
 });
 
-vi.mock("../../../auth/db.js", () => ({ withLuciaBypass: mockWithLuciaBypass }));
+vi.mock("../../../auth/db.js", () => ({ withLuciaBypass: mockWithLuciaBypass, withCurrentUser: mockWithCurrentUser }));
 vi.mock("../../../lib/feature-flags/service.js", () => ({ isEnabled: mockIsEnabled }));
-vi.mock("../../journal-entries.service.js", () => ({ createJournalEntry: mockCreateJournalEntry }));
+vi.mock("../../journal-entries.service.js", () => ({ createJournalEntry: mockCreateJournalEntry, createJournalEntryOnClient: mockCreateJournalEntry, enqueueJournalEntrySideEffects: vi.fn(async () => undefined) }));
+vi.mock("../../posting-engine.service.js", () => ({ ensureOpenPeriod: vi.fn(async () => undefined) }));
+vi.mock("../../accounting-spine-emit.js", () => ({ writeTransactionSourceLink: vi.fn(async () => undefined) }));
 vi.mock("../../coa-roles/resolver.service.js", () => ({ resolveRoleAccount: mockResolveRoleAccount }));
+vi.mock("../../../audit/crud-audit.js", () => ({ appendCrudAudit: vi.fn(async () => undefined) }));
+vi.mock("../faro-agreement-gate.js", () => ({
+  requireEffectiveFaroFullRecourseAgreement: vi.fn(async () => ({
+    ok: true,
+    vendorId: "faro-vendor",
+    vendorName: "Faro",
+    agreementId: "agr-1",
+    factorProfileId: "fp-1",
+    companyCode: "TRANSP",
+    asOf: "2026-01-20",
+  })),
+  advanceBoundToFaroVendor: vi.fn(async () => true),
+  FARO_FULL_RECOURSE_AGREEMENT_CODE: "FARO_FULL_RECOURSE_V1",
+}));
+
 
 const OPCO = "11111111-1111-4111-8111-111111111111";
 const OTHER_OPCO = "99999999-9999-4999-8999-999999999999";
@@ -80,7 +102,7 @@ function advanceRow(overrides: Record<string, unknown> = {}) {
 
 function postingsFromCall(callIndex: number): Posting[] {
   const call = mockCreateJournalEntry.mock.calls[callIndex];
-  return (call?.[0]?.postings ?? []) as Posting[];
+  return (call?.[1]?.postings ?? call?.[0]?.postings ?? []) as Posting[];
 }
 function leg(postings: Posting[], accountId: string) {
   return postings.find((p) => p.account_id === accountId);
@@ -112,28 +134,83 @@ function installDefaults() {
 
   mockIsEnabled.mockResolvedValue(true);
   mockResolveRoleAccount.mockImplementation(async (_c: unknown, _o: string, role: string) => `acct-${role}`);
-  mockCreateJournalEntry.mockResolvedValue({ id: "je-chain-06" });
+  mockCreateJournalEntry.mockImplementation(
+    async (...args: unknown[]) => {
+      const options = (args.length >= 4 ? args[3] : args[2]) as
+        | { afterInsertBeforeCommit?: (client: { query: typeof mockQuery }, header: { id: string }) => Promise<void> }
+        | undefined;
+      const client =
+        args.length >= 4
+          ? (args[0] as { query: typeof mockQuery })
+          : { query: mockQuery };
+      const header = { id: "je-chain-06" };
+      if (options?.afterInsertBeforeCommit) {
+        await options.afterInsertBeforeCommit(client, header);
+      }
+      return header;
+    }
+  );
 
   mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
     if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
+    if (sql.includes("SAVEPOINT") || sql.includes("RELEASE SAVEPOINT") || sql.includes("ROLLBACK TO SAVEPOINT")) return { rows: [] };
+    if (sql.includes("FOR UPDATE")) return { rows: [{ id: "locked" }] };
+    if (sql.includes("information_schema.columns")) return { rows: [{ n: "0" }] };
+    if (sql.includes("AS paid") && sql.includes("factoring_customer_payment")) {
+      return { rows: [{ paid: "100000" }] };
+    }
+    if (sql.includes("AS outstanding")) {
+      return { rows: [{ outstanding: "100000" }] };
+    }
+    if (sql.includes("factoring_lifecycle_posting_keys")) {
+      if (sql.includes("INSERT")) return { rows: alreadyPosted ? [] : [{ journal_entry_id: "je-1" }] };
+      return { rows: alreadyPosted ? [{ journal_entry_id: "je-existing" }] : [] };
+    }
+    if (alreadyPosted && sql.includes("status::text AS status") && sql.includes("journal_entries")) {
+      return { rows: [{ id: "je-existing", status: "posted", reverses_je_id: null, reversed_by_je_id: null }] };
+    }
+    if (alreadyPosted && sql.includes("chart_of_accounts_roles") && sql.includes("AS role")) {
+      return {
+        rows: [
+          { role: "cash_clearing", debit_or_credit: "debit", amount_cents: "90000", source_transaction_type: null, source_transaction_id: null },
+          { role: "factor_reserve_held", debit_or_credit: "debit", amount_cents: "8000", source_transaction_type: null, source_transaction_id: null },
+          { role: "factor_fee_expense", debit_or_credit: "debit", amount_cents: "2000", source_transaction_type: null, source_transaction_id: null },
+          { role: "factoring_advance_liability", debit_or_credit: "credit", amount_cents: "100000", source_transaction_type: null, source_transaction_id: null },
+        ],
+      };
+    }
+    if (sql.includes("AS ok") && sql.includes("journal_entry_uuid") && sql.includes("= COALESCE")) {
+      return { rows: [{ ok: true }] };
+    }
     if (sql.includes("FROM accounting.factoring_advances") && sql.includes("invoice_total_cents")) {
       advanceLoadSql.push(sql);
       const opco = values?.[1];
       if (opco && opco !== OPCO) return { rows: [] };
       return { rows: [advanceRow()] };
     }
-    if (sql.includes("FROM accounting.journal_entries") && sql.includes("memo = $2")) {
-      return { rows: alreadyPosted ? [{ id: "je-existing" }] : [] };
+    if (sql.includes("FROM accounting.journal_entries")) {
+      return { rows: [] };
     }
-    if (sql.includes("SELECT id::text, total_cents::text, voided_at::text") && sql.includes("FROM accounting.invoices")) {
+    if (sql.includes("UPDATE accounting.journal_entry_postings")) return { rows: [] };
+    if (sql.includes("FROM accounting.journal_entry_postings")) {
+      if (sql.includes("LIMIT 1") && (sql.includes("NOT (") || sql.includes("IS DISTINCT FROM"))) {
+        return { rows: [] };
+      }
+      return { rows: [{ id: "line-1" }] };
+    }
+    if (sql.includes("total_cents::text") && sql.includes("FROM accounting.invoices")) {
       expect(sql).toContain("factoring_advance_id");
       expect(sql).toContain("operating_company_id");
       return { rows: invoiceRows };
+    }
+    if (sql.includes("FROM accounting.invoices") && !sql.includes("UPDATE") && !sql.includes("AS outstanding")) {
+      return { rows: invoiceRows.length ? invoiceRows : [{ id: "inv-1", total_cents: "100000", voided_at: null }] };
     }
     if (sql.trim().startsWith("UPDATE accounting.invoices")) {
       updateCalls.push({ sql, values: values ?? [] });
       return { rows: [] };
     }
+    if (sql.includes("UPDATE accounting.factoring_advances")) return { rows: [] };
     if (sql.includes("INSERT INTO accounting.factoring_reserve_movements")) {
       reserveCalls.push({ sql, values: values ?? [] });
       return { rows: [] };
@@ -240,6 +317,19 @@ describe("CHAIN-06 invoice→A/R→Faro chain-proof behavioral matrix (mocked se
   it("missing link: advance_not_found when factoring advance is absent for the entity", async () => {
     mockQuery.mockImplementation(async (sql: string) => {
       if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
+    if (sql.includes("SAVEPOINT") || sql.includes("RELEASE SAVEPOINT") || sql.includes("ROLLBACK TO SAVEPOINT")) return { rows: [] };
+    if (sql.includes("FOR UPDATE")) return { rows: [{ id: "locked" }] };
+    if (sql.includes("information_schema.columns")) return { rows: [{ n: "0" }] };
+    if (sql.includes("factoring_lifecycle_posting_keys")) {
+      if (sql.includes("INSERT")) return { rows: [{ journal_entry_id: "je-1" }] };
+      return { rows: [] };
+    }
+    if (sql.includes("AS paid") && sql.includes("factoring_customer_payment")) {
+      return { rows: [{ paid: "100000" }] };
+    }
+    if (sql.includes("AS outstanding")) {
+      return { rows: [{ outstanding: "100000" }] };
+    }
       if (sql.includes("FROM accounting.factoring_advances")) return { rows: [] };
       return { rows: [] };
     });

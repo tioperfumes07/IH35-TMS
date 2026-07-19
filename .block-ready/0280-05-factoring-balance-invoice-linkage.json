@@ -1,17 +1,76 @@
 {
   "block_id": "0280-05-factoring-balance-invoice-linkage",
-  "status": "NEEDS-VERIFY",
+  "branch": "cursor/factoring-balance-invoice-linkage-7ff5",
+  "status": "BUILD",
   "classification": "FINANCIAL",
   "phase": "tier1",
-  "source": "MASTER-6 authored dispatch (03-TIER1-BLOCKS)",
+  "task": "CPA VETO fix (36946df7 follow-on): cumulative ledger-backed amount_paid_cents; DI opening from outstanding liability after payments; retain atomic Faro CSV agreement as-of statement date; canonical_factor_agreements term immutability + voided_at; guard requireIdent/dead-string plants. HOLD draft. No tab/nav.",
+  "priority": "P0",
+  "module": "home-factoring-balance",
+  "db_required": true,
+  "guard_required": true,
+  "runtime_path": "src",
+  "extra_gates": [],
+  "source": "MASTER-6 authored dispatch (03-TIER1-BLOCKS) + owner/CPA VETO 2026-07-19 (bb8b80f9f)",
   "source_file": "0280-05-factoring-balance-invoice-linkage.txt",
   "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
+    "apps/backend/src/home/factoring-balance-invoice-linkage.service.ts",
+    "apps/backend/src/home/factoring-balance-invoice-linkage.service.test.ts",
+    "apps/backend/src/home/__tests__/factoring-balance-invoice-linkage.db.test.ts",
+    "apps/backend/src/home/home-widgets.routes.ts",
+    "apps/backend/src/home/home-widgets.routes.test.ts",
+    "apps/backend/src/accounting/factoring-posting/poster.service.ts",
+    "apps/backend/src/accounting/factoring-posting/lifecycle-repair.ts",
+    "apps/backend/src/accounting/factoring-posting/faro-agreement-gate.ts",
+    "apps/backend/src/accounting/factoring-posting/default-interest.service.ts",
+    "apps/backend/src/accounting/factoring-posting/__tests__/poster-lifecycle-atomicity.test.ts",
+    "apps/backend/src/accounting/factoring-posting/__tests__/poster-open-items-and-gates.test.ts",
+    "apps/backend/src/accounting/factoring-posting/__tests__/poster-scenario-8.test.ts",
+    "apps/backend/src/accounting/factoring-posting/__tests__/poster-tenant-isolation.test.ts",
+    "apps/backend/src/accounting/factoring-posting/__tests__/poster-default-interest-lifecycle.test.ts",
+    "apps/backend/src/accounting/factoring-posting/__tests__/conn2-ar-subledger-and-reserve-tracker.test.ts",
+    "apps/backend/src/accounting/factoring-posting/__tests__/chain-06-invoice-ar-chain-proof.test.ts",
+    "apps/backend/src/home/factoring-balance-invoice-linkage.service.ts",
+    "apps/backend/src/accounting/factoring-posting/__tests__/chain-06-invoice-ar-chain-proof.test.ts",
+    "apps/backend/src/accounting/factoring-posting/__tests__/chain-06-factoring-ar-tieout.db.test.ts",
+    "apps/backend/src/accounting/factoring-posting/__tests__/lifecycle-repair.test.ts",
+    "apps/backend/src/accounting/factoring-posting/__tests__/default-interest-day95-recourse.test.ts",
+    "apps/backend/src/accounting/factoring-posting/__tests__/cpa-veto-eb06028d-remediation.test.ts",
+    "apps/backend/src/factoring/faro-csv-import.ts",
+    "apps/backend/src/factoring/faro-csv-import.test.ts",
+    "apps/backend/src/data-infra/data-infra.service.ts",
+    "apps/backend/src/lib/company-business-date.ts",
+    "apps/backend/src/lib/__tests__/company-business-date.test.ts",
+    "apps/backend/src/accounting/journal-entries.service.ts",
+    "apps/frontend/src/api/home.ts",
+    "apps/frontend/src/api/home-widget-contract.test.ts",
+    "apps/frontend/src/pages/home/roles/DefaultHome.tsx",
+    "apps/frontend/src/pages/home/OwnerHome.tsx",
+    "db/migrations/202607600000_factoring_balance_invoice_linkage.sql",
+    "db/migrations/.held-migrations.json",
+    "docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md",
+    "scripts/verify-factoring-balance-invoice-linkage.mjs",
+    "scripts/verify-steps/929-verify-factoring-balance-invoice-linkage.mjs",
+    "scripts/canonical-relations.json",
+    "docs/schema-parity-baseline.json",
+    ".block-ready/0280-05-factoring-balance-invoice-linkage.json"
   ],
   "acceptance": [
     {
-      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
+      "check": "GET /api/v1/home/factoring-balance + FE fetchHomeFactoringBalance headline outstanding_liability_cents; reserve separate; status ok|empty|unverifiable|accounting_exception; null preserved (never $0)"
+    },
+    {
+      "check": "Liability/reserve from per-advance source_transaction_type/TSL/reserve_movements; statuses never clear; single active factor fail-closed on mixed; FORCE RLS Owner/Admin write; apply-twice throwaway PG"
+    },
+    {
+      "check": "DB tests: multi-invoice, orphan JE, future JE, second factor, debit anomaly, reserve over-release, Owner/Admin vs Dispatcher RLS, cross-company, fixture display_id"
+    },
+    {
+      "check": "verify-factoring-balance-invoice-linkage semantic --selftest PASS via verify-steps/929; no package.json / workflow hot-file edits"
+    },
+    {
+      "check": "DRAFT HOLD PR only — NEVER self-merge; owner Neon ceremony"
     }
   ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+  "note": "FINANCIAL HOLD. No Home/Factoring tab/nav edits (tab drift). FE api + Home KPI render for null/unverifiable only."
 }

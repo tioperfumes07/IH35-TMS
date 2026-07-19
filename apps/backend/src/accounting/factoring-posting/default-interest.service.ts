@@ -10,25 +10,26 @@
 //      post one compounding Dr Default-Interest-Expense / Cr Liability entry per missing calendar day, in
 //      ascending order so each day compounds off the committed prior day.
 //   2) triggerDay95RecourseForCompany — for each advance that hits the 95-day Repurchase Deadline still
-//      unpaid: catch interest up to today, then fire the chargeback poster (Dr Liability(full outstanding) /
-//      Cr Cash; Dr Recoursed-AR / Cr A/R) and flip the advance + its invoices to recourse_returned. Interest
-//      is passed as 0 to the chargeback because it is ALREADY expensed + already compounded into the
-//      liability by motion (1); the full outstanding liability (Net + accrued interest) is repaid to cash —
-//      re-debiting interest here would double-count the expense and strand the interest in the liability.
+//      unpaid: catch interest up to today, then fire the chargeback poster with EXACT linked outstanding
+//      liability + A/R (no guessed amounts). Status/subledger/audit land inside the chargeback's single
+//      caller-owned txn. Interest on the repay leg is 0 because daily accrual already compounded it into
+//      the liability.
 
 import { withLuciaBypass } from "../../auth/db.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
+import { companyBusinessDate } from "../../lib/company-business-date.js";
 import {
   FACTORING_GL_POSTING_FLAG,
+  loadExactLinkedChargebackAmounts,
   postFactoringChargebackEvent,
   postFactoringDefaultInterestAccrualEvent,
-  sumAccruedDefaultInterest,
 } from "./poster.service.js";
 import {
   FACTORING_INTEREST_ACCRUAL_AFTER_DAY,
   FACTORING_REPURCHASE_DEADLINE_DAYS,
 } from "./contract-config.js";
+import { requireEffectiveFaroFullRecourseAgreement } from "./faro-agreement-gate.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -48,24 +49,32 @@ type OutstandingAdvance = {
 };
 
 function ymd(iso: string): string {
-  return iso.slice(0, 10);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso;
+  return companyBusinessDate(new Date(iso));
 }
 
+/** Pure calendar-day arithmetic on YYYY-MM-DD (no UTC wall-clock / DST shift). */
 function addDays(ymdDate: string, days: number): string {
-  const base = Date.parse(`${ymdDate}T00:00:00.000Z`);
-  return new Date(base + days * 86_400_000).toISOString().slice(0, 10);
+  const [y, m, d] = ymdDate.slice(0, 10).split("-").map(Number);
+  const next = new Date(Date.UTC(y!, m! - 1, d! + days));
+  const yy = next.getUTCFullYear();
+  const mm = String(next.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(next.getUTCDate()).padStart(2, "0");
+  return `${yy}-${mm}-${dd}`;
 }
 
 async function companyPostingEnabled(client: DbClient, operatingCompanyId: string): Promise<boolean> {
   return isEnabled(client as never, FACTORING_GL_POSTING_FLAG, { operating_company_id: operatingCompanyId });
 }
 
-// Advances that are funded, customer-unpaid (status 'advanced'), and past the 30+5 grace as of `asOf`.
+// Advances that are funded, customer-unpaid (status 'advanced'), past the 30+5 grace as of `asOf`,
+// AND bound to the authoritative Faro full-recourse vendor (never entity-wide / other-factor).
 async function selectOutstandingPastGrace(
   client: DbClient,
   operatingCompanyId: string,
   asOf: string,
-  minDayIndex: number
+  minDayIndex: number,
+  faroVendorId: string
 ): Promise<OutstandingAdvance[]> {
   const res = await client.query<{
     id: string;
@@ -81,7 +90,7 @@ async function selectOutstandingPastGrace(
         fa.display_id,
         fa.invoice_total_cents::text AS invoice_total_cents,
         fa.advanced_at::text          AS advanced_at,
-        (($2::date) - (fa.advanced_at::date))::text AS day_index,
+        (($2::date) - ((fa.advanced_at AT TIME ZONE 'America/Chicago')::date))::text AS day_index,
         (
           SELECT MAX(a.accrual_date)::text
           FROM accounting.factoring_default_interest_accruals a
@@ -93,10 +102,11 @@ async function selectOutstandingPastGrace(
       WHERE fa.operating_company_id = $1::uuid
         AND fa.status = 'advanced'
         AND fa.advanced_at IS NOT NULL
-        AND (($2::date) - (fa.advanced_at::date)) >= $3::int
+        AND fa.factoring_company_vendor_id = $4::uuid
+        AND (($2::date) - ((fa.advanced_at AT TIME ZONE 'America/Chicago')::date)) >= $3::int
       ORDER BY fa.advanced_at ASC
     `,
-    [operatingCompanyId, asOf, minDayIndex]
+    [operatingCompanyId, asOf, minDayIndex, faroVendorId]
   );
   return res.rows.map((r) => ({
     id: r.id,
@@ -130,9 +140,112 @@ async function accrueThroughDateForAdvance(
       accrual_date_iso: cursor,
     });
     if (res.posted) posted += 1;
+    // already_posted / before_grace / not_outstanding are non-fatal for catch-up; invalid repair fails closed.
+    if (
+      res.reason === "repair_candidate_invalid" ||
+      res.reason === "repair_ambiguous" ||
+      res.reason === "policy_invalid_entry_date" ||
+      res.reason === "policy_faro_agreement"
+    ) {
+      throw new Error(`factoring_default_interest_catchup_failed:${res.reason}`);
+    }
     cursor = addDays(cursor, 1);
   }
   return posted;
+}
+
+/**
+ * Catch contractual default interest through `as_of` for ONE advance (reuse poster math — no duplicate GL).
+ * Used by Faro CSV chargeback so missed cron cannot understate liability vs statement date.
+ */
+export async function ensureDefaultInterestAccruedThroughDate(input: {
+  operating_company_id: string;
+  factoring_advance_id: string;
+  as_of_date_iso: string;
+  actor_user_id?: string;
+}): Promise<{ flag_off: boolean; accruals_posted: number }> {
+  const asOf = ymd(input.as_of_date_iso);
+  const actorUserId = input.actor_user_id ?? SYSTEM_ACTOR_ID;
+
+  type Loaded =
+    | { kind: "flag_off" }
+    | { kind: "skip" }
+    | { kind: "advance"; advance: OutstandingAdvance };
+
+  const loaded = await withLuciaBypass(async (client: DbClient): Promise<Loaded> => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
+      input.operating_company_id,
+    ]);
+    if (!(await companyPostingEnabled(client, input.operating_company_id))) {
+      return { kind: "flag_off" };
+    }
+    const faro = await requireEffectiveFaroFullRecourseAgreement(
+      client,
+      input.operating_company_id,
+      asOf
+    );
+    if (!faro.ok) {
+      throw new Error(`factoring_default_interest_catchup_failed:policy_faro_agreement`);
+    }
+    const res = await client.query<{
+      id: string;
+      display_id: string;
+      invoice_total_cents: string;
+      advanced_at: string;
+      day_index: string;
+      last_accrual_date: string | null;
+      factoring_company_vendor_id: string;
+      status: string;
+    }>(
+      `
+        SELECT
+          fa.id::text,
+          fa.display_id,
+          fa.invoice_total_cents::text AS invoice_total_cents,
+          fa.advanced_at::text AS advanced_at,
+          (($2::date) - ((fa.advanced_at AT TIME ZONE 'America/Chicago')::date))::text AS day_index,
+          (
+            SELECT MAX(a.accrual_date)::text
+              FROM accounting.factoring_default_interest_accruals a
+             WHERE a.operating_company_id = fa.operating_company_id
+               AND a.factoring_advance_id = fa.id
+               AND a.is_active = true
+          ) AS last_accrual_date,
+          fa.factoring_company_vendor_id::text AS factoring_company_vendor_id,
+          fa.status::text AS status
+        FROM accounting.factoring_advances fa
+       WHERE fa.id = $3::uuid
+         AND fa.operating_company_id = $1::uuid
+       LIMIT 1
+      `,
+      [input.operating_company_id, asOf, input.factoring_advance_id]
+    );
+    const row = res.rows[0];
+    if (!row?.advanced_at || row.status !== "advanced") return { kind: "skip" };
+    if (row.factoring_company_vendor_id !== faro.vendorId) return { kind: "skip" };
+    return {
+      kind: "advance",
+      advance: {
+        id: row.id,
+        display_id: row.display_id,
+        invoice_total_cents: Number(row.invoice_total_cents ?? 0),
+        advanced_at: row.advanced_at,
+        day_index: Number(row.day_index ?? 0),
+        last_accrual_date: row.last_accrual_date,
+      },
+    };
+  });
+
+  if (loaded.kind === "flag_off") return { flag_off: true, accruals_posted: 0 };
+  if (loaded.kind === "skip") return { flag_off: false, accruals_posted: 0 };
+
+  const posted = await accrueThroughDateForAdvance(
+    input.operating_company_id,
+    loaded.advance,
+    asOf,
+    actorUserId
+  );
+  return { flag_off: false, accruals_posted: posted };
 }
 
 export type AccrualTickSummary = { flag_off: boolean; advances_scanned: number; accruals_posted: number };
@@ -142,13 +255,21 @@ export async function accrueDefaultInterestForCompany(input: {
   as_of_date_iso?: string;
   actor_user_id?: string;
 }): Promise<AccrualTickSummary> {
-  const asOf = ymd(input.as_of_date_iso ?? new Date().toISOString());
+  const asOf = ymd(input.as_of_date_iso ?? companyBusinessDate());
   const actorUserId = input.actor_user_id ?? SYSTEM_ACTOR_ID;
 
   const advances = await withLuciaBypass(async (client: DbClient) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
     if (!(await companyPostingEnabled(client, input.operating_company_id))) return null;
-    return selectOutstandingPastGrace(client, input.operating_company_id, asOf, FACTORING_INTEREST_ACCRUAL_AFTER_DAY + 1);
+    const faro = await requireEffectiveFaroFullRecourseAgreement(client, input.operating_company_id, asOf);
+    if (!faro.ok) return []; // Fail closed — no entity-wide scan without authoritative Faro agreement.
+    return selectOutstandingPastGrace(
+      client,
+      input.operating_company_id,
+      asOf,
+      FACTORING_INTEREST_ACCRUAL_AFTER_DAY + 1,
+      faro.vendorId
+    );
   });
 
   if (advances === null) return { flag_off: true, advances_scanned: 0, accruals_posted: 0 };
@@ -167,13 +288,21 @@ export async function triggerDay95RecourseForCompany(input: {
   as_of_date_iso?: string;
   actor_user_id?: string;
 }): Promise<RecourseTickSummary> {
-  const asOf = ymd(input.as_of_date_iso ?? new Date().toISOString());
+  const asOf = ymd(input.as_of_date_iso ?? companyBusinessDate());
   const actorUserId = input.actor_user_id ?? SYSTEM_ACTOR_ID;
 
   const candidates = await withLuciaBypass(async (client: DbClient) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
     if (!(await companyPostingEnabled(client, input.operating_company_id))) return null;
-    return selectOutstandingPastGrace(client, input.operating_company_id, asOf, FACTORING_REPURCHASE_DEADLINE_DAYS);
+    const faro = await requireEffectiveFaroFullRecourseAgreement(client, input.operating_company_id, asOf);
+    if (!faro.ok) return []; // Fail closed — RTS/partial/missing/expired/ambiguous agreement.
+    return selectOutstandingPastGrace(
+      client,
+      input.operating_company_id,
+      asOf,
+      FACTORING_REPURCHASE_DEADLINE_DAYS,
+      faro.vendorId
+    );
   });
 
   if (candidates === null) return { flag_off: true, advances_scanned: 0, recoursed: 0 };
@@ -183,50 +312,29 @@ export async function triggerDay95RecourseForCompany(input: {
     // 1) Catch interest all the way up to today so the liability = Net + full accrued interest.
     await accrueThroughDateForAdvance(input.operating_company_id, advance, asOf, actorUserId);
 
-    // 2) Read the outstanding liability (Net + compounded interest). last_closing is null if nothing accrued
-    //    (e.g. interest rounded to 0) → fall back to Net.
-    const { last_closing_cents } = await sumAccruedDefaultInterest(input.operating_company_id, advance.id);
-    const outstandingLiability = last_closing_cents ?? advance.invoice_total_cents;
+    // 2) Exact linked outstanding amounts only — never guess from mutable status / invoice face alone.
+    const exact = await loadExactLinkedChargebackAmounts(input.operating_company_id, advance.id);
+    if (exact.liability_cents <= 0 || exact.recoursed_ar_cents <= 0) {
+      continue;
+    }
 
-    // 3) Fire the SHIPPED chargeback poster. chargeback = full outstanding liability; default_interest = 0
-    //    (already expensed + compounded into the liability by the daily accrual — passing it again would
-    //    double-count). recoursed A/R = the pledged Net (A/R was only ever the invoice face).
+    // 3) Full-recourse chargeback in ONE caller-owned txn (repay + A/R return + status + audit).
     const cb = await postFactoringChargebackEvent({
       operating_company_id: input.operating_company_id,
       factoring_advance_id: advance.id,
       actor_user_id: actorUserId,
       charged_back_at_iso: asOf,
-      chargeback_amount_cents: outstandingLiability,
+      chargeback_amount_cents: exact.liability_cents,
       default_interest_cents: 0,
-      recoursed_ar_cents: advance.invoice_total_cents,
+      recoursed_ar_cents: exact.recoursed_ar_cents,
     });
 
-    // Flag was ON (we got past the gate), so a flag_off here is impossible; guard anyway. Flip business
-    // state only when the GL actually landed (posted) OR is already there from a prior partial run.
     if (cb.reason === "flag_off") continue;
     if (!(cb.posted || cb.reason === "already_posted")) continue;
 
+    // Orchestration audit only — status/subledger already committed inside chargeback txn.
     await withLuciaBypass(async (client: DbClient) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
-      await client.query(
-        `
-          UPDATE accounting.factoring_advances
-          SET status = 'recourse_returned',
-              recourse_returned_at = $2::timestamptz,
-              recourse_reason = COALESCE(recourse_reason,
-                'Auto recourse: Faro Repurchase Deadline (95 days) reached unpaid')
-          WHERE id = $1 AND status = 'advanced'
-        `,
-        [advance.id, `${asOf}T00:00:00.000Z`]
-      );
-      await client.query(
-        `
-          UPDATE accounting.invoices
-          SET factoring_status = 'recourse_returned', updated_at = now()
-          WHERE factoring_advance_id = $1
-        `,
-        [advance.id]
-      );
       await appendCrudAudit(
         client,
         actorUserId,
@@ -237,8 +345,8 @@ export async function triggerDay95RecourseForCompany(input: {
           operating_company_id: input.operating_company_id,
           display_id: advance.display_id,
           repurchase_deadline_days: FACTORING_REPURCHASE_DEADLINE_DAYS,
-          outstanding_liability_cents: outstandingLiability,
-          net_recoursed_ar_cents: advance.invoice_total_cents,
+          outstanding_liability_cents: exact.liability_cents,
+          net_recoursed_ar_cents: exact.recoursed_ar_cents,
           journal_entry_id: cb.journal_entry_id ?? null,
         },
         "warning",

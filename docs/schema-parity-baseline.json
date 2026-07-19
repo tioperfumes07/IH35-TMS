@@ -559,6 +559,15 @@
       "operating_company_id",
       "updated_at"
     ],
+    "accounting.factoring_lifecycle_posting_keys": [
+      "created_at",
+      "event_key",
+      "factoring_advance_id",
+      "id",
+      "journal_entry_id",
+      "operating_company_id",
+      "source_transaction_type"
+    ],
     "accounting.factoring_reserve_movements": [
       "amount_cents",
       "created_at",
@@ -4340,6 +4349,27 @@
       "submitted_at",
       "tenant_id",
       "total_face_cents"
+    ],
+    "factoring.canonical_factor_agreements": [
+      "agreement_code",
+      "created_at",
+      "created_by_user_id",
+      "default_interest_daily_rate",
+      "effective_from",
+      "effective_to",
+      "factor_profile_id",
+      "factor_vendor_id",
+      "fee_rate_tier1",
+      "fee_rate_tier2",
+      "grace_days",
+      "id",
+      "is_full_recourse",
+      "repurchase_deadline_days",
+      "repurchase_term_days",
+      "reserve_rate",
+      "tenant_id",
+      "voided_at",
+      "voided_by_user_id"
     ],
     "factoring.customer_factor_assignment": [
       "created_at",

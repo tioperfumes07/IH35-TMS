@@ -52,6 +52,33 @@ export type CreateJournalEntryInput = {
   postings: CreatePostingInput[];
 };
 
+export type CreateJournalEntryHeader = {
+  id: string;
+  operating_company_id: string;
+  entry_date: string;
+  memo: string | null;
+  status: JournalEntryStatus;
+  source: JournalEntrySource;
+  qbo_sync_pending: boolean;
+  created_at: string;
+};
+
+/**
+ * Optional caller-owned transaction hooks (CPA VETO 0280-05 atomic lifecycle links).
+ * When `client` is supplied the caller owns BEGIN/COMMIT; side-effect enqueue is suppressed
+ * so the caller can enqueue only after a successful outer commit.
+ */
+export type CreateJournalEntryOptions = {
+  client?: QueryableClient;
+  /** Runs after JE header+lines+manual TSL, before the owning transaction commits. */
+  afterInsertBeforeCommit?: (
+    client: QueryableClient,
+    header: CreateJournalEntryHeader
+  ) => Promise<void>;
+  /** When true with a caller-owned client, skip QBO/sync enqueue (caller runs after COMMIT). */
+  suppressSideEffects?: boolean;
+};
+
 function hashPayload(payload: unknown) {
   return crypto.createHash("sha256").update(JSON.stringify(payload)).digest("hex");
 }
@@ -80,7 +107,16 @@ async function triggerWf064OwnerNotification(
   );
 }
 
-export async function createJournalEntry(input: CreateJournalEntryInput, actor: { userId: string; role: string }) {
+/**
+ * In-client JE insert primitive (caller-owned transaction). Used by factoring poster so
+ * lifecycle source links / reserve movements commit atomically with the JE.
+ */
+export async function createJournalEntryOnClient(
+  client: QueryableClient,
+  input: CreateJournalEntryInput,
+  actor: { userId: string; role: string },
+  options?: Pick<CreateJournalEntryOptions, "afterInsertBeforeCommit">
+): Promise<CreateJournalEntryHeader> {
   if (!input.postings?.length || input.postings.length < 2) {
     throw new Error("journal_entry_min_two_lines_required");
   }
@@ -95,147 +131,207 @@ export async function createJournalEntry(input: CreateJournalEntryInput, actor: 
     throw new Error("journal_entry_not_balanced");
   }
 
-  const created = await withCurrentUser(actor.userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
-    const headerRes = await client.query<{
-      id: string;
-      operating_company_id: string;
-      entry_date: string;
-      memo: string | null;
-      status: JournalEntryStatus;
-      source: JournalEntrySource;
-      qbo_sync_pending: boolean;
-      created_at: string;
-    }>(
+  await client.query(`SELECT set_config('app.operating_company_id', $1, true)`, [input.operating_company_id]);
+  const headerRes = await client.query<CreateJournalEntryHeader>(
+    `
+      INSERT INTO accounting.journal_entries (
+        operating_company_id,
+        entry_date,
+        memo,
+        status,
+        source,
+        created_by_user_id,
+        qbo_sync_pending,
+        created_at,
+        updated_at
+      )
+      VALUES ($1,$2::date,$3,'posted',$4,$5,true,now(),now())
+      RETURNING id, operating_company_id::text, entry_date::text, memo, status, source, qbo_sync_pending, created_at::text
+    `,
+    [input.operating_company_id, input.entry_date, input.memo ?? null, input.source ?? "manual", actor.userId]
+  );
+  const header = headerRes.rows[0];
+  if (!header?.id) throw new Error("journal_entry_insert_failed");
+
+  let lineSequence = 1;
+  for (const posting of input.postings) {
+    const lineRes = await client.query<{ id: string }>(
       `
-        INSERT INTO accounting.journal_entries (
+        INSERT INTO accounting.journal_entry_postings (
           operating_company_id,
-          entry_date,
-          memo,
-          status,
-          source,
-          created_by_user_id,
-          qbo_sync_pending,
+          journal_entry_uuid,
+          line_sequence,
+          account_id,
+          class_id,
+          entity_uuid,
+          debit_or_credit,
+          amount_cents,
+          description,
+          idempotency_key,
           created_at,
           updated_at
         )
-        VALUES ($1,$2::date,$3,'posted',$4,$5,true,now(),now())
-        RETURNING id, operating_company_id::text, entry_date::text, memo, status, source, qbo_sync_pending, created_at::text
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,now(),now())
+        ON CONFLICT (operating_company_id, idempotency_key, line_sequence)
+          WHERE idempotency_key IS NOT NULL DO NOTHING
+        RETURNING id::text
       `,
-      [input.operating_company_id, input.entry_date, input.memo ?? null, input.source ?? "manual", actor.userId]
+      [
+        input.operating_company_id,
+        header.id,
+        lineSequence,
+        posting.account_id,
+        posting.class_id ?? null,
+        posting.entity_uuid ?? null,
+        posting.debit_or_credit,
+        posting.amount_cents,
+        posting.description ?? null,
+        // BLOCK 2: every money insert carries a key. A manual JE has no natural idempotency token,
+        // so the key is keyed to its freshly-generated header id (unique per entry) — this populates
+        // the column + satisfies the unique-index backstop without changing manual-JE behavior.
+        `manual_je:${header.id}`,
+      ]
     );
-    const header = headerRes.rows[0];
-    if (!header?.id) throw new Error("journal_entry_insert_failed");
-
-    let lineSequence = 1;
-    for (const posting of input.postings) {
-      const lineRes = await client.query<{ id: string }>(
-        `
-          INSERT INTO accounting.journal_entry_postings (
-            operating_company_id,
-            journal_entry_uuid,
-            line_sequence,
-            account_id,
-            class_id,
-            entity_uuid,
-            debit_or_credit,
-            amount_cents,
-            description,
-            idempotency_key,
-            created_at,
-            updated_at
-          )
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,now(),now())
-          ON CONFLICT (operating_company_id, idempotency_key, line_sequence)
-            WHERE idempotency_key IS NOT NULL DO NOTHING
-          RETURNING id::text
-        `,
-        [
-          input.operating_company_id,
-          header.id,
-          lineSequence,
-          posting.account_id,
-          posting.class_id ?? null,
-          posting.entity_uuid ?? null,
-          posting.debit_or_credit,
-          posting.amount_cents,
-          posting.description ?? null,
-          // BLOCK 2: every money insert carries a key. A manual JE has no natural idempotency token,
-          // so the key is keyed to its freshly-generated header id (unique per entry) — this populates
-          // the column + satisfies the unique-index backstop without changing manual-JE behavior.
-          `manual_je:${header.id}`,
-        ]
-      );
-      // CODER-12 audit-spine: one source link per inserted posting line, same transaction. On a
-      // BLOCK-2 ON CONFLICT no-op (no row returned) the original line already carries its link → skip.
-      const postingId = lineRes.rows[0]?.id;
-      if (postingId) {
-        await writeTransactionSourceLink(client, {
-          operating_company_id: input.operating_company_id,
-          journal_entry_posting_id: postingId,
-          linked_object_type: "journal_entry",
-          linked_object_id: header.id,
-          relationship_role: "manual_entry",
-        });
-      }
-      lineSequence += 1;
-    }
-
-    // CODER-12 audit-spine: the immutable audit event for this posting is the appendCrudAudit
-    // ("accounting.journal_entry.created") call below -> audit.audit_events (the canonical, DB-trigger
-    // immutable 5-yr audit log per the blueprint). events.log_event is NOT used (its valid_subject_type
-    // CHECK rejects accounting subjects -> would fail-loud + roll back the posting). The per-line
-    // source links above are the source->posting traceability half of the spine.
-    await appendCrudAudit(
-      client,
-      actor.userId,
-      "accounting.journal_entry.created",
-      {
-        resource_type: "accounting.journal_entries",
-        resource_id: header.id,
+    // CODER-12 audit-spine: one source link per inserted posting line, same transaction. On a
+    // BLOCK-2 ON CONFLICT no-op (no row returned) the original line already carries its link → skip.
+    const postingId = lineRes.rows[0]?.id;
+    if (postingId) {
+      await writeTransactionSourceLink(client, {
         operating_company_id: input.operating_company_id,
-        source: input.source ?? "manual",
-        debit_total_cents: debits,
-        credit_total_cents: credits,
-        postings_count: input.postings.length,
-      },
-      "info",
-      "P5-D4-MANUAL-JE"
-    );
+        journal_entry_posting_id: postingId,
+        linked_object_type: "journal_entry",
+        linked_object_id: header.id,
+        relationship_role: "manual_entry",
+      });
+    }
+    lineSequence += 1;
+  }
 
-    await triggerWf064OwnerNotification(client, actor.userId, actor.role, {
-      journal_entry_id: header.id,
+  // CODER-12 audit-spine: the immutable audit event for this posting is the appendCrudAudit
+  // ("accounting.journal_entry.created") call below -> audit.audit_events (the canonical, DB-trigger
+  // immutable 5-yr audit log per the blueprint). events.log_event is NOT used (its valid_subject_type
+  // CHECK rejects accounting subjects -> would fail-loud + roll back the posting). The per-line
+  // source links above are the source->posting traceability half of the spine.
+  await appendCrudAudit(
+    client,
+    actor.userId,
+    "accounting.journal_entry.created",
+    {
+      resource_type: "accounting.journal_entries",
+      resource_id: header.id,
       operating_company_id: input.operating_company_id,
       source: input.source ?? "manual",
-    });
+      debit_total_cents: debits,
+      credit_total_cents: credits,
+      postings_count: input.postings.length,
+    },
+    "info",
+    "P5-D4-MANUAL-JE"
+  );
 
-    return header;
+  await triggerWf064OwnerNotification(client, actor.userId, actor.role, {
+    journal_entry_id: header.id,
+    operating_company_id: input.operating_company_id,
+    source: input.source ?? "manual",
   });
+
+  if (options?.afterInsertBeforeCommit) {
+    await options.afterInsertBeforeCommit(client, header);
+  }
+
+  return header;
+}
+
+export async function createJournalEntry(
+  input: CreateJournalEntryInput,
+  actor: { userId: string; role: string },
+  options?: CreateJournalEntryOptions
+) {
+  if (!input.postings?.length || input.postings.length < 2) {
+    throw new Error("journal_entry_min_two_lines_required");
+  }
+  const debits = input.postings
+    .filter((line) => line.debit_or_credit === "debit")
+    .reduce((sum, line) => sum + Number(line.amount_cents || 0), 0);
+  const credits = input.postings
+    .filter((line) => line.debit_or_credit === "credit")
+    .reduce((sum, line) => sum + Number(line.amount_cents || 0), 0);
+  if (debits <= 0 || credits <= 0) throw new Error("journal_entry_requires_debit_and_credit");
+  if (debits !== credits) {
+    throw new Error("journal_entry_not_balanced");
+  }
+
+  const created = options?.client
+    ? await createJournalEntryOnClient(options.client, input, actor, {
+        afterInsertBeforeCommit: options.afterInsertBeforeCommit,
+      })
+    : await withCurrentUser(actor.userId, async (client) => {
+        return createJournalEntryOnClient(client, input, actor, {
+          afterInsertBeforeCommit: options?.afterInsertBeforeCommit,
+        });
+      });
 
   // [IMPORT-P0 qbo-import-exclusion] This create path only produces TMS-origin JEs (source_system='tms').
   // BOTH downstream push paths — the queue drain (sync-outbound-accounting.ts, drained by cron) and the
   // immediate best-effort push below — consult the shared gate (qbo-je-push-gate.ts): they refuse any
   // non-'tms' source_system (structural) and require QBO_JE_PUSH_ENABLED ON per entity (default OFF).
+  // When the caller owns the outer transaction (options.client + suppressSideEffects), enqueue AFTER
+  // their COMMIT so a rolled-back JE never leaves a sync job / QBO push artifact.
+  if (!(options?.client && options.suppressSideEffects)) {
+    await enqueueSyncJob(
+      input.operating_company_id,
+      "journal_entry",
+      created.id,
+      hashPayload({
+        journal_entry_id: created.id,
+        entry_date: input.entry_date,
+        source: input.source ?? "manual",
+        debit_total_cents: debits,
+        credit_total_cents: credits,
+      }),
+      actor.userId
+    );
+
+    void pushJournalEntryToQuickBooksImmediateBestEffort({
+      operatingCompanyId: input.operating_company_id,
+      journalEntryId: created.id,
+    });
+  }
+
+  return created;
+}
+
+/** Side effects deferred when createJournalEntry ran inside a caller-owned transaction. */
+export async function enqueueJournalEntrySideEffects(
+  input: Pick<CreateJournalEntryInput, "operating_company_id" | "entry_date" | "source" | "postings">,
+  journalEntryId: string,
+  actorUserId: string
+): Promise<void> {
+  const debits = input.postings
+    .filter((line) => line.debit_or_credit === "debit")
+    .reduce((sum, line) => sum + Number(line.amount_cents || 0), 0);
+  const credits = input.postings
+    .filter((line) => line.debit_or_credit === "credit")
+    .reduce((sum, line) => sum + Number(line.amount_cents || 0), 0);
+  // [IMPORT-P0 qbo-import-exclusion] Post-COMMIT enqueue for caller-owned JE txns (same gate as create).
+  // Queue drain + immediate push refuse non-'tms' source_system and require QBO_JE_PUSH_ENABLED ON.
   await enqueueSyncJob(
     input.operating_company_id,
     "journal_entry",
-    created.id,
+    journalEntryId,
     hashPayload({
-      journal_entry_id: created.id,
+      journal_entry_id: journalEntryId,
       entry_date: input.entry_date,
       source: input.source ?? "manual",
       debit_total_cents: debits,
       credit_total_cents: credits,
     }),
-    actor.userId
+    actorUserId
   );
-
   void pushJournalEntryToQuickBooksImmediateBestEffort({
     operatingCompanyId: input.operating_company_id,
-    journalEntryId: created.id,
+    journalEntryId,
   });
-
-  return created;
 }
 
 // AF-7 money-control kill switch: per-entity, default OFF. Gates the void ACTION on a posted journal
