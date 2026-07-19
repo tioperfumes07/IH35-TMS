@@ -1,12 +1,21 @@
 /**
  * 0280-02 revenue↔GL linkage — real Postgres behavioral coverage.
  * Runs only in CI (GITHUB_ACTIONS=true) with a migrated DB.
+ *
+ * ISOLATION: owns UNIQUE org.companies rows via createIsolatedOperatingCompany().
+ * ROOT CAUSE of flake expected 28500 / received 368500: shared TRANSP company let
+ * parallel CI forks' Income credits inflate gl_posted_revenue_cents for "today".
  */
 import { randomUUID } from "node:crypto";
 import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
-import { ensureIntegrationPrerequisites, getOperatingCompanyId } from "../../../test-helpers/db-fixture.js";
+import { ensureIntegrationPrerequisites } from "../../../test-helpers/db-fixture.js";
+import {
+  createIsolatedOperatingCompany,
+  deactivateIsolatedOperatingCompany,
+  type IsolatedOperatingCompany,
+} from "../../../test-helpers/isolated-company.js";
 import { companyBusinessDate } from "../../lib/company-business-date.js";
 import { computeRevenueGlLinkage } from "../revenue-gl-linkage.service.js";
 
@@ -15,6 +24,8 @@ const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true
 describeIntegration("0280-02 revenue-gl-linkage (real Postgres)", () => {
   let db: pg.Client;
   let companyId: string;
+  let isolated: IsolatedOperatingCompany;
+  let otherIsolated: IsolatedOperatingCompany | null = null;
   let otherCompanyId: string | null = null;
   const suffix = randomUUID().slice(0, 8);
   const incomeAccountId = randomUUID();
@@ -73,20 +84,26 @@ describeIntegration("0280-02 revenue-gl-linkage (real Postgres)", () => {
 
   beforeAll(async () => {
     await ensureIntegrationPrerequisites();
-    companyId = getOperatingCompanyId();
+    isolated = await createIsolatedOperatingCompany({
+      codePrefix: "RGL",
+      legalNamePrefix: "REVGL Primary",
+      label: "revgl-primary",
+    });
+    companyId = isolated.companyId;
+    otherIsolated = await createIsolatedOperatingCompany({
+      codePrefix: "RGO",
+      legalNamePrefix: "REVGL Other",
+      label: "revgl-other",
+    });
+    otherCompanyId = otherIsolated.companyId;
+
     const cs = process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL;
     if (!cs) throw new Error("DATABASE_URL required");
     db = new pg.Client(buildPgClientConfig(cs));
     await db.connect();
+    await db.query("SET ROLE ih35_app");
 
     await bypass(async () => {
-      // Prefer a second real company for cross-entity isolation when available.
-      const other = await db.query<{ id: string }>(
-        `SELECT id::text AS id FROM org.companies WHERE id <> $1::uuid ORDER BY created_at ASC NULLS LAST LIMIT 1`,
-        [companyId]
-      );
-      otherCompanyId = other.rows[0]?.id ?? null;
-
       await db.query(
         `INSERT INTO catalogs.accounts (id, operating_company_id, account_number, account_name, account_type, is_postable)
          VALUES ($1::uuid,$2::uuid,$3,'REVGL Income','Income',true)`,
@@ -294,6 +311,8 @@ describeIntegration("0280-02 revenue-gl-linkage (real Postgres)", () => {
         await db.query(`DELETE FROM catalogs.accounts WHERE id = ANY($1::uuid[])`, [
           [incomeAccountId, expenseAccountId, arAccountId],
         ]);
+        if (otherIsolated) await deactivateIsolatedOperatingCompany(db, otherIsolated);
+        if (isolated) await deactivateIsolatedOperatingCompany(db, isolated);
       });
     } catch {
       /* best-effort */
@@ -324,7 +343,7 @@ describeIntegration("0280-02 revenue-gl-linkage (real Postgres)", () => {
   });
 
   it("cross-entity isolation: other company invoice does not inflate this company's invoice basis", async () => {
-    if (!otherCompanyId) return; // skip soft when only one company seeded
+    expect(otherCompanyId).toBeTruthy();
     const client = await scopedClient();
     const result = await computeRevenueGlLinkage(client, {
       operatingCompanyId: companyId,

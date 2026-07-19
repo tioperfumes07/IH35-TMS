@@ -1,0 +1,26 @@
+{
+  "block_id": "revenue-gl-linkage-db-isolation",
+  "branch": "cursor/revenue-gl-linkage-isolation-0280",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "test-hygiene",
+  "task": "Root-cause fix for CI flake on revenue-gl-linkage.db.test.ts (expected 28500 received 368500): suite used shared TRANSP via getOperatingCompanyId(); parallel forks' Income credits inflated gl_posted_revenue_cents. Migrate to canonical createIsolatedOperatingCompany() + deactivate teardown; Rule-17 guard plants regression. No product GL / expectation weakening / skips.",
+  "priority": "P0",
+  "module": "home-test-hygiene",
+  "db_required": true,
+  "guard_required": true,
+  "runtime_path": "src",
+  "extra_gates": [],
+  "allowed_files": [
+    "apps/backend/src/home/__tests__/revenue-gl-linkage.db.test.ts",
+    "scripts/verify-revenue-gl-linkage-db-isolation.mjs",
+    "scripts/verify-steps/928-verify-revenue-gl-linkage-db-isolation.mjs",
+    ".block-ready/revenue-gl-linkage-db-isolation.json"
+  ],
+  "acceptance": [
+    {
+      "check": "revenue-gl-linkage.db.test.ts uses createIsolatedOperatingCompany (not getOperatingCompanyId); deactivate teardown; verify-revenue-gl-linkage-db-isolation + --selftest PASS; expectations unchanged (28500)"
+    }
+  ],
+  "note": "Test hygiene only — separate from FMCSA PR #2716. FINANCIAL product code untouched."
+}
