@@ -230,38 +230,13 @@ async function sourceCargoSensorIncidents(client: DbClient, ociId: string): Prom
   }
 }
 
-// ─── Source: Period-close pending entries with warnings ───────────────────────
+// ─── Source: Period-close pending entries ─────────────────────────────────────
+// FORENSIC: no migrated period-close warning table exists. Do not query a phantom
+// source or debt-transfer it. Period-close attention stays empty until a
+// canonical migrated control record is owned in (separate migration lane).
 
-async function sourcePeriodCloseWarnings(client: DbClient, ociId: string): Promise<AttentionItem[]> {
-  try {
-    if (!(await tableExists(client, "accounting.period_close_warnings"))) return [];
-    const res = await client.query(
-      `
-        SELECT COUNT(*)::text AS c
-        FROM accounting.period_close_warnings
-        WHERE operating_company_id = $1::uuid
-          AND resolved_at IS NULL
-      `,
-      [ociId]
-    );
-    const count = num(res.rows[0]?.c);
-    if (count === 0) return [];
-    return [
-      {
-        item_id: `period_close_warnings:${ociId}`,
-        source: "period_close",
-        score: 80,
-        title: `${count} period-close warning${count === 1 ? "" : "s"} pending`,
-        body: "Journal entries or invoices have unresolved warnings preventing period close.",
-        action_url: "/accounting/invoices",
-        action_label: "Open accounting",
-        severity: "warning",
-        extra: { count },
-      },
-    ];
-  } catch {
-    return [];
-  }
+async function sourcePeriodCloseAttention(_client: DbClient, _ociId: string): Promise<AttentionItem[]> {
+  return [];
 }
 
 // ─── Source: Driver damage liabilities awaiting Owner decision ────────────────
@@ -419,7 +394,7 @@ export async function computeTodaysAttention(
     sourceBankDrift,
     sourceEngFaultWOs,
     sourceCargoSensorIncidents,
-    sourcePeriodCloseWarnings,
+    sourcePeriodCloseAttention,
     sourceDamageLiabilities,
     sourceDetentionApprovals,
     sourceCoolingCustomers,

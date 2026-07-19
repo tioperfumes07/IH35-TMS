@@ -58,7 +58,6 @@ describe("computeTodaysAttention", () => {
       "banking.reconciliation_drift_alerts": [{ c: "2" }],
       "maintenance.work_orders": [{ c: "4" }],
       "telematics.cargo_sensor_incidents": [{ c: "1" }],
-      "accounting.period_close_warnings": [{ c: "2" }],
       "safety.accident_liabilities": [{ c: "1" }],
       "mdata.detention_requests": [{ c: "2" }],
       "mdata.customer_health_scores": [{ c: "3" }],

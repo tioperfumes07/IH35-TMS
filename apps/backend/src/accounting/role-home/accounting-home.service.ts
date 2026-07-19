@@ -2,6 +2,7 @@ import { getApAgingReport, type ApAgingTotals } from "../ap-aging.service.js";
 import { getArAgingReport, type ArAgingTotals } from "../ar-aging.service.js";
 import { withCompanyScope } from "../shared.js";
 import { companyBusinessDate } from "../../lib/company-business-date.js";
+import { countPendingJournalApprovals } from "./pending-approvals-gl.service.js";
 
 export type AgingBuckets = {
   current_cents: number;
@@ -99,18 +100,8 @@ export async function getAccountingHomeData(input: {
       );
       const openPeriod = (periodRes.rows[0] as { period_label: string; period_end: string; status: string } | undefined) ?? null;
 
-      let pendingJournalApprovals = 0;
-      if (await tableExists(client, "accounting.period_close_warnings")) {
-        const warnRes = await client.query(
-          `
-            SELECT COUNT(*)::text AS c
-            FROM accounting.period_close_warnings
-            WHERE operating_company_id = $1::uuid
-          `,
-          [input.operating_company_id]
-        );
-        pendingJournalApprovals = Number((warnRes.rows[0] as { c?: string } | undefined)?.c ?? 0);
-      }
+      // 0280-15: linked pending journal approvals only (0 when approval control unavailable).
+      const pendingJournalApprovals = await countPendingJournalApprovals(client, input.operating_company_id);
 
       let outboxDepth = 0;
       let lastSyncAt: string | null = null;

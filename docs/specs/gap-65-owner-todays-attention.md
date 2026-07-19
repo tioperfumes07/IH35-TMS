@@ -51,7 +51,7 @@ A scored + ranked aggregator that pulls from 10 source modules every 15 minutes 
 | Bank account drift | 90 | `banking.reconciliation_drift_alerts` (GAP-53) |
 | Severe engine fault WOs | 90 | `maintenance.work_orders` (GAP-58) |
 | Cargo sensor out-of-range | 85 | `telematics.cargo_sensor_incidents` (GAP-64) |
-| Period-close warnings | 80 | `accounting.period_close_warnings` (GAP-16) |
+| Period-close warnings | 80 | No migrated source yet — attention item stays empty (0280-15 forensic; do not invent a phantom table) |
 | Driver damage liabilities | 80 | `safety.accident_liabilities` (GAP-12) |
 | Pending detention approvals | 75 | `mdata.detention_requests` (GAP-19) |
 | Cooling customers (cold tier) | 70 | `mdata.customer_health_scores` (GAP-36) |

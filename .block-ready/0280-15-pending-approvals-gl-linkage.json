@@ -1,17 +1,50 @@
 {
   "block_id": "0280-15-pending-approvals-gl-linkage",
+  "branch": "cursor/pending-approvals-gl-linkage-3c30",
   "status": "NEEDS-VERIFY",
   "classification": "FINANCIAL",
   "phase": "tier3",
+  "task": "Accounting Home pending approvals ↔ JE/GL linkage (read-only)",
   "source": "MASTER-6 authored dispatch (06-TIER3-BLOCKS)",
   "source_file": "0280-15-pending-approvals-gl-linkage.txt",
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [
+    "node scripts/verify-pending-approvals-gl-linkage.mjs"
+  ],
   "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
+    "apps/backend/src/accounting/role-home/pending-approvals-gl.service.ts",
+    "apps/backend/src/accounting/role-home/routes.ts",
+    "apps/backend/src/accounting/role-home/accounting-home.service.ts",
+    "apps/backend/src/accounting/role-home/__tests__/pending-approvals-gl.test.ts",
+    "apps/backend/src/accounting/role-home/__tests__/accounting-home.test.ts",
+    "apps/backend/src/owner/todays-attention/aggregator.service.ts",
+    "apps/backend/src/owner/todays-attention/__tests__/aggregator.test.ts",
+    "apps/frontend/src/api/accountingHome.ts",
+    "apps/frontend/src/components/home/AccountingPendingApprovalsPanel.tsx",
+    "apps/frontend/src/components/home/__tests__/QboSyncHealthCard.test.tsx",
+    "scripts/verify-pending-approvals-gl-linkage.mjs",
+    "scripts/verify-steps/914-verify-pending-approvals-gl-linkage.mjs",
+    "scripts/sql-read-targets-known-debt.json",
+    "docs/specs/gap-67-accounting-home-view.md",
+    "docs/specs/gap-65-owner-todays-attention.md",
+    "docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md",
+    ".block-ready/0280-15-pending-approvals-gl-linkage.json"
   ],
   "acceptance": [
     {
-      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
+      "check": "No runtime read/reference to nonexistent period-close warning table; debt entries removed (no allowlist/debt-transfer)"
+    },
+    {
+      "check": "GET /api/v1/accounting/role-home/pending-approvals rate-limited; when no migrated JE approval-status column: control_available=false, pending_journal_approvals=0, approval_control_unavailable exception (never empty success / fabricated rows)"
+    },
+    {
+      "check": "When control available: JE detail drill /accounting/journal-entries/${id}; voided/reversed excluded via voided_at/status/reverses_je_id/reversed_by_je_id; required approver from canonical columns or null+assignment_unresolved (never invented Owner/Administrator/role-only); created_at+id ordering; entity-scoped; integer cents; governed CoA"
+    },
+    {
+      "check": "Behavioral tests + Rule-17 guard cover phantom absence, control unavailable, direct detail route, voided/reversed exclusion, null approver, cross-entity; no package.json/CI hot-file edits"
     }
   ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+  "note": "Financial read-only HOLD — do not self-merge. Adversarial rewrite: no migration (lane occupied). Builder stops at branch-proof for GUARD/owner."
 }
