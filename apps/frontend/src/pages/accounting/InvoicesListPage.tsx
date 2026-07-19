@@ -64,7 +64,22 @@ export function InvoicesListPage() {
   const [factoredModalOpen, setFactoredModalOpen] = useState(false);
   const [pendingIds, setPendingIds] = useState<string[]>([]);
   const [batchId, setBatchId] = useState("");
-  const [status, setStatus] = useState<InvoiceListFilter>("");
+  // RPT-PAR-1 / BillsPage parity: honor ?status= deep-link (incl. client-side with_balance)
+  // so A/R Aging drill-through lands pre-filtered instead of on "All statuses".
+  const STATUS_FILTER_VALUES = new Set<string>([
+    "draft",
+    "sent",
+    "partial",
+    "paid",
+    "void",
+    "factored",
+    "not_sent",
+    "with_balance",
+  ]);
+  const initialStatus = searchParams.get("status");
+  const [status, setStatus] = useState<InvoiceListFilter>(
+    initialStatus && STATUS_FILTER_VALUES.has(initialStatus) ? (initialStatus as InvoiceListFilter) : ""
+  );
   // Mirror BillsPage vendor_id deep-link: Customers "New transaction" → ?customer_id=
   const [customerId, setCustomerId] = useState(() => searchParams.get("customer_id") ?? "");
   const [search, setSearch] = useState("");

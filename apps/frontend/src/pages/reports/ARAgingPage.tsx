@@ -11,6 +11,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { arAgingCustomerProfileHref, arAgingInvoiceListHref } from "./agingDrillThrough";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -213,7 +214,21 @@ export function ARAgingPage() {
         loading={query.isPending || (query.isFetching && filtered.length === 0)}
         storageKey="ar-aging"
         emptyText="No rows"
-        onRowClick={(r) => navigate(`/customers/${r.customer_id}?tab=billing`)}
+        // RPT-PAR-1: row drill → open invoices for this customer (aging/status context).
+        // Customer billing profile kept additively via row action (never delete).
+        onRowClick={(r) => navigate(arAgingInvoiceListHref(r.customer_id))}
+        rowActions={(r) => (
+          <div className="flex flex-wrap justify-end gap-1">
+            <Button
+              size="sm"
+              variant="secondary"
+              aria-label={`Open customer profile for ${r.customer_name}`}
+              onClick={() => navigate(arAgingCustomerProfileHref(r.customer_id))}
+            >
+              Customer profile
+            </Button>
+          </div>
+        )}
       />
     </div>
   );
