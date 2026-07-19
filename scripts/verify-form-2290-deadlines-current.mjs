@@ -1,7 +1,11 @@
 #!/usr/bin/env node
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import { register } from "tsx/esm/api";
+
+// Plain `node` cannot import .ts (ERR_UNKNOWN_FILE_EXTENSION); register before dynamic import.
+register();
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const migrationPath = path.join(ROOT, "db/migrations/0378_form_2290_filings.sql");
@@ -31,7 +35,7 @@ const generator = fs.readFileSync(generatorPath, "utf8");
 if (!generator.includes("upcomingForm2290Deadline")) fail("generator must export upcomingForm2290Deadline");
 if (!generator.includes("partialYearTaxFactor")) fail("generator must support partial-year tax computation");
 
-const { deadline, daysRemaining } = (await import(generatorPath)).upcomingForm2290Deadline();
+const { deadline, daysRemaining } = (await import(pathToFileURL(generatorPath).href)).upcomingForm2290Deadline();
 if (!/^\d{4}-\d{2}-\d{2}$/.test(deadline)) fail("deadline must be ISO date");
 if (daysRemaining < 0 || daysRemaining > 366) fail(`unexpected daysRemaining=${daysRemaining}`);
 

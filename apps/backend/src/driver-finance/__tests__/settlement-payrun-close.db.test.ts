@@ -18,7 +18,14 @@ import crypto, { randomUUID } from "node:crypto";
 import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
-import { ensureIntegrationPrerequisites } from "../../../test-helpers/db-fixture.js";
+import {
+  acquireGlobalAccountRoleBindingsLock,
+  ensureIntegrationPrerequisites,
+  releaseGlobalAccountRoleBindingsLock,
+  restoreGlobalAccountRoleBindings,
+  saveGlobalAccountRoleBindings,
+  type SavedAccountRoleBinding,
+} from "../../../test-helpers/db-fixture.js";
 import { TEST_OWNER_USER_ID, TEST_ENCRYPTION_KEY } from "../../../test-helpers/constants.js";
 import { upsertDriverEscrowAccountLink } from "../../accounting/driver-subaccount-provision.service.js";
 import { closeSettlementPayRun } from "../settlement-payrun-close.service.js";
@@ -54,6 +61,16 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
     chargebackRecovery: randomUUID(),
     cash: randomUUID(),
   };
+  // GLOBAL catalogs.account_role_bindings UNIQUE(role_key) — share lock with settlement-bill-payment +
+  // settlement-gl-posting for save → bind → tests → fail-loud restore.
+  const GLOBAL_BIND_KEYS = [
+    "driver_pay_expense",
+    "insurance_recovery",
+    "advance_recovery",
+    "abandonment_chargeback_recovery",
+  ] as const;
+  let priorGlobalBindings: SavedAccountRoleBinding[] = [];
+  let heldGlobalBindingsLock = false;
   const paymentMethodId = randomUUID();
   // per-driver escrow liability sub-accounts (grandparent -> parent -> per-driver leaf)
   const escrowGrandparent = randomUUID();
@@ -188,6 +205,8 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
     db = new pg.Client(buildPgClientConfig(cs));
     await db.connect();
     await db.query("SET ROLE ih35_app");
+    await acquireGlobalAccountRoleBindingsLock(db);
+    heldGlobalBindingsLock = true;
     await bypass(async () => {
       await db.query(
         `INSERT INTO identity.users (id, email, role, preferred_language) VALUES
@@ -210,6 +229,7 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
       await mkAcct(acct.cash, `Operating Cash ${suffix}`, "Asset", null, null);
       await mkAcct(escrowGrandparent, `Damage Claim Escrow ${suffix}`, "Liability", null, escrowQbo("GP"));
       await mkAcct(escrowParent, `Driver Escrow ${suffix}`, "Liability", escrowGrandparent, escrowQbo("P"));
+      priorGlobalBindings = await saveGlobalAccountRoleBindings(db, GLOBAL_BIND_KEYS);
       await bind("driver_pay_expense", acct.driverPay);
       await bind("insurance_recovery", acct.insuranceRecovery);
       await bind("advance_recovery", acct.advanceClearing);
@@ -236,10 +256,22 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
 
   afterAll(async () => {
     if (!db) return;
+    let restoreError: unknown;
+    const sids = [below.settlementId, atcap.settlementId, off.settlementId];
+    // Fixture cleanup in its own txn — a failed DELETE must not abort GLOBAL restore.
     try {
       await bypass(async () => {
-        const sids = [below.settlementId, atcap.settlementId, off.settlementId];
         await db.query(`DELETE FROM driver_finance.payrun_gl_runs WHERE settlement_id = ANY($1::uuid[])`, [sids]);
+        // Drop posting→link FKs before deleting journal_entry_postings.
+        await db.query(
+          `DELETE FROM accounting.transaction_source_links tsl
+            USING accounting.journal_entry_postings jep
+            JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
+           WHERE tsl.journal_entry_posting_id = jep.id
+             AND je.operating_company_id = $1::uuid
+             AND je.memo LIKE $2`,
+          [companyId, `Settlement PR-%${suffix}%`]
+        );
         await db.query(`DELETE FROM accounting.journal_entry_postings jep USING accounting.journal_entries je
                           WHERE je.id=jep.journal_entry_uuid AND je.operating_company_id=$1::uuid AND je.memo LIKE $2`, [companyId, `Settlement PR-%${suffix}%`]);
         await db.query(`DELETE FROM accounting.journal_entries WHERE operating_company_id=$1::uuid AND memo LIKE $2`, [companyId, `Settlement PR-%${suffix}%`]);
@@ -254,14 +286,42 @@ describeIntegration("SETTLEMENT PAY-RUN CLOSE net-zero (real Postgres)", () => {
         await db.query(`DELETE FROM accounting.escrow_accounts WHERE holder_id = ANY($1::uuid[])`, [allDrivers]);
         await db.query(`DELETE FROM catalogs.payment_methods WHERE id=$1::uuid`, [paymentMethodId]);
         await db.query(`DELETE FROM mdata.drivers WHERE id = ANY($1::uuid[])`, [allDrivers]);
-        await db.query(`DELETE FROM catalogs.accounts WHERE id = ANY($1::uuid[])`, [
-          [below.escrowSub, atcap.escrowSub, off.escrowSub, escrowParent, escrowGrandparent, acct.driverPay, acct.insuranceRecovery, acct.advanceClearing, acct.chargebackRecovery, acct.cash],
-        ]);
-        await db.query(`DELETE FROM catalogs.account_role_bindings WHERE role_key = ANY($1)`, [["driver_pay_expense", "insurance_recovery", "advance_recovery", "abandonment_chargeback_recovery"]]);
         await db.query(`DELETE FROM lib.feature_flag_overrides WHERE flag_key='SETTLEMENT_GL_POSTING_ENABLED' AND (operating_company_id=$1::uuid OR user_uuid=$2::uuid)`, [companyId, flagActor]);
         await db.query(`DELETE FROM integrations.qbo_connections WHERE operating_company_id=$1::uuid AND realm_id=$2`, [companyId, realm]);
       });
-    } catch { /* best-effort */ } finally { await db.end(); }
+    } catch (fixtureCleanupErr) {
+      void fixtureCleanupErr;
+    }
+
+    try {
+      // Restore GLOBAL bindings BEFORE deleting fixture accounts (FK). FAIL-LOUD — own txn.
+      await bypass(async () => {
+        await restoreGlobalAccountRoleBindings(db, GLOBAL_BIND_KEYS, priorGlobalBindings, companyId);
+      });
+    } catch (err) {
+      restoreError = err;
+    }
+
+    try {
+      await bypass(async () => {
+        await db.query(`DELETE FROM catalogs.accounts WHERE id = ANY($1::uuid[])`, [
+          [below.escrowSub, atcap.escrowSub, off.escrowSub, escrowParent, escrowGrandparent, acct.driverPay, acct.insuranceRecovery, acct.advanceClearing, acct.chargebackRecovery, acct.cash],
+        ]);
+      });
+    } catch (postRestoreCleanupErr) {
+      void postRestoreCleanupErr;
+    }
+
+    if (heldGlobalBindingsLock) {
+      try {
+        await releaseGlobalAccountRoleBindingsLock(db);
+      } catch (unlockErr) {
+        restoreError ??= unlockErr;
+      }
+      heldGlobalBindingsLock = false;
+    }
+    await db.end();
+    if (restoreError) throw restoreError;
   });
 
   async function jeBalance(jeId: string): Promise<{ dr: number; cr: number }> {

@@ -10,7 +10,14 @@ import { randomUUID } from "node:crypto";
 import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../../lib/pg-connection-options.js";
-import { ensureIntegrationPrerequisites } from "../../../../test-helpers/db-fixture.js";
+import {
+  acquireGlobalAccountRoleBindingsLock,
+  ensureIntegrationPrerequisites,
+  releaseGlobalAccountRoleBindingsLock,
+  restoreGlobalAccountRoleBindings,
+  saveGlobalAccountRoleBindings,
+  type SavedAccountRoleBinding,
+} from "../../../../test-helpers/db-fixture.js";
 import { postSettlementToGl, type SettlementPostingResult } from "../settlement-posting.service.js";
 import { SettlementPostingError } from "../settlement-posting.math.js";
 
@@ -31,7 +38,11 @@ describeIntegration("FIN-18 settlement GL posting (real Postgres)", () => {
     damageRecovery: randomUUID(),
     reimb: randomUUID(),
   };
-  const roleKeys = ["driver_pay_expense", "driver_payroll_clearing", "damage_recovery", "reimbursement_expense"];
+  // GLOBAL catalogs.account_role_bindings UNIQUE(role_key) — share lock with settlement-bill-payment +
+  // settlement-payrun-close for save → bind → tests → fail-loud restore.
+  const roleKeys = ["driver_pay_expense", "driver_payroll_clearing", "damage_recovery", "reimbursement_expense"] as const;
+  let priorGlobalBindings: SavedAccountRoleBinding[] = [];
+  let heldGlobalBindingsLock = false;
   let templateId: string;
   const drivers: string[] = [];
   const settlementIds: string[] = [];
@@ -146,6 +157,8 @@ describeIntegration("FIN-18 settlement GL posting (real Postgres)", () => {
     db = new pg.Client(buildPgClientConfig(cs));
     await db.connect();
     await db.query("SET ROLE ih35_app");
+    await acquireGlobalAccountRoleBindingsLock(db);
+    heldGlobalBindingsLock = true;
     await bypass(async () => {
       await db.query(
         `INSERT INTO identity.users (id, email, role, preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
@@ -167,12 +180,18 @@ describeIntegration("FIN-18 settlement GL posting (real Postgres)", () => {
       await mk(acct.netClearing, "NCLR", "Asset");
       await mk(acct.damageRecovery, "DMGR", "Expense");
       await mk(acct.reimb, "RMB", "Expense");
+      priorGlobalBindings = await saveGlobalAccountRoleBindings(db, roleKeys);
       const bind = async (roleKey: string, accountId: string) =>
         db.query(
-          `INSERT INTO catalogs.account_role_bindings (role_key, account_id)
-           VALUES ($1,$2::uuid)
-           ON CONFLICT (role_key) DO UPDATE SET account_id = EXCLUDED.account_id, deactivated_at = NULL`,
-          [roleKey, accountId]
+          // Must set operating_company_id — resolveRoleAccountByKey requires entity match (or NULL).
+          // Leaving a sibling suite's ISO-company id on the row makes TRANSP resolution fail closed.
+          `INSERT INTO catalogs.account_role_bindings (role_key, account_id, operating_company_id)
+           VALUES ($1,$2::uuid,$3::uuid)
+           ON CONFLICT (role_key) DO UPDATE
+             SET account_id = EXCLUDED.account_id,
+                 operating_company_id = EXCLUDED.operating_company_id,
+                 deactivated_at = NULL`,
+          [roleKey, accountId, companyId]
         );
       await bind("driver_pay_expense", acct.driverPay);
       await bind("driver_payroll_clearing", acct.netClearing);
@@ -198,9 +217,20 @@ describeIntegration("FIN-18 settlement GL posting (real Postgres)", () => {
 
   afterAll(async () => {
     if (!db) return;
+    let restoreError: unknown;
+    // Fixture cleanup in its own txn — a failed DELETE must not abort GLOBAL restore.
     try {
       await bypass(async () => {
-        await db.query(`DELETE FROM accounting.transaction_source_links WHERE linked_object_id = ANY($1)`, [settlementIds]);
+        // Drop posting→link FKs first (linked_object_id may be JE id, not settlement id).
+        await db.query(
+          `DELETE FROM accounting.transaction_source_links
+            WHERE journal_entry_posting_id IN (
+              SELECT id FROM accounting.journal_entry_postings
+               WHERE source_transaction_id = ANY($1::uuid[]) AND source_transaction_type = 'settlement'
+            )
+               OR linked_object_id = ANY($1::uuid[])`,
+          [settlementIds]
+        );
         await db.query(`DELETE FROM accounting.journal_entry_postings WHERE source_transaction_id = ANY($1) AND source_transaction_type='settlement'`, [settlementIds]);
         await db.query(`DELETE FROM driver_finance.driver_deduction_bucket_events WHERE settlement_id = ANY($1::uuid[])`, [settlementIds]);
         await db.query(`DELETE FROM driver_finance.driver_settlement_deductions WHERE applied_to_settlement_id = ANY($1::uuid[])`, [settlementIds]);
@@ -210,13 +240,33 @@ describeIntegration("FIN-18 settlement GL posting (real Postgres)", () => {
         await db.query(`DELETE FROM legal.contract_instances WHERE signer_entity_id = ANY($1::uuid[])`, [drivers]);
         await db.query(`DELETE FROM legal.contract_templates WHERE id = $1::uuid`, [templateId]);
         await db.query(`DELETE FROM mdata.drivers WHERE id = ANY($1::uuid[])`, [drivers]);
-        await db.query(`DELETE FROM catalogs.account_role_bindings WHERE role_key = ANY($1)`, [roleKeys]);
         await db.query(`DELETE FROM accounting.settlement_posting_config WHERE operating_company_id = $1::uuid`, [companyId]);
         await db.query(`DELETE FROM lib.feature_flag_overrides WHERE flag_key = 'SETTLEMENT_GL_POSTING_ENABLED' AND operating_company_id = $1::uuid`, [companyId]);
         await db.query(`DELETE FROM org.user_company_access WHERE user_id=$1::uuid AND company_id=$2::uuid`, [userId, companyId]);
       });
-    } catch { /* best-effort */ }
-    await db.end();
+    } catch (fixtureCleanupErr) {
+      void fixtureCleanupErr;
+    }
+
+    try {
+      // Restore GLOBAL bindings (do NOT DELETE) — fail-loud, own transaction.
+      await bypass(async () => {
+        await restoreGlobalAccountRoleBindings(db, roleKeys, priorGlobalBindings, companyId);
+      });
+    } catch (err) {
+      restoreError = err;
+    } finally {
+      if (heldGlobalBindingsLock) {
+        try {
+          await releaseGlobalAccountRoleBindingsLock(db);
+        } catch (unlockErr) {
+          restoreError ??= unlockErr;
+        }
+        heldGlobalBindingsLock = false;
+      }
+      await db.end();
+    }
+    if (restoreError) throw restoreError;
   });
 
   it("(a) flag OFF -> no-op, zero journal entries", async () => {

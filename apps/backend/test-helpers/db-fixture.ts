@@ -3,6 +3,22 @@ import pg from "pg";
 import { buildPgClientConfig } from "../src/lib/pg-connection-options.js";
 import { TEST_OWNER_EMAIL, TEST_OWNER_GOOGLE_ID, TEST_OWNER_USER_ID } from "./constants.js";
 
+// Canonical home: ./isolated-company.ts — re-export for import convenience (#2717 / #2719).
+export {
+  createIsolatedOperatingCompany,
+  deactivateIsolatedOperatingCompany,
+  type IsolatedOperatingCompany,
+  type CreateIsolatedOperatingCompanyOpts,
+} from "./isolated-company.js";
+export {
+  acquireGlobalAccountRoleBindingsLock,
+  releaseGlobalAccountRoleBindingsLock,
+  saveGlobalAccountRoleBindings,
+  restoreGlobalAccountRoleBindings,
+  GLOBAL_ACCOUNT_ROLE_BINDINGS_TEST_LOCK_KEY,
+  type SavedAccountRoleBinding,
+} from "./global-account-role-bindings-lock.js";
+
 let cachedOperatingCompanyId: string | null = null;
 let cachedWorkOrderUnitId: string | null = null;
 let cachedWorkOrderDriverId: string | null = null;

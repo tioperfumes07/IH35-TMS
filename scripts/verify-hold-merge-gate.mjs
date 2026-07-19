@@ -97,6 +97,10 @@ const PROTECTED_GLOBS = [
   "**/.held-migrations.json",
 ];
 
+// *posting* tooling globs must NOT catch *.db.test.ts / __tests__ / *.test.ts — those are test
+// hygiene (ap_control isolation, settlement lock serialization). Real posting engines stay protected.
+const PROTECTED_GLOB_TEST_PATH_RE = /(\.test\.|\.spec\.|\/__tests__\/)/;
+
 // Migration safety (CREATE-TABLE-only neutral, Jorge-approved 2026-06-20). A migration is NEUTRAL only if
 // it is PROVABLY additive-new-table: it CREATEs a new table and does nothing dangerous. Anything else stays
 // PROTECTED (RED until JORGE-APPROVED). Conservative by construction — if we can't prove it's additive,
@@ -159,11 +163,27 @@ export function analyzeMigrationSql(diffText) {
 // always-protected path globs (real migrations / *.sql / *posting* tooling) still catch the real thing.
 const CONTENT_SCAN_EXCLUDE = [
   /^scripts\/verify-hold-merge-gate\.mjs$/, // this gate's own fixtures look like flips/GL writes
+  /^scripts\/verify-.*\.mjs$/, // verify selftests embed SQL / flag literals by design
   /\.md$/,
   /(\.test\.|\.spec\.)/,
   /(^|\/)__tests__\//,
+  /(^|\/)test-helpers\//, // db fixtures seed catalogs/accounting under bypass — not product GL
 ];
 const isExcludedFromContentScan = (f) => CONTENT_SCAN_EXCLUDE.some((re) => re.test(f));
+
+/** True when path matches a PROTECTED_GLOBS entry, excluding *posting* false-positives on tests. */
+export function matchesProtectedGlob(f) {
+  let hit = false;
+  for (let i = 0; i < PROTECTED_GLOB_RES.length; i++) {
+    if (!PROTECTED_GLOB_RES[i].test(f)) continue;
+    const glob = PROTECTED_GLOBS[i];
+    // *posting* tooling globs must not catch *.db.test.ts / __tests__ / *.test.ts.
+    if (String(glob).includes("posting") && PROTECTED_GLOB_TEST_PATH_RE.test(f)) continue;
+    hit = true;
+    break;
+  }
+  return hit;
+}
 
 // Path coverage (2026-07-15, D2 map): GL writes also live OUTSIDE accounting/ + driver-finance/ — the posting
 // engine is called from banking/ (bank-feed-gl, transfers, bank-driver-advance, bulk-transactions),
@@ -235,7 +255,7 @@ export function classify(input) {
   if (HOLD_TITLE_RE.test(title)) reasons.push("title contains [HOLD-FOR-JORGE]");
 
   for (const f of changedFiles) {
-    if (PROTECTED_GLOB_RES.some((re) => re.test(f))) reasons.push(`protected path: ${f}`);
+    if (matchesProtectedGlob(f)) reasons.push(`protected path: ${f}`);
   }
 
   // Migrations: neutral ONLY if provably additive-new-table; ALTER / financial / DML-into-existing → protected.
@@ -309,6 +329,24 @@ function selfTest() {
     { name: "migration path, no label -> fail", in: { title: "feat: thing", labels: [], changedFiles: ["db/migrations/0500_x.sql"], diffByFile: {} }, want: "fail" },
     { name: "nested migrations path -> fail", in: { title: "x", labels: [], changedFiles: ["apps/backend/migrations/9.ts"], diffByFile: {} }, want: "fail" },
     { name: "posting tooling -> fail", in: { title: "x", labels: [], changedFiles: ["apps/backend/src/accounting/posting-engine.service.ts"], diffByFile: {} }, want: "fail" },
+    { name: "posting*.db.test.ts is test hygiene, not posting tooling -> neutral", in: {
+      title: "fix(tests): isolate ap_control",
+      labels: [],
+      changedFiles: ["apps/backend/src/accounting/__tests__/bill-payment-gl-posting.db.test.ts"],
+      diffByFile: {
+        "apps/backend/src/accounting/__tests__/bill-payment-gl-posting.db.test.ts":
+          "+ INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id)\n",
+      },
+    }, want: "pass-neutral" },
+    { name: "test-helpers fixture SQL is not a financial-schema product write -> neutral", in: {
+      title: "fix(tests): isolated company helper",
+      labels: [],
+      changedFiles: ["apps/backend/test-helpers/isolated-company.ts"],
+      diffByFile: {
+        "apps/backend/test-helpers/isolated-company.ts":
+          "+ await client.query(`DELETE FROM accounting.chart_of_accounts_roles WHERE operating_company_id = $1`);\n",
+      },
+    }, want: "pass-neutral" },
     { name: "accounting .ts WITHOUT GL markers -> neutral", in: { title: "x", labels: [], changedFiles: ["apps/backend/src/accounting/ar-aging.service.ts"], diffByFile: { "apps/backend/src/accounting/ar-aging.service.ts": "+ const x = 1;" } }, want: "pass-neutral" },
     { name: "accounting .ts WITH GL write -> fail", in: { title: "x", labels: [], changedFiles: ["apps/backend/src/accounting/bills.service.ts"], diffByFile: { "apps/backend/src/accounting/bills.service.ts": "+ await client.query('INSERT INTO accounting.journal_entries ...')" } }, want: "fail" },
     // D2 marker/path coverage (2026-07-15): a file that POSTS by calling the engine (no raw INSERT) is a GL writer.

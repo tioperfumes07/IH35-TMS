@@ -10,12 +10,21 @@
  * Plus: ineligible (voided) payment and idempotent re-post.
  * Runs only in CI (GITHUB_ACTIONS=true) where a migrated Postgres is available; the literal posted JE
  * is console.logged for the CI artifact.
+ *
+ * ISOLATION: this suite owns a UNIQUE org.companies row via createIsolatedOperatingCompany(). It does
+ * NOT seed/mutate TRANSP's shared ap_control singleton, so parallel forks (cash vs CC, or sibling
+ * suites) cannot DO UPDATE each other's role row. Exact debit-account assertions stay strict.
  */
 import { randomUUID } from "node:crypto";
 import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
-import { ensureIntegrationPrerequisites } from "../../../test-helpers/db-fixture.js";
+import {
+  createIsolatedOperatingCompany,
+  deactivateIsolatedOperatingCompany,
+  ensureIntegrationPrerequisites,
+  type IsolatedOperatingCompany,
+} from "../../../test-helpers/db-fixture.js";
 import { postSourceTransaction, PostingEngineError } from "../posting-engine.service.js";
 import { postBillPaymentGlIfEnabled } from "../bill-payment-gl.service.js";
 
@@ -24,6 +33,7 @@ const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true
 describeIntegration("CHAIN-04 bill-payment → GL gap-closure end-to-end (real Postgres)", () => {
   let db: pg.Client;
   let companyId: string;
+  let isolated: IsolatedOperatingCompany;
   const suffix = randomUUID().slice(0, 6);
   const fuelAccountId = randomUUID();
   const apAccountId = randomUUID();
@@ -123,7 +133,11 @@ describeIntegration("CHAIN-04 bill-payment → GL gap-closure end-to-end (real P
   }
 
   beforeAll(async () => {
-    companyId = await ensureIntegrationPrerequisites();
+    // Owner + TRANSP seed (shared helpers); THIS suite's money/role rows live on `isolated`, not TRANSP.
+    await ensureIntegrationPrerequisites();
+    // Actor is INSERTed below — do not pass actorUserId here (fail-loud grant requires the user row).
+    isolated = await createIsolatedOperatingCompany({ label: "bill-pay-gl" });
+    companyId = isolated.companyId;
     const cs = process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL;
     if (!cs) throw new Error("DATABASE_URL required");
     db = new pg.Client(buildPgClientConfig(cs));
@@ -144,14 +158,10 @@ describeIntegration("CHAIN-04 bill-payment → GL gap-closure end-to-end (real P
       await db.query(`INSERT INTO catalogs.accounts (id, operating_company_id, account_number, account_name, account_type, is_postable) VALUES ($1::uuid,$3::uuid,$2,'Fuel Test','Expense',true)`, [fuelAccountId, `F${suffix}`, companyId]);
       await db.query(`INSERT INTO catalogs.accounts (id, operating_company_id, account_number, account_name, account_type, is_postable) VALUES ($1::uuid,$3::uuid,$2,'AP Test','Liability',true)`, [apAccountId, `P${suffix}`, companyId]);
       await db.query(`INSERT INTO catalogs.accounts (id, operating_company_id, account_number, account_name, account_type, is_postable) VALUES ($1::uuid,$3::uuid,$2,'Bank GL Test','Asset',true)`, [bankGlAccountId, `B${suffix}`, companyId]);
-      // ap_control role — claim it for this test's apAccountId. DO UPDATE (not DO NOTHING) because
-      // other DB tests (e.g. bank-transaction-splits-vendor-bill) share the same companyId and use
-      // DO UPDATE to seed their own ap_control account; DO NOTHING would silently leave the wrong
-      // account and cause an assertion mismatch when this test calls liveRole("ap_control").
+      // ap_control for THIS suite's company only — parallel forks cannot see/mutate this row.
       await db.query(
         `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
-         VALUES ($1::uuid,'ap_control',$2::uuid,true)
-         ON CONFLICT (operating_company_id, role) WHERE is_active = true DO UPDATE SET account_id = EXCLUDED.account_id`,
+         VALUES ($1::uuid,'ap_control',$2::uuid,true)`,
         [companyId, apAccountId]
       );
       // expense_category_account_map: (fuel, <unique code>) → fuel account (so the bill posts to A/P).
@@ -179,12 +189,13 @@ describeIntegration("CHAIN-04 bill-payment → GL gap-closure end-to-end (real P
         [ccLiabilityAccountId, `CC${suffix}`, companyId]
       );
     });
+    // Sanity: the role we just seeded is the only active ap_control for this company.
+    expect(await liveRole("ap_control")).toBe(apAccountId);
   });
 
   afterAll(async () => {
     if (!db) return;
     try {
-      await db.query("SELECT pg_advisory_lock(4200000001)");
       await bypass(async () => {
         await db.query(`DELETE FROM lib.feature_flag_overrides WHERE flag_key='BILL_PAYMENT_GL_POSTING_ENABLED' AND operating_company_id=$1::uuid`, [companyId]);
         await db.query(`DELETE FROM accounting.transaction_source_links WHERE linked_object_id = ANY($1) AND linked_object_type IN ('bill','bill_payment')`, [[...createdBillIds, ...createdPaymentIds]]);
@@ -195,11 +206,12 @@ describeIntegration("CHAIN-04 bill-payment → GL gap-closure end-to-end (real P
         await db.query(`DELETE FROM accounting.bills WHERE id = ANY($1::uuid[])`, [createdBillIds]);
         await db.query(`DELETE FROM banking.bank_accounts WHERE id = ANY($1::uuid[])`, [[bankAccountId, bankNoLedgerId]]);
         await db.query(`DELETE FROM accounting.expense_category_account_map WHERE operating_company_id=$1::uuid AND account_id=$2::uuid`, [companyId, fuelAccountId]);
-        await db.query(`DELETE FROM accounting.chart_of_accounts_roles WHERE operating_company_id=$1::uuid AND account_id=$2::uuid`, [companyId, apAccountId]);
+        await db.query(`DELETE FROM accounting.chart_of_accounts_roles WHERE operating_company_id=$1::uuid`, [companyId]);
         await db.query(`DELETE FROM catalogs.accounts WHERE id = ANY($1::uuid[])`, [[fuelAccountId, apAccountId, bankGlAccountId, ccLiabilityAccountId]]);
         await db.query(`DELETE FROM org.user_company_access WHERE user_id=$1::uuid AND company_id=$2::uuid`, [userId, companyId]);
+        if (isolated) await deactivateIsolatedOperatingCompany(db, isolated);
       });
-    } catch { /* best-effort cleanup */ } finally { await db.query("SELECT pg_advisory_unlock(4200000001)").catch(() => {}); }
+    } catch { /* best-effort cleanup */ }
     await db.end();
   });
 
@@ -211,17 +223,7 @@ describeIntegration("CHAIN-04 bill-payment → GL gap-closure end-to-end (real P
     return Number(r[0].c);
   }
 
-  // FLAKE FIX: write a USER-scoped override (user_uuid = this file's dedicated actor userId), NOT a
-  // tenant-scoped (operating_company_id, user_uuid IS NULL) one. ensureIntegrationPrerequisites() hands
-  // EVERY integration test the SAME cached TRANSP company, so a tenant-scoped BILL_PAYMENT_GL_POSTING_ENABLED
-  // override on it is clobberable by any parallel sibling *.db.test.ts that toggles the same flag on that
-  // shared company (e.g. bank-transaction-splits-vendor-bill.db.test.ts, which shares this company + the
-  // ap_control role and already coordinates via pg_advisory_lock(4200000001) below) in the window before
-  // isBillPaymentGlPostingEnabled reads it — the poster then silently no-ops. isBillPaymentGlPostingEnabled
-  // (bill-payment-gl.service.ts) resolves the USER override BEFORE the tenant override, and this file always
-  // posts as its own dedicated actor (userId), so a user-scoped override for that actor is immune to
-  // cross-file tenant contention. Still carries operating_company_id so the existing cleanup deletes
-  // (by flag_key + operating_company_id) continue to remove it.
+  // USER-scoped override for this file's dedicated actor — immune to tenant-flag clobber on other companies.
   async function setFlagOverride(enabled: boolean) {
     await bypass(async () => {
       await db.query(
@@ -251,29 +253,7 @@ describeIntegration("CHAIN-04 bill-payment → GL gap-closure end-to-end (real P
     const paymentId = await seedPayment({ billId, amountCents: 120_000, fromBankAccountId: bankAccountId });
 
     await setFlagOverride(true);
-    // pg_advisory_lock(4200000001): serializes the re-seed + posting window across concurrent vitest forks.
-    // Both this file and bank-transaction-splits-vendor-bill.db.test.ts share the TRANSP company's
-    // ap_control row. Without this lock one fork's re-seed can clobber the other's between the re-seed
-    // and the posting call, causing the posting to use the wrong ap_control UUID.
-    const outcome = await (async () => {
-      await db.query("SELECT pg_advisory_lock(4200000001)");
-      try {
-        await bypass(async () => {
-          await db.query(
-            `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
-             VALUES ($1::uuid, 'ap_control', $2::uuid, true)
-             ON CONFLICT (operating_company_id, role) WHERE is_active = true DO UPDATE SET account_id = EXCLUDED.account_id`,
-            [companyId, apAccountId]
-          );
-        });
-        // Re-assert inside the lock — guards against concurrent afterAll blocks deleting this shared
-        // override between the setFlagOverride call above and this lock window.
-        await setFlagOverride(true);
-        return await postBillPaymentGlIfEnabled(companyId, paymentId, { userId });
-      } finally {
-        await db.query("SELECT pg_advisory_unlock(4200000001)");
-      }
-    })();
+    const outcome = await postBillPaymentGlIfEnabled(companyId, paymentId, { userId });
     expect(outcome.posted).toBe(true);
 
     const rows = await scopedRead<{ account_id: string; account_number: string; account_name: string; debit_or_credit: string; amount_cents: string }>(
@@ -344,24 +324,7 @@ describeIntegration("CHAIN-04 bill-payment → GL gap-closure end-to-end (real P
     const paymentId = await seedCcPayment({ billId, amountCents: 40_000, ccAccountId: ccLiabilityAccountId });
 
     await setFlagOverride(true);
-    // Same pg_advisory_lock(4200000001) as the cash test — serializes re-seed + posting across forks.
-    const outcome = await (async () => {
-      await db.query("SELECT pg_advisory_lock(4200000001)");
-      try {
-        await bypass(async () => {
-          await db.query(
-            `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
-             VALUES ($1::uuid, 'ap_control', $2::uuid, true)
-             ON CONFLICT (operating_company_id, role) WHERE is_active = true DO UPDATE SET account_id = EXCLUDED.account_id`,
-            [companyId, apAccountId]
-          );
-        });
-        await setFlagOverride(true);
-        return await postBillPaymentGlIfEnabled(companyId, paymentId, { userId });
-      } finally {
-        await db.query("SELECT pg_advisory_unlock(4200000001)");
-      }
-    })();
+    const outcome = await postBillPaymentGlIfEnabled(companyId, paymentId, { userId });
     expect(outcome.posted).toBe(true);
 
     const rows = await scopedRead<{ account_id: string; debit_or_credit: string; amount_cents: string }>(

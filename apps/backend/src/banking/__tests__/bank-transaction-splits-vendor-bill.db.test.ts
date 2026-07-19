@@ -15,7 +15,12 @@ import { randomUUID } from "node:crypto";
 import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
-import { ensureIntegrationPrerequisites } from "../../../test-helpers/db-fixture.js";
+import {
+  createIsolatedOperatingCompany,
+  deactivateIsolatedOperatingCompany,
+  ensureIntegrationPrerequisites,
+  type IsolatedOperatingCompany,
+} from "../../../test-helpers/db-fixture.js";
 import { BANK_TX_SPLIT_FLAG_KEY, BANK_TX_SPLIT_GL_POSTING_FLAG_KEY, commitSplit, saveSplitDraft } from "../bank-transaction-splits.service.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
@@ -23,6 +28,7 @@ const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true
 describeIntegration("BANKING-GL-COMPLETION bank-transaction-splits vendor-bill line (real Postgres)", () => {
   let db: pg.Client;
   let companyId: string;
+  let isolated: IsolatedOperatingCompany;
   const suffix = randomUUID().slice(0, 6);
   const userId = "00000000-0000-4000-8000-0000000000f7";
   const vendorId = randomUUID();
@@ -62,15 +68,7 @@ describeIntegration("BANKING-GL-COMPLETION bank-transaction-splits vendor-bill l
     }
   }
 
-  // FLAKE FIX: write a USER-scoped override (user_uuid = this file's unique actor), NOT a per-company
-  // (tenant) override. ensureIntegrationPrerequisites() hands EVERY integration test the SAME cached
-  // company, so a tenant-scoped BILL_GL_POSTING_ENABLED override on it is clobberable by any parallel
-  // *.db.test.ts that toggles the same flag on that shared company in the window before commitSplit reads
-  // it — the bill's GL leg then silently no-ops and billDebit is undefined (the intermittent CI failure).
-  // The resolver (feature-flags/service.ts resolveFlagEnabled) checks the USER override BEFORE the tenant
-  // override, and commitSplit resolves these flags with user_uuid = this same userId
-  // (bill-gl.service / bill-payment-gl.service / bank-transaction-splits.service), so a user-scoped
-  // override is immune to cross-file tenant contention. userId 00000000-...-f7 is unique to this file.
+  // USER-scoped override for this file's dedicated actor (immune to tenant-flag clobber elsewhere).
   async function setFlagOverride(flagKey: string, enabled: boolean) {
     await bypass(async () => {
       await db.query(
@@ -84,7 +82,10 @@ describeIntegration("BANKING-GL-COMPLETION bank-transaction-splits vendor-bill l
   }
 
   beforeAll(async () => {
-    companyId = await ensureIntegrationPrerequisites();
+    await ensureIntegrationPrerequisites();
+    // Actor is INSERTed below — grant membership after the identity.users row exists.
+    isolated = await createIsolatedOperatingCompany({ label: "split-vendor-bill" });
+    companyId = isolated.companyId;
     const cs = process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL;
     if (!cs) throw new Error("DATABASE_URL required");
     db = new pg.Client(buildPgClientConfig(cs));
@@ -117,13 +118,10 @@ describeIntegration("BANKING-GL-COMPLETION bank-transaction-splits vendor-bill l
       await mkAccount(otherGlAccountId, "SPV2", "Split Vendor Line 2 Test", "Expense");
       await mkAccount(bankGlAccountId, "SPBK", "Split Bank GL Test", "Asset");
       await mkAccount(apGlAccountId, "SPAP", "Split AP Control Test", "Liability");
-      // Wire the AP control role so resolveApAccountForCompany finds it in a fresh CI DB
-      // (migration 202607011000_transp_coa_role_map_seed.sql is a no-op on fresh DB because the QBO-synced
-      // account doesn't exist there, so we seed it explicitly for this test's company scope).
+      // ap_control for THIS suite's isolated company only — no shared-TRANSP DO UPDATE race.
       await db.query(
         `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
-         VALUES ($1::uuid, 'ap_control', $2::uuid, true)
-         ON CONFLICT (operating_company_id, role) WHERE is_active DO UPDATE SET account_id = EXCLUDED.account_id`,
+         VALUES ($1::uuid, 'ap_control', $2::uuid, true)`,
         [companyId, apGlAccountId]
       );
       await db.query(
@@ -150,7 +148,6 @@ describeIntegration("BANKING-GL-COMPLETION bank-transaction-splits vendor-bill l
   afterAll(async () => {
     if (!db) return;
     try {
-      await db.query("SELECT pg_advisory_lock(4200000001)");
       await bypass(async () => {
         await db.query(
           `DELETE FROM accounting.transaction_source_links WHERE linked_object_id = ANY($1) AND linked_object_type IN ('bill','bill_payment')`,
@@ -171,10 +168,7 @@ describeIntegration("BANKING-GL-COMPLETION bank-transaction-splits vendor-bill l
         await db.query(`DELETE FROM banking.bank_transaction_splits WHERE bank_transaction_id = $1::uuid`, [txnId]);
         await db.query(`DELETE FROM banking.bank_transactions WHERE id = $1::uuid`, [txnId]);
         await db.query(`DELETE FROM banking.bank_accounts WHERE id = $1::uuid`, [bankAccountId]);
-        await db.query(
-          `DELETE FROM accounting.chart_of_accounts_roles WHERE operating_company_id = $1::uuid AND role = 'ap_control' AND account_id = $2::uuid`,
-          [companyId, apGlAccountId]
-        );
+        await db.query(`DELETE FROM accounting.chart_of_accounts_roles WHERE operating_company_id = $1::uuid`, [companyId]);
         await db.query(`DELETE FROM catalogs.accounts WHERE id = ANY($1::uuid[])`, [[glAccountId, otherGlAccountId, bankGlAccountId, apGlAccountId]]);
         for (const key of [
           "BANK_TX_SPLIT_ENABLED",
@@ -185,11 +179,10 @@ describeIntegration("BANKING-GL-COMPLETION bank-transaction-splits vendor-bill l
           await db.query(`DELETE FROM lib.feature_flag_overrides WHERE flag_key=$1 AND operating_company_id=$2::uuid`, [key, companyId]);
         }
         await db.query(`DELETE FROM org.user_company_access WHERE user_id=$1::uuid AND company_id=$2::uuid`, [userId, companyId]);
+        if (isolated) await deactivateIsolatedOperatingCompany(db, isolated);
       });
     } catch {
       /* best-effort cleanup */
-    } finally {
-      await db.query("SELECT pg_advisory_unlock(4200000001)").catch(() => {});
     }
     await db.end();
   });
@@ -200,45 +193,13 @@ describeIntegration("BANKING-GL-COMPLETION bank-transaction-splits vendor-bill l
     await setFlagOverride("BILL_GL_POSTING_ENABLED", true);
     await setFlagOverride("BILL_PAYMENT_GL_POSTING_ENABLED", true);
 
-    // Re-seed ap_control immediately before commitSplit — guards against bill-payment-gl-posting
-    // afterAll deleting the row (it deletes by its own account_id, which may be the current row
-    // if it ran its beforeAll last and overwrote ours via DO UPDATE on the shared companyId).
-    await bypass(async () => {
-      await db.query(
-        `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
-         VALUES ($1::uuid, 'ap_control', $2::uuid, true)
-         ON CONFLICT (operating_company_id, role) WHERE is_active DO UPDATE SET account_id = EXCLUDED.account_id`,
-        [companyId, apGlAccountId]
-      );
-    });
-
     await saveSplitDraft(companyId, userId, txnId, "multi_vendor", [
       { amount_cents: 30_000, vendor_id: vendorId, gl_account_id: glAccountId, category_kind: "supplies" },
       { amount_cents: 20_000, gl_account_id: otherGlAccountId, category_kind: "supplies" }, // no vendor -> neither branch eligible
     ]);
 
-    // pg_advisory_lock(4200000001): same key as bill-payment-gl-posting.db.test.ts — serializes the
-    // ap_control re-seed + commitSplit window so one fork's re-seed can't clobber the other's.
-    const first = await (async () => {
-      await db.query("SELECT pg_advisory_lock(4200000001)");
-      try {
-        await bypass(async () => {
-          await db.query(
-            `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
-             VALUES ($1::uuid, 'ap_control', $2::uuid, true)
-             ON CONFLICT (operating_company_id, role) WHERE is_active DO UPDATE SET account_id = EXCLUDED.account_id`,
-            [companyId, apGlAccountId]
-          );
-        });
-        // Re-assert inside the lock — guards against concurrent afterAll blocks deleting these shared
-        // overrides between our setFlagOverride calls above and this lock window.
-        await setFlagOverride("BILL_GL_POSTING_ENABLED", true);
-        await setFlagOverride("BILL_PAYMENT_GL_POSTING_ENABLED", true);
-        return await commitSplit(companyId, userId, "Owner", txnId);
-      } finally {
-        await db.query("SELECT pg_advisory_unlock(4200000001)");
-      }
-    })();
+    // Isolated company owns ap_control — no shared-TRANSP re-seed / advisory lock needed.
+    const first = await commitSplit(companyId, userId, "Owner", txnId);
     const line1 = first.results.find((r) => r.line_no === 1)!;
     expect(line1.posted).toBe(true);
     expect(line1.bill_id).toBeTruthy();
