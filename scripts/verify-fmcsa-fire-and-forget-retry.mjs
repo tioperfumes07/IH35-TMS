@@ -540,6 +540,37 @@ export function collectFailures(sources) {
   if (/status\s*===\s*429[\s\S]{0,80}return\s+null/.test(fmcsaClient)) {
     failures.push("fmcsa-client must not swallow 429 as null");
   }
+  // SAFER alternate query_param must NOT be hammered after provider retryable (429/5xx).
+  {
+    const saferFnMatch = sources.fmcsaClient.match(
+      /async function fetchSaferSnapshot\s*\([\s\S]*?\n\}(?:\n\n|\n\/\*\*|export)/
+    );
+    const saferFn = saferFnMatch?.[0] ?? "";
+    if (!saferFn) {
+      failures.push("fmcsa-client must define fetchSaferSnapshot for SAFER dual-query lookup");
+    } else {
+      // Fail-fast: retryable branch must throw (throwForRetryable or FmcsaRetryableError), not continue.
+      const retryableBranch = saferFn.match(
+        /kind\s*===\s*["']retryable["']\s*\)\s*\{([\s\S]*?)\n\s*\}/
+      );
+      const branchBody = retryableBranch?.[1] ?? "";
+      if (!branchBody) {
+        failures.push("fetchSaferSnapshot must classify retryable (429/5xx) explicitly");
+      } else {
+        if (/\bcontinue\s*;/.test(branchBody)) {
+          failures.push(
+            "fetchSaferSnapshot must not continue after SAFER retryable — throw immediately (honor Retry-After)"
+          );
+        }
+        if (!/throwForRetryable|throw\s+new\s+FmcsaRetryableError/.test(branchBody)) {
+          failures.push("fetchSaferSnapshot must throw typed retryable immediately on SAFER 429/5xx");
+        }
+        if (/lastRetryable\s*=/.test(branchBody)) {
+          failures.push("fetchSaferSnapshot must not defer lastRetryable across alternate SAFER endpoints");
+        }
+      }
+    }
+  }
   if (!/if\s*\(\s*mobileRetryable\s*\)\s*throw\s+mobileRetryable/.test(fmcsaClient)) {
     failures.push("fmcsa-client must rethrow mobileRetryable when SAFER returns null (no 429→null collapse)");
   }
@@ -871,6 +902,20 @@ function selftest() {
         ),
       }),
       expect: (f) => f.some((x) => /registry|cycle|outbox-handler\.types/i.test(x)),
+    },
+    {
+      name: "SAFER retryable continue hammers alternate endpoint",
+      mutate: (s) => ({
+        ...s,
+        // Reintroduce deferred continue after SAFER retryable (rate-limit hammering).
+        fmcsaClient: s.fmcsaClient.replace(
+          /throwForRetryable\(response\.status, "safer", response\.headers\.get\("retry-after"\)\);/,
+          `lastRetryable = new FmcsaRetryableError("deferred", { status: response.status });
+      continue;`
+        ),
+      }),
+      expect: (f) =>
+        f.some((x) => /continue after SAFER retryable|throw typed retryable|lastRetryable|honor Retry-After/i.test(x)),
     },
   ];
 

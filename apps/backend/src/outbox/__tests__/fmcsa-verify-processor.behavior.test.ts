@@ -75,6 +75,45 @@ describe("OutboxProcessor FMCSA verify durability behavior", () => {
     expect(updateSql).not.toMatch(/failed_at = now\(\)/);
   });
 
+  it("schedules next_retry_at no earlier than Retry-After floor (honors provider backoff)", async () => {
+    const { FmcsaRetryableError } = await import("../../lib/fmcsa-http-errors.js");
+    // Larger than attempt-1 backoff base (30s) so Math.max(backoff, retryAfter) = retryAfter.
+    const retryAfterMs = 180_000;
+    const before = Date.now();
+    deliver.mockRejectedValue(
+      new FmcsaRetryableError("FMCSA safer rate limited (429)", { status: 429, retryAfterMs })
+    );
+    const { OutboxProcessor } = await import("../processor.js");
+    const processor = new OutboxProcessor();
+    await (processor as unknown as { processEvent: (e: typeof BASE_EVENT) => Promise<void> }).processEvent(BASE_EVENT);
+
+    const resolvedClients = await Promise.all(connect.mock.results.map((r) => r.value));
+    const updateCall = resolvedClients
+      .flatMap((c) => c.query.mock.calls)
+      .find((call: unknown[]) => String(call[0]).includes("next_retry_at") && String(call[0]).includes("retry_count"));
+    expect(updateCall).toBeTruthy();
+    const nextRetryAtIso = String(updateCall?.[1]?.[3] ?? "");
+    const nextRetryAtMs = Date.parse(nextRetryAtIso);
+    expect(Number.isFinite(nextRetryAtMs)).toBe(true);
+    // Floor: must not schedule earlier than now + Retry-After (1s clock slack).
+    expect(nextRetryAtMs).toBeGreaterThanOrEqual(before + retryAfterMs - 1_000);
+
+    const auditPayloads = resolvedClients.flatMap((c) =>
+      c.query.mock.calls
+        .filter((call: unknown[]) => String(call[0]).includes("audit.append_event"))
+        .map((call: unknown[]) => {
+          try {
+            return JSON.parse(String(call[1]?.[2] ?? "{}")) as Record<string, unknown>;
+          } catch {
+            return {};
+          }
+        })
+    );
+    const retried = auditPayloads.find((p) => p.retry_after_ms != null);
+    expect(retried?.retry_after_ms).toBe(retryAfterMs);
+    expect(Number(retried?.retry_delay_ms)).toBeGreaterThanOrEqual(retryAfterMs);
+  });
+
   it("marks failed_at immediately on permanent delivery error and releases dedupe_key", async () => {
     const { PermanentDeliveryError } = await import("../delivery-errors.js");
     deliver.mockRejectedValue(new PermanentDeliveryError("fmcsa_customer_missing_or_cross_tenant"));

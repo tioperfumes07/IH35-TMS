@@ -264,8 +264,10 @@ async function fetchFmcsMobile(type: LookupType, value: string): Promise<Carrier
 
 async function fetchSaferSnapshot(type: LookupType, value: string): Promise<CarrierResult | null> {
   const normalized = normalizeLookupValue(type, value);
+  // Alternate query_param is only for authoritative miss (404 / no-record HTML).
+  // Provider retryable (429 / 5xx / network) must stop this attempt immediately so
+  // outbox can honor Retry-After — never hammer the alternate SAFER endpoint.
   const queryParams = type === "usdot" ? ["USDOT", "MC_MX"] : ["MC_MX", "USDOT"];
-  let lastRetryable: FmcsaRetryableError | null = null;
 
   for (const queryParam of queryParams) {
     const url = `${FMCSA_SAFER_BASE}?searchtype=ANY&query_type=queryCarrierSnapshot&query_param=${encodeURIComponent(queryParam)}&query_string=${encodeURIComponent(normalized)}`;
@@ -274,14 +276,8 @@ async function fetchSaferSnapshot(type: LookupType, value: string): Promise<Carr
     const kind = classifyHttpStatus(response.status, "safer", response.headers.get("retry-after"));
     if (kind === "not_found") continue;
     if (kind === "retryable") {
-      const retryAfterMs = parseRetryAfterMs(response.headers.get("retry-after"));
-      lastRetryable = new FmcsaRetryableError(
-        response.status === 429
-          ? "FMCSA safer rate limited (429)"
-          : `FMCSA safer service error ${response.status}`,
-        { status: response.status, retryAfterMs }
-      );
-      continue;
+      // Fail-fast: throw typed retryable with Retry-After (no alternate SAFER request).
+      throwForRetryable(response.status, "safer", response.headers.get("retry-after"));
     }
     if (kind === "permanent") throwForPermanent(response.status, "safer");
 
@@ -291,7 +287,6 @@ async function fetchSaferSnapshot(type: LookupType, value: string): Promise<Carr
     if (parsed) return parsed;
   }
 
-  if (lastRetryable) throw lastRetryable;
   return null;
 }
 

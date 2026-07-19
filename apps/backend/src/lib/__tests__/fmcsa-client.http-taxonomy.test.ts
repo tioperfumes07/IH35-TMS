@@ -133,4 +133,68 @@ describe("fmcsa-client HTTP taxonomy", () => {
     const { lookupCarrierByMC } = await import("../fmcsa-client.js");
     await expect(lookupCarrierByMC("12345")).resolves.toBeNull();
   });
+
+  it("stops at first SAFER 429 — no second SAFER request; Retry-After survives", async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("mobile.fmcsa")) return jsonResponse(404);
+      // First SAFER query_param only — a second call would be rate-limit hammering.
+      return htmlResponse(429, "<html>rate limited</html>", { "retry-after": "90" });
+    });
+    globalThis.fetch = fetchMock as typeof fetch;
+    const { lookupCarrierByMC } = await import("../fmcsa-client.js");
+    await expect(lookupCarrierByMC("12345")).rejects.toMatchObject({
+      name: "FmcsaRetryableError",
+      status: 429,
+      retryAfterMs: 90_000,
+    });
+    const saferCalls = fetchMock.mock.calls.filter((c) => String(c[0]).includes("safer.fmcsa"));
+    expect(saferCalls).toHaveLength(1);
+    expect(fetchMock).toHaveBeenCalledTimes(2); // mobile + one SAFER only
+  });
+
+  it("stops at first SAFER 5xx — does not hammer alternate query_param", async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("mobile.fmcsa")) return jsonResponse(404);
+      return htmlResponse(503, "<html>unavailable</html>", { "retry-after": "45" });
+    });
+    globalThis.fetch = fetchMock as typeof fetch;
+    const { lookupCarrierByUSDOT } = await import("../fmcsa-client.js");
+    await expect(lookupCarrierByUSDOT("1234567")).rejects.toMatchObject({
+      name: "FmcsaRetryableError",
+      status: 503,
+      retryAfterMs: 45_000,
+    });
+    const saferCalls = fetchMock.mock.calls.filter((c) => String(c[0]).includes("safer.fmcsa"));
+    expect(saferCalls).toHaveLength(1);
+  });
+
+  it("stops at first SAFER network failure — no alternate endpoint request", async () => {
+    let saferHits = 0;
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("mobile.fmcsa")) return jsonResponse(404);
+      saferHits += 1;
+      throw new TypeError("fetch failed");
+    });
+    globalThis.fetch = fetchMock as typeof fetch;
+    const { lookupCarrierByMC } = await import("../fmcsa-client.js");
+    await expect(lookupCarrierByMC("12345")).rejects.toBeInstanceOf(FmcsaRetryableError);
+    expect(saferHits).toBe(1);
+  });
+
+  it("may try alternate SAFER query_param only after authoritative 404 miss", async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("mobile.fmcsa")) return jsonResponse(404);
+      if (url.includes("query_param=MC_MX")) return htmlResponse(404);
+      return htmlResponse(404);
+    });
+    globalThis.fetch = fetchMock as typeof fetch;
+    const { lookupCarrierByMC } = await import("../fmcsa-client.js");
+    await expect(lookupCarrierByMC("12345")).resolves.toBeNull();
+    const saferCalls = fetchMock.mock.calls.filter((c) => String(c[0]).includes("safer.fmcsa"));
+    expect(saferCalls.length).toBe(2);
+  });
 });
