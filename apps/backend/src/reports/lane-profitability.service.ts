@@ -1,5 +1,20 @@
 import type { PoolClient } from "pg";
 
+/** Bound parameters per lane_profitability_cache INSERT row (excludes NOW()). */
+export const LANE_CACHE_INSERT_BINDS_PER_ROW = 19;
+
+/**
+ * Conservative bind-parameter budget for a single INSERT statement.
+ * PostgreSQL hard limit is 65535; stay well below so statement overhead / driver
+ * limits cannot silently truncate a multi-row upsert.
+ */
+export const LANE_CACHE_INSERT_BIND_BUDGET = 60_000;
+
+/** Max lanes per multi-row INSERT chunk (= floor(budget / binds-per-row)). */
+export const LANE_CACHE_INSERT_MAX_ROWS = Math.floor(
+  LANE_CACHE_INSERT_BIND_BUDGET / LANE_CACHE_INSERT_BINDS_PER_ROW
+);
+
 export type LaneSummary = {
   origin_city: string;
   origin_state: string;
@@ -255,6 +270,9 @@ export async function refreshLaneProfitabilityCache(
   periodEnd: string
 ): Promise<number> {
   const lanes = await computeLaneProfitability(client, operatingCompanyId, periodStart, periodEnd);
+
+  // G5-4: DELETE + single multi-row INSERT must stay in the caller's transaction
+  // (withCurrentUser / withLuciaBypass) so a failed upsert cannot leave a wiped cache.
   await client.query(
     `
       DELETE FROM reports.lane_profitability_cache
@@ -265,81 +283,96 @@ export async function refreshLaneProfitabilityCache(
     [operatingCompanyId, periodStart, periodEnd]
   );
 
-  for (const lane of lanes) {
-    await client.query(
-      `
-        INSERT INTO reports.lane_profitability_cache (
-          operating_company_id,
-          origin_city,
-          origin_state,
-          destination_city,
-          destination_state,
-          period_start,
-          period_end,
-          load_count,
-          total_revenue_cents,
-          total_fuel_cost_cents,
-          total_driver_pay_cents,
-          total_maintenance_cost_cents,
-          total_miles,
-          gross_profit_cents,
-          profit_per_mile_cents,
-          profit_per_load_cents,
-          margin_pct,
-          avg_deadhead_pct,
-          last_load_date,
-          computed_at
-        )
-        VALUES (
-          $1::uuid, $2, $3, $4, $5, $6::date, $7::date,
-          $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19::date, NOW()
-        )
-        ON CONFLICT (
-          operating_company_id,
-          origin_city,
-          origin_state,
-          destination_city,
-          destination_state,
-          period_start,
-          period_end
-        )
-        DO UPDATE SET
-          load_count = EXCLUDED.load_count,
-          total_revenue_cents = EXCLUDED.total_revenue_cents,
-          total_fuel_cost_cents = EXCLUDED.total_fuel_cost_cents,
-          total_driver_pay_cents = EXCLUDED.total_driver_pay_cents,
-          total_maintenance_cost_cents = EXCLUDED.total_maintenance_cost_cents,
-          total_miles = EXCLUDED.total_miles,
-          gross_profit_cents = EXCLUDED.gross_profit_cents,
-          profit_per_mile_cents = EXCLUDED.profit_per_mile_cents,
-          profit_per_load_cents = EXCLUDED.profit_per_load_cents,
-          margin_pct = EXCLUDED.margin_pct,
-          avg_deadhead_pct = EXCLUDED.avg_deadhead_pct,
-          last_load_date = EXCLUDED.last_load_date,
-          computed_at = NOW()
-      `,
-      [
-        operatingCompanyId,
-        lane.origin_city,
-        lane.origin_state,
-        lane.destination_city,
-        lane.destination_state,
-        periodStart,
-        periodEnd,
-        lane.load_count,
-        lane.total_revenue_cents,
-        lane.total_fuel_cost_cents,
-        lane.total_driver_pay_cents,
-        lane.total_maintenance_cost_cents,
-        lane.total_miles,
-        lane.gross_profit_cents,
-        lane.profit_per_mile_cents,
-        lane.profit_per_load_cents,
-        lane.margin_pct,
-        lane.avg_deadhead_pct,
-        lane.last_load_date,
-      ]
-    );
+  // G5-4 (perf): multi-row INSERT chunks sized by bind-parameter budget (not a per-row
+  // await loop). Empty batch → DELETE only (no INSERT). No silent LIMIT/cap on lane count —
+  // every lane is written across ceil(n / LANE_CACHE_INSERT_MAX_ROWS) statements, all inside
+  // the caller's open transaction with the DELETE above.
+  if (lanes.length > 0) {
+    for (let offset = 0; offset < lanes.length; offset += LANE_CACHE_INSERT_MAX_ROWS) {
+      const chunk = lanes.slice(offset, offset + LANE_CACHE_INSERT_MAX_ROWS);
+      const insertValues: unknown[] = [];
+      const insertPlaceholders: string[] = [];
+
+      for (const lane of chunk) {
+        const base = insertValues.length;
+        insertValues.push(
+          operatingCompanyId,
+          lane.origin_city,
+          lane.origin_state,
+          lane.destination_city,
+          lane.destination_state,
+          periodStart,
+          periodEnd,
+          lane.load_count,
+          lane.total_revenue_cents,
+          lane.total_fuel_cost_cents,
+          lane.total_driver_pay_cents,
+          lane.total_maintenance_cost_cents,
+          lane.total_miles,
+          lane.gross_profit_cents,
+          lane.profit_per_mile_cents,
+          lane.profit_per_load_cents,
+          lane.margin_pct,
+          lane.avg_deadhead_pct,
+          lane.last_load_date
+        );
+        insertPlaceholders.push(
+          `($${base + 1}::uuid, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6}::date, $${base + 7}::date, $${base + 8}, $${base + 9}, $${base + 10}, $${base + 11}, $${base + 12}, $${base + 13}, $${base + 14}, $${base + 15}, $${base + 16}, $${base + 17}, $${base + 18}, $${base + 19}::date, NOW())`
+        );
+      }
+
+      await client.query(
+        `
+          INSERT INTO reports.lane_profitability_cache (
+            operating_company_id,
+            origin_city,
+            origin_state,
+            destination_city,
+            destination_state,
+            period_start,
+            period_end,
+            load_count,
+            total_revenue_cents,
+            total_fuel_cost_cents,
+            total_driver_pay_cents,
+            total_maintenance_cost_cents,
+            total_miles,
+            gross_profit_cents,
+            profit_per_mile_cents,
+            profit_per_load_cents,
+            margin_pct,
+            avg_deadhead_pct,
+            last_load_date,
+            computed_at
+          )
+          VALUES ${insertPlaceholders.join(", ")}
+          ON CONFLICT (
+            operating_company_id,
+            origin_city,
+            origin_state,
+            destination_city,
+            destination_state,
+            period_start,
+            period_end
+          )
+          DO UPDATE SET
+            load_count = EXCLUDED.load_count,
+            total_revenue_cents = EXCLUDED.total_revenue_cents,
+            total_fuel_cost_cents = EXCLUDED.total_fuel_cost_cents,
+            total_driver_pay_cents = EXCLUDED.total_driver_pay_cents,
+            total_maintenance_cost_cents = EXCLUDED.total_maintenance_cost_cents,
+            total_miles = EXCLUDED.total_miles,
+            gross_profit_cents = EXCLUDED.gross_profit_cents,
+            profit_per_mile_cents = EXCLUDED.profit_per_mile_cents,
+            profit_per_load_cents = EXCLUDED.profit_per_load_cents,
+            margin_pct = EXCLUDED.margin_pct,
+            avg_deadhead_pct = EXCLUDED.avg_deadhead_pct,
+            last_load_date = EXCLUDED.last_load_date,
+            computed_at = NOW()
+        `,
+        insertValues
+      );
+    }
   }
 
   await client.query(`SELECT reports.refresh_lane_metrics_monthly()`).catch(() => undefined);

@@ -54,7 +54,48 @@ type LoadRow = {
   miles_deadhead: number | null;
   deadhead_miles_calculation_method: DeadheadCalculationMethod | null;
   first_stop_at: string | null;
+  pickup_city?: string | null;
+  delivery_city?: string | null;
+  created_at?: string | null;
 };
+
+type BatchedLoadRow = LoadRow & {
+  unit_id: string;
+  stop_ats: Array<string | Date | null> | null;
+};
+
+/** Max units per ANY($n::uuid[]) bind — chunks ALL units; never a silent result cap. */
+export const DEADHEAD_REFRESH_UNIT_BATCH_SIZE = 200;
+
+const LOAD_SELECT_COLUMNS = `
+        l.id::text,
+        l.loaded_miles,
+        l.deadhead_miles_to_pickup,
+        l.miles_practical,
+        l.miles_shortest,
+        l.miles_deadhead,
+        l.deadhead_miles_calculation_method,
+        l.created_at,
+        (
+          SELECT MIN(COALESCE(ls.scheduled_arrival_at, ls.scheduled_departure_at, l.created_at))::text
+          FROM mdata.load_stops ls
+          WHERE ls.load_id = l.id
+        ) AS first_stop_at,
+        (
+          SELECT NULLIF(TRIM(CONCAT_WS(', ', ls.city, ls.state)), '')
+          FROM mdata.load_stops ls
+          WHERE ls.load_id = l.id AND ls.stop_type = 'pickup'
+          ORDER BY ls.sequence_number ASC
+          LIMIT 1
+        ) AS pickup_city,
+        (
+          SELECT NULLIF(TRIM(CONCAT_WS(', ', ls.city, ls.state)), '')
+          FROM mdata.load_stops ls
+          WHERE ls.load_id = l.id AND ls.stop_type = 'delivery'
+          ORDER BY ls.sequence_number DESC
+          LIMIT 1
+        ) AS delivery_city
+`;
 
 function num(v: unknown): number {
   const n = Number(v ?? 0);
@@ -128,69 +169,20 @@ export function periodBounds(period: "last_4_weeks" | "last_12_weeks" | "YTD"): 
   return { start: isoDate(startMonday), end, label: period };
 }
 
-export async function computeDeadhead(
-  client: PoolClient,
-  operatingCompanyId: string,
+function summarizeDeadheadLoads(
   unitId: string,
-  weekStarting: string
-): Promise<Omit<DeadheadWeekSummary, "unit_number" | "fleet_avg_deadhead_pct" | "rank_in_fleet">> {
-  const weekStart = new Date(`${weekStarting}T00:00:00.000Z`);
-  const weekEnd = addDays(weekStart, 7);
-
-  const loadsRes = await client.query<LoadRow & { delivery_city: string | null; pickup_city: string | null }>(
-    `
-      SELECT
-        l.id::text,
-        l.loaded_miles,
-        l.deadhead_miles_to_pickup,
-        l.miles_practical,
-        l.miles_shortest,
-        l.miles_deadhead,
-        l.deadhead_miles_calculation_method,
-        (
-          SELECT MIN(COALESCE(ls.scheduled_arrival_at, ls.scheduled_departure_at, l.created_at))::text
-          FROM mdata.load_stops ls
-          WHERE ls.load_id = l.id
-        ) AS first_stop_at,
-        (
-          SELECT NULLIF(TRIM(CONCAT_WS(', ', ls.city, ls.state)), '')
-          FROM mdata.load_stops ls
-          WHERE ls.load_id = l.id AND ls.stop_type = 'pickup'
-          ORDER BY ls.sequence_number ASC
-          LIMIT 1
-        ) AS pickup_city,
-        (
-          SELECT NULLIF(TRIM(CONCAT_WS(', ', ls.city, ls.state)), '')
-          FROM mdata.load_stops ls
-          WHERE ls.load_id = l.id AND ls.stop_type = 'delivery'
-          ORDER BY ls.sequence_number DESC
-          LIMIT 1
-        ) AS delivery_city
-      FROM mdata.loads l
-      WHERE l.operating_company_id = $1::uuid
-        AND l.assigned_unit_id = $2::uuid
-        AND l.soft_deleted_at IS NULL
-        AND EXISTS (
-          SELECT 1
-          FROM mdata.load_stops ls
-          WHERE ls.load_id = l.id
-            AND COALESCE(ls.scheduled_arrival_at, ls.scheduled_departure_at, l.created_at) >= $3::timestamptz
-            AND COALESCE(ls.scheduled_arrival_at, ls.scheduled_departure_at, l.created_at) < $4::timestamptz
-        )
-      ORDER BY first_stop_at ASC NULLS LAST, l.created_at ASC
-    `,
-    [operatingCompanyId, unitId, weekStart.toISOString(), weekEnd.toISOString()]
-  );
-
+  weekStarting: string,
+  rows: Array<LoadRow & { pickup_city?: string | null; delivery_city?: string | null }>
+): Omit<DeadheadWeekSummary, "unit_number" | "fleet_avg_deadhead_pct" | "rank_in_fleet"> {
   let loadedMiles = 0;
   let deadheadMiles = 0;
   let previousDelivery: string | null = null;
 
-  for (const row of loadsRes.rows) {
-    const deadhead = resolveDeadheadToPickup(row, previousDelivery, row.pickup_city);
+  for (const row of rows) {
+    const deadhead = resolveDeadheadToPickup(row, previousDelivery, row.pickup_city ?? null);
     deadheadMiles += deadhead.miles;
     loadedMiles += resolveLoadedMiles(row);
-    previousDelivery = row.delivery_city;
+    previousDelivery = row.delivery_city ?? null;
   }
 
   const totalMiles = loadedMiles + deadheadMiles;
@@ -202,8 +194,122 @@ export async function computeDeadhead(
     loaded_miles: loadedMiles,
     deadhead_miles: deadheadMiles,
     deadhead_pct: roundPct(deadheadMiles, totalMiles),
-    load_count: loadsRes.rows.length,
+    load_count: rows.length,
   };
+}
+
+function stopInstantMs(value: string | Date | null | undefined): number | null {
+  if (value == null) return null;
+  const ms = value instanceof Date ? value.getTime() : new Date(value).getTime();
+  return Number.isFinite(ms) ? ms : null;
+}
+
+function loadBelongsToWeek(row: BatchedLoadRow, weekStartMs: number, weekEndMs: number): boolean {
+  const stops = row.stop_ats ?? [];
+  for (const stop of stops) {
+    const ms = stopInstantMs(stop);
+    if (ms != null && ms >= weekStartMs && ms < weekEndMs) return true;
+  }
+  return false;
+}
+
+/**
+ * Deterministic load order for deadhead chaining (previousDelivery → next pickup).
+ * Primary: first_stop_at ASC NULLS LAST; secondary: created_at ASC NULLS LAST;
+ * tertiary (intentional): load id localeCompare — PostgreSQL does not guarantee order
+ * when first_stop_at and created_at tie, so both computeDeadhead (SQL ORDER BY l.id)
+ * and the batched refresh path use an explicit id tie-break for stable previousDelivery
+ * chains and byte-identical week summaries across refreshes.
+ */
+function compareLoadsForWeek(a: BatchedLoadRow, b: BatchedLoadRow): number {
+  const aFirst = stopInstantMs(a.first_stop_at);
+  const bFirst = stopInstantMs(b.first_stop_at);
+  if (aFirst == null && bFirst != null) return 1;
+  if (aFirst != null && bFirst == null) return -1;
+  if (aFirst != null && bFirst != null && aFirst !== bFirst) return aFirst - bFirst;
+  const aCreated = stopInstantMs(a.created_at);
+  const bCreated = stopInstantMs(b.created_at);
+  if (aCreated == null && bCreated != null) return 1;
+  if (aCreated != null && bCreated == null) return -1;
+  if (aCreated != null && bCreated != null && aCreated !== bCreated) return aCreated - bCreated;
+  return String(a.id).localeCompare(String(b.id));
+}
+
+export async function computeDeadhead(
+  client: PoolClient,
+  operatingCompanyId: string,
+  unitId: string,
+  weekStarting: string
+): Promise<Omit<DeadheadWeekSummary, "unit_number" | "fleet_avg_deadhead_pct" | "rank_in_fleet">> {
+  const weekStart = new Date(`${weekStarting}T00:00:00.000Z`);
+  const weekEnd = addDays(weekStart, 7);
+
+  const loadsRes = await client.query<LoadRow>(
+    `
+      SELECT
+        ${LOAD_SELECT_COLUMNS}
+      FROM mdata.loads l
+      WHERE l.operating_company_id = $1::uuid
+        AND l.assigned_unit_id = $2::uuid
+        AND l.soft_deleted_at IS NULL
+        AND EXISTS (
+          SELECT 1
+          FROM mdata.load_stops ls
+          WHERE ls.load_id = l.id
+            AND COALESCE(ls.scheduled_arrival_at, ls.scheduled_departure_at, l.created_at) >= $3::timestamptz
+            AND COALESCE(ls.scheduled_arrival_at, ls.scheduled_departure_at, l.created_at) < $4::timestamptz
+        )
+      ORDER BY first_stop_at ASC NULLS LAST, l.created_at ASC, l.id ASC
+    `,
+    [operatingCompanyId, unitId, weekStart.toISOString(), weekEnd.toISOString()]
+  );
+
+  return summarizeDeadheadLoads(unitId, weekStarting, loadsRes.rows);
+}
+
+/**
+ * G5-4: fetch every load that touches [rangeStart, rangeEnd) for a unit batch in ONE
+ * explicit-column query (no SELECT *). Callers chunk units; never silently drop a unit.
+ */
+async function fetchDeadheadLoadsForUnitBatch(
+  client: PoolClient,
+  operatingCompanyId: string,
+  unitIds: string[],
+  rangeStartIso: string,
+  rangeEndIso: string
+): Promise<BatchedLoadRow[]> {
+  if (unitIds.length === 0) return [];
+
+  const loadsRes = await client.query<BatchedLoadRow>(
+    `
+      SELECT
+        l.assigned_unit_id::text AS unit_id,
+        ${LOAD_SELECT_COLUMNS},
+        (
+          SELECT COALESCE(
+            array_agg(COALESCE(ls.scheduled_arrival_at, ls.scheduled_departure_at, l.created_at)),
+            '{}'::timestamptz[]
+          )
+          FROM mdata.load_stops ls
+          WHERE ls.load_id = l.id
+        ) AS stop_ats
+      FROM mdata.loads l
+      WHERE l.operating_company_id = $1::uuid
+        AND l.assigned_unit_id = ANY($2::uuid[])
+        AND l.soft_deleted_at IS NULL
+        AND EXISTS (
+          SELECT 1
+          FROM mdata.load_stops ls
+          WHERE ls.load_id = l.id
+            AND COALESCE(ls.scheduled_arrival_at, ls.scheduled_departure_at, l.created_at) >= $3::timestamptz
+            AND COALESCE(ls.scheduled_arrival_at, ls.scheduled_departure_at, l.created_at) < $4::timestamptz
+        )
+      ORDER BY l.assigned_unit_id, first_stop_at ASC NULLS LAST, l.created_at ASC, l.id ASC
+    `,
+    [operatingCompanyId, unitIds, rangeStartIso, rangeEndIso]
+  );
+
+  return loadsRes.rows;
 }
 
 export async function refreshDeadheadCache(client: PoolClient, operatingCompanyId: string): Promise<number> {
@@ -225,6 +331,35 @@ export async function refreshDeadheadCache(client: PoolClient, operatingCompanyI
     weekStarts.push(isoDate(mondayOfWeek(addDays(now, -i * 7))));
   }
 
+  const weekBounds = weekStarts.map((week) => {
+    const start = new Date(`${week}T00:00:00.000Z`);
+    const end = addDays(start, 7);
+    return { week, startMs: start.getTime(), endMs: end.getTime(), start, end };
+  });
+  const rangeStartIso = weekBounds[weekBounds.length - 1]!.start.toISOString();
+  const rangeEndIso = weekBounds[0]!.end.toISOString();
+
+  const unitIds = unitsRes.rows.map((row) => row.id);
+  const loadsByUnit = new Map<string, BatchedLoadRow[]>();
+
+  // G5-4 (perf): replace unit×week query loops with bounded set-based batch reads.
+  // All units are processed (chunked by DEADHEAD_REFRESH_UNIT_BATCH_SIZE) — never a silent cap.
+  for (let offset = 0; offset < unitIds.length; offset += DEADHEAD_REFRESH_UNIT_BATCH_SIZE) {
+    const chunk = unitIds.slice(offset, offset + DEADHEAD_REFRESH_UNIT_BATCH_SIZE);
+    const rows = await fetchDeadheadLoadsForUnitBatch(
+      client,
+      operatingCompanyId,
+      chunk,
+      rangeStartIso,
+      rangeEndIso
+    );
+    for (const row of rows) {
+      const list = loadsByUnit.get(row.unit_id);
+      if (list) list.push(row);
+      else loadsByUnit.set(row.unit_id, [row]);
+    }
+  }
+
   const summaries: Array<{
     unit_id: string;
     week_starting: string;
@@ -235,10 +370,13 @@ export async function refreshDeadheadCache(client: PoolClient, operatingCompanyI
     load_count: number;
   }> = [];
 
-  for (const unit of unitsRes.rows) {
-    for (const week of weekStarts) {
-      const computed = await computeDeadhead(client, operatingCompanyId, unit.id, week);
-      summaries.push(computed);
+  for (const unitId of unitIds) {
+    const unitLoads = loadsByUnit.get(unitId) ?? [];
+    for (const bounds of weekBounds) {
+      const weekRows = unitLoads
+        .filter((row) => loadBelongsToWeek(row, bounds.startMs, bounds.endMs))
+        .sort(compareLoadsForWeek);
+      summaries.push(summarizeDeadheadLoads(unitId, bounds.week, weekRows));
     }
   }
 

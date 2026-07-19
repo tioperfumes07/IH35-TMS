@@ -1,17 +1,45 @@
 {
   "block_id": "0243-g5-4-n-plus-1-report-loops-select-star",
-  "status": "PENDING",
+  "status": "BUILD",
   "classification": "FINANCIAL",
   "phase": "tier2",
+  "wave": "Accounting Core Block 20/67",
+  "branch": "fix/0243-g5-4-report-nplus1",
+  "task": "Eliminate confirmed N+1 unit×week deadhead load reads and lane-profitability per-row INSERT loops; preserve exact cache results, entity scope, and audit/cache behavior. No SELECT *, no silent caps, no schema/migration/GL math.",
   "source": "MASTER-6 authored dispatch (05-TIER2-BLOCKS)",
   "source_file": "0243-g5-4-n-plus-1-report-loops-select-star.txt",
+  "lane": "cloud",
   "allowed_files": [
-    "additive only; ALTER/CREATE on existing financial tables = PROTECTED owner-ceremony; never write a RETIRE table; no delete."
+    ".block-ready/0243-g5-4-n-plus-1-report-loops-select-star.json",
+    "apps/backend/src/reports/deadhead.service.ts",
+    "apps/backend/src/reports/lane-profitability.service.ts",
+    "apps/backend/src/reports/__tests__/deadhead-refresh-batch.test.ts",
+    "apps/backend/src/reports/__tests__/lane-profitability-refresh-batch.test.ts",
+    "scripts/verify-report-refresh-no-nplus1.mjs",
+    "scripts/verify-steps/910-verify-report-refresh-no-nplus1.mjs"
   ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
   "acceptance": [
     {
-      "check": "table/column/fk/rls/route/mounted proven; effective(flag via isEnabled honoring overrides) if flag-dependent; data(0-NULL) if populated; guard wired; live proof. Builder STOPS at branch-proof for GUARD."
+      "check": "refreshDeadheadCache uses bounded set-based load batching (ANY uuid[] + unit chunks) instead of await computeDeadhead per unit×week; multi-row deadhead_cache INSERT retained; id tie-break documented; oracle-equivalent to computeDeadhead; no SELECT *.",
+      "evidence": "apps/backend/src/reports/deadhead.service.ts + deadhead-refresh-batch.test.ts (oracle multi-week/chain/estimated/empty/tie-break/203+ units)."
+    },
+    {
+      "check": "refreshLaneProfitabilityCache chunks multi-row VALUES INSERTs by bind budget (60_000 / 19 binds/row) below PG 65535; DELETE + all chunks in caller txn; empty skips INSERT; >3500 lanes → multiple inserts, no omissions/duplicates; later-chunk failure stops metrics.",
+      "evidence": "apps/backend/src/reports/lane-profitability.service.ts + lane-profitability-refresh-batch.test.ts."
+    },
+    {
+      "check": "Rule-17 auto-discovered TypeScript-AST structural guard catches renamed-variable / reformatted nested await computeDeadhead, nested per-unit load queries, and per-row awaited lane INSERTs; planted self-tests fail-closed; no package.json/workflow hot-file thrash.",
+      "evidence": "scripts/verify-report-refresh-no-nplus1.mjs + scripts/verify-steps/910-verify-report-refresh-no-nplus1.mjs."
+    },
+    {
+      "check": "Financial cluster — build-and-HOLD; no merge/deploy/prod DB without Jorge approval. QBO tests untouched.",
+      "evidence": "Owner GO for durability closeout push; merge forbidden."
     }
   ],
-  "note": "Registered by faithful extraction from the authored MASTER-6 dispatch spec (real acceptance/lane/status). Status reflects the dispatch's own marker; NEEDS-VERIFY = still needs a live code check."
+  "linkage": "Cache-only report refresh perf. Reads mdata.loads/load_stops/units + driver_finance/maintenance/fuel cost joins already present; writes reports.deadhead_cache + reports.lane_profitability_cache only. No new FK/GL/posting. operating_company_id predicates preserved on every statement.",
+  "note": "Owner-ordered cloud GO for Accounting Core Block 20/67. Partial prior fix (deadhead write batching) retained; read-side N+1 + lane insert loop closed here."
 }
