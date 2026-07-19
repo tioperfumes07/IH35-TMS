@@ -12,9 +12,17 @@ import { RecordPaymentModal } from "./RecordPaymentModal";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { useUrlSort } from "../../hooks/useUrlSort";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
+}
+
+function paymentStatusSortKey(payment: Payment): string {
+  if (payment.voided_at) return "voided";
+  if (Number(payment.amount_unapplied_cents) === 0) return "fully applied";
+  if (Number(payment.amount_applied_cents) > 0) return "partially applied";
+  return "unapplied";
 }
 
 function statusPill(payment: Payment) {
@@ -43,6 +51,9 @@ const METHOD_OPTIONS: Array<{ value: "" | PaymentMethod | "factoring"; label: st
 export function PaymentsListPage() {
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
+  // BANK-SORT-ROLLOUT-ACCT: every visible column header sorts ASC/DESC; sort persists in the URL
+  // (?sort=&dir=) so it survives reload / is shareable, same as Bills / Expenses.
+  const { sortKey, sortDirection, onSortChange } = useUrlSort();
   const [status, setStatus] = useState<"all" | "active" | "voided">("all");
   const [method, setMethod] = useState<"" | PaymentMethod | "factoring">("");
   const [search, setSearch] = useState("");
@@ -103,11 +114,23 @@ export function PaymentsListPage() {
       { key: "customer_name", label: "Customer", sortable: true },
       { key: "payment_date", label: "Date", sortable: true, render: (row) => formatDateUS(row.payment_date) },
       { key: "payment_method", label: "Method", sortable: true },
-      { key: "reference", label: "Reference", render: (row) => row.reference ?? "-" },
+      {
+        key: "reference",
+        label: "Reference",
+        sortable: true,
+        sortValue: (row) => row.reference ?? "",
+        render: (row) => row.reference ?? "-",
+      },
       { key: "amount_cents", label: "Amount", sortable: true, className: "text-right", cellClass: "text-right tabular-nums", render: (row) => money(row.amount_cents) },
       { key: "amount_applied_cents", label: "Applied", sortable: true, className: "text-right", cellClass: "text-right tabular-nums", render: (row) => money(row.amount_applied_cents) },
       { key: "amount_unapplied_cents", label: "Unapplied", sortable: true, className: "text-right", cellClass: "text-right tabular-nums", render: (row) => money(row.amount_unapplied_cents) },
-      { key: "status", label: "Status", render: (row) => statusPill(row) },
+      {
+        key: "status",
+        label: "Status",
+        sortable: true,
+        sortValue: (row) => paymentStatusSortKey(row),
+        render: (row) => statusPill(row),
+      },
     ],
     [],
   );
@@ -181,6 +204,9 @@ export function PaymentsListPage() {
         exportFilename="payments"
         storageKey="payments-list"
         initialPageSize={50}
+        sortKey={sortKey}
+        sortDirection={sortDirection}
+        onSortChange={onSortChange}
         emptyText="No payments found."
       />
 

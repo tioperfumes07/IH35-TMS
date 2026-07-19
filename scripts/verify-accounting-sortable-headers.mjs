@@ -3,7 +3,7 @@
  * verify-accounting-sortable-headers.mjs — BANK-SORT-ROLLOUT-ACCT CI guard
  *
  * Locks: every visible DATA column header on Accounting Bills (BillsPage) + Expenses
- * (ExpensesListPage) is clickable ASC/DESC, and the sort state is persisted in the URL
+ * (ExpensesListPage) + Payments (PaymentsListPage) + Bill Payments (BillPaymentsListPage) is clickable ASC/DESC, and the sort state is persisted in the URL
  * (?sort=&dir=) via the shared `useUrlSort` hook + ParityTable's controlled-sort props —
  * same asc/desc-only header contract the Banking register (BANK-SORT-ROLLOUT) shipped.
  *
@@ -24,6 +24,8 @@ const PARITY_TABLE_FILE = "apps/frontend/src/components/parity/ParityTable.tsx";
 const PAGES = [
   { file: "apps/frontend/src/pages/accounting/BillsPage.tsx", label: "Bills" },
   { file: "apps/frontend/src/pages/accounting/ExpensesListPage.tsx", label: "Expenses" },
+  { file: "apps/frontend/src/pages/accounting/PaymentsListPage.tsx", label: "Payments" },
+  { file: "apps/frontend/src/pages/accounting/BillPaymentsListPage.tsx", label: "Bill Payments" },
 ];
 
 /** Pure action / non-data columns are exempt from the sortable-header rule (GLOBAL-SORT-RULE.md). */
@@ -172,6 +174,8 @@ function selftest() {
     pages: [
       { file: PAGES[0].file, label: PAGES[0].label, src: goodPage },
       { file: PAGES[1].file, label: PAGES[1].label, src: goodExpenses },
+      { file: PAGES[2].file, label: PAGES[2].label, src: goodPage },
+      { file: PAGES[3].file, label: PAGES[3].label, src: goodPage },
     ],
   };
 
@@ -213,5 +217,5 @@ if (failures.length) {
 
 console.log(
   `${LABEL} — OK (useUrlSort hook, ParityTable controlled-sort contract, Bills + Expenses every ` +
-    `data column sortable + URL-persisted)`,
+    `data column sortable + URL-persisted — Bills + Expenses + Payments + Bill Payments)`,
 );
