@@ -14,7 +14,10 @@ import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
 import { ensureIntegrationPrerequisites } from "../../../test-helpers/db-fixture.js";
-import { TEST_OWNER_USER_ID } from "../../../test-helpers/constants.js";
+import {
+  FARO_CANONICAL_AGREEMENT_TEST_LOCK_KEY,
+  TEST_OWNER_USER_ID,
+} from "../../../test-helpers/constants.js";
 import {
   createIsolatedOperatingCompany,
   deactivateIsolatedOperatingCompany,
@@ -283,6 +286,8 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
     db = new pg.Client(buildPgClientConfig(cs));
     await db.connect();
     await db.query("SET ROLE ih35_app");
+    // Serialize vs chain-06-factoring-ar-tieout.db.test.ts (shared Faro agreement table family).
+    await db.query("SELECT pg_advisory_lock($1::bigint)", [FARO_CANONICAL_AGREEMENT_TEST_LOCK_KEY]);
 
     const viewOk = await db.query(
       `SELECT to_regclass('views.factoring_balance_invoice_linkage') IS NOT NULL AS ok`
@@ -603,6 +608,9 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
       } catch {
         /* best-effort */
       }
+      await db
+        .query("SELECT pg_advisory_unlock($1::bigint)", [FARO_CANONICAL_AGREEMENT_TEST_LOCK_KEY])
+        .catch(() => {});
       await db.end().catch(() => {});
     }
     if (isolated) await deactivateIsolatedOperatingCompany(isolated).catch(() => {});

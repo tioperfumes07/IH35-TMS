@@ -44,7 +44,11 @@ import {
   deactivateIsolatedOperatingCompany,
   type IsolatedOperatingCompany,
 } from "../../../../test-helpers/isolated-company.js";
-import { TEST_OWNER_USER_ID, TEST_ENCRYPTION_KEY } from "../../../../test-helpers/constants.js";
+import {
+  FARO_CANONICAL_AGREEMENT_TEST_LOCK_KEY,
+  TEST_OWNER_USER_ID,
+  TEST_ENCRYPTION_KEY,
+} from "../../../../test-helpers/constants.js";
 import {
   loadExactLinkedChargebackAmounts,
   postFactoringAdvanceEvent,
@@ -303,6 +307,10 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
     db = new pg.Client(buildPgClientConfig(cs));
     await db.connect();
     await db.query("SET ROLE ih35_app");
+    // Serialize vs factoring-balance-invoice-linkage.db.test.ts — both mutate
+    // factoring.canonical_factor_agreements / factor.factor / mdata.vendors under parallel forks;
+    // the poster's Faro SELECT JOIN deadlocked there (Leg B prepare → resolveCanonicalActiveFactor).
+    await db.query("SELECT pg_advisory_lock($1::bigint)", [FARO_CANONICAL_AGREEMENT_TEST_LOCK_KEY]);
     await seedPosterRoles();
     await bypass(async () => {
       seededFaroAgreementId = randomUUID();
@@ -408,6 +416,9 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
     } catch {
       /* best-effort cleanup */
     }
+    await db
+      .query("SELECT pg_advisory_unlock($1::bigint)", [FARO_CANONICAL_AGREEMENT_TEST_LOCK_KEY])
+      .catch(() => {});
     await db.end();
   });
 

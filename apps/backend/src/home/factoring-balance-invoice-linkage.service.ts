@@ -35,6 +35,27 @@ export type DbClient = {
   ) => Promise<{ rows: T[] }>;
 };
 
+/** Retry read queries that lose a Postgres deadlock race (40P01) against concurrent agreement seeds. */
+async function queryWithDeadlockRetry<T>(
+  client: DbClient,
+  sql: string,
+  values: unknown[],
+  attempts = 3
+): Promise<{ rows: T[] }> {
+  let last: unknown;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await client.query<T>(sql, values);
+    } catch (err) {
+      last = err;
+      const code = (err as { code?: string } | null)?.code;
+      if (code !== "40P01" || i === attempts - 1) throw err;
+      await new Promise((r) => setTimeout(r, 25 * (i + 1)));
+    }
+  }
+  throw last;
+}
+
 export type FactoringBalanceStatus = "ok" | "empty" | "unverifiable" | "accounting_exception";
 
 export type FactoringBalanceDiagnostics = {
@@ -270,7 +291,9 @@ export async function resolveCanonicalActiveFactor(
 
   // Effective window: as_of ∈ [effective_from, effective_to] (NULL effective_to = open-ended).
   // Overlapping/ambiguous bindings → fail closed (never pick by majority or name).
-  const bindings = await client.query<{
+  // 40P01 retry: concurrent agreement/profile/vendor seeders (CI forks; rare owner re-seed) can
+  // deadlock this JOIN — fail-closed retry, never invent a binding.
+  const bindings = await queryWithDeadlockRetry<{
     agreement_id: string;
     factor_profile_id: string;
     factor_vendor_id: string;
@@ -288,6 +311,7 @@ export async function resolveCanonicalActiveFactor(
     profile_recourse_days: number;
     profile_active: boolean;
   }>(
+    client,
     `
       SELECT
         a.id::text AS agreement_id,
@@ -331,11 +355,12 @@ export async function resolveCanonicalActiveFactor(
     // A stale future/expired sibling row (e.g. an earlier ambiguity-test leftover) must NEVER short-circuit
     // that void→missing verdict. Only a *non-voided* out-of-window binding, with NO voided-current binding,
     // yields faro_agreement_not_effective.
-    const anyBinding = await client.query<{
+    const anyBinding = await queryWithDeadlockRetry<{
       live_future_n: string;
       live_expired_n: string;
       voided_current_n: string;
     }>(
+      client,
       `
         SELECT
           COUNT(*) FILTER (

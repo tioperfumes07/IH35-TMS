@@ -246,6 +246,10 @@ export function checker(sources) {
     /companyId\s*=\s*await\s+ensureIntegrationPrerequisites\s*\(/,
     "chain06_db_must_not_use_shared_transp_company"
   );
+  // Faro agreement table family serialization under vitest forks (Leg B prepare deadlock).
+  requireExec("chain06DbTest", "FARO_CANONICAL_AGREEMENT_TEST_LOCK_KEY", "chain06_db_must_hold_faro_agreement_lock");
+  requireExec("dbTest", "FARO_CANONICAL_AGREEMENT_TEST_LOCK_KEY", "db_test_must_hold_faro_agreement_lock");
+  requireExec("service", "queryWithDeadlockRetry", "service_faro_query_must_retry_deadlock");
   requireIdent("defaultInterest", "companyBusinessDate", "default_interest_company_business_date_missing");
   requireIdent("defaultInterest", "loadExactLinkedChargebackAmounts", "default_interest_exact_linked_amounts_missing");
   requireIdent("defaultInterest", "requireEffectiveFaroFullRecourseAgreement", "default_interest_faro_gate_missing");
@@ -560,8 +564,11 @@ function createBadFixture(good) {
   bad.chain06DbTest =
     String(good.chain06DbTest ?? "")
       .replace(/createIsolatedOperatingCompany/g, "createSomethingElse")
-      .replace(/deactivateIsolatedOperatingCompany/g, "deactivateSomethingElse") +
+      .replace(/deactivateIsolatedOperatingCompany/g, "deactivateSomethingElse")
+      .replace(/FARO_CANONICAL_AGREEMENT_TEST_LOCK_KEY/g, "SOME_OTHER_LOCK_KEY") +
     "\ncompanyId = await ensureIntegrationPrerequisites();\n";
+  bad.dbTest = String(bad.dbTest).replace(/FARO_CANONICAL_AGREEMENT_TEST_LOCK_KEY/g, "SOME_OTHER_LOCK_KEY");
+  bad.service = String(bad.service).replace(/queryWithDeadlockRetry/g, "querySomethingElse");
   return bad;
 }
 
@@ -603,6 +610,8 @@ if (isDirectRun) {
       "poster_exact_shape_validator_missing",
       "chain06_db_must_use_isolated_company",
       "chain06_db_must_not_use_shared_transp_company",
+      "chain06_db_must_hold_faro_agreement_lock",
+      "service_faro_query_must_retry_deadlock",
     ],
   });
 }
