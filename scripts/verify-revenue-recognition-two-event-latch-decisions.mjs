@@ -1,16 +1,18 @@
 #!/usr/bin/env node
 /**
- * Delivery revenue recognition — two-event latch, materiality, maker/checker, entity scope
- * (owner/CPA LOCKED 2026-07-19). Governance/docs guard only.
+ * Delivery revenue recognition — two-event latch (LOCKED — OWNER, 2026-07-19).
+ * Governance/docs guard only.
  *
- * Rule 17: auto-discovered via scripts/verify-steps/933-verify-revenue-recognition-two-event-latch-decisions.mjs.
+ * Rule 17: auto-discovered via
+ * scripts/verify-steps/936-verify-revenue-recognition-two-event-latch-decisions.mjs
+ * (renumbered off the #2732 collision that also used step 933).
  * Do NOT wire through package.json / locked-guards.yml / ci.yml.
  *
  * FAILS when either canonical decision doc:
- *   1. Is missing any of the four locked anchors (two-event-latch accounts, materiality
- *      no-permissive-default, maker/checker approval pool, TRK freight-lifecycle exclusion), OR
- *   2. Affirmatively describes a single combined POD+delivered recognition gate (the two events must
- *      stay distinct), OR
+ *   1. Is missing locked anchors (two-event latch, HARD Unbilled seed prerequisite,
+ *      reconciliation known-item, unbilled report, boundary, materiality, maker/checker,
+ *      TRK exclusion, point-in-time-as-simplification honesty), OR
+ *   2. Affirmatively describes a single combined POD+delivered recognition gate, OR
  *   3. (SKILL.md — sanitized surface) contains forbidden private-source / PII patterns.
  *
  * Pure filesystem checks — no DB, no network. Uses runExecutableGuard planted fixtures.
@@ -29,20 +31,39 @@ const CANONICAL_DOCS = [
 
 const SANITIZED_DOCS = new Set([".claude/skills/ih35-cpa-accounting-decisions/SKILL.md"]);
 
-const REQUIRED_ANCHORS = [
+/** Anchors that must appear in BOTH surfaces (additions.md + skill pointer). */
+const REQUIRED_ANCHORS_BOTH = [
   "DR Unbilled Revenue",
   "CR Line-Haul Income",
   "delivered_pending_docs",
   "completed_docs_received",
   "DR A/R",
-  "CR Unbilled",
-  "no-permissive-default",
+  "CR Unbilled Revenue",
+  "REVENUE_RECOGNITION_POST_ENABLED",
+  "no permissive default",
   "single-correction",
   "cumulative-for-period",
   "SOD-A",
   "Owner/Admin/Accountant",
-  "TRK excluded",
   "42000-LEASE",
+  "TRK: EXCLUDED",
+  "TMS unbilled revenue not yet in QBO",
+  "KNOWN reconciling item",
+  "defensible practical simplification",
+  "606-10-25-27",
+  "HARD PREREQUISITE",
+  "runtime 500",
+  "Unbilled Revenue report",
+  "mdata.loads",
+  "SSP allocation",
+  "over-transit",
+  "point-in-time at delivery",
+];
+
+/** Extra anchors required only in the full additions lock. */
+const REQUIRED_ANCHORS_ADDITIONS_ONLY = [
+  "Not claimed as the only correct method",
+  "before `REVENUE_RECOGNITION_POST_ENABLED` may flip",
 ];
 
 const COMBINED_GATE_PATTERNS = [
@@ -68,7 +89,7 @@ function checker(docs) {
     for (const pattern of COMBINED_GATE_PATTERNS) {
       if (pattern.test(source)) {
         failures.push(
-          `${rel}: affirmative single combined POD+delivered gate wording matched /${pattern.source}/ — the earn event and the invoice/bill gate must stay two distinct GL postings`
+          `${rel}: affirmative single combined POD+delivered gate wording matched /${pattern.source}/ — earn and bill gates must stay two distinct GL postings`
         );
       }
     }
@@ -80,12 +101,24 @@ function checker(docs) {
         }
       }
     }
-  }
 
-  const joined = docs.map(([, source]) => source ?? "").join("\n");
-  for (const anchor of REQUIRED_ANCHORS) {
-    if (!joined.includes(anchor)) {
-      failures.push(`revenue-recognition two-event-latch lock docs missing required anchor: "${anchor}"`);
+    for (const anchor of REQUIRED_ANCHORS_BOTH) {
+      if (!source.includes(anchor)) {
+        failures.push(`${rel}: missing locked anchor ${JSON.stringify(anchor)}`);
+      }
+    }
+
+    if (rel === "docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md") {
+      for (const anchor of REQUIRED_ANCHORS_ADDITIONS_ONLY) {
+        if (!source.includes(anchor)) {
+          failures.push(`${rel}: missing locked anchor ${JSON.stringify(anchor)}`);
+        }
+      }
+      if (!/Not claimed as the only correct method/i.test(source)) {
+        failures.push(
+          `${rel}: missing honesty that point-in-time is not claimed as the only correct ASC 606 method`
+        );
+      }
     }
   }
 
@@ -103,19 +136,33 @@ function loadRepositoryFixture() {
 function createBadFixture(goodFixture) {
   const stripAnchors = (source) =>
     (source ?? "")
+      .replaceAll("before `REVENUE_RECOGNITION_POST_ENABLED` may flip", "GATE_FLIP_REMOVED")
+      .replaceAll("Not claimed as the only correct method", "HONESTY_REMOVED")
       .replaceAll("DR Unbilled Revenue", "UNBILLED_REV_REMOVED")
       .replaceAll("CR Line-Haul Income", "LINE_HAUL_INCOME_REMOVED")
       .replaceAll("delivered_pending_docs", "STATUS_REMOVED")
       .replaceAll("completed_docs_received", "POD_STATUS_REMOVED")
       .replaceAll("DR A/R", "AR_REMOVED")
-      .replaceAll("CR Unbilled", "CR_UNBILLED_REMOVED")
-      .replaceAll("no-permissive-default", "PERMISSIVE_DEFAULT_ALLOWED")
+      .replaceAll("CR Unbilled Revenue", "CR_UNBILLED_REMOVED")
+      .replaceAll("REVENUE_RECOGNITION_POST_ENABLED", "FLAG_REMOVED")
+      .replaceAll("no permissive default", "PERMISSIVE_DEFAULT_ALLOWED")
       .replaceAll("single-correction", "SINGLE_CORRECTION_REMOVED")
       .replaceAll("cumulative-for-period", "CUMULATIVE_REMOVED")
       .replaceAll("SOD-A", "SOD_A_REMOVED")
       .replaceAll("Owner/Admin/Accountant", "APPROVAL_POOL_REMOVED")
-      .replaceAll("TRK excluded", "TRK_INCLUDED")
-      .replaceAll("42000-LEASE", "LEASE_ACCOUNT_REMOVED");
+      .replaceAll("TRK: EXCLUDED", "TRK_INCLUDED")
+      .replaceAll("42000-LEASE", "LEASE_ACCOUNT_REMOVED")
+      .replaceAll("TMS unbilled revenue not yet in QBO", "RECON_ITEM_REMOVED")
+      .replaceAll("KNOWN reconciling item", "RECON_CLASS_REMOVED")
+      .replaceAll("defensible practical simplification", "SIMPLIFICATION_REMOVED")
+      .replaceAll("606-10-25-27", "ASC_REF_REMOVED")
+      .replaceAll("HARD PREREQUISITE", "HARD_GATE_REMOVED")
+      .replaceAll("runtime 500", "RUNTIME_REMOVED")
+      .replaceAll("Unbilled Revenue report", "REPORT_REMOVED")
+      .replaceAll("mdata.loads", "LOADS_LINK_REMOVED")
+      .replaceAll("SSP allocation", "SSP_REMOVED")
+      .replaceAll("over-transit", "OVER_TRANSIT_REMOVED")
+      .replaceAll("point-in-time at delivery", "PIT_REMOVED");
 
   return goodFixture.map(([rel, source]) => {
     let planted = stripAnchors(source);
@@ -138,7 +185,7 @@ runExecutableGuard({
   goodFixture,
   badFixture,
   expectedBadViolationSubstrings: [
-    "missing required anchor",
+    "missing locked anchor",
     "personal guaranty",
     "affirmative single combined POD+delivered gate",
   ],
