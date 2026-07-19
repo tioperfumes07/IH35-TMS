@@ -135,7 +135,8 @@ describeIntegration("CHAIN-04 bill-payment → GL gap-closure end-to-end (real P
   beforeAll(async () => {
     // Owner + TRANSP seed (shared helpers); THIS suite's money/role rows live on `isolated`, not TRANSP.
     await ensureIntegrationPrerequisites();
-    isolated = await createIsolatedOperatingCompany({ label: "bill-pay-gl", actorUserId: userId });
+    // Actor is INSERTed below — do not pass actorUserId here (fail-loud grant requires the user row).
+    isolated = await createIsolatedOperatingCompany({ label: "bill-pay-gl" });
     companyId = isolated.companyId;
     const cs = process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL;
     if (!cs) throw new Error("DATABASE_URL required");

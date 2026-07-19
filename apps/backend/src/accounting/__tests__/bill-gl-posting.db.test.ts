@@ -56,7 +56,7 @@ describeIntegration("bill → GL posting end-to-end (real Postgres)", () => {
   beforeAll(async () => {
     await ensureIntegrationPrerequisites();
     // Own company + own ap_control / uncategorized_expense — no shared-TRANSP advisory lock.
-    isolated = await createIsolatedOperatingCompany({ label: "bill-gl", actorUserId: userId });
+    isolated = await createIsolatedOperatingCompany({ label: "bill-gl" });
     companyId = isolated.companyId;
     const cs = process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL;
     if (!cs) throw new Error("DATABASE_URL required");

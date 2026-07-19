@@ -3,12 +3,14 @@
   "status": "BUILD",
   "classification": "NON-FINANCIAL",
   "phase": "test-hygiene",
-  "task": "Root-cause fix for nondeterministic bill-payment-gl-posting CC/ap_control race: each ap_control-seeding db.test owns a unique org.companies + chart_of_accounts_roles namespace via createIsolatedOperatingCompany(); guard requires isolation; concurrent cash/CC stress regression. No product GL or migration changes.",
+  "task": "Root-cause fix for nondeterministic bill-payment-gl-posting CC/ap_control race: each ap_control-seeding db.test owns a unique org.companies + chart_of_accounts_roles namespace via canonical createIsolatedOperatingCompany() (apps/backend/test-helpers/isolated-company.ts; #2717-ready opts). Settlement suites share GLOBAL account_role_bindings session lock (save→bind→tests→fail-loud restore). Guard requires isolation + lock. Concurrent cash/CC stress regression. No product GL or migration changes.",
   "branch": "cursor/ap-control-test-isolation-b21d",
   "lane": "cloud",
   "allowed_files": [
     ".block-ready/ap-control-test-isolation.json",
     "apps/backend/test-helpers/isolated-company.ts",
+    "apps/backend/test-helpers/global-account-role-bindings-lock.ts",
+    "apps/backend/test-helpers/constants.ts",
     "apps/backend/test-helpers/db-fixture.ts",
     "apps/backend/vitest.config.ts",
     "apps/backend/src/accounting/__tests__/bill-payment-gl-posting.db.test.ts",
@@ -16,8 +18,8 @@
     "apps/backend/src/accounting/__tests__/bill-payment-gl-ap-control-isolation.stress.db.test.ts",
     "apps/backend/src/accounting/settlement-posting/__tests__/settlement-bill-payment-posting.db.test.ts",
     "apps/backend/src/accounting/settlement-posting/__tests__/settlement-gl-posting.db.test.ts",
+    "apps/backend/src/driver-finance/__tests__/settlement-payrun-close.db.test.ts",
     "apps/backend/src/banking/__tests__/bank-transaction-splits-vendor-bill.db.test.ts",
-    "apps/frontend/src/components/home/__tests__/QboSyncHealthCard.test.tsx",
     "scripts/verify-shared-coa-role-tests-serialized.mjs",
     "scripts/verify-steps/131-verify-shared-coa-role-tests-serialized.mjs"
   ],
@@ -29,8 +31,8 @@
   ],
   "acceptance": [
     {
-      "check": "ap_control-seeding db.tests use createIsolatedOperatingCompany; verify-shared-coa-role-tests-serialized selftest PASS; focused concurrent bill-payment + stress suite deterministic; no product GL/migration change"
+      "check": "ap_control-seeding db.tests use canonical isolated-company.ts; settlement GLOBAL bindings lock+fail-loud restore; verify-shared-coa-role-tests-serialized selftest PASS; stress + settlement suites parallel-stable; no product GL/migration change; QboSync/verify-local-ci Debian churn removed (fixed on main #2709)"
     }
   ],
-  "note": "Test hygiene only. QboSyncHealthCard assertion fix unblocks wall-clock flake in verify:qbo-sync-staleness (pre-existing on main)."
+  "note": "Test hygiene only. Helper is canonical for #2717 integration (codePrefix/legalNamePrefix/grantUserId); do not overwrite #2717 bank-transaction-splits.service.ts product code."
 }

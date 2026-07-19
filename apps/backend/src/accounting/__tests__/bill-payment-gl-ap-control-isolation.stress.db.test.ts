@@ -85,6 +85,15 @@ describeIntegration("ap_control isolation stress — concurrent cash/CC bill-pay
     await client.connect();
     await client.query("SET ROLE ih35_app");
 
+    // Actor must exist BEFORE createIsolatedOperatingCompany({ actorUserId }) — fail-loud grant.
+    await client.query("BEGIN");
+    await client.query("SET LOCAL app.bypass_rls = 'lucia'");
+    await client.query(
+      `INSERT INTO identity.users (id, email, role, preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
+      [userId, `stress-${kind}-${suffix}@test.local`]
+    );
+    await client.query("COMMIT");
+
     const isolated = await createIsolatedOperatingCompany({
       label: `stress-${kind}-r${round}-s${slot}`,
       actorUserId: userId,
@@ -99,14 +108,6 @@ describeIntegration("ap_control isolation stress — concurrent cash/CC bill-pay
     const fuelCode = `FUEL-${suffix}`;
 
     await bypass(client, companyId, async () => {
-      await client.query(
-        `INSERT INTO identity.users (id, email, role, preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
-        [userId, `stress-${kind}-${suffix}@test.local`]
-      );
-      await client.query(
-        `INSERT INTO org.user_company_access (user_id, company_id) VALUES ($1::uuid,$2::uuid) ON CONFLICT (user_id, company_id) DO NOTHING`,
-        [userId, companyId]
-      );
       await client.query(
         `INSERT INTO catalogs.accounts (id, operating_company_id, account_number, account_name, account_type, is_postable)
          VALUES ($1::uuid,$3::uuid,$2,'Stress Fuel','Expense',true)`,

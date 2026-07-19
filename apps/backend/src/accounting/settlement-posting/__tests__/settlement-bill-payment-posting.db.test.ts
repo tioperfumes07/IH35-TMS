@@ -18,10 +18,15 @@ import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../../lib/pg-connection-options.js";
 import {
+  acquireGlobalAccountRoleBindingsLock,
   createIsolatedOperatingCompany,
   deactivateIsolatedOperatingCompany,
   ensureIntegrationPrerequisites,
+  releaseGlobalAccountRoleBindingsLock,
+  restoreGlobalAccountRoleBindings,
+  saveGlobalAccountRoleBindings,
   type IsolatedOperatingCompany,
+  type SavedAccountRoleBinding,
 } from "../../../../test-helpers/db-fixture.js";
 import { TEST_ENCRYPTION_KEY } from "../../../../test-helpers/constants.js";
 import { postSettlementBillPayment, reverseSettlementBillPayment, type SettlementBillPaymentResult } from "../settlement-bill-payment-posting.service.js";
@@ -82,16 +87,11 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
   const escrowCents = 7500; // total deductions 275.00 -> net 1,240.00
   const deductionBucketIds = [randomUUID(), randomUUID()];
   let settlementId = "";
-  // catalogs.account_role_bindings is still UNIQUE(role_key) globally — save/restore so this suite's
-  // bind() to ISO-company accounts cannot leave sibling TRANSP suites (settlement-gl-posting) without
-  // a resolvable driver_pay_expense / cash_dip row.
+  // catalogs.account_role_bindings is still UNIQUE(role_key) globally — share the session lock with
+  // settlement-gl-posting + settlement-payrun-close around save → bind → tests → fail-loud restore.
   const GLOBAL_BIND_KEYS = ["driver_pay_expense", "cash_dip"] as const;
-  let priorGlobalBindings: {
-    role_key: string;
-    account_id: string;
-    operating_company_id: string | null;
-    deactivated_at: Date | null;
-  }[] = [];
+  let priorGlobalBindings: SavedAccountRoleBinding[] = [];
+  let heldGlobalBindingsLock = false;
 
   async function bypass(fn: () => Promise<void>) {
     await db.query("BEGIN");
@@ -288,13 +288,17 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
 
   beforeAll(async () => {
     await ensureIntegrationPrerequisites();
-    isolated = await createIsolatedOperatingCompany({ label: "settlement-bp", actorUserId: userId });
+    // Actor INSERTed below — do not pass actorUserId (fail-loud grant requires the user row).
+    isolated = await createIsolatedOperatingCompany({ label: "settlement-bp" });
     companyId = isolated.companyId;
     const cs = process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL;
     if (!cs) throw new Error("DATABASE_URL required");
     db = new pg.Client(buildPgClientConfig(cs));
     await db.connect();
     await db.query("SET ROLE ih35_app");
+    // Serialize GLOBAL account_role_bindings mutators for the full suite lifespan.
+    await acquireGlobalAccountRoleBindingsLock(db);
+    heldGlobalBindingsLock = true;
     await bypass(async () => {
       await db.query(
         `INSERT INTO identity.users (id, email, role, preferred_language) VALUES ($1::uuid,$2,'Owner','en') ON CONFLICT (id) DO NOTHING`,
@@ -354,17 +358,7 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
          VALUES ($1::uuid,'ap_control',$2::uuid,true)`,
         [companyId, acct.ap]
       );
-      const prior = await db.query<{
-        role_key: string;
-        account_id: string;
-        operating_company_id: string | null;
-        deactivated_at: Date | null;
-      }>(
-        `SELECT role_key, account_id::text AS account_id, operating_company_id::text AS operating_company_id, deactivated_at
-           FROM catalogs.account_role_bindings WHERE role_key = ANY($1::text[])`,
-        [GLOBAL_BIND_KEYS as unknown as string[]]
-      );
-      priorGlobalBindings = prior.rows;
+      priorGlobalBindings = await saveGlobalAccountRoleBindings(db, GLOBAL_BIND_KEYS);
       const bind = async (roleKey: string, accountId: string) =>
         db.query(
           `INSERT INTO catalogs.account_role_bindings (role_key, account_id, operating_company_id)
@@ -396,13 +390,21 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
 
   afterAll(async () => {
     if (!db) return;
+    let restoreError: unknown;
+    // Resolve BEFORE cleanup txns (resolveGlBillIds/read run their own BEGIN/COMMIT).
+    const glBillIds = settlementId ? await resolveGlBillIds().catch(() => [] as string[]) : [];
+
+    // Fixture cleanup in its own txn — a failed DELETE must not abort GLOBAL restore.
     try {
+<<<<<<< HEAD
       // Resolve BEFORE the cleanup transaction (resolveGlBillIds/read run their own BEGIN/COMMIT — must
       // not nest inside the bypass() transaction below).
       const glBillIds = settlementId ? await resolveGlBillIds() : [];
       // Reversal JEs (#2705) — resolve before cleanup txn so FK deletes can target them.
       const originalJeIds = settlementId ? await resolveOwnJournalEntryIds() : [];
       const reversalJeIds = settlementId ? await resolveReversalJournalEntryIds(originalJeIds) : [];
+=======
+>>>>>>> ac8a8a173 (fix(tests): canonical isolation helper + GLOBAL bindings lock)
       await bypass(async () => {
         await db.query(`DELETE FROM driver_finance.driver_settlement_gl_bills WHERE settlement_id = $1::uuid`, [settlementId]);
         await db.query(`DELETE FROM driver_finance.driver_settlement_gl_runs WHERE settlement_id = $1::uuid`, [settlementId]);
@@ -431,42 +433,47 @@ describeIntegration("SETTLEMENT-BILL-PAYMENT GL posting (real Postgres)", () => 
         await db.query(`DELETE FROM mdata.loads WHERE id = ANY($1::uuid[])`, [loadIds]);
         await db.query(`DELETE FROM banking.bank_accounts WHERE id = $1::uuid`, [dipBankId]);
         await db.query(`DELETE FROM accounting.chart_of_accounts_roles WHERE operating_company_id=$1::uuid`, [companyId]);
-        // Restore GLOBAL account_role_bindings BEFORE deleting our ISO accounts (FK).
-        for (const row of priorGlobalBindings) {
-          await db.query(
-            `INSERT INTO catalogs.account_role_bindings (role_key, account_id, operating_company_id, deactivated_at)
-             VALUES ($1,$2::uuid,$3::uuid,$4)
-             ON CONFLICT (role_key) DO UPDATE
-               SET account_id = EXCLUDED.account_id,
-                   operating_company_id = EXCLUDED.operating_company_id,
-                   deactivated_at = EXCLUDED.deactivated_at`,
-            [row.role_key, row.account_id, row.operating_company_id, row.deactivated_at]
-          );
-        }
-        // If no prior row existed, clear our ISO-company pointer so we don't leave a foreign binding.
-        if (priorGlobalBindings.length === 0) {
-          await db.query(
-            `UPDATE catalogs.account_role_bindings
-                SET deactivated_at = COALESCE(deactivated_at, now())
-              WHERE role_key = ANY($1::text[]) AND operating_company_id = $2::uuid`,
-            [GLOBAL_BIND_KEYS as unknown as string[], companyId]
-          );
-        }
-        await db.query(`DELETE FROM catalogs.accounts WHERE id = ANY($1::uuid[])`, [
-          Object.entries(acct)
-            .filter(([key]) => key !== "driverPay" && key !== "dipCash")
-            .map(([, id]) => id),
-        ]);
+        await db.query(`DELETE FROM driver_finance.driver_advance_accounts WHERE driver_id = $1::uuid`, [driverId]);
+        await db.query(`DELETE FROM accounting.escrow_accounts WHERE holder_id = $1::uuid`, [driverId]);
         await db.query(`DELETE FROM mdata.drivers WHERE id = $1::uuid`, [driverId]);
         await db.query(`DELETE FROM mdata.customers WHERE id = $1::uuid`, [customerId]);
         await db.query(`DELETE FROM lib.feature_flag_overrides WHERE flag_key='SETTLEMENT_GL_POSTING_ENABLED' AND operating_company_id=$1::uuid`, [companyId]);
         await db.query(`DELETE FROM org.user_company_access WHERE user_id=$1::uuid AND company_id=$2::uuid`, [userId, companyId]);
         await db.query(`DELETE FROM integrations.qbo_sync_queue WHERE operating_company_id=$1::uuid AND entity_id = ANY($2::uuid[])`, [companyId, glBillIds]);
         await db.query(`DELETE FROM integrations.qbo_connections WHERE operating_company_id=$1::uuid AND realm_id=$2`, [companyId, `TEST-REALM-${suffix}`]);
+      });
+    } catch (fixtureCleanupErr) {
+      void fixtureCleanupErr;
+    }
+
+    try {
+      // Restore GLOBAL bindings BEFORE deleting ISO accounts (FK). FAIL-LOUD — own txn.
+      await bypass(async () => {
+        await restoreGlobalAccountRoleBindings(db, GLOBAL_BIND_KEYS, priorGlobalBindings, companyId);
+      });
+    } catch (err) {
+      restoreError = err;
+    }
+
+    try {
+      await bypass(async () => {
+        await db.query(`DELETE FROM catalogs.accounts WHERE id = ANY($1::uuid[])`, [Object.values(acct)]);
         if (isolated) await deactivateIsolatedOperatingCompany(db, isolated);
       });
-    } catch { /* best-effort */ }
+    } catch (postRestoreCleanupErr) {
+      void postRestoreCleanupErr;
+    }
+
+    if (heldGlobalBindingsLock) {
+      try {
+        await releaseGlobalAccountRoleBindingsLock(db);
+      } catch (unlockErr) {
+        restoreError ??= unlockErr;
+      }
+      heldGlobalBindingsLock = false;
+    }
     await db.end();
+    if (restoreError) throw restoreError;
   });
 
   it("(a) flag OFF -> no-op, no run / bills / journal entries", async () => {

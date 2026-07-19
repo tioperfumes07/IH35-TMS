@@ -15,6 +15,15 @@ export const TEST_OWNER_GOOGLE_ID = "integration-google-user-id";
 export const CASH_ADVANCE_MAP_TEST_LOCK_KEY = "922337203685477001";
 
 /**
+ * Session-level pg_advisory_lock key shared by settlement suites that mutate GLOBAL
+ * `catalogs.account_role_bindings` (UNIQUE(role_key)):
+ *   settlement-bill-payment-posting / settlement-gl-posting / settlement-payrun-close.
+ * Hold for the full save → bind → post/tests → restore lifespan; restore must fail loud.
+ * See test-helpers/global-account-role-bindings-lock.ts.
+ */
+export const GLOBAL_ACCOUNT_ROLE_BINDINGS_TEST_LOCK_KEY = "922337203685477002";
+
+/**
  * Shared ENCRYPTION_KEY default for every `.db.test.ts` that seeds a fake integrations.qbo_connections
  * row so createJournalEntry's unconditional enqueueSyncJob->getValidAccessToken can resolve a connection
  * (the JE push flag itself stays OFF — push is gated separately, at drain/immediate-push time). MUST be

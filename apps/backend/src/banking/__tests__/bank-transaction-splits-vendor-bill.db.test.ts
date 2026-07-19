@@ -83,7 +83,8 @@ describeIntegration("BANKING-GL-COMPLETION bank-transaction-splits vendor-bill l
 
   beforeAll(async () => {
     await ensureIntegrationPrerequisites();
-    isolated = await createIsolatedOperatingCompany({ label: "split-vendor-bill", actorUserId: userId });
+    // Actor is INSERTed below — grant membership after the identity.users row exists.
+    isolated = await createIsolatedOperatingCompany({ label: "split-vendor-bill" });
     companyId = isolated.companyId;
     const cs = process.env.DATABASE_DIRECT_URL ?? process.env.DATABASE_URL;
     if (!cs) throw new Error("DATABASE_URL required");
