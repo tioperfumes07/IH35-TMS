@@ -24,20 +24,20 @@
   "extra_gates": [],
   "acceptance": [
     {
-      "check": "refreshDeadheadCache uses bounded set-based load batching (ANY uuid[] + unit chunks) instead of await computeDeadhead per unit×week; multi-row deadhead_cache INSERT retained; no SELECT *.",
-      "evidence": "apps/backend/src/reports/deadhead.service.ts + deadhead-refresh-batch.test.ts (query-count, empty/large batch, entity scope, insert failure)."
+      "check": "refreshDeadheadCache uses bounded set-based load batching (ANY uuid[] + unit chunks) instead of await computeDeadhead per unit×week; multi-row deadhead_cache INSERT retained; id tie-break documented; oracle-equivalent to computeDeadhead; no SELECT *.",
+      "evidence": "apps/backend/src/reports/deadhead.service.ts + deadhead-refresh-batch.test.ts (oracle multi-week/chain/estimated/empty/tie-break/203+ units)."
     },
     {
-      "check": "refreshLaneProfitabilityCache uses one multi-row VALUES INSERT; empty batch skips INSERT; entity-scoped DELETE+INSERT; failure does not continue to metrics refresh.",
+      "check": "refreshLaneProfitabilityCache chunks multi-row VALUES INSERTs by bind budget (60_000 / 19 binds/row) below PG 65535; DELETE + all chunks in caller txn; empty skips INSERT; >3500 lanes → multiple inserts, no omissions/duplicates; later-chunk failure stops metrics.",
       "evidence": "apps/backend/src/reports/lane-profitability.service.ts + lane-profitability-refresh-batch.test.ts."
     },
     {
-      "check": "Rule-17 auto-discovered fail-closed planted guard blocks N+1 / per-row INSERT / SELECT * regressions without package.json or workflow hot-file thrash.",
+      "check": "Rule-17 auto-discovered TypeScript-AST structural guard catches renamed-variable / reformatted nested await computeDeadhead, nested per-unit load queries, and per-row awaited lane INSERTs; planted self-tests fail-closed; no package.json/workflow hot-file thrash.",
       "evidence": "scripts/verify-report-refresh-no-nplus1.mjs + scripts/verify-steps/910-verify-report-refresh-no-nplus1.mjs."
     },
     {
-      "check": "Financial cluster — build-and-HOLD; no merge/deploy/prod DB without Jorge approval.",
-      "evidence": "Owner GO for implement+push+draft-PR-if-room; merge forbidden."
+      "check": "Financial cluster — build-and-HOLD; no merge/deploy/prod DB without Jorge approval. QBO tests untouched.",
+      "evidence": "Owner GO for durability closeout push; merge forbidden."
     }
   ],
   "linkage": "Cache-only report refresh perf. Reads mdata.loads/load_stops/units + driver_finance/maintenance/fuel cost joins already present; writes reports.deadhead_cache + reports.lane_profitability_cache only. No new FK/GL/posting. operating_company_id predicates preserved on every statement.",

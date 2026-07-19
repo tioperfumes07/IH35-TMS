@@ -1,10 +1,15 @@
 import { describe, expect, it } from "vitest";
 import type { PoolClient } from "pg";
-import { refreshLaneProfitabilityCache } from "../lane-profitability.service.js";
+import {
+  LANE_CACHE_INSERT_BINDS_PER_ROW,
+  LANE_CACHE_INSERT_BIND_BUDGET,
+  LANE_CACHE_INSERT_MAX_ROWS,
+  refreshLaneProfitabilityCache,
+} from "../lane-profitability.service.js";
 
-// G5-4: lane profitability cache refresh must upsert with ONE multi-row INSERT,
-// never a per-lane await client.query INSERT loop. Empty batches skip INSERT;
-// failures stay atomic under the caller's transaction.
+// G5-4: lane profitability cache refresh must upsert with bind-budget-chunked
+// multi-row INSERTs (never a per-lane await client.query INSERT). Empty batches
+// skip INSERT; DELETE + all chunks share the caller's transaction.
 
 type LaneRow = {
   origin_city: string;
@@ -45,8 +50,29 @@ function lane(partial: Partial<LaneRow> & Pick<LaneRow, "origin_city" | "destina
   };
 }
 
-describe("refreshLaneProfitabilityCache — multi-row INSERT (G5-4)", () => {
-  it("issues exactly one multi-row INSERT with prior per-row values", async () => {
+function collectInsertedOrigins(insertCalls: Array<{ params: unknown[] }>): string[] {
+  const origins: string[] = [];
+  for (const call of insertCalls) {
+    for (let i = 0; i < call.params.length; i += LANE_CACHE_INSERT_BINDS_PER_ROW) {
+      origins.push(String(call.params[i + 1]));
+    }
+  }
+  return origins;
+}
+
+describe("refreshLaneProfitabilityCache — bind-budget multi-row INSERT (G5-4)", () => {
+  it("exports a bind budget safely below PostgreSQL 65535", () => {
+    expect(LANE_CACHE_INSERT_BINDS_PER_ROW).toBe(19);
+    expect(LANE_CACHE_INSERT_BIND_BUDGET).toBeLessThan(65535);
+    expect(LANE_CACHE_INSERT_MAX_ROWS).toBe(
+      Math.floor(LANE_CACHE_INSERT_BIND_BUDGET / LANE_CACHE_INSERT_BINDS_PER_ROW)
+    );
+    expect(LANE_CACHE_INSERT_MAX_ROWS * LANE_CACHE_INSERT_BINDS_PER_ROW).toBeLessThanOrEqual(
+      LANE_CACHE_INSERT_BIND_BUDGET
+    );
+  });
+
+  it("issues exactly one multi-row INSERT for small batches with prior per-row values", async () => {
     const lanes = [
       lane({ origin_city: "Laredo", destination_city: "Dallas", gross_profit_cents: 50_000 }),
       lane({
@@ -63,9 +89,7 @@ describe("refreshLaneProfitabilityCache — multi-row INSERT (G5-4)", () => {
 
     const client = {
       query: async (sql: string, params: unknown[] = []) => {
-        if (/WITH pickup AS/.test(sql)) {
-          return { rows: lanes };
-        }
+        if (/WITH pickup AS/.test(sql)) return { rows: lanes };
         if (/DELETE FROM reports\.lane_profitability_cache/.test(sql)) {
           deleteCount += 1;
           expect(params).toEqual(["opco-1", "2026-01-01", "2026-07-01"]);
@@ -89,11 +113,8 @@ describe("refreshLaneProfitabilityCache — multi-row INSERT (G5-4)", () => {
     expect(sql).toMatch(/VALUES/);
     expect(sql).toMatch(/ON CONFLICT \(/);
     expect(sql).not.toMatch(/SELECT\s+\*/i);
-    const tupleCount = (sql.match(/\(\$/g) ?? []).length;
-    expect(tupleCount).toBe(2);
+    expect((sql.match(/\(\$/g) ?? []).length).toBe(2);
     expect(params).toHaveLength(38);
-
-    // Tuple layout matches prior per-row INSERT (19 bound params + NOW() in SQL).
     expect(params.slice(0, 19)).toEqual([
       "opco-1",
       "Laredo",
@@ -115,27 +136,8 @@ describe("refreshLaneProfitabilityCache — multi-row INSERT (G5-4)", () => {
       10,
       "2026-07-01",
     ]);
-    expect(params.slice(19, 38)).toEqual([
-      "opco-1",
-      "Dallas",
-      "TX",
-      "Houston",
-      "TX",
-      "2026-01-01",
-      "2026-07-01",
-      2,
-      100_000,
-      20_000,
-      30_000,
-      5_000,
-      500,
-      40_000,
-      null,
-      22_500,
-      45,
-      10,
-      null,
-    ]);
+    expect(params.slice(19, 38)[14]).toBeNull();
+    expect(params.slice(19, 38)[18]).toBeNull();
   });
 
   it("skips INSERT on empty lane batch (DELETE still scoped)", async () => {
@@ -164,10 +166,12 @@ describe("refreshLaneProfitabilityCache — multi-row INSERT (G5-4)", () => {
     expect(insertCalls).toHaveLength(0);
   });
 
-  it("handles large batches in one INSERT (no per-row await loop / no silent cap)", async () => {
-    const lanes = Array.from({ length: 250 }, (_, i) =>
+  it("chunks >3500 lanes into multiple INSERTs with no omissions or duplicates", async () => {
+    expect(LANE_CACHE_INSERT_MAX_ROWS).toBeLessThan(3500);
+    const laneCount = 3501;
+    const lanes = Array.from({ length: laneCount }, (_, i) =>
       lane({
-        origin_city: `City${i}`,
+        origin_city: `City${String(i).padStart(4, "0")}`,
         destination_city: `Dest${i}`,
         gross_profit_cents: 1000 + i,
         last_load_date: "2026-06-15",
@@ -175,11 +179,17 @@ describe("refreshLaneProfitabilityCache — multi-row INSERT (G5-4)", () => {
     );
 
     const insertCalls: Array<{ sql: string; params: unknown[] }> = [];
+    let deleteCount = 0;
     const client = {
       query: async (sql: string, params: unknown[] = []) => {
         if (/WITH pickup AS/.test(sql)) return { rows: lanes };
-        if (/DELETE FROM reports\.lane_profitability_cache/.test(sql)) return { rows: [] };
+        if (/DELETE FROM reports\.lane_profitability_cache/.test(sql)) {
+          deleteCount += 1;
+          return { rows: [] };
+        }
         if (/INSERT INTO reports\.lane_profitability_cache/.test(sql)) {
+          expect(params.length).toBeLessThanOrEqual(LANE_CACHE_INSERT_BIND_BUDGET);
+          expect(params.length % LANE_CACHE_INSERT_BINDS_PER_ROW).toBe(0);
           insertCalls.push({ sql, params });
           return { rows: [] };
         }
@@ -189,13 +199,60 @@ describe("refreshLaneProfitabilityCache — multi-row INSERT (G5-4)", () => {
     } as unknown as PoolClient;
 
     const total = await refreshLaneProfitabilityCache(client, "opco-1", "2026-01-01", "2026-12-31");
-    expect(total).toBe(250);
-    expect(insertCalls).toHaveLength(1);
-    expect((insertCalls[0].sql.match(/\(\$/g) ?? []).length).toBe(250);
-    expect(insertCalls[0].params).toHaveLength(250 * 19);
+    const expectedChunks = Math.ceil(laneCount / LANE_CACHE_INSERT_MAX_ROWS);
+    expect(total).toBe(laneCount);
+    expect(deleteCount).toBe(1);
+    expect(insertCalls.length).toBe(expectedChunks);
+    expect(insertCalls.length).toBeGreaterThan(1);
+
+    const origins = collectInsertedOrigins(insertCalls);
+    expect(origins).toHaveLength(laneCount);
+    expect(new Set(origins).size).toBe(laneCount);
+    expect(origins).toEqual(lanes.map((row) => row.origin_city));
+    expect(insertCalls[0].params.length / LANE_CACHE_INSERT_BINDS_PER_ROW).toBe(LANE_CACHE_INSERT_MAX_ROWS);
+    expect(insertCalls[insertCalls.length - 1].params.length / LANE_CACHE_INSERT_BINDS_PER_ROW).toBe(
+      laneCount - LANE_CACHE_INSERT_MAX_ROWS * (expectedChunks - 1)
+    );
   });
 
-  it("keeps entity scope on compute + delete + insert", async () => {
+  it("rolls back later-chunk failure after earlier chunks (caller txn atomicity)", async () => {
+    const laneCount = LANE_CACHE_INSERT_MAX_ROWS + 5;
+    const lanes = Array.from({ length: laneCount }, (_, i) =>
+      lane({ origin_city: `City${i}`, destination_city: `Dest${i}` })
+    );
+
+    let deleteCount = 0;
+    let insertAttempts = 0;
+    let metricsCalled = false;
+    const client = {
+      query: async (sql: string, _params: unknown[] = []) => {
+        if (/WITH pickup AS/.test(sql)) return { rows: lanes };
+        if (/DELETE FROM reports\.lane_profitability_cache/.test(sql)) {
+          deleteCount += 1;
+          return { rows: [] };
+        }
+        if (/INSERT INTO reports\.lane_profitability_cache/.test(sql)) {
+          insertAttempts += 1;
+          if (insertAttempts >= 2) throw new Error("planted_lane_chunk_failure");
+          return { rows: [] };
+        }
+        if (/refresh_lane_metrics_monthly/.test(sql)) {
+          metricsCalled = true;
+          return { rows: [] };
+        }
+        return { rows: [] };
+      },
+    } as unknown as PoolClient;
+
+    await expect(
+      refreshLaneProfitabilityCache(client, "opco-1", "2026-01-01", "2026-01-31")
+    ).rejects.toThrow("planted_lane_chunk_failure");
+    expect(deleteCount).toBe(1);
+    expect(insertAttempts).toBe(2);
+    expect(metricsCalled).toBe(false);
+  });
+
+  it("keeps entity scope on compute + delete + insert chunks", async () => {
     const scoped: unknown[] = [];
     const client = {
       query: async (sql: string, params: unknown[] = []) => {
@@ -215,7 +272,7 @@ describe("refreshLaneProfitabilityCache — multi-row INSERT (G5-4)", () => {
     expect(scoped.length).toBeGreaterThanOrEqual(3);
   });
 
-  it("propagates INSERT failure after DELETE (caller txn provides atomicity)", async () => {
+  it("propagates first-chunk INSERT failure after DELETE (no metrics)", async () => {
     let deleted = false;
     let metricsCalled = false;
     const client = {

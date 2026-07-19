@@ -213,6 +213,14 @@ function loadBelongsToWeek(row: BatchedLoadRow, weekStartMs: number, weekEndMs: 
   return false;
 }
 
+/**
+ * Deterministic load order for deadhead chaining (previousDelivery → next pickup).
+ * Primary: first_stop_at ASC NULLS LAST; secondary: created_at ASC NULLS LAST;
+ * tertiary (intentional): load id localeCompare — PostgreSQL does not guarantee order
+ * when first_stop_at and created_at tie, so both computeDeadhead (SQL ORDER BY l.id)
+ * and the batched refresh path use an explicit id tie-break for stable previousDelivery
+ * chains and byte-identical week summaries across refreshes.
+ */
 function compareLoadsForWeek(a: BatchedLoadRow, b: BatchedLoadRow): number {
   const aFirst = stopInstantMs(a.first_stop_at);
   const bFirst = stopInstantMs(b.first_stop_at);
@@ -251,7 +259,7 @@ export async function computeDeadhead(
             AND COALESCE(ls.scheduled_arrival_at, ls.scheduled_departure_at, l.created_at) >= $3::timestamptz
             AND COALESCE(ls.scheduled_arrival_at, ls.scheduled_departure_at, l.created_at) < $4::timestamptz
         )
-      ORDER BY first_stop_at ASC NULLS LAST, l.created_at ASC
+      ORDER BY first_stop_at ASC NULLS LAST, l.created_at ASC, l.id ASC
     `,
     [operatingCompanyId, unitId, weekStart.toISOString(), weekEnd.toISOString()]
   );
@@ -296,7 +304,7 @@ async function fetchDeadheadLoadsForUnitBatch(
             AND COALESCE(ls.scheduled_arrival_at, ls.scheduled_departure_at, l.created_at) >= $3::timestamptz
             AND COALESCE(ls.scheduled_arrival_at, ls.scheduled_departure_at, l.created_at) < $4::timestamptz
         )
-      ORDER BY l.assigned_unit_id, first_stop_at ASC NULLS LAST, l.created_at ASC
+      ORDER BY l.assigned_unit_id, first_stop_at ASC NULLS LAST, l.created_at ASC, l.id ASC
     `,
     [operatingCompanyId, unitIds, rangeStartIso, rangeEndIso]
   );
