@@ -3,7 +3,7 @@
   "status": "HOLD",
   "classification": "FINANCIAL",
   "phase": "tier1",
-  "task": "PR #2705 replaces host-UTC accounting date defaults with one transaction-scoped company business date and makes driver-settlement cancellation atomic across canonical posting reversals, bills, bill payments, bank balance, driver bills, operational deductions, deduction buckets, GL reconciliation, settlement state, and audit. It reuses existing posting, journal-entry reversal, bill void, and deduction bucket reversal services; adds no GL math, schema, migration, QBO write-back, or flag change. Full block-ready exposed deterministic gate defects: external Redis state in a bulk test, duplicate local HOLD-label adjudication, a host-clock-dependent QBO test, and an IFTA guard that demanded non-final Q3 rates before the official 2026-09-04 posting date. The fixes isolate state/clocks, delegate server-only authority, and follow the official IFTA 2026-2028 final-rate calendar.",
+  "task": "PR #2705 replaces host-UTC accounting date defaults with one transaction-scoped company business date and makes driver-settlement cancellation atomic across canonical posting reversals, bills, bill payments, bank balance, driver bills, operational deductions, deduction buckets, GL reconciliation, settlement state, and audit. It reuses existing posting, journal-entry reversal, bill void, and deduction bucket reversal services; adds no GL math, schema, migration, QBO write-back, or flag change. Full block-ready exposed deterministic gate defects: external Redis state in a bulk test, duplicate/local reruns that bypassed verify:static's wired/capability classification, a host-clock-dependent QBO test, and an IFTA guard that demanded non-final Q3 rates before the official 2026-09-04 posting date. The fixes isolate state/clocks, make C5 run only authoritative verify:static plus verify:local-ci, and follow the official IFTA 2026-2028 final-rate calendar.",
   "branch": "hold/0091-g6-1-business-date-20260718",
   "lane": "B",
   "source": "MASTER-6 authored dispatch (03-TIER1-BLOCKS)",
@@ -78,7 +78,7 @@
     },
     {
       "kind": "pipeline",
-      "check": "block-ready C5 reads server_required_guard_capabilities from verify-meta and does not locally re-decide PR-label/PASS-8 authority after verify:static; authoritative required GitHub contexts remain fail-closed."
+      "check": "block-ready C5 runs only verify:static and verify:local-ci. It no longer reruns stale/unwired package aliases or locally re-decides server-only PR-label/PASS-8 capabilities after verify:static; authoritative required GitHub contexts remain fail-closed."
     },
     {
       "kind": "test-clock",
