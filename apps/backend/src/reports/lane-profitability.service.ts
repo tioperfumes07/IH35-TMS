@@ -255,6 +255,9 @@ export async function refreshLaneProfitabilityCache(
   periodEnd: string
 ): Promise<number> {
   const lanes = await computeLaneProfitability(client, operatingCompanyId, periodStart, periodEnd);
+
+  // G5-4: DELETE + single multi-row INSERT must stay in the caller's transaction
+  // (withCurrentUser / withLuciaBypass) so a failed upsert cannot leave a wiped cache.
   await client.query(
     `
       DELETE FROM reports.lane_profitability_cache
@@ -265,7 +268,42 @@ export async function refreshLaneProfitabilityCache(
     [operatingCompanyId, periodStart, periodEnd]
   );
 
-  for (const lane of lanes) {
+  // G5-4 (perf): one multi-row INSERT for every lane (VALUES list), not a per-row loop.
+  // Empty batch → DELETE only (no INSERT). No silent LIMIT/cap on lane count.
+  // Prefer explicit VALUES placeholders over unnest arrays so nullable numeric/date
+  // columns bind identically to the prior per-row path (node-pg null-safe).
+  if (lanes.length > 0) {
+    const insertValues: unknown[] = [];
+    const insertPlaceholders: string[] = [];
+
+    for (const lane of lanes) {
+      const base = insertValues.length;
+      insertValues.push(
+        operatingCompanyId,
+        lane.origin_city,
+        lane.origin_state,
+        lane.destination_city,
+        lane.destination_state,
+        periodStart,
+        periodEnd,
+        lane.load_count,
+        lane.total_revenue_cents,
+        lane.total_fuel_cost_cents,
+        lane.total_driver_pay_cents,
+        lane.total_maintenance_cost_cents,
+        lane.total_miles,
+        lane.gross_profit_cents,
+        lane.profit_per_mile_cents,
+        lane.profit_per_load_cents,
+        lane.margin_pct,
+        lane.avg_deadhead_pct,
+        lane.last_load_date
+      );
+      insertPlaceholders.push(
+        `($${base + 1}::uuid, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6}::date, $${base + 7}::date, $${base + 8}, $${base + 9}, $${base + 10}, $${base + 11}, $${base + 12}, $${base + 13}, $${base + 14}, $${base + 15}, $${base + 16}, $${base + 17}, $${base + 18}, $${base + 19}::date, NOW())`
+      );
+    }
+
     await client.query(
       `
         INSERT INTO reports.lane_profitability_cache (
@@ -290,10 +328,7 @@ export async function refreshLaneProfitabilityCache(
           last_load_date,
           computed_at
         )
-        VALUES (
-          $1::uuid, $2, $3, $4, $5, $6::date, $7::date,
-          $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19::date, NOW()
-        )
+        VALUES ${insertPlaceholders.join(", ")}
         ON CONFLICT (
           operating_company_id,
           origin_city,
@@ -318,27 +353,7 @@ export async function refreshLaneProfitabilityCache(
           last_load_date = EXCLUDED.last_load_date,
           computed_at = NOW()
       `,
-      [
-        operatingCompanyId,
-        lane.origin_city,
-        lane.origin_state,
-        lane.destination_city,
-        lane.destination_state,
-        periodStart,
-        periodEnd,
-        lane.load_count,
-        lane.total_revenue_cents,
-        lane.total_fuel_cost_cents,
-        lane.total_driver_pay_cents,
-        lane.total_maintenance_cost_cents,
-        lane.total_miles,
-        lane.gross_profit_cents,
-        lane.profit_per_mile_cents,
-        lane.profit_per_load_cents,
-        lane.margin_pct,
-        lane.avg_deadhead_pct,
-        lane.last_load_date,
-      ]
+      insertValues
     );
   }
 
