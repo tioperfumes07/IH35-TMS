@@ -1286,3 +1286,88 @@ Guards: `scripts/verify-push-gate-classification.mjs` and `scripts/verify-xlsx-c
 
 Official basis: FMCSA CSA “Measure” and SMS Help Center — Hazmat Compliance and Crash Indicator BASICs are available only to logged-in carriers and enforcement personnel.
 
+---
+
+## 2026-07-18 — CPA Answers Integration Phase 1 (LOCKED — owner/CPA)
+
+**Block type:** docs / governance only. **No** executable financial code, **no** migration, **no** money-flag flip.
+**Do not modify** `docs/specs/IH35_MASTER_BLUEPRINT_v3_FULL.md` for this phase.
+**Sanitization:** never commit names, signatures, addresses, emails, personal-guaranty text, or executed-agreement text.
+
+### Three-layer SoR / cutover / validation model (do not collapse)
+Canonical detail: `docs/specs/TMS-QBO-PARALLEL-BOOKS.md` + CPA skill. Layers are additive and concurrent:
+
+1. **Historical transaction authority:** QBO authoritative through **12/31/2025**; **TMS ledger authority begins 2026-01-01.** Dual-run wording does **not** retire these dates.
+2. **Ch.11 operating / GL cutover:** OB as-of **03/31/2026**; live operating line **04/01/2026**; **ASC 470-60 debt restructuring — NOT ASC 852 fresh-start accounting.**
+3. **Ongoing validation mode:** QBO remains **actively maintained** as comparison/filing book; TMS independent; **reconcile-only**; **never** TMS→QBO write-back; **IMPORT-P0** / **IMPORT-P0b** (`QBO_JE_PUSH_ENABLED` / `QBO_ENTITY_PUSH_ENABLED`) **default OFF**.
+
+### Locked recognition + dual-basis crosswalk
+- **TMS ACCRUAL recognition event** = **canonical load delivery**.
+- Operational definition (no guessing): **final active delivery stop completion / actual departure** is the source evidence.
+- A load-level `delivered_at` may be used **only** when the implementation proves it is derived from that same event.
+- Revenue is **not** recognized at invoice creation (stale "invoice-create recognition" wording in canonical decision docs is a defect).
+- POD approval and invoice creation = **billing/factoring readiness** only.
+- **Dual-basis crosswalk:** QBO **cash-basis** reporting/mirroring remains unchanged during the QBO-SoR window; delivery recognition does **not** redefine cash recognition.
+
+### Locked Ch.11 operating cutover line
+- **ASC 470-60 debt restructuring — NOT ASC 852 fresh-start accounting.**
+- Opening balances as-of **03/31/2026**; TMS live parallel posting from **04/01/2026** (per entity after opening tie-out).
+
+### Locked factoring (Faro) — secured borrowing
+- Treatment: **secured borrowing / recourse** (not a sale).
+- Substance-over-form: even when a factoring contract is styled as a “sale,” GAAP treatment is secured borrowing with A/R retained and financing recognized as a liability — never as a sale of receivables.
+- Sanitized commercial terms (actual factor statements remain authoritative):
+  - Revolving limit **$1,000,000**
+  - Tier 1 fee **1.5% of Net at funding**; Tier 2 fee **2% of Net at funding**
+  - Reserve **1.5%**
+  - **Purchase Price = Net − Fee − Reserve**
+  - **Proceeds = Purchase Price − transaction/wire fees**
+  - Term **30 days** + grace **5 days**
+  - Repurchase deadline **95 days**
+  - Default interest **0.067% per day, compounded daily, beginning after day 35**
+  - **A/R remains on IH35 books as pledged collateral**; funding credits **Factoring Advance** — **no A/R derecognition**
+
+### Locked CoA structure (additive — never delete/rename)
+**Sales of Service** children:
+- Line Haul
+- Fuel Surcharge
+- Accessorial Revenue (Detention, Layover, Lumper, TONU, Other)
+
+**Interest & Financing Expense** children:
+- Factoring Fees
+- Factoring Default Interest
+- Factoring Transaction/Wire Fees
+
+**Also additive:** Driver Damage Loss.
+
+### Locked entity-books model
+- Separate **entity books** per legal entity.
+- **Reciprocal intercompany monitoring** between entities.
+- Retain existing **read-only consolidated reporting** additively for future reporting needs (never delete that surface).
+
+### Verified CoA export facts (owner-local verification)
+| Fact | Value |
+|------|------:|
+| Total rows | 1,368 |
+| TRANSP | 387 |
+| TRK | 947 |
+| USMCA | 34 |
+| QBO-connected | 1,294 |
+| Active | 1,198 |
+| Duplicate entity/account-number pairs | 0 |
+| Opening balances in export | 0 |
+
+### Canonical surfaces updated in this phase
+- `docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md` (this section)
+- `docs/specs/TMS-QBO-PARALLEL-BOOKS.md`
+- `docs/specs/ACCOUNTING-ARCHITECTURE.md`
+- `.claude/skills/ih35-cpa-accounting-decisions/SKILL.md`
+- `.claude/skills/ih35-cpa-accounting-decisions/resources/locked-decisions-reference.md`
+- `docs/trackers/FINANCIAL-OWNER-UNBLOCK-PACKET.md` (stale invoice-create recognition line corrected)
+
+### Guard (Rule 17 — auto-discovered)
+- `scripts/verify-cpa-answers-phase1-decisions.mjs`
+- `scripts/verify-steps/910-verify-cpa-answers-phase1-decisions.mjs`
+- Fails on stale invoice-create recognition wording in the canonical decision docs above (including the financial unblock packet).
+- Protects the sanitized Phase-1 decision anchors (delivery definition, dual-basis crosswalk, ASC 470-60 wording, full Faro mechanics, CoA children, entity books, CoA export facts) without `package.json` / CI workflow hot-file edits.
+

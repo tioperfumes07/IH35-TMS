@@ -1,0 +1,55 @@
+{
+  "block_id": "CPA-ANSWERS-PHASE1",
+  "status": "BUILD",
+  "classification": "DOCS",
+  "phase": "CPA-ANSWERS-INTEGRATION",
+  "task": "Phase 1 of owner-approved CPA Answers Integration (CPA-veto corrections): governance-only lock of TMS ACCRUAL recognition at canonical load delivery (final active delivery stop completion/actual departure; delivered_at only if proven derived); dual-basis crosswalk (QBO cash-basis mirroring unchanged); Ch.11 operating cutover line as ASC 470-60 debt restructuring — NOT ASC 852 fresh-start accounting (OB 03/31, live parallel 04/01 preserved); full sanitized Faro mechanics (fees of Net at funding, Purchase Price, proceeds, after day 35 default interest, A/R pledged collateral, Factoring Advance, no derecognition, substance-over-form); additive CoA; entity books + intercompany; CoA export facts. Corrects FINANCIAL-OWNER-UNBLOCK-PACKET stale invoice-create line. Rule-17 guard strengthened. Reverts non-deterministic tracker reconcile churn from the initial push. No executable financial code/migration/money-flag flip. No private-source PII. Does not modify IH35_MASTER_BLUEPRINT_v3_FULL.md.",
+  "branch": "cursor/cpa-answers-integration-phase-1-3aab",
+  "lane": "GOVERNANCE",
+  "allowed_files": [
+    ".block-ready/CPA-ANSWERS-PHASE1.json",
+    "docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md",
+    "docs/specs/ACCOUNTING-ARCHITECTURE.md",
+    "docs/specs/TMS-QBO-PARALLEL-BOOKS.md",
+    ".claude/skills/ih35-cpa-accounting-decisions/SKILL.md",
+    ".claude/skills/ih35-cpa-accounting-decisions/resources/locked-decisions-reference.md",
+    "docs/trackers/FINANCIAL-OWNER-UNBLOCK-PACKET.md",
+    "scripts/verify-cpa-answers-phase1-decisions.mjs",
+    "scripts/verify-steps/910-verify-cpa-answers-phase1-decisions.mjs",
+    "scripts/lib/block-ready-retirement.mjs",
+    "scripts/reconcile-block-status.mjs",
+    "scripts/verify-tracker-no-duplicate-block-ids.mjs",
+    "scripts/verify-block-ready-retirement.mjs",
+    "scripts/verify-steps/911-verify-block-ready-retirement.mjs",
+    "scripts/__tests__/block-ready-retirement.test.mjs",
+    "apps/backend/src/program/program-tracker.service.ts",
+    "docs/trackers/block-reconciliation-data.json",
+    "docs/trackers/program-phase-manifest.json",
+    "docs/trackers/BLOCK-RECONCILIATION-2026-07-18.md",
+    "docs/trackers/exports/IH35-TMS-BLOCK-RECONCILIATION-2026-07-18.xlsx"
+  ],
+  "runtime_path": "docs",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "acceptance": [
+    {
+      "check": "TMS ACCRUAL at canonical load delivery (final active delivery stop completion/actual departure); POD/invoice = billing/factoring readiness only; dual-basis crosswalk preserved"
+    },
+    {
+      "check": "Full sanitized Faro mechanics locked (of Net at funding, Purchase Price, proceeds, after day 35, pledged collateral, Factoring Advance, no A/R derecognition, substance-over-form); no private-source PII"
+    },
+    {
+      "check": "Ch.11 operating cutover line stated as ASC 470-60 — NOT ASC 852 fresh-start accounting; OB 03/31 and live parallel 04/01 preserved"
+    },
+    {
+      "check": "Three-layer SoR model locked consistently (skill, reference, PARALLEL-BOOKS, ACCOUNTING-ARCHITECTURE): Layer 1 QBO through 12/31/2025 + TMS from 2026-01-01 (not retired); Layer 2 Ch.11 OB 03/31/2026 + live 04/01/2026 ASC 470-60 NOT ASC 852; Layer 3 QBO actively maintained comparison/filing book, reconcile-only, never write-back, IMPORT-P0/P0b default OFF"
+    },
+    {
+      "check": "FINANCIAL-OWNER-UNBLOCK-PACKET stale invoice-create line corrected and in guard stale-wording scope"
+    },
+    {
+      "check": "verify-cpa-answers-phase1-decisions PASS + --selftest PASS; no package.json/CI hot-file edits; tracker reconcile churn reverted to origin/main"
+    }
+  ]
+}

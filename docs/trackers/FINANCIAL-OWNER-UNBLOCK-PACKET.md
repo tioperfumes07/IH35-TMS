@@ -64,7 +64,7 @@ Confirm the already-locked decisions and the opening entry. Nothing here is new 
 - [ ] **Driver escrow = LIABILITY** (held-in-trust, returned 60–90d post-separation net of deductions).
 - [ ] **Cash-basis** mirrored from QBO for TRANSP (books + MOR); AP is the rare accrual exception.
 - [ ] Drivers = Mexican B1, W-8BEN yearly; 5% net-floor + override; "Cost of Labor–Mexico Drivers".
-- [ ] Revenue recognized at invoice-create (pickup→delivery); "Sales of Service" / Line Haul subs.
+- [ ] Revenue recognized at **canonical load delivery** (TMS ACCRUAL; final active delivery stop completion/actual departure); POD/invoice = billing/factoring readiness only; QBO cash-basis mirroring unchanged; "Sales of Service" / Line Haul (+ Fuel Surcharge / Accessorial) children.
 - [ ] A/R = QBO-45, A/P = QBO-47 (QBO natives off).
 
 **Definition of done for Gate 2:** CPA initials each box; the opening JE is generated (flag still OFF) and
