@@ -10,7 +10,6 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -22,7 +21,7 @@ const FILES = Object.freeze({
   precheck: "scripts/branch-precheck-push.mjs",
   precheckTests: "scripts/__tests__/branch-precheck-push.test.mjs",
   branchTooling: "docs/specs/BRANCH-TOOLING.md",
-  verifyStep: "scripts/verify-steps/912-verify-pre-push-env-isolation.mjs",
+  verifyStep: "scripts/verify-steps/926-verify-pre-push-env-isolation.mjs",
 });
 
 function read(rel, root = ROOT) {
@@ -66,11 +65,26 @@ export function checkPrePushEnvIsolation(fixture) {
   if (!/validateOwnershipProof/.test(precheck) || !/isLocalVerifyDatabaseUrl/.test(precheck)) {
     violations.push("detectLocalCapabilities must require owned VLCI proof or local-verify URL validation");
   }
-  if (!/probeLocalVerifyTcp/.test(precheck)) {
-    violations.push("detectLocalCapabilities must validate local-CI connections (TCP probe)");
+  if (!/probeVerifyDatabaseIdentity/.test(precheck)) {
+    violations.push("detectLocalCapabilities must validate DB capability via a real pg identity probe (probeVerifyDatabaseIdentity)");
+  }
+  if (!/current_database\(\)/.test(precheck) || !/ih35_verify/.test(precheck)) {
+    violations.push("pg identity probe must assert current_database()==='ih35_verify' (authenticated connection, not a bare TCP probe)");
+  }
+  if (/probeLocalVerifyTcp/.test(precheck)) {
+    violations.push("bare TCP probe (probeLocalVerifyTcp) must be replaced by the authenticated pg identity probe");
   }
   if (!/serverRequiredCiEquivalent:\s*"ci \/ build-typecheck"/.test(precheck)) {
     violations.push("precheck must preserve server-required CI equivalent fail-closed skip");
+  }
+  if (/\benv\.BRANCH_PRECHECK_STEPS_JSON\b|process\.env\.BRANCH_PRECHECK_STEPS_JSON/.test(precheck)) {
+    violations.push("precheck must NOT read BRANCH_PRECHECK_STEPS_JSON — env step override is a closed all-gates bypass");
+  }
+  if (/process\.env\.IH35_BRANCH_TOOLING_SKIP_FETCH|env\.IH35_BRANCH_TOOLING_SKIP_FETCH/.test(precheck)) {
+    violations.push("branch:precheck-push CLI must NOT read IH35_BRANCH_TOOLING_SKIP_FETCH — env fetch-skip is a closed bypass");
+  }
+  if (!/resolvePrecheckSteps/.test(precheck)) {
+    violations.push("precheck must resolve steps via resolvePrecheckSteps (caller option or built-in only, never env)");
   }
 
   for (const planted of [
@@ -78,6 +92,11 @@ export function checkPrePushEnvIsolation(fixture) {
     "actual pre-push hook does not source hostile .env",
     "explicitly inherited owned ephemeral DB context still runs DB gates",
     "precheck with stale Neon env skips block-ready via server-required CI equivalent",
+    "raw TCP listener is not a verify database capability",
+    "wrong current_database is not a verify database capability",
+    "wrong credentials are not a verify database capability",
+    "environment BRANCH_PRECHECK_STEPS_JSON cannot inject or empty gate steps",
+    "production CLI ignores BRANCH_PRECHECK_STEPS_JSON and IH35_BRANCH_TOOLING_SKIP_FETCH bypass",
   ]) {
     if (!tests.includes(planted)) {
       violations.push(`precheck behavioral test missing: ${planted}`);
@@ -96,7 +115,7 @@ export function checkPrePushEnvIsolation(fixture) {
   }
 
   if (!/verify-pre-push-env-isolation/.test(step)) {
-    violations.push("Rule 17 verify-step 912 must invoke verify-pre-push-env-isolation");
+    violations.push("Rule 17 verify-step 926 must invoke verify-pre-push-env-isolation");
   }
 
   return violations;
@@ -114,14 +133,20 @@ function selftest() {
     installHooks: 'const script = `#!/usr/bin/env sh\\nnpm run branch:precheck-push\\n`;\n',
     precheck:
       'import { validateOwnershipProof, isLocalVerifyDatabaseUrl } from "./vlci-lifecycle.mjs";\n' +
-      "export function probeLocalVerifyTcp() {}\n" +
+      "export function probeVerifyDatabaseIdentity() { /* SELECT current_database() AS db === ih35_verify */ }\n" +
       'serverRequiredCiEquivalent: "ci / build-typecheck"\n' +
+      "export function resolvePrecheckSteps(options) { return options.steps; }\n" +
       "export function detectLocalCapabilities() { return { database: false }; }\n",
     precheckTests:
       "stale Neon DATABASE_URL string alone is never a database capability\n" +
       "actual pre-push hook does not source hostile .env\n" +
       "explicitly inherited owned ephemeral DB context still runs DB gates\n" +
-      "precheck with stale Neon env skips block-ready via server-required CI equivalent\n",
+      "precheck with stale Neon env skips block-ready via server-required CI equivalent\n" +
+      "raw TCP listener is not a verify database capability\n" +
+      "wrong current_database is not a verify database capability\n" +
+      "wrong credentials are not a verify database capability\n" +
+      "environment BRANCH_PRECHECK_STEPS_JSON cannot inject or empty gate steps\n" +
+      "production CLI ignores BRANCH_PRECHECK_STEPS_JSON and IH35_BRANCH_TOOLING_SKIP_FETCH bypass\n",
     branchTooling:
       "Do NOT source repository `.env` in the husky pre-push hook.\n" +
       "Database capability requires owned ephemeral VLCI lifecycle or a validated local-CI connection.\n",
@@ -142,11 +167,14 @@ if [ -f "$(git rev-parse --show-toplevel)/.env" ]; then
 fi
 npm run branch:precheck-push
 `,
-    precheck: "export function detectLocalCapabilities(env = process.env) {\n  return { database: Boolean(env.DATABASE_URL?.trim()) };\n}\n",
+    precheck:
+      "export function detectLocalCapabilities(env = process.env) {\n  return { database: Boolean(env.DATABASE_URL?.trim()) };\n}\n" +
+      "const steps = JSON.parse(env.BRANCH_PRECHECK_STEPS_JSON);\n" +
+      'const skip = process.env.IH35_BRANCH_TOOLING_SKIP_FETCH === "1";\n',
   };
   const badViolations = checkPrePushEnvIsolation(bad);
   if (badViolations.length < 2) {
-    throw new Error(`selftest bad fixture should flag .env source + string capability; got: ${badViolations.join("; ")}`);
+    throw new Error(`selftest bad fixture should flag .env source + string capability + env bypass; got: ${badViolations.join("; ")}`);
   }
   console.log(`${LABEL} --selftest PASS`);
 }
@@ -162,20 +190,10 @@ function main() {
     for (const v of violations) console.error(`  ✗ ${v}`);
     process.exit(1);
   }
-  // Behavioral suite is the live proof; invoke when not skipped by caller.
-  if (process.env.IH35_PRE_PUSH_ENV_ISOLATION_RUN_TESTS === "1") {
-    const run = spawnSync(
-      process.execPath,
-      ["--test", "scripts/__tests__/branch-precheck-push.test.mjs"],
-      { cwd: ROOT, encoding: "utf8" }
-    );
-    if (run.status !== 0) {
-      console.error(run.stdout);
-      console.error(run.stderr);
-      console.error(`${LABEL} FAIL: behavioral tests exited ${run.status}`);
-      process.exit(1);
-    }
-  }
+  // The behavioral suite (scripts/__tests__/branch-precheck-push.test.mjs) is the live proof and is
+  // now run UNCONDITIONALLY by verify-steps/926 (executed by verify:pre-commit / CI build-typecheck),
+  // no longer gated behind an env flag that CI never set. This structural guard stays fast for
+  // verify:static; it does not re-run the heavy behavioral suite here.
   console.log(`${LABEL} OK — pre-push env isolation + capability law locked`);
 }
 
