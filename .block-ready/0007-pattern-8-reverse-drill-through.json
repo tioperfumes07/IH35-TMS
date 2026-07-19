@@ -18,6 +18,7 @@
     "apps/backend/src/reports/library.routes.ts",
     "apps/backend/src/reports/library.routes.live-counter.test.ts",
     "apps/frontend/src/pages/accounting/AccountingAuditTrailPage.tsx",
+    "apps/frontend/src/pages/accounting/InvoiceDetailPage.tsx",
     "apps/frontend/src/pages/accounting/__tests__/reverse-drill-through.behavior.test.tsx",
     "docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md",
     "scripts/.guard-exempt.json",
