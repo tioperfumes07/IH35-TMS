@@ -34,6 +34,8 @@
  * Runs only in CI (GITHUB_ACTIONS=true) where a migrated Postgres is available.
  */
 import crypto, { randomUUID } from "node:crypto";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../../lib/pg-connection-options.js";
@@ -633,5 +635,39 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
     expect(row37!.closing).toBe(60_107);
     // Guard against the stale-closing regression: compounding off day-36 closing (100,067) would be 67.
     expect(row37!.interest).not.toBe(67);
+  });
+});
+
+/**
+ * Deterministic regression guard for the funding-path deadlock (no DB — always runs).
+ *
+ * Root cause: the funding write txn in postFactoringAdvanceEvent inserted its lifecycle posting-key
+ * (an FK KEY-SHARE on accounting.factoring_advances) WITHOUT first taking FOR UPDATE on that advance,
+ * while every other lifecycle path (payment/chargeback/default-interest) locks the advance first. That
+ * KEY-SHARE-vs-FOR-UPDATE asymmetry on the same row was the cross-transaction deadlock cycle that
+ * killed "Leg B" under parallel CI load. Fix = uniform lock order: funding must lock the advance
+ * BEFORE its JE write claims the "funding" posting-key. This guard fails if that lock is removed or
+ * reordered after the claim.
+ */
+describe("CHAIN-06 funding-path uniform lock order (deadlock regression guard)", () => {
+  it("postFactoringAdvanceEvent funding write locks the advance BEFORE the funding posting-key claim", () => {
+    const posterPath = fileURLToPath(
+      new URL("../poster.service.ts", import.meta.url)
+    );
+    const src = readFileSync(posterPath, "utf8");
+
+    const fundingClaimIdx = src.indexOf('event_key: "funding"');
+    expect(fundingClaimIdx, "funding posting-key claim marker not found").toBeGreaterThan(-1);
+
+    const before = src.slice(0, fundingClaimIdx);
+    const writeTxnIdx = before.lastIndexOf("withCurrentUser(input.actor_user_id");
+    expect(writeTxnIdx, "funding write withCurrentUser txn not found").toBeGreaterThan(-1);
+
+    const lockIdx = before.lastIndexOf("lockFactoringAdvanceForSettlement(");
+    // The advance FOR UPDATE lock must be inside the SAME write txn and BEFORE the funding claim.
+    expect(
+      lockIdx,
+      "funding write txn must call lockFactoringAdvanceForSettlement before claiming the funding posting-key"
+    ).toBeGreaterThan(writeTxnIdx);
   });
 });

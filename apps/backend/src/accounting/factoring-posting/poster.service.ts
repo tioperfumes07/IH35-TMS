@@ -996,6 +996,17 @@ export async function postFactoringAdvanceEvent(input: PostFactoringAdvanceInput
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
       input.operating_company_id,
     ]);
+    // Uniform lock order: take FOR UPDATE on the advance BEFORE the JE write claims its posting-key
+    // (which takes an FK KEY-SHARE on this same advance row). Every other lifecycle path
+    // (payment/chargeback/default-interest) already locks the advance first; funding was the lone
+    // exception, and that KEY-SHARE-vs-FOR-UPDATE inversion on accounting.factoring_advances was the
+    // cross-transaction deadlock cycle. Locking here also correctly serializes a funding post against
+    // any concurrent lifecycle mutation on the same advance.
+    await lockFactoringAdvanceForSettlement(
+      client,
+      input.operating_company_id,
+      input.factoring_advance_id
+    );
     await ensureOpenPeriod(client, input.operating_company_id, prepared.entryDate);
     await client.query(`SAVEPOINT factoring_lifecycle_je_create`);
     try {
