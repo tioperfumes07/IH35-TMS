@@ -95,7 +95,8 @@ export function IntegrationTransactionsPage() {
       sortValue: (row) => {
         const bt = row.bank_transaction;
         if (!bt) return 0;
-        return bt.is_credit ? bt.amount_cents : -bt.amount_cents;
+        const cents = bt.amount_cents ?? 0;
+        return bt.is_credit ? cents : -cents;
       },
       render: (row) => {
         const bt = row.bank_transaction;
