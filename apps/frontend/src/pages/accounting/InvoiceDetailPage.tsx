@@ -12,6 +12,7 @@ import { DataPanel } from "../../components/layout/DataPanel";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { useToast } from "../../components/Toast";
 import { RecordPaymentModal } from "./RecordPaymentModal";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { MoneyInput } from "../../components/forms/MoneyInput";
@@ -35,6 +36,7 @@ export function InvoiceDetailPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { selectedCompanyId } = useCompanyContext();
+  const { pushToast } = useToast();
   const [recordPaymentOpen, setRecordPaymentOpen] = useState(false);
   // M-1: inline QBO money entry for invoice lines (replaces window.prompt). unit_amount stays CENTS.
   const [newLineDesc, setNewLineDesc] = useState("");
@@ -54,6 +56,7 @@ export function InvoiceDetailPage() {
       void queryClient.invalidateQueries({ queryKey: ["accounting", "invoice", selectedCompanyId, id] });
       void queryClient.invalidateQueries({ queryKey: ["accounting", "invoices"] });
     },
+    onError: (error) => pushToast(String((error as Error)?.message ?? "Failed to send invoice"), "error"),
   });
 
   const voidMutation = useMutation({
@@ -62,6 +65,7 @@ export function InvoiceDetailPage() {
       void queryClient.invalidateQueries({ queryKey: ["accounting", "invoice", selectedCompanyId, id] });
       void queryClient.invalidateQueries({ queryKey: ["accounting", "invoices"] });
     },
+    onError: (error) => pushToast(String((error as Error)?.message ?? "Failed to void invoice"), "error"),
   });
 
   const [voidOpen, setVoidOpen] = useState(false);
@@ -78,6 +82,7 @@ export function InvoiceDetailPage() {
       void queryClient.invalidateQueries({ queryKey: ["accounting", "invoice", selectedCompanyId, id] });
       void queryClient.invalidateQueries({ queryKey: ["accounting", "invoices"] });
     },
+    onError: (error) => pushToast(String((error as Error)?.message ?? "Failed to add invoice line"), "error"),
   });
 
   const patchLineMutation = useMutation({
@@ -87,6 +92,7 @@ export function InvoiceDetailPage() {
       void queryClient.invalidateQueries({ queryKey: ["accounting", "invoice", selectedCompanyId, id] });
       void queryClient.invalidateQueries({ queryKey: ["accounting", "invoices"] });
     },
+    onError: (error) => pushToast(String((error as Error)?.message ?? "Failed to update invoice line"), "error"),
   });
 
   const deleteLineMutation = useMutation({
@@ -95,6 +101,7 @@ export function InvoiceDetailPage() {
       void queryClient.invalidateQueries({ queryKey: ["accounting", "invoice", selectedCompanyId, id] });
       void queryClient.invalidateQueries({ queryKey: ["accounting", "invoices"] });
     },
+    onError: (error) => pushToast(String((error as Error)?.message ?? "Failed to delete invoice line"), "error"),
   });
 
   const invoice = detailQuery.data;
