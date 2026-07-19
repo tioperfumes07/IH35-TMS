@@ -71,4 +71,19 @@ describe("fmcsa-client HTTP taxonomy", () => {
     const { lookupCarrierByMC } = await import("../fmcsa-client.js");
     await expect(lookupCarrierByMC("12345")).rejects.toBeInstanceOf(FmcsaRetryableError);
   });
+
+  it("does not swallow mobile 429 as null when SAFER has no record", async () => {
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("mobile.fmcsa")) return jsonResponse(429, {}, { "retry-after": "8" });
+      // SAFER "no records" HTML (authoritative miss) — must still surface mobile rate-limit.
+      return htmlResponse(200, "<html>No records found</html>");
+    }) as typeof fetch;
+    const { lookupCarrierByMC } = await import("../fmcsa-client.js");
+    await expect(lookupCarrierByMC("12345")).rejects.toMatchObject({
+      name: "FmcsaRetryableError",
+      status: 429,
+      retryAfterMs: 8_000,
+    });
+  });
 });

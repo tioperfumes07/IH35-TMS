@@ -110,6 +110,9 @@ export function collectFailures(sources) {
   if (/status === 429[\s\S]{0,80}return null/.test(sources.fmcsaClient)) {
     failures.push("fmcsa-client must not swallow 429 as null");
   }
+  if (!/if\s*\(\s*mobileRetryable\s*\)\s*throw\s+mobileRetryable/.test(sources.fmcsaClient)) {
+    failures.push("fmcsa-client must rethrow mobileRetryable when SAFER returns null (no 429→null collapse)");
+  }
   if (!sources.fmcsaClient.includes("FmcsaPermanentError")) {
     failures.push("fmcsa-client must classify non-404 4xx as permanent");
   }
@@ -206,6 +209,14 @@ function selftest() {
         fmcsaClient: s.fmcsaClient.replace(/if \(status === 429\) return "retryable";/, 'if (status === 429) return null;'),
       }),
       expect: (f) => f.some((x) => /429/i.test(x)),
+    },
+    {
+      name: "mobileRetryable discarded on SAFER null",
+      mutate: (s) => ({
+        ...s,
+        fmcsaClient: s.fmcsaClient.replace(/if\s*\(\s*mobileRetryable\s*\)\s*throw\s+mobileRetryable;/g, "/* swallowed */"),
+      }),
+      expect: (f) => f.some((x) => /mobileRetryable|429→null/i.test(x)),
     },
     {
       name: "missing Retry-After parse",

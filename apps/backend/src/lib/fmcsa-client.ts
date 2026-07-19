@@ -314,7 +314,13 @@ async function lookupCarrier(type: LookupType, value: string): Promise<CarrierRe
   }
 
   try {
-    return await fetchSaferSnapshot(type, normalized);
+    const safer = await fetchSaferSnapshot(type, normalized);
+    // Authoritative SAFER hit wins. If SAFER has no record but mobile was
+    // rate-limited / 5xx / network, do NOT collapse that into null not-found
+    // (would poison fmcsa_last_checked_at / suppress retries).
+    if (safer) return safer;
+    if (mobileRetryable) throw mobileRetryable;
+    return null;
   } catch (error) {
     if (error instanceof FmcsaRetryableError) throw error;
     if (error instanceof FmcsaPermanentError) throw error;
