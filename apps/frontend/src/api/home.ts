@@ -339,12 +339,15 @@ export type HomeCashPosition = {
 };
 
 export type HomeFactoringBalance = {
-  /** Outstanding Faro secured-borrowing LIABILITY (integer cents). Never reserve. */
-  outstanding_cents: number;
+  /**
+   * Outstanding Faro secured-borrowing LIABILITY (integer cents). Never reserve.
+   * Null when status is unverifiable / accounting_exception — never coerce to $0.
+   */
+  outstanding_cents: number | null;
   /** Separate 1.5% reserve receivable asset (integer cents). Never netted into outstanding. */
   reserve_receivable_cents?: number | null;
-  invoices_factored: number;
-  status?: "ok" | "empty" | "unverifiable";
+  invoices_factored: number | null;
+  status?: "ok" | "empty" | "unverifiable" | "accounting_exception";
   unverifiable_reason?: string | null;
 };
 
@@ -571,25 +574,44 @@ export async function fetchHomeCashPosition(companyId: string): Promise<HomeCash
   };
 }
 
+function nullableCents(raw: unknown): number | null {
+  if (raw === null || raw === undefined) return null;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : null;
+}
+
 export async function fetchHomeFactoringBalance(companyId: string): Promise<HomeFactoringBalance> {
   const raw = await apiRequest<Record<string, unknown>>(withCompany("/api/v1/home/factoring-balance", companyId));
-  // 0280-05 / owner VETO: Factoring Balance headline = outstanding Faro LIABILITY, never reserve.
+  // 0280-05 / CPA VETO: Factoring Balance headline = outstanding Faro LIABILITY, never reserve.
   // Prefer outstanding_liability_cents / outstanding_cents / advancedCents / totalCents (all liability).
   // reserve_receivable_cents / reserveCents are returned separately and MUST NOT headline.
-  const liability = num(
-    raw.outstanding_liability_cents ?? raw.outstanding_cents ?? raw.advancedCents ?? raw.totalCents
-  );
-  const reserveRaw = raw.reserve_receivable_cents ?? raw.reserveCents;
-  const reserve =
-    reserveRaw === null || reserveRaw === undefined ? null : num(reserveRaw);
+  // Never coerce null → 0 when status is unverifiable / accounting_exception.
   const status =
-    raw.status === "ok" || raw.status === "empty" || raw.status === "unverifiable"
+    raw.status === "ok" ||
+    raw.status === "empty" ||
+    raw.status === "unverifiable" ||
+    raw.status === "accounting_exception"
       ? raw.status
       : undefined;
+  if (status === "unverifiable" || status === "accounting_exception") {
+    return {
+      outstanding_cents: null,
+      reserve_receivable_cents: null,
+      invoices_factored: null,
+      status,
+      unverifiable_reason:
+        typeof raw.unverifiable_reason === "string" ? raw.unverifiable_reason : null,
+    };
+  }
+  const liability = nullableCents(
+    raw.outstanding_liability_cents ?? raw.outstanding_cents ?? raw.advancedCents ?? raw.totalCents
+  );
+  const reserve = nullableCents(raw.reserve_receivable_cents ?? raw.reserveCents);
+  const invoices = nullableCents(raw.invoice_count ?? raw.invoices_factored);
   return {
     outstanding_cents: liability,
     reserve_receivable_cents: reserve,
-    invoices_factored: num(raw.invoice_count ?? raw.invoices_factored),
+    invoices_factored: invoices,
     status,
     unverifiable_reason:
       typeof raw.unverifiable_reason === "string" ? raw.unverifiable_reason : null,

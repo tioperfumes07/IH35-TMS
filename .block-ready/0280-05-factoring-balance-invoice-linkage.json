@@ -4,14 +4,14 @@
   "status": "BUILD",
   "classification": "FINANCIAL",
   "phase": "tier1",
-  "task": "Root-cause fix for Factoring Balance: JE-artifact Faro LIABILITY + separate reserve; kill status-based clearing and fake-zero catch; TRANSP/Faro identity fail-closed; FORCE RLS Owner/Admin write; FE liability headline. HOLD additive migration. No tab/nav changes. Posting flags OFF; no QBO write-back; no new GL math.",
+  "task": "CPA VETO fix: per-factor advance-linked JE liability/reserve; canonical single active factor (no majority/name); no clamp anomalies; as-of companyBusinessDate; FE null/unverifiable preserve; poster lifecycle source links (flags OFF); FORCE RLS Owner/Admin; semantic guard. HOLD additive migration. No tab/nav changes.",
   "priority": "P0",
   "module": "home-factoring-balance",
   "db_required": true,
   "guard_required": true,
   "runtime_path": "src",
   "extra_gates": [],
-  "source": "MASTER-6 authored dispatch (03-TIER1-BLOCKS) + owner cloud decisions/VETO 2026-07-19",
+  "source": "MASTER-6 authored dispatch (03-TIER1-BLOCKS) + owner/CPA VETO 2026-07-19 (bb8b80f9f)",
   "source_file": "0280-05-factoring-balance-invoice-linkage.txt",
   "allowed_files": [
     "apps/backend/src/home/factoring-balance-invoice-linkage.service.ts",
@@ -19,8 +19,11 @@
     "apps/backend/src/home/__tests__/factoring-balance-invoice-linkage.db.test.ts",
     "apps/backend/src/home/home-widgets.routes.ts",
     "apps/backend/src/home/home-widgets.routes.test.ts",
+    "apps/backend/src/accounting/factoring-posting/poster.service.ts",
     "apps/frontend/src/api/home.ts",
     "apps/frontend/src/api/home-widget-contract.test.ts",
+    "apps/frontend/src/pages/home/roles/DefaultHome.tsx",
+    "apps/frontend/src/pages/home/OwnerHome.tsx",
     "db/migrations/202607600000_factoring_balance_invoice_linkage.sql",
     "db/migrations/.held-migrations.json",
     "docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md",
@@ -30,13 +33,13 @@
   ],
   "acceptance": [
     {
-      "check": "GET /api/v1/home/factoring-balance + FE fetchHomeFactoringBalance headline outstanding_liability_cents; reserve separate; status ok|empty|unverifiable; no silent $0"
+      "check": "GET /api/v1/home/factoring-balance + FE fetchHomeFactoringBalance headline outstanding_liability_cents; reserve separate; status ok|empty|unverifiable|accounting_exception; null preserved (never $0)"
     },
     {
-      "check": "Liability/reserve from live JE role legs + reserve movements; statuses never clear; Faro identity fail-closed; FORCE RLS Owner/Admin write; apply-twice throwaway PG"
+      "check": "Liability/reserve from per-advance source_transaction_type/TSL/reserve_movements; statuses never clear; single active factor fail-closed on mixed; FORCE RLS Owner/Admin write; apply-twice throwaway PG"
     },
     {
-      "check": "DB tests: multi-invoice, status-without-artifact, reserve/recourse artifacts, cross-company, empty, planted failure, display_id contract, RLS policies"
+      "check": "DB tests: multi-invoice, orphan JE, future JE, second factor, debit anomaly, reserve over-release, Owner/Admin vs Dispatcher RLS, cross-company, fixture display_id"
     },
     {
       "check": "verify-factoring-balance-invoice-linkage semantic --selftest PASS via verify-steps/929; no package.json / workflow hot-file edits"
@@ -45,5 +48,5 @@
       "check": "DRAFT HOLD PR only — NEVER self-merge; owner Neon ceremony"
     }
   ],
-  "note": "FINANCIAL HOLD. No Home/Factoring tab/nav edits (tab drift). FE api/home.ts consumer only."
+  "note": "FINANCIAL HOLD. No Home/Factoring tab/nav edits (tab drift). FE api + Home KPI render for null/unverifiable only."
 }

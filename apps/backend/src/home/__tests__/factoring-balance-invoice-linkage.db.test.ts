@@ -145,27 +145,34 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
     jeId: string;
     opco: string;
     memo: string;
+    entryDate?: string;
     lines: Array<{
       accountId: string;
       side: "debit" | "credit";
       cents: number;
       sourceAdvanceId?: string;
+      /** Authoritative lifecycle source — defaults to factoring_advance when sourceAdvanceId set. */
+      sourceType?: string;
       seq: number;
     }>;
   }) {
     await db.query(
       `INSERT INTO accounting.journal_entries
          (id, operating_company_id, entry_date, memo, status, source)
-       VALUES ($1::uuid,$2::uuid,CURRENT_DATE,$3,'posted','auto')`,
-      [opts.jeId, opts.opco, opts.memo]
+       VALUES ($1::uuid,$2::uuid,COALESCE($4::date, CURRENT_DATE),$3,'posted','auto')`,
+      [opts.jeId, opts.opco, opts.memo, opts.entryDate ?? null]
     );
     for (const line of opts.lines) {
-      await db.query(
+      const sourceType = line.sourceAdvanceId
+        ? (line.sourceType ?? "factoring_advance")
+        : null;
+      const posting = await db.query<{ id: string }>(
         `INSERT INTO accounting.journal_entry_postings
            (operating_company_id, journal_entry_uuid, line_sequence, account_id,
             debit_or_credit, amount_cents, description,
             source_transaction_type, source_transaction_id, idempotency_key)
-         VALUES ($1::uuid,$2::uuid,$3,$4::uuid,$5,$6,$7,$8,$9,$10)`,
+         VALUES ($1::uuid,$2::uuid,$3,$4::uuid,$5,$6,$7,$8,$9,$10)
+         RETURNING id::text AS id`,
         [
           opts.opco,
           opts.jeId,
@@ -174,11 +181,19 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
           line.side,
           line.cents,
           opts.memo,
-          line.sourceAdvanceId ? "factoring_advance" : null,
+          sourceType,
           line.sourceAdvanceId ?? null,
           `${opts.jeId}:${line.seq}`,
         ]
       );
+      if (line.sourceAdvanceId && posting.rows[0]?.id) {
+        await db.query(
+          `INSERT INTO accounting.transaction_source_links
+             (operating_company_id, journal_entry_posting_id, linked_object_type, linked_object_id, relationship_role)
+           VALUES ($1::uuid,$2::uuid,'factoring_advance',$3,$4)`,
+          [opts.opco, posting.rows[0].id, line.sourceAdvanceId, sourceType]
+        );
+      }
     }
   }
 
@@ -286,8 +301,22 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
         opco: companyId,
         memo: `Factoring customer payment settled`,
         lines: [
-          { accountId: liabAcct, side: "debit", cents: 500000, sourceAdvanceId: settledAdvanceId, seq: 1 },
-          { accountId: arAcct, side: "credit", cents: 500000, sourceAdvanceId: settledAdvanceId, seq: 2 },
+          {
+            accountId: liabAcct,
+            side: "debit",
+            cents: 500000,
+            sourceAdvanceId: settledAdvanceId,
+            sourceType: "factoring_customer_payment",
+            seq: 1,
+          },
+          {
+            accountId: arAcct,
+            side: "credit",
+            cents: 500000,
+            sourceAdvanceId: settledAdvanceId,
+            sourceType: "factoring_customer_payment",
+            seq: 2,
+          },
         ],
       });
       // Reserve release JE for settled advance (structural reserve reduction).
@@ -296,8 +325,22 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
         opco: companyId,
         memo: `Factoring reserve release settled`,
         lines: [
-          { accountId: cashAcct, side: "debit", cents: 7500, sourceAdvanceId: settledAdvanceId, seq: 1 },
-          { accountId: reserveAcct, side: "credit", cents: 7500, sourceAdvanceId: settledAdvanceId, seq: 2 },
+          {
+            accountId: cashAcct,
+            side: "debit",
+            cents: 7500,
+            sourceAdvanceId: settledAdvanceId,
+            sourceType: "factoring_reserve_release",
+            seq: 1,
+          },
+          {
+            accountId: reserveAcct,
+            side: "credit",
+            cents: 7500,
+            sourceAdvanceId: settledAdvanceId,
+            sourceType: "factoring_reserve_release",
+            seq: 2,
+          },
         ],
       });
 
@@ -327,15 +370,28 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
           { accountId: liabAcct, side: "credit", cents: 200000, sourceAdvanceId: recourseAdvanceId, seq: 3 },
         ],
       });
+      // Chargeback repay JE — classified by source_transaction_type=factoring_chargeback (NOT recoursed_ar co-occurrence).
       await insertBalancedJe({
         jeId: chargebackJeRecourse,
         opco: companyId,
-        memo: `Factoring chargeback recourse`,
+        memo: `Factoring chargeback repay recourse`,
         lines: [
-          { accountId: liabAcct, side: "debit", cents: 200000, sourceAdvanceId: recourseAdvanceId, seq: 1 },
-          { accountId: cashAcct, side: "credit", cents: 200000, sourceAdvanceId: recourseAdvanceId, seq: 2 },
-          { accountId: recoursedAcct, side: "debit", cents: 200000, sourceAdvanceId: recourseAdvanceId, seq: 3 },
-          { accountId: arAcct, side: "credit", cents: 200000, sourceAdvanceId: recourseAdvanceId, seq: 4 },
+          {
+            accountId: liabAcct,
+            side: "debit",
+            cents: 200000,
+            sourceAdvanceId: recourseAdvanceId,
+            sourceType: "factoring_chargeback",
+            seq: 1,
+          },
+          {
+            accountId: cashAcct,
+            side: "credit",
+            cents: 200000,
+            sourceAdvanceId: recourseAdvanceId,
+            sourceType: "factoring_chargeback",
+            seq: 2,
+          },
         ],
       });
 
@@ -552,8 +608,227 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
       operatingCompanyId: otherCompanyId!,
     });
     expect(other.status).toBe("unverifiable");
-    expect(other.unverifiable_reason).toMatch(/faro_contract_entity_mismatch|active_factor_is_not_faro|faro_factor/);
+    expect(other.unverifiable_reason).toMatch(
+      /faro_contract_entity_mismatch|active_factor_identity_unavailable|mixed_factor/
+    );
     expect(other.outstanding_liability_cents).toBeNull();
+  });
+
+  it("orphan/unrelated role-account JE must not inflate Faro liability", async () => {
+    const orphanJe = randomUUID();
+    await bypass(companyId, async () => {
+      await insertBalancedJe({
+        jeId: orphanJe,
+        opco: companyId,
+        memo: `Manual orphan liability ${suffix}`,
+        lines: [
+          { accountId: liabAcct, side: "credit", cents: 9_999_999, seq: 1 },
+          { accountId: cashAcct, side: "debit", cents: 9_999_999, seq: 2 },
+        ],
+      });
+    });
+    const client = await scopedClient();
+    const result = await computeFactoringBalanceInvoiceLinkage(client, { operatingCompanyId: companyId });
+    expect(result.status).toBe("ok");
+    expect(result.outstanding_liability_cents).toBe(1_300_000);
+    expect(result.outstanding_liability_cents).not.toBe(1_300_000 + 9_999_999);
+    expect(result.diagnostics?.orphan_liability_role_cents).toBeGreaterThanOrEqual(9_999_999);
+  });
+
+  it("future-dated posted JE excluded by companyBusinessDate as-of boundary", async () => {
+    const futureJe = randomUUID();
+    await bypass(companyId, async () => {
+      // Extra liability credit on an EXISTING advance, dated far in the future — must not affect today.
+      await insertBalancedJe({
+        jeId: futureJe,
+        opco: companyId,
+        memo: `Factoring funding future ${suffix}`,
+        entryDate: "2099-12-31",
+        lines: [
+          { accountId: cashAcct, side: "debit", cents: 888000, sourceAdvanceId: multiAdvanceId, seq: 1 },
+          { accountId: liabAcct, side: "credit", cents: 888000, sourceAdvanceId: multiAdvanceId, seq: 2 },
+        ],
+      });
+    });
+    const client = await scopedClient();
+    const result = await computeFactoringBalanceInvoiceLinkage(client, { operatingCompanyId: companyId });
+    expect(result.status).toBe("ok");
+    expect(result.outstanding_liability_cents).toBe(1_300_000);
+    expect(result.outstanding_liability_cents).not.toBe(1_300_000 + 888_000);
+    await bypass(companyId, async () => {
+      await db.query(
+        `UPDATE accounting.journal_entries SET status = 'voided', voided_at = now() WHERE id = $1::uuid`,
+        [futureJe]
+      );
+    });
+  });
+
+  it("second factor within TRANSP → mixed_factor_assignment fail closed", async () => {
+    const rtsVendor = randomUUID();
+    const rtsCustomer = randomUUID();
+    await bypass(companyId, async () => {
+      await db.query(
+        `INSERT INTO mdata.vendors (id, operating_company_id, vendor_name, vendor_type)
+         VALUES ($1::uuid,$2::uuid,$3,'Other')`,
+        [rtsVendor, companyId, `RTS Transition Factor ${suffix}`]
+      );
+      await db.query(
+        `INSERT INTO mdata.customers (id, operating_company_id, customer_name, factoring_company_vendor_id)
+         VALUES ($1::uuid,$2::uuid,$3,$4::uuid)`,
+        [rtsCustomer, companyId, `RTS Cust ${suffix}`, rtsVendor]
+      );
+    });
+    const client = await scopedClient();
+    const result = await computeFactoringBalanceInvoiceLinkage(client, { operatingCompanyId: companyId });
+    expect(result.status).toBe("unverifiable");
+    expect(result.unverifiable_reason).toBe("mixed_factor_assignment");
+    expect(result.outstanding_liability_cents).toBeNull();
+    // Restore single-factor for subsequent tests.
+    await bypass(companyId, async () => {
+      await db.query(`DELETE FROM mdata.customers WHERE id = $1::uuid`, [rtsCustomer]);
+      await db.query(`UPDATE mdata.vendors SET deactivated_at = now() WHERE id = $1::uuid`, [rtsVendor]);
+    });
+  });
+
+  it("debit liability anomaly → accounting_exception with signed diagnostics (never clamp to $0)", async () => {
+    const overSettleJe = randomUUID();
+    await bypass(companyId, async () => {
+      await insertBalancedJe({
+        jeId: overSettleJe,
+        opco: companyId,
+        memo: `Over-settle anomaly ${suffix}`,
+        lines: [
+          {
+            accountId: liabAcct,
+            side: "debit",
+            cents: 5_000_000,
+            sourceAdvanceId: multiAdvanceId,
+            sourceType: "factoring_customer_payment",
+            seq: 1,
+          },
+          {
+            accountId: arAcct,
+            side: "credit",
+            cents: 5_000_000,
+            sourceAdvanceId: multiAdvanceId,
+            sourceType: "factoring_customer_payment",
+            seq: 2,
+          },
+        ],
+      });
+    });
+    const client = await scopedClient();
+    const result = await computeFactoringBalanceInvoiceLinkage(client, { operatingCompanyId: companyId });
+    expect(result.status).toBe("accounting_exception");
+    expect(result.unverifiable_reason).toBe("accounting_exception:debit_liability_anomaly");
+    expect(result.outstanding_liability_cents).toBeNull();
+    expect(result.diagnostics?.outstanding_liability_signed_cents).toBeLessThan(0);
+    // Cleanup over-settle so later tests are not poisoned.
+    await bypass(companyId, async () => {
+      await db.query(`UPDATE accounting.journal_entries SET status = 'voided', voided_at = now() WHERE id = $1::uuid`, [
+        overSettleJe,
+      ]);
+    });
+  });
+
+  it("reserve over-release → accounting_exception with signed diagnostics", async () => {
+    const overReleaseJe = randomUUID();
+    await bypass(companyId, async () => {
+      await insertBalancedJe({
+        jeId: overReleaseJe,
+        opco: companyId,
+        memo: `Over-release reserve ${suffix}`,
+        lines: [
+          {
+            accountId: cashAcct,
+            side: "debit",
+            cents: 100_000,
+            sourceAdvanceId: multiAdvanceId,
+            sourceType: "factoring_reserve_release",
+            seq: 1,
+          },
+          {
+            accountId: reserveAcct,
+            side: "credit",
+            cents: 100_000,
+            sourceAdvanceId: multiAdvanceId,
+            sourceType: "factoring_reserve_release",
+            seq: 2,
+          },
+        ],
+      });
+    });
+    const client = await scopedClient();
+    const result = await computeFactoringBalanceInvoiceLinkage(client, { operatingCompanyId: companyId });
+    expect(result.status).toBe("accounting_exception");
+    expect(result.unverifiable_reason).toBe("accounting_exception:reserve_over_release");
+    expect(result.reserve_receivable_cents).toBeNull();
+    expect(result.diagnostics?.reserve_receivable_signed_cents).toBeLessThan(0);
+    await bypass(companyId, async () => {
+      await db.query(`UPDATE accounting.journal_entries SET status = 'voided', voided_at = now() WHERE id = $1::uuid`, [
+        overReleaseJe,
+      ]);
+    });
+  });
+
+  it("FORCE RLS write: Owner authorized INSERT; unauthorized role blocked; cross-company isolation", async () => {
+    const dispatcherId = randomUUID();
+    const ownerAdv = randomUUID();
+    const blockedAdv = randomUUID();
+    const crossAdv = randomUUID();
+    await bypass(companyId, async () => {
+      await db.query(
+        `INSERT INTO identity.users (id, email, google_user_id, role, preferred_language, default_company_id)
+         VALUES ($1::uuid,$2,$3,'Dispatcher','en',$4::uuid)
+         ON CONFLICT (id) DO UPDATE SET role = 'Dispatcher', deactivated_at = NULL`,
+        [dispatcherId, `dispatcher-fbl-${suffix}@example.com`, `google-fbl-${suffix}`, companyId]
+      );
+    });
+
+    // Owner (TEST_OWNER_USER_ID) can INSERT under entity scope.
+    await db.query(`SELECT set_config('app.bypass_rls', '', false)`);
+    await db.query(`SELECT set_config('app.operating_company_id', $1::text, false)`, [companyId]);
+    await db.query(`SELECT set_config('app.current_user_id', $1::text, false)`, [TEST_OWNER_USER_ID]);
+    await db.query(
+      `INSERT INTO accounting.factoring_advances
+         (id, operating_company_id, factoring_company_vendor_id, display_id, status,
+          invoice_total_cents, advance_rate_pct, advance_amount_cents, reserve_pct, reserve_amount_cents,
+          factor_fee_pct, factor_fee_cents, advanced_at)
+       VALUES ($1::uuid,$2::uuid,$3::uuid,$4,'advanced',100,97,97,1.5,2,1.5,1,now())`,
+      [ownerAdv, companyId, vendorId, `FA-OWN-${n()}`]
+    );
+
+    // Dispatcher blocked by role gate.
+    await db.query(`SELECT set_config('app.current_user_id', $1::text, false)`, [dispatcherId]);
+    await expect(
+      db.query(
+        `INSERT INTO accounting.factoring_advances
+           (id, operating_company_id, factoring_company_vendor_id, display_id, status,
+            invoice_total_cents, advance_rate_pct, advance_amount_cents, reserve_pct, reserve_amount_cents,
+            factor_fee_pct, factor_fee_cents, advanced_at)
+         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,'advanced',100,97,97,1.5,2,1.5,1,now())`,
+        [blockedAdv, companyId, vendorId, `FA-BLK-${n()}`]
+      )
+    ).rejects.toThrow();
+
+    // Cross-company: Owner scoped to companyId cannot insert into otherCompanyId.
+    await db.query(`SELECT set_config('app.current_user_id', $1::text, false)`, [TEST_OWNER_USER_ID]);
+    await db.query(`SELECT set_config('app.operating_company_id', $1::text, false)`, [companyId]);
+    await expect(
+      db.query(
+        `INSERT INTO accounting.factoring_advances
+           (id, operating_company_id, factoring_company_vendor_id, display_id, status,
+            invoice_total_cents, advance_rate_pct, advance_amount_cents, reserve_pct, reserve_amount_cents,
+            factor_fee_pct, factor_fee_cents, advanced_at)
+         VALUES ($1::uuid,$2::uuid,$3::uuid,$4,'advanced',100,97,97,1.5,2,1.5,1,now())`,
+        [crossAdv, otherCompanyId, otherVendorId, `FA-XCO-${n()}`]
+      )
+    ).rejects.toThrow();
+
+    await bypass(companyId, async () => {
+      await db.query(`UPDATE accounting.factoring_advances SET status = 'voided' WHERE id = $1::uuid`, [ownerAdv]);
+      await db.query(`UPDATE identity.users SET deactivated_at = now() WHERE id = $1::uuid`, [dispatcherId]);
+    });
   });
 
   it("empty: TRANSP+Faro identity with no advances/JEs returns empty (distinct from unverifiable)", async () => {
@@ -637,8 +912,11 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
         if (sql.includes("FROM org.companies")) {
           return { rows: [{ code: "TRANSP-X", legal_name: "IH 35 TRANSPORTATION LLC" }] };
         }
-        if (sql.includes("FROM mdata.vendors")) {
-          return { rows: [{ id: vendorId, vendor_name: "Faro Factoring LLC" }] };
+        if (sql.includes("FROM mdata.vendors") || sql.includes("WITH candidates")) {
+          return { rows: [{ vendor_id: vendorId, vendor_name: "Faro Factoring LLC" }] };
+        }
+        if (sql.includes("set_config('app.factoring_balance_as_of'")) {
+          return { rows: [{ set_config: "2026-07-19" }] };
         }
         if (sql.includes("chart_of_accounts_roles")) {
           return {

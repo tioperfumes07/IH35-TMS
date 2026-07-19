@@ -1412,13 +1412,15 @@ Standards: QuickBooks/NetSuite liability-vs-asset honesty; McLeod/Alvys factorin
   never fabricated $0.
 - **Reserve:** reduces only via structural credits to `factor_reserve_held` (release JE) or equivalent
   reserve-movement release evidence. `recourse_returned` alone must not zero reserve.
-- **TRANSP/Faro identity (no hard-coded UUIDs):** `org.companies` TRANSP-class + majority
-  `mdata.customers.factoring_company_vendor_id` → `mdata.vendors` with Faro name. Other entities /
-  non-Faro factors → fail closed (`faro_contract_entity_mismatch` / `active_factor_is_not_faro`),
-  never labeled Faro liability.
+- **TRANSP/Faro identity (no hard-coded UUIDs):** `org.companies` TRANSP-class + canonical
+  single active factor (exactly one distinct `factoring_company_vendor_id` across customers ∪
+  non-void funded advances). No majority inference; no vendor-name match. Mixed/transition →
+  `mixed_factor_assignment`. Other entities → `faro_contract_entity_mismatch`.
 - **Contract fields (integer cents):** `outstanding_liability_cents` (headline),
-  `reserve_receivable_cents` (separate), `invoice_count`, plus `status` ∈ `ok|empty|unverifiable`.
-  Frontend `fetchHomeFactoringBalance` must headline liability fields — never `reserveCents`.
+  `reserve_receivable_cents` (separate), `invoice_count`, plus
+  `status` ∈ `ok|empty|unverifiable|accounting_exception` and signed `diagnostics`.
+  Frontend `fetchHomeFactoringBalance` must headline liability fields — never `reserveCents`;
+  never coerce null → 0 when unverifiable/exception.
 - **Errors:** typed `factoring_balance_invoice_linkage_unverifiable` (200) /
   `factoring_balance_invoice_linkage_failed` (500). Never silent zero.
 - **Out of scope this block:** Home/Factoring UI chrome tabs/nav (tab drift unresolved); posting;
@@ -1430,6 +1432,31 @@ Owner directed Cursor to fix PR #2724 for: (1) canonical `INV-YYYY-NNNNN` fixtur
 reserve (not status); (5) TRANSP/Faro identity fail-closed; (6) FORCE RLS Owner/Admin write;
 (7) semantic executable guard plants; (8) flags OFF / no QBO / no destructive DDL;
 (9) HOLD draft PR only — never merge / Neon / live claim.
+
+### CPA VETO amendments (append-only 2026-07-19 — exact head `bb8b80f9f`)
+1. **Per-factor / per-advance source linkage only.** Company-wide role-account rollups that
+   then label totals “Faro” are forbidden. Unrelated/orphan/manual/RTS JEs on
+   `factoring_advance_liability` / `factor_reserve_held` must not be attributed. Linkage =
+   `journal_entry_postings.source_transaction_type` ∈
+   `{factoring_advance, factoring_customer_payment, factoring_reserve_release,
+   factoring_chargeback, factoring_default_interest}` + `source_transaction_id = advance.id`,
+   OR `transaction_source_links` (`linked_object_type='factoring_advance'`), OR
+   `factoring_reserve_movements.journal_entry_id`. Lifecycle classification is from those
+   source keys — **not** account co-occurrence on the same JE.
+2. **Canonical active factor identity (no majority, no vendor-name match, no hard-coded UUIDs).**
+   Active factor = EXACTLY one distinct `factoring_company_vendor_id` across
+   `(customers with assignment) ∪ (non-void funded advances)`. Count ≠ 1 →
+   `mixed_factor_assignment` / `active_factor_identity_unavailable` fail closed. TRANSP-class
+   entity required (`faro_contract_entity_mismatch` otherwise).
+3. **Never clamp anomalies to $0.** Debit-liability or reserve over-release → status
+   `accounting_exception` with signed diagnostic cents; headline amounts stay `null`.
+4. **As-of boundary.** View/service filter `je.entry_date <= companyBusinessDate`
+   (GUC `app.factoring_balance_as_of`); future-dated posted JEs excluded.
+5. **Poster additive linkage (flags OFF).** `attachFactoringLifecycleSourceLinks` stamps
+   source keys + TSL after each factoring JE — no new GL math; `FACTORING_GL_POSTING_ENABLED`
+   remains default OFF.
+6. **FE/Home.** `fetchHomeFactoringBalance` + DefaultHome/OwnerHome preserve
+   null/unverifiable/accounting_exception — never coerce to `$0`.
 
 ### Guard (Rule 17 — auto-discovered)
 - `scripts/verify-factoring-balance-invoice-linkage.mjs`

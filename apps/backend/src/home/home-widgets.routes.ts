@@ -46,8 +46,9 @@ function factoringBalancePayload(result: FactoringBalanceInvoiceLinkageResult) {
     settled_cents: result.settled_cents,
     recourse_buyback_cents: result.recourse_buyback_cents,
     funded_advance_count: result.funded_advance_count,
+    diagnostics: result.diagnostics,
     meta: result.meta,
-    // Backward-compat aliases — null when unverifiable (never fabricate $0).
+    // Backward-compat aliases — null when unverifiable/accounting_exception (never fabricate $0).
     // outstanding_cents = LIABILITY (owner 2026-07-19); reserveCents stays reserve asset.
     outstanding_cents: result.outstanding_liability_cents,
     reserveCents: result.reserve_receivable_cents,
@@ -380,10 +381,13 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
           operatingCompanyId: parsed.data.operating_company_id,
         })
       );
-      if (result.status === "unverifiable") {
+      if (result.status === "unverifiable" || result.status === "accounting_exception") {
         return {
           ...factoringBalancePayload(result),
-          error: "factoring_balance_invoice_linkage_unverifiable",
+          error:
+            result.status === "accounting_exception"
+              ? "factoring_balance_invoice_linkage_accounting_exception"
+              : "factoring_balance_invoice_linkage_unverifiable",
         };
       }
       return factoringBalancePayload(result);

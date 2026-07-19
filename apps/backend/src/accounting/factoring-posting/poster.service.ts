@@ -54,6 +54,7 @@ import { withLuciaBypass } from "../../auth/db.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { createJournalEntry } from "../journal-entries.service.js";
+import { writeTransactionSourceLink } from "../accounting-spine-emit.js";
 import { resolveRoleAccount } from "../coa-roles/resolver.service.js";
 import {
   FACTORING_DEFAULT_INTEREST_DAILY_RATE,
@@ -61,6 +62,17 @@ import {
 } from "./contract-config.js";
 
 export const FACTORING_GL_POSTING_FLAG = "FACTORING_GL_POSTING_ENABLED";
+
+/** Authoritative lifecycle source types for Factoring Balance JE linkage (CPA VETO 0280-05). */
+export const FACTORING_LIFECYCLE_SOURCE_TYPES = [
+  "factoring_advance",
+  "factoring_customer_payment",
+  "factoring_reserve_release",
+  "factoring_chargeback",
+  "factoring_default_interest",
+] as const;
+
+export type FactoringLifecycleSourceType = (typeof FACTORING_LIFECYCLE_SOURCE_TYPES)[number];
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -295,6 +307,75 @@ async function recordReserveMovement(
   );
 }
 
+/**
+ * Additive lifecycle linkage (CPA VETO 0280-05) — no new GL math.
+ * Stamps source_transaction_type/id on every posting line of the JE and writes
+ * transaction_source_links → factoring_advance with the lifecycle relationship_role.
+ * createJournalEntry currently only links to journal_entry; this extends the spine for Factoring Balance.
+ * Flags remain OFF — this runs only when a posting actually commits.
+ */
+export async function attachFactoringLifecycleSourceLinks(
+  client: DbClient,
+  opts: {
+    operating_company_id: string;
+    journal_entry_id: string;
+    factoring_advance_id: string;
+    source_transaction_type: FactoringLifecycleSourceType;
+  }
+): Promise<void> {
+  await client.query(
+    `
+      UPDATE accounting.journal_entry_postings
+         SET source_transaction_type = $3,
+             source_transaction_id = $4
+       WHERE journal_entry_uuid = $1::uuid
+         AND operating_company_id = $2::uuid
+    `,
+    [
+      opts.journal_entry_id,
+      opts.operating_company_id,
+      opts.source_transaction_type,
+      opts.factoring_advance_id,
+    ]
+  );
+  const lines = await client.query<{ id: string }>(
+    `
+      SELECT id::text AS id
+        FROM accounting.journal_entry_postings
+       WHERE journal_entry_uuid = $1::uuid
+         AND operating_company_id = $2::uuid
+    `,
+    [opts.journal_entry_id, opts.operating_company_id]
+  );
+  for (const line of lines.rows) {
+    await writeTransactionSourceLink(client, {
+      operating_company_id: opts.operating_company_id,
+      journal_entry_posting_id: line.id,
+      linked_object_type: "factoring_advance",
+      linked_object_id: opts.factoring_advance_id,
+      relationship_role: opts.source_transaction_type,
+    });
+  }
+}
+
+async function attachLifecycleAfterPost(
+  operatingCompanyId: string,
+  journalEntryId: string | undefined,
+  factoringAdvanceId: string,
+  sourceType: FactoringLifecycleSourceType
+): Promise<void> {
+  if (!journalEntryId) return;
+  await withLuciaBypass(async (client: DbClient) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+    await attachFactoringLifecycleSourceLinks(client, {
+      operating_company_id: operatingCompanyId,
+      journal_entry_id: journalEntryId,
+      factoring_advance_id: factoringAdvanceId,
+      source_transaction_type: sourceType,
+    });
+  });
+}
+
 // ---------------------------------------------------------------------------------------------------
 // STEP 2 — FUNDING (posts at funding, using FARO's actual funded figures; A/R is UNTOUCHED).
 //   Dr Cash + Dr Factoring Reserves + Dr Factoring Fees (+ Dr Bank/ACH) / Cr Factoring Advance (liability).
@@ -388,6 +469,13 @@ export async function postFactoringAdvanceEvent(input: PostFactoringAdvanceInput
     });
   }
 
+  await attachLifecycleAfterPost(
+    input.operating_company_id,
+    created.id,
+    input.factoring_advance_id,
+    "factoring_advance"
+  );
+
   return { posted: true, journal_entry_id: created.id, memo: prepared.memo };
 }
 
@@ -463,6 +551,13 @@ export async function postFactoringCustomerPaymentEvent(input: PostFactoringCust
     await applyCustomerPaymentSubledgerRelief(client, input.operating_company_id, input.factoring_advance_id, amount);
   });
 
+  await attachLifecycleAfterPost(
+    input.operating_company_id,
+    created.id,
+    input.factoring_advance_id,
+    "factoring_customer_payment"
+  );
+
   return { posted: true, journal_entry_id: created.id, memo: prepared.memo };
 }
 
@@ -529,6 +624,13 @@ export async function postFactoringReleaseEvent(input: PostFactoringReleaseInput
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
     await recordReserveMovement(client, input.operating_company_id, input.factoring_advance_id, "released", releaseAmount, prepared.entryDate, created.id);
   });
+
+  await attachLifecycleAfterPost(
+    input.operating_company_id,
+    created.id,
+    input.factoring_advance_id,
+    "factoring_reserve_release"
+  );
 
   return { posted: true, journal_entry_id: created.id, memo: prepared.memo };
 }
@@ -606,6 +708,12 @@ export async function postFactoringChargebackEvent(input: PostFactoringChargebac
     );
     anyPosted = true;
     lastJeId = created.id;
+    await attachLifecycleAfterPost(
+      input.operating_company_id,
+      created.id,
+      input.factoring_advance_id,
+      "factoring_chargeback"
+    );
   }
   if (prepared.returnPostings.length > 0 && !prepared.returnExists) {
     const created = await createJournalEntry(
@@ -614,6 +722,12 @@ export async function postFactoringChargebackEvent(input: PostFactoringChargebac
     );
     anyPosted = true;
     lastJeId = created.id;
+    await attachLifecycleAfterPost(
+      input.operating_company_id,
+      created.id,
+      input.factoring_advance_id,
+      "factoring_chargeback"
+    );
   }
 
   // CHAIN-06 §5/§7-A fix: the (B) leg above removes the receivable from trade A/R (ar_control) — sync the
@@ -840,6 +954,13 @@ export async function postFactoringDefaultInterestAccrualEvent(
       "FACTORING-DEFAULT-INTEREST"
     );
   });
+
+  await attachLifecycleAfterPost(
+    input.operating_company_id,
+    created.id,
+    input.factoring_advance_id,
+    "factoring_default_interest"
+  );
 
   return { posted: true, journal_entry_id: created.id, memo: prepared.memo, closing_balance_cents: prepared.closing };
 }

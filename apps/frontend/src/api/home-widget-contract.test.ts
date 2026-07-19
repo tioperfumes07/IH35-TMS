@@ -183,4 +183,37 @@ describe("home-widgets FE↔BE response contract", () => {
     // Must not prefer reserve as the headline when liability fields are present.
     expect(fb.outstanding_cents).not.toBe(2_500_000);
   });
+
+  it("factoring-balance: unverifiable keeps outstanding_cents null (never coerces to $0)", async () => {
+    vi.spyOn(client, "apiRequest").mockResolvedValue({
+      status: "unverifiable",
+      unverifiable_reason: "mixed_factor_assignment",
+      outstanding_liability_cents: null,
+      reserve_receivable_cents: null,
+      outstanding_cents: null,
+      reserveCents: null,
+      totalCents: null,
+      invoice_count: null,
+    } as never);
+    const fb = await fetchHomeFactoringBalance("c1");
+    expect(fb.status).toBe("unverifiable");
+    expect(fb.outstanding_cents).toBeNull();
+    expect(fb.reserve_receivable_cents).toBeNull();
+    expect(fb.invoices_factored).toBeNull();
+    expect(fb.outstanding_cents).not.toBe(0);
+  });
+
+  it("factoring-balance: accounting_exception keeps headline null (never $0)", async () => {
+    vi.spyOn(client, "apiRequest").mockResolvedValue({
+      status: "accounting_exception",
+      unverifiable_reason: "accounting_exception:debit_liability_anomaly",
+      outstanding_liability_cents: null,
+      diagnostics: { outstanding_liability_signed_cents: -150_000 },
+      totalCents: null,
+    } as never);
+    const fb = await fetchHomeFactoringBalance("c1");
+    expect(fb.status).toBe("accounting_exception");
+    expect(fb.outstanding_cents).toBeNull();
+    expect(fb.outstanding_cents).not.toBe(0);
+  });
 });

@@ -56,9 +56,11 @@ describe("home-widgets factoring-balance invoice linkage (0280-05)", () => {
     expect(routesSrc).not.toMatch(/SUM\(advanced_cents\)/);
   });
 
-  it("surfaces unverifiable + failed errors (no silent zero catch)", () => {
+  it("surfaces unverifiable + accounting_exception + failed errors (no silent zero catch)", () => {
     expect(routesSrc).toContain("factoring_balance_invoice_linkage_unverifiable");
+    expect(routesSrc).toContain("factoring_balance_invoice_linkage_accounting_exception");
     expect(routesSrc).toContain("factoring_balance_invoice_linkage_failed");
+    expect(routesSrc).toContain("accounting_exception");
     expect(routesSrc).not.toMatch(
       /factoring-balance[\s\S]{0,800}catch\s*\{\s*return\s*\{\s*reserveCents:\s*0/
     );

@@ -371,13 +371,29 @@ export function OwnerHome({ auth }: Props) {
         <HomeKpiCard
           label="Factoring Balance"
           to="/factoring"
-          number={fb ? formatUsdFromCents(fb.outstanding_cents) : "—"}
+          number={
+            !fb
+              ? "—"
+              : fb.status === "unverifiable" || fb.status === "accounting_exception"
+                ? fb.status === "accounting_exception"
+                  ? "Exception"
+                  : "Unverifiable"
+                : fb.outstanding_cents == null
+                  ? "—"
+                  : formatUsdFromCents(fb.outstanding_cents)
+          }
           isLoading={factoringBalanceQuery.isLoading}
           isError={factoringBalanceQuery.isError}
           error={factoringBalanceQuery.error}
           onRetry={() => void factoringBalanceQuery.refetch()}
           accent="#475569"
-          subtext={fb ? `${fb.invoices_factored} invoices factored` : null}
+          subtext={
+            !fb
+              ? null
+              : fb.status === "unverifiable" || fb.status === "accounting_exception"
+                ? `Factoring balance ${fb.status}${fb.unverifiable_reason ? `: ${fb.unverifiable_reason}` : ""}`
+                : `${fb.invoices_factored ?? 0} invoices factored`
+          }
         />
       </section>
 
