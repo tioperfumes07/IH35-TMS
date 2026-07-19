@@ -1424,28 +1424,64 @@ operator nothing about which governed GL accounts were affected.
 ## 17. EntityLink adoption + reverse drill-through guard contract (0007 Pattern 8)
 
 Source: Owner approval 2026-07-19 (`0007-pattern-8-reverse-drill-through`)
-Status: LOCKED (non-financial guard/spec wiring; no runtime UI or tab change)
+Status: LOCKED (non-financial guard/spec wiring plus behavior tests; relation-false counter is canonical zero; no tab change)
 
 - Existing entity references must use the shared `EntityLink` producer where a real target route exists.
-- A deep link is complete only when its producer, `resolveEntityRoute` mapping, registered route, and target
-  consumer of path/query parameters are all executable. A route-shaped string by itself is not wiring.
-- Static guards must inspect executable TypeScript/JSX semantics and fail closed on missing files, parse
-  errors, broken producer/resolver/consumer bindings, or a regression above the locked adoption baseline.
+- Named deep-link surfaces must use canonical direct `EntityLink`, `navigate`, `searchParams.get`,
+  resolver-return, and registered `Route` forms in the exact exported top-level production component,
+  exact column/map renderer, or direct exported `ROUTES` mount. Nested/dead functions, lexical shadows,
+  aliases, wrappers, reassignment, and dynamic renderer/route expressions cannot satisfy the contract.
+- The invoice `View audit log` producer is a single unambiguous direct control. Its handler executes
+  `preventDefault()` and `stopPropagation()` before the canonical `navigate(...)` call so an enclosing
+  row/control cannot overwrite the audit destination.
+- Each guarded `ROUTES` component binding must resolve to the exact canonical `React.lazy` module path and
+  export, and each invoice/payment/expense/audit path must occur exactly once under `ProtectedRoute`.
+  Conflicting duplicate paths fail even when one route is canonical. The audit consumer must initialize rendered state from the direct query-param bindings and pass
+  that state to `listAccountingAuditTrail`; a dead declaration or ignored/overwritten parameter does not count.
+- Static guards enforce only these narrow source structures and fail closed on missing files, parse errors,
+  obsolete expense routes, or a regression above the locked syntactic-adoption baselines. They do not claim
+  to prove arbitrary JavaScript aliasing, callback execution, or control/data flow.
 - Comments, documentation text, and inert string constants must never satisfy a guard assertion.
-- Analysis must use lexical scopes and branch-aware control/data flow: fold constant conditions, reject
-  unreachable branches and uninvoked callbacks, and require query evidence to flow into the returned field.
-- Alias proof covers declarations, later assignments, destructuring, computed properties, multi-hop aliases,
-  and invoked helper returns without leaking bindings between lexical scopes.
-- Every guard in this contract must include a table-driven `--selftest` corpus covering valid controls, every
-  known VETO plant, and fresh metamorphic variants. Unknown wrappers fail closed unless invocation is proven.
-- CI wiring is additive through unique auto-discovered `scripts/verify-steps/<NNN>-*.mjs` entries. Do not edit
+- The home-fleet route must retain its direct `app.get` statement inside the exported top-level
+  `registerReportsLibraryRoutes` function and its exact executable handler/try path: direct
+  `withCompanyScope` callback, company GUC, relation check, scoped DISTINCT query, captured result, and
+  returned `samsara_live` property. `samsaraLive` has exactly one assignment from that query result; absence
+  of the Samsara relation leaves the initialized zero unchanged. Nested helpers, fallback counters, extra or
+  conditional assignments (including object/array/computed destructuring, compound writes, and increments),
+  dead route wrappers, and dead proof functions do not count.
+- The company GUC statement is parsed as executable SQL after SQL-comment removal and must execute
+  `SELECT set_config('app.operating_company_id', $1, true)` with the immutable current `companyId`.
+- The Samsara SQL contract strips SQL comments, parses the executable SELECT/FROM/JOIN/WHERE clauses, and
+  requires the count expression, canonical table, no JOIN, company-GUC predicate, non-null local unit, and
+  six-hour freshness predicate. Tokens present only in SQL or JavaScript comments never satisfy the contract.
+- Behavior-level tests against production modules are the primary proof: Fastify injection proves counter
+  response/scoping/fifth-arbitrary-company behavior and proves that an existing `mdata.units` relation cannot
+  reintroduce a fallback when Samsara is absent. SQL-decoy scenarios also inject the production handler before
+  probing fail-closed test SQL, so company/result mutations in the actual route are killed. React/router tests mount all four guarded paths through the
+  real `ROUTES`, assert exactly one protected registration per path, resolve real lazy imports, click producers,
+  and exercise consumers. The real-ROUTES invoice test awaits the final exact audit URL and asserts a competing
+  parent row handler was not invoked; removing propagation control fails. The audit-row behavior test clicks `Source lineage` through the real audit route,
+  asserts the exact location and lineage request, and proves `stopPropagation` prevents the row expansion from winning.
+- Every guard includes table-driven `--selftest` plants covering every historical VETO and canonical controls.
+- CI wiring is additive through unique auto-discovered `scripts/verify-steps/<NNN>-*.mjs` entries. Each step
+  runs the production guard, its selftest, and the relevant focused behavior test, and its own planted-failure
+  probe proves nonzero results propagate through `_runner.mjs`. Do not edit
   `package.json`, `.github/workflows/locked-guards.yml`, or `.github/workflows/ci.yml`.
 
 ### Guards (Rule 17)
-- `scripts/verify-entity-link-adoption.mjs` — fail-closed non-regression ratchet for direct id rendering.
-- `scripts/verify-entitylink-deep-links.mjs` — producer → resolver → route → consumer executable contract.
-- `scripts/verify-94-live-counter-linkage.mjs` — executable company-scoped Samsara live-counter linkage.
-- `scripts/verify-steps/915-verify-entity-link-adoption.mjs`
-- `scripts/verify-steps/916-verify-entitylink-deep-links.mjs`
-- `scripts/verify-steps/917-verify-94-live-counter-linkage.mjs`
+- `scripts/verify-entity-link-adoption.mjs` — narrow direct-ID plus lexically scoped/version-ordered
+  declaration, ordinary/destructured later-assignment, computed-key, multi-hop alias, and helper detection;
+  reaching definitions merge conservatively across if/else, ternary, loop, and switch branches, so a possible
+  ID path remains tainted while complete unconditional sanitization across every branch is accepted;
+  exact SHA-256 per-file/scope/structural-location/rule/
+  expression finding-key/count equality rejects additions, removals, same-function moves, inflated counts,
+  unknown hashes, and cancellation. Structural paths use AST ancestry and ordinals, not raw line numbers.
+- `scripts/entity-link-adoption-baseline.json` — versioned exact structural finding-key/count baseline.
+- `scripts/verify-entitylink-deep-links.mjs` — strict direct producer/resolver/route/consumer source contract.
+- `scripts/verify-94-live-counter-linkage.mjs` — strict canonical Samsara counter route source contract.
+- `apps/backend/src/reports/library.routes.live-counter.test.ts` — production Fastify route behavior.
+- `apps/frontend/src/pages/accounting/__tests__/reverse-drill-through.behavior.test.tsx` — production component/router behavior.
+- `scripts/verify-steps/930-verify-entity-link-adoption.mjs`
+- `scripts/verify-steps/931-verify-entitylink-deep-links.mjs`
+- `scripts/verify-steps/932-verify-94-live-counter-linkage.mjs`
 

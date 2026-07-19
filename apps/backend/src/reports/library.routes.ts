@@ -612,22 +612,6 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
           `,
         );
         samsaraLive = Number((samsaraRes.rows[0] as { samsara_live?: string } | undefined)?.samsara_live ?? 0);
-      } else if (await relationExists(client, "mdata.units")) {
-        const unitsFallback = await client.query(
-          `
-            SELECT count(*)::text AS samsara_live
-            FROM mdata.units
-            WHERE deactivated_at IS NULL
-              AND updated_at >= now() - interval '6 hours'
-              AND ${
-                (await columnExists(client, "mdata", "units", "operating_company_id"))
-                  ? "operating_company_id = current_setting('app.operating_company_id', true)::uuid"
-                  : "(owner_company_id = $1 OR currently_leased_to_company_id = $1)"
-              }
-          `,
-          [companyId]
-        );
-        samsaraLive = Number((unitsFallback.rows[0] as { samsara_live?: string } | undefined)?.samsara_live ?? 0);
       }
 
       let assignedUnits = 0;

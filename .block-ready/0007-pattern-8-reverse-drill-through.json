@@ -11,43 +11,52 @@
   "db_required": false,
   "guard_required": true,
   "extra_gates": [
-    "node scripts/verify-entity-link-adoption.mjs --selftest",
-    "node scripts/verify-entity-link-adoption.mjs",
-    "node scripts/verify-entitylink-deep-links.mjs --selftest",
-    "node scripts/verify-entitylink-deep-links.mjs",
-    "node scripts/verify-94-live-counter-linkage.mjs --selftest",
-    "node scripts/verify-94-live-counter-linkage.mjs",
-    "node scripts/verify-guard-wired.mjs"
+    "verify:pre-commit"
   ],
   "allowed_files": [
     ".block-ready/0007-pattern-8-reverse-drill-through.json",
+    "apps/backend/src/reports/library.routes.ts",
+    "apps/backend/src/reports/library.routes.live-counter.test.ts",
+    "apps/frontend/src/pages/accounting/AccountingAuditTrailPage.tsx",
+    "apps/frontend/src/pages/accounting/InvoiceDetailPage.tsx",
+    "apps/frontend/src/pages/accounting/__tests__/reverse-drill-through.behavior.test.tsx",
     "docs/specs/IH35_UNIFIED_BLUEPRINT_ADDITIONS.md",
     "scripts/.guard-exempt.json",
+    "scripts/entity-link-adoption-baseline.json",
     "scripts/verify-entity-link-adoption.mjs",
     "scripts/verify-entitylink-deep-links.mjs",
     "scripts/verify-94-live-counter-linkage.mjs",
     "scripts/verify-steps/915-verify-entity-link-adoption.mjs",
     "scripts/verify-steps/916-verify-entitylink-deep-links.mjs",
-    "scripts/verify-steps/917-verify-94-live-counter-linkage.mjs"
+    "scripts/verify-steps/917-verify-94-live-counter-linkage.mjs",
+    "scripts/verify-steps/930-verify-entity-link-adoption.mjs",
+    "scripts/verify-steps/931-verify-entitylink-deep-links.mjs",
+    "scripts/verify-steps/932-verify-94-live-counter-linkage.mjs"
   ],
   "acceptance": [
     {
       "check": "all three guards pass normally and with table-driven --selftest corpora covering valid controls, every VETO plant, and fresh metamorphic variants"
     },
     {
-      "check": "EntityLink adoption is fail-closed with a 76-finding origin/main baseline ratchet; parse errors or any increase fail"
+      "check": "EntityLink adoption conservatively merges reaching ID/safe definitions across if/else, ternary, loop, and switch control flow while accepting complete unconditional branch sanitization; it traces scoped ordinary/destructured/computed/multi-hop aliases and requires exact structural-location baseline equality"
     },
     {
-      "check": "deep-link guard proves executable producer → resolver → registered route → consumed query/path semantics with constant-folded reachability"
+      "check": "deep-link guard and real ROUTES test require exactly one protected invoice/payment/expense/audit route bound to the exact React.lazy module/export; the unique invoice audit control prevents default/stops propagation before navigating, and conflicting routes, wrong imports, or propagation removal fail"
     },
     {
-      "check": "94-live guard causally proves scoped client + company GUC + relation true branch + DISTINCT local_unit_id query result → returned samsara_live"
+      "check": "94-live guard recursively rejects nested object/array/rest/default/computed destructuring writes plus every other samsaraLive write beyond its canonical declaration/query assignment; Fastify scenarios inject the production route to prove arbitrary-company isolation, executable SQL, and zero when mdata.units exists but Samsara does not"
     },
     {
-      "check": "unique verify-steps 915/916/917 auto-discover all three guards; guard-wired reports them fully wired"
+      "check": "unique verify-steps 930/931/932 auto-discover all guard selftests and focused backend/frontend behavior tests; direct step plants prove nonzero test failures propagate through runStep; manifest extra_gates contains only valid npm script name verify:pre-commit"
     },
     {
-      "check": "package.json and workflow hot files unchanged; no UI, route, tab, schema, migration, or runtime behavior changes"
+      "check": "allowed_files covers both deleted historical verify-step paths 915-917 and replacement paths 930-932 so exact origin/main diff scope is auditable"
+    },
+    {
+      "check": "real-ROUTES audit-row behavior clicks Source lineage, preserves the exact audit URL, executes the exact lineage request, and proves row expansion does not win; removing stopPropagation fails"
+    },
+    {
+      "check": "package.json and workflow hot files unchanged; no tab, schema, migration, or financial changes; obsolete mdata.units live-counter fallback is removed so relation-false deterministically returns zero"
     }
   ],
   "note": "Owner explicitly approved the existing EntityLink adoption/deep-link guard contract and draft-PR handoff. Builder stops at local/PR proof for independent review; do not merge."

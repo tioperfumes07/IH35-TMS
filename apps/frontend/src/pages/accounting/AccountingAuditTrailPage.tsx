@@ -96,8 +96,10 @@ export function AccountingAuditTrailPage() {
   const companyId = selectedCompanyId ?? "";
   const [searchParams] = useSearchParams();
   // Deep-link from invoice/payment "View audit log" (?source_type=&source_id=).
-  const [sourceType, setSourceType] = useState(() => searchParams.get("source_type") ?? "");
-  const [sourceId, setSourceId] = useState(() => searchParams.get("source_id") ?? "");
+  const sourceTypeParam = searchParams.get("source_type");
+  const sourceIdParam = searchParams.get("source_id");
+  const [sourceType, setSourceType] = useState(() => sourceTypeParam ?? "");
+  const [sourceId, setSourceId] = useState(() => sourceIdParam ?? "");
   const [accountId, setAccountId] = useState("");
   const [lineageRows, setLineageRows] = useState<AccountingSourceLineageRow[] | null>(null);
   const [lineageKey, setLineageKey] = useState<{ source_transaction_type: string; source_transaction_id: string } | null>(null);

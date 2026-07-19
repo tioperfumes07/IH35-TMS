@@ -307,9 +307,11 @@ export function InvoiceDetailPage() {
             </div>
             <button
               className="text-xs font-semibold text-slate-700 underline"
-              onClick={() =>
-                navigate(`/accounting/audit-trail?source_type=invoice&source_id=${encodeURIComponent(invoice.id)}`)
-              }
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                navigate(`/accounting/audit-trail?source_type=invoice&source_id=${encodeURIComponent(invoice.id)}`);
+              }}
               type="button"
             >
               View audit log
