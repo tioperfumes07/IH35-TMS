@@ -1,0 +1,34 @@
+{
+  "block_id": "accounting-sortable-headers-guard-wiring",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "ACCOUNTING",
+  "task": "Wire verify-accounting-sortable-headers + verify-custvend-sortable-headers into auto-discovered verify-steps (Rule 17 — no package.json/ci.yml hot files). UI shipped in #2602/#2609; guards existed but were orphaned.",
+  "branch": "fix/accounting-sortable-headers-guard-wiring",
+  "allowed_files": [
+    ".block-ready/accounting-sortable-headers-guard-wiring.json",
+    "scripts/verify-accounting-sortable-headers.mjs",
+    "scripts/verify-custvend-sortable-headers.mjs",
+    "scripts/verify-steps/933-verify-accounting-sortable-headers.mjs",
+    "scripts/verify-steps/934-verify-custvend-sortable-headers.mjs"
+  ],
+  "runtime_path": "scripts",
+  "db_required": false,
+  "guard_required": true,
+  "acceptance": [
+    {
+      "kind": "guard",
+      "check": "verify-accounting-sortable-headers locks Bills + Expenses URL sort; --selftest catches 5 planted regressions; verify-step 933 auto-discovered."
+    },
+    {
+      "kind": "guard",
+      "check": "verify-custvend-sortable-headers locks Customers/Vendors/AP-Aging URL sort; --selftest catches 5 planted regressions; verify-step 934 auto-discovered."
+    }
+  ],
+  "extra_gates": [
+    "node scripts/verify-accounting-sortable-headers.mjs --selftest",
+    "node scripts/verify-custvend-sortable-headers.mjs --selftest",
+    "node scripts/verify-steps/933-verify-accounting-sortable-headers.mjs --selftest",
+    "node scripts/verify-steps/934-verify-custvend-sortable-headers.mjs --selftest"
+  ]
+}
