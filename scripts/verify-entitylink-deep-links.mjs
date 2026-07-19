@@ -60,22 +60,50 @@ function findFunction(sf, name) {
   return result;
 }
 
+function isConstFalse(node) {
+  return node.kind === ts.SyntaxKind.FalseKeyword;
+}
+
 function isExecutedCallback(node) {
   const parent = node.parent;
+  if (ts.isJsxExpression(parent) && ts.isJsxAttribute(parent.parent)) return true;
+  if (ts.isPropertyAssignment(parent) && parent.name.getText() === "render") return true;
+  if (!ts.isCallExpression(parent)) return false;
+  if (parent.expression === node) return true;
+  if (!parent.arguments.includes(node)) return false;
+  const callee = parent.expression;
+  if (ts.isIdentifier(callee)) return new Set(["useMemo", "useState"]).has(callee.text);
   return (
-    (ts.isCallExpression(parent) && parent.arguments.includes(node)) ||
-    (ts.isJsxExpression(parent) && ts.isJsxAttribute(parent.parent)) ||
-    ts.isPropertyAssignment(parent)
+    ts.isPropertyAccessExpression(callee) &&
+    new Set(["map", "flatMap", "forEach", "filter", "find", "some", "reduce", "then"]).has(callee.name.text)
   );
 }
 
 // Walk only code reached when `root` executes. Named/local helper bodies are not executable
-// merely because they occur textually inside a component; callbacks passed to calls/JSX are.
+// merely because they occur textually inside a component. Only callbacks with known invocation
+// semantics are traversed, and constant-false branches are excluded.
 function walkExecutable(root, predicate, sf) {
   let matched = false;
   function visit(node) {
     if (node !== root && ts.isFunctionLike(node) && !isExecutedCallback(node)) return;
     if (predicate(node, sf)) matched = true;
+    if (ts.isIfStatement(node) && isConstFalse(node.expression)) {
+      if (node.elseStatement) visit(node.elseStatement);
+      return;
+    }
+    if (
+      ts.isBinaryExpression(node) &&
+      node.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken &&
+      isConstFalse(node.left)
+    ) {
+      visit(node.left);
+      return;
+    }
+    if (ts.isConditionalExpression(node) && isConstFalse(node.condition)) {
+      visit(node.condition);
+      visit(node.whenFalse);
+      return;
+    }
     ts.forEachChild(node, visit);
   }
   visit(root);
@@ -130,7 +158,20 @@ function executableArguments(sf, root, callee) {
 }
 
 function routeUsesComponent(sf, routePath, componentName) {
-  return walk(sf, (node, sourceFile) => {
+  let routesRoot = null;
+  walk(sf, (node) => {
+    if (
+      ts.isVariableDeclaration(node) &&
+      ts.isIdentifier(node.name) &&
+      node.name.text === "ROUTES" &&
+      node.initializer
+    ) {
+      routesRoot = node.initializer;
+    }
+    return false;
+  });
+  if (!routesRoot) return false;
+  return walkExecutable(routesRoot, (node, sourceFile) => {
     if (!ts.isJsxSelfClosingElement(node) && !ts.isJsxOpeningElement(node)) return false;
     if (jsxName(node) !== "Route" || jsxAttribute(node, "path", sourceFile) !== routePath) return false;
     const element = node.attributes.properties.find(
@@ -141,7 +182,7 @@ function routeUsesComponent(sf, routePath, componentName) {
       (ts.isJsxSelfClosingElement(child) || ts.isJsxOpeningElement(child)) &&
       jsxName(child) === componentName
     ));
-  });
+  }, sf);
 }
 
 function hasResolverCase(sf, kind, expectedReturn) {
@@ -316,7 +357,7 @@ function runSelftest() {
     entityLink: `function resolveEntityRoute(kind,id){ switch (kind) { case "expense": return \`/accounting/expenses/list?expense_id=\${id}\`; } }`,
     expensesList: `function ExpensesListPage(){ const [searchParams] = useSearchParams(); useState(searchParams.get("expense_id")); return <EntityLink kind="expense" id={r.id}/>; }`,
     woDetail: `function WorkOrderDetailPage(){ return <EntityLink kind="expense" id={expense.id}/>; }`,
-    manifest: `<><Route path="/accounting/invoices/:id" element={<InvoiceDetailPage/>}/><Route path="/accounting/payments/:id" element={<PaymentDetailPage/>}/><Route path="/accounting/audit-trail" element={<AccountingAuditTrailPage/>}/><Route path="/accounting/expenses/list" element={<ExpensesListPage/>}/></>`,
+    manifest: `const ROUTES = React.Children.toArray(<><Route path="/accounting/invoices/:id" element={<InvoiceDetailPage/>}/><Route path="/accounting/payments/:id" element={<PaymentDetailPage/>}/><Route path="/accounting/audit-trail" element={<AccountingAuditTrailPage/>}/><Route path="/accounting/expenses/list" element={<ExpensesListPage/>}/></>);`,
   };
   const decoyText = `// EntityLink kind="expense" id={expense.id}; useSearchParams(); searchParams.get("expense_id")\nconst decoy = "/accounting/expenses/list /accounting/audit-trail?source_type=invoice&source_id=";`;
   const decoys = Object.fromEntries(Object.keys(FILES).map((key) => [key, decoyText]));
@@ -346,6 +387,24 @@ function runSelftest() {
     ...good,
     woDetail: `function WorkOrderDetailPage(){ navigate(\`/accounting/expenses?expense_id=\${expense.id}\`); return <EntityLink kind="expense" id={expense.id}/>; }`,
   });
+  const constantFalseProducerFailures = assertContracts({
+    ...good,
+    invoice: good.invoice.replace(
+      `<EntityLink kind="customer" id={invoice.customer_id}/>`,
+      `{false && <EntityLink kind="customer" id={invoice.customer_id}/>}`,
+    ),
+  });
+  const inertConsumerCallbackFailures = assertContracts({
+    ...good,
+    audit: `function AccountingAuditTrailPage(){ const [searchParams] = useSearchParams(); const inert = () => { searchParams.get("source_type"); searchParams.get("source_id"); }; return null; }`,
+  });
+  const constantFalseRouteFailures = assertContracts({
+    ...good,
+    manifest: good.manifest.replace(
+      `<Route path="/accounting/expenses/list" element={<ExpensesListPage/>}/>`,
+      `{false && <Route path="/accounting/expenses/list" element={<ExpensesListPage/>}/>}`,
+    ),
+  });
   if (
     goodFailures.length > 0 ||
     decoyFailures.length < 8 ||
@@ -355,7 +414,11 @@ function runSelftest() {
     !deadConsumerFailures.some((failure) => failure.includes("consume ?source_type=")) ||
     !deadConsumerFailures.some((failure) => failure.includes("consume ?source_id=")) ||
     !wrongRouteComponentFailures.some((failure) => failure.includes("must render ExpensesListPage")) ||
-    !obsoleteExpenseRouteFailures.some((failure) => failure.includes("obsolete /accounting/expenses"))
+    !obsoleteExpenseRouteFailures.some((failure) => failure.includes("obsolete /accounting/expenses")) ||
+    !constantFalseProducerFailures.some((failure) => failure.includes("customer header")) ||
+    !inertConsumerCallbackFailures.some((failure) => failure.includes("consume ?source_type=")) ||
+    !inertConsumerCallbackFailures.some((failure) => failure.includes("consume ?source_id=")) ||
+    !constantFalseRouteFailures.some((failure) => failure.includes("must render ExpensesListPage"))
   ) {
     console.error(`${LABEL} --selftest FAIL`, {
       goodFailures,
@@ -366,6 +429,9 @@ function runSelftest() {
       deadConsumerFailures,
       wrongRouteComponentFailures,
       obsoleteExpenseRouteFailures,
+      constantFalseProducerFailures,
+      inertConsumerCallbackFailures,
+      constantFalseRouteFailures,
     });
     process.exit(1);
   }
@@ -375,6 +441,9 @@ function runSelftest() {
   console.log(`${LABEL} --selftest PASS never-called search-param consumers rejected`);
   console.log(`${LABEL} --selftest PASS wrong registered route component rejected`);
   console.log(`${LABEL} --selftest PASS obsolete /accounting/expenses?expense_id= rejected`);
+  console.log(`${LABEL} --selftest PASS constant-false EntityLink producer rejected`);
+  console.log(`${LABEL} --selftest PASS inert callback search-param consumers rejected`);
+  console.log(`${LABEL} --selftest PASS constant-false route mount rejected`);
 }
 
 function main() {

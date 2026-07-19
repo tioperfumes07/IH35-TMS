@@ -28,6 +28,8 @@ const MAX_BASELINE_FINDINGS = 76;
 // Newly visible debt from String(...) and conditional wrappers at exact-head review.
 // Kept as a separate ratchet so the original 76-finding contract remains intact.
 const MAX_EXTENDED_FINDINGS = 24;
+// Existing alias/generic-wrapper debt exposed by the exact-head semantic expansion.
+const MAX_ALIAS_WRAPPER_FINDINGS = 30;
 
 // Matches property/identifier names shaped like an entity id: vendor_id, matched_bill_id, driverId,
 // unitId, or a bare `id`. Case-sensitive on the "Id" suffix so words like "valid"/"paid" don't match.
@@ -89,6 +91,43 @@ export function identifierNames(expr) {
   return [];
 }
 
+function resolvedIdentifierNames(expr, aliases, seen = new Set()) {
+  if (!expr) return [];
+  if (ts.isIdentifier(expr)) {
+    if (seen.has(expr.text) || !aliases.has(expr.text)) return [expr.text];
+    const nextSeen = new Set(seen);
+    nextSeen.add(expr.text);
+    return [expr.text, ...resolvedIdentifierNames(aliases.get(expr.text), aliases, nextSeen)];
+  }
+  if (ts.isPropertyAccessExpression(expr)) return [expr.name.text];
+  if (
+    ts.isParenthesizedExpression(expr) ||
+    ts.isAsExpression(expr) ||
+    ts.isTypeAssertionExpression(expr) ||
+    ts.isNonNullExpression(expr) ||
+    ts.isSatisfiesExpression(expr)
+  ) {
+    return resolvedIdentifierNames(expr.expression, aliases, seen);
+  }
+  if (
+    ts.isBinaryExpression(expr) &&
+    (expr.operatorToken.kind === ts.SyntaxKind.QuestionQuestionToken ||
+      expr.operatorToken.kind === ts.SyntaxKind.BarBarToken)
+  ) {
+    return resolvedIdentifierNames(expr.left, aliases, seen);
+  }
+  if (ts.isConditionalExpression(expr)) {
+    return [
+      ...resolvedIdentifierNames(expr.whenTrue, aliases, seen),
+      ...resolvedIdentifierNames(expr.whenFalse, aliases, seen),
+    ];
+  }
+  if (ts.isCallExpression(expr)) {
+    return expr.arguments.flatMap((argument) => resolvedIdentifierNames(argument, aliases, seen));
+  }
+  return [];
+}
+
 export function identifierName(expr) {
   if (!expr) return null;
   if (ts.isIdentifier(expr)) return expr.text;
@@ -104,16 +143,32 @@ export function identifierName(expr) {
   return null;
 }
 
-export function scanSource(file, source, extended = true) {
+export function scanSource(file, source, mode = 2) {
   const sf = ts.createSourceFile(file, source, ts.ScriptTarget.ESNext, true, ts.ScriptKind.TSX);
   if (sf.parseDiagnostics.length > 0) {
     const details = sf.parseDiagnostics.map((d) => ts.flattenDiagnosticMessageText(d.messageText, " ")).join("; ");
     throw new Error(`${file}: TypeScript parse failed: ${details}`);
   }
+  const aliases = new Map();
+  function collectAliases(node) {
+    if (
+      ts.isVariableDeclaration(node) &&
+      ts.isIdentifier(node.name) &&
+      node.initializer
+    ) {
+      aliases.set(node.name.text, node.initializer);
+    }
+    ts.forEachChild(node, collectAliases);
+  }
+  collectAliases(sf);
   const findings = [];
   function visit(node) {
     if (ts.isJsxExpression(node) && node.expression && !ts.isJsxAttribute(node.parent)) {
-      const names = extended ? identifierNames(node.expression) : [identifierName(node.expression)].filter(Boolean);
+      const names = mode === 0
+        ? [identifierName(node.expression)].filter(Boolean)
+        : mode === 1
+          ? identifierNames(node.expression)
+          : resolvedIdentifierNames(node.expression, aliases);
       if (names.some((name) => ID_NAME_RE.test(name))) {
         const enclosingTag = ts.isJsxElement(node.parent)
           ? node.parent.openingElement.tagName.getText()
@@ -135,10 +190,10 @@ export function scanSource(file, source, extended = true) {
   return findings;
 }
 
-export function scanTree(frontendRoot = FRONTEND_ROOT, extended = true) {
+export function scanTree(frontendRoot = FRONTEND_ROOT, mode = 2) {
   const findings = [];
   for (const file of walk(frontendRoot)) {
-    findings.push(...scanSource(file, fs.readFileSync(file, "utf8"), extended));
+    findings.push(...scanSource(file, fs.readFileSync(file, "utf8"), mode));
   }
   return findings;
 }
@@ -165,13 +220,33 @@ function runSelftest() {
     "ternary-linked.tsx",
     `export const T = ({ row, ok }) => <td>{ok ? <EntityLink kind="vendor" id={row.vendor_id}/> : <EntityLink kind="driver" id={row.driverId}/>}</td>;`,
   );
+  const aliased = scanSource(
+    "aliased.tsx",
+    `export const T = ({ row }) => { const vendor = row.vendor_id; return <td>{vendor}</td>; };`,
+  );
+  const multiHopAlias = scanSource(
+    "multi-hop-alias.tsx",
+    `export const T = ({ row }) => { const first = row.vendor_id; const second = first; return <td>{second}</td>; };`,
+  );
+  const wrapperCall = scanSource(
+    "wrapper-call.tsx",
+    `export const T = ({ row }) => <td>{show(row.vendor_id)}</td>;`,
+  );
+  const linkedWrapper = scanSource(
+    "linked-wrapper.tsx",
+    `export const T = ({ row }) => <td>{show(<EntityLink kind="vendor" id={row.vendor_id}/>)}</td>;`,
+  );
   if (
     plain.length !== 1 ||
     linked.length !== 0 ||
     decoy.length !== 1 ||
     stringWrapped.length !== 1 ||
     ternaryPlain.length !== 1 ||
-    ternaryLinked.length !== 0
+    ternaryLinked.length !== 0 ||
+    aliased.length !== 1 ||
+    multiHopAlias.length !== 1 ||
+    wrapperCall.length !== 1 ||
+    linkedWrapper.length !== 0
   ) {
     console.error(
       "verify:entity-link-adoption --selftest FAIL",
@@ -182,6 +257,10 @@ function runSelftest() {
         stringWrapped: stringWrapped.length,
         ternaryPlain: ternaryPlain.length,
         ternaryLinked: ternaryLinked.length,
+        aliased: aliased.length,
+        multiHopAlias: multiHopAlias.length,
+        wrapperCall: wrapperCall.length,
+        linkedWrapper: linkedWrapper.length,
       },
     );
     process.exit(1);
@@ -189,6 +268,10 @@ function runSelftest() {
   console.log("verify:entity-link-adoption --selftest PASS String(row.vendor_id) rejected");
   console.log("verify:entity-link-adoption --selftest PASS plain ternary IDs rejected");
   console.log("verify:entity-link-adoption --selftest PASS EntityLink ternary branches accepted");
+  console.log("verify:entity-link-adoption --selftest PASS direct ID alias rejected");
+  console.log("verify:entity-link-adoption --selftest PASS multi-hop ID alias rejected");
+  console.log("verify:entity-link-adoption --selftest PASS wrapper call ID rejected");
+  console.log("verify:entity-link-adoption --selftest PASS wrapper around EntityLink accepted");
 }
 
 function main() {
@@ -197,36 +280,45 @@ function main() {
     return;
   }
 
-  const legacyFindings = scanTree(FRONTEND_ROOT, false);
-  const allFindings = scanTree(FRONTEND_ROOT, true);
+  const legacyFindings = scanTree(FRONTEND_ROOT, 0);
+  const wrapperFindings = scanTree(FRONTEND_ROOT, 1);
+  const allFindings = scanTree(FRONTEND_ROOT, 2);
   const legacyKeys = new Set(legacyFindings.map((finding) => `${finding.file}:${finding.line}:${finding.text}`));
-  const extendedFindings = allFindings.filter(
+  const extendedFindings = wrapperFindings.filter(
     (finding) => !legacyKeys.has(`${finding.file}:${finding.line}:${finding.text}`),
+  );
+  const wrapperKeys = new Set(wrapperFindings.map((finding) => `${finding.file}:${finding.line}:${finding.text}`));
+  const aliasWrapperFindings = allFindings.filter(
+    (finding) => !wrapperKeys.has(`${finding.file}:${finding.line}:${finding.text}`),
   );
   console.log("verify:entity-link-adoption (fail-closed ratchet)");
   console.log("Scanned apps/frontend/src for id-shaped values rendered without <EntityLink>/<Link>.");
   console.log(
     `Found ${legacyFindings.length} legacy candidate(s) (max ${MAX_BASELINE_FINDINGS}) and ` +
-      `${extendedFindings.length} String/ternary candidate(s) (max ${MAX_EXTENDED_FINDINGS}).`,
+      `${extendedFindings.length} String/ternary candidate(s) (max ${MAX_EXTENDED_FINDINGS}) and ` +
+      `${aliasWrapperFindings.length} alias/wrapper candidate(s) (max ${MAX_ALIAS_WRAPPER_FINDINGS}).`,
   );
 
   if (
     legacyFindings.length > MAX_BASELINE_FINDINGS ||
-    extendedFindings.length > MAX_EXTENDED_FINDINGS
+    extendedFindings.length > MAX_EXTENDED_FINDINGS ||
+    aliasWrapperFindings.length > MAX_ALIAS_WRAPPER_FINDINGS
   ) {
-    for (const f of [...legacyFindings, ...extendedFindings]) {
+    for (const f of [...legacyFindings, ...extendedFindings, ...aliasWrapperFindings]) {
       console.error(`  ${f.file}:${f.line}  <${f.tag}>  ${f.text}`);
     }
     const legacyIncrease = Math.max(0, legacyFindings.length - MAX_BASELINE_FINDINGS);
     const extendedIncrease = Math.max(0, extendedFindings.length - MAX_EXTENDED_FINDINGS);
-    console.error(`verify:entity-link-adoption FAIL — ${legacyIncrease + extendedIncrease} new candidate(s) exceed locked baselines`);
+    const aliasWrapperIncrease = Math.max(0, aliasWrapperFindings.length - MAX_ALIAS_WRAPPER_FINDINGS);
+    console.error(`verify:entity-link-adoption FAIL — ${legacyIncrease + extendedIncrease + aliasWrapperIncrease} new candidate(s) exceed locked baselines`);
     process.exit(1);
   }
 
   console.log(
     `verify:entity-link-adoption PASS — no regression (` +
       `${MAX_BASELINE_FINDINGS - legacyFindings.length} legacy and ` +
-      `${MAX_EXTENDED_FINDINGS - extendedFindings.length} extended finding(s) below baseline)`,
+      `${MAX_EXTENDED_FINDINGS - extendedFindings.length} extended and ` +
+      `${MAX_ALIAS_WRAPPER_FINDINGS - aliasWrapperFindings.length} alias/wrapper finding(s) below baseline)`,
   );
 }
 
