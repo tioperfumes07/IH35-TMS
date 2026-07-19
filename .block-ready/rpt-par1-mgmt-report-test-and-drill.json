@@ -25,7 +25,7 @@
     "apps/frontend/src/routes/manifest.tsx",
     "apps/frontend/src/components/home/__tests__/QboSyncHealthCard.test.tsx",
     "scripts/verify-mgmt-report-aging-drill.mjs",
-    "scripts/verify-steps/913-verify-mgmt-report-aging-drill.mjs",
+    "scripts/verify-steps/927-verify-mgmt-report-aging-drill.mjs",
     "scripts/__tests__/verify-mgmt-report-aging-drill.test.mjs",
     ".block-ready/rpt-par1-mgmt-report-test-and-drill.json"
   ],
@@ -47,7 +47,7 @@
       "check": "InvoicesListPage bidirectionally syncs customer_id/status/has_balance with searchParams; no client-only with_balance page slice"
     },
     {
-      "check": "Rule-17 auto-discovered guard scripts/verify-mgmt-report-aging-drill.mjs + verify-steps/913 + --selftest fail-closed"
+      "check": "Rule-17 auto-discovered guard scripts/verify-mgmt-report-aging-drill.mjs + verify-steps/927 + --selftest fail-closed"
     }
   ],
   "note": "No schema/migration/posting/GL changes. Additive list filter + UI drill + tests + static guard only. Keep draft/HOLD — do not merge."
