@@ -30,6 +30,7 @@ import { VENDOR_CATEGORY_VALUES, type VendorCategoryValue } from "../lib/vendorC
 import { SelectCombobox } from "../components/shared/SelectCombobox";
 import { BillSelect } from "../components/ap/BillSelect";
 import { emptyVendorProfileMeta, parseVendorNotes, serializeVendorNotes, type VendorProfileMeta } from "../lib/vendorProfileMeta";
+import { useUrlSort } from "../hooks/useUrlSort";
 
 type SaferEntityStatus = {
   id: string;
@@ -75,6 +76,17 @@ export function VendorDetailPage() {
   const { user } = useAuth();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  // BANK-SORT-ROLLOUT-ACCT — payments + bills share the A/P tab; distinct URL prefixes required.
+  const {
+    sortKey: paySortKey,
+    sortDirection: paySortDirection,
+    onSortChange: onPaySortChange,
+  } = useUrlSort({ key: "pay_sort", dir: "pay_dir" });
+  const {
+    sortKey: billSortKey,
+    sortDirection: billSortDirection,
+    onSortChange: onBillSortChange,
+  } = useUrlSort({ key: "bill_sort", dir: "bill_dir" });
   const [activeTab, setActiveTab] = useState<VendorTab>("Profile");
   const [billPayOpen, setBillPayOpen] = useState(false);
   const [billPayDate, setBillPayDate] = useState(() => new Date().toISOString().slice(0, 10));
@@ -1025,6 +1037,9 @@ export function VendorDetailPage() {
                 storageKey="vendor-detail-bill-payments"
                 emptyText="No payments recorded."
                 exportFilename="vendor-bill-payments"
+                sortKey={paySortKey}
+                sortDirection={paySortDirection}
+                onSortChange={onPaySortChange}
                 columns={[
                   { key: "payment_date", label: "Date", sortable: true, render: (p) => p.payment_date },
                   { key: "amount_cents", label: "Amount", sortable: true, cellClass: "text-right tabular-nums", render: (p) => money.format(p.amount_cents / 100) },
@@ -1032,10 +1047,11 @@ export function VendorDetailPage() {
                   {
                     key: "amount_applied_cents",
                     label: "Applied",
+                    sortable: true,
                     cellClass: "text-right tabular-nums",
                     render: (p) => (p.amount_applied_cents != null ? money.format(p.amount_applied_cents / 100) : "—"),
                   },
-                  { key: "reference", label: "Reference", render: (p) => p.reference ?? "—" },
+                  { key: "reference", label: "Reference", sortable: true, render: (p) => p.reference ?? "—" },
                 ]}
               />
             )}
@@ -1049,8 +1065,17 @@ export function VendorDetailPage() {
               storageKey="vendor-detail-bills"
               emptyText="No bills for this vendor."
               exportFilename="vendor-bills"
+              sortKey={billSortKey}
+              sortDirection={billSortDirection}
+              onSortChange={onBillSortChange}
               columns={[
-                { key: "bill_number", label: "Bill #", render: (b) => <EntityLink kind="bill" id={b.id} label={b.bill_number ?? b.id.slice(0, 8)} /> },
+                {
+                  key: "bill_number",
+                  label: "Bill #",
+                  sortable: true,
+                  sortValue: (b) => b.bill_number ?? b.id,
+                  render: (b) => <EntityLink kind="bill" id={b.id} label={b.bill_number ?? b.id.slice(0, 8)} />,
+                },
                 { key: "bill_date", label: "Date", sortable: true, render: (b) => b.bill_date },
                 { key: "due_date", label: "Due", sortable: true, render: (b) => b.due_date ?? "—" },
                 { key: "amount_cents", label: "Amount", sortable: true, cellClass: "text-right tabular-nums", render: (b) => money.format(b.amount_cents / 100) },
@@ -1059,6 +1084,7 @@ export function VendorDetailPage() {
                   label: "Balance",
                   sortable: true,
                   cellClass: "text-right tabular-nums",
+                  sortValue: (b) => b.balance_cents ?? b.amount_cents - b.paid_cents,
                   render: (b) => money.format((b.balance_cents ?? b.amount_cents - b.paid_cents) / 100),
                 },
                 { key: "status", label: "Status", sortable: true, render: (b) => b.status },

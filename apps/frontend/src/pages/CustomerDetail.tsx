@@ -78,6 +78,7 @@ import { StatusBadge } from "../components/layout/StatusBadge";
 import { MissingRequiredChip } from "../components/compliance/MissingRequiredChip";
 import { SelectCombobox } from "../components/shared/SelectCombobox";
 import { scrubQboArchiveProjectionNotes } from "../lib/qboArchiveNotes";
+import { useUrlSort } from "../hooks/useUrlSort";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { useListState } from "../components/list-state";
 import { EntityLink } from "../components/shared/EntityLink";
@@ -349,6 +350,27 @@ export function CustomerDetailPage() {
   const { pushToast } = useToast();
   const { user } = useAuth();
   const { selectedCompanyId } = useCompanyContext();
+  // BANK-SORT-ROLLOUT-ACCT — distinct URL prefixes so Loads / Contacts / Payments / Lanes never fight.
+  const {
+    sortKey: loadSortKey,
+    sortDirection: loadSortDirection,
+    onSortChange: onLoadSortChange,
+  } = useUrlSort({ key: "load_sort", dir: "load_dir" });
+  const {
+    sortKey: contactSortKey,
+    sortDirection: contactSortDirection,
+    onSortChange: onContactSortChange,
+  } = useUrlSort({ key: "contact_sort", dir: "contact_dir" });
+  const {
+    sortKey: paySortKey,
+    sortDirection: paySortDirection,
+    onSortChange: onPaySortChange,
+  } = useUrlSort({ key: "pay_sort", dir: "pay_dir" });
+  const {
+    sortKey: laneSortKey,
+    sortDirection: laneSortDirection,
+    onSortChange: onLaneSortChange,
+  } = useUrlSort({ key: "lane_sort", dir: "lane_dir" });
 
   const [activeTab, setActiveTab] = useState<CustomerTab>("Profile");
   const [pnlRange, setPnlRange] = useState(trailing12mRange);
@@ -1649,6 +1671,9 @@ export function CustomerDetailPage() {
             emptyText="No loads for this customer yet."
             exportFilename="customer-loads"
             onRowClick={(load) => navigate(`/dispatch/loads/${load.id}`)}
+            sortKey={loadSortKey}
+            sortDirection={loadSortDirection}
+            onSortChange={onLoadSortChange}
             columns={[
               {
                 key: "load_number",
@@ -1665,9 +1690,25 @@ export function CustomerDetailPage() {
                 sortable: true,
                 render: (load) => <StatusBadge variant={loadStatusVariant(load.status)}>{load.status ?? "—"}</StatusBadge>,
               },
-              { key: "lane", label: "Lane", render: (load) => `${load.first_pickup_city ?? "—"} → ${load.first_delivery_city ?? "—"}` },
-              { key: "assigned_primary_driver_name", label: "Driver", render: (load) => load.assigned_primary_driver_name ?? "—" },
-              { key: "assigned_unit_number", label: "Unit", render: (load) => load.assigned_unit_number ?? "—" },
+              {
+                key: "lane",
+                label: "Lane",
+                sortable: true,
+                sortValue: (load) => `${load.first_pickup_city ?? ""} → ${load.first_delivery_city ?? ""}`,
+                render: (load) => `${load.first_pickup_city ?? "—"} → ${load.first_delivery_city ?? "—"}`,
+              },
+              {
+                key: "assigned_primary_driver_name",
+                label: "Driver",
+                sortable: true,
+                render: (load) => load.assigned_primary_driver_name ?? "—",
+              },
+              {
+                key: "assigned_unit_number",
+                label: "Unit",
+                sortable: true,
+                render: (load) => load.assigned_unit_number ?? "—",
+              },
               {
                 key: "rate_total_cents",
                 label: "Rate",
@@ -1767,6 +1808,9 @@ export function CustomerDetailPage() {
             storageKey="customer-detail-contacts"
             emptyText="No contacts on file. Add via Edit Customer."
             exportFilename="customer-contacts"
+            sortKey={contactSortKey}
+            sortDirection={contactSortDirection}
+            onSortChange={onContactSortChange}
             toolbar={
               canManageContacts ? (
                 <Button
@@ -1826,11 +1870,35 @@ export function CustomerDetailPage() {
             }
             columns={[
               { key: "name", label: "Name", sortable: true, render: (contact) => contact.name },
-              { key: "role", label: "Role", render: (contact) => contact.title || contact.department },
-              { key: "phone", label: "Phone", render: (contact) => contact.phone || contact.mobile || "-" },
+              {
+                key: "role",
+                label: "Role",
+                sortable: true,
+                sortValue: (contact) => contact.title || contact.department || "",
+                render: (contact) => contact.title || contact.department,
+              },
+              {
+                key: "phone",
+                label: "Phone",
+                sortable: true,
+                sortValue: (contact) => contact.phone || contact.mobile || "",
+                render: (contact) => contact.phone || contact.mobile || "-",
+              },
               { key: "email", label: "Email", sortable: true, render: (contact) => contact.email || "-" },
-              { key: "is_primary", label: "Primary", render: (contact) => (contact.is_primary ? "Yes" : "No") },
-              { key: "status", label: "Status", render: (contact) => (contact.deactivated_at ? "Inactive" : "Active") },
+              {
+                key: "is_primary",
+                label: "Primary",
+                sortable: true,
+                sortValue: (contact) => (contact.is_primary ? 1 : 0),
+                render: (contact) => (contact.is_primary ? "Yes" : "No"),
+              },
+              {
+                key: "status",
+                label: "Status",
+                sortable: true,
+                sortValue: (contact) => (contact.deactivated_at ? "Inactive" : "Active"),
+                render: (contact) => (contact.deactivated_at ? "Inactive" : "Active"),
+              },
             ]}
           />
         </DataPanel>
@@ -2017,6 +2085,9 @@ export function CustomerDetailPage() {
                 storageKey="customer-detail-payments"
                 emptyText="No payments recorded."
                 exportFilename="customer-payments"
+                sortKey={paySortKey}
+                sortDirection={paySortDirection}
+                onSortChange={onPaySortChange}
                 rowActions={(p) =>
                   canUnapplyCustomerPayment ? (
                     <button
@@ -2031,17 +2102,19 @@ export function CustomerDetailPage() {
                 columns={[
                   { key: "date", label: "Date", sortable: true, render: (p) => p.date },
                   { key: "amount_cents", label: "Amount", sortable: true, cellClass: "text-right tabular-nums", render: (p) => formatCurrencyCents(p.amount_cents) },
-                  { key: "source_kind", label: "Method", render: (p) => p.source_kind ?? "—" },
+                  { key: "source_kind", label: "Method", sortable: true, render: (p) => p.source_kind ?? "—" },
                   {
                     key: "applied",
                     label: "Applied",
+                    sortable: true,
                     cellClass: "text-right tabular-nums",
+                    sortValue: (p) => p.applied_to_invoices?.reduce((sum, inv) => sum + inv.amount_cents, 0) ?? 0,
                     render: (p) => {
                       const appliedTotal = p.applied_to_invoices?.reduce((sum, inv) => sum + inv.amount_cents, 0) ?? 0;
                       return appliedTotal > 0 ? formatCurrencyCents(appliedTotal) : "—";
                     },
                   },
-                  { key: "qbo_payment_id", label: "Reference", render: (p) => p.qbo_payment_id ?? "—" },
+                  { key: "qbo_payment_id", label: "Reference", sortable: true, render: (p) => p.qbo_payment_id ?? "—" },
                 ]}
               />
             )}
@@ -2145,6 +2218,9 @@ export function CustomerDetailPage() {
             storageKey="customer-detail-lanes"
             emptyText="Add your first lane to track customer pricing."
             exportFilename="customer-lanes"
+            sortKey={laneSortKey}
+            sortDirection={laneSortDirection}
+            onSortChange={onLaneSortChange}
             toolbar={
               canManageLanes ? (
                 <Button
@@ -2197,16 +2273,35 @@ export function CustomerDetailPage() {
             }
             columns={[
               { key: "lane_label", label: "Lane", sortable: true, render: (lane) => lane.lane_label },
-              { key: "origin", label: "Origin", render: (lane) => `${lane.origin_city}, ${lane.origin_state}` },
-              { key: "destination", label: "Destination", render: (lane) => `${lane.destination_city}, ${lane.destination_state}` },
+              {
+                key: "origin",
+                label: "Origin",
+                sortable: true,
+                sortValue: (lane) => `${lane.origin_city}, ${lane.origin_state}`,
+                render: (lane) => `${lane.origin_city}, ${lane.origin_state}`,
+              },
+              {
+                key: "destination",
+                label: "Destination",
+                sortable: true,
+                sortValue: (lane) => `${lane.destination_city}, ${lane.destination_state}`,
+                render: (lane) => `${lane.destination_city}, ${lane.destination_state}`,
+              },
               { key: "typical_miles", label: "Miles", sortable: true, render: (lane) => lane.typical_miles ?? "-" },
               { key: "base_rate_cents", label: "Base Rate", sortable: true, render: (lane) => formatUsdCents(Number(lane.base_rate_cents ?? 0)) },
               {
                 key: "fsc_per_mile_cents",
                 label: "FSC/mi",
+                sortable: true,
                 render: (lane) => (lane.fsc_per_mile_cents == null ? "-" : `$${(lane.fsc_per_mile_cents / 100).toFixed(2)}`),
               },
-              { key: "status", label: "Status", render: (lane) => (lane.deactivated_at ? "Inactive" : "Active") },
+              {
+                key: "status",
+                label: "Status",
+                sortable: true,
+                sortValue: (lane) => (lane.deactivated_at ? "Inactive" : "Active"),
+                render: (lane) => (lane.deactivated_at ? "Inactive" : "Active"),
+              },
             ]}
           />
         </div>
