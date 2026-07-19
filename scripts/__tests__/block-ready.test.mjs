@@ -758,6 +758,9 @@ test("readVerifyMeta returns db_gated, c5_skip_after_c4, and orchestrator skip l
   assert.ok(Array.isArray(meta.block_ready_c5_skip_orchestrators));
   assert.ok(meta.block_ready_c5_skip_orchestrators.includes("verify:local-ci"));
   assert.ok(meta.block_ready_c5_skip_orchestrators.includes("verify:static"));
+  assert.deepEqual(meta.server_required_guard_capabilities["verify:hold-merge-gate"], [
+    "pull-request-metadata",
+  ]);
 });
 
 test("C5 honors block_ready_c5_skip_after_c4 for verify:arch-design", () => {
@@ -777,4 +780,11 @@ test("C5 still runs verify scripts not in skip-after-c4 or orchestrator sets", (
   const meta = readVerifyMeta(REPO_ROOT);
   assert.equal(shouldSkipC5VerifyScript("verify:nav-integrity", meta), false);
   assert.equal(shouldSkipC5VerifyScript("verify:fixture-other", meta), false);
+});
+
+test("C5 delegates server-required PR metadata to verify:static and authoritative CI", () => {
+  const meta = readVerifyMeta(REPO_ROOT);
+  assert.equal(shouldSkipC5VerifyScript("verify:hold-merge-gate", meta), true);
+  assert.equal(shouldSkipC5VerifyScript("verify:pass-8-clean-baseline", meta), true);
+  assert.match(getC5SkipReason("verify:hold-merge-gate", meta) ?? "", /server-required/);
 });

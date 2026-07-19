@@ -3,7 +3,7 @@
   "status": "HOLD",
   "classification": "FINANCIAL",
   "phase": "tier1",
-  "task": "PR #2705 replaces host-UTC accounting date defaults with one transaction-scoped company business date and makes driver-settlement cancellation atomic across canonical posting reversals, bills, bill payments, bank balance, driver bills, operational deductions, deduction buckets, GL reconciliation, settlement state, and audit. It reuses existing posting, journal-entry reversal, bill void, and deduction bucket reversal services; adds no GL math, schema, migration, QBO write-back, or flag change. Full block-ready also exposed external Redis state in a bulk test and an IFTA guard that demanded non-final Q3 rates before the official 2026-09-04 posting date; those branch changes isolate the test and follow the official IFTA 2026-2028 final-rate calendar. Current main supplies the acyclic C5 and deterministic QBO-clock repairs from #2709.",
+  "task": "PR #2705 replaces host-UTC accounting date defaults with one transaction-scoped company business date and makes driver-settlement cancellation atomic across canonical posting reversals, bills, bill payments, bank balance, driver bills, operational deductions, deduction buckets, GL reconciliation, settlement state, and audit. It reuses existing posting, journal-entry reversal, bill void, and deduction bucket reversal services; adds no GL math, schema, migration, QBO write-back, or flag change. Full block-ready also exposed external Redis state in a bulk test, an IFTA guard that demanded non-final Q3 rates before the official 2026-09-04 posting date, and C5 locally re-running server-only approval guards after verify:static. Those changes isolate the test, follow the official IFTA 2026-2028 final-rate calendar, and delegate PR-label/PASS-8 authority to required CI while retaining #2709's acyclic C5 ownership.",
   "branch": "hold/0091-g6-1-business-date-20260718",
   "lane": "B",
   "source": "MASTER-6 authored dispatch (03-TIER1-BLOCKS)",
@@ -26,7 +26,9 @@
     "apps/backend/src/governance/__tests__/void-cancel-requests.test.ts",
     "apps/backend/src/governance/void-cancel-executors.ts",
     "apps/backend/src/lib/__tests__/company-business-date.test.ts",
+    "scripts/__tests__/block-ready.test.mjs",
     "scripts/__tests__/verify-step-fail-closed-907-909.test.mjs",
+    "scripts/block-ready.mjs",
     "scripts/verify-acct-posting-business-date.mjs",
     "scripts/verify-je-void-reverses-not-voids.mjs",
     "scripts/verify-ifta-tax-rates-current.mjs",
@@ -72,6 +74,10 @@
     {
       "kind": "test-isolation",
       "check": "bulk-update.factory rate-limit test explicitly mocks Redis unavailable and uses a unique valid user key; it deterministically verifies the in-memory fallback without external or persistent Redis state."
+    },
+    {
+      "kind": "pipeline",
+      "check": "block-ready C5 preserves #2709's acyclic orchestrator ownership and skips server-required PR-metadata/PASS-8 guards only after verify:static validates their authoritative required-CI capability mapping."
     },
     {
       "kind": "compliance-guard",
