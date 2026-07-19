@@ -3,6 +3,9 @@
   "status": "BUILD",
   "classification": "FINANCIAL",
   "phase": "tier3",
+  "task": "RPT-PAR-1: add behavioral tests for ManagementReportPackagePage; fix A/R and A/P aging row drill-through to invoice/bill lists filtered by customer/vendor + existing status contracts (with_balance / unpaid); preserve Customer profile, Vendor profile, and Pay-now additively; seed InvoicesListPage ?status= deep-link; Rule-17 auto-discovered fail-closed guard + selftest. No schema/migration/posting/GL changes.",
+  "branch": "cursor/management-report-drill-through-tests-ad9d",
+  "lane": "CLOUD",
   "source": "MASTER-6 authored dispatch (06-TIER3-BLOCKS)",
   "source_file": "rpt-par1-mgmt-report-test-and-drill.txt",
   "allowed_files": [
@@ -14,12 +17,16 @@
     "apps/frontend/src/pages/accounting/InvoicesListPage.tsx",
     "apps/frontend/src/pages/accounting/__tests__/InvoicesListPage.statusDeeplink.test.tsx",
     "apps/frontend/src/routes/manifest.tsx",
-    "scripts/verify-mgmt-report-aging-drill.mjs",
-    "scripts/verify-steps/910-verify-mgmt-report-aging-drill.mjs",
-    "scripts/__tests__/verify-mgmt-report-aging-drill.test.mjs",
     "apps/frontend/src/components/home/__tests__/QboSyncHealthCard.test.tsx",
+    "scripts/verify-mgmt-report-aging-drill.mjs",
+    "scripts/verify-steps/912-verify-mgmt-report-aging-drill.mjs",
+    "scripts/__tests__/verify-mgmt-report-aging-drill.test.mjs",
     ".block-ready/rpt-par1-mgmt-report-test-and-drill.json"
   ],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
   "acceptance": [
     {
       "check": "ManagementReportPackagePage behavioral tests cover packages, entity scoping, keyboard/a11y, and existing ?type= route contract"
@@ -34,9 +41,8 @@
       "check": "InvoicesListPage honors ?status= deep-link (with_balance) so AR drill lands filtered; no invented query params"
     },
     {
-      "check": "Rule-17 auto-discovered guard scripts/verify-mgmt-report-aging-drill.mjs + verify-steps/910 + --selftest fail-closed"
+      "check": "Rule-17 auto-discovered guard scripts/verify-mgmt-report-aging-drill.mjs + verify-steps/912 + --selftest fail-closed"
     }
   ],
-  "guard_required": true,
-  "note": "No schema/migration/posting/GL changes. Additive UI drill + tests + static guard only."
+  "note": "No schema/migration/posting/GL changes. Additive UI drill + tests + static guard only. QboSyncHealthCard test timer pin unblocks verify:static wall-clock flake on main."
 }
