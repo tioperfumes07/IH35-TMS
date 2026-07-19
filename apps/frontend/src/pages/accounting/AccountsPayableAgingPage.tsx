@@ -84,12 +84,41 @@ export function AccountsPayableAgingPage() {
   });
   const vendors = useMemo(() => query.data?.vendors ?? [], [query.data?.vendors]);
 
-  // ACCT-2 (Path A): only claim a QBO tie when the read-only mirror has actually synced. Until the owner
-  // enables the QBO A/P mirror pull, name the real source (TMS bills) instead of falsely asserting a QBO tie.
-  const qboSyncedAt = query.data?.qbo_synced_at ?? null;
-  const apSubtitle = qboSyncedAt
-    ? `What we owe vendors — synced from QuickBooks as of ${formatDateUS(qboSyncedAt)}.`
-    : "What we owe vendors — from TMS bills. QBO A/P mirror not yet enabled.";
+  // ACCOUNTING-2: TMS bills are the internal aging basis. QBO mirror status is separate provenance —
+  // never invent a QBO tie; never claim matched when as_of is historical or mirror N/A.
+  const qboMirror = query.data?.qbo_mirror;
+  const qboSyncedAt = qboMirror?.last_synced_at ?? query.data?.qbo_synced_at ?? null;
+  const apSubtitle = "What we owe vendors — from TMS bills (canonical A/P subledger).";
+  const emptyMessage = (() => {
+    switch (query.data?.empty_state) {
+      case "no_unpaid_bills_mirror_disabled":
+        return "No open A/P in TMS bills. QBO A/P mirror pull is OFF for this entity — empty is not proof QBO has $0.";
+      case "no_unpaid_bills_mirror_absent":
+        return "No open A/P in TMS bills. QBO A/P mirror has never synced — empty is not proof QBO has $0.";
+      case "no_unpaid_bills_mirror_stale":
+        return "No open A/P in TMS bills. QBO A/P mirror is stale — re-check after the next inbound pull.";
+      default:
+        return "No open A/P in TMS bills.";
+    }
+  })();
+  const freshnessLabel =
+    qboMirror?.freshness === "fresh" ? "fresh" : qboMirror?.freshness === "stale" ? "stale" : "never-synced";
+  const signedDelta = qboMirror?.reconcile.delta_cents;
+  const deltaLabel =
+    signedDelta == null
+      ? "n/a"
+      : `${signedDelta > 0 ? "+" : ""}${(signedDelta / 100).toLocaleString("en-US", {
+          style: "currency",
+          currency: "USD",
+        })}`;
+  const reconcileLabel = (() => {
+    const status = qboMirror?.reconcile.status;
+    if (!status || status === "unavailable") return "n/a (mirror unavailable)";
+    if (status === "incomparable") return "n/a (historical as-of — mirror is current-only)";
+    if (status === "uncompared") return "n/a (not yet comparable)";
+    if (status === "matched") return "matched";
+    return "divergent";
+  })();
 
   const typeFiltered = useMemo(
     () => (typeFilter === "all" ? vendors : vendors.filter((v) => v.display_group === typeFilter)),
@@ -187,6 +216,38 @@ export function AccountsPayableAgingPage() {
         </div>
       </div>
 
+      <div
+        className="mb-3 grid gap-1 rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-600 print:hidden"
+        data-testid="ap-aging-qbo-mirror-status"
+      >
+        <div>
+          Internal basis: <span className="font-semibold text-slate-800">TMS bills</span>
+          {query.data?.as_of_is_historical ? (
+            <span className="ml-2 text-slate-600">(historical as-of — open reconstructed via as-of payments + credits)</span>
+          ) : null}
+        </div>
+        <div>
+          QBO mirror pull:{" "}
+          <span className="font-semibold text-slate-800">{qboMirror?.pull_enabled ? "ON" : "OFF"}</span>
+          {" · "}
+          projection:{" "}
+          <span className="font-semibold text-slate-800">{qboMirror?.projection_enabled ? "ON" : "OFF"}</span>
+          {" · "}
+          freshness: <span className="font-semibold text-slate-800">{freshnessLabel}</span>
+          {qboSyncedAt ? ` (${formatDateUS(qboSyncedAt)})` : ""}
+        </div>
+        <div>
+          Reconcile: <span className="font-semibold text-slate-800">{reconcileLabel}</span>
+          {qboMirror?.reconcile_applicable ? (
+            <>
+              {" · "}signed Δ (TMS − mirror): <span className="font-semibold tabular-nums text-slate-800">{deltaLabel}</span>
+            </>
+          ) : (
+            <span className="ml-1 text-slate-500">— no match claim when source N/A or as-of is historical</span>
+          )}
+        </div>
+      </div>
+
       {query.isLoading ? (
         <div className="px-3 py-6 text-sm text-slate-500">Loading A/P aging…</div>
       ) : query.isError ? (
@@ -220,7 +281,16 @@ export function AccountsPayableAgingPage() {
                     {table.visibleColumns.map((col) => (
                       <td key={col.key} className={MONEY_KEYS.includes(col.key as (typeof MONEY_KEYS)[number]) ? moneyCellClass(col.key) : "px-2 py-1.5"}>
                         {col.key === "vendor" ? (
-                          v.vendor_id ? <Link to={`/vendors/${v.vendor_id}`} className="font-medium text-slate-700 hover:underline">{v.vendor_name}</Link> : <span className="font-medium">{v.vendor_name}</span>
+                          v.vendor_id ? (
+                            <span className="inline-flex flex-col gap-0.5">
+                              <Link to={`/vendors/${v.vendor_id}`} className="font-medium text-slate-700 hover:underline">{v.vendor_name}</Link>
+                              <Link to={`/accounting/bills?vendor_id=${v.vendor_id}&status=unpaid`} className="text-[10px] font-medium text-slate-500 hover:underline">
+                                Open bills
+                              </Link>
+                            </span>
+                          ) : (
+                            <span className="font-medium">{v.vendor_name}</span>
+                          )
                         ) : col.key === "type" ? (
                           <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${GROUP_CHIP[v.display_group]}`}>{v.display_group}</span>
                         ) : (
@@ -230,7 +300,7 @@ export function AccountsPayableAgingPage() {
                     ))}
                   </tr>
                 ))}
-                {table.paged.length === 0 ? <tr><td colSpan={table.visibleColumns.length} className="px-3 py-6 text-center text-slate-500">No open A/P.</td></tr> : null}
+                {table.paged.length === 0 ? <tr><td colSpan={table.visibleColumns.length} className="px-3 py-6 text-center text-slate-500">{emptyMessage}</td></tr> : null}
               </tbody>
               <tfoot>
                 <tr className="border-t-2 border-slate-300 bg-slate-50 font-semibold">
@@ -268,7 +338,7 @@ export function AccountsPayableAgingPage() {
                 {groups.map(({ group, rows, subtotal }) => (
                   <GroupBlock key={group} group={group} rows={rows} subtotal={subtotal} open={expanded.has(group)} onToggle={() => toggleGroup(group)} />
                 ))}
-                {groups.length === 0 ? <tr><td colSpan={7} className="px-3 py-6 text-center text-slate-500">No open A/P.</td></tr> : null}
+                {groups.length === 0 ? <tr><td colSpan={7} className="px-3 py-6 text-center text-slate-500">{emptyMessage}</td></tr> : null}
               </tbody>
               <tfoot>
                 <tr className="border-t-2 border-slate-300 bg-slate-50 font-semibold">
@@ -298,7 +368,16 @@ function GroupBlock({ group, rows, subtotal, open, onToggle }: { group: ApAgingD
         ? rows.map((v) => (
             <tr key={v.vendor_id ?? v.vendor_name} className="border-t border-slate-100 hover:bg-slate-50">
               <td className="px-2 py-1.5 pl-7">
-                {v.vendor_id ? <Link to={`/vendors/${v.vendor_id}`} className="text-slate-700 hover:underline">{v.vendor_name}</Link> : v.vendor_name}
+                {v.vendor_id ? (
+                  <span className="inline-flex flex-col gap-0.5">
+                    <Link to={`/vendors/${v.vendor_id}`} className="text-slate-700 hover:underline">{v.vendor_name}</Link>
+                    <Link to={`/accounting/bills?vendor_id=${v.vendor_id}&status=unpaid`} className="text-[10px] font-medium text-slate-500 hover:underline">
+                      Open bills
+                    </Link>
+                  </span>
+                ) : (
+                  v.vendor_name
+                )}
               </td>
               {MONEY_KEYS.map((k) => <td key={k} className={moneyCellClass(k)}>{money(amount(v, k))}</td>)}
             </tr>

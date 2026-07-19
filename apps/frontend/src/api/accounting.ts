@@ -1003,12 +1003,43 @@ export type ApAgingTotals = {
   d90_plus: number;
   total_outstanding: number;
 };
+export type ApAgingQboMirrorStatus = {
+  available: boolean;
+  table_present: boolean;
+  pull_enabled: boolean;
+  projection_enabled: boolean;
+  reconcile_applicable: boolean;
+  last_synced_at: string | null;
+  freshness: "never" | "fresh" | "stale";
+  stale_after_seconds: number;
+  row_count: number;
+  open_balance_cents: number;
+  reconcile: {
+    status: "unavailable" | "uncompared" | "incomparable" | "matched" | "divergent";
+    tms_open_cents: number;
+    mirror_open_cents: number;
+    delta_cents: number;
+  };
+};
+
+export type ApAgingEmptyState =
+  | "has_rows"
+  | "no_unpaid_bills"
+  | "no_unpaid_bills_mirror_absent"
+  | "no_unpaid_bills_mirror_stale"
+  | "no_unpaid_bills_mirror_disabled";
+
 export type ApAgingResponse = {
   vendors: ApAgingVendor[];
   totals: ApAgingTotals;
   basis?: string;
-  // ACCT-2: last QBO A/P mirror sync for this entity; null until the read-only pull runs (flags OFF).
+  internal_basis?: "accounting.bills";
+  as_of_date?: string;
+  as_of_is_historical?: boolean;
+  empty_state?: ApAgingEmptyState;
+  // ACCT-2 back-compat; prefer qbo_mirror.last_synced_at.
   qbo_synced_at?: string | null;
+  qbo_mirror?: ApAgingQboMirrorStatus;
 };
 export function getApAgingByVendor(operatingCompanyId: string, asOfDate: string) {
   return apiRequest<ApAgingResponse>(
