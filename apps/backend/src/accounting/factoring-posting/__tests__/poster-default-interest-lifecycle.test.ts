@@ -39,7 +39,7 @@ const {
 
 vi.mock("../../../auth/db.js", () => ({ withLuciaBypass: mockWithLuciaBypass, withCurrentUser: mockWithCurrentUser }));
 vi.mock("../../../lib/feature-flags/service.js", () => ({ isEnabled: mockIsEnabled }));
-vi.mock("../../journal-entries.service.js", () => ({ createJournalEntry: mockCreateJournalEntry, enqueueJournalEntrySideEffects: vi.fn(async () => undefined) }));
+vi.mock("../../journal-entries.service.js", () => ({ createJournalEntry: mockCreateJournalEntry, createJournalEntryOnClient: mockCreateJournalEntry, enqueueJournalEntrySideEffects: vi.fn(async () => undefined) }));
 vi.mock("../../posting-engine.service.js", () => ({ ensureOpenPeriod: vi.fn(async () => undefined) }));
 vi.mock("../../accounting-spine-emit.js", () => ({ writeTransactionSourceLink: vi.fn(async () => undefined) }));
 vi.mock("../../coa-roles/resolver.service.js", () => ({ resolveRoleAccount: mockResolveRoleAccount }));
@@ -61,17 +61,33 @@ function installDefaults(opts: { flagOn?: boolean; accrual?: AccrualState } = {}
 
   mockIsEnabled.mockResolvedValue(flagOn);
   mockResolveRoleAccount.mockImplementation(async (_c: unknown, _o: string, role: string) => role);
-  mockCreateJournalEntry.mockImplementation(async (_input: unknown, _actor: unknown, options?: { afterInsertBeforeCommit?: (client: { query: typeof mockQuery }, header: { id: string }) => Promise<void> }) => {
-    const header = { id: "je-1" };
-    if (options?.afterInsertBeforeCommit) {
-      await options.afterInsertBeforeCommit({ query: mockQuery }, header);
+  mockCreateJournalEntry.mockImplementation(
+    async (...args: unknown[]) => {
+      const options = (args.length >= 4 ? args[3] : args[2]) as
+        | { afterInsertBeforeCommit?: (client: { query: typeof mockQuery }, header: { id: string }) => Promise<void> }
+        | undefined;
+      const client =
+        args.length >= 4
+          ? (args[0] as { query: typeof mockQuery })
+          : { query: mockQuery };
+      const header = { id: "je-1" };
+      if (options?.afterInsertBeforeCommit) {
+        await options.afterInsertBeforeCommit(client, header);
+      }
+      return header;
     }
-    return header;
-  });
+  );
   mockAppendCrudAudit.mockResolvedValue(undefined);
 
   mockQuery.mockImplementation(async (sql: string) => {
     if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
+    if (sql.includes("factoring_lifecycle_posting_keys")) {
+      if (sql.trim().startsWith("INSERT")) return { rows: [] };
+      return { rows: [] };
+    }
+    if (sql.includes("AS outstanding")) {
+      return { rows: [{ outstanding: "500000" }] };
+    }
     if (sql.includes("FROM accounting.factoring_advances") && sql.includes("invoice_total_cents")) {
       return {
         rows: [
@@ -102,7 +118,10 @@ function installDefaults(opts: { flagOn?: boolean; accrual?: AccrualState } = {}
       return { rows: c == null ? [] : [{ closing_balance_cents: String(c) }] };
     }
     if (sql.includes("INSERT INTO accounting.factoring_default_interest_accruals")) return { rows: [] };
-    if (sql.includes("FROM accounting.journal_entries") && sql.includes("memo = $2")) return { rows: [] };
+    if (sql.includes("FROM accounting.journal_entries")) {
+      return { rows: [] };
+    }
+    if (false && sql.includes("FROM accounting.journal_entries") && sql.includes("memo = $2")) return { rows: [] };
     return { rows: [] };
   });
 }

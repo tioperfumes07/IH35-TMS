@@ -216,4 +216,25 @@ describe("home-widgets FE↔BE response contract", () => {
     expect(fb.outstanding_cents).toBeNull();
     expect(fb.outstanding_cents).not.toBe(0);
   });
+
+  it("factoring-balance: orphan liability → unverifiable with diagnostics; headline null (never includes orphan cents)", async () => {
+    vi.spyOn(client, "apiRequest").mockResolvedValue({
+      status: "unverifiable",
+      unverifiable_reason: "orphan_unattributed_liability_role_legs",
+      outstanding_liability_cents: null,
+      reserve_receivable_cents: null,
+      diagnostics: {
+        orphan_liability_role_cents: 9_999_999,
+        outstanding_liability_signed_cents: 1_300_000,
+      },
+      totalCents: null,
+    } as never);
+    const fb = await fetchHomeFactoringBalance("c1");
+    expect(fb.status).toBe("unverifiable");
+    expect(fb.unverifiable_reason).toBe("orphan_unattributed_liability_role_legs");
+    expect(fb.outstanding_cents).toBeNull();
+    expect(fb.diagnostics?.orphan_liability_role_cents).toBe(9_999_999);
+    expect(fb.outstanding_cents).not.toBe(9_999_999);
+    expect(fb.outstanding_cents).not.toBe(1_300_000);
+  });
 });

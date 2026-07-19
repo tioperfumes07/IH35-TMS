@@ -349,6 +349,13 @@ export type HomeFactoringBalance = {
   invoices_factored: number | null;
   status?: "ok" | "empty" | "unverifiable" | "accounting_exception";
   unverifiable_reason?: string | null;
+  /** Signed diagnostics (orphan legs, anomalies) — never used as Faro headline. */
+  diagnostics?: {
+    orphan_liability_role_cents?: number;
+    orphan_reserve_role_cents?: number;
+    outstanding_liability_signed_cents?: number;
+    [key: string]: unknown;
+  } | null;
 };
 
 export type HomeWeeklyRevenuePoint = {
@@ -601,6 +608,10 @@ export async function fetchHomeFactoringBalance(companyId: string): Promise<Home
       status,
       unverifiable_reason:
         typeof raw.unverifiable_reason === "string" ? raw.unverifiable_reason : null,
+      diagnostics:
+        raw.diagnostics && typeof raw.diagnostics === "object"
+          ? (raw.diagnostics as HomeFactoringBalance["diagnostics"])
+          : null,
     };
   }
   const liability = nullableCents(

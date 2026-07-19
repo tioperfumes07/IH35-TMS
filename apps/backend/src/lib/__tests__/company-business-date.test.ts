@@ -50,4 +50,21 @@ describe("company-business-date", () => {
     const fallBackEvening = new Date("2026-11-02T05:30:00Z");
     expect(companyBusinessDate(fallBackEvening)).toBe("2026-11-01");
   });
+
+  it("Central midnight winter (CST): posting as-of must not use UTC date slice", () => {
+    // 2026-01-16T05:59:00Z = 2026-01-15 23:59 CST — UTC slice would be 01-16.
+    const winterPreMidnight = new Date("2026-01-16T05:59:00Z");
+    expect(winterPreMidnight.toISOString().slice(0, 10)).toBe("2026-01-16");
+    expect(companyBusinessDate(winterPreMidnight)).toBe("2026-01-15");
+    // 2026-01-16T06:01:00Z = 2026-01-16 00:01 CST
+    expect(companyBusinessDate(new Date("2026-01-16T06:01:00Z"))).toBe("2026-01-16");
+  });
+
+  it("Central midnight summer (CDT): posting as-of must not use UTC date slice", () => {
+    // 2026-07-15T04:59:00Z = 2026-07-14 23:59 CDT — UTC slice would be 07-15.
+    const summerPreMidnight = new Date("2026-07-15T04:59:00Z");
+    expect(summerPreMidnight.toISOString().slice(0, 10)).toBe("2026-07-15");
+    expect(companyBusinessDate(summerPreMidnight)).toBe("2026-07-14");
+    expect(companyBusinessDate(new Date("2026-07-15T05:01:00Z"))).toBe("2026-07-15");
+  });
 });

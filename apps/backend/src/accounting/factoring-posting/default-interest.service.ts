@@ -10,20 +10,20 @@
 //      post one compounding Dr Default-Interest-Expense / Cr Liability entry per missing calendar day, in
 //      ascending order so each day compounds off the committed prior day.
 //   2) triggerDay95RecourseForCompany — for each advance that hits the 95-day Repurchase Deadline still
-//      unpaid: catch interest up to today, then fire the chargeback poster (Dr Liability(full outstanding) /
-//      Cr Cash; Dr Recoursed-AR / Cr A/R) and flip the advance + its invoices to recourse_returned. Interest
-//      is passed as 0 to the chargeback because it is ALREADY expensed + already compounded into the
-//      liability by motion (1); the full outstanding liability (Net + accrued interest) is repaid to cash —
-//      re-debiting interest here would double-count the expense and strand the interest in the liability.
+//      unpaid: catch interest up to today, then fire the chargeback poster with EXACT linked outstanding
+//      liability + A/R (no guessed amounts). Status/subledger/audit land inside the chargeback's single
+//      caller-owned txn. Interest on the repay leg is 0 because daily accrual already compounded it into
+//      the liability.
 
 import { withLuciaBypass } from "../../auth/db.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
+import { companyBusinessDate } from "../../lib/company-business-date.js";
 import {
   FACTORING_GL_POSTING_FLAG,
+  loadExactLinkedChargebackAmounts,
   postFactoringChargebackEvent,
   postFactoringDefaultInterestAccrualEvent,
-  sumAccruedDefaultInterest,
 } from "./poster.service.js";
 import {
   FACTORING_INTEREST_ACCRUAL_AFTER_DAY,
@@ -48,12 +48,18 @@ type OutstandingAdvance = {
 };
 
 function ymd(iso: string): string {
-  return iso.slice(0, 10);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso;
+  return companyBusinessDate(new Date(iso));
 }
 
+/** Pure calendar-day arithmetic on YYYY-MM-DD (no UTC wall-clock / DST shift). */
 function addDays(ymdDate: string, days: number): string {
-  const base = Date.parse(`${ymdDate}T00:00:00.000Z`);
-  return new Date(base + days * 86_400_000).toISOString().slice(0, 10);
+  const [y, m, d] = ymdDate.slice(0, 10).split("-").map(Number);
+  const next = new Date(Date.UTC(y!, m! - 1, d! + days));
+  const yy = next.getUTCFullYear();
+  const mm = String(next.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(next.getUTCDate()).padStart(2, "0");
+  return `${yy}-${mm}-${dd}`;
 }
 
 async function companyPostingEnabled(client: DbClient, operatingCompanyId: string): Promise<boolean> {
@@ -81,7 +87,7 @@ async function selectOutstandingPastGrace(
         fa.display_id,
         fa.invoice_total_cents::text AS invoice_total_cents,
         fa.advanced_at::text          AS advanced_at,
-        (($2::date) - (fa.advanced_at::date))::text AS day_index,
+        (($2::date) - ((fa.advanced_at AT TIME ZONE 'America/Chicago')::date))::text AS day_index,
         (
           SELECT MAX(a.accrual_date)::text
           FROM accounting.factoring_default_interest_accruals a
@@ -93,7 +99,7 @@ async function selectOutstandingPastGrace(
       WHERE fa.operating_company_id = $1::uuid
         AND fa.status = 'advanced'
         AND fa.advanced_at IS NOT NULL
-        AND (($2::date) - (fa.advanced_at::date)) >= $3::int
+        AND (($2::date) - ((fa.advanced_at AT TIME ZONE 'America/Chicago')::date)) >= $3::int
       ORDER BY fa.advanced_at ASC
     `,
     [operatingCompanyId, asOf, minDayIndex]
@@ -142,7 +148,7 @@ export async function accrueDefaultInterestForCompany(input: {
   as_of_date_iso?: string;
   actor_user_id?: string;
 }): Promise<AccrualTickSummary> {
-  const asOf = ymd(input.as_of_date_iso ?? new Date().toISOString());
+  const asOf = ymd(input.as_of_date_iso ?? companyBusinessDate());
   const actorUserId = input.actor_user_id ?? SYSTEM_ACTOR_ID;
 
   const advances = await withLuciaBypass(async (client: DbClient) => {
@@ -167,7 +173,7 @@ export async function triggerDay95RecourseForCompany(input: {
   as_of_date_iso?: string;
   actor_user_id?: string;
 }): Promise<RecourseTickSummary> {
-  const asOf = ymd(input.as_of_date_iso ?? new Date().toISOString());
+  const asOf = ymd(input.as_of_date_iso ?? companyBusinessDate());
   const actorUserId = input.actor_user_id ?? SYSTEM_ACTOR_ID;
 
   const candidates = await withLuciaBypass(async (client: DbClient) => {
@@ -183,50 +189,29 @@ export async function triggerDay95RecourseForCompany(input: {
     // 1) Catch interest all the way up to today so the liability = Net + full accrued interest.
     await accrueThroughDateForAdvance(input.operating_company_id, advance, asOf, actorUserId);
 
-    // 2) Read the outstanding liability (Net + compounded interest). last_closing is null if nothing accrued
-    //    (e.g. interest rounded to 0) → fall back to Net.
-    const { last_closing_cents } = await sumAccruedDefaultInterest(input.operating_company_id, advance.id);
-    const outstandingLiability = last_closing_cents ?? advance.invoice_total_cents;
+    // 2) Exact linked outstanding amounts only — never guess from mutable status / invoice face alone.
+    const exact = await loadExactLinkedChargebackAmounts(input.operating_company_id, advance.id);
+    if (exact.liability_cents <= 0 || exact.recoursed_ar_cents <= 0) {
+      continue;
+    }
 
-    // 3) Fire the SHIPPED chargeback poster. chargeback = full outstanding liability; default_interest = 0
-    //    (already expensed + compounded into the liability by the daily accrual — passing it again would
-    //    double-count). recoursed A/R = the pledged Net (A/R was only ever the invoice face).
+    // 3) Full-recourse chargeback in ONE caller-owned txn (repay + A/R return + status + audit).
     const cb = await postFactoringChargebackEvent({
       operating_company_id: input.operating_company_id,
       factoring_advance_id: advance.id,
       actor_user_id: actorUserId,
       charged_back_at_iso: asOf,
-      chargeback_amount_cents: outstandingLiability,
+      chargeback_amount_cents: exact.liability_cents,
       default_interest_cents: 0,
-      recoursed_ar_cents: advance.invoice_total_cents,
+      recoursed_ar_cents: exact.recoursed_ar_cents,
     });
 
-    // Flag was ON (we got past the gate), so a flag_off here is impossible; guard anyway. Flip business
-    // state only when the GL actually landed (posted) OR is already there from a prior partial run.
     if (cb.reason === "flag_off") continue;
     if (!(cb.posted || cb.reason === "already_posted")) continue;
 
+    // Orchestration audit only — status/subledger already committed inside chargeback txn.
     await withLuciaBypass(async (client: DbClient) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
-      await client.query(
-        `
-          UPDATE accounting.factoring_advances
-          SET status = 'recourse_returned',
-              recourse_returned_at = $2::timestamptz,
-              recourse_reason = COALESCE(recourse_reason,
-                'Auto recourse: Faro Repurchase Deadline (95 days) reached unpaid')
-          WHERE id = $1 AND status = 'advanced'
-        `,
-        [advance.id, `${asOf}T00:00:00.000Z`]
-      );
-      await client.query(
-        `
-          UPDATE accounting.invoices
-          SET factoring_status = 'recourse_returned', updated_at = now()
-          WHERE factoring_advance_id = $1
-        `,
-        [advance.id]
-      );
       await appendCrudAudit(
         client,
         actorUserId,
@@ -237,8 +222,8 @@ export async function triggerDay95RecourseForCompany(input: {
           operating_company_id: input.operating_company_id,
           display_id: advance.display_id,
           repurchase_deadline_days: FACTORING_REPURCHASE_DEADLINE_DAYS,
-          outstanding_liability_cents: outstandingLiability,
-          net_recoursed_ar_cents: advance.invoice_total_cents,
+          outstanding_liability_cents: exact.liability_cents,
+          net_recoursed_ar_cents: exact.recoursed_ar_cents,
           journal_entry_id: cb.journal_entry_id ?? null,
         },
         "warning",

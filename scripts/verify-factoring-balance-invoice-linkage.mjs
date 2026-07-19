@@ -35,7 +35,12 @@ const PATHS = {
   feDefaultHome: "apps/frontend/src/pages/home/roles/DefaultHome.tsx",
   feOwnerHome: "apps/frontend/src/pages/home/OwnerHome.tsx",
   poster: "apps/backend/src/accounting/factoring-posting/poster.service.ts",
+  lifecycleRepair: "apps/backend/src/accounting/factoring-posting/lifecycle-repair.ts",
+  defaultInterest: "apps/backend/src/accounting/factoring-posting/default-interest.service.ts",
   posterAtomicityTest: "apps/backend/src/accounting/factoring-posting/__tests__/poster-lifecycle-atomicity.test.ts",
+  lifecycleRepairTest: "apps/backend/src/accounting/factoring-posting/__tests__/lifecycle-repair.test.ts",
+  day95Test: "apps/backend/src/accounting/factoring-posting/__tests__/default-interest-day95-recourse.test.ts",
+  companyDateTest: "apps/backend/src/lib/__tests__/company-business-date.test.ts",
   journalEntries: "apps/backend/src/accounting/journal-entries.service.ts",
   migration: "db/migrations/202607600000_factoring_balance_invoice_linkage.sql",
   held: "db/migrations/.held-migrations.json",
@@ -98,6 +103,8 @@ export function checker(sources) {
   requireExec("service", "ambiguous_faro_agreement_binding", "service_ambiguous_agreement_gate_missing");
   requireExec("service", "faro_agreement_terms_mismatch", "service_terms_mismatch_gate_missing");
   requireExec("service", "incomplete_funding_je_artifacts", "service_incomplete_funding_gate_missing");
+  requireExec("service", "orphan_unattributed_liability_role_legs", "service_orphan_liability_fail_closed_missing");
+  requireExec("service", "voided_advance_without_reversing_je", "service_voided_without_reversal_fail_closed_missing");
   requireExec("service", "accounting_exception:debit_liability_anomaly", "service_debit_anomaly_missing");
   requireExec("service", "accounting_exception:reserve_over_release", "service_reserve_over_release_missing");
   requireExec("service", "never_clamp_anomaly_to_zero: true", "service_must_declare_no_clamp");
@@ -167,6 +174,11 @@ export function checker(sources) {
   requireExec("poster", "afterRepair", "poster_already_posted_atomic_after_repair_missing");
   requireExec("poster", "ensureOpenPeriod", "poster_closed_period_gate_missing");
   requireExec("poster", "failAfterJeBeforeLifecycleLinks", "poster_inject_failure_hook_missing");
+  requireExec("poster", "failAfterChargebackRepayBeforeReturn", "poster_chargeback_inject_hook_missing");
+  requireExec("poster", "policy_partial_or_ambiguous_recourse", "poster_partial_recourse_policy_missing");
+  requireExec("poster", "loadExactLinkedChargebackAmounts", "poster_exact_linked_amounts_missing");
+  requireExec("poster", "companyBusinessDate", "poster_company_business_date_missing");
+  requireExec("poster", "claimFactoringLifecyclePostingKey", "poster_posting_key_claim_missing");
   requireExec("poster", "factoring_customer_payment", "poster_customer_payment_source_missing");
   requireExec("poster", "factoring_reserve_release", "poster_reserve_release_source_missing");
   requireExec("poster", "factoring_chargeback", "poster_chargeback_source_missing");
@@ -175,12 +187,26 @@ export function checker(sources) {
   requireExec("poster", "postFactoringCustomerPaymentEvent", "poster_customer_payment_fn_missing");
   requireExec("poster", "postFactoringReleaseEvent", "poster_release_fn_missing");
   requireExec("poster", "postFactoringChargebackEvent", "poster_chargeback_fn_missing");
+  requireExec("lifecycleRepair", "findStrictLifecycleRepairCandidate", "lifecycle_repair_strict_candidate_missing");
+  requireExec("lifecycleRepair", "attachFactoringLifecycleSourceLinksStrict", "lifecycle_repair_strict_attach_missing");
+  requireExec("lifecycleRepair", "factoring_lifecycle_posting_keys", "lifecycle_repair_posting_keys_missing");
+  requireExec("lifecycleRepair", "AND source_transaction_id IS NULL", "lifecycle_repair_must_only_fill_null_source");
+  requireExec("lifecycleRepair", "factoring_lifecycle_source_link_conflict", "lifecycle_repair_conflict_throw_missing");
+  requireExec("defaultInterest", "companyBusinessDate", "default_interest_company_business_date_missing");
+  requireExec("defaultInterest", "loadExactLinkedChargebackAmounts", "default_interest_exact_linked_amounts_missing");
+  forbidExec("defaultInterest", /toISOString\(\)\.slice\(0,\s*10\)/, "default_interest_must_not_utc_slice");
   requireExec("journalEntries", "createJournalEntryOnClient", "journal_entries_on_client_missing");
   requireExec("journalEntries", "afterInsertBeforeCommit", "journal_entries_after_insert_hook_missing");
   requireExec("journalEntries", "suppressSideEffects", "journal_entries_suppress_side_effects_missing");
   requireExec("journalEntries", "enqueueJournalEntrySideEffects", "journal_entries_deferred_side_effects_missing");
   requireExec("posterAtomicityTest", "injected_failure_between_je_and_lifecycle_links", "atomicity_test_inject_missing");
   requireExec("posterAtomicityTest", "already_posted path repairs", "atomicity_test_repair_missing");
+  requireExec("posterAtomicityTest", "failAfterChargebackRepayBeforeReturn", "atomicity_test_chargeback_inject_missing");
+  requireExec("lifecycleRepairTest", "memo_collision", "lifecycle_repair_test_memo_collision_missing");
+  requireExec("lifecycleRepairTest", "factoring_lifecycle_source_link_conflict", "lifecycle_repair_test_conflict_missing");
+  requireExec("day95Test", "loadExactLinkedChargebackAmounts", "day95_test_exact_linked_missing");
+  requireExec("companyDateTest", "Central midnight winter", "company_date_winter_midnight_test_missing");
+  requireExec("companyDateTest", "Central midnight summer", "company_date_summer_midnight_test_missing");
 
   // Migration — hold marker may live in header comments; structural DDL is executable-only.
   requireText("migration", "DO NOT RUN ON PROD", "migration_missing_hold_marker");
@@ -207,6 +233,10 @@ export function checker(sources) {
   requireExec("migration", "app.factoring_balance_as_of", "migration_missing_as_of_guc");
   requireExec("migration", "outstanding_liability_signed_cents", "migration_missing_signed_liability");
   requireExec("migration", "orphan_liability_role_cents", "migration_missing_orphan_counter");
+  requireExec("migration", "factoring_lifecycle_posting_keys", "migration_missing_lifecycle_posting_keys");
+  requireExec("migration", "UNIQUE (operating_company_id, factoring_advance_id, source_transaction_type, event_key)", "migration_missing_posting_key_unique");
+  requireExec("migration", "America/Chicago", "migration_missing_chicago_as_of");
+  requireExec("migration", "advanced_at AT TIME ZONE 'America/Chicago'", "migration_missing_advanced_at_as_of");
   requireExec("migration", "HELD_MIGRATION_PREREQUISITE_MISSING", "migration_missing_prereq_fail_closed");
   requireExec("migration", "202607340000_je_reversal_linkage", "migration_missing_prereq_reference");
   requireExec("migration", "canonical_factor_agreements", "migration_missing_faro_agreement_table");
@@ -218,6 +248,16 @@ export function checker(sources) {
   forbidExec("migration", /ILIKE\s*'%faro%'/i, "migration_must_not_vendor_name_match");
   forbidExec("migration", /GREATEST\s*\(\s*0\s*,/i, "migration_must_not_clamp_greatest");
   forbidExec("migration", /ORDER BY COUNT\(\*\) DESC/, "migration_must_not_majority_inference");
+  // Mutable voided status alone must not drop live JE legs from liability roll.
+  {
+    const stripped = String(sources.migration ?? "")
+      .replace(/--.*$/gm, "")
+      .replace(/\/\*[\s\S]*?\*\//g, "");
+    const linkedBlock = stripped.match(/advance_linked_postings AS \(([\s\S]*?)\),\s*liability_legs/i);
+    if (linkedBlock && /fa\.status\s*<>\s*'voided'|fa\.status\s*!=\s*'voided'/.test(linkedBlock[1])) {
+      failures.push("migration_must_not_drop_liability_via_voided_status");
+    }
+  }
   // Completeness must require liability role legs — bare reserve_movements→JE is insufficient.
   {
     const stripped = String(sources.migration ?? "")
@@ -251,6 +291,10 @@ export function checker(sources) {
   requireText("additions", "same-entity", "additions_missing_same_entity");
   requireText("additions", "CREATE OR REPLACE VIEW", "additions_missing_create_or_replace");
   requireText("additions", "isTranspContractEntityCode", "additions_missing_canonical_entity_code");
+  requireText("additions", "factoring_lifecycle_posting_keys", "additions_missing_posting_keys");
+  requireText("additions", "policy_partial_or_ambiguous_recourse", "additions_missing_partial_recourse_policy");
+  requireText("additions", "orphan_unattributed_liability_role_legs", "additions_missing_orphan_fail_closed");
+  requireText("additions", "voided_advance_without_reversing_je", "additions_missing_voided_fail_closed");
 
   // Tests — fixture IDs, plants, isolation, CPA negatives
   requireExec("dbTest", "canonicalInvoiceDisplayId", "db_test_canonical_invoice_display_helper");
@@ -267,7 +311,8 @@ export function checker(sources) {
   requireExec("dbTest", "PERIOD_LOCKED", "db_test_closed_period");
   requireExec("dbTest", "HELD_MIGRATION_PREREQUISITE_MISSING", "db_test_prereq_failure");
   requireExec("dbTest", "apply-twice is idempotent", "db_test_apply_twice");
-  requireExec("dbTest", "orphan", "db_test_orphan_je");
+  requireExec("dbTest", "orphan_unattributed_liability_role_legs", "db_test_orphan_je");
+  requireExec("dbTest", "voided_advance_without_reversing_je", "db_test_voided_without_reversal");
   requireExec("dbTest", "2099-12-31", "db_test_future_je");
   requireExec("dbTest", "debit_liability_anomaly", "db_test_debit_anomaly");
   requireExec("dbTest", "reserve_over_release", "db_test_reserve_over_release");
@@ -275,6 +320,9 @@ export function checker(sources) {
   requireExec("dbTest", "unbacked reserve_movements", "db_test_unbacked_reserve_movement");
   requireExec("dbTest", "incomplete_funding_je_artifacts", "db_test_incomplete_funding_reason");
   forbidExec("dbTest", /INV-FBL-|INV-FBO-/, "db_test_must_not_seed_malformed_invoice_display_id");
+  // Orphan must never assert status ok.
+  forbidExec("dbTest", /orphan[\s\S]{0,400}status\)\.toBe\("ok"\)/, "db_test_must_not_accept_orphan_as_ok");
+  requireExec("feTest", "orphan_unattributed_liability_role_legs", "fe_test_orphan_unverifiable_missing");
   requireExec("serviceTest", "connection_reset", "service_test_planted_failure");
   requireExec("serviceTest", "incomplete_funding_je_artifacts", "service_test_incomplete");
   requireExec("serviceTest", "faro_contract_entity_mismatch", "service_test_faro_identity");

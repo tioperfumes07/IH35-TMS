@@ -656,6 +656,60 @@ export async function computeFactoringBalanceInvoiceLinkage(
     return nullHeadline("unverifiable", "incomplete_reserve_held_artifacts", idMeta, diagnostics);
   }
 
+  // Orphan/unattributed liability or reserve role legs — never status=ok; never include in Faro headline.
+  if (orphanLiab > 0 || orphanReserve > 0) {
+    return nullHeadline(
+      "unverifiable",
+      orphanLiab > 0
+        ? "orphan_unattributed_liability_role_legs"
+        : "orphan_unattributed_reserve_role_legs",
+      idMeta,
+      diagnostics
+    );
+  }
+
+  // Voided advance status with live unreverted JE legs — ledger/status inconsistency; fail closed.
+  const voidedWithLiveJe = await client.query<{ n: string }>(
+    `
+      SELECT COUNT(*)::text AS n
+        FROM accounting.factoring_advances fa
+       WHERE fa.operating_company_id = $1::uuid
+         AND fa.factoring_company_vendor_id = $2::uuid
+         AND fa.status = 'voided'
+         AND fa.advanced_at IS NOT NULL
+         AND (fa.advanced_at AT TIME ZONE 'America/Chicago')::date <= $3::date
+         AND EXISTS (
+               SELECT 1
+                 FROM accounting.journal_entry_postings jep
+                 JOIN accounting.journal_entries je
+                   ON je.id = jep.journal_entry_uuid
+                  AND je.operating_company_id = jep.operating_company_id
+                WHERE jep.operating_company_id = fa.operating_company_id
+                  AND jep.source_transaction_id = fa.id::text
+                  AND jep.source_transaction_type IN (
+                    'factoring_advance',
+                    'factoring_customer_payment',
+                    'factoring_reserve_release',
+                    'factoring_chargeback',
+                    'factoring_default_interest'
+                  )
+                  AND je.status = 'posted'
+                  AND je.voided_at IS NULL
+                  AND je.reverses_je_id IS NULL
+                  AND je.reversed_by_je_id IS NULL
+             )
+    `,
+    [operatingCompanyId, identity.vendorId, asOf]
+  );
+  if (Number(voidedWithLiveJe.rows[0]?.n ?? 0) > 0) {
+    return nullHeadline(
+      "unverifiable",
+      "voided_advance_without_reversing_je",
+      idMeta,
+      diagnostics
+    );
+  }
+
   // Never clamp — surface accounting_exception with signed diagnostics; headline stays null.
   if (liabilitySigned < 0) {
     return nullHeadline(

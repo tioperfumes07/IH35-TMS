@@ -48,11 +48,13 @@ vi.mock("../../../auth/db.js", () => ({
 vi.mock("../../../lib/feature-flags/service.js", () => ({ isEnabled: mockIsEnabled }));
 vi.mock("../../journal-entries.service.js", () => ({
   createJournalEntry: mockCreateJournalEntry,
+  createJournalEntryOnClient: mockCreateJournalEntry,
   enqueueJournalEntrySideEffects: mockEnqueueSideEffects,
 }));
 vi.mock("../../posting-engine.service.js", () => ({ ensureOpenPeriod: mockEnsureOpenPeriod }));
 vi.mock("../../accounting-spine-emit.js", () => ({ writeTransactionSourceLink: mockWriteTsl }));
 vi.mock("../../coa-roles/resolver.service.js", () => ({ resolveRoleAccount: mockResolveRoleAccount }));
+vi.mock("../../../audit/crud-audit.js", () => ({ appendCrudAudit: vi.fn(async () => undefined) }));
 
 const OPCO = "11111111-1111-4111-8111-111111111111";
 const ADVANCE = "22222222-2222-4222-8222-222222222222";
@@ -73,25 +75,30 @@ describe("factoring poster — atomic lifecycle source links", () => {
     mockResolveRoleAccount.mockImplementation(async (_c: unknown, _o: string, role: string) => role);
     mockEnsureOpenPeriod.mockResolvedValue(undefined);
     mockCreateJournalEntry.mockImplementation(
-      async (
-        _input: unknown,
-        _actor: unknown,
-        options?: {
-          afterInsertBeforeCommit?: (
-            client: { query: typeof mockQuery },
-            header: { id: string }
-          ) => Promise<void>;
-        }
-      ) => {
-        const header = { id: "je-atomic-1" };
-        if (options?.afterInsertBeforeCommit) {
-          await options.afterInsertBeforeCommit({ query: mockQuery }, header);
-        }
-        return header;
+    async (...args: unknown[]) => {
+      const options = (args.length >= 4 ? args[3] : args[2]) as
+        | { afterInsertBeforeCommit?: (client: { query: typeof mockQuery }, header: { id: string }) => Promise<void> }
+        | undefined;
+      const client =
+        args.length >= 4
+          ? (args[0] as { query: typeof mockQuery })
+          : { query: mockQuery };
+      const header = { id: "je-atomic-1" };
+      if (options?.afterInsertBeforeCommit) {
+        await options.afterInsertBeforeCommit(client, header);
       }
-    );
+      return header;
+    }
+  );
     mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
       if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
+    if (sql.includes("factoring_lifecycle_posting_keys")) {
+      if (sql.trim().startsWith("INSERT")) return { rows: [] };
+      return { rows: [] };
+    }
+    if (sql.includes("AS outstanding")) {
+      return { rows: [{ outstanding: "500000" }] };
+    }
       if (sql.includes("FROM accounting.factoring_advances") && sql.includes("invoice_total_cents")) {
         return {
           rows: [
@@ -116,10 +123,19 @@ describe("factoring poster — atomic lifecycle source links", () => {
         return { rows: [] };
       }
       if (sql.includes("UPDATE accounting.journal_entry_postings")) return { rows: [] };
-      if (sql.includes("FROM accounting.journal_entry_postings")) {
+          if (sql.includes("FROM accounting.journal_entries")) {
+      // Authoritative repair candidate query — empty unless already_posted fixtures override.
+      return { rows: [] };
+    }
+    if (sql.includes("FROM accounting.journal_entry_postings")) {
+        // Conflict probe must be empty; line select for TSL attach returns rows.
+        if (sql.includes("LIMIT 1") && (sql.includes("NOT (") || sql.includes("IS DISTINCT FROM"))) {
+          return { rows: [] };
+        }
         return { rows: [{ id: "line-1" }, { id: "line-2" }] };
       }
       if (sql.includes("INSERT INTO accounting.factoring_reserve_movements")) return { rows: [] };
+      if (sql.includes("INSERT INTO accounting.factoring_lifecycle_posting_keys")) return { rows: [] };
       return { rows: [] };
     });
   });
@@ -162,8 +178,12 @@ describe("factoring poster — atomic lifecycle source links", () => {
 
   it("already_posted path repairs missing lifecycle source links + reserve_held (idempotent, no new JE)", async () => {
     let reserveInserts = 0;
-    mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
+    mockQuery.mockImplementation(async (sql: string) => {
       if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
+      if (sql.includes("factoring_lifecycle_posting_keys")) {
+        if (sql.trim().startsWith("INSERT")) return { rows: [] };
+        return { rows: [{ journal_entry_id: "existing-je" }] };
+      }
       if (sql.includes("FROM accounting.factoring_advances") && sql.includes("invoice_total_cents")) {
         return {
           rows: [
@@ -184,11 +204,15 @@ describe("factoring poster — atomic lifecycle source links", () => {
           ],
         };
       }
-      if (sql.includes("FROM accounting.journal_entries") && sql.includes("memo = $2")) {
-        return { rows: [{ id: "existing-je" }] };
-      }
       if (sql.includes("UPDATE accounting.journal_entry_postings")) return { rows: [] };
-      if (sql.includes("FROM accounting.journal_entry_postings")) {
+          if (sql.includes("FROM accounting.journal_entries")) {
+      // Authoritative repair candidate query — empty unless already_posted fixtures override.
+      return { rows: [] };
+    }
+    if (sql.includes("FROM accounting.journal_entry_postings")) {
+        if (sql.includes("source_transaction_id IS NOT NULL") || sql.includes("NOT (")) {
+          return { rows: [] };
+        }
         return { rows: [{ id: "line-1" }] };
       }
       if (sql.includes("INSERT INTO accounting.factoring_reserve_movements")) {
@@ -211,7 +235,16 @@ describe("factoring poster — atomic lifecycle source links", () => {
 
   it("attachFactoringLifecycleSourceLinks is idempotent via TSL write helper", async () => {
     const client = { query: mockQuery };
-    mockQuery.mockResolvedValue({ rows: [{ id: "line-1" }] });
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("LIMIT 1") && (sql.includes("NOT (") || sql.includes("IS DISTINCT FROM"))) {
+        return { rows: [] };
+      }
+      if (sql.includes("UPDATE")) return { rows: [] };
+      if (sql.includes("FROM accounting.journal_entry_postings")) {
+        return { rows: [{ id: "line-1" }] };
+      }
+      return { rows: [] };
+    });
     await attachFactoringLifecycleSourceLinks(client, {
       operating_company_id: OPCO,
       journal_entry_id: "je-1",
@@ -261,6 +294,13 @@ describe("factoring poster — atomic lifecycle source links", () => {
   function alreadyPostedAdvanceMocks() {
     mockQuery.mockImplementation(async (sql: string) => {
       if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
+      if (sql.includes("factoring_lifecycle_posting_keys")) {
+        if (sql.trim().startsWith("INSERT")) return { rows: [] };
+        return { rows: [{ journal_entry_id: "existing-je" }] };
+      }
+      if (sql.includes("AS outstanding")) {
+        return { rows: [{ outstanding: "100000" }] };
+      }
       if (sql.includes("FROM accounting.factoring_advances") && sql.includes("invoice_total_cents")) {
         return { rows: [advanceRow()] };
       }
@@ -268,10 +308,19 @@ describe("factoring poster — atomic lifecycle source links", () => {
         return { rows: [{ id: "existing-je" }] };
       }
       if (sql.includes("UPDATE accounting.journal_entry_postings")) return { rows: [] };
-      if (sql.includes("FROM accounting.journal_entry_postings")) {
+          if (sql.includes("FROM accounting.journal_entries")) {
+      // Authoritative repair candidate query — empty unless already_posted fixtures override.
+      return { rows: [] };
+    }
+    if (sql.includes("FROM accounting.journal_entry_postings")) {
+        // conflict check empty; line select returns attachable lines
+        if (sql.includes("source_transaction_id IS NOT NULL") || sql.includes("NOT (")) {
+          return { rows: [] };
+        }
         return { rows: [{ id: "line-1" }] };
       }
       if (sql.includes("UPDATE accounting.invoices")) return { rows: [] };
+      if (sql.includes("UPDATE accounting.factoring_advances")) return { rows: [] };
       return { rows: [] };
     });
   }
@@ -297,14 +346,22 @@ describe("factoring poster — atomic lifecycle source links", () => {
     let reserveInserts = 0;
     mockQuery.mockImplementation(async (sql: string) => {
       if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
+      if (sql.includes("factoring_lifecycle_posting_keys")) {
+        if (sql.trim().startsWith("INSERT")) return { rows: [] };
+        return { rows: [{ journal_entry_id: "existing-je" }] };
+      }
       if (sql.includes("FROM accounting.factoring_advances") && sql.includes("invoice_total_cents")) {
         return { rows: [advanceRow()] };
       }
-      if (sql.includes("FROM accounting.journal_entries") && sql.includes("memo = $2")) {
-        return { rows: [{ id: "existing-je" }] };
-      }
       if (sql.includes("UPDATE accounting.journal_entry_postings")) return { rows: [] };
-      if (sql.includes("FROM accounting.journal_entry_postings")) {
+          if (sql.includes("FROM accounting.journal_entries")) {
+      // Authoritative repair candidate query — empty unless already_posted fixtures override.
+      return { rows: [] };
+    }
+    if (sql.includes("FROM accounting.journal_entry_postings")) {
+        if (sql.includes("source_transaction_id IS NOT NULL") || sql.includes("NOT (")) {
+          return { rows: [] };
+        }
         return { rows: [{ id: "line-1" }] };
       }
       if (sql.includes("INSERT INTO accounting.factoring_reserve_movements")) {
@@ -340,5 +397,44 @@ describe("factoring poster — atomic lifecycle source links", () => {
     expect(res).toMatchObject({ posted: false, reason: "already_posted" });
     expect(mockCreateJournalEntry).not.toHaveBeenCalled();
     expect(mockWriteTsl).toHaveBeenCalled();
+  });
+
+  it("chargeback mid-flow inject after repay rolls back — no side-effect enqueue", async () => {
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
+      if (sql.includes("factoring_lifecycle_posting_keys")) {
+        if (sql.trim().startsWith("INSERT")) return { rows: [] };
+        return { rows: [] };
+      }
+      if (sql.includes("AS outstanding")) return { rows: [{ outstanding: "100000" }] };
+      if (sql.includes("FROM accounting.factoring_advances") && sql.includes("invoice_total_cents")) {
+        return { rows: [advanceRow()] };
+      }
+      if (sql.includes("UPDATE accounting.journal_entry_postings")) return { rows: [] };
+      if (sql.includes("FROM accounting.journal_entries")) return { rows: [] };
+      if (sql.includes("FROM accounting.journal_entry_postings")) {
+        if (sql.includes("LIMIT 1") && (sql.includes("NOT (") || sql.includes("IS DISTINCT FROM"))) {
+          return { rows: [] };
+        }
+        return { rows: [{ id: "line-1" }] };
+      }
+      if (sql.includes("UPDATE accounting.invoices")) return { rows: [] };
+      if (sql.includes("UPDATE accounting.factoring_advances")) return { rows: [] };
+      return { rows: [] };
+    });
+    __posterAtomicityTestHooks.failAfterChargebackRepayBeforeReturn = true;
+    await expect(
+      postFactoringChargebackEvent({
+        operating_company_id: OPCO,
+        factoring_advance_id: ADVANCE,
+        actor_user_id: ACTOR,
+        chargeback_amount_cents: 100000,
+        default_interest_cents: 0,
+        recoursed_ar_cents: 100000,
+        charged_back_at_iso: "2026-02-01T00:00:00.000Z",
+      })
+    ).rejects.toThrow("injected_failure_after_chargeback_repay_before_return");
+    expect(mockEnqueueSideEffects).not.toHaveBeenCalled();
+    __posterAtomicityTestHooks.failAfterChargebackRepayBeforeReturn = false;
   });
 });

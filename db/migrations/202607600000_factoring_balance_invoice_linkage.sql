@@ -313,6 +313,68 @@ BEGIN
 END
 $rls$;
 
+-- ── 1b. Deterministic lifecycle posting keys (entity + advance + source type + event) ────────────
+-- Unique DB constraint backstops concurrent memo check-then-insert races (code-review VETO).
+DO $posting_keys$
+BEGIN
+  IF to_regclass('accounting.journal_entries') IS NULL THEN
+    RAISE NOTICE '202607600000: accounting.journal_entries absent — skipping factoring_lifecycle_posting_keys';
+    RETURN;
+  END IF;
+
+  CREATE TABLE IF NOT EXISTS accounting.factoring_lifecycle_posting_keys (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    operating_company_id uuid NOT NULL REFERENCES org.companies(id),
+    factoring_advance_id uuid NOT NULL,
+    source_transaction_type text NOT NULL
+      CHECK (source_transaction_type IN (
+        'factoring_advance',
+        'factoring_customer_payment',
+        'factoring_reserve_release',
+        'factoring_chargeback',
+        'factoring_default_interest'
+      )),
+    event_key text NOT NULL,
+    journal_entry_id uuid NOT NULL REFERENCES accounting.journal_entries(id),
+    created_at timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (operating_company_id, factoring_advance_id, source_transaction_type, event_key)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_factoring_lifecycle_posting_keys_je
+    ON accounting.factoring_lifecycle_posting_keys (operating_company_id, journal_entry_id);
+
+  ALTER TABLE accounting.factoring_lifecycle_posting_keys ENABLE ROW LEVEL SECURITY;
+  ALTER TABLE accounting.factoring_lifecycle_posting_keys FORCE ROW LEVEL SECURITY;
+
+  DROP POLICY IF EXISTS factoring_lifecycle_posting_keys_entity_select
+    ON accounting.factoring_lifecycle_posting_keys;
+  DROP POLICY IF EXISTS factoring_lifecycle_posting_keys_entity_insert
+    ON accounting.factoring_lifecycle_posting_keys;
+
+  CREATE POLICY factoring_lifecycle_posting_keys_entity_select
+    ON accounting.factoring_lifecycle_posting_keys
+    FOR SELECT
+    TO ih35_app
+    USING (
+      identity.is_lucia_bypass()
+      OR operating_company_id::text = current_setting('app.operating_company_id', true)
+    );
+
+  -- Append-only claim rows (no UPDATE/DELETE) — concurrency backstop only.
+  CREATE POLICY factoring_lifecycle_posting_keys_entity_insert
+    ON accounting.factoring_lifecycle_posting_keys
+    FOR INSERT
+    TO ih35_app
+    WITH CHECK (
+      identity.is_lucia_bypass()
+      OR operating_company_id::text = current_setting('app.operating_company_id', true)
+    );
+
+  GRANT SELECT, INSERT ON accounting.factoring_lifecycle_posting_keys TO ih35_app;
+  REVOKE UPDATE, DELETE ON accounting.factoring_lifecycle_posting_keys FROM ih35_app;
+END
+$posting_keys$;
+
 -- ── 2. Per-factor / per-advance JE-artifact factoring balance rollup (security_invoker) ──────────
 CREATE SCHEMA IF NOT EXISTS views;
 
@@ -370,8 +432,9 @@ BEGIN
           AND je.entry_date <= a.d
       ),
       -- Authoritative advance↔posting link with source/TSL consistency + DISTINCT ON dedup.
-      -- Disagreeing source_* vs TSL fails closed (excluded). Multi-TSL rows never multiply legs.
-      -- Bare factoring_reserve_movements→JE is NOT sufficient (code-review VETO #2).
+      -- Disagreeing source_* vs TSL fails closed (NOT EXISTS bad TSL — never treat as "no TSL").
+      -- Multi-TSL rows never multiply legs. Bare reserve_movements→JE is NOT sufficient.
+      -- Ledger artifacts decide debt: mutable status='voided' alone does NOT drop live JE legs.
       advance_linked_postings AS (
         SELECT DISTINCT ON (jep.id)
           fa.id AS factoring_advance_id,
@@ -388,6 +451,7 @@ BEGIN
             tsl.relationship_role
           ) AS lifecycle_source
         FROM accounting.factoring_advances fa
+        CROSS JOIN as_of a
         JOIN accounting.journal_entry_postings jep
           ON jep.operating_company_id = fa.operating_company_id
         JOIN live_je je
@@ -406,7 +470,22 @@ BEGIN
            'factoring_default_interest'
          )
         WHERE fa.advanced_at IS NOT NULL
-          AND fa.status <> 'voided'
+          AND (fa.advanced_at AT TIME ZONE 'America/Chicago')::date <= a.d
+          AND NOT EXISTS (
+                SELECT 1
+                  FROM accounting.transaction_source_links bad
+                 WHERE bad.journal_entry_posting_id = jep.id
+                   AND bad.operating_company_id = jep.operating_company_id
+                   AND bad.linked_object_type = 'factoring_advance'
+                   AND (
+                     bad.linked_object_id <> fa.id::text
+                     OR (
+                       jep.source_transaction_type IS NOT NULL
+                       AND jep.source_transaction_type <> ''
+                       AND bad.relationship_role IS DISTINCT FROM jep.source_transaction_type
+                     )
+                   )
+              )
           AND (
             (
               jep.source_transaction_type IN (
@@ -488,11 +567,34 @@ BEGIN
         FROM reserve_legs rl
         GROUP BY rl.operating_company_id, rl.factor_vendor_id
       ),
+      -- Advances in scope as-of company business date.
+      -- Clean voids (status voided AND no live advance-linked JE) excluded.
+      -- Voided WITH live unreverted JE legs remain (ledger decides debt); service fails closed.
       factor_advances AS (
         SELECT fa.*
         FROM accounting.factoring_advances fa
+        CROSS JOIN as_of a
         WHERE fa.advanced_at IS NOT NULL
-          AND fa.status <> 'voided'
+          AND (fa.advanced_at AT TIME ZONE 'America/Chicago')::date <= a.d
+          AND (
+            fa.status IS DISTINCT FROM 'voided'
+            OR EXISTS (
+              SELECT 1
+                FROM accounting.journal_entry_postings jep
+                JOIN live_je je
+                  ON je.id = jep.journal_entry_uuid
+                 AND je.operating_company_id = jep.operating_company_id
+               WHERE jep.operating_company_id = fa.operating_company_id
+                 AND jep.source_transaction_id = fa.id::text
+                 AND jep.source_transaction_type IN (
+                   'factoring_advance',
+                   'factoring_customer_payment',
+                   'factoring_reserve_release',
+                   'factoring_chargeback',
+                   'factoring_default_interest'
+                 )
+            )
+          )
       ),
       -- Funding completeness: MUST have a live liability CREDIT leg with advance lifecycle source.
       -- A reserve_movements row pointing at an empty/unrelated JE is NOT sufficient (code-review VETO #2).
@@ -705,6 +807,6 @@ $view$;
 GRANT SELECT ON views.factoring_balance_invoice_linkage TO ih35_app;
 
 COMMENT ON VIEW views.factoring_balance_invoice_linkage IS
-  '0280-05 CPA: Factoring Balance = per-factor advance-linked JE legs (source_transaction_type/TSL/reserve_movements); signed diagnostics (no clamp); as-of via app.factoring_balance_as_of; orphans excluded; security_invoker. HOLD 202607600000.';
+  '0280-05 CPA: Factoring Balance = per-factor advance-linked JE legs (source_transaction_type/TSL); signed diagnostics (no clamp); as-of via app.factoring_balance_as_of + advanced_at company date; ledger artifacts decide debt (voided status alone never drops live JE); orphans counted for fail-closed; contradictory TSL excluded; security_invoker. HOLD 202607600000.';
 
 COMMIT;

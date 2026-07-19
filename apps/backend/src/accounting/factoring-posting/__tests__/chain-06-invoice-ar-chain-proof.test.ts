@@ -49,10 +49,11 @@ const {
 
 vi.mock("../../../auth/db.js", () => ({ withLuciaBypass: mockWithLuciaBypass, withCurrentUser: mockWithCurrentUser }));
 vi.mock("../../../lib/feature-flags/service.js", () => ({ isEnabled: mockIsEnabled }));
-vi.mock("../../journal-entries.service.js", () => ({ createJournalEntry: mockCreateJournalEntry, enqueueJournalEntrySideEffects: vi.fn(async () => undefined) }));
+vi.mock("../../journal-entries.service.js", () => ({ createJournalEntry: mockCreateJournalEntry, createJournalEntryOnClient: mockCreateJournalEntry, enqueueJournalEntrySideEffects: vi.fn(async () => undefined) }));
 vi.mock("../../posting-engine.service.js", () => ({ ensureOpenPeriod: vi.fn(async () => undefined) }));
 vi.mock("../../accounting-spine-emit.js", () => ({ writeTransactionSourceLink: vi.fn(async () => undefined) }));
 vi.mock("../../coa-roles/resolver.service.js", () => ({ resolveRoleAccount: mockResolveRoleAccount }));
+vi.mock("../../../audit/crud-audit.js", () => ({ appendCrudAudit: vi.fn(async () => undefined) }));
 
 const OPCO = "11111111-1111-4111-8111-111111111111";
 const OTHER_OPCO = "99999999-9999-4999-8999-999999999999";
@@ -120,19 +121,17 @@ function installDefaults() {
   mockIsEnabled.mockResolvedValue(true);
   mockResolveRoleAccount.mockImplementation(async (_c: unknown, _o: string, role: string) => `acct-${role}`);
   mockCreateJournalEntry.mockImplementation(
-    async (
-      _input: unknown,
-      _actor: unknown,
-      options?: {
-        afterInsertBeforeCommit?: (
-          client: { query: typeof mockQuery },
-          header: { id: string }
-        ) => Promise<void>;
-      }
-    ) => {
+    async (...args: unknown[]) => {
+      const options = (args.length >= 4 ? args[3] : args[2]) as
+        | { afterInsertBeforeCommit?: (client: { query: typeof mockQuery }, header: { id: string }) => Promise<void> }
+        | undefined;
+      const client =
+        args.length >= 4
+          ? (args[0] as { query: typeof mockQuery })
+          : { query: mockQuery };
       const header = { id: "je-chain-06" };
       if (options?.afterInsertBeforeCommit) {
-        await options.afterInsertBeforeCommit({ query: mockQuery }, header);
+        await options.afterInsertBeforeCommit(client, header);
       }
       return header;
     }
@@ -140,14 +139,28 @@ function installDefaults() {
 
   mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
     if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
+    if (sql.includes("factoring_lifecycle_posting_keys")) {
+      if (sql.trim().startsWith("INSERT")) return { rows: [] };
+      return { rows: alreadyPosted ? [{ journal_entry_id: "je-existing" }] : [] };
+    }
+    if (sql.includes("AS outstanding")) {
+      return { rows: [{ outstanding: "100000" }] };
+    }
     if (sql.includes("FROM accounting.factoring_advances") && sql.includes("invoice_total_cents")) {
       advanceLoadSql.push(sql);
       const opco = values?.[1];
       if (opco && opco !== OPCO) return { rows: [] };
       return { rows: [advanceRow()] };
     }
-    if (sql.includes("FROM accounting.journal_entries") && sql.includes("memo = $2")) {
-      return { rows: alreadyPosted ? [{ id: "je-existing" }] : [] };
+    if (sql.includes("FROM accounting.journal_entries")) {
+      return { rows: [] };
+    }
+    if (sql.includes("UPDATE accounting.journal_entry_postings")) return { rows: [] };
+    if (sql.includes("FROM accounting.journal_entry_postings")) {
+      if (sql.includes("LIMIT 1") && (sql.includes("NOT (") || sql.includes("IS DISTINCT FROM"))) {
+        return { rows: [] };
+      }
+      return { rows: [{ id: "line-1" }] };
     }
     if (sql.includes("SELECT id::text, total_cents::text, voided_at::text") && sql.includes("FROM accounting.invoices")) {
       expect(sql).toContain("factoring_advance_id");
@@ -158,6 +171,7 @@ function installDefaults() {
       updateCalls.push({ sql, values: values ?? [] });
       return { rows: [] };
     }
+    if (sql.includes("UPDATE accounting.factoring_advances")) return { rows: [] };
     if (sql.includes("INSERT INTO accounting.factoring_reserve_movements")) {
       reserveCalls.push({ sql, values: values ?? [] });
       return { rows: [] };
@@ -264,6 +278,13 @@ describe("CHAIN-06 invoice→A/R→Faro chain-proof behavioral matrix (mocked se
   it("missing link: advance_not_found when factoring advance is absent for the entity", async () => {
     mockQuery.mockImplementation(async (sql: string) => {
       if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
+    if (sql.includes("factoring_lifecycle_posting_keys")) {
+      if (sql.trim().startsWith("INSERT")) return { rows: [] };
+      return { rows: [] };
+    }
+    if (sql.includes("AS outstanding")) {
+      return { rows: [{ outstanding: "100000" }] };
+    }
       if (sql.includes("FROM accounting.factoring_advances")) return { rows: [] };
       return { rows: [] };
     });

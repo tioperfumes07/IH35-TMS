@@ -3,6 +3,7 @@ import { postReserveMovement } from "./reserve.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import {
   FACTORING_GL_POSTING_FLAG,
+  loadExactLinkedChargebackAmounts,
   postFactoringAdvanceEvent,
   postFactoringChargebackEvent,
 } from "../accounting/factoring-posting/poster.service.js";
@@ -442,24 +443,42 @@ export async function commitFaroCsvImport(input: {
         });
       }
 
-      // CHARGEBACK: a recourse chargeback is an independent event on an already-funded advance, so it is
-      // NOT gated on batch completeness (funding may have posted from an earlier file). Route it to the
-      // secured-borrowing recoursed-invoice treatment instead of dropping it. Idempotent (memo-keyed).
+      // CHARGEBACK: independent of batch completeness. Full recourse only — CSV amount must equal
+      // exact linked outstanding liability; recoursed A/R from linked invoices (no defaults / partial).
       if (a.actual_chargeback_cents > 0) {
-        const cb = await postFactoringChargebackEvent({
-          operating_company_id: input.operatingCompanyId,
-          factoring_advance_id: a.factoring_advance_id,
-          actor_user_id: input.userId,
-          charged_back_at_iso: statementDate,
-          chargeback_amount_cents: a.actual_chargeback_cents,
-        });
-        chargeback_posts.push({
-          factoring_advance_id: a.factoring_advance_id,
-          posted: cb.posted,
-          reason: cb.reason,
-          journal_entry_id: cb.journal_entry_id,
-          chargeback_amount_cents: a.actual_chargeback_cents,
-        });
+        const exact = await loadExactLinkedChargebackAmounts(
+          input.operatingCompanyId,
+          a.factoring_advance_id
+        );
+        if (
+          exact.liability_cents <= 0 ||
+          exact.recoursed_ar_cents <= 0 ||
+          a.actual_chargeback_cents !== exact.liability_cents
+        ) {
+          chargeback_posts.push({
+            factoring_advance_id: a.factoring_advance_id,
+            posted: false,
+            reason: "policy_partial_or_ambiguous_recourse",
+            chargeback_amount_cents: a.actual_chargeback_cents,
+          });
+        } else {
+          const cb = await postFactoringChargebackEvent({
+            operating_company_id: input.operatingCompanyId,
+            factoring_advance_id: a.factoring_advance_id,
+            actor_user_id: input.userId,
+            charged_back_at_iso: statementDate,
+            chargeback_amount_cents: exact.liability_cents,
+            default_interest_cents: 0,
+            recoursed_ar_cents: exact.recoursed_ar_cents,
+          });
+          chargeback_posts.push({
+            factoring_advance_id: a.factoring_advance_id,
+            posted: cb.posted,
+            reason: cb.reason,
+            journal_entry_id: cb.journal_entry_id,
+            chargeback_amount_cents: exact.liability_cents,
+          });
+        }
       }
     }
   }

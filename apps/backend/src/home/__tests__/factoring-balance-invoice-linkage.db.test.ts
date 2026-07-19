@@ -736,7 +736,7 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
     });
   });
 
-  it("orphan/unrelated role-account JE must not inflate Faro liability", async () => {
+  it("orphan/unrelated role-account JE → unverifiable (never ok); orphan cents in diagnostics only, not Faro headline", async () => {
     const orphanJe = randomUUID();
     await bypass(companyId, async () => {
       await insertBalancedJe({
@@ -751,10 +751,43 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
     });
     const client = await scopedClient();
     const result = await computeFactoringBalanceInvoiceLinkage(client, { operatingCompanyId: companyId });
-    expect(result.status).toBe("ok");
-    expect(result.outstanding_liability_cents).toBe(1_300_000);
-    expect(result.outstanding_liability_cents).not.toBe(1_300_000 + 9_999_999);
+    expect(result.status).toBe("unverifiable");
+    expect(result.unverifiable_reason).toBe("orphan_unattributed_liability_role_legs");
+    expect(result.outstanding_liability_cents).toBeNull();
     expect(result.diagnostics?.orphan_liability_role_cents).toBeGreaterThanOrEqual(9_999_999);
+    expect(result.diagnostics?.outstanding_liability_signed_cents).toBe(1_300_000);
+    expect(result.diagnostics?.outstanding_liability_signed_cents).not.toBe(1_300_000 + 9_999_999);
+    await bypass(companyId, async () => {
+      await db.query(
+        `UPDATE accounting.journal_entries SET status = 'voided', voided_at = now() WHERE id = $1::uuid`,
+        [orphanJe]
+      );
+    });
+  });
+
+  it("voided advance with live unreverted liability JE → unverifiable (ledger artifacts decide debt)", async () => {
+    // Mutate an EXISTING funded advance to voided WITHOUT reversing its JE — status alone must
+    // not drop liability; read model fails closed (never status=ok with missing debt).
+    try {
+      await bypass(companyId, async () => {
+        await db.query(`UPDATE accounting.factoring_advances SET status = 'voided' WHERE id = $1::uuid`, [
+          statusOnlyAdvanceId,
+        ]);
+      });
+      const client = await scopedClient();
+      const result = await computeFactoringBalanceInvoiceLinkage(client, { operatingCompanyId: companyId });
+      expect(result.status).toBe("unverifiable");
+      expect(result.unverifiable_reason).toBe("voided_advance_without_reversing_je");
+      expect(result.outstanding_liability_cents).toBeNull();
+      // Liability legs remain in signed diagnostics (ledger artifacts decide debt).
+      expect(result.diagnostics?.outstanding_liability_signed_cents).toBeGreaterThanOrEqual(1_300_000);
+    } finally {
+      await bypass(companyId, async () => {
+        await db.query(`UPDATE accounting.factoring_advances SET status = 'advanced' WHERE id = $1::uuid`, [
+          statusOnlyAdvanceId,
+        ]);
+      });
+    }
   });
 
   it("future-dated posted JE excluded by companyBusinessDate as-of boundary", async () => {

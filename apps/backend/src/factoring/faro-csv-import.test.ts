@@ -16,14 +16,16 @@ vi.mock("../lib/feature-flags/service.js", () => ({
 
 // Capture posts instead of hitting the DB double-entry engine. `vi.hoisted` keeps the spies accessible to
 // the (hoisted) vi.mock factory without tripping vitest's out-of-scope-variable guard.
-const { postFundingMock, postChargebackMock } = vi.hoisted(() => ({
+const { postFundingMock, postChargebackMock, loadExactMock } = vi.hoisted(() => ({
   postFundingMock: vi.fn(async () => ({ posted: true, journal_entry_id: "je-fund" })),
   postChargebackMock: vi.fn(async () => ({ posted: true, journal_entry_id: "je-cb" })),
+  loadExactMock: vi.fn(async () => ({ liability_cents: 30000, recoursed_ar_cents: 150000 })),
 }));
 vi.mock("../accounting/factoring-posting/poster.service.js", () => ({
   FACTORING_GL_POSTING_FLAG: "FACTORING_GL_POSTING_ENABLED",
   postFactoringAdvanceEvent: postFundingMock,
   postFactoringChargebackEvent: postChargebackMock,
+  loadExactLinkedChargebackAmounts: loadExactMock,
 }));
 
 // An advance (batch) that is made of TWO invoices; each invoice lookup resolves to the same advance.
@@ -147,7 +149,8 @@ INV-2026-00001,Acme Freight,1000.00,950.00,50.00,25.00,"(3,000.00)",925.00,2026-
   it("posts funding once all of an advance's invoices are present, and routes a positive chargeback", async () => {
     postFundingMock.mockClear();
     postChargebackMock.mockClear();
-    // Both invoices present => complete; a positive chargeback amount routes to the chargeback poster.
+    loadExactMock.mockResolvedValue({ liability_cents: 30000, recoursed_ar_cents: 150000 });
+    // Both invoices present => complete; CSV chargeback must equal exact linked liability.
     const fullCsv = `Invoice Number,Customer Name,Gross,Advance,Reserve,Fee,Chargeback,Net,Due Date
 INV-2026-00001,Acme Freight,1000.00,950.00,50.00,25.00,300.00,925.00,2026-06-15
 INV-2026-00002,Beta Logistics,500.00,475.00,25.00,12.50,0.00,462.50,2026-06-16`;
@@ -162,7 +165,31 @@ INV-2026-00002,Beta Logistics,500.00,475.00,25.00,12.50,0.00,462.50,2026-06-16`;
     expect(result.chargeback_total_cents).toBe(30000);
     expect(postChargebackMock).toHaveBeenCalledTimes(1);
     expect(postChargebackMock).toHaveBeenCalledWith(
-      expect.objectContaining({ chargeback_amount_cents: 30000, factoring_advance_id: "fa-1" })
+      expect.objectContaining({
+        chargeback_amount_cents: 30000,
+        default_interest_cents: 0,
+        recoursed_ar_cents: 150000,
+        factoring_advance_id: "fa-1",
+      })
+    );
+  });
+
+  it("fail-closed when CSV chargeback ≠ exact linked liability (no partial / guessed recourse)", async () => {
+    postFundingMock.mockClear();
+    postChargebackMock.mockClear();
+    loadExactMock.mockResolvedValue({ liability_cents: 50000, recoursed_ar_cents: 150000 });
+    const fullCsv = `Invoice Number,Customer Name,Gross,Advance,Reserve,Fee,Chargeback,Net,Due Date
+INV-2026-00001,Acme Freight,1000.00,950.00,50.00,25.00,300.00,925.00,2026-06-15
+INV-2026-00002,Beta Logistics,500.00,475.00,25.00,12.50,0.00,462.50,2026-06-16`;
+    const result = await commitFaroCsvImport({
+      userId: "user-1",
+      operatingCompanyId: "11111111-1111-4111-8111-111111111111",
+      csvText: fullCsv,
+      statementDate: "2026-06-04",
+    });
+    expect(postChargebackMock).not.toHaveBeenCalled();
+    expect(result.chargeback_posts.some((c) => c.reason === "policy_partial_or_ambiguous_recourse")).toBe(
+      true
     );
   });
 });

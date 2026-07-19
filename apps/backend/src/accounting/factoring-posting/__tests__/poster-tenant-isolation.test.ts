@@ -27,10 +27,11 @@ const {
 
 vi.mock("../../../auth/db.js", () => ({ withLuciaBypass: mockWithLuciaBypass, withCurrentUser: mockWithCurrentUser }));
 vi.mock("../../../lib/feature-flags/service.js", () => ({ isEnabled: mockIsEnabled }));
-vi.mock("../../journal-entries.service.js", () => ({ createJournalEntry: mockCreateJournalEntry, enqueueJournalEntrySideEffects: vi.fn(async () => undefined) }));
+vi.mock("../../journal-entries.service.js", () => ({ createJournalEntry: mockCreateJournalEntry, createJournalEntryOnClient: mockCreateJournalEntry, enqueueJournalEntrySideEffects: vi.fn(async () => undefined) }));
 vi.mock("../../posting-engine.service.js", () => ({ ensureOpenPeriod: vi.fn(async () => undefined) }));
 vi.mock("../../accounting-spine-emit.js", () => ({ writeTransactionSourceLink: vi.fn(async () => undefined) }));
 vi.mock("../../coa-roles/resolver.service.js", () => ({ resolveRoleAccount: mockResolveRoleAccount }));
+vi.mock("../../../audit/crud-audit.js", () => ({ appendCrudAudit: vi.fn(async () => undefined) }));
 
 const OPCO = "11111111-1111-4111-8111-111111111111";
 
@@ -43,16 +44,32 @@ describe("factoring posting tenant isolation (secured borrowing)", () => {
 
     mockIsEnabled.mockResolvedValue(true);
     mockResolveRoleAccount.mockImplementation(async (_c: unknown, _opco: string, role: string) => role);
-    mockCreateJournalEntry.mockImplementation(async (_input: unknown, _actor: unknown, options?: { afterInsertBeforeCommit?: (client: { query: typeof mockQuery }, header: { id: string }) => Promise<void> }) => {
-    const header = { id: "je-1" };
-    if (options?.afterInsertBeforeCommit) {
-      await options.afterInsertBeforeCommit({ query: mockQuery }, header);
+    mockCreateJournalEntry.mockImplementation(
+    async (...args: unknown[]) => {
+      const options = (args.length >= 4 ? args[3] : args[2]) as
+        | { afterInsertBeforeCommit?: (client: { query: typeof mockQuery }, header: { id: string }) => Promise<void> }
+        | undefined;
+      const client =
+        args.length >= 4
+          ? (args[0] as { query: typeof mockQuery })
+          : { query: mockQuery };
+      const header = { id: "je-1" };
+      if (options?.afterInsertBeforeCommit) {
+        await options.afterInsertBeforeCommit(client, header);
+      }
+      return header;
     }
-    return header;
-  });
+  );
 
     mockQuery.mockImplementation(async (sql: string) => {
       if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
+    if (sql.includes("factoring_lifecycle_posting_keys")) {
+      if (sql.trim().startsWith("INSERT")) return { rows: [] };
+      return { rows: [] };
+    }
+    if (sql.includes("AS outstanding")) {
+      return { rows: [{ outstanding: "500000" }] };
+    }
       if (sql.includes("FROM accounting.factoring_advances") && sql.includes("invoice_total_cents")) {
         return {
           rows: [
@@ -72,7 +89,10 @@ describe("factoring posting tenant isolation (secured borrowing)", () => {
           ],
         };
       }
-      if (sql.includes("FROM accounting.journal_entries") && sql.includes("memo = $2")) return { rows: [] };
+      if (sql.includes("FROM accounting.journal_entries")) {
+      return { rows: [] };
+    }
+    if (false && sql.includes("FROM accounting.journal_entries") && sql.includes("memo = $2")) return { rows: [] };
       return { rows: [] };
     });
 

@@ -1526,6 +1526,39 @@ reserve (not status); (5) TRANSP/Faro identity fail-closed; (6) FORCE RLS Owner/
 10. **Guard executable evidence only.** No raw comment/string marker acceptance;
     planted FORCE-RLS / GREATEST / DROP VIEW / legal_name decoys must fail.
 
+### CPA / code-review VETO amendments (append-only 2026-07-19 — exact head `e37d16eef`)
+11. **Strict already_posted repair (never memo-only).** Candidate must match same
+    entity + exact lifecycle `source_transaction_type` / `source_transaction_id` +
+    advance + expected JE status + balanced JE + authoritative source/TSL links.
+    Unlinked same-memo repair is allowed only when every posting line is
+    unattributed and free of contradictory TSL. Memo collision with foreign
+    provenance → `repair_candidate_invalid` (fail closed). Never overwrite
+    attributed `source_transaction_*` or append TSL over contradictory links.
+12. **Deterministic lifecycle posting keys.** Table
+    `accounting.factoring_lifecycle_posting_keys` UNIQUE
+    `(operating_company_id, factoring_advance_id, source_transaction_type, event_key)`
+    claimed in the caller-owned JE txn — concurrency backstop replacing
+    memo check-then-insert races.
+13. **Chargeback / recourse atomic end-to-end.** One `withCurrentUser` txn:
+    repay JE + A/R reclass JE + recourse status + subledger + source links +
+    append-only audit. Mid-flow inject hooks prove rollback. Partial /
+    omitted / zero `recoursed_ar_cents` / mismatched amounts →
+    `policy_partial_or_ambiguous_recourse` (no PENDING defaults; no guessed
+    economics). Full recourse amounts must equal exact linked outstanding
+    liability + invoice A/R (`loadExactLinkedChargebackAmounts`).
+14. **companyBusinessDate for posting / day-95.** No UTC `toISOString().slice`
+    fallbacks for entry dates or day-95 as-of. `ensureOpenPeriod` enforced.
+    Central midnight winter (CST) / summer (CDT) tests required.
+15. **Orphan / voided fail-closed on read model.** Any
+    `orphan_liability_role_cents` / `orphan_reserve_role_cents` → status
+    `unverifiable` (`orphan_unattributed_liability_role_legs` /
+    `orphan_unattributed_reserve_role_legs`); headline null; orphan cents only
+    in diagnostics. Mutable `status='voided'` must not drop live unreverted JE
+    liability; voided-with-live-JE → `voided_advance_without_reversing_je`.
+    Advances scoped by `(advanced_at AT TIME ZONE 'America/Chicago')::date <= as_of`.
+    Contradictory source vs TSL detected via `NOT EXISTS` bad TSL (never treated
+    as “no TSL”).
+
 
 ## 16. Accounting Home — Pending approvals ↔ GL linkage (0280-15)
 

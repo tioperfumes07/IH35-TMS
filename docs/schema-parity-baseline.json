@@ -559,6 +559,15 @@
       "operating_company_id",
       "updated_at"
     ],
+    "accounting.factoring_lifecycle_posting_keys": [
+      "created_at",
+      "event_key",
+      "factoring_advance_id",
+      "id",
+      "journal_entry_id",
+      "operating_company_id",
+      "source_transaction_type"
+    ],
     "accounting.factoring_reserve_movements": [
       "amount_cents",
       "created_at",
